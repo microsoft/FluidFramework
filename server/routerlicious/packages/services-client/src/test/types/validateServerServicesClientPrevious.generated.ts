@@ -986,6 +986,30 @@ use_old_InterfaceDeclaration_IWriteSummaryResponse(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_InternalErrorCode": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_InternalErrorCode():
+    TypeOnly<old.InternalErrorCode>;
+declare function use_current_EnumDeclaration_InternalErrorCode(
+    use: TypeOnly<current.InternalErrorCode>): void;
+use_current_EnumDeclaration_InternalErrorCode(
+    get_old_EnumDeclaration_InternalErrorCode());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_InternalErrorCode": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_InternalErrorCode():
+    TypeOnly<current.InternalErrorCode>;
+declare function use_old_EnumDeclaration_InternalErrorCode(
+    use: TypeOnly<old.InternalErrorCode>): void;
+use_old_EnumDeclaration_InternalErrorCode(
+    get_current_EnumDeclaration_InternalErrorCode());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_LatestSummaryId": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_LatestSummaryId():

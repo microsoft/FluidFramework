@@ -4,11 +4,10 @@
  */
 
 import { RuntimeHeaders } from "@fluidframework/container-runtime/internal";
+import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import {
-	FluidObject,
 	IFluidHandleContext,
 	type IFluidHandleInternal,
-	IRequest,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { FluidHandleBase, responseToException } from "@fluidframework/runtime-utils/internal";
@@ -51,15 +50,13 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 				url: this.absolutePath,
 				headers: { [RuntimeHeaders.viaHandle]: true },
 			};
-			this.objectP = this.routeContext
-				.resolveHandle(request)
-				.then<FluidObject>((response) => {
-					if (response.mimeType === "fluid/object") {
-						const fluidObject: FluidObject = response.value;
-						return fluidObject;
-					}
-					throw responseToException(response, request);
-				});
+			this.objectP = this.routeContext.resolveHandle(request).then<FluidObject>((response) => {
+				if (response.mimeType === "fluid/object") {
+					const fluidObject: FluidObject = response.value;
+					return fluidObject;
+				}
+				throw responseToException(response, request);
+			});
 		}
 		return this.objectP;
 	}

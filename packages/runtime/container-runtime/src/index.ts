@@ -25,13 +25,12 @@ export {
 } from "./containerRuntime.js";
 export {
 	ContainerMessageType,
-	ContainerRuntimeMessage,
 	IContainerRuntimeMessageCompatDetails,
 	CompatModeBehavior,
 	RecentlyAddedContainerRuntimeMessageDetails,
 	UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
-export { IBlobManagerLoadInfo } from "./blobManager.js";
+export { IBlobManagerLoadInfo } from "./blobManager/index.js";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 export {
 	detectOutboundReferences,
@@ -97,7 +96,7 @@ export {
 	ICancellableSummarizerController,
 	SubmitSummaryFailureData,
 	SummaryStage,
-	IRetriableFailureResult,
+	IRetriableFailureError,
 	ISummarizeEventProps,
 	IdCompressorMode,
 	IDocumentSchema,
@@ -107,6 +106,11 @@ export {
 	DocumentsSchemaController,
 	IDocumentSchemaChangeMessage,
 	IDocumentSchemaFeatures,
+	ReadFluidDataStoreAttributes,
+	IFluidDataStoreAttributes0,
+	IFluidDataStoreAttributes1,
+	IFluidDataStoreAttributes2,
+	OmitAttributesVersions,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
 export { ChannelCollection } from "./channelCollection.js";

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IOdspAudience, OdspMember } from "@fluid-experimental/odsp-client";
 import { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
+import { IOdspAudience, OdspMember } from "@fluidframework/odsp-client/internal";
 
 export const waitForMember = async (
 	audience: IOdspAudience,

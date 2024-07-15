@@ -82,10 +82,8 @@ describeCompat(
 			sharedString1 = await dataObject1.getSharedObject<SharedString>(sharedStringId);
 			sharedString2 = await dataObject2.getSharedObject<SharedString>(sharedStringId);
 
-			sharedDirectory1 =
-				await dataObject1.getSharedObject<SharedDirectory>(sharedDirectoryId);
-			sharedDirectory2 =
-				await dataObject2.getSharedObject<SharedDirectory>(sharedDirectoryId);
+			sharedDirectory1 = await dataObject1.getSharedObject<SharedDirectory>(sharedDirectoryId);
+			sharedDirectory2 = await dataObject2.getSharedObject<SharedDirectory>(sharedDirectoryId);
 
 			await provider.ensureSynchronized();
 		};
@@ -225,14 +223,8 @@ describeCompat(
 
 				await provider.ensureSynchronized();
 				assert.strictEqual(
-					sharedDirectory1
-						.getSubDirectory(topLevel)
-						?.getSubDirectory(innerLevel)
-						?.get(key),
-					sharedDirectory2
-						.getSubDirectory(topLevel)
-						?.getSubDirectory(innerLevel)
-						?.get(key),
+					sharedDirectory1.getSubDirectory(topLevel)?.getSubDirectory(innerLevel)?.get(key),
+					sharedDirectory2.getSubDirectory(topLevel)?.getSubDirectory(innerLevel)?.get(key),
 				);
 			});
 		});

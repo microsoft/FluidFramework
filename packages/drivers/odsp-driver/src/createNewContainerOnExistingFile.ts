@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils/internal";
 import {
@@ -10,8 +11,10 @@ import {
 	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { IWriteSummaryResponse } from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
@@ -24,7 +27,11 @@ import { createOdspUrl } from "./createOdspUrl.js";
 import { EpochTracker } from "./epochTracker.js";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
 import { getApiRoot } from "./odspUrlHelper.js";
-import { IExistingFileInfo, createCacheSnapshotKey } from "./odspUtils.js";
+import {
+	IExistingFileInfo,
+	createCacheSnapshotKey,
+	snapshotWithLoadingGroupIdSupported,
+} from "./odspUtils.js";
 
 /**
  * Creates a new Fluid container on an existing file.
@@ -38,7 +45,7 @@ import { IExistingFileInfo, createCacheSnapshotKey } from "./odspUtils.js";
  * "alternative file partition" where the main File stub is an ASPX page.
  */
 export async function createNewContainerOnExistingFile(
-	getStorageToken: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	fileInfo: IExistingFileInfo,
 	logger: ITelemetryLoggerExt,
 	createNewSummary: ISummaryTree | undefined,
@@ -62,7 +69,7 @@ export async function createNewContainerOnExistingFile(
 
 	const { id: summaryHandle } = await createNewFluidContainerCore<IWriteSummaryResponse>({
 		containerSnapshot,
-		getStorageToken,
+		getAuthHeader,
 		logger,
 		initialUrl,
 		forceAccessTokenViaAuthorizationHeader,
@@ -87,7 +94,13 @@ export async function createNewContainerOnExistingFile(
 			summaryHandle,
 		);
 		// caching the converted summary
-		await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), snapshot);
+		await epochTracker.put(
+			createCacheSnapshotKey(
+				odspResolvedUrl,
+				snapshotWithLoadingGroupIdSupported(loggerToMonitoringContext(logger).config),
+			),
+			snapshot,
+		);
 	}
 
 	return odspResolvedUrl;

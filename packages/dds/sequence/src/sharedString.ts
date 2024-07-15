@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import {
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeTextHelper,
@@ -17,14 +20,15 @@ import {
 	refHasTileLabel,
 } from "@fluidframework/merge-tree/internal";
 
-import { SharedSegmentSequence } from "./sequence.js";
+import { SharedSegmentSequence, type ISharedSegmentSequence } from "./sequence.js";
 import { SharedStringFactory } from "./sequenceFactory.js";
 
 /**
  * Fluid object interface describing access methods on a SharedString
+ * @legacy
  * @alpha
  */
-export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
+export interface ISharedString extends ISharedSegmentSequence<SharedStringSegment> {
 	/**
 	 * Inserts the text at the position.
 	 * @param pos - The position to insert the text at
@@ -93,7 +97,11 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 	 * @param markerLabel - Label of the marker to search for
 	 * @param forwards - Whether the desired marker comes before (false) or after (true) `startPos`. Default true.
 	 */
-	searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;
+	searchForMarker(
+		startPos: number,
+		markerLabel: string,
+		forwards?: boolean,
+	): Marker | undefined;
 
 	/**
 	 * Retrieve text from the SharedString in string format.
@@ -118,6 +126,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export type SharedStringSegment = TextSegment | Marker;
@@ -130,6 +139,7 @@ export type SharedStringSegment = TextSegment | Marker;
  * In addition to text, a Shared String can also contain markers. Markers can be
  * used to store metadata at positions within the text, like the details of an
  * image or Fluid object that should be rendered with the text.
+ * @legacy
  * @alpha
  */
 export class SharedStringClass

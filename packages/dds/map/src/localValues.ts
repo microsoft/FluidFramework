@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISerializedHandle } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ISerializedHandle } from "@fluidframework/runtime-utils/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	ValueType,
 	parseHandles,
@@ -13,10 +13,11 @@ import {
 } from "@fluidframework/shared-object-base/internal";
 
 // eslint-disable-next-line import/no-deprecated
-import { ISerializableValue, ISerializedValue } from "./internalInterfaces.js";
+import type { ISerializableValue, ISerializedValue } from "./internalInterfaces.js";
 
 /**
  * A local value to be stored in a container type Distributed Data Store (DDS).
+ * @legacy
  * @alpha
  */
 export interface ILocalValue {
@@ -99,6 +100,7 @@ export class PlainLocalValue implements ILocalValue {
 /**
  * Enables a container type {@link https://fluidframework.com/docs/build/dds/ | DDS} to produce and store local
  * values with minimal awareness of how those objects are stored, serialized, and deserialized.
+ * @legacy
  * @alpha
  */
 export class LocalValueMaker {

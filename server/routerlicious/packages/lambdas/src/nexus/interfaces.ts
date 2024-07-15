@@ -43,6 +43,11 @@ export interface IConnectedClient {
 	 * Client protocol versions of standard semver types.
 	 */
 	connectVersions: string[];
+
+	/**
+	 * Connection disposal function to clean up resources and connections after client disconnects.
+	 */
+	dispose: () => void;
 }
 
 /**
@@ -128,4 +133,5 @@ export interface INexusLambdaConnectionStateTrackers {
 	roomMap: Map<string, IRoom>;
 	disconnectedOrdererConnections: Set<string>;
 	disconnectedClients: Set<string>;
+	supportedFeaturesMap: Map<string, Record<string, unknown>>;
 }

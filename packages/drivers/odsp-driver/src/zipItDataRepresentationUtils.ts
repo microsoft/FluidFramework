@@ -301,39 +301,46 @@ export class NodeCore {
 	}
 
 	public get(index: number): NodeTypes {
-		return this.children[index];
+		// TODO Why are we non null asserting here?
+		return this.children[index]!;
 	}
 
 	public getString(index: number): string {
-		const node = this.children[index];
+		// TODO Why are we non null asserting here?
+		const node = this.children[index]!;
 		return getStringInstance(node, "getString should return string");
 	}
 
 	public getMaybeString(index: number): string | undefined {
-		const node = this.children[index];
+		// TODO Why are we non null asserting here?
+		const node = this.children[index]!;
 		return getMaybeStringInstance(node);
 	}
 
 	public getBlob(index: number): BlobCore {
-		const node = this.children[index];
+		// TODO Why are we non null asserting here?
+		const node = this.children[index]!;
 		assertBlobCoreInstance(node, "getBlob should return a blob");
 		return node;
 	}
 
 	public getNode(index: number): NodeCore {
-		const node = this.children[index];
+		// TODO Why are we non null asserting here?
+		const node = this.children[index]!;
 		assertNodeCoreInstance(node, "getNode should return a node");
 		return node;
 	}
 
 	public getNumber(index: number): number {
-		const node = this.children[index];
+		// TODO Why are we non null asserting here?
+		const node = this.children[index]!;
 		assertNumberInstance(node, "getNumber should return a number");
 		return node;
 	}
 
 	public getBool(index: number): boolean {
-		const node = this.children[index];
+		// TODO Why are we non null asserting here?
+		const node = this.children[index]!;
 		assertBoolInstance(node, "getBool should return a boolean");
 		return node;
 	}
@@ -366,7 +373,10 @@ export class NodeCore {
 
 	public addNumber(payload: number | undefined): void {
 		assert(Number.isInteger(payload), 0x231 /* "Number should be an integer" */);
-		assert(payload !== undefined && payload >= 0, 0x232 /* "Payload should not be negative" */);
+		assert(
+			payload !== undefined && payload >= 0,
+			0x232 /* "Payload should not be negative" */,
+		);
 		this.children.push(payload);
 	}
 
@@ -474,9 +484,7 @@ export class NodeCore {
 				case MarkerCodes.BinarySingle16:
 				case MarkerCodes.BinarySingle32:
 				case MarkerCodes.BinarySingle64: {
-					children.push(
-						BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code)),
-					);
+					children.push(BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code)));
 					continue;
 				}
 				// If integer is 0.
@@ -548,7 +556,8 @@ export class NodeCore {
 
 		for (const el of stringsToResolve) {
 			for (let it = el.startPos; it < el.endPos; it++) {
-				stringBuffer[length] = input[it];
+				// Non null asserting here because we are iterating over startPos
+				stringBuffer[length] = input[it]!;
 				length++;
 			}
 			stringBuffer[length] = 0;
@@ -560,7 +569,8 @@ export class NodeCore {
 		if (result.length === stringsToResolve.length + 1) {
 			// All is good, we expect all the cases to get here
 			for (let i = 0; i < stringsToResolve.length; i++) {
-				stringsToResolve[i].content = result[i];
+				// Non null asserting here because we are iterating over stringsToResolve
+				stringsToResolve[i]!.content = result[i];
 			}
 		} else {
 			// String content has \0 chars!
@@ -568,8 +578,7 @@ export class NodeCore {
 			logger.sendErrorEvent({ eventName: "StringParsingError" });
 			for (const el of stringsToResolve) {
 				assert(
-					el.content ===
-						Uint8ArrayToString(input.subarray(el.startPos, el.endPos), "utf8"),
+					el.content === Uint8ArrayToString(input.subarray(el.startPos, el.endPos), "utf8"),
 					0x3ea /* test */,
 				);
 			}
@@ -614,21 +623,30 @@ export function getStringInstance(node: NodeTypes, message: string): string {
 	throwBufferParseException(node, "BlobCore", message);
 }
 
-export function assertBlobCoreInstance(node: NodeTypes, message: string): asserts node is BlobCore {
+export function assertBlobCoreInstance(
+	node: NodeTypes,
+	message: string,
+): asserts node is BlobCore {
 	if (node instanceof BlobCore) {
 		return;
 	}
 	throwBufferParseException(node, "BlobCore", message);
 }
 
-export function assertNodeCoreInstance(node: NodeTypes, message: string): asserts node is NodeCore {
+export function assertNodeCoreInstance(
+	node: NodeTypes,
+	message: string,
+): asserts node is NodeCore {
 	if (node instanceof NodeCore) {
 		return;
 	}
 	throwBufferParseException(node, "NodeCore", message);
 }
 
-export function assertNumberInstance(node: NodeTypes, message: string): asserts node is number {
+export function assertNumberInstance(
+	node: NodeTypes,
+	message: string,
+): asserts node is number {
 	if (typeof node === "number") {
 		return;
 	}

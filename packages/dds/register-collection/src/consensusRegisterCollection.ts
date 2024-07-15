@@ -7,13 +7,19 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+import {
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import {
+	IFluidSerializer,
+	SharedObject,
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
 
 import {
 	IConsensusRegisterCollection,
@@ -92,7 +98,8 @@ interface IRegisterOperationPlain<T> {
 type IIncomingRegisterOperation<T> = IRegisterOperationSerialized | IRegisterOperationPlain<T>;
 
 /** Distinguish between incoming op formats so we know which type it is */
-const incomingOpMatchesPlainFormat = <T>(op): op is IRegisterOperationPlain<T> => "value" in op;
+const incomingOpMatchesPlainFormat = <T>(op): op is IRegisterOperationPlain<T> =>
+	"value" in op;
 
 /** The type of the resolve function to call after the local operation is ack'd */
 type PendingResolve = (winner: boolean) => void;
@@ -101,6 +108,7 @@ const snapshotFileName = "header";
 
 /**
  * {@inheritDoc IConsensusRegisterCollection}
+ * @legacy
  * @alpha
  */
 export class ConsensusRegisterCollection<T>
@@ -141,7 +149,7 @@ export class ConsensusRegisterCollection<T>
 				type: "Plain",
 				value,
 			},
-			refSeq: this.runtime.deltaManager.lastSequenceNumber,
+			refSeq: this.deltaManager.lastSequenceNumber,
 		};
 
 		return this.newAckBasedPromise<boolean>((resolve) => {
@@ -295,7 +303,9 @@ export class ConsensusRegisterCollection<T>
 		}
 
 		// Remove versions that were known to the remote client at the time of write
-		while (data.versions.length > 0 && refSeq >= data.versions[0].sequenceNumber) {
+		// TODO Non null asserting, why is this not null?
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		while (data.versions.length > 0 && refSeq >= data.versions[0]!.sequenceNumber) {
 			data.versions.shift();
 		}
 
@@ -310,7 +320,9 @@ export class ConsensusRegisterCollection<T>
 		} else if (data.versions.length > 0) {
 			assert(
 				// seqNum should always be increasing, except for the case of grouped batches (seqNum will be the same)
-				sequenceNumber >= data.versions[data.versions.length - 1].sequenceNumber,
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				sequenceNumber >= data.versions[data.versions.length - 1]!.sequenceNumber,
 				0x071 /* "Versions should naturally be ordered by sequenceNumber" */,
 			);
 		}

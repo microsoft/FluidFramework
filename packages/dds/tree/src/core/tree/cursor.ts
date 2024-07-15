@@ -5,10 +5,10 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { FieldKey } from "../schema-stored/index.js";
+import type { FieldKey } from "../schema-stored/index.js";
 
-import { FieldUpPath, UpPath } from "./pathTree.js";
-import { TreeType, Value } from "./types.js";
+import type { FieldUpPath, UpPath } from "./pathTree.js";
+import type { TreeType, Value } from "./types.js";
 
 /**
  * A symbol for marking an object as an {@link ITreeCursor}.
@@ -26,7 +26,11 @@ export const CursorMarker: unique symbol = Symbol("CursorMarker");
 export function isCursor(data: unknown): data is ITreeCursor {
 	// Other than on null and undefined, looking up a missing symbol shouldn't type error.
 	// typeof check deals with undefined while providing an early out for other non-object types.
-	return data !== null && typeof data === "object" && (data as any)[CursorMarker] === true;
+	return (
+		data !== null &&
+		typeof data === "object" &&
+		(data as Partial<ITreeCursor>)[CursorMarker] === true
+	);
 }
 
 /**

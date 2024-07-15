@@ -12,12 +12,12 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerExperimental, Loader } from "@fluidframework/container-loader/internal";
-import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
+import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils/internal";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import commander from "commander";
 
@@ -104,16 +104,12 @@ async function main() {
 	// this makes runners repeatable, but ensures each runner
 	// will get its own set of randoms
 	const random = makeRandom(seed, runId);
-	const logger = await createLogger(
-		{
-			runId,
-			driverType: driver,
-			driverEndpointName: endpoint,
-			profile: profileName,
-		},
-		// Turn on verbose events for ALL stress test runs.
-		random.pick([LogLevel.verbose]),
-	);
+	const logger = await createLogger({
+		runId,
+		driverType: driver,
+		driverEndpointName: endpoint,
+		profile: profileName,
+	});
 
 	// this will enabling capturing the full stack for errors
 	// since this is test capturing the full stack is worth it
@@ -208,7 +204,12 @@ async function runnerProcess(
 	const containerOptions = generateRuntimeOptions(seed, optionsOverride?.container);
 	const configurations = generateConfigurations(seed, optionsOverride?.configurations);
 
-	const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
+	const testDriver: ITestDriver = await createTestDriver(
+		driver,
+		endpoint,
+		seed,
+		runConfig.runId,
+	);
 
 	// Cycle between creating new factory vs. reusing factory.
 	// Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
@@ -293,12 +294,7 @@ async function runnerProcess(
 			// If undefined then no fault injection.
 			const faultInjection = runConfig.testConfig.faultInjectionMs;
 			if (faultInjection) {
-				scheduleContainerClose(
-					container,
-					runConfig,
-					faultInjection.min,
-					faultInjection.max,
-				);
+				scheduleContainerClose(container, runConfig, faultInjection.min, faultInjection.max);
 				scheduleFaultInjection(
 					documentServiceFactory,
 					container,
@@ -374,8 +370,9 @@ function scheduleFaultInjection(
 				container.connectionState === ConnectionState.Connected &&
 				container.resolvedUrl !== undefined
 			) {
-				const deltaConn = ds.documentServices.get(container.resolvedUrl)
-					?.documentDeltaConnection;
+				const deltaConn = ds.documentServices.get(
+					container.resolvedUrl,
+				)?.documentDeltaConnection;
 				if (deltaConn !== undefined && !deltaConn.disposed) {
 					// 1 in numClients chance of non-retritable error to not overly conflict with container close
 					const canRetry = random.bool(1 - 1 / runConfig.testConfig.numClients);
@@ -453,9 +450,7 @@ function scheduleContainerClose(
 						);
 						setTimeout(() => {
 							if (!container.closed) {
-								container.close(
-									new FaultInjectionError("scheduleContainerClose", false),
-								);
+								container.close(new FaultInjectionError("scheduleContainerClose", false));
 							}
 						}, leaveTime);
 					}

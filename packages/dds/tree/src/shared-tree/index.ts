@@ -4,44 +4,49 @@
  */
 
 export {
-	ISharedTree,
+	type ISharedTree,
 	SharedTreeFactory,
-	SharedTreeOptions,
+	type SharedTreeOptions,
 	SharedTree,
 	ForestType,
-	SharedTreeContentSnapshot,
-	SharedTreeFormatOptions,
+	type SharedTreeContentSnapshot,
+	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 } from "./sharedTree.js";
 
 export {
 	createTreeCheckout,
 	TreeCheckout,
-	ITreeCheckout,
+	type ITreeCheckout,
 	runSynchronous,
-	CheckoutEvents,
-	ITransaction,
-	ITreeCheckoutFork,
-	RevertibleFactory,
+	type CheckoutEvents,
+	type ITransaction,
+	type ITreeCheckoutFork,
+	type RevertibleFactory,
 } from "./treeCheckout.js";
 
 export {
-	SchematizeConfiguration,
-	TreeContent,
-	InitializeAndSchematizeConfiguration,
-	SchemaConfiguration,
+	type SchematizeConfiguration,
+	type TreeContent,
+	type InitializeAndSchematizeConfiguration,
+	type SchemaConfiguration,
 	buildTreeConfiguration,
 } from "./schematizeTree.js";
 
-export { FlexTreeView, CheckoutFlexTreeView, ITreeViewFork } from "./treeView.js";
+export {
+	type FlexTreeView,
+	CheckoutFlexTreeView,
+	type ITreeViewFork,
+	type FlexTreeViewGeneric,
+} from "./treeView.js";
 
-export { ISharedTreeEditor, ISchemaEditor } from "./sharedTreeEditBuilder.js";
+export type { ISharedTreeEditor, ISchemaEditor } from "./sharedTreeEditBuilder.js";
 
 export {
 	treeApi as Tree,
-	TreeApi,
-	TransactionConstraint,
-	NodeInDocumentConstraint,
-	RunTransaction,
+	type TreeApi,
+	type TransactionConstraint,
+	type NodeInDocumentConstraint,
+	type RunTransaction,
 	rollback,
 } from "./treeApi.js";

@@ -5,14 +5,19 @@
 
 import { strict as assert } from "assert";
 
-import { BenchmarkTimer, BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { type BenchmarkTimer, BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 
-import { ChangeFamily, RevisionTag, rootFieldKey } from "../../../core/index.js";
+import {
+	type ChangeFamily,
+	type RevisionTag,
+	rootFieldKey,
+	type ChangeFamilyEditor,
+} from "../../../core/index.js";
 import { singleJsonCursor } from "../../../domains/index.js";
 import { DefaultChangeFamily } from "../../../feature-libraries/index.js";
-import { Commit } from "../../../shared-tree-core/index.js";
+import type { Commit } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
-import { Editor, makeEditMinter } from "../../editMinter.js";
+import { type Editor, makeEditMinter } from "../../editMinter.js";
 import { NoOpChangeRebaser, TestChange, testChangeFamilyFactory } from "../../testChange.js";
 import { failCodecFamily, mintRevisionTag } from "../../utils.js";
 
@@ -44,7 +49,7 @@ describe("EditManager - Bench", () => {
 
 	interface Family<TChange> {
 		readonly name: string;
-		readonly changeFamily: ChangeFamily<any, TChange>;
+		readonly changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>;
 		readonly mintChange: (revision: RevisionTag | undefined) => TChange;
 		readonly maxEditCount: number;
 	}
@@ -56,7 +61,10 @@ describe("EditManager - Bench", () => {
 			.insert(0, singleJsonCursor(1));
 	};
 
-	const families: Family<any>[] = [
+	// Family is invariant over the change type, so using any is required to write generic Family processing code.
+	// Refactors to make this more type safe are possible for some usages (ex: extracting a non generic base interface), but are not practical for the tests here.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const families: readonly Family<any>[] = [
 		{
 			name: "TestChange",
 			changeFamily: testChangeFamilyFactory(new NoOpChangeRebaser()),

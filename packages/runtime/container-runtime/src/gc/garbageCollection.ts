@@ -5,13 +5,17 @@
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
-import { IGarbageCollectionData, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import {
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
 	gcTreeKey,
+	type IGarbageCollectionData,
+	type ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
-import { createResponseError, responseToException } from "@fluidframework/runtime-utils/internal";
+import {
+	createResponseError,
+	responseToException,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
@@ -22,7 +26,7 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { BlobManager } from "../blobManager.js";
+import { blobManagerBasePath } from "../blobManager/index.js";
 import { InactiveResponseHeaderKey, TombstoneResponseHeaderKey } from "../containerRuntime.js";
 import { ClientSessionExpiredError } from "../error.js";
 import { ContainerMessageType, ContainerRuntimeGCMessage } from "../messageTypes.js";
@@ -55,7 +59,10 @@ import {
 	urlToGCNodePath,
 } from "./gcHelpers.js";
 import { runGarbageCollection } from "./gcReferenceGraphAlgorithm.js";
-import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions.js";
+import {
+	IGarbageCollectionSnapshotData,
+	IGarbageCollectionState,
+} from "./gcSummaryDefinitions.js";
 import { GCSummaryStateTracker } from "./gcSummaryStateTracker.js";
 import { GCTelemetryTracker } from "./gcTelemetry.js";
 import {
@@ -95,7 +102,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private readonly configs: IGarbageCollectorConfigs;
 
 	public get shouldRunGC(): boolean {
-		return this.configs.shouldRunGC;
+		return this.configs.gcEnabled;
 	}
 
 	public readonly sessionExpiryTimerStarted: number | undefined;
@@ -158,10 +165,6 @@ export class GarbageCollector implements IGarbageCollector {
 
 	private readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
 
-	public get summaryStateNeedsReset(): boolean {
-		return this.summaryStateTracker.doesSummaryStateNeedReset;
-	}
-
 	/** Returns the count of data stores whose GC state updated since the last summary. */
 	public get updatedDSCountSinceLastSummary(): number {
 		return this.summaryStateTracker.updatedDSCountSinceLastSummary;
@@ -216,10 +219,7 @@ export class GarbageCollector implements IGarbageCollector {
 			this.sessionExpiryTimerStarted = Date.now();
 		}
 
-		this.summaryStateTracker = new GCSummaryStateTracker(
-			this.configs,
-			baseSnapshot?.trees[gcTreeKey] !== undefined /* wasGCRunInBaseSnapshot */,
-		);
+		this.summaryStateTracker = new GCSummaryStateTracker(this.configs);
 
 		this.telemetryTracker = new GCTelemetryTracker(
 			this.mc,
@@ -248,10 +248,7 @@ export class GarbageCollector implements IGarbageCollector {
 						return undefined;
 					}
 
-					const snapshotData = await getGCDataFromSnapshot(
-						gcSnapshotTree,
-						readAndParseBlob,
-					);
+					const snapshotData = await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
 
 					// If the GC version in base snapshot does not match the GC version currently in effect, the GC data
 					// in the snapshot cannot be interpreted correctly. Set everything to undefined except for
@@ -266,10 +263,7 @@ export class GarbageCollector implements IGarbageCollector {
 					}
 					return snapshotData;
 				} catch (error) {
-					const dpe = DataProcessingError.wrapIfUnrecognized(
-						error,
-						"FailedToInitializeGC",
-					);
+					const dpe = DataProcessingError.wrapIfUnrecognized(error, "FailedToInitializeGC");
 					dpe.addTelemetryProperties({
 						gcConfigs: JSON.stringify(this.configs),
 					});
@@ -333,6 +327,10 @@ export class GarbageCollector implements IGarbageCollector {
 				return {};
 			}
 
+			// Note that the base GC details are returned even if GC is disabled. This is to handle the special scenario
+			// where GC is disabled but GC state exists in base snapshot. In this scenario, the nodes which get the GC
+			// state will re-summarize to reset any GC specific state in their summaries (like unreferenced flag).
+
 			const gcNodes: { [id: string]: string[] } = {};
 			for (const [nodeId, nodeData] of Object.entries(baseSnapshotData.gcState.gcNodes)) {
 				gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
@@ -373,7 +371,7 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
-		// Initialize the deleted nodes from the snapshot. This is done irrespective of whether sweep is enabled or not
+		// Initialize the deleted nodes from the snapshot. This is done irrespective of whether GC / sweep is enabled
 		// to identify deleted nodes' usage.
 		if (baseSnapshotData.deletedNodes !== undefined) {
 			this.deletedNodes = new Set(baseSnapshotData.deletedNodes);
@@ -405,20 +403,21 @@ export class GarbageCollector implements IGarbageCollector {
 			this.mc.logger,
 			{
 				eventName: "InitializeOrUpdateGCState",
-				details: { initialized, unrefNodeCount: this.unreferencedNodesState.size },
 			},
-			async () => {
+			async (event) => {
 				// If the GC state hasn't been initialized yet, initialize it and return.
 				if (!initialized) {
 					await this.initializeGCStateFromBaseSnapshotP;
-					return;
+				} else {
+					// If the GC state has been initialized, update the tracking of unreferenced nodes as per the current
+					// reference timestamp.
+					for (const [, nodeStateTracker] of this.unreferencedNodesState) {
+						nodeStateTracker.updateTracking(currentReferenceTimestampMs);
+					}
 				}
-
-				// If the GC state has been initialized, update the tracking of unreferenced nodes as per the current
-				// reference timestamp.
-				for (const [, nodeStateTracker] of this.unreferencedNodesState) {
-					nodeStateTracker.updateTracking(currentReferenceTimestampMs);
-				}
+				event.end({
+					details: { initialized, unrefNodeCount: this.unreferencedNodesState.size },
+				});
 			},
 		);
 	}
@@ -439,7 +438,7 @@ export class GarbageCollector implements IGarbageCollector {
 		 * with an older reference timestamp. So, doing this on every connection will keep the unreferenced state
 		 * tracking up-to-date.
 		 */
-		if (connected && this.configs.shouldRunGC) {
+		if (connected && this.shouldRunGC) {
 			this.initializeOrUpdateGCState().catch((error) => {
 				this.mc.logger.sendErrorEvent(
 					{
@@ -479,8 +478,7 @@ export class GarbageCollector implements IGarbageCollector {
 		const fullGC =
 			options.fullGC ??
 			(this.configs.runFullGC === true ||
-				this.summaryStateTracker.autoRecovery.fullGCRequested() ||
-				this.summaryStateTracker.doesSummaryStateNeedReset);
+				this.summaryStateTracker.autoRecovery.fullGCRequested());
 
 		// Add the options that are used to run GC to the telemetry context.
 		telemetryContext?.setMultiple("fluid_GC", "Options", {
@@ -488,14 +486,12 @@ export class GarbageCollector implements IGarbageCollector {
 			runSweep: options.runSweep,
 		});
 
-		const logger = options.logger
-			? createChildLogger({
-					logger: options.logger,
-					properties: {
-						all: { completedGCRuns: () => this.completedRuns },
-					},
-			  })
-			: this.mc.logger;
+		const logger = createChildLogger({
+			logger: options.logger ?? this.mc.logger,
+			properties: {
+				all: { completedGCRuns: this.completedRuns, fullGC },
+			},
+		});
 
 		/**
 		 * If there is no current reference timestamp, skip running GC. We need the current timestamp to track
@@ -522,8 +518,6 @@ export class GarbageCollector implements IGarbageCollector {
 				/** Pre-GC steps */
 				// Ensure that state has been initialized from the base snapshot data.
 				await this.initializeGCStateFromBaseSnapshotP;
-				// Let the runtime update its pending state before GC runs.
-				await this.runtime.updateStateBeforeGC();
 
 				/** GC step */
 				const gcStats = await this.runGC(fullGC, currentReferenceTimestampMs, logger);
@@ -753,7 +747,7 @@ export class GarbageCollector implements IGarbageCollector {
 			const containerGCMessage: ContainerRuntimeGCMessage = {
 				type: ContainerMessageType.GC,
 				contents,
-				compatDetails: { behavior: "Ignore" },
+				compatDetails: { behavior: "Ignore" }, // DEPRECATED: For temporary back compat only
 			};
 			this.submitMessage(containerGCMessage);
 			return;
@@ -821,14 +815,18 @@ export class GarbageCollector implements IGarbageCollector {
 		 */
 		const gcDataSuperSet = concatGarbageCollectionData(previousGCData, currentGCData);
 		const newOutboundRoutesSinceLastRun: string[] = [];
-		this.newReferencesSinceLastRun.forEach((outboundRoutes: string[], sourceNodeId: string) => {
-			if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
-				gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
-			} else {
-				gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
-			}
-			newOutboundRoutesSinceLastRun.push(...outboundRoutes);
-		});
+		this.newReferencesSinceLastRun.forEach(
+			(outboundRoutes: string[], sourceNodeId: string) => {
+				if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
+					gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
+				} else {
+					// Non null asserting here because we are checking if it is undefined above.
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					gcDataSuperSet.gcNodes[sourceNodeId]!.push(...outboundRoutes);
+				}
+				newOutboundRoutesSinceLastRun.push(...outboundRoutes);
+			},
+		);
 
 		/**
 		 * Run GC on the above reference graph starting with root and all new outbound routes. This will generate a
@@ -854,7 +852,7 @@ export class GarbageCollector implements IGarbageCollector {
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummarizeResult | undefined {
-		if (!this.configs.shouldRunGC || this.gcDataFromLastRun === undefined) {
+		if (!this.shouldRunGC || this.gcDataFromLastRun === undefined) {
 			return;
 		}
 
@@ -899,9 +897,14 @@ export class GarbageCollector implements IGarbageCollector {
 	/**
 	 * Process a GC message.
 	 * @param message - The GC message from the container runtime.
+	 * @param messageTimestampMs - The timestamp of the message.
 	 * @param local - Whether it was send by this client.
 	 */
-	public processMessage(message: ContainerRuntimeGCMessage, local: boolean) {
+	public processMessage(
+		message: ContainerRuntimeGCMessage,
+		messageTimestampMs: number,
+		local: boolean,
+	) {
 		const gcMessageType = message.contents.type;
 		switch (gcMessageType) {
 			case GarbageCollectionMessageType.Sweep: {
@@ -910,13 +913,21 @@ export class GarbageCollector implements IGarbageCollector {
 				break;
 			}
 			case GarbageCollectionMessageType.TombstoneLoaded: {
-				if (this.mc.config.getBoolean(disableAutoRecoveryKey) === true) {
+				if (
+					!this.configs.tombstoneAutorecoveryEnabled ||
+					this.mc.config.getBoolean(disableAutoRecoveryKey) === true
+				) {
 					break;
 				}
 
 				// Mark the node as referenced to ensure it isn't Swept
 				const tombstonedNodePath = message.contents.nodePath;
-				this.addedOutboundReference("/", tombstonedNodePath, true /* autorecovery */);
+				this.addedOutboundReference(
+					"/",
+					tombstonedNodePath,
+					messageTimestampMs,
+					true /* autorecovery */,
+				);
 
 				// In case the cause of the TombstoneLoaded event is incorrect GC Data (i.e. the object is actually reachable),
 				// do fullGC on the next run to get a chance to repair (in the likely case the bug is not deterministic)
@@ -926,10 +937,7 @@ export class GarbageCollector implements IGarbageCollector {
 			}
 			default: {
 				if (
-					!compatBehaviorAllowsGCMessageType(
-						gcMessageType,
-						message.compatDetails?.behavior,
-					)
+					!compatBehaviorAllowsGCMessageType(gcMessageType, message.compatDetails?.behavior)
 				) {
 					const error = DataProcessingError.create(
 						`Garbage collection message of unknown type ${gcMessageType}`,
@@ -996,8 +1004,11 @@ export class GarbageCollector implements IGarbageCollector {
 		packagePath,
 		request,
 		headerData,
+		additionalProps,
 	}: IGCNodeUpdatedProps) {
-		if (!this.configs.shouldRunGC) {
+		// If there is no reference timestamp to work with, no ops have been processed after creation. If so, skip
+		// logging as nothing interesting would have happened worth logging.
+		if (!this.shouldRunGC || timestampMs === undefined) {
 			return;
 		}
 
@@ -1012,8 +1023,7 @@ export class GarbageCollector implements IGarbageCollector {
 		this.telemetryTracker.nodeUsed(trackedId, {
 			id: fullPath,
 			usageType: reason,
-			currentReferenceTimestampMs:
-				timestampMs ?? this.runtime.getCurrentReferenceTimestampMs(),
+			currentReferenceTimestampMs: timestampMs,
 			packagePath,
 			completedGCRuns: this.completedRuns,
 			isTombstoned,
@@ -1021,6 +1031,7 @@ export class GarbageCollector implements IGarbageCollector {
 			headers: headerData,
 			requestUrl: request?.url,
 			requestHeaders: JSON.stringify(request?.headers),
+			additionalProps,
 		});
 
 		// Any time we log a Tombstone Loaded error (via Telemetry Tracker),
@@ -1080,7 +1091,10 @@ export class GarbageCollector implements IGarbageCollector {
 	 * before runnint GC next.
 	 */
 	private triggerAutoRecovery(nodePath: string) {
-		if (this.mc.config.getBoolean(disableAutoRecoveryKey) === true) {
+		if (
+			!this.configs.tombstoneAutorecoveryEnabled ||
+			this.mc.config.getBoolean(disableAutoRecoveryKey) === true
+		) {
 			return;
 		}
 
@@ -1092,7 +1106,7 @@ export class GarbageCollector implements IGarbageCollector {
 				type: GarbageCollectionMessageType.TombstoneLoaded,
 				nodePath,
 			},
-			compatDetails: { behavior: "Ignore" },
+			compatDetails: { behavior: "Ignore" }, // DEPRECATED: For temporary back compat only
 		};
 		this.submitMessage(containerGCMessage);
 	}
@@ -1103,10 +1117,16 @@ export class GarbageCollector implements IGarbageCollector {
 	 *
 	 * @param fromNodePath - The node from which the reference is added.
 	 * @param toNodePath - The node to which the reference is added.
+	 * @param timestampMs - The timestamp of the message that added the reference.
 	 * @param autorecovery - This reference is added artificially, for autorecovery. Used for logging.
 	 */
-	public addedOutboundReference(fromNodePath: string, toNodePath: string, autorecovery?: true) {
-		if (!this.configs.shouldRunGC) {
+	public addedOutboundReference(
+		fromNodePath: string,
+		toNodePath: string,
+		timestampMs: number,
+		autorecovery?: true,
+	) {
+		if (!this.shouldRunGC) {
 			return;
 		}
 
@@ -1136,7 +1156,7 @@ export class GarbageCollector implements IGarbageCollector {
 			id: toNodePath,
 			fromId: fromNodePath,
 			usageType: "Revived",
-			currentReferenceTimestampMs: this.runtime.getCurrentReferenceTimestampMs(),
+			currentReferenceTimestampMs: timestampMs,
 			packagePath: undefined,
 			completedGCRuns: this.completedRuns,
 			isTombstoned: this.tombstones.includes(trackedId),
@@ -1257,7 +1277,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// be good enough because the only types that participate in GC today are data stores, DDSes and blobs.
 		const getDeletedNodeType = (nodeId: string): GCNodeType => {
 			const pathParts = nodeId.split("/");
-			if (pathParts[1] === BlobManager.basePath) {
+			if (pathParts[1] === blobManagerBasePath) {
 				return GCNodeType.Blob;
 			}
 			if (pathParts.length === 2) {

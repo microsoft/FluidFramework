@@ -45,6 +45,7 @@ USAGE
 * [`flub list`](docs/list.md) - List packages in a release group in topological order.
 * [`flub merge`](docs/merge.md) - Sync branches depending on the batch size passed
 * [`flub modify`](docs/modify.md) - Modify commands are used to modify projects to add or remove dependencies, update Fluid imports, etc.
+* [`flub publish`](docs/publish.md) - Publish commands are used to publish packages to an npm registry.
 * [`flub release`](docs/release.md) - Release commands are used to manage the Fluid release process.
 * [`flub rename-types`](docs/rename-types.md) - Renames type declaration files from .d.ts to .d.mts.
 * [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
@@ -72,6 +73,23 @@ in some way. Other commands could adopt this, but only the `release command` use
 
 The `release` command also provides a `state` flag that can be used to initialize the state machine to a specific state.
 This is intended for testing.
+
+### Manual Integration Testing and Debugging
+
+There are some VS Code launch targets like `flub generate typetests` that may work in some cases.
+
+To run a locally built version of flub in contexts where the invocation of flub is done via package.json scripts, use a pnpm override.
+For client that is:
+
+```
+			"@fluid-tools/build-cli": "file:./build-tools/packages/build-cli",
+			"@fluidframework/build-tools": "file:./build-tools/packages/build-tools",
+			"@fluid-tools/version-tools": "file:./build-tools/packages/version-tools",
+			"@fluidframework/bundle-size-tools": "file:./build-tools/packages/bundle-size-tools"
+```
+
+This approach can be used with `flub generate typetests` to ensure that the `--level` configuration from the scripts is included, and can be done from a JavaScript Debug console to debug, though breakpoints will need to be set in the `.js` files in `node_modules` (for example in `node_modules/.pnpm/file+build-tools+packages+build-cli_@types+node@18.19.1/node_modules/@fluid-tools/build-cli/lib/commands/generate/typetests.js`).
+
 
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
 

@@ -6,10 +6,10 @@
 import { strict as assert } from "assert";
 
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-import { ICodecOptions } from "../../codec/index.js";
+import type { ICodecOptions } from "../../codec/index.js";
 import {
-	DeltaDetachedNodeId,
-	TreeStoredSchema,
+	type DeltaDetachedNodeId,
+	type TreeStoredSchema,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
 	rootFieldKey,
@@ -20,17 +20,18 @@ import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKi
 import {
 	DefaultEditBuilder,
 	ModularChangeFamily,
-	ModularChangeset,
-	TreeChunk,
+	type ModularChangeset,
+	type TreeChunk,
 	cursorForJsonableTreeNode,
 	fieldKinds,
+	type SchemaChange,
 } from "../../feature-libraries/index.js";
 import {
 	SharedTreeChangeFamily,
 	updateRefreshers,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeFamily.js";
-import {
+import type {
 	SharedTreeChange,
 	SharedTreeInnerChange,
 	// eslint-disable-next-line import/no-internal-modules
@@ -46,7 +47,9 @@ const fieldBatchCodec = {
 };
 
 const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
-const defaultEditor = new DefaultEditBuilder(modularFamily, (change) => dataChanges.push(change));
+const defaultEditor = new DefaultEditBuilder(modularFamily, (change) =>
+	dataChanges.push(change),
+);
 
 const nodeX = { type: leaf.string.name, value: "X" };
 const nodeY = { type: leaf.string.name, value: "Y" };
@@ -225,20 +228,14 @@ describe("SharedTreeChangeFamily", () => {
 
 		for (const isRollback of [true, false]) {
 			it(`when inverting (isRollback = ${isRollback})`, () => {
-				assert.deepEqual(
-					sharedTreeFamily.invert(makeAnonChange(stDataChange1), isRollback),
-					{
-						changes: [
-							{
-								type: "data",
-								innerChange: modularFamily.invert(
-									makeAnonChange(dataChange1),
-									isRollback,
-								),
-							},
-						],
-					},
-				);
+				assert.deepEqual(sharedTreeFamily.invert(makeAnonChange(stDataChange1), isRollback), {
+					changes: [
+						{
+							type: "data",
+							innerChange: modularFamily.invert(makeAnonChange(dataChange1), isRollback),
+						},
+					],
+				});
 			});
 		}
 	});
@@ -254,11 +251,11 @@ describe("SharedTreeChangeFamily", () => {
 		const idInForest1: DeltaDetachedNodeId = { minor: 1 };
 		const idInForest2: DeltaDetachedNodeId = { minor: 2 };
 		const idNotInForest: DeltaDetachedNodeId = { minor: 3 };
-		const refresher1: TreeChunk = "refresher1" as any;
-		const refresher2: TreeChunk = "refresher2" as any;
+		const refresher1: TreeChunk = "refresher1" as unknown as TreeChunk;
+		const refresher2: TreeChunk = "refresher2" as unknown as TreeChunk;
 		const schemaChange: SharedTreeInnerChange = {
 			type: "schema",
-			innerChange: "MockSchemaChange" as any,
+			innerChange: "MockSchemaChange" as unknown as SchemaChange,
 		};
 
 		function updateDataChangeRefreshers(
@@ -307,9 +304,9 @@ describe("SharedTreeChangeFamily", () => {
 		it("updates all data changes", () => {
 			const input: SharedTreeChange = {
 				changes: [
-					{ innerChange: [idInForest1] as any, type: "data" },
+					{ innerChange: [idInForest1] as unknown as ModularChangeset, type: "data" },
 					schemaChange,
-					{ innerChange: [idInForest2] as any, type: "data" },
+					{ innerChange: [idInForest2] as unknown as ModularChangeset, type: "data" },
 				],
 			};
 			const updated = testUpdateRefreshers(input);
@@ -324,11 +321,17 @@ describe("SharedTreeChangeFamily", () => {
 		it("excludes refreshers from later changes if they are included in earlier changes", () => {
 			const input: SharedTreeChange = {
 				changes: [
-					{ innerChange: [idInForest1] as any, type: "data" },
+					{ innerChange: [idInForest1] as unknown as ModularChangeset, type: "data" },
 					schemaChange,
-					{ innerChange: [idInForest1, idInForest2] as any, type: "data" },
+					{
+						innerChange: [idInForest1, idInForest2] as unknown as ModularChangeset,
+						type: "data",
+					},
 					schemaChange,
-					{ innerChange: [idInForest1, idInForest2] as any, type: "data" },
+					{
+						innerChange: [idInForest1, idInForest2] as unknown as ModularChangeset,
+						type: "data",
+					},
 				],
 			};
 			const updated = testUpdateRefreshers(input);
@@ -344,16 +347,21 @@ describe("SharedTreeChangeFamily", () => {
 		});
 		it("throws for missing refreshers in first data change", () => {
 			const input: SharedTreeChange = {
-				changes: [{ innerChange: [idNotInForest] as any, type: "data" }],
+				changes: [
+					{ innerChange: [idNotInForest] as unknown as ModularChangeset, type: "data" },
+				],
 			};
 			assert.throws(() => testUpdateRefreshers(input));
 		});
 		it("tolerates missing refreshers in later data changes", () => {
 			const input: SharedTreeChange = {
 				changes: [
-					{ innerChange: [idInForest1] as any, type: "data" },
+					{ innerChange: [idInForest1] as unknown as ModularChangeset, type: "data" },
 					schemaChange,
-					{ innerChange: [idNotInForest, idInForest2] as any, type: "data" },
+					{
+						innerChange: [idNotInForest, idInForest2] as unknown as ModularChangeset,
+						type: "data",
+					},
 				],
 			};
 			const updated = testUpdateRefreshers(input);

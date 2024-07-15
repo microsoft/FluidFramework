@@ -4,13 +4,15 @@
  */
 
 import { strict as assert } from "assert";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { Deferred } from "@fluidframework/core-utils/internal";
-import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
-import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+
 import { bufferToString } from "@fluid-internal/client-utils";
-import { BlobManager, IBlobManagerRuntime, type IPendingBlobs } from "../blobManager.js";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import { Deferred } from "@fluidframework/core-utils/internal";
+import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
+import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
+import { BlobManager, IBlobManagerRuntime, type IPendingBlobs } from "../blobManager/index.js";
 
 export const failProxy = <T extends object>(handler: Partial<T> = {}) => {
 	const proxy: T = new Proxy<T>(handler as T, {
@@ -32,7 +34,7 @@ function createBlobManager(overrides?: Partial<ConstructorParameters<typeof Blob
 	return new BlobManager(
 		failProxy({
 			// defaults, these can still be overridden below
-			runtime: failProxy<IBlobManagerRuntime>({ logger: createChildLogger() }),
+			runtime: failProxy<IBlobManagerRuntime>({ baseLogger: createChildLogger() }),
 			snapshot: {},
 			stashedBlobs: undefined,
 

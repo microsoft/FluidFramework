@@ -9,21 +9,21 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import {
 	CommitKind,
-	GraphCommit,
-	RevisionTag,
+	type GraphCommit,
+	type RevisionTag,
 	findAncestor,
 	findCommonAncestor,
 	rootFieldKey,
 } from "../../core/index.js";
 import {
 	DefaultChangeFamily,
-	DefaultChangeset,
-	DefaultEditBuilder,
+	type DefaultChangeset,
+	type DefaultEditBuilder,
 	cursorForJsonableTreeNode,
 } from "../../feature-libraries/index.js";
 import {
 	SharedTreeBranch,
-	SharedTreeBranchChange,
+	type SharedTreeBranchChange,
 	onForkTransitive,
 } from "../../shared-tree-core/index.js";
 import { brand, fail } from "../../util/index.js";
@@ -377,6 +377,96 @@ describe("Branches", () => {
 		branch.dispose();
 		assert.equal(disposed, true);
 	});
+
+	for (const withCommits of [true, false]) {
+		const [withCommitsTitle, potentiallyAddCommit] = withCommits
+			? ["(with commits)", change]
+			: ["(without commits)", () => {}];
+		it(`emit a transactionStarted event after a new transaction scope is opened ${withCommitsTitle}`, () => {
+			const branch = create();
+			const log: boolean[] = [];
+			branch.on("transactionStarted", (isOuterTransaction) => {
+				log.push(isOuterTransaction);
+			});
+			branch.startTransaction();
+			{
+				assert.deepEqual(log, [true]);
+				potentiallyAddCommit(branch);
+				branch.startTransaction();
+				{
+					assert.deepEqual(log, [true, false]);
+					potentiallyAddCommit(branch);
+				}
+				branch.abortTransaction();
+				potentiallyAddCommit(branch);
+				branch.startTransaction();
+				{
+					assert.deepEqual(log, [true, false, false]);
+					potentiallyAddCommit(branch);
+				}
+				branch.abortTransaction();
+			}
+			branch.abortTransaction();
+		});
+
+		it(`emit a transactionAborted event after a transaction scope is aborted ${withCommitsTitle}`, () => {
+			const branch = create();
+			const log: boolean[] = [];
+			branch.on("transactionAborted", (isOuterTransaction) => {
+				log.push(isOuterTransaction);
+			});
+			branch.startTransaction();
+			{
+				potentiallyAddCommit(branch);
+				branch.startTransaction();
+				{
+					potentiallyAddCommit(branch);
+					assert.deepEqual(log, []);
+				}
+				branch.abortTransaction();
+				assert.deepEqual(log, [false]);
+				potentiallyAddCommit(branch);
+				branch.startTransaction();
+				{
+					potentiallyAddCommit(branch);
+				}
+				branch.abortTransaction();
+				assert.deepEqual(log, [false, false]);
+				potentiallyAddCommit(branch);
+			}
+			branch.abortTransaction();
+			assert.deepEqual(log, [false, false, true]);
+		});
+
+		it(`emit a transactionCommitted event after a new transaction scope is committed ${withCommitsTitle}`, () => {
+			const branch = create();
+			const log: boolean[] = [];
+			branch.on("transactionCommitted", (isOuterTransaction) => {
+				log.push(isOuterTransaction);
+			});
+			branch.startTransaction();
+			{
+				potentiallyAddCommit(branch);
+				branch.startTransaction();
+				{
+					potentiallyAddCommit(branch);
+					assert.deepEqual(log, []);
+				}
+				branch.commitTransaction();
+				assert.deepEqual(log, [false]);
+				potentiallyAddCommit(branch);
+				branch.startTransaction();
+				{
+					potentiallyAddCommit(branch);
+				}
+				branch.commitTransaction();
+				assert.deepEqual(log, [false, false]);
+				potentiallyAddCommit(branch);
+			}
+			branch.commitTransaction();
+			assert.deepEqual(log, [false, false, true]);
+		});
+	}
 
 	it("can be read after disposal", () => {
 		const branch = create();

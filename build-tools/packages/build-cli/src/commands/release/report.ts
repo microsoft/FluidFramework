@@ -8,12 +8,13 @@ import path from "node:path";
 import { Command, Flags, ux } from "@oclif/core";
 import chalk from "chalk";
 import { differenceInBusinessDays, formatDistanceToNow } from "date-fns";
-import { writeJson } from "fs-extra";
+import { writeJson } from "fs-extra/esm";
 import inquirer from "inquirer";
 import sortJson from "sort-json";
 import { table } from "table";
 
 import {
+	BaseCommand,
 	Context,
 	PackageVersionMap,
 	ReleaseReport,
@@ -26,7 +27,7 @@ import {
 	getRanges,
 	sortVersions,
 	toReportKind,
-} from "../../library";
+} from "../../library/index.js";
 
 import {
 	ReleaseVersion,
@@ -37,10 +38,9 @@ import {
 	isVersionBumpType,
 } from "@fluid-tools/version-tools";
 
-import { BaseCommand } from "../../base";
-import { releaseGroupFlag } from "../../flags";
-import { CommandLogger } from "../../logging";
-import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups";
+import { releaseGroupFlag } from "../../flags.js";
+import { CommandLogger } from "../../logging.js";
+import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups.js";
 
 /**
  * Controls behavior when there is a list of releases and one needs to be selected.

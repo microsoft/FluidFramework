@@ -248,8 +248,8 @@ const _callCorrespondingHandlers = function (
 					in_operationType === "remove"
 						? undefined
 						: containerType === "array"
-						? in_changeSetObject[k]
-						: in_changeSetObject[key];
+							? in_changeSetObject[k]
+							: in_changeSetObject[key];
 
 				const escapedKey = _.isString(key)
 					? PathHelper.quotePathSegmentIfNeeded(key)
@@ -413,7 +413,10 @@ const _iterateChangesetTypeids = function (
  * @private
  * @hidden
  */
-const _invokeNodePropertyCallbacks = function (in_invokeContext: InvokeContext, in_handlers: any) {
+const _invokeNodePropertyCallbacks = function (
+	in_invokeContext: InvokeContext,
+	in_handlers: any,
+) {
 	const nestedChangeSet = in_invokeContext.traversalContext.getNestedChangeSet();
 
 	// When the container type is set to single, we must have a NodeProperty
@@ -482,9 +485,7 @@ const _invokePropertyCallbacks = function (
 			nestedModificationContext._path = in_invokeContext.absolutePath;
 			if (operationType === "remove") {
 				// need to pass the "previous" path because that's used as key to the map of removed DataBindings
-				nestedModificationContext._setRemovedDataBindingPath(
-					in_invokeContext.dataBindingPath,
-				);
+				nestedModificationContext._setRemovedDataBindingPath(in_invokeContext.dataBindingPath);
 			}
 			in_operationHandlers[j].pathCallback.call(
 				in_invokeContext.dataBinding,
@@ -690,9 +691,9 @@ const recursivelyVisitHierarchy = function (
 						in_tokenizedPath.push(id);
 						const oldDataBindingTreeNode = in_dataBindingTreeNode;
 						if (in_dataBindingTreeNode) {
-							in_dataBindingTreeNode = in_dataBindingTreeNode.getNodeForTokenizedPath(
-								[skippedId],
-							)! as any;
+							in_dataBindingTreeNode = in_dataBindingTreeNode.getNodeForTokenizedPath([
+								skippedId,
+							])! as any;
 						}
 						const typeidSplit = TypeIdHelper.extractContext(
 							in_propertyElement.getProperty()!.getFullTypeid(),
@@ -701,8 +702,8 @@ const recursivelyVisitHierarchy = function (
 							in_path === "/"
 								? "/" + skippedId
 								: typeidSplit.context !== "single"
-								? in_path + `[${skippedId}]`
-								: in_path + "." + skippedId;
+									? in_path + `[${skippedId}]`
+									: in_path + "." + skippedId;
 						_recursiveStep(child, subpath, in_tokenizedPath, in_dataBindingTreeNode);
 						in_tokenizedPath.pop();
 						in_dataBindingTreeNode = oldDataBindingTreeNode;
@@ -760,10 +761,7 @@ const forEachProperty = function (
 			) {
 				const ids = (in_property as ContainerProperty).getIds();
 				for (let i = 0; i < ids.length; ++i) {
-					const childProp = (in_property as ContainerProperty).get(
-						ids[i],
-						RESOLVE_NEVER,
-					)!;
+					const childProp = (in_property as ContainerProperty).get(ids[i], RESOLVE_NEVER)!;
 					_recursiveStep_forEachProperty(childProp);
 				}
 			}
@@ -796,10 +794,10 @@ const getLocalOrRemoteSchema = (in_typeid: string): PropertyTemplate | undefined
 	return TypeIdHelper.isReferenceTypeId(in_typeid)
 		? undefined
 		: // if in_typeid is a remotely registered template
-		  // TODO: Figure out whether we want to expose templates through the PropertyTree or just PropertyFactory
-		  // (in_workspace ? in_workspace.getTemplate(in_typeid) : undefined) ||
-		  // or it's locally registered template/property
-		  PropertyFactory.getTemplate(in_typeid);
+			// TODO: Figure out whether we want to expose templates through the PropertyTree or just PropertyFactory
+			// (in_workspace ? in_workspace.getTemplate(in_typeid) : undefined) ||
+			// or it's locally registered template/property
+			PropertyFactory.getTemplate(in_typeid);
 };
 
 /**
@@ -943,7 +941,9 @@ const isDataBindingRegistered = function (in_bindingConstructor: typeof DataBind
  *
  * @param in_dataBindingConstructor - the constructor to extend
  */
-const installForEachPrototypeMember = function (in_dataBindingConstructor: typeof DataBinding) {
+const installForEachPrototypeMember = function (
+	in_dataBindingConstructor: typeof DataBinding,
+) {
 	if (!in_dataBindingConstructor.prototype.hasOwnProperty("_forEachPrototypeMember")) {
 		in_dataBindingConstructor.prototype._forEachPrototypeMember = function (
 			in_propertyName: string | number,
@@ -1016,7 +1016,9 @@ const _getHandlerList = function (
 	const pathNode = getOrInsertDefaultInNestedObjects.apply(
 		this,
 		// @ts-ignore
-		[registeredPaths].concat(in_escapedPath).concat([{}]),
+		[registeredPaths]
+			.concat(in_escapedPath)
+			.concat([{}]),
 	) as any;
 
 	pathNode.__registeredDataBindingHandlers = pathNode.__registeredDataBindingHandlers || {};
@@ -1172,7 +1174,9 @@ const createHandle = function (
  * @hidden
  */
 const _hasValidPropertyFromContext = function (in_context: BaseContext): boolean {
-	return in_context instanceof ModificationContext && in_context.getOperationType() !== "remove";
+	return (
+		in_context instanceof ModificationContext && in_context.getOperationType() !== "remove"
+	);
 };
 
 /**

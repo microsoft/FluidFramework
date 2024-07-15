@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
-import { Signaler } from "@fluid-experimental/data-objects";
+import {
+	ModelContainerRuntimeFactory,
+	getDataStoreEntryPoint,
+} from "@fluid-example/example-utils";
+import { Signaler, ISignaler } from "@fluid-experimental/data-objects";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { createServiceAudience } from "@fluidframework/fluid-static/internal";
@@ -43,7 +46,7 @@ export class TrackerContainerRuntimeFactory extends ModelContainerRuntimeFactory
 	}
 
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		const signaler = await getDataStoreEntryPoint<Signaler>(runtime, signalerId);
+		const signaler = await getDataStoreEntryPoint<ISignaler>(runtime, signalerId);
 
 		const audience = createServiceAudience({
 			container,

@@ -24,7 +24,7 @@ It also empowers the container author (rather than the host--if they differ) to 
 
 In the SharedTree MVP, there is currently no mechanism for safely changing the persisted format version.
 However, it is feasible to add such a mechanism in the future, and specifying the persisted format explicity in configuration sets us up to easily do so.
-One example of prior art in the space is `@fluid-experimental/tree`'s [format-breaking migration strategy](../../../tree/docs/Breaking-Change-Migration.md),
+One example of prior art in the space is `@fluid-experimental/tree`'s [format-breaking migration strategy](../../../../../experimental/dds/tree/docs/Breaking-Change-Migration.md),
 though we would likely want to make the mechanism usable across the Fluid Framework.
 
 ## Code Organization
@@ -233,6 +233,17 @@ To make a breaking change in `SchemaChangeCodec`,
 -   Add an option to `SharedTreeFormatVersion` as a new write version
     -   Make this write version create edit manager & message codecs of the appropriate versions
     -   Be sure to document code saturation requirements which must be met before the new version can be used
+
+## Example
+
+A new format was introduced for optional-field in [this PR](https://github.com/microsoft/FluidFramework/pull/20341).
+
+> This PR should have also included code changes which began writing this format in messages! That was instead made shortly after in [this commit](https://github.com/microsoft/FluidFramework/commit/0fafbebcd3324fc481bd8464f09ab15d595b4a57).
+
+That format was added as an option for `SharedTree` users in [this PR](https://github.com/microsoft/FluidFramework/pull/20615).
+
+Waiting to expose the new format in `SharedTreeFormatVersion` has the benefit of allowing iteration on the new format without preserving compatibility.
+Once the format is exposed & released to users, it must be supported indefinitely.
 
 ## Possible Improvements
 

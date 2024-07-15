@@ -7,9 +7,11 @@
 
 import * as child_process from "node:child_process";
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import { EOL as newline } from "node:os";
 import path from "node:path";
 import * as readline from "node:readline";
+import { writeJson } from "fs-extra/esm";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
@@ -17,10 +19,15 @@ import {
 	PackageJson,
 	PackageNamePolicyConfig,
 	ScriptRequirement,
+	getApiExtractorConfigFilePath,
 	loadFluidBuildConfig,
 	updatePackageJsonFile,
+	updatePackageJsonFileAsync,
 } from "@fluidframework/build-tools";
-import { Handler, readFile, writeFile } from "./common";
+import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
+import { Handler, readFile, writeFile } from "./common.js";
+
+const require = createRequire(import.meta.url);
 
 const licenseId = "MIT";
 const author = "Microsoft and contributors";
@@ -506,6 +513,269 @@ function getPreferredScriptLine(scriptLine: string): string {
 }
 
 /**
+ * Read the "mainEntryPointFilePath" value from the api-extractor-lint config file.
+ * @param configFileAbsPath - api-exractor-lint config file path
+ * @param projectRoot - project root directory (package.json directory)
+ * @returns "mainEntryPointFilePath" value relative to {@link projectRoot}
+ */
+async function readConfigMainEntryPointFilePath(
+	configFileAbsPath: string,
+	projectRoot: string,
+): Promise<string | undefined> {
+	return fs.promises
+		.readFile(configFileAbsPath, { encoding: "utf8" })
+		.then(async (configContent) => {
+			const { mainEntryPointFilePath } = JSON.parse(configContent) as {
+				mainEntryPointFilePath?: string;
+			};
+			if (mainEntryPointFilePath === undefined) {
+				return undefined;
+			}
+			// mainEntryPointFilePath is relative to the config file
+			// directory unless it is prefixed with <projectFolder>
+			// which is replaced with the project root directory.
+			const mainEntryPointFilePathWithoutProjectFolder = mainEntryPointFilePath.replace(
+				/^<projectFolder>\//,
+				"./",
+			);
+			if (mainEntryPointFilePathWithoutProjectFolder !== mainEntryPointFilePath) {
+				return mainEntryPointFilePathWithoutProjectFolder;
+			}
+			const mainEntryPointFileAbsPath = path.join(
+				path.dirname(configFileAbsPath),
+				mainEntryPointFilePath,
+			);
+			return `./${path
+				.relative(projectRoot, mainEntryPointFileAbsPath)
+				.replaceAll("\\", "/")}`;
+		});
+}
+
+/**
+ * Read the package.json scripts to find the api-extractor lint commands and
+ * the files they cover. Remove covered files from needLinted.
+ */
+async function removeLintedExportsPathsAsync(
+	packageJson: PackageJson,
+	dir: string,
+	needLinted: Map<string, unknown>,
+): Promise<void> {
+	const promises: Promise<void>[] = [];
+	for (const [name, commands] of Object.entries(packageJson.scripts ?? {})) {
+		// Expect api-extractor lint commands are named check:exports:*
+		if (!name.startsWith("check:exports:")) {
+			continue;
+		}
+		if (typeof commands !== "string") {
+			continue;
+		}
+		for (const command of commands.split("&&")) {
+			if (command.startsWith("api-extractor run")) {
+				const configFileRelPath = getApiExtractorConfigFilePath(command);
+				const configFileAbsPath = path.resolve(dir, configFileRelPath);
+				promises.push(
+					readConfigMainEntryPointFilePath(configFileAbsPath, dir)
+						.then((mainEntryPointFilePath) => {
+							if (mainEntryPointFilePath !== undefined) {
+								needLinted.delete(mainEntryPointFilePath);
+							}
+						})
+						.catch((error) =>
+							console.warn(
+								`Error parsing API Extractor config: ${configFileAbsPath} for ${packageJson.name} "${name}".\n\t${error}`,
+							),
+						),
+				);
+			}
+		}
+	}
+	await Promise.all(promises);
+}
+
+interface ScriptEntry {
+	name: string;
+	commandLine: string;
+}
+
+/**
+ * Determine missing elements to properly lint API exports.
+ *
+ * @remarks Does not check that api-extractor config files have linting enabled.
+ *
+ * @param packageJson - package.json contents
+ * @param dir - directory of package.json
+ * @returns record of missing requirements or with unexpected values
+ */
+async function getApiLintElementsMissing(
+	packageJson: Readonly<PackageJson>,
+	dir: string,
+): Promise<{
+	scriptEntries: ScriptEntry[];
+	configFiles: Map<string, string>;
+	devDependencies: string[];
+	targetsImpacted: Set<string>;
+}> {
+	const scriptEntries: ScriptEntry[] = [];
+	const configFiles = new Map<string, string>();
+	const devDependencies: string[] = [];
+	const targetsImpacted = new Set<string>();
+	const missing = { scriptEntries, configFiles, devDependencies, targetsImpacted };
+
+	const exportsField = packageJson.exports;
+	if (exportsField === undefined) {
+		return missing;
+	}
+
+	const { mapTypesPathToExportPaths } = queryTypesResolutionPathsFromPackageExports(
+		packageJson,
+		new Map([[/\.d\.ts$/, undefined]]),
+		{ node10TypeCompat: false, onlyFirstMatches: false },
+	);
+
+	const needsLinted = new Map<string, string>();
+	let internalLintTarget: string | undefined;
+	let rootLintTarget: string | undefined;
+	for (const [relPath, exports] of mapTypesPathToExportPaths.entries()) {
+		const onlyRequire = exports.every((e) => e.conditions.includes("require"));
+		const onlyImport = exports.every((e) => e.conditions.includes("import"));
+		const skew = onlyRequire ? "cjs:" : onlyImport ? "esm:" : "";
+		if (exports.some((e) => !e.exportPath.startsWith("./internal"))) {
+			const existingSkew = needsLinted.get(relPath);
+			if (existingSkew === undefined) {
+				needsLinted.set(relPath, skew);
+			} else if (existingSkew !== skew) {
+				needsLinted.set(relPath, "");
+			}
+			// Keep track of root exports for cross group consistency checks
+			// in case there isn't an ./internal export.
+			if (exports.some((e) => e.exportPath === ".")) {
+				// Only one file needs to be checked for this. Prefer export that
+				// is not 'require' restricted.
+				// eslint-disable-next-line unicorn/no-lonely-if
+				if (rootLintTarget === undefined || !onlyRequire) {
+					rootLintTarget = relPath;
+				}
+			}
+		} else if (exports.some((e) => e.exportPath === "./internal")) {
+			// ./internal export should be checked for cross group consistency.
+			// Only one file needs to be checked for this. Prefer export that
+			// is not 'require' restricted.
+			// eslint-disable-next-line unicorn/no-lonely-if
+			if (internalLintTarget === undefined || !onlyRequire) {
+				internalLintTarget = relPath;
+			}
+		}
+	}
+	if (needsLinted.size === 0 && internalLintTarget === undefined) {
+		// No files need linting
+		return missing;
+	}
+
+	// -------------------------------------------------------------------------
+	// There are files that need linting.
+
+	function addAllTargets(): void {
+		if (internalLintTarget !== undefined) {
+			targetsImpacted.add(internalLintTarget);
+		}
+		for (const target of needsLinted.keys()) {
+			targetsImpacted.add(target);
+		}
+	}
+
+	// Make sure the package.json has the check:exports script that runs others.
+	const checkExports = packageJson.scripts?.["check:exports"];
+	if (checkExports !== 'concurrently "npm:check:exports:*"') {
+		scriptEntries.push({
+			name: "check:exports",
+			commandLine: 'concurrently "npm:check:exports:*"',
+		});
+		addAllTargets();
+	}
+
+	// Make sure `concurrently` and `@microsoft/api-extractor` are available.
+	if (packageJson.devDependencies?.concurrently === undefined) {
+		devDependencies.push("concurrently");
+		addAllTargets();
+	}
+	if (packageJson.devDependencies?.["@microsoft/api-extractor"] === undefined) {
+		devDependencies.push("@microsoft/api-extractor");
+		addAllTargets();
+	}
+
+	// The bundle target is specially linted using bundling checks for cross group consistency.
+	{
+		const bundleLintTarget = internalLintTarget ?? rootLintTarget;
+		if (bundleLintTarget !== undefined) {
+			const lintBundleTags = packageJson.scripts?.["check:exports:bundle-release-tags"];
+			const apiExtractorFile = "api-extractor/api-extractor-lint-bundle.json";
+			const commandLine = `api-extractor run --config ${apiExtractorFile}`;
+			if (lintBundleTags !== commandLine) {
+				scriptEntries.push({
+					name: "check:exports:bundle-release-tags",
+					commandLine,
+				});
+				targetsImpacted.add(bundleLintTarget);
+			}
+			const configFileAbsPath = path.resolve(dir, apiExtractorFile);
+			// If the bundle target is not the internal target, then it is the root target
+			// or any target appropriate for cross group consistency checks. "*|" is used
+			// as a sentinel to allow any target, but also encodes a default file when
+			// fixing is invoked.
+			configFiles.set(configFileAbsPath, internalLintTarget ?? `*|${rootLintTarget}`);
+		}
+	}
+
+	// Remove any entries from needLinted that are already covered.
+	await removeLintedExportsPathsAsync(packageJson, dir, needsLinted);
+
+	// Form script entries and unique config file names for files without recognized coverage.
+	const regexPath = /^(?:\.\/)?(?:lib\/|dist\/)?(?<path>[^/]+(?:\/[^/]+)*)\.d\.ts$/;
+	for (const [relPath, skew] of needsLinted) {
+		const pathMatch = regexPath.exec(relPath);
+		const scriptEntry = pathMatch?.groups?.path.replace(/\//g, ":") ?? "";
+		const apiExtractorFile = `api-extractor/api-extractor-lint-${scriptEntry.replaceAll(
+			":",
+			"_",
+		)}.${skew.replaceAll(":", ".")}json`;
+		const scriptEntryName = `check:exports:${skew}${scriptEntry}`;
+		const scriptCommand = `api-extractor run --config ${apiExtractorFile}`;
+		scriptEntries.push({ name: scriptEntryName, commandLine: scriptCommand });
+		const configFileAbsPath = path.resolve(dir, apiExtractorFile);
+		configFiles.set(configFileAbsPath, relPath);
+		targetsImpacted.add(relPath);
+	}
+
+	// Check for the presence of the api-extractor-lint-* files with the expected
+	// mainEntryPointFilePath values.
+	const configAndTargetFilesArray = [...configFiles.entries()];
+	await Promise.all(
+		configAndTargetFilesArray.map(async ([configFileNeeded, target]) =>
+			readConfigMainEntryPointFilePath(configFileNeeded, dir)
+				.then((mainEntryPointFilePath) => {
+					if (
+						mainEntryPointFilePath !== undefined &&
+						(mainEntryPointFilePath === target || target.startsWith("*|"))
+					) {
+						// Satisfied, remove from map of missing.
+						configFiles.delete(configFileNeeded);
+					}
+				})
+				.catch(() => undefined),
+		),
+	);
+	// Make sure remaining config targets are in impacted set.
+	// Bundle target might not be.
+	for (const target of configFiles.values()) {
+		targetsImpacted.add(
+			target.startsWith("*|") ? "any .d.ts file (for bundle check)" : target,
+		);
+	}
+
+	return missing;
+}
+
+/**
  * Tests that given value is defined.
  */
 function isDefined<T>(v: T | undefined): v is T {
@@ -544,8 +814,24 @@ export const handlers: Handler[] = [
 				ret.push(`repository field missing`);
 			} else if (typeof json.repository === "string") {
 				ret.push(`repository should be an object, not a string`);
-			} else if (json.repository?.url !== repository) {
-				ret.push(`repository.url: "${json.repository.url}" !== "${repository}"`);
+			} else {
+				if (json.repository?.url !== repository) {
+					ret.push(`repository.url: "${json.repository.url}" !== "${repository}"`);
+				}
+
+				// file is already relative to the repo root, so we can use it as-is.
+				const relativePkgDir = path.dirname(file).replace(/\\/g, "/");
+
+				// The directory field should be omitted from the root package, so consider this a policy failure.
+				if (relativePkgDir === ".") {
+					ret.push(
+						`repository.directory: "${json.repository.directory}" field is present but should be omitted from root package`,
+					);
+				} else if (json.repository?.directory !== relativePkgDir) {
+					ret.push(
+						`repository.directory: "${json.repository.directory}" !== "${relativePkgDir}"`,
+					);
+				}
 			}
 
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -566,18 +852,25 @@ export const handlers: Handler[] = [
 
 			return undefined;
 		},
-		resolver: (file: string, root: string): { resolved: boolean } => {
+		resolver: (file: string): { resolved: boolean } => {
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				json.author = author;
 				json.license = licenseId;
 
-				if (json.repository === undefined || typeof json.repository === "string") {
-					json.repository = {
-						type: "git",
-						url: repository,
-						directory: path.posix.relative(root, path.dirname(file)),
-					};
-				}
+				// file is already relative to the repo root, so we can use it as-is.
+				const relativePkgDir = path.dirname(file).replace(/\\/g, "/");
+				json.repository =
+					// The directory field should be omitted from the root package.
+					relativePkgDir === "."
+						? {
+								type: "git",
+								url: repository,
+							}
+						: {
+								type: "git",
+								url: repository,
+								directory: relativePkgDir,
+							};
 
 				json.homepage = homepage;
 			});
@@ -940,6 +1233,21 @@ export const handlers: Handler[] = [
 			const missingDeps: string[] = [];
 
 			if (hasScriptsField) {
+				const regexNpmAlias = /^npm:(?<alias>.+)@/;
+				// Get names of all of the packages that are dependencies or devDependencies
+				// resolving any aliases.
+				// This does not support an attempt to workaround policy by using an alias
+				// to expected package name, but installing alternate bin package. In such
+				// a case a temporary policy exclusion can be used.
+				const deps = new Set<string>(
+					[
+						...Object.entries(json.dependencies ?? {}),
+						...Object.entries(json.devDependencies ?? {}),
+					].map(([depName, versionSpec]) => {
+						const alias = versionSpec?.match(regexNpmAlias)?.groups?.alias;
+						return alias ?? depName;
+					}),
+				);
 				const commands = new Set(
 					Object.values(json.scripts)
 						// eslint-disable-next-line unicorn/no-array-callback-reference
@@ -951,8 +1259,7 @@ export const handlers: Handler[] = [
 					if (
 						// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 						dep &&
-						json.dependencies?.[dep] === undefined &&
-						json.devDependencies?.[dep] === undefined
+						!deps.has(dep)
 					) {
 						missingDeps.push(`Package '${dep}' missing needed by command '${command}'`);
 					}
@@ -1178,7 +1485,7 @@ export const handlers: Handler[] = [
 			}
 
 			const jestConfigFile = path.join(packageDir, jestFileName);
-			// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports, unicorn/prefer-module
+			// This assumes that the jest config will be in CommonJS, because if it's ESM the require call will fail.
 			const config = require(path.resolve(jestConfigFile)) as { reporters?: unknown };
 			if (config.reporters === undefined) {
 				return `Missing reporters in '${jestConfigFile}'`;
@@ -1437,6 +1744,114 @@ export const handlers: Handler[] = [
 						result.resolved = false;
 						result.message = (error as Error).message;
 					}
+				}
+			});
+
+			return result;
+		},
+	},
+	{
+		// This rule enforces each exports type resolution (exported .d.ts file) is linted.
+		name: "npm-package-exports-apis-linted",
+		match,
+		handler: async (file: string): Promise<string | undefined> => {
+			let packageJson: PackageJson;
+
+			try {
+				packageJson = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
+			}
+
+			// Only public packages' APIs must be linted
+			if (packageJson.private ?? false) {
+				return;
+			}
+
+			const { targetsImpacted } = await getApiLintElementsMissing(
+				packageJson,
+				path.dirname(file),
+			);
+
+			if (targetsImpacted.size > 0) {
+				return `exports types files ${[...targetsImpacted].join(
+					", ",
+				)} should be linted by check:exports:* script using api-extractor.`;
+			}
+		},
+		resolver: async (
+			file: string,
+			root: string,
+		): Promise<{ resolved: boolean; message?: string }> => {
+			const result: { resolved: boolean; message?: string } = { resolved: true };
+			const dir = path.dirname(file);
+			const pathToRoot = path.relative(dir, root);
+			// <projectFolder> is used in path to allow config file to be located anywhere
+			// within project (projectFolder = package.json directory).
+			const commonApiLintConfig = `<projectFolder>/${path
+				.join(pathToRoot, "common/build/build-common/api-extractor-lint.entrypoint.json")
+				.replaceAll("\\", "/")}`;
+			await updatePackageJsonFileAsync(dir, async (packageJson) => {
+				try {
+					const missingElements = await getApiLintElementsMissing(packageJson, dir);
+					// 1. Fix config files.
+					//    Config files are written first before any scripts are updated that
+					//    would reference them. In case of failure, the package.json is not
+					//    updated, which helps to avoid noise checking policy again.
+					//    a. Make sure config directories exist using set of unique directories.
+					const configDirs = new Set(
+						[...missingElements.configFiles.keys()].map((configFile) =>
+							path.dirname(configFile),
+						),
+					);
+					await Promise.all(
+						[...configDirs].map(async (configDir) =>
+							fs.promises.mkdir(configDir, { recursive: true }),
+						),
+					);
+					//    b. Write config files.
+					await Promise.all(
+						[...missingElements.configFiles.entries()].map(
+							async ([configFile, mainEntryPointFilePath]) =>
+								writeJson(
+									configFile,
+									{
+										$schema:
+											"https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+										extends: configFile.endsWith("-bundle.json")
+											? commonApiLintConfig.replace(".entrypoint.json", ".json")
+											: commonApiLintConfig,
+										// <projectFolder> is used in place of . to allow
+										// various config file locations. This replace()
+										// also removes a possible `*|` prefix sentinel
+										// for special bundle target.
+										mainEntryPointFilePath: mainEntryPointFilePath.replace(
+											/^(\*\|)?.\//,
+											"<projectFolder>/",
+										),
+									},
+									{ spaces: "\t" },
+								),
+						),
+					);
+					// 2. Fix devDependencies.
+					if (missingElements.devDependencies.length > 0) {
+						packageJson.devDependencies = packageJson.devDependencies ?? {};
+						for (const devDep of missingElements.devDependencies) {
+							// Ideally this would be set with version specified in neighbor
+							// packages. Accept any version and let user set version.
+							packageJson.devDependencies[devDep] = "*";
+						}
+						result.message = `Please set the version for the new devDependencies in ${packageJson.name}.`;
+					}
+					// 3. Fix scripts.
+					//    Final step using all prior elements.
+					for (const { name, commandLine } of missingElements.scriptEntries) {
+						packageJson.scripts[name] = commandLine;
+					}
+				} catch (error: unknown) {
+					result.resolved = false;
+					result.message = (error as Error).message;
 				}
 			});
 

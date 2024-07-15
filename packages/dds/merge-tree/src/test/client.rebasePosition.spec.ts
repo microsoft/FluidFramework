@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IMergeTreeOp } from "../ops.js";
 
@@ -70,7 +70,11 @@ describe("client.rebasePosition", () => {
 		// to get an equivalent position to the one that was applied locally with a different refSeq.
 		// Since this suite doesn't actually spin up a remote client, we verify this equivalence by asking
 		// the local client to resolve that remote position and confirm the text matches what's expected.
-		const expectTextAtRebasedPosMatches = (pos: number, expected: string, message?: string) => {
+		const expectTextAtRebasedPosMatches = (
+			pos: number,
+			expected: string,
+			message?: string,
+		): void => {
 			const localViewOfRebasedPos = client.resolveRemoteClientPosition(
 				pos,
 				seq,

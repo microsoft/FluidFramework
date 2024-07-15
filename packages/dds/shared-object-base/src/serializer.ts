@@ -6,8 +6,8 @@
 // RATIONALE: Many methods consume and return 'any' by necessity.
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
-	IFluidHandle,
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
@@ -21,7 +21,8 @@ import {
 import { RemoteFluidObjectHandle } from "./remoteObjectHandle.js";
 
 /**
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IFluidSerializer {
 	/**
@@ -63,11 +64,7 @@ export interface IFluidSerializer {
 export class FluidSerializer implements IFluidSerializer {
 	private readonly root: IFluidHandleContext;
 
-	public constructor(
-		private readonly context: IFluidHandleContext,
-		// To be called whenever a handle is parsed by this serializer.
-		private readonly handleParsedCb: (handle: IFluidHandle) => void = () => {},
-	) {
+	public constructor(private readonly context: IFluidHandleContext) {
 		this.root = this.context;
 		while (this.root.routeContext !== undefined) {
 			this.root = this.root.routeContext;
@@ -144,9 +141,7 @@ export class FluidSerializer implements IFluidSerializer {
 				? value.url
 				: generateHandleContextPath(value.url, this.context);
 
-			const parsedHandle = new RemoteFluidObjectHandle(absolutePath, this.root);
-			this.handleParsedCb(parsedHandle);
-			return parsedHandle;
+			return new RemoteFluidObjectHandle(absolutePath, this.root);
 		} else {
 			return value;
 		}
@@ -167,9 +162,9 @@ export class FluidSerializer implements IFluidSerializer {
 		// is a non-null object.
 		const maybeReplaced = replacer(input, context);
 
-		// If the replacer made a substitution there is no need to decscend further. IFluidHandles are always
-		// leaves in the object graph.
-		if (maybeReplaced !== input) {
+		// If either input or the replaced result is a Fluid Handle, there is no need to descend further.
+		// IFluidHandles are always leaves in the object graph, and the code below cannot deal with IFluidHandle's structure.
+		if (isFluidHandle(input) || isFluidHandle(maybeReplaced)) {
 			return maybeReplaced;
 		}
 

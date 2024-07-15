@@ -3,16 +3,29 @@
  * Licensed under the MIT License.
  */
 
+import { initializeForest } from "../../core/index.js";
 import {
-	ImplicitFieldSchema,
-	InsertableTreeFieldFromImplicitField,
-	TreeConfiguration,
-	TreeFieldFromImplicitField,
-	toFlexConfig,
+	buildForest,
+	cursorForMapTreeNode,
+	getSchemaAndPolicy,
+	type NodeKeyManager,
+} from "../../feature-libraries/index.js";
+import {
+	mapTreeFromNodeData,
+	normalizeFieldSchema,
+	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
+	type TreeFieldFromImplicitField,
 } from "../../simple-tree/index.js";
+import {
+	getProxyForField,
+	prepareContentForHydration,
+	type InsertableContent,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/proxies.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getProxyForField } from "../../simple-tree/proxies.js";
-import { flexTreeWithContent } from "../utils.js";
+import { toFlexSchema } from "../../simple-tree/toFlexSchema.js";
+import { flexTreeFromForest, testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 /**
  * Given the schema and initial tree data, returns a hydrated tree node.
@@ -22,11 +35,20 @@ import { flexTreeWithContent } from "../utils.js";
 export function hydrate<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	initialTree: InsertableTreeFieldFromImplicitField<TSchema>,
+	nodeKeyManager?: NodeKeyManager,
 ): TreeFieldFromImplicitField<TSchema> {
-	const config = new TreeConfiguration(schema, () => initialTree);
-	const flexConfig = toFlexConfig(config);
-	const tree = flexTreeWithContent(flexConfig);
-	return getProxyForField(tree) as TreeFieldFromImplicitField<TSchema>;
+	const forest = buildForest();
+	const field = flexTreeFromForest(toFlexSchema(schema), forest, { nodeKeyManager });
+	const mapTree = mapTreeFromNodeData(
+		initialTree as InsertableContent,
+		normalizeFieldSchema(schema).allowedTypes,
+		field.context.nodeKeyManager,
+		getSchemaAndPolicy(field),
+	);
+	prepareContentForHydration(mapTree, field.context.checkout.forest);
+	const cursor = cursorForMapTreeNode(mapTree);
+	initializeForest(forest, [cursor], testRevisionTagCodec, testIdCompressor, true);
+	return getProxyForField(field) as TreeFieldFromImplicitField<TSchema>;
 }
 
 /**

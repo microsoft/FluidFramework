@@ -20,10 +20,16 @@ import {
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	IDirectory,
+	ISharedDirectory,
+	ISharedMap,
+	SharedMap,
+} from "@fluidframework/map/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -62,7 +68,9 @@ const defaultBlobSize = 1024;
  * via task picking.
  */
 export class LoadTestDataStoreModel {
-	private static async waitForCatchupOrDispose(runtime: IFluidDataStoreRuntime): Promise<void> {
+	private static async waitForCatchupOrDispose(
+		runtime: IFluidDataStoreRuntime,
+	): Promise<void> {
 		await new Promise<void>((resolve) => {
 			const resolveIfConnectedOrDisposed = () => {
 				if (runtime.connected || runtime.disposed) {
@@ -76,22 +84,23 @@ export class LoadTestDataStoreModel {
 			resolveIfConnectedOrDisposed();
 		});
 
-		const lastKnownSeq = runtime.deltaManager.lastKnownSeqNumber;
+		const deltaManager = toDeltaManagerInternal(runtime.deltaManager);
+		const lastKnownSeq = deltaManager.lastKnownSeqNumber;
 		assert(
-			runtime.deltaManager.lastSequenceNumber <= lastKnownSeq,
+			deltaManager.lastSequenceNumber <= lastKnownSeq,
 			"lastKnownSeqNumber should never be below last processed sequence number",
 		);
 
 		await new Promise<void>((resolve) => {
 			const resolveIfDisposedOrCaughtUp = (op?: ISequencedDocumentMessage) => {
 				if (runtime.disposed || (op !== undefined && lastKnownSeq <= op.sequenceNumber)) {
-					runtime.deltaManager.off("op", resolveIfDisposedOrCaughtUp);
+					deltaManager.off("op", resolveIfDisposedOrCaughtUp);
 					runtime.off("dispose", resolveIfDisposedOrCaughtUp);
 					resolve();
 				}
 			};
 
-			runtime.deltaManager.on("op", resolveIfDisposedOrCaughtUp);
+			deltaManager.on("op", resolveIfDisposedOrCaughtUp);
 			runtime.once("dispose", resolveIfDisposedOrCaughtUp);
 			resolveIfDisposedOrCaughtUp();
 		});
@@ -272,10 +281,7 @@ export class LoadTestDataStoreModel {
 						const value = this.counter.value;
 						if (!local) {
 							// this is an old op, we should have already uploaded this blob
-							this.blobCount = Math.max(
-								this.blobCount,
-								Math.trunc(value * blobsPerOp),
-							);
+							this.blobCount = Math.max(this.blobCount, Math.trunc(value * blobsPerOp));
 							return;
 						}
 						const newBlobs =
@@ -285,9 +291,7 @@ export class LoadTestDataStoreModel {
 
 						if (newBlobs > 0) {
 							this.blobUploads.push(
-								...[...Array(newBlobs)].map(async () =>
-									this.writeBlob(this.blobCount++),
-								),
+								...[...Array(newBlobs)].map(async () => this.writeBlob(this.blobCount++)),
 							);
 						}
 					},
@@ -470,17 +474,17 @@ export class LoadTestDataStoreModel {
 			const now = Date.now();
 			const totalMin = (now - this.startTime) / 60000;
 			const taskMin = this.totalTaskTime / 60000;
-			const opCount = this.runtime.deltaManager.lastKnownSeqNumber;
-			const opRate = Math.floor(this.runtime.deltaManager.lastKnownSeqNumber / totalMin);
+
+			const deltaManager = toDeltaManagerInternal(this.runtime.deltaManager);
+			const opCount = deltaManager.lastKnownSeqNumber;
+			const opRate = Math.floor(deltaManager.lastKnownSeqNumber / totalMin);
 			const sendRate = Math.floor(this.counter.value / taskMin);
 			const disposed = this.runtime.disposed;
 			const blobsEnabled = (this.config.testConfig.totalBlobCount ?? 0) > 0;
 			const blobSize = this.config.testConfig.blobSize ?? defaultBlobSize;
 			console.log(
 				`${this.config.runId.toString().padStart(3)}>` +
-					` seen: ${opCount.toString().padStart(8)} (${opRate
-						.toString()
-						.padStart(4)}/min),` +
+					` seen: ${opCount.toString().padStart(8)} (${opRate.toString().padStart(4)}/min),` +
 					` sent: ${this.counter.value.toString().padStart(8)} (${sendRate
 						.toString()
 						.padStart(2)}/min),` +
@@ -591,9 +595,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				? Math.floor(Math.random() * opSizeinBytes)
 				: opSizeinBytes;
 		const largeOpRate = Math.max(
-			Math.floor(
-				(config.testConfig.content?.largeOpRate ?? 1) / config.testConfig.numClients,
-			),
+			Math.floor((config.testConfig.content?.largeOpRate ?? 1) / config.testConfig.numClients),
 			1,
 		);
 		// To avoid having all clients send their large payloads at roughly the same time
@@ -650,6 +652,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				largeOpsSent++;
 			}
 
+			// [DEPRECATED] This flow is deprecated and is expected to be removed from FF soon.
 			if (futureOpPeriod !== undefined && opsSent % futureOpPeriod === 0) {
 				(
 					this.context.containerRuntime as unknown as {
@@ -685,11 +688,11 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 						} else {
 							await dataModel.volunteerForTask();
 						}
-				  }
+					}
 				: async () => {
 						sendSingleOp();
 						await delay(opsGapMs * config.random.real(1, 1.5));
-				  };
+					};
 
 		try {
 			while (dataModel.counter.value < clientSendCount && !this.runtime.disposed) {
@@ -698,8 +701,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				// and it's partner is done, return true to complete the runner.
 				if (enableQuickRampDown()) {
 					if (
-						this.runtime.getAudience().getMembers().size <
-							config.testConfig.numClients / 2 &&
+						this.runtime.getAudience().getMembers().size < config.testConfig.numClients / 2 &&
 						((await dataModel.getPartnerCounter())?.value ?? 0) >= clientSendCount
 					) {
 						return true;

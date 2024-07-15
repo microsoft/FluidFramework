@@ -21,7 +21,10 @@ export {
 	FluidHandleBase,
 } from "./handles.js";
 export { ObjectStoragePartition } from "./objectstoragepartition.js";
-export { getNormalizedObjectStoragePathParts, listBlobsAtTreePath } from "./objectstorageutils.js";
+export {
+	getNormalizedObjectStoragePathParts,
+	listBlobsAtTreePath,
+} from "./objectstorageutils.js";
 export { RequestParser } from "./requestParser.js";
 export { RuntimeFactoryHelper } from "./runtimeFactoryHelper.js";
 export {
@@ -43,3 +46,4 @@ export {
 export { unpackChildNodesUsedRoutes } from "./unpackUsedRoutes.js";
 export { ReadAndParseBlob, seqFromTree, encodeCompactIdToString } from "./utils.js";
 export { isSnapshotFetchRequiredForLoadingGroupId } from "./snapshotUtils.js";
+export { toDeltaManagerErased, toDeltaManagerInternal } from "./deltaManager.js";

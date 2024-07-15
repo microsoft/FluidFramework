@@ -101,7 +101,7 @@ export class ReferenceProperty extends ValueProperty {
 
 		return resolvedProperty !== undefined && _.isArray(in_ids)
 			? // Forward handling of arrays to the BaseProperty function
-			  resolvedProperty.get(in_ids, in_options)
+				resolvedProperty.get(in_ids, in_options)
 			: resolvedProperty;
 	}
 
@@ -182,7 +182,7 @@ export class ReferenceProperty extends ValueProperty {
 					this,
 					in_segment,
 					in_segmentType,
-			  );
+				);
 	}
 
 	// Define a property to simplify accessing the referenced path
@@ -215,9 +215,7 @@ export class ReferenceProperty extends ValueProperty {
 		} else if (in_value instanceof String) {
 			path = String(in_value);
 		} else {
-			throw new TypeError(
-				MSG.PROPERTY_OR_UNDEFINED + "(" + typeof in_value + ") " + in_value,
-			);
+			throw new TypeError(MSG.PROPERTY_OR_UNDEFINED + "(" + typeof in_value + ") " + in_value);
 		}
 		return path;
 	}

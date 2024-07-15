@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import { ITestDriver, TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import {
 	IContainer,
@@ -22,6 +21,7 @@ import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -46,6 +46,7 @@ const defaultCodeDetails: IFluidCodeDetails = {
 };
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IOpProcessingController {
@@ -197,7 +198,7 @@ export interface ITestObjectProvider {
 	/**
 	 * Make sure all the tracked containers are synchronized.
 	 */
-	ensureSynchronized(timeoutDuration?: number): Promise<void>;
+	ensureSynchronized(...containers: IContainer[]): Promise<void>;
 
 	/**
 	 * Reset the tracker, closing all containers and stop tracking them.
@@ -531,7 +532,10 @@ export class TestObjectProvider implements ITestObjectProvider {
 	/**
 	 * {@inheritDoc ITestObjectProvider.createContainer}
 	 */
-	public async createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>) {
+	public async createContainer(
+		entryPoint: fluidEntryPoint,
+		loaderProps?: Partial<ILoaderProps>,
+	) {
 		if (this._documentCreated) {
 			throw new Error(
 				"Only one container/document can be created. To load the container/document use loadContainer",
@@ -677,8 +681,8 @@ export class TestObjectProvider implements ITestObjectProvider {
 	/**
 	 * {@inheritDoc ITestObjectProvider.ensureSynchronized}
 	 */
-	public async ensureSynchronized(): Promise<void> {
-		return this._loaderContainerTracker.ensureSynchronized();
+	public async ensureSynchronized(...containers: IContainer[]): Promise<void> {
+		return this._loaderContainerTracker.ensureSynchronized(...containers);
 	}
 
 	private async waitContainerToCatchUp(container: IContainer) {
@@ -895,7 +899,10 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	/**
 	 * {@inheritDoc ITestObjectProvider.createContainer}
 	 */
-	public async createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>) {
+	public async createContainer(
+		entryPoint: fluidEntryPoint,
+		loaderProps?: Partial<ILoaderProps>,
+	) {
 		if (this._documentCreated) {
 			throw new Error(
 				"Only one container/document can be created. To load the container/document use loadContainer",
@@ -1055,8 +1062,8 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	/**
 	 * {@inheritDoc ITestObjectProvider.ensureSynchronized}
 	 */
-	public async ensureSynchronized(): Promise<void> {
-		return this._loaderContainerTracker.ensureSynchronized();
+	public async ensureSynchronized(...containers: IContainer[]): Promise<void> {
+		return this._loaderContainerTracker.ensureSynchronized(...containers);
 	}
 
 	private async waitContainerToCatchUp(container: IContainer) {

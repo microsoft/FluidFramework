@@ -13,7 +13,7 @@ import {
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime, ISummarizer } from "@fluidframework/container-runtime/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -276,11 +276,7 @@ describeCompat("GC incremental summaries", "NoCompat", (getTestObjectProvider) =
 				);
 				return true;
 			};
-			await assert.rejects(
-				summarizeNow(summarizer1),
-				errorFn,
-				"Summarize should have failed",
-			);
+			await assert.rejects(summarizeNow(summarizer1), errorFn, "Summarize should have failed");
 			// There should not be any IncrementalSummaryViolation errors.
 			mockLogger.assertMatchNone([{ eventName: "IncrementalSummaryViolation" }]);
 

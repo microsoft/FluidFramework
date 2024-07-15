@@ -79,7 +79,7 @@ export class DocLoaderRunner extends ScenarioRunner<
 				logger,
 				{ eventName: "load" },
 				async () => {
-					return ac.getContainer(runConfig.docId, schema);
+					return ac.getContainer(runConfig.docId, schema, "2");
 				},
 				{ start: true, end: true, cancel: "generic" },
 			));
@@ -92,13 +92,10 @@ export class DocLoaderRunner extends ScenarioRunner<
 			{ eventName: "connected" },
 			async () => {
 				if (container.connectionState !== ConnectionState.Connected) {
-					return timeoutPromise(
-						(resolve) => container.once("connected", () => resolve()),
-						{
-							durationMs: 60000,
-							errorMsg: "container connect() timeout",
-						},
-					);
+					return timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+						durationMs: 60000,
+						errorMsg: "container connect() timeout",
+					});
 				}
 			},
 			{ start: true, end: true, cancel: "generic" },

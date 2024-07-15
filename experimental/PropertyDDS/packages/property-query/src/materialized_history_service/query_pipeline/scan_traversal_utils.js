@@ -18,7 +18,12 @@ class ScanTraversalUtils {
 	 * @param {Object} context - Traversal context
 	 * @return {Boolean} - Whether to stop traversing
 	 */
-	static shouldStopTraversing(tokenizedPagingPath, tokenizedFieldsToGather, depthLimit, context) {
+	static shouldStopTraversing(
+		tokenizedPagingPath,
+		tokenizedFieldsToGather,
+		depthLimit,
+		context,
+	) {
 		// Root context, keep moving
 		if (context._parentStack.length === 0) {
 			return false;
@@ -40,10 +45,8 @@ class ScanTraversalUtils {
 			} else {
 				for (let tokenizedSubPath of tokenizedFieldsToGather) {
 					const len =
-						Math.min(
-							context._parentStack.length,
-							tokenizedPagingPath.length + depthLimit,
-						) + tokenizedSubPath.length;
+						Math.min(context._parentStack.length, tokenizedPagingPath.length + depthLimit) +
+						tokenizedSubPath.length;
 					// Current path is shorter than the matching path
 					if (len >= context._parentStack.length) {
 						let comparable = context._parentStack
