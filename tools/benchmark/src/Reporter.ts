@@ -272,7 +272,7 @@ export class BenchmarkReporter {
 		for (const [key, bench] of benchmarks.entries()) {
 			if (!isResultError(bench)) {
 				benchmarkArray.push(
-					this.outputFriendlyObjectFromBenchmark(key, bench as BenchmarkData),
+					this.outputFriendlyObjectFromBenchmark(key, bench as Record<string, unknown>),
 				);
 			}
 		}
@@ -296,12 +296,13 @@ export class BenchmarkReporter {
 	 */
 	private outputFriendlyObjectFromBenchmark(
 		benchmarkName: string,
-		benchmark: BenchmarkData,
+		benchmark: Record<string, unknown>,
 	): Record<string, unknown> {
+		const keys = new Set(Object.getOwnPropertyNames(benchmark));
 		const obj = {
 			benchmarkName,
 		};
-		for (const key in benchmark) {
+		for (const key of keys) {
 			obj[key] = benchmark[key];
 		}
 		return obj;
