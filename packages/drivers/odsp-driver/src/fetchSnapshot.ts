@@ -453,11 +453,17 @@ async function fetchLatestSnapshotCore(
 						const props = snapshotContents.telemetryProps;
 						const slowTreeParseCodePaths = props.slowTreeStructureCount ?? 0;
 						const slowBlobParseCodePaths = props.slowBlobStructureCount ?? 0;
-						if (slowTreeParseCodePaths > 10 || slowBlobParseCodePaths > 10) {
+						const treeStructureCountWithGroupId = props.treeStructureCountWithGroupId ?? 0;
+						if (
+							slowTreeParseCodePaths > 10 ||
+							slowBlobParseCodePaths > 10 ||
+							treeStructureCountWithGroupId > 100
+						) {
 							logger.sendErrorEvent({
 								eventName: "SlowSnapshotParseCodePaths",
 								slowTreeStructureCount: slowTreeParseCodePaths,
 								slowBlobStructureCount: slowBlobParseCodePaths,
+								treeStructureCountWithGroupId,
 							});
 						}
 						parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
