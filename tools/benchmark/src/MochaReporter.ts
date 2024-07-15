@@ -8,7 +8,7 @@ import { Runner, Suite, Test } from "mocha";
 
 import { isChildProcess, ReporterOptions } from "./Configuration";
 import { BenchmarkReporter } from "./Reporter";
-import { BenchmarkResult, isResultError, type BenchmarkData } from "./ResultTypes";
+import { BenchmarkResult } from "./ResultTypes";
 // TODO: this file should be moved in with the mocha specific stuff, but is left where it is for now to avoid breaking users of this reporter.
 // Since it's not moved yet, it needs this lint suppression to do this import:
 // eslint-disable-next-line import/no-internal-modules
@@ -76,10 +76,6 @@ module.exports = class {
 					console.info(JSON.stringify(benchmark));
 				} else {
 					benchmarkReporter.recordTestResult(suite, getName(test.title), benchmark);
-					// Add test name to customData here?
-					if (!isResultError(benchmark)) {
-						(benchmark as BenchmarkData).customData.testName = test.title;
-					}
 				}
 			})
 			.on(Runner.constants.EVENT_SUITE_END, (suite: Suite) => {
