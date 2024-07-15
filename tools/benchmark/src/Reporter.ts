@@ -268,9 +268,14 @@ export class BenchmarkReporter {
 	): string {
 		// Use the suite name as a filename, but first replace non-alphanumerics with underscores
 		const suiteNameEscaped: string = suiteName.replace(/[^\da-z]/gi, "_");
-		const benchmarksArray: Readonly<BenchmarkResult>[] = [...benchmarks.values()];
+		const benchmarkArray: Readonly<BenchmarkResult>[] = [];
+		for (const bench of benchmarks.values()) {
+			if (!isResultError(bench)) {
+				benchmarkArray.push(bench);
+			}
+		}
 		const outputContentString: string = JSON.stringify(
-			{ suiteName, benchmarksArray },
+			{ suiteName, benchmarks: benchmarkArray },
 			undefined,
 			4,
 		);

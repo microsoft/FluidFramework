@@ -76,6 +76,7 @@ module.exports = class {
 					console.info(JSON.stringify(benchmark));
 				} else {
 					benchmarkReporter.recordTestResult(suite, getName(test.title), benchmark);
+					// Add test name to customData here?
 				}
 			})
 			.on(Runner.constants.EVENT_SUITE_END, (suite: Suite) => {
