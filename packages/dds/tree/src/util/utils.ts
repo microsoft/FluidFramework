@@ -174,6 +174,12 @@ export function* mapIterable<T, U>(
 	}
 }
 
+/**
+ * Filter one iterable into another
+ * @param iterable - the iterable to filter
+ * @param filter - the predicate function to run on each element of the iterable
+ * @returns a new iterable including only the elements that passed the filter predicate
+ */
 export function* filterIterable<T>(
 	iterable: Iterable<T>,
 	filter: (t: T) => boolean,
