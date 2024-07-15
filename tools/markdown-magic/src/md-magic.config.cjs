@@ -10,9 +10,11 @@ const {
 	formattedGeneratedContentBody,
 	getPackageMetadata,
 	getScopeKindFromPackage,
+	parseBooleanOption,
 	parseHeadingOptions,
 	resolveRelativePackageJsonPath,
 	shouldInstallAsDevDependency,
+	shouldLinkToApiDocs,
 } = require("./utilities.cjs");
 const {
 	apiDocsLinkSectionTransform,
@@ -131,7 +133,7 @@ const generateTrademarkSection = (headingOptions) =>
  * Will include the section if the property is found, and one of our special paths is found (`/alpha`, `/beta`, or `/legacy`).
  * Can be explicitly disabled by specifying `FALSE`.
  * @param {"TRUE" | "FALSE" | undefined} options.apiDocs - (optional) Whether or not to include a section pointing readers to the package's generated API documentation on <fluidframework.com>.
- * Default: `TRUE`.
+ * Default: Will be displayed if the package is a member of the `@fluidframework` or `@fluid-experimental` namespaces, of if the package is unscoped (e.g. "fluid-framework").
  * @param {"TRUE" | "FALSE" | undefined} options.scripts - (optional) Whether or not to include a section enumerating the package.json file's dev scripts.
  * Default: `FALSE`.
  * @param {"TRUE" | "FALSE" | undefined} options.clientRequirements - (optional) Whether or not to include a section listing Fluid Framework's minimum client requirements.
@@ -161,7 +163,10 @@ function libraryPackageReadmeFooterTransform(content, options, config) {
 
 	const sections = [];
 
-	if (options.apiDocs !== "FALSE") {
+	const includeApiDocsSection = parseBooleanOption(options.apiDocs, () =>
+		shouldLinkToApiDocs(packageName),
+	);
+	if (includeApiDocsSection) {
 		sections.push(generateApiDocsLinkSection(packageName, sectionHeadingOptions));
 	}
 
@@ -245,8 +250,9 @@ function libraryPackageReadmeHeaderTransform(content, options, config) {
 
 	// Note: if the user specified an explicit scope, that takes precedence over the package namespace.
 	const scopeNoticeKind = options.packageScopeNotice ?? scopeKind;
-	if (scopeNoticeKind !== undefined) {
-		sections.push(generatePackageScopeNotice(scopeNoticeKind));
+	const scopeNotice = generatePackageScopeNotice(scopeNoticeKind);
+	if (scopeNotice) {
+		sections.push(scopeNotice);
 	}
 
 	// Display dependency guidelines if explicitly requested, or if the package is not internal/private and not explicitly disabled.

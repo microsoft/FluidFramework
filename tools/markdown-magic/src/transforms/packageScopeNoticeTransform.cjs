@@ -12,12 +12,16 @@ const {
 } = require("../utilities.cjs");
 
 /**
- * Generates simple Markdown contents indicating implications of the specified kind of package scope.
+ * Generates simple Markdown contents indicating implications of the specified kind of package scope,
+ * if the package scope is one for which we wish to display a notice.
  *
- * @param {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE"} kind - Scope kind to switch on.
+ * @param {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | "TOOLS"} kind - Scope kind to switch on.
  * EXPERIMENTAL: See templates/Experimental-Package-Notice-Template.md.
  * INTERNAL: See templates/Internal-Package-Notice-Template.md.
  * PRIVATE: See templates/Private-Package-Notice-Template.md.
+ * TOOLS: See templates/Tools-Package-Notice-Template.md.
+ *
+ * @returns {string | undefined} The generated Markdown content, or `undefined` if no notice is required.
  */
 const generatePackageScopeNotice = (kind) => {
 	let rawContents;
@@ -35,7 +39,7 @@ const generatePackageScopeNotice = (kind) => {
 			rawContents = readTemplate("Tools-Package-Notice-Template.md");
 			break;
 		default:
-			throw new Error(`Unrecognized package scope kind: ${kind}`);
+			return undefined;
 	}
 
 	return formattedSectionText(rawContents, /* headingOptions: */ undefined);
@@ -68,9 +72,7 @@ function packageScopeNoticeTransform(content, options, config) {
 
 	// Note: if the user specified an explicit scope, that takes precedence over the package namespace.
 	const scopeKindWithInheritance = scopeKind ?? getScopeKindFromPackage(packageName);
-	if (scopeKindWithInheritance !== undefined) {
-		return generatePackageScopeNotice(scopeKindWithInheritance);
-	}
+	return generatePackageScopeNotice(scopeKindWithInheritance);
 }
 
 module.exports = {

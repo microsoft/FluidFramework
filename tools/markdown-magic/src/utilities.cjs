@@ -92,14 +92,17 @@ function getPackageMetadata(packageJsonFilePath) {
 }
 
 /**
- * Gets the appropriate scope kind for the provided package name.
+ * Gets the appropriate special scope kind for the provided package name, if applicable.
  *
  * @param {string} packageName
- * @returns {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | "TOOLS" | undefined} A scope kind based on the package's scope (namespace).
+ * @returns {"FRAMEWORK" | "EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | "TOOLS" | undefined} A scope kind based on the package's scope (namespace).
+ * Will be `undefined` if the package has no scope, or has an unrecognized scope.
  */
 const getScopeKindFromPackage = (packageName) => {
 	const packageScope = PackageName.getScope(packageName);
-	if (packageScope === `@fluid-experimental`) {
+	if (packageScope === `@fluidframework`) {
+		return "FRAMEWORK";
+	} else if (packageScope === `@fluid-experimental`) {
 		return "EXPERIMENTAL";
 	} else if (packageScope === `@fluid-internal`) {
 		return "INTERNAL";
@@ -113,7 +116,16 @@ const getScopeKindFromPackage = (packageName) => {
 };
 
 /**
- * Determines if the package should be installed as a dev dependency, as opposed to a standard dependency.
+ * Determines if the package's README should link to the Fluid Framework API documentation for that package by default.
+ * @param {string} packageName
+ */
+const shouldLinkToApiDocs = (packageName) => {
+	const scope = getScopeKindFromPackage(packageName);
+	return scope === "FRAMEWORK" || scope === "EXPERIMENTAL" || scope === undefined;
+};
+
+/**
+ * Determines if the package's installation instructions have the package installed as a dev dependency by default, as opposed to a standard dependency.
  * @param {string} packageName
  */
 const shouldInstallAsDevDependency = (packageName) => {
@@ -208,15 +220,36 @@ function parseHeadingOptions(transformationOptions, headingText) {
 	};
 }
 
+/**
+ * TODO
+ * @param {"TRUE" | "FALSE" | undefined} option
+ * @param {function} defaultValue - The default value, or a callback that returns the default value to use for the option.
+ * Used if the option is not explicitly provided.
+ */
+function parseBooleanOption(option, defaultValue) {
+	if (option === "TRUE") {
+		return true;
+	}
+	if (option === "FALSE") {
+		return false;
+	}
+	if (typeof defaultValue === "function") {
+		return defaultValue();
+	}
+	return defaultValue;
+}
+
 module.exports = {
 	formattedSectionText,
 	formattedGeneratedContentBody,
 	formattedEmbeddedContentBody,
 	getPackageMetadata,
 	getScopeKindFromPackage,
+	parseBooleanOption,
 	parseHeadingOptions,
 	readTemplate,
 	resolveRelativePackageJsonPath,
 	resolveRelativePath,
 	shouldInstallAsDevDependency,
+	shouldLinkToApiDocs,
 };
