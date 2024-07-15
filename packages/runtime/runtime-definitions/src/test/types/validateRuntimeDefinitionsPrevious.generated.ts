@@ -337,6 +337,7 @@ declare type old_as_current_for_InterfaceDeclaration_IFluidDataStoreContext = re
  * typeValidation.broken:
  * "InterfaceDeclaration_IFluidDataStoreContext": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_InterfaceDeclaration_IFluidDataStoreContext = requireAssignableTo<TypeOnly<current.IFluidDataStoreContext>, TypeOnly<old.IFluidDataStoreContext>>
 
 /*
@@ -355,6 +356,7 @@ declare type old_as_current_for_InterfaceDeclaration_IFluidDataStoreContextDetac
  * typeValidation.broken:
  * "InterfaceDeclaration_IFluidDataStoreContextDetached": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_InterfaceDeclaration_IFluidDataStoreContextDetached = requireAssignableTo<TypeOnly<current.IFluidDataStoreContextDetached>, TypeOnly<old.IFluidDataStoreContextDetached>>
 
 /*

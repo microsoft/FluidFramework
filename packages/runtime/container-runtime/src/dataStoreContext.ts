@@ -45,7 +45,6 @@ import {
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
 	IFluidParentContext,
-	IGarbageCollectionDetailsBase,
 	IProvideFluidDataStoreFactory,
 	ISummarizeInternalResult,
 	ISummarizeResult,
@@ -930,13 +929,6 @@ export abstract class FluidDataStoreContext
 	 */
 	public setInMemoryRoot(): void {
 		this._isInMemoryRoot = true;
-	}
-
-	/**
-	 * @deprecated The functionality to get base GC details has been moved to summarizer node.
-	 */
-	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
-		return {};
 	}
 
 	public reSubmit(type: string, contents: any, localOpMetadata: unknown) {

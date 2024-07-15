@@ -157,6 +157,7 @@ declare type old_as_current_for_InterfaceDeclaration_IDataObjectProps = requireA
  * typeValidation.broken:
  * "InterfaceDeclaration_IDataObjectProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_InterfaceDeclaration_IDataObjectProps = requireAssignableTo<TypeOnly<current.IDataObjectProps>, TypeOnly<old.IDataObjectProps>>
 
 /*

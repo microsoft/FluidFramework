@@ -25,7 +25,6 @@ import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IFluidDataStoreRegistry,
-	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
@@ -143,10 +142,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public async uploadBlob(
 		blob: ArrayBufferLike,
 	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
-		throw new Error("Method not implemented.");
-	}
-
-	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
 		throw new Error("Method not implemented.");
 	}
 

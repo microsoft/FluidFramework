@@ -232,15 +232,21 @@
 	"typeValidation": {
 		"broken": {
 			"ClassDeclaration_LocalFluidDataStoreContext": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
 			"ClassDeclaration_FluidDataStoreContext": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
 			"ClassDeclaration_LocalFluidDataStoreContextBase": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
 			"InterfaceDeclaration_IGCNodeUpdatedProps": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreContextInternal": {
 				"backCompat": false
 			}
 		}

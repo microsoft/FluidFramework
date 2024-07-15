@@ -139,6 +139,7 @@ declare type old_as_current_for_InterfaceDeclaration_IProvideTestFluidObject = r
  * typeValidation.broken:
  * "InterfaceDeclaration_IProvideTestFluidObject": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_InterfaceDeclaration_IProvideTestFluidObject = requireAssignableTo<TypeOnly<current.IProvideTestFluidObject>, TypeOnly<old.IProvideTestFluidObject>>
 
 /*
@@ -193,6 +194,7 @@ declare type old_as_current_for_InterfaceDeclaration_ITestFluidObject = requireA
  * typeValidation.broken:
  * "InterfaceDeclaration_ITestFluidObject": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_InterfaceDeclaration_ITestFluidObject = requireAssignableTo<TypeOnly<current.ITestFluidObject>, TypeOnly<old.ITestFluidObject>>
 
 /*
@@ -319,6 +321,7 @@ declare type old_as_current_for_ClassDeclaration_TestFluidObject = requireAssign
  * typeValidation.broken:
  * "ClassDeclaration_TestFluidObject": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassDeclaration_TestFluidObject = requireAssignableTo<TypeOnly<current.TestFluidObject>, TypeOnly<old.TestFluidObject>>
 
 /*

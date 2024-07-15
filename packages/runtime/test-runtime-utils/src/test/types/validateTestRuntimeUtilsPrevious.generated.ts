@@ -283,6 +283,7 @@ declare type old_as_current_for_ClassDeclaration_MockFluidDataStoreContext = req
  * typeValidation.broken:
  * "ClassDeclaration_MockFluidDataStoreContext": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassDeclaration_MockFluidDataStoreContext = requireAssignableTo<TypeOnly<current.MockFluidDataStoreContext>, TypeOnly<old.MockFluidDataStoreContext>>
 
 /*
