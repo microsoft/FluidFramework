@@ -8,6 +8,7 @@ const {
 	formattedGeneratedContentBody,
 	formattedSectionText,
 	getPackageMetadata,
+	getScopeKindFromPackage,
 	resolveRelativePackageJsonPath,
 	parseHeadingOptions,
 } = require("../utilities.cjs");
@@ -47,22 +48,31 @@ npm i ${packageName}${devDependency ? " -D" : ""}
  * @param {number | undefined} options.headingLevel - (optional) Heading level for the section.
  * Must be a positive integer.
  * Default: {@link defaultSectionHeadingLevel}.
- * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a dev dependency.
- * Default: `FALSE`.
+ * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a devDependency.
+ * Default: `TRUE` for packages in the `@fluid-tools` and `@fluid-private` namespace, `FALSE` otherwise.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
 function installationInstructionsTransform(content, options, config) {
 	const headingOptions = parseHeadingOptions(options);
-	const devDependency = options.devDependency === "TRUE";
 
 	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
 		config.originalPath,
 		options.packageJsonPath,
 	);
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
-
 	const packageName = packageMetadata.name;
+
+	const scopeKind = getScopeKindFromPackage(packageName);
+
+	let devDependency = false;
+	if (
+		options.devDependency === "TRUE" ||
+		(options.devDependency !== "FALSE" && (scopeKind === "TOOLS" || scopeKind === "PRIVATE"))
+	) {
+		devDependency = true;
+	}
+
 	return formattedGeneratedContentBody(
 		generateInstallationInstructionsSection(packageName, devDependency, headingOptions),
 	);

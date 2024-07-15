@@ -216,7 +216,7 @@ function libraryPackageReadmeFooterTransform(content, options, config) {
  * Default: Will be displayed if the package is not a member of the `@fluid-internal` or `@fluid-private` namespaces.
  * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a devDependency.
  * Only used if `installation` is specified.
- * Default: `TRUE` for packages in the `@fluid-tools` namespace, `FALSE` otherwise.
+ * Default: `TRUE` for packages in the `@fluid-tools` and `@fluid-private` namespace, `FALSE` otherwise.
  * @param {"FALSE" | undefined} options.importInstructions - (optional) Whether or not to include information about how to import from the package's export options.
  * Default: Checks at the `package.json` file for an `exports` property.
  * Will include the section if the property is found, and one of our special paths is found (`/alpha`, `/beta`, or `/legacy`).
@@ -256,7 +256,7 @@ function libraryPackageReadmeHeaderTransform(content, options, config) {
 			generateDependencyGuidelines(sectionHeadingOptions),
 			generateInstallationInstructionsSection(
 				packageName,
-				options.devDependency ?? scopeKind === "TOOLS",
+				options.devDependency ?? (scopeKind === "TOOLS" || scopeKind === "PRIVATE"),
 				sectionHeadingOptions,
 			),
 		);
