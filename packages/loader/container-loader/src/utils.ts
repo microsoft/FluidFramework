@@ -78,7 +78,7 @@ export interface IParsedUrl {
  * Utility api to parse the IResolvedUrl.url into specific parts like querystring, path to get
  * deep link info etc.
  * Warning - This function may not be compatible with any Url Resolver's resolved url. It works
- * with urls of type: protocol://<string>/.../..?<querystring>
+ * with urls of type: [http | https]://<host>/<tenantId>/<containerId>/<stringPath>/.../..?<querystring>
  * @param url - This is the IResolvedUrl.url part of the resolved url.
  * @returns The IParsedUrl representing the input URL, or undefined if the format was not supported
  * @legacy
@@ -86,10 +86,12 @@ export interface IParsedUrl {
  */
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined {
 	const parsed = new URL(url);
-	if (typeof parsed.pathname !== "string") {
-		throw new LoggingError("Failed to parse pathname");
+	if (parsed.protocol !== "http" && parsed.protocol !== "https") {
+		throw new LoggingError("Failed to parse url, invalid protocol");
 	}
 	const query = parsed.search ?? "";
+	// This regex separates the first two path parts (expected to be tenantId/containerId) from
+	// the rest of the path (left up to the application).
 	const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
 	const match = regex.exec(parsed.pathname);
 	return match?.length === 3
