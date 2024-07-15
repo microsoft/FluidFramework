@@ -268,10 +268,12 @@ export class BenchmarkReporter {
 	): string {
 		// Use the suite name as a filename, but first replace non-alphanumerics with underscores
 		const suiteNameEscaped: string = suiteName.replace(/[^\da-z]/gi, "_");
-		const benchmarkArray: Readonly<BenchmarkResult>[] = [];
-		for (const bench of benchmarks.values()) {
+		const benchmarkArray: unknown[] = [];
+		for (const [key, bench] of benchmarks.entries()) {
 			if (!isResultError(bench)) {
-				benchmarkArray.push(bench);
+				benchmarkArray.push(
+					this.outputFriendlyObjectFromBenchmark(key, bench as BenchmarkData),
+				);
 			}
 		}
 		const outputContentString: string = JSON.stringify(
@@ -286,5 +288,22 @@ export class BenchmarkReporter {
 		const fullPath: string = path.join(this.outputDirectory, outputFilename);
 		fs.writeFileSync(fullPath, outputContentString);
 		return fullPath;
+	}
+
+	/**
+	 * The Benchmark object contains a lot of data we don't need and also has vague names, so
+	 * this method extracts the necessary data and provides friendlier names.
+	 */
+	private outputFriendlyObjectFromBenchmark(
+		benchmarkName: string,
+		benchmark: BenchmarkData,
+	): Record<string, unknown> {
+		const obj = {
+			benchmarkName,
+		};
+		for (const key in benchmark) {
+			obj[key] = benchmark[key];
+		}
+		return obj;
 	}
 }
