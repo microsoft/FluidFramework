@@ -86,7 +86,7 @@ export interface IParsedUrl {
  */
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined {
 	const parsed = new URL(url);
-	if (parsed.protocol !== "http" && parsed.protocol !== "https") {
+	if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
 		throw new LoggingError("Failed to parse url, invalid protocol");
 	}
 	const query = parsed.search ?? "";
