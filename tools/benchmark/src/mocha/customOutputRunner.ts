@@ -11,18 +11,13 @@ import { timer } from "../timer";
 /**
  * Options to configure a benchmark that reports custom measurements.
  *
- * @internal
+ * @public
  */
-export interface CustomBenchmarkOptions extends MochaExclusiveOptions {
+export interface CustomBenchmarkOptions extends BenchmarkDescription, MochaExclusiveOptions {
 	/**
 	 * Title about benchmark option
 	 */
 	title: string;
-
-	/**
-	 * Set of options to describe a benchmark.
-	 */
-	decription: BenchmarkDescription;
 
 	/**
 	 * Runs the benchmark.
@@ -37,7 +32,7 @@ export interface CustomBenchmarkOptions extends MochaExclusiveOptions {
  * Tests created with this function get tagged with '\@CustomBenchmark', so mocha's --grep/--fgrep
  * options can be used to only run this type of tests by filtering on that value.
  *
- * @internal
+ * @public
  */
 export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 	const itFunction = options.only === true ? it.only : it;
@@ -69,7 +64,7 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 /**
  * Allows the benchmark code to report custom measurements.
  *
- * @internal
+ * @public
  */
 export interface IMeasurementReporter {
 	/**
