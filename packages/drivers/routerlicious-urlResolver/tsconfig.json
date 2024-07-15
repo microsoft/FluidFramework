@@ -6,6 +6,5 @@
 		"rootDir": "./src",
 		"outDir": "./lib",
 		"types": ["node"],
-		"noUncheckedIndexedAccess": false,
 	},
 }

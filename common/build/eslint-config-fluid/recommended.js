@@ -57,6 +57,13 @@ module.exports = {
 		"unicorn/no-nested-ternary": "off",
 
 		/**
+		 * Disabled due to false positives / disruptive behavior of auto-fix.
+		 * See {@link https://github.com/sindresorhus/eslint-plugin-unicorn/issues/2018}.
+		 * We may consider re-enabling once the above issue has been resolved.
+		 */
+		"unicorn/no-useless-spread": "off",
+
+		/**
 		 * Disabled due to the sheer number of false positives it detects, and because it is sometimes valuable to
 		 * explicitly denote `undefined`.
 		 */
@@ -193,6 +200,9 @@ module.exports = {
 			rules: {
 				// Does not work well with describe/it block scoping
 				"unicorn/consistent-function-scoping": "off",
+				// We run most of our tests in a Node.js environment, so this rule is not important and makes
+				// file-system logic more cumbersome.
+				"unicorn/prefer-module": "off",
 			},
 		},
 		{

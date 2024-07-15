@@ -434,12 +434,6 @@ export class LazyFieldNode<TSchema extends FlexFieldNodeSchema>
 			unboxedField(this.context, this.schema.info, cursor),
 		) as FlexTreeUnboxField<TSchema["info"]>;
 	}
-
-	public get boxedContent(): FlexTreeTypedField<TSchema["info"]> {
-		return inCursorField(this[cursorSymbol], EmptyKey, (cursor) =>
-			makeField(this.context, this.schema.info, cursor),
-		) as FlexTreeTypedField<TSchema["info"]>;
-	}
 }
 
 /**

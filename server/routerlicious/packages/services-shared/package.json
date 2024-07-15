@@ -88,7 +88,7 @@
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.1",
 		"@types/nconf": "^0.10.2",
-		"@types/node": "^18.17.1",
+		"@types/node": "^18.19.39",
 		"@types/supertest": "^2.0.5",
 		"@types/uuid": "^9.0.2",
 		"axios": "^1.6.2",

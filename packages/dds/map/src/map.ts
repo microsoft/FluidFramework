@@ -202,23 +202,22 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		//    and result in non-incremental snapshot.
 		//    This can be improved in the future, without being format breaking change, as loading sequence
 		//    loads all blobs at once and partitioning schema has no impact on that process.
-		for (const key of Object.keys(data)) {
-			const value = data[key];
-			if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
+		for (const [key, { value, type }] of Object.entries(data)) {
+			if (value && value.length >= MinValueSizeSeparateSnapshotBlob) {
 				const blobName = `blob${counter}`;
 				counter++;
 				blobs.push(blobName);
 				const content: IMapDataObjectSerializable = {
 					[key]: {
-						type: value.type,
-						value: JSON.parse(value.value) as unknown,
+						type,
+						value: JSON.parse(value) as unknown,
 					},
 				};
 				builder.addBlob(blobName, JSON.stringify(content));
 			} else {
-				currentSize += value.type.length + 21; // Approximation cost of property header
-				if (value.value) {
-					currentSize += value.value.length;
+				currentSize += type.length + 21; // Approximation cost of property header
+				if (value) {
+					currentSize += value.length;
 				}
 
 				if (currentSize > MaxSnapshotBlobSize) {
@@ -230,8 +229,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 					currentSize = 0;
 				}
 				headerBlob[key] = {
-					type: value.type,
-					value: value.value === undefined ? undefined : (JSON.parse(value.value) as unknown),
+					type,
+					value: value === undefined ? undefined : (JSON.parse(value) as unknown),
 				};
 			}
 		}

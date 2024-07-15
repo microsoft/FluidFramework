@@ -9,11 +9,11 @@
  */
 
 import type * as old from "@fluid-internal/client-utils-previous";
-import type { TypeOnly, MinimalType, FullType } from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -22,12 +22,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "ClassDeclaration_Buffer": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_Buffer():
-    TypeOnly<old.Buffer>;
-declare function use_current_ClassDeclaration_Buffer(
-    use: TypeOnly<current.Buffer>): void;
-use_current_ClassDeclaration_Buffer(
-    get_old_ClassDeclaration_Buffer());
+declare type old_as_current_for_ClassDeclaration_Buffer = requireAssignableTo<TypeOnly<old.Buffer>, TypeOnly<current.Buffer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -36,12 +31,7 @@ use_current_ClassDeclaration_Buffer(
  * typeValidation.broken:
  * "ClassDeclaration_Buffer": {"backCompat": false}
  */
-declare function get_current_ClassDeclaration_Buffer():
-    TypeOnly<current.Buffer>;
-declare function use_old_ClassDeclaration_Buffer(
-    use: TypeOnly<old.Buffer>): void;
-use_old_ClassDeclaration_Buffer(
-    get_current_ClassDeclaration_Buffer());
+declare type current_as_old_for_ClassDeclaration_Buffer = requireAssignableTo<TypeOnly<current.Buffer>, TypeOnly<old.Buffer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -50,12 +40,7 @@ use_old_ClassDeclaration_Buffer(
  * typeValidation.broken:
  * "ClassDeclaration_EventEmitter": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_EventEmitter():
-    TypeOnly<old.EventEmitter>;
-declare function use_current_ClassDeclaration_EventEmitter(
-    use: TypeOnly<current.EventEmitter>): void;
-use_current_ClassDeclaration_EventEmitter(
-    get_old_ClassDeclaration_EventEmitter());
+declare type old_as_current_for_ClassDeclaration_EventEmitter = requireAssignableTo<TypeOnly<old.EventEmitter>, TypeOnly<current.EventEmitter>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -64,12 +49,7 @@ use_current_ClassDeclaration_EventEmitter(
  * typeValidation.broken:
  * "ClassDeclaration_EventEmitter": {"backCompat": false}
  */
-declare function get_current_ClassDeclaration_EventEmitter():
-    TypeOnly<current.EventEmitter>;
-declare function use_old_ClassDeclaration_EventEmitter(
-    use: TypeOnly<old.EventEmitter>): void;
-use_old_ClassDeclaration_EventEmitter(
-    get_current_ClassDeclaration_EventEmitter());
+declare type current_as_old_for_ClassDeclaration_EventEmitter = requireAssignableTo<TypeOnly<current.EventEmitter>, TypeOnly<old.EventEmitter>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -78,12 +58,7 @@ use_old_ClassDeclaration_EventEmitter(
  * typeValidation.broken:
  * "TypeAliasDeclaration_EventEmitterEventType": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_EventEmitterEventType():
-    TypeOnly<old.EventEmitterEventType>;
-declare function use_current_TypeAliasDeclaration_EventEmitterEventType(
-    use: TypeOnly<current.EventEmitterEventType>): void;
-use_current_TypeAliasDeclaration_EventEmitterEventType(
-    get_old_TypeAliasDeclaration_EventEmitterEventType());
+declare type old_as_current_for_TypeAliasDeclaration_EventEmitterEventType = requireAssignableTo<TypeOnly<old.EventEmitterEventType>, TypeOnly<current.EventEmitterEventType>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -92,12 +67,7 @@ use_current_TypeAliasDeclaration_EventEmitterEventType(
  * typeValidation.broken:
  * "TypeAliasDeclaration_EventEmitterEventType": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_EventEmitterEventType():
-    TypeOnly<current.EventEmitterEventType>;
-declare function use_old_TypeAliasDeclaration_EventEmitterEventType(
-    use: TypeOnly<old.EventEmitterEventType>): void;
-use_old_TypeAliasDeclaration_EventEmitterEventType(
-    get_current_TypeAliasDeclaration_EventEmitterEventType());
+declare type current_as_old_for_TypeAliasDeclaration_EventEmitterEventType = requireAssignableTo<TypeOnly<current.EventEmitterEventType>, TypeOnly<old.EventEmitterEventType>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -106,12 +76,7 @@ use_old_TypeAliasDeclaration_EventEmitterEventType(
  * typeValidation.broken:
  * "InterfaceDeclaration_ITraceEvent": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_ITraceEvent():
-    TypeOnly<old.ITraceEvent>;
-declare function use_current_InterfaceDeclaration_ITraceEvent(
-    use: TypeOnly<current.ITraceEvent>): void;
-use_current_InterfaceDeclaration_ITraceEvent(
-    get_old_InterfaceDeclaration_ITraceEvent());
+declare type old_as_current_for_InterfaceDeclaration_ITraceEvent = requireAssignableTo<TypeOnly<old.ITraceEvent>, TypeOnly<current.ITraceEvent>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -120,12 +85,7 @@ use_current_InterfaceDeclaration_ITraceEvent(
  * typeValidation.broken:
  * "InterfaceDeclaration_ITraceEvent": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ITraceEvent():
-    TypeOnly<current.ITraceEvent>;
-declare function use_old_InterfaceDeclaration_ITraceEvent(
-    use: TypeOnly<old.ITraceEvent>): void;
-use_old_InterfaceDeclaration_ITraceEvent(
-    get_current_InterfaceDeclaration_ITraceEvent());
+declare type current_as_old_for_InterfaceDeclaration_ITraceEvent = requireAssignableTo<TypeOnly<current.ITraceEvent>, TypeOnly<old.ITraceEvent>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -134,12 +94,7 @@ use_old_InterfaceDeclaration_ITraceEvent(
  * typeValidation.broken:
  * "VariableDeclaration_IsoBuffer": {"forwardCompat": false}
  */
-declare function get_old_VariableDeclaration_IsoBuffer():
-    TypeOnly<typeof old.IsoBuffer>;
-declare function use_current_VariableDeclaration_IsoBuffer(
-    use: TypeOnly<typeof current.IsoBuffer>): void;
-use_current_VariableDeclaration_IsoBuffer(
-    get_old_VariableDeclaration_IsoBuffer());
+declare type old_as_current_for_VariableDeclaration_IsoBuffer = requireAssignableTo<TypeOnly<typeof old.IsoBuffer>, TypeOnly<typeof current.IsoBuffer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -148,12 +103,7 @@ use_current_VariableDeclaration_IsoBuffer(
  * typeValidation.broken:
  * "VariableDeclaration_IsoBuffer": {"backCompat": false}
  */
-declare function get_current_VariableDeclaration_IsoBuffer():
-    TypeOnly<typeof current.IsoBuffer>;
-declare function use_old_VariableDeclaration_IsoBuffer(
-    use: TypeOnly<typeof old.IsoBuffer>): void;
-use_old_VariableDeclaration_IsoBuffer(
-    get_current_VariableDeclaration_IsoBuffer());
+declare type current_as_old_for_VariableDeclaration_IsoBuffer = requireAssignableTo<TypeOnly<typeof current.IsoBuffer>, TypeOnly<typeof old.IsoBuffer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -162,12 +112,7 @@ use_old_VariableDeclaration_IsoBuffer(
  * typeValidation.broken:
  * "TypeAliasDeclaration_IsoBuffer": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_IsoBuffer():
-    TypeOnly<old.IsoBuffer>;
-declare function use_current_TypeAliasDeclaration_IsoBuffer(
-    use: TypeOnly<current.IsoBuffer>): void;
-use_current_TypeAliasDeclaration_IsoBuffer(
-    get_old_TypeAliasDeclaration_IsoBuffer());
+declare type old_as_current_for_TypeAliasDeclaration_IsoBuffer = requireAssignableTo<TypeOnly<old.IsoBuffer>, TypeOnly<current.IsoBuffer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -176,12 +121,7 @@ use_current_TypeAliasDeclaration_IsoBuffer(
  * typeValidation.broken:
  * "TypeAliasDeclaration_IsoBuffer": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_IsoBuffer():
-    TypeOnly<current.IsoBuffer>;
-declare function use_old_TypeAliasDeclaration_IsoBuffer(
-    use: TypeOnly<old.IsoBuffer>): void;
-use_old_TypeAliasDeclaration_IsoBuffer(
-    get_current_TypeAliasDeclaration_IsoBuffer());
+declare type current_as_old_for_TypeAliasDeclaration_IsoBuffer = requireAssignableTo<TypeOnly<current.IsoBuffer>, TypeOnly<old.IsoBuffer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -190,12 +130,7 @@ use_old_TypeAliasDeclaration_IsoBuffer(
  * typeValidation.broken:
  * "TypeAliasDeclaration_IsomorphicPerformance": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_IsomorphicPerformance():
-    TypeOnly<old.IsomorphicPerformance>;
-declare function use_current_TypeAliasDeclaration_IsomorphicPerformance(
-    use: TypeOnly<current.IsomorphicPerformance>): void;
-use_current_TypeAliasDeclaration_IsomorphicPerformance(
-    get_old_TypeAliasDeclaration_IsomorphicPerformance());
+declare type old_as_current_for_TypeAliasDeclaration_IsomorphicPerformance = requireAssignableTo<TypeOnly<old.IsomorphicPerformance>, TypeOnly<current.IsomorphicPerformance>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -204,12 +139,7 @@ use_current_TypeAliasDeclaration_IsomorphicPerformance(
  * typeValidation.broken:
  * "TypeAliasDeclaration_IsomorphicPerformance": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_IsomorphicPerformance():
-    TypeOnly<current.IsomorphicPerformance>;
-declare function use_old_TypeAliasDeclaration_IsomorphicPerformance(
-    use: TypeOnly<old.IsomorphicPerformance>): void;
-use_old_TypeAliasDeclaration_IsomorphicPerformance(
-    get_current_TypeAliasDeclaration_IsomorphicPerformance());
+declare type current_as_old_for_TypeAliasDeclaration_IsomorphicPerformance = requireAssignableTo<TypeOnly<current.IsomorphicPerformance>, TypeOnly<old.IsomorphicPerformance>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -218,12 +148,7 @@ use_old_TypeAliasDeclaration_IsomorphicPerformance(
  * typeValidation.broken:
  * "ClassDeclaration_Trace": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_Trace():
-    TypeOnly<old.Trace>;
-declare function use_current_ClassDeclaration_Trace(
-    use: TypeOnly<current.Trace>): void;
-use_current_ClassDeclaration_Trace(
-    get_old_ClassDeclaration_Trace());
+declare type old_as_current_for_ClassDeclaration_Trace = requireAssignableTo<TypeOnly<old.Trace>, TypeOnly<current.Trace>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -232,12 +157,7 @@ use_current_ClassDeclaration_Trace(
  * typeValidation.broken:
  * "ClassDeclaration_Trace": {"backCompat": false}
  */
-declare function get_current_ClassDeclaration_Trace():
-    TypeOnly<current.Trace>;
-declare function use_old_ClassDeclaration_Trace(
-    use: TypeOnly<old.Trace>): void;
-use_old_ClassDeclaration_Trace(
-    get_current_ClassDeclaration_Trace());
+declare type current_as_old_for_ClassDeclaration_Trace = requireAssignableTo<TypeOnly<current.Trace>, TypeOnly<old.Trace>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -246,12 +166,7 @@ use_old_ClassDeclaration_Trace(
  * typeValidation.broken:
  * "ClassDeclaration_TypedEventEmitter": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_TypedEventEmitter():
-    TypeOnly<old.TypedEventEmitter<any>>;
-declare function use_current_ClassDeclaration_TypedEventEmitter(
-    use: TypeOnly<current.TypedEventEmitter<any>>): void;
-use_current_ClassDeclaration_TypedEventEmitter(
-    get_old_ClassDeclaration_TypedEventEmitter());
+declare type old_as_current_for_ClassDeclaration_TypedEventEmitter = requireAssignableTo<TypeOnly<old.TypedEventEmitter<any>>, TypeOnly<current.TypedEventEmitter<any>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -260,12 +175,7 @@ use_current_ClassDeclaration_TypedEventEmitter(
  * typeValidation.broken:
  * "ClassDeclaration_TypedEventEmitter": {"backCompat": false}
  */
-declare function get_current_ClassDeclaration_TypedEventEmitter():
-    TypeOnly<current.TypedEventEmitter<any>>;
-declare function use_old_ClassDeclaration_TypedEventEmitter(
-    use: TypeOnly<old.TypedEventEmitter<any>>): void;
-use_old_ClassDeclaration_TypedEventEmitter(
-    get_current_ClassDeclaration_TypedEventEmitter());
+declare type current_as_old_for_ClassDeclaration_TypedEventEmitter = requireAssignableTo<TypeOnly<current.TypedEventEmitter<any>>, TypeOnly<old.TypedEventEmitter<any>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -274,12 +184,7 @@ use_old_ClassDeclaration_TypedEventEmitter(
  * typeValidation.broken:
  * "TypeAliasDeclaration_TypedEventTransform": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_TypedEventTransform():
-    TypeOnly<old.TypedEventTransform<any,any>>;
-declare function use_current_TypeAliasDeclaration_TypedEventTransform(
-    use: TypeOnly<current.TypedEventTransform<any,any>>): void;
-use_current_TypeAliasDeclaration_TypedEventTransform(
-    get_old_TypeAliasDeclaration_TypedEventTransform());
+declare type old_as_current_for_TypeAliasDeclaration_TypedEventTransform = requireAssignableTo<TypeOnly<old.TypedEventTransform<any,any>>, TypeOnly<current.TypedEventTransform<any,any>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -288,12 +193,7 @@ use_current_TypeAliasDeclaration_TypedEventTransform(
  * typeValidation.broken:
  * "TypeAliasDeclaration_TypedEventTransform": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_TypedEventTransform():
-    TypeOnly<current.TypedEventTransform<any,any>>;
-declare function use_old_TypeAliasDeclaration_TypedEventTransform(
-    use: TypeOnly<old.TypedEventTransform<any,any>>): void;
-use_old_TypeAliasDeclaration_TypedEventTransform(
-    get_current_TypeAliasDeclaration_TypedEventTransform());
+declare type current_as_old_for_TypeAliasDeclaration_TypedEventTransform = requireAssignableTo<TypeOnly<current.TypedEventTransform<any,any>>, TypeOnly<old.TypedEventTransform<any,any>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -302,12 +202,7 @@ use_old_TypeAliasDeclaration_TypedEventTransform(
  * typeValidation.broken:
  * "FunctionDeclaration_Uint8ArrayToArrayBuffer": {"forwardCompat": false}
  */
-declare function get_old_FunctionDeclaration_Uint8ArrayToArrayBuffer():
-    TypeOnly<typeof old.Uint8ArrayToArrayBuffer>;
-declare function use_current_FunctionDeclaration_Uint8ArrayToArrayBuffer(
-    use: TypeOnly<typeof current.Uint8ArrayToArrayBuffer>): void;
-use_current_FunctionDeclaration_Uint8ArrayToArrayBuffer(
-    get_old_FunctionDeclaration_Uint8ArrayToArrayBuffer());
+declare type old_as_current_for_FunctionDeclaration_Uint8ArrayToArrayBuffer = requireAssignableTo<TypeOnly<typeof old.Uint8ArrayToArrayBuffer>, TypeOnly<typeof current.Uint8ArrayToArrayBuffer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -316,12 +211,7 @@ use_current_FunctionDeclaration_Uint8ArrayToArrayBuffer(
  * typeValidation.broken:
  * "FunctionDeclaration_Uint8ArrayToArrayBuffer": {"backCompat": false}
  */
-declare function get_current_FunctionDeclaration_Uint8ArrayToArrayBuffer():
-    TypeOnly<typeof current.Uint8ArrayToArrayBuffer>;
-declare function use_old_FunctionDeclaration_Uint8ArrayToArrayBuffer(
-    use: TypeOnly<typeof old.Uint8ArrayToArrayBuffer>): void;
-use_old_FunctionDeclaration_Uint8ArrayToArrayBuffer(
-    get_current_FunctionDeclaration_Uint8ArrayToArrayBuffer());
+declare type current_as_old_for_FunctionDeclaration_Uint8ArrayToArrayBuffer = requireAssignableTo<TypeOnly<typeof current.Uint8ArrayToArrayBuffer>, TypeOnly<typeof old.Uint8ArrayToArrayBuffer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -330,12 +220,7 @@ use_old_FunctionDeclaration_Uint8ArrayToArrayBuffer(
  * typeValidation.broken:
  * "FunctionDeclaration_Uint8ArrayToString": {"forwardCompat": false}
  */
-declare function get_old_FunctionDeclaration_Uint8ArrayToString():
-    TypeOnly<typeof old.Uint8ArrayToString>;
-declare function use_current_FunctionDeclaration_Uint8ArrayToString(
-    use: TypeOnly<typeof current.Uint8ArrayToString>): void;
-use_current_FunctionDeclaration_Uint8ArrayToString(
-    get_old_FunctionDeclaration_Uint8ArrayToString());
+declare type old_as_current_for_FunctionDeclaration_Uint8ArrayToString = requireAssignableTo<TypeOnly<typeof old.Uint8ArrayToString>, TypeOnly<typeof current.Uint8ArrayToString>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -344,12 +229,7 @@ use_current_FunctionDeclaration_Uint8ArrayToString(
  * typeValidation.broken:
  * "FunctionDeclaration_Uint8ArrayToString": {"backCompat": false}
  */
-declare function get_current_FunctionDeclaration_Uint8ArrayToString():
-    TypeOnly<typeof current.Uint8ArrayToString>;
-declare function use_old_FunctionDeclaration_Uint8ArrayToString(
-    use: TypeOnly<typeof old.Uint8ArrayToString>): void;
-use_old_FunctionDeclaration_Uint8ArrayToString(
-    get_current_FunctionDeclaration_Uint8ArrayToString());
+declare type current_as_old_for_FunctionDeclaration_Uint8ArrayToString = requireAssignableTo<TypeOnly<typeof current.Uint8ArrayToString>, TypeOnly<typeof old.Uint8ArrayToString>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -358,12 +238,7 @@ use_old_FunctionDeclaration_Uint8ArrayToString(
  * typeValidation.broken:
  * "VariableDeclaration_bufferToString": {"forwardCompat": false}
  */
-declare function get_old_VariableDeclaration_bufferToString():
-    TypeOnly<typeof old.bufferToString>;
-declare function use_current_VariableDeclaration_bufferToString(
-    use: TypeOnly<typeof current.bufferToString>): void;
-use_current_VariableDeclaration_bufferToString(
-    get_old_VariableDeclaration_bufferToString());
+declare type old_as_current_for_VariableDeclaration_bufferToString = requireAssignableTo<TypeOnly<typeof old.bufferToString>, TypeOnly<typeof current.bufferToString>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -372,12 +247,7 @@ use_current_VariableDeclaration_bufferToString(
  * typeValidation.broken:
  * "VariableDeclaration_bufferToString": {"backCompat": false}
  */
-declare function get_current_VariableDeclaration_bufferToString():
-    TypeOnly<typeof current.bufferToString>;
-declare function use_old_VariableDeclaration_bufferToString(
-    use: TypeOnly<typeof old.bufferToString>): void;
-use_old_VariableDeclaration_bufferToString(
-    get_current_VariableDeclaration_bufferToString());
+declare type current_as_old_for_VariableDeclaration_bufferToString = requireAssignableTo<TypeOnly<typeof current.bufferToString>, TypeOnly<typeof old.bufferToString>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -386,12 +256,7 @@ use_old_VariableDeclaration_bufferToString(
  * typeValidation.broken:
  * "VariableDeclaration_fromBase64ToUtf8": {"forwardCompat": false}
  */
-declare function get_old_VariableDeclaration_fromBase64ToUtf8():
-    TypeOnly<typeof old.fromBase64ToUtf8>;
-declare function use_current_VariableDeclaration_fromBase64ToUtf8(
-    use: TypeOnly<typeof current.fromBase64ToUtf8>): void;
-use_current_VariableDeclaration_fromBase64ToUtf8(
-    get_old_VariableDeclaration_fromBase64ToUtf8());
+declare type old_as_current_for_VariableDeclaration_fromBase64ToUtf8 = requireAssignableTo<TypeOnly<typeof old.fromBase64ToUtf8>, TypeOnly<typeof current.fromBase64ToUtf8>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -400,12 +265,7 @@ use_current_VariableDeclaration_fromBase64ToUtf8(
  * typeValidation.broken:
  * "VariableDeclaration_fromBase64ToUtf8": {"backCompat": false}
  */
-declare function get_current_VariableDeclaration_fromBase64ToUtf8():
-    TypeOnly<typeof current.fromBase64ToUtf8>;
-declare function use_old_VariableDeclaration_fromBase64ToUtf8(
-    use: TypeOnly<typeof old.fromBase64ToUtf8>): void;
-use_old_VariableDeclaration_fromBase64ToUtf8(
-    get_current_VariableDeclaration_fromBase64ToUtf8());
+declare type current_as_old_for_VariableDeclaration_fromBase64ToUtf8 = requireAssignableTo<TypeOnly<typeof current.fromBase64ToUtf8>, TypeOnly<typeof old.fromBase64ToUtf8>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -414,12 +274,7 @@ use_old_VariableDeclaration_fromBase64ToUtf8(
  * typeValidation.broken:
  * "VariableDeclaration_fromUtf8ToBase64": {"forwardCompat": false}
  */
-declare function get_old_VariableDeclaration_fromUtf8ToBase64():
-    TypeOnly<typeof old.fromUtf8ToBase64>;
-declare function use_current_VariableDeclaration_fromUtf8ToBase64(
-    use: TypeOnly<typeof current.fromUtf8ToBase64>): void;
-use_current_VariableDeclaration_fromUtf8ToBase64(
-    get_old_VariableDeclaration_fromUtf8ToBase64());
+declare type old_as_current_for_VariableDeclaration_fromUtf8ToBase64 = requireAssignableTo<TypeOnly<typeof old.fromUtf8ToBase64>, TypeOnly<typeof current.fromUtf8ToBase64>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -428,12 +283,7 @@ use_current_VariableDeclaration_fromUtf8ToBase64(
  * typeValidation.broken:
  * "VariableDeclaration_fromUtf8ToBase64": {"backCompat": false}
  */
-declare function get_current_VariableDeclaration_fromUtf8ToBase64():
-    TypeOnly<typeof current.fromUtf8ToBase64>;
-declare function use_old_VariableDeclaration_fromUtf8ToBase64(
-    use: TypeOnly<typeof old.fromUtf8ToBase64>): void;
-use_old_VariableDeclaration_fromUtf8ToBase64(
-    get_current_VariableDeclaration_fromUtf8ToBase64());
+declare type current_as_old_for_VariableDeclaration_fromUtf8ToBase64 = requireAssignableTo<TypeOnly<typeof current.fromUtf8ToBase64>, TypeOnly<typeof old.fromUtf8ToBase64>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -442,12 +292,7 @@ use_old_VariableDeclaration_fromUtf8ToBase64(
  * typeValidation.broken:
  * "FunctionDeclaration_gitHashFile": {"forwardCompat": false}
  */
-declare function get_old_FunctionDeclaration_gitHashFile():
-    TypeOnly<typeof old.gitHashFile>;
-declare function use_current_FunctionDeclaration_gitHashFile(
-    use: TypeOnly<typeof current.gitHashFile>): void;
-use_current_FunctionDeclaration_gitHashFile(
-    get_old_FunctionDeclaration_gitHashFile());
+declare type old_as_current_for_FunctionDeclaration_gitHashFile = requireAssignableTo<TypeOnly<typeof old.gitHashFile>, TypeOnly<typeof current.gitHashFile>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -456,12 +301,7 @@ use_current_FunctionDeclaration_gitHashFile(
  * typeValidation.broken:
  * "FunctionDeclaration_gitHashFile": {"backCompat": false}
  */
-declare function get_current_FunctionDeclaration_gitHashFile():
-    TypeOnly<typeof current.gitHashFile>;
-declare function use_old_FunctionDeclaration_gitHashFile(
-    use: TypeOnly<typeof old.gitHashFile>): void;
-use_old_FunctionDeclaration_gitHashFile(
-    get_current_FunctionDeclaration_gitHashFile());
+declare type current_as_old_for_FunctionDeclaration_gitHashFile = requireAssignableTo<TypeOnly<typeof current.gitHashFile>, TypeOnly<typeof old.gitHashFile>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -470,12 +310,7 @@ use_old_FunctionDeclaration_gitHashFile(
  * typeValidation.broken:
  * "FunctionDeclaration_hashFile": {"forwardCompat": false}
  */
-declare function get_old_FunctionDeclaration_hashFile():
-    TypeOnly<typeof old.hashFile>;
-declare function use_current_FunctionDeclaration_hashFile(
-    use: TypeOnly<typeof current.hashFile>): void;
-use_current_FunctionDeclaration_hashFile(
-    get_old_FunctionDeclaration_hashFile());
+declare type old_as_current_for_FunctionDeclaration_hashFile = requireAssignableTo<TypeOnly<typeof old.hashFile>, TypeOnly<typeof current.hashFile>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -484,12 +319,7 @@ use_current_FunctionDeclaration_hashFile(
  * typeValidation.broken:
  * "FunctionDeclaration_hashFile": {"backCompat": false}
  */
-declare function get_current_FunctionDeclaration_hashFile():
-    TypeOnly<typeof current.hashFile>;
-declare function use_old_FunctionDeclaration_hashFile(
-    use: TypeOnly<typeof old.hashFile>): void;
-use_old_FunctionDeclaration_hashFile(
-    get_current_FunctionDeclaration_hashFile());
+declare type current_as_old_for_FunctionDeclaration_hashFile = requireAssignableTo<TypeOnly<typeof current.hashFile>, TypeOnly<typeof old.hashFile>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -498,12 +328,7 @@ use_old_FunctionDeclaration_hashFile(
  * typeValidation.broken:
  * "VariableDeclaration_performance": {"forwardCompat": false}
  */
-declare function get_old_VariableDeclaration_performance():
-    TypeOnly<typeof old.performance>;
-declare function use_current_VariableDeclaration_performance(
-    use: TypeOnly<typeof current.performance>): void;
-use_current_VariableDeclaration_performance(
-    get_old_VariableDeclaration_performance());
+declare type old_as_current_for_VariableDeclaration_performance = requireAssignableTo<TypeOnly<typeof old.performance>, TypeOnly<typeof current.performance>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -512,12 +337,7 @@ use_current_VariableDeclaration_performance(
  * typeValidation.broken:
  * "VariableDeclaration_performance": {"backCompat": false}
  */
-declare function get_current_VariableDeclaration_performance():
-    TypeOnly<typeof current.performance>;
-declare function use_old_VariableDeclaration_performance(
-    use: TypeOnly<typeof old.performance>): void;
-use_old_VariableDeclaration_performance(
-    get_current_VariableDeclaration_performance());
+declare type current_as_old_for_VariableDeclaration_performance = requireAssignableTo<TypeOnly<typeof current.performance>, TypeOnly<typeof old.performance>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -526,12 +346,7 @@ use_old_VariableDeclaration_performance(
  * typeValidation.broken:
  * "FunctionDeclaration_stringToBuffer": {"forwardCompat": false}
  */
-declare function get_old_FunctionDeclaration_stringToBuffer():
-    TypeOnly<typeof old.stringToBuffer>;
-declare function use_current_FunctionDeclaration_stringToBuffer(
-    use: TypeOnly<typeof current.stringToBuffer>): void;
-use_current_FunctionDeclaration_stringToBuffer(
-    get_old_FunctionDeclaration_stringToBuffer());
+declare type old_as_current_for_FunctionDeclaration_stringToBuffer = requireAssignableTo<TypeOnly<typeof old.stringToBuffer>, TypeOnly<typeof current.stringToBuffer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -540,12 +355,7 @@ use_current_FunctionDeclaration_stringToBuffer(
  * typeValidation.broken:
  * "FunctionDeclaration_stringToBuffer": {"backCompat": false}
  */
-declare function get_current_FunctionDeclaration_stringToBuffer():
-    TypeOnly<typeof current.stringToBuffer>;
-declare function use_old_FunctionDeclaration_stringToBuffer(
-    use: TypeOnly<typeof old.stringToBuffer>): void;
-use_old_FunctionDeclaration_stringToBuffer(
-    get_current_FunctionDeclaration_stringToBuffer());
+declare type current_as_old_for_FunctionDeclaration_stringToBuffer = requireAssignableTo<TypeOnly<typeof current.stringToBuffer>, TypeOnly<typeof old.stringToBuffer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -554,12 +364,7 @@ use_old_FunctionDeclaration_stringToBuffer(
  * typeValidation.broken:
  * "VariableDeclaration_toUtf8": {"forwardCompat": false}
  */
-declare function get_old_VariableDeclaration_toUtf8():
-    TypeOnly<typeof old.toUtf8>;
-declare function use_current_VariableDeclaration_toUtf8(
-    use: TypeOnly<typeof current.toUtf8>): void;
-use_current_VariableDeclaration_toUtf8(
-    get_old_VariableDeclaration_toUtf8());
+declare type old_as_current_for_VariableDeclaration_toUtf8 = requireAssignableTo<TypeOnly<typeof old.toUtf8>, TypeOnly<typeof current.toUtf8>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -568,9 +373,4 @@ use_current_VariableDeclaration_toUtf8(
  * typeValidation.broken:
  * "VariableDeclaration_toUtf8": {"backCompat": false}
  */
-declare function get_current_VariableDeclaration_toUtf8():
-    TypeOnly<typeof current.toUtf8>;
-declare function use_old_VariableDeclaration_toUtf8(
-    use: TypeOnly<typeof old.toUtf8>): void;
-use_old_VariableDeclaration_toUtf8(
-    get_current_VariableDeclaration_toUtf8());
+declare type current_as_old_for_VariableDeclaration_toUtf8 = requireAssignableTo<TypeOnly<typeof current.toUtf8>, TypeOnly<typeof old.toUtf8>>

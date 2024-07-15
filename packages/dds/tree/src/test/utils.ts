@@ -113,6 +113,7 @@ import {
 	mapTreeFromCursor,
 	MockNodeKeyManager,
 	normalizeNewFieldContent,
+	type FlexTreeSchema,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
@@ -754,24 +755,23 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	return forest;
 }
 
-export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
-	content: TreeContent<TRoot>,
+export function flexTreeFromForest<TRoot extends FlexFieldSchema>(
+	schema: FlexTreeSchema<TRoot>,
+	forest: IEditableForest,
 	args?: {
-		forest?: IEditableForest;
 		nodeKeyManager?: NodeKeyManager;
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
 ): FlexTreeTypedField<TRoot> {
-	const forest = args?.forest ?? forestWithContent(content);
 	const branch = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
 		...args,
 		forest,
-		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
+		schema: new TreeStoredSchemaRepository(intoStoredSchema(schema)),
 	});
 	const manager = args?.nodeKeyManager ?? new MockNodeKeyManager();
-	const view = new CheckoutFlexTreeView(branch, content.schema, manager);
+	const view = new CheckoutFlexTreeView(branch, schema, manager);
 	return view.flexTree;
 }
 

@@ -22,6 +22,4 @@ export const SharedCounter: ISharedObjectKind<ISharedCounter> & SharedObjectKind
 // @alpha
 export type SharedCounter = ISharedCounter;
 
-// (No @packageDocumentation comment for this package)
-
 ```
