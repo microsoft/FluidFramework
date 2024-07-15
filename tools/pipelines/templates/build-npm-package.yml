@@ -332,8 +332,6 @@ extends:
                       tagName: '${{ parameters.tagName }}'
                       interdependencyRange: '${{ parameters.interdependencyRange }}'
                       packageTypesOverride: '${{ parameters.packageTypesOverride }}'
-                      STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
-                      STORAGE_KEY: $(STORAGE_KEY)
 
               # Build and Lint
               - template: /tools/pipelines/templates/include-build-lint.yml@self
