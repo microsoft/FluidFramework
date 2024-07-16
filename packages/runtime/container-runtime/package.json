@@ -230,6 +230,19 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_LocalFluidDataStoreContext": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_FluidDataStoreContext": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_LocalFluidDataStoreContextBase": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IGCNodeUpdatedProps": {
+				"backCompat": false
+			}
+		}
 	}
 }

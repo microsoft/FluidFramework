@@ -20,7 +20,6 @@ import { TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
-// eslint-disable-next-line import/no-deprecated
 import { PropertySet, clone, createMap, type MapLike } from "./properties.js";
 import {
 	ReferencePosition,
@@ -451,9 +450,7 @@ export class MergeBlock implements IMergeNodeCommon {
 		// Using Array.from leads to unused children being undefined, which are counted in childCount.
 		// eslint-disable-next-line unicorn/no-new-array
 		this.children = new Array<IMergeNode>(MaxNodesInBlock);
-		// eslint-disable-next-line import/no-deprecated
 		this.rightmostTiles = createMap<Marker>();
-		// eslint-disable-next-line import/no-deprecated
 		this.leftmostTiles = createMap<Marker>();
 	}
 
@@ -524,7 +521,7 @@ export abstract class BaseSegment implements ISegment {
 	): PropertySet {
 		this.propertyManager ??= new PropertiesManager();
 		// A property set must be able to hold properties of any type, so the any is needed.
-		// eslint-disable-next-line import/no-deprecated, @typescript-eslint/no-explicit-any
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		this.properties ??= createMap<any>();
 		return this.propertyManager.addProperties(
 			this.properties,
@@ -546,7 +543,6 @@ export abstract class BaseSegment implements ISegment {
 	protected cloneInto(b: ISegment): void {
 		b.clientId = this.clientId;
 		// TODO: deep clone properties
-		// eslint-disable-next-line import/no-deprecated
 		b.properties = clone(this.properties);
 		b.removedClientIds = this.removedClientIds?.slice();
 		// TODO: copy removed client overlap and branch removal info

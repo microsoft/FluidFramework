@@ -107,8 +107,7 @@ module.exports = {
 		"ci:build:api-reports:legacy": ["api-extractor:esnext"],
 		// With most packages in client building ESM first, there is ideally just "build:esnext" dependency.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
-		// therefore we need to require both before running api-extractor. For packages with /legacy
-		// exports, we need the export rollups too and in those cases we only use ESM.
+		// therefore we need to require both before running api-extractor.
 		"build:docs": ["tsc", "build:esnext"],
 		"ci:build:docs": ["tsc", "build:esnext"],
 		"build:readme": {

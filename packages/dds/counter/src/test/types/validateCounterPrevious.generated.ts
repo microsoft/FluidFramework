@@ -58,6 +58,7 @@ declare type current_as_old_for_InterfaceDeclaration_ISharedCounterEvents = requ
  * typeValidation.broken:
  * "VariableDeclaration_SharedCounter": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_VariableDeclaration_SharedCounter = requireAssignableTo<TypeOnly<typeof old.SharedCounter>, TypeOnly<typeof current.SharedCounter>>
 
 /*

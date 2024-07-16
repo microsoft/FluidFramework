@@ -7,11 +7,11 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { Multiplicity, rootFieldKey } from "../core/index.js";
 import {
-	FieldKinds,
 	type LazyItem,
 	type TreeStatus,
 	isLazy,
 	isTreeValue,
+	FlexObjectNodeSchema,
 } from "../feature-libraries/index.js";
 import { fail, extractFromOpaque, isReadonlyArray } from "../util/index.js";
 
@@ -201,26 +201,26 @@ export const treeNodeApi: TreeNodeApi = {
 	},
 	shortId(node: TreeNode): number | string | undefined {
 		const flexNode = getFlexNode(node);
-		let shortId: number | string | undefined;
-		for (const field of flexNode.boxedIterator()) {
-			if (field.schema.kind === FieldKinds.identifier) {
-				if (shortId !== undefined) {
-					throw new UsageError(
-						"shortId() may not be called on a node with more than one identifier. Consider converting extraneous identifier fields to string fields.",
-					);
-				}
-				const identifier = field.boxedAt(0);
+		const flexSchema = flexNode.schema;
+		const identifierFieldKeys =
+			flexSchema instanceof FlexObjectNodeSchema ? flexSchema.identifierFieldKeys : [];
+
+		switch (identifierFieldKeys.length) {
+			case 0:
+				return undefined;
+			case 1: {
+				const identifier = flexNode.tryGetField(identifierFieldKeys[0])?.boxedAt(0);
 				assert(identifier !== undefined, 0x927 /* The identifier must exist */);
 				const identifierValue = identifier.value as string;
 				const localNodeKey =
 					identifier.context.nodeKeyManager.tryLocalizeNodeKey(identifierValue);
-
-				shortId =
-					localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
+				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
 			}
+			default:
+				throw new UsageError(
+					"shortId() may not be called on a node with more than one identifier. Consider converting extraneous identifier fields to string fields.",
+				);
 		}
-
-		return shortId;
 	},
 };
 

@@ -120,6 +120,10 @@ export function jsonMorganLoggerMiddleware(
 				[BaseTelemetryProperties.correlationId]: getCorrelationIdWithHttpFallback(req, res),
 				[CommonProperties.serviceName]: serviceName,
 				[CommonProperties.telemetryGroupName]: "http_requests",
+				[HttpProperties.retryCount]: Number.parseInt(
+					typeof req.query.retry === "string" ? req.query.retry : "0",
+					10,
+				),
 				...additionalProperties,
 				...getTelemetryContextPropertiesWithHttpInfo(req, res),
 			};

@@ -69,9 +69,12 @@ Arguments:
 -   `start`: (optional) First line from the target file to be embedded (inclusive). If positive, the value is relative to the beginning of the file. If negative, the value is relative to the end of the file.
 -   `end`: (optional) Limit line from the target file to be embedded (exclusive). If positive, the value is relative to the beginning of the file. If negative, the value is relative to the end of the file.
 
-#### `LIBRARY_PACKAGE_README`
+#### `LIBRARY_PACKAGE_README_HEADER`
 
-Generates a complete starter `README.md` file for a libary package.
+Generates simple "header" contents for a library package README.
+Contains instructions for installing the package and importing its contents.
+
+Generally recommended for inclusion after a brief package introduction, but before more detailed sections.
 
 Notes:
 
@@ -79,6 +82,9 @@ Notes:
     You will still need to fill in semantic and usage information.
 -   This is effectively just a wrapper around lower-level templates.
     If you want more fine-grained control over the content structure, we recommend using other templates.
+    -   [README_PACKAGE_SCOPE_NOTICE](#readme_package_scope_notice)
+    -   [README_INSTALLATION_SECTION](#readme_installation_section)
+    -   [README_IMPORT_INSTRUCTIONS](#readme_import_instructions)
 
 Arguments:
 
@@ -91,6 +97,31 @@ Arguments:
 -   `devDependency`: Whether or not the package is intended to be installed as a dev dependency.
     -   Default: `false`.
     -   Only observed if `installation` is `true`.
+
+#### `LIBRARY_PACKAGE_README_FOOTER`
+
+Generates simple "footer" contents for a library package README.
+
+Generally recommended for inclusion at the end of the README.
+
+Notes:
+
+-   This is strictly intended as a starter template to remove the need for some handwritten boilerplate.
+    You will still need to fill in semantic and usage information.
+-   This is effectively just a wrapper around lower-level templates.
+    If you want more fine-grained control over the content structure, we recommend using other templates.
+    -   [API_DOCS_LINK_SECTION](#api_docs_link_section)
+    -   [README_PACKAGE_SCRIPTS](#readme_package_scripts)
+    -   [README_CLIENT_REQUIREMENTS_SECTION](#readme_client_requirements_section)
+    -   [README_CONTRIBUTION_GUIDELINES_SECTION](#contribution-guidelines)
+    -   [README_HELP_SECTION](#readme_help_section)
+    -   [README_TRADEMARK_SECTION](#readme_trademark_section)
+
+Arguments:
+
+-   `packageJsonPath`: Relative file path to the library package's `package.json` file.
+    Used for generation of package metadata.
+    -   Default: `./package.json`.
 -   `apiDocs`: Whether or not to include a section pointing to the library's generated API documentation on `fluidframework.com`.
     -   Default: `true`.
     -   Assumes that the package is published, uses [API-Extractor][], and has its documentation published under `fluidframework.com/apis/<package-name>`.
@@ -295,7 +326,7 @@ Arguments:
     -   Default: `./package.json`.
 -   `scopeKind`: (optional) Override the automatic scope detection behavior with an explicit scope kind: `EXPERIMENTAL`, `INTERNAL`, or `PRIVATE`.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:clientRequirements=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -318,15 +349,6 @@ This project may contain Microsoft trademarks or logos for Microsoft projects, p
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
-<!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
 ## Help
 
 Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
@@ -334,15 +356,6 @@ Not finding what you're looking for in this README? Check out [fluidframework.co
 Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
 
 Thank you!
-
-<!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Trademark
 
