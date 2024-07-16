@@ -39,14 +39,14 @@ export {
 	CustomBenchmarkArguments,
 } from "./Configuration";
 export { benchmark, benchmarkMemory, IMemoryTestObject, MemoryTestObjectProps } from "./mocha";
-export { prettyNumber, geometricMean, Stats } from "./ReporterUtilities";
+export { prettyNumber, geometricMean } from "./RunnerUtilities";
 export { BenchmarkReporter } from "./Reporter";
+export { Phase, runBenchmark } from "./runBenchmark";
 export {
 	BenchmarkData,
 	BenchmarkError,
 	BenchmarkResult,
+	Stats,
 	isResultError,
-	Phase,
-	runBenchmark,
-} from "./runBenchmark";
+} from "./ResultTypes";
 export { Timer } from "./timer";
