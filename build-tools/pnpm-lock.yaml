@@ -450,9 +450,6 @@ importers:
       '@types/lodash.isequal':
         specifier: ^4.5.6
         version: 4.5.6
-      '@types/mocha':
-        specifier: ^9.1.1
-        version: 9.1.1
       '@types/node':
         specifier: ^18.18.6
         version: 18.18.6
@@ -471,9 +468,9 @@ importers:
       eslint:
         specifier: ~8.57.0
         version: 8.57.0
-      mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+      vitest:
+        specifier: ^2.0.3
+        version: 2.0.3(@types/node@18.18.6)
 
   packages/bundle-size-tools:
     dependencies:

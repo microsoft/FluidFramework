@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert, describe, it } from "vitest";
 import * as path from "node:path";
 
 import {
