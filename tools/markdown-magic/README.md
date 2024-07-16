@@ -110,12 +110,12 @@ Notes:
     You will still need to fill in semantic and usage information.
 -   This is effectively just a wrapper around lower-level templates.
     If you want more fine-grained control over the content structure, we recommend using other templates.
-    -  [API_DOCS_LINK_SECTION](#api_docs_link_section)
-    -  [README_PACKAGE_SCRIPTS](#readme_package_scripts)
-    -  [README_CLIENT_REQUIREMENTS_SECTION](#readme_client_requirements_section)
-    -  [README_CONTRIBUTION_GUIDELINES_SECTION](#contribution-guidelines)
-    -  [README_HELP_SECTION](#readme_help_section)
-    -  [README_TRADEMARK_SECTION](#readme_trademark_section)
+    -   [API_DOCS_LINK_SECTION](#api_docs_link_section)
+    -   [README_PACKAGE_SCRIPTS](#readme_package_scripts)
+    -   [README_CLIENT_REQUIREMENTS_SECTION](#readme_client_requirements_section)
+    -   [README_CONTRIBUTION_GUIDELINES_SECTION](#contribution-guidelines)
+    -   [README_HELP_SECTION](#readme_help_section)
+    -   [README_TRADEMARK_SECTION](#readme_trademark_section)
 
 Arguments:
 
