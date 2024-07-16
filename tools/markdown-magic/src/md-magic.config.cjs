@@ -132,7 +132,7 @@ const generateTrademarkSection = (headingOptions) =>
  * Will include the section if the property is found, and one of our special paths is found (`/alpha`, `/beta`, or `/legacy`).
  * Can be explicitly disabled by specifying `FALSE`.
  * @param {"TRUE" | "FALSE" | undefined} options.apiDocs - (optional) Whether or not to include a section pointing readers to the package's generated API documentation on <fluidframework.com>.
- * Default: Will be displayed if the package is a member of the `@fluidframework` or `@fluid-experimental` namespaces, of if the package is unscoped (e.g. "fluid-framework").
+ * Default: `TRUE` if the package is a member of the `@fluidframework` or `@fluid-experimental` namespaces, of if the package is unscoped (e.g. "fluid-framework"). `FALSE` otherwise.
  * @param {"TRUE" | "FALSE" | undefined} options.scripts - (optional) Whether or not to include a section enumerating the package.json file's dev scripts.
  * Default: `FALSE`.
  * @param {"TRUE" | "FALSE" | undefined} options.clientRequirements - (optional) Whether or not to include a section listing Fluid Framework's minimum client requirements.
