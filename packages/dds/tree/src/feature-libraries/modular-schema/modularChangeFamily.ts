@@ -96,6 +96,7 @@ import type {
 	ModularChangeset,
 	NodeChangeset,
 	NodeId,
+	TupleBTree,
 } from "./modularChangeTypes.js";
 
 /**
@@ -3037,9 +3038,6 @@ export function newCrossFieldKeyTable(): CrossFieldKeyTable {
 	return newBTree();
 }
 
-export type TupleBTree<K, V> = Brand<BTree<K, V>, "TupleBTree">;
-
-// XXX: Can we use branding to ensure that we never create changesets with B trees with a default comparator?
 function newBTree<K extends unknown[], V>(): TupleBTree<K, V> {
 	return brand(new BTree<K, V>(undefined, compareTuples));
 }

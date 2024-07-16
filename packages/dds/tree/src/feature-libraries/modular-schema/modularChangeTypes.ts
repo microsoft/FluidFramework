@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { BTree } from "@tylerbu/sorted-btree-es6";
 import type {
 	ChangeAtomId,
 	ChangeAtomIdMap,
@@ -15,7 +16,6 @@ import type {
 import type { Brand } from "../../util/index.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
-import type { TupleBTree } from "./modularChangeFamily.js";
 
 /**
  * @internal
@@ -45,6 +45,7 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly refreshers?: ChangeAtomIdMap<TreeChunk>;
 }
 
+export type TupleBTree<K, V> = Brand<BTree<K, V>, "TupleBTree">;
 export type CrossFieldKeyTable = TupleBTree<CrossFieldKeyRange, FieldId>;
 export type CrossFieldKeyRange = [
 	CrossFieldTarget,
