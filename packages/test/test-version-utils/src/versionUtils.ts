@@ -40,6 +40,12 @@ interface InstalledJson {
 	installed: string[];
 }
 
+let cachedInstalledJson: InstalledJson | undefined;
+function writeAndUpdateInstalledJson(data: InstalledJson) {
+	cachedInstalledJson = data;
+	writeFileSync(installedJsonPath, JSON.stringify(data, undefined, 2), { encoding: "utf8" });
+}
+
 async function ensureInstalledJson() {
 	if (existsSync(installedJsonPath)) {
 		return;
@@ -54,7 +60,7 @@ async function ensureInstalledJson() {
 		mkdirSync(baseModulePath, { recursive: true });
 		const data: InstalledJson = { revision, installed: [] };
 
-		writeFileSync(installedJsonPath, JSON.stringify(data, undefined, 2), { encoding: "utf8" });
+		writeAndUpdateInstalledJson(data);
 	} finally {
 		release();
 	}
@@ -68,6 +74,7 @@ function readInstalledJsonNoLock(): InstalledJson {
 		// if the revision doesn't match assume that it doesn't match
 		return { revision, installed: [] };
 	}
+	cachedInstalledJson = installedJson;
 	return installedJson;
 }
 
@@ -81,9 +88,12 @@ async function readInstalledJson(): Promise<InstalledJson> {
 	}
 }
 const readInstalledJsonLazy = new LazyPromise(async () => readInstalledJson());
+async function getInstalledJson(): Promise<InstalledJson> {
+	return cachedInstalledJson ?? (await readInstalledJsonLazy);
+}
 
 const isInstalled = async (version: string) =>
-	(await readInstalledJsonLazy).installed.includes(version);
+	(await getInstalledJson()).installed.includes(version);
 async function addInstalled(version: string) {
 	await ensureInstalledJsonLazy;
 	const release = await lock(installedJsonPath, { retries: { forever: true } });
@@ -91,9 +101,7 @@ async function addInstalled(version: string) {
 		const installedJson = readInstalledJsonNoLock();
 		if (!installedJson.installed.includes(version)) {
 			installedJson.installed.push(version);
-			writeFileSync(installedJsonPath, JSON.stringify(installedJson, undefined, 2), {
-				encoding: "utf8",
-			});
+			writeAndUpdateInstalledJson(installedJson);
 		}
 	} finally {
 		release();
@@ -106,9 +114,7 @@ async function removeInstalled(version: string) {
 	try {
 		const installedJson = readInstalledJsonNoLock();
 		installedJson.installed = installedJson.installed.filter((value) => value !== version);
-		writeFileSync(installedJsonPath, JSON.stringify(installedJson, undefined, 2), {
-			encoding: "utf8",
-		});
+		writeAndUpdateInstalledJson(installedJson);
 	} finally {
 		release();
 	}
