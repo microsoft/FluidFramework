@@ -47,7 +47,7 @@ export interface ModularChangeset extends HasFieldChanges {
 
 export type TupleBTree<K, V> = Brand<BTree<K, V>, "TupleBTree">;
 export type CrossFieldKeyTable = TupleBTree<CrossFieldKeyRange, FieldId>;
-export type CrossFieldKeyRange = [
+export type CrossFieldKeyRange = readonly [
 	CrossFieldTarget,
 	RevisionTag | undefined,
 	ChangesetLocalId,
@@ -58,7 +58,11 @@ export type CrossFieldKeyRange = [
 	number,
 ];
 
-export type CrossFieldKey = [CrossFieldTarget, RevisionTag | undefined, ChangesetLocalId];
+export type CrossFieldKey = readonly [
+	CrossFieldTarget,
+	RevisionTag | undefined,
+	ChangesetLocalId,
+];
 
 export interface FieldId {
 	nodeId: NodeId | undefined;

@@ -60,7 +60,6 @@ import {
 	tryGetFromNestedMap,
 	type NestedMap,
 	type RangeQueryResult,
-	type Brand,
 } from "../../util/index.js";
 import {
 	type TreeChunk,
@@ -3038,12 +3037,12 @@ export function newCrossFieldKeyTable(): CrossFieldKeyTable {
 	return newBTree();
 }
 
-function newBTree<K extends unknown[], V>(): TupleBTree<K, V> {
+function newBTree<K extends readonly unknown[], V>(): TupleBTree<K, V> {
 	return brand(new BTree<K, V>(undefined, compareTuples));
 }
 
 // This assumes that the arrays are the same length.
-function compareTuples(arrayA: unknown[], arrayB: unknown[]): number {
+function compareTuples(arrayA: readonly unknown[], arrayB: readonly unknown[]): number {
 	for (let i = 0; i < arrayA.length; i++) {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const a = arrayA[i] as any;
