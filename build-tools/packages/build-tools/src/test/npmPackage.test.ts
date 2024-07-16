@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, describe, it } from "vitest";
 import * as path from "node:path";
+import { assert, describe, it } from "vitest";
 
 import {
 	PackageJson,

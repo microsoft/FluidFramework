@@ -84,10 +84,12 @@ describe("flub test-only-filter", async () => {
 		const { filtered } = output;
 
 		const names = filtered.map((p) => p.name);
-		["@fluid-private/changelog-generator-wrapper", "@fluid-tools/build-cli", "fluid-framework"].forEach(
-			(item) => {
-				expect(names).toContain(item);
-			},
-		);
+		[
+			"@fluid-private/changelog-generator-wrapper",
+			"@fluid-tools/build-cli",
+			"fluid-framework",
+		].forEach((item) => {
+			expect(names).toContain(item);
+		});
 	});
 });
