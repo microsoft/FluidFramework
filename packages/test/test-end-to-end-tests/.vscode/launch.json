@@ -36,10 +36,10 @@
 				// This reduces the number of source files VSCode needs to load to debug the e2e tests
 				// considerably, which decreases the time it takes to start debugging.
 				// Note: these globs include files under node_modules, which is explicitly desirable when trying to set breakpoints
-				// in legacy FF packages. When the user doesn't select that option, debugLegacyModules will handle excluding node_modules.
+				// in legacy FF packages. When the user doesn't select that option, debugOldFluidModules will handle excluding node_modules.
 				"${workspaceFolder}/lib/**/*.js",
 				"${workspaceFolder:FluidFramework}/**/{dist,lib}/**/!(*.spec,*.test,*.tests).[mc]?js",
-				"${input:debugLegacyModules}",
+				"${input:debugOldFluidModules}",
 			],
 			"presentation": {
 				"group": "e2e-tests",
@@ -74,7 +74,7 @@
 			"outFiles": [
 				"${workspaceFolder}/lib/**/*.js",
 				"${workspaceFolder:FluidFramework}/**/{dist,lib}/**/!(*.spec,*.test,*.tests).[mc]?js",
-				"${input:debugLegacyModules}",
+				"${input:debugOldFluidModules}",
 			],
 			"presentation": {
 				"hidden": true,
@@ -129,7 +129,7 @@
 			"outFiles": [
 				"${workspaceFolder}/lib/**/*.js",
 				"${workspaceFolder:FluidFramework}/**/{dist,lib}/**/!(*.spec,*.test,*.tests).[mc]?js",
-				"${input:debugLegacyModules}",
+				"${input:debugOldFluidModules}",
 			],
 			"presentation": {
 				"group": "e2e-tests",
@@ -164,7 +164,7 @@
 			"outFiles": [
 				"${workspaceFolder}/lib/**/*.js",
 				"${workspaceFolder:FluidFramework}/**/{dist,lib}/**/!(*.spec,*.test,*.tests).[mc]?js",
-				"${input:debugLegacyModules}",
+				"${input:debugOldFluidModules}",
 			],
 			"presentation": {
 				"group": "e2e-tests",
@@ -214,8 +214,8 @@
 			"options": [{ "label": "No", "value": "" }, { "label": "Yes", "value": "1" }],
 		},
 		{
-			"id": "debugLegacyModules",
-			"description": "Load source maps for compat matrix? (slower, but allows breakpoints in node_modules/.legacy TS files)",
+			"id": "debugOldFluidModules",
+			"description": "Load source maps for compat matrix? (slower, but allows breakpoints in compat Fluid packages)",
 			"type": "pickString",
 			"default": "!**/node_modules/**",
 			"options": [
