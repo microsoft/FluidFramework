@@ -58,6 +58,7 @@ describe("`benchmarkCustom` function", () => {
 		});
 	});
 });
+
 /**
  * Waits for the provided duration in milliseconds. See
  * {@link https://javascript.info/settimeout-setinterval | setTimeout}.
