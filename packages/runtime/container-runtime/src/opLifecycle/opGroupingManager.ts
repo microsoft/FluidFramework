@@ -54,7 +54,14 @@ export class OpGroupingManager {
 	 * @param referenceSequenceNumber - reference sequence number
 	 * @returns - IBatch with empty content
 	 */
-	public createEmptyGroupedBatch(referenceSequenceNumber: number): IBatch<[BatchMessage]> {
+	public createEmptyGroupedBatch(
+		resubmittingBatchId: string,
+		referenceSequenceNumber: number,
+	): IBatch<[BatchMessage]> {
+		assert(
+			this.config.groupedBatchingEnabled,
+			"cannot create empty grouped batch when grouped batching is disabled",
+		);
 		const serializedContent = JSON.stringify({
 			type: OpGroupingManager.groupedBatchOp,
 			contents: [],
@@ -64,6 +71,7 @@ export class OpGroupingManager {
 			contentSizeInBytes: 0,
 			messages: [
 				{
+					metadata: { resubmittingBatchId, emptyBatch: true },
 					referenceSequenceNumber,
 					contents: serializedContent,
 				},

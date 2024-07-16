@@ -74,6 +74,7 @@ export class RemoteMessageProcessor {
 		| {
 				messages: InboundSequencedContainerRuntimeMessage[];
 				batchStartCsn: number;
+				sequenceNumber?: number;
 		  }
 		| undefined {
 		let message = remoteMessageCopy;
@@ -109,9 +110,11 @@ export class RemoteMessageProcessor {
 				this.processorBatch.length === 0,
 				"Processor batch should be empty on grouped batch",
 			);
+			const groupedMessages = this.opGroupingManager.ungroupOp(message).map(unpack);
 			return {
-				messages: this.opGroupingManager.ungroupOp(message).map(unpack),
+				messages: groupedMessages,
 				batchStartCsn: message.clientSequenceNumber,
+				sequenceNumber: groupedMessages.length === 0 ? message.sequenceNumber : undefined,
 			};
 		}
 

@@ -1763,6 +1763,7 @@ export class ContainerRuntime
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
 				disablePartialFlush: disablePartialFlush === true,
+				immediateMode: this.flushMode !== FlushMode.Immediate,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
@@ -2419,24 +2420,16 @@ export class ContainerRuntime
 	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
 	 */
 	// TODO: markfields: confirm Local- versus Outbound- ContainerRuntimeMessage typing
-	private parseLocalOpContent(
-		serializedContents?: string,
-	): LocalContainerRuntimeMessage | undefined {
+	private parseLocalOpContent(serializedContents?: string): LocalContainerRuntimeMessage {
 		assert(serializedContents !== undefined, 0x6d5 /* content must be defined */);
-		const message = JSON.parse(serializedContents);
+		const message: LocalContainerRuntimeMessage = JSON.parse(serializedContents);
 		assert(message.type !== undefined, 0x6d6 /* incorrect op content format */);
-		if (message.type === "groupedBatch") {
-			return undefined;
-		}
-		return message as LocalContainerRuntimeMessage;
+		return message;
 	}
 
 	private async applyStashedOp(serializedOpContent: string): Promise<unknown> {
 		// Need to parse from string for back-compat
 		const opContents = this.parseLocalOpContent(serializedOpContent);
-		if (opContents === undefined) {
-			return;
-		}
 		switch (opContents.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:
@@ -2649,22 +2642,37 @@ export class ContainerRuntime
 			}
 			const batchStartCsn = processResult.batchStartCsn;
 			const batch = processResult.messages;
+			const sequenceNumber = processResult.sequenceNumber;
 			const messages: {
 				message: InboundSequencedContainerRuntimeMessage;
 				localOpMetadata: unknown;
+				sequenceNumber?: number;
 			}[] = local
-				? this.pendingStateManager.processPendingLocalBatch(batch, batchStartCsn)
+				? this.pendingStateManager.processPendingLocalBatch(
+						batch,
+						batchStartCsn,
+						sequenceNumber,
+					)
 				: batch.map((message) => ({ message, localOpMetadata: undefined }));
-			messages.forEach(({ message, localOpMetadata }) => {
-				const msg: MessageWithContext = {
-					message,
-					local,
-					modernRuntimeMessage,
-					savedOp,
-					localOpMetadata,
-				};
-				this.ensureNoDataModelChanges(() => this.processCore(msg));
-			});
+			if (messages.length === 0) {
+				assert(sequenceNumber !== undefined, "sequenceNumber must be defined");
+				this.emit("batchBegin", { sequenceNumber });
+				if (!this.hasPendingMessages()) {
+					this.updateDocumentDirtyState(false);
+				}
+				this.emit("batchEnd", undefined, { sequenceNumber });
+			} else {
+				messages.forEach(({ message, localOpMetadata }) => {
+					const msg: MessageWithContext = {
+						message,
+						local,
+						modernRuntimeMessage,
+						savedOp,
+						localOpMetadata,
+					};
+					this.ensureNoDataModelChanges(() => this.processCore(msg));
+				});
+			}
 		} else {
 			const msg: MessageWithContext = {
 				message: messageCopy as InboundSequencedContainerRuntimeMessageOrSystemMessage,
@@ -4145,9 +4153,6 @@ export class ContainerRuntime
 	private reSubmit(message: PendingMessageResubmitData) {
 		// Need to parse from string for back-compat
 		const containerRuntimeMessage = this.parseLocalOpContent(message.content);
-		if (containerRuntimeMessage === undefined) {
-			return;
-		}
 		this.reSubmitCore(containerRuntimeMessage, message.localOpMetadata, message.opMetadata);
 	}
 

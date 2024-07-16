@@ -13,6 +13,8 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
+type BatchTrackerMessage = Pick<ISequencedDocumentMessage, "sequenceNumber">;
+
 export class BatchTracker {
 	private readonly logger: ITelemetryLoggerExt;
 	private startBatchSequenceNumber: number | undefined;
@@ -28,7 +30,7 @@ export class BatchTracker {
 	) {
 		this.logger = createChildLogger({ logger, namespace: "Batching" });
 
-		this.batchEventEmitter.on("batchBegin", (message: ISequencedDocumentMessage) => {
+		this.batchEventEmitter.on("batchBegin", (message: BatchTrackerMessage) => {
 			this.startBatchSequenceNumber = message.sequenceNumber;
 			this.batchProcessingStartTimeStamp = dateTimeProvider();
 			this.trackedBatchCount++;
@@ -36,7 +38,7 @@ export class BatchTracker {
 
 		this.batchEventEmitter.on(
 			"batchEnd",
-			(error: any | undefined, message: ISequencedDocumentMessage) => {
+			(error: any | undefined, message: BatchTrackerMessage) => {
 				assert(
 					this.startBatchSequenceNumber !== undefined &&
 						this.batchProcessingStartTimeStamp !== undefined,

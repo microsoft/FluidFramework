@@ -34,6 +34,7 @@ export interface IOutboxConfig {
 	// The maximum size of a batch that we can send over the wire.
 	readonly maxBatchSizeInBytes: number;
 	readonly disablePartialFlush: boolean;
+	readonly immediateMode?: boolean;
 }
 
 export interface IOutboxParameters {
@@ -277,11 +278,14 @@ export class Outbox {
 	) {
 		let clientSequenceNumber: number | undefined;
 		if (mainBatch.empty) {
-			if (resubmittingBatchId && this.params.shouldSend()) {
+			if (resubmittingBatchId && this.params.config.immediateMode === true) {
 				const emptyGroupedBatch = this.params.groupingManager.createEmptyGroupedBatch(
+					resubmittingBatchId,
 					this.params.getCurrentSequenceNumbers().referenceSequenceNumber ?? 0,
 				);
-				clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
+				if (this.params.shouldSend()) {
+					clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
+				}
 				this.params.pendingStateManager.onFlushBatch(
 					emptyGroupedBatch.messages,
 					clientSequenceNumber,
@@ -298,6 +302,7 @@ export class Outbox {
 		disableGroupedBatching: boolean = false,
 		resubmittingBatchId?: BatchId,
 	) {
+		let clientSequenceNumber: number | undefined;
 		if (batchManager.empty) {
 			return;
 		}
@@ -314,7 +319,6 @@ export class Outbox {
 			return;
 		}
 
-		let clientSequenceNumber: number | undefined;
 		// Did we disconnect? (i.e. is shouldSend false?)
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.

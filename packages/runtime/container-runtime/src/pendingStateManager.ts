@@ -181,16 +181,12 @@ export class PendingStateManager implements IDisposable {
 		// be available when the container is not attached. Therefore, no filtering is needed.
 		const newSavedOps = [...this.savedOps].filter((message) => {
 			if (message.sequenceNumber === undefined) {
-				const messageContent = JSON.parse(message.content);
 				assert(
-					messageContent.type &&
-						messageContent.type === "groupedBatch" &&
-						messageContent.contents?.length === 0,
-					"saved op should already have a sequence number or be an empty groupedBatch",
+					message.sequenceNumber !== undefined,
+					0x97c /* saved op should already have a sequence number */,
 				);
 			}
-
-			return (message.sequenceNumber ?? Infinity) > (snapshotSequenceNumber ?? 0);
+			return message.sequenceNumber > (snapshotSequenceNumber ?? 0);
 		});
 		this.pendingMessages.toArray().forEach((message) => {
 			if (
@@ -280,6 +276,10 @@ export class PendingStateManager implements IDisposable {
 			}
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const nextMessage = this.initialMessages.shift()!;
+			// Ignore emptyBatch messages when applying stashed ops
+			if (nextMessage.opMetadata?.emptyBatch === true) {
+				continue;
+			}
 			try {
 				// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
 				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
@@ -304,10 +304,12 @@ export class PendingStateManager implements IDisposable {
 	 * that the batch information is correct.
 	 * @param batch - The batch that is being processed.
 	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch
+	 * @param sequenceNumber - The sequence number of the batch message.
 	 */
 	public processPendingLocalBatch(
 		batch: InboundSequencedContainerRuntimeMessage[],
 		batchStartCsn: number,
+		sequenceNumber?: number,
 	): {
 		message: InboundSequencedContainerRuntimeMessage;
 		localOpMetadata: unknown;
@@ -315,6 +317,8 @@ export class PendingStateManager implements IDisposable {
 		if (batch.length === 0) {
 			const pendingMessage = this.pendingMessages.peekFront();
 			assert(pendingMessage !== undefined, "No pending message found for this remote message");
+				assert(pendingMessage.opMetadata?.emptyBatch === true, "Expected empty batch");
+
 			if (pendingMessage.batchIdContext.batchStartCsn !== batchStartCsn) {
 				this.stateHandler.close(
 					DataProcessingError.create(
@@ -328,6 +332,7 @@ export class PendingStateManager implements IDisposable {
 				);
 				return [];
 			}
+			pendingMessage.sequenceNumber = sequenceNumber;
 			this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
 
 			this.pendingMessages.shift();
@@ -536,6 +541,10 @@ export class PendingStateManager implements IDisposable {
 					pendingMessage.batchIdContext.clientId,
 					pendingMessage.batchIdContext.batchStartCsn,
 				);
+			// Ignore emptyBatch messages when resubmitting
+			if (pendingMessage.opMetadata?.emptyBatch === true) {
+				continue;
+			}
 
 			/**
 			 * We must preserve the distinct batches on resubmit.
