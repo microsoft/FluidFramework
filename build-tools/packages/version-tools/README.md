@@ -238,7 +238,7 @@ PR here for an example: <https://github.com/microsoft/FluidFramework/pull/12155>
 Due to https://github.com/oclif/core/issues/630, the `build:manifest` node script uses an experimental flag. This can be
 removed once we have upgraded to Node 16 in the repo.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:apiDocs=FALSE&clientRequirements=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:clientRequirements=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

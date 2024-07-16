@@ -93,7 +93,7 @@ be the same as browser. (Both report sets use the same target files.)
 Package scripts `check:exports:esm:indexBrowser:legacy` and `check:exports:esm:indexNode:legacy` are not
 verifying actual exports, but the consistency of tags within the legacy API set.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:apiDocs=FALSE&clientRequirements=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:clientRequirements=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

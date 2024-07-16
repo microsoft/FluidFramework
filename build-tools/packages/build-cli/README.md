@@ -90,7 +90,7 @@ For client that is:
 
 This approach can be used with `flub generate typetests` to ensure that the `--level` configuration from the scripts is included, and can be done from a JavaScript Debug console to debug, though breakpoints will need to be set in the `.js` files in `node_modules` (for example in `node_modules/.pnpm/file+build-tools+packages+build-cli_@types+node@18.19.1/node_modules/@fluid-tools/build-cli/lib/commands/generate/typetests.js`).
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:apiDocs=FALSE&clientRequirements=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:clientRequirements=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
