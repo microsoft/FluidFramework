@@ -12,7 +12,7 @@ module.exports = {
 	"fgrep": ["@Benchmark", "@MemoryUsage"],
 	"node-option": ["expose-gc", "gc-global", "unhandled-rejections=strict"], // without leading "--"
 	"recursive": true,
-	"reporter": "@fluid-tools/benchmark/dist/MochaMemoryTestReporter.js",
+	"reporter": "@fluid-tools/benchmark/dist/MochaReporter.js",
 	"reporterOptions": ["reportDir=.memoryTestsOutput/"],
 	"require": ["node_modules/@fluid-internal/mocha-test-setup"],
 	"spec": ["dist/test/memory/**/*.spec.*js", "--perfMode"],
