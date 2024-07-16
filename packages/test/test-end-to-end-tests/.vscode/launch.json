@@ -237,10 +237,13 @@
 			"description": "Which r11s endpoint should be used?",
 			"type": "pickString",
 			"default": "frs",
-			"options": ["frs", {
-				"label": "docker (local service must be started separately prior to debugging)",
-				"value": "docker",
-			}],
-		}
+			"options": [
+				"frs",
+				{
+					"label": "docker (local service must be started separately prior to debugging)",
+					"value": "docker",
+				},
+			],
+		},
 	],
 }
