@@ -127,7 +127,7 @@ const getScopeKindFromPackage = (packageName) => {
  */
 const shouldLinkToApiDocs = (packageName) => {
 	const scope = getScopeKindFromPackage(packageName);
-	return scope === "FRAMEWORK" || scope === "EXPERIMENTAL" || scope === "";
+	return scope === "FRAMEWORK" || scope === "EXPERIMENTAL" || packageName === "fluid-framework";
 };
 
 /**
