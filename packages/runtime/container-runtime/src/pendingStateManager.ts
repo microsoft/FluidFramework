@@ -317,7 +317,7 @@ export class PendingStateManager implements IDisposable {
 		if (batch.length === 0) {
 			const pendingMessage = this.pendingMessages.peekFront();
 			assert(pendingMessage !== undefined, "No pending message found for this remote message");
-				assert(pendingMessage.opMetadata?.emptyBatch === true, "Expected empty batch");
+			assert(pendingMessage.opMetadata?.emptyBatch === true, "Expected empty batch");
 
 			if (pendingMessage.batchIdContext.batchStartCsn !== batchStartCsn) {
 				this.stateHandler.close(
