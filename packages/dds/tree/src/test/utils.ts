@@ -143,7 +143,11 @@ import {
 } from "../shared-tree/schematizingTreeView.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
-import type { ImplicitFieldSchema, TreeViewConfiguration } from "../simple-tree/index.js";
+import {
+	type ImplicitFieldSchema,
+	type TreeViewConfiguration,
+	SchemaFactory,
+} from "../simple-tree/index.js";
 import { type JsonCompatible, type Mutable, nestedMapFromFlatList } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
@@ -764,6 +768,23 @@ export function flexTreeFromForest<TRoot extends FlexFieldSchema>(
 	const view = new CheckoutFlexTreeView(branch, schema, manager);
 	return view.flexTree;
 }
+
+const sf = new SchemaFactory(undefined);
+
+export const numberArray = sf.array("array", sf.number);
+export const stringArray = sf.array("array", sf.string);
+
+const jsonPrimitiveSchema = [sf.null, sf.boolean, sf.number, sf.string] as const;
+export const JsonObject = sf.mapRecursive("object", [
+	() => JsonObject,
+	() => JsonArray,
+	...jsonPrimitiveSchema,
+]);
+export const JsonArray = sf.arrayRecursive("array", [
+	JsonObject,
+	() => JsonArray,
+	...jsonPrimitiveSchema,
+]);
 
 export const jsonSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence, {
 	scope: "JsonSequenceRoot",
