@@ -589,3 +589,60 @@ export function versionHasMovedSparsedMatrix(version: string): boolean {
 		version >= "2.0.0-internal.2.0.0" || (!version.includes("internal") && version >= "2.0.0")
 	);
 }
+
+/**
+ * @internal
+ */
+export function versionToComparisonNumber(version: string): number {
+	if (version.startsWith("0.")) {
+		return 0;
+	}
+	if (version.startsWith("1.")) {
+		return 1;
+	}
+	if (version.startsWith("2.0.0-internal.1")) {
+		return 2;
+	}
+	if (version.startsWith("2.0.0-internal.2")) {
+		return 3;
+	}
+	if (version.startsWith("2.0.0-internal.3")) {
+		return 4;
+	}
+	if (version.startsWith("2.0.0-internal.4")) {
+		return 5;
+	}
+	if (version.startsWith("2.0.0-internal.5")) {
+		return 6;
+	}
+	if (version.startsWith("2.0.0-internal.6")) {
+		return 7;
+	}
+	if (version.startsWith("2.0.0-internal.7")) {
+		return 8;
+	}
+	if (version.startsWith("2.0.0-internal.8")) {
+		return 9;
+	}
+	if (version.startsWith("2.0.0-rc.1")) {
+		return 10;
+	}
+	if (version.startsWith("2.0.0-rc.2")) {
+		return 11;
+	}
+	if (version.startsWith("2.0.0-rc.3")) {
+		return 12;
+	}
+	if (version.startsWith("2.0.0-rc.4")) {
+		return 13;
+	}
+	if (version.startsWith("2.0.0-rc.5")) {
+		return 14;
+	}
+
+	const parsed = semver.parse(version);
+	if (!parsed) {
+		throw new Error(`Invalid version: ${version}`);
+	}
+	return parsed.major * 1_000_000 + parsed.minor * 1000 + parsed.patch + 15;
+}
