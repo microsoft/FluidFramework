@@ -771,8 +771,8 @@ export function flexTreeFromForest<TRoot extends FlexFieldSchema>(
 
 const sf = new SchemaFactory(undefined);
 
-export const numberArray = sf.array("array", sf.number);
-export const stringArray = sf.array("array", sf.string);
+export const NumberArray = sf.array("array", sf.number);
+export const StringArray = sf.array("array", sf.string);
 
 const jsonPrimitiveSchema = [sf.null, sf.boolean, sf.number, sf.string] as const;
 export const JsonObject = sf.mapRecursive("object", [
