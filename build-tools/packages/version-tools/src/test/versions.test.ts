@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, expect } from "chai";
 import * as semver from "semver";
+import { assert, describe, expect, it } from "vitest";
 
 import { getVersionRange } from "../internalVersionScheme";
 import { getIsLatest, getSimpleVersion } from "../versions";
@@ -136,7 +136,7 @@ describe("getIsLatest", () => {
 		"client_v0.59.1001",
 	];
 
-	it("includeInternalVersions === true", () => {
+	describe("includeInternalVersions === true", () => {
 		// By default, getIsLatest filters out Fluid internal versions. This can be changed with an argument, so these
 		// tests check that isLatest returns
 		it("2.0.0-internal.1.0.0 is latest", () => {
@@ -148,7 +148,7 @@ describe("getIsLatest", () => {
 		});
 
 		it("2.0.0-internal.1.0.1.12345 is not latest", () => {
-			assert.isTrue(getIsLatest("client", "2.0.0-internal.1.0.1.12345", post1_tags, true));
+			assert.isFalse(getIsLatest("client", "2.0.0-internal.1.0.1.12345", post1_tags, true));
 		});
 
 		it("pre 1.0 builds are not latest", () => {
