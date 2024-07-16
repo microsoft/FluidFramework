@@ -15,10 +15,11 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import commander from "commander";
 import ps from "ps-node";
 
+import { smokeTest } from "./stressSmoke.js";
 import { ILoadTestConfig } from "./testConfigFile.js";
 import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils.js";
 
-interface ITestUserConfig {
+export interface ITestUserConfig {
 	/* Credentials' key/value description:
 	 * Key    : Username for the client
 	 * Value  : Password specific to that username
@@ -26,7 +27,7 @@ interface ITestUserConfig {
 	credentials: Record<string, string>;
 }
 
-async function getTestUsers(credFile?: string) {
+function getTestUsers(credFile?: string) {
 	if (credFile === undefined || credFile.length === 0) {
 		return undefined;
 	}
@@ -45,7 +46,7 @@ async function getTestUsers(credFile?: string) {
 const createLoginEnv = (userName: string, password: string) =>
 	`{"${userName}": "${password}"}`;
 
-async function main() {
+async function getTestConfig() {
 	commander
 		.version("0.0.1")
 		.requiredOption("-d, --driver <driver>", "Which test driver info to use", "odsp")
@@ -91,15 +92,14 @@ async function main() {
 
 	const profile = getProfile(profileName);
 
-	if (log !== undefined) {
-		process.env.DEBUG = log;
-	}
-
-	const testUsers = await getTestUsers(credFile);
+	const testUsers = getTestUsers(credFile);
 
 	const testDriver = await createTestDriver(driver, endpoint, seed, undefined, browserAuth);
 
-	await orchestratorProcess(testDriver, profile, {
+	return {
+		testDriver,
+		profile,
+		log,
 		testId,
 		debug,
 		verbose,
@@ -108,7 +108,7 @@ async function main() {
 		createTestId,
 		testUsers,
 		profileName,
-	});
+	};
 }
 
 /**
@@ -241,9 +241,11 @@ async function orchestratorProcess(
 				return new Promise((resolve) => runnerProcess.once("close", resolve));
 			}),
 		);
-	} finally {
-		await safeExit(0, url);
+	} catch {
+		// Swallow all errors.  A previous implementation exited the process here with code 0.
 	}
+
+	return url;
 }
 
 /**
@@ -331,6 +333,41 @@ function setupTelemetry(
 		stdErrLine++;
 	});
 }
+
+const main = async () => {
+	const {
+		testDriver,
+		profile,
+		log,
+		testId,
+		debug,
+		verbose,
+		seed,
+		enableMetrics,
+		createTestId,
+		testUsers,
+		profileName,
+	} = await getTestConfig();
+
+	if (log !== undefined) {
+		process.env.DEBUG = log;
+	}
+
+	await smokeTest(testDriver, profile, { verbose, testUsers, profileName });
+	console.log("Smoke test complete!");
+	const url = await orchestratorProcess(testDriver, profile, {
+		testId,
+		debug,
+		verbose,
+		seed,
+		enableMetrics,
+		createTestId,
+		testUsers,
+		profileName,
+	});
+	console.log("Stress test complete!");
+	await safeExit(0, url);
+};
 
 main().catch((error) => {
 	console.error(error);

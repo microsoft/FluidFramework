@@ -44,6 +44,10 @@ import { pkgName, pkgVersion } from "./packageVersion.js";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile.js";
 
 const packageName = `${pkgName}@${pkgVersion}`;
+const codeDetails: IFluidCodeDetails = {
+	package: packageName,
+	config: {},
+};
 
 class FileLogger implements ITelemetryBufferedLogger {
 	private static readonly loggerP = new LazyPromise<FileLogger>(async () => {
@@ -132,11 +136,6 @@ class FileLogger implements ITelemetryBufferedLogger {
 }
 
 export const createLogger = FileLogger.createLogger.bind(FileLogger);
-
-const codeDetails: IFluidCodeDetails = {
-	package: packageName,
-	config: {},
-};
 
 export const createCodeLoader = (options: IContainerRuntimeOptions) =>
 	new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
