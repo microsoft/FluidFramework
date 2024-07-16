@@ -5,7 +5,7 @@
 
 import { Test } from "mocha";
 
-import type { BenchmarkDescription, MochaExclusiveOptions } from "../Configuration";
+import type { BenchmarkDescription, MochaExclusiveOptions, Titled } from "../Configuration";
 import { timer } from "../timer";
 import type { BenchmarkData } from "../ResultTypes";
 
@@ -14,7 +14,7 @@ import type { BenchmarkData } from "../ResultTypes";
  *
  * @public
  */
-export interface CustomBenchmarkOptions extends BenchmarkDescription, MochaExclusiveOptions {
+export interface CustomBenchmarkOptions extends Titled, BenchmarkDescription, MochaExclusiveOptions {
 	/**
 	 * Title about benchmark option
 	 */
