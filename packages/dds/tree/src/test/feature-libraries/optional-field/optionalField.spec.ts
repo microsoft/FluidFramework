@@ -58,7 +58,7 @@ const nodeChange2 = TestNodeId.create(nodeId2, TestChange.mint([], 2));
 const failCrossFieldManager: CrossFieldManager = {
 	get: () => assert.fail("Should query CrossFieldManager"),
 	set: () => assert.fail("Should not modify CrossFieldManager"),
-	moveNode: () => assert.fail("Should not modify CrossFieldManager"),
+	onMoveIn: () => assert.fail("Should not modify CrossFieldManager"),
 	moveKey: () => assert.fail("Should not modify CrossFieldManager"),
 };
 

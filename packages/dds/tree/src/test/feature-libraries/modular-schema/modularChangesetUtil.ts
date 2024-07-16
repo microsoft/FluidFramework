@@ -223,7 +223,7 @@ const dummyCrossFieldManager: CrossFieldManager = {
 		length: count,
 	}),
 	set: () => fail("Not supported"),
-	moveNode: () => fail("Not supported"),
+	onMoveIn: () => fail("Not supported"),
 	moveKey: () => fail("Not supported"),
 };
 

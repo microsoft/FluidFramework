@@ -718,7 +718,7 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			setInCrossFieldMap(getMap(target), revision, id, count, value);
 		},
 
-		moveNode: () => {},
+		onMoveIn: () => {},
 		moveKey: () => {},
 
 		reset: () => {

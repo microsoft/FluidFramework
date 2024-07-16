@@ -47,7 +47,7 @@ const nodeChange2: NodeId = { localId: brand(2) };
 const failCrossFieldManager: CrossFieldManager = {
 	get: () => assert.fail("Should not query CrossFieldManager"),
 	set: () => assert.fail("Should not modify CrossFieldManager"),
-	moveNode: () => assert.fail("Should not modify CrossFieldManager"),
+	onMoveIn: () => assert.fail("Should not modify CrossFieldManager"),
 	moveKey: () => assert.fail("Should not modify CrossFieldManager"),
 };
 

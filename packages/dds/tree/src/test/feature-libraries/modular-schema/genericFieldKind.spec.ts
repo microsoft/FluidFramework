@@ -49,7 +49,7 @@ const revisionMetadata: RebaseRevisionMetadata = {
 const crossFieldManager: CrossFieldManager = {
 	get: unexpectedDelegate,
 	set: unexpectedDelegate,
-	moveNode: unexpectedDelegate,
+	onMoveIn: unexpectedDelegate,
 	moveKey: unexpectedDelegate,
 };
 

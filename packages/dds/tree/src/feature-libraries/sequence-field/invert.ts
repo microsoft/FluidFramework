@@ -293,7 +293,7 @@ function applyMovedChanges(
 	}
 
 	if (entry.value !== undefined) {
-		manager.moveNode(entry.value);
+		manager.onMoveIn(entry.value);
 		return [withNodeChange<CellMark<MoveOut>, MoveOut>(mark, entry.value)];
 	}
 

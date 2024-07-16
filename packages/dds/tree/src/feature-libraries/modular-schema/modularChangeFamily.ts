@@ -2244,7 +2244,7 @@ abstract class CrossFieldManagerI<T> implements CrossFieldManager {
 		return getFirstFromCrossFieldMap(this.getMap(target), revision, id, count);
 	}
 
-	public abstract moveNode(id: NodeId): void;
+	public abstract onMoveIn(id: NodeId): void;
 
 	public abstract moveKey(
 		target: CrossFieldTarget,
@@ -2276,7 +2276,7 @@ class InvertManager extends CrossFieldManagerI<FieldChange> {
 		super(table, field, allowInval);
 	}
 
-	public override moveNode(id: ChangeAtomId): void {
+	public override onMoveIn(id: ChangeAtomId): void {
 		setInChangeAtomIdMap(this.table.invertedNodeToParent, id, this.fieldId);
 	}
 
@@ -2352,7 +2352,7 @@ class RebaseManager extends CrossFieldManagerI<FieldChange> {
 		super.set(target, revision, id, count, newValue, invalidateDependents);
 	}
 
-	public override moveNode(id: ChangeAtomId): void {
+	public override onMoveIn(id: ChangeAtomId): void {
 		setInChangeAtomIdMap(this.table.rebasedNodeToParent, id, this.fieldId);
 	}
 
@@ -2431,7 +2431,7 @@ class ComposeManager extends CrossFieldManagerI<FieldChange> {
 		super.set(target, revision, id, count, newValue, invalidateDependents);
 	}
 
-	public override moveNode(id: ChangeAtomId): void {
+	public override onMoveIn(id: ChangeAtomId): void {
 		throw new Error("Method not implemented.");
 	}
 	public override moveKey(
