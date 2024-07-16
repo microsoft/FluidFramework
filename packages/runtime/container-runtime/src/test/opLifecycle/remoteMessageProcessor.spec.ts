@@ -306,7 +306,7 @@ describe("RemoteMessageProcessor", () => {
 		];
 		assert.deepStrictEqual(
 			result,
-			{ messages: expected, batchStartCsn: 12 },
+			{ messages: expected, batchStartCsn: 12, sequenceNumber: undefined },
 			"unexpected processing of groupedBatch",
 		);
 	});

@@ -335,7 +335,6 @@ export class PendingStateManager implements IDisposable {
 				return [];
 			}
 			pendingMessage.sequenceNumber = sequenceNumber;
-			this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
 
 			this.pendingMessages.shift();
 			return [];

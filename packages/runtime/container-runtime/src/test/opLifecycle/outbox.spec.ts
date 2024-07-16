@@ -344,7 +344,6 @@ describe("Outbox", () => {
 				["batchId-A", undefined], // Flush 1 - Main
 				["batchId-B"], // Flush 2 - Main
 				["batchId-C", undefined], // Flush 3 - Blob Attach
-				[undefined], // Flush 3 - Blob Attach (empty main batch case)
 				[undefined], // Flush 4 - Main (no batch ID given)
 			],
 			"Submitted batches have incorrect batch ID",
@@ -359,7 +358,6 @@ describe("Outbox", () => {
 				"batchId-B",
 				"batchId-C",
 				undefined, // second message in batch
-				undefined, // no batchId given
 				undefined, // no batchId given
 			],
 			"Pending messages have incorrect batch ID",
