@@ -84,7 +84,7 @@ jobs:
         workingDirectory: ${{ parameters.buildDirectory }}
         script: |
           mkdir upload_release_reports
-          flub release report-unreleased --version $(SetVersion.version) --fullReportFilePath generate_release_reports/manifest.full.json --outDir upload_release_reports --branchName '$(Build.SourceBranch)'
+          flub release report-unreleased --version $(stageDependencies.build.build.outputs['SetVersion.version']) --fullReportFilePath generate_release_reports/manifest.full.json --outDir upload_release_reports --branchName '$(Build.SourceBranch)'
 
     - task: CopyFiles@2
       displayName: Copy release reports
@@ -106,3 +106,10 @@ jobs:
           done
           # Delete generate_release_reports and upload_release_reports folder
           rm -r generate_release_reports upload_release_reports
+
+    - task: 1ES.PublishPipelineArtifact@1
+      displayName: Publish Artifact - release_reports
+      inputs:
+        targetPath: $(Build.ArtifactStagingDirectory)/release_reports
+        artifactName: release_reports
+        publishLocation: pipeline
