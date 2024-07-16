@@ -277,10 +277,12 @@ export class PendingStateManager implements IDisposable {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const nextMessage = this.initialMessages.shift()!;
 			// Ignore emptyBatch messages when applying stashed ops
-			if (nextMessage.opMetadata?.emptyBatch === true) {
-				continue;
-			}
 			try {
+				if (nextMessage.opMetadata?.emptyBatch === true) {
+					patchBatchIdContext(nextMessage); // Back compat
+					this.pendingMessages.push(nextMessage);
+					continue;
+				}
 				// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
 				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
 				if (!this.stateHandler.isAttached()) {
