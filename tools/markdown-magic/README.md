@@ -82,9 +82,9 @@ Notes:
     You will still need to fill in semantic and usage information.
 -   This is effectively just a wrapper around lower-level templates.
     If you want more fine-grained control over the content structure, we recommend using other templates.
-    -  [README_PACKAGE_SCOPE_NOTICE](#readme_package_scope_notice)
-    -  [README_INSTALLATION_SECTION](#readme_installation_section)
-    -  [README_IMPORT_INSTRUCTIONS](#readme_import_instructions)
+    -   [README_PACKAGE_SCOPE_NOTICE](#readme_package_scope_notice)
+    -   [README_INSTALLATION_SECTION](#readme_installation_section)
+    -   [README_IMPORT_INSTRUCTIONS](#readme_import_instructions)
 
 Arguments:
 
@@ -116,6 +116,7 @@ Notes:
     -  [README_CONTRIBUTION_GUIDELINES_SECTION](#contribution-guidelines)
     -  [README_HELP_SECTION](#readme_help_section)
     -  [README_TRADEMARK_SECTION](#readme_trademark_section)
+
 Arguments:
 
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
