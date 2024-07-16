@@ -26,45 +26,46 @@ interface IDataObjectGridToolbarAddItemPickerProps {
 	toolbarOptions: IToolbarOption[];
 }
 
-const DataObjectGridToolbarAddItemPicker: React.FC<IDataObjectGridToolbarAddItemPickerProps> =
-	(props: React.PropsWithChildren<IDataObjectGridToolbarAddItemPickerProps>) => {
-		const { toolbarOptions } = props;
-		const [open, setOpen] = React.useState<boolean>(false);
+const DataObjectGridToolbarAddItemPicker: React.FC<
+	IDataObjectGridToolbarAddItemPickerProps
+> = (props: React.PropsWithChildren<IDataObjectGridToolbarAddItemPickerProps>) => {
+	const { toolbarOptions } = props;
+	const [open, setOpen] = React.useState<boolean>(false);
 
-		const itemsButton = (
-			<Button
-				icon={open ? <ChevronUpFilled /> : <ChevronDownFilled />}
-				className="data-grid-toolbar-top-level-button"
-				onClick={() => setOpen(!open)}
-			>
-				{"Add Items"}
-			</Button>
-		);
-		const itemButtonList = toolbarOptions.map((toolbarOption) => (
-			<Button
-				className="data-grid-toolbar-option-button"
-				key={`toolbarButton-${toolbarOption.key}`}
-				icon={iconMap[toolbarOption.fabricIconName]}
-				onClick={() => {
-					toolbarOption.create();
-					setOpen(false);
-				}}
-			>
-				{toolbarOption.friendlyName}
-			</Button>
-		));
+	const itemsButton = (
+		<Button
+			icon={open ? <ChevronUpFilled /> : <ChevronDownFilled />}
+			className="data-grid-toolbar-top-level-button"
+			onClick={() => setOpen(!open)}
+		>
+			{"Add Items"}
+		</Button>
+	);
+	const itemButtonList = toolbarOptions.map((toolbarOption) => (
+		<Button
+			className="data-grid-toolbar-option-button"
+			key={`toolbarButton-${toolbarOption.key}`}
+			icon={iconMap[toolbarOption.fabricIconName]}
+			onClick={() => {
+				toolbarOption.create();
+				setOpen(false);
+			}}
+		>
+			{toolbarOption.friendlyName}
+		</Button>
+	));
 
-		return (
-			<Collapsible
-				open={open}
-				trigger={itemsButton}
-				className="data-grid-toolbar-tool"
-				openedClassName="data-grid-toolbar-tool"
-			>
-				{itemButtonList}
-			</Collapsible>
-		);
-	};
+	return (
+		<Collapsible
+			open={open}
+			trigger={itemsButton}
+			className="data-grid-toolbar-tool"
+			openedClassName="data-grid-toolbar-tool"
+		>
+			{itemButtonList}
+		</Collapsible>
+	);
+};
 
 interface IDataObjectGridToolbarProps {
 	editable: boolean;

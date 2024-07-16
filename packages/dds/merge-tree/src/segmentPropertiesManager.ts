@@ -9,7 +9,6 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 import { IMergeTreeAnnotateMsg } from "./ops.js";
-// eslint-disable-next-line import/no-deprecated
 import { MapLike, PropertySet, createMap } from "./properties.js";
 
 /**
@@ -17,10 +16,14 @@ import { MapLike, PropertySet, createMap } from "./properties.js";
  * @alpha
  */
 export enum PropertiesRollback {
-	/** Not in a rollback */
+	/**
+	 * Not in a rollback
+	 */
 	None,
 
-	/** Rollback */
+	/**
+	 * Rollback
+	 */
 	Rollback,
 }
 
@@ -31,24 +34,22 @@ export enum PropertiesRollback {
 export class PropertiesManager {
 	private pendingKeyUpdateCount: MapLike<number> | undefined;
 
-	public ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg) {
+	public ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg): void {
 		this.decrementPendingCounts(annotateOp.props);
 	}
 
-	private decrementPendingCounts(props: PropertySet) {
+	private decrementPendingCounts(props: PropertySet): void {
 		for (const [key, value] of Object.entries(props)) {
-			if (value !== undefined) {
-				if (this.pendingKeyUpdateCount?.[key] !== undefined) {
-					assert(
-						// TODO Non null asserting, why is this not null?
-						this.pendingKeyUpdateCount[key]! > 0,
-						0x05c /* "Trying to update more annotate props than do exist!" */,
-					);
-					this.pendingKeyUpdateCount[key]--;
-					if (this.pendingKeyUpdateCount?.[key] === 0) {
-						// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-						delete this.pendingKeyUpdateCount[key];
-					}
+			if (value !== undefined && this.pendingKeyUpdateCount?.[key] !== undefined) {
+				assert(
+					// TODO Non null asserting, why is this not null?
+					this.pendingKeyUpdateCount[key]! > 0,
+					0x05c /* "Trying to update more annotate props than do exist!" */,
+				);
+				this.pendingKeyUpdateCount[key]--;
+				if (this.pendingKeyUpdateCount?.[key] === 0) {
+					// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+					delete this.pendingKeyUpdateCount[key];
 				}
 			}
 		}
@@ -61,7 +62,6 @@ export class PropertiesManager {
 		collaborating: boolean = false,
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	): PropertySet {
-		// eslint-disable-next-line import/no-deprecated
 		this.pendingKeyUpdateCount ??= createMap<number>();
 
 		// Clean up counts for rolled back edits before modifying oldProps
@@ -98,13 +98,15 @@ export class PropertiesManager {
 				}
 			}
 
-			const previousValue: any = oldProps[key];
+			const previousValue: unknown = oldProps[key];
 			// The delta should be null if undefined, as that's how we encode delete
+			// eslint-disable-next-line unicorn/no-null
 			deltas[key] = previousValue === undefined ? null : previousValue;
 			if (newValue === null) {
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 				delete oldProps[key];
 			} else {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				oldProps[key] = newValue;
 			}
 		}
@@ -118,15 +120,15 @@ export class PropertiesManager {
 		newManager: PropertiesManager,
 	): PropertySet | undefined {
 		if (oldProps) {
-			// eslint-disable-next-line no-param-reassign, import/no-deprecated
-			newProps ??= createMap<any>();
+			// eslint-disable-next-line no-param-reassign
+			newProps ??= createMap<unknown>();
 			if (!newManager) {
 				throw new Error("Must provide new PropertyManager");
 			}
 			for (const key of Object.keys(oldProps)) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				newProps[key] = oldProps[key];
 			}
-			// eslint-disable-next-line import/no-deprecated
 			newManager.pendingKeyUpdateCount = createMap<number>();
 			for (const key of Object.keys(this.pendingKeyUpdateCount!)) {
 				// TODO Non null asserting, why is this not null?
@@ -137,9 +139,9 @@ export class PropertiesManager {
 	}
 
 	/**
-	 * @returns whether all valid (i.e. defined) entries of the property bag are pending
+	 * Determines if all of the defined properties in a given property set are pending.
 	 */
-	public hasPendingProperties(props: PropertySet) {
+	public hasPendingProperties(props: PropertySet): boolean {
 		for (const [key, value] of Object.entries(props)) {
 			if (value !== undefined && this.pendingKeyUpdateCount?.[key] === undefined) {
 				return false;

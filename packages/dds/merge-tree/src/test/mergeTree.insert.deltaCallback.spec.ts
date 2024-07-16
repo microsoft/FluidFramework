@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	LocalClientId,
@@ -45,7 +45,7 @@ describe("MergeTree", () => {
 		it("Insert starting text", () => {
 			let eventCalled: number = 0;
 
-			mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs) => {
+			mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs): void => {
 				eventCalled++;
 			};
 
@@ -67,7 +67,7 @@ describe("MergeTree", () => {
 			const textLength = mergeTree.getLength(currentSequenceNumber, localClientId);
 			let eventCalled: number = 0;
 
-			mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs) => {
+			mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs): void => {
 				eventCalled++;
 			};
 
