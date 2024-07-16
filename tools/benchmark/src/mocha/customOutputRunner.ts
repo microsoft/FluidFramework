@@ -14,7 +14,10 @@ import type { BenchmarkData } from "../ResultTypes";
  *
  * @public
  */
-export interface CustomBenchmarkOptions extends Titled, BenchmarkDescription, MochaExclusiveOptions {
+export interface CustomBenchmarkOptions
+	extends Titled,
+		BenchmarkDescription,
+		MochaExclusiveOptions {
 	/**
 	 * Title about benchmark option
 	 */
