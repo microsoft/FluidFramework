@@ -95,13 +95,19 @@ function getPackageMetadata(packageJsonFilePath) {
  * Gets the appropriate special scope kind for the provided package name, if applicable.
  *
  * @param {string} packageName
- * @returns {"FRAMEWORK" | "EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | "TOOLS" | undefined} A scope kind based on the package's scope (namespace).
- * Will be `undefined` if the package has no scope, or has an unrecognized scope.
+ * @returns {"" | "FRAMEWORK" | "EXAMPLE" | "EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | "TOOLS" | undefined}
+ * A scope kind based on the package's scope (namespace).
+ * Will be an empty string if the package has no scope.
+ * Will be `undefined` if the package has an unrecognized scope.
  */
 const getScopeKindFromPackage = (packageName) => {
 	const packageScope = PackageName.getScope(packageName);
-	if (packageScope === `@fluidframework`) {
+	if (packageScope === "") {
+		return undefined;
+	} else if (packageScope === `@fluidframework`) {
 		return "FRAMEWORK";
+	} else if (packageScope === `@fluid-example`) {
+		return "EXAMPLE";
 	} else if (packageScope === `@fluid-experimental`) {
 		return "EXPERIMENTAL";
 	} else if (packageScope === `@fluid-internal`) {
@@ -121,7 +127,7 @@ const getScopeKindFromPackage = (packageName) => {
  */
 const shouldLinkToApiDocs = (packageName) => {
 	const scope = getScopeKindFromPackage(packageName);
-	return scope === "FRAMEWORK" || scope === "EXPERIMENTAL" || scope === undefined;
+	return scope === "FRAMEWORK" || scope === "EXPERIMENTAL" || scope === "";
 };
 
 /**
