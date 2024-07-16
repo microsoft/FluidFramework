@@ -1,6 +1,6 @@
 {
-	// This config must be used in a "type": "commonjs" environment. (Use `fluid-tsc commonjs`.)
-	"extends": "./tsconfig.json",
+	// This config may be used in a "type": "commonjs" environment. (Use `fluid-tsc commonjs`.)
+	"extends": ["./tsconfig.json", "../../../../../common/build/build-common/tsconfig.cjs.json"],
 	"compilerOptions": {
 		"outDir": "../../dist/test",
 	},
