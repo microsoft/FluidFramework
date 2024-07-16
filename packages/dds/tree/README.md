@@ -46,6 +46,8 @@ To access the `beta` APIs, import via `@fluidframework/tree/beta`.
 Notable consideration that early adopters should be wary of:
 
 -   The persisted format is stable such that documents created with released versions 2.0.0 or greater of this package are fully supported long term.
+-   In versions prior to 2.1.0, SharedTree had unbounded memory growth:
+    -   Removed content was retained in memory and persisted in the document at rest ([fix](https://github.com/microsoft/FluidFramework/pull/21372)). This was fixed in version 2.1.0.
 -   All range changes are atomized.
     This means that, when inserting/removing/moving multiple contiguous nodes the edit is split up into separate single node edits.
     This can impact the merge behavior of these edits, as well as the performance of large array edits.
