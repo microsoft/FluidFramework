@@ -560,7 +560,7 @@ export class ModularChangeFamily
 			change2: change2Normalized,
 		} = this.normalizeFieldChanges(change1, change2, idAllocator, revisionMetadata);
 
-		const manager = new ComposeManager(crossFieldTable, change1 ?? change2);
+		const manager = new ComposeManager(crossFieldTable, change1);
 
 		const composedChange = changeHandler.rebaser.compose(
 			change1Normalized,
@@ -995,9 +995,7 @@ export class ModularChangeFamily
 				constraintState,
 			);
 
-			if (rebasedNode !== undefined) {
-				setInChangeAtomIdMap(rebasedNodes, newId, rebasedNode);
-			}
+			setInChangeAtomIdMap(rebasedNodes, newId, rebasedNode);
 		}
 
 		return rebasedFields;
@@ -1025,17 +1023,6 @@ export class ModularChangeFamily
 				continue;
 			}
 
-			// This field has no changes in the base changeset, otherwise it would have been added to `crossFieldTable.rebasedFields`
-			// when processing fields with both base and new changes.
-			const rebaseChild = (
-				child: NodeId | undefined,
-				baseChild: NodeId | undefined,
-				stateChange: NodeAttachState | undefined,
-			): NodeId | undefined => {
-				assert(baseChild === undefined, "There should be no base changes in this field");
-				return child;
-			};
-
 			const handler = getChangeHandler(this.fieldKinds, fieldChange.fieldKind);
 			const baseFieldChange: FieldChange = {
 				...fieldChange,
@@ -1046,7 +1033,7 @@ export class ModularChangeFamily
 			const rebasedField = handler.rebaser.rebase(
 				fieldChange.change,
 				baseFieldChange.change,
-				rebaseChild,
+				rebaseChildInFieldWithNoBaseChanges,
 				genId,
 				new RebaseManager(crossFieldTable, baseFieldChange, fieldId),
 				metadata,
@@ -1274,6 +1261,16 @@ export class ModularChangeFamily
 		revisionMetadata: RebaseRevisionMetadata,
 	): FieldChangeMap {
 		const rebasedFields: FieldChangeMap = new Map();
+		const rebaseChild = (
+			child: NodeId | undefined,
+			baseChild: NodeId | undefined,
+			stateChange: NodeAttachState | undefined,
+		): NodeId | undefined => {
+			if (child !== undefined && baseChild !== undefined) {
+				crossFieldTable.nodeIdPairs.push([child, baseChild, stateChange]);
+			}
+			return child;
+		};
 
 		for (const [field, fieldChange] of change) {
 			const fieldId: FieldId = { nodeId: parentId, field };
@@ -1291,17 +1288,6 @@ export class ModularChangeFamily
 			} = this.normalizeFieldChanges(fieldChange, baseChange, genId, revisionMetadata);
 
 			const manager = new RebaseManager(crossFieldTable, baseChange, fieldId);
-
-			const rebaseChild = (
-				child: NodeId | undefined,
-				baseChild: NodeId | undefined,
-				stateChange: NodeAttachState | undefined,
-			): NodeId | undefined => {
-				if (child !== undefined && baseChild !== undefined) {
-					crossFieldTable.nodeIdPairs.push([child, baseChild, stateChange]);
-				}
-				return child;
-			};
 
 			const rebasedField = changeHandler.rebaser.rebase(
 				fieldChangeset,
@@ -2300,7 +2286,7 @@ class InvertManager extends CrossFieldManagerI<FieldChange> {
 		id: ChangesetLocalId,
 		count: number,
 	): void {
-		throw new Error("Method not implemented.");
+		assert(false, "Keys should not be moved manually during invert");
 	}
 
 	private get table(): InvertTable {
@@ -3077,4 +3063,13 @@ function cloneNestedMap<K1, K2, V>(map: NestedMap<K1, K2, V>): NestedMap<K1, K2,
 	const cloned: NestedMap<K1, K2, V> = new Map();
 	populateNestedMap(map, cloned, true);
 	return cloned;
+}
+
+function rebaseChildInFieldWithNoBaseChanges(
+	child: NodeId | undefined,
+	baseChild: NodeId | undefined,
+	_stateChange: NodeAttachState | undefined,
+): NodeId | undefined {
+	assert(baseChild === undefined, "There should be no base changes in this field");
+	return child;
 }

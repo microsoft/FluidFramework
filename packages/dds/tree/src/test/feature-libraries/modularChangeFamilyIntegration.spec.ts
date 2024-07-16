@@ -286,9 +286,7 @@ describe("ModularChangeFamily integration", () => {
 					MarkMaker.moveOut(1, brand(3)),
 					MarkMaker.moveIn(2, brand(2)),
 				]),
-				Change.field(fieldB, sequence.identifier, [
-					MarkMaker.moveOut(1, brand(2)),
-				]),
+				Change.field(fieldB, sequence.identifier, [MarkMaker.moveOut(1, brand(2))]),
 			);
 
 			assert.deepEqual(rebased, expected);
