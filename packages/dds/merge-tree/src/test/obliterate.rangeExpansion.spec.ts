@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert } from "assert";
 
-import { ReconnectTestHelper } from "./reconnectHelper.js";
 import { TestClient } from "./testClient.js";
+import { ReconnectTestHelper } from "./reconnectHelper.js";
 
 describe("obliterate", () => {
 	let client: TestClient;

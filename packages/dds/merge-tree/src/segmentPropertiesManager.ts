@@ -9,6 +9,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 import { IMergeTreeAnnotateMsg } from "./ops.js";
+// eslint-disable-next-line import/no-deprecated
 import { MapLike, PropertySet, createMap } from "./properties.js";
 
 /**
@@ -62,6 +63,7 @@ export class PropertiesManager {
 		collaborating: boolean = false,
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	): PropertySet {
+		// eslint-disable-next-line import/no-deprecated
 		this.pendingKeyUpdateCount ??= createMap<number>();
 
 		// Clean up counts for rolled back edits before modifying oldProps
@@ -120,7 +122,7 @@ export class PropertiesManager {
 		newManager: PropertiesManager,
 	): PropertySet | undefined {
 		if (oldProps) {
-			// eslint-disable-next-line no-param-reassign
+			// eslint-disable-next-line no-param-reassign, import/no-deprecated
 			newProps ??= createMap<unknown>();
 			if (!newManager) {
 				throw new Error("Must provide new PropertyManager");
@@ -129,6 +131,7 @@ export class PropertiesManager {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				newProps[key] = oldProps[key];
 			}
+			// eslint-disable-next-line import/no-deprecated
 			newManager.pendingKeyUpdateCount = createMap<number>();
 			for (const key of Object.keys(this.pendingKeyUpdateCount!)) {
 				// TODO Non null asserting, why is this not null?

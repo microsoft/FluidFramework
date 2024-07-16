@@ -77,6 +77,7 @@ import {
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
 import { PerspectiveImpl, isSegmentPresent } from "./perspective.js";
+// eslint-disable-next-line import/no-deprecated
 import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
 	DetachedReferencePosition,
@@ -2512,8 +2513,9 @@ export class MergeTree {
 	private blockUpdate(block: MergeBlock): void {
 		let len: number | undefined;
 
+		// eslint-disable-next-line import/no-deprecated
 		const rightmostTiles = createMap<Marker>();
-
+		// eslint-disable-next-line import/no-deprecated
 		const leftmostTiles = createMap<Marker>();
 
 		for (let i = 0; i < block.childCount; i++) {
@@ -2548,7 +2550,9 @@ export class MergeTree {
 					}
 				}
 			} else {
+				// eslint-disable-next-line import/no-deprecated
 				extend(rightmostTiles, node.rightmostTiles);
+				// eslint-disable-next-line import/no-deprecated
 				extendIfUndefined(leftmostTiles, node.leftmostTiles);
 			}
 		}

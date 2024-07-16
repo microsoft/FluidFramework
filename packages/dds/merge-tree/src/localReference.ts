@@ -10,6 +10,7 @@ import { DoublyLinkedList, ListNode, walkList } from "./collections/index.js";
 import { ISegment } from "./mergeTreeNodes.js";
 import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { ReferenceType } from "./ops.js";
+// eslint-disable-next-line import/no-deprecated
 import { PropertySet, addProperties } from "./properties.js";
 import { ReferencePosition, refTypeIncludesFlag } from "./referencePositions.js";
 
@@ -130,6 +131,7 @@ class LocalReference implements LocalReferencePosition {
 	}
 
 	public addProperties(newProps: PropertySet): void {
+		// eslint-disable-next-line import/no-deprecated
 		this.properties = addProperties(this.properties, newProps);
 	}
 
