@@ -590,7 +590,6 @@ export function versionHasMovedSparsedMatrix(version: string): boolean {
 	);
 }
 
-
 /**
  * @internal
  */
