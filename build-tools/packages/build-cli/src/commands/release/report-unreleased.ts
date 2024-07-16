@@ -5,7 +5,6 @@
 
 import * as fs from "node:fs/promises";
 import path from "node:path";
-// import { isInternalVersionRange, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { formatISO } from "date-fns";

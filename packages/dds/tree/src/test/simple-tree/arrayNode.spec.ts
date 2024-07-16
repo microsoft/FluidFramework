@@ -35,6 +35,29 @@ describe("ArrayNode", () => {
 			// "extra" should not be stringified
 			assert.equal(JSON.stringify(array), JSON.stringify(jsArray));
 		});
+
+		it("accessor local properties", () => {
+			const thisList: unknown[] = [];
+			class Test extends schemaFactory.array("test", schemaFactory.number) {
+				public get y() {
+					assert.equal(this, n);
+					thisList.push(this);
+					return this[0];
+				}
+				public set y(value: number) {
+					assert.equal(this, n);
+					thisList.push(this);
+					this.insertAtStart(value);
+				}
+			}
+
+			const n = hydrate(Test, [1]);
+			n.y = 2;
+			assert.equal(n[0], 2);
+			n.insertAtStart(3);
+			assert.equal(n.y, 3);
+			assert.deepEqual(thisList, [n, n]);
+		});
 	});
 
 	// Tests which should behave the same for both "structurally named" "POJO emulation mode" arrays and "customizable" arrays can be added in this function to avoid duplication.

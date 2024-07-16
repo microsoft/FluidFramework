@@ -586,7 +586,7 @@ function createArrayNodeProxy(
 					"Cannot set indexed properties on array nodes. Use array node mutation APIs to alter the array.",
 				);
 			}
-			return allowAdditionalProperties ? Reflect.set(target, key, newValue) : false;
+			return allowAdditionalProperties ? Reflect.set(target, key, newValue, receiver) : false;
 		},
 		has: (target, key) => {
 			const field = getSequenceField(proxy);
