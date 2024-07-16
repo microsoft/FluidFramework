@@ -5,9 +5,14 @@
 
 import { Test } from "mocha";
 
-import type { BenchmarkDescription, MochaExclusiveOptions, Titled } from "../Configuration";
-import { timer } from "../timer";
+import type {
+	BenchmarkDescription,
+	HookArguments,
+	MochaExclusiveOptions,
+	Titled,
+} from "../Configuration";
 import type { BenchmarkData } from "../ResultTypes";
+import { timer } from "../timer";
 
 /**
  * Options to configure a benchmark that reports custom measurements.
@@ -17,6 +22,7 @@ import type { BenchmarkData } from "../ResultTypes";
 export interface CustomBenchmarkOptions
 	extends Titled,
 		BenchmarkDescription,
+		HookArguments,
 		MochaExclusiveOptions {
 	/**
 	 * Title about benchmark option
@@ -42,6 +48,7 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 	const itFunction = options.only === true ? it.only : it;
 	const test = itFunction(`${options.title} @CustomBenchmark`, async () => {
 		const customData: Record<string, number> = {};
+		const customDataFormatters: Record<string, (value: unknown) => string> = {};
 		const reporter: IMeasurementReporter = {
 			addMeasurement: (key: string, value: number) => {
 				if (key in customData) {
@@ -57,6 +64,7 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 		const results: BenchmarkData = {
 			elapsedSeconds: timer.toSeconds(startTime, timer.now()),
 			customData,
+			customDataFormatters,
 		};
 
 		test.emit("benchmark end", results);

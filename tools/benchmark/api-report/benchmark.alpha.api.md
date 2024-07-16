@@ -111,7 +111,7 @@ export interface CustomBenchmark extends BenchmarkTimingOptions {
 export type CustomBenchmarkArguments = MochaExclusiveOptions & CustomBenchmark & BenchmarkDescription;
 
 // @public
-export interface CustomBenchmarkOptions extends BenchmarkDescription, MochaExclusiveOptions {
+export interface CustomBenchmarkOptions extends Titled, BenchmarkDescription, HookArguments, MochaExclusiveOptions {
     run: (reporter: IMeasurementReporter) => void | Promise<unknown>;
     title: string;
 }

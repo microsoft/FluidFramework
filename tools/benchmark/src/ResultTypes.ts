@@ -64,7 +64,7 @@ export interface BenchmarkData {
 	/**
 	 * Custom data formatters.
 	 */
-	customDataFormatters?: Record<string, (value: unknown) => string>;
+	customDataFormatters: Record<string, (value: unknown) => string>;
 }
 
 /**
