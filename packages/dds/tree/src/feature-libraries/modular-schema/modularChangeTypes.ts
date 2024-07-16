@@ -65,8 +65,8 @@ export type CrossFieldKey = readonly [
 ];
 
 export interface FieldId {
-	nodeId: NodeId | undefined;
-	field: FieldKey;
+	readonly nodeId: NodeId | undefined;
+	readonly field: FieldKey;
 }
 
 /**

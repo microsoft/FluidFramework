@@ -135,8 +135,8 @@ export class ModularChangeFamily
 		genId: IdAllocator,
 		revisionMetadata: RevisionMetadataSource,
 	): {
-		// TODO: Could this be a FieldChangeHandler instead of a FieldKindWithEditor?
-		fieldKind: FieldKindWithEditor;
+		fieldKind: FieldKindIdentifier;
+		changeHandler: FieldChangeHandler<unknown>;
 		change1: FieldChangeset;
 		change2: FieldChangeset;
 	} {
@@ -149,26 +149,32 @@ export class ModularChangeFamily
 		if (kind === genericFieldKind.identifier) {
 			// All the changes are generic
 			return {
-				fieldKind: genericFieldKind,
+				fieldKind: genericFieldKind.identifier,
+				changeHandler: genericFieldKind.changeHandler,
 				change1: change1?.change,
 				change2: change2?.change,
 			};
 		}
 		const fieldKind = getFieldKind(this.fieldKinds, kind);
-		const handler = fieldKind.changeHandler;
+		const changeHandler = fieldKind.changeHandler;
 		const normalizedChange1 = this.normalizeFieldChange(
 			change1,
-			handler,
+			changeHandler,
 			genId,
 			revisionMetadata,
 		);
 		const normalizedChange2 = this.normalizeFieldChange(
 			change2,
-			handler,
+			changeHandler,
 			genId,
 			revisionMetadata,
 		);
-		return { fieldKind, change1: normalizedChange1, change2: normalizedChange2 };
+		return {
+			fieldKind: kind,
+			changeHandler,
+			change1: normalizedChange1,
+			change2: normalizedChange2,
+		};
 	}
 
 	private normalizeFieldChange<T>(
@@ -549,15 +555,16 @@ export class ModularChangeFamily
 	): FieldChange {
 		const {
 			fieldKind,
+			changeHandler,
 			change1: normalizedFieldChange1,
 			change2: normalizedFieldChange2,
 		} = this.normalizeFieldChanges(change1, change2, idAllocator, revisionMetadata);
 
 		const manager = new ComposeManager(crossFieldTable, change1 ?? change2);
-		const change1Normalized = normalizedFieldChange1 ?? fieldKind.changeHandler.createEmpty();
-		const change2Normalized = normalizedFieldChange2 ?? fieldKind.changeHandler.createEmpty();
+		const change1Normalized = normalizedFieldChange1 ?? changeHandler.createEmpty();
+		const change2Normalized = normalizedFieldChange2 ?? changeHandler.createEmpty();
 
-		const composedChange = fieldKind.changeHandler.rebaser.compose(
+		const composedChange = changeHandler.rebaser.compose(
 			change1Normalized,
 			change2Normalized,
 			(child1, child2) => {
@@ -573,7 +580,7 @@ export class ModularChangeFamily
 		);
 
 		const composedField: FieldChange = {
-			fieldKind: fieldKind.identifier,
+			fieldKind,
 			change: brand(composedChange),
 		};
 
@@ -895,7 +902,7 @@ export class ModularChangeFamily
 				const context = crossFieldTable.baseFieldToContext.get(field);
 				assert(context !== undefined, 0x852 /* Every field should have a context */);
 				const {
-					fieldKind,
+					changeHandler,
 					change1: fieldChangeset,
 					change2: baseChangeset,
 				} = this.normalizeFieldChanges(
@@ -924,13 +931,15 @@ export class ModularChangeFamily
 					return undefined;
 				};
 
-				context.rebasedChange.change = fieldKind.changeHandler.rebaser.rebase(
-					fieldChangeset,
-					baseChangeset,
-					rebaseChild,
-					genId,
-					new RebaseManager(crossFieldTable, field, context.fieldId),
-					rebaseMetadata,
+				context.rebasedChange.change = brand(
+					changeHandler.rebaser.rebase(
+						fieldChangeset,
+						baseChangeset,
+						rebaseChild,
+						genId,
+						new RebaseManager(crossFieldTable, field, context.fieldId),
+						rebaseMetadata,
+					),
 				);
 			}
 		}
@@ -1279,6 +1288,7 @@ export class ModularChangeFamily
 
 			const {
 				fieldKind,
+				changeHandler,
 				change1: fieldChangeset,
 				change2: baseChangeset,
 			} = this.normalizeFieldChanges(fieldChange, baseChange, genId, revisionMetadata);
@@ -1296,7 +1306,7 @@ export class ModularChangeFamily
 				return child;
 			};
 
-			const rebasedField = fieldKind.changeHandler.rebaser.rebase(
+			const rebasedField = changeHandler.rebaser.rebase(
 				fieldChangeset,
 				baseChangeset,
 				rebaseChild,
@@ -1306,7 +1316,7 @@ export class ModularChangeFamily
 			);
 
 			const rebasedFieldChange: FieldChange = {
-				fieldKind: fieldKind.identifier,
+				fieldKind,
 				change: brand(rebasedField),
 			};
 
