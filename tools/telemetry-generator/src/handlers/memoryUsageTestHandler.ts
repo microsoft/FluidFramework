@@ -17,9 +17,9 @@ module.exports = function handler(fileData, logger): void {
 			eventName: "Benchmark",
 			benchmarkType: "MemoryUsage",
 			suiteName: fileData.suiteName,
-			testName: testData.testName,
-			heapUsedAvg: testData.testData.stats.arithmeticMean,
-			heapUsedStdDev: testData.testData.stats.standardDeviation,
+			testName: testData.benchmarkName,
+			heapUsedAvg: testData.customData["Heap Used Avg"],
+			heapUsedStdDev: testData.customData["Heap Used StdDev"],
 			driverEndpointName: process.env.FLUID_ENDPOINTNAME ?? "",
 		});
 	}
