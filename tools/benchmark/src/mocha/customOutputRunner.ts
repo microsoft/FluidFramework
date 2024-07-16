@@ -5,12 +5,7 @@
 
 import { Test } from "mocha";
 
-import type {
-	BenchmarkDescription,
-	HookArguments,
-	MochaExclusiveOptions,
-	Titled,
-} from "../Configuration";
+import type { BenchmarkDescription, MochaExclusiveOptions, Titled } from "../Configuration";
 import type { BenchmarkData } from "../ResultTypes";
 import { timer } from "../timer";
 
@@ -53,11 +48,9 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 			},
 		};
 
-		await options.before?.();
 		const startTime = timer.now();
 		await options.run(reporter);
 		const elapsedSeconds = timer.toSeconds(startTime, timer.now());
-		await options.after?.();
 
 		const results: BenchmarkData = {
 			elapsedSeconds,

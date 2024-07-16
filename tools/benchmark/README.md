@@ -90,8 +90,7 @@ when you define the test) and `@ExecutionTime` (as opposed to `@MemoryUsage` for
 
 To customize profiling, define tests using the benchmarkCustom() function. The run argument of this function
 includes a reporter that uses `addMeasurement()` to record custom data for reporting. Look at the documentation
-on `Titled`, `BenchmarkDescription`, `HookArguments`, `MochaExclusiveOptions` for more details on what the
-rest of its properties do.
+on `Titled`, `BenchmarkDescription`, `MochaExclusiveOptions` for more details on what the rest of its properties do.
 
 ## Profiling memory usage
 
