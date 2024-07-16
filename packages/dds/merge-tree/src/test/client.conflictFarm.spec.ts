@@ -99,7 +99,7 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 }
 
 describeFuzz("MergeTree.Client", ({ testCount, stressMode }) => {
-	const opts = stressMode !== undefined ? stressOptions : defaultOptions;
+	const opts = stressMode ? stressOptions : defaultOptions;
 	// defaultOptions;
 	// debugOptions;
 	// longOptions;
