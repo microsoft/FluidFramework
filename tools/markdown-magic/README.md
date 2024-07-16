@@ -82,9 +82,9 @@ Notes:
     You will still need to fill in semantic and usage information.
 -   This is effectively just a wrapper around lower-level templates.
     If you want more fine-grained control over the content structure, we recommend using other templates.
-    -  [README_PACKAGE_SCOPE_NOTICE](#readme_package_scope_notice)
-    -  [README_INSTALLATION_SECTION](#readme_installation_section)
-    -  [README_IMPORT_INSTRUCTIONS](#readme_import_instructions)
+    -   [README_PACKAGE_SCOPE_NOTICE](#readme_package_scope_notice)
+    -   [README_INSTALLATION_SECTION](#readme_installation_section)
+    -   [README_IMPORT_INSTRUCTIONS](#readme_import_instructions)
 
 Arguments:
 
@@ -110,12 +110,13 @@ Notes:
     You will still need to fill in semantic and usage information.
 -   This is effectively just a wrapper around lower-level templates.
     If you want more fine-grained control over the content structure, we recommend using other templates.
-    -  [API_DOCS_LINK_SECTION](#api_docs_link_section)
-    -  [README_PACKAGE_SCRIPTS](#readme_package_scripts)
-    -  [README_CLIENT_REQUIREMENTS_SECTION](#readme_client_requirements_section)
-    -  [README_CONTRIBUTION_GUIDELINES_SECTION](#contribution-guidelines)
-    -  [README_HELP_SECTION](#readme_help_section)
-    -  [README_TRADEMARK_SECTION](#readme_trademark_section)
+    -   [API_DOCS_LINK_SECTION](#api_docs_link_section)
+    -   [README_PACKAGE_SCRIPTS](#readme_package_scripts)
+    -   [README_CLIENT_REQUIREMENTS_SECTION](#readme_client_requirements_section)
+    -   [README_CONTRIBUTION_GUIDELINES_SECTION](#contribution-guidelines)
+    -   [README_HELP_SECTION](#readme_help_section)
+    -   [README_TRADEMARK_SECTION](#readme_trademark_section)
+
 Arguments:
 
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
@@ -325,7 +326,7 @@ Arguments:
     -   Default: `./package.json`.
 -   `scopeKind`: (optional) Override the automatic scope detection behavior with an explicit scope kind: `EXPERIMENTAL`, `INTERNAL`, or `PRIVATE`.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:clientRequirements=FALSE&apiDocs=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:clientRequirements=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

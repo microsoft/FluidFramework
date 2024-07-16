@@ -30,7 +30,7 @@ npm i @fluid-private/test-loader-utils
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER&apiDocs=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
