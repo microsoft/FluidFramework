@@ -984,7 +984,7 @@ export class ModularChangeFamily
 		);
 
 		// This loop processes all fields which have both base and new changes.
-		// Note that the call to `rebaseNodeChanges` can add entries to `crossFieldTable.nodeIdPairs`.
+		// Note that the call to `rebaseNodeChange` can add entries to `crossFieldTable.nodeIdPairs`.
 		for (const [newId, baseId, _attachState] of crossFieldTable.nodeIdPairs) {
 			const rebasedNode = this.rebaseNodeChange(
 				newId,
