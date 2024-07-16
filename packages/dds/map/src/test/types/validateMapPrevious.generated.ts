@@ -229,6 +229,7 @@ declare type current_as_old_for_ClassDeclaration_MapFactory = requireAssignableT
  * typeValidation.broken:
  * "VariableDeclaration_SharedDirectory": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_VariableDeclaration_SharedDirectory = requireAssignableTo<TypeOnly<typeof old.SharedDirectory>, TypeOnly<typeof current.SharedDirectory>>
 
 /*
@@ -265,6 +266,7 @@ declare type current_as_old_for_TypeAliasDeclaration_SharedDirectory = requireAs
  * typeValidation.broken:
  * "VariableDeclaration_SharedMap": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_VariableDeclaration_SharedMap = requireAssignableTo<TypeOnly<typeof old.SharedMap>, TypeOnly<typeof current.SharedMap>>
 
 /*

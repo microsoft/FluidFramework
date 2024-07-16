@@ -166,6 +166,13 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"VariableDeclaration_SharedMap": {
+				"forwardCompat": false
+			},
+			"VariableDeclaration_SharedDirectory": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
