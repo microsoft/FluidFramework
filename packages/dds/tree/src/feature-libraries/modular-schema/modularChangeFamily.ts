@@ -556,13 +556,11 @@ export class ModularChangeFamily
 		const {
 			fieldKind,
 			changeHandler,
-			change1: normalizedFieldChange1,
-			change2: normalizedFieldChange2,
+			change1: change1Normalized,
+			change2: change2Normalized,
 		} = this.normalizeFieldChanges(change1, change2, idAllocator, revisionMetadata);
 
 		const manager = new ComposeManager(crossFieldTable, change1 ?? change2);
-		const change1Normalized = normalizedFieldChange1 ?? changeHandler.createEmpty();
-		const change2Normalized = normalizedFieldChange2 ?? changeHandler.createEmpty();
 
 		const composedChange = changeHandler.rebaser.compose(
 			change1Normalized,
@@ -2100,7 +2098,7 @@ interface RebaseTable extends CrossFieldTable<FieldChange> {
 	readonly rebasedCrossFieldKeys: CrossFieldKeyTable;
 
 	/**
-	 * List of (newId, baseId) pairs encountered so far.
+	 * List of unprocessed (newId, baseId) pairs encountered so far.
 	 */
 	readonly nodeIdPairs: [NodeId, NodeId, NodeAttachState | undefined][];
 
