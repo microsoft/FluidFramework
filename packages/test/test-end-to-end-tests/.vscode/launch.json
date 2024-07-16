@@ -145,6 +145,7 @@
 			"env": {
 				"fluid__test__driver": "r11s",
 				"fluid__test__backCompat": "${input:backCompat}",
+				"fluid__test__r11sEndpointName": "${input:r11sEndpoint}",
 				"FLUID_TEST_VERBOSE": "${input:verboseConsoleOutputt}",
 			},
 			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
@@ -231,5 +232,15 @@
 			"default": "odsp",
 			"options": ["odsp", "odsp-df"],
 		},
+		{
+			"id": "r11sEndpoint",
+			"description": "Which r11s endpoint should be used?",
+			"type": "pickString",
+			"default": "frs",
+			"options": ["frs", {
+				"label": "docker (local service must be started separately prior to debugging)",
+				"value": "docker",
+			}],
+		}
 	],
 }
