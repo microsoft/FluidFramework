@@ -142,17 +142,17 @@ export class ModularChangeFamily
 	} {
 		// TODO: Handle the case where changes have conflicting field kinds
 		const kind =
-			change1 !== undefined && change1.fieldKind !== genericFieldKind.identifier
+			change1.fieldKind !== genericFieldKind.identifier
 				? change1.fieldKind
-				: change2?.fieldKind ?? genericFieldKind.identifier;
+				: change2.fieldKind;
 
 		if (kind === genericFieldKind.identifier) {
-			// All the changes are generic
+			// Both changes are generic
 			return {
 				fieldKind: genericFieldKind.identifier,
 				changeHandler: genericFieldKind.changeHandler,
-				change1: change1?.change,
-				change2: change2?.change,
+				change1: change1.change,
+				change2: change2.change,
 			};
 		}
 		const fieldKind = getFieldKind(this.fieldKinds, kind);
