@@ -22,7 +22,6 @@ import { timer } from "../timer";
 export interface CustomBenchmarkOptions
 	extends Titled,
 		BenchmarkDescription,
-		HookArguments,
 		MochaExclusiveOptions {
 	/**
 	 * Runs the benchmark.
