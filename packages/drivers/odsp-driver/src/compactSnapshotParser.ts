@@ -222,9 +222,6 @@ function readTreeSection(node: NodeCore): {
 				const groupId = getStringInstance(records.groupId, "groupId should be a string");
 				// Non null asserting since trees[path] is already created
 				trees[path]!.groupId = groupId;
-				// If the trees has a groupId, then count that separately as we didn't put its parsing
-				// into above path deliberately to reduce number of special cases.
-				slowTreeStructureCount -= 1;
 				treeStructureCountWithGroupId += 1;
 			}
 			slowTreeStructureCount += result.slowTreeStructureCount;
