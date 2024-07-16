@@ -28,7 +28,7 @@
 			"cwd": "${fileDirname}",
 			"skipFiles": [
 				"<node_internals>/**",
-				// Allow debugging into legacy fluid packages (and breakpoints to be set in them)
+				// Allow debugging into legacy Fluid packages (and breakpoints to be set in them)
 				"**/node_modules/!(.legacy)/**",
 			],
 			"outFiles": [
