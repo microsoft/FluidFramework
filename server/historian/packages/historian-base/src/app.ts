@@ -84,7 +84,7 @@ export function create(
 							Constants.IsEphemeralContainer,
 						);
 					}
-					if (enableRetryCountLogging) {
+					if (enableRetryCountLogging === true) {
 						additionalProperties.retryCount = Number.parseInt(
 							typeof req.query.retry === "string" ? req.query.retry : "0",
 							10,

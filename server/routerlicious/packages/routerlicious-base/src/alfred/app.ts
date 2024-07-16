@@ -138,7 +138,7 @@ export function create(
 					if (req.body?.isEphemeralContainer !== undefined) {
 						additionalProperties.isEphemeralContainer = req.body.isEphemeralContainer;
 					}
-					if (enableRetryCountLogging) {
+					if (enableRetryCountLogging === true) {
 						additionalProperties.retryCount = Number.parseInt(
 							typeof req.query.retry === "string" ? req.query.retry : "0",
 							10,
