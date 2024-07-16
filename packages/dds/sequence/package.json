@@ -194,6 +194,9 @@
 		"broken": {
 			"InterfaceDeclaration_SequenceOptions": {
 				"backCompat": false
+			},
+			"VariableDeclaration_SharedString": {
+				"forwardCompat": false
 			}
 		}
 	}
