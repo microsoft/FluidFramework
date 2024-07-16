@@ -3,19 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeValue } from "../core/index.js";
 import type { TreeJsonSchema } from "./jsonSchema.js";
+import type { TreeNodeSchema } from "./schemaTypes.js";
 import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
-import { treeNodeApi } from "./treeNodeApi.js";
 import { toSimpleTreeSchema } from "./treeNodeSchemaToSimpleSchema.js";
-import type { TreeNode } from "./types.js";
 
 // TODO: move to `treeNodeApi` once it is a namespace and this can remain `@internal` or `@alpha`
 /**
  * TODO
  * @internal
  */
-export function getJsonSchema(node: TreeNode | TreeValue): TreeJsonSchema {
-	const simpleViewSchema = toSimpleTreeSchema(treeNodeApi.schema(node));
+export function getJsonSchema(schema: TreeNodeSchema): TreeJsonSchema {
+	const simpleViewSchema = toSimpleTreeSchema(schema);
 	return toJsonSchema(simpleViewSchema);
 }

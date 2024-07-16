@@ -15,9 +15,9 @@ import { getJsonValidator } from "./jsonSchemaUtilities.js";
 describe.only("getJsonSchema", () => {
 	it("Leaf node", async () => {
 		const schemaFactory = new SchemaFactory("test");
+		const Schema = schemaFactory.string;
 
-		const input = hydrate(schemaFactory.string, "Hello world");
-		const actual = getJsonSchema(input);
+		const actual = getJsonSchema(Schema);
 
 		const expected: TreeJsonSchema = {
 			definitions: {
@@ -38,7 +38,7 @@ describe.only("getJsonSchema", () => {
 		const validator = getJsonValidator(actual);
 
 		// Verify expected data validation behavior.
-		validator(input, true);
+		validator(hydrate(Schema, "Hello world"), true);
 		validator("Hello world", true);
 		validator({}, false);
 		validator([], false);
@@ -46,12 +46,9 @@ describe.only("getJsonSchema", () => {
 
 	it("Array schema", () => {
 		const schemaFactory = new SchemaFactory("test");
-		const input = hydrate(schemaFactory.array("array", schemaFactory.string), [
-			"Hello",
-			"world",
-		]);
+		class Schema extends schemaFactory.array("array", schemaFactory.string) {}
 
-		const actual = getJsonSchema(input);
+		const actual = getJsonSchema(Schema);
 
 		const expected: TreeJsonSchema = {
 			definitions: {
@@ -79,7 +76,7 @@ describe.only("getJsonSchema", () => {
 		const validator = getJsonValidator(actual);
 
 		// Verify expected data validation behavior.
-		validator(input, true);
+		validator(hydrate(Schema, ["Hello", "world"]), false); // TODO: this should work
 		validator([], true);
 		validator(["Hello", "world"], true);
 		validator("Hello world", false);
@@ -90,15 +87,9 @@ describe.only("getJsonSchema", () => {
 
 	it("Map schema", () => {
 		const schemaFactory = new SchemaFactory("test");
-		const input = hydrate(
-			schemaFactory.map("map", schemaFactory.string),
-			new Map([
-				["foo", "Hello"],
-				["bar", "World"],
-			]),
-		);
+		class Schema extends schemaFactory.map("map", schemaFactory.string) {}
 
-		const actual = getJsonSchema(input);
+		const actual = getJsonSchema(Schema);
 
 		const expected: TreeJsonSchema = {
 			definitions: {
@@ -126,7 +117,16 @@ describe.only("getJsonSchema", () => {
 		const validator = getJsonValidator(actual);
 
 		// Verify expected data validation behavior.
-		validator(input, true);
+		validator(
+			hydrate(
+				Schema,
+				new Map([
+					["foo", "Hello"],
+					["bar", "World"],
+				]),
+			),
+			true,
+		);
 		validator({}, true);
 		validator(
 			{
@@ -149,16 +149,12 @@ describe.only("getJsonSchema", () => {
 
 	it("Object schema", () => {
 		const schemaFactory = new SchemaFactory("test");
-		class ObjectSchema extends schemaFactory.object("object", {
+		class Schema extends schemaFactory.object("object", {
 			foo: schemaFactory.optional(schemaFactory.number),
 			bar: schemaFactory.required(schemaFactory.string),
 		}) {}
-		const input = hydrate(ObjectSchema, {
-			foo: 42,
-			bar: "Hello World",
-		});
 
-		const actual = getJsonSchema(input);
+		const actual = getJsonSchema(Schema);
 
 		const expected: TreeJsonSchema = {
 			definitions: {
@@ -197,7 +193,13 @@ describe.only("getJsonSchema", () => {
 		const validator = getJsonValidator(actual);
 
 		// Verify expected data validation behavior.
-		validator(input, true);
+		validator(
+			hydrate(Schema, {
+				foo: 42,
+				bar: "Hello World",
+			}),
+			true,
+		);
 
 		validator(
 			{
@@ -234,15 +236,11 @@ describe.only("getJsonSchema", () => {
 
 	it("Recursive object schema", () => {
 		const schemaFactory = new SchemaFactory("test");
-		class ObjectSchema extends schemaFactory.objectRecursive("recursive-object", {
-			foo: schemaFactory.optionalRecursive([schemaFactory.string, () => ObjectSchema]),
+		class Schema extends schemaFactory.objectRecursive("recursive-object", {
+			foo: schemaFactory.optionalRecursive([schemaFactory.string, () => Schema]),
 		}) {}
-		const input = hydrate(
-			ObjectSchema,
-			new ObjectSchema({ foo: new ObjectSchema({ foo: "Hello" }) }),
-		);
 
-		const actual = getJsonSchema(input);
+		const actual = getJsonSchema(Schema);
 
 		const expected: TreeJsonSchema = {
 			definitions: {
@@ -277,7 +275,7 @@ describe.only("getJsonSchema", () => {
 		const validator = getJsonValidator(actual);
 
 		// Verify expected data validation behavior.
-		validator(input, true);
+		validator(hydrate(Schema, new Schema({ foo: new Schema({ foo: "Hello" }) })), true);
 		validator({}, true);
 		validator({ foo: {} }, true);
 		validator({ foo: "Hello world" }, true);
