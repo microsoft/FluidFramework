@@ -95,10 +95,12 @@ describe("ObjectNode", () => {
 			x: schemaFactory.number,
 		}) {
 			public get y() {
+				assert.equal(this, n);
 				thisList.push(this);
 				return this.x;
 			}
 			public set y(value: number) {
+				assert.equal(this, n);
 				thisList.push(this);
 				this.x = value;
 			}
