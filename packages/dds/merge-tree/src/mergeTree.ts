@@ -2512,9 +2512,7 @@ export class MergeTree {
 	private blockUpdate(block: MergeBlock): void {
 		let len: number | undefined;
 
-
 		const rightmostTiles = createMap<Marker>();
-
 		const leftmostTiles = createMap<Marker>();
 
 		for (let i = 0; i < block.childCount; i++) {
