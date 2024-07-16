@@ -19,6 +19,7 @@
 			}
 		}
 	},
+	"type": "commonjs",
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"bin": {
@@ -35,7 +36,7 @@
 		"build:compile": "npm run build:commonjs && npm run build:readme",
 		"build:docs": "api-extractor run --local",
 		"build:manifest": "oclif manifest",
-		"build:readme": "fluid-readme generate readme",
+		"build:readme": "oclif readme --version 0.0.0",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
@@ -50,9 +51,10 @@
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"postpack": "npm run clean:manifest",
-		"test": "npm run test:mocha",
-		"test:coverage": "c8 npm run test",
+		"test": "npm run test:vitest",
+		"test:coverage": "npm run test:vitest --coverage",
 		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.js\"",
+		"test:vitest": "vitest run \"test\"",
 		"tsc": "tsc"
 	},
 	"c8": {
@@ -87,24 +89,19 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",
-		"@fluid-private/readme-command": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.40.0",
 		"@fluidframework/eslint-config-fluid": "^5.3.0",
 		"@microsoft/api-extractor": "^7.45.1",
 		"@oclif/test": "^4.0.4",
-		"@types/chai": "^4.3.5",
-		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.18.6",
 		"@types/semver": "^7.5.0",
 		"c8": "^7.14.0",
-		"chai": "^4.3.7",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.57.0",
 		"eslint-config-oclif": "^5.2.0",
 		"eslint-config-oclif-typescript": "^3.1.8",
 		"eslint-config-prettier": "~9.1.0",
-		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.29.4",
@@ -112,7 +109,8 @@
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.1",
 		"tslib": "^2.6.0",
-		"typescript": "~5.4.5"
+		"typescript": "~5.4.5",
+		"vitest": "^2.0.3"
 	},
 	"engines": {
 		"node": ">=18.17.1"

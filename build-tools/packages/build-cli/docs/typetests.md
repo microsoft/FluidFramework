@@ -17,8 +17,9 @@ Updates configuration for type tests in package.json files. If the previous vers
 USAGE
   $ flub typetests [-v | --quiet] [--reset] [-p | --exact <value> | -r | --disable] [-n | --enable]
     [--concurrency <value>] [--branch <value> [--changed |  |  |  | [--all | --dir <value> | --packages | -g
-    client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] | ]] [--private] [--scope <value> | --skipScope <value>]
+    client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... | --skipScope
+    <value>...]
 
 FLAGS
   -n, --normalize

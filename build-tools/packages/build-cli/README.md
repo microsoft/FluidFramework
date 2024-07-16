@@ -21,7 +21,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version|-V)
-@fluid-tools/build-cli/1.0.0
+@fluid-tools/build-cli/0.0.0 linux-x64 node-v18.19.1
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -37,7 +37,7 @@ USAGE
 * [`flub autocomplete`](docs/autocomplete.md) - Display autocomplete installation instructions.
 * [`flub bump`](docs/bump.md) - Bump the version of packages, release groups, and their dependencies.
 * [`flub check`](docs/check.md) - Check commands are used to verify repo state, apply policy, etc.
-* [`flub commands`](docs/commands.md) - list all the commands
+* [`flub commands`](docs/commands.md) - List all flub commands.
 * [`flub exec`](docs/exec.md) - Run a shell command in the context of a package or release group.
 * [`flub generate`](docs/generate.md) - Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub help`](docs/help.md) - Display help for flub.

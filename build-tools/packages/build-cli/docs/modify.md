@@ -12,7 +12,7 @@ Rewrite imports for Fluid Framework APIs to use the correct subpath import (/bet
 
 ```
 USAGE
-  $ flub modify fluid-imports [-v | --quiet] [--tsconfigs <value>] [--packageRegex <value>] [--data <value>]
+  $ flub modify fluid-imports [-v | --quiet] [--tsconfigs <value>...] [--packageRegex <value>] [--data <value>]
     [--onlyInternal]
 
 FLAGS

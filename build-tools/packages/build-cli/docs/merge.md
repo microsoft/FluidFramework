@@ -12,7 +12,8 @@ Sync branches depending on the batch size passed
 
 ```
 USAGE
-  $ flub merge branches -p <value> -s <value> -t <value> -b <value> --reviewers <value> [-v | --quiet] [-r <value>]
+  $ flub merge branches -p <value> -s <value> -t <value> -b <value> --reviewers <value>... [-v | --quiet] [-r
+    <value>]
 
 FLAGS
   -b, --batchSize=<value>     (required) Maximum number of commits to include in the pull request
@@ -40,7 +41,7 @@ Get info about the merge status of branches in the repo. Uses "main" and "next" 
 
 ```
 USAGE
-  $ flub merge info [--json] [-v | --quiet] [-b <value>]
+  $ flub merge info [--json] [-v | --quiet] [-b <value>...]
 
 FLAGS
   -b, --branch=<value>...  A branch name. Use this argument multiple times to provide multiple branch names.

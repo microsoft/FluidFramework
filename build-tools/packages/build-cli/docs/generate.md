@@ -20,9 +20,9 @@ Tags asserts by replacing their message with a unique numerical value.
 ```
 USAGE
   $ flub generate assertTags [-v | --quiet] [--disableConfig] [--concurrency <value>] [--branch <value> [--changed |  | 
-    |  | [--all | --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all |
-    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all] | ]] [--private] [--scope <value> |
-    --skipScope <value>]
+    |  | [--all | --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
+    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... |
+    --skipScope <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -264,9 +264,9 @@ Outputs a list of files that will be included in a package based on its 'files' 
 ```
 USAGE
   $ flub generate packlist [-v | --quiet] [--out <value>] [--concurrency <value>] [--branch <value> [--changed |  |  | 
-    | [--all | --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all |
-    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all] | ]] [--private] [--scope <value> |
-    --skipScope <value>]
+    | [--all | --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
+    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... |
+    --skipScope <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -320,8 +320,9 @@ Generates type tests for a package or group of packages.
 USAGE
   $ flub generate typetests [-v | --quiet] [--level public|alpha|beta|internal|legacy] [--outDir <value>] [--outFile
     <value>] [--publicFallback] [--concurrency <value>] [--branch <value> [--changed |  |  |  | [--all | --dir <value> |
-    --packages | -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] | ]] [--private] [--scope <value> | --skipScope <value>]
+    --packages | -g client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... | --skipScope
+    <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.

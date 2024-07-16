@@ -12,8 +12,9 @@ Run a shell command in the context of a package or release group.
 ```
 USAGE
   $ flub exec CMD [-v | --quiet] [--concurrency <value>] [--branch <value> [--changed |  |  |  | [--all |
-    --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] | ]] [--private] [--scope <value> | --skipScope <value>]
+    --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... | --skipScope
+    <value>...]
 
 ARGUMENTS
   CMD  The shell command to execute.

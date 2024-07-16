@@ -3,12 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import chai, { expect } from "chai";
-import assertArrays from "chai-arrays";
+import { describe, expect, it } from "vitest";
 
 import { FluidReleaseMachine as machine } from "../../src/machines/fluidReleaseMachine.js";
-
-chai.use(assertArrays);
 
 /**
  * The expected path patch releases will go through. When the state machine is updated these will likely change and need
@@ -105,7 +102,7 @@ describe("FluidReleaseMachine", () => {
 
 		walkExits(startingState, states);
 		console.log(JSON.stringify([...states]));
-		expect([...states]).to.be.equalTo(expectedPatchPath);
+		expect([...states]).to.deep.equal(expectedPatchPath);
 	});
 
 	it("DoMinorRelease path matches expected", () => {
@@ -114,15 +111,15 @@ describe("FluidReleaseMachine", () => {
 
 		walkExits(startingState, states);
 		console.log(JSON.stringify([...states]));
-		expect([...states]).to.be.equalTo(expectedMinorPath);
+		expect([...states]).to.deep.equal(expectedMinorPath);
 	});
 
 	it("DoMajorRelease path matches expected", () => {
 		const states = new Set<string>();
 		const startingState = `DoMajorRelease`;
 		walkExits(startingState, states);
-		console.log(JSON.stringify([...states]));
-		expect([...states]).to.be.equalTo(expectedMajorPath);
+		// console.log(JSON.stringify([...states]));
+		expect([...states]).to.deep.equal(expectedMajorPath);
 	});
 
 	describe("All states with a success action have a failure action", () => {
@@ -138,12 +135,13 @@ describe("FluidReleaseMachine", () => {
 
 			if (!state.startsWith("Do") || requiresBothActions.includes(state)) {
 				it(state, () => {
-					expect(exits).to.be.equalTo(["failure", "success"]);
+					["failure", "success"].forEach((item) => expect(exits).toContain(item));
 				});
 			} else {
 				// Do* actions are not required to have a failure action
 				it(state, () => {
-					expect(exits).to.be.equalTo(["success"]);
+					expect(exits).toContain("success");
+					expect(exits).toHaveLength(1);
 				});
 			}
 		}

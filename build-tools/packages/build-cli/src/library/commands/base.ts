@@ -5,7 +5,7 @@
 
 import { Command, Flags, Interfaces } from "@oclif/core";
 // eslint-disable-next-line import/no-internal-modules
-import type { PrettyPrintableError } from "@oclif/core/lib/interfaces";
+import type { PrettyPrintableError } from "@oclif/core/errors";
 import chalk from "chalk";
 
 import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";

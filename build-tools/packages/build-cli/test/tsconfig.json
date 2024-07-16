@@ -6,7 +6,7 @@
 		"declarationMap": false,
 		"rootDir": "./",
 		"outDir": "../lib/test",
-		"types": ["node", "mocha", "chai"],
+		"types": ["node"],
 		"skipLibCheck": true,
 	},
 	"references": [
