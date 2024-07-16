@@ -10,10 +10,25 @@ function createSuite<TArgs extends StressSuiteArguments>(
 	args: TArgs,
 ) {
 	return function (this: Mocha.Suite) {
-		if (args.stressLevel > 0) {
-			// Stress runs may have tests which are expected to take longer amounts of time.
-			// Don't override the timeout if it's already set to a higher value, though.
-			this.timeout(this.timeout() === 0 ? 0 : Math.max(10_000 * args.stressLevel, this.timeout()));
+		switch (args.stressMode) {
+			case StressMode.Normal: {
+				// Stress runs may have tests which are expected to take longer amounts of time.
+				// Don't override the timeout if it's already set to a higher value, though.
+				this.timeout(this.timeout() === 0 ? 0 : Math.max(10_000, this.timeout()));
+
+				break;
+			}
+			case StressMode.Long: {
+				this.timeout(this.timeout() === 0 ? 0 : Math.max(20_000, this.timeout()));
+
+				break;
+			}
+			case StressMode.Short: {
+				this.timeout(this.timeout() === 0 ? 0 : Math.max(5_000, this.timeout()));
+
+				break;
+			}
+			// No default
 		}
 		tests.bind(this)(args);
 	};
@@ -29,7 +44,16 @@ export interface StressSuiteArguments {
 	 * test count and timeout threshold. A stress run generally takes longer time or more programatically generated
 	 * tests.
 	 */
-	stressLevel: number;
+	stressMode: StressMode | undefined;
+}
+
+/**
+ * @internal
+ */
+export enum StressMode {
+	Short,
+	Normal,
+	Long,
 }
 
 /**
@@ -94,16 +118,24 @@ export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFu
 		process.env?.FUZZ_TEST_COUNT !== undefined
 			? Number.parseInt(process.env.FUZZ_TEST_COUNT, 10)
 			: undefined;
-	let testCount = testCountFromEnv ?? options.defaultTestCount;
-	const stressLevel = Number(process.env?.FUZZ_TEST_RUN) || 0;
-	// Adjust the testCount based on whether stressLevel is defined.
-	if (stressLevel > 0) {
-		testCount = Math.round(testCount * stressLevel);
-	}
+	const testCount = testCountFromEnv ?? options.defaultTestCount;
 
-	const args = { testCount, stressLevel };
+	const stressMode = (() => {
+		switch (process.env?.FUZZ_TEST_RUN) {
+			case "short":
+				return StressMode.Short;
+			case "normal":
+				return StressMode.Normal;
+			case "long":
+				return StressMode.Long;
+			default:
+				return undefined;
+		}
+	})();
+
+	const args = { testCount, stressMode };
 	const d: DescribeFuzz = (name, tests) =>
-		(stressLevel > 0 ? describe.only : describe)(name, createSuite(tests, args));
+		(stressMode != null ? describe.only : describe)(name, createSuite(tests, args));
 	d.skip = (name, tests) => describe.skip(name, createSuite(tests, args));
 	d.only = (name, tests) => describe.only(name, createSuite(tests, args));
 	return d;

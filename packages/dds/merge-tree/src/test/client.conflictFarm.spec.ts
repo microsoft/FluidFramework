@@ -98,8 +98,8 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 	});
 }
 
-describeFuzz("MergeTree.Client", ({ testCount, stressLevel }) => {
-	const opts = stressLevel > 0 ? stressOptions : defaultOptions;
+describeFuzz("MergeTree.Client", ({ testCount, stressMode }) => {
+	const opts = stressMode !== undefined ? stressOptions : defaultOptions;
 	// defaultOptions;
 	// debugOptions;
 	// longOptions;

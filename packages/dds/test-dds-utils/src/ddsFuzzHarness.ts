@@ -18,6 +18,7 @@ import type {
 } from "@fluid-private/stochastic-test-utils";
 import {
 	ExitBehavior,
+	StressMode,
 	asyncGeneratorFromArray,
 	chainAsync,
 	createFuzzDescribe,
@@ -1588,6 +1589,35 @@ export async function replayTest<
 	await runTestForSeed(model, options, seed, saveInfo);
 }
 
+export function generateTestSeeds(testCount: number, stressMode: StressMode): number[] {
+	const random = makeRandom();
+
+	const seeds = Array.from({ length: testCount }, (_, i) => i);
+
+	switch (stressMode) {
+		case StressMode.Short: {
+			const selectedSeeds: number[] = [];
+			for (let i = 0; i < Math.ceil(testCount / 2); i++) {
+				const seed = random.pick(seeds.filter((s) => !selectedSeeds.includes(s)));
+				selectedSeeds.push(seed);
+			}
+			return selectedSeeds;
+		}
+		case StressMode.Long: {
+			const additionalSeeds: number[] = [];
+			for (let i = 0; i < testCount; i++) {
+				const seed = random.pick(seeds.filter((s) => !additionalSeeds.includes(s)));
+				additionalSeeds.push(seed);
+			}
+			return [...seeds, ...additionalSeeds];
+		}
+
+		default: {
+			return seeds;
+		}
+	}
+}
+
 /**
  * Creates a suite of eventual consistency tests for a particular DDS model.
  * @internal
@@ -1612,7 +1642,7 @@ export function createDDSFuzzSuite<
 	const model = getFullModel(ddsModel, options);
 
 	const describeFuzz = createFuzzDescribe({ defaultTestCount: options.defaultTestCount });
-	describeFuzz(model.workloadName, ({ testCount }) => {
+	describeFuzz(model.workloadName, ({ testCount, stressMode }) => {
 		before(() => {
 			if (options.saveFailures !== false) {
 				mkdirSync(getSaveDirectory(options.saveFailures.directory, model), {
@@ -1626,7 +1656,8 @@ export function createDDSFuzzSuite<
 			}
 		});
 
-		for (let seed = 0; seed < testCount; seed++) {
+		const seeds = generateTestSeeds(testCount, stressMode ?? StressMode.Normal);
+		for (const seed of seeds) {
 			runTest(model, options, seed, getSaveInfo(model, options, seed));
 		}
 

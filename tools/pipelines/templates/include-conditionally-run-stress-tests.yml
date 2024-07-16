@@ -22,9 +22,9 @@ parameters:
   type: object
   default: Small
 
-- name: stressLevel
-  type: number
-  default: 1
+- name: stressMode
+  type: string
+  default: normal
 
 # Id of the run of the 'Build - client packages' pipeline which contains the artifacts to download.
 # Needed to workaround a bug in the DownloadPipelineArtifact task that might cause artifacts to be downloaded from the
@@ -84,4 +84,4 @@ stages:
             testFileTarName: ${{ package.testFileTarName }}
             testCommand: ${{ package.testCommand }}
             env:
-              FUZZ_STRESS_RUN: ${{ parameters.stressLevel }}
+              FUZZ_STRESS_RUN: ${{ parameters.stressMode }}
