@@ -5,11 +5,16 @@
 
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import { isInternalVersionRange, isInternalVersionScheme } from "@fluid-tools/version-tools";
+// import { isInternalVersionRange, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { formatISO } from "date-fns";
-import { BaseCommand, type ReleaseReport, toReportKind } from "../../library/index.js";
+import {
+	BaseCommand,
+	type ReleaseReport,
+	type ReportKind,
+	toReportKind,
+} from "../../library/index.js";
 
 export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
 	static readonly summary =
@@ -79,7 +84,8 @@ async function generateReleaseReport(
 ): Promise<void> {
 	const ignorePackageList = new Set(["@types/jest-environment-puppeteer"]);
 
-	await updateReportVersions(fullReleaseReport, ignorePackageList, version, log);
+	await updateReportVersions(fullReleaseReport, ignorePackageList, version, "caret", log);
+	await updateReportVersions(fullReleaseReport, ignorePackageList, version, "simple", log);
 
 	const caretReportOutput = toReportKind(fullReleaseReport, "caret");
 	const simpleReportOutput = toReportKind(fullReleaseReport, "simple");
@@ -152,21 +158,34 @@ async function updateReportVersions(
 	report: ReleaseReport,
 	ignorePackageList: Set<string>,
 	version: string,
+	kind: ReportKind,
 	log: Logger,
 ): Promise<void> {
+	const clientPackage = "@fluidframework/aqueduct";
+	let clientVersionCaret;
+	let clientVersionSimple;
+
+	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+	if (report[clientPackage]) {
+		clientVersionCaret = report[clientPackage].ranges.caret;
+		clientVersionSimple = report[clientPackage].version;
+	}
+
+	log.log(`Caret version: ${clientVersionCaret}`);
+	log.log(`Simple version: ${clientVersionSimple}`);
+
 	for (const packageName of Object.keys(report)) {
 		if (ignorePackageList.has(packageName)) {
 			continue;
 		}
 
-		// updates caret ranges
-		if (isInternalVersionRange(report[packageName].ranges.caret, true)) {
-			// If the caret range is a range, reset it to an exact version.
-			// Note: Post 2.0 release, the versions will no longer be internal versions so another condition will be required that will work after 2.0.
+		// todo: add better checks
+		if (kind === "caret" && report[packageName].ranges.caret === clientVersionCaret) {
 			report[packageName].ranges.caret = version;
 		}
 
-		if (isInternalVersionScheme(report[packageName].version)) {
+		// todo: add better checks
+		if (kind === "simple" && report[packageName].version === clientVersionSimple) {
 			report[packageName].version = version;
 		}
 	}
@@ -186,6 +205,9 @@ async function updateReportVersions(
 
 function extractBuildNumber(version: string): number {
 	const versionParts: string[] = version.split("-");
+	if (version.includes("test")) {
+		return Number.parseInt(versionParts[1], 10);
+	}
 	// Extract the last part of the version, which is the number you're looking for
 	return Number.parseInt(versionParts[versionParts.length - 1], 10);
 }
