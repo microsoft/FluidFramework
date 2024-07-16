@@ -2,7 +2,8 @@
 
 ## 0.51.0
 
-Provide @benchmarkCustom feature
+Provide @benchmarkCustom feature to log custom measurements. To profile custom usage, define tests using the `benchmarkCustom()` function. The argument `run` to the function includes a reporter with `addMeasurement()`
+to write custom data to report.
 
 ### ⚠ BREAKING CHANGES
 
