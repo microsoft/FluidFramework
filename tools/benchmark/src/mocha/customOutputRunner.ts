@@ -7,6 +7,7 @@ import { Test } from "mocha";
 
 import type { BenchmarkDescription, MochaExclusiveOptions } from "../Configuration";
 import { timer } from "../timer";
+import type { BenchmarkData } from "../ResultTypes";
 
 /**
  * Options to configure a benchmark that reports custom measurements.
@@ -50,7 +51,7 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 		const startTime = timer.now();
 		await options.run(reporter);
 
-		const results = {
+		const results: BenchmarkData = {
 			elapsedSeconds: timer.toSeconds(startTime, timer.now()),
 			customData,
 		};

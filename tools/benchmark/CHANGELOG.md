@@ -1,10 +1,8 @@
 # @fluid-tools/benchmark
 
-## 0.52.0
+## 0.51.0
 
 Provide @benchmarkCustom feature
-
-## 0.51.0
 
 ### ⚠ BREAKING CHANGES
 
