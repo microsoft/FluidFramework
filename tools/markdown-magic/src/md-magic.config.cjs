@@ -7,7 +7,6 @@ const scripts = require("markdown-magic-package-scripts");
 
 const { defaultSectionHeadingLevel } = require("./constants.cjs");
 const {
-	createSectionFromTemplate,
 	formattedGeneratedContentBody,
 	getPackageMetadata,
 	getScopeKindFromPackage,
@@ -41,9 +40,24 @@ const {
  * Must be a positive integer.
  */
 const generateDependencyGuidelines = (headingOptions) =>
-	createSectionFromTemplate("Dependency-Guidelines-Template.md", {
+	generateSectionFromTemplate("Dependency-Guidelines-Template.md", {
 		...headingOptions,
 		headingText: "Using Fluid Framework libraries",
+	});
+
+/**
+ * Generates a Markdown section listing Fluid Framework's minimum client requirements.
+ *
+ * @param {object} headingOptions - Heading generation options.
+ * @param {boolean} includeHeading - Whether or not to include a heading in the generated content.
+ * If not specified, no top-level heading will be included in the section.
+ * @param {number} headingOptions.headingLevel - Root heading level for the generated section.
+ * Must be a positive integer.
+ */
+const generateClientRequirementsSection = (headingOptions) =>
+	generateSectionFromTemplate("Client-Requirements-Template.md", {
+		...headingOptions,
+		headingText: "Minimum Client Requirements",
 	});
 
 /**
@@ -56,7 +70,7 @@ const generateDependencyGuidelines = (headingOptions) =>
  * Must be a positive integer.
  */
 const generateContributionGuidelinesSection = (headingOptions) =>
-	createSectionFromTemplate("Contribution-Guidelines-Template.md", {
+	generateSectionFromTemplate("Contribution-Guidelines-Template.md", {
 		...headingOptions,
 		headingText: "Contribution Guidelines",
 	});
@@ -71,7 +85,7 @@ const generateContributionGuidelinesSection = (headingOptions) =>
  * Must be a positive integer.
  */
 const generateHelpSection = (headingOptions) =>
-	createSectionFromTemplate("Help-Template.md", {
+	generateSectionFromTemplate("Help-Template.md", {
 		...headingOptions,
 		headingText: "Help",
 	});
@@ -86,13 +100,100 @@ const generateHelpSection = (headingOptions) =>
  * Must be a positive integer.
  */
 const generateTrademarkSection = (headingOptions) =>
-	createSectionFromTemplate("Trademark-Template.md", {
+	generateSectionFromTemplate("Trademark-Template.md", {
 		...headingOptions,
 		headingText: "Trademark",
 	});
 
 /**
- * Generates simple README contents for a library package.
+ * Generates simple "footer" contents for a library package README.
+ *
+ * @remarks Generally recommended for inclusion at the end of the README.
+ *
+ * Includes:
+ *
+ * - Link to API documentation for the package on <fluidframework.com>
+ *
+ * - (if explicitly specified) Package script documentation
+ *
+ * - Fluid Framework contribution guidelines
+ *
+ * - Help section
+ *
+ * - Microsoft trademark info
+ *
+ * @param {object} content - The original document file contents.
+ * @param {object} options - Transform options.
+ * @param {string | undefined} options.packageJsonPath - (optional) Relative path from the document to the package's package.json file.
+ * Default: "./package.json".
+ * Default: Checks at the `package.json` file for an `exports` property.
+ * Will include the section if the property is found, and one of our special paths is found (`/alpha`, `/beta`, or `/legacy`).
+ * Can be explicitly disabled by specifying `FALSE`.
+ * @param {"TRUE" | "FALSE" | undefined} options.apiDocs - (optional) Whether or not to include a section pointing readers to the package's generated API documentation on <fluidframework.com>.
+ * Default: `TRUE`.
+ * @param {"TRUE" | "FALSE" | undefined} options.scripts - (optional) Whether or not to include a section enumerating the package.json file's dev scripts.
+ * Default: `FALSE`.
+ * @param {"TRUE" | "FALSE" | undefined} options.clientRequirements - (optional) Whether or not to include a section listing Fluid Framework's minimum client requirements.
+ * Default: `TRUE`.
+ * @param {"TRUE" | "FALSE" | undefined} options.contributionGuidelines - (optional) Whether or not to include a section outlining fluid-framework's contribution guidelines.
+ * Default: `TRUE`.
+ * @param {"TRUE" | "FALSE" | undefined} options.help - (optional) Whether or not to include a developer help section.
+ * Default: `TRUE`.
+ * @param {"TRUE" | "FALSE" | undefined} options.trademark - (optional) Whether or not to include a section with Microsoft's trademark info.
+ * Default: `TRUE`.
+ * @param {object} config - Transform configuration.
+ * @param {string} config.originalPath - Path to the document being modified.
+ */
+function libraryPackageReadmeFooterTransform(content, options, config) {
+	const { packageJsonPath: relativePackageJsonPath } = options;
+	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
+		config.originalPath,
+		relativePackageJsonPath,
+	);
+	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
+	const packageName = packageMetadata.name;
+
+	const sectionHeadingOptions = {
+		includeHeading: true,
+		headingLevel: defaultSectionHeadingLevel,
+	};
+
+	const sections = [];
+
+	if (options.apiDocs !== "FALSE") {
+		sections.push(generateApiDocsLinkSection(packageName, sectionHeadingOptions));
+	}
+
+	if (options.scripts === "TRUE") {
+		options.pkg = relativePackageJsonPath;
+		const scriptsTable = scripts(content, options, config);
+		sections.push(generatePackageScriptsSection(scriptsTable, sectionHeadingOptions));
+	}
+
+	if (options.clientRequirements !== "FALSE") {
+		sections.push(generateClientRequirementsSection(sectionHeadingOptions));
+	}
+
+	if (options.contributionGuidelines !== "FALSE") {
+		sections.push(generateContributionGuidelinesSection(sectionHeadingOptions));
+	}
+
+	if (options.help !== "FALSE") {
+		sections.push(generateHelpSection(sectionHeadingOptions));
+	}
+
+	if (options.trademark !== "FALSE") {
+		sections.push(generateTrademarkSection(sectionHeadingOptions));
+	}
+
+	return formattedGeneratedContentBody(sections.join(""));
+}
+
+/**
+ * Generates simple "header" contents for a library package README.
+ * Contains instructions for installing the package and importing its contents.
+ *
+ * @remarks Generally recommended for inclusion after a brief package introduction, but before more detailed sections.
  *
  * Includes:
  *
@@ -101,16 +202,6 @@ const generateTrademarkSection = (headingOptions) =>
  * - Installation instructions
  *
  * - Import instructions
- *
- * - Link to API documentation for the package on <fluidframework.com>
- *
- * - Package script documentation (only if specified)
- *
- * - Fluid Framework contribution guidelines
- *
- * - Help section
- *
- * - Microsoft trademark info
  *
  * @param {object} content - The original document file contents.
  * @param {object} options - Transform options.
@@ -130,20 +221,10 @@ const generateTrademarkSection = (headingOptions) =>
  * Default: Checks at the `package.json` file for an `exports` property.
  * Will include the section if the property is found, and one of our special paths is found (`/alpha`, `/beta`, or `/legacy`).
  * Can be explicitly disabled by specifying `FALSE`.
- * @param {"TRUE" | "FALSE" | undefined} options.apiDocs - (optional) Whether or not to include a section pointing readers to the package's generated API documentation on <fluidframework.com>.
- * Default: `TRUE`.
- * @param {"TRUE" | "FALSE" | undefined} options.scripts - (optional) Whether or not to include a section enumerating the package.json file's dev scripts.
- * Default: `FALSE`.
- * @param {"TRUE" | "FALSE" | undefined} options.contributionGuidelines - (optional) Whether or not to include a section outlining fluid-framework's contribution guidelines.
- * Default: `TRUE`.
- * @param {"TRUE" | "FALSE" | undefined} options.help - (optional) Whether or not to include a developer help section.
- * Default: `TRUE`.
- * @param {"TRUE" | "FALSE" | undefined} options.trademark - (optional) Whether or not to include a section with Microsoft's trademark info.
- * Default: `TRUE`.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
-function libraryPackageReadmeTransform(content, options, config) {
+function libraryPackageReadmeHeaderTransform(content, options, config) {
 	const { packageJsonPath: relativePackageJsonPath } = options;
 	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
 		config.originalPath,
@@ -180,28 +261,6 @@ function libraryPackageReadmeTransform(content, options, config) {
 		sections.push(
 			generatePackageImportInstructionsSection(packageMetadata, sectionHeadingOptions),
 		);
-	}
-
-	if (options.apiDocs !== "FALSE") {
-		sections.push(generateApiDocsLinkSection(packageName, sectionHeadingOptions));
-	}
-
-	if (options.scripts === "TRUE") {
-		options.pkg = relativePackageJsonPath;
-		const scriptsTable = scripts(content, options, config);
-		sections.push(generatePackageScriptsSection(scriptsTable, sectionHeadingOptions));
-	}
-
-	if (options.contributionGuidelines !== "FALSE") {
-		sections.push(generateContributionGuidelinesSection(sectionHeadingOptions));
-	}
-
-	if (options.help !== "FALSE") {
-		sections.push(generateHelpSection(sectionHeadingOptions));
-	}
-
-	if (options.trademark !== "FALSE") {
-		sections.push(generateTrademarkSection(sectionHeadingOptions));
 	}
 
 	return formattedGeneratedContentBody(sections.join(""));
@@ -315,15 +374,26 @@ module.exports = {
 		INCLUDE: includeTransform,
 
 		/**
-		 * See {@link libraryPackageReadmeTransform}.
+		 * See {@link libraryPackageReadmeHeaderTransform}.
 		 *
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_LIBRARY_PACKAGE:packageJsonPath=./package.json&installation=TRUE&devDependency=FALSE&apiDocs=TRUE&scripts=FALSE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER:packageJsonPath=./package.json&installation=TRUE&devDependency=FALSE) -->
 		 * ```
 		 */
-		LIBRARY_PACKAGE_README: libraryPackageReadmeTransform,
+		LIBRARY_PACKAGE_README_HEADER: libraryPackageReadmeHeaderTransform,
+
+		/**
+		 * See {@link libraryPackageReadmeFooterTransform}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:packageJsonPath=./package.json&apiDocs=TRUE&scripts=FALSE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE) -->
+		 * ```
+		 */
+		LIBRARY_PACKAGE_README_FOOTER: libraryPackageReadmeFooterTransform,
 
 		/**
 		 * See {@link examplePackageReadmeTransform}.
@@ -396,6 +466,33 @@ module.exports = {
 		 * ```
 		 */
 		README_IMPORT_INSTRUCTIONS: packageImportInstructionsSectionTransform,
+
+		/**
+		 * Generates a README section with Fluid Framework client requirements.
+		 *
+		 * @param {object} content - The original document file contents.
+		 * @param {object} options - Transform options.
+		 * @param {"TRUE" | "FALSE" | undefined} includeHeading - (optional) Whether or not to include a top-level heading in the generated section.
+		 * default: `TRUE`.
+		 * @param {number | undefined} options.headingLevel - (optional) Heading level for the section.
+		 * Must be a positive integer.
+		 * Default: {@link defaultSectionHeadingLevel}.
+		 * @param {object} config - Transform configuration.
+		 * @param {string} config.originalPath - Path to the document being modified.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_CLIENT_REQUIREMENTS_SECTION:headingLevel=2) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
+		 * ```
+		 */
+		README_CLIENT_REQUIREMENTS_SECTION: (content, options, config) => {
+			return templateTransform(
+				"Client-Requirements-Template.md",
+				parseHeadingOptions(options, "Client Requirements"),
+			);
+		},
 
 		/**
 		 * Generates a README section with Microsoft trademark info.

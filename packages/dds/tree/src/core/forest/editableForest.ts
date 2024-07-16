@@ -13,9 +13,10 @@ import {
 	type DeltaVisitor,
 	type DetachedField,
 	type ITreeCursorSynchronous,
-	applyDelta,
+	combineVisitors,
 	deltaForRootInitialization,
 	makeDetachedFieldIndex,
+	visitDelta,
 } from "../tree/index.js";
 
 import type { IForestSubscription, ITreeSubscriptionCursor } from "./forest.js";
@@ -40,8 +41,11 @@ export interface IEditableForest extends IForestSubscription {
 }
 
 /**
- * Sets the contents of the forest via delta.
- * Requires the fores starts empty.
+ * Initializes the given forest with the given content.
+ * @remarks The forest must be empty when this function is called.
+ * This does not perform an edit in the typical sense.
+ * Instead, it creates a delta expressing a creation and insertion of the `content` under the {@link rootFieldKey}, and then applies the delta to the forest.
+ * If `visitAnchors` is enabled, then the delta will also be applied to the forest's {@link AnchorSet} (in which case there must be no existing anchors when this function is called).
  *
  * @remarks
  * This does not perform an edit: it updates the forest content as if there was an edit that did that.
@@ -51,10 +55,19 @@ export function initializeForest(
 	content: readonly ITreeCursorSynchronous[],
 	revisionTagCodec: RevisionTagCodec,
 	idCompressor: IIdCompressor,
+	visitAnchors = false,
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
 	const delta: DeltaRoot = deltaForRootInitialization(content);
-	applyDelta(delta, forest, makeDetachedFieldIndex("init", revisionTagCodec, idCompressor));
+	let visitor = forest.acquireVisitor();
+	if (visitAnchors) {
+		assert(forest.anchors.isEmpty(), "anchor set must be empty");
+		const anchorVisitor = forest.anchors.acquireVisitor();
+		visitor = combineVisitors([visitor, anchorVisitor], [anchorVisitor]);
+	}
+
+	visitDelta(delta, visitor, makeDetachedFieldIndex("init", revisionTagCodec, idCompressor));
+	visitor.free();
 }
 
 // TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.

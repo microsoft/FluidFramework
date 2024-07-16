@@ -107,8 +107,7 @@ module.exports = {
 		"ci:build:api-reports:legacy": ["api-extractor:esnext"],
 		// With most packages in client building ESM first, there is ideally just "build:esnext" dependency.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
-		// therefore we need to require both before running api-extractor. For packages with /legacy
-		// exports, we need the export rollups too and in those cases we only use ESM.
+		// therefore we need to require both before running api-extractor.
 		"build:docs": ["tsc", "build:esnext"],
 		"ci:build:docs": ["tsc", "build:esnext"],
 		"build:readme": {
@@ -338,8 +337,6 @@ module.exports = {
 				"^examples/data-objects/table-document/",
 				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support
 				"^experimental/dds/tree/",
-				// AB#8288 api-extractor Internal Error: symbol has a ts.SyntaxKind.SourceFile declaration
-				"^packages/framework/fluid-framework/",
 
 				// Packages with APIs that don't need strict API linting
 				"^build-tools/",
@@ -462,6 +459,7 @@ module.exports = {
 			commandPackages: [
 				["api-extractor", "@microsoft/api-extractor"],
 				["attw", "@arethetypeswrong/cli"],
+				["biome", "@biomejs/biome"],
 				["c8", "c8"],
 				["concurrently", "concurrently"],
 				["copyfiles", "copyfiles"],

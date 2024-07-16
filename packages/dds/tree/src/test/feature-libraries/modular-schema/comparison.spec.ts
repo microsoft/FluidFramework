@@ -35,7 +35,7 @@ import { brand } from "../../../util/index.js";
 /**
  * Helper for building {@link TreeFieldStoredSchema}.
  */
-function fieldSchema(
+export function fieldSchema(
 	kind: { identifier: FieldKindIdentifier },
 	types?: Iterable<TreeNodeSchemaIdentifier>,
 ): TreeFieldStoredSchema {

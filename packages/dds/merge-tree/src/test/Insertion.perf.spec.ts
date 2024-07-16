@@ -27,7 +27,7 @@ function constructTree(numOfSegments: number): MergeTree {
 	return mergeTree;
 }
 
-const TREE_SIZE: number = 7_500;
+const TREE_SIZE: number = 7500;
 
 describe("MergeTree insertion", () => {
 	benchmark({

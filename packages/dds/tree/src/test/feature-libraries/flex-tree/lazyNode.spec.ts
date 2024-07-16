@@ -444,7 +444,7 @@ describe("LazyNode", () => {
 
 		it("boxing", () => {
 			assert.equal(node.foo, node.boxedFoo.content);
-			assert(node.bar.isSameAs(node.boxedBar));
+			assert(node.bar === node.boxedBar);
 		});
 
 		it("value", () => {

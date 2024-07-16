@@ -25,10 +25,9 @@ export interface BenchmarkAsyncFunction extends BenchmarkOptions {
 
 // @public
 export interface BenchmarkData {
-    readonly elapsedSeconds: number;
-    readonly iterationsPerBatch: number;
-    readonly numberOfBatches: number;
-    readonly stats: Stats;
+    customData: Record<string, unknown>;
+    customDataFormatters: Record<string, (value: unknown) => string>;
+    elapsedSeconds: number;
 }
 
 // @public
@@ -39,7 +38,6 @@ export interface BenchmarkDescription {
 
 // @public
 export interface BenchmarkError {
-    // (undocumented)
     error: string;
 }
 
@@ -55,7 +53,7 @@ export class BenchmarkReporter {
     constructor(outputDirectory?: string);
     recordResultsSummary(): void;
     recordSuiteResults(suiteName: string): void;
-    recordTestResult(suiteName: string, testName: string, result: BenchmarkResult): void;
+    recordTestResult(suiteName: string, testName: string, result: Readonly<BenchmarkResult>): void;
 }
 
 // @public
@@ -177,21 +175,14 @@ export function qualifiedTitle(args: BenchmarkDescription & Titled): string;
 // @public
 export function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData>;
 
-// @public (undocumented)
+// @public
 export interface Stats {
-    // (undocumented)
     readonly arithmeticMean: number;
-    // (undocumented)
     readonly marginOfError: number;
-    // (undocumented)
     readonly marginOfErrorPercent: number;
-    // (undocumented)
     readonly samples: readonly number[];
-    // (undocumented)
     readonly standardDeviation: number;
-    // (undocumented)
     readonly standardErrorOfMean: number;
-    // (undocumented)
     readonly variance: number;
 }
 
