@@ -77,7 +77,6 @@ import {
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
 import { PerspectiveImpl, isSegmentPresent } from "./perspective.js";
-// eslint-disable-next-line import/no-deprecated
 import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
 	DetachedReferencePosition,
@@ -395,31 +394,6 @@ const forwardPred = (ref: LocalReferencePosition): boolean =>
 	ref.slidingPreference !== SlidingPreference.BACKWARD;
 const backwardPred = (ref: LocalReferencePosition): boolean =>
 	ref.slidingPreference === SlidingPreference.BACKWARD;
-
-const continueFrom = (node: MergeBlock): boolean => {
-	let siblingExists = false;
-	forwardExcursion(node, () => {
-		siblingExists = true;
-		return false;
-	});
-	return siblingExists;
-};
-
-const onLeaf = (
-	segment: ISegment | undefined,
-	_pos: number,
-	context: InsertContext,
-): ISegmentChanges => {
-	const segmentChanges: ISegmentChanges = {};
-	if (segment) {
-		// Insert before segment
-		segmentChanges.replaceCurrent = context.candidateSegment;
-		segmentChanges.next = segment;
-	} else {
-		segmentChanges.next = context.candidateSegment;
-	}
-	return segmentChanges;
-};
 
 /**
  * @internal
@@ -1438,6 +1412,16 @@ export class MergeTree {
 		localSeq: number | undefined,
 		newSegments: T[],
 	): void {
+		// Keeping this function within the scope of blockInsert for readability.
+		// eslint-disable-next-line unicorn/consistent-function-scoping
+		const continueFrom = (node: MergeBlock): boolean => {
+			let siblingExists = false;
+			forwardExcursion(node, () => {
+				siblingExists = true;
+				return false;
+			});
+			return siblingExists;
+		};
 		// eslint-disable-next-line import/no-deprecated
 		let segmentGroup: SegmentGroup;
 		const saveIfLocal = (locSegment: ISegment): void => {
@@ -1459,6 +1443,23 @@ export class MergeTree {
 					this.addToLRUSet(locSegment, locSegment.seq!);
 				}
 			}
+		};
+		const onLeaf = (
+			segment: ISegment | undefined,
+			_pos: number,
+			context: InsertContext,
+			// Keeping this function within the scope of blockInsert for readability.
+			// eslint-disable-next-line unicorn/consistent-function-scoping
+		): ISegmentChanges => {
+			const segmentChanges: ISegmentChanges = {};
+			if (segment) {
+				// Insert before segment
+				segmentChanges.replaceCurrent = context.candidateSegment;
+				segmentChanges.next = segment;
+			} else {
+				segmentChanges.next = context.candidateSegment;
+			}
+			return segmentChanges;
 		};
 
 		// TODO: build tree from segs and insert all at once
@@ -2511,9 +2512,7 @@ export class MergeTree {
 	private blockUpdate(block: MergeBlock): void {
 		let len: number | undefined;
 
-		// eslint-disable-next-line import/no-deprecated
 		const rightmostTiles = createMap<Marker>();
-		// eslint-disable-next-line import/no-deprecated
 		const leftmostTiles = createMap<Marker>();
 
 		for (let i = 0; i < block.childCount; i++) {
@@ -2548,9 +2547,7 @@ export class MergeTree {
 					}
 				}
 			} else {
-				// eslint-disable-next-line import/no-deprecated
 				extend(rightmostTiles, node.rightmostTiles);
-				// eslint-disable-next-line import/no-deprecated
 				extendIfUndefined(leftmostTiles, node.leftmostTiles);
 			}
 		}

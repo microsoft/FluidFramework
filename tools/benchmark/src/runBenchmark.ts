@@ -12,7 +12,8 @@ import {
 	benchmarkArgumentsIsCustom,
 	BenchmarkTimer,
 } from "./Configuration";
-import { Stats, getArrayStatistics } from "./ReporterUtilities";
+import type { BenchmarkData } from "./ResultTypes";
+import { getArrayStatistics, prettyNumber } from "./RunnerUtilities";
 import { Timer, defaultMinimumTime, timer } from "./timer";
 
 /**
@@ -32,39 +33,6 @@ export const defaultTimingOptions: Required<BenchmarkTimingOptions> = {
 };
 
 /**
- * Result of successfully running a benchmark.
- * @public
- */
-export interface BenchmarkData {
-	/**
-	 * Iterations per batch.
-	 */
-	readonly iterationsPerBatch: number;
-
-	/**
-	 * Number of batches, each with `iterationsPerBatch` iterations.
-	 */
-	readonly numberOfBatches: number;
-
-	/**
-	 * Stats about runtime, in seconds.
-	 * This is already scaled to be per iteration and not per batch.
-	 */
-	readonly stats: Stats;
-
-	/**
-	 * Time it took to run the benchmark in seconds.
-	 */
-	readonly elapsedSeconds: number;
-}
-
-/**
- * Result of trying to run a benchmark.
- * @public
- */
-export type BenchmarkResult = BenchmarkError | BenchmarkData;
-
-/**
  * Use for readonly view of Json compatible data.
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
@@ -80,22 +48,6 @@ export type JsonCompatible =
 	| { readonly [P in string]: JsonCompatible | undefined };
 
 export type Results = { readonly [P in string]: JsonCompatible | undefined };
-
-/**
- * Provides type narrowing when the provided result is a {@link BenchmarkError}.
- * @public
- */
-export function isResultError(result: BenchmarkResult): result is BenchmarkError {
-	return (result as Partial<BenchmarkError>).error !== undefined;
-}
-
-/**
- * Result of failing to run a benchmark.
- * @public
- */
-export interface BenchmarkError {
-	error: string;
-}
 
 /**
  * Runs the benchmark.
@@ -235,14 +187,21 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 
 	public computeData(): BenchmarkData {
 		const now = this.timer.now();
-		const stats: Stats = getArrayStatistics(
-			this.samples.map((v) => v / this.iterationsPerBatch),
-		);
+		const stats = getArrayStatistics(this.samples.map((v) => v / this.iterationsPerBatch));
 		const data: BenchmarkData = {
 			elapsedSeconds: this.timer.toSeconds(this.startTime, now),
-			numberOfBatches: this.samples.length,
-			stats,
-			iterationsPerBatch: this.iterationsPerBatch,
+			customData: {
+				"batch count": this.samples.length,
+				"period (ns/op)": stats.arithmeticMean,
+				"relative margin of error": stats.marginOfErrorPercent,
+				"iterations per batch": this.iterationsPerBatch,
+			},
+			customDataFormatters: {
+				"batch count": (v: unknown): string => prettyNumber(v as number, 0),
+				"period (ns/op)": (v: unknown) => prettyNumber(1e9 * (v as number), 2),
+				"relative margin of error": (v: unknown) => `±${(v as number).toFixed(2)}%`,
+				"iterations per batch": (v: unknown) => `${prettyNumber(v as number, 0)}`,
+			},
 		};
 		return data;
 	}

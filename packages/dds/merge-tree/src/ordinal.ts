@@ -19,13 +19,19 @@ export function computeHierarchicalOrdinal(
 
 	const ordinalWidth = 1 << (maxCount - actualCount);
 	let ordinal: string;
-	if (previousOrdinal === undefined || previousOrdinal === "") {
-		ordinal = parentOrdinal + String.fromCodePoint(ordinalWidth - 1);
+	if (previousOrdinal === undefined) {
+		// Ordinals exist purely for lexicographical sort order and use a small set of valid bytes for each string character.
+		// The extra handling fromCodePoint has for things like surrogate pairs is therefore unnecessary.
+		// disable the rule to use code points when dealing with ordinals.
+		// eslint-disable-next-line unicorn/prefer-code-point
+		ordinal = parentOrdinal + String.fromCharCode(ordinalWidth - 1);
 	} else {
-		const prevOrdCode = previousOrdinal.codePointAt(previousOrdinal.length - 1);
+		// eslint-disable-next-line unicorn/prefer-code-point
+		const prevOrdCode = previousOrdinal.charCodeAt(previousOrdinal.length - 1);
 		assert(prevOrdCode !== undefined, "previous ordinal should not be empty");
 		const localOrdinal = prevOrdCode + ordinalWidth;
-		ordinal = parentOrdinal + String.fromCodePoint(localOrdinal);
+		// eslint-disable-next-line unicorn/prefer-code-point
+		ordinal = parentOrdinal + String.fromCharCode(localOrdinal);
 	}
 
 	return ordinal;

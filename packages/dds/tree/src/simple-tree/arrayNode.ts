@@ -558,10 +558,8 @@ function createArrayNodeProxy(
 				return Reflect.get(dispatchTarget, key, receiver) as unknown;
 			}
 
-			const maybeUnboxedContent = field.at(maybeIndex);
-			return isFlexTreeNode(maybeUnboxedContent)
-				? getOrCreateNodeProxy(maybeUnboxedContent)
-				: maybeUnboxedContent;
+			const maybeContent = field.at(maybeIndex);
+			return isFlexTreeNode(maybeContent) ? getOrCreateNodeProxy(maybeContent) : maybeContent;
 		},
 		set: (target, key, newValue, receiver) => {
 			if (key === "length") {
