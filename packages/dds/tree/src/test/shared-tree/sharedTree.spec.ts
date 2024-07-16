@@ -46,6 +46,7 @@ import {
 	SchemaBuilderBase,
 	SchemaBuilderInternal,
 	TreeCompressionStrategy,
+	TreeStatus,
 	ViewSchema,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
@@ -1034,8 +1035,7 @@ describe("SharedTree", () => {
 			// get an anchor to the node we're removing
 			const anchorAOnTree2 = TestAnchor.fromValue(tree2.checkout.forest, "A");
 
-			// remove in first tree
-			// todo: remove usages of removeAt
+			// remove in first treex
 			root1.removeAt(0);
 
 			provider.processMessages();

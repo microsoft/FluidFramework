@@ -5,49 +5,44 @@
 
 import { strict as assert } from "assert";
 
-import { AllowedUpdateType, rootFieldKey } from "../../core/index.js";
-import type { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
-import {
-	TestTreeProviderLite,
-	createTestUndoRedoStacks,
-	schematizeFlexTree,
-	stringSequenceRootSchema,
-} from "../utils.js";
+import { rootFieldKey } from "../../core/index.js";
+import { StringArray, TestTreeProviderLite, createTestUndoRedoStacks } from "../utils.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
 import { TestAnchor } from "../testAnchor.js";
+
+const enableSchemaValidation = true;
 
 describe("Repair Data", () => {
 	describe("is destroyed when", () => {
 		it("the collab window progresses far enough", () => {
 			const provider = new TestTreeProviderLite(2);
-			const content = {
-				schema: stringSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.Initialize,
-				initialTree: ["A", "B", "C", "D"],
-			} satisfies InitializeAndSchematizeConfiguration;
-			const tree1 = schematizeFlexTree(provider.trees[0], content);
+			const view1 = provider.trees[0].viewWith({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			view1.initialize(["A", "B", "C", "D"]);
 
 			// make sure that revertibles are created
-			const { unsubscribe } = createTestUndoRedoStacks(tree1.checkout.events);
+			const { unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
 
 			provider.processMessages();
-			const tree2 = schematizeFlexTree(provider.trees[1], content);
-
-			const root1 = tree1.flexTree;
-			const root2 = tree2.flexTree;
+			const view2 = provider.trees[1].viewWith({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
 
 			// get anchors on the peer to the nodes we're removing
-			const anchorAOnTree2 = TestAnchor.fromValue(tree2.checkout.forest, "A");
-			const anchorBOnTree2 = TestAnchor.fromValue(tree2.checkout.forest, "B");
+			const anchorAOnTree2 = TestAnchor.fromValue(view2.checkout.forest, "A");
+			const anchorBOnTree2 = TestAnchor.fromValue(view2.checkout.forest, "B");
 
 			// remove in first tree
-			root1.sequenceEditor().remove(0, 2);
+			view1.root.removeRange(0, 2);
 
 			provider.processMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
-			assert.deepEqual([...root1], ["C", "D"]);
-			assert.deepEqual([...root2], ["C", "D"]);
-			assert.equal(tree2.checkout.getRemovedRoots().length, 2);
+			assert.deepEqual([...view1.root], ["C", "D"]);
+			assert.deepEqual([...view2.root], ["C", "D"]);
+			assert.equal(view2.checkout.getRemovedRoots().length, 2);
 
 			// check the detached field on the peer
 			assert.equal(anchorAOnTree2.treeStatus, TreeStatus.Removed);
@@ -55,92 +50,89 @@ describe("Repair Data", () => {
 
 			advanceCollabWindow(provider, removeSequenceNumber);
 
-			assert.deepEqual([...root1], ["C", "D"]);
-			assert.deepEqual([...root2], ["C", "D"]);
+			assert.deepEqual([...view1.root], ["C", "D"]);
+			assert.deepEqual([...view2.root], ["C", "D"]);
 
 			// check that the repair data on the peer is destroyed
 			assert.equal(anchorAOnTree2.treeStatus, TreeStatus.Deleted);
 			assert.equal(anchorBOnTree2.treeStatus, TreeStatus.Deleted);
 
-			assert.equal(tree2.checkout.getRemovedRoots().length, 0);
+			assert.equal(view2.checkout.getRemovedRoots().length, 0);
 
 			unsubscribe();
 		});
 
 		it("the collab window progresses far enough after a rebase", () => {
 			const provider = new TestTreeProviderLite(2);
-			const content = {
-				schema: stringSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.Initialize,
-				initialTree: ["A", "B", "C", "D"],
-			} satisfies InitializeAndSchematizeConfiguration;
-			const tree1 = schematizeFlexTree(provider.trees[0], content);
+			const view1 = provider.trees[0].viewWith({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			view1.initialize(["A", "B", "C", "D"]);
 
 			provider.processMessages();
-			const tree2 = schematizeFlexTree(provider.trees[1], content);
+			const view2 = provider.trees[1].viewWith({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
 
-			const root1 = tree1.flexTree;
-			const root2 = tree2.flexTree;
-
-			root1.insertAt(1, ["x"]);
-			assert.deepEqual([...root1], ["A", "x", "B", "C", "D"]);
+			view1.root.insertAt(1, "x");
+			assert.deepEqual([...view1.root], ["A", "x", "B", "C", "D"]);
 
 			// get an anchor on the peer to the node we're removing
-			const anchorCOnTree2 = TestAnchor.fromValue(tree2.checkout.forest, "C");
+			const anchorCOnview2 = TestAnchor.fromValue(view2.checkout.forest, "C");
 
-			root2.removeAt(2);
-			assert.deepEqual([...root2], ["A", "B", "D"]);
+			view2.root.removeAt(2);
+			assert.deepEqual([...view2.root], ["A", "B", "D"]);
 
-			// Syncing will cause tree2 to rebase its local changes
+			// Syncing will cause view2 to rebase its local changes
 			provider.processMessages();
 
 			const removeSequenceNumber = provider.sequenceNumber;
-			assert.deepEqual([...root1], ["A", "x", "B", "D"]);
-			assert.deepEqual([...root2], ["A", "x", "B", "D"]);
-			assert.equal(tree2.checkout.getRemovedRoots().length, 1);
+			assert.deepEqual([...view1.root], ["A", "x", "B", "D"]);
+			assert.deepEqual([...view2.root], ["A", "x", "B", "D"]);
+			assert.equal(view2.checkout.getRemovedRoots().length, 1);
 
 			// check the detached field on the peer
-			assert.equal(anchorCOnTree2.treeStatus, TreeStatus.Removed);
+			assert.equal(anchorCOnview2.treeStatus, TreeStatus.Removed);
 
 			advanceCollabWindow(provider, removeSequenceNumber);
 
-			assert.deepEqual([...root1], ["A", "x", "B", "D"]);
-			assert.deepEqual([...root2], ["A", "x", "B", "D"]);
+			assert.deepEqual([...view1.root], ["A", "x", "B", "D"]);
+			assert.deepEqual([...view2.root], ["A", "x", "B", "D"]);
 
 			// check that the repair data on the peer is destroyed
-			assert.equal(anchorCOnTree2.treeStatus, TreeStatus.Deleted);
+			assert.equal(anchorCOnview2.treeStatus, TreeStatus.Deleted);
 		});
 
 		it("the corresponding revertible is disposed", () => {
 			const provider = new TestTreeProviderLite(1);
-			const content = {
-				schema: stringSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.Initialize,
-				initialTree: ["A", "B", "C", "D"],
-			} satisfies InitializeAndSchematizeConfiguration;
-			const tree1 = schematizeFlexTree(provider.trees[0], content);
-			const root1 = tree1.flexTree;
+			const view1 = provider.trees[0].viewWith({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			view1.initialize(["A", "B", "C", "D"]);
 
 			// make sure that revertibles are created
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.checkout.events);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
 
 			// get anchors to the nodes we're removing
-			const anchorAOnTree1 = TestAnchor.fromValue(tree1.checkout.forest, "A");
-			const anchorBOnTree1 = TestAnchor.fromValue(tree1.checkout.forest, "B");
+			const anchorAOnTree1 = TestAnchor.fromValue(view1.checkout.forest, "A");
+			const anchorBOnTree1 = TestAnchor.fromValue(view1.checkout.forest, "B");
 
 			// remove in first tree
-			root1.sequenceEditor().remove(0, 2);
+			view1.root.removeRange(0, 2);
 			provider.processMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
 
-			assert.deepEqual([...root1], ["C", "D"]);
+			assert.deepEqual([...view1.root], ["C", "D"]);
 
 			advanceCollabWindow(provider, removeSequenceNumber);
 
 			// The nodes should not have been deleted yet because the revertible is still active
 			assert.equal(anchorAOnTree1.treeStatus, TreeStatus.Removed);
 			assert.equal(anchorBOnTree1.treeStatus, TreeStatus.Removed);
-			assert.equal(tree1.checkout.getRemovedRoots().length, 2);
+			assert.equal(view1.checkout.getRemovedRoots().length, 2);
 
 			// dispose the revertible
 			undoStack[0].dispose();
@@ -148,146 +140,142 @@ describe("Repair Data", () => {
 			// check that the repair data on the first tree is destroyed
 			assert.equal(anchorAOnTree1.treeStatus, TreeStatus.Deleted);
 			assert.equal(anchorBOnTree1.treeStatus, TreeStatus.Deleted);
-			assert.equal(tree1.checkout.getRemovedRoots().length, 0);
+			assert.equal(view1.checkout.getRemovedRoots().length, 0);
 
 			unsubscribe();
 		});
 
 		it("created in a transaction with an aborted nested transaction", () => {
 			const provider = new TestTreeProviderLite(1);
-			const content = {
-				schema: stringSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.Initialize,
-				initialTree: ["A", "B", "C", "D"],
-			} satisfies InitializeAndSchematizeConfiguration;
-			const tree1 = schematizeFlexTree(provider.trees[0], content);
-			const root1 = tree1.flexTree;
+			const view1 = provider.trees[0].viewWith({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			view1.initialize(["A", "B", "C", "D"]);
 
 			// get an anchor on the peer to the node we're removing
-			const anchorA = TestAnchor.fromValue(tree1.checkout.forest, "A");
-			const anchorB = TestAnchor.fromValue(tree1.checkout.forest, "B");
+			const anchorA = TestAnchor.fromValue(view1.checkout.forest, "A");
+			const anchorB = TestAnchor.fromValue(view1.checkout.forest, "B");
 
 			// remove in first tree in a transaction
-			tree1.checkout.transaction.start();
-			root1.removeAt(0);
-			tree1.checkout.transaction.start();
-			root1.removeAt(0);
+			view1.checkout.transaction.start();
+			view1.root.removeAt(0);
+			view1.checkout.transaction.start();
+			view1.root.removeAt(0);
 			assert.equal(anchorA.treeStatus, TreeStatus.Removed);
 			assert.equal(anchorB.treeStatus, TreeStatus.Removed);
 
-			tree1.checkout.transaction.abort();
-			tree1.checkout.transaction.commit();
+			view1.checkout.transaction.abort();
+			view1.checkout.transaction.commit();
 
 			assert.equal(anchorA.treeStatus, TreeStatus.Removed);
 			assert.equal(anchorB.treeStatus, TreeStatus.InDocument);
 
 			provider.processMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
-			assert.deepEqual([...root1], ["B", "C", "D"]);
-			assert.equal(tree1.checkout.getRemovedRoots().length, 1);
+			assert.deepEqual([...view1.root], ["B", "C", "D"]);
+			assert.equal(view1.checkout.getRemovedRoots().length, 1);
 
 			advanceCollabWindow(provider, removeSequenceNumber);
 
-			assert.deepEqual([...root1], ["B", "C", "D"]);
+			assert.deepEqual([...view1.root], ["B", "C", "D"]);
 
 			assert.equal(anchorA.treeStatus, TreeStatus.Deleted);
 			assert.equal(anchorB.treeStatus, TreeStatus.InDocument);
-			assert.equal(tree1.checkout.getRemovedRoots().length, 0);
+			assert.equal(view1.checkout.getRemovedRoots().length, 0);
 		});
 	});
 
 	describe("is not destroyed when", () => {
 		it("still relevant due to branches", () => {
 			const provider = new TestTreeProviderLite(2);
-			const content = {
-				schema: stringSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.Initialize,
-				initialTree: ["A", "B", "C", "D"],
-			} satisfies InitializeAndSchematizeConfiguration;
-			const tree1 = schematizeFlexTree(provider.trees[0], content);
+			const view1 = provider.trees[0].viewWith({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			view1.initialize(["A", "B", "C", "D"]);
 
 			provider.processMessages();
-			const tree2 = schematizeFlexTree(provider.trees[1], content);
-
-			const root1 = tree1.flexTree;
-			const root2 = tree2.flexTree;
+			const view2 = provider.trees[1].viewWith({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
 
 			// create a fork before the creation of the repair data
-			const _ = tree2.fork();
+			const _ = view2.checkout.fork();
 
 			// get an anchor on the peer to the node we're removing
-			const anchorAOnTree2 = TestAnchor.fromValue(tree2.checkout.forest, "A");
+			const anchorAOnTree2 = TestAnchor.fromValue(view2.checkout.forest, "A");
 
 			// remove in first tree
-			root1.removeAt(0);
+			view1.root.removeAt(0);
 
 			provider.processMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
-			assert.deepEqual([...root1], ["B", "C", "D"]);
-			assert.deepEqual([...root2], ["B", "C", "D"]);
+			assert.deepEqual([...view1.root], ["B", "C", "D"]);
+			assert.deepEqual([...view2.root], ["B", "C", "D"]);
 
 			// check the detached field on the peer
 			assert.equal(anchorAOnTree2.treeStatus, TreeStatus.Removed);
-			assert.equal(tree2.checkout.getRemovedRoots().length, 1);
+			assert.equal(view2.checkout.getRemovedRoots().length, 1);
 
 			advanceCollabWindow(provider, removeSequenceNumber);
 
-			assert.deepEqual([...root1], ["B", "C", "D"]);
-			assert.deepEqual([...root2], ["B", "C", "D"]);
+			assert.deepEqual([...view1.root], ["B", "C", "D"]);
+			assert.deepEqual([...view2.root], ["B", "C", "D"]);
 
 			// check that the repair data on the peer is not destroyed
 			assert.equal(anchorAOnTree2.treeStatus, TreeStatus.Removed);
-			assert.equal(tree2.checkout.getRemovedRoots().length, 1);
+			assert.equal(view2.checkout.getRemovedRoots().length, 1);
 		});
 
 		it("still relevant due to revertibles", () => {
 			const provider = new TestTreeProviderLite(2);
-			const content = {
-				schema: stringSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.Initialize,
-				initialTree: ["A", "B", "C", "D"],
-			} satisfies InitializeAndSchematizeConfiguration;
-			const tree1 = schematizeFlexTree(provider.trees[0], content);
+			const view1 = provider.trees[0].viewWith({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			view1.initialize(["A", "B", "C", "D"]);
 
 			// make sure that revertibles are created
-			const { unsubscribe } = createTestUndoRedoStacks(tree1.checkout.events);
+			const { unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
 
 			provider.processMessages();
-			const tree2 = schematizeFlexTree(provider.trees[1], content);
-
-			const root1 = tree1.flexTree;
-			const root2 = tree2.flexTree;
+			const view2 = provider.trees[1].viewWith({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
 
 			// get an anchor to the node we're removing
-			const anchorAOnTree1 = TestAnchor.fromValue(tree1.checkout.forest, "A");
+			const anchorAOnTree1 = TestAnchor.fromValue(view1.checkout.forest, "A");
 
 			// get an anchor on the peer to the node we're removing
-			const anchorAOnTree2 = TestAnchor.fromValue(tree2.checkout.forest, "A");
+			const anchorAOnTree2 = TestAnchor.fromValue(view2.checkout.forest, "A");
 
 			// remove in first tree
-			root1.removeAt(0);
+			view1.root.removeAt(0);
 
 			provider.processMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
-			assert.deepEqual([...root1], ["B", "C", "D"]);
-			assert.deepEqual([...root2], ["B", "C", "D"]);
+			assert.deepEqual([...view1.root], ["B", "C", "D"]);
+			assert.deepEqual([...view2.root], ["B", "C", "D"]);
 
 			// check the detached field on the first tree
 			assert.equal(anchorAOnTree1.treeStatus, TreeStatus.Removed);
-			assert.equal(tree1.checkout.getRemovedRoots().length, 1);
+			assert.equal(view1.checkout.getRemovedRoots().length, 1);
 
 			advanceCollabWindow(provider, removeSequenceNumber);
 
-			assert.deepEqual([...root1], ["B", "C", "D"]);
-			assert.deepEqual([...root2], ["B", "C", "D"]);
+			assert.deepEqual([...view1.root], ["B", "C", "D"]);
+			assert.deepEqual([...view2.root], ["B", "C", "D"]);
 
 			// check that the repair data on the first tree is not destroyed
 			assert.equal(anchorAOnTree1.treeStatus, TreeStatus.Removed);
-			assert.equal(tree1.checkout.getRemovedRoots().length, 1);
+			assert.equal(view1.checkout.getRemovedRoots().length, 1);
 
 			// check that the repair data on the second tree is destroyed
 			assert.equal(anchorAOnTree2.treeStatus, TreeStatus.Deleted);
-			assert.equal(tree2.checkout.getRemovedRoots().length, 0);
+			assert.equal(view2.checkout.getRemovedRoots().length, 0);
 
 			unsubscribe();
 		});
