@@ -18,7 +18,7 @@ import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
-import { assert } from "@fluidframework/core-utils/internal";
+import { LazyPromise, assert } from "@fluidframework/core-utils/internal";
 import { lock } from "proper-lockfile";
 import * as semver from "semver";
 
@@ -59,6 +59,7 @@ async function ensureInstalledJson() {
 		release();
 	}
 }
+const ensureInstalledJsonLazy = new LazyPromise(async () => ensureInstalledJson());
 
 function readInstalledJsonNoLock(): InstalledJson {
 	const data = readFileSync(installedJsonPath, { encoding: "utf8" });
@@ -71,7 +72,7 @@ function readInstalledJsonNoLock(): InstalledJson {
 }
 
 async function readInstalledJson(): Promise<InstalledJson> {
-	await ensureInstalledJson();
+	await ensureInstalledJsonLazy;
 	const release = await lock(installedJsonPath, { retries: { forever: true } });
 	try {
 		return readInstalledJsonNoLock();
@@ -79,11 +80,12 @@ async function readInstalledJson(): Promise<InstalledJson> {
 		release();
 	}
 }
+const readInstalledJsonLazy = new LazyPromise(async () => readInstalledJson());
 
 const isInstalled = async (version: string) =>
-	(await readInstalledJson()).installed.includes(version);
+	(await readInstalledJsonLazy).installed.includes(version);
 async function addInstalled(version: string) {
-	await ensureInstalledJson();
+	await ensureInstalledJsonLazy;
 	const release = await lock(installedJsonPath, { retries: { forever: true } });
 	try {
 		const installedJson = readInstalledJsonNoLock();
@@ -99,7 +101,7 @@ async function addInstalled(version: string) {
 }
 
 async function removeInstalled(version: string) {
-	await ensureInstalledJson();
+	await ensureInstalledJsonLazy;
 	const release = await lock(installedJsonPath, { retries: { forever: true } });
 	try {
 		const installedJson = readInstalledJsonNoLock();
