@@ -22,6 +22,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "VariableDeclaration_ConsensusRegisterCollection": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_VariableDeclaration_ConsensusRegisterCollection = requireAssignableTo<TypeOnly<typeof old.ConsensusRegisterCollection>, TypeOnly<typeof current.ConsensusRegisterCollection>>
 
 /*

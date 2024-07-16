@@ -103,6 +103,7 @@ declare type current_as_old_for_InterfaceDeclaration_ISharedCellEvents = require
  * typeValidation.broken:
  * "VariableDeclaration_SharedCell": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_VariableDeclaration_SharedCell = requireAssignableTo<TypeOnly<typeof old.SharedCell>, TypeOnly<typeof current.SharedCell>>
 
 /*
