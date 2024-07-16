@@ -187,7 +187,8 @@ function createProxyHandler(
 		set(target, viewKey, value: InsertableContent | undefined, proxy) {
 			const fieldInfo = flexKeyMap.get(viewKey);
 			if (fieldInfo === undefined) {
-				return allowAdditionalProperties ? Reflect.set(target, viewKey, value) : false;
+				// Pass the proxy as the receiver here, so that setters on the prototype receive `proxy` as `this`.
+				return allowAdditionalProperties ? Reflect.set(target, viewKey, value, proxy) : false;
 			}
 
 			const flexNode = getFlexNode(proxy);

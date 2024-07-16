@@ -18,7 +18,6 @@
 			"**/node_modules/**/@fluid*/*-previous",
 			"**/node_modules/**/@fluid*/*-previous/*"
 		],
-		"typescript.preferences.includePackageJsonAutoImports": "on",
 		"typescript.preferences.importModuleSpecifier": "project-relative"
 	}
 }
