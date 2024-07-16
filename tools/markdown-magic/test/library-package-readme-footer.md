@@ -5,7 +5,7 @@
 
 ## API Documentation
 
-API documentation for **@test/test-package** is available at <https://fluidframework.com/docs/apis/test-package>.
+API documentation for **@fluidframework/test-package** is available at <https://fluidframework.com/docs/apis/test-package>.
 
 ## Scripts
 
