@@ -29,24 +29,18 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	AllowedUpdateType,
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	type GraphCommit,
 	rootFieldKey,
 } from "../../core/index.js";
-import { leaf } from "../../domains/index.js";
 import {
 	type DefaultChangeset,
 	type DefaultEditBuilder,
-	FieldKinds,
-	FlexFieldSchema,
 	type ModularChangeset,
-	SchemaBuilderBase,
 	cursorForJsonableTreeNode,
-	typeNameSymbol,
 } from "../../feature-libraries/index.js";
-import type { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
+import { Tree } from "../../shared-tree/index.js";
 import type {
 	ChangeEnricherReadonlyCheckout,
 	EditManager,
@@ -57,14 +51,12 @@ import type {
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import { brand, disposeSymbol } from "../../util/index.js";
-import {
-	SharedTreeTestFactory,
-	TestTreeProviderLite,
-	schematizeFlexTree,
-	stringSequenceRootSchema,
-} from "../utils.js";
+import { SharedTreeTestFactory, StringArray, TestTreeProviderLite } from "../utils.js";
 
 import { TestSharedTreeCore } from "./utils.js";
+import { SchemaFactory } from "../../simple-tree/index.js";
+
+const enableSchemaValidation = true;
 
 describe("SharedTreeCore", () => {
 	it("summarizes without indexes", async () => {
@@ -301,14 +293,10 @@ describe("SharedTreeCore", () => {
 			objectStorage: new MockStorage(),
 		});
 
-		const b = new SchemaBuilderBase(FieldKinds.optional, {
-			scope: "0x4a6 repro",
-			libraries: [leaf.library],
+		const sf = new SchemaFactory("0x4a6 repro");
+		const TestNode = sf.objectRecursive("test node", {
+			child: sf.optionalRecursive([() => TestNode, sf.number]),
 		});
-		const node = b.objectRecursive("test node", {
-			child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
-		});
-		const schema = b.intoSchema(node);
 
 		const tree2 = await factory.load(
 			dataStoreRuntime2,
@@ -320,107 +308,95 @@ describe("SharedTreeCore", () => {
 			factory.attributes,
 		);
 
-		const config = {
-			schema,
-			initialTree: undefined,
-			allowedSchemaModifications: AllowedUpdateType.Initialize,
-		} satisfies InitializeAndSchematizeConfiguration;
-
-		const view1 = schematizeFlexTree(tree1, config);
+		const view1 = tree1.viewWith({ schema: TestNode, enableSchemaValidation });
+		view1.initialize(new TestNode({}));
 		containerRuntimeFactory.processAllMessages();
-		const view2 = schematizeFlexTree(tree2, config);
-		const editable1 = view1.flexTree;
-		const editable2 = view2.flexTree;
+		const view2 = tree2.viewWith({ schema: TestNode, enableSchemaValidation });
 
-		editable2.content = { [typeNameSymbol]: node.name, child: undefined };
-		editable1.content = { [typeNameSymbol]: node.name, child: undefined };
-		const rootNode = editable2.content;
-		assert(rootNode?.is(node), "Expected set operation to set root node");
-		rootNode.boxedChild.content = 42;
-		editable1.content = { [typeNameSymbol]: node.name, child: undefined };
-		rootNode.boxedChild.content = 43;
+		view2.root = new TestNode({});
+		view1.root = new TestNode({});
+		assert(Tree.is(view2.root, TestNode), "Expected set operation to set root node");
+		view2.root.child = 42;
+		view1.root = new TestNode({});
+		view2.root.child = 43;
 		containerRuntimeFactory.processAllMessages();
 		assert.deepEqual(tree1.contentSnapshot().tree, [
 			{
-				type: node.name,
+				type: TestNode.identifier,
 			},
 		]);
 		assert.deepEqual(tree2.contentSnapshot().tree, [
 			{
-				type: node.name,
+				type: TestNode.identifier,
 			},
 		]);
 	});
 
 	it("Does not submit changes that were aborted in an outer transaction", async () => {
 		const provider = new TestTreeProviderLite(2);
-		const content = {
-			schema: stringSequenceRootSchema,
-			allowedSchemaModifications: AllowedUpdateType.Initialize,
-			initialTree: ["A", "B"],
-		} satisfies InitializeAndSchematizeConfiguration;
-		const tree1 = schematizeFlexTree(provider.trees[0], content);
+		const view1 = provider.trees[0].viewWith({
+			schema: StringArray,
+			enableSchemaValidation,
+		});
+		view1.initialize(["A", "B"]);
 		provider.processMessages();
-		const tree2 = schematizeFlexTree(provider.trees[1], content);
+		const view2 = provider.trees[1].viewWith({
+			schema: StringArray,
+			enableSchemaValidation,
+		});
 
-		const root1 = tree1.flexTree;
-		const root2 = tree2.flexTree;
+		const root1 = view1.root;
+		const root2 = view2.root;
 
-		tree1.checkout.transaction.start();
-		{
+		Tree.runTransaction(root1, () => {
 			// Remove A as part of the aborted transaction
 			root1.removeAt(0);
-			tree1.checkout.transaction.start();
-			{
+			Tree.runTransaction(root1, () => {
 				// Remove B as part of the committed inner transaction
 				root1.removeAt(0);
-			}
-			tree1.checkout.transaction.commit();
-		}
-		tree1.checkout.transaction.abort();
+			});
+			return Tree.runTransaction.rollback;
+		});
 
 		provider.processMessages();
-		assert.deepEqual([...root2], ["A", "B"]);
+		assert.deepEqual([...root1], ["A", "B"]);
 		assert.deepEqual([...root2], ["A", "B"]);
 
 		// Make an additional change to ensure that all changes from the previous transactions were flushed
-		tree1.checkout.transaction.start();
-		{
+		Tree.runTransaction(root1, () => {
 			root1.insertAtEnd("C");
-		}
-		tree1.checkout.transaction.commit();
+		});
+
 		provider.processMessages();
-		assert.deepEqual([...root2], ["A", "B", "C"]);
+		assert.deepEqual([...root1], ["A", "B", "C"]);
 		assert.deepEqual([...root2], ["A", "B", "C"]);
 	});
 
 	it("Does not submit changes that were aborted in an inner transaction", async () => {
 		const provider = new TestTreeProviderLite(2);
-		const content = {
-			schema: stringSequenceRootSchema,
-			allowedSchemaModifications: AllowedUpdateType.Initialize,
-			initialTree: ["A", "B"],
-		} satisfies InitializeAndSchematizeConfiguration;
-		const tree1 = schematizeFlexTree(provider.trees[0], content);
-
+		const view1 = provider.trees[0].viewWith({
+			schema: StringArray,
+			enableSchemaValidation,
+		});
+		view1.initialize(["A", "B"]);
 		provider.processMessages();
-		const tree2 = schematizeFlexTree(provider.trees[1], content);
+		const view2 = provider.trees[1].viewWith({
+			schema: StringArray,
+			enableSchemaValidation,
+		});
 
-		const root1 = tree1.flexTree;
-		const root2 = tree2.flexTree;
+		const root1 = view1.root;
+		const root2 = view2.root;
 
-		tree1.checkout.transaction.start();
-		{
+		Tree.runTransaction(root1, () => {
 			// Remove A as part of the committed transaction
 			root1.removeAt(0);
-			tree1.checkout.transaction.start();
-			{
+			Tree.runTransaction(root1, () => {
 				// Remove B as part of the aborted transaction
 				root1.removeAt(0);
-			}
-			tree1.checkout.transaction.abort();
-		}
-		tree1.checkout.transaction.commit();
+				return Tree.runTransaction.rollback;
+			});
+		});
 
 		assert.deepEqual([...root1], ["B"]);
 		assert.deepEqual([...root2], ["A", "B"]);
@@ -431,11 +407,10 @@ describe("SharedTreeCore", () => {
 		assert.deepEqual([...root2], ["B"]);
 
 		// Make an additional change to ensure that all changes from the previous transactions were flushed
-		tree1.checkout.transaction.start();
-		{
+		Tree.runTransaction(root1, () => {
 			root1.insertAtEnd("C");
-		}
-		tree1.checkout.transaction.commit();
+		});
+
 		provider.processMessages();
 		assert.deepEqual([...root2], ["B", "C"]);
 		assert.deepEqual([...root2], ["B", "C"]);
