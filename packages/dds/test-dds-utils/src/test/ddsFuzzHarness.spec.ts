@@ -890,11 +890,11 @@ describe("DDS Fuzz Harness", () => {
 			return testResults;
 		}
 
-		describe.skip("supports modified .only syntax", () => {
+		describe("supports modified .only syntax", () => {
 			let runResults: MochaReport;
 			before(async function () {
 				// 2s timeout is a bit aggressive to run mocha, even though the suite of tests is very fast.
-				this.timeout(50000);
+				this.timeout(5000);
 				runResults = await runTestFile("dotOnly");
 			});
 
@@ -942,7 +942,7 @@ describe("DDS Fuzz Harness", () => {
 			});
 		});
 
-		describe.skip("supports modified .skip syntax", () => {
+		describe("supports modified .skip syntax", () => {
 			let runResults: MochaReport;
 			before(async function () {
 				// 2s timeout is a bit aggressive to run mocha, even though the suite of tests is very fast.
@@ -990,7 +990,7 @@ describe("DDS Fuzz Harness", () => {
 			});
 		});
 
-		describe.skip("failure", () => {
+		describe("failure", () => {
 			let runResults: MochaReport;
 			const jsonDir = path.join(_dirname, "./ddsSuiteCases/failing-configuration");
 			before(async function () {
@@ -1039,7 +1039,7 @@ describe("DDS Fuzz Harness", () => {
 			}
 		});
 
-		describe.skip("replay", () => {
+		describe("replay", () => {
 			let runResults: MochaReport;
 			before(async function () {
 				this.timeout(5000);
