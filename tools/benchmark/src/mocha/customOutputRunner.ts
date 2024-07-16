@@ -37,23 +37,22 @@ export interface CustomBenchmarkOptions extends BenchmarkDescription, MochaExclu
 export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 	const itFunction = options.only === true ? it.only : it;
 	const test = itFunction(`${options.title} @CustomBenchmark`, async () => {
-		const customMeasurements: Record<string, number> = {};
+		const customData: Record<string, number> = {};
 		const reporter: IMeasurementReporter = {
 			addMeasurement: (key: string, value: number) => {
-				if (key in customMeasurements) {
+				if (key in customData) {
 					throw new Error(`Measurement key '${key}' was already used.`);
 				}
-				customMeasurements[key] = value;
+				customData[key] = value;
 			},
 		};
 
 		const startTime = timer.now();
 		await options.run(reporter);
 
-		const results: CustomBenchmarkResults = {
-			aborted: false,
-			totalRunTimeMs: timer.toSeconds(startTime, timer.now()) * 1000,
-			customMeasurements,
+		const results = {
+			elapsedSeconds: timer.toSeconds(startTime, timer.now()),
+			customData,
 		};
 
 		test.emit("benchmark end", results);
@@ -77,20 +76,4 @@ export interface IMeasurementReporter {
 	 * Trying to add a measurement with a key that was already used will throw an error.
 	 */
 	addMeasurement(key: string, value: number): void;
-}
-
-/**
- * Contains the result data for a benchmark with custom measurements.
- */
-export interface CustomBenchmarkResults {
-	// TODO: aborted, error, and totalRunTimeMs apply to any kind of benchmark (runtime, memory, custom)
-	// so they could go in a base interface
-	aborted: boolean;
-	error?: Error;
-	totalRunTimeMs: number;
-
-	/**
-	 * Custom measurements that represent the result of the benchmark.
-	 */
-	customMeasurements: Record<string, number>;
 }
