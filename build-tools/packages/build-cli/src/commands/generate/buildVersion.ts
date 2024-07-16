@@ -156,12 +156,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		this.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
 
 		if (flags.tag !== undefined) {
-			const isLatest = getIsLatest(
-				flags.tag,
-				version,
-				tags,
-				shouldIncludeInternalVersions,
-			);
+			const isLatest = getIsLatest(flags.tag, version, tags, shouldIncludeInternalVersions);
 			this.log(`isLatest=${isLatest}`);
 			if (isRelease && isLatest === true) {
 				this.log(`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`);
