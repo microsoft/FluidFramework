@@ -454,8 +454,11 @@ async function fetchLatestSnapshotCore(
 						const slowTreeParseCodePaths = props.slowTreeStructureCount ?? 0;
 						const slowBlobParseCodePaths = props.slowBlobStructureCount ?? 0;
 						const treeStructureCountWithGroupId = props.treeStructureCountWithGroupId ?? 0;
-						// Increasing it to 100 to be an error event, as snapshot with groupId go through normal parsing.
-						if (slowTreeParseCodePaths > 100 || slowBlobParseCodePaths > 10) {
+						// As snapshot with groupId go through normal parsing, so exclude them.
+						if (
+							slowTreeParseCodePaths - treeStructureCountWithGroupId > 10 ||
+							slowBlobParseCodePaths > 10
+						) {
 							logger.sendErrorEvent({
 								eventName: "SlowSnapshotParseCodePaths",
 								slowTreeStructureCount: slowTreeParseCodePaths,
