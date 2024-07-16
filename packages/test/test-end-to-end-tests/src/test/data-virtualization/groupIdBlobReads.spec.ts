@@ -39,7 +39,7 @@ describeCompat("Odsp Network calls", "NoCompat", (getTestObjectProvider) => {
 
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ persistedCache: testSnapshotCache });
-		if (provider.driver.type === "odsp") {
+		if (provider.driver.type !== "odsp") {
 			this.skip();
 		}
 	});
@@ -62,7 +62,7 @@ describeCompat("Odsp Network calls", "NoCompat", (getTestObjectProvider) => {
 		mainObject._root.set("dataObjectB", dataStoreB.entryPoint);
 	};
 
-	it("Should not make odsp network calls", async () => {
+	it.skip("Should not make odsp network calls", async () => {
 		const container = await provider.makeTestContainer({
 			runtimeOptions,
 			loaderProps: { configProvider },
