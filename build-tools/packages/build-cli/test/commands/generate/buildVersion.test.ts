@@ -7,6 +7,9 @@ import { EOL } from "node:os";
 import { runCommand } from "@oclif/test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+/**
+ * Stubs multiple environment variables from an object.
+ */
 function setEnv(envVars: Record<string, string>): void {
 	for (const [envVar, value] of Object.entries(envVars)) {
 		vi.stubEnv(envVar, value);

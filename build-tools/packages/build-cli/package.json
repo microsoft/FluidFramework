@@ -144,7 +144,6 @@
 		"@types/semver": "^7.5.0",
 		"@types/semver-utils": "^1.1.1",
 		"@types/sort-json": "^2.0.1",
-		"@vitest/coverage-istanbul": "^2.0.3",
 		"@vitest/coverage-v8": "^2.0.3",
 		"c8": "^7.14.0",
 		"concurrently": "^8.2.1",

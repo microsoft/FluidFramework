@@ -71,21 +71,19 @@ version-tools provides a command-line interface (`fluv`) when installed directly
 also available in the Fluid build and release tool (`flub`). This is accomplished using
 [oclif's plugin system](https://oclif.io/docs/plugins).
 
-<!-- prettier-ignore-start -->
-<!-- usage -->
+<!-- This is hardcoded because `oclif readme` creates different output per
+platform, and we generate readmes during build -->
 ```sh-session
 $ npm install -g @fluid-tools/version-tools
 $ fluv COMMAND
 running command...
 $ fluv (--version|-V)
-@fluid-tools/version-tools/0.0.0 linux-x64 node-v18.19.1
+@fluid-tools/version-tools/0.0.0
 $ fluv --help [COMMAND]
 USAGE
   $ fluv COMMAND
 ...
 ```
-<!-- usagestop -->
-<!-- prettier-ignore-stop -->
 
 # Commands
 

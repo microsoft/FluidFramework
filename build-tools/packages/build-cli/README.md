@@ -14,21 +14,19 @@ maintainable CLI using [oclif](https://oclif.io).
 
 # Usage
 
-<!-- prettier-ignore-start -->
-<!-- usage -->
+<!-- This is hardcoded because `oclif readme` creates different output per
+platform, and we generate readmes during build -->
 ```sh-session
 $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version|-V)
-@fluid-tools/build-cli/0.0.0 linux-x64 node-v18.19.1
+@fluid-tools/build-cli/0.0.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
 ...
 ```
-<!-- usagestop -->
-<!-- prettier-ignore-stop -->
 
 <!-- prettier-ignore-start -->
 <!-- commands -->

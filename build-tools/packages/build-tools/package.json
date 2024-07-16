@@ -81,6 +81,7 @@
 		"@types/rimraf": "^2.0.5",
 		"@types/semver": "^7.5.0",
 		"@types/shelljs": "^0.8.12",
+		"@vitest/coverage-v8": "^2.0.3",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.57.0",
 		"vitest": "^2.0.3"

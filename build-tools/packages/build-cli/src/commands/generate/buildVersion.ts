@@ -161,7 +161,6 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 				version,
 				tags,
 				shouldIncludeInternalVersions,
-				true,
 			);
 			this.log(`isLatest=${isLatest}`);
 			if (isRelease && isLatest === true) {
