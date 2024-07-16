@@ -34,6 +34,12 @@ async function getBuildToolsPackages() {
 	return packages;
 }
 
+async function getClientPackages() {
+	const context = await getContext();
+	const packages = context.packagesInReleaseGroup("client");
+	return packages;
+}
+
 describe("filterPackages", async () => {
 	it("no filters", async () => {
 		const packages = await getBuildToolsPackages();
@@ -42,33 +48,30 @@ describe("filterPackages", async () => {
 			scope: undefined,
 			skipScope: undefined,
 		};
-		const expected = [
+		const actual = await filterPackages(packages, filters);
+		const names = actual.map((p) => p.name);
+		[
 			"@fluid-tools/build-cli",
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
-			"@fluid-private/readme-command",
 			"@fluid-tools/version-tools",
-		];
-		const actual = await filterPackages(packages, filters);
-		const names = actual.map((p) => p.name);
-		for (const pkg of expected) {
-			expect(names).toContain(pkg);
-		}
+		].forEach((item) => {
+			expect(names).toContain(item);
+		});
 	});
 
 	it("private=true", async () => {
-		const packages = await getBuildToolsPackages();
+		const packages = await getClientPackages();
 		const filters: PackageFilterOptions = {
 			private: true,
 			scope: undefined,
 			skipScope: undefined,
 		};
 		const actual = await filterPackages(packages, filters);
-		// There's only one private build-tools package
-		expect(actual).toHaveLength(1);
-
-		const pkg = actual[0];
-		assert.equal(pkg.nameUnscoped, "readme-command");
+		const names = actual.map((p) => p.name);
+		["@fluid-private/changelog-generator-wrapper"].forEach((item) => {
+			expect(names).toContain(item);
+		});
 	});
 
 	it("private=false", async () => {
@@ -81,14 +84,14 @@ describe("filterPackages", async () => {
 		const actual = await filterPackages(packages, filters);
 		const names = actual.map((p) => p.name);
 		expect(names).toHaveLength(4);
-		expect(names).toEqual(
-			expect.arrayContaining([
-				"@fluid-tools/build-cli",
-				"@fluidframework/build-tools",
-				"@fluidframework/bundle-size-tools",
-				"@fluid-tools/version-tools",
-			]),
-		);
+		[
+			"@fluid-tools/build-cli",
+			"@fluidframework/build-tools",
+			"@fluidframework/bundle-size-tools",
+			"@fluid-tools/version-tools",
+		].forEach((item) => {
+			expect(names).toContain(item);
+		});
 	});
 
 	it("multiple scopes", async () => {
@@ -100,14 +103,10 @@ describe("filterPackages", async () => {
 		};
 		const actual = await filterPackages(packages, filters);
 		const names = actual.map((p) => p.name);
-		expect(names).toEqual(
-			expect.arrayContaining([
-				"@fluidframework/build-tools",
-				"@fluidframework/bundle-size-tools",
-				"@fluid-private/readme-command",
-			]),
-		);
-		expect(names).toHaveLength(3);
+		["@fluidframework/build-tools", "@fluidframework/bundle-size-tools"].forEach((item) => {
+			expect(names).toContain(item);
+		});
+		expect(names).toHaveLength(2);
 	});
 
 	it("multiple skipScopes", async () => {
@@ -155,16 +154,14 @@ describe("selectAndFilterPackages", async () => {
 
 		const { selected } = await selectAndFilterPackages(context, selectionOptions, filters);
 		const names = selected.map((p) => p.name);
-
-		expect(names).toEqual(
-			expect.arrayContaining([
-				"@fluid-tools/build-cli",
-				"@fluidframework/build-tools",
-				"@fluidframework/bundle-size-tools",
-				"@fluid-private/readme-command",
-				"@fluid-tools/version-tools",
-			]),
-		);
+		[
+			"@fluid-tools/build-cli",
+			"@fluidframework/build-tools",
+			"@fluidframework/bundle-size-tools",
+			"@fluid-tools/version-tools",
+		].forEach((item) => {
+			expect(names).toContain(item);
+		});
 	});
 
 	it("select independent packages", async () => {
@@ -216,16 +213,15 @@ describe("selectAndFilterPackages", async () => {
 		const { selected } = await selectAndFilterPackages(context, selectionOptions, filters);
 		const names = selected.map((p) => p.name);
 
-		expect(names).toEqual(
-			expect.arrayContaining([
-				"@fluid-tools/build-cli",
-				"@fluidframework/build-tools",
-				"@fluidframework/bundle-size-tools",
-				"@fluid-private/readme-command",
-				"@fluid-tools/version-tools",
-			]),
-		);
-		expect(names).toHaveLength(5);
+		[
+			"@fluid-tools/build-cli",
+			"@fluidframework/build-tools",
+			"@fluidframework/bundle-size-tools",
+			"@fluid-tools/version-tools",
+		].forEach((item) => {
+			expect(names).toContain(item);
+		});
+		expect(names).toHaveLength(4);
 	});
 
 	it("select release group root", async () => {
@@ -285,7 +281,7 @@ describe("selectAndFilterPackages", async () => {
 		const context = await getContext();
 		const selectionOptions: PackageSelectionCriteria = {
 			independentPackages: false,
-			releaseGroups: ["build-tools"],
+			releaseGroups: ["client"],
 			releaseGroupRoots: [],
 			directory: undefined,
 			changedSinceBranch: undefined,
@@ -299,7 +295,7 @@ describe("selectAndFilterPackages", async () => {
 		const { filtered } = await selectAndFilterPackages(context, selectionOptions, filters);
 		const names = filtered.map((p) => p.name);
 
-		expect(names).toEqual(expect.arrayContaining(["@fluid-private/readme-command"]));
+		expect(names).toContain("@fluid-private/changelog-generator-wrapper");
 	});
 
 	it("select release group, filter non-private", async () => {
