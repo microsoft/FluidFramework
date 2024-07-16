@@ -8,19 +8,18 @@ import { strict as assert } from "node:assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map/internal";
+import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/driver-definitions/internal";
-import { type ConnectionMode } from "@fluidframework/driver-definitions";
-import type { MonitoringContext } from "@fluidframework/telemetry-utils/internal";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { SharedMap } from "@fluidframework/map/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 import { v4 as uuid } from "uuid";
 
 import { AzureClient } from "../AzureClient.js";
-import { type AzureLocalConnectionConfig } from "../interfaces.js";
+import type { AzureLocalConnectionConfig } from "../interfaces.js";
 
 function createAzureClient(
 	props: {
@@ -287,35 +286,26 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			);
 		});
 
-		it("GC is disabled by default, but can be enabled", async function () {
+		it("GC is disabled for both compat modes", async function () {
 			const { container: container_defaultConfig } = await client.createContainer(
 				schema,
 				compatibilityMode,
 			);
-			assert.strictEqual(
-				(
-					container_defaultConfig as unknown as { container: { mc: MonitoringContext } }
-				).container.mc.config.getBoolean("Fluid.GarbageCollection.RunSweep"),
-				false,
-				"Expected GC to be disabled per configs set in constructor",
-			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const { shouldRunSweep, tombstoneAutorecoveryEnabled, throwOnTombstoneLoad } =
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+				(container_defaultConfig as any).container._runtime.garbageCollector.configs;
 
-			const client_gcEnabled = createAzureClient({
-				configProvider: {
-					getRawConfig: (name: string) =>
-						({ "Fluid.GarbageCollection.RunSweep": true })[name],
-				},
-			});
-			const { container: container_gcEnabled } = await client_gcEnabled.createContainer(
-				schema,
-				compatibilityMode,
-			);
-			assert.strictEqual(
-				(
-					container_gcEnabled as unknown as { container: { mc: MonitoringContext } }
-				).container.mc.config.getBoolean("Fluid.GarbageCollection.RunSweep"),
-				true,
-				"Expected GC to be able to enable GC via config provider",
+			const expectedConfigs = {
+				shouldRunSweep: "NO",
+				tombstoneAutorecoveryEnabled: false,
+				throwOnTombstoneLoad: false,
+			};
+			assert.deepStrictEqual(
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				{ shouldRunSweep, tombstoneAutorecoveryEnabled, throwOnTombstoneLoad },
+				expectedConfigs,
+				"Expected GC to be disabled per compatibilityModeRuntimeOptions",
 			);
 		});
 
@@ -362,15 +352,8 @@ for (const compatibilityMode of ["1", "2"] as const) {
 					itWorks: _.string,
 				}) {}
 
-				const view = tree.schematize(
-					new TreeConfiguration(
-						RootNode,
-						() =>
-							new RootNode({
-								itWorks: "yes",
-							}),
-					),
-				);
+				const view = tree.viewWith(new TreeViewConfiguration({ schema: RootNode }));
+				view.initialize(new RootNode({ itWorks: "yes" }));
 
 				// Ensure root node is correctly typed.
 				assert.equal(view.root.itWorks, "yes");

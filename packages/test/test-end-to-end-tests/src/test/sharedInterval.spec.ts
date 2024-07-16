@@ -8,9 +8,9 @@ import { strict as assert } from "assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { ISummaryBlob } from "@fluidframework/driver-definitions";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree/internal";
-import { ISummaryBlob } from "@fluidframework/driver-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type {
 	IIntervalCollection,
@@ -677,10 +677,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 				assert.strictEqual(interval, interval2, "Oddball interval found in client 2");
 			}
 
-			if (
-				typeof intervals1.change === "function" &&
-				typeof intervals2.change === "function"
-			) {
+			if (typeof intervals1.change === "function" && typeof intervals2.change === "function") {
 				// Conflicting changes
 				intervals1.change(id1, { start: 1, end: 2 });
 				intervals2.change(id1, { start: 2, end: 1 });
@@ -716,10 +713,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					);
 				}
 			}
-			if (
-				typeof intervals1.change === "function" &&
-				typeof intervals2.change === "function"
-			) {
+			if (typeof intervals1.change === "function" && typeof intervals2.change === "function") {
 				const assertPropertyChangedArg = (p: any, v: any, m: string) => {
 					// Check expected values of args passed to the propertyChanged event only if IntervalCollection
 					// is a TypedEventEmitter. (This is not true of earlier versions,
@@ -1005,21 +999,9 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			const serialized1 = Array.from(intervalCollection1);
 			const serialized2 = Array.from(intervalCollection2);
 			const serialized3 = Array.from(intervalCollection3);
-			assert.equal(
-				serialized1.length,
-				3,
-				"Incorrect interval collection size in container 1",
-			);
-			assert.equal(
-				serialized2.length,
-				3,
-				"Incorrect interval collection size in container 2",
-			);
-			assert.equal(
-				serialized3.length,
-				3,
-				"Incorrect interval collection size in container 3",
-			);
+			assert.equal(serialized1.length, 3, "Incorrect interval collection size in container 1");
+			assert.equal(serialized2.length, 3, "Incorrect interval collection size in container 2");
+			assert.equal(serialized3.length, 3, "Incorrect interval collection size in container 3");
 
 			const interval1From3Properties = serialized3[0].properties;
 			assert(interval1From3Properties);
@@ -1042,8 +1024,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 				"Incorrect value in interval collection's shared map",
 			);
 
-			const summaryBlob = (await outerString2.summarize()).summary.tree
-				.header as ISummaryBlob;
+			const summaryBlob = (await outerString2.summarize()).summary.tree.header as ISummaryBlob;
 			// Since it's based on a map kernel, its contents parse as
 			// an IMapDataObjectSerializable with the "comments" member we set
 			const parsedContent = JSON.parse(summaryBlob.content as string);
@@ -1054,8 +1035,9 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			).intervals[0][4];
 			// The "story" is the ILocalValue of the handle pointing to the SharedString
 			assert(serializedInterval1FromSnapshotProperties);
-			const handleLocalValueFromSnapshot =
-				serializedInterval1FromSnapshotProperties.story as { type: string };
+			const handleLocalValueFromSnapshot = serializedInterval1FromSnapshotProperties.story as {
+				type: string;
+			};
 			assert.equal(
 				handleLocalValueFromSnapshot.type,
 				"__fluid_handle__",

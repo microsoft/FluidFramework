@@ -6,20 +6,20 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	FieldKey,
-	ForestEvents,
-	TreeFieldStoredSchema,
+	type FieldKey,
+	type ForestEvents,
+	type TreeFieldStoredSchema,
 	anchorSlot,
 	moveToDetachedField,
 } from "../../core/index.js";
-import { ISubscribable } from "../../events/index.js";
-import { IDisposable, disposeSymbol } from "../../util/index.js";
-import { FieldGenerator } from "../fieldGenerator.js";
-import { NodeKeyManager } from "../node-key/index.js";
-import { FlexTreeSchema } from "../typed-schema/index.js";
+import type { Listenable } from "../../events/index.js";
+import { type IDisposable, disposeSymbol } from "../../util/index.js";
+import type { FieldGenerator } from "../fieldGenerator.js";
+import type { NodeKeyManager } from "../node-key/index.js";
+import type { FlexTreeSchema } from "../typed-schema/index.js";
 
-import { FlexTreeField } from "./flexTreeTypes.js";
-import { LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
+import type { FlexTreeField } from "./flexTreeTypes.js";
+import { type LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
 import type { ITreeCheckout } from "../../shared-tree/index.js";
 
@@ -28,7 +28,7 @@ import type { ITreeCheckout } from "../../shared-tree/index.js";
  * It handles group operations like transforming cursors into anchors for edits.
  * @internal
  */
-export interface FlexTreeContext extends ISubscribable<ForestEvents> {
+export interface FlexTreeContext extends Listenable<ForestEvents> {
 	/**
 	 * Gets the root field of the tree.
 	 */
@@ -137,14 +137,17 @@ export class Context implements FlexTreeContext, IDisposable {
 
 	public get root(): FlexTreeField {
 		assert(this.disposed === false, 0x804 /* use after dispose */);
-		const cursor = this.checkout.forest.allocateCursor();
+		const cursor = this.checkout.forest.allocateCursor("root");
 		moveToDetachedField(this.checkout.forest, cursor);
 		const field = makeField(this, this.schema.rootFieldSchema, cursor);
 		cursor.free();
 		return field;
 	}
 
-	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
+	public on<K extends keyof ForestEvents>(
+		eventName: K,
+		listener: ForestEvents[K],
+	): () => void {
 		return this.checkout.forest.on(eventName, listener);
 	}
 
@@ -152,7 +155,10 @@ export class Context implements FlexTreeContext, IDisposable {
 	 * FieldSource used to get a FieldGenerator to populate required fields during procedural contextual data generation.
 	 */
 	// TODO: Use this to automatically provide node keys where required.
-	public fieldSource?(key: FieldKey, schema: TreeFieldStoredSchema): undefined | FieldGenerator;
+	public fieldSource?(
+		key: FieldKey,
+		schema: TreeFieldStoredSchema,
+	): undefined | FieldGenerator;
 }
 
 /**

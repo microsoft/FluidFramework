@@ -6,8 +6,11 @@
 import { strict as assert } from "assert";
 
 import { ILoggingError } from "@fluidframework/core-interfaces/internal";
-import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/driver-definitions";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import {
+	ISnapshotTree,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
@@ -77,12 +80,7 @@ describe("Runtime", () => {
 				createParam: CreateChildSummarizerNodeParam,
 				config?: ISummarizerNodeConfig,
 			) {
-				midNode = rootNode.createChild(
-					getSummarizeInternalFn(1),
-					ids[1],
-					createParam,
-					config,
-				);
+				midNode = rootNode.createChild(getSummarizeInternalFn(1), ids[1], createParam, config);
 			}
 
 			function createLeaf(
@@ -266,11 +264,7 @@ describe("Runtime", () => {
 
 					// Failing to refresh the root node should generate failing summaries
 					const result = rootNode.startSummary(21, logger, 12);
-					assert.strictEqual(
-						result.invalidNodes,
-						1,
-						"startSummary fails due to no refresh",
-					);
+					assert.strictEqual(result.invalidNodes, 1, "startSummary fails due to no refresh");
 					assert.deepEqual(
 						result.mismatchNumbers,
 						new Set(["12-11"]),
@@ -373,14 +367,25 @@ describe("Runtime", () => {
 			});
 
 			describe("Summarize", () => {
-				it("Should fail summarize if startSummary is not called", async () => {
+				it("Should fail completeSummary if startSummary is not called", async () => {
 					createRoot();
 					await expectReject(
-						async () => rootNode.summarize(false),
+						async () => rootNode.completeSummary("handle"),
 						"summarize",
 						"no wip referenceSequenceNumber or logger",
-						"0x1a1",
-						"0x1a2",
+						"0x1a4",
+					);
+					assertSummarizeCalls(0, 0, 0);
+				});
+
+				it("Should fail validateSummary if startSummary is not called", async () => {
+					createRoot();
+					await expectReject(
+						async () => rootNode.validateSummary(),
+						"summarize",
+						"no wip referenceSequenceNumber or logger",
+						"0x6fc",
+						"0x6fd",
 					);
 					assertSummarizeCalls(0, 0, 0);
 				});
@@ -425,10 +430,7 @@ describe("Runtime", () => {
 			describe("Refresh Latest Summary", () => {
 				it("Should not refresh latest if already passed ref seq number", async () => {
 					createRoot({ refSeq: summaryRefSeq });
-					const result = await rootNode.refreshLatestSummary(
-						"test-handle",
-						summaryRefSeq,
-					);
+					const result = await rootNode.refreshLatestSummary("test-handle", summaryRefSeq);
 					assert(!result.isSummaryTracked, "we already got this summary");
 				});
 
@@ -440,10 +442,7 @@ describe("Runtime", () => {
 					await rootNode.summarize(false);
 					rootNode.completeSummary(proposalHandle);
 
-					const result = await rootNode.refreshLatestSummary(
-						proposalHandle,
-						summaryRefSeq,
-					);
+					const result = await rootNode.refreshLatestSummary(proposalHandle, summaryRefSeq);
 					assert(result.isSummaryTracked, "should be tracked");
 					assert(result.isSummaryNewer === true, "should be newer");
 				});
@@ -457,11 +456,8 @@ describe("Runtime", () => {
 					await rootNode.summarize(false);
 					await assert.rejects(
 						async () => rootNode.refreshLatestSummary(proposalHandle, summaryRefSeq),
-						(
-							error: ILoggingError & { inProgressSummaryRefSeq: number | undefined },
-						) => {
-							const correctErrorMessage =
-								error.message === "UnexpectedRefreshDuringSummarize";
+						(error: ILoggingError & { inProgressSummaryRefSeq: number | undefined }) => {
+							const correctErrorMessage = error.message === "UnexpectedRefreshDuringSummarize";
 							const correctInProgressRefSeq =
 								error.inProgressSummaryRefSeq === referenceSeqNum;
 							return correctErrorMessage && correctInProgressRefSeq;

@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockEmptyDeltaConnection,
@@ -13,13 +14,13 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { MatrixItem, SharedMatrix } from "../index.js";
+import { MatrixItem, SharedMatrix, type ISharedMatrix } from "../index.js";
 
 import { TestConsumer } from "./testconsumer.js";
 import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 import { expectSize, extract, matrixFactory } from "./utils.js";
 
-[false, true].forEach((isSetCellPolicyFWW: boolean) => {
+for (const isSetCellPolicyFWW of [false, true]) {
 	describe(`Matrix isSetCellPolicyFWW=${isSetCellPolicyFWW}`, () => {
 		describe("undo/redo", () => {
 			let dataStoreRuntime: MockFluidDataStoreRuntime;
@@ -29,7 +30,7 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 			let undo1: UndoRedoStackManager;
 			let expect: <T>(expected: readonly (readonly MatrixItem<T>[])[]) => Promise<void>;
 
-			function singleClientTests() {
+			function singleClientTests(): void {
 				it("undo/redo setCell", async () => {
 					matrix1.insertRows(/* start: */ 0, /* count: */ 1);
 					matrix1.insertCols(/* start: */ 0, /* count: */ 1);
@@ -65,12 +66,7 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 					undo1.closeCurrentOperation();
 
 					matrix1.insertRows(/* start: */ 0, /* count: */ 2);
-					matrix1.setCells(
-						/* rowStart: */ 0,
-						/* colStart: */ 0,
-						/* colCount: */ 1,
-						[0, 1],
-					);
+					matrix1.setCells(/* rowStart: */ 0, /* colStart: */ 0, /* colCount: */ 1, [0, 1]);
 					undo1.closeCurrentOperation();
 
 					await expect([[0], [1]]);
@@ -243,12 +239,7 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 					undo1.closeCurrentOperation();
 
 					matrix1.insertCols(/* start: */ 0, /* count: */ 2);
-					matrix1.setCells(
-						/* rowStart: */ 0,
-						/* colStart: */ 0,
-						/* colCount: */ 2,
-						[0, 1],
-					);
+					matrix1.setCells(/* rowStart: */ 0, /* colStart: */ 0, /* colCount: */ 2, [0, 1]);
 					undo1.closeCurrentOperation();
 
 					await expect([[0, 1]]);
@@ -407,7 +398,9 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 			describe("local client", () => {
 				// Summarizes the given `SharedMatrix`, loads the summary into a 2nd SharedMatrix, vets that the two are
 				// equivalent, and then returns the 2nd matrix.
-				async function summarize<T>(matrix: SharedMatrix<T>) {
+				async function summarize<T>(
+					matrix: SharedMatrix<T>,
+				): Promise<ISharedMatrix & IChannel> {
 					// Create a summary
 					const objectStorage = MockStorage.createFromSummary(
 						matrix.getAttachSummary().summary,
@@ -444,7 +437,9 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 				}
 
 				before(() => {
-					expect = async <T>(expected: readonly (readonly MatrixItem<T>[])[]) => {
+					expect = async <T>(
+						expected: readonly (readonly MatrixItem<T>[])[],
+					): Promise<void> => {
 						const actual = extract(matrix1);
 						assert.deepEqual(actual, expected, "Matrix must match expected.");
 						assert.deepEqual(
@@ -498,7 +493,9 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 				let containerRuntimeFactory: MockContainerRuntimeFactory;
 
 				before(() => {
-					expect = async (expected?: readonly (readonly any[])[]) => {
+					expect = async (
+						expected?: readonly (readonly MatrixItem<unknown>[])[],
+					): Promise<void> => {
 						containerRuntimeFactory.processAllMessages();
 
 						const actual1 = extract(matrix1);
@@ -558,6 +555,8 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 
 				afterEach(async () => {
 					// Paranoid check that the matrices are have converged on the same state.
+					// Supressed to allow checking that the matrices are not undefined at the end of the test.
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
 					await expect(undefined as any);
 
 					matrix1.closeMatrix(consumer1);
@@ -665,6 +664,8 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 					undo1.redoOperation();
 
 					// Only check for convergence due to GitHub issue #3964...  (See below.)
+					// Supressed to allow checking that the matrices are not undefined at the end of the test.
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
 					await expect(undefined as any);
 
 					// A known weakness of our current undo implementation is that undoing a
@@ -796,4 +797,4 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 			});
 		});
 	});
-});
+}

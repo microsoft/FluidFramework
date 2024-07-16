@@ -6,16 +6,16 @@
 import { strict as assert } from "assert";
 
 import {
-	DeltaDetachedNodeId,
-	DeltaFieldChanges,
-	DeltaFieldMap,
-	DeltaMark,
-	DeltaRoot,
-	FieldKey,
-	FieldKindIdentifier,
-	RevisionTag,
-	TaggedChange,
-	UpPath,
+	type DeltaDetachedNodeId,
+	type DeltaFieldChanges,
+	type DeltaFieldMap,
+	type DeltaMark,
+	type DeltaRoot,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type RevisionTag,
+	type TaggedChange,
+	type UpPath,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
 	tagChange,
@@ -26,11 +26,11 @@ import { leaf } from "../../domains/index.js";
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
-	FieldKindWithEditor,
-	ModularChangeset,
+	type FieldKindWithEditor,
+	type ModularChangeset,
 	cursorForJsonableTreeNode,
-	SequenceField as SF,
-	EditDescription,
+	type SequenceField as SF,
+	type EditDescription,
 } from "../../feature-libraries/index.js";
 import {
 	ModularChangeFamily,
@@ -38,8 +38,8 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
-	IdAllocator,
-	Mutable,
+	type IdAllocator,
+	type Mutable,
 	brand,
 	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
@@ -52,7 +52,7 @@ import {
 	testChangeReceiver,
 } from "../utils.js";
 
-import {
+import type {
 	NodeChangeset,
 	NodeId,
 	// eslint-disable-next-line import/no-internal-modules
@@ -275,6 +275,26 @@ describe("ModularChangeFamily integration", () => {
 
 			assertDeltaEqual(rebasedDelta, expectedDelta);
 		});
+
+		it("prunes its output", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver);
+			const nodeAPath: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
+			const nodeBPath: UpPath = { parent: undefined, parentField: fieldB, parentIndex: 0 };
+
+			editor.sequenceField({ parent: nodeAPath, field: fieldA }).remove(0, 1);
+			editor.sequenceField({ parent: nodeBPath, field: fieldB }).remove(0, 1);
+
+			const [editA, editB] = getChanges();
+			const baseTag = mintRevisionTag();
+			const rebased = family.rebase(
+				makeAnonChange(editB),
+				tagChangeInline(editA, baseTag),
+				revisionMetadataSourceFromInfo([{ revision: baseTag }]),
+			);
+
+			assert.deepEqual(rebased, editB);
+		});
 	});
 
 	describe("compose", () => {
@@ -324,11 +344,7 @@ describe("ModularChangeFamily integration", () => {
 			const [moveA, moveB, moveC, removeD] = getChanges();
 
 			const moves = makeAnonChange(
-				family.compose([
-					makeAnonChange(moveA),
-					makeAnonChange(moveB),
-					makeAnonChange(moveC),
-				]),
+				family.compose([makeAnonChange(moveA), makeAnonChange(moveB), makeAnonChange(moveC)]),
 			);
 
 			const remove = makeAnonChange(removeD);
@@ -476,9 +492,7 @@ describe("ModularChangeFamily integration", () => {
 										[
 											fieldC,
 											{
-												local: [
-													{ count: 1, attach: { major: tag2, minor: 2 } },
-												],
+												local: [{ count: 1, attach: { major: tag2, minor: 2 } }],
 											},
 										],
 									]),
@@ -607,10 +621,7 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			const fieldBExpected = [
-				MarkMaker.moveOut(1, brand(2), {
-					changes: nodeId2,
-					idOverride: { revision: tag1, localId: brand(3) },
-				}),
+				MarkMaker.moveOut(1, brand(2), { changes: nodeId2 }),
 				{ count: 1 },
 				MarkMaker.returnTo(1, brand(2), { revision: tag1, localId: brand(2) }),
 			];
@@ -623,10 +634,7 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			const fieldAExpected = [
-				MarkMaker.moveOut(1, brand(0), {
-					changes: nodeId1,
-					idOverride: { revision: tag1, localId: brand(1) },
-				}),
+				MarkMaker.moveOut(1, brand(0), { changes: nodeId1 }),
 				{ count: 1 },
 				MarkMaker.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 			];

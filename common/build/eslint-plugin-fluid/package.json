@@ -6,7 +6,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "common/build/eslint-pluig-fluid/"
+		"directory": "common/build/eslint-plugin-fluid"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -22,19 +22,19 @@
 	},
 	"dependencies": {
 		"@microsoft/tsdoc": "^0.14.2",
-		"@typescript-eslint/parser": "^6.7.2",
-		"ts-morph": "^20.0.0"
+		"@typescript-eslint/parser": "^6.21.0",
+		"ts-morph": "^22.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
-		"eslint": "^8.50.0",
-		"mocha": "^10.2.0",
+		"eslint": "^8.57.0",
+		"mocha": "^10.4.0",
 		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",
-		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"prettier": "~3.2.5",
+		"rimraf": "^5.0.7",
+		"typescript": "~5.4.5"
 	},
 	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392"
 }

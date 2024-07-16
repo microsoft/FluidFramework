@@ -7,7 +7,6 @@
  * @fileoverview Definition of the valuearray property class
  */
 
-const _ = require("lodash");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const {
 	BaseDataArray,
@@ -16,6 +15,7 @@ const {
 	Uint64,
 	Int64,
 } = require("@fluid-experimental/property-common");
+const _ = require("lodash");
 
 const { Int64Property, Uint64Property } = require("../properties/intProperties");
 

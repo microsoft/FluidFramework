@@ -15,9 +15,9 @@ import {
 	parsePackageFilterFlags,
 	parsePackageSelectionFlags,
 	selectAndFilterPackages,
-} from "./filter";
-import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags";
-import { BaseCommand } from "./library";
+} from "./filter.js";
+import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags.js";
+import { BaseCommand } from "./library/index.js";
 
 /**
  * Commands that run operations per project.
@@ -83,7 +83,7 @@ export abstract class PackageCommand<
 		}
 
 		const ctx = await this.getContext();
-		const { selected, filtered } = selectAndFilterPackages(
+		const { selected, filtered } = await selectAndFilterPackages(
 			ctx,
 			this.selectionOptions,
 			this.filterOptions,

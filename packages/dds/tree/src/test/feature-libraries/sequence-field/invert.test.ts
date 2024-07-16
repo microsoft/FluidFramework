@@ -4,14 +4,14 @@
  */
 
 import {
-	ChangeAtomId,
-	ChangesetLocalId,
-	RevisionTag,
+	type ChangeAtomId,
+	type ChangesetLocalId,
+	type RevisionTag,
 	offsetChangeAtomId,
 } from "../../../core/index.js";
-import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
+import type { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { CellId } from "../../../feature-libraries/sequence-field/index.js";
+import type { CellId } from "../../../feature-libraries/sequence-field/index.js";
 import { TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 import { brand } from "../../../util/index.js";
@@ -25,6 +25,7 @@ function invert(change: SF.Changeset, tag: RevisionTag = tag1): SF.Changeset {
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
+const tag3: RevisionTag = mintRevisionTag();
 
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
@@ -107,7 +108,11 @@ export function testInvert() {
 
 		it("remove => revive (with rollback ID)", () => {
 			const detachId: ChangeAtomId = { revision: tag2, localId: brand(0) };
-			const input = tagChangeInline([Mark.remove(2, brand(0))], tag1, tag2);
+			const input = tagChangeInline(
+				[Mark.remove(2, brand(0), { idOverride: detachId })],
+				tag1,
+				tag3, // This ID should be ignored
+			);
 			const expected = [Mark.revive(2, detachId)];
 			const actual = invertChange(input);
 			assertChangesetsEqual(actual, expected);
@@ -378,26 +383,21 @@ export function testInvert() {
 				];
 
 				const actual = invert(input, tag1);
-				const expected = Change.modifyDetached(
-					0,
-					{ ...childChange1, revision: tag1 },
-					cellId,
-				);
+				const expected = Change.modifyDetached(0, { ...childChange1, revision: tag1 }, cellId);
 				assertChangesetsEqual(actual, expected);
 			});
 
 			it("remove (same detach ID through metadata)", () => {
 				const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 				const input = [
-					Mark.onEmptyCell(cellId, Mark.remove(1, brand(0), { changes: childChange1 })),
+					Mark.onEmptyCell(
+						cellId,
+						Mark.remove(1, brand(0), { changes: childChange1, idOverride: cellId }),
+					),
 				];
 
-				const actual = invertChange(tagChangeInline(input, tag2, tag1));
-				const expected = Change.modifyDetached(
-					0,
-					{ ...childChange1, revision: tag2 },
-					cellId,
-				);
+				const actual = invertChange(tagChangeInline(input, tag2, tag3 /* <= ignored */));
+				const expected = Change.modifyDetached(0, { ...childChange1, revision: tag2 }, cellId);
 				assertChangesetsEqual(actual, expected);
 			});
 

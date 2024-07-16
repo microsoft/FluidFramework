@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypeData, toTypeString } from "./typeData";
+import { TypeData, getFullTypeName, toTypeString } from "./typeData";
 
 export interface TestCaseTypeData extends TypeData {
 	prefix: "old" | "current";
@@ -14,28 +14,26 @@ export function buildTestCase(
 	getAsType: TestCaseTypeData,
 	useType: TestCaseTypeData,
 	isCompatible: boolean,
-) {
+	typePreprocessor: string,
+): string[] {
 	if (!isCompatible && (getAsType.removed || useType.removed)) {
-		return "";
+		return [];
 	}
 
-	const getSig = `get_${getAsType.prefix}_${getFullTypeName(getAsType).replace(".", "_")}`;
-	const useSig = `use_${useType.prefix}_${getFullTypeName(useType).replace(".", "_")}`;
-	const expectErrorString = "    // @ts-expect-error compatibility expected to be broken";
+	const expectErrorString = "// @ts-expect-error compatibility expected to be broken";
 	const testString: string[] = [];
 
-	testString.push(`declare function ${getSig}():`);
-	testString.push(`    ${toTypeString(getAsType.prefix, getAsType)};`);
-	testString.push(`declare function ${useSig}(`);
-	testString.push(`    use: ${toTypeString(useType.prefix, useType)}): void;`);
-	testString.push(`${useSig}(`);
 	if (!isCompatible) {
 		testString.push(expectErrorString);
 	}
-	testString.push(`    ${getSig}());`);
+	testString.push(
+		`declare type ${getAsType.prefix}_as_${useType.prefix}_for_${getFullTypeName(
+			getAsType,
+		)} = requireAssignableTo<${toTypeString(
+			getAsType.prefix,
+			getAsType,
+			typePreprocessor,
+		)}, ${toTypeString(useType.prefix, useType, typePreprocessor)}>`,
+	);
 	return testString;
-}
-
-function getFullTypeName(typeData: TypeData) {
-	return `${typeData.kind}_${typeData.name}`;
 }

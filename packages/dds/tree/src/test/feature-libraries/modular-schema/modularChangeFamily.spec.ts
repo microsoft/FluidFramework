@@ -5,71 +5,75 @@
 
 import { strict as assert } from "assert";
 
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 
-import { ICodecOptions, IJsonCodec, makeCodecFamily } from "../../../codec/index.js";
+import { type ICodecOptions, type IJsonCodec, makeCodecFamily } from "../../../codec/index.js";
 import {
-	FieldChangeHandler,
+	type FieldChangeHandler,
 	genericFieldKind,
-	ModularChangeset,
+	type ModularChangeset,
 	FieldKindWithEditor,
-	RelevantRemovedRootsFromChild,
+	type RelevantRemovedRootsFromChild,
 	chunkTree,
 	defaultChunkPolicy,
-	TreeChunk,
+	type TreeChunk,
 	cursorForJsonableTreeField,
 	chunkFieldSingle,
 	makeFieldBatchCodec,
-	NodeId,
-	FieldKindConfiguration,
-	FieldKindConfigurationEntry,
+	type NodeId,
+	type FieldKindConfiguration,
+	type FieldKindConfigurationEntry,
 	makeModularChangeCodecFamily,
 	ModularChangeFamily,
-	EncodedModularChangeset,
-	FieldChangeRebaser,
-	FieldEditor,
-	EditDescription,
+	type EncodedModularChangeset,
+	type FieldChangeRebaser,
+	type FieldEditor,
+	type EditDescription,
+	jsonableTreeFromFieldCursor,
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
 	makeDetachedNodeId,
-	RevisionTag,
+	type RevisionTag,
 	tagChange,
-	TaggedChange,
-	FieldKindIdentifier,
-	FieldKey,
-	UpPath,
+	type TaggedChange,
+	type FieldKindIdentifier,
+	type FieldKey,
+	type UpPath,
 	revisionMetadataSourceFromInfo,
-	ITreeCursorSynchronous,
-	DeltaFieldChanges,
-	DeltaRoot,
-	DeltaDetachedNodeId,
-	ChangeEncodingContext,
-	ChangeAtomIdMap,
+	type ITreeCursorSynchronous,
+	type DeltaFieldChanges,
+	type DeltaRoot,
+	type DeltaDetachedNodeId,
+	type ChangeEncodingContext,
+	type ChangeAtomIdMap,
 	Multiplicity,
 	replaceAtomRevisions,
-	FieldUpPath,
+	type FieldUpPath,
 } from "../../../core/index.js";
 import {
+	type Mutable,
 	brand,
 	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
 	setInNestedMap,
 	tryGetFromNestedMap,
+	mapNestedMap,
 } from "../../../util/index.js";
 import {
-	EncodingTestData,
+	type EncodingTestData,
 	assertDeltaEqual,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testChangeReceiver,
+	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
 
-import { ValueChangeset, valueField } from "./basicRebasers.js";
+import { type ValueChangeset, valueField } from "./basicRebasers.js";
 import { ajvValidator } from "../../codec/index.js";
 import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
-import {
+import type {
 	FieldChangeMap,
 	NodeChangeset,
 	// eslint-disable-next-line import/no-internal-modules
@@ -81,7 +85,7 @@ import {
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import {
+import type {
 	EncodedNodeChangeset,
 	FieldChangeEncodingContext,
 	// eslint-disable-next-line import/no-internal-modules
@@ -91,7 +95,9 @@ import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 type SingleNodeChangeset = NodeId | undefined;
 const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 	compose: (change1, change2, composeChild) =>
-		change1 === undefined && change2 === undefined ? undefined : composeChild(change1, change2),
+		change1 === undefined && change2 === undefined
+			? undefined
+			: composeChild(change1, change2),
 	invert: (change) => change,
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
@@ -135,6 +141,7 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	// We create changesets by composing an empty single node field with a change to the child.
 	// We don't want the temporarily empty single node field to be pruned away leaving us with a generic field instead.
 	isEmpty: (change) => false,
+	getNestedChanges: (change) => (change === undefined ? [] : [[change, 0]]),
 	createEmpty: () => undefined,
 };
 
@@ -783,9 +790,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
-					refreshers: new Map([
-						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
-					]),
+					refreshers: new Map([[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])]]),
 				},
 				tag1,
 			);
@@ -831,9 +836,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
-					refreshers: new Map([
-						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
-					]),
+					refreshers: new Map([[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])]]),
 				},
 				tag1,
 			);
@@ -998,9 +1001,7 @@ describe("ModularChangeFamily", () => {
 							[
 								fieldA,
 								{
-									local: [
-										{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } },
-									],
+									local: [{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } }],
 								},
 							],
 						]),
@@ -1115,7 +1116,10 @@ describe("ModularChangeFamily", () => {
 			nested: NodeId[];
 		}
 
-		const handler: FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>> = {
+		const handler: FieldChangeHandler<
+			HasRemovedRootsRefs,
+			FieldEditor<HasRemovedRootsRefs>
+		> = {
 			relevantRemovedRoots: (
 				change: HasRemovedRootsRefs,
 				relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
@@ -1404,7 +1408,11 @@ describe("ModularChangeFamily", () => {
 		}
 
 		const sessionId = "session1" as SessionId;
-		const context: ChangeEncodingContext = { originatorId: sessionId, revision: tag1 };
+		const context: ChangeEncodingContext = {
+			originatorId: sessionId,
+			revision: tag1,
+			idCompressor: testIdCompressor,
+		};
 		const encodingTestData: EncodingTestData<
 			ModularChangeset,
 			EncodedModularChangeset,
@@ -1413,6 +1421,39 @@ describe("ModularChangeFamily", () => {
 			successes: [
 				["without constraint", inlineRevision(rootChange1a, tag1), context],
 				["with constraint", inlineRevision(rootChange3, tag1), context],
+				[
+					"with violated constraint",
+					inlineRevision({ ...buildChangeset([]), constraintViolationCount: 42 }, tag1),
+					context,
+				],
+				[
+					"with builds",
+					inlineRevision(
+						{
+							...buildChangeset([]),
+							builds: new Map([
+								[undefined, new Map([[brand(1), node1Chunk]])],
+								[tag2, new Map([[brand(2), nodesChunk]])],
+							]),
+						},
+						tag1,
+					),
+					context,
+				],
+				[
+					"with refreshers",
+					inlineRevision(
+						{
+							...buildChangeset([]),
+							refreshers: new Map([
+								[undefined, new Map([[brand(1), node1Chunk]])],
+								[tag2, new Map([[brand(2), nodesChunk]])],
+							]),
+						},
+						tag1,
+					),
+					context,
+				],
 				["with node existence constraint", inlineRevision(rootChange4, tag1), context],
 				[
 					"without node field changes",
@@ -1464,6 +1505,13 @@ function treeChunkFromCursor(cursor: ITreeCursorSynchronous): TreeChunk {
 	return chunkTree(cursor, defaultChunkPolicy);
 }
 
+function deepCloneChunkedTree(chunk: TreeChunk): TreeChunk {
+	const jsonable = jsonableTreeFromFieldCursor(chunk.cursor());
+	const cursor = cursorForJsonableTreeField(jsonable);
+	const clone = chunkFieldSingle(cursor, defaultChunkPolicy);
+	return clone;
+}
+
 function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 	const idAllocator = idAllocatorFromMaxId();
 
@@ -1509,7 +1557,17 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 
 	const fieldChanges = normalizeFieldChanges(change.fieldChanges);
 	assert(nodeChanges.size === change.nodeChanges.size);
-	return { ...change, nodeChanges, fieldChanges };
+
+	const normal: Mutable<ModularChangeset> = { ...change, nodeChanges, fieldChanges };
+
+	// The TreeChunk objects need to be deep cloned to avoid comparison issues on reference counting
+	if (change.builds !== undefined) {
+		normal.builds = mapNestedMap(change.builds, deepCloneChunkedTree);
+	}
+	if (change.refreshers !== undefined) {
+		normal.refreshers = mapNestedMap(change.refreshers, deepCloneChunkedTree);
+	}
+	return normal;
 }
 
 function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {

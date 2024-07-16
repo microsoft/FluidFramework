@@ -10,23 +10,23 @@ import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { FlexListToUnion } from "../../feature-libraries/index.js";
+import type { FlexListToUnion } from "../../feature-libraries/index.js";
 import {
-	ApplyKind,
-	FieldSchema,
-	InsertableTreeNodeFromImplicitAllowedTypes,
-	NodeFromSchema,
-	TreeConfiguration,
-	TreeNodeFromImplicitAllowedTypes,
-	TreeView,
+	type FieldSchema,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NodeFromSchema,
+	TreeViewConfiguration,
+	type TreeNodeFromImplicitAllowedTypes,
+	type TreeView,
 	SchemaFactory,
-	InternalTreeNode,
+	type InternalTreeNode,
+	type ApplyKind,
 } from "../../simple-tree/index.js";
-import {
+import type {
 	ValidateRecursiveSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaFactoryRecursive.js";
-import {
+import type {
 	FieldSchemaUnsafe,
 	InsertableTreeFieldFromImplicitFieldUnsafe,
 	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
@@ -35,7 +35,12 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/typesUnsafe.js";
 import { TreeFactory } from "../../treeFactory.js";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
+import type {
+	areSafelyAssignable,
+	requireAssignableTo,
+	requireTrue,
+	requireFalse,
+} from "../../util/index.js";
 
 import { hydrate } from "./utils.js";
 
@@ -77,17 +82,16 @@ describe("SchemaFactory Recursive methods", () => {
 				type _check = ValidateRecursiveSchema<typeof Box>;
 			}
 
-			const config = new TreeConfiguration(
-				Box,
-				() => new Box({ text: "hi", child: undefined }),
-			);
+			const config = new TreeViewConfiguration({ schema: Box });
 
 			const tree = factory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
 
-			const view: TreeView<typeof Box> = tree.schematize(config);
+			const view: TreeView<typeof Box> = tree.viewWith(config);
+			view.initialize(new Box({ text: "hi", child: undefined }));
+
 			assert.equal(view.root?.text, "hi");
 
 			const stuff: undefined | Box = view.root.child;
@@ -109,7 +113,7 @@ describe("SchemaFactory Recursive methods", () => {
 			assert.equal(stuff2?.text, "hi4");
 		});
 
-		it("objects", () => {
+		it("object with optional recursive field", () => {
 			class ObjectRecursive extends sf.objectRecursive("Object", {
 				x: sf.optionalRecursive([() => ObjectRecursive]),
 			}) {}
@@ -120,8 +124,10 @@ describe("SchemaFactory Recursive methods", () => {
 			type XSchema = typeof ObjectRecursive.info.x;
 			type Field2 = XSchema extends FieldSchema<infer Kind, infer Types>
 				? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
-				: "zzz";
-			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? Types : "Q";
+				: "Not a FieldSchema";
+			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
+				? Types
+				: "Not A FieldSchemaUnsafe";
 			type Field3 = TreeNodeFromImplicitAllowedTypes<XTypes>;
 			type Field4 = FlexListToUnion<XTypes>;
 			type _check1 = requireTrue<areSafelyAssignable<Field3, ObjectRecursive>>;
@@ -141,7 +147,7 @@ describe("SchemaFactory Recursive methods", () => {
 					Constructor,
 					[
 						| {
-								readonly x: undefined | ObjectRecursive;
+								readonly x?: ObjectRecursive;
 						  }
 						| InternalTreeNode,
 					]
@@ -163,6 +169,66 @@ describe("SchemaFactory Recursive methods", () => {
 			const tree2 = hydrate(
 				ObjectRecursive,
 				new ObjectRecursive({ x: new ObjectRecursive({ x: undefined }) }),
+			);
+		});
+
+		it("object with required recursive field", () => {
+			class ObjectRecursive extends sf.objectRecursive("Object", {
+				x: sf.requiredRecursive([() => ObjectRecursive, sf.number]),
+			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof ObjectRecursive>;
+			}
+
+			type XSchema = typeof ObjectRecursive.info.x;
+			type Field2 = XSchema extends FieldSchema<infer Kind, infer Types>
+				? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
+				: "Not a FieldSchema";
+			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
+				? Types
+				: "Not A FieldSchemaUnsafe";
+			type Field3 = TreeNodeFromImplicitAllowedTypes<XTypes>;
+			type Field4 = FlexListToUnion<XTypes>;
+			type _check1 = requireTrue<areSafelyAssignable<Field3, ObjectRecursive | number>>;
+			type _check2 = requireTrue<
+				areSafelyAssignable<Field4, typeof ObjectRecursive | typeof sf.number>
+			>;
+
+			type Insertable = InsertableTreeNodeFromImplicitAllowedTypes<typeof ObjectRecursive>;
+			type _checkInsertable = requireTrue<areSafelyAssignable<Insertable, ObjectRecursive>>;
+			type Constructable = NodeFromSchema<typeof ObjectRecursive>;
+			type _checkConstructable = requireTrue<
+				areSafelyAssignable<Constructable, ObjectRecursive>
+			>;
+			type Child = ObjectRecursive["x"];
+			type _checkChild = requireTrue<areSafelyAssignable<Child, ObjectRecursive | number>>;
+			type Constructor = ConstructorParameters<typeof ObjectRecursive>;
+			type _checkConstructor = requireTrue<
+				areSafelyAssignable<
+					Constructor,
+					[
+						| {
+								readonly x: ObjectRecursive | number;
+						  }
+						| InternalTreeNode,
+					]
+				>
+			>;
+			type _checkConstructor2 = requireFalse<
+				areSafelyAssignable<
+					Constructor,
+					[
+						| {
+								readonly x?: ObjectRecursive | number;
+						  }
+						| InternalTreeNode,
+					]
+				>
+			>;
+
+			const tree = hydrate(
+				ObjectRecursive,
+				new ObjectRecursive({ x: new ObjectRecursive({ x: 42 }) }),
 			);
 		});
 

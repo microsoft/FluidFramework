@@ -71,7 +71,8 @@ function runTasks(
 			break;
 		}
 
-		const taskQueueItem = taskQueue[index];
+		// Non null asserting here because we are iterating though taskQueue
+		const taskQueueItem = taskQueue[index]!;
 
 		if (filter && !filter(taskQueueItem)) {
 			newTaskQueue.push(taskQueueItem);
@@ -84,7 +85,10 @@ function runTasks(
 }
 
 // Runs all the tasks in the task queue
-function idleTaskCallback(deadline: { timeRemaining: () => number; readonly didTimeout: boolean }) {
+function idleTaskCallback(deadline: {
+	timeRemaining: () => number;
+	readonly didTimeout: boolean;
+}) {
 	// Minimum time that must be available on deadline to run any more tasks
 	const minTaskTime = 10;
 	runTasks(undefined, () => deadline.timeRemaining() > minTaskTime);

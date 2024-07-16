@@ -3,15 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import type { ITree, ITreeEntry } from "@fluidframework/driver-definitions/internal";
+import { TreeEntry } from "@fluidframework/driver-definitions/internal";
 import {
 	AttachmentTreeEntry,
 	BlobTreeEntry,
 	TreeTreeEntry,
 } from "@fluidframework/driver-utils/internal";
-import { ITree, ITreeEntry, TreeEntry } from "@fluidframework/driver-definitions/internal";
 
-/** The name of the metadata blob added to the root of the container runtime. */
+/**
+ * The name of the metadata blob added to the root of the container runtime.
+ */
 const metadataBlobName = ".metadata";
+
 /**
  * The prefix that all GC blob names start with.
  *
@@ -33,12 +37,18 @@ export interface ISnapshotNormalizerConfig {
 	excludedChannelContentTypes?: string[];
 }
 
+const sortStringified = (elem1: unknown, elem2: unknown): number => {
+	const serializedElem1 = JSON.stringify(elem1);
+	const serializedElem2 = JSON.stringify(elem2);
+	return serializedElem1.localeCompare(serializedElem2);
+};
+
 /**
  * Function that deep sorts an array. It handles cases where array elements are objects or arrays.
  * @returns the sorted array.
  */
-function getDeepSortedArray(array: any[]): any[] {
-	const sortedArray: any[] = [];
+function getDeepSortedArray(array: unknown[]): unknown[] {
+	const sortedArray: unknown[] = [];
 	// Sort arrays and objects, if any, in the array.
 	for (const element of array) {
 		if (Array.isArray(element)) {
@@ -52,25 +62,20 @@ function getDeepSortedArray(array: any[]): any[] {
 
 	// Now that all the arrays and objects in this array's elements have been sorted, sort it by comparing each
 	// element's stringified version.
-	const sortFn = (elem1: any, elem2: any) => {
-		const serializedElem1 = JSON.stringify(elem1);
-		const serializedElem2 = JSON.stringify(elem2);
-		return serializedElem1.localeCompare(serializedElem2);
-	};
-
-	return sortedArray.sort(sortFn);
+	return sortedArray.sort(sortStringified);
 }
 
 /**
  * Function that deep sorts an object. It handles cases where object properties are arrays or objects.
  * @returns the sorted object.
  */
-function getDeepSortedObject(obj: any): any {
-	const sortedObj: any = {};
+function getDeepSortedObject<T extends object>(obj: T): T {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	const sortedObj: T = {} as T;
 	// Sort the object keys first. Then sort arrays and objects, if any, in the object.
 	const keys = Object.keys(obj).sort();
 	for (const key of keys) {
-		const value = obj[key];
+		const value: unknown = obj[key];
 		if (Array.isArray(value)) {
 			sortedObj[key] = getDeepSortedArray(value);
 		} else if (value instanceof Object) {
@@ -91,10 +96,16 @@ function getDeepSortedObject(obj: any): any {
 function getNormalizedBlobContent(blobContent: string, blobName: string): string {
 	let content = blobContent;
 	if (blobName.startsWith(gcBlobPrefix)) {
+		// The following code parses JSON and makes some assumptions about the type of data within. There does not appear to
+		// be a better type than `any` to use here, so the lint rules are disabled.
+
+		/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
+
 		// GC blobs may contain `unreferencedTimestampMs` for node that became unreferenced. This is the timestamp
 		// of the last op processed or current timestamp and can differ between clients depending on when GC was run.
 		// So, remove it for the purposes of comparing snapshots.
-		const gcState = JSON.parse(content);
+		const gcState: any = JSON.parse(content);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		for (const [, data] of Object.entries(gcState.gcNodes)) {
 			delete (data as any).unreferencedTimestampMs;
 		}
@@ -135,7 +146,12 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
 			contentObj = getDeepSortedObject(contentObj);
 		}
 		content = JSON.stringify(contentObj);
-	} catch {}
+	} catch {
+		// Do nothing
+	}
+
+	/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
+
 	return content;
 }
 
@@ -149,7 +165,10 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
  * @returns a copy of the normalized snapshot tree.
  * @internal
  */
-export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormalizerConfig): ITree {
+export function getNormalizedSnapshot(
+	snapshot: ITree,
+	config?: ISnapshotNormalizerConfig,
+): ITree {
 	// Merge blobs to normalize in the config with runtime blobs to normalize. The contents of these blobs will be
 	// parsed and deep sorted.
 	const normalizedEntries: ITreeEntry[] = [];
@@ -192,6 +211,8 @@ function normalizeMatrix(value: ITree): ITree {
 		return value;
 	}
 
+	/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
+
 	const contents = JSON.parse(header?.value.contents);
 
 	for (const segment of contents.segments) {
@@ -206,6 +227,8 @@ function normalizeMatrix(value: ITree): ITree {
 
 	header.value.contents = JSON.stringify(contents);
 
+	/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
+
 	return value;
 }
 
@@ -218,8 +241,7 @@ function normalizeEntry(
 			let contents = entry.value.contents;
 			// If this blob has to be normalized or it's a GC blob, parse and sort the blob contents first.
 			if (
-				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when .includes returns false.
-				config?.blobsToNormalize?.includes(entry.path) ||
+				(config?.blobsToNormalize?.includes(entry.path) ?? false) ||
 				entry.path.startsWith(gcBlobPrefix)
 			) {
 				contents = getNormalizedBlobContent(contents, entry.path);
@@ -233,9 +255,8 @@ function normalizeEntry(
 						maybeAttributes.type === TreeEntry.Blob &&
 						maybeAttributes.path === ".attributes"
 					) {
-						const parsed: { type?: string } = JSON.parse(
-							maybeAttributes.value.contents,
-						);
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+						const parsed: { type?: string } = JSON.parse(maybeAttributes.value.contents);
 						if (parsed.type === "https://graph.microsoft.com/types/sharedmatrix") {
 							return new TreeTreeEntry(
 								entry.path,
@@ -259,7 +280,8 @@ function normalizeEntry(
 			return new AttachmentTreeEntry(entry.path, entry.value.id);
 		}
 
-		default:
+		default: {
 			throw new Error("Unknown entry type");
+		}
 	}
 }

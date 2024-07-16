@@ -34,13 +34,18 @@ import {
 import { Deferred, delay } from "@fluidframework/core-utils/internal";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import type { ISharedDirectory, SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
+import type {
+	ISharedDirectory,
+	SharedDirectory,
+	ISharedMap,
+} from "@fluidframework/map/internal";
 import {
 	ReferenceType,
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
 	reservedTileLabelsKey,
 } from "@fluidframework/merge-tree/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import type {
 	IIntervalCollection,
 	SequenceInterval,
@@ -57,9 +62,9 @@ import {
 	createDocumentId,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
+import { SchemaFactory } from "@fluidframework/tree";
+import { TreeViewConfiguration } from "@fluidframework/tree";
 import { ISharedTree, SharedTree } from "@fluidframework/tree/internal";
-import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 
@@ -280,11 +285,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		loaderProps: {
 			configProvider: configProvider({
 				"Fluid.Container.enableOfflineLoad": true,
+				"Fluid.Sequence.intervalStickinessEnabled": true,
 			}),
-			options: {
-				// Smuggle in this option to pass down to DataStoreRuntime and IntervalCollection DDS
-				...({ intervalStickinessEnabled: true } as any),
-			},
 		},
 	};
 
@@ -294,9 +296,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		map: sf.map(sf.string),
 	}) {}
 
-	const treeConfig = new TreeConfiguration(Root, () => ({
-		map: new Map<string, string>(),
-	}));
+	const treeConfig = new TreeViewConfiguration({ schema: Root });
 
 	interface MinimalMap {
 		get(key: string): string | undefined;
@@ -311,8 +311,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	async function getTreeBackedMap(d: ITestFluidObject): Promise<MinimalMap> {
 		const tree = await d.getSharedObject<ISharedTree>(treeId);
-		const root = tree.schematize(treeConfig);
-		return root.root.map;
+		const view = tree.viewWith(treeConfig);
+		if (view.compatibility.canInitialize) {
+			view.initialize({ map: new Map<string, string>() });
+		}
+		return view.root.map;
 	}
 
 	async function getMapFromProvider(
@@ -370,6 +373,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				const string = await d.getSharedObject<SharedString>(stringId);
 				const collection = string.getIntervalCollection(collectionId);
 				collection.add({ start: testStart, end: testEnd });
+				// [DEPRECATED]
 				// Submit a message with an unrecognized type
 				// Super rare corner case where you stash an op and then roll back to a previous runtime version that doesn't recognize it
 				(
@@ -434,15 +438,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				const cell = await d.getSharedObject<ISharedCell>(cellId);
 				assert((cell as any).runtime.idCompressor !== undefined);
 				cellCompressedId = (cell as any).runtime.idCompressor.generateCompressedId();
-				cellDecompressedId = (cell as any).runtime.idCompressor.decompress(
-					cellCompressedId,
-				);
+				cellDecompressedId = (cell as any).runtime.idCompressor.decompress(cellCompressedId);
 				cell.set(cellDecompressedId);
 				const directory = await d.getSharedObject<SharedDirectory>(directoryId);
 				assert((directory as any).runtime.idCompressor !== undefined);
-				directoryCompressedId = (
-					directory as any
-				).runtime.idCompressor.generateCompressedId();
+				directoryCompressedId = (directory as any).runtime.idCompressor.generateCompressedId();
 				directoryDecompressedId = (directory as any).runtime.idCompressor.decompress(
 					directoryCompressedId,
 				);
@@ -663,9 +663,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const map2 = await getMap(dataStore2);
 			await waitForContainerConnection(container2);
 			await provider.ensureSynchronized();
-			[...Array(lots).keys()].map((i) =>
-				assert.strictEqual(map.get(i.toString()), testValue),
-			);
+			[...Array(lots).keys()].map((i) => assert.strictEqual(map.get(i.toString()), testValue));
 			[...Array(lots).keys()].map((i) =>
 				assert.strictEqual(map2.get(i.toString()), testValue),
 			);
@@ -1281,10 +1279,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	itExpects(
 		"waits for previous container's leave message",
-		[
-			{ eventName: "fluid:telemetry:Container:connectedStateRejected" },
-			{ eventName: "fluid:telemetry:Container:WaitBeforeClientLeave_end" },
-		],
+		[{ eventName: "fluid:telemetry:Container:connectedStateRejected" }],
 		async () => {
 			const container: IContainerExperimental =
 				await provider.loadTestContainer(testContainerConfig);
@@ -1460,10 +1455,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	itExpects(
 		"waits for previous container's leave message after rehydration",
-		[
-			{ eventName: "fluid:telemetry:Container:connectedStateRejected" },
-			{ eventName: "fluid:telemetry:Container:WaitBeforeClientLeave_end" },
-		],
+		[{ eventName: "fluid:telemetry:Container:connectedStateRejected" }],
 		async () => {
 			const pendingOps = await getPendingOps(
 				testContainerConfig,
@@ -1792,7 +1784,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
 
-		await detachedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
+		await detachedContainer.attach(
+			provider.driver.createCreateNewRequest(provider.documentId),
+		);
 		const pendingOps = await detachedContainer.closeAndGetPendingLocalState?.();
 
 		const url2 = await detachedContainer.getAbsoluteUrl("");

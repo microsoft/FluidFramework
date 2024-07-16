@@ -9,12 +9,8 @@ import {
 	type ConnectionState,
 	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import { type IContainer } from "@fluidframework/container-definitions/internal";
-import {
-	type IEvent,
-	type IEventProvider,
-	type IFluidLoadable,
-} from "@fluidframework/core-interfaces";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import type { ContainerAttachProps, ContainerSchema, IRootDataObject } from "./types.js";
@@ -205,15 +201,26 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	/**
 	 * Create a new data object or Distributed Data Store (DDS) of the specified type.
 	 *
-	 * @remarks
-	 *
-	 * In order to share the data object or DDS with other
-	 * collaborators and retrieve it later, store its handle in a collection like a SharedDirectory from your
-	 * initialObjects.
-	 *
 	 * @param objectClass - The class of the `DataObject` or `SharedObject` to create.
 	 *
 	 * @typeParam T - The class of the `DataObject` or `SharedObject`.
+	 *
+	 * @remarks
+	 *
+	 * In order to share the data object or DDS with other collaborators and retrieve it later,
+	 * store its handle in a collection like a SharedDirectory from your initialObjects.
+	 * It's typically a good idea to set any initial state on the object before doing so,
+	 * as it is both more efficient and helpful to maintain domain model invariants
+	 * (e.g. this approach easily allows state to only be set once).
+	 *
+	 * @example
+	 *
+	 * ```typescript
+	 * const existingDirectory = container.initialObjects.myDirectory;
+	 * const map = await container.create(SharedMap);
+	 * map.set("initialState", "someValue");
+	 * existingDirectory.set("myMap", map.handle);
+	 * ```
 	 */
 	create<T extends IFluidLoadable>(objectClass: SharedObjectKind<T>): Promise<T>;
 
@@ -245,8 +252,6 @@ export function createFluidContainer<
  *
  * Note: this implementation is not complete. Consumers who rely on {@link IFluidContainer.attach}
  * will need to utilize or provide a service-specific implementation of this type that implements that method.
- * @deprecated use {@link createFluidContainer} and {@link IFluidContainer} instead
- * @internal
  */
 class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends TypedEventEmitter<IFluidContainerEvents>
@@ -319,7 +324,6 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	 * but internally this separation is not there.
 	 */
 	public async attach(props?: ContainerAttachProps): Promise<string> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- AB#7608
 		if (this.container.attachState !== AttachState.Detached) {
 			throw new Error("Cannot attach container. Container is not in detached state.");
 		}

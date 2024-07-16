@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { fromInternalScheme } from "@fluid-tools/version-tools";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import * as semver from "semver";
 
@@ -205,19 +204,16 @@ const genDriverLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] 
 };
 
 const getNumberOfVersionsToGoBack = (numOfVersionsAboveV2Int1: number = 0): number => {
-	const [, semverInternal, prereleaseIndentifier] = fromInternalScheme(codeVersion, true, true);
-	assert(semverInternal !== undefined, "Unexpected pkg version");
+	const semverVersion = semver.parse(codeVersion);
+	assert(semverVersion !== null, `Unexpected pkg version '${codeVersion}'`);
 
-	// Here we check if the release is an RC release. If so, we also need to account for internal releases when
+	// Here we add the minor release to the math. If so, we also need to account for internal releases when
 	// generating back compat configs. For back compat purposes, we consider RC major release 1 to be treated as internal
 	// major release 9. This will ensure we generate back compat configs for all RC and internal major releases.
-	const greatestInternalMajor = 8;
-	const numOfVersionsToV2Int1 =
-		prereleaseIndentifier === "rc" || prereleaseIndentifier === "dev-rc"
-			? semverInternal.major + greatestInternalMajor
-			: semverInternal.major; // this happens to be the greatest major version
+	// There are 5 rc versions. 8 internal versions. 5 rc versions. 2.0 is the first minor version.
+	const greatestInternalMajor = 8 + 5 + semverVersion.minor;
 	// This allows us to increase our "LTS" support for certain versions above 2.0.0.internal.1.y.z
-	return numOfVersionsToV2Int1 - numOfVersionsAboveV2Int1;
+	return greatestInternalMajor - numOfVersionsAboveV2Int1;
 };
 
 const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatConfig[] => {
@@ -355,9 +351,7 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 					break;
 				}
 				case "V2_INT_3": {
-					_configList.push(
-						...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1),
-					);
+					_configList.push(...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1));
 					break;
 				}
 				case "CROSS_VERSION": {

@@ -5,10 +5,10 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { IBatch } from "./definitions.js";
+import { IBatch, type BatchMessage } from "./definitions.js";
 
 /**
  * Grouping makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
@@ -49,45 +49,52 @@ export class OpGroupingManager {
 		this.logger = createChildLogger({ logger, namespace: "OpGroupingManager" });
 	}
 
-	public groupBatch(batch: IBatch): IBatch {
+	/**
+	 * Converts the given batch into a "grouped batch" - a batch with a single message of type "groupedBatch",
+	 * with contents being an array of the original batch's messages.
+	 *
+	 * @remarks - Remember that a BatchMessage has its content JSON serialized, so the incoming batch message contents
+	 * must be parsed first, and then the type and contents mentioned above are hidden in that JSON serialization.
+	 */
+	public groupBatch(batch: IBatch): IBatch<[BatchMessage]> {
 		assert(this.shouldGroup(batch), 0x946 /* cannot group the provided batch */);
 
-		if (batch.content.length >= 1000) {
+		if (batch.messages.length >= 1000) {
 			this.logger.sendTelemetryEvent({
 				eventName: "GroupLargeBatch",
-				length: batch.content.length,
+				length: batch.messages.length,
 				threshold: this.config.opCountThreshold,
 				reentrant: batch.hasReentrantOps,
-				referenceSequenceNumber: batch.content[0].referenceSequenceNumber,
+				// Non null asserting here because of the length check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				referenceSequenceNumber: batch.messages[0]!.referenceSequenceNumber,
 			});
 		}
 
-		for (const message of batch.content) {
+		for (const message of batch.messages) {
 			if (message.metadata) {
-				const keys = Object.keys(message.metadata);
-				assert(keys.length < 2, 0x5dd /* cannot group ops with metadata */);
-				assert(
-					keys.length === 0 || keys[0] === "batch",
-					0x5de /* unexpected op metadata */,
-				);
+				const { batch: _batch, batchId, ...rest } = message.metadata;
+				assert(Object.keys(rest).length === 0, 0x5dd /* cannot group ops with metadata */);
 			}
 		}
 
 		const serializedContent = JSON.stringify({
 			type: OpGroupingManager.groupedBatchOp,
-			contents: batch.content.map<IGroupedMessage>((message) => ({
+			contents: batch.messages.map<IGroupedMessage>((message) => ({
 				contents: message.contents === undefined ? undefined : JSON.parse(message.contents),
 				metadata: message.metadata,
 				compression: message.compression,
 			})),
 		});
 
-		const groupedBatch: IBatch = {
+		const groupedBatch: IBatch<[BatchMessage]> = {
 			...batch,
-			content: [
+			messages: [
 				{
 					metadata: undefined,
-					referenceSequenceNumber: batch.content[0].referenceSequenceNumber,
+					// TODO why are we non null asserting here?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					referenceSequenceNumber: batch.messages[0]!.referenceSequenceNumber,
 					contents: serializedContent,
 				},
 			],
@@ -114,7 +121,7 @@ export class OpGroupingManager {
 			// Grouped batching must be enabled
 			this.config.groupedBatchingEnabled &&
 			// The number of ops in the batch must surpass the configured threshold
-			batch.content.length >= this.config.opCountThreshold &&
+			batch.messages.length >= this.config.opCountThreshold &&
 			// Support for reentrant batches must be explicitly enabled
 			(this.config.reentrantBatchGroupingEnabled || batch.hasReentrantOps !== true)
 		);

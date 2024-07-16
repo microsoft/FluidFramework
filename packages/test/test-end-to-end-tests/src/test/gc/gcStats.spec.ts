@@ -108,7 +108,8 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 
 		// Create a second summarizer for running GC and summarizing so that it doesn't summarize local changes.
 		const summarizerContainer = await provider.loadTestContainer(testContainerConfig);
-		const summarizerDataObject = (await summarizerContainer.getEntryPoint()) as ITestDataObject;
+		const summarizerDataObject =
+			(await summarizerContainer.getEntryPoint()) as ITestDataObject;
 		summarizerRuntime = summarizerDataObject._context.containerRuntime as ContainerRuntime;
 
 		// Ensure the container used to summarize is in write mode. This is necessary because this container may
@@ -180,7 +181,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		const gcStats = await summarizerRuntime.collectGarbage({});
 		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
-		const summarizeResult = await summarizerRuntime.summarize({ trackState: false });
+		const summarizeResult = await summarizerRuntime.summarize({ fullTree: true });
 		assert.strictEqual(
 			summarizeResult.stats.unreferencedBlobSize,
 			0,
@@ -249,7 +250,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		gcStats = await summarizerRuntime.collectGarbage({});
 		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
-		let summarizeResult = await summarizerRuntime.summarize({ trackState: false });
+		let summarizeResult = await summarizerRuntime.summarize({ fullTree: true });
 		let unrefDataStoreStats = getDataStoreSummaryStats(summarizeResult.summary, [
 			dataStore1._context.id,
 		]);
@@ -276,7 +277,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		gcStats = await summarizerRuntime.collectGarbage({});
 		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
-		summarizeResult = await summarizerRuntime.summarize({ trackState: false });
+		summarizeResult = await summarizerRuntime.summarize({ fullTree: true });
 		unrefDataStoreStats = getDataStoreSummaryStats(summarizeResult.summary, [
 			dataStore1._context.id,
 			dataStore2._context.id,
@@ -379,7 +380,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		const gcStats = await summarizerRuntime.collectGarbage({});
 		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
-		const summarizeResult = await summarizerRuntime.summarize({ trackState: false });
+		const summarizeResult = await summarizerRuntime.summarize({ fullTree: true });
 		assert.strictEqual(
 			summarizeResult.stats.unreferencedBlobSize,
 			0,

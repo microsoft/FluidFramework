@@ -4,15 +4,18 @@
  */
 
 import type { ITestObjectProvider } from "@fluidframework/test-utils/internal";
-import type { TestSnapshotCache } from "./testSnapshotCache.js";
+
+import type { TestSnapshotCache } from "../../testSnapshotCache.js";
 
 export function supportsDataVirtualization(provider: ITestObjectProvider) {
-	return provider.driver.type === "local" || provider.driver.endpointName === "odsp-df";
+	return provider.driver.type === "local" || provider.driver.type === "odsp";
 }
 
-// TODO: enable for Odsp Prod endpoint
-export function clearCacheIfOdsp(provider: ITestObjectProvider, persistedCache: TestSnapshotCache) {
-	if (provider.driver.endpointName === "odsp-df") {
+export function clearCacheIfOdsp(
+	provider: ITestObjectProvider,
+	persistedCache: TestSnapshotCache,
+) {
+	if (provider.driver.type === "odsp") {
 		persistedCache.clearCache();
 	}
 }

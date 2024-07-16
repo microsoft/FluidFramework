@@ -6,23 +6,23 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	Anchor,
+	type Anchor,
 	AnchorSet,
-	DeltaVisitor,
-	DetachedField,
-	FieldAnchor,
-	FieldKey,
-	ForestEvents,
-	IEditableForest,
-	ITreeCursorSynchronous,
-	ITreeSubscriptionCursor,
+	type DeltaVisitor,
+	type DetachedField,
+	type FieldAnchor,
+	type FieldKey,
+	type ForestEvents,
+	type IEditableForest,
+	type ITreeCursorSynchronous,
+	type ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
-	PlaceIndex,
-	ProtoNodes,
-	Range,
+	type PlaceIndex,
+	type ProtoNodes,
+	type Range,
 	TreeNavigationResult,
-	TreeStoredSchemaSubscription,
-	UpPath,
+	type TreeStoredSchemaSubscription,
+	type UpPath,
 	aboveRootPlaceholder,
 	detachedFieldAsKey,
 	mapCursorField,
@@ -31,9 +31,9 @@ import {
 import { createEmitter } from "../../events/index.js";
 import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
 
-import { BasicChunk, BasicChunkCursor, SiblingsOrKey } from "./basicChunk.js";
-import { ChunkedCursor, TreeChunk } from "./chunk.js";
-import { IChunker, basicChunkTree, chunkTree } from "./chunkTree.js";
+import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
+import type { ChunkedCursor, TreeChunk } from "./chunk.js";
+import { type IChunker, basicChunkTree, chunkTree } from "./chunkTree.js";
 
 function makeRoot(): BasicChunk {
 	return new BasicChunk(aboveRootPlaceholder, new Map());
@@ -71,7 +71,10 @@ export class ChunkedForest implements IEditableForest {
 		return this.roots.fields.size === 0;
 	}
 
-	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
+	public on<K extends keyof ForestEvents>(
+		eventName: K,
+		listener: ForestEvents[K],
+	): () => void {
 		return this.events.on(eventName, listener);
 	}
 
@@ -101,10 +104,7 @@ export class ChunkedForest implements IEditableForest {
 			mutableChunkStack: [] as StackNode[],
 			mutableChunk: this.roots as BasicChunk | undefined,
 			getParent(): StackNode {
-				assert(
-					this.mutableChunkStack.length > 0,
-					0x532 /* invalid access to root's parent */,
-				);
+				assert(this.mutableChunkStack.length > 0, 0x532 /* invalid access to root's parent */);
 				return this.mutableChunkStack[this.mutableChunkStack.length - 1];
 			},
 			free(): void {

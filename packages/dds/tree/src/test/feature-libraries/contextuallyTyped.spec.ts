@@ -5,10 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { MapTree } from "../../core/index.js";
+import type { MapTree } from "../../core/index.js";
 import { SchemaBuilder, leaf } from "../../domains/index.js";
 import {
-	ContextuallyTypedNodeDataObject,
+	type ContextuallyTypedNodeDataObject,
 	applyTypesFromContext,
 	cursorFromContextualData,
 	// Allow importing from this specific file which is being tested:
@@ -32,7 +32,11 @@ describe("ContextuallyTyped", () => {
 		const mapTree = applyTypesFromContext({ schema }, new Set([numbersObject]), {
 			numbers: [],
 		});
-		const expected: MapTree = { fields: new Map(), type: numbersObject.name, value: undefined };
+		const expected: MapTree = {
+			fields: new Map(),
+			type: numbersObject.name,
+			value: undefined,
+		};
 		assert.deepEqual(mapTree, expected);
 	});
 
@@ -45,7 +49,11 @@ describe("ContextuallyTyped", () => {
 		const primaryObject = builder.fieldNode("numbers", numberSequence);
 		const schema = builder.intoSchema(numberSequence);
 		const mapTree = applyTypesFromContext({ schema }, new Set([primaryObject]), []);
-		const expected: MapTree = { fields: new Map(), type: primaryObject.name, value: undefined };
+		const expected: MapTree = {
+			fields: new Map(),
+			type: primaryObject.name,
+			value: undefined,
+		};
 		assert.deepEqual(mapTree, expected);
 	});
 

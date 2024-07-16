@@ -28,9 +28,13 @@ import {
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import {
+	FluidErrorTypes,
+	type IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
 import { delay } from "@fluidframework/core-utils/internal";
-import type { ISharedMap } from "@fluidframework/map/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	IFluidDataStoreChannel,
 	IGarbageCollectionDetailsBase,
@@ -47,7 +51,6 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 
 import {
 	getGCStateFromSummary,
@@ -177,10 +180,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			await loadSummarizer(container);
 		const summaryVersion = (await summarize(summarizer1)).summaryVersion;
 
-		// Send a trailing op to the unreferenced datastore for additional scenario coverage
-		testDataObject._root.set("send while unreferenced", "op");
-		await provider.ensureSynchronized();
-
 		// Close the containers as these containers would be closed by session expiry before sweep ready ever occurs
 		container.close();
 		summarizingContainer1.close();
@@ -241,7 +240,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 	const setupContainerCloseErrorValidation = (container: IContainer, expectedCall: string) => {
 		container.on("closed", (error) => {
 			assert(error !== undefined, `Expecting an error!`);
-			assert(error.errorType === "dataCorruptionError");
+			assert(error.errorType === FluidErrorTypes.dataProcessingError);
 			assert(error.message === `Context is tombstoned! Call site [${expectedCall}]`);
 		});
 	};
@@ -284,8 +283,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			"Send ops fails for tombstoned datastores in summarizing container loaded after tombstone timeout",
 			[
 				{
-					eventName:
-						"fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+					eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
 					callSite: "submitMessage",
 					clientType: "interactive",
 				},
@@ -306,7 +304,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				assert.throws(
 					() => dataObject._root.set("send", "op"),
 					(error: IErrorBase) => {
-						const correctErrorType = error.errorType === "dataCorruptionError";
+						const correctErrorType = error.errorType === FluidErrorTypes.dataProcessingError;
 						const correctErrorMessage =
 							error.message?.startsWith(`Context is tombstoned`) === true;
 						return correctErrorType && correctErrorMessage;
@@ -322,7 +320,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					error: "Context is tombstoned! Call site [process]",
-					errorType: "dataCorruptionError",
+					errorType: FluidErrorTypes.dataProcessingError,
 					clientType: "interactive",
 				},
 			],
@@ -365,8 +363,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			"Send signals fails for tombstoned datastores in summarizing container loaded after tombstone timeout",
 			[
 				{
-					eventName:
-						"fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+					eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
 					callSite: "submitSignal",
 					clientType: "interactive",
 				},
@@ -386,7 +383,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				assert.throws(
 					() => dataObject._runtime.submitSignal("send", "signal"),
 					(error: IErrorBase) => {
-						const correctErrorType = error.errorType === "dataCorruptionError";
+						const correctErrorType = error.errorType === FluidErrorTypes.dataProcessingError;
 						const correctErrorMessage =
 							error.message?.startsWith(`Context is tombstoned`) === true;
 						return correctErrorType && correctErrorMessage;
@@ -400,22 +397,20 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			"Receive signals fails for tombstoned datastores in summarizing container loaded after tombstone timeout",
 			[
 				{
-					eventName:
-						"fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+					eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
 					category: "generic",
 					error: "Context is tombstoned! Call site [processSignal]",
 					clientType: "noninteractive/summarizer",
 				},
 				{
-					eventName:
-						"fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+					eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
 					error: "Context is tombstoned! Call site [processSignal]",
 					clientType: "interactive",
 				},
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					error: "Context is tombstoned! Call site [processSignal]",
-					errorType: "dataCorruptionError",
+					errorType: FluidErrorTypes.dataProcessingError,
 					clientType: "interactive",
 				},
 			],
@@ -775,10 +770,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					unreferencedId,
 				);
 
-				const serializer = new FluidSerializer(
-					dataObject._context.IFluidHandleContext,
-					() => {},
-				);
+				const serializer = new FluidSerializer(dataObject._context.IFluidHandleContext);
 				const handle: IFluidHandle = parseHandles(
 					{ type: "__fluid_handle__", url: unreferencedId },
 					serializer,
@@ -879,8 +871,9 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					url: unreferencedId,
 					headers: { [AllowTombstoneRequestHeaderKey]: true },
 				};
-				const tombstoneAllowedResponse =
-					await containerRuntime.resolveHandle(requestAllowingTombstone);
+				const tombstoneAllowedResponse = await containerRuntime.resolveHandle(
+					requestAllowingTombstone,
+				);
 				const tombstonedObject = tombstoneAllowedResponse.value as ITestDataObject;
 				const defaultDataObject =
 					(await tombstoneContainer.getEntryPoint()) as ITestDataObject;
@@ -889,8 +882,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				// The datastore should be un-tombstoned now
 				const { summaryVersion: revivalVersion } = await summarize(summarizer);
 				const revivalContainer = await loadContainer(revivalVersion);
-				const revivalEntryPoint =
-					(await revivalContainer.getEntryPoint()) as ITestDataObject;
+				const revivalEntryPoint = (await revivalContainer.getEntryPoint()) as ITestDataObject;
 				const revivalContainerRuntime = revivalEntryPoint._context
 					.containerRuntime as ContainerRuntime;
 				const revivalResponse = await revivalContainerRuntime.resolveHandle({
@@ -903,8 +895,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				revivedObject._runtime.submitSignal("can submit", "signal");
 
 				const sendingContainer = await loadContainer(revivalVersion);
-				const sendingEntryPoint =
-					(await sendingContainer.getEntryPoint()) as ITestDataObject;
+				const sendingEntryPoint = (await sendingContainer.getEntryPoint()) as ITestDataObject;
 				const sendingContainerRuntime = sendingEntryPoint._context
 					.containerRuntime as ContainerRuntime;
 				const sendingResponse = await sendingContainerRuntime.resolveHandle({
@@ -972,8 +963,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				);
 				await waitForContainerConnection(initialContainer);
 
-				const defaultDataObject =
-					(await initialContainer.getEntryPoint()) as ITestDataObject;
+				const defaultDataObject = (await initialContainer.getEntryPoint()) as ITestDataObject;
 
 				// Create dataStoreA and dataStoreB. dataStoreA has reference to dataStoreB. Then unreference dataStoreA.
 				const dataStoreA = await createDataStore(defaultDataObject);
@@ -1178,8 +1168,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					);
 				await waitForContainerConnection(initialContainer);
 
-				const defaultDataObject =
-					(await initialContainer.getEntryPoint()) as ITestDataObject;
+				const defaultDataObject = (await initialContainer.getEntryPoint()) as ITestDataObject;
 
 				// Create dataStoreA and dataStoreX and reference them from the default data object.
 				// They will both remain referenced, but the reference will be "lost" (by intentionally corrupting the GC Data)
@@ -1231,8 +1220,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					summaryVersion_corrupted,
 					summarizerMockLogger,
 				);
-				const { summaryVersion: summaryVersion_withTombstone } =
-					await summarize(summarizer);
+				const { summaryVersion: summaryVersion_withTombstone } = await summarize(summarizer);
 
 				// The datastore should be tombstoned in the snapshot this container loads from,
 				// even though the datastores are properly referenced and easily reachable.
@@ -1329,8 +1317,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				// Otherwise it would have been unreferenced and would have become tombstoned again
 				await delay(tombstoneTimeoutMs);
 				dataStoreX._root.set("update", "timestamp again");
-				const { summaryVersion: summaryVersion_stillRepaired } =
-					await summarize(summarizer);
+				const { summaryVersion: summaryVersion_stillRepaired } = await summarize(summarizer);
 				const container3 = await loadContainer(summaryVersion_stillRepaired);
 				const defaultDataObject3 = (await container3.getEntryPoint()) as ITestDataObject;
 				const handleA3 = defaultDataObject3._root.get<IFluidHandle>("dsA");
@@ -1340,6 +1327,44 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				);
 			},
 		);
+
+		it("trailing ops cause tombstone ready data store to be realized by summarizer", async () => {
+			const container = await makeContainer();
+			const defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
+			await waitForContainerConnection(container);
+
+			// Create a data store and make it unreferenced.
+			const ds2key = "ds2";
+			const testDataObject = await createDataStore(defaultDataObject);
+			const unreferencedId = testDataObject._context.id;
+			defaultDataObject._root.set(ds2key, testDataObject.handle);
+			defaultDataObject._root.delete(ds2key);
+
+			// Summarize so that the above data store is unreferenced.
+			const { summarizer: summarizer1 } = await loadSummarizer(container);
+			const { summaryVersion } = await summarize(summarizer1);
+
+			// Send a trailing op and close the summarizer.
+			testDataObject._root.set("key", "value");
+			summarizer1.close();
+			await delay(tombstoneTimeoutMs);
+
+			const mockLogger = new MockLogger();
+			// Summarize. The tombstone ready data store should get realized because it has a
+			// trailing op.
+			const { summarizer: summarizer2 } = await loadSummarizer(
+				container,
+				summaryVersion,
+				mockLogger,
+			);
+			await assert.doesNotReject(summarize(summarizer2), "summarize failed");
+			mockLogger.assertMatch([
+				{
+					eventName: "fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Realized",
+					id: { value: `/${unreferencedId}`, tag: TelemetryDataTag.CodeArtifact },
+				},
+			]);
+		});
 	});
 
 	itExpects(
@@ -1662,10 +1687,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			await provider.ensureSynchronized();
 			const summary = await summarizeNow(summarizer);
 			const gcState = getGCStateFromSummary(summary.summaryTree);
-			assert(
-				gcState !== undefined,
-				"GC state should be available and should not be a handle",
-			);
+			assert(gcState !== undefined, "GC state should be available and should not be a handle");
 
 			// Wait for tombstone timeout so that the data stores are tombstoned.
 			await delay(tombstoneTimeoutMs + 10);

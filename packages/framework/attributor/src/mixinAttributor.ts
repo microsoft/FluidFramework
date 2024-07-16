@@ -11,15 +11,17 @@ import {
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	type IQuorumClients,
-	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions";
+	type FluidObject,
+	type IRequest,
+	type IResponse,
+} from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { type IQuorumClients } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentMessage,
 	type ISnapshotTree,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type ISummaryTreeWithStats,

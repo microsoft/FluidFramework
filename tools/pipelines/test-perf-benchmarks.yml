@@ -37,6 +37,7 @@ parameters:
     - "@fluidframework/tree"
     - "@fluid-experimental/tree"
     - "@fluidframework/merge-tree"
+    - "@fluidframework/container-runtime"
 
 # Performance e2e tests
 - name: endpoints
@@ -44,10 +45,10 @@ parameters:
   default:
   - endpointName: 'local'
   - endpointName: 'odsp'
-    lockVariableGroupName: 'e2e-odsp-lock'
+    lockVariableGroupName: 'perf-odsp-lock'
     timeoutInMinutes: 360
   - endpointName: 'frs'
-    lockVariableGroupName: 'e2e-frs-lock'
+    lockVariableGroupName: 'perf-frs-lock'
     timeoutInMinutes: 360
 
 variables:
@@ -419,9 +420,9 @@ stages:
             FLUID_LOGGER_PROPS: '{ "hostName": "Benchmark" }'
             login__microsoft__clientId: $(login-microsoft-clientId)
             ${{ if eq( endpointObject.endpointName, 'odsp' ) }}:
-              login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
+              login__odsp__test__tenants: $(automation-perf-login-odsp-test-tenants)
             ${{ if eq( endpointObject.endpointName, 'frs' ) }}:
-              fluid__test__driver__frs: $(automation-fluid-test-driver-frs-stress-test)
+              fluid__test__driver__frs: $(automation-fluid-test-driver-frs-perf-test)
 
         - task: Bash@3
           displayName: Write measurements to Aria/Kusto - execution time ${{ endpointObject.endpointName }}

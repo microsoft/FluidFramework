@@ -6,25 +6,25 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
-	ChangeAtomId,
-	RevisionMetadataSource,
-	RevisionTag,
+	type ChangeAtomId,
+	type RevisionMetadataSource,
+	type RevisionTag,
 	offsetChangeAtomId,
 } from "../../core/index.js";
-import { IdAllocator, fail } from "../../util/index.js";
+import { type IdAllocator, fail } from "../../util/index.js";
 import {
-	CrossFieldManager,
+	type CrossFieldManager,
 	CrossFieldTarget,
-	NodeChangeComposer,
-	NodeId,
+	type NodeChangeComposer,
+	type NodeId,
 } from "../modular-schema/index.js";
 
-import { MoveMarkEffect } from "./helperTypes.js";
+import type { MoveMarkEffect } from "./helperTypes.js";
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
 import {
-	MoveEffect,
-	MoveEffectTable,
+	type MoveEffect,
+	type MoveEffectTable,
 	getCrossFieldTargetFromMove,
 	getMoveEffect,
 	getMoveIn,
@@ -34,14 +34,14 @@ import {
 	setMoveEffect,
 } from "./moveEffectTable.js";
 import {
-	CellMark,
-	Changeset,
-	Detach,
-	Mark,
-	MarkEffect,
-	MarkList,
-	MoveId,
-	NoopMark,
+	type CellMark,
+	type Changeset,
+	type Detach,
+	type Mark,
+	type MarkEffect,
+	type MarkList,
+	type MoveId,
+	type NoopMark,
 	NoopMarkType,
 } from "./types.js";
 import {
@@ -124,7 +124,7 @@ function composeMarkLists(
 		} else {
 			// We only compose changesets that will not be further rebased.
 			// It is therefore safe to remove any intentions that have no impact in the context they apply to.
-			const settledNewMark = settleMark(newMark, revisionMetadata);
+			const settledNewMark = settleMark(newMark);
 			if (baseMark === undefined) {
 				factory.push(
 					composeMark(settledNewMark, moveEffects, (node: NodeId) =>
@@ -135,13 +135,12 @@ function composeMarkLists(
 				// Past this point, we are guaranteed that `settledNewMark` and `baseMark` have the same length and
 				// start at the same location in the revision after the base changes.
 				// They therefore refer to the same range for that revision.
-				const settledBaseMark = settleMark(baseMark, revisionMetadata);
+				const settledBaseMark = settleMark(baseMark);
 				const composedMark = composeMarks(
 					settledBaseMark,
 					settledNewMark,
 					composeChild,
 					moveEffects,
-					revisionMetadata,
 				);
 				factory.push(composedMark);
 			}
@@ -165,15 +164,11 @@ function composeMarks(
 	newMark: Mark,
 	composeChild: NodeChangeComposer,
 	moveEffects: MoveEffectTable,
-	revisionMetadata: RevisionMetadataSource,
 ): Mark {
 	const nodeChange = handleNodeChanges(baseMark, newMark, composeChild, moveEffects);
 
 	return withUpdatedEndpoint(
-		withNodeChange(
-			composeMarksIgnoreChild(baseMark, newMark, moveEffects, revisionMetadata),
-			nodeChange,
-		),
+		withNodeChange(composeMarksIgnoreChild(baseMark, newMark, moveEffects), nodeChange),
 		baseMark.count,
 		moveEffects,
 	);
@@ -183,9 +178,8 @@ function composeMarksIgnoreChild(
 	baseMark: Mark,
 	newMark: Mark,
 	moveEffects: MoveEffectTable,
-	revisionMetadata: RevisionMetadataSource,
 ): Mark {
-	if (isImpactfulCellRename(newMark, revisionMetadata)) {
+	if (isImpactfulCellRename(newMark)) {
 		const newAttachAndDetach = asAttachAndDetach(newMark);
 		const newDetachRevision = newAttachAndDetach.detach.revision;
 		if (markEmptiesCells(baseMark)) {
@@ -246,9 +240,9 @@ function composeMarksIgnoreChild(
 			return newDetach;
 		}
 
-		if (isImpactfulCellRename(baseMark, revisionMetadata)) {
+		if (isImpactfulCellRename(baseMark)) {
 			const baseAttachAndDetach = asAttachAndDetach(baseMark);
-			const newOutputId = getOutputCellId(newAttachAndDetach, revisionMetadata);
+			const newOutputId = getOutputCellId(newAttachAndDetach);
 
 			if (areEqualCellIds(newOutputId, baseAttachAndDetach.cellId)) {
 				return { count: baseAttachAndDetach.count, cellId: baseAttachAndDetach.cellId };
@@ -273,7 +267,7 @@ function composeMarksIgnoreChild(
 
 		return normalizeCellRename(newAttachAndDetach);
 	}
-	if (isImpactfulCellRename(baseMark, revisionMetadata)) {
+	if (isImpactfulCellRename(baseMark)) {
 		const baseAttachAndDetach = asAttachAndDetach(baseMark);
 		if (markFillsCells(newMark)) {
 			const originalAttach = withRevision(
@@ -335,7 +329,7 @@ function composeMarksIgnoreChild(
 		} else if (isNoopMark(newMark)) {
 			return baseMark;
 		}
-		return createNoopMark(newMark.count, undefined, getInputCellId(baseMark, undefined));
+		return createNoopMark(newMark.count, undefined, getInputCellId(baseMark));
 	} else if (!markHasCellEffect(baseMark)) {
 		return newMark;
 	} else if (!markHasCellEffect(newMark)) {
@@ -409,7 +403,7 @@ function composeMarksIgnoreChild(
 			delete detach.finalEndpoint;
 		}
 
-		if (areEqualCellIds(getOutputCellId(newMark, revisionMetadata), baseMark.cellId)) {
+		if (areEqualCellIds(getOutputCellId(newMark), baseMark.cellId)) {
 			// The output and input cell IDs are the same, so this mark has no effect.
 			return { count: baseMark.count, cellId: baseMark.cellId };
 		}
@@ -497,12 +491,8 @@ export class ComposeQueue {
 	) {
 		this.baseMarks = new MarkQueue(baseMarks, moveEffects);
 		this.newMarks = new MarkQueue(newMarks, moveEffects);
-		this.baseMarksCellSources = cellSourcesFromMarks(
-			baseMarks,
-			revisionMetadata,
-			getOutputCellId,
-		);
-		this.newMarksCellSources = cellSourcesFromMarks(newMarks, revisionMetadata, getInputCellId);
+		this.baseMarksCellSources = cellSourcesFromMarks(baseMarks, getOutputCellId);
+		this.newMarksCellSources = cellSourcesFromMarks(newMarks, getInputCellId);
 	}
 
 	public isEmpty(): boolean {
@@ -520,8 +510,7 @@ export class ComposeQueue {
 			return this.dequeueBase();
 		} else if (areOutputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
 			const baseCellId: ChangeAtomId =
-				getOutputCellId(baseMark, this.revisionMetadata) ??
-				fail("Expected defined output ID");
+				getOutputCellId(baseMark) ?? fail("Expected defined output ID");
 
 			if (markEmptiesCells(baseMark) && baseCellId.revision === undefined) {
 				// The base revision should always be defined except when squashing changes into a transaction.
@@ -535,7 +524,7 @@ export class ComposeQueue {
 				return this.dequeueNew();
 			}
 
-			const newCellId = getInputCellId(newMark, this.revisionMetadata);
+			const newCellId = getInputCellId(newMark);
 			assert(newCellId !== undefined, 0x89d /* Both marks should have cell IDs */);
 			const comparison = compareCellPositionsUsingTombstones(
 				baseCellId,
@@ -567,21 +556,13 @@ export class ComposeQueue {
 		const baseMark = this.baseMarks.dequeueUpTo(length);
 		const movedChanges = getMovedChangesFromMark(this.moveEffects, baseMark);
 
-		const newMark = createNoopMark(
-			baseMark.count,
-			movedChanges,
-			getOutputCellId(baseMark, this.revisionMetadata),
-		);
+		const newMark = createNoopMark(baseMark.count, movedChanges, getOutputCellId(baseMark));
 		return { baseMark, newMark };
 	}
 
 	private dequeueNew(length: number = Infinity): ComposeMarks {
 		const newMark = this.newMarks.dequeueUpTo(length);
-		const baseMark = createNoopMark(
-			newMark.count,
-			undefined,
-			getInputCellId(newMark, this.revisionMetadata),
-		);
+		const baseMark = createNoopMark(newMark.count, undefined, getInputCellId(newMark));
 
 		return {
 			baseMark,
@@ -677,7 +658,7 @@ function setEndpoint(
 	count: number,
 	endpoint: ChangeAtomId,
 ): void {
-	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
+	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count, false);
 	const newEffect = effect.value !== undefined ? { ...effect.value, endpoint } : { endpoint };
 	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
 
@@ -702,7 +683,9 @@ function setTruncatedEndpoint(
 ): void {
 	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
 	const newEffect =
-		effect.value !== undefined ? { ...effect.value, truncatedEndpoint } : { truncatedEndpoint };
+		effect.value !== undefined
+			? { ...effect.value, truncatedEndpoint }
+			: { truncatedEndpoint };
 
 	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
 

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	ISummaryContext,
@@ -13,7 +14,6 @@ import {
 	buildSnapshotTree,
 	convertSummaryTreeToSnapshotITree,
 } from "@fluidframework/driver-utils/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver/internal";
 
 /**
@@ -24,7 +24,10 @@ import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver
  * - When a snapshot is written, it calls a callback and provide the snapshot to it in `IFileSnapshot` format. The
  * callback should be provided when creating the storage service.
  */
-export class SnapshotStorageService extends FileSnapshotReader implements IDocumentStorageService {
+export class SnapshotStorageService
+	extends FileSnapshotReader
+	implements IDocumentStorageService
+{
 	public constructor(
 		json: IFileSnapshot,
 		private readonly snapshotCb: (snapshot: IFileSnapshot) => void,

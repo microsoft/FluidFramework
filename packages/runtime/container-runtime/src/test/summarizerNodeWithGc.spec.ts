@@ -57,7 +57,8 @@ describe("SummarizerNodeWithGC Tests", () => {
 
 	const getRootBaseGCDetails = async (): Promise<IGarbageCollectionDetailsBase> =>
 		rootBaseGCDetails;
-	const getChildInternalGCData = async (): Promise<IGarbageCollectionData> => childInternalGCData;
+	const getChildInternalGCData = async (): Promise<IGarbageCollectionData> =>
+		childInternalGCData;
 
 	beforeEach(async () => {
 		mockLogger = new MockLogger();

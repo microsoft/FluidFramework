@@ -125,11 +125,28 @@ describe("schema validation", () => {
 	});
 
 	describe("isNodeInSchema", () => {
-		it(`not in schema due to missing node schema entry in schemaCollection`, () => {
+		it(`skips validation if stored schema is completely empty`, () => {
 			assert.equal(
 				isNodeInSchema(
 					createLeafNode("myNumberNode", 1, ValueSchema.Number).node,
-					createSchemaAndPolicy(),
+					createSchemaAndPolicy(), // Note this passes an empty stored schema
+				),
+				SchemaValidationErrors.NoError,
+			);
+		});
+
+		it(`not in schema due to missing node schema entry in schemaCollection`, () => {
+			const { node: stringNode, schema: stringSchema } = createLeafNode(
+				"myStringNode",
+				"string",
+				ValueSchema.String,
+			);
+			assert.equal(
+				isNodeInSchema(
+					createLeafNode("myNumberNode", 1, ValueSchema.Number).node,
+					// Note, this cannot use an empty stored schema because that would skip validation,
+					// So just putting a schema for a node that is not the one we pass in for validation.
+					createSchemaAndPolicy(new Map([[stringNode.type, stringSchema]])),
 				),
 				SchemaValidationErrors.Node_MissingSchema,
 			);

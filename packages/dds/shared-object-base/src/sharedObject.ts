@@ -5,11 +5,8 @@
 
 import { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import {
-	IFluidHandle,
-	ITelemetryBaseProperties,
-	type ErasedType,
-} from "@fluidframework/core-interfaces";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { ITelemetryBaseProperties, type ErasedType } from "@fluidframework/core-interfaces";
 import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -21,8 +18,10 @@ import {
 	type IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { type IDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	type IDocumentMessage,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
@@ -32,6 +31,10 @@ import {
 	totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	toDeltaManagerInternal,
+	TelemetryContext,
+} from "@fluidframework/runtime-utils/internal";
+import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
 	EventEmitterWithErrorHandling,
@@ -40,12 +43,10 @@ import {
 	createChildLogger,
 	loggerToMonitoringContext,
 	tagCodeArtifacts,
+	type ICustomData,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
-import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
-import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 
-import { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { SummarySerializer } from "./summarySerializer.js";
@@ -53,10 +54,22 @@ import { ISharedObject, ISharedObjectEvents } from "./types.js";
 import { makeHandlesSerializable, parseHandles } from "./utils.js";
 
 /**
+ * Custom telemetry properties used in {@link SharedObjectCore} to instantiate {@link TelemetryEventBatcher} class.
+ * This interface is used to define the properties that will be passed to the {@link TelemetryEventBatcher.measure} function
+ * which is called in the {@link SharedObjectCore.process} method.
+ */
+interface ProcessTelemetryProperties {
+	sequenceDifference: number;
+}
+
+/**
  * Base class from which all shared objects derive.
+ * @legacy
  * @alpha
  */
-export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
+export abstract class SharedObjectCore<
+		TEvent extends ISharedObjectEvents = ISharedObjectEvents,
+	>
 	extends EventEmitterWithErrorHandling<TEvent>
 	implements ISharedObject<TEvent>
 {
@@ -64,8 +77,11 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		return this;
 	}
 
-	private readonly opProcessingHelper: SampledTelemetryHelper;
-	private readonly callbacksHelper: SampledTelemetryHelper;
+	private readonly opProcessingHelper: SampledTelemetryHelper<
+		void,
+		ProcessTelemetryProperties
+	>;
+	private readonly callbacksHelper: SampledTelemetryHelper<boolean>;
 
 	/**
 	 * The handle referring to this SharedObject
@@ -135,7 +151,9 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		});
 		this.mc = loggerToMonitoringContext(this.logger);
 
-		[this.opProcessingHelper, this.callbacksHelper] = this.setUpSampledTelemetryHelpers();
+		const { opProcessingHelper, callbacksHelper } = this.setUpSampledTelemetryHelpers();
+		this.opProcessingHelper = opProcessingHelper;
+		this.callbacksHelper = callbacksHelper;
 	}
 
 	/**
@@ -151,12 +169,15 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * @returns The telemetry sampling helpers, so the constructor can be the one to assign them
 	 * to variables to avoid complaints from TypeScript.
 	 */
-	private setUpSampledTelemetryHelpers(): SampledTelemetryHelper[] {
+	private setUpSampledTelemetryHelpers(): {
+		opProcessingHelper: SampledTelemetryHelper<void, ProcessTelemetryProperties>;
+		callbacksHelper: SampledTelemetryHelper<boolean>;
+	} {
 		assert(
 			this.mc !== undefined && this.logger !== undefined,
 			0x349 /* this.mc and/or this.logger has not been set */,
 		);
-		const opProcessingHelper = new SampledTelemetryHelper(
+		const opProcessingHelper = new SampledTelemetryHelper<void, ProcessTelemetryProperties>(
 			{
 				eventName: "ddsOpProcessing",
 				category: "performance",
@@ -169,7 +190,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 				["remote", { localOp: false }],
 			]),
 		);
-		const callbacksHelper = new SampledTelemetryHelper(
+		const callbacksHelper = new SampledTelemetryHelper<boolean>(
 			{
 				eventName: "ddsEventCallbacks",
 				category: "performance",
@@ -184,7 +205,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 			this.opProcessingHelper.dispose();
 		});
 
-		return [opProcessingHelper, callbacksHelper];
+		return { opProcessingHelper, callbacksHelper };
 	}
 
 	/**
@@ -329,18 +350,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	public abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
 
 	/**
-	 * Called when a handle is decoded by this object. A handle in the object's data represents an outbound reference
-	 * to another object in the container.
-	 * @param decodedHandle - The handle of the Fluid object that is decoded.
-	 */
-	protected handleDecoded(decodedHandle: IFluidHandle) {
-		if (this.isAttached()) {
-			// This represents an outbound reference from this object to the node represented by decodedHandle.
-			this.services?.deltaConnection.addedGCOutboundReference?.(this.handle, decodedHandle);
-		}
-	}
-
-	/**
 	 * Allows the distributed data type to perform custom loading
 	 * @param services - Storage used by the shared object
 	 */
@@ -450,9 +459,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		return new Promise<T>((resolve, reject) => {
 			rejectBecauseDispose = () =>
 				reject(
-					new Error(
-						"FluidDataStoreRuntime disposed while this ack-based Promise was pending",
-					),
+					new Error("FluidDataStoreRuntime disposed while this ack-based Promise was pending"),
 				);
 
 			if (this.runtime.disposed) {
@@ -539,13 +546,23 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 */
-	private process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+	private process(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	) {
 		this.verifyNotClosed(); // This will result in container closure.
 		this.emitInternal("pre-op", message, local, this);
 
 		this.opProcessingHelper.measure(
-			() => {
+			(): ICustomData<ProcessTelemetryProperties> => {
 				this.processCore(message, local, localOpMetadata);
+				const telemetryProperties: ProcessTelemetryProperties = {
+					sequenceDifference: message.sequenceNumber - message.referenceSequenceNumber,
+				};
+				return {
+					customData: telemetryProperties,
+				};
 			},
 			local ? "local" : "remote",
 		);
@@ -620,6 +637,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 /**
  * SharedObject with simplified, synchronous summarization and GC.
  * DDS implementations with async and incremental summarization should extend SharedObjectCore directly instead.
+ * @legacy
  * @alpha
  */
 export abstract class SharedObject<
@@ -663,10 +681,7 @@ export abstract class SharedObject<
 	) {
 		super(id, runtime, attributes);
 
-		this._serializer = new FluidSerializer(
-			this.runtime.channelsRoutingContext,
-			(handle: IFluidHandle) => this.handleDecoded(handle),
-		);
+		this._serializer = new FluidSerializer(this.runtime.channelsRoutingContext);
 	}
 
 	/**
@@ -732,10 +747,7 @@ export abstract class SharedObject<
 
 		let gcData: IGarbageCollectionData;
 		try {
-			const serializer = new SummarySerializer(
-				this.runtime.channelsRoutingContext,
-				(handle: IFluidHandle) => this.handleDecoded(handle),
-			);
+			const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
 			this.processGCDataCore(serializer);
 			// The GC data for this shared object contains a single GC node. The outbound routes of this node are the
 			// routes of handles serialized during summarization.
@@ -781,18 +793,14 @@ export abstract class SharedObject<
 			// TelemetryContext needs to implment a get function
 			assert(
 				"get" in telemetryContext && typeof telemetryContext.get === "function",
-				"received context must have a get function",
+				0x97e /* received context must have a get function */,
 			);
 
 			const prevTotal = ((telemetryContext as TelemetryContext).get(
 				this.telemetryContextPrefix,
 				propertyName,
 			) ?? 0) as number;
-			telemetryContext.set(
-				this.telemetryContextPrefix,
-				propertyName,
-				prevTotal + incrementBy,
-			);
+			telemetryContext.set(this.telemetryContextPrefix, propertyName, prevTotal + incrementBy);
 		}
 	}
 }
@@ -809,6 +817,7 @@ export abstract class SharedObject<
  * This does not extend {@link SharedObjectKind} since doing so would prevent implementing this interface in type safe code.
  * Any implementation of this can safely be used as a {@link SharedObjectKind} with an explicit type conversion,
  * but doing so is typically not needed as {@link createSharedObjectKind} is used to produce values that are both types simultaneously.
+ * @legacy
  * @alpha
  */
 export interface ISharedObjectKind<TSharedObject> {
@@ -856,6 +865,7 @@ export interface ISharedObjectKind<TSharedObject> {
  * Type erased reference to an {@link ISharedObjectKind} or a DataObject class in for use in
  * `fluid-static`'s `IFluidContainer` and `ContainerSchema`.
  * Use {@link createSharedObjectKind} to creating an instance of this type.
+ * @sealed
  * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface

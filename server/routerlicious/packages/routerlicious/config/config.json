@@ -162,7 +162,8 @@
 		},
 		"socketIo": {
 			"perMessageDeflate": false,
-			"gracefulShutdownEnabled": false
+			"gracefulShutdownEnabled": false,
+			"pingPongLatencyTrackingEnabled": false
 		},
 		"jwtTokenCache": {
 			"enable": true
@@ -189,7 +190,8 @@
 		},
 		"restartOnCheckpointFailure": true,
 		"enableEphemeralContainerSummaryCleanup": true,
-		"enableLeaveOpNoClientServerMetadata": false
+		"enableLeaveOpNoClientServerMetadata": false,
+		"noOpConsolidationTimeout": 250
 	},
 	"scribe": {
 		"kafkaClientId": "scribe",

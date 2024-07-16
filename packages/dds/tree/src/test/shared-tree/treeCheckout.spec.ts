@@ -5,36 +5,42 @@
 
 import { strict as assert, fail } from "assert";
 
+import type { IMockLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	AllowedUpdateType,
-	CommitKind,
-	FieldUpPath,
-	Revertible,
-	RevertibleStatus,
-	TreeNodeSchemaIdentifier,
-	TreeNodeStoredSchema,
-	TreeStoredSchema,
-	TreeValue,
-	Value,
+	type FieldUpPath,
+	type Revertible,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
+	type TreeValue,
+	type Value,
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
+	RevertibleStatus,
+	CommitKind,
 } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
 import {
-	ContextuallyTypedNodeData,
+	type ContextuallyTypedNodeData,
 	FieldKinds,
 	FlexFieldSchema,
 	SchemaBuilderBase,
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
-import { ITreeCheckout, RevertibleFactory, TreeContent } from "../../shared-tree/index.js";
+import {
+	TreeCheckout,
+	type ITreeCheckout,
+	type RevertibleFactory,
+	type TreeContent,
+} from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
-	checkoutWithContent,
+	createCheckoutWithContent,
 	createTestUndoRedoStacks,
 	emptyJsonSequenceConfig,
 	flexTreeViewWithContent,
@@ -167,10 +173,7 @@ describe("sharedTreeView", () => {
 
 				checkout.editor
 					.sequenceField(rootField)
-					.insert(
-						0,
-						cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]),
-					);
+					.insert(0, cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]));
 
 				assert.equal(log.length, 2);
 
@@ -194,10 +197,7 @@ describe("sharedTreeView", () => {
 				checkout.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
 				checkout.editor
 					.sequenceField(rootField)
-					.insert(
-						0,
-						cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]),
-					);
+					.insert(0, cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]));
 				checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 
 				assert.deepEqual(log, ["not-revertible", "revertible", "not-revertible"]);
@@ -438,11 +438,13 @@ describe("sharedTreeView", () => {
 				assert.equal(getSchema(child), "schemaB");
 			},
 			{
-				schema: new SchemaBuilderBase(FieldKinds.required, {
-					scope: "test",
-					libraries: [leaf.library],
-				}).intoSchema(leaf.boolean),
-				initialTree: true,
+				initialContent: {
+					schema: new SchemaBuilderBase(FieldKinds.required, {
+						scope: "test",
+						libraries: [leaf.library],
+					}).intoSchema(leaf.boolean),
+					initialTree: true,
+				},
 			},
 		);
 
@@ -517,21 +519,40 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(getTestValues(view), ["A", "B"]);
 		});
 
-		itView("can span a view fork and merge", (view) => {
-			view.transaction.start();
+		itView("rejects merges while a transaction is in progress", (view) => {
 			const fork = view.fork();
 			insertFirstNode(fork, 42);
+
+			view.transaction.start();
+			insertFirstNode(view, 43);
 			assert.throws(
-				() => view.merge(fork, false),
+				() => view.merge(fork, true),
 				(e: Error) =>
 					validateAssertionError(
 						e,
-						"A view that is merged into an in-progress transaction must be disposed",
+						"Views cannot be merged into a view while it has a pending transaction",
 					),
 			);
-			view.merge(fork, true);
 			view.transaction.commit();
-			assert.equal(getTestValue(view), 42);
+			assert.equal(getTestValue(view), 43);
+		});
+
+		itView("rejects rebases while a transaction is in progress", (view) => {
+			const fork = view.fork();
+			insertFirstNode(view, 42);
+
+			fork.transaction.start();
+			insertFirstNode(fork, 43);
+			assert.throws(
+				() => fork.rebaseOnto(view),
+				(e: Error) =>
+					validateAssertionError(
+						e,
+						"A view cannot be rebased while it has a pending transaction",
+					),
+			);
+			fork.transaction.commit();
+			assert.equal(getTestValue(fork), 43);
 		});
 
 		itView("automatically commit if in progress when view merges", (view) => {
@@ -564,15 +585,21 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(getTestValues(view), ["A", "B", "C"]);
 		});
 
-		itView("can handle a pull while in progress", (view) => {
-			const fork = view.fork();
-			fork.transaction.start();
-			insertFirstNode(view, 42);
-			fork.rebaseOnto(view);
-			assert.equal(getTestValue(fork), 42);
-			fork.transaction.commit();
-			assert.equal(getTestValue(fork), 42);
-		});
+		// Disabled because rebases are not supported while a transaction is in progress
+		// TODO: enable once ADO#8603 is complete.
+		itView(
+			"can handle a pull while in progress",
+			(view) => {
+				const fork = view.fork();
+				fork.transaction.start();
+				insertFirstNode(view, 42);
+				fork.rebaseOnto(view);
+				assert.equal(getTestValue(fork), 42);
+				fork.transaction.commit();
+				assert.equal(getTestValue(fork), 42);
+			},
+			{ skip: true },
+		);
 
 		itView("update anchors correctly", (view) => {
 			insertFirstNode(view, "A");
@@ -588,51 +615,57 @@ describe("sharedTreeView", () => {
 			cursor.clear();
 		});
 
-		itView("can handle a complicated scenario", (view) => {
-			insertFirstNode(view, "A");
-			view.transaction.start();
-			insertFirstNode(view, "B");
-			insertFirstNode(view, "C");
-			view.transaction.start();
-			insertFirstNode(view, "D");
-			const fork = view.fork();
-			insertFirstNode(fork, "E");
-			fork.transaction.start();
-			insertFirstNode(fork, "F");
-			insertFirstNode(view, "G");
-			fork.transaction.commit();
-			insertFirstNode(fork, "H");
-			fork.transaction.start();
-			insertFirstNode(fork, "I");
-			fork.transaction.abort();
-			view.merge(fork);
-			insertFirstNode(view, "J");
-			view.transaction.start();
-			const fork2 = view.fork();
-			insertFirstNode(fork2, "K");
-			insertFirstNode(fork2, "L");
-			view.merge(fork2);
-			view.transaction.abort();
-			insertFirstNode(view, "M");
-			view.transaction.commit();
-			insertFirstNode(view, "N");
-			view.transaction.commit();
-			insertFirstNode(view, "O");
-			assert.deepEqual(getTestValues(view), [
-				"A",
-				"B",
-				"C",
-				"D",
-				"G",
-				"E",
-				"F",
-				"H",
-				"J",
-				"M",
-				"N",
-				"O",
-			]);
-		});
+		// Disabled because merges are not supported while a transaction is in progress
+		// TODO: enable once ADO#8602 is complete.
+		itView(
+			"can handle a complicated scenario",
+			(view) => {
+				insertFirstNode(view, "A");
+				view.transaction.start();
+				insertFirstNode(view, "B");
+				insertFirstNode(view, "C");
+				view.transaction.start();
+				insertFirstNode(view, "D");
+				const fork = view.fork();
+				insertFirstNode(fork, "E");
+				fork.transaction.start();
+				insertFirstNode(fork, "F");
+				insertFirstNode(view, "G");
+				fork.transaction.commit();
+				insertFirstNode(fork, "H");
+				fork.transaction.start();
+				insertFirstNode(fork, "I");
+				fork.transaction.abort();
+				view.merge(fork);
+				insertFirstNode(view, "J");
+				view.transaction.start();
+				const fork2 = view.fork();
+				insertFirstNode(fork2, "K");
+				insertFirstNode(fork2, "L");
+				view.merge(fork2);
+				view.transaction.abort();
+				insertFirstNode(view, "M");
+				view.transaction.commit();
+				insertFirstNode(view, "N");
+				view.transaction.commit();
+				insertFirstNode(view, "O");
+				assert.deepEqual(getTestValues(view), [
+					"A",
+					"B",
+					"C",
+					"D",
+					"G",
+					"E",
+					"F",
+					"H",
+					"J",
+					"M",
+					"N",
+					"O",
+				]);
+			},
+			{ skip: true },
+		);
 	});
 
 	describe("disposal", () => {
@@ -844,7 +877,7 @@ describe("sharedTreeView", () => {
 				assert.equal(revertiblesCreated.length, 2);
 				assert.equal(revertiblesDisposed.length, 0);
 
-				revertiblesCreated[0][disposeSymbol]();
+				revertiblesCreated[0].dispose();
 
 				assert.equal(revertiblesDisposed.length, 1);
 				assert.equal(revertiblesDisposed[0], revertiblesCreated[0]);
@@ -907,10 +940,10 @@ describe("sharedTreeView", () => {
 			assert.equal(revertiblesCreated.length, 1);
 			const revertible = revertiblesCreated[0];
 
-			revertible[disposeSymbol]();
+			revertible.dispose();
 			assert.equal(revertible.status, RevertibleStatus.Disposed);
 
-			assert.throws(() => revertible[disposeSymbol]());
+			assert.throws(() => revertible.dispose());
 			assert.throws(() => revertible.revert(false));
 
 			assert.equal(revertible.status, RevertibleStatus.Disposed);
@@ -989,6 +1022,37 @@ describe("sharedTreeView", () => {
 
 			stacks.unsubscribe();
 		});
+
+		for (const ageToTest of [0, 1, 5]) {
+			itView(`Telemetry logs track reversion age (${ageToTest})`, (view, logger) => {
+				let revertible: Revertible | undefined;
+				const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
+					if (getRevertible === undefined) {
+						assert.fail("Expected commit to be revertible.");
+					}
+
+					// Only save off the first revertible, as it's the only one we'll use.
+					if (revertible === undefined) {
+						revertible = getRevertible();
+					}
+				});
+
+				// Insert (`ageToTest` + 1) nodes, then revert the first.
+				for (let i = 0; i <= ageToTest; i++) {
+					insertFirstNode(view, "A");
+				}
+				assert(revertible !== undefined, "Expected revertible to be created.");
+				revertible.revert();
+
+				const revertEvents = logger
+					.events()
+					.filter((event) => event.eventName.endsWith(TreeCheckout.revertTelemetryEventName));
+				assert.equal(revertEvents.length, 1);
+				assert.equal(revertEvents[0].age, ageToTest);
+
+				unsubscribe();
+			});
+		}
 	});
 });
 
@@ -1042,10 +1106,10 @@ function getTestValues({ forest }: ITreeCheckout): Value[] {
  */
 function itView(
 	title: string,
-	fn: (view: ITreeCheckout) => void,
-	initialContent?: TreeContent,
+	fn: (view: ITreeCheckout, logger: IMockLoggerExt) => void,
+	options: { initialContent?: TreeContent; skip?: true } = {},
 ): void {
-	const content: TreeContent = initialContent ?? {
+	const content: TreeContent = options.initialContent ?? {
 		schema: jsonSequenceRootSchema,
 		initialTree: [],
 	};
@@ -1053,22 +1117,28 @@ function itView(
 		...content,
 		allowedSchemaModifications: AllowedUpdateType.Initialize,
 	};
-	it(`${title} (root view)`, () => {
+
+	const itFunction = options.skip === true ? it.skip.bind(it) : it;
+
+	itFunction(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
 		// Test an actual SharedTree.
-		fn(schematizeFlexTree(provider.trees[0], config).checkout);
+		fn(schematizeFlexTree(provider.trees[0], config).checkout, provider.logger);
 	});
 
-	it(`${title} (reference view)`, () => {
-		fn(checkoutWithContent(content));
+	itFunction(`${title} (reference view)`, () => {
+		const { checkout, logger } = createCheckoutWithContent(content);
+		fn(checkout, logger);
 	});
 
-	it(`${title} (forked view)`, () => {
+	itFunction(`${title} (forked view)`, () => {
 		const provider = new TestTreeProviderLite();
-		fn(schematizeFlexTree(provider.trees[0], config).checkout.fork());
+		fn(schematizeFlexTree(provider.trees[0], config).checkout.fork(), provider.logger);
 	});
 
-	it(`${title} (reference forked view)`, () => {
-		fn(checkoutWithContent(content).fork());
+	itFunction(`${title} (reference forked view)`, () => {
+		const { checkout, logger } = createCheckoutWithContent(content);
+		const fork = checkout.fork();
+		fn(fork, logger);
 	});
 }

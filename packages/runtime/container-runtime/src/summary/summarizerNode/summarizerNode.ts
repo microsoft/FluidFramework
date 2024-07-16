@@ -5,8 +5,11 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/driver-definitions";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import {
+	ISnapshotTree,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
@@ -162,15 +165,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 		trackState: boolean = true,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
-		assert(
-			this.isSummaryInProgress(),
-			0x1a1 /* "summarize should not be called when not tracking the summary" */,
-		);
-		assert(
-			this.wipSummaryLogger !== undefined,
-			0x1a2 /* "wipSummaryLogger should have been set in startSummary or ctor" */,
-		);
-
 		// Try to reuse the tree if unchanged
 		if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
 			const latestSummary = this._latestSummary;
@@ -193,21 +187,22 @@ export class SummarizerNode implements IRootSummarizerNode {
 			}
 		}
 
-		// This assert is the same the other 0a1x1 assert `isSummaryInProgress`, the only difference is that typescript
-		// complains if this assert isn't done this way
-		assert(
-			this.wipReferenceSequenceNumber !== undefined,
-			0x5df /* Summarize should not be called when not tracking the summary */,
-		);
-		const incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined =
-			this._latestSummary !== undefined
-				? {
-						summarySequenceNumber: this.wipReferenceSequenceNumber,
-						latestSummarySequenceNumber: this._latestSummary.referenceSequenceNumber,
-						// TODO: remove summaryPath
-						summaryPath: this._latestSummary.fullPath.path,
-				  }
-				: undefined;
+		let incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined;
+		if (!fullTree) {
+			assert(
+				this.wipReferenceSequenceNumber !== undefined,
+				0x5df /* Summarize should not be called when not tracking the summary */,
+			);
+			incrementalSummaryContext =
+				this._latestSummary !== undefined
+					? {
+							summarySequenceNumber: this.wipReferenceSequenceNumber,
+							latestSummarySequenceNumber: this._latestSummary.referenceSequenceNumber,
+							// TODO: remove summaryPath
+							summaryPath: this._latestSummary.fullPath.path,
+						}
+					: undefined;
+		}
 
 		const result = await this.summarizeInternalFn(
 			fullTree,
@@ -327,7 +322,10 @@ export class SummarizerNode implements IRootSummarizerNode {
 		parentPath: EscapedPath | undefined,
 		parentSkipRecursion: boolean,
 	) {
-		assert(this.wipReferenceSequenceNumber !== undefined, 0x1a4 /* "Not tracking a summary" */);
+		assert(
+			this.wipReferenceSequenceNumber !== undefined,
+			0x1a4 /* "Not tracking a summary" */,
+		);
 		let localPathsToUse = this.wipLocalPaths;
 
 		if (parentSkipRecursion) {

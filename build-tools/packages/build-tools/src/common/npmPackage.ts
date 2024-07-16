@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { PackageName } from "@rushstack/node-core-library";
 import { queue } from "async";
 import * as chalk from "chalk";
 import detectIndent from "detect-indent";
-import { readFileSync, readJsonSync, writeJsonSync } from "fs-extra";
+import { readFileSync, readJsonSync, writeJson, writeJsonSync } from "fs-extra";
 import sortPackageJson from "sort-package-json";
 
 import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
@@ -69,6 +69,15 @@ export type PackageJson = SetRequired<
 	StandardPackageJson & FluidPackageJson,
 	"name" | "scripts" | "version"
 >;
+
+/**
+ * Information about a package dependency.
+ */
+interface PackageDependency {
+	name: string;
+	version: string;
+	depClass: "prod" | "dev" | "peer";
+}
 
 export class Package {
 	private static packageCount: number = 0;
@@ -190,22 +199,31 @@ export class Package {
 		return Object.keys(this.packageJson.dependencies ?? {});
 	}
 
-	public get combinedDependencies(): Generator<
-		{
-			name: string;
-			version: string;
-			dev: boolean;
-		},
-		void
-	> {
+	public get combinedDependencies(): Generator<PackageDependency, void> {
 		const it = function* (packageJson: PackageJson) {
 			for (const item in packageJson.dependencies) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				yield { name: item, version: packageJson.dependencies[item]!, dev: false };
+				yield {
+					name: item,
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					version: packageJson.dependencies[item]!,
+					depClass: "prod",
+				} as const;
 			}
 			for (const item in packageJson.devDependencies) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				yield { name: item, version: packageJson.devDependencies[item]!, dev: true };
+				yield {
+					name: item,
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					version: packageJson.devDependencies[item]!,
+					depClass: "dev",
+				} as const;
+			}
+			for (const item in packageJson.peerDependencies) {
+				yield {
+					name: item,
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					version: packageJson.peerDependencies[item]!,
+					depClass: "peer",
+				} as const;
 			}
 		};
 		return it(this.packageJson);
@@ -267,7 +285,7 @@ export class Package {
 
 		if (!existsSync(path.join(this.directory, "node_modules"))) {
 			if (print) {
-				error(`${this.nameColored}: node_modules not installed`);
+				error(`${this.nameColored}: node_modules not installed in ${this.directory}`);
 			}
 			return false;
 		}
@@ -544,4 +562,47 @@ export function readPackageJsonAndIndent(
  */
 function writePackageJson(packagePath: string, pkgJson: PackageJson, indent: string) {
 	return writeJsonSync(packagePath, sortPackageJson(pkgJson), { spaces: indent });
+}
+
+/**
+ * Reads the contents of package.json, applies a transform function to it, then writes
+ * the results back to the source file.
+ *
+ * @param packagePath - A path to a package.json file or a folder containing one. If the
+ * path is a directory, the package.json from that directory will be used.
+ * @param packageTransformer - A function that will be executed on the package.json
+ * contents before writing it back to the file.
+ *
+ * @remarks
+ * The package.json is always sorted using sort-package-json.
+ *
+ * @internal
+ */
+export async function updatePackageJsonFileAsync(
+	packagePath: string,
+	packageTransformer: (json: PackageJson) => Promise<void>,
+): Promise<void> {
+	packagePath = packagePath.endsWith("package.json")
+		? packagePath
+		: path.join(packagePath, "package.json");
+	const [pkgJson, indent] = await readPackageJsonAndIndentAsync(packagePath);
+
+	// Transform the package.json
+	await packageTransformer(pkgJson);
+
+	await writeJson(packagePath, sortPackageJson(pkgJson), { spaces: indent });
+}
+
+/**
+ * Reads a package.json file from a path, detects its indentation, and returns both the JSON as an object and
+ * indentation.
+ */
+async function readPackageJsonAndIndentAsync(
+	pathToJson: string,
+): Promise<[json: PackageJson, indent: string]> {
+	return fs.promises.readFile(pathToJson, { encoding: "utf8" }).then((contents) => {
+		const indentation = detectIndent(contents).indent || "\t";
+		const pkgJson: PackageJson = JSON.parse(contents);
+		return [pkgJson, indentation];
+	});
 }

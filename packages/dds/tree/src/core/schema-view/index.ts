@@ -4,9 +4,9 @@
  */
 
 export {
-	Adapters,
+	type Adapters,
 	Compatibility,
-	TreeAdapter,
+	type TreeAdapter,
 	AdaptedViewSchema,
 	AllowedUpdateType,
 } from "./view.js";
