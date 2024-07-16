@@ -10,10 +10,10 @@ function createSuite<TArgs extends StressSuiteArguments>(
 	args: TArgs,
 ) {
 	return function (this: Mocha.Suite) {
+		// Stress runs may have tests which are expected to take longer amounts of time.
+		// Don't override the timeout if it's already set to a higher value, though.
 		switch (args.stressMode) {
 			case StressMode.Normal: {
-				// Stress runs may have tests which are expected to take longer amounts of time.
-				// Don't override the timeout if it's already set to a higher value, though.
 				this.timeout(this.timeout() === 0 ? 0 : Math.max(10_000, this.timeout()));
 
 				break;
