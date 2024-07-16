@@ -13,6 +13,7 @@ import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtoo
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
+import type { ContainerSchema } from "fluid-framework";
 import { IFluidContainer } from "fluid-framework";
 import { v4 as uuid } from "uuid";
 
@@ -66,7 +67,8 @@ const containerSchema = {
 		map1: SharedMap,
 		map2: SharedMap,
 	},
-};
+} satisfies ContainerSchema;
+type DiceRollerContainerSchema = typeof containerSchema;
 
 function createDiceRollerControllerProps(map: ISharedMap): DiceRollerControllerProps {
 	return {
@@ -90,17 +92,17 @@ function createDiceRollerControllerProps(map: ISharedMap): DiceRollerControllerP
 }
 
 function createDiceRollerControllerPropsFromContainer(
-	container: IFluidContainer,
+	container: IFluidContainer<DiceRollerContainerSchema>,
 ): [DiceRollerControllerProps, DiceRollerControllerProps] {
 	const diceRollerController1Props: DiceRollerControllerProps =
-		createDiceRollerControllerProps(container.initialObjects.map1 as ISharedMap);
+		createDiceRollerControllerProps(container.initialObjects.map1);
 	const diceRollerController2Props: DiceRollerControllerProps =
-		createDiceRollerControllerProps(container.initialObjects.map2 as ISharedMap);
+		createDiceRollerControllerProps(container.initialObjects.map2);
 	return [diceRollerController1Props, diceRollerController2Props];
 }
 
 async function initializeNewContainer(
-	container: IFluidContainer,
+	container: IFluidContainer<DiceRollerContainerSchema>,
 ): Promise<[DiceRollerControllerProps, DiceRollerControllerProps]> {
 	const [diceRollerController1Props, diceRollerController2Props] =
 		createDiceRollerControllerPropsFromContainer(container);
@@ -127,7 +129,7 @@ async function start(): Promise<void> {
 		logger: devtoolsLogger,
 	};
 	const client = new AzureClient(clientProps);
-	let container: IFluidContainer;
+	let container: IFluidContainer<DiceRollerContainerSchema>;
 	let services: AzureContainerServices;
 	let id: string;
 
