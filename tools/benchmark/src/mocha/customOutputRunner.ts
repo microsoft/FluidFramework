@@ -29,6 +29,7 @@ export interface CustomBenchmarkOptions
 	 */
 	run: (reporter: IMeasurementReporter) => void | Promise<unknown>;
 }
+
 /**
  * This is a wrapper for Mocha's `it` function which runs the specified function {@link CustomBenchmarkOptions.run}
  * and gives it full control over the measurements that will be reported as benchmark output.
