@@ -454,7 +454,7 @@ async function fetchLatestSnapshotCore(
 						const slowTreeParseCodePaths = props.slowTreeStructureCount ?? 0;
 						const slowBlobParseCodePaths = props.slowBlobStructureCount ?? 0;
 						const treeStructureCountWithGroupId = props.treeStructureCountWithGroupId ?? 0;
-						// As snapshot with groupId go through normal parsing, so exclude them.
+						// As trees with groupId go through normal parsing, so exclude them.
 						if (
 							slowTreeParseCodePaths - treeStructureCountWithGroupId > 10 ||
 							slowBlobParseCodePaths > 10
