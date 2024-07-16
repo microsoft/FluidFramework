@@ -83,8 +83,13 @@ export interface FieldChangeHandler<
 	 */
 	getNestedChanges(change: TChangeset): [NodeId, number | undefined][];
 
-	createEmpty(): TChangeset;
+	/**
+	 * @returns A list of all cross-field keys contained in the change.
+	 * This should not include cross-field keys in descendant fields.
+	 */
 	getCrossFieldKeys(change: TChangeset): CrossFieldKeyRange[];
+
+	createEmpty(): TChangeset;
 }
 
 export interface FieldChangeRebaser<TChangeset> {

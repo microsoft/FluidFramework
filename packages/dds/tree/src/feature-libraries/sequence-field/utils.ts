@@ -13,20 +13,10 @@ import {
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
 } from "../../core/index.js";
+import { type Mutable, brand, fail } from "../../util/index.js";
 import {
-	type Mutable,
-	type RangeMap,
-	brand,
-	fail,
-	getFromRangeMap,
-} from "../../util/index.js";
-import {
-	type CrossFieldManager,
-	type CrossFieldQuerySet,
 	CrossFieldTarget,
 	type NodeId,
-	addCrossFieldQuery,
-	setInCrossFieldMap,
 	type CrossFieldKeyRange,
 } from "../modular-schema/index.js";
 
@@ -48,7 +38,6 @@ import {
 	type Insert,
 	type Mark,
 	type MarkEffect,
-	type MoveId,
 	type MoveIn,
 	type MoveOut,
 	type NoopMark,
@@ -707,83 +696,6 @@ function tryMergeEffects(
 	}
 
 	return undefined;
-}
-
-/**
- * @internal
- */
-export interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
-	srcQueries: CrossFieldQuerySet;
-	dstQueries: CrossFieldQuerySet;
-	isInvalidated: boolean;
-	mapSrc: Map<RevisionTag | undefined, RangeMap<T>>;
-	mapDst: Map<RevisionTag | undefined, RangeMap<T>>;
-	reset: () => void;
-}
-
-// TODO: Can this be moved to a test utility file?
-/**
- * @internal
- */
-export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
-	const srcQueries: CrossFieldQuerySet = new Map();
-	const dstQueries: CrossFieldQuerySet = new Map();
-	const mapSrc: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
-	const mapDst: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
-
-	const getMap = (target: CrossFieldTarget): Map<RevisionTag | undefined, RangeMap<T>> =>
-		target === CrossFieldTarget.Source ? mapSrc : mapDst;
-
-	const getQueries = (target: CrossFieldTarget): CrossFieldQuerySet =>
-		target === CrossFieldTarget.Source ? srcQueries : dstQueries;
-
-	const table = {
-		srcQueries,
-		dstQueries,
-		isInvalidated: false,
-		mapSrc,
-		mapDst,
-
-		get: (
-			target: CrossFieldTarget,
-			revision: RevisionTag | undefined,
-			id: MoveId,
-			count: number,
-			addDependency: boolean,
-		) => {
-			if (addDependency) {
-				addCrossFieldQuery(getQueries(target), revision, id, count);
-			}
-			return getFromRangeMap(getMap(target).get(revision) ?? [], id, count);
-		},
-		set: (
-			target: CrossFieldTarget,
-			revision: RevisionTag | undefined,
-			id: MoveId,
-			count: number,
-			value: T,
-			invalidateDependents: boolean,
-		) => {
-			if (
-				invalidateDependents &&
-				getFromRangeMap(getQueries(target).get(revision) ?? [], id, count) !== undefined
-			) {
-				table.isInvalidated = true;
-			}
-			setInCrossFieldMap(getMap(target), revision, id, count, value);
-		},
-
-		moveNode: () => {},
-		moveKey: () => {},
-
-		reset: () => {
-			table.isInvalidated = false;
-			table.srcQueries.clear();
-			table.dstQueries.clear();
-		},
-	};
-
-	return table;
 }
 
 /**
