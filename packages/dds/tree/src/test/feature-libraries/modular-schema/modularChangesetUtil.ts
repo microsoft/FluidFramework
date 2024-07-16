@@ -110,6 +110,7 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 		idAllocator,
 	);
 
+	assert(args.maxId === undefined || args.maxId >= idAllocator.getMaxId());
 	const result: Mutable<ModularChangeset> = {
 		nodeChanges,
 		fieldChanges,
