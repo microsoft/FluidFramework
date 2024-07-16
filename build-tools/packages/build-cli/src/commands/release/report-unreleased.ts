@@ -8,12 +8,7 @@ import path from "node:path";
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { formatISO } from "date-fns";
-import {
-	BaseCommand,
-	type ReleaseReport,
-	type ReportKind,
-	toReportKind,
-} from "../../library/index.js";
+import { BaseCommand, type ReleaseReport, toReportKind } from "../../library/index.js";
 
 export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
 	static readonly summary =
@@ -83,8 +78,7 @@ async function generateReleaseReport(
 ): Promise<void> {
 	const ignorePackageList = new Set(["@types/jest-environment-puppeteer"]);
 
-	await updateReportVersions(fullReleaseReport, ignorePackageList, version, "caret", log);
-	await updateReportVersions(fullReleaseReport, ignorePackageList, version, "simple", log);
+	await updateReportVersions(fullReleaseReport, ignorePackageList, version, log);
 
 	const caretReportOutput = toReportKind(fullReleaseReport, "caret");
 	const simpleReportOutput = toReportKind(fullReleaseReport, "simple");
@@ -157,7 +151,6 @@ async function updateReportVersions(
 	report: ReleaseReport,
 	ignorePackageList: Set<string>,
 	version: string,
-	kind: ReportKind,
 	log: Logger,
 ): Promise<void> {
 	const clientPackage = "@fluidframework/aqueduct";
@@ -179,12 +172,11 @@ async function updateReportVersions(
 		}
 
 		// todo: add better checks
-		if (kind === "caret" && report[packageName].ranges.caret === clientVersionCaret) {
+		if (report[packageName].ranges.caret === clientVersionCaret) {
 			report[packageName].ranges.caret = version;
 		}
 
-		// todo: add better checks
-		if (kind === "simple" && report[packageName].version === clientVersionSimple) {
+		if (report[packageName].version === clientVersionSimple) {
 			report[packageName].version = version;
 		}
 	}
