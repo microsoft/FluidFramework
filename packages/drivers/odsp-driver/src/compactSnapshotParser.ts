@@ -197,7 +197,7 @@ function readTreeSection(node: NodeCore): {
 		/**
 		 * More generalized workflow
 		 */
-		slowTreeStructureCount += 1;
+		slowTreeStructureCount++;
 		const records = getNodeProps(treeNode);
 
 		if (records.unreferenced !== undefined) {
@@ -222,7 +222,7 @@ function readTreeSection(node: NodeCore): {
 				const groupId = getStringInstance(records.groupId, "groupId should be a string");
 				// Non null asserting since trees[path] is already created
 				trees[path]!.groupId = groupId;
-				treeStructureCountWithGroupId += 1;
+				treeStructureCountWithGroupId++;
 			}
 			slowTreeStructureCount += result.slowTreeStructureCount;
 			treeStructureCountWithGroupId += result.treeStructureCountWithGroupId;
