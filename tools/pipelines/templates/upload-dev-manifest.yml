@@ -19,6 +19,8 @@ jobs:
     displayName: Upload Dev Manifest
     variables:
     - group: storage-vars
+    - name: version
+      value: $[stageDependencies.build.build.outputs['SetVersion.version']]
     steps:
     # These steps should ONLY run if we're using the repo version of the build tools. These steps are mutually exclusive
     # with the next group of steps.
@@ -84,7 +86,7 @@ jobs:
         workingDirectory: ${{ parameters.buildDirectory }}
         script: |
           mkdir upload_release_reports
-          flub release report-unreleased --version $(stageDependencies.build.build.outputs['SetVersion.version']) --fullReportFilePath generate_release_reports/manifest.full.json --outDir upload_release_reports --branchName '$(Build.SourceBranch)'
+          flub release report-unreleased --version $(version) --fullReportFilePath generate_release_reports/manifest.full.json --outDir upload_release_reports --branchName '$(Build.SourceBranch)'
 
     - task: CopyFiles@2
       displayName: Copy release reports
