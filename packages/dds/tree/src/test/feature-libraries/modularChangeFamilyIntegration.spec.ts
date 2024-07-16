@@ -283,11 +283,11 @@ describe("ModularChangeFamily integration", () => {
 				{ family, maxId: 5 },
 				Change.field(fieldA, sequence.identifier, [
 					MarkMaker.tomb(tag1, brand(0)),
-					MarkMaker.moveOut(1, { localId: brand(3) }),
-					MarkMaker.moveIn(2, { localId: brand(2) }),
+					MarkMaker.moveOut(1, brand(3)),
+					MarkMaker.moveIn(2, brand(2)),
 				]),
 				Change.field(fieldB, sequence.identifier, [
-					MarkMaker.moveOut(1, { localId: brand(2) }),
+					MarkMaker.moveOut(1, brand(2)),
 				]),
 			);
 
