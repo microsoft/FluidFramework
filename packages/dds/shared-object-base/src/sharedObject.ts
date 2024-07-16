@@ -910,5 +910,6 @@ export function createSharedObjectKind<TSharedObject>(
 }
 
 function isChannel(loadable: IFluidLoadable): loadable is IChannel {
+	// This assumes no other IFluidLoadable has an `attributes` field, and thus may not be fully robust.
 	return (loadable as IChannel).attributes !== undefined;
 }
