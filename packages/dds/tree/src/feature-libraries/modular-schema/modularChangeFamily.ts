@@ -635,8 +635,7 @@ export class ModularChangeFamily
 		crossFieldTable: ComposeTable,
 		revisionMetadata: RevisionMetadataSource,
 	): NodeChangeset {
-		const nodeExistsConstraint =
-			change1?.nodeExistsConstraint ?? change2?.nodeExistsConstraint;
+		const nodeExistsConstraint = change1.nodeExistsConstraint ?? change2.nodeExistsConstraint;
 
 		const composedFieldChanges = this.composeFieldMaps(
 			change1.fieldChanges,
