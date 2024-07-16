@@ -5,9 +5,6 @@
 
 import type { SimpleLeafSchemaKind, SimpleNodeSchemaKind } from "./simpleSchema.js";
 
-// TODOs:
-// "ajv" library for at least testing, maybe type defs as well.
-
 /**
  * TODO: document expected format.
  * @internal
