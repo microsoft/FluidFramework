@@ -113,7 +113,6 @@ export type CustomBenchmarkArguments = MochaExclusiveOptions & CustomBenchmark &
 // @public
 export interface CustomBenchmarkOptions extends Titled, BenchmarkDescription, HookArguments, MochaExclusiveOptions {
     run: (reporter: IMeasurementReporter) => void | Promise<unknown>;
-    title: string;
 }
 
 // @public

@@ -24,7 +24,6 @@ export interface CustomBenchmarkOptions
 		BenchmarkDescription,
 		HookArguments,
 		MochaExclusiveOptions {
-
 	/**
 	 * Runs the benchmark.
 	 */
@@ -55,10 +54,10 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 		};
 
 		await options.before?.();
-        const startTime = timer.now();
-        await options.run(reporter);
-        const elapsedSeconds = timer.toSeconds(startTime, timer.now());
-        await options.after?.();
+		const startTime = timer.now();
+		await options.run(reporter);
+		const elapsedSeconds = timer.toSeconds(startTime, timer.now());
+		await options.after?.();
 
 		const results: BenchmarkData = {
 			elapsedSeconds,

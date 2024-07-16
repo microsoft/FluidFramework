@@ -1,0 +1,66 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { expect } from "chai";
+
+import { benchmarkCustom } from "..";
+import { BenchmarkType, isParentProcess } from "../Configuration";
+
+describe("`benchmarkCustom` function", () => {
+	describe("uses `before` and `after`", () => {
+		let beforeHasBeenCalled = false;
+		let afterHasBeenCalled = false;
+		benchmarkCustom({
+			title: "test",
+			before: async () =>
+				delay(1).then(() => {
+					beforeHasBeenCalled = true;
+				}),
+			run: async () => {
+				expect(beforeHasBeenCalled).to.equal(
+					true,
+					"before should be called before test body",
+				);
+
+				expect(afterHasBeenCalled).to.equal(
+					false,
+					"after should not be called during test execution",
+				);
+			},
+			after: async () =>
+				delay(1).then(() => {
+					afterHasBeenCalled = true;
+				}),
+			type: BenchmarkType.OwnCorrectness,
+		});
+
+		afterEach(() => {
+			if (!isParentProcess) {
+				// If running with separate processes,
+				// this check must only be done in the child process (it will fail in the parent process)
+				expect(afterHasBeenCalled).to.equal(
+					true,
+					"after should be called after test execution",
+				);
+			}
+		});
+
+		it("run BenchmarkCustom", async () => {
+			benchmarkCustom({
+				title: `test`,
+				run: async (reporter) => {
+					reporter.addMeasurement("test", 0);
+				},
+				type: BenchmarkType.OwnCorrectness,
+			});
+		});
+	});
+});
+/**
+ * Waits for the provided duration in milliseconds. See
+ * {@link https://javascript.info/settimeout-setinterval | setTimeout}.
+ */
+const delay = async (milliseconds: number): Promise<void> =>
+	new Promise((resolve) => setTimeout(resolve, milliseconds));
