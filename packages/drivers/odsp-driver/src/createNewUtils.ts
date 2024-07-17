@@ -72,7 +72,8 @@ function convertCreateNewSummaryTreeToTreeAndBlobsCore(
 	};
 	const keys = Object.keys(summary.tree);
 	for (const key of keys) {
-		const summaryObject = summary.tree[key];
+		// Non null asserting for now this should change to Object.entries
+		const summaryObject = summary.tree[key]!;
 
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
@@ -150,7 +151,8 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 	const keys = Object.keys(summary.tree);
 	for (const key of keys) {
 		assert(!key.includes("/"), "id should not include slashes");
-		const summaryObject = summary.tree[key];
+		// Non null asserting for now this should change to Object.entries
+		const summaryObject = summary.tree[key]!;
 
 		let value: OdspSummaryTreeValue;
 		// Tracks if an entry is unreferenced. Currently, only tree entries can be marked as unreferenced. If the

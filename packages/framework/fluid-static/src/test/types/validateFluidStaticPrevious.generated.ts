@@ -58,6 +58,7 @@ declare type current_as_old_for_TypeAliasDeclaration_ContainerAttachProps = requ
  * typeValidation.broken:
  * "InterfaceDeclaration_ContainerSchema": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_InterfaceDeclaration_ContainerSchema = requireAssignableTo<TypeOnly<old.ContainerSchema>, TypeOnly<current.ContainerSchema>>
 
 /*

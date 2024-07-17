@@ -17,7 +17,7 @@ const QUERY_VERSIONS = {
 
 const QUERY_SCHEMA = Joi.array().items(
 	Joi.object({
-		queryLanguage: Joi.string().valid(Object.values(QUERY_VERSIONS)),
+		queryLanguage: Joi.string().valid(...Object.values(QUERY_VERSIONS)),
 	}),
 );
 
@@ -74,7 +74,7 @@ class MultipleQueriesExecution {
 	 * @return {Object} - Object with the arguments to pass to getCommitMV
 	 */
 	_validateAndParseQueryString(queryString) {
-		let result = Joi.validate(queryString.query, QUERY_SCHEMA, {
+		let result = QUERY_SCHEMA.validate(queryString.query, {
 			convert: true,
 			allowUnknown: true,
 		});

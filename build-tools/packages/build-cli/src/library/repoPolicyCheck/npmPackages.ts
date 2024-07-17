@@ -1233,6 +1233,21 @@ export const handlers: Handler[] = [
 			const missingDeps: string[] = [];
 
 			if (hasScriptsField) {
+				const regexNpmAlias = /^npm:(?<alias>.+)@/;
+				// Get names of all of the packages that are dependencies or devDependencies
+				// resolving any aliases.
+				// This does not support an attempt to workaround policy by using an alias
+				// to expected package name, but installing alternate bin package. In such
+				// a case a temporary policy exclusion can be used.
+				const deps = new Set<string>(
+					[
+						...Object.entries(json.dependencies ?? {}),
+						...Object.entries(json.devDependencies ?? {}),
+					].map(([depName, versionSpec]) => {
+						const alias = versionSpec?.match(regexNpmAlias)?.groups?.alias;
+						return alias ?? depName;
+					}),
+				);
 				const commands = new Set(
 					Object.values(json.scripts)
 						// eslint-disable-next-line unicorn/no-array-callback-reference
@@ -1244,8 +1259,7 @@ export const handlers: Handler[] = [
 					if (
 						// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 						dep &&
-						json.dependencies?.[dep] === undefined &&
-						json.devDependencies?.[dep] === undefined
+						!deps.has(dep)
 					) {
 						missingDeps.push(`Package '${dep}' missing needed by command '${command}'`);
 					}

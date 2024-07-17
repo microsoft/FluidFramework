@@ -24,6 +24,7 @@ import {
 	makeLegacySendBatchFn,
 } from "../../containerRuntime.js";
 import { ContainerMessageType } from "../../messageTypes.js";
+import { asBatchMetadata } from "../../metadata.js";
 import {
 	BatchMessage,
 	BatchSequenceNumbers,
@@ -54,7 +55,7 @@ describe("Outbox", () => {
 		batchesCompressed: IBatch[];
 		batchesSplit: IBatch[];
 		individualOpsSubmitted: any[];
-		pendingOpContents: Partial<IPendingMessage>[];
+		pendingOpContents: Partial<IPendingMessage & { batchStartCsn: number }>[];
 		opsSubmitted: number;
 		opsResubmitted: number;
 		isReentrant: boolean;
@@ -127,14 +128,14 @@ describe("Outbox", () => {
 
 	const getMockPendingStateManager = (): Partial<PendingStateManager> => ({
 		// Similar implementation as the real PSM - queue each message 1-by-1
-		onFlushBatch: (batch: BatchMessage[], clientSequenceNumber: number): void => {
+		onFlushBatch: (batch: BatchMessage[], clientSequenceNumber: number | undefined): void => {
 			batch.forEach(
 				({ contents: content = "", referenceSequenceNumber, metadata: opMetadata }) =>
 					state.pendingOpContents.push({
 						content,
 						referenceSequenceNumber,
 						opMetadata,
-						batchStartCsn: clientSequenceNumber,
+						batchStartCsn: clientSequenceNumber ?? -1,
 					}),
 			);
 		},
@@ -311,6 +312,58 @@ describe("Outbox", () => {
 		);
 	});
 
+	it("Batch ID added when applicable", () => {
+		const outbox = getOutbox({ context: getMockContext() });
+
+		// Flush 1 - resubmit multi-message batch including ID Allocation
+		outbox.submitIdAllocation(createMessage(ContainerMessageType.IdAllocation, "0")); // Separate batch, batch ID not used
+		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "1"));
+		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "2"));
+		outbox.flush("batchId-A");
+
+		// Flush 2 - resubmit single-message batch
+		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "3"));
+		outbox.flush("batchId-B");
+
+		// Flush 3 - resubmit blob attach batch
+		outbox.submitBlobAttach(createMessage(ContainerMessageType.BlobAttach, "4"));
+		outbox.submitBlobAttach(createMessage(ContainerMessageType.BlobAttach, "5"));
+		outbox.flush("batchId-C");
+
+		// Flush 4 - no batch ID given
+		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "6"));
+		outbox.flush(); // Ignored - No batchID given (not resubmit)
+
+		// Not Flushed (will not appear in batchesSubmitted or pendingOpContents)
+		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "7"));
+
+		assert.deepEqual(
+			state.batchesSubmitted.map((x) => x.messages.map((m) => m.metadata?.batchId)),
+			[
+				[undefined], // Flush 1 - ID Allocation (no batch ID used)
+				["batchId-A", undefined], // Flush 1 - Main
+				["batchId-B"], // Flush 2 - Main
+				["batchId-C", undefined], // Flush 3 - Blob Attach
+				[undefined], // Flush 4 - Main (no batch ID given)
+			],
+			"Submitted batches have incorrect batch ID",
+		);
+
+		assert.deepEqual(
+			state.pendingOpContents.map(({ opMetadata }) => asBatchMetadata(opMetadata)?.batchId),
+			[
+				undefined, // ID Allocation (no batch ID used)
+				"batchId-A",
+				undefined, // second message in batch
+				"batchId-B",
+				"batchId-C",
+				undefined, // second message in batch
+				undefined, // no batchId given
+			],
+			"Pending messages have incorrect batch ID",
+		);
+	});
+
 	it("Will send messages only when allowed, but will store them in the pending state", () => {
 		const outbox = getOutbox({ context: getMockContext() });
 		const messages = [
@@ -341,7 +394,7 @@ describe("Outbox", () => {
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
-				batchStartCsn: i === 2 ? undefined : 1, // Third batch got no CSN as it was not submitted
+				batchStartCsn: i === 2 ? -1 : 1, // Third batch got no CSN as it was not submitted
 			})),
 		);
 	});

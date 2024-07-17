@@ -1493,7 +1493,7 @@
             "error"
         ],
         "unicorn/prefer-module": [
-            "error"
+            "off"
         ],
         "unicorn/prefer-native-coercion-functions": [
             "error"

@@ -567,6 +567,9 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 	/**
 	 * If this returns true, then the donefile will use the hash of the file contents instead of the last modified time
 	 * and other file stats.
+	 *
+	 * Hashing is roughly 20% slower than the stats-based approach, but is less susceptible to getting invalidated by
+	 * other processes like git touching files but not ultimately changing their contents.
 	 */
 	protected get useHashes(): boolean {
 		return false;

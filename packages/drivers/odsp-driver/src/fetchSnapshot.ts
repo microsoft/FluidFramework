@@ -77,7 +77,7 @@ export enum SnapshotFormatSupportType {
  * @param snapshotUrl - snapshot url from where the odsp snapshot will be fetched
  * @param versionId - id of specific snapshot to be fetched
  * @param fetchFullSnapshot - whether we want to fetch full snapshot(with blobs)
- * @param forceAccessTokenViaAuthorizationHeader - @deprecated Not used, true value always used instead. Whether to force passing given token via authorization header
+ * @param forceAccessTokenViaAuthorizationHeader - Deprecated and not used, true value always used instead. Whether to force passing given token via authorization header
  * @param snapshotDownloader - Implementation of the get/post methods used to fetch the snapshot. snapshotDownloader is responsible for generating the appropriate headers (including Authorization header) as well as handling any token refreshes before retrying.
  * @returns A promise of the snapshot and the status code of the response
  */
@@ -453,11 +453,17 @@ async function fetchLatestSnapshotCore(
 						const props = snapshotContents.telemetryProps;
 						const slowTreeParseCodePaths = props.slowTreeStructureCount ?? 0;
 						const slowBlobParseCodePaths = props.slowBlobStructureCount ?? 0;
-						if (slowTreeParseCodePaths > 10 || slowBlobParseCodePaths > 10) {
+						const treeStructureCountWithGroupId = props.treeStructureCountWithGroupId ?? 0;
+						// As trees with groupId go through normal parsing, so exclude them.
+						if (
+							slowTreeParseCodePaths - treeStructureCountWithGroupId > 10 ||
+							slowBlobParseCodePaths > 10
+						) {
 							logger.sendErrorEvent({
 								eventName: "SlowSnapshotParseCodePaths",
 								slowTreeStructureCount: slowTreeParseCodePaths,
 								slowBlobStructureCount: slowBlobParseCodePaths,
+								treeStructureCountWithGroupId,
 							});
 						}
 						parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
@@ -499,7 +505,8 @@ async function fetchLatestSnapshotCore(
 			const sequenceNumber: number = snapshot.sequenceNumber ?? 0;
 			const seqNumberFromOps =
 				snapshot.ops && snapshot.ops.length > 0
-					? snapshot.ops[0].sequenceNumber - 1
+					? // Non null asserting here because of the length check above
+						snapshot.ops[0]!.sequenceNumber - 1
 					: undefined;
 
 			if (
