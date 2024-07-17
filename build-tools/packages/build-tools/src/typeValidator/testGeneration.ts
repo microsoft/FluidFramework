@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypeData, getFullTypeName, toTypeString } from "./typeData";
+import { TypeData, toTypeString } from "./typeData";
 
 export interface TestCaseTypeData extends TypeData {
 	prefix: "old" | "current";
@@ -27,9 +27,9 @@ export function buildTestCase(
 		testString.push(expectErrorString);
 	}
 	testString.push(
-		`declare type ${getAsType.prefix}_as_${useType.prefix}_for_${getFullTypeName(
-			getAsType,
-		)} = requireAssignableTo<${toTypeString(
+		`declare type ${getAsType.prefix}_as_${useType.prefix}_for_${
+			getAsType.testCaseName
+		} = requireAssignableTo<${toTypeString(
 			getAsType.prefix,
 			getAsType,
 			typePreprocessor,

@@ -62,7 +62,7 @@ describeCompat("Odsp Network calls", "NoCompat", (getTestObjectProvider) => {
 		mainObject._root.set("dataObjectB", dataStoreB.entryPoint);
 	};
 
-	it.skip("Should not make odsp network calls", async () => {
+	it("Should not make odsp network calls", async () => {
 		const container = await provider.makeTestContainer({
 			runtimeOptions,
 			loaderProps: { configProvider },
