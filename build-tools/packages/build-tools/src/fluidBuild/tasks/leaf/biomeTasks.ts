@@ -43,14 +43,12 @@ interface BiomeConfig {
 
 /**
  * This task enables incremental build support for Biome formatting tasks. It reads Biome configuration files to load
- * ignore settings, and will not consider ignored files when checking if the task needs to run.
+ * the 'include' and 'ignore' settings, and will not consider other files when checking if the task needs to run.
  *
- * In addition, files that are ignored by git will be excluded. Internally the task uses git itself to enumerate files.
+ * The task will consider the 'extends' value and load nested Biome configs. The configs will be merged, but array-type
+ * settings like 'includes' and 'ignores' are not merged - the top-most config wins for such keys.
  *
- * IMPORTANT: While ignore settings are loaded and applied from the Biome configuration file, the "include" settings are
- * not consulted. This means that files may not be properly excluded by the task when using "include" and "ignore"
- * together.
- * This task enables incremental build support for Biome formatting tasks. It has important limitations.
+ * In addition, .gitignored paths will be excluded. Internally the task uses git itself to enumerate files.
  */
 export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	// performance note: having individual tasks each acquire repo root and GitRepo
@@ -124,8 +122,8 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 
 		const config = await loadBiomeConfig(configFile);
 		const [includeEntries, ignoreEntries] = await Promise.all([
-			getPathsFromBiomeConfig(config, "formatter", "include"),
-			getPathsFromBiomeConfig(config, "formatter", "ignore"),
+			getSettingValuesFromBiomeConfig(config, "formatter", "include"),
+			getSettingValuesFromBiomeConfig(config, "formatter", "ignore"),
 		]);
 
 		// From the Biome docs (https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained):
@@ -133,7 +131,12 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 		// "At the moment, Biome uses a glob library that treats all globs as having a **/ prefix.
 		// This means that src/**/*.js and **/src/**/*.js are treated as identical. They match both src/file.js and
 		// test/src/file.js. This is something we plan to fix in Biome v2.0.0."
-		const includedPaths = await globby([...includeEntries], {
+		const prefixedIncludes = [...includeEntries].map((glob) => `**/${glob}`);
+
+		/**
+		 * An array of package-relative paths to files included via the 'include' settings in the Biome config.
+		 */
+		const includedPaths = await globby(prefixedIncludes, {
 			// We need to interpret the globs from the provided directory; the paths returned will be relative to this path
 			cwd: pkgDir,
 
@@ -156,7 +159,7 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 }
 
 /**
- * Loads a Biome configuration file _without_ following any "extends" values. You probably want to use
+ * Loads a Biome configuration file _without_ following any 'extends' values. You probably want to use
  * {@link loadBiomeConfig} instead of this function.
  */
 async function loadRawBiomeConfig(configPath: string): Promise<BiomeConfig> {
@@ -190,6 +193,13 @@ async function getAllBiomeConfigPaths(configPath: string): Promise<string[]> {
 /**
  * Loads a Biome configuration file. If the config extends others, then those are loaded recursively and the results are
  * merged. Array-type values are not merged, in accordance with how Biome applies configs.
+ *
+ * @remarks
+ *
+ * The intent is to merge the configs in the same way that Biome itself does, but the implementation is based on the
+ * Biome documentation, so there may be subtle differences unaccounted for. Where this implementation diverges from
+ * Biome's behavior, this function should be considered incorrect.
+ *
  */
 async function loadBiomeConfig(configPath: string): Promise<BiomeConfig> {
 	const allConfigPaths = await getAllBiomeConfigPaths(configPath);
@@ -208,16 +218,17 @@ async function loadBiomeConfig(configPath: string): Promise<BiomeConfig> {
 	return mergedConfig;
 }
 
-type PathKind = "include" | "ignore";
-type ConfigSection = "formatter" | "linter";
+type BiomeIncludeIgnore = "include" | "ignore";
+type BiomeConfigSection = "formatter" | "linter";
 
 /**
- * Given a Biome config object, returns the combined files.ignore and formatter.ignore values.
+ * Given a Biome config object, returns the combined settings for 'ignore' and 'include' across the 'files', 'formatter'
+ * and 'linter' sections in the config.
  */
-async function getPathsFromBiomeConfig(
+async function getSettingValuesFromBiomeConfig(
 	config: BiomeConfig,
-	section: ConfigSection,
-	kind: PathKind,
+	section: BiomeConfigSection,
+	kind: BiomeIncludeIgnore,
 ): Promise<Set<string>> {
 	if (section === "formatter" && kind === "ignore") {
 		const filesIgnore = config.files?.ignore ?? [];
@@ -237,7 +248,7 @@ async function getPathsFromBiomeConfig(
 		return new Set([...filesIgnore, ...linterIgnores]);
 	}
 
-	if (section === "formatter" && kind === "include") {
+	if (section === "linter" && kind === "include") {
 		const filesInclude = config.files?.include ?? [];
 		const linterIncludes = config.linter?.include ?? [];
 		return new Set([...filesInclude, ...linterIncludes]);
