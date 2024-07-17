@@ -553,7 +553,6 @@ declare type current_as_old_for_Interface_IFluidPackageEnvironment = requireAssi
  * typeValidation.broken:
  * "RemovedInterface_IGenericError": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IGenericError = requireAssignableTo<TypeOnly<old.IGenericError>, TypeOnly<current.IGenericError>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -562,7 +561,6 @@ declare type old_as_current_for_Interface_IGenericError = requireAssignableTo<Ty
  * typeValidation.broken:
  * "RemovedInterface_IGenericError": {"backCompat": false}
  */
-declare type current_as_old_for_RemovedInterface_IGenericError = requireAssignableTo<TypeOnly<current.IGenericError>, TypeOnly<old.IGenericError>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -832,7 +830,6 @@ declare type current_as_old_for_Interface_IThrottlingWarning = requireAssignable
  * typeValidation.broken:
  * "RemovedInterface_IUsageError": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IUsageError = requireAssignableTo<TypeOnly<old.IUsageError>, TypeOnly<current.IUsageError>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -841,7 +838,6 @@ declare type old_as_current_for_Interface_IUsageError = requireAssignableTo<Type
  * typeValidation.broken:
  * "RemovedInterface_IUsageError": {"backCompat": false}
  */
-declare type current_as_old_for_RemovedInterface_IUsageError = requireAssignableTo<TypeOnly<current.IUsageError>, TypeOnly<old.IUsageError>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
