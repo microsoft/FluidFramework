@@ -19,7 +19,7 @@ import { smokeTest } from "./stressSmoke.js";
 import { ILoadTestConfig } from "./testConfigFile.js";
 import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils.js";
 
-export interface ITestUserConfig {
+interface ITestUserConfig {
 	/* Credentials' key/value description:
 	 * Key    : Username for the client
 	 * Value  : Password specific to that username
@@ -353,7 +353,7 @@ const main = async () => {
 		process.env.DEBUG = log;
 	}
 
-	await smokeTest(testDriver, profile, { verbose, testUsers, profileName });
+	await smokeTest(testDriver, profileName);
 	console.log("Smoke test complete!");
 	const url = await orchestratorProcess(testDriver, profile, {
 		testId,
