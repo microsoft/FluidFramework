@@ -5,12 +5,12 @@
 
 import path from "path";
 import { readFile } from "fs/promises";
+import globby from "globby";
 import ignore from "ignore";
 import * as JSON5 from "json5";
 import { merge } from "ts-deepmerge";
 import { getResolvedFluidRoot } from "../../../common/fluidUtils";
 import { GitRepo } from "../../../common/gitRepo";
-import { globFn } from "../../../common/utils";
 import { LeafWithFileStatDoneFileTask } from "./leafTask";
 
 // switch to regular import once building ESM
@@ -128,18 +128,13 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 			getPathsFromBiomeConfig(config, "formatter", "ignore"),
 		]);
 
-		// Use the include globs to enumerate files
-		const includedPathsP: Promise<string[]>[] = [...includeEntries].map((glob) => {
-			// From the Biome docs (https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained):
-			//
-			// "At the moment, Biome uses a glob library that treats all globs as having a **/ prefix.
-			// This means that src/**/*.js and **/src/**/*.js are treated as identical. They match both src/file.js and
-			// test/src/file.js. This is something we plan to fix in Biome v2.0.0."
-			return globFn(`**/${glob}`, {
-				// glob doesn't ignore node_modules or read .gitignore. It might be better to use globby since it will do all
-				// that automatically, but that would be a new dependency.
-				ignore: `${cwd}/node_modules/**`,
-
+		// From the Biome docs (https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained):
+		//
+		// "At the moment, Biome uses a glob library that treats all globs as having a **/ prefix.
+		// This means that src/**/*.js and **/src/**/*.js are treated as identical. They match both src/file.js and
+		// test/src/file.js. This is something we plan to fix in Biome v2.0.0."
+		const includedPaths = (
+			await globby([...includeEntries], {
 				// We need to interpret the globs from the provided directory
 				cwd,
 
@@ -148,21 +143,55 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 
 				// Don't return directories, only files; Biome includes are only applied to files.
 				// See note at https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained
-				nodir: true,
-			});
-		});
-		const includedPaths = new Set(
-			(await Promise.all(includedPathsP))
-				.flat()
-				// Make the path relative to the package.
-				.map((filePath) => path.relative(this.package.directory, filePath)),
-		);
+				onlyFiles: true,
+			})
+		)
+			// Make the path relative to the package.
+			.map((filePath) => path.relative(this.package.directory, filePath));
+
+		// const includedPathsP: Promise<string[]>[] = [...includeEntries].map((glob) => {
+		// 	// From the Biome docs (https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained):
+		// 	//
+		// 	// "At the moment, Biome uses a glob library that treats all globs as having a **/ prefix.
+		// 	// This means that src/**/*.js and **/src/**/*.js are treated as identical. They match both src/file.js and
+		// 	// test/src/file.js. This is something we plan to fix in Biome v2.0.0."
+		// 	return globby(["*.md", "!README.md"], {
+		// 		// We need to interpret the globs from the provided directory
+		// 		cwd,
+
+		// 		// Return absolute paths so we can more easily make them package-relative
+		// 		absolute: true,
+
+		// 		// Don't return directories, only files; Biome includes are only applied to files.
+		// 		// See note at https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained
+		// 		onlyFiles: true,
+		// 	});
+
+		// 	return globFn(`**/${glob}`, {
+		// 		// glob doesn't ignore node_modules or read .gitignore. It might be better to use globby since it will do all
+		// 		// that automatically, but that would be a new dependency.
+		// 		ignore: `${cwd}/node_modules/**`,
+
+		// 		// Return absolute paths so we can more easily make them package-relative
+		// 		absolute: true,
+
+		// 		// Don't return directories, only files; Biome includes are only applied to files.
+		// 		// See note at https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained
+		// 		nodir: true,
+		// 	});
+		// });
+		// const includedPaths = new Set(
+		// 	(await Promise.all(includedPathsP))
+		// 		.flat()
+		// 		// Make the path relative to the package.
+		// 		.map((filePath) => path.relative(this.package.directory, filePath)),
+		// );
 
 		const ignoreObject = ignore().add([...ignoreEntries]);
 		const filtered = ignoreObject.filter([...includedPaths]);
 
 		this.traceExec(
-			`Biome formatter found ${allPossibleFiles.size} total files, included ${includedPaths.size}, and reduced to ${filtered.length} files by ignore settings.`,
+			`Biome formatter found ${allPossibleFiles.size} total files, included ${includedPaths.length}, and reduced to ${filtered.length} files by ignore settings.`,
 		);
 
 		// Convert repo-relative paths to absolute
