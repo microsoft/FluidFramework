@@ -229,6 +229,12 @@ export function validateVersionScheme(
 		);
 	}
 
+	if (parsedVersion.compare(MINIMUM_PUBLIC_VERSION) >= 0) {
+		throw new Error(
+			`The public version must be < ${MINIMUM_PUBLIC_VERSION}; found ${parsedVersion.format()}`,
+		);
+	}
+
 	if (parsedVersion.prerelease.length > MINIMUM_SEMVER_PRERELEASE_SECTIONS) {
 		if (allowPrereleases) {
 			return true;
