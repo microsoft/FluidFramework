@@ -103,7 +103,7 @@ function getPackageMetadata(packageJsonFilePath) {
 const getScopeKindFromPackage = (packageName) => {
 	const packageScope = PackageName.getScope(packageName);
 	if (packageScope === "") {
-		return undefined;
+		return "";
 	} else if (packageScope === "@fluidframework") {
 		return "FRAMEWORK";
 	} else if (packageScope === "@fluid-example") {
@@ -127,7 +127,7 @@ const getScopeKindFromPackage = (packageName) => {
  */
 const shouldLinkToApiDocs = (packageName) => {
 	const scope = getScopeKindFromPackage(packageName);
-	return scope === "FRAMEWORK" || scope === "EXPERIMENTAL" || scope === "";
+	return scope === "FRAMEWORK" || scope === "EXPERIMENTAL" || packageName === "fluid-framework";
 };
 
 /**
