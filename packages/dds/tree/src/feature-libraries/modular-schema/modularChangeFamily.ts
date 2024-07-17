@@ -315,12 +315,14 @@ export class ModularChangeFamily
 			revisionMetadata,
 		);
 
+		// Currently no field kinds require making changes to cross-field keys during composition, so we can just merge the two tables.
+		const composedCrossFieldKeys = mergeBTrees(change1.crossFieldKeys, change2.crossFieldKeys);
 		return {
 			fieldChanges: composedFields,
 			nodeChanges: composedNodeChanges,
 			nodeToParent: composedNodeToParent,
 			nodeAliases: composedNodeAliases,
-			crossFieldKeys: brand(mergeBTrees(change1.crossFieldKeys, change2.crossFieldKeys)),
+			crossFieldKeys: brand(composedCrossFieldKeys),
 		};
 	}
 
@@ -470,6 +472,9 @@ export class ModularChangeFamily
 				table.fieldToContext.has(fieldChange) ||
 				table.newFieldToBaseField.has(fieldChange)
 			) {
+				// This function handles fields which were not part of the intersection of the two changesets but which need to be updated anyway.
+				// If we've already processed this field then either it is up to date
+				// or there is pending inval which will be handled in processInvalidatedCompositions.
 				continue;
 			}
 
