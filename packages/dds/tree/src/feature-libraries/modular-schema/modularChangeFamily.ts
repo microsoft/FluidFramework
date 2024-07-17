@@ -336,19 +336,16 @@ export class ModularChangeFamily
 
 		const rebaser = getChangeHandler(this.fieldKinds, composedChange.fieldKind).rebaser;
 		const composeNodes = (child1: NodeId | undefined, child2: NodeId | undefined): NodeId => {
-			const id1 = normalizeNodeIdOpt(child1, crossFieldTable.baseChange.nodeAliases);
-			const id2 = normalizeNodeIdOpt(child2, crossFieldTable.newChange.nodeAliases);
-
 			if (
-				id1 !== undefined &&
-				id2 !== undefined &&
-				getFromChangeAtomIdMap(crossFieldTable.newToBaseNodeId, id2) === undefined
+				child1 !== undefined &&
+				child2 !== undefined &&
+				getFromChangeAtomIdMap(crossFieldTable.newToBaseNodeId, child2) === undefined
 			) {
-				setInChangeAtomIdMap(crossFieldTable.newToBaseNodeId, id2, id1);
-				crossFieldTable.pendingCompositions.nodeIdsToCompose.push([id1, id2]);
+				setInChangeAtomIdMap(crossFieldTable.newToBaseNodeId, child2, child1);
+				crossFieldTable.pendingCompositions.nodeIdsToCompose.push([child1, child2]);
 			}
 
-			return id1 ?? id2 ?? fail("Should not compose two undefined nodes");
+			return child1 ?? child2 ?? fail("Should not compose two undefined nodes");
 		};
 
 		const amendedChange = rebaser.compose(
@@ -575,13 +572,11 @@ export class ModularChangeFamily
 			change1Normalized,
 			change2Normalized,
 			(child1, child2) => {
-				const id1 = normalizeNodeIdOpt(child1, crossFieldTable.baseChange.nodeAliases);
-				const id2 = normalizeNodeIdOpt(child2, crossFieldTable.newChange.nodeAliases);
-				if (id1 !== undefined && id2 !== undefined) {
-					setInChangeAtomIdMap(crossFieldTable.newToBaseNodeId, id2, id1);
-					crossFieldTable.pendingCompositions.nodeIdsToCompose.push([id1, id2]);
+				if (child1 !== undefined && child2 !== undefined) {
+					setInChangeAtomIdMap(crossFieldTable.newToBaseNodeId, child2, child1);
+					crossFieldTable.pendingCompositions.nodeIdsToCompose.push([child1, child2]);
 				}
-				return id1 ?? id2 ?? fail("Should not compose two undefined nodes");
+				return child1 ?? child2 ?? fail("Should not compose two undefined nodes");
 			},
 			idAllocator,
 			manager,
@@ -1278,11 +1273,7 @@ export class ModularChangeFamily
 			stateChange: NodeAttachState | undefined,
 		): NodeId | undefined => {
 			if (child !== undefined && baseChild !== undefined) {
-				crossFieldTable.nodeIdPairs.push([
-					normalizeNodeId(child, crossFieldTable.newChange.nodeAliases),
-					normalizeNodeId(baseChild, crossFieldTable.baseChange.nodeAliases),
-					stateChange,
-				]);
+				crossFieldTable.nodeIdPairs.push([child, baseChild, stateChange]);
 			}
 			return child;
 		};
@@ -2099,7 +2090,6 @@ interface RebaseTable extends CrossFieldTable<FieldChange> {
 
 	/**
 	 * List of unprocessed (newId, baseId) pairs encountered so far.
-	 * The IDs used should always be normalized.
 	 */
 	readonly nodeIdPairs: [NodeId, NodeId, NodeAttachState | undefined][];
 
@@ -2160,7 +2150,6 @@ interface PendingCompositions {
 	/**
 	 * Each entry in this list represents a node with both base and new changes which have not yet been composed.
 	 * Entries are of the form [baseId, newId].
-	 * The IDs used should be normalized.
 	 */
 	readonly nodeIdsToCompose: [NodeId, NodeId][];
 
@@ -3034,13 +3023,9 @@ function normalizeFieldId(fieldId: FieldId, nodeAliases: ChangeAtomIdMap<NodeId>
 		: fieldId;
 }
 
-function normalizeNodeIdOpt(
-	nodeId: NodeId | undefined,
-	nodeAliases: ChangeAtomIdMap<NodeId>,
-): NodeId | undefined {
-	return nodeId !== undefined ? normalizeNodeId(nodeId, nodeAliases) : undefined;
-}
-
+/**
+ * @returns The canonical form of nodeId, according to nodeAliases
+ */
 function normalizeNodeId(nodeId: NodeId, nodeAliases: ChangeAtomIdMap<NodeId>): NodeId {
 	let currentId = nodeId;
 
