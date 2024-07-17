@@ -22,6 +22,9 @@ import type {
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
 
+// TODOs:
+// - Throw an error when polymorphic schemas are ambiguous
+
 /**
  * Generates a JSON schema representation from a simple tree schema.
  * @internal
@@ -80,6 +83,10 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): ArrayNodeJsonSch
 }
 
 function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): LeafNodeJsonSchema {
+	if (schema.type === "fluid-handle") {
+		throw new Error("Fluid handles are not yet round-trip supported via JSON schema.");
+	}
+
 	return {
 		type: schema.type,
 		kind: "leaf",
@@ -112,19 +119,23 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): ObjectNodeJson
 }
 
 function convertMapNodeSchema(schema: SimpleMapNodeSchema): MapNodeJsonSchema {
-	const allowedTypes: JsonDefinitionRef[] = [];
-	schema.allowedTypes.forEach((type) => {
-		allowedTypes.push(createRefNode(type));
-	});
-	return {
-		type: "object",
-		kind: "map",
-		patternProperties: {
-			"^(.*)+$": {
-				anyOf: allowedTypes,
-			},
-		},
-	};
+	throw new Error("Map nodes are not yet round-trip supported via JSON schema.");
+
+	// TODO: once map inputs can be simple records, we should be able to make this round-trip correctly.
+	//
+	// const allowedTypes: JsonDefinitionRef[] = [];
+	// schema.allowedTypes.forEach((type) => {
+	// 	allowedTypes.push(createRefNode(type));
+	// });
+	// return {
+	// 	type: "object",
+	// 	kind: "map",
+	// 	patternProperties: {
+	// 		"^(.*)+$": {
+	// 			anyOf: allowedTypes,
+	// 		},
+	// 	},
+	// };
 }
 
 function createRefNode(schemaId: string): JsonDefinitionRef {

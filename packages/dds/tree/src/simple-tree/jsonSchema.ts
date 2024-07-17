@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { SimpleLeafSchemaKind, SimpleNodeSchemaKind } from "./simpleSchema.js";
+import type { SimpleNodeSchemaKind } from "./simpleSchema.js";
 
 /**
  * TODO: document expected format.
@@ -14,7 +14,13 @@ export type JsonSchemaId = string;
 /**
  * @internal
  */
-export type JsonSchemaType = "object" | "array" | SimpleLeafSchemaKind;
+export type JsonSchemaType = "object" | "array" | JsonLeafSchemaType ;
+
+
+/**
+ * @internal
+ */
+export type JsonLeafSchemaType = "string" | "number" | "boolean" | "null" ;
 
 /**
  * @internal
@@ -71,8 +77,8 @@ export interface MapNodeJsonSchema extends NodeJsonSchemaBase<"map", "object"> {
 /**
  * @internal
  */
-export interface LeafNodeJsonSchema extends NodeJsonSchemaBase<"leaf", SimpleLeafSchemaKind> {
-	readonly type: SimpleLeafSchemaKind;
+export interface LeafNodeJsonSchema extends NodeJsonSchemaBase<"leaf", JsonLeafSchemaType> {
+	readonly type: JsonLeafSchemaType;
 }
 
 /**

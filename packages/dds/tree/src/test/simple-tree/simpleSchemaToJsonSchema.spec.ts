@@ -14,6 +14,7 @@ import { getJsonValidator } from "./jsonSchemaUtilities.js";
 
 // TODOs:
 // - Identifier fields
+// - Ambiguous polymorphism cases
 
 describe.only("simpleSchemaToJsonSchema", () => {
 	it("Leaf schema", async () => {
@@ -95,7 +96,7 @@ describe.only("simpleSchemaToJsonSchema", () => {
 		validator(["Hello", 42, "world"], false);
 	});
 
-	it("Map schema", () => {
+	it.skip("Map schema", () => {
 		const input: SimpleTreeSchema = {
 			definitions: new Map<string, SimpleNodeSchema>([
 				["test.map", { kind: "map", allowedTypes: new Set<string>(["test.string"]) }],
