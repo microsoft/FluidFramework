@@ -89,6 +89,31 @@ describe("ObjectNode", () => {
 		});
 	});
 
+	it("accessor local properties", () => {
+		const thisList: unknown[] = [];
+		class Test extends schemaFactory.object("test", {
+			x: schemaFactory.number,
+		}) {
+			public get y() {
+				assert.equal(this, n);
+				thisList.push(this);
+				return this.x;
+			}
+			public set y(value: number) {
+				assert.equal(this, n);
+				thisList.push(this);
+				this.x = value;
+			}
+		}
+
+		const n = hydrate(Test, { x: 1 });
+		n.y = 2;
+		assert.equal(n.x, 2);
+		n.x = 3;
+		assert.equal(n.y, 3);
+		assert.deepEqual(thisList, [n, n]);
+	});
+
 	it("empty property pojo deep equals", () => {
 		const Schema = schemaFactory.object("x", {
 			foo: schemaFactory.optional(schemaFactory.number),

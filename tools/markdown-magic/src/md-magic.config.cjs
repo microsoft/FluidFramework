@@ -10,10 +10,10 @@ const {
 	formattedGeneratedContentBody,
 	getPackageMetadata,
 	getScopeKindFromPackage,
+	isPublic,
 	parseBooleanOption,
 	parseHeadingOptions,
 	resolveRelativePackageJsonPath,
-	shouldLinkToApiDocs,
 } = require("./utilities.cjs");
 const {
 	apiDocsLinkSectionTransform,
@@ -132,11 +132,11 @@ const generateTrademarkSection = (headingOptions) =>
  * Will include the section if the property is found, and one of our special paths is found (`/alpha`, `/beta`, or `/legacy`).
  * Can be explicitly disabled by specifying `FALSE`.
  * @param {"TRUE" | "FALSE" | undefined} options.apiDocs - (optional) Whether or not to include a section pointing readers to the package's generated API documentation on <fluidframework.com>.
- * Default: `TRUE` if the package is a member of the `@fluidframework` or `@fluid-experimental` namespaces, of if the package is unscoped (e.g. "fluid-framework"). `FALSE` otherwise.
+ * Default: `TRUE` if the package is end-user facing (i.e., a member of the `@fluidframework` or `@fluid-experimental` namespaces, or "fluid-framework"). `FALSE` otherwise.
  * @param {"TRUE" | "FALSE" | undefined} options.scripts - (optional) Whether or not to include a section enumerating the package.json file's dev scripts.
  * Default: `FALSE`.
  * @param {"TRUE" | "FALSE" | undefined} options.clientRequirements - (optional) Whether or not to include a section listing Fluid Framework's minimum client requirements.
- * Default: `TRUE`.
+ * Default: `TRUE` if the package is end-user facing (i.e., a member of the `@fluidframework` or `@fluid-experimental` namespaces, or "fluid-framework"). `FALSE` otherwise.
  * @param {"TRUE" | "FALSE" | undefined} options.contributionGuidelines - (optional) Whether or not to include a section outlining fluid-framework's contribution guidelines.
  * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.help - (optional) Whether or not to include a developer help section.
@@ -163,7 +163,7 @@ function libraryPackageReadmeFooterTransform(content, options, config) {
 	const sections = [];
 
 	const includeApiDocsSection = parseBooleanOption(options.apiDocs, () =>
-		shouldLinkToApiDocs(packageName),
+		isPublic(packageName),
 	);
 	if (includeApiDocsSection) {
 		sections.push(generateApiDocsLinkSection(packageName, sectionHeadingOptions));
@@ -175,7 +175,10 @@ function libraryPackageReadmeFooterTransform(content, options, config) {
 		sections.push(generatePackageScriptsSection(scriptsTable, sectionHeadingOptions));
 	}
 
-	if (options.clientRequirements !== "FALSE") {
+	const includeClientRequirementsSection = parseBooleanOption(options.clientRequirements, () =>
+		isPublic(packageName),
+	);
+	if (includeClientRequirementsSection) {
 		sections.push(generateClientRequirementsSection(sectionHeadingOptions));
 	}
 

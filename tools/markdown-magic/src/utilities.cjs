@@ -94,19 +94,27 @@ function getPackageMetadata(packageJsonFilePath) {
 /**
  * Gets the appropriate special scope kind for the provided package name, if applicable.
  *
+ * @remarks for an overview of the Fluid Framework's package scopes, see {@link https://github.com/microsoft/FluidFramework/wiki/npm-package-scopes}.
+ *
  * @param {string} packageName
- * @returns {"FRAMEWORK" | "EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | "TOOLS" | undefined} A scope kind based on the package's scope (namespace).
- * Will be `undefined` if the package has no scope, or has an unrecognized scope.
+ * @returns {"" | "FRAMEWORK" | "EXAMPLE" | "EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | "TOOLS" | undefined}
+ * A scope kind based on the package's scope (namespace).
+ * Will be an empty string if the package has no scope.
+ * Will be `undefined` if the package has an unrecognized scope.
  */
 const getScopeKindFromPackage = (packageName) => {
 	const packageScope = PackageName.getScope(packageName);
-	if (packageScope === `@fluidframework`) {
+	if (packageScope === "") {
+		return "";
+	} else if (packageScope === "@fluidframework") {
 		return "FRAMEWORK";
-	} else if (packageScope === `@fluid-experimental`) {
+	} else if (packageScope === "@fluid-example") {
+		return "EXAMPLE";
+	} else if (packageScope === "@fluid-experimental") {
 		return "EXPERIMENTAL";
-	} else if (packageScope === `@fluid-internal`) {
+	} else if (packageScope === "@fluid-internal") {
 		return "INTERNAL";
-	} else if (packageScope === `@fluid-private`) {
+	} else if (packageScope === "@fluid-private") {
 		return "PRIVATE";
 	} else if (packageScope === "@fluid-tools") {
 		return "TOOLS";
@@ -116,12 +124,15 @@ const getScopeKindFromPackage = (packageName) => {
 };
 
 /**
- * Determines if the package's README should link to the Fluid Framework API documentation for that package by default.
+ * Determines if the package is end-user facing or not.
+ * For the purposes of README content generation, this is true for "fluid-framework" and packages in the "@fluidframework" and "@fluid-experimental" scoped.
+ *
+ * @remarks Used to determine which automatically generated sections should be included in package READMEs, etc.
  * @param {string} packageName
  */
-const shouldLinkToApiDocs = (packageName) => {
+const isPublic = (packageName) => {
 	const scope = getScopeKindFromPackage(packageName);
-	return scope === "FRAMEWORK" || scope === "EXPERIMENTAL" || scope === undefined;
+	return scope === "FRAMEWORK" || scope === "EXPERIMENTAL" || packageName === "fluid-framework";
 };
 
 /**
@@ -237,10 +248,10 @@ module.exports = {
 	formattedEmbeddedContentBody,
 	getPackageMetadata,
 	getScopeKindFromPackage,
+	isPublic,
 	parseBooleanOption,
 	parseHeadingOptions,
 	readTemplate,
 	resolveRelativePackageJsonPath,
 	resolveRelativePath,
-	shouldLinkToApiDocs,
 };
