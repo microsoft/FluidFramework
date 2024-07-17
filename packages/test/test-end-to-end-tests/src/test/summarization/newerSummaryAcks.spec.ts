@@ -80,7 +80,7 @@ describeCompat(
 			configProvider.clear();
 		});
 
-		// 278268
+		// 278268, 280572
 		itExpects.only(
 			"closes the container on getting a newer summary ack and fetching the corresponding snapshot",
 			[{ eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed" }],
