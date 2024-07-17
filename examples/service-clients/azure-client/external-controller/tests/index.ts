@@ -5,7 +5,13 @@
 
 /* eslint-disable import/no-internal-modules */
 
-import { SharedMap } from "@fluidframework/map/internal";
+import {
+	IContainer,
+	IFluidModuleWithDetails,
+	IRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import { createDOProviderContainerRuntimeFactory } from "@fluidframework/fluid-static/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
@@ -15,17 +21,11 @@ import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
+import type { IFluidContainer, ContainerSchema } from "fluid-framework";
+import { SharedMap } from "fluid-framework/legacy";
 
-import type { IFluidContainer, ContainerSchema } from "@fluidframework/fluid-static";
-import { createDOProviderContainerRuntimeFactory } from "@fluidframework/fluid-static/internal";
 import { DiceRollerController } from "../src/controller.js";
 import { makeAppView } from "../src/view.js";
-import {
-	IContainer,
-	IFluidModuleWithDetails,
-	IRuntimeFactory,
-} from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
 
 // The local server needs to be shared across the Loader instances for collaboration to happen
 const localServerMap = new Map<string, ILocalDeltaConnectionServer>();
