@@ -861,7 +861,6 @@ export class ModularChangeFamily
 			rebasedNodeToParent: cloneNestedMap(change.nodeToParent),
 			rebasedCrossFieldKeys: brand(change.crossFieldKeys.clone()),
 			nodeIdPairs: [],
-			affectedNewFields: newBTree(),
 			affectedBaseFields: newBTree(),
 		};
 
@@ -883,14 +882,6 @@ export class ModularChangeFamily
 			rebasedNodes,
 			genId,
 			constraintState,
-			rebaseMetadata,
-		);
-
-		this.rebaseFieldsWithoutBaseChanges(
-			rebasedFields,
-			rebasedNodes,
-			crossFieldTable,
-			genId,
 			rebaseMetadata,
 		);
 
@@ -1010,59 +1001,6 @@ export class ModularChangeFamily
 		}
 
 		return rebasedFields;
-	}
-
-	// This processes fields which have no base changes but have been invalidated by another field.
-	private rebaseFieldsWithoutBaseChanges(
-		rebasedFields: FieldChangeMap,
-		rebasedNodes: ChangeAtomIdMap<NodeChangeset>,
-		crossFieldTable: RebaseTable,
-		genId: IdAllocator,
-		metadata: RebaseRevisionMetadata,
-	): void {
-		for (const [revision, localId, fieldKey] of crossFieldTable.affectedNewFields.keys()) {
-			const nodeId: NodeId | undefined =
-				localId !== undefined ? { revision, localId } : undefined;
-
-			const fieldMap = fieldMapFromNodeId(rebasedFields, rebasedNodes, nodeId);
-
-			const fieldChange = fieldMap.get(fieldKey);
-			assert(fieldChange !== undefined, "Cross field key registered for empty field");
-
-			if (crossFieldTable.rebasedFields.has(fieldChange)) {
-				// This field has already been processed because there were base changes.
-				continue;
-			}
-
-			const handler = getChangeHandler(this.fieldKinds, fieldChange.fieldKind);
-			const baseFieldChange: FieldChange = {
-				...fieldChange,
-				change: brand(handler.createEmpty()),
-			};
-
-			const fieldId: FieldId = { nodeId, field: fieldKey };
-			const rebasedField = handler.rebaser.rebase(
-				fieldChange.change,
-				baseFieldChange.change,
-				rebaseChildInFieldWithNoBaseChanges,
-				genId,
-				new RebaseManager(crossFieldTable, baseFieldChange, fieldId),
-				metadata,
-			);
-
-			const rebasedFieldChange: FieldChange = { ...fieldChange, change: brand(rebasedField) };
-			fieldMap.set(fieldKey, rebasedFieldChange);
-
-			// TODO: Deduplicate these lines with other rebase locations.
-			crossFieldTable.baseFieldToContext.set(baseFieldChange, {
-				newChange: fieldChange,
-				baseChange: baseFieldChange,
-				rebasedChange: rebasedFieldChange,
-				fieldId,
-				baseNodeIds: [],
-			});
-			crossFieldTable.rebasedFields.add(rebasedFieldChange);
-		}
 	}
 
 	// This processes fields which have no new changes but have been invalidated by another field.
@@ -2097,8 +2035,6 @@ interface RebaseTable extends CrossFieldTable<FieldChange> {
 	 * List of unprocessed (newId, baseId) pairs encountered so far.
 	 */
 	readonly nodeIdPairs: [NodeId, NodeId, NodeAttachState | undefined][];
-
-	readonly affectedNewFields: TupleBTree<FieldIdKey, boolean>;
 	readonly affectedBaseFields: TupleBTree<FieldIdKey, boolean>;
 }
 
@@ -2331,32 +2267,25 @@ class RebaseManager extends CrossFieldManagerI<FieldChange> {
 				count,
 			]);
 
-			if (newFieldIds.length > 0) {
-				for (const newFieldId of newFieldIds) {
-					this.table.affectedNewFields.set(
-						[newFieldId.nodeId?.revision, newFieldId.nodeId?.localId, newFieldId.field],
-						true,
-					);
-				}
-			} else {
-				const baseFieldIds = getFieldsForCrossFieldKey(this.table.baseChange, [
-					target,
-					revision,
-					id,
-					count,
-				]);
+			assert(
+				newFieldIds.length === 0,
+				"TODO: Modifying a cross-field key from the new changeset is currently unsupported",
+			);
 
-				assert(
-					baseFieldIds.length > 0,
-					"Cross field key not registered in base or new change",
+			const baseFieldIds = getFieldsForCrossFieldKey(this.table.baseChange, [
+				target,
+				revision,
+				id,
+				count,
+			]);
+
+			assert(baseFieldIds.length > 0, "Cross field key not registered in base or new change");
+
+			for (const baseFieldId of baseFieldIds) {
+				this.table.affectedBaseFields.set(
+					[baseFieldId.nodeId?.revision, baseFieldId.nodeId?.localId, baseFieldId.field],
+					true,
 				);
-
-				for (const baseFieldId of baseFieldIds) {
-					this.table.affectedBaseFields.set(
-						[baseFieldId.nodeId?.revision, baseFieldId.nodeId?.localId, baseFieldId.field],
-						true,
-					);
-				}
 			}
 		}
 
@@ -3086,13 +3015,4 @@ function cloneNestedMap<K1, K2, V>(map: NestedMap<K1, K2, V>): NestedMap<K1, K2,
 	const cloned: NestedMap<K1, K2, V> = new Map();
 	populateNestedMap(map, cloned, true);
 	return cloned;
-}
-
-function rebaseChildInFieldWithNoBaseChanges(
-	child: NodeId | undefined,
-	baseChild: NodeId | undefined,
-	_stateChange: NodeAttachState | undefined,
-): NodeId | undefined {
-	assert(baseChild === undefined, "There should be no base changes in this field");
-	return child;
 }
