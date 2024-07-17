@@ -31,8 +31,7 @@ import {
 	brand,
 	fail,
 	idAllocatorFromMaxId,
-	nestedMapFromFlatList,
-	nestedMapToFlatList,
+	mapNestedMap,
 	setInNestedMap,
 } from "../../../util/index.js";
 import {
@@ -234,12 +233,9 @@ const dummyRevisionMetadata: RevisionMetadataSource = {
 };
 
 export function removeAliases(changeset: ModularChangeset): ModularChangeset {
-	const updatedNodeToParent = nestedMapFromFlatList(
-		nestedMapToFlatList(changeset.nodeToParent).map(([revision, localId, _field]) => [
-			revision,
-			localId,
-			getParentFieldId(changeset, { revision, localId }),
-		]),
+	const updatedNodeToParent = mapNestedMap(
+		changeset.nodeToParent,
+		(_field, revision, localId) => getParentFieldId(changeset, { revision, localId }),
 	);
 
 	const updatedCrossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();
