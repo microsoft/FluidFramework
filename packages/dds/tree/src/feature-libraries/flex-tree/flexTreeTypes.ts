@@ -99,14 +99,6 @@ export interface FlexTreeEntity<out TSchema = unknown> {
 	readonly context: FlexTreeContext;
 
 	/**
-	 * Gets the {@link TreeStatus} of this tree.
-	 *
-	 * @remarks
-	 * For non-root fields, this is the status of the parent node, since fields do not have a separate lifetime.
-	 */
-	treeStatus(): TreeStatus;
-
-	/**
 	 * Iterate through all nodes/fields in this field/node.
 	 *
 	 * @remarks
@@ -588,7 +580,6 @@ export const reservedObjectNodeFieldPropertyNames = [
 	"on",
 	"parentField",
 	"schema",
-	"treeStatus",
 	"tryGetField",
 	"type",
 	"value",

@@ -34,7 +34,6 @@ import {
 	type FlexTreeUnboxNodeUnion,
 	type FlexibleFieldContent,
 	type FlexibleNodeSubSequence,
-	TreeStatus,
 	flexTreeMarker,
 	indexForAt,
 } from "../flex-tree/index.js";
@@ -210,10 +209,6 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 		return mapIterable(this.mapTree.fields.entries(), ([key, field]) =>
 			getOrCreateField(this, key, field, this.schema.getFieldSchema(key)),
 		);
-	}
-
-	public treeStatus(): TreeStatus {
-		return TreeStatus.New;
 	}
 
 	public get value(): Value {
@@ -418,9 +413,6 @@ export const rootMapTreeField: MapTreeField<FlexAllowedTypes> = {
 	get context(): FlexTreeContext {
 		return fail("MapTreeField does not implement context");
 	},
-	treeStatus(): TreeStatus {
-		return TreeStatus.New;
-	},
 	mapTrees: [],
 };
 
@@ -491,10 +483,6 @@ class MapTreeField<T extends FlexAllowedTypes> implements FlexTreeField {
 
 	public get context(): FlexTreeContext {
 		return fail("MapTreeField does not implement context");
-	}
-
-	public treeStatus(): TreeStatus {
-		return TreeStatus.New;
 	}
 }
 

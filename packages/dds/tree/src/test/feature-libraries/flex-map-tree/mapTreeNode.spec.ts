@@ -9,7 +9,6 @@ import {
 	FieldKinds,
 	FlexFieldSchema,
 	SchemaBuilderBase,
-	TreeStatus,
 } from "../../../feature-libraries/index.js";
 import { EmptyKey, type FieldKey, type MapTree } from "../../../core/index.js";
 import { leaf as leafDomain } from "../../../domains/index.js";
@@ -207,12 +206,6 @@ describe("MapTreeNodes", () => {
 		assert.equal(map.is(fieldNodeSchema), false);
 		assert.equal(fieldNode.is(objectSchema), false);
 		assert.equal(object.is(mapSchema), false);
-	});
-
-	it("can get their tree status", () => {
-		assert.equal(map.treeStatus(), TreeStatus.New);
-		assert.equal(fieldNode.treeStatus(), TreeStatus.New);
-		assert.equal(object.treeStatus(), TreeStatus.New);
 	});
 
 	describe("cannot", () => {
