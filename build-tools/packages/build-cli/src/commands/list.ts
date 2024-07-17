@@ -5,7 +5,7 @@
 
 import { writeFileSync } from "node:fs";
 import path from "node:path";
-import { MonoRepo, Package } from "@fluidframework/build-tools";
+import { Package, Workspace } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { mkdirpSync } from "fs-extra";
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args.js";
@@ -97,12 +97,12 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 			return [item];
 		}
 
-		if (rgOrPackage === undefined || !(rgOrPackage instanceof MonoRepo)) {
+		if (rgOrPackage === undefined || !(rgOrPackage instanceof Workspace)) {
 			this.error(`No release group or package found using name '${lookupName}'.`, { exit: 1 });
 		}
 
 		const filterOptions = parsePackageFilterFlags(this.flags);
-		const packageList = await pnpmList(rgOrPackage.repoPath);
+		const packageList = await pnpmList(rgOrPackage.directory);
 		const filteredPackages = await filterPackages(packageList, filterOptions);
 		const filtered = filteredPackages
 			.reverse()

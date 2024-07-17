@@ -66,7 +66,7 @@ export default class GenerateUpcomingCommand extends BaseCommand<
 		const context = await this.getContext();
 		const { flags, logger } = this;
 
-		const releaseGroup = context.repo.releaseGroups.get(flags.releaseGroup);
+		const releaseGroup = context.repo.workspaces.get(flags.releaseGroup);
 		if (releaseGroup === undefined) {
 			this.errorLog(`Unknown release group: ${flags.releaseGroup}`);
 			this.exit(2);

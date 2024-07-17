@@ -8,7 +8,7 @@ import * as path from "path";
 import * as semver from "semver";
 
 import { defaultLogger } from "../common/logging";
-import { MonoRepo } from "../common/monoRepo";
+import { Workspace } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import {
 	existsSync,
@@ -150,7 +150,7 @@ export async function symlinkPackage(
 	options: ISymlinkOptions,
 ) {
 	let count = 0;
-	const monoRepoNodeModulePath = pkg.monoRepo?.getNodeModulePath();
+	const monoRepoNodeModulePath = pkg.workspace?.getNodeModulePath();
 
 	if (monoRepoNodeModulePath && !existsSync(monoRepoNodeModulePath)) {
 		// If the node_modules isn't install at all, just don't check
@@ -165,7 +165,7 @@ export async function symlinkPackage(
 		// Check and fix link if it is a known package and version satisfy the version.
 		// TODO: check of extraneous symlinks
 		if (depBuildPackage) {
-			const sameMonoRepo = MonoRepo.isSame(pkg.monoRepo, depBuildPackage.monoRepo);
+			const sameMonoRepo = Workspace.isSame(pkg.workspace, depBuildPackage.workspace);
 			const satisfied =
 				version.startsWith("workspace:") || semver.satisfies(depBuildPackage.version, version);
 			traceSymLink(

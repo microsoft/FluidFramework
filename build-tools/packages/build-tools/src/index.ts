@@ -9,9 +9,13 @@ export {
 	FluidRepo,
 	type BrokenCompatTypes,
 } from "./common/fluidRepo";
-export { getResolvedFluidRoot, loadFluidBuildConfig } from "./common/fluidUtils";
-export type { Logger } from "./common/logging";
-export { MonoRepo } from "./common/monoRepo";
+export {
+	getResolvedFluidRoot,
+	getFluidBuildConfig,
+	loadFluidBuildConfig,
+} from "./common/fluidUtils";
+export type { Logger, ErrorLoggingFunction, LoggingFunction } from "./common/logging";
+export { Workspace } from "./common/monoRepo";
 export {
 	Package,
 	type PackageJson,

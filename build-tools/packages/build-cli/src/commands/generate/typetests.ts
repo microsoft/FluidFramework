@@ -524,7 +524,7 @@ export function generateCompatibilityTestCases(
 				? {
 						prefix: "current",
 						...oldTypeData,
-						kind: `Removed${oldTypeData.kind}`,
+						kind: `Removed${oldTypeData.name}`,
 						removed: true,
 					}
 				: {

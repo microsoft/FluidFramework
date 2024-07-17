@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MonoRepo, Package } from "@fluidframework/build-tools";
+import { Package, Workspace } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
 // eslint-disable-next-line import/no-deprecated
 import { Context, isMonoRepoKind } from "./library/index.js";
@@ -25,10 +25,10 @@ export const packageOrReleaseGroupArg = Args.custom({
 export const findPackageOrReleaseGroup = (
 	name: string,
 	context: Context,
-): Package | MonoRepo | undefined => {
+): Package | Workspace | undefined => {
 	// eslint-disable-next-line import/no-deprecated
 	if (isMonoRepoKind(name)) {
-		return context.repo.releaseGroups.get(name);
+		return context.repo.workspaces.get(name);
 	}
 
 	return (

@@ -155,7 +155,7 @@ export abstract class ReleaseReportBaseCommand<
 			rgs.push(releaseGroupOrPackage);
 		} else if (releaseGroupOrPackage === undefined) {
 			// No filter, so include all release groups and packages
-			rgs.push(...([...context.repo.releaseGroups.keys()] as ReleaseGroup[]));
+			rgs.push(...([...context.repo.workspaces.keys()] as ReleaseGroup[]));
 			pkgs.push(...context.independentPackages.map((p) => p.name));
 		} else {
 			// Filter to only the specified package
@@ -578,7 +578,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 						previousVersion: prevVer === DEFAULT_MIN_VERSION ? undefined : prevVer,
 						date: latestDate,
 						releaseType: bumpType,
-						releaseGroup: pkg.monoRepo?.releaseGroup,
+						releaseGroup: pkg.releaseGroup as ReleaseGroup,
 						isNewRelease,
 						ranges,
 					};

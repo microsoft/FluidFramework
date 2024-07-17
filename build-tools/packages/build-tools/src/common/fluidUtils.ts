@@ -12,6 +12,7 @@ import { getPackages } from "@manypkg/get-packages";
 import { readJson } from "fs-extra";
 import { commonOptions } from "./commonOptions";
 import { IFluidBuildConfig } from "./fluidRepo";
+import { type PackageJson } from "./npmPackage";
 import { realpathAsync } from "./utils";
 
 // switch to regular import once building ESM
@@ -27,7 +28,7 @@ async function isFluidRootPackage(dir: string) {
 		return false;
 	}
 
-	const parsed = await readJson(filename);
+	const parsed: PackageJson = await readJson(filename);
 	if (parsed.private === true) {
 		return true;
 	}

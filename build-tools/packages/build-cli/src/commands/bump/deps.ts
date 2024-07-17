@@ -8,7 +8,7 @@ import chalk from "chalk";
 import prompts from "prompts";
 import stripAnsi from "strip-ansi";
 
-import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
+import { FluidRepo, Workspace } from "@fluidframework/build-tools";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
 import {
@@ -169,7 +169,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		 */
 		const depsToUpdate: string[] = [];
 
-		if (rgOrPackage instanceof MonoRepo) {
+		if (rgOrPackage instanceof Workspace) {
 			depsToUpdate.push(
 				...rgOrPackage.packages
 					.filter((pkg) => pkg.packageJson.private !== true)
@@ -187,8 +187,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 				this.error(`Package not found: ${rgOrPackage.name}`);
 			}
 
-			if (pkg.monoRepo !== undefined) {
-				const rg = pkg.monoRepo.kind;
+			if (pkg.workspace !== undefined) {
+				const rg = pkg.workspace.name;
 				this.errorLog(`${pkg.name} is part of the ${rg} release group.`);
 				this.errorLog(
 					`If you want to update dependencies on that package, run the following command:\n\n    ${
@@ -219,7 +219,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 						context,
 						flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
 						depsToUpdate,
-						rgOrPackage instanceof MonoRepo ? rgOrPackage.releaseGroup : undefined,
+						rgOrPackage instanceof Workspace ? (rgOrPackage.name as ReleaseGroup) : undefined,
 						/* prerelease */ flags.prerelease,
 						/* writeChanges */ !flags.testMode,
 						this.logger,
@@ -228,7 +228,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 						context,
 						flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
 						depsToUpdate,
-						rgOrPackage instanceof MonoRepo ? rgOrPackage.releaseGroup : undefined,
+						rgOrPackage instanceof Workspace ? (rgOrPackage.name as ReleaseGroup) : undefined,
 						flags.updateType,
 						/* prerelease */ flags.prerelease,
 						/* writeChanges */ !flags.testMode,
@@ -247,9 +247,9 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			const updatedReleaseGroups: ReleaseGroup[] = [
 				...new Set(
 					updatedPackages
-						.filter((p) => p.monoRepo !== undefined)
+						.filter((p) => p.workspace !== undefined)
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						.map((p) => p.monoRepo!.releaseGroup),
+						.map((p) => p.workspace!.name as ReleaseGroup),
 				),
 			];
 
@@ -260,7 +260,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			}
 
 			for (const pkg of updatedPackages) {
-				if (pkg.monoRepo === undefined) {
+				if (pkg.workspace === undefined) {
 					changedVersionsString.push(indentString(`${pkg.name}`));
 				}
 			}

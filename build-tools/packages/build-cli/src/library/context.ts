@@ -100,7 +100,7 @@ export class Context {
 		public readonly originalBranchName: string,
 	) {
 		// Load the package
-		this.repo = FluidRepo.create(this.gitRepo.resolvedRoot);
+		this.repo = new FluidRepo(this.gitRepo.resolvedRoot);
 		this.fullPackageMap = this.repo.createPackageMap();
 		this.rootFluidBuildConfig = loadFluidBuildConfig(this.repo.resolvedRoot);
 	}
@@ -125,7 +125,7 @@ export class Context {
 	 * @returns An array of packages that belong to the release group
 	 */
 	public packagesInReleaseGroup(releaseGroup: string): Package[] {
-		const packages = this.packages.filter((pkg) => pkg.monoRepo?.kind === releaseGroup);
+		const packages = this.packages.filter((pkg) => pkg.workspace?.name === releaseGroup);
 		return packages;
 	}
 
@@ -139,7 +139,7 @@ export class Context {
 		const packages =
 			releaseGroup instanceof Package
 				? this.packages.filter((p) => p.name !== releaseGroup.name)
-				: this.packages.filter((pkg) => pkg.monoRepo?.kind !== releaseGroup);
+				: this.packages.filter((pkg) => pkg.workspace?.name !== releaseGroup);
 		return packages;
 	}
 
@@ -148,7 +148,7 @@ export class Context {
 	 * @returns An array of packages in the repo that are not associated with a release group.
 	 */
 	public get independentPackages(): Package[] {
-		const packages = this.packages.filter((pkg) => pkg.monoRepo === undefined);
+		const packages = this.packages.filter((pkg) => pkg.workspace === undefined);
 		return packages;
 	}
 
@@ -170,7 +170,7 @@ export class Context {
 		let ver = "";
 
 		if (isMonoRepoKind(key)) {
-			const rgRepo = this.repo.releaseGroups.get(key);
+			const rgRepo = this.repo.workspaces.get(key);
 			if (rgRepo === undefined) {
 				throw new Error(`Release group not found: ${key}`);
 			}
