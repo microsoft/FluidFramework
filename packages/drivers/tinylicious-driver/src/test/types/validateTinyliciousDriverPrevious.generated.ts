@@ -20,87 +20,78 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_InsecureTinyliciousTokenProvider": {"forwardCompat": false}
+ * "Class_InsecureTinyliciousTokenProvider": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_InsecureTinyliciousTokenProvider = requireAssignableTo<TypeOnly<old.InsecureTinyliciousTokenProvider>, TypeOnly<current.InsecureTinyliciousTokenProvider>>
+declare type old_as_current_for_Class_InsecureTinyliciousTokenProvider = requireAssignableTo<TypeOnly<old.InsecureTinyliciousTokenProvider>, TypeOnly<current.InsecureTinyliciousTokenProvider>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_InsecureTinyliciousTokenProvider": {"backCompat": false}
+ * "Class_InsecureTinyliciousTokenProvider": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_InsecureTinyliciousTokenProvider = requireAssignableTo<TypeOnly<current.InsecureTinyliciousTokenProvider>, TypeOnly<old.InsecureTinyliciousTokenProvider>>
+declare type current_as_old_for_Class_InsecureTinyliciousTokenProvider = requireAssignableTo<TypeOnly<current.InsecureTinyliciousTokenProvider>, TypeOnly<old.InsecureTinyliciousTokenProvider>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_InsecureTinyliciousTokenProvider": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_InsecureTinyliciousTokenProvider = requireAssignableTo<TypeOnly<typeof current.InsecureTinyliciousTokenProvider>, TypeOnly<typeof old.InsecureTinyliciousTokenProvider>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_InsecureTinyliciousUrlResolver": {"forwardCompat": false}
+ * "Class_InsecureTinyliciousUrlResolver": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_InsecureTinyliciousUrlResolver = requireAssignableTo<TypeOnly<old.InsecureTinyliciousUrlResolver>, TypeOnly<current.InsecureTinyliciousUrlResolver>>
+declare type old_as_current_for_Class_InsecureTinyliciousUrlResolver = requireAssignableTo<TypeOnly<old.InsecureTinyliciousUrlResolver>, TypeOnly<current.InsecureTinyliciousUrlResolver>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_InsecureTinyliciousUrlResolver": {"backCompat": false}
+ * "Class_InsecureTinyliciousUrlResolver": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_InsecureTinyliciousUrlResolver = requireAssignableTo<TypeOnly<current.InsecureTinyliciousUrlResolver>, TypeOnly<old.InsecureTinyliciousUrlResolver>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "VariableDeclaration_createTinyliciousCreateNewRequest": {"forwardCompat": false}
- */
-declare type old_as_current_for_VariableDeclaration_createTinyliciousCreateNewRequest = requireAssignableTo<TypeOnly<typeof old.createTinyliciousCreateNewRequest>, TypeOnly<typeof current.createTinyliciousCreateNewRequest>>
+declare type current_as_old_for_Class_InsecureTinyliciousUrlResolver = requireAssignableTo<TypeOnly<current.InsecureTinyliciousUrlResolver>, TypeOnly<old.InsecureTinyliciousUrlResolver>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_createTinyliciousCreateNewRequest": {"backCompat": false}
+ * "ClassStatics_InsecureTinyliciousUrlResolver": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_createTinyliciousCreateNewRequest = requireAssignableTo<TypeOnly<typeof current.createTinyliciousCreateNewRequest>, TypeOnly<typeof old.createTinyliciousCreateNewRequest>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "VariableDeclaration_defaultTinyliciousEndpoint": {"forwardCompat": false}
- */
-declare type old_as_current_for_VariableDeclaration_defaultTinyliciousEndpoint = requireAssignableTo<TypeOnly<typeof old.defaultTinyliciousEndpoint>, TypeOnly<typeof current.defaultTinyliciousEndpoint>>
+declare type current_as_old_for_ClassStatics_InsecureTinyliciousUrlResolver = requireAssignableTo<TypeOnly<typeof current.InsecureTinyliciousUrlResolver>, TypeOnly<typeof old.InsecureTinyliciousUrlResolver>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_defaultTinyliciousEndpoint": {"backCompat": false}
+ * "Variable_createTinyliciousCreateNewRequest": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_defaultTinyliciousEndpoint = requireAssignableTo<TypeOnly<typeof current.defaultTinyliciousEndpoint>, TypeOnly<typeof old.defaultTinyliciousEndpoint>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "VariableDeclaration_defaultTinyliciousPort": {"forwardCompat": false}
- */
-declare type old_as_current_for_VariableDeclaration_defaultTinyliciousPort = requireAssignableTo<TypeOnly<typeof old.defaultTinyliciousPort>, TypeOnly<typeof current.defaultTinyliciousPort>>
+declare type current_as_old_for_Variable_createTinyliciousCreateNewRequest = requireAssignableTo<TypeOnly<typeof current.createTinyliciousCreateNewRequest>, TypeOnly<typeof old.createTinyliciousCreateNewRequest>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_defaultTinyliciousPort": {"backCompat": false}
+ * "Variable_defaultTinyliciousEndpoint": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_defaultTinyliciousPort = requireAssignableTo<TypeOnly<typeof current.defaultTinyliciousPort>, TypeOnly<typeof old.defaultTinyliciousPort>>
+declare type current_as_old_for_Variable_defaultTinyliciousEndpoint = requireAssignableTo<TypeOnly<typeof current.defaultTinyliciousEndpoint>, TypeOnly<typeof old.defaultTinyliciousEndpoint>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_defaultTinyliciousPort": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_defaultTinyliciousPort = requireAssignableTo<TypeOnly<typeof current.defaultTinyliciousPort>, TypeOnly<typeof old.defaultTinyliciousPort>>
