@@ -231,6 +231,20 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 }
 
 /**
+ * Internal interface for {@link IFluidContainer}.
+ *
+ * @internal
+ */
+export interface IFluidContainerInternal {
+	/**
+	 * Gets the underlying {@link @fluidframework/container-definitions#IContainer}.
+	 *
+	 * @remarks Used to power debug tooling and experimental features.
+	 */
+	INTERNAL_CONTAINER_DO_NOT_USE?(): IContainer;
+}
+
+/**
  * Creates an {@link IFluidContainer} from the provided `container` and `rootDataObject`.
  *
  * @internal
@@ -255,7 +269,7 @@ export function createFluidContainer<
  */
 class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends TypedEventEmitter<IFluidContainerEvents>
-	implements IFluidContainer<TContainerSchema>
+	implements IFluidContainer<TContainerSchema>, Required<IFluidContainerInternal>
 {
 	private readonly connectedHandler = (): boolean => this.emit("connected");
 	private readonly disconnectedHandler = (): boolean => this.emit("disconnected");
@@ -364,14 +378,9 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	}
 
 	/**
-	 * FOR INTERNAL USE ONLY. NOT FOR EXTERNAL USE.
-	 * We make no stability guarantees here whatsoever.
-	 *
-	 * Gets the underlying {@link @fluidframework/container-definitions#IContainer}.
-	 *
-	 * @remarks Used to power debug tooling.
+	 * {@inheritDoc IFluidContainerInternal.INTERNAL_CONTAINER_DO_NOT_USE}
 	 */
-	public readonly INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer = () => {
+	public INTERNAL_CONTAINER_DO_NOT_USE(): IContainer {
 		return this.container;
-	};
+	}
 }
