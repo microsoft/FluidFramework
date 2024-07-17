@@ -17,7 +17,7 @@ import type { IdAllocator, Invariant } from "../../util/index.js";
 import type { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 
 import type { CrossFieldManager } from "./crossFieldQueries.js";
-import type { NodeId } from "./modularChangeTypes.js";
+import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
 
 /**
@@ -83,13 +83,21 @@ export interface FieldChangeHandler<
 	 */
 	getNestedChanges(change: TChangeset): [NodeId, number | undefined][];
 
+	/**
+	 * @returns A list of all cross-field keys contained in the change.
+	 * This should not include cross-field keys in descendant fields.
+	 */
+	getCrossFieldKeys(change: TChangeset): CrossFieldKeyRange[];
+
 	createEmpty(): TChangeset;
 }
 
 export interface FieldChangeRebaser<TChangeset> {
 	/**
 	 * Compose a collection of changesets into a single one.
-	 * Every child included in the composed change must be the result of a call to `composeChild`.
+	 * For each node which has a change in both changesets, `composeChild` must be called
+	 * and the result used as the composite node change.
+	 * Calling `composeChild` when one of the changesets has no node change is unnecessary but tolerated.
 	 * See `ChangeRebaser` for more details.
 	 */
 	compose(

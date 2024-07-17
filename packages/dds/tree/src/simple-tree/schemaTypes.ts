@@ -67,6 +67,41 @@ export interface TreeNodeSchemaNonClass<
  *
  * Using classes in this way allows introducing a named type and a named value at the same time, helping keep the runtime and compile time information together and easy to refer to un a uniform way.
  * Additionally, this works around https://github.com/microsoft/TypeScript/issues/55832 which causes similar patterns with less explicit types to infer "any" in the d.ts file.
+ *
+ * When sub-classing a a `TreeNodeSchemaClass`, some extra rules must be followed:
+ *
+ * - Only ever use a single class from the schema's class hierarchy within a document and its schema.
+ * For example, if using {@link SchemaFactory.object} you can do:
+ * ```typescript
+ * // Recommended "customizable" object schema pattern.
+ * class Good extends schemaFactory.object("A", {
+ * 	exampleField: schemaFactory.number,
+ * }) {
+ * 	public exampleCustomMethod(): void {
+ * 		this.exampleField++;
+ * 	}
+ * }
+ * ```
+ * But should avoid:
+ * ```typescript
+ * // This by itself is ok, and opts into "POJO mode".
+ * const base = schemaFactory.object("A", {});
+ * // This is a bad pattern since it leaves two classes in scope which derive from the same SchemaFactory defined class.
+ * // If both get used, its an error!
+ * class Invalid extends base {}
+ * ```
+ * - Do not modify the constructor input parameter types or values:
+ * ```typescript
+ * class Invalid extends schemaFactory.object("A", {
+ * 	exampleField: schemaFactory.number,
+ * }) {
+ * 	// This Modifies the type of the constructor input.
+ * 	// This is unsupported due to programmatic access to the constructor being used internally.
+ * 	public constructor(a: number) {
+ * 		super({ exampleField: a });
+ * 	}
+ * }
+ * ```
  * @sealed @public
  */
 export interface TreeNodeSchemaClass<
@@ -81,7 +116,7 @@ export interface TreeNodeSchemaClass<
 	 * Constructs an {@link Unhydrated} node with this schema.
 	 * @remarks
 	 * This constructor is also used internally to construct hydrated nodes with a different parameter type.
-	 * Therefor overriding this constructor is not type-safe and is not supported.
+	 * Therefore, overriding this constructor with different argument types is not type-safe and is not supported.
 	 * @sealed
 	 */
 	new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;

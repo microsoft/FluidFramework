@@ -5,6 +5,7 @@
 
 /* eslint-disable import/no-internal-modules */
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type {
 	ITreeCursorSynchronous,
@@ -75,8 +76,8 @@ export function cursorFromUnhydratedRoot(
 }
 
 interface SchemaInfo {
-	toFlex: () => FlexTreeNodeSchema;
-	original: TreeNodeSchema;
+	readonly toFlex: () => FlexTreeNodeSchema;
+	readonly original: TreeNodeSchema;
 }
 
 type SchemaMap = Map<TreeNodeSchemaIdentifier, SchemaInfo>;
@@ -180,8 +181,8 @@ export function convertNodeSchema(
 	const fromMap = schemaMap.get(brand(schema.identifier));
 	if (fromMap !== undefined) {
 		if (fromMap.original !== schema) {
-			// Use JSON.stringify to quote and escape string.
-			throw new Error(
+			// Use JSON.stringify to quote and escape identifier string.
+			throw new UsageError(
 				`Multiple schema encountered with the identifier ${JSON.stringify(
 					schema.identifier,
 				)}. Remove or rename them to avoid the collision.`,
