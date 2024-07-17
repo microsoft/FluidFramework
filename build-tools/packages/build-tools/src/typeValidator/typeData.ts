@@ -19,7 +19,7 @@ export interface TypeData {
 	readonly node: Node;
 	readonly tags: ReadonlySet<string>;
 	/**
-	 * Does this TypeData to the the name item, or the typeof the name item.
+	 * Indicates if this TypeData refer to the named item (false), or the typeof the named item (true).
 	 * This is particularly relevant with classes which can have both.
 	 */
 	readonly useTypeof: boolean;
