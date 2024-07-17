@@ -68,6 +68,7 @@ export {
 	JsonCompatibleReadOnlySchema,
 	makeArray,
 	mapIterable,
+	filterIterable,
 	type Mutable,
 	type Populated,
 	type RecursiveReadonly,
@@ -127,4 +128,10 @@ export {
 	fakeIdAllocator,
 } from "./idAllocator.js";
 
-export { Breakable, type WithBreakable, breakingMethod, throwIfBroken } from "./breakable.js";
+export {
+	Breakable,
+	type WithBreakable,
+	breakingMethod,
+	throwIfBroken,
+	breakingClass,
+} from "./breakable.js";

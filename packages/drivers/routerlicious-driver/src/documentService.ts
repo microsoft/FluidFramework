@@ -143,7 +143,7 @@ export class DocumentService
 						this.logger,
 						rateLimiter,
 						this.driverPolicies.enableRestLess,
-						this.storageUrl,
+						this.storageUrl /* baseUrl */,
 					);
 				}
 				const historian = new Historian(true, false, this.storageRestWrapper);

@@ -13,7 +13,10 @@ import {
 	ISummarizeResult,
 } from "@fluidframework/runtime-definitions/internal";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	type ITelemetryPropertiesExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { RuntimeHeaderData } from "../containerRuntime.js";
 import { ContainerRuntimeGCMessage } from "../messageTypes.js";
@@ -397,7 +400,7 @@ export interface IGCNodeUpdatedProps {
 	/** Type and path of the updated node */
 	node: { type: (typeof GCNodeType)["DataStore" | "Blob"]; path: string };
 	/** Whether the node (or a subpath) was loaded or changed. */
-	reason: "Loaded" | "Changed";
+	reason: "Loaded" | "Changed" | "Realized";
 	/**
 	 * The op-based timestamp when the node changed. If the update is from receiving an op, this should
 	 * be the timestamp of the op. If not, this should be the timestamp of the last op processed.
@@ -409,6 +412,8 @@ export interface IGCNodeUpdatedProps {
 	request?: IRequest;
 	/** If the node was loaded via request path, the header data. May be modified from the original request */
 	headerData?: RuntimeHeaderData;
+	/** Any other properties to be logged. */
+	additionalProps?: ITelemetryPropertiesExt;
 }
 
 /** Parameters necessary for creating a GarbageCollector. */

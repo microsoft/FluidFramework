@@ -113,6 +113,7 @@ import {
 	mapTreeFromCursor,
 	MockNodeKeyManager,
 	normalizeNewFieldContent,
+	type FlexTreeSchema,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
@@ -142,7 +143,11 @@ import {
 } from "../shared-tree/schematizingTreeView.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
-import type { ImplicitFieldSchema, TreeViewConfiguration } from "../simple-tree/index.js";
+import {
+	type ImplicitFieldSchema,
+	type TreeViewConfiguration,
+	SchemaFactory,
+} from "../simple-tree/index.js";
 import { type JsonCompatible, type Mutable, nestedMapFromFlatList } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
@@ -744,26 +749,42 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	return forest;
 }
 
-export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
-	content: TreeContent<TRoot>,
+export function flexTreeFromForest<TRoot extends FlexFieldSchema>(
+	schema: FlexTreeSchema<TRoot>,
+	forest: IEditableForest,
 	args?: {
-		forest?: IEditableForest;
 		nodeKeyManager?: NodeKeyManager;
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
 ): FlexTreeTypedField<TRoot> {
-	const forest = args?.forest ?? forestWithContent(content);
 	const branch = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
 		...args,
 		forest,
-		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
+		schema: new TreeStoredSchemaRepository(intoStoredSchema(schema)),
 	});
 	const manager = args?.nodeKeyManager ?? new MockNodeKeyManager();
-	const view = new CheckoutFlexTreeView(branch, content.schema, manager);
+	const view = new CheckoutFlexTreeView(branch, schema, manager);
 	return view.flexTree;
 }
+
+const sf = new SchemaFactory(undefined);
+
+export const NumberArray = sf.array("array", sf.number);
+export const StringArray = sf.array("array", sf.string);
+
+const jsonPrimitiveSchema = [sf.null, sf.boolean, sf.number, sf.string] as const;
+export const JsonObject = sf.mapRecursive("object", [
+	() => JsonObject,
+	() => JsonArray,
+	...jsonPrimitiveSchema,
+]);
+export const JsonArray = sf.arrayRecursive("array", [
+	JsonObject,
+	() => JsonArray,
+	...jsonPrimitiveSchema,
+]);
 
 export const jsonSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence, {
 	scope: "JsonSequenceRoot",

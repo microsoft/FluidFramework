@@ -18,6 +18,7 @@ export const reservedTileLabelsKey = "referenceTileLabels";
 export const reservedRangeLabelsKey = "referenceRangeLabels";
 
 /**
+ * Determines if the given reference type includes the given flags.
  * @internal
  */
 export function refTypeIncludesFlag(
@@ -30,6 +31,7 @@ export function refTypeIncludesFlag(
 }
 
 /**
+ * Gets the tile labels stored in the given reference position.
  * @legacy
  * @alpha
  */
@@ -39,6 +41,7 @@ export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefine
 		: undefined;
 
 /**
+ * Determines if a reference position has the given tile label.
  * @legacy
  * @alpha
  */
@@ -48,6 +51,7 @@ export function refHasTileLabel(refPos: ReferencePosition, label: string): boole
 }
 
 /**
+ * Determines if a reference position has any tile labels.
  * @internal
  */
 export function refHasTileLabels(refPos: ReferencePosition): boolean {
@@ -108,6 +112,7 @@ export interface ReferencePosition {
 export const DetachedReferencePosition = -1;
 
 /**
+ * Finds the minimum reference position.
  * @internal
  */
 export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T {
@@ -115,6 +120,7 @@ export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T
 }
 
 /**
+ * Finds the maximum reference position.
  * @internal
  */
 export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T {
@@ -122,6 +128,7 @@ export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T
 }
 
 /**
+ * Compares two reference positions.
  * @internal
  */
 export function compareReferencePositions(a: ReferencePosition, b: ReferencePosition): number {

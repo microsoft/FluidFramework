@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import {
@@ -41,7 +41,7 @@ interface ITestData {
 const localClientId = 17;
 const treeFactories: ITestTreeFactory[] = [
 	{
-		create: () => {
+		create: (): ITestData => {
 			const initialText = "hello world";
 			const mergeTree = new MergeTree();
 			insertSegments({
@@ -69,7 +69,7 @@ const treeFactories: ITestTreeFactory[] = [
 		name: "single segment tree",
 	},
 	{
-		create: () => {
+		create: (): ITestData => {
 			let initialText = "0";
 			const mergeTree = new MergeTree();
 			insertSegments({
@@ -125,7 +125,7 @@ const treeFactories: ITestTreeFactory[] = [
 		name: "Full single layer tree",
 	},
 	{
-		create: () => {
+		create: (): ITestData => {
 			let initialText = "0";
 			const mergeTree = new MergeTree();
 			insertSegments({
@@ -161,9 +161,9 @@ const treeFactories: ITestTreeFactory[] = [
 				localClientId,
 				UniversalSequenceNumber,
 				false,
-				undefined as any,
+				undefined as never,
 			);
-			initialText = initialText.substring(remove);
+			initialText = initialText.slice(Math.max(0, remove));
 
 			// remove from end
 			mergeTree.markRangeRemoved(
@@ -173,9 +173,9 @@ const treeFactories: ITestTreeFactory[] = [
 				localClientId,
 				UniversalSequenceNumber,
 				false,
-				undefined as any,
+				undefined as never,
 			);
-			initialText = initialText.substring(0, initialText.length - remove);
+			initialText = initialText.slice(0, Math.max(0, initialText.length - remove));
 
 			mergeTree.startCollaboration(
 				localClientId,
@@ -196,7 +196,7 @@ const treeFactories: ITestTreeFactory[] = [
 ];
 
 describe("MergeTree.insertingWalk", () => {
-	treeFactories.forEach((tf) => {
+	for (const tf of treeFactories) {
 		describe(tf.name, () => {
 			const treeFactory = tf;
 			let testData: ITestData;
@@ -270,14 +270,14 @@ describe("MergeTree.insertingWalk", () => {
 					assert.equal(currentValue.length, testData.initialText.length + 1);
 					assert.equal(
 						currentValue,
-						`${testData.initialText.substring(0, testData.middle)}` +
+						`${testData.initialText.slice(0, Math.max(0, testData.middle))}` +
 							"a" +
-							`${testData.initialText.substring(testData.middle)}`,
+							`${testData.initialText.slice(Math.max(0, testData.middle))}`,
 					);
 				});
 			});
 		});
-	});
+	}
 
 	it("handles conflicts involving removed segments across block boundaries", () => {
 		let initialText = "0";
@@ -294,7 +294,7 @@ describe("MergeTree.insertingWalk", () => {
 			opArgs: undefined,
 		});
 		for (let i = 1; i < MaxNodesInBlock; i++) {
-			const text = String.fromCharCode(i + 64);
+			const text = String.fromCodePoint(i + 64);
 			insertText({
 				mergeTree,
 				pos: 0,
@@ -321,7 +321,7 @@ describe("MergeTree.insertingWalk", () => {
 			clientId: localClientId,
 			seq: UnassignedSequenceNumber,
 			overwrite: false,
-			opArgs: undefined as any,
+			opArgs: undefined as never,
 		});
 		assert.equal(textHelper.getText(0, localClientId), "GFE0");
 		// Simulate another client inserting concurrently with the above operations. Because

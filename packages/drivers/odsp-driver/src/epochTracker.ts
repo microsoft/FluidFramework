@@ -21,6 +21,7 @@ import {
 	OdspErrorTypes,
 	maximumCacheDurationMs,
 	snapshotKey,
+	snapshotWithLoadingGroupIdKey,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
@@ -149,7 +150,7 @@ export class EpochTracker implements IPersistedFileCache {
 			}
 			// Expire the cached snapshot if it's older than snapshotCacheExpiryTimeoutMs and immediately
 			// expire all old caches that do not have cacheEntryTime
-			if (entry.type === snapshotKey) {
+			if (entry.type === snapshotKey || entry.type === snapshotWithLoadingGroupIdKey) {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 				const cacheTime = value.value?.cacheEntryTime;
 				const currentTime = Date.now();
@@ -180,7 +181,7 @@ export class EpochTracker implements IPersistedFileCache {
 		assert(this._fluidEpoch !== undefined, 0x1dd /* "no epoch" */);
 		// For snapshots, the value should have the cacheEntryTime.
 		// This will be used to expire snapshots older than snapshotCacheExpiryTimeoutMs.
-		if (entry.type === snapshotKey) {
+		if (entry.type === snapshotKey || entry.type === snapshotWithLoadingGroupIdKey) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			value.cacheEntryTime = value.cacheEntryTime ?? Date.now();
 		}
@@ -522,7 +523,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 		let result = super.get(entry);
 
 		// equivalence of what happens in fetchAndParseAsJSON()
-		if (entry.type === snapshotKey) {
+		if (entry.type === snapshotKey || entry.type === snapshotWithLoadingGroupIdKey) {
 			result = result
 				.then((value) => {
 					// If there is nothing in cache, we need to wait for network call to complete (and do redemption)
