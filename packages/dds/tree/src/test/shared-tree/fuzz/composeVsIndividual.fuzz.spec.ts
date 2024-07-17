@@ -31,12 +31,19 @@ import {
 import {
 	applyConstraint,
 	applyFieldEdit,
-	applySchemaOp,
 	applySynchronizationOp,
 	applyUndoRedoEdit,
+	generateLeafNodeSchemas,
 } from "./fuzzEditReducers.js";
-import { deterministicIdCompressorFactory, isRevertibleSharedTreeView } from "./fuzzUtils.js";
+import {
+	createTreeViewSchema,
+	deterministicIdCompressorFactory,
+	isRevertibleSharedTreeView,
+} from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
+import { brand } from "../../../util/index.js";
+import { intoStoredSchema } from "../../../feature-libraries/index.js";
+import type { TreeNodeSchemaIdentifier } from "../../../index.js";
 
 /**
  * This interface is meant to be used for tests that require you to store a branch of a tree
@@ -79,7 +86,20 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<
 		return state;
 	},
 	schemaChange: async (state, operation) => {
-		applySchemaOp(state, operation);
+		const branch = state.branch;
+		assert(branch !== undefined);
+		const nodeSchema = branch.currentSchema;
+
+		const nodeTypes: TreeNodeSchemaIdentifier[] = [];
+		for (const leafNodeSchema of nodeSchema.info.optionalChild.allowedTypeSet) {
+			if (typeof leafNodeSchema !== "string") {
+				nodeTypes.push(leafNodeSchema.name);
+			}
+		}
+		nodeTypes.push(brand(operation.operation.type));
+		const { leafNodeSchemas, library } = generateLeafNodeSchemas(nodeTypes);
+		const newSchema = createTreeViewSchema(leafNodeSchemas, library);
+		branch.checkout.updateSchema(intoStoredSchema(newSchema));
 	},
 	constraint: async (state, operation) => {
 		applyConstraint(state, operation);
@@ -115,7 +135,7 @@ describe("Fuzz - composed vs individual changes", () => {
 		},
 		start: 0,
 		commit: 0,
-		schema: 0,
+		schema: 1,
 	};
 
 	describe("converges to the same tree", () => {
