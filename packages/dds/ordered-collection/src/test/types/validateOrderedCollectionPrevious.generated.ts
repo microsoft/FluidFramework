@@ -58,6 +58,7 @@ declare type current_as_old_for_ClassDeclaration_ConsensusOrderedCollection = re
  * typeValidation.broken:
  * "VariableDeclaration_ConsensusQueue": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_VariableDeclaration_ConsensusQueue = requireAssignableTo<TypeOnly<typeof old.ConsensusQueue>, TypeOnly<typeof current.ConsensusQueue>>
 
 /*

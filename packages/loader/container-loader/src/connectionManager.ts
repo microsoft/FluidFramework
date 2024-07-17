@@ -868,7 +868,7 @@ export class ConnectionManager implements IConnectionManager {
 		// Does information in scopes & mode matches?
 		// If we asked for "write" and got "read", then file is read-only
 		// But if we ask read, server can still give us write.
-		const readonly = !connection.claims.scopes.includes(ScopeType.DocWrite);
+		const readonlyPermission = !connection.claims.scopes.includes(ScopeType.DocWrite);
 
 		if (connection.mode !== requestedMode) {
 			this.logger.sendTelemetryEvent({
@@ -877,19 +877,14 @@ export class ConnectionManager implements IConnectionManager {
 				mode: connection.mode,
 			});
 		}
-		// This connection mode validation logic is moving to the driver layer in 0.44.  These two asserts can be
-		// removed after those packages have released and become ubiquitous.
+
 		assert(
-			requestedMode === "read" || readonly === (this.connectionMode === "read"),
-			0x0e7 /* "claims/connectionMode mismatch" */,
-		);
-		assert(
-			!readonly || this.connectionMode === "read",
+			!readonlyPermission || this.connectionMode === "read",
 			0x0e8 /* "readonly perf with write connection" */,
 		);
 
 		this.set_readonlyPermissions(
-			readonly,
+			readonlyPermission,
 			oldReadonlyValue,
 			isNoDeltaStreamConnection(connection) ? connection.readonlyConnectionReason : undefined,
 		);

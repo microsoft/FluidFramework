@@ -132,7 +132,7 @@
 			"arrowParentheses": "always",
 			"jsxQuoteStyle": "double",
 			"semicolons": "always",
-			"trailingComma": "all",
+			"trailingCommas": "all",
 			"quoteProperties": "preserve",
 			"quoteStyle": "double",
 			"bracketSpacing": true
@@ -158,7 +158,7 @@
 			"javascript": {
 				"formatter": {
 					"jsxQuoteStyle": "single",
-					"trailingComma": "es5",
+					"trailingCommas": "es5",
 					"quoteStyle": "single"
 				}
 			}
