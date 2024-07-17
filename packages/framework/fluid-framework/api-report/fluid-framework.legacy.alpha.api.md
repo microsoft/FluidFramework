@@ -900,17 +900,6 @@ type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord
 };
 
 // @public
-export interface ObjectNodeSchema<TName extends string = string, T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema> = RestrictiveReadonlyRecord<string, ImplicitFieldSchema>, ImplicitlyConstructable extends boolean = boolean> extends TreeNodeSchemaClass<TName, NodeKind.Object, TreeObjectNode<T, TName>, object & InsertableObjectFromSchemaRecord<T>, ImplicitlyConstructable, T> {
-    // (undocumented)
-    readonly fields: ReadonlyMap<string, FieldSchema>;
-}
-
-// @public (undocumented)
-export const ObjectNodeSchema: {
-    readonly [Symbol.hasInstance]: (schema: TreeNodeSchema) => schema is ObjectNodeSchema<string, RestrictiveReadonlyRecord<string, ImplicitFieldSchema>, boolean>;
-};
-
-// @public
 export type Off = () => void;
 
 // @public
@@ -989,8 +978,8 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     }, false, T>;
     readonly null: TreeNodeSchema<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null>;
     readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
-    object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, fields: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
-    objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & { readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>; } & { readonly [Property_1 in keyof T as FieldHasDefaultUnsafe<T[Property_1]> extends true ? Property_1 : never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property_1]> | undefined; }, false, T>;
+    object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, fields: T): TreeObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true>;
+    objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & { readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>; } & { readonly [Property_1 in keyof T as FieldHasDefaultUnsafe<T[Property_1]> extends true ? Property_1 : never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property_1]> | undefined; }, false, T> & TreeObjectNodeSchemaBase<ScopedSchemaName<TScope, Name>, T, false>;
     optional<const T extends ImplicitAllowedTypes>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchema<FieldKind.Optional, T>;
     optionalRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchemaUnsafe<FieldKind.Optional, T>;
     required<const T extends ImplicitAllowedTypes>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchema<FieldKind.Required, T>;
@@ -1253,6 +1242,21 @@ interface TreeNodeSchemaNonClass<out Name extends string = string, out Kind exte
 
 // @public
 export type TreeObjectNode<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>, TypeName extends string = string> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName>;
+
+// @public
+export interface TreeObjectNodeSchema<TName extends string = string, T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema> = RestrictiveReadonlyRecord<string, ImplicitFieldSchema>, ImplicitlyConstructable extends boolean = boolean> extends TreeObjectNodeSchemaBase<TName, T, ImplicitlyConstructable>, TreeNodeSchemaClass<TName, NodeKind.Object, TreeObjectNode<T, TName>, object & InsertableObjectFromSchemaRecord<T>, ImplicitlyConstructable, T> {
+}
+
+// @public (undocumented)
+export const TreeObjectNodeSchema: {
+    readonly [Symbol.hasInstance]: (schema: TreeNodeSchema) => schema is TreeObjectNodeSchema<string, RestrictiveReadonlyRecord<string, ImplicitFieldSchema>, boolean>;
+};
+
+// @public
+export interface TreeObjectNodeSchemaBase<out TName extends string = string, out Info = unknown, out ImplicitlyConstructable extends boolean = boolean> extends TreeNodeSchemaCore<TName, NodeKind.Object, ImplicitlyConstructable, Info> {
+    // (undocumented)
+    readonly fields: ReadonlyMap<string, FieldSchema>;
+}
 
 // @public
 export type TreeObjectNodeUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>, TypeName extends string = string> = TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<TypeName>;
