@@ -152,34 +152,45 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 export function walkNodeSchema(
 	schema: TreeNodeSchema,
 	visitor: (schema: TreeNodeSchema) => void,
+	visitedSet: Set<TreeNodeSchema>,
 ): void {
+	if (visitedSet.has(schema)) {
+		return;
+	}
+	visitedSet.add(schema);
 	if (schema instanceof LeafNodeSchema) {
 		// nothing to do
 	} else if (isObjectNodeSchema(schema)) {
 		for (const field of schema.fields.values()) {
-			walkAllowedTypes(field.allowedTypeSet, visitor);
+			walkAllowedTypes(field.allowedTypeSet, visitor, visitedSet);
 		}
 	} else {
 		assert(schema.kind === NodeKind.Array || schema.kind === NodeKind.Map, "invalid schema");
 		const childTypes = schema.info as ImplicitAllowedTypes;
-		walkFieldSchema(childTypes, visitor);
+		walkFieldSchema(childTypes, visitor, visitedSet);
 	}
+	// This visit is done at the end so the traversal order is most inner types first.
+	// This was picked since when fixing errors,
+	// working from the inner types out to the types that use them will probably go better than the reverse.
+	// This does not however ensure all types referenced by a type are visited before it, since in recursive cases thats impossible.
 	visitor(schema);
 }
 
 export function walkFieldSchema(
 	schema: ImplicitFieldSchema,
 	visitor: (schema: TreeNodeSchema) => void,
+	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
-	walkAllowedTypes(normalizeFieldSchema(schema).allowedTypeSet, visitor);
+	walkAllowedTypes(normalizeFieldSchema(schema).allowedTypeSet, visitor, visitedSet);
 }
 
 export function walkAllowedTypes(
 	allowedTypes: Iterable<TreeNodeSchema>,
 	visitor: (schema: TreeNodeSchema) => void,
+	visitedSet: Set<TreeNodeSchema>,
 ): void {
 	for (const childType of allowedTypes) {
-		walkNodeSchema(childType, visitor);
+		walkNodeSchema(childType, visitor, visitedSet);
 	}
 }
 

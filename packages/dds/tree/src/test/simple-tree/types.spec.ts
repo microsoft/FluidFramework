@@ -198,12 +198,12 @@ describe("simple-tree types", () => {
 
 			assert.throws(
 				() => new Subclass(),
-				(error: Error) => validateAssertionError(error, /constructorCached/),
+				(error: Error) => validateAssertionError(error, /invalid schema class/),
 			);
 			// Ensure oneTimeSetup doesn't prevent error from rethrowing
 			assert.throws(
 				() => new Subclass(),
-				(error: Error) => validateAssertionError(error, /constructorCached/),
+				(error: Error) => validateAssertionError(error, /invalid schema class/),
 			);
 		});
 
