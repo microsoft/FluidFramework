@@ -157,9 +157,7 @@ export function walkNodeSchema(
 		// nothing to do
 	} else if (isObjectNodeSchema(schema)) {
 		for (const field of schema.fields.values()) {
-			for (const childType of field.allowedTypeSet) {
-				walkNodeSchema(childType, visitor);
-			}
+			walkAllowedTypes(field.allowedTypeSet, visitor);
 		}
 	} else {
 		assert(schema.kind === NodeKind.Array || schema.kind === NodeKind.Map, "invalid schema");
@@ -173,7 +171,14 @@ export function walkFieldSchema(
 	schema: ImplicitFieldSchema,
 	visitor: (schema: TreeNodeSchema) => void,
 ): void {
-	for (const childType of normalizeFieldSchema(schema).allowedTypeSet) {
+	walkAllowedTypes(normalizeFieldSchema(schema).allowedTypeSet, visitor);
+}
+
+export function walkAllowedTypes(
+	allowedTypes: Iterable<TreeNodeSchema>,
+	visitor: (schema: TreeNodeSchema) => void,
+): void {
+	for (const childType of allowedTypes) {
 		walkNodeSchema(childType, visitor);
 	}
 }

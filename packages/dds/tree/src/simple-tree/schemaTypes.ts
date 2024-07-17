@@ -73,10 +73,35 @@ export interface TreeNodeSchemaNonClass<
  * - Only ever use a single class from the schema's class hierarchy within a document and its schema.
  * For example, if using {@link SchemaFactory.object} you can do:
  * ```typescript
- * class Foo extends schemaFactory.object("Foo", {}) {}
- * class Foo extends schemaFactory.object()
+ * // Recommended "customizable" object schema pattern.
+ * class Good extends schemaFactory.object("A", {
+ * 	exampleField: schemaFactory.number,
+ * }) {
+ * 	public exampleCustomMethod(): void {
+ * 		this.exampleField++;
+ * 	}
+ * }
  * ```
- *
+ * But should avoid:
+ * ```typescript
+ * // This by itself is ok, and opts into "POJO mode".
+ * const base = schemaFactory.object("A", {});
+ * // This is a bad pattern since it leaves two classes in scope which derive from the same SchemaFactory defined class.
+ * // If both get used, its an error!
+ * class Invalid extends base {}
+ * ```
+ * - Do not modify the constructor input parameter types or values:
+ * ```typescript
+ * class Invalid extends schemaFactory.object("A", {
+ * 	exampleField: schemaFactory.number,
+ * }) {
+ * 	// This Modifies the type of the constructor input.
+ * 	// This is unsupported due to programmatic access to the constructor being use internally.
+ * 	public constructor(a: number) {
+ * 		super({ exampleField: a });
+ * 	}
+ * }
+ * ```
  * @sealed @public
  */
 export interface TreeNodeSchemaClass<

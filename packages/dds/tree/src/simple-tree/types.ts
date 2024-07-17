@@ -292,6 +292,17 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 // Class objects are functions (callable), so we need a strong way to distinguish between `schema` and `() => schema` when used as a `LazyItem`.
 markEager(TreeNodeValid);
 
+/**
+ * Data cached about the most derived type in a schema's class hierarchy.
+ * @remarks
+ * The most derived type is the only one allowed to be referenced by other schema or constructed as a node.
+ * It has to be discovered lazily (when a node is constructed or when a {@link TreeViewConfiguration} is made),
+ * since JavaScript provides no way to find derived classes, or inject static class initialization time logic into base classes.
+ * Additionally since schema can reference other schema through lazy references which might be forward or recursive references,
+ * this can not be evaluated for one schema when referenced by another schema.
+ *
+ * See {@link TreeNodeValid.constructorCached} and {@link TreeNodeValid.markMostDerived}.
+ */
 export interface MostDerivedData {
 	readonly constructor: typeof TreeNodeValid & TreeNodeSchema;
 	oneTimeInitialized: boolean;
