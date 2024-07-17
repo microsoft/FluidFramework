@@ -5,23 +5,23 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
+import type { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
 	cursorForMapTreeNode,
 	FieldKinds,
-	FlexAllowedTypes,
-	FlexObjectNodeSchema,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
+	type FlexAllowedTypes,
+	type FlexObjectNodeSchema,
+	type FlexTreeField,
+	type FlexTreeNode,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 	isMapTreeNode,
-	MapTreeNode,
+	type MapTreeNode,
 } from "../feature-libraries/index.js";
 import {
-	InsertableContent,
+	type InsertableContent,
 	getProxyForField,
 	markContentType,
 	prepareContentForHydration,
@@ -29,23 +29,28 @@ import {
 import { getFlexNode } from "./proxyBinding.js";
 import {
 	NodeKind,
-	ImplicitFieldSchema,
-	TreeNodeSchemaClass,
-	WithType,
-	TreeNodeSchema,
+	type ImplicitFieldSchema,
+	type TreeNodeSchemaClass,
+	type WithType,
+	type TreeNodeSchema,
 	getStoredKey,
 	getExplicitStoredKey,
-	TreeFieldFromImplicitField,
-	InsertableTreeFieldFromImplicitField,
-	FieldSchema,
+	type TreeFieldFromImplicitField,
+	type InsertableTreeFieldFromImplicitField,
+	type FieldSchema,
 	normalizeFieldSchema,
-	type,
-	ImplicitAllowedTypes,
+	typeNameSymbol,
+	type ImplicitAllowedTypes,
 	FieldKind,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
-import { InternalTreeNode, TreeNode, TreeNodeValid } from "./types.js";
-import { RestrictiveReadonlyRecord, fail } from "../util/index.js";
+import {
+	type InternalTreeNode,
+	type MostDerivedData,
+	type TreeNode,
+	TreeNodeValid,
+} from "./types.js";
+import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 
 /**
@@ -75,6 +80,21 @@ export type TreeObjectNode<
 > = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName>;
 
 /**
+ * Type utility for determining whether or not an implicit field schema has a default value.
+ *
+ * @privateRemarks
+ * TODO: Account for field schemas with default value providers.
+ * For now, this only captures field kinds that we know always have defaults - optional fields and identifier fields.
+ *
+ * @public
+ */
+export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<
+	FieldKind.Optional | FieldKind.Identifier
+>
+	? true
+	: false;
+
+/**
  * Helper used to produce types for:
  *
  * 1. Insertable content which can be used to construct an object node.
@@ -89,9 +109,16 @@ export type TreeObjectNode<
  */
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-> = {
-	readonly [Property in keyof T]: InsertableTreeFieldFromImplicitField<T[Property]>;
-};
+> = FlattenKeys<
+	{
+		readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property]>;
+	} & {
+		// Field does not have a known default, make it required:
+		readonly [Property in keyof T as FieldHasDefault<T[Property]> extends false
+			? Property
+			: never]: InsertableTreeFieldFromImplicitField<T[Property]>;
+	}
+>;
 
 /**
  * Maps from simple field keys ("view" keys) to information about the field.
@@ -165,7 +192,8 @@ function createProxyHandler(
 		set(target, viewKey, value: InsertableContent | undefined, proxy) {
 			const fieldInfo = flexKeyMap.get(viewKey);
 			if (fieldInfo === undefined) {
-				return allowAdditionalProperties ? Reflect.set(target, viewKey, value) : false;
+				// Pass the proxy as the receiver here, so that setters on the prototype receive `proxy` as `this`.
+				return allowAdditionalProperties ? Reflect.set(target, viewKey, value, proxy) : false;
 			}
 
 			const flexNode = getFlexNode(proxy);
@@ -177,6 +205,12 @@ function createProxyHandler(
 
 			setField(flexNode.getBoxed(fieldInfo.storedKey), fieldInfo.schema, value);
 			return true;
+		},
+		deleteProperty(target, viewKey): boolean {
+			// TODO: supporting delete when it makes sense (custom local fields, and optional field) could be added as a feature in the future.
+			throw new UsageError(
+				`Object nodes do not support the delete operator. Optional fields can be assigned to undefined instead.`,
+			);
 		},
 		has: (target, viewKey) => {
 			return (
@@ -331,7 +365,7 @@ export function objectSchema<
 			);
 		}
 
-		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
+		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
@@ -370,7 +404,7 @@ export function objectSchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 
-		public get [type](): TName {
+		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
 	}

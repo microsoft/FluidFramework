@@ -7,35 +7,43 @@ import { strict as assert, fail } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	AsyncGenerator,
+	type AsyncGenerator,
 	combineReducersAsync,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	DDSFuzzHarnessEvents,
-	DDSFuzzModel,
-	DDSFuzzTestState,
+	type DDSFuzzHarnessEvents,
+	type DDSFuzzModel,
+	type DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";
 
 import {
-	EditGeneratorOpWeights,
-	FuzzTestState,
-	FuzzTransactionView,
-	FuzzView,
+	type EditGeneratorOpWeights,
+	type FuzzTestState,
+	type FuzzTransactionView,
+	type FuzzView,
 	makeOpGenerator,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import {
+	applyConstraint,
 	applyFieldEdit,
-	applySchemaOp,
 	applySynchronizationOp,
 	applyUndoRedoEdit,
+	generateLeafNodeSchemas,
 } from "./fuzzEditReducers.js";
-import { deterministicIdCompressorFactory, isRevertibleSharedTreeView } from "./fuzzUtils.js";
-import { Operation } from "./operationTypes.js";
+import {
+	createTreeViewSchema,
+	deterministicIdCompressorFactory,
+	isRevertibleSharedTreeView,
+} from "./fuzzUtils.js";
+import type { Operation } from "./operationTypes.js";
+import { brand } from "../../../util/index.js";
+import { intoStoredSchema } from "../../../feature-libraries/index.js";
+import type { TreeNodeSchemaIdentifier } from "../../../index.js";
 
 /**
  * This interface is meant to be used for tests that require you to store a branch of a tree
@@ -45,7 +53,10 @@ interface BranchedTreeFuzzTestState extends FuzzTestState {
 	branch?: FuzzTransactionView;
 }
 
-const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, BranchedTreeFuzzTestState>({
+const fuzzComposedVsIndividualReducer = combineReducersAsync<
+	Operation,
+	BranchedTreeFuzzTestState
+>({
 	treeEdit: async (state, { edit }) => {
 		switch (edit.type) {
 			case "fieldEdit": {
@@ -75,7 +86,23 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 		return state;
 	},
 	schemaChange: async (state, operation) => {
-		applySchemaOp(state, operation);
+		const branch = state.branch;
+		assert(branch !== undefined);
+		const nodeSchema = branch.currentSchema;
+
+		const nodeTypes: TreeNodeSchemaIdentifier[] = [];
+		for (const leafNodeSchema of nodeSchema.info.optionalChild.allowedTypeSet) {
+			if (typeof leafNodeSchema !== "string") {
+				nodeTypes.push(leafNodeSchema.name);
+			}
+		}
+		nodeTypes.push(brand(operation.operation.type));
+		const { leafNodeSchemas, library } = generateLeafNodeSchemas(nodeTypes);
+		const newSchema = createTreeViewSchema(leafNodeSchemas, library);
+		branch.checkout.updateSchema(intoStoredSchema(newSchema));
+	},
+	constraint: async (state, operation) => {
+		applyConstraint(state, operation);
 	},
 });
 
@@ -108,7 +135,7 @@ describe("Fuzz - composed vs individual changes", () => {
 		},
 		start: 0,
 		commit: 0,
-		schema: 0,
+		schema: 1,
 	};
 
 	describe("converges to the same tree", () => {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	OpSpaceCompressedId,
 	SessionId,
 	SessionSpaceCompressedId,
@@ -11,14 +11,14 @@ import {
 import { Type } from "@sinclair/typebox";
 
 import {
-	Brand,
-	NestedMap,
-	RangeMap,
+	type Brand,
+	type NestedMap,
+	type RangeMap,
 	brand,
 	brandedNumberType,
 	brandedStringType,
 } from "../../util/index.js";
-import { TaggedChange } from "./changeRebaser.js";
+import type { TaggedChange } from "./changeRebaser.js";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
@@ -89,7 +89,10 @@ export function areEqualChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): boolean
 /**
  * @returns a ChangeAtomId with the given revision and local ID.
  */
-export function makeChangeAtomId(localId: ChangesetLocalId, revision?: RevisionTag): ChangeAtomId {
+export function makeChangeAtomId(
+	localId: ChangesetLocalId,
+	revision?: RevisionTag,
+): ChangeAtomId {
 	return revision === undefined ? { localId } : { localId, revision };
 }
 
@@ -97,7 +100,10 @@ export function asChangeAtomId(id: ChangesetLocalId | ChangeAtomId): ChangeAtomI
 	return typeof id === "object" ? id : { localId: id };
 }
 
-export function taggedAtomId(id: ChangeAtomId, revision: RevisionTag | undefined): ChangeAtomId {
+export function taggedAtomId(
+	id: ChangeAtomId,
+	revision: RevisionTag | undefined,
+): ChangeAtomId {
 	return makeChangeAtomId(id.localId, id.revision ?? revision);
 }
 
@@ -163,7 +169,7 @@ export enum CommitKind {
 /**
  * Information about a commit that has been applied.
  *
- * @public
+ * @sealed @public
  */
 export interface CommitMetadata {
 	/**

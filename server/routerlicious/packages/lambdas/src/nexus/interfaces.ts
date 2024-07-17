@@ -43,6 +43,11 @@ export interface IConnectedClient {
 	 * Client protocol versions of standard semver types.
 	 */
 	connectVersions: string[];
+
+	/**
+	 * Connection disposal function to clean up resources and connections after client disconnects.
+	 */
+	dispose: () => void;
 }
 
 /**

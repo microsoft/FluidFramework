@@ -28,7 +28,8 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): ISnapshotTree {
 		const entryPathBase = entry.path.slice(lastIndex + 1);
 
 		// ODSP snapshots are created breadth-first so we can assume we see tree nodes prior to their contents
-		const node = lookup[entryPathDir];
+		// TODO Why are we non null asserting here?
+		const node = lookup[entryPathDir]!;
 
 		// Add in either the blob or tree
 		if (entry.type === "tree") {
@@ -38,10 +39,10 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): ISnapshotTree {
 				unreferenced: entry.unreferenced,
 				groupId: entry.groupId,
 			};
-			node.trees[decodeURIComponent(entryPathBase)] = newTree;
+			node.trees[entryPathBase] = newTree;
 			lookup[entry.path] = newTree;
 		} else if (entry.type === "blob") {
-			node.blobs[decodeURIComponent(entryPathBase)] = entry.id;
+			node.blobs[entryPathBase] = entry.id;
 		}
 	}
 
@@ -52,7 +53,9 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): ISnapshotTree {
  * Converts existing IOdspSnapshot to snapshot tree, blob array and ops
  * @param odspSnapshot - snapshot
  */
-export function convertOdspSnapshotToSnapshotTreeAndBlobs(odspSnapshot: IOdspSnapshot): ISnapshot {
+export function convertOdspSnapshotToSnapshotTreeAndBlobs(
+	odspSnapshot: IOdspSnapshot,
+): ISnapshot {
 	const blobsWithBufferContent = new Map<string, ArrayBuffer>();
 	if (odspSnapshot.blobs) {
 		for (const blob of odspSnapshot.blobs) {
@@ -67,16 +70,19 @@ export function convertOdspSnapshotToSnapshotTreeAndBlobs(odspSnapshot: IOdspSna
 		}
 	}
 
-	const sequenceNumber = odspSnapshot?.trees[0].sequenceNumber;
+	// TODO Why are we non null asserting here?
+	const sequenceNumber = odspSnapshot?.trees[0]!.sequenceNumber;
 
 	const val: ISnapshot = {
 		blobContents: blobsWithBufferContent,
 		ops: odspSnapshot.ops?.map((op) => op.op) ?? [],
 		sequenceNumber,
-		snapshotTree: buildHierarchy(odspSnapshot.trees[0]),
+		// TODO Why are we non null asserting here?
+		snapshotTree: buildHierarchy(odspSnapshot.trees[0]!),
 		latestSequenceNumber:
 			odspSnapshot.ops && odspSnapshot.ops.length > 0
-				? odspSnapshot.ops[odspSnapshot.ops.length - 1].sequenceNumber
+				? // Non null asserting here because of the length check above
+					odspSnapshot.ops[odspSnapshot.ops.length - 1]!.sequenceNumber
 				: sequenceNumber,
 		snapshotFormatV: 1,
 	};

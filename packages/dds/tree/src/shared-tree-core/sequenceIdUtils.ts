@@ -5,7 +5,7 @@
 
 import { brand } from "../util/index.js";
 
-import { SequenceId } from "./editManagerFormat.js";
+import type { SequenceId } from "./editManagerFormat.js";
 
 export const sequenceIdComparator = (a: SequenceId, b: SequenceId): number =>
 	a.sequenceNumber !== b.sequenceNumber
@@ -22,6 +22,6 @@ export const decrementSequenceId = (sequenceId: SequenceId): SequenceId => {
 		? {
 				sequenceNumber: brand(sequenceId.sequenceNumber),
 				indexInBatch: sequenceId.indexInBatch - 1,
-		  }
+			}
 		: { sequenceNumber: brand(sequenceId.sequenceNumber - 1) };
 };

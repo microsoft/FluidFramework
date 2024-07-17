@@ -10,7 +10,8 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import { SchemaFactory } from "../../simple-tree/index.js";
 
 import { hydrate } from "./utils.js";
-import { requireAssignableTo } from "../../util/index.js";
+import type { requireAssignableTo } from "../../util/index.js";
+import { validateUsageError } from "../utils.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
@@ -88,6 +89,31 @@ describe("ObjectNode", () => {
 		});
 	});
 
+	it("accessor local properties", () => {
+		const thisList: unknown[] = [];
+		class Test extends schemaFactory.object("test", {
+			x: schemaFactory.number,
+		}) {
+			public get y() {
+				assert.equal(this, n);
+				thisList.push(this);
+				return this.x;
+			}
+			public set y(value: number) {
+				assert.equal(this, n);
+				thisList.push(this);
+				this.x = value;
+			}
+		}
+
+		const n = hydrate(Test, { x: 1 });
+		n.y = 2;
+		assert.equal(n.x, 2);
+		n.x = 3;
+		assert.equal(n.y, 3);
+		assert.deepEqual(thisList, [n, n]);
+	});
+
 	it("empty property pojo deep equals", () => {
 		const Schema = schemaFactory.object("x", {
 			foo: schemaFactory.optional(schemaFactory.number),
@@ -120,5 +146,19 @@ describe("ObjectNode", () => {
 		assert.equal(descriptor.value, 0);
 		const keys = Object.keys(n);
 		assert.deepEqual(keys, ["foo"]);
+	});
+
+	it("delete operator", () => {
+		class Schema extends schemaFactory.object("x", {
+			foo: schemaFactory.optional(schemaFactory.number),
+		}) {}
+		const n = hydrate(Schema, { foo: 0 });
+		assert.throws(
+			() => {
+				// Since we do not have exactOptionalPropertyTypes enabled, this compiles, but should error at runtime:
+				delete n.foo;
+			},
+			validateUsageError(/delete operator/),
+		);
 	});
 });

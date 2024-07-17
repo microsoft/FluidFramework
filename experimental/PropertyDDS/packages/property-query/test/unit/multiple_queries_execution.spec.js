@@ -54,7 +54,9 @@ describe("Multiple query execution", () => {
 					],
 				}),
 			)
-				.to.be.eventually.rejectedWith('queryLanguage" must be one of')
+				.to.be.eventually.rejectedWith(
+					'Invalid query 0,queryLanguage: "[0].queryLanguage" must be [queryV1]',
+				)
 				.and.to.have.property("statusCode", 400));
 	});
 
@@ -159,43 +161,43 @@ describe("Multiple query execution", () => {
 		});
 
 		it("should return the union of results", () =>
-			expect(
-				aQV1Execution.execute(someBranchInfo, someCommitGuid, queries),
-			).to.eventually.eql({
-				changeSet: {
-					insert: {
-						"map<mysample:point2d-1.0.0>": {
-							collectionA: {
-								insert: {
-									"mysample:point2d-1.0.0": {
-										pointA: {
-											Float64: {
-												x: -16.0,
-												y: -32.0,
+			expect(aQV1Execution.execute(someBranchInfo, someCommitGuid, queries)).to.eventually.eql(
+				{
+					changeSet: {
+						insert: {
+							"map<mysample:point2d-1.0.0>": {
+								collectionA: {
+									insert: {
+										"mysample:point2d-1.0.0": {
+											pointA: {
+												Float64: {
+													x: -16.0,
+													y: -32.0,
+												},
 											},
-										},
-										pointB: {
-											Float64: {
-												x: -8.0,
-												y: -16.0,
+											pointB: {
+												Float64: {
+													x: -8.0,
+													y: -16.0,
+												},
 											},
 										},
 									},
 								},
-							},
-							collectionB: {
-								insert: {
-									"mysample:point2d-1.0.0": {
-										pointC: {
-											Float64: {
-												x: -16.0,
-												y: -32.0,
+								collectionB: {
+									insert: {
+										"mysample:point2d-1.0.0": {
+											pointC: {
+												Float64: {
+													x: -16.0,
+													y: -32.0,
+												},
 											},
-										},
-										pointD: {
-											Float64: {
-												x: -8.0,
-												y: -16.0,
+											pointD: {
+												Float64: {
+													x: -8.0,
+													y: -16.0,
+												},
 											},
 										},
 									},
@@ -203,13 +205,13 @@ describe("Multiple query execution", () => {
 							},
 						},
 					},
+					queryPaths: [
+						"collectionA[pointA]",
+						"collectionA[pointB]",
+						"collectionB[pointC]",
+						"collectionB[pointD]",
+					],
 				},
-				queryPaths: [
-					"collectionA[pointA]",
-					"collectionA[pointB]",
-					"collectionB[pointC]",
-					"collectionB[pointD]",
-				],
-			}));
+			));
 	});
 });

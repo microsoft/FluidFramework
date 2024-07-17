@@ -33,7 +33,7 @@ import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 
-import { ILoadTest, createFluidExport } from "./loadTestDataStore.js";
+import { ILoadTest, createFluidExport, type IRunConfig } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
 	generateLoaderOptions,
@@ -175,10 +175,16 @@ export async function initialize(
 	testIdn?: string,
 ) {
 	const random = makeRandom(seed);
-	const optionsOverride = getOptionOverride(testConfig, testDriver.type, testDriver.endpointName);
+	const optionsOverride = getOptionOverride(
+		testConfig,
+		testDriver.type,
+		testDriver.endpointName,
+	);
 
 	const loaderOptions = random.pick(generateLoaderOptions(seed, optionsOverride?.loader));
-	const containerOptions = random.pick(generateRuntimeOptions(seed, optionsOverride?.container));
+	const containerOptions = random.pick(
+		generateRuntimeOptions(seed, optionsOverride?.container),
+	);
 	const configurations = random.pick(
 		generateConfigurations(seed, optionsOverride?.configurations),
 	);
@@ -313,3 +319,9 @@ export const configProvider = (configs: Record<string, ConfigTypes>): IConfigPro
 		getRawConfig: (name: string): ConfigTypes => globalConfigurations[name] ?? configs[name],
 	};
 };
+
+export function printStatus(runConfig: IRunConfig, message: string) {
+	if (runConfig.verbose) {
+		console.log(`${runConfig.runId.toString().padStart(3)}> ${message}`);
+	}
+}

@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { TreeNodeSchemaIdentifier } from "../core/index.js";
+import type { TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
-	FlexMapNodeSchema,
-	FlexTreeNode,
-	MapTreeNode,
+	type FlexMapNodeSchema,
+	type FlexTreeNode,
+	type MapTreeNode,
 	cursorForMapTreeNode,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import {
-	InsertableContent,
+	type InsertableContent,
 	getProxyForField,
 	markContentType,
 	prepareContentForHydration,
@@ -25,14 +25,14 @@ import {
 	NodeKind,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
-	TreeNodeSchemaClass,
-	WithType,
-	TreeNodeSchema,
-	TreeNodeFromImplicitAllowedTypes,
-	type,
+	type TreeNodeSchemaClass,
+	type WithType,
+	type TreeNodeSchema,
+	type TreeNodeFromImplicitAllowedTypes,
+	typeNameSymbol,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
-import { TreeNode, TreeNodeValid } from "./types.js";
+import { type MostDerivedData, type TreeNode, TreeNodeValid } from "./types.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -42,7 +42,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  * @privateRemarks
  * Add support for `clear` once we have established merge semantics for it.
  *
- * @public
+ * @sealed @public
  */
 export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
 	extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
@@ -145,10 +145,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	public *entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
 		const node = getFlexNode(this);
 		for (const key of node.keys()) {
-			yield [
-				key,
-				getProxyForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>,
-			];
+			yield [key, getProxyForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>];
 		}
 	}
 	public get(key: string): TreeNodeFromImplicitAllowedTypes<T> {
@@ -249,7 +246,7 @@ export function mapSchema<
 			);
 		}
 
-		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
+		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexMapNodeSchema;
@@ -260,7 +257,7 @@ export function mapSchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 
-		public get [type](): TName {
+		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
 	}

@@ -74,11 +74,7 @@
             "off"
         ],
         "@typescript-eslint/brace-style": [
-            "error",
-            "1tbs",
-            {
-                "allowSingleLine": true
-            }
+            "off"
         ],
         "@typescript-eslint/class-literal-property-style": [
             "error"
@@ -1476,7 +1472,7 @@
             "error"
         ],
         "unicorn/no-useless-spread": [
-            "error"
+            "off"
         ],
         "unicorn/no-useless-switch-case": [
             "error"

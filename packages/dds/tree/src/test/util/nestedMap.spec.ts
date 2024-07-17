@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import {
-	NestedMap,
+	type NestedMap,
 	SizedNestedMap,
 	deleteFromNestedMap,
 	getOrAddInNestedMap,
@@ -15,6 +15,7 @@ import {
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
+	mapNestedMap,
 } from "../../util/index.js";
 
 describe("NestedMap unit tests", () => {
@@ -292,6 +293,47 @@ describe("NestedMap unit tests", () => {
 					],
 				]),
 			);
+		});
+	});
+
+	describe("mapNestedMap", () => {
+		it("creates a new map with mapped values", () => {
+			const input: NestedMap<string, string, number> = new Map<string, Map<string, number>>();
+			setInNestedMap(input, "Foo", "Bar", 1);
+			setInNestedMap(input, "Foo", "Baz", 2);
+
+			const output = mapNestedMap(input, (n: number) => String(n));
+
+			assert.deepEqual(
+				output,
+				new Map([
+					[
+						"Foo",
+						new Map([
+							["Bar", "1"],
+							["Baz", "2"],
+						]),
+					],
+				]),
+			);
+		});
+
+		it("tolerates empty outer maps", () => {
+			const input: NestedMap<string, string, number> = new Map<string, Map<string, number>>();
+
+			const output = mapNestedMap(input, (n: number) => String(n));
+
+			assert.deepEqual(output, new Map([]));
+		});
+
+		it("tolerates (and preserves) empty inner maps", () => {
+			const input: NestedMap<string, string, number> = new Map<string, Map<string, number>>([
+				["Foo", new Map()],
+			]);
+
+			const output = mapNestedMap(input, (n: number) => String(n));
+
+			assert.deepEqual(output, new Map([["Foo", new Map()]]));
 		});
 	});
 });

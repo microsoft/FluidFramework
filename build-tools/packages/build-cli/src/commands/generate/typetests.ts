@@ -13,7 +13,6 @@ import {
 	type TestCaseTypeData,
 	type TypeData,
 	buildTestCase,
-	getFullTypeName,
 	getTypeTestPreviousPackageDetails,
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
@@ -21,7 +20,16 @@ import { PackageName } from "@rushstack/node-core-library";
 import * as changeCase from "change-case";
 import { readJson } from "fs-extra/esm";
 import * as resolve from "resolve.exports";
-import { JSDoc, ModuleKind, Node, Project, type SourceFile, SyntaxKind } from "ts-morph";
+import {
+	JSDoc,
+	ModuleKind,
+	type NameableNodeSpecific,
+	type NamedNodeSpecificBase,
+	Node,
+	Project,
+	type SourceFile,
+	SyntaxKind,
+} from "ts-morph";
 import { PackageCommand } from "../../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../../flags.js";
 import {
@@ -144,7 +152,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 
 		// Sort import statements to respect linting rules.
 		const buildToolsPackageName = "@fluidframework/build-tools";
-		const buildToolsImport = `import type { TypeOnly, MinimalType, FullType } from "${buildToolsPackageName}";`;
+		const buildToolsImport = `import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "${buildToolsPackageName}";`;
 		const previousImport = `import type * as old from "${previousPackageName}${
 			previousPackageLevel === ApiLevel.public ? "" : `/${previousPackageLevel}`
 		}";`;
@@ -168,7 +176,7 @@ ${imports.join("\n")}
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 `,
 		];
 
@@ -231,7 +239,7 @@ function getTypesPathWithFallback(
  * This implementation loosely follows TypeScript's process for finding types as described at
  * {@link https://www.typescriptlang.org/docs/handbook/modules/reference.html#packagejson-main-and-types}. If an export
  * map is found, the `types` and `typings` field are ignored. If an export map is not found, then the `types`/`typings`
- * fields will be used as a fallback _only_ for the public API level (which coresponds to the default export).
+ * fields will be used as a fallback _only_ for the public API level (which corresponds to the default export).
  *
  * Importantly, this code _does not_ implement falling back to the `main` field when `types` and `typings` are missing,
  * nor does it look up types from DefinitelyTyped (i.e. \@types/* packages). This fallback logic is not needed for our
@@ -331,7 +339,7 @@ function getTypeTestFilePath(pkg: Package, outDir: string, outFile: string): str
  * @param log - A logger to use.
  * @returns The mapping between type name and its type data.
  */
-function typeDataFromFile(
+export function typeDataFromFile(
 	file: SourceFile,
 	log: Logger,
 	namespacePrefix?: string,
@@ -339,10 +347,16 @@ function typeDataFromFile(
 	const typeData = new Map<string, TypeData>();
 	const exportedDeclarations = file.getExportedDeclarations();
 
-	for (const declarations of exportedDeclarations.values()) {
+	// Here we capture the exported name, rather than the name of the node.
+	// This ensures exports which alias names (ex: export {foo as bad} ...) report the external facing name not the internal one.
+	for (const [exportedName, declarations] of exportedDeclarations) {
 		for (const declaration of declarations) {
-			for (const typeDefinition of getNodeTypeData(declaration, log, namespacePrefix)) {
-				const fullName = getFullTypeName(typeDefinition);
+			for (const typeDefinition of getNodeTypeData(
+				declaration,
+				log,
+				addStringScope(namespacePrefix, exportedName),
+			)) {
+				const fullName = typeDefinition.testCaseName;
 				if (typeData.has(fullName)) {
 					// This system does not properly handle overloads: instead it only keeps the last signature.
 					log.warning(
@@ -356,7 +370,27 @@ function typeDataFromFile(
 	return typeData;
 }
 
-function getNodeTypeData(node: Node, log: Logger, namespacePrefix?: string): TypeData[] {
+/**
+ * Prefix `node`'s name with `namespacePrefix` to produce a qualified name.
+ */
+function addScope(
+	namespacePrefix: string | undefined,
+	node: NameableNodeSpecific | NamedNodeSpecificBase<Node>,
+): string {
+	const scope = node.getName();
+	if (scope === undefined) throw new Error("Missing scope where one was expected");
+	return addStringScope(namespacePrefix, scope);
+}
+
+/**
+ * Prefix `innerName` name with `namespacePrefix` to produce a qualified name.
+ */
+function addStringScope(namespacePrefix: string | undefined, innerName: string): string {
+	const name = namespacePrefix === undefined ? innerName : `${namespacePrefix}.${innerName}`;
+	return name;
+}
+
+function getNodeTypeData(node: Node, log: Logger, exportedName: string): TypeData[] {
 	/*
         handles namespaces e.g.
         export namespace foo{
@@ -371,7 +405,7 @@ function getNodeTypeData(node: Node, log: Logger, namespacePrefix?: string): Typ
 		for (const s of node.getStatements()) {
 			// only get type data for nodes that are exported from the namespace
 			if (Node.isExportable(s) && s.isExported()) {
-				typeData.push(...getNodeTypeData(s, log, node.getName()));
+				typeData.push(...getNodeTypeData(s, log, addScope(exportedName, node)));
 			}
 		}
 		return typeData;
@@ -385,7 +419,7 @@ function getNodeTypeData(node: Node, log: Logger, namespacePrefix?: string): Typ
 	if (Node.isVariableStatement(node)) {
 		const typeData: TypeData[] = [];
 		for (const dec of node.getDeclarations()) {
-			typeData.push(...getNodeTypeData(dec, log, namespacePrefix));
+			typeData.push(...getNodeTypeData(dec, log, addScope(exportedName, dec)));
 		}
 		return typeData;
 	}
@@ -393,7 +427,7 @@ function getNodeTypeData(node: Node, log: Logger, namespacePrefix?: string): Typ
 	if (Node.isIdentifier(node)) {
 		const typeData: TypeData[] = [];
 		for (const definition of node.getDefinitionNodes()) {
-			typeData.push(...getNodeTypeData(definition, log, namespacePrefix));
+			typeData.push(...getNodeTypeData(definition, log, exportedName));
 		}
 		return typeData;
 	}
@@ -406,29 +440,55 @@ function getNodeTypeData(node: Node, log: Logger, namespacePrefix?: string): Typ
 		Node.isVariableDeclaration(node) ||
 		Node.isFunctionDeclaration(node)
 	) {
-		const name =
-			namespacePrefix === undefined
-				? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					node.getName()!
-				: `${namespacePrefix}.${node.getName()}`;
-
 		const docs = Node.isVariableDeclaration(node)
 			? node.getFirstAncestorByKindOrThrow(SyntaxKind.VariableStatement).getJsDocs()
 			: node.getJsDocs();
 
-		const typeData: TypeData[] = [
-			{
-				name,
-				kind: node.getKindName(),
-				node,
-				tags: getTags(docs),
-			},
-		];
+		const typeData: TypeData[] = [];
+
+		const dataCommon = {
+			name: exportedName,
+			node,
+			tags: getTags(docs),
+		};
+
+		const escapedTypeName = exportedName.replace(/\./g, "_");
+		const trimmedKind = node.getKindName().replace(/Declaration/g, "");
+
+		if (
+			// Covers instance type of the class (including generics of it)
+			Node.isClassDeclaration(node) ||
+			Node.isEnumDeclaration(node) ||
+			Node.isInterfaceDeclaration(node) ||
+			Node.isTypeAliasDeclaration(node)
+		) {
+			typeData.push({
+				...dataCommon,
+				useTypeof: false,
+				testCaseName: `${trimmedKind}_${escapedTypeName}`,
+			});
+		}
+
+		if (
+			// Covers statics of the class (non-generic)
+			Node.isClassDeclaration(node) ||
+			Node.isVariableDeclaration(node) ||
+			Node.isFunctionDeclaration(node)
+		) {
+			typeData.push({
+				...dataCommon,
+				useTypeof: true,
+				testCaseName: `${
+					Node.isClassDeclaration(node) ? "ClassStatics" : trimmedKind
+				}_${escapedTypeName}`,
+			});
+		}
+
 		return typeData;
 	}
 
 	if (Node.isSourceFile(node)) {
-		return [...typeDataFromFile(node, log, namespacePrefix).values()];
+		return [...typeDataFromFile(node, log, exportedName).values()];
 	}
 
 	throw new Error(`Unknown Export Kind: ${node.getKindName()}`);
@@ -485,7 +545,7 @@ export function generateCompatibilityTestCases(
 			...oldTypeData,
 			removed: false,
 		};
-		const currentTypeData = currentTypeMap.get(getFullTypeName(oldTypeData));
+		const currentTypeData = currentTypeMap.get(oldTypeData.testCaseName);
 		// if the current package is missing a type, we will use the old type data.
 		// this can represent a breaking change which can be disable in the package.json.
 		// this can also happen for type changes, like type to interface, which can remain
@@ -495,7 +555,7 @@ export function generateCompatibilityTestCases(
 				? {
 						prefix: "current",
 						...oldTypeData,
-						kind: `Removed${oldTypeData.kind}`,
+						testCaseName: `Removed${oldTypeData.testCaseName}`,
 						removed: true,
 					}
 				: {
@@ -505,7 +565,7 @@ export function generateCompatibilityTestCases(
 					};
 
 		// look for settings not under version, then fall back to version for back compat
-		const brokenData = broken?.[getFullTypeName(currentType)];
+		const brokenData = broken?.[currentType.testCaseName];
 
 		const typePreprocessor = selectTypePreprocessor(currentType);
 		if (typePreprocessor !== undefined) {
@@ -515,6 +575,12 @@ export function generateCompatibilityTestCases(
 				// but trying to implement it based on the old version should not occur and is not a supported usage.
 				// This means that adding members to sealed types, as well as making their members have more specific types is allowed as a non-breaking change.
 				// This check implements skipping generation of type tests which would flag such changes to sealed types as errors.
+			} else if (oldTypeData.useTypeof) {
+				// If the type was using typeof treat it like `@sealed`.
+				// This assumes adding members to existing variables (and class statics) is non-breaking.
+				// This is true in most cases, though there are some edge cases where this assumption is wrong
+				// (for example name collisions with inherited statics in subclasses, and explicit use of typeof in user code to define a type which it implements),
+				// but overall skipping this case seems preferable to the large amount of false positives keeping it produces.
 			} else {
 				testString.push(
 					`/*`,
@@ -522,7 +588,7 @@ export function generateCompatibilityTestCases(
 					` * If this test starts failing, it indicates a change that is not forward compatible.`,
 					` * To acknowledge the breaking change, add the following to package.json under`,
 					` * typeValidation.broken:`,
-					` * "${getFullTypeName(currentType)}": {"forwardCompat": false}`,
+					` * "${currentType.testCaseName}": {"forwardCompat": false}`,
 					" */",
 					...buildTestCase(
 						oldType,
@@ -539,7 +605,7 @@ export function generateCompatibilityTestCases(
 				` * If this test starts failing, it indicates a change that is not backward compatible.`,
 				` * To acknowledge the breaking change, add the following to package.json under`,
 				` * typeValidation.broken:`,
-				` * "${getFullTypeName(currentType)}": {"backCompat": false}`,
+				` * "${currentType.testCaseName}": {"backCompat": false}`,
 				" */",
 				...buildTestCase(
 					currentType,

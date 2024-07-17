@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.40.0",
+	"version": "0.42.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -25,7 +25,12 @@
 	"bin": {
 		"flub": "./bin/run.js"
 	},
-	"files": ["/bin", "/lib", "!lib/test", "/oclif.manifest.json"],
+	"files": [
+		"/bin",
+		"/lib",
+		"!lib/test",
+		"/oclif.manifest.json"
+	],
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && concurrently npm:build:docs npm:build:diagrams",
 		"build:compile": "npm run tsc && npm run build:test && npm run build:copy && npm run build:readme",
@@ -33,7 +38,7 @@
 		"build:diagrams": "jssm-viz -i \"./src/machines/*.fsl\"",
 		"build:docs": "api-extractor run --local",
 		"build:manifest": "oclif manifest",
-		"build:readme": "fluid-readme generate readme --multi",
+		"build:readme": "fluid-readme generate readme --multi --no-aliases",
 		"build:test": "tsc --project ./test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
@@ -44,7 +49,7 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
-		"format:biome": "biome check --apply .",
+		"format:biome": "biome check --write .",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"postpack": "npm run clean:manifest",
@@ -56,11 +61,21 @@
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
-		"exclude": ["src/test/**/*.*ts", "lib/test/**/*.*js"],
+		"exclude": [
+			"src/test/**/*.*ts",
+			"lib/test/**/*.*js"
+		],
 		"exclude-after-remap": false,
-		"include": ["src/**/*.*ts", "lib/**/*.*js"],
+		"include": [
+			"src/**/*.*ts",
+			"lib/**/*.*js"
+		],
 		"report-dir": "nyc/report",
-		"reporter": ["cobertura", "html", "text"],
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
@@ -147,7 +162,7 @@
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.1",
 		"tslib": "^2.6.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.4.5"
 	},
 	"engines": {
 		"node": ">=18.17.1"
@@ -155,11 +170,18 @@
 	"fluidBuild": {
 		"tasks": {
 			"compile": {
-				"dependsOn": ["...", "build:diagrams"],
+				"dependsOn": [
+					"...",
+					"build:diagrams"
+				],
 				"script": false
 			},
 			"build:diagrams": [],
-			"build:manifest": ["...", "build:copy", "build:diagrams"]
+			"build:manifest": [
+				"...",
+				"build:copy",
+				"build:diagrams"
+			]
 		}
 	},
 	"oclif": {
@@ -167,8 +189,12 @@
 		"dirname": "flub",
 		"flexibleTaxonomy": true,
 		"commands": "./lib/commands",
-		"additionalHelpFlags": ["-h"],
-		"additionalVersionFlags": ["-V"],
+		"additionalHelpFlags": [
+			"-h"
+		],
+		"additionalVersionFlags": [
+			"-V"
+		],
 		"plugins": [
 			"@oclif/plugin-autocomplete",
 			"@oclif/plugin-commands",

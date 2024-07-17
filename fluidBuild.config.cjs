@@ -9,13 +9,6 @@
 
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 
-// These tasks are used to check code formatting. We currently format code in both the lint and format tasks, so we
-// define the list here so we can re-use it in multiple task definitions.
-//
-// The "prettier" task should be replaced by "check:prettier" eventually. Once the conversion is done, then the
-// "prettier" task can be removed from this list.
-const checkFormatTasks = ["check:biome", "check:prettier", "prettier"];
-
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -28,7 +21,14 @@ const checkFormatTasks = ["check:biome", "check:prettier", "prettier"];
 module.exports = {
 	tasks: {
 		"ci:build": {
-			dependsOn: ["compile", "lint", "ci:build:docs", "build:manifest", "build:readme"],
+			dependsOn: [
+				"compile",
+				"lint",
+				"ci:build:api-reports",
+				"ci:build:docs",
+				"build:manifest",
+				"build:readme",
+			],
 			script: false,
 		},
 		"full": {
@@ -36,7 +36,14 @@ module.exports = {
 			script: false,
 		},
 		"build": {
-			dependsOn: ["compile", "lint", "build:docs", "build:manifest", "build:readme"],
+			dependsOn: [
+				"compile",
+				"lint",
+				"build:api-reports",
+				"build:docs",
+				"build:manifest",
+				"build:readme",
+			],
 			script: false,
 		},
 		"compile": {
@@ -49,7 +56,7 @@ module.exports = {
 		},
 		"lint": {
 			dependsOn: [
-				...checkFormatTasks,
+				"check:format",
 				"eslint",
 				"good-fences",
 				"depcruise",
@@ -59,11 +66,11 @@ module.exports = {
 			script: false,
 		},
 		"checks": {
-			dependsOn: [...checkFormatTasks],
+			dependsOn: ["check:format"],
 			script: false,
 		},
 		"checks:fix": {
-			dependsOn: ["^checks:fix"],
+			dependsOn: [],
 			script: false,
 		},
 		"build:copy": [],
@@ -88,6 +95,16 @@ module.exports = {
 			dependsOn: ["build:esnext"],
 			script: true,
 		},
+		// build:api-reports may be handled in one step with build:docs when a
+		// package only uses api-extractor supported exports, which is a single
+		// export/entrypoint. For packages with /legacy exports, we need to
+		// generate reports from legacy entrypoint as well as the "current" one.
+		// The "current" entrypoint should be the broadest of "public.d.ts",
+		// "beta.d.ts", and "alpha.d.ts".
+		"build:api-reports:current": ["api-extractor:esnext"],
+		"build:api-reports:legacy": ["api-extractor:esnext"],
+		"ci:build:api-reports:current": ["api-extractor:esnext"],
+		"ci:build:api-reports:legacy": ["api-extractor:esnext"],
 		// With most packages in client building ESM first, there is ideally just "build:esnext" dependency.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
@@ -108,12 +125,12 @@ module.exports = {
 		"check:release-tags": ["tsc", "build:esnext"],
 		"check:are-the-types-wrong": ["build"],
 		"check:format": {
-			dependsOn: [...checkFormatTasks],
-			script: false,
+			dependencies: [],
+			script: true,
 		},
 		"format": {
-			dependsOn: ["prettier:fix", "format:prettier", "format:biome"],
-			script: false,
+			dependencies: [],
+			script: true,
 		},
 		"check:biome": [],
 		"check:prettier": [],
@@ -179,7 +196,6 @@ module.exports = {
 		"tools": [
 			"tools/api-markdown-documenter",
 			"tools/benchmark",
-			"tools/changelog-generator-wrapper",
 			"tools/getkeys",
 			"tools/test-tools",
 		],
@@ -187,15 +203,18 @@ module.exports = {
 
 	// `flub check policy` config. It applies to the whole repo.
 	policy: {
+		// Entries here are COMPLETELY ignored by the policy checker. Instead of adding entries here, consider adding
+		// entries to the handlerExclusions list below to ignore a particular.
 		exclusions: [
+			// The paths below are for fluidframework.com layouts and code and are not subject to policy.
 			"docs/layouts/",
 			"docs/themes/thxvscode/assets/",
 			"docs/themes/thxvscode/layouts/",
 			"docs/themes/thxvscode/static/assets/",
-			"docs/tutorials/.*\\.tsx?",
-			"server/gitrest/package.json",
-			"server/historian/package.json",
+
+			// This file is a test file.
 			"tools/markdown-magic/test/package.json",
+
 			// Source to output package.json files - not real packages
 			// These should only be files that are not in an pnpm workspace.
 			"common/build/build-common/src/cjs/package.json",
@@ -265,6 +284,10 @@ module.exports = {
 				"tools/changelog-generator-wrapper/src/index.js",
 				"tools/getkeys/index.js",
 			],
+			"npm-package-metadata-and-sorting": [
+				// The root package.json is not checked temporarily due to AB#8640
+				"^package.json",
+			],
 			"package-lockfiles-npm-version": [
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
@@ -307,15 +330,9 @@ module.exports = {
 			"npm-package-exports-apis-linted": [
 				// Rollout suppressions - enable only after tools are updated to support policy
 				// as new build-tools will have the concurrently fluid-build support it uses.
-				"^azure/",
 				"^common/",
-				"^examples/",
-				"^experimental/",
-				"^packages/",
 
 				// Packages that violate the API linting rules
-				// AB#8135: ae-unresolved-inheritdoc-reference: @public AzureMember references @internal AzureUser
-				"^packages/service-clients/azure-client/",
 				// ae-missing-release-tags, ae-incompatible-release-tags
 				"^examples/data-objects/table-document/",
 				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support
@@ -442,6 +459,7 @@ module.exports = {
 			commandPackages: [
 				["api-extractor", "@microsoft/api-extractor"],
 				["attw", "@arethetypeswrong/cli"],
+				["biome", "@biomejs/biome"],
 				["c8", "c8"],
 				["concurrently", "concurrently"],
 				["copyfiles", "copyfiles"],
@@ -491,7 +509,8 @@ module.exports = {
 		},
 		// Requirements applied to all `public` packages.
 		publicPackageRequirements: {
-			// The following scripts are all currently required to ensure api-extractor is run correctly in local builds and pipelines
+			// The following scripts combined with npm-package-exports-apis-linted policy are all currently required
+			// to ensure api-extractor is run correctly in local builds and pipelines.
 			requiredScripts: [
 				// TODO: Add as a requirement once all packages have been updated to produce dual esm/commonjs builds
 				// {
@@ -500,15 +519,11 @@ module.exports = {
 				// },
 				{
 					name: "build:docs",
-					body: "fluid-build . --task api",
+					body: "api-extractor run --local",
 				},
 				{
 					name: "ci:build:docs",
 					body: "api-extractor run",
-				},
-				{
-					name: "check:release-tags",
-					body: "api-extractor run --local --config ./api-extractor-lint.json",
 				},
 			],
 			// All of our public packages should be using api-extractor

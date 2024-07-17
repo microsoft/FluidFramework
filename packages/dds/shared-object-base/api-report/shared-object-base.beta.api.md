@@ -4,32 +4,9 @@
 
 ```ts
 
-import { ErasedType } from '@fluidframework/core-interfaces';
-import { EventEmitterEventType } from '@fluid-internal/client-utils';
-import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
-import { IChannel } from '@fluidframework/datastore-definitions/internal';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
-import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
-import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
-import type { IDeltaManager } from '@fluidframework/container-definitions/internal';
-import { IDocumentMessage } from '@fluidframework/driver-definitions/internal';
-import { IErrorEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions/internal';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
-import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
-
-// @public
+// @public @sealed
 export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
+    is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
 }
 
 // (No @packageDocumentation comment for this package)

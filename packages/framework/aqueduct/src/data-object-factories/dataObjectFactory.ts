@@ -4,7 +4,7 @@
  */
 
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
-import { type IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	SharedMap,
 	DirectoryFactory,
@@ -12,14 +12,10 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	SharedDirectory,
 } from "@fluidframework/map/internal";
-import { type NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
-import { type FluidObjectSymbolProvider } from "@fluidframework/synthesize/internal";
+import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
+import type { FluidObjectSymbolProvider } from "@fluidframework/synthesize/internal";
 
-import {
-	type DataObject,
-	type DataObjectTypes,
-	type IDataObjectProps,
-} from "../data-objects/index.js";
+import type { DataObject, DataObjectTypes, IDataObjectProps } from "../data-objects/index.js";
 
 import { PureDataObjectFactory } from "./pureDataObjectFactory.js";
 
@@ -30,6 +26,7 @@ import { PureDataObjectFactory } from "./pureDataObjectFactory.js";
  *
  * @typeParam TObj - DataObject (concrete type)
  * @typeParam I - The input types for the DataObject
+ * @legacy
  * @alpha
  */
 export class DataObjectFactory<

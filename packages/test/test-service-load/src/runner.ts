@@ -39,14 +39,9 @@ import {
 	createTestDriver,
 	getProfile,
 	globalConfigurations,
+	printStatus,
 	safeExit,
 } from "./utils.js";
-
-function printStatus(runConfig: IRunConfig, message: string) {
-	if (runConfig.verbose) {
-		console.log(`${runConfig.runId.toString().padStart(3)}> ${message}`);
-	}
-}
 
 async function main() {
 	const parseIntArg = (value: any): number => {
@@ -204,7 +199,12 @@ async function runnerProcess(
 	const containerOptions = generateRuntimeOptions(seed, optionsOverride?.container);
 	const configurations = generateConfigurations(seed, optionsOverride?.configurations);
 
-	const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
+	const testDriver: ITestDriver = await createTestDriver(
+		driver,
+		endpoint,
+		seed,
+		runConfig.runId,
+	);
 
 	// Cycle between creating new factory vs. reusing factory.
 	// Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
@@ -289,12 +289,7 @@ async function runnerProcess(
 			// If undefined then no fault injection.
 			const faultInjection = runConfig.testConfig.faultInjectionMs;
 			if (faultInjection) {
-				scheduleContainerClose(
-					container,
-					runConfig,
-					faultInjection.min,
-					faultInjection.max,
-				);
+				scheduleContainerClose(container, runConfig, faultInjection.min, faultInjection.max);
 				scheduleFaultInjection(
 					documentServiceFactory,
 					container,
@@ -370,8 +365,9 @@ function scheduleFaultInjection(
 				container.connectionState === ConnectionState.Connected &&
 				container.resolvedUrl !== undefined
 			) {
-				const deltaConn = ds.documentServices.get(container.resolvedUrl)
-					?.documentDeltaConnection;
+				const deltaConn = ds.documentServices.get(
+					container.resolvedUrl,
+				)?.documentDeltaConnection;
 				if (deltaConn !== undefined && !deltaConn.disposed) {
 					// 1 in numClients chance of non-retritable error to not overly conflict with container close
 					const canRetry = random.bool(1 - 1 / runConfig.testConfig.numClients);
@@ -449,9 +445,7 @@ function scheduleContainerClose(
 						);
 						setTimeout(() => {
 							if (!container.closed) {
-								container.close(
-									new FaultInjectionError("scheduleContainerClose", false),
-								);
+								container.close(new FaultInjectionError("scheduleContainerClose", false));
 							}
 						}, leaveTime);
 					}

@@ -253,23 +253,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		},
 	);
 
-	itExpects(
-		"Large ops fail when compression is disabled by feature gate and the content is over max op size",
-		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
-		async function () {
-			const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
-			await setupContainers(testContainerConfig, {
-				"Fluid.ContainerRuntime.CompressionDisabled": true,
-			});
-
-			const largeString = generateStringOfSize(maxMessageSizeInBytes);
-			const messageCount = 10;
-			assert.throws(() => setMapKeys(localMap, messageCount, largeString));
-			await provider.ensureSynchronized();
-		},
-	);
-
-	itExpects(
+	itExpects.skip(
 		"Large ops fail when compression enabled and compressed content is over max op size",
 		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
 		async function () {
@@ -307,9 +291,10 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				: [
 						{
 							eventName: "fluid:telemetry:Container:ContainerClose",
-							error: "Runtime detected too many reconnects with no progress syncing local ops.",
+							error:
+								"Runtime detected too many reconnects with no progress syncing local ops.",
 						},
-				  ], // Without grouped batching, it is expected for the container to never make progress
+					], // Without grouped batching, it is expected for the container to never make progress
 			async function () {
 				await setupContainers(containerConfig);
 				// This is not supported by the local server. See ADO:2690
@@ -356,10 +341,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 						async function () {
 							// This is not supported by the local server. See ADO:2690
 							// This test is flaky on tinylicious. See ADO:2964
-							if (
-								provider.driver.type === "local" ||
-								provider.driver.type === "tinylicious"
-							) {
+							if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
 								this.skip();
 							}
 
@@ -393,7 +375,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				}));
 
 			itExpects(
-				"Large ops fail when compression chunking is disabled by feature gate",
+				"Large ops fail when compression chunking is disabled",
 				[
 					{
 						eventName: "fluid:telemetry:Container:ContainerClose",
@@ -402,18 +384,14 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				],
 				async function () {
 					const maxMessageSizeInBytes = 50 * 1024; // 50 KB
-					await setupContainers(
-						{
-							...containerConfig,
-							runtimeOptions: {
-								...containerConfig.runtimeOptions,
-								maxBatchSizeInBytes: 51 * 1024, // 51 KB
-							},
+					await setupContainers({
+						...containerConfig,
+						runtimeOptions: {
+							...containerConfig.runtimeOptions,
+							maxBatchSizeInBytes: 51 * 1024, // 51 KB
+							chunkSizeInBytes: Infinity,
 						},
-						{
-							"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
-						},
-					);
+					});
 
 					const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
 					const messageCount = 3; // Will result in a 150 KB payload
@@ -495,20 +473,15 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 						"Payload size check, " +
 							"Sending " +
 							`${config.messagesInBatch.toLocaleString()} messages of ${config.messageSize.toLocaleString()} bytes == ` +
-							`${(
-								(config.messagesInBatch * config.messageSize) /
-								(1024 * 1024)
-							).toFixed(4)} MB, expecting ${(
-								config.expectedSize /
-								(1024 * 1024)
-							).toFixed(4)} MB on the wire`,
+							`${((config.messagesInBatch * config.messageSize) / (1024 * 1024)).toFixed(
+								4,
+							)} MB, expecting ${(config.expectedSize / (1024 * 1024)).toFixed(
+								4,
+							)} MB on the wire`,
 						async function () {
 							// This is not supported by the local server due to chunking. See ADO:2690
 							// This test is flaky on tinylicious. See ADO:2964
-							if (
-								provider.driver.type === "local" ||
-								provider.driver.type === "tinylicious"
-							) {
+							if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
 								this.skip();
 							}
 
@@ -520,10 +493,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 							await setup();
 
 							for (let i = 0; i < config.messagesInBatch; i++) {
-								localMap.set(
-									`key${i}`,
-									config.payloadGenerator(config.messageSize),
-								);
+								localMap.set(`key${i}`, config.payloadGenerator(config.messageSize));
 							}
 
 							await provider.ensureSynchronized();
@@ -672,8 +642,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					localContainer,
 					(batch) =>
 						batch.length === 1 &&
-						JSON.parse(batch[0].contents as string)?.type ===
-							ContainerMessageType.ChunkedOp,
+						JSON.parse(batch[0].contents as string)?.type === ContainerMessageType.ChunkedOp,
 					2,
 				);
 

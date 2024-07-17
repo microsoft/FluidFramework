@@ -49,6 +49,15 @@ module.exports = {
 
 		// TODO: Remove these overrides once this config has been updated to extend the "strict" base config.
 		"@typescript-eslint/explicit-member-accessibility": "error",
+		"@typescript-eslint/consistent-type-exports": [
+			"error",
+			{ fixMixedExportsWithInlineTypeSpecifier: true },
+		],
+		"@typescript-eslint/consistent-type-imports": [
+			"error",
+			{ fixStyle: "inline-type-imports" },
+		],
+		"@typescript-eslint/no-import-type-side-effects": "error",
 	},
 	overrides: [
 		{
@@ -59,6 +68,13 @@ module.exports = {
 			rules: {
 				"@typescript-eslint/no-unused-vars": ["off"],
 				"@typescript-eslint/explicit-function-return-type": "off",
+			},
+		},
+		// TODO: Remove this override once this config has been updated to extend at least the "recommended" base config.
+		{
+			files: ["src/test/**/*.generated.ts*"],
+			rules: {
+				"@typescript-eslint/no-explicit-any": ["off"],
 			},
 		},
 	],

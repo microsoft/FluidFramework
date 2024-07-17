@@ -5,13 +5,16 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyObject } from "../feature-libraries/index.js";
+import type { EmptyObject } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
 
-import { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
-import { NodeFromSchema, NodeKind, TreeNodeSchemaClass } from "./schemaTypes.js";
-import { TreeNode } from "./types.js";
-import { InsertableObjectFromSchemaRecord, ObjectFromSchemaRecord } from "./objectNode.js";
+import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
+import type { NodeFromSchema, NodeKind, TreeNodeSchemaClass } from "./schemaTypes.js";
+import type { TreeNode } from "./types.js";
+import type {
+	InsertableObjectFromSchemaRecord,
+	ObjectFromSchemaRecord,
+} from "./objectNode.js";
 
 /**
  * Create a schema for a node with no state.

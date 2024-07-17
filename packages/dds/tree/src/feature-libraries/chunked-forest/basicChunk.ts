@@ -7,19 +7,19 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
-	FieldKey,
-	FieldUpPath,
-	PathRootPrefix,
-	TreeNodeSchemaIdentifier,
-	TreeType,
-	TreeValue,
-	UpPath,
-	Value,
+	type FieldKey,
+	type FieldUpPath,
+	type PathRootPrefix,
+	type TreeNodeSchemaIdentifier,
+	type TreeType,
+	type TreeValue,
+	type UpPath,
+	type Value,
 } from "../../core/index.js";
 import { ReferenceCountedBase, fail } from "../../util/index.js";
 import { SynchronousCursor, prefixPath } from "../treeCursorUtils.js";
 
-import { ChunkedCursor, TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
+import { type ChunkedCursor, type TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
 
 /**
  * General purpose one node chunk.
@@ -258,7 +258,10 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		};
 	}
 
-	private getOffsetPath(offset: number, prefix: PathRootPrefix | undefined): UpPath | undefined {
+	private getOffsetPath(
+		offset: number,
+		prefix: PathRootPrefix | undefined,
+	): UpPath | undefined {
 		// It is more efficient to handle prefix directly in here rather than delegating to PrefixedPath.
 
 		const length = this.indexStack.length - offset;
@@ -426,7 +429,10 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 				this.nestedCursor = undefined;
 			}
 		}
-		assert(this.mode === CursorLocationType.Nodes, 0x52c /* can only nextNode when in Nodes */);
+		assert(
+			this.mode === CursorLocationType.Nodes,
+			0x52c /* can only nextNode when in Nodes */,
+		);
 		this.indexWithinChunk++;
 		if (
 			this.indexWithinChunk ===

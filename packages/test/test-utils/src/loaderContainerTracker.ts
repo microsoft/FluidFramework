@@ -48,6 +48,7 @@ interface ContainerRecord {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export class LoaderContainerTracker implements IOpProcessingController {
@@ -312,10 +313,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 			const quorum = container.getQuorum();
 			quorum.getMembers().forEach((client, clientId) => {
 				// ignore summarizer
-				if (
-					!client.client.details.capabilities.interactive &&
-					!this.syncSummarizerClients
-				) {
+				if (!client.client.details.capabilities.interactive && !this.syncSummarizerClients) {
 					return;
 				}
 				if (!openedClientId.includes(clientId)) {
@@ -439,9 +437,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const index = this.containers.get(container)!.index;
 					debugWait(
-						`${index}: Waiting for pending clients ${Array.from(
-							pendingClientId.keys(),
-						)}`,
+						`${index}: Waiting for pending clients ${Array.from(pendingClientId.keys())}`,
 					);
 					unconnectedClients.forEach((c) => c.on("connected", handler));
 					container.getQuorum().on("removeMember", handler);
@@ -552,7 +548,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 				const maybeContainer = container as Partial<IContainer>;
 				const codeProposal = maybeContainer.getLoadedCodeDetails
 					? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					  container.getLoadedCodeDetails()!
+						container.getLoadedCodeDetails()!
 					: (container as any).chaincodePackage;
 
 				proposalP = container.proposeCodeDetails(codeProposal);
@@ -748,9 +744,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 							: "        ";
 					debugOp(
 						`${index}: ${type}: seq: ${msg.sequenceNumber.toString().padStart(3)} ` +
-							`${clientSeq} min: ${msg.minimumSequenceNumber
-								.toString()
-								.padStart(3)} ` +
+							`${clientSeq} min: ${msg.minimumSequenceNumber.toString().padStart(3)} ` +
 							`${msg.type} ${getContentsString(msg.type, msg.contents)}`,
 					);
 				};

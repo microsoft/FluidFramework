@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/readme-command",
-	"version": "0.40.0",
+	"version": "0.42.0",
 	"private": true,
 	"description": "CLI to generate readmes for Fluid build-tools",
 	"homepage": "https://fluidframework.com",
@@ -17,7 +17,11 @@
 	"bin": {
 		"fluid-readme": "./bin/run.js"
 	},
-	"files": ["/bin", "/lib", "/oclif.manifest.json"],
+	"files": [
+		"/bin",
+		"/lib",
+		"/oclif.manifest.json"
+	],
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run build:readme",
@@ -31,7 +35,7 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
-		"format:biome": "biome check --apply .",
+		"format:biome": "biome check --write .",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"postpack": "npm run clean:manifest",
@@ -44,7 +48,9 @@
 		"semver": "^7.5.4"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "~1.8.3",
 		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.40.0",
 		"@fluidframework/eslint-config-fluid": "^5.3.0",
 		"@oclif/test": "^3.2.12",
 		"@types/chai": "^4.3.5",
@@ -61,7 +67,7 @@
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.1",
 		"tslib": "^2.6.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.4.5"
 	},
 	"engines": {
 		"node": ">=18.17.1"
@@ -70,8 +76,12 @@
 		"bin": "fluid-readme",
 		"flexibleTaxonomy": true,
 		"commands": "./lib/commands",
-		"additionalHelpFlags": ["-h"],
-		"additionalVersionFlags": ["-V"],
+		"additionalHelpFlags": [
+			"-h"
+		],
+		"additionalVersionFlags": [
+			"-V"
+		],
 		"plugins": [],
 		"repositoryPrefix": "<%- repo %>/blob/main/build-tools/packages/readme-command/<%- commandPath %>",
 		"topicSeparator": " "

@@ -4,13 +4,15 @@
  */
 
 import type { IEvent } from "@fluidframework/core-interfaces";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { getOrCreate } from "../util/index.js";
 
 /**
  * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
+ * @privateRemarks
+ * First an always true extends clause is used (T extends T) to distribute T into to a union of types contravariant over each member of the T union.
+ * Then the constraint on the type parameter in this new context is inferred, giving the intersection.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never) extends (
+export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (
 	k: infer U,
 ) => unknown
 	? U
@@ -85,7 +87,7 @@ export type TransformListeners<
  * ```
  * {@link createEmitter} can help implement this interface via delegation.
  *
- * @public
+ * @sealed @public
  */
 export interface Listenable<TListeners extends object> {
 	/**
@@ -95,7 +97,7 @@ export interface Listenable<TListeners extends object> {
 	 * @returns a {@link Off | function} which will deregister the listener when called.
 	 * This deregistration function is idempotent and therefore may be safely called more than once with no effect.
 	 * @remarks Do not register the exact same `listener` object for the same event more than once.
-	 * Doing so will result in an error.
+	 * Doing so will result in undefined behavior, and is not guaranteed to behave the same in future versions of this library.
 	 */
 	on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 }
@@ -262,12 +264,11 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 	 * @param listener - the handler to run when the event is fired by the emitter
 	 * @returns a function which will deregister the listener when run.
 	 * This function will error if called more than once.
-	 * @privateRemarks
-	 * TODO:
-	 * invoking the returned callback can error even if its only called once if the same listener was provided to two calls to "on".
-	 * This behavior is not documented and its unclear if its a bug or not: see note on listeners.
 	 */
-	public on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off {
+	public on<K extends keyof Listeners<TListeners>>(
+		eventName: K,
+		listener: TListeners[K],
+	): Off {
 		const off: Off = () => {
 			const currentListeners = this.listeners.get(eventName);
 			if (currentListeners?.delete(off) === true) {
@@ -278,23 +279,7 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 			}
 		};
 
-		const listeners = this.listeners.get(eventName);
-		if (listeners === undefined) {
-			const map = new Map([[off, listener]]);
-			this.listeners.set(eventName, map);
-		} else {
-			// If the same listener function is already registered, error.
-			// This policy may change in the future, but in the meantime this is a conservative choice that can accommodate multiple future eventing API/implementation options.
-			// For example, adding an `Listenable.off()` method in the future could be problematic if we allowed registering the same function twice (should `off(f)` deregister _both_ `f`s or just one?).
-			for (const l of listeners.values()) {
-				if (Object.is(l, listener)) {
-					throw new UsageError(
-						"The same listener may not be registered more than once for the same event",
-					);
-				}
-			}
-			listeners.set(off, listener);
-		}
+		getOrCreate(this.listeners, eventName, () => new Map()).set(off, listener);
 		return off;
 	}
 
