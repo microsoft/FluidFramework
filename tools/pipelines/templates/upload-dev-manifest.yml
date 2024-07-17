@@ -16,7 +16,7 @@ parameters:
 
 jobs:
   - job:
-    displayName: Upload Dev Manifest
+    displayName: Upload Release Reports
     variables:
     - group: storage-vars
     - name: version
