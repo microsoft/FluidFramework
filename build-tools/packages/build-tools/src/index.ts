@@ -42,5 +42,5 @@ export {
 	requireAssignableTo,
 } from "./typeValidator/compatibility";
 export { type TestCaseTypeData, buildTestCase } from "./typeValidator/testGeneration";
-export { type TypeData, getFullTypeName } from "./typeValidator/typeData";
+export { type TypeData } from "./typeValidator/typeData";
 export { getTypeTestPreviousPackageDetails } from "./typeValidator/validatorUtils";
