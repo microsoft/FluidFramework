@@ -242,10 +242,7 @@ export class SerializedStateManager {
 			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 			// non-interactive clients will not have any pending state we want to save
 			if (this.offlineLoadEnabled) {
-				const snapshotBlobs = await getBlobContentsFromTree(
-					baseSnapshotTree,
-					this.storageAdapter,
-				);
+				const snapshotBlobs = await getBlobContentsFromTree(baseSnapshot, this.storageAdapter);
 				const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshotTree);
 				this.snapshot = {
 					baseSnapshot: baseSnapshotTree,
@@ -524,7 +521,7 @@ export async function getLatestSnapshotInfo(
 
 			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 			const snapshotFetchedTime = Date.now();
-			const snapshotBlobs = await getBlobContentsFromTree(baseSnapshotTree, storageAdapter);
+			const snapshotBlobs = await getBlobContentsFromTree(baseSnapshot, storageAdapter);
 			const attributes: IDocumentAttributes = await getDocumentAttributes(
 				storageAdapter,
 				baseSnapshotTree,

@@ -105,7 +105,7 @@ function getPackageMetadata(packageJsonFilePath) {
 const getScopeKindFromPackage = (packageName) => {
 	const packageScope = PackageName.getScope(packageName);
 	if (packageScope === "") {
-		return undefined;
+		return "";
 	} else if (packageScope === "@fluidframework") {
 		return "FRAMEWORK";
 	} else if (packageScope === "@fluid-example") {

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/readme-command",
-	"version": "0.41.0",
+	"version": "0.42.0",
 	"private": true,
 	"description": "CLI to generate readmes for Fluid build-tools",
 	"homepage": "https://fluidframework.com",
