@@ -96,7 +96,7 @@ export interface TreeNodeSchemaNonClass<
  * 	exampleField: schemaFactory.number,
  * }) {
  * 	// This Modifies the type of the constructor input.
- * 	// This is unsupported due to programmatic access to the constructor being use internally.
+ * 	// This is unsupported due to programmatic access to the constructor being used internally.
  * 	public constructor(a: number) {
  * 		super({ exampleField: a });
  * 	}
