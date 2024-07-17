@@ -313,6 +313,7 @@ export {
 	type InsertableObjectFromSchemaRecordUnsafe,
 	type InsertableTreeFieldFromImplicitFieldUnsafe,
 	type FieldSchemaUnsafe,
+	type TreeObjectNodeSchemaBase,
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
 	// experimental @internal APIs:

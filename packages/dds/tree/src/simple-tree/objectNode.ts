@@ -42,6 +42,7 @@ import {
 	typeNameSymbol,
 	type ImplicitAllowedTypes,
 	FieldKind,
+	type TreeNodeSchemaCore,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import {
@@ -482,14 +483,28 @@ export interface TreeObjectNodeSchema<
 		ImplicitFieldSchema
 	>,
 	ImplicitlyConstructable extends boolean = boolean,
-> extends TreeNodeSchemaClass<
-		TName,
-		NodeKind.Object,
-		TreeObjectNode<T, TName>,
-		object & InsertableObjectFromSchemaRecord<T>,
-		ImplicitlyConstructable,
-		T
-	> {
+> extends TreeObjectNodeSchemaBase<TName, T, ImplicitlyConstructable>,
+		TreeNodeSchemaClass<
+			TName,
+			NodeKind.Object,
+			TreeObjectNode<T, TName>,
+			object & InsertableObjectFromSchemaRecord<T>,
+			ImplicitlyConstructable,
+			T
+		> {}
+
+/**
+ * A schema for {@link TreeObjectNode}s.
+ * @remarks
+ * Can be used to narrow schema.
+ * Covariant base type for {@link (TreeObjectNodeSchema:interface)} which is also compatible with recursive schema.
+ * @public
+ */
+export interface TreeObjectNodeSchemaBase<
+	out TName extends string = string,
+	out Info = unknown,
+	out ImplicitlyConstructable extends boolean = boolean,
+> extends TreeNodeSchemaCore<TName, NodeKind.Object, ImplicitlyConstructable, Info> {
 	readonly fields: ReadonlyMap<string, FieldSchema>;
 }
 
