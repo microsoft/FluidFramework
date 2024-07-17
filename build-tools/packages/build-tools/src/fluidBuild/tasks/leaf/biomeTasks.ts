@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { readFile } from "fs/promises";
 import path from "path";
+import { readFile } from "fs/promises";
 import ignore from "ignore";
 import * as JSON5 from "json5";
 import { merge } from "ts-deepmerge";
 import { getResolvedFluidRoot } from "../../../common/fluidUtils";
 import { GitRepo } from "../../../common/gitRepo";
+import { globFn } from "../../../common/utils";
 import { LeafWithFileStatDoneFileTask } from "./leafTask";
 
 // switch to regular import once building ESM
@@ -26,9 +27,16 @@ const findUp = import("find-up");
 interface BiomeConfig {
 	extends?: string[];
 	files?: {
+		include?: string[];
 		ignore?: string[];
 	};
 	formatter?: {
+		include?: string[];
+		ignore?: string[];
+	};
+
+	linter?: {
+		include?: string[];
 		ignore?: string[];
 	};
 }
@@ -106,22 +114,55 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 		 * All files that could possibly be formatted before ignore entries are applied. Paths are relative to the root of
 		 * the repo.
 		 */
-		const allPossibleFiles = await gitRepo.getFiles(cwd);
+		const allPossibleFiles = new Set(await gitRepo.getFiles(cwd));
 
 		const configFile = await this.getClosestBiomeConfigPath(cwd);
 		if (configFile === undefined) {
 			// No config, so all files are formatted
-			return allPossibleFiles;
+			return [...allPossibleFiles];
 		}
 
 		const config = await loadBiomeConfig(configFile);
-		const ignoreEntries = await getFormatterIgnoresFromConfig(config);
+		const [includeEntries, ignoreEntries] = await Promise.all([
+			getPathsFromBiomeConfig(config, "formatter", "include"),
+			getPathsFromBiomeConfig(config, "formatter", "ignore"),
+		]);
+
+		// Use the include globs to enumerate files
+		const includedPathsP: Promise<string[]>[] = [...includeEntries].map((glob) => {
+			// From the Biome docs (https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained):
+			//
+			// "At the moment, Biome uses a glob library that treats all globs as having a **/ prefix.
+			// This means that src/**/*.js and **/src/**/*.js are treated as identical. They match both src/file.js and
+			// test/src/file.js. This is something we plan to fix in Biome v2.0.0."
+			return globFn(`**/${glob}`, {
+				// glob doesn't ignore node_modules or read .gitignore. It might be better to use globby since it will do all
+				// that automatically, but that would be a new dependency.
+				ignore: `${cwd}/node_modules/**`,
+
+				// We need to interpret the globs from the provided directory
+				cwd,
+
+				// Return absolute paths so we can more easily make them package-relative
+				absolute: true,
+
+				// Don't return directories, only files; Biome includes are only applied to files.
+				// See note at https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained
+				nodir: true,
+			});
+		});
+		const includedPaths = new Set(
+			(await Promise.all(includedPathsP))
+				.flat()
+				// Make the path relative to the package.
+				.map((filePath) => path.relative(this.package.directory, filePath)),
+		);
 
 		const ignoreObject = ignore().add([...ignoreEntries]);
-		const filtered = ignoreObject.filter(allPossibleFiles);
+		const filtered = ignoreObject.filter([...includedPaths]);
 
 		this.traceExec(
-			`Found ${allPossibleFiles.length} files to format, reduced to ${filtered.length} files by ignore settings.`,
+			`Biome formatter found ${allPossibleFiles.size} total files, included ${includedPaths.size}, and reduced to ${filtered.length} files by ignore settings.`,
 		);
 
 		// Convert repo-relative paths to absolute
@@ -183,11 +224,40 @@ async function loadBiomeConfig(configPath: string): Promise<BiomeConfig> {
 	return mergedConfig;
 }
 
+type PathKind = "include" | "ignore";
+type ConfigSection = "formatter" | "linter";
+
 /**
  * Given a Biome config object, returns the combined files.ignore and formatter.ignore values.
  */
-async function getFormatterIgnoresFromConfig(config: BiomeConfig) {
-	const filesIgnore = config.files?.ignore ?? [];
-	const formatterIgnores = config.formatter?.ignore ?? [];
-	return new Set([...filesIgnore, ...formatterIgnores]);
+async function getPathsFromBiomeConfig(
+	config: BiomeConfig,
+	section: ConfigSection,
+	kind: PathKind,
+): Promise<Set<string>> {
+	if (section === "formatter" && kind === "ignore") {
+		const filesIgnore = config.files?.ignore ?? [];
+		const formatterIgnores = config.formatter?.ignore ?? [];
+		return new Set([...filesIgnore, ...formatterIgnores]);
+	}
+
+	if (section === "formatter" && kind === "include") {
+		const filesInclude = config.files?.include ?? [];
+		const formatterIncludes = config.formatter?.include ?? [];
+		return new Set([...filesInclude, ...formatterIncludes]);
+	}
+
+	if (section === "linter" && kind === "ignore") {
+		const filesIgnore = config.files?.ignore ?? [];
+		const linterIgnores = config.linter?.ignore ?? [];
+		return new Set([...filesIgnore, ...linterIgnores]);
+	}
+
+	if (section === "formatter" && kind === "include") {
+		const filesInclude = config.files?.include ?? [];
+		const linterIncludes = config.linter?.include ?? [];
+		return new Set([...filesInclude, ...linterIncludes]);
+	}
+
+	return new Set<string>();
 }
