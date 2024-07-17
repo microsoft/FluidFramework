@@ -3042,8 +3042,17 @@ function normalizeNodeIdOpt(
 }
 
 function normalizeNodeId(nodeId: NodeId, nodeAliases: ChangeAtomIdMap<NodeId>): NodeId {
-	const dealiased = getFromChangeAtomIdMap(nodeAliases, nodeId);
-	return dealiased !== undefined ? normalizeNodeId(dealiased, nodeAliases) : nodeId;
+	let currentId = nodeId;
+
+	// eslint-disable-next-line no-constant-condition
+	while (true) {
+		const dealiased = getFromChangeAtomIdMap(nodeAliases, currentId);
+		if (dealiased === undefined) {
+			return currentId;
+		}
+
+		currentId = dealiased;
+	}
 }
 
 function hasConflicts(change: ModularChangeset): boolean {
