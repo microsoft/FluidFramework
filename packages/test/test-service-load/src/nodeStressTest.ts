@@ -146,9 +146,11 @@ async function orchestratorProcess(
 	const estRunningTimeMin = Math.floor(
 		(2 * profile.totalSendCount) / (profile.opRatePerMin * profile.numClients),
 	);
+	const startTime = Date.now();
 	console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
 	console.log(`Selected test profile: ${args.profileName}`);
 	console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
+	console.log(`Start time: ${startTime} ms\n`);
 
 	const logger = await createLogger({
 		driverType: testDriver.type,
@@ -234,14 +236,18 @@ async function orchestratorProcess(
 					env: envVar,
 				});
 
+				setupTelemetry(runnerProcess, logger, index, username);
 				if (args.enableMetrics === true) {
-					setupTelemetry(runnerProcess, logger, index, username);
+					setupDataTelemetry(runnerProcess, logger, index, username);
 				}
 
 				return new Promise((resolve) => runnerProcess.once("close", resolve));
 			}),
 		);
 	} finally {
+		const endTime = Date.now();
+		console.log(`End time: ${endTime} ms\n`);
+		console.log(`Total run time: ${(endTime - startTime) / 1000}s\n`);
 		await safeExit(0, url);
 	}
 }
@@ -294,8 +300,16 @@ function setupTelemetry(
 			runId,
 			exitCode: code ?? 0,
 		});
+		console.log(`RunId: ${runId} exited with code ${code}`);
 	});
+}
 
+function setupDataTelemetry(
+	process: child_process.ChildProcess,
+	logger: ITelemetryLoggerExt,
+	runId: number,
+	username?: string,
+) {
 	let stdOutLine = 0;
 	process.stdout?.on("data", (chunk) => {
 		const data = String(chunk);
