@@ -18,7 +18,7 @@ import type {
  * Type of "valueChanged" event parameter.
  * @sealed
  * @legacy
- * @alpha
+ * @public
  */
 export interface IValueChanged {
 	/**
@@ -38,8 +38,9 @@ export interface IValueChanged {
  * Interface describing actions on a directory.
  *
  * @remarks When used as a Map, operates on its keys.
+ * @sealed
  * @legacy
- * @alpha
+ * @public
  */
 export interface IDirectory
 	// TODO: Use `unknown` instead (breaking change).
@@ -123,6 +124,7 @@ export interface IDirectory
  *
  * @remarks
  * These events only emit on the {@link ISharedDirectory} itself, and not on subdirectories.
+ * @sealed
  * @legacy
  * @alpha
  */
@@ -197,8 +199,9 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 
 /**
  * Events emitted in response to changes to the directory data.
+ * @sealed
  * @legacy
- * @alpha
+ * @public
  */
 export interface IDirectoryEvents extends IEvent {
 	/**
@@ -279,6 +282,7 @@ export interface IDirectoryEvents extends IEvent {
  * Provides a hierarchical organization of map-like data structures as SubDirectories.
  * The values stored within can be accessed like a map, and the hierarchy can be navigated using path syntax.
  * SubDirectories can be retrieved for use as working directories.
+ * @sealed
  * @legacy
  * @alpha
  */
@@ -295,12 +299,16 @@ export interface ISharedDirectory
 
 /**
  * Type of "valueChanged" event parameter for {@link ISharedDirectory}.
+ * @sealed
  * @legacy
- * @alpha
+ * @public
  */
 export interface IDirectoryValueChanged extends IValueChanged {
 	/**
 	 * The absolute path to the IDirectory storing the key which changed.
+	 * @readonly
+	 * @privateRemarks
+	 * When breaking changes can be made, `readonly` should be added.
 	 */
 	path: string;
 }

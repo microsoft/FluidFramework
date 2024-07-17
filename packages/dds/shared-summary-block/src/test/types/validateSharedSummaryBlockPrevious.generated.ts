@@ -40,6 +40,7 @@ declare type current_as_old_for_InterfaceDeclaration_ISharedSummaryBlock = requi
  * typeValidation.broken:
  * "VariableDeclaration_SharedSummaryBlock": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_VariableDeclaration_SharedSummaryBlock = requireAssignableTo<TypeOnly<typeof old.SharedSummaryBlock>, TypeOnly<typeof current.SharedSummaryBlock>>
 
 /*

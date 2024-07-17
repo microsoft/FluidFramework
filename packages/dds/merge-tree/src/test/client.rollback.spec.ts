@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { UniversalSequenceNumber } from "../constants.js";
 import { ISegmentLeaf, Marker, SegmentGroup, reservedMarkerIdKey } from "../mergeTreeNodes.js";
@@ -133,6 +133,7 @@ describe("client.rollback", () => {
 			foo: "bar",
 		});
 		const marker = client.getMarkerFromId("markerId") as Marker;
+		// eslint-disable-next-line unicorn/no-null
 		client.annotateMarker(marker, { foo: null });
 		client.rollback?.(
 			{ type: MergeTreeDeltaType.ANNOTATE },
@@ -167,6 +168,7 @@ describe("client.rollback", () => {
 		client.annotateMarker(marker, {
 			[reservedMarkerIdKey]: "markerId",
 			abc: "def",
+			// eslint-disable-next-line unicorn/no-null
 			foo: null,
 		});
 		client.rollback?.(
@@ -350,7 +352,9 @@ describe("client.rollback", () => {
 		// The insertion position calculation will be wrong if the blocks aren't updated correctly
 		client.insertTextLocal(text.length - 1, "+");
 
-		const expectedText = `${text.substring(0, text.length - 1)}+${text[text.length - 1]}`;
+		const expectedText = `${text.slice(0, Math.max(0, text.length - 1))}+${
+			text[text.length - 1]
+		}`;
 		assert.equal(client.getText(), expectedText, client.getText());
 	});
 	it("Should rollback delete and restore local references", () => {
@@ -574,16 +578,16 @@ describe("client.rollback", () => {
 		logger.validate();
 
 		let msg = remoteClient.makeOpMessage(remoteClient.insertTextLocal(0, "12345"), ++seq);
-		clients.forEach((c) => c.applyMsg(msg));
+		for (const c of clients) c.applyMsg(msg);
 		logger.validate({ baseText: "12345" });
 
 		client.removeRangeLocal(1, 4);
 		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 
 		msg = remoteClient.makeOpMessage(remoteClient.removeRangeLocal(2, 3), ++seq);
-		clients.forEach((c) => {
+		for (const c of clients) {
 			c.applyMsg(msg);
-		});
+		}
 
 		logger.validate({ baseText: "1245" });
 
@@ -591,12 +595,12 @@ describe("client.rollback", () => {
 			remoteClient.annotateRangeLocal(0, 3, { foo: "bar" }),
 			++seq,
 		);
-		clients.forEach((c) => {
+		for (const c of clients) {
 			c.applyMsg(msg);
-		});
+		}
 
 		logger.validate({ baseText: "1245" });
-		clients.forEach((c) => {
+		for (const c of clients) {
 			for (let i = 0; i < c.getText().length; i++) {
 				const props = c.getPropertiesAtPosition(i);
 				if (i >= 0 && i < 3) {
@@ -605,12 +609,12 @@ describe("client.rollback", () => {
 					assert(props === undefined || props.foo === undefined);
 				}
 			}
-		});
+		}
 
 		msg = remoteClient.makeOpMessage(remoteClient.insertTextLocal(3, "abc"), ++seq);
-		clients.forEach((c) => {
+		for (const c of clients) {
 			c.applyMsg(msg);
-		});
+		}
 
 		logger.validate({ baseText: "124abc5" });
 	});

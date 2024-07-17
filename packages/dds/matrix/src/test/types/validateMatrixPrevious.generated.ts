@@ -112,6 +112,7 @@ declare type current_as_old_for_TypeAliasDeclaration_MatrixItem = requireAssigna
  * typeValidation.broken:
  * "VariableDeclaration_SharedMatrix": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_VariableDeclaration_SharedMatrix = requireAssignableTo<TypeOnly<typeof old.SharedMatrix>, TypeOnly<typeof current.SharedMatrix>>
 
 /*

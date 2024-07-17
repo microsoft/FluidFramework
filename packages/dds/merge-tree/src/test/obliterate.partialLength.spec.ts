@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { MergeTreeDeltaType } from "../ops.js";
 
@@ -120,7 +120,7 @@ describe("obliterate partial lengths", () => {
 				clientId: remoteClientId,
 				seq: refSeq + 1,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 
 			validatePartialLengths(localClientId, client.mergeTree, [
@@ -181,7 +181,7 @@ describe("obliterate partial lengths", () => {
 				clientId: remoteClientId + 1,
 				seq: refSeq + 2,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 
 			validatePartialLengths(localClientId, client.mergeTree, [
@@ -222,7 +222,7 @@ describe("obliterate partial lengths", () => {
 				clientId: remoteClientId,
 				seq: refSeq + 1,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 
 			validatePartialLengths(localClientId, client.mergeTree, [
@@ -253,7 +253,7 @@ describe("obliterate partial lengths", () => {
 				clientId: remoteClientId,
 				seq: refSeq + 1,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 			const localObliterateOp = client.obliterateRangeLocal(0, "hello".length);
 

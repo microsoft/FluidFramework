@@ -18,28 +18,28 @@ const {
  * Reads and returns the contents from the specified template file.
  *
  * @param {string} templateFileName - Name of the file to read, under {@link templatesDirectoryPath} (e.g. "Trademark-Template.md").
+ * @param {number} headingOffset - (optional) Level offset for all headings in the target template.
+ * Must be a non-negative integer.
  */
-const readTemplate = (templateFileName) => {
-	return fs
+const readTemplate = (templateFileName, headingOffset = 0) => {
+	if (!Number.isInteger(headingOffset) || headingOffset < 0) {
+		throw new TypeError(
+			`"headingOffset" must be a non-negative integer. Got "${headingOffset}".`,
+		);
+	}
+
+	const unmodifiedContents = fs
 		.readFileSync(path.resolve(templatesDirectoryPath, templateFileName), {
 			encoding: "utf-8",
 		})
 		.trim();
-};
 
-/**
- * Generates a simple block of Markdown contents by embedding the specified template and (optionally) including a header.
- *
- * @param {string} templateName - The name of the template file to embed.
- * @param {object} headingOptions - (optional) Heading generation options.
- * @param {boolean} headingOptions.includeHeading - Whether or not to include a top-level heading in the generated section.
- * @param {number} headingOptions.headingLevel - Root heading level for the generated section.
- * Must be a positive integer.
- * @param {string} headingOptions.headingText - Text to display in the section heading, if one was requested.
- */
-const createSectionFromTemplate = (templateName, headingOptions) => {
-	const sectionBody = readTemplate(templateName);
-	return formattedSectionText(sectionBody, headingOptions);
+	if (headingOffset === 0) {
+		return unmodifiedContents;
+	}
+
+	const headingOffsetString = "#".repeat(headingOffset);
+	return unmodifiedContents.replace(/(^#)/gm, `$1${headingOffsetString}`);
 };
 
 /**
@@ -92,22 +92,42 @@ function getPackageMetadata(packageJsonFilePath) {
 }
 
 /**
- * Gets the appropriate scope kind for the provided package name.
+ * Gets the appropriate special scope kind for the provided package name, if applicable.
  *
  * @param {string} packageName
- * @returns {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | undefined} A scope kind based on the package's scope (namespace).
+ * @returns {"" | "FRAMEWORK" | "EXAMPLE" | "EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | "TOOLS" | undefined}
+ * A scope kind based on the package's scope (namespace).
+ * Will be an empty string if the package has no scope.
+ * Will be `undefined` if the package has an unrecognized scope.
  */
 const getScopeKindFromPackage = (packageName) => {
 	const packageScope = PackageName.getScope(packageName);
-	if (packageScope === `@fluid-experimental`) {
+	if (packageScope === "") {
+		return "";
+	} else if (packageScope === "@fluidframework") {
+		return "FRAMEWORK";
+	} else if (packageScope === "@fluid-example") {
+		return "EXAMPLE";
+	} else if (packageScope === "@fluid-experimental") {
 		return "EXPERIMENTAL";
-	} else if (packageScope === `@fluid-internal`) {
+	} else if (packageScope === "@fluid-internal") {
 		return "INTERNAL";
-	} else if (packageScope === `@fluid-private`) {
+	} else if (packageScope === "@fluid-private") {
 		return "PRIVATE";
+	} else if (packageScope === "@fluid-tools") {
+		return "TOOLS";
 	} else {
 		return undefined;
 	}
+};
+
+/**
+ * Determines if the package's README should link to the Fluid Framework API documentation for that package by default.
+ * @param {string} packageName
+ */
+const shouldLinkToApiDocs = (packageName) => {
+	const scope = getScopeKindFromPackage(packageName);
+	return scope === "FRAMEWORK" || scope === "EXPERIMENTAL" || packageName === "fluid-framework";
 };
 
 /**
@@ -197,15 +217,36 @@ function parseHeadingOptions(transformationOptions, headingText) {
 	};
 }
 
+/**
+ * Parses a provided "boolean" (i.e., "TRUE" | "FALSE") MarkdownMagic transform option.
+ * Returns the provided default if no option was specified.
+ * @param {"TRUE" | "FALSE" | undefined} option
+ * @param {function} defaultValue - The default value, or a callback that returns the default value to use for the option.
+ * Used if the option is not explicitly provided.
+ */
+function parseBooleanOption(option, defaultValue) {
+	if (option === "TRUE") {
+		return true;
+	}
+	if (option === "FALSE") {
+		return false;
+	}
+	if (typeof defaultValue === "function") {
+		return defaultValue();
+	}
+	return defaultValue;
+}
+
 module.exports = {
-	createSectionFromTemplate,
 	formattedSectionText,
 	formattedGeneratedContentBody,
 	formattedEmbeddedContentBody,
 	getPackageMetadata,
 	getScopeKindFromPackage,
+	parseBooleanOption,
 	parseHeadingOptions,
 	readTemplate,
 	resolveRelativePackageJsonPath,
 	resolveRelativePath,
+	shouldLinkToApiDocs,
 };

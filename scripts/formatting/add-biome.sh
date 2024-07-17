@@ -10,8 +10,8 @@ set -eux -o pipefail
 npe scripts.format "npm run format:prettier"
 npe scripts.check:format "npm run check:prettier"
 
-npe scripts.check:biome "biome check . --formatter-enabled=true"
-npe scripts.format:biome "biome check . --formatter-enabled=true --apply"
+npe scripts.check:biome "biome check ."
+npe scripts.format:biome "biome check . --write"
 npe devDependencies.@biomejs/biome "^1.7.3"
 
 

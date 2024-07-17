@@ -181,11 +181,11 @@ async function updateReportVersions(
  *
  * @example
  * Returns 260312
- * extractBuildNumber("2.0.0-dev-rc.4.0.0.260312");
+ * extractBuildNumber("2.1.0-260312");
  */
 
 function extractBuildNumber(version: string): number {
-	const versionParts: string[] = version.split(".");
+	const versionParts: string[] = version.split("-");
 	// Extract the last part of the version, which is the number you're looking for
 	return Number.parseInt(versionParts[versionParts.length - 1], 10);
 }

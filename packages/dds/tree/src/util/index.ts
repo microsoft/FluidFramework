@@ -68,6 +68,7 @@ export {
 	JsonCompatibleReadOnlySchema,
 	makeArray,
 	mapIterable,
+	filterIterable,
 	type Mutable,
 	type Populated,
 	type RecursiveReadonly,
