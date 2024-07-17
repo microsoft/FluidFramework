@@ -34,7 +34,6 @@ interface BiomeConfig {
 		include?: string[];
 		ignore?: string[];
 	};
-
 	linter?: {
 		include?: string[];
 		ignore?: string[];
