@@ -17,6 +17,8 @@ import {
 	brand,
 	brandedNumberType,
 	brandedStringType,
+	setInNestedMap,
+	tryGetFromNestedMap,
 } from "../../util/index.js";
 import type { TaggedChange } from "./changeRebaser.js";
 
@@ -73,6 +75,21 @@ export type EncodedChangeAtomId = [ChangesetLocalId, EncodedRevisionTag] | Chang
  * @internal
  */
 export type ChangeAtomIdMap<T> = NestedMap<RevisionTag | undefined, ChangesetLocalId, T>;
+
+export function getFromChangeAtomIdMap<T>(
+	map: ChangeAtomIdMap<T>,
+	id: ChangeAtomId,
+): T | undefined {
+	return tryGetFromNestedMap(map, id.revision, id.localId);
+}
+
+export function setInChangeAtomIdMap<T>(
+	map: ChangeAtomIdMap<T>,
+	id: ChangeAtomId,
+	value: T,
+): void {
+	setInNestedMap(map, id.revision, id.localId, value);
+}
 
 /**
  * @internal

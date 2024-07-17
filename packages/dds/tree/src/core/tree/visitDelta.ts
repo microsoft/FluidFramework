@@ -9,6 +9,7 @@ import { type NestedMap, setInNestedMap, tryGetFromNestedMap } from "../../util/
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { ITreeCursorSynchronous } from "./cursor.js";
+// eslint-disable-next-line import/no-duplicates
 import type * as Delta from "./delta.js";
 // Since ProtoNodes is reexported, import it directly to avoid forcing Delta to be reexported.
 // eslint-disable-next-line import/no-duplicates

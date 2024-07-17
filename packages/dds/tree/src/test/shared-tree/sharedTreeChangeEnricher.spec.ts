@@ -57,7 +57,11 @@ const dataChanges: ModularChangeset[] = [];
 const defaultEditor = new DefaultEditBuilder(modularFamily, (change) =>
 	dataChanges.push(change),
 );
-const modularBuilder = new ModularEditBuilder(modularFamily, () => {});
+const modularBuilder = new ModularEditBuilder(
+	modularFamily,
+	modularFamily.fieldKinds,
+	() => {},
+);
 
 // Side effects results in `dataChanges` being populated
 defaultEditor.optionalField({ parent: undefined, field: rootFieldKey }).set(undefined, false);

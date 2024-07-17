@@ -48,6 +48,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	isEmpty: (change: 0) => true,
 	getNestedChanges: (change: 0) => [],
 	createEmpty: () => 0,
+	getCrossFieldKeys: () => [],
 };
 
 export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
