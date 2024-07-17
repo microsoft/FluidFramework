@@ -306,8 +306,27 @@ describe("RemoteMessageProcessor", () => {
 		];
 		assert.deepStrictEqual(
 			result,
-			{ messages: expected, batchStartCsn: 12, sequenceNumber: undefined },
+			{ messages: expected, batchStartCsn: 12 },
 			"unexpected processing of groupedBatch",
+		);
+	});
+
+	it("Processing empty groupedBatch works as expected", () => {
+		const groupedBatch = {
+			type: MessageType.Operation,
+			sequenceNumber: 10,
+			clientSequenceNumber: 12,
+			contents: {
+				type: OpGroupingManager.groupedBatchOp,
+				contents: [],
+			},
+		};
+		const messageProcessor = getMessageProcessor();
+		const result = messageProcessor.process(groupedBatch as ISequencedDocumentMessage);
+		assert.deepStrictEqual(
+			result,
+			{ messages: [], batchStartCsn: 12, sequenceNumber: 10 },
+			"unexpected processing of empty groupedBatch",
 		);
 	});
 });

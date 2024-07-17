@@ -110,6 +110,38 @@ describe("OpGroupingManager", () => {
 			]);
 		});
 
+		it("empty grouped batching disabled", () => {
+			assert.throws(() => {
+				new OpGroupingManager(
+					{
+						groupedBatchingEnabled: false,
+						opCountThreshold: 2,
+						reentrantBatchGroupingEnabled: false,
+					},
+					mockLogger,
+				).createEmptyGroupedBatch("resubmittingBatchId", 0);
+			});
+		});
+
+		it("create empty batch", () => {
+			const result = new OpGroupingManager(
+				{
+					groupedBatchingEnabled: true,
+					opCountThreshold: 2,
+					reentrantBatchGroupingEnabled: false,
+				},
+				mockLogger,
+			).createEmptyGroupedBatch("resubmittingBatchId", 0);
+			assert.strictEqual(result.messages.length, 1);
+			assert.deepStrictEqual(result.messages, [
+				{
+					contents: '{"type":"groupedBatch","contents":[]}',
+					metadata: { resubmittingBatchId: "resubmittingBatchId", emptyBatch: true },
+					referenceSequenceNumber: 0,
+				},
+			]);
+		});
+
 		it("grouped batching enabled, not large enough", () => {
 			assert.throws(() => {
 				new OpGroupingManager(

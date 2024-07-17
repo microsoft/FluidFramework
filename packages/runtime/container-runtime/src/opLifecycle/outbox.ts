@@ -278,7 +278,7 @@ export class Outbox {
 	) {
 		let clientSequenceNumber: number | undefined;
 		if (mainBatch.empty) {
-			if (resubmittingBatchId && this.params.config.immediateMode === true) {
+			if (resubmittingBatchId && this.params.config.immediateMode !== true) {
 				const emptyGroupedBatch = this.params.groupingManager.createEmptyGroupedBatch(
 					resubmittingBatchId,
 					this.params.getCurrentSequenceNumbers().referenceSequenceNumber ?? 0,

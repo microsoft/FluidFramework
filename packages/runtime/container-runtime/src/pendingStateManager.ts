@@ -180,12 +180,11 @@ export class PendingStateManager implements IDisposable {
 		// Such ops should not be declared in pending/stashed state. Snapshot seq num will not
 		// be available when the container is not attached. Therefore, no filtering is needed.
 		const newSavedOps = [...this.savedOps].filter((message) => {
-			if (message.sequenceNumber === undefined) {
-				assert(
-					message.sequenceNumber !== undefined,
-					0x97c /* saved op should already have a sequence number */,
-				);
-			}
+			assert(
+				message.sequenceNumber !== undefined,
+				0x97c /* saved op should already have a sequence number */,
+			);
+
 			return message.sequenceNumber > (snapshotSequenceNumber ?? 0);
 		});
 		this.pendingMessages.toArray().forEach((message) => {
@@ -276,7 +275,8 @@ export class PendingStateManager implements IDisposable {
 			}
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const nextMessage = this.initialMessages.shift()!;
-			// Ignore emptyBatch messages when applying stashed ops
+			// Nothing to apply if the message is an empty batch.
+			// We still need to track it for resubmission.
 			try {
 				if (nextMessage.opMetadata?.emptyBatch === true) {
 					patchBatchIdContext(nextMessage); // Back compat
@@ -320,6 +320,7 @@ export class PendingStateManager implements IDisposable {
 			const pendingMessage = this.pendingMessages.peekFront();
 			assert(pendingMessage !== undefined, "No pending message found for this remote message");
 			assert(pendingMessage.opMetadata?.emptyBatch === true, "Expected empty batch");
+			assert(sequenceNumber !== undefined, "Expected sequence number for empty batch");
 
 			if (pendingMessage.batchIdContext.batchStartCsn !== batchStartCsn) {
 				this.stateHandler.close(
@@ -335,10 +336,12 @@ export class PendingStateManager implements IDisposable {
 				return [];
 			}
 			pendingMessage.sequenceNumber = sequenceNumber;
+			this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
 
 			this.pendingMessages.shift();
 			return [];
 		}
+
 		return batch.map((message) => ({
 			message,
 			localOpMetadata: this.processPendingLocalMessage(message, batchStartCsn),

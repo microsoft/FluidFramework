@@ -200,6 +200,7 @@ describe("Outbox", () => {
 		disablePartialFlush?: boolean;
 		chunkSizeInBytes?: number;
 		opGroupingConfig?: OpGroupingManagerConfig;
+		immediateMode?: boolean;
 	}) => {
 		const { submitFn, submitBatchFn, deltaManager } = params.context;
 
@@ -219,6 +220,7 @@ describe("Outbox", () => {
 				maxBatchSizeInBytes: params.maxBatchSize ?? maxBatchSizeInBytes,
 				compressionOptions: params.compressionOptions ?? DefaultCompressionOptions,
 				disablePartialFlush: params.disablePartialFlush ?? false,
+				immediateMode: params.immediateMode ?? false,
 			},
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(
@@ -312,6 +314,35 @@ describe("Outbox", () => {
 		);
 	});
 
+	it("Flush empty", () => {
+		const outbox = getOutbox({
+			context: getMockContext(),
+			opGroupingConfig: {
+				groupedBatchingEnabled: true,
+				opCountThreshold: 2,
+				reentrantBatchGroupingEnabled: true,
+			},
+		});
+		outbox.flush();
+		assert.equal(state.opsSubmitted, 0);
+		assert.equal(state.batchesSubmitted.length, 0);
+		assert.equal(state.deltaManagerFlushCalls, 0);
+		assert.equal(state.pendingOpContents.length, 0);
+
+		outbox.flush("resubmittingBatchId");
+		assert.equal(state.opsSubmitted, 1);
+		assert.equal(state.batchesSubmitted.length, 1);
+		assert.equal(
+			state.batchesSubmitted[0].messages[0].contents,
+			'{"type":"groupedBatch","contents":[]}',
+		);
+		assert.equal(
+			state.batchesSubmitted[0].messages[0].metadata?.resubmittingBatchId,
+			"resubmittingBatchId",
+		);
+		assert.equal(state.batchesSubmitted[0].messages[0].metadata?.emptyBatch, true);
+	});
+
 	it("Batch ID added when applicable", () => {
 		const outbox = getOutbox({ context: getMockContext() });
 
@@ -345,6 +376,7 @@ describe("Outbox", () => {
 				["batchId-B"], // Flush 2 - Main
 				["batchId-C", undefined], // Flush 3 - Blob Attach
 				[undefined], // Flush 4 - Main (no batch ID given)
+				[undefined],
 			],
 			"Submitted batches have incorrect batch ID",
 		);
@@ -359,6 +391,7 @@ describe("Outbox", () => {
 				"batchId-C",
 				undefined, // second message in batch
 				undefined, // no batchId given
+				undefined,
 			],
 			"Pending messages have incorrect batch ID",
 		);

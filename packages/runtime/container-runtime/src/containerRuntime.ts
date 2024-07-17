@@ -1763,7 +1763,7 @@ export class ContainerRuntime
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
 				disablePartialFlush: disablePartialFlush === true,
-				immediateMode: this.flushMode !== FlushMode.Immediate,
+				immediateMode: this.flushMode === FlushMode.Immediate,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
@@ -4235,19 +4235,16 @@ export class ContainerRuntime
 
 	private rollback(content: string | undefined, localOpMetadata: unknown) {
 		// Need to parse from string for back-compat
-		const op = this.parseLocalOpContent(content);
-		if (op === undefined) {
-			return;
-		}
-		switch (op.type) {
+		const { type, contents } = this.parseLocalOpContent(content);
+		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				// For operations, call rollbackDataStoreOp which will find the right store
 				// and trigger rollback on it.
-				this.channelCollection.rollback(op.type, op.contents, localOpMetadata);
+				this.channelCollection.rollback(type, contents, localOpMetadata);
 				break;
 			default:
 				// Don't check message.compatDetails because this is for rolling back a local op so the type will be known
-				throw new Error(`Can't rollback ${op.type}`);
+				throw new Error(`Can't rollback ${type}`);
 		}
 	}
 

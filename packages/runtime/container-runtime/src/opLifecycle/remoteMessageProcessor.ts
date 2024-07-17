@@ -111,10 +111,21 @@ export class RemoteMessageProcessor {
 				"Processor batch should be empty on grouped batch",
 			);
 			const groupedMessages = this.opGroupingManager.ungroupOp(message).map(unpack);
+			// If the batch is empty, we need to return the sequence number aside
+			if (groupedMessages.length === 0) {
+				assert(
+					message.sequenceNumber !== undefined,
+					"Empty grouped batch has no sequence number",
+				);
+				return {
+					messages: groupedMessages, // empty array
+					batchStartCsn: message.clientSequenceNumber,
+					sequenceNumber: message.sequenceNumber,
+				};
+			}
 			return {
 				messages: groupedMessages,
 				batchStartCsn: message.clientSequenceNumber,
-				sequenceNumber: groupedMessages.length === 0 ? message.sequenceNumber : undefined,
 			};
 		}
 

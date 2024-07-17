@@ -149,21 +149,29 @@ describe("Pending State Manager", () => {
 			);
 		});
 
-		const submitBatch = (messages: Partial<ISequencedDocumentMessage>[]) => {
+		const submitBatch = (
+			messages: Partial<ISequencedDocumentMessage>[],
+			clientSequenceNumber?: number,
+		) => {
 			pendingStateManager.onFlushBatch(
 				messages.map<BatchMessage>((message) => ({
 					contents: JSON.stringify({ type: message.type, contents: message.contents }),
 					referenceSequenceNumber: message.referenceSequenceNumber!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
 					metadata: message.metadata as any as Record<string, unknown> | undefined,
 				})),
-				messages[0]?.clientSequenceNumber,
+				clientSequenceNumber ?? messages[0]?.clientSequenceNumber,
 			);
 		};
 
-		const process = (messages: Partial<ISequencedDocumentMessage>[], batchStartCsn: number) =>
+		const process = (
+			messages: Partial<ISequencedDocumentMessage>[],
+			batchStartCsn: number,
+			sequenceNumber?: number,
+		) =>
 			pendingStateManager.processPendingLocalBatch(
 				messages as InboundSequencedContainerRuntimeMessage[],
 				batchStartCsn,
+				sequenceNumber,
 			);
 
 		it("proper batch is processed correctly", () => {
@@ -192,6 +200,26 @@ describe("Pending State Manager", () => {
 
 			submitBatch(messages);
 			process(messages, 0 /* batchStartCsn */);
+			assert(closeError === undefined);
+		});
+
+		it("empty batch is processed correctly", () => {
+			// Empty batch is reflected in the pending state manager as a single message
+			// with the following metadata:
+			submitBatch(
+				[
+					{
+						contents: JSON.stringify({ type: "groupedBatch", contents: [] }),
+						referenceSequenceNumber: 0,
+						metadata: { emptyBatch: true, resubmmitingBatchId: "batchId" },
+					},
+				],
+				1 /* clientSequenceNumber */,
+			);
+			// A groupedBatch is supposed to have nested messages inside its contents,
+			// but an empty batch has no nested messages. When processing en empty grouped batch,
+			// the psm will expect the next pending message to be an "empty" message as portrayed above.
+			process([], 1 /* batchStartCsn */, 3);
 			assert(closeError === undefined);
 		});
 
