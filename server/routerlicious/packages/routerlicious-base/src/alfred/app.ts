@@ -54,6 +54,7 @@ export function create(
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	enableClientIPLogging?: boolean,
+	enableRetryCountLogging?: boolean,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -136,6 +137,12 @@ export function create(
 					}
 					if (req.body?.isEphemeralContainer !== undefined) {
 						additionalProperties.isEphemeralContainer = req.body.isEphemeralContainer;
+					}
+					if (enableRetryCountLogging === true) {
+						additionalProperties.retryCount = Number.parseInt(
+							typeof req.query.retry === "string" ? req.query.retry : "0",
+							10,
+						);
 					}
 					const customHeadersToLog = (config.get("customHeadersToLog") as string[]) ?? [];
 					if (customHeadersToLog) {

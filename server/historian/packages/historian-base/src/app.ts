@@ -39,6 +39,7 @@ export function create(
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
+	enableRetryCountLogging?: boolean,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -81,6 +82,12 @@ export function create(
 					if (req.get(Constants.IsEphemeralContainer) !== undefined) {
 						additionalProperties.isEphemeralContainer = req.get(
 							Constants.IsEphemeralContainer,
+						);
+					}
+					if (enableRetryCountLogging === true) {
+						additionalProperties.retryCount = Number.parseInt(
+							typeof req.query.retry === "string" ? req.query.retry : "0",
+							10,
 						);
 					}
 					return additionalProperties;
