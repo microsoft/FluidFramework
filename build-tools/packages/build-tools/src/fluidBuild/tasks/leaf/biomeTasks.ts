@@ -71,7 +71,7 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	 * apply to the directory. Files ignored by git are excluded.
 	 */
 	protected async getInputFiles(): Promise<string[]> {
-		// Files that would be formatted by biome. Paths are relative to the package directory.
+		// Absolute paths to files that would be formatted by biome.
 		const files = await this.getBiomeFormattedFiles(this.node.pkg.directory);
 		const configPath = await this.getClosestBiomeConfigPath(this.node.pkg.directory);
 
@@ -107,16 +107,16 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	/**
 	 * Return an array of absolute paths to files that Biome would format under the provided path.
 	 */
-	private async getBiomeFormattedFiles(cwd: string): Promise<string[]> {
+	private async getBiomeFormattedFiles(pkgDir: string): Promise<string[]> {
 		const gitRepo = await this.gitRepo;
 
 		/**
 		 * All files that could possibly be formatted before ignore entries are applied. Paths are relative to the root of
 		 * the repo.
 		 */
-		const allPossibleFiles = new Set(await gitRepo.getFiles(cwd));
+		const allPossibleFiles = new Set(await gitRepo.getFiles(pkgDir));
 
-		const configFile = await this.getClosestBiomeConfigPath(cwd);
+		const configFile = await this.getClosestBiomeConfigPath(pkgDir);
 		if (configFile === undefined) {
 			// No config, so all files are formatted
 			return [...allPossibleFiles];
@@ -133,59 +133,14 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 		// "At the moment, Biome uses a glob library that treats all globs as having a **/ prefix.
 		// This means that src/**/*.js and **/src/**/*.js are treated as identical. They match both src/file.js and
 		// test/src/file.js. This is something we plan to fix in Biome v2.0.0."
-		const includedPaths = (
-			await globby([...includeEntries], {
-				// We need to interpret the globs from the provided directory
-				cwd,
+		const includedPaths = await globby([...includeEntries], {
+			// We need to interpret the globs from the provided directory; the paths returned will be relative to this path
+			cwd: pkgDir,
 
-				// Return absolute paths so we can more easily make them package-relative
-				absolute: true,
-
-				// Don't return directories, only files; Biome includes are only applied to files.
-				// See note at https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained
-				onlyFiles: true,
-			})
-		)
-			// Make the path relative to the package.
-			.map((filePath) => path.relative(this.package.directory, filePath));
-
-		// const includedPathsP: Promise<string[]>[] = [...includeEntries].map((glob) => {
-		// 	// From the Biome docs (https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained):
-		// 	//
-		// 	// "At the moment, Biome uses a glob library that treats all globs as having a **/ prefix.
-		// 	// This means that src/**/*.js and **/src/**/*.js are treated as identical. They match both src/file.js and
-		// 	// test/src/file.js. This is something we plan to fix in Biome v2.0.0."
-		// 	return globby(["*.md", "!README.md"], {
-		// 		// We need to interpret the globs from the provided directory
-		// 		cwd,
-
-		// 		// Return absolute paths so we can more easily make them package-relative
-		// 		absolute: true,
-
-		// 		// Don't return directories, only files; Biome includes are only applied to files.
-		// 		// See note at https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained
-		// 		onlyFiles: true,
-		// 	});
-
-		// 	return globFn(`**/${glob}`, {
-		// 		// glob doesn't ignore node_modules or read .gitignore. It might be better to use globby since it will do all
-		// 		// that automatically, but that would be a new dependency.
-		// 		ignore: `${cwd}/node_modules/**`,
-
-		// 		// Return absolute paths so we can more easily make them package-relative
-		// 		absolute: true,
-
-		// 		// Don't return directories, only files; Biome includes are only applied to files.
-		// 		// See note at https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained
-		// 		nodir: true,
-		// 	});
-		// });
-		// const includedPaths = new Set(
-		// 	(await Promise.all(includedPathsP))
-		// 		.flat()
-		// 		// Make the path relative to the package.
-		// 		.map((filePath) => path.relative(this.package.directory, filePath)),
-		// );
+			// Don't return directories, only files; Biome includes are only applied to files.
+			// See note at https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained
+			onlyFiles: true,
+		});
 
 		const ignoreObject = ignore().add([...ignoreEntries]);
 		const filtered = ignoreObject.filter([...includedPaths]);
@@ -194,9 +149,9 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 			`Biome formatter found ${allPossibleFiles.size} total files, included ${includedPaths.length}, and reduced to ${filtered.length} files by ignore settings.`,
 		);
 
-		// Convert repo-relative paths to absolute
+		// Convert package-relative paths to absolute
 		const repoRoot = await this.repoRoot;
-		return filtered.map((filePath) => path.resolve(repoRoot, filePath));
+		return filtered.map((filePath) => path.resolve(repoRoot, pkgDir, filePath));
 	}
 }
 
