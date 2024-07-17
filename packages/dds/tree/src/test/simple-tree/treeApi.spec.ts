@@ -261,6 +261,15 @@ describe("treeNodeApi", () => {
 					),
 			);
 		});
+
+		it("Returns undefined for non-object nodes", () => {
+			const config = new TreeViewConfiguration({
+				schema: schema.array("parent", schema.number),
+			});
+			const view = getView(config);
+			view.initialize([1, 2, 3]);
+			assert.equal(Tree.shortId(view.root), undefined);
+		});
 	});
 
 	describe("on", () => {

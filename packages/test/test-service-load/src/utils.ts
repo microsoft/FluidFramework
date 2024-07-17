@@ -33,7 +33,7 @@ import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 
-import { ILoadTest, createFluidExport, type IRunConfig } from "./loadTestDataStore.js";
+import { ILoadTest, createFluidExport } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
 	generateLoaderOptions,
@@ -319,9 +319,3 @@ export const configProvider = (configs: Record<string, ConfigTypes>): IConfigPro
 		getRawConfig: (name: string): ConfigTypes => globalConfigurations[name] ?? configs[name],
 	};
 };
-
-export function printStatus(runConfig: IRunConfig, message: string) {
-	if (runConfig.verbose) {
-		console.log(`${runConfig.runId.toString().padStart(3)}> ${message}`);
-	}
-}

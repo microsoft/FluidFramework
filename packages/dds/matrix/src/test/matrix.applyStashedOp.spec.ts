@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -35,20 +35,20 @@ async function createMatrixForReconnection(
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage:
-			summary !== undefined ? MockStorage.createFromSummary(summary) : new MockStorage(),
+			summary === undefined ? new MockStorage() : MockStorage.createFromSummary(summary),
 	};
 
 	let matrix: SharedMatrix;
-	if (summary !== undefined) {
+	if (summary === undefined) {
+		matrix = matrixFactory.create(dataStoreRuntime, id);
+		matrix.connect(services);
+	} else {
 		matrix = await matrixFactory.load(
 			dataStoreRuntime,
 			id,
 			services,
 			matrixFactory.attributes,
 		);
-	} else {
-		matrix = matrixFactory.create(dataStoreRuntime, id);
-		matrix.connect(services);
 	}
 
 	return {
@@ -60,19 +60,19 @@ async function createMatrixForReconnection(
 }
 
 function spyOnContainerRuntimeMessages(runtime: MockContainerRuntimeForReconnection): {
-	submittedContent: any[];
+	submittedContent: unknown[];
 	processedMessages: ISequencedDocumentMessage[];
 } {
-	const submittedContent: any[] = [];
+	const submittedContent: unknown[] = [];
 	const originalSubmit = runtime.submit.bind(runtime);
-	runtime.submit = (content: any, localMetadata) => {
+	runtime.submit = (content: unknown, localMetadata): number => {
 		submittedContent.push(content);
 		return originalSubmit(content, localMetadata);
 	};
 
 	const processedMessages: ISequencedDocumentMessage[] = [];
 	const originalProcess = runtime.process.bind(runtime);
-	runtime.process = (message: ISequencedDocumentMessage) => {
+	runtime.process = (message: ISequencedDocumentMessage): void => {
 		processedMessages.push(message);
 		return originalProcess(message);
 	};

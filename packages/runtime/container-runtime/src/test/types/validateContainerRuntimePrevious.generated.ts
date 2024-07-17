@@ -274,6 +274,7 @@ declare type current_as_old_for_TypeAliasDeclaration_EnqueueSummarizeResult = re
  * typeValidation.broken:
  * "ClassDeclaration_FluidDataStoreContext": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_ClassDeclaration_FluidDataStoreContext = requireAssignableTo<TypeOnly<old.FluidDataStoreContext>, TypeOnly<current.FluidDataStoreContext>>
 
 /*
@@ -877,6 +878,7 @@ declare type old_as_current_for_InterfaceDeclaration_IGCNodeUpdatedProps = requi
  * typeValidation.broken:
  * "InterfaceDeclaration_IGCNodeUpdatedProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_InterfaceDeclaration_IGCNodeUpdatedProps = requireAssignableTo<TypeOnly<current.IGCNodeUpdatedProps>, TypeOnly<old.IGCNodeUpdatedProps>>
 
 /*
@@ -1606,6 +1608,7 @@ declare type current_as_old_for_VariableDeclaration_InactiveResponseHeaderKey = 
  * typeValidation.broken:
  * "ClassDeclaration_LocalFluidDataStoreContext": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_ClassDeclaration_LocalFluidDataStoreContext = requireAssignableTo<TypeOnly<old.LocalFluidDataStoreContext>, TypeOnly<current.LocalFluidDataStoreContext>>
 
 /*
@@ -1624,6 +1627,7 @@ declare type current_as_old_for_ClassDeclaration_LocalFluidDataStoreContext = re
  * typeValidation.broken:
  * "ClassDeclaration_LocalFluidDataStoreContextBase": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_ClassDeclaration_LocalFluidDataStoreContextBase = requireAssignableTo<TypeOnly<old.LocalFluidDataStoreContextBase>, TypeOnly<current.LocalFluidDataStoreContextBase>>
 
 /*
