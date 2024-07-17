@@ -250,12 +250,12 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				clientType: "noninteractive/summarizer",
-				error: "NodeDidNotRunGC",
+				error: "NodeDidNotSummarize",
 			},
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
 				clientType: "noninteractive/summarizer",
-				error: "NodeDidNotRunGC",
+				error: "NodeDidNotSummarize",
 			},
 		],
 		async () => {
@@ -278,14 +278,14 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 			);
 			await provider.ensureSynchronized();
 
-			// Summarization should fail because of a data store created during summarization which does not run GC.
+			// Summarization should fail because of a data store created during summarization which does not summarize.
 			await assert.rejects(
 				async () => summarizeNow(summarizer),
 				(error: any) => {
-					// The summary should have failed because of "NodeDidNotRunGC" error.
-					return error.message === "NodeDidNotRunGC";
+					// The summary should have failed because of "NodeDidNotSummarize" error.
+					return error.message === "NodeDidNotSummarize";
 				},
-				"expected NodeDidNotRunGC",
+				"expected NodeDidNotSummarize",
 			);
 		},
 	);
@@ -415,12 +415,12 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 	);
 
 	itExpects(
-		"Heuristic based summaries should pass on retry when NodeDidNotRunGC is hit",
+		"Heuristic based summaries should pass on retry when NodeDidNotSummarize is hit",
 		[
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				clientType: "noninteractive/summarizer",
-				error: "NodeDidNotRunGC",
+				error: "NodeDidNotSummarize",
 			},
 		],
 		async () => {
@@ -445,7 +445,7 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 			// The sequence of events that should happen:
 			// 1. First summarize attempt starts, i.e., summaryAttempts = 1.
 			// 2. Data store is created in summarizer.
-			// 3. Summarize cancels with NodeDidNotRunGC error.
+			// 3. Summarize cancels with NodeDidNotSummarize error.
 			// 4. Second summarize attempts starts, i.e., summaryAttempts = 2.
 			// 5. Summary is successfully generated.
 			const clientType = "noninteractive/summarizer";
@@ -462,7 +462,7 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 					clientType,
-					error: "NodeDidNotRunGC",
+					error: "NodeDidNotSummarize",
 					summaryAttempts: 1,
 				},
 				{

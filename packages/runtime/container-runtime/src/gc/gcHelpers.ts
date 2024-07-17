@@ -241,9 +241,10 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 		}
 
 		assert(id.startsWith("/"), 0x5d9 /* node id should always be an absolute route */);
-		// TODO Why are we non null asserting here
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const childId = id.split("/")[1]!;
+		const childId = id.split("/")[1];
+		if (childId === undefined) {
+			continue;
+		}
 		let childGCNodeId = id.slice(childId.length + 1);
 		// GC node id always begins with "/". Handle the special case where a child's id in the parent's GC nodes is
 		// of format `/root`. In this case, the childId is root and childGCNodeId is "". Make childGCNodeId = "/".
@@ -272,9 +273,10 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 	const usedRoutes = gcDetails.usedRoutes.filter((route) => route !== "" && route !== "/");
 	for (const route of usedRoutes) {
 		assert(route.startsWith("/"), 0x5db /* Used route should always be an absolute route */);
-		// TODO Why are we non null asserting here
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const childId = route.split("/")[1]!;
+		const childId = route.split("/")[1];
+		if (childId === undefined) {
+			continue;
+		}
 		const childUsedRoute = route.slice(childId.length + 1);
 
 		const childGCDetails = childGCDetailsMap.get(childId);
@@ -287,6 +289,30 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 		childGCDetailsMap.set(childId, childGCDetails);
 	}
 	return childGCDetailsMap;
+}
+
+/**
+ * Helper function that unpacks the used routes of the children from a given node's used routes.
+ * @param parentUsedRoutes - The used routes of a parent node.
+ * @returns A map of used routes of each children of the the given node.
+ */
+export function unpackChildNodesUsedRoutes(parentUsedRoutes: string[]) {
+	const childUsedRoutesMap: Map<string, string[]> = new Map();
+
+	// Remove the node's self used route, if any, and generate the children used routes.
+	const usedRoutes = parentUsedRoutes.filter((route) => route !== "" && route !== "/");
+	for (const route of usedRoutes) {
+		assert(route.startsWith("/"), "Used route should always be an absolute route");
+		const childId = route.split("/")[1];
+		if (childId === undefined) {
+			continue;
+		}
+		const childUsedRoute = route.slice(childId.length + 1);
+
+		const childUsedRoutes = childUsedRoutesMap.get(childId) ?? [];
+		childUsedRoutes.push(childUsedRoute);
+	}
+	return childUsedRoutesMap;
 }
 
 /**
