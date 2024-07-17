@@ -8,6 +8,8 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 // which degrades the API-Extractor report quality since API-Extractor can not tell the inline import is the same as the non-inline one.
 // eslint-disable-next-line unused-imports/no-unused-imports
 import type { IFluidHandle as _dummyImport } from "@fluidframework/core-interfaces";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import type { TreeValue } from "../core/index.js";
 import { type NodeKeyManager, type Unenforced, isLazy } from "../feature-libraries/index.js";
@@ -41,7 +43,6 @@ import {
 	getDefaultProvider,
 } from "./schemaTypes.js";
 import { type TreeArrayNode, arraySchema } from "./arrayNode.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import {
 	type InsertableObjectFromSchemaRecord,
 	type TreeObjectNode,
@@ -66,7 +67,6 @@ import type {
 } from "./typesUnsafe.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import { inPrototypeChain, TreeNodeValid } from "./types.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */
@@ -752,6 +752,13 @@ export function structuralName<const T extends string>(
 	return `${collectionName}<${inner}>`;
 }
 
+/**
+ * Indicates that a schema is the "most derived" version which is allowed to be used, see {@link MostDerivedData}.
+ * Calling helps with error messages about invalid schema usage (using more than one type from single schema factor produced type,
+ * and thus calling this for one than one subclass).
+ * @remarks
+ * Helper for invoking {@link TreeNodeValid.markMostDerived} for any {@link TreeNodeSchema} if it needed.
+ */
 export function markSchemaMostDerived(schema: TreeNodeSchema): void {
 	if (schema instanceof LeafNodeSchema) {
 		return;
