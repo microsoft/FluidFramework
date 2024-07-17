@@ -16,7 +16,7 @@ do
 	export FLUID_TEST_LOGGER_PKG_PATH='/home/alex/code/FluidFramework/packages/test/test-end-to-end-tests/node_modules/@ff-internal/aria-logger'; \
 	export logger__colorize="false"; \
 	export logger__morganFormat=tiny; \
-	export FLUID_TEST_VERBOSE=1; \
+	#export FLUID_TEST_VERBOSE=1; \
 	export DEBUG=wait:*,fluid:telemetry:fluid:telemetry:*; \
 	# Running the :full version causes things to hang because something is trying to load mocha-test-setup by folder
 	# and seemingly can't because it's ESM so it needs the whole path to a js file. Not sure why that causes mocha to
