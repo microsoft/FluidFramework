@@ -10,6 +10,7 @@ mocha).
 This package exports a few functions that you'll use instead of mocha's `it()` to define profiling tests:
 
 -   `benchmark()` for runtime tests
+-   `benchmarkCustom()` for custom usage tests
 -   `benchmarkMemory()` for memory usage tests
 
 More details particular to each can be found in the sections below.
@@ -84,6 +85,12 @@ when you define the test) and `@ExecutionTime` (as opposed to `@MemoryUsage` for
 > The test execution strategy presents problems if each iteration of `benchmarkFn` isn't an independent event.
 > The problem can be alleviated but not fully fixed using the `onCycle` hook argument.
 > See documentation on `HookArguments` for more detail.
+
+## Profiling custom usage
+
+To customize profiling, define tests using the `benchmarkCustom()` function. The run argument of this function
+includes a reporter that uses `addMeasurement()` to record custom data for reporting. Look at the documentation
+on `Titled`, `BenchmarkDescription`, `MochaExclusiveOptions` for more details on what the rest of its properties do.
 
 ## Profiling memory usage
 
