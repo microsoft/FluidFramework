@@ -104,15 +104,15 @@ const getScopeKindFromPackage = (packageName) => {
 	const packageScope = PackageName.getScope(packageName);
 	if (packageScope === "") {
 		return undefined;
-	} else if (packageScope === `@fluidframework`) {
+	} else if (packageScope === "@fluidframework") {
 		return "FRAMEWORK";
-	} else if (packageScope === `@fluid-example`) {
+	} else if (packageScope === "@fluid-example") {
 		return "EXAMPLE";
-	} else if (packageScope === `@fluid-experimental`) {
+	} else if (packageScope === "@fluid-experimental") {
 		return "EXPERIMENTAL";
-	} else if (packageScope === `@fluid-internal`) {
+	} else if (packageScope === "@fluid-internal") {
 		return "INTERNAL";
-	} else if (packageScope === `@fluid-private`) {
+	} else if (packageScope === "@fluid-private") {
 		return "PRIVATE";
 	} else if (packageScope === "@fluid-tools") {
 		return "TOOLS";
