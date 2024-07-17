@@ -548,6 +548,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 		});
 	}
 
+	// stores matrix handle in directory and attaches by storing in tree with new data store: 280547
 	for (const {
 		detachedFactory1,
 		detachedFactory2,

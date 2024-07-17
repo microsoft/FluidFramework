@@ -484,7 +484,7 @@ describeCompat.only("stashed ops", "NoCompat", (getTestObjectProvider, apis) => 
 		assert.strictEqual(directory2.get(directoryDecompressedId), testValue);
 	});
 
-	// 276907
+	// 276907, 280540
 	it("connects in write mode and resends op when loaded with no delta connection", async function () {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
@@ -941,6 +941,7 @@ describeCompat.only("stashed ops", "NoCompat", (getTestObjectProvider, apis) => 
 		assert.strictEqual(string2.getText(), "");
 	});
 
+	// 280712
 	it("doesn't resend successful string remove op", async function () {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
@@ -964,7 +965,7 @@ describeCompat.only("stashed ops", "NoCompat", (getTestObjectProvider, apis) => 
 		assert.strictEqual(string2.getText(), "goodbye cruel world");
 	});
 
-	// 277284
+	// 277284, 280712
 	it("resends string annotate op", async function () {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
@@ -1696,6 +1697,7 @@ describeCompat.only("stashed ops", "NoCompat", (getTestObjectProvider, apis) => 
 		);
 	});
 
+	// 280623, 280725
 	it("stashed changes with blobs", async function () {
 		const container = await loadOffline(testContainerConfig, provider, { url });
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
