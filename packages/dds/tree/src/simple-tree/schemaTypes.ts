@@ -71,7 +71,7 @@ export interface TreeNodeSchemaNonClass<
  * When sub-classing a a `TreeNodeSchemaClass`, some extra rules must be followed:
  *
  * - Only ever use a single class from the schema's class hierarchy within a document and its schema.
- * For example, if using {@link SchemaFactory.object} for can do:
+ * For example, if using {@link SchemaFactory.object} you can do:
  * ```typescript
  * class Foo extends schemaFactory.object("Foo", {}) {}
  * class Foo extends schemaFactory.object()
@@ -91,7 +91,7 @@ export interface TreeNodeSchemaClass<
 	 * Constructs an {@link Unhydrated} node with this schema.
 	 * @remarks
 	 * This constructor is also used internally to construct hydrated nodes with a different parameter type.
-	 * Therefor overriding this constructor with different argument types is not type-safe and is not supported.
+	 * Therefore, overriding this constructor with different argument types is not type-safe and is not supported.
 	 * @sealed
 	 */
 	new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
