@@ -154,7 +154,7 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"VariableDeclaration_ConsensusRegisterCollection": {
+			"Variable_ConsensusRegisterCollection": {
 				"forwardCompat": false
 			}
 		}

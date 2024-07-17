@@ -170,7 +170,7 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"VariableDeclaration_SharedMatrix": {
+			"Variable_SharedMatrix": {
 				"forwardCompat": false
 			}
 		}

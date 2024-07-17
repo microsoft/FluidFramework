@@ -157,7 +157,7 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"VariableDeclaration_ConsensusQueue": {
+			"Variable_ConsensusQueue": {
 				"forwardCompat": false
 			}
 		}

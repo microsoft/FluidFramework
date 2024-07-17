@@ -167,10 +167,10 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"VariableDeclaration_SharedMap": {
+			"Variable_SharedMap": {
 				"forwardCompat": false
 			},
-			"VariableDeclaration_SharedDirectory": {
+			"Variable_SharedDirectory": {
 				"forwardCompat": false
 			}
 		}

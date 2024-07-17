@@ -231,16 +231,16 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_LocalFluidDataStoreContext": {
+			"Class_LocalFluidDataStoreContext": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_FluidDataStoreContext": {
+			"Class_FluidDataStoreContext": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_LocalFluidDataStoreContextBase": {
+			"Class_LocalFluidDataStoreContextBase": {
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_IGCNodeUpdatedProps": {
+			"Interface_IGCNodeUpdatedProps": {
 				"backCompat": false
 			}
 		}

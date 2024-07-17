@@ -158,7 +158,7 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"VariableDeclaration_TaskManager": {
+			"Variable_TaskManager": {
 				"forwardCompat": false
 			}
 		}

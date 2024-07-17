@@ -136,7 +136,7 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"VariableDeclaration_SharedCell": {
+			"Variable_SharedCell": {
 				"forwardCompat": false
 			}
 		}

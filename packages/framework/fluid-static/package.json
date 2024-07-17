@@ -140,7 +140,7 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_ContainerSchema": {
+			"Interface_ContainerSchema": {
 				"forwardCompat": false
 			}
 		}

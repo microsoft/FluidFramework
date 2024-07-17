@@ -115,11 +115,11 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"RemovedInterfaceDeclaration_IGenericError": {
+			"RemovedInterface_IGenericError": {
 				"backCompat": false,
 				"forwardCompat": false
 			},
-			"RemovedInterfaceDeclaration_IUsageError": {
+			"RemovedInterface_IUsageError": {
 				"backCompat": false,
 				"forwardCompat": false
 			}

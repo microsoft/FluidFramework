@@ -155,7 +155,7 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"VariableDeclaration_SharedSummaryBlock": {
+			"Variable_SharedSummaryBlock": {
 				"forwardCompat": false
 			}
 		}
