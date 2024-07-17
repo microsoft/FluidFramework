@@ -195,7 +195,7 @@ This package also exports a `describeFuzz` helper, which is a simple wrapper aro
 -   `FUZZ_TEST_COUNT`: Controls the `testCount` value passed to the fuzz test's `describeFuzz` block callback.
 -   `FUZZ_STRESS_RUN`: If set to a truthy value, test commands in packages with fuzz tests will only run `describeFuzz` blocks.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:clientRequirements=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

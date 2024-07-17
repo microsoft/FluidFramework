@@ -189,7 +189,7 @@ This means that statically importing and referencing a DDS in a test file _will_
 but this happens implicitly.
 Test authors are encouraged to use the `apis` argument of `describeCompat`'s test creation callback to reference the DDS instead.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:clientRequirements=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

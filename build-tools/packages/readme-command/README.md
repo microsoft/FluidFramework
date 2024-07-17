@@ -91,7 +91,7 @@ in some way. Other commands could adopt this, but only the `release command` use
 The `release` command also provides a `state` flag that can be used to initialize the state machine to a specific state.
 This is intended for testing.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:clientRequirements=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
