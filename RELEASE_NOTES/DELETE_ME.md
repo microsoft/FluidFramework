@@ -2,41 +2,7 @@
 
 # Upcoming changes in Fluid Framework v2.1.0
 
-## The Marker.fromJSONObject and TextSegment.fromJSONObject argument types have been corrected
-
-Previously, the arguments of `Marker.fromJSONObject` and `TextSegment.fromJSONObject` were of type `any`. However, at runtime only certain types were expected and using other types would cause errors.
-
-Now, the argument for the Marker implementation is of type `IJSONSegment` and the argument for the TextSegment implementation is of type `string | IJSONSegment`. This reflects actual runtime support.
-
-This change should have no impact on existing code unless the code is using incorrect types. Such code already does not function and should be corrected.
-
-## Detect arrayNode iterator invalidation
-
-This change updates the behavior of array nodes such that when we concurrently edit the array during iteration, it will throw an error.
-
-## Promote APIs from `@beta` to `@public`
-
-Some tinylicious-client APIs were marked beta in previous releases. These APIs are now correctly marked public and also sealed to indicate they are not to be implemented externally to Fluid Framework and not changed.
-
-Updated APIs:
-
-- [ITinyliciousAudience](https://fluidframework.com/docs/api/v2/tinylicious-client/itinyliciousaudience-typealias) sealed
-- [TinyliciousClient](https://fluidframework.com/docs/api/v2/tinylicious-client/tinyliciousclient-class) sealed
-- [TinyliciousClientProps](https://fluidframework.com/docs/api/v2/tinylicious-client/tinyliciousclientprops-interface) sealed
-- [TinyliciousConnectionConfig](https://fluidframework.com/docs/api/v2/tinylicious-client/tinyliciousconnectionconfig-interface) sealed
-- [TinyliciousContainerServices](https://fluidframework.com/docs/api/v2/tinylicious-client/tinyliciouscontainerservices-interface) sealed
-- [TinyliciousMember](https://fluidframework.com/docs/api/v2/tinylicious-client/tinyliciousmember-interface) sealed
-- [TinyliciousUser](https://fluidframework.com/docs/api/v2/tinylicious-client/tinylicioususer-interface) sealed
-
-## tree: fix: Using "delete" on tree fields now throws an error instead of not working correctly
-
-TypeScript allows `delete` on object node optional fields if the `exactOptionalPropertyTypes` tsconfig setting is not enabled. This does not work correctly at runtime and now produces an informative error.
-
-## property-query: Updated `joi` dependency to latest major version
-
-The `joi` dependency was updated from 14.3.1 to 17.3.1 to address a critical vulnerability exploit [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp). This required updating the use of `joi` schema validation function within property-query to the new major version syntax.
-
-## New feature: Added type guards for DDS types
+## Type guards for DDS types
 
 In the 2.0 release of Fluid, the concrete class implementations for DDSes were hidden from Fluid's API surface. This made `instanceof` checks fail to work correctly. There were ways to work around this in application code, but they involved boilerplate which required more understanding of Fluid internals than should be necessary.
 
@@ -54,7 +20,43 @@ if (SharedString.is(myObject)) {
 }
 ```
 
-## Some SharedMap/SharedMap-related APIs have been sealed
+## SharedTree content that is removed is now deleted
+
+SharedTree now supports garbage collection so that removed content is not retained forever. This is an internal change and users of SharedTree won't need to adapt any existing code.
+
+This change could cause errors with cross-version collaboration where an older client does not send data that a newer version may need. In this case, a "refresher data not found" error will be thrown.
+
+## Updated `joi` dependency to latest major version
+
+The `joi` dependency was updated from 14.3.1 to 17.3.1 to address a critical vulnerability exploit [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp). This required updating the use of `joi` schema validation function within property-query to the new major version syntax.
+
+## Detect arrayNode iterator invalidation
+
+When `arrayNode`s are edited concurrently during iteration, an error will be thrown.
+
+## tinylicious-client: Promote APIs from beta to public
+
+Some tinylicious-client APIs were marked beta in previous releases. These APIs are now correctly marked public and also sealed to indicate they are not to be implemented externally to Fluid Framework and not changed.
+
+Updated APIs:
+
+- [ITinyliciousAudience](https://fluidframework.com/docs/api/v2/tinylicious-client/itinyliciousaudience-typealias) sealed
+- [TinyliciousClient](https://fluidframework.com/docs/api/v2/tinylicious-client/tinyliciousclient-class) sealed
+- [TinyliciousClientProps](https://fluidframework.com/docs/api/v2/tinylicious-client/tinyliciousclientprops-interface) sealed
+- [TinyliciousConnectionConfig](https://fluidframework.com/docs/api/v2/tinylicious-client/tinyliciousconnectionconfig-interface) sealed
+- [TinyliciousContainerServices](https://fluidframework.com/docs/api/v2/tinylicious-client/tinyliciouscontainerservices-interface) sealed
+- [TinyliciousMember](https://fluidframework.com/docs/api/v2/tinylicious-client/tinyliciousmember-interface) sealed
+- [TinyliciousUser](https://fluidframework.com/docs/api/v2/tinylicious-client/tinylicioususer-interface) sealed
+
+## The Marker.fromJSONObject and TextSegment.fromJSONObject argument types have been corrected
+
+Previously, the arguments of `Marker.fromJSONObject` and `TextSegment.fromJSONObject` were of type `any`. However, at runtime only certain types were expected and using other types would cause errors.
+
+Now, the argument for the Marker implementation is of type `IJSONSegment` and the argument for the TextSegment implementation is of type `string | IJSONSegment`. This reflects actual runtime support.
+
+This change should have no impact on existing code unless the code is using incorrect types. Such code already does not function and should be corrected.
+
+## Some SharedDirectory/SharedMap-related APIs have been sealed
 
 Note that this is a _documentation only change._ There is no runtime or type-level impact.
 
@@ -69,8 +71,6 @@ Updated APIs:
 - [ISharedDirectoryEvents](https://fluidframework.com/docs/api/v2/fluid-framework/ishareddirectoryevents-interface) sealed
 - [IValueChanged](https://fluidframework.com/docs/api/v2/fluid-framework/ivaluechanged-interface) sealed
 
-## tree: Delete removed content stored in SharedTree
+## Using "delete" on tree fields now throws an error instead of not working correctly
 
-SharedTree now supports garbage collection so that removed content is not retained forever. This is an internal change and users of SharedTree won't need to adapt any existing code.
-
-This change could cause errors with cross-version collaboration where an older client does not send data that a newer version may need. In this case, a "refresher data not found" error will be thrown.
+TypeScript allows `delete` on object node optional fields if the `exactOptionalPropertyTypes` tsconfig setting is not enabled. This does not work correctly at runtime and now produces an informative error.

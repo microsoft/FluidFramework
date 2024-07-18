@@ -2,7 +2,7 @@
 "@fluidframework/shared-object-base": minor
 ---
 
-New feature: Added type guards for DDS types
+Type guards for DDS types
 
 In the 2.0 release of Fluid, the concrete class implementations for DDSes were hidden from Fluid's API surface.
 This made `instanceof` checks fail to work correctly.

@@ -2,7 +2,7 @@
 "@fluidframework/tree": minor
 ---
 
-tree: Delete removed content stored in SharedTree
+SharedTree content that is removed is now deleted
 
 SharedTree now supports garbage collection so that removed content is not retained forever.
 This is an internal change and users of SharedTree won't need to adapt any existing code.

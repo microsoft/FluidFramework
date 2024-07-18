@@ -3,7 +3,7 @@
 "@fluidframework/map": minor
 ---
 
-Some SharedMap/SharedMap-related APIs have been sealed
+Some SharedDirectory/SharedMap-related APIs have been sealed
 
 Note that this is a _documentation only change._ There is no runtime or type-level impact.
 
