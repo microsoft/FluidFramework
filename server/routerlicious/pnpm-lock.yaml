@@ -2056,15 +2056,15 @@ importers:
         specifier: ^3.6.0
         version: 3.9.0
     devDependencies:
+      '@fluid-internal/mocha-test-setup':
+        specifier: ~2.0.5
+        version: 2.0.5
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
-      '@fluidframework/mocha-test-setup':
-        specifier: ~2.0.0-internal.6.2.0
-        version: 2.0.0-internal.7.0.0
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.39)
@@ -3622,6 +3622,22 @@ packages:
       - typescript
     dev: true
 
+  /@fluid-internal/mocha-test-setup@2.0.5:
+    resolution: {integrity: sha512-oSPv7nJKbyhMBWzSIRsu1h1WXXOaT2/cwD5qSeKsUZTIUVXsd5FdIUOdV/vc7hAEoJI/JLXZeauVrJHe/qlv6g==}
+    dependencies:
+      '@fluid-internal/test-driver-definitions': 2.0.5
+      '@fluidframework/core-interfaces': 2.0.5
+      mocha: 10.2.0
+      source-map-support: 0.5.21
+    dev: true
+
+  /@fluid-internal/test-driver-definitions@2.0.5:
+    resolution: {integrity: sha512-EHaiRJOFlqVR/53qx4/6LS6cbw/pJ/g2zLkpTOp6X3CydHZIQbpjPKxsq4HsAalClMqCy2aOYgErnygUPIIEPQ==}
+    dependencies:
+      '@fluidframework/core-interfaces': 2.0.5
+      '@fluidframework/driver-definitions': 2.0.5
+    dev: true
+
   /@fluid-tools/build-cli@0.38.0(@types/node@18.19.39):
     resolution: {integrity: sha512-QvfpjBidx9+bCsSIeqsZiRLg/dDmYrMZeJvAq6zRxhUynnA74koIIt2hbp0cP4MWbDWxMCMUvgLpzJHKuVVslA==}
     engines: {node: '>=14.17.0'}
@@ -3880,15 +3896,14 @@ packages:
       lodash: 4.17.21
       sha.js: 2.4.11
 
-  /@fluidframework/core-interfaces@2.0.0-internal.7.0.0:
-    resolution: {integrity: sha512-znZqbn0ew7aqrnjFf+sfNsnajjZ9z9PHycrfzkVfo6YAW1WKuTi7VmZwUyLGVDIAJ86qlQW4/kI9WL4OypzSFA==}
+  /@fluidframework/core-interfaces@2.0.5:
+    resolution: {integrity: sha512-thn4lmgl3Tzu4/wWK1VBxZvjeEb+Xye6fts+kIKJhzbP9KPNFfSDOaA/gDBRgz+4GYCTo9K9Ssey4IarR5x4fA==}
     dev: true
 
-  /@fluidframework/driver-definitions@2.0.0-internal.7.0.0:
-    resolution: {integrity: sha512-yPsYKh7CPOaYrxmAMMDzKkiTRsy99XX97Wibjr4gjQ5rRgnE8wIMC0Y3PHvRgUwj1pPcZEArFTFnCIxUhs3lvw==}
+  /@fluidframework/driver-definitions@2.0.5:
+    resolution: {integrity: sha512-1jdEGpWg73ow3g7wEv/YnIKa5NzRqsOAbqsUQj6v3QCK6lDhwbUNibctyKSdhRaE18s42s06Ip5n15fqbeq76Q==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.7.0.0
-      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/core-interfaces': 2.0.5
     dev: true
 
   /@fluidframework/eslint-config-fluid@5.2.0(eslint@8.55.0)(typescript@5.1.6):
@@ -3922,15 +3937,6 @@ packages:
 
   /@fluidframework/gitresources@5.0.0:
     resolution: {integrity: sha512-nfam1KT+EUqFCENHcxrU9VwUfbhUC83UcLuOsdLpn9I7VuClL+w8KMWosoYauZraO9gDhTo2kCErjgQji5GzGA==}
-    dev: true
-
-  /@fluidframework/mocha-test-setup@2.0.0-internal.7.0.0:
-    resolution: {integrity: sha512-4OxXgKhsGA4mOA559Je+LoybAVqx8wygL/dhUoDEaiA/8tEgkRFCDzpPFHAPlyWrgwj9HB0vQsulj2u59rwGMg==}
-    dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.7.0.0
-      '@fluidframework/test-driver-definitions': 2.0.0-internal.7.0.0
-      mocha: 10.2.0
-      source-map-support: 0.5.21
     dev: true
 
   /@fluidframework/protocol-base@5.0.0:
@@ -4321,15 +4327,6 @@ packages:
       uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
-    dev: true
-
-  /@fluidframework/test-driver-definitions@2.0.0-internal.7.0.0:
-    resolution: {integrity: sha512-IubdjrhM5Rtx9cYk4g9WQliIflkIrgQC800m6o12giUvm8ocnwl5klNkqC6WYLgwfBWP3vhQrPluFD4X2pKaFw==}
-    dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.7.0.0
-      '@fluidframework/driver-definitions': 2.0.0-internal.7.0.0
-      '@fluidframework/protocol-definitions': 3.2.0
-      uuid: 9.0.1
     dev: true
 
   /@gitbeaker/core@35.8.1:
