@@ -61,10 +61,8 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			FlexFieldSchema<typeof FieldKinds.required | typeof FieldKinds.optional>
 		>,
 	): TreeNode | TreeValue | undefined {
-		const maybeUnboxedContent = flexField.content;
-		return isFlexTreeNode(maybeUnboxedContent)
-			? getOrCreateNodeProxy(maybeUnboxedContent)
-			: maybeUnboxedContent;
+		const maybeContent = flexField.content;
+		return isFlexTreeNode(maybeContent) ? getOrCreateNodeProxy(maybeContent) : maybeContent;
 	}
 	switch (field.schema.kind) {
 		case FieldKinds.required: {

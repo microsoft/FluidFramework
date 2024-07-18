@@ -152,7 +152,6 @@ describe("MapTreeNodes", () => {
 		assert.equal(fieldNode.getBoxed(EmptyKey).at(1), undefined);
 		assert.equal([...fieldNode.boxedIterator()].length, 1);
 		assert.equal([...fieldNode.boxedIterator()][0].boxedAt(0)?.value, childValue);
-		assert.deepEqual(fieldNode.boxedContent.length, 1);
 		assert.deepEqual([...fieldNode.content], [childValue]);
 	});
 

@@ -253,22 +253,6 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		},
 	);
 
-	itExpects(
-		"Large ops fail when compression is disabled by feature gate and the content is over max op size",
-		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
-		async function () {
-			const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
-			await setupContainers(testContainerConfig, {
-				"Fluid.ContainerRuntime.CompressionDisabled": true,
-			});
-
-			const largeString = generateStringOfSize(maxMessageSizeInBytes);
-			const messageCount = 10;
-			assert.throws(() => setMapKeys(localMap, messageCount, largeString));
-			await provider.ensureSynchronized();
-		},
-	);
-
 	itExpects.skip(
 		"Large ops fail when compression enabled and compressed content is over max op size",
 		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
@@ -391,7 +375,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				}));
 
 			itExpects(
-				"Large ops fail when compression chunking is disabled by feature gate",
+				"Large ops fail when compression chunking is disabled",
 				[
 					{
 						eventName: "fluid:telemetry:Container:ContainerClose",
@@ -400,18 +384,14 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				],
 				async function () {
 					const maxMessageSizeInBytes = 50 * 1024; // 50 KB
-					await setupContainers(
-						{
-							...containerConfig,
-							runtimeOptions: {
-								...containerConfig.runtimeOptions,
-								maxBatchSizeInBytes: 51 * 1024, // 51 KB
-							},
+					await setupContainers({
+						...containerConfig,
+						runtimeOptions: {
+							...containerConfig.runtimeOptions,
+							maxBatchSizeInBytes: 51 * 1024, // 51 KB
+							chunkSizeInBytes: Infinity,
 						},
-						{
-							"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
-						},
-					);
+					});
 
 					const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
 					const messageCount = 3; // Will result in a 150 KB payload

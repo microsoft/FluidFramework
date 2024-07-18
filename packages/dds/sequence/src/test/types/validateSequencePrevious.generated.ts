@@ -923,6 +923,7 @@ declare type current_as_old_for_ClassDeclaration_SharedSequence = requireAssigna
  * typeValidation.broken:
  * "VariableDeclaration_SharedString": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_VariableDeclaration_SharedString = requireAssignableTo<TypeOnly<typeof old.SharedString>, TypeOnly<typeof current.SharedString>>
 
 /*

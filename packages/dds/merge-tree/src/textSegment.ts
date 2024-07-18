@@ -40,7 +40,7 @@ export class TextSegment extends BaseSegment {
 		return segment.type === TextSegment.type;
 	}
 
-	public static make(text: string, props?: PropertySet) {
+	public static make(text: string, props?: PropertySet): TextSegment {
 		const seg = new TextSegment(text);
 		if (props) {
 			seg.addProperties(props);
@@ -48,7 +48,7 @@ export class TextSegment extends BaseSegment {
 		return seg;
 	}
 
-	public static fromJSONObject(spec: any) {
+	public static fromJSONObject(spec: string | IJSONSegment): TextSegment | undefined {
 		if (typeof spec === "string") {
 			return new TextSegment(spec);
 		} else if (spec && typeof spec === "object" && "text" in spec) {
@@ -69,8 +69,8 @@ export class TextSegment extends BaseSegment {
 		return this.properties ? { text: this.text, props: { ...this.properties } } : this.text;
 	}
 
-	public clone(start = 0, end?: number) {
-		const text = this.text.substring(start, end);
+	public clone(start = 0, end?: number): TextSegment {
+		const text = this.text.slice(start, end);
 		const b = TextSegment.make(text, this.properties);
 		this.cloneInto(b);
 		return b;
@@ -85,20 +85,20 @@ export class TextSegment extends BaseSegment {
 		);
 	}
 
-	public toString() {
+	public toString(): string {
 		return this.text;
 	}
 
-	public append(segment: ISegment) {
+	public append(segment: ISegment): void {
 		assert(TextSegment.is(segment), 0x447 /* can only append text segment */);
 		super.append(segment);
 		this.text += segment.text;
 	}
 
-	protected createSplitSegmentAt(pos: number) {
+	protected createSplitSegmentAt(pos: number): TextSegment | undefined {
 		if (pos > 0) {
-			const remainingText = this.text.substring(pos);
-			this.text = this.text.substring(0, pos);
+			const remainingText = this.text.slice(Math.max(0, pos));
+			this.text = this.text.slice(0, Math.max(0, pos));
 			this.cachedLength = this.text.length;
 			const leafSegment = new TextSegment(remainingText);
 			return leafSegment;

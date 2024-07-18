@@ -105,7 +105,7 @@ export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory
 }
 
 // TODO: Update this function to be done in a more ergonomic way using libraries
-function generateLeafNodeSchemas(nodeTypes: string[]) {
+export function generateLeafNodeSchemas(nodeTypes: string[]) {
 	const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.leaf" });
 	const leafNodeSchemas = [];
 	for (const nodeType of nodeTypes) {
