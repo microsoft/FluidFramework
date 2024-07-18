@@ -46,6 +46,7 @@ import {
 	SchemaBuilderBase,
 	SchemaBuilderInternal,
 	TreeCompressionStrategy,
+	TreeStatus,
 	ViewSchema,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
@@ -102,6 +103,7 @@ import {
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import { TestAnchor } from "../testAnchor.js";
 
 const enableSchemaValidation = true;
 
@@ -1030,13 +1032,19 @@ describe("SharedTree", () => {
 			const root1 = view1.root;
 			const root2 = view2.root;
 
-			// remove in first tree
+			// get an anchor to the node we're removing
+			const anchorAOnTree2 = TestAnchor.fromValue(tree2.checkout.forest, "A");
+
+			// remove in first treex
 			root1.removeAt(0);
 
 			provider.processMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
 			assert.deepEqual([...root1], ["B", "C", "D"]);
 			assert.deepEqual([...root2], ["B", "C", "D"]);
+
+			// check the detached field on the peer
+			assert.equal(anchorAOnTree2.treeStatus, TreeStatus.Removed);
 
 			// send edits to move the collab window up
 			root2.insertAt(3, "y");
@@ -1053,6 +1061,9 @@ describe("SharedTree", () => {
 
 			// ensure the remove is out of the collab window
 			assert(removeSequenceNumber < provider.minimumSequenceNumber);
+			// check that the repair data on the peer is destroyed
+			assert.equal(anchorAOnTree2.treeStatus, TreeStatus.Deleted);
+
 			undoStack[0]?.revert();
 
 			provider.processMessages();
@@ -1757,7 +1768,7 @@ describe("SharedTree", () => {
 			assert.equal(trees[0].checkout.forest instanceof ObjectForest, true);
 		});
 
-		it("ForestType.Reference uses ObjectForest", () => {
+		it("ForestType.Reference uses ObjectForest with additionalAsserts flag set to false", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				new SharedTreeFactory({
@@ -1765,7 +1776,9 @@ describe("SharedTree", () => {
 					forest: ForestType.Reference,
 				}),
 			);
-			assert.equal(trees[0].checkout.forest instanceof ObjectForest, true);
+			const forest = trees[0].checkout.forest;
+			assert(forest instanceof ObjectForest);
+			assert.equal(forest.additionalAsserts, false);
 		});
 
 		it("ForestType.Optimized uses ChunkedForest", () => {
@@ -1777,6 +1790,19 @@ describe("SharedTree", () => {
 				}),
 			);
 			assert.equal(trees[0].checkout.forest instanceof ChunkedForest, true);
+		});
+
+		it("ForestType.Expensive uses ObjectForest with additionalAsserts flag set to true", () => {
+			const { trees } = new TestTreeProviderLite(
+				1,
+				new SharedTreeFactory({
+					jsonValidator: typeboxValidator,
+					forest: ForestType.Expensive,
+				}),
+			);
+			const forest = trees[0].checkout.forest;
+			assert(forest instanceof ObjectForest);
+			assert.equal(forest.additionalAsserts, true);
 		});
 	});
 	describe("Schema based op encoding", () => {

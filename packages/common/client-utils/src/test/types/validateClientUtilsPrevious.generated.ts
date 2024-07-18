@@ -20,357 +20,294 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_Buffer": {"forwardCompat": false}
+ * "Class_Buffer": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_Buffer = requireAssignableTo<TypeOnly<old.Buffer>, TypeOnly<current.Buffer>>
+declare type old_as_current_for_Class_Buffer = requireAssignableTo<TypeOnly<old.Buffer>, TypeOnly<current.Buffer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_Buffer": {"backCompat": false}
+ * "Class_Buffer": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_Buffer = requireAssignableTo<TypeOnly<current.Buffer>, TypeOnly<old.Buffer>>
+declare type current_as_old_for_Class_Buffer = requireAssignableTo<TypeOnly<current.Buffer>, TypeOnly<old.Buffer>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_Buffer": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_Buffer = requireAssignableTo<TypeOnly<typeof current.Buffer>, TypeOnly<typeof old.Buffer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_EventEmitter": {"forwardCompat": false}
+ * "Class_EventEmitter": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_EventEmitter = requireAssignableTo<TypeOnly<old.EventEmitter>, TypeOnly<current.EventEmitter>>
+declare type old_as_current_for_Class_EventEmitter = requireAssignableTo<TypeOnly<old.EventEmitter>, TypeOnly<current.EventEmitter>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_EventEmitter": {"backCompat": false}
+ * "Class_EventEmitter": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_EventEmitter = requireAssignableTo<TypeOnly<current.EventEmitter>, TypeOnly<old.EventEmitter>>
+declare type current_as_old_for_Class_EventEmitter = requireAssignableTo<TypeOnly<current.EventEmitter>, TypeOnly<old.EventEmitter>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_EventEmitter": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_EventEmitter = requireAssignableTo<TypeOnly<typeof current.EventEmitter>, TypeOnly<typeof old.EventEmitter>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_EventEmitterEventType": {"forwardCompat": false}
+ * "TypeAlias_EventEmitterEventType": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_EventEmitterEventType = requireAssignableTo<TypeOnly<old.EventEmitterEventType>, TypeOnly<current.EventEmitterEventType>>
+declare type old_as_current_for_TypeAlias_EventEmitterEventType = requireAssignableTo<TypeOnly<old.EventEmitterEventType>, TypeOnly<current.EventEmitterEventType>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_EventEmitterEventType": {"backCompat": false}
+ * "TypeAlias_EventEmitterEventType": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAliasDeclaration_EventEmitterEventType = requireAssignableTo<TypeOnly<current.EventEmitterEventType>, TypeOnly<old.EventEmitterEventType>>
+declare type current_as_old_for_TypeAlias_EventEmitterEventType = requireAssignableTo<TypeOnly<current.EventEmitterEventType>, TypeOnly<old.EventEmitterEventType>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITraceEvent": {"forwardCompat": false}
+ * "Interface_ITraceEvent": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ITraceEvent = requireAssignableTo<TypeOnly<old.ITraceEvent>, TypeOnly<current.ITraceEvent>>
+declare type old_as_current_for_Interface_ITraceEvent = requireAssignableTo<TypeOnly<old.ITraceEvent>, TypeOnly<current.ITraceEvent>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITraceEvent": {"backCompat": false}
+ * "Interface_ITraceEvent": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ITraceEvent = requireAssignableTo<TypeOnly<current.ITraceEvent>, TypeOnly<old.ITraceEvent>>
+declare type current_as_old_for_Interface_ITraceEvent = requireAssignableTo<TypeOnly<current.ITraceEvent>, TypeOnly<old.ITraceEvent>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_IsoBuffer": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_IsoBuffer = requireAssignableTo<TypeOnly<typeof current.IsoBuffer>, TypeOnly<typeof old.IsoBuffer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_IsoBuffer": {"forwardCompat": false}
+ * "TypeAlias_IsoBuffer": {"forwardCompat": false}
  */
-declare type old_as_current_for_VariableDeclaration_IsoBuffer = requireAssignableTo<TypeOnly<typeof old.IsoBuffer>, TypeOnly<typeof current.IsoBuffer>>
+declare type old_as_current_for_TypeAlias_IsoBuffer = requireAssignableTo<TypeOnly<old.IsoBuffer>, TypeOnly<current.IsoBuffer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_IsoBuffer": {"backCompat": false}
+ * "TypeAlias_IsoBuffer": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_IsoBuffer = requireAssignableTo<TypeOnly<typeof current.IsoBuffer>, TypeOnly<typeof old.IsoBuffer>>
+declare type current_as_old_for_TypeAlias_IsoBuffer = requireAssignableTo<TypeOnly<current.IsoBuffer>, TypeOnly<old.IsoBuffer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_IsoBuffer": {"forwardCompat": false}
+ * "TypeAlias_IsomorphicPerformance": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_IsoBuffer = requireAssignableTo<TypeOnly<old.IsoBuffer>, TypeOnly<current.IsoBuffer>>
+declare type old_as_current_for_TypeAlias_IsomorphicPerformance = requireAssignableTo<TypeOnly<old.IsomorphicPerformance>, TypeOnly<current.IsomorphicPerformance>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_IsoBuffer": {"backCompat": false}
+ * "TypeAlias_IsomorphicPerformance": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAliasDeclaration_IsoBuffer = requireAssignableTo<TypeOnly<current.IsoBuffer>, TypeOnly<old.IsoBuffer>>
+declare type current_as_old_for_TypeAlias_IsomorphicPerformance = requireAssignableTo<TypeOnly<current.IsomorphicPerformance>, TypeOnly<old.IsomorphicPerformance>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_IsomorphicPerformance": {"forwardCompat": false}
+ * "Class_Trace": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_IsomorphicPerformance = requireAssignableTo<TypeOnly<old.IsomorphicPerformance>, TypeOnly<current.IsomorphicPerformance>>
+declare type old_as_current_for_Class_Trace = requireAssignableTo<TypeOnly<old.Trace>, TypeOnly<current.Trace>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_IsomorphicPerformance": {"backCompat": false}
+ * "Class_Trace": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAliasDeclaration_IsomorphicPerformance = requireAssignableTo<TypeOnly<current.IsomorphicPerformance>, TypeOnly<old.IsomorphicPerformance>>
+declare type current_as_old_for_Class_Trace = requireAssignableTo<TypeOnly<current.Trace>, TypeOnly<old.Trace>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_Trace": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_Trace = requireAssignableTo<TypeOnly<typeof current.Trace>, TypeOnly<typeof old.Trace>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_Trace": {"forwardCompat": false}
+ * "Class_TypedEventEmitter": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_Trace = requireAssignableTo<TypeOnly<old.Trace>, TypeOnly<current.Trace>>
+declare type old_as_current_for_Class_TypedEventEmitter = requireAssignableTo<TypeOnly<old.TypedEventEmitter<any>>, TypeOnly<current.TypedEventEmitter<any>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_Trace": {"backCompat": false}
+ * "Class_TypedEventEmitter": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_Trace = requireAssignableTo<TypeOnly<current.Trace>, TypeOnly<old.Trace>>
+declare type current_as_old_for_Class_TypedEventEmitter = requireAssignableTo<TypeOnly<current.TypedEventEmitter<any>>, TypeOnly<old.TypedEventEmitter<any>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_TypedEventEmitter": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_TypedEventEmitter = requireAssignableTo<TypeOnly<typeof current.TypedEventEmitter>, TypeOnly<typeof old.TypedEventEmitter>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_TypedEventEmitter": {"forwardCompat": false}
+ * "TypeAlias_TypedEventTransform": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_TypedEventEmitter = requireAssignableTo<TypeOnly<old.TypedEventEmitter<any>>, TypeOnly<current.TypedEventEmitter<any>>>
+declare type old_as_current_for_TypeAlias_TypedEventTransform = requireAssignableTo<TypeOnly<old.TypedEventTransform<any,any>>, TypeOnly<current.TypedEventTransform<any,any>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_TypedEventEmitter": {"backCompat": false}
+ * "TypeAlias_TypedEventTransform": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_TypedEventEmitter = requireAssignableTo<TypeOnly<current.TypedEventEmitter<any>>, TypeOnly<old.TypedEventEmitter<any>>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAliasDeclaration_TypedEventTransform": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAliasDeclaration_TypedEventTransform = requireAssignableTo<TypeOnly<old.TypedEventTransform<any,any>>, TypeOnly<current.TypedEventTransform<any,any>>>
+declare type current_as_old_for_TypeAlias_TypedEventTransform = requireAssignableTo<TypeOnly<current.TypedEventTransform<any,any>>, TypeOnly<old.TypedEventTransform<any,any>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_TypedEventTransform": {"backCompat": false}
+ * "Function_Uint8ArrayToArrayBuffer": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAliasDeclaration_TypedEventTransform = requireAssignableTo<TypeOnly<current.TypedEventTransform<any,any>>, TypeOnly<old.TypedEventTransform<any,any>>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_Uint8ArrayToArrayBuffer": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_Uint8ArrayToArrayBuffer = requireAssignableTo<TypeOnly<typeof old.Uint8ArrayToArrayBuffer>, TypeOnly<typeof current.Uint8ArrayToArrayBuffer>>
+declare type current_as_old_for_Function_Uint8ArrayToArrayBuffer = requireAssignableTo<TypeOnly<typeof current.Uint8ArrayToArrayBuffer>, TypeOnly<typeof old.Uint8ArrayToArrayBuffer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_Uint8ArrayToArrayBuffer": {"backCompat": false}
+ * "Function_Uint8ArrayToString": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_Uint8ArrayToArrayBuffer = requireAssignableTo<TypeOnly<typeof current.Uint8ArrayToArrayBuffer>, TypeOnly<typeof old.Uint8ArrayToArrayBuffer>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_Uint8ArrayToString": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_Uint8ArrayToString = requireAssignableTo<TypeOnly<typeof old.Uint8ArrayToString>, TypeOnly<typeof current.Uint8ArrayToString>>
+declare type current_as_old_for_Function_Uint8ArrayToString = requireAssignableTo<TypeOnly<typeof current.Uint8ArrayToString>, TypeOnly<typeof old.Uint8ArrayToString>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_Uint8ArrayToString": {"backCompat": false}
+ * "Variable_bufferToString": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_Uint8ArrayToString = requireAssignableTo<TypeOnly<typeof current.Uint8ArrayToString>, TypeOnly<typeof old.Uint8ArrayToString>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "VariableDeclaration_bufferToString": {"forwardCompat": false}
- */
-declare type old_as_current_for_VariableDeclaration_bufferToString = requireAssignableTo<TypeOnly<typeof old.bufferToString>, TypeOnly<typeof current.bufferToString>>
+declare type current_as_old_for_Variable_bufferToString = requireAssignableTo<TypeOnly<typeof current.bufferToString>, TypeOnly<typeof old.bufferToString>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_bufferToString": {"backCompat": false}
+ * "Variable_fromBase64ToUtf8": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_bufferToString = requireAssignableTo<TypeOnly<typeof current.bufferToString>, TypeOnly<typeof old.bufferToString>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "VariableDeclaration_fromBase64ToUtf8": {"forwardCompat": false}
- */
-declare type old_as_current_for_VariableDeclaration_fromBase64ToUtf8 = requireAssignableTo<TypeOnly<typeof old.fromBase64ToUtf8>, TypeOnly<typeof current.fromBase64ToUtf8>>
+declare type current_as_old_for_Variable_fromBase64ToUtf8 = requireAssignableTo<TypeOnly<typeof current.fromBase64ToUtf8>, TypeOnly<typeof old.fromBase64ToUtf8>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_fromBase64ToUtf8": {"backCompat": false}
+ * "Variable_fromUtf8ToBase64": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_fromBase64ToUtf8 = requireAssignableTo<TypeOnly<typeof current.fromBase64ToUtf8>, TypeOnly<typeof old.fromBase64ToUtf8>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "VariableDeclaration_fromUtf8ToBase64": {"forwardCompat": false}
- */
-declare type old_as_current_for_VariableDeclaration_fromUtf8ToBase64 = requireAssignableTo<TypeOnly<typeof old.fromUtf8ToBase64>, TypeOnly<typeof current.fromUtf8ToBase64>>
+declare type current_as_old_for_Variable_fromUtf8ToBase64 = requireAssignableTo<TypeOnly<typeof current.fromUtf8ToBase64>, TypeOnly<typeof old.fromUtf8ToBase64>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_fromUtf8ToBase64": {"backCompat": false}
+ * "Function_gitHashFile": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_fromUtf8ToBase64 = requireAssignableTo<TypeOnly<typeof current.fromUtf8ToBase64>, TypeOnly<typeof old.fromUtf8ToBase64>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_gitHashFile": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_gitHashFile = requireAssignableTo<TypeOnly<typeof old.gitHashFile>, TypeOnly<typeof current.gitHashFile>>
+declare type current_as_old_for_Function_gitHashFile = requireAssignableTo<TypeOnly<typeof current.gitHashFile>, TypeOnly<typeof old.gitHashFile>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_gitHashFile": {"backCompat": false}
+ * "Function_hashFile": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_gitHashFile = requireAssignableTo<TypeOnly<typeof current.gitHashFile>, TypeOnly<typeof old.gitHashFile>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_hashFile": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_hashFile = requireAssignableTo<TypeOnly<typeof old.hashFile>, TypeOnly<typeof current.hashFile>>
+declare type current_as_old_for_Function_hashFile = requireAssignableTo<TypeOnly<typeof current.hashFile>, TypeOnly<typeof old.hashFile>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_hashFile": {"backCompat": false}
+ * "Variable_performance": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_hashFile = requireAssignableTo<TypeOnly<typeof current.hashFile>, TypeOnly<typeof old.hashFile>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "VariableDeclaration_performance": {"forwardCompat": false}
- */
-declare type old_as_current_for_VariableDeclaration_performance = requireAssignableTo<TypeOnly<typeof old.performance>, TypeOnly<typeof current.performance>>
+declare type current_as_old_for_Variable_performance = requireAssignableTo<TypeOnly<typeof current.performance>, TypeOnly<typeof old.performance>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_performance": {"backCompat": false}
+ * "Function_stringToBuffer": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_performance = requireAssignableTo<TypeOnly<typeof current.performance>, TypeOnly<typeof old.performance>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_stringToBuffer": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_stringToBuffer = requireAssignableTo<TypeOnly<typeof old.stringToBuffer>, TypeOnly<typeof current.stringToBuffer>>
+declare type current_as_old_for_Function_stringToBuffer = requireAssignableTo<TypeOnly<typeof current.stringToBuffer>, TypeOnly<typeof old.stringToBuffer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_stringToBuffer": {"backCompat": false}
+ * "Variable_toUtf8": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_stringToBuffer = requireAssignableTo<TypeOnly<typeof current.stringToBuffer>, TypeOnly<typeof old.stringToBuffer>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "VariableDeclaration_toUtf8": {"forwardCompat": false}
- */
-declare type old_as_current_for_VariableDeclaration_toUtf8 = requireAssignableTo<TypeOnly<typeof old.toUtf8>, TypeOnly<typeof current.toUtf8>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "VariableDeclaration_toUtf8": {"backCompat": false}
- */
-declare type current_as_old_for_VariableDeclaration_toUtf8 = requireAssignableTo<TypeOnly<typeof current.toUtf8>, TypeOnly<typeof old.toUtf8>>
+declare type current_as_old_for_Variable_toUtf8 = requireAssignableTo<TypeOnly<typeof current.toUtf8>, TypeOnly<typeof old.toUtf8>>

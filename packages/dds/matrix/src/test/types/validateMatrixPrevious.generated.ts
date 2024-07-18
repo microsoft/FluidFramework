@@ -20,142 +20,141 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IRevertible": {"forwardCompat": false}
+ * "Interface_IRevertible": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IRevertible = requireAssignableTo<TypeOnly<old.IRevertible>, TypeOnly<current.IRevertible>>
+declare type old_as_current_for_Interface_IRevertible = requireAssignableTo<TypeOnly<old.IRevertible>, TypeOnly<current.IRevertible>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IRevertible": {"backCompat": false}
+ * "Interface_IRevertible": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IRevertible = requireAssignableTo<TypeOnly<current.IRevertible>, TypeOnly<old.IRevertible>>
+declare type current_as_old_for_Interface_IRevertible = requireAssignableTo<TypeOnly<current.IRevertible>, TypeOnly<old.IRevertible>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISharedMatrix": {"forwardCompat": false}
+ * "Interface_ISharedMatrix": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ISharedMatrix = requireAssignableTo<TypeOnly<old.ISharedMatrix>, TypeOnly<current.ISharedMatrix>>
+declare type old_as_current_for_Interface_ISharedMatrix = requireAssignableTo<TypeOnly<old.ISharedMatrix>, TypeOnly<current.ISharedMatrix>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISharedMatrix": {"backCompat": false}
+ * "Interface_ISharedMatrix": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ISharedMatrix = requireAssignableTo<TypeOnly<current.ISharedMatrix>, TypeOnly<old.ISharedMatrix>>
+declare type current_as_old_for_Interface_ISharedMatrix = requireAssignableTo<TypeOnly<current.ISharedMatrix>, TypeOnly<old.ISharedMatrix>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISharedMatrixEvents": {"forwardCompat": false}
+ * "Interface_ISharedMatrixEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ISharedMatrixEvents = requireAssignableTo<TypeOnly<old.ISharedMatrixEvents<any>>, TypeOnly<current.ISharedMatrixEvents<any>>>
+declare type old_as_current_for_Interface_ISharedMatrixEvents = requireAssignableTo<TypeOnly<old.ISharedMatrixEvents<any>>, TypeOnly<current.ISharedMatrixEvents<any>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISharedMatrixEvents": {"backCompat": false}
+ * "Interface_ISharedMatrixEvents": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ISharedMatrixEvents = requireAssignableTo<TypeOnly<current.ISharedMatrixEvents<any>>, TypeOnly<old.ISharedMatrixEvents<any>>>
+declare type current_as_old_for_Interface_ISharedMatrixEvents = requireAssignableTo<TypeOnly<current.ISharedMatrixEvents<any>>, TypeOnly<old.ISharedMatrixEvents<any>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IUndoConsumer": {"forwardCompat": false}
+ * "Interface_IUndoConsumer": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IUndoConsumer = requireAssignableTo<TypeOnly<old.IUndoConsumer>, TypeOnly<current.IUndoConsumer>>
+declare type old_as_current_for_Interface_IUndoConsumer = requireAssignableTo<TypeOnly<old.IUndoConsumer>, TypeOnly<current.IUndoConsumer>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IUndoConsumer": {"backCompat": false}
+ * "Interface_IUndoConsumer": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IUndoConsumer = requireAssignableTo<TypeOnly<current.IUndoConsumer>, TypeOnly<old.IUndoConsumer>>
+declare type current_as_old_for_Interface_IUndoConsumer = requireAssignableTo<TypeOnly<current.IUndoConsumer>, TypeOnly<old.IUndoConsumer>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_MatrixItem": {"forwardCompat": false}
+ * "TypeAlias_MatrixItem": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_MatrixItem = requireAssignableTo<TypeOnly<old.MatrixItem<any>>, TypeOnly<current.MatrixItem<any>>>
+declare type old_as_current_for_TypeAlias_MatrixItem = requireAssignableTo<TypeOnly<old.MatrixItem<any>>, TypeOnly<current.MatrixItem<any>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_MatrixItem": {"backCompat": false}
+ * "TypeAlias_MatrixItem": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAliasDeclaration_MatrixItem = requireAssignableTo<TypeOnly<current.MatrixItem<any>>, TypeOnly<old.MatrixItem<any>>>
+declare type current_as_old_for_TypeAlias_MatrixItem = requireAssignableTo<TypeOnly<current.MatrixItem<any>>, TypeOnly<old.MatrixItem<any>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_SharedMatrix": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_SharedMatrix = requireAssignableTo<TypeOnly<typeof current.SharedMatrix>, TypeOnly<typeof old.SharedMatrix>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_SharedMatrix": {"forwardCompat": false}
+ * "TypeAlias_SharedMatrix": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
-declare type old_as_current_for_VariableDeclaration_SharedMatrix = requireAssignableTo<TypeOnly<typeof old.SharedMatrix>, TypeOnly<typeof current.SharedMatrix>>
+declare type old_as_current_for_TypeAlias_SharedMatrix = requireAssignableTo<TypeOnly<old.SharedMatrix>, TypeOnly<current.SharedMatrix>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_SharedMatrix": {"backCompat": false}
+ * "TypeAlias_SharedMatrix": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_SharedMatrix = requireAssignableTo<TypeOnly<typeof current.SharedMatrix>, TypeOnly<typeof old.SharedMatrix>>
+declare type current_as_old_for_TypeAlias_SharedMatrix = requireAssignableTo<TypeOnly<current.SharedMatrix>, TypeOnly<old.SharedMatrix>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_SharedMatrix": {"forwardCompat": false}
+ * "Class_SharedMatrixFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_SharedMatrix = requireAssignableTo<TypeOnly<old.SharedMatrix>, TypeOnly<current.SharedMatrix>>
+declare type old_as_current_for_Class_SharedMatrixFactory = requireAssignableTo<TypeOnly<old.SharedMatrixFactory>, TypeOnly<current.SharedMatrixFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_SharedMatrix": {"backCompat": false}
+ * "Class_SharedMatrixFactory": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAliasDeclaration_SharedMatrix = requireAssignableTo<TypeOnly<current.SharedMatrix>, TypeOnly<old.SharedMatrix>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassDeclaration_SharedMatrixFactory": {"forwardCompat": false}
- */
-declare type old_as_current_for_ClassDeclaration_SharedMatrixFactory = requireAssignableTo<TypeOnly<old.SharedMatrixFactory>, TypeOnly<current.SharedMatrixFactory>>
+declare type current_as_old_for_Class_SharedMatrixFactory = requireAssignableTo<TypeOnly<current.SharedMatrixFactory>, TypeOnly<old.SharedMatrixFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_SharedMatrixFactory": {"backCompat": false}
+ * "ClassStatics_SharedMatrixFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_SharedMatrixFactory = requireAssignableTo<TypeOnly<current.SharedMatrixFactory>, TypeOnly<old.SharedMatrixFactory>>
+declare type current_as_old_for_ClassStatics_SharedMatrixFactory = requireAssignableTo<TypeOnly<typeof current.SharedMatrixFactory>, TypeOnly<typeof old.SharedMatrixFactory>>

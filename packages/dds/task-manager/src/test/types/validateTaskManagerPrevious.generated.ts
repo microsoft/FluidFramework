@@ -20,88 +20,78 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITaskManager": {"forwardCompat": false}
+ * "Interface_ITaskManager": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ITaskManager = requireAssignableTo<TypeOnly<old.ITaskManager>, TypeOnly<current.ITaskManager>>
+declare type old_as_current_for_Interface_ITaskManager = requireAssignableTo<TypeOnly<old.ITaskManager>, TypeOnly<current.ITaskManager>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITaskManager": {"backCompat": false}
+ * "Interface_ITaskManager": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ITaskManager = requireAssignableTo<TypeOnly<current.ITaskManager>, TypeOnly<old.ITaskManager>>
+declare type current_as_old_for_Interface_ITaskManager = requireAssignableTo<TypeOnly<current.ITaskManager>, TypeOnly<old.ITaskManager>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITaskManagerEvents": {"forwardCompat": false}
+ * "Interface_ITaskManagerEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ITaskManagerEvents = requireAssignableTo<TypeOnly<old.ITaskManagerEvents>, TypeOnly<current.ITaskManagerEvents>>
+declare type old_as_current_for_Interface_ITaskManagerEvents = requireAssignableTo<TypeOnly<old.ITaskManagerEvents>, TypeOnly<current.ITaskManagerEvents>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITaskManagerEvents": {"backCompat": false}
+ * "Interface_ITaskManagerEvents": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ITaskManagerEvents = requireAssignableTo<TypeOnly<current.ITaskManagerEvents>, TypeOnly<old.ITaskManagerEvents>>
+declare type current_as_old_for_Interface_ITaskManagerEvents = requireAssignableTo<TypeOnly<current.ITaskManagerEvents>, TypeOnly<old.ITaskManagerEvents>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_TaskEventListener": {"forwardCompat": false}
+ * "TypeAlias_TaskEventListener": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_TaskEventListener = requireAssignableTo<TypeOnly<old.TaskEventListener>, TypeOnly<current.TaskEventListener>>
+declare type old_as_current_for_TypeAlias_TaskEventListener = requireAssignableTo<TypeOnly<old.TaskEventListener>, TypeOnly<current.TaskEventListener>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_TaskEventListener": {"backCompat": false}
+ * "TypeAlias_TaskEventListener": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAliasDeclaration_TaskEventListener = requireAssignableTo<TypeOnly<current.TaskEventListener>, TypeOnly<old.TaskEventListener>>
+declare type current_as_old_for_TypeAlias_TaskEventListener = requireAssignableTo<TypeOnly<current.TaskEventListener>, TypeOnly<old.TaskEventListener>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_TaskManager": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_TaskManager = requireAssignableTo<TypeOnly<typeof current.TaskManager>, TypeOnly<typeof old.TaskManager>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_TaskManager": {"forwardCompat": false}
+ * "TypeAlias_TaskManager": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
-declare type old_as_current_for_VariableDeclaration_TaskManager = requireAssignableTo<TypeOnly<typeof old.TaskManager>, TypeOnly<typeof current.TaskManager>>
+declare type old_as_current_for_TypeAlias_TaskManager = requireAssignableTo<TypeOnly<old.TaskManager>, TypeOnly<current.TaskManager>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_TaskManager": {"backCompat": false}
+ * "TypeAlias_TaskManager": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_TaskManager = requireAssignableTo<TypeOnly<typeof current.TaskManager>, TypeOnly<typeof old.TaskManager>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAliasDeclaration_TaskManager": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAliasDeclaration_TaskManager = requireAssignableTo<TypeOnly<old.TaskManager>, TypeOnly<current.TaskManager>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAliasDeclaration_TaskManager": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAliasDeclaration_TaskManager = requireAssignableTo<TypeOnly<current.TaskManager>, TypeOnly<old.TaskManager>>
+declare type current_as_old_for_TypeAlias_TaskManager = requireAssignableTo<TypeOnly<current.TaskManager>, TypeOnly<old.TaskManager>>
