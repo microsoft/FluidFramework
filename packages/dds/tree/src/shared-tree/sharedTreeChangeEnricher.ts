@@ -87,7 +87,7 @@ export class SharedTreeMutableChangeEnricher
 				case "data": {
 					const delta = intoDelta(tagChange(dataOrSchemaChange.innerChange, revision));
 					const visitor = this.forest.acquireVisitor();
-					visitDelta(delta, visitor, this.removedRoots);
+					visitDelta(delta, visitor, this.removedRoots, revision);
 					visitor.free();
 					break;
 				}

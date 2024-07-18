@@ -455,7 +455,7 @@ function runTransactionInCheckout<TResult>(
 			case "nodeInDocument": {
 				const node = getFlexNode(constraint.node);
 				assert(
-					node.treeStatus() === TreeStatus.InDocument,
+					treeApi.status(constraint.node) === TreeStatus.InDocument,
 					0x90f /* Attempted to apply "nodeExists" constraint when building a transaction, but the node is not in the document. */,
 				);
 				checkout.editor.addNodeExistsConstraint(node.anchorNode);
