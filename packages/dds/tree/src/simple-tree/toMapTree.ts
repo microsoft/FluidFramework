@@ -476,9 +476,7 @@ function getObjectFieldSchema(schema: TreeNodeSchema, key: string): FieldSchema 
 	if (fields[key] === undefined) {
 		fail(`Field "${key}" not found in schema "${schema.identifier}".`);
 	} else {
-		return normalizeFieldSchema(
-			fields[key] ?? oob(),
-		);
+		return normalizeFieldSchema(fields[key] ?? oob());
 	}
 }
 

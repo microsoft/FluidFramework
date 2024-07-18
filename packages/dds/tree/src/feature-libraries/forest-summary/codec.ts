@@ -42,10 +42,7 @@ export function makeForestSummarizerCodec(
 			const fields = inner.decode(data.fields, context);
 			assert(data.keys.length === fields.length, 0x891 /* mismatched lengths */);
 			for (const [index, field] of fields.entries()) {
-				out.set(
-					data.keys[index] ?? oob(),
-					field,
-				);
+				out.set(data.keys[index] ?? oob(), field);
 			}
 			return out;
 		},

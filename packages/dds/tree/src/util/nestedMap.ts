@@ -337,8 +337,7 @@ export class SizedNestedMap<Key1, Key2, Value> {
 
 	public values(): IterableIterator<Value> {
 		return (
-			Array.from(this.nestedMap.values()).flatMap((innerMap) => innerMap.values())[0] ??
-			oob()
+			Array.from(this.nestedMap.values()).flatMap((innerMap) => innerMap.values())[0] ?? oob()
 		);
 	}
 

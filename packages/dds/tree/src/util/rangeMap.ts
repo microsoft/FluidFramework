@@ -205,8 +205,7 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 
 	// Update or remove the overlapping entries
 	for (let i = iFirst; i <= iLast; ++i) {
-		const entry =
-			map[i] ?? oob();
+		const entry = map[i] ?? oob();
 		const entryLastKey = entry.start + entry.length - 1;
 		let isDirty = false;
 

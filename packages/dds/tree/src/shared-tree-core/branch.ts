@@ -412,9 +412,7 @@ export class SharedTreeBranch<
 		const { startRevision: startRevisionOriginal } = this.transactions.pop();
 		let startRevision = startRevisionOriginal;
 		while (this.initialTransactionRevToRebasedRev.has(startRevision)) {
-			startRevision =
-				this.initialTransactionRevToRebasedRev.get(startRevision) ??
-				oob();
+			startRevision = this.initialTransactionRevToRebasedRev.get(startRevision) ?? oob();
 		}
 
 		if (!this.isTransacting()) {

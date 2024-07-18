@@ -536,11 +536,7 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 		if (i === undefined) {
 			return undefined;
 		}
-		return unboxedUnion(
-			this.schema,
-			this.mapTrees[i] ?? oob(),
-			{ parent: this, index: i },
-		);
+		return unboxedUnion(this.schema, this.mapTrees[i] ?? oob(), { parent: this, index: i });
 	}
 	public map<U>(callbackfn: (value: FlexTreeUnboxNodeUnion<T>, index: number) => U): U[] {
 		return Array.from(this, callbackfn);

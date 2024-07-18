@@ -168,10 +168,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
 	private getStackedNode(height: number): TNode {
 		const index = this.getStackedNodeIndex(height);
-		return (
-			(this.siblingStack[height] as readonly TNode[])[index] ??
-			oob()
-		);
+		return (this.siblingStack[height] as readonly TNode[])[index] ?? oob();
 	}
 
 	public getFieldLength(): number {
