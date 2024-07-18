@@ -55,7 +55,6 @@ import {
 	type FlexibleFieldContent,
 	type FlexibleNodeContent,
 	type PropertyNameFromFieldKey,
-	TreeStatus,
 	flexTreeMarker,
 	flexTreeSlot,
 	reservedObjectNodeFieldPropertyNamePrefixes,
@@ -66,13 +65,11 @@ import {
 	anchorSymbol,
 	cursorSymbol,
 	forgetAnchorSymbol,
-	isFreedSymbol,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
 import type { FlexTreeNodeEvents } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
-import { treeStatusFromAnchorCache } from "./utilities.js";
 
 /**
  * @param cursor - This does not take ownership of this cursor: Node will fork it as needed.
@@ -257,13 +254,6 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		return { parent: proxifiedField, index };
 	}
 
-	public override treeStatus(): TreeStatus {
-		if (this[isFreedSymbol]()) {
-			return TreeStatus.Deleted;
-		}
-		return treeStatusFromAnchorCache(this.anchorNode);
-	}
-
 	public on<K extends keyof FlexTreeNodeEvents>(
 		eventName: K,
 		listener: FlexTreeNodeEvents[K],
@@ -433,12 +423,6 @@ export class LazyFieldNode<TSchema extends FlexFieldNodeSchema>
 		return inCursorField(this[cursorSymbol], EmptyKey, (cursor) =>
 			unboxedField(this.context, this.schema.info, cursor),
 		) as FlexTreeUnboxField<TSchema["info"]>;
-	}
-
-	public get boxedContent(): FlexTreeTypedField<TSchema["info"]> {
-		return inCursorField(this[cursorSymbol], EmptyKey, (cursor) =>
-			makeField(this.context, this.schema.info, cursor),
-		) as FlexTreeTypedField<TSchema["info"]>;
 	}
 }
 

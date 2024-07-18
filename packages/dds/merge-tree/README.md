@@ -5,7 +5,7 @@ sequence of collaboratively edited items. MergeTree is used in both SharedSequen
 
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER:) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -18,14 +18,13 @@ library consumers should always prefer `^`.
 
 If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
 
-<!-- prettier-ignore-end -->
+## Installation
 
-<!-- AUTO-GENERATED-CONTENT:END -->
+To get started, install the package by running the following command:
 
-<!-- AUTO-GENERATED-CONTENT:START (README_IMPORT_INSTRUCTIONS:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+```bash
+npm i @fluidframework/merge-tree
+```
 
 ## Importing from this package
 
@@ -133,7 +132,7 @@ consequently should be ignored during the search.
 Note that any locally applied operations that are still pending sequencing by the Fluid service are unknown to
 remote clients and should be ignored when processing remote ops.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE&installation=FALSE&importInstructions=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

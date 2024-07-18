@@ -46,6 +46,7 @@ import type {
 } from "../../util/index.js";
 
 import { hydrate } from "./utils.js";
+import { validateUsageError } from "../utils.js";
 
 {
 	const schema = new SchemaFactory("Blah");
@@ -836,5 +837,111 @@ describe("schemaFactory", () => {
 
 		const tree = hydrate(A, { a: { b: {} } });
 		assert.equal(tree.a.b.c, "X");
+	});
+
+	describe("multiple subclass use errors", () => {
+		it("mixed configuration", () => {
+			const schemaFactory = new SchemaFactory("");
+
+			const base = schemaFactory.object("Foo", {});
+			class Foo extends base {}
+			assert.throws(
+				() => {
+					const config = new TreeViewConfiguration({ schema: [Foo, base] });
+				},
+				validateUsageError(/same SchemaFactory generated class/),
+			);
+		});
+
+		it("mixed hydrate", () => {
+			const schemaFactory = new SchemaFactory("");
+
+			const base = schemaFactory.object("Foo", {});
+			class Foo extends base {}
+			const other = schemaFactory.array(base);
+
+			assert.throws(
+				() => {
+					const tree_B = hydrate(other, [new Foo({})]);
+				},
+				validateUsageError(/same SchemaFactory generated class/),
+			);
+		});
+
+		it("constructing", () => {
+			const schemaFactory = new SchemaFactory("");
+
+			const base = schemaFactory.object("Foo", {});
+			class Foo extends base {}
+
+			const _1 = new base({});
+
+			assert.throws(
+				() => {
+					const _2 = new Foo({});
+				},
+				validateUsageError(/same SchemaFactory generated class/),
+			);
+		});
+
+		it("constructing reversed", () => {
+			const schemaFactory = new SchemaFactory("");
+
+			const base = schemaFactory.object("Foo", {});
+			class Foo extends base {}
+
+			const _2 = new Foo({});
+
+			assert.throws(
+				() => {
+					const _1 = new base({});
+				},
+				validateUsageError(/same SchemaFactory generated class/),
+			);
+		});
+
+		it("mixed configs", () => {
+			const schemaFactory = new SchemaFactory("");
+			const base = schemaFactory.object("Foo", {});
+			class Foo extends base {}
+			const config = new TreeViewConfiguration({ schema: base });
+
+			assert.throws(
+				() => {
+					const config2 = new TreeViewConfiguration({ schema: Foo });
+				},
+				validateUsageError(/same SchemaFactory generated class/),
+			);
+		});
+
+		it("structural types", () => {
+			const schemaFactory = new SchemaFactory("");
+			const base = schemaFactory.object("Foo", {});
+			class Foo extends base {}
+			schemaFactory.array(base);
+			assert.throws(
+				() => {
+					schemaFactory.array(Foo);
+				},
+				validateUsageError(/same SchemaFactory generated class/),
+			);
+		});
+
+		it("indirect configs", () => {
+			const schemaFactory = new SchemaFactory("");
+			const base = schemaFactory.object("Foo", {});
+			class Foo extends base {}
+			const config = new TreeViewConfiguration({
+				schema: schemaFactory.object("x", { x: base }),
+			});
+			assert.throws(
+				() => {
+					const config2 = new TreeViewConfiguration({
+						schema: schemaFactory.map("x", Foo),
+					});
+				},
+				validateUsageError(/same SchemaFactory generated class/),
+			);
+		});
 	});
 });

@@ -14,7 +14,6 @@ import {
 import type { Assume, FlattenKeys } from "../../util/index.js";
 import type { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
-import type { LocalNodeKey, StableNodeKey } from "../node-key/index.js";
 import type {
 	AllowedTypesToFlexInsertableTree,
 	InsertableFlexField,
@@ -98,14 +97,6 @@ export interface FlexTreeEntity<out TSchema = unknown> {
 	 * A common context of a "forest" of FlexTrees.
 	 */
 	readonly context: FlexTreeContext;
-
-	/**
-	 * Gets the {@link TreeStatus} of this tree.
-	 *
-	 * @remarks
-	 * For non-root fields, this is the status of the parent node, since fields do not have a separate lifetime.
-	 */
-	treeStatus(): TreeStatus;
 
 	/**
 	 * Iterate through all nodes/fields in this field/node.
@@ -261,18 +252,6 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
 	is<TSchema extends FlexFieldSchema>(schema: TSchema): this is FlexTreeTypedField<TSchema>;
 
 	boxedIterator(): IterableIterator<FlexTreeNode>;
-
-	/**
-	 * Check if this field is the same as a different field.
-	 * This is defined to mean that both are in the same flex tree, and are the same field on the same node.
-	 * This is more than just a reference comparison because unlike FlexTree nodes, fields are not cached on anchors and can be duplicated.
-	 *
-	 * @privateRemarks
-	 * TODO:
-	 * If practical, cache TreeField instances so use of this method can be replaced with `===` to compare object identity.
-	 * Implementing this will require some care to preserve lazy-ness and work efficiently (without leaks) for empty fields, particularly on MapNodes.
-	 */
-	isSameAs(other: FlexTreeField): boolean;
 
 	/**
 	 * Gets a node of this field by its index without unboxing.
@@ -468,20 +447,8 @@ export interface FlexTreeFieldNode<in out TSchema extends FlexFieldNodeSchema>
 
 	/**
 	 * The content this field node wraps.
-	 * @remarks
-	 * This is a version of {@link FlexTreeFieldNode.boxedContent} but does unboxing.
-	 * Since field node are usually used to wrap fields which don't do unboxing (like {@link FlexTreeSequenceField})
 	 */
 	readonly content: FlexTreeUnboxField<TSchema["info"]>;
-	/**
-	 * The field this field node wraps.
-	 *
-	 * @remarks
-	 * Since field nodes are usually used to wrap fields which don't do unboxing (like {@link FlexTreeSequenceField}),
-	 * this is usually the same as {@link FlexTreeFieldNode.content}.
-	 * This is also the same as `[...this][0]`.
-	 */
-	readonly boxedContent: FlexTreeTypedField<TSchema["info"]>;
 }
 
 /**
@@ -507,11 +474,6 @@ export interface FlexTreeFieldNode<in out TSchema extends FlexFieldNodeSchema>
  */
 export interface FlexTreeObjectNode extends FlexTreeNode {
 	readonly schema: FlexObjectNodeSchema;
-
-	/**
-	 * {@link LocalNodeKey} that identifies this node.
-	 */
-	readonly localNodeKey?: LocalNodeKey;
 }
 
 /**
@@ -618,7 +580,6 @@ export const reservedObjectNodeFieldPropertyNames = [
 	"on",
 	"parentField",
 	"schema",
-	"treeStatus",
 	"tryGetField",
 	"type",
 	"value",
@@ -987,8 +948,6 @@ export interface FlexTreeRequiredField<in out TTypes extends FlexAllowedTypes>
 	extends FlexTreeField {
 	get content(): FlexTreeUnboxNodeUnion<TTypes>;
 	set content(content: FlexibleNodeContent<TTypes>);
-
-	readonly boxedContent: FlexTreeTypedNodeUnion<TTypes>;
 }
 
 /**
@@ -1009,17 +968,6 @@ export interface FlexTreeOptionalField<in out TTypes extends FlexAllowedTypes>
 	extends FlexTreeField {
 	get content(): FlexTreeUnboxNodeUnion<TTypes> | undefined;
 	set content(newContent: FlexibleNodeContent<TTypes> | undefined);
-
-	readonly boxedContent?: FlexTreeTypedNodeUnion<TTypes>;
-}
-
-/**
- * Field that contains an immutable {@link StableNodeKey} identifying this node.
- * @internal
- */
-export interface FlexTreeNodeKeyField extends FlexTreeField {
-	readonly localNodeKey: LocalNodeKey;
-	readonly stableNodeKey: StableNodeKey;
 }
 
 // #endregion

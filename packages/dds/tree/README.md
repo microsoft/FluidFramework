@@ -7,7 +7,7 @@ The contents of this package are also reported as part of the [`fluid-framework`
 [SharedTree Philosophy](./docs/SharedTree%20Philosophy.md) covers the goals of the SharedTree project,
 and some of the implications of those goals for developers working on this package.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -20,14 +20,13 @@ library consumers should always prefer `^`.
 
 If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
 
-<!-- prettier-ignore-end -->
+## Installation
 
-<!-- AUTO-GENERATED-CONTENT:END -->
+To get started, install the package by running the following command:
 
-<!-- AUTO-GENERATED-CONTENT:START (README_IMPORT_INSTRUCTIONS:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+```bash
+npm i @fluidframework/tree
+```
 
 ## Importing from this package
 
@@ -47,8 +46,8 @@ To access the `beta` APIs, import via `@fluidframework/tree/beta`.
 Notable consideration that early adopters should be wary of:
 
 -   The persisted format is stable such that documents created with released versions 2.0.0 or greater of this package are fully supported long term.
--   SharedTree currently has unbounded memory growth:
-    -   Removed content is retained in memory and persisted in the document at rest ([fix](https://github.com/microsoft/FluidFramework/pull/21372)).
+-   In versions prior to 2.1.0, SharedTree had unbounded memory growth:
+    -   Removed content was retained in memory and persisted in the document at rest ([fix](https://github.com/microsoft/FluidFramework/pull/21372)). This was fixed in version 2.1.0.
 -   All range changes are atomized.
     This means that, when inserting/removing/moving multiple contiguous nodes the edit is split up into separate single node edits.
     This can impact the merge behavior of these edits, as well as the performance of large array edits.
@@ -418,7 +417,7 @@ Applications should have a domain model that can mix tree nodes with custom impl
 Custom implementations should probably be able to be projections of flex trees, the forest content (via cursors), and updated via either regeneration from the input, or updated by a delta.
 This is important for performance/scalability and might be how we do virtualization (maybe subtrees that aren't downloaded are just one custom representation?).
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE&installation=FALSE&importInstructions=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

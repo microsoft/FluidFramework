@@ -9,6 +9,7 @@ import { type NestedMap, setInNestedMap, tryGetFromNestedMap } from "../../util/
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { ITreeCursorSynchronous } from "./cursor.js";
+// eslint-disable-next-line import/no-duplicates
 import type * as Delta from "./delta.js";
 // Since ProtoNodes is reexported, import it directly to avoid forcing Delta to be reexported.
 // eslint-disable-next-line import/no-duplicates
@@ -20,9 +21,10 @@ import {
 	isReplaceMark,
 	offsetDetachId,
 } from "./deltaUtil.js";
-import type { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex.js";
-import type { Major, Minor } from "./detachedFieldIndexTypes.js";
+import type { DetachedFieldIndex } from "./detachedFieldIndex.js";
+import type { ForestRootId, Major, Minor } from "./detachedFieldIndexTypes.js";
 import type { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
+import type { RevisionTag } from "../index.js";
 
 /**
  * Implementation notes:
@@ -73,11 +75,13 @@ import type { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
  * @param delta - The delta to be crawled.
  * @param visitor - The object to notify of the changes encountered.
  * @param detachedFieldIndex - Index responsible for keeping track of the existing detached fields.
+ * @param latestRevision - The latest revision tag associated with this delta.
  */
 export function visitDelta(
 	delta: Delta.Root,
 	visitor: DeltaVisitor,
 	detachedFieldIndex: DetachedFieldIndex,
+	latestRevision: RevisionTag | undefined,
 ): void {
 	const detachPassRoots: Map<ForestRootId, Delta.FieldMap> = new Map();
 	const attachPassRoots: Map<ForestRootId, Delta.FieldMap> = new Map();
@@ -92,6 +96,7 @@ export function visitDelta(
 	});
 	const detachConfig: PassConfig = {
 		func: detachPass,
+		latestRevision,
 		refreshers,
 		detachedFieldIndex,
 		detachPassRoots,
@@ -102,9 +107,17 @@ export function visitDelta(
 	processBuilds(delta.build, detachConfig, visitor);
 	visitFieldMarks(delta.fields, visitor, detachConfig);
 	fixedPointVisitOfRoots(visitor, detachPassRoots, detachConfig);
-	transferRoots(rootTransfers, attachPassRoots, detachedFieldIndex, visitor);
+	transferRoots(
+		rootTransfers,
+		attachPassRoots,
+		detachedFieldIndex,
+		visitor,
+		refreshers,
+		latestRevision,
+	);
 	const attachConfig: PassConfig = {
 		func: attachPass,
+		latestRevision,
 		refreshers,
 		detachedFieldIndex,
 		detachPassRoots,
@@ -153,6 +166,10 @@ function fixedPointVisitOfRoots(
 
 /**
  * Transfers roots from one detached field to another.
+ * This occurs in the following circumstances:
+ * - A changeset moves then removes a node
+ * - A changeset restores then moves a node
+ * - A changeset restores then removes a node
  * TODO#5481: update the DetachedFieldIndex instead of moving the nodes around.
  *
  * @param rootTransfers - The transfers to perform.
@@ -165,6 +182,8 @@ function transferRoots(
 	mapToUpdate: Map<ForestRootId, unknown>,
 	detachedFieldIndex: DetachedFieldIndex,
 	visitor: DeltaVisitor,
+	refreshers: NestedMap<Major, Minor, ITreeCursorSynchronous>,
+	revision?: RevisionTag,
 ): void {
 	type AtomizedNodeRename = Omit<Delta.DetachedNodeRename, "count">;
 	let nextBatch = rootTransfers.flatMap(({ oldId, newId, count }) => {
@@ -185,7 +204,14 @@ function transferRoots(
 		const delayed: AtomizedNodeRename[] = [];
 		const priorSize = nextBatch.length;
 		for (const { oldId, newId } of nextBatch) {
-			const oldRootId = detachedFieldIndex.tryGetEntry(oldId);
+			let oldRootId = detachedFieldIndex.tryGetEntry(oldId);
+			if (oldRootId === undefined) {
+				const tree = tryGetFromNestedMap(refreshers, oldId.major, oldId.minor);
+				if (tree !== undefined) {
+					buildTrees(oldId, [tree], detachedFieldIndex, revision, visitor);
+					oldRootId = detachedFieldIndex.getEntry(oldId);
+				}
+			}
 			if (oldRootId === undefined) {
 				// The source field is not populated.
 				// This can happen when another rename needs to be performed first.
@@ -199,7 +225,7 @@ function transferRoots(
 				delayed.push({ oldId, newId });
 				continue;
 			}
-			newRootId = detachedFieldIndex.createEntry(newId);
+			newRootId = detachedFieldIndex.createEntry(newId, revision);
 			const fields = mapToUpdate.get(oldRootId);
 			if (fields !== undefined) {
 				mapToUpdate.delete(oldRootId);
@@ -310,6 +336,13 @@ export interface DeltaVisitor {
 
 interface PassConfig {
 	readonly func: Pass;
+
+	/**
+	 * The latest revision tag associated with the given delta. This is used to keep track
+	 * of when repair data should be garbage collected.
+	 */
+	readonly latestRevision: RevisionTag | undefined;
+
 	readonly detachedFieldIndex: DetachedFieldIndex;
 	/**
 	 * A mapping between forest root id and trees that represent refresher data. Each entry is only
@@ -393,9 +426,11 @@ function detachPass(
 			if (root === undefined) {
 				const tree = tryGetFromNestedMap(config.refreshers, id.major, id.minor);
 				assert(tree !== undefined, 0x928 /* refresher data not found */);
-				buildTrees(id, [tree], config, visitor);
+				buildTrees(id, [tree], config.detachedFieldIndex, config.latestRevision, visitor);
 				root = config.detachedFieldIndex.getEntry(id);
 			}
+			// the revision is updated for any refresher data included in the delta that is used
+			config.detachedFieldIndex.updateLatestRevision(id, config.latestRevision);
 			config.detachPassRoots.set(root, fields);
 			config.attachPassRoots.set(root, fields);
 		}
@@ -415,10 +450,9 @@ function detachPass(
 			}
 			if (isDetachMark(mark)) {
 				for (let i = 0; i < mark.count; i += 1) {
-					const root = config.detachedFieldIndex.createEntry(
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						offsetDetachId(mark.detach!, i),
-					);
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					const id = offsetDetachId(mark.detach!, i);
+					const root = config.detachedFieldIndex.createEntry(id, config.latestRevision);
 					if (mark.fields !== undefined) {
 						config.attachPassRoots.set(root, mark.fields);
 					}
@@ -435,15 +469,16 @@ function detachPass(
 function buildTrees(
 	id: Delta.DetachedNodeId,
 	trees: readonly ITreeCursorSynchronous[],
-	config: PassConfig,
+	detachedFieldIndex: DetachedFieldIndex,
+	latestRevision: RevisionTag | undefined,
 	visitor: DeltaVisitor,
 ): void {
 	for (let i = 0; i < trees.length; i += 1) {
 		const offsettedId = offsetDetachId(id, i);
-		let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
+		let root = detachedFieldIndex.tryGetEntry(offsettedId);
 		assert(root === undefined, 0x929 /* Unable to build tree that already exists */);
-		root = config.detachedFieldIndex.createEntry(offsettedId);
-		const field = config.detachedFieldIndex.toFieldKey(root);
+		root = detachedFieldIndex.createEntry(offsettedId, latestRevision);
+		const field = detachedFieldIndex.toFieldKey(root);
 		visitor.create([trees[i]], field);
 	}
 }
@@ -455,7 +490,7 @@ function processBuilds(
 ): void {
 	if (builds !== undefined) {
 		for (const { id, trees } of builds) {
-			buildTrees(id, trees, config, visitor);
+			buildTrees(id, trees, config.detachedFieldIndex, config.latestRevision, visitor);
 		}
 	}
 }
@@ -495,7 +530,13 @@ function attachPass(
 							offsetAttachId.minor,
 						);
 						assert(tree !== undefined, 0x92a /* refresher data not found */);
-						buildTrees(offsetAttachId, [tree], config, visitor);
+						buildTrees(
+							offsetAttachId,
+							[tree],
+							config.detachedFieldIndex,
+							config.latestRevision,
+							visitor,
+						);
 						sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId);
 					}
 					const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
@@ -504,6 +545,7 @@ function attachPass(
 						const rootDestination = config.detachedFieldIndex.createEntry(
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							offsetDetachId(mark.detach!, i),
+							config.latestRevision,
 						);
 						const destinationField = config.detachedFieldIndex.toFieldKey(rootDestination);
 						visitor.replace(

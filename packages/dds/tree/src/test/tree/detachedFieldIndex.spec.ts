@@ -135,7 +135,7 @@ export function generateTestCases(
 			name: "single range with single node",
 			data: {
 				maxId,
-				data: new Map([[revision, new Map([[0, 1]])]]),
+				data: new Map([[revision, new Map([[0, { root: 1 }]])]]),
 			},
 		},
 		{
@@ -146,9 +146,9 @@ export function generateTestCases(
 					[
 						revision,
 						new Map([
-							[2, 1],
-							[0, 2],
-							[1, 4],
+							[2, { root: 1 }],
+							[0, { root: 2 }],
+							[1, { root: 4 }],
 						]),
 					],
 				]),
@@ -162,11 +162,11 @@ export function generateTestCases(
 					[
 						revision,
 						new Map([
-							[1, 2],
-							[3, 4],
-							[2, 3],
-							[7, 6],
-							[6, 5],
+							[1, { root: 2 }],
+							[3, { root: 4 }],
+							[2, { root: 3 }],
+							[7, { root: 6 }],
+							[6, { root: 5 }],
 						]),
 					],
 				]),

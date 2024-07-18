@@ -12,14 +12,17 @@ import {
 } from "../../codec/index.js";
 import type { EncodedRevisionTag, RevisionTagCodec, RevisionTag } from "../rebase/index.js";
 
-import type { ForestRootId } from "./detachedFieldIndex.js";
 import {
 	type EncodedRootsForRevision,
 	Format,
 	type RootRanges,
 	version,
 } from "./detachedFieldIndexFormat.js";
-import type { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
+import type {
+	DetachedField,
+	DetachedFieldSummaryData,
+	Major,
+} from "./detachedFieldIndexTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 class MajorCodec implements IJsonCodec<Major> {
@@ -76,7 +79,10 @@ export function makeDetachedNodeToFieldCodec(
 			const rootsForRevisions: EncodedRootsForRevision[] = [];
 			for (const [major, innerMap] of data.data) {
 				const encodedRevision = majorCodec.encode(major);
-				const rootRanges: RootRanges = [...innerMap];
+				const rootRanges: RootRanges = [];
+				for (const [minor, detachedField] of innerMap) {
+					rootRanges.push([minor, detachedField.root]);
+				}
 				if (rootRanges.length === 1) {
 					const rootsForRevision: EncodedRootsForRevision = [
 						encodedRevision,
@@ -99,11 +105,14 @@ export function makeDetachedNodeToFieldCodec(
 		decode: (parsed: Format): DetachedFieldSummaryData => {
 			const map = new Map();
 			for (const rootsForRevision of parsed.data) {
-				const innerMap = new Map<number, ForestRootId>(
-					rootsForRevision.length === 2
-						? rootsForRevision[1]
-						: [[rootsForRevision[1], rootsForRevision[2]]],
-				);
+				const innerMap = new Map<number, DetachedField>();
+				if (rootsForRevision.length === 2) {
+					for (const [minor, root] of rootsForRevision[1]) {
+						innerMap.set(minor, { root });
+					}
+				} else {
+					innerMap.set(rootsForRevision[1], { root: rootsForRevision[2] });
+				}
 				map.set(majorCodec.decode(rootsForRevision[0]), innerMap);
 			}
 			return {
