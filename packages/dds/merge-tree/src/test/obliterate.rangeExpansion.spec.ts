@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
-import { TestClient } from "./testClient.js";
 import { ReconnectTestHelper } from "./reconnectHelper.js";
+import { TestClient } from "./testClient.js";
 
 describe("obliterate", () => {
 	let client: TestClient;
@@ -29,7 +29,7 @@ describe("obliterate", () => {
 		assert.equal(client.getText(), "hello world");
 	});
 
-	it("test from word", () => {
+	it("delete adjacent text", () => {
 		const helper = new ReconnectTestHelper();
 
 		helper.insertText("A", 0, "|ABC>");
@@ -42,6 +42,7 @@ describe("obliterate", () => {
 		helper.insertText("B", 1, "XYZ");
 		helper.processAllOps();
 
+		// expected result once range expansion is done
 		assert.equal(helper.clients.A.getText(), "|XYZ>");
 		assert.equal(helper.clients.C.getText(), "|XYZ>");
 
@@ -54,10 +55,11 @@ describe("obliterate", () => {
 		helper.insertText("A", 0, "hello world");
 		helper.processAllOps();
 		helper.obliterateRange("A", 2, 4);
-		// do not obliterate the XYZ - outside the obliterated range
+		// do not obliterate the XYZ - outside the obliterated range without expansion
 		helper.insertText("B", 2, "XYZ");
 		helper.processAllOps();
 
+		// expected result once range expansion is done
 		assert.equal(helper.clients.A.getText(), "hello world");
 		assert.equal(helper.clients.C.getText(), "hello world");
 
@@ -70,16 +72,19 @@ describe("obliterate", () => {
 		helper.insertText("A", 0, "hello world");
 		helper.processAllOps();
 		helper.obliterateRange("A", 2, 4);
-		// do not obliterate the XYZ - outside the obliterated range
+		// do not obliterate the XYZ - outside the obliterated range without expansion
 		helper.insertText("B", 4, "XYZ");
 		helper.processAllOps();
 
+		// expected result once range expansion is done
 		assert.equal(helper.clients.A.getText(), "hello world");
 		assert.equal(helper.clients.C.getText(), "hello world");
 
 		helper.logger.validate();
 	});
 
+	// TODO: update this test specifically to test sidedness:
+	// same number position, but insert on the inside of the obliterated range
 	it("inside endpoint of obliterated range", () => {
 		const helper = new ReconnectTestHelper();
 
@@ -96,8 +101,10 @@ describe("obliterate", () => {
 		helper.logger.validate();
 	});
 
+	// TODO: these tests will be much more interesting once we have sidedness:
+	// as is, they vaidate the current behavior
+	// if we already have sufficient overlap tests in the other test files, we can remove these
 	describe("overlapping edits", () => {
-		// not sure if the first two are interesting in terms of range expansion
 		it("overlapping obliterate and obliterate", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -243,17 +250,17 @@ describe("obliterate", () => {
 			helper.insertText("A", 0, "hello world");
 			helper.processAllOps();
 			helper.disconnect(["C"]);
-			helper.obliterateRangeLocal("C", 2, 4);
+			const op = helper.obliterateRangeLocal("C", 2, 4);
 			helper.reconnect(["C"]);
+			helper.submitDisconnectedOp("C", op);
 			helper.processAllOps();
-			// inserting in the middle for now
-			helper.insertText("A", 3, "123");
+			// inserting adjacent to the obliterated range start
+			helper.insertText("A", 2, "123");
 			helper.processAllOps();
 
-			// fails when I insert at 3, in the middle of the range/regardless of if
-			// i processallops or not --> why doesn't the obliterate get resent?
-			assert.equal(helper.clients.A.getText(), "he123 world");
-			assert.equal(helper.clients.C.getText(), "he123 world");
+			// expected result once range expansion is done
+			assert.equal(helper.clients.A.getText(), "heo world");
+			assert.equal(helper.clients.C.getText(), "heo world");
 
 			helper.logger.validate();
 		});
@@ -263,15 +270,147 @@ describe("obliterate", () => {
 			helper.insertText("A", 0, "hello world");
 			helper.processAllOps();
 			helper.disconnect(["C"]);
-			helper.obliterateRangeLocal("C", 2, 4);
-			// inserting in the middle for now
-			helper.insertText("A", 3, "123");
+			const op = helper.obliterateRangeLocal("C", 2, 4);
+			// inserting adjacent to the obliterated range start
+			helper.insertText("A", 2, "123");
 			helper.reconnect(["C"]);
+			helper.submitDisconnectedOp("C", op);
 			helper.processAllOps();
 
-			// same as above - as if the obliterate doesn't happen
+			// expected result once range expansion is done
+			assert.equal(helper.clients.A.getText(), "heo world");
+			assert.equal(helper.clients.C.getText(), "heo world");
+
+			helper.logger.validate();
+		});
+	});
+
+	describe("sided obliterates", () => {
+		/**
+		 * All test cases will operate on the same number positions, but differ on their sidedness:
+		 * 1. A expand both endpoints, B expand neither endpoint = expand range on both endpoints
+		 * 2. A expand start endpoint, B expand end endpoint = either FWW/LWW
+		 * 3. A expand both endpoints, B expand start = expand range on both endpoints
+		 * 4. (similar to 3) A expand both endpoints, B expand end = expand range on both endpoints
+		 * 5. A expand neither endpoint, B expand start = expand start endpoint
+		 * 6. A expand neither endpoint, B expand end = expand end endpoint
+		 * before = 0, after = 1
+		 */
+		it("1. A expand both endpoints, B expand neither endpoint", () => {
+			const helper = new ReconnectTestHelper();
+
+			helper.insertText("A", 0, "hello world");
+			helper.processAllOps();
+			// in order to get the right behavior, the range needs to start after the previous position
+			// if so, for a range ( 2, 4 ) it would need to be after 1 and before 5
+			// h e( l l o )_ w o r l d
+			helper.obliterateRange("A", { pos: 1, side: 1 }, { pos: 5, side: 0 });
+			// [2, 4]: before 2, after 4 => h e [l l o] _ w o r l d
+			helper.obliterateRange("B", { pos: 2, side: 0 }, { pos: 4, side: 1 });
+			helper.insertText("C", 2, "123");
+			// should probably also insert at end for this test
+			helper.processAllOps();
+
 			assert.equal(helper.clients.A.getText(), "he world");
 			assert.equal(helper.clients.C.getText(), "he world");
+
+			helper.logger.validate();
+		});
+		it("2. A expand start endpoint, B expand end endpoint", () => {
+			// currently this is the example from obliterate notation loop doc
+			// TODO: translate this into same format as others
+			// i think this gets difficult when the range to obliterate > 1 character
+			const helper = new ReconnectTestHelper();
+
+			helper.insertText("A", 0, "ABC");
+			helper.processAllOps();
+			helper.insertText("A", 2, "D");
+			// ( 1]: after 0, after 1 => A( B] C
+			helper.obliterateRange("A", { pos: 0, side: 1 }, { pos: 2, side: 1 });
+			// included in the range -- should get obliterated
+			helper.insertText("B", 2, "E");
+			// [1 ): before 1, before 2 => A [B )C
+			helper.obliterateRange("B", { pos: 1, side: 1 }, { pos: 3, side: 0 });
+			helper.processAllOps();
+
+			assert.equal(helper.clients.A.getText(), "ADC");
+			assert.equal(helper.clients.C.getText(), "ADC");
+
+			helper.logger.validate();
+		});
+		it("3. A expand both endpoints, B expand start", () => {
+			const helper = new ReconnectTestHelper();
+
+			helper.insertText("A", 0, "hello world");
+			helper.processAllOps();
+
+			// ( 2, 4 ): after 1, before 5 => h e( l l o )_ w o r l d
+			helper.obliterateRange("A", { pos: 1, side: 1 }, { pos: 5, side: 0 });
+			// ( 2, 4]: after 1, after 4 => h e( l l o] _ w o r l d
+			helper.obliterateRange("B", { pos: 2, side: 1 }, { pos: 4, side: 0 });
+			helper.insertText("C", 2, "123");
+			helper.insertText("C", 4, "456");
+			helper.processAllOps();
+
+			assert.equal(helper.clients.A.getText(), "he world");
+			assert.equal(helper.clients.C.getText(), "he world");
+
+			helper.logger.validate();
+		});
+		it("4. A expand both endpoints, B expand end", () => {
+			const helper = new ReconnectTestHelper();
+
+			helper.insertText("A", 0, "hello world");
+			helper.processAllOps();
+
+			// ( 2, 4 ): after 1, before 5 => h e( l l o )_ w o r l d
+			helper.obliterateRange("A", { pos: 1, side: 1 }, { pos: 5, side: 0 });
+			// [2, 4 ): before 2, before 5 => h e [l l o )_ w o r l d
+			helper.obliterateRange("B", { pos: 2, side: 0 }, { pos: 5, side: 0 });
+			helper.insertText("C", 2, "123");
+			helper.insertText("C", 4, "456");
+			helper.processAllOps();
+
+			assert.equal(helper.clients.A.getText(), "he world");
+			assert.equal(helper.clients.C.getText(), "he world");
+
+			helper.logger.validate();
+		});
+		it("5. A expand neither endpoint, B expand start", () => {
+			const helper = new ReconnectTestHelper();
+
+			helper.insertText("A", 0, "hello world");
+			helper.processAllOps();
+
+			// [2, 4]: before 2, after 4 => h e [l l o] _ w o r l d
+			helper.obliterateRange("A", { pos: 2, side: 0 }, { pos: 4, side: 1 });
+			// ( 2, 4]: after 1, after 4 => h e( l l o] _ w o r l d
+			helper.obliterateRange("B", { pos: 1, side: 1 }, { pos: 4, side: 1 });
+			helper.insertText("C", 2, "123");
+			helper.insertText("C", 5, "456");
+			helper.processAllOps();
+
+			assert.equal(helper.clients.A.getText(), "he456 world");
+			assert.equal(helper.clients.C.getText(), "he456 world");
+
+			helper.logger.validate();
+		});
+		it("6. A expand neither endpoint, B expand end", () => {
+			const helper = new ReconnectTestHelper();
+
+			helper.insertText("A", 0, "hello world");
+			helper.processAllOps();
+
+			// [2, 4]: before 2, after 4 => h e [l l o] _ w o r l d
+			helper.obliterateRange("A", { pos: 2, side: 0 }, { pos: 4, side: 1 });
+			// [2, 4 ): before 2, before 5 => h e [l l o )_ w o r l d
+			helper.obliterateRange("B", { pos: 2, side: 0 }, { pos: 5, side: 0 });
+			helper.insertText("C", 2, "123");
+			helper.insertText("C", 5, "456");
+			helper.processAllOps();
+
+			assert.equal(helper.clients.A.getText(), "he123 world");
+			assert.equal(helper.clients.C.getText(), "he123 world");
 
 			helper.logger.validate();
 		});
