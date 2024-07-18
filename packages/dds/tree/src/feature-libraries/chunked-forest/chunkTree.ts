@@ -278,7 +278,7 @@ export function tryShapeFromFieldSchema(
 	if (type.types?.size !== 1) {
 		return undefined;
 	}
-	const childType = [...type.types][0] ?? fail("This wont run due to the length check above");
+	const childType = [...type.types][0] ?? oob();
 	const childShape = tryShapeFromSchema(schema, policy, childType, shapes);
 	if (childShape instanceof Polymorphic) {
 		return undefined;
