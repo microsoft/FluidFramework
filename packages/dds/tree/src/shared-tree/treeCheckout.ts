@@ -447,7 +447,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			if (event.change !== undefined) {
 				const revision =
 					event.type === "replace"
-						? event.newCommits[event.newCommits.length - 1].revision
+						? // Change events will always contain new commits
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							event.newCommits[event.newCommits.length - 1]!.revision
 						: event.change.revision;
 
 				// Conflicts due to schema will be empty and thus are not applied.
