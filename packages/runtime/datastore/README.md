@@ -30,6 +30,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `legacy` APIs, import via `@fluidframework/datastore/legacy`.
 
+## API Documentation
+
+API documentation for **@fluidframework/datastore** is available at <https://fluidframework.com/docs/apis/datastore>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -54,10 +58,6 @@ For more details on Fluid Handles, check this [doc](../../../content/docs/advanc
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/datastore** is available at <https://fluidframework.com/docs/apis/datastore>.
 
 ## Minimum Client Requirements
 

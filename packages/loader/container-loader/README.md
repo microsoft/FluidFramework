@@ -71,6 +71,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `legacy` APIs, import via `@fluidframework/container-loader/legacy`.
 
+## API Documentation
+
+API documentation for **@fluidframework/container-loader** is available at <https://fluidframework.com/docs/apis/container-loader>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -296,10 +300,6 @@ Note that when an active connection is in place, it's just a matter of time befo
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/container-loader** is available at <https://fluidframework.com/docs/apis/container-loader>.
 
 ## Minimum Client Requirements
 

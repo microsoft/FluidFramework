@@ -36,6 +36,10 @@ To get started, install the package by running the following command:
 npm i @fluid-experimental/last-edited
 ```
 
+## API Documentation
+
+API documentation for **@fluid-experimental/last-edited** is available at <https://fluidframework.com/docs/apis/last-edited>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -122,10 +126,6 @@ const lastEditedTracker = root.IFluidLastEditedTracker;
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluid-experimental/last-edited** is available at <https://fluidframework.com/docs/apis/last-edited>.
 
 ## Minimum Client Requirements
 

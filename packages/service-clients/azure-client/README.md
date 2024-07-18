@@ -32,6 +32,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `legacy` APIs, import via `@fluidframework/azure-client/legacy`.
 
+## API Documentation
+
+API documentation for **@fluidframework/azure-client** is available at <https://fluidframework.com/docs/apis/azure-client>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -207,10 +211,6 @@ const text1 = await map1.get("text1-unique-id").get();
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/azure-client** is available at <https://fluidframework.com/docs/apis/azure-client>.
 
 ## Minimum Client Requirements
 

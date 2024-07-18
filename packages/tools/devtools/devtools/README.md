@@ -38,6 +38,10 @@ To access the `beta` APIs, import via `@fluidframework/devtools/beta`.
 
 To access the `alpha` APIs, import via `@fluidframework/devtools/alpha`.
 
+## API Documentation
+
+API documentation for **@fluidframework/devtools** is available at <https://fluidframework.com/docs/apis/devtools>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -144,10 +148,6 @@ Next, run `npm run test` from a terminal within this directory.
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/devtools** is available at <https://fluidframework.com/docs/apis/devtools>.
 
 ## Minimum Client Requirements
 

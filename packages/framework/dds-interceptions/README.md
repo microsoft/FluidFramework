@@ -28,6 +28,10 @@ To get started, install the package by running the following command:
 npm i @fluid-experimental/dds-interceptions
 ```
 
+## API Documentation
+
+API documentation for **@fluid-experimental/dds-interceptions** is available at <https://fluidframework.com/docs/apis/dds-interceptions>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -96,10 +100,6 @@ Example: To support a feature like simple user attribution, in the callback, the
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluid-experimental/dds-interceptions** is available at <https://fluidframework.com/docs/apis/dds-interceptions>.
 
 ## Minimum Client Requirements
 

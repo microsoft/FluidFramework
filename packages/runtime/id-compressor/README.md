@@ -32,6 +32,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `legacy` APIs, import via `@fluidframework/id-compressor/legacy`.
 
+## API Documentation
+
+API documentation for **@fluidframework/id-compressor** is available at <https://fluidframework.com/docs/apis/id-compressor>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -106,10 +110,6 @@ Normalization is O(log<sub>n</sub>) in the number of IDs created by the originat
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/id-compressor** is available at <https://fluidframework.com/docs/apis/id-compressor>.
 
 ## Minimum Client Requirements
 

@@ -32,6 +32,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `legacy` APIs, import via `@fluidframework/local-driver/legacy`.
 
+## API Documentation
+
+API documentation for **@fluidframework/local-driver** is available at <https://fluidframework.com/docs/apis/local-driver>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -40,10 +44,6 @@ To access the `legacy` APIs, import via `@fluidframework/local-driver/legacy`.
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/local-driver** is available at <https://fluidframework.com/docs/apis/local-driver>.
 
 ## Minimum Client Requirements
 

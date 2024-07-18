@@ -28,6 +28,10 @@ To get started, install the package by running the following command:
 npm i @fluid-experimental/attributor
 ```
 
+## API Documentation
+
+API documentation for **@fluid-experimental/attributor** is available at <https://fluidframework.com/docs/apis/attributor>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -139,10 +143,6 @@ During the "waiting to saturate" period, developers are free to experiment with 
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluid-experimental/attributor** is available at <https://fluidframework.com/docs/apis/attributor>.
 
 ## Minimum Client Requirements
 

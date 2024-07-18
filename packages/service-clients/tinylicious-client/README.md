@@ -32,6 +32,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `beta` APIs, import via `@fluidframework/tinylicious-client/beta`.
 
+## API Documentation
+
+API documentation for **@fluidframework/tinylicious-client** is available at <https://fluidframework.com/docs/apis/tinylicious-client>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -156,10 +160,6 @@ const text = await map1.get("text-unique-id").get();
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/tinylicious-client** is available at <https://fluidframework.com/docs/apis/tinylicious-client>.
 
 ## Minimum Client Requirements
 

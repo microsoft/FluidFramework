@@ -39,6 +39,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `fluid-f
 
 To access the `legacy` APIs, import via `fluid-framework/legacy`.
 
+## API Documentation
+
+API documentation for **fluid-framework** is available at <https://fluidframework.com/docs/apis/fluid-framework>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -69,10 +73,6 @@ Check out the [Hello World tutorial](https://fluidframework.com/docs/start/tutor
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **fluid-framework** is available at <https://fluidframework.com/docs/apis/fluid-framework>.
 
 ## Minimum Client Requirements
 

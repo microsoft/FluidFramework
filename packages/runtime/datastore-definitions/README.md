@@ -32,6 +32,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `legacy` APIs, import via `@fluidframework/datastore-definitions/legacy`.
 
+## API Documentation
+
+API documentation for **@fluidframework/datastore-definitions** is available at <https://fluidframework.com/docs/apis/datastore-definitions>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -64,10 +68,6 @@ but a data store will emit the signal event only on signals emitted on that data
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/datastore-definitions** is available at <https://fluidframework.com/docs/apis/datastore-definitions>.
 
 ## Minimum Client Requirements
 

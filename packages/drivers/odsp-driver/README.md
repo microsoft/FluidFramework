@@ -37,6 +37,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `legacy` APIs, import via `@fluidframework/odsp-driver/legacy`.
 
+## API Documentation
+
+API documentation for **@fluidframework/odsp-driver** is available at <https://fluidframework.com/docs/apis/odsp-driver>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -63,10 +67,6 @@ Documenting some basics about opds-driver specific apis that are relevant for cr
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/odsp-driver** is available at <https://fluidframework.com/docs/apis/odsp-driver>.
 
 ## Minimum Client Requirements
 

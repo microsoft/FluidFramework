@@ -30,6 +30,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `legacy` APIs, import via `@fluidframework/sequence/legacy`.
 
+## API Documentation
+
+API documentation for **@fluidframework/sequence** is available at <https://fluidframework.com/docs/apis/sequence>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -630,10 +634,6 @@ For further reading on attribution, see the [@fluid-experimental/attributor READ
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/sequence** is available at <https://fluidframework.com/docs/apis/sequence>.
 
 ## Minimum Client Requirements
 

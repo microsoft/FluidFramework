@@ -35,6 +35,10 @@ To access the `alpha` APIs, import via `@fluidframework/test-package/alpha`.
 
 To access the `legacy` APIs, import via `@fluidframework/test-package/legacy`.
 
+## API Documentation
+
+API documentation for **@fluidframework/test-package** is available at <https://fluidframework.com/docs/apis/test-package>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
