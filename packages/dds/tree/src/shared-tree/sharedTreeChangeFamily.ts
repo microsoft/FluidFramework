@@ -33,6 +33,7 @@ import {
 	addToNestedSet,
 	fail,
 	nestedSetContains,
+	oob,
 } from "../util/index.js";
 
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
@@ -173,10 +174,8 @@ export class SharedTreeChangeFamily
 			0x884 /* SharedTreeChange should have exactly one inner change if no schema change is present. */,
 		);
 
-		const dataChangeIntention =
-			change.change.changes[0] ?? fail("This wont run due to the length check above");
-		const dataChangeOver =
-			over.change.changes[0] ?? fail("This wont run due to the length check above");
+		const dataChangeIntention = change.change.changes[0] ?? oob();
+		const dataChangeOver = over.change.changes[0] ?? oob();
 		assert(
 			dataChangeIntention.type === "data" && dataChangeOver.type === "data",
 			0x885 /* Data change should be present. */,

@@ -105,10 +105,7 @@ export class ChunkedForest implements IEditableForest {
 			mutableChunk: this.roots as BasicChunk | undefined,
 			getParent(): StackNode {
 				assert(this.mutableChunkStack.length > 0, 0x532 /* invalid access to root's parent */);
-				return (
-					this.mutableChunkStack[this.mutableChunkStack.length - 1] ??
-					oob()
-				);
+				return this.mutableChunkStack[this.mutableChunkStack.length - 1] ?? oob();
 			},
 			free(): void {
 				this.mutableChunk = undefined;
@@ -216,8 +213,7 @@ export class ChunkedForest implements IEditableForest {
 						fail("missing edited node");
 					}
 				}
-				let found =
-					chunks[indexOfChunk] ?? fail("This wont run due to the length check above");
+				let found = chunks[indexOfChunk] ?? oob();
 				if (!(found instanceof BasicChunk)) {
 					// TODO:Perf: support in place editing of other chunk formats when possible:
 					// 1. Support updating values in uniform chunks.

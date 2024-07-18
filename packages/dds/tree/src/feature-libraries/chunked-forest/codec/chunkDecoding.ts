@@ -7,7 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
 import type { FieldKey, TreeNodeSchemaIdentifier, Value } from "../../../core/index.js";
-import { assertValidIndex, fail, oob } from "../../../util/index.js";
+import { assertValidIndex, oob } from "../../../util/index.js";
 import { BasicChunk } from "../basicChunk.js";
 import type { TreeChunk } from "../chunk.js";
 import { emptyChunk } from "../emptyChunk.js";
@@ -169,7 +169,7 @@ export function aggregateChunks(input: TreeChunk[]): TreeChunk {
 		case 0:
 			return emptyChunk;
 		case 1:
-			return chunks[0] ?? fail("This will never run because of the length check above");
+			return chunks[0] ?? oob();
 		default:
 			return new SequenceChunk(chunks);
 	}

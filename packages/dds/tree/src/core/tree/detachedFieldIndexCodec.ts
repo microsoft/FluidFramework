@@ -21,7 +21,7 @@ import {
 } from "./detachedFieldIndexFormat.js";
 import type { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { fail } from "../../util/index.js";
+import { oob } from "../../util/index.js";
 
 class MajorCodec implements IJsonCodec<Major> {
 	public constructor(
@@ -79,8 +79,7 @@ export function makeDetachedNodeToFieldCodec(
 				const encodedRevision = majorCodec.encode(major);
 				const rootRanges: RootRanges = [...innerMap];
 				if (rootRanges.length === 1) {
-					const firstRootRange =
-						rootRanges[0] ?? oob();
+					const firstRootRange = rootRanges[0] ?? oob();
 					const rootsForRevision: EncodedRootsForRevision = [
 						encodedRevision,
 						firstRootRange[0],

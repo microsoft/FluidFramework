@@ -24,6 +24,7 @@ import {
 	disposeSymbol,
 	fail,
 	getOrCreate,
+	oob,
 } from "../../util/index.js";
 // TODO: stop depending on contextuallyTyped
 import { applyTypesFromContext, cursorFromContextualData } from "../contextuallyTyped.js";
@@ -531,7 +532,7 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 		const fieldEditor = this.valueFieldEditor();
 		assert(content.length === 1, 0x780 /* value field content should normalize to one item */);
 
-		fieldEditor.set(content[0] ?? fail("This wont run due to the length check above"));
+		fieldEditor.set(content[0] ?? oob());
 	}
 
 	public override get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {

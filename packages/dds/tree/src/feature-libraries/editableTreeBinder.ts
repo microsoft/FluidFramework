@@ -17,7 +17,7 @@ import {
 	topDownPath,
 } from "../core/index.js";
 import type { Listeners, Listenable } from "../events/index.js";
-import { brand, fail, getOrCreate, oob } from "../util/index.js";
+import { brand, getOrCreate, oob } from "../util/index.js";
 
 import type { FlexTreeNode } from "./flex-tree/index.js";
 
@@ -1000,8 +1000,7 @@ export function compileSyntaxTree(
 ): BindPolicy {
 	const entries = Object.entries(syntaxTree);
 	if (entries.length === 1) {
-		const [fieldName, childNode] =
-			entries[0] ?? fail("This wont run due to the length check above");
+		const [fieldName, childNode] = entries[0] ?? oob();
 		const fieldKey: FieldKey = brand(fieldName);
 		const bindTree = compileSyntaxTreeNode(childNode as BindSyntaxTree, fieldKey);
 		return { matchPolicy: matchPolicy ?? "path", bindTree };

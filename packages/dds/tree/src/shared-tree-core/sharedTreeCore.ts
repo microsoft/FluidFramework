@@ -41,7 +41,7 @@ import {
 	type WithBreakable,
 	throwIfBroken,
 	breakingClass,
-	fail,
+	oob,
 } from "../util/index.js";
 
 import { type SharedTreeBranch, getChangeReplaceType } from "./branch.js";
@@ -208,10 +208,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 					change.newCommits.length === 1,
 					0x983 /* Unexpected number of commits when committing transaction */,
 				);
-				this.commitEnricher.prepareCommit(
-					change.newCommits[0] ?? fail("This wont run due to the length check above"),
-					true,
-				);
+				this.commitEnricher.prepareCommit(change.newCommits[0] ?? oob(), true);
 			}
 		});
 		this.editManager.localBranch.on("afterChange", (change) => {

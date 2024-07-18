@@ -6,7 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import type { RevisionTag } from "../../core/index.js";
-import { type IdAllocator, type Mutable, fail } from "../../util/index.js";
+import { type IdAllocator, type Mutable, fail, oob } from "../../util/index.js";
 import {
 	type CrossFieldManager,
 	CrossFieldTarget,
@@ -222,8 +222,7 @@ function invertMark(
 				0x80d /* Only expected MoveIn marks to be split when inverting */,
 			);
 
-			let detachInverse =
-				detachInverses[0] ?? fail("This wont run due to the length check above");
+			let detachInverse = detachInverses[0] ?? oob();
 			assert(isAttach(detachInverse), 0x80e /* Inverse of a detach should be an attach */);
 
 			const inverses: Mark[] = [];

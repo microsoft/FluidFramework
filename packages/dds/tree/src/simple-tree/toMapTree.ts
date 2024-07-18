@@ -24,7 +24,7 @@ import {
 	type NodeKeyManager,
 	isMapTreeNode,
 } from "../feature-libraries/index.js";
-import { brand, fail, isReadonlyArray, find } from "../util/index.js";
+import { brand, fail, isReadonlyArray, find, oob } from "../util/index.js";
 
 import { nullSchema } from "./leafNodeSchema.js";
 import type { InsertableContent } from "./proxies.js";
@@ -508,7 +508,7 @@ The set of possible types is ${JSON.stringify([
 Explicitly construct an unhydrated node of the desired type to disambiguate.
 For class-based schema, this can be done by replacing an expression like "{foo: 1}" with "new MySchema({foo: 1})".`,
 	);
-	return possibleTypes[0] ?? fail("This wont run due to the length check above");
+	return possibleTypes[0] ?? oob();
 }
 
 /**

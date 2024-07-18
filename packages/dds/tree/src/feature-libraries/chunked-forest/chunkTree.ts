@@ -182,7 +182,7 @@ export function chunkFieldSingle(
 ): TreeChunk {
 	const chunks = chunkField(cursor, policy);
 	if (chunks.length === 1) {
-		return chunks[0] ?? fail("This wont run due to the length check above");
+		return chunks[0] ?? oob();
 	}
 	return new SequenceChunk(chunks);
 }
