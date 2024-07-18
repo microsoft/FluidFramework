@@ -60,6 +60,12 @@ export type {
 	FlexibleNodeSubSequence,
 } from "./flexTreeTypes.js";
 
-export { assertFlexTreeEntityNotFreed } from "./lazyEntity.js";
+export {
+	assertFlexTreeEntityNotFreed,
+	isFreedSymbol,
+	LazyEntity,
+} from "./lazyEntity.js";
 
 export { getSchemaAndPolicy, indexForAt } from "./utilities.js";
+
+export { treeStatusFromAnchorCache } from "./utilities.js";

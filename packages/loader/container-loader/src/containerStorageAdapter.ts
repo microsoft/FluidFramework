@@ -20,7 +20,7 @@ import {
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
-import { UsageError } from "@fluidframework/driver-utils/internal";
+import { isInstanceOfISnapshot, UsageError } from "@fluidframework/driver-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 // eslint-disable-next-line import/no-deprecated
@@ -31,7 +31,7 @@ import type {
 	ISerializedStateManagerDocumentStorageService,
 	ISnapshotInfo,
 } from "./serializedStateManager.js";
-import { convertSnapshotInfoToSnapshot, getDocumentAttributes } from "./utils.js";
+import { convertSnapshotInfoToSnapshot } from "./utils.js";
 
 /**
  * Stringified blobs from a summary/snapshot tree.
@@ -179,8 +179,10 @@ export class ContainerStorageAdapter
 			const localSnapshot =
 				this.loadingGroupIdSnapshotsFromPendingState[snapshotFetchOptions.loadingGroupIds[0]];
 			assert(localSnapshot !== undefined, 0x970 /* Local snapshot must be present */);
-			const attributes = await getDocumentAttributes(this, localSnapshot.baseSnapshot);
-			snapshot = convertSnapshotInfoToSnapshot(localSnapshot, attributes.sequenceNumber);
+			snapshot = convertSnapshotInfoToSnapshot(
+				localSnapshot,
+				localSnapshot.snapshotSequenceNumber,
+			);
 		} else {
 			if (this._storageService.getSnapshot === undefined) {
 				throw new UsageError(
@@ -315,11 +317,19 @@ const redirectTableBlobName = ".redirectTable";
  * Get blob contents of a snapshot tree from storage (or, ideally, cache)
  */
 export async function getBlobContentsFromTree(
-	snapshot: ISnapshotTree,
+	snapshot: ISnapshot | ISnapshotTree,
 	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<ISerializableBlobContents> {
 	const blobs = {};
-	await getBlobContentsFromTreeCore(snapshot, blobs, storage);
+	if (isInstanceOfISnapshot(snapshot)) {
+		const blobContents = snapshot.blobContents;
+		for (const [id, content] of blobContents.entries()) {
+			// ArrayBufferLike will not survive JSON.stringify()
+			blobs[id] = bufferToString(content, "utf8");
+		}
+	} else {
+		await getBlobContentsFromTreeCore(snapshot, blobs, storage);
+	}
 	return blobs;
 }
 

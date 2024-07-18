@@ -43,6 +43,7 @@ export {
 	type FieldChangeEncodingContext,
 } from "./fieldChangeHandler.js";
 export type {
+	CrossFieldKeyRange,
 	FieldChange,
 	FieldChangeMap,
 	FieldChangeset,
