@@ -12,6 +12,7 @@ import {
 	type NodeKeyManager,
 	getTreeContext,
 } from "../feature-libraries/index.js";
+import { tryDisposeTreeNode } from "../simple-tree/index.js";
 import { type IDisposable, disposeSymbol } from "../util/index.js";
 
 import type { ITreeCheckout, ITreeCheckoutFork, TreeCheckout } from "./treeCheckout.js";
@@ -94,6 +95,10 @@ export class CheckoutFlexTreeView<
 	}
 
 	public [disposeSymbol](): void {
+		for (const anchorNode of this.checkout.forest.anchors) {
+			tryDisposeTreeNode(anchorNode);
+		}
+
 		this.context[disposeSymbol]();
 		this.onDispose?.();
 	}
