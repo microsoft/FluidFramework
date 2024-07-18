@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { RevisionTagCodec } from "../rebase/index.js";
@@ -66,7 +67,14 @@ export function initializeForest(
 		visitor = combineVisitors([visitor, anchorVisitor], [anchorVisitor]);
 	}
 
-	visitDelta(delta, visitor, makeDetachedFieldIndex("init", revisionTagCodec, idCompressor));
+	// any detached trees built here are immediately attached so the revision used here doesn't matter
+	// we use a dummy revision to make correctness checks in the detached field index easier
+	visitDelta(
+		delta,
+		visitor,
+		makeDetachedFieldIndex("init", revisionTagCodec, idCompressor),
+		0 as SessionSpaceCompressedId,
+	);
 	visitor.free();
 }
 

@@ -138,6 +138,13 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	transactionAborted(isOuterTransaction: boolean): void;
 
 	/**
+	 * Fired after the current transaction is completely rolled back.
+	 * @param isOuterTransaction - true iff the transaction being aborted is the outermost transaction
+	 * as opposed to a nested transaction.
+	 */
+	transactionRolledBack(isOuterTransaction: boolean): void;
+
+	/**
 	 * Fired after the current transaction is committed.
 	 * @param isOuterTransaction - true iff the transaction being committed is the outermost transaction
 	 * as opposed to a nested transaction.
@@ -361,6 +368,7 @@ export class SharedTreeBranch<
 
 		this.emit("transactionAborted", this.transactions.size === 0);
 		if (commits.length === 0) {
+			this.emit("transactionRolledBack", this.transactions.size === 0);
 			return [undefined, []];
 		}
 
@@ -387,6 +395,7 @@ export class SharedTreeBranch<
 		this.emit("beforeChange", changeEvent);
 		this.head = startCommit;
 		this.emit("afterChange", changeEvent);
+		this.emit("transactionRolledBack", this.transactions.size === 0);
 		return [change, commits];
 	}
 
