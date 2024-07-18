@@ -80,7 +80,7 @@ export function makeDetachedNodeToFieldCodec(
 				const rootRanges: RootRanges = [...innerMap];
 				if (rootRanges.length === 1) {
 					const firstRootRange =
-						rootRanges[0] ?? fail("This wont run because of the length check above");
+						rootRanges[0] ?? oob();
 					const rootsForRevision: EncodedRootsForRevision = [
 						encodedRevision,
 						firstRootRange[0],
