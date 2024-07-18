@@ -2,9 +2,9 @@
 "@fluidframework/merge-tree": minor
 ---
 
-merge-tree: The Marker.fromJSONObject and TextSegment.fromJSONObject argument types have been corrected
+The Marker.fromJSONObject and TextSegment.fromJSONObject argument types have been corrected
 
-Previously, the arguments of Marker.fromJSONObject and TextSegment.fromJSONObject were of type `any`. However, at
+Previously, the arguments of `Marker.fromJSONObject` and `TextSegment.fromJSONObject` were of type `any`. However, at
 runtime only certain types were expected and using other types would cause errors.
 
 Now, the argument for the Marker implementation is of type `IJSONSegment` and the argument for the TextSegment

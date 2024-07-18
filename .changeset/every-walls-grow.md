@@ -3,6 +3,6 @@
 "fluid-framework": minor
 ---
 
-fluid-framework, tree: Detect arrayNode iterator invalidation
+Detect arrayNode iterator invalidation
 
 This change updates the behavior of array nodes such that when we concurrently edit the array during iteration, it will throw an error.
