@@ -70,7 +70,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * Converts an enum into a collection of schema which can be used in a union.
  * @remarks
  * Currently only supports `string` enums.
- * The string value of the enum is used as the name of the schema: callers must ensure that its stable and unique.
+ * The string value of the enum is used as the name of the schema: callers must ensure that it is stable and unique.
  * Consider making a dedicated schema factory with a nested scope to avoid the enum members colliding with other schema.
  * @example
  * ```typescript
