@@ -193,7 +193,9 @@ export class SharedTree
 		const forest =
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
-				: buildForest();
+				: options.forest === ForestType.Reference
+					? buildForest()
+					: buildForest(undefined, true);
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
 		const removedRoots = makeDetachedFieldIndex(
 			"repair",
@@ -423,6 +425,10 @@ export enum ForestType {
 	 * The "ChunkedForest" forest type.
 	 */
 	Optimized = 1,
+	/**
+	 * The "ObjectForest" forest type with expensive asserts for debugging.
+	 */
+	Expensive = 2,
 }
 
 export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {

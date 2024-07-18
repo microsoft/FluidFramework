@@ -1757,7 +1757,7 @@ describe("SharedTree", () => {
 			assert.equal(trees[0].checkout.forest instanceof ObjectForest, true);
 		});
 
-		it("ForestType.Reference uses ObjectForest", () => {
+		it("ForestType.Reference uses ObjectForest with additionalAsserts flag set to false", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				new SharedTreeFactory({
@@ -1765,7 +1765,9 @@ describe("SharedTree", () => {
 					forest: ForestType.Reference,
 				}),
 			);
-			assert.equal(trees[0].checkout.forest instanceof ObjectForest, true);
+			const forest = trees[0].checkout.forest;
+			assert(forest instanceof ObjectForest);
+			assert.equal(forest.additionalAsserts, false);
 		});
 
 		it("ForestType.Optimized uses ChunkedForest", () => {
@@ -1777,6 +1779,19 @@ describe("SharedTree", () => {
 				}),
 			);
 			assert.equal(trees[0].checkout.forest instanceof ChunkedForest, true);
+		});
+
+		it("ForestType.Expensive uses ObjectForest with additionalAsserts flag set to true", () => {
+			const { trees } = new TestTreeProviderLite(
+				1,
+				new SharedTreeFactory({
+					jsonValidator: typeboxValidator,
+					forest: ForestType.Expensive,
+				}),
+			);
+			const forest = trees[0].checkout.forest;
+			assert(forest instanceof ObjectForest);
+			assert.equal(forest.additionalAsserts, true);
 		});
 	});
 	describe("Schema based op encoding", () => {

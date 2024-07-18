@@ -8,10 +8,14 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { Multiplicity, rootFieldKey } from "../core/index.js";
 import {
 	type LazyItem,
-	type TreeStatus,
+	TreeStatus,
 	isLazy,
 	isTreeValue,
 	FlexObjectNodeSchema,
+	LazyEntity,
+	treeStatusFromAnchorCache,
+	isMapTreeNode,
+	isFreedSymbol,
 } from "../feature-libraries/index.js";
 import { fail, extractFromOpaque, isReadonlyArray } from "../util/index.js";
 
@@ -37,6 +41,7 @@ import {
 } from "./leafNodeSchema.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import type { Off } from "../events/index.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -102,7 +107,7 @@ export interface TreeNodeApi {
 	/**
 	 * Returns the {@link TreeStatus} of the given node.
 	 */
-	readonly status: (node: TreeNode) => TreeStatus;
+	status(node: TreeNode): TreeStatus;
 
 	/**
 	 * Returns the {@link SchemaFactory.identifier | identifier} of the given node in the most compressed form possible.
@@ -127,7 +132,7 @@ export interface TreeNodeApi {
  * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
  */
 export const treeNodeApi: TreeNodeApi = {
-	parent: (node: TreeNode): TreeNode | undefined => {
+	parent(node: TreeNode): TreeNode | undefined {
 		const editNode = getFlexNode(node).parentField.parent.parent;
 		if (editNode === undefined) {
 			return undefined;
@@ -140,7 +145,7 @@ export const treeNodeApi: TreeNodeApi = {
 		);
 		return output;
 	},
-	key: (node: TreeNode) => {
+	key(node: TreeNode): string | number {
 		// If the parent is undefined, then this node is under the root field,
 		// so we know its key is the special root one.
 		const parent = treeNodeApi.parent(node);
@@ -156,11 +161,11 @@ export const treeNodeApi: TreeNodeApi = {
 		const viewKey = getViewKeyFromStoredKey(parentSchema, storedKey);
 		return viewKey;
 	},
-	on: <K extends keyof TreeChangeEvents>(
+	on<K extends keyof TreeChangeEvents>(
 		node: TreeNode,
 		eventName: K,
 		listener: TreeChangeEvents[K],
-	) => {
+	): Off {
 		const flex = getFlexNode(node);
 		switch (eventName) {
 			case "nodeChanged":
@@ -171,13 +176,23 @@ export const treeNodeApi: TreeNodeApi = {
 				return unreachableCase(eventName);
 		}
 	},
-	status: (node: TreeNode) => {
-		return getFlexNode(node, true).treeStatus();
+	status(node: TreeNode): TreeStatus {
+		const flexNode = getFlexNode(node, true);
+		if (isMapTreeNode(flexNode)) {
+			return TreeStatus.New;
+		}
+
+		assert(flexNode instanceof LazyEntity, "Unexpected flex node implementation");
+		if (flexNode[isFreedSymbol]()) {
+			return TreeStatus.Deleted;
+		}
+
+		return treeStatusFromAnchorCache(flexNode.anchorNode);
 	},
-	is: <TSchema extends ImplicitAllowedTypes>(
+	is<TSchema extends ImplicitAllowedTypes>(
 		value: unknown,
 		schema: TSchema,
-	): value is TreeNodeFromImplicitAllowedTypes<TSchema> => {
+	): value is TreeNodeFromImplicitAllowedTypes<TSchema> {
 		const actualSchema = tryGetSchema(value);
 		if (actualSchema === undefined) {
 			return false;
