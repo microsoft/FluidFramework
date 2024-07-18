@@ -44,8 +44,12 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			let listIndex2 = 0;
 
 			while (listIndex1 < change1.length || listIndex2 < change2.length) {
-				const next1 = change1[listIndex1] ?? oob();
-				const next2 = change2[listIndex2] ?? oob();
+				// TODO why are we non null asserting here?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const next1 = change1[listIndex1]!;
+				// TODO why are we non null asserting here?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const next2 = change2[listIndex2]!;
 				const nodeIndex1 = next1?.index ?? Infinity;
 				const nodeIndex2 = next2?.index ?? Infinity;
 				if (nodeIndex1 < nodeIndex2) {
