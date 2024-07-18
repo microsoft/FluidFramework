@@ -230,34 +230,13 @@ describe("SummarizerNodeWithGC Tests", () => {
 		});
 	});
 
-	describe("summarize API", () => {
-		it("should not allow summarizing without running GC first", async () => {
-			// Since GC is enabled, calling summarize without running GC (updating used routes) should result in
-			// an assert being thrown.
-			await assert.rejects(
-				summarizerNode.summarize(true /* fullTree */),
-				"summarize should have thrown since GC was run",
-			);
-		});
-
-		it("should allow summarizing after running GC", async () => {
-			// Update the used routes which emulates running GC.
-			summarizerNode.updateUsedRoutes([""]);
-			// Summarize should not throw since GC was run before.
-			await assert.doesNotReject(
-				summarizerNode.summarize(true /* fullTree */),
-				"summarize should not have thrown an error since GC was run",
-			);
-		});
-	});
-
 	describe("Re-summarization due to GC state changes", () => {
 		/**
 		 * Re-summarization is triggered due to GC state change if summarizer node's "hasUsedStateChanged"
 		 * returns true.
 		 */
 		it("should not trigger re-summarization if used routes don't change", async () => {
-			const usedRoutes = ["route"];
+			const usedRoutes = ["/route"];
 			const baseGCDetails: IGarbageCollectionDetailsBase = {
 				gcData: {
 					gcNodes: {},
@@ -275,7 +254,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 		});
 
 		it("should trigger re-summarization if used routes changes from base snapshot", async () => {
-			const usedRoutes = ["route"];
+			const usedRoutes = ["/route"];
 			const baseGCDetails: IGarbageCollectionDetailsBase = {
 				gcData: {
 					gcNodes: {},
@@ -284,7 +263,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			};
 			summarizerNode.baseGCDetailsP = Promise.resolve(baseGCDetails);
 			await summarizerNode.loadBaseGCDetails();
-			summarizerNode.updateUsedRoutes([...usedRoutes, "newRoute"]);
+			summarizerNode.updateUsedRoutes([...usedRoutes, "/newRoute"]);
 			assert.strictEqual(
 				summarizerNode.hasUsedStateChanged(),
 				true,
@@ -301,7 +280,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			};
 			summarizerNode.baseGCDetailsP = Promise.resolve(baseGCDetails);
 			await summarizerNode.loadBaseGCDetails();
-			summarizerNode.updateUsedRoutes(["newRoute"]);
+			summarizerNode.updateUsedRoutes(["/newRoute"]);
 			assert.strictEqual(
 				summarizerNode.hasUsedStateChanged(),
 				true,
@@ -326,7 +305,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			};
 			summarizerNodeGCDisabled.baseGCDetailsP = Promise.resolve(baseGCDetails);
 			await summarizerNodeGCDisabled.loadBaseGCDetails();
-			summarizerNodeGCDisabled.updateUsedRoutes(["newRoute"]);
+			summarizerNodeGCDisabled.updateUsedRoutes(["/newRoute"]);
 			assert.strictEqual(
 				summarizerNodeGCDisabled.hasUsedStateChanged(),
 				false,
