@@ -18,7 +18,7 @@ if (myObject instanceof SharedString) {
 	// do something
 }
 
-// In Fluid Framework 2.0 and beuyond, that code can now be written like so:
+// In Fluid Framework 2.0 and beyond, that code can now be written like so:
 if (SharedString.is(myObject)) {
 	// do something
 }
