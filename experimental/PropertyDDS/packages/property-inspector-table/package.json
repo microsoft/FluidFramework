@@ -120,11 +120,11 @@
 		"webpack-merge": "^5.8.0"
 	},
 	"peerDependencies": {
-		"@fluid-experimental/property-binder": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
-		"@fluid-experimental/property-changeset": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
-		"@fluid-experimental/property-dds": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
-		"@fluid-experimental/property-properties": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
-		"@fluid-experimental/property-proxy": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
+		"@fluid-experimental/property-binder": "workspace:~",
+		"@fluid-experimental/property-changeset": "workspace:~",
+		"@fluid-experimental/property-dds": "workspace:~",
+		"@fluid-experimental/property-properties": "workspace:~",
+		"@fluid-experimental/property-proxy": "workspace:~",
 		"react": "^17.0.1"
 	},
 	"fluidBuild": {
