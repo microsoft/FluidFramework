@@ -18,6 +18,7 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
+      echo '$(Build.SourceBranch)'
       mkdir generate_release_reports
       flub release report -g client -o generate_release_reports --baseFileName manifest
 
