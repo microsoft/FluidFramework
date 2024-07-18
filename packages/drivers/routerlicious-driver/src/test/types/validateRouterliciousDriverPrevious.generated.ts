@@ -20,177 +20,195 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_DefaultTokenProvider": {"forwardCompat": false}
+ * "Class_DefaultTokenProvider": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_DefaultTokenProvider = requireAssignableTo<TypeOnly<old.DefaultTokenProvider>, TypeOnly<current.DefaultTokenProvider>>
+declare type old_as_current_for_Class_DefaultTokenProvider = requireAssignableTo<TypeOnly<old.DefaultTokenProvider>, TypeOnly<current.DefaultTokenProvider>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_DefaultTokenProvider": {"backCompat": false}
+ * "Class_DefaultTokenProvider": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_DefaultTokenProvider = requireAssignableTo<TypeOnly<current.DefaultTokenProvider>, TypeOnly<old.DefaultTokenProvider>>
+declare type current_as_old_for_Class_DefaultTokenProvider = requireAssignableTo<TypeOnly<current.DefaultTokenProvider>, TypeOnly<old.DefaultTokenProvider>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_DefaultTokenProvider": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_DefaultTokenProvider = requireAssignableTo<TypeOnly<typeof current.DefaultTokenProvider>, TypeOnly<typeof old.DefaultTokenProvider>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_DocumentPostCreateError": {"forwardCompat": false}
+ * "Class_DocumentPostCreateError": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_DocumentPostCreateError = requireAssignableTo<TypeOnly<old.DocumentPostCreateError>, TypeOnly<current.DocumentPostCreateError>>
+declare type old_as_current_for_Class_DocumentPostCreateError = requireAssignableTo<TypeOnly<old.DocumentPostCreateError>, TypeOnly<current.DocumentPostCreateError>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_DocumentPostCreateError": {"backCompat": false}
+ * "Class_DocumentPostCreateError": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_DocumentPostCreateError = requireAssignableTo<TypeOnly<current.DocumentPostCreateError>, TypeOnly<old.DocumentPostCreateError>>
+declare type current_as_old_for_Class_DocumentPostCreateError = requireAssignableTo<TypeOnly<current.DocumentPostCreateError>, TypeOnly<old.DocumentPostCreateError>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_DocumentPostCreateError": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_DocumentPostCreateError = requireAssignableTo<TypeOnly<typeof current.DocumentPostCreateError>, TypeOnly<typeof old.DocumentPostCreateError>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IRouterliciousDriverPolicies": {"forwardCompat": false}
+ * "Interface_IRouterliciousDriverPolicies": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IRouterliciousDriverPolicies = requireAssignableTo<TypeOnly<old.IRouterliciousDriverPolicies>, TypeOnly<current.IRouterliciousDriverPolicies>>
+declare type old_as_current_for_Interface_IRouterliciousDriverPolicies = requireAssignableTo<TypeOnly<old.IRouterliciousDriverPolicies>, TypeOnly<current.IRouterliciousDriverPolicies>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IRouterliciousDriverPolicies": {"backCompat": false}
+ * "Interface_IRouterliciousDriverPolicies": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IRouterliciousDriverPolicies = requireAssignableTo<TypeOnly<current.IRouterliciousDriverPolicies>, TypeOnly<old.IRouterliciousDriverPolicies>>
+declare type current_as_old_for_Interface_IRouterliciousDriverPolicies = requireAssignableTo<TypeOnly<current.IRouterliciousDriverPolicies>, TypeOnly<old.IRouterliciousDriverPolicies>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IRouterliciousResolvedUrl": {"forwardCompat": false}
+ * "Interface_IRouterliciousResolvedUrl": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IRouterliciousResolvedUrl = requireAssignableTo<TypeOnly<old.IRouterliciousResolvedUrl>, TypeOnly<current.IRouterliciousResolvedUrl>>
+declare type old_as_current_for_Interface_IRouterliciousResolvedUrl = requireAssignableTo<TypeOnly<old.IRouterliciousResolvedUrl>, TypeOnly<current.IRouterliciousResolvedUrl>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IRouterliciousResolvedUrl": {"backCompat": false}
+ * "Interface_IRouterliciousResolvedUrl": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IRouterliciousResolvedUrl = requireAssignableTo<TypeOnly<current.IRouterliciousResolvedUrl>, TypeOnly<old.IRouterliciousResolvedUrl>>
+declare type current_as_old_for_Interface_IRouterliciousResolvedUrl = requireAssignableTo<TypeOnly<current.IRouterliciousResolvedUrl>, TypeOnly<old.IRouterliciousResolvedUrl>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITokenProvider": {"forwardCompat": false}
+ * "Interface_ITokenProvider": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ITokenProvider = requireAssignableTo<TypeOnly<old.ITokenProvider>, TypeOnly<current.ITokenProvider>>
+declare type old_as_current_for_Interface_ITokenProvider = requireAssignableTo<TypeOnly<old.ITokenProvider>, TypeOnly<current.ITokenProvider>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITokenProvider": {"backCompat": false}
+ * "Interface_ITokenProvider": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ITokenProvider = requireAssignableTo<TypeOnly<current.ITokenProvider>, TypeOnly<old.ITokenProvider>>
+declare type current_as_old_for_Interface_ITokenProvider = requireAssignableTo<TypeOnly<current.ITokenProvider>, TypeOnly<old.ITokenProvider>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITokenResponse": {"forwardCompat": false}
+ * "Interface_ITokenResponse": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ITokenResponse = requireAssignableTo<TypeOnly<old.ITokenResponse>, TypeOnly<current.ITokenResponse>>
+declare type old_as_current_for_Interface_ITokenResponse = requireAssignableTo<TypeOnly<old.ITokenResponse>, TypeOnly<current.ITokenResponse>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITokenResponse": {"backCompat": false}
+ * "Interface_ITokenResponse": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ITokenResponse = requireAssignableTo<TypeOnly<current.ITokenResponse>, TypeOnly<old.ITokenResponse>>
+declare type current_as_old_for_Interface_ITokenResponse = requireAssignableTo<TypeOnly<current.ITokenResponse>, TypeOnly<old.ITokenResponse>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITokenService": {"forwardCompat": false}
+ * "Interface_ITokenService": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ITokenService = requireAssignableTo<TypeOnly<old.ITokenService>, TypeOnly<current.ITokenService>>
+declare type old_as_current_for_Interface_ITokenService = requireAssignableTo<TypeOnly<old.ITokenService>, TypeOnly<current.ITokenService>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITokenService": {"backCompat": false}
+ * "Interface_ITokenService": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ITokenService = requireAssignableTo<TypeOnly<current.ITokenService>, TypeOnly<old.ITokenService>>
+declare type current_as_old_for_Interface_ITokenService = requireAssignableTo<TypeOnly<current.ITokenService>, TypeOnly<old.ITokenService>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_RouterliciousDocumentServiceFactory": {"forwardCompat": false}
+ * "Class_RouterliciousDocumentServiceFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_RouterliciousDocumentServiceFactory = requireAssignableTo<TypeOnly<old.RouterliciousDocumentServiceFactory>, TypeOnly<current.RouterliciousDocumentServiceFactory>>
+declare type old_as_current_for_Class_RouterliciousDocumentServiceFactory = requireAssignableTo<TypeOnly<old.RouterliciousDocumentServiceFactory>, TypeOnly<current.RouterliciousDocumentServiceFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_RouterliciousDocumentServiceFactory": {"backCompat": false}
+ * "Class_RouterliciousDocumentServiceFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_RouterliciousDocumentServiceFactory = requireAssignableTo<TypeOnly<current.RouterliciousDocumentServiceFactory>, TypeOnly<old.RouterliciousDocumentServiceFactory>>
+declare type current_as_old_for_Class_RouterliciousDocumentServiceFactory = requireAssignableTo<TypeOnly<current.RouterliciousDocumentServiceFactory>, TypeOnly<old.RouterliciousDocumentServiceFactory>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_RouterliciousDocumentServiceFactory": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_RouterliciousDocumentServiceFactory = requireAssignableTo<TypeOnly<typeof current.RouterliciousDocumentServiceFactory>, TypeOnly<typeof old.RouterliciousDocumentServiceFactory>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_RouterliciousErrorTypes": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_RouterliciousErrorTypes = requireAssignableTo<TypeOnly<typeof current.RouterliciousErrorTypes>, TypeOnly<typeof old.RouterliciousErrorTypes>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_RouterliciousErrorTypes": {"forwardCompat": false}
+ * "TypeAlias_RouterliciousErrorTypes": {"forwardCompat": false}
  */
-declare type old_as_current_for_VariableDeclaration_RouterliciousErrorTypes = requireAssignableTo<TypeOnly<typeof old.RouterliciousErrorTypes>, TypeOnly<typeof current.RouterliciousErrorTypes>>
+declare type old_as_current_for_TypeAlias_RouterliciousErrorTypes = requireAssignableTo<TypeOnly<old.RouterliciousErrorTypes>, TypeOnly<current.RouterliciousErrorTypes>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_RouterliciousErrorTypes": {"backCompat": false}
+ * "TypeAlias_RouterliciousErrorTypes": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_RouterliciousErrorTypes = requireAssignableTo<TypeOnly<typeof current.RouterliciousErrorTypes>, TypeOnly<typeof old.RouterliciousErrorTypes>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAliasDeclaration_RouterliciousErrorTypes": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAliasDeclaration_RouterliciousErrorTypes = requireAssignableTo<TypeOnly<old.RouterliciousErrorTypes>, TypeOnly<current.RouterliciousErrorTypes>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAliasDeclaration_RouterliciousErrorTypes": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAliasDeclaration_RouterliciousErrorTypes = requireAssignableTo<TypeOnly<current.RouterliciousErrorTypes>, TypeOnly<old.RouterliciousErrorTypes>>
+declare type current_as_old_for_TypeAlias_RouterliciousErrorTypes = requireAssignableTo<TypeOnly<current.RouterliciousErrorTypes>, TypeOnly<old.RouterliciousErrorTypes>>
