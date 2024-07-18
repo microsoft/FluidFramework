@@ -412,7 +412,7 @@ const nodeFormatter: DevtoolsFormatter.DevtoolsFormatter = {
 		// TODO:
 		// for array nodes, this isn't great since (at least in FireFox) the list items show up with a prefixed number starting from 1.
 		// This looks messy when followed by the array index.
-		// Find a way to hid the list index.
+		// Find a way to hide the list index.
 		// { style: 'list-style-type: none` } did not seem to work.
 
 		return ["ol", ...children];
