@@ -14,7 +14,7 @@ import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
 import { Format } from "./format.js";
-import { fail } from "../../util/index.js";
+import { oob } from "../../util/index.js";
 
 /**
  * Uses field cursors
@@ -43,7 +43,7 @@ export function makeForestSummarizerCodec(
 			assert(data.keys.length === fields.length, 0x891 /* mismatched lengths */);
 			for (const [index, field] of fields.entries()) {
 				out.set(
-					data.keys[index] ?? fail("This will never run because of the length assert above"),
+					data.keys[index] ?? oob(),
 					field,
 				);
 			}

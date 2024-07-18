@@ -22,7 +22,7 @@ import {
 	compareFieldUpPaths,
 	topDownPath,
 } from "../../core/index.js";
-import { brand, fail, oob } from "../../util/index.js";
+import { brand, oob } from "../../util/index.js";
 import {
 	type EditDescription,
 	type FieldChangeset,
@@ -294,7 +294,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						};
 						for (let i = sharedDepth + 1; i < attachPath.length; i += 1) {
 							parent = {
-								...(attachPath[i] ?? fail("We are looping through arrachPath")),
+								...(attachPath[i] ?? oob()),
 								parent,
 							};
 						}

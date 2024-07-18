@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { type MoveEffectTable, splitMarkForMoveEffects } from "./moveEffectTable.js";
 import type { Mark } from "./types.js";
 import { splitMark } from "./utils.js";
+import { oob } from "../../util/index.js";
 
 export class MarkQueue {
 	private readonly stack: Mark[] = [];
@@ -37,9 +38,7 @@ export class MarkQueue {
 
 		const splitMarks = splitMarkForMoveEffects(mark, this.moveEffects);
 		for (let i = splitMarks.length - 1; i > 0; i--) {
-			// Non null asserting here because we are iterating over splitMarks
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.stack.push(splitMarks[i]!);
+			this.stack.push(splitMarks[i] ?? oob());
 		}
 		return splitMarks[0];
 	}

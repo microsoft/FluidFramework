@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail, type MapGetSet } from "./utils.js";
+import { oob, type MapGetSet } from "./utils.js";
 
 /**
  * A dictionary whose values are keyed off of two objects (key1, key2).
@@ -338,7 +338,7 @@ export class SizedNestedMap<Key1, Key2, Value> {
 	public values(): IterableIterator<Value> {
 		return (
 			Array.from(this.nestedMap.values()).flatMap((innerMap) => innerMap.values())[0] ??
-			fail("Expected value to be in array")
+			oob()
 		);
 	}
 

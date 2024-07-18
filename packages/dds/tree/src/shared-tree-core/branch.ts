@@ -413,7 +413,7 @@ export class SharedTreeBranch<
 		while (this.initialTransactionRevToRebasedRev.has(startRevision)) {
 			startRevision =
 				this.initialTransactionRevToRebasedRev.get(startRevision) ??
-				fail("This will never run because of the has check above");
+				oob();
 		}
 
 		if (!this.isTransacting()) {

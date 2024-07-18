@@ -568,7 +568,7 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 		}
 		return unboxedUnion(
 			this.schema,
-			this.mapTrees[i] ?? fail("This wont run because i is not undefined"),
+			this.mapTrees[i] ?? oob(),
 			{ parent: this, index: i },
 		);
 	}

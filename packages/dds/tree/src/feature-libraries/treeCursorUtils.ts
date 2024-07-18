@@ -170,7 +170,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		const index = this.getStackedNodeIndex(height);
 		return (
 			(this.siblingStack[height] as readonly TNode[])[index] ??
-			fail("Expected value to be in array")
+			oob()
 		);
 	}
 

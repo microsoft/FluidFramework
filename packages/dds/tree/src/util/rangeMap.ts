@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail, oob } from "./utils.js";
+import { oob } from "./utils.js";
 
 /**
  * A map keyed on integers allowing reading and writing contiguous ranges of integer keys.
@@ -206,7 +206,7 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 	// Update or remove the overlapping entries
 	for (let i = iFirst; i <= iLast; ++i) {
 		const entry =
-			map[i] ?? fail("This wont run because we are iterating over the overlapping entries");
+			map[i] ?? oob();
 		const entryLastKey = entry.start + entry.length - 1;
 		let isDirty = false;
 
