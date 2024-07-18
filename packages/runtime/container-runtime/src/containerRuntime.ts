@@ -2623,8 +2623,8 @@ export class ContainerRuntime
 		// to understand if/when it is hit.
 		const logLegacyCase = (codePath: string) =>
 			this.logger.sendTelemetryEvent({
-				eventName: "LegacyRuntimeMessage",
-				details: { codePath, modernRuntimeMessage },
+				eventName: "LegacyMessageFormat",
+				details: { codePath, type: messageArg.type },
 			});
 
 		// Do shallow copy of message, as the processing flow will modify it.
