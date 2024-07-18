@@ -103,7 +103,7 @@ describe("obliterate", () => {
 
 	// TODO: these tests will be much more interesting once we have sidedness:
 	// as is, they vaidate the current behavior
-	// if we already have sufficient overlap tests in the other test files, we can remove these
+	// if we already have sufficient overlap tests in the other test files, we can likely remove these
 	describe("overlapping edits", () => {
 		it("overlapping obliterate and obliterate", () => {
 			const helper = new ReconnectTestHelper();
@@ -287,7 +287,7 @@ describe("obliterate", () => {
 
 	describe("sided obliterates", () => {
 		/**
-		 * All test cases will operate on the same number positions, but differ on their sidedness:
+		 * All test cases will operate on the same numerical positions, but differ on their sidedness:
 		 * 1. A expand both endpoints, B expand neither endpoint = expand range on both endpoints
 		 * 2. A expand start endpoint, B expand end endpoint = either FWW/LWW
 		 * 3. A expand both endpoints, B expand start = expand range on both endpoints
@@ -308,10 +308,11 @@ describe("obliterate", () => {
 			// [2, 4]: before 2, after 4 => h e [l l o] _ w o r l d
 			helper.obliterateRange("B", { pos: 2, side: 0 }, { pos: 4, side: 1 });
 			helper.insertText("C", 2, "123");
-			// should probably also insert at end for this test
+			helper.insertText("C", 5, "456");
 			helper.processAllOps();
 
 			assert.equal(helper.clients.A.getText(), "he world");
+			assert.equal(helper.clients.B.getText(), "he world");
 			assert.equal(helper.clients.C.getText(), "he world");
 
 			helper.logger.validate();
@@ -333,7 +334,9 @@ describe("obliterate", () => {
 			helper.obliterateRange("B", { pos: 1, side: 1 }, { pos: 3, side: 0 });
 			helper.processAllOps();
 
+			// assumes FWW
 			assert.equal(helper.clients.A.getText(), "ADC");
+			assert.equal(helper.clients.B.getText(), "ADC");
 			assert.equal(helper.clients.C.getText(), "ADC");
 
 			helper.logger.validate();
@@ -353,6 +356,7 @@ describe("obliterate", () => {
 			helper.processAllOps();
 
 			assert.equal(helper.clients.A.getText(), "he world");
+			assert.equal(helper.clients.B.getText(), "he world");
 			assert.equal(helper.clients.C.getText(), "he world");
 
 			helper.logger.validate();
@@ -372,6 +376,7 @@ describe("obliterate", () => {
 			helper.processAllOps();
 
 			assert.equal(helper.clients.A.getText(), "he world");
+			assert.equal(helper.clients.B.getText(), "he world");
 			assert.equal(helper.clients.C.getText(), "he world");
 
 			helper.logger.validate();
@@ -391,6 +396,7 @@ describe("obliterate", () => {
 			helper.processAllOps();
 
 			assert.equal(helper.clients.A.getText(), "he456 world");
+			assert.equal(helper.clients.B.getText(), "he456 world");
 			assert.equal(helper.clients.C.getText(), "he456 world");
 
 			helper.logger.validate();
@@ -410,6 +416,7 @@ describe("obliterate", () => {
 			helper.processAllOps();
 
 			assert.equal(helper.clients.A.getText(), "he123 world");
+			assert.equal(helper.clients.B.getText(), "he123 world");
 			assert.equal(helper.clients.C.getText(), "he123 world");
 
 			helper.logger.validate();
