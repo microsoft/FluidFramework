@@ -72,7 +72,7 @@ export function isPrereleaseVersion(version: string | semver.SemVer | undefined)
 // @public
 export function isRangeOperator(r: unknown): r is RangeOperator;
 
-// @public (undocumented)
+// @public
 export function isTestVersion(version: string): boolean;
 
 // @public

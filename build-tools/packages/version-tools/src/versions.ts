@@ -190,6 +190,22 @@ function getVersionsFromStrings(prefix: TagPrefix, tags: string[]): string[] {
 	return versions;
 }
 
+/**
+ * Checks if the provided version is a test version.
+ *
+ * Test versions are generated from test/ branches and are published to the test feed.
+ *
+ * @param version - The version to check
+ * @returns - True if the version string is a test version, otherwise false
+ *
+ * @example
+ * returns true
+ * isTestVersion("0.0.0-260312-test");
+ *
+ * @example
+ * returns false
+ * isTestVersion("2.1.0-260312");
+ */
 export function isTestVersion(version: string): boolean {
 	return version.includes("test");
 }

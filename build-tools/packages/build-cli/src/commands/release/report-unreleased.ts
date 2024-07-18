@@ -154,7 +154,7 @@ async function updateReportVersions(
 	version: string,
 	log: Logger,
 ): Promise<void> {
-	const clientPackage = "@fluidframework/aqueduct";
+	const clientPackage = Object.keys(report)[1];
 
 	if (report[clientPackage] === undefined) {
 		throw new Error(`Client package ${clientPackage} is not defined in the report.`);
