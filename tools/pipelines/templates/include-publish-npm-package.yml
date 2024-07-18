@@ -18,10 +18,6 @@ parameters:
 - name: buildDirectory
   type: string
 
-- name: buildToolsVersionToInstall
-  type: string
-  default: repo
-
 stages:
 
 # This stage only runs for test-branch builds
@@ -46,7 +42,6 @@ stages:
     - template: /tools/pipelines/templates/upload-dev-manifest.yml@self
       parameters:
         buildDirectory: '${{ parameters.buildDirectory }}'
-        buildToolsVersionToInstall: '${{ parameters.buildToolsVersionToInstall }}'
 
 # This stage and the following stage both run for non-test builds. The build feed is equivalent to the public npmjs.org
 # feed except it contains builds for every main- or next-branch build.
@@ -73,7 +68,6 @@ stages:
     - template: /tools/pipelines/templates/upload-dev-manifest.yml@self
       parameters:
         buildDirectory: '${{ parameters.buildDirectory }}'
-        buildToolsVersionToInstall: '${{ parameters.buildToolsVersionToInstall }}'
 
 # Only add a stage to publish packages to the dev feed for release groups, which have separate lists of packages to
 # publish to each feed. Non-release-group builds (for an independent package) only need to publish to the build feed.

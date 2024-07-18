@@ -40,5 +40,5 @@ export {
 	VersionScheme,
 } from "./schemes";
 export { bumpRange, detectBumpType, isPrereleaseVersion, getPreviousVersions } from "./semver";
-export { getIsLatest, getSimpleVersion } from "./versions";
+export { getIsLatest, getSimpleVersion, isTestVersion } from "./versions";
 export { fromVirtualPatchScheme, toVirtualPatchScheme } from "./virtualPatchScheme";

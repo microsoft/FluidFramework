@@ -189,3 +189,7 @@ function getVersionsFromStrings(prefix: TagPrefix, tags: string[]): string[] {
 	semver.sort(versions);
 	return versions;
 }
+
+export function isTestVersion(version: string): boolean {
+	return version.includes("test");
+}
