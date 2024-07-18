@@ -461,7 +461,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		);
 		const chunk =
 			(this.siblings as TreeChunk[])[this.indexOfChunk] ??
-			fail("Expected value to be in array");
+			oob();
 		this.nestedCursor = !(chunk instanceof BasicChunk) ? chunk.cursor() : undefined;
 		this.nestedCursor?.enterNode(this.indexWithinChunk);
 	}
