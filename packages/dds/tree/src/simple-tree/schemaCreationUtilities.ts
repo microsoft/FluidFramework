@@ -5,7 +5,6 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { EmptyObject } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
 
 import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
@@ -31,7 +30,7 @@ import type { TreeNode } from "./types.js";
  * This is commonly used in unions when the only information needed is which kind of node the value is.
  * Enums are a common example of this pattern.
  * @see {@link adaptEnum}
- * @beta
+ * @alpha
  */
 // Return type is intentionally derived.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -108,7 +107,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * Extend this to support numeric enums.
  * Maybe provide `SchemaFactory.nested` to ease creating nested scopes?
  * @see {@link enumFromStrings} for a similar function that works on arrays of strings instead of an enum.
- * @beta
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function adaptEnum<
@@ -154,7 +153,7 @@ export function adaptEnum<
  * `Object.values`, but with more specific types.
  * @remarks
  * Useful with collections of schema, like those returned by {@link adaptEnum} or {@link enumFromStrings}.
- * @beta
+ * @alpha
  */
 export function typedObjectValues<TKey extends string, TValues>(
 	object: Record<TKey, TValues>,
@@ -180,7 +179,7 @@ export function typedObjectValues<TKey extends string, TValues>(
  * class Parent extends schemaFactory.object("Parent", { mode: typedObjectValues(Mode) }) {}
  * ```
  * @see {@link adaptEnum} for a similar function that works on enums instead of arrays of strings.
- * @beta
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function enumFromStrings<TScope extends string, const Members extends string>(
@@ -214,6 +213,7 @@ export function enumFromStrings<TScope extends string, const Members extends str
 
 // TODO: This generates an invalid d.ts file if exported due to a bug https://github.com/microsoft/TypeScript/issues/58688.
 // TODO: replace enumFromStrings above with this simpler implementation when the TypeScript bug is resolved.
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function _enumFromStrings2<TScope extends string, const Members extends readonly string[]>(
 	factory: SchemaFactory<TScope>,
 	members: Members,

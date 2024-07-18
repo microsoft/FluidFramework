@@ -314,7 +314,7 @@ export {
 	type FieldSchemaUnsafe,
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
-	// experimental @internal APIs:
+	// experimental @alpha APIs:
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
