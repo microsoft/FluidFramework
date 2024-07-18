@@ -13,83 +13,109 @@ import type {
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
-import  {type ZodType, z as Zod } from "zod";
+import { type ZodLazy, type ZodType, type ZodTypeAny, z as Zod } from "zod";
+import { fail } from "../util/index.js";
 
 // TODOs:
 // - Throw an error when polymorphic schemas are ambiguous
-
-interface ZodTreeSchema {
-	readonly definitions: Record<string, ZodType>;
-	readonly allowedTypes: ReadonlySet<string>;
-}
 
 /**
  * Generates a JSON schema representation from a simple tree schema.
  * @internal
  */
-export function toZodSchema(schema: SimpleTreeSchema): ZodTreeSchema {
+export function toZodSchema(schema: SimpleTreeSchema): ZodType {
 	const definitions = convertDefinitions(schema.definitions);
 
-	return {
-		definitions,
-		allowedTypes: schema.allowedTypes,
-	}
+	const mappedAllowedTypes = [...schema.allowedTypes].map((key) => {
+		const mapped = definitions.get(key);
+		if (mapped === undefined) {
+			fail(`No child schema definition created for "${key}".`);
+		}
+		return mapped;
+	});
+
+	return mapTypesToZodUnion(mappedAllowedTypes);
 }
 
 function convertDefinitions(
 	definitions: ReadonlyMap<string, SimpleNodeSchema>,
-): Record<string, Zod.Schema> {
-	const result: Record<string, Zod.Schema> = {};
+): ReadonlyMap<string, ZodType> {
+	const result = new Map<string, ZodType>();
 	for (const [key, value] of definitions) {
-		result[key] = convertNodeSchema(value);
+		result.set(
+			key,
+			convertNodeSchema(value, (_childKey) =>
+				Zod.lazy(() => {
+					const childSchema = result.get(_childKey);
+					if (childSchema === undefined) {
+						fail(`No child schema definition created for "${_childKey}".`);
+					}
+					return childSchema;
+				}),
+			),
+		);
 	}
 	return result;
 }
 
-function convertNodeSchema(schema: SimpleNodeSchema, definitions: Record<string, Zod.Schema>): ZodType {
+function convertNodeSchema(
+	schema: SimpleNodeSchema,
+	getChildSchema: (key: string) => ZodLazy<ZodType>,
+): ZodType {
 	switch (schema.kind) {
 		case "array":
-			return convertArrayNodeSchema(schema);
+			return convertArrayNodeSchema(schema, getChildSchema);
 		case "leaf":
 			return convertLeafNodeSchema(schema);
 		case "map":
-			return convertMapNodeSchema(schema);
+			return convertMapNodeSchema(schema, getChildSchema);
 		case "object":
-			return convertObjectNodeSchema(schema);
+			return convertObjectNodeSchema(schema, getChildSchema);
 		default:
 			throw new TypeError(`Unknown node schema kind: ${(schema as SimpleNodeSchema).kind}`);
 	}
 }
 
-function convertFieldSchema(schema: SimpleFieldSchema, definitions: Record<string, Zod.Schema>): ZodType {
-	const mappedAllowedTypes = [...schema.allowedTypes].map((schemaIdentifier) => {
-		return Zod.lazy(() => definitions[schemaIdentifier]);
-	});
+function mapChildTypes(
+	allowedTypes: ReadonlySet<string>,
+	getChildSchema: (key: string) => ZodLazy<ZodType>,
+): ZodType {
+	const mappedAllowedTypes = [...allowedTypes].map(getChildSchema);
+	return mapTypesToZodUnion(mappedAllowedTypes);
+}
 
-	assert(mappedAllowedTypes.length > 0);
-	const mappedFieldChild = mappedAllowedTypes.length === 1 ? mappedAllowedTypes[0] : Zod.union(mappedAllowedTypes);
+function mapTypesToZodUnion(types: ZodType[]): ZodType {
+	assert(types.length > 0, "No allowed types found in the schema.");
+	return types.length === 1
+		? types[0]
+		: // Zod's union typing requires that the input array have 2+ members statically.
+			// We verify it here dynamically, and cast.
+			Zod.union(types as unknown as [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]);
+}
 
-	switch(schema.kind) {
+function convertFieldSchema(
+	schema: SimpleFieldSchema,
+	getChildSchema: (key: string) => ZodLazy<ZodType>,
+): ZodType {
+	const childSchema = mapChildTypes(schema.allowedTypes, getChildSchema);
+
+	switch (schema.kind) {
 		case "required":
 		case "identifier":
-			return mappedFieldChild;
+			return childSchema;
 		case "optional":
-			return Zod.optional(mappedFieldChild);
+			return Zod.optional(childSchema);
+		default:
+			unreachableCase(schema.kind);
 	}
 }
 
-function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): ZodType {
-	// const allowedTypes: JsonDefinitionRef[] = [];
-	// schema.allowedTypes.forEach((type) => {
-	// 	allowedTypes.push(createRefNode(type));
-	// });
-	// return {
-	// 	type: "array",
-	// 	kind: "array",
-	// 	items: {
-	// 		anyOf: allowedTypes,
-	// 	},
-	// };
+function convertArrayNodeSchema(
+	schema: SimpleArrayNodeSchema,
+	getChildSchema: (key: string) => ZodLazy<ZodType>,
+): ZodType {
+	const childSchema = mapChildTypes(schema.allowedTypes, getChildSchema);
+	return Zod.array(childSchema);
 }
 
 function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): ZodType {
@@ -111,31 +137,22 @@ function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): ZodType {
 	}
 }
 
-function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): ZodType {
+function convertObjectNodeSchema(
+	schema: SimpleObjectNodeSchema,
+	getChildSchema: (key: string) => ZodLazy<ZodType>,
+): ZodType {
 	const properties: Record<string, ZodType> = {};
-	// const required: string[] = [];
 	for (const [key, value] of Object.entries(schema.fields)) {
-		for (const allowedType of value.allowedTypes) {
-			properties[key] = convertField
-		}
+		properties[key] = convertFieldSchema(value, getChildSchema);
+	}
 
-	// 	properties[key] = {
-	// 		anyOf,
-	// 	};
-	// 	if (value.kind === "required") {
-	// 		required.push(key);
-	// 	}
-	// }
-	// return {
-	// 	type: "object",
-	// 	kind: "object",
-	// 	properties,
-	// 	required,
-	// 	additionalProperties: false, // TODO: get allowance from schema policy
-	// };
+	return Zod.object(properties);
 }
 
-function convertMapNodeSchema(schema: SimpleMapNodeSchema): ZodType {
+function convertMapNodeSchema(
+	schema: SimpleMapNodeSchema,
+	getChildSchema: (key: string) => ZodLazy<ZodType>,
+): ZodType {
 	throw new Error("Map nodes are not yet round-trip supported via Zod schema.");
 	// const allowedTypes: JsonDefinitionRef[] = [];
 	// schema.allowedTypes.forEach((type) => {

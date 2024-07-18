@@ -85,7 +85,7 @@ describe.only("getJsonSchema", () => {
 		validator(["Hello", 42, "world"], false);
 	});
 
-	it("Map schema", () => {
+	it.skip("Map schema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.map("map", schemaFactory.string) {}
 

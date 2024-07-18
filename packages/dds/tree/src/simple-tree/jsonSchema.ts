@@ -14,13 +14,12 @@ export type JsonSchemaId = string;
 /**
  * @internal
  */
-export type JsonSchemaType = "object" | "array" | JsonLeafSchemaType ;
-
+export type JsonSchemaType = "object" | "array" | JsonLeafSchemaType;
 
 /**
  * @internal
  */
-export type JsonLeafSchemaType = "string" | "number" | "boolean" | "null" ;
+export type JsonLeafSchemaType = "string" | "number" | "boolean" | "null";
 
 /**
  * @internal

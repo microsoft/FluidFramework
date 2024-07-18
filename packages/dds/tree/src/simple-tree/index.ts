@@ -126,7 +126,10 @@ export {
 	type NodeJsonSchemaBase,
 	type TreeJsonSchema,
 	type FieldJsonSchema,
+	type JsonLeafSchemaType,
 } from "./jsonSchema.js";
 export { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
+export { toZodSchema } from "./simpleSchemaToZod.js";
 // TODO: move this into `treeNodeApi`
 export { getJsonSchema } from "./getJsonSchema.js";
+export { getZodSchema } from "./getZodSchema.js";
