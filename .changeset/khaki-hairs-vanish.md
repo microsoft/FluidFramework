@@ -1,6 +1,6 @@
 ---
-"fluid-framework": patch
-"@fluidframework/map": patch
+"fluid-framework": minor
+"@fluidframework/map": minor
 ---
 
 fluid-framework, map: Some SharedMap/SharedMap-related APIs have been sealed
