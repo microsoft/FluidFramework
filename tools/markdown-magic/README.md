@@ -123,14 +123,14 @@ Arguments:
     Used for generation of package metadata.
     -   Default: `./package.json`.
 -   `apiDocs`: Whether or not to include a section pointing to the library's generated API documentation on `fluidframework.com`.
-    -   Default: `true`.
+    -   Default: `true` if the package is intended for direct public use. `false` otherwise.
     -   Assumes that the package is published, uses [API-Extractor][], and has its documentation published under `fluidframework.com/apis/<package-name>`.
     -   See [API_DOCS_LINK_SECTION](#api_docs_link_section)
 -   `scripts`: Whether or not to include a section listing the package's `npm` scripts.
     -   Default: `false`.
     -   See [README_PACKAGE_SCRIPTS](#readme-package_scripts).
 -   `clientRequirements`: Whether or not to include a section outlining the minimum client requirements for using Fluid Framework packages.
-    -   Default: `true`.
+    -   Default: `true` if the package is intended for direct public use. `false` otherwise.
     -   See [README_CLIENT_REQUIREMENTS_SECTION](#readme_client_requirements_section).
 -   `contributionGuidelines`: Whether or not to include a section enumerating `fluid-framework`'s contribution guidelines.
     -   Default: `true`.

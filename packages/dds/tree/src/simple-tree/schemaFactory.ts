@@ -8,6 +8,8 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 // which degrades the API-Extractor report quality since API-Extractor can not tell the inline import is the same as the non-inline one.
 // eslint-disable-next-line unused-imports/no-unused-imports
 import type { IFluidHandle as _dummyImport } from "@fluidframework/core-interfaces";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import type { TreeValue } from "../core/index.js";
 import { type NodeKeyManager, type Unenforced, isLazy } from "../feature-libraries/index.js";
@@ -20,6 +22,7 @@ import {
 import {
 	booleanSchema,
 	handleSchema,
+	LeafNodeSchema,
 	nullSchema,
 	numberSchema,
 	stringSchema,
@@ -40,7 +43,6 @@ import {
 	getDefaultProvider,
 } from "./schemaTypes.js";
 import { type TreeArrayNode, arraySchema } from "./arrayNode.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import {
 	type InsertableObjectFromSchemaRecord,
 	type TreeObjectNode,
@@ -64,6 +66,7 @@ import type {
 	TreeObjectNodeUnsafe,
 } from "./typesUnsafe.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
+import { inPrototypeChain, TreeNodeValid } from "./types.js";
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */
@@ -161,6 +164,13 @@ export class SchemaFactory<
 	out TScope extends string | undefined = string | undefined,
 	TName extends number | string = string,
 > {
+	/**
+	 * TODO:
+	 * If users of this generate the same name because two different schema with the same identifier were used,
+	 * the second use can get a cache hit, and reference the wrong schema.
+	 * Such usage should probably return a distinct type or error but currently does not.
+	 * The use of markSchemaMostDerived in structuralName at least ensure an error in the case where the collision is from two types extending the same schema factor class.
+	 */
 	private readonly structuralTypes: Map<string, TreeNodeSchema> = new Map();
 
 	/**
@@ -236,7 +246,7 @@ export class SchemaFactory<
 	public readonly handle = handleSchema;
 
 	/**
-	 * Define a {@link TreeNodeSchema} for a {@link TreeObjectNode}.
+	 * Define a {@link TreeNodeSchemaClass} for a {@link TreeObjectNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
@@ -729,6 +739,7 @@ export function structuralName<const T extends string>(
 		const names = allowedTypes.map((t): string => {
 			// Ensure that lazy types (functions) don't slip through here.
 			assert(!isLazy(t), 0x83d /* invalid type provided */);
+			markSchemaMostDerived(t);
 			return t.identifier;
 		});
 		// Ensure name is order independent
@@ -739,4 +750,28 @@ export function structuralName<const T extends string>(
 		inner = JSON.stringify(names);
 	}
 	return `${collectionName}<${inner}>`;
+}
+
+/**
+ * Indicates that a schema is the "most derived" version which is allowed to be used, see {@link MostDerivedData}.
+ * Calling helps with error messages about invalid schema usage (using more than one type from single schema factor produced type,
+ * and thus calling this for one than one subclass).
+ * @remarks
+ * Helper for invoking {@link TreeNodeValid.markMostDerived} for any {@link TreeNodeSchema} if it needed.
+ */
+export function markSchemaMostDerived(schema: TreeNodeSchema): void {
+	if (schema instanceof LeafNodeSchema) {
+		return;
+	}
+
+	if (!inPrototypeChain(schema, TreeNodeValid)) {
+		// Use JSON.stringify to quote and escape identifier string.
+		throw new UsageError(
+			`Schema for ${JSON.stringify(
+				schema.identifier,
+			)} does not extend a SchemaFactory generated class. This is invalid.`,
+		);
+	}
+
+	(schema as typeof TreeNodeValid & TreeNodeSchema).markMostDerived();
 }

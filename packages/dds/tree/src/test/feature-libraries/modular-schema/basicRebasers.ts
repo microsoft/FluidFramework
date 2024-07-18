@@ -101,6 +101,7 @@ export const valueHandler = {
 	isEmpty: (change) => change === 0,
 	getNestedChanges: (change) => [],
 	createEmpty: () => 0,
+	getCrossFieldKeys: (_change) => [],
 } satisfies FieldChangeHandler<ValueChangeset>;
 
 export const valueField = new FieldKindWithEditor(
