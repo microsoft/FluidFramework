@@ -3,24 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { ITreeSubscriptionCursor, inCursorNode } from "../../core/index.js";
-import { FlexFieldKind } from "../modular-schema/index.js";
+import { type ITreeSubscriptionCursor, inCursorNode } from "../../core/index.js";
 import { FieldKinds } from "../default-schema/index.js";
+import type { FlexFieldKind } from "../modular-schema/index.js";
 import {
-	FlexAllowedTypes,
-	FlexFieldSchema,
-	FlexTreeNodeSchema,
+	type FlexAllowedTypes,
+	type FlexFieldSchema,
+	type FlexTreeNodeSchema,
 	schemaIsLeaf,
 } from "../typed-schema/index.js";
-import { Context } from "./context.js";
-import {
+
+import type { Context } from "./context.js";
+import type {
 	FlexTreeNode,
 	FlexTreeUnboxField,
 	FlexTreeUnboxNode,
 	FlexTreeUnboxNodeUnion,
 } from "./flexTreeTypes.js";
-import { makeTree } from "./lazyNode.js";
 import { makeField } from "./lazyField.js";
+import { makeTree } from "./lazyNode.js";
 
 /**
  * See {@link FlexTreeUnboxNode} for documentation on what unwrapping this performs.

@@ -4,19 +4,21 @@
  */
 
 import { strict as assert } from "assert";
+
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	createWeightedAsyncGenerator as createWeightedGenerator,
 	AsyncGenerator as Generator,
+	createWeightedAsyncGenerator as createWeightedGenerator,
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	createDDSFuzzSuite,
-	DDSFuzzModel,
 	DDSFuzzHarnessEvents,
+	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
+	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+
 import {
 	appendAddIntervalToRevertibles,
 	appendChangeIntervalToRevertibles,
@@ -24,18 +26,19 @@ import {
 	appendIntervalPropertyChangedToRevertibles,
 	appendSharedStringDeltaToRevertibles,
 } from "../../revertibles.js";
+
 import {
 	FuzzTestState,
-	RevertOperation,
-	RevertibleSharedString,
-	isRevertibleSharedString,
 	IntervalOperationGenerationConfig,
+	RevertOperation,
 	RevertSharedStringRevertibles,
+	RevertibleSharedString,
 	SharedStringFuzzFactory,
 	baseModel,
 	defaultFuzzOptions,
+	isRevertibleSharedString,
+	makeIntervalOperationGenerator,
 } from "./fuzzUtils.js";
-import { makeOperationGenerator } from "./intervalCollection.fuzz.spec.js";
 
 const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 
@@ -120,7 +123,7 @@ function operationGenerator(
 	};
 
 	assert(optionsParam.weights !== undefined);
-	const baseGenerator = makeOperationGenerator(optionsParam, true);
+	const baseGenerator = makeIntervalOperationGenerator(optionsParam, true);
 	return createWeightedGenerator<RevertOperation, ClientOpState>([
 		[revertSharedStringRevertibles, optionsParam.weights.revertWeight, hasRevertibles],
 		[baseGenerator, 1],
@@ -141,6 +144,7 @@ describe("IntervalCollection fuzz testing", () => {
 						revertWeight: 2,
 						addText: 2,
 						removeRange: 1,
+						annotateRange: 1,
 						obliterateRange: 0,
 						addInterval: 2,
 						deleteInterval: 2,
@@ -167,6 +171,7 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 						revertWeight: 2,
 						addText: 2,
 						removeRange: 1,
+						annotateRange: 1,
 						obliterateRange: 0,
 						addInterval: 2,
 						deleteInterval: 2,

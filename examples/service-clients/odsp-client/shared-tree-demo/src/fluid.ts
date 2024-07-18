@@ -2,8 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { OdspClient, OdspContainerServices } from "@fluid-experimental/odsp-client";
+
+import { OdspClient, OdspContainerServices } from "@fluidframework/odsp-client/beta";
 import { ContainerSchema, IFluidContainer, SharedTree } from "fluid-framework";
+
 import { clientProps } from "./clientProps.js";
 
 const client = new OdspClient(clientProps);
@@ -21,7 +23,10 @@ export const loadFluidData = async (
 	services: OdspContainerServices;
 	container: IFluidContainer;
 }> => {
-	const { container, services }: { container: IFluidContainer; services: OdspContainerServices } =
+	const {
+		container,
+		services,
+	}: { container: IFluidContainer; services: OdspContainerServices } =
 		await client.getContainer(itemId, schema);
 
 	return { services, container };
@@ -35,7 +40,10 @@ export const createFluidData = async (
 }> => {
 	// The client will create a new detached container using the schema
 	// A detached container will enable the app to modify the container before attaching it to the client
-	const { container, services }: { container: IFluidContainer; services: OdspContainerServices } =
+	const {
+		container,
+		services,
+	}: { container: IFluidContainer; services: OdspContainerServices } =
 		await client.createContainer(schema);
 
 	return { services, container };

@@ -3,11 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { compareArrays } from '@fluidframework/core-utils/internal';
 import { v4 as uuidv4 } from 'uuid';
-import { compareArrays } from '@fluidframework/core-utils';
-import { copyPropertyIfDefined, fail, Mutable } from './Common.js';
+
+import { BuildNode, BuildTreeNode, Change, HasVariadicTraits, StablePlace, StableRange } from './ChangeTypes.js';
+import { Mutable, copyPropertyIfDefined, fail } from './Common.js';
 import { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from './Identifiers.js';
 import { NodeIdContext, NodeIdConverter } from './NodeIdUtilities.js';
+import { comparePayloads } from './PayloadUtilities.js';
+import { TransactionView, iterateChildren } from './RevisionView.js';
+import { getChangeNode_0_0_2FromView } from './SerializationUtilities.js';
+import { TraitLocation, TreeView } from './TreeView.js';
+import { placeFromStablePlace, rangeFromStableRange } from './TreeViewUtilities.js';
 import {
 	BuildNodeInternal,
 	ChangeInternal,
@@ -24,12 +31,6 @@ import {
 	TreeNode,
 	TreeNodeSequence,
 } from './persisted-types/index.js';
-import { TraitLocation, TreeView } from './TreeView.js';
-import { BuildNode, BuildTreeNode, Change, HasVariadicTraits, StablePlace, StableRange } from './ChangeTypes.js';
-import { placeFromStablePlace, rangeFromStableRange } from './TreeViewUtilities.js';
-import { iterateChildren, TransactionView } from './RevisionView.js';
-import { getChangeNode_0_0_2FromView } from './SerializationUtilities.js';
-import { comparePayloads } from './PayloadUtilities.js';
 
 /**
  * Functions for constructing and comparing Edits.
@@ -130,8 +131,7 @@ export function convertTreeNodes<
 			if (!isKnownType(child, isPlaceholder)) {
 				convertedChild = convert(child) as TOut;
 				if (child.traits !== undefined) {
-					const childTraits =
-						(child as unknown as TOut) === convertedChild ? { traits: child.traits } : child;
+					const childTraits = (child as unknown as TOut) === convertedChild ? { traits: child.traits } : child;
 					pendingNodes.push({
 						childIterator: iterateChildren(childTraits)[Symbol.iterator](),
 						newNode: convertedChild,
@@ -170,7 +170,10 @@ export function walkTree<TIn extends HasVariadicTraits<TIn | TPlaceholder>, TPla
 	tree: TIn | TPlaceholder,
 	visitors:
 		| ((node: TIn) => void)
-		| { nodeVisitor?: (node: TIn) => void; placeholderVisitor?: (placeholder: TPlaceholder) => void },
+		| {
+				nodeVisitor?: (node: TIn) => void;
+				placeholderVisitor?: (placeholder: TPlaceholder) => void;
+		  },
 	isPlaceholder: (node: TIn | TPlaceholder) => node is TPlaceholder
 ): void;
 
@@ -178,7 +181,10 @@ export function walkTree<TIn extends HasVariadicTraits<TIn | TPlaceholder>, TPla
 	tree: TIn | TPlaceholder,
 	visitors:
 		| ((node: TIn) => void)
-		| { nodeVisitor?: (node: TIn) => void; placeholderVisitor?: (placeholder: TPlaceholder) => void },
+		| {
+				nodeVisitor?: (node: TIn) => void;
+				placeholderVisitor?: (placeholder: TPlaceholder) => void;
+		  },
 	isPlaceholder?: (node: TIn | TPlaceholder) => node is TPlaceholder
 ): void {
 	const nodeVisitor = typeof visitors === 'function' ? visitors : visitors.nodeVisitor;
@@ -428,7 +434,11 @@ export function validateStableRange(
 	view: TreeView,
 	range: StableRangeInternal
 ):
-	| { result: RangeValidationResultKind.Valid; start: StablePlaceInternal; end: StablePlaceInternal }
+	| {
+			result: RangeValidationResultKind.Valid;
+			start: StablePlaceInternal;
+			end: StablePlaceInternal;
+	  }
 	| { result: Exclude<RangeValidationResult, RangeValidationResultKind.Valid> } {
 	/* A StableRange is valid if the following conditions are met:
 	 *     1. Its start and end places are valid.
@@ -440,13 +450,23 @@ export function validateStableRange(
 	const validatedStart = validateStablePlace(view, start);
 	if (validatedStart.result !== PlaceValidationResult.Valid) {
 		return {
-			result: { kind: RangeValidationResultKind.BadPlace, place: start, placeFailure: validatedStart.result },
+			result: {
+				kind: RangeValidationResultKind.BadPlace,
+				place: start,
+				placeFailure: validatedStart.result,
+			},
 		};
 	}
 
 	const validatedEnd = validateStablePlace(view, end);
 	if (validatedEnd.result !== PlaceValidationResult.Valid) {
-		return { result: { kind: RangeValidationResultKind.BadPlace, place: end, placeFailure: validatedEnd.result } };
+		return {
+			result: {
+				kind: RangeValidationResultKind.BadPlace,
+				place: end,
+				placeFailure: validatedEnd.result,
+			},
+		};
 	}
 
 	const startTraitLocation = validatedStart.referenceTrait ?? view.getTraitLocation(validatedStart.referenceSibling);

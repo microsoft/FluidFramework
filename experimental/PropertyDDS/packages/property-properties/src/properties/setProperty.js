@@ -10,6 +10,7 @@
 const { PathHelper, TypeIdHelper } = require("@fluid-experimental/property-changeset");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const _ = require("lodash");
+
 const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
 const { BaseProperty } = require("./baseProperty");
 const { IndexedCollectionBaseProperty } = require("./indexedCollectionBaseProperty");
@@ -122,7 +123,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 					this,
 					in_segment,
 					in_segmentType,
-			  );
+				);
 	}
 
 	/**

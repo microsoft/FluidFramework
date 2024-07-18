@@ -3,36 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { Mutable } from "../../util/index.js";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+
 import {
-	DeltaDetachedNodeChanges,
-	DeltaDetachedNodeRename,
-	DeltaFieldChanges,
-	DeltaFieldMap,
-	DeltaMark,
-	TaggedChange,
+	type DeltaDetachedNodeChanges,
+	type DeltaDetachedNodeRename,
+	type DeltaFieldChanges,
+	type DeltaMark,
 	areEqualChangeAtomIds,
-	makeDetachedNodeId,
 } from "../../core/index.js";
+import type { Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
-import { MarkList, NoopMarkType } from "./types.js";
+
+import { isMoveIn, isMoveOut } from "./moveEffectTable.js";
+import { type MarkList, NoopMarkType } from "./types.js";
 import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
+	getDetachedNodeId,
 	getEndpoint,
 	getInputCellId,
-	getOutputCellId,
 	isAttachAndDetachEffect,
-	getDetachOutputId,
 } from "./utils.js";
-import { isMoveIn, isMoveOut } from "./moveEffectTable.js";
+import type { ToDelta } from "../modular-schema/index.js";
 
-export type ToDelta<TNodeChange> = (child: TNodeChange) => DeltaFieldMap;
-
-export function sequenceFieldToDelta<TNodeChange>(
-	{ change, revision }: TaggedChange<MarkList<TNodeChange>>,
-	deltaFromChild: ToDelta<TNodeChange>,
+export function sequenceFieldToDelta(
+	change: MarkList,
+	deltaFromChild: ToDelta,
 ): DeltaFieldChanges {
 	const local: DeltaMark[] = [];
 	const global: DeltaDetachedNodeChanges[] = [];
@@ -40,7 +37,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 
 	for (const mark of change) {
 		const deltaMark: Mutable<DeltaMark> = { count: mark.count };
-		const inputCellId = getInputCellId(mark, revision, undefined);
+		const inputCellId = getInputCellId(mark);
 		const changes = mark.changes;
 		if (changes !== undefined) {
 			const nestedDelta = deltaFromChild(changes);
@@ -74,13 +71,13 @@ export function sequenceFieldToDelta<TNodeChange>(
 				continue;
 			}
 
-			const outputId = getOutputCellId(mark, revision, undefined);
+			const outputId = getDetachedNodeId(mark.detach);
 			assert(
 				outputId !== undefined,
 				0x820 /* AttachAndDetach mark should have defined output cell ID */,
 			);
 			const oldId = nodeIdFromChangeAtom(
-				isMoveIn(mark.attach) ? getEndpoint(mark.attach, revision) : inputCellId,
+				isMoveIn(mark.attach) ? getEndpoint(mark.attach) : inputCellId,
 			);
 			if (!areEqualChangeAtomIds(inputCellId, outputId)) {
 				rename.push({
@@ -101,13 +98,13 @@ export function sequenceFieldToDelta<TNodeChange>(
 			switch (type) {
 				case "MoveIn": {
 					local.push({
-						attach: nodeIdFromChangeAtom(getEndpoint(mark, revision)),
+						attach: nodeIdFromChangeAtom(getEndpoint(mark)),
 						count: mark.count,
 					});
 					break;
 				}
 				case "Remove": {
-					const newDetachId = getDetachOutputId(mark, revision, undefined);
+					const newDetachId = getDetachedNodeId(mark);
 					if (inputCellId === undefined) {
 						deltaMark.detach = nodeIdFromChangeAtom(newDetachId);
 						local.push(deltaMark);
@@ -133,7 +130,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 				}
 				case "MoveOut": {
 					// The move destination will look for the detach ID of the source, so we can ignore `finalEndpoint`.
-					const detachId = makeDetachedNodeId(mark.revision ?? revision, mark.id);
+					const detachId = nodeIdFromChangeAtom(getDetachedNodeId(mark));
 					if (inputCellId === undefined) {
 						deltaMark.detach = detachId;
 						local.push(deltaMark);

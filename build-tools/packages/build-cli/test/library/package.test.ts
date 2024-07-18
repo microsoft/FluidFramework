@@ -2,13 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { PackageName } from "@rushstack/node-core-library";
 import { assert } from "chai";
 import { parseJSON } from "date-fns";
 
-import { VersionDetails } from "@fluidframework/build-tools";
+import { VersionDetails } from "../../src/library/index.js";
 
-import { generateReleaseGitTagName, sortVersions } from "../../src/library/package";
+import type { PackageJson } from "@fluidframework/build-tools";
+import {
+	ensureDevDependencyExists,
+	generateReleaseGitTagName,
+	sortVersions,
+} from "../../src/library/package.js";
 
 describe("VersionDetails sorting", async () => {
 	const versions: VersionDetails[] = [
@@ -83,5 +89,42 @@ describe("the rushstack PackageName.getUnscopedName function", () => {
 		const actual = PackageName.getUnscopedName(input);
 		const expected = "fluid-static";
 		assert.equal(actual, expected);
+	});
+});
+
+/**
+ * Mock package.json object for testing.
+ */
+const mockPackageObject: PackageJson = {
+	name: "mockPackageForTesting",
+	description: "Mock package.json",
+	version: "1.0.0",
+	scripts: {},
+	devDependencies: {
+		"dependency1": "1.0.0",
+		"dependency2": "2.0.0",
+		"mockPackage-previous": "1.2.3",
+	},
+};
+
+/**
+ * Unit tests for the abstracted functions in typeTestUtils.
+ */
+describe("typeTestUtils", () => {
+	const packageObject: PackageJson = mockPackageObject;
+
+	describe("ensureDevDependencyExists", () => {
+		it("Should return expected version if dev dependency exists", () => {
+			const actual = ensureDevDependencyExists(packageObject, "dependency1");
+			assert.equal(actual, "1.0.0");
+		});
+
+		it("Should throw an error if dev dependency does not exist", () => {
+			const previousPackageName = `${packageObject.name}-does-not-exist`;
+			assert.throws(
+				() => ensureDevDependencyExists(packageObject, previousPackageName),
+				/Did not find devDependency '.*' in package.json/,
+			);
+		});
 	});
 });

@@ -4,15 +4,17 @@
  */
 
 import { IsoBuffer } from '@fluid-internal/client-utils';
-import { TestObjectProvider } from '@fluidframework/test-utils';
+import { TestObjectProvider } from '@fluidframework/test-utils/internal';
 import { expect } from 'chai';
-import { fail } from '../../Common.js';
-import { Definition, EditId, SessionId, TraitLabel } from '../../Identifiers.js';
+
 import { Change, StablePlace, StableRange } from '../../ChangeTypes.js';
-import { SharedTree } from '../../SharedTree.js';
-import { ChangeInternal, ChangeNode, Edit, TraitMap } from '../../persisted-types/index.js';
+import { fail } from '../../Common.js';
 import { revert } from '../../HistoryEditFactory.js';
+import { Definition, EditId, SessionId, TraitLabel } from '../../Identifiers.js';
+import { SharedTree } from '../../SharedTree.js';
 import { IdCompressor } from '../../id-compressor/index.js';
+import { ChangeInternal, ChangeNode, Edit, TraitMap } from '../../persisted-types/index.js';
+
 import { TestTree } from './TestNode.js';
 import {
 	LocalServerSharedTreeTestingComponents,
@@ -39,9 +41,7 @@ interface SummarySizeTestEntry {
  */
 const summarySizeTests: SummarySizeTestEntry[] = [
 	{
-		edits: (testTree) => [
-			Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.right.traitLocation)),
-		],
+		edits: (testTree) => [Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.right.traitLocation))],
 		expectedSize: 1163,
 		description: 'when inserting a node',
 	},
@@ -79,9 +79,7 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 		description: 'when inserting and deleting a node',
 	},
 	{
-		edits: (testTree) => [
-			Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.right.traitLocation)),
-		],
+		edits: (testTree) => [Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.right.traitLocation))],
 		expectedSize: 1355,
 		description: 'when inserting and reverting a node',
 		revertEdits: true,
@@ -144,8 +142,7 @@ export function runSummarySizeTests(
 				for (let i = changes.length - 1; i >= 0; i--) {
 					const editIndex = tree.edits.getIndexOfId(edits[i].id);
 					const edit =
-						(tree.edits.tryGetEditAtIndex(editIndex) as unknown as Edit<ChangeInternal>) ??
-						fail('edit not found');
+						(tree.edits.tryGetEditAtIndex(editIndex) as unknown as Edit<ChangeInternal>) ?? fail('edit not found');
 					const reverted = revert(edit.changes, tree.logViewer.getRevisionViewInMemory(editIndex));
 					if (reverted !== undefined) {
 						tree.applyEditInternal(reverted);

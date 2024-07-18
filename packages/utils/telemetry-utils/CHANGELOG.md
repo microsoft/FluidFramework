@@ -1,5 +1,86 @@
 # @fluidframework/telemetry-utils
 
+## 2.0.0-rc.5.0.0
+
+### Major Changes
+
+-   telemetry-utils: BREAKING CHANGE: Update MockLogger's events property is no longer externally mutable ([#21470](https://github.com/microsoft/FluidFramework/pull/21470)) [a9cc448107](https://github.com/microsoft/FluidFramework/commit/a9cc44810707d58f64350d468a922ed0a307ede9)
+
+    If you depended on this mutability to implement some behavior, you should create your own mock logger implementation.
+
+    If you depended on this mutability to work around the logger's self-clearing behavior after running a match check, you
+    can now override this behavior via the `clearEventsAfterCheck` parameter.
+
+### Minor Changes
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
+-   Update to ES 2022 ([#21292](https://github.com/microsoft/FluidFramework/pull/21292)) [68921502f7](https://github.com/microsoft/FluidFramework/commit/68921502f79b1833c4cd6d0fe339bfb126a712c7)
+
+    Update tsconfig to target ES 2022.
+
+-   telemetry-utils: Deprecate `MockLogger` for external use. ([#21497](https://github.com/microsoft/FluidFramework/pull/21497)) [ed09fac561](https://github.com/microsoft/FluidFramework/commit/ed09fac5617ef832b2febfd3427a2949f8777bfe)
+
+    No replacement API is given. This type was never intended for use outside of the `fluid-framework` repository.
+    If you were depending on this class for testing purposes, we recommend creating your own mock logger implementation,
+    or copy and adapt the code from `fluid-framework` as needed.
+
+## 2.0.0-rc.4.0.0
+
+### Major Changes
+
+-   telemetry-utils: Internal telemetry types removed from public API surface [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    We have updated the tags for the following telemetry-related types in the FluidFramework: TelemetryEventCategory, TelemetryEventPropertyTypeExt, ITelemetryPropertiesExt, ITelemetryGenericEventExt, ITelemetryErrorEventExt, ITelemetryPerformanceEventExt, ITelemetryLoggerExt. For developers using any of these types, the primary action required is to transition to using the corresponding "base" type. For example, replace ITelemetryPerformanceEventExt with ITelemetryBaseEvent from @core-interfaces.
+
+## 2.0.0-rc.3.0.0
+
+### Major Changes
+
+-   Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    Fluid Framework packages have been updated to use the [package.json "exports"
+    field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+    TypeScript types and implementation code.
+
+    This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+
+    -   `"moduleResolution": "Node16"` with `"module": "Node16"`
+    -   `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+
+    We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+    for use with modern versions of Node.js _and_ Bundlers.
+    [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+    regarding the module and moduleResolution options.
+
+    **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+    to distinguish stable APIs from those that are in development.**
+
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   fluid-framework: EventEmitterWithErrorHandling is no longer publicly exported ([#19717](https://github.com/microsoft/FluidFramework/issues/19717)) [ae1d0be26d](https://github.com/microsoft/FluidFramework/commits/ae1d0be26d61453cff316b3f622a9f3647149167)
+
+    EventEmitterWithErrorHandling is intended for authoring DDSes, and thus is only intended for use within the Fluid Framework client packages.
+    It is no longer publicly exported: any users should fine their own solution or be upstreamed.
+    EventEmitterWithErrorHandling is available for now as `@alpha` to make this migration less disrupting for any existing users.
+
+-   telemetry-utils: logIfFalse() is removed ([#19597](https://github.com/microsoft/FluidFramework/issues/19597)) [213b5ab761](https://github.com/microsoft/FluidFramework/commits/213b5ab7611c214fda7fa005f89ac37c2f1695c1)
+
+    The deprecated `logIfFalse()` function has been removed. Consumers who want to keep using it can reimplement in in their
+    codebase by copying it from a previous version of the `@fluidframework/telemetry-utils` package.
+
+-   Deprecated error-related enums have been removed ([#19067](https://github.com/microsoft/FluidFramework/issues/19067)) [59793302e5](https://github.com/microsoft/FluidFramework/commits/59793302e56784cfb6ace0e6469345f3565b3312)
+
+    Error-related enums `ContainerErrorType`, `DriverErrorType`, `OdspErrorType` and `RouterliciousErrorType` were previously
+    deprecated and are now removed. There are replacement object-based enumerations of `ContainerErrorTypes`,
+    `DriverErrorTypes`, `OdspErrorTypes` and `RouterliciousErrorTypes`. Refer to the release notes of [Fluid Framework version
+    2.0.0-internal.7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.7.0.0) for details
+    on the replacements.
+
 ## 2.0.0-rc.1.0.0
 
 ### Minor Changes

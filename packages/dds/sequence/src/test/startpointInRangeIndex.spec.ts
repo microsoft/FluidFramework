@@ -4,10 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { Client } from "@fluidframework/merge-tree";
+import { Client } from "@fluidframework/merge-tree/internal";
+
 import { IStartpointInRangeIndex, StartpointInRangeIndex } from "../intervalIndex/index.js";
 import { Interval, intervalHelpers } from "../intervals/index.js";
+
 import {
 	assertPlainNumberIntervals,
 	createTestInterval,

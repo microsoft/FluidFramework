@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 // jest.config.cjs
 module.exports = {
 	reporters: [
@@ -15,7 +16,8 @@ module.exports = {
 		],
 	],
 	// The glob patterns Jest uses to detect test files
-	testMatch: ["/**/dist/test/*.spec.js"],
+	// Test only CommonJS as test files (mostly .js) use only CommonJS patterns.
+	testMatch: ["**/dist/test/*.spec.js"],
 
 	testEnvironment: "jsdom",
 

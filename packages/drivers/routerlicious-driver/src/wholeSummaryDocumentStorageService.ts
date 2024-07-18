@@ -3,40 +3,38 @@
  * Licensed under the MIT License.
  */
 
+import { Uint8ArrayToString, performance, stringToBuffer } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { getW3CData, promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import {
+	IDocumentStorageService,
+	IDocumentStorageServicePolicies,
+	ISummaryContext,
+	ICreateBlobResponse,
+	ISnapshotTree,
+	IVersion,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
 	createChildMonitoringContext,
-} from "@fluidframework/telemetry-utils";
-import { performance, stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { getW3CData, promiseRaceWithWinner } from "@fluidframework/driver-base";
-import {
-	IDocumentStorageService,
-	ISummaryContext,
-	IDocumentStorageServicePolicies,
-} from "@fluidframework/driver-definitions";
-import {
-	ICreateBlobResponse,
-	ISnapshotTree,
-	ISummaryHandle,
-	ISummaryTree,
-	IVersion,
-} from "@fluidframework/protocol-definitions";
-import { ICache, InMemoryCache } from "./cache";
-import { IRouterliciousDriverPolicies } from "./policies";
+} from "@fluidframework/telemetry-utils/internal";
+
+import { ICache, InMemoryCache } from "./cache.js";
+import { INormalizedWholeSnapshot, IWholeFlatSnapshot } from "./contracts.js";
+import { GitManager } from "./gitManager.js";
+import { IRouterliciousDriverPolicies } from "./policies.js";
+import { convertWholeFlatSnapshotToSnapshotTreeAndBlobs } from "./r11sSnapshotParser.js";
+import { IR11sResponse } from "./restWrapper.js";
+import { ISummaryUploadManager } from "./storageContracts.js";
 import {
 	convertSnapshotAndBlobsToSummaryTree,
 	evalBlobsAndTrees,
 	validateBlobsAndTrees,
-} from "./treeUtils";
-import { GitManager } from "./gitManager";
-import { WholeSummaryUploadManager } from "./wholeSummaryUploadManager";
-import { ISummaryUploadManager } from "./storageContracts";
-import { IR11sResponse } from "./restWrapper";
-import { INormalizedWholeSnapshot, IWholeFlatSnapshot } from "./contracts";
-import { convertWholeFlatSnapshotToSnapshotTreeAndBlobs } from "./r11sSnapshotParser";
+} from "./treeUtils.js";
+import { WholeSummaryUploadManager } from "./wholeSummaryUploadManager.js";
 
 const latestSnapshotId: string = "latest";
 
@@ -163,13 +161,14 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 	// eslint-disable-next-line @rushstack/no-new-null
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		let requestVersion = version;
-		if (!requestVersion) {
+		if (requestVersion === undefined) {
 			const versions = await this.getVersions(this.id, 1);
-			if (versions.length === 0) {
+			const firstVersion = versions[0];
+			if (firstVersion === undefined) {
 				return null;
 			}
 
-			requestVersion = versions[0];
+			requestVersion = firstVersion;
 		}
 
 		let normalizedWholeSnapshot = await this.snapshotTreeCache.get(
@@ -214,7 +213,6 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 				return response;
 			},
 			undefined, // workers
-			undefined, // recordHeapSize
 			this.mc.config.getNumber("Fluid.Driver.ReadBlobTelemetrySampling"),
 		);
 		const bufferValue = stringToBuffer(blob.content, blob.encoding);

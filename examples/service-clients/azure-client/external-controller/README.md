@@ -98,7 +98,7 @@ const connectionConfig: AzureConnectionConfig = useAzure
 
 We use the `AzureFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user, thereby
 making an axios `GET` request call to the Azure Function. This axios call takes in the tenant ID, documentId and
-userID/userName as optional parameters. The Azure Function is responsible for mapping the tenantId to tenant key secret
+id/name as optional parameters. The Azure Function is responsible for mapping the tenantId to tenant key secret
 to generate and sign the token such that the service will accept it.
 
 ```typescript
@@ -108,7 +108,7 @@ const connectionConfig: AzureConnectionConfig = useAzure
 			tenantId: "YOUR-TENANT-ID-HERE",
 			tokenProvider: new AzureFunctionTokenProvider(
 				"AZURE-FUNCTION-URL" + "/api/GetAzureToken",
-				{ userId: "test-user", userName: "Test User" },
+				{ id: "test-user", name: "Test User" },
 			),
 			endpoint: "ENTER-DISCOVERY-ENDPOINT-URL-HERE",
 	  }
@@ -157,11 +157,9 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 ## Help
 
-Not finding what you're looking for in this README? Check out our [GitHub
-Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
 
-Still not finding what you're looking for? Please [file an
-issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
 
 Thank you!
 

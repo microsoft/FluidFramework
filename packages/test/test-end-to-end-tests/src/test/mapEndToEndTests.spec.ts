@@ -4,26 +4,26 @@
  */
 
 import { strict as assert } from "assert";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IErrorBase,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
-
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import type { ISharedMap, IValueChanged } from "@fluidframework/map";
+import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
 	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
 	ITestFluidObject,
+	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore";
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
@@ -135,31 +135,19 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 		let user3ValueChangedCount: number = 0;
 		sharedMap1.on("valueChanged", (changed, local) => {
 			if (!local) {
-				assert.equal(
-					changed.key,
-					"testKey1",
-					"Incorrect value for testKey1 in container 1",
-				);
+				assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 1");
 				user1ValueChangedCount = user1ValueChangedCount + 1;
 			}
 		});
 		sharedMap2.on("valueChanged", (changed, local) => {
 			if (!local) {
-				assert.equal(
-					changed.key,
-					"testKey1",
-					"Incorrect value for testKey1 in container 2",
-				);
+				assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 2");
 				user2ValueChangedCount = user2ValueChangedCount + 1;
 			}
 		});
 		sharedMap3.on("valueChanged", (changed, local) => {
 			if (!local) {
-				assert.equal(
-					changed.key,
-					"testKey1",
-					"Incorrect value for testKey1 in container 3",
-				);
+				assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 3");
 				user3ValueChangedCount = user3ValueChangedCount + 1;
 			}
 		});
@@ -337,7 +325,9 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 
 		// The new map should be available in the remote client and it should contain that key that was
 		// set in local state.
-		const newSharedMap2 = await sharedMap2.get<IFluidHandle<ISharedMap>>("newSharedMap")?.get();
+		const newSharedMap2 = await sharedMap2
+			.get<IFluidHandle<ISharedMap>>("newSharedMap")
+			?.get();
 		assert(newSharedMap2);
 		assert.equal(
 			newSharedMap2.get("newKey"),

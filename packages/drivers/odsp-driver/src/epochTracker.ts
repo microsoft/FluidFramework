@@ -3,48 +3,51 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import {
+	LocationRedirectionError,
+	NonRetryableError,
+	RateLimiter,
+	ThrottlingError,
+} from "@fluidframework/driver-utils/internal";
+import {
+	ICacheEntry,
+	IEntry,
+	IFileEntry,
+	IOdspError,
+	IOdspErrorAugmentations,
+	IOdspResolvedUrl,
+	IPersistedCache,
+	OdspErrorTypes,
+	maximumCacheDurationMs,
+	snapshotKey,
+	snapshotWithLoadingGroupIdKey,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 	isFluidError,
-	normalizeError,
 	loggerToMonitoringContext,
+	normalizeError,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
+
+import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";
+import { ClpCompliantAppHeader } from "./contractsPublic.js";
+import { INonPersistentCache, IOdspCache, IPersistedFileCache } from "./odspCache.js";
+import { patchOdspResolvedUrl } from "./odspLocationRedirection.js";
 import {
-	ThrottlingError,
-	RateLimiter,
-	NonRetryableError,
-	LocationRedirectionError,
-} from "@fluidframework/driver-utils";
-import {
-	OdspErrorTypes,
-	snapshotKey,
-	ICacheEntry,
-	IEntry,
-	IFileEntry,
-	IPersistedCache,
-	IOdspError,
-	IOdspErrorAugmentations,
-	IOdspResolvedUrl,
-	maximumCacheDurationMs,
-} from "@fluidframework/odsp-driver-definitions";
-import {
+	IOdspResponse,
 	fetchAndParseAsJSONHelper,
 	fetchArray,
 	fetchHelper,
 	getOdspResolvedUrl,
-	IOdspResponse,
 } from "./odspUtils.js";
-import { IOdspCache, INonPersistentCache, IPersistedFileCache } from "./odspCache.js";
-import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";
-import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { patchOdspResolvedUrl } from "./odspLocationRedirection.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export type FetchType =
@@ -61,6 +64,7 @@ export type FetchType =
 	| "versions";
 
 /**
+ * @legacy
  * @alpha
  */
 export type FetchTypeInternal = FetchType | "cache";
@@ -81,6 +85,7 @@ export const Odsp409Error = "Odsp409Error";
  * server can match it with its epoch value in order to match the version.
  * It also validates the epoch value received in response of fetch calls. If the epoch does not match,
  * then it also clears all the cached entries for the given container.
+ * @legacy
  * @alpha
  */
 export class EpochTracker implements IPersistedFileCache {
@@ -145,7 +150,7 @@ export class EpochTracker implements IPersistedFileCache {
 			}
 			// Expire the cached snapshot if it's older than snapshotCacheExpiryTimeoutMs and immediately
 			// expire all old caches that do not have cacheEntryTime
-			if (entry.type === snapshotKey) {
+			if (entry.type === snapshotKey || entry.type === snapshotWithLoadingGroupIdKey) {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 				const cacheTime = value.value?.cacheEntryTime;
 				const currentTime = Date.now();
@@ -176,7 +181,7 @@ export class EpochTracker implements IPersistedFileCache {
 		assert(this._fluidEpoch !== undefined, 0x1dd /* "no epoch" */);
 		// For snapshots, the value should have the cacheEntryTime.
 		// This will be used to expire snapshots older than snapshotCacheExpiryTimeoutMs.
-		if (entry.type === snapshotKey) {
+		if (entry.type === snapshotKey || entry.type === snapshotWithLoadingGroupIdKey) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			value.cacheEntryTime = value.cacheEntryTime ?? Date.now();
 		}
@@ -311,9 +316,7 @@ export class EpochTracker implements IPersistedFileCache {
 							redirectUrl,
 							{ driverVersion, redirectLocation },
 						);
-						locationRedirectionError.addTelemetryProperties(
-							error.getTelemetryProperties(),
-						);
+						locationRedirectionError.addTelemetryProperties(error.getTelemetryProperties());
 						throw locationRedirectionError;
 					}
 				}
@@ -474,11 +477,11 @@ export class EpochTracker implements IPersistedFileCache {
 		if (this.fluidEpoch && epochFromResponse && this.fluidEpoch !== epochFromResponse) {
 			// This is similar in nature to how fluidEpochMismatchError (409) is handled.
 			// Difference - client detected mismatch, instead of server detecting it.
-			return new NonRetryableError(
-				"Epoch mismatch",
-				OdspErrorTypes.fileOverwrittenInStorage,
-				{ driverVersion, serverEpoch: epochFromResponse, clientEpoch: this.fluidEpoch },
-			);
+			return new NonRetryableError("Epoch mismatch", OdspErrorTypes.fileOverwrittenInStorage, {
+				driverVersion,
+				serverEpoch: epochFromResponse,
+				clientEpoch: this.fluidEpoch,
+			});
 		}
 	}
 
@@ -520,7 +523,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 		let result = super.get(entry);
 
 		// equivalence of what happens in fetchAndParseAsJSON()
-		if (entry.type === snapshotKey) {
+		if (entry.type === snapshotKey || entry.type === snapshotWithLoadingGroupIdKey) {
 			result = result
 				.then((value) => {
 					// If there is nothing in cache, we need to wait for network call to complete (and do redemption)
@@ -614,6 +617,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ICacheAndTracker {

@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as path from "path";
-import * as fs from "fs";
 
+import * as fs from "fs";
+import * as path from "path";
+
+import * as assert from "assert";
 import { globFn, loadModule, toPosixPath } from "../../../common/utils";
 import { LeafWithDoneFileTask } from "./leafTask";
-import * as assert from "assert";
 
 interface DoneFileContent {
 	version: string;

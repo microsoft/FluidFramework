@@ -2,29 +2,33 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import child_process from "child_process";
-import commander from "commander";
+
 import {
 	AzureClient,
-	// eslint-disable-next-line import/no-deprecated
-	AzureFunctionTokenProvider,
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 	ITokenProvider,
 	IUser,
 } from "@fluidframework/azure-client";
 import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
-
+import { SharedMap } from "@fluidframework/map/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
+import commander from "commander";
 import { v4 as uuid } from "uuid";
 
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { AzureClientConnectionConfig, ContainerFactorySchema, IRunConfig } from "./interface.js";
+import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
+import {
+	AzureClientConnectionConfig,
+	ContainerFactorySchema,
+	IRunConfig,
+} from "./interface.js";
 
 export interface AzureClientConfig {
-	userId?: string;
-	userName?: string;
+	id?: string;
+	name?: string;
 	logger?: ITelemetryLoggerExt;
 }
 
@@ -62,25 +66,23 @@ export function convertConfigToScriptParams<T extends IRunConfig>(config: T): st
 
 export function createAzureTokenProvider(
 	fnUrl: string,
-	userID?: string,
-	userName?: string,
-	// eslint-disable-next-line import/no-deprecated
+	id?: string,
+	name?: string,
 ): AzureFunctionTokenProvider {
-	// eslint-disable-next-line import/no-deprecated
 	return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
-		userId: userID ?? "foo",
-		userName: userName ?? "bar",
+		id: id ?? "foo",
+		name: name ?? "bar",
 	});
 }
 
 export function createInsecureTokenProvider(
 	tenantKey: string,
-	userID?: string,
-	userName?: string,
+	id?: string,
+	name?: string,
 ): InsecureTokenProvider {
 	const user: IUser & { name: string } = {
-		id: userID ?? "foo",
-		name: userName ?? "bar",
+		id: id ?? "foo",
+		name: name ?? "bar",
 	};
 	return new InsecureTokenProvider(tenantKey, user);
 }
@@ -132,8 +134,8 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
 			}
 			tokenProvider = createInsecureTokenProvider(
 				connectionConfig.key,
-				config.userId,
-				config.userName,
+				config.id,
+				config.name,
 			);
 		} else {
 			/* Secure Token Provider (Azure Function) */
@@ -142,8 +144,8 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
 			}
 			tokenProvider = createAzureTokenProvider(
 				connectionConfig.functionUrl,
-				config.userId,
-				config.userName,
+				config.id,
+				config.name,
 			);
 		}
 		connectionProps = {

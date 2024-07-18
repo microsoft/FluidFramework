@@ -4,10 +4,12 @@
  */
 
 import React, { useEffect, useState } from "react";
-import useResizeObserver from "use-resize-observer";
+
 import { Stats } from "../stats.js";
 import { IAppState, IBubble } from "../types.js";
+
 import { StageView } from "./stage.js";
+import { useResizeObserver } from "./useResizeObserver.cjs";
 
 const formatFloat = (n: number): number => Math.round(n * 10) / 10;
 interface IAppProps {
@@ -141,9 +143,7 @@ export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
 			<div>{`${app.localClient.bubbles.length}/${bubbleCount} bubbles @${formatFloat(
 				stats.smoothFps,
 			)} fps (${stats.lastFrameElapsed} ms)`}</div>
-			<div>{`Total FPS: ${formatFloat(stats.totalFps)} (Glitches: ${
-				stats.glitchCount
-			})`}</div>
+			<div>{`Total FPS: ${formatFloat(stats.totalFps)} (Glitches: ${stats.glitchCount})`}</div>
 			<StageView app={app}></StageView>
 		</div>
 	);

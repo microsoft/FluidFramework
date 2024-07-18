@@ -3,23 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import commander from "commander";
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
+	DriverEndpoint,
 	ITestDriver,
 	TestDriverTypes,
-	DriverEndpoint,
-} from "@fluidframework/test-driver-definitions";
-import { Loader, ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
-import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { getRetryDelayFromError } from "@fluidframework/driver-utils";
-import { assert, delay } from "@fluidframework/core-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import { ILoadTest, IRunConfig } from "./loadTestDataStore";
+} from "@fluid-internal/test-driver-definitions";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { IContainerExperimental, Loader } from "@fluidframework/container-loader/internal";
+import { IRequestHeader } from "@fluidframework/core-interfaces";
+import { assert, delay } from "@fluidframework/core-utils/internal";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import { getRetryDelayFromError } from "@fluidframework/driver-utils/internal";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
+import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import commander from "commander";
+
+import {
+	FaultInjectionDocumentServiceFactory,
+	FaultInjectionError,
+} from "./faultInjectionDriver.js";
+import { ILoadTest, IRunConfig } from "./loadTestDataStore.js";
+import {
+	generateConfigurations,
+	generateLoaderOptions,
+	generateRuntimeOptions,
+	getOptionOverride,
+} from "./optionsMatrix.js";
 import {
 	configProvider,
 	createCodeLoader,
@@ -27,21 +39,9 @@ import {
 	createTestDriver,
 	getProfile,
 	globalConfigurations,
+	printStatus,
 	safeExit,
-} from "./utils";
-import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
-import {
-	generateConfigurations,
-	generateLoaderOptions,
-	generateRuntimeOptions,
-	getOptionOverride,
-} from "./optionsMatrix";
-
-function printStatus(runConfig: IRunConfig, message: string) {
-	if (runConfig.verbose) {
-		console.log(`${runConfig.runId.toString().padStart(3)}> ${message}`);
-	}
-}
+} from "./utils.js";
 
 async function main() {
 	const parseIntArg = (value: any): number => {
@@ -99,16 +99,12 @@ async function main() {
 	// this makes runners repeatable, but ensures each runner
 	// will get its own set of randoms
 	const random = makeRandom(seed, runId);
-	const logger = await createLogger(
-		{
-			runId,
-			driverType: driver,
-			driverEndpointName: endpoint,
-			profile: profileName,
-		},
-		// Turn on verbose events for ALL stress test runs.
-		random.pick([LogLevel.verbose]),
-	);
+	const logger = await createLogger({
+		runId,
+		driverType: driver,
+		driverEndpointName: endpoint,
+		profile: profileName,
+	});
 
 	// this will enabling capturing the full stack for errors
 	// since this is test capturing the full stack is worth it
@@ -203,7 +199,12 @@ async function runnerProcess(
 	const containerOptions = generateRuntimeOptions(seed, optionsOverride?.container);
 	const configurations = generateConfigurations(seed, optionsOverride?.configurations);
 
-	const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
+	const testDriver: ITestDriver = await createTestDriver(
+		driver,
+		endpoint,
+		seed,
+		runConfig.runId,
+	);
 
 	// Cycle between creating new factory vs. reusing factory.
 	// Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
@@ -257,28 +258,38 @@ async function runnerProcess(
 			const test = (await container.getEntryPoint()) as ILoadTest;
 
 			// Retain old behavior of runtime being disposed on container close
-			container.once("closed", () => container?.dispose());
+			container.once("closed", (err) => {
+				// everywhere else we gracefully handle container close/dispose,
+				// and don't create more errors which add noise to the stress
+				// results. This should be the only place we on error close/dispose ,
+				// as this place catches closes with no error specified, which
+				// should never happen. if it does happen, the container is
+				// closing without error which could be a test or product bug,
+				// but we don't want silent failures.
+				container?.dispose(
+					err === undefined
+						? new GenericError("Container closed unexpectedly without error")
+						: undefined,
+				);
+			});
 
 			if (enableOpsMetrics) {
 				const testRuntime = await test.getRuntime();
-				metricsCleanup = await setupOpsMetrics(
-					container,
-					runConfig.logger,
-					runConfig.testConfig.progressIntervalMs,
-					testRuntime,
-				);
+				if (testRuntime !== undefined) {
+					metricsCleanup = await setupOpsMetrics(
+						container,
+						runConfig.logger,
+						runConfig.testConfig.progressIntervalMs,
+						testRuntime,
+					);
+				}
 			}
 
 			// Control fault injection period through config.
 			// If undefined then no fault injection.
 			const faultInjection = runConfig.testConfig.faultInjectionMs;
 			if (faultInjection) {
-				scheduleContainerClose(
-					container,
-					runConfig,
-					faultInjection.min,
-					faultInjection.max,
-				);
+				scheduleContainerClose(container, runConfig, faultInjection.min, faultInjection.max);
 				scheduleFaultInjection(
 					documentServiceFactory,
 					container,
@@ -323,8 +334,11 @@ async function runnerProcess(
 				await delay(delayMs);
 			}
 		} finally {
-			if (container?.closed === false) {
-				container?.close();
+			if (container?.disposed === false) {
+				// this should be the only place we dispose the container
+				// to avoid the closed handler above. This is also
+				// the only expected, non-fault, closure.
+				container?.dispose();
 			}
 			metricsCleanup();
 		}
@@ -351,8 +365,9 @@ function scheduleFaultInjection(
 				container.connectionState === ConnectionState.Connected &&
 				container.resolvedUrl !== undefined
 			) {
-				const deltaConn = ds.documentServices.get(container.resolvedUrl)
-					?.documentDeltaConnection;
+				const deltaConn = ds.documentServices.get(
+					container.resolvedUrl,
+				)?.documentDeltaConnection;
 				if (deltaConn !== undefined && !deltaConn.disposed) {
 					// 1 in numClients chance of non-retritable error to not overly conflict with container close
 					const canRetry = random.bool(1 - 1 / runConfig.testConfig.numClients);
@@ -430,7 +445,7 @@ function scheduleContainerClose(
 						);
 						setTimeout(() => {
 							if (!container.closed) {
-								container.close();
+								container.close(new FaultInjectionError("scheduleContainerClose", false));
 							}
 						}, leaveTime);
 					}

@@ -2,16 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { unreachableCase } from "@fluidframework/core-utils";
+
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
 	AsyncWeights,
 	BaseFuzzTestState,
-	done,
 	Generator,
 	Weights,
-} from "./types";
+	done,
+} from "./types.js";
 
 /**
  * Returns a generator which produces a categorial distribution with the provided weights.
@@ -44,7 +46,8 @@ import {
 export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 	weights: Weights<T, TState>,
 ): Generator<T, TState> {
-	const cumulativeSums: [T | Generator<T, TState>, number, AcceptanceCondition<TState>?][] = [];
+	const cumulativeSums: [T | Generator<T, TState>, number, AcceptanceCondition<TState>?][] =
+		[];
 	let totalWeight = 0;
 	for (const [tOrGenerator, weight, shouldAccept] of weights) {
 		const cumulativeWeight = totalWeight + weight;
@@ -53,14 +56,14 @@ export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 		}
 		totalWeight = cumulativeWeight;
 	}
-	if (totalWeight === 0) {
-		throw new Error("createWeightedGenerator must have some positive weight");
-	}
 
 	// Note: if this is a perf bottleneck in usage, the cumulative weights array could be
 	// binary searched, and for small likelihood of acceptance (i.e. disproportional weights)
 	// we could pre-filter the acceptance conditions rather than rejection sample the outcome.
 	return (state) => {
+		if (totalWeight === 0) {
+			throw new Error("createWeightedGenerator must have some positive weight");
+		}
 		const { random } = state;
 		const sample = () => {
 			const weightSelected = random.real(0, totalWeight);
@@ -91,7 +94,10 @@ export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
  * Higher-order generator operator which creates a new generator producing the first `n` elements of `generator`.
  * @internal
  */
-export function take<T, TState>(n: number, generator: Generator<T, TState>): Generator<T, TState> {
+export function take<T, TState>(
+	n: number,
+	generator: Generator<T, TState>,
+): Generator<T, TState> {
 	let count = 0;
 	return (state) => {
 		if (count < n) {
@@ -295,8 +301,11 @@ export function repeat<T, TState = void>(t: T): Generator<T, TState> {
 export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState>(
 	weights: AsyncWeights<T, TState>,
 ): AsyncGenerator<T, TState> {
-	const cumulativeSums: [T | AsyncGenerator<T, TState>, number, AcceptanceCondition<TState>?][] =
-		[];
+	const cumulativeSums: [
+		T | AsyncGenerator<T, TState>,
+		number,
+		AcceptanceCondition<TState>?,
+	][] = [];
 	let totalWeight = 0;
 	for (const [tOrGenerator, weight, shouldAccept] of weights) {
 		const cumulativeWeight = totalWeight + weight;

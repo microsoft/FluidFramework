@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IChannelAttributes,
-	type IFluidDataStoreRuntime,
-	type IChannelServices,
-	type IChannelFactory,
-} from "@fluidframework/datastore-definitions";
-import { SharedCell } from "./cell.js";
-import { type ISharedCell } from "./interfaces.js";
+import type {
+	IChannelAttributes,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
+import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
+
+import { SharedCell as SharedCellClass } from "./cell.js";
+import type { ISharedCell } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -20,7 +22,7 @@ import { pkgVersion } from "./packageVersion.js";
  *
  * @internal
  */
-export class CellFactory implements IChannelFactory {
+export class CellFactory implements IChannelFactory<ISharedCell> {
 	/**
 	 * {@inheritDoc CellFactory."type"}
 	 */
@@ -58,7 +60,7 @@ export class CellFactory implements IChannelFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<ISharedCell> {
-		const cell = new SharedCell(id, runtime, attributes);
+		const cell = new SharedCellClass(id, runtime, attributes);
 		await cell.load(services);
 		return cell;
 	}
@@ -67,8 +69,17 @@ export class CellFactory implements IChannelFactory {
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 	 */
 	public create(document: IFluidDataStoreRuntime, id: string): ISharedCell {
-		const cell = new SharedCell(id, document, this.attributes);
+		const cell = new SharedCellClass(id, document, this.attributes);
 		cell.initializeLocal();
 		return cell;
 	}
 }
+
+/**
+ * Entrypoint for {@link ISharedCell} creation.
+ *
+ * This does not control the type of the content of the cell:
+ * it is up to the user of this to ensure the cell's content types align.
+ * @internal
+ */
+export const SharedCell = createSharedObjectKind<ISharedCell>(CellFactory);

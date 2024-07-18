@@ -4,31 +4,33 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
-	jsonableTreeFromCursor,
-	cursorForJsonableTreeNode,
-	prefixPath,
-	prefixFieldPath,
-	Any,
-	FieldKinds,
-	SchemaBuilderBase,
-	FlexFieldSchema,
-} from "../feature-libraries/index.js";
-import {
-	FieldKey,
-	EmptyKey,
-	JsonableTree,
-	ITreeCursor,
 	CursorLocationType,
+	EmptyKey,
+	type FieldKey,
+	type FieldUpPath,
+	type ITreeCursor,
+	type JsonableTree,
+	type PathRootPrefix,
+	type UpPath,
+	compareFieldUpPaths,
 	rootFieldKey,
 	setGenericTreeField,
-	UpPath,
-	compareFieldUpPaths,
-	FieldUpPath,
-	PathRootPrefix,
 } from "../core/index.js";
-import { brand } from "../util/index.js";
 import { leaf } from "../domains/index.js";
+import {
+	Any,
+	FieldKinds,
+	FlexFieldSchema,
+	SchemaBuilderBase,
+	cursorForJsonableTreeNode,
+	jsonableTreeFromCursor,
+	prefixFieldPath,
+	prefixPath,
+} from "../feature-libraries/index.js";
+import { brand } from "../util/index.js";
+
 import { expectEqualFieldPaths, expectEqualPaths } from "./utils.js";
 
 const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, {
@@ -47,7 +49,9 @@ export const mapSchema = schemaBuilder.map(
 export const objectSchema = schemaBuilder.object("object", {
 	child: leaf.number,
 });
-
+export const identifierSchema = schemaBuilder.object("identifier-object", {
+	identifier: FlexFieldSchema.create(FieldKinds.identifier, [leaf.string]),
+});
 export const testTreeSchema = schemaBuilder.intoSchema(
 	FlexFieldSchema.create(FieldKinds.sequence, [Any]),
 );
@@ -332,8 +336,8 @@ export function testSpecializedFieldCursor<TData, TCursor extends ITreeCursor>(c
 				withKeys:
 					config.builders.withKeys !== undefined
 						? // This is known to be non-null from check above, but typescript can't infer it.
-						  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						  (keys) => [0, config.builders.withKeys!(keys)]
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							(keys) => [0, config.builders.withKeys!(keys)]
 						: undefined,
 			},
 			cursorFactory: (data: [number, TData]): TCursor => {
@@ -418,7 +422,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 						setGenericTreeField(root, key, [child]);
 					}
 					return builder(root);
-			  };
+				};
 
 	const parent = !extraRoot
 		? undefined
@@ -426,7 +430,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 				parent: undefined,
 				parentField: rootFieldKey,
 				parentIndex: 0,
-		  };
+			};
 
 	return describe(`${cursorName} cursor implementation`, () => {
 		describe("test trees", () => {

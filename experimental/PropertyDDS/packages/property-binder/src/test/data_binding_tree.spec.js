@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* globals should, expect */
 import { DataBindingTree } from "../data_binder/dataBindingTree";
 import { catchConsoleErrors } from "./catchConsoleError";

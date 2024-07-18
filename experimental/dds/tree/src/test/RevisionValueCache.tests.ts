@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from 'assert';
+
+import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
-import { validateAssertionError } from '@fluidframework/test-runtime-utils';
+
 import { fail } from '../Common.js';
 import { RevisionValueCache } from '../RevisionValueCache.js';
 
@@ -42,11 +44,10 @@ describe('RevisionValueCache', () => {
 
 	it('evicts entries when full', () => {
 		const size = 3;
-		const cache = new RevisionValueCache<DummyValue>(
-			size,
-			size * 3 /* ensure all entries are outside of window */,
-			[0, dummyValue]
-		);
+		const cache = new RevisionValueCache<DummyValue>(size, size * 3 /* ensure all entries are outside of window */, [
+			0,
+			dummyValue,
+		]);
 
 		// Fill the cache
 		// Start at 1 because the initial revision is never evicted

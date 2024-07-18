@@ -23,19 +23,17 @@ export {
 	IGarbageCollectorCreateParams,
 	IGCMetadata,
 	IGCMetadata_Deprecated,
+	IGCNodeUpdatedProps,
 	IGCResult,
 	IGCRuntimeOptions,
 	IMarkPhaseStats,
 	ISweepPhaseStats,
 	IGCStats,
 	oneDayMs,
-	runGCKey,
 	runSessionExpiryKey,
-	runSweepKey,
 	stableGCVersion,
 	disableAutoRecoveryKey,
 	disableDatastoreSweepKey,
-	detectOutboundRoutesViaDDSKey,
 	UnreferencedState,
 	throwOnTombstoneLoadOverrideKey,
 	GarbageCollectionMessage,
@@ -45,8 +43,9 @@ export {
 export {
 	cloneGCData,
 	concatGarbageCollectionStates,
-	trimLeadingAndTrailingSlashes,
+	getGCVersionInEffect,
 	unpackChildNodesGCDetails,
+	urlToGCNodePath,
 } from "./gcHelpers.js";
 export { runGarbageCollection } from "./gcReferenceGraphAlgorithm.js";
 export {

@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import {
+
+import type {
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
 	DeltaRoot,
@@ -13,12 +14,12 @@ import {
 	TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
 import {
-	mapTreeFromCursor,
 	cursorForMapTreeNode,
 	mapRootChanges,
+	mapTreeFromCursor,
 } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
-import { deepFreeze } from "../utils.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const emptyMap = new Map();

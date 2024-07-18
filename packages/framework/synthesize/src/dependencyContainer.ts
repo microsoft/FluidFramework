@@ -3,19 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { LazyPromise } from "@fluidframework/core-utils";
+import { LazyPromise } from "@fluidframework/core-utils/internal";
+
+import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
 import {
 	AsyncFluidObjectProvider,
-	FluidObjectSymbolProvider,
-	FluidObjectProvider,
 	AsyncOptionalFluidObjectProvider,
 	AsyncRequiredFluidObjectProvider,
+	FluidObjectProvider,
+	FluidObjectSymbolProvider,
 } from "./types.js";
-import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
 
 /**
  * DependencyContainer is similar to a IoC Container. It takes providers and will
  * synthesize an object based on them when requested.
+ * @legacy
  * @alpha
  */
 export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
@@ -122,9 +124,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 			const provider = this.resolveProvider(key);
 			if (provider === undefined) {
 				throw new Error(
-					`Object attempted to be created without registered required provider ${String(
-						key,
-					)}`,
+					`Object attempted to be created without registered required provider ${String(key)}`,
 				);
 			}
 			Object.defineProperty(base, key, provider);

@@ -4,19 +4,25 @@
  */
 
 import { strict as assert } from "node:assert";
-import { IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions";
+
+import { IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions/internal";
 import {
-	OdspErrorTypes,
-	IOdspResolvedUrl,
 	ICacheEntry,
 	IEntry,
+	IOdspResolvedUrl,
+	OdspErrorTypes,
 	maximumCacheDurationMs,
-} from "@fluidframework/odsp-driver-definitions";
-import { IFluidErrorBase, createChildLogger } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	type IFluidErrorBase,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts.js";
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
-import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts.js";
+
 import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
@@ -63,7 +69,10 @@ describe("Tests for Epoch Tracker", () => {
 			undefined
 		> = 432000000;
 
-		assert(maximumCacheDurationMs <= expected, "Actual cache expiry used must meet the policy");
+		assert(
+			maximumCacheDurationMs <= expected,
+			"Actual cache expiry used must meet the policy",
+		);
 	});
 
 	it("Cache, old versions", async () => {

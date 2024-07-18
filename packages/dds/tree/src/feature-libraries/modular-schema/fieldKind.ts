@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier, FieldKindSpecifier } from "../../core/index.js";
-import { Multiplicity } from "../multiplicity.js";
+import type {
+	FieldKindIdentifier,
+	FieldKindData,
+	Multiplicity,
+	SchemaPolicy,
+} from "../../core/index.js";
 
 /**
  * Functionality for FieldKinds that is stable,
@@ -28,7 +32,7 @@ import { Multiplicity } from "../multiplicity.js";
 export abstract class FlexFieldKind<
 	TName extends string = string,
 	TMultiplicity extends Multiplicity = Multiplicity,
-> implements FieldKindSpecifier
+> implements FieldKindData
 {
 	/**
 	 * @param identifier - Globally scoped identifier.
@@ -46,7 +50,7 @@ export abstract class FlexFieldKind<
  * The app must ensure consistency for all users of the document.
  * @internal
  */
-export interface FullSchemaPolicy {
+export interface FullSchemaPolicy extends SchemaPolicy {
 	/**
 	 * Policy information about FieldKinds:
 	 * This is typically stored as code, not in documents, and defines how to handles fields based on their kind.

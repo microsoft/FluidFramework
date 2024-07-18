@@ -4,14 +4,14 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IResolvedUrl,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * @deprecated - unused
@@ -24,7 +24,9 @@ export function wrapDocumentStorageService(
 	innerDocStorageService: IDocumentStorageService,
 	uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext,
 ) {
-	const outerDocStorageService = Object.create(innerDocStorageService) as IDocumentStorageService;
+	const outerDocStorageService = Object.create(
+		innerDocStorageService,
+	) as IDocumentStorageService;
 	outerDocStorageService.uploadSummaryWithContext = async (
 		summary: ISummaryTree,
 		context: ISummaryContext,
@@ -69,7 +71,9 @@ export function wrapDocumentServiceFactory(
 	innerDocServiceFactory: IDocumentServiceFactory,
 	uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext,
 ) {
-	const outerDocServiceFactory = Object.create(innerDocServiceFactory) as IDocumentServiceFactory;
+	const outerDocServiceFactory = Object.create(
+		innerDocServiceFactory,
+	) as IDocumentServiceFactory;
 	outerDocServiceFactory.createDocumentService = async (
 		resolvedUrl: IResolvedUrl,
 		logger?: ITelemetryBaseLogger,

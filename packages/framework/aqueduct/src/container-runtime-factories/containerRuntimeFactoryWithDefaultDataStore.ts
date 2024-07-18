@@ -3,19 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IContainerRuntimeOptions,
-	type ContainerRuntime,
-} from "@fluidframework/container-runtime";
-import {
-	type NamedFluidDataStoreRegistryEntries,
-	type IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
-import { RequestParser } from "@fluidframework/runtime-utils";
-import { type IFluidDependencySynthesizer } from "@fluidframework/synthesize";
-import { type RuntimeRequestHandler } from "@fluidframework/request-handler";
+import type {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import/no-deprecated
+import type { RuntimeRequestHandler } from "@fluidframework/request-handler/internal";
+import type {
+	IFluidDataStoreFactory,
+	NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions/internal";
+import { RequestParser } from "@fluidframework/runtime-utils/internal";
+import type { IFluidDependencySynthesizer } from "@fluidframework/synthesize/internal";
+
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory.js";
 
 const defaultDataStoreId = "default";
@@ -30,6 +32,7 @@ async function getDefaultFluidObject(runtime: IContainerRuntime): Promise<FluidO
 
 /**
  * {@link ContainerRuntimeFactoryWithDefaultDataStore} construction properties.
+ * @legacy
  * @alpha
  */
 export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
@@ -46,6 +49,7 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	 * Request handlers for containers produced.
 	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	requestHandlers?: RuntimeRequestHandler[];
 	/**
 	 * The runtime options passed to the ContainerRuntime when instantiating it
@@ -63,6 +67,7 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
  * the container with an empty URL.
  *
  * This factory should be exposed as fluidExport off the entry point to your module.
+ * @legacy
  * @alpha
  */
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {

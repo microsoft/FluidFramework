@@ -11,7 +11,10 @@ export {
 	OrderedClientCollection,
 	OrderedClientElection,
 } from "./orderedClientElection.js";
-export { defaultMaxAttemptsForSubmitFailures, RunningSummarizer } from "./runningSummarizer.js";
+export {
+	defaultMaxAttemptsForSubmitFailures,
+	RunningSummarizer,
+} from "./runningSummarizer.js";
 export {
 	ICancellableSummarizerController,
 	neverCancelledSummaryToken,
@@ -63,7 +66,7 @@ export {
 	SummarizeResultPart,
 	SubmitSummaryFailureData,
 	SummaryStage,
-	IRetriableFailureResult,
+	IRetriableFailureError,
 	ISummarizeEventProps,
 } from "./summarizerTypes.js";
 export {
@@ -80,7 +83,6 @@ export {
 } from "./summaryCollection.js";
 export {
 	aliasBlobName,
-	blobsTreeName,
 	chunksBlobName,
 	dataStoreAttributesBlobName,
 	electedSummarizerBlobName,
@@ -98,8 +100,21 @@ export {
 	WriteFluidDataStoreAttributes,
 	wrapSummaryInChannelsTree,
 	idCompressorBlobName,
-	IdCompressorMode,
+	IFluidDataStoreAttributes0,
+	IFluidDataStoreAttributes1,
+	IFluidDataStoreAttributes2,
+	OmitAttributesVersions,
 } from "./summaryFormat.js";
+export {
+	IdCompressorMode,
+	IDocumentSchemaCurrent,
+	IDocumentSchema,
+	currentDocumentVersionSchema,
+	DocumentSchemaValueType,
+	DocumentsSchemaController,
+	IDocumentSchemaChangeMessage,
+	IDocumentSchemaFeatures,
+} from "./documentSchema.js";
 export { getFailMessage, RetriableSummaryError, SummarizeReason } from "./summaryGenerator.js";
 export {
 	IConnectedEvents,

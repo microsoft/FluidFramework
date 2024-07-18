@@ -4,31 +4,34 @@
  */
 
 import {
-	DataCorruptionError,
-	ITelemetryLoggerExt,
-	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import {
-	IGarbageCollectionData,
+	IDocumentStorageService,
+	ISnapshotTree,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import {
 	IExperimentalIncrementalSummaryContext,
-	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	IGarbageCollectionData,
 	IFluidDataStoreContext,
-} from "@fluidframework/runtime-definitions";
-import { addBlobToSummary } from "@fluidframework/runtime-utils";
-import { readAndParse } from "@fluidframework/driver-utils";
-import { ChannelStorageService } from "./channelStorageService.js";
+	ISummarizeResult,
+} from "@fluidframework/runtime-definitions/internal";
+import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	DataCorruptionError,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils/internal";
+
 import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
+import { ChannelStorageService } from "./channelStorageService.js";
 import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export const attributesBlobKey = ".attributes";
@@ -38,7 +41,11 @@ export interface IChannelContext {
 
 	setConnectionState(connected: boolean, clientId?: string);
 
-	processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
+	processOp(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata?: unknown,
+	): void;
 
 	summarize(
 		fullTree?: boolean,
@@ -77,7 +84,6 @@ export function createChannelServiceEndpoints(
 	connected: boolean,
 	submitFn: (content: any, localOpMetadata: unknown) => void,
 	dirtyFn: () => void,
-	addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 	isAttachedAndVisible: () => boolean,
 	storageService: IDocumentStorageService,
 	logger: ITelemetryLoggerExt,
@@ -88,7 +94,6 @@ export function createChannelServiceEndpoints(
 		connected,
 		(message, localOpMetadata) => submitFn(message, localOpMetadata),
 		dirtyFn,
-		addedGCOutboundReferenceFn,
 		isAttachedAndVisible,
 	);
 	const objectStorage = new ChannelStorageService(tree, storageService, logger, extraBlobs);

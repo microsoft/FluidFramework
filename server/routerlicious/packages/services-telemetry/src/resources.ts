@@ -69,6 +69,7 @@ export enum HttpProperties {
 	responseFinishToCloseLatencyMs = "responseFinishToCloseLatencyMs",
 	status = "status",
 	url = "url",
+	retryCount = "retryCount",
 }
 
 /**
@@ -80,9 +81,12 @@ export enum CommonProperties {
 	clientType = "clientType",
 	clientCount = "clientCount",
 	clientDriverVersion = "clientDriverVersion",
+
+	// Connection properties
 	connectionClients = "connectionClients",
 	roomClients = "roomClients",
 	connectionCount = "connectionCount",
+	disconnectReason = "disconnectReason",
 
 	// Session properties
 	sessionState = "sessionState",
@@ -114,6 +118,9 @@ export enum CommonProperties {
 	totalBatchSize = "totalBatchSize",
 	isEphemeralContainer = "isEphemeralContainer",
 	restartReason = "restartReason",
+	errorLabel = "errorLabel",
+	isGlobalDb = "isGlobalDb",
+	internalErrorCode = "internalErrorCode",
 }
 
 /**

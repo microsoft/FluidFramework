@@ -2,17 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable no-param-reassign */
 import {
-	PropertyFactory,
 	BaseProperty,
 	MapProperty,
+	PropertyFactory,
 	ReferenceMapProperty,
 } from "@fluid-experimental/property-properties";
 
-import { PropertyProxy } from "./propertyProxy";
-import { PropertyProxyErrors } from "./errors";
-import { forceType, Utilities } from "./utilities";
+import { PropertyProxyErrors } from "./errors.js";
+import { PropertyProxy } from "./propertyProxy.js";
+import { Utilities, forceType } from "./utilities.js";
 
 /**
  * The function returns an iterator for {@link external:MapProperty MapProperty}.
@@ -127,7 +128,7 @@ class ComponentMap extends Map {
 							this.property.get(key, {
 								referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS,
 							})!,
-					  )
+						)
 					: Utilities.proxifyInternal(this.property, key, caretFound, isReferenceMap);
 			}
 		} else {
@@ -191,10 +192,7 @@ class ComponentMap extends Map {
 			) {
 				Utilities.setValueOfReferencedProperty(this.property, key, value);
 			} else {
-				if (
-					asteriskFound &&
-					!PropertyFactory.instanceOf(this.property, "Reference", "map")
-				) {
+				if (asteriskFound && !PropertyFactory.instanceOf(this.property, "Reference", "map")) {
 					throw new Error(PropertyProxyErrors.NON_REFERENCE_ASSIGN);
 				}
 				this.property.set(key, Utilities.prepareElementForInsertion(this.property, value));

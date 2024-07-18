@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import type { EmptyObject } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
-import { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
-import { NodeFromSchema, NodeKind, TreeNodeSchemaClass } from "./schemaTypes.js";
-import { TreeNode } from "./types.js";
+
+import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
+import type { NodeFromSchema, NodeKind, TreeNodeSchemaClass } from "./schemaTypes.js";
+import type { TreeNode } from "./types.js";
 
 /*
  * This file does two things:
@@ -30,6 +33,8 @@ import { TreeNode } from "./types.js";
  * @see {@link adaptEnum}
  * @beta
  */
+// Return type is intentionally derived.
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function singletonSchema<TScope extends string, TName extends string | number>(
 	factory: SchemaFactory<TScope, TName>,
 	name: TName,
@@ -105,6 +110,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * @see {@link enumFromStrings} for a similar function that works on arrays of strings instead of an enum.
  * @beta
  */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function adaptEnum<
 	TScope extends string,
 	const TEnum extends Record<string, string | number>,
@@ -125,6 +131,7 @@ export function adaptEnum<
 			typeof singletonSchema<TScope, TEnum[Property]>
 		>;
 	};
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const factoryOut = <TValue extends Values>(value: TValue) => {
 		return new out[inverse.get(value) ?? fail("missing enum value")]() as NodeFromSchema<
 			ReturnType<typeof singletonSchema<TScope, TValue>>
@@ -175,9 +182,10 @@ export function typedObjectValues<TKey extends string, TValues>(
  * @see {@link adaptEnum} for a similar function that works on enums instead of arrays of strings.
  * @beta
  */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function enumFromStrings<TScope extends string, const Members extends string>(
 	factory: SchemaFactory<TScope>,
-	members: Members[],
+	members: readonly Members[],
 ) {
 	const names = new Set(members);
 	if (names.size !== members.length) {
@@ -185,6 +193,7 @@ export function enumFromStrings<TScope extends string, const Members extends str
 	}
 
 	type TOut = Record<Members, ReturnType<typeof singletonSchema<TScope, Members>>>;
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const factoryOut = <TValue extends Members>(value: TValue) => {
 		return new out[value]() as NodeFromSchema<
 			ReturnType<typeof singletonSchema<TScope, TValue>>
@@ -203,14 +212,16 @@ export function enumFromStrings<TScope extends string, const Members extends str
 	return out;
 }
 
-// TODO: This generates an invalid d.ts file if exported due to a bug https://github.com/microsoft/TypeScript/issues/56718 which is fixed in TypeScript 5.4.
-// TODO: replace enumFromStrings above with this simpler implementation when we require at least TypeScript 5.4 to use this package.
+// TODO: This generates an invalid d.ts file if exported due to a bug https://github.com/microsoft/TypeScript/issues/58688.
+// TODO: replace enumFromStrings above with this simpler implementation when the TypeScript bug is resolved.
 function _enumFromStrings2<TScope extends string, const Members extends readonly string[]>(
 	factory: SchemaFactory<TScope>,
 	members: Members,
 ) {
 	const enumObject: {
-		[key in keyof Members as Members[key] extends string ? Members[key] : string]: Members[key];
+		[key in keyof Members as Members[key] extends string
+			? Members[key]
+			: string]: Members[key] extends string ? Members[key] : string;
 	} = Object.create(null);
 	for (const name of members) {
 		Object.defineProperty(enumObject, name, {

@@ -7,10 +7,14 @@ import fs from "fs";
 import util from "util";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { IDocumentService, IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
+import {
+	IDocumentService,
+	IDocumentStorageService,
+	ISnapshotTree,
+	IVersion,
+} from "@fluidframework/driver-definitions/internal";
 
-import { formatNumber } from "./fluidAnalyzeMessages";
+import { formatNumber } from "./fluidAnalyzeMessages.js";
 import {
 	dumpSnapshotStats,
 	dumpSnapshotTrees,
@@ -18,8 +22,8 @@ import {
 	paramActualFormatting,
 	paramNumSnapshotVersions,
 	paramSnapshotVersionIndex,
-} from "./fluidFetchArgs";
-import { latestVersionsId } from "./fluidFetchInit";
+} from "./fluidFetchArgs.js";
+import { latestVersionsId } from "./fluidFetchInit.js";
 
 interface ISnapshotInfo {
 	blobCountNew: number;
@@ -181,11 +185,16 @@ async function dumpSnapshotTreeVerbose(name: string, fetchedData: IFetchedData[]
 
 	console.log("-".repeat(nameLength + 26));
 	console.log(
-		`${"Total snapshot size".padEnd(nameLength)} |        | ${formatNumber(size).padStart(10)}`,
+		`${"Total snapshot size".padEnd(nameLength)} |        | ${formatNumber(size).padStart(
+			10,
+		)}`,
 	);
 }
 
-async function dumpSnapshotTree(name: string, fetchedData: IFetchedData[]): Promise<ISnapshotInfo> {
+async function dumpSnapshotTree(
+	name: string,
+	fetchedData: IFetchedData[],
+): Promise<ISnapshotInfo> {
 	let size = 0;
 	let sizeNew = 0;
 	let blobCountNew = 0;
@@ -268,7 +277,10 @@ async function reportErrors<T>(message: string, res: Promise<T>) {
 	}
 }
 
-export async function fluidFetchSnapshot(documentService?: IDocumentService, saveDir?: string) {
+export async function fluidFetchSnapshot(
+	documentService?: IDocumentService,
+	saveDir?: string,
+) {
 	if (
 		!dumpSnapshotStats &&
 		!dumpSnapshotTrees &&

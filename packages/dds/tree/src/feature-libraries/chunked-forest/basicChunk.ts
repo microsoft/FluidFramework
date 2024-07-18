@@ -3,21 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
-	FieldKey,
-	TreeNodeSchemaIdentifier,
 	CursorLocationType,
-	FieldUpPath,
-	UpPath,
-	TreeValue,
-	Value,
-	TreeType,
-	PathRootPrefix,
+	type FieldKey,
+	type FieldUpPath,
+	type PathRootPrefix,
+	type TreeNodeSchemaIdentifier,
+	type TreeType,
+	type TreeValue,
+	type UpPath,
+	type Value,
 } from "../../core/index.js";
-import { fail, ReferenceCountedBase } from "../../util/index.js";
-import { prefixPath, SynchronousCursor } from "../treeCursorUtils.js";
-import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk.js";
+import { ReferenceCountedBase, fail } from "../../util/index.js";
+import { SynchronousCursor, prefixPath } from "../treeCursorUtils.js";
+
+import { type ChunkedCursor, type TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
 
 /**
  * General purpose one node chunk.
@@ -57,7 +59,7 @@ export class BasicChunk extends ReferenceCountedBase implements TreeChunk {
 		return new BasicChunkCursor([this], [], [], [], [], [dummyRoot], 0, 0, 0, undefined);
 	}
 
-	protected dispose(): void {
+	protected onUnreferenced(): void {
 		for (const v of this.fields.values()) {
 			for (const child of v) {
 				child.referenceRemoved();
@@ -256,7 +258,10 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		};
 	}
 
-	private getOffsetPath(offset: number, prefix: PathRootPrefix | undefined): UpPath | undefined {
+	private getOffsetPath(
+		offset: number,
+		prefix: PathRootPrefix | undefined,
+	): UpPath | undefined {
 		// It is more efficient to handle prefix directly in here rather than delegating to PrefixedPath.
 
 		const length = this.indexStack.length - offset;
@@ -424,7 +429,10 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 				this.nestedCursor = undefined;
 			}
 		}
-		assert(this.mode === CursorLocationType.Nodes, 0x52c /* can only nextNode when in Nodes */);
+		assert(
+			this.mode === CursorLocationType.Nodes,
+			0x52c /* can only nextNode when in Nodes */,
+		);
 		this.indexWithinChunk++;
 		if (
 			this.indexWithinChunk ===

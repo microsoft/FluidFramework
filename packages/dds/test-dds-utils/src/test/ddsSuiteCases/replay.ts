@@ -2,13 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 import * as path from "node:path";
 
-import type { Operation, SharedNothingFactory } from "../sharedNothing.js";
-import { baseModel } from "../sharedNothing.js";
 import type { DDSFuzzModel } from "../../ddsFuzzHarness.js";
 import { createDDSFuzzSuite } from "../../ddsFuzzHarness.js";
+import type { Operation, SharedNothingFactory } from "../sharedNothing.js";
+import { baseModel } from "../sharedNothing.js";
+
 import { _dirname } from "./dirname.cjs";
 
 let currentIndex = 0;

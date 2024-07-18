@@ -2,36 +2,39 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	BaseContainerRuntimeFactory,
 	DataObject,
 	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import {
-	type FluidObject,
-	type IFluidLoadable,
-	type IRequest,
-	type IResponse,
+} from "@fluidframework/aqueduct/internal";
+import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
+import type { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type {
+	FluidObject,
+	IFluidLoadable,
+	IRequest,
+	IResponse,
 } from "@fluidframework/core-interfaces";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { type IRuntimeFactory } from "@fluidframework/container-definitions";
-import { RequestParser } from "@fluidframework/runtime-utils";
-import { type ContainerRuntime } from "@fluidframework/container-runtime";
-import { type IDirectory } from "@fluidframework/map";
+import type { IDirectory } from "@fluidframework/map/internal";
+import { RequestParser } from "@fluidframework/runtime-utils/internal";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-import {
-	type ContainerSchema,
-	type IRootDataObject,
-	type LoadableObjectClass,
-	type LoadableObjectClassRecord,
-	type LoadableObjectRecord,
-	type SharedObjectClass,
+import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
+import type {
+	CompatibilityMode,
+	ContainerSchema,
+	DataObjectClass,
+	IRootDataObject,
+	LoadableObjectClass,
+	LoadableObjectClassRecord,
+	LoadableObjectRecord,
 } from "./types.js";
 import {
-	type InternalDataObjectClass,
 	isDataObjectClass,
-	isSharedObjectClass,
+	isSharedObjectKind,
 	parseDataObjectsFromSharedObjects,
 } from "./utils.js";
 
@@ -44,7 +47,7 @@ export interface RootDataObjectProps {
 	 *
 	 * @see {@link RootDataObject.initializingFirstTime}
 	 */
-	initialObjects: LoadableObjectClassRecord;
+	readonly initialObjects: LoadableObjectClassRecord;
 }
 
 /**
@@ -83,7 +86,9 @@ class RootDataObject
 		const initialObjectsP: Promise<void>[] = [];
 		for (const [id, objectClass] of Object.entries(props.initialObjects)) {
 			const createObject = async (): Promise<void> => {
-				const obj = await this.create<IFluidLoadable>(objectClass);
+				const obj = await this.create<IFluidLoadable>(
+					objectClass as SharedObjectKind<IFluidLoadable>,
+				);
 				this.initialObjectsDir.set(id, obj.handle);
 			};
 			initialObjectsP.push(createObject());
@@ -126,27 +131,28 @@ class RootDataObject
 	/**
 	 * {@inheritDoc IRootDataObject.create}
 	 */
-	public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
-		if (isDataObjectClass(objectClass)) {
-			return this.createDataObject<T>(objectClass);
-		} else if (isSharedObjectClass(objectClass)) {
-			return this.createSharedObject<T>(objectClass);
+	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
+		const internal = objectClass as unknown as LoadableObjectClass<T & IFluidLoadable>;
+		if (isDataObjectClass(internal)) {
+			return this.createDataObject(internal);
+		} else if (isSharedObjectKind(internal)) {
+			return this.createSharedObject(internal);
 		}
 		throw new Error("Could not create new Fluid object because an unknown object was passed");
 	}
 
 	private async createDataObject<T extends IFluidLoadable>(
-		dataObjectClass: InternalDataObjectClass<T>,
+		dataObjectClass: DataObjectClass<T>,
 	): Promise<T> {
 		const factory = dataObjectClass.factory;
 		const packagePath = [...this.context.packagePath, factory.type];
 		const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
 		const entryPoint = await dataStore.entryPoint.get();
-		return entryPoint as unknown as T;
+		return entryPoint as T;
 	}
 
 	private createSharedObject<T extends IFluidLoadable>(
-		sharedObjectClass: SharedObjectClass<T>,
+		sharedObjectClass: ISharedObjectKind<T>,
 	): T {
 		const factory = sharedObjectClass.getFactory();
 		const obj = this.runtime.createChannel(undefined, factory.type);
@@ -164,8 +170,9 @@ const rootDataStoreId = "rootDOId";
  */
 export function createDOProviderContainerRuntimeFactory(props: {
 	schema: ContainerSchema;
+	compatibilityMode: CompatibilityMode;
 }): IRuntimeFactory {
-	return new DOProviderContainerRuntimeFactory(props.schema);
+	return new DOProviderContainerRuntimeFactory(props.schema, props.compatibilityMode);
 }
 
 /**
@@ -188,7 +195,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 
 	private readonly initialObjects: LoadableObjectClassRecord;
 
-	public constructor(schema: ContainerSchema) {
+	public constructor(schema: ContainerSchema, compatibilityMode: CompatibilityMode) {
 		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 		const rootDataObjectFactory = new DataObjectFactory(
 			"rootDO",
@@ -201,8 +208,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			containerRuntime: IContainerRuntime,
 			// eslint-disable-next-line unicorn/consistent-function-scoping
 		): Promise<FluidObject> => {
-			const entryPoint =
-				await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
+			const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
 			if (entryPoint === undefined) {
 				throw new Error(`default dataStore [${rootDataStoreId}] must exist`);
 			}
@@ -226,13 +232,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			requestHandlers: [getDefaultObject],
-			runtimeOptions: {
-				// temporary workaround to disable message batching until the message batch size issue is resolved
-				// resolution progress is tracked by the Feature 465 work item in AzDO
-				flushMode: FlushMode.Immediate,
-				// The runtime compressor is required to be on to use @fluidframework/tree.
-				enableRuntimeIdCompressor: "on",
-			},
+			runtimeOptions: compatibilityModeRuntimeOptions[compatibilityMode],
 			provideEntryPoint,
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;

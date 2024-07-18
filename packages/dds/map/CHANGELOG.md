@@ -1,5 +1,81 @@
 # @fluidframework/map
 
+## 2.0.0-rc.5.0.0
+
+### Minor Changes
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
+## 2.0.0-rc.4.0.0
+
+### Minor Changes
+
+-   Deprecated members of IFluidHandle are split off into new IFluidHandleInternal interface [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    Split IFluidHandle into two interfaces, `IFluidHandle` and `IFluidHandleInternal`.
+    Code depending on the previously deprecated members of IFluidHandle can access them by using `toFluidHandleInternal` from `@fluidframework/runtime-utils/legacy`.
+
+    External implementation of the `IFluidHandle` interface are not supported: this change makes the typing better convey this using the `ErasedType` pattern.
+    Any existing and previously working, and now broken, external implementations of `IFluidHandle` should still work at runtime, but will need some unsafe type casts to compile.
+    Such handle implementation may break in the future and thus should be replaced with use of handles produced by the Fluid Framework client packages.
+
+## 2.0.0-rc.3.0.0
+
+### Major Changes
+
+-   fluid-framework: DDS classes are no longer publicly exported [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    SharedDirectory now only exports its factory and the interface type.
+    The actual concrete classes which leak implementation details are no longer exported.
+    Users of the `SharedDirectory` type should use `ISharedDirectory`.
+
+    Most of other internal crufts are also hided within the API surface, such as the encoded format,
+    ILocalValue, ICreateInfo, local op metadata types, etc.
+
+-   Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    Fluid Framework packages have been updated to use the [package.json "exports"
+    field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+    TypeScript types and implementation code.
+
+    This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+
+    -   `"moduleResolution": "Node16"` with `"module": "Node16"`
+    -   `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+
+    We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+    for use with modern versions of Node.js _and_ Bundlers.
+    [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+    regarding the module and moduleResolution options.
+
+    **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+    to distinguish stable APIs from those that are in development.**
+
+### Minor Changes
+
+-   fluid-framework: Replace SharedObjectClass with new ISharedObjectKind type. [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    The static objects used as SharedObjectClass now explicitly implement the new ISharedObjectKind type.
+    SharedObjectClass has been removed as ISharedObjectKind now fills that role.
+    LoadableObjectCtor has been inlined as it only had one use: an external user of it can replace it with `(new (...args: any[]) => T)`.
+
+-   fluid-framework: Make some interface members readonly [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    Remove unneeded mutability from some interface members.
+
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   map, tree: DDS classes are no longer publicly exported ([#19717](https://github.com/microsoft/FluidFramework/issues/19717)) [ae1d0be26d](https://github.com/microsoft/FluidFramework/commits/ae1d0be26d61453cff316b3f622a9f3647149167)
+
+    SharedMap and SharedTree now only export their factories and the interface types.
+    The actual concrete classes which leak implementation details are no longer exported.
+    Users of the `SharedMap` type should use `ISharedMap`.
+    Users of the `SharedTree` type should use `ISharedTree`.
+
 ## 2.0.0-rc.1.0.0
 
 ### Minor Changes

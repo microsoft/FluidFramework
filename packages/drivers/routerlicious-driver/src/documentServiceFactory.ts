@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { getW3CData } from "@fluidframework/driver-base";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import { getW3CData } from "@fluidframework/driver-base/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FiveDaysMs,
 	IDocumentService,
@@ -12,35 +14,34 @@ import {
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
 	LoaderCachingPolicy,
-} from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
+	RateLimiter,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
-	RateLimiter,
-} from "@fluidframework/driver-utils";
-import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/driver-utils/internal";
 import {
 	ISession,
 	convertSummaryTreeToWholeSummaryTree,
 } from "@fluidframework/server-services-client";
-import { ICache, InMemoryCache, NullCache } from "./cache";
-import { INormalizedWholeSnapshot } from "./contracts";
-import { ISnapshotTreeVersion } from "./definitions";
-import { DocumentService } from "./documentService";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { IRouterliciousDriverPolicies } from "./policies";
+import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
+import { ICache, InMemoryCache, NullCache } from "./cache.js";
+import { INormalizedWholeSnapshot } from "./contracts.js";
+import { ISnapshotTreeVersion } from "./definitions.js";
+import { DocumentService } from "./documentService.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { IRouterliciousDriverPolicies } from "./policies.js";
 import {
 	RouterliciousOrdererRestWrapper,
 	RouterliciousStorageRestWrapper,
 	toInstrumentedR11sOrdererTokenFetcher,
 	toInstrumentedR11sStorageTokenFetcher,
-} from "./restWrapper";
-import { isRouterliciousResolvedUrl } from "./routerliciousResolvedUrl";
-import { ITokenProvider } from "./tokens";
-import { replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
+} from "./restWrapper.js";
+import { isRouterliciousResolvedUrl } from "./routerliciousResolvedUrl.js";
+import { ITokenProvider } from "./tokens.js";
+import { getDiscoveredFluidResolvedUrl, replaceDocumentIdInPath } from "./urlUtils.js";
 
 const maximumSnapshotCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
 
@@ -112,6 +113,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			throw new Error("Parsed url should contain tenant and doc Id!!");
 		}
 		const [, tenantId] = parsedUrl.pathname.split("/");
+		assert(tenantId !== undefined, 0x9ac /* "Missing tenant ID!" */);
 
 		if (!isCombinedAppAndProtocolSummary(createNewSummary)) {
 			throw new Error("Protocol and App Summary required in the full summary");
@@ -130,12 +132,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			logger2,
 		);
 		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-		const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+		const ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 			ordererTokenFetcher,
 			logger2,
 			rateLimiter,
 			this.driverPolicies.enableRestLess,
-			resolvedUrl.endpoints.ordererUrl,
+			resolvedUrl.endpoints.ordererUrl /* baseUrl */,
 		);
 
 		const createAsEphemeral = isRouterliciousResolvedUrl(resolvedUrl)
@@ -280,7 +282,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		const storageTokenP = storageTokenFetcher();
 
 		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-		const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+		const ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 			ordererTokenFetcher,
 			logger2,
 			rateLimiter,
@@ -319,23 +321,25 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 				? getDiscoveredFluidResolvedUrl(resolvedUrl, session)
 				: await discoverFluidResolvedUrl();
 
-		const storageUrl = fluidResolvedUrl.endpoints.storageUrl;
-		const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
+		// TODO why are we non null asserting here?
+		const storageUrl = fluidResolvedUrl.endpoints.storageUrl!;
+		// TODO why are we non null asserting here?
+		const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl!;
 		const deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
-		const deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl || ordererUrl; // backward compatibility
+		const deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl ?? ordererUrl; // backward compatibility
 		if (!ordererUrl || !deltaStorageUrl) {
 			throw new Error(
 				`All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`,
 			);
 		}
 
-		const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
+		const storageRestWrapper = RouterliciousStorageRestWrapper.load(
 			tenantId,
 			storageTokenFetcher,
 			logger2,
 			new RateLimiter(this.driverPolicies.maxConcurrentStorageRequests),
 			this.driverPolicies.enableRestLess,
-			storageUrl,
+			storageUrl /* baseUrl */,
 			storageTokenP,
 		);
 

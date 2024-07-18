@@ -4,16 +4,18 @@
  */
 
 import {
-	IRandom,
-	makeRandom,
+	type IRandom,
 	SpaceEfficientWordMarkovChain,
+	makeRandom,
 } from "@fluid-private/stochastic-test-utils";
+
 import {
 	createAlphabetFromUnicodeRange,
 	getRandomEnglishString,
 	getRandomNumberString,
 	getSizeInBytes,
 } from "./jsonGeneratorUtils.js";
+import type { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 
 // This file contains logic to generate a JSON file that is statistically similar to the well-known
 // json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json
@@ -196,7 +198,7 @@ export function generateTwitterJsonByByteSize(
 	sizeInBytes: number,
 	allowOversize = false,
 	seed = 1,
-) {
+): Twitter & JsonCompatibleReadOnlyObject {
 	const random = makeRandom(seed);
 	const textFieldMarkovChain = new SpaceEfficientWordMarkovChain(
 		random,
@@ -207,7 +209,7 @@ export function generateTwitterJsonByByteSize(
 		getTwitterJsonUserDescFieldWordMarkovChain(),
 	);
 	const basicJapaneseAlphabetString = getBasicJapaneseAlphabetString();
-	const twitterJson: Twitter = {
+	const twitterJson: Twitter & JsonCompatibleReadOnlyObject = {
 		statuses: [],
 		search_metadata: {
 			completed_in: 0.087,
@@ -305,11 +307,13 @@ function generateTwitterStatus(
 	const favoriteCount = Math.floor(random.integer(0, 99999));
 	const user = generateTwitterUser(random, userDescFieldMarkovChain, alphabet);
 	// The following boolean values mirror the statistical probability of the original json
-	const shouldAddHashtagEntity = type === "standard" ? random.bool(0.07) : random.bool(0.027397);
+	const shouldAddHashtagEntity =
+		type === "standard" ? random.bool(0.07) : random.bool(0.027397);
 	const shouldAddUrlEntity = type === "standard" ? random.bool(0.12) : random.bool(0.068493);
 	const shouldAddUserMentionsEntity =
 		type === "standard" ? random.bool(0.12) : random.bool(0.068493);
-	const shouldAddMediaEntity = type === "standard" ? random.bool(0.06) : random.bool(0.0547945);
+	const shouldAddMediaEntity =
+		type === "standard" ? random.bool(0.06) : random.bool(0.0547945);
 	const shouldAddInReplyToStatusId =
 		type === "standard" ? random.bool(0.06) : random.bool(0.027397);
 	// in reply to screen name & in reply to user id always appear together
@@ -3403,7 +3407,10 @@ export function getTwitterJsonTextFieldWordMarkovChain(): Record<string, [string
 	};
 }
 // Returns a MarkovChain for prediciting the user description field of TwitterJson. The Chain is compatible with the SpaceEfficientWordMarkovChain Class
-export function getTwitterJsonUserDescFieldWordMarkovChain(): Record<string, [string, number][]> {
+export function getTwitterJsonUserDescFieldWordMarkovChain(): Record<
+	string,
+	[string, number][]
+> {
 	return {
 		"1": [["と", 1]],
 		"2": [

@@ -2,14 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { StringBuilder } from "@rushstack/node-core-library";
 import chalk from "chalk";
 
-import { MonoRepoKind } from "@fluidframework/build-tools";
-
-import { indentString } from "./library";
-import { CommandLogger } from "./logging";
-import { ReleaseGroup, ReleasePackage } from "./releaseGroups";
+// eslint-disable-next-line import/no-deprecated
+import { MonoRepoKind, indentString } from "./library/index.js";
+import { CommandLogger } from "./logging.js";
+import { ReleaseGroup, ReleasePackage } from "./releaseGroups.js";
 
 /**
  * An instructional prompt to display to a user in a terminal. A prompt can have any number of sections, and each
@@ -52,15 +52,19 @@ interface Section {
  */
 export const ADOPipelineLinks = new Map<ReleasePackage | ReleaseGroup | undefined, string>([
 	[
+		// eslint-disable-next-line import/no-deprecated
 		MonoRepoKind.Client,
 		"https://dev.azure.com/fluidframework/internal/_build?definitionId=12",
 	],
 	[
+		// eslint-disable-next-line import/no-deprecated
 		MonoRepoKind.Server,
 		"https://dev.azure.com/fluidframework/internal/_build?definitionId=30",
 	],
+	// eslint-disable-next-line import/no-deprecated
 	[MonoRepoKind.Azure, "https://dev.azure.com/fluidframework/internal/_build?definitionId=85"],
 	[
+		// eslint-disable-next-line import/no-deprecated
 		MonoRepoKind.BuildTools,
 		"https://dev.azure.com/fluidframework/internal/_build?definitionId=14",
 	],

@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import {
+	IDocumentAttributes,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Reads a blob from storage and parses it from JSON.
@@ -24,7 +27,9 @@ export async function seqFromTree(
 	tree: ISnapshotTree,
 	readAndParseBlob: ReadAndParseBlob,
 ): Promise<number> {
-	const attributesHash = tree.trees[".protocol"].blobs.attributes;
+	// TODO why are we non null asserting here?
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const attributesHash = tree.trees[".protocol"]!.blobs.attributes!;
 	const attrib = await readAndParseBlob<IDocumentAttributes>(attributesHash);
 	return attrib.sequenceNumber;
 }
@@ -54,7 +59,7 @@ export function encodeCompactIdToString(idArg: number | string, prefix = "") {
 	// new values have zero overlap with old values.
 	// Also resulting string can't contain "/", as that's disallowed by some users
 	// (data store and DDS IDs can't have "/" in their IDs).
-	assert(Number.isInteger(idArg) && idArg >= 0, "invalid input");
+	assert(Number.isInteger(idArg) && idArg >= 0, 0x900 /* invalid input */);
 	let id = "";
 	let num = idArg;
 	do {

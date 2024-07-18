@@ -5,18 +5,21 @@
 
 import { strict as assert } from "node:assert";
 import path from "node:path";
+
+import { createSnapshotSuite } from "@fluid-private/test-dds-utils";
+import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
-import { createSnapshotSuite } from "@fluid-private/test-dds-utils";
-import { DirectoryFactory, SharedDirectory } from "../../index.js";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { type ISharedDirectory, SharedDirectory } from "../../index.js";
+
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 import { _dirname } from "./dirname.cjs";
 
-function serialize(directory: SharedDirectory): string {
+function serialize(directory: ISharedDirectory): string {
 	const summaryTree = directory.getAttachSummary().summary;
 	const snapshotTree = convertSummaryTreeToITree(summaryTree);
 	return JSON.stringify(snapshotTree, undefined, 1);
@@ -25,7 +28,7 @@ function serialize(directory: SharedDirectory): string {
 async function loadSharedDirectory(
 	id: string,
 	serializedSnapshot: string,
-): Promise<SharedDirectory> {
+): Promise<ISharedDirectory> {
 	const containerRuntimeFactory = new MockContainerRuntimeFactory();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
@@ -34,9 +37,10 @@ async function loadSharedDirectory(
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		objectStorage: new MockStorage(JSON.parse(serializedSnapshot)),
 	};
-	const sharedDirectory = new SharedDirectory(id, dataStoreRuntime, DirectoryFactory.Attributes);
-	await sharedDirectory.load(services);
-	return sharedDirectory;
+
+	const factory = SharedDirectory.getFactory();
+	const directory = await factory.load(dataStoreRuntime, id, services, factory.attributes);
+	return directory;
 }
 
 interface TestScenario {
@@ -67,12 +71,8 @@ function generateTestScenarios(): TestScenario[] {
 	const testScenarios: TestScenario[] = [
 		{
 			name: "random-create-delete",
-			runScenario: (): SharedDirectory => {
-				const testDirectory = new SharedDirectory(
-					"A",
-					dataStoreRuntime,
-					factory.attributes,
-				);
+			runScenario: (): ISharedDirectory => {
+				const testDirectory = factory.create(dataStoreRuntime, "A");
 				const dir1 = testDirectory.createSubDirectory("a");
 				const dir2 = testDirectory.createSubDirectory("b");
 				dir1.set("key1", "value1");
@@ -86,12 +86,8 @@ function generateTestScenarios(): TestScenario[] {
 		},
 		{
 			name: "long-property-value",
-			runScenario: (): SharedDirectory => {
-				const testDirectory = new SharedDirectory(
-					"A",
-					dataStoreRuntime,
-					factory.attributes,
-				);
+			runScenario: (): ISharedDirectory => {
+				const testDirectory = factory.create(dataStoreRuntime, "A");
 				// 40K word
 				let longWord = "0123456789";
 				for (let i = 0; i < 12; i++) {
@@ -109,12 +105,8 @@ function generateTestScenarios(): TestScenario[] {
 		},
 		{
 			name: "old-format-directory",
-			runScenario: (): SharedDirectory => {
-				const testDirectory = new SharedDirectory(
-					"A",
-					dataStoreRuntime,
-					factory.attributes,
-				);
+			runScenario: (): ISharedDirectory => {
+				const testDirectory = factory.create(dataStoreRuntime, "A");
 				const dir1 = testDirectory.createSubDirectory("a");
 				const dir2 = testDirectory.createSubDirectory("b");
 				dir1.set("key3", "value3");
@@ -154,7 +146,7 @@ describe("SharedDirectory Snapshot Tests", () => {
 				? takeSnapshot(serialize(testDirectory))
 				: readSnapshot();
 			const secondDirectory = await loadSharedDirectory("B", snapshotData);
-			assertEquivalentDirectories(testDirectory, secondDirectory);
+			await assertEquivalentDirectories(testDirectory, secondDirectory);
 		});
 	}
 });

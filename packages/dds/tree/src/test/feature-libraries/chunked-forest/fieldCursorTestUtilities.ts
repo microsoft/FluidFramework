@@ -4,15 +4,16 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
-	FieldUpPath,
-	ITreeCursorSynchronous,
-	JsonableTree,
+	type FieldUpPath,
+	type ITreeCursorSynchronous,
+	type JsonableTree,
 	mapCursorField,
 	rootFieldKey,
 } from "../../../core/index.js";
 import { leaf } from "../../../domains/index.js";
-import { jsonableTreeFromCursor, TreeChunk } from "../../../feature-libraries/index.js";
+import { type TreeChunk, jsonableTreeFromCursor } from "../../../feature-libraries/index.js";
 import { checkFieldTraversal } from "../../cursorTestSuite.js";
 
 export function jsonableTreesFromFieldCursor(cursor: ITreeCursorSynchronous): JsonableTree[] {
@@ -33,7 +34,10 @@ export function assertChunkCursorEquals(chunk: TreeChunk, expected: JsonableTree
 	assert.equal(chunk.topLevelLength, expected.length);
 }
 
-export function assertChunkCursorBatchEquals(chunk: TreeChunk[], expected: JsonableTree[][]): void {
+export function assertChunkCursorBatchEquals(
+	chunk: TreeChunk[],
+	expected: JsonableTree[][],
+): void {
 	assert.equal(chunk.length, expected.length);
 	for (let index = 0; index < chunk.length; index++) {
 		assertChunkCursorEquals(chunk[index], expected[index]);

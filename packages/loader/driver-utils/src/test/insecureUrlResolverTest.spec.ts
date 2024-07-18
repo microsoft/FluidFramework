@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { DriverHeader, IResolvedUrl } from "@fluidframework/driver-definitions";
+
 import { IRequest } from "@fluidframework/core-interfaces";
+import { DriverHeader, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+
 import { InsecureUrlResolver } from "../insecureUrlResolver.js";
 
 describe("Insecure Url Resolver Test", () => {
@@ -121,7 +123,9 @@ describe("Insecure Url Resolver Test", () => {
 		};
 		const resolvedUrl = await resolver.resolve(testRequest);
 
-		const expectedResolvedUrl = `https://${new URL(ordererUrl).host}/${tenantId}/${fileName}//`;
+		const expectedResolvedUrl = `https://${
+			new URL(ordererUrl).host
+		}/${tenantId}/${fileName}//`;
 		assert.strictEqual(resolvedUrl?.url, expectedResolvedUrl, "resolved url is wrong");
 	});
 

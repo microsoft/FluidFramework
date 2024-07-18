@@ -3,32 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
 import {
-	bufferToString,
-	fromBase64ToUtf8,
 	IsoBuffer,
 	Uint8ArrayToString,
+	bufferToString,
+	fromBase64ToUtf8,
 } from "@fluid-internal/client-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	ITree,
-	SummaryType,
+	ISummaryBlob,
 	ISummaryTree,
 	SummaryObject,
-	ISummaryBlob,
-	TreeEntry,
-	ITreeEntry,
-} from "@fluidframework/protocol-definitions";
+	SummaryType,
+} from "@fluidframework/driver-definitions";
+import { ITree, ITreeEntry, TreeEntry } from "@fluidframework/driver-definitions/internal";
+import {
+	AttachmentTreeEntry,
+	BlobTreeEntry,
+	TreeTreeEntry,
+} from "@fluidframework/driver-utils/internal";
 import {
 	ISummaryStats,
-	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IGarbageCollectionData,
-} from "@fluidframework/runtime-definitions";
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
+	ISummarizeResult,
+	ITelemetryContextExt,
+	gcDataBlobKey,
+} from "@fluidframework/runtime-definitions/internal";
+import type { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Combines summary stats by adding their totals together.
@@ -143,6 +147,7 @@ export function addSummarizeResultToSummary(
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
@@ -213,6 +218,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
  * Converts snapshot ITree to ISummaryTree format and tracks stats.
  * @param snapshot - snapshot in ITree format
  * @param fullTree - true to never use handles, even if id is specified
+ * @legacy
  * @alpha
  */
 export function convertToSummaryTreeWithStats(
@@ -225,9 +231,7 @@ export function convertToSummaryTreeWithStats(
 			case TreeEntry.Blob: {
 				const blob = entry.value;
 				const content =
-					blob.encoding === "base64"
-						? IsoBuffer.from(blob.contents, "base64")
-						: blob.contents;
+					blob.encoding === "base64" ? IsoBuffer.from(blob.contents, "base64") : blob.contents;
 				builder.addBlob(entry.path, content);
 				break;
 			}
@@ -263,7 +267,10 @@ export function convertToSummaryTreeWithStats(
  * @param fullTree - true to never use handles, even if id is specified
  * @internal
  */
-export function convertToSummaryTree(snapshot: ITree, fullTree: boolean = false): ISummarizeResult {
+export function convertToSummaryTree(
+	snapshot: ITree,
+	fullTree: boolean = false,
+): ISummarizeResult {
 	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	if (snapshot.id && !fullTree) {
 		const stats = mergeStats();
@@ -294,14 +301,18 @@ export function convertSnapshotTreeToSummaryTree(
 	for (const [path, id] of Object.entries(snapshot.blobs)) {
 		let decoded: string | undefined;
 		if (snapshot.blobsContents !== undefined) {
-			const content: ArrayBufferLike = snapshot.blobsContents[id];
+			// TODO Why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const content: ArrayBufferLike = snapshot.blobsContents[id]!;
 			if (content !== undefined) {
 				decoded = bufferToString(content, "utf-8");
 			}
 			// 0.44 back-compat We still put contents in same blob for back-compat so need to add blob
 			// only for blobPath -> blobId mapping and not for blobId -> blob value contents.
 		} else if (snapshot.blobs[id] !== undefined) {
-			decoded = fromBase64ToUtf8(snapshot.blobs[id]);
+			// Non null asserting here because of the undefined check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			decoded = fromBase64ToUtf8(snapshot.blobs[id]!);
 		}
 		if (decoded !== undefined) {
 			builder.addBlob(path, decoded);
@@ -383,7 +394,7 @@ export function processAttachMessageGCData(
 	snapshot: ITree | null,
 	addedGCOutboundRoute: (fromNodeId: string, toPath: string) => void,
 ): boolean {
-	const gcDataEntry = snapshot?.entries.find((e) => e.path === ".gcdata");
+	const gcDataEntry = snapshot?.entries.find((e) => e.path === gcDataBlobKey);
 
 	// Old attach messages won't have GC Data
 	// (And REALLY old DataStore Attach messages won't even have a snapshot!)
@@ -393,7 +404,7 @@ export function processAttachMessageGCData(
 
 	assert(
 		gcDataEntry.type === TreeEntry.Blob && gcDataEntry.value.encoding === "utf-8",
-		"GC data should be a utf-8-encoded blob",
+		0x8ff /* GC data should be a utf-8-encoded blob */,
 	);
 
 	const gcData = JSON.parse(gcDataEntry.value.contents) as IGarbageCollectionData;
@@ -408,13 +419,13 @@ export function processAttachMessageGCData(
 /**
  * @internal
  */
-export class TelemetryContext implements ITelemetryContext {
-	private readonly telemetry = new Map<string, TelemetryBaseEventPropertyType>();
+export class TelemetryContext implements ITelemetryContext, ITelemetryContextExt {
+	private readonly telemetry = new Map<string, TelemetryEventPropertyTypeExt>();
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.set}
 	 */
-	set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void {
+	set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void {
 		this.telemetry.set(`${prefix}${property}`, value);
 	}
 
@@ -424,7 +435,7 @@ export class TelemetryContext implements ITelemetryContext {
 	setMultiple(
 		prefix: string,
 		property: string,
-		values: Record<string, TelemetryBaseEventPropertyType>,
+		values: Record<string, TelemetryEventPropertyTypeExt>,
 	): void {
 		// Set the values individually so that they are logged as a flat list along with other properties.
 		for (const key of Object.keys(values)) {
@@ -435,7 +446,7 @@ export class TelemetryContext implements ITelemetryContext {
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.get}
 	 */
-	get(prefix: string, property: string): TelemetryBaseEventPropertyType {
+	get(prefix: string, property: string): TelemetryEventPropertyTypeExt {
 		return this.telemetry.get(`${prefix}${property}`);
 	}
 

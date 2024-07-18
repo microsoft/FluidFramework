@@ -2,31 +2,48 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
+
+import { strict as assert, fail } from "assert";
+
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	AsyncGenerator,
+	type AsyncGenerator,
 	combineReducersAsync,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	DDSFuzzModel,
-	DDSFuzzTestState,
+	type DDSFuzzHarnessEvents,
+	type DDSFuzzModel,
+	type DDSFuzzTestState,
 	createDDSFuzzSuite,
-	DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";
+
 import {
+	type EditGeneratorOpWeights,
+	type FuzzTestState,
+	type FuzzTransactionView,
+	type FuzzView,
 	makeOpGenerator,
-	EditGeneratorOpWeights,
-	FuzzTestState,
 	viewFromState,
-	FuzzView,
-	FuzzTransactionView,
 } from "./fuzzEditGenerators.js";
-import { applyFieldEdit, applySynchronizationOp, applyUndoRedoEdit } from "./fuzzEditReducers.js";
-import { deterministicIdCompressorFactory, isRevertibleSharedTreeView } from "./fuzzUtils.js";
-import { Operation } from "./operationTypes.js";
+import {
+	applyConstraint,
+	applyFieldEdit,
+	applySynchronizationOp,
+	applyUndoRedoEdit,
+	generateLeafNodeSchemas,
+} from "./fuzzEditReducers.js";
+import {
+	createTreeViewSchema,
+	deterministicIdCompressorFactory,
+	isRevertibleSharedTreeView,
+} from "./fuzzUtils.js";
+import type { Operation } from "./operationTypes.js";
+import { brand } from "../../../util/index.js";
+import { intoStoredSchema } from "../../../feature-libraries/index.js";
+import type { TreeNodeSchemaIdentifier } from "../../../index.js";
 
 /**
  * This interface is meant to be used for tests that require you to store a branch of a tree
@@ -36,36 +53,56 @@ interface BranchedTreeFuzzTestState extends FuzzTestState {
 	branch?: FuzzTransactionView;
 }
 
-const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, BranchedTreeFuzzTestState>({
-	edit: async (state, operation) => {
-		const { contents } = operation;
-		switch (contents.type) {
+const fuzzComposedVsIndividualReducer = combineReducersAsync<
+	Operation,
+	BranchedTreeFuzzTestState
+>({
+	treeEdit: async (state, { edit }) => {
+		switch (edit.type) {
 			case "fieldEdit": {
 				const tree = state.branch;
 				assert(tree !== undefined);
-				applyFieldEdit(tree, contents);
+				applyFieldEdit(tree, edit);
 				break;
 			}
 			default:
-				break;
+				fail("Unknown tree edit type");
 		}
 		return state;
 	},
-	transaction: async (state, operation) => {
+	transactionBoundary: async (state, operation) => {
 		assert.fail(
 			"Transactions are simulated manually in these tests and should not be generated.",
 		);
 	},
-	undoRedo: async (state, operation) => {
-		const { contents } = operation;
+	undoRedo: async (state, { operation }) => {
 		const tree = state.main ?? assert.fail();
 		assert(isRevertibleSharedTreeView(tree.checkout));
-		applyUndoRedoEdit(tree.checkout.undoStack, tree.checkout.redoStack, contents);
+		applyUndoRedoEdit(tree.checkout.undoStack, tree.checkout.redoStack, operation);
 		return state;
 	},
 	synchronizeTrees: async (state) => {
 		applySynchronizationOp(state);
 		return state;
+	},
+	schemaChange: async (state, operation) => {
+		const branch = state.branch;
+		assert(branch !== undefined);
+		const nodeSchema = branch.currentSchema;
+
+		const nodeTypes: TreeNodeSchemaIdentifier[] = [];
+		for (const leafNodeSchema of nodeSchema.info.optionalChild.allowedTypeSet) {
+			if (typeof leafNodeSchema !== "string") {
+				nodeTypes.push(leafNodeSchema.name);
+			}
+		}
+		nodeTypes.push(brand(operation.operation.type));
+		const { leafNodeSchemas, library } = generateLeafNodeSchemas(nodeTypes);
+		const newSchema = createTreeViewSchema(leafNodeSchemas, library);
+		branch.checkout.updateSchema(intoStoredSchema(newSchema));
+	},
+	constraint: async (state, operation) => {
+		applyConstraint(state, operation);
 	},
 });
 
@@ -81,10 +118,15 @@ describe("Fuzz - composed vs individual changes", () => {
 	const runsPerBatch = 50;
 
 	// "start" and "commit" opWeights set to 0 in case there are changes to the default weights.
+	// AB#7593: schema weight is currently set to 0, as most tests are failing with various branch related asserts,
+	// assert 0x675, "Expected branch to be tracked"
 	const composeVsIndividualWeights: Partial<EditGeneratorOpWeights> = {
+		set: 2,
+		clear: 1,
 		insert: 1,
 		remove: 2,
-		move: 2,
+		intraFieldMove: 2,
+		crossFieldMove: 2,
 		fieldSelection: {
 			optional: 1,
 			required: 1,
@@ -93,6 +135,7 @@ describe("Fuzz - composed vs individual changes", () => {
 		},
 		start: 0,
 		commit: 0,
+		schema: 1,
 	};
 
 	describe("converges to the same tree", () => {

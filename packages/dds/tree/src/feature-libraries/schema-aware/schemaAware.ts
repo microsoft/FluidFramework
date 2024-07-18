@@ -3,22 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { TreeNodeSchemaIdentifier, TreeValue, ValueSchema } from "../../core/index.js";
-import { ContextuallyTypedNodeData, typeNameSymbol, valueSymbol } from "../contextuallyTyped.js";
-import {
-	FlexFieldSchema,
-	FlexTreeNodeSchema,
+import type {
+	TreeNodeSchemaIdentifier,
+	TreeValue,
+	ValueSchema,
+	Multiplicity,
+} from "../../core/index.js";
+import type { Assume, FlattenKeys, _InlineTrick } from "../../util/index.js";
+import type {
+	ContextuallyTypedNodeData,
+	typeNameSymbol,
+	valueSymbol,
+} from "../contextuallyTyped.js";
+import type {
 	FlexAllowedTypes,
-	LeafNodeSchema,
-	FlexObjectNodeSchema,
-	FlexObjectNodeFields,
 	FlexFieldNodeSchema,
-	FlexMapNodeSchema,
+	FlexFieldSchema,
 	FlexListToUnion,
+	FlexMapNodeSchema,
+	FlexObjectNodeFields,
+	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
 	LazyItem,
+	LeafNodeSchema,
 } from "../typed-schema/index.js";
-import { Assume, FlattenKeys, _InlineTrick } from "../../util/index.js";
-import { Multiplicity } from "../multiplicity.js";
 
 /**
  * Empty Object for use in type computations that should contribute no fields when `&`ed with another type.
@@ -42,11 +50,11 @@ export type CollectOptions<
 			{ [typeNameSymbol]?: UnbrandedName<TName> } & (TValueSchema extends ValueSchema
 				? { [valueSymbol]: TreeValue<TValueSchema> }
 				: EmptyObject)
-	  > &
+		> &
 			TTypedFields
 	: TValueSchema extends ValueSchema
-	? TreeValue<TValueSchema>
-	: undefined;
+		? TreeValue<TValueSchema>
+		: undefined;
 
 /**
  * Remove type brand from name.
@@ -62,11 +70,13 @@ export type UnbrandedName<TName> = [
  * In Editable mode, unwraps the fields.
  * @internal
  */
-export type TypedFields<TFields extends undefined | { readonly [key: string]: FlexFieldSchema }> = [
+export type TypedFields<
+	TFields extends undefined | { readonly [key: string]: FlexFieldSchema },
+> = [
 	TFields extends { [key: string]: FlexFieldSchema }
 		? {
 				-readonly [key in keyof TFields]: InsertableFlexField<TFields[key]>;
-		  }
+			}
 		: EmptyObject,
 ][_InlineTrick];
 
@@ -111,13 +121,15 @@ export type InsertableFlexNode<TSchema extends FlexTreeNodeSchema> = FlattenKeys
 		TSchema extends FlexObjectNodeSchema<string, infer TFields extends FlexObjectNodeFields>
 			? TypedFields<TFields>
 			: TSchema extends FlexFieldNodeSchema<string, infer TField extends FlexFieldSchema>
-			? InsertableFlexField<TField>
-			: TSchema extends FlexMapNodeSchema<string, infer TField extends FlexFieldSchema>
-			? {
-					readonly [P in string]: InsertableFlexField<TField>;
-			  }
-			: EmptyObject,
-		TSchema extends LeafNodeSchema<string, infer TValueSchema> ? TValueSchema : undefined,
+				? InsertableFlexField<TField>
+				: TSchema extends FlexMapNodeSchema<string, infer TField extends FlexFieldSchema>
+					? {
+							readonly [P in string]: InsertableFlexField<TField>;
+						}
+					: EmptyObject,
+		TSchema extends LeafNodeSchema<string, infer TValueSchema extends ValueSchema>
+			? TValueSchema
+			: undefined,
 		TSchema["name"]
 	>
 >;

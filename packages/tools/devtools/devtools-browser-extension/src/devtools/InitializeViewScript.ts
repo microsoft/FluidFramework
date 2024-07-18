@@ -10,7 +10,7 @@
  * {@link @fluidframework/devtools-core-view#MessageRelayContext} used by our internal React components.
  */
 
-import { initializeDevtoolsView } from "./InitializeView";
+import { initializeDevtoolsView } from "./InitializeView.js";
 
 document.body.style.margin = "0px";
 

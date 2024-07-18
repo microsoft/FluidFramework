@@ -2,16 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	TableBodyCellNode,
 	TableBodyRowNode,
 	type TableCellNode,
 	type TableNode,
-} from "../../../documentation-domain";
-import type { DocumentWriter } from "../../DocumentWriter";
-import { renderNode, renderNodes } from "../Render";
-import type { RenderContext } from "../RenderContext";
-import { renderNodeWithHtmlSyntax } from "../Utilities";
+} from "../../../documentation-domain/index.js";
+import type { DocumentWriter } from "../../DocumentWriter.js";
+import { renderNode, renderNodes } from "../Render.js";
+import type { RenderContext } from "../RenderContext.js";
+import { renderNodeWithHtmlSyntax } from "../Utilities.js";
 
 /**
  * Renders a {@link TableNode} as Markdown.

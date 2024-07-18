@@ -10,45 +10,33 @@
  */
 
 // There are lots of violations in this file.
-/* eslint-disable @typescript-eslint/no-base-to-string */
+
 /* eslint-disable jsdoc/check-line-alignment */
 
-import Ajv from "ajv";
-import ajvKeywords from "ajv-keywords";
-
-import each from "lodash/each";
-import isEqual from "lodash/isEqual";
-import every from "lodash/every";
-import isString from "lodash/isString";
-import isObject from "lodash/isObject";
-import difference from "lodash/difference";
-import has from "lodash/has";
-import mapValues from "lodash/mapValues";
-import includes from "lodash/includes";
-import map from "lodash/map";
-import find from "lodash/find";
-import isEmpty from "lodash/isEmpty";
-import { copy as cloneDeep } from "fastest-json-copy";
-
-import { gt, diff, major, valid, compare } from "semver";
-import traverse from "traverse";
-import { queue } from "async";
-
-// @ts-ignore
 import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
-import { TemplateSchema } from "./templateSchema";
-import { TypeIdHelper } from "./helpers/typeidHelper";
-import { SchemaValidationResult, ValidationResultBuilder } from "./validationResultBuilder";
+import { queue } from "async";
+import cloneDeep from "lodash/cloneDeep.js";
+import difference from "lodash/difference.js";
+import each from "lodash/each.js";
+import every from "lodash/every.js";
+import find from "lodash/find.js";
+import has from "lodash/has.js";
+import includes from "lodash/includes.js";
+import isEmpty from "lodash/isEmpty.js";
+import isEqual from "lodash/isEqual.js";
+import isObject from "lodash/isObject.js";
+import isString from "lodash/isString.js";
+import map from "lodash/map.js";
+import mapValues from "lodash/mapValues.js";
+import { compare, diff, gt, major, valid } from "semver";
+import traverse from "traverse";
+
+import { ajvFactory } from "./ajvFactory.cjs";
+import { TypeIdHelper } from "./helpers/typeidHelper.js";
+import { TemplateSchema } from "./templateSchema.js";
+import { SchemaValidationResult, ValidationResultBuilder } from "./validationResultBuilder.js";
 
 const { MSG } = constants;
-
-const ajvFactory = new Ajv({
-	allErrors: true,
-	verbose: true,
-});
-
-ajvKeywords(ajvFactory, "prohibited");
-ajvKeywords(ajvFactory, "typeof");
 
 const _syntaxValidator = ajvFactory.compile(TemplateSchema);
 
@@ -220,12 +208,7 @@ const _psetDeepEquals = function (
 
 				for (let i = 0; i < source.length && result.isEqual; i++) {
 					const sourceId = source[i].id;
-					result = _depthFirstDeepEquals.call(
-						this,
-						source[i],
-						targetMap[sourceId],
-						sourceId,
-					);
+					result = _depthFirstDeepEquals.call(this, source[i], targetMap[sourceId], sourceId);
 					idPath.pop();
 				}
 			} else {
@@ -582,7 +565,9 @@ const _validateSameVersion = function (
 	const result = _psetDeepEquals.call(this, in_templatePrevious, in_template);
 	if (!result.isEqual) {
 		// Violates rule 3a.
-		this._resultBuilder.addError(new Error(MSG.MODIFIED_TEMPLATE_SAME_VERSION_1 + result.path));
+		this._resultBuilder.addError(
+			new Error(MSG.MODIFIED_TEMPLATE_SAME_VERSION_1 + result.path),
+		);
 	}
 };
 
@@ -623,7 +608,9 @@ const _validateSemanticAndSyntax = function (in_template: PropertySchema) {
  * @return {Promise} a promise that resolved to nothing
  * @ignore
  */
-const _validateSemanticAndSyntaxAsync = async function (in_template: PropertySchema): Promise<any> {
+const _validateSemanticAndSyntaxAsync = async function (
+	in_template: PropertySchema,
+): Promise<any> {
 	return _validateSyntaxAsync.call(this, in_template);
 };
 
@@ -830,26 +817,30 @@ const _processValidationResults = function (in_template: PropertySchema) {
 			switch (error.keyword) {
 				case "pattern":
 					if (error.instancePath === ".typeid") {
+						// eslint-disable-next-line @typescript-eslint/no-base-to-string
 						error.message = `typeid should have a pattern like: my.example:point-1.0.0 ${error.data} does not match that pattern`;
 					} else if ("pattern" && regexTypeId.test(error.instancePath)) {
 						error.message =
 							error.schemaPath === "#/definitions/typed-reference-typeid/pattern"
 								? ""
 								: `${error.instancePath} should follow this pattern: <namespace>:<typeid>-<version> ` +
-								  `(for example: Sample:Rectangle-1.0.0) or match one of the Primitive Types (Float32, Float64, ` +
-								  `Int8, Uint8, Int16, Uint16, Int32, Uint32, Bool, String, Reference, Enum, Int64, Uint64) or ` +
-								  `Reserved Types (BaseProperty, NamedProperty, NodeProperty, NamedNodeProperty, ` +
-								  `RelationshipProperty). '${error.data}' is not valid`;
+									`(for example: Sample:Rectangle-1.0.0) or match one of the Primitive Types (Float32, Float64, ` +
+									`Int8, Uint8, Int16, Uint16, Int32, Uint32, Bool, String, Reference, Enum, Int64, Uint64) or ` +
+									`Reserved Types (BaseProperty, NamedProperty, NodeProperty, NamedNodeProperty, ` +
+									// eslint-disable-next-line @typescript-eslint/no-base-to-string
+									`RelationshipProperty). '${error.data}' is not valid`;
 					}
 					break;
 
 				case "enum":
 					error.message = regexTypeId.test(error.instancePath)
 						? ""
-						: `${error.instancePath} should match one of the following: ${error.schema}`;
+						: // eslint-disable-next-line @typescript-eslint/no-base-to-string
+							`${error.instancePath} should match one of the following: ${error.schema}`;
 					break;
 
 				case "type":
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					error.message = `${error.instancePath} should be a ${error.schema}`;
 					break;
 
@@ -1032,7 +1023,10 @@ export class TemplateValidator {
 	private _resultBuilder: ValidationResultBuilder;
 	public _inheritsFrom: (source: PropertySchema, target: PropertySchema) => boolean;
 	public _hasSchema: (schema: PropertySchema, typeid: string) => boolean;
-	public _inheritsFromAsync: (source: PropertySchema, target: PropertySchema) => Promise<boolean>;
+	public _inheritsFromAsync: (
+		source: PropertySchema,
+		target: PropertySchema,
+	) => Promise<boolean>;
 	public _hasSchemaAsync: (schema: PropertySchema, typeid: string) => Promise<boolean>;
 	private readonly _allowDraft: boolean;
 	private readonly _skipSemver: boolean;

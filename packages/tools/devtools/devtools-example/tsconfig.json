@@ -1,13 +1,12 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": "../../../../common/build/build-common/tsconfig.node16.json",
 	"compilerOptions": {
 		"rootDir": "src",
-		"outDir": "dist",
-		"module": "ESNext",
-		"composite": true,
-		"jsx": "react",
-		"types": ["jest", "node", "puppeteer", "jest-environment-puppeteer"],
+		"outDir": "./lib",
+		"types": ["jest", "puppeteer", "jest-environment-puppeteer"],
 		"skipLibCheck": true,
+		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],
 }

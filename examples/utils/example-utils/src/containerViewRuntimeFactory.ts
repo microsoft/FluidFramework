@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+
 import { type IFluidMountableView, MountableView } from "./mountableView/index.js";
 
 const dataStoreId = "modelDataStore";

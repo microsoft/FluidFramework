@@ -18,6 +18,7 @@ export interface IFileLogger extends ITelemetryBaseLogger {
 
 /**
  * Desired output format for the telemetry
+ * @legacy
  * @alpha
  */
 export enum OutputFormat {
@@ -25,7 +26,6 @@ export enum OutputFormat {
 	CSV,
 }
 
-/* eslint-disable tsdoc/syntax */
 /**
  * Options to provide upon creation of IFileLogger
  * @internal
@@ -48,4 +48,3 @@ export interface ITelemetryOptions {
 	/** Number of telemetry events per flush to telemetry file */
 	eventsPerFlush?: number;
 }
-/* eslint-enable tsdoc/syntax */

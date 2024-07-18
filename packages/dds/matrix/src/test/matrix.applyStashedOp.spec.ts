@@ -3,17 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
-	MockStorage,
 	MockDeltaConnection,
-} from "@fluidframework/test-runtime-utils";
-import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
-import { SharedMatrix, SharedMatrixFactory } from "../index.js";
-import { extract } from "./utils.js";
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { SharedMatrix } from "../index.js";
+
+import { extract, matrixFactory } from "./utils.js";
 
 async function createMatrixForReconnection(
 	id: string,
@@ -31,15 +35,22 @@ async function createMatrixForReconnection(
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage:
-			summary !== undefined ? MockStorage.createFromSummary(summary) : new MockStorage(),
+			summary === undefined ? new MockStorage() : MockStorage.createFromSummary(summary),
 	};
 
-	const matrix = new SharedMatrix(dataStoreRuntime, id, SharedMatrixFactory.Attributes);
-	if (summary !== undefined) {
-		await matrix.load(services);
-	} else {
+	let matrix: SharedMatrix;
+	if (summary === undefined) {
+		matrix = matrixFactory.create(dataStoreRuntime, id);
 		matrix.connect(services);
+	} else {
+		matrix = await matrixFactory.load(
+			dataStoreRuntime,
+			id,
+			services,
+			matrixFactory.attributes,
+		);
 	}
+
 	return {
 		matrix,
 		containerRuntime,
@@ -49,19 +60,19 @@ async function createMatrixForReconnection(
 }
 
 function spyOnContainerRuntimeMessages(runtime: MockContainerRuntimeForReconnection): {
-	submittedContent: any[];
+	submittedContent: unknown[];
 	processedMessages: ISequencedDocumentMessage[];
 } {
-	const submittedContent: any[] = [];
+	const submittedContent: unknown[] = [];
 	const originalSubmit = runtime.submit.bind(runtime);
-	runtime.submit = (content: any, localMetadata) => {
+	runtime.submit = (content: unknown, localMetadata): number => {
 		submittedContent.push(content);
 		return originalSubmit(content, localMetadata);
 	};
 
 	const processedMessages: ISequencedDocumentMessage[] = [];
 	const originalProcess = runtime.process.bind(runtime);
-	runtime.process = (message: ISequencedDocumentMessage) => {
+	runtime.process = (message: ISequencedDocumentMessage): void => {
 		processedMessages.push(message);
 		return originalProcess(message);
 	};
@@ -89,13 +100,13 @@ describe("Matrix applyStashedOp", () => {
 		const { summary } = await matrix1.summarize();
 		const { matrix: matrix2, containerRuntime: containerRuntime2 } =
 			await createMatrixForReconnection("B", containerRuntimeFactory, summary, {
-				minimumSequenceNumber: dataStoreRuntime1.deltaManager.minimumSequenceNumber,
+				minimumSequenceNumber: dataStoreRuntime1.deltaManagerInternal.minimumSequenceNumber,
 			});
 
 		matrix1.insertRows(0, 2);
 		matrix2.insertCols(0, 2);
 		containerRuntimeFactory.processAllMessages();
-		const minimumSequenceNumber = dataStoreRuntime1.deltaManager.minimumSequenceNumber;
+		const minimumSequenceNumber = dataStoreRuntime1.deltaManagerInternal.minimumSequenceNumber;
 
 		const { submittedContent } = spyOnContainerRuntimeMessages(containerRuntime1);
 		const { processedMessages } = spyOnContainerRuntimeMessages(containerRuntime2);

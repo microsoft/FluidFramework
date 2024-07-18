@@ -2,12 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Flags } from "@oclif/core";
-import { copySync, existsSync, readJson } from "fs-extra";
-import path from "node:path";
 
-import { BaseCommand } from "../../base";
-import { PnpmListEntry, pnpmList } from "../../pnpm";
+import { existsSync } from "node:fs";
+import path from "node:path";
+import { Flags } from "@oclif/core";
+import { copySync, readJson } from "fs-extra/esm";
+
+import { BaseCommand } from "../../library/index.js";
+import { PnpmListEntry, pnpmList } from "../../pnpm.js";
 
 export default class GenerateBundlestats extends BaseCommand<typeof GenerateBundlestats> {
 	static readonly description =
@@ -78,9 +80,7 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 				}
 				/* eslint-enable @typescript-eslint/no-unsafe-member-access */
 
-				copySync(packageAnalysisPath, path.join(analysesDestPath, pkg.name), {
-					recursive: true,
-				});
+				copySync(packageAnalysisPath, path.join(analysesDestPath, pkg.name));
 			}
 		}
 

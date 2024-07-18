@@ -2,12 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+
 import { UnassignedSequenceNumber } from "../constants.js";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder.js";
 import { TextSegment } from "../textSegment.js";
+
 import { TestClient } from "./testClient.js";
 
 describe("MergeTree.markRangeRemoved", () => {

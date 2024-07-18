@@ -3,27 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
-	TreeStoredSchema,
-	TreeNodeSchemaIdentifier,
-	TreeFieldStoredSchema,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
 } from "../core/index.js";
 import { fail } from "../util/index.js";
+
 import { defaultSchemaPolicy } from "./default-schema/index.js";
 import {
-	FlexTreeSchema,
-	FlexTreeNodeSchema,
-	FlexMapFieldSchema,
-	FlexFieldSchema,
-	FlexAllowedTypes,
 	Any,
-	LeafNodeSchema,
+	type FlexAllowedTypes,
+	FlexFieldSchema,
+	type FlexMapFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
+	type FlexTreeNodeSchema,
+	type FlexTreeSchema,
+	LeafNodeSchema,
 } from "./typed-schema/index.js";
 
 /**
@@ -41,11 +43,7 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSc
 		if (innerSchema instanceof LeafNodeStoredSchema) {
 			map.set(
 				identifier,
-				LeafNodeSchema.create(
-					{ name: "intoTypedSchema" },
-					identifier,
-					innerSchema.leafValue,
-				),
+				LeafNodeSchema.create({ name: "intoTypedSchema" }, identifier, innerSchema.leafValue),
 			);
 		} else if (innerSchema instanceof MapNodeStoredSchema) {
 			map.set(
@@ -57,10 +55,7 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSc
 				),
 			);
 		} else {
-			assert(
-				innerSchema instanceof ObjectNodeStoredSchema,
-				0x882 /* unsupported node kind */,
-			);
+			assert(innerSchema instanceof ObjectNodeStoredSchema, 0x882 /* unsupported node kind */);
 			const fields = new Map<string, FlexFieldSchema>();
 			for (const [key, field] of innerSchema.objectNodeFields) {
 				fields.set(key, fieldSchemaFromStoredSchema(field, map));
@@ -98,8 +93,7 @@ export function fieldSchemaFromStoredSchema(
 	schema: TreeFieldStoredSchema,
 	map: ReadonlyMap<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>,
 ): FlexFieldSchema {
-	const kind =
-		defaultSchemaPolicy.fieldKinds.get(schema.kind.identifier) ?? fail("missing field kind");
+	const kind = defaultSchemaPolicy.fieldKinds.get(schema.kind) ?? fail("missing field kind");
 	const types: FlexAllowedTypes =
 		schema.types === undefined
 			? [Any]

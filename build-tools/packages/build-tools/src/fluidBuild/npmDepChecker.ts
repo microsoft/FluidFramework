@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Package } from "../common/npmPackage";
 import { readFileAsync } from "../common/utils";
 

@@ -2,10 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { expect } from "chai";
 
-import { BlockQuoteNode, LineBreakNode, PlainTextNode } from "../../../documentation-domain";
-import { testRender } from "./Utilities";
+import {
+	BlockQuoteNode,
+	LineBreakNode,
+	PlainTextNode,
+} from "../../../documentation-domain/index.js";
+import { testRender } from "./Utilities.js";
 
 describe("BlockQuote Markdown rendering tests", () => {
 	describe("Standard context", () => {

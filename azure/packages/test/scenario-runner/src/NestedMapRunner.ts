@@ -2,15 +2,21 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ConnectionState } from "@fluidframework/container-loader";
-import { SharedMap, type ISharedMap } from "@fluidframework/map";
+
 import { AzureClient } from "@fluidframework/azure-client";
+import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { ScenarioRunner } from "./ScenarioRunner.js";
 import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface.js";
+import { getLogger, loggerP } from "./logger.js";
 import {
 	FluidSummarizerTelemetryEventNames,
 	createAzureClient,
@@ -18,8 +24,6 @@ import {
 	getScenarioRunnerTelemetryEventMap,
 	loadInitialObjSchema,
 } from "./utils.js";
-import { getLogger, loggerP } from "./logger.js";
-import { ScenarioRunner } from "./ScenarioRunner.js";
 
 const eventMap = getScenarioRunnerTelemetryEventMap("NestedMap");
 
@@ -46,7 +50,7 @@ export class NestedMapRunner extends ScenarioRunner<
 	NestedMapRunConfig,
 	string
 > {
-	protected runnerClientFilePath: string = "./dist/nestedMapRunnerClient.js";
+	protected runnerClientFilePath: string = "./lib/nestedMapRunnerClient.js";
 
 	constructor(scenarioConfig: NestedMapRunnerConfig) {
 		super({
@@ -71,8 +75,8 @@ export class NestedMapRunner extends ScenarioRunner<
 		const ac =
 			runConfig.client ??
 			(await createAzureClient({
-				userId: `testUserId_${runConfig.childId}`,
-				userName: `testUserName_${runConfig.childId}`,
+				id: `testUserId_${runConfig.childId}`,
+				name: `testUserName_${runConfig.childId}`,
 				logger,
 			}));
 
@@ -137,9 +141,8 @@ export class NestedMapRunner extends ScenarioRunner<
 				const scenarioLogger = await loggerP;
 				await timeoutPromise(
 					(resolve) =>
-						scenarioLogger.events.once(
-							FluidSummarizerTelemetryEventNames.Summarize,
-							() => resolve(),
+						scenarioLogger.events.once(FluidSummarizerTelemetryEventNames.Summarize, () =>
+							resolve(),
 						),
 					{
 						durationMs: 600000,
@@ -177,7 +180,7 @@ export class NestedMapRunner extends ScenarioRunner<
 					logger,
 					{ eventName: "load" },
 					async () => {
-						return client.getContainer(docId, schema);
+						return client.getContainer(docId, schema, "2");
 					},
 					{ start: true, end: true, cancel: "generic" },
 				));
@@ -190,13 +193,10 @@ export class NestedMapRunner extends ScenarioRunner<
 				{ eventName: "connected" },
 				async () => {
 					if (container.connectionState !== ConnectionState.Connected) {
-						return timeoutPromise(
-							(resolve) => container.once("connected", () => resolve()),
-							{
-								durationMs: 60000,
-								errorMsg: "container connect() timeout",
-							},
-						);
+						return timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+							durationMs: 60000,
+							errorMsg: "container connect() timeout",
+						});
 					}
 				},
 				{ start: true, end: true, cancel: "generic" },
@@ -207,7 +207,7 @@ export class NestedMapRunner extends ScenarioRunner<
 					logger,
 					{ eventName: "create" },
 					async () => {
-						return client.createContainer(schema);
+						return client.createContainer(schema, "2");
 					},
 					{ start: true, end: true, cancel: "generic" },
 				));

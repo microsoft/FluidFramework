@@ -4,19 +4,24 @@
  */
 
 import { strict as assert } from "assert";
-import { v4 as uuid } from "uuid";
-import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IFluidCodeDetails, ILoader, IContainer } from "@fluidframework/container-definitions";
-import { Loader, ILoaderProps } from "@fluidframework/container-loader";
-import {
-	LocalCodeLoader,
-	LoaderContainerTracker,
-	ITestObjectProvider,
-	TestFluidObjectFactory,
-} from "@fluidframework/test-utils";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	ILoader,
+} from "@fluidframework/container-definitions/internal";
+import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import {
+	ITestObjectProvider,
+	LoaderContainerTracker,
+	LocalCodeLoader,
+	TestFluidObjectFactory,
+} from "@fluidframework/test-utils/internal";
+import { v4 as uuid } from "uuid";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
@@ -33,8 +38,7 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 			...props,
 			logger: provider.logger,
 			urlResolver: props?.urlResolver ?? provider.urlResolver,
-			documentServiceFactory:
-				props?.documentServiceFactory ?? provider.documentServiceFactory,
+			documentServiceFactory: props?.documentServiceFactory ?? provider.documentServiceFactory,
 			codeLoader:
 				props?.codeLoader ??
 				new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
@@ -97,9 +101,7 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 
 			async run() {
 				this.container = await loader.createDetachedContainer(codeDetails);
-				await this.container.attach(
-					provider.driver.createCreateNewRequest("containerTest"),
-				);
+				await this.container.attach(provider.driver.createCreateNewRequest("containerTest"));
 			}
 		})(),
 	);

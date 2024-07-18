@@ -1,4 +1,3 @@
-<!-- Front Matter! -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -132,6 +131,37 @@
             </tr>
           </thead>
           <tbody>
+            <tr>
+              <td>
+                <a href='./simple-suite-test/testinterface-interface#getterproperty-property'>getterProperty</a>
+              </td>
+              <td>
+                <code>readonly</code>
+              </td>
+              <td>
+              </td>
+              <td>
+                <span>boolean</span>
+              </td>
+              <td>
+                A test getter-only interface property.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href='./simple-suite-test/testinterface-interface#setterproperty-property'>setterProperty</a>
+              </td>
+              <td>
+              </td>
+              <td>
+              </td>
+              <td>
+                <span>boolean</span>
+              </td>
+              <td>
+                A test property with a getter and a setter.
+              </td>
+            </tr>
             <tr>
               <td>
                 <a href='./simple-suite-test/testinterface-interface#testinterfaceproperty-propertysignature'>testInterfaceProperty</a>
@@ -286,6 +316,9 @@
             <code>
               readonly testClassEventProperty: () =&gt; void;
             </code>
+            <p>
+              <span><span><b>Type:</b> </span><span>() =&gt; void</span></span>
+            </p>
           </section>
           <section>
             <h4 id="testclasseventproperty-remarks">
@@ -302,6 +335,52 @@
           Property Details
         </h2>
         <section>
+          <h3 id="getterproperty-property">
+            getterProperty
+          </h3>
+          <section>
+            <p>
+              A test getter-only interface property.
+            </p>
+          </section>
+          <section>
+            <h4 id="getterproperty-signature">
+              Signature
+            </h4>
+            <code>
+              get getterProperty(): boolean;
+            </code>
+            <p>
+              <span><span><b>Type:</b> </span><span>boolean</span></span>
+            </p>
+          </section>
+        </section>
+        <section>
+          <h3 id="setterproperty-property">
+            setterProperty
+          </h3>
+          <section>
+            <p>
+              A test property with a getter and a setter.
+            </p>
+          </section>
+          <section>
+            <h4 id="setterproperty-signature">
+              Signature
+            </h4>
+            <code>
+              get setterProperty(): boolean;
+              <br>
+              <br>
+              <br>
+              set setterProperty(newValue: boolean);
+            </code>
+            <p>
+              <span><span><b>Type:</b> </span><span>boolean</span></span>
+            </p>
+          </section>
+        </section>
+        <section>
           <h3 id="testinterfaceproperty-propertysignature">
             testInterfaceProperty
           </h3>
@@ -317,6 +396,9 @@
             <code>
               testInterfaceProperty: number;
             </code>
+            <p>
+              <span><span><b>Type:</b> </span><span>number</span></span>
+            </p>
           </section>
           <section>
             <h4 id="testinterfaceproperty-remarks">
@@ -343,6 +425,9 @@
             <code>
               testOptionalInterfaceProperty?: number;
             </code>
+            <p>
+              <span><span><b>Type:</b> </span><span>number</span></span>
+            </p>
           </section>
         </section>
       </section>

@@ -2,18 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable no-param-reassign */
 import {
-	PropertyFactory,
 	BaseProperty,
 	ContainerProperty,
 	NodeProperty,
+	PropertyFactory,
 } from "@fluid-experimental/property-properties";
 
-import { PropertyProxy, proxySymbol } from "./propertyProxy";
-import { PropertyProxyErrors } from "./errors";
-import { Utilities, forceType } from "./utilities";
-import { ProxyType, ReferenceType } from "./interfaces";
+import { PropertyProxyErrors } from "./errors.js";
+import { ProxyType, ReferenceType } from "./interfaces.js";
+import { PropertyProxy, proxySymbol } from "./propertyProxy.js";
+import { Utilities, forceType } from "./utilities.js";
 
 /**
  * The additional proxy handlers for non-collection type properties.
@@ -46,7 +47,7 @@ export const proxyHandler = {
 						target.getProperty().get(key, {
 							referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS,
 						})!,
-				  )
+					)
 				: Utilities.proxifyInternal(target.getProperty(), key, caretFound);
 		}
 		return Reflect.get(target, key);
@@ -128,7 +129,10 @@ export const proxyHandler = {
 		target: ProxyType<ContainerProperty>,
 		key: string | typeof proxySymbol,
 	) {
-		if (Reflect.has(target.getProperty().getEntriesReadOnly(), key) && forceType<string>(key)) {
+		if (
+			Reflect.has(target.getProperty().getEntriesReadOnly(), key) &&
+			forceType<string>(key)
+		) {
 			return {
 				configurable: true,
 				enumerable: true,

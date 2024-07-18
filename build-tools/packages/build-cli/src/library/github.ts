@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Octokit } from "@octokit/core";
-import { CommandLogger } from "../logging";
+import { CommandLogger } from "../logging.js";
 
 const PULL_REQUEST_EXISTS = "GET /repos/{owner}/{repo}/pulls";
 const COMMIT_INFO = "GET /repos/{owner}/{repo}/commits/{ref}";

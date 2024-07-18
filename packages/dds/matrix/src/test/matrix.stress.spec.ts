@@ -3,24 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { Random } from "best-random";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { strict as assert } from "node:assert";
+
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
-	MockFluidDataStoreRuntime,
-	MockStorage,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
-} from "@fluidframework/test-runtime-utils";
-import { SharedMatrix, SharedMatrixFactory } from "../index.js";
-import { extract, expectSize } from "./utils.js";
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+import { Random } from "best-random";
+
+import { SharedMatrix, type MatrixItem } from "../index.js";
+import { SharedMatrix as SharedMatrixClass } from "../matrix.js";
+
 import { UndoRedoStackManager } from "./undoRedoStackManager.js";
+import { expectSize, extract, matrixFactory } from "./utils.js";
 
 /**
  * 0 means use LWW.
  * 2 means use LWW and then switch to FWW.
  */
-[0, 2].forEach((isSetCellPolicyFWW: number) => {
+for (const isSetCellPolicyFWW of [0, 2]) {
 	describe(`Matrix isSetCellPolicyFWW=${isSetCellPolicyFWW}`, () => {
 		describe("stress", () => {
 			let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
@@ -29,10 +33,16 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 			let trace: string[]; // Repro steps to be printed if a failure is encountered.
 			let matrixTrace: string[];
 
+			const logMatrix = (matrix: SharedMatrix): void => {
+				// This avoids @typescript-eslint/no-base-to-string.
+				assert(matrix instanceof SharedMatrixClass);
+				matrixTrace.push(matrix.toString());
+			};
+
 			/**
 			 * Drains the queue of pending ops for each client and vets that all matrices converged on the same state.
 			 */
-			const expect = async () => {
+			const expect = async (): Promise<void> => {
 				// Reconnect any disconnected clients before processing pending ops.
 				for (let matrixIndex = 0; matrixIndex < runtimes.length; matrixIndex++) {
 					const runtime = runtimes[matrixIndex];
@@ -83,7 +93,7 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 				maxRows?: number,
 				maxCols?: number,
 				maxClients?: number,
-			) {
+			): Promise<void> {
 				try {
 					matrices = [];
 					runtimes = [];
@@ -100,7 +110,7 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 					// equivalent, and then returns the 2nd matrix.
 					const createNewClientFromSummary = async function summarize<T>(
 						summarizer: SharedMatrix<T>,
-					) {
+					): Promise<void> {
 						// Create a summary
 						const objectStorage = MockStorage.createFromSummary(
 							summarizer.getAttachSummary(true).summary,
@@ -117,13 +127,12 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 							objectStorage,
 						};
 
-						const matrixN = new SharedMatrix(
+						const matrixN = await matrixFactory.load(
 							dataStoreRuntime,
 							`matrix-${matrices.length}`,
-							SharedMatrixFactory.Attributes,
+							servicesN,
+							matrixFactory.attributes,
 						);
-						await matrixN.load(servicesN);
-						matrixN.connect(servicesN);
 						if (undoRedoStacks) {
 							const undoRedo = new UndoRedoStackManager();
 							matrixN.openUndo(undoRedo);
@@ -152,12 +161,14 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 							objectStorage: new MockStorage(),
 						};
 
-						const matrixN = new SharedMatrix(
+						const matrixN = matrixFactory.create(
 							dataStoreRuntimeN,
 							i === numClients ? "summarizer" : `matrix-${i}`,
-							SharedMatrixFactory.Attributes,
-							isSetCellPolicyFWW === 1 ? true : false,
 						);
+						if (isSetCellPolicyFWW === 1) {
+							matrixN.switchSetCellPolicy();
+						}
+
 						matrixN.connect(servicesN);
 						if (i < numClients) {
 							if (undoRedoStacks) {
@@ -178,11 +189,13 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 					const float64 = new Random(seed).float64;
 
 					// Returns a pseudorandom 32b integer in the range [0 .. max).
-					// eslint-disable-next-line no-bitwise
-					const int32 = (max = 0x7fffffff) => (float64() * max) | 0;
+					const int32 = (max = 0x7fffffff): number => Math.trunc(float64() * max);
 
 					// Returns an array with 'n' random values, each in the range [0 .. 100).
-					const values = (n: number) => new Array(n).fill(0).map(() => int32(100));
+					const values = (n: number): number[] =>
+						Array.from({ length: n })
+							.fill(0)
+							.map(() => int32(100));
 
 					// Invokes 'setCells()' on the matrix w/the given index and logs the command to the trace.
 					const setCells = (
@@ -190,17 +203,17 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 						row: number,
 						col: number,
 						colCount: number,
-						values: any[],
-					) => {
+						values: MatrixItem<unknown>[],
+					): void => {
 						const matrix = matrices[matrixIndex];
 						trace?.push(
 							`matrix${
 								matrixIndex + 1
 							}.setCells(/* row: */ ${row}, /* col: */ ${col}, /* colCount: */ ${colCount}, ${JSON.stringify(
 								values,
-							)});    // rowCount: ${matrix.rowCount} colCount: ${
+							)});    // rowCount: ${matrix.rowCount} colCount: ${matrix.colCount} stride: ${
 								matrix.colCount
-							} stride: ${matrix.colCount} length: ${values.length}`,
+							} length: ${values.length}`,
 						);
 						matrix.setCells(row, col, colCount, values);
 					};
@@ -229,16 +242,19 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 								/* row: */ 0,
 								/* col: */ 0,
 								colCount,
-								new Array(colCount * rowCount).fill(0).map((_, index) => index),
+								Array.from({ length: colCount * rowCount })
+									.fill(0)
+									.map((_, index) => index),
 							);
 						}
 					}
 
 					assert(summarizer !== undefined);
 					for (const m of matrices) {
-						matrixTrace.push(m.toString());
-						matrixTrace.push(summarizer.toString());
+						logMatrix(m);
 					}
+					logMatrix(summarizer);
+
 					// Loop for the prescribed number of iterations, randomly mutating one of matrices with one
 					// of the following operations:
 					//
@@ -268,15 +284,16 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 								// remove 1 or more rows (if any exist)
 								if (rowCount > 0) {
 									// 10% probability of removing multiple rows.
-									const numRemoved =
-										float64() < 0.1 ? int32(rowCount - row - 1) + 1 : 1;
+									const numRemoved = float64() < 0.1 ? int32(rowCount - row - 1) + 1 : 1;
 
 									trace?.push(
 										`matrix${
 											matrixIndex + 1
 										}.removeRows(/* rowStart: */ ${row}, /* rowCount: */ ${numRemoved});    // rowCount: ${
-											matrix.rowCount - numRemoved
-										}, colCount: ${matrix.colCount}`,
+											// rowCount and colCount are destructured above and used to keep track of the initial
+											// row and column counts in the matrix.
+											rowCount - numRemoved
+										}, colCount: ${colCount}`,
 									);
 									matrix.removeRows(row, numRemoved);
 								}
@@ -287,15 +304,14 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 								// remove 1 or more cols (if any exist)
 								if (colCount > 0) {
 									// 10% probability of removing multiple cols.
-									const numRemoved =
-										float64() < 0.1 ? int32(colCount - col - 1) + 1 : 1;
+									const numRemoved = float64() < 0.1 ? int32(colCount - col - 1) + 1 : 1;
 
 									trace?.push(
 										`matrix${
 											matrixIndex + 1
-										}.removeCols(/* colStart: */ ${col}, /* colCount: */ ${numRemoved});    // rowCount: ${
-											matrix.rowCount
-										}, colCount: ${matrix.colCount - numRemoved}`,
+										}.removeCols(/* colStart: */ ${col}, /* colCount: */ ${numRemoved});    // rowCount: ${rowCount}, colCount: ${
+											colCount - numRemoved
+										}`,
 									);
 									matrix.removeCols(col, numRemoved);
 								}
@@ -310,22 +326,20 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 									`matrix${
 										matrixIndex + 1
 									}.insertRows(/* rowStart: */ ${row}, /* rowCount: */ ${numInserted});    // rowCount: ${
-										matrix.rowCount + numInserted
-									}, colCount: ${matrix.colCount}`,
+										rowCount + numInserted
+									}, colCount: ${colCount}`,
 								);
 								matrix.insertRows(row, numInserted);
 
 								// 90% probability of filling the newly inserted row with values.
-								if (float64() < 0.9) {
-									if (colCount > 0) {
-										setCells(
-											matrixIndex,
-											row,
-											/* col: */ 0,
-											matrix.colCount,
-											values(matrix.colCount * numInserted),
-										);
-									}
+								if (float64() < 0.9 && colCount > 0) {
+									setCells(
+										matrixIndex,
+										row,
+										/* col: */ 0,
+										colCount,
+										values(colCount * numInserted),
+									);
 								}
 								break;
 							}
@@ -337,23 +351,21 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 								trace?.push(
 									`matrix${
 										matrixIndex + 1
-									}.insertCols(/* colStart: */ ${col}, /* colCount: */ ${numInserted});    // rowCount: ${
-										matrix.rowCount
-									}, colCount: ${matrix.colCount + numInserted}`,
+									}.insertCols(/* colStart: */ ${col}, /* colCount: */ ${numInserted});    // rowCount: ${rowCount}, colCount: ${
+										colCount + numInserted
+									}`,
 								);
 								matrix.insertCols(col, numInserted);
 
 								// 90% probability of filling the newly inserted col with values.
-								if (float64() < 0.9) {
-									if (rowCount > 0) {
-										setCells(
-											matrixIndex,
-											/* row: */ 0,
-											col,
-											numInserted,
-											values(matrix.rowCount * numInserted),
-										);
-									}
+								if (float64() < 0.9 && rowCount > 0) {
+									setCells(
+										matrixIndex,
+										/* row: */ 0,
+										col,
+										numInserted,
+										values(rowCount * numInserted),
+									);
 								}
 								break;
 							}
@@ -412,9 +424,9 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 							await expect();
 							matrixTrace = [];
 							for (const m of matrices) {
-								matrixTrace.push(m.toString());
-								matrixTrace.push(summarizer.toString());
+								logMatrix(m);
 							}
+							logMatrix(summarizer);
 						}
 					}
 
@@ -432,6 +444,7 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 					}
 
 					for (const m of matrices) {
+						assert(m instanceof SharedMatrixClass);
 						console.log(
 							`Matrix id=${
 								m.id
@@ -441,6 +454,7 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 
 					// Also dump the current state of the matrices.
 					for (const m of matrices) {
+						// eslint-disable-next-line @typescript-eslint/no-base-to-string
 						console.log(m.toString());
 					}
 
@@ -482,7 +496,7 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 				{
 					numClients: 5,
 					numOps: 200,
-					syncProbability: 0.0,
+					syncProbability: 0,
 					disconnectProbability: 0,
 					undoRedoProbability: 0,
 					switchProbability: 0.25,
@@ -532,7 +546,7 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 				{
 					numClients: 3,
 					numOps: 500,
-					syncProbability: 0.0,
+					syncProbability: 0,
 					disconnectProbability: 0,
 					undoRedoProbability: 0.2,
 					switchProbability: 0.1,
@@ -544,7 +558,7 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 					numOps: 100,
 					syncProbability: 0.1,
 					disconnectProbability: 0,
-					undoRedoProbability: 0.0,
+					undoRedoProbability: 0,
 					switchProbability: 0.02,
 					newClientJoinProbability: 0.09,
 					seed: 0xbb56bb9e,
@@ -605,13 +619,13 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 
 				it(`Stress Test With Small Matrix and lots of clients addition`, async function () {
 					// Note: Must use 'function' rather than arrow '() => { .. }' in order to set 'this.timeout(..)'
-					this.timeout(30000);
+					this.timeout(35000);
 
 					const numClients = 2;
 					const numOps = 120;
 					const syncProbability = 0.06;
 					const disconnectProbability = 0.1;
-					const undoRedoProbability = 0.0;
+					const undoRedoProbability = 0;
 					const switchProbability = 0.04;
 					const newClientJoinProbability = 0.3;
 					await stress(
@@ -652,6 +666,7 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 					);
 
 					// Note: Mocha reporter intercepts 'console.log()' so use 'process.stdout.write' instead.
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					process.stdout.write(matrices[0].toString());
 
 					process.stdout.write(
@@ -664,4 +679,4 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 			});
 		});
 	});
-});
+}

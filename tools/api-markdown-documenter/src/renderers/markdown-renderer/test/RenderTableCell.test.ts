@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { expect } from "chai";
 
 import {
@@ -11,8 +12,8 @@ import {
 	SpanNode,
 	TableBodyCellNode,
 	TableHeaderCellNode,
-} from "../../../documentation-domain";
-import { testRender } from "./Utilities";
+} from "../../../documentation-domain/index.js";
+import { testRender } from "./Utilities.js";
 
 describe("Table Markdown rendering tests", () => {
 	describe("Standard context", () => {

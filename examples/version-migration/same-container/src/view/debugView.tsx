@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import React, { useEffect, useState } from "react";
-
 import type {
 	ISameContainerMigratableModel,
 	SameContainerMigrationState,
 } from "@fluid-example/example-utils";
+import React, { useEffect, useState } from "react";
+
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
 
 export interface IDebugViewProps {

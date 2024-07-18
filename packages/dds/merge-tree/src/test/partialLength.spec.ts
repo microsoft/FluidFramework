@@ -7,6 +7,7 @@ import { UnassignedSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeDeltaType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
+
 import {
 	insertSegments,
 	insertText,
@@ -111,7 +112,7 @@ describe("partial lengths", () => {
 				clientId: localClientId,
 				seq: refSeq + 1,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 
 			validatePartialLengths(localClientId, mergeTree, [{ seq: 1, len: 0 }]);
@@ -125,7 +126,7 @@ describe("partial lengths", () => {
 				clientId: localClientId,
 				seq: refSeq + 1,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 
 			validatePartialLengths(remoteClientId, mergeTree, [{ seq: 1, len: 0 }]);
@@ -139,7 +140,7 @@ describe("partial lengths", () => {
 				clientId: remoteClientId,
 				seq: refSeq + 1,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 
 			validatePartialLengths(localClientId, mergeTree, [{ seq: 1, len: 0 }]);
@@ -153,7 +154,7 @@ describe("partial lengths", () => {
 				clientId: remoteClientId,
 				seq: refSeq + 1,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 
 			validatePartialLengths(remoteClientId, mergeTree, [{ seq: 1, len: 0 }]);
@@ -235,7 +236,7 @@ describe("partial lengths", () => {
 				clientId: remoteClientId,
 				seq: refSeq + 1,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 			markRangeRemoved({
 				mergeTree,
@@ -245,7 +246,7 @@ describe("partial lengths", () => {
 				clientId: remoteClientId + 1,
 				seq: refSeq + 2,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 
 			validatePartialLengths(localClientId, mergeTree, [{ seq: 1, len: 2 }]);
@@ -259,7 +260,7 @@ describe("partial lengths", () => {
 				clientId: localClientId,
 				seq: refSeq + 1,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 			markRangeRemoved({
 				mergeTree,
@@ -269,7 +270,7 @@ describe("partial lengths", () => {
 				clientId: remoteClientId,
 				seq: refSeq + 2,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 
 			validatePartialLengths(localClientId, mergeTree, [{ seq: 1, len: 2 }]);
@@ -284,7 +285,7 @@ describe("partial lengths", () => {
 				clientId: localClientId,
 				seq: UnassignedSequenceNumber,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 			markRangeRemoved({
 				mergeTree,
@@ -294,7 +295,7 @@ describe("partial lengths", () => {
 				clientId: remoteClientId,
 				seq: refSeq + 1,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 
 			validatePartialLengths(localClientId, mergeTree, [{ seq: 1, len: 2 }]);

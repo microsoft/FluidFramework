@@ -5,28 +5,29 @@
 
 import { strict as assert } from "assert";
 
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	IContainerRuntimeOptions,
 	UnknownContainerRuntimeMessage,
-} from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import type { ISharedMap } from "@fluidframework/map";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import {
-	ITestFluidObject,
-	ChannelFactoryRegistry,
-	timeoutPromise,
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+} from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
+	timeoutPromise,
+} from "@fluidframework/test-utils/internal";
+
 const map1Id = "map1Key";
 const map2Id = "map2Key";
 
@@ -147,7 +148,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 	}
 
-	it("can send and a batch containing a future/unknown op type", async () => {
+	it("[DEPRECATED] can send and a batch containing a future/unknown op type", async () => {
 		await setupContainers({
 			flushMode: FlushMode.TurnBased,
 			compressionOptions: {

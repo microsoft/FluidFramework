@@ -1,5 +1,9 @@
 # tinylicious
 
+## 5.0.0
+
+Dependency updates only.
+
 ## 3.0.0
 
 ### Major Changes

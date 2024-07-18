@@ -4,10 +4,9 @@
  */
 
 export { EncodedFieldBatch } from "./format.js";
-export { FieldBatch } from "./fieldBatch.js";
+export type { FieldBatch } from "./fieldBatch.js";
 export {
-	FieldBatchCodec,
+	type FieldBatchCodec,
 	makeFieldBatchCodec,
-	FieldBatchEncodingContext,
-	SchemaAndPolicy,
+	type FieldBatchEncodingContext,
 } from "./codecs.js";

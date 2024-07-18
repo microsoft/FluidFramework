@@ -3,27 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
+import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
-	IContainerRuntimeOptions,
 	DefaultSummaryConfiguration,
-} from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
-	FluidObject,
-	IFluidHandleContext,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-deprecated
-import { buildRuntimeRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
+	// eslint-disable-next-line import/no-deprecated
+	RuntimeRequestHandler,
+	// eslint-disable-next-line import/no-deprecated
+	buildRuntimeRequestHandler,
+} from "@fluidframework/request-handler/internal";
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
-import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 
 interface backCompat_IFluidRouter {
 	IFluidRouter?: backCompat_IFluidRouter;
@@ -78,6 +78,7 @@ export const createTestContainerRuntimeFactory = (
 					},
 				},
 			},
+			// eslint-disable-next-line import/no-deprecated
 			public requestHandlers: RuntimeRequestHandler[] = [],
 		) {
 			super();
@@ -89,7 +90,7 @@ export const createTestContainerRuntimeFactory = (
 			const rootContext =
 				"createDetachedRootDataStore" in runtime
 					? (runtime as any).createDetachedRootDataStore([this.type], "default")
-					: runtime.createDetachedDataStore([this.type], "default");
+					: runtime.createDetachedDataStore([this.type]);
 
 			const rootRuntime = await this.dataStoreFactory.instantiateDataStore(
 				rootContext,
@@ -109,10 +110,7 @@ export const createTestContainerRuntimeFactory = (
 			await (runtime.getAliasedDataStoreEntryPoint?.("default") ??
 				(
 					runtime as any as {
-						getRootDataStore(
-							id: string,
-							wait?: boolean,
-						): Promise<backCompat_IFluidRouter>;
+						getRootDataStore(id: string, wait?: boolean): Promise<backCompat_IFluidRouter>;
 					}
 				).getRootDataStore("default"));
 		}
@@ -130,6 +128,7 @@ export const createTestContainerRuntimeFactory = (
 						["default", Promise.resolve(this.dataStoreFactory)],
 						[this.type, Promise.resolve(this.dataStoreFactory)],
 					],
+					// eslint-disable-next-line import/no-deprecated
 					buildRuntimeRequestHandler(
 						backCompat_DefaultRouteRequestHandler("default"),
 						...this.requestHandlers,
@@ -163,10 +162,8 @@ export const createTestContainerRuntimeFactory = (
 					["default", Promise.resolve(this.dataStoreFactory)],
 					[this.type, Promise.resolve(this.dataStoreFactory)],
 				],
-				requestHandler: buildRuntimeRequestHandler(
-					getDefaultObject,
-					...this.requestHandlers,
-				),
+				// eslint-disable-next-line import/no-deprecated
+				requestHandler: buildRuntimeRequestHandler(getDefaultObject, ...this.requestHandlers),
 				provideEntryPoint,
 				// ! This prop is needed for back-compat. Can be removed in 2.0.0-internal.8.0.0
 				initializeEntryPoint: provideEntryPoint,

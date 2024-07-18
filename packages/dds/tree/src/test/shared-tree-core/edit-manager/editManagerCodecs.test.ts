@@ -3,17 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
-import { makeCodecFamily, withDefaultBinaryEncoding } from "../../../codec/index.js";
+import type { SessionId } from "@fluidframework/id-compressor";
+
+import type { ChangeEncodingContext } from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
-import { TestChange } from "../../testChange.js";
+// eslint-disable-next-line import/no-internal-modules
+import { makeEditManagerCodecs } from "../../../shared-tree-core/editManagerCodecs.js";
+import type { SummaryData } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
-import { ChangeEncodingContext } from "../../../core/index.js";
-import { SummaryData, makeEditManagerCodec } from "../../../shared-tree-core/index.js";
+import { TestChange } from "../../testChange.js";
 import {
-	EncodingTestData,
+	type EncodingTestData,
 	makeEncodingTestSuite,
 	mintRevisionTag,
+	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
 
@@ -41,7 +44,11 @@ const trunkCommits: SummaryData<TestChange>["trunk"] = [
 ];
 
 // Dummy context object created to pass through the codec.
-const dummyContext = { originatorId: "dummySessionID" as SessionId };
+const dummyContext = {
+	originatorId: "dummySessionID" as SessionId,
+	revision: undefined,
+	idCompressor: testIdCompressor,
+};
 const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodingContext> = {
 	successes: [
 		["empty", { trunk: [], peerLocalBranches: new Map() }, dummyContext],
@@ -130,7 +137,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 		],
 	],
 	failures: {
-		0: [
+		1: [
 			[
 				"missing revision",
 				{
@@ -162,15 +169,11 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 
 export function testCodec() {
 	describe("Codec", () => {
-		const codec = makeEditManagerCodec(
-			withDefaultBinaryEncoding(TestChange.codec),
-			testRevisionTagCodec,
-			{
-				jsonValidator: typeboxValidator,
-			},
-		);
+		const family = makeEditManagerCodecs(TestChange.codecs, testRevisionTagCodec, {
+			jsonValidator: typeboxValidator,
+		});
 
-		makeEncodingTestSuite(makeCodecFamily([[0, codec]]), testCases);
+		makeEncodingTestSuite(family, testCases);
 
 		// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
 		// TODO: format compatibility tests to detect breaking of existing documents.

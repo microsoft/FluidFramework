@@ -8,8 +8,8 @@
  * Use caustion when making changes and consider backward and forward compatibility of your changes!
  */
 
-import { Serializable } from "@fluidframework/datastore-definitions";
-import { IMergeTreeOp } from "@fluidframework/merge-tree";
+import { Serializable } from "@fluidframework/datastore-definitions/internal";
+import { IMergeTreeOp } from "@fluidframework/merge-tree/internal";
 
 export enum MatrixOp {
 	spliceCols,
@@ -26,6 +26,7 @@ export enum SnapshotPath {
 /**
  * A matrix cell value may be undefined (indicating an empty cell) or any serializable type,
  * excluding null.  (However, nulls may be embedded inside objects and arrays.)
+ * @legacy
  * @alpha
  */
 // eslint-disable-next-line @rushstack/no-new-null -- Using 'null' to disallow 'null'.

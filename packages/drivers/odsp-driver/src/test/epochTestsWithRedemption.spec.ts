@@ -4,23 +4,26 @@
  */
 
 import { strict as assert } from "node:assert";
-import { Deferred } from "@fluidframework/core-utils";
-import { MockLogger, type IFluidErrorBase } from "@fluidframework/telemetry-utils";
+
+import { Deferred } from "@fluidframework/core-utils/internal";
 import {
-	OdspErrorTypes,
-	IOdspResolvedUrl,
 	IEntry,
+	IOdspResolvedUrl,
+	OdspErrorTypes,
 	snapshotKey,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { type IFluidErrorBase, MockLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { EpochTrackerWithRedemption } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
+
 import {
-	mockFetchSingle,
-	mockFetchMultiple,
-	okResponse,
-	notFound,
 	MockResponse,
+	mockFetchMultiple,
+	mockFetchSingle,
+	notFound,
+	okResponse,
 } from "./mockFetch.js";
 
 class DeferralWithCallback extends Deferred<void> {
@@ -97,8 +100,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 				async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
 				[
 					notFound,
-					async (): Promise<MockResponse> =>
-						okResponse({ "x-fluid-epoch": "epoch1" }, {}),
+					async (): Promise<MockResponse> => okResponse({ "x-fluid-epoch": "epoch1" }, {}),
 				],
 			);
 		});
@@ -121,10 +123,8 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 				async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
 				[
 					notFound, // joinSession
-					async (): Promise<MockResponse> =>
-						okResponse({ "x-fluid-epoch": "epoch1" }, {}), // "treesLatest"
-					async (): Promise<MockResponse> =>
-						okResponse({ "x-fluid-epoch": "epoch1" }, {}), // "joinSession"
+					async (): Promise<MockResponse> => okResponse({ "x-fluid-epoch": "epoch1" }, {}), // "treesLatest"
+					async (): Promise<MockResponse> => okResponse({ "x-fluid-epoch": "epoch1" }, {}), // "joinSession"
 				],
 			);
 		});
@@ -136,8 +136,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 				epochCallback.setCallback(async () => {
 					try {
 						await mockFetchSingle(
-							async () =>
-								epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest"),
+							async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest"),
 							notFound,
 							"internal",
 						);

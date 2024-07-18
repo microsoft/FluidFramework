@@ -2,19 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Package } from "@fluidframework/build-tools";
-import { VersionBumpType } from "@fluid-tools/version-tools";
-import { Flags } from "@oclif/core";
-import chalk from "chalk";
-import humanId from "human-id";
+
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
+import { VersionBumpType } from "@fluid-tools/version-tools";
+import { Package } from "@fluidframework/build-tools";
+import { Flags } from "@oclif/core";
+import chalk from "chalk";
+import { humanId } from "human-id";
 import { format as prettier } from "prettier";
 import prompts from "prompts";
 
-import { BaseCommand } from "../../base";
-import { Repository, getDefaultBumpTypeForBranch } from "../../library";
-import { releaseGroupFlag } from "../../flags";
+import { releaseGroupFlag } from "../../flags.js";
+import { BaseCommand, Repository, getDefaultBumpTypeForBranch } from "../../library/index.js";
 
 /**
  * If more than this number of packages are changed relative to the selected branch, the user will be prompted to select
