@@ -65,6 +65,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_KafkaNodeProducer": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

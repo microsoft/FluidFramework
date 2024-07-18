@@ -58,6 +58,7 @@ export interface IOrdererConnection {
 	 * Error event Handler.
 	 */
 	once(event: "error", listener: (...args: any[]) => void): void;
+	off(event: "error", listener: (...args: any[]) => void): void;
 
 	/**
 	 * Sends the client leave op for this connection

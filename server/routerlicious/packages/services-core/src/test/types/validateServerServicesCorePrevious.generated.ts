@@ -129,6 +129,7 @@ declare function get_old_ClassDeclaration_CombinedProducer():
 declare function use_current_ClassDeclaration_CombinedProducer(
     use: TypeOnly<current.CombinedProducer>): void;
 use_current_ClassDeclaration_CombinedProducer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_CombinedProducer());
 
 /*
@@ -1425,6 +1426,7 @@ declare function get_old_InterfaceDeclaration_IOrdererConnection():
 declare function use_current_InterfaceDeclaration_IOrdererConnection(
     use: TypeOnly<current.IOrdererConnection>): void;
 use_current_InterfaceDeclaration_IOrdererConnection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IOrdererConnection());
 
 /*
@@ -1666,6 +1668,7 @@ declare function get_old_InterfaceDeclaration_IProducer():
 declare function use_current_InterfaceDeclaration_IProducer(
     use: TypeOnly<current.IProducer>): void;
 use_current_InterfaceDeclaration_IProducer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProducer());
 
 /*

@@ -90,6 +90,10 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_TestProducer": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

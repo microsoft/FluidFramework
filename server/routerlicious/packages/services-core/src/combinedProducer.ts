@@ -66,4 +66,11 @@ export class CombinedProducer<T = ITicketedMessage> implements IProducer<T> {
 	): this {
 		return this;
 	}
+
+	public off(
+		event: "connected" | "produced" | "error",
+		listener: (...args: any[]) => void,
+	): this {
+		return this;
+	}
 }

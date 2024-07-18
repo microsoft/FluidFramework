@@ -64,6 +64,15 @@
 		"broken": {
 			"InterfaceDeclaration_IOrdererManager": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IProducer": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_CombinedProducer": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IOrdererConnection": {
+				"forwardCompat": false
 			}
 		}
 	}
