@@ -70,36 +70,36 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * Converts an enum into a collection of schema which can be used in a union.
  * @remarks
  * Currently only supports `string` enums.
- * The string value of the enum is used as the name of the schema: ensure that its stable and unique.
+ * The string value of the enum is used as the name of the schema: callers must ensure that its stable and unique.
  * Consider making a dedicated schema factory with a nested scope to avoid the enum members colliding with other schema.
  * @example
  * ```typescript
  * const schemaFactory = new SchemaFactory("com.myApp");
  * // An enum for use in the tree. Must have string keys.
- * export enum Mode {
+ * enum Mode {
  * 	a = "A",
  * 	b = "B",
  * }
  * // Define the schema for each member of the enum using a nested scope to group them together.
- * export const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
+ * const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
  * // Defined the types of the nodes which correspond to this the schema.
- * export type ModeNodes = NodeFromSchema<(typeof ModeNodes)[keyof typeof ModeNodes]>;
+ * type ModeNodes = NodeFromSchema<(typeof ModeNodes)[keyof typeof ModeNodes]>;
  * // An example schema which has an enum as a child.
- * export class Parent extends schemaFactory.object("Parent", {
+ * class Parent extends schemaFactory.object("Parent", {
  * 	// typedObjectValues extracts a list of all the fields of ModeNodes, which are the schema for each enum member.
  * 	// This means any member of the enum is allowed in this field.
  * 	mode: typedObjectValues(ModeNodes),
  * }) {}
  *
+ * // Example usage of enum based nodes, showing what type to use and that `.value` can be used to read out the enum value.
+ * function getValue(node: ModeNodes): Mode {
+ * 	return node.value;
+ * }
+ *
  * // Example constructing a tree containing an enum node from an enum value.
  * // The syntax `new ModeNodes.a()` is also supported.
- * export const config = new TreeConfiguration(Parent, () => ({
- * 	mode: ModeNodes(Mode.a),
- * }));
- *
- * // Example usage of enum based nodes, showing what type to use and that `.value` can be used to read out the enum value.
- * export function getValue(node: ModeNodes): Mode {
- * 	return node.value;
+ * function setValue(node: Parent): void {
+ * 	node.mode = ModeNodes(Mode.a);
  * }
  * ```
  * @privateRemarks

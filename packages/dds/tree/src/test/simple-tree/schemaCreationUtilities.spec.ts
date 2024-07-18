@@ -92,15 +92,15 @@ describe("schemaCreationUtilities", () => {
 			mode: typedObjectValues(ModeNodes),
 		}) {}
 
-		// Example constructing a tree containing an enum node from an enum value.
-		// The syntax `new ModeNodes.a()` is also supported.
-		const config = new TreeConfiguration(Parent, () => ({
-			mode: ModeNodes(Mode.a),
-		}));
-
 		// Example usage of enum based nodes, showing what type to use and that `.value` can be used to read out the enum value.
 		function getValue(node: ModeNodes): Mode {
 			return node.value;
+		}
+
+		// Example constructing a tree containing an enum node from an enum value.
+		// The syntax `new ModeNodes.a()` is also supported.
+		function setValue(node: Parent): void {
+			node.mode = ModeNodes(Mode.a);
 		}
 	});
 
