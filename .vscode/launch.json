@@ -89,7 +89,7 @@
 				"-t",
 				"minor",
 				"--out",
-				"${workspaceFolder}/RELEASE_NOTES/notes.md",
+				"RELEASE_NOTES/notes.md",
 				"-v",
 			],
 		},

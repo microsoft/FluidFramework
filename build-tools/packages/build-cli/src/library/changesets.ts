@@ -9,6 +9,7 @@ import { Logger } from "@fluidframework/build-tools";
 import { compareAsc, formatISO, parseISO } from "date-fns";
 import globby from "globby";
 import matter from "gray-matter";
+const { test: hasFrontMatter } = matter;
 
 import { ReleasePackage } from "../releaseGroups.js";
 import { Repository } from "./git.js";
@@ -18,16 +19,19 @@ export const DEFAULT_CHANGESET_PATH = ".changeset";
 
 export type ChangeKind = "fix" | "feature";
 
+export interface FluidCustomChangesetMetadata {
+	kind?: ChangeKind;
+	includeInReleaseNotes?: boolean;
+}
+
 export interface Changeset {
 	metadata: { [pkg: string]: VersionBumpType };
+	mainPackage: ReleasePackage;
 	changeTypes: VersionBumpType[];
 	content: string;
 	summary?: string;
 	added?: Date;
-	additionalMetadata?: {
-		kind?: ChangeKind;
-		includeInReleaseNotes?: boolean;
-	};
+	additionalMetadata?: FluidCustomChangesetMetadata;
 	sourceFile: string;
 }
 
@@ -36,7 +40,7 @@ export interface Changeset {
  * themselves include a mapping of package to version bump type. This object includes the change type and a single
  * package, effectively flattening the changesets.
  */
-export type ChangesetEntry = Omit<Changeset, "metadata" | "changeTypes"> & {
+export type ChangesetEntry = Omit<Changeset, "metadata" | "mainPackage" | "changeTypes"> & {
 	pkg: string;
 	changeType: VersionBumpType;
 };
@@ -71,9 +75,27 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 		const added = parseISO(results.all?.[0]?.date ?? formatISO(Date.now()));
 
 		// Read the changeset file into content and metadata (front-matter)
-		const rawFileContent = await readFile(file, {encoding:"utf8"});
-		const md = matter(rawFileContent);
-		const paragraphs = md.content.trim().split("\n\n");
+		// eslint-disable-next-line no-await-in-loop
+		const rawFileContent = await readFile(file, { encoding: "utf8" });
+
+		// Parse out the first layer of metadata, which is the package --> change type mapping.
+		const firstParse = matter(rawFileContent);
+		const packageBumpTypeMetadata = firstParse.data;
+
+		// If there is a second frontmatter section, parse it as the additional metadata.
+		const hasAdditionalMetadata = hasFrontMatter(firstParse.content);
+
+		let markdownContent: string;
+		let additionalMetadata: FluidCustomChangesetMetadata | undefined;
+		if (hasAdditionalMetadata) {
+			const secondParse = matter(firstParse.content);
+			additionalMetadata = secondParse.data;
+			markdownContent = secondParse.content.trim();
+		} else {
+			markdownContent = firstParse.content.trim();
+		}
+
+		const paragraphs = markdownContent.trim().split("\n\n");
 
 		if (paragraphs.length < 2) {
 			log?.warning(`No changeset content found in ${file}. Skipping!`);
@@ -84,13 +106,15 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 		const content = paragraphs.slice(1).join("\n\n");
 
 		const newChangeset: Changeset = {
-			metadata: md.data,
+			metadata: packageBumpTypeMetadata,
+			mainPackage: Object.keys(packageBumpTypeMetadata)[0],
+			additionalMetadata,
 			content,
 			added,
 			summary,
 			sourceFile: file,
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			changeTypes: [...new Set(Object.values(md.data))],
+			changeTypes: [...new Set(Object.values(packageBumpTypeMetadata))],
 		};
 
 		changesets.push(newChangeset);

@@ -1,6 +1,7 @@
 ---
 "@fluid-experimental/property-query": minor
 ---
+---
 kind: fix
 ---
 

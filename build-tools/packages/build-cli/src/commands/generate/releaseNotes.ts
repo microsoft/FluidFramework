@@ -45,6 +45,8 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 		out: Flags.file({
 			description: `Output the results to this file.`,
 			required: true,
+			default: "RELEASE_NOTES.md",
+			// exists: true
 		}),
 		...BaseCommand.flags,
 	} as const;

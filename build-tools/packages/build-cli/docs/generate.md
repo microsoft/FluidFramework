@@ -10,6 +10,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate changeset`](#flub-generate-changeset)
 * [`flub generate entrypoints`](#flub-generate-entrypoints)
 * [`flub generate packlist`](#flub-generate-packlist)
+* [`flub generate releaseNotes`](#flub-generate-releasenotes)
 * [`flub generate typetests`](#flub-generate-typetests)
 * [`flub generate upcoming`](#flub-generate-upcoming)
 
@@ -311,6 +312,30 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/generate/packlist.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/packlist.ts)_
+
+## `flub generate releaseNotes`
+
+```
+USAGE
+  $ flub generate releaseNotes -g client|server|azure|build-tools|gitrest|historian -t major|minor --out <value> [--json]
+    [-v | --quiet]
+
+FLAGS
+  -g, --releaseGroup=<option>  (required) Name of a release group.
+                               <options: client|server|azure|build-tools|gitrest|historian>
+  -t, --releaseType=<option>   (required) The type of release for which the release notes are being generated.
+                               <options: major|minor>
+      --out=<value>            (required) Output the results to this file.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+```
+
+_See code: [src/commands/generate/releaseNotes.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/releaseNotes.ts)_
 
 ## `flub generate typetests`
 
