@@ -292,30 +292,6 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 }
 
 /**
- * Helper function that unpacks the used routes of the children from a given node's used routes.
- * @param parentUsedRoutes - The used routes of a parent node.
- * @returns A map of used routes of each children of the the given node.
- */
-export function unpackChildNodesUsedRoutes(parentUsedRoutes: string[]) {
-	const childUsedRoutesMap: Map<string, string[]> = new Map();
-
-	// Remove the node's self used route, if any, and generate the children used routes.
-	const usedRoutes = parentUsedRoutes.filter((route) => route !== "" && route !== "/");
-	for (const route of usedRoutes) {
-		assert(route.startsWith("/"), "Used route should always be an absolute route");
-		const childId = route.split("/")[1];
-		if (childId === undefined) {
-			continue;
-		}
-		const childUsedRoute = route.slice(childId.length + 1);
-
-		const childUsedRoutes = childUsedRoutesMap.get(childId) ?? [];
-		childUsedRoutes.push(childUsedRoute);
-	}
-	return childUsedRoutesMap;
-}
-
-/**
  * Trims the leading and trailing slashes from the given string.
  * @param str - A string that may contain leading and / or trailing slashes.
  * @returns A new string without leading and trailing slashes.
