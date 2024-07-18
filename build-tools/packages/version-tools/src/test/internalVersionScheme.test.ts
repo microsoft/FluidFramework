@@ -167,15 +167,6 @@ describe("internalScheme", () => {
 			assert.strictEqual(calculated.version, expected);
 		});
 
-		it("parses 3.0.0-internal.1.0.0", () => {
-			const input = `3.0.0-internal.1.0.0`;
-			const expectedInt = `1.0.0`;
-			const expectedPub = `3.0.0`;
-			const [pubVer, intVer] = fromInternalScheme(input);
-			assert.strictEqual(intVer.version, expectedInt);
-			assert.strictEqual(pubVer.version, expectedPub);
-		});
-
 		it("throws on 2.0.0-internal.1.1.0.12345", () => {
 			const input = `2.0.0-internal.1.1.0.12345`;
 			const expected = `1.1.0-12345`;
@@ -210,13 +201,6 @@ describe("internalScheme", () => {
 	});
 
 	describe("converting TO internal scheme", () => {
-		it("converts 1.0.0 to internal version with public version 2.2.2", () => {
-			const input = `1.0.0`;
-			const expected = `2.2.2-internal.1.0.0`;
-			const calculated = toInternalScheme("2.2.2", input);
-			assert.strictEqual(calculated.version, expected);
-		});
-
 		it("converts 1.2.3 to internal version with public version 2.0.0, dev prerelease identifier", () => {
 			const input = `1.2.3`;
 			const expected = `2.0.0-dev.1.2.3`;

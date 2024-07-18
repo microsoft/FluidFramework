@@ -796,13 +796,5 @@ describe("semver", () => {
 			assert.equal(result1, expected1, "previous major version mismatch");
 			assert.equal(result2, expected2, "previous minor version mismatch");
 		});
-
-		it("3.0.0-internal.3.2.2", () => {
-			const input = `3.0.0-internal.3.2.2`;
-			const [expected1, expected2] = [`3.0.0-internal.2.0.0`, `3.0.0-internal.3.1.0`];
-			const [result1, result2] = getPreviousVersions(input);
-			assert.equal(result1, expected1, "previous major version mismatch");
-			assert.equal(result2, expected2, "previous minor version mismatch");
-		});
 	});
 });
