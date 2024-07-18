@@ -439,7 +439,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		);
 		const siblingChunk =
 			(this.siblings as TreeChunk[])[this.indexOfChunk] ??
-			fail("Expected value to be in array");
+			oob();
 		this.indexWithinChunk++;
 		if (this.indexWithinChunk === siblingChunk.topLevelLength) {
 			this.indexOfChunk++;
