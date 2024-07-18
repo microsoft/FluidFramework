@@ -20,132 +20,114 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ContainerDevtoolsProps": {"forwardCompat": false}
+ * "Interface_ContainerDevtoolsProps": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ContainerDevtoolsProps = requireAssignableTo<TypeOnly<old.ContainerDevtoolsProps>, TypeOnly<current.ContainerDevtoolsProps>>
+declare type old_as_current_for_Interface_ContainerDevtoolsProps = requireAssignableTo<TypeOnly<old.ContainerDevtoolsProps>, TypeOnly<current.ContainerDevtoolsProps>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ContainerDevtoolsProps": {"backCompat": false}
+ * "Interface_ContainerDevtoolsProps": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ContainerDevtoolsProps = requireAssignableTo<TypeOnly<current.ContainerDevtoolsProps>, TypeOnly<old.ContainerDevtoolsProps>>
+declare type current_as_old_for_Interface_ContainerDevtoolsProps = requireAssignableTo<TypeOnly<current.ContainerDevtoolsProps>, TypeOnly<old.ContainerDevtoolsProps>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_ContainerKey": {"forwardCompat": false}
+ * "TypeAlias_ContainerKey": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_ContainerKey = requireAssignableTo<TypeOnly<old.ContainerKey>, TypeOnly<current.ContainerKey>>
+declare type old_as_current_for_TypeAlias_ContainerKey = requireAssignableTo<TypeOnly<old.ContainerKey>, TypeOnly<current.ContainerKey>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_ContainerKey": {"backCompat": false}
+ * "TypeAlias_ContainerKey": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAliasDeclaration_ContainerKey = requireAssignableTo<TypeOnly<current.ContainerKey>, TypeOnly<old.ContainerKey>>
+declare type current_as_old_for_TypeAlias_ContainerKey = requireAssignableTo<TypeOnly<current.ContainerKey>, TypeOnly<old.ContainerKey>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_DevtoolsProps": {"forwardCompat": false}
+ * "Interface_DevtoolsProps": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_DevtoolsProps = requireAssignableTo<TypeOnly<old.DevtoolsProps>, TypeOnly<current.DevtoolsProps>>
+declare type old_as_current_for_Interface_DevtoolsProps = requireAssignableTo<TypeOnly<old.DevtoolsProps>, TypeOnly<current.DevtoolsProps>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_DevtoolsProps": {"backCompat": false}
+ * "Interface_DevtoolsProps": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_DevtoolsProps = requireAssignableTo<TypeOnly<current.DevtoolsProps>, TypeOnly<old.DevtoolsProps>>
+declare type current_as_old_for_Interface_DevtoolsProps = requireAssignableTo<TypeOnly<current.DevtoolsProps>, TypeOnly<old.DevtoolsProps>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_HasContainerKey": {"forwardCompat": false}
+ * "Interface_HasContainerKey": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_HasContainerKey = requireAssignableTo<TypeOnly<old.HasContainerKey>, TypeOnly<current.HasContainerKey>>
+declare type old_as_current_for_Interface_HasContainerKey = requireAssignableTo<TypeOnly<old.HasContainerKey>, TypeOnly<current.HasContainerKey>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_HasContainerKey": {"backCompat": false}
+ * "Interface_HasContainerKey": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_HasContainerKey = requireAssignableTo<TypeOnly<current.HasContainerKey>, TypeOnly<old.HasContainerKey>>
+declare type current_as_old_for_Interface_HasContainerKey = requireAssignableTo<TypeOnly<current.HasContainerKey>, TypeOnly<old.HasContainerKey>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IDevtools": {"forwardCompat": false}
+ * "Interface_IDevtools": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IDevtools = requireAssignableTo<TypeOnly<old.IDevtools>, TypeOnly<current.IDevtools>>
+declare type old_as_current_for_Interface_IDevtools = requireAssignableTo<TypeOnly<old.IDevtools>, TypeOnly<current.IDevtools>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IDevtools": {"backCompat": false}
+ * "Interface_IDevtools": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IDevtools = requireAssignableTo<TypeOnly<current.IDevtools>, TypeOnly<old.IDevtools>>
+declare type current_as_old_for_Interface_IDevtools = requireAssignableTo<TypeOnly<current.IDevtools>, TypeOnly<old.IDevtools>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IDevtoolsLogger": {"backCompat": false}
+ * "Interface_IDevtoolsLogger": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IDevtoolsLogger = requireAssignableTo<TypeOnly<current.IDevtoolsLogger>, TypeOnly<old.IDevtoolsLogger>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_createDevtoolsLogger": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_createDevtoolsLogger = requireAssignableTo<TypeOnly<typeof old.createDevtoolsLogger>, TypeOnly<typeof current.createDevtoolsLogger>>
+declare type current_as_old_for_Interface_IDevtoolsLogger = requireAssignableTo<TypeOnly<current.IDevtoolsLogger>, TypeOnly<old.IDevtoolsLogger>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_createDevtoolsLogger": {"backCompat": false}
+ * "Function_createDevtoolsLogger": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_createDevtoolsLogger = requireAssignableTo<TypeOnly<typeof current.createDevtoolsLogger>, TypeOnly<typeof old.createDevtoolsLogger>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_initializeDevtools": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_initializeDevtools = requireAssignableTo<TypeOnly<typeof old.initializeDevtools>, TypeOnly<typeof current.initializeDevtools>>
+declare type current_as_old_for_Function_createDevtoolsLogger = requireAssignableTo<TypeOnly<typeof current.createDevtoolsLogger>, TypeOnly<typeof old.createDevtoolsLogger>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_initializeDevtools": {"backCompat": false}
+ * "Function_initializeDevtools": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_initializeDevtools = requireAssignableTo<TypeOnly<typeof current.initializeDevtools>, TypeOnly<typeof old.initializeDevtools>>
+declare type current_as_old_for_Function_initializeDevtools = requireAssignableTo<TypeOnly<typeof current.initializeDevtools>, TypeOnly<typeof old.initializeDevtools>>

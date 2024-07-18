@@ -20,69 +20,69 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IContainerRuntime": {"forwardCompat": false}
+ * "Interface_IContainerRuntime": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IContainerRuntime = requireAssignableTo<TypeOnly<old.IContainerRuntime>, TypeOnly<current.IContainerRuntime>>
+declare type old_as_current_for_Interface_IContainerRuntime = requireAssignableTo<TypeOnly<old.IContainerRuntime>, TypeOnly<current.IContainerRuntime>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IContainerRuntime": {"backCompat": false}
+ * "Interface_IContainerRuntime": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IContainerRuntime = requireAssignableTo<TypeOnly<current.IContainerRuntime>, TypeOnly<old.IContainerRuntime>>
+declare type current_as_old_for_Interface_IContainerRuntime = requireAssignableTo<TypeOnly<current.IContainerRuntime>, TypeOnly<old.IContainerRuntime>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {"forwardCompat": false}
+ * "TypeAlias_IContainerRuntimeBaseWithCombinedEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents = requireAssignableTo<TypeOnly<old.IContainerRuntimeBaseWithCombinedEvents>, TypeOnly<current.IContainerRuntimeBaseWithCombinedEvents>>
+declare type old_as_current_for_TypeAlias_IContainerRuntimeBaseWithCombinedEvents = requireAssignableTo<TypeOnly<old.IContainerRuntimeBaseWithCombinedEvents>, TypeOnly<current.IContainerRuntimeBaseWithCombinedEvents>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {"backCompat": false}
+ * "TypeAlias_IContainerRuntimeBaseWithCombinedEvents": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents = requireAssignableTo<TypeOnly<current.IContainerRuntimeBaseWithCombinedEvents>, TypeOnly<old.IContainerRuntimeBaseWithCombinedEvents>>
+declare type current_as_old_for_TypeAlias_IContainerRuntimeBaseWithCombinedEvents = requireAssignableTo<TypeOnly<current.IContainerRuntimeBaseWithCombinedEvents>, TypeOnly<old.IContainerRuntimeBaseWithCombinedEvents>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IContainerRuntimeEvents": {"forwardCompat": false}
+ * "Interface_IContainerRuntimeEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IContainerRuntimeEvents = requireAssignableTo<TypeOnly<old.IContainerRuntimeEvents>, TypeOnly<current.IContainerRuntimeEvents>>
+declare type old_as_current_for_Interface_IContainerRuntimeEvents = requireAssignableTo<TypeOnly<old.IContainerRuntimeEvents>, TypeOnly<current.IContainerRuntimeEvents>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IContainerRuntimeEvents": {"backCompat": false}
+ * "Interface_IContainerRuntimeEvents": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IContainerRuntimeEvents = requireAssignableTo<TypeOnly<current.IContainerRuntimeEvents>, TypeOnly<old.IContainerRuntimeEvents>>
+declare type current_as_old_for_Interface_IContainerRuntimeEvents = requireAssignableTo<TypeOnly<current.IContainerRuntimeEvents>, TypeOnly<old.IContainerRuntimeEvents>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated": {"forwardCompat": false}
+ * "Interface_IContainerRuntimeWithResolveHandle_Deprecated": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated = requireAssignableTo<TypeOnly<old.IContainerRuntimeWithResolveHandle_Deprecated>, TypeOnly<current.IContainerRuntimeWithResolveHandle_Deprecated>>
+declare type old_as_current_for_Interface_IContainerRuntimeWithResolveHandle_Deprecated = requireAssignableTo<TypeOnly<old.IContainerRuntimeWithResolveHandle_Deprecated>, TypeOnly<current.IContainerRuntimeWithResolveHandle_Deprecated>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated": {"backCompat": false}
+ * "Interface_IContainerRuntimeWithResolveHandle_Deprecated": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated = requireAssignableTo<TypeOnly<current.IContainerRuntimeWithResolveHandle_Deprecated>, TypeOnly<old.IContainerRuntimeWithResolveHandle_Deprecated>>
+declare type current_as_old_for_Interface_IContainerRuntimeWithResolveHandle_Deprecated = requireAssignableTo<TypeOnly<current.IContainerRuntimeWithResolveHandle_Deprecated>, TypeOnly<old.IContainerRuntimeWithResolveHandle_Deprecated>>

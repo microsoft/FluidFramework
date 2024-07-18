@@ -20,69 +20,51 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_DocumentDeltaConnection": {"forwardCompat": false}
+ * "Class_DocumentDeltaConnection": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_DocumentDeltaConnection = requireAssignableTo<TypeOnly<old.DocumentDeltaConnection>, TypeOnly<current.DocumentDeltaConnection>>
+declare type old_as_current_for_Class_DocumentDeltaConnection = requireAssignableTo<TypeOnly<old.DocumentDeltaConnection>, TypeOnly<current.DocumentDeltaConnection>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_DocumentDeltaConnection": {"backCompat": false}
+ * "Class_DocumentDeltaConnection": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_DocumentDeltaConnection = requireAssignableTo<TypeOnly<current.DocumentDeltaConnection>, TypeOnly<old.DocumentDeltaConnection>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_getW3CData": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_getW3CData = requireAssignableTo<TypeOnly<typeof old.getW3CData>, TypeOnly<typeof current.getW3CData>>
+declare type current_as_old_for_Class_DocumentDeltaConnection = requireAssignableTo<TypeOnly<current.DocumentDeltaConnection>, TypeOnly<old.DocumentDeltaConnection>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_getW3CData": {"backCompat": false}
+ * "ClassStatics_DocumentDeltaConnection": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_getW3CData = requireAssignableTo<TypeOnly<typeof current.getW3CData>, TypeOnly<typeof old.getW3CData>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_promiseRaceWithWinner": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_promiseRaceWithWinner = requireAssignableTo<TypeOnly<typeof old.promiseRaceWithWinner>, TypeOnly<typeof current.promiseRaceWithWinner>>
+declare type current_as_old_for_ClassStatics_DocumentDeltaConnection = requireAssignableTo<TypeOnly<typeof current.DocumentDeltaConnection>, TypeOnly<typeof old.DocumentDeltaConnection>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_promiseRaceWithWinner": {"backCompat": false}
+ * "Function_getW3CData": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_promiseRaceWithWinner = requireAssignableTo<TypeOnly<typeof current.promiseRaceWithWinner>, TypeOnly<typeof old.promiseRaceWithWinner>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_validateMessages": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_validateMessages = requireAssignableTo<TypeOnly<typeof old.validateMessages>, TypeOnly<typeof current.validateMessages>>
+declare type current_as_old_for_Function_getW3CData = requireAssignableTo<TypeOnly<typeof current.getW3CData>, TypeOnly<typeof old.getW3CData>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_validateMessages": {"backCompat": false}
+ * "Function_promiseRaceWithWinner": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_validateMessages = requireAssignableTo<TypeOnly<typeof current.validateMessages>, TypeOnly<typeof old.validateMessages>>
+declare type current_as_old_for_Function_promiseRaceWithWinner = requireAssignableTo<TypeOnly<typeof current.promiseRaceWithWinner>, TypeOnly<typeof old.promiseRaceWithWinner>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_validateMessages": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_validateMessages = requireAssignableTo<TypeOnly<typeof current.validateMessages>, TypeOnly<typeof old.validateMessages>>
