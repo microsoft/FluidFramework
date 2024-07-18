@@ -2,7 +2,7 @@
 "@fluidframework/tree": minor
 ---
 
-Expose expirmental alpha APIs for producing schema from enums
+Expose experimental alpha APIs for producing schema from enums
 
 `adaptEnum` and `enumFromStrings` have been added to `@fluidframework/tree/alpha`.
 These are unstable alpha APIs, are relatively simple helpers on-top of public APIs (source: [schemaCreationUtilities.ts](https://github.com/microsoft/FluidFramework/blob/a97d2a19bc063e15be38395154ddbc7b3ddca50f/packages/dds/tree/src/simple-tree/schemaCreationUtilities.ts)):
