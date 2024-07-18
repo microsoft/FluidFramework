@@ -58,10 +58,10 @@ export class OpGroupingManager {
 		resubmittingBatchId: string,
 		referenceSequenceNumber: number,
 	): IBatch<[BatchMessage]> {
-		assert(
-			this.config.groupedBatchingEnabled,
-			"cannot create empty grouped batch when grouped batching is disabled",
-		);
+		// assert(
+		// 	this.config.groupedBatchingEnabled,
+		// 	"cannot create empty grouped batch when grouped batching is disabled",
+		// );
 		const serializedContent = JSON.stringify({
 			type: OpGroupingManager.groupedBatchOp,
 			contents: [],
@@ -152,7 +152,8 @@ export class OpGroupingManager {
 			// Grouped batching must be enabled
 			this.config.groupedBatchingEnabled &&
 			// The number of ops in the batch must surpass the configured threshold
-			batch.messages.length >= this.config.opCountThreshold &&
+			// or be empty (to allow for empty batches to be grouped)
+			(batch.messages.length === 0 || batch.messages.length >= this.config.opCountThreshold) &&
 			// Support for reentrant batches must be explicitly enabled
 			(this.config.reentrantBatchGroupingEnabled || batch.hasReentrantOps !== true)
 		);
