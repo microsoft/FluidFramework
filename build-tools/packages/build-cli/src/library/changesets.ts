@@ -12,8 +12,11 @@ import matter from "gray-matter";
 
 import { ReleasePackage } from "../releaseGroups.js";
 import { Repository } from "./git.js";
+import { readFile } from "node:fs/promises";
 
 export const DEFAULT_CHANGESET_PATH = ".changeset";
+
+export type ChangeKind = "fix" | "feature";
 
 export interface Changeset {
 	metadata: { [pkg: string]: VersionBumpType };
@@ -21,6 +24,10 @@ export interface Changeset {
 	content: string;
 	summary?: string;
 	added?: Date;
+	additionalMetadata?: {
+		kind?: ChangeKind;
+		includeInReleaseNotes?: boolean;
+	};
 	sourceFile: string;
 }
 
@@ -64,7 +71,8 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 		const added = parseISO(results.all?.[0]?.date ?? formatISO(Date.now()));
 
 		// Read the changeset file into content and metadata (front-matter)
-		const md = matter.read(file);
+		const rawFileContent = await readFile(file, {encoding:"utf8"});
+		const md = matter(rawFileContent);
 		const paragraphs = md.content.trim().split("\n\n");
 
 		if (paragraphs.length < 2) {

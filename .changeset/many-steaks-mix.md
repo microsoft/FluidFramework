@@ -2,6 +2,8 @@
 "fluid-framework": minor
 "@fluidframework/tree": minor
 ---
+includeInReleaseNotes: no
+---
 
 tree: Improved performance for accessing identifiers in shortId API
 
