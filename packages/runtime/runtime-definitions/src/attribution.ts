@@ -60,11 +60,25 @@ export interface LocalAttributionKey {
 }
 
 /**
+ * @alpha
+ * @legacy
+ */
+export interface CustomAttributionKey {
+	type: "custom";
+
+	id: string;
+}
+
+/**
  * Can be indexed into the ContainerRuntime in order to retrieve {@link AttributionInfo}.
  * @legacy
  * @alpha
  */
-export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
+export type AttributionKey =
+	| OpAttributionKey
+	| DetachedAttributionKey
+	| LocalAttributionKey
+	| CustomAttributionKey;
 
 /**
  * Attribution information associated with a change.
@@ -80,4 +94,15 @@ export interface AttributionInfo {
 	 * When the change happened.
 	 */
 	timestamp: number;
+}
+
+/**
+ * @alpha
+ * @legacy
+ */
+export interface CustomAttributionInfo extends AttributionInfo {
+	/**
+	 * Any custom attributes to be stores by the app.
+	 */
+	customAttributes?: { [index: string]: string | number };
 }

@@ -231,6 +231,12 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"EnumDeclaration_ContainerMessageType": {
+				"backCompat": false
+			},
+			"ClassDeclaration_ContainerRuntime": {
+				"forwardCompat": false
+			},
 			"ClassDeclaration_LocalFluidDataStoreContext": {
 				"forwardCompat": false
 			},
