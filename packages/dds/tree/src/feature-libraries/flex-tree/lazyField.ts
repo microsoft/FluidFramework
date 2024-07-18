@@ -12,7 +12,6 @@ import {
 	type FieldUpPath,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
-	ITreeSubscriptionCursorState,
 	type TreeNavigationResult,
 	inCursorNode,
 	isCursor,
