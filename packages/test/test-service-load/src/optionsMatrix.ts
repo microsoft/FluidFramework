@@ -20,7 +20,7 @@ import {
 import { ConfigTypes } from "@fluidframework/core-interfaces";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
-import { ILoadTestConfig, OptionOverride } from "./testConfigFile.js";
+import { TestConfiguration, OptionOverride } from "./testConfigFile.js";
 
 interface ILoaderOptionsExperimental extends ILoaderOptions {
 	enableOfflineSnapshotRefresh?: boolean;
@@ -142,7 +142,7 @@ export function generateConfigurations(
  * @returns an option override
  */
 export function getOptionOverride(
-	testConfig: ILoadTestConfig | undefined,
+	testConfig: TestConfiguration | undefined,
 	driverType: TestDriverTypes,
 	endpoint: string | undefined,
 ): OptionOverride | undefined {

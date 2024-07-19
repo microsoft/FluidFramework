@@ -25,6 +25,7 @@ import {
 	FaultInjectionDocumentServiceFactory,
 	FaultInjectionError,
 } from "./faultInjectionDriver.js";
+import { getProfile } from "./getProfile.js";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
@@ -37,7 +38,6 @@ import {
 	createCodeLoader,
 	createLogger,
 	createTestDriver,
-	getProfile,
 	globalConfigurations,
 	safeExit,
 } from "./utils.js";
@@ -89,6 +89,7 @@ async function main() {
 	const seed: number = commander.seed;
 	const enableOpsMetrics: boolean = commander.enableOpsMetrics ?? false;
 
+	// TODO: Ensure the right thing happens in case of an error.
 	const profile = getProfile(profileName);
 
 	if (log !== undefined) {

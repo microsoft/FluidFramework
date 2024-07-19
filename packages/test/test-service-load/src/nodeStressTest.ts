@@ -14,10 +14,11 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import commander from "commander";
 import ps from "ps-node";
 
+import { getProfile } from "./getProfile.js";
 import { getTestUsers, TestUsers } from "./getTestUsers.js";
 import { smokeTest } from "./stressSmoke.js";
-import { ILoadTestConfig } from "./testConfigFile.js";
-import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils.js";
+import { TestConfiguration } from "./testConfigFile.js";
+import { createLogger, createTestDriver, initialize, safeExit } from "./utils.js";
 
 const createLoginEnv = (userName: string, password: string) =>
 	`{"${userName}": "${password}"}`;
@@ -87,7 +88,7 @@ function getRunOptions() {
  */
 async function orchestratorProcess(
 	testDriver: ITestDriver,
-	profile: ILoadTestConfig,
+	profile: TestConfiguration,
 	args: {
 		testId?: string;
 		debug?: true;

@@ -9,12 +9,14 @@ import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/inte
 import { ConfigTypes } from "@fluidframework/core-interfaces";
 
 /** Type modeling the structure of the testConfig.json file */
-export interface ITestConfig {
-	profiles: { [name: string]: ILoadTestConfig };
-}
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type TestConfigurationFileContents = {
+	profiles: { [profileName: string]: TestConfiguration };
+};
 
 /** Type modeling the profile sub-structure of the testConfig.json file */
-export interface ILoadTestConfig {
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type TestConfiguration = {
 	opRatePerMin: number;
 	progressIntervalMs: number;
 	numClients: number;
@@ -107,10 +109,11 @@ export interface ILoadTestConfig {
 		 */
 		numClients?: number;
 	};
-}
+};
 
-export interface OptionOverride {
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type OptionOverride = {
 	loader?: Partial<OptionsMatrix<ILoaderOptions>>;
 	container?: Partial<OptionsMatrix<IContainerRuntimeOptions>>;
 	configurations?: OptionsMatrix<Record<string, ConfigTypes>>;
-}
+};

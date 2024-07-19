@@ -12,7 +12,7 @@ type TestUsersRecord = Record<string, string>;
 
 // Consider just having the Json format be TestUsers directly, if there's no one depending on this format already.
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-type TestUserFileContents = {
+type TestUsersFileContents = {
 	credentials: TestUsersRecord;
 };
 
@@ -26,7 +26,7 @@ const isTestUsersRecord = (recordObject: unknown): recordObject is TestUsersReco
 	);
 };
 
-const isTestUserFileContents = (contents: unknown): contents is TestUserFileContents => {
+const isTestUserFileContents = (contents: unknown): contents is TestUsersFileContents => {
 	return (
 		typeof contents === "object" &&
 		contents !== null &&

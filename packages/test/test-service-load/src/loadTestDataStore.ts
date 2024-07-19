@@ -33,12 +33,12 @@ import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { ILoadTestConfig } from "./testConfigFile.js";
+import { TestConfiguration } from "./testConfigFile.js";
 
 export interface IRunConfig {
 	runId: number;
 	profileName: string;
-	testConfig: ILoadTestConfig;
+	testConfig: TestConfiguration;
 	verbose: boolean;
 	random: IRandom;
 	logger: ITelemetryLoggerExt;
