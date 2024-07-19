@@ -1,5 +1,15 @@
 # @fluid-experimental/property-query
 
+## 2.1.0
+
+### Minor Changes
+
+-   Updated `joi` dependency to latest major version ([#20987](https://github.com/microsoft/FluidFramework/pull/20987)) [99bcf456fc](https://github.com/microsoft/FluidFramework/commit/99bcf456fcc1b490a5d590a1cd1bdc9c90662f15)
+
+    The `joi` dependency was updated from 14.3.1 to 17.3.1 to address a critical vulnerability exploit
+    [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp). This required updating the use of `joi` schema
+    validation function within property-query to the new major version syntax.
+
 ## 2.0.0-rc.5.0.0
 
 Dependency updates only.
