@@ -49,20 +49,6 @@ export enum Side {
 	After = 1,
 }
 
-export function toSequencePlace(
-	pos: number | "start" | "end",
-	side: Side | undefined,
-): SequencePlace {
-	return typeof pos === "number" && side !== undefined ? { pos, side } : pos;
-}
-
-export function toOptionalSequencePlace(
-	pos: number | "start" | "end" | undefined,
-	side: Side | undefined,
-): SequencePlace | undefined {
-	return typeof pos === "number" && side !== undefined ? { pos, side } : pos;
-}
-
 export function endpointPosAndSide(
 	start: SequencePlace | undefined,
 	end: SequencePlace | undefined,
