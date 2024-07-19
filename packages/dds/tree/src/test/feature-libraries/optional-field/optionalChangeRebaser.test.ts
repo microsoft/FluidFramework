@@ -222,10 +222,12 @@ function rebaseComposedWrapped(
 	change: TaggedChange<WrappedChangeset>,
 	...baseChanges: TaggedChange<WrappedChangeset>[]
 ): WrappedChangeset {
-	const composed = baseChanges.reduce(
-		(change1, change2) => makeAnonChange(composeWrapped(change1, change2)),
-		makeAnonChange(ChangesetWrapper.create(Change.empty())),
-	);
+	const composed =
+		baseChanges.length === 0
+			? makeAnonChange(ChangesetWrapper.create(Change.empty()))
+			: baseChanges.reduce((change1, change2) =>
+					makeAnonChange(composeWrapped(change1, change2)),
+				);
 
 	return rebaseWrapped(change, composed, metadata);
 }
