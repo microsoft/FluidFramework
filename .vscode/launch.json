@@ -89,7 +89,7 @@
 				"-t",
 				"minor",
 				"--out",
-				"RELEASE_NOTES/notes.md",
+				"RELEASE_NOTES/2.1.0.md",
 				"-v",
 			],
 		},
