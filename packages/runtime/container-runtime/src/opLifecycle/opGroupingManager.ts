@@ -58,10 +58,10 @@ export class OpGroupingManager {
 		resubmittingBatchId: string,
 		referenceSequenceNumber: number,
 	): IBatch<[BatchMessage]> {
-		// assert(
-		// 	this.config.groupedBatchingEnabled,
-		// 	"cannot create empty grouped batch when grouped batching is disabled",
-		// );
+		assert(
+			this.config.groupedBatchingEnabled,
+			"cannot create empty grouped batch when grouped batching is disabled",
+		);
 		const serializedContent = JSON.stringify({
 			type: OpGroupingManager.groupedBatchOp,
 			contents: [],
@@ -71,7 +71,7 @@ export class OpGroupingManager {
 			contentSizeInBytes: 0,
 			messages: [
 				{
-					metadata: { resubmittingBatchId, emptyBatch: true },
+					metadata: { batchId: resubmittingBatchId, emptyBatch: true },
 					referenceSequenceNumber,
 					contents: serializedContent,
 				},
@@ -102,9 +102,13 @@ export class OpGroupingManager {
 			});
 		}
 
+		let groupedBatchId;
 		for (const message of batch.messages) {
 			if (message.metadata) {
 				const { batch: _batch, batchId, ...rest } = message.metadata;
+				if (batchId) {
+					groupedBatchId = batchId;
+				}
 				assert(Object.keys(rest).length === 0, 0x5dd /* cannot group ops with metadata */);
 			}
 		}
@@ -122,7 +126,7 @@ export class OpGroupingManager {
 			...batch,
 			messages: [
 				{
-					metadata: undefined,
+					metadata: { batchId: groupedBatchId },
 					// TODO why are we non null asserting here?
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					referenceSequenceNumber: batch.messages[0]!.referenceSequenceNumber,

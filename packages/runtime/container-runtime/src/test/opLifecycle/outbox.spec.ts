@@ -337,14 +337,21 @@ describe("Outbox", () => {
 			'{"type":"groupedBatch","contents":[]}',
 		);
 		assert.equal(
-			state.batchesSubmitted[0].messages[0].metadata?.resubmittingBatchId,
+			state.batchesSubmitted[0].messages[0].metadata?.batchId,
 			"resubmittingBatchId",
 		);
 		assert.equal(state.batchesSubmitted[0].messages[0].metadata?.emptyBatch, true);
 	});
 
 	it("Batch ID added when applicable", () => {
-		const outbox = getOutbox({ context: getMockContext() });
+		const outbox = getOutbox({
+			context: getMockContext(),
+			opGroupingConfig: {
+				groupedBatchingEnabled: true,
+				opCountThreshold: 2,
+				reentrantBatchGroupingEnabled: true,
+			},
+		});
 
 		// Flush 1 - resubmit multi-message batch including ID Allocation
 		outbox.submitIdAllocation(createMessage(ContainerMessageType.IdAllocation, "0")); // Separate batch, batch ID not used
@@ -372,11 +379,11 @@ describe("Outbox", () => {
 			state.batchesSubmitted.map((x) => x.messages.map((m) => m.metadata?.batchId)),
 			[
 				[undefined], // Flush 1 - ID Allocation (no batch ID used)
-				["batchId-A", undefined], // Flush 1 - Main
+				["batchId-A"], // Flush 1 - Main
 				["batchId-B"], // Flush 2 - Main
 				["batchId-C", undefined], // Flush 3 - Blob Attach
+				["batchId-C"], // Flush 3 - Blob Attach, Main empty batch
 				[undefined], // Flush 4 - Main (no batch ID given)
-				[undefined],
 			],
 			"Submitted batches have incorrect batch ID",
 		);
@@ -390,8 +397,8 @@ describe("Outbox", () => {
 				"batchId-B",
 				"batchId-C",
 				undefined, // second message in batch
+				"batchId-C", // Main empty batch
 				undefined, // no batchId given
-				undefined,
 			],
 			"Pending messages have incorrect batch ID",
 		);
