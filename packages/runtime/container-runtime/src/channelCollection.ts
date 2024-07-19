@@ -398,6 +398,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 	private processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
 		const attachMessage = message.contents as InboundAttachMessage;
+		// Include the type of attach message which is the pkg of the store to be
+		// used by RemoteFluidDataStoreContext in case it is not in the snapshot.
+		const pkg = [attachMessage.type];
 
 		// We need to process the GC Data for both local and remote attach messages
 		const foundGCData = processAttachMessageGCData(
@@ -405,7 +408,14 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			(nodeId, toPath) => {
 				// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
 				const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
-				this.parentContext.addedGCOutboundRoute(fromPath, toPath, message.timestamp);
+				const toPkg = this.getDataStorePackagePath(toPath);
+				this.parentContext.addedGCOutboundRoute(
+					fromPath,
+					toPath,
+					message.timestamp,
+					pkg /* fromPkg */,
+					toPkg,
+				);
 			},
 		);
 
@@ -459,9 +469,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			}
 		}
 
-		// Include the type of attach message which is the pkg of the store to be
-		// used by RemoteFluidDataStoreContext in case it is not in the snapshot.
-		const pkg = [attachMessage.type];
 		const remoteFluidDataStoreContext = new RemoteFluidDataStoreContext({
 			id: attachMessage.id,
 			snapshot,
@@ -535,7 +542,16 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		// If message timestamp doesn't exist, this is called in a detached container. Don't notify GC in that case
 		// because it doesn't run in detached container and doesn't need to know about this route.
 		if (messageTimestampMs) {
-			this.parentContext.addedGCOutboundRoute("/", `/${internalId}`, messageTimestampMs);
+			const fromPkg = ["_gcRoot"];
+			const toNodePath = `/${internalId}`;
+			const toPkg = this.getDataStorePackagePath(toNodePath);
+			this.parentContext.addedGCOutboundRoute(
+				"/" /* fromNotPath */,
+				toNodePath,
+				messageTimestampMs,
+				fromPkg,
+				toPkg,
+			);
 		}
 
 		this.aliasMap.set(alias, context.id);
@@ -854,7 +870,13 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 					envelope.address,
 					transformed.contents,
 					(fromPath: string, toPath: string) =>
-						this.parentContext.addedGCOutboundRoute(fromPath, toPath, message.timestamp),
+						this.parentContext.addedGCOutboundRoute(
+							fromPath,
+							toPath,
+							message.timestamp,
+							this.getDataStorePackagePath(fromPath),
+							this.getDataStorePackagePath(toPath),
+						),
 				);
 				break;
 			}
@@ -1406,15 +1428,17 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	/**
 	 * Called by GC to retrieve the package path of a data store node with the given path.
 	 */
-	public async getDataStorePackagePath(
-		nodePath: string,
-	): Promise<readonly string[] | undefined> {
+	public getDataStorePackagePath(nodePath: string): readonly string[] | undefined {
 		// If the node belongs to a data store, return its package path. For DDSes, we return the package path of the
 		// data store that contains it.
-		// TODO why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const context = this.contexts.get(nodePath.split("/")[1]!);
-		return (await context?.getInitialSnapshotDetails())?.pkg;
+		const dataStoreId = nodePath.split("/")[1];
+		if (dataStoreId !== undefined) {
+			const context = this.contexts.get(dataStoreId);
+			if (context?.isLoaded) {
+				return context.packagePath;
+			}
+		}
+		return undefined;
 	}
 
 	/**

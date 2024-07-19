@@ -49,6 +49,7 @@ import {
 	UnreferencedState,
 	disableAutoRecoveryKey,
 	type IGCNodeUpdatedProps,
+	type IGCReferenceAddedProps,
 } from "./gcDefinitions.js";
 import {
 	cloneGCData,
@@ -156,10 +157,6 @@ export class GarbageCollector implements IGarbageCollector {
 		return this.configs.throwOnTombstoneUsage;
 	}
 
-	/** For a given node path, returns the node's package path. */
-	private readonly getNodePackagePath: (
-		nodePath: string,
-	) => Promise<readonly string[] | undefined>;
 	/** Returns the timestamp of the last summary generated for this container. */
 	private readonly getLastSummaryTimestampMs: () => number | undefined;
 
@@ -173,7 +170,6 @@ export class GarbageCollector implements IGarbageCollector {
 	protected constructor(createParams: IGarbageCollectorCreateParams) {
 		this.runtime = createParams.runtime;
 		this.isSummarizerClient = createParams.isSummarizerClient;
-		this.getNodePackagePath = createParams.getNodePackagePath;
 		this.getLastSummaryTimestampMs = createParams.getLastSummaryTimestampMs;
 		this.submitMessage = createParams.submitMessage;
 
@@ -228,7 +224,6 @@ export class GarbageCollector implements IGarbageCollector {
 			createParams.createContainerMetadata,
 			(nodeId: string) => this.runtime.getNodeType(nodeId),
 			(nodeId: string) => this.unreferencedNodesState.get(nodeId),
-			this.getNodePackagePath,
 		);
 
 		// Get the GC data from the base snapshot. Use LazyPromise because we only want to do this once since it
@@ -531,10 +526,8 @@ export class GarbageCollector implements IGarbageCollector {
 				});
 
 				/** Post-GC steps */
-				// Log pending unreferenced events such as a node being used after inactive. This is done after GC runs and
-				// updates its state so that we don't send false positives based on intermediate state. For example, we may get
-				// reference to an unreferenced node from another unreferenced node which means the node wasn't revived.
-				await this.telemetryTracker.logPendingEvents(logger);
+				// Telemetry tracker clears up state after every GC run.
+				this.telemetryTracker.gcRunCompleted();
 				// Update the state of summary state tracker from this run's stats.
 				this.summaryStateTracker.updateStateFromGCRunStats(gcStats);
 				this.newReferencesSinceLastRun.clear();
@@ -922,12 +915,12 @@ export class GarbageCollector implements IGarbageCollector {
 
 				// Mark the node as referenced to ensure it isn't Swept
 				const tombstonedNodePath = message.contents.nodePath;
-				this.addedOutboundReference(
-					"/",
-					tombstonedNodePath,
-					messageTimestampMs,
-					true /* autorecovery */,
-				);
+				this.addedOutboundReference({
+					fromNodePath: "/",
+					toNodePath: tombstonedNodePath,
+					timestampMs: messageTimestampMs,
+					autorecovery: true /* autorecovery */,
+				});
 
 				// In case the cause of the TombstoneLoaded event is incorrect GC Data (i.e. the object is actually reachable),
 				// do fullGC on the next run to get a chance to repair (in the likely case the bug is not deterministic)
@@ -1030,7 +1023,6 @@ export class GarbageCollector implements IGarbageCollector {
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
 			headers: headerData,
 			requestUrl: request?.url,
-			requestHeaders: JSON.stringify(request?.headers),
 			additionalProps,
 		});
 
@@ -1114,18 +1106,15 @@ export class GarbageCollector implements IGarbageCollector {
 	/**
 	 * Called when an outbound reference is added to a node. This is used to identify all nodes that have been
 	 * referenced between summaries so that their unreferenced timestamp can be reset.
-	 *
-	 * @param fromNodePath - The node from which the reference is added.
-	 * @param toNodePath - The node to which the reference is added.
-	 * @param timestampMs - The timestamp of the message that added the reference.
-	 * @param autorecovery - This reference is added artificially, for autorecovery. Used for logging.
 	 */
-	public addedOutboundReference(
-		fromNodePath: string,
-		toNodePath: string,
-		timestampMs: number,
-		autorecovery?: true,
-	) {
+	public addedOutboundReference({
+		fromNodePath,
+		toNodePath,
+		timestampMs,
+		autorecovery,
+		packagePath,
+		fromPackagePath,
+	}: IGCReferenceAddedProps) {
 		if (!this.shouldRunGC) {
 			return;
 		}
@@ -1157,11 +1146,12 @@ export class GarbageCollector implements IGarbageCollector {
 			fromId: fromNodePath,
 			usageType: "Revived",
 			currentReferenceTimestampMs: timestampMs,
-			packagePath: undefined,
+			packagePath,
 			completedGCRuns: this.completedRuns,
 			isTombstoned: this.tombstones.includes(trackedId),
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
 			autorecovery,
+			fromPackagePath,
 		});
 
 		// This node is referenced - Clear its unreferenced state if present

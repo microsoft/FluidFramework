@@ -34,7 +34,6 @@ import { pkgVersion } from "../../packageVersion.js";
 describe("Garbage Collection Stats", () => {
 	// Nodes in the reference graph.
 	const nodes: string[] = ["/node1", "/node2", "/node3", "/node4", "/node5", "/node6"];
-	const testPkgPath = ["testPkg"];
 
 	let mockLogger: MockLogger;
 	let mc: MonitoringContext<MockLogger>;
@@ -114,7 +113,6 @@ describe("Garbage Collection Stats", () => {
 			},
 			isSummarizerClient,
 			readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
-			getNodePackagePath: async (nodeId: string) => testPkgPath,
 			getLastSummaryTimestampMs: () => Date.now(),
 			submitMessage: (message: ContainerRuntimeGCMessage) => {
 				gcMessagesCount++;

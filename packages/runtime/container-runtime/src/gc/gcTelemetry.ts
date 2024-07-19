@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { Tagged } from "@fluidframework/core-interfaces";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
@@ -18,7 +17,6 @@ import { RuntimeHeaderData } from "../containerRuntime.js";
 import { ICreateContainerMetadata } from "../summary/index.js";
 
 import {
-	GCFeatureMatrix,
 	GCNodeType,
 	IGarbageCollectorConfigs,
 	UnreferencedState,
@@ -31,50 +29,34 @@ import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived" | "Realized";
 
-/** Properties that are common to IUnreferencedEventProps and INodeUsageProps */
-interface ICommonProps {
-	usageType: NodeUsageType;
-	completedGCRuns: number;
-	isTombstoned: boolean;
-	lastSummaryTime?: number;
-	headers?: RuntimeHeaderData;
-	additionalProps?: ITelemetryPropertiesExt;
-}
-
-/** The event that is logged when unreferenced node is used after a certain time. */
-interface IUnreferencedEventProps extends ICreateContainerMetadata, ICommonProps {
-	/** The id that GC uses to track the node. May or may not match id */
-	trackedId: string;
-	state: UnreferencedState;
-	/** The full path (in GC Path format) to the node in question */
-	id: Tagged<string>;
-	fromId?: Tagged<string>;
-	type: GCNodeType;
-	unrefTime: number;
-	age: number;
-	// Expanding GC feature matrix. Without doing this, the configs cannot be logged in telemetry directly.
-	gcConfigs: Omit<IGarbageCollectorConfigs, "persistedGcFeatureMatrix"> & {
-		[K in keyof GCFeatureMatrix]: GCFeatureMatrix[K];
-	};
-	timeout?: number;
-}
-
 /** Properties passed to nodeUsed function when a node is used. */
-interface INodeUsageProps extends ICommonProps {
+interface INodeUsageProps {
 	/** The full path (in GC Path format) to the node in question */
 	id: string;
 	/** Latest timestamp received from the server, as a baseline for computing GC state/age */
 	currentReferenceTimestampMs: number;
-	/** The package path of the node. This may not be available if the node hasn't been loaded yet */
+	/** The package path of the node. Not available if the node hasn't been loaded yet */
 	packagePath: readonly string[] | undefined;
+	/** How was this node used */
+	usageType: NodeUsageType;
+	/** How many GC runs have been completed in this session */
+	completedGCRuns: number;
+	/** Whether the node is tombstoned */
+	isTombstoned: boolean;
 	/** In case of Revived - what node added the reference? */
 	fromId?: string;
 	/** In case of Revived - was it revived due to autorecovery? */
 	autorecovery?: true;
 	/** URL (including query string) if this usage came from a request */
 	requestUrl?: string;
+	/** The timestamp of the last summary */
+	lastSummaryTime?: number;
 	/** Original request headers if this usage came from a request or handle.get */
-	requestHeaders?: string;
+	headers?: RuntimeHeaderData;
+	/** Additional properties to log in telemetry */
+	additionalProps?: ITelemetryPropertiesExt;
+	/** The package path of the node that adds a reference. Not available if the node hasn't been loaded yet */
+	fromPackagePath?: readonly string[] | undefined;
 }
 
 /**
@@ -97,8 +79,8 @@ export class GCTelemetryTracker {
 	// Keeps track of unreferenced events that are logged for a node. This is used to limit the log generation to one
 	// per event per node.
 	private readonly loggedUnreferencedEvents: Set<string> = new Set();
-	// Queue for unreferenced events that should be logged the next time GC runs.
-	private pendingEventsQueue: IUnreferencedEventProps[] = [];
+
+	private readonly referencesSinceLastRun: Set<string> = new Set();
 
 	constructor(
 		private readonly mc: MonitoringContext,
@@ -109,10 +91,15 @@ export class GCTelemetryTracker {
 		private readonly getNodeStateTracker: (
 			nodeId: string,
 		) => UnreferencedStateTracker | undefined,
-		private readonly getNodePackagePath: (
-			nodePath: string,
-		) => Promise<readonly string[] | undefined>,
 	) {}
+
+	/**
+	 * Called after every GC run. Clear all references since the last GC run since the unreferenced
+	 * state of all nodes would have updated and the references are now stale.
+	 */
+	public gcRunCompleted() {
+		this.referencesSinceLastRun.clear();
+	}
 
 	/**
 	 * Returns whether an event should be logged for a node that isn't active anymore. This does not apply to
@@ -123,10 +110,10 @@ export class GCTelemetryTracker {
 	private shouldLogNonActiveEvent(
 		nodeType: GCNodeType,
 		usageType: NodeUsageType,
-		nodeStateTracker: UnreferencedStateTracker,
+		state: UnreferencedState,
 		uniqueEventId: string,
 	) {
-		if (nodeStateTracker.state === UnreferencedState.Active) {
+		if (state === UnreferencedState.Active) {
 			return false;
 		}
 
@@ -160,9 +147,12 @@ export class GCTelemetryTracker {
 			usageType,
 			currentReferenceTimestampMs,
 			packagePath,
+			fromPackagePath,
 			id: untaggedId,
 			fromId: untaggedFromId,
 			isTombstoned,
+			headers,
+			additionalProps,
 			...otherNodeUsageProps
 		}: INodeUsageProps,
 	) {
@@ -170,7 +160,12 @@ export class GCTelemetryTracker {
 		// This is necessary because the SubDataStore path may be unrecognized by GC (if suited for a custom request handler)
 		const nodeStateTracker = this.getNodeStateTracker(trackedId);
 		const nodeType = this.getNodeType(untaggedId);
-
+		const unrefTime = nodeStateTracker?.unreferencedTimestampMs ?? -1;
+		const age =
+			nodeStateTracker !== undefined
+				? currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs
+				: -1;
+		const { persistedGcFeatureMatrix, ...configs } = this.configs;
 		const timeout = (() => {
 			switch (nodeStateTracker?.state) {
 				case UnreferencedState.Inactive:
@@ -186,27 +181,49 @@ export class GCTelemetryTracker {
 					return undefined;
 			}
 		})();
-		const { persistedGcFeatureMatrix, ...configs } = this.configs;
-		const unrefEventProps = {
-			trackedId,
-			type: nodeType,
-			unrefTime: nodeStateTracker?.unreferencedTimestampMs ?? -1,
-			age:
-				nodeStateTracker !== undefined
-					? currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs
-					: -1,
-			timeout,
-			isTombstoned,
+
+		const loggingProps: ITelemetryPropertiesExt = {
 			...tagCodeArtifacts({ id: untaggedId, fromId: untaggedFromId }),
-			...otherNodeUsageProps,
-			...this.createContainerMetadata,
+			...tagCodeArtifacts({ pkg: packagePath?.join("/") }),
+			...tagCodeArtifacts({ fromPkg: fromPackagePath?.join("/") }),
 			gcConfigs: { ...configs, ...persistedGcFeatureMatrix },
-		} satisfies Omit<IUnreferencedEventProps, "state" | "usageType"> &
-			typeof otherNodeUsageProps;
+			details: {
+				age,
+				unrefTime,
+				timeout,
+				type: nodeType,
+				trackedId,
+				isTombstoned,
+				...headers,
+				...additionalProps,
+				...otherNodeUsageProps,
+				...this.createContainerMetadata,
+			},
+		};
 
 		// If the node that is used is tombstoned, log a tombstone telemetry.
 		if (isTombstoned) {
-			this.logTombstoneUsageTelemetry(unrefEventProps, nodeType, usageType, packagePath);
+			this.logTombstoneUsageTelemetry(
+				nodeType,
+				usageType,
+				loggingProps,
+				headers?.allowTombstone,
+			);
+		}
+
+		// If the node has been referenced before it was used, this usage is not unexpected. Check the trackedId
+		// as well for cases where a DDS is used after it's data store is referenced.
+		if (
+			this.referencesSinceLastRun.has(untaggedId) ||
+			this.referencesSinceLastRun.has(trackedId)
+		) {
+			return;
+		}
+
+		// If the node is revived, add it to the list of references since last GC run. This will be used to filter out
+		// cases where this node is later.
+		if (usageType === "Revived") {
+			this.referencesSinceLastRun.add(untaggedId);
 		}
 
 		// After logging tombstone telemetry, if the node's unreferenced state is not tracked, there is nothing
@@ -218,86 +235,50 @@ export class GCTelemetryTracker {
 		const state = nodeStateTracker.state;
 		const uniqueEventId = `${state}-${untaggedId}-${usageType}`;
 
-		if (!this.shouldLogNonActiveEvent(nodeType, usageType, nodeStateTracker, uniqueEventId)) {
+		if (!this.shouldLogNonActiveEvent(nodeType, usageType, state, uniqueEventId)) {
 			return;
 		}
 
 		// Add the unique event id so that we don't generate a log for this event again in this session.
 		this.loggedUnreferencedEvents.add(uniqueEventId);
 
-		// For summarizer client, queue the event so it is logged the next time GC runs if the event is still valid.
-		// For non-summarizer client, log the event now since GC won't run on it. This may result in false positives
-		// but it's a good signal nonetheless and we can consume it with a grain of salt.
-		// Inactive errors are usages of Objects that are unreferenced for at least a period of 7 days.
-		// SweepReady errors are usages of Objects that will be deleted by GC Sweep!
-		if (this.isSummarizerClient) {
-			this.pendingEventsQueue.push({
-				...unrefEventProps, // Note: Contains some properties from INodeUsageProps as well
-				usageType,
-				state,
-			});
-		} else {
-			// For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
-			// summarizer clients if they are based off of user actions (such as scrolling to content for these objects)
-			// Events generated:
-			// InactiveObject_Loaded, SweepReadyObject_Loaded
-			if (usageType === "Loaded") {
-				const { id, fromId, headers, gcConfigs, additionalProps, ...detailedProps } =
-					unrefEventProps;
-				const event = {
-					eventName: `${state}Object_${usageType}`,
-					...tagCodeArtifacts({ pkg: packagePath?.join("/") }),
-					stack: generateStack(),
-					id,
-					fromId,
-					headers: { ...headers },
-					details: { ...detailedProps, ...additionalProps },
-					gcConfigs,
-				};
+		if (this.isSummarizerClient || usageType === "Loaded") {
+			const event = {
+				eventName: `${state}Object_${usageType}`,
+				stack: generateStack(),
+				...loggingProps,
+			};
 
-				// These are logged as generic events and not errors because there can be false positives. The Tombstone
-				// and Delete errors are separately logged and are reliable.
-				this.mc.logger.sendTelemetryEvent(event);
-			}
+			// These are logged as generic events and not errors because there can be false positives. The Tombstone
+			// and Delete errors are separately logged and are reliable.
+			this.mc.logger.sendTelemetryEvent(event);
 		}
 	}
 
-	/**
-	 * Logs telemetry when a tombstoned object is changed, revived or loaded.
-	 */
 	private logTombstoneUsageTelemetry(
-		unrefEventProps: Omit<IUnreferencedEventProps, "state" | "usageType">,
 		nodeType: GCNodeType,
 		usageType: NodeUsageType,
-		packagePath?: readonly string[],
+		loggingProps: ITelemetryPropertiesExt,
+		allowTombstone?: boolean,
 	) {
 		// This will log the following events:
 		// GC_Tombstone_DataStore_Requested, GC_Tombstone_DataStore_Changed, GC_Tombstone_DataStore_Revived
 		// GC_Tombstone_SubDataStore_Requested, GC_Tombstone_SubDataStore_Changed, GC_Tombstone_SubDataStore_Revived
 		// GC_Tombstone_Blob_Requested, GC_Tombstone_Blob_Changed, GC_Tombstone_Blob_Revived
-		const { id, fromId, headers, gcConfigs, additionalProps, ...detailedProps } =
-			unrefEventProps;
 		const eventUsageName = usageType === "Loaded" ? "Requested" : usageType;
 		const event = {
 			eventName: `GC_Tombstone_${nodeType}_${eventUsageName}`,
-			...tagCodeArtifacts({ pkg: packagePath?.join("/") }),
 			stack: generateStack(),
-			id,
-			fromId,
-			headers: { ...headers },
-			details: { ...detailedProps, ...additionalProps }, // Also includes some properties from INodeUsageProps type
-			gcConfigs,
 			tombstoneFlags: {
 				DisableTombstone: this.mc.config.getBoolean(disableTombstoneKey),
 				ThrowOnTombstoneUsage: this.mc.config.getBoolean(throwOnTombstoneUsageKey),
 				ThrowOnTombstoneLoad: this.mc.config.getBoolean(throwOnTombstoneLoadOverrideKey),
 			},
+			...loggingProps,
 		};
 
 		if (
-			(usageType === "Loaded" &&
-				this.configs.throwOnTombstoneLoad &&
-				!headers?.allowTombstone) ||
+			(usageType === "Loaded" && this.configs.throwOnTombstoneLoad && !allowTombstone) ||
 			(usageType === "Changed" && this.configs.throwOnTombstoneUsage)
 		) {
 			this.mc.logger.sendErrorEvent(event);
@@ -361,62 +342,6 @@ export class GCTelemetryTracker {
 				});
 			}
 		}
-	}
-
-	/**
-	 * Log events that are pending in pendingEventsQueue. This is called after GC runs in the summarizer client
-	 * so that the state of an unreferenced node is updated.
-	 */
-	public async logPendingEvents(logger: ITelemetryLoggerExt) {
-		// Events sent come only from the summarizer client. In between summaries, events are pushed to a queue and at
-		// summary time they are then logged.
-		// Events generated:
-		// InactiveObject_Loaded, InactiveObject_Changed, InactiveObject_Revived
-		// SweepReadyObject_Loaded, SweepReadyObject_Changed, SweepReadyObject_Revived
-		for (const eventProps of this.pendingEventsQueue) {
-			const {
-				usageType,
-				state,
-				id,
-				fromId,
-				headers,
-				gcConfigs,
-				additionalProps,
-				...detailedProps
-			} = eventProps;
-			/**
-			 * Revived event is logged only if the node is active. If the node is not active, the reference to it was
-			 * from another unreferenced node and this scenario is not interesting to log.
-			 * Loaded and Changed events are logged only if the node is not active. If the node is active, it was
-			 * revived and a Revived event will be logged for it.
-			 */
-			const nodeStateTracker = this.getNodeStateTracker(detailedProps.trackedId); // Note: This is never SubDataStore path
-			const active =
-				nodeStateTracker === undefined || nodeStateTracker.state === UnreferencedState.Active;
-			if ((usageType === "Revived") === active) {
-				const pkg = await this.getNodePackagePath(eventProps.id.value);
-				const fromPkg = eventProps.fromId
-					? await this.getNodePackagePath(eventProps.fromId.value)
-					: undefined;
-				const event = {
-					eventName: `${state}Object_${usageType}`,
-					id,
-					fromId,
-					headers: { ...headers },
-					details: { ...detailedProps, ...additionalProps },
-					gcConfigs,
-					...tagCodeArtifacts({
-						pkg: pkg?.join("/"),
-						fromPkg: fromPkg?.join("/"),
-					}),
-				};
-
-				// These are logged as generic events and not errors because there can be false positives. The Tombstone
-				// and Delete errors are separately logged and are reliable.
-				logger.sendTelemetryEvent(event);
-			}
-		}
-		this.pendingEventsQueue = [];
 	}
 }
 

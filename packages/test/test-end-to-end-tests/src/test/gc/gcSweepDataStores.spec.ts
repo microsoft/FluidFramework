@@ -672,12 +672,18 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				ensureSynchronizedAndSummarize(summarizer2),
 				"summarize failed",
 			);
-			logger.assertMatch([
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Realized",
-					id: { value: `/${unreferencedId}`, tag: TelemetryDataTag.CodeArtifact },
-				},
-			]);
+			logger.assertMatch(
+				[
+					{
+						eventName:
+							"fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Realized",
+						id: { value: `/${unreferencedId}`, tag: TelemetryDataTag.CodeArtifact },
+						trailingOpCount: 1,
+					},
+				],
+				"realized event not logged as expected",
+				true,
+			);
 		});
 	});
 

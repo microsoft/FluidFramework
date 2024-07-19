@@ -374,12 +374,7 @@ export interface IGarbageCollector {
 	 */
 	nodeUpdated(props: IGCNodeUpdatedProps): void;
 	/** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
-	addedOutboundReference(
-		fromNodePath: string,
-		toNodePath: string,
-		timestampMs: number,
-		autorecovery?: true,
-	): void;
+	addedOutboundReference(props: IGCReferenceAddedProps): void;
 	/** Called to process a garbage collection message. */
 	processMessage(
 		message: ContainerRuntimeGCMessage,
@@ -406,7 +401,7 @@ export interface IGCNodeUpdatedProps {
 	 * be the timestamp of the op. If not, this should be the timestamp of the last op processed.
 	 */
 	timestampMs: number | undefined;
-	/** The package path of the node. This may not be available if the node hasn't been loaded yet */
+	/** The package path of the node. Not available if the node hasn't been loaded yet */
 	packagePath?: readonly string[];
 	/** The original request for loads to preserve it in telemetry */
 	request?: IRequest;
@@ -414,6 +409,25 @@ export interface IGCNodeUpdatedProps {
 	headerData?: RuntimeHeaderData;
 	/** Any other properties to be logged. */
 	additionalProps?: ITelemetryPropertiesExt;
+}
+
+/**
+ * Info needed by GC when notified that a reference is added
+ * @internal
+ */
+export interface IGCReferenceAddedProps {
+	/** The node from which the reference is added */
+	fromNodePath: string;
+	/** The node to which the reference is added */
+	toNodePath: string;
+	/** The timestamp of the message that added the reference */
+	timestampMs: number;
+	/** This reference is added artificially, for autorecovery. Used for logging */
+	autorecovery?: true;
+	/** The package path of the node that adds the reference. Not available if the node hasn't been loaded yet */
+	packagePath?: readonly string[];
+	/** The package path of the node to which reference is added. Not available if the node hasn't been loaded yet */
+	fromPackagePath?: readonly string[];
 }
 
 /** Parameters necessary for creating a GarbageCollector. */
@@ -426,7 +440,6 @@ export interface IGarbageCollectorCreateParams {
 	readonly createContainerMetadata: ICreateContainerMetadata;
 	readonly baseSnapshot: ISnapshotTree | undefined;
 	readonly isSummarizerClient: boolean;
-	readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
 	readonly getLastSummaryTimestampMs: () => number | undefined;
 	readonly readAndParseBlob: ReadAndParseBlob;
 	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;

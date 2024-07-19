@@ -97,7 +97,6 @@ describe("GC Telemetry Tracker", () => {
 			{ createContainerRuntimeVersion: pkgVersion },
 			getNodeType,
 			(nodeId: string) => unreferencedNodesState.get(nodeId),
-			async (nodeId: string) => testPkgPath,
 		);
 		return tracker;
 	}
@@ -144,7 +143,7 @@ describe("GC Telemetry Tracker", () => {
 	}
 
 	// Mock node revived activity for the given nodes.
-	function reviveNode(fromId: string, toId: string, isTombstoned = false) {
+	function mockNodeRevival(fromId: string, toId: string, isTombstoned = false) {
 		telemetryTracker.nodeUsed(toId, {
 			id: toId,
 			usageType: "Revived",
@@ -155,17 +154,6 @@ describe("GC Telemetry Tracker", () => {
 			fromId,
 		});
 		unreferencedNodesState.delete(toId);
-	}
-
-	/**
-	 * For summarizer clients, inactive / sweep ready events are not logged when on node usage. They are logged when GC
-	 * runs next time. This emulates that by calling the functions in the telemetry tracker that are called when GC runs.
-	 */
-	async function simulateGCToTriggerEvents(isSummarizerClient: boolean) {
-		if (!isSummarizerClient) {
-			return;
-		}
-		await telemetryTracker.logPendingEvents(mc.logger);
 	}
 
 	before(() => {
@@ -230,7 +218,7 @@ describe("GC Telemetry Tracker", () => {
 			// Advance the clock to trigger inactive timeout and validate that inactive events are as expected.
 			clock.tick(inactiveTimeoutMs + 1);
 			mockNodeChanges(nodes);
-			await simulateGCToTriggerEvents(isSummarizerClient);
+
 			assertMatchEvents(
 				[
 					{
@@ -260,7 +248,7 @@ describe("GC Telemetry Tracker", () => {
 			// Advance the clock to trigger tombstone timeout and validate that TombstoneReady events are as expected.
 			clock.tick(tombstoneTimeoutMs - inactiveTimeoutMs);
 			mockNodeChanges(nodes);
-			await simulateGCToTriggerEvents(isSummarizerClient);
+
 			assertMatchEvents(
 				[
 					{
@@ -290,7 +278,7 @@ describe("GC Telemetry Tracker", () => {
 			// Advance the clock by the delay and validate that SweepReady events are as expected.
 			clock.tick(sweepGracePeriodMs);
 			mockNodeChanges(nodes);
-			await simulateGCToTriggerEvents(isSummarizerClient);
+
 			assertMatchEvents(
 				[
 					{
@@ -325,7 +313,7 @@ describe("GC Telemetry Tracker", () => {
 
 			// Advance the clock to trigger tombstone timeout and validate that tombstone revived event is as expected.
 			clock.tick(tombstoneTimeoutMs + 1);
-			reviveNode(nodes[1], nodes[2], true /* isTombstoned */);
+			mockNodeRevival(nodes[1], nodes[2], true /* isTombstoned */);
 			mockLogger.assertMatch(
 				[
 					{
@@ -371,19 +359,19 @@ describe("GC Telemetry Tracker", () => {
 
 			it("doesn't generate events for referenced nodes", async () => {
 				mockNodeChanges(nodes);
-				await simulateGCToTriggerEvents(isSummarizerClient);
+
 				validateNoEvents();
 
 				// Advance the clock to just before the timeout expires, update nodes and validate no events.
 				clock.tick(timeout - 1);
 				mockNodeChanges(nodes);
-				await simulateGCToTriggerEvents(isSummarizerClient);
+
 				validateNoEvents();
 
 				// Advance the clock to expire the timeout, update nodes and validate no events.
 				clock.tick(1);
 				mockNodeChanges(nodes);
-				await simulateGCToTriggerEvents(isSummarizerClient);
+
 				validateNoEvents();
 			});
 
@@ -394,13 +382,13 @@ describe("GC Telemetry Tracker", () => {
 				// Advance the clock just before the timeout and validate no unexpected events are logged.
 				clock.tick(timeout - 1);
 				mockNodeChanges(nodes);
-				await simulateGCToTriggerEvents(isSummarizerClient);
+
 				validateNoEvents();
 
 				// Expire the timeout, update nodes and validate that all events for node 1 and node 2 are logged.
 				clock.tick(1);
 				mockNodeChanges(nodes);
-				await simulateGCToTriggerEvents(isSummarizerClient);
+
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 				expectedEvents.push(
 					{
@@ -431,8 +419,8 @@ describe("GC Telemetry Tracker", () => {
 				assertMatchEvents(expectedEvents, "all events not as expected");
 
 				// Revived node 2 and validate that revived event is as expected.
-				reviveNode(nodes[0], nodes[2]);
-				await simulateGCToTriggerEvents(isSummarizerClient);
+				mockNodeRevival(nodes[0], nodes[2]);
+
 				assertMatchEvents(
 					[
 						{
@@ -466,7 +454,7 @@ describe("GC Telemetry Tracker", () => {
 					completedGCRuns: 0,
 					isTombstoned: false,
 				});
-				await simulateGCToTriggerEvents(isSummarizerClient);
+
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 				expectedEvents.push({
 					eventName: loadedEventName,
@@ -483,18 +471,17 @@ describe("GC Telemetry Tracker", () => {
 			it("generates events once per node", async () => {
 				// Mark node 2 as unreferenced.
 				markNodesUnreferenced([nodes[2]]);
-				await simulateGCToTriggerEvents(isSummarizerClient);
 
 				// Advance the clock just before the timeout and validate no unexpected events are logged.
 				clock.tick(timeout - 1);
 				mockNodeChanges(nodes);
-				await simulateGCToTriggerEvents(isSummarizerClient);
+
 				validateNoEvents();
 
 				// Expire the timeout, updated nodes and validate that events are logged as expected.
 				clock.tick(1);
 				mockNodeChanges(nodes);
-				await simulateGCToTriggerEvents(isSummarizerClient);
+
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 				expectedEvents.push(
 					{
@@ -514,28 +501,26 @@ describe("GC Telemetry Tracker", () => {
 
 				// Update all nodes again. There shouldn't be any more events since for each node the event is only once.
 				mockNodeChanges(nodes);
-				await simulateGCToTriggerEvents(isSummarizerClient);
+
 				validateNoEvents();
 			});
 
 			// This test is only relevant for summarizer client because it does not log changed events if the node is revived.
 			if (isSummarizerClient) {
-				it("generates only revived event in summarizer when a node is updated and revived", async () => {
+				it("generates only revived event in summarizer when a node is revived then updated", async () => {
 					// Mark node 2 as unreferenced.
 					markNodesUnreferenced([nodes[2]]);
 
 					// Advance the clock just before the timeout and validate no unexpected events are logged.
 					clock.tick(timeout - 1);
 					mockNodeChanges(nodes);
-					await simulateGCToTriggerEvents(isSummarizerClient);
 
 					validateNoEvents();
 
 					// Expire the timeout and validate that only revived event is generated for node 2.
 					clock.tick(1);
+					mockNodeRevival(nodes[1], nodes[2]);
 					mockNodeChanges([nodes[2]]);
-					reviveNode(nodes[1], nodes[2]);
-					await simulateGCToTriggerEvents(isSummarizerClient);
 
 					for (const event of mockLogger.events) {
 						assert.notStrictEqual(
