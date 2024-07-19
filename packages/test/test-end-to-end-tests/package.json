@@ -14,9 +14,11 @@
 	"type": "module",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:genver": "gen-version",
 		"build:test": "npm run build:test:esm",
+		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
