@@ -13,10 +13,10 @@ import { format as prettier } from "prettier";
 import { releaseGroupFlag } from "../../flags.js";
 import {
 	BaseCommand,
+	ChangeKindHeaders,
 	DEFAULT_CHANGESET_PATH,
 	groupByChangeKind,
 	loadChangesets,
-	ChangeKindHeaders,
 } from "../../library/index.js";
 
 /**
@@ -90,12 +90,11 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 
 		const byChangeKind = groupByChangeKind(changesets);
 		const body = new StringBuilder();
-		// let body: string = "";
 		for (const [kind, sectionHead] of ChangeKindHeaders.entries()) {
-			// const kind = entry[0] as ChangeKind;
-			const changes = byChangeKind.get(kind)?.filter((change) =>
-				// filter out changes that shouldn't be in the release notes
-				(change.additionalMetadata?.includeInReleaseNotes ?? true) === true
+			const changes = byChangeKind.get(kind)?.filter(
+				(change) =>
+					// filter out changes that shouldn't be in the release notes
+					(change.additionalMetadata?.includeInReleaseNotes ?? true) === true,
 			);
 			if (changes === undefined || changes.length === 0) {
 				continue;
@@ -105,6 +104,13 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			for (const change of changes) {
 				if (change.changeTypes.includes("minor") || flags.releaseType === "major") {
 					body.append(`### ${change.summary}\n\n${change.content}\n\n`);
+					const affectedPackages = Object.keys(change.metadata)
+						.map((pkg) => `- ${pkg}\n`)
+						.join("");
+					body.append(`#### Packages affected\n\n${affectedPackages}\n\n`);
+
+					// TODO: Remove this
+					// body.append(`**Added**: ${change.added?.toISOString()}\n\n`);
 				} else {
 					this.info(
 						`Excluding changeset: ${path.basename(change.sourceFile)} because it has no ${
