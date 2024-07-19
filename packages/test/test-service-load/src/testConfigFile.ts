@@ -10,7 +10,7 @@ import { ConfigTypes } from "@fluidframework/core-interfaces";
 
 /** Type modeling the structure of the testConfig.json file */
 export interface ITestConfig {
-	profiles: { [name: string]: ILoadTestConfig | undefined };
+	profiles: { [name: string]: ILoadTestConfig };
 }
 
 /** Type modeling the profile sub-structure of the testConfig.json file */

@@ -22,7 +22,7 @@ import { createLogger, createTestDriver, getProfile, initialize, safeExit } from
 const createLoginEnv = (userName: string, password: string) =>
 	`{"${userName}": "${password}"}`;
 
-async function getTestConfig() {
+function getRunOptions() {
 	commander
 		.version("0.0.1")
 		.requiredOption("-d, --driver <driver>", "Which test driver info to use", "odsp")
@@ -62,28 +62,23 @@ async function getTestConfig() {
 	const verbose: true | undefined = commander.verbose;
 	const seed: number = commander.seed ?? Date.now();
 	const browserAuth: true | undefined = commander.browserAuth;
-	const credFile: string | undefined = commander.credFile;
+	const credFilePath: string | undefined = commander.credFile;
 	const enableMetrics: boolean = commander.enableMetrics ?? false;
 	const createTestId: boolean = commander.createTestId ?? false;
 
-	const profile = getProfile(profileName);
-
-	const testUsers = credFile !== undefined ? getTestUsers(credFile) : undefined;
-
-	const testDriver = await createTestDriver(driver, endpoint, seed, undefined, browserAuth);
-
 	return {
-		testDriver,
-		profile,
-		log,
+		driver,
+		endpoint,
+		profileName,
 		testId,
 		debug,
+		log,
 		verbose,
 		seed,
+		browserAuth,
+		credFilePath,
 		enableMetrics,
 		createTestId,
-		testUsers,
-		profileName,
 	};
 }
 
@@ -312,25 +307,35 @@ function setupTelemetry(
 
 const main = async () => {
 	const {
-		testDriver,
-		profile,
-		log,
+		driver,
+		endpoint,
+		profileName,
 		testId,
 		debug,
+		log,
 		verbose,
 		seed,
+		browserAuth,
+		credFilePath,
 		enableMetrics,
 		createTestId,
-		testUsers,
-		profileName,
-	} = await getTestConfig();
+	} = getRunOptions();
 
 	if (log !== undefined) {
 		process.env.DEBUG = log;
 	}
 
+	const profile = getProfile(profileName);
+
+	const testUsers = credFilePath !== undefined ? getTestUsers(credFilePath) : undefined;
+
+	const testDriver = await createTestDriver(driver, endpoint, seed, undefined, browserAuth);
+
+	console.log("Starting smoke test...");
 	await smokeTest(testDriver, profileName);
 	console.log("Smoke test complete!");
+
+	console.log("Starting stress test...");
 	const url = await orchestratorProcess(testDriver, profile, {
 		testId,
 		debug,
