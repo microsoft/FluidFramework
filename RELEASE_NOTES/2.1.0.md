@@ -138,3 +138,7 @@ Updated APIs:
 
 - fluid-framework
 - @fluidframework/map
+
+### 🛠️ Start Building Today!
+
+Please continue to engage with us on GitHub [Discussion](https://github.com/microsoft/FluidFramework/discussions) and [Issue](https://github.com/microsoft/FluidFramework/issues) pages as you adopt Fluid Framework!
