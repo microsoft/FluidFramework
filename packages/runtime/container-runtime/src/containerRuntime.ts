@@ -4336,7 +4336,7 @@ export class ContainerRuntime
 						fetchSource: FetchSource.noCache,
 					});
 					const id = snapshot.snapshotTree.id;
-					assert(id !== undefined, "id of the fetched snapshot should be defined");
+					assert(id !== undefined, 0x9d0 /* id of the fetched snapshot should be defined */);
 					props.snapshotVersion = id;
 					snapshotTree = snapshot.snapshotTree;
 				} else {
