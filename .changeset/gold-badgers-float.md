@@ -13,7 +13,7 @@ on all DDSes.
 For example:
 
 ```typescript
-// Works in Fluid Framework 1.0 but not in the initial release of FluidFramework 2.0:
+// Works in Fluid Framework 1.0 but not in the initial release of Fluid Framework 2.0:
 if (myObject instanceof SharedString) {
 	// do something
 }
