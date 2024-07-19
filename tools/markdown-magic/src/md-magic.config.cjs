@@ -114,8 +114,6 @@ const generateTrademarkSection = (headingOptions) =>
  *
  * Includes:
  *
- * - Link to API documentation for the package on <fluidframework.com>
- *
  * - (if explicitly specified) Package script documentation
  *
  * - Fluid Framework contribution guidelines
@@ -131,8 +129,6 @@ const generateTrademarkSection = (headingOptions) =>
  * Default: Checks at the `package.json` file for an `exports` property.
  * Will include the section if the property is found, and one of our special paths is found (`/alpha`, `/beta`, or `/legacy`).
  * Can be explicitly disabled by specifying `FALSE`.
- * @param {"TRUE" | "FALSE" | undefined} options.apiDocs - (optional) Whether or not to include a section pointing readers to the package's generated API documentation on <fluidframework.com>.
- * Default: `TRUE` if the package is end-user facing (i.e., a member of the `@fluidframework` or `@fluid-experimental` namespaces, or "fluid-framework"). `FALSE` otherwise.
  * @param {"TRUE" | "FALSE" | undefined} options.scripts - (optional) Whether or not to include a section enumerating the package.json file's dev scripts.
  * Default: `FALSE`.
  * @param {"TRUE" | "FALSE" | undefined} options.clientRequirements - (optional) Whether or not to include a section listing Fluid Framework's minimum client requirements.
@@ -161,13 +157,6 @@ function libraryPackageReadmeFooterTransform(content, options, config) {
 	};
 
 	const sections = [];
-
-	const includeApiDocsSection = parseBooleanOption(options.apiDocs, () =>
-		isPublic(packageName),
-	);
-	if (includeApiDocsSection) {
-		sections.push(generateApiDocsLinkSection(packageName, sectionHeadingOptions));
-	}
 
 	if (options.scripts === "TRUE") {
 		options.pkg = relativePackageJsonPath;
@@ -211,6 +200,8 @@ function libraryPackageReadmeFooterTransform(content, options, config) {
  *
  * - Import instructions
  *
+ * - Link to API documentation for the package on <fluidframework.com>
+ *
  * @param {object} content - The original document file contents.
  * @param {object} options - Transform options.
  * @param {string | undefined} options.packageJsonPath - (optional) Relative path from the document to the package's package.json file.
@@ -229,6 +220,8 @@ function libraryPackageReadmeFooterTransform(content, options, config) {
  * Default: Checks at the `package.json` file for an `exports` property.
  * Will include the section if the property is found, and one of our special paths is found (`/alpha`, `/beta`, or `/legacy`).
  * Can be explicitly disabled by specifying `FALSE`.
+* @param {"TRUE" | "FALSE" | undefined} options.apiDocs - (optional) Whether or not to include a section pointing readers to the package's generated API documentation on <fluidframework.com>.
+ * Default: `TRUE` if the package is end-user facing (i.e., a member of the `@fluidframework` or `@fluid-experimental` namespaces, or "fluid-framework"). `FALSE` otherwise.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
@@ -270,6 +263,13 @@ function libraryPackageReadmeHeaderTransform(content, options, config) {
 		sections.push(
 			generatePackageImportInstructionsSection(packageMetadata, sectionHeadingOptions),
 		);
+	}
+
+	const includeApiDocsSection = parseBooleanOption(options.apiDocs, () =>
+		isPublic(packageName),
+	);
+	if (includeApiDocsSection) {
+		sections.push(generateApiDocsLinkSection(packageName, sectionHeadingOptions));
 	}
 
 	return formattedGeneratedContentBody(sections.join(""));
@@ -388,7 +388,7 @@ module.exports = {
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER:packageJsonPath=./package.json&installation=TRUE&devDependency=FALSE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER:packageJsonPath=./package.json&installation=TRUE&devDependency=FALSE&apiDocs=TRUE) -->
 		 * ```
 		 */
 		LIBRARY_PACKAGE_README_HEADER: libraryPackageReadmeHeaderTransform,
@@ -399,7 +399,7 @@ module.exports = {
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:packageJsonPath=./package.json&apiDocs=TRUE&scripts=FALSE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:packageJsonPath=./package.json&scripts=FALSE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE) -->
 		 * ```
 		 */
 		LIBRARY_PACKAGE_README_FOOTER: libraryPackageReadmeFooterTransform,
