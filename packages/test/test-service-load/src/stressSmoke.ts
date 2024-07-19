@@ -40,6 +40,7 @@ export async function smokeTest(testDriver: ITestDriver, profileName: string) {
 		logger,
 	});
 
+	// Verify container creation works
 	const createContainerAndGetUrl = async () => {
 		const createdContainer: IContainer = await loader.createDetachedContainer(codeDetails);
 
@@ -61,6 +62,7 @@ export async function smokeTest(testDriver: ITestDriver, profileName: string) {
 	const url = await tryNTimes(createContainerAndGetUrl, 3, 3);
 	console.log("Container successfully created and attached!");
 
+	// Verify container loading works
 	const loadContainer = async () => {
 		const loadedContainer = await loader.resolve({ url });
 		loadedContainer.dispose();

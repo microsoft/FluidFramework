@@ -104,7 +104,7 @@ async function orchestratorProcess(
 	const url = await (args.testId !== undefined && !args.createTestId
 		? // If testId is provided and createTestId is false, then load the file;
 			testDriver.createContainerUrl(args.testId)
-		: // If no testId is provided, (or) if testId is provided but createTestId is not false, then
+		: // If no testId is provided, (or) if testId is provided but createTestId is true, then
 			// create a file;
 			// In case testId is provided, name of the file to be created is taken as the testId provided
 			initialize(testDriver, args.seed, profile, args.verbose, args.profileName, args.testId));

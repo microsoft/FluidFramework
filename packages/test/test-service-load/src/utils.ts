@@ -74,7 +74,7 @@ export async function initialize(
 	testConfig: TestConfiguration,
 	verbose: boolean,
 	profileName: string,
-	testIdn?: string,
+	requestedTestId?: string,
 ) {
 	const random = makeRandom(seed);
 	const optionsOverride = getOptionOverride(
@@ -133,7 +133,7 @@ export async function initialize(
 		}
 	}
 
-	const testId = testIdn ?? Date.now().toString();
+	const testId = requestedTestId ?? Date.now().toString();
 	assert(testId !== "", "testId specified cannot be an empty string");
 	const request = testDriver.createCreateNewRequest(testId);
 	await container.attach(request);
