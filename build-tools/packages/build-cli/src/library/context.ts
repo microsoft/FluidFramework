@@ -5,16 +5,10 @@
 
 import { PackageName } from "@rushstack/node-core-library";
 
-import {
-	FluidRepo,
-	GitRepo,
-	IFluidBuildConfig,
-	Package,
-	loadFluidBuildConfig,
-} from "@fluidframework/build-tools";
-
 import { ReleaseVersion } from "@fluid-tools/version-tools";
+import { FluidRepo, GitRepo, Package } from "@fluidframework/build-tools";
 import * as semver from "semver";
+import { IFluidBuildConfig, loadFluidBuildConfig } from "../config.js";
 
 /**
  * Represents a release version and its release date, if applicable.
@@ -100,9 +94,12 @@ export class Context {
 		public readonly originalBranchName: string,
 	) {
 		// Load the package
-		this.repo = FluidRepo.create(this.gitRepo.resolvedRoot);
+		this.rootFluidBuildConfig = loadFluidBuildConfig(this.gitRepo.resolvedRoot);
+		this.repo = new FluidRepo(
+			this.gitRepo.resolvedRoot,
+			this.rootFluidBuildConfig.repoPackages,
+		);
 		this.fullPackageMap = this.repo.createPackageMap();
-		this.rootFluidBuildConfig = loadFluidBuildConfig(this.repo.resolvedRoot);
 	}
 
 	/**

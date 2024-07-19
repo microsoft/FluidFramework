@@ -6,8 +6,9 @@
 import { strict as assert } from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
-import { Package, loadFluidBuildConfig } from "@fluidframework/build-tools";
+import { Package } from "@fluidframework/build-tools";
 import { PackageCommand } from "../../BasePackageCommand.js";
+import { loadFluidBuildConfig } from "../../config.js";
 import { PackageKind } from "../../filter.js";
 
 import { Flags } from "@oclif/core";

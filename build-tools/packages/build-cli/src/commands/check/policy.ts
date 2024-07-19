@@ -9,7 +9,7 @@ import * as path from "node:path";
 import { Flags } from "@oclif/core";
 import { readJson } from "fs-extra/esm";
 
-import { loadFluidBuildConfig } from "@fluidframework/build-tools";
+import { loadFluidBuildConfig } from "../../config.js";
 
 import {
 	BaseCommand,

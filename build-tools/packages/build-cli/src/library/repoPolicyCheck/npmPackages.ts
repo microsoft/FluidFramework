@@ -17,15 +17,18 @@ import sortPackageJson from "sort-package-json";
 
 import {
 	PackageJson,
-	PackageNamePolicyConfig,
-	ScriptRequirement,
 	getApiExtractorConfigFilePath,
-	loadFluidBuildConfig,
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
 } from "@fluidframework/build-tools";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
 import { Handler, readFile, writeFile } from "./common.js";
+
+import {
+	PackageNamePolicyConfig,
+	ScriptRequirement,
+	loadFluidBuildConfig,
+} from "../../config.js";
 
 const require = createRequire(import.meta.url);
 

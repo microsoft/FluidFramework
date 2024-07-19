@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { MonoRepo, Package } from "@fluidframework/build-tools";
+import {
+	DEFAULT_INTERDEPENDENCY_RANGE,
+	InterdependencyRange,
+} from "@fluid-tools/version-tools";
+import { IRepoBuildDir, MonoRepo, Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
 // eslint-disable-next-line import/no-deprecated
 import { Context, isMonoRepoKind } from "./library/index.js";
@@ -35,4 +39,39 @@ export const findPackageOrReleaseGroup = (
 		context.fullPackageMap.get(name) ??
 		context.independentPackages.find((pkg) => pkg.nameUnscoped === name)
 	);
+};
+
+interface IFluidRepoBuildDir extends IRepoBuildDir {
+	/**
+	 * The interdependencyRange controls the type of semver range to use between packages in the same release group. This
+	 * setting controls the default range that will be used when updating the version of a release group. The default can
+	 * be overridden using the `--interdependencyRange` flag in the `flub bump` command.
+	 */
+	defaultInterdependencyRange?: InterdependencyRange;
+}
+
+export type IFluidRepoBuildDirEntry =
+	| string
+	| IFluidRepoBuildDir
+	| (string | IFluidRepoBuildDir)[];
+
+export const getDefaultInterdependencyRange = (
+	releaseGroup: MonoRepo,
+	context: Context,
+): InterdependencyRange => {
+	const packageManifest = context.rootFluidBuildConfig;
+	const repoPackages = packageManifest.repoPackages as Record<string, IFluidRepoBuildDirEntry>;
+	for (const [group, item] of Object.entries(repoPackages)) {
+		if (group === releaseGroup.name) {
+			if (Array.isArray(item)) {
+				throw new TypeError(
+					`ReleaseGroup ${releaseGroup.name} cannot have array entries in package manifest`,
+				);
+			}
+			const interdependencyRange =
+				typeof item === "object" ? item.defaultInterdependencyRange : undefined;
+			return interdependencyRange ?? DEFAULT_INTERDEPENDENCY_RANGE;
+		}
+	}
+	throw new Error(`ReleaseGroup ${releaseGroup.name} not found in package manifest`);
 };
