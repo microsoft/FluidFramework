@@ -2,6 +2,9 @@
 "fluid-framework": minor
 "@fluidframework/tree": minor
 ---
+---
+kind: tree
+---
 
 ✨ New! Debug visualizers for TreeNodes in NodeJS and browsers
 
