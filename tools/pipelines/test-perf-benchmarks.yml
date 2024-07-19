@@ -37,8 +37,7 @@ parameters:
     - "@fluidframework/tree"
     - "@fluid-experimental/tree"
     - "@fluidframework/merge-tree"
-    # TODO: AB#9074. These perf benchmarks are hanging. Once we figure out why and fix it, uncomment them.
-    # - "@fluidframework/container-runtime"
+    - "@fluidframework/container-runtime"
 
 # Performance e2e tests
 - name: endpoints
