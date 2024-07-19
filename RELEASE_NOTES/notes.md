@@ -2,19 +2,21 @@
 
 # Fluid Framework v2.1.0
 
-## Promote Tinylicious Client APIs from `@beta` to `@public`
+## Other Changes
+
+### Promote Tinylicious Client APIs from `@beta` to `@public`
 
 The Tinylicious Client is used in public examples and documentation, and therefore requires public level support.
 
-## The expected type of the argument to the fromJSONObject function has changed.
+### The expected type of the argument to the fromJSONObject function has changed.
 
 Previously, the arguments of Marker.fromJSONObject and TextSegment.fromJSONObject were of type `any`. Now, the argument for the Marker implementation is of type `IJSONSegment` and the argument for the TextSegment implementation is of type `string | IJSONSegment`.
 
-## Detect arrayNode iterator invalidation
+### Detect arrayNode iterator invalidation
 
 This change updates the behavior of array nodes such that when we concurrently edit the array during iteration, it will throw an error.
 
-## Added typeguard for SharedObjectKinds
+### Added typeguard for SharedObjectKinds
 
 In the 2.0 release of Fluid, the concrete class implementations for DDSes were hidden from Fluid's API surface. This made `instanceof` checks fail to work correctly. There were ways to work around this in application code, but they involved boilerplate which required more understanding of Fluid internals than should be necessary. This change adds a drop-in replacement to `instanceof`: the `.is()` method to `SharedObjectKind`. For example:
 
@@ -30,11 +32,11 @@ if (SharedString.is(myObject)) {
 }
 ```
 
-## Using "delete" on tree fields now errors instead of not working correctly.
+### Using "delete" on tree fields now errors instead of not working correctly.
 
 TypeScript allows "delete" on object node optional fields if "exactOptionalPropertyTypes" is not enabled. This does not work correctly at runtime and now produces an informative error.
 
-## Improved error reporting
+### Improved error reporting
 
 Several cases of invalid usage patterns for tree APIs have gained improved error reporting, as well as improved documentation on the APIs detailing what usage is supported. These improvements include:
 
@@ -42,18 +44,16 @@ Several cases of invalid usage patterns for tree APIs have gained improved error
 
 - Improved detection of when prior exception may have left SharedTree in an invalid state. These cases now report a UsageError including a reference to the prior exception. This was mainly done in [9fb3dcf](https://github.com/microsoft/FluidFramework/commit/9fb3dcf491a7f0d66f4abbdc64ab97ccabef4707) and [b77d530](https://github.com/microsoft/FluidFramework/commit/b77d530b9252201c40a90d1a2a6315f76f1a4a4b).
 
-## ---
-
-## kind: fix
-
-Updated `joi` dependency to latest major version
-
-The `joi` dependency was updated from 14.3.1 to 17.3.1 to address a critical vulnerability exploit [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp). This required updating the use of `joi` schema validation function within `property-query` to the new major version syntax.
-
-## includeInReleaseNotes: no
+### includeInReleaseNotes: no
 
 ---
 
 tree: Improved performance for accessing identifiers in shortId API
 
 Users should see improved performance when calling the `Tree.shortId` API. Identifier field keys are now cached in the schema for faster access.
+
+## 🐛 Bug Fixes
+
+### Updated `joi` dependency to latest major version
+
+The `joi` dependency was updated from 14.3.1 to 17.3.1 to address a critical vulnerability exploit [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp). This required updating the use of `joi` schema validation function within `property-query` to the new major version syntax.

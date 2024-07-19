@@ -17,7 +17,14 @@ import { Repository } from "./git.js";
 
 export const DEFAULT_CHANGESET_PATH = ".changeset";
 
-export type ChangeKind = "fix" | "feature";
+export type ChangeKind = "fix" | "feature" | "tree" | "other";
+
+export const ChangeKindHeaders: Record<ChangeKind, string> = {
+	"feature": "✨ New Features",
+	"tree": "🌳 SharedTree DDS changes",
+	"fix": "🐛 Bug Fixes",
+	"other": "Other Changes",
+};
 
 export interface FluidCustomChangesetMetadata {
 	kind?: ChangeKind;
@@ -171,6 +178,31 @@ export function groupByMainPackage(changesets: Changeset[]): Map<ReleasePackage,
 		const entries = changesetMap.get(changeset.mainPackage) ?? [];
 		entries.push(changeset);
 		changesetMap.set(changeset.mainPackage, entries);
+	}
+
+	// Sort all the entries by date
+	for (const entries of changesetMap.values()) {
+		entries.sort(compareChangesets);
+	}
+
+	return changesetMap;
+}
+
+/**
+ * Creates a map of package names to an array of all the changesets that apply to the package. Only the "main" package
+ * is considered. The returned array of changesets is sorted oldest-to-newest (that is, index 0 is the earliest
+ * changeset, and the last changeset in the array is the newest).
+ *
+ * @param changesets - An array of changesets to be grouped.
+ * @returns a Map of package names to an array of all the changesets that apply to the package.
+ */
+export function groupByChangeKind(changesets: Changeset[]): Map<ReleasePackage, Changeset[]> {
+	const changesetMap = new Map<ReleasePackage, Changeset[]>();
+	for (const changeset of changesets) {
+		const kind = changeset.additionalMetadata?.kind ?? "other";
+		const entries = changesetMap.get(kind) ?? [];
+		entries.push(changeset);
+		changesetMap.set(kind, entries);
 	}
 
 	// Sort all the entries by date
