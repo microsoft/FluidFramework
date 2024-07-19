@@ -172,19 +172,21 @@ describe.only("simpleSchemaToZod", () => {
 			]),
 			allowedTypes: new Set<string>(["test.recursive-object"]),
 		};
-		const schema = toZodSchema(input);
 
-		// Verify expected data validation behavior.
-		validate(schema, {}, true);
-		validate(schema, { foo: {} }, true);
-		validate(schema, { foo: "Hello world" }, true);
-		validate(schema, { foo: { foo: "Hello world" } }, true);
+		assert.throws(() => toZodSchema(input));
+		// const schema = toZodSchema(input);
 
-		validate(schema, "Hello world", false);
-		validate(schema, [], false);
-		validate(schema, { foo: 42 }, false);
-		validate(schema, { foo: { foo: 42 } }, false);
-		validate(schema, { bar: "Hello world" }, false);
-		validate(schema, { foo: { bar: "Hello world" } }, false);
+		// // Verify expected data validation behavior.
+		// validate(schema, {}, true);
+		// validate(schema, { foo: {} }, true);
+		// validate(schema, { foo: "Hello world" }, true);
+		// validate(schema, { foo: { foo: "Hello world" } }, true);
+
+		// validate(schema, "Hello world", false);
+		// validate(schema, [], false);
+		// validate(schema, { foo: 42 }, false);
+		// validate(schema, { foo: { foo: 42 } }, false);
+		// validate(schema, { bar: "Hello world" }, false);
+		// validate(schema, { foo: { bar: "Hello world" } }, false);
 	});
 });

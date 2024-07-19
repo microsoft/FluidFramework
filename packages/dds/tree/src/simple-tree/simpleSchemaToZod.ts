@@ -13,8 +13,11 @@ import type {
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
-import { type ZodLazy, type ZodType, type ZodTypeAny, z as Zod } from "zod";
+import { type ZodType, type ZodTypeAny, z as Zod } from "zod";
 import { fail } from "../util/index.js";
+
+// TODO: Forbid recursion and remove usages of `lazy` below.
+// Verify how that affects the "type generation" via TypeChat.
 
 // TODOs:
 // - Throw an error when polymorphic schemas are ambiguous
@@ -41,46 +44,67 @@ function convertDefinitions(
 	definitions: ReadonlyMap<string, SimpleNodeSchema>,
 ): ReadonlyMap<string, ZodType> {
 	const result = new Map<string, ZodType>();
+	const visited = new Set<string>();
 	for (const [key, value] of definitions) {
-		result.set(
-			key,
-			convertNodeSchema(value, (_childKey) =>
-				Zod.lazy(() => {
-					const childSchema = result.get(_childKey);
-					if (childSchema === undefined) {
-						fail(`No child schema definition created for "${_childKey}".`);
-					}
-					return childSchema;
-				}),
-			),
-		);
+		convertNodeSchema(key, value, definitions, result, visited);
 	}
 	return result;
 }
 
 function convertNodeSchema(
+	schemaId: string,
 	schema: SimpleNodeSchema,
-	getChildSchema: (key: string) => ZodLazy<ZodType>,
+	inputDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
+	outputDefinitions: Map<string, ZodType>,
+	visited: Set<string>,
 ): ZodType {
+	if (visited.has(schemaId)) {
+		const existingDefinition = outputDefinitions.get(schemaId);
+		if (existingDefinition === undefined) {
+			throw new Error(
+				"Circular schema references are not supported in conversion to Zod schema.",
+			);
+		}
+		return existingDefinition;
+	}
+
+	visited.add(schemaId);
+	let result: ZodType;
 	switch (schema.kind) {
 		case "array":
-			return convertArrayNodeSchema(schema, getChildSchema);
+			result = convertArrayNodeSchema(schema, inputDefinitions, outputDefinitions, visited);
+			break;
 		case "leaf":
-			return convertLeafNodeSchema(schema);
+			result = convertLeafNodeSchema(schema);
+			break;
 		case "map":
-			return convertMapNodeSchema(schema, getChildSchema);
+			result = convertMapNodeSchema(schema, inputDefinitions, outputDefinitions, visited);
+			break;
 		case "object":
-			return convertObjectNodeSchema(schema, getChildSchema);
+			result = convertObjectNodeSchema(schema, inputDefinitions, outputDefinitions, visited);
+			break;
 		default:
 			throw new TypeError(`Unknown node schema kind: ${(schema as SimpleNodeSchema).kind}`);
 	}
+	outputDefinitions.set(schemaId, result);
+	return result;
 }
 
 function mapChildTypes(
 	allowedTypes: ReadonlySet<string>,
-	getChildSchema: (key: string) => ZodLazy<ZodType>,
+	inputDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
+	outputDefinitions: Map<string, ZodType>,
+	visited: Set<string>,
 ): ZodType {
-	const mappedAllowedTypes = [...allowedTypes].map(getChildSchema);
+	const mappedAllowedTypes = [...allowedTypes].map((schemaId) =>
+		convertNodeSchema(
+			schemaId,
+			inputDefinitions.get(schemaId) ?? fail(`No schema definition found for "${schemaId}".`),
+			inputDefinitions,
+			outputDefinitions,
+			visited,
+		),
+	);
 	return mapTypesToZodUnion(mappedAllowedTypes);
 }
 
@@ -95,9 +119,16 @@ function mapTypesToZodUnion(types: ZodType[]): ZodType {
 
 function convertFieldSchema(
 	schema: SimpleFieldSchema,
-	getChildSchema: (key: string) => ZodLazy<ZodType>,
+	inputDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
+	outputDefinitions: Map<string, ZodType>,
+	visited: Set<string>,
 ): ZodType {
-	const childSchema = mapChildTypes(schema.allowedTypes, getChildSchema);
+	const childSchema = mapChildTypes(
+		schema.allowedTypes,
+		inputDefinitions,
+		outputDefinitions,
+		visited,
+	);
 
 	switch (schema.kind) {
 		case "required":
@@ -112,26 +143,37 @@ function convertFieldSchema(
 
 function convertArrayNodeSchema(
 	schema: SimpleArrayNodeSchema,
-	getChildSchema: (key: string) => ZodLazy<ZodType>,
+	inputDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
+	outputDefinitions: Map<string, ZodType>,
+	visited: Set<string>,
 ): ZodType {
-	const childSchema = mapChildTypes(schema.allowedTypes, getChildSchema);
+	const childSchema = mapChildTypes(
+		schema.allowedTypes,
+		inputDefinitions,
+		outputDefinitions,
+		visited,
+	);
 	return Zod.array(childSchema);
 }
 
+const zodBooleanSchema = Zod.boolean();
+const zodNumberSchema = Zod.number();
+const zodStringSchema = Zod.string();
+const zodNullSchema = Zod.null();
 function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): ZodType {
 	if (schema.type === "fluid-handle") {
 		throw new Error("Fluid handles are not yet round-trip supported via JSON schema.");
 	}
 
 	switch (schema.type) {
-		case "string":
-			return Zod.string();
-		case "number":
-			return Zod.number();
 		case "boolean":
-			return Zod.boolean();
+			return zodBooleanSchema;
+		case "number":
+			return zodNumberSchema;
+		case "string":
+			return zodStringSchema;
 		case "null":
-			return Zod.null();
+			return zodNullSchema;
 		default:
 			unreachableCase(schema.type);
 	}
@@ -139,11 +181,13 @@ function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): ZodType {
 
 function convertObjectNodeSchema(
 	schema: SimpleObjectNodeSchema,
-	getChildSchema: (key: string) => ZodLazy<ZodType>,
+	inputDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
+	outputDefinitions: Map<string, ZodType>,
+	visited: Set<string>,
 ): ZodType {
 	const properties: Record<string, ZodType> = {};
 	for (const [key, value] of Object.entries(schema.fields)) {
-		properties[key] = convertFieldSchema(value, getChildSchema);
+		properties[key] = convertFieldSchema(value, inputDefinitions, outputDefinitions, visited);
 	}
 
 	return Zod.object(properties);
@@ -151,7 +195,9 @@ function convertObjectNodeSchema(
 
 function convertMapNodeSchema(
 	schema: SimpleMapNodeSchema,
-	getChildSchema: (key: string) => ZodLazy<ZodType>,
+	inputDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
+	outputDefinitions: Map<string, ZodType>,
+	visited: Set<string>,
 ): ZodType {
 	throw new Error("Map nodes are not yet round-trip supported via Zod schema.");
 	// const allowedTypes: JsonDefinitionRef[] = [];
