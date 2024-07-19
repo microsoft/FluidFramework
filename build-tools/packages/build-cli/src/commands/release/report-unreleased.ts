@@ -153,22 +153,24 @@ async function updateReportVersions(
 	version: string,
 	log: Logger,
 ): Promise<void> {
-	const clientPackage = "fluid-framework";
+	const clientPackageName = "fluid-framework";
 
-	if (report[clientPackage] === undefined) {
-		throw new Error(`Client package ${clientPackage} is not defined in the report.`);
+	const packageReleaseDetails = report[clientPackageName];
+
+	if (packageReleaseDetails === undefined) {
+		throw new Error(`Client package ${clientPackageName} is not defined in the report.`);
 	}
 
-	if (report[clientPackage].ranges?.caret === undefined) {
-		throw new Error(`Caret version for ${clientPackage} is not defined in the report.`);
+	if (packageReleaseDetails.ranges?.caret === undefined) {
+		throw new Error(`Caret version for ${clientPackageName} is not defined in the report.`);
 	}
 
-	if (report[clientPackage].version === undefined) {
-		throw new Error(`Simple version for ${clientPackage} is not defined in the report.`);
+	if (packageReleaseDetails.version === undefined) {
+		throw new Error(`Simple version for ${clientPackageName} is not defined in the report.`);
 	}
 
-	const clientVersionCaret = report[clientPackage].ranges.caret;
-	const clientVersionSimple = report[clientPackage].version;
+	const clientVersionCaret = report[clientPackageName].ranges.caret;
+	const clientVersionSimple = report[clientPackageName].version;
 
 	log.log(`Caret version: ${clientVersionCaret}`);
 	log.log(`Simple version: ${clientVersionSimple}`);
