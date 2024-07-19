@@ -8,8 +8,9 @@ import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definit
 import { Loader } from "@fluidframework/container-loader/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 
+import { FileLogger } from "./FileLogger.js";
 import { pkgName, pkgVersion } from "./packageVersion.js";
-import { createCodeLoader, createLogger } from "./utils.js";
+import { createCodeLoader } from "./utils.js";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 const codeDetails: IFluidCodeDetails = {
@@ -24,7 +25,7 @@ const codeDetails: IFluidCodeDetails = {
 // to investigate and allow us to skip a (doomed) attempt at running the stress tests.
 
 export async function smokeTest(testDriver: ITestDriver, profileName: string) {
-	const logger = await createLogger({
+	const logger = await FileLogger.createLogger({
 		driverType: testDriver.type,
 		driverEndpointName: testDriver.endpointName,
 		profile: profileName,

@@ -67,7 +67,7 @@ const defaultBlobSize = 1024;
  * and provide common abstractions for workload scheduling
  * via task picking.
  */
-export class LoadTestDataStoreModel {
+class LoadTestDataStoreModel {
 	private static async waitForCatchupOrDispose(
 		runtime: IFluidDataStoreRuntime,
 	): Promise<void> {
