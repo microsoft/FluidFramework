@@ -140,7 +140,10 @@ export class DetachedFieldIndex {
 						nodeId.major,
 						nodeId.minor,
 					);
-					assert(entry !== undefined, "Inconsistent data: missing detached node entry");
+					assert(
+						entry !== undefined,
+						0x9b8 /* Inconsistent data: missing detached node entry */,
+					);
 					setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor, {
 						...entry,
 						latestRelevantRevision: updated,
@@ -175,7 +178,7 @@ export class DetachedFieldIndex {
 					);
 					assert(
 						entryInLatest !== undefined,
-						"Inconsistent data: missing node entry in latestRelevantRevision",
+						0x9b9 /* Inconsistent data: missing node entry in latestRelevantRevision */,
 					);
 					entryInLatest.set(entry.root, { major: updated, minor });
 				}
@@ -235,13 +238,13 @@ export class DetachedFieldIndex {
 				detachedNodeId.major,
 				detachedNodeId.minor,
 			);
-			assert(found, "Unable to delete unknown entry");
+			assert(found, 0x9ba /* Unable to delete unknown entry */);
 		}
 	}
 
 	public deleteEntry(nodeId: Delta.DetachedNodeId): void {
 		const entry = tryGetFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
-		assert(entry !== undefined, "Unable to delete unknown entry");
+		assert(entry !== undefined, 0x9bb /* Unable to delete unknown entry */);
 		deleteFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
 		deleteFromNestedMap(
 			this.latestRelevantRevisionToFields,
@@ -291,7 +294,7 @@ export class DetachedFieldIndex {
 		const fieldEntry = tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor);
 		assert(
 			fieldEntry !== undefined,
-			"detached node id does not exist in the detached field index",
+			0x9bc /* detached node id does not exist in the detached field index */,
 		);
 		const { root, latestRelevantRevision: previousRevision } = fieldEntry;
 
@@ -342,7 +345,7 @@ export class DetachedFieldIndex {
 	public setRevisionsForLoadedData(latestRevision: RevisionTag): void {
 		assert(
 			!this.isFullyLoaded,
-			"revisions should only be set once using this function after loading data from a summary",
+			0x9bd /* revisions should only be set once using this function after loading data from a summary */,
 		);
 
 		const newDetachedNodeToField = new Map();

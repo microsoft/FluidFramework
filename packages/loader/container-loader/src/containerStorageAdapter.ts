@@ -362,7 +362,7 @@ async function getBlobManagerTreeFromTree(
 	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<void> {
 	const id = tree.blobs[redirectTableBlobName];
-	assert(id !== undefined, "id is undefined in getBlobManagerTreeFromTree");
+	assert(id !== undefined, 0x9ce /* id is undefined in getBlobManagerTreeFromTree */);
 	const blob = await storage.readBlob(id);
 	// ArrayBufferLike will not survive JSON.stringify()
 	blobs[id] = bufferToString(blob, "utf8");
@@ -405,7 +405,10 @@ function getBlobManagerTreeFromTreeWithBlobContents(
 	blobs: ISerializableBlobContents,
 ): void {
 	const id = tree.blobs[redirectTableBlobName];
-	assert(id !== undefined, "id is undefined in getBlobManagerTreeFromTreeWithBlobContents");
+	assert(
+		id !== undefined,
+		0x9cf /* id is undefined in getBlobManagerTreeFromTreeWithBlobContents */,
+	);
 	const blob = tree.blobsContents?.[id];
 	assert(blob !== undefined, 0x70f /* Blob must be present in blobsContents */);
 	// ArrayBufferLike will not survive JSON.stringify()
