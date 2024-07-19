@@ -16,8 +16,6 @@ import type {
 import { type ZodType, type ZodTypeAny, z as Zod } from "zod";
 import { fail } from "../util/index.js";
 
-// TODO: Forbid recursion and remove usages of `lazy` below.
-// Verify how that affects the "type generation" via TypeChat.
 
 // TODOs:
 // - Throw an error when polymorphic schemas are ambiguous
