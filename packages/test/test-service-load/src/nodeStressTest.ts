@@ -19,27 +19,49 @@ import { smokeTest } from "./stressSmoke.js";
 import { ILoadTestConfig } from "./testConfigFile.js";
 import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils.js";
 
-interface ITestUserConfig {
-	/* Credentials' key/value description:
-	 * Key    : Username for the client
-	 * Value  : Password specific to that username
-	 */
-	credentials: Record<string, string>;
+/**
+ * A Record mapping usernames (keys) to passwords (values).
+ */
+type TestUsersRecord = Record<string, string>;
+
+// Consider just having the Json format be TestUsers directly, if there's no one depending on this format already.
+interface ITestUserConfigJson {
+	credentials: TestUsersRecord;
 }
 
-function getTestUsers(credFile?: string) {
-	if (credFile === undefined || credFile.length === 0) {
-		return undefined;
-	}
+const isITestUserConfig = (config: unknown): config is ITestUserConfigJson => {
+	return (
+		typeof config === "object" &&
+		config !== null &&
+		"credentials" in config &&
+		typeof config.credentials === "object" &&
+		config.credentials !== null
+	);
+};
 
-	let config: ITestUserConfig;
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type TestUser = {
+	username: string;
+	password: string;
+};
+type TestUsers = TestUser[];
+
+function getTestUsers(credFilePath: string): TestUsers {
 	try {
-		config = JSON.parse(fs.readFileSync(credFile, "utf8"));
-		return config;
-	} catch (e) {
-		console.error(`Failed to read ${credFile}`);
-		console.error(e);
-		return undefined;
+		const config = JSON.parse(fs.readFileSync(credFilePath, "utf8"));
+		if (!isITestUserConfig(config)) {
+			throw new Error("credFile provided but incorrect format");
+		}
+		const testUsers = Object.entries(config.credentials).map(([username, password]) => ({
+			username,
+			password,
+		}));
+		if (testUsers.length === 0) {
+			throw new Error("credFile valid but contained no credentials");
+		}
+		return testUsers;
+	} finally {
+		console.error(`Failed to read ${credFilePath}`);
 	}
 }
 
@@ -92,7 +114,7 @@ async function getTestConfig() {
 
 	const profile = getProfile(profileName);
 
-	const testUsers = getTestUsers(credFile);
+	const testUsers = credFile !== undefined ? getTestUsers(credFile) : undefined;
 
 	const testDriver = await createTestDriver(driver, endpoint, seed, undefined, browserAuth);
 
@@ -124,7 +146,7 @@ async function orchestratorProcess(
 		seed: number;
 		enableMetrics?: boolean;
 		createTestId?: boolean;
-		testUsers?: ITestUserConfig;
+		testUsers?: TestUsers | undefined;
 		profileName: string;
 	},
 ) {
@@ -213,14 +235,14 @@ async function orchestratorProcess(
 	}
 
 	try {
-		const usernames =
-			args.testUsers !== undefined ? Object.keys(args.testUsers.credentials) : undefined;
 		await Promise.all(
 			runnerArgs.map(async (childArgs, index) => {
-				const username =
-					usernames !== undefined ? usernames[index % usernames.length] : undefined;
-				const password =
-					username !== undefined ? args.testUsers?.credentials[username] : undefined;
+				const testUser =
+					args.testUsers !== undefined
+						? args.testUsers[index % args.testUsers.length]
+						: undefined;
+				const username = testUser !== undefined ? testUser.username : undefined;
+				const password = testUser !== undefined ? testUser.password : undefined;
 				const envVar = { ...process.env };
 				if (username !== undefined && password !== undefined) {
 					if (testDriver.endpointName === "odsp") {
@@ -255,7 +277,7 @@ function setupTelemetry(
 	process: child_process.ChildProcess,
 	logger: ITelemetryLoggerExt,
 	runId: number,
-	username?: string,
+	username: string | undefined,
 ) {
 	logger.send({
 		category: "metric",
