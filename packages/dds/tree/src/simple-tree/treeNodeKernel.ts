@@ -68,7 +68,7 @@ export class TreeNodeKernel implements Listenable<TreeChangeEvents> {
 		// TODO: Replace this check with the proper check against the cursor state when the cursor becomes part of the kernel
 		const flex = this.#hydrated.anchorNode.slots.get(flexTreeSlot);
 		if (flex !== undefined) {
-			assert(flex instanceof LazyEntity, "Unexpected flex node implementation");
+			assert(flex instanceof LazyEntity, 0x9b4 /* Unexpected flex node implementation */);
 			if (flex[isFreedSymbol]()) {
 				return TreeStatus.Deleted;
 			}

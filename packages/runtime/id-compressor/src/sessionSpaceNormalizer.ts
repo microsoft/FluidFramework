@@ -77,7 +77,7 @@ export class SessionSpaceNormalizer {
 		}
 		assert(
 			ranges[0] !== undefined,
-			"ranges[0] is undefined in SessionSpaceNormalizer.getRangesBetween",
+			0x9dd /* ranges[0] is undefined in SessionSpaceNormalizer.getRangesBetween */,
 		);
 
 		// now we touch up the first and last ranges to ensure that if they contain the
@@ -100,7 +100,7 @@ export class SessionSpaceNormalizer {
 		const lastRange = ranges[lastRangeIndex];
 		assert(
 			lastRange !== undefined,
-			"lastRange is undefined in SessionSpaceNormalizer.getRangesBetween",
+			0x9de /* lastRange is undefined in SessionSpaceNormalizer.getRangesBetween */,
 		);
 		const [limitGenCount, limitCount] = lastRange;
 		if (this.rangeContains(lastRange, lastGenCount)) {

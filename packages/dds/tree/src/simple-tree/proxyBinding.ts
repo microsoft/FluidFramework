@@ -200,7 +200,7 @@ export function createKernel(node: TreeNode): void {
 
 export function getKernel(node: TreeNode): TreeNodeKernel {
 	const kernel = treeNodeToKernel.get(node);
-	assert(kernel !== undefined, "Expected tree node to have kernel");
+	assert(kernel !== undefined, 0x9b1 /* Expected tree node to have kernel */);
 	return kernel;
 }
 
@@ -208,7 +208,7 @@ export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
 	const treeNode = anchorNode.slots.get(proxySlot);
 	if (treeNode !== undefined) {
 		const kernel = treeNodeToKernel.get(treeNode);
-		assert(kernel !== undefined, "Expected tree node to have kernel");
+		assert(kernel !== undefined, 0x9b2 /* Expected tree node to have kernel */);
 		kernel.dispose();
 	}
 }
