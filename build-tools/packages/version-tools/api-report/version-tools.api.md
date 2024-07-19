@@ -73,9 +73,6 @@ export function isPrereleaseVersion(version: string | semver.SemVer | undefined)
 export function isRangeOperator(r: unknown): r is RangeOperator;
 
 // @public
-export function isTestVersion(version: string): boolean;
-
-// @public
 export function isVersionBumpType(type: VersionChangeType | string | undefined): type is VersionBumpType;
 
 // @public

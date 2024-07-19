@@ -5,7 +5,6 @@
 
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import { isTestVersion } from "@fluid-tools/version-tools";
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { formatISO } from "date-fns";
@@ -154,7 +153,7 @@ async function updateReportVersions(
 	version: string,
 	log: Logger,
 ): Promise<void> {
-	const clientPackage = Object.keys(report)[1];
+	const clientPackage = "fluid-framework";
 
 	if (report[clientPackage] === undefined) {
 		throw new Error(`Client package ${clientPackage} is not defined in the report.`);
@@ -202,14 +201,10 @@ async function updateReportVersions(
  * @example
  * Returns 260312
  * extractBuildNumber("2.1.0-260312");
- * extractBuildNumber("0.0.0-260312-test")
  */
 
 function extractBuildNumber(version: string): number {
 	const versionParts: string[] = version.split("-");
-	if (isTestVersion(version)) {
-		return Number.parseInt(versionParts[1], 10);
-	}
 	// Extract the last part of the version, which is the number you're looking for
 	return Number.parseInt(versionParts[versionParts.length - 1], 10);
 }
