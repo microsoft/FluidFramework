@@ -11,9 +11,9 @@ import globby from "globby";
 import matter from "gray-matter";
 const { test: hasFrontMatter } = matter;
 
+import { readFile } from "node:fs/promises";
 import { ReleasePackage } from "../releaseGroups.js";
 import { Repository } from "./git.js";
-import { readFile } from "node:fs/promises";
 
 export const DEFAULT_CHANGESET_PATH = ".changeset";
 
@@ -42,7 +42,9 @@ export interface Changeset {
  */
 export type ChangesetEntry = Omit<Changeset, "metadata" | "mainPackage" | "changeTypes"> & {
 	pkg: string;
+	isMainPackage: boolean;
 	changeType: VersionBumpType;
+	fullChangeset: Readonly<Changeset>;
 };
 
 function compareChangesets<T extends Pick<Changeset, "added">>(a: T, b: T): number {
@@ -138,14 +140,37 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
  * @param changesets - An array of changesets to be grouped.
  * @returns a Map of package names to an array of all the changesets that apply to the package.
  */
-export function groupByPackage(
-	changesets: ChangesetEntry[],
-): Map<ReleasePackage, ChangesetEntry[]> {
-	const changesetMap = new Map<ReleasePackage, ChangesetEntry[]>();
-	for (const changeset of changesets) {
+export function groupByPackage(changesets: Changeset[]): Map<ReleasePackage, Changeset[]> {
+	const changesetMap = new Map<ReleasePackage, Changeset[]>();
+	const flattened = flattenChangesets(changesets);
+	for (const changeset of flattened) {
 		const entries = changesetMap.get(changeset.pkg) ?? [];
-		entries.push(changeset);
+		entries.push(changeset.fullChangeset);
 		changesetMap.set(changeset.pkg, entries);
+	}
+
+	// Sort all the entries by date
+	for (const entries of changesetMap.values()) {
+		entries.sort(compareChangesets);
+	}
+
+	return changesetMap;
+}
+
+/**
+ * Creates a map of package names to an array of all the changesets that apply to the package. Only the "main" package
+ * is considered. The returned array of changesets is sorted oldest-to-newest (that is, index 0 is the earliest
+ * changeset, and the last changeset in the array is the newest).
+ *
+ * @param changesets - An array of changesets to be grouped.
+ * @returns a Map of package names to an array of all the changesets that apply to the package.
+ */
+export function groupByMainPackage(changesets: Changeset[]): Map<ReleasePackage, Changeset[]> {
+	const changesetMap = new Map<ReleasePackage, Changeset[]>();
+	for (const changeset of changesets) {
+		const entries = changesetMap.get(changeset.mainPackage) ?? [];
+		entries.push(changeset);
+		changesetMap.set(changeset.mainPackage, entries);
 	}
 
 	// Sort all the entries by date
@@ -164,15 +189,19 @@ export function flattenChangesets(changesets: Changeset[]): ChangesetEntry[] {
 
 	for (const changeset of changesets) {
 		const { content, summary, added, sourceFile, metadata } = changeset;
+		let index = 0;
 		for (const [pkg, changeType] of Object.entries(metadata)) {
 			entries.push({
 				pkg,
+				isMainPackage: index === 0,
 				changeType,
 				content,
 				summary,
 				added,
 				sourceFile,
+				fullChangeset: changeset,
 			});
+			index++;
 		}
 	}
 

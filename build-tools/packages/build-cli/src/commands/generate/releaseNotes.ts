@@ -19,8 +19,7 @@ import { BaseCommand, DEFAULT_CHANGESET_PATH, loadChangesets } from "../../libra
 export default class GenerateReleaseNotesCommand extends BaseCommand<
 	typeof GenerateReleaseNotesCommand
 > {
-	static readonly summary =
-		``;
+	static readonly summary = ``;
 
 	// Enables the global JSON flag in oclif.
 	static readonly enableJsonFlag = true;
