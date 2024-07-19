@@ -37,6 +37,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `beta` APIs, import via `@fluidframework/tree/beta`.
 
+## API Documentation
+
+API documentation for **@fluidframework/tree** is available at <https://fluidframework.com/docs/apis/tree>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -421,10 +425,6 @@ This is important for performance/scalability and might be how we do virtualizat
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/tree** is available at <https://fluidframework.com/docs/apis/tree>.
 
 ## Minimum Client Requirements
 

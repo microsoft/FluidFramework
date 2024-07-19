@@ -36,6 +36,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `alpha` APIs, import via `@fluidframework/devtools-core/alpha`.
 
+## API Documentation
+
+API documentation for **@fluidframework/devtools-core** is available at <https://fluidframework.com/docs/apis/devtools-core>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -139,10 +143,6 @@ Next, run `npm run test` from a terminal within this directory.
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/devtools-core** is available at <https://fluidframework.com/docs/apis/devtools-core>.
 
 ## Minimum Client Requirements
 
