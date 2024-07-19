@@ -137,7 +137,7 @@ class FileLogger implements ITelemetryBufferedLogger {
 
 export const createLogger = FileLogger.createLogger.bind(FileLogger);
 
-export const createCodeLoader = (options: IContainerRuntimeOptions) =>
+export const createCodeLoader = (options?: IContainerRuntimeOptions | undefined) =>
 	new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
 
 // eslint-disable-next-line import/no-deprecated

@@ -35,7 +35,7 @@ export async function smokeTest(testDriver: ITestDriver, profileName: string) {
 	const loader = new Loader({
 		urlResolver: testDriver.createUrlResolver(),
 		documentServiceFactory: testDriver.createDocumentServiceFactory(),
-		codeLoader: createCodeLoader({}),
+		codeLoader: createCodeLoader(), // For the smoke test, just run with default container runtime options
 		logger,
 	});
 

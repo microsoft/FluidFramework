@@ -89,12 +89,12 @@ async function main() {
 	const seed: number = commander.seed;
 	const enableOpsMetrics: boolean = commander.enableOpsMetrics ?? false;
 
-	// TODO: Ensure the right thing happens in case of an error.
-	const profile = getProfile(profileName);
-
 	if (log !== undefined) {
 		process.env.DEBUG = log;
 	}
+
+	// TODO: Ensure the right thing happens in case of an error.
+	const profile = getProfile(profileName);
 
 	if (url === undefined) {
 		console.error("Missing --url argument needed to run child process");
