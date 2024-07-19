@@ -11,7 +11,7 @@ In the 2.0 release of Fluid, the concrete class implementations for DDSes were h
 There is now a drop-in replacement to `instanceof`: the static `.is()` method to `SharedObjectKind`, which is available on all DDSes. For example:
 
 ```typescript
-// Works in Fluid Framework 1.0 but not in the initial release of FluidFramework 2.0:
+// Works in Fluid Framework 1.0 but not in the initial release of Fluid Framework 2.0:
 if (myObject instanceof SharedString) {
   // do something
 }
