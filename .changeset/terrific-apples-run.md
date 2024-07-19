@@ -1,6 +1,9 @@
 ---
 "@fluidframework/tree": minor
 ---
+---
+kind: tree
+---
 
 SharedTree content that is removed is now deleted
 

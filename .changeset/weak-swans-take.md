@@ -2,6 +2,9 @@
 "fluid-framework": minor
 "@fluidframework/tree": minor
 ---
+---
+kind: tree
+---
 
 Improved error reporting
 

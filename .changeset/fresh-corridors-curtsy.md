@@ -1,6 +1,9 @@
 ---
 "@fluidframework/tinylicious-client": minor
 ---
+---
+kind: fix
+---
 
 tinylicious-client: Promote APIs from beta to public
 

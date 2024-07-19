@@ -2,6 +2,9 @@
 "fluid-framework": minor
 "@fluidframework/tree": minor
 ---
+---
+kind: tree
+---
 
 Using "delete" on tree fields now throws an error instead of not working correctly
 

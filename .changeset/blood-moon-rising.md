@@ -2,7 +2,7 @@
 "@fluid-experimental/property-query": minor
 ---
 ---
-kind: fix
+includeInReleaseNotes: no
 ---
 
 Updated `joi` dependency to latest major version

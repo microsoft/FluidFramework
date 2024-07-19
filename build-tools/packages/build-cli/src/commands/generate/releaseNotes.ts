@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Flags } from "@oclif/core";
+import { StringBuilder } from "@rushstack/node-core-library";
 import { format as prettier } from "prettier";
 
 import { releaseGroupFlag } from "../../flags.js";
@@ -15,7 +16,6 @@ import {
 	DEFAULT_CHANGESET_PATH,
 	groupByChangeKind,
 	loadChangesets,
-	ChangeKind,
 	ChangeKindHeaders,
 } from "../../library/index.js";
 
@@ -89,16 +89,22 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 		assert(flags.releaseType !== undefined, `Release type must be provided.`);
 
 		const byChangeKind = groupByChangeKind(changesets);
-
-		let body: string = "";
-		for (const entry of byChangeKind.entries()) {
-			const kind = entry[0] as ChangeKind;
-			const changes = entry[1];
-			const sectionHead = ChangeKindHeaders[kind];
-			body += `## ${sectionHead}\n\n`;
+		const body = new StringBuilder();
+		// let body: string = "";
+		for (const [kind, sectionHead] of ChangeKindHeaders.entries()) {
+			// const kind = entry[0] as ChangeKind;
+			const changes = byChangeKind.get(kind)?.filter((change) =>
+				// filter out changes that shouldn't be in the release notes
+				(change.additionalMetadata?.includeInReleaseNotes ?? true) === true
+			);
+			if (changes === undefined || changes.length === 0) {
+				continue;
+			}
+			// const sectionHead = ChangeKindHeaders[kind];
+			body.append(`## ${sectionHead}\n\n`);
 			for (const change of changes) {
 				if (change.changeTypes.includes("minor") || flags.releaseType === "major") {
-					body += `### ${change.summary}\n\n${change.content}\n\n`;
+					body.append(`### ${change.summary}\n\n${change.content}\n\n`);
 				} else {
 					this.info(
 						`Excluding changeset: ${path.basename(change.sourceFile)} because it has no ${
@@ -109,7 +115,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			}
 		}
 
-		const contents = `${header}\n\n${intro}\n\n${body}`;
+		const contents = `${header}\n\n${intro}\n\n${body.toString()}`;
 		const outputPath = path.join(context.repo.resolvedRoot, flags.out);
 		this.info(`Writing output file: ${outputPath}`);
 		await writeFile(

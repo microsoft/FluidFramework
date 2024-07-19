@@ -2,6 +2,9 @@
 "fluid-framework": minor
 "@fluidframework/map": minor
 ---
+---
+kind: fix
+---
 
 Some SharedDirectory/SharedMap-related APIs have been sealed
 

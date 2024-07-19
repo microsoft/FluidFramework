@@ -19,12 +19,26 @@ export const DEFAULT_CHANGESET_PATH = ".changeset";
 
 export type ChangeKind = "fix" | "feature" | "tree" | "other";
 
-export const ChangeKindHeaders: Record<ChangeKind, string> = {
-	"feature": "✨ New Features",
-	"tree": "🌳 SharedTree DDS changes",
-	"fix": "🐛 Bug Fixes",
-	"other": "Other Changes",
-};
+// export const ChangeKindHeaders: Record<ChangeKind, { header: string; index: number }> = {
+// 	"feature": { header: "✨ New Features", index: 0 },
+// 	"tree": { header: "🌳 SharedTree DDS changes", index: 1 },
+// 	"fix": { header: "🐛 Bug Fixes", index: 2 },
+// 	"other": { header: "Other Changes", index: 3 },
+// };
+
+// export const ChangeKindHeaders = new Map<string, { header: string; index: number }>([
+//   ["feature", { header: "✨ New Features", index: 0 }],
+//   ["tree", { header: "🌳 SharedTree DDS changes", index: 1 }],
+//   ["fix", { header: "🐛 Bug Fixes", index: 2 }],
+//   ["other", { header: "Other Changes", index: 3 }],
+// ]);
+
+export const ChangeKindHeaders = new Map<string, string>([
+	["feature", "✨ New Features"],
+	["tree", "🌳 SharedTree DDS changes"],
+	["fix", "🐛 Bug Fixes"],
+	["other", "Other Changes"],
+]);
 
 export interface FluidCustomChangesetMetadata {
 	kind?: ChangeKind;

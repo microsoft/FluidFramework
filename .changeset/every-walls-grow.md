@@ -2,6 +2,9 @@
 "@fluidframework/tree": minor
 "fluid-framework": minor
 ---
+---
+kind: tree
+---
 
 Detect arrayNode iterator invalidation
 

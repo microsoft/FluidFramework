@@ -1,6 +1,9 @@
 ---
 "@fluidframework/shared-object-base": minor
 ---
+---
+kind: feature
+---
 
 Type guards for DDS types
 
