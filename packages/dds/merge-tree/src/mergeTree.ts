@@ -86,6 +86,7 @@ import {
 	refTypeIncludesFlag,
 } from "./referencePositions.js";
 import { PropertiesRollback } from "./segmentPropertiesManager.js";
+import { endpointPosAndSide, type SequencePlace } from "./sequencePlace.js";
 import { zamboniSegments } from "./zamboni.js";
 
 function wasRemovedAfter(seg: ISegment, seq: number): boolean {
@@ -1910,8 +1911,8 @@ export class MergeTree {
 	}
 
 	public obliterateRange(
-		start: number,
-		end: number,
+		start: SequencePlace,
+		end: SequencePlace,
 		refSeq: number,
 		clientId: number,
 		seq: number,
@@ -1922,8 +1923,24 @@ export class MergeTree {
 			throw new UsageError("Attempted to send obliterate op without enabling feature flag.");
 		}
 
-		this.ensureIntervalBoundary(start, refSeq, clientId);
-		this.ensureIntervalBoundary(end, refSeq, clientId);
+		let { startPos, endPos } = endpointPosAndSide(start, end);
+		const { startSide, endSide } = endpointPosAndSide(start, end);
+
+		assert(
+			startPos !== undefined &&
+				endPos !== undefined &&
+				startSide !== undefined &&
+				endSide !== undefined &&
+				startPos !== "end" &&
+				endPos !== "start",
+			"start and end cannot be undefined because they were not passed in as undefined",
+		);
+
+		startPos = startPos === "start" ? 0 : startPos;
+		endPos = endPos === "end" ? this.getLength(refSeq, clientId) : endPos;
+
+		this.ensureIntervalBoundary(startPos, refSeq, clientId);
+		this.ensureIntervalBoundary(endPos, refSeq, clientId);
 
 		let _overwrite = overwrite;
 		const localOverlapWithRefs: ISegment[] = [];
@@ -2020,8 +2037,8 @@ export class MergeTree {
 			markMoved,
 			undefined,
 			afterMarkMoved,
-			start,
-			end,
+			startPos,
+			endPos,
 			undefined,
 			seq === UnassignedSequenceNumber ? undefined : seq,
 		);
