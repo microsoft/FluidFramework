@@ -39,8 +39,8 @@ export {
 	type ApplyKind,
 } from "./schemaTypes.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
-export { getFlexNode } from "./proxyBinding.js";
-export { treeNodeApi, type TreeNodeApi, type TreeChangeEvents } from "./treeNodeApi.js";
+export { getFlexNode, tryDisposeTreeNode } from "./proxyBinding.js";
+export { treeNodeApi, type TreeNodeApi } from "./treeNodeApi.js";
 export { toFlexSchema, cursorFromUnhydratedRoot } from "./toFlexSchema.js";
 export type {
 	FieldHasDefaultUnsafe,
@@ -82,7 +82,7 @@ export {
 
 // TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instancof.
 // See docs on TreeNode for more details.
-export type { TreeNode, Unhydrated, InternalTreeNode } from "./types.js";
+export type { TreeChangeEvents, TreeNode, Unhydrated, InternalTreeNode } from "./types.js";
 export {
 	TreeArrayNode,
 	IterableTreeArrayContent,

@@ -334,6 +334,20 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 		return this.root.slots;
 	}
 
+	public *[Symbol.iterator](): IterableIterator<AnchorNode> {
+		const stack: PathNode[] = [];
+		let node: PathNode | undefined = this.root;
+		while (node !== undefined) {
+			yield node;
+			for (const [_, children] of node.children) {
+				for (const child of children) {
+					stack.push(child);
+				}
+			}
+			node = stack.pop();
+		}
+	}
+
 	public on<K extends keyof AnchorSetRootEvents>(
 		eventName: K,
 		listener: AnchorSetRootEvents[K],
