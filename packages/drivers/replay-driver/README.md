@@ -24,6 +24,10 @@ To get started, install the package by running the following command:
 npm i @fluidframework/replay-driver
 ```
 
+## API Documentation
+
+API documentation for **@fluidframework/replay-driver** is available at <https://fluidframework.com/docs/apis/replay-driver>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -32,10 +36,6 @@ npm i @fluidframework/replay-driver
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/replay-driver** is available at <https://fluidframework.com/docs/apis/replay-driver>.
 
 ## Minimum Client Requirements
 

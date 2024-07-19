@@ -5,4 +5,4 @@
 
 Detect arrayNode iterator invalidation
 
-This change updates the behavior of array nodes such that when we concurrently edit the array during iteration, it will throw an error.
+When `arrayNode`s are edited concurrently during iteration, an error will be thrown.

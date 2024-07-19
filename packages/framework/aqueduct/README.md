@@ -30,6 +30,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `legacy` APIs, import via `@fluidframework/aqueduct/legacy`.
 
+## API Documentation
+
+API documentation for **@fluidframework/aqueduct** is available at <https://fluidframework.com/docs/apis/aqueduct>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -234,10 +238,6 @@ We use custom handlers to build the Container Services pattern.
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/aqueduct** is available at <https://fluidframework.com/docs/apis/aqueduct>.
 
 ## Minimum Client Requirements
 
