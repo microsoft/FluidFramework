@@ -211,16 +211,12 @@ export class ModularChangeFamily
 		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
 		const idState: IdAllocationState = { maxId };
 
-		return changes.reduce(
-			(change1, change2) =>
-				makeAnonChange(this.composePair(change1, change2, revInfos, idState)),
-			makeAnonChange({
-				fieldChanges: new Map(),
-				nodeChanges: new Map(),
-				nodeToParent: new Map(),
-				nodeAliases: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-			}),
+		if (changes.length === 0) {
+			return makeModularChangeset();
+		}
+
+		return changes.reduce((change1, change2) =>
+			makeAnonChange(this.composePair(change1, change2, revInfos, idState)),
 		).change;
 	}
 
