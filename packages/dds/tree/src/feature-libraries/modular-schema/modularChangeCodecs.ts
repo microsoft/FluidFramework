@@ -511,6 +511,6 @@ function getChangeHandler(
 	}
 
 	const handler = fieldKinds.get(fieldKind)?.kind.changeHandler;
-	assert(handler !== undefined, "Unknown field kind");
+	assert(handler !== undefined, 0x9c1 /* Unknown field kind */);
 	return handler;
 }

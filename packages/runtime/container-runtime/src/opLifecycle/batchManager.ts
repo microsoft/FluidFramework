@@ -156,7 +156,10 @@ const addBatchMetadata = (batch: IBatch, batchId?: BatchId): IBatch => {
 
 	const firstMsg = batch.messages[0];
 	const lastMsg = batch.messages[batchEnd];
-	assert(firstMsg !== undefined && lastMsg !== undefined, "expected non-empty batch");
+	assert(
+		firstMsg !== undefined && lastMsg !== undefined,
+		0x9d1 /* expected non-empty batch */,
+	);
 
 	const firstMetadata: Partial<IBatchMetadata> = firstMsg.metadata ?? {};
 	const lastMetadata: Partial<IBatchMetadata> = lastMsg.metadata ?? {};

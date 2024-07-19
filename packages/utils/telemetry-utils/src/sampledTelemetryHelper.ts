@@ -245,8 +245,8 @@ export class SampledTelemetryHelper<
 		loggerData: LoggerData,
 	): LoggerData {
 		for (const [key, val] of Object.entries(customData)) {
-			assert(typeof key === "string", "Key should be a string");
-			assert(typeof val === "number", "Value should be a number");
+			assert(typeof key === "string", 0x9df /* Key should be a string */);
+			assert(typeof val === "number", 0x9e0 /* Value should be a number */);
 
 			loggerData.dataSums[key] = (loggerData.dataSums[key] ?? 0) + val;
 			loggerData.dataMaxes[key] = Math.max(

@@ -700,7 +700,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			const sessionArray = sessions[sessionIndex + sessionOffset];
 			assert(
 				sessionArray !== undefined,
-				"sessionArray is undefined in IdCompressor.deserialize2_0",
+				0x9d8 /* sessionArray is undefined in IdCompressor.deserialize2_0 */,
 			);
 			const session = sessionArray[1];
 			const capacity = readNumber(index);

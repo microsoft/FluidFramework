@@ -79,7 +79,7 @@ export class Breakable {
 	 * This is pretty much only safe in tests which just were checking a specific error was thrown, and which know that error closepath is actually exception safe.
 	 */
 	public clearError(): void {
-		assert(this.brokenBy !== undefined, "No error to clear");
+		assert(this.brokenBy !== undefined, 0x9b6 /* No error to clear */);
 		this.brokenBy = undefined;
 	}
 }

@@ -28,7 +28,7 @@ export function computeHierarchicalOrdinal(
 	} else {
 		// eslint-disable-next-line unicorn/prefer-code-point
 		const prevOrdCode = previousOrdinal.charCodeAt(previousOrdinal.length - 1);
-		assert(prevOrdCode !== undefined, "previous ordinal should not be empty");
+		assert(prevOrdCode !== undefined, 0x9ad /* previous ordinal should not be empty */);
 		const localOrdinal = prevOrdCode + ordinalWidth;
 		// eslint-disable-next-line unicorn/prefer-code-point
 		ordinal = parentOrdinal + String.fromCharCode(localOrdinal);

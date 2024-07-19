@@ -298,7 +298,7 @@ export class Outbox {
 			clientSequenceNumber = this.sendBatch(processedBatch);
 			assert(
 				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
-				"unexpected negative clientSequenceNumber (empty batch should yield undefined)",
+				0x9d2 /* unexpected negative clientSequenceNumber (empty batch should yield undefined) */,
 			);
 		}
 

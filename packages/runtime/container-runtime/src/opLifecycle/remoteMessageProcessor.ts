@@ -104,10 +104,13 @@ export class RemoteMessageProcessor {
 
 		if (isGroupedBatch(message)) {
 			// We should be awaiting a new batch (batchStartCsn undefined)
-			assert(this.batchStartCsn === undefined, "Grouped batch interrupting another batch");
+			assert(
+				this.batchStartCsn === undefined,
+				0x9d3 /* Grouped batch interrupting another batch */,
+			);
 			assert(
 				this.processorBatch.length === 0,
-				"Processor batch should be empty on grouped batch",
+				0x9d4 /* Processor batch should be empty on grouped batch */,
 			);
 			return {
 				messages: this.opGroupingManager.ungroupOp(message).map(unpack),
@@ -146,7 +149,7 @@ export class RemoteMessageProcessor {
 		const batchMetadataFlag = asBatchMetadata(message.metadata)?.batch;
 		if (this.batchStartCsn === undefined) {
 			// We are waiting for a new batch
-			assert(batchMetadataFlag !== false, "Unexpected batch end marker");
+			assert(batchMetadataFlag !== false, 0x9d5 /* Unexpected batch end marker */);
 
 			// Start of a new multi-message batch
 			if (batchMetadataFlag === true) {
@@ -162,7 +165,7 @@ export class RemoteMessageProcessor {
 		// We are in the middle or end of an existing multi-message batch. Return the current batchStartCsn
 		const batchStartCsn = this.batchStartCsn;
 
-		assert(batchMetadataFlag !== true, "Unexpected batch start marker");
+		assert(batchMetadataFlag !== true, 0x9d6 /* Unexpected batch start marker */);
 		if (batchMetadataFlag === false) {
 			// Batch end? Then get ready for the next batch to start
 			this.batchStartCsn = undefined;

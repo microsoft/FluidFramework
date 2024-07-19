@@ -281,7 +281,7 @@ export class Session {
 		while (left <= right) {
 			const mid = Math.floor((left + right) / 2);
 			const value = arr[mid];
-			assert(value !== undefined, "value is undefined in Session.binarySearch");
+			assert(value !== undefined, 0x9dc /* value is undefined in Session.binarySearch */);
 			const c = comparator(search, value);
 			if (c === 0) {
 				return value; // Found the target, return its index.

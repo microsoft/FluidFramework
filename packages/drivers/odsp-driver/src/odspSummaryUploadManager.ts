@@ -179,7 +179,7 @@ export class OdspSummaryUploadManager {
 		let blobs = 0;
 		const keys = Object.keys(tree.tree);
 		for (const key of keys) {
-			assert(!key.includes("/"), "id should not include slashes");
+			assert(!key.includes("/"), 0x9cd /* id should not include slashes */);
 			// Non null asserting for now, this should be changed to Object.entries
 			const summaryObject = tree.tree[key]!;
 

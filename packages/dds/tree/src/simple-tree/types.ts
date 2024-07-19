@@ -314,7 +314,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 			schemaBase.constructorCached = { constructor: this, oneTimeInitialized: false };
 			assert(
 				this.constructorCached === schemaBase.constructorCached,
-				"Inheritance should work",
+				0x9b5 /* Inheritance should work */,
 			);
 			return this.constructorCached;
 		} else if (this.constructorCached.constructor === this) {

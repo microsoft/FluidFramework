@@ -429,7 +429,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// after a transaction is rolled back, revert removed roots back to the latest snapshot
 		branch.on("transactionRolledBack", () => {
 			const snapshot = this.removedRootsSnapshots.pop();
-			assert(snapshot !== undefined, "a snapshot for removed roots does not exist");
+			assert(snapshot !== undefined, 0x9ae /* a snapshot for removed roots does not exist */);
 			this.removedRoots = snapshot;
 		});
 
@@ -617,7 +617,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.checkNotDisposed();
 		assert(
 			!view.transaction.inProgress(),
-			"A view cannot be rebased while it has a pending transaction",
+			0x9af /* A view cannot be rebased while it has a pending transaction */,
 		);
 		view.branch.rebaseOnto(this.branch);
 	}
@@ -633,7 +633,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.checkNotDisposed();
 		assert(
 			!this.transaction.inProgress(),
-			"Views cannot be merged into a view while it has a pending transaction",
+			0x9b0 /* Views cannot be merged into a view while it has a pending transaction */,
 		);
 		while (view.transaction.inProgress()) {
 			view.transaction.commit();
