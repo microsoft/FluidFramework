@@ -30,6 +30,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `legacy` APIs, import via `@fluidframework/counter/legacy`.
 
+## API Documentation
+
+API documentation for **@fluidframework/counter** is available at <https://fluidframework.com/docs/apis/counter>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -176,10 +180,6 @@ Since `updateCounterValueLabel` is listening for all `incremented` events, the v
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/counter** is available at <https://fluidframework.com/docs/apis/counter>.
 
 ## Minimum Client Requirements
 
