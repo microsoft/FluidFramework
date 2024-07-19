@@ -46,10 +46,18 @@ export interface IPendingMessage {
 }
 
 /**
+ * IPendingMessage but without localOpMetadata, which isn't suitable for stashing
+ * (it's not serializable and will be regenerated when applying stashed ops)
+ */
+interface IMessageToStash extends IPendingMessage {
+	localOpMetadata: undefined;
+}
+
+/**
  * This represents a message that has been sequenced by the service and processed by this client (aka saved).
  * It will be included in pending local state, since it may need to be replayed locally on rehydrate.
  */
-interface ISavedMessage extends IPendingMessage {
+interface ISavedMessage extends IMessageToStash {
 	sequenceNumber: number;
 	localOpMetadata: undefined;
 }
@@ -70,7 +78,7 @@ export interface IPendingLocalState {
 	/**
 	 * list of pending states, including ops and batch information
 	 */
-	pendingStates: IPendingMessage[];
+	pendingStates: IMessageToStash[];
 }
 
 /** Info needed to replay/resubmit a pending message */
@@ -109,7 +117,7 @@ function buildPendingMessageContent(
 	return JSON.stringify({ type, contents, compatDetails });
 }
 
-function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
+function toStash(message: IPendingMessage): IMessageToStash {
 	return {
 		...message,
 		localOpMetadata: undefined,
@@ -207,10 +215,7 @@ export class PendingStateManager implements IDisposable {
 			}
 		});
 		return {
-			pendingStates: [
-				...newSavedOps,
-				...this.pendingMessages.toArray().map(withoutLocalOpMetadata),
-			],
+			pendingStates: [...newSavedOps, ...this.pendingMessages.toArray().map(toStash)],
 		};
 	}
 
