@@ -30,6 +30,7 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"test": "npm run test:realsvc",
 		"test:benchmark:report": "mocha --config src/test/benchmark/.mocharc.time.cjs -- --driver=local --e2eConfigFile=src/test/benchmark/e2eDocsConfig.json",
 		"test:benchmark:report:frs": "mocha --config src/test/benchmark/.mocharc.time.cjs -- --driver=r11s --r11sEndpointName=frs --e2eConfigFile=src/test/benchmark/e2eDocsConfig.json",
