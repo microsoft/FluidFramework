@@ -24,7 +24,7 @@ import { createTestDriver, initialize, safeExit } from "./utils.js";
 const createLoginEnv = (userName: string, password: string) =>
 	`{"${userName}": "${password}"}`;
 
-function getRunOptions() {
+function readRunOptions() {
 	commander
 		.version("0.0.1")
 		.requiredOption("-d, --driver <driver>", "Which test driver info to use", "odsp")
@@ -59,11 +59,11 @@ function getRunOptions() {
 	const endpoint: DriverEndpoint | undefined = commander.driverEndpoint;
 	const profileName: string = commander.profile;
 	const testId: string | undefined = commander.testId;
-	const debug: true | undefined = commander.debug;
+	const debug: boolean = commander.debug ?? false;
 	const log: string | undefined = commander.log;
-	const verbose: true | undefined = commander.verbose;
+	const verbose: boolean = commander.verbose ?? false;
 	const seed: number = commander.seed ?? Date.now();
-	const browserAuth: true | undefined = commander.browserAuth;
+	const supportsBrowserAuth: boolean = commander.browserAuth ?? false;
 	const credFilePath: string | undefined = commander.credFile;
 	const enableMetrics: boolean = commander.enableMetrics ?? false;
 	const createTestId: boolean = commander.createTestId ?? false;
@@ -77,7 +77,7 @@ function getRunOptions() {
 		log,
 		verbose,
 		seed,
-		browserAuth,
+		supportsBrowserAuth,
 		credFilePath,
 		enableMetrics,
 		createTestId,
@@ -91,30 +91,23 @@ async function orchestratorProcess(
 	testDriver: ITestDriver,
 	profile: TestConfiguration,
 	args: {
-		testId?: string;
-		debug?: true;
-		verbose?: true;
+		testId: string | undefined;
+		debug: boolean;
+		verbose: boolean;
 		seed: number;
-		enableMetrics?: boolean;
-		createTestId?: boolean;
-		testUsers?: TestUsers | undefined;
+		enableMetrics: boolean;
+		createTestId: boolean;
+		testUsers: TestUsers | undefined;
 		profileName: string;
 	},
 ) {
-	const url = await (args.testId !== undefined && args.createTestId === false
+	const url = await (args.testId !== undefined && !args.createTestId
 		? // If testId is provided and createTestId is false, then load the file;
 			testDriver.createContainerUrl(args.testId)
 		: // If no testId is provided, (or) if testId is provided but createTestId is not false, then
 			// create a file;
 			// In case testId is provided, name of the file to be created is taken as the testId provided
-			initialize(
-				testDriver,
-				args.seed,
-				profile,
-				args.verbose === true,
-				args.profileName,
-				args.testId,
-			));
+			initialize(testDriver, args.seed, profile, args.verbose, args.profileName, args.testId));
 
 	const estRunningTimeMin = Math.floor(
 		(2 * profile.totalSendCount) / (profile.opRatePerMin * profile.numClients),
@@ -145,14 +138,14 @@ async function orchestratorProcess(
 			"--seed",
 			`0x${args.seed.toString(16)}`,
 		];
-		if (args.debug === true) {
+		if (args.debug) {
 			const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
 			childArgs.unshift(`--inspect-brk=${debugPort}`);
 		}
-		if (args.verbose === true) {
+		if (args.verbose) {
 			childArgs.push("--verbose");
 		}
-		if (args.enableMetrics === true) {
+		if (args.enableMetrics) {
 			childArgs.push("--enableOpsMetrics");
 		}
 
@@ -164,7 +157,7 @@ async function orchestratorProcess(
 	}
 	console.log(runnerArgs.map((a) => a.join(" ")).join("\n"));
 
-	if (args.enableMetrics === true) {
+	if (args.enableMetrics) {
 		setInterval(() => {
 			ps.lookup(
 				{
@@ -207,7 +200,7 @@ async function orchestratorProcess(
 					env: envVar,
 				});
 
-				if (args.enableMetrics === true) {
+				if (args.enableMetrics) {
 					setupTelemetry(runnerProcess, logger, index, username);
 				}
 
@@ -317,11 +310,11 @@ const main = async () => {
 		log,
 		verbose,
 		seed,
-		browserAuth,
+		supportsBrowserAuth,
 		credFilePath,
 		enableMetrics,
 		createTestId,
-	} = getRunOptions();
+	} = readRunOptions();
 
 	if (log !== undefined) {
 		process.env.DEBUG = log;
@@ -331,7 +324,13 @@ const main = async () => {
 
 	const testUsers = credFilePath !== undefined ? getTestUsers(credFilePath) : undefined;
 
-	const testDriver = await createTestDriver(driver, endpoint, seed, undefined, browserAuth);
+	const testDriver = await createTestDriver(
+		driver,
+		endpoint,
+		seed,
+		undefined,
+		supportsBrowserAuth,
+	);
 
 	console.log("Starting smoke test...");
 	await smokeTest(testDriver, profileName);

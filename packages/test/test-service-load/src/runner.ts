@@ -210,6 +210,7 @@ async function runnerProcess(
 		endpoint,
 		seed,
 		runConfig.runId,
+		false, // supportsBrowserAuth
 	);
 
 	// Cycle between creating new factory vs. reusing factory.
