@@ -325,7 +325,7 @@ FLAGS
                                <options: client|server|azure|build-tools|gitrest|historian>
   -t, --releaseType=<option>   (required) The type of release for which the release notes are being generated.
                                <options: major|minor>
-      --out=<value>            (required) Output the results to this file.
+      --out=<value>            (required) [default: RELEASE_NOTES.md] Output the results to this file.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
