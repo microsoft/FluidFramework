@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
 	MonitoringContext,
@@ -27,6 +26,7 @@ import {
 	defaultSweepGracePeriodMs,
 	oneDayMs,
 	stableGCVersion,
+	type IGarbageCollectionDataNoHandle,
 } from "../../gc/index.js";
 import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";
@@ -43,7 +43,7 @@ describe("Garbage Collection Stats", () => {
 	let gcMessagesCount: number = 0;
 
 	// The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
-	let defaultGCData: IGarbageCollectionData = { gcNodes: {} };
+	let defaultGCData: IGarbageCollectionDataNoHandle = { gcNodes: {} };
 
 	/**
 	 * Called when sweep runs. It deleted the nodes from defaultGCData.

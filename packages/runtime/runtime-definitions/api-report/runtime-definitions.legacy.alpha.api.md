@@ -58,6 +58,9 @@ export enum FlushMode {
     TurnBased = 1
 }
 
+// @alpha (undocumented)
+export const GarbageCollectionHandle = "gcHandle";
+
 // @alpha
 export interface IAttachMessage {
     id: string;
@@ -233,7 +236,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
 // @alpha
 export interface IGarbageCollectionData {
     gcNodes: {
-        [id: string]: string[];
+        [id: string]: string[] | typeof GarbageCollectionHandle;
     };
 }
 

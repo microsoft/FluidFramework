@@ -448,6 +448,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			for (const [id, routes] of Object.entries(s.getGCData(fullGC).gcNodes)) {
 				gcNodes[id] ??= [];
 				for (const route of routes) {
+					assert(typeof gcNodes[id] !== "string", "");
 					gcNodes[id].push(route);
 				}
 			}

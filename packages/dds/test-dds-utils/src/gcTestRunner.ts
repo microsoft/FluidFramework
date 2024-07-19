@@ -54,6 +54,7 @@ export const runGCTests = (ctor: new () => IGCTestProvider): void => {
 
 		const [id, outboundRoutes] = gcNodes[0];
 		assert.strictEqual(id, "/", "GC node's id should be /");
+		assert(typeof outboundRoutes !== "string");
 		assert.deepStrictEqual(
 			outboundRoutes.sort(),
 			provider.expectedOutboundRoutes.sort(),

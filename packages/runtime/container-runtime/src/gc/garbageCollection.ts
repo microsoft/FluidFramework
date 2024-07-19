@@ -11,6 +11,7 @@ import {
 	gcTreeKey,
 	type IGarbageCollectionData,
 	type ITelemetryContext,
+	GarbageCollectionHandle,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	createResponseError,
@@ -49,12 +50,14 @@ import {
 	UnreferencedState,
 	disableAutoRecoveryKey,
 	type IGCNodeUpdatedProps,
+	type IGarbageCollectionDataNoHandle,
 } from "./gcDefinitions.js";
 import {
 	cloneGCData,
 	compatBehaviorAllowsGCMessageType,
 	concatGarbageCollectionData,
 	dataStoreNodePathOnly,
+	getChildTreeNodeIds,
 	getGCDataFromSnapshot,
 	urlToGCNodePath,
 } from "./gcHelpers.js";
@@ -107,7 +110,8 @@ export class GarbageCollector implements IGarbageCollector {
 
 	public readonly sessionExpiryTimerStarted: number | undefined;
 	// Keeps track of the GC state from the last run.
-	private gcDataFromLastRun: IGarbageCollectionData | undefined;
+	private gcDataFromLastRun: IGarbageCollectionDataNoHandle | undefined;
+	private childTreeNodeIds: Map<string, string[]> = new Map();
 	// Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
 	// outbound routes from that node.
 	private readonly newReferencesSinceLastRun: Map<string, string[]> = new Map();
@@ -478,7 +482,8 @@ export class GarbageCollector implements IGarbageCollector {
 		const fullGC =
 			options.fullGC ??
 			(this.configs.runFullGC === true ||
-				this.summaryStateTracker.autoRecovery.fullGCRequested());
+				this.summaryStateTracker.autoRecovery.fullGCRequested() ||
+				this.gcDataFromLastRun === undefined);
 
 		// Add the options that are used to run GC to the telemetry context.
 		telemetryContext?.setMultiple("fluid_GC", "Options", {
@@ -546,6 +551,25 @@ export class GarbageCollector implements IGarbageCollector {
 		);
 	}
 
+	private getGCDataWithNoHandle(gcData: IGarbageCollectionData) {
+		const gcDataNoHandle: IGarbageCollectionDataNoHandle = { gcNodes: {} };
+		for (const [id, value] of Object.entries(gcData.gcNodes)) {
+			if (value === GarbageCollectionHandle) {
+				assert(this.gcDataFromLastRun !== undefined, "");
+				const childTreeNodeIds = this.childTreeNodeIds.get(id);
+				assert(childTreeNodeIds !== undefined, "");
+				for (const nodeId of childTreeNodeIds) {
+					const outboundRoutes = this.gcDataFromLastRun.gcNodes[nodeId];
+					assert(outboundRoutes !== undefined, "");
+					gcDataNoHandle.gcNodes[nodeId] = Array.from(outboundRoutes);
+				}
+			} else {
+				gcDataNoHandle.gcNodes[id] = Array.from(value);
+			}
+		}
+		return gcDataNoHandle;
+	}
+
 	/**
 	 * Runs garbage collection. It does the following:
 	 *
@@ -567,10 +591,11 @@ export class GarbageCollector implements IGarbageCollector {
 		// 1. Generate / analyze the runtime's reference graph.
 		// Get the reference graph (gcData) and run GC algorithm to get referenced / unreferenced nodes.
 		const gcData = await this.runtime.getGCData(fullGC);
-		const gcResult = runGarbageCollection(gcData.gcNodes, ["/"]);
+		const gcDataNoHandle = this.getGCDataWithNoHandle(gcData);
+		const gcResult = runGarbageCollection(gcDataNoHandle.gcNodes, ["/"]);
 		// Get all referenced nodes - References in this run + references between the previous and current runs.
 		const allReferencedNodeIds =
-			this.findAllNodesReferencedBetweenGCs(gcData, this.gcDataFromLastRun, logger) ??
+			this.findAllNodesReferencedBetweenGCs(gcDataNoHandle, this.gcDataFromLastRun, logger) ??
 			gcResult.referencedNodeIds;
 
 		// 2. Get the mark phase stats based on the previous / current GC state.
@@ -591,7 +616,8 @@ export class GarbageCollector implements IGarbageCollector {
 		// Note that no nodes will be deleted until the GC Sweep op is processed.
 		this.runSweepPhase(gcResult, tombstoneReadyNodeIds, sweepReadyNodeIds);
 
-		this.gcDataFromLastRun = cloneGCData(gcData);
+		this.gcDataFromLastRun = cloneGCData(gcDataNoHandle);
+		this.childTreeNodeIds = getChildTreeNodeIds(gcData);
 
 		// 5. Get the sweep phase stats.
 		const sweepPhaseStats = this.getSweepPhaseStats(
@@ -770,8 +796,8 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @returns A list of all nodes referenced from the last local summary until now.
 	 */
 	private findAllNodesReferencedBetweenGCs(
-		currentGCData: IGarbageCollectionData,
-		previousGCData: IGarbageCollectionData | undefined,
+		currentGCData: IGarbageCollectionDataNoHandle,
+		previousGCData: IGarbageCollectionDataNoHandle | undefined,
 		logger: ITelemetryLoggerExt,
 	): string[] | undefined {
 		// If we haven't run GC before there is nothing to do.
@@ -813,7 +839,10 @@ export class GarbageCollector implements IGarbageCollector {
 		 * - We don't require DDSes handles to be stored in a referenced DDS.
 		 * - A new data store may have "root" DDSes already created and we don't detect them today.
 		 */
-		const gcDataSuperSet = concatGarbageCollectionData(previousGCData, currentGCData);
+		const gcDataSuperSet = concatGarbageCollectionData(
+			previousGCData,
+			currentGCData,
+		) as IGarbageCollectionDataNoHandle;
 		const newOutboundRoutesSinceLastRun: string[] = [];
 		this.newReferencesSinceLastRun.forEach(
 			(outboundRoutes: string[], sourceNodeId: string) => {

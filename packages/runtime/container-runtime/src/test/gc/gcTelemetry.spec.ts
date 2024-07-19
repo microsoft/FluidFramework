@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
 	MonitoringContext,
@@ -27,6 +26,7 @@ import {
 	defaultSessionExpiryDurationMs,
 	oneDayMs,
 	stableGCVersion,
+	type IGarbageCollectionDataNoHandle,
 } from "../../gc/index.js";
 import { pkgVersion } from "../../packageVersion.js";
 
@@ -619,8 +619,8 @@ describe("GC Telemetry Tracker", () => {
 
 	describe("gcUnknownOutboundReferences telemetry", () => {
 		const unknownReferenceEventName = "GarbageCollector:gcUnknownOutboundReferences";
-		const currentGCData: IGarbageCollectionData = { gcNodes: {} };
-		let previousGCData: IGarbageCollectionData;
+		const currentGCData: IGarbageCollectionDataNoHandle = { gcNodes: {} };
+		let previousGCData: IGarbageCollectionDataNoHandle;
 		let explicitReferences: Map<string, string[]>;
 
 		beforeEach(() => {

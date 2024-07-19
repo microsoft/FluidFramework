@@ -21,6 +21,7 @@ import {
 	gcVersionUpgradeToV4Key,
 	nextGCVersion,
 	stableGCVersion,
+	type IGarbageCollectionDataNoHandle,
 } from "./gcDefinitions.js";
 import {
 	IGarbageCollectionNodeData,
@@ -144,7 +145,9 @@ export function concatGarbageCollectionStates(
  * @param gcData - The GC data to clone.
  * @returns a clone of the given GC data.
  */
-export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData {
+export function cloneGCData(
+	gcData: IGarbageCollectionDataNoHandle,
+): IGarbageCollectionDataNoHandle {
 	const clonedGCNodes: { [id: string]: string[] } = {};
 	for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
 		clonedGCNodes[id] = Array.from(outboundRoutes);
@@ -158,8 +161,8 @@ export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionD
  * Concatenates the given GC data and returns the concatenated GC data.
  */
 export function concatGarbageCollectionData(
-	gcData1: IGarbageCollectionData,
-	gcData2: IGarbageCollectionData,
+	gcData1: IGarbageCollectionDataNoHandle,
+	gcData2: IGarbageCollectionDataNoHandle,
 ) {
 	const combinedGCData: IGarbageCollectionData = cloneGCData(gcData1);
 	for (const [id, routes] of Object.entries(gcData2.gcNodes)) {
@@ -287,6 +290,36 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 		childGCDetailsMap.set(childId, childGCDetails);
 	}
 	return childGCDetailsMap;
+}
+
+/**
+ * For each node in the GC data, find the ids of all nodes in its sub-tree. For example, say there are nodes with
+ * ids \{ "/a1", "/a1/b1", "/a1/b1/c1" \}, it generates the following list for each node:
+ * "/a1": ["/a1", "/a1/b1", "/a1/b1/c1"]
+ * "/a1/b1": ["/a1/b1", "/a1/b1/c1"]
+ * "/a1/b1/c1": ["/a1/b1/c1"]
+ * @param gcData - The GC data with a list of nodes.
+ * @returns A map with each node id as key and the list of all node ids in its sub-tree as values.
+ */
+export function getChildTreeNodeIds(gcData: IGarbageCollectionData) {
+	const childNodesMap: Map<string, string[]> = new Map();
+
+	for (const [id] of Object.entries(gcData.gcNodes)) {
+		if (id === "/") {
+			continue;
+		}
+
+		assert(id.startsWith("/"), "node id should always be an absolute route");
+		const pathParts = id.split("/").filter((part: string) => part !== "");
+		let nodeId = "";
+		for (const part of pathParts) {
+			nodeId += `/${part}`;
+			const childNodes = childNodesMap.get(nodeId) ?? [];
+			childNodes.push(id);
+			childNodesMap.set(nodeId, childNodes);
+		}
+	}
+	return childNodesMap;
 }
 
 /**

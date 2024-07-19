@@ -557,3 +557,10 @@ export interface IGCResult {
 	/** The ids of nodes that are not-referenced or deleted in the referenced graph */
 	deletedNodeIds: string[];
 }
+
+export interface IGarbageCollectionDataNoHandle {
+	/**
+	 * The GC nodes of a Fluid object in the Container. Each node has an id and a set of routes to other GC nodes.
+	 */
+	gcNodes: { [id: string]: string[] };
+}

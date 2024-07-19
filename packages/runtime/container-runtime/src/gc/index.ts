@@ -39,6 +39,7 @@ export {
 	GarbageCollectionMessage,
 	GarbageCollectionMessageType,
 	ISweepMessage,
+	IGarbageCollectionDataNoHandle,
 } from "./gcDefinitions.js";
 export {
 	cloneGCData,

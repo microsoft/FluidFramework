@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
@@ -16,6 +16,7 @@ import {
 	ISummarizerNodeConfigWithGC,
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
+	GarbageCollectionHandle,
 } from "@fluidframework/runtime-definitions/internal";
 import { unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils/internal";
 import {
@@ -23,8 +24,6 @@ import {
 	TelemetryDataTag,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
-
-import { cloneGCData, unpackChildNodesGCDetails } from "../../gc/index.js";
 
 import { SummarizerNode } from "./summarizerNode.js";
 import {
@@ -74,19 +73,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
 	// This is the last known used routes of this node as seen by the server as part of a summary.
 	private referenceUsedRoutes: string[] | undefined;
-
-	// The base GC details of this node used to initialize the GC state.
-	private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
-
-	// Keeps track of whether we have loaded the base details to ensure that we only do it once.
-	private baseGCDetailsLoaded: boolean = false;
-
-	// The base GC details for the child nodes. This is passed to child nodes when creating them.
-	private readonly childNodesBaseGCDetailsP: Promise<
-		Map<string, IGarbageCollectionDetailsBase>
-	>;
-
-	private gcData: IGarbageCollectionData | undefined;
 
 	// Set used routes to have self route by default. This makes the node referenced by default. This is done to ensure
 	// that this node is not marked as collected when running GC has been disabled. Once, the option to disable GC is
@@ -140,46 +126,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		);
 
 		this.gcDisabled = config.gcDisabled === true;
-
-		this.baseGCDetailsP = new LazyPromise(async () => {
-			return (await getBaseGCDetailsFn?.()) ?? { usedRoutes: [] };
-		});
-
-		this.childNodesBaseGCDetailsP = new LazyPromise(async () => {
-			await this.loadBaseGCDetails();
-			return unpackChildNodesGCDetails({ gcData: this.gcData, usedRoutes: this.usedRoutes });
-		});
-	}
-
-	/**
-	 * Loads state from this node's initial GC summary details. This contains the following data from the last summary
-	 * seen by the server for this client:
-	 * - usedRoutes: This is used to figure out if the used state of this node changed since last summary.
-	 * - gcData: The garbage collection data of this node that is required for running GC.
-	 */
-	private async loadBaseGCDetails() {
-		if (this.baseGCDetailsLoaded) {
-			return;
-		}
-		const baseGCDetails = await this.baseGCDetailsP;
-
-		// Possible race - If there were parallel calls to loadBaseGCDetails, we want to make sure that we update
-		// the state from the base details only once.
-		if (this.baseGCDetailsLoaded) {
-			return;
-		}
-		this.baseGCDetailsLoaded = true;
-
-		// Update GC data, used routes and reference used routes. The used routes are sorted because they are compared
-		// across GC runs to check if they changed. Sorting ensures that the elements are in the same order.
-		// If the GC details has GC data, initialize our GC data from it.
-		if (baseGCDetails.gcData !== undefined) {
-			this.gcData = cloneGCData(baseGCDetails.gcData);
-		}
-		if (baseGCDetails.usedRoutes !== undefined) {
-			this.usedRoutes = Array.from(baseGCDetails.usedRoutes).sort();
-			this.referenceUsedRoutes = Array.from(baseGCDetails.usedRoutes).sort();
-		}
 	}
 
 	public async summarize(
@@ -218,25 +164,18 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			0x1b3 /* "GC data cannot be retrieved without getGCDataFn" */,
 		);
 
-		// Load GC details from the initial summary, if not already loaded. If this is the first time this function is
-		// called and the node's data has not changed since last summary, the GC data in initial details is returned.
-		await this.loadBaseGCDetails();
-
 		// If there is no new data since last summary and we have GC data from the previous run, return it. The previous
 		// GC data may not be available if loaded from a snapshot with either GC disabled or before GC was added.
 		// Note - canReuseHandle is checked to be consistent with summarize - generate GC data for nodes for which
 		// summary must be generated.
-		if (
-			this.canReuseHandle &&
-			!fullGC &&
-			!this.hasDataChanged() &&
-			this.gcData !== undefined
-		) {
-			return cloneGCData(this.gcData);
-		}
-
-		const gcData = await this.getGCDataFn(fullGC);
-		this.gcData = cloneGCData(gcData);
+		const gcData =
+			this.canReuseHandle && !fullGC && !this.hasDataChanged()
+				? ({
+						gcNodes: {
+							"/": GarbageCollectionHandle,
+						},
+					} satisfies IGarbageCollectionData)
+				: await this.getGCDataFn(fullGC);
 		return gcData;
 	}
 
@@ -396,17 +335,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 	): ISummarizerNodeWithGC {
 		assert(!this.children.has(id), 0x1b6 /* "Create SummarizerNode child already exists" */);
-		/**
-		 * Update the child node's base GC details from this node's current GC details instead of updating from the base
-		 * GC details of this node. This will handle scenarios where the GC details was updated during refresh from
-		 * snapshot and the child node wasn't created then. If a child is created after that, its GC details should be
-		 * the one from the downloaded snapshot and not the base GC details.
-		 */
-		const getChildBaseGCDetailsFn = async () => {
-			const childNodesBaseGCDetails = await this.childNodesBaseGCDetailsP;
-			return childNodesBaseGCDetails.get(id) ?? {};
-		};
-
 		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
 		const child = new SummarizerNodeWithGC(
 			this.logger,
@@ -420,7 +348,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			createDetails.latestSummary,
 			this.wipSummaryLogger,
 			getGCDataFn,
-			getChildBaseGCDetailsFn,
+			undefined,
 			createDetails.telemetryNodeId,
 		);
 
@@ -494,6 +422,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		// be tracked for this summary.
 		if (!this.gcDisabled && this.isSummaryInProgress()) {
 			this.wipSerializedUsedRoutes = JSON.stringify(this.usedRoutes);
+		}
+
+		if (this.referenceUsedRoutes === undefined && !this.hasDataChanged()) {
+			this.referenceUsedRoutes = Array.from(this.usedRoutes);
 		}
 	}
 

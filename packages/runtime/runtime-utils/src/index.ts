@@ -42,6 +42,7 @@ export {
 	SummaryTreeBuilder,
 	TelemetryContext,
 	utf8ByteLength,
+	GCNodesType,
 } from "./summaryUtils.js";
 export { unpackChildNodesUsedRoutes } from "./unpackUsedRoutes.js";
 export { ReadAndParseBlob, seqFromTree, encodeCompactIdToString } from "./utils.js";

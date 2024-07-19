@@ -5,8 +5,11 @@
 
 import { strict as assert } from "assert";
 
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
+
 import {
 	dataStoreNodePathOnly,
+	getChildTreeNodeIds,
 	shouldAllowGcSweep,
 	urlToGCNodePath,
 	// eslint-disable-next-line import/no-internal-modules
@@ -196,6 +199,38 @@ describe("Garbage Collection Helpers Tests", () => {
 			it(`url=${url}`, () => {
 				const result = urlToGCNodePath(url);
 				assert.equal(result, expected);
+			});
+		});
+	});
+
+	describe("getChildNodesList", () => {
+		it.only("splits correctly", () => {
+			const gcData1: IGarbageCollectionData = {
+				gcNodes: {},
+			};
+			gcData1.gcNodes["/"] = ["/1", "/2"];
+			gcData1.gcNodes["/1"] = ["/1/1", "/1/2"];
+			gcData1.gcNodes["/1/1"] = ["/1"];
+			gcData1.gcNodes["/1/2"] = ["/1", "/2"];
+			gcData1.gcNodes["/2"] = ["/2/1", "/2/2"];
+			gcData1.gcNodes["/2/1"] = ["/2"];
+			gcData1.gcNodes["/2/2"] = ["/2", "/2/2/1"];
+			gcData1.gcNodes["/2/2/1"] = ["/2/2", "/3"];
+			gcData1.gcNodes["/2/2/2"] = ["/2/2"];
+			gcData1.gcNodes["/2/2/1/1"] = ["/2/2"];
+			gcData1.gcNodes["/2/2/1/2"] = ["/2/2"];
+			gcData1.gcNodes["/3"] = ["/3/1"];
+			gcData1.gcNodes["/3/1"] = ["/3"];
+
+			// gcData1.gcNodes["/2"] = ["/2/1", "/2/2"];
+			// gcData1.gcNodes["/2/1"] = ["/2"];
+			// gcData1.gcNodes["/2/2"] = ["/2", "/2/2/1"];
+
+			const result = getChildTreeNodeIds(gcData1);
+			assert(result !== undefined);
+			// console.log(result);
+			result.forEach((value, key) => {
+				console.log(`${key} -> ${value}`);
 			});
 		});
 	});

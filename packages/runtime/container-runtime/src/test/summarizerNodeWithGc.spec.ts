@@ -23,7 +23,7 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { cloneGCData } from "../gc/index.js";
+import { cloneGCData, IGarbageCollectionDataNoHandle } from "../gc/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
 import {
@@ -35,7 +35,6 @@ import {
 
 type SummarizerNodeWithPrivates = ISummarizerNodeWithGC & {
 	baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
-	loadBaseGCDetails(): Promise<void>;
 	hasUsedStateChanged(): boolean;
 };
 
@@ -192,7 +191,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			);
 
 			// Make a clone of the GC data returned above because we are about to change it.
-			const cachedGCData = cloneGCData(gcData);
+			const cachedGCData = cloneGCData(gcData as IGarbageCollectionDataNoHandle);
 
 			// Add a new node to the GC data returned by getChildInternalGCData to make it different from cachedGCData above.
 			// This will validate that the data returned by getGCData is not childInternalGCData.
@@ -265,7 +264,6 @@ describe("SummarizerNodeWithGC Tests", () => {
 				usedRoutes,
 			};
 			summarizerNode.baseGCDetailsP = Promise.resolve(baseGCDetails);
-			await summarizerNode.loadBaseGCDetails();
 			summarizerNode.updateUsedRoutes(usedRoutes);
 			assert.strictEqual(
 				summarizerNode.hasUsedStateChanged(),
@@ -283,7 +281,6 @@ describe("SummarizerNodeWithGC Tests", () => {
 				usedRoutes,
 			};
 			summarizerNode.baseGCDetailsP = Promise.resolve(baseGCDetails);
-			await summarizerNode.loadBaseGCDetails();
 			summarizerNode.updateUsedRoutes([...usedRoutes, "newRoute"]);
 			assert.strictEqual(
 				summarizerNode.hasUsedStateChanged(),
@@ -300,7 +297,6 @@ describe("SummarizerNodeWithGC Tests", () => {
 				usedRoutes: undefined,
 			};
 			summarizerNode.baseGCDetailsP = Promise.resolve(baseGCDetails);
-			await summarizerNode.loadBaseGCDetails();
 			summarizerNode.updateUsedRoutes(["newRoute"]);
 			assert.strictEqual(
 				summarizerNode.hasUsedStateChanged(),
@@ -325,7 +321,6 @@ describe("SummarizerNodeWithGC Tests", () => {
 				usedRoutes: undefined,
 			};
 			summarizerNodeGCDisabled.baseGCDetailsP = Promise.resolve(baseGCDetails);
-			await summarizerNodeGCDisabled.loadBaseGCDetails();
 			summarizerNodeGCDisabled.updateUsedRoutes(["newRoute"]);
 			assert.strictEqual(
 				summarizerNodeGCDisabled.hasUsedStateChanged(),

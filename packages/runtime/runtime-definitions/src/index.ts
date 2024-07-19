@@ -41,6 +41,7 @@ export {
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
+	GarbageCollectionHandle,
 } from "./garbageCollectionDefinitions.js";
 export type {
 	IAttachMessage,

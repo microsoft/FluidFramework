@@ -31,6 +31,7 @@ import {
 	ISummarizeResult,
 	ITelemetryContextExt,
 	gcDataBlobKey,
+	GarbageCollectionHandle,
 } from "@fluidframework/runtime-definitions/internal";
 import type { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -409,6 +410,10 @@ export function processAttachMessageGCData(
 
 	const gcData = JSON.parse(gcDataEntry.value.contents) as IGarbageCollectionData;
 	for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
+		assert(
+			outboundRoutes !== GarbageCollectionHandle,
+			"There should be no handles in attach GC data",
+		);
 		outboundRoutes.forEach((toPath) => {
 			addedGCOutboundRoute(nodeId, toPath);
 		});
@@ -481,21 +486,19 @@ function trimTrailingSlashes(str: string) {
 }
 
 /**
+ * @internal
+ */
+export type GCNodesType = IGarbageCollectionData["gcNodes"];
+
+/**
  * Helper class to build the garbage collection data of a node by combining the data from multiple nodes.
  * @internal
  */
 export class GCDataBuilder implements IGarbageCollectionData {
-	private readonly gcNodesSet: { [id: string]: Set<string> } = {};
-	public get gcNodes(): { [id: string]: string[] } {
-		const gcNodes = {};
-		for (const [nodeId, outboundRoutes] of Object.entries(this.gcNodesSet)) {
-			gcNodes[nodeId] = [...outboundRoutes];
-		}
-		return gcNodes;
-	}
+	public readonly gcNodes: GCNodesType = {};
 
-	public addNode(id: string, outboundRoutes: string[]) {
-		this.gcNodesSet[id] = new Set(outboundRoutes);
+	public addNode(id: string, value: string[] | typeof GarbageCollectionHandle) {
+		this.gcNodes[id] = value === GarbageCollectionHandle ? value : Array.from(value);
 	}
 
 	/**
@@ -504,8 +507,8 @@ export class GCDataBuilder implements IGarbageCollectionData {
 	 * - Prefixes the given `prefixId` to the given nodes' ids.
 	 * - Adds the outbound routes of the nodes against the normalized and prefixed id.
 	 */
-	public prefixAndAddNodes(prefixId: string, gcNodes: { [id: string]: string[] }) {
-		for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
+	public prefixAndAddNodes(prefixId: string, gcNodes: GCNodesType) {
+		for (const [id, value] of Object.entries(gcNodes)) {
 			// Remove any leading slashes from the id.
 			let normalizedId = trimLeadingSlashes(id);
 			// Prefix the given id to the normalized id.
@@ -515,13 +518,14 @@ export class GCDataBuilder implements IGarbageCollectionData {
 			normalizedId = trimTrailingSlashes(normalizedId);
 
 			// Add the outbound routes against the normalized and prefixed id without duplicates.
-			this.gcNodesSet[normalizedId] = new Set(outboundRoutes);
+			this.gcNodes[normalizedId] =
+				value === GarbageCollectionHandle ? value : Array.from(value);
 		}
 	}
 
-	public addNodes(gcNodes: { [id: string]: string[] }) {
-		for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
-			this.gcNodesSet[id] = new Set(outboundRoutes);
+	public addNodes(gcNodes: GCNodesType) {
+		for (const [id, value] of Object.entries(gcNodes)) {
+			this.gcNodes[id] = value === GarbageCollectionHandle ? value : Array.from(value);
 		}
 	}
 
@@ -529,8 +533,11 @@ export class GCDataBuilder implements IGarbageCollectionData {
 	 * Adds the given outbound route to the outbound routes of all GC nodes.
 	 */
 	public addRouteToAllNodes(outboundRoute: string) {
-		for (const outboundRoutes of Object.values(this.gcNodesSet)) {
-			outboundRoutes.add(outboundRoute);
+		for (const value of Object.values(this.gcNodes)) {
+			if (value === GarbageCollectionHandle) {
+				continue;
+			}
+			value.push(outboundRoute);
 		}
 	}
 
