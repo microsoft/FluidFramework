@@ -58,7 +58,6 @@ type GcWithPrivates = IGarbageCollector & {
 };
 
 describe("Garbage Collection configurations", () => {
-	const testPkgPath = ["testPkg"];
 	const configProvider = createTestConfigProvider();
 
 	let mockLogger: MockLogger;
@@ -140,7 +139,6 @@ describe("Garbage Collection configurations", () => {
 			},
 			isSummarizerClient,
 			readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
-			getNodePackagePath: async (nodeId: string) => testPkgPath,
 			getLastSummaryTimestampMs: () => Date.now(),
 			submitMessage: (message: ContainerRuntimeGCMessage) => {},
 		});

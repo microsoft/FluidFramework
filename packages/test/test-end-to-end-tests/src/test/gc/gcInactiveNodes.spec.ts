@@ -48,9 +48,12 @@ import {
  */
 describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory } = apis.dds;
-	const revivedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Revived";
-	const changedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Changed";
-	const loadedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Loaded";
+	const revivedEvent =
+		"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Revived";
+	const changedEvent =
+		"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Changed";
+	const loadedEvent =
+		"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded";
 	const inactiveTimeoutMs = 100;
 
 	function makeTestContainerConfig(
@@ -199,7 +202,6 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 					200,
 					"Loading the inactive object should succeed on summarizer despite throwOnInactiveLoad option",
 				);
-				await summarize(summarizerRuntime);
 				mockLogger.assertMatch(
 					[
 						{
@@ -222,13 +224,13 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 				// Make a change again and validate that we don't get another changedEvent as we only log it
 				// once per data store per session.
 				dataObject._root.set("key2", "value2");
-				await summarize(summarizerRuntime);
+				await provider.ensureSynchronized();
 				validateNoInactiveEvents();
 
 				// Revive the inactive data store (via both DDS reference and DataStore reference) and validate that we get the revivedEvent events.
 				defaultDataStore._root.set("dataStore_root", dataObject._root.handle);
 				defaultDataStore._root.set("dataStore1", dataObject.handle);
-				await summarize(summarizerRuntime);
+				await provider.ensureSynchronized();
 				mockLogger.assertMatch(
 					[
 						// For DDS
@@ -316,7 +318,6 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 
 				// Retrieve the blob in the summarizer client now and validate that we get the loadedEvent.
 				await summarizerBlobHandle.get();
-				await summarize(summarizerRuntime);
 				mockLogger.assertMatch(
 					[
 						{
@@ -332,10 +333,9 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 					true /* inlineDetailsProp */,
 				);
 
-				// Add the handle back, summarize and validate that we get the revivedEvent.
+				// Add the handle back and validate that we get the revivedEvent.
 				defaultDataStore._root.set("blob", blobHandle);
 				await provider.ensureSynchronized();
-				await summarize(summarizerRuntime);
 				mockLogger.assertMatch(
 					[
 						{
@@ -398,7 +398,6 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 					404,
 					"404 would fall back to custom request handler (not implemented here)",
 				);
-				await summarize(summarizerRuntime);
 				mockLogger.assertMatch(
 					[
 						{
@@ -444,8 +443,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 				"throwOnInactiveLoad: true; DataStore handle.get -- throws and logs",
 				[
 					{
-						eventName:
-							"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+						eventName: loadedEvent,
 					},
 				],
 				async () => {
@@ -502,8 +500,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 					mockLogger.assertMatch(
 						[
 							{
-								eventName:
-									"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+								eventName: loadedEvent,
 								timeout: inactiveTimeoutMs,
 								id: { value: dataStoreUrl, tag: TelemetryDataTag.CodeArtifact },
 							},
@@ -517,11 +514,9 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 			itExpects(
 				"throwOnInactiveLoad: true; DDS handle.get -- Doesn't throw, and DOESN'T log",
 				[
-					// Bug: It SHOULD actually log
-					// {
-					// 	eventName:
-					// 		"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
-					// },
+					{
+						eventName: loadedEvent,
+					},
 				],
 				async () => {
 					// Create a summarizer client that will be used to summarize the container.
@@ -569,21 +564,20 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 					);
 
 					// Bug: It SHOULD actually log
-					// mockLogger.assertMatch(
-					// 	[
-					// 		{
-					// 			eventName:
-					// 				"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
-					// 			timeout: inactiveTimeoutMs,
-					// 			id: {
-					// 				value: `${dataStoreId}`,
-					// 				tag: TelemetryDataTag.CodeArtifact,
-					// 			},
-					// 		},
-					// 	],
-					// 	"loaded event not generated as expected",
-					// 	true /* inlineDetailsProp */,
-					// );
+					mockLogger.assertMatch(
+						[
+							{
+								eventName: loadedEvent,
+								timeout: inactiveTimeoutMs,
+								id: {
+									value: ddsUrl,
+									tag: TelemetryDataTag.CodeArtifact,
+								},
+							},
+						],
+						"loaded event not generated as expected",
+						true /* inlineDetailsProp */,
+					);
 				},
 			);
 
@@ -591,8 +585,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 				"throwOnInactiveLoad: true; resolveHandle with header -- only logs",
 				[
 					{
-						eventName:
-							"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+						eventName: loadedEvent,
 					},
 				],
 				async () => {
@@ -638,8 +631,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 					mockLogger.assertMatch(
 						[
 							{
-								eventName:
-									"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+								eventName: loadedEvent,
 								timeout: inactiveTimeoutMs,
 								id: { value: url, tag: TelemetryDataTag.CodeArtifact },
 							},
@@ -654,8 +646,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 				"throwOnInactiveLoad: false; handle.get -- only logs",
 				[
 					{
-						eventName:
-							"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+						eventName: loadedEvent,
 					},
 				],
 				async () => {
@@ -701,8 +692,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 					mockLogger.assertMatch(
 						[
 							{
-								eventName:
-									"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+								eventName: loadedEvent,
 								timeout: inactiveTimeoutMs,
 								id: { value: url, tag: TelemetryDataTag.CodeArtifact },
 							},
@@ -718,15 +708,12 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 		 * This test validates that we can generate inactive object events for data stores which are not loaded
 		 * when we identify the error. The following bug was fixed in this code path and this test covers that
 		 * scenario - https://github.com/microsoft/FluidFramework/pull/10237.
-		 *
-		 * Note that the namespace for "inactiveObject_Revived" is different than the tests above because it is logged
-		 * via the running summarizer's logger.
 		 */
 		itExpects(
 			"can generate events for data stores that are not loaded",
 			[
 				{
-					eventName: "fluid:telemetry:Summarizer:Running:InactiveObject_Revived",
+					eventName: revivedEvent,
 				},
 			],
 			async () => {
@@ -758,18 +745,31 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 						},
 					},
 					summaryVersion1,
+					mockLogger,
 				);
 
 				// Wait for inactive timeout. This will ensure that the unreferenced data store is inactive.
 				await waitForInactiveTimeout();
 
-				// Send an op for the deleted data store and revived it. There should not be any errors.
-				dataObject._root.set("key", "value");
+				// Revive the deleted data store and send an op for it. There should not be any errors and revived
+				// event should be logged.
 				defaultDataStore._root.set("dataStore", dataObject.handle);
+				dataObject._root.set("key", "value");
 				await provider.ensureSynchronized();
-
-				// Summarize now. This is when the inactive object events will be logged.
-				await assert.doesNotReject(waitForSummary(summarizer2), "Summary wasn't successful");
+				const fromUrl = toFluidHandleInternal(defaultDataStore._root.handle).absolutePath;
+				const toUrl = toFluidHandleInternal(dataObject.handle).absolutePath;
+				mockLogger.assertMatch(
+					[
+						{
+							eventName: revivedEvent,
+							timeout: inactiveTimeoutMs,
+							id: { value: toUrl, tag: TelemetryDataTag.CodeArtifact },
+							fromId: { value: fromUrl, tag: TelemetryDataTag.CodeArtifact },
+						},
+					],
+					"revived event not generated as expected",
+					true /* inlineDetailsProp */,
+				);
 			},
 		);
 
@@ -826,8 +826,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 			mockLogger2.assertMatch(
 				[
 					{
-						eventName:
-							"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+						eventName: loadedEvent,
 						id: { value: `/${idA}`, tag: "CodeArtifact" },
 					},
 				],
@@ -844,8 +843,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 			mockLogger3.assertMatchNone(
 				[
 					{
-						eventName:
-							"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+						eventName: loadedEvent,
 					},
 				],
 				"Expected no InactiveObject_Loaded events due to revival",
@@ -857,8 +855,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 			mockLogger3.assertMatch(
 				[
 					{
-						eventName:
-							"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+						eventName: loadedEvent,
 						id: { value: `/${idB}`, tag: "CodeArtifact" },
 					},
 				],
@@ -933,8 +930,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 					mockLogger2.assertMatch(
 						[
 							{
-								eventName:
-									"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+								eventName: loadedEvent,
 								id: { value: `/${idA}`, tag: "CodeArtifact" },
 							},
 						],
@@ -957,8 +953,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 					mockLogger3.assertMatchNone(
 						[
 							{
-								eventName:
-									"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+								eventName: loadedEvent,
 							},
 						],
 						"Expected no InactiveObject_Loaded events due to revival",
@@ -970,8 +965,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 					mockLogger3.assertMatch(
 						[
 							{
-								eventName:
-									"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+								eventName: loadedEvent,
 								id: { value: `/${idB}`, tag: "CodeArtifact" },
 							},
 						],

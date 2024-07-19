@@ -737,9 +737,23 @@ export abstract class FluidDataStoreContext
 	 * @param fromPath - The absolute path of the node that added the reference.
 	 * @param toPath - The absolute path of the outbound node that is referenced.
 	 * @param messageTimestampMs - The timestamp of the message that added the reference.
+	 * @param fromPkg - The package path of the node that adds the reference.
+	 * @param toPkg - The package path of the node to which reference is added.
 	 */
-	public addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number) {
-		this.parentContext.addedGCOutboundRoute(fromPath, toPath, messageTimestampMs);
+	public addedGCOutboundRoute(
+		fromPath: string,
+		toPath: string,
+		messageTimestampMs?: number,
+		fromPkg?: readonly string[],
+		toPkg?: readonly string[],
+	) {
+		this.parentContext.addedGCOutboundRoute(
+			fromPath,
+			toPath,
+			messageTimestampMs,
+			fromPkg ?? this.pkg,
+			toPkg,
+		);
 	}
 
 	/**

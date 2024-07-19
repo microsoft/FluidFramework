@@ -131,7 +131,7 @@ export function generateGCConfigs(
 		: "NO";
 
 	// If we aren't running sweep, also disable AutoRecovery which also emits the GC op.
-	// This gives a simple control surface for compability concerns around introducing the new op.
+	// This gives a simple control surface for compatibility concerns around introducing the new op.
 	const tombstoneAutorecoveryEnabled = shouldRunSweep !== "NO";
 
 	// Override inactive timeout if test config or gc options to override it is set.

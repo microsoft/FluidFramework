@@ -453,14 +453,13 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 	describe("Loading tombstoned data stores", () => {
 		const expectedHeadersLogged = {
-			request: "{}",
-			handleGet: JSON.stringify({ viaHandle: true }),
-			request_allowTombstone: JSON.stringify({ allowTombstone: true }),
-			request_subDataStoreHandle: JSON.stringify({
+			handleGet: { viaHandle: true },
+			request_allowTombstone: { allowTombstone: true },
+			request_subDataStoreHandle: {
 				viaHandle: true,
 				allowTombstone: true,
 				allowInactive: true,
-			}),
+			},
 		};
 
 		beforeEach("extraSettings", () => {
@@ -476,21 +475,18 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-					headers: expectedHeadersLogged.request,
 					clientType: "interactive",
 				},
 				// Interactive client's request w/ allowTombstone
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-					headers: expectedHeadersLogged.request_allowTombstone,
 					clientType: "interactive",
 				},
 				// Summarizer client's request
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-					headers: expectedHeadersLogged.request,
 					clientType: "noninteractive/summarizer",
 				},
 			],
@@ -558,7 +554,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 							eventName:
 								"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 							clientType: "interactive",
-							headers: expectedHeadersLogged.request,
 							id: { value: `/${unreferencedId}`, tag: TelemetryDataTag.CodeArtifact },
 							trackedId: `/${unreferencedId}`,
 						},
@@ -567,7 +562,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 							category: "generic",
 							eventName:
 								"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-							headers: expectedHeadersLogged.request_allowTombstone,
+							...expectedHeadersLogged.request_allowTombstone,
 							clientType: "interactive",
 							id: { value: `/${unreferencedId}`, tag: TelemetryDataTag.CodeArtifact },
 							trackedId: `/${unreferencedId}`,
@@ -603,7 +598,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 							eventName:
 								"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_SubDataStore_Requested",
 							clientType: "interactive",
-							headers: expectedHeadersLogged.request_subDataStoreHandle,
+							...expectedHeadersLogged.request_subDataStoreHandle,
 							id: {
 								value: ddsHandle.absolutePath,
 								tag: TelemetryDataTag.CodeArtifact,
@@ -616,7 +611,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 							eventName:
 								"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_SubDataStore_Requested",
 							clientType: "interactive",
-							headers: expectedHeadersLogged.request_subDataStoreHandle,
+							...expectedHeadersLogged.request_subDataStoreHandle,
 							id: {
 								value: untrackedHandle.absolutePath,
 								tag: TelemetryDataTag.CodeArtifact,
@@ -747,14 +742,12 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-					headers: expectedHeadersLogged.handleGet,
 					clientType: "interactive",
 				},
 				// Interactive client's request w/ allowTombstone
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-					headers: expectedHeadersLogged.request_allowTombstone,
 					clientType: "interactive",
 				},
 			],
@@ -1358,12 +1351,18 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				mockLogger,
 			);
 			await assert.doesNotReject(summarize(summarizer2), "summarize failed");
-			mockLogger.assertMatch([
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Realized",
-					id: { value: `/${unreferencedId}`, tag: TelemetryDataTag.CodeArtifact },
-				},
-			]);
+			mockLogger.assertMatch(
+				[
+					{
+						eventName:
+							"fluid:telemetry:ContainerRuntime:GarbageCollector:TombstoneReadyObject_Realized",
+						id: { value: `/${unreferencedId}`, tag: TelemetryDataTag.CodeArtifact },
+						trailingOpCount: 1,
+					},
+				],
+				"realized event not logged as expected",
+				true,
+			);
 		});
 	});
 

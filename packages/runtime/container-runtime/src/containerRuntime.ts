@@ -1625,7 +1625,6 @@ export class ContainerRuntime
 			metadata,
 			createContainerMetadata: this.createContainerMetadata,
 			isSummarizerClient: this.isSummarizerClient,
-			getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
 			submitMessage: (message: ContainerRuntimeGCMessage) => this.submit(message),
@@ -3386,28 +3385,6 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Called by GC to retrieve the package path of the node with the given path. The node should belong to a
-	 * data store or an attachment blob.
-	 */
-	public async getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined> {
-		// GC uses "/" when adding "root" references, e.g. for Aliasing or as part of Tombstone Auto-Recovery.
-		// These have no package path so return a special value.
-		if (nodePath === "/") {
-			return ["_gcRoot"];
-		}
-
-		switch (this.getNodeType(nodePath)) {
-			case GCNodeType.Blob:
-				return [blobManagerBasePath];
-			case GCNodeType.DataStore:
-			case GCNodeType.SubDataStore:
-				return this.channelCollection.getDataStorePackagePath(nodePath);
-			default:
-				assert(false, 0x2de /* "Package path requested for unsupported node type." */);
-		}
-	}
-
-	/**
 	 * From a given list of routes, separate and return routes that belong to blob manager and data stores.
 	 * @param routes - A list of routes that can belong to data stores or blob manager.
 	 * @returns Two route lists - One that contains routes for blob manager and another one that contains routes
@@ -3450,8 +3427,18 @@ export class ContainerRuntime
 	 * @param fromPath - The absolute path of the node that added the reference.
 	 * @param toPath - The absolute path of the outbound node that is referenced.
 	 * @param messageTimestampMs - The timestamp of the message that added the reference.
+	 * @param fromPkg - The package path of the node that adds the reference.
+	 * @param toPkg - The package path of the node to which reference is added.
 	 */
-	public addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number) {
+	public addedGCOutboundRoute(
+		fromPath: string,
+		toPath: string,
+		messageTimestampMs?: number,
+		fromPkg?: readonly string[],
+		toPkg?: readonly string[],
+	) {
+		const packagePath = toPkg ?? this.getGCNodePackagePath(toPath);
+		const fromPackagePath = fromPkg ?? this.getGCNodePackagePath(fromPath);
 		// This is always called when processing an op so messageTimestampMs should exist. Due to back-compat
 		// across the data store runtime / container runtime boundary, this may be undefined and if so, get
 		// the timestamp from the last processed message which should exist.
@@ -3463,11 +3450,41 @@ export class ContainerRuntime
 				...tagCodeArtifacts({
 					id: toPath,
 					fromId: fromPath,
+					pkg: packagePath?.join("/"),
+					fromPkg: fromPackagePath?.join("/"),
 				}),
 			});
 			return;
 		}
-		this.garbageCollector.addedOutboundReference(fromPath, toPath, timestampMs);
+		this.garbageCollector.addedOutboundReference({
+			fromNodePath: fromPath,
+			toNodePath: toPath,
+			packagePath,
+			fromPackagePath,
+			timestampMs,
+		});
+	}
+
+	/**
+	 * Called to retrieve the package path of the node with the given path. The node should be root or belong to a
+	 * data store or an attachment blob.
+	 */
+	public getGCNodePackagePath(nodePath: string): readonly string[] | undefined {
+		// GC uses "/" when adding "root" references, e.g. for Aliasing or as part of Tombstone Auto-Recovery.
+		// These have no package path so return a special value.
+		if (nodePath === "/") {
+			return ["_gcRoot"];
+		}
+
+		switch (this.getNodeType(nodePath)) {
+			case GCNodeType.Blob:
+				return [blobManagerBasePath];
+			case GCNodeType.DataStore:
+			case GCNodeType.SubDataStore:
+				return this.channelCollection.getDataStorePackagePath(nodePath);
+			default:
+				return undefined;
+		}
 	}
 
 	/**

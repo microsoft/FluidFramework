@@ -63,7 +63,6 @@ function createGarbageCollector(gcOptions: IGCRuntimeOptions): GcWithPrivates {
 		},
 		isSummarizerClient: true,
 		readAndParseBlob: parseNothing,
-		getNodePackagePath: async (nodeId: string) => ["gcBenchmarkTestPkg"],
 		getLastSummaryTimestampMs: () => Date.now(),
 		submitMessage: (message: ContainerRuntimeGCMessage) => {},
 	}) as GcWithPrivates;
