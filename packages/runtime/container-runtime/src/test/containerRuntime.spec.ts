@@ -75,8 +75,8 @@ import {
 import type { BatchMessage } from "../opLifecycle/index.js";
 import {
 	IPendingLocalState,
-	IPendingMessage,
 	PendingStateManager,
+	type IMessageToStash,
 } from "../pendingStateManager.js";
 import {
 	ISummaryCancellationToken,
@@ -1875,7 +1875,7 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				const pendingStates = Array.from({ length: 5 }).map<IPendingMessage>((_, i) => ({
+				const pendingStates = Array.from({ length: 5 }).map<IMessageToStash>((_, i) => ({
 					content: i.toString(),
 					type: "message",
 					referenceSequenceNumber: 0,
@@ -1917,7 +1917,7 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				const pendingStates = Array.from({ length: 5 }).map<IPendingMessage>((_, i) => ({
+				const pendingStates = Array.from({ length: 5 }).map<IMessageToStash>((_, i) => ({
 					content: i.toString(),
 					type: "message",
 					referenceSequenceNumber: 0,
@@ -1986,7 +1986,7 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				const pendingStates = Array.from({ length: 5 }).map<IPendingMessage>((_, i) => ({
+				const pendingStates = Array.from({ length: 5 }).map<IMessageToStash>((_, i) => ({
 					content: i.toString(),
 					type: "message",
 					referenceSequenceNumber: 0,

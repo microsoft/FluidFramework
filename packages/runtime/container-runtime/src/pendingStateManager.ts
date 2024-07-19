@@ -49,7 +49,7 @@ export interface IPendingMessage {
  * IPendingMessage but without localOpMetadata, which isn't suitable for stashing
  * (it's not serializable and will be regenerated when applying stashed ops)
  */
-interface IMessageToStash extends IPendingMessage {
+export interface IMessageToStash extends IPendingMessage {
 	localOpMetadata: undefined;
 }
 
@@ -117,7 +117,7 @@ function buildPendingMessageContent(
 	return JSON.stringify({ type, contents, compatDetails });
 }
 
-function toStash(message: IPendingMessage): IMessageToStash {
+export function toStash(message: IPendingMessage): IMessageToStash {
 	return {
 		...message,
 		localOpMetadata: undefined,

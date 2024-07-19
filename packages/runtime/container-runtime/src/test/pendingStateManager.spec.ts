@@ -24,7 +24,12 @@ import type {
 	UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
 import { BatchManager, BatchMessage } from "../opLifecycle/index.js";
-import { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
+import {
+	IPendingMessage,
+	PendingStateManager,
+	toStash,
+	type IMessageToStash,
+} from "../pendingStateManager.js";
 
 type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
 	initialMessages: Deque<IPendingMessage>;
@@ -573,7 +578,7 @@ describe("Pending State Manager", () => {
 		];
 
 		function createPendingStateManager(
-			pendingStates?: IPendingMessage[],
+			pendingStates?: IMessageToStash[],
 		): PendingStateManager {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return new PendingStateManager(
@@ -592,7 +597,7 @@ describe("Pending State Manager", () => {
 		}
 
 		it("minimum sequence number can be retrieved from initial messages", async () => {
-			const pendingStateManager = createPendingStateManager(messages);
+			const pendingStateManager = createPendingStateManager(messages.map(toStash));
 			await pendingStateManager.applyStashedOpsAt();
 
 			assert.strictEqual(
