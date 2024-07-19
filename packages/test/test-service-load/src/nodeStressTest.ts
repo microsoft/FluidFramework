@@ -4,7 +4,6 @@
  */
 
 import child_process from "child_process";
-import fs from "fs";
 
 import {
 	DriverEndpoint,
@@ -15,55 +14,10 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import commander from "commander";
 import ps from "ps-node";
 
+import { getTestUsers, TestUsers } from "./getTestUsers.js";
 import { smokeTest } from "./stressSmoke.js";
 import { ILoadTestConfig } from "./testConfigFile.js";
 import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils.js";
-
-/**
- * A Record mapping usernames (keys) to passwords (values).
- */
-type TestUsersRecord = Record<string, string>;
-
-// Consider just having the Json format be TestUsers directly, if there's no one depending on this format already.
-interface ITestUserConfigJson {
-	credentials: TestUsersRecord;
-}
-
-const isITestUserConfig = (config: unknown): config is ITestUserConfigJson => {
-	return (
-		typeof config === "object" &&
-		config !== null &&
-		"credentials" in config &&
-		typeof config.credentials === "object" &&
-		config.credentials !== null
-	);
-};
-
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-type TestUser = {
-	username: string;
-	password: string;
-};
-type TestUsers = TestUser[];
-
-function getTestUsers(credFilePath: string): TestUsers {
-	try {
-		const config = JSON.parse(fs.readFileSync(credFilePath, "utf8"));
-		if (!isITestUserConfig(config)) {
-			throw new Error("credFile provided but incorrect format");
-		}
-		const testUsers = Object.entries(config.credentials).map(([username, password]) => ({
-			username,
-			password,
-		}));
-		if (testUsers.length === 0) {
-			throw new Error("credFile valid but contained no credentials");
-		}
-		return testUsers;
-	} finally {
-		console.error(`Failed to read ${credFilePath}`);
-	}
-}
 
 const createLoginEnv = (userName: string, password: string) =>
 	`{"${userName}": "${password}"}`;
