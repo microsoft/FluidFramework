@@ -107,6 +107,41 @@ function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
 }
 
 /**
+ * Get the effective batch ID for a pending message.
+ * If the batch ID is already present in the message's op metadata, return it.
+ * Otherwise, generate a new batch ID using the client ID and batch start CSN.
+ * @param pendingMessage - The pending message
+ * @returns The effective batch ID
+ */
+function getEffectiveBatchId(pendingMessage: IPendingMessage): string {
+	return (
+		asBatchMetadata(pendingMessage.opMetadata)?.batchId ??
+		generateBatchId(
+			pendingMessage.batchIdContext.clientId,
+			pendingMessage.batchIdContext.batchStartCsn
+		)
+	);
+}
+
+//* Reconcile/combine these or something
+/**
+ * Get the effective batch ID for an incoming batch message.
+ * If the batch ID is already present in the message's op metadata, return it.
+ * Otherwise, generate a new batch ID using the client ID and batch start CSN.
+ * @param pendingMessage - The pending message
+ * @returns The effective batch ID
+ */
+function getEffectiveBatchId2(batch: IncomingBatch): string {
+	return (
+		batch.batchId ??
+		generateBatchId(
+			batch.clientId,
+			batch.batchStartCsn
+		)
+	);
+}
+
+/**
  * PendingStateManager is responsible for maintaining the messages that have not been sent or have not yet been
  * acknowledged by the server. It also maintains the batch information for both automatically and manually flushed
  * batches along with the messages.
@@ -355,24 +390,29 @@ export class PendingStateManager implements IDisposable {
 			"No pending message found as we start processing this remote batch",
 		);
 
+		//* TODO: Merge in Daniel's changes
 		// This could be undefined if this batch became empty on resubmit
 		const firstMessage = batch.messages[0];
 
-		if (pendingMessage.batchIdContext.batchStartCsn !== batch.batchStartCsn) {
+		const pendingBatchId = getEffectiveBatchId(pendingMessage);
+		const incomingBatchId = getEffectiveBatchId2(batch);
+
+		if (pendingBatchId !== incomingBatchId || pendingMessage.batchIdContext.batchStartCsn !== batch.batchStartCsn) {
 			this.logger?.sendErrorEvent({
-				eventName: "BatchClientSequenceNumberMismatch",
+				eventName: "BatchIdOrCsnMismatch",
 				details: {
 					pendingBatchCsn: pendingMessage.batchIdContext.batchStartCsn,
 					batchStartCsn: batch.batchStartCsn,
-					emptyBatch: firstMessage === undefined,
+					pendingBatchId,
+					incomingBatchId,
+					incomingBatchIdComputed: batch.batchId === undefined,
 					messageBatchMetadata: (firstMessage?.metadata as any)?.batch,
 					pendingMessageBatchMetadata: (pendingMessage.opMetadata as any)?.batch,
+					emptyBatch: firstMessage === undefined,
 				},
 				messageDetails: firstMessage && extractSafePropertiesFromMessage(firstMessage),
 			});
 		}
-
-		//* TODO: Compare Batch IDs
 	}
 
 	/**
@@ -413,14 +453,7 @@ export class PendingStateManager implements IDisposable {
 			assert(batchMetadataFlag !== false, 0x41b /* We cannot process batches in chunks */);
 
 			// The next message starts a batch (possibly single-message), and we'll need its batchId.
-			// We'll find batchId on this message if it was previously generated.
-			// Otherwise, generate it now - this is the first time resubmitting this batch.
-			const batchId =
-				asBatchMetadata(pendingMessage.opMetadata)?.batchId ??
-				generateBatchId(
-					pendingMessage.batchIdContext.clientId,
-					pendingMessage.batchIdContext.batchStartCsn,
-				);
+			const batchId = getEffectiveBatchId(pendingMessage);
 
 			/**
 			 * We must preserve the distinct batches on resubmit.
