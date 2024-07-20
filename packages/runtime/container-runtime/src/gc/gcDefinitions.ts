@@ -9,7 +9,6 @@ import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	ITelemetryContext,
 	IGarbageCollectionData,
-	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
 } from "@fluidframework/runtime-definitions/internal";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
@@ -364,8 +363,6 @@ export interface IGarbageCollector {
 	): ISummarizeResult | undefined;
 	/** Returns the garbage collector specific metadata to be written into the summary. */
 	getMetadata(): IGCMetadata;
-	/** Returns the GC details generated from the base snapshot. */
-	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 	/** Called when the latest summary of the system has been refreshed. */
 	refreshLatestSummary(result: IRefreshSummaryResult): Promise<void>;
 	/**

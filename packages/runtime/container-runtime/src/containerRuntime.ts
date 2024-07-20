@@ -1650,8 +1650,6 @@ export class ContainerRuntime
 			},
 			// Function to get GC data if needed. This will always be called by the root summarizer node to get GC data.
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
-			// Function to get the GC details from the base snapshot we loaded from.
-			async () => this.garbageCollector.getBaseGCDetails(),
 		);
 
 		if (baseSnapshot) {

@@ -32,14 +32,10 @@ import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	IFluidParentContext,
-	IGarbageCollectionDetailsBase,
 	SummarizeInternalFn,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	GCDataBuilder,
-	convertSummaryTreeToITree,
-} from "@fluidframework/runtime-utils/internal";
+import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
 	MockLogger,
 	TelemetryDataTag,
@@ -710,21 +706,6 @@ describe("Data Store Context Tests", () => {
 		});
 
 		describe("Garbage Collection", () => {
-			// The base GC details of the root summarizer node. The child base GC details from this is passed on to the
-			// child summarizer node during its creation.
-			let rootBaseGCDetails: IGarbageCollectionDetailsBase;
-			const getRootBaseGCDetails = async (): Promise<IGarbageCollectionDetailsBase> =>
-				rootBaseGCDetails;
-
-			/**
-			 * Given the GC data of a data store, build the GC data of the root (parent) node.
-			 */
-			function buildRootGCData(dataStoreGCData: IGarbageCollectionData, id: string) {
-				const builder = new GCDataBuilder();
-				builder.prefixAndAddNodes(id, dataStoreGCData.gcNodes);
-				return builder.getGCData();
-			}
-
 			beforeEach(() => {
 				summarizerNode = createRootSummarizerNodeWithGC(
 					createChildLogger(),
@@ -733,7 +714,6 @@ describe("Data Store Context Tests", () => {
 					0,
 					undefined,
 					undefined,
-					getRootBaseGCDetails,
 				);
 				summarizerNode.startSummary(0, createChildLogger(), 0);
 
@@ -805,11 +785,6 @@ describe("Data Store Context Tests", () => {
 						"/dds1": ["/dds2", "/"],
 					},
 				};
-				// Set the root base GC details to include the child node's base GC data.
-				rootBaseGCDetails = {
-					usedRoutes: [],
-					gcData: buildRootGCData(dataStoreGCData, dataStoreId),
-				};
 
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
@@ -853,11 +828,6 @@ describe("Data Store Context Tests", () => {
 					gcNodes: {
 						"/": [],
 					},
-				};
-				// Set the root base GC details to include the child node's base GC data.
-				rootBaseGCDetails = {
-					usedRoutes: [`/${dataStoreId}`],
-					gcData: buildRootGCData(dataStoreGCData, dataStoreId),
 				};
 
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({

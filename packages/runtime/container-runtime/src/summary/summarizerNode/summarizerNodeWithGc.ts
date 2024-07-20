@@ -10,7 +10,6 @@ import {
 	ITelemetryContext,
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
-	IGarbageCollectionDetailsBase,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeConfigWithGC,
@@ -100,7 +99,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		latestSummary?: SummaryNode,
 		wipSummaryLogger?: ITelemetryBaseLogger,
 		private readonly getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-		getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 		/** A unique id of this node to be logged when sending telemetry. */
 		telemetryId?: string,
 	) {
@@ -348,7 +346,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			createDetails.latestSummary,
 			this.wipSummaryLogger,
 			getGCDataFn,
-			undefined,
 			createDetails.telemetryNodeId,
 		);
 
@@ -470,7 +467,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
  * or undefined if not loaded from summary
  * @param config - Configure behavior of summarizer node
  * @param getGCDataFn - Function to get the GC data of this node
- * @param baseGCDetailsP - Function to get the initial GC details of this node
  */
 export const createRootSummarizerNodeWithGC = (
 	logger: ITelemetryBaseLogger,
@@ -479,7 +475,6 @@ export const createRootSummarizerNodeWithGC = (
 	referenceSequenceNumber: number | undefined,
 	config: ISummarizerNodeConfigWithGC = {},
 	getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-	getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 ): IRootSummarizerNodeWithGC =>
 	new SummarizerNodeWithGC(
 		logger,
@@ -491,6 +486,5 @@ export const createRootSummarizerNodeWithGC = (
 			: SummaryNode.createForRoot(referenceSequenceNumber),
 		undefined /* wipSummaryLogger */,
 		getGCDataFn,
-		getBaseGCDetailsFn,
 		"" /* telemetryId */,
 	);

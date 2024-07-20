@@ -6,7 +6,6 @@
 import { IRequest } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
 import {
-	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
 	gcTreeKey,
 	type IGarbageCollectionData,
@@ -124,8 +123,6 @@ export class GarbageCollector implements IGarbageCollector {
 	private readonly baseSnapshotDataP: Promise<IGarbageCollectionSnapshotData | undefined>;
 	// Promise when resolved initializes the GC state from the data in the base snapshot.
 	private readonly initializeGCStateFromBaseSnapshotP: Promise<void>;
-	// The GC details generated from the base snapshot.
-	private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
 
 	/**
 	 * Map of node ids to their unreferenced state tracker
@@ -323,30 +320,6 @@ export class GarbageCollector implements IGarbageCollector {
 			this.gcDataFromLastRun = { gcNodes };
 		});
 
-		// Get the GC details from the GC state in the base summary. This is returned in getBaseGCDetails which is
-		// used to initialize the GC state of all the nodes in the container.
-		this.baseGCDetailsP = new LazyPromise<IGarbageCollectionDetailsBase>(async () => {
-			const baseSnapshotData = await this.baseSnapshotDataP;
-			if (baseSnapshotData?.gcState === undefined) {
-				return {};
-			}
-
-			// Note that the base GC details are returned even if GC is disabled. This is to handle the special scenario
-			// where GC is disabled but GC state exists in base snapshot. In this scenario, the nodes which get the GC
-			// state will re-summarize to reset any GC specific state in their summaries (like unreferenced flag).
-
-			const gcNodes: { [id: string]: string[] } = {};
-			for (const [nodeId, nodeData] of Object.entries(baseSnapshotData.gcState.gcNodes)) {
-				gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
-			}
-			// Run GC on the nodes in the base summary to get the routes used in each node in the container.
-			// This is an optimization for space (vs performance) wherein we don't need to store the used routes of
-			// each node in the summary.
-			const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
-
-			return { gcData: { gcNodes }, usedRoutes };
-		});
-
 		// Log all the GC options and the state determined by the garbage collector.
 		// This is useful even for interactive clients since they track unreferenced nodes and log errors.
 		this.mc.logger.sendTelemetryEvent({
@@ -454,14 +427,6 @@ export class GarbageCollector implements IGarbageCollector {
 				);
 			});
 		}
-	}
-
-	/**
-	 * Returns a the GC details generated from the base summary. This is used to initialize the GC state of the nodes
-	 * in the container.
-	 */
-	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
-		return this.baseGCDetailsP;
 	}
 
 	/**

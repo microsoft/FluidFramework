@@ -54,8 +54,6 @@ describe("SummarizerNodeWithGC Tests", () => {
 	let childInternalGCData: IGarbageCollectionData;
 	let mockLogger: MockLogger;
 
-	const getRootBaseGCDetails = async (): Promise<IGarbageCollectionDetailsBase> =>
-		rootBaseGCDetails;
 	const getChildInternalGCData = async (): Promise<IGarbageCollectionData> =>
 		childInternalGCData;
 
@@ -68,7 +66,6 @@ describe("SummarizerNodeWithGC Tests", () => {
 			0,
 			undefined,
 			undefined,
-			getRootBaseGCDetails,
 		);
 		rootSummarizerNode.startSummary(0, createChildLogger(), 0);
 
