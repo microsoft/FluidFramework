@@ -71,7 +71,7 @@ const generateExampleGettingStartedSection = (
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
-function exampleGettingStartedSectionTransform(content, options, config) {
+function exampleGettingStartedTransform(content, options, config) {
 	const usesTinylicious = options.usesTinylicious !== "FALSE";
 	const headingOptions = parseHeadingOptions(options);
 
@@ -86,5 +86,5 @@ function exampleGettingStartedSectionTransform(content, options, config) {
 
 module.exports = {
 	generateExampleGettingStartedSection,
-	exampleGettingStartedSectionTransform,
+	exampleGettingStartedTransform,
 };
