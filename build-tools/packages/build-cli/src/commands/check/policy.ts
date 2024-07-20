@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import { EOL as newline } from "node:os";
 import * as path from "node:path";
@@ -181,7 +182,12 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		const handlerExclusions: HandlerExclusions = {};
 		if (rawHandlerExclusions) {
 			for (const rule of Object.keys(rawHandlerExclusions)) {
-				handlerExclusions[rule] = rawHandlerExclusions[rule].map((e) => new RegExp(e, "i"));
+				const rawHandlerExclusionsRule = rawHandlerExclusions[rule];
+				assert(
+					rawHandlerExclusionsRule !== undefined,
+					"rawHandlerExclusionsRule is undefined in CheckPolicy.run()",
+				);
+				handlerExclusions[rule] = rawHandlerExclusionsRule.map((e) => new RegExp(e, "i"));
 			}
 		}
 

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -279,9 +280,14 @@ function readArgValues<TQuery extends Readonly<Record<string, string>>>(
 	const args = commandLine.split(" ");
 	for (const [argName, defaultValue] of Object.entries(argQuery)) {
 		const indexOfArgValue = args.indexOf(`--${argName}`) + 1;
+		const argAtIndexOfArgValue = args[indexOfArgValue];
+		assert(
+			argAtIndexOfArgValue !== undefined,
+			"argAtIndexOfArgValue is undefined in readArgValues",
+		);
 		values[argName] =
 			0 < indexOfArgValue && indexOfArgValue < args.length
-				? args[indexOfArgValue]
+				? argAtIndexOfArgValue
 				: defaultValue;
 	}
 	return values as TQuery;
@@ -396,8 +402,11 @@ async function generateEntrypoints(
 		for (const name of [...exports.unknown.keys()].sort()) {
 			commonNamedExports.push({ name, leadingTrivia: "\n\t" });
 		}
+		assert(commonNamedExports[0] !== undefined, "commonNamedExports[0] is undefined in generateEntrypoints()");
 		commonNamedExports[0].leadingTrivia = `\n\t// Unrestricted APIs\n\t`;
-		commonNamedExports[commonNamedExports.length - 1].trailingTrivia = "\n";
+		const commonNamedExportLast = commonNamedExports[commonNamedExports.length - 1];
+		assert(commonNamedExportLast !== undefined, "commonNamedExportLast is undefined in generateEntrypoints()");
+		commonNamedExportLast.trailingTrivia = "\n";
 	}
 
 	for (const apiTagLevel of apiTagLevels) {
@@ -410,8 +419,12 @@ async function generateEntrypoints(
 			namedExports.push({ ...levelExport, leadingTrivia: "\n\t" });
 		}
 		if (namedExports.length > orgLength) {
-			namedExports[orgLength].leadingTrivia = `\n\t// @${apiTagLevel} APIs\n\t`;
-			namedExports[namedExports.length - 1].trailingTrivia = "\n";
+			const namedExport = namedExports[orgLength];
+			assert(namedExport !== undefined, "namedExport is undefined in generateEntrypoints()");
+			namedExport.leadingTrivia = `\n\t// @${apiTagLevel} APIs\n\t`;
+			const namedExportLast = commonNamedExports[commonNamedExports.length - 1];
+			assert(namedExportLast !== undefined, "namedExportLast is undefined in generateEntrypoints()");
+			namedExportLast.trailingTrivia = "\n";
 		}
 
 		// legacy APIs do not accumulate to others

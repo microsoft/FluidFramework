@@ -166,7 +166,12 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 						// If comment already exists, extract it for the mapping file
 						const comments = msg.getTrailingCommentRanges();
 						if (comments.length > 0) {
-							let originalErrorText = comments[0]
+							const comments0 = comments[0];
+							assert(
+								comments0 !== undefined,
+								"comments0 is undefined in quoteAndEscapeArgsForUniversalScriptLine",
+							);
+							let originalErrorText = comments0
 								.getText()
 								.replace(/\/\*/g, "")
 								.replace(/\*\//g, "")
@@ -336,6 +341,7 @@ function getAssertMessageParams(
 			const args = call.getArguments();
 			if (args.length >= messageIndex && args[messageIndex] !== undefined) {
 				const messageArg = args[messageIndex];
+				assert(messageArg !== undefined, "messageArg is undefined in getAssertMessageParams");
 				messageArgs.push(messageArg);
 			}
 		}

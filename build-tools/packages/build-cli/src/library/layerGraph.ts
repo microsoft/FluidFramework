@@ -319,11 +319,19 @@ export class LayerGraph {
 		// First pass get the layer nodes
 		for (const groupName of Object.keys(layerInfoFile)) {
 			const groupInfo = layerInfoFile[groupName];
+			assert(
+				groupInfo !== undefined,
+				"groupInfo is undefined in LayerGraph.initializeLayers()",
+			);
 			const groupNode = new GroupNode(groupName, groupInfo);
 			this.groupNodes.push(groupNode);
 
 			for (const layerName of Object.keys(groupInfo.layers)) {
 				const layerInfo = groupInfo.layers[layerName];
+				assert(
+					layerInfo !== undefined,
+					"layerInfo is undefined in LayerGraph.initializeLayers()",
+				);
 				const layerNode = groupNode.createLayerNode(layerName, layerInfo);
 				this.layerNodeMap.set(layerName, layerNode);
 
@@ -385,6 +393,10 @@ export class LayerGraph {
 			for (const dir of Object.keys(this.dirMapping)) {
 				if (pkg.directory.startsWith(dir)) {
 					const layerNode = this.dirMapping[dir];
+					assert(
+						layerNode !== undefined,
+						"layerNode is undefined in LayerGraph.initializePackageMatching()",
+					);
 					traceLayerCheck(`${pkg.nameColored}: matched with ${layerNode.name} (${dir})`);
 					const newPackageNode = this.createPackageNode(pkg.name, layerNode);
 					newPackageNode.pkg = pkg;
@@ -510,16 +522,24 @@ export class LayerGraph {
 		) {
 			// Move this childless child dependecy node to orderedLayers
 			const [childDepNode] = layers.splice(nextIndex, 1);
+			assert(
+				childDepNode !== undefined,
+				"childDepNode is undefined in LayerGraph.traverseLayerDependencyGraph()",
+			);
 			this.orderedLayers.push(childDepNode);
 
 			// Update all dependent layers. After this at least one layer will have no more children to visit.
 			for (const l of layers) {
 				const foundIdx = l.childrenToVisit.findIndex(
-					(child) => child.name === childDepNode.node.name,
+					(child) => child.name === childDepNode?.node.name,
 				);
 				if (foundIdx >= 0) {
 					// Move this child node to orderedChildren for each dependent layer
 					const [childNode] = l.childrenToVisit.splice(foundIdx, 1);
+					assert(
+						childNode !== undefined,
+						"childNode is undefined in LayerGraph.traverseLayerDependencyGraph()",
+					);
 					l.orderedChildren.push(childNode);
 				}
 			}

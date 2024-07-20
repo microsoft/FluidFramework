@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import fs from "node:fs";
 import { Handler, readFile, writeFile } from "./common.js";
 
@@ -50,8 +51,8 @@ export const handler: Handler = {
 				/(copy\s+server\/routerlicious\/packages\/.*\/package\*\.json\s+server\/routerlicious\/packages\/.*\/\s*\n){3,}[^\S\r]*(?<newline>\r?\n)+/gi;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const regexMatch = endOfCopyLinesRegex.exec(dockerfileContents)!;
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const localNewline = regexMatch.groups!.newline;
+			const localNewline = regexMatch.groups?.newline;
+			assert(localNewline !== undefined, "localNewline is undefined in resolver");
 			const insertIndex = regexMatch.index + regexMatch[0].length - localNewline.length;
 
 			dockerfileContents =

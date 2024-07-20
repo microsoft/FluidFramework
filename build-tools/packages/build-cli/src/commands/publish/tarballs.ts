@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { untar } from "@andrewbranch/untar.js";
@@ -184,6 +185,8 @@ async function extractPackageJsonFromTarball(
 	}
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const data = untar(unzipped!);
+
+	assert(data[0] !== undefined, "data[0] is undefined in extractPackageJsonFromTarball()");
 	// eslint-disable-next-line unicorn/prefer-string-slice -- substring is clearer than slice in this case
 	const prefix = data[0].filename.substring(0, data[0].filename.indexOf("/") + 1);
 	const packageJsonText = data.find((f) => f.filename === `${prefix}package.json`)?.fileData;

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import { ReleaseVersion, VersionBumpType, detectBumpType } from "@fluid-tools/version-tools";
 import { MonoRepo, Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
@@ -75,6 +76,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 		);
 
 		const release = this.releaseData[this.releaseGroupName];
+		assert(release !== undefined, "release is undefined in FromTagCommand.run()");
 		const versions = sortVersions([...release.versions], "version");
 		const taggedReleaseIndex = versions.findIndex((v) => v.version === version.version);
 		if (taggedReleaseIndex === -1) {
@@ -97,6 +99,8 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 		}
 
 		this.log(`${this.releaseGroupName} v${version.version} (${releaseType})`);
+
+		assert(taggedVersion !== undefined, "taggedVersion is undefined in FromTagCommand.run()");
 
 		// When the --json flag is passed, the command will return the raw data as JSON.
 		return sortJson({
@@ -129,6 +133,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 		}
 
 		const context = await this.getContext();
+		assert(rg !== undefined, "rg is undefined in FromTagCommand.parseTag()");
 		const releaseGroupOrPackage = findPackageOrReleaseGroup(rg, context);
 		if (releaseGroupOrPackage === undefined) {
 			this.error(`Can't find release group or package with name: ${rg}`, {
