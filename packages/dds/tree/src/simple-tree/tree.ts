@@ -9,11 +9,20 @@ import type { CommitMetadata } from "../core/index.js";
 import type { Listenable } from "../events/index.js";
 import type { RevertibleFactory } from "../shared-tree/index.js";
 
-import type {
-	ImplicitFieldSchema,
-	InsertableTreeFieldFromImplicitField,
-	TreeFieldFromImplicitField,
+import {
+	type ImplicitAllowedTypes,
+	NodeKind,
+	normalizeFieldSchema,
+	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
+	type TreeFieldFromImplicitField,
+	type TreeNodeSchema,
 } from "./schemaTypes.js";
+import { toFlexSchema } from "./toFlexSchema.js";
+import { LeafNodeSchema } from "./leafNodeSchema.js";
+import { assert } from "@fluidframework/core-utils/internal";
+import { isObjectNodeSchema } from "./objectNode.js";
+import { markSchemaMostDerived } from "./schemaFactory.js";
 
 /**
  * Channel for a Fluid Tree DDS.
@@ -130,6 +139,61 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 		const config = { ...defaultTreeConfigurationOptions, ...props };
 		this.schema = config.schema;
 		this.enableSchemaValidation = config.enableSchemaValidation;
+
+		// Ensure all reachable schema are marked as most derived.
+		// This ensures if multiple schema extending the same schema factory generated class are present (or have been constructed, or get constructed in the future),
+		// an error is reported.
+		walkFieldSchema(config.schema, markSchemaMostDerived);
+		// Eagerly perform this conversion to surface errors sooner.
+		toFlexSchema(config.schema);
+	}
+}
+
+export function walkNodeSchema(
+	schema: TreeNodeSchema,
+	visitor: (schema: TreeNodeSchema) => void,
+	visitedSet: Set<TreeNodeSchema>,
+): void {
+	if (visitedSet.has(schema)) {
+		return;
+	}
+	visitedSet.add(schema);
+	if (schema instanceof LeafNodeSchema) {
+		// nothing to do
+	} else if (isObjectNodeSchema(schema)) {
+		for (const field of schema.fields.values()) {
+			walkAllowedTypes(field.allowedTypeSet, visitor, visitedSet);
+		}
+	} else {
+		assert(
+			schema.kind === NodeKind.Array || schema.kind === NodeKind.Map,
+			0x9b3 /* invalid schema */,
+		);
+		const childTypes = schema.info as ImplicitAllowedTypes;
+		walkFieldSchema(childTypes, visitor, visitedSet);
+	}
+	// This visit is done at the end so the traversal order is most inner types first.
+	// This was picked since when fixing errors,
+	// working from the inner types out to the types that use them will probably go better than the reverse.
+	// This does not however ensure all types referenced by a type are visited before it, since in recursive cases thats impossible.
+	visitor(schema);
+}
+
+export function walkFieldSchema(
+	schema: ImplicitFieldSchema,
+	visitor: (schema: TreeNodeSchema) => void,
+	visitedSet: Set<TreeNodeSchema> = new Set(),
+): void {
+	walkAllowedTypes(normalizeFieldSchema(schema).allowedTypeSet, visitor, visitedSet);
+}
+
+export function walkAllowedTypes(
+	allowedTypes: Iterable<TreeNodeSchema>,
+	visitor: (schema: TreeNodeSchema) => void,
+	visitedSet: Set<TreeNodeSchema>,
+): void {
+	for (const childType of allowedTypes) {
+		walkNodeSchema(childType, visitor, visitedSet);
 	}
 }
 

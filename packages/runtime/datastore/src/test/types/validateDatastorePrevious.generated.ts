@@ -20,105 +20,105 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "EnumDeclaration_DataStoreMessageType": {"forwardCompat": false}
+ * "Enum_DataStoreMessageType": {"forwardCompat": false}
  */
-declare type old_as_current_for_EnumDeclaration_DataStoreMessageType = requireAssignableTo<TypeOnly<old.DataStoreMessageType>, TypeOnly<current.DataStoreMessageType>>
+declare type old_as_current_for_Enum_DataStoreMessageType = requireAssignableTo<TypeOnly<old.DataStoreMessageType>, TypeOnly<current.DataStoreMessageType>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "EnumDeclaration_DataStoreMessageType": {"backCompat": false}
+ * "Enum_DataStoreMessageType": {"backCompat": false}
  */
-declare type current_as_old_for_EnumDeclaration_DataStoreMessageType = requireAssignableTo<TypeOnly<current.DataStoreMessageType>, TypeOnly<old.DataStoreMessageType>>
+declare type current_as_old_for_Enum_DataStoreMessageType = requireAssignableTo<TypeOnly<current.DataStoreMessageType>, TypeOnly<old.DataStoreMessageType>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_FluidDataStoreRuntime": {"forwardCompat": false}
+ * "Class_FluidDataStoreRuntime": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_FluidDataStoreRuntime = requireAssignableTo<TypeOnly<old.FluidDataStoreRuntime>, TypeOnly<current.FluidDataStoreRuntime>>
+declare type old_as_current_for_Class_FluidDataStoreRuntime = requireAssignableTo<TypeOnly<old.FluidDataStoreRuntime>, TypeOnly<current.FluidDataStoreRuntime>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_FluidDataStoreRuntime": {"backCompat": false}
+ * "Class_FluidDataStoreRuntime": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_FluidDataStoreRuntime = requireAssignableTo<TypeOnly<current.FluidDataStoreRuntime>, TypeOnly<old.FluidDataStoreRuntime>>
+declare type current_as_old_for_Class_FluidDataStoreRuntime = requireAssignableTo<TypeOnly<current.FluidDataStoreRuntime>, TypeOnly<old.FluidDataStoreRuntime>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_FluidDataStoreRuntime": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_FluidDataStoreRuntime = requireAssignableTo<TypeOnly<typeof current.FluidDataStoreRuntime>, TypeOnly<typeof old.FluidDataStoreRuntime>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_FluidObjectHandle": {"forwardCompat": false}
+ * "Class_FluidObjectHandle": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_FluidObjectHandle = requireAssignableTo<TypeOnly<old.FluidObjectHandle>, TypeOnly<current.FluidObjectHandle>>
+declare type old_as_current_for_Class_FluidObjectHandle = requireAssignableTo<TypeOnly<old.FluidObjectHandle>, TypeOnly<current.FluidObjectHandle>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_FluidObjectHandle": {"backCompat": false}
+ * "Class_FluidObjectHandle": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_FluidObjectHandle = requireAssignableTo<TypeOnly<current.FluidObjectHandle>, TypeOnly<old.FluidObjectHandle>>
+declare type current_as_old_for_Class_FluidObjectHandle = requireAssignableTo<TypeOnly<current.FluidObjectHandle>, TypeOnly<old.FluidObjectHandle>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_FluidObjectHandle": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_FluidObjectHandle = requireAssignableTo<TypeOnly<typeof current.FluidObjectHandle>, TypeOnly<typeof old.FluidObjectHandle>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISharedObjectRegistry": {"forwardCompat": false}
+ * "Interface_ISharedObjectRegistry": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ISharedObjectRegistry = requireAssignableTo<TypeOnly<old.ISharedObjectRegistry>, TypeOnly<current.ISharedObjectRegistry>>
+declare type old_as_current_for_Interface_ISharedObjectRegistry = requireAssignableTo<TypeOnly<old.ISharedObjectRegistry>, TypeOnly<current.ISharedObjectRegistry>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISharedObjectRegistry": {"backCompat": false}
+ * "Interface_ISharedObjectRegistry": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ISharedObjectRegistry = requireAssignableTo<TypeOnly<current.ISharedObjectRegistry>, TypeOnly<old.ISharedObjectRegistry>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "VariableDeclaration_mixinRequestHandler": {"forwardCompat": false}
- */
-declare type old_as_current_for_VariableDeclaration_mixinRequestHandler = requireAssignableTo<TypeOnly<typeof old.mixinRequestHandler>, TypeOnly<typeof current.mixinRequestHandler>>
+declare type current_as_old_for_Interface_ISharedObjectRegistry = requireAssignableTo<TypeOnly<current.ISharedObjectRegistry>, TypeOnly<old.ISharedObjectRegistry>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_mixinRequestHandler": {"backCompat": false}
+ * "Variable_mixinRequestHandler": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_mixinRequestHandler = requireAssignableTo<TypeOnly<typeof current.mixinRequestHandler>, TypeOnly<typeof old.mixinRequestHandler>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "VariableDeclaration_mixinSummaryHandler": {"forwardCompat": false}
- */
-declare type old_as_current_for_VariableDeclaration_mixinSummaryHandler = requireAssignableTo<TypeOnly<typeof old.mixinSummaryHandler>, TypeOnly<typeof current.mixinSummaryHandler>>
+declare type current_as_old_for_Variable_mixinRequestHandler = requireAssignableTo<TypeOnly<typeof current.mixinRequestHandler>, TypeOnly<typeof old.mixinRequestHandler>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_mixinSummaryHandler": {"backCompat": false}
+ * "Variable_mixinSummaryHandler": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_mixinSummaryHandler = requireAssignableTo<TypeOnly<typeof current.mixinSummaryHandler>, TypeOnly<typeof old.mixinSummaryHandler>>
+declare type current_as_old_for_Variable_mixinSummaryHandler = requireAssignableTo<TypeOnly<typeof current.mixinSummaryHandler>, TypeOnly<typeof old.mixinSummaryHandler>>

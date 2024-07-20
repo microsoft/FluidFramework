@@ -1,5 +1,26 @@
 # @fluidframework/map
 
+## 2.1.0
+
+### Minor Changes
+
+-   Some SharedDirectory/SharedMap-related APIs have been sealed ([#21836](https://github.com/microsoft/FluidFramework/pull/21836)) [b1d0427eab](https://github.com/microsoft/FluidFramework/commit/b1d0427eab3fcd55588dd80996967133db66f1b8)
+
+    Note that this is a _documentation only change._ There is no runtime or type-level impact.
+
+    Some top-level APIs within `@fluidframework/map` and `fluid-framework` have been updated to reflect their
+    sealed/readonly nature. That is, they are not to be implemented externally to Fluid Framework and not changed. This was
+    already the case, but the documentation was not clear.
+
+    Updated APIs:
+
+    -   [IDirectory](https://fluidframework.com/docs/api/v2/fluid-framework/idirectory-interface) sealed
+    -   [IDirectoryEvents](https://fluidframework.com/docs/api/v2/fluid-framework/idirectoryevents-interface) sealed
+    -   [IDirectoryValueChanged](https://fluidframework.com/docs/api/v2/fluid-framework/idirectoryvaluechanged-interface) sealed and path property is readonly
+    -   [ISharedDirectory](https://fluidframework.com/docs/api/v2/fluid-framework/ishareddirectory-interface) sealed
+    -   [ISharedDirectoryEvents](https://fluidframework.com/docs/api/v2/fluid-framework/ishareddirectoryevents-interface) sealed
+    -   [IValueChanged](https://fluidframework.com/docs/api/v2/fluid-framework/ivaluechanged-interface) sealed
+
 ## 2.0.0-rc.5.0.0
 
 ### Minor Changes

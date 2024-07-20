@@ -170,7 +170,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		changeReceiver: (change: DefaultChangeset) => void,
 	) {
-		this.modularBuilder = new ModularEditBuilder(family, changeReceiver);
+		this.modularBuilder = new ModularEditBuilder(family, fieldKinds, changeReceiver);
 	}
 
 	public enterTransaction(): void {

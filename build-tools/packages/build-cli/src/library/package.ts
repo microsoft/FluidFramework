@@ -651,6 +651,26 @@ export async function setVersion(
 }
 
 /**
+ * Extracts the dependencies record from a package.json file based on the dependency group.
+ */
+function getDependenciesRecord(
+	packageJson: PackageJson,
+	depClass: "prod" | "dev" | "peer",
+): PackageJson["dependencies" | "devDependencies" | "peerDependencies"] | undefined {
+	switch (depClass) {
+		case "dev": {
+			return packageJson.devDependencies;
+		}
+		case "peer": {
+			return packageJson.peerDependencies;
+		}
+		default: {
+			return packageJson.dependencies;
+		}
+	}
+}
+
+/**
  * Set the version of _dependencies_ within a package according to the provided map of packages to range strings.
  *
  * @param pkg - The package whose dependencies should be updated.
@@ -675,14 +695,12 @@ async function setPackageDependencies(
 ): Promise<boolean> {
 	let changed = false;
 	let newRangeString: string;
-	for (const { name, dev } of pkg.combinedDependencies) {
+	for (const { name, depClass } of pkg.combinedDependencies) {
 		const dep = dependencyVersionMap.get(name);
 		if (dep !== undefined) {
 			const isSameReleaseGroup = MonoRepo.isSame(dep.pkg.monoRepo, pkg.monoRepo);
 			if (!isSameReleaseGroup || (updateWithinSameReleaseGroup && isSameReleaseGroup)) {
-				const dependencies = dev
-					? pkg.packageJson.devDependencies
-					: pkg.packageJson.dependencies;
+				const dependencies = getDependenciesRecord(pkg.packageJson, depClass);
 				if (dependencies === undefined) {
 					continue;
 				}

@@ -16,7 +16,7 @@ import {
 	inCursorNode,
 	isCursor,
 	iterateCursorField,
-	keyAsDetachedField,
+	rootFieldKey,
 } from "../../core/index.js";
 import {
 	assertValidIndex,
@@ -64,11 +64,7 @@ import {
 } from "./lazyEntity.js";
 import { type LazyTreeNode, makeTree } from "./lazyNode.js";
 import { unboxedUnion } from "./unboxed.js";
-import {
-	indexForAt,
-	treeStatusFromAnchorCache,
-	treeStatusFromDetachedField,
-} from "./utilities.js";
+import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -190,14 +186,6 @@ export abstract class LazyField<
 		return this.schema.equals(schema);
 	}
 
-	public isSameAs(other: FlexTreeField): boolean {
-		assert(
-			other.context === this.context,
-			0x77d /* Content from different flex trees should not be used together */,
-		);
-		return this.key === other.key && this.parent === other.parent;
-	}
-
 	public get parent(): FlexTreeNode | undefined {
 		if (this[anchorSymbol].parent === undefined) {
 			return undefined;
@@ -267,23 +255,6 @@ export abstract class LazyField<
 		);
 	}
 
-	public treeStatus(): TreeStatus {
-		if (this[isFreedSymbol]()) {
-			return TreeStatus.Deleted;
-		}
-		const fieldAnchor = this[anchorSymbol];
-		const parentAnchor = fieldAnchor.parent;
-		// If the parentAnchor is undefined it is a detached field.
-		if (parentAnchor === undefined) {
-			return treeStatusFromDetachedField(keyAsDetachedField(fieldAnchor.fieldKey));
-		}
-		const parentAnchorNode = this.context.checkout.forest.anchors.locate(parentAnchor);
-
-		// As the "parentAnchor === undefined" case is handled above, parentAnchorNode should exist.
-		assert(parentAnchorNode !== undefined, 0x77e /* parentAnchorNode must exist. */);
-		return treeStatusFromAnchorCache(parentAnchorNode);
-	}
-
 	public getFieldPath(): FieldUpPath {
 		return this[cursorSymbol].getFieldPath();
 	}
@@ -293,10 +264,19 @@ export abstract class LazyField<
 	 * This path is not valid to hold onto across edits: this must be recalled for each edit.
 	 */
 	public getFieldPathForEditing(): FieldUpPath {
-		if (this.treeStatus() !== TreeStatus.InDocument) {
-			throw new UsageError("Editing only allowed on fields with TreeStatus.InDocument status");
+		if (!this[isFreedSymbol]()) {
+			if (
+				// Only allow editing if we are the root document field...
+				(this.parent === undefined && this[anchorSymbol].fieldKey === rootFieldKey) ||
+				// ...or are under a node in the document
+				(this.parent !== undefined &&
+					treeStatusFromAnchorCache(this.parent.anchorNode) === TreeStatus.InDocument)
+			) {
+				return this.getFieldPath();
+			}
 		}
-		return this.getFieldPath();
+
+		throw new UsageError("Editing only allowed on fields with TreeStatus.InDocument status");
 	}
 }
 
@@ -444,7 +424,7 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 		sourceEnd: number,
 		source?: FlexTreeSequenceField<FlexAllowedTypes>,
 	): void {
-		const sourceField = source !== undefined ? (this.isSameAs(source) ? this : source) : this;
+		const sourceField = source ?? this;
 
 		// TODO: determine support for move across different sequence types
 		assert(
@@ -495,10 +475,6 @@ export class ReadonlyLazyValueField<TTypes extends FlexAllowedTypes>
 	public set content(newContent: FlexibleNodeContent<TTypes>) {
 		fail("cannot set content in readonly field");
 	}
-
-	public get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
-		return this.boxedAt(0) ?? fail("value node must have 1 item");
-	}
 }
 
 export class LazyValueField<TTypes extends FlexAllowedTypes>
@@ -531,10 +507,6 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 		const fieldEditor = this.valueFieldEditor();
 		assert(content.length === 1, 0x780 /* value field content should normalize to one item */);
 		fieldEditor.set(content[0]);
-	}
-
-	public override get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
-		return this.boxedAt(0) ?? fail("value node must have 1 item");
 	}
 }
 
@@ -588,10 +560,6 @@ export class LazyOptionalField<TTypes extends FlexAllowedTypes>
 			0x781 /* optional field content should normalize at most one item */,
 		);
 		fieldEditor.set(content.length === 0 ? undefined : content[0], this.length === 0);
-	}
-
-	public get boxedContent(): FlexTreeTypedNodeUnion<TTypes> | undefined {
-		return this.length === 0 ? undefined : this.boxedAt(0);
 	}
 }
 

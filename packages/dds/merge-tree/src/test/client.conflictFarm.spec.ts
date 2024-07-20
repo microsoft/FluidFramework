@@ -76,11 +76,11 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 			}
 
 			const clients: TestClient[] = [new TestClient()];
-			clients.forEach((c, i) => c.startOrUpdateCollaboration(clientNames[i]));
+			for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
 
 			let seq = 0;
 			while (clients.length < opts.clients.max) {
-				clients.forEach((c) => c.updateMinSeq(seq));
+				for (const c of clients) c.updateMinSeq(seq);
 
 				// Add double the number of clients each iteration
 				const targetClients = Math.max(opts.clients.min, opts.growthFunc(clients.length));

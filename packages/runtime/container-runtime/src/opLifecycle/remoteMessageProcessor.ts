@@ -95,10 +95,11 @@ export class RemoteMessageProcessor {
 	 * @returns all the unchunked, decompressed, ungrouped, unpacked InboundSequencedContainerRuntimeMessage from a single batch
 	 * or undefined if the batch is not yet complete.
 	 */
-	public process(remoteMessageCopy: ISequencedDocumentMessage): IncomingBatch | undefined {
+	public process(
+		remoteMessageCopy: ISequencedDocumentMessage,
+		logLegacyCase: (codePath: string) => void,
+	): IncomingBatch | undefined {
 		let message = remoteMessageCopy;
-
-		ensureContentsDeserialized(message);
 
 		assertHasClientId(message);
 		const clientId = message.clientId;
@@ -128,7 +129,7 @@ export class RemoteMessageProcessor {
 		//* TODO (DANIEL): Make sure Grouped Batches get batchId promoted to the top level
 		if (isGroupedBatch(message)) {
 			// We should be awaiting a new batch (batchStartCsn undefined)
-			assert(this.batchInProgress === undefined, "Grouped batch interrupting another batch");
+			assert(this.batchInProgress === undefined, 0x9d3 /* Grouped batch interrupting another batch */,);
 			const batchId = asBatchMetadata(message.metadata)?.batchId;
 			return {
 				messages: this.opGroupingManager.ungroupOp(message).map(unpack),
@@ -139,7 +140,7 @@ export class RemoteMessageProcessor {
 		}
 
 		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked
-		unpackRuntimeMessage(message);
+		unpackRuntimeMessage(message, logLegacyCase);
 
 		const batchEnd = this.addMessageToBatch(
 			message as InboundSequencedContainerRuntimeMessage & { clientId: string },
@@ -168,7 +169,7 @@ export class RemoteMessageProcessor {
 		const batchMetadataFlag = asBatchMetadata(message.metadata)?.batch;
 		if (this.batchInProgress === undefined) {
 			// We are waiting for a new batch
-			assert(batchMetadataFlag !== false, "Unexpected batch end marker");
+			assert(batchMetadataFlag !== false, 0x9d5 /* Unexpected batch end marker */);
 
 			// Start of a new multi-message batch
 			if (batchMetadataFlag === true) {
@@ -191,7 +192,7 @@ export class RemoteMessageProcessor {
 			};
 			return true;
 		}
-		assert(batchMetadataFlag !== true, "Unexpected batch start marker");
+		assert(batchMetadataFlag !== true, 0x9d6 /* Unexpected batch start marker */);
 
 		this.batchInProgress.messages.push(message);
 
@@ -200,12 +201,27 @@ export class RemoteMessageProcessor {
 }
 
 /** Takes an incoming message and if the contents is a string, JSON.parse's it in place */
-function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): void {
+export function ensureContentsDeserialized(
+	mutableMessage: ISequencedDocumentMessage,
+	modernRuntimeMessage: boolean,
+	logLegacyCase: (codePath: string) => void,
+): void {
 	// back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
 	// System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
 	// Old ops may contain empty string (I assume noops).
+	let parsedJsonContents: boolean;
 	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
 		mutableMessage.contents = JSON.parse(mutableMessage.contents);
+		parsedJsonContents = true;
+	} else {
+		parsedJsonContents = false;
+	}
+
+	// We expect Modern Runtime Messages to have JSON serialized contents,
+	// and all other messages not to (system messages and legacy runtime messages without outer "op" type envelope)
+	// Let's observe if we are wrong about this to learn about these cases.
+	if (modernRuntimeMessage !== parsedJsonContents) {
+		logLegacyCase("ensureContentsDeserialized_unexpectedContentsType");
 	}
 }
 
@@ -241,7 +257,10 @@ function unpack(message: ISequencedDocumentMessage): InboundSequencedContainerRu
  *
  * @internal
  */
-export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean {
+export function unpackRuntimeMessage(
+	message: ISequencedDocumentMessage,
+	logLegacyCase: (codePath: string) => void = () => {},
+): boolean {
 	if (message.type !== MessageType.Operation) {
 		// Legacy format, but it's already "unpacked",
 		// i.e. message.type is actually ContainerMessageType.
@@ -257,6 +276,7 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolea
 		(message.contents as { type?: unknown }).type === undefined
 	) {
 		message.type = ContainerMessageType.FluidDataStoreOp;
+		logLegacyCase("unpackRuntimeMessage_contentsWithAddress");
 	} else {
 		// new format
 		unpack(message);

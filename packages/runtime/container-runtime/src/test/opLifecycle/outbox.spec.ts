@@ -313,7 +313,7 @@ describe("Outbox", () => {
 	});
 
 	it("Batch ID added when applicable", () => {
-		const outbox = getOutbox({ context: getMockContext() as IContainerContext });
+		const outbox = getOutbox({ context: getMockContext() });
 
 		// Flush 1 - resubmit multi-message batch including ID Allocation
 		outbox.submitIdAllocation(createMessage(ContainerMessageType.IdAllocation, "0")); // Separate batch, batch ID not used

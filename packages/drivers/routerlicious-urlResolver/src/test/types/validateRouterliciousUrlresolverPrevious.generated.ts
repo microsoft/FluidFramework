@@ -20,51 +20,60 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IAlfredUser": {"forwardCompat": false}
+ * "Interface_IAlfredUser": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IAlfredUser = requireAssignableTo<TypeOnly<old.IAlfredUser>, TypeOnly<current.IAlfredUser>>
+declare type old_as_current_for_Interface_IAlfredUser = requireAssignableTo<TypeOnly<old.IAlfredUser>, TypeOnly<current.IAlfredUser>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IAlfredUser": {"backCompat": false}
+ * "Interface_IAlfredUser": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IAlfredUser = requireAssignableTo<TypeOnly<current.IAlfredUser>, TypeOnly<old.IAlfredUser>>
+declare type current_as_old_for_Interface_IAlfredUser = requireAssignableTo<TypeOnly<current.IAlfredUser>, TypeOnly<old.IAlfredUser>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IConfig": {"forwardCompat": false}
+ * "Interface_IConfig": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IConfig = requireAssignableTo<TypeOnly<old.IConfig>, TypeOnly<current.IConfig>>
+declare type old_as_current_for_Interface_IConfig = requireAssignableTo<TypeOnly<old.IConfig>, TypeOnly<current.IConfig>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IConfig": {"backCompat": false}
+ * "Interface_IConfig": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IConfig = requireAssignableTo<TypeOnly<current.IConfig>, TypeOnly<old.IConfig>>
+declare type current_as_old_for_Interface_IConfig = requireAssignableTo<TypeOnly<current.IConfig>, TypeOnly<old.IConfig>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_RouterliciousUrlResolver": {"forwardCompat": false}
+ * "Class_RouterliciousUrlResolver": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_RouterliciousUrlResolver = requireAssignableTo<TypeOnly<old.RouterliciousUrlResolver>, TypeOnly<current.RouterliciousUrlResolver>>
+declare type old_as_current_for_Class_RouterliciousUrlResolver = requireAssignableTo<TypeOnly<old.RouterliciousUrlResolver>, TypeOnly<current.RouterliciousUrlResolver>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_RouterliciousUrlResolver": {"backCompat": false}
+ * "Class_RouterliciousUrlResolver": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_RouterliciousUrlResolver = requireAssignableTo<TypeOnly<current.RouterliciousUrlResolver>, TypeOnly<old.RouterliciousUrlResolver>>
+declare type current_as_old_for_Class_RouterliciousUrlResolver = requireAssignableTo<TypeOnly<current.RouterliciousUrlResolver>, TypeOnly<old.RouterliciousUrlResolver>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_RouterliciousUrlResolver": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_RouterliciousUrlResolver = requireAssignableTo<TypeOnly<typeof current.RouterliciousUrlResolver>, TypeOnly<typeof old.RouterliciousUrlResolver>>
