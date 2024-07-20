@@ -104,6 +104,9 @@ const main = async () => {
 		supportsBrowserAuth,
 	);
 
+	// Run in two phases.  First run a smoke test to fail fast for basic issues like service being down, auth doesn't work, etc.
+	// Then after verifying basic functionality works, run the real stress test.
+
 	console.log("Starting smoke test...");
 	await smokeTest(testDriver, profileName);
 	console.log("Smoke test complete!");
