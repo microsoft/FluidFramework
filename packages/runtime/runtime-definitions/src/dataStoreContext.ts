@@ -30,10 +30,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
 import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";
-import type {
-	IGarbageCollectionData,
-	IGarbageCollectionDetailsBase,
-} from "./garbageCollectionDefinitions.js";
+import type { IGarbageCollectionData } from "./garbageCollectionDefinitions.js";
 import type { IInboundSignalMessage } from "./protocol.js";
 import type {
 	CreateChildSummarizerNodeParam,
@@ -388,10 +385,6 @@ export interface IFluidDataStoreChannel extends IDisposable {
 export type CreateChildSummarizerNodeFn = (
 	summarizeInternal: SummarizeInternalFn,
 	getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-	/**
-	 * @deprecated The functionality to get base GC details has been moved to summarizer node.
-	 */
-	getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 ) => ISummarizerNodeWithGC;
 
 /**
@@ -553,14 +546,6 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 * @deprecated 0.16 Issue #1635, #3631
 	 */
 	readonly createProps?: any;
-
-	/**
-	 * @deprecated The functionality to get base GC details has been moved to summarizer node.
-	 *
-	 * Returns the GC details in the initial summary of this data store. This is used to initialize the data store
-	 * and its children with the GC details from the previous summary.
-	 */
-	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 }
 
 /**

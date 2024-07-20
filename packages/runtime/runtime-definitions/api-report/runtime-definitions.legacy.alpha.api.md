@@ -17,8 +17,7 @@ export interface AttributionInfo {
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
 // @alpha (undocumented)
-export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
+export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>) => ISummarizerNodeWithGC;
 
 // @alpha (undocumented)
 export type CreateChildSummarizerNodeParam = {
@@ -152,8 +151,6 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
     readonly baseSnapshot: ISnapshotTree | undefined;
     // @deprecated (undocumented)
     readonly createProps?: any;
-    // @deprecated (undocumented)
-    getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
     // (undocumented)
     readonly id: string;
     readonly isLocalDataStore: boolean;
@@ -316,8 +313,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     summarizeInternalFn: SummarizeInternalFn,
     id: string,
     createParam: CreateChildSummarizerNodeParam,
-    config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-    getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>): ISummarizerNodeWithGC;
+    config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>): ISummarizerNodeWithGC;
     deleteChild(id: string): void;
     // (undocumented)
     getChild(id: string): ISummarizerNodeWithGC | undefined;

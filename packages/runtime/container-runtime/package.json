@@ -232,15 +232,30 @@
 	"typeValidation": {
 		"broken": {
 			"Class_LocalFluidDataStoreContext": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
 			"Class_FluidDataStoreContext": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
 			"Class_LocalFluidDataStoreContextBase": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
 			"Interface_IGCNodeUpdatedProps": {
+				"backCompat": false
+			},
+			"Interface_IFluidDataStoreContextInternal": {
+				"backCompat": false
+			},
+			"ClassStatics_FluidDataStoreContext": {
+				"backCompat": false
+			},
+			"ClassStatics_LocalFluidDataStoreContext": {
+				"backCompat": false
+			},
+			"ClassStatics_LocalFluidDataStoreContextBase": {
 				"backCompat": false
 			}
 		}

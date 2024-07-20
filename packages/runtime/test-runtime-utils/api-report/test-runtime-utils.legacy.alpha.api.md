@@ -313,8 +313,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     getAudience(): IAudience;
     // (undocumented)
-    getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
-    // (undocumented)
     getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
     // (undocumented)
     getQuorum(): IQuorumClients;
