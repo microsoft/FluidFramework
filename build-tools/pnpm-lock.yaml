@@ -356,9 +356,6 @@ importers:
       cosmiconfig:
         specifier: ^8.2.0
         version: 8.2.0
-      danger:
-        specifier: ^11.3.0
-        version: 11.3.0
       date-fns:
         specifier: ^2.30.0
         version: 2.30.0
