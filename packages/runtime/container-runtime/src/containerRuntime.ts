@@ -2635,8 +2635,6 @@ export class ContainerRuntime
 		// We expect runtime messages to have JSON contents - deserialize it in place.
 		ensureContentsDeserialized(messageCopy, modernRuntimeMessage, logLegacyCase);
 		if (modernRuntimeMessage) {
-			//* FUTURE: Move PSM calls to RMP (renamed Inbox)?
-
 			const incomingBatch = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
 			if (incomingBatch === undefined) {
 				// This means the incoming message is an incomplete part of a message or batch

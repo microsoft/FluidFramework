@@ -324,8 +324,6 @@ export class PendingStateManager implements IDisposable {
 
 		this.pendingMessages.shift();
 
-		//* FUTURE: ditch this check for performance reasons
-		//* Batch CSN check is enough, and we can also ensure CSNs increment properly within a batch
 		const messageContent = buildPendingMessageContent(message);
 
 		// Stringified content should match
@@ -350,7 +348,6 @@ export class PendingStateManager implements IDisposable {
 	 * Do some bookkeeping for the new batch
 	 */
 	private processBatchBegin(batch: IncomingBatch) {
-		//* FOR DANIEL: what will we put in the PSM queue when resubmitting an empty batch?
 		// Get the next message from the pending queue. Verify a message exists.
 		const pendingMessage = this.pendingMessages.peekFront();
 		assert(

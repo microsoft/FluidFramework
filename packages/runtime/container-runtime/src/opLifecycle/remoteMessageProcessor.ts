@@ -126,7 +126,7 @@ export class RemoteMessageProcessor {
 			}
 		}
 
-		//* TODO (DANIEL): Make sure Grouped Batches get batchId promoted to the top level
+		//* TODO (DANIEL?): Make sure Grouped Batches get batchId promoted to the top level
 		if (isGroupedBatch(message)) {
 			// We should be awaiting a new batch (batchStartCsn undefined)
 			assert(this.batchInProgress === undefined, 0x9d3 /* Grouped batch interrupting another batch */,);
