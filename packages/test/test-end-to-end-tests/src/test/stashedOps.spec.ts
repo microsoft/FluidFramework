@@ -1843,7 +1843,7 @@ describeCompat.only("stashed ops", "NoCompat", (getTestObjectProvider, apis) => 
 	});
 
 	// TODO: https://github.com/microsoft/FluidFramework/issues/10729
-	// 276519, 276912
+	// 276519, 276912, 281394
 	it("works with summary while offline", async function () {
 		map1.set("test op 1", "test op 1");
 		await waitForSummary(provider, container1, testContainerConfig);

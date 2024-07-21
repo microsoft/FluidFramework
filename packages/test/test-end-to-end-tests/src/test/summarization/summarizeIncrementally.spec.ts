@@ -186,6 +186,8 @@ describeCompat(
 		});
 
 		// 278813, 276975, 280446
+		// compat back 2.0.0-rc.4.0.9 (N-2) - older loader + older driver
+		// 281394
 		it.only("can do incremental dds summary", async () => {
 			const directory2 = SharedDirectory.create(dataObject1._runtime);
 			dataObject1._root.set("directory2", directory2.handle);
