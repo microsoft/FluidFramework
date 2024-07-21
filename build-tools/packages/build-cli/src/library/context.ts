@@ -8,7 +8,7 @@ import { PackageName } from "@rushstack/node-core-library";
 import { ReleaseVersion } from "@fluid-tools/version-tools";
 import { FluidRepo, GitRepo, Package } from "@fluidframework/build-tools";
 import * as semver from "semver";
-import { IFlubConfig, getFlubConfig } from "../config.js";
+import { FlubConfig, getFlubConfig } from "../config.js";
 
 /**
  * Represents a release version and its release date, if applicable.
@@ -85,7 +85,7 @@ export function isMonoRepoKind(str: string | undefined): str is MonoRepoKind {
 export class Context {
 	public readonly repo: FluidRepo;
 	public readonly fullPackageMap: Map<string, Package>;
-	public readonly rootFlubConfig: IFlubConfig;
+	public readonly rootFlubConfig: FlubConfig;
 	private readonly newBranches: string[] = [];
 
 	constructor(

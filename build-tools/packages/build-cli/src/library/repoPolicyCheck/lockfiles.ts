@@ -5,13 +5,13 @@
 
 import { unlinkSync } from "node:fs";
 import path from "node:path";
-import { IFlubConfig, getFlubConfig } from "../../config.js";
+import { FlubConfig, getFlubConfig } from "../../config.js";
 import { Handler } from "./common.js";
 
 const lockFilePattern = /.*?package-lock\.json$/i;
 let _knownPaths: string[] | undefined;
 
-const getKnownPaths = (manifest: IFlubConfig): string[] => {
+const getKnownPaths = (manifest: FlubConfig): string[] => {
 	if (_knownPaths === undefined) {
 		// Add the root path (.) because a lockfile is expected there
 		_knownPaths = ["."];

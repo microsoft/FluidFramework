@@ -14,7 +14,7 @@ import type { ReleaseGroup } from "./releaseGroups.js";
  * The `tasks` and `repoPackages` keys, inherited from the repoBuild config, are deprecated. They should be defined in
  * repoBuild.config.
  */
-export interface IFlubConfig extends IRepoBuildConfig {
+export interface FlubConfig extends IRepoBuildConfig {
 	/**
 	 * Policy configuration for the `check:policy` command. This can only be configured in the repo-wide Fluid build
 	 * config (the repo-root package.json).
@@ -26,6 +26,9 @@ export interface IFlubConfig extends IRepoBuildConfig {
 	 */
 	assertTagging?: AssertTaggingConfig;
 
+	/**
+	 * Configuration for flub bump.
+	 */
 	bump?: BumpConfig;
 
 	/**
@@ -76,14 +79,14 @@ export interface IFlubConfig extends IRepoBuildConfig {
  *
  * baseMajor: 2.0.0-internal.2.0.0
  * baseMinor: 2.0.0-internal.2.3.0
- * ~baseMinor: >=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0
+ * ~baseMinor: \>=2.0.0-internal.2.3.0 \<2.0.0-internal.3.0.0
  * previousPatch: 2.0.0-internal.2.3.4
  * previousMinor: 2.0.0-internal.2.2.0
  * previousMajor: 2.0.0-internal.1.0.0
- * ^previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0
- * ^previousMinor: >=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0
- * ~previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0
- * ~previousMinor: >=2.0.0-internal.2.2.0 <2.0.0-internal.2.2.0
+ * ^previousMajor: \>=2.0.0-internal.1.0.0 \<2.0.0-internal.2.0.0
+ * ^previousMinor: \>=2.0.0-internal.2.2.0 \<2.0.0-internal.3.0.0
+ * ~previousMajor: \>=2.0.0-internal.1.0.0 \<2.0.0-internal.1.1.0
+ * ~previousMinor: \>=2.0.0-internal.2.2.0 \<2.0.0-internal.2.2.0
  *
  * @example
  *
@@ -91,16 +94,14 @@ export interface IFlubConfig extends IRepoBuildConfig {
  *
  * baseMajor: 2.0.0-internal.2.0.0
  * baseMinor: 2.0.0-internal.2.0.0
- * ~baseMinor: >=2.0.0-internal.2.0.0 <2.0.0-internal.2.1.0
+ * ~baseMinor: \>=2.0.0-internal.2.0.0 \<2.0.0-internal.2.1.0
  * previousPatch: 2.0.0-internal.2.0.0
  * previousMinor: 2.0.0-internal.2.0.0
  * previousMajor: 2.0.0-internal.1.0.0
- * ^previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0
- * ^previousMinor: >=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0
- * ~previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0
- * ~previousMinor: >=2.0.0-internal.2.0.0 <2.0.0-internal.2.1.0
- *
- * @internal
+ * ^previousMajor: \>=2.0.0-internal.1.0.0 \<2.0.0-internal.2.0.0
+ * ^previousMinor: \>=2.0.0-internal.2.0.0 \<2.0.0-internal.3.0.0
+ * ~previousMajor: \>=2.0.0-internal.1.0.0 \<2.0.0-internal.1.1.0
+ * ~previousMinor: \>=2.0.0-internal.2.0.0 \<2.0.0-internal.2.1.0
  */
 /* eslint-enable tsdoc/syntax */
 export type PreviousVersionStyle =
@@ -161,6 +162,9 @@ export interface AssertTaggingConfig {
 	enabledPaths?: RegExp[];
 }
 
+/**
+ * Configuration settings that influence `flub bump`.
+ */
 export interface BumpConfig {
 	/**
 	 * The interdependencyRange controls the type of semver range to use between packages in the same release group. This
@@ -284,11 +288,11 @@ const configExplorer = cosmiconfigSync(configName, {
  * @param noCache - If true, the config cache will be cleared and the config will be reloaded.
  * @returns The flub config
  */
-export function getFlubConfig(rootDir: string, noCache = false): IFlubConfig {
+export function getFlubConfig(rootDir: string, noCache = false): FlubConfig {
 	if (noCache === true) {
 		configExplorer.clearCaches();
 	}
 
 	const config = configExplorer.search(rootDir);
-	return config?.config as IFlubConfig;
+	return config?.config as FlubConfig;
 }
