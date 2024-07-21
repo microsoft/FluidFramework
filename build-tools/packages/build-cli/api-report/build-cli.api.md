@@ -75,7 +75,7 @@ export interface PolicyConfig {
         };
     };
     handlerExclusions?: {
-        [rule: string]: string[];
+        [rule: string]: (string | RegExp)[];
     };
     // (undocumented)
     packageNames?: PackageNamePolicyConfig;

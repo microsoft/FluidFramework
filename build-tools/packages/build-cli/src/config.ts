@@ -142,7 +142,7 @@ export interface PolicyConfig {
 	 * An object with handler name as keys that maps to an array of strings/regular expressions to
 	 * exclude that rule from being checked.
 	 */
-	handlerExclusions?: { [rule: string]: string[] };
+	handlerExclusions?: { [rule: string]: (string|RegExp)[] };
 
 	packageNames?: PackageNamePolicyConfig;
 
@@ -266,7 +266,7 @@ const configName = "flub";
  */
 const configExplorer = cosmiconfigSync(configName, {
 	searchPlaces: [
-		`${configName}.ts`,
+		// `${configName}.ts`,
 		`${configName}.config.cjs`,
 		`${configName}.config.js`,
 		// Back-compat entries - we'll load settings from the old fluidBuild config files if present.
