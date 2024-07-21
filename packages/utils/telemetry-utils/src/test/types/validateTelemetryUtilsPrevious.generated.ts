@@ -20,1230 +20,1023 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_DataCorruptionError": {"forwardCompat": false}
+ * "Class_DataCorruptionError": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_DataCorruptionError = requireAssignableTo<TypeOnly<old.DataCorruptionError>, TypeOnly<current.DataCorruptionError>>
+declare type old_as_current_for_Class_DataCorruptionError = requireAssignableTo<TypeOnly<old.DataCorruptionError>, TypeOnly<current.DataCorruptionError>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_DataCorruptionError": {"backCompat": false}
+ * "Class_DataCorruptionError": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_DataCorruptionError = requireAssignableTo<TypeOnly<current.DataCorruptionError>, TypeOnly<old.DataCorruptionError>>
+declare type current_as_old_for_Class_DataCorruptionError = requireAssignableTo<TypeOnly<current.DataCorruptionError>, TypeOnly<old.DataCorruptionError>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassDeclaration_DataProcessingError": {"forwardCompat": false}
- */
-declare type old_as_current_for_ClassDeclaration_DataProcessingError = requireAssignableTo<TypeOnly<old.DataProcessingError>, TypeOnly<current.DataProcessingError>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_DataProcessingError": {"backCompat": false}
+ * "ClassStatics_DataCorruptionError": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_DataProcessingError = requireAssignableTo<TypeOnly<current.DataProcessingError>, TypeOnly<old.DataProcessingError>>
+declare type current_as_old_for_ClassStatics_DataCorruptionError = requireAssignableTo<TypeOnly<typeof current.DataCorruptionError>, TypeOnly<typeof old.DataCorruptionError>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_EventEmitterWithErrorHandling": {"forwardCompat": false}
+ * "Class_DataProcessingError": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_EventEmitterWithErrorHandling = requireAssignableTo<TypeOnly<old.EventEmitterWithErrorHandling>, TypeOnly<current.EventEmitterWithErrorHandling>>
+declare type old_as_current_for_Class_DataProcessingError = requireAssignableTo<TypeOnly<old.DataProcessingError>, TypeOnly<current.DataProcessingError>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassDeclaration_EventEmitterWithErrorHandling": {"backCompat": false}
- */
-declare type current_as_old_for_ClassDeclaration_EventEmitterWithErrorHandling = requireAssignableTo<TypeOnly<current.EventEmitterWithErrorHandling>, TypeOnly<old.EventEmitterWithErrorHandling>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_GenericError": {"forwardCompat": false}
+ * "Class_DataProcessingError": {"backCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_GenericError = requireAssignableTo<TypeOnly<old.GenericError>, TypeOnly<current.GenericError>>
+declare type current_as_old_for_Class_DataProcessingError = requireAssignableTo<TypeOnly<current.DataProcessingError>, TypeOnly<old.DataProcessingError>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_GenericError": {"backCompat": false}
+ * "ClassStatics_DataProcessingError": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_GenericError = requireAssignableTo<TypeOnly<current.GenericError>, TypeOnly<old.GenericError>>
+declare type current_as_old_for_ClassStatics_DataProcessingError = requireAssignableTo<TypeOnly<typeof current.DataProcessingError>, TypeOnly<typeof old.DataProcessingError>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IConfigProvider": {"forwardCompat": false}
+ * "Class_EventEmitterWithErrorHandling": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IConfigProvider = requireAssignableTo<TypeOnly<old.IConfigProvider>, TypeOnly<current.IConfigProvider>>
+declare type old_as_current_for_Class_EventEmitterWithErrorHandling = requireAssignableTo<TypeOnly<old.EventEmitterWithErrorHandling>, TypeOnly<current.EventEmitterWithErrorHandling>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "InterfaceDeclaration_IConfigProvider": {"backCompat": false}
- */
-declare type current_as_old_for_InterfaceDeclaration_IConfigProvider = requireAssignableTo<TypeOnly<current.IConfigProvider>, TypeOnly<old.IConfigProvider>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IEventSampler": {"forwardCompat": false}
+ * "Class_EventEmitterWithErrorHandling": {"backCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IEventSampler = requireAssignableTo<TypeOnly<old.IEventSampler>, TypeOnly<current.IEventSampler>>
+declare type current_as_old_for_Class_EventEmitterWithErrorHandling = requireAssignableTo<TypeOnly<current.EventEmitterWithErrorHandling>, TypeOnly<old.EventEmitterWithErrorHandling>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IEventSampler": {"backCompat": false}
+ * "ClassStatics_EventEmitterWithErrorHandling": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IEventSampler = requireAssignableTo<TypeOnly<current.IEventSampler>, TypeOnly<old.IEventSampler>>
+declare type current_as_old_for_ClassStatics_EventEmitterWithErrorHandling = requireAssignableTo<TypeOnly<typeof current.EventEmitterWithErrorHandling>, TypeOnly<typeof old.EventEmitterWithErrorHandling>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IFluidErrorAnnotations": {"forwardCompat": false}
+ * "Class_GenericError": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IFluidErrorAnnotations = requireAssignableTo<TypeOnly<old.IFluidErrorAnnotations>, TypeOnly<current.IFluidErrorAnnotations>>
+declare type old_as_current_for_Class_GenericError = requireAssignableTo<TypeOnly<old.GenericError>, TypeOnly<current.GenericError>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "InterfaceDeclaration_IFluidErrorAnnotations": {"backCompat": false}
- */
-declare type current_as_old_for_InterfaceDeclaration_IFluidErrorAnnotations = requireAssignableTo<TypeOnly<current.IFluidErrorAnnotations>, TypeOnly<old.IFluidErrorAnnotations>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IFluidErrorBase": {"forwardCompat": false}
+ * "Class_GenericError": {"backCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IFluidErrorBase = requireAssignableTo<TypeOnly<old.IFluidErrorBase>, TypeOnly<current.IFluidErrorBase>>
+declare type current_as_old_for_Class_GenericError = requireAssignableTo<TypeOnly<current.GenericError>, TypeOnly<old.GenericError>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IFluidErrorBase": {"backCompat": false}
+ * "ClassStatics_GenericError": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IFluidErrorBase = requireAssignableTo<TypeOnly<current.IFluidErrorBase>, TypeOnly<old.IFluidErrorBase>>
+declare type current_as_old_for_ClassStatics_GenericError = requireAssignableTo<TypeOnly<typeof current.GenericError>, TypeOnly<typeof old.GenericError>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IMockLoggerExt": {"forwardCompat": false}
+ * "Interface_IConfigProvider": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IMockLoggerExt = requireAssignableTo<TypeOnly<old.IMockLoggerExt>, TypeOnly<current.IMockLoggerExt>>
+declare type old_as_current_for_Interface_IConfigProvider = requireAssignableTo<TypeOnly<old.IConfigProvider>, TypeOnly<current.IConfigProvider>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IMockLoggerExt": {"backCompat": false}
+ * "Interface_IConfigProvider": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IMockLoggerExt = requireAssignableTo<TypeOnly<current.IMockLoggerExt>, TypeOnly<old.IMockLoggerExt>>
+declare type current_as_old_for_Interface_IConfigProvider = requireAssignableTo<TypeOnly<current.IConfigProvider>, TypeOnly<old.IConfigProvider>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IPerformanceEventMarkers": {"forwardCompat": false}
+ * "Interface_IEventSampler": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IPerformanceEventMarkers = requireAssignableTo<TypeOnly<old.IPerformanceEventMarkers>, TypeOnly<current.IPerformanceEventMarkers>>
+declare type old_as_current_for_Interface_IEventSampler = requireAssignableTo<TypeOnly<old.IEventSampler>, TypeOnly<current.IEventSampler>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IPerformanceEventMarkers": {"backCompat": false}
+ * "Interface_IEventSampler": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IPerformanceEventMarkers = requireAssignableTo<TypeOnly<current.IPerformanceEventMarkers>, TypeOnly<old.IPerformanceEventMarkers>>
+declare type current_as_old_for_Interface_IEventSampler = requireAssignableTo<TypeOnly<current.IEventSampler>, TypeOnly<old.IEventSampler>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISampledTelemetryLogger": {"forwardCompat": false}
+ * "Interface_IFluidErrorAnnotations": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ISampledTelemetryLogger = requireAssignableTo<TypeOnly<old.ISampledTelemetryLogger>, TypeOnly<current.ISampledTelemetryLogger>>
+declare type old_as_current_for_Interface_IFluidErrorAnnotations = requireAssignableTo<TypeOnly<old.IFluidErrorAnnotations>, TypeOnly<current.IFluidErrorAnnotations>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISampledTelemetryLogger": {"backCompat": false}
+ * "Interface_IFluidErrorAnnotations": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ISampledTelemetryLogger = requireAssignableTo<TypeOnly<current.ISampledTelemetryLogger>, TypeOnly<old.ISampledTelemetryLogger>>
+declare type current_as_old_for_Interface_IFluidErrorAnnotations = requireAssignableTo<TypeOnly<current.IFluidErrorAnnotations>, TypeOnly<old.IFluidErrorAnnotations>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt": {"forwardCompat": false}
+ * "Interface_IFluidErrorBase": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt = requireAssignableTo<TypeOnly<old.ITaggedTelemetryPropertyTypeExt>, TypeOnly<current.ITaggedTelemetryPropertyTypeExt>>
+declare type old_as_current_for_Interface_IFluidErrorBase = requireAssignableTo<TypeOnly<old.IFluidErrorBase>, TypeOnly<current.IFluidErrorBase>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt": {"backCompat": false}
+ * "Interface_IFluidErrorBase": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt = requireAssignableTo<TypeOnly<current.ITaggedTelemetryPropertyTypeExt>, TypeOnly<old.ITaggedTelemetryPropertyTypeExt>>
+declare type current_as_old_for_Interface_IFluidErrorBase = requireAssignableTo<TypeOnly<current.IFluidErrorBase>, TypeOnly<old.IFluidErrorBase>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryErrorEventExt": {"forwardCompat": false}
+ * "Interface_IMockLoggerExt": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ITelemetryErrorEventExt = requireAssignableTo<TypeOnly<old.ITelemetryErrorEventExt>, TypeOnly<current.ITelemetryErrorEventExt>>
+declare type old_as_current_for_Interface_IMockLoggerExt = requireAssignableTo<TypeOnly<old.IMockLoggerExt>, TypeOnly<current.IMockLoggerExt>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryErrorEventExt": {"backCompat": false}
+ * "Interface_IMockLoggerExt": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ITelemetryErrorEventExt = requireAssignableTo<TypeOnly<current.ITelemetryErrorEventExt>, TypeOnly<old.ITelemetryErrorEventExt>>
+declare type current_as_old_for_Interface_IMockLoggerExt = requireAssignableTo<TypeOnly<current.IMockLoggerExt>, TypeOnly<old.IMockLoggerExt>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryEventExt": {"forwardCompat": false}
+ * "Interface_IPerformanceEventMarkers": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ITelemetryEventExt = requireAssignableTo<TypeOnly<old.ITelemetryEventExt>, TypeOnly<current.ITelemetryEventExt>>
+declare type old_as_current_for_Interface_IPerformanceEventMarkers = requireAssignableTo<TypeOnly<old.IPerformanceEventMarkers>, TypeOnly<current.IPerformanceEventMarkers>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryEventExt": {"backCompat": false}
+ * "Interface_IPerformanceEventMarkers": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ITelemetryEventExt = requireAssignableTo<TypeOnly<current.ITelemetryEventExt>, TypeOnly<old.ITelemetryEventExt>>
+declare type current_as_old_for_Interface_IPerformanceEventMarkers = requireAssignableTo<TypeOnly<current.IPerformanceEventMarkers>, TypeOnly<old.IPerformanceEventMarkers>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryGenericEventExt": {"forwardCompat": false}
+ * "Interface_ISampledTelemetryLogger": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ITelemetryGenericEventExt = requireAssignableTo<TypeOnly<old.ITelemetryGenericEventExt>, TypeOnly<current.ITelemetryGenericEventExt>>
+declare type old_as_current_for_Interface_ISampledTelemetryLogger = requireAssignableTo<TypeOnly<old.ISampledTelemetryLogger>, TypeOnly<current.ISampledTelemetryLogger>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryGenericEventExt": {"backCompat": false}
+ * "Interface_ISampledTelemetryLogger": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ITelemetryGenericEventExt = requireAssignableTo<TypeOnly<current.ITelemetryGenericEventExt>, TypeOnly<old.ITelemetryGenericEventExt>>
+declare type current_as_old_for_Interface_ISampledTelemetryLogger = requireAssignableTo<TypeOnly<current.ISampledTelemetryLogger>, TypeOnly<old.ISampledTelemetryLogger>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryLoggerExt": {"forwardCompat": false}
+ * "Interface_ITaggedTelemetryPropertyTypeExt": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ITelemetryLoggerExt = requireAssignableTo<TypeOnly<old.ITelemetryLoggerExt>, TypeOnly<current.ITelemetryLoggerExt>>
+declare type old_as_current_for_Interface_ITaggedTelemetryPropertyTypeExt = requireAssignableTo<TypeOnly<old.ITaggedTelemetryPropertyTypeExt>, TypeOnly<current.ITaggedTelemetryPropertyTypeExt>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryLoggerExt": {"backCompat": false}
+ * "Interface_ITaggedTelemetryPropertyTypeExt": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ITelemetryLoggerExt = requireAssignableTo<TypeOnly<current.ITelemetryLoggerExt>, TypeOnly<old.ITelemetryLoggerExt>>
+declare type current_as_old_for_Interface_ITaggedTelemetryPropertyTypeExt = requireAssignableTo<TypeOnly<current.ITaggedTelemetryPropertyTypeExt>, TypeOnly<old.ITaggedTelemetryPropertyTypeExt>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_ITelemetryLoggerPropertyBag": {"forwardCompat": false}
+ * "Interface_ITelemetryErrorEventExt": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_ITelemetryLoggerPropertyBag = requireAssignableTo<TypeOnly<old.ITelemetryLoggerPropertyBag>, TypeOnly<current.ITelemetryLoggerPropertyBag>>
+declare type old_as_current_for_Interface_ITelemetryErrorEventExt = requireAssignableTo<TypeOnly<old.ITelemetryErrorEventExt>, TypeOnly<current.ITelemetryErrorEventExt>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_ITelemetryLoggerPropertyBag": {"backCompat": false}
+ * "Interface_ITelemetryErrorEventExt": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAliasDeclaration_ITelemetryLoggerPropertyBag = requireAssignableTo<TypeOnly<current.ITelemetryLoggerPropertyBag>, TypeOnly<old.ITelemetryLoggerPropertyBag>>
+declare type current_as_old_for_Interface_ITelemetryErrorEventExt = requireAssignableTo<TypeOnly<current.ITelemetryErrorEventExt>, TypeOnly<old.ITelemetryErrorEventExt>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryLoggerPropertyBags": {"forwardCompat": false}
+ * "Interface_ITelemetryEventExt": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ITelemetryLoggerPropertyBags = requireAssignableTo<TypeOnly<old.ITelemetryLoggerPropertyBags>, TypeOnly<current.ITelemetryLoggerPropertyBags>>
+declare type old_as_current_for_Interface_ITelemetryEventExt = requireAssignableTo<TypeOnly<old.ITelemetryEventExt>, TypeOnly<current.ITelemetryEventExt>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryLoggerPropertyBags": {"backCompat": false}
+ * "Interface_ITelemetryEventExt": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ITelemetryLoggerPropertyBags = requireAssignableTo<TypeOnly<current.ITelemetryLoggerPropertyBags>, TypeOnly<old.ITelemetryLoggerPropertyBags>>
+declare type current_as_old_for_Interface_ITelemetryEventExt = requireAssignableTo<TypeOnly<current.ITelemetryEventExt>, TypeOnly<old.ITelemetryEventExt>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryPerformanceEventExt": {"forwardCompat": false}
+ * "Interface_ITelemetryGenericEventExt": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ITelemetryPerformanceEventExt = requireAssignableTo<TypeOnly<old.ITelemetryPerformanceEventExt>, TypeOnly<current.ITelemetryPerformanceEventExt>>
+declare type old_as_current_for_Interface_ITelemetryGenericEventExt = requireAssignableTo<TypeOnly<old.ITelemetryGenericEventExt>, TypeOnly<current.ITelemetryGenericEventExt>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryPerformanceEventExt": {"backCompat": false}
+ * "Interface_ITelemetryGenericEventExt": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ITelemetryPerformanceEventExt = requireAssignableTo<TypeOnly<current.ITelemetryPerformanceEventExt>, TypeOnly<old.ITelemetryPerformanceEventExt>>
+declare type current_as_old_for_Interface_ITelemetryGenericEventExt = requireAssignableTo<TypeOnly<current.ITelemetryGenericEventExt>, TypeOnly<old.ITelemetryGenericEventExt>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_ITelemetryPropertiesExt": {"forwardCompat": false}
+ * "Interface_ITelemetryLoggerExt": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_ITelemetryPropertiesExt = requireAssignableTo<TypeOnly<old.ITelemetryPropertiesExt>, TypeOnly<current.ITelemetryPropertiesExt>>
+declare type old_as_current_for_Interface_ITelemetryLoggerExt = requireAssignableTo<TypeOnly<old.ITelemetryLoggerExt>, TypeOnly<current.ITelemetryLoggerExt>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_ITelemetryPropertiesExt": {"backCompat": false}
+ * "Interface_ITelemetryLoggerExt": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAliasDeclaration_ITelemetryPropertiesExt = requireAssignableTo<TypeOnly<current.ITelemetryPropertiesExt>, TypeOnly<old.ITelemetryPropertiesExt>>
+declare type current_as_old_for_Interface_ITelemetryLoggerExt = requireAssignableTo<TypeOnly<current.ITelemetryLoggerExt>, TypeOnly<old.ITelemetryLoggerExt>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_LoggingError": {"forwardCompat": false}
+ * "TypeAlias_ITelemetryLoggerPropertyBag": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_LoggingError = requireAssignableTo<TypeOnly<old.LoggingError>, TypeOnly<current.LoggingError>>
+declare type old_as_current_for_TypeAlias_ITelemetryLoggerPropertyBag = requireAssignableTo<TypeOnly<old.ITelemetryLoggerPropertyBag>, TypeOnly<current.ITelemetryLoggerPropertyBag>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_LoggingError": {"backCompat": false}
+ * "TypeAlias_ITelemetryLoggerPropertyBag": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_LoggingError = requireAssignableTo<TypeOnly<current.LoggingError>, TypeOnly<old.LoggingError>>
+declare type current_as_old_for_TypeAlias_ITelemetryLoggerPropertyBag = requireAssignableTo<TypeOnly<current.ITelemetryLoggerPropertyBag>, TypeOnly<old.ITelemetryLoggerPropertyBag>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_MockLogger": {"forwardCompat": false}
+ * "Interface_ITelemetryLoggerPropertyBags": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_MockLogger = requireAssignableTo<TypeOnly<old.MockLogger>, TypeOnly<current.MockLogger>>
+declare type old_as_current_for_Interface_ITelemetryLoggerPropertyBags = requireAssignableTo<TypeOnly<old.ITelemetryLoggerPropertyBags>, TypeOnly<current.ITelemetryLoggerPropertyBags>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_MockLogger": {"backCompat": false}
+ * "Interface_ITelemetryLoggerPropertyBags": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_MockLogger = requireAssignableTo<TypeOnly<current.MockLogger>, TypeOnly<old.MockLogger>>
+declare type current_as_old_for_Interface_ITelemetryLoggerPropertyBags = requireAssignableTo<TypeOnly<current.ITelemetryLoggerPropertyBags>, TypeOnly<old.ITelemetryLoggerPropertyBags>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_MonitoringContext": {"forwardCompat": false}
+ * "Interface_ITelemetryPerformanceEventExt": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_MonitoringContext = requireAssignableTo<TypeOnly<old.MonitoringContext>, TypeOnly<current.MonitoringContext>>
+declare type old_as_current_for_Interface_ITelemetryPerformanceEventExt = requireAssignableTo<TypeOnly<old.ITelemetryPerformanceEventExt>, TypeOnly<current.ITelemetryPerformanceEventExt>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_MonitoringContext": {"backCompat": false}
+ * "Interface_ITelemetryPerformanceEventExt": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_MonitoringContext = requireAssignableTo<TypeOnly<current.MonitoringContext>, TypeOnly<old.MonitoringContext>>
+declare type current_as_old_for_Interface_ITelemetryPerformanceEventExt = requireAssignableTo<TypeOnly<current.ITelemetryPerformanceEventExt>, TypeOnly<old.ITelemetryPerformanceEventExt>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_MultiSinkLoggerProperties": {"forwardCompat": false}
+ * "TypeAlias_ITelemetryPropertiesExt": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_MultiSinkLoggerProperties = requireAssignableTo<TypeOnly<old.MultiSinkLoggerProperties>, TypeOnly<current.MultiSinkLoggerProperties>>
+declare type old_as_current_for_TypeAlias_ITelemetryPropertiesExt = requireAssignableTo<TypeOnly<old.ITelemetryPropertiesExt>, TypeOnly<current.ITelemetryPropertiesExt>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_MultiSinkLoggerProperties": {"backCompat": false}
+ * "TypeAlias_ITelemetryPropertiesExt": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_MultiSinkLoggerProperties = requireAssignableTo<TypeOnly<current.MultiSinkLoggerProperties>, TypeOnly<old.MultiSinkLoggerProperties>>
+declare type current_as_old_for_TypeAlias_ITelemetryPropertiesExt = requireAssignableTo<TypeOnly<current.ITelemetryPropertiesExt>, TypeOnly<old.ITelemetryPropertiesExt>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_NORMALIZED_ERROR_TYPE": {"forwardCompat": false}
+ * "Class_LoggingError": {"forwardCompat": false}
  */
-declare type old_as_current_for_VariableDeclaration_NORMALIZED_ERROR_TYPE = requireAssignableTo<TypeOnly<typeof old.NORMALIZED_ERROR_TYPE>, TypeOnly<typeof current.NORMALIZED_ERROR_TYPE>>
+declare type old_as_current_for_Class_LoggingError = requireAssignableTo<TypeOnly<old.LoggingError>, TypeOnly<current.LoggingError>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "VariableDeclaration_NORMALIZED_ERROR_TYPE": {"backCompat": false}
- */
-declare type current_as_old_for_VariableDeclaration_NORMALIZED_ERROR_TYPE = requireAssignableTo<TypeOnly<typeof current.NORMALIZED_ERROR_TYPE>, TypeOnly<typeof old.NORMALIZED_ERROR_TYPE>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_PerformanceEvent": {"forwardCompat": false}
+ * "Class_LoggingError": {"backCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_PerformanceEvent = requireAssignableTo<TypeOnly<old.PerformanceEvent>, TypeOnly<current.PerformanceEvent>>
+declare type current_as_old_for_Class_LoggingError = requireAssignableTo<TypeOnly<current.LoggingError>, TypeOnly<old.LoggingError>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_PerformanceEvent": {"backCompat": false}
+ * "ClassStatics_LoggingError": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_PerformanceEvent = requireAssignableTo<TypeOnly<current.PerformanceEvent>, TypeOnly<old.PerformanceEvent>>
+declare type current_as_old_for_ClassStatics_LoggingError = requireAssignableTo<TypeOnly<typeof current.LoggingError>, TypeOnly<typeof old.LoggingError>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_SampledTelemetryHelper": {"forwardCompat": false}
+ * "Class_MockLogger": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_SampledTelemetryHelper = requireAssignableTo<TypeOnly<old.SampledTelemetryHelper>, TypeOnly<current.SampledTelemetryHelper>>
+declare type old_as_current_for_Class_MockLogger = requireAssignableTo<TypeOnly<old.MockLogger>, TypeOnly<current.MockLogger>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassDeclaration_SampledTelemetryHelper": {"backCompat": false}
- */
-declare type current_as_old_for_ClassDeclaration_SampledTelemetryHelper = requireAssignableTo<TypeOnly<current.SampledTelemetryHelper>, TypeOnly<old.SampledTelemetryHelper>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_TaggedLoggerAdapter": {"forwardCompat": false}
+ * "Class_MockLogger": {"backCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_TaggedLoggerAdapter = requireAssignableTo<TypeOnly<old.TaggedLoggerAdapter>, TypeOnly<current.TaggedLoggerAdapter>>
+declare type current_as_old_for_Class_MockLogger = requireAssignableTo<TypeOnly<current.MockLogger>, TypeOnly<old.MockLogger>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_TaggedLoggerAdapter": {"backCompat": false}
+ * "ClassStatics_MockLogger": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_TaggedLoggerAdapter = requireAssignableTo<TypeOnly<current.TaggedLoggerAdapter>, TypeOnly<old.TaggedLoggerAdapter>>
+declare type current_as_old_for_ClassStatics_MockLogger = requireAssignableTo<TypeOnly<typeof current.MockLogger>, TypeOnly<typeof old.MockLogger>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "EnumDeclaration_TelemetryDataTag": {"forwardCompat": false}
- */
-declare type old_as_current_for_EnumDeclaration_TelemetryDataTag = requireAssignableTo<TypeOnly<old.TelemetryDataTag>, TypeOnly<current.TelemetryDataTag>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "EnumDeclaration_TelemetryDataTag": {"backCompat": false}
+ * "Interface_MonitoringContext": {"forwardCompat": false}
  */
-declare type current_as_old_for_EnumDeclaration_TelemetryDataTag = requireAssignableTo<TypeOnly<current.TelemetryDataTag>, TypeOnly<old.TelemetryDataTag>>
+declare type old_as_current_for_Interface_MonitoringContext = requireAssignableTo<TypeOnly<old.MonitoringContext>, TypeOnly<current.MonitoringContext>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_TelemetryEventBatcher": {"backCompat": false}
+ * "Interface_MonitoringContext": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_TelemetryEventBatcher = requireAssignableTo<TypeOnly<current.TelemetryEventBatcher<any>>, TypeOnly<old.TelemetryEventBatcher<any>>>
+declare type current_as_old_for_Interface_MonitoringContext = requireAssignableTo<TypeOnly<current.MonitoringContext>, TypeOnly<old.MonitoringContext>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_TelemetryEventCategory": {"forwardCompat": false}
+ * "Interface_MultiSinkLoggerProperties": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_TelemetryEventCategory = requireAssignableTo<TypeOnly<old.TelemetryEventCategory>, TypeOnly<current.TelemetryEventCategory>>
+declare type old_as_current_for_Interface_MultiSinkLoggerProperties = requireAssignableTo<TypeOnly<old.MultiSinkLoggerProperties>, TypeOnly<current.MultiSinkLoggerProperties>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAliasDeclaration_TelemetryEventCategory": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAliasDeclaration_TelemetryEventCategory = requireAssignableTo<TypeOnly<current.TelemetryEventCategory>, TypeOnly<old.TelemetryEventCategory>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_TelemetryEventPropertyTypeExt": {"forwardCompat": false}
+ * "Interface_MultiSinkLoggerProperties": {"backCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_TelemetryEventPropertyTypeExt = requireAssignableTo<TypeOnly<old.TelemetryEventPropertyTypeExt>, TypeOnly<current.TelemetryEventPropertyTypeExt>>
+declare type current_as_old_for_Interface_MultiSinkLoggerProperties = requireAssignableTo<TypeOnly<current.MultiSinkLoggerProperties>, TypeOnly<old.MultiSinkLoggerProperties>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_TelemetryEventPropertyTypeExt": {"backCompat": false}
+ * "Variable_NORMALIZED_ERROR_TYPE": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAliasDeclaration_TelemetryEventPropertyTypeExt = requireAssignableTo<TypeOnly<current.TelemetryEventPropertyTypeExt>, TypeOnly<old.TelemetryEventPropertyTypeExt>>
+declare type current_as_old_for_Variable_NORMALIZED_ERROR_TYPE = requireAssignableTo<TypeOnly<typeof current.NORMALIZED_ERROR_TYPE>, TypeOnly<typeof old.NORMALIZED_ERROR_TYPE>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_TelemetryEventPropertyTypes": {"forwardCompat": false}
+ * "Class_PerformanceEvent": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_TelemetryEventPropertyTypes = requireAssignableTo<TypeOnly<old.TelemetryEventPropertyTypes>, TypeOnly<current.TelemetryEventPropertyTypes>>
+declare type old_as_current_for_Class_PerformanceEvent = requireAssignableTo<TypeOnly<old.PerformanceEvent>, TypeOnly<current.PerformanceEvent>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAliasDeclaration_TelemetryEventPropertyTypes": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAliasDeclaration_TelemetryEventPropertyTypes = requireAssignableTo<TypeOnly<current.TelemetryEventPropertyTypes>, TypeOnly<old.TelemetryEventPropertyTypes>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_ThresholdCounter": {"forwardCompat": false}
+ * "Class_PerformanceEvent": {"backCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_ThresholdCounter = requireAssignableTo<TypeOnly<old.ThresholdCounter>, TypeOnly<current.ThresholdCounter>>
+declare type current_as_old_for_Class_PerformanceEvent = requireAssignableTo<TypeOnly<current.PerformanceEvent>, TypeOnly<old.PerformanceEvent>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_ThresholdCounter": {"backCompat": false}
+ * "ClassStatics_PerformanceEvent": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_ThresholdCounter = requireAssignableTo<TypeOnly<current.ThresholdCounter>, TypeOnly<old.ThresholdCounter>>
+declare type current_as_old_for_ClassStatics_PerformanceEvent = requireAssignableTo<TypeOnly<typeof current.PerformanceEvent>, TypeOnly<typeof old.PerformanceEvent>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_UsageError": {"forwardCompat": false}
+ * "Class_SampledTelemetryHelper": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_UsageError = requireAssignableTo<TypeOnly<old.UsageError>, TypeOnly<current.UsageError>>
+declare type old_as_current_for_Class_SampledTelemetryHelper = requireAssignableTo<TypeOnly<old.SampledTelemetryHelper>, TypeOnly<current.SampledTelemetryHelper>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassDeclaration_UsageError": {"backCompat": false}
- */
-declare type current_as_old_for_ClassDeclaration_UsageError = requireAssignableTo<TypeOnly<current.UsageError>, TypeOnly<old.UsageError>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_connectedEventName": {"forwardCompat": false}
+ * "Class_SampledTelemetryHelper": {"backCompat": false}
  */
-declare type old_as_current_for_VariableDeclaration_connectedEventName = requireAssignableTo<TypeOnly<typeof old.connectedEventName>, TypeOnly<typeof current.connectedEventName>>
+declare type current_as_old_for_Class_SampledTelemetryHelper = requireAssignableTo<TypeOnly<current.SampledTelemetryHelper>, TypeOnly<old.SampledTelemetryHelper>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_connectedEventName": {"backCompat": false}
+ * "ClassStatics_SampledTelemetryHelper": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_connectedEventName = requireAssignableTo<TypeOnly<typeof current.connectedEventName>, TypeOnly<typeof old.connectedEventName>>
+declare type current_as_old_for_ClassStatics_SampledTelemetryHelper = requireAssignableTo<TypeOnly<typeof current.SampledTelemetryHelper>, TypeOnly<typeof old.SampledTelemetryHelper>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_createChildLogger": {"forwardCompat": false}
+ * "Class_TaggedLoggerAdapter": {"forwardCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_createChildLogger = requireAssignableTo<TypeOnly<typeof old.createChildLogger>, TypeOnly<typeof current.createChildLogger>>
+declare type old_as_current_for_Class_TaggedLoggerAdapter = requireAssignableTo<TypeOnly<old.TaggedLoggerAdapter>, TypeOnly<current.TaggedLoggerAdapter>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_createChildLogger": {"backCompat": false}
- */
-declare type current_as_old_for_FunctionDeclaration_createChildLogger = requireAssignableTo<TypeOnly<typeof current.createChildLogger>, TypeOnly<typeof old.createChildLogger>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_createChildMonitoringContext": {"forwardCompat": false}
+ * "Class_TaggedLoggerAdapter": {"backCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_createChildMonitoringContext = requireAssignableTo<TypeOnly<typeof old.createChildMonitoringContext>, TypeOnly<typeof current.createChildMonitoringContext>>
+declare type current_as_old_for_Class_TaggedLoggerAdapter = requireAssignableTo<TypeOnly<current.TaggedLoggerAdapter>, TypeOnly<old.TaggedLoggerAdapter>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_createChildMonitoringContext": {"backCompat": false}
+ * "ClassStatics_TaggedLoggerAdapter": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_createChildMonitoringContext = requireAssignableTo<TypeOnly<typeof current.createChildMonitoringContext>, TypeOnly<typeof old.createChildMonitoringContext>>
+declare type current_as_old_for_ClassStatics_TaggedLoggerAdapter = requireAssignableTo<TypeOnly<typeof current.TaggedLoggerAdapter>, TypeOnly<typeof old.TaggedLoggerAdapter>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_createMockLoggerExt": {"forwardCompat": false}
+ * "Enum_TelemetryDataTag": {"forwardCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_createMockLoggerExt = requireAssignableTo<TypeOnly<typeof old.createMockLoggerExt>, TypeOnly<typeof current.createMockLoggerExt>>
+declare type old_as_current_for_Enum_TelemetryDataTag = requireAssignableTo<TypeOnly<old.TelemetryDataTag>, TypeOnly<current.TelemetryDataTag>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_createMockLoggerExt": {"backCompat": false}
- */
-declare type current_as_old_for_FunctionDeclaration_createMockLoggerExt = requireAssignableTo<TypeOnly<typeof current.createMockLoggerExt>, TypeOnly<typeof old.createMockLoggerExt>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_createMultiSinkLogger": {"forwardCompat": false}
+ * "Enum_TelemetryDataTag": {"backCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_createMultiSinkLogger = requireAssignableTo<TypeOnly<typeof old.createMultiSinkLogger>, TypeOnly<typeof current.createMultiSinkLogger>>
+declare type current_as_old_for_Enum_TelemetryDataTag = requireAssignableTo<TypeOnly<current.TelemetryDataTag>, TypeOnly<old.TelemetryDataTag>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_createMultiSinkLogger": {"backCompat": false}
- */
-declare type current_as_old_for_FunctionDeclaration_createMultiSinkLogger = requireAssignableTo<TypeOnly<typeof current.createMultiSinkLogger>, TypeOnly<typeof old.createMultiSinkLogger>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_createSampledLogger": {"forwardCompat": false}
+ * "Class_TelemetryEventBatcher": {"backCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_createSampledLogger = requireAssignableTo<TypeOnly<typeof old.createSampledLogger>, TypeOnly<typeof current.createSampledLogger>>
+declare type current_as_old_for_Class_TelemetryEventBatcher = requireAssignableTo<TypeOnly<current.TelemetryEventBatcher<any>>, TypeOnly<old.TelemetryEventBatcher<any>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_createSampledLogger": {"backCompat": false}
+ * "ClassStatics_TelemetryEventBatcher": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_createSampledLogger = requireAssignableTo<TypeOnly<typeof current.createSampledLogger>, TypeOnly<typeof old.createSampledLogger>>
+declare type current_as_old_for_ClassStatics_TelemetryEventBatcher = requireAssignableTo<TypeOnly<typeof current.TelemetryEventBatcher>, TypeOnly<typeof old.TelemetryEventBatcher>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_disconnectedEventName": {"forwardCompat": false}
+ * "TypeAlias_TelemetryEventCategory": {"forwardCompat": false}
  */
-declare type old_as_current_for_VariableDeclaration_disconnectedEventName = requireAssignableTo<TypeOnly<typeof old.disconnectedEventName>, TypeOnly<typeof current.disconnectedEventName>>
+declare type old_as_current_for_TypeAlias_TelemetryEventCategory = requireAssignableTo<TypeOnly<old.TelemetryEventCategory>, TypeOnly<current.TelemetryEventCategory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_disconnectedEventName": {"backCompat": false}
+ * "TypeAlias_TelemetryEventCategory": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_disconnectedEventName = requireAssignableTo<TypeOnly<typeof current.disconnectedEventName>, TypeOnly<typeof old.disconnectedEventName>>
+declare type current_as_old_for_TypeAlias_TelemetryEventCategory = requireAssignableTo<TypeOnly<current.TelemetryEventCategory>, TypeOnly<old.TelemetryEventCategory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_eventNamespaceSeparator": {"forwardCompat": false}
+ * "TypeAlias_TelemetryEventPropertyTypeExt": {"forwardCompat": false}
  */
-declare type old_as_current_for_VariableDeclaration_eventNamespaceSeparator = requireAssignableTo<TypeOnly<typeof old.eventNamespaceSeparator>, TypeOnly<typeof current.eventNamespaceSeparator>>
+declare type old_as_current_for_TypeAlias_TelemetryEventPropertyTypeExt = requireAssignableTo<TypeOnly<old.TelemetryEventPropertyTypeExt>, TypeOnly<current.TelemetryEventPropertyTypeExt>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_eventNamespaceSeparator": {"backCompat": false}
+ * "TypeAlias_TelemetryEventPropertyTypeExt": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_eventNamespaceSeparator = requireAssignableTo<TypeOnly<typeof current.eventNamespaceSeparator>, TypeOnly<typeof old.eventNamespaceSeparator>>
+declare type current_as_old_for_TypeAlias_TelemetryEventPropertyTypeExt = requireAssignableTo<TypeOnly<current.TelemetryEventPropertyTypeExt>, TypeOnly<old.TelemetryEventPropertyTypeExt>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_extractLogSafeErrorProperties": {"forwardCompat": false}
+ * "TypeAlias_TelemetryEventPropertyTypes": {"forwardCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_extractLogSafeErrorProperties = requireAssignableTo<TypeOnly<typeof old.extractLogSafeErrorProperties>, TypeOnly<typeof current.extractLogSafeErrorProperties>>
+declare type old_as_current_for_TypeAlias_TelemetryEventPropertyTypes = requireAssignableTo<TypeOnly<old.TelemetryEventPropertyTypes>, TypeOnly<current.TelemetryEventPropertyTypes>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_extractLogSafeErrorProperties": {"backCompat": false}
+ * "TypeAlias_TelemetryEventPropertyTypes": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_extractLogSafeErrorProperties = requireAssignableTo<TypeOnly<typeof current.extractLogSafeErrorProperties>, TypeOnly<typeof old.extractLogSafeErrorProperties>>
+declare type current_as_old_for_TypeAlias_TelemetryEventPropertyTypes = requireAssignableTo<TypeOnly<current.TelemetryEventPropertyTypes>, TypeOnly<old.TelemetryEventPropertyTypes>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_extractSafePropertiesFromMessage": {"forwardCompat": false}
+ * "Class_ThresholdCounter": {"forwardCompat": false}
  */
-declare type old_as_current_for_VariableDeclaration_extractSafePropertiesFromMessage = requireAssignableTo<TypeOnly<typeof old.extractSafePropertiesFromMessage>, TypeOnly<typeof current.extractSafePropertiesFromMessage>>
+declare type old_as_current_for_Class_ThresholdCounter = requireAssignableTo<TypeOnly<old.ThresholdCounter>, TypeOnly<current.ThresholdCounter>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "VariableDeclaration_extractSafePropertiesFromMessage": {"backCompat": false}
- */
-declare type current_as_old_for_VariableDeclaration_extractSafePropertiesFromMessage = requireAssignableTo<TypeOnly<typeof current.extractSafePropertiesFromMessage>, TypeOnly<typeof old.extractSafePropertiesFromMessage>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_formatTick": {"forwardCompat": false}
+ * "Class_ThresholdCounter": {"backCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_formatTick = requireAssignableTo<TypeOnly<typeof old.formatTick>, TypeOnly<typeof current.formatTick>>
+declare type current_as_old_for_Class_ThresholdCounter = requireAssignableTo<TypeOnly<current.ThresholdCounter>, TypeOnly<old.ThresholdCounter>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_formatTick": {"backCompat": false}
+ * "ClassStatics_ThresholdCounter": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_formatTick = requireAssignableTo<TypeOnly<typeof current.formatTick>, TypeOnly<typeof old.formatTick>>
+declare type current_as_old_for_ClassStatics_ThresholdCounter = requireAssignableTo<TypeOnly<typeof current.ThresholdCounter>, TypeOnly<typeof old.ThresholdCounter>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_generateErrorWithStack": {"forwardCompat": false}
+ * "Class_UsageError": {"forwardCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_generateErrorWithStack = requireAssignableTo<TypeOnly<typeof old.generateErrorWithStack>, TypeOnly<typeof current.generateErrorWithStack>>
+declare type old_as_current_for_Class_UsageError = requireAssignableTo<TypeOnly<old.UsageError>, TypeOnly<current.UsageError>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_generateErrorWithStack": {"backCompat": false}
- */
-declare type current_as_old_for_FunctionDeclaration_generateErrorWithStack = requireAssignableTo<TypeOnly<typeof current.generateErrorWithStack>, TypeOnly<typeof old.generateErrorWithStack>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_generateStack": {"forwardCompat": false}
+ * "Class_UsageError": {"backCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_generateStack = requireAssignableTo<TypeOnly<typeof old.generateStack>, TypeOnly<typeof current.generateStack>>
+declare type current_as_old_for_Class_UsageError = requireAssignableTo<TypeOnly<current.UsageError>, TypeOnly<old.UsageError>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_generateStack": {"backCompat": false}
- */
-declare type current_as_old_for_FunctionDeclaration_generateStack = requireAssignableTo<TypeOnly<typeof current.generateStack>, TypeOnly<typeof old.generateStack>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_getCircularReplacer": {"forwardCompat": false}
+ * "ClassStatics_UsageError": {"backCompat": false}
  */
-declare type old_as_current_for_VariableDeclaration_getCircularReplacer = requireAssignableTo<TypeOnly<typeof old.getCircularReplacer>, TypeOnly<typeof current.getCircularReplacer>>
+declare type current_as_old_for_ClassStatics_UsageError = requireAssignableTo<TypeOnly<typeof current.UsageError>, TypeOnly<typeof old.UsageError>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "VariableDeclaration_getCircularReplacer": {"backCompat": false}
- */
-declare type current_as_old_for_VariableDeclaration_getCircularReplacer = requireAssignableTo<TypeOnly<typeof current.getCircularReplacer>, TypeOnly<typeof old.getCircularReplacer>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_hasErrorInstanceId": {"forwardCompat": false}
+ * "Variable_connectedEventName": {"backCompat": false}
  */
-declare type old_as_current_for_VariableDeclaration_hasErrorInstanceId = requireAssignableTo<TypeOnly<typeof old.hasErrorInstanceId>, TypeOnly<typeof current.hasErrorInstanceId>>
+declare type current_as_old_for_Variable_connectedEventName = requireAssignableTo<TypeOnly<typeof current.connectedEventName>, TypeOnly<typeof old.connectedEventName>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_hasErrorInstanceId": {"backCompat": false}
+ * "Function_createChildLogger": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_hasErrorInstanceId = requireAssignableTo<TypeOnly<typeof current.hasErrorInstanceId>, TypeOnly<typeof old.hasErrorInstanceId>>
+declare type current_as_old_for_Function_createChildLogger = requireAssignableTo<TypeOnly<typeof current.createChildLogger>, TypeOnly<typeof old.createChildLogger>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_isExternalError": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_isExternalError = requireAssignableTo<TypeOnly<typeof old.isExternalError>, TypeOnly<typeof current.isExternalError>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_isExternalError": {"backCompat": false}
- */
-declare type current_as_old_for_FunctionDeclaration_isExternalError = requireAssignableTo<TypeOnly<typeof current.isExternalError>, TypeOnly<typeof old.isExternalError>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_isFluidError": {"forwardCompat": false}
+ * "Function_createChildMonitoringContext": {"backCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_isFluidError = requireAssignableTo<TypeOnly<typeof old.isFluidError>, TypeOnly<typeof current.isFluidError>>
+declare type current_as_old_for_Function_createChildMonitoringContext = requireAssignableTo<TypeOnly<typeof current.createChildMonitoringContext>, TypeOnly<typeof old.createChildMonitoringContext>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_isFluidError": {"backCompat": false}
- */
-declare type current_as_old_for_FunctionDeclaration_isFluidError = requireAssignableTo<TypeOnly<typeof current.isFluidError>, TypeOnly<typeof old.isFluidError>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_isILoggingError": {"forwardCompat": false}
+ * "Function_createMockLoggerExt": {"backCompat": false}
  */
-declare type old_as_current_for_VariableDeclaration_isILoggingError = requireAssignableTo<TypeOnly<typeof old.isILoggingError>, TypeOnly<typeof current.isILoggingError>>
+declare type current_as_old_for_Function_createMockLoggerExt = requireAssignableTo<TypeOnly<typeof current.createMockLoggerExt>, TypeOnly<typeof old.createMockLoggerExt>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "VariableDeclaration_isILoggingError": {"backCompat": false}
- */
-declare type current_as_old_for_VariableDeclaration_isILoggingError = requireAssignableTo<TypeOnly<typeof current.isILoggingError>, TypeOnly<typeof old.isILoggingError>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_isTaggedTelemetryPropertyValue": {"forwardCompat": false}
+ * "Function_createMultiSinkLogger": {"backCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_isTaggedTelemetryPropertyValue = requireAssignableTo<TypeOnly<typeof old.isTaggedTelemetryPropertyValue>, TypeOnly<typeof current.isTaggedTelemetryPropertyValue>>
+declare type current_as_old_for_Function_createMultiSinkLogger = requireAssignableTo<TypeOnly<typeof current.createMultiSinkLogger>, TypeOnly<typeof old.createMultiSinkLogger>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_isTaggedTelemetryPropertyValue": {"backCompat": false}
- */
-declare type current_as_old_for_FunctionDeclaration_isTaggedTelemetryPropertyValue = requireAssignableTo<TypeOnly<typeof current.isTaggedTelemetryPropertyValue>, TypeOnly<typeof old.isTaggedTelemetryPropertyValue>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_loggerToMonitoringContext": {"forwardCompat": false}
+ * "Function_createSampledLogger": {"backCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_loggerToMonitoringContext = requireAssignableTo<TypeOnly<typeof old.loggerToMonitoringContext>, TypeOnly<typeof current.loggerToMonitoringContext>>
+declare type current_as_old_for_Function_createSampledLogger = requireAssignableTo<TypeOnly<typeof current.createSampledLogger>, TypeOnly<typeof old.createSampledLogger>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_loggerToMonitoringContext": {"backCompat": false}
- */
-declare type current_as_old_for_FunctionDeclaration_loggerToMonitoringContext = requireAssignableTo<TypeOnly<typeof current.loggerToMonitoringContext>, TypeOnly<typeof old.loggerToMonitoringContext>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_measure": {"forwardCompat": false}
+ * "Variable_disconnectedEventName": {"backCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_measure = requireAssignableTo<TypeOnly<typeof old.measure>, TypeOnly<typeof current.measure>>
+declare type current_as_old_for_Variable_disconnectedEventName = requireAssignableTo<TypeOnly<typeof current.disconnectedEventName>, TypeOnly<typeof old.disconnectedEventName>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_measure": {"backCompat": false}
+ * "Variable_eventNamespaceSeparator": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_measure = requireAssignableTo<TypeOnly<typeof current.measure>, TypeOnly<typeof old.measure>>
+declare type current_as_old_for_Variable_eventNamespaceSeparator = requireAssignableTo<TypeOnly<typeof current.eventNamespaceSeparator>, TypeOnly<typeof old.eventNamespaceSeparator>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_mixinMonitoringContext": {"forwardCompat": false}
+ * "Function_extractLogSafeErrorProperties": {"backCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_mixinMonitoringContext = requireAssignableTo<TypeOnly<typeof old.mixinMonitoringContext>, TypeOnly<typeof current.mixinMonitoringContext>>
+declare type current_as_old_for_Function_extractLogSafeErrorProperties = requireAssignableTo<TypeOnly<typeof current.extractLogSafeErrorProperties>, TypeOnly<typeof old.extractLogSafeErrorProperties>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_mixinMonitoringContext": {"backCompat": false}
+ * "Variable_extractSafePropertiesFromMessage": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_mixinMonitoringContext = requireAssignableTo<TypeOnly<typeof current.mixinMonitoringContext>, TypeOnly<typeof old.mixinMonitoringContext>>
+declare type current_as_old_for_Variable_extractSafePropertiesFromMessage = requireAssignableTo<TypeOnly<typeof current.extractSafePropertiesFromMessage>, TypeOnly<typeof old.extractSafePropertiesFromMessage>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_normalizeError": {"forwardCompat": false}
+ * "Function_formatTick": {"backCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_normalizeError = requireAssignableTo<TypeOnly<typeof old.normalizeError>, TypeOnly<typeof current.normalizeError>>
+declare type current_as_old_for_Function_formatTick = requireAssignableTo<TypeOnly<typeof current.formatTick>, TypeOnly<typeof old.formatTick>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_normalizeError": {"backCompat": false}
+ * "Function_generateErrorWithStack": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_normalizeError = requireAssignableTo<TypeOnly<typeof current.normalizeError>, TypeOnly<typeof old.normalizeError>>
+declare type current_as_old_for_Function_generateErrorWithStack = requireAssignableTo<TypeOnly<typeof current.generateErrorWithStack>, TypeOnly<typeof old.generateErrorWithStack>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_numberFromString": {"forwardCompat": false}
+ * "Function_generateStack": {"backCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_numberFromString = requireAssignableTo<TypeOnly<typeof old.numberFromString>, TypeOnly<typeof current.numberFromString>>
+declare type current_as_old_for_Function_generateStack = requireAssignableTo<TypeOnly<typeof current.generateStack>, TypeOnly<typeof old.generateStack>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_numberFromString": {"backCompat": false}
+ * "Variable_getCircularReplacer": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_numberFromString = requireAssignableTo<TypeOnly<typeof current.numberFromString>, TypeOnly<typeof old.numberFromString>>
+declare type current_as_old_for_Variable_getCircularReplacer = requireAssignableTo<TypeOnly<typeof current.getCircularReplacer>, TypeOnly<typeof old.getCircularReplacer>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_overwriteStack": {"forwardCompat": false}
+ * "Variable_hasErrorInstanceId": {"backCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_overwriteStack = requireAssignableTo<TypeOnly<typeof old.overwriteStack>, TypeOnly<typeof current.overwriteStack>>
+declare type current_as_old_for_Variable_hasErrorInstanceId = requireAssignableTo<TypeOnly<typeof current.hasErrorInstanceId>, TypeOnly<typeof old.hasErrorInstanceId>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_overwriteStack": {"backCompat": false}
+ * "Function_isExternalError": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_overwriteStack = requireAssignableTo<TypeOnly<typeof current.overwriteStack>, TypeOnly<typeof old.overwriteStack>>
+declare type current_as_old_for_Function_isExternalError = requireAssignableTo<TypeOnly<typeof current.isExternalError>, TypeOnly<typeof old.isExternalError>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_raiseConnectedEvent": {"forwardCompat": false}
+ * "Function_isFluidError": {"backCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_raiseConnectedEvent = requireAssignableTo<TypeOnly<typeof old.raiseConnectedEvent>, TypeOnly<typeof current.raiseConnectedEvent>>
+declare type current_as_old_for_Function_isFluidError = requireAssignableTo<TypeOnly<typeof current.isFluidError>, TypeOnly<typeof old.isFluidError>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_raiseConnectedEvent": {"backCompat": false}
+ * "Variable_isILoggingError": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_raiseConnectedEvent = requireAssignableTo<TypeOnly<typeof current.raiseConnectedEvent>, TypeOnly<typeof old.raiseConnectedEvent>>
+declare type current_as_old_for_Variable_isILoggingError = requireAssignableTo<TypeOnly<typeof current.isILoggingError>, TypeOnly<typeof old.isILoggingError>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_safeRaiseEvent": {"forwardCompat": false}
+ * "Function_isTaggedTelemetryPropertyValue": {"backCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_safeRaiseEvent = requireAssignableTo<TypeOnly<typeof old.safeRaiseEvent>, TypeOnly<typeof current.safeRaiseEvent>>
+declare type current_as_old_for_Function_isTaggedTelemetryPropertyValue = requireAssignableTo<TypeOnly<typeof current.isTaggedTelemetryPropertyValue>, TypeOnly<typeof old.isTaggedTelemetryPropertyValue>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_safeRaiseEvent": {"backCompat": false}
+ * "Function_loggerToMonitoringContext": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_safeRaiseEvent = requireAssignableTo<TypeOnly<typeof current.safeRaiseEvent>, TypeOnly<typeof old.safeRaiseEvent>>
+declare type current_as_old_for_Function_loggerToMonitoringContext = requireAssignableTo<TypeOnly<typeof current.loggerToMonitoringContext>, TypeOnly<typeof old.loggerToMonitoringContext>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_sessionStorageConfigProvider": {"forwardCompat": false}
+ * "Function_measure": {"backCompat": false}
  */
-declare type old_as_current_for_VariableDeclaration_sessionStorageConfigProvider = requireAssignableTo<TypeOnly<typeof old.sessionStorageConfigProvider>, TypeOnly<typeof current.sessionStorageConfigProvider>>
+declare type current_as_old_for_Function_measure = requireAssignableTo<TypeOnly<typeof current.measure>, TypeOnly<typeof old.measure>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_sessionStorageConfigProvider": {"backCompat": false}
+ * "Function_mixinMonitoringContext": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_sessionStorageConfigProvider = requireAssignableTo<TypeOnly<typeof current.sessionStorageConfigProvider>, TypeOnly<typeof old.sessionStorageConfigProvider>>
+declare type current_as_old_for_Function_mixinMonitoringContext = requireAssignableTo<TypeOnly<typeof current.mixinMonitoringContext>, TypeOnly<typeof old.mixinMonitoringContext>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_tagCodeArtifacts": {"forwardCompat": false}
+ * "Function_normalizeError": {"backCompat": false}
  */
-declare type old_as_current_for_VariableDeclaration_tagCodeArtifacts = requireAssignableTo<TypeOnly<typeof old.tagCodeArtifacts>, TypeOnly<typeof current.tagCodeArtifacts>>
+declare type current_as_old_for_Function_normalizeError = requireAssignableTo<TypeOnly<typeof current.normalizeError>, TypeOnly<typeof old.normalizeError>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_tagCodeArtifacts": {"backCompat": false}
+ * "Function_numberFromString": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_tagCodeArtifacts = requireAssignableTo<TypeOnly<typeof current.tagCodeArtifacts>, TypeOnly<typeof old.tagCodeArtifacts>>
+declare type current_as_old_for_Function_numberFromString = requireAssignableTo<TypeOnly<typeof current.numberFromString>, TypeOnly<typeof old.numberFromString>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_tagData": {"forwardCompat": false}
+ * "Function_overwriteStack": {"backCompat": false}
  */
-declare type old_as_current_for_VariableDeclaration_tagData = requireAssignableTo<TypeOnly<typeof old.tagData>, TypeOnly<typeof current.tagData>>
+declare type current_as_old_for_Function_overwriteStack = requireAssignableTo<TypeOnly<typeof current.overwriteStack>, TypeOnly<typeof old.overwriteStack>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_tagData": {"backCompat": false}
+ * "Function_raiseConnectedEvent": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_tagData = requireAssignableTo<TypeOnly<typeof current.tagData>, TypeOnly<typeof old.tagData>>
+declare type current_as_old_for_Function_raiseConnectedEvent = requireAssignableTo<TypeOnly<typeof current.raiseConnectedEvent>, TypeOnly<typeof old.raiseConnectedEvent>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_validatePrecondition": {"forwardCompat": false}
+ * "Function_safeRaiseEvent": {"backCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_validatePrecondition = requireAssignableTo<TypeOnly<typeof old.validatePrecondition>, TypeOnly<typeof current.validatePrecondition>>
+declare type current_as_old_for_Function_safeRaiseEvent = requireAssignableTo<TypeOnly<typeof current.safeRaiseEvent>, TypeOnly<typeof old.safeRaiseEvent>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_validatePrecondition": {"backCompat": false}
+ * "Variable_sessionStorageConfigProvider": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_validatePrecondition = requireAssignableTo<TypeOnly<typeof current.validatePrecondition>, TypeOnly<typeof old.validatePrecondition>>
+declare type current_as_old_for_Variable_sessionStorageConfigProvider = requireAssignableTo<TypeOnly<typeof current.sessionStorageConfigProvider>, TypeOnly<typeof old.sessionStorageConfigProvider>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_wrapConfigProviderWithDefaults": {"forwardCompat": false}
+ * "Variable_tagCodeArtifacts": {"backCompat": false}
  */
-declare type old_as_current_for_VariableDeclaration_wrapConfigProviderWithDefaults = requireAssignableTo<TypeOnly<typeof old.wrapConfigProviderWithDefaults>, TypeOnly<typeof current.wrapConfigProviderWithDefaults>>
+declare type current_as_old_for_Variable_tagCodeArtifacts = requireAssignableTo<TypeOnly<typeof current.tagCodeArtifacts>, TypeOnly<typeof old.tagCodeArtifacts>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_wrapConfigProviderWithDefaults": {"backCompat": false}
+ * "Variable_tagData": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_wrapConfigProviderWithDefaults = requireAssignableTo<TypeOnly<typeof current.wrapConfigProviderWithDefaults>, TypeOnly<typeof old.wrapConfigProviderWithDefaults>>
+declare type current_as_old_for_Variable_tagData = requireAssignableTo<TypeOnly<typeof current.tagData>, TypeOnly<typeof old.tagData>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_wrapError": {"forwardCompat": false}
+ * "Function_validatePrecondition": {"backCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_wrapError = requireAssignableTo<TypeOnly<typeof old.wrapError>, TypeOnly<typeof current.wrapError>>
+declare type current_as_old_for_Function_validatePrecondition = requireAssignableTo<TypeOnly<typeof current.validatePrecondition>, TypeOnly<typeof old.validatePrecondition>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_wrapError": {"backCompat": false}
+ * "Variable_wrapConfigProviderWithDefaults": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_wrapError = requireAssignableTo<TypeOnly<typeof current.wrapError>, TypeOnly<typeof old.wrapError>>
+declare type current_as_old_for_Variable_wrapConfigProviderWithDefaults = requireAssignableTo<TypeOnly<typeof current.wrapConfigProviderWithDefaults>, TypeOnly<typeof old.wrapConfigProviderWithDefaults>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_wrapErrorAndLog": {"forwardCompat": false}
+ * "Function_wrapError": {"backCompat": false}
  */
-declare type old_as_current_for_FunctionDeclaration_wrapErrorAndLog = requireAssignableTo<TypeOnly<typeof old.wrapErrorAndLog>, TypeOnly<typeof current.wrapErrorAndLog>>
+declare type current_as_old_for_Function_wrapError = requireAssignableTo<TypeOnly<typeof current.wrapError>, TypeOnly<typeof old.wrapError>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_wrapErrorAndLog": {"backCompat": false}
+ * "Function_wrapErrorAndLog": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_wrapErrorAndLog = requireAssignableTo<TypeOnly<typeof current.wrapErrorAndLog>, TypeOnly<typeof old.wrapErrorAndLog>>
+declare type current_as_old_for_Function_wrapErrorAndLog = requireAssignableTo<TypeOnly<typeof current.wrapErrorAndLog>, TypeOnly<typeof old.wrapErrorAndLog>>

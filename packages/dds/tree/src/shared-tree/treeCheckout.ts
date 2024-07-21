@@ -388,6 +388,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	>();
 
 	/**
+	 * copies of the removed roots used as snapshots for reverting to previous state when transactions are aborted
+	 */
+	private readonly removedRootsSnapshots: DetachedFieldIndex[] = [];
+
+	/**
 	 * The name of the telemetry event logged for calls to {@link TreeCheckout.revertRevertible}.
 	 * @privateRemarks Exposed for testing purposes.
 	 */
@@ -405,7 +410,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly idCompressor: IIdCompressor,
-		private readonly removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
+		private removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
 			"repair",
 			revisionTagCodec,
 			idCompressor,
@@ -413,18 +418,38 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		/** Optional logger for telemetry. */
 		private readonly logger?: ITelemetryLoggerExt,
 	) {
+		// when a transaction is started, take a snapshot of the current state of removed roots
+		branch.on("transactionStarted", () => {
+			this.removedRootsSnapshots.push(this.removedRoots.clone());
+		});
+		// when a transaction is committed, the latest snapshot of removed roots can be discarded
+		branch.on("transactionCommitted", () => {
+			this.removedRootsSnapshots.pop();
+		});
+		// after a transaction is rolled back, revert removed roots back to the latest snapshot
+		branch.on("transactionRolledBack", () => {
+			const snapshot = this.removedRootsSnapshots.pop();
+			assert(snapshot !== undefined, 0x9ae /* a snapshot for removed roots does not exist */);
+			this.removedRoots = snapshot;
+		});
+
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
 		// For example, a bug in the editor might produce a malformed change object and thus applying the change to the forest will throw an error.
 		// In such a case we will crash here, preventing the change from being added to the commit graph, and preventing `afterChange` from firing.
 		// One important consequence of this is that we will not submit the op containing the invalid change, since op submissions happens in response to `afterChange`.
 		branch.on("beforeChange", (event) => {
 			if (event.change !== undefined) {
+				const revision =
+					event.type === "replace"
+						? event.newCommits[event.newCommits.length - 1].revision
+						: event.change.revision;
+
 				// Conflicts due to schema will be empty and thus are not applied.
 				for (const change of event.change.change.changes) {
 					if (change.type === "data") {
-						const delta = intoDelta(tagChange(change.innerChange, event.change.revision));
+						const delta = intoDelta(tagChange(change.innerChange, revision));
 						this.withCombinedVisitor((visitor) => {
-							visitDelta(delta, visitor, this.removedRoots);
+							visitDelta(delta, visitor, this.removedRoots, revision);
 						});
 					} else if (change.type === "schema") {
 						// Schema changes from a current to a new schema are expected to be backwards compatible.
@@ -518,6 +543,24 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.events.emit("commitApplied", data, getRevertible);
 			withinEventContext = false;
 		});
+
+		// When the branch is trimmed, we can garbage collect any repair data whose latest relevant revision is one of the
+		// trimmed revisions.
+		branch.on("ancestryTrimmed", (revisions) => {
+			this.withCombinedVisitor((visitor) => {
+				revisions.forEach((revision) => {
+					// get all the roots last created or used by the revision
+					const roots = this.removedRoots.getRootsLastTouchedByRevision(revision);
+
+					// get the detached field for the root and delete it from the removed roots
+					for (const root of roots) {
+						visitor.destroy(this.removedRoots.toFieldKey(root), 1);
+					}
+
+					this.removedRoots.deleteRootsLastTouchedByRevision(revision);
+				});
+			});
+		});
 	}
 
 	private withCombinedVisitor(fn: (visitor: DeltaVisitor) => void): void {
@@ -574,7 +617,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.checkNotDisposed();
 		assert(
 			!view.transaction.inProgress(),
-			"A view cannot be rebased while it has a pending transaction",
+			0x9af /* A view cannot be rebased while it has a pending transaction */,
 		);
 		view.branch.rebaseOnto(this.branch);
 	}
@@ -590,7 +633,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.checkNotDisposed();
 		assert(
 			!this.transaction.inProgress(),
-			"Views cannot be merged into a view while it has a pending transaction",
+			0x9b0 /* Views cannot be merged into a view while it has a pending transaction */,
 		);
 		while (view.transaction.inProgress()) {
 			view.transaction.commit();
@@ -627,6 +670,14 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		}
 		cursor.free();
 		return trees;
+	}
+
+	/**
+	 * This sets the tip revision as the latest relevant revision for any removed roots that are loaded from a summary.
+	 * This needs to be called right after loading {@link this.removedRoots} from a summary to allow loaded data to be garbage collected.
+	 */
+	public setTipRevisionForLoadedData(revision: RevisionTag): void {
+		this.removedRoots.setRevisionsForLoadedData(revision);
 	}
 
 	private purgeRevertibles(): void {

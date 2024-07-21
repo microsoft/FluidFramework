@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import { Multiplicity, rootFieldKey } from "../core/index.js";
 import {
@@ -16,7 +16,7 @@ import {
 import { fail, extractFromOpaque, isReadonlyArray } from "../util/index.js";
 
 import { getOrCreateNodeProxy, isTreeNode } from "./proxies.js";
-import { getFlexNode } from "./proxyBinding.js";
+import { getFlexNode, getKernel } from "./proxyBinding.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 import {
 	NodeKind,
@@ -27,7 +27,7 @@ import {
 	type ImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
-import type { TreeNode } from "./types.js";
+import type { TreeNode, TreeChangeEvents } from "./types.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -37,6 +37,7 @@ import {
 } from "./leafNodeSchema.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import type { Off } from "../events/index.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -102,7 +103,7 @@ export interface TreeNodeApi {
 	/**
 	 * Returns the {@link TreeStatus} of the given node.
 	 */
-	readonly status: (node: TreeNode) => TreeStatus;
+	status(node: TreeNode): TreeStatus;
 
 	/**
 	 * Returns the {@link SchemaFactory.identifier | identifier} of the given node in the most compressed form possible.
@@ -127,7 +128,7 @@ export interface TreeNodeApi {
  * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
  */
 export const treeNodeApi: TreeNodeApi = {
-	parent: (node: TreeNode): TreeNode | undefined => {
+	parent(node: TreeNode): TreeNode | undefined {
 		const editNode = getFlexNode(node).parentField.parent.parent;
 		if (editNode === undefined) {
 			return undefined;
@@ -140,7 +141,7 @@ export const treeNodeApi: TreeNodeApi = {
 		);
 		return output;
 	},
-	key: (node: TreeNode) => {
+	key(node: TreeNode): string | number {
 		// If the parent is undefined, then this node is under the root field,
 		// so we know its key is the special root one.
 		const parent = treeNodeApi.parent(node);
@@ -156,28 +157,20 @@ export const treeNodeApi: TreeNodeApi = {
 		const viewKey = getViewKeyFromStoredKey(parentSchema, storedKey);
 		return viewKey;
 	},
-	on: <K extends keyof TreeChangeEvents>(
+	on<K extends keyof TreeChangeEvents>(
 		node: TreeNode,
 		eventName: K,
 		listener: TreeChangeEvents[K],
-	) => {
-		const flex = getFlexNode(node);
-		switch (eventName) {
-			case "nodeChanged":
-				return flex.on("nodeChanged", listener);
-			case "treeChanged":
-				return flex.on("treeChanged", listener);
-			default:
-				return unreachableCase(eventName);
-		}
+	): Off {
+		return getKernel(node).on(eventName, listener);
 	},
-	status: (node: TreeNode) => {
-		return getFlexNode(node, true).treeStatus();
+	status(node: TreeNode): TreeStatus {
+		return getKernel(node).getStatus();
 	},
-	is: <TSchema extends ImplicitAllowedTypes>(
+	is<TSchema extends ImplicitAllowedTypes>(
 		value: unknown,
 		schema: TSchema,
-	): value is TreeNodeFromImplicitAllowedTypes<TSchema> => {
+	): value is TreeNodeFromImplicitAllowedTypes<TSchema> {
 		const actualSchema = tryGetSchema(value);
 		if (actualSchema === undefined) {
 			return false;
@@ -303,79 +296,4 @@ function getViewKeyFromStoredKey(
 	}
 
 	return storedKey;
-}
-
-/**
- * A collection of events that can be emitted by a {@link TreeNode}.
- *
- * @privateRemarks
- * TODO: add a way to subscribe to a specific field (for nodeChanged and treeChanged).
- * Probably have object node and map node specific APIs for this.
- *
- * TODO: ensure that subscription API for fields aligns with API for subscribing to the root.
- *
- * TODO: add more wider area (avoid needing tons of nodeChanged registration) events for use-cases other than treeChanged.
- * Some ideas:
- *
- * - treeChanged, but with some subtrees/fields/paths excluded
- * - helper to batch several nodeChanged calls to a treeChanged scope
- * - parent change (ex: registration on the parent field for a specific index: maybe allow it for a range. Ex: node event takes optional field and optional index range?)
- * - new content inserted into subtree. Either provide event for this and/or enough info to treeChanged to find and search the new sub-trees.
- * Add separate (non event related) API to efficiently scan tree for given set of types (using low level cursor and schema based filtering)
- * to allow efficiently searching for new content (and initial content) of a given type.
- *
- * @sealed @public
- */
-export interface TreeChangeEvents {
-	/**
-	 * Emitted by a node after a batch of changes has been applied to the tree, if a change affected the node, where a
-	 * change is:
-	 *
-	 * - For an object node, when the value of one of its properties changes (i.e., the property's value is set
-	 * to something else, including `undefined`).
-	 *
-	 * - For an array node, when an element is added, removed, or moved.
-	 *
-	 * - For a map node, when an entry is added, updated, or removed.
-	 *
-	 * @remarks
-	 * This event is not emitted when:
-	 *
-	 * - Properties of a child node change. Notably, updates to an array node or a map node (like adding or removing
-	 * elements/entries) will emit this event on the array/map node itself, but not on the node that contains the
-	 * array/map node as one of its properties.
-	 *
-	 * - The node is moved to a different location in the tree or removed from the tree.
-	 * In this case the event is emitted on the _parent_ node, not the node itself.
-	 *
-	 * For remote edits, this event is not guaranteed to occur in the same order or quantity that it did in
-	 * the client that made the original edit.
-	 *
-	 * When it is emitted, the tree is guaranteed to be in-schema.
-	 *
-	 * @privateRemarks
-	 * This event occurs whenever the apparent contents of the node instance change, regardless of what caused the change.
-	 * For example, it will fire when the local client reassigns a child, when part of a remote edit is applied to the
-	 * node, or when the node has to be updated due to resolution of a merge conflict
-	 * (for example a previously applied local change might be undone, then reapplied differently or not at all).
-	 */
-	nodeChanged(): void;
-
-	/**
-	 * Emitted by a node after a batch of changes has been applied to the tree, when something changed anywhere in the
-	 * subtree rooted at it.
-	 *
-	 * @remarks
-	 * This event is not emitted when the node itself is moved to a different location in the tree or removed from the tree.
-	 * In that case it is emitted on the _parent_ node, not the node itself.
-	 *
-	 * The node itself is part of the subtree, so this event will be emitted even if the only changes are to the properties
-	 * of the node itself.
-	 *
-	 * For remote edits, this event is not guaranteed to occur in the same order or quantity that it did in
-	 * the client that made the original edit.
-	 *
-	 * When it is emitted, the tree is guaranteed to be in-schema.
-	 */
-	treeChanged(): void;
 }

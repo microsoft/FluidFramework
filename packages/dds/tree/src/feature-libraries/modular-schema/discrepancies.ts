@@ -147,7 +147,7 @@ export function getAllowedContentIncompatibilities(
 				const storedNodeSchema = stored.nodeSchema.get(key);
 				assert(
 					storedNodeSchema !== undefined,
-					"The storedNodeSchema in stored.nodeSchema should not be undefined",
+					0x9be /* The storedNodeSchema in stored.nodeSchema should not be undefined */,
 				);
 				if (storedNodeSchema instanceof MapNodeStoredSchema) {
 					incompatibilities.push({
@@ -188,7 +188,7 @@ export function getAllowedContentIncompatibilities(
 				const storedNodeSchema = stored.nodeSchema.get(key);
 				assert(
 					storedNodeSchema !== undefined,
-					"The storedNodeSchema in stored.nodeSchema should not be undefined",
+					0x9bf /* The storedNodeSchema in stored.nodeSchema should not be undefined */,
 				);
 				if (storedNodeSchema instanceof ObjectNodeStoredSchema) {
 					incompatibilities.push({
@@ -228,7 +228,7 @@ export function getAllowedContentIncompatibilities(
 				const storedNodeSchema = stored.nodeSchema.get(key);
 				assert(
 					storedNodeSchema !== undefined,
-					"The storedNodeSchema in stored.nodeSchema should not be undefined",
+					0x9c0 /* The storedNodeSchema in stored.nodeSchema should not be undefined */,
 				);
 				if (storedNodeSchema instanceof MapNodeStoredSchema) {
 					incompatibilities.push({

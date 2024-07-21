@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-inspector-table",
-	"version": "2.1.0",
+	"version": "2.2.0",
 	"description": "Property Inspector Table component",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -76,7 +76,7 @@
 		"@fluid-experimental/property-properties": "workspace:~",
 		"@fluid-experimental/property-proxy": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.40.0",
+		"@fluidframework/build-tools": "^0.41.0",
 		"@storybook/addon-actions": "^6.4.22",
 		"@storybook/addon-essentials": "^6.4.22",
 		"@storybook/addon-links": "^6.4.22",
@@ -120,11 +120,11 @@
 		"webpack-merge": "^5.8.0"
 	},
 	"peerDependencies": {
-		"@fluid-experimental/property-binder": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
-		"@fluid-experimental/property-changeset": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
-		"@fluid-experimental/property-dds": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
-		"@fluid-experimental/property-properties": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
-		"@fluid-experimental/property-proxy": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
+		"@fluid-experimental/property-binder": "workspace:~",
+		"@fluid-experimental/property-changeset": "workspace:~",
+		"@fluid-experimental/property-dds": "workspace:~",
+		"@fluid-experimental/property-properties": "workspace:~",
+		"@fluid-experimental/property-proxy": "workspace:~",
 		"react": "^17.0.1"
 	},
 	"fluidBuild": {

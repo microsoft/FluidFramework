@@ -103,6 +103,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 	getNestedChanges,
 	createEmpty: (): GenericChangeset => [],
+	getCrossFieldKeys: (_change) => [],
 };
 
 function getNestedChanges(change: GenericChangeset): [NodeId, number | undefined][] {
@@ -227,6 +228,8 @@ const invalidFunc = (): never => fail("Should not be called when converting gene
 const invalidCrossFieldManager: CrossFieldManager = {
 	set: invalidFunc,
 	get: invalidFunc,
+	onMoveIn: invalidFunc,
+	moveKey: invalidFunc,
 };
 
 export function newGenericChangeset(): GenericChangeset {

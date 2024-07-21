@@ -28,6 +28,10 @@ To get started, install the package by running the following command:
 npm i @fluid-experimental/ot
 ```
 
+## API Documentation
+
+API documentation for **@fluid-experimental/ot** is available at <https://fluidframework.com/docs/apis/ot>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -36,10 +40,6 @@ npm i @fluid-experimental/ot
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluid-experimental/ot** is available at <https://fluidframework.com/docs/apis/ot>.
 
 ## Minimum Client Requirements
 

@@ -16,7 +16,7 @@ import {
 	inCursorNode,
 	isCursor,
 	iterateCursorField,
-	keyAsDetachedField,
+	rootFieldKey,
 } from "../../core/index.js";
 import {
 	assertValidIndex,
@@ -64,11 +64,7 @@ import {
 } from "./lazyEntity.js";
 import { type LazyTreeNode, makeTree } from "./lazyNode.js";
 import { unboxedUnion } from "./unboxed.js";
-import {
-	indexForAt,
-	treeStatusFromAnchorCache,
-	treeStatusFromDetachedField,
-} from "./utilities.js";
+import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -259,23 +255,6 @@ export abstract class LazyField<
 		);
 	}
 
-	public treeStatus(): TreeStatus {
-		if (this[isFreedSymbol]()) {
-			return TreeStatus.Deleted;
-		}
-		const fieldAnchor = this[anchorSymbol];
-		const parentAnchor = fieldAnchor.parent;
-		// If the parentAnchor is undefined it is a detached field.
-		if (parentAnchor === undefined) {
-			return treeStatusFromDetachedField(keyAsDetachedField(fieldAnchor.fieldKey));
-		}
-		const parentAnchorNode = this.context.checkout.forest.anchors.locate(parentAnchor);
-
-		// As the "parentAnchor === undefined" case is handled above, parentAnchorNode should exist.
-		assert(parentAnchorNode !== undefined, 0x77e /* parentAnchorNode must exist. */);
-		return treeStatusFromAnchorCache(parentAnchorNode);
-	}
-
 	public getFieldPath(): FieldUpPath {
 		return this[cursorSymbol].getFieldPath();
 	}
@@ -285,10 +264,19 @@ export abstract class LazyField<
 	 * This path is not valid to hold onto across edits: this must be recalled for each edit.
 	 */
 	public getFieldPathForEditing(): FieldUpPath {
-		if (this.treeStatus() !== TreeStatus.InDocument) {
-			throw new UsageError("Editing only allowed on fields with TreeStatus.InDocument status");
+		if (!this[isFreedSymbol]()) {
+			if (
+				// Only allow editing if we are the root document field...
+				(this.parent === undefined && this[anchorSymbol].fieldKey === rootFieldKey) ||
+				// ...or are under a node in the document
+				(this.parent !== undefined &&
+					treeStatusFromAnchorCache(this.parent.anchorNode) === TreeStatus.InDocument)
+			) {
+				return this.getFieldPath();
+			}
 		}
-		return this.getFieldPath();
+
+		throw new UsageError("Editing only allowed on fields with TreeStatus.InDocument status");
 	}
 }
 
