@@ -25,7 +25,7 @@ import {
 	typeNameSymbol,
 	isFlexTreeNode,
 } from "../feature-libraries/index.js";
-import { type Mutable, fail, isReadonlyArray, oob } from "../util/index.js";
+import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
 
 import { anchorProxy, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
