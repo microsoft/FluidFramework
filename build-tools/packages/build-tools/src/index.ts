@@ -4,12 +4,8 @@
  */
 
 export { GitRepo } from "./common/gitRepo";
-export {
-	type ITypeValidationConfig,
-	FluidRepo,
-	type BrokenCompatTypes,
-} from "./common/fluidRepo";
-export { getResolvedFluidRoot, loadFluidBuildConfig } from "./common/fluidUtils";
+export { FluidRepo } from "./common/fluidRepo";
+export { getResolvedFluidRoot, getRepoBuildConfig } from "./common/fluidUtils";
 export type { Logger } from "./common/logging";
 export { MonoRepo } from "./common/monoRepo";
 export {
@@ -20,11 +16,8 @@ export {
 } from "./common/npmPackage";
 export { Timer } from "./common/timer";
 export type {
-	IFluidBuildConfig,
-	PackageNamePolicyConfig,
-	PolicyConfig,
-	PreviousVersionStyle,
-	ScriptRequirement,
+	IRepoBuildDir,
+	IRepoBuildConfig,
 } from "./common/fluidRepo";
 
 // For repo policy check
@@ -35,6 +28,10 @@ export {
 export { getApiExtractorConfigFilePath, getEsLintConfigFilePath } from "./common/taskUtils";
 export * as TscUtils from "./common/tscUtils";
 
+export {
+	type BrokenCompatTypes,
+	type ITypeValidationConfig,
+} from "./common/typeValidatorConfig";
 export {
 	TypeOnly,
 	MinimalType,
