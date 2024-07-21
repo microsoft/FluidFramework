@@ -154,6 +154,8 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 	for (const testConfig of testConfigs) {
 		// Snapshot refresh life cycle: {"waitForRefresh":false,"timeoutRefreshInOriginalContainer":true,"idCompressorEnabled":"on","savedOps":true,"pendingOps":true,"remoteOps":true,"savedOps2":true,"pendingOps2":true,"summaryWhileOffline":true,"loadOffline":false,"useLoadingGroupIdForSnapshotFetch":true,"timeoutRefreshInLoadedContainer":true}
 		// 280725
+		// {"waitForRefresh":false,"timeoutRefreshInOriginalContainer":true,"idCompressorEnabled":"on","savedOps":true,"pendingOps":true,"remoteOps":true,"savedOps2":true,"pendingOps2":true,"summaryWhileOffline":true,"loadOffline":false,"useLoadingGroupIdForSnapshotFetch":true,"timeoutRefreshInLoadedContainer":true}
+		// 281244
 		it(`Snapshot refresh life cycle: ${JSON.stringify(
 			testConfig ?? "undefined",
 		)}`, async () => {
