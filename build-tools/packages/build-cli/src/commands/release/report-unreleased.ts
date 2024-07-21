@@ -207,6 +207,10 @@ async function updateReportVersions(
 
 function extractBuildNumber(version: string): number {
 	const versionParts: string[] = version.split("-");
+
+	if (version.includes("test")) {
+		return Number.parseInt(versionParts[1], 10);
+	}
 	// Extract the last part of the version, which is the number you're looking for
 	return Number.parseInt(versionParts[versionParts.length - 1], 10);
 }
