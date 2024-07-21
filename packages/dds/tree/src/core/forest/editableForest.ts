@@ -62,7 +62,7 @@ export function initializeForest(
 	const delta: DeltaRoot = deltaForRootInitialization(content);
 	let visitor = forest.acquireVisitor();
 	if (visitAnchors) {
-		assert(forest.anchors.isEmpty(), "anchor set must be empty");
+		assert(forest.anchors.isEmpty(), 0x9b7 /* anchor set must be empty */);
 		const anchorVisitor = forest.anchors.acquireVisitor();
 		visitor = combineVisitors([visitor, anchorVisitor], [anchorVisitor]);
 	}

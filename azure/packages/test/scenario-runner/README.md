@@ -30,6 +30,10 @@ To get started, install the package by running the following command:
 npm i @fluid-experimental/azure-scenario-runner
 ```
 
+## API Documentation
+
+API documentation for **@fluid-experimental/azure-scenario-runner** is available at <https://fluidframework.com/docs/apis/azure-scenario-runner>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -87,10 +91,6 @@ You can add new scenarios by following existing patterns (see `MapTrafficRunner`
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluid-experimental/azure-scenario-runner** is available at <https://fluidframework.com/docs/apis/azure-scenario-runner>.
 
 ## Minimum Client Requirements
 

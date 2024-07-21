@@ -33,6 +33,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `legacy` APIs, import via `@fluidframework/core-utils/legacy`.
 
+## API Documentation
+
+API documentation for **@fluidframework/core-utils** is available at <https://fluidframework.com/docs/apis/core-utils>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -67,10 +71,6 @@ If you want to add code that does not meet these requirements, these other packa
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/core-utils** is available at <https://fluidframework.com/docs/apis/core-utils>.
 
 ## Minimum Client Requirements
 
