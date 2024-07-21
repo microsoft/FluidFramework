@@ -294,5 +294,6 @@ export function getFlubConfig(rootDir: string, noCache = false): FlubConfig {
 	}
 
 	const config = configExplorer.search(rootDir);
+	console.warn(config?.filepath);
 	return config?.config as FlubConfig;
 }
