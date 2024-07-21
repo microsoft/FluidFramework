@@ -13,6 +13,7 @@ import {
 	replaceAtomRevisions,
 } from "../../core/index.js";
 import { type IdAllocator, fail, oob } from "../../util/index.js";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import type { CrossFieldManager } from "./crossFieldQueries.js";
 import type {
@@ -44,21 +45,19 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			let listIndex2 = 0;
 
 			while (listIndex1 < change1.length || listIndex2 < change2.length) {
-				// TODO why are we non null asserting here?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const next1 = change1[listIndex1]!;
-				// TODO why are we non null asserting here?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const next2 = change2[listIndex2]!;
+				const next1 = change1[listIndex1];
+				const next2 = change2[listIndex2];
 				const nodeIndex1 = next1?.index ?? Infinity;
 				const nodeIndex2 = next2?.index ?? Infinity;
 				if (nodeIndex1 < nodeIndex2) {
+					assert(next1 !== undefined, "next1 should not be undefined");
 					composed.push({
 						index: nodeIndex1,
 						nodeChange: composeChildren(next1.nodeChange, undefined),
 					});
 					listIndex1 += 1;
 				} else if (nodeIndex2 < nodeIndex1) {
+					assert(next2 !== undefined, "next2 should not be undefined");
 					composed.push({
 						index: nodeIndex2,
 						nodeChange: composeChildren(undefined, next2.nodeChange),
@@ -66,6 +65,8 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 					listIndex2 += 1;
 				} else {
 					// Both nodes are at the same position.
+					assert(next1 !== undefined, "next1 should not be undefined");
+					assert(next2 !== undefined, "next2 should not be undefined");
 					composed.push({
 						index: nodeIndex1,
 						nodeChange: composeChildren(next1.nodeChange, next2.nodeChange),
