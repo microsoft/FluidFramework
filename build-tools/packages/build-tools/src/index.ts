@@ -15,10 +15,7 @@ export {
 	updatePackageJsonFileAsync,
 } from "./common/npmPackage";
 export { Timer } from "./common/timer";
-export type {
-	IRepoBuildDir,
-	IRepoBuildConfig,
-} from "./common/fluidRepo";
+export type { IRepoBuildConfig } from "./common/fluidRepo";
 
 // For repo policy check
 export {

@@ -13,7 +13,6 @@ import {
 	TscUtils,
 	getEsLintConfigFilePath,
 	getTaskDefinitions,
-	loadFluidBuildConfig,
 	normalizeGlobalTaskDefinitions,
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
@@ -21,6 +20,7 @@ import {
 import JSON5 from "json5";
 import * as semver from "semver";
 import { TsConfigJson } from "type-fest";
+import { getFlubConfig } from "../../config.js";
 import { Handler, readFile } from "./common.js";
 import { FluidBuildDatabase } from "./fluidBuildDatabase.js";
 
@@ -35,8 +35,7 @@ const getFluidBuildTasksTscIgnore = (root: string): Set<string> => {
 	const rootDir = path.resolve(root);
 	let ignore = fluidBuildTasksTscIgnoreTasksCache.get(rootDir);
 	if (ignore === undefined) {
-		const ignoreArray =
-			loadFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreTasks;
+		const ignoreArray = getFlubConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreTasks;
 		ignore = ignoreArray ? new Set(ignoreArray) : new Set();
 		fluidBuildTasksTscIgnoreTasksCache.set(rootDir, ignore);
 	}
@@ -51,7 +50,8 @@ function getFluidPackageMap(root: string): Map<string, Package> {
 	const rootDir = path.resolve(root);
 	let record = repoCache.get(rootDir);
 	if (record === undefined) {
-		const repo = FluidRepo.create(rootDir);
+		const packageManifest = getFlubConfig(rootDir);
+		const repo = new FluidRepo(rootDir, packageManifest.repoPackages);
 		const packageMap = repo.createPackageMap();
 		record = { repo, packageMap };
 		repoCache.set(rootDir, record);
@@ -335,7 +335,7 @@ function hasTaskDependency(
 	taskName: string,
 	searchDeps: readonly string[],
 ): boolean {
-	const rootConfig = loadFluidBuildConfig(root);
+	const rootConfig = getFlubConfig(root);
 	const globalTaskDefinitions = normalizeGlobalTaskDefinitions(rootConfig?.tasks);
 	const taskDefinitions = getTaskDefinitions(json, globalTaskDefinitions, false);
 	// Searched deps that are package specific (e.g. <packageName>#<taskName>)

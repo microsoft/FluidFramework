@@ -9,7 +9,7 @@ import * as path from "node:path";
 import { Flags } from "@oclif/core";
 import { readJson } from "fs-extra/esm";
 
-import { loadFluidBuildConfig } from "@fluidframework/build-tools";
+import { getFlubConfig } from "../../config.js";
 
 import {
 	BaseCommand,
@@ -166,7 +166,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			this.info("Resolving errors if possible.");
 		}
 
-		const manifest = loadFluidBuildConfig(this.flags.root ?? process.cwd());
+		const manifest = getFlubConfig(this.flags.root ?? process.cwd());
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const rawExclusions: string[] =

@@ -127,18 +127,30 @@ export async function getResolvedFluidRoot(buildRoot = false) {
 	return await realpathAsync(resolvedRoot);
 }
 
+const configName = "repoBuild";
 /**
  * A cosmiconfig explorer to find the fluidBuild config. First looks for javascript config files and falls back to the
  * fluidBuild property in package.json. We create a single explorer here because cosmiconfig internally caches configs
  * for performance. The cache is per-explorer, so re-using the same explorer is a minor perf improvement.
  */
-const configExplorer = cosmiconfigSync("fluidBuild", {
-	searchPlaces: [`fluidBuild.config.cjs`, `fluidBuild.config.js`, "package.json"],
-	packageProp: "fluidBuild",
+const configExplorer = cosmiconfigSync(configName, {
+	searchPlaces: [
+		`${configName}.config.cjs`,
+		`${configName}.config.js`,
+		// Back-compat entries - we'll load settings from the old fluidBuild config files if present.
+		"fluidBuild.config.cjs",
+		"fluidBuild.config.js",
+		"package.json",
+	],
+	packageProp: [
+		configName,
+		// Back-compat entry
+		"fluidBuild",
+	],
 });
 
 /**
- * Get an IFluidBuildConfig from the fluidBuild property in a package.json file, or from fluidBuild.config.[c]js.
+ * Get an IRepoBuildConfig from the fluidBuild property in a package.json file, or from fluidBuild.config.[c]js.
  *
  * @param rootDir - The path to the root package.json to load.
  * @param noCache - If true, the config cache will be cleared and the config will be reloaded.

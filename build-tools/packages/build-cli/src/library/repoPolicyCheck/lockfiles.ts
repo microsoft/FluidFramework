@@ -5,13 +5,13 @@
 
 import { unlinkSync } from "node:fs";
 import path from "node:path";
-import { IFluidBuildConfig, loadFluidBuildConfig } from "@fluidframework/build-tools";
+import { IFlubConfig, getFlubConfig } from "../../config.js";
 import { Handler } from "./common.js";
 
 const lockFilePattern = /.*?package-lock\.json$/i;
 let _knownPaths: string[] | undefined;
 
-const getKnownPaths = (manifest: IFluidBuildConfig): string[] => {
+const getKnownPaths = (manifest: IFlubConfig): string[] => {
 	if (_knownPaths === undefined) {
 		// Add the root path (.) because a lockfile is expected there
 		_knownPaths = ["."];
@@ -46,7 +46,7 @@ export const handlers: Handler[] = [
 		name: "extraneous-lockfiles",
 		match: lockFilePattern,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
-			const manifest = loadFluidBuildConfig(root);
+			const manifest = getFlubConfig(root);
 			const knownPaths: string[] = getKnownPaths(manifest);
 
 			if (
@@ -59,7 +59,7 @@ export const handlers: Handler[] = [
 			return undefined;
 		},
 		resolver: (file: string, root: string): { resolved: boolean; message?: string } => {
-			const manifest = loadFluidBuildConfig(root);
+			const manifest = getFlubConfig(root);
 			const knownPaths: string[] = getKnownPaths(manifest);
 
 			if (

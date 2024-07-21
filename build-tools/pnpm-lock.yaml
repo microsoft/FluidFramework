@@ -39,7 +39,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ~0.40.0
-        version: 0.40.0
+        version: 0.40.0(@types/node@18.18.6)
       '@microsoft/api-documenter':
         specifier: ^7.22.24
         version: 7.22.24
@@ -136,6 +136,9 @@ importers:
       change-case:
         specifier: ^3.1.0
         version: 3.1.0
+      cosmiconfig:
+        specifier: ^8.3.6
+        version: 8.3.6(typescript@5.4.5)
       danger:
         specifier: ^11.3.0
         version: 11.3.0
@@ -341,9 +344,6 @@ importers:
 
   packages/build-tools:
     dependencies:
-      '@fluid-tools/version-tools':
-        specifier: workspace:~
-        version: link:../version-tools
       '@fluidframework/bundle-size-tools':
         specifier: workspace:~
         version: link:../bundle-size-tools
@@ -363,8 +363,8 @@ importers:
         specifier: ^2.4.2
         version: 2.4.2
       cosmiconfig:
-        specifier: ^8.2.0
-        version: 8.2.0
+        specifier: ^8.3.6
+        version: 8.3.6(typescript@5.4.5)
       danger:
         specifier: ^11.3.0
         version: 11.3.0
@@ -1890,8 +1890,8 @@ packages:
       '@commitlint/types': 17.4.4
       '@types/node': 18.18.7
       chalk: 4.1.2
-      cosmiconfig: 8.2.0
-      cosmiconfig-typescript-loader: 4.2.0(@types/node@18.18.7)(cosmiconfig@8.2.0)(ts-node@10.9.1)(typescript@5.4.5)
+      cosmiconfig: 8.3.6(typescript@5.4.5)
+      cosmiconfig-typescript-loader: 4.2.0(@types/node@18.18.7)(cosmiconfig@8.3.6)(ts-node@10.9.1)(typescript@5.4.5)
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       lodash.uniq: 4.5.0
@@ -1914,8 +1914,8 @@ packages:
       '@commitlint/types': 18.1.0
       '@types/node': 18.18.7
       chalk: 4.1.2
-      cosmiconfig: 8.2.0
-      cosmiconfig-typescript-loader: 5.0.0(@types/node@18.18.7)(cosmiconfig@8.2.0)(typescript@5.4.5)
+      cosmiconfig: 8.3.6(typescript@5.4.5)
+      cosmiconfig-typescript-loader: 5.0.0(@types/node@18.18.7)(cosmiconfig@8.3.6)(typescript@5.4.5)
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       lodash.uniq: 4.5.0
@@ -2095,7 +2095,7 @@ packages:
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
       '@fluid-tools/version-tools': 0.40.0
-      '@fluidframework/build-tools': 0.40.0
+      '@fluidframework/build-tools': 0.40.0(@types/node@18.18.6)
       '@fluidframework/bundle-size-tools': 0.40.0
       '@microsoft/api-extractor': 7.45.1(@types/node@18.18.6)
       '@oclif/core': 3.26.6
@@ -2104,7 +2104,7 @@ packages:
       '@oclif/plugin-help': 6.0.21
       '@oclif/plugin-not-found': 3.1.7
       '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.59.5
+      '@rushstack/node-core-library': 3.59.5(@types/node@18.18.6)
       async: 3.2.4
       chalk: 5.3.0
       change-case: 3.1.0
@@ -2175,48 +2175,6 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools@0.40.0:
-    resolution: {integrity: sha512-4F5tNPlwrlD2QkaJgnkkECy3aWf7TR6fjbPI9RhnFJw2Fo6ZkamoIMWyliqSyiJwrAeLDvsdZsVgVRscjmZTBw==}
-    engines: {node: '>=18.17.1'}
-    hasBin: true
-    dependencies:
-      '@fluid-tools/version-tools': 0.40.0
-      '@fluidframework/bundle-size-tools': 0.40.0
-      '@manypkg/get-packages': 2.2.0
-      '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.59.5
-      async: 3.2.4
-      chalk: 2.4.2
-      cosmiconfig: 8.2.0
-      danger: 11.3.0
-      date-fns: 2.30.0
-      debug: 4.3.4(supports-color@8.1.1)
-      detect-indent: 6.1.0
-      find-up: 7.0.0
-      fs-extra: 11.2.0
-      glob: 7.2.3
-      ignore: 5.2.4
-      json5: 2.2.3
-      lodash: 4.17.21
-      lodash.isequal: 4.5.0
-      picomatch: 2.3.1
-      rimraf: 4.4.1
-      semver: 7.6.2
-      sort-package-json: 1.57.0
-      ts-morph: 22.0.0
-      type-fest: 2.19.0
-      typescript: 5.4.5
-      yaml: 2.3.1
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - encoding
-      - esbuild
-      - supports-color
-      - uglify-js
-      - webpack-cli
-    dev: true
-
   /@fluidframework/build-tools@0.40.0(@types/node@18.18.6):
     resolution: {integrity: sha512-4F5tNPlwrlD2QkaJgnkkECy3aWf7TR6fjbPI9RhnFJw2Fo6ZkamoIMWyliqSyiJwrAeLDvsdZsVgVRscjmZTBw==}
     engines: {node: '>=18.17.1'}
@@ -2229,7 +2187,7 @@ packages:
       '@rushstack/node-core-library': 3.59.5(@types/node@18.18.6)
       async: 3.2.4
       chalk: 2.4.2
-      cosmiconfig: 8.2.0
+      cosmiconfig: 8.3.6(typescript@5.4.5)
       danger: 11.3.0
       date-fns: 2.30.0
       debug: 4.3.4(supports-color@8.1.1)
@@ -2717,7 +2675,7 @@ packages:
     dependencies:
       '@microsoft/api-extractor-model': 7.27.4
       '@microsoft/tsdoc': 0.14.2
-      '@rushstack/node-core-library': 3.59.5
+      '@rushstack/node-core-library': 3.59.5(@types/node@18.18.6)
       '@rushstack/ts-command-line': 4.15.1
       colors: 1.2.5
       js-yaml: 3.13.1
@@ -2731,7 +2689,7 @@ packages:
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.59.5
+      '@rushstack/node-core-library': 3.59.5(@types/node@18.18.6)
     transitivePeerDependencies:
       - '@types/node'
     dev: true
@@ -3200,23 +3158,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
       - typescript
-    dev: true
-
-  /@rushstack/node-core-library@3.59.5:
-    resolution: {integrity: sha512-1IpV7LufrI1EoVO8hYsb3t6L8L+yp40Sa0OaOV2CIu1zx4e6ZeVNaVIEXFgMXBKdGXkAh21MnCaIzlDNpG6ZQw==}
-    peerDependencies:
-      '@types/node': '*'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-    dependencies:
-      colors: 1.2.5
-      fs-extra: 7.0.1
-      import-lazy: 4.0.0
-      jju: 1.4.0
-      resolve: 1.22.8
-      semver: 7.3.8
-      z-schema: 5.0.5
     dev: true
 
   /@rushstack/node-core-library@3.59.5(@types/node@18.18.6):
@@ -5814,7 +5755,7 @@ packages:
   /core-util-is@1.0.3:
     resolution: {integrity: sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==}
 
-  /cosmiconfig-typescript-loader@4.2.0(@types/node@18.18.7)(cosmiconfig@8.2.0)(ts-node@10.9.1)(typescript@5.4.5):
+  /cosmiconfig-typescript-loader@4.2.0(@types/node@18.18.7)(cosmiconfig@8.3.6)(ts-node@10.9.1)(typescript@5.4.5):
     resolution: {integrity: sha512-NkANeMnaHrlaSSlpKGyvn2R4rqUDeE/9E5YHx+b4nwo0R8dZyAqcih8/gxpCZvqWP9Vf6xuLpMSzSgdVEIM78g==}
     engines: {node: '>=12', npm: '>=6'}
     peerDependencies:
@@ -5827,12 +5768,12 @@ packages:
         optional: true
     dependencies:
       '@types/node': 18.18.7
-      cosmiconfig: 8.2.0
+      cosmiconfig: 8.3.6(typescript@5.4.5)
       ts-node: 10.9.1(@types/node@18.18.7)(typescript@5.4.5)
       typescript: 5.4.5
     dev: true
 
-  /cosmiconfig-typescript-loader@5.0.0(@types/node@18.18.7)(cosmiconfig@8.2.0)(typescript@5.4.5):
+  /cosmiconfig-typescript-loader@5.0.0(@types/node@18.18.7)(cosmiconfig@8.3.6)(typescript@5.4.5):
     resolution: {integrity: sha512-+8cK7jRAReYkMwMiG+bxhcNKiHJDM6bR9FD/nGBXOWdMLuYawjF5cGrtLilJ+LGd3ZjCXnJjR5DkfWPoIVlqJA==}
     engines: {node: '>=v16'}
     requiresBuild: true
@@ -5845,7 +5786,7 @@ packages:
         optional: true
     dependencies:
       '@types/node': 18.18.7
-      cosmiconfig: 8.2.0
+      cosmiconfig: 8.3.6(typescript@5.4.5)
       jiti: 1.20.0
       typescript: 5.4.5
     dev: true
@@ -5861,14 +5802,20 @@ packages:
       path-type: 4.0.0
     dev: true
 
-  /cosmiconfig@8.2.0:
-    resolution: {integrity: sha512-3rTMnFJA1tCOPwRxtgF4wd7Ab2qvDbL8jX+3smjIbS4HlZBagTlpERbdN7iAbWlrfxE3M8c27kTwTawQ7st+OQ==}
+  /cosmiconfig@8.3.6(typescript@5.4.5):
+    resolution: {integrity: sha512-kcZ6+W5QzcJ3P1Mt+83OUv/oHFqZHIx8DuxG6eZ5RGMERoLqp4BuGjhHLYGK+Kf5XVkQvqBSmAy/nGWN3qDgEA==}
     engines: {node: '>=14'}
+    peerDependencies:
+      typescript: '>=4.9.5'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
     dependencies:
       import-fresh: 3.3.0
       js-yaml: 4.1.0
       parse-json: 5.2.0
       path-type: 4.0.0
+      typescript: 5.4.5
 
   /create-require@1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}

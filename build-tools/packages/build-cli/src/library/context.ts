@@ -5,16 +5,10 @@
 
 import { PackageName } from "@rushstack/node-core-library";
 
-import {
-	FluidRepo,
-	GitRepo,
-	IFluidBuildConfig,
-	Package,
-	loadFluidBuildConfig,
-} from "@fluidframework/build-tools";
-
 import { ReleaseVersion } from "@fluid-tools/version-tools";
+import { FluidRepo, GitRepo, Package } from "@fluidframework/build-tools";
 import * as semver from "semver";
+import { IFlubConfig, getFlubConfig } from "../config.js";
 
 /**
  * Represents a release version and its release date, if applicable.
@@ -91,7 +85,7 @@ export function isMonoRepoKind(str: string | undefined): str is MonoRepoKind {
 export class Context {
 	public readonly repo: FluidRepo;
 	public readonly fullPackageMap: Map<string, Package>;
-	public readonly rootFluidBuildConfig: IFluidBuildConfig;
+	public readonly rootFlubConfig: IFlubConfig;
 	private readonly newBranches: string[] = [];
 
 	constructor(
@@ -100,14 +94,14 @@ export class Context {
 		public readonly originalBranchName: string,
 	) {
 		// Load the package
-		this.repo = FluidRepo.create(this.gitRepo.resolvedRoot);
+		this.rootFlubConfig = getFlubConfig(this.gitRepo.resolvedRoot);
+		this.repo = new FluidRepo(this.gitRepo.resolvedRoot, this.rootFlubConfig.repoPackages);
 		this.fullPackageMap = this.repo.createPackageMap();
-		this.rootFluidBuildConfig = loadFluidBuildConfig(this.repo.resolvedRoot);
 	}
 
 	/**
 	 * Create a branch with name. throw an error if the branch already exist.
-	 * @deprecated ??
+	 * @deprecated Use GitRepository instead.
 	 */
 	public async createBranch(branchName: string): Promise<void> {
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions

@@ -107,7 +107,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 		const filtered = filteredPackages
 			.reverse()
 			.filter((item): item is ListItem => {
-				const config = context.rootFluidBuildConfig?.policy?.packageNames;
+				const config = context.rootFlubConfig?.policy?.packageNames;
 				if (config === undefined) {
 					// exits the process
 					this.error(`No fluid-build package name policy config found.`);
