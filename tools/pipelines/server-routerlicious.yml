@@ -46,6 +46,9 @@ parameters:
   type: string
   default: repo
 
+- name: buildDirectory
+  type: string
+
 trigger:
   branches:
     include:

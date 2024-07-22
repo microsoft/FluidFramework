@@ -6,6 +6,7 @@
 parameters:
   - name: buildDirectory
     type: string
+    default: server/gitrest
 
   - name: containerName
     type: string
