@@ -6,7 +6,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
-import { assert, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
 	AllPackagesSelectionCriteria,
 	PackageFilterOptions,

@@ -5,6 +5,7 @@
 
 import { MonoRepo, Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
+import { PackageName } from "@rushstack/node-core-library";
 // eslint-disable-next-line import/no-deprecated
 import { Context, isMonoRepoKind } from "./library/index.js";
 
@@ -33,6 +34,6 @@ export const findPackageOrReleaseGroup = (
 
 	return (
 		context.fullPackageMap.get(name) ??
-		context.independentPackages.find((pkg) => pkg.nameUnscoped === name)
+		context.independentPackages.find((pkg) => PackageName.getUnscopedName(pkg.name) === name)
 	);
 };

@@ -21,7 +21,7 @@ If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), 
 To get started, install the package by running the following command:
 
 ```bash
-npm i @test/test-package -D
+npm i @fluidframework/test-package -D
 ```
 
 ## Importing from this package
@@ -29,11 +29,15 @@ npm i @test/test-package -D
 This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
 For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
 
-To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@test/test-package` like normal.
+To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/test-package` like normal.
 
-To access the `alpha` APIs, import via `@test/test-package/alpha`.
+To access the `alpha` APIs, import via `@fluidframework/test-package/alpha`.
 
-To access the `legacy` APIs, import via `@test/test-package/legacy`.
+To access the `legacy` APIs, import via `@fluidframework/test-package/legacy`.
+
+## API Documentation
+
+API documentation for **@fluidframework/test-package** is available at <https://fluidframework.com/docs/apis/test-package>.
 
 <!-- prettier-ignore-end -->
 

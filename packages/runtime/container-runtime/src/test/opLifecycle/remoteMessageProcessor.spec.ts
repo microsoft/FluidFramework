@@ -16,6 +16,7 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { ContainerMessageType } from "../../index.js";
 import {
 	type BatchMessage,
+	ensureContentsDeserialized,
 	type IBatch,
 	OpCompressor,
 	OpDecompressor,
@@ -172,7 +173,8 @@ describe("RemoteMessageProcessor", () => {
 					referenceSequenceNumber: message.referenceSequenceNumber,
 				} as ISequencedDocumentMessage;
 
-				const processResult = messageProcessor.process(inboundMessage);
+				ensureContentsDeserialized(inboundMessage, true, () => {});
+				const processResult = messageProcessor.process(inboundMessage, () => {});
 
 				// It'll be undefined for the first n-1 chunks if chunking is enabled
 				if (processResult === undefined) {
@@ -225,7 +227,8 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		const processResult = messageProcessor.process(documentMessage)?.messages ?? [];
+		ensureContentsDeserialized(documentMessage, true, () => {});
+		const processResult = messageProcessor.process(documentMessage, () => {})?.messages ?? [];
 
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
 		const result = processResult[0];
@@ -243,7 +246,7 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		const processResult = messageProcessor.process(documentMessage)?.messages ?? [];
+		const processResult = messageProcessor.process(documentMessage, () => {})?.messages ?? [];
 
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
 		const result = processResult[0];
@@ -280,7 +283,10 @@ describe("RemoteMessageProcessor", () => {
 			},
 		};
 		const messageProcessor = getMessageProcessor();
-		const result = messageProcessor.process(groupedBatch as ISequencedDocumentMessage);
+		const result = messageProcessor.process(
+			groupedBatch as ISequencedDocumentMessage,
+			() => {},
+		);
 
 		const expected = [
 			{
