@@ -14,7 +14,7 @@
 
 ## Introduction
 
-This document provides a conceptual overview of summarization without going into a lot of technical or implementation details. It describes what summaries are, how / when they are generated, and what they look like. The goal is for this to be an entry point into summarization for users and developers alike.
+This document provides a conceptual overview of summarization. It describes what summaries are, how / when they are generated, and what they look like. The goal is for this to be an entry point into summarization for users and developers alike.
 
 ### Summary vs snapshot
 
@@ -50,29 +50,28 @@ The lifecycle of a summary starts when a "parent summarizer" client is elected.
 -   The parent summarizer spawns a non-interactive summarizer client.
 -   The summarizer client periodically starts a summary as per heuristics. A summary happens at a particular sequence number called the "summary sequence number" or reference sequence number for the summary.
 -   The container runtime (hereafter runtime) generates a summary tree (described in the ["What does a summary look like?"](#what-does-a-summary-look-like) section below).
--   The runtime uploads the summary tree to the Fluid storage service which returns a handle (unique id) to the summary if the upload is successful. Otherwise, it returns a failure.
+-   The runtime uploads the summary tree to the Fluid storage service which returns a handle (unique id) to the summary if the upload is successful. Otherwise, it returns a failure. The runtime also includes the handle of the last successful summary. If this information is incorrect, the service will reject this summary. This is done to ensure that [incremental summaries](#incremental-summaries) are correct.
 -   The runtime submits a "summarize" op to the Fluid ordering service containing the uploaded summary handle and the summary sequence number.
--   The ordering service stamps it with a sequence number (like any other op) and broadcasts the summarize op.
--   Another service on the server responds to the summarize op.
-    -   If the summary is accepted, it sends a "summary ack" with the summary sequence number and a summary handle. This handle may or may not be the same as the one in summary op depending on whether this is a single-commit or two-commit summary. More details on this below.
+-   The ordering service stamps it with a sequence number (like any other op) and broadcasts the summarize op. This creates a record in the op log that a summary was submitted and it lets other clients know about it. Non-summarizer clients don't do anything with the summary op. The summarizer client that submitted it processes it and waits for a summary ack / nack. Future summarizer clients also process them and validates that a corresponding summary ack / nack is received.
+-   The ordering service then responds to the summarize op:
+    -   If the summary is accepted, it sends a "summary ack" with the summary sequence number and a summary handle.
     -   If the summary is rejected, it sends a "summary nack" with the details of the summary op.
--   The runtime completes the summary process on receiving the summary ack / nack. The runtime has a timeout called "maxAckWaitTime" and if the summary op, ack or nack is not received within this time, it will fail this summary.
-
-### Single-commit vs two-commit summaries
-
-By default, Fluid uses "two-commit summaries" mode where the two commits refer to the storage committing the summary twice and returning two different handles for it - One when the summary is uploaded and second, on responding to the summary op via a summary ack. In this mode, when the server receives the summary op, it augments the corresponding summary with a "protocol" blob hence generating a new commit and new handle for this summary which it returns in the summary ack.
-
-Fluid is switching to "single-commit summary" mode where the client adds the "protocol" blob when uploading the summary. Thus, the server doesn't need to augment the summary and the summary ack is no longer required. As soon as the summary is uploaded (first commit), the summary process is complete. The "summarize" op then is just a way to indicate that a summary happened, and it has details of the summary
+-   The runtime processes the summary ack or nack completes the summary process as success or failure accordingly.
+    -   If the summary is successful, the handle in the ack becomes the last successful summary's handle which is used when upload summaries as described earlier.
+    -   If the summary failed, the summarizer client closes and the summary election process starts to elect a new one.
+-   The runtime has a timeout called "maxAckWaitTime" and if the summary op, ack or nack is not received within this time, it will fail this summary.
 
 ### Incremental summaries
 
 Summaries are incremental, i.e., if an object (or node) did not change since the last summary, it doesn't have to re-summarize its entire contents. Fluid supports the concept of a summary handle defined in [this file][summary-protocol]. A handle is a path to a subtree in a snapshot and it allows objects to reference a subtree in the previous snapshot, which is essentially an instruction to storage to find that subtree and populate into new summary.
 
-Say that a data store or DDS did not change since the last summary, it doesn't have to go through the whole summary process described above. It can instead return an ISummaryHandle with path to its subtree in the previous snapshot. The same applies to other types of content like a single content blob within an object's summary tree.
+So, say that a data store or DDS did not change since the last summary, it doesn't have to go through the whole summary process described above. It can instead return an ISummaryHandle with path to its subtree in the last successful summary. The same applies to other types of content like a single content blob within an object's summary tree.
+
+For incremental summary, objects diff their content against the last summary to determine whether to send a summary handle. So, it's crucial that the last summary information be correct or else the summary will be incorrect. So, during upload, the last summary's handle is also sent and the service will validate that it's correct.
 
 ### Resiliency
 
-The summarization process is designed to be resilient - Basically, a document will eventually summarize and make progress even if there are intermittent failures or disruptions. Some examples of steps taken to achieve this:
+The summarization process is designed to be resilient - A document will eventually summarize and make progress even if there are intermittent failures or disruptions. Some examples of steps taken to achieve this:
 
 -   Last summary - Usually, if the "parent summarizer" client disconnects or shuts down, the "summarizer" client also shuts down and the summarizer election process begins. However, if there a certain number of un-summarized ops, the summarizer client will perform a "last summary" even if the parent shuts down. This is done to make progress in scenarios where new summarizer clients are closed quickly because the parent summarizer keeps disconnecting repeatedly.
 -   Retries - The summarizer has a retry mechanism which can identify certain types of intermittent failures either in the client or in the server. It will retry the summary attempt for these failures a certain number of times. This helps in cases where there are intermittent failures such as throttling errors from the server which goes away after waiting for a while.
