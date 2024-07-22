@@ -1,5 +1,5 @@
 ---
-"@fluidframework/server-lambdas": major
+"@fluidframework/server-lambdas": minor
 ---
 
 Orderer Connection "error" listener disposed on disconnect
