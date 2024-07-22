@@ -15,6 +15,7 @@ import {
 	NoopMarkType,
 } from "./types.js";
 import type { MoveMarkEffect } from "./helperTypes.js";
+import { isDetach } from "./utils.js";
 
 export function replaceRevisions(
 	changeset: Changeset,
@@ -44,6 +45,13 @@ function updateMark(
 		updatedMark.changes = replaceAtomRevisions(mark.changes, revisionsToReplace, newRevision);
 	}
 
+	if (isDetach(updatedMark) && updatedMark.idOverride !== undefined) {
+		updatedMark.idOverride = replaceAtomRevisions(
+			updatedMark.idOverride,
+			revisionsToReplace,
+			newRevision,
+		);
+	}
 	return updatedMark;
 }
 
