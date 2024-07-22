@@ -78,6 +78,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@ff-internal/aria-logger": "^0.0.20",
 		"@fluid-experimental/attributor": "workspace:~",
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluid-experimental/tree": "workspace:~",

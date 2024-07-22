@@ -208,7 +208,8 @@ describeCompat(
 				});
 			});
 
-			it("Test Assert 0x1a6 should not happen with MixinSearch", async () => {
+			// 276671
+			it.only("Test Assert 0x1a6 should not happen with MixinSearch", async () => {
 				const { summarizer } = await loadSummarizer();
 
 				const dataStoreA = await dataStoreFactory1.createInstance(

@@ -408,7 +408,8 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 	}
 
-	it("Can summarize after hitting nack on unsummarized ops", async function () {
+	// 276486, 278426, 278025, 276732
+	it.only("Can summarize after hitting nack on unsummarized ops", async function () {
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
@@ -654,6 +655,7 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		);
 	});
 
+	// 281366
 	itExpects(
 		"Non single commit summary/Last summary should be discarded due to missing SummaryOp",
 		[{ eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed" }],
