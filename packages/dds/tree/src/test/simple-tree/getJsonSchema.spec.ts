@@ -85,66 +85,67 @@ describe.only("getJsonSchema", () => {
 		validator(["Hello", 42, "world"], false);
 	});
 
-	it.skip("Map schema", () => {
+	it("Map schema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.map("map", schemaFactory.string) {}
 
-		const actual = getJsonSchema(Schema);
+		assert.throws(() => getJsonSchema(Schema));
+		// TODO
+		// const actual = getJsonSchema(Schema);
+		// const expected: TreeJsonSchema = {
+		// 	definitions: {
+		// 		"test.map": {
+		// 			type: "object",
+		// 			kind: "map",
+		// 			patternProperties: {
+		// 				"^(.*)+$": { anyOf: [{ $ref: "#/definitions/com.fluidframework.leaf.string" }] },
+		// 			},
+		// 		},
+		// 		"com.fluidframework.leaf.string": {
+		// 			type: "string",
+		// 			kind: "leaf",
+		// 		},
+		// 	},
+		// 	anyOf: [
+		// 		{
+		// 			$ref: "#/definitions/test.map",
+		// 		},
+		// 	],
+		// };
+		// assert.deepEqual(actual, expected);
 
-		const expected: TreeJsonSchema = {
-			definitions: {
-				"test.map": {
-					type: "object",
-					kind: "map",
-					patternProperties: {
-						"^(.*)+$": { anyOf: [{ $ref: "#/definitions/com.fluidframework.leaf.string" }] },
-					},
-				},
-				"com.fluidframework.leaf.string": {
-					type: "string",
-					kind: "leaf",
-				},
-			},
-			anyOf: [
-				{
-					$ref: "#/definitions/test.map",
-				},
-			],
-		};
-		assert.deepEqual(actual, expected);
+		// // Verify that the generated schema is valid.
+		// const validator = getJsonValidator(actual);
 
-		// Verify that the generated schema is valid.
-		const validator = getJsonValidator(actual);
-
-		// Verify expected data validation behavior.
-		validator(
-			hydrate(
-				Schema,
-				new Map([
-					["foo", "Hello"],
-					["bar", "World"],
-				]),
-			),
-			true,
-		);
-		validator({}, true);
-		validator(
-			{
-				foo: "Hello",
-				bar: "World",
-			},
-			true,
-		);
-		validator("Hello world", false);
-		validator([], false);
-		validator(
-			{
-				foo: "Hello",
-				bar: "World",
-				baz: 42,
-			},
-			false,
-		);
+		// // Verify expected data validation behavior.
+		// validator(
+		// 	hydrate(
+		// 		Schema,
+		// 		new Map([
+		// 			["foo", "Hello"],
+		// 			["bar", "World"],
+		// 		]),
+		// 	),
+		// 	true,
+		// );
+		// validator({}, true);
+		// validator(
+		// 	{
+		// 		foo: "Hello",
+		// 		bar: "World",
+		// 	},
+		// 	true,
+		// );
+		// validator("Hello world", false);
+		// validator([], false);
+		// validator(
+		// 	{
+		// 		foo: "Hello",
+		// 		bar: "World",
+		// 		baz: 42,
+		// 	},
+		// 	false,
+		// );
 	});
 
 	it("Object schema", () => {
