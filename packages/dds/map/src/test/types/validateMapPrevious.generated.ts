@@ -52,15 +52,6 @@ declare type old_as_current_for_Interface_ICreateInfo = requireAssignableTo<Type
 declare type current_as_old_for_Interface_ICreateInfo = requireAssignableTo<TypeOnly<current.ICreateInfo>, TypeOnly<old.ICreateInfo>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IDirectory": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IDirectory = requireAssignableTo<TypeOnly<old.IDirectory>, TypeOnly<current.IDirectory>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -86,15 +77,6 @@ declare type old_as_current_for_Interface_IDirectoryDataObject = requireAssignab
  * "Interface_IDirectoryDataObject": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IDirectoryDataObject = requireAssignableTo<TypeOnly<current.IDirectoryDataObject>, TypeOnly<old.IDirectoryDataObject>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IDirectoryEvents": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IDirectoryEvents = requireAssignableTo<TypeOnly<old.IDirectoryEvents>, TypeOnly<current.IDirectoryEvents>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -124,15 +106,6 @@ declare type old_as_current_for_Interface_IDirectoryNewStorageFormat = requireAs
 declare type current_as_old_for_Interface_IDirectoryNewStorageFormat = requireAssignableTo<TypeOnly<current.IDirectoryNewStorageFormat>, TypeOnly<old.IDirectoryNewStorageFormat>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IDirectoryValueChanged": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IDirectoryValueChanged = requireAssignableTo<TypeOnly<old.IDirectoryValueChanged>, TypeOnly<current.IDirectoryValueChanged>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -160,15 +133,6 @@ declare type old_as_current_for_Interface_ISerializableValue = requireAssignable
 declare type current_as_old_for_Interface_ISerializableValue = requireAssignableTo<TypeOnly<current.ISerializableValue>, TypeOnly<old.ISerializableValue>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ISharedDirectory": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_ISharedDirectory = requireAssignableTo<TypeOnly<old.ISharedDirectory>, TypeOnly<current.ISharedDirectory>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -176,15 +140,6 @@ declare type old_as_current_for_Interface_ISharedDirectory = requireAssignableTo
  * "Interface_ISharedDirectory": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_ISharedDirectory = requireAssignableTo<TypeOnly<current.ISharedDirectory>, TypeOnly<old.ISharedDirectory>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ISharedDirectoryEvents": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_ISharedDirectoryEvents = requireAssignableTo<TypeOnly<old.ISharedDirectoryEvents>, TypeOnly<current.ISharedDirectoryEvents>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

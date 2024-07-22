@@ -60,6 +60,7 @@ import {
 	tryGetFromNestedMap,
 	type NestedMap,
 	type RangeQueryResult,
+	oob,
 } from "../../util/index.js";
 import {
 	type TreeChunk,
@@ -211,16 +212,12 @@ export class ModularChangeFamily
 		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
 		const idState: IdAllocationState = { maxId };
 
-		return changes.reduce(
-			(change1, change2) =>
-				makeAnonChange(this.composePair(change1, change2, revInfos, idState)),
-			makeAnonChange({
-				fieldChanges: new Map(),
-				nodeChanges: new Map(),
-				nodeToParent: new Map(),
-				nodeAliases: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-			}),
+		if (changes.length === 0) {
+			return makeModularChangeset();
+		}
+
+		return changes.reduce((change1, change2) =>
+			makeAnonChange(this.composePair(change1, change2, revInfos, idState)),
 		).change;
 	}
 
@@ -2760,10 +2757,9 @@ function revisionFromTaggedChange(
 function revisionFromRevInfos(
 	revInfos: undefined | readonly RevisionInfo[],
 ): RevisionTag | undefined {
-	if (revInfos === undefined || revInfos.length !== 1) {
-		return undefined;
+	if (revInfos?.length === 1) {
+		return (revInfos[0] ?? oob()).revision;
 	}
-	return revInfos[0].revision;
 }
 
 function mergeBTrees<K, V>(tree1: BTree<K, V>, tree2: BTree<K, V>): BTree<K, V> {

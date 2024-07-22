@@ -12,7 +12,7 @@ import {
 	type DeltaMark,
 	areEqualChangeAtomIds,
 } from "../../core/index.js";
-import type { Mutable } from "../../util/index.js";
+import { oob, type Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 
 import { isMoveIn, isMoveOut } from "./moveEffectTable.js";
@@ -171,7 +171,7 @@ export function sequenceFieldToDelta(
 	}
 	// Remove trailing no-op marks
 	while (local.length > 0) {
-		const lastMark = local[local.length - 1];
+		const lastMark = local[local.length - 1] ?? oob();
 		if (
 			lastMark.attach !== undefined ||
 			lastMark.detach !== undefined ||

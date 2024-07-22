@@ -92,15 +92,15 @@ export function composeDeep(
 ): WrappedChange {
 	const metadata = revisionMetadata ?? defaultRevisionMetadataFromChanges(changes);
 
-	return changes.reduce(
-		(change1, change2) =>
-			makeAnonChange(
-				ChangesetWrapper.compose(change1, change2, (c1, c2, composeChild) =>
-					composePair(c1.change, c2.change, composeChild, metadata, idAllocatorFromMaxId()),
+	return changes.length === 0
+		? ChangesetWrapper.create([])
+		: changes.reduce((change1, change2) =>
+				makeAnonChange(
+					ChangesetWrapper.compose(change1, change2, (c1, c2, composeChild) =>
+						composePair(c1.change, c2.change, composeChild, metadata, idAllocatorFromMaxId()),
+					),
 				),
-			),
-		makeAnonChange(ChangesetWrapper.create([])),
-	).change;
+			).change;
 }
 
 export function composeNoVerify(
