@@ -6,7 +6,7 @@
 To get started, install the package by running the following command:
 
 ```bash
-npm i @test/test-package
+npm i @fluidframework/test-package
 ```
 
 <!-- prettier-ignore-end -->
@@ -23,7 +23,7 @@ npm i @test/test-package
 To get started, install the package by running the following command:
 
 ```bash
-npm i @test/test-package -D
+npm i @fluidframework/test-package -D
 ```
 
 <!-- prettier-ignore-end -->

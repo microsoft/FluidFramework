@@ -40,10 +40,12 @@ const generatePrivatePackageNotice = () => {
 /**
  * Generates simple Markdown contents indicating implications of the specified kind of package scope.
  *
- * @param {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE"} kind - Scope kind to switch on.
+ * @param {string} kind - Scope kind to switch on.
  * EXPERIMENTAL: See templates/Experimental-Package-Notice-Template.md.
  * INTERNAL: See templates/Internal-Package-Notice-Template.md.
  * PRIVATE: See templates/Private-Package-Notice-Template.md.
+ *
+ * @returns The appropriate notice, if applicable. Otherwise, `undefined`.
  */
 const generatePackageScopeNotice = (kind) => {
 	switch (kind) {
@@ -54,7 +56,7 @@ const generatePackageScopeNotice = (kind) => {
 		case "PRIVATE":
 			return generatePrivatePackageNotice();
 		default:
-			throw new Error(`Unrecognized package scope kind: ${kind}`);
+			return undefined;
 	}
 };
 
@@ -85,9 +87,7 @@ function packageScopeNoticeTransform(content, options, config) {
 
 	// Note: if the user specified an explicit scope, that takes precedence over the package namespace.
 	const scopeKindWithInheritance = scopeKind ?? getScopeKindFromPackage(packageName);
-	if (scopeKindWithInheritance !== undefined) {
-		return generatePackageScopeNotice(scopeKindWithInheritance);
-	}
+	return generatePackageScopeNotice(scopeKindWithInheritance);
 }
 
 module.exports = {

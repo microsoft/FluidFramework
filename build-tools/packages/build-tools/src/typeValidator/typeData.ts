@@ -3,23 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { Node, ts } from "ts-morph";
+import { Node } from "ts-morph";
 
 export interface TypeData {
 	/**
 	 * Includes namespace prefix if needed.
 	 */
 	readonly name: string;
-	readonly kind: string;
+	/**
+	 * Test case name.
+	 * Uniquely identifies a test case with a string safe to use as an identifier.
+	 * Consists of a non-colliding "mangled" identifier for the type.
+	 */
+	readonly testCaseName: string;
 	readonly node: Node;
 	readonly tags: ReadonlySet<string>;
-}
-
-/**
- * Creates a non-colliding "mangled" identifier for the type.
- */
-export function getFullTypeName(typeData: TypeData) {
-	return `${typeData.kind}_${typeData.name.replace(/\./g, "_")}`;
+	/**
+	 * Indicates if this TypeData refer to the named item (false), or the typeof the named item (true).
+	 * This is particularly relevant with classes which can have both.
+	 */
+	readonly useTypeof: boolean;
 }
 
 /**
@@ -29,9 +32,10 @@ export function toTypeString(prefix: string, typeData: TypeData, typePreprocesso
 	const node = typeData.node;
 	let typeParams: string | undefined;
 	if (
-		Node.isInterfaceDeclaration(node) ||
-		Node.isTypeAliasDeclaration(node) ||
-		Node.isClassDeclaration(node)
+		!typeData.useTypeof &&
+		(Node.isInterfaceDeclaration(node) ||
+			Node.isTypeAliasDeclaration(node) ||
+			Node.isClassDeclaration(node))
 	) {
 		// does the type take generics that don't have defaults?
 		if (
@@ -50,14 +54,5 @@ export function toTypeString(prefix: string, typeData: TypeData, typePreprocesso
 	}
 
 	const typeStringBase = `${prefix}.${typeData.name}${typeParams ?? ""}`;
-	switch (node.getKind()) {
-		case ts.SyntaxKind.VariableDeclaration:
-		case ts.SyntaxKind.FunctionDeclaration:
-		case ts.SyntaxKind.Identifier:
-			// turn variables and functions into types
-			return `${typePreprocessor}<typeof ${typeStringBase}>`;
-
-		default:
-			return `${typePreprocessor}<${typeStringBase}>`;
-	}
+	return `${typePreprocessor}<${typeData.useTypeof ? "typeof " : ""}${typeStringBase}>`;
 }

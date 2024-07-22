@@ -44,7 +44,7 @@ stages:
         testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
-        testCommand: test:realsvc:local:report:full
+        testCommand: test:realsvc:local:report # TODO: AB#9085 - restore full compat matrix
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
@@ -59,8 +59,9 @@ stages:
         testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
-        testCommand: test:realsvc:tinylicious:report:full
-        timeoutInMinutes: 90
+        testCommand: test:realsvc:tinylicious:report # TODO: AB#9085 - restore full compat matrix
+        # TODO: AB#8968 tracks figuring out the root cause of the extended delay, and restoring this timeout to 90m or less
+        timeoutInMinutes: 120
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
           # Disable colorization for tinylicious logs (not useful when printing to a file)

@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.1.0",
+	"version": "2.2.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -156,10 +156,10 @@
 		"@biomejs/biome": "~1.8.3",
 		"@changesets/cli": "^2.26.1",
 		"@fluid-private/changelog-generator-wrapper": "workspace:~",
-		"@fluid-tools/build-cli": "^0.40.0",
+		"@fluid-tools/build-cli": "^0.41.0",
 		"@fluid-tools/markdown-magic": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.40.0",
+		"@fluidframework/build-tools": "^0.41.0",
 		"@fluidframework/eslint-config-fluid": "^5.3.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
@@ -364,7 +364,8 @@
 			"codemirror and marked overrides are because simplemde use * versions, and the fully up to date versions of its deps do not work. packageExtensions was tried to fix this, but did not work.",
 			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix",
 			"@fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation, so overriding it forces a version that meets peer dependency requirements is installed.",
-			"get-tsconfig has a bug below 4.7.3 which causes eslint to fail to resolve typescript configurations. See https://github.com/privatenumber/get-tsconfig/issues/67"
+			"get-tsconfig has a bug below 4.7.3 which causes eslint to fail to resolve typescript configurations. See https://github.com/privatenumber/get-tsconfig/issues/67",
+			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently."
 		],
 		"overrides": {
 			"@types/node@<18": "^18.19.0",
@@ -375,7 +376,9 @@
 			"simplemde>codemirror": "^5.65.11",
 			"simplemde>marked": "^4.3.0",
 			"sharp": "^0.33.2",
-			"@fluentui/react-positioning>@floating-ui/dom": "~1.5.4"
+			"@fluentui/react-positioning>@floating-ui/dom": "~1.5.4",
+			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
+			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0"
 		},
 		"peerDependencyComments": [
 			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",

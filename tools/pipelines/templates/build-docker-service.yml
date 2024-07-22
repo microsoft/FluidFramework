@@ -559,6 +559,7 @@ extends:
         parameters:
           tagName: ${{ parameters.tagName }}
           isReleaseGroup: ${{ parameters.isReleaseGroup }}
+          buildDirectory: ${{ parameters.buildDirectory }}
 
     - ${{ if eq(parameters.shouldReleaseDockerImage, true) }}:
       - template: /tools/pipelines/templates/include-publish-docker-service.yml@self

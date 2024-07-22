@@ -462,6 +462,8 @@ Unhydrated<NodeFromSchemaUnsafe<T>> | (T extends {
 } ? NodeBuilderDataUnsafe<T> : never)
 ][_InlineTrick];
 
+export { InteriorSequencePlace }
+
 // @public @sealed
 export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
 }
@@ -714,12 +716,17 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 // @public
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
+export { SequencePlace }
+
 // @public @sealed
 export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
+    is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
 }
 
 // @public
 export const SharedTree: SharedObjectKind<ITree>;
+
+export { Side }
 
 // @public
 export interface Tagged<V, T extends string = string> {
@@ -829,7 +836,7 @@ export interface TreeNodeApi {
     parent(node: TreeNode): TreeNode | undefined;
     schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
     shortId(node: TreeNode): number | string | undefined;
-    readonly status: (node: TreeNode) => TreeStatus;
+    status(node: TreeNode): TreeStatus;
 }
 
 // @public
