@@ -13,7 +13,7 @@ jobs:
     - name: version
       value: $[stageDependencies.build.build.outputs['SetVersion.version']]
     steps:
-    - template: /tools/pipelines/templates/include-install-build-tools@self
+    - template: include-install-build-tools.yml
       parameters:
         buildDirectory: ${{ parameters.buildDirectory }}
 
