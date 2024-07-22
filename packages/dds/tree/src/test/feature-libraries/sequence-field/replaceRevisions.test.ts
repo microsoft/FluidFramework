@@ -133,16 +133,16 @@ function runCases(outputRev: RevisionTag | undefined) {
 
 	it("attach an detach marks", () => {
 		const input: SF.Changeset = [
-			Mark.attachAndDetach(Mark.moveIn(1, atom0), Mark.moveOut(1, atom0)),
-			Mark.attachAndDetach(Mark.moveIn(1, atom1), Mark.moveOut(1, atom2)),
-			Mark.attachAndDetach(Mark.moveIn(1, atom2), Mark.moveOut(1, atom3)),
-			Mark.attachAndDetach(Mark.moveIn(1, atom3), Mark.moveOut(1, atom1)),
+			Mark.attachAndDetach(Mark.moveIn(1, atom0), Mark.moveOut(1, atom0, { finalEndpoint: atom0, idOverride: atom1 })),
+			Mark.attachAndDetach(Mark.moveIn(1, atom1), Mark.moveOut(1, atom2, { finalEndpoint: atom1, idOverride: atom2 })),
+			Mark.attachAndDetach(Mark.moveIn(1, atom2), Mark.moveOut(1, atom3, { finalEndpoint: atom2, idOverride: atom3 })),
+			Mark.attachAndDetach(Mark.moveIn(1, atom3), Mark.moveOut(1, atom1, { finalEndpoint: atom3, idOverride: atom0 })),
 		];
 		const expected: SF.Changeset = [
-			Mark.attachAndDetach(Mark.moveIn(1, atom0), Mark.moveOut(1, atom0)),
-			Mark.attachAndDetach(Mark.moveIn(1, atomOut1), Mark.moveOut(1, atomOut2)),
-			Mark.attachAndDetach(Mark.moveIn(1, atomOut2), Mark.moveOut(1, atomOut3)),
-			Mark.attachAndDetach(Mark.moveIn(1, atomOut3), Mark.moveOut(1, atomOut1)),
+			Mark.attachAndDetach(Mark.moveIn(1, atom0), Mark.moveOut(1, atom0, { finalEndpoint: atom0, idOverride: atomOut1 })),
+			Mark.attachAndDetach(Mark.moveIn(1, atomOut1), Mark.moveOut(1, atomOut2, { finalEndpoint: atomOut1, idOverride: atomOut2 })),
+			Mark.attachAndDetach(Mark.moveIn(1, atomOut2), Mark.moveOut(1, atomOut3, { finalEndpoint: atomOut2, idOverride: atomOut3 })),
+			Mark.attachAndDetach(Mark.moveIn(1, atomOut3), Mark.moveOut(1, atomOut1, { finalEndpoint: atomOut3, idOverride: atom0 })),
 		];
 		const actual = process(input);
 		assertChangesetsEqual(actual, expected);
