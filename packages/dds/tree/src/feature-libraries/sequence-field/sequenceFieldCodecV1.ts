@@ -130,6 +130,7 @@ export function makeV1Codec(
 							detach: markEffectCodec.encode(effect.detach, context) as Encoded.Detach,
 						},
 					};
+				case "Rename":
 				case NoopMarkType:
 					fail(`Mark type: ${type} should not be encoded.`);
 				default:

@@ -54,6 +54,7 @@ import {
 	isAttachAndDetachEffect,
 	isDetach,
 	isNewAttach,
+	isRename,
 	isTombstone,
 	markEmptiesCells,
 	markFillsCells,
@@ -334,6 +335,8 @@ function rebaseMarkIgnoreChild(
 			{ ...baseMark.detach, count: baseMark.count },
 			moveEffects,
 		);
+	} else if (isRename(baseMark)) {
+		return withCellId(currMark, getDetachOutputCellId(baseMark));
 	} else {
 		rebasedMark = currMark;
 	}
@@ -356,6 +359,7 @@ function separateEffectsForMove(mark: MarkEffect): {
 		case "AttachAndDetach":
 			return { follows: mark.detach, remains: mark.attach };
 		case "MoveIn":
+		case "Rename":
 			return { remains: mark };
 		case NoopMarkType:
 			return {};

@@ -360,7 +360,7 @@ export function testRebase() {
 		});
 
 		it("redundant revive ↷ insert", () => {
-			const revive = Change.redundantRevive(0, 3, { revision: tag1, localId: brand(0) });
+			const revive = Change.pin(0, 3, { revision: tag1, localId: brand(0) });
 			const insert = Change.insert(1, 1);
 			const actual = rebase(revive, insert);
 			const expected = [Mark.pin(1, brand(0)), Mark.skip(1), Mark.pin(2, brand(1))];

@@ -80,6 +80,7 @@ describe("Fuzz - move", () => {
 			rehydrateDisabled: true,
 		},
 		reconnectProbability: 0.1,
+		// replay: 16,
 		idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 	};
 	createDDSFuzzSuite(model, options);

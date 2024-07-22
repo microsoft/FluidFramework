@@ -15,6 +15,7 @@ import {
 	NoopMarkType,
 } from "./types.js";
 import type { MoveMarkEffect } from "./helperTypes.js";
+import { isDetach, isRename } from "./utils.js";
 
 export function replaceRevisions(
 	changeset: Changeset,
@@ -42,6 +43,16 @@ function updateMark(
 
 	if (mark.changes !== undefined) {
 		updatedMark.changes = replaceAtomRevisions(mark.changes, revisionsToReplace, newRevision);
+	}
+
+	if (isDetach(updatedMark) || isRename(updatedMark)) {
+		if (updatedMark.idOverride !== undefined) {
+			updatedMark.idOverride = replaceAtomRevisions(
+				updatedMark.idOverride,
+				revisionsToReplace,
+				newRevision,
+			);
+		}
 	}
 
 	return updatedMark;
@@ -72,6 +83,7 @@ function updateEffect<TMark extends MarkEffect>(
 			);
 		case "Insert":
 		case "Remove":
+		case "Rename":
 			return updateRevision<TMark & HasRevisionTag>(mark, revisionsToReplace, newRevision);
 		default:
 			unreachableCase(type);

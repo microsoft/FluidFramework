@@ -28,6 +28,7 @@ import {
 	type MoveOut,
 	NoopMarkType,
 	type Remove,
+	type Rename,
 } from "./types.js";
 import { isNoopMark } from "./utils.js";
 import type { FieldChangeEncodingContext } from "../index.js";
@@ -82,6 +83,12 @@ export function makeV2Codec(
 						insert: {
 							revision: encodeRevision(effect.revision),
 							id: effect.id,
+						},
+					};
+				case "Rename":
+					return {
+						rename: {
+							idOverride: changeAtomIdCodec.encode(effect.idOverride, context),
 						},
 					};
 				case "Remove":
@@ -180,6 +187,12 @@ export function makeV2Codec(
 				mark.idOverride = changeAtomIdCodec.decode(idOverride, context);
 			}
 			return mark;
+		},
+		rename(encoded: Encoded.Rename, context: ChangeEncodingContext): Rename {
+			return {
+				type: "Rename",
+				idOverride: changeAtomIdCodec.decode(encoded.idOverride, context),
+			};
 		},
 		moveOut(encoded: Encoded.MoveOut, context: ChangeEncodingContext): MoveOut {
 			const { id, finalEndpoint, idOverride, revision } = encoded;

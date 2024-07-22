@@ -101,7 +101,7 @@ export interface MoveIn extends HasMoveFields {
 	type: "MoveIn";
 }
 
-export interface DetachFields {
+export interface HasDetachOverride {
 	/**
 	 * When set, the detach should use the `CellId` specified in this object to characterize the cell being emptied.
 	 */
@@ -116,7 +116,7 @@ export interface DetachFields {
  * Rebasing this mark never causes it to target different set of nodes.
  * Rebasing this mark can cause it to clear a different set of cells.
  */
-export interface Remove extends HasRevisionTag, DetachFields {
+export interface Remove extends HasRevisionTag, HasDetachOverride {
 	type: "Remove";
 	id: ChangesetLocalId;
 }
@@ -129,7 +129,7 @@ export interface Remove extends HasRevisionTag, DetachFields {
  * Rebasing this mark never causes it to target different set of nodes.
  * Rebasing this mark can cause it to clear a different set of cells.
  */
-export interface MoveOut extends HasMoveFields, DetachFields {
+export interface MoveOut extends HasMoveFields, HasDetachOverride {
 	type: "MoveOut";
 }
 
@@ -152,7 +152,13 @@ export interface AttachAndDetach {
 	detach: Detach;
 }
 
-export type MarkEffect = NoopMark | Attach | Detach | AttachAndDetach;
+// DO WE NEED THE HasRevisionTag HERE?
+export interface Rename {
+	type: "Rename";
+	readonly idOverride: CellId;
+}
+
+export type MarkEffect = NoopMark | Attach | Detach | AttachAndDetach | Rename;
 
 export type CellMark<TMark> = TMark & HasMarkFields;
 
