@@ -17,7 +17,6 @@ parameters:
 
 - name: buildDirectory
   type: string
-  default: packages
 
 stages:
 
