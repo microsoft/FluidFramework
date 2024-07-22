@@ -4,7 +4,7 @@ _Note: This tool has dependencies on Microsoft-internal systems._
 
 NodeJs-based test to simulate many clients and a high rate of op generation.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -116,7 +116,7 @@ The value passed here should be a filter string for the logger namespace.
 > To print all messages, provide `--log '*'` or `--log 'fluid:*'`. For example, to filter to only Container logs,
 > provide something like: `-l 'fluid:telemetry:Container:*'`.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
