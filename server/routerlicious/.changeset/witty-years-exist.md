@@ -1,6 +1,5 @@
 ---
 "@fluidframework/server-kafka-orderer": major
-"@fluidframework/server-lambdas": major
 "@fluidframework/server-memory-orderer": major
 "@fluidframework/server-routerlicious-base": major
 "@fluidframework/server-services-core": major
