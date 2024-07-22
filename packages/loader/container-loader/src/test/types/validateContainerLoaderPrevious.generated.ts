@@ -20,393 +20,357 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "EnumDeclaration_ConnectionState": {"forwardCompat": false}
+ * "Enum_ConnectionState": {"forwardCompat": false}
  */
-declare type old_as_current_for_EnumDeclaration_ConnectionState = requireAssignableTo<TypeOnly<old.ConnectionState>, TypeOnly<current.ConnectionState>>
+declare type old_as_current_for_Enum_ConnectionState = requireAssignableTo<TypeOnly<old.ConnectionState>, TypeOnly<current.ConnectionState>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "EnumDeclaration_ConnectionState": {"backCompat": false}
+ * "Enum_ConnectionState": {"backCompat": false}
  */
-declare type current_as_old_for_EnumDeclaration_ConnectionState = requireAssignableTo<TypeOnly<current.ConnectionState>, TypeOnly<old.ConnectionState>>
+declare type current_as_old_for_Enum_ConnectionState = requireAssignableTo<TypeOnly<current.ConnectionState>, TypeOnly<old.ConnectionState>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IBaseProtocolHandler": {"forwardCompat": false}
+ * "Interface_IBaseProtocolHandler": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IBaseProtocolHandler = requireAssignableTo<TypeOnly<old.IBaseProtocolHandler>, TypeOnly<current.IBaseProtocolHandler>>
+declare type old_as_current_for_Interface_IBaseProtocolHandler = requireAssignableTo<TypeOnly<old.IBaseProtocolHandler>, TypeOnly<current.IBaseProtocolHandler>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IBaseProtocolHandler": {"backCompat": false}
+ * "Interface_IBaseProtocolHandler": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IBaseProtocolHandler = requireAssignableTo<TypeOnly<current.IBaseProtocolHandler>, TypeOnly<old.IBaseProtocolHandler>>
+declare type current_as_old_for_Interface_IBaseProtocolHandler = requireAssignableTo<TypeOnly<current.IBaseProtocolHandler>, TypeOnly<old.IBaseProtocolHandler>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ICodeDetailsLoader": {"forwardCompat": false}
+ * "Interface_ICodeDetailsLoader": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ICodeDetailsLoader = requireAssignableTo<TypeOnly<old.ICodeDetailsLoader>, TypeOnly<current.ICodeDetailsLoader>>
+declare type old_as_current_for_Interface_ICodeDetailsLoader = requireAssignableTo<TypeOnly<old.ICodeDetailsLoader>, TypeOnly<current.ICodeDetailsLoader>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ICodeDetailsLoader": {"backCompat": false}
+ * "Interface_ICodeDetailsLoader": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ICodeDetailsLoader = requireAssignableTo<TypeOnly<current.ICodeDetailsLoader>, TypeOnly<old.ICodeDetailsLoader>>
+declare type current_as_old_for_Interface_ICodeDetailsLoader = requireAssignableTo<TypeOnly<current.ICodeDetailsLoader>, TypeOnly<old.ICodeDetailsLoader>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IContainerExperimental": {"forwardCompat": false}
+ * "Interface_IContainerExperimental": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IContainerExperimental = requireAssignableTo<TypeOnly<old.IContainerExperimental>, TypeOnly<current.IContainerExperimental>>
+declare type old_as_current_for_Interface_IContainerExperimental = requireAssignableTo<TypeOnly<old.IContainerExperimental>, TypeOnly<current.IContainerExperimental>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IContainerExperimental": {"backCompat": false}
+ * "Interface_IContainerExperimental": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IContainerExperimental = requireAssignableTo<TypeOnly<current.IContainerExperimental>, TypeOnly<old.IContainerExperimental>>
+declare type current_as_old_for_Interface_IContainerExperimental = requireAssignableTo<TypeOnly<current.IContainerExperimental>, TypeOnly<old.IContainerExperimental>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_IDetachedBlobStorage": {"forwardCompat": false}
+ * "TypeAlias_IDetachedBlobStorage": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_IDetachedBlobStorage = requireAssignableTo<TypeOnly<old.IDetachedBlobStorage>, TypeOnly<current.IDetachedBlobStorage>>
+declare type old_as_current_for_TypeAlias_IDetachedBlobStorage = requireAssignableTo<TypeOnly<old.IDetachedBlobStorage>, TypeOnly<current.IDetachedBlobStorage>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_IDetachedBlobStorage": {"backCompat": false}
+ * "TypeAlias_IDetachedBlobStorage": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAliasDeclaration_IDetachedBlobStorage = requireAssignableTo<TypeOnly<current.IDetachedBlobStorage>, TypeOnly<old.IDetachedBlobStorage>>
+declare type current_as_old_for_TypeAlias_IDetachedBlobStorage = requireAssignableTo<TypeOnly<current.IDetachedBlobStorage>, TypeOnly<old.IDetachedBlobStorage>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IFluidModuleWithDetails": {"forwardCompat": false}
+ * "Interface_IFluidModuleWithDetails": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IFluidModuleWithDetails = requireAssignableTo<TypeOnly<old.IFluidModuleWithDetails>, TypeOnly<current.IFluidModuleWithDetails>>
+declare type old_as_current_for_Interface_IFluidModuleWithDetails = requireAssignableTo<TypeOnly<old.IFluidModuleWithDetails>, TypeOnly<current.IFluidModuleWithDetails>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IFluidModuleWithDetails": {"backCompat": false}
+ * "Interface_IFluidModuleWithDetails": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IFluidModuleWithDetails = requireAssignableTo<TypeOnly<current.IFluidModuleWithDetails>, TypeOnly<old.IFluidModuleWithDetails>>
+declare type current_as_old_for_Interface_IFluidModuleWithDetails = requireAssignableTo<TypeOnly<current.IFluidModuleWithDetails>, TypeOnly<old.IFluidModuleWithDetails>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ILoaderOptions": {"forwardCompat": false}
+ * "Interface_ILoaderOptions": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ILoaderOptions = requireAssignableTo<TypeOnly<old.ILoaderOptions>, TypeOnly<current.ILoaderOptions>>
+declare type old_as_current_for_Interface_ILoaderOptions = requireAssignableTo<TypeOnly<old.ILoaderOptions>, TypeOnly<current.ILoaderOptions>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ILoaderOptions": {"backCompat": false}
+ * "Interface_ILoaderOptions": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ILoaderOptions = requireAssignableTo<TypeOnly<current.ILoaderOptions>, TypeOnly<old.ILoaderOptions>>
+declare type current_as_old_for_Interface_ILoaderOptions = requireAssignableTo<TypeOnly<current.ILoaderOptions>, TypeOnly<old.ILoaderOptions>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ILoaderProps": {"forwardCompat": false}
+ * "Interface_ILoaderProps": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ILoaderProps = requireAssignableTo<TypeOnly<old.ILoaderProps>, TypeOnly<current.ILoaderProps>>
+declare type old_as_current_for_Interface_ILoaderProps = requireAssignableTo<TypeOnly<old.ILoaderProps>, TypeOnly<current.ILoaderProps>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ILoaderProps": {"backCompat": false}
+ * "Interface_ILoaderProps": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ILoaderProps = requireAssignableTo<TypeOnly<current.ILoaderProps>, TypeOnly<old.ILoaderProps>>
+declare type current_as_old_for_Interface_ILoaderProps = requireAssignableTo<TypeOnly<current.ILoaderProps>, TypeOnly<old.ILoaderProps>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ILoaderServices": {"forwardCompat": false}
+ * "Interface_ILoaderServices": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ILoaderServices = requireAssignableTo<TypeOnly<old.ILoaderServices>, TypeOnly<current.ILoaderServices>>
+declare type old_as_current_for_Interface_ILoaderServices = requireAssignableTo<TypeOnly<old.ILoaderServices>, TypeOnly<current.ILoaderServices>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ILoaderServices": {"backCompat": false}
+ * "Interface_ILoaderServices": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ILoaderServices = requireAssignableTo<TypeOnly<current.ILoaderServices>, TypeOnly<old.ILoaderServices>>
+declare type current_as_old_for_Interface_ILoaderServices = requireAssignableTo<TypeOnly<current.ILoaderServices>, TypeOnly<old.ILoaderServices>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IParsedUrl": {"forwardCompat": false}
+ * "Interface_IParsedUrl": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IParsedUrl = requireAssignableTo<TypeOnly<old.IParsedUrl>, TypeOnly<current.IParsedUrl>>
+declare type old_as_current_for_Interface_IParsedUrl = requireAssignableTo<TypeOnly<old.IParsedUrl>, TypeOnly<current.IParsedUrl>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IParsedUrl": {"backCompat": false}
+ * "Interface_IParsedUrl": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IParsedUrl = requireAssignableTo<TypeOnly<current.IParsedUrl>, TypeOnly<old.IParsedUrl>>
+declare type current_as_old_for_Interface_IParsedUrl = requireAssignableTo<TypeOnly<current.IParsedUrl>, TypeOnly<old.IParsedUrl>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IProtocolHandler": {"forwardCompat": false}
+ * "Interface_IProtocolHandler": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IProtocolHandler = requireAssignableTo<TypeOnly<old.IProtocolHandler>, TypeOnly<current.IProtocolHandler>>
+declare type old_as_current_for_Interface_IProtocolHandler = requireAssignableTo<TypeOnly<old.IProtocolHandler>, TypeOnly<current.IProtocolHandler>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IProtocolHandler": {"backCompat": false}
+ * "Interface_IProtocolHandler": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IProtocolHandler = requireAssignableTo<TypeOnly<current.IProtocolHandler>, TypeOnly<old.IProtocolHandler>>
+declare type current_as_old_for_Interface_IProtocolHandler = requireAssignableTo<TypeOnly<current.IProtocolHandler>, TypeOnly<old.IProtocolHandler>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IQuorumSnapshot": {"forwardCompat": false}
+ * "Interface_IQuorumSnapshot": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IQuorumSnapshot = requireAssignableTo<TypeOnly<old.IQuorumSnapshot>, TypeOnly<current.IQuorumSnapshot>>
+declare type old_as_current_for_Interface_IQuorumSnapshot = requireAssignableTo<TypeOnly<old.IQuorumSnapshot>, TypeOnly<current.IQuorumSnapshot>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IQuorumSnapshot": {"backCompat": false}
+ * "Interface_IQuorumSnapshot": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IQuorumSnapshot = requireAssignableTo<TypeOnly<current.IQuorumSnapshot>, TypeOnly<old.IQuorumSnapshot>>
+declare type current_as_old_for_Interface_IQuorumSnapshot = requireAssignableTo<TypeOnly<current.IQuorumSnapshot>, TypeOnly<old.IQuorumSnapshot>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IScribeProtocolState": {"forwardCompat": false}
+ * "Interface_IScribeProtocolState": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IScribeProtocolState = requireAssignableTo<TypeOnly<old.IScribeProtocolState>, TypeOnly<current.IScribeProtocolState>>
+declare type old_as_current_for_Interface_IScribeProtocolState = requireAssignableTo<TypeOnly<old.IScribeProtocolState>, TypeOnly<current.IScribeProtocolState>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IScribeProtocolState": {"backCompat": false}
+ * "Interface_IScribeProtocolState": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IScribeProtocolState = requireAssignableTo<TypeOnly<current.IScribeProtocolState>, TypeOnly<old.IScribeProtocolState>>
+declare type current_as_old_for_Interface_IScribeProtocolState = requireAssignableTo<TypeOnly<current.IScribeProtocolState>, TypeOnly<old.IScribeProtocolState>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_Loader": {"forwardCompat": false}
+ * "Class_Loader": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_Loader = requireAssignableTo<TypeOnly<old.Loader>, TypeOnly<current.Loader>>
+declare type old_as_current_for_Class_Loader = requireAssignableTo<TypeOnly<old.Loader>, TypeOnly<current.Loader>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_Loader": {"backCompat": false}
+ * "Class_Loader": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_Loader = requireAssignableTo<TypeOnly<current.Loader>, TypeOnly<old.Loader>>
+declare type current_as_old_for_Class_Loader = requireAssignableTo<TypeOnly<current.Loader>, TypeOnly<old.Loader>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_Loader": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_Loader = requireAssignableTo<TypeOnly<typeof current.Loader>, TypeOnly<typeof old.Loader>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_ProtocolHandlerBuilder": {"forwardCompat": false}
+ * "TypeAlias_ProtocolHandlerBuilder": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_ProtocolHandlerBuilder = requireAssignableTo<TypeOnly<old.ProtocolHandlerBuilder>, TypeOnly<current.ProtocolHandlerBuilder>>
+declare type old_as_current_for_TypeAlias_ProtocolHandlerBuilder = requireAssignableTo<TypeOnly<old.ProtocolHandlerBuilder>, TypeOnly<current.ProtocolHandlerBuilder>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_ProtocolHandlerBuilder": {"backCompat": false}
+ * "TypeAlias_ProtocolHandlerBuilder": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAliasDeclaration_ProtocolHandlerBuilder = requireAssignableTo<TypeOnly<current.ProtocolHandlerBuilder>, TypeOnly<old.ProtocolHandlerBuilder>>
+declare type current_as_old_for_TypeAlias_ProtocolHandlerBuilder = requireAssignableTo<TypeOnly<current.ProtocolHandlerBuilder>, TypeOnly<old.ProtocolHandlerBuilder>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_QuorumClientsSnapshot": {"forwardCompat": false}
+ * "TypeAlias_QuorumClientsSnapshot": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_QuorumClientsSnapshot = requireAssignableTo<TypeOnly<old.QuorumClientsSnapshot>, TypeOnly<current.QuorumClientsSnapshot>>
+declare type old_as_current_for_TypeAlias_QuorumClientsSnapshot = requireAssignableTo<TypeOnly<old.QuorumClientsSnapshot>, TypeOnly<current.QuorumClientsSnapshot>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_QuorumClientsSnapshot": {"backCompat": false}
+ * "TypeAlias_QuorumClientsSnapshot": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAliasDeclaration_QuorumClientsSnapshot = requireAssignableTo<TypeOnly<current.QuorumClientsSnapshot>, TypeOnly<old.QuorumClientsSnapshot>>
+declare type current_as_old_for_TypeAlias_QuorumClientsSnapshot = requireAssignableTo<TypeOnly<current.QuorumClientsSnapshot>, TypeOnly<old.QuorumClientsSnapshot>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_QuorumProposalsSnapshot": {"forwardCompat": false}
+ * "TypeAlias_QuorumProposalsSnapshot": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_QuorumProposalsSnapshot = requireAssignableTo<TypeOnly<old.QuorumProposalsSnapshot>, TypeOnly<current.QuorumProposalsSnapshot>>
+declare type old_as_current_for_TypeAlias_QuorumProposalsSnapshot = requireAssignableTo<TypeOnly<old.QuorumProposalsSnapshot>, TypeOnly<current.QuorumProposalsSnapshot>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_QuorumProposalsSnapshot": {"backCompat": false}
+ * "TypeAlias_QuorumProposalsSnapshot": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAliasDeclaration_QuorumProposalsSnapshot = requireAssignableTo<TypeOnly<current.QuorumProposalsSnapshot>, TypeOnly<old.QuorumProposalsSnapshot>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_isLocationRedirectionError": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_isLocationRedirectionError = requireAssignableTo<TypeOnly<typeof old.isLocationRedirectionError>, TypeOnly<typeof current.isLocationRedirectionError>>
+declare type current_as_old_for_TypeAlias_QuorumProposalsSnapshot = requireAssignableTo<TypeOnly<current.QuorumProposalsSnapshot>, TypeOnly<old.QuorumProposalsSnapshot>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_isLocationRedirectionError": {"backCompat": false}
+ * "Function_isLocationRedirectionError": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_isLocationRedirectionError = requireAssignableTo<TypeOnly<typeof current.isLocationRedirectionError>, TypeOnly<typeof old.isLocationRedirectionError>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_loadContainerPaused": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_loadContainerPaused = requireAssignableTo<TypeOnly<typeof old.loadContainerPaused>, TypeOnly<typeof current.loadContainerPaused>>
+declare type current_as_old_for_Function_isLocationRedirectionError = requireAssignableTo<TypeOnly<typeof current.isLocationRedirectionError>, TypeOnly<typeof old.isLocationRedirectionError>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_loadContainerPaused": {"backCompat": false}
+ * "Function_loadContainerPaused": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_loadContainerPaused = requireAssignableTo<TypeOnly<typeof current.loadContainerPaused>, TypeOnly<typeof old.loadContainerPaused>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_resolveWithLocationRedirectionHandling": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_resolveWithLocationRedirectionHandling = requireAssignableTo<TypeOnly<typeof old.resolveWithLocationRedirectionHandling>, TypeOnly<typeof current.resolveWithLocationRedirectionHandling>>
+declare type current_as_old_for_Function_loadContainerPaused = requireAssignableTo<TypeOnly<typeof current.loadContainerPaused>, TypeOnly<typeof old.loadContainerPaused>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_resolveWithLocationRedirectionHandling": {"backCompat": false}
+ * "Function_resolveWithLocationRedirectionHandling": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_resolveWithLocationRedirectionHandling = requireAssignableTo<TypeOnly<typeof current.resolveWithLocationRedirectionHandling>, TypeOnly<typeof old.resolveWithLocationRedirectionHandling>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_tryParseCompatibleResolvedUrl": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_tryParseCompatibleResolvedUrl = requireAssignableTo<TypeOnly<typeof old.tryParseCompatibleResolvedUrl>, TypeOnly<typeof current.tryParseCompatibleResolvedUrl>>
+declare type current_as_old_for_Function_resolveWithLocationRedirectionHandling = requireAssignableTo<TypeOnly<typeof current.resolveWithLocationRedirectionHandling>, TypeOnly<typeof old.resolveWithLocationRedirectionHandling>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_tryParseCompatibleResolvedUrl": {"backCompat": false}
+ * "Function_tryParseCompatibleResolvedUrl": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_tryParseCompatibleResolvedUrl = requireAssignableTo<TypeOnly<typeof current.tryParseCompatibleResolvedUrl>, TypeOnly<typeof old.tryParseCompatibleResolvedUrl>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_waitContainerToCatchUp": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_waitContainerToCatchUp = requireAssignableTo<TypeOnly<typeof old.waitContainerToCatchUp>, TypeOnly<typeof current.waitContainerToCatchUp>>
+declare type current_as_old_for_Function_tryParseCompatibleResolvedUrl = requireAssignableTo<TypeOnly<typeof current.tryParseCompatibleResolvedUrl>, TypeOnly<typeof old.tryParseCompatibleResolvedUrl>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_waitContainerToCatchUp": {"backCompat": false}
+ * "Function_waitContainerToCatchUp": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_waitContainerToCatchUp = requireAssignableTo<TypeOnly<typeof current.waitContainerToCatchUp>, TypeOnly<typeof old.waitContainerToCatchUp>>
+declare type current_as_old_for_Function_waitContainerToCatchUp = requireAssignableTo<TypeOnly<typeof current.waitContainerToCatchUp>, TypeOnly<typeof old.waitContainerToCatchUp>>

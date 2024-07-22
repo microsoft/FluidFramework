@@ -39,14 +39,9 @@ import {
 	createTestDriver,
 	getProfile,
 	globalConfigurations,
+	printStatus,
 	safeExit,
 } from "./utils.js";
-
-function printStatus(runConfig: IRunConfig, message: string) {
-	if (runConfig.verbose) {
-		console.log(`${runConfig.runId.toString().padStart(3)}> ${message}`);
-	}
-}
 
 async function main() {
 	const parseIntArg = (value: any): number => {

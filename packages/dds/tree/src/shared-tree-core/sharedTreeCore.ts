@@ -96,6 +96,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	}
 
 	/**
+	 * Gets the revision at the head of the trunk.
+	 */
+	protected get trunkHeadRevision(): RevisionTag {
+		return this.editManager.getTrunkHead().revision;
+	}
+
+	/**
 	 * Used to encode/decode messages sent to/received from the Fluid runtime.
 	 *
 	 * @remarks Since there is currently only one format, this can just be cached on the class.

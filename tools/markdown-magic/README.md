@@ -85,6 +85,7 @@ Notes:
     -   [README_PACKAGE_SCOPE_NOTICE](#readme_package_scope_notice)
     -   [README_INSTALLATION_SECTION](#readme_installation_section)
     -   [README_IMPORT_INSTRUCTIONS](#readme_import_instructions)
+    -   [API_DOCS_LINK_SECTION](#api_docs_link_section)
 
 Arguments:
 
@@ -97,6 +98,10 @@ Arguments:
 -   `devDependency`: Whether or not the package is intended to be installed as a dev dependency.
     -   Default: `false`.
     -   Only observed if `installation` is `true`.
+-   `apiDocs`: Whether or not to include a section pointing to the library's generated API documentation on `fluidframework.com`.
+    -   Default: `true` if the package is intended for direct public use. `false` otherwise.
+    -   Assumes that the package is published, uses [API-Extractor][], and has its documentation published under `fluidframework.com/apis/<package-name>`.
+    -   See [API_DOCS_LINK_SECTION](#api_docs_link_section)
 
 #### `LIBRARY_PACKAGE_README_FOOTER`
 
@@ -110,7 +115,6 @@ Notes:
     You will still need to fill in semantic and usage information.
 -   This is effectively just a wrapper around lower-level templates.
     If you want more fine-grained control over the content structure, we recommend using other templates.
-    -   [API_DOCS_LINK_SECTION](#api_docs_link_section)
     -   [README_PACKAGE_SCRIPTS](#readme_package_scripts)
     -   [README_CLIENT_REQUIREMENTS_SECTION](#readme_client_requirements_section)
     -   [README_CONTRIBUTION_GUIDELINES_SECTION](#contribution-guidelines)
@@ -122,15 +126,11 @@ Arguments:
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
     -   Default: `./package.json`.
--   `apiDocs`: Whether or not to include a section pointing to the library's generated API documentation on `fluidframework.com`.
-    -   Default: `true`.
-    -   Assumes that the package is published, uses [API-Extractor][], and has its documentation published under `fluidframework.com/apis/<package-name>`.
-    -   See [API_DOCS_LINK_SECTION](#api_docs_link_section)
 -   `scripts`: Whether or not to include a section listing the package's `npm` scripts.
     -   Default: `false`.
     -   See [README_PACKAGE_SCRIPTS](#readme-package_scripts).
 -   `clientRequirements`: Whether or not to include a section outlining the minimum client requirements for using Fluid Framework packages.
-    -   Default: `true`.
+    -   Default: `true` if the package is intended for direct public use. `false` otherwise.
     -   See [README_CLIENT_REQUIREMENTS_SECTION](#readme_client_requirements_section).
 -   `contributionGuidelines`: Whether or not to include a section enumerating `fluid-framework`'s contribution guidelines.
     -   Default: `true`.
@@ -326,7 +326,7 @@ Arguments:
     -   Default: `./package.json`.
 -   `scopeKind`: (optional) Override the automatic scope detection behavior with an explicit scope kind: `EXPERIMENTAL`, `INTERNAL`, or `PRIVATE`.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:clientRequirements=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

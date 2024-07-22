@@ -741,7 +741,7 @@ class AbstractDataBinder<
 		const visitor = getOrCreate(this.visitors, anchor, () => {
 			const newVisitor = this.visitorFactory(anchor);
 			this.unregisterHandles.add(
-				anchor.on("subtreeChanging", (upPath: UpPath) => {
+				anchor.anchorNode.on("subtreeChanging", (upPath: UpPath) => {
 					assert(newVisitor !== undefined, 0x6dc /* visitor expected to be defined */);
 					if (!this.visitorLocations.has(newVisitor)) {
 						this.visitorLocations.set(newVisitor, upPath);
