@@ -11,7 +11,7 @@ import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
 import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
 
-import { getDefaultInterdependencyRange } from "../args.js";
+import { getDefaultInterdependencyRange } from "../config.js";
 import {
 	difference,
 	getPreReleaseDependencies,

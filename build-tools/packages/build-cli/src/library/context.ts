@@ -6,9 +6,15 @@
 import { PackageName } from "@rushstack/node-core-library";
 
 import { ReleaseVersion } from "@fluid-tools/version-tools";
-import { FluidRepo, GitRepo, Package } from "@fluidframework/build-tools";
+import {
+	FluidRepo,
+	GitRepo,
+	Package,
+	getRepoBuildConfig,
+	IRepoBuildConfig,
+} from "@fluidframework/build-tools";
 import * as semver from "semver";
-import { FlubConfig, getFlubConfig } from "../config.js";
+import { getFlubConfig, type FlubConfig } from "../config.js";
 
 /**
  * Represents a release version and its release date, if applicable.
@@ -85,7 +91,8 @@ export function isMonoRepoKind(str: string | undefined): str is MonoRepoKind {
 export class Context {
 	public readonly repo: FluidRepo;
 	public readonly fullPackageMap: Map<string, Package>;
-	public readonly rootFlubConfig: FlubConfig;
+	public readonly repoBuildConfig: IRepoBuildConfig;
+	public readonly flubConfig: FlubConfig;
 	private readonly newBranches: string[] = [];
 
 	constructor(
@@ -93,9 +100,10 @@ export class Context {
 		public readonly originRemotePartialUrl: string,
 		public readonly originalBranchName: string,
 	) {
-		// Load the package
-		this.rootFlubConfig = getFlubConfig(this.gitRepo.resolvedRoot);
-		this.repo = new FluidRepo(this.gitRepo.resolvedRoot, this.rootFlubConfig.repoPackages);
+		// Load the packages
+		this.repoBuildConfig = getRepoBuildConfig(this.gitRepo.resolvedRoot);
+		this.flubConfig = getFlubConfig(this.gitRepo.resolvedRoot);
+		this.repo = new FluidRepo(this.gitRepo.resolvedRoot, this.repoBuildConfig.repoPackages);
 		this.fullPackageMap = this.repo.createPackageMap();
 	}
 

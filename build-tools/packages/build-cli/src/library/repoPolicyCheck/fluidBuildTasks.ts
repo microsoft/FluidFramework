@@ -16,6 +16,7 @@ import {
 	normalizeGlobalTaskDefinitions,
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
+	getRepoBuildConfig,
 } from "@fluidframework/build-tools";
 import JSON5 from "json5";
 import * as semver from "semver";
@@ -50,8 +51,8 @@ function getFluidPackageMap(root: string): Map<string, Package> {
 	const rootDir = path.resolve(root);
 	let record = repoCache.get(rootDir);
 	if (record === undefined) {
-		const packageManifest = getFlubConfig(rootDir);
-		const repo = new FluidRepo(rootDir, packageManifest.repoPackages);
+		const repoBuildConfig = getRepoBuildConfig(rootDir);
+		const repo = new FluidRepo(rootDir, repoBuildConfig.repoPackages);
 		const packageMap = repo.createPackageMap();
 		record = { repo, packageMap };
 		repoCache.set(rootDir, record);
@@ -335,7 +336,7 @@ function hasTaskDependency(
 	taskName: string,
 	searchDeps: readonly string[],
 ): boolean {
-	const rootConfig = getFlubConfig(root);
+	const rootConfig = getRepoBuildConfig(root);
 	const globalTaskDefinitions = normalizeGlobalTaskDefinitions(rootConfig?.tasks);
 	const taskDefinitions = getTaskDefinitions(json, globalTaskDefinitions, false);
 	// Searched deps that are package specific (e.g. <packageName>#<taskName>)

@@ -5,7 +5,6 @@
 ```ts
 
 import { InterdependencyRange } from '@fluid-tools/version-tools';
-import { IRepoBuildConfig } from '@fluidframework/build-tools';
 import { run } from '@oclif/core';
 import { VersionBumpType } from '@fluid-tools/version-tools';
 
@@ -24,7 +23,7 @@ export interface BumpConfig {
 }
 
 // @public
-export interface FlubConfig extends IRepoBuildConfig {
+export interface FlubConfig {
     assertTagging?: AssertTaggingConfig;
     // @deprecated
     branchReleaseTypes?: {

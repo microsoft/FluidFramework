@@ -23,11 +23,8 @@ import {
 	isInterdependencyRange,
 } from "@fluid-tools/version-tools";
 
-import {
-	findPackageOrReleaseGroup,
-	getDefaultInterdependencyRange,
-	packageOrReleaseGroupArg,
-} from "../args.js";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args.js";
+import { getDefaultInterdependencyRange } from "../config.js";
 import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags.js";
 import {
 	BaseCommand,

@@ -8,7 +8,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { Package } from "@fluidframework/build-tools";
 import { PackageCommand } from "../../BasePackageCommand.js";
-import { getFlubConfig } from "../../config.js";
 import { PackageKind } from "../../filter.js";
 
 import { Flags } from "@oclif/core";
@@ -55,7 +54,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 		await super.selectAndFilterPackages();
 
 		const context = await this.getContext();
-		const { assertTagging } = getFlubConfig(context.gitRepo.resolvedRoot);
+		const { assertTagging } = context.flubConfig;
 		const assertTaggingEnabledPaths = this.flags.disableConfig
 			? undefined
 			: assertTagging?.enabledPaths;

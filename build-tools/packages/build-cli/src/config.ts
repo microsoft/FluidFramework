@@ -3,18 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { InterdependencyRange, VersionBumpType } from "@fluid-tools/version-tools";
-import { IRepoBuildConfig } from "@fluidframework/build-tools";
+import { statSync } from "node:fs";
+import {
+	DEFAULT_INTERDEPENDENCY_RANGE,
+	InterdependencyRange,
+	VersionBumpType,
+} from "@fluid-tools/version-tools";
+import { MonoRepo } from "@fluidframework/build-tools";
 import { cosmiconfigSync } from "cosmiconfig";
 import type { ReleaseGroup } from "./releaseGroups.js";
+import { Context } from "./library/index.js";
 
 /**
  * Fluid repo build configuration that is expected in the fluidRepo config file or package.json.
- *
- * The `tasks` and `repoPackages` keys, inherited from the repoBuild config, are deprecated. They should be defined in
- * repoBuild.config.
  */
-export interface FlubConfig extends IRepoBuildConfig {
+export interface FlubConfig {
 	/**
 	 * Policy configuration for the `check:policy` command. This can only be configured in the repo-wide Fluid build
 	 * config (the repo-root package.json).
@@ -43,7 +46,6 @@ export interface FlubConfig extends IRepoBuildConfig {
 	};
 }
 
-/* eslint-disable tsdoc/syntax */
 /**
  * A type representing the different version constraint styles we use when determining the previous version for type
  * test generation.
@@ -103,7 +105,6 @@ export interface FlubConfig extends IRepoBuildConfig {
  * ~previousMajor: \>=2.0.0-internal.1.0.0 \<2.0.0-internal.1.1.0
  * ~previousMinor: \>=2.0.0-internal.2.0.0 \<2.0.0-internal.2.1.0
  */
-/* eslint-enable tsdoc/syntax */
 export type PreviousVersionStyle =
 	| "baseMajor"
 	| "baseMinor"
@@ -142,7 +143,7 @@ export interface PolicyConfig {
 	 * An object with handler name as keys that maps to an array of strings/regular expressions to
 	 * exclude that rule from being checked.
 	 */
-	handlerExclusions?: { [rule: string]: (string|RegExp)[] };
+	handlerExclusions?: { [rule: string]: (string | RegExp)[] };
 
 	packageNames?: PackageNamePolicyConfig;
 
@@ -284,16 +285,34 @@ const configExplorer = cosmiconfigSync(configName, {
 /**
  * Get an IFlubConfig from the flub property in a package.json file, or from flub.config.[c]js.
  *
- * @param rootDir - The path to the root package.json to load.
+ * @param configPath - The path to start searching for the config file. If a path to a file is provided, the file will
+ * be loaded directly. Otherwise it will search upwards looking for config files until it finds one.
  * @param noCache - If true, the config cache will be cleared and the config will be reloaded.
  * @returns The flub config
  */
-export function getFlubConfig(rootDir: string, noCache = false): FlubConfig {
+export function getFlubConfig(configPath: string, noCache = false): FlubConfig {
 	if (noCache === true) {
 		configExplorer.clearCaches();
 	}
 
-	const config = configExplorer.search(rootDir);
-	console.warn(config?.filepath);
+	const config = statSync(configPath).isFile()
+		? configExplorer.load(configPath)
+		: configExplorer.search(configPath);
 	return config?.config as FlubConfig;
+}
+
+export function getDefaultInterdependencyRange(
+	releaseGroup: ReleaseGroup | MonoRepo,
+	context: Context,
+): InterdependencyRange {
+	const releaseGroupName = releaseGroup instanceof MonoRepo ? releaseGroup.name : releaseGroup;
+	const interdependencyRangeDefaults = context.flubConfig.bump?.defaultInterdependencyRange;
+	if (interdependencyRangeDefaults === undefined) {
+		return DEFAULT_INTERDEPENDENCY_RANGE;
+	}
+
+	const interdependencyRange =
+		interdependencyRangeDefaults?.[releaseGroupName as ReleaseGroup];
+
+	return interdependencyRange ?? DEFAULT_INTERDEPENDENCY_RANGE;
 }

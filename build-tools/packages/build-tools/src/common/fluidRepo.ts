@@ -10,6 +10,9 @@ import { MonoRepo } from "./monoRepo";
 import { Package, Packages } from "./npmPackage";
 import { ExecAsyncResult } from "./utils";
 
+/**
+ * Top-most configuration for repo build settings.
+ */
 export interface IRepoBuildConfig {
 	/**
 	 * Build tasks and dependencies definitions
