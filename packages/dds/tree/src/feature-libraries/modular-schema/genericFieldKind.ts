@@ -12,9 +12,8 @@ import {
 	type RevisionTag,
 	replaceAtomRevisions,
 } from "../../core/index.js";
-import { type IdAllocator, fail, oob } from "../../util/index.js";
+import { type IdAllocator, fail } from "../../util/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
-
 import type { CrossFieldManager } from "./crossFieldQueries.js";
 import type {
 	FieldChangeHandler,
@@ -124,24 +123,28 @@ function rebaseGenericChange(
 	let iChange = 0;
 	let iOver = 0;
 	while (iChange < change.length || iOver < over.length) {
-		const a = change[iChange] ?? oob();
-		const b = over[iOver] ?? oob();
+		const a = change[iChange];
+		const b = over[iOver];
 		const aIndex = a?.index ?? Infinity;
 		const bIndex = b?.index ?? Infinity;
 		let nodeChangeA: NodeId | undefined;
 		let nodeChangeB: NodeId | undefined;
 		let index: number;
 		if (aIndex === bIndex) {
+			assert(a !== undefined, "a should not be undefined if aIndex === bIndex");
+			assert(b !== undefined, "b should not be undefined if aIndex === bIndex");
 			index = a.index;
 			nodeChangeA = a.nodeChange;
 			nodeChangeB = b.nodeChange;
 			iChange += 1;
 			iOver += 1;
 		} else if (aIndex < bIndex) {
+			assert(a !== undefined, "a should not be undefined if aIndex < bIndex");
 			index = a.index;
 			nodeChangeA = a.nodeChange;
 			iChange += 1;
 		} else {
+			assert(b !== undefined, "b should not be undefined if aIndex > bIndex");
 			index = b.index;
 			nodeChangeB = b.nodeChange;
 			iOver += 1;
