@@ -18,7 +18,7 @@ The following sections describe the fundamental structure of a summary / snapsho
 
 ### Summary Format
 
-Summary is uploaded to storage and is the container's state at a point in time. A summary is represented by an `ISummaryTree` which is defined in [this file][summary-protocol] and has the following basic structure (some optional properties are removed for simplicity):
+Summary is uploaded to storage and is the container's state at a point in time. A summary is represented by an `ISummaryTree` which is defined in [summary.ts in the protocol-definitions package][summary-protocol] and has the following basic structure (some optional properties are removed for simplicity):
 
 ```typescript
 export interface ISummaryTree {
@@ -76,7 +76,7 @@ Each tree node in a summary tree is represented by the `ISummaryTree` interface 
 
 ### Snapshot Format
 
-Snapshot is downloaded from the storage (typically on document load) and is the container's state at a point in time. A snapshot is represented by an `ISnapshotTree` which is defined in [this file][storage-protocol] and has the following basic structure (some optional properties are removed for simplicity):
+Snapshot is downloaded from the storage (typically on document load) and is the container's state at a point in time. A snapshot is represented by an `ISnapshotTree` which is defined in [storage.ts in the protocol-definitions package][storage-protocol] and has the following basic structure (some optional properties are removed for simplicity):
 
 ```typescript
 export interface ISnapshotTree {

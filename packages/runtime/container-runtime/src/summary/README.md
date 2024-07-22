@@ -35,9 +35,9 @@ Note: If the summarizer client closes, the "summary client election" process wil
 
 ## When are summaries generated?
 
-The summarizer client periodically generates summary based on heuristics calculated based on configurations such as the number of user or system operations received, the amount of time a client has been idle (hasn't received any ops), the maximum time since last summary, maximum number of ops since last summary, etc. The heuristic configurations are defined by an `ISummaryConfigurationHeuristics` interface defined in [this file][container-runtime].
+The summarizer client periodically generates summary based on heuristics calculated based on configurations such as the number of user or system operations received, the amount of time a client has been idle (hasn't received any ops), the maximum time since last summary, maximum number of ops since last summary, etc. The heuristic configurations are defined by an `ISummaryConfigurationHeuristics` interface defined in [containerRuntime.ts in the container-runtime package][container-runtime].
 
-The summarizer client uses a default set of configurations defined by `DefaultSummaryConfiguration` in [this file][container-runtime]. These can be overridden by providing a new set of configurations as part of container runtime options during creation.
+The summarizer client uses a default set of configurations defined by `DefaultSummaryConfiguration` in [containerRuntime.ts in the container-runtime package][container-runtime]. These can be overridden by providing a new set of configurations as part of container runtime options during creation.
 
 ## How are summaries generated?
 
@@ -63,7 +63,7 @@ The lifecycle of a summary starts when a "parent summarizer" client is elected.
 
 ### Incremental summaries
 
-Summaries are incremental, i.e., if an object (or node) did not change since the last summary, it doesn't have to re-summarize its entire contents. Fluid supports the concept of a summary handle defined in [this file][summary-protocol]. A handle is a path to a subtree in a snapshot and it allows objects to reference a subtree in the previous snapshot, which is essentially an instruction to storage to find that subtree and populate into new summary.
+Summaries are incremental, i.e., if an object (or node) did not change since the last summary, it doesn't have to re-summarize its entire contents. Fluid supports the concept of a summary handle defined in [summary.ts in the protocol-definitions package][summary-protocol]. A handle is a path to a subtree in a snapshot and it allows objects to reference a subtree in the previous snapshot, which is essentially an instruction to storage to find that subtree and populate into new summary.
 
 So, say that a data store or DDS did not change since the last summary, it doesn't have to go through the whole summary process described above. It can instead return an ISummaryHandle with path to its subtree in the last successful summary. The same applies to other types of content like a single content blob within an object's summary tree.
 
