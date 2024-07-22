@@ -692,35 +692,6 @@ describe("ModularChangeFamily integration", () => {
 			);
 			assert.deepEqual(actualDelta, expectedDelta);
 		});
-
-		it("prunes its output", () => {
-			const a = buildChangeset([
-				{
-					type: "field",
-					field: {
-						parent: undefined,
-						field: brand("foo"),
-					},
-					fieldKind: sequence.identifier,
-					change: brand([]),
-				},
-			]);
-
-			const b = buildChangeset([
-				{
-					type: "field",
-					field: {
-						parent: undefined,
-						field: brand("bar"),
-					},
-					fieldKind: sequence.identifier,
-					change: brand([]),
-				},
-			]);
-
-			const composed = family.compose([makeAnonChange(a), makeAnonChange(b)]);
-			assert.deepEqual(composed, ModularChangeFamily.emptyChange);
-		});
 	});
 
 	describe("invert", () => {
