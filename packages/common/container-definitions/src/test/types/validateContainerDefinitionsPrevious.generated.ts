@@ -551,22 +551,6 @@ declare type current_as_old_for_Interface_IFluidPackageEnvironment = requireAssi
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedInterface_IGenericError": {"forwardCompat": false}
- */
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedInterface_IGenericError": {"backCompat": false}
- */
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_IGetPendingLocalStateProps": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IGetPendingLocalStateProps = requireAssignableTo<TypeOnly<old.IGetPendingLocalStateProps>, TypeOnly<current.IGetPendingLocalStateProps>>
@@ -822,22 +806,6 @@ declare type old_as_current_for_Interface_IThrottlingWarning = requireAssignable
  * "Interface_IThrottlingWarning": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IThrottlingWarning = requireAssignableTo<TypeOnly<current.IThrottlingWarning>, TypeOnly<old.IThrottlingWarning>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedInterface_IUsageError": {"forwardCompat": false}
- */
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedInterface_IUsageError": {"backCompat": false}
- */
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
