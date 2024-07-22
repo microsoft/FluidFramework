@@ -168,7 +168,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
 	private getStackedNode(height: number): TNode {
 		const index = this.getStackedNodeIndex(height);
-		return (this.siblingStack[height] as readonly TNode[])[index] ?? oob();
+		// Test is failing when using `?? oob()` here.
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return (this.siblingStack[height] as readonly TNode[])[index]!;
 	}
 
 	public getFieldLength(): number {
@@ -352,7 +354,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
 	public getNode(): TNode {
 		// assert(this.mode === CursorLocationType.Nodes, "can only get node when in node");
-		return (this.siblings as TNode[])[this.index] ?? oob();
+		// Test is failing when using `?? oob()` here.
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return (this.siblings as TNode[])[this.index]!;
 	}
 
 	private getField(): readonly TNode[] {

@@ -183,9 +183,8 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 
 	private getStackedFieldKey(height: number): FieldKey {
 		assert(height % 2 === 0, 0x51f /* must field height */);
-		const siblingStack = this.siblingStack[height] ?? oob();
-		const indexStack = this.indexStack[height] ?? oob();
-		return siblingStack[indexStack] as FieldKey;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this.siblingStack[height]![this.indexStack[height]!] as FieldKey;
 	}
 
 	private getStackedNodeIndex(height: number): number {
@@ -369,12 +368,12 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		assert(this.indexOfChunk < this.siblings.length, 0x52a /* out of bounds indexOfChunk */);
 
 		this.indexWithinChunk += offset;
-		const chunks = this.siblings as TreeChunk[];
-		let chunk = chunks[this.indexOfChunk] ?? oob();
 		if (offset >= 0) {
-			while (this.indexWithinChunk >= chunk.topLevelLength) {
-				chunk = chunks[this.indexOfChunk] ?? oob();
-				this.indexWithinChunk -= chunk.topLevelLength;
+			const chunks = (this.siblings as TreeChunk[]) ?? oob();
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			while (this.indexWithinChunk >= chunks[this.indexOfChunk]!.topLevelLength) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.indexWithinChunk -= chunks[this.indexOfChunk]!.topLevelLength;
 				this.indexOfChunk++;
 				if (this.indexOfChunk === chunks.length) {
 					this.exitNode();
@@ -386,14 +385,15 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 				);
 			}
 		} else {
+			const chunks = this.siblings as TreeChunk[];
 			while (this.indexWithinChunk < 0) {
 				if (this.indexOfChunk === 0) {
 					this.exitNode();
 					return false;
 				}
 				this.indexOfChunk--;
-				chunk = chunks[this.indexOfChunk] ?? oob();
-				this.indexWithinChunk += chunk.topLevelLength;
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.indexWithinChunk += chunks[this.indexOfChunk]!.topLevelLength;
 			}
 		}
 
@@ -437,9 +437,12 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			this.mode === CursorLocationType.Nodes,
 			0x52c /* can only nextNode when in Nodes */,
 		);
-		const siblingChunk = (this.siblings as TreeChunk[])[this.indexOfChunk] ?? oob();
 		this.indexWithinChunk++;
-		if (this.indexWithinChunk === siblingChunk.topLevelLength) {
+		if (
+			this.indexWithinChunk ===
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			(this.siblings as TreeChunk[])[this.indexOfChunk]!.topLevelLength
+		) {
 			this.indexOfChunk++;
 			if (this.indexOfChunk === (this.siblings as TreeChunk[]).length) {
 				this.exitNode();
