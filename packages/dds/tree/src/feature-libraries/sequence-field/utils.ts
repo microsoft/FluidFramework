@@ -119,26 +119,7 @@ export function areEqualCellIds(a: CellId | undefined, b: CellId | undefined): b
 }
 
 export function getInputCellId(mark: Mark): CellId | undefined {
-	const cellId = mark.cellId;
-	if (cellId === undefined) {
-		return undefined;
-	}
-
-	if (cellId.revision !== undefined) {
-		return cellId;
-	}
-
-	let markRevision: RevisionTag | undefined;
-	if (isAttachAndDetachEffect(mark)) {
-		markRevision = mark.attach.revision;
-	} else if (!isNoopMark(mark)) {
-		markRevision = mark.revision;
-	}
-
-	return {
-		...cellId,
-		revision: markRevision,
-	};
+	return mark.cellId;
 }
 
 export function getOutputCellId(mark: Mark): CellId | undefined {
