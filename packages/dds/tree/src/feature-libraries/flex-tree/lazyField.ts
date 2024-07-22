@@ -24,6 +24,7 @@ import {
 	disposeSymbol,
 	fail,
 	getOrCreate,
+	oob,
 } from "../../util/index.js";
 // TODO: stop depending on contextuallyTyped
 import { applyTypesFromContext, cursorFromContextualData } from "../contextuallyTyped.js";
@@ -506,7 +507,8 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 			: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
 		const fieldEditor = this.valueFieldEditor();
 		assert(content.length === 1, 0x780 /* value field content should normalize to one item */);
-		fieldEditor.set(content[0]);
+
+		fieldEditor.set(content[0] ?? oob());
 	}
 }
 
