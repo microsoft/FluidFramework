@@ -879,12 +879,7 @@ function addRevision(effect: MarkEffect, revision: RevisionTag): void {
 }
 
 export function getEndpoint(effect: MoveMarkEffect): ChangeAtomId {
-	return effect.finalEndpoint !== undefined
-		? {
-				...effect.finalEndpoint,
-				revision: effect.finalEndpoint.revision ?? effect.revision,
-			}
-		: { revision: effect.revision, localId: effect.id };
+	return effect.finalEndpoint ?? { revision: effect.revision, localId: effect.id };
 }
 
 export function getCrossFieldKeys(change: Changeset): CrossFieldKeyRange[] {
