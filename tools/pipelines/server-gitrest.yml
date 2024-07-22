@@ -81,7 +81,6 @@ pr:
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
 
-
 variables:
   - template: /tools/pipelines/templates/include-vars.yml@self
     parameters:
