@@ -55,6 +55,12 @@ export enum Side {
 	After = 1,
 }
 
+/**
+ * Returns the position and side of the start and end of a sequence.
+ *
+ * @legacy
+ * @alpha
+ */
 export function endpointPosAndSide(
 	start: SequencePlace | undefined,
 	end: SequencePlace | undefined,

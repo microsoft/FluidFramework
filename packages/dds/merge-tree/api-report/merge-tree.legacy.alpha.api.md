@@ -187,6 +187,14 @@ export class CollaborationWindow {
 // @alpha
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]): void;
 
+// @alpha
+export function endpointPosAndSide(start: SequencePlace | undefined, end: SequencePlace | undefined): {
+    startSide: Side | undefined;
+    endSide: Side | undefined;
+    startPos: number | "start" | "end" | undefined;
+    endPos: number | "start" | "end" | undefined;
+};
+
 // @alpha (undocumented)
 export interface IAttributionCollection<T> {
     // (undocumented)
