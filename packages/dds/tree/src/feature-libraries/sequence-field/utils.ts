@@ -42,7 +42,7 @@ import {
 	type CellMark,
 	type Changeset,
 	type Detach,
-	type HasDetachOverride,
+	type DetachFields,
 	type HasRevisionTag,
 	type Insert,
 	type Mark,
@@ -600,9 +600,9 @@ function areAdjacentIdRanges(
 }
 
 function haveMergeableIdOverrides(
-	lhs: HasDetachOverride,
+	lhs: DetachFields,
 	lhsCount: number,
-	rhs: HasDetachOverride,
+	rhs: DetachFields,
 ): boolean {
 	if (lhs.idOverride !== undefined && rhs.idOverride !== undefined) {
 		return areMergeableCellIds(lhs.idOverride, lhsCount, rhs.idOverride);
