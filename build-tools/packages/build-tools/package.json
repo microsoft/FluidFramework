@@ -79,9 +79,9 @@
 		"@types/shelljs": "^0.8.12",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.57.0",
+		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.1.0",
-		"mocha-multi-reporters": "^1.5.1",
-		"mocha": "^10.2.0"
+		"mocha-multi-reporters": "^1.5.1"
 	},
 	"engines": {
 		"node": ">=18.17.1"
