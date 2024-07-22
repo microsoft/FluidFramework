@@ -39,7 +39,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ~0.40.0
-        version: 0.40.0
+        version: 0.40.0(@types/node@18.18.6)
       '@microsoft/api-documenter':
         specifier: ^7.22.24
         version: 7.22.24
@@ -107,20 +107,20 @@ importers:
         specifier: ^7.45.1
         version: 7.45.1(@types/node@18.18.6)
       '@oclif/core':
-        specifier: ^4.0.12
-        version: 4.0.12
+        specifier: ^4.0.13
+        version: 4.0.13
       '@oclif/plugin-autocomplete':
-        specifier: ^3.1.7
-        version: 3.1.7
+        specifier: ^3.1.9
+        version: 3.1.9
       '@oclif/plugin-commands':
-        specifier: ^4.0.7
-        version: 4.0.7
+        specifier: ^4.0.8
+        version: 4.0.8
       '@oclif/plugin-help':
         specifier: ^6.2.6
         version: 6.2.6
       '@oclif/plugin-not-found':
-        specifier: ^3.2.11
-        version: 3.2.11
+        specifier: ^3.2.12
+        version: 3.2.12
       '@octokit/core':
         specifier: ^4.2.4
         version: 4.2.4
@@ -185,8 +185,8 @@ importers:
         specifier: ^16.14.20
         version: 16.14.20
       oclif:
-        specifier: ^4.14.5
-        version: 4.14.6
+        specifier: ^4.14.8
+        version: 4.14.8
       prettier:
         specifier: ~3.2.4
         version: 3.2.5
@@ -237,8 +237,8 @@ importers:
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.57.0)(typescript@5.4.5)
       '@oclif/test':
-        specifier: ^4.0.4
-        version: 4.0.4(@oclif/core@4.0.12)
+        specifier: ^4.0.5
+        version: 4.0.5(@oclif/core@4.0.13)
       '@types/async':
         specifier: ^3.2.20
         version: 3.2.20
@@ -503,20 +503,20 @@ importers:
   packages/version-tools:
     dependencies:
       '@oclif/core':
-        specifier: ^4.0.12
-        version: 4.0.12
+        specifier: ^4.0.13
+        version: 4.0.13
       '@oclif/plugin-autocomplete':
-        specifier: ^3.1.7
-        version: 3.1.7
+        specifier: ^3.1.9
+        version: 3.1.9
       '@oclif/plugin-commands':
-        specifier: ^4.0.7
-        version: 4.0.7
+        specifier: ^4.0.8
+        version: 4.0.8
       '@oclif/plugin-help':
         specifier: ^6.2.6
         version: 6.2.6
       '@oclif/plugin-not-found':
-        specifier: ^3.2.11
-        version: 3.2.11
+        specifier: ^3.2.12
+        version: 3.2.12
       chalk:
         specifier: ^2.4.2
         version: 2.4.2
@@ -543,8 +543,8 @@ importers:
         specifier: ^7.45.1
         version: 7.45.1(@types/node@18.18.6)
       '@oclif/test':
-        specifier: ^4.0.4
-        version: 4.0.4(@oclif/core@4.0.12)
+        specifier: ^4.0.5
+        version: 4.0.5(@oclif/core@4.0.13)
       '@types/node':
         specifier: ^18.18.6
         version: 18.18.6
@@ -582,8 +582,8 @@ importers:
         specifier: ^2.29.4
         version: 2.29.4
       oclif:
-        specifier: ^4.14.5
-        version: 4.14.6
+        specifier: ^4.14.8
+        version: 4.14.8
       rimraf:
         specifier: ^4.4.1
         version: 4.4.1
@@ -1948,16 +1948,16 @@ packages:
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
       '@fluid-tools/version-tools': 0.40.0
-      '@fluidframework/build-tools': 0.40.0
+      '@fluidframework/build-tools': 0.40.0(@types/node@18.18.6)
       '@fluidframework/bundle-size-tools': 0.40.0
       '@microsoft/api-extractor': 7.45.1(@types/node@18.18.6)
       '@oclif/core': 3.26.6
-      '@oclif/plugin-autocomplete': 3.1.7
+      '@oclif/plugin-autocomplete': 3.1.9
       '@oclif/plugin-commands': 3.3.1
       '@oclif/plugin-help': 6.2.6
-      '@oclif/plugin-not-found': 3.2.11
+      '@oclif/plugin-not-found': 3.2.12
       '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.59.5
+      '@rushstack/node-core-library': 3.59.5(@types/node@18.18.6)
       async: 3.2.4
       chalk: 5.3.0
       change-case: 3.1.0
@@ -1977,7 +1977,7 @@ packages:
       minimatch: 7.4.6
       node-fetch: 3.3.2
       npm-check-updates: 16.14.20
-      oclif: 4.14.6
+      oclif: 4.14.8
       prettier: 3.2.5
       prompts: 2.4.2
       read-pkg-up: 7.0.1
@@ -2010,10 +2010,10 @@ packages:
     hasBin: true
     dependencies:
       '@oclif/core': 3.26.6
-      '@oclif/plugin-autocomplete': 3.1.7
+      '@oclif/plugin-autocomplete': 3.1.9
       '@oclif/plugin-commands': 3.3.1
       '@oclif/plugin-help': 6.2.6
-      '@oclif/plugin-not-found': 3.2.11
+      '@oclif/plugin-not-found': 3.2.12
       chalk: 2.4.2
       semver: 7.6.2
       table: 6.8.1
@@ -2024,48 +2024,6 @@ packages:
   /@fluidframework/build-common@2.0.3:
     resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
-    dev: true
-
-  /@fluidframework/build-tools@0.40.0:
-    resolution: {integrity: sha512-4F5tNPlwrlD2QkaJgnkkECy3aWf7TR6fjbPI9RhnFJw2Fo6ZkamoIMWyliqSyiJwrAeLDvsdZsVgVRscjmZTBw==}
-    engines: {node: '>=18.17.1'}
-    hasBin: true
-    dependencies:
-      '@fluid-tools/version-tools': 0.40.0
-      '@fluidframework/bundle-size-tools': 0.40.0
-      '@manypkg/get-packages': 2.2.0
-      '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.59.5
-      async: 3.2.4
-      chalk: 2.4.2
-      cosmiconfig: 8.2.0
-      danger: 11.3.0
-      date-fns: 2.30.0
-      debug: 4.3.4(supports-color@8.1.1)
-      detect-indent: 6.1.0
-      find-up: 7.0.0
-      fs-extra: 11.2.0
-      glob: 7.2.3
-      ignore: 5.2.4
-      json5: 2.2.3
-      lodash: 4.17.21
-      lodash.isequal: 4.5.0
-      picomatch: 2.3.1
-      rimraf: 4.4.1
-      semver: 7.6.2
-      sort-package-json: 1.57.0
-      ts-morph: 22.0.0
-      type-fest: 2.19.0
-      typescript: 5.4.5
-      yaml: 2.3.1
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - encoding
-      - esbuild
-      - supports-color
-      - uglify-js
-      - webpack-cli
     dev: true
 
   /@fluidframework/build-tools@0.40.0(@types/node@18.18.6):
@@ -2408,6 +2366,13 @@ packages:
       '@inquirer/core': 9.0.3
       '@inquirer/type': 1.5.0
 
+  /@inquirer/confirm@3.1.17:
+    resolution: {integrity: sha512-qCpt/AABzPynz8tr69VDvhcjwmzAryipWXtW8Vi6m651da4H/d0Bdn55LkxXD7Rp2gfgxvxzTdb66AhIA8gzBA==}
+    engines: {node: '>=18'}
+    dependencies:
+      '@inquirer/core': 9.0.5
+      '@inquirer/type': 1.5.1
+
   /@inquirer/core@9.0.3:
     resolution: {integrity: sha512-p2BRZv/vMmpwlU4ZR966vKQzGVCi4VhLjVofwnFLziTQia541T7i1Ar8/LPh+LzjkXzocme+g5Io6MRtzlCcNA==}
     engines: {node: '>=18'}
@@ -2426,8 +2391,30 @@ packages:
       wrap-ansi: 6.2.0
       yoctocolors-cjs: 2.1.2
 
+  /@inquirer/core@9.0.5:
+    resolution: {integrity: sha512-QWG41I7vn62O9stYKg/juKXt1PEbr/4ZZCPb4KgXDQGwgA9M5NBTQ7FnOvT1ridbxkm/wTxLCNraUs7y47pIRQ==}
+    engines: {node: '>=18'}
+    dependencies:
+      '@inquirer/figures': 1.0.5
+      '@inquirer/type': 1.5.1
+      '@types/mute-stream': 0.0.4
+      '@types/node': 20.14.11
+      '@types/wrap-ansi': 3.0.0
+      ansi-escapes: 4.3.2
+      cli-spinners: 2.9.2
+      cli-width: 4.1.0
+      mute-stream: 1.0.0
+      signal-exit: 4.1.0
+      strip-ansi: 6.0.1
+      wrap-ansi: 6.2.0
+      yoctocolors-cjs: 2.1.2
+
   /@inquirer/figures@1.0.4:
     resolution: {integrity: sha512-R7Gsg6elpuqdn55fBH2y9oYzrU/yKrSmIsDX4ROT51vohrECFzTf2zw9BfUbOW8xjfmM2QbVoVYdTwhrtEKWSQ==}
+    engines: {node: '>=18'}
+
+  /@inquirer/figures@1.0.5:
+    resolution: {integrity: sha512-79hP/VWdZ2UVc9bFGJnoQ/lQMpL74mGgzSYX1xUqCVk7/v73vJCMw1VuyWN1jGkZ9B3z7THAbySqGbCNefcjfA==}
     engines: {node: '>=18'}
 
   /@inquirer/input@2.2.2:
@@ -2449,6 +2436,12 @@ packages:
 
   /@inquirer/type@1.5.0:
     resolution: {integrity: sha512-L/UdayX9Z1lLN+itoTKqJ/X4DX5DaWu2Sruwt4XgZzMNv32x4qllbzMX4MbJlz0yxAQtU19UvABGOjmdq1u3qA==}
+    engines: {node: '>=18'}
+    dependencies:
+      mute-stream: 1.0.0
+
+  /@inquirer/type@1.5.1:
+    resolution: {integrity: sha512-m3YgGQlKNS0BM+8AFiJkCsTqHEFCWn6s/Rqye3mYwvqY6LdfUv12eSwbsgNzrYyrLXiy7IrrjDLPysaSBwEfhw==}
     engines: {node: '>=18'}
     dependencies:
       mute-stream: 1.0.0
@@ -2535,7 +2528,7 @@ packages:
   /@kwsites/file-exists@1.1.1:
     resolution: {integrity: sha512-m9/5YGR18lIwxSFDwfE3oA7bWuq9kdau6ugN4H2rJeyhFQZcG9AgSHkQtSD15a8WvTgfz9aikZMrKPHvbpqFiw==}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -2573,7 +2566,7 @@ packages:
     dependencies:
       '@microsoft/api-extractor-model': 7.27.4
       '@microsoft/tsdoc': 0.14.2
-      '@rushstack/node-core-library': 3.59.5
+      '@rushstack/node-core-library': 3.59.5(@types/node@18.18.6)
       '@rushstack/ts-command-line': 4.15.1
       colors: 1.2.5
       js-yaml: 3.13.1
@@ -2587,7 +2580,7 @@ packages:
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.59.5
+      '@rushstack/node-core-library': 3.59.5(@types/node@18.18.6)
     transitivePeerDependencies:
       - '@types/node'
     dev: true
@@ -2729,7 +2722,7 @@ packages:
       clean-stack: 3.0.1
       cli-progress: 3.12.0
       color: 4.2.3
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
       ejs: 3.1.10
       get-package-type: 0.1.0
       globby: 11.1.0
@@ -2737,7 +2730,7 @@ packages:
       indent-string: 4.0.0
       is-wsl: 2.2.0
       js-yaml: 3.14.1
-      minimatch: 9.0.4
+      minimatch: 9.0.5
       natural-orderby: 2.0.3
       object-treeify: 1.1.33
       password-prompt: 1.1.3
@@ -2751,12 +2744,12 @@ packages:
       wrap-ansi: 7.0.0
     dev: true
 
-  /@oclif/core@4.0.12:
-    resolution: {integrity: sha512-o2dfPtmi2uBGHgpvHr+GNfoRKysKgQGiffONoMN3R+qBVNeIkJIZhVk31HreDkAI9LAzS92BWNgp/l7lXDxdvg==}
+  /@oclif/core@4.0.13:
+    resolution: {integrity: sha512-xZAOTK6f0Dk+DidDI7SvmbMpmBXYmzRA1YrAw5g+/cMTSmmOojq/DGNCgdUf2i+S/DEMIOs0uEUIUidYBnIfkQ==}
     engines: {node: '>=18.0.0'}
     dependencies:
       ansi-escapes: 4.3.2
-      ansis: 3.3.0
+      ansis: 3.3.1
       clean-stack: 3.0.1
       cli-spinners: 2.9.2
       debug: 4.3.5(supports-color@8.1.1)
@@ -2773,12 +2766,12 @@ packages:
       wordwrap: 1.0.0
       wrap-ansi: 7.0.0
 
-  /@oclif/plugin-autocomplete@3.1.7:
-    resolution: {integrity: sha512-PeI5VV7rJ0CzGsxJ7L8Z166PIK0F/ukHQihHt8RLVYnuDGa8ZMMwKgZPRhTyR3dcSwYajpgHvQ1ONZz1D46Fpg==}
+  /@oclif/plugin-autocomplete@3.1.9:
+    resolution: {integrity: sha512-eCoKeLLuZB5jVlEotk43PsFVQ1BaIm0ccpXNgF9FS71OCufzuJbqMsC5jfs76XM902lIEljVc+zMXvVVg+4Q8w==}
     engines: {node: '>=18.0.0'}
     dependencies:
-      '@oclif/core': 4.0.12
-      ansis: 3.3.0
+      '@oclif/core': 4.0.13
+      ansis: 3.3.1
       debug: 4.3.5(supports-color@8.1.1)
       ejs: 3.1.10
     transitivePeerDependencies:
@@ -2795,11 +2788,11 @@ packages:
       lodash.uniqby: 4.7.0
     dev: true
 
-  /@oclif/plugin-commands@4.0.7:
-    resolution: {integrity: sha512-xnSLatrHCa2ViwT2M908aIwCRVT5MKPfkLJMmBMJD5QjjpsM8jeFBoqF4aGS3YZP4enisXXNGowXUT+XwGPyfw==}
+  /@oclif/plugin-commands@4.0.8:
+    resolution: {integrity: sha512-Zae4iXKQ9G8vuktSM5tgOMoVgD7dx4HEAwNu0Wt10IN5/um9XuqClWcredU9vMzxjSxLdHpamDRqw8PP1I6Okw==}
     engines: {node: '>=18.0.0'}
     dependencies:
-      '@oclif/core': 4.0.12
+      '@oclif/core': 4.0.13
       lodash: 4.17.21
       object-treeify: 4.0.1
       tty-table: 4.2.3
@@ -2809,22 +2802,22 @@ packages:
     resolution: {integrity: sha512-0+9xlMkQK1Y7BmLDx9i3uIPlK8KleFP0ITpv6rGlqgc66HxdQFh5CY4TxcomxR5XL8S6YLCUY3f/iKkaZcdZNw==}
     engines: {node: '>=18.0.0'}
     dependencies:
-      '@oclif/core': 4.0.12
+      '@oclif/core': 4.0.13
 
-  /@oclif/plugin-not-found@3.2.11:
-    resolution: {integrity: sha512-mHHqz2EaWCw9r12ShDyJYgYr+EyJTUpfkTx9NeTAnvn7TzGhZYJEj7N3YFZm/41V43wOZxOFYejsIEwci6y+/A==}
+  /@oclif/plugin-not-found@3.2.12:
+    resolution: {integrity: sha512-XnHcX45d4ICTA9x+uWuQhjhTCTQxBrtEeqSGhma6nk5EZLCPwuUiR21jXRxSXll7eYmHUghzMkjD1TkMVpuTEg==}
     engines: {node: '>=18.0.0'}
     dependencies:
       '@inquirer/confirm': 3.1.15
-      '@oclif/core': 4.0.12
-      ansis: 3.3.0
+      '@oclif/core': 4.0.13
+      ansis: 3.3.1
       fast-levenshtein: 3.0.0
 
   /@oclif/plugin-warn-if-update-available@3.1.9:
     resolution: {integrity: sha512-4iIU+q9abyH3JbrQolL5AmcopSSorXLGCjSDH+KsIqYrGSgpwEnBXuAXLNzzO0E9A1Q8LO6zIYHKZ8yr0uE3lw==}
     engines: {node: '>=18.0.0'}
     dependencies:
-      '@oclif/core': 4.0.12
+      '@oclif/core': 4.0.13
       ansis: 3.3.0
       debug: 4.3.5(supports-color@8.1.1)
       http-call: 5.3.0
@@ -2832,14 +2825,14 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@oclif/test@4.0.4(@oclif/core@4.0.12):
-    resolution: {integrity: sha512-O0lGcUl6sq4ijgjPimbx32O6DPCoHknzrNsA+X+XzWD9DsEv0SK6Tib2+22cOqLzLItr+gU73pIYttiD5+UWag==}
+  /@oclif/test@4.0.5(@oclif/core@4.0.13):
+    resolution: {integrity: sha512-211tiiwxg9Qds7lVGK5dHKX8JmjC0Lx6/PI5r64YL1rDa0XbkRu6FuBXKmiZcAx3oxNsFePmwUlZgBz/tgkXEQ==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       '@oclif/core': '>= 3.0.0'
     dependencies:
-      '@oclif/core': 4.0.12
-      ansis: 3.3.0
+      '@oclif/core': 4.0.13
+      ansis: 3.3.1
       debug: 4.3.5(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
@@ -3187,23 +3180,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
       - typescript
-    dev: true
-
-  /@rushstack/node-core-library@3.59.5:
-    resolution: {integrity: sha512-1IpV7LufrI1EoVO8hYsb3t6L8L+yp40Sa0OaOV2CIu1zx4e6ZeVNaVIEXFgMXBKdGXkAh21MnCaIzlDNpG6ZQw==}
-    peerDependencies:
-      '@types/node': '*'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-    dependencies:
-      colors: 1.2.5
-      fs-extra: 7.0.1
-      import-lazy: 4.0.0
-      jju: 1.4.0
-      resolve: 1.22.8
-      semver: 7.3.8
-      z-schema: 5.0.5
     dev: true
 
   /@rushstack/node-core-library@3.59.5(@types/node@18.18.6):
@@ -3797,7 +3773,7 @@ packages:
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
       '@tufjs/canonical-json': 1.0.0
-      minimatch: 9.0.4
+      minimatch: 9.0.5
 
   /@types/argparse@1.0.38:
     resolution: {integrity: sha512-ebDJ9b0e702Yr7pWgB0jzm+CX4Srzz8RcXtLJDJB+BSccqMa36uyH/zUsSYao5+BD1ytv3k3rPYCq4mAE1hsXA==}
@@ -4091,7 +4067,7 @@ packages:
       '@typescript-eslint/types': 6.21.0
       '@typescript-eslint/typescript-estree': 6.21.0(typescript@5.4.5)
       '@typescript-eslint/visitor-keys': 6.21.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
       eslint: 8.57.0
       typescript: 5.4.5
     transitivePeerDependencies:
@@ -4155,7 +4131,7 @@ packages:
     dependencies:
       '@typescript-eslint/typescript-estree': 6.21.0(typescript@5.4.5)
       '@typescript-eslint/utils': 6.21.0(eslint@8.57.0)(typescript@5.4.5)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
       eslint: 8.57.0
       ts-api-utils: 1.0.3(typescript@5.4.5)
       typescript: 5.4.5
@@ -4175,7 +4151,7 @@ packages:
     dependencies:
       '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.4.5)
       '@typescript-eslint/utils': 6.7.5(eslint@8.57.0)(typescript@5.4.5)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
       eslint: 8.57.0
       ts-api-utils: 1.0.3(typescript@5.4.5)
       typescript: 5.4.5
@@ -4209,7 +4185,7 @@ packages:
     dependencies:
       '@typescript-eslint/types': 5.59.11
       '@typescript-eslint/visitor-keys': 5.59.11
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.6.2
@@ -4230,7 +4206,7 @@ packages:
     dependencies:
       '@typescript-eslint/types': 6.21.0
       '@typescript-eslint/visitor-keys': 6.21.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
       minimatch: 9.0.3
@@ -4252,7 +4228,7 @@ packages:
     dependencies:
       '@typescript-eslint/types': 6.7.5
       '@typescript-eslint/visitor-keys': 6.7.5
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.6.2
@@ -4557,7 +4533,7 @@ packages:
     resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
     engines: {node: '>= 6.0.0'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -4565,7 +4541,7 @@ packages:
     resolution: {integrity: sha512-Zn4cw2NEqd+9fiSVWMscnjyQ1a8Yfoc5oBajLeo5w+YBHgDUcEBY2hS4YpTz6iN5f/2zQiktcuM6tS8x1p9dpA==}
     engines: {node: '>= 8.0.0'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
       depd: 1.1.2
       humanize-ms: 1.2.1
     transitivePeerDependencies:
@@ -4700,6 +4676,10 @@ packages:
 
   /ansis@3.3.0:
     resolution: {integrity: sha512-RQTFlI2DOTJS00S3jQ5vAnryYKsiU6dBuR0yztid2HQKKN2a1ZZDOLIBfBqCfs3tnvtLpAeubNYtEK7a8zriLg==}
+    engines: {node: '>=15'}
+
+  /ansis@3.3.1:
+    resolution: {integrity: sha512-dW/sqnbVeWXW1UMRyKGHiJj+vBrlnnDcvyNMDB8BBI4Gu0tsohweIkvcqb3bNNwcVn70LTyvvnGgjUzUVFnK6Q==}
     engines: {node: '>=15'}
 
   /anymatch@3.1.2:
@@ -6489,7 +6469,7 @@ packages:
       eslint: '*'
       eslint-plugin-import: '*'
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
       enhanced-resolve: 5.15.0
       eslint: 8.57.0
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.21.0)(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0)
@@ -7920,7 +7900,7 @@ packages:
     dependencies:
       '@tootallnate/once': 2.0.0
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -7943,7 +7923,7 @@ packages:
     engines: {node: '>= 6'}
     dependencies:
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -7989,7 +7969,7 @@ packages:
     resolution: {integrity: sha512-C7FfFoTA+bI10qfeydT8aZbvr91vAEU+2W5BZUlzPec47oNb07SsOfwYrtxuvOYdUApPP/Qlh4DtAO51Ekk2QA==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
-      minimatch: 9.0.4
+      minimatch: 9.0.5
 
   /ignore@5.2.4:
     resolution: {integrity: sha512-MAb38BcSbH0eHNBxn7ql2NH/kX33OkB3lZ1BNdh7ENeRChHTYsTvWrMubiIAMNS2llXEEgZ1MUOBtXChP3kaFQ==}
@@ -9797,24 +9777,24 @@ packages:
       es-abstract: 1.22.2
     dev: true
 
-  /oclif@4.14.6:
-    resolution: {integrity: sha512-pfyrDzzETLrGh2D4E+DDTfZetjP0N5DeZLLaNPcZ0ENuZPVC54XvW0q5OSDDYavzxD9y97z3SKh6qRyMPRwXLQ==}
+  /oclif@4.14.8:
+    resolution: {integrity: sha512-dJplgtnF2eQ+c06aJHm8xtjKitpvgx5DLf1qU/yrRjREYE+BTcXaOZa7cIskAcFiEz/86I0rBeovEoQTI3G+zA==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     dependencies:
       '@aws-sdk/client-cloudfront': 3.614.0
       '@aws-sdk/client-s3': 3.614.0
-      '@inquirer/confirm': 3.1.15
+      '@inquirer/confirm': 3.1.17
       '@inquirer/input': 2.2.2
       '@inquirer/select': 2.3.11
-      '@oclif/core': 4.0.12
+      '@oclif/core': 4.0.13
       '@oclif/plugin-help': 6.2.6
-      '@oclif/plugin-not-found': 3.2.11
+      '@oclif/plugin-not-found': 3.2.12
       '@oclif/plugin-warn-if-update-available': 3.1.9
       async-retry: 1.3.3
       chalk: 4.1.2
       change-case: 4.1.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
       ejs: 3.1.10
       find-yarn-workspace-root: 2.0.0
       fs-extra: 8.1.0
@@ -10361,7 +10341,7 @@ packages:
   /rc-config-loader@4.1.3:
     resolution: {integrity: sha512-kD7FqML7l800i6pS6pvLyIE2ncbk9Du8Q0gp/4hMPhJU6ZxApkoLcGD8ZeqgiAlfwZ6BlETq6qqe+12DUL207w==}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
       js-yaml: 4.1.0
       json5: 2.2.3
       require-from-string: 2.0.2
@@ -11066,7 +11046,7 @@ packages:
     engines: {node: '>= 10'}
     dependencies:
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
       socks: 2.8.3
     transitivePeerDependencies:
       - supports-color
@@ -11773,7 +11753,7 @@ packages:
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
       '@tufjs/models': 1.0.4
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
       make-fetch-happen: 11.1.1
     transitivePeerDependencies:
       - supports-color

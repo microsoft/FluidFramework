@@ -78,11 +78,11 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@oclif/core": "^4.0.12",
-		"@oclif/plugin-autocomplete": "^3.1.7",
-		"@oclif/plugin-commands": "^4.0.7",
+		"@oclif/core": "^4.0.13",
+		"@oclif/plugin-autocomplete": "^3.1.9",
+		"@oclif/plugin-commands": "^4.0.8",
 		"@oclif/plugin-help": "^6.2.6",
-		"@oclif/plugin-not-found": "^3.2.11",
+		"@oclif/plugin-not-found": "^3.2.12",
 		"chalk": "^2.4.2",
 		"semver": "^7.5.4",
 		"table": "^6.8.1"
@@ -93,7 +93,7 @@
 		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.40.0",
 		"@fluidframework/eslint-config-fluid": "^5.3.0",
 		"@microsoft/api-extractor": "^7.45.1",
-		"@oclif/test": "^4.0.4",
+		"@oclif/test": "^4.0.5",
 		"@types/node": "^18.18.6",
 		"@types/semver": "^7.5.0",
 		"@vitest/coverage-v8": "^2.0.3",
@@ -106,7 +106,7 @@
 		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.29.4",
-		"oclif": "^4.14.5",
+		"oclif": "^4.14.8",
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.1",
 		"tslib": "^2.6.0",
