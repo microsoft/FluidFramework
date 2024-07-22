@@ -70,7 +70,7 @@ data:
             "enableRedisFsMetrics": {{ .Values.gitrest.git.enableRedisFsMetrics }},
             "enableHashmapRedisFs": {{ .Values.gitrest.git.enableHashmapRedisFs }},
             "redisApiMetricsSamplingPeriod": {{ .Values.gitrest.git.redisApiMetricsSamplingPeriod }},
-		    "enforceStrictPersistedFullSummaryReads": {{ .Values.gitrest.git.enforceStrictPersistedFullSummaryReads }},
+            "enforceStrictPersistedFullSummaryReads": {{ .Values.gitrest.git.enforceStrictPersistedFullSummaryReads }},
             "enableRedisFsOptimizedStat": {{ .Values.gitrest.git.enableRedisFsOptimizedStat }},
             "redisApiMetricsSamplingPeriod": {{ .Values.gitrest.git.redisApiMetricsSamplingPeriod }}
         },

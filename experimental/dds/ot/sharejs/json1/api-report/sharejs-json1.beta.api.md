@@ -4,17 +4,6 @@
 
 ```ts
 
-import { Doc } from 'ot-json1';
-import { IChannel } from '@fluidframework/datastore-definitions/internal';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
-import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
-import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
-import { JSONOp } from 'ot-json1';
-import { Path } from 'ot-json1';
-import { Serializable } from '@fluidframework/datastore-definitions/internal';
-import { SharedOT } from '@fluid-experimental/ot';
-
 // (No @packageDocumentation comment for this package)
 
 ```

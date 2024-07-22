@@ -499,52 +499,56 @@ async function addMessageClientToClientManager(
 	}
 }
 
+/**
+ * Sets up a listener for broadcast signals from external API and broadcasts them to the room.
+ *
+ * @param socket - Websocket instance
+ * @param room - Current room
+ * @param lambdaDependencies - Lambda dependencies including collaborationSessionEventEmitter and logger
+ * @returns Dispose function to remove the added listener
+ */
 function setUpSignalListenerForRoomBroadcasting(
 	socket: IWebSocket,
 	room: IRoom,
-	documentId: string,
-	tenantId: string,
 	{ collaborationSessionEventEmitter, logger }: INexusLambdaDependencies,
-): void {
-	collaborationSessionEventEmitter?.on(
-		"broadcastSignal",
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		async (broadcastSignal: IBroadcastSignalEventPayload) => {
-			const { signalRoom, signalContent } = broadcastSignal;
+): () => void {
+	const broadCastSignalListener = (broadcastSignal: IBroadcastSignalEventPayload): void => {
+		const { signalRoom, signalContent } = broadcastSignal;
 
-			// No-op if the room (collab session) that signal came in from is different
-			// than the current room. We reuse websockets so there could be multiple rooms
-			// that we are sending the signal to, and we don't want to do that.
-			if (
-				signalRoom.documentId === room.documentId &&
-				signalRoom.tenantId === room.tenantId
-			) {
+		// No-op if the room (collab session) that signal came in from is different
+		// than the current room. We reuse websockets so there could be multiple rooms
+		// that we are sending the signal to, and we don't want to do that.
+		if (signalRoom.documentId === room.documentId && signalRoom.tenantId === room.tenantId) {
+			try {
+				const runtimeMessage = createRuntimeMessage(signalContent);
+
 				try {
-					const runtimeMessage = createRuntimeMessage(signalContent);
-
-					try {
-						socket.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage);
-					} catch (error) {
-						const errorMsg = `Failed to broadcast signal from external API.`;
-						Lumberjack.error(
-							errorMsg,
-							getLumberBaseProperties(signalRoom.documentId, signalRoom.tenantId),
-							error,
-						);
-					}
+					socket.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage);
 				} catch (error) {
-					const errorMsg = `broadcast-signal content body is malformed`;
-					throw handleServerErrorAndConvertToNetworkError(
-						logger,
+					const errorMsg = `Failed to broadcast signal from external API.`;
+					Lumberjack.error(
 						errorMsg,
-						documentId,
-						tenantId,
+						getLumberBaseProperties(signalRoom.documentId, signalRoom.tenantId),
 						error,
 					);
 				}
+			} catch (error) {
+				const errorMsg = `broadcast-signal content body is malformed`;
+				throw handleServerErrorAndConvertToNetworkError(
+					logger,
+					errorMsg,
+					room.documentId,
+					room.tenantId,
+					error,
+				);
 			}
-		},
-	);
+		}
+	};
+	collaborationSessionEventEmitter?.on("broadcastSignal", broadCastSignalListener);
+	const disposeBroadcastSignalListener = (): void => {
+		collaborationSessionEventEmitter?.off("broadcastSignal", broadCastSignalListener);
+	};
+	return disposeBroadcastSignalListener;
 }
 
 export async function connectDocument(
@@ -669,11 +673,9 @@ export async function connectDocument(
 		trackSocket(socket, tenantId, documentId, claims, lambdaDependencies);
 		connectionTrace.stampStage(ConnectDocumentStage.SocketTrackerAppended);
 
-		setUpSignalListenerForRoomBroadcasting(
+		const disposeSignalListenerForRoomBroadcasting = setUpSignalListenerForRoomBroadcasting(
 			socket,
 			room,
-			documentId,
-			tenantId,
 			lambdaDependencies,
 		);
 		connectionTrace.stampStage(ConnectDocumentStage.SignalListenerSetUp);
@@ -701,6 +703,9 @@ export async function connectDocument(
 			connection: connectedMessage,
 			connectVersions,
 			details: messageClient as IClient,
+			dispose: (): void => {
+				disposeSignalListenerForRoomBroadcasting();
+			},
 		};
 	} catch (error) {
 		uncaughtError = error;

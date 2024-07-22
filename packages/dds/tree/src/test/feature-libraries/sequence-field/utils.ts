@@ -21,9 +21,14 @@ import {
 	tagRollbackInverse,
 } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
-import type {
-	NodeId,
-	RebaseRevisionMetadata,
+import {
+	addCrossFieldQuery,
+	type CrossFieldManager,
+	type CrossFieldQuerySet,
+	CrossFieldTarget,
+	type NodeId,
+	type RebaseRevisionMetadata,
+	setInCrossFieldMap,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -35,6 +40,7 @@ import {
 	type Changeset,
 	type HasMarkFields,
 	MarkListFactory,
+	type MoveId,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/index.js";
 import {
@@ -51,9 +57,11 @@ import {
 } from "../../../feature-libraries/sequence-field/utils.js";
 import {
 	type IdAllocator,
+	type RangeMap,
 	brand,
 	fail,
 	fakeIdAllocator,
+	getFromRangeMap,
 	getOrAddEmptyToMap,
 	idAllocatorFromMaxId,
 } from "../../../util/index.js";
@@ -84,15 +92,15 @@ export function composeDeep(
 ): WrappedChange {
 	const metadata = revisionMetadata ?? defaultRevisionMetadataFromChanges(changes);
 
-	return changes.reduce(
-		(change1, change2) =>
-			makeAnonChange(
-				ChangesetWrapper.compose(change1, change2, (c1, c2, composeChild) =>
-					composePair(c1.change, c2.change, composeChild, metadata, idAllocatorFromMaxId()),
+	return changes.length === 0
+		? ChangesetWrapper.create([])
+		: changes.reduce((change1, change2) =>
+				makeAnonChange(
+					ChangesetWrapper.compose(change1, change2, (c1, c2, composeChild) =>
+						composePair(c1.change, c2.change, composeChild, metadata, idAllocatorFromMaxId()),
+					),
 				),
-			),
-		makeAnonChange(ChangesetWrapper.create([])),
-	).change;
+			).change;
 }
 
 export function composeNoVerify(
@@ -177,7 +185,7 @@ function composePair(
 	metadata: RevisionMetadataSource,
 	idAllocator: IdAllocator,
 ): SF.Changeset {
-	const moveEffects = SF.newCrossFieldTable();
+	const moveEffects = newCrossFieldTable();
 	let composed = SF.compose(change1, change2, composer, idAllocator, moveEffects, metadata);
 
 	if (moveEffects.isInvalidated) {
@@ -213,7 +221,7 @@ export function rebase(
 
 	const childRebaser = config.childRebaser ?? TestNodeId.rebaseChild;
 
-	const moveEffects = SF.newCrossFieldTable();
+	const moveEffects = newCrossFieldTable();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change.change, base.change));
 	let rebasedChange = SF.rebase(
 		change.change,
@@ -288,7 +296,7 @@ export function rebaseDeepTagged(
 	);
 }
 
-function resetCrossFieldTable(table: SF.CrossFieldTable) {
+function resetCrossFieldTable(table: CrossFieldTable) {
 	table.isInvalidated = false;
 	table.srcQueries.clear();
 	table.dstQueries.clear();
@@ -300,7 +308,7 @@ export function invertDeep(change: TaggedChange<WrappedChange>): WrappedChange {
 
 export function invert(change: TaggedChange<SF.Changeset>, isRollback = true): SF.Changeset {
 	deepFreeze(change.change);
-	const table = SF.newCrossFieldTable();
+	const table = newCrossFieldTable();
 	let inverted = SF.invert(
 		change.change,
 		isRollback,
@@ -651,4 +659,74 @@ export function inlineRevision(change: Changeset, revision: RevisionTag): Change
 		new Set([undefined]),
 		revision,
 	);
+}
+
+interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
+	srcQueries: CrossFieldQuerySet;
+	dstQueries: CrossFieldQuerySet;
+	isInvalidated: boolean;
+	mapSrc: Map<RevisionTag | undefined, RangeMap<T>>;
+	mapDst: Map<RevisionTag | undefined, RangeMap<T>>;
+	reset: () => void;
+}
+
+function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
+	const srcQueries: CrossFieldQuerySet = new Map();
+	const dstQueries: CrossFieldQuerySet = new Map();
+	const mapSrc: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
+	const mapDst: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
+
+	const getMap = (target: CrossFieldTarget): Map<RevisionTag | undefined, RangeMap<T>> =>
+		target === CrossFieldTarget.Source ? mapSrc : mapDst;
+
+	const getQueries = (target: CrossFieldTarget): CrossFieldQuerySet =>
+		target === CrossFieldTarget.Source ? srcQueries : dstQueries;
+
+	const table = {
+		srcQueries,
+		dstQueries,
+		isInvalidated: false,
+		mapSrc,
+		mapDst,
+
+		get: (
+			target: CrossFieldTarget,
+			revision: RevisionTag | undefined,
+			id: MoveId,
+			count: number,
+			addDependency: boolean,
+		) => {
+			if (addDependency) {
+				addCrossFieldQuery(getQueries(target), revision, id, count);
+			}
+			return getFromRangeMap(getMap(target).get(revision) ?? [], id, count);
+		},
+		set: (
+			target: CrossFieldTarget,
+			revision: RevisionTag | undefined,
+			id: MoveId,
+			count: number,
+			value: T,
+			invalidateDependents: boolean,
+		) => {
+			if (
+				invalidateDependents &&
+				getFromRangeMap(getQueries(target).get(revision) ?? [], id, count) !== undefined
+			) {
+				table.isInvalidated = true;
+			}
+			setInCrossFieldMap(getMap(target), revision, id, count, value);
+		},
+
+		onMoveIn: () => {},
+		moveKey: () => {},
+
+		reset: () => {
+			table.isInvalidated = false;
+			table.srcQueries.clear();
+			table.dstQueries.clear();
+		},
+	};
+
+	return table;
 }

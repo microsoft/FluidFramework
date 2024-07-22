@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
-import { IOdspTokenProvider } from "@fluidframework/odsp-client";
+import { IOdspTokenProvider } from "@fluidframework/odsp-client/internal";
 import {
 	IPublicClientConfig,
 	TokenRequestCredentials,

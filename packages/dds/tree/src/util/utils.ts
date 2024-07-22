@@ -55,6 +55,18 @@ export function fail(message: string): never {
 }
 
 /**
+ * Use this function to assert that an array index is not out-of-bounds.
+ * @example
+ * ```ts
+ * // We know that `numberArray` has four elements in it, so this is safe.
+ * const n: number = numberArray[3] ?? oob();
+ * ```
+ */
+export function oob(): never {
+	return fail("Array index is out of bounds");
+}
+
+/**
  * Checks whether or not the given object is a `readonly` array.
  *
  * Note that this does NOT indicate if a given array should be treated as readonly.
@@ -171,6 +183,23 @@ export function* mapIterable<T, U>(
 ): IterableIterator<U> {
 	for (const t of iterable) {
 		yield map(t);
+	}
+}
+
+/**
+ * Filter one iterable into another
+ * @param iterable - the iterable to filter
+ * @param filter - the predicate function to run on each element of the iterable
+ * @returns a new iterable including only the elements that passed the filter predicate
+ */
+export function* filterIterable<T>(
+	iterable: Iterable<T>,
+	filter: (t: T) => boolean,
+): IterableIterator<T> {
+	for (const t of iterable) {
+		if (filter(t)) {
+			yield t;
+		}
 	}
 }
 

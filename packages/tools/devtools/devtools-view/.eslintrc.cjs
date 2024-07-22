@@ -31,27 +31,33 @@ module.exports = {
 		// Forbid new imports from legacy FluentUI react package.
 		// We have a couple of components that still use it, but new usages should not be added without due consideration.
 		"no-restricted-imports": ["error", "@fluentui/react"],
+
+		// Allow unassigned imports for testing-library/jest-dom
+		"import/no-unassigned-import": [
+			"error",
+			{
+				allow: ["@testing-library/jest-dom"],
+			},
+		],
 	},
 	overrides: [
 		{
 			// Overrides for jest test files
-			files: ["src/test/jest/**"],
+			files: ["src/test/**"],
 			plugins: ["jest"],
 			extends: ["plugin:jest/recommended"],
 			rules: {
 				"import/no-nodejs-modules": "off",
 				"unicorn/prefer-module": "off",
+				"import/no-internal-modules": "off",
 			},
-
+		},
+		{
 			// Overrides for screenshot tests
 			files: ["src/test/screenshot/**"],
 			rules: {
 				// Default exports are used by "Storybook" modules to describe test scenarios
 				"import/no-default-export": "off",
-
-				// previewjs doesn't handle imports from roll-up modules well.
-				// Screenshot tests import components directly from their source module.
-				"import/no-internal-modules": "off",
 
 				// Fine for tests
 				"import/no-nodejs-modules": "off",

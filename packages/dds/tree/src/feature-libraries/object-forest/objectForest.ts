@@ -94,6 +94,7 @@ export class ObjectForest implements IEditableForest {
 
 	public constructor(
 		public readonly anchors: AnchorSet = new AnchorSet(),
+		public readonly additionalAsserts: boolean = false,
 		roots?: MapTree,
 	) {
 		this.#roots =
@@ -117,7 +118,7 @@ export class ObjectForest implements IEditableForest {
 	}
 
 	public clone(_: TreeStoredSchemaSubscription, anchors: AnchorSet): ObjectForest {
-		return new ObjectForest(anchors, this.roots);
+		return new ObjectForest(anchors, this.additionalAsserts, this.roots);
 	}
 
 	public forgetAnchor(anchor: Anchor): void {
@@ -145,7 +146,10 @@ export class ObjectForest implements IEditableForest {
 		 */
 		const preEdit = (): void => {
 			this.events.emit("beforeChange");
-			assert(this.currentCursors.has(cursor), "missing visitor cursor while editing");
+			assert(
+				this.currentCursors.has(cursor),
+				0x995 /* missing visitor cursor while editing */,
+			);
 			if (this.currentCursors.size > 1) {
 				const unexpectedSources = [...this.currentCursors].flatMap((c) =>
 					c === cursor ? [] : c.source ?? null,
@@ -551,6 +555,9 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
-export function buildForest(anchors?: AnchorSet): ObjectForest {
-	return new ObjectForest(anchors);
+export function buildForest(
+	anchors?: AnchorSet,
+	additionalAsserts: boolean = false,
+): ObjectForest {
+	return new ObjectForest(anchors, additionalAsserts);
 }

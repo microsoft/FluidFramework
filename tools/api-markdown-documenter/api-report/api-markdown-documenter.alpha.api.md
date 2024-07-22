@@ -27,6 +27,7 @@ import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { Data } from 'unist';
 import { DocNode } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
+import { Excerpt } from '@microsoft/api-extractor-model';
 import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
@@ -76,16 +77,20 @@ declare namespace ApiItemUtilities {
         getHeadingForApiItem,
         getLinkForApiItem,
         shouldItemBeIncluded,
+        getCustomBlockComments,
         getDefaultValueBlock,
         getDeprecatedBlock,
         getExampleBlocks,
         getModifiers,
+        getModifierTags,
         getQualifiedApiItemName,
         getReleaseTag,
         getReturnsBlock,
         getSeeBlocks,
+        getSingleLineExcerptText,
         getThrowsBlocks,
         getUnscopedPackageName,
+        hasModifierTag,
         isDeprecated,
         isOptional,
         isReadonly,
@@ -179,6 +184,7 @@ export const defaultConsoleLogger: Logger;
 export namespace DefaultDocumentationSuiteOptions {
     const defaultDocumentBoundaries: ApiMemberKind[];
     const defaultHierarchyBoundaries: ApiMemberKind[];
+    export function defaultGetAlertsForItem(apiItem: ApiItem): string[];
     export function defaultGetFileNameForItem(apiItem: ApiItem): string;
     export function defaultGetHeadingTextForItem(apiItem: ApiItem): string;
     export function defaultGetLinkTextForItem(apiItem: ApiItem): string;
@@ -265,6 +271,7 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 // @public
 export interface DocumentationSuiteOptions {
     documentBoundaries?: DocumentBoundaries;
+    getAlertsForItem?: (apiItem: ApiItem) => string[];
     getFileNameForItem?: (apiItem: ApiItem) => string;
     getHeadingTextForItem?: (apiItem: ApiItem) => string;
     getLinkTextForItem?: (apiItem: ApiItem) => string;
@@ -341,13 +348,16 @@ function filterItems(apiItems: readonly ApiItem[], config: Required<ApiItemTrans
 export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationConfiguration): Required<ApiItemTransformationConfiguration>;
 
 // @public
+function getCustomBlockComments(apiItem: ApiItem): ReadonlyMap<string, readonly DocSection[]>;
+
+// @public
 function getDefaultValueBlock(apiItem: ApiItem, logger?: Logger): DocSection | undefined;
 
 // @public
 function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
 
 // @public
-function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined;
+function getExampleBlocks(apiItem: ApiItem): readonly DocSection[] | undefined;
 
 // @public
 function getHeadingForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingLevel?: number): Heading;
@@ -359,6 +369,9 @@ function getLinkForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformat
 function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[];
 
 // @public
+function getModifierTags(apiItem: ApiItem): ReadonlySet<string>;
+
+// @public
 function getQualifiedApiItemName(apiItem: ApiItem): string;
 
 // @public
@@ -368,13 +381,19 @@ function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined;
 function getReturnsBlock(apiItem: ApiItem): DocSection | undefined;
 
 // @public
-function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined;
+function getSeeBlocks(apiItem: ApiItem): readonly DocSection[] | undefined;
 
 // @public
-function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined;
+function getSingleLineExcerptText(excerpt: Excerpt): string;
+
+// @public
+function getThrowsBlocks(apiItem: ApiItem): readonly DocSection[] | undefined;
 
 // @public
 function getUnscopedPackageName(apiPackage: ApiPackage): string;
+
+// @public
+function hasModifierTag(apiItem: ApiItem, tagName: string): boolean;
 
 // @public
 export interface Heading {

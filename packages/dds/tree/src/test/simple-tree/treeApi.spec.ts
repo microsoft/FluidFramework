@@ -181,8 +181,7 @@ describe("treeNodeApi", () => {
 		const newChild = new Point({});
 		assert.equal(Tree.status(root), TreeStatus.InDocument);
 		assert.equal(Tree.status(child), TreeStatus.InDocument);
-		// TODO: This API layer should have an Unhydrated status:
-		// assert.equal(nodeApi.status(newChild), TreeStatus.Unhydrated);
+		assert.equal(Tree.status(newChild), TreeStatus.New);
 		root.x = newChild;
 		assert.equal(Tree.status(root), TreeStatus.InDocument);
 		assert.equal(Tree.status(child), TreeStatus.Removed);
@@ -260,6 +259,15 @@ describe("treeNodeApi", () => {
 						/may not be called on a node with more than one identifier/,
 					),
 			);
+		});
+
+		it("Returns undefined for non-object nodes", () => {
+			const config = new TreeViewConfiguration({
+				schema: schema.array("parent", schema.number),
+			});
+			const view = getView(config);
+			view.initialize([1, 2, 3]);
+			assert.equal(Tree.shortId(view.root), undefined);
 		});
 	});
 
@@ -723,6 +731,42 @@ describe("treeNodeApi", () => {
 			// Changes should be batched so we should only get one firing of each event type.
 			assert.equal(deepChanges, 1, "'treeChanged' should only fire once");
 			assert.equal(shallowChanges, 1, "'nodeChanged' should only fire once");
+		});
+
+		it(`'nodeChanged' and 'treeChanged' fire in the correct order`, () => {
+			// The main reason this test exists is to ensure that the fact that a node (and its ancestors) might be visited
+			// during the detach pass of the delta visit even if they're not being mutated during that pass, doesn't cause
+			// the 'treeChanged' event to fire before the 'nodeChanged' event, which could be an easily introduced bug when
+			// updating the delta visit code for the anchorset.
+			const sb = new SchemaFactory("test");
+			class innerObject extends sb.object("inner", { value: sb.number }) {}
+			class treeSchema extends sb.object("root", {
+				prop1: innerObject,
+			}) {}
+
+			const view = getView(new TreeViewConfiguration({ schema: treeSchema }));
+			view.initialize({ prop1: { value: 1 } });
+
+			let nodeChanged = false;
+			let treeChanged = false;
+			// Asserts in the event handlers validate the order of the events we expect
+			Tree.on(view.root.prop1, "nodeChanged", () => {
+				assert(nodeChanged === false, "nodeChanged should not have fired yet");
+				assert(treeChanged === false, "treeChanged should not have fired yet");
+				nodeChanged = true;
+			});
+			Tree.on(view.root.prop1, "treeChanged", () => {
+				assert(nodeChanged === true, "nodeChanged should have fired before treeChanged");
+				assert(treeChanged === false, "treeChanged should not have fired yet");
+				treeChanged = true;
+			});
+
+			view.root.prop1.value = 2;
+
+			// Validate changes actually took place and all listeners fired
+			assert.equal(view.root.prop1.value, 2, "'prop1' value did not change as expected");
+			assert.equal(nodeChanged, true, "'nodeChanged' should have fired");
+			assert.equal(treeChanged, true, "'treeChanged' should have fired");
 		});
 	});
 });

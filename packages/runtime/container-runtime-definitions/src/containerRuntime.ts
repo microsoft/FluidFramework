@@ -28,6 +28,7 @@ import type {
 
 /**
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ * @legacy
  * @alpha
  */
 export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
@@ -37,6 +38,7 @@ export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContaine
 
 /**
  * Events emitted by {@link IContainerRuntime}.
+ * @legacy
  * @alpha
  */
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
@@ -45,6 +47,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
@@ -52,6 +55,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
+ * @legacy
  * @alpha
  */
 export interface IContainerRuntime

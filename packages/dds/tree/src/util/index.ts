@@ -24,11 +24,13 @@ export {
 	getOrDefaultInNestedMap,
 	forEachInNestedMap,
 	type NestedMap,
+	type ReadonlyNestedMap,
 	SizedNestedMap,
 	populateNestedMap,
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
+	mapNestedMap,
 	nestedMapToFlatList,
 	nestedMapFromFlatList,
 } from "./nestedMap.js";
@@ -56,6 +58,7 @@ export {
 	clone,
 	compareSets,
 	fail,
+	oob,
 	getOrAddEmptyToMap,
 	getOrCreate,
 	isJsonObject,
@@ -67,6 +70,7 @@ export {
 	JsonCompatibleReadOnlySchema,
 	makeArray,
 	mapIterable,
+	filterIterable,
 	type Mutable,
 	type Populated,
 	type RecursiveReadonly,
@@ -125,3 +129,11 @@ export {
 	type IdAllocationState,
 	fakeIdAllocator,
 } from "./idAllocator.js";
+
+export {
+	Breakable,
+	type WithBreakable,
+	breakingMethod,
+	throwIfBroken,
+	breakingClass,
+} from "./breakable.js";

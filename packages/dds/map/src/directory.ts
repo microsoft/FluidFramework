@@ -85,6 +85,7 @@ interface IDirectoryMessageHandler {
 
 /**
  * Operation indicating a value should be set for a key.
+ * @legacy
  * @alpha
  */
 export interface IDirectorySetOperation {
@@ -112,6 +113,7 @@ export interface IDirectorySetOperation {
 
 /**
  * Operation indicating a key should be deleted from the directory.
+ * @legacy
  * @alpha
  */
 export interface IDirectoryDeleteOperation {
@@ -133,12 +135,14 @@ export interface IDirectoryDeleteOperation {
 
 /**
  * An operation on a specific key within a directory.
+ * @legacy
  * @alpha
  */
 export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
 
 /**
  * Operation indicating the directory should be cleared.
+ * @legacy
  * @alpha
  */
 export interface IDirectoryClearOperation {
@@ -155,12 +159,14 @@ export interface IDirectoryClearOperation {
 
 /**
  * An operation on one or more of the keys within a directory.
+ * @legacy
  * @alpha
  */
 export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
 
 /**
  * Operation indicating a subdirectory should be created.
+ * @legacy
  * @alpha
  */
 export interface IDirectoryCreateSubDirectoryOperation {
@@ -182,6 +188,7 @@ export interface IDirectoryCreateSubDirectoryOperation {
 
 /**
  * Operation indicating a subdirectory should be deleted.
+ * @legacy
  * @alpha
  */
 export interface IDirectoryDeleteSubDirectoryOperation {
@@ -203,6 +210,7 @@ export interface IDirectoryDeleteSubDirectoryOperation {
 
 /**
  * An operation on the subdirectories within a directory.
+ * @legacy
  * @alpha
  */
 export type IDirectorySubDirectoryOperation =
@@ -211,6 +219,7 @@ export type IDirectorySubDirectoryOperation =
 
 /**
  * Any operation on a directory.
+ * @legacy
  * @alpha
  */
 export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
@@ -220,6 +229,7 @@ export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDire
  *
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  *
+ * @legacy
  * @alpha
  */
 export interface ICreateInfo {
@@ -244,6 +254,7 @@ export interface ICreateInfo {
  *
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  *
+ * @legacy
  * @alpha
  */
 export interface IDirectoryDataObject {
@@ -273,6 +284,7 @@ export interface IDirectoryDataObject {
  *
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  *
+ * @legacy
  * @alpha
  */
 export interface IDirectoryNewStorageFormat {
@@ -412,6 +424,7 @@ class DirectoryCreationTracker {
  * ```
  *
  * @sealed
+ * @legacy
  * @alpha
  */
 export class SharedDirectory
@@ -854,7 +867,9 @@ export class SharedDirectory
 		const nodeList = absolutePath.split(posix.sep);
 		let start = 1;
 		while (start < nodeList.length) {
-			const subDirName = nodeList[start];
+			// Non null asserting, this loop only runs while start in in the bounds of the array
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const subDirName = nodeList[start]!;
 			if (currentParent.isSubDirectoryDeletePending(subDirName)) {
 				return true;
 			}
@@ -1479,7 +1494,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			dirs: this._subdirectories,
 			next(): IteratorResult<[string, IDirectory]> {
 				if (this.index < subdirNames.length) {
-					const subdirName = subdirNames[this.index++];
+					// Non null asserting, we've checked that the index is inside the bounds of the array.
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					const subdirName = subdirNames[this.index]!;
+					this.index++;
 					const subdir = this.dirs.get(subdirName);
 					assert(subdir !== undefined, 0x8ac /* Could not find expected sub-directory. */);
 					return { value: [subdirName, subdir], done: false };
@@ -2170,18 +2188,22 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): boolean {
 		if (this.pendingClearMessageIds.length > 0) {
 			if (local) {
+				// Remove all pendingMessageIds lower than first pendingClearMessageId.
+				// Non null asserting, because of pendingClearMessageIds length check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const firstPendingClearMessageId = this.pendingClearMessageIds[0]!;
 				assert(
 					localOpMetadata !== undefined &&
 						isKeyEditLocalOpMetadata(localOpMetadata) &&
-						localOpMetadata.pendingMessageId < this.pendingClearMessageIds[0],
+						localOpMetadata.pendingMessageId < firstPendingClearMessageId,
 					0x010 /* "Received out of order storage op when there is an unackd clear message" */,
 				);
-				// Remove all pendingMessageIds lower than first pendingClearMessageId.
-				const lowestPendingClearMessageId = this.pendingClearMessageIds[0];
 				const pendingKeyMessageIdArray = this.pendingKeys.get(op.key);
 				if (pendingKeyMessageIdArray !== undefined) {
 					let index = 0;
-					while (pendingKeyMessageIdArray[index] < lowestPendingClearMessageId) {
+					// Non-null asserting because we maintain that the pendingKeyMessageIdArray will only exist if it is non-empty.
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					while (pendingKeyMessageIdArray[index]! < firstPendingClearMessageId) {
 						index += 1;
 					}
 					const newPendingKeyMessageId = pendingKeyMessageIdArray.splice(index);

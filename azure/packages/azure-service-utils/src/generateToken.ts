@@ -49,6 +49,7 @@ import { v4 as uuid } from "uuid";
  * @param ver - See {@link @fluidframework/protocol-definitions#ITokenClaims.ver}.
  * Default: `1.0`.
  *
+ * @legacy
  * @alpha
  */
 export function generateToken(

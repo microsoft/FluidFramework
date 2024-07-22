@@ -7,6 +7,7 @@ import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/driver-definitions";
 /**
  * Manages the state and the members for {@link IAudience}
+ * @legacy
  * @alpha
  */
 export interface IAudienceOwner extends IAudience {

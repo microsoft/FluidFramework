@@ -21,14 +21,14 @@ import {
 import { matchProperties } from "./properties.js";
 
 export const zamboniSegmentsMax = 2;
-function underflow(node: MergeBlock) {
+function underflow(node: MergeBlock): boolean {
 	return node.childCount < MaxNodesInBlock / 2;
 }
 
 export function zamboniSegments(
 	mergeTree: MergeTree,
 	zamboniSegmentsMaxCount = zamboniSegmentsMax,
-) {
+): void {
 	if (!mergeTree.collabWindow.collaborating) {
 		return;
 	}
@@ -57,7 +57,8 @@ export function zamboniSegments(
 				block.childCount = newChildCount;
 				block.children = childrenCopy;
 				for (let j = 0; j < newChildCount; j++) {
-					block.assignChild(childrenCopy[j], j, false);
+					// Non null asserting here since its looping though childrenCopy.length so j at childrenCopy will always exist
+					block.assignChild(childrenCopy[j]!, j, false);
 				}
 
 				if (underflow(block) && block.parent) {
@@ -72,7 +73,7 @@ export function zamboniSegments(
 }
 
 // Interior node with all node children
-export function packParent(parent: MergeBlock, mergeTree: MergeTree) {
+export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 	const children = parent.children;
 	let childIndex: number;
 	let childBlock: MergeBlock;
@@ -96,7 +97,7 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree) {
 		}
 		const baseNodesInBlockCount = Math.floor(totalNodeCount / childCount);
 		let remainderCount = totalNodeCount % childCount;
-		const packedBlocks = new Array<MergeBlock>(MaxNodesInBlock);
+		const packedBlocks: IMergeNode[] = Array.from({ length: MaxNodesInBlock });
 		let childrenPackedCount = 0;
 		for (let nodeIndex = 0; nodeIndex < childCount; nodeIndex++) {
 			let nodeCount = baseNodesInBlockCount;
@@ -106,7 +107,8 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree) {
 			}
 			const packedBlock = mergeTree.makeBlock(nodeCount);
 			for (let packedNodeIndex = 0; packedNodeIndex < nodeCount; packedNodeIndex++) {
-				const nodeToPack = holdNodes[childrenPackedCount++];
+				// TODO Non null asserting, why is this not null?
+				const nodeToPack = holdNodes[childrenPackedCount++]!;
 				packedBlock.assignChild(nodeToPack, packedNodeIndex, false);
 			}
 			packedBlock.parent = parent;
@@ -115,7 +117,8 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree) {
 		}
 		parent.children = packedBlocks;
 		for (let j = 0; j < childCount; j++) {
-			parent.assignChild(packedBlocks[j], j, false);
+			// TODO Non null asserting, why is this not null?
+			parent.assignChild(packedBlocks[j]!, j, false);
 		}
 		parent.childCount = childCount;
 	} else {
@@ -130,12 +133,13 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree) {
 	}
 }
 
-function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTree) {
+function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTree): void {
 	// The previous segment is tracked while scouring for the purposes of merging adjacent segments
 	// when possible.
 	let prevSegment: ISegment | undefined;
 	for (let k = 0; k < node.childCount; k++) {
-		const childNode = node.children[k];
+		// TODO Non null asserting, why is this not null?
+		const childNode = node.children[k]!;
 		if (!childNode.isLeaf() || !childNode.segmentGroups.empty) {
 			holdNodes.push(childNode);
 			prevSegment = undefined;
@@ -191,7 +195,7 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 					);
 
 					segment.parent = undefined;
-					segment.trackingCollection.trackingGroups.forEach((tg) => tg.unlink(segment));
+					for (const tg of segment.trackingCollection.trackingGroups) tg.unlink(segment);
 				} else {
 					holdNodes.push(segment);
 					prevSegment = segmentHasPositiveLength ? segment : undefined;

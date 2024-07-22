@@ -9,11 +9,20 @@ import type { CommitMetadata } from "../core/index.js";
 import type { Listenable } from "../events/index.js";
 import type { RevertibleFactory } from "../shared-tree/index.js";
 
-import type {
-	ImplicitFieldSchema,
-	InsertableTreeFieldFromImplicitField,
-	TreeFieldFromImplicitField,
+import {
+	type ImplicitAllowedTypes,
+	NodeKind,
+	normalizeFieldSchema,
+	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
+	type TreeFieldFromImplicitField,
+	type TreeNodeSchema,
 } from "./schemaTypes.js";
+import { toFlexSchema } from "./toFlexSchema.js";
+import { LeafNodeSchema } from "./leafNodeSchema.js";
+import { assert } from "@fluidframework/core-utils/internal";
+import { isObjectNodeSchema } from "./objectNode.js";
+import { markSchemaMostDerived } from "./schemaFactory.js";
 
 /**
  * Channel for a Fluid Tree DDS.
@@ -130,43 +139,61 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 		const config = { ...defaultTreeConfigurationOptions, ...props };
 		this.schema = config.schema;
 		this.enableSchemaValidation = config.enableSchemaValidation;
+
+		// Ensure all reachable schema are marked as most derived.
+		// This ensures if multiple schema extending the same schema factory generated class are present (or have been constructed, or get constructed in the future),
+		// an error is reported.
+		walkFieldSchema(config.schema, markSchemaMostDerived);
+		// Eagerly perform this conversion to surface errors sooner.
+		toFlexSchema(config.schema);
 	}
 }
 
-/**
- * Configuration for how to {@link ITree.schematize | schematize} a tree.
- * @sealed @public
- * @deprecated Please migrate to use {@link TreeViewConfiguration} with {@link ITree.viewWith} instead.
- */
-export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-	/**
-	 * If `true`, the tree will validate new content against its stored schema at insertion time
-	 * and throw an error if the new content doesn't match the expected schema.
-	 *
-	 * @defaultValue `false`.
-	 *
-	 * @remarks Enabling schema validation has a performance penalty when inserting new content into the tree because
-	 * additional checks are done. Enable this option only in scenarios where you are ok with that operation being a
-	 * bit slower.
-	 */
-	public readonly enableSchemaValidation: boolean;
+export function walkNodeSchema(
+	schema: TreeNodeSchema,
+	visitor: (schema: TreeNodeSchema) => void,
+	visitedSet: Set<TreeNodeSchema>,
+): void {
+	if (visitedSet.has(schema)) {
+		return;
+	}
+	visitedSet.add(schema);
+	if (schema instanceof LeafNodeSchema) {
+		// nothing to do
+	} else if (isObjectNodeSchema(schema)) {
+		for (const field of schema.fields.values()) {
+			walkAllowedTypes(field.allowedTypeSet, visitor, visitedSet);
+		}
+	} else {
+		assert(
+			schema.kind === NodeKind.Array || schema.kind === NodeKind.Map,
+			0x9b3 /* invalid schema */,
+		);
+		const childTypes = schema.info as ImplicitAllowedTypes;
+		walkFieldSchema(childTypes, visitor, visitedSet);
+	}
+	// This visit is done at the end so the traversal order is most inner types first.
+	// This was picked since when fixing errors,
+	// working from the inner types out to the types that use them will probably go better than the reverse.
+	// This does not however ensure all types referenced by a type are visited before it, since in recursive cases thats impossible.
+	visitor(schema);
+}
 
-	/**
-	 * @param schema - The schema which the application wants to view the tree with.
-	 * @param initialTree - A function that returns the default tree content to initialize the tree with iff the tree is uninitialized
-	 * (meaning it does not even have any schema set at all).
-	 * If `initialTree` returns any actual node instances, they should be recreated each time `initialTree` runs.
-	 * This is because if the config is used a second time any nodes that were not recreated could error since nodes cannot be inserted into the tree multiple times.
-	 * @param options - Additional options that can be specified when {@link ITree.schematize | schematizing } a tree.
-	 */
-	public constructor(
-		public readonly schema: TSchema,
-		public readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
-		options?: ITreeConfigurationOptions,
-	) {
-		this.enableSchemaValidation =
-			options?.enableSchemaValidation ??
-			defaultTreeConfigurationOptions.enableSchemaValidation;
+export function walkFieldSchema(
+	schema: ImplicitFieldSchema,
+	visitor: (schema: TreeNodeSchema) => void,
+	visitedSet: Set<TreeNodeSchema> = new Set(),
+): void {
+	walkAllowedTypes(normalizeFieldSchema(schema).allowedTypeSet, visitor, visitedSet);
+}
+
+export function walkAllowedTypes(
+	allowedTypes: Iterable<TreeNodeSchema>,
+	visitor: (schema: TreeNodeSchema) => void,
+	visitedSet: Set<TreeNodeSchema>,
+): void {
+	for (const childType of allowedTypes) {
+		walkNodeSchema(childType, visitor, visitedSet);
 	}
 }
 

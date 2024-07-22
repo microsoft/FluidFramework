@@ -29,7 +29,7 @@ export class DeltaQueue<T>
 	 */
 	private pauseCount = 1;
 
-	private error: any | undefined;
+	private error: Error | undefined;
 
 	/**
 	 * When processing is ongoing, holds a deferred that will resolve once processing stops.
@@ -42,7 +42,7 @@ export class DeltaQueue<T>
 	}
 
 	/**
-	 * @returns True if the queue is paused, false if not.
+	 * Whether or not the queue is paused.
 	 */
 	public get paused(): boolean {
 		return this.pauseCount !== 0;
@@ -56,7 +56,10 @@ export class DeltaQueue<T>
 		return this.processingPromise === undefined && this.q.length === 0;
 	}
 
-	public async waitTillProcessingDone() {
+	public async waitTillProcessingDone(): Promise<{
+		count: number;
+		duration: number;
+	}> {
 		return this.processingPromise ?? { count: 0, duration: 0 };
 	}
 
@@ -67,7 +70,7 @@ export class DeltaQueue<T>
 		super();
 	}
 
-	public dispose() {
+	public dispose(): void {
 		throw new Error("Not implemented.");
 		this.isDisposed = true;
 	}
@@ -84,7 +87,7 @@ export class DeltaQueue<T>
 		return this.q.toArray();
 	}
 
-	public push(task: T) {
+	public push(task: T): void {
 		try {
 			this.q.push(task);
 			this.emit("push", task);
@@ -112,7 +115,7 @@ export class DeltaQueue<T>
 	 * accidental reentrancy. ensureProcessing can be called safely to start the processing loop if it is
 	 * not already started.
 	 */
-	private ensureProcessing() {
+	private ensureProcessing(): void {
 		if (this.anythingToProcess() && this.processingPromise === undefined) {
 			// Use a resolved promise to start the processing on a separate stack.
 			this.processingPromise = Promise.resolve()
@@ -126,7 +129,7 @@ export class DeltaQueue<T>
 					this.processingPromise = undefined;
 					return result;
 				})
-				.catch((error) => {
+				.catch((error: Error) => {
 					this.error = error;
 					this.processingPromise = undefined;
 					this.emit("error", error);
@@ -139,14 +142,17 @@ export class DeltaQueue<T>
 		}
 	}
 
-	private anythingToProcess() {
-		return this.q.length !== 0 && !this.paused && this.error === undefined;
+	private anythingToProcess(): boolean {
+		return this.q.length > 0 && !this.paused && this.error === undefined;
 	}
 
 	/**
 	 * Executes the delta processing loop until a stop condition is reached.
 	 */
-	private processDeltas() {
+	private processDeltas(): {
+		count: number;
+		duration: number;
+	} {
 		const start = performance.now();
 		let count = 0;
 

@@ -15,6 +15,7 @@ import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
  * ```typescript
  * { IFoo: "IFoo" }
  * ```
+ * @legacy
  * @alpha
  */
 export type FluidObjectSymbolProvider<T> = {
@@ -25,6 +26,7 @@ export type FluidObjectSymbolProvider<T> = {
  * This is a condensed version of Record that requires the object has all
  * the FluidObject properties as its type mapped to an object that implements
  * the property.
+ * @legacy
  * @alpha
  */
 export type AsyncRequiredFluidObjectProvider<T> = T extends undefined
@@ -37,6 +39,7 @@ export type AsyncRequiredFluidObjectProvider<T> = T extends undefined
  * This is a condensed version of Record that requires the object has all
  * the FluidObject properties as its type, mapped to an object that implements
  * the property or undefined.
+ * @legacy
  * @alpha
  */
 export type AsyncOptionalFluidObjectProvider<T> = T extends undefined
@@ -47,6 +50,7 @@ export type AsyncOptionalFluidObjectProvider<T> = T extends undefined
 
 /**
  * Combined type for Optional and Required Async Fluid object Providers
+ * @legacy
  * @alpha
  */
 export type AsyncFluidObjectProvider<O, R = undefined> = AsyncOptionalFluidObjectProvider<O> &
@@ -54,6 +58,7 @@ export type AsyncFluidObjectProvider<O, R = undefined> = AsyncOptionalFluidObjec
 
 /**
  * Multiple ways to provide a Fluid object.
+ * @legacy
  * @alpha
  */
 export type FluidObjectProvider<T> =

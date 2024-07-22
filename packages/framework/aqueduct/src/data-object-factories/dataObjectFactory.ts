@@ -26,6 +26,7 @@ import { PureDataObjectFactory } from "./pureDataObjectFactory.js";
  *
  * @typeParam TObj - DataObject (concrete type)
  * @typeParam I - The input types for the DataObject
+ * @legacy
  * @alpha
  */
 export class DataObjectFactory<

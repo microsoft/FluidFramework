@@ -26,7 +26,7 @@ describe("OpGroupingManager", () => {
 		hasReentrantOps,
 	});
 	const messagesToBatch = (messages: BatchMessage[]): IBatch => ({
-		content: messages,
+		messages,
 		contentSizeInBytes: messages
 			.map((message) => JSON.stringify(message).length)
 			.reduce((a, b) => a + b),
@@ -99,8 +99,8 @@ describe("OpGroupingManager", () => {
 				},
 				mockLogger,
 			).groupBatch(createBatch(5));
-			assert.strictEqual(result.content.length, 1);
-			assert.deepStrictEqual(result.content, [
+			assert.strictEqual(result.messages.length, 1);
+			assert.deepStrictEqual(result.messages, [
 				{
 					contents:
 						'{"type":"groupedBatch","contents":[{"contents":0},{"contents":0},{"contents":0},{"contents":0},{"contents":0}]}',

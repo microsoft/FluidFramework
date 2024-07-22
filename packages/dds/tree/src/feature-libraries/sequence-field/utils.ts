@@ -13,14 +13,11 @@ import {
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
 } from "../../core/index.js";
-import { type Mutable, type RangeMap, brand, fail, getFromRangeMap } from "../../util/index.js";
+import { type Mutable, brand, fail } from "../../util/index.js";
 import {
-	type CrossFieldManager,
-	type CrossFieldQuerySet,
 	CrossFieldTarget,
 	type NodeId,
-	addCrossFieldQuery,
-	setInCrossFieldMap,
+	type CrossFieldKeyRange,
 } from "../modular-schema/index.js";
 
 import type {
@@ -41,7 +38,6 @@ import {
 	type Insert,
 	type Mark,
 	type MarkEffect,
-	type MoveId,
 	type MoveIn,
 	type MoveOut,
 	type NoopMark,
@@ -531,7 +527,10 @@ export function compareCellsFromSameRevision(
 	cell2: CellId,
 	count2: number,
 ): number | undefined {
-	assert(cell1.revision === cell2.revision, 0x85b /* Expected cells to have the same revision */);
+	assert(
+		cell1.revision === cell2.revision,
+		0x85b /* Expected cells to have the same revision */,
+	);
 	if (areOverlappingIdRanges(cell1.localId, count1, cell2.localId, count2)) {
 		return cell1.localId - cell2.localId;
 	}
@@ -556,7 +555,9 @@ function areMergeableChangeAtoms(
 		return lhs === undefined && rhs === undefined;
 	}
 
-	return lhs.revision === rhs.revision && areAdjacentIdRanges(lhs.localId, lhsCount, rhs.localId);
+	return (
+		lhs.revision === rhs.revision && areAdjacentIdRanges(lhs.localId, lhsCount, rhs.localId)
+	);
 }
 
 function areAdjacentIdRanges(
@@ -567,7 +568,11 @@ function areAdjacentIdRanges(
 	return (firstStart as number) + firstLength === secondStart;
 }
 
-function haveMergeableIdOverrides(lhs: DetachFields, lhsCount: number, rhs: DetachFields): boolean {
+function haveMergeableIdOverrides(
+	lhs: DetachFields,
+	lhsCount: number,
+	rhs: DetachFields,
+): boolean {
 	if (lhs.idOverride !== undefined && rhs.idOverride !== undefined) {
 		return areMergeableCellIds(lhs.idOverride, lhsCount, rhs.idOverride);
 	}
@@ -694,79 +699,6 @@ function tryMergeEffects(
 }
 
 /**
- * @internal
- */
-export interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
-	srcQueries: CrossFieldQuerySet;
-	dstQueries: CrossFieldQuerySet;
-	isInvalidated: boolean;
-	mapSrc: Map<RevisionTag | undefined, RangeMap<T>>;
-	mapDst: Map<RevisionTag | undefined, RangeMap<T>>;
-	reset: () => void;
-}
-
-/**
- * @internal
- */
-export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
-	const srcQueries: CrossFieldQuerySet = new Map();
-	const dstQueries: CrossFieldQuerySet = new Map();
-	const mapSrc: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
-	const mapDst: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
-
-	const getMap = (target: CrossFieldTarget): Map<RevisionTag | undefined, RangeMap<T>> =>
-		target === CrossFieldTarget.Source ? mapSrc : mapDst;
-
-	const getQueries = (target: CrossFieldTarget): CrossFieldQuerySet =>
-		target === CrossFieldTarget.Source ? srcQueries : dstQueries;
-
-	const table = {
-		srcQueries,
-		dstQueries,
-		isInvalidated: false,
-		mapSrc,
-		mapDst,
-
-		get: (
-			target: CrossFieldTarget,
-			revision: RevisionTag | undefined,
-			id: MoveId,
-			count: number,
-			addDependency: boolean,
-		) => {
-			if (addDependency) {
-				addCrossFieldQuery(getQueries(target), revision, id, count);
-			}
-			return getFromRangeMap(getMap(target).get(revision) ?? [], id, count);
-		},
-		set: (
-			target: CrossFieldTarget,
-			revision: RevisionTag | undefined,
-			id: MoveId,
-			count: number,
-			value: T,
-			invalidateDependents: boolean,
-		) => {
-			if (
-				invalidateDependents &&
-				getFromRangeMap(getQueries(target).get(revision) ?? [], id, count) !== undefined
-			) {
-				table.isInvalidated = true;
-			}
-			setInCrossFieldMap(getMap(target), revision, id, count, value);
-		},
-
-		reset: () => {
-			table.isInvalidated = false;
-			table.srcQueries.clear();
-			table.dstQueries.clear();
-		},
-	};
-
-	return table;
-}
-
-/**
  * Splits the `mark` into two marks such that the first returned mark has length `length`.
  * @param mark - The mark to split.
  * @param revision - The revision of the changeset the mark is part of.
@@ -875,7 +807,9 @@ function splitDetachEvent(detachEvent: CellId, length: number): CellId {
 }
 
 // TODO: Refactor MarkEffect into a field of CellMark so this function isn't necessary.
-export function extractMarkEffect<TEffect extends MarkEffect>(mark: CellMark<TEffect>): TEffect {
+export function extractMarkEffect<TEffect extends MarkEffect>(
+	mark: CellMark<TEffect>,
+): TEffect {
 	const { cellId: _cellId, count: _count, changes: _changes, ...effect } = mark;
 	return effect as unknown as TEffect;
 }
@@ -946,4 +880,39 @@ function addRevision(effect: MarkEffect, revision: RevisionTag): void {
 
 export function getEndpoint(effect: MoveMarkEffect): ChangeAtomId {
 	return effect.finalEndpoint ?? { revision: effect.revision, localId: effect.id };
+}
+
+export function getCrossFieldKeys(change: Changeset): CrossFieldKeyRange[] {
+	const keys: CrossFieldKeyRange[] = [];
+	for (const mark of change) {
+		keys.push(...getCrossFieldKeysForMarkEffect(mark, mark.count));
+	}
+
+	return keys;
+}
+
+function getCrossFieldKeysForMarkEffect(
+	effect: MarkEffect,
+	count: number,
+): CrossFieldKeyRange[] {
+	switch (effect.type) {
+		case "Insert":
+			// An insert behaves like a move where the source and destination are at the same location.
+			// An insert can become a move when after rebasing.
+			return [
+				[CrossFieldTarget.Source, effect.revision, effect.id, count],
+				[CrossFieldTarget.Destination, effect.revision, effect.id, count],
+			];
+		case "MoveOut":
+			return [[CrossFieldTarget.Source, effect.revision, effect.id, count]];
+		case "MoveIn":
+			return [[CrossFieldTarget.Destination, effect.revision, effect.id, count]];
+		case "AttachAndDetach":
+			return [
+				...getCrossFieldKeysForMarkEffect(effect.attach, count),
+				...getCrossFieldKeysForMarkEffect(effect.detach, count),
+			];
+		default:
+			return [];
+	}
 }

@@ -69,6 +69,8 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 
 	// It would be preferable for attaching to look more like service.attach(model) rather than returning an attach
 	// callback here, but this callback at least allows us to keep the method off the model interface.
+	// TODO: Consider making the version param optional, and in that case having a mechanism to query the codeLoader
+	// for the latest/default version to use?
 	public async createDetached(version: string): Promise<IDetachedModel<ModelType>> {
 		const container = await this.loader.createDetachedContainer({ package: version });
 		const model = await this.getModelFromContainer(container);

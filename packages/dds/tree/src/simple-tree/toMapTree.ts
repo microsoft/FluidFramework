@@ -24,7 +24,7 @@ import {
 	type NodeKeyManager,
 	isMapTreeNode,
 } from "../feature-libraries/index.js";
-import { brand, fail, isReadonlyArray, find } from "../util/index.js";
+import { brand, fail, isReadonlyArray, find, oob } from "../util/index.js";
 
 import { nullSchema } from "./leafNodeSchema.js";
 import type { InsertableContent } from "./proxies.js";
@@ -476,7 +476,7 @@ function getObjectFieldSchema(schema: TreeNodeSchema, key: string): FieldSchema 
 	if (fields[key] === undefined) {
 		fail(`Field "${key}" not found in schema "${schema.identifier}".`);
 	} else {
-		return normalizeFieldSchema(fields[key]);
+		return normalizeFieldSchema(fields[key] ?? oob());
 	}
 }
 
@@ -506,7 +506,7 @@ The set of possible types is ${JSON.stringify([
 Explicitly construct an unhydrated node of the desired type to disambiguate.
 For class-based schema, this can be done by replacing an expression like "{foo: 1}" with "new MySchema({foo: 1})".`,
 	);
-	return possibleTypes[0];
+	return possibleTypes[0] ?? oob();
 }
 
 /**
@@ -728,7 +728,7 @@ function addDefaultsToMapTree(
 			}
 			break;
 		default:
-			assert(schema.kind === NodeKind.Leaf, "Unrecognized schema kind");
+			assert(schema.kind === NodeKind.Leaf, 0x989 /* Unrecognized schema kind */);
 			break;
 	}
 }

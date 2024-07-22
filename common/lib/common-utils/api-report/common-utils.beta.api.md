@@ -4,8 +4,6 @@
 
 ```ts
 
-import { EventEmitter } from 'events';
-
 export { performance_2 as performance }
 
 ```

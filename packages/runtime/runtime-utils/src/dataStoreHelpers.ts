@@ -72,6 +72,7 @@ export function responseToException(response: IResponse, request: IRequest): Err
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export const create404Response = (request: IRequest) =>

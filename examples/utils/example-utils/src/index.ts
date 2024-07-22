@@ -24,7 +24,6 @@ export type {
 	IAcceptedMigrationDetails,
 	IImportExportModel,
 	IMigratableModel,
-	IMigratableModelEvents,
 	IMigrationTool,
 	IMigrationToolEvents,
 	IMigrator,

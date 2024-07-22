@@ -9,7 +9,7 @@ overrides:
 
 patchedDependencies:
   '@microsoft/api-extractor@7.45.1':
-    hash: f66stvskxun56mencgf6l5564y
+    hash: tos6v6doskwck2kr7bbxweswri
     path: ../../../patches/@microsoft__api-extractor@7.45.1.patch
 
 importers:
@@ -36,7 +36,7 @@ importers:
         version: /@fluidframework/protocol-definitions@3.2.0
       '@microsoft/api-extractor':
         specifier: ^7.45.1
-        version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)
+        version: 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)
       concurrently:
         specifier: ^6.2.0
         version: 6.5.1
@@ -880,7 +880,7 @@ packages:
       '@fluid-tools/version-tools': 0.38.0
       '@fluidframework/build-tools': 0.38.0
       '@fluidframework/bundle-size-tools': 0.38.0
-      '@microsoft/api-extractor': 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)
+      '@microsoft/api-extractor': 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)
       '@oclif/core': 3.26.6
       '@oclif/plugin-autocomplete': 3.0.18
       '@oclif/plugin-commands': 3.3.4
@@ -1285,7 +1285,7 @@ packages:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor@7.45.1(patch_hash=f66stvskxun56mencgf6l5564y):
+  /@microsoft/api-extractor@7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri):
     resolution: {integrity: sha512-FZgcJxEmHA15gxTb1PpXHTforRcyIOLp6GKMqqk+ok8M58QJ0y54Bk+dcTcBC92nmanZppKn5/VRXPP4XvzB3Q==}
     hasBin: true
     dependencies:
@@ -1760,7 +1760,7 @@ packages:
   /@rushstack/node-core-library@5.3.0:
     resolution: {integrity: sha512-t23gjdZV6aWkbwXSE3TkKr1UXJFbXICvAOJ0MRQEB/ZYGhfSJqqrQFaGd20I1a/nIIHJEkNO0xzycHixjcbCPw==}
     peerDependencies:
-      '@types/node': ^18.19.0
+      '@types/node': '*'
     peerDependenciesMeta:
       '@types/node':
         optional: true
@@ -1785,7 +1785,7 @@ packages:
   /@rushstack/terminal@0.12.2:
     resolution: {integrity: sha512-yaHKyD/l6Zg34pC5zzc/KdiRBHy8zAH7ZbL3umpDLnvTrZ0SP8MVYZu9xA2lRsGkKfGbv/6gQhyNq4/tRzXH4A==}
     peerDependencies:
-      '@types/node': ^18.19.0
+      '@types/node': '*'
     peerDependenciesMeta:
       '@types/node':
         optional: true
@@ -2566,7 +2566,7 @@ packages:
       debug: 4.3.4(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.6.0
+      semver: 7.6.2
       tsutils: 3.21.0(typescript@5.1.6)
       typescript: 5.1.6
     transitivePeerDependencies:
@@ -2608,7 +2608,7 @@ packages:
       '@typescript-eslint/typescript-estree': 5.59.11(typescript@5.1.6)
       eslint: 8.55.0
       eslint-scope: 5.1.1
-      semver: 7.6.0
+      semver: 7.6.2
     transitivePeerDependencies:
       - supports-color
       - typescript

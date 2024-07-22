@@ -4,14 +4,6 @@
 
 ```ts
 
-import { IErrorEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import type { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
-import { IInboundSignalMessage } from '@fluidframework/runtime-definitions/internal';
-import { Jsonable } from '@fluidframework/datastore-definitions/internal';
-import type { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions/internal';
-import type { SharedObjectKind } from '@fluidframework/shared-object-base';
-
 // (No @packageDocumentation comment for this package)
 
 ```

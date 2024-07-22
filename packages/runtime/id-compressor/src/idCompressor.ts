@@ -697,7 +697,12 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		let baseFinalId = 0;
 		for (let i = 0; i < clusterCount; i++) {
 			const sessionIndex = readNumber(index);
-			const session = sessions[sessionIndex + sessionOffset][1];
+			const sessionArray = sessions[sessionIndex + sessionOffset];
+			assert(
+				sessionArray !== undefined,
+				0x9d8 /* sessionArray is undefined in IdCompressor.deserialize2_0 */,
+			);
+			const session = sessionArray[1];
 			const capacity = readNumber(index);
 			const count = readNumber(index);
 			const cluster = session.addNewCluster(baseFinalId as FinalCompressedId, capacity, count);
@@ -742,6 +747,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 /**
  * Create a new {@link IIdCompressor}.
+ * @legacy
  * @alpha
  */
 export function createIdCompressor(
@@ -750,6 +756,7 @@ export function createIdCompressor(
 /**
  * Create a new {@link IIdCompressor}.
  * @param sessionId - The seed ID for the compressor.
+ * @legacy
  * @alpha
  */
 export function createIdCompressor(
@@ -782,6 +789,7 @@ export function createIdCompressor(
 
 /**
  * Deserializes the supplied state into an ID compressor.
+ * @legacy
  * @alpha
  */
 export function deserializeIdCompressor(
@@ -790,6 +798,7 @@ export function deserializeIdCompressor(
 ): IIdCompressor & IIdCompressorCore;
 /**
  * Deserializes the supplied state into an ID compressor.
+ * @legacy
  * @alpha
  */
 export function deserializeIdCompressor(

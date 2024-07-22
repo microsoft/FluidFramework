@@ -13,6 +13,7 @@ import {
 
 /**
  * Handle for a shared {@link @fluidframework/core-interfaces#FluidObject}.
+ * @legacy
  * @alpha
  */
 export class FluidObjectHandle<

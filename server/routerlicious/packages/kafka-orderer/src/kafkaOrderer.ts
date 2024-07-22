@@ -231,7 +231,7 @@ export class KafkaOrdererFactory {
 	) {}
 
 	public async create(tenantId: string, documentId: string): Promise<core.IOrderer> {
-		const fullId = `${tenantId}/${documentId}`;
+		const fullId = this.getOrdererMapKey(tenantId, documentId);
 
 		let orderer = this.ordererMap.get(fullId);
 		if (orderer === undefined) {
@@ -248,7 +248,17 @@ export class KafkaOrdererFactory {
 		return orderer;
 	}
 
-	public delete(tenantId: string, documentId: string): void {
-		this.ordererMap.delete(`${tenantId}/${documentId}`);
+	public async delete(tenantId: string, documentId: string): Promise<void> {
+		const fullId = this.getOrdererMapKey(tenantId, documentId);
+
+		const orderer = this.ordererMap.get(fullId);
+		if (orderer !== undefined) {
+			this.ordererMap.delete(fullId);
+			await (await orderer).close();
+		}
+	}
+
+	private getOrdererMapKey(tenantId: string, documentId: string) {
+		return `${tenantId}/${documentId}`;
 	}
 }

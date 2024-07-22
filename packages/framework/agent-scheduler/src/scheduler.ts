@@ -467,6 +467,7 @@ class AgentSchedulerRuntime extends FluidDataStoreRuntime {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export class AgentSchedulerFactory implements IFluidDataStoreFactory {

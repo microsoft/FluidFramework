@@ -12,7 +12,7 @@ import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { BlobManager, IBlobManagerRuntime, type IPendingBlobs } from "../blobManager.js";
+import { BlobManager, IBlobManagerRuntime, type IPendingBlobs } from "../blobManager/index.js";
 
 export const failProxy = <T extends object>(handler: Partial<T> = {}) => {
 	const proxy: T = new Proxy<T>(handler as T, {

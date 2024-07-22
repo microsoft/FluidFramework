@@ -4,15 +4,50 @@
 
 ```ts
 
-import { CompatibilityMode } from '@fluidframework/fluid-static';
-import type { ContainerSchema } from '@fluidframework/fluid-static';
-import type { IFluidContainer } from '@fluidframework/fluid-static';
-import type { IMember } from '@fluidframework/fluid-static';
-import type { IServiceAudience } from '@fluidframework/fluid-static';
-import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import type { ITokenProvider } from '@fluidframework/routerlicious-driver';
-import type { IUser } from '@fluidframework/driver-definitions';
-
 export { CompatibilityMode }
+
+// @public @sealed
+export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
+
+// @public @sealed
+export class TinyliciousClient {
+    constructor(properties?: TinyliciousClientProps);
+    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: TinyliciousContainerServices;
+    }>;
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: TinyliciousContainerServices;
+    }>;
+}
+
+// @public @sealed
+export interface TinyliciousClientProps {
+    readonly connection?: TinyliciousConnectionConfig;
+    readonly logger?: ITelemetryBaseLogger;
+}
+
+// @public @sealed
+export interface TinyliciousConnectionConfig {
+    readonly domain?: string;
+    readonly port?: number;
+    readonly tokenProvider?: ITokenProvider;
+}
+
+// @public @sealed
+export interface TinyliciousContainerServices {
+    readonly audience: ITinyliciousAudience;
+}
+
+// @public @sealed
+export interface TinyliciousMember extends IMember {
+    readonly name: string;
+}
+
+// @public @sealed
+export interface TinyliciousUser extends IUser {
+    readonly name: string;
+}
 
 ```

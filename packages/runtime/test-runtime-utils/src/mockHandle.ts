@@ -8,6 +8,7 @@ import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Mock implementation of IFluidHandle.
+ * @legacy
  * @alpha
  */
 export class MockHandle<T> extends FluidHandleBase<T> {

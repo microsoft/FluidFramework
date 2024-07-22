@@ -8,7 +8,7 @@
  */
 
 import { constants, ConsoleUtils, joinPaths } from "@fluid-experimental/property-common";
-import { copy as cloneDeep } from "fastest-json-copy";
+import cloneDeep from "lodash/cloneDeep.js";
 import each from "lodash/each.js";
 import extend from "lodash/extend.js";
 import isEmpty from "lodash/isEmpty.js";

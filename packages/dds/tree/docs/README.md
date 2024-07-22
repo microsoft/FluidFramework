@@ -10,7 +10,7 @@ List of technical/design documents (to be organized into appropriate sections at
 -   [Modular Change Family](./main/modular-change-family.md)
 -   [Schema 2](./main/schema2.md)
 -   [Semantic Format](./main/semantic-format.md)
--   [Sequence Field](./main/sequence-field.md)
+-   [Sequence Field](./main/sequence-field)
 -   [Stored and View Schema Options](./main/stored-and-view-schema-options.md)
 -   [Stored and View Schema](./main/stored-and-view-schema.md)
 -   [Tree Content APIs](./main/tree-content-apis.md)

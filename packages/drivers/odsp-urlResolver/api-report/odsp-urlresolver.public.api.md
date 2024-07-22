@@ -4,11 +4,6 @@
 
 ```ts
 
-import { IContainerPackageInfo } from '@fluidframework/driver-definitions/internal';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
-
 // (No @packageDocumentation comment for this package)
 
 ```

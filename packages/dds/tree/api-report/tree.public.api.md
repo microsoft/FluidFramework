@@ -4,18 +4,6 @@
 
 ```ts
 
-import type { ErasedType } from '@fluidframework/core-interfaces';
-import type { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
-import type { IFluidHandle } from '@fluidframework/core-interfaces';
-import type { IFluidLoadable } from '@fluidframework/core-interfaces';
-import type { ISharedObject } from '@fluidframework/shared-object-base/internal';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
-import type { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
-import type { SharedObjectKind } from '@fluidframework/shared-object-base';
-import type { StableId } from '@fluidframework/id-compressor';
-import type { Static } from '@sinclair/typebox';
-import type { TSchema } from '@sinclair/typebox';
-
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
@@ -389,6 +377,7 @@ interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<
     moveToStart(sourceIndex: number, source: TMoveFrom): void;
     removeAt(index: number): void;
     removeRange(start?: number, end?: number): void;
+    values(): IterableIterator<T>;
 }
 
 // @public @sealed
@@ -442,7 +431,7 @@ export interface TreeNodeApi {
     parent(node: TreeNode): TreeNode | undefined;
     schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
     shortId(node: TreeNode): number | string | undefined;
-    readonly status: (node: TreeNode) => TreeStatus;
+    status(node: TreeNode): TreeStatus;
 }
 
 // @public

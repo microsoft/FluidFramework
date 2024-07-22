@@ -22,8 +22,10 @@ export interface ITestConfigProvider extends IConfigProviderBase {
  * Creates a test config provider with the ability to set configs values and clear all config values.
  * @internal
  */
-export const createTestConfigProvider = (): ITestConfigProvider => {
-	const settings: Record<string, ConfigTypes> = {};
+export const createTestConfigProvider = (
+	defaults: Record<string, ConfigTypes> = {},
+): ITestConfigProvider => {
+	const settings: Record<string, ConfigTypes> = { ...defaults };
 	return {
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 		set: (key: string, value: ConfigTypes) => {

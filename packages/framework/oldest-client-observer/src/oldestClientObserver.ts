@@ -68,6 +68,7 @@ import {
  *     console.log("I'm not the oldest anymore");
  * });
  * ```
+ * @legacy
  * @alpha
  */
 export class OldestClientObserver

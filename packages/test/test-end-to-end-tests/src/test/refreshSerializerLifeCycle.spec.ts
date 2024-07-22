@@ -44,6 +44,8 @@ const testConfigs = generatePairwiseOptions({
 	idCompressorEnabled: ["on", undefined, "delayed"],
 	loadOffline: [true, false],
 	useLoadingGroupIdForSnapshotFetch: [true, false],
+	timeoutRefreshInOriginalContainer: [true, false],
+	timeoutRefreshInLoadedContainer: [true, false],
 });
 
 /**
@@ -184,6 +186,11 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 						"Fluid.Container.enableOfflineSnapshotRefresh": true,
 						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch":
 							testConfig.useLoadingGroupIdForSnapshotFetch,
+						"Fluid.Container.snapshotRefreshTimeoutMs":
+							testConfig.timeoutRefreshInOriginalContainer ||
+							testConfig.timeoutRefreshInLoadedContainer
+								? 100
+								: undefined,
 					}),
 				},
 			};
@@ -217,9 +224,18 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			const groupIdDataObject1 = await getDataStoreWithGroupId(dataStore1, groupId);
 
 			if (testConfig.savedOps) {
-				map1.set(`${i}`, i++);
-				groupIdDataObject1.root.set(`${j}`, j++);
+				for (let k = 0; k < 10; k++) {
+					map.set(`${i}`, i++);
+					groupIdDataObject.root.set(`${j}`, j++);
+				}
 				await waitForSummary(container1);
+				if (testConfig.timeoutRefreshInOriginalContainer) {
+					await timeoutPromise((resolve) => {
+						setTimeout(() => {
+							resolve();
+						}, 105);
+					});
+				}
 				await provider.ensureSynchronized();
 			}
 			if (testConfig.pendingOps) {
@@ -260,6 +276,13 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				await timeoutAwait(getLatestSnapshotInfoP.promise, {
 					errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
 				});
+				if (testConfig.timeoutRefreshInLoadedContainer) {
+					await timeoutPromise((resolve) => {
+						setTimeout(() => {
+							resolve();
+						}, 105);
+					});
+				}
 			}
 
 			// we can't produce a summary while offline
@@ -271,8 +294,11 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			}
 
 			if (testConfig.pendingOps2) {
-				if (!testConfig.loadOffline)
+				if (!testConfig.loadOffline) {
+					// making sure container is already connected before pausing processing
+					await waitForContainerConnection(container2);
 					await provider.opProcessingController.pauseProcessing(container2);
+				}
 				map2.set(`${i}`, i++);
 				map2.set(`${i}`, i++);
 				groupIdDataObject2.root.set(`${j}`, j++);

@@ -36,23 +36,26 @@ export class TransactionEnricher<TChange> {
 
 	public commitCurrentTransaction(): void {
 		const commitsCommitted = this.transactionScopesStart.pop();
-		assert(commitsCommitted !== undefined, "No transaction to commit");
+		assert(commitsCommitted !== undefined, 0x985 /* No transaction to commit */);
 	}
 
 	public abortCurrentTransaction(): void {
 		const scopeStart = this.transactionScopesStart.pop();
-		assert(scopeStart !== undefined, "No transaction to abort");
+		assert(scopeStart !== undefined, 0x986 /* No transaction to abort */);
 		this.transactionCommits.length = scopeStart;
 	}
 
 	public addTransactionStep(commit: GraphCommit<TChange>): void {
-		assert(this.transactionScopesStart.length !== 0, "No transaction to add a step to");
+		assert(
+			this.transactionScopesStart.length !== 0,
+			0x987 /* No transaction to add a step to */,
+		);
 		const change = this.enricher.updateChangeEnrichments(commit.change, commit.revision);
 		this.transactionCommits.push({ ...commit, change });
 	}
 
 	public getComposedChange(revision: RevisionTag): TChange {
-		assert(this.transactionScopesStart.length === 0, "Transaction not committed");
+		assert(this.transactionScopesStart.length === 0, 0x988 /* Transaction not committed */);
 		const squashed = this.rebaser.compose(this.transactionCommits);
 		const tagged = this.rebaser.changeRevision(squashed, revision);
 		this.transactionCommits.length = 0;

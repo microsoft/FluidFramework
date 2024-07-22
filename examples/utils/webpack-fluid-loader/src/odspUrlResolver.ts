@@ -68,16 +68,16 @@ export class OdspUrlResolver implements IUrlResolver {
 
 	public async createCreateNewRequest(fileName: string): Promise<IRequest> {
 		const filePath = "/r11s/";
-		const driveItem = await getDriveItemByRootFileName(
+		const { driveId } = await getDriveItemByRootFileName(
 			this.server,
 			"",
-			filePath,
+			"/",
 			this.authRequestInfo,
 			false,
 		);
 		return createOdspCreateContainerRequest(
 			`https://${this.server}`,
-			driveItem.driveId,
+			driveId,
 			filePath,
 			`${fileName}.fluid`,
 		);

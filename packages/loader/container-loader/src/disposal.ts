@@ -13,9 +13,9 @@ import { IDisposable } from "@fluidframework/core-interfaces";
  */
 export function doIfNotDisposed<T>(
 	disposable: IDisposable,
-	f: (...args: any[]) => T,
-): (...args: any[]) => T {
-	return (...args: any[]): T => {
+	f: (...args: unknown[]) => T,
+): (...args: unknown[]) => T {
+	return (...args: unknown[]): T => {
 		if (disposable.disposed) {
 			throw new Error("Already disposed");
 		} else {

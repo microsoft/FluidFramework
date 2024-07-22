@@ -35,6 +35,7 @@ import type { AttachState } from "./runtime.js";
 
 /**
  * Encapsulates a module entry point with corresponding code details.
+ * @legacy
  * @alpha
  */
 export interface IFluidModuleWithDetails {
@@ -55,6 +56,7 @@ export interface IFluidModuleWithDetails {
 /**
  * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
  * a package name and package version range.
+ * @legacy
  * @alpha
  */
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
@@ -103,6 +105,7 @@ export interface IFluidCodeResolver {
 
 /**
  * Events emitted by the {@link IContainer} "upwards" to the Loader and Host.
+ * @legacy
  * @alpha
  */
 export interface IContainerEvents extends IEvent {
@@ -314,6 +317,7 @@ export type ConnectionState =
 
 /**
  * The Host's view of a Container and its connection to storage
+ * @legacy
  * @alpha
  */
 export interface IContainer extends IEventProvider<IContainerEvents> {
@@ -525,6 +529,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 
 /**
  * The Runtime's view of the Loader, used for loading Containers
+ * @legacy
  * @alpha
  */
 export interface ILoader extends Partial<IProvideLoader> {
@@ -542,6 +547,7 @@ export interface ILoader extends Partial<IProvideLoader> {
 
 /**
  * The Host's view of the Loader, used for loading Containers
+ * @legacy
  * @alpha
  */
 export interface IHostLoader extends ILoader {
@@ -572,6 +578,7 @@ export interface IHostLoader extends ILoader {
 
 /**
  * Options to configure various behaviors of the ILoader.
+ * @legacy
  * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -614,6 +621,7 @@ export type ILoaderOptions = {
 
 /**
  * Accepted header keys for requests coming to the Loader
+ * @legacy
  * @alpha
  */
 export enum LoaderHeader {
@@ -646,6 +654,7 @@ export enum LoaderHeader {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IContainerLoadMode {
@@ -707,6 +716,7 @@ export interface ILoaderHeader {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IProvideLoader {
@@ -718,6 +728,7 @@ export interface IProvideLoader {
  * in separate property: {@link ISnapshotTreeWithBlobContents.blobsContents}.
  *
  * @remarks This is used as the `ContainerContext`'s base snapshot when attaching.
+ * @legacy
  * @alpha
  */
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {

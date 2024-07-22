@@ -20,12 +20,10 @@ const configProvider = createTestConfigProvider();
 // configProvider.set("Fluid.ContainerRuntime.DeltaManagerOpsProxy", false);
 describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+	configProvider.set("Fluid.Sequence.intervalStickinessEnabled", true);
 	const loaderProps: Partial<ILoaderProps> = {
-		options: {
-			intervalStickinessEnabled: true,
-		},
 		configProvider,
-	} as unknown as ILoaderProps;
+	};
 
 	const sharedType = "sharedString";
 	let provider: ITestObjectProvider;

@@ -48,6 +48,7 @@ interface ContainerRecord {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export class LoaderContainerTracker implements IOpProcessingController {

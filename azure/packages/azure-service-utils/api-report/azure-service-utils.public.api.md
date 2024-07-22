@@ -4,11 +4,6 @@
 
 ```ts
 
-import { IUser } from '@fluidframework/driver-definitions';
-import { ScopeType } from '@fluidframework/driver-definitions/internal';
-
 export { IUser }
-
-export { ScopeType }
 
 ```

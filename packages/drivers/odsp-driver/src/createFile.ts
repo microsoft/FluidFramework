@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
+	loggerToMonitoringContext,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -28,7 +29,7 @@ import {
 } from "./createNewUtils.js";
 import { createOdspUrl } from "./createOdspUrl.js";
 import { EpochTracker } from "./epochTracker.js";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
 import { getApiRoot } from "./odspUrlHelper.js";
 import {
@@ -36,6 +37,7 @@ import {
 	buildOdspShareLinkReqParams,
 	createCacheSnapshotKey,
 	getWithRetryForTokenRefresh,
+	snapshotWithLoadingGroupIdSupported,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { runWithRetry } from "./retryUtils.js";
@@ -50,7 +52,7 @@ const isInvalidFileName = (fileName: string): boolean => {
  * Returns resolved url
  */
 export async function createNewFluidFile(
-	getStorageToken: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	newFileInfo: INewFileInfo,
 	logger: ITelemetryLoggerExt,
 	createNewSummary: ISummaryTree | undefined,
@@ -75,16 +77,10 @@ export async function createNewFluidFile(
 	let summaryHandle: string = "";
 	let shareLinkInfo: ShareLinkInfoType | undefined;
 	if (createNewSummary === undefined) {
-		itemId = await createNewEmptyFluidFile(
-			getStorageToken,
-			newFileInfo,
-			logger,
-			epochTracker,
-			forceAccessTokenViaAuthorizationHeader,
-		);
+		itemId = await createNewEmptyFluidFile(getAuthHeader, newFileInfo, logger, epochTracker);
 	} else {
 		const content = await createNewFluidFileFromSummary(
-			getStorageToken,
+			getAuthHeader,
 			newFileInfo,
 			logger,
 			createNewSummary,
@@ -116,7 +112,13 @@ export async function createNewFluidFile(
 			summaryHandle,
 		);
 		// caching the converted summary
-		await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), snapshot);
+		await epochTracker.put(
+			createCacheSnapshotKey(
+				odspResolvedUrl,
+				snapshotWithLoadingGroupIdSupported(loggerToMonitoringContext(logger).config),
+			),
+			snapshot,
+		);
 	}
 	return odspResolvedUrl;
 }
@@ -163,11 +165,10 @@ function extractShareLinkData(
 }
 
 export async function createNewEmptyFluidFile(
-	getStorageToken: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	newFileInfo: INewFileInfo,
 	logger: ITelemetryLoggerExt,
 	epochTracker: EpochTracker,
-	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<string> {
 	const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
 	// add .tmp extension to empty file (host is expected to rename)
@@ -177,17 +178,18 @@ export async function createNewEmptyFluidFile(
 	}/items/root:/${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
 
 	return getWithRetryForTokenRefresh(async (options) => {
-		const storageToken = await getStorageToken(options, "CreateNewFile");
+		const url = initialUrl;
+		const method = "PUT";
+		const authHeader = await getAuthHeader(
+			{ ...options, request: { url, method } },
+			"CreateNewFile",
+		);
 
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			{ eventName: "createNewEmptyFile" },
 			async (event) => {
-				const { url, headers } = getUrlAndHeadersWithAuth(
-					initialUrl,
-					storageToken,
-					forceAccessTokenViaAuthorizationHeader,
-				);
+				const headers = getHeadersWithAuth(authHeader);
 				headers["Content-Type"] = "application/json";
 
 				const fetchResponse = await runWithRetry(
@@ -197,7 +199,7 @@ export async function createNewEmptyFluidFile(
 							{
 								body: undefined,
 								headers,
-								method: "PUT",
+								method,
 							},
 							"createFile",
 						),
@@ -225,7 +227,7 @@ export async function createNewEmptyFluidFile(
 }
 
 export async function createNewFluidFileFromSummary(
-	getStorageToken: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	newFileInfo: INewFileInfo,
 	logger: ITelemetryLoggerExt,
 	createNewSummary: ISummaryTree,
@@ -249,7 +251,7 @@ export async function createNewFluidFileFromSummary(
 
 	return createNewFluidContainerCore<ICreateFileResponse>({
 		containerSnapshot,
-		getStorageToken,
+		getAuthHeader,
 		logger,
 		initialUrl,
 		forceAccessTokenViaAuthorizationHeader,

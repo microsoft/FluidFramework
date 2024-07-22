@@ -217,7 +217,9 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 			const tree: ITree = { entries: [] };
 
 			for (const subTreeId of Object.keys(snapshotTree.trees)) {
-				const subTree = await this.buildTree(snapshotTree.trees[subTreeId]);
+				// Non null asserting here, we should use Object.entries() instead
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const subTree = await this.buildTree(snapshotTree.trees[subTreeId]!);
 				tree.entries.push({
 					mode: FileMode.Directory,
 					path: subTreeId,
@@ -227,7 +229,9 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 			}
 
 			for (const blobName of Object.keys(snapshotTree.blobs)) {
-				const buffer = await this.readBlob(snapshotTree.blobs[blobName]);
+				// Non null asserting here, we should use Object.entries() instead
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const buffer = await this.readBlob(snapshotTree.blobs[blobName]!);
 				const contents = bufferToString(buffer, "utf8");
 				const blob: IBlob = {
 					contents,

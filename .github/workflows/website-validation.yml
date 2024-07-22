@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # ratchet:actions/checkout@v4
         with:
           submodules: false
-      - uses: pnpm/action-setup@d882d12c64e032187b2edb46d3a0d003b7a43598 # ratchet:pnpm/action-setup@v2
+      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
       - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # ratchet:actions/setup-node@v3
         with:
           node-version: "18"
@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # ratchet:actions/checkout@v4
         with:
           submodules: false
-      - uses: pnpm/action-setup@d882d12c64e032187b2edb46d3a0d003b7a43598 # ratchet:pnpm/action-setup@v2
+      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
       - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # ratchet:actions/setup-node@v3
         with:
           node-version: "18"
@@ -64,7 +64,7 @@ jobs:
       - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
           submodules: false
-      - uses: pnpm/action-setup@d882d12c64e032187b2edb46d3a0d003b7a43598 # ratchet:pnpm/action-setup@v2
+      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
       - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # ratchet:actions/setup-node@v3
         with:
           node-version: "18"

@@ -12,8 +12,6 @@ import {
 	ITokenProvider,
 	IUser,
 } from "@fluidframework/azure-client";
-// eslint-disable-next-line import/no-deprecated
-import { AzureFunctionTokenProvider } from "@fluidframework/azure-client/internal";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
@@ -21,6 +19,7 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/intern
 import commander from "commander";
 import { v4 as uuid } from "uuid";
 
+import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
 import {
 	AzureClientConnectionConfig,
 	ContainerFactorySchema,
@@ -69,9 +68,7 @@ export function createAzureTokenProvider(
 	fnUrl: string,
 	id?: string,
 	name?: string,
-	// eslint-disable-next-line import/no-deprecated
 ): AzureFunctionTokenProvider {
-	// eslint-disable-next-line import/no-deprecated
 	return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
 		id: id ?? "foo",
 		name: name ?? "bar",

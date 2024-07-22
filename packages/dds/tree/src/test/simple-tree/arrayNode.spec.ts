@@ -5,12 +5,12 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
-import { SchemaFactory } from "../../simple-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { hydrate } from "./utils.js";
 import type { Mutable } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { asIndex } from "../../simple-tree/arrayNode.js";
-import { validateUsageError } from "../utils.js";
+import { TestTreeProviderLite, validateUsageError } from "../utils.js";
 
 const schemaFactory = new SchemaFactory("ArrayNodeTest");
 const PojoEmulationNumberArray = schemaFactory.array(schemaFactory.number);
@@ -34,6 +34,29 @@ describe("ArrayNode", () => {
 			assert.equal(array.extra, "foo");
 			// "extra" should not be stringified
 			assert.equal(JSON.stringify(array), JSON.stringify(jsArray));
+		});
+
+		it("accessor local properties", () => {
+			const thisList: unknown[] = [];
+			class Test extends schemaFactory.array("test", schemaFactory.number) {
+				public get y() {
+					assert.equal(this, n);
+					thisList.push(this);
+					return this[0];
+				}
+				public set y(value: number) {
+					assert.equal(this, n);
+					thisList.push(this);
+					this.insertAtStart(value);
+				}
+			}
+
+			const n = hydrate(Test, [1]);
+			n.y = 2;
+			assert.equal(n[0], 2);
+			n.insertAtStart(3);
+			assert.equal(n.y, 3);
+			assert.deepEqual(thisList, [n, n]);
 		});
 	});
 
@@ -110,6 +133,17 @@ describe("ArrayNode", () => {
 		});
 
 		describe("moveToStart", () => {
+			it("move element to start of empty array", () => {
+				const schema = schemaFactory.object("parent", {
+					array1: schemaFactory.array(schemaFactory.number),
+					array2: schemaFactory.array(schemaFactory.number),
+				});
+				const { array1, array2 } = hydrate(schema, { array1: [], array2: [1, 2, 3] });
+				array1.moveToStart(1, array2);
+				assert.deepEqual([...array1], [2]);
+				assert.deepEqual([...array2], [1, 3]);
+			});
+
 			it("move within field", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
 				array.moveToStart(1);
@@ -144,6 +178,17 @@ describe("ArrayNode", () => {
 		});
 
 		describe("moveToEnd", () => {
+			it("move element to end of empty array", () => {
+				const schema = schemaFactory.object("parent", {
+					array1: schemaFactory.array(schemaFactory.number),
+					array2: schemaFactory.array(schemaFactory.number),
+				});
+				const { array1, array2 } = hydrate(schema, { array1: [], array2: [1, 2, 3] });
+				array1.moveToEnd(1, array2);
+				assert.deepEqual([...array1], [2]);
+				assert.deepEqual([...array2], [1, 3]);
+			});
+
 			it("move within field", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
 				array.moveToEnd(1);
@@ -178,43 +223,171 @@ describe("ArrayNode", () => {
 		});
 
 		describe("moveToIndex", () => {
-			it("move within field", () => {
-				const array = hydrate(schemaType, [1, 2, 3]);
-				array.moveToIndex(0, 1);
-				assert.deepEqual([...array], [2, 1, 3]);
-			});
-
-			it("cross-field move", () => {
+			it("move element to start of empty array", () => {
 				const schema = schemaFactory.object("parent", {
 					array1: schemaFactory.array(schemaFactory.number),
 					array2: schemaFactory.array(schemaFactory.number),
 				});
-				const { array1, array2 } = hydrate(schema, { array1: [1, 2], array2: [1, 2] });
-				array1.moveToIndex(1, 0, array2);
-				assert.deepEqual([...array1], [1, 1, 2]);
+				const { array1, array2 } = hydrate(schema, { array1: [], array2: [1, 2, 3] });
+				array1.moveToIndex(0, 1, array2);
+				assert.deepEqual([...array1], [2]);
+				assert.deepEqual([...array2], [1, 3]);
 			});
 
-			it("invalid index", () => {
-				const array = hydrate(schemaType, [1, 2, 3]);
-				// Destination index too large
-				assert.throws(
-					() => array.moveToIndex(4, 0),
-					validateUsageError(
-						/Index value passed to TreeArrayNode.moveToIndex is out of bounds./,
-					),
-				);
-				// Source index too large
-				assert.throws(
-					() => array.moveToIndex(0, 4),
-					validateUsageError(
-						/Index value passed to TreeArrayNode.moveToIndex is out of bounds./,
-					),
-				);
-				// Index is negative
-				assert.throws(
-					() => array.moveToIndex(-1, 0),
-					validateUsageError(/Expected non-negative index, got -1./),
-				);
+			for (const specifySource of [false, true]) {
+				describe(`move within field ${
+					specifySource ? "(specified source)" : "(implicit source)"
+				}`, () => {
+					it("moves node to the destination index when valid", () => {
+						const initialState = [0, 1, 2];
+						for (let sourceIndex = 0; sourceIndex < initialState.length; sourceIndex += 1) {
+							const movedValue = initialState[sourceIndex];
+							for (
+								let destinationIndex = 0;
+								destinationIndex < initialState.length;
+								destinationIndex += 1
+							) {
+								const array = hydrate(schemaType, initialState);
+								if (specifySource) {
+									array.moveToIndex(destinationIndex, sourceIndex, array);
+								} else {
+									array.moveToIndex(destinationIndex, sourceIndex);
+								}
+								const actual = [...array];
+								const expected =
+									sourceIndex < destinationIndex
+										? [
+												...initialState.slice(0, sourceIndex),
+												...initialState.slice(sourceIndex + 1, destinationIndex),
+												movedValue,
+												...initialState.slice(destinationIndex),
+											]
+										: [
+												...initialState.slice(0, destinationIndex),
+												movedValue,
+												...initialState.slice(destinationIndex, sourceIndex),
+												...initialState.slice(sourceIndex + 1),
+											];
+								assert.deepEqual(actual, expected);
+							}
+						}
+					});
+
+					it("throws when the source index is invalid", () => {
+						const array = hydrate(schemaType, [1, 2, 3]);
+						// Destination index too large
+						assert.throws(
+							() => array.moveToIndex(4, 0),
+							validateUsageError(
+								/Index value passed to TreeArrayNode.moveToIndex is out of bounds./,
+							),
+						);
+						// Source index too large
+						assert.throws(
+							() => array.moveToIndex(0, 4),
+							validateUsageError(
+								/Index value passed to TreeArrayNode.moveToIndex is out of bounds./,
+							),
+						);
+						// Destination index is negative
+						assert.throws(
+							() => array.moveToIndex(-1, 0),
+							validateUsageError(/Expected non-negative index, got -1./),
+						);
+						// Source index is negative
+						assert.throws(
+							() => array.moveToIndex(0, -1),
+							validateUsageError(/Expected non-negative index, got -1./),
+						);
+					});
+				});
+			}
+
+			describe("move across fields", () => {
+				it("moves node to the destination index when valid", () => {
+					const schema = schemaFactory.object("parent", {
+						source: schemaFactory.array(schemaFactory.number),
+						destination: schemaFactory.array(schemaFactory.number),
+					});
+					for (const [initialSourceState, initialDestinationState] of [
+						[[1, 2, 3], []],
+						[
+							[1, 2, 3],
+							[4, 5],
+						],
+						[
+							[1, 2],
+							[3, 4, 5],
+						],
+					]) {
+						for (
+							let sourceIndex = 0;
+							sourceIndex < initialSourceState.length;
+							sourceIndex += 1
+						) {
+							const movedValue = initialSourceState[sourceIndex];
+							for (
+								let destinationIndex = 0;
+								destinationIndex < initialDestinationState.length;
+								destinationIndex += 1
+							) {
+								const { source, destination } = hydrate(schema, {
+									source: initialSourceState,
+									destination: initialDestinationState,
+								});
+								destination.moveToIndex(destinationIndex, sourceIndex, source);
+								const actualSource = [...source];
+								const actualDestination = [...destination];
+								const expectedSource = [
+									...initialSourceState.slice(0, sourceIndex),
+									...initialSourceState.slice(sourceIndex + 1),
+								];
+								const expectedDestination = [
+									...initialDestinationState.slice(0, destinationIndex),
+									movedValue,
+									...initialDestinationState.slice(destinationIndex),
+								];
+								assert.deepEqual(actualSource, expectedSource);
+								assert.deepEqual(actualDestination, expectedDestination);
+							}
+						}
+					}
+				});
+
+				it("throws when the source index is invalid", () => {
+					const schema = schemaFactory.object("parent", {
+						source: schemaFactory.array(schemaFactory.number),
+						destination: schemaFactory.array(schemaFactory.number),
+					});
+					const { source, destination } = hydrate(schema, {
+						source: [1, 2, 3],
+						destination: [4, 5, 6, 7],
+					});
+					// Destination index too large
+					assert.throws(
+						() => destination.moveToIndex(5, 0, source),
+						validateUsageError(
+							/Index value passed to TreeArrayNode.moveToIndex is out of bounds./,
+						),
+					);
+					// Source index too large
+					assert.throws(
+						() => destination.moveToIndex(0, 4, source),
+						validateUsageError(
+							/Index value passed to TreeArrayNode.moveToIndex is out of bounds./,
+						),
+					);
+					// Destination index is negative
+					assert.throws(
+						() => destination.moveToIndex(-1, 0, source),
+						validateUsageError(/Expected non-negative index, got -1./),
+					);
+					// Source index is negative
+					assert.throws(
+						() => destination.moveToIndex(0, -1, source),
+						validateUsageError(/Expected non-negative index, got -1./),
+					);
+				});
 			});
 		});
 
@@ -333,6 +506,20 @@ describe("ArrayNode", () => {
 				const array = hydrate(schemaType, []);
 				array.moveRangeToIndex(0, 0, 0);
 				assert.deepEqual([...array], []);
+			});
+
+			it("invalid content type", () => {
+				const schema = schemaFactory.object("parent", {
+					array1: schemaFactory.array([schemaFactory.number, schemaFactory.string]),
+					array2: schemaFactory.array(schemaFactory.number),
+				});
+				const { array1, array2 } = hydrate(schema, { array1: [1, "bad", 2], array2: [] });
+				const expected = validateUsageError(
+					/Type in source sequence is not allowed in destination./,
+				);
+				assert.throws(() => array2.moveRangeToIndex(0, 1, 3, array1), expected);
+				assert.throws(() => array2.moveRangeToIndex(0, 0, 2, array1), expected);
+				assert.throws(() => array2.moveRangeToIndex(0, 0, 3, array1), expected);
 			});
 
 			it("invalid index", () => {
@@ -555,6 +742,97 @@ describe("ArrayNode", () => {
 				(error: Error) =>
 					validateAssertionError(error, /Shadowing of array indices is not permitted/),
 			);
+		});
+	});
+
+	describe("Iteration", () => {
+		it("Concurrently iterating and editing should throw an error.", () => {
+			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
+			const values = array.values();
+			values.next();
+			array.removeRange(1, 3);
+			assert.throws(
+				() => {
+					values.next();
+				},
+				validateUsageError(/Concurrent editing and iteration is not allowed./),
+			);
+			// Checks that new iterator still works
+			const values2 = array.values();
+			values2.next();
+		});
+
+		it("Iterator of an unhydrated node works after it's been inserted, and throws during iteration once a concurrent edit is made.", () => {
+			class TestArray extends schemaFactory.array("Array", schemaFactory.number) {}
+
+			// Create unhydrated array node
+			const array = new TestArray([1, 2]);
+
+			const provider = new TestTreeProviderLite();
+			const tree = provider.trees[0];
+			const view = tree.viewWith(new TreeViewConfiguration({ schema: TestArray }));
+			const values = array.values();
+
+			// Initialize the tree with unhydrated array node
+			view.initialize(array);
+
+			// Checks that the iterator works after hydrating the node.
+			values.next();
+
+			// Make an edit
+			array.insertAtEnd(3);
+
+			// Checks that the iterator throws after
+			assert.throws(
+				() => {
+					values.next();
+				},
+				validateUsageError(/Concurrent editing and iteration is not allowed./),
+			);
+		});
+
+		it("Iterating when edits were made after the iterator was returned from ArrayNode.values should throw an error.  ", () => {
+			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
+			const values = array.values();
+			array.removeRange();
+			assert.throws(
+				() => {
+					values.next();
+				},
+				validateUsageError(/Concurrent editing and iteration is not allowed./),
+			);
+		});
+
+		it("Iterates through the values of the array", () => {
+			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
+			const result = [];
+			for (const nodeChild of array) {
+				result.push(nodeChild);
+			}
+			assert.deepEqual(result, [1, 2, 3]);
+		});
+
+		it("Iterates through the values of an empty array", () => {
+			const array = hydrate(CustomizableNumberArray, []);
+			const result = [];
+			for (const nodeChild of array) {
+				result.push(nodeChild);
+			}
+			assert.deepEqual(result, []);
+		});
+
+		it("Iterates through the values of two concurrent iterators", () => {
+			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
+			const values1 = array.values();
+			const values2 = array.values();
+			const result1 = [];
+			const result2 = [];
+			for (const value of values1) {
+				result1.push(value);
+				result2.push(values2.next().value);
+			}
+			assert.deepEqual(result1, [1, 2, 3]);
+			assert.deepEqual(result2, [1, 2, 3]);
 		});
 	});
 });

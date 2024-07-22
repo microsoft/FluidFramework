@@ -34,7 +34,15 @@ import {
 	type SchemaPolicy,
 	type TreeStoredSchemaRepository,
 } from "../core/index.js";
-import { type JsonCompatibleReadOnly, brand } from "../util/index.js";
+import {
+	type JsonCompatibleReadOnly,
+	brand,
+	Breakable,
+	type WithBreakable,
+	throwIfBroken,
+	breakingClass,
+	oob,
+} from "../util/index.js";
 
 import { type SharedTreeBranch, getChangeReplaceType } from "./branch.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
@@ -62,12 +70,15 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 }
 
 /**
- * Generic shared tree, which needs to be configured with indexes, field kinds and a history policy to be used.
- *
- * TODO: actually implement
- * TODO: is history policy a detail of what indexes are used, or is there something else to it?
+ * Generic shared tree, which needs to be configured with indexes, field kinds and other configuration.
  */
-export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends SharedObject {
+@breakingClass
+export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
+	extends SharedObject
+	implements WithBreakable
+{
+	public readonly breaker: Breakable = new Breakable("Shared Tree");
+
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	private readonly summarizables: readonly Summarizable[];
 	/**
@@ -83,6 +94,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 */
 	public get editor(): TEditor {
 		return this.getLocalBranch().editor;
+	}
+
+	/**
+	 * Gets the revision at the head of the trunk.
+	 */
+	protected get trunkHeadRevision(): RevisionTag {
+		return this.editManager.getTrunkHead().revision;
 	}
 
 	/**
@@ -195,9 +213,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			) {
 				assert(
 					change.newCommits.length === 1,
-					"Unexpected number of commits when committing transaction",
+					0x983 /* Unexpected number of commits when committing transaction */,
 				);
-				this.commitEnricher.prepareCommit(change.newCommits[0], true);
+				this.commitEnricher.prepareCommit(change.newCommits[0] ?? oob(), true);
 			}
 		});
 		this.editManager.localBranch.on("afterChange", (change) => {
@@ -262,6 +280,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
 	// We might want to not subclass it, or override/reimplement most of its functionality.
+	@throwIfBroken
 	protected summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
@@ -304,6 +323,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @returns the submitted commit. This is undefined if the underlying `SharedObject` is not attached,
 	 * and may differ from `commit` due to enrichments like detached tree refreshers.
 	 */
+
 	private submitCommit(
 		commit: GraphCommit<TChange>,
 		schemaAndPolicy: ClonableSchemaAndPolicy,
@@ -412,7 +432,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 		assert(
 			this.resubmitMachine.isInResubmitPhase !== false,
-			"Invalid resubmit outside of resubmit phase",
+			0x984 /* Invalid resubmit outside of resubmit phase */,
 		);
 		const enrichedCommit = this.resubmitMachine.peekNextCommit();
 		this.submitCommit(enrichedCommit, localOpMetadata, true);
@@ -436,7 +456,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			for (const [id, routes] of Object.entries(s.getGCData(fullGC).gcNodes)) {
 				gcNodes[id] ??= [];
 				for (const route of routes) {
-					gcNodes[id].push(route);
+					// Non null asserting here because we are creating an array at gcNodes[id] if it is undefined
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					gcNodes[id]!.push(route);
 				}
 			}
 		}

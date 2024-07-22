@@ -4,33 +4,6 @@
 
 ```ts
 
-import { Client } from '@fluidframework/merge-tree/internal';
-import { IChannel } from '@fluidframework/datastore-definitions/internal';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
-import { IJSONSegment } from '@fluidframework/merge-tree/internal';
-import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree/internal';
-import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree/internal';
-import { IMergeTreeGroupMsg } from '@fluidframework/merge-tree/internal';
-import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree/internal';
-import { IRelativePosition } from '@fluidframework/merge-tree/internal';
-import { ISegment } from '@fluidframework/merge-tree/internal';
-import { ISegmentAction } from '@fluidframework/merge-tree/internal';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
-import { LocalReferencePosition } from '@fluidframework/merge-tree/internal';
-import { Marker } from '@fluidframework/merge-tree/internal';
-import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree/internal';
-import { MergeTreeDeltaOperationTypes } from '@fluidframework/merge-tree/internal';
-import { MergeTreeMaintenanceType } from '@fluidframework/merge-tree/internal';
-import { MergeTreeRevertibleDriver } from '@fluidframework/merge-tree/internal';
-import { PropertiesManager } from '@fluidframework/merge-tree/internal';
-import { PropertySet } from '@fluidframework/merge-tree/internal';
-import { ReferencePosition } from '@fluidframework/merge-tree/internal';
-import { ReferenceType } from '@fluidframework/merge-tree/internal';
-import { SharedObjectKind as SharedObjectKind_2 } from '@fluidframework/shared-object-base/internal';
-import { SlidingPreference } from '@fluidframework/merge-tree/internal';
-import { TextSegment } from '@fluidframework/merge-tree/internal';
-import { TypedEventEmitter } from '@fluid-internal/client-utils';
-
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
@@ -709,6 +682,7 @@ type ScopedSchemaName<TScope extends string | undefined, TName extends number | 
 
 // @public @sealed
 export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
+    is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
 }
 
 // @public
@@ -768,6 +742,7 @@ interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<
     moveToStart(sourceIndex: number, source: TMoveFrom): void;
     removeAt(index: number): void;
     removeRange(start?: number, end?: number): void;
+    values(): IterableIterator<T>;
 }
 
 // @public @sealed
@@ -821,7 +796,7 @@ export interface TreeNodeApi {
     parent(node: TreeNode): TreeNode | undefined;
     schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
     shortId(node: TreeNode): number | string | undefined;
-    readonly status: (node: TreeNode) => TreeStatus;
+    status(node: TreeNode): TreeStatus;
 }
 
 // @public

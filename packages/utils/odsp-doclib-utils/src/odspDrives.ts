@@ -202,6 +202,7 @@ async function getDriveItem(
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export async function getDriveId(
