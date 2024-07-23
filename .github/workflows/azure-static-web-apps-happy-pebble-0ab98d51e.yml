@@ -21,7 +21,7 @@ jobs:
           lfs: false
       # Step to install pnpm
       - name: Install pnpm
-        run: npx pnpm@8 install
+        run: npm install -g pnpm@8
 
       # Install dependencies using pnpm
       - name: Install dependencies
