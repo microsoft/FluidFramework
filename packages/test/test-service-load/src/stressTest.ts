@@ -24,13 +24,13 @@ export async function stressTest(
 	testDriver: ITestDriver,
 	profile: ILoadTestConfig,
 	args: {
-		testId?: string;
-		debug?: true;
-		verbose?: true;
+		testId: string | undefined;
+		debug: boolean;
+		verbose: boolean;
 		seed: number;
-		enableMetrics?: boolean;
-		createTestId?: boolean;
-		testUsers?: ITestUserConfig;
+		enableMetrics: boolean;
+		createTestId: boolean;
+		testUsers: ITestUserConfig | undefined;
 		profileName: string;
 	},
 ) {

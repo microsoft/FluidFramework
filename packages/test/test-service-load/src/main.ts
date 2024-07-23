@@ -46,12 +46,12 @@ async function main() {
 	const endpoint: DriverEndpoint | undefined = commander.driverEndpoint;
 	const profileName: string = commander.profile;
 	const testId: string | undefined = commander.testId;
-	const debug: true | undefined = commander.debug;
+	const debug: boolean = commander.debug ?? false;
 	const log: string | undefined = commander.log;
-	const verbose: true | undefined = commander.verbose;
+	const verbose: boolean = commander.verbose ?? false;
 	const seed: number = commander.seed ?? Date.now();
-	const browserAuth: true | undefined = commander.browserAuth;
-	const credFile: string | undefined = commander.credFile;
+	const supportsBrowserAuth: boolean = commander.browserAuth ?? false;
+	const credFilePath: string | undefined = commander.credFile;
 	const enableMetrics: boolean = commander.enableMetrics ?? false;
 	const createTestId: boolean = commander.createTestId ?? false;
 
@@ -61,9 +61,15 @@ async function main() {
 		process.env.DEBUG = log;
 	}
 
-	const testUsers = await getTestUsers(credFile);
+	const testUsers = await getTestUsers(credFilePath);
 
-	const testDriver = await createTestDriver(driver, endpoint, seed, undefined, browserAuth);
+	const testDriver = await createTestDriver(
+		driver,
+		endpoint,
+		seed,
+		undefined, // runId
+		supportsBrowserAuth,
+	);
 
 	await stressTest(testDriver, profile, {
 		testId,

@@ -154,7 +154,7 @@ export async function createTestDriver(
 	endpointName: DriverEndpoint | undefined,
 	seed: number,
 	runId: number | undefined,
-	supportsBrowserAuth?: true,
+	supportsBrowserAuth: boolean,
 ) {
 	const options = generateOdspHostStoragePolicy(seed);
 	return createFluidTestDriver(driver, {
