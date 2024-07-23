@@ -55,11 +55,11 @@ async function main() {
 	const enableMetrics: boolean = commander.enableMetrics ?? false;
 	const createTestId: boolean = commander.createTestId ?? false;
 
-	const profile = getProfile(profileName);
-
 	if (log !== undefined) {
 		process.env.DEBUG = log;
 	}
+
+	const profile = getProfile(profileName);
 
 	const testUsers = credFilePath !== undefined ? getTestUsers(credFilePath) : undefined;
 
