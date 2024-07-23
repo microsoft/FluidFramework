@@ -254,6 +254,7 @@ extends:
                     Variables:
                       absolutePathToTelemetryGenerator=$(absolutePathToTelemetryGenerator)
                       BuildReason=${{ variables['Build.Reason'] }}
+                      runCodeQL=${{ variables['runCodeQL'] }}
 
                     Publish Parameters:
                       interdependencyRange='${{ parameters.interdependencyRange }}'
