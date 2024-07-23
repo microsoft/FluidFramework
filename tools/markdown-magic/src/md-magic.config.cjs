@@ -165,7 +165,7 @@ function readmeFooterTransform(content, options, config) {
 	}
 
 	const includeClientRequirementsSection = parseBooleanOption(options.clientRequirements, () =>
-		isPublic(packageName),
+		isPublic(packageMetadata),
 	);
 	if (includeClientRequirementsSection) {
 		sections.push(generateClientRequirementsSection(sectionHeadingOptions));
@@ -263,7 +263,7 @@ function libraryReadmeHeaderTransform(content, options, config) {
 		sections.push(generateImportInstructionsSection(packageMetadata, sectionHeadingOptions));
 	}
 
-	const includeApiDocsSection = parseBooleanOption(options.apiDocs, () => isPublic(packageName));
+	const includeApiDocsSection = parseBooleanOption(options.apiDocs, () => isPublic(packageMetadata));
 	if (includeApiDocsSection) {
 		sections.push(generateApiDocsSection(packageName, sectionHeadingOptions));
 	}
