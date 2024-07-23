@@ -19,6 +19,11 @@ parameters:
 - name: buildNumberInPatch
   type: string
 
+# Set to true to skip CodeQL analysis
+- name: runCodeQL
+  type: boolean
+  default: false
+
 variables:
 - group: prague-key-vault
 - name: skipComponentGovernanceDetection
@@ -103,3 +108,6 @@ variables:
 - name: testCoverage
   value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
   readonly: true
+
+- name: Codeql.Enabled
+  value: ${{ parameters.runCodeQL }}

@@ -92,6 +92,7 @@ variables:
       publishOverride: '${{ parameters.publishOverride }}'
       releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
       buildNumberInPatch: ''
+      runCodeQL: false
 
 extends:
   template: /tools/pipelines/templates/build-npm-package.yml@self
