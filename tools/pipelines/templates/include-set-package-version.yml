@@ -43,7 +43,7 @@ steps:
 
 - task: Bash@3
   name: SetVersion
-  displayName: Set Package Version
+  displayName: Calculate Package Version
   env:
     VERSION_RELEASE: $(release)
     VERSION_BUILDNUMBER: $(Build.BuildNumber)

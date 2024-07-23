@@ -18,6 +18,15 @@ parameters:
 - name: buildDirectory
   type: string
 
+- name: buildToolsVersionToInstall
+  type: string
+  default: repo
+
+# The path to the pnpm store.
+- name: pnpmStorePath
+  type: string
+  default: $(Pipeline.Workspace)/.pnpm-store
+
 stages:
 
 # This stage only runs for test-branch builds
