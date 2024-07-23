@@ -25,7 +25,7 @@ export interface MapTree extends NodeData {
  *
  * @remarks
  * To not keep multiple references to a value with this type around to avoid unexpected mutations.
- * While this type does implement MapTree, it should not be used as a MapTree while its being mutated.
+ * While this type does implement MapTree, it should not be used as a MapTree while it is being mutated.
  *
  * @internal
  */
