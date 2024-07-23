@@ -368,7 +368,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		// 277870, 278093, 281244
-		it.only("repeated replacement", async () => {
+		it("repeated replacement", async () => {
 			sharedString.insertText(0, "012");
 			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);

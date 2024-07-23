@@ -241,7 +241,7 @@ const waitForSummary = async (
 };
 // Introduced in 0.37
 // REVIEW: enable compat testing
-describeCompat.only("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory, SharedCounter, SharedString, SharedCell } = apis.dds;
 	const { getTextAndMarkers } = apis.dataRuntime.packages.sequence;
 

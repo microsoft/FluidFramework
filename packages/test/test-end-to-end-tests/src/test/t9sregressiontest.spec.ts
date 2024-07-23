@@ -31,7 +31,7 @@ describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider, 
 		},
 	};
 	// 276970, 277338, 280712
-	it.only("handles long logtail", async function () {
+	it("handles long logtail", async function () {
 		const provider = getTestObjectProvider();
 		const loader1 = provider.makeTestLoader(testContainerConfig);
 		const container1 = await createAndAttachContainer(
