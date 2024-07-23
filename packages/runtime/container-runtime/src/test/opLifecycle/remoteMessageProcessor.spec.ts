@@ -315,7 +315,7 @@ describe("RemoteMessageProcessor", () => {
 		const groupedBatch = {
 			type: MessageType.Operation,
 			sequenceNumber: 10,
-			clientSequenceNumber: 12,
+			clientSequenceNumber: 8,
 			contents: {
 				type: OpGroupingManager.groupedBatchOp,
 				contents: [],
@@ -325,7 +325,7 @@ describe("RemoteMessageProcessor", () => {
 		const result = messageProcessor.process(groupedBatch as ISequencedDocumentMessage);
 		assert.deepStrictEqual(
 			result,
-			{ messages: [], batchStartCsn: 12, sequenceNumber: 10 },
+			{ messages: [], batchStartCsn: 8, sequenceNumber: 10 },
 			"unexpected processing of empty groupedBatch",
 		);
 	});

@@ -2646,7 +2646,6 @@ export class ContainerRuntime
 			const messages: {
 				message: InboundSequencedContainerRuntimeMessage;
 				localOpMetadata: unknown;
-				sequenceNumber?: number;
 			}[] = local
 				? this.pendingStateManager.processPendingLocalBatch(
 						batch,

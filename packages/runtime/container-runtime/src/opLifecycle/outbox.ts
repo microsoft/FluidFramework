@@ -260,41 +260,39 @@ export class Outbox {
 			true /* disableGroupedBatching */,
 			resubmittingBatchId,
 		);
-		this.flushInternalMainBatch(
-			this.mainBatch,
-			false /* disableGroupedBatching */,
-			resubmittingBatchId,
-		);
+		this.flushInternalEvenIfEmpty(this.mainBatch, resubmittingBatchId);
 	}
 
 	/**
 	 * Flushes the main batch to the ordering service. If the batch is empty, it will create an empty grouped batch
 	 * if BatchId is present (resubmit flow) and the runtime should send.
 	 */
-	private flushInternalMainBatch(
-		mainBatch: BatchManager,
-		disableGroupedBatching: boolean = false,
-		resubmittingBatchId?: BatchId,
-	) {
+	private flushInternalEvenIfEmpty(mainBatch: BatchManager, resubmittingBatchId?: BatchId) {
 		let clientSequenceNumber: number | undefined;
 		if (mainBatch.empty) {
-			if (resubmittingBatchId && this.params.config.immediateMode !== true) {
-				const emptyGroupedBatch = this.params.groupingManager.createEmptyGroupedBatch(
-					resubmittingBatchId,
-					this.params.getCurrentSequenceNumbers().referenceSequenceNumber ?? 0,
-				);
-				if (this.params.shouldSend()) {
-					clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
-				}
-				this.params.pendingStateManager.onFlushBatch(
-					emptyGroupedBatch.messages, // This is the single empty Grouped Batch message
-					clientSequenceNumber,
-				);
-				return;
+		if (resubmittingBatchId && this.params.config.immediateMode !== true) {
+			const referenceSequenceNumber =
+				this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
+			assert(
+				referenceSequenceNumber !== undefined,
+				"reference sequence number should be defined",
+			);
+			const emptyGroupedBatch = this.params.groupingManager.createEmptyGroupedBatch(
+				resubmittingBatchId,
+				referenceSequenceNumber,
+			);
+			if (this.params.shouldSend()) {
+				clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
 			}
+			this.params.pendingStateManager.onFlushBatch(
+				emptyGroupedBatch.messages, // This is the single empty Grouped Batch message
+				clientSequenceNumber,
+			);
 			return;
 		}
-		this.flushInternal(mainBatch, disableGroupedBatching, resubmittingBatchId);
+		return;
+	}
+		this.flushInternal(mainBatch, false /* disableGroupBatching */, resubmittingBatchId);
 	}
 
 	private flushInternal(
@@ -302,7 +300,6 @@ export class Outbox {
 		disableGroupedBatching: boolean = false,
 		resubmittingBatchId?: BatchId,
 	) {
-		let clientSequenceNumber: number | undefined;
 		if (batchManager.empty) {
 			return;
 		}
@@ -319,6 +316,7 @@ export class Outbox {
 			return;
 		}
 
+		let clientSequenceNumber: number | undefined;
 		// Did we disconnect? (i.e. is shouldSend false?)
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.

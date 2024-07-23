@@ -323,6 +323,7 @@ describe("Outbox", () => {
 				reentrantBatchGroupingEnabled: true,
 			},
 		});
+		currentSeqNumbers.referenceSequenceNumber = 0;
 		outbox.flush();
 		assert.equal(state.opsSubmitted, 0);
 		assert.equal(state.batchesSubmitted.length, 0);
@@ -352,7 +353,6 @@ describe("Outbox", () => {
 				reentrantBatchGroupingEnabled: true,
 			},
 		});
-
 		// Flush 1 - resubmit multi-message batch including ID Allocation
 		outbox.submitIdAllocation(createMessage(ContainerMessageType.IdAllocation, "0")); // Separate batch, batch ID not used
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "1"));
@@ -366,6 +366,7 @@ describe("Outbox", () => {
 		// Flush 3 - resubmit blob attach batch
 		outbox.submitBlobAttach(createMessage(ContainerMessageType.BlobAttach, "4"));
 		outbox.submitBlobAttach(createMessage(ContainerMessageType.BlobAttach, "5"));
+		currentSeqNumbers.referenceSequenceNumber = 0;
 		outbox.flush("batchId-C");
 
 		// Flush 4 - no batch ID given

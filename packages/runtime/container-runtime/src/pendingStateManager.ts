@@ -315,36 +315,47 @@ export class PendingStateManager implements IDisposable {
 		message: InboundSequencedContainerRuntimeMessage;
 		localOpMetadata: unknown;
 	}[] {
+		// If the batch is empty, we need to process it differently
 		if (batch.length === 0) {
-			const pendingMessage = this.pendingMessages.peekFront();
-			assert(pendingMessage !== undefined, "No pending message found for this remote message");
-			assert(pendingMessage.opMetadata?.emptyBatch === true, "Expected empty batch");
-			assert(sequenceNumber !== undefined, "Expected sequence number for empty batch");
-
-			if (pendingMessage.batchIdContext.batchStartCsn !== batchStartCsn) {
-				this.stateHandler.close(
-					DataProcessingError.create(
-						"batchStartCsn mismatch on empty batch",
-						"unexpectedAckReceived",
-						undefined,
-						{
-							expectedMessageType: JSON.parse(pendingMessage.content).type,
-						},
-					),
-				);
-				return [];
-			}
-			pendingMessage.sequenceNumber = sequenceNumber;
-			this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
-
-			this.pendingMessages.shift();
-			return [];
+			return this.processPendingLocalEmptyBatch(batchStartCsn, sequenceNumber);
 		}
 
 		return batch.map((message) => ({
 			message,
 			localOpMetadata: this.processPendingLocalMessage(message, batchStartCsn),
 		}));
+	}
+
+	/**
+	 * Verifies we are expecting an empty batch. If so, saves it and removes it from the pending queue.
+	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch
+	 * @param sequenceNumber - The sequence number of the empty batch placeholder message.
+	 * @returns An empty array since no messages are processed. This is crucial to
+	 */
+	private processPendingLocalEmptyBatch(batchStartCsn, sequenceNumber): [] {
+		const pendingMessage = this.pendingMessages.peekFront();
+		assert(pendingMessage !== undefined, "No pending message found for this remote message");
+		assert(pendingMessage.opMetadata?.emptyBatch === true, "Expected empty batch");
+		assert(sequenceNumber !== undefined, "Expected sequence number for empty batch");
+
+		if (pendingMessage.batchIdContext.batchStartCsn !== batchStartCsn) {
+			this.stateHandler.close(
+				DataProcessingError.create(
+					"batchStartCsn mismatch on empty batch",
+					"unexpectedAckReceived",
+					undefined,
+					{
+						expectedMessageType: JSON.parse(pendingMessage.content).type,
+					},
+				),
+			);
+			return [];
+		}
+		pendingMessage.sequenceNumber = sequenceNumber;
+		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
+
+		this.pendingMessages.shift();
+		return [];
 	}
 
 	/**
@@ -546,6 +557,7 @@ export class PendingStateManager implements IDisposable {
 				);
 			// Ignore emptyBatch messages when resubmitting
 			if (pendingMessage.opMetadata?.emptyBatch === true) {
+				this.stateHandler.reSubmitBatch([], batchId);
 				continue;
 			}
 

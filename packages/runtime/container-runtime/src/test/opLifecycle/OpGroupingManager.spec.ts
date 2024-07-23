@@ -104,7 +104,7 @@ describe("OpGroupingManager", () => {
 				{
 					contents:
 						'{"type":"groupedBatch","contents":[{"contents":0},{"contents":0},{"contents":0},{"contents":0},{"contents":0}]}',
-					metadata: undefined,
+					metadata: { batchId: undefined },
 					referenceSequenceNumber: 0,
 				},
 			]);
@@ -132,11 +132,10 @@ describe("OpGroupingManager", () => {
 				},
 				mockLogger,
 			).createEmptyGroupedBatch("resubmittingBatchId", 0);
-			assert.strictEqual(result.messages.length, 1);
 			assert.deepStrictEqual(result.messages, [
 				{
 					contents: '{"type":"groupedBatch","contents":[]}',
-					metadata: { resubmittingBatchId: "resubmittingBatchId", emptyBatch: true },
+					metadata: { batchId: "resubmittingBatchId", emptyBatch: true },
 					referenceSequenceNumber: 0,
 				},
 			]);
