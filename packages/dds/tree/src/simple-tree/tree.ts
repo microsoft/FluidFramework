@@ -21,7 +21,7 @@ import {
 import { toFlexSchema } from "./toFlexSchema.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
 import { assert } from "@fluidframework/core-utils/internal";
-import { isObjectNodeSchema } from "./objectNode.js";
+import { TreeObjectNodeSchema } from "./objectNode.js";
 import { markSchemaMostDerived } from "./schemaFactory.js";
 
 /**
@@ -160,7 +160,7 @@ export function walkNodeSchema(
 	visitedSet.add(schema);
 	if (schema instanceof LeafNodeSchema) {
 		// nothing to do
-	} else if (isObjectNodeSchema(schema)) {
+	} else if (schema instanceof TreeObjectNodeSchema) {
 		for (const field of schema.fields.values()) {
 			walkAllowedTypes(field.allowedTypeSet, visitor, visitedSet);
 		}

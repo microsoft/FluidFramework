@@ -44,8 +44,8 @@ import {
 } from "./schemaTypes.js";
 import { type TreeArrayNode, arraySchema } from "./arrayNode.js";
 import {
-	type InsertableObjectFromSchemaRecord,
-	type TreeObjectNode,
+	type TreeObjectNodeSchema,
+	type TreeObjectNodeSchemaBase,
 	objectSchema,
 } from "./objectNode.js";
 import { type TreeMapNode, mapSchema } from "./mapNode.js";
@@ -254,17 +254,7 @@ export class SchemaFactory<
 	public object<
 		const Name extends TName,
 		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-	>(
-		name: Name,
-		fields: T,
-	): TreeNodeSchemaClass<
-		ScopedSchemaName<TScope, Name>,
-		NodeKind.Object,
-		TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
-		object & InsertableObjectFromSchemaRecord<T>,
-		true,
-		T
-	> {
+	>(name: Name, fields: T): TreeObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true> {
 		return objectSchema(this.scoped(name), fields, true);
 	}
 
@@ -631,14 +621,18 @@ export class SchemaFactory<
 		return this.object(
 			name,
 			t as T & RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-		) as unknown as TreeNodeSchemaClass<
-			TScopedName,
-			NodeKind.Object,
-			TreeObjectNodeUnsafe<T, TScopedName>,
-			object & InsertableObjectFromSchemaRecordUnsafe<T>,
-			false,
-			T
-		>;
+		) as unknown as
+			// TreeObjectNodeSchema is not covariant over its `T` value due to the constructor,
+			// and needs type constraints on T, so use TreeNodeSchemaClass & TreeObjectNodeSchemaBase instead.
+			TreeNodeSchemaClass<
+				TScopedName,
+				NodeKind.Object,
+				TreeObjectNodeUnsafe<T, TScopedName>,
+				object & InsertableObjectFromSchemaRecordUnsafe<T>,
+				false,
+				T
+			> &
+				TreeObjectNodeSchemaBase<TScopedName, T, false>;
 	}
 
 	/**

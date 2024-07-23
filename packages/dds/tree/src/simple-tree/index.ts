@@ -94,6 +94,8 @@ export {
 	type ObjectFromSchemaRecord,
 	type TreeObjectNode,
 	setField,
+	type TreeObjectNodeSchema,
+	type TreeObjectNodeSchemaBase,
 } from "./objectNode.js";
 export type { TreeMapNode } from "./mapNode.js";
 export { mapTreeFromNodeData } from "./toMapTree.js";
