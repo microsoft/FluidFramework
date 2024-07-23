@@ -31,10 +31,9 @@ export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMa
 	const atomId: Populated<ChangeAtomId> = { localId: brand(0), revision: tag };
 	const changes = TestNodeId.create({ localId: brand(2) }, TestChange.mint([], 1));
 	const attach: Populated<Attach> = {
-		type: "MoveIn",
+		type: "Insert",
 		id: brand(0),
 		revision: tag,
-		finalEndpoint: atomId,
 	};
 	const detach: Populated<Detach> = {
 		type: "MoveOut",
