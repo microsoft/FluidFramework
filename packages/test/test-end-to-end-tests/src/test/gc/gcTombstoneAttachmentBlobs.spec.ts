@@ -334,7 +334,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 		);
 
 		itExpects(
-			"logs error on retrieval of tombstones attachment blobs when ThrowOnTombstoneUsage is not enabled",
+			"logs error on retrieval of tombstones attachment blobs when ThrowOnTombstoneLoad is not enabled",
 			[
 				{
 					eventName:

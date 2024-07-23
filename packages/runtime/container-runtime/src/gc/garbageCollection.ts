@@ -143,19 +143,6 @@ export class GarbageCollector implements IGarbageCollector {
 	private readonly summaryStateTracker: GCSummaryStateTracker;
 	private readonly telemetryTracker: GCTelemetryTracker;
 
-	/** If false, loading or using a Tombstoned object should merely log, not fail */
-	public get tombstoneEnforcementAllowed(): boolean {
-		return this.configs.sweepEnabled;
-	}
-	/** If true, throw an error when a tombstone data store is retrieved */
-	public get throwOnTombstoneLoad(): boolean {
-		return this.configs.throwOnTombstoneLoad;
-	}
-	/** If true, throw an error when a tombstone data store is used */
-	public get throwOnTombstoneUsage(): boolean {
-		return this.configs.throwOnTombstoneUsage;
-	}
-
 	/** For a given node path, returns the node's package path. */
 	private readonly getNodePackagePath: (
 		nodePath: string,
@@ -377,9 +364,8 @@ export class GarbageCollector implements IGarbageCollector {
 			this.deletedNodes = new Set(baseSnapshotData.deletedNodes);
 		}
 
-		// If running in tombstone mode, initialize the tombstone state from the snapshot. Also, notify the runtime of
-		// tombstone routes.
-		if (this.configs.tombstoneMode && baseSnapshotData.tombstones !== undefined) {
+		// Initialize the tombstone state from the snapshot. Also, notify the runtime of tombstone routes.
+		if (baseSnapshotData.tombstones !== undefined) {
 			// Create a copy since we are writing from a source we don't control
 			this.tombstones = Array.from(baseSnapshotData.tombstones);
 			this.runtime.updateTombstonedRoutes(this.tombstones);
@@ -525,7 +511,7 @@ export class GarbageCollector implements IGarbageCollector {
 					...gcStats,
 					details: {
 						timestamp: currentReferenceTimestampMs,
-						sweep: this.configs.shouldRunSweep,
+						sweep: this.configs.sweepAllowed,
 						tombstone: this.configs.throwOnTombstoneLoad,
 					},
 				});
@@ -703,30 +689,14 @@ export class GarbageCollector implements IGarbageCollector {
 			nodesToTombstone: [...tombstoneReadyNodes],
 			nodesToDelete: [] as string[],
 		};
-		switch (this.configs.shouldRunSweep) {
-			case "YES":
-				nodesToDelete.push(...sweepReadyNodes);
-				break;
-			case "ONLY_BLOBS":
-				sweepReadyNodes.forEach((nodeId) => {
-					const nodeType = this.runtime.getNodeType(nodeId);
-					if (nodeType === GCNodeType.Blob) {
-						nodesToDelete.push(nodeId);
-					} else {
-						nodesToTombstone.push(nodeId);
-					}
-				});
-				break;
-			default: // case "NO":
-				nodesToTombstone.push(...sweepReadyNodes);
-				break;
+		if (this.configs.sweepAllowed) {
+			nodesToDelete.push(...sweepReadyNodes);
+		} else {
+			nodesToTombstone.push(...sweepReadyNodes);
 		}
 
-		if (this.configs.tombstoneMode) {
-			this.tombstones = nodesToTombstone;
-			// If we are running in GC tombstone mode, update tombstoned routes.
-			this.runtime.updateTombstonedRoutes(this.tombstones);
-		}
+		this.tombstones = nodesToTombstone;
+		this.runtime.updateTombstonedRoutes(this.tombstones);
 
 		if (nodesToDelete.length > 0) {
 			// Do not send DDS node ids in the GC op. This is an optimization to reduce its size. Since GC applies to
@@ -1054,7 +1024,11 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		const errorRequest: IRequest = request ?? { url: fullPath };
-		if (isTombstoned && this.throwOnTombstoneLoad && headerData?.allowTombstone !== true) {
+		if (
+			isTombstoned &&
+			this.configs.throwOnTombstoneLoad &&
+			headerData?.allowTombstone !== true
+		) {
 			// The requested data store is removed by gc. Create a 404 gc response exception.
 			throw responseToException(
 				createResponseError(404, `${nodeType} was tombstoned`, errorRequest, {

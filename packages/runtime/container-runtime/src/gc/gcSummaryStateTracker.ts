@@ -66,7 +66,7 @@ export class GCSummaryStateTracker {
 		// Tells whether GC should run or not.
 		private readonly configs: Pick<
 			IGarbageCollectorConfigs,
-			"gcEnabled" | "tombstoneMode" | "gcVersionInBaseSnapshot" | "gcVersionInEffect"
+			"gcEnabled" | "gcVersionInBaseSnapshot" | "gcVersionInEffect"
 		>,
 	) {}
 
@@ -109,12 +109,9 @@ export class GCSummaryStateTracker {
 		// to identify deleted nodes' usage.
 		const serializedDeletedNodes =
 			deletedNodes.size > 0 ? JSON.stringify(Array.from(deletedNodes).sort()) : undefined;
-		// If running in tombstone mode, serialize and write tombstones, if any.
-		const serializedTombstones = this.configs.tombstoneMode
-			? tombstones.length > 0
-				? JSON.stringify(tombstones.sort())
-				: undefined
-			: undefined;
+		// Serialize and write tombstones, if any.
+		const serializedTombstones =
+			tombstones.length > 0 ? JSON.stringify(tombstones.sort()) : undefined;
 
 		/**
 		 * Incremental summary of GC data - If none of GC state, deleted nodes or tombstones changed since last summary,

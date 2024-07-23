@@ -69,7 +69,6 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { sendGCUnexpectedUsageEvent } from "./gc/index.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	ReadFluidDataStoreAttributes,
@@ -255,8 +254,8 @@ export abstract class FluidDataStoreContext
 		return this._tombstoned;
 	}
 	/** If true, throw an error when a tombstone data store is used. */
-	public readonly gcThrowOnTombstoneUsage: boolean;
-	public readonly gcTombstoneEnforcementAllowed: boolean;
+	public readonly gcThrowOnTombstoneUsage = false;
+	public readonly gcTombstoneEnforcementAllowed = false;
 
 	/** If true, this means that this data store context and its children have been removed from the runtime */
 	protected deleted: boolean = false;
@@ -398,9 +397,6 @@ export abstract class FluidDataStoreContext
 			FluidDataStoreContext.pendingOpsCountThreshold,
 			this.mc.logger,
 		);
-
-		this.gcThrowOnTombstoneUsage = this.parentContext.gcThrowOnTombstoneUsage;
-		this.gcTombstoneEnforcementAllowed = this.parentContext.gcTombstoneEnforcementAllowed;
 
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
@@ -572,14 +568,6 @@ export abstract class FluidDataStoreContext
 		// On op process, tombstone error is logged in garbage collector. So, set "checkTombstone" to false when calling
 		// "verifyNotClosed" which logs tombstone errors. Throw error if tombstoned and throwing on load is configured.
 		this.verifyNotClosed("process", false /* checkTombstone */, safeTelemetryProps);
-		if (this.tombstoned && this.gcThrowOnTombstoneUsage) {
-			throw DataProcessingError.create(
-				"Context is tombstoned! Call site [process]",
-				"process",
-				undefined /* sequencedMessage */,
-				safeTelemetryProps,
-			);
-		}
 
 		this.summarizerNode.recordChange(message);
 
@@ -999,20 +987,14 @@ export abstract class FluidDataStoreContext
 				safeTelemetryProps,
 			);
 
-			sendGCUnexpectedUsageEvent(
-				this.mc,
+			this.mc.logger.sendTelemetryEvent(
 				{
 					eventName: "GC_Tombstone_DataStore_Changed",
-					category: this.gcThrowOnTombstoneUsage ? "error" : "generic",
-					gcTombstoneEnforcementAllowed: this.gcTombstoneEnforcementAllowed,
+					category: "generic",
 					callSite,
 				},
-				this.pkg,
 				error,
 			);
-			if (this.gcThrowOnTombstoneUsage) {
-				throw error;
-			}
 		}
 	}
 
@@ -1378,16 +1360,11 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	 */
 	public delete() {
 		// TODO: GC:Validation - potentially prevent this from happening or asserting. Maybe throw here.
-		sendGCUnexpectedUsageEvent(
-			this.mc,
-			{
-				eventName: "GC_Deleted_DataStore_Unexpected_Delete",
-				message: "Unexpected deletion of a local data store context",
-				category: "error",
-				gcTombstoneEnforcementAllowed: undefined,
-			},
-			this.pkg,
-		);
+		this.mc.logger.sendErrorEvent({
+			eventName: "GC_Deleted_DataStore_Unexpected_Delete",
+			message: "Unexpected deletion of a local data store context",
+			category: "error",
+		});
 		super.delete();
 	}
 }
