@@ -11,7 +11,6 @@ export {
 	defaultSessionExpiryDurationMs,
 	GCNodeType,
 	gcTestModeKey,
-	gcDisableThrowOnTombstoneLoadOptionName,
 	gcGenerationOptionName,
 	GCFeatureMatrix,
 	GCVersion,

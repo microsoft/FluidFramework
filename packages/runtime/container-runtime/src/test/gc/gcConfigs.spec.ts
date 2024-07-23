@@ -34,7 +34,6 @@ import {
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,
-	gcDisableThrowOnTombstoneLoadOptionName,
 	gcGenerationOptionName,
 	gcTestModeKey,
 	gcVersionUpgradeToV4Key,
@@ -855,41 +854,6 @@ describe("Garbage Collection configurations", () => {
 		beforeEach(() => {
 			configProvider.set(testOverrideSessionExpiryMsKey, defaultSessionExpiryDurationMs); // Required for sweep to be enabled
 		});
-		it("gcDisableThrowOnTombstoneLoad true (w/ Sweep)", () => {
-			gc = createGcWithPrivateMembers(
-				undefined /* metadata */,
-				{ enableGCSweep: true, [gcDisableThrowOnTombstoneLoadOptionName]: true },
-				false /* isSummarizerClient */,
-			);
-			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
-		});
-		it("gcDisableThrowOnTombstoneLoad true (w/o Sweep)", () => {
-			gc = createGcWithPrivateMembers(
-				undefined /* metadata */,
-				{ enableGCSweep: undefined, [gcDisableThrowOnTombstoneLoadOptionName]: true },
-				false /* isSummarizerClient */,
-			);
-			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
-		});
-		it("gcDisableThrowOnTombstoneLoad false", () => {
-			gc = createGcWithPrivateMembers(
-				undefined /* metadata */,
-				{ enableGCSweep: true, [gcDisableThrowOnTombstoneLoadOptionName]: false },
-				false /* isSummarizerClient */,
-			);
-			assert.equal(gc.configs.throwOnTombstoneLoad, true, "throwOnTombstoneLoad incorrect");
-		});
-		it("gcDisableThrowOnTombstoneLoad undefined", () => {
-			gc = createGcWithPrivateMembers(
-				undefined /* metadata */,
-				{
-					enableGCSweep: true,
-					[gcDisableThrowOnTombstoneLoadOptionName]: undefined,
-				},
-				false /* isSummarizerClient */,
-			);
-			assert.equal(gc.configs.throwOnTombstoneLoad, true, "throwOnTombstoneLoad incorrect");
-		});
 		it("Old 'enable' option false (ignored)", () => {
 			const gcThrowOnTombstoneLoadOptionName_old = "gcThrowOnTombstoneLoad";
 			gc = createGcWithPrivateMembers(
@@ -903,7 +867,7 @@ describe("Garbage Collection configurations", () => {
 			configProvider.set(throwOnTombstoneLoadOverrideKey, true);
 			gc = createGcWithPrivateMembers(
 				undefined /* metadata */,
-				{ enableGCSweep: true, [gcDisableThrowOnTombstoneLoadOptionName]: true },
+				{ enableGCSweep: true },
 				false /* isSummarizerClient */,
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, true, "throwOnTombstoneLoad incorrect");
@@ -912,7 +876,7 @@ describe("Garbage Collection configurations", () => {
 			configProvider.set(throwOnTombstoneLoadOverrideKey, false);
 			gc = createGcWithPrivateMembers(
 				undefined /* metadata */,
-				{ enableGCSweep: true, [gcDisableThrowOnTombstoneLoadOptionName]: false },
+				{ enableGCSweep: true },
 				false /* isSummarizerClient */,
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
