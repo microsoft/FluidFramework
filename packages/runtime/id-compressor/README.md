@@ -2,7 +2,7 @@
 
 A library which generates small number representations of arbitrary non-colliding Version 4 UUIDs ("stable IDs") across multiple sessions in a network. This scheme enables a distributed application to utilize the global uniqueness guarantees of UUIDs while maintaining the performance advantages of small integers.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -106,7 +106,7 @@ Clusters are efficient to store, requiring only two integers: the base positive 
 
 Normalization is O(log<sub>n</sub>) in the number of IDs created by the originating session, as it requires a simple binary search on the clusters owned by that session.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

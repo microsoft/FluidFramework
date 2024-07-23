@@ -71,10 +71,10 @@ export interface SequenceOptions
 	> {
 	/**
 	 * Enable the ability to use interval APIs that rely on positions before and
-	 * after individual characters, referred to as "sides". See {@link SequencePlace}
+	 * after individual characters, referred to as "sides". See {@link @fluidframework/merge-tree#SequencePlace}
 	 * for additional context.
 	 *
-	 * This flag must be enabled to pass instances of {@link SequencePlace} to
+	 * This flag must be enabled to pass instances of {@link @fluidframework/merge-tree#SequencePlace} to
 	 * any IIntervalCollection API.
 	 *
 	 * Also see the feature flag `mergeTreeReferencesCanSlideToEndpoint` to allow

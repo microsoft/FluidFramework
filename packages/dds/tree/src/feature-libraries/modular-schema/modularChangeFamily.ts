@@ -236,7 +236,7 @@ export class ModularChangeFamily
 		]);
 
 		return makeModularChangeset(
-			this.pruneFieldMap(fieldChanges, nodeChanges),
+			fieldChanges,
 			nodeChanges,
 			nodeToParent,
 			nodeAliases,
