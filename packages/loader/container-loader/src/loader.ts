@@ -93,14 +93,14 @@ export class RelativeLoader implements ILoader {
 /**
  * @legacy
  * @alpha
- * @deprecated
+ * @deprecated Use ILoaderOptions from container-definitions instead
  */
 export interface ILoaderOptions extends ILoaderOptions1 {
 	/**
-	 * Used to enable including of protocol tree in the summaries.
-	 * This flag was introduced for initial testing and controlled rollout of single-commit summaries.
+	 *
+	 * @deprecated No longer needed or used (initially introduced to test single-commit summaries).
+	 * Driver layer can enable single-commit summaries via document service policies if needed.
 	 * ADO #9098: To remove declaration and usage from code.
-	 * @deprecated
 	 */
 	summarizeProtocolTree?: boolean;
 }
