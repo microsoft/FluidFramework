@@ -54,7 +54,7 @@ This package runs in two different modes: Orchestrator Mode and Test Runner mode
 _This is the main entry point to the test - this Orchestrator process will spawn many Test Runner processes._
 
 ```bash
-node ./dist/nodeStressTest.js [--url <url>] [--tenant <tenant>] [--profile <profile>] [--debug] [--log <filterTerm>]
+node ./dist/main.js [--url <url>] [--tenant <tenant>] [--profile <profile>] [--debug] [--log <filterTerm>]
 ```
 
 ### Test Runner Mode
