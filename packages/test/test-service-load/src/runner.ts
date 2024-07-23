@@ -25,6 +25,7 @@ import {
 	FaultInjectionDocumentServiceFactory,
 	FaultInjectionError,
 } from "./faultInjectionDriver.js";
+import { FileLogger } from "./FileLogger.js";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
@@ -35,7 +36,6 @@ import {
 import {
 	configProvider,
 	createCodeLoader,
-	createLogger,
 	createTestDriver,
 	getProfile,
 	globalConfigurations,
@@ -99,7 +99,7 @@ async function main() {
 	// this makes runners repeatable, but ensures each runner
 	// will get its own set of randoms
 	const random = makeRandom(seed, runId);
-	const logger = await createLogger({
+	const logger = await FileLogger.createLogger({
 		runId,
 		driverType: driver,
 		driverEndpointName: endpoint,

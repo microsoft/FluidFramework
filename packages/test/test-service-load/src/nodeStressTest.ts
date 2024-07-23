@@ -15,8 +15,9 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import commander from "commander";
 import ps from "ps-node";
 
+import { FileLogger } from "./FileLogger.js";
 import { ILoadTestConfig } from "./testConfigFile.js";
-import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils.js";
+import { createTestDriver, getProfile, initialize, safeExit } from "./utils.js";
 
 interface ITestUserConfig {
 	/* Credentials' key/value description:
@@ -152,7 +153,7 @@ async function orchestratorProcess(
 	console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 	console.log(`Start time: ${startTime} ms\n`);
 
-	const logger = await createLogger({
+	const logger = await FileLogger.createLogger({
 		driverType: testDriver.type,
 		driverEndpointName: testDriver.endpointName,
 		profile: args.profileName,
