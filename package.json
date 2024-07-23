@@ -116,7 +116,7 @@
 		"watch:webpack": "pnpm run -r --parallel webpack --watch",
 		"webpack": "fluid-build --task webpack",
 		"webpack:profile": "fluid-build --task webpack:profile",
-		"depcheck": "depcheck"
+		"depcheck": "fluid-build --task depcheck"
 	},
 	"c8": {
 		"all": true,
