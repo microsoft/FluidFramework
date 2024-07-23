@@ -162,7 +162,7 @@ function applySequenceFieldEdit(
 ): void {
 	switch (change.type) {
 		case "insert": {
-			field.insertAt(change.index, cursorForJsonableTreeField(change.content));
+			field.sequenceEditor().insert(change.index, cursorForJsonableTreeField(change.content));
 			break;
 		}
 		case "remove": {
@@ -172,17 +172,20 @@ function applySequenceFieldEdit(
 			break;
 		}
 		case "intraFieldMove": {
-			field.moveRangeToIndex(change.dstIndex, change.range.first, change.range.last + 1);
+			field
+				.sequenceEditor()
+				.move(change.range.first, change.range.last + 1 - change.range.first, change.dstIndex);
 			break;
 		}
 		case "crossFieldMove": {
 			const dstField = navigateToField(tree, change.dstField);
 			assert(dstField.is(tree.currentSchema.objectNodeFieldsObject.sequenceChildren));
-			dstField.moveRangeToIndex(
-				change.dstIndex,
+			dstField.context.checkout.editor.move(
+				field.getFieldPath(),
 				change.range.first,
-				change.range.last + 1,
-				field,
+				change.range.last + 1 - change.range.first,
+				dstField.getFieldPath(),
+				change.dstIndex,
 			);
 			break;
 		}
