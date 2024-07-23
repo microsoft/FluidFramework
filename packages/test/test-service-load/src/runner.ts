@@ -21,10 +21,12 @@ import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/inter
 import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import commander from "commander";
 
+import { FileLogger } from "./FileLogger.js";
 import {
 	FaultInjectionDocumentServiceFactory,
 	FaultInjectionError,
 } from "./faultInjectionDriver.js";
+import { getProfile } from "./getProfile.js";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
@@ -35,9 +37,7 @@ import {
 import {
 	configProvider,
 	createCodeLoader,
-	createLogger,
 	createTestDriver,
-	getProfile,
 	globalConfigurations,
 	printStatus,
 	safeExit,
@@ -99,7 +99,7 @@ async function main() {
 	// this makes runners repeatable, but ensures each runner
 	// will get its own set of randoms
 	const random = makeRandom(seed, runId);
-	const logger = await createLogger({
+	const logger = await FileLogger.createLogger({
 		runId,
 		driverType: driver,
 		driverEndpointName: endpoint,
