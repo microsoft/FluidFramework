@@ -63,4 +63,34 @@ describe("MapNode", () => {
 			assert.equal(Reflect.getPrototypeOf(node), Map.prototype);
 		});
 	});
+
+	it("explicit construction", () => {
+		class Schema extends schemaFactory.map("x", schemaFactory.number) {}
+		const data = [["x", 5]] as const;
+		const fromArray = new Schema(data);
+		assert.deepEqual([...fromArray], data);
+		const fromMap = new Schema(new Map(data));
+		assert.deepEqual([...fromMap], data);
+		const fromIterable = new Schema(new Map(data).entries());
+		assert.deepEqual([...fromIterable], data);
+	});
+
+	describe("implicit construction", () => {
+		class Schema extends schemaFactory.map("x", schemaFactory.number) {}
+		class Root extends schemaFactory.object("root", { data: Schema }) {}
+		const data = [["x", 5]] as const;
+		// See TODO in shallowCompatibilityTest for how to enable this case.
+		it.skip("fromArray", () => {
+			const fromArray = new Root({ data });
+			assert.deepEqual([...fromArray.data], data);
+		});
+		it("fromMap", () => {
+			const fromMap = new Root({ data: new Map(data) });
+			assert.deepEqual([...fromMap.data], data);
+		});
+		it("fromIterable", () => {
+			const fromIterable = new Root({ data: new Map(data).entries() });
+			assert.deepEqual([...fromIterable.data], data);
+		});
+	});
 });

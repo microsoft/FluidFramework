@@ -85,6 +85,8 @@ import {
 	type AnchorNode,
 	type AnchorSetRootEvents,
 	type TreeStoredSchemaSubscription,
+	type SchemaAndPolicy,
+	type ITreeCursorSynchronous,
 } from "../core/index.js";
 import {
 	cursorToJsonObject,
@@ -145,8 +147,12 @@ import {
 import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import {
 	type ImplicitFieldSchema,
+	type InsertableContent,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeViewConfiguration,
+	normalizeFieldSchema,
 	SchemaFactory,
+	toFlexSchema,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -157,6 +163,8 @@ import {
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
+// eslint-disable-next-line import/no-internal-modules
+import { cursorFromNodeData } from "../simple-tree/toMapTree.js";
 
 // Testing utilities
 
@@ -1342,4 +1350,36 @@ export function validateUsageError(expectedErrorMsg: string | RegExp): (error: E
 		}
 		return true;
 	};
+}
+
+/**
+ * Returns a cursor (in nodes mode) for the root node.
+ *
+ * @privateRemarks
+ * Ideally this would work on any node, not just the root,
+ * and the schema would come from the unhydrated node.
+ * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
+ */
+export function cursorFromUnhydratedRoot(
+	schema: ImplicitFieldSchema,
+	tree: InsertableTreeNodeFromImplicitAllowedTypes,
+	nodeKeyManager: NodeKeyManager,
+): ITreeCursorSynchronous {
+	const data = tree as InsertableContent;
+	const normalizedFieldSchema = normalizeFieldSchema(schema);
+
+	const flexSchema = toFlexSchema(normalizedFieldSchema);
+	const storedSchema: SchemaAndPolicy = {
+		policy: defaultSchemaPolicy,
+		schema: intoStoredSchema(flexSchema),
+	};
+
+	return (
+		cursorFromNodeData(
+			data,
+			normalizedFieldSchema.allowedTypes,
+			nodeKeyManager,
+			storedSchema,
+		) ?? assert.fail("failed to decode tree")
+	);
 }

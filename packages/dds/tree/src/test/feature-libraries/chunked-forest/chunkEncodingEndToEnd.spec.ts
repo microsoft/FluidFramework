@@ -53,13 +53,14 @@ import {
 import {
 	MockTreeCheckout,
 	checkoutWithContent,
+	cursorFromUnhydratedRoot,
 	flexTreeViewWithContent,
 	numberSequenceRootSchema,
 	testIdCompressor,
 } from "../../utils.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { cursorFromUnhydratedRoot, toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
+import { toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
