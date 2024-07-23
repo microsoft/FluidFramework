@@ -60,19 +60,13 @@ steps:
       tarballsDir=$(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
       orderFile=$(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt
 
+      # This is a dry-run publish only; once the flub publish process is verified we can remove the --dryRun flag and
+      # delete the old script logic.
       echo "flub publish tarballs --dir $tarballsDir --orderFile $orderFile --publishArgs \"$tag\" --retry $maximumRetryIfNetworkError --tarball --verbose --dryRun"
 
       flub publish tarballs --dir $tarballsDir --orderFile $orderFile --publishArgs "$tag" --retry $maximumRetryIfNetworkError --tarball --verbose --dryRun
 
-      # flub publish tarballs \
-      # --dir $tarballsDir \
-      # --orderFile $orderFile \
-      # --publishArgs "$tag" \
-      # --retry $maximumRetryIfNetworkError \
-      # --tarball \
-      # --verbose \
-      # --dryRun
-
+      # Below is the old publish script
       if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt ]]; then
         packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt)
         sorted=true
