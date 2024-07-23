@@ -74,7 +74,7 @@ export class RemoteMessageProcessor {
 		| {
 				messages: InboundSequencedContainerRuntimeMessage[];
 				batchStartCsn: number;
-				sequenceNumber?: number;
+				sequenceNumber?: number; // Needed by the PendingStateManager to properly track empty batches
 		  }
 		| undefined {
 		let message = remoteMessageCopy;

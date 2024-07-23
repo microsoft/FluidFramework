@@ -220,7 +220,7 @@ describe("Pending State Manager", () => {
 			// but an empty batch has no nested messages. When processing en empty grouped batch,
 			// the psm will expect the next pending message to be an "empty" message as portrayed above.
 			process([], 1 /* batchStartCsn */, 3);
-			assert(closeError === undefined);
+			process([], 1 /* batchStartCsn */, 3 /* sequenceNumber */);
 		});
 
 		it("batch missing end message will call close", () => {

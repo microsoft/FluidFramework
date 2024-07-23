@@ -51,8 +51,9 @@ export class OpGroupingManager {
 
 	/**
 	 * Creates a new batch with a single message of type "groupedBatch" and empty contents.
+	 * This is needed as a placeholder if a batch becomes empty on resubmit, but we are tracking batch IDs.
 	 * @param referenceSequenceNumber - reference sequence number
-	 * @returns - IBatch with empty content
+	 * @returns - IBatch containing a single empty Grouped Batch op
 	 */
 	public createEmptyGroupedBatch(
 		resubmittingBatchId: string,

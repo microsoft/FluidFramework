@@ -287,7 +287,7 @@ export class Outbox {
 					clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
 				}
 				this.params.pendingStateManager.onFlushBatch(
-					emptyGroupedBatch.messages,
+					emptyGroupedBatch.messages, // This is the single empty Grouped Batch message
 					clientSequenceNumber,
 				);
 				return;

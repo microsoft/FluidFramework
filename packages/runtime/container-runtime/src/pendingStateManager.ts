@@ -184,7 +184,6 @@ export class PendingStateManager implements IDisposable {
 				message.sequenceNumber !== undefined,
 				0x97c /* saved op should already have a sequence number */,
 			);
-
 			return message.sequenceNumber > (snapshotSequenceNumber ?? 0);
 		});
 		this.pendingMessages.toArray().forEach((message) => {
@@ -306,7 +305,7 @@ export class PendingStateManager implements IDisposable {
 	 * that the batch information is correct.
 	 * @param batch - The batch that is being processed.
 	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch
-	 * @param sequenceNumber - The sequence number of the batch message.
+	 * @param sequenceNumber - If the batch is empty, the sequence number of the empty batch placeholder message. Otherwise, undefined.
 	 */
 	public processPendingLocalBatch(
 		batch: InboundSequencedContainerRuntimeMessage[],
