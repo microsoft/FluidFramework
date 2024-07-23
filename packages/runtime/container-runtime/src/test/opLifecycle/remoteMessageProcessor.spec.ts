@@ -328,7 +328,7 @@ describe("RemoteMessageProcessor", () => {
 			},
 		};
 		const messageProcessor = getMessageProcessor();
-		const processResult = messageProcessor.process(groupedBatch as ISequencedDocumentMessage, () => {})?.messages ?? [];
+		const processResult = messageProcessor.process(groupedBatch as ISequencedDocumentMessage, () => {});
 		assert.deepStrictEqual(
 			processResult,
 			{ messages: [], batchStartCsn: 8, sequenceNumber: 10 },
