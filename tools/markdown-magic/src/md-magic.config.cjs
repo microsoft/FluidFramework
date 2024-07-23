@@ -233,6 +233,7 @@ function libraryReadmeHeaderTransform(content, options, config) {
 	);
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
 	const packageName = packageMetadata.name;
+	const isPackagePublic = isPublic(packageMetadata);
 
 	const sectionHeadingOptions = {
 		includeHeading: true,
@@ -248,7 +249,8 @@ function libraryReadmeHeaderTransform(content, options, config) {
 		sections.push(scopeNoticeSection);
 	}
 
-	if (options.installation !== "FALSE") {
+	const includeInstallationSection = parseBooleanOption(options.installation, isPackagePublic);
+	if (includeInstallationSection) {
 		sections.push(
 			generateDependencyGuidelines(sectionHeadingOptions),
 			generateInstallationInstructionsSection(
@@ -259,11 +261,12 @@ function libraryReadmeHeaderTransform(content, options, config) {
 		);
 	}
 
-	if (options.importInstructions !== "FALSE") {
+	const includeImportInstructionsSection = parseBooleanOption(options.importInstructions, isPackagePublic);
+	if (includeImportInstructionsSection) {
 		sections.push(generateImportInstructionsSection(packageMetadata, sectionHeadingOptions));
 	}
 
-	const includeApiDocsSection = parseBooleanOption(options.apiDocs, () => isPublic(packageMetadata));
+	const includeApiDocsSection = parseBooleanOption(options.apiDocs, isPackagePublic);
 	if (includeApiDocsSection) {
 		sections.push(generateApiDocsSection(packageName, sectionHeadingOptions));
 	}
