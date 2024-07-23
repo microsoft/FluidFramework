@@ -328,9 +328,9 @@ describe("RemoteMessageProcessor", () => {
 			},
 		};
 		const messageProcessor = getMessageProcessor();
-		const result = messageProcessor.process(groupedBatch as ISequencedDocumentMessage);
+		const processResult = messageProcessor.process(groupedBatch as ISequencedDocumentMessage, () => {})?.messages ?? [];
 		assert.deepStrictEqual(
-			result,
+			processResult,
 			{ messages: [], batchStartCsn: 8, sequenceNumber: 10 },
 			"unexpected processing of empty groupedBatch",
 		);
