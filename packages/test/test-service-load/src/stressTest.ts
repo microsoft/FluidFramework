@@ -34,20 +34,13 @@ export async function stressTest(
 		profileName: string;
 	},
 ) {
-	const url = await (args.testId !== undefined && args.createTestId === false
+	const url = await (args.testId !== undefined && !args.createTestId
 		? // If testId is provided and createTestId is false, then load the file;
 			testDriver.createContainerUrl(args.testId)
-		: // If no testId is provided, (or) if testId is provided but createTestId is not false, then
+		: // If no testId is provided, (or) if testId is provided but createTestId is true, then
 			// create a file;
 			// In case testId is provided, name of the file to be created is taken as the testId provided
-			initialize(
-				testDriver,
-				args.seed,
-				profile,
-				args.verbose === true,
-				args.profileName,
-				args.testId,
-			));
+			initialize(testDriver, args.seed, profile, args.verbose, args.profileName, args.testId));
 
 	const estRunningTimeMin = Math.floor(
 		(2 * profile.totalSendCount) / (profile.opRatePerMin * profile.numClients),
@@ -80,14 +73,14 @@ export async function stressTest(
 			"--seed",
 			`0x${args.seed.toString(16)}`,
 		];
-		if (args.debug === true) {
+		if (args.debug) {
 			const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
 			childArgs.unshift(`--inspect-brk=${debugPort}`);
 		}
-		if (args.verbose === true) {
+		if (args.verbose) {
 			childArgs.push("--verbose");
 		}
-		if (args.enableMetrics === true) {
+		if (args.enableMetrics) {
 			childArgs.push("--enableOpsMetrics");
 		}
 
@@ -99,7 +92,7 @@ export async function stressTest(
 	}
 	console.log(runnerArgs.map((a) => a.join(" ")).join("\n"));
 
-	if (args.enableMetrics === true) {
+	if (args.enableMetrics) {
 		setInterval(() => {
 			ps.lookup(
 				{
@@ -143,7 +136,7 @@ export async function stressTest(
 				});
 
 				setupTelemetry(runnerProcess, logger, index, username);
-				if (args.enableMetrics === true) {
+				if (args.enableMetrics) {
 					setupDataTelemetry(runnerProcess, logger, index, username);
 				}
 

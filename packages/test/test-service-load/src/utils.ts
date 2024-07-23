@@ -41,7 +41,7 @@ const codeDetails: IFluidCodeDetails = {
 	config: {},
 };
 
-export const createCodeLoader = (options: IContainerRuntimeOptions) =>
+export const createCodeLoader = (options?: IContainerRuntimeOptions | undefined) =>
 	new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
 
 // eslint-disable-next-line import/no-deprecated
@@ -75,7 +75,7 @@ export async function initialize(
 	testConfig: ILoadTestConfig,
 	verbose: boolean,
 	profileName: string,
-	testIdn?: string,
+	requestedTestId?: string,
 ) {
 	const random = makeRandom(seed);
 	const optionsOverride = getOptionOverride(
@@ -85,7 +85,7 @@ export async function initialize(
 	);
 
 	const loaderOptions = random.pick(generateLoaderOptions(seed, optionsOverride?.loader));
-	const containerOptions = random.pick(
+	const containerRuntimeOptions = random.pick(
 		generateRuntimeOptions(seed, optionsOverride?.container),
 	);
 	const configurations = random.pick(
@@ -103,7 +103,7 @@ export async function initialize(
 		eventName: "RunConfigOptions",
 		details: JSON.stringify({
 			loaderOptions,
-			containerOptions,
+			containerOptions: containerRuntimeOptions,
 			configurations: { ...globalConfigurations, ...configurations },
 		}),
 	});
@@ -112,7 +112,7 @@ export async function initialize(
 	const loader = new Loader({
 		urlResolver: testDriver.createUrlResolver(),
 		documentServiceFactory: testDriver.createDocumentServiceFactory(),
-		codeLoader: createCodeLoader(containerOptions),
+		codeLoader: createCodeLoader(containerRuntimeOptions),
 		logger,
 		options: loaderOptions,
 		detachedBlobStorage: new MockDetachedBlobStorage(),
@@ -134,7 +134,7 @@ export async function initialize(
 		}
 	}
 
-	const testId = testIdn ?? Date.now().toString();
+	const testId = requestedTestId ?? Date.now().toString();
 	assert(testId !== "", "testId specified cannot be an empty string");
 	const request = testDriver.createCreateNewRequest(testId);
 	await container.attach(request);

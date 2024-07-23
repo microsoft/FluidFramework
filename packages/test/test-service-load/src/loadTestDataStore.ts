@@ -947,7 +947,7 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
 	{},
 );
 
-export const createFluidExport = (runtimeOptions: IContainerRuntimeOptions) =>
+export const createFluidExport = (runtimeOptions?: IContainerRuntimeOptions | undefined) =>
 	new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: LoadTestDataStoreInstantiationFactory,
 		registryEntries: [
