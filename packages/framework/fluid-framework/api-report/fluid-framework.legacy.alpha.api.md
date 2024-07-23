@@ -148,7 +148,7 @@ export interface IConnection {
 // @public
 export type ICriticalContainerError = IErrorBase;
 
-// @alpha
+// @public @sealed
 export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
     countSubDirectory?(): number;
@@ -162,7 +162,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     subdirectories(): IterableIterator<[string, IDirectory]>;
 }
 
-// @alpha
+// @public @sealed
 export interface IDirectoryEvents extends IEvent {
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -171,7 +171,7 @@ export interface IDirectoryEvents extends IEvent {
     (event: "undisposed", listener: (target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha
+// @public @sealed
 export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
 }
@@ -534,13 +534,7 @@ Unhydrated<NodeFromSchemaUnsafe<T>> | (T extends {
 } ? NodeBuilderDataUnsafe<T> : never)
 ][_InlineTrick];
 
-// @alpha
-export interface InteriorSequencePlace {
-    // (undocumented)
-    pos: number;
-    // (undocumented)
-    side: Side;
-}
+export { InteriorSequencePlace }
 
 // @public @sealed
 export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
@@ -682,7 +676,7 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
     (event: "memberRemoved", listener: MemberChangedListener<M>): void;
 }
 
-// @alpha
+// @alpha @sealed
 export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>, Omit<IDirectory, "on" | "once" | "off"> {
     // (undocumented)
     [Symbol.iterator](): IterableIterator<[string, any]>;
@@ -690,7 +684,7 @@ export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents &
     readonly [Symbol.toStringTag]: string;
 }
 
-// @alpha
+// @alpha @sealed
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -830,7 +824,7 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
     readonly schema: TSchema;
 }
 
-// @alpha @sealed
+// @public @sealed
 export interface IValueChanged {
     readonly key: string;
     readonly previousValue: any;
@@ -1058,8 +1052,7 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
 }
 
-// @alpha
-export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
+export { SequencePlace }
 
 // @alpha
 export const SharedDirectory: ISharedObjectKind<ISharedDirectory> & SharedObjectKind_2<ISharedDirectory>;
@@ -1075,6 +1068,7 @@ export type SharedMap = ISharedMap;
 
 // @public @sealed
 export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
+    is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
 }
 
 // @alpha
@@ -1089,13 +1083,7 @@ export type SharedStringSegment = TextSegment | Marker;
 // @public
 export const SharedTree: SharedObjectKind<ITree>;
 
-// @alpha
-export enum Side {
-    // (undocumented)
-    After = 1,
-    // (undocumented)
-    Before = 0
-}
+export { Side }
 
 // @public
 export interface Tagged<V, T extends string = string> {
@@ -1205,7 +1193,7 @@ export interface TreeNodeApi {
     parent(node: TreeNode): TreeNode | undefined;
     schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
     shortId(node: TreeNode): number | string | undefined;
-    readonly status: (node: TreeNode) => TreeStatus;
+    status(node: TreeNode): TreeStatus;
 }
 
 // @public

@@ -70,15 +70,16 @@ export class RemoteMessageProcessor {
 	 * @returns all the unchunked, decompressed, ungrouped, unpacked InboundSequencedContainerRuntimeMessage from a single batch
 	 * or undefined if the batch is not yet complete.
 	 */
-	public process(remoteMessageCopy: ISequencedDocumentMessage):
+	public process(
+		remoteMessageCopy: ISequencedDocumentMessage,
+		logLegacyCase: (codePath: string) => void,
+	):
 		| {
 				messages: InboundSequencedContainerRuntimeMessage[];
 				batchStartCsn: number;
 		  }
 		| undefined {
 		let message = remoteMessageCopy;
-
-		ensureContentsDeserialized(message);
 
 		if (isChunkedMessage(message)) {
 			const chunkProcessingResult = this.opSplitter.processChunk(message);
@@ -104,10 +105,13 @@ export class RemoteMessageProcessor {
 
 		if (isGroupedBatch(message)) {
 			// We should be awaiting a new batch (batchStartCsn undefined)
-			assert(this.batchStartCsn === undefined, "Grouped batch interrupting another batch");
+			assert(
+				this.batchStartCsn === undefined,
+				0x9d3 /* Grouped batch interrupting another batch */,
+			);
 			assert(
 				this.processorBatch.length === 0,
-				"Processor batch should be empty on grouped batch",
+				0x9d4 /* Processor batch should be empty on grouped batch */,
 			);
 			return {
 				messages: this.opGroupingManager.ungroupOp(message).map(unpack),
@@ -118,7 +122,7 @@ export class RemoteMessageProcessor {
 		const batchStartCsn = this.getAndUpdateBatchStartCsn(message);
 
 		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked
-		unpackRuntimeMessage(message);
+		unpackRuntimeMessage(message, logLegacyCase);
 		this.processorBatch.push(message as InboundSequencedContainerRuntimeMessage);
 
 		// this.batchStartCsn is undefined only if we have processed all messages in the batch.
@@ -146,7 +150,7 @@ export class RemoteMessageProcessor {
 		const batchMetadataFlag = asBatchMetadata(message.metadata)?.batch;
 		if (this.batchStartCsn === undefined) {
 			// We are waiting for a new batch
-			assert(batchMetadataFlag !== false, "Unexpected batch end marker");
+			assert(batchMetadataFlag !== false, 0x9d5 /* Unexpected batch end marker */);
 
 			// Start of a new multi-message batch
 			if (batchMetadataFlag === true) {
@@ -162,7 +166,7 @@ export class RemoteMessageProcessor {
 		// We are in the middle or end of an existing multi-message batch. Return the current batchStartCsn
 		const batchStartCsn = this.batchStartCsn;
 
-		assert(batchMetadataFlag !== true, "Unexpected batch start marker");
+		assert(batchMetadataFlag !== true, 0x9d6 /* Unexpected batch start marker */);
 		if (batchMetadataFlag === false) {
 			// Batch end? Then get ready for the next batch to start
 			this.batchStartCsn = undefined;
@@ -173,12 +177,27 @@ export class RemoteMessageProcessor {
 }
 
 /** Takes an incoming message and if the contents is a string, JSON.parse's it in place */
-function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): void {
+export function ensureContentsDeserialized(
+	mutableMessage: ISequencedDocumentMessage,
+	modernRuntimeMessage: boolean,
+	logLegacyCase: (codePath: string) => void,
+): void {
 	// back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
 	// System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
 	// Old ops may contain empty string (I assume noops).
+	let parsedJsonContents: boolean;
 	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
 		mutableMessage.contents = JSON.parse(mutableMessage.contents);
+		parsedJsonContents = true;
+	} else {
+		parsedJsonContents = false;
+	}
+
+	// We expect Modern Runtime Messages to have JSON serialized contents,
+	// and all other messages not to (system messages and legacy runtime messages without outer "op" type envelope)
+	// Let's observe if we are wrong about this to learn about these cases.
+	if (modernRuntimeMessage !== parsedJsonContents) {
+		logLegacyCase("ensureContentsDeserialized_unexpectedContentsType");
 	}
 }
 
@@ -214,7 +233,10 @@ function unpack(message: ISequencedDocumentMessage): InboundSequencedContainerRu
  *
  * @internal
  */
-export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean {
+export function unpackRuntimeMessage(
+	message: ISequencedDocumentMessage,
+	logLegacyCase: (codePath: string) => void = () => {},
+): boolean {
 	if (message.type !== MessageType.Operation) {
 		// Legacy format, but it's already "unpacked",
 		// i.e. message.type is actually ContainerMessageType.
@@ -230,6 +252,7 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolea
 		(message.contents as { type?: unknown }).type === undefined
 	) {
 		message.type = ContainerMessageType.FluidDataStoreOp;
+		logLegacyCase("unpackRuntimeMessage_contentsWithAddress");
 	} else {
 		// new format
 		unpack(message);

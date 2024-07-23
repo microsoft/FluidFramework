@@ -23,7 +23,7 @@ const {
  * Must be a positive integer.
  * @returns {string | undefined} Generated Markdown content, if any was generated. `undefined` otherwise.
  */
-const generatePackageImportInstructionsSection = (packageMetadata, headingOptions) => {
+const generateImportInstructionsSection = (packageMetadata, headingOptions) => {
 	const packageName = packageMetadata.name;
 	const packageExports = packageMetadata.exports;
 
@@ -88,7 +88,7 @@ const generatePackageImportInstructionsSection = (packageMetadata, headingOption
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
-function packageImportInstructionsSectionTransform(content, options, config) {
+function importInstructionsTransform(content, options, config) {
 	const headingOptions = parseHeadingOptions(options);
 
 	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
@@ -98,11 +98,11 @@ function packageImportInstructionsSectionTransform(content, options, config) {
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
 
 	return formattedGeneratedContentBody(
-		generatePackageImportInstructionsSection(packageMetadata, headingOptions) ?? "",
+		generateImportInstructionsSection(packageMetadata, headingOptions),
 	);
 }
 
 module.exports = {
-	generatePackageImportInstructionsSection,
-	packageImportInstructionsSectionTransform,
+	generateImportInstructionsSection,
+	importInstructionsTransform,
 };

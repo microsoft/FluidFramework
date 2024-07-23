@@ -2,7 +2,7 @@
 
 Shared utilities for tools.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -23,18 +23,18 @@ To get started, install the package by running the following command:
 npm i @fluidframework/tool-utils
 ```
 
+## API Documentation
+
+API documentation for **@fluidframework/tool-utils** is available at <https://fluidframework.com/docs/apis/tool-utils>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/tool-utils** is available at <https://fluidframework.com/docs/apis/tool-utils>.
 
 ## Minimum Client Requirements
 

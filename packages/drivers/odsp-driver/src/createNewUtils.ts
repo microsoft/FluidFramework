@@ -150,7 +150,7 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 
 	const keys = Object.keys(summary.tree);
 	for (const key of keys) {
-		assert(!key.includes("/"), "id should not include slashes");
+		assert(!key.includes("/"), 0x9cc /* id should not include slashes */);
 		// Non null asserting for now this should change to Object.entries
 		const summaryObject = summary.tree[key]!;
 

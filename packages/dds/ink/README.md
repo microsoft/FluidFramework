@@ -2,7 +2,7 @@
 
 Contains a [Distributed Data Structure](https://fluidframework.com/docs/build/dds/) (DDS) for representing digital ink strokes.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER:) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -28,18 +28,18 @@ To get started, install the package by running the following command:
 npm i @fluid-experimental/ink
 ```
 
+## API Documentation
+
+API documentation for **@fluid-experimental/ink** is available at <https://fluidframework.com/docs/apis/ink>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER:) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluid-experimental/ink** is available at <https://fluidframework.com/docs/apis/ink>.
 
 ## Minimum Client Requirements
 

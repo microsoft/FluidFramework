@@ -16,7 +16,6 @@ import type { Context } from "./context.js";
 import {
 	type FlexTreeEntity,
 	type FlexTreeEntityKind,
-	type TreeStatus,
 	flexTreeMarker,
 } from "./flexTreeTypes.js";
 
@@ -64,8 +63,6 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 
 	public abstract boxedIterator(): IterableIterator<FlexTreeEntity>;
 	public abstract get [flexTreeMarker](): FlexTreeEntityKind;
-
-	public abstract treeStatus(): TreeStatus;
 
 	public [disposeSymbol](): void {
 		this.#lazyCursor.free();

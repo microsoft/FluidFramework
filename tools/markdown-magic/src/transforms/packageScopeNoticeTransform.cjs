@@ -15,13 +15,12 @@ const {
  * Generates simple Markdown contents indicating implications of the specified kind of package scope,
  * if the package scope is one for which we wish to display a notice.
  *
- * @param {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | "TOOLS"} kind - Scope kind to switch on.
+ * @param {string} kind - Scope kind to switch on.
  * EXPERIMENTAL: See templates/Experimental-Package-Notice-Template.md.
  * INTERNAL: See templates/Internal-Package-Notice-Template.md.
  * PRIVATE: See templates/Private-Package-Notice-Template.md.
- * TOOLS: See templates/Tools-Package-Notice-Template.md.
  *
- * @returns {string | undefined} The generated Markdown content, or `undefined` if no notice is required.
+ * @returns The appropriate notice, if applicable. Otherwise, `undefined`.
  */
 const generatePackageScopeNotice = (kind) => {
 	let rawContents;

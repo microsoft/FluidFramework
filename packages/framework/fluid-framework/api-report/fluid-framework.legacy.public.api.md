@@ -139,6 +139,34 @@ export interface IConnection {
 export type ICriticalContainerError = IErrorBase;
 
 // @public @sealed
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
+    readonly absolutePath: string;
+    countSubDirectory?(): number;
+    createSubDirectory(subdirName: string): IDirectory;
+    deleteSubDirectory(subdirName: string): boolean;
+    get<T = any>(key: string): T | undefined;
+    getSubDirectory(subdirName: string): IDirectory | undefined;
+    getWorkingDirectory(relativePath: string): IDirectory | undefined;
+    hasSubDirectory(subdirName: string): boolean;
+    set<T = unknown>(key: string, value: T): this;
+    subdirectories(): IterableIterator<[string, IDirectory]>;
+}
+
+// @public @sealed
+export interface IDirectoryEvents extends IEvent {
+    (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
+    (event: "undisposed", listener: (target: IEventThisPlaceHolder) => void): any;
+}
+
+// @public @sealed
+export interface IDirectoryValueChanged extends IValueChanged {
+    path: string;
+}
+
+// @public @sealed
 export interface IDisposable {
     dispose(error?: Error): void;
     readonly disposed: boolean;
@@ -434,6 +462,8 @@ Unhydrated<NodeFromSchemaUnsafe<T>> | (T extends {
 } ? NodeBuilderDataUnsafe<T> : never)
 ][_InlineTrick];
 
+export { InteriorSequencePlace }
+
 // @public @sealed
 export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
 }
@@ -522,6 +552,12 @@ export interface ITreeConfigurationOptions {
 export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
     readonly enableSchemaValidation?: boolean;
     readonly schema: TSchema;
+}
+
+// @public @sealed
+export interface IValueChanged {
+    readonly key: string;
+    readonly previousValue: any;
 }
 
 // @public
@@ -680,12 +716,17 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 // @public
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
+export { SequencePlace }
+
 // @public @sealed
 export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
+    is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
 }
 
 // @public
 export const SharedTree: SharedObjectKind<ITree>;
+
+export { Side }
 
 // @public
 export interface Tagged<V, T extends string = string> {
@@ -795,7 +836,7 @@ export interface TreeNodeApi {
     parent(node: TreeNode): TreeNode | undefined;
     schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
     shortId(node: TreeNode): number | string | undefined;
-    readonly status: (node: TreeNode) => TreeStatus;
+    status(node: TreeNode): TreeStatus;
 }
 
 // @public

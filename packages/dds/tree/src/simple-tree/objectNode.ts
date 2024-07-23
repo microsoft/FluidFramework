@@ -44,7 +44,12 @@ import {
 	FieldKind,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
-import { type InternalTreeNode, type TreeNode, TreeNodeValid } from "./types.js";
+import {
+	type InternalTreeNode,
+	type MostDerivedData,
+	type TreeNode,
+	TreeNodeValid,
+} from "./types.js";
 import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 
@@ -187,7 +192,8 @@ function createProxyHandler(
 		set(target, viewKey, value: InsertableContent | undefined, proxy) {
 			const fieldInfo = flexKeyMap.get(viewKey);
 			if (fieldInfo === undefined) {
-				return allowAdditionalProperties ? Reflect.set(target, viewKey, value) : false;
+				// Pass the proxy as the receiver here, so that setters on the prototype receive `proxy` as `this`.
+				return allowAdditionalProperties ? Reflect.set(target, viewKey, value, proxy) : false;
 			}
 
 			const flexNode = getFlexNode(proxy);
@@ -359,7 +365,7 @@ export function objectSchema<
 			);
 		}
 
-		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
+		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
