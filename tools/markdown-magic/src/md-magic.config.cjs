@@ -206,11 +206,12 @@ function readmeFooterTransform(content, options, config) {
  * @param {object} options - Transform options.
  * @param {string | undefined} options.packageJsonPath - (optional) Relative path from the document to the package's package.json file.
  * Default: "./package.json".
- * @param {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | undefined} options.packageScopeNotice - (optional) Kind of package scope (namespace) notice to add.
+ * @param {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | "TOOLS" | undefined} options.packageScopeNotice - (optional) Kind of package scope (namespace) notice to add.
  * EXPERIMENTAL: See templates/Experimental-Package-Notice-Template.md.
  * INTERNAL: See templates/Internal-Package-Notice-Template.md.
  * PRIVATE: See templates/Private-Package-Notice-Template.md.
- * `undefined`: Inherit from package namespace (fluid-experimental, fluid-internal, fluid-private).
+ * TOOLS: See templates/Tools-Package-Notice-Template.md.
+ * `undefined`: Inherit from package namespace (`fluid-experimental`, `fluid-internal`, `fluid-private`, `fluid-tools`, etc.).
  * @param {"TRUE" | "FALSE" | undefined} options.installation - (optional) Whether or not to include the package installation instructions section.
  * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a devDependency.
