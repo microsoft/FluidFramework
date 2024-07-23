@@ -1,11 +1,14 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import globby from "globby";
+import ignore from "ignore";
 import * as JSON5 from "json5";
 import { merge } from "ts-deepmerge";
 import type { Configuration as BiomeConfig } from "./biomeConfigTypes";
+import type { GitRepo } from "./gitRepo";
 
 // switch to regular import once building ESM
-// const findUp = import("find-up");
+const findUp = import("find-up");
 
 /**
  * Loads a Biome configuration file _without_ following any 'extends' values. You probably want to use
@@ -104,4 +107,75 @@ export async function getSettingValuesFromBiomeConfig(
 	}
 
 	return new Set<string>();
+}
+
+/**
+ * Returns the absolute path to the closest Biome config file found from the current working directory up to the root
+ * of the repo.
+ */
+export async function getClosestBiomeConfigPath(
+	cwd: string,
+	stopAt?: string,
+): Promise<string | undefined> {
+	return (await findUp)
+		.findUp(["biome.json", "biome.jsonc"], { cwd, stopAt })
+		.then((config) => {
+			if (config === undefined) {
+				throw new Error(`Can't find biome config file`);
+			}
+			return config;
+		});
+}
+
+/**
+ * Return an array of absolute paths to files that Biome would format under the provided path. Paths ignored by git are
+ * always excluded.
+ */
+export async function getBiomeFormattedFiles(
+	cwd: string,
+	gitRepo: GitRepo,
+): Promise<string[]> {
+	/**
+	 * All files that could possibly be formatted before ignore entries are applied. Paths are relative to the root of
+	 * the repo.
+	 */
+	const allPossibleFiles = new Set(await gitRepo.getFiles(cwd));
+
+	const configFile = await getClosestBiomeConfigPath(cwd);
+	if (configFile === undefined) {
+		// No config, so all files are formatted
+		return [...allPossibleFiles];
+	}
+
+	const config = await loadBiomeConfig(configFile);
+	const [includeEntries, ignoreEntries] = await Promise.all([
+		getSettingValuesFromBiomeConfig(config, "formatter", "include"),
+		getSettingValuesFromBiomeConfig(config, "formatter", "ignore"),
+	]);
+
+	// From the Biome docs (https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained):
+	//
+	// "At the moment, Biome uses a glob library that treats all globs as having a **/ prefix.
+	// This means that src/**/*.js and **/src/**/*.js are treated as identical. They match both src/file.js and
+	// test/src/file.js. This is something we plan to fix in Biome v2.0.0."
+	const prefixedIncludes = [...includeEntries].map((glob) => `**/${glob}`);
+
+	/**
+	 * An array of cwd-relative paths to files included via the 'include' settings in the Biome config.
+	 */
+	const includedPaths = await globby(prefixedIncludes, {
+		// We need to interpret the globs from the provided directory; the paths returned will be relative to this path
+		cwd,
+
+		// Don't return directories, only files; Biome includes are only applied to files.
+		// See note at https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained
+		onlyFiles: true,
+	});
+
+	const ignoreObject = ignore().add([...ignoreEntries]);
+	const filtered = ignoreObject.filter([...includedPaths]);
+
+	// Convert cwd-relative paths to absolute
+	const repoRoot = gitRepo.resolvedRoot;
+	return filtered.map((filePath) => path.resolve(repoRoot, cwd, filePath));
 }

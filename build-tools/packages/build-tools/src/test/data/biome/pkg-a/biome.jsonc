@@ -2,10 +2,15 @@
 	"$schema": "../../../../../node_modules/@biomejs/biome/configuration_schema.json",
 	"extends": ["../base.jsonc"],
 	"files": {
-		"include": ["src/**"],
-		"ignore": ["**/pkg-a-ignore/*"]
+		"include": ["pkg-a-include/**"],
+		"ignore": ["pkg-a-ignore/**"]
 	},
 	"formatter": {
-		"ignore": ["ignored/**"]
+		"include": ["include-formatter/**"],
+		"ignore": ["ignore-formatter/**"]
+	},
+	"linter": {
+		"include": ["include-linter/**"],
+		"ignore": ["ignore-linter/**"]
 	}
 }

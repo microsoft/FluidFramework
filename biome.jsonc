@@ -39,7 +39,7 @@
 			"*.hbs",
 
 			// Test json
-			"build-tools/packages/build-tools/src/test/data/**",
+			"build-tools/packages/build-tools/src/test/data/biome/empty.jsonc",
 			"experimental/dds/tree/src/test/documents/**",
 			"packages/dds/map/src/test/mocha/snapshots/**/*.json",
 			"packages/dds/matrix/src/test/results/**/*.json",
