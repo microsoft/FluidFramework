@@ -253,9 +253,16 @@ export abstract class FluidDataStoreContext
 	public get tombstoned() {
 		return this._tombstoned;
 	}
-	/** If true, throw an error when a tombstone data store is used. */
-	public readonly gcThrowOnTombstoneUsage = false;
-	public readonly gcTombstoneEnforcementAllowed = false;
+	/**
+	 * If true, throw an error when a tombstone data store is used.
+	 * @deprecated - This feature has been removed.
+	 */
+	public readonly gcThrowOnTombstoneUsage: boolean = false;
+	/**
+	 * If false, loading or using a Tombstoned object should merely log, not fail.
+	 * @deprecated - This feature has been removed.
+	 */
+	public readonly gcTombstoneEnforcementAllowed: boolean = false;
 
 	/** If true, this means that this data store context and its children have been removed from the runtime */
 	protected deleted: boolean = false;
