@@ -11,10 +11,27 @@ It is similar to [API-Documenter][] and is heavily based upon it and uses it und
 **Note**: this library does not currently offer a Command Line Interface (CLI).
 One may be added in the future, but for now this library is intended to be consumed programmatically.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:devDependency=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:installation=TRUE&devDependency=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Installation
+
+To get started, install the package by running the following command:
+
+```bash
+npm i @fluid-tools/api-markdown-documenter -D
+```
+
+## Importing from this package
+
+This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
+For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+
+To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluid-tools/api-markdown-documenter` like normal.
+
+To access the `beta` APIs, import via `@fluid-tools/api-markdown-documenter/beta`.
 
 <!-- prettier-ignore-end -->
 

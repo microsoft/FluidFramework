@@ -4,10 +4,18 @@ Connection using ODSP or routerlicious driver to dump the messages or snapshot i
 In order to connect to ODSP, the clientID must be set as the environment variable `fetch__tool__clientId`. If you have access to the keyvault this can be done by running [this tool](../../../tools/getkeys).
 Beware that to use fetch-tool on documents in the Microsoft tenant, you will need to follow the fetch tool usage instructions on the "Debugging Tools" page of the internal Fluid wiki.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:devDependency=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:installation=TRUE&devDependency=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Installation
+
+To get started, install the package by running the following command:
+
+```bash
+npm i @fluid-tools/fetch-tool -D
+```
 
 <!-- prettier-ignore-end -->
 
