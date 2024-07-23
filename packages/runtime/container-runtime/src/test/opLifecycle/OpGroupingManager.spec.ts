@@ -141,6 +141,23 @@ describe("OpGroupingManager", () => {
 			]);
 		});
 
+		it("should group on empty batch", () => {
+			const result = new OpGroupingManager(
+				{
+					groupedBatchingEnabled: true,
+					opCountThreshold: 2,
+					reentrantBatchGroupingEnabled: false,
+				},
+				mockLogger,
+			).shouldGroup({
+				messages: [],
+				contentSizeInBytes: 0,
+				referenceSequenceNumber: 0,
+				hasReentrantOps: false,
+			});
+			assert.strictEqual(result, true);
+		});
+
 		it("grouped batching enabled, not large enough", () => {
 			assert.throws(() => {
 				new OpGroupingManager(
