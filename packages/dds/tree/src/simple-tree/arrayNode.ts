@@ -27,7 +27,7 @@ import {
 	markContentType,
 	prepareContentForHydration,
 } from "./proxies.js";
-import { getFlexNode } from "./proxyBinding.js";
+import { getFlexNode, getKernel } from "./proxyBinding.js";
 import {
 	NodeKind,
 	type ImplicitAllowedTypes,
@@ -40,7 +40,12 @@ import {
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
-import { type TreeNode, TreeNodeValid, type InternalTreeNode } from "./types.js";
+import {
+	type TreeNode,
+	TreeNodeValid,
+	type InternalTreeNode,
+	type MostDerivedData,
+} from "./types.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -678,7 +683,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
 	) {
 		super(input);
-		getFlexNode(this).on("nodeChanged", () => {
+		getKernel(this).on("nodeChanged", () => {
 			this.#generationNumber += 1;
 		});
 	}
@@ -943,7 +948,7 @@ export function arraySchema<
 			);
 		}
 
-		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
+		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexFieldNodeSchema;

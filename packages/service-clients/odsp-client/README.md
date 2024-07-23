@@ -2,7 +2,7 @@
 
 The odsp-client package provides a simple and powerful way to consume collaborative Fluid data with OneDrive/SharePoint (ODSP) storage. Please note that odsp-client is currently an experimental package. We'd love for you to try it out and provide feedback but it is not yet recommended or supported for production scenarios.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -31,6 +31,10 @@ For more information on the related support guarantees, see [API Support Levels]
 To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/odsp-client` like normal.
 
 To access the `beta` APIs, import via `@fluidframework/odsp-client/beta`.
+
+## API Documentation
+
+API documentation for **@fluidframework/odsp-client** is available at <https://fluidframework.com/docs/apis/odsp-client>.
 
 <!-- prettier-ignore-end -->
 
@@ -142,14 +146,10 @@ const map1 = initialObjects.map1;
 const text1 = initialObjects.text1;
 ```
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/odsp-client** is available at <https://fluidframework.com/docs/apis/odsp-client>.
 
 ## Minimum Client Requirements
 

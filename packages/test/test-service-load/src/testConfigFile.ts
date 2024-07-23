@@ -109,7 +109,22 @@ export type TestConfiguration = {
 		 */
 		numClients?: number;
 	};
-};
+	virtualization?: {
+		/**
+		 * Once every `createRate` ops, a virtualized dataStore will be created
+		 */
+		createRate?: number;
+		/**
+		 * Once every `loadRate` ops, a virtualized dataStore will be loaded
+		 */
+		loadRate?: number;
+		/**
+		 * How many clients should create/load virtual data stores if `createRate` is specified.
+		 * By default, only one client will send create/load virtual data stores.
+		 */
+		numClients?: number;
+	};
+}
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type OptionOverride = {

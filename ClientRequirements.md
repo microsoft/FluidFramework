@@ -1,6 +1,6 @@
 # Platform Requirements for Fluid Framework Client Packages
 
-<!-- AUTO-GENERATED-CONTENT:START (README_CLIENT_REQUIREMENTS_SECTION:includeHeading=FALSE&headingLevel=1) -->
+<!-- AUTO-GENERATED-CONTENT:START (CLIENT_REQUIREMENTS:includeHeading=FALSE&headingLevel=1) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

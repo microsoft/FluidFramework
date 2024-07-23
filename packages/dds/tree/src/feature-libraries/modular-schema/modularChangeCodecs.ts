@@ -33,6 +33,7 @@ import {
 	brand,
 	fail,
 	idAllocatorFromMaxId,
+	oob,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util/index.js";
@@ -61,11 +62,13 @@ import {
 import type {
 	FieldChangeMap,
 	FieldChangeset,
+	FieldId,
 	ModularChangeset,
 	NodeChangeset,
 	NodeId,
 } from "./modularChangeTypes.js";
-import type { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
+import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
+import { newCrossFieldKeyTable } from "./modularChangeFamily.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
@@ -228,33 +231,10 @@ function makeModularChangeCodec(
 
 	function decodeFieldChangesFromJson(
 		encodedChange: EncodedFieldChangeMap,
+		parentId: NodeId | undefined,
+		decoded: ModularChangeset,
 		context: ChangeEncodingContext,
 		idAllocator: IdAllocator,
-	): [FieldChangeMap, ChangeAtomIdMap<NodeChangeset>] {
-		const decodedNodes: ChangeAtomIdMap<NodeChangeset> = new Map();
-		const fieldContext: FieldChangeEncodingContext = {
-			baseContext: context,
-
-			encodeNode: () => fail("Should not encode nodes during field decoding"),
-
-			decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
-				const node = decodeNodeChangesetFromJson(encodedNode, fieldContext);
-				const nodeId: NodeId = {
-					revision: context.revision,
-					localId: brand(idAllocator.allocate()),
-				};
-				setInNestedMap(decodedNodes, nodeId.revision, nodeId.localId, node);
-				return nodeId;
-			},
-		};
-
-		const decodedFields = decodeFieldChangesFromJsonI(encodedChange, fieldContext);
-		return [decodedFields, decodedNodes];
-	}
-
-	function decodeFieldChangesFromJsonI(
-		encodedChange: EncodedFieldChangeMap,
-		context: FieldChangeEncodingContext,
 	): FieldChangeMap {
 		const decodedFields: FieldChangeMap = new Map();
 		for (const field of encodedChange) {
@@ -262,7 +242,46 @@ function makeModularChangeCodec(
 			if (compiledSchema !== undefined && !compiledSchema.check(field.change)) {
 				fail("Encoded change didn't pass schema validation.");
 			}
-			const fieldChangeset = codec.json.decode(field.change, context);
+
+			const fieldId: FieldId = {
+				nodeId: parentId,
+				field: field.fieldKey,
+			};
+
+			const fieldContext: FieldChangeEncodingContext = {
+				baseContext: context,
+
+				encodeNode: () => fail("Should not encode nodes during field decoding"),
+
+				decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
+					const nodeId: NodeId = {
+						revision: context.revision,
+						localId: brand(idAllocator.allocate()),
+					};
+
+					const node = decodeNodeChangesetFromJson(
+						encodedNode,
+						nodeId,
+						decoded,
+						context,
+						idAllocator,
+					);
+
+					setInNestedMap(decoded.nodeChanges, nodeId.revision, nodeId.localId, node);
+					setInNestedMap(decoded.nodeToParent, nodeId.revision, nodeId.localId, fieldId);
+					return nodeId;
+				},
+			};
+
+			const fieldChangeset = codec.json.decode(field.change, fieldContext);
+
+			const crossFieldKeys = getChangeHandler(fieldKinds, field.fieldKind).getCrossFieldKeys(
+				fieldChangeset,
+			);
+
+			for (const crossFieldKey of crossFieldKeys) {
+				decoded.crossFieldKeys.set(crossFieldKey, fieldId);
+			}
 
 			const fieldKey: FieldKey = brand<FieldKey>(field.fieldKey);
 
@@ -277,13 +296,22 @@ function makeModularChangeCodec(
 
 	function decodeNodeChangesetFromJson(
 		encodedChange: EncodedNodeChangeset,
-		context: FieldChangeEncodingContext,
+		id: NodeId,
+		decoded: ModularChangeset,
+		context: ChangeEncodingContext,
+		idAllocator: IdAllocator,
 	): NodeChangeset {
 		const decodedChange: NodeChangeset = {};
 		const { fieldChanges, nodeExistsConstraint } = encodedChange;
 
 		if (fieldChanges !== undefined) {
-			decodedChange.fieldChanges = decodeFieldChangesFromJsonI(fieldChanges, context);
+			decodedChange.fieldChanges = decodeFieldChangesFromJson(
+				fieldChanges,
+				id,
+				decoded,
+				context,
+				idAllocator,
+			);
 		}
 
 		if (nodeExistsConstraint !== undefined) {
@@ -347,7 +375,7 @@ function makeModularChangeCodec(
 		});
 		const getChunk = (index: number): TreeChunk => {
 			assert(index < chunks.length, 0x898 /* out of bounds index for build chunk */);
-			return chunkFieldSingle(chunks[index], defaultChunkPolicy);
+			return chunkFieldSingle(chunks[index] ?? oob(), defaultChunkPolicy);
 		};
 
 		const map: ModularChangeset["builds"] = new Map();
@@ -368,6 +396,7 @@ function makeModularChangeCodec(
 		if (context.revision !== undefined) {
 			assert(
 				revisions.length === 1 &&
+					revisions[0] !== undefined &&
 					revisions[0].revision === context.revision &&
 					revisions[0].rollbackOf === undefined,
 				0x964 /* A tagged change should only contain the tagged revision */,
@@ -434,15 +463,21 @@ function makeModularChangeCodec(
 		},
 
 		decode: (encodedChange: EncodedModularChangeset, context) => {
-			const [fieldChanges, nodeChanges] = decodeFieldChangesFromJson(
+			const decoded: Mutable<ModularChangeset> = {
+				fieldChanges: new Map(),
+				nodeChanges: new Map(),
+				nodeToParent: new Map(),
+				nodeAliases: new Map(),
+				crossFieldKeys: newCrossFieldKeyTable(),
+			};
+
+			decoded.fieldChanges = decodeFieldChangesFromJson(
 				encodedChange.changes,
+				undefined,
+				decoded,
 				context,
 				idAllocatorFromMaxId(encodedChange.maxId),
 			);
-			const decoded: Mutable<ModularChangeset> = {
-				fieldChanges,
-				nodeChanges,
-			};
 
 			if (encodedChange.builds !== undefined) {
 				decoded.builds = decodeDetachedNodes(encodedChange.builds, context);
@@ -467,4 +502,17 @@ function makeModularChangeCodec(
 	};
 
 	return withSchemaValidation(EncodedModularChangeset, modularChangeCodec, validator);
+}
+
+function getChangeHandler(
+	fieldKinds: FieldKindConfiguration,
+	fieldKind: FieldKindIdentifier,
+): FieldChangeHandler<unknown> {
+	if (fieldKind === genericFieldKind.identifier) {
+		return genericFieldKind.changeHandler;
+	}
+
+	const handler = fieldKinds.get(fieldKind)?.kind.changeHandler;
+	assert(handler !== undefined, 0x9c1 /* Unknown field kind */);
+	return handler;
 }

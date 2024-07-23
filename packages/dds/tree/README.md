@@ -7,7 +7,7 @@ The contents of this package are also reported as part of the [`fluid-framework`
 [SharedTree Philosophy](./docs/SharedTree%20Philosophy.md) covers the goals of the SharedTree project,
 and some of the implications of those goals for developers working on this package.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -37,6 +37,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `beta` APIs, import via `@fluidframework/tree/beta`.
 
+## API Documentation
+
+API documentation for **@fluidframework/tree** is available at <https://fluidframework.com/docs/apis/tree>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -46,8 +50,8 @@ To access the `beta` APIs, import via `@fluidframework/tree/beta`.
 Notable consideration that early adopters should be wary of:
 
 -   The persisted format is stable such that documents created with released versions 2.0.0 or greater of this package are fully supported long term.
--   SharedTree currently has unbounded memory growth:
-    -   Removed content is retained in memory and persisted in the document at rest ([fix](https://github.com/microsoft/FluidFramework/pull/21372)).
+-   In versions prior to 2.1.0, SharedTree had unbounded memory growth:
+    -   Removed content was retained in memory and persisted in the document at rest ([fix](https://github.com/microsoft/FluidFramework/pull/21372)). This was fixed in version 2.1.0.
 -   All range changes are atomized.
     This means that, when inserting/removing/moving multiple contiguous nodes the edit is split up into separate single node edits.
     This can impact the merge behavior of these edits, as well as the performance of large array edits.
@@ -417,14 +421,10 @@ Applications should have a domain model that can mix tree nodes with custom impl
 Custom implementations should probably be able to be projections of flex trees, the forest content (via cursors), and updated via either regeneration from the input, or updated by a delta.
 This is important for performance/scalability and might be how we do virtualization (maybe subtrees that aren't downloaded are just one custom representation?).
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/tree** is available at <https://fluidframework.com/docs/apis/tree>.
 
 ## Minimum Client Requirements
 

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { type Listenable, createEmitter } from "../../events/index.js";
@@ -334,6 +336,20 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 		return this.root.slots;
 	}
 
+	public *[Symbol.iterator](): IterableIterator<AnchorNode> {
+		const stack: PathNode[] = [];
+		let node: PathNode | undefined = this.root;
+		while (node !== undefined) {
+			yield node;
+			for (const [_, children] of node.children) {
+				for (const child of children) {
+					stack.push(child);
+				}
+			}
+			node = stack.pop();
+		}
+	}
+
 	public on<K extends keyof AnchorSetRootEvents>(
 		eventName: K,
 		listener: AnchorSetRootEvents[K],
@@ -482,7 +498,6 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 	private deepDelete(nodes: readonly PathNode[]): void {
 		const stack = [...nodes];
 		while (stack.length > 0) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const node = stack.pop()!;
 			assert(node.status === Status.Alive, 0x408 /* PathNode must be alive */);
 			node.status = Status.Dangling;
@@ -516,27 +531,26 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			let index = 0;
 			while (
 				index < sourceChildren.length &&
-				sourceChildren[index].parentIndex < startPath.parentIndex
+				sourceChildren[index]!.parentIndex < startPath.parentIndex
 			) {
 				numberBeforeDecouple++;
 				index++;
 			}
 			while (
 				index < sourceChildren.length &&
-				sourceChildren[index].parentIndex < startPath.parentIndex + count
+				sourceChildren[index]!.parentIndex < startPath.parentIndex + count
 			) {
 				numberToDecouple++;
 				index++;
 			}
 			while (index < sourceChildren.length) {
 				// Fix indexes in source after moved items (subtract count).
-				sourceChildren[index].parentIndex -= count;
+				sourceChildren[index]!.parentIndex -= count;
 				index++;
 			}
 			// Sever the parent -> child connections
 			nodes = sourceChildren.splice(numberBeforeDecouple, numberToDecouple);
 			if (sourceChildren.length === 0) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				sourceParent!.afterEmptyField(startPath.parentField);
 			}
 		}
@@ -605,12 +619,12 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 		count: number,
 	): number {
 		let index = 0;
-		while (index < field.length && field[index].parentIndex < fromParentIndex) {
+		while (index < field.length && field[index]!.parentIndex < fromParentIndex) {
 			index++;
 		}
 		const numberBeforeIncrease = index;
 		while (index < field.length) {
-			field[index].parentIndex += count;
+			field[index]!.parentIndex += count;
 			index++;
 		}
 
