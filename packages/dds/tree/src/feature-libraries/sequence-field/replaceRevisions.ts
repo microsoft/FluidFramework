@@ -54,7 +54,9 @@ function updateEffect<TMark extends MarkEffect>(
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
 ): TMark {
-	const mark = isDetach(input) ? updateIdOverride(input, revisionsToReplace, newRevision) : input;
+	const mark = isDetach(input)
+		? updateIdOverride(input, revisionsToReplace, newRevision)
+		: input;
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType:
@@ -92,12 +94,11 @@ function updateIdOverride<TEffect extends Detach>(
 			revisionsToReplace,
 			newRevision,
 		);
-		return { ...effect, idOverride }
+		return { ...effect, idOverride };
 	} else {
 		return effect;
 	}
 }
-
 
 function updateMoveEffect<TEffect extends HasMoveFields>(
 	effect: TEffect,
