@@ -20,52 +20,42 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISharedSummaryBlock": {"forwardCompat": false}
+ * "Interface_ISharedSummaryBlock": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ISharedSummaryBlock = requireAssignableTo<TypeOnly<old.ISharedSummaryBlock>, TypeOnly<current.ISharedSummaryBlock>>
+declare type old_as_current_for_Interface_ISharedSummaryBlock = requireAssignableTo<TypeOnly<old.ISharedSummaryBlock>, TypeOnly<current.ISharedSummaryBlock>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISharedSummaryBlock": {"backCompat": false}
+ * "Interface_ISharedSummaryBlock": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ISharedSummaryBlock = requireAssignableTo<TypeOnly<current.ISharedSummaryBlock>, TypeOnly<old.ISharedSummaryBlock>>
+declare type current_as_old_for_Interface_ISharedSummaryBlock = requireAssignableTo<TypeOnly<current.ISharedSummaryBlock>, TypeOnly<old.ISharedSummaryBlock>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_SharedSummaryBlock": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_SharedSummaryBlock = requireAssignableTo<TypeOnly<typeof current.SharedSummaryBlock>, TypeOnly<typeof old.SharedSummaryBlock>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_SharedSummaryBlock": {"forwardCompat": false}
+ * "TypeAlias_SharedSummaryBlock": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
-declare type old_as_current_for_VariableDeclaration_SharedSummaryBlock = requireAssignableTo<TypeOnly<typeof old.SharedSummaryBlock>, TypeOnly<typeof current.SharedSummaryBlock>>
+declare type old_as_current_for_TypeAlias_SharedSummaryBlock = requireAssignableTo<TypeOnly<old.SharedSummaryBlock>, TypeOnly<current.SharedSummaryBlock>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_SharedSummaryBlock": {"backCompat": false}
+ * "TypeAlias_SharedSummaryBlock": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_SharedSummaryBlock = requireAssignableTo<TypeOnly<typeof current.SharedSummaryBlock>, TypeOnly<typeof old.SharedSummaryBlock>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAliasDeclaration_SharedSummaryBlock": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAliasDeclaration_SharedSummaryBlock = requireAssignableTo<TypeOnly<old.SharedSummaryBlock>, TypeOnly<current.SharedSummaryBlock>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAliasDeclaration_SharedSummaryBlock": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAliasDeclaration_SharedSummaryBlock = requireAssignableTo<TypeOnly<current.SharedSummaryBlock>, TypeOnly<old.SharedSummaryBlock>>
+declare type current_as_old_for_TypeAlias_SharedSummaryBlock = requireAssignableTo<TypeOnly<current.SharedSummaryBlock>, TypeOnly<old.SharedSummaryBlock>>

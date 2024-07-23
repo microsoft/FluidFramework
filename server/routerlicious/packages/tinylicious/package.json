@@ -71,9 +71,9 @@
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {
+		"@fluid-internal/mocha-test-setup": "~2.0.5",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
-		"@fluidframework/mocha-test-setup": "~2.0.0-internal.6.2.0",
 		"@microsoft/api-extractor": "^7.45.1",
 		"@types/compression": "^1.7.2",
 		"@types/cookie-parser": "^1.4.1",

@@ -1,4 +1,4 @@
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER:packageJsonPath=./package.json&devDependency=TRUE&scripts=TRUE&packageScopeNotice=EXPERIMENTAL) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:packageJsonPath=./package.json&devDependency=TRUE&scripts=TRUE&packageScopeNotice=EXPERIMENTAL) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -34,6 +34,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 To access the `alpha` APIs, import via `@fluidframework/test-package/alpha`.
 
 To access the `legacy` APIs, import via `@fluidframework/test-package/legacy`.
+
+## API Documentation
+
+API documentation for **@fluidframework/test-package** is available at <https://fluidframework.com/docs/apis/test-package>.
 
 <!-- prettier-ignore-end -->
 

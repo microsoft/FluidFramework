@@ -148,7 +148,13 @@ import {
 	type TreeViewConfiguration,
 	SchemaFactory,
 } from "../simple-tree/index.js";
-import { type JsonCompatible, type Mutable, nestedMapFromFlatList } from "../util/index.js";
+import {
+	type JsonCompatible,
+	type Mutable,
+	nestedMapFromFlatList,
+	forEachInNestedMap,
+	tryGetFromNestedMap,
+} from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
 
@@ -629,8 +635,7 @@ export function validateSnapshotConsistency(
 		`Inconsistent document tree json representation: ${idDifferentiator}`,
 	);
 
-	// Note: removed trees are not currently garbage collected, which allows us to expect that all clients should share the same
-	// exact set of them. In the future, we will need to relax this expectation and only enforce that whenever two
+	// Removed trees are garbage collected so we only enforce that whenever two
 	// clients both have data for the same removed tree (as identified by the first two tuple entries), then they
 	// should be consistent about the content being stored (the third tuple entry).
 	const mapA = nestedMapFromFlatList(
@@ -647,11 +652,16 @@ export function validateSnapshotConsistency(
 			prepareTreeForCompare([children])[0],
 		]),
 	);
-	assert.deepEqual(
-		mapA,
-		mapB,
-		`Inconsistent removed trees json representation: ${idDifferentiator}`,
-	);
+	forEachInNestedMap(mapA, (content, major, minor) => {
+		const mapBContent = tryGetFromNestedMap(mapB, major, minor);
+		if (mapBContent !== undefined) {
+			assert.deepEqual(
+				content,
+				mapBContent,
+				`Inconsistent removed trees json representation: ${idDifferentiator}`,
+			);
+		}
+	});
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);
 }
 
@@ -1073,12 +1083,14 @@ export function applyTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	revision?: RevisionTag,
 	build?: readonly DeltaDetachedNodeBuild[],
 	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
 	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	applyDelta(
 		rootDelta,
+		revision,
 		deltaProcessor,
 		detachedFieldIndex ??
 			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),
@@ -1089,12 +1101,14 @@ export function announceTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	revision?: RevisionTag,
 	build?: readonly DeltaDetachedNodeBuild[],
 	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
 	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	announceDelta(
 		rootDelta,
+		revision,
 		deltaProcessor,
 		detachedFieldIndex ??
 			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),

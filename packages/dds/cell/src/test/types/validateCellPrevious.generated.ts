@@ -20,97 +20,96 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_CellFactory": {"backCompat": false}
+ * "Class_CellFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_CellFactory = requireAssignableTo<TypeOnly<current.CellFactory>, TypeOnly<old.CellFactory>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "InterfaceDeclaration_ICellAttributionOptions": {"forwardCompat": false}
- */
-declare type old_as_current_for_InterfaceDeclaration_ICellAttributionOptions = requireAssignableTo<TypeOnly<old.ICellAttributionOptions>, TypeOnly<current.ICellAttributionOptions>>
+declare type current_as_old_for_Class_CellFactory = requireAssignableTo<TypeOnly<current.CellFactory>, TypeOnly<old.CellFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ICellAttributionOptions": {"backCompat": false}
+ * "ClassStatics_CellFactory": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ICellAttributionOptions = requireAssignableTo<TypeOnly<current.ICellAttributionOptions>, TypeOnly<old.ICellAttributionOptions>>
+declare type current_as_old_for_ClassStatics_CellFactory = requireAssignableTo<TypeOnly<typeof current.CellFactory>, TypeOnly<typeof old.CellFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ICellOptions": {"forwardCompat": false}
+ * "Interface_ICellAttributionOptions": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ICellOptions = requireAssignableTo<TypeOnly<old.ICellOptions>, TypeOnly<current.ICellOptions>>
+declare type old_as_current_for_Interface_ICellAttributionOptions = requireAssignableTo<TypeOnly<old.ICellAttributionOptions>, TypeOnly<current.ICellAttributionOptions>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ICellOptions": {"backCompat": false}
+ * "Interface_ICellAttributionOptions": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ICellOptions = requireAssignableTo<TypeOnly<current.ICellOptions>, TypeOnly<old.ICellOptions>>
+declare type current_as_old_for_Interface_ICellAttributionOptions = requireAssignableTo<TypeOnly<current.ICellAttributionOptions>, TypeOnly<old.ICellAttributionOptions>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISharedCell": {"forwardCompat": false}
+ * "Interface_ICellOptions": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ISharedCell = requireAssignableTo<TypeOnly<old.ISharedCell>, TypeOnly<current.ISharedCell>>
+declare type old_as_current_for_Interface_ICellOptions = requireAssignableTo<TypeOnly<old.ICellOptions>, TypeOnly<current.ICellOptions>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISharedCell": {"backCompat": false}
+ * "Interface_ICellOptions": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ISharedCell = requireAssignableTo<TypeOnly<current.ISharedCell>, TypeOnly<old.ISharedCell>>
+declare type current_as_old_for_Interface_ICellOptions = requireAssignableTo<TypeOnly<current.ICellOptions>, TypeOnly<old.ICellOptions>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISharedCellEvents": {"forwardCompat": false}
+ * "Interface_ISharedCell": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_ISharedCellEvents = requireAssignableTo<TypeOnly<old.ISharedCellEvents<any>>, TypeOnly<current.ISharedCellEvents<any>>>
+declare type old_as_current_for_Interface_ISharedCell = requireAssignableTo<TypeOnly<old.ISharedCell>, TypeOnly<current.ISharedCell>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISharedCellEvents": {"backCompat": false}
+ * "Interface_ISharedCell": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_ISharedCellEvents = requireAssignableTo<TypeOnly<current.ISharedCellEvents<any>>, TypeOnly<old.ISharedCellEvents<any>>>
+declare type current_as_old_for_Interface_ISharedCell = requireAssignableTo<TypeOnly<current.ISharedCell>, TypeOnly<old.ISharedCell>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_SharedCell": {"forwardCompat": false}
+ * "Interface_ISharedCellEvents": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
-declare type old_as_current_for_VariableDeclaration_SharedCell = requireAssignableTo<TypeOnly<typeof old.SharedCell>, TypeOnly<typeof current.SharedCell>>
+declare type old_as_current_for_Interface_ISharedCellEvents = requireAssignableTo<TypeOnly<old.ISharedCellEvents<any>>, TypeOnly<current.ISharedCellEvents<any>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "VariableDeclaration_SharedCell": {"backCompat": false}
+ * "Interface_ISharedCellEvents": {"backCompat": false}
  */
-declare type current_as_old_for_VariableDeclaration_SharedCell = requireAssignableTo<TypeOnly<typeof current.SharedCell>, TypeOnly<typeof old.SharedCell>>
+declare type current_as_old_for_Interface_ISharedCellEvents = requireAssignableTo<TypeOnly<current.ISharedCellEvents<any>>, TypeOnly<old.ISharedCellEvents<any>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_SharedCell": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_SharedCell = requireAssignableTo<TypeOnly<typeof current.SharedCell>, TypeOnly<typeof old.SharedCell>>

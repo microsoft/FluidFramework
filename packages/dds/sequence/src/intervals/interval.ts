@@ -12,10 +12,11 @@ import {
 	PropertySet,
 	createMap,
 	reservedRangeLabelsKey,
+	SequencePlace,
 } from "@fluidframework/merge-tree/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { SequencePlace, reservedIntervalIdKey } from "../intervalCollection.js";
+import { reservedIntervalIdKey } from "../intervalCollection.js";
 
 import {
 	IIntervalHelpers,
