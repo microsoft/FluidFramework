@@ -11,7 +11,7 @@ import { getTestUsers } from "./getTestUsers.js";
 import { stressTest } from "./stressTest.js";
 import { createTestDriver } from "./utils.js";
 
-function readRunOptions() {
+const readRunOptions = () => {
 	commander
 		.version("0.0.1")
 		.requiredOption("-d, --driver <driver>", "Which test driver info to use", "odsp")
@@ -69,9 +69,9 @@ function readRunOptions() {
 		enableMetrics,
 		createTestId,
 	};
-}
+};
 
-async function main() {
+const main = async () => {
 	const {
 		driver,
 		endpoint,
@@ -113,7 +113,7 @@ async function main() {
 		testUsers,
 		profileName,
 	});
-}
+};
 
 main().catch((error) => {
 	console.error(error);
