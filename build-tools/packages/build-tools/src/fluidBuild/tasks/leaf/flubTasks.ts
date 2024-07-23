@@ -20,7 +20,7 @@ export class FlubListTask extends LeafWithDoneFileTask {
 		}
 
 		// no release group flag, so assume the third argument is the release group.
-		return split.length < 3 ? undefined : split[2];
+		return split.length < 3 || split[2].startsWith("-") ? undefined : split[2];
 	}
 
 	public async getDoneFileContent(): Promise<string | undefined> {
