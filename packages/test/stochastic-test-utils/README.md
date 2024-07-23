@@ -4,7 +4,7 @@ This package contains utilities for writing stochastic tests (sometimes called f
 Such tests can be useful for stress testing systems with well-defined inputs and expected invariants.
 For example, they are useful for asserting eventual convergence properties of DDSes.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:devDependency=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

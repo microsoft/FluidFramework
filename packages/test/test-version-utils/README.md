@@ -7,7 +7,7 @@ combinations and driver selection can be controlled via the `mocha` command line
 `describe*` functions. For advanced usage, a test can bypass this mechanism and directly call our
 exports to get the versioned Fluid APIs.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:devDependency=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
