@@ -21,11 +21,11 @@ import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/inter
 import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import commander from "commander";
 
+import { FileLogger } from "./FileLogger.js";
 import {
 	FaultInjectionDocumentServiceFactory,
 	FaultInjectionError,
 } from "./faultInjectionDriver.js";
-import { FileLogger } from "./FileLogger.js";
 import { getProfile } from "./getProfile.js";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore.js";
 import {

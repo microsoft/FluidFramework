@@ -8,8 +8,8 @@ import commander from "commander";
 
 import { getProfile } from "./getProfile.js";
 import { getTestUsers } from "./getTestUsers.js";
-import { createTestDriver } from "./utils.js";
 import { stressTest } from "./stressTest.js";
+import { createTestDriver } from "./utils.js";
 
 async function main() {
 	commander

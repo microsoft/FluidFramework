@@ -10,6 +10,7 @@ import { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definition
 import { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { pkgName, pkgVersion } from "./packageVersion.js";
 
 export class FileLogger implements ITelemetryBufferedLogger {
