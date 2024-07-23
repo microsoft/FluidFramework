@@ -68,6 +68,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	// Tracks the work-in-progress used routes during summary.
 	private wipSerializedUsedRoutes: string | undefined;
 
+	// Tracks the work-in-progress used routes of child nodes during summary.
+	private wipChildNodesUsedRoutes: Map<string, string[]> | undefined;
+
 	// This is the last known used routes of this node as seen by the server as part of a summary.
 	private referenceUsedRoutes: string[] | undefined;
 
@@ -88,8 +91,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	// that this node is not marked as collected when running GC has been disabled. Once, the option to disable GC is
 	// removed (from runGC flag in IContainerRuntimeOptions), this should be changed to be have no routes by default.
 	private usedRoutes: string[] = [""];
-
-	private childNodesUsedRoutes: Map<string, string[]> = new Map();
 
 	// True if GC is disabled for this node. If so, do not track GC specific state for a summary.
 	private readonly gcDisabled: boolean;
@@ -299,6 +300,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 */
 	public clearSummary() {
 		this.wipSerializedUsedRoutes = undefined;
+		this.wipChildNodesUsedRoutes = undefined;
 		super.clearSummary();
 	}
 
@@ -410,7 +412,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		// doesn't have any ops but its reference state changed. So, it gets realized during summarize after GC ran
 		// so GC would not have run on this node which is fine.
 		if (this.wipSerializedUsedRoutes !== undefined) {
-			child.updateUsedRoutes(this.childNodesUsedRoutes.get(id) ?? [""]);
+			// If the child route used routes are not defined, initialize it now and it can be used for all child nodes
+			// created until this summarization process is completed. This is an optimization to unpack the used routes
+			// only when needed.
+			if (this.wipChildNodesUsedRoutes === undefined) {
+				this.wipChildNodesUsedRoutes = unpackChildNodesUsedRoutes(this.usedRoutes);
+			}
+			child.updateUsedRoutes(this.wipChildNodesUsedRoutes.get(id) ?? [""]);
 		}
 
 		// In case we have pending summaries on the parent, let's initialize it on the child.
@@ -464,8 +472,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		if (!this.gcDisabled && this.isSummaryInProgress()) {
 			this.wipSerializedUsedRoutes = JSON.stringify(this.usedRoutes);
 		}
-
-		this.childNodesUsedRoutes = unpackChildNodesUsedRoutes(this.usedRoutes);
 	}
 
 	/**
