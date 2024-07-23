@@ -4,7 +4,6 @@
  */
 
 import child_process from "child_process";
-import fs from "fs";
 
 import {
 	DriverEndpoint,
@@ -17,32 +16,9 @@ import ps from "ps-node";
 
 import { FileLogger } from "./FileLogger.js";
 import { getProfile } from "./getProfile.js";
+import { getTestUsers, type ITestUserConfig } from "./getTestUsers.js";
 import { ILoadTestConfig } from "./testConfigFile.js";
 import { createTestDriver, initialize, safeExit } from "./utils.js";
-
-interface ITestUserConfig {
-	/* Credentials' key/value description:
-	 * Key    : Username for the client
-	 * Value  : Password specific to that username
-	 */
-	credentials: Record<string, string>;
-}
-
-async function getTestUsers(credFile?: string) {
-	if (credFile === undefined || credFile.length === 0) {
-		return undefined;
-	}
-
-	let config: ITestUserConfig;
-	try {
-		config = JSON.parse(fs.readFileSync(credFile, "utf8"));
-		return config;
-	} catch (e) {
-		console.error(`Failed to read ${credFile}`);
-		console.error(e);
-		return undefined;
-	}
-}
 
 const createLoginEnv = (userName: string, password: string) =>
 	`{"${userName}": "${password}"}`;
