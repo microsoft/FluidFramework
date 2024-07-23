@@ -22,7 +22,7 @@ parameters:
 # Set to true to skip CodeQL analysis
 - name: runCodeQL
   type: boolean
-  default: false
+  default: true
 
 variables:
 - group: prague-key-vault
