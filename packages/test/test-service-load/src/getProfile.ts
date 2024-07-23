@@ -11,6 +11,7 @@ export function getProfile(profileName: string): TestConfiguration {
 	let config: TestConfigurationFileContents;
 	try {
 		config = JSON.parse(fs.readFileSync("./testConfig.json", "utf-8"));
+		// TODO: Consider validating the file contents.
 	} catch (error) {
 		console.error("Failed to read testConfig.json");
 		throw error;

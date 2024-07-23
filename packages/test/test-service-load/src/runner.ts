@@ -93,7 +93,7 @@ async function main() {
 		process.env.DEBUG = log;
 	}
 
-	// TODO: Ensure the right thing happens in case of an error.
+	// TODO: Ensure the right thing happens if getProfile throws.
 	const profile = getProfile(profileName);
 
 	if (url === undefined) {
