@@ -120,6 +120,7 @@ export function makeV2Codec(
 						},
 					};
 				case "Rename":
+					// In documents post-2024-07-23, renames are encoded as AttachAndDetach with a special id.
 					return markEffectCodec.encode(
 						{
 							type: "AttachAndDetach",
@@ -215,6 +216,7 @@ export function makeV2Codec(
 		): AttachAndDetach | Rename {
 			const attach = decoderLibrary.dispatch(encoded.attach, context) as Attach;
 			const detach = decoderLibrary.dispatch(encoded.detach, context) as Detach;
+			// In documents post-2024-07-23, renames are encoded as AttachAndDetach with a special id.
 			if (attach.id === renameLocalId) {
 				assert(detach.idOverride !== undefined, "Rename must have idOverride");
 				return {
@@ -278,6 +280,7 @@ export function makeV2Codec(
 				// This assignment is solely to recover the type of `decodedMark`.
 				let decodedMark2 = decodedMark as Mark;
 				if (decodedMark2.cellId !== undefined && decodedMark2.type === "AttachAndDetach") {
+					// Ensures that a pre-2024-07-23 document's Rename-like AttachAndDetach marks are normalized to Rename marks
 					decodedMark2 = normalizeCellRename(
 						decodedMark2.cellId,
 						decodedMark2.count,
