@@ -16,8 +16,9 @@ One may be added in the future, but for now this library is intended to be consu
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-**NOTE: This package is a tools library intended for use within the `@microsoft/fluid-framework` repository and is not intended for public consumption.**
-**We make no stability guarantees regarding its APIs.**
+**NOTE: This package is a library intended for use within the [microsoft/FluidFramework](https://github.com/microsoft/FluidFramework) repository.**
+**It is not intended for public use.**
+**We make no stability guarantees regarding this library and its APIs.**
 
 ## Using Fluid Framework libraries
 
