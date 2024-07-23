@@ -690,7 +690,7 @@ export const makeLegacySendBatchFn =
  * savedOp - Is this op being replayed after being serialized (having been sequenced previously)
  * batchStartCsn - The clientSequenceNumber given on submit to the start of this batch
  * message - The unpacked message. Likely a TypedContainerRuntimeMessage, but could also be a system op
- * modernRuntimeMessage - Does this appear like a current TypedContainerRuntimeMessage?
+ * isModernRuntimeMessage - Does this appear like a current TypedContainerRuntimeMessage?
  */
 type MessageWithContext = {
 	local: boolean;
@@ -699,11 +699,11 @@ type MessageWithContext = {
 } & (
 	| {
 			message: InboundSequencedContainerRuntimeMessage;
-			modernRuntimeMessage: true;
+			isModernRuntimeMessage: true;
 	  }
 	| {
 			message: InboundSequencedContainerRuntimeMessageOrSystemMessage;
-			modernRuntimeMessage: false;
+			isModernRuntimeMessage: false;
 	  }
 );
 
@@ -2624,7 +2624,7 @@ export class ContainerRuntime
 		// Whether or not the message appears to be a runtime message from an up-to-date client.
 		// It may be a legacy runtime message (ie already unpacked and ContainerMessageType)
 		// or something different, like a system message.
-		const modernRuntimeMessage = messageArg.type === MessageType.Operation;
+		const isModernRuntimeMessage = messageArg.type === MessageType.Operation;
 
 		const savedOp = (messageArg.metadata as ISavedOpMetadata)?.savedOp;
 
@@ -2642,8 +2642,8 @@ export class ContainerRuntime
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		// We expect runtime messages to have JSON contents - deserialize it in place.
-		ensureContentsDeserialized(messageCopy, modernRuntimeMessage, logLegacyCase);
-		if (modernRuntimeMessage) {
+		ensureContentsDeserialized(messageCopy, isModernRuntimeMessage, logLegacyCase);
+		if (isModernRuntimeMessage) {
 			const processResult = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
 			if (processResult === undefined) {
 				// This means the incoming message is an incomplete part of a message or batch
@@ -2673,7 +2673,7 @@ export class ContainerRuntime
 				const msg: MessageWithContext = {
 					message,
 					local,
-					modernRuntimeMessage,
+					isModernRuntimeMessage,
 					savedOp,
 					localOpMetadata,
 				};
@@ -2683,7 +2683,7 @@ export class ContainerRuntime
 			const msg: MessageWithContext = {
 				message: messageCopy as InboundSequencedContainerRuntimeMessageOrSystemMessage,
 				local,
-				modernRuntimeMessage,
+				isModernRuntimeMessage,
 				savedOp,
 			};
 			this.ensureNoDataModelChanges(() => this.processCore(msg));
@@ -2729,11 +2729,9 @@ export class ContainerRuntime
 			}
 
 			// validateAndProcessRuntimeMessage only processes internal container messages
-			if (messageWithContext.message.type in ContainerMessageType) {
-				this.validateAndProcessRuntimeMessage(messageWithContext, localOpMetadata);
-			}
+			this.validateAndProcessRuntimeMessage(messageWithContext, localOpMetadata);
 
-			this.emit("op", message, messageWithContext.modernRuntimeMessage);
+			this.emit("op", message, messageWithContext.isModernRuntimeMessage);
 
 			this.scheduleManager.afterOpProcessing(undefined, message);
 
@@ -2749,6 +2747,7 @@ export class ContainerRuntime
 		}
 	}
 
+<<<<<<< HEAD
 	/**
 	 * Process an empty batch, which will execute expected actions while processing even if there are no messages.
 	 * This is a separate function because the processCore function expects at least one message to process.
@@ -2771,6 +2770,8 @@ export class ContainerRuntime
 		}
 	}
 
+=======
+>>>>>>> b3b7c5ad67 (revert conditional validation funcito)
 	/**
 	 * Assuming the given message is also a TypedContainerRuntimeMessage,
 	 * checks its type and dispatches the message to the appropriate handler in the runtime.
@@ -2780,7 +2781,7 @@ export class ContainerRuntime
 		messageWithContext: MessageWithContext,
 		localOpMetadata: unknown,
 	): void {
-		// TODO: destructure message and modernRuntimeMessage once using typescript 5.2.2+
+		// TODO: destructure message and isModernRuntimeMessage once using typescript 5.2.2+
 		const { local } = messageWithContext;
 		switch (messageWithContext.message.type) {
 			case ContainerMessageType.Attach:
@@ -2838,7 +2839,7 @@ export class ContainerRuntime
 			default: {
 				// If we didn't necessarily expect a runtime message type, then no worries - just return
 				// e.g. this case applies to system ops, or legacy ops that would have fallen into the above cases anyway.
-				if (!messageWithContext.modernRuntimeMessage) {
+				if (!messageWithContext.isModernRuntimeMessage) {
 					return;
 				}
 

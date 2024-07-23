@@ -193,7 +193,7 @@ export class RemoteMessageProcessor {
 /** Takes an incoming message and if the contents is a string, JSON.parse's it in place */
 export function ensureContentsDeserialized(
 	mutableMessage: ISequencedDocumentMessage,
-	modernRuntimeMessage: boolean,
+	isModernRuntimeMessage: boolean,
 	logLegacyCase: (codePath: string) => void,
 ): void {
 	// back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
@@ -210,7 +210,7 @@ export function ensureContentsDeserialized(
 	// We expect Modern Runtime Messages to have JSON serialized contents,
 	// and all other messages not to (system messages and legacy runtime messages without outer "op" type envelope)
 	// Let's observe if we are wrong about this to learn about these cases.
-	if (modernRuntimeMessage !== parsedJsonContents) {
+	if (isModernRuntimeMessage !== parsedJsonContents) {
 		logLegacyCase("ensureContentsDeserialized_unexpectedContentsType");
 	}
 }
