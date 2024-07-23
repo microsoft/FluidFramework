@@ -51,7 +51,7 @@ const generatePackageScopeNotice = (kind) => {
  * @param {object} options - Transform options.
  * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
  * Default: "./package.json".
- * @param {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | undefined} scopeKind - Scope kind to switch on.
+ * @param {string | undefined} scopeKind - Scope kind to switch on.
  * EXPERIMENTAL: See templates/Experimental-Package-Notice-Template.md.
  * INTERNAL: See templates/Internal-Package-Notice-Template.md.
  * PRIVATE: See templates/Private-Package-Notice-Template.md.
