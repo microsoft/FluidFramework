@@ -409,7 +409,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 	}
 
 	// 276486, 278426, 278025, 276732
-	it.only("Can summarize after hitting nack on unsummarized ops", async function () {
+	it("Can summarize after hitting nack on unsummarized ops", async function () {
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
