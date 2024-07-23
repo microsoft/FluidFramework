@@ -473,12 +473,11 @@ module.exports = {
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		CLIENT_REQUIREMENTS: (content, options, config) => {
-			return templateTransform(
+		CLIENT_REQUIREMENTS: (content, options, config) =>
+			templateTransform(
 				"Client-Requirements-Template.md",
 				parseHeadingOptions(options, "Client Requirements"),
-			);
-		},
+			),
 
 		/**
 		 * Generates a README section with Microsoft trademark info.
