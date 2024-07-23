@@ -36,7 +36,8 @@
 		"list-repo-files": "cd ../../.. && git ls-files -co --exclude-standard",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha --recursive dist/test",
-		"tsc": "tsc"
+		"tsc": "tsc",
+		"depcheck": "depcheck"
 	},
 	"dependencies": {
 		"@fluid-tools/version-tools": "workspace:~",

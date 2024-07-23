@@ -11,6 +11,7 @@ import { GroupTask } from "./groupTask";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
 import { BiomeTask } from "./leaf/biomeTasks";
 import { createDeclarativeTaskHandler } from "./leaf/declarativeTask";
+import { DepcheckTask } from "./leaf/depcheckTasks";
 import { FlubCheckLayerTask, FlubCheckPolicyTask, FlubListTask } from "./leaf/flubTasks";
 import { GenerateEntrypointsTask } from "./leaf/generateEntrypointsTask.js";
 import { type LeafTask, UnknownLeafTask } from "./leaf/leafTask";
@@ -57,6 +58,7 @@ const executableToLeafTask: {
 	"depcruise": DepCruiseTask,
 	"biome check": BiomeTask,
 	"biome format": BiomeTask,
+	"depcheck": DepcheckTask,
 
 	// flub list does not require a -g flag - the third argument is the release group. Rather than add custom handling for
 	// that, we just add mappings for all three.

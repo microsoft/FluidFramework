@@ -1,1 +1,2 @@
 ignores: ["@fluid-private/changelog-generator-wrapper", "@fluidframework/eslint-config-fluid","@microsoft/api-documenter", "@microsoft/api-extractor", "danger", "depcheck", "jest", "ts2esm"]
+skipmissing: true
