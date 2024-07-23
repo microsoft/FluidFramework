@@ -2728,8 +2728,9 @@ export class ContainerRuntime
 				this.updateDocumentDirtyState(false);
 			}
 
-			// validateAndProcessRuntimeMessage only processes internal container messages
-			this.validateAndProcessRuntimeMessage(messageWithContext, localOpMetadata);
+			if (messageWithContext.isModernRuntimeMessage) {
+				this.validateAndProcessRuntimeMessage(messageWithContext, localOpMetadata);
+			}
 
 			this.emit("op", message, messageWithContext.isModernRuntimeMessage);
 
@@ -2837,12 +2838,6 @@ export class ContainerRuntime
 				);
 				break;
 			default: {
-				// If we didn't necessarily expect a runtime message type, then no worries - just return
-				// e.g. this case applies to system ops, or legacy ops that would have fallen into the above cases anyway.
-				if (!messageWithContext.isModernRuntimeMessage) {
-					return;
-				}
-
 				const compatBehavior = messageWithContext.message.compatDetails?.behavior;
 				if (
 					!compatBehaviorAllowsMessageType(messageWithContext.message.type, compatBehavior)
