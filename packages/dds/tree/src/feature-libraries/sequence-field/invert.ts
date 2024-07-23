@@ -96,7 +96,7 @@ function invertMark(
 				type: "Rename",
 				count: mark.count,
 				cellId: mark.idOverride,
-				// Unlike a remove or move-out, which follow a node, there is no way this mark to assign the original input cell ID to another cell.
+				// Unlike a remove or move-out, which follow a node, there is no way for this mark to assign the original input cell ID to another cell.
 				// This means it should be safe to always restore the input cell ID (as opposed to only doing it on rollbacks).
 				// Despite that, we still only do it on rollback for the sake of consistency: once a cell has been assigned an ID,
 				// the only way for that cell to be assigned that ID again is if it is rolled back to that state.
