@@ -10,8 +10,8 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import ps from "ps-node";
 
 import { FileLogger } from "./FileLogger.js";
-import { type ITestUserConfig } from "./getTestUsers.js";
-import { ILoadTestConfig } from "./testConfigFile.js";
+import type { ITestUserConfig } from "./getTestUsers.js";
+import type { TestConfiguration } from "./testConfigFile.js";
 import { initialize, safeExit } from "./utils.js";
 
 const createLoginEnv = (userName: string, password: string) =>
@@ -22,7 +22,7 @@ const createLoginEnv = (userName: string, password: string) =>
  */
 export async function stressTest(
 	testDriver: ITestDriver,
-	profile: ILoadTestConfig,
+	profile: TestConfiguration,
 	args: {
 		testId: string | undefined;
 		debug: boolean;

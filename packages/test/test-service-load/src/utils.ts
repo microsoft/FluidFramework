@@ -32,7 +32,7 @@ import {
 	getOptionOverride,
 } from "./optionsMatrix.js";
 import { pkgName, pkgVersion } from "./packageVersion.js";
-import { ILoadTestConfig } from "./testConfigFile.js";
+import type { TestConfiguration } from "./testConfigFile.js";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
@@ -72,7 +72,7 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
 export async function initialize(
 	testDriver: ITestDriver,
 	seed: number,
-	testConfig: ILoadTestConfig,
+	testConfig: TestConfiguration,
 	verbose: boolean,
 	profileName: string,
 	requestedTestId?: string,

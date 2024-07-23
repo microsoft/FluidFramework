@@ -5,10 +5,10 @@
 
 import fs from "fs";
 
-import type { ILoadTestConfig, ITestConfig } from "./testConfigFile.js";
+import type { TestConfiguration, TestConfigurationFileContents } from "./testConfigFile.js";
 
 export function getProfile(profileName: string) {
-	let config: ITestConfig;
+	let config: TestConfigurationFileContents;
 	try {
 		config = JSON.parse(fs.readFileSync("./testConfig.json", "utf-8"));
 	} catch (error) {
@@ -17,7 +17,7 @@ export function getProfile(profileName: string) {
 		process.exit(-1);
 	}
 
-	const profile: ILoadTestConfig | undefined = config.profiles[profileName];
+	const profile: TestConfiguration | undefined = config.profiles[profileName];
 	if (profile === undefined) {
 		console.error("Invalid --profile argument not found in testConfig.json profiles");
 		process.exit(-1);
