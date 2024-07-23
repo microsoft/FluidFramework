@@ -136,6 +136,7 @@ describeCompat(
 		// compat 2.0.0-rc.5.0.5 (N-1) - new driver: 278456
 		// compat back 2.0.0-rc.1.0.9 (N-5) - older loader + older driver: 280547
 		// compat 2.0.0-rc.5.0.6 (N-1) - new loader: 280660
+		it("can do incremental data store summary", async function () {
 			const dataStore2 = await containerRuntime.createDataStore(TestDataObjectType);
 			const dataObject2 = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore2);
 			dataObject1._root.set("dataObject2", dataObject2.handle);
