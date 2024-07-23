@@ -1,0 +1,11 @@
+{
+	"$schema": "../../../../../node_modules/@biomejs/biome/configuration_schema.json",
+	"extends": ["../base.jsonc"],
+	"files": {
+		"include": ["src/**"],
+		"ignore": ["**/pkg-a-ignore/*"]
+	},
+	"formatter": {
+		"ignore": ["ignored/**"]
+	}
+}
