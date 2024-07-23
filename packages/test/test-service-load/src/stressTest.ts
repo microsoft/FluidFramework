@@ -158,7 +158,7 @@ function setupTelemetry(
 	process: child_process.ChildProcess,
 	logger: ITelemetryLoggerExt,
 	runId: number,
-	username?: string,
+	username: string | undefined,
 ) {
 	logger.send({
 		category: "metric",

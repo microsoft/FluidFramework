@@ -24,7 +24,7 @@ import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal
 import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 
 import { FileLogger } from "./FileLogger.js";
-import { ILoadTest, createFluidExport, type IRunConfig } from "./loadTestDataStore.js";
+import { createFluidExport, type ILoadTest, type IRunConfig } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
 	generateLoaderOptions,

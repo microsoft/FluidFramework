@@ -5,19 +5,19 @@
 
 import fs from "fs";
 
-import { ILoadTestConfig, ITestConfig } from "./testConfigFile.js";
+import type { ILoadTestConfig, ITestConfig } from "./testConfigFile.js";
 
-export function getProfile(profileArg: string) {
+export function getProfile(profileName: string) {
 	let config: ITestConfig;
 	try {
 		config = JSON.parse(fs.readFileSync("./testConfig.json", "utf-8"));
-	} catch (e) {
+	} catch (error) {
 		console.error("Failed to read testConfig.json");
-		console.error(e);
+		console.error(error);
 		process.exit(-1);
 	}
 
-	const profile: ILoadTestConfig | undefined = config.profiles[profileArg];
+	const profile: ILoadTestConfig | undefined = config.profiles[profileName];
 	if (profile === undefined) {
 		console.error("Invalid --profile argument not found in testConfig.json profiles");
 		process.exit(-1);
