@@ -43,21 +43,16 @@ export interface TestUser {
 export type TestUsers = TestUser[];
 
 export function getTestUsers(credFilePath: string): TestUsers {
-	try {
-		const contents = JSON.parse(fs.readFileSync(credFilePath, "utf8"));
-		if (!isTestUserFileContents(contents)) {
-			throw new Error("credFile provided, but incorrect format");
-		}
-		const testUsers = Object.entries(contents.credentials).map(([username, password]) => ({
-			username,
-			password,
-		}));
-		if (testUsers.length === 0) {
-			throw new Error("credFile contained no credentials");
-		}
-		return testUsers;
-	} catch (error) {
-		console.error(`Failed to read ${credFilePath}`);
-		throw error;
+	const contents = JSON.parse(fs.readFileSync(credFilePath, "utf8"));
+	if (!isTestUserFileContents(contents)) {
+		throw new Error("credFile provided, but incorrect format");
 	}
+	const testUsers = Object.entries(contents.credentials).map(([username, password]) => ({
+		username,
+		password,
+	}));
+	if (testUsers.length === 0) {
+		throw new Error("credFile contained no credentials");
+	}
+	return testUsers;
 }
