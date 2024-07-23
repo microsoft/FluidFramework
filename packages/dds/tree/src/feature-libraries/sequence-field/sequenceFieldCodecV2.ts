@@ -31,7 +31,7 @@ import {
 	type Remove,
 	type Rename,
 } from "./types.js";
-import { isNoopMark } from "./utils.js";
+import { isNoopMark, normalizeCellRename } from "./utils.js";
 import type { FieldChangeEncodingContext } from "../index.js";
 import { EncodedNodeChangeset } from "../modular-schema/index.js";
 
@@ -275,10 +275,20 @@ export function makeV2Codec(
 				if (mark.cellId !== undefined) {
 					decodedMark.cellId = changeAtomIdCodec.decode(mark.cellId, context.baseContext);
 				}
-				if (mark.changes !== undefined) {
-					decodedMark.changes = context.decodeNode(mark.changes);
+				// This assignment is solely to recover the type of `decodedMark`.
+				let decodedMark2 = decodedMark as Mark;
+				if (decodedMark2.cellId !== undefined && decodedMark2.type === "AttachAndDetach") {
+					decodedMark2 = normalizeCellRename(
+						decodedMark2.cellId,
+						decodedMark2.count,
+						decodedMark2.attach,
+						decodedMark2.detach,
+					);
 				}
-				marks.push(decodedMark);
+				if (mark.changes !== undefined) {
+					decodedMark2.changes = context.decodeNode(mark.changes);
+				}
+				marks.push(decodedMark2);
 			}
 			return marks;
 		},
