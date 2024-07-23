@@ -11,7 +11,7 @@ import { getTestUsers } from "./getTestUsers.js";
 import { stressTest } from "./stressTest.js";
 import { createTestDriver } from "./utils.js";
 
-async function main() {
+function readRunOptions() {
 	commander
 		.version("0.0.1")
 		.requiredOption("-d, --driver <driver>", "Which test driver info to use", "odsp")
@@ -54,6 +54,38 @@ async function main() {
 	const credFilePath: string | undefined = commander.credFile;
 	const enableMetrics: boolean = commander.enableMetrics ?? false;
 	const createTestId: boolean = commander.createTestId ?? false;
+
+	return {
+		driver,
+		endpoint,
+		profileName,
+		testId,
+		debug,
+		log,
+		verbose,
+		seed,
+		supportsBrowserAuth,
+		credFilePath,
+		enableMetrics,
+		createTestId,
+	};
+}
+
+async function main() {
+	const {
+		driver,
+		endpoint,
+		profileName,
+		testId,
+		debug,
+		log,
+		verbose,
+		seed,
+		supportsBrowserAuth,
+		credFilePath,
+		enableMetrics,
+		createTestId,
+	} = readRunOptions();
 
 	if (log !== undefined) {
 		process.env.DEBUG = log;
