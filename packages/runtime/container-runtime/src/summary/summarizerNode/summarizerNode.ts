@@ -166,7 +166,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
 		// Try to reuse the tree if unchanged
-		if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
+		if (this.canReuseHandle && !fullTree && !this.hasChanged() && trackState) {
 			const latestSummary = this._latestSummary;
 			if (latestSummary !== undefined) {
 				this.wipLocalPaths = {
@@ -206,7 +206,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 		const result = await this.summarizeInternalFn(
 			fullTree,
-			true,
+			trackState,
 			telemetryContext,
 			incrementalSummaryContext,
 		);
