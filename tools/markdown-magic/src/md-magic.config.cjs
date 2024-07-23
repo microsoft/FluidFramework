@@ -211,8 +211,12 @@ function readmeFooterTransform(content, options, config) {
  * INTERNAL: See templates/Internal-Package-Notice-Template.md.
  * PRIVATE: See templates/Private-Package-Notice-Template.md.
  * `undefined`: Inherit from package namespace (fluid-experimental, fluid-internal, fluid-private).
+ * @param {"TRUE" | "FALSE" | undefined} options.dependencyGuidelines - (optional) Whether or not to include the Fluid Framework dependency guidelines section.
+ * Default: `TRUE` if the package is end-user facing (i.e., a member of the `@fluidframework` or `@fluid-experimental` namespaces, or "fluid-framework").
+ * `FALSE` otherwise.
  * @param {"TRUE" | "FALSE" | undefined} options.installation - (optional) Whether or not to include the package installation instructions section.
- * Default: `TRUE`.
+ * Default: `TRUE` if the package is end-user facing (i.e., a member of the `@fluidframework` or `@fluid-experimental` namespaces, or "fluid-framework").
+ * `FALSE` otherwise.
  * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a devDependency.
  * Only used if `installation` is specified.
  * Default: `FALSE`.
@@ -221,7 +225,8 @@ function readmeFooterTransform(content, options, config) {
  * Will include the section if the property is found, and one of our special paths is found (`/alpha`, `/beta`, or `/legacy`).
  * Can be explicitly disabled by specifying `FALSE`.
  * @param {"TRUE" | "FALSE" | undefined} options.apiDocs - (optional) Whether or not to include a section pointing readers to the package's generated API documentation on <fluidframework.com>.
- * Default: `TRUE` if the package is end-user facing (i.e., a member of the `@fluidframework` or `@fluid-experimental` namespaces, or "fluid-framework"). `FALSE` otherwise.
+ * Default: `TRUE` if the package is end-user facing (i.e., a member of the `@fluidframework` or `@fluid-experimental` namespaces, or "fluid-framework").
+ * `FALSE` otherwise.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
@@ -249,10 +254,16 @@ function libraryReadmeHeaderTransform(content, options, config) {
 		sections.push(scopeNoticeSection);
 	}
 
+	const includeDependencyGuidelinesSection = parseBooleanOption(options.dependencyGuidelines, isPackagePublic);
+	if (includeDependencyGuidelinesSection) {
+		sections.push(
+			generateDependencyGuidelines(sectionHeadingOptions),
+		);
+	}
+
 	const includeInstallationSection = parseBooleanOption(options.installation, isPackagePublic);
 	if (includeInstallationSection) {
 		sections.push(
-			generateDependencyGuidelines(sectionHeadingOptions),
 			generateInstallationInstructionsSection(
 				packageName,
 				options.devDependency,
