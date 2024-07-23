@@ -20,7 +20,6 @@ import {
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,
-	gcDisableThrowOnTombstoneLoadOptionName,
 	gcGenerationOptionName,
 	gcTestModeKey,
 	maxSnapshotCacheExpiryMs,
@@ -147,8 +146,7 @@ export function generateGCConfigs(
 	const throwOnInactiveLoad: boolean | undefined = createParams.gcOptions.throwOnInactiveLoad;
 
 	const throwOnTombstoneLoadConfig =
-		mc.config.getBoolean(throwOnTombstoneLoadOverrideKey) ??
-		createParams.gcOptions[gcDisableThrowOnTombstoneLoadOptionName] !== true;
+		mc.config.getBoolean(throwOnTombstoneLoadOverrideKey) ?? true;
 	const throwOnTombstoneLoad =
 		throwOnTombstoneLoadConfig && sweepEnabled && !createParams.isSummarizerClient;
 

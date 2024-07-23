@@ -38,14 +38,6 @@ export const stableGCVersion: GCVersion = 3;
 export const nextGCVersion: GCVersion = 4;
 
 /**
- * This undocumented GC Option (on ContainerRuntime Options) allows an app to disable throwing an error when tombstone
- * object is loaded (requested), merely logging a message instead.
- *
- * By default, attempting to load a Tombstoned object will result in an error.
- */
-export const gcDisableThrowOnTombstoneLoadOptionName = "gcDisableThrowOnTombstoneLoad";
-
-/**
  * This undocumented GC Option (on ContainerRuntime Options) allows configuring which documents can have Sweep enabled.
  * This provides a way to disable both Tombstone Enforcement and Sweep.
  *
