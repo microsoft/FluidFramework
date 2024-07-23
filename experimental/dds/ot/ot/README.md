@@ -1,6 +1,8 @@
 # @fluid-experimental/ot
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE) -->
+Distributed data structure for hosting [Operational Transformation (OT)](https://en.wikipedia.org/wiki/Operational_transformation) types.
+
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -29,6 +31,15 @@ npm i @fluid-experimental/ot
 ## API Documentation
 
 API documentation for **@fluid-experimental/ot** is available at <https://fluidframework.com/docs/apis/ot>.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER:) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
 

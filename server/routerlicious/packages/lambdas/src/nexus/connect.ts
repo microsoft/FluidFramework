@@ -117,7 +117,7 @@ async function connectOrderer(
 	claims: ITokenClaims,
 	version: string,
 	clients: ISignalClient[],
-): Promise<IConnected> {
+): Promise<{ connectedMessage: IConnected; disposeOrdererConnectionListener: () => void }> {
 	const { ordererManager, logger } = lambdaDependencies;
 	const { numberOfMessagesPerTrace } = lambdaSettings;
 	const { expirationTimer, connectionsMap } = lambdaConnectionStateTrackers;
@@ -160,7 +160,7 @@ async function connectOrderer(
 		});
 
 	// Eventually we will send disconnect reason as headers to client.
-	connection.once("error", (error) => {
+	const connectionErrorListener = (error: unknown): void => {
 		const messageMetaData = getMessageMetadata(connection.documentId, connection.tenantId);
 
 		logger.error(
@@ -174,7 +174,8 @@ async function connectOrderer(
 		);
 		expirationTimer.clear();
 		socket.disconnect(true);
-	});
+	};
+	connection.once("error", connectionErrorListener);
 
 	let clientJoinMessageServerMetadata: any;
 	if (DefaultServiceConfiguration.enableTraces && sampleMessages(numberOfMessagesPerTrace)) {
@@ -211,7 +212,7 @@ async function connectOrderer(
 
 	connectDocumentOrdererConnectionMetric.success("Successfully established orderer connection");
 
-	return composeConnectedMessage(
+	const connectedMessage = composeConnectedMessage(
 		connection.maxMessageSize,
 		"write",
 		connection.serviceConfiguration.blockSize,
@@ -221,6 +222,13 @@ async function connectOrderer(
 		version,
 		clients,
 	);
+
+	return {
+		connectedMessage,
+		disposeOrdererConnectionListener: (): void => {
+			connection.off("error", connectionErrorListener);
+		},
+	};
 }
 
 function trackSocket(
@@ -640,7 +648,7 @@ export async function connectDocument(
 
 		const isWriterClient = isWriter(messageClient.scopes ?? [], message.mode);
 		connectMetric.setProperty("IsWriterClient", isWriterClient);
-		const connectedMessage = isWriterClient
+		const { connectedMessage, disposeOrdererConnectionListener } = isWriterClient
 			? await connectOrderer(
 					socket,
 					subMetricProperties,
@@ -656,16 +664,19 @@ export async function connectDocument(
 					version,
 					clients,
 			  )
-			: composeConnectedMessage(
-					1024 /* messageSize */,
-					"read",
-					DefaultServiceConfiguration.blockSize,
-					DefaultServiceConfiguration.maxMessageSize,
-					clientId,
-					claims,
-					version,
-					clients,
-			  );
+			: {
+					connectedMessage: composeConnectedMessage(
+						1024 /* messageSize */,
+						"read",
+						DefaultServiceConfiguration.blockSize,
+						DefaultServiceConfiguration.maxMessageSize,
+						clientId,
+						claims,
+						version,
+						clients,
+					),
+					disposeOrdererConnectionListener: (): void => {},
+			  };
 		// back-compat: remove cast to any once new definition of IConnected comes through.
 		(connectedMessage as any).timestamp = connectedTimestamp;
 		connectionTrace.stampStage(ConnectDocumentStage.MessageClientConnected);
@@ -705,6 +716,7 @@ export async function connectDocument(
 			details: messageClient as IClient,
 			dispose: (): void => {
 				disposeSignalListenerForRoomBroadcasting();
+				disposeOrdererConnectionListener();
 			},
 		};
 	} catch (error) {

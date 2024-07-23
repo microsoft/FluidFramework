@@ -171,6 +171,7 @@ import { IBatchMetadata, ISavedOpMetadata } from "./metadata.js";
 import {
 	BatchId,
 	BatchMessage,
+	ensureContentsDeserialized,
 	IBatch,
 	IBatchCheckpoint,
 	OpCompressor,
@@ -989,11 +990,7 @@ export class ContainerRuntime
 			}
 		};
 
-		const disableCompression = mc.config.getBoolean(
-			"Fluid.ContainerRuntime.CompressionDisabled",
-		);
 		const compressionLz4 =
-			disableCompression !== true &&
 			compressionOptions.minimumBatchSizeInBytes !== Infinity &&
 			compressionOptions.compressionAlgorithm === "lz4";
 
@@ -1013,9 +1010,7 @@ export class ContainerRuntime
 			},
 		);
 
-		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {
-			disableCompression,
-		};
+		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {};
 
 		const runtime = new containerRuntimeCtor(
 			context,
@@ -1520,9 +1515,6 @@ export class ContainerRuntime
 		this.disableAttachReorder = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.disableAttachOpReorder",
 		);
-		const disableChunking = this.mc.config.getBoolean(
-			"Fluid.ContainerRuntime.CompressionChunkingDisabled",
-		);
 
 		const opGroupingManager = new OpGroupingManager(
 			{
@@ -1539,7 +1531,7 @@ export class ContainerRuntime
 		const opSplitter = new OpSplitter(
 			chunks,
 			this.submitBatchFn,
-			disableChunking === true ? Number.POSITIVE_INFINITY : runtimeOptions.chunkSizeInBytes,
+			runtimeOptions.chunkSizeInBytes,
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
 		);
@@ -1930,7 +1922,6 @@ export class ContainerRuntime
 			sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
 			featureGates: JSON.stringify({
 				...featureGatesForTelemetry,
-				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
 				closeSummarizerDelayOverride,
@@ -2627,14 +2618,25 @@ export class ContainerRuntime
 		// or something different, like a system message.
 		const modernRuntimeMessage = messageArg.type === MessageType.Operation;
 
+		const savedOp = (messageArg.metadata as ISavedOpMetadata)?.savedOp;
+
+		// There is some ancient back-compat code that we'd like to instrument
+		// to understand if/when it is hit.
+		const logLegacyCase = (codePath: string) =>
+			this.logger.sendTelemetryEvent({
+				eventName: "LegacyMessageFormat",
+				details: { codePath, type: messageArg.type },
+			});
+
 		// Do shallow copy of message, as the processing flow will modify it.
 		// There might be multiple container instances receiving the same message.
 		// We do not need to make a deep copy. Each layer will just replace message.contents itself,
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
-		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
+		// We expect runtime messages to have JSON contents - deserialize it in place.
+		ensureContentsDeserialized(messageCopy, modernRuntimeMessage, logLegacyCase);
 		if (modernRuntimeMessage) {
-			const processResult = this.remoteMessageProcessor.process(messageCopy);
+			const processResult = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
 			if (processResult === undefined) {
 				// This means the incoming message is an incomplete part of a message or batch
 				// and we need to process more messages before the rest of the system can understand it.
@@ -4349,7 +4351,7 @@ export class ContainerRuntime
 						fetchSource: FetchSource.noCache,
 					});
 					const id = snapshot.snapshotTree.id;
-					assert(id !== undefined, "id of the fetched snapshot should be defined");
+					assert(id !== undefined, 0x9d0 /* id of the fetched snapshot should be defined */);
 					props.snapshotVersion = id;
 					snapshotTree = snapshot.snapshotTree;
 				} else {

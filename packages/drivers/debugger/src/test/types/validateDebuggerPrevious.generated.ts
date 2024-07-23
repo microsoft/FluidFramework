@@ -20,87 +20,105 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_DebugReplayController": {"forwardCompat": false}
+ * "Class_DebugReplayController": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_DebugReplayController = requireAssignableTo<TypeOnly<old.DebugReplayController>, TypeOnly<current.DebugReplayController>>
+declare type old_as_current_for_Class_DebugReplayController = requireAssignableTo<TypeOnly<old.DebugReplayController>, TypeOnly<current.DebugReplayController>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_DebugReplayController": {"backCompat": false}
+ * "Class_DebugReplayController": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_DebugReplayController = requireAssignableTo<TypeOnly<current.DebugReplayController>, TypeOnly<old.DebugReplayController>>
+declare type current_as_old_for_Class_DebugReplayController = requireAssignableTo<TypeOnly<current.DebugReplayController>, TypeOnly<old.DebugReplayController>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_DebugReplayController": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_DebugReplayController = requireAssignableTo<TypeOnly<typeof current.DebugReplayController>, TypeOnly<typeof old.DebugReplayController>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_DebuggerUI": {"forwardCompat": false}
+ * "Class_DebuggerUI": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_DebuggerUI = requireAssignableTo<TypeOnly<old.DebuggerUI>, TypeOnly<current.DebuggerUI>>
+declare type old_as_current_for_Class_DebuggerUI = requireAssignableTo<TypeOnly<old.DebuggerUI>, TypeOnly<current.DebuggerUI>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_DebuggerUI": {"backCompat": false}
+ * "Class_DebuggerUI": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_DebuggerUI = requireAssignableTo<TypeOnly<current.DebuggerUI>, TypeOnly<old.DebuggerUI>>
+declare type current_as_old_for_Class_DebuggerUI = requireAssignableTo<TypeOnly<current.DebuggerUI>, TypeOnly<old.DebuggerUI>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_DebuggerUI": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_DebuggerUI = requireAssignableTo<TypeOnly<typeof current.DebuggerUI>, TypeOnly<typeof old.DebuggerUI>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IDebuggerController": {"forwardCompat": false}
+ * "Interface_IDebuggerController": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IDebuggerController = requireAssignableTo<TypeOnly<old.IDebuggerController>, TypeOnly<current.IDebuggerController>>
+declare type old_as_current_for_Interface_IDebuggerController = requireAssignableTo<TypeOnly<old.IDebuggerController>, TypeOnly<current.IDebuggerController>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IDebuggerController": {"backCompat": false}
+ * "Interface_IDebuggerController": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IDebuggerController = requireAssignableTo<TypeOnly<current.IDebuggerController>, TypeOnly<old.IDebuggerController>>
+declare type current_as_old_for_Interface_IDebuggerController = requireAssignableTo<TypeOnly<current.IDebuggerController>, TypeOnly<old.IDebuggerController>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IDebuggerUI": {"forwardCompat": false}
+ * "Interface_IDebuggerUI": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IDebuggerUI = requireAssignableTo<TypeOnly<old.IDebuggerUI>, TypeOnly<current.IDebuggerUI>>
+declare type old_as_current_for_Interface_IDebuggerUI = requireAssignableTo<TypeOnly<old.IDebuggerUI>, TypeOnly<current.IDebuggerUI>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IDebuggerUI": {"backCompat": false}
+ * "Interface_IDebuggerUI": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IDebuggerUI = requireAssignableTo<TypeOnly<current.IDebuggerUI>, TypeOnly<old.IDebuggerUI>>
+declare type current_as_old_for_Interface_IDebuggerUI = requireAssignableTo<TypeOnly<current.IDebuggerUI>, TypeOnly<old.IDebuggerUI>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_debuggerUIFactory": {"forwardCompat": false}
+ * "TypeAlias_debuggerUIFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_debuggerUIFactory = requireAssignableTo<TypeOnly<old.debuggerUIFactory>, TypeOnly<current.debuggerUIFactory>>
+declare type old_as_current_for_TypeAlias_debuggerUIFactory = requireAssignableTo<TypeOnly<old.debuggerUIFactory>, TypeOnly<current.debuggerUIFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_debuggerUIFactory": {"backCompat": false}
+ * "TypeAlias_debuggerUIFactory": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAliasDeclaration_debuggerUIFactory = requireAssignableTo<TypeOnly<current.debuggerUIFactory>, TypeOnly<old.debuggerUIFactory>>
+declare type current_as_old_for_TypeAlias_debuggerUIFactory = requireAssignableTo<TypeOnly<current.debuggerUIFactory>, TypeOnly<old.debuggerUIFactory>>

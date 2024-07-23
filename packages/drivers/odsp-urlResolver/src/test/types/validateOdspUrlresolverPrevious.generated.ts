@@ -20,33 +20,51 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_FluidAppOdspUrlResolver": {"forwardCompat": false}
+ * "Class_FluidAppOdspUrlResolver": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_FluidAppOdspUrlResolver = requireAssignableTo<TypeOnly<old.FluidAppOdspUrlResolver>, TypeOnly<current.FluidAppOdspUrlResolver>>
+declare type old_as_current_for_Class_FluidAppOdspUrlResolver = requireAssignableTo<TypeOnly<old.FluidAppOdspUrlResolver>, TypeOnly<current.FluidAppOdspUrlResolver>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_FluidAppOdspUrlResolver": {"backCompat": false}
+ * "Class_FluidAppOdspUrlResolver": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_FluidAppOdspUrlResolver = requireAssignableTo<TypeOnly<current.FluidAppOdspUrlResolver>, TypeOnly<old.FluidAppOdspUrlResolver>>
+declare type current_as_old_for_Class_FluidAppOdspUrlResolver = requireAssignableTo<TypeOnly<current.FluidAppOdspUrlResolver>, TypeOnly<old.FluidAppOdspUrlResolver>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_FluidAppOdspUrlResolver": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_FluidAppOdspUrlResolver = requireAssignableTo<TypeOnly<typeof current.FluidAppOdspUrlResolver>, TypeOnly<typeof old.FluidAppOdspUrlResolver>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_OdspUrlResolver": {"forwardCompat": false}
+ * "Class_OdspUrlResolver": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_OdspUrlResolver = requireAssignableTo<TypeOnly<old.OdspUrlResolver>, TypeOnly<current.OdspUrlResolver>>
+declare type old_as_current_for_Class_OdspUrlResolver = requireAssignableTo<TypeOnly<old.OdspUrlResolver>, TypeOnly<current.OdspUrlResolver>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_OdspUrlResolver": {"backCompat": false}
+ * "Class_OdspUrlResolver": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_OdspUrlResolver = requireAssignableTo<TypeOnly<current.OdspUrlResolver>, TypeOnly<old.OdspUrlResolver>>
+declare type current_as_old_for_Class_OdspUrlResolver = requireAssignableTo<TypeOnly<current.OdspUrlResolver>, TypeOnly<old.OdspUrlResolver>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_OdspUrlResolver": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_OdspUrlResolver = requireAssignableTo<TypeOnly<typeof current.OdspUrlResolver>, TypeOnly<typeof old.OdspUrlResolver>>

@@ -14,14 +14,14 @@ export function loadSegments(
 	segLimit: number,
 	markers: boolean = false,
 	withProps: boolean = true,
-) {
+): ISegment[] {
 	const BOMFreeContent = content.replace(/^\uFEFF/, "");
 
 	const paragraphs = BOMFreeContent.split(/\r?\n/);
 	for (let i = 0, len = paragraphs.length; i < len; i++) {
 		paragraphs[i] = paragraphs[i]
 			.replace(/\r?\n/g, " ")
-			.replace(/\u201c|\u201d/g, '"')
+			.replace(/\u201C|\u201D/g, '"')
 			.replace(/\u2019/g, "'");
 		if (!markers && i !== paragraphs.length - 1) {
 			paragraphs[i] += "\n";
@@ -77,7 +77,7 @@ export function loadText(
 	mergeTree: MergeTree,
 	segLimit: number,
 	markers = false,
-) {
+): MergeTree {
 	const segments = loadSegments(content, segLimit, markers);
 	mergeTree.reloadFromSegments(segments);
 	return mergeTree;

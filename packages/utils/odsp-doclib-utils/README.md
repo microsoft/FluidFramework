@@ -2,7 +2,7 @@
 
 Shared ODSP utilities for tools.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -35,6 +35,15 @@ To access the `legacy` APIs, import via `@fluidframework/odsp-doclib-utils/legac
 ## API Documentation
 
 API documentation for **@fluidframework/odsp-doclib-utils** is available at <https://fluidframework.com/docs/apis/odsp-doclib-utils>.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
 

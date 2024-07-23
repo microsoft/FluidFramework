@@ -133,7 +133,7 @@ function initializeEditableForest(data?: JsonableTree): {
 		changes.push(taggedChange);
 		const delta = intoDelta(taggedChange);
 		deltas.push(delta);
-		applyDelta(delta, forest, detachedFieldIndex);
+		applyDelta(delta, currentRevision, forest, detachedFieldIndex);
 		currentRevision = mintRevisionTag();
 	});
 	return {

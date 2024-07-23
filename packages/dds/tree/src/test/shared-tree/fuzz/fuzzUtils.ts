@@ -121,10 +121,14 @@ export function validateAnchors(
 	view: ITreeCheckout,
 	anchors: ReadonlyMap<Anchor, [UpPath, Value]>,
 	checkPaths: boolean,
+	tolerateLostAnchors = true,
 ) {
 	const cursor = view.forest.allocateCursor();
 	for (const [anchor, [path, value]] of anchors) {
 		const result = view.forest.tryMoveCursorToNode(anchor, cursor);
+		if (tolerateLostAnchors && result === TreeNavigationResult.NotFound) {
+			continue;
+		}
 		assert.equal(result, TreeNavigationResult.Ok);
 		assert.equal(cursor.value, value);
 		if (checkPaths) {

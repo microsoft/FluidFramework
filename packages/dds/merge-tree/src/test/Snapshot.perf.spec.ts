@@ -4,13 +4,14 @@
  */
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 
 import { TestString, loadSnapshot } from "./snapshot.utils.js";
 
 describe("MergeTree snapshots", () => {
-	let summary;
+	let summary: ISummaryTree | undefined;
 
-	for (const summarySize of [10, 50, 100, 500, 1000, 5_000, 10_000]) {
+	for (const summarySize of [10, 50, 100, 500, 1000, 5000, 10_000]) {
 		benchmark({
 			type: BenchmarkType.Measurement,
 			title: `load snapshot with ${summarySize} segments`,
@@ -25,7 +26,8 @@ describe("MergeTree snapshots", () => {
 				summary = str.getSummary();
 			},
 			benchmarkFnAsync: async () => {
-				await loadSnapshot(summary);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				await loadSnapshot(summary!);
 			},
 			after: () => {
 				summary = undefined;
