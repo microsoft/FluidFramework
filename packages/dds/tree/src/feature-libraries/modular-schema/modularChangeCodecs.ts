@@ -34,8 +34,6 @@ import {
 	fail,
 	idAllocatorFromMaxId,
 	oob,
-	setInNestedMap,
-	tryGetFromNestedMap,
 } from "../../util/index.js";
 import {
 	type FieldBatchCodec,
@@ -60,6 +58,7 @@ import {
 	type EncodedRevisionInfo,
 } from "./modularChangeFormat.js";
 import type {
+	ChangeAtomIdBTree,
 	FieldChangeMap,
 	FieldChangeset,
 	FieldId,
@@ -68,7 +67,7 @@ import type {
 	NodeId,
 } from "./modularChangeTypes.js";
 import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
-import { newCrossFieldKeyTable } from "./modularChangeFamily.js";
+import { newCrossFieldKeyTable, newTupleBTree } from "./modularChangeFamily.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
@@ -168,13 +167,13 @@ function makeModularChangeCodec(
 	function encodeFieldChangesForJson(
 		change: FieldChangeMap,
 		context: ChangeEncodingContext,
-		nodeChanges: ChangeAtomIdMap<NodeChangeset>,
+		nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
 	): EncodedFieldChangeMap {
 		const fieldContext: FieldChangeEncodingContext = {
 			baseContext: context,
 
 			encodeNode: (nodeId: NodeId): EncodedNodeChangeset => {
-				const node = tryGetFromNestedMap(nodeChanges, nodeId.revision, nodeId.localId);
+				const node = nodeChanges.get([nodeId.revision, nodeId.localId]);
 				assert(node !== undefined, 0x92e /* Unknown node ID */);
 				return encodeNodeChangesForJson(node, fieldContext);
 			},
@@ -267,8 +266,8 @@ function makeModularChangeCodec(
 						idAllocator,
 					);
 
-					setInNestedMap(decoded.nodeChanges, nodeId.revision, nodeId.localId, node);
-					setInNestedMap(decoded.nodeToParent, nodeId.revision, nodeId.localId, fieldId);
+					decoded.nodeChanges.set([nodeId.revision, nodeId.localId], node);
+					decoded.nodeToParent.set([nodeId.revision, nodeId.localId], fieldId);
 					return nodeId;
 				},
 			};
@@ -465,9 +464,9 @@ function makeModularChangeCodec(
 		decode: (encodedChange: EncodedModularChangeset, context) => {
 			const decoded: Mutable<ModularChangeset> = {
 				fieldChanges: new Map(),
-				nodeChanges: new Map(),
-				nodeToParent: new Map(),
-				nodeAliases: new Map(),
+				nodeChanges: newTupleBTree(),
+				nodeToParent: newTupleBTree(),
+				nodeAliases: newTupleBTree(),
 				crossFieldKeys: newCrossFieldKeyTable(),
 			};
 
