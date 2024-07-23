@@ -2,10 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
 
-import { FluidReleaseMachine as machine } from "../../src/machines/fluidReleaseMachine";
+import { FluidReleaseMachine as machine } from "../../src/machines/fluidReleaseMachine.js";
 
 chai.use(assertArrays);
 

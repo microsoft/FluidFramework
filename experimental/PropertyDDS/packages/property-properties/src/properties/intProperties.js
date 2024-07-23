@@ -7,7 +7,6 @@
  * @fileoverview Definition of the Int*Property classes
  */
 
-const _ = require("lodash");
 const { ChangeSet } = require("@fluid-experimental/property-changeset");
 const {
 	ConsoleUtils,
@@ -15,8 +14,10 @@ const {
 	Uint64,
 	Int64,
 } = require("@fluid-experimental/property-common");
-const { ValueProperty } = require("./valueProperty");
+const _ = require("lodash");
+
 const { _castFunctors } = require("./primitiveTypeCasts");
+const { ValueProperty } = require("./valueProperty");
 
 const BIT32 = 4294967296;
 

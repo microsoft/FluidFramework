@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* globals expect */
 import { DataBinder } from "../data_binder/dataBinder";
 
 import { catchConsoleErrors } from "./catchConsoleError";
 
-import { DataBinding } from "../data_binder/dataBinding";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
+import { DataBinding } from "../data_binder/dataBinding";
 import { ActivationQueryCacheHelper } from "../internal/activationQueryCacheHelper";
 import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
 
@@ -332,9 +333,7 @@ describe("DataBinder ActivationQueryCacheHelper", function () {
 				true,
 			);
 			// A cube in an array is considered a child
-			expect(scenario.helper.childrenMayHaveBindings("array<test3:cube-1.0.0>")).toEqual(
-				true,
-			);
+			expect(scenario.helper.childrenMayHaveBindings("array<test3:cube-1.0.0>")).toEqual(true);
 
 			tearDownScenario(scenario);
 		});
@@ -496,9 +495,7 @@ describe("DataBinder ActivationQueryCacheHelper", function () {
 			const scenario = setupScenario("map<test4:thing-1.0.0>", dataBinder);
 
 			// map<test4:thing-1.0.0> does not match map<test4:cube-1.0.0>
-			expect(scenario.helper.hierarchyMayHaveBindings("map<test4:cube-1.0.0>")).toEqual(
-				false,
-			);
+			expect(scenario.helper.hierarchyMayHaveBindings("map<test4:cube-1.0.0>")).toEqual(false);
 			// map<test4:thing-1.0.0> matches map<test4:inheritedThing-1.0.0>
 			expect(
 				scenario.helper.hierarchyMayHaveBindings("map<test4:inheritedThing-1.0.0>"),

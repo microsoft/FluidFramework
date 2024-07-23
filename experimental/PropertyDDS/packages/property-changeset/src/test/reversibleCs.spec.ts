@@ -7,9 +7,9 @@
  * @fileoverview In this file, we will test the path helper functions described in /src/properties/path_helper.js
  */
 
-import { copy as cloneDeep } from "fastest-json-copy";
+import cloneDeep from "lodash/cloneDeep.js";
 
-import { ChangeSet } from "../changeset";
+import { ChangeSet } from "../changeset.js";
 
 describe("Reversible ChangeSets", function () {
 	it("Inverting a string map insert", () => {

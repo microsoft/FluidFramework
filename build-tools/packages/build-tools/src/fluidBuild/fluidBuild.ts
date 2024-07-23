@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import chalk from "chalk";
 
 import { commonOptions } from "../common/commonOptions";
@@ -86,8 +87,8 @@ async function main() {
 				options.fullSymlink
 					? "full"
 					: options.fullSymlink === false
-					  ? "isolated"
-					  : "non-dependent"
+						? "isolated"
+						: "non-dependent"
 			} mode`,
 		);
 
@@ -138,7 +139,7 @@ async function main() {
 			? ` (${Math.floor(timer.getTotalTime() / 60000)}m ${(
 					(timer.getTotalTime() % 60000) /
 					1000
-			  ).toFixed(3)}s)`
+				).toFixed(3)}s)`
 			: "";
 	log(`Total time: ${(timer.getTotalTime() / 1000).toFixed(3)}s${timeInMinutes}`);
 

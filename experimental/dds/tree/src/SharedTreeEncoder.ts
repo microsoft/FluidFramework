@@ -3,60 +3,61 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
 import { IsoBuffer } from '@fluid-internal/client-utils';
+import { assert } from '@fluidframework/core-utils/internal';
+
+import { ChangeCompressor, compressEdit, decompressEdit } from './ChangeCompression.js';
 import { assertWithMessage, fail } from './Common.js';
 import { EditLog } from './EditLog.js';
 import { convertTreeNodes, newEdit } from './EditUtilities.js';
+import { convertEditIds, convertNodeDataIds } from './IdConversion.js';
 import { AttributionId, DetachedSequenceId, FinalNodeId, OpSpaceNodeId, TraitLabel } from './Identifiers.js';
 import { initialTree } from './InitialTree.js';
 import {
 	ContextualizedNodeIdNormalizer,
-	getNodeIdContext,
 	NodeIdContext,
 	NodeIdConverter,
 	NodeIdGenerator,
 	NodeIdNormalizer,
+	getNodeIdContext,
 	scopeIdNormalizer,
 	sequencedIdNormalizer,
 } from './NodeIdUtilities.js';
-import { getChangeNodeFromView, getChangeNode_0_0_2FromView } from './SerializationUtilities.js';
-import {
-	CompressedChangeInternal,
-	ChangeInternal,
-	SharedTreeSummary_0_0_2,
-	WriteFormat,
-	ChangeNode,
-	Edit,
-	SharedTreeEditOp,
-	SharedTreeOpType,
-	SharedTreeSummary,
-	EditWithoutId,
-	ChangeTypeInternal,
-	ChangeInternal_0_0_2,
-	SharedTreeEditOp_0_0_2,
-	reservedIdCount,
-	ChangeNode_0_0_2,
-	EditChunkContents,
-	EditLogSummary,
-	EditChunkContents_0_1_1,
-	FluidEditHandle,
-	StablePlaceInternal,
-	Side,
-} from './persisted-types/index.js';
 import { RevisionView } from './RevisionView.js';
+import { getChangeNodeFromView, getChangeNode_0_0_2FromView } from './SerializationUtilities.js';
 import { MutableStringInterner, StringInterner } from './StringInterner.js';
 import { SummaryContents } from './Summary.js';
 import { InterningTreeCompressor } from './TreeCompressor.js';
 import {
-	createSessionId,
-	hasOngoingSession,
 	IdCompressor,
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
+	createSessionId,
+	hasOngoingSession,
 } from './id-compressor/index.js';
-import { ChangeCompressor, compressEdit, decompressEdit } from './ChangeCompression.js';
-import { convertEditIds, convertNodeDataIds } from './IdConversion.js';
+import {
+	ChangeInternal,
+	ChangeInternal_0_0_2,
+	ChangeNode,
+	ChangeNode_0_0_2,
+	ChangeTypeInternal,
+	CompressedChangeInternal,
+	Edit,
+	EditChunkContents,
+	EditChunkContents_0_1_1,
+	EditLogSummary,
+	EditWithoutId,
+	FluidEditHandle,
+	SharedTreeEditOp,
+	SharedTreeEditOp_0_0_2,
+	SharedTreeOpType,
+	SharedTreeSummary,
+	SharedTreeSummary_0_0_2,
+	Side,
+	StablePlaceInternal,
+	WriteFormat,
+	reservedIdCount,
+} from './persisted-types/index.js';
 
 /**
  * Object capable of converting between the current internal representation for 0.1.1 edits and their wire format.
@@ -153,10 +154,7 @@ export class SharedTreeEncoder_0_1_1 {
 		}: SharedTreeSummary,
 		attributionId: AttributionId
 	): SummaryContents {
-		assertWithMessage(
-			version === WriteFormat.v0_1_1,
-			`Invalid summary version to decode: ${version}, expected: 0.1.1`
-		);
+		assertWithMessage(version === WriteFormat.v0_1_1, `Invalid summary version to decode: ${version}, expected: 0.1.1`);
 		assert(typeof editHistory === 'object', 0x633 /* 0.1.1 summary encountered with non-object edit history. */);
 
 		const idCompressor = hasOngoingSession(serializedIdCompressor)
@@ -179,15 +177,13 @@ export class SharedTreeEncoder_0_1_1 {
 				? {
 						get: async () => {
 							const baseHandle = chunk;
-							const contents: EditChunkContents = JSON.parse(
-								IsoBuffer.from(await baseHandle.get()).toString()
-							);
+							const contents: EditChunkContents = JSON.parse(IsoBuffer.from(await baseHandle.get()).toString());
 							// Note: any interned IDs referenced in chunks taken at the time of summarization must be included
 							// in the summary. So this interner is sufficient.
 							return this.decodeEditChunk(contents, sequencedNormalizer, interner);
 						},
 						baseHandle: chunk,
-				  }
+					}
 				: chunk.map((edit) => decompressEdit(this.changeCompressor, interner, sequencedNormalizer, edit)),
 		}));
 		return {
@@ -219,10 +215,7 @@ export class SharedTreeEncoder_0_1_1 {
 			const id = 0 as DetachedSequenceId;
 			changes.push(
 				ChangeInternal.build(children, id),
-				ChangeInternal.insert(
-					id,
-					StablePlaceInternal.atStartOf({ parent: initialTreeId, label: label as TraitLabel })
-				)
+				ChangeInternal.insert(id, StablePlaceInternal.atStartOf({ parent: initialTreeId, label: label as TraitLabel }))
 			);
 		});
 
@@ -261,11 +254,7 @@ export class SharedTreeEncoder_0_1_1 {
 		serializedIdCompressor: SerializedIdCompressorWithNoSession
 	): SharedTreeSummary {
 		const sequencedNormalizer = sequencedIdNormalizer(idNormalizer);
-		const currentTree = this.treeCompressor.compress(
-			getChangeNodeFromView(currentView),
-			interner,
-			sequencedNormalizer
-		);
+		const currentTree = this.treeCompressor.compress(getChangeNodeFromView(currentView), interner, sequencedNormalizer);
 
 		return {
 			currentTree,

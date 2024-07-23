@@ -20,10 +20,12 @@ export abstract class SortedSet<T, U extends string | number> {
 		return this.keySortedItems;
 	}
 
-	public addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => void) {
+	public addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => void): void {
 		const position = this.findItemPosition(newItem);
 		if (position.exists) {
-			update?.(this.keySortedItems[position.index], newItem);
+			// Non null asserting here because we know the item exists
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			update?.(this.keySortedItems[position.index]!, newItem);
 		} else {
 			this.keySortedItems.splice(position.index, 0, newItem);
 		}
@@ -54,7 +56,9 @@ export abstract class SortedSet<T, U extends string | number> {
 
 		while (start <= end) {
 			index = start + Math.floor((end - start) / 2);
-			const indexKey = this.getKey(this.keySortedItems[index]);
+			// TODO Non null asserting, why is this not null?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const indexKey = this.getKey(this.keySortedItems[index]!);
 			if (indexKey > itemKey) {
 				if (start === index) {
 					return { exists: false, index };

@@ -4,18 +4,22 @@
  */
 
 import fs from "fs";
-import { assert } from "@fluidframework/core-utils";
-import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions";
-import { emptyMessageStream } from "@fluidframework/driver-utils";
-import * as api from "@fluidframework/protocol-definitions";
+
+import { assert } from "@fluidframework/core-utils/internal";
+import {
+	IDocumentDeltaStorageService,
+	IStream,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { emptyMessageStream } from "@fluidframework/driver-utils/internal";
 
 /**
  * Provides access to the underlying delta storage on the local file storage for file driver.
  * @internal
  */
 export class FileDeltaStorageService implements IDocumentDeltaStorageService {
-	private readonly messages: api.ISequencedDocumentMessage[];
-	private lastOps: api.ISequencedDocumentMessage[] = [];
+	private readonly messages: ISequencedDocumentMessage[];
+	private lastOps: ISequencedDocumentMessage[] = [];
 
 	constructor(private readonly path: string) {
 		this.messages = [];
@@ -40,11 +44,11 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
 		to: number | undefined,
 		abortSignal?: AbortSignal,
 		cachedOnly?: boolean,
-	): IStream<api.ISequencedDocumentMessage[]> {
+	): IStream<ISequencedDocumentMessage[]> {
 		return emptyMessageStream;
 	}
 
-	public get ops(): readonly Readonly<api.ISequencedDocumentMessage>[] {
+	public get ops(): readonly Readonly<ISequencedDocumentMessage>[] {
 		return this.messages;
 	}
 
@@ -54,7 +58,7 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
 	 * @param from - First op to be fetched.
 	 * @param to - Last op to be fetched. This is exclusive.
 	 */
-	public getFromWebSocket(from: number, to: number): api.ISequencedDocumentMessage[] {
+	public getFromWebSocket(from: number, to: number): ISequencedDocumentMessage[] {
 		const readFrom = Math.max(from, 0); // Inclusive
 		const readTo = Math.min(to, this.messages.length); // Exclusive
 
@@ -63,12 +67,16 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
 		}
 
 		// Optimizations for multiple readers (replay tool)
-		if (this.lastOps.length > 0 && this.lastOps[0].sequenceNumber === readFrom + 1) {
+		// Non null asserting here because of the length check
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		if (this.lastOps.length > 0 && this.lastOps[0]!.sequenceNumber === readFrom + 1) {
 			return this.lastOps;
 		}
 		this.lastOps = this.messages.slice(readFrom, readTo);
 		assert(
-			this.lastOps[0].sequenceNumber === readFrom + 1,
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.lastOps[0]!.sequenceNumber === readFrom + 1,
 			0x091 /* "Retrieved ops' first sequence number has unexpected value!" */,
 		);
 		return this.lastOps;

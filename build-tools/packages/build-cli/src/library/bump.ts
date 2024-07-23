@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Context, MonoRepo, Logger, Package } from "@fluidframework/build-tools";
 import {
 	DEFAULT_INTERDEPENDENCY_RANGE,
 	InterdependencyRange,
@@ -12,8 +11,10 @@ import {
 	bumpVersionScheme,
 	isVersionBumpType,
 } from "@fluid-tools/version-tools";
+import { Logger, MonoRepo, Package } from "@fluidframework/build-tools";
+import { Context } from "./context.js";
 
-import { setVersion } from "./package";
+import { setVersion } from "./package.js";
 
 /**
  * A type representing the types of dependency updates that can be done. This type is intended to match the type
@@ -62,7 +63,6 @@ export async function bumpReleaseGroup(
 	releaseGroupOrPackage: MonoRepo | Package,
 	bumpType: VersionChangeType,
 	scheme?: VersionScheme,
-	// eslint-disable-next-line default-param-last
 	interdependencyRange: InterdependencyRange = DEFAULT_INTERDEPENDENCY_RANGE,
 	log?: Logger,
 ): Promise<void> {

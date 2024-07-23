@@ -4,6 +4,7 @@
  */
 
 import React from "react";
+
 import { IBubble } from "../types.js";
 
 export type IBubbleProps = Pick<IBubble, "x" | "y" | "r">;

@@ -4,7 +4,8 @@
  */
 
 import * as React from "react";
-import { ModalConsumer } from "./ModalManager";
+
+import { ModalConsumer } from "./ModalManager.js";
 
 /**
  * @internal

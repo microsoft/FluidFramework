@@ -3,44 +3,40 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { LocalServerTestDriver } from "@fluid-private/test-drivers";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import {
-	ITestObjectProvider,
-	TestContainerRuntimeFactory,
-	TestFluidObjectFactory,
-	TestFluidObject,
-	TestObjectProvider,
-	summarizeNow,
-	createSummarizerCore,
-} from "@fluidframework/test-utils";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import {
+	ChannelCollection,
+	ChannelCollectionFactory,
 	IContainerRuntimeOptions,
 	ISummarizer,
 	SummaryCollection,
-	ChannelCollectionFactory,
-} from "@fluidframework/container-runtime";
-import { LocalServerTestDriver } from "@fluid-private/test-drivers";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { Loader } from "@fluidframework/container-loader";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+} from "@fluidframework/container-runtime/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITestObjectProvider,
+	TestContainerRuntimeFactory,
+	TestFluidObject,
+	TestFluidObjectFactory,
+	TestObjectProvider,
+	createSummarizerCore,
+	summarizeNow,
+} from "@fluidframework/test-utils/internal";
 
 /**
  * ADO:7302 This needs to be revisited after settling on a set of
  * unified creation APIs for the nested datastores and the container runtime.
  */
 interface IDataStores extends IFluidDataStoreChannel {
-	_createFluidDataStoreContext(
-		pkg: string[],
-		id: string,
-		props?: any,
-		loadingGroupId?: string,
-	): unknown;
+	createDataStoreContext(pkg: string[], props?: any, loadingGroupId?: string): any;
 }
 
 describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) => {
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 	const { SharedMap } = apis.dds;
 
 	let provider: ITestObjectProvider;
@@ -70,6 +66,8 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	const dataStoreFactory = new ChannelCollectionFactory(
 		[[testObjectFactory.type, Promise.resolve(testObjectFactory)]],
 		async (runtime: IFluidDataStoreChannel) => runtime,
+		(...args: ConstructorParameters<typeof ChannelCollection>) =>
+			new ChannelCollection(...args),
 	);
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
@@ -164,10 +162,11 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	it("Basic test", async () => {
 		const dataStores = await initialize();
 
-		const res1 = dataStores._createFluidDataStoreContext([testObjectFactory.type], "test");
-		const res2 = await (res1 as any).realize();
-		res2.makeVisibleAndAttachGraph();
-		const testObject1 = (await dataStores.request({ url: "/test" })).value as TestFluidObject;
+		const context = dataStores.createDataStoreContext([testObjectFactory.type]);
+		const url = `/${context.id}`;
+		const channel = await context.realize();
+		channel.makeVisibleAndAttachGraph();
+		const testObject1 = (await dataStores.request({ url })).value as TestFluidObject;
 		testObject1.root.set("testKey", 100);
 
 		await waitForSummary();
@@ -175,7 +174,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 
 		await provider.ensureSynchronized();
 
-		const testObject2 = (await dataStores2.request({ url: "/test" })).value as TestFluidObject;
+		const testObject2 = (await dataStores2.request({ url })).value as TestFluidObject;
 		const value = testObject2.root.get("testKey");
 		assert(value === 100, "same value");
 	});

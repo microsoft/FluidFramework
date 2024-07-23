@@ -5,11 +5,11 @@
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
-import { renderContactCollection } from "../src/view.js";
 import {
 	ContactCollectionContainerRuntimeFactory,
 	IContactCollectionAppModel,
 } from "../src/containerCode.js";
+import { renderContactCollection } from "../src/view.js";
 
 const getContactUrl = (contactId: string): string => {
 	const contactUrl = new URL(location.toString());

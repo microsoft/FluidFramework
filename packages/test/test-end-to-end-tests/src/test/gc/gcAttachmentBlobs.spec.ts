@@ -4,24 +4,26 @@
  */
 
 import { strict as assert } from "assert";
-import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IContainer } from "@fluidframework/container-definitions";
 
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { blobManagerBasePath } from "@fluidframework/container-runtime/internal/test/blobManager";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { BlobManager } from "@fluidframework/container-runtime/test/blobManager";
+} from "@fluidframework/test-utils/internal";
+
 import {
+	MockDetachedBlobStorage,
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
-	MockDetachedBlobStorage,
 } from "../mockDetachedBlobStorage.js";
+
 import {
 	getGCStateFromSummary,
 	waitForContainerWriteModeConnectionWrite,
@@ -42,7 +44,6 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 					},
 				},
 				gcOptions: {
-					gcAllowed: true,
 					runGCInTestMode: deleteUnreferencedContent,
 				},
 			},
@@ -60,7 +61,6 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 			const { summary } = await summarizerRuntime.summarize({
 				runGC: true,
 				fullTree: true,
-				trackState: false,
 			});
 
 			const gcState = getGCStateFromSummary(summary);
@@ -69,7 +69,7 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 			const nodeTimestamps: Map<string, "referenced" | "unreferenced"> = new Map();
 			for (const [nodePath, nodeData] of Object.entries(gcState.gcNodes)) {
 				// Filter blob nodes.
-				if (nodePath.slice(1).startsWith(BlobManager.basePath)) {
+				if (nodePath.slice(1).startsWith(blobManagerBasePath)) {
 					// Unreferenced nodes have unreferenced timestamp associated with them.
 					nodeTimestamps.set(
 						nodePath,
@@ -78,26 +78,6 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 				}
 			}
 			return nodeTimestamps;
-		}
-
-		/**
-		 * Retrieves the storage Id from the given reference map of blobIds. Note that this only works if the given
-		 * localId blobs are mapped to the same storageId.
-		 */
-		function getStorageIdFromReferenceMap(
-			referenceNodeStateMap: Map<string, "referenced" | "unreferenced">,
-			localBlobIds: string[],
-		): string {
-			let storageId: string | undefined;
-			referenceNodeStateMap.forEach((state, nodePath) => {
-				if (localBlobIds.includes(nodePath)) {
-					return;
-				}
-				assert(storageId === undefined, "Unexpected blob node in reference state map");
-				storageId = nodePath;
-			});
-			assert(storageId !== undefined, "No storage id node in reference state map");
-			return storageId;
 		}
 
 		/**
@@ -123,6 +103,7 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 
 		beforeEach("setup", async function () {
 			provider = getTestObjectProvider();
+			// Skip these tests for drivers / services that do not support attachment blobs.
 			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();
 			}
@@ -198,7 +179,8 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 			const defaultDataStore2 = (await container2.getEntryPoint()) as ITestDataObject;
 
 			// Validate the blob handle's path is the same as the one in the first container.
-			const blobHandle2 = defaultDataStore2._root.get<IFluidHandle<ArrayBufferLike>>("blob");
+			const blobHandle2 =
+				defaultDataStore2._root.get<IFluidHandleInternal<ArrayBufferLike>>("blob");
 			assert.strictEqual(
 				blobHandle.absolutePath,
 				blobHandle2?.absolutePath,

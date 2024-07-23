@@ -2,13 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import nconf from "nconf";
+
 import { isInternalVersionScheme } from "@fluid-tools/version-tools";
+import nconf from "nconf";
+
+import { pkgVersion } from "./packageVersion.js";
 import { resolveVersion } from "./versionUtils.js";
 // This import ensures nconf has been configured to load from correct sources before we compute the right baseVersion.
 // eslint-disable-next-line import/no-unassigned-import
-import "../compatOptions.cjs";
-import { pkgVersion } from "./packageVersion.js";
+import "./compatOptions.js";
 
 function getCodeVersion() {
 	const configVersion = nconf.get("fluid:test:baseVersion");
@@ -39,6 +41,13 @@ export const baseVersion = resolveVersion(
 	false,
 );
 
+/**
+ * Base version used for N min compat versions calculations. Decoupled from baseVersion or codeVersion to avoid
+ * running with issues while bumping a new version or releasing.
+ *
+ * @internal
+ */
+export const baseVersionForMinCompat = "2.0.0-rc.4.0.0";
 /**
  * The problem with just using the code version, is that the current version in the test is actually 0.0.0-xyz-test
  * we want to tell the test to use 0.0.0-xyz-test as the current version. If we are asking for an N-1 version, that

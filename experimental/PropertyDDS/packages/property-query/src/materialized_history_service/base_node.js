@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Base class B-Tree nodes
  */
@@ -427,12 +428,11 @@
 				);
 
 				if (lastDeltaChangeSetIndex === -1) {
-					let { node, deltaIndex } =
-						await this._btreeManager._storage.getNodeExpectingDelta(
-							originalNodeRef,
-							previousSubId,
-							false,
-						);
+					let { node, deltaIndex } = await this._btreeManager._storage.getNodeExpectingDelta(
+						originalNodeRef,
+						previousSubId,
+						false,
+					);
 					newNode = node;
 					lastDeltaChangeSetIndex = deltaIndex;
 				}

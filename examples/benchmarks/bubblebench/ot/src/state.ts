@@ -3,24 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { SharedJson1 } from "@fluid-experimental/sharejs-json1";
 import {
 	IAppState,
 	IClient,
-	IArrayish,
 	makeBubble,
 	randomColor,
+	type SimpleClient,
 } from "@fluid-example/bubblebench-common";
+import { SharedJson1 } from "@fluid-experimental/sharejs-json1";
+
 import { observe } from "./proxy/index.js";
 
 interface IApp {
-	clients: IArrayish<IClient>;
+	clients: IArrayish<SimpleClient>;
 }
+
+interface IArrayish<T> extends ArrayLike<T>, Pick<T[], "push">, Iterable<T> {}
 
 export class AppState implements IAppState {
 	private readonly root: IApp;
 
-	public readonly localClient: IClient;
+	public readonly localClient: SimpleClient;
 
 	constructor(
 		tree: SharedJson1,

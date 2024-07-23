@@ -4,13 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { MockHandle } from "@fluidframework/test-runtime-utils";
-import { MapTree } from "../../core/index.js";
 
+import type { MapTree } from "../../core/index.js";
+import { SchemaBuilder, leaf } from "../../domains/index.js";
 import {
-	isTreeValue,
+	type ContextuallyTypedNodeDataObject,
 	applyTypesFromContext,
-	ContextuallyTypedNodeDataObject,
 	cursorFromContextualData,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
@@ -20,23 +19,8 @@ import {
 	FlexFieldSchema,
 	jsonableTreeFromCursor,
 } from "../../feature-libraries/index.js";
-import { leaf, SchemaBuilder } from "../../domains/index.js";
 
 describe("ContextuallyTyped", () => {
-	it("isTreeValue", () => {
-		assert(isTreeValue(0));
-		assert(isTreeValue(0.001));
-		assert(isTreeValue(NaN));
-		assert(isTreeValue(true));
-		assert(isTreeValue(false));
-		assert(isTreeValue(""));
-		assert(!isTreeValue({}));
-		assert(!isTreeValue(undefined));
-		assert(isTreeValue(null));
-		assert(!isTreeValue([]));
-		assert(isTreeValue(new MockHandle(5)));
-	});
-
 	it("applyTypesFromContext omits empty fields", () => {
 		const builder = new SchemaBuilder({
 			scope: "applyTypesFromContext",
@@ -48,7 +32,11 @@ describe("ContextuallyTyped", () => {
 		const mapTree = applyTypesFromContext({ schema }, new Set([numbersObject]), {
 			numbers: [],
 		});
-		const expected: MapTree = { fields: new Map(), type: numbersObject.name, value: undefined };
+		const expected: MapTree = {
+			fields: new Map(),
+			type: numbersObject.name,
+			value: undefined,
+		};
 		assert.deepEqual(mapTree, expected);
 	});
 
@@ -61,7 +49,11 @@ describe("ContextuallyTyped", () => {
 		const primaryObject = builder.fieldNode("numbers", numberSequence);
 		const schema = builder.intoSchema(numberSequence);
 		const mapTree = applyTypesFromContext({ schema }, new Set([primaryObject]), []);
-		const expected: MapTree = { fields: new Map(), type: primaryObject.name, value: undefined };
+		const expected: MapTree = {
+			fields: new Map(),
+			type: primaryObject.name,
+			value: undefined,
+		};
 		assert.deepEqual(mapTree, expected);
 	});
 
@@ -105,11 +97,9 @@ describe("ContextuallyTyped", () => {
 				libraries: [leaf.library],
 			});
 
-			const recursiveReference = () => nodeSchema;
-			builder.fixRecursiveReference(recursiveReference);
-			const nodeSchema = builder.object("node", {
+			const nodeSchema = builder.objectRecursive("node", {
 				foo: builder.required(leaf.string),
-				child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [recursiveReference]),
+				child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchema]),
 			});
 
 			const nodeSchemaData = builder.intoSchema(builder.optional(nodeSchema));

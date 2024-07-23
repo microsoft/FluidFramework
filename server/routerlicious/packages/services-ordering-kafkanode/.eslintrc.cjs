@@ -10,6 +10,8 @@ module.exports = {
 	],
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
+		// This package uses node's events APIs.
+		// This should probably be reconsidered, but until then we will leave an exception for it here.
 		"import/no-nodejs-modules": "off",
 		"promise/catch-or-return": ["error", { allowFinally: true }],
 

@@ -3,8 +3,9 @@
 	"compilerOptions": {
 		"rootDir": "src",
 		"outDir": "./lib",
-		"target": "es6",
 		"types": ["chai", "mocha"],
+		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],
 }

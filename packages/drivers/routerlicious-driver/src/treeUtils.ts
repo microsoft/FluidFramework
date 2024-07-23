@@ -4,14 +4,11 @@
  */
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import {
-	SummaryType,
-	ISnapshotTree,
-	ISummaryTree,
-	SummaryObject,
-} from "@fluidframework/protocol-definitions";
-import { INormalizedWholeSnapshot } from "./contracts";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+
+import { INormalizedWholeSnapshot } from "./contracts.js";
 
 /**
  * Summary tree assembler props

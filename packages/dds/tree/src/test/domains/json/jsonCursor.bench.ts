@@ -4,49 +4,49 @@
  */
 
 import { strict as assert } from "assert";
-import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+
+import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+
 import {
-	ITreeCursor,
-	jsonableTreeFromCursor,
 	EmptyKey,
-	JsonCompatible,
-	brand,
-} from "../../../index.js";
-import {
-	singleJsonCursor,
-	cursorToJsonObject,
-	jsonSchema,
-	jsonRoot,
-	SchemaBuilder,
-} from "../../../domains/index.js";
-import {
-	buildForest,
-	defaultSchemaPolicy,
-	mapTreeFromCursor,
-	cursorForMapTreeNode,
-	cursorForJsonableTreeNode,
-	buildChunkedForest,
-	intoStoredSchema,
-} from "../../../feature-libraries/index.js";
-import {
-	FieldKey,
-	initializeForest,
-	JsonableTree,
-	moveToDetachedField,
+	type FieldKey,
+	type ITreeCursor,
+	type JsonableTree,
 	TreeStoredSchemaRepository,
+	initializeForest,
+	moveToDetachedField,
 } from "../../../core/index.js";
+import {
+	SchemaBuilder,
+	cursorToJsonObject,
+	jsonRoot,
+	jsonSchema,
+	singleJsonCursor,
+} from "../../../domains/index.js";
 import {
 	basicChunkTree,
 	defaultChunkPolicy,
 	makeTreeChunker,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
-import { testRevisionTagCodec } from "../../utils.js";
+import {
+	buildChunkedForest,
+	buildForest,
+	cursorForJsonableTreeNode,
+	cursorForMapTreeNode,
+	defaultSchemaPolicy,
+	intoStoredSchema,
+	jsonableTreeFromCursor,
+	mapTreeFromCursor,
+} from "../../../feature-libraries/index.js";
+import { brand, type JsonCompatible } from "../../../util/index.js";
+
+import { testIdCompressor, testRevisionTagCodec } from "../../utils.js";
+import { averageValues, sum, sumMap } from "./benchmarks.js";
 import { Canada, generateCanada } from "./canada.js";
-import { averageTwoValues, sum, sumMap } from "./benchmarks.js";
-import { generateTwitterJsonByByteSize } from "./twitter.js";
 import { CitmCatalog, generateCitmJson } from "./citm.js";
 import { clone } from "./jsObjectUtil.js";
+import { generateTwitterJsonByByteSize } from "./twitter.js";
 
 // Shared tree keys that map to the type used by the Twitter type/dataset
 export const TwitterKey = {
@@ -61,8 +61,9 @@ export const TwitterKey = {
 function bench(
 	data: {
 		name: string;
-		getJson: () => any;
-		dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any;
+		getJson: () => JsonCompatible;
+		// Some synthetic workload that invokes this callback with numbers from the data.
+		dataConsumer: (cursor: ITreeCursor, calculate: (a: number) => void) => void;
 	}[],
 ) {
 	const schemaCollection = new SchemaBuilder({
@@ -85,11 +86,7 @@ function bench(
 				before: () => {
 					const cloned = clone(json);
 					assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
-					assert.notEqual(
-						cloned,
-						json,
-						"clone() must not return the same tree instance.",
-					);
+					assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
 				},
 				benchmarkFn: () => {
 					clone(json);
@@ -102,9 +99,7 @@ function bench(
 				[
 					"MapCursor",
 					() =>
-						cursorForMapTreeNode(
-							mapTreeFromCursor(cursorForJsonableTreeNode(encodedTree)),
-						),
+						cursorForMapTreeNode(mapTreeFromCursor(cursorForJsonableTreeNode(encodedTree))),
 				],
 				[
 					"object-forest Cursor",
@@ -114,6 +109,7 @@ function bench(
 							forest,
 							[cursorForJsonableTreeNode(encodedTree)],
 							testRevisionTagCodec,
+							testIdCompressor,
 						);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);
@@ -134,13 +130,12 @@ function bench(
 				[
 					"chunked-forest Cursor",
 					() => {
-						const forest = buildChunkedForest(
-							makeTreeChunker(schema, defaultSchemaPolicy),
-						);
+						const forest = buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy));
 						initializeForest(
 							forest,
 							[cursorForJsonableTreeNode(encodedTree)],
 							testRevisionTagCodec,
+							testIdCompressor,
 						);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);
@@ -154,10 +149,7 @@ function bench(
 				string,
 				(
 					cursor: ITreeCursor,
-					dataConsumer: (
-						cursor: ITreeCursor,
-						calculate: (...operands: any[]) => void,
-					) => any,
+					dataConsumer: (cursor: ITreeCursor, calculate: (a: number) => void) => unknown,
 				) => void,
 			][] = [
 				["cursorToJsonObject", cursorToJsonObject],
@@ -165,7 +157,7 @@ function bench(
 				["mapTreeFromCursor", mapTreeFromCursor],
 				["sum", sum],
 				["sum-map", sumMap],
-				["averageTwoValues", averageTwoValues],
+				["averageValues", averageValues],
 			];
 
 			for (const [factoryName, factory] of cursorFactories) {
@@ -200,7 +192,7 @@ const canada = generateCanada(
 
 function extractCoordinatesFromCanada(
 	cursor: ITreeCursor,
-	calculate: (x: number, y: number) => void,
+	calculate: (x: number) => void,
 ): void {
 	cursor.enterField(Canada.SharedTreeFieldKey.features);
 	cursor.enterNode(0);
@@ -227,7 +219,8 @@ function extractCoordinatesFromCanada(
 			cursor.exitNode();
 			cursor.exitField();
 
-			calculate(x, y);
+			calculate(x);
+			calculate(y);
 		}
 
 		cursor.exitField();
@@ -308,13 +301,34 @@ function extractAvgValsFromCitm(
 }
 
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
-const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
+const twitter = generateTwitterJsonByByteSize(
+	isInPerformanceTestingMode ? 2500000 : 466906,
+	true,
+);
 // The original benchmark citm_catalog.json 500299 Bytes according to getSizeInBytes.
 const citm = isInPerformanceTestingMode
 	? generateCitmJson(2, 2500000)
 	: generateCitmJson(1, 500299);
 describe("ITreeCursor", () => {
-	bench([{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada }]);
-	bench([{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitter }]);
-	bench([{ name: "citm", getJson: () => citm, dataConsumer: extractAvgValsFromCitm }]);
+	bench([
+		{
+			name: "canada",
+			getJson: () => canada as unknown as JsonCompatible,
+			dataConsumer: (cursor) => averageValues(cursor, extractCoordinatesFromCanada),
+		},
+	]);
+	bench([
+		{
+			name: "twitter",
+			getJson: () => twitter as unknown as JsonCompatible,
+			dataConsumer: extractAvgValsFromTwitter,
+		},
+	]);
+	bench([
+		{
+			name: "citm",
+			getJson: () => citm as unknown as JsonCompatible,
+			dataConsumer: extractAvgValsFromCitm,
+		},
+	]);
 });

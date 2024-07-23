@@ -4,13 +4,15 @@
  */
 
 import { strict as assert } from "node:assert";
-import { type ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
+
 import { AttachState } from "@fluidframework/container-definitions";
-// import { ConnectionState } from "@fluidframework/container-loader";
-// import { timeoutPromise } from "@fluidframework/test-utils";
-import { OdspConnectionConfig } from "../interfaces.js";
+import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { type ContainerSchema } from "@fluidframework/fluid-static";
+import { SharedMap } from "@fluidframework/map/internal";
+
+import type { OdspConnectionConfig } from "../interfaces.js";
 import { OdspClient } from "../odspClient.js";
+
 import { OdspTestTokenProvider } from "./odspTestTokenProvider.js";
 
 /**
@@ -18,7 +20,6 @@ import { OdspTestTokenProvider } from "./odspTestTokenProvider.js";
  */
 export interface OdspTestCredentials {
 	clientId: string;
-	clientSecret: string;
 	username: string;
 	password: string;
 }
@@ -28,7 +29,6 @@ export interface OdspTestCredentials {
  */
 const clientCreds: OdspTestCredentials = {
 	clientId: "<client_id>",
-	clientSecret: "<client_secret>",
 	username: "<email_id>",
 	password: "<password>",
 };
@@ -38,16 +38,19 @@ const clientCreds: OdspTestCredentials = {
  *
  * @returns OdspClient - An instance of the odsp-client.
  */
-function createOdspClient(): OdspClient {
+function createOdspClient(props: { configProvider?: IConfigProviderBase } = {}): OdspClient {
 	// Configuration for connecting to the ODSP service.
 	const connectionProperties: OdspConnectionConfig = {
 		tokenProvider: new OdspTestTokenProvider(clientCreds), // Token provider using the provided test credentials.
 		siteUrl: "<site_url>",
-		driveId: "<raas_drive_id>",
+		driveId: "<sharepoint_embedded_container_id>",
 		filePath: "<file_path>",
 	};
 
-	return new OdspClient({ connection: connectionProperties });
+	return new OdspClient({
+		connection: connectionProperties,
+		configProvider: props.configProvider,
+	});
 }
 
 describe("OdspClient", () => {
@@ -90,6 +93,26 @@ describe("OdspClient", () => {
 			container.attachState,
 			AttachState.Detached,
 			"Container should be detached",
+		);
+	});
+
+	it("GC is disabled by default", async () => {
+		const { container: container_defaultConfig } = await client.createContainer(schema);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const { shouldRunSweep, tombstoneAutorecoveryEnabled, throwOnTombstoneLoad } =
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+			(container_defaultConfig as any).container._runtime.garbageCollector.configs;
+
+		const expectedConfigs = {
+			shouldRunSweep: "NO",
+			tombstoneAutorecoveryEnabled: false,
+			throwOnTombstoneLoad: false,
+		};
+		assert.deepStrictEqual(
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			{ shouldRunSweep, tombstoneAutorecoveryEnabled, throwOnTombstoneLoad },
+			expectedConfigs,
+			"Expected GC to be disabled per compatibilityModeRuntimeOptions",
 		);
 	});
 });

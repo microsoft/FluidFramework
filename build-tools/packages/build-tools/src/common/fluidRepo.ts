@@ -2,21 +2,21 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as path from "path";
 
 import {
 	DEFAULT_INTERDEPENDENCY_RANGE,
 	InterdependencyRange,
-	ReleaseVersion,
 	VersionBumpType,
 } from "@fluid-tools/version-tools";
 
+import registerDebug from "debug";
+import { TaskDefinitionsOnDisk } from "./fluidTaskDefinitions";
 import { loadFluidBuildConfig } from "./fluidUtils";
 import { MonoRepo } from "./monoRepo";
 import { Package, Packages } from "./npmPackage";
 import { ExecAsyncResult } from "./utils";
-import { TaskDefinitionsOnDisk } from "./fluidTaskDefinitions";
-import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");
 
 /**
@@ -417,21 +417,4 @@ export class FluidRepo {
 		// Replace \ in result with / in case OS is Windows.
 		return path.relative(this.resolvedRoot, p).replace(/\\/g, "/");
 	}
-}
-
-/**
- * Represents a release version and its release date, if applicable.
- *
- * @internal
- */
-export interface VersionDetails {
-	/**
-	 * The version of the release.
-	 */
-	version: ReleaseVersion;
-
-	/**
-	 * The date the version was released, if applicable.
-	 */
-	date?: Date;
 }

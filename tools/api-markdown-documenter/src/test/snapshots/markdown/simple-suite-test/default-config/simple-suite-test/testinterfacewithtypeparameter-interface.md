@@ -1,5 +1,3 @@
-<!-- Front Matter! -->
-
 # TestInterfaceWithTypeParameter
 
 [Packages](./) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)
@@ -39,6 +37,8 @@ A test interface property using generic type parameter
 ```typescript
 testProperty: T;
 ```
+
+**Type:** T
 
 #### Remarks {#testproperty-remarks}
 

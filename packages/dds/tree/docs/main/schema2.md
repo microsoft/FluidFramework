@@ -38,13 +38,13 @@ Instead of one kind of node in view schema, have 4, each with a subset of our cu
    otherwise the tree would be required to have a non-empty field for all possible string keys (which would be an infinite sized tree) to be in schema.
    This is the same functionality currently done by making a node schema with extra local fields.
 4. Field Node: Has a single unnamed field (using the empty field key).
-   When reading in the editable tree API implicitly, unwraps to the field.
+   When reading in the flex tree API implicitly, unwraps to the field.
    This provides the functionality currently done by making a node schema with a primary field (empty field key), which is used for "array nodes".
 
 Each of these will get a separate API to declare (similar to SchemaBuilder.object and SchemaBuilder.primitive, except we will have 4 options).
-Each will also get its own API for accessing it in editable tree, though all will extend a common generic tree traversal API as well.
+Each will also get its own API for accessing it in flex tree, though all will extend a common generic tree traversal API as well.
 
-This will mirror how field kinds work, where we have a small collection of supported kinds in schema, and each gets its own editable tree API.
+This will mirror how field kinds work, where we have a small collection of supported kinds in schema, and each gets its own flex tree API.
 
 Struct Nodes will also get an additional feature: custom field names.
 Custom field names allow the view schema to declare the string to be used for the name of the field in schema-aware APIs instead of just using the field key.

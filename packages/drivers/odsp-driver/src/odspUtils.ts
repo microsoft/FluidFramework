@@ -3,59 +3,62 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions";
+import { performance } from "@fluid-internal/client-utils";
 import {
-	isOnline,
+	ITelemetryBaseLogger,
+	ITelemetryBaseProperties,
+} from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions/internal";
+import {
+	type AuthorizationError,
+	NetworkErrorBasic,
+	NonRetryableError,
 	OnlineStatus,
 	RetryableError,
-	NonRetryableError,
-	NetworkErrorBasic,
-	type AuthorizationError,
-} from "@fluidframework/driver-utils";
-import { performance } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+	isOnline,
+} from "@fluidframework/driver-utils/internal";
 import {
+	fetchIncorrectResponse,
+	getSPOAndGraphRequestIdsFromResponse,
+	throwOdspNetworkError,
+} from "@fluidframework/odsp-doclib-utils/internal";
+import {
+	ICacheEntry,
+	IOdspResolvedUrl,
+	IOdspUrlParts,
+	ISharingLinkKind,
+	InstrumentedStorageTokenFetcher,
+	InstrumentedTokenFetcher,
+	OdspErrorTypes,
+	authHeaderFromTokenResponse,
+	OdspResourceTokenFetchOptions,
+	TokenFetchOptions,
+	TokenFetcher,
+	isTokenFromCache,
+	snapshotKey,
+	tokenFromResponse,
+	snapshotWithLoadingGroupIdKey,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	type IConfigProvider,
+	type IFluidErrorBase,
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 	TelemetryDataTag,
 	createChildLogger,
 	wrapError,
-	type IFluidErrorBase,
-} from "@fluidframework/telemetry-utils";
-import {
-	fetchIncorrectResponse,
-	throwOdspNetworkError,
-	getSPOAndGraphRequestIdsFromResponse,
-} from "@fluidframework/odsp-doclib-utils/internal";
-import {
-	IOdspResolvedUrl,
-	TokenFetchOptions,
-	OdspErrorTypes,
-	tokenFromResponse,
-	isTokenFromCache,
-	OdspResourceTokenFetchOptions,
-	ISharingLinkKind,
-	TokenFetcher,
-	ICacheEntry,
-	snapshotKey,
-	InstrumentedStorageTokenFetcher,
-	IOdspUrlParts,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { fetch } from "./fetch.js";
-import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { IOdspSnapshot } from "./contracts.js";
 // eslint-disable-next-line import/no-deprecated
 import { ISnapshotContents } from "./odspPublicUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 
 /**
- * Parse the given url and return the origin (host name)
- */
-export const getOrigin = (url: string): string => new URL(url).origin;
-
-/**
+ * @legacy
  * @alpha
  */
 export interface IOdspResponse<T> {
@@ -65,7 +68,14 @@ export interface IOdspResponse<T> {
 	duration: number;
 }
 
-export interface TokenFetchOptionsEx extends TokenFetchOptions {
+/**
+ * This interface captures the portion of TokenFetchOptions required for refreshing tokens
+ * It is controlled by logic in getWithRetryForTokenRefresh to specify what is the required refresh behavior
+ */
+export interface TokenFetchOptionsEx {
+	refresh: boolean;
+	claims?: string;
+	tenantId?: string;
 	/**
 	 * The previous error we hit in {@link getWithRetryForTokenRefresh}.
 	 */
@@ -168,13 +178,9 @@ export async function fetchHelper(
 			// This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			if (error.name === "AbortError") {
-				throw new RetryableError(
-					"Fetch Timeout (AbortError)",
-					OdspErrorTypes.fetchTimeout,
-					{
-						driverVersion,
-					},
-				);
+				throw new RetryableError("Fetch Timeout (AbortError)", OdspErrorTypes.fetchTimeout, {
+					driverVersion,
+				});
 			}
 			// TCP/IP timeout
 			if (redactedErrorText.includes("ETIMEDOUT")) {
@@ -220,7 +226,10 @@ export async function fetchArray(
 	requestInfo: RequestInfo,
 	requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<ArrayBuffer>> {
-	const { content, headers, propsToLog, duration } = await fetchHelper(requestInfo, requestInit);
+	const { content, headers, propsToLog, duration } = await fetchHelper(
+		requestInfo,
+		requestInit,
+	);
 	let arrayBuffer: ArrayBuffer;
 	try {
 		arrayBuffer = await content.arrayBuffer();
@@ -254,7 +263,10 @@ export async function fetchAndParseAsJSONHelper<T>(
 	requestInfo: RequestInfo,
 	requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<T>> {
-	const { content, headers, propsToLog, duration } = await fetchHelper(requestInfo, requestInit);
+	const { content, headers, propsToLog, duration } = await fetchHelper(
+		requestInfo,
+		requestInit,
+	);
 	let text: string | undefined;
 	try {
 		text = await content.text();
@@ -340,40 +352,39 @@ export const createOdspLogger = (logger?: ITelemetryBaseLogger): ITelemetryLogge
 		},
 	});
 
-export function evalBlobsAndTrees(snapshot: IOdspSnapshot): {
-	numTrees: number;
-	numBlobs: number;
-	encodedBlobsSize: number;
-	decodedBlobsSize: number;
-} {
-	let numTrees = 0;
-	let numBlobs = 0;
-	let encodedBlobsSize = 0;
-	let decodedBlobsSize = 0;
-	for (const tree of snapshot.trees) {
-		for (const treeEntry of tree.entries) {
-			if (treeEntry.type === "blob") {
-				numBlobs++;
-			} else if (treeEntry.type === "tree") {
-				numTrees++;
-			}
-		}
-	}
-	if (snapshot.blobs !== undefined) {
-		for (const blob of snapshot.blobs) {
-			decodedBlobsSize += blob.size;
-			encodedBlobsSize += blob.content.length;
-		}
-	}
-	return { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize };
+/**
+ * Returns a function that can be used to fetch storage token.
+ * Storage token can not be empty - if original delegate (tokenFetcher argument) returns null result, exception will be thrown
+ */
+export function toInstrumentedOdspStorageTokenFetcher(
+	logger: ITelemetryLoggerExt,
+	resolvedUrlParts: IOdspUrlParts,
+	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
+): InstrumentedStorageTokenFetcher {
+	const res = toInstrumentedOdspTokenFetcher(
+		logger,
+		resolvedUrlParts,
+		tokenFetcher,
+		true, // throwOnNullToken
+		false, // returnPlainToken
+	);
+	// Drop undefined from signature - we can do it safely due to throwOnNullToken == true above
+	return res as InstrumentedStorageTokenFetcher;
 }
 
+/**
+ * Returns a function that can be used to fetch storage or websocket token.
+ * There are scenarios where websocket token is not required / present (consumer stack and ordering service token),
+ * thus it could return null. Use toInstrumentedOdspStorageTokenFetcher if you deal with storage token.
+ * @param returnPlainToken - When true, tokenResponse.token is returned. When false, tokenResponse.authorizationHeader is returned or an authorization header value is created based on tokenResponse.token
+ */
 export function toInstrumentedOdspTokenFetcher(
 	logger: ITelemetryLoggerExt,
 	resolvedUrlParts: IOdspUrlParts,
 	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
 	throwOnNullToken: boolean,
-): InstrumentedStorageTokenFetcher {
+	returnPlainToken: boolean,
+): InstrumentedTokenFetcher {
 	return async (
 		options: TokenFetchOptions,
 		name: string,
@@ -397,7 +408,9 @@ export function toInstrumentedOdspTokenFetcher(
 					...resolvedUrlParts,
 				}).then(
 					(tokenResponse) => {
-						const token = tokenFromResponse(tokenResponse);
+						const returnVal = returnPlainToken
+							? tokenFromResponse(tokenResponse)
+							: authHeaderFromTokenResponse(tokenResponse);
 						// This event alone generates so many events that is materially impacts cost of telemetry
 						// Thus do not report end event when it comes back quickly.
 						// Note that most of the hosts do not report if result is comming from cache or not,
@@ -406,10 +419,10 @@ export function toInstrumentedOdspTokenFetcher(
 						if (alwaysRecordTokenFetchTelemetry || event.duration >= 32) {
 							event.end({
 								fromCache: isTokenFromCache(tokenResponse),
-								isNull: token === null,
+								isNull: returnVal === null,
 							});
 						}
-						if (token === null && throwOnNullToken) {
+						if (returnVal === null && throwOnNullToken) {
 							throw new NonRetryableError(
 								// pre-0.58 error message: Token is null for ${name} call
 								`The Host-provided token fetcher returned null`,
@@ -417,7 +430,7 @@ export function toInstrumentedOdspTokenFetcher(
 								{ method: name, driverVersion },
 							);
 						}
-						return token;
+						return returnVal;
 					},
 					(error) => {
 						// There is an important but unofficial contract here where token providers can set canRetry: true
@@ -430,9 +443,7 @@ export function toInstrumentedOdspTokenFetcher(
 								new NetworkErrorBasic(
 									`The Host-provided token fetcher threw an error`,
 									OdspErrorTypes.fetchTokenError,
-									typeof rawCanRetry === "boolean"
-										? rawCanRetry
-										: false /* canRetry */,
+									typeof rawCanRetry === "boolean" ? rawCanRetry : false /* canRetry */,
 									{ method: name, errorMessage, driverVersion },
 								),
 						);
@@ -444,9 +455,12 @@ export function toInstrumentedOdspTokenFetcher(
 	};
 }
 
-export function createCacheSnapshotKey(odspResolvedUrl: IOdspResolvedUrl): ICacheEntry {
+export function createCacheSnapshotKey(
+	odspResolvedUrl: IOdspResolvedUrl,
+	snapshotWithLoadingGroupId: boolean | undefined,
+): ICacheEntry {
 	const cacheEntry: ICacheEntry = {
-		type: snapshotKey,
+		type: snapshotWithLoadingGroupId ? snapshotWithLoadingGroupIdKey : snapshotKey,
 		key: odspResolvedUrl.fileVersion ?? "",
 		file: {
 			resolvedUrl: odspResolvedUrl,
@@ -454,6 +468,12 @@ export function createCacheSnapshotKey(odspResolvedUrl: IOdspResolvedUrl): ICach
 		},
 	};
 	return cacheEntry;
+}
+
+export function snapshotWithLoadingGroupIdSupported(
+	config: IConfigProvider,
+): boolean | undefined {
+	return config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch2");
 }
 
 // 80KB is the max body size that we can put in ump post body for server to be able to accept it.
@@ -515,7 +535,9 @@ export function isInstanceOfISnapshot(
  * This tells whether request if for a specific loading group or not. The snapshot which
  * we fetch on initial load, fetches all ungrouped content.
  */
-export function isSnapshotFetchForLoadingGroup(loadingGroupIds: string[] | undefined): boolean {
+export function isSnapshotFetchForLoadingGroup(
+	loadingGroupIds: string[] | undefined,
+): boolean {
 	return loadingGroupIds !== undefined && loadingGroupIds.length > 0;
 }
 

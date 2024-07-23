@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IGCResult, runGarbageCollection } from "../../gc/index.js";
 
 interface IGCNode {

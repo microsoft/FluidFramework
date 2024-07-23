@@ -3,17 +3,20 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import * as fs from "fs";
 import path from "path";
-import { strict as assert } from "assert";
+
 /* eslint-disable import/no-internal-modules */
-import { JSONFileLogger } from "../logger/jsonFileLogger";
-import { CSVFileLogger } from "../logger/csvFileLogger";
-import { IFileLogger } from "../logger/fileLogger";
+import { CSVFileLogger } from "../logger/csvFileLogger.js";
+import { IFileLogger } from "../logger/fileLogger.js";
+import { JSONFileLogger } from "../logger/jsonFileLogger.js";
 /* eslint-enable import/no-internal-modules */
 
+import { _dirname } from "./dirname.cjs";
+
 describe("fileLogger", () => {
-	const folderRoot = path.join(__dirname, "../../src/test");
+	const folderRoot = path.join(_dirname, "../../src/test");
 	const outputFolder = path.join(folderRoot, "outputFolder");
 	const telemetryFile = path.join(outputFolder, "telemetryFile.txt");
 	const expectedOutputFolder = path.join(folderRoot, "telemetryExpectedOutputs");

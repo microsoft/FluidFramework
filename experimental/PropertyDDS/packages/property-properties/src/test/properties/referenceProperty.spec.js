@@ -15,11 +15,12 @@
 
 const { ChangeSet } = require("@fluid-experimental/property-changeset");
 const { MSG } = require("@fluid-experimental/property-common").constants;
+
 const { BaseProperty } = require("../..");
 const { PropertyFactory } = require("../..");
-const { ReferenceProperty } = require("../../properties/referenceProperty");
-const { ReferenceMapProperty } = require("../../properties/referenceMapProperty");
 const { ReferenceArrayProperty } = require("../../properties/referenceArrayProperty");
+const { ReferenceMapProperty } = require("../../properties/referenceMapProperty");
+const { ReferenceProperty } = require("../../properties/referenceProperty");
 
 describe("Reference Properties", function () {
 	var dereferenceToken;
@@ -542,9 +543,7 @@ describe("Reference Properties", function () {
 			// Test creation via a template
 			var prop = PropertyFactory.create("autodesk.test:referencePropertyTest-1.0.0");
 			expect(prop._properties.refMap_anon).to.be.instanceof(ReferenceMapProperty);
-			expect(prop._properties.refMap_anon.getReferenceTargetTypeId()).to.equal(
-				"BaseProperty",
-			);
+			expect(prop._properties.refMap_anon.getReferenceTargetTypeId()).to.equal("BaseProperty");
 			expect(prop._properties.refMap).to.be.instanceof(ReferenceMapProperty);
 			expect(prop._properties.refMap.getReferenceTargetTypeId()).to.equal("NodeProperty");
 		});

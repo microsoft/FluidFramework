@@ -35,7 +35,11 @@
 							}
 						],
 						"right": [
-							{ "definition": "B", "identifier": "968bee41-bcf7-46d2-8035-6eb163b76c51", "traits": {} }
+							{
+								"definition": "B",
+								"identifier": "968bee41-bcf7-46d2-8035-6eb163b76c51",
+								"traits": {}
+							}
 						]
 					}
 				}
@@ -105,7 +109,10 @@
 					"source": 1,
 					"destination": {
 						"side": 1,
-						"referenceTrait": { "label": "root", "parent": "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6" }
+						"referenceTrait": {
+							"label": "root",
+							"parent": "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6"
+						}
 					}
 				}
 			]
@@ -124,7 +131,10 @@
 				{
 					"type": 0,
 					"source": 0,
-					"destination": { "side": 1, "referenceSibling": "968bee41-bcf7-46d2-8035-6eb163b76c4c" }
+					"destination": {
+						"side": 1,
+						"referenceSibling": "968bee41-bcf7-46d2-8035-6eb163b76c4c"
+					}
 				}
 			]
 		},

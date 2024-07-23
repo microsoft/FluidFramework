@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 
 export interface ReferenceCounted {
 	referenceAdded(): void;
@@ -32,7 +32,7 @@ export abstract class ReferenceCountedBase implements ReferenceCounted {
 		this.refCount -= count;
 		assert(this.refCount >= 0, 0x4c4 /* Negative ref count */);
 		if (this.refCount === 0) {
-			this.dispose();
+			this.onUnreferenced();
 		}
 	}
 
@@ -47,5 +47,5 @@ export abstract class ReferenceCountedBase implements ReferenceCounted {
 	/**
 	 * Called when refcount reaches 0.
 	 */
-	protected abstract dispose(): void;
+	protected abstract onUnreferenced(): void;
 }

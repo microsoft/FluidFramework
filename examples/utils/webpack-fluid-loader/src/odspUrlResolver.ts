@@ -4,16 +4,16 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IUrlResolver, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
 	IOdspAuthRequestInfo,
 	getDriveItemByRootFileName,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	OdspDriverUrlResolver,
-	createOdspUrl,
 	createOdspCreateContainerRequest,
-} from "@fluidframework/odsp-driver";
+	createOdspUrl,
+} from "@fluidframework/odsp-driver/internal";
 
 export class OdspUrlResolver implements IUrlResolver {
 	private readonly driverUrlResolver = new OdspDriverUrlResolver();
@@ -59,22 +59,25 @@ export class OdspUrlResolver implements IUrlResolver {
 		return `/r11s/${encoded}`;
 	}
 
-	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+	public async getAbsoluteUrl(
+		resolvedUrl: IResolvedUrl,
+		relativeUrl: string,
+	): Promise<string> {
 		return this.driverUrlResolver.getAbsoluteUrl(resolvedUrl, relativeUrl);
 	}
 
 	public async createCreateNewRequest(fileName: string): Promise<IRequest> {
 		const filePath = "/r11s/";
-		const driveItem = await getDriveItemByRootFileName(
+		const { driveId } = await getDriveItemByRootFileName(
 			this.server,
 			"",
-			filePath,
+			"/",
 			this.authRequestInfo,
 			false,
 		);
 		return createOdspCreateContainerRequest(
 			`https://${this.server}`,
-			driveItem.driveId,
+			driveId,
 			filePath,
 			`${fileName}.fluid`,
 		);

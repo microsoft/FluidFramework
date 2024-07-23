@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { type IRequest } from "@fluidframework/core-interfaces";
+
+import type { IRequest } from "@fluidframework/core-interfaces";
 import {
 	DriverHeader,
 	type IResolvedUrl,
 	type IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Implementation of {@link @fluidframework/driver-definitions#IUrlResolver} to resolve documents stored using the
@@ -55,7 +56,10 @@ export class AzureUrlResolver implements IUrlResolver {
 		};
 	}
 
-	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+	public async getAbsoluteUrl(
+		resolvedUrl: IResolvedUrl,
+		relativeUrl: string,
+	): Promise<string> {
 		if (resolvedUrl.type !== "fluid") {
 			throw new Error("Invalid Resolved Url");
 		}
@@ -83,7 +87,8 @@ function decodeAzureUrl(urlString: string): {
 	const storageUrlDecoded = decodeURIComponent(storageUrl);
 	const tenantIdDecoded = decodeURIComponent(tenantId);
 	const containerId = searchParameters.get("containerId");
-	const containerIdDecoded = containerId === null ? undefined : decodeURIComponent(containerId);
+	const containerIdDecoded =
+		containerId === null ? undefined : decodeURIComponent(containerId);
 	return {
 		ordererUrl,
 		storageUrl: storageUrlDecoded,
@@ -99,7 +104,10 @@ function decodeAzureUrl(urlString: string): {
  * @param endpointUrl - URI to the Azure Fluid Relay service discovery endpoint.
  * @param tenantId - Unique tenant identifier.
  */
-export const createAzureCreateNewRequest = (endpointUrl: string, tenantId: string): IRequest => {
+export const createAzureCreateNewRequest = (
+	endpointUrl: string,
+	tenantId: string,
+): IRequest => {
 	const url = new URL(endpointUrl);
 	url.searchParams.append("storage", encodeURIComponent(endpointUrl));
 	url.searchParams.append("tenantId", encodeURIComponent(tenantId));

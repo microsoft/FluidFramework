@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 
 export function apisToBundle() {
 	// Pass through dummy parameters, this file is only used for bundle analysis

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { shortCodeMap } from "./assertionShortCodesMap";
+import { shortCodeMap } from "./assertionShortCodesMap.js";
 
 /**
  * Validates that an error thrown by our assert() function has the expected message, or a
@@ -23,7 +23,10 @@ import { shortCodeMap } from "./assertionShortCodesMap";
  * message. Otherwise it throws an error.
  * @internal
  */
-export function validateAssertionError(error: Error, expectedErrorMsg: string | RegExp): boolean {
+export function validateAssertionError(
+	error: Error,
+	expectedErrorMsg: string | RegExp,
+): boolean {
 	const mappedMsg = (shortCodeMap[error.message] as string) ?? error.message;
 	if (
 		typeof expectedErrorMsg === "string"

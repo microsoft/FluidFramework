@@ -3,24 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { expect, assert } from 'chai';
+import { assert, expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
+
 import { walkTree } from '../EditUtilities.js';
-import { createSessionId, IdCompressor, isFinalId, isLocalId } from '../id-compressor/index.js';
 import {
 	Definition,
 	DetachedSequenceId,
 	InternedStringId,
-	isDetachedSequenceId,
 	NodeId,
 	OpSpaceNodeId,
 	TraitLabel,
+	isDetachedSequenceId,
 } from '../Identifiers.js';
 import { ContextualizedNodeIdNormalizer, scopeIdNormalizer } from '../NodeIdUtilities.js';
-import { CompressedPlaceholderTree, PlaceholderTree, TraitMap, TreeNode } from '../persisted-types/index.js';
 import { RevisionView } from '../RevisionView.js';
 import { MutableStringInterner } from '../StringInterner.js';
 import { InterningTreeCompressor } from '../TreeCompressor.js';
+import { IdCompressor, createSessionId, isFinalId, isLocalId } from '../id-compressor/index.js';
+import { CompressedPlaceholderTree, PlaceholderTree, TraitMap, TreeNode } from '../persisted-types/index.js';
+
 import { makeNodeIdContext, setUpTestTree } from './utilities/TestUtilities.js';
 
 /**
@@ -35,10 +37,7 @@ function testCompression<TPlaceholder extends DetachedSequenceId | never>(
 	idNormalizer: ContextualizedNodeIdNormalizer<OpSpaceNodeId>,
 	compressed?: CompressedPlaceholderTree<OpSpaceNodeId, TPlaceholder>,
 	roundTripAsserter?: (tree: PlaceholderTree<TPlaceholder>, roundTrippedTree: PlaceholderTree<TPlaceholder>) => void,
-	internStrings: (interner: MutableStringInterner, tree: PlaceholderTree<TPlaceholder>) => void = (
-		interner,
-		tree
-	) => {
+	internStrings: (interner: MutableStringInterner, tree: PlaceholderTree<TPlaceholder>) => void = (interner, tree) => {
 		walkTree<Exclude<PlaceholderTree<DetachedSequenceId>, DetachedSequenceId>, DetachedSequenceId>(
 			tree,
 			(node) => {
@@ -245,10 +244,7 @@ describe('TreeCompression', () => {
 			// SimpleTestTree contains extra properties, so deep compare as objects is insufficient. The revision view strategy
 			// only works for valid standalone trees (i.e. ones without placeholders).
 			(tree, treeAfterRoundTrip) => {
-				expect(
-					RevisionView.fromTree(tree).equals(RevisionView.fromTree(treeAfterRoundTrip)),
-					'Unequal revision views'
-				);
+				expect(RevisionView.fromTree(tree).equals(RevisionView.fromTree(treeAfterRoundTrip)), 'Unequal revision views');
 			}
 		);
 	});

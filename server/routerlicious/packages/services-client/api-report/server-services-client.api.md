@@ -375,6 +375,7 @@ export interface IHistorian extends IGitService {
 // @internal
 export interface INetworkErrorDetails {
     canRetry?: boolean;
+    internalErrorCode?: InternalErrorCode;
     isFatal?: boolean;
     message?: string;
     retryAfter?: number;
@@ -390,6 +391,11 @@ export interface INormalizedWholeSummary {
     sequenceNumber: number | undefined;
     // (undocumented)
     snapshotTree: ISnapshotTree;
+}
+
+// @internal
+export enum InternalErrorCode {
+    ClusterDraining = "ClusterDraining"
 }
 
 // @internal
@@ -568,12 +574,14 @@ export class NetworkError extends Error {
     canRetry?: boolean,
     isFatal?: boolean,
     retryAfterMs?: number,
-    source?: string);
+    source?: string,
+    internalErrorCode?: InternalErrorCode);
     // @public
     readonly canRetry?: boolean;
     // @public
     readonly code: number;
     get details(): INetworkErrorDetails | string;
+    readonly internalErrorCode?: InternalErrorCode;
     // @public
     readonly isFatal?: boolean;
     readonly retryAfter: number;

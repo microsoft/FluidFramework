@@ -2,11 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { AsyncPriorityQueue } from "async";
 import chalk from "chalk";
 import * as semver from "semver";
 
+import * as assert from "assert";
+import registerDebug from "debug";
 import { FileHashCache } from "../common/fileHashCache";
+import {
+	TaskDefinition,
+	TaskDefinitions,
+	TaskDefinitionsOnDisk,
+	getDefaultTaskDefinition,
+	getTaskDefinitions,
+	normalizeGlobalTaskDefinitions,
+} from "../common/fluidTaskDefinitions";
 import { defaultLogger } from "../common/logging";
 import { Package } from "../common/npmPackage";
 import { Timer } from "../common/timer";
@@ -14,16 +25,6 @@ import { options } from "./options";
 import { Task, TaskExec } from "./tasks/task";
 import { TaskFactory } from "./tasks/taskFactory";
 import { WorkerPool } from "./tasks/workers/workerPool";
-import * as assert from "assert";
-import {
-	TaskDefinitions,
-	TaskDefinitionsOnDisk,
-	TaskDefinition,
-	getTaskDefinitions,
-	normalizeGlobalTaskDefinitions,
-	getDefaultTaskDefinition,
-} from "../common/fluidTaskDefinitions";
-import registerDebug from "debug";
 
 const traceTaskDef = registerDebug("fluid-build:task:definition");
 const traceTaskDepTask = registerDebug("fluid-build:task:init:dep:task");
@@ -518,7 +519,8 @@ export class BuildGraph {
 	}
 
 	public async build(timer?: Timer): Promise<BuildResult> {
-		// TODO: This function can only be called once
+		// This function must only be called once here at the beginning of the build.
+		// It checks the up-to-date state at this moment and will not be changed for the duration of the build.
 		const isUpToDate = await this.isUpToDate();
 		if (timer) timer.time(`Check up to date completed`);
 

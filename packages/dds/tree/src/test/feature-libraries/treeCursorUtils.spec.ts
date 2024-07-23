@@ -4,16 +4,17 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
+	CursorLocationType,
+	type DetachedField,
+	type FieldUpPath,
+	type TreeNodeSchemaIdentifier,
+	type UpPath,
 	compareFieldUpPaths,
 	compareUpPaths,
-	CursorLocationType,
-	DetachedField,
-	FieldUpPath,
-	TreeNodeSchemaIdentifier,
-	UpPath,
 } from "../../core/index.js";
-
+import { leaf } from "../../domains/index.js";
 import {
 	PrefixedPath,
 	prefixFieldPath,
@@ -23,10 +24,9 @@ import {
 	// Allow importing from this specific file which is being tested:
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/treeCursorUtils.js";
-import { brand } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { adapter } from "../../feature-libraries/treeTextCursor.js";
-import { leaf } from "../../domains/index.js";
+import { brand } from "../../util/index.js";
 import { expectEqualFieldPaths, expectEqualPaths } from "../utils.js";
 
 describe("treeCursorUtils", () => {
@@ -76,10 +76,7 @@ describe("treeCursorUtils", () => {
 			);
 			assert(
 				compareUpPaths(
-					prefixPath(
-						{ indexOffset: 2, rootFieldOverride: brand("y"), parent: child },
-						root,
-					),
+					prefixPath({ indexOffset: 2, rootFieldOverride: brand("y"), parent: child }, root),
 					{
 						parent: child,
 						parentField: brand("y"),
@@ -125,10 +122,7 @@ describe("treeCursorUtils", () => {
 			);
 			assert(
 				compareUpPaths(
-					prefixPath(
-						{ indexOffset: 2, rootFieldOverride: brand("y"), parent: child },
-						child,
-					),
+					prefixPath({ indexOffset: 2, rootFieldOverride: brand("y"), parent: child }, child),
 					{
 						parent: {
 							parent: child,

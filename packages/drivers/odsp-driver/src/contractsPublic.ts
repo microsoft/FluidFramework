@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
+import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions/internal";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface OdspFluidDataStoreLocator extends IOdspUrlParts {

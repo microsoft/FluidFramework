@@ -3,21 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
-	FluidObjectHandle,
 	FluidDataStoreRuntime,
+	FluidObjectHandle,
 	mixinRequestHandler,
-} from "@fluidframework/datastore";
-import { SharedMap, ISharedMap } from "@fluidframework/map";
+} from "@fluidframework/datastore/internal";
 import {
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
+import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import {
+	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-	IFluidDataStoreChannel,
-} from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
-import { assert } from "@fluidframework/core-utils";
-import { create404Response } from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { create404Response } from "@fluidframework/runtime-utils/internal";
+
 import { ITestFluidObject } from "./interfaces.js";
 
 /**
@@ -71,7 +75,7 @@ export class TestFluidObject implements ITestFluidObject {
 		for (const key of this.factoryEntriesMap.keys()) {
 			if (key === id) {
 				const handle = this.root.get<IFluidHandle>(id);
-				return handle?.get() as unknown as T;
+				return handle?.get() as Promise<T>;
 			}
 		}
 
@@ -89,15 +93,10 @@ export class TestFluidObject implements ITestFluidObject {
 			if (!existing) {
 				this.root = SharedMap.create(this.runtime, "root");
 
-				this.factoryEntriesMap.forEach(
-					(sharedObjectFactory: IChannelFactory, key: string) => {
-						const sharedObject = this.runtime.createChannel(
-							key,
-							sharedObjectFactory.type,
-						);
-						this.root.set(key, sharedObject.handle);
-					},
-				);
+				this.factoryEntriesMap.forEach((sharedObjectFactory: IChannelFactory, key: string) => {
+					const sharedObject = this.runtime.createChannel(key, sharedObjectFactory.type);
+					this.root.set(key, sharedObject.handle);
+				});
 
 				this.root.bindToContext();
 			}

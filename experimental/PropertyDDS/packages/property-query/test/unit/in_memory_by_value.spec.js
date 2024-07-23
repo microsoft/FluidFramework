@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint max-nested-callbacks: [0, 0] */
 const InMemoryByValue = require("../../src/materialized_history_service/query_pipeline/filtering/in_memory_by_value");
 const { OperationError } = require("@fluid-experimental/property-common");
@@ -418,11 +419,7 @@ describe("In Memory Filtering By Value", () => {
 					"myNodeProperty.myPointsMap.pointK",
 				];
 
-				let result = await InMemoryByValue.filterByValue(
-					query.from[0],
-					changeSet,
-					limitPaths,
-				);
+				let result = await InMemoryByValue.filterByValue(query.from[0], changeSet, limitPaths);
 				expect(result).to.eql({
 					changeSet: {
 						insert: {
@@ -826,26 +823,14 @@ describe("In Memory Filtering By Value", () => {
 										"mysample:point64-1.0.0": {
 											pointA: {
 												Int64: {
-													x: [
-														intsX[0].getLowBits(),
-														intsX[0].getHighBits(),
-													],
-													y: [
-														intsY[0].getLowBits(),
-														intsY[0].getHighBits(),
-													],
+													x: [intsX[0].getLowBits(), intsX[0].getHighBits()],
+													y: [intsY[0].getLowBits(), intsY[0].getHighBits()],
 												},
 											},
 											pointC: {
 												Int64: {
-													x: [
-														intsX[2].getLowBits(),
-														intsX[2].getHighBits(),
-													],
-													y: [
-														intsY[2].getLowBits(),
-														intsY[2].getHighBits(),
-													],
+													x: [intsX[2].getLowBits(), intsX[2].getHighBits()],
+													y: [intsY[2].getLowBits(), intsY[2].getHighBits()],
 												},
 											},
 										},
@@ -914,26 +899,14 @@ describe("In Memory Filtering By Value", () => {
 										"mysample:point64-1.0.0": {
 											pointC: {
 												Int64: {
-													x: [
-														intsX[2].getLowBits(),
-														intsX[2].getHighBits(),
-													],
-													y: [
-														intsY[2].getLowBits(),
-														intsY[2].getHighBits(),
-													],
+													x: [intsX[2].getLowBits(), intsX[2].getHighBits()],
+													y: [intsY[2].getLowBits(), intsY[2].getHighBits()],
 												},
 											},
 											pointD: {
 												Int64: {
-													x: [
-														intsX[3].getLowBits(),
-														intsX[3].getHighBits(),
-													],
-													y: [
-														intsY[3].getLowBits(),
-														intsY[3].getHighBits(),
-													],
+													x: [intsX[3].getLowBits(), intsX[3].getHighBits()],
+													y: [intsY[3].getLowBits(), intsY[3].getHighBits()],
 												},
 											},
 										},

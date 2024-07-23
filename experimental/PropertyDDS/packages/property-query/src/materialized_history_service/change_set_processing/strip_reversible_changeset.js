@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const TypeIdHelper = require("@fluid-experimental/property-changeset").TypeIdHelper;
 const PropertyUtils = require("@fluid-experimental/property-changeset").Utils;
 const _ = require("lodash");
@@ -101,9 +102,7 @@ function stripReversibleChangeSet() {
 							let newRemove = [];
 							let removedTypes = Object.keys(nestedChangeset.remove);
 							for (let t = 0; t < removedTypes.length; t++) {
-								let removedKeys = Object.keys(
-									nestedChangeset.remove[removedTypes[t]],
-								);
+								let removedKeys = Object.keys(nestedChangeset.remove[removedTypes[t]]);
 								for (let i = 0; i < removedKeys.length; i++) {
 									newRemove.push(removedKeys[i]);
 								}

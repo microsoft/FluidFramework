@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
+import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeDeltaType } from "../ops.js";
+
 import { insertText } from "./testUtils.js";
 
 function constructTree(numOfSegments: number): MergeTree {
@@ -25,7 +27,7 @@ function constructTree(numOfSegments: number): MergeTree {
 	return mergeTree;
 }
 
-const TREE_SIZE: number = 7_500;
+const TREE_SIZE: number = 7500;
 
 describe("MergeTree insertion", () => {
 	benchmark({

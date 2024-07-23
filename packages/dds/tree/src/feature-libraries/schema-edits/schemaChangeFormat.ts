@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Static, Type } from "@sinclair/typebox";
+import { type Static, Type } from "@sinclair/typebox";
+
 import { Format } from "../schema-index/index.js";
 
 export const EncodedSchemaChange = Type.Object({

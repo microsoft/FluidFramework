@@ -3,41 +3,41 @@
  * Licensed under the MIT License.
  */
 
-import { type IRequest, type FluidObject } from "@fluidframework/core-interfaces";
+import { FluidDataStoreRegistry } from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FluidDataStoreRuntime,
 	type ISharedObjectRegistry,
 	mixinRequestHandler,
-} from "@fluidframework/datastore";
-import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
-import {
-	type IContainerRuntimeBase,
-	type IDataStore,
-	type IFluidDataStoreChannel,
-	type IFluidDataStoreContext,
-	type IFluidDataStoreContextDetached,
-	type IFluidDataStoreFactory,
-	type IFluidDataStoreRegistry,
-	type NamedFluidDataStoreRegistryEntries,
-	type NamedFluidDataStoreRegistryEntry,
-	type IProvideFluidDataStoreRegistry,
-} from "@fluidframework/runtime-definitions";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import {
-	type IChannelFactory,
-	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import {
-	type AsyncFluidObjectProvider,
-	type FluidObjectSymbolProvider,
-	type IFluidDependencySynthesizer,
-} from "@fluidframework/synthesize";
+} from "@fluidframework/datastore/internal";
+import type {
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
+import type {
+	IContainerRuntimeBase,
+	IDataStore,
+	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
+	IFluidDataStoreContextDetached,
+	IFluidDataStoreFactory,
+	IFluidDataStoreRegistry,
+	IProvideFluidDataStoreRegistry,
+	NamedFluidDataStoreRegistryEntries,
+	NamedFluidDataStoreRegistryEntry,
+} from "@fluidframework/runtime-definitions/internal";
+import type {
+	AsyncFluidObjectProvider,
+	FluidObjectSymbolProvider,
+	IFluidDependencySynthesizer,
+} from "@fluidframework/synthesize/internal";
 
-import { assert } from "@fluidframework/core-utils";
-import {
-	type IDataObjectProps,
-	type PureDataObject,
-	type DataObjectTypes,
+import type {
+	DataObjectTypes,
+	IDataObjectProps,
+	PureDataObject,
 } from "../data-objects/index.js";
 
 /**
@@ -79,7 +79,8 @@ async function createDataObject<
 	// Create a new runtime for our data store, as if via new FluidDataStoreRuntime,
 	// but using the runtimeClass that's been augmented with mixins
 	// The runtime is what Fluid uses to create DDS' and route to your data store
-	const runtime: FluidDataStoreRuntime = new runtimeClass( // calls new FluidDataStoreRuntime(...)
+	const runtime: FluidDataStoreRuntime = new runtimeClass(
+		// calls new FluidDataStoreRuntime(...)
 		context,
 		sharedObjectRegistry,
 		existing,
@@ -132,13 +133,13 @@ async function createDataObject<
  *
  * @typeParam TObj - DataObject (concrete type)
  * @typeParam I - The input types for the DataObject
+ * @legacy
  * @alpha
  */
 export class PureDataObjectFactory<
-		TObj extends PureDataObject<I>,
-		I extends DataObjectTypes = DataObjectTypes,
-	>
-	implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
+	TObj extends PureDataObject<I>,
+	I extends DataObjectTypes = DataObjectTypes,
+> implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
 {
 	private readonly sharedObjectRegistry: ISharedObjectRegistry;
 	private readonly registry: IFluidDataStoreRegistry | undefined;
@@ -342,7 +343,7 @@ export class PureDataObjectFactory<
 		const result = await dataStore.trySetAlias(rootDataStoreId);
 		if (result !== "Success") {
 			const handle = await runtime.getAliasedDataStoreEntryPoint(rootDataStoreId);
-			assert(handle !== undefined, "Should have retrieved aliased handle");
+			assert(handle !== undefined, 0x8e1 /* Should have retrieved aliased handle */);
 			return (await handle.get()) as TObj;
 		}
 		return instance;

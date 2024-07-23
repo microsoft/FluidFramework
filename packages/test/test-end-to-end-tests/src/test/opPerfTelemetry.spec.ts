@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ITestFluidObject,
-	createTestConfigProvider,
-} from "@fluidframework/test-utils";
-import { type SharedString } from "@fluidframework/sequence";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { ILoaderProps } from "@fluidframework/container-loader";
+import { ILoaderProps } from "@fluidframework/container-loader/internal";
+import { type SharedString } from "@fluidframework/sequence/internal";
+import {
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	createTestConfigProvider,
+} from "@fluidframework/test-utils/internal";
 
 /**
  * Regression tests for issue where clients loading a container with a write connection (vs the read connection

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { globals } from "../jest.config.cjs";
 import { strict as assert } from "assert";
+import { globals } from "../jest.config.cjs";
 
 describe("CoordinateContainerRuntimeFactory", () => {
 	beforeAll(async () => {

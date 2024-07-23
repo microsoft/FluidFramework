@@ -3,15 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	AliasResult,
 	IDataStore,
 	IFluidDataStoreChannel,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	ITelemetryLoggerExt,
+	TelemetryDataTag,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
+
 import { ChannelCollection } from "./channelCollection.js";
 import { ContainerMessageType } from "./messageTypes.js";
 
@@ -115,7 +121,10 @@ class DataStore implements IDataStore {
 		this.fluidDataStoreChannel.makeVisibleAndAttachGraph();
 
 		if (this.parentContext.attachState === AttachState.Detached) {
-			const localResult = this.channelCollection.processAliasMessageCore(message);
+			const localResult = this.channelCollection.processAliasMessageCore(
+				this.internalId,
+				alias,
+			);
 			// Explicitly lock-out future attempts of aliasing,
 			// regardless of result
 			this.aliasState = AliasState.Aliased;
@@ -161,7 +170,7 @@ class DataStore implements IDataStore {
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IDataStore.entryPoint}
 	 */
-	get entryPoint(): IFluidHandle<FluidObject> {
+	get entryPoint(): IFluidHandleInternal<FluidObject> {
 		return this.fluidDataStoreChannel.entryPoint;
 	}
 

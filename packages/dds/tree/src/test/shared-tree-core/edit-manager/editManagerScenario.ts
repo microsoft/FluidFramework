@@ -3,14 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { fail, strict as assert } from "assert";
-import { unreachableCase } from "@fluidframework/core-utils";
-import { SessionId } from "@fluidframework/id-compressor";
-import { ChangeRebaser, ChangeFamilyEditor, emptyDelta } from "../../../core/index.js";
-import { TestChangeFamily, TestChange, asDelta } from "../../testChange.js";
-import { Commit, EditManager, SeqNumber } from "../../../shared-tree-core/index.js";
+import { strict as assert, fail } from "assert";
+
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+import type { SessionId } from "@fluidframework/id-compressor";
+
+import {
+	type ChangeFamilyEditor,
+	type ChangeRebaser,
+	emptyDelta,
+} from "../../../core/index.js";
+import type { Commit, EditManager, SeqNumber } from "../../../shared-tree-core/index.js";
 import { brand, clone } from "../../../util/index.js";
+import { TestChange, type TestChangeFamily, asDelta } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
+
 import {
 	addSequencedChange,
 	checkChangeList,
@@ -211,12 +218,8 @@ export function runUnitTestScenario(
 					.map(
 						(peer) =>
 							steps
-								.filter(
-									(s): s is UnitTestPullStep =>
-										s.type === "Pull" && s.from === peer,
-								)
-								.find((s) => s.seq > sequenceNumber)?.ref ??
-							Number.POSITIVE_INFINITY,
+								.filter((s): s is UnitTestPullStep => s.type === "Pull" && s.from === peer)
+								.find((s) => s.seq > sequenceNumber)?.ref ?? Number.POSITIVE_INFINITY,
 					)
 					.reduce((p, c) => Math.min(p, c), Number.POSITIVE_INFINITY);
 
@@ -251,7 +254,7 @@ export function runUnitTestScenario(
 							iNextAck < acks.length
 								? acks[iNextAck].seq
 								: // If the pushed edit is never Ack-ed, assign the next available sequence number to it.
-								  finalSequencedEdit + 1 + iNextAck - acks.length;
+									finalSequencedEdit + 1 + iNextAck - acks.length;
 					}
 					iNextAck += 1;
 					const changeset = TestChange.mint(knownToLocal, seq);
@@ -308,10 +311,7 @@ export function runUnitTestScenario(
 					 * Filter that includes changes that were local to the issuer of this commit.
 					 */
 					const peerLocalChangesFilter = (s: UnitTestScenarioStep) =>
-						s.type === "Pull" &&
-						s.seq > step.ref &&
-						s.seq < step.seq &&
-						s.from === step.from;
+						s.type === "Pull" && s.seq > step.ref && s.seq < step.seq && s.from === step.from;
 					/**
 					 * Changes that were known to the peer at the time it authored this commit.
 					 */

@@ -8,7 +8,7 @@ import type {
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 
 import { getLatestVersion } from "./app.js";
 import { DiceRollerContainerRuntimeFactory } from "./modelVersion2/index.js";

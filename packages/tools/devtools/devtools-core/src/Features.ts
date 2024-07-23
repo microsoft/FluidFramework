@@ -50,20 +50,10 @@ export interface ContainerDevtoolsFeatureFlags {
 	/**
 	 * Indicates that the Container Devtools supports visualizing the data associated with the Container.
 	 */
-	"containerDataVisualization"?: boolean;
+	containerDataVisualization?: boolean;
 
 	/**
 	 * Indicates that the Container Devtools supports editing the data associated with the Container.
 	 */
-	"containerDataEditing"?: boolean;
-
-	/**
-	 * Indicates that the Container Devtools supports visualizing the data associated with the Container.
-	 *
-	 * @deprecated
-	 *
-	 * This exists for backwards compatibility only.
-	 * Use {@link ContainerDevtoolsFeatureFlags.containerDataVisualization} instead.
-	 */
-	"container-data"?: boolean;
+	containerDataEditing?: boolean;
 }

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IdCompressor, isFinalId } from './id-compressor/index.js';
-import { FinalNodeId, NodeId, OpSpaceNodeId, SessionId, StableNodeId } from './Identifiers.js';
-import { NodeData } from './persisted-types/index.js';
 import { assertWithMessage } from './Common.js';
+import { FinalNodeId, NodeId, OpSpaceNodeId, SessionId, StableNodeId } from './Identifiers.js';
+import { IdCompressor, isFinalId } from './id-compressor/index.js';
+import { NodeData } from './persisted-types/index.js';
 
 /**
  * An object which can generate node IDs and convert node IDs between compressed and stable variants
@@ -109,8 +109,7 @@ export function scopeIdNormalizer<TId extends OpSpaceNodeId>(
 ): ContextualizedNodeIdNormalizer<TId> {
 	return {
 		normalizeToOpSpace: (id) => idNormalizer.normalizeToOpSpace(id),
-		normalizeToSessionSpace: (id) =>
-			idNormalizer.normalizeToSessionSpace(id, sessionId ?? idNormalizer.localSessionId),
+		normalizeToSessionSpace: (id) => idNormalizer.normalizeToSessionSpace(id, sessionId ?? idNormalizer.localSessionId),
 	};
 }
 

@@ -3,35 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
-	ITreeSubscriptionCursor,
-	IEditableForest,
-	TreeNavigationResult,
-	TreeStoredSchemaSubscription,
-	FieldKey,
-	DetachedField,
+	type Anchor,
 	AnchorSet,
-	detachedFieldAsKey,
-	UpPath,
-	Anchor,
-	FieldAnchor,
-	ForestEvents,
+	type DeltaVisitor,
+	type DetachedField,
+	type FieldAnchor,
+	type FieldKey,
+	type ForestEvents,
+	type IEditableForest,
+	type ITreeCursorSynchronous,
+	type ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
-	rootFieldKey,
-	mapCursorField,
-	DeltaVisitor,
-	PlaceIndex,
-	Range,
-	ITreeCursorSynchronous,
+	type PlaceIndex,
+	type ProtoNodes,
+	type Range,
+	TreeNavigationResult,
+	type TreeStoredSchemaSubscription,
+	type UpPath,
 	aboveRootPlaceholder,
-	ProtoNodes,
+	detachedFieldAsKey,
+	mapCursorField,
+	rootFieldKey,
 } from "../../core/index.js";
-import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
 import { createEmitter } from "../../events/index.js";
-import { BasicChunk, BasicChunkCursor, SiblingsOrKey } from "./basicChunk.js";
-import { basicChunkTree, chunkTree, IChunker } from "./chunkTree.js";
-import { ChunkedCursor, TreeChunk } from "./chunk.js";
+import { assertValidRange, brand, fail, getOrAddEmptyToMap, oob } from "../../util/index.js";
+
+import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
+import type { ChunkedCursor, TreeChunk } from "./chunk.js";
+import { type IChunker, basicChunkTree, chunkTree } from "./chunkTree.js";
 
 function makeRoot(): BasicChunk {
 	return new BasicChunk(aboveRootPlaceholder, new Map());
@@ -69,7 +71,10 @@ export class ChunkedForest implements IEditableForest {
 		return this.roots.fields.size === 0;
 	}
 
-	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
+	public on<K extends keyof ForestEvents>(
+		eventName: K,
+		listener: ForestEvents[K],
+	): () => void {
 		return this.events.on(eventName, listener);
 	}
 
@@ -87,7 +92,6 @@ export class ChunkedForest implements IEditableForest {
 			this.activeVisitor === undefined,
 			0x76a /* Must release existing visitor before acquiring another */,
 		);
-		this.events.emit("beforeChange");
 
 		if (this.roots.isShared()) {
 			this.roots = this.roots.clone();
@@ -99,12 +103,9 @@ export class ChunkedForest implements IEditableForest {
 			// Start above root detached sequences.
 			mutableChunkStack: [] as StackNode[],
 			mutableChunk: this.roots as BasicChunk | undefined,
-			getParent() {
-				assert(
-					this.mutableChunkStack.length > 0,
-					0x532 /* invalid access to root's parent */,
-				);
-				return this.mutableChunkStack[this.mutableChunkStack.length - 1];
+			getParent(): StackNode {
+				assert(this.mutableChunkStack.length > 0, 0x532 /* invalid access to root's parent */);
+				return this.mutableChunkStack[this.mutableChunkStack.length - 1] ?? oob();
 			},
 			free(): void {
 				this.mutableChunk = undefined;
@@ -114,14 +115,16 @@ export class ChunkedForest implements IEditableForest {
 					0x76b /* Multiple free calls for same visitor */,
 				);
 				this.forest.activeVisitor = undefined;
-				this.forest.events.emit("afterChange");
 			},
 			destroy(detachedField: FieldKey, count: number): void {
+				this.forest.events.emit("beforeChange");
 				this.forest.roots.fields.delete(detachedField);
 			},
 			create(content: ProtoNodes, destination: FieldKey): void {
+				this.forest.events.emit("beforeChange");
 				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.forest.chunker));
 				this.forest.roots.fields.set(destination, chunks);
+				this.forest.events.emit("afterRootFieldCreated", destination);
 			},
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.attachEdit(source, count, destination);
@@ -136,6 +139,7 @@ export class ChunkedForest implements IEditableForest {
 			 * @param destination - The index in the current field at which to attach the content.
 			 */
 			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
+				this.forest.events.emit("beforeChange");
 				const sourceField = this.forest.roots.fields.get(source) ?? [];
 				this.forest.roots.fields.delete(source);
 				if (sourceField.length === 0) {
@@ -155,6 +159,7 @@ export class ChunkedForest implements IEditableForest {
 			 * If not specified, the detached range is destroyed.
 			 */
 			detachEdit(source: Range, destination: FieldKey | undefined): void {
+				this.forest.events.emit("beforeChange");
 				const parent = this.getParent();
 				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
 
@@ -199,14 +204,16 @@ export class ChunkedForest implements IEditableForest {
 					parent.mutableChunk.fields.get(parent.key) ?? fail("missing edited field");
 				let indexWithinChunk = index;
 				let indexOfChunk = 0;
-				while (indexWithinChunk >= chunks[indexOfChunk].topLevelLength) {
-					indexWithinChunk -= chunks[indexOfChunk].topLevelLength;
+				let chunk = chunks[indexOfChunk] ?? oob();
+				while (indexWithinChunk >= chunk.topLevelLength) {
+					chunk = chunks[indexOfChunk] ?? oob();
+					indexWithinChunk -= chunk.topLevelLength;
 					indexOfChunk++;
 					if (indexOfChunk === chunks.length) {
 						fail("missing edited node");
 					}
 				}
-				let found = chunks[indexOfChunk];
+				let found = chunks[indexOfChunk] ?? oob();
 				if (!(found instanceof BasicChunk)) {
 					// TODO:Perf: support in place editing of other chunk formats when possible:
 					// 1. Support updating values in uniform chunks.
@@ -221,7 +228,7 @@ export class ChunkedForest implements IEditableForest {
 					chunks.splice(indexOfChunk, 1, ...newChunks);
 					found.referenceRemoved();
 
-					found = newChunks[indexWithinChunk];
+					found = newChunks[indexWithinChunk] ?? oob();
 				}
 				assert(found instanceof BasicChunk, 0x536 /* chunk should have been normalized */);
 				if (found.isShared()) {

@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-import path from "path";
 import { strict as assert } from "assert";
 import { spawnSync } from "child_process";
+import * as fs from "fs";
+import path from "path";
+
+import { _dirname } from "./dirname.cjs";
 
 describe("fluid-runner from command line", () => {
-	const command = path.join(__dirname, "../../bin/fluid-runner");
+	const command = path.join(_dirname, "../../bin/fluid-runner.mjs");
 
 	describe("exportFile", () => {
-		const codeLoader = path.join(__dirname, "sampleCodeLoaders", "sampleCodeLoader.js");
-		const folderRoot = path.join(__dirname, "../../src/test");
+		const codeLoader = path.join(_dirname, "sampleCodeLoaders", "sampleCodeLoader.js");
+		const folderRoot = path.join(_dirname, "../../src/test");
 		const snapshot = path.join(folderRoot, "localOdspSnapshots", "odspSnapshot2.json");
 		const outputFolder = path.join(folderRoot, "outputFolder");
 		const outputFilePath = path.join(outputFolder, "result.txt");
@@ -108,7 +110,7 @@ describe("fluid-runner from command line", () => {
 
 		it("Process exits with code 1 when timeout occurs", () => {
 			const timeoutCodeLoader = path.join(
-				__dirname,
+				_dirname,
 				"sampleCodeLoaders",
 				"timeoutCodeLoader.js",
 			);
@@ -136,7 +138,7 @@ describe("fluid-runner from command line", () => {
 
 		it("Process exits with code 1 when disallowed network call occurs", () => {
 			const networkFetchCodeLoader = path.join(
-				__dirname,
+				_dirname,
 				"sampleCodeLoaders",
 				"networkFetchCodeLoader.js",
 			);
@@ -164,7 +166,7 @@ describe("fluid-runner from command line", () => {
 
 		it("Process exits with code 0 when allowed network call occurs", () => {
 			const networkFetchCodeLoader = path.join(
-				__dirname,
+				_dirname,
 				"sampleCodeLoaders",
 				"networkFetchCodeLoader.js",
 			);
@@ -191,12 +193,18 @@ describe("fluid-runner from command line", () => {
 	});
 });
 
-describe("custom fluidFileConverter provided", () => {
-	const command = path.join(__dirname, "../../src/test/sampleCodeLoaders", "sample-executable");
+describe(`custom fluidFileConverter provided (${
+	_dirname.includes("dist") ? "CJS" : "ESM"
+})`, () => {
+	const command = path.join(
+		_dirname,
+		"sampleCodeLoaders",
+		_dirname.includes("dist") ? "sample-executable.cjs.js" : "sample-executable.esm.js",
+	);
 
 	describe("exportFile", () => {
-		const folderRoot = path.join(__dirname, "../../src/test");
-		const codeLoader = path.join(__dirname, "sampleCodeLoaders", "sampleCodeLoader.js");
+		const folderRoot = path.join(_dirname, "../../src/test");
+		const codeLoader = path.join(_dirname, "sampleCodeLoaders", "sampleCodeLoader.js");
 		const snapshot = path.join(folderRoot, "localOdspSnapshots", "odspSnapshot2.json");
 		const outputFolder = path.join(folderRoot, "outputFolder");
 		const outputFilePath = path.join(outputFolder, "result.txt");

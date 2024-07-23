@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -10,15 +11,11 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
-import {
 	ICreateBlobResponse,
 	ISnapshotTree,
-	ISummaryHandle,
-	ISummaryTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
-import { UsageError } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * @internal
@@ -58,7 +55,12 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 		scenarioName?: string,
 		fetchSource?: FetchSource,
 	): Promise<IVersion[]> {
-		return this.internalStorageService.getVersions(versionId, count, scenarioName, fetchSource);
+		return this.internalStorageService.getVersions(
+			versionId,
+			count,
+			scenarioName,
+			fetchSource,
+		);
 	}
 
 	public async uploadSummaryWithContext(

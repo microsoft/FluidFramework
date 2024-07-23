@@ -4,24 +4,25 @@
  */
 
 import { strict as assert } from "assert";
-// TODO:AB#6558: This should be provided based on the compatibility configuration.
-// eslint-disable-next-line @typescript-eslint/no-restricted-imports
-import { SharedMap, type ISharedMap } from "@fluidframework/map";
-import {
-	ITestFluidObject,
-	ChannelFactoryRegistry,
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+
 import {
 	describeInstallVersions,
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
 } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+// TODO:AB#6558: This should be provided based on the compatibility configuration.
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
+} from "@fluidframework/test-utils/internal";
 
 const versionWithChunking = "0.56.0";
 
@@ -68,9 +69,6 @@ describeInstallVersions(
 				// to force the container to flush the ops as soon as
 				// they are produced.
 				flushMode: FlushMode.Immediate,
-				gcOptions: {
-					gcAllowed: true,
-				},
 			},
 		);
 

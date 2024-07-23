@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 // Export modules to global scope as necessary (only for testing)
 const path = require("path");
 const fs = require("fs");

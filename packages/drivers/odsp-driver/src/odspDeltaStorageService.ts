@@ -3,23 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { validateMessages } from "@fluidframework/driver-base";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { validateMessages } from "@fluidframework/driver-base/internal";
 import {
 	IDeltasFetchResult,
 	IDocumentDeltaStorageService,
 	type IStream,
-} from "@fluidframework/driver-definitions";
-import { requestOps, streamObserver } from "@fluidframework/driver-utils";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { requestOps, streamObserver } from "@fluidframework/driver-utils/internal";
+import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
+
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts.js";
 import { EpochTracker } from "./epochTracker.js";
-import { getWithRetryForTokenRefresh } from "./odspUtils.js";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
+import { getWithRetryForTokenRefresh } from "./odspUtils.js";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.
@@ -27,7 +31,7 @@ import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
 export class OdspDeltaStorageService {
 	constructor(
 		private readonly deltaFeedUrl: string,
-		private readonly getStorageToken: InstrumentedStorageTokenFetcher,
+		private readonly getAuthHeader: InstrumentedStorageTokenFetcher,
 		private readonly epochTracker: EpochTracker,
 		private readonly logger: ITelemetryLoggerExt,
 	) {}
@@ -48,9 +52,13 @@ export class OdspDeltaStorageService {
 	): Promise<IDeltasFetchResult> {
 		return getWithRetryForTokenRefresh(async (options) => {
 			// Note - this call ends up in getSocketStorageDiscovery() and can refresh token
-			// Thus it needs to be done before we call getStorageToken() to reduce extra calls
-			const baseUrl = this.buildUrl(from, to);
-			const storageToken = await this.getStorageToken(options, "DeltaStorage");
+			// Thus it needs to be done before we call getAuthHeader() to reduce extra calls
+			const url = this.buildUrl(from, to);
+			const method = "POST";
+			const authHeader = await this.getAuthHeader(
+				{ ...options, request: { url, method } },
+				"DeltaStorage",
+			);
 
 			return PerformanceEvent.timedExecAsync(
 				this.logger,
@@ -65,7 +73,7 @@ export class OdspDeltaStorageService {
 				async (event) => {
 					const formBoundary = uuid();
 					let postBody = `--${formBoundary}\r\n`;
-					postBody += `Authorization: Bearer ${storageToken}\r\n`;
+					postBody += `Authorization: ${authHeader}\r\n`;
 					postBody += `X-HTTP-Method-Override: GET\r\n`;
 
 					postBody += `_post: 1\r\n`;
@@ -84,11 +92,11 @@ export class OdspDeltaStorageService {
 
 					const response =
 						await this.epochTracker.fetchAndParseAsJSON<IDeltaStorageGetResponse>(
-							baseUrl,
+							url,
 							{
 								headers,
 								body: postBody,
-								method: "POST",
+								method,
 								signal: abort.signal,
 							},
 							"ops",
@@ -98,15 +106,14 @@ export class OdspDeltaStorageService {
 					clearTimeout(timer);
 					const deltaStorageResponse = response.content;
 					const messages =
-						deltaStorageResponse.value.length > 0 &&
-						"op" in deltaStorageResponse.value[0]
+						// Non null asserting here because of the length check
+						deltaStorageResponse.value.length > 0 && "op" in deltaStorageResponse.value[0]!
 							? (deltaStorageResponse.value as ISequencedDeltaOpMessage[]).map(
 									(operation) => operation.op,
-							  )
+								)
 							: (deltaStorageResponse.value as ISequencedDocumentMessage[]);
 
 					event.end({
-						headers: Object.keys(headers).length > 0 ? true : undefined,
 						length: messages.length,
 						...response.propsToLog,
 					});
@@ -166,8 +173,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 
 		// Don't use cache for ops is snapshot is fetched from network or if it was not fetched at all.
 		this.useCacheForOps =
-			this.useCacheForOps &&
-			this.storageManagerGetter()?.isFirstSnapshotFromNetwork === false;
+			this.useCacheForOps && this.storageManagerGetter()?.isFirstSnapshotFromNetwork === false;
 		let opsFromSnapshot = 0;
 		let opsFromCache = 0;
 		let opsFromStorage = 0;
@@ -182,7 +188,8 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 					(op) => op.sequenceNumber >= from && op.sequenceNumber < to,
 				);
 				validateMessages("cached", messages, from, this.logger);
-				if (messages.length > 0 && messages[0].sequenceNumber === from) {
+				// Non null asserting here because of the length check
+				if (messages.length > 0 && messages[0]!.sequenceNumber === from) {
 					this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
 					opsFromSnapshot += messages.length;
 					return { messages, partialResult: true };

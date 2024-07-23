@@ -5,11 +5,12 @@
 
 import {
 	IChannelAttributes,
+	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import Delta from "quill-delta";
+
 import { SharedOT } from "../index.js";
 
 export class SharedDelta extends SharedOT<Delta, Delta> {

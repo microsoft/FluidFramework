@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { v4, NIL } from 'uuid';
+import { NIL, v4 } from 'uuid';
+
 import { assertWithMessage } from './Common.js';
 import { StableId, UuidString } from './Identifiers.js';
 

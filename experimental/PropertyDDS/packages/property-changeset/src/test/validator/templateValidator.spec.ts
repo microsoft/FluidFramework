@@ -5,43 +5,68 @@
 
 /* eslint no-unused-expressions: 0 */
 
+// Lint disable to avoid needing to place `async` on many test functions
+// as validity of testing is in general questionable and trying to avoid
+// changes.
+/* eslint-disable @typescript-eslint/promise-function-async */
+
 /**
  * @fileoverview In this file, we will test template validation.
  */
 
+import { constants } from "@fluid-experimental/property-common";
 import { expect } from "chai";
-import { SchemaValidator } from "../schemaValidator";
-import { TemplateValidator } from "../../templateValidator";
+import semver from "semver";
+
+import { TemplateValidator } from "../../templateValidator.js";
+import type { SchemaValidationResult } from "../../validationResultBuilder.js";
+import { SchemaValidator } from "../schemaValidator.js";
+import {
+	badInvalidSemverInTypeid,
+	badMissingSemverInTypeid,
+	badPrimitiveTypeid,
+	goodPointId,
+	goodReservedTypes,
+	goodUIBorder,
+} from "../schemas/index.js";
 
 (function () {
-	let MSG = require("@fluid-experimental/property-common").constants.MSG;
-	let semver = require("semver");
+	const MSG = constants.MSG;
 
 	const performValidation = function (
-		async,
+		async: boolean,
 		template,
 		templatePrevious,
 		skipSemver,
 		asyncErrorMessage?,
-	) {
+	): Promise<SchemaValidationResult> {
 		let schemaValidator = new SchemaValidator();
 
+		// @ts-expect-error - per the catch and no throw below
 		return async
 			? schemaValidator
 					.validate(template, templatePrevious, async, skipSemver)
 					.catch((error) => {
 						expect(error.message).to.have.string(asyncErrorMessage);
+						// This really should re-throw the error. As it stands this
+						// catch returns `undefined` which is not SchemaValidationResult.
+						// Throwing will cause "fail: previous template: invalid semver"
+						// test case to fail with uncaught error.
+						// This also has impact on the malformed validate function below.
+						// throw error;
 					})
-			: new Promise((resolve) => {
-					resolve(
-						schemaValidator.validate(template, templatePrevious, async, skipSemver),
-					);
-			  });
+			: // A better pattern is simply Promise.resolve(...). However without all callers
+				// properly specifying they are `async` (lint disabled for file), they may fail.
+				// In particular see test case
+				//   "should fail if map with context key type typeid is not constant"
+				new Promise((resolve) => {
+					resolve(schemaValidator.validate(template, templatePrevious, async, skipSemver));
+				});
 	};
 
 	// Performs both synchronous and asynchronous validation
 	let validate = function (
-		expectations,
+		expectations: (result: SchemaValidationResult) => SchemaValidationResult,
 		template?,
 		templatePrevious?,
 		skipSemver?,
@@ -50,6 +75,14 @@ import { TemplateValidator } from "../../templateValidator";
 		return performValidation(false, template, templatePrevious, skipSemver)
 			.then(expectations)
 			.then(
+				// This patten is invalid. The `then` parameter is expected to be callable.
+				// Instead performValidation is called and its result is is called. Or at least
+				// should be. As set up the following .then is executed (apparently) on the
+				// results of the prior performValidation. This could be address with this prefix:
+				//   async () =>
+				// However doing so causes tests to fail. Testing coming through here appears
+				// invalid.
+				// @ts-expect-error
 				performValidation(true, template, templatePrevious, skipSemver, asyncErrorMessage),
 			)
 			.then(expectations);
@@ -82,7 +115,7 @@ import { TemplateValidator } from "../../templateValidator";
 		// --- TYPEID ---
 		describe("typeid validation", function () {
 			it("pass: valid typeid", function () {
-				let template = JSON.parse(JSON.stringify(require("../schemas/goodPointId")));
+				let template = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 
 				let expectations = function (result) {
 					expect(result).property("isValid", true);
@@ -96,9 +129,7 @@ import { TemplateValidator } from "../../templateValidator";
 			});
 
 			it("fail: missing semver", function () {
-				let template = JSON.parse(
-					JSON.stringify(require("../schemas/badMissingSemverInTypeid")),
-				);
+				let template = JSON.parse(JSON.stringify(badMissingSemverInTypeid.templateSchema));
 				let expectations = function (result) {
 					expect(result).property("isValid", false);
 					expect(result.typeid).to.equal(template.typeid);
@@ -113,9 +144,7 @@ import { TemplateValidator } from "../../templateValidator";
 			});
 
 			it("fail: invalid semver 1", function () {
-				let template = JSON.parse(
-					JSON.stringify(require("../schemas/badInvalidSemverInTypeid")),
-				);
+				let template = JSON.parse(JSON.stringify(badInvalidSemverInTypeid.templateSchema));
 
 				let expectations = function (result) {
 					expect(result).property("isValid", false);
@@ -129,9 +158,7 @@ import { TemplateValidator } from "../../templateValidator";
 			});
 
 			it("fail: invalid semver 2", function () {
-				let template = JSON.parse(
-					JSON.stringify(require("../schemas/badInvalidSemverInTypeid")),
-				);
+				let template = JSON.parse(JSON.stringify(badInvalidSemverInTypeid.templateSchema));
 				template.typeid = "TeamLeoValidation2:PointID-1.0.01";
 				let expectations = function (result) {
 					expect(result).property("isValid", false);
@@ -144,9 +171,7 @@ import { TemplateValidator } from "../../templateValidator";
 			});
 
 			it("fail: previous template: invalid semver", function () {
-				let templatePrevious = JSON.parse(
-					JSON.stringify(require("../schemas/goodPointId")),
-				);
+				let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 				let template = JSON.parse(JSON.stringify(templatePrevious));
 				let badTypeId = "TeamLeoValidation2:PointID-1.0.0.1";
 				templatePrevious.typeid = badTypeId;
@@ -170,9 +195,7 @@ import { TemplateValidator } from "../../templateValidator";
 		// --- Template versioning ---
 		describe("template versioning", function () {
 			it("fail: version regression: 1.0.0 -> 0.9.9", function () {
-				let templatePrevious = JSON.parse(
-					JSON.stringify(require("../schemas/goodPointId")),
-				);
+				let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 				let template = JSON.parse(JSON.stringify(templatePrevious));
 				template.typeid = "TeamLeoValidation2:PointID-0.9.9";
 				let expectations = function (result) {
@@ -186,9 +209,7 @@ import { TemplateValidator } from "../../templateValidator";
 
 			describe("same version", function () {
 				it("pass: same content", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					let expectations = function (result) {
 						expect(result).property("isValid", true);
@@ -200,9 +221,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("fail: changed 'annotation'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					templatePrevious.annotation = { description: "Test" };
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.annotation.description = "Changed!";
@@ -219,9 +238,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("fail: deleted 'annotation'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					templatePrevious.annotation = { description: "Test" };
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					delete template.annotation;
@@ -238,9 +255,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("fail: added 'annotation'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.annotation = { description: "Test" };
 
@@ -256,9 +271,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("fail: changed 'value'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodUIBorder")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodUIBorder.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.properties[0].properties[0].value = 123456;
 
@@ -274,9 +287,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("fail: changed 'id'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.properties[0].properties[0].id = "xx";
 
@@ -292,9 +303,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("fail: changed 'inherits'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodReservedTypes")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodReservedTypes.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.inherits = "Reference<Adsk.Core:Math.Color-1.0.0>";
 
@@ -310,9 +319,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("fail: added property", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					templatePrevious.annotation = { description: "Test" };
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.properties[0].properties.push({ id: "newPropId", typeid: "Float32" });
@@ -329,9 +336,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("fail: deleted property", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					templatePrevious.annotation = { description: "Test" };
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.properties[0].properties.pop();
@@ -350,9 +355,7 @@ import { TemplateValidator } from "../../templateValidator";
 
 			describe("incremented patch level", function () {
 				it("pass: same content", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "patch");
 
@@ -366,9 +369,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("pass: unstable with major content change: 0.0.1 -> 0.0.2", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					templatePrevious.typeid = "TeamLeoValidation2:PointID-0.0.1";
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-0.0.2";
@@ -384,9 +385,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("pass: changed 'annotation'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					templatePrevious.annotation = { description: "Test" };
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "patch");
@@ -402,9 +401,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("pass: deleted 'annotation'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					templatePrevious.annotation = { description: "Test" };
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "patch");
@@ -420,9 +417,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("pass: added 'annotation'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "patch");
 					template.annotation = { description: "Test" };
@@ -437,9 +432,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("warn: changed 'value'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodUIBorder")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodUIBorder.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "Adsk.Core:UI.Border-" + semver.inc("1.0.0", "patch");
 					template.properties[0].properties[0].value = 123456;
@@ -455,9 +448,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("warn: changed 'id' (delete, add)", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "patch");
 					template.properties[0].properties[0].id = "xx";
@@ -473,9 +464,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("warn: changed 'inherits'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodReservedTypes")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodReservedTypes.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:Example-" + semver.inc("1.0.0", "patch");
 					template.inherits = "Reference<Adsk.Core:Math.Color-1.0.0>";
@@ -491,9 +480,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("warn: added property", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					templatePrevious.annotation = { description: "Test" };
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "patch");
@@ -510,9 +497,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("warn: deleted property", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					templatePrevious.annotation = { description: "Test" };
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "patch");
@@ -531,9 +516,7 @@ import { TemplateValidator } from "../../templateValidator";
 
 			describe("incremented minor level", function () {
 				it("pass: same content", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "minor");
 
@@ -547,9 +530,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("pass: changed 'annotation'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					templatePrevious.annotation = { description: "Test" };
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "minor");
@@ -565,9 +546,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("pass: deleted 'annotation'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					templatePrevious.annotation = { description: "Test" };
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "minor");
@@ -583,9 +562,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("pass: added 'annotation'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "minor");
 					template.annotation = { description: "Test" };
@@ -600,9 +577,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("pass: changed 'value'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodUIBorder")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodUIBorder.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "Adsk.Core:UI.Border-" + semver.inc("1.0.0", "minor");
 					template.properties[0].properties[0].value = 123456;
@@ -617,9 +592,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("warn: changed 'id' (delete, add)", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "minor");
 					template.properties[0].properties[0].id = "xx";
@@ -635,9 +608,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("warn: changed 'inherits'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodReservedTypes")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodReservedTypes.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:Example-" + semver.inc("1.0.0", "minor");
 					template.inherits = "Reference<Adsk.Core:Math.Color-1.0.0>";
@@ -653,9 +624,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("pass: added property", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					templatePrevious.annotation = { description: "Test" };
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "minor");
@@ -671,9 +640,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("warn: deleted property", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					templatePrevious.annotation = { description: "Test" };
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "minor");
@@ -692,9 +659,7 @@ import { TemplateValidator } from "../../templateValidator";
 
 			describe("incremented major level", function () {
 				it("pass: same content", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "major");
 
@@ -708,9 +673,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("pass: changed 'annotation'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					templatePrevious.annotation = { description: "Test" };
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "major");
@@ -726,9 +689,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("pass: deleted 'annotation'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					templatePrevious.annotation = { description: "Test" };
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "major");
@@ -744,9 +705,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("pass: added 'annotation'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "major");
 					template.annotation = { description: "Test" };
@@ -761,9 +720,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("pass: changed 'value'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodUIBorder")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodUIBorder.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "Adsk.Core:UI.Border-" + semver.inc("1.0.0", "major");
 					template.properties[0].properties[0].value = 123456;
@@ -778,9 +735,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("pass: changed 'id' (delete, add)", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "major");
 					template.properties[0].properties[0].id = "xx";
@@ -795,9 +750,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("pass: changed 'inherits'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodReservedTypes")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodReservedTypes.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:Example-" + semver.inc("1.0.0", "major");
 					template.inherits = "Reference<Adsk.Core:Math.Color-1.0.0>";
@@ -812,9 +765,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("pass: added property", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					templatePrevious.annotation = { description: "Test" };
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "major");
@@ -830,9 +781,7 @@ import { TemplateValidator } from "../../templateValidator";
 				});
 
 				it("pass: deleted property", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(require("../schemas/goodPointId")),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 					templatePrevious.annotation = { description: "Test" };
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:PointID-" + semver.inc("1.0.0", "major");
@@ -851,9 +800,7 @@ import { TemplateValidator } from "../../templateValidator";
 
 		describe("skip semver validation", function () {
 			it("pass: deep equal on scrambled arrays", function () {
-				let templatePrevious = JSON.parse(
-					JSON.stringify(require("../schemas/goodPointId")),
-				);
+				let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 				let template = JSON.parse(JSON.stringify(templatePrevious));
 				let tmp = template.properties[0].properties[0];
 				template.properties[0].properties[0] = template.properties[0].properties[2];
@@ -873,9 +820,7 @@ import { TemplateValidator } from "../../templateValidator";
 			});
 
 			it("pass: deep equal with version regression", function () {
-				let templatePrevious = JSON.parse(
-					JSON.stringify(require("../schemas/goodPointId")),
-				);
+				let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 				let template = JSON.parse(JSON.stringify(templatePrevious));
 
 				let expectations = function (result) {
@@ -888,9 +833,7 @@ import { TemplateValidator } from "../../templateValidator";
 			});
 
 			it("pass: preserves input templates", function () {
-				let templatePrevious = JSON.parse(
-					JSON.stringify(require("../schemas/goodPointId")),
-				);
+				let templatePrevious = JSON.parse(JSON.stringify(goodPointId.templateSchema));
 				let template = JSON.parse(JSON.stringify(templatePrevious));
 
 				let copies = [
@@ -910,9 +853,7 @@ import { TemplateValidator } from "../../templateValidator";
 			});
 
 			it("fail: changed value", function () {
-				let templatePrevious = JSON.parse(
-					JSON.stringify(require("../schemas/goodUIBorder")),
-				);
+				let templatePrevious = JSON.parse(JSON.stringify(goodUIBorder.templateSchema));
 				let template = JSON.parse(JSON.stringify(templatePrevious));
 				template.properties[0].properties[0].value = 123456;
 
@@ -930,7 +871,7 @@ import { TemplateValidator } from "../../templateValidator";
 
 		describe("syntax validation", function () {
 			it("pass: validate a simple file", function () {
-				let template = require("../schemas/goodPointId");
+				let template = goodPointId.templateSchema;
 
 				let expectations = function (result) {
 					expect(result.isValid).to.equal(true);
@@ -940,7 +881,7 @@ import { TemplateValidator } from "../../templateValidator";
 			});
 
 			it("fail: invalid file", function () {
-				let template = require("../schemas/badPrimitiveTypeid");
+				let template = badPrimitiveTypeid.templateSchema;
 
 				let expectations = function (result) {
 					expect(result.isValid).to.equal(false);
@@ -1232,9 +1173,7 @@ import { TemplateValidator } from "../../templateValidator";
 				let expectations = function (result) {
 					expect(result.isValid).to.equal(false);
 					expect(result.errors.length).to.equal(2);
-					expect(result.errors[0].message).to.include(
-						MSG.KEY_MUST_BE_TYPEID + "NotATypeId",
-					);
+					expect(result.errors[0].message).to.include(MSG.KEY_MUST_BE_TYPEID + "NotATypeId");
 					expect(result.errors[1].message).to.include(
 						MSG.KEY_MUST_BE_TYPEID + "AlsoNotATypeId",
 					);

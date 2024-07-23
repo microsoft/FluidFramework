@@ -5,14 +5,15 @@
 
 /* eslint accessor-pairs: [2, { "getWithoutSet": false }] */
 
-import _ from "lodash";
 import {
 	ChangeSet,
 	PathHelper,
 	SerializedChangeSet,
 	TypeIdHelper,
 } from "@fluid-experimental/property-changeset";
-import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
+import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
+import _ from "lodash";
+
 import { LazyLoadedProperties as Property } from "./lazyLoadedProperties";
 
 const { MSG, PROPERTY_PATH_DELIMITER } = constants;
@@ -777,8 +778,9 @@ export abstract class BaseProperty {
 			for (const key of keys) {
 				if (key) {
 					var repoRef =
-						repoInfo._referencedByPropertyInstanceGUIDs[key]
-							._repositoryReferenceProperties[key].property;
+						repoInfo._referencedByPropertyInstanceGUIDs[key]._repositoryReferenceProperties[
+							key
+						].property;
 					if (that.getRoot() === repoRef.getReferencedRepositoryRoot()) {
 						referenceProps.push(repoRef);
 					}
@@ -974,9 +976,7 @@ export abstract class BaseProperty {
 
 						let refRoot;
 						try {
-							refRoot = refProperty
-								? refProperty.getReferencedRepositoryRoot()
-								: undefined;
+							refRoot = refProperty ? refProperty.getReferencedRepositoryRoot() : undefined;
 						} catch (e) {
 							console.warn(e.message);
 						}
@@ -1303,10 +1303,7 @@ export abstract class BaseProperty {
 			if (this.isPrimitiveType()) {
 				const childrenIds = this.getContext() === "single" ? [] : this.getIds();
 				for (const childId of childrenIds) {
-					const childPath = PathHelper.getChildAbsolutePathCanonical(
-						in_basePath,
-						childId,
-					);
+					const childPath = PathHelper.getChildAbsolutePathCanonical(in_basePath, childId);
 					if (
 						PathHelper.getPathCoverage(childPath, coverage.pathList).coverageExtent ===
 						PathHelper.CoverageExtent.UNCOVERED
@@ -1319,10 +1316,7 @@ export abstract class BaseProperty {
 				const childrenIds = this.getIds();
 				for (const childId of childrenIds) {
 					const child = this.get(childId);
-					const childPath = PathHelper.getChildAbsolutePathCanonical(
-						in_basePath,
-						childId,
-					);
+					const childPath = PathHelper.getChildAbsolutePathCanonical(in_basePath, childId);
 					if (!child._coveredByPaths(childPath, coverage.pathList)) {
 						return false;
 					}

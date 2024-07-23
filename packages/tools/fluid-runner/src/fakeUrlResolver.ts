@@ -8,8 +8,8 @@ import {
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 
 const fakeId = "FakeUrlResolver";
 const fakeUrl = "https://examplehost.com/FakeUrlResolver/";

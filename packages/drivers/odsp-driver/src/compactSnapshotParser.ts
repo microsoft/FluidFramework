@@ -3,23 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions";
-import { ReadBuffer } from "./ReadBufferUtils.js";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
+	ISnapshot,
+	ISnapshotTree,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+
+import { ReadBuffer } from "./ReadBufferUtils.js";
+import { measure } from "./odspUtils.js";
+import {
+	NodeCore,
+	NodeTypes,
+	TreeBuilder,
 	assertBlobCoreInstance,
-	getStringInstance,
 	assertBoolInstance,
 	assertNodeCoreInstance,
 	assertNumberInstance,
 	getNodeProps,
-	NodeCore,
-	NodeTypes,
-	TreeBuilder,
+	getStringInstance,
 } from "./zipItDataRepresentationUtils.js";
-import { measure } from "./odspUtils.js";
 
 export const snapshotMinReadVersion = "1.0";
 export const currentReadVersion = "1.0";
@@ -60,17 +64,18 @@ function readBlobSection(node: NodeTypes): {
 			// "id": <node name>
 			// "data": <blob>
 			blobContents.set(blob.getString(1), blob.getBlob(3).arrayBuffer);
-			continue;
+		} else {
+			/**
+			 * More generalized workflow
+			 */
+			slowBlobStructureCount += 1;
+			const records = getNodeProps(blob);
+			// TODO why are we non null asserting here?
+			assertBlobCoreInstance(records.data!, "data should be of BlobCore type");
+			// TODO why are we non null asserting here?
+			const id = getStringInstance(records.id!, "blob id should be string");
+			blobContents.set(id, records.data.arrayBuffer);
 		}
-
-		/**
-		 * More generalized workflow
-		 */
-		slowBlobStructureCount += 1;
-		const records = getNodeProps(blob);
-		assertBlobCoreInstance(records.data, "data should be of BlobCore type");
-		const id = getStringInstance(records.id, "blob id should be string");
-		blobContents.set(id, records.data.arrayBuffer);
 	}
 	return { blobContents, slowBlobStructureCount };
 }
@@ -83,8 +88,10 @@ function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 	assertNodeCoreInstance(node, "Deltas should be of type NodeCore");
 	const ops: ISequencedDocumentMessage[] = [];
 	const records = getNodeProps(node);
-	assertNumberInstance(records.firstSequenceNumber, "Seq number should be a number");
-	assertNodeCoreInstance(records.deltas, "Deltas should be a Node");
+	// TODO Why are we non null asserting here?
+	assertNumberInstance(records.firstSequenceNumber!, "Seq number should be a number");
+	// TODO Why are we non null asserting here?
+	assertNodeCoreInstance(records.deltas!, "Deltas should be a Node");
 	for (let i = 0; i < records.deltas.length; ++i) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		ops.push(JSON.parse(records.deltas.getString(i)));
@@ -93,7 +100,8 @@ function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 	// when there are no ops. So just make the code resilient to that bug. Service has also
 	// fixed that bug.
 	assert(
-		ops.length === 0 || records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber,
+		// Non null asserting here because of the length check
+		ops.length === 0 || records.firstSequenceNumber.valueOf() === ops[0]!.sequenceNumber,
 		0x280 /* "Validate first op seq number" */,
 	);
 	return ops;
@@ -106,9 +114,11 @@ function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 function readTreeSection(node: NodeCore): {
 	snapshotTree: ISnapshotTree;
 	slowTreeStructureCount: number;
+	treeStructureCountWithGroupId: number;
 } {
 	let slowTreeStructureCount = 0;
-	const trees = {};
+	let treeStructureCountWithGroupId = 0;
+	const trees: Record<string, ISnapshotTree> = {};
 	const snapshotTree: ISnapshotTree = {
 		blobs: {},
 		trees,
@@ -124,6 +134,12 @@ function readTreeSection(node: NodeCore): {
 		const length = treeNode.length;
 		if (length > 0 && treeNode.getMaybeString(0) === "name") {
 			switch (length) {
+				case 2: {
+					// empty tree case
+					// "name": <node name>
+					trees[treeNode.getString(1)] = { blobs: {}, trees: {} };
+					continue;
+				}
 				case 4: {
 					const content = treeNode.getMaybeString(2);
 					// "name": <node name>
@@ -132,6 +148,7 @@ function readTreeSection(node: NodeCore): {
 						const result = readTreeSection(treeNode.getNode(3));
 						trees[treeNode.getString(1)] = result.snapshotTree;
 						slowTreeStructureCount += result.slowTreeStructureCount;
+						treeStructureCountWithGroupId += result.treeStructureCountWithGroupId;
 						continue;
 					}
 					// "name": <node name>
@@ -164,10 +181,8 @@ function readTreeSection(node: NodeCore): {
 						const result = readTreeSection(treeNode.getNode(5));
 						trees[treeNode.getString(1)] = result.snapshotTree;
 						slowTreeStructureCount += result.slowTreeStructureCount;
-						assert(
-							treeNode.getBool(3),
-							0x3db /* Unreferenced if present should be true */,
-						);
+						treeStructureCountWithGroupId += result.treeStructureCountWithGroupId;
+						assert(treeNode.getBool(3), 0x3db /* Unreferenced if present should be true */);
 						snapshotTree.unreferenced = true;
 						continue;
 					}
@@ -182,7 +197,7 @@ function readTreeSection(node: NodeCore): {
 		/**
 		 * More generalized workflow
 		 */
-		slowTreeStructureCount += 1;
+		slowTreeStructureCount++;
 		const records = getNodeProps(treeNode);
 
 		if (records.unreferenced !== undefined) {
@@ -191,21 +206,8 @@ function readTreeSection(node: NodeCore): {
 			snapshotTree.unreferenced = true;
 		}
 
-		if (records.groupId !== undefined) {
-			const groupId = getStringInstance(records.groupId, "groupId should be a string");
-			snapshotTree.groupId = groupId;
-		}
-
-		if (records.omitted !== undefined) {
-			assertBoolInstance(records.omitted, "omitted should be a boolean");
-			assert(
-				!records.omitted || snapshotTree.groupId !== undefined,
-				"GroupId absent but omitted is true",
-			);
-			snapshotTree.omitted = records.omitted;
-		}
-
-		const path = getStringInstance(records.name, "Path name should be string");
+		// TODO Why are we non null asserting here?
+		const path = getStringInstance(records.name!, "Path name should be string");
 		if (records.value !== undefined) {
 			snapshotTree.blobs[path] = getStringInstance(
 				records.value,
@@ -216,12 +218,19 @@ function readTreeSection(node: NodeCore): {
 			assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
 			const result = readTreeSection(records.children);
 			trees[path] = result.snapshotTree;
+			if (records.groupId !== undefined) {
+				const groupId = getStringInstance(records.groupId, "groupId should be a string");
+				// Non null asserting since trees[path] is already created
+				trees[path]!.groupId = groupId;
+				treeStructureCountWithGroupId++;
+			}
 			slowTreeStructureCount += result.slowTreeStructureCount;
+			treeStructureCountWithGroupId += result.treeStructureCountWithGroupId;
 		} else {
 			trees[path] = { blobs: {}, trees: {} };
 		}
 	}
-	return { snapshotTree, slowTreeStructureCount };
+	return { snapshotTree, slowTreeStructureCount, treeStructureCountWithGroupId };
 }
 
 /**
@@ -232,19 +241,25 @@ function readSnapshotSection(node: NodeTypes): {
 	sequenceNumber: number;
 	snapshotTree: ISnapshotTree;
 	slowTreeStructureCount: number;
+	treeStructureCountWithGroupId: number;
 } {
 	assertNodeCoreInstance(node, "Snapshot should be of type NodeCore");
 	const records = getNodeProps(node);
 
-	assertNodeCoreInstance(records.treeNodes, "TreeNodes should be of type NodeCore");
-	assertNumberInstance(records.sequenceNumber, "sequenceNumber should be of type number");
-	const { snapshotTree, slowTreeStructureCount } = readTreeSection(records.treeNodes);
-	snapshotTree.id = getStringInstance(records.id, "snapshotId should be string");
+	// TODO Why are we non null asserting here?
+	assertNodeCoreInstance(records.treeNodes!, "TreeNodes should be of type NodeCore");
+	// TODO Why are we non null asserting here?
+	assertNumberInstance(records.sequenceNumber!, "sequenceNumber should be of type number");
+	const { snapshotTree, slowTreeStructureCount, treeStructureCountWithGroupId } =
+		readTreeSection(records.treeNodes);
+	// TODO Why are we non null asserting here?
+	snapshotTree.id = getStringInstance(records.id!, "snapshotId should be string");
 	const sequenceNumber = records.sequenceNumber.valueOf();
 	return {
 		sequenceNumber,
 		snapshotTree,
 		slowTreeStructureCount,
+		treeStructureCountWithGroupId,
 	};
 }
 
@@ -264,8 +279,10 @@ export function parseCompactSnapshotResponse(
 
 	const records = getNodeProps(root);
 
-	const mrv = getStringInstance(records.mrv, "minReadVersion should be string");
-	const cv = getStringInstance(records.cv, "createVersion should be string");
+	// TODO Why are we non null asserting here?
+	const mrv = getStringInstance(records.mrv!, "minReadVersion should be string");
+	// TODO Why are we non null asserting here?
+	const cv = getStringInstance(records.cv!, "createVersion should be string");
 	if (records.lsn !== undefined) {
 		assertNumberInstance(records.lsn, "lsn should be a number");
 	}
@@ -283,12 +300,16 @@ export function parseCompactSnapshotResponse(
 		0x2c2 /* "Create Version should be equal to currentReadVersion" */,
 	);
 
-	const [snapshot, durationSnapshotTree] = measure(() => readSnapshotSection(records.snapshot));
-	const [blobContents, durationBlobs] = measure(() => readBlobSection(records.blobs));
+	const [snapshot, durationSnapshotTree] = measure(() =>
+		// TODO Why are we non null asserting here?
+		readSnapshotSection(records.snapshot!),
+	);
+	// TODO Why are we non null asserting here?
+	const [blobContents, durationBlobs] = measure(() => readBlobSection(records.blobs!));
 
 	return {
 		...snapshot,
-		...blobContents,
+		blobContents: blobContents.blobContents,
 		ops: records.deltas === undefined ? [] : readOpsSection(records.deltas),
 		latestSequenceNumber: records.lsn,
 		snapshotFormatV: 1,
@@ -298,6 +319,7 @@ export function parseCompactSnapshotResponse(
 			durationBlobs,
 			slowTreeStructureCount: snapshot.slowTreeStructureCount,
 			slowBlobStructureCount: blobContents.slowBlobStructureCount,
+			treeStructureCountWithGroupId: snapshot.treeStructureCountWithGroupId,
 		},
 	};
 }

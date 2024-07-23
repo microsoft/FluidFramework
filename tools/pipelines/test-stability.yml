@@ -159,11 +159,11 @@ stages:
           timeoutInMinutes: 360
           taskBuild : ${{ parameters.taskBuild }}
           taskLint: false
-          taskTest: 
+          taskTest:
           - ci:test:mocha
           - ci:test:jest
-          - ci:test:realsvc:local:full
-          - ci:test:realsvc:tinylicious:full
+          - ci:test:realsvc:local
+          - ci:test:realsvc:tinylicious
           - ci:test:stress:tinylicious
           - test:copyresults
           stageName: ${{ stageName }}

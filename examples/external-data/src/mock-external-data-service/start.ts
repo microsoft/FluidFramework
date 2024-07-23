@@ -5,6 +5,7 @@
 
 import { externalDataServicePort } from "../mock-external-data-service-interface/index.js";
 import { ITaskData } from "../model-interface/index.js";
+
 import { ExternalDataSource } from "./externalDataSource.js";
 import { initializeExternalDataService } from "./service.js";
 import { MockWebhook } from "./webhook.js";

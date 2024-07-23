@@ -1,6 +1,6 @@
-# editable-tree
+# flex-tree
 
-Editable Tree is a simple API for accessing a Forest's data.
+Flex Tree (previously Editable Tree) is a simple API for accessing a Forest's data.
 
 The entry point is `getTreeContext` which provides a root `TreeField` which allows reading and writing nodes of the Forest.
 

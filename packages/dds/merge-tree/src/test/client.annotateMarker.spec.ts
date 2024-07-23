@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+
 import { UniversalSequenceNumber } from "../constants.js";
 import { Marker, reservedMarkerIdKey } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
+
 import { TestClient } from "./testClient.js";
 import { insertSegments } from "./testUtils.js";
 

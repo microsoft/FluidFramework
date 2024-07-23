@@ -3,39 +3,44 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { NonRetryableError } from "@fluidframework/driver-utils";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
-	InstrumentedStorageTokenFetcher,
+	IFileEntry,
 	IOdspResolvedUrl,
+	InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 	ShareLinkInfoType,
-	IFileEntry,
-} from "@fluidframework/odsp-driver-definitions";
-import { ISnapshot } from "@fluidframework/driver-definitions";
-import { ICreateFileResponse } from "./contracts.js";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	buildOdspShareLinkReqParams,
-	createCacheSnapshotKey,
-	getWithRetryForTokenRefresh,
-	INewFileInfo,
-	getOrigin,
-} from "./odspUtils.js";
-import { createOdspUrl } from "./createOdspUrl.js";
-import { getApiRoot } from "./odspUrlHelper.js";
-import { EpochTracker } from "./epochTracker.js";
-import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
+	ITelemetryLoggerExt,
+	loggerToMonitoringContext,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { ICreateFileResponse } from "./contracts.js";
+import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import {
 	convertCreateNewSummaryTreeToTreeAndBlobs,
 	convertSummaryIntoContainerSnapshot,
 	createNewFluidContainerCore,
 } from "./createNewUtils.js";
-import { runWithRetry } from "./retryUtils.js";
+import { createOdspUrl } from "./createOdspUrl.js";
+import { EpochTracker } from "./epochTracker.js";
+import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
+import { getApiRoot } from "./odspUrlHelper.js";
+import {
+	INewFileInfo,
+	buildOdspShareLinkReqParams,
+	createCacheSnapshotKey,
+	getWithRetryForTokenRefresh,
+	snapshotWithLoadingGroupIdSupported,
+} from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { ClpCompliantAppHeader } from "./contractsPublic.js";
+import { runWithRetry } from "./retryUtils.js";
 
 const isInvalidFileName = (fileName: string): boolean => {
 	const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -47,7 +52,7 @@ const isInvalidFileName = (fileName: string): boolean => {
  * Returns resolved url
  */
 export async function createNewFluidFile(
-	getStorageToken: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	newFileInfo: INewFileInfo,
 	logger: ITelemetryLoggerExt,
 	createNewSummary: ISummaryTree | undefined,
@@ -72,16 +77,10 @@ export async function createNewFluidFile(
 	let summaryHandle: string = "";
 	let shareLinkInfo: ShareLinkInfoType | undefined;
 	if (createNewSummary === undefined) {
-		itemId = await createNewEmptyFluidFile(
-			getStorageToken,
-			newFileInfo,
-			logger,
-			epochTracker,
-			forceAccessTokenViaAuthorizationHeader,
-		);
+		itemId = await createNewEmptyFluidFile(getAuthHeader, newFileInfo, logger, epochTracker);
 	} else {
 		const content = await createNewFluidFileFromSummary(
-			getStorageToken,
+			getAuthHeader,
 			newFileInfo,
 			logger,
 			createNewSummary,
@@ -113,7 +112,13 @@ export async function createNewFluidFile(
 			summaryHandle,
 		);
 		// caching the converted summary
-		await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), snapshot);
+		await epochTracker.put(
+			createCacheSnapshotKey(
+				odspResolvedUrl,
+				snapshotWithLoadingGroupIdSupported(loggerToMonitoringContext(logger).config),
+			),
+			snapshot,
+		);
 	}
 	return odspResolvedUrl;
 }
@@ -148,7 +153,7 @@ function extractShareLinkData(
 							role: sharing.sharingLink.type,
 							webUrl: sharing.sharingLink.webUrl,
 							...sharing.sharingLink,
-					  }
+						}
 					: undefined,
 				error: sharing.error,
 				shareId: sharing.shareId,
@@ -160,31 +165,31 @@ function extractShareLinkData(
 }
 
 export async function createNewEmptyFluidFile(
-	getStorageToken: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	newFileInfo: INewFileInfo,
 	logger: ITelemetryLoggerExt,
 	epochTracker: EpochTracker,
-	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<string> {
 	const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
 	// add .tmp extension to empty file (host is expected to rename)
 	const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
-	const initialUrl = `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${
+	const initialUrl = `${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${
 		newFileInfo.driveId
 	}/items/root:/${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
 
 	return getWithRetryForTokenRefresh(async (options) => {
-		const storageToken = await getStorageToken(options, "CreateNewFile");
+		const url = initialUrl;
+		const method = "PUT";
+		const authHeader = await getAuthHeader(
+			{ ...options, request: { url, method } },
+			"CreateNewFile",
+		);
 
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			{ eventName: "createNewEmptyFile" },
 			async (event) => {
-				const { url, headers } = getUrlAndHeadersWithAuth(
-					initialUrl,
-					storageToken,
-					forceAccessTokenViaAuthorizationHeader,
-				);
+				const headers = getHeadersWithAuth(authHeader);
 				headers["Content-Type"] = "application/json";
 
 				const fetchResponse = await runWithRetry(
@@ -194,7 +199,7 @@ export async function createNewEmptyFluidFile(
 							{
 								body: undefined,
 								headers,
-								method: "PUT",
+								method,
 							},
 							"createFile",
 						),
@@ -212,7 +217,6 @@ export async function createNewEmptyFluidFile(
 					);
 				}
 				event.end({
-					headers: Object.keys(headers).length > 0 ? true : undefined,
 					...fetchResponse.propsToLog,
 				});
 				return content.id;
@@ -223,7 +227,7 @@ export async function createNewEmptyFluidFile(
 }
 
 export async function createNewFluidFileFromSummary(
-	getStorageToken: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	newFileInfo: INewFileInfo,
 	logger: ITelemetryLoggerExt,
 	createNewSummary: ISummaryTree,
@@ -233,7 +237,7 @@ export async function createNewFluidFileFromSummary(
 	const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
 	const encodedFilename = encodeURIComponent(newFileInfo.filename);
 	const baseUrl =
-		`${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
+		`${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
 		`${filePath}/${encodedFilename}`;
 
 	const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
@@ -247,7 +251,7 @@ export async function createNewFluidFileFromSummary(
 
 	return createNewFluidContainerCore<ICreateFileResponse>({
 		containerSnapshot,
-		getStorageToken,
+		getAuthHeader,
 		logger,
 		initialUrl,
 		forceAccessTokenViaAuthorizationHeader,

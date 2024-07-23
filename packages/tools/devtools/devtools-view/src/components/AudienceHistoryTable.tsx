@@ -3,29 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 import {
-	tokens,
+	Table,
 	TableBody,
 	TableCell,
-	TableRow,
-	Table,
 	TableHeader,
-	TableHeaderCell,
+	TableRow,
 	makeStyles,
+	tokens,
 } from "@fluentui/react-components";
 import {
-	DoorArrowLeftRegular,
-	Clock12Regular,
-	Person12Regular,
-	ArrowJoinRegular,
 	ArrowExitRegular,
+	ArrowJoinRegular,
+	Clock12Regular,
+	DoorArrowLeftRegular,
+	Person12Regular,
 } from "@fluentui/react-icons";
+import React from "react";
 
-import { ThemeOption, useThemeContext } from "../ThemeHelper";
-import { clientIdTooltipText } from "./TooltipTexts";
-import { type TransformedAudienceHistoryData } from "./AudienceView";
-import { LabelCellLayout } from "./utility-components";
+import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
+
+import type { TransformedAudienceHistoryData } from "./AudienceView.js";
+import { clientIdTooltipText } from "./TooltipTexts.js";
+import { LabelCellLayout } from "./utility-components/index.js";
 
 const audienceStyles = makeStyles({
 	joined: {
@@ -79,7 +79,8 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 			<TableHeader>
 				<TableRow>
 					{audienceHistoryColumns.map((column, columnIndex) => (
-						<TableHeaderCell key={columnIndex}>
+						// TODO: Replace TableCell with TableHeaderCell once https://github.com/microsoft/fluentui/issues/31588 is fixed.
+						<TableCell key={columnIndex}>
 							{column.columnKey === "event" && (
 								<LabelCellLayout icon={<DoorArrowLeftRegular />}>
 									{column.label}
@@ -89,17 +90,16 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 							{column.columnKey === "clientId" && (
 								<LabelCellLayout
 									icon={<Person12Regular />}
+									aria-label="Client ID"
 									infoTooltipContent={clientIdTooltipText}
 								>
 									{column.label}
 								</LabelCellLayout>
 							)}
 							{column.columnKey === "time" && (
-								<LabelCellLayout icon={<Clock12Regular />}>
-									{column.label}
-								</LabelCellLayout>
+								<LabelCellLayout icon={<Clock12Regular />}>{column.label}</LabelCellLayout>
 							)}
-						</TableHeaderCell>
+						</TableCell>
 					))}
 				</TableRow>
 			</TableHeader>
@@ -113,18 +113,14 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 							themeInfo.name === ThemeOption.HighContrast
 								? style.highContrast
 								: item.changeKind === "joined"
-								? style.joined
-								: style.left
+									? style.joined
+									: style.left
 						}
 					>
 						<TableCell>
 							<LabelCellLayout
 								icon={
-									item.changeKind === "joined" ? (
-										<ArrowJoinRegular />
-									) : (
-										<ArrowExitRegular />
-									)
+									item.changeKind === "joined" ? <ArrowJoinRegular /> : <ArrowExitRegular />
 								}
 							>
 								{item.changeKind}

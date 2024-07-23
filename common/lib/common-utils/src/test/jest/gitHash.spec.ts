@@ -54,7 +54,7 @@ async function evaluateBrowserHash(
 			const fileUint8 = Uint8Array.from(fileCharCodes);
 
 			// eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
-			const hashFn = Function(`"use strict"; return ( ${fn} );`);
+			const hashFn = new Function(`"use strict"; return ( ${fn} );`);
 			const pageHashArray = await (hashFn()(fileUint8, alg) as Promise<Uint8Array>);
 
 			// Similarly, return the hash array as a string instead of a Uint8Array

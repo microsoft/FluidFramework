@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
+import { assert } from '@fluidframework/core-utils/internal';
+
 import type { IdCreationRange, UnackedLocalId } from './persisted-types/index.js';
 
 export function getIds(

@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { retryWithEventualValue } from "@fluidframework/test-utils/internal";
+
 import { globals } from "../jest.config.cjs";
-import { retryWithEventualValue } from "@fluidframework/test-utils";
 
 describe("clicker", () => {
 	const getValue = async (index: number, expectedValue: string) =>
@@ -50,9 +51,9 @@ describe("clicker", () => {
 		await expect(page).toClick("button", { text: "+" });
 		await page.waitForFunction(
 			() =>
-				(
-					document.querySelector(".clicker-value-class") as HTMLDivElement
-				).innerText.includes("1"),
+				(document.querySelector(".clicker-value-class") as HTMLDivElement).innerText.includes(
+					"1",
+				),
 			{ timeout: 1000 },
 		);
 
@@ -77,9 +78,9 @@ describe("clicker", () => {
 		await expect(page).toClick("button", { text: "+" });
 		await page.waitForFunction(
 			() =>
-				(
-					document.querySelector(".clicker-value-class") as HTMLDivElement
-				).innerText.includes("1"),
+				(document.querySelector(".clicker-value-class") as HTMLDivElement).innerText.includes(
+					"1",
+				),
 			{ timeout: 1000 },
 		);
 

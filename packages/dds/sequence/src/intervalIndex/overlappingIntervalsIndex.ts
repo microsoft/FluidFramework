@@ -2,22 +2,29 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable import/no-deprecated */
 
-import { Client } from "@fluidframework/merge-tree";
 import {
-	IntervalType,
+	Client,
+	SequencePlace,
+	endpointPosAndSide,
+} from "@fluidframework/merge-tree/internal";
+
+import { IntervalNode, IntervalTree } from "../intervalTree.js";
+import {
 	IIntervalHelpers,
 	ISerializableInterval,
-	sequenceIntervalHelpers,
+	IntervalType,
 	SequenceInterval,
-} from "../intervals";
-import { IntervalNode, IntervalTree } from "../intervalTree";
-import { SharedString } from "../sharedString";
-import { SequencePlace, endpointPosAndSide } from "../intervalCollection";
-import { IntervalIndex } from "./intervalIndex";
+	sequenceIntervalHelpers,
+} from "../intervals/index.js";
+import { ISharedString } from "../sharedString.js";
+
+import { IntervalIndex } from "./intervalIndex.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
@@ -112,10 +119,10 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 					end === undefined
 						? (node: IntervalNode<TInterval>) => {
 								return transientInterval.compareStart(node.key);
-						  }
+							}
 						: (node: IntervalNode<TInterval>) => {
 								return transientInterval.compare(node.key);
-						  };
+							};
 				const continueLeftFn = (cmpResult: number) => cmpResult <= 0;
 				const continueRightFn = (cmpResult: number) => cmpResult >= 0;
 				const actionFn = (node: IntervalNode<TInterval>) => {
@@ -176,10 +183,11 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export function createOverlappingIntervalsIndex(
-	sharedString: SharedString,
+	sharedString: ISharedString,
 ): IOverlappingIntervalsIndex<SequenceInterval> {
 	const client = (sharedString as unknown as { client: Client }).client;
 	return new OverlappingIntervalsIndex<SequenceInterval>(client, sequenceIntervalHelpers);

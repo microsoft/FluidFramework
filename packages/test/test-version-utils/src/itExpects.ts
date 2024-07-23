@@ -3,11 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { getUnexpectedLogErrorException, TestObjectProvider } from "@fluidframework/test-utils";
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import {
+	type ITelemetryGenericEventExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
+import {
+	getUnexpectedLogErrorException,
+	TestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Context } from "mocha";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { createChildLogger, type ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils";
 
 /**
  * @internal
@@ -19,7 +25,10 @@ export type ExpectedEvents =
 /**
  * @internal
  */
-export function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) {
+export function createExpectsTest(
+	orderedExpectedEvents: ExpectedEvents,
+	test: Mocha.AsyncFunc,
+) {
 	return async function (this: Context) {
 		const provider: TestObjectProvider | undefined = this.__fluidTestProvider;
 		if (provider === undefined) {
@@ -30,7 +39,7 @@ export function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: M
 			: orderedExpectedEvents[provider.driver.type] ?? [];
 
 		try {
-			provider.logger.registerExpectedEvent(...orderedEvents);
+			provider.tracker.registerExpectedEvent(...orderedEvents);
 			await test.bind(this)();
 		} catch (error) {
 			// only use TestException if the event is provided.
@@ -44,7 +53,7 @@ export function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: M
 				throw error;
 			}
 		}
-		const err = getUnexpectedLogErrorException(provider.logger);
+		const err = getUnexpectedLogErrorException(provider.tracker);
 		if (err !== undefined) {
 			throw err;
 		}
@@ -72,8 +81,14 @@ export const itExpects: ExpectsTest & Record<"only" | "skip", ExpectsTest> = (
 	test: Mocha.AsyncFunc,
 ): Mocha.Test => it(name, createExpectsTest(orderedExpectedEvents, test));
 
-itExpects.only = (name: string, orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) =>
-	it.only(name, createExpectsTest(orderedExpectedEvents, test));
+itExpects.only = (
+	name: string,
+	orderedExpectedEvents: ExpectedEvents,
+	test: Mocha.AsyncFunc,
+) => it.only(name, createExpectsTest(orderedExpectedEvents, test));
 
-itExpects.skip = (name: string, orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) =>
-	it.skip(name, createExpectsTest(orderedExpectedEvents, test));
+itExpects.skip = (
+	name: string,
+	orderedExpectedEvents: ExpectedEvents,
+	test: Mocha.AsyncFunc,
+) => it.skip(name, createExpectsTest(orderedExpectedEvents, test));

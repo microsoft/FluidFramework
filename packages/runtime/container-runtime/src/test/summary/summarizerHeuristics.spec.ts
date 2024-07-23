@@ -4,14 +4,19 @@
  */
 
 import { strict as assert } from "assert";
+
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import sinon from "sinon";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ISummaryConfiguration, ISummaryConfigurationHeuristics } from "../../containerRuntime.js";
+
 import {
+	ISummaryConfiguration,
+	ISummaryConfigurationHeuristics,
+} from "../../containerRuntime.js";
+import {
+	ISummarizeAttempt,
+	ISummarizeHeuristicData,
 	SummarizeHeuristicData,
 	SummarizeHeuristicRunner,
-	ISummarizeHeuristicData,
-	ISummarizeAttempt,
 	SummarizeReason,
 } from "../../summary/index.js";
 

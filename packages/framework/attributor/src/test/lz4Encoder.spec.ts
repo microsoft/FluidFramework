@@ -2,8 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
-import { type JsonableTypeWith } from "@fluidframework/datastore-definitions";
+
+import { type JsonableTypeWith } from "@fluidframework/datastore-definitions/internal";
 
 import { makeLZ4Encoder } from "../lz4Encoder.js";
 

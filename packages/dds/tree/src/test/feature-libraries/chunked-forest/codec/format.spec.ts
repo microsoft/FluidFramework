@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { EncodedFieldBatch } from "../../../../feature-libraries/chunked-forest/codec/format.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
 
 describe("chunked-forest-format", () => {
 	useSnapshotDirectory();

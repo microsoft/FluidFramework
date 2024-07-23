@@ -3,46 +3,54 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
-import { FieldKey } from "../schema-stored/index.js";
-import { RevisionTagCodec } from "../rebase/index.js";
-import { ICodecOptions } from "../../codec/index.js";
-import { PlaceIndex, Range } from "./pathTree.js";
-import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex.js";
-import { DeltaVisitor, visitDelta } from "./visitDelta.js";
-import { ProtoNodes, Root } from "./delta.js";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import type { ICodecOptions } from "../../codec/index.js";
+import { type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
+import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
+import type { FieldKey } from "../schema-stored/index.js";
+
+import type { ProtoNodes, Root } from "./delta.js";
+import { DetachedFieldIndex } from "./detachedFieldIndex.js";
+import type { ForestRootId } from "./detachedFieldIndexTypes.js";
+import type { PlaceIndex, Range } from "./pathTree.js";
+import { type DeltaVisitor, visitDelta } from "./visitDelta.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export function makeDetachedFieldIndex(
 	prefix: string = "Temp",
 	revisionTagCodec: RevisionTagCodec,
+	idCompressor: IIdCompressor,
 	options?: ICodecOptions,
 ): DetachedFieldIndex {
 	return new DetachedFieldIndex(
 		prefix,
 		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 		revisionTagCodec,
+		idCompressor,
 		options,
 	);
 }
 
 export function applyDelta(
 	delta: Root,
+	latestRevision: RevisionTag | undefined,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex: DetachedFieldIndex,
 ): void {
 	const visitor = deltaProcessor.acquireVisitor();
-	visitDelta(delta, visitor, detachedFieldIndex);
+	visitDelta(delta, visitor, detachedFieldIndex, latestRevision);
 	visitor.free();
 }
 
 export function announceDelta(
 	delta: Root,
+	latestRevision: RevisionTag | undefined,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex: DetachedFieldIndex,
 ): void {
 	const visitor = deltaProcessor.acquireVisitor();
-	visitDelta(delta, combineVisitors([visitor], [visitor]), detachedFieldIndex);
+	visitDelta(delta, combineVisitors([visitor], [visitor]), detachedFieldIndex, latestRevision);
 	visitor.free();
 }
 
@@ -61,7 +69,7 @@ export function combineVisitors(
 	{
 		const set = new Set(visitors);
 		for (const item of announcedVisitors) {
-			assert(set.has(item), "AnnouncedVisitor would not get traversed");
+			assert(set.has(item), 0x8c8 /* AnnouncedVisitor would not get traversed */);
 		}
 	}
 	return {
@@ -119,6 +127,10 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 	afterAttach(source: FieldKey, destination: Range): void;
 	beforeDetach(source: Range, destination: FieldKey): void;
 	afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void;
-	beforeReplace(newContent: FieldKey, oldContent: Range, oldContentDestination: FieldKey): void;
+	beforeReplace(
+		newContent: FieldKey,
+		oldContent: Range,
+		oldContentDestination: FieldKey,
+	): void;
 	afterReplace(newContentSource: FieldKey, newContent: Range, oldContent: FieldKey): void;
 }

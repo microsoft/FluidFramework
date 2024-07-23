@@ -44,6 +44,11 @@ module.exports = {
 		publicPath: "",
 	},
 	resolve: {
+		extensionAlias: {
+			".cjs": [".cts", ".cjs"],
+			".js": [".ts", ".tsx", ".js"],
+			".mjs": [".mts", ".mjs"],
+		},
 		extensions: [".js", ".jsx", ".ts", ".tsx"],
 	},
 	module: {

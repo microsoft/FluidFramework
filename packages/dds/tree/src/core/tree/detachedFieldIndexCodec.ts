@@ -3,25 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
-import { EncodedRevisionTag, RevisionTagCodec } from "../rebase/index.js";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
-	EncodedRootsForRevision,
+	type ICodecOptions,
+	type IJsonCodec,
+	makeVersionedValidatedCodec,
+} from "../../codec/index.js";
+import type { EncodedRevisionTag, RevisionTagCodec, RevisionTag } from "../rebase/index.js";
+
+import {
+	type EncodedRootsForRevision,
 	Format,
-	RootRanges,
+	type RootRanges,
 	version,
 } from "./detachedFieldIndexFormat.js";
-import { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
-import { ForestRootId } from "./detachedFieldIndex.js";
+import type {
+	DetachedField,
+	DetachedFieldSummaryData,
+	Major,
+} from "./detachedFieldIndexTypes.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { oob } from "../../util/index.js";
 
 class MajorCodec implements IJsonCodec<Major> {
 	public constructor(
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly options: ICodecOptions,
+		private readonly idCompressor: IIdCompressor,
 	) {}
 
-	public encode(major: Major) {
+	public encode(major: Major): EncodedRevisionTag {
 		assert(major !== undefined, 0x88e /* Unexpected undefined revision */);
 		const id = this.revisionTagCodec.encode(major);
 		/**
@@ -44,13 +56,15 @@ class MajorCodec implements IJsonCodec<Major> {
 		return id;
 	}
 
-	public decode(major: EncodedRevisionTag) {
+	public decode(major: EncodedRevisionTag): RevisionTag {
 		assert(
 			major === "root" || major >= 0,
 			0x890 /* Expected final id on decode of detached field index revision */,
 		);
 		return this.revisionTagCodec.decode(major, {
 			originatorId: this.revisionTagCodec.localSessionId,
+			idCompressor: this.idCompressor,
+			revision: undefined,
 		});
 	}
 }
@@ -58,19 +72,24 @@ class MajorCodec implements IJsonCodec<Major> {
 export function makeDetachedNodeToFieldCodec(
 	revisionTagCodec: RevisionTagCodec,
 	options: ICodecOptions,
+	idCompressor: IIdCompressor,
 ): IJsonCodec<DetachedFieldSummaryData, Format> {
-	const majorCodec = new MajorCodec(revisionTagCodec, options);
+	const majorCodec = new MajorCodec(revisionTagCodec, options, idCompressor);
 	return makeVersionedValidatedCodec(options, new Set([version]), Format, {
 		encode: (data: DetachedFieldSummaryData): Format => {
 			const rootsForRevisions: EncodedRootsForRevision[] = [];
 			for (const [major, innerMap] of data.data) {
 				const encodedRevision = majorCodec.encode(major);
-				const rootRanges: RootRanges = [...innerMap];
+				const rootRanges: RootRanges = [];
+				for (const [minor, detachedField] of innerMap) {
+					rootRanges.push([minor, detachedField.root]);
+				}
 				if (rootRanges.length === 1) {
+					const firstRootRange = rootRanges[0] ?? oob();
 					const rootsForRevision: EncodedRootsForRevision = [
 						encodedRevision,
-						rootRanges[0][0],
-						rootRanges[0][1],
+						firstRootRange[0],
+						firstRootRange[1],
 					];
 					rootsForRevisions.push(rootsForRevision);
 				} else {
@@ -88,11 +107,14 @@ export function makeDetachedNodeToFieldCodec(
 		decode: (parsed: Format): DetachedFieldSummaryData => {
 			const map = new Map();
 			for (const rootsForRevision of parsed.data) {
-				const innerMap = new Map<number, ForestRootId>(
-					rootsForRevision.length === 2
-						? rootsForRevision[1]
-						: [[rootsForRevision[1], rootsForRevision[2]]],
-				);
+				const innerMap = new Map<number, DetachedField>();
+				if (rootsForRevision.length === 2) {
+					for (const [minor, root] of rootsForRevision[1]) {
+						innerMap.set(minor, { root });
+					}
+				} else {
+					innerMap.set(rootsForRevision[1], { root: rootsForRevision[2] });
+				}
 				map.set(majorCodec.decode(rootsForRevision[0]), innerMap);
 			}
 			return {

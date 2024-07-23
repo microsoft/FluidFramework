@@ -5,6 +5,7 @@
 
 import React from "react";
 import ReactDOM from "react-dom";
+
 import { IDiceRoller } from "../dataObject.js";
 
 /**
@@ -20,7 +21,9 @@ interface IDiceRollerViewProps {
 	model: IDiceRoller;
 }
 
-export const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewProps) => {
+export const DiceRollerView: React.FC<IDiceRollerViewProps> = (
+	props: IDiceRollerViewProps,
+) => {
 	const [diceValue, setDiceValue] = React.useState(props.model.value);
 
 	React.useEffect(() => {

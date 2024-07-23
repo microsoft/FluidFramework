@@ -56,6 +56,8 @@ const DefaultScribe: IScribe = {
 	lastSummarySequenceNumber: 0,
 	validParentSummaries: undefined,
 	isCorrupt: false,
+	protocolHead: undefined,
+	checkpointTimestamp: Date.now(),
 };
 
 const DefaultDeli: IDeliState = {
@@ -67,7 +69,6 @@ const DefaultDeli: IDeliState = {
 	signalClientConnectionNumber: 0,
 	lastSentMSN: 0,
 	nackMessages: undefined,
-	successfullyStartedLambdas: [],
 	checkpointTimestamp: undefined,
 };
 
@@ -291,7 +292,6 @@ export class LocalOrderer implements IOrderer {
 					this.rawDeltasKafka,
 					this.serviceConfiguration,
 					undefined,
-					undefined,
 					checkpointService,
 				);
 			},
@@ -379,6 +379,8 @@ export class LocalOrderer implements IOrderer {
 			checkpointService,
 		);
 
+		const maxPendingCheckpointMessagesLength = 2000;
+
 		return new ScribeLambda(
 			context,
 			this.tenantId,
@@ -399,6 +401,7 @@ export class LocalOrderer implements IOrderer {
 			true,
 			this.details.value.isEphemeralContainer,
 			checkpointService.getLocalCheckpointEnabled(),
+			maxPendingCheckpointMessagesLength,
 		);
 	}
 

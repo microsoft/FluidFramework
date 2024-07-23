@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { IMergeBlock } from "../mergeTreeNodes.js";
-import { zamboniSegments, packParent } from "../zamboni.js";
+import { strict as assert } from "node:assert";
+
+import { MergeBlock } from "../mergeTreeNodes.js";
+import { packParent, zamboniSegments } from "../zamboni.js";
+
 import { TestClient } from "./testClient.js";
 
 describe("Zamboni Logic", () => {
@@ -50,14 +52,14 @@ describe("Zamboni Logic", () => {
 		assert.equal(childCount, client.mergeTree.root.childCount);
 	});
 	it("zamboni with one segment to scour", () => {
-		const initialChildCount = (client.mergeTree.root.children[0] as IMergeBlock).childCount;
+		const initialChildCount = (client.mergeTree.root.children[0] as MergeBlock).childCount;
 		const initialCachedLength = client.mergeTree.root.cachedLength ?? 0;
 		client.removeRangeLocal(0, 1);
 		zamboniSegments(client.mergeTree);
 
 		assert.equal(client.mergeTree.root.cachedLength, initialCachedLength - 1);
 		assert.equal(
-			(client.mergeTree.root.children[0] as IMergeBlock).childCount,
+			(client.mergeTree.root.children[0] as MergeBlock).childCount,
 			initialChildCount,
 		);
 	});

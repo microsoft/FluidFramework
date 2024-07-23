@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { benchmark } from "..";
 import { BenchmarkType, isParentProcess, BenchmarkTimer } from "../Configuration";
 import { Phase, runBenchmark, runBenchmarkAsync, runBenchmarkSync } from "../runBenchmark";

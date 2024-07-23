@@ -18,11 +18,11 @@ export interface IProvideFluidLoadable {
 }
 /**
  * A shared FluidObject has a URL from which it can be referenced
- * @public
+ * @sealed @public
  */
 export interface IFluidLoadable extends IProvideFluidLoadable {
 	// Handle to the loadable FluidObject
-	handle: IFluidHandle;
+	readonly handle: IFluidHandle;
 }
 
 /**

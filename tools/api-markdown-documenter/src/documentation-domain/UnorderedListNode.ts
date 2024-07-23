@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	DocumentationParentNodeBase,
 	type MultiLineDocumentationNode,
 	type SingleLineDocumentationNode,
-} from "./DocumentationNode";
-import { DocumentationNodeType } from "./DocumentationNodeType";
-import { PlainTextNode } from "./PlainTextNode";
+} from "./DocumentationNode.js";
+import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import { PlainTextNode } from "./PlainTextNode.js";
 
 // TODOs:
 // - Support for nested lists

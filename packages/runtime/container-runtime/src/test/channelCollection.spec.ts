@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { channelsTreeName } from "@fluidframework/runtime-definitions";
+
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+
 import { detectOutboundReferences, getSummaryForDatastores } from "../channelCollection.js";
 import { IContainerRuntimeMetadata, nonDataStorePaths } from "../summary/index.js";
 
@@ -67,11 +69,7 @@ describe("Runtime", () => {
 				const snapshot = getSummaryForDatastores(testSnapshot, undefined);
 				assert(snapshot, "Snapshot should be defined");
 				assert.strictEqual(snapshot.id, "root-id", "Should be top-level");
-				assert.strictEqual(
-					Object.keys(snapshot.trees).length,
-					3,
-					"Should have 3 datastores",
-				);
+				assert.strictEqual(Object.keys(snapshot.trees).length, 3, "Should have 3 datastores");
 				assert.strictEqual(
 					snapshot.trees[channelsTreeName]?.id,
 					"channels-id",
@@ -93,11 +91,7 @@ describe("Runtime", () => {
 				const snapshot = getSummaryForDatastores(testSnapshot, disabledMetadata);
 				assert(snapshot, "Snapshot should be defined");
 				assert.strictEqual(snapshot.id, "root-id", "Should be top-level");
-				assert.strictEqual(
-					Object.keys(snapshot.trees).length,
-					3,
-					"Should have 3 datastores",
-				);
+				assert.strictEqual(Object.keys(snapshot.trees).length, 3, "Should have 3 datastores");
 				assert.strictEqual(
 					snapshot.trees[channelsTreeName]?.id,
 					"channels-id",
@@ -119,11 +113,7 @@ describe("Runtime", () => {
 				const snapshot = getSummaryForDatastores(testSnapshot, enabledMetadata);
 				assert(snapshot, "Snapshot should be defined");
 				assert.strictEqual(snapshot.id, "channels-id", "Should be lower-level");
-				assert.strictEqual(
-					Object.keys(snapshot.trees).length,
-					4,
-					"Should have 4 datastores",
-				);
+				assert.strictEqual(Object.keys(snapshot.trees).length, 4, "Should have 4 datastores");
 				// Put in variable to avoid type-narrowing bug
 				const nonDataStore1 = snapshot.trees[nonDataStorePaths[0]];
 				assert.strictEqual(
@@ -152,35 +142,33 @@ describe("Runtime", () => {
 			it("Can find handles", () => {
 				const outboundReferences: [string, string][] = [];
 				detectOutboundReferences(
+					"dataStore1",
 					{
-						address: "dataStore1",
-						contents: {
-							address: "dds1",
-							someHandle: {
-								type: "__fluid_handle__",
-								url: "routeA",
-							},
-							nested: {
-								anotherHandle: {
-									type: "__fluid_handle__",
-									url: "routeB",
-								},
-								address: "ignored",
-							},
-							array: [
-								{
-									type: "__fluid_handle__",
-									url: "routeC",
-								},
-								{
-									type: "__fluid_handle__",
-									url: "routeD",
-								},
-							],
-							deadEnd: null,
-							number: 1,
-							nothing: undefined,
+						address: "dds1",
+						someHandle: {
+							type: "__fluid_handle__",
+							url: "routeA",
 						},
+						nested: {
+							anotherHandle: {
+								type: "__fluid_handle__",
+								url: "routeB",
+							},
+							address: "ignored",
+						},
+						array: [
+							{
+								type: "__fluid_handle__",
+								url: "routeC",
+							},
+							{
+								type: "__fluid_handle__",
+								url: "routeD",
+							},
+						],
+						deadEnd: null,
+						number: 1,
+						nothing: undefined,
 					},
 					(from, to) => {
 						outboundReferences.push([from, to]);
@@ -198,7 +186,7 @@ describe("Runtime", () => {
 				);
 			});
 			it("null contents", () => {
-				detectOutboundReferences({ address: "foo", contents: null }, () => {
+				detectOutboundReferences("foo", null, () => {
 					assert.fail("Should not be called");
 				});
 			});

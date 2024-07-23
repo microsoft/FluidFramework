@@ -93,13 +93,14 @@ Data Objects' data structures will be summarized.
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
 [Sequences]: {{< relref "/docs/data-structures/sequences.md" >}}
+[SharedTree]: {{< relref "/docs/data-structures/tree.md" >}}
 
 <!-- API links -->
 
 [fluid-framework]: {{< packageref "fluid-framework" "v2" >}}
 [@fluidframework/azure-client]: {{< packageref "azure-client" "v2" >}}
 [@fluidframework/tinylicious-client]: {{< packageref "tinylicious-client" "v1" >}}
-[@fluid-experimental/odsp-client]: {{< packageref "odsp-client" "v2" >}}
+[@fluidframework/odsp-client]: {{< packageref "odsp-client" "v2" >}}
 
 [AzureClient]: {{< apiref "azure-client" "AzureClient" "class" "v2" >}}
 [TinyliciousClient]: {{< apiref "tinylicious-client" "TinyliciousClient" "class" "v1" >}}

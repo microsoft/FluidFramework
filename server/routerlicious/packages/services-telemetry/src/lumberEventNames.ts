@@ -15,6 +15,7 @@ export enum LumberEventName {
 
 	// Fluid server infrastructure
 	RunService = "RunService",
+	GracefulShutdown = "GracefulShutdown",
 
 	// Unit Testing
 	UnitTestEvent = "UnitTestEvent",
@@ -51,6 +52,7 @@ export enum LumberEventName {
 	DisconnectDocumentRetry = "DisconnectDocumentRetry",
 	RiddlerFetchTenantKey = "RiddlerFetchTenantKey",
 	HttpRequest = "HttpRequest",
+	SocketConnection = "SocketConnection",
 	SocketConnectionCount = "SocketConnectionCount",
 	TotalConnectionCount = "TotalConnectionCount",
 	ConnectionCountPerNode = "ConnectionCountPerNode",

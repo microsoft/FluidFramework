@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import Denque from 'denque';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { IEvent } from '@fluidframework/core-interfaces';
-import { assert } from '@fluidframework/core-utils';
+import { assert } from '@fluidframework/core-utils/internal';
+import Denque from 'denque';
+
 import { fail, noop } from './Common.js';
 import { EditLog, SequencedOrderedEditId } from './EditLog.js';
 import { EditId } from './Identifiers.js';
-import { Revision, RevisionValueCache } from './RevisionValueCache.js';
 import { ReconciliationChange, ReconciliationEdit, ReconciliationPath } from './ReconciliationPath.js';
-import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
+import { Revision, RevisionValueCache } from './RevisionValueCache.js';
 import { RevisionView } from './RevisionView.js';
 import { EditingResult, TransactionInternal } from './TransactionInternal.js';
+import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
 
 /**
  * Callback for when an edit is applied (meaning the result of applying it to a particular revision is computed).
@@ -349,12 +350,12 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 								view,
 								status: entry.status,
 								steps: entry.steps,
-						  }
+							}
 						: {
 								view,
 								status: entry.status,
 								failure: entry.failure,
-						  }
+							}
 				);
 				this.handleSequencedEditResult(edit, entry, []);
 			}
@@ -453,8 +454,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 			}
 		} else {
 			const [cachedRevision, cachedView] =
-				this.sequencedRevisionCache.getClosestEntry(revisionClamped) ??
-				fail('No preceding revision view cached.');
+				this.sequencedRevisionCache.getClosestEntry(revisionClamped) ?? fail('No preceding revision view cached.');
 
 			startRevision = cachedRevision;
 			current = cachedView;
@@ -486,9 +486,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 			cached = true;
 		} else {
 			reconciliationPath = this.reconciliationPathFromEdit(edit.id);
-			editingResult = TransactionInternal.factory(prevView)
-				.applyChanges(edit.changes, reconciliationPath)
-				.close();
+			editingResult = TransactionInternal.factory(prevView).applyChanges(edit.changes, reconciliationPath).close();
 			cached = false;
 		}
 
@@ -571,13 +569,10 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 								const firstEdit = this.getEditResultFromSequenceNumber(targetSequenceNumber);
 								if (firstEdit !== undefined) {
 									if (firstEdit.status === EditStatus.Applied) {
-										const firstEditInfo = this.log.getOrderedEditId(
-											firstEdit.id
-										) as SequencedOrderedEditId;
+										const firstEditInfo = this.log.getOrderedEditId(firstEdit.id) as SequencedOrderedEditId;
 										if (
 											firstEditInfo.sequenceInfo !== undefined &&
-											firstEditInfo.sequenceInfo.sequenceNumber >
-												orderedId.sequenceInfo.referenceSequenceNumber
+											firstEditInfo.sequenceInfo.sequenceNumber > orderedId.sequenceInfo.referenceSequenceNumber
 										) {
 											reconciliationPath.push({
 												...firstEdit.steps,
@@ -646,7 +641,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 					changes: edit.changes,
 					view: resultAfter.view,
 					steps: resultAfter.steps,
-			  }
+				}
 			: {
 					id: edit.id,
 					status: resultAfter.status,
@@ -654,7 +649,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 					before,
 					view: resultAfter.view,
 					changes: edit.changes,
-			  };
+				};
 	}
 
 	/**
@@ -691,7 +686,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 									changes: edit.changes,
 									view: resultAfter.view,
 									steps: resultAfter.steps,
-							  }
+								}
 							: {
 									id: edit.id,
 									status: resultAfter.status,
@@ -699,7 +694,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 									before,
 									view: resultAfter.view,
 									changes: edit.changes,
-							  };
+								};
 					}
 				}
 			}

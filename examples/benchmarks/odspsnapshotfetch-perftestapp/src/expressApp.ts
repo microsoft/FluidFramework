@@ -3,19 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import express, { type Response } from "express";
-import webpackDevMiddleware from "webpack-dev-middleware";
-import webpackHotMiddleware from "webpack-hot-middleware";
-import webpack from "webpack";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
-	getMicrosoftConfiguration,
+	type IOdspTokens,
+	type IPublicClientConfig,
+	getServer,
+} from "@fluidframework/odsp-doclib-utils/internal";
+import {
+	OdspTokenConfig,
 	OdspTokenManager,
 	odspTokensCache,
-	OdspTokenConfig,
-} from "@fluidframework/tool-utils";
-import { getServer, type IOdspTokens } from "@fluidframework/odsp-doclib-utils/internal";
-import { assert } from "@fluidframework/core-utils";
+} from "@fluidframework/tool-utils/internal";
+import express, { type Response } from "express";
+import webpack from "webpack";
+import webpackDevMiddleware from "webpack-dev-middleware";
+import webpackHotMiddleware from "webpack-hot-middleware";
+
 import config from "../webpack.config.cjs";
+
 import { _dirname } from "./dirname.cjs";
 
 const getThisOrigin = (port: number): string => `http://localhost:${port}`;
@@ -56,6 +61,18 @@ app.listen(8080, () => {
 	console.log("Node server is running..");
 });
 
+const clientConfig: IPublicClientConfig = {
+	get clientId(): string {
+		const clientId = process.env.fetch__tool__clientId;
+		if (clientId === undefined) {
+			throw new Error(
+				"Client ID environment variable not set: fetch__tool__clientId. Use the getkeys tool to populate it.",
+			);
+		}
+		return clientId;
+	},
+};
+
 async function getOdspToken(res: Response, originalUrl: string): Promise<boolean> {
 	const buildTokenConfig = (
 		response: Response,
@@ -68,7 +85,7 @@ async function getOdspToken(res: Response, originalUrl: string): Promise<boolean
 	const tokenManager = new OdspTokenManager(odspTokensCache);
 	await tokenManager.getOdspTokens(
 		getServer("spo-df"),
-		getMicrosoftConfiguration(),
+		clientConfig,
 		buildTokenConfig(res, async (tokens: IOdspTokens) => {
 			odspAccessToken = tokens.accessToken;
 			odspAuthStage += 1;

@@ -82,7 +82,7 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests.js";
  * ```
  * @privateRemarks
  * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
- * @public
+ * @sealed @public
  */
 export interface MakeNominal {}
 
@@ -155,7 +155,9 @@ export type requireFalse<_X extends false> = true;
  * @see {@link https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types | distributive-conditional-types} for details.
  * @internal
  */
-export type isAssignableTo<Source, Destination> = [Source] extends [Destination] ? true : false;
+export type isAssignableTo<Source, Destination> = [Source] extends [Destination]
+	? true
+	: false;
 
 /**
  * Returns a type parameter that is true iff Subset is a strict subset of Superset.
@@ -165,8 +167,8 @@ export type isAssignableTo<Source, Destination> = [Source] extends [Destination]
 export type isStrictSubset<Subset, Superset> = isAssignableTo<Subset, Superset> extends false
 	? false
 	: isAssignableTo<Superset, Subset> extends true
-	? false
-	: true;
+		? false
+		: true;
 
 /**
  * Returns a type parameter that is true iff A and B are assignable to each other, and neither is any.
@@ -177,8 +179,8 @@ export type isStrictSubset<Subset, Superset> = isAssignableTo<Subset, Superset> 
 export type areSafelyAssignable<A, B> = eitherIsAny<A, B> extends true
 	? false
 	: isAssignableTo<A, B> extends true
-	? isAssignableTo<B, A>
-	: false;
+		? isAssignableTo<B, A>
+		: false;
 
 /**
  * Returns a type parameter that is true iff A is any or B is any.

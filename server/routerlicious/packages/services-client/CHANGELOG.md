@@ -1,5 +1,24 @@
 # @fluidframework/server-services-client
 
+## 5.0.0
+
+### Minor Changes
+
+-   server-services-client: Add optional internalErrorCode property to NetworkError and INetworkErrorDetails ([#21465](https://github.com/microsoft/FluidFramework/pull/21465)) [9427e25689](https://github.com/microsoft/FluidFramework/commit/9427e2568924e0bed83d2a6f78a6e2a20be8a29e)
+
+    `NetworkError`s now include an optional property, `internalErrorCode`, which can contain additional information about
+    the internal error.
+
+    You can find more details in [pull request #21429](https://github.com/microsoft/FluidFramework/pull/21429).
+
+## 4.0.0
+
+### Major Changes
+
+-   RestWrapper querystring types narrowed ([#19624](https://github.com/microsoft/FluidFramework/issues/19624)) [41ac3dbecf](https://github.com/microsoft/FluidFramework/commits/41ac3dbecf4325384231fb2e67ef64bd40a47c4a)
+
+    The acceptable values for the querystrings passed to RestWrapper must be string | number | boolean (previously accepted unknown). Other values cannot be successfully stringified and so should be avoided.
+
 ## 3.0.0
 
 ### Major Changes

@@ -39,7 +39,14 @@ async function main() {
 	}
 
 	const command = `tsc ${process.argv.slice(3).join(" ")}`;
-	process.exit(tsCompile({ command, cwd: process.cwd(), packageJsonTypeOverride: firstArg }));
+	const result = tsCompile(
+		{ command, cwd: process.cwd(), packageJsonTypeOverride: firstArg },
+		"allow-watch",
+	);
+	// In watch mode, there is no result code and the process must be left to continue running.
+	if (result !== undefined) {
+		process.exit(result);
+	}
 }
 
 main().catch((e) => {

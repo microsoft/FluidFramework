@@ -4,8 +4,8 @@
  */
 
 import { IIntegerRange } from "./client.js";
-import { ISegment } from "./mergeTreeNodes.js";
 import { MergeTree } from "./mergeTree.js";
+import { ISegment } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated
 import { IMergeTreeTextHelper, TextSegment } from "./textSegment.js";
 
@@ -25,7 +25,7 @@ export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 		placeholder = "",
 		start?: number,
 		end?: number,
-	) {
+	): string {
 		const range = this.getValidRange(start, end, refSeq, clientId);
 
 		const accum: ITextAccumulator = { textSegment: new TextSegment(""), placeholder };
@@ -71,7 +71,7 @@ function gatherText(
 			const seglen = segment.text.length;
 			const _start = start < 0 ? 0 : start;
 			const _end = end >= seglen ? undefined : end;
-			textSegment.text += segment.text.substring(_start, _end);
+			textSegment.text += segment.text.slice(_start, _end);
 		}
 	} else if (placeholder && placeholder.length > 0) {
 		const placeholderText =

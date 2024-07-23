@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert } from "chai";
 
 import { detectVersionScheme, getLatestReleaseFromList } from "../schemes";
@@ -80,6 +81,12 @@ describe("detectVersionScheme", () => {
 
 	it("detects ^0.24.0 is semver", () => {
 		const input = `^0.24.0`;
+		const expected = "semver";
+		assert.strictEqual(detectVersionScheme(input), expected);
+	});
+
+	it("detects ~2.0.0-internal.1.0.0 is semver", () => {
+		const input = `~2.0.0-internal.1.0.0`;
 		const expected = "semver";
 		assert.strictEqual(detectVersionScheme(input), expected);
 	});

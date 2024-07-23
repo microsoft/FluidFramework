@@ -1,6 +1,6 @@
 ## (constructor)
 
-This is a constructor.
+This is a _{@customTag constructor}_.
 
 ### Signature {#_constructor_-signature}
 

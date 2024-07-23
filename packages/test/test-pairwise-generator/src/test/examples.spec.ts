@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { generatePairwiseOptions, OptionsMatrix } from "../index";
+
+import { OptionsMatrix, generatePairwiseOptions } from "../index.js";
 
 describe("generatePairwiseOptions.examples", () => {
 	it("Testing a function", () => {
@@ -83,9 +84,7 @@ describe("generatePairwiseOptions.examples", () => {
 		const complexObjectMatrix: OptionsMatrix<MyComplexObject> = {
 			numbers: [
 				undefined,
-				...generatePairwiseOptions<ArrayLike<number>>(arrayMatrix).map((a) =>
-					Array.from(a),
-				),
+				...generatePairwiseOptions<ArrayLike<number>>(arrayMatrix).map((a) => Array.from(a)),
 			],
 			subObject: generatePairwiseOptions<{ str: string }>({ str: ["a", "b", "c"] }),
 		};

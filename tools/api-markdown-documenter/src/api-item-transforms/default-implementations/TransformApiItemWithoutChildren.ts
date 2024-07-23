@@ -2,10 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { type ApiItem } from "@microsoft/api-extractor-model";
 
-import { type SectionNode } from "../../documentation-domain";
-import { type ApiItemTransformationConfiguration } from "../configuration";
+import { type SectionNode } from "../../documentation-domain/index.js";
+import { type ApiItemTransformationConfiguration } from "../configuration/index.js";
 
 /**
  * Default transformation helper for rendering item kinds that do not have children.

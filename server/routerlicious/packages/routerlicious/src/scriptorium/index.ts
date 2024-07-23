@@ -49,37 +49,11 @@ export async function create(
 	const opsCountTelemetryEnabled =
 		(config.get("scriptorium:opsCountTelemetryEnabled") as boolean) ?? false;
 
-	// Database connection for global db if enabled
 	const factory = await services.getDbFactory(config);
-
-	let globalDb;
-	if (globalDbEnabled) {
-		const globalDbReconnect = (config.get("mongo:globalDbReconnect") as boolean) ?? false;
-		const globalDbMongoManager = new MongoManager(factory, globalDbReconnect, null, true);
-		globalDb = await globalDbMongoManager.getDatabase();
-	}
 
 	const operationsDbManager = new MongoManager(factory, false);
 	const operationsDb = await operationsDbManager.getDatabase();
 
-	const documentsCollectionDb = globalDbEnabled ? globalDb : operationsDb;
-
-	const documentRepository =
-		customizations?.documentRepository ??
-		new MongoDocumentRepository(documentsCollectionDb.collection(documentsCollectionName));
-
-	// Required for checkpoint service
-	const checkpointRepository = new MongoCheckpointRepository(
-		operationsDb.collection(checkpointsCollectionName),
-		undefined /* checkpoint type */,
-	);
-	const isLocalCheckpointEnabled = config.get("checkpoints: localCheckpointEnabled");
-
-	const checkpointService = new CheckpointService(
-		checkpointRepository,
-		documentRepository,
-		isLocalCheckpointEnabled,
-	);
 	const opCollection = operationsDb.collection(deltasCollectionName);
 
 	if (createCosmosDBIndexes) {
@@ -105,23 +79,51 @@ export async function create(
 			: opCollection.createTTLIndex({ mongoTimestamp: 1 }, mongoExpireAfterSeconds));
 	}
 
-	executeOnInterval(
-		async () =>
-			deleteSummarizedOps(
-				opCollection,
-				softDeletionRetentionPeriodMs,
-				offlineWindowMs,
-				softDeletionEnabled,
-				permanentDeletionEnabled,
-				checkpointService,
-			),
-		deletionIntervalMs,
-		"deleteSummarizedOps",
-		undefined,
-		(error) => {
-			return error.code === FluidServiceErrorCode.FeatureDisabled;
-		},
-	);
+	if (softDeletionEnabled) {
+		let globalDb;
+		// Database connection for global db if enabled
+		if (globalDbEnabled) {
+			const globalDbReconnect = (config.get("mongo:globalDbReconnect") as boolean) ?? false;
+			const globalDbMongoManager = new MongoManager(factory, globalDbReconnect, null, true);
+			globalDb = await globalDbMongoManager.getDatabase();
+		}
+		const documentsCollectionDb = globalDbEnabled ? globalDb : operationsDb;
+
+		const documentRepository =
+			customizations?.documentRepository ??
+			new MongoDocumentRepository(documentsCollectionDb.collection(documentsCollectionName));
+
+		// Required for checkpoint service
+		const checkpointRepository = new MongoCheckpointRepository(
+			operationsDb.collection(checkpointsCollectionName),
+			undefined /* checkpoint type */,
+		);
+		const isLocalCheckpointEnabled = config.get("checkpoints: localCheckpointEnabled");
+
+		const checkpointService = new CheckpointService(
+			checkpointRepository,
+			documentRepository,
+			isLocalCheckpointEnabled,
+		);
+
+		executeOnInterval(
+			async () =>
+				deleteSummarizedOps(
+					opCollection,
+					softDeletionRetentionPeriodMs,
+					offlineWindowMs,
+					softDeletionEnabled,
+					permanentDeletionEnabled,
+					checkpointService,
+				),
+			deletionIntervalMs,
+			"deleteSummarizedOps",
+			undefined,
+			(error) => {
+				return error.code === FluidServiceErrorCode.FeatureDisabled;
+			},
+		);
+	}
 
 	return new ScriptoriumLambdaFactory(operationsDbManager, opCollection, {
 		enableTelemetry,

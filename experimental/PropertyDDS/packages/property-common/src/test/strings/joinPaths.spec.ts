@@ -8,6 +8,7 @@
  * @fileoverview In this file,we will test property-common.joinPaths
  */
 import { expect } from "chai";
+
 import { joinPaths } from "../../index";
 
 describe("property-common.joinPaths", function () {

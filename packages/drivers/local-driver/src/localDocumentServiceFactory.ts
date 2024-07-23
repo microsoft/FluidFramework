@@ -3,22 +3,25 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentServicePolicies,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { DefaultTokenProvider } from "@fluidframework/routerlicious-driver";
+	NackErrorType,
+} from "@fluidframework/driver-definitions/internal";
+import { DefaultTokenProvider } from "@fluidframework/routerlicious-driver/internal";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
+
+import { createDocument } from "./localCreateDocument.js";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
 import { createLocalDocumentService } from "./localDocumentService.js";
-import { createDocument } from "./localCreateDocument.js";
 
 /**
  * Implementation of document service factory for local use.
+ * @legacy
  * @alpha
  */
 export class LocalDocumentServiceFactory implements IDocumentServiceFactory {

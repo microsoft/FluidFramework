@@ -7,53 +7,40 @@
 /* eslint-disable import/no-deprecated */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	addProperties,
 	Client,
-	createMap,
-	getSlideToSegoff,
+	DetachedReferencePosition,
 	ISegment,
+	LocalReferencePosition,
 	MergeTreeDeltaType,
 	PropertySet,
-	LocalReferencePosition,
 	ReferenceType,
+	SlidingPreference,
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
+	addProperties,
+	createMap,
+	getSlideToSegoff,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
-	UnassignedSequenceNumber,
-	DetachedReferencePosition,
-	UniversalSequenceNumber,
-	SlidingPreference,
-} from "@fluidframework/merge-tree";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+	Side,
+	SequencePlace,
+	endpointPosAndSide,
+} from "@fluidframework/merge-tree/internal";
+import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
+
 import {
+	IIntervalCollectionFactory,
+	IIntervalCollectionOperation,
+	IIntervalCollectionType,
 	IMapMessageLocalMetadata,
-	IValueFactory,
 	IValueOpEmitter,
-	IValueOperation,
-	IValueType,
 	SequenceOptions,
-} from "./defaultMapInterfaces";
-import {
-	CompressedSerializedInterval,
-	IIntervalHelpers,
-	Interval,
-	IntervalOpType,
-	IntervalStickiness,
-	IntervalType,
-	ISerializableInterval,
-	ISerializedInterval,
-	SequenceInterval,
-	SerializedIntervalDelta,
-	createPositionReferenceFromSegoff,
-	endReferenceSlidingPreference,
-	startReferenceSlidingPreference,
-	sequenceIntervalHelpers,
-	createInterval,
-} from "./intervals";
+} from "./intervalCollectionMapInterfaces.js";
 import {
 	EndpointIndex,
 	IEndpointIndex,
@@ -62,56 +49,24 @@ import {
 	IntervalIndex,
 	OverlappingIntervalsIndex,
 	createIdIntervalIndex,
-} from "./intervalIndex";
-
-/**
- * Defines a position and side relative to a character in a sequence.
- *
- * For this purpose, sequences look like:
- *
- * `{start} - {character 0} - {character 1} - ... - {character N} - {end}`
- *
- * Each `{value}` in the diagram is a character within a sequence.
- * Each `-` in the above diagram is a position where text could be inserted.
- * Each position between a `{value}` and a `-` is a `SequencePlace`.
- *
- * The special endpoints `{start}` and `{end}` refer to positions outside the
- * contents of the string.
- *
- * This gives us 2N + 2 possible positions to refer to within a string, where N
- * is the number of characters.
- *
- * If the position is specified with a bare number, the side defaults to
- * `Side.Before`.
- *
- * If a SequencePlace is the endpoint of a range (e.g. start/end of an interval or search range),
- * the Side value means it is exclusive if it is nearer to the other position and inclusive if it is farther.
- * E.g. the start of a range with Side.After is exclusive of the character at the position.
- * @alpha
- */
-export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
-
-/**
- * A sequence place that does not refer to the special endpoint segments.
- *
- * See {@link SequencePlace} for additional context.
- * @alpha
- */
-export interface InteriorSequencePlace {
-	pos: number;
-	side: Side;
-}
-
-/**
- * Defines a side relative to a character in a sequence.
- *
- * @remarks See {@link SequencePlace} for additional context on usage.
- * @alpha
- */
-export enum Side {
-	Before = 0,
-	After = 1,
-}
+} from "./intervalIndex/index.js";
+import {
+	CompressedSerializedInterval,
+	IIntervalHelpers,
+	ISerializableInterval,
+	ISerializedInterval,
+	Interval,
+	IntervalOpType,
+	IntervalStickiness,
+	IntervalType,
+	SequenceInterval,
+	SerializedIntervalDelta,
+	createInterval,
+	createPositionReferenceFromSegoff,
+	endReferenceSlidingPreference,
+	sequenceIntervalHelpers,
+	startReferenceSlidingPreference,
+} from "./intervals/index.js";
 
 export const reservedIntervalIdKey = "intervalId";
 
@@ -175,27 +130,6 @@ function compressInterval(interval: ISerializedInterval): CompressedSerializedIn
 	return base;
 }
 
-export function endpointPosAndSide(
-	start: SequencePlace | undefined,
-	end: SequencePlace | undefined,
-) {
-	const startIsPlainEndpoint = typeof start === "number" || start === "start" || start === "end";
-	const endIsPlainEndpoint = typeof end === "number" || end === "start" || end === "end";
-
-	const startSide = startIsPlainEndpoint ? Side.Before : start?.side;
-	const endSide = endIsPlainEndpoint ? Side.Before : end?.side;
-
-	const startPos = startIsPlainEndpoint ? start : start?.pos;
-	const endPos = endIsPlainEndpoint ? end : end?.pos;
-
-	return {
-		startSide,
-		endSide,
-		startPos,
-		endPos,
-	};
-}
-
 export function toSequencePlace(
 	pos: number | "start" | "end",
 	side: Side | undefined,
@@ -233,7 +167,12 @@ export function createIntervalIndex() {
 	const helpers: IIntervalHelpers<Interval> = {
 		create: createInterval,
 	};
-	const lc = new LocalIntervalCollection<Interval>(undefined as any as Client, "", helpers, {});
+	const lc = new LocalIntervalCollection<Interval>(
+		undefined as any as Client,
+		"",
+		helpers,
+		{},
+	);
 	return lc;
 }
 
@@ -265,7 +204,10 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		]);
 	}
 
-	public createLegacyId(start: number | "start" | "end", end: number | "start" | "end"): string {
+	public createLegacyId(
+		start: number | "start" | "end",
+		end: number | "start" | "end",
+	): string {
 		// Create a non-unique ID based on start and end to be used on intervals that come from legacy clients
 		// without ID's.
 		return `${LocalIntervalCollection.legacyIdPrefix}${start}-${end}`;
@@ -478,7 +420,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 }
 
 class SequenceIntervalCollectionFactory
-	implements IValueFactory<IntervalCollection<SequenceInterval>>
+	implements IIntervalCollectionFactory<SequenceInterval>
 {
 	public load(
 		emitter: IValueOpEmitter,
@@ -502,7 +444,7 @@ class SequenceIntervalCollectionFactory
 }
 
 export class SequenceIntervalCollectionValueType
-	implements IValueType<IntervalCollection<SequenceInterval>>
+	implements IIntervalCollectionType<SequenceInterval>
 {
 	public static Name = "sharedStringIntervalCollection";
 
@@ -510,21 +452,21 @@ export class SequenceIntervalCollectionValueType
 		return SequenceIntervalCollectionValueType.Name;
 	}
 
-	public get factory(): IValueFactory<IntervalCollection<SequenceInterval>> {
+	public get factory(): IIntervalCollectionFactory<SequenceInterval> {
 		return SequenceIntervalCollectionValueType._factory;
 	}
 
-	public get ops(): Map<IntervalOpType, IValueOperation<IntervalCollection<SequenceInterval>>> {
+	public get ops(): Map<IntervalOpType, IIntervalCollectionOperation<SequenceInterval>> {
 		return SequenceIntervalCollectionValueType._ops;
 	}
 
-	private static readonly _factory: IValueFactory<IntervalCollection<SequenceInterval>> =
+	private static readonly _factory: IIntervalCollectionFactory<SequenceInterval> =
 		new SequenceIntervalCollectionFactory();
 
 	private static readonly _ops = makeOpsMap<SequenceInterval>();
 }
 
-class IntervalCollectionFactory implements IValueFactory<IntervalCollection<Interval>> {
+class IntervalCollectionFactory implements IIntervalCollectionFactory<Interval> {
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
@@ -543,31 +485,31 @@ class IntervalCollectionFactory implements IValueFactory<IntervalCollection<Inte
 	}
 }
 
-export class IntervalCollectionValueType implements IValueType<IntervalCollection<Interval>> {
+export class IntervalCollectionValueType implements IIntervalCollectionType<Interval> {
 	public static Name = "sharedIntervalCollection";
 
 	public get name(): string {
 		return IntervalCollectionValueType.Name;
 	}
 
-	public get factory(): IValueFactory<IntervalCollection<Interval>> {
+	public get factory(): IIntervalCollectionFactory<Interval> {
 		return IntervalCollectionValueType._factory;
 	}
 
-	public get ops(): Map<IntervalOpType, IValueOperation<IntervalCollection<Interval>>> {
+	public get ops(): Map<IntervalOpType, IIntervalCollectionOperation<Interval>> {
 		return IntervalCollectionValueType._ops;
 	}
 
-	private static readonly _factory: IValueFactory<IntervalCollection<Interval>> =
+	private static readonly _factory: IIntervalCollectionFactory<Interval> =
 		new IntervalCollectionFactory();
 	private static readonly _ops = makeOpsMap<Interval>();
 }
 
 export function makeOpsMap<T extends ISerializableInterval>(): Map<
 	IntervalOpType,
-	IValueOperation<IntervalCollection<T>>
+	IIntervalCollectionOperation<T>
 > {
-	const rebase: IValueOperation<IntervalCollection<T>>["rebase"] = (
+	const rebase: IIntervalCollectionOperation<T>["rebase"] = (
 		collection,
 		op,
 		localOpMetadata,
@@ -581,7 +523,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 		return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
 	};
 
-	return new Map<IntervalOpType, IValueOperation<IntervalCollection<T>>>([
+	return new Map<IntervalOpType, IIntervalCollectionOperation<T>>([
 		[
 			IntervalOpType.ADD,
 			{
@@ -629,6 +571,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export type DeserializeCallback = (properties: PropertySet) => void;
@@ -654,7 +597,9 @@ class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 	public next(): IteratorResult<TInterval> {
 		if (this.index < this.results.length) {
 			return {
-				value: this.results[this.index++],
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				value: this.results[this.index++]!,
 				done: false,
 			};
 		}
@@ -668,9 +613,11 @@ class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 
 /**
  * Change events emitted by `IntervalCollection`s
+ * @legacy
  * @alpha
  */
-export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
+export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval>
+	extends IEvent {
 	/**
 	 * This event is invoked whenever the endpoints of an interval may have changed.
 	 * This can happen on:
@@ -752,6 +699,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 /**
  * Collection of intervals that supports addition, modification, removal, and efficient spatial querying.
  * Changes to this collection will be incur updates on collaborating clients (i.e. they are not local-only).
+ * @legacy
  * @alpha
  */
 export interface IIntervalCollection<TInterval extends ISerializableInterval>
@@ -797,7 +745,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * it is possible to control whether the interval expands to include content
 	 * inserted at its start or end.
 	 *
-	 *	See {@link SequencePlace} for more details on the model.
+	 *	See {@link @fluidframework/merge-tree#SequencePlace} for more details on the model.
 	 *
 	 *	@example
 	 *
@@ -1009,7 +957,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			? serializedIntervals
 			: serializedIntervals.intervals.map((i) =>
 					decompressInterval(i, serializedIntervals.label),
-			  );
+				);
 	}
 
 	/**
@@ -1128,10 +1076,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (client) {
 			client.on("normalize", () => {
 				for (const localSeq of this.localSeqToSerializedInterval.keys()) {
-					this.localSeqToRebasedInterval.set(
-						localSeq,
-						this.computeRebasedPositions(localSeq),
-					);
+					this.localSeqToRebasedInterval.set(localSeq, this.computeRebasedPositions(localSeq));
 				}
 			});
 		}
@@ -1286,7 +1231,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				start: startPos,
 				end: endPos,
 				intervalType: IntervalType.SlideOnRemove,
-				properties: interval.properties,
+				properties: { ...interval.properties },
 				sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 				stickiness,
 				startSide,
@@ -1427,6 +1372,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			if (newInterval) {
 				this.addPendingChange(id, serializedInterval);
 				this.emitChange(newInterval, interval, true, false);
+				if (interval instanceof SequenceInterval) {
+					this.client?.removeLocalReferencePosition(interval.start);
+					this.client?.removeLocalReferencePosition(interval.end);
+				}
 			}
 			return newInterval;
 		}
@@ -1652,8 +1601,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		// if the interval slid off the string, rebase the op to be a noop and delete the interval.
 		if (
-			startRebased === DetachedReferencePosition ||
-			endRebased === DetachedReferencePosition
+			!this.options.mergeTreeReferencesCanSlideToEndpoint &&
+			(startRebased === DetachedReferencePosition || endRebased === DetachedReferencePosition)
 		) {
 			if (localInterval) {
 				this.localCollection?.removeExistingInterval(localInterval);
@@ -1760,8 +1709,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					undefined,
 					undefined,
 					startReferenceSlidingPreference(interval.stickiness),
-					startReferenceSlidingPreference(interval.stickiness) ===
-						SlidingPreference.BACKWARD,
+					startReferenceSlidingPreference(interval.stickiness) === SlidingPreference.BACKWARD,
 				);
 				if (props) {
 					interval.start.addProperties(props);
@@ -1782,8 +1730,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					undefined,
 					undefined,
 					endReferenceSlidingPreference(interval.stickiness),
-					endReferenceSlidingPreference(interval.stickiness) ===
-						SlidingPreference.FORWARD,
+					endReferenceSlidingPreference(interval.stickiness) === SlidingPreference.FORWARD,
 				);
 				if (props) {
 					interval.end.addProperties(props);

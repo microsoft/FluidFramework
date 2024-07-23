@@ -5,15 +5,20 @@ menuPosition: 6
 
 ## Introduction
 
-The `SharedTree` distributed data structure (DDS), available in Fluid Framework 2.0 preview and later, is used to store most or all of your application's shared data in a hierarchical structure.
+The `SharedTree` distributed data structure (DDS), available in Fluid Framework 2 and later, is used to store most or all of your application's shared data in a hierarchical structure.
 
-A `SharedTree` object has the following characteristics:
+A `SharedTree` has the following characteristics:
 
+-   It is accessed through a `TreeView` object that exposes all the functionality for reading and editing data within a `SharedTree`.
 -   It has a root and can have several types of internal (i.e., non-leaf) nodes and several types of leaf nodes.
 -   Although there are some exceptions, for the most part, each type of node closely mirrors a familiar JavaScript datatype, such as object, map, array, boolean, number, string, and null.
 -   Again, with exceptions, your code accesses nodes with the syntax of JavaScript and TypeScript, such as dot notation, property assignment, and array indexes.
--   Besides being of the type `SharedTree`, the object will also conform to a schema that your code creates so it has an application-specific strong typing too.
--   The various types of internal nodes can be nested in one another (subject to the constraints of the schema).
+-   A `TreeView` will conform to a schema that your code creates so it has application-specific strong typing.
+-   The various types of internal nodes can be nested (subject to the constraints of the schema).
+
+### TreeView object
+
+The `TreeView` object is accessed via the Fluid Framework `IFluidContainer` object (container). The `TreeView` contains a `root` node that provides access to the complete `SharedTree`. The `TreeView` also provides access to tree-level events.
 
 ### Node types
 
@@ -54,7 +59,7 @@ The `SharedTree` library can be found in the [fluid-framework](https://www.npmjs
 To get started, run the following from a terminal in your project folder:
 
 ```bash
-npm install fluid-framework@canary
+npm install fluid-framework@latest
 ```
 
 ## Usage
@@ -62,15 +67,15 @@ npm install fluid-framework@canary
 The major programming tasks for using `SharedTree`s are:
 
 -   Define a schema for the `SharedTree`. As you build out from prototype to full production application, you can add to this schema and create additional schemas for additional `ShareTree`s. See [Schema definition](#schema-definition).
--   Create the `SharedTree` object. See [Creation](#creation).
--   Create code that reads and writes to the nodes of the `SharedTree`. See [API](#api).
+-   Initialize the `TreeView` object. See [Creation](#creation).
+-   Create code that reads and edits the nodes of the `SharedTree`. See [API](#api).
 
 ### Schema definition
 
 Start by creating a `SchemaFactory` object. The following is an example. Note that the parameter must be some unique string such as a UUID.
 
 ```typescript
-import { ... SchemaFactory, ... } from '@fluid-experimental/tree2';
+import { ... SchemaFactory, ... } from 'fluid-framework';
 
 const sf = new SchemaFactory('ec1db2e8-0a00-11ee-be56-0242ac120002');
 ```
@@ -143,7 +148,7 @@ public setColor(newColor: string) {
 
 {{< callout note >}}
 
-Do *not* override the constructor of types that you derive from objects returned by the `object()`, `array()`, and `map()` methods of `SchemaFactory`. Doing so has unexpected effects.
+Do *not* override the constructor of types that you derive from objects returned by the `object()`, `array()`, and `map()` methods of `SchemaFactory`. Doing so has unexpected effects and is not supported.
 
 {{< /callout >}}
 
@@ -203,16 +208,13 @@ class App extends sf.object('App', {
 }) {}
 ```
 
-The final step is to create a configuration object that will be used when a `SharedTree` object is created. See [Creation](#creation). The following is an example of doing this. Note that the second parameter returns an object that initializes the tree with an object that must conform to the root schema, `App`. So in this example, it has a single `items` property. The value of the `items` property specifies that the items array is empty. It is not a requirement that the initial tree be empty: you can assign one or more groups or notes to the initial tree.
+The final step is to create a configuration object that will be used when a `SharedTree` object is created or loaded. See [Creation](#creation). The following is an example of doing this.
 
 ```typescript
-export const appTreeConfiguration = new TreeConfiguration(
-    App, // root node schema
-    () => ({
-        // initial tree
-        items: [],
-    })
-);
+export const appTreeConfiguration = new TreeViewConfiguration({
+    // root node schema
+    schema: App
+});
 ```
 
 #### Map schema
@@ -229,6 +231,16 @@ Like `array()`, `map()` can accept an array of types when the values of the map 
 class MyMapSchema extends sf.map('MyMap', [sf.number, sf.string]) { ... }
 ```
 
+#### Recursive schema
+
+Additionally, you can create recursive types (nodes that include nodes of the same type in their subtree hierarchy). Because of current limitation in TypeScript, doing this requires specific versions of the node types: `objectRecursive()`, `arrayRecursive()`, and `mapRecursive`.
+
+Due to limitations of TypeScript, recursive schema may not produce type errors when declared incorrectly. Using `ValidateRecursiveSchema` helps ensure that mistakes made in the definition of a recursive schema will introduce a compile error.
+
+```typescript
+type _check = ValidateRecursiveSchema<typeof myRecursiveType>;
+```
+
 #### Setting properties as optional
 
 To specify that a property is not required, pass it to the `SchemaFactory.optional()` method inline. The following example shows a schema with two optional properties.
@@ -243,31 +255,44 @@ class Proposal = sf.object('Proposal', {
 
 ### Creation
 
-To create a `SharedTree` object, create a container with an initial object of that type and then apply the schema to it. The code in this section continues the sticky note example. Start by creating a container schema with an initial object of type `SharedTree` and use it to create a container.
+To create a `TreeView` object, create a container with an initial object of type `SharedTree` and then call `viewWith` with some schema. The code in this section continues the sticky note example. Start by creating a container schema with an initial object of type `SharedTree` and use it to create a container.
 
 ```typescript
 const containerSchema: ContainerSchema = {
     initialObjects: {
-        appData: ISharedTree,
+        appData: SharedTree,
     },
 };
 
-const { container, services } = await client.createContainer(containerSchema);
+const { container, services } = await client.createContainer(containerSchema, "2");
 ```
 
-Apply the schema to the tree by passing the tree configuration object to the `ITree.schematize()` method.
+Use `ITree.viewWith` to create a `TreeView` based on your tree configuration.
+Tree views provide schema-dependent APIs for viewing and editing tree data.
 
 ```typescript
-const stickyNotesTree = container.initialObjects.appData as ITree;
-
-stickyNotesTree.schematize(appTreeConfiguration);
+const stickyNotesTreeView = container.initialObjects.appData.viewWith(appTreeConfiguration);
 ```
 
-You can now add child items to the `stickyNotesTree` object using the methods described in [API](#api) below.
+When the tree is first created, this schema along with some initial data can be applied to the tree using `TreeView.initialize`.
+Note that the data used to initialize the tree must conform to the root schema, `App`. So in this example, it has a single `items` property. The value of the `items` property specifies that the items array is empty. It is not a requirement that the initial tree be empty: you can assign one or more groups or notes to the initial tree.
+
+```typescript
+// Both of the following options are equivalent ways to initialize the tree.
+// See documentation about plain-old javascript objects (POJO) on `SchemaFactory` for more details.
+
+// Option 1:
+stickyNotesTreeView.initialize({ items: [] });
+
+// Option 2:
+stickyNotesTreeView.initialize(new App({ items: [] }));
+```
+
+You can now add child items to the `stickyNotesTreeView` object using the methods described in [API](#api) below.
 
 ### API
 
-The `SharedTree` object provides methods that enable your code to add nodes to the tree, remove nodes, and move nodes within the tree. You can also set and read the values of leaf nodes. The APIs have been designed to match as much as possible the syntax of TypeScript primitives, objects, maps, and arrays; although some editing APIs are different for the sake of making the merge semantics clearer.
+The `TreeView` object and its children provide methods that enable your code to add nodes to the tree, remove nodes, and move nodes within the tree. You can also set and read the values of leaf nodes. The APIs have been designed to match as much as possible the syntax of TypeScript primitives, objects, maps, and arrays; although some editing APIs are different for the sake of making the merge semantics clearer.
 
 #### Leaf node APIs
 
@@ -292,7 +317,7 @@ Your code reads object nodes and their properties exactly as it would read a Jav
 ```typescript
 const pointsForDetroitTigers: number = seasonTree.tigersTeam.game1.points;
 
-const counterHandle: FluidHandle = myTree.myObjectNode.myHandle; 
+const counterHandle: FluidHandle = myTree.myObjectNode.myHandle;
 
 const myItems: Array = stickyNotesTree.items;
 ```
@@ -387,15 +412,15 @@ The `set()` method sets/changes the value of the item with the specified key. If
 -   If multiple clients set the same key simultaneously, the key gets the value set by the last edit to apply. For the meaning of "simultaneously", see [Types of distributed data structures]({{< relref "overview.md" >}}).
 
 ```typescript
-delete(key: string): boolean
+delete(key: string): void
 ```
 
-The `delete()` method removes the item with the specified key. If the key is not present, the method returns `false`. If one client sets a key and another deletes it simultaneously, the key is deleted only if the deletion op is the last one applied. For the meaning of "simultaneously", see [Types of distributed data structures]({{< relref "overview.md" >}}).
+The `delete()` method removes the item with the specified key. If one client sets a key and another deletes it simultaneously, the key is deleted only if the deletion op is the last one applied. For the meaning of "simultaneously", see [Types of distributed data structures]({{< relref "overview.md" >}}).
 
 ##### Map node properties
 
 ```typescript
-size: number 
+size: number
 ```
 
 The total number of entries in the map node.
@@ -485,41 +510,62 @@ For the meaning of "simultaneously", see [Types of distributed data structures](
 
 ### Events
 
-The `SharedTree` object supports two events: `beforeChange` and `afterChange`. Your code can create handlers for these events using the utility class `Tree`. See [Tree utility APIs](#tree-utility-apis).
+`SharedTree` supports two node level events: `nodeChanged` and `treeChanged`. Your code can create handlers for these events using the utility class `Tree`. See [Tree utility APIs](#tree-utility-apis).
+
+Additionally, the `TreeView` object includes 2 events that operate over the whole tree. These are `rootChanged` and `commitApplied`.
+
+`rootChanged` fires when the root field (the field that contains the root node) changes. That is, if a new root node is assigned or the schema changes. This will not fire when the node itself changes.
+
+`commitApplied` fires whenever a local change is applied outside of a transaction or when a local transaction is committed. This is used to get `Revertible` objects to put on the undo or redo stacks. See [Undo/Redo support](#undoredo-support) and [Transactions](#transactions).
+
+### Undo/Redo support
+
+`SharedTree` makes creating an undo and redo stack very simple. By listening for the `commitApplied` event on the `TreeView` object, you can get a `Revertible` object from a `Commit`.
+`Commit` objects come in three flavors:
+
+-   Default: a normal commit made in the local client that would go on the undo stack
+-   Undo: a commit that is the result of reverting a Default or Redo `Revertible` object that would go on the redo stack
+-   Redo: a commit that is the result of reverting an Undo `Revertible` object that would go on the undo stack
+
+To undo a change, call the `revert` method on the `Revertible` object. This will return the properties of the `TreeView` object last changed by the local client to the their previous state. If changes were made to those properties by other clients in the meantime these changes will be overwritten. For example, if the local client moves 3 items into an array, and then a remote client moves one of those items somewhere else, when the local client reverts their change, the item moved by the remote client will be returned to its original position.
+
+There is an example of a working undo/redo stack here: [Shared Tree Demo](https://github.com/microsoft/FluidExamples/tree/main/brainstorm).
 
 ## Tree utility APIs
 
-The `Tree` class provides some static utility APIs for working with `ShareTree` objects.
+The `Tree` class provides some static utility APIs for working with data in the `TreeView` object.
 
-## Event handling
-
-```typescript
-Tree.on(node: SharedTreeNode, eventType: string, listener: () => void): () => void
-```
-
-Assigns the specified `listener` function to the specified `eventType` for the specified `node`. The `node` can be any node of the tree. The `eventType` can be either "afterChange" or "beforeChange". An `event` object is automatically passed to the `listener`. It has three members:
-
--   `event.target`: The node on which the event was triggered.
--   `event.isLocal`: Specifies whether the change was made on the local client or a remote client.
--   `event.stopPropagation()`: If called in the listener, it stops the event from being triggered on the parent, in the tree, of the `event.target`.
-
-The `Tree.on()` method returns a function that unsubscribes the handler from the event. This method is typically called in clean up code when the node is being removed.
-
-## Type guard
-
-When your code needs to process nodes only of a certain type and it has a reference to an object of an unknown type, you can use the TypeScript `instanceOf` keyword to test for the desired type as in the following examples.
+### Event handling
 
 ```typescript
-if (myNode instanceOf sf.number) {
-   // Code here that processes number nodes.
-}
-
-if (myNode instanceOf Note) {
-   // Code here that processes Note nodes.
-}
+on<K extends keyof TreeChangeEvents>(
+		node: TreeNode,
+		eventName: K,
+		listener: TreeChangeEvents[K],
+	): () => void;
 ```
 
-Alternatively, the `Tree` class provides a method for testing the type of a node:
+
+`Tree.on` assigns the specified `listener` function to the specified `eventName` for the specified `node`.
+The `node` can be any node of the tree.
+The `eventName` can be either "treeChanged" or "nodeChanged".
+`nodeChanged` fires whenever one or more properties of the specified node change.
+`treeChanged` fires whenever one or more properties of the specified node or any node in its subtree, change.
+We recommend looking at the documentation of each of the events for more details.
+
+The `Tree.on()` method returns a function that unsubscribes the handler from the event. This method is typically called in clean up code when the node is being removed. For example:
+
+```typescript
+const unsubscribe = Tree.on(myTreeNode, "nodeChanged", () => {...});
+
+// Later at some point when the event subscription is not needed anymore
+unsubscribe();
+
+```
+
+### Type guard
+
+When your code needs to process nodes only of a certain type and it has a reference to an object of an unknown type, you can use the `Tree.is()` method to test for the desired type as in the following examples.
 
 ```typescript
 Tree.is(someNode: SharedTreeNode, nodeType: TreeNodeSchema | T): boolean
@@ -528,10 +574,6 @@ Tree.is(someNode: SharedTreeNode, nodeType: TreeNodeSchema | T): boolean
 Returns `true` if `someNode` is of type `nodeType`. Note that `T` is a type that is derived from a call of one of the `SchemaFactory` methods; `object()`, `map()`, or `array()`. Here are examples:
 
 ```typescript
-if (Tree.is(myNode, sf.number)) {
-   // Code here that processes number nodes.
-}
-
 if (Tree.is(myNode, Note)) {
    // Code here that processes Note nodes.
 }
@@ -539,7 +581,36 @@ if (Tree.is(myNode, Note)) {
 
 For another example, see the `Tree.parent()` method in [Node information](#node-information).
 
-## Node information
+### Transactions
+
+If you want the `SharedTree` to treat a set of changes atomically, wrap these changes in a transaction. Using a transaction guarantees that (if applied) all of the changes will be applied together synchronously (though, note that the Fluid Framework guarantees this already for any sequence of changes that are submitted synchronously). However, the changes may not be applied at all if the transaction is given one or more constraints. If any constraint on a transaction is not met, then the transaction and all its changes will ignored by all clients. Additionally, all changes in a transaction will be reverted together as a single unit by [undo/redo code](#undoredo-support), because changes within a transaction are exposed through a single `Revertible` object. It is also more efficient for SharedTree to process a large number of changes in a row as a transaction rather than as changes submitted separately.
+
+To create a transaction use the `Tree.runTransaction()` method. You can cancel a transaction from within the callback function by returning the special "rollback object", available via `Tree.runTransaction.rollback`. Also, if an error occurs within the callback, the transaction will be canceled automatically before propagating the error.
+
+In this example, myNode can be any node in the SharedTree. It will be optionally passed into the callback function.
+
+```typescript
+Tree.runTransaction(myNode, (node) => {
+    // Make multiple changes to the tree.
+    // This can be changes to the referenced node but is not limited to that scope.
+    if (
+        // Something is wrong here!
+    ) return "rollback";
+})
+```
+
+You can also pass a `TreeView` object to `runTransaction()`.
+
+```typescript
+Tree.runTransaction(myTreeView, (treeView) => {
+    // Make multiple changes to the tree.
+})
+```
+
+There are example transactions here: [Shared Tree Demo](https://github.com/microsoft/FluidExamples/tree/main/brainstorm).
+
+
+### Node information
 
 ```typescript
 Tree.key(node: SharedTreeNode): number | string
@@ -556,7 +627,7 @@ Returns the parent node of `node`. The following snippet continues the sticky no
 ```typescript
 const parent = Tree.parent(note);
 
-if ((parent instanceOf Notes) || (parent instanceOf Items)) {
+if (Tree.is(parent, Notes) || Tree.is(parent, Items)) {
     const index = parent.indexOf(note);
     parent.removeAt(index);
 }

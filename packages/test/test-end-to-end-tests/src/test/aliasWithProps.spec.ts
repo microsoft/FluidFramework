@@ -4,15 +4,12 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
-import {
-	BaseContainerRuntimeFactory,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import type { DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject, IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
-import { type ITestObjectProvider } from "@fluidframework/test-utils";
+import { type ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 interface TestDataObjectTypes {
 	/**
@@ -30,54 +27,61 @@ interface TestDataObjectTypes {
 }
 
 const propsKey = "props";
-
-// A Test Data Object that exposes some basic functionality.
-class TestDataObject extends DataObject<TestDataObjectTypes> {
-	public get _context() {
-		return this.context;
-	}
-
-	public get _root() {
-		return this.root;
-	}
-
-	public getValue(): string | undefined {
-		return this.root.get(propsKey);
-	}
-
-	// The object starts with a LegacySharedTree
-	public async initializingFirstTime(props: TestDataObjectProps): Promise<void> {
-		this.root.set(propsKey, props.a);
-	}
-}
-
 interface TestDataObjectProps {
 	a: string;
 }
-type TestDataObjectFactory = DataObjectFactory<TestDataObject, TestDataObjectTypes>;
 
 const defaultDataStoreId = "default";
-class RuntimeFactoryWithProps extends BaseContainerRuntimeFactory {
-	constructor(private readonly defaultFactory: TestDataObjectFactory) {
-		const props = {
-			registryEntries: [defaultFactory.registryEntry],
-			provideEntryPoint: async (runtime: IContainerRuntime) => {
-				const entrypoint = await runtime.getAliasedDataStoreEntryPoint(defaultDataStoreId);
-				assert(entrypoint !== undefined, "default dataStore must exist");
-				return entrypoint.get();
-			},
-		};
-		super(props);
+
+describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { BaseContainerRuntimeFactory } = apis.containerRuntime;
+
+	// A Test Data Object that exposes some basic functionality.
+	class TestDataObject extends DataObject<TestDataObjectTypes> {
+		public get _context() {
+			return this.context;
+		}
+
+		public get _root() {
+			return this.root;
+		}
+
+		public getValue(): string | undefined {
+			return this.root.get(propsKey);
+		}
+
+		// The object starts with a LegacySharedTree
+		public async initializingFirstTime(props: TestDataObjectProps): Promise<void> {
+			this.root.set(propsKey, props.a);
+		}
 	}
 
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const props = { a: "b" };
-		const [, dataStore] = await this.defaultFactory.createInstanceWithDataStore(runtime, props);
-		await dataStore.trySetAlias(defaultDataStoreId);
-	}
-}
+	type TestDataObjectFactory = DataObjectFactory<TestDataObject, TestDataObjectTypes>;
 
-describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
+	class RuntimeFactoryWithProps extends BaseContainerRuntimeFactory {
+		constructor(private readonly defaultFactory: TestDataObjectFactory) {
+			const props = {
+				registryEntries: [defaultFactory.registryEntry],
+				provideEntryPoint: async (runtime: IContainerRuntime) => {
+					const entrypoint = await runtime.getAliasedDataStoreEntryPoint(defaultDataStoreId);
+					assert(entrypoint !== undefined, "default dataStore must exist");
+					return entrypoint.get();
+				},
+			};
+			super(props);
+		}
+
+		protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+			const props = { a: "b" };
+			const [, dataStore] = await this.defaultFactory.createInstanceWithDataStore(
+				runtime,
+				props,
+			);
+			await dataStore.trySetAlias(defaultDataStoreId);
+		}
+	}
+
 	// Registry -----------------------------------------
 	const childDataObjectFactory = new DataObjectFactory("Child", TestDataObject, [], {});
 	const dataObjectFactory = new DataObjectFactory("Test", TestDataObject, [], {}, [
@@ -129,7 +133,12 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
 		const props1 = { a: "1 is different from 2" };
 		const newObjectPromise1 = createAliasedInstance(dataObjectFactory, runtime, props1, "new");
 		const props2 = { a: "Totally not same string" };
-		const newObjectPromise2 = createAliasedInstance(dataObjectFactory, runtime2, props2, "new");
+		const newObjectPromise2 = createAliasedInstance(
+			dataObjectFactory,
+			runtime2,
+			props2,
+			"new",
+		);
 		await provider.ensureSynchronized();
 		await Promise.all([newObjectPromise1, newObjectPromise2]);
 		const newObject1 = await newObjectPromise1;

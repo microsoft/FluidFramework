@@ -3,17 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { ICodecOptions, IJsonCodec } from "../../codec/index.js";
-import { makeSchemaCodec } from "../schema-index/index.js";
-import { EncodedSchemaChange } from "./schemaChangeFormat.js";
-import { SchemaChange } from "./schemaChangeTypes.js";
+import { assert } from "@fluidframework/core-utils/internal";
 
-export function makeSchemaChangeCodec({
+import {
+	type ICodecFamily,
+	type ICodecOptions,
+	type IJsonCodec,
+	makeCodecFamily,
+	withSchemaValidation,
+} from "../../codec/index.js";
+import { makeSchemaCodec } from "../schema-index/index.js";
+
+import { EncodedSchemaChange } from "./schemaChangeFormat.js";
+import type { SchemaChange } from "./schemaChangeTypes.js";
+
+export function makeSchemaChangeCodecs(options: ICodecOptions): ICodecFamily<SchemaChange> {
+	return makeCodecFamily([[1, makeSchemaChangeCodec(options)]]);
+}
+
+function makeSchemaChangeCodec({
 	jsonValidator: validator,
 }: ICodecOptions): IJsonCodec<SchemaChange, EncodedSchemaChange> {
 	const schemaCodec = makeSchemaCodec({ jsonValidator: validator });
-	return {
+	const schemaChangeCodec: IJsonCodec<SchemaChange, EncodedSchemaChange> = {
 		encode: (schemaChange) => {
+			assert(
+				!schemaChange.isInverse,
+				0x933 /* Inverse schema changes should never be transmitted */,
+			);
 			return {
 				new: schemaCodec.encode(schemaChange.schema.new),
 				old: schemaCodec.encode(schemaChange.schema.old),
@@ -25,8 +42,11 @@ export function makeSchemaChangeCodec({
 					new: schemaCodec.decode(encoded.new),
 					old: schemaCodec.decode(encoded.old),
 				},
+				isInverse: false,
 			};
 		},
 		encodedSchema: EncodedSchemaChange,
 	};
+
+	return withSchemaValidation(EncodedSchemaChange, schemaChangeCodec, validator);
 }

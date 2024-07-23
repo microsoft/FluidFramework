@@ -4,10 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+
 import { IRequest } from "@fluidframework/core-interfaces";
-import { Provider } from "nconf";
-import { RouterliciousUrlResolver } from "../urlResolver";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+
+import { Provider } from "../nconf.cjs";
+import { RouterliciousUrlResolver } from "../urlResolver.js";
 
 describe("Routerlicious Url Resolver", () => {
 	const token = "dummy";
@@ -116,7 +118,11 @@ describe("Routerlicious Url Resolver", () => {
 			"http://localhost:3003/deltas/fluid/damp-competition",
 			"Improperly Formed deltaStorageUrl",
 		);
-		assert.equal(endpoints.ordererUrl, "http://localhost:3003", "Improperly Formed OrdererUrl");
+		assert.equal(
+			endpoints.ordererUrl,
+			"http://localhost:3003",
+			"Improperly Formed OrdererUrl",
+		);
 		assert.equal(
 			url,
 			"https://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",

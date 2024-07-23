@@ -3,44 +3,58 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
 import { bufferToString } from '@fluid-internal/client-utils';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import {
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-	IChannelFactory,
-	IChannelAttributes,
-	IChannelServices,
-} from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
+import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import { assert } from '@fluidframework/core-utils/internal';
 import {
-	createSingleBlobSummary,
+	IChannelAttributes,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+	IChannelServices,
+	IChannelStorageService,
+} from '@fluidframework/datastore-definitions/internal';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
+import {
 	IFluidSerializer,
 	ISharedObjectEvents,
 	SharedObject,
-} from '@fluidframework/shared-object-base';
-import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+	createSingleBlobSummary,
+} from '@fluidframework/shared-object-base/internal';
 import {
-	ITelemetryLoggerExt,
-	createChildLogger,
-	ITelemetryLoggerPropertyBags,
-	PerformanceEvent,
-	createSampledLogger,
 	IEventSampler,
-} from '@fluidframework/telemetry-utils';
-import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray } from './Common.js';
+	ITelemetryLoggerPropertyBags,
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	createChildLogger,
+	createSampledLogger,
+} from '@fluidframework/telemetry-utils/internal';
+
+import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes.js';
+import { RestOrArray, copyPropertyIfDefined, fail, unwrapRestOrArray } from './Common.js';
 import { EditHandle, EditLog, OrderedEditSet } from './EditLog.js';
 import {
+	areRevisionViewsSemanticallyEqual,
+	convertTreeNodes,
+	deepCloneStablePlace,
+	deepCloneStableRange,
+	internalizeBuildNode,
+	newEditId,
+	walkTree,
+} from './EditUtilities.js';
+import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes.js';
+import { revert } from './HistoryEditFactory.js';
+import { convertEditIds } from './IdConversion.js';
+import {
+	AttributionId,
+	DetachedSequenceId,
 	EditId,
 	NodeId,
-	StableNodeId,
-	DetachedSequenceId,
 	OpSpaceNodeId,
-	isDetachedSequenceId,
-	AttributionId,
 	SessionId,
+	StableNodeId,
+	isDetachedSequenceId,
 } from './Identifiers.js';
 import { initialTree } from './InitialTree.js';
 import {
@@ -51,8 +65,16 @@ import {
 	SequencedEditResult,
 	SequencedEditResultCallback,
 } from './LogViewer.js';
-import { deserialize, getSummaryStatistics } from './SummaryBackCompatibility.js';
+import { NodeIdContext, NodeIdNormalizer, getNodeIdContext } from './NodeIdUtilities.js';
 import { ReconciliationPath } from './ReconciliationPath.js';
+import { RevisionView } from './RevisionView.js';
+import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from './SharedTreeEncoder.js';
+import { MutableStringInterner } from './StringInterner.js';
+import { SummaryContents, serialize } from './Summary.js';
+import { deserialize, getSummaryStatistics } from './SummaryBackCompatibility.js';
+import { TransactionInternal } from './TransactionInternal.js';
+import { nilUuid } from './UuidUtilities.js';
+import { IdCompressor, createSessionId } from './id-compressor/index.js';
 import {
 	BuildNodeInternal,
 	ChangeInternal,
@@ -63,7 +85,7 @@ import {
 	Edit,
 	EditLogSummary,
 	EditStatus,
-	reservedIdCount,
+	InternalizedChange,
 	SharedTreeEditOp,
 	SharedTreeEditOp_0_0_2,
 	SharedTreeOp,
@@ -73,32 +95,11 @@ import {
 	SharedTreeSummaryBase,
 	SharedTreeSummary_0_0_2,
 	TreeNode,
-	ghostSessionId,
-	WriteFormat,
 	TreeNodeSequence,
-	InternalizedChange,
+	WriteFormat,
+	ghostSessionId,
+	reservedIdCount,
 } from './persisted-types/index.js';
-import { serialize, SummaryContents } from './Summary.js';
-import {
-	areRevisionViewsSemanticallyEqual,
-	convertTreeNodes,
-	deepCloneStablePlace,
-	deepCloneStableRange,
-	internalizeBuildNode,
-	newEditId,
-	walkTree,
-} from './EditUtilities.js';
-import { getNodeIdContext, NodeIdContext, NodeIdNormalizer } from './NodeIdUtilities.js';
-import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes.js';
-import { RevisionView } from './RevisionView.js';
-import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from './SharedTreeEncoder.js';
-import { revert } from './HistoryEditFactory.js';
-import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes.js';
-import { TransactionInternal } from './TransactionInternal.js';
-import { IdCompressor, createSessionId } from './id-compressor/index.js';
-import { convertEditIds } from './IdConversion.js';
-import { MutableStringInterner } from './StringInterner.js';
-import { nilUuid } from './UuidUtilities.js';
 
 /**
  * The write format and associated options used to construct a `SharedTree`
@@ -118,8 +119,8 @@ export type SharedTreeOptions<
 		WF extends WriteFormat.v0_0_2
 			? SharedTreeOptions_0_0_2
 			: WF extends WriteFormat.v0_1_1
-			? SharedTreeOptions_0_1_1
-			: never,
+				? SharedTreeOptions_0_1_1
+				: never,
 		HistoryCompatibility extends 'Forwards' ? 'summarizeHistory' : never
 	>;
 
@@ -364,7 +365,9 @@ export type EditCommittedHandler = (args: EditCommittedEventArguments) => void;
  */
 export type SequencedEditAppliedHandler = (args: SequencedEditAppliedEventArguments) => void;
 
-const sharedTreeTelemetryProperties: ITelemetryLoggerPropertyBags = { all: { isSharedTreeEvent: true } };
+const sharedTreeTelemetryProperties: ITelemetryLoggerPropertyBags = {
+	all: { isSharedTreeEvent: true },
+};
 
 /**
  * Contains information resulting from processing stashed shared tree ops
@@ -520,10 +523,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		return typeof noCompatOptions.summarizeHistory === 'object'
 			? {
 					summarizeHistory: true,
-			  }
+				}
 			: {
 					summarizeHistory: noCompatOptions.summarizeHistory ?? false,
-			  };
+				};
 	}
 
 	/**
@@ -544,7 +547,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		private writeFormat: WriteFormat,
 		options: SharedTreeOptions<typeof writeFormat> = {}
 	) {
-		super(id, runtime, SharedTreeFactory.Attributes, 'fluid_sharedTree_');
+		super(id, runtime, SharedTreeFactory.Attributes, 'fluid_legacySharedTree_');
 		const historyPolicy = this.getHistoryPolicy(options);
 		this.summarizeHistory = historyPolicy.summarizeHistory;
 
@@ -688,9 +691,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * `id` was at some point generated by an instance of this SharedTree.
 	 */
 	public convertToNodeId(id: StableNodeId): NodeId {
-		return (
-			(this.idCompressor.tryRecompress(id) as NodeId) ?? fail('Stable node id is not known to this SharedTree')
-		);
+		return (this.idCompressor.tryRecompress(id) as NodeId) ?? fail('Stable node id is not known to this SharedTree');
 	}
 
 	/**
@@ -826,7 +827,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	public loadSummary(summary: SharedTreeSummaryBase): void {
 		const { version: loadedSummaryVersion } = summary;
 
-		if (isUpdateRequired(loadedSummaryVersion, this.writeFormat)) {
+		if (this.deltaManager.readOnlyInfo.readonly !== true && isUpdateRequired(loadedSummaryVersion, this.writeFormat)) {
 			this.submitOp({ type: SharedTreeOpType.Update, version: this.writeFormat });
 			this.logger.sendTelemetryEvent({
 				eventName: 'RequestVersionUpdate',
@@ -848,10 +849,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		let convertedSummary: SummaryContents;
 		switch (loadedSummaryVersion) {
 			case WriteFormat.v0_0_2:
-				convertedSummary = this.encoder_0_0_2.decodeSummary(
-					summary as SharedTreeSummary_0_0_2,
-					this.attributionId
-				);
+				convertedSummary = this.encoder_0_0_2.decodeSummary(summary as SharedTreeSummary_0_0_2, this.attributionId);
 				break;
 			case WriteFormat.v0_1_1: {
 				const typedSummary = summary as SharedTreeSummary;
@@ -982,7 +980,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
-		const summaryLoadPerformanceEvent = PerformanceEvent.start(this.logger, { eventName: 'SummaryLoad' });
+		const summaryLoadPerformanceEvent = PerformanceEvent.start(this.logger, {
+			eventName: 'SummaryLoad',
+		});
 
 		try {
 			const newBlob = await storage.readBlob(snapshotFileName);
@@ -1435,10 +1435,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 								break;
 							}
 							case WriteFormat.v0_1_1: {
-								assert(
-									this.stashedIdCompressor !== null,
-									0x632 /* Stashed op applied after expected window */
-								);
+								assert(this.stashedIdCompressor !== null, 0x632 /* Stashed op applied after expected window */);
 								if (this.stashedIdCompressor === undefined) {
 									// Use a temporary compressor that will help translate the stashed ops
 									this.stashedIdCompressor = IdCompressor.deserialize(
@@ -1459,23 +1456,13 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 									localSessionId: this.idCompressor.localSessionId,
 									normalizeToSessionSpace: (id, _sessionId) => {
 										// Interpret the IDs from the stashed ops as stable IDs, and use those as overrides for the equivalent new ops
-										const sessionSpaceId = stashedIdContext.normalizeToSessionSpace(
-											id,
-											sharedTreeOp.idRange.sessionId
-										);
-										return this.generateNodeId(
-											stashedIdContext.convertToStableNodeId(sessionSpaceId)
-										);
+										const sessionSpaceId = stashedIdContext.normalizeToSessionSpace(id, sharedTreeOp.idRange.sessionId);
+										return this.generateNodeId(stashedIdContext.convertToStableNodeId(sessionSpaceId));
 									},
 									normalizeToOpSpace: (id) => this.idNormalizer.normalizeToOpSpace(id),
 								};
 
-								stashedEdit = this.encoder_0_1_1.decodeEditOp(
-									sharedTreeOp,
-									(x) => x,
-									normalizer,
-									this.interner
-								);
+								stashedEdit = this.encoder_0_1_1.decodeEditOp(sharedTreeOp, (x) => x, normalizer, this.interner);
 								break;
 							}
 							default:

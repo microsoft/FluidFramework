@@ -4,7 +4,11 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import {
+	DriverHeader,
+	IResolvedUrl,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Default endpoint port. Will be used by the service if the consumer does not specify a port.
@@ -33,7 +37,8 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
 		const relativeUrl = request.url.replace(`${this.tinyliciousEndpoint}/`, "");
-		const documentIdFromRequest = relativeUrl.split("/")[0];
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- <string>.split() always returns an array with at least one item
+		const documentIdFromRequest = relativeUrl.split("/")[0]!;
 
 		let deltaStorageUrl: string;
 		let documentUrl: string;
@@ -70,7 +75,10 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 		};
 	}
 
-	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+	public async getAbsoluteUrl(
+		resolvedUrl: IResolvedUrl,
+		relativeUrl: string,
+	): Promise<string> {
 		const documentId = decodeURIComponent(
 			resolvedUrl.url.replace(`${this.tinyliciousEndpoint}/tinylicious/`, ""),
 		);

@@ -3,7 +3,9 @@
 
 # DisableDockerDetector "No feasible secure solution for OSS repos yet"
 
-FROM node:18.17.1-buster-slim AS base
+# Use a direct sha256 hash to ensure we are always using the same version of the base image.
+# This avoids throttling issues with Docker Hub by using an image baked into the pipeline build image.
+FROM node:18.17.1-buster-slim@sha256:cb2a746612c2564d3bd0f871174618337af9d0f4d895df6a623fd7a69ca6e5bd AS base
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
@@ -24,7 +26,7 @@ RUN chmod +x /tini
 
 # There are some packages outside the routerlicious folder that we need to build, so we copy the package to the /usr directory
 WORKDIR /usr
-COPY --from=root tools/changelog-generator-wrapper/package*.json tools/changelog-generator-wrapper/
+COPY --from=root packages/tools/changelog-generator-wrapper/package*.json packages/tools/changelog-generator-wrapper/
 
 # Copy over and build the server
 WORKDIR /usr/src/server

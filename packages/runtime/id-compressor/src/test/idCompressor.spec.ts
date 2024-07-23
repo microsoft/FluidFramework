@@ -4,31 +4,40 @@
  */
 
 import { strict as assert } from "assert";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { take } from "@fluid-private/stochastic-test-utils";
+
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { take } from "@fluid-private/stochastic-test-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+
+import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor.js";
 import {
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-} from "..//index.js";
-import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor.js";
+} from "../index.js";
 import { createSessionId } from "../utilities.js";
+
 import {
-	performFuzzActions,
-	sessionIds,
-	IdCompressorTestNetwork,
 	Client,
+	CompressorFactory,
 	DestinationClient,
+	IdCompressorTestNetwork,
 	MetaClient,
 	expectSerializes,
-	roundtrip,
 	makeOpGenerator,
-	CompressorFactory,
+	performFuzzActions,
+	roundtrip,
+	sessionIds,
 } from "./idCompressorTestUtilities.js";
-import { LocalCompressedId, incrementStableId, isFinalId, isLocalId, fail } from "./testCommon.js";
+import {
+	LocalCompressedId,
+	fail,
+	incrementStableId,
+	isFinalId,
+	isLocalId,
+} from "./testCommon.js";
 
 describe("IdCompressor", () => {
 	it("reports the proper session ID", () => {
@@ -264,14 +273,7 @@ describe("IdCompressor", () => {
 				compressor.finalizeCreationRange(range2);
 
 				// All generated IDs should have aligned finals (even though range3 has not been finalized)
-				const allIds: SessionSpaceCompressedId[] = [
-					id1_1,
-					id1_2,
-					id2_1,
-					id2_2,
-					id2_3,
-					id3_1,
-				];
+				const allIds: SessionSpaceCompressedId[] = [id1_1, id1_2, id2_1, id2_2, id2_3, id3_1];
 				allIds.forEach((id) => assert(isFinalId(compressor.normalizeToOpSpace(id))));
 
 				compressor.finalizeCreationRange(range3);
@@ -331,28 +333,145 @@ describe("IdCompressor", () => {
 				}
 			});
 		});
-	});
 
-	it("does not return the same non-empty range twice", () => {
-		const rangeCompressor = CompressorFactory.createCompressor(Client.Client1);
-		generateCompressedIds(rangeCompressor, 3);
-		const range1 = rangeCompressor.takeNextCreationRange();
-		assert.notEqual(range1.ids, undefined);
-		const range2 = rangeCompressor.takeNextCreationRange();
-		assert.equal(range2.ids, undefined);
-		rangeCompressor.finalizeCreationRange(range1);
-		rangeCompressor.finalizeCreationRange(range2);
+		it("with the correct local ranges", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1, 1);
+			const ids1 = generateCompressedIds(compressor, 1);
+			const range1 = compressor.takeNextCreationRange(); // one local
+			assert.deepEqual(ids1, [-1]);
+			assert.deepEqual(range1.ids?.localIdRanges, [[1, 1]]);
+
+			compressor.finalizeCreationRange(range1);
+			const ids2 = generateCompressedIds(compressor, 1);
+			const range2 = compressor.takeNextCreationRange(); // one eager final
+			assert.deepEqual(ids2, [1]);
+			assert.deepEqual(range2.ids?.localIdRanges, []);
+
+			// make new cluster
+			compressor.finalizeCreationRange(range2);
+			compressor.generateCompressedId();
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+
+			const ids3 = generateCompressedIds(compressor, 2);
+			const range3 = compressor.takeNextCreationRange(); // one eager final and one local
+			assert.deepEqual(ids3, [3, -5]);
+			assert.deepEqual(range3.ids?.localIdRanges, [[5, 1]]);
+
+			(range3 as any).ids.requestedClusterSize = 4;
+			const ids4 = generateCompressedIds(compressor, 2);
+			compressor.finalizeCreationRange(range3);
+			ids4.push(...generateCompressedIds(compressor, 5));
+			const range4 = compressor.takeNextCreationRange(); // two locals, two eager finals, three locals
+			assert.deepEqual(ids4, [-6, -7, 7, 8, -10, -11, -12]);
+			assert.deepEqual(range4.ids?.localIdRanges, [
+				[6, 2],
+				[10, 3],
+			]);
+		});
+
+		describe("by retaking all outstanding ranges", () => {
+			it("when there are no outstanding ranges", () => {
+				const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
+				let retakenRangeEmpty = compressor.takeUnfinalizedCreationRange();
+				assert.equal(retakenRangeEmpty.ids, undefined);
+				compressor.finalizeCreationRange(retakenRangeEmpty);
+				generateCompressedIds(compressor, 1);
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+				retakenRangeEmpty = compressor.takeUnfinalizedCreationRange();
+				assert.equal(retakenRangeEmpty.ids, undefined);
+			});
+
+			it("when there is one outstanding ranges with local IDs only", () => {
+				const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
+
+				generateCompressedIds(compressor, 1);
+				compressor.takeNextCreationRange();
+
+				let retakenRangeLocalOnly = compressor.takeUnfinalizedCreationRange();
+				assert.deepEqual(retakenRangeLocalOnly.ids, {
+					firstGenCount: 1,
+					count: 1,
+					localIdRanges: [[1, 1]],
+					requestedClusterSize: 2,
+				});
+
+				generateCompressedIds(compressor, 1);
+				retakenRangeLocalOnly = compressor.takeUnfinalizedCreationRange();
+				assert.deepEqual(retakenRangeLocalOnly.ids, {
+					firstGenCount: 1,
+					count: 2,
+					localIdRanges: [[1, 2]],
+					requestedClusterSize: 2,
+				});
+
+				let postRetakeRange = compressor.takeNextCreationRange();
+				// IDs should be undefined because retaking should still advance the taken ID counter
+				// if it doesn't, ranges will be resubmitted causing out of order errors
+				assert.equal(postRetakeRange.ids, undefined);
+				generateCompressedIds(compressor, 1);
+				postRetakeRange = compressor.takeNextCreationRange();
+				assert.deepEqual(postRetakeRange.ids, {
+					firstGenCount: 3,
+					count: 1,
+					localIdRanges: [[3, 1]],
+					requestedClusterSize: 2,
+				});
+
+				compressor.finalizeCreationRange(retakenRangeLocalOnly);
+			});
+
+			it("when there are multiple outstanding ranges", () => {
+				const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
+				generateCompressedIds(compressor, 1);
+				const range1 = compressor.takeNextCreationRange();
+				generateCompressedIds(compressor, 1); // one local
+				compressor.finalizeCreationRange(range1);
+				const range2 = compressor.takeNextCreationRange();
+				assert.deepEqual(range2.ids?.localIdRanges, [[2, 1]]);
+				generateCompressedIds(compressor, 1); // one eager final
+				const range3 = compressor.takeNextCreationRange();
+				assert.deepEqual(range3.ids?.localIdRanges, []);
+				generateCompressedIds(compressor, 1); // one local
+				const range4 = compressor.takeNextCreationRange();
+				assert.deepEqual(range4.ids?.localIdRanges, [[4, 1]]);
+
+				const retakenRange = compressor.takeUnfinalizedCreationRange();
+				assert.deepEqual(retakenRange.ids?.firstGenCount, 2);
+				assert.deepEqual(retakenRange.ids?.count, 3);
+				assert.deepEqual(retakenRange.ids?.localIdRanges, [
+					[2, 1],
+					[4, 1],
+				]);
+
+				compressor.finalizeCreationRange(retakenRange);
+				assert.throws(
+					() => compressor.finalizeCreationRange(range2),
+					(e: Error) => e.message === "Ranges finalized out of order",
+				);
+				assert.throws(
+					() => compressor.finalizeCreationRange(range3),
+					(e: Error) => e.message === "Ranges finalized out of order",
+				);
+				assert.throws(
+					() => compressor.finalizeCreationRange(range4),
+					(e: Error) => e.message === "Ranges finalized out of order",
+				);
+			});
+		});
 	});
 
 	describe("Finalizing", () => {
 		it("prevents attempts to finalize ranges twice", () => {
-			const rangeCompressor = CompressorFactory.createCompressor(Client.Client1);
-			generateCompressedIds(rangeCompressor, 3);
-			const batchRange = rangeCompressor.takeNextCreationRange();
-			rangeCompressor.finalizeCreationRange(batchRange);
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			generateCompressedIds(compressor, 3);
+			const batchRange = compressor.takeNextCreationRange();
+			compressor.finalizeCreationRange(batchRange);
 			assert.throws(
-				() => rangeCompressor.finalizeCreationRange(batchRange),
-				(e: Error) => e.message === "Ranges finalized out of order.",
+				() => compressor.finalizeCreationRange(batchRange),
+				(e: Error) =>
+					e.message === "Ranges finalized out of order" &&
+					(e as any).expectedStart === -4 &&
+					(e as any).actualStart === -1,
 			);
 		});
 
@@ -364,7 +483,10 @@ describe("IdCompressor", () => {
 			const secondRange = compressor.takeNextCreationRange();
 			assert.throws(
 				() => compressor.finalizeCreationRange(secondRange),
-				(e: Error) => e.message === "Ranges finalized out of order.",
+				(e: Error) =>
+					e.message === "Ranges finalized out of order" &&
+					(e as any).expectedStart === -1 &&
+					(e as any).actualStart === -2,
 			);
 		});
 
@@ -576,8 +698,7 @@ describe("IdCompressor", () => {
 			const normalized = compressor1.normalizeToOpSpace(compressor1.generateCompressedId());
 			assert.throws(
 				() => compressor2.normalizeToSessionSpace(normalized, compressor1.localSessionId),
-				(e: Error) =>
-					e.message === "No IDs have ever been finalized by the supplied session.",
+				(e: Error) => e.message === "No IDs have ever been finalized by the supplied session.",
 			);
 		});
 

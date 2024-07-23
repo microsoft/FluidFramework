@@ -134,7 +134,7 @@ export interface INack {
 
 /**
  * Document-specific message.
- * @public
+ * @alpha
  */
 export interface IDocumentMessage {
 	/**

@@ -2,17 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PropertyProxy, ProxifiedMapProperty } from "@fluid-experimental/property-proxy";
-import { SetProperty, ContainerProperty } from "@fluid-experimental/property-properties";
+
+import type { ContainerProperty, SetProperty } from "@fluid-experimental/property-properties";
+import { PropertyProxy, type ProxifiedMapProperty } from "@fluid-experimental/property-proxy";
 import * as React from "react";
-import { StringView, typeToViewMap } from "./PropertyViews";
-import { Utils } from "./typeUtils";
-import { IEditableValueCellProps } from "./InspectorTableTypes";
+
+import type { IEditableValueCellProps } from "./InspectorTableTypes.js";
+import { StringView, typeToViewMap } from "./PropertyViews/index.js";
+import { Utils } from "./typeUtils.js";
 
 function onInlineEditEnd(val: string | number | boolean, props: IEditableValueCellProps) {
 	const { rowData } = props;
 	// Convert to number if it is possible and the type is not an integer with 64 bits.
-	if (rowData.typeid !== "Uint64" && rowData.typeid !== "Int64" && rowData.typeid !== "String") {
+	if (
+		rowData.typeid !== "Uint64" &&
+		rowData.typeid !== "Int64" &&
+		rowData.typeid !== "String"
+	) {
 		val = !isNaN(+val) ? +val : val;
 	}
 

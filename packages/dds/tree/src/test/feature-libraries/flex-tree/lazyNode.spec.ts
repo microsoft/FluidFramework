@@ -7,7 +7,23 @@
 
 import { strict as assert, fail } from "assert";
 
-import { noopValidator } from "../../../codec/index.js";
+import {
+	type Anchor,
+	type AnchorNode,
+	EmptyKey,
+	type FieldAnchor,
+	type FieldKey,
+	type ITreeSubscriptionCursor,
+	type MapTree,
+	TreeNavigationResult,
+	rootFieldKey,
+} from "../../../core/index.js";
+import { SchemaBuilder, leaf as leafDomain } from "../../../domains/index.js";
+import { type Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
+import {
+	type PropertyNameFromFieldKey,
+	reservedObjectNodeFieldPropertyNamePrefixes,
+} from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
 import {
 	LazyFieldNode,
 	LazyLeaf,
@@ -19,45 +35,23 @@ import {
 } from "../../../feature-libraries/flex-tree/lazyNode.js";
 import {
 	Any,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexFieldKind,
-	FlexAllowedTypes,
-	typeNameSymbol,
-	FlexTreeNodeSchema,
-	createMockNodeKeyManager,
-	nodeKeyFieldKey,
-	DefaultEditBuilder,
 	DefaultChangeFamily,
-	DefaultChangeset,
+	type DefaultChangeset,
+	DefaultEditBuilder,
+	type FlexAllowedTypes,
+	type FlexFieldKind,
+	type FlexTreeField,
+	type FlexTreeNode,
+	type FlexTreeNodeSchema,
 	cursorForJsonableTreeNode,
+	typeNameSymbol,
 } from "../../../feature-libraries/index.js";
-import {
-	Anchor,
-	AnchorNode,
-	EmptyKey,
-	FieldAnchor,
-	FieldKey,
-	ITreeSubscriptionCursor,
-	MapTree,
-	TreeNavigationResult,
-	rootFieldKey,
-} from "../../../core/index.js";
+import type { TreeContent, ITreeCheckout } from "../../../shared-tree/index.js";
 import { brand, capitalize } from "../../../util/index.js";
-import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
-import { TreeContent } from "../../../shared-tree/index.js";
-import { leaf as leafDomain, SchemaBuilder } from "../../../domains/index.js";
-import {
-	forestWithContent,
-	flexTreeViewWithContent,
-	failCodec,
-	testRevisionTagCodec,
-} from "../../utils.js";
-import {
-	PropertyNameFromFieldKey,
-	reservedObjectNodeFieldPropertyNamePrefixes,
-} from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
+import { failCodecFamily, flexTreeViewWithContent, forestWithContent } from "../../utils.js";
+
 import { contextWithContentReadonly } from "./utils.js";
+import { MockNodeKeyManager } from "../../../feature-libraries/node-key/mockNodeKeyManager.js";
 
 function collectPropertyNames(obj: object): Set<string> {
 	if (obj == null) {
@@ -75,9 +69,12 @@ const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey
  * Creates a cursor from the provided `context` and moves it to the provided `anchor`.
  */
 function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscriptionCursor {
-	const cursor = context.forest.allocateCursor();
+	const cursor = context.checkout.forest.allocateCursor();
 
-	assert.equal(context.forest.tryMoveCursorToField(anchor, cursor), TreeNavigationResult.Ok);
+	assert.equal(
+		context.checkout.forest.tryMoveCursorToField(anchor, cursor),
+		TreeNavigationResult.Ok,
+	);
 	return cursor;
 }
 
@@ -113,8 +110,8 @@ function createAnchors(
 	context: Context,
 	cursor: ITreeSubscriptionCursor,
 ): { anchor: Anchor; anchorNode: AnchorNode } {
-	const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
-	const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+	const anchor = context.checkout.forest.anchors.track(cursor.getPath() ?? fail());
+	const anchorNode = context.checkout.forest.anchors.locate(anchor) ?? fail();
 
 	return { anchor, anchorNode };
 }
@@ -325,9 +322,7 @@ describe("LazyNode", () => {
 		});
 
 		const editBuilder = new DefaultEditBuilder(
-			new DefaultChangeFamily(testRevisionTagCodec, failCodec, {
-				jsonValidator: noopValidator,
-			}),
+			new DefaultChangeFamily(failCodecFamily),
 			(change: DefaultChangeset) => {
 				editCallCount++;
 			},
@@ -341,10 +336,8 @@ describe("LazyNode", () => {
 		});
 		const context = getTreeContext(
 			schema,
-			forest,
-			editBuilder,
-			createMockNodeKeyManager(),
-			brand(nodeKeyFieldKey),
+			{ forest, editor: editBuilder } as unknown as ITreeCheckout,
+			new MockNodeKeyManager(),
 		);
 
 		const cursor = initializeCursor(context, rootFieldAnchor);
@@ -425,9 +418,7 @@ describe("LazyNode", () => {
 		});
 
 		const editBuilder = new DefaultEditBuilder(
-			new DefaultChangeFamily(testRevisionTagCodec, failCodec, {
-				jsonValidator: noopValidator,
-			}),
+			new DefaultChangeFamily(failCodecFamily),
 			(change: DefaultChangeset) => {
 				editCallCount++;
 			},
@@ -440,10 +431,8 @@ describe("LazyNode", () => {
 		const forest = forestWithContent({ schema, initialTree });
 		const context = getTreeContext(
 			schema,
-			forest,
-			editBuilder,
-			createMockNodeKeyManager(),
-			brand(nodeKeyFieldKey),
+			{ forest, editor: editBuilder } as unknown as ITreeCheckout,
+			new MockNodeKeyManager(),
 		);
 
 		const cursor = initializeCursor(context, rootFieldAnchor);
@@ -455,7 +444,7 @@ describe("LazyNode", () => {
 
 		it("boxing", () => {
 			assert.equal(node.foo, node.boxedFoo.content);
-			assert(node.bar.isSameAs(node.boxedBar));
+			assert(node.bar === node.boxedBar);
 		});
 
 		it("value", () => {

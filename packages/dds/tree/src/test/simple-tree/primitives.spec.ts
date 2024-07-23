@@ -4,11 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
-	ImplicitFieldSchema,
-	InsertableTreeFieldFromImplicitField,
+	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
 	SchemaFactory,
 } from "../../simple-tree/index.js";
+
 import { hydrate, pretty } from "./utils.js";
 
 const schemaFactory = new SchemaFactory("Test");
@@ -57,7 +59,7 @@ describe("Primitives", () => {
 	 * @param value - The value to be coerced.
 	 * @returns The coerced value.
 	 */
-	function getCoercedValue(value: any): unknown {
+	function getCoercedValue(value: unknown): unknown {
 		const coercedValue = JSON.parse(JSON.stringify(value));
 
 		// Paranoid check that the given value is in fact coerced.

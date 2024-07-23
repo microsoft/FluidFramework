@@ -4,31 +4,49 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import * as api from "@fluidframework/driver-definitions";
-import { RateLimiter, NetworkErrorBasic, canRetryOnError } from "@fluidframework/driver-utils";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IClient } from "@fluidframework/driver-definitions";
+import {
+	IDocumentServiceEvents,
+	IDocumentServicePolicies,
+	IDocumentDeltaConnection,
+	IDocumentDeltaStorageService,
+	IDocumentService,
+	IDocumentStorageService,
+	IDocumentStorageServicePolicies,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
+import {
+	NetworkErrorBasic,
+	RateLimiter,
+	canRetryOnError,
+} from "@fluidframework/driver-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	wrapError,
+} from "@fluidframework/telemetry-utils/internal";
 import io from "socket.io-client";
-import { PerformanceEvent, wrapError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { RouterliciousErrorTypes } from "./errorUtils";
-import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
-import { DocumentStorageService } from "./documentStorageService";
-import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
-import { NullBlobStorageService } from "./nullBlobStorageService";
-import { ITokenProvider } from "./tokens";
+
+import { ICache } from "./cache.js";
+import { INormalizedWholeSnapshot } from "./contracts.js";
+import { ISnapshotTreeVersion } from "./definitions.js";
+import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService.js";
+import { R11sDocumentDeltaConnection } from "./documentDeltaConnection.js";
+import { DocumentStorageService } from "./documentStorageService.js";
+import { RouterliciousErrorTypes } from "./errorUtils.js";
+import { GitManager } from "./gitManager.js";
+import { Historian } from "./historian.js";
+import { NullBlobStorageService } from "./nullBlobStorageService.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { IRouterliciousDriverPolicies } from "./policies.js";
 import {
 	RouterliciousOrdererRestWrapper,
 	RouterliciousStorageRestWrapper,
 	TokenFetcher,
-} from "./restWrapper";
-import { IRouterliciousDriverPolicies } from "./policies";
-import { ICache } from "./cache";
-import { ISnapshotTreeVersion } from "./definitions";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { GitManager } from "./gitManager";
-import { Historian } from "./historian";
-import { RestWrapper } from "./restWrapperBase";
-import { INormalizedWholeSnapshot } from "./contracts";
+} from "./restWrapper.js";
+import { RestWrapper } from "./restWrapperBase.js";
+import { ITokenProvider } from "./tokens.js";
 
 /**
  * Amount of time between discoveries within which we don't need to rediscover on re-connect.
@@ -42,10 +60,10 @@ const RediscoverAfterTimeSinceDiscoveryMs = 5 * 60000; // 5 minute
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients.
  */
-// eslint-disable-next-line import/namespace
 export class DocumentService
-	extends TypedEventEmitter<api.IDocumentServiceEvents>
-	implements api.IDocumentService
+	extends TypedEventEmitter<IDocumentServiceEvents>
+	// eslint-disable-next-line import/namespace
+	implements IDocumentService
 {
 	private lastDiscoveredAt: number = Date.now();
 	private discoverP: Promise<void> | undefined;
@@ -53,12 +71,14 @@ export class DocumentService
 	private storageManager: GitManager | undefined;
 	private noCacheStorageManager: GitManager | undefined;
 
+	private _policies: IDocumentServicePolicies | undefined;
+
 	public get resolvedUrl() {
 		return this._resolvedUrl;
 	}
 
 	constructor(
-		private _resolvedUrl: api.IResolvedUrl,
+		private _resolvedUrl: IResolvedUrl,
 		protected ordererUrl: string,
 		private deltaStorageUrl: string,
 		private deltaStreamUrl: string,
@@ -68,12 +88,12 @@ export class DocumentService
 		protected tenantId: string,
 		protected documentId: string,
 		protected ordererRestWrapper: RouterliciousOrdererRestWrapper,
-		private readonly documentStorageServicePolicies: api.IDocumentStorageServicePolicies,
+		private readonly documentStorageServicePolicies: IDocumentStorageServicePolicies,
 		private readonly driverPolicies: IRouterliciousDriverPolicies,
 		private readonly blobCache: ICache<ArrayBufferLike>,
 		private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSnapshot>,
 		private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion>,
-		private readonly discoverFluidResolvedUrl: () => Promise<api.IResolvedUrl>,
+		private readonly discoverFluidResolvedUrl: () => Promise<IResolvedUrl>,
 		private storageRestWrapper: RouterliciousStorageRestWrapper,
 		private readonly storageTokenFetcher: TokenFetcher,
 		private readonly ordererTokenFetcher: TokenFetcher,
@@ -83,6 +103,10 @@ export class DocumentService
 
 	private documentStorageService: DocumentStorageService | undefined;
 
+	public get policies(): IDocumentServicePolicies | undefined {
+		return this._policies;
+	}
+
 	public dispose() {}
 
 	/**
@@ -90,7 +114,7 @@ export class DocumentService
 	 *
 	 * @returns returns the document storage service for routerlicious driver.
 	 */
-	public async connectToStorage(): Promise<api.IDocumentStorageService> {
+	public async connectToStorage(): Promise<IDocumentStorageService> {
 		if (this.documentStorageService !== undefined) {
 			return this.documentStorageService;
 		}
@@ -113,13 +137,13 @@ export class DocumentService
 					const rateLimiter = new RateLimiter(
 						this.driverPolicies.maxConcurrentStorageRequests,
 					);
-					this.storageRestWrapper = await RouterliciousStorageRestWrapper.load(
+					this.storageRestWrapper = RouterliciousStorageRestWrapper.load(
 						this.tenantId,
 						this.storageTokenFetcher,
 						this.logger,
 						rateLimiter,
 						this.driverPolicies.enableRestLess,
-						this.storageUrl,
+						this.storageUrl /* baseUrl */,
 					);
 				}
 				const historian = new Historian(true, false, this.storageRestWrapper);
@@ -153,7 +177,7 @@ export class DocumentService
 	 *
 	 * @returns returns the document delta storage service for routerlicious driver.
 	 */
-	public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
+	public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
 		await this.connectToStorage();
 		assert(!!this.documentStorageService, 0x0b1 /* "Storage service not initialized" */);
 
@@ -162,10 +186,8 @@ export class DocumentService
 
 			if (shouldUpdateDiscoveredSessionInfo) {
 				await this.refreshDiscovery();
-				const rateLimiter = new RateLimiter(
-					this.driverPolicies.maxConcurrentOrdererRequests,
-				);
-				this.ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+				const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
+				this.ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 					this.ordererTokenFetcher,
 					this.logger,
 					rateLimiter,
@@ -196,7 +218,7 @@ export class DocumentService
 	 *
 	 * @returns returns the document delta stream service for routerlicious driver.
 	 */
-	public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
+	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
 		const connect = async (refreshToken?: boolean) => {
 			let ordererToken = await this.ordererRestWrapper.getToken();
 			if (this.shouldUpdateDiscoveredSessionInfo()) {
@@ -264,6 +286,17 @@ export class DocumentService
 		// Retry with new token on authorization error; otherwise, allow container layer to handle.
 		try {
 			const connection = await connect();
+			// Enable single-commit summaries via driver policy based on the enable_single_commit_summary flag which maybe provided by the service during connection.
+			// summarizeProtocolTree flag is used by the loader layer to attach protocol tree along with the summary required in the single-commit summaries.
+			const shouldSummarizeProtocolTree = (connection as R11sDocumentDeltaConnection).details
+				?.supportedFeatures?.enable_single_commit_summary
+				? true
+				: false;
+			this._policies = {
+				...this._policies,
+				summarizeProtocolTree: shouldSummarizeProtocolTree,
+			};
+
 			return connection;
 		} catch (error: any) {
 			if (error?.statusCode === 401) {
@@ -294,10 +327,13 @@ export class DocumentService
 	private async refreshDiscoveryCore(): Promise<void> {
 		const fluidResolvedUrl = await this.discoverFluidResolvedUrl();
 		this._resolvedUrl = fluidResolvedUrl;
-		this.storageUrl = fluidResolvedUrl.endpoints.storageUrl;
-		this.ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
-		this.deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
-		this.deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl || this.ordererUrl;
+		// TODO why are we non null asserting here?
+		this.storageUrl = fluidResolvedUrl.endpoints.storageUrl!;
+		// TODO why are we non null asserting here?
+		this.ordererUrl = fluidResolvedUrl.endpoints.ordererUrl!;
+		// TODO why are we non null asserting here?
+		this.deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl!;
+		this.deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl ?? this.ordererUrl;
 	}
 
 	/**

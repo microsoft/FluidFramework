@@ -3,23 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { useTree } from "@fluid-experimental/tree-react-api";
 import * as React from "react";
-import { Tree } from "@fluidframework/tree";
+
 import { Inventory } from "../schema.js";
+
 import { Counter } from "./counter.js";
 
 export const MainView: React.FC<{ root: Inventory }> = ({ root: inventory }) => {
-	// Use a React effect hook to invalidate this component when the inventory changes.
-	// We do this by incrementing a counter, which is passed as a dependency to the effect hook.
-	const [invalidations, setInvalidations] = React.useState(0);
-
-	// React effect hook that increments the 'invalidation' counter whenever inventory or any of its children change.
-	React.useEffect(() => {
-		// Returns the cleanup function to be invoked when the component unmounts.
-		return Tree.on(inventory, "afterChange", () => {
-			setInvalidations((i) => i + 1);
-		});
-	}, [invalidations, inventory]);
+	useTree(inventory);
 
 	const counters: JSX.Element[] = [];
 
@@ -29,8 +21,8 @@ export const MainView: React.FC<{ root: Inventory }> = ({ root: inventory }) => 
 				key={part.name}
 				title={part.name}
 				count={part.quantity}
-				onDecrement={() => part.quantity--}
-				onIncrement={() => part.quantity++}
+				onDecrement={(): number => part.quantity--}
+				onIncrement={(): number => part.quantity++}
 			></Counter>,
 		);
 	}

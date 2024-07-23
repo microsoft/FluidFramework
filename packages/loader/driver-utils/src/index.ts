@@ -8,7 +8,11 @@ export { BlobTreeEntry, TreeTreeEntry, AttachmentTreeEntry } from "./blob.js";
 export { DocumentStorageServiceProxy } from "./documentStorageServiceProxy.js";
 export { UsageError } from "./error.js";
 export { InsecureUrlResolver } from "./insecureUrlResolver.js";
-export { canBeCoalescedByService, isRuntimeMessage, MessageType2 } from "./messageRecognition.js";
+export {
+	canBeCoalescedByService,
+	isRuntimeMessage,
+	MessageType2,
+} from "./messageRecognition.js";
 export {
 	AuthorizationError,
 	canRetryOnError,
@@ -54,4 +58,5 @@ export {
 	SummaryCompressionAlgorithm,
 	blobHeadersBlobName,
 } from "./adapters/index.js";
-export { isInstanceOfISnapshot } from "./storageUtils.js";
+export { getSnapshotTree, isInstanceOfISnapshot } from "./storageUtils.js";
+export { buildGitTreeHierarchy, getGitMode, getGitType } from "./protocol/index.js";

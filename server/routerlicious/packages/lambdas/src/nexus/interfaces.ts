@@ -3,9 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
-import { IClient, IConnected } from "@fluidframework/protocol-definitions";
-import { IRuntimeSignalEnvelope } from "../utils";
+import type { TypedEventEmitter } from "@fluidframework/common-utils";
+import type { IClient, IConnected } from "@fluidframework/protocol-definitions";
+import type {
+	IClientManager,
+	IClusterDrainingChecker,
+	ILogger,
+	IOrdererConnection,
+	IOrdererManager,
+	IRevokedTokenChecker,
+	ITenantManager,
+	IThrottleAndUsageStorageManager,
+	IThrottler,
+	IWebSocketTracker,
+} from "@fluidframework/server-services-core";
+import { IEvent } from "../events";
+import type { IRuntimeSignalEnvelope } from "../utils";
+import type { ExpirationTimer } from "./utils";
 
 /**
  * Connection details of a client.
@@ -29,6 +43,11 @@ export interface IConnectedClient {
 	 * Client protocol versions of standard semver types.
 	 */
 	connectVersions: string[];
+
+	/**
+	 * Connection disposal function to clean up resources and connections after client disconnects.
+	 */
+	dispose: () => void;
 }
 
 /**
@@ -75,4 +94,44 @@ export interface ICollaborationSessionEvents extends IEvent {
 		event: "broadcastSignal",
 		listener: (broadcastSignal: IBroadcastSignalEventPayload) => void,
 	): void;
+}
+
+export interface INexusLambdaSettings {
+	maxTokenLifetimeSec: number;
+	isTokenExpiryEnabled: boolean;
+	isClientConnectivityCountingEnabled: boolean;
+	maxNumberOfClientsPerDocument: number;
+	numberOfMessagesPerTrace: number;
+}
+
+export interface INexusLambdaDependencies {
+	ordererManager: IOrdererManager;
+	tenantManager: ITenantManager;
+	clientManager: IClientManager;
+	logger: ILogger;
+
+	throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager;
+	throttlers: {
+		connectionsPerTenant?: IThrottler;
+		connectionsPerCluster?: IThrottler;
+		submitOps?: IThrottler;
+		submitSignals?: IThrottler;
+	};
+
+	socketTracker?: IWebSocketTracker;
+	revokedTokenChecker?: IRevokedTokenChecker;
+	clusterDrainingChecker?: IClusterDrainingChecker;
+
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>;
+}
+
+export interface INexusLambdaConnectionStateTrackers {
+	expirationTimer: ExpirationTimer;
+	connectionsMap: Map<string, IOrdererConnection>;
+	connectionTimeMap: Map<string, number>;
+	scopeMap: Map<string, string[]>;
+	roomMap: Map<string, IRoom>;
+	disconnectedOrdererConnections: Set<string>;
+	disconnectedClients: Set<string>;
+	supportedFeaturesMap: Map<string, Record<string, unknown>>;
 }

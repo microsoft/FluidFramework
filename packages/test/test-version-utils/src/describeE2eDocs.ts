@@ -4,18 +4,26 @@
  */
 
 import fs from "fs";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	getUnexpectedLogErrorException,
 	ITestObjectProvider,
 	TestObjectProvider,
-} from "@fluidframework/test-utils";
-import { CompatKind, driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
-import { configList } from "./compatConfig.js";
+} from "@fluidframework/test-utils/internal";
+
 import { testBaseVersion } from "./baseVersion.js";
-import { ITestObjectProviderOptions } from "./describeCompat.js";
+import { configList } from "./compatConfig.js";
+import {
+	CompatKind,
+	driver,
+	odspEndpointName,
+	r11sEndpointName,
+	tenantIndex,
+} from "./compatOptions.js";
 import { getVersionedTestObjectProviderFromApis } from "./compatUtils.js";
+import { ITestObjectProviderOptions } from "./describeCompat.js";
 import {
 	getDataRuntimeApi,
 	getLoaderApi,
@@ -23,6 +31,7 @@ import {
 	getDriverApi,
 	CompatApis,
 } from "./testApi.js";
+import { getRequestedVersion } from "./versionUtils.js";
 
 /**
  * Types of documents to be used during the performance runs.
@@ -205,7 +214,9 @@ export function isDocumentMatrixInfo(info: DocumentTypeInfo): info is DocumentMa
 /**
  * @internal
  */
-export function isDocumentMatrixPlainInfo(info: DocumentTypeInfo): info is DocumentMatrixPlainInfo {
+export function isDocumentMatrixPlainInfo(
+	info: DocumentTypeInfo,
+): info is DocumentMatrixPlainInfo {
 	return (info as DocumentMatrixPlainInfo).rowSize !== undefined;
 }
 
@@ -304,7 +315,9 @@ function createE2EDocsDescribe(docTypes?: DescribeE2EDocInfo[]): DescribeE2EDocS
 	return d;
 }
 
-function createE2EDocsDescribeWithType(testType: BenchmarkTypeDescription): DescribeE2EDocSuite {
+function createE2EDocsDescribeWithType(
+	testType: BenchmarkTypeDescription,
+): DescribeE2EDocSuite {
 	const config = getE2EConfigFile();
 
 	const d: DescribeE2EDocSuite = (title, tests, docTypes) => {
@@ -341,18 +354,23 @@ function createE2EDocCompatSuite(
 					let provider: TestObjectProvider;
 					let resetAfterEach: boolean;
 					const dataRuntimeApi = getDataRuntimeApi(
-						testBaseVersion(config.dataRuntime),
-						config.dataRuntime,
+						getRequestedVersion(testBaseVersion(config.dataRuntime), config.dataRuntime),
 					);
 					const apis: CompatApis = {
 						containerRuntime: getContainerRuntimeApi(
-							testBaseVersion(config.containerRuntime),
-							config.containerRuntime,
+							getRequestedVersion(
+								testBaseVersion(config.containerRuntime),
+								config.containerRuntime,
+							),
 						),
 						dataRuntime: dataRuntimeApi,
 						dds: dataRuntimeApi.dds,
-						driver: getDriverApi(testBaseVersion(config.driver), config.driver),
-						loader: getLoaderApi(testBaseVersion(config.loader), config.loader),
+						driver: getDriverApi(
+							getRequestedVersion(testBaseVersion(config.driver), config.driver),
+						),
+						loader: getLoaderApi(
+							getRequestedVersion(testBaseVersion(config.loader), config.loader),
+						),
 					};
 
 					before(async function () {
@@ -361,7 +379,7 @@ function createE2EDocCompatSuite(
 								type: driver,
 								config: {
 									r11s: { r11sEndpointName },
-									odsp: { tenantIndex },
+									odsp: { tenantIndex, odspEndpointName },
 								},
 							});
 						} catch (error) {
@@ -385,9 +403,7 @@ function createE2EDocCompatSuite(
 						(options?: ITestObjectProviderOptions) => {
 							resetAfterEach = options?.resetAfterEach ?? true;
 							if (options?.syncSummarizer === true) {
-								provider.resetLoaderContainerTracker(
-									true /* syncSummarizerClients */,
-								);
+								provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
 							}
 							return provider;
 						},
@@ -401,7 +417,7 @@ function createE2EDocCompatSuite(
 						// then we don't need to check errors
 						// and fail the after each as well
 						if (this.currentTest?.state === "passed") {
-							const logErrors = getUnexpectedLogErrorException(provider.logger);
+							const logErrors = getUnexpectedLogErrorException(provider.tracker);
 							done(logErrors);
 						} else {
 							done();

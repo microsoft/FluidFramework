@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, IRequest } from "@fluidframework/core-interfaces";
+import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
-	DriverErrorTypes,
 	ILocationRedirectionError,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+	DriverErrorTypes,
+} from "@fluidframework/driver-definitions/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Checks if the error is location redirection error.
@@ -17,11 +17,14 @@ import { createChildLogger } from "@fluidframework/telemetry-utils";
  * @returns `true` is the error is location redirection error, otherwise `false`.
  * @internal
  */
-export function isLocationRedirectionError(error: any): error is ILocationRedirectionError {
+export function isLocationRedirectionError(
+	error: unknown,
+): error is ILocationRedirectionError {
 	return (
 		typeof error === "object" &&
 		error !== null &&
-		error.errorType === DriverErrorTypes.locationRedirection
+		(error as Partial<ILocationRedirectionError>).errorType ===
+			DriverErrorTypes.locationRedirection
 	);
 }
 
@@ -32,6 +35,7 @@ export function isLocationRedirectionError(error: any): error is ILocationRedire
  * @param urlResolver - resolver used to resolve the url.
  * @param logger - logger to send events.
  * @returns Response from the API call.
+ * @legacy
  * @alpha
  */
 export async function resolveWithLocationRedirectionHandling<T>(
@@ -45,7 +49,7 @@ export async function resolveWithLocationRedirectionHandling<T>(
 	for (;;) {
 		try {
 			return await api(req);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			if (!isLocationRedirectionError(error)) {
 				throw error;
 			}

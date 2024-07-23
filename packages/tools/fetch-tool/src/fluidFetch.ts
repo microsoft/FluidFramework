@@ -5,12 +5,14 @@
 
 import fs from "fs";
 import util from "util";
-import { isOdspHostname, IOdspDriveItem } from "@fluidframework/odsp-doclib-utils/internal";
-import { paramSaveDir, paramURL, parseArguments } from "./fluidFetchArgs";
-import { connectionInfo, fluidFetchInit } from "./fluidFetchInit";
-import { fluidFetchMessages } from "./fluidFetchMessages";
-import { getSharepointFiles, getSingleSharePointFile } from "./fluidFetchSharePoint";
-import { fluidFetchSnapshot } from "./fluidFetchSnapshot";
+
+import { IOdspDriveItem, isOdspHostname } from "@fluidframework/odsp-doclib-utils/internal";
+
+import { paramSaveDir, paramURL, parseArguments } from "./fluidFetchArgs.js";
+import { connectionInfo, fluidFetchInit } from "./fluidFetchInit.js";
+import { fluidFetchMessages } from "./fluidFetchMessages.js";
+import { getSharepointFiles, getSingleSharePointFile } from "./fluidFetchSharePoint.js";
+import { fluidFetchSnapshot } from "./fluidFetchSnapshot.js";
 
 async function fluidFetchOneFile(urlStr: string, name?: string) {
 	const documentService = await fluidFetchInit(urlStr);
@@ -39,10 +41,15 @@ async function fluidFetchOneFile(urlStr: string, name?: string) {
 async function tryFluidFetchOneSharePointFile(server: string, driveItem: IOdspDriveItem) {
 	const { path, name, driveId, itemId } = driveItem;
 	console.log(`File: ${path}/${name}`);
-	await fluidFetchOneFile(`https://${server}/_api/v2.1/drives/${driveId}/items/${itemId}`, name);
+	await fluidFetchOneFile(
+		`https://${server}/_api/v2.1/drives/${driveId}/items/${itemId}`,
+		name,
+	);
 }
 
-function getSharePointSpecificDriveItem(url: URL): { driveId: string; itemId: string } | undefined {
+function getSharePointSpecificDriveItem(
+	url: URL,
+): { driveId: string; itemId: string } | undefined {
 	if (url.searchParams.has("driveId") && url.searchParams.has("itemId")) {
 		return {
 			driveId: url.searchParams.get("driveId") as string,
@@ -122,9 +129,7 @@ fluidFetchMain()
 			}
 			console.error(`ERROR: ${error.stack}${extraMsg}`);
 		} else if (typeof error === "object") {
-			console.error(
-				`ERROR: Unknown exception object\n${JSON.stringify(error, undefined, 2)}`,
-			);
+			console.error(`ERROR: Unknown exception object\n${JSON.stringify(error, undefined, 2)}`);
 		} else {
 			console.error(`ERROR: ${error}`);
 		}

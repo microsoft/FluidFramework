@@ -4,4 +4,8 @@
  */
 
 export { Versioned } from "./format.js";
-export { makeVersionedCodec, makeVersionedValidatedCodec } from "./codec.js";
+export {
+	makeVersionedCodec,
+	makeVersionedValidatedCodec,
+	makeVersionDispatchingCodec,
+} from "./codec.js";

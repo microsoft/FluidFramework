@@ -4,24 +4,25 @@
  */
 
 import { strict as assert } from "assert";
+
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import {
 	IContainer,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IFluidPackage,
 	isFluidPackage,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import {
-	createAndAttachContainer,
-	createDocumentId,
-	getContainerEntryPointBackCompat,
 	ITestFluidObject,
 	ITestObjectProvider,
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
-} from "@fluidframework/test-utils";
-import type { ISharedMap } from "@fluidframework/map";
-import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+	createAndAttachContainer,
+	createDocumentId,
+	getContainerEntryPointBackCompat,
+} from "@fluidframework/test-utils/internal";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
 	version: number;
@@ -178,11 +179,7 @@ describeCompat("CodeProposal.EndToEnd", "NoCompat", (getTestObjectProvider, apis
 		assert.strictEqual(res[0], true, "Code proposal should be accepted");
 
 		for (let i = 0; i < containers.length; i++) {
-			assert.strictEqual(
-				containers[i].closed,
-				false,
-				`containers[${i}] should not be closed`,
-			);
+			assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
 			assert.deepStrictEqual(
 				containers[i].getLoadedCodeDetails?.(),
 				{ package: packageV1 },
@@ -195,8 +192,7 @@ describeCompat("CodeProposal.EndToEnd", "NoCompat", (getTestObjectProvider, apis
 		const maps: ISharedMap[] = [];
 		for (const container of containers) {
 			if (!container.closed) {
-				const dataObject =
-					await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+				const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 				const map = await dataObject.getSharedObject<ISharedMap>("map");
 				const key = createDocumentId();
 				map.set(key, key);

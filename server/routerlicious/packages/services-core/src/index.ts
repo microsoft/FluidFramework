@@ -151,7 +151,12 @@ export {
 	ThrottlingError,
 } from "./throttler";
 export { TokenGenerator } from "./token";
-export { clientConnectivityStorageId, IUsageData, signalUsageStorageId } from "./usageData";
+export {
+	clientConnectivityStorageId,
+	IUsageData,
+	signalUsageStorageId,
+	httpUsageStorageId,
+} from "./usageData";
 export { IZookeeperClient, ZookeeperClientConstructor } from "./zookeeper";
 export {
 	ITokenRevocationManager,

@@ -4,25 +4,32 @@
  */
 
 import { strict as assert } from "assert";
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
+
+import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+
 import {
-	uniformChunk,
+	EmptyKey,
+	type ITreeCursorSynchronous,
+	type TreeNodeSchemaIdentifier,
+} from "../../../core/index.js";
+import { cursorToJsonObject, singleJsonCursor } from "../../../domains/index.js";
+import {
+	type ChunkShape,
 	TreeShape,
-	ChunkShape,
+	uniformChunk,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
-import { mapSchema, testSpecializedFieldCursor } from "../../cursorTestSuite.js";
-import { cursorToJsonObject, singleJsonCursor } from "../../../domains/index.js";
-import { EmptyKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { sum } from "../../domains/json/benchmarks.js";
 import {
+	type TreeChunk,
+	cursorForJsonableTreeNode,
+	cursorForMapTreeNode,
 	jsonableTreeFromCursor,
 	mapTreeFromCursor,
-	cursorForMapTreeNode,
-	cursorForJsonableTreeNode,
-	TreeChunk,
 } from "../../../feature-libraries/index.js";
+import { mapSchema, testSpecializedFieldCursor } from "../../cursorTestSuite.js";
+// eslint-disable-next-line import/no-internal-modules
+import { sum } from "../../domains/json/benchmarks.js";
+
 import { emptyShape, polygonTree, testData, xField, yField } from "./uniformChunkTestData.js";
 
 // Validate a few aspects of shapes that are easier to verify here than via checking the cursor.

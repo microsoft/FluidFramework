@@ -5,27 +5,38 @@
 
 import { strict } from "assert";
 import fs from "fs";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ILoaderOptions, Loader } from "@fluidframework/container-loader";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { IFileSnapshot } from "@fluidframework/replay-driver";
-import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "@fluidframework/tool-utils";
-import stringify from "json-stable-stringify";
+
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ILoaderOptions, Loader } from "@fluidframework/container-loader/internal";
+import {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	FluidObject,
 	IConfigProviderBase,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
-	excludeChannelContentDdsFactories,
+	IDocumentServiceFactory,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
+import { IFileSnapshot } from "@fluidframework/replay-driver/internal";
+import {
+	ISnapshotNormalizerConfig,
+	getNormalizedSnapshot,
+} from "@fluidframework/tool-utils/internal";
+import stringify from "json-stable-stringify";
+
+import {
 	ReplayDataStoreFactory,
 	ReplayRuntimeFactory,
-} from "./replayFluidFactories";
-import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
-import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
+	excludeChannelContentDdsFactories,
+} from "./replayFluidFactories.js";
+import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject.js";
+import { mixinDataStoreWithAnyChannel } from "./unknownChannel.js";
 
 export interface ReplayToolContainerEntryPoint {
 	readonly containerRuntime: ContainerRuntime;
@@ -63,7 +74,10 @@ export function compareWithReferenceSnapshot(
 	errorHandler: (description: string, error?: any) => void,
 ) {
 	// Read the reference snapshot and covert it to normalized IFileSnapshot.
-	const referenceSnapshotString = fs.readFileSync(`${referenceSnapshotFilename}.json`, "utf-8");
+	const referenceSnapshotString = fs.readFileSync(
+		`${referenceSnapshotFilename}.json`,
+		"utf-8",
+	);
 	const referenceSnapshot = JSON.parse(referenceSnapshotString);
 
 	/**
@@ -200,12 +214,12 @@ export async function loadContainer(
  * @internal
  */
 export async function uploadSummary(container: IContainer) {
-	const entryPoint: FluidObject<ReplayToolContainerEntryPoint> = await container.getEntryPoint();
+	const entryPoint: FluidObject<ReplayToolContainerEntryPoint> =
+		await container.getEntryPoint();
 	const runtime = entryPoint?.ReplayToolContainerEntryPoint?.containerRuntime;
 	assert(runtime !== undefined, 0x5a7 /* ContainerRuntime entryPoint was not initialized */);
 	const summaryResult = await runtime.summarize({
 		fullTree: true,
-		trackState: false,
 		fullGC: true,
 	});
 	return runtime.storage.uploadSummaryWithContext(summaryResult.summary, {

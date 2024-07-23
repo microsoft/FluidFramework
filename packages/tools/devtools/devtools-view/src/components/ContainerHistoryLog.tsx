@@ -2,30 +2,32 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import React from "react";
+
 import {
-	tokens,
+	Table,
 	TableBody,
 	TableCell,
-	TableRow,
-	Table,
 	TableHeader,
 	TableHeaderCell,
+	TableRow,
+	tokens,
 } from "@fluentui/react-components";
 import {
-	Clock12Regular,
-	PlugConnected20Regular,
 	AlertBadgeRegular,
-	PlugDisconnected20Regular,
-	ErrorCircle20Regular,
-	Warning20Regular,
 	Attach20Regular,
+	Clock12Regular,
+	ErrorCircle20Regular,
 	LockClosed20Filled,
+	PlugConnected20Regular,
+	PlugDisconnected20Regular,
+	Warning20Regular,
 } from "@fluentui/react-icons";
-import { type ConnectionStateChangeLogEntry } from "@fluidframework/devtools-core";
+import type { ConnectionStateChangeLogEntry } from "@fluidframework/devtools-core/internal";
+import React from "react";
 
-import { ThemeContext, ThemeOption } from "../ThemeHelper";
-import { LabelCellLayout } from "./utility-components";
+import { ThemeContext, ThemeOption } from "../ThemeHelper.js";
+
+import { LabelCellLayout } from "./utility-components/index.js";
 
 /**
  * Returns the text color based on the current color theme of the devtools.
@@ -96,7 +98,7 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 			}
 			case "disconnected": {
 				// orange
-				return tokens.colorPaletteDarkOrangeBorderActive;
+				return tokens.colorPaletteDarkOrangeBorder1;
 			}
 			case "disposed": {
 				// dark red
@@ -118,14 +120,10 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 					{containerHistoryColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
 							{column.columnKey === "state" && (
-								<LabelCellLayout icon={<AlertBadgeRegular />}>
-									{column.label}
-								</LabelCellLayout>
+								<LabelCellLayout icon={<AlertBadgeRegular />}>{column.label}</LabelCellLayout>
 							)}
 							{column.columnKey === "time" && (
-								<LabelCellLayout icon={<Clock12Regular />}>
-									{column.label}
-								</LabelCellLayout>
+								<LabelCellLayout icon={<Clock12Regular />}>{column.label}</LabelCellLayout>
 							)}
 						</TableHeaderCell>
 					))}
@@ -172,9 +170,7 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 								backgroundColor: getBackgroundColorForState(item.newState),
 							}}
 						>
-							<TableCell
-								style={{ color: setThemeStyle(themeInfo.name, item.newState) }}
-							>
+							<TableCell style={{ color: setThemeStyle(themeInfo.name, item.newState) }}>
 								<LabelCellLayout icon={getStateIcon(item.newState)}>
 									<span
 										style={{
@@ -185,9 +181,7 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 									</span>
 								</LabelCellLayout>
 							</TableCell>
-							<TableCell
-								style={{ color: setThemeStyle(themeInfo.name, item.newState) }}
-							>
+							<TableCell style={{ color: setThemeStyle(themeInfo.name, item.newState) }}>
 								{timestampDisplay}
 							</TableCell>
 						</TableRow>

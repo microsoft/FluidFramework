@@ -8,6 +8,8 @@ Test class property
 readonly testClassProperty: TTypeParameterB;
 ```
 
+**Type:** TTypeParameterB
+
 ### Remarks {#testclassproperty-remarks}
 
 Here are some remarks about the property

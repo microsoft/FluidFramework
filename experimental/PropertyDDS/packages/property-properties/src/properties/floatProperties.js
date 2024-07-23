@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Definition of the Float*Property classes
  */
 
-const { ValueProperty } = require("./valueProperty");
 const { _castFunctors } = require("./primitiveTypeCasts");
+const { ValueProperty } = require("./valueProperty");
 
 /**
  * A primitive property for a 32 bit floating point value.

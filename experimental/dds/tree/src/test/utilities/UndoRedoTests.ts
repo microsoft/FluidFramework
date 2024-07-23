@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
+import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
-import { noop } from '../../Common.js';
-import { DetachedSequenceId, EditId, NodeId } from '../../Identifiers.js';
-import { TreeNodeHandle } from '../../TreeNodeHandle.js';
-import { SharedTree } from '../../SharedTree.js';
+
 import { Change, StablePlace, StableRange } from '../../ChangeTypes.js';
+import { noop } from '../../Common.js';
 import { deepCompareNodes } from '../../EditUtilities.js';
+import { DetachedSequenceId, EditId, NodeId } from '../../Identifiers.js';
+import { SharedTree } from '../../SharedTree.js';
+import { TreeNodeHandle } from '../../TreeNodeHandle.js';
 import { NodeData } from '../../persisted-types/index.js';
+
 import { expectDefined } from './TestCommon.js';
-import { buildLeaf, TestTree } from './TestNode.js';
+import { TestTree, buildLeaf } from './TestNode.js';
 import { setUpTestSharedTree, setUpTestTree, translateId } from './TestUtilities.js';
 
 /** Options used to generate a SharedTree undo/redo test suite. */
@@ -164,9 +166,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 						];
 						const places = leftTraitPlaces(testTree, leftTraitNodes);
 
-						sharedTree.applyEdit(
-							...Change.insertTree(leftTraitNodes[0], StablePlace.before(testTree.left))
-						);
+						sharedTree.applyEdit(...Change.insertTree(leftTraitNodes[0], StablePlace.before(testTree.left)));
 						afterEdit();
 						sharedTree.applyEdit(...Change.insertTree(leftTraitNodes[2], StablePlace.after(testTree.left)));
 						afterEdit();
@@ -181,9 +181,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 						afterEdit();
 
 						expect(sharedTree.edits.length).to.equal(4);
-						expect(sharedTree.currentView.getTrait(testTree.left.traitLocation).length).to.equal(
-							3 - countDetached
-						);
+						expect(sharedTree.currentView.getTrait(testTree.left.traitLocation).length).to.equal(3 - countDetached);
 
 						if (!localMode) {
 							containerRuntimeFactory.processAllMessages();
@@ -207,9 +205,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 						}
 
 						expect(sharedTree.edits.length).to.equal(6);
-						expect(sharedTree.currentView.getTrait(testTree.left.traitLocation).length).to.equal(
-							3 - countDetached
-						);
+						expect(sharedTree.currentView.getTrait(testTree.left.traitLocation).length).to.equal(3 - countDetached);
 					});
 				}
 			}

@@ -2,20 +2,26 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/core-utils";
-import { IContainer, IDeltaQueue, IHostLoader } from "@fluidframework/container-definitions";
-import { ConnectionState } from "@fluidframework/container-loader";
-import { canBeCoalescedByService } from "@fluidframework/driver-utils";
+
 import {
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
+	IDeltaQueue,
+	IContainer,
+	IHostLoader,
+} from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
 import {
 	IContainerCreateProps,
 	IContainerLoadProps,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-loader/test/container";
+} from "@fluidframework/container-loader/internal/test/container";
+import { assert } from "@fluidframework/core-utils/internal";
+import {
+	IDocumentMessage,
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
+
 import { waitForContainerConnection } from "./containerUtils.js";
 import { debug } from "./debug.js";
 import { IOpProcessingController } from "./testObjectProvider.js";
@@ -42,6 +48,7 @@ interface ContainerRecord {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export class LoaderContainerTracker implements IOpProcessingController {
@@ -306,10 +313,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 			const quorum = container.getQuorum();
 			quorum.getMembers().forEach((client, clientId) => {
 				// ignore summarizer
-				if (
-					!client.client.details.capabilities.interactive &&
-					!this.syncSummarizerClients
-				) {
+				if (!client.client.details.capabilities.interactive && !this.syncSummarizerClients) {
 					return;
 				}
 				if (!openedClientId.includes(clientId)) {
@@ -433,9 +437,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const index = this.containers.get(container)!.index;
 					debugWait(
-						`${index}: Waiting for pending clients ${Array.from(
-							pendingClientId.keys(),
-						)}`,
+						`${index}: Waiting for pending clients ${Array.from(pendingClientId.keys())}`,
 					);
 					unconnectedClients.forEach((c) => c.on("connected", handler));
 					container.getQuorum().on("removeMember", handler);
@@ -546,7 +548,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 				const maybeContainer = container as Partial<IContainer>;
 				const codeProposal = maybeContainer.getLoadedCodeDetails
 					? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					  container.getLoadedCodeDetails()!
+						container.getLoadedCodeDetails()!
 					: (container as any).chaincodePackage;
 
 				proposalP = container.proposeCodeDetails(codeProposal);
@@ -742,9 +744,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 							: "        ";
 					debugOp(
 						`${index}: ${type}: seq: ${msg.sequenceNumber.toString().padStart(3)} ` +
-							`${clientSeq} min: ${msg.minimumSequenceNumber
-								.toString()
-								.padStart(3)} ` +
+							`${clientSeq} min: ${msg.minimumSequenceNumber.toString().padStart(3)} ` +
 							`${msg.type} ${getContentsString(msg.type, msg.contents)}`,
 					);
 				};

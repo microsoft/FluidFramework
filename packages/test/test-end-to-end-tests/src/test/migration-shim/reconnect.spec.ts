@@ -4,12 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	type BuildNode,
 	Change,
+	SharedTree as LegacySharedTree,
 	type MigrationShim,
 	MigrationShimFactory,
-	SharedTree as LegacySharedTree,
 	type SharedTreeShim,
 	SharedTreeShimFactory,
 	StablePlace,
@@ -17,30 +18,20 @@ import {
 } from "@fluid-experimental/tree";
 // eslint-disable-next-line import/no-internal-modules
 import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
-import {
-	SharedTree,
-	disposeSymbol,
-	SchemaFactory,
-	TreeConfiguration,
-	ITree,
-} from "@fluidframework/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { LoaderHeader } from "@fluidframework/container-definitions";
-import { type IContainerExperimental } from "@fluidframework/container-loader";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { type IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type ConfigTypes, type IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
+	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
-	type ITestObjectProvider,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
+import { ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -64,70 +55,17 @@ function getQuantity(tree: LegacySharedTree): number {
 	return legacyNode.payload.quantity as number;
 }
 
-// A Test Data Object that exposes some basic functionality.
-class TestDataObject extends DataObject {
-	private channel?: IChannel;
-
-	public get _root() {
-		return this.root;
-	}
-
-	// The object starts with a LegacySharedTree
-	public async initializingFirstTime(props?: unknown): Promise<void> {
-		const legacyTree = this.runtime.createChannel(
-			"tree",
-			LegacySharedTree.getFactory().type,
-		) as LegacySharedTree;
-
-		const inventoryNode: BuildNode = {
-			definition: legacyNodeId,
-			traits: {
-				quantity: {
-					definition: "quantity",
-					payload: 0,
-				},
-			},
-		};
-		legacyTree.applyEdit(
-			Change.insertTree(
-				inventoryNode,
-				StablePlace.atStartOf({
-					parent: legacyTree.currentView.root,
-					label: "inventory" as TraitLabel,
-				}),
-			),
-		);
-
-		this.root.set("tree", legacyTree.handle);
-		this.channel = legacyTree;
-	}
-
-	// Makes it so we can get the tree stored as "tree"
-	public async hasInitialized(): Promise<void> {
-		// We are using runtime.getChannel here instead of fetching the handle
-		// TODO: handle tests
-		const tree = await this.runtime.getChannel("tree");
-		this.channel = tree;
-	}
-
-	// Allows us to get the SharedObject with whatever type we want
-	public getTree<T>(): T {
-		assert(this.channel !== undefined, "Channel should be defined");
-		return this.channel as T;
-	}
-}
-
 const builder = new SchemaFactory("test");
 // For now this is the schema of the view.root
 class QuantityType extends builder.object("quantityObj", {
 	quantity: builder.number,
 }) {}
+const treeConfig = new TreeViewConfiguration({ schema: QuantityType });
 
-function getNewTreeView(tree: ITree) {
-	return tree.schematize(new TreeConfiguration(QuantityType, () => ({ quantity: 0 })));
-}
+describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
-describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -135,8 +73,61 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 				state: "disabled",
 			},
 		},
-		enableRuntimeIdCompressor: true,
+		enableRuntimeIdCompressor: "on",
 	};
+
+	// A Test Data Object that exposes some basic functionality.
+	class TestDataObject extends DataObject {
+		private channel?: IChannel;
+
+		public get _root() {
+			return this.root;
+		}
+
+		// The object starts with a LegacySharedTree
+		public async initializingFirstTime(props?: unknown): Promise<void> {
+			const legacyTree = this.runtime.createChannel(
+				"tree",
+				LegacySharedTree.getFactory().type,
+			) as LegacySharedTree;
+
+			const inventoryNode: BuildNode = {
+				definition: legacyNodeId,
+				traits: {
+					quantity: {
+						definition: "quantity",
+						payload: 0,
+					},
+				},
+			};
+			legacyTree.applyEdit(
+				Change.insertTree(
+					inventoryNode,
+					StablePlace.atStartOf({
+						parent: legacyTree.currentView.root,
+						label: "inventory" as TraitLabel,
+					}),
+				),
+			);
+
+			this.root.set("tree", legacyTree.handle);
+			this.channel = legacyTree;
+		}
+
+		// Makes it so we can get the tree stored as "tree"
+		public async hasInitialized(): Promise<void> {
+			// We are using runtime.getChannel here instead of fetching the handle
+			// TODO: handle tests
+			const tree = await this.runtime.getChannel("tree");
+			this.channel = tree;
+		}
+
+		// Allows us to get the SharedObject with whatever type we want
+		public getTree<T>(): T {
+			assert(this.channel !== undefined, "Channel should be defined");
+			return this.channel as T;
+		}
+	}
 
 	// V1 of the registry -----------------------------------------
 	// V1 of the code: Registry setup to create the old document
@@ -173,13 +164,9 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 			}
 			// migrate data
 			const quantity = getQuantity(legacyTree);
-			newTree
-				.schematize(
-					new TreeConfiguration(QuantityType, () => ({
-						quantity,
-					})),
-				)
-				[disposeSymbol]();
+			const view = newTree.viewWith(treeConfig);
+			view.initialize({ quantity });
+			view.dispose();
 		},
 	);
 
@@ -248,11 +235,11 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		assert(getQuantity(legacyTree1) === 123, "expected quantity updates to have been dropped");
 
 		const newTree1 = shim1.currentTree as ITree;
-		const view1 = getNewTreeView(newTree1);
+		const view1 = newTree1.viewWith(treeConfig);
 		const node1 = view1.root;
 
 		const newTree2 = shim2.currentTree as ITree;
-		const view2 = getNewTreeView(newTree2);
+		const view2 = newTree2.viewWith(treeConfig);
 		const node2 = view2.root;
 
 		container1.disconnect();
@@ -277,7 +264,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
 		const shim3 = testObj3.getTree<SharedTreeShim>();
 		const newTree3 = shim3.currentTree;
-		const view3 = getNewTreeView(newTree3);
+		const view3 = newTree3.viewWith(treeConfig);
 		const node3 = view3.root;
 		node3.quantity = 431;
 		await provider.ensureSynchronized();
@@ -339,7 +326,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		shim1.submitMigrateOp();
 		await provider.ensureSynchronized();
 		const newTree1 = shim1.currentTree as ITree;
-		const node1 = getNewTreeView(newTree1).root;
+		const node1 = newTree1.viewWith(treeConfig).root;
 
 		// generate stashed ops
 		await provider.opProcessingController.pauseProcessing(container1);
@@ -358,7 +345,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<MigrationShim>();
 		const newTree2 = shim2.currentTree as ITree;
-		const node2 = getNewTreeView(newTree2).root;
+		const node2 = newTree2.viewWith(treeConfig).root;
 		assert(node2.quantity === 5, "expected quantity updates to have been applied");
 	});
 
@@ -377,7 +364,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		shim1.submitMigrateOp();
 		await provider.ensureSynchronized();
 		const newTree1 = shim1.currentTree as ITree;
-		const view1 = getNewTreeView(newTree1);
+		const view1 = newTree1.viewWith(treeConfig);
 		const node1 = view1.root;
 
 		// summarize migration
@@ -400,7 +387,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<SharedTreeShim>();
 		const newTree2 = shim2.currentTree;
-		const view2 = getNewTreeView(newTree2);
+		const view2 = newTree2.viewWith(treeConfig);
 		const node2 = view2.root;
 
 		// generate stashed ops
@@ -420,7 +407,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
 		const shim3 = testObj3.getTree<SharedTreeShim>();
 		const newTree3 = shim3.currentTree;
-		const node3 = getNewTreeView(newTree3).root;
+		const node3 = newTree3.viewWith(treeConfig).root;
 		assert(node3.quantity === 5, "expected quantity updates to have been applied");
 		assert(node1.quantity === 5, "expected quantity updates to have been synced");
 	});
@@ -471,7 +458,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		const testObj4 = (await container4.getEntryPoint()) as TestDataObject;
 		const shim4 = testObj4.getTree<SharedTreeShim>();
 		const newTree4 = shim4.currentTree;
-		const view4 = getNewTreeView(newTree4);
+		const view4 = newTree4.viewWith(treeConfig);
 		const node4 = view4.root;
 
 		// Load a new container and apply stashed ops
@@ -483,7 +470,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
 		const shim3 = testObj3.getTree<MigrationShim>();
 		const tree3 = shim3.currentTree as ITree;
-		const view3 = getNewTreeView(tree3);
+		const view3 = tree3.viewWith(treeConfig);
 		const node3 = view3.root;
 		assert(node3.quantity === 123, "expected quantity updates to have been dropped");
 		assert(
@@ -537,7 +524,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 			"Should not have migrated to new tree",
 		);
 		const tree3 = shim3.currentTree as ITree;
-		const node3 = getNewTreeView(tree3).root;
+		const node3 = tree3.viewWith(treeConfig).root;
 		assert(node3.quantity === 5, "expected migration to have been applied");
 	});
 });

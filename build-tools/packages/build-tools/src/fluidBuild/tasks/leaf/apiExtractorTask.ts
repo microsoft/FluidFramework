@@ -2,16 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { getInstalledPackageVersion } from "../../../common/taskUtils";
+
+import {
+	getApiExtractorConfigFilePath,
+	getInstalledPackageVersion,
+} from "../../../common/taskUtils";
 import { TscDependentTask } from "./tscTask";
 
 export class ApiExtractorTask extends TscDependentTask {
 	protected get configFileFullPaths() {
-		return [
-			this.getPackageFileFullPath("api-extractor.json"),
-			this.getPackageFileFullPath("api-extractor-esm.json"),
-			this.getPackageFileFullPath("api-extractor-lint.json"),
-		];
+		// TODO: read all configs used by command via api-extractor simple extension pattern
+		return [this.getPackageFileFullPath(getApiExtractorConfigFilePath(this.command))];
 	}
 
 	protected async getToolVersion() {

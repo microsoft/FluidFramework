@@ -12,7 +12,7 @@ module.exports = {
 		"prettier",
 	],
 	parserOptions: {
-		project: ["./tsconfig.json"],
+		project: ["./tsconfig.esm.json", "./src/test/tsconfig.esm.json"],
 	},
 	rules: {
 		// Disabled because they disagrees with React common patterns / best practices.
@@ -28,40 +28,36 @@ module.exports = {
 		 */
 		"unicorn/no-useless-undefined": "off",
 
-		"import/no-internal-modules": [
-			"error",
-			{
-				allow: [
-					// Allow use of unstable API
-					"@fluentui/react-components/unstable",
-				],
-			},
-		],
-
 		// Forbid new imports from legacy FluentUI react package.
 		// We have a couple of components that still use it, but new usages should not be added without due consideration.
 		"no-restricted-imports": ["error", "@fluentui/react"],
+
+		// Allow unassigned imports for testing-library/jest-dom
+		"import/no-unassigned-import": [
+			"error",
+			{
+				allow: ["@testing-library/jest-dom"],
+			},
+		],
 	},
 	overrides: [
 		{
-			// Overrides for test files
-			files: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/test/**"],
+			// Overrides for jest test files
+			files: ["src/test/**"],
 			plugins: ["jest"],
 			extends: ["plugin:jest/recommended"],
 			rules: {
 				"import/no-nodejs-modules": "off",
 				"unicorn/prefer-module": "off",
+				"import/no-internal-modules": "off",
 			},
-
+		},
+		{
 			// Overrides for screenshot tests
-			files: ["src/screenshot-tests/**"],
+			files: ["src/test/screenshot/**"],
 			rules: {
 				// Default exports are used by "Storybook" modules to describe test scenarios
 				"import/no-default-export": "off",
-
-				// previewjs doesn't handle imports from roll-up modules well.
-				// Screenshot tests import components directly from their source module.
-				"import/no-internal-modules": "off",
 
 				// Fine for tests
 				"import/no-nodejs-modules": "off",

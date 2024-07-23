@@ -2,26 +2,27 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* globals expect, should  */
 import { DataBinder } from "../data_binder/dataBinder";
 
 import { catchConsoleErrors } from "./catchConsoleError";
 
 import {
-	registerTestTemplates,
+	ArrayContainerTemplate,
 	ChildTemplate,
+	MapContainerTemplate,
 	PrimitiveChildrenTemplate,
 	ReferenceParentTemplate,
-	ArrayContainerTemplate,
-	MapContainerTemplate,
 	SetContainerTemplate,
+	registerTestTemplates,
 } from "./testTemplates";
 
 import * as _ from "underscore";
 
-import { PropertyElement } from "../internal/propertyElement";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
-import { RESOLVE_NEVER, RESOLVE_NO_LEAFS, RESOLVE_ALWAYS } from "../internal/constants";
+import { RESOLVE_ALWAYS, RESOLVE_NEVER, RESOLVE_NO_LEAFS } from "../internal/constants";
+import { PropertyElement } from "../internal/propertyElement";
 import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
 
 describe("Property element", function () {
@@ -72,9 +73,9 @@ describe("Property element", function () {
 			expect(refParentElem.getProperty().getId()).toEqual("refParent");
 
 			const directToRef = ["single_ref"];
-			expect(
-				refParentElem.getChild(directToRef, RESOLVE_NEVER).getProperty().getId(),
-			).toEqual("single_ref");
+			expect(refParentElem.getChild(directToRef, RESOLVE_NEVER).getProperty().getId()).toEqual(
+				"single_ref",
+			);
 			expect(
 				refParentElem.getChild(directToRef, RESOLVE_NO_LEAFS).getProperty().getId(),
 			).toEqual("single_ref");
@@ -123,14 +124,16 @@ describe("Property element", function () {
 		expect(refParentElem.getProperty().getId()).toEqual("refParent");
 
 		const pathToArrayRef = ["array_ref", 0];
-		expect(refParentElem.getChild(pathToArrayRef, RESOLVE_NEVER).getProperty().getId()).toEqual(
-			"array_ref",
-		);
+		expect(
+			refParentElem.getChild(pathToArrayRef, RESOLVE_NEVER).getProperty().getId(),
+		).toEqual("array_ref");
 		expect(refParentElem.getChild(pathToArrayRef, RESOLVE_NEVER).getChildToken()).toEqual(0);
 		expect(
 			refParentElem.getChild(pathToArrayRef, RESOLVE_NO_LEAFS).getProperty().getId(),
 		).toEqual("array_ref");
-		expect(refParentElem.getChild(pathToArrayRef, RESOLVE_NO_LEAFS).getChildToken()).toEqual(0);
+		expect(refParentElem.getChild(pathToArrayRef, RESOLVE_NO_LEAFS).getChildToken()).toEqual(
+			0,
+		);
 		expect(
 			refParentElem.getChild(pathToArrayRef, RESOLVE_ALWAYS).getProperty().getId(),
 		).toEqual("child");
@@ -139,7 +142,9 @@ describe("Property element", function () {
 		expect(refParentElem.getChild(pathToMapRef, RESOLVE_NEVER).getProperty().getId()).toEqual(
 			"map_ref",
 		);
-		expect(refParentElem.getChild(pathToMapRef, RESOLVE_NEVER).getChildToken()).toEqual("aKey");
+		expect(refParentElem.getChild(pathToMapRef, RESOLVE_NEVER).getChildToken()).toEqual(
+			"aKey",
+		);
 		expect(
 			refParentElem.getChild(pathToMapRef, RESOLVE_NO_LEAFS).getProperty().getId(),
 		).toEqual("map_ref");
@@ -716,9 +721,9 @@ describe("Property element", function () {
 		expect(propElem.getChild("myReference2", RESOLVE_NO_LEAFS).getProperty()).toEqual(
 			myReference2,
 		);
-		expect(propElem.getChild(["myReference2", "aNumber"], RESOLVE_NO_LEAFS).getValue()).toEqual(
-			42,
-		);
+		expect(
+			propElem.getChild(["myReference2", "aNumber"], RESOLVE_NO_LEAFS).getValue(),
+		).toEqual(42);
 	});
 
 	it("getChild with special characters in tokenized path", function () {

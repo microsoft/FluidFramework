@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import {
+	IRedisClientConnectionManager,
+	ITenantKeyGenerator,
+} from "@fluidframework/server-services-utils";
 import { ITenantRepository } from "./mongoTenantRepository";
 
 /**
@@ -10,4 +14,6 @@ import { ITenantRepository } from "./mongoTenantRepository";
  */
 export interface IRiddlerResourcesCustomizations {
 	tenantRepository?: ITenantRepository;
+	redisClientConnectionManagerForTenantCache?: IRedisClientConnectionManager;
+	tenantKeyGenerator?: ITenantKeyGenerator;
 }

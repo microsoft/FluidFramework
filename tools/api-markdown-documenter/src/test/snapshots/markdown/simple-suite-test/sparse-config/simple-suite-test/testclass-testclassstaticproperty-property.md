@@ -7,3 +7,5 @@ Test static class property
 ```typescript
 static testClassStaticProperty: (foo: number) => string;
 ```
+
+**Type:** (foo: number) =&gt; string

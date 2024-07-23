@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { UndoRedoStackManager } from '@fluidframework/undo-redo';
+import { UndoRedoStackManager } from '@fluidframework/undo-redo/internal';
+
 import { EditId } from '../Identifiers.js';
 import { SharedTree } from '../SharedTree.js';
 import { SharedTreeUndoRedoHandler } from '../UndoRedoHandler.js';
+
 import { runSharedTreeUndoRedoTestSuite } from './utilities/UndoRedoTests.js';
 
 describe('SharedTreeUndoRedoHandler', () => {
@@ -40,6 +42,14 @@ describe('SharedTreeUndoRedoHandler', () => {
 		testOutOfOrderRevert: false,
 	};
 
-	runSharedTreeUndoRedoTestSuite({ localMode: true, title: 'in local mode', ...undoRedoOptions });
-	runSharedTreeUndoRedoTestSuite({ localMode: false, title: 'in connected mode', ...undoRedoOptions });
+	runSharedTreeUndoRedoTestSuite({
+		localMode: true,
+		title: 'in local mode',
+		...undoRedoOptions,
+	});
+	runSharedTreeUndoRedoTestSuite({
+		localMode: false,
+		title: 'in connected mode',
+		...undoRedoOptions,
+	});
 });

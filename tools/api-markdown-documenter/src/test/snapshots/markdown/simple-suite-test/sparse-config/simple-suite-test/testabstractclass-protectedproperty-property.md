@@ -7,3 +7,5 @@ A test protected property.
 ```typescript
 protected readonly protectedProperty: TestEnum;
 ```
+
+**Type:** [TestEnum](docs/simple-suite-test/testenum-enum)

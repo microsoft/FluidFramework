@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { strict as assert } from "node:assert";
+
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
+
 import { MergeTree } from "../mergeTree.js";
+
 import { ReconnectTestHelper } from "./reconnectHelper.js";
 import { useStrictPartialLengthChecks } from "./testUtils.js";
 
@@ -126,9 +129,9 @@ for (const incremental of [true, false]) {
 			try {
 				helper.obliterateRange("C", 0, 2);
 				assert.fail("should not be possible to obliterate outside local range");
-			} catch (e) {
-				assert(e instanceof LoggingError);
-				assert.equal(e.message, "RangeOutOfBounds");
+			} catch (error) {
+				assert(error instanceof LoggingError);
+				assert.equal(error.message, "RangeOutOfBounds");
 			}
 		});
 

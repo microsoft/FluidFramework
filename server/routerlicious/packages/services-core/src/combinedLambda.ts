@@ -14,7 +14,7 @@ export class CombinedLambda implements IPartitionLambda {
 	constructor(protected readonly lambdas: IPartitionLambda[]) {}
 
 	/**
-	 * Processes an incoming message
+	 * {@inheritDoc IPartitionLambda.handler}
 	 */
 	public handler(message: IQueuedMessage) {
 		const promises: Promise<void>[] = [];

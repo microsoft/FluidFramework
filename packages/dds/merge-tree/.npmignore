@@ -16,4 +16,6 @@ docs/
 # then the ./test export is invalid, so it will fail to import anywhere outside the repo. However, some of the contents
 # of the test folder is not needed for testing, so we exclude additional paths.
 # dist/test
+# lib/test
 dist/test/types
+lib/test/types

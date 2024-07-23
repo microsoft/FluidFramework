@@ -12,6 +12,7 @@ import {
 	bindCorrelationId,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
+	ITenantKeyGenerator,
 } from "@fluidframework/server-services-utils";
 import { catch404, getTenantIdFromRequest, handleError } from "../utils";
 import * as api from "./api";
@@ -26,6 +27,7 @@ export function create(
 	secretManager: ISecretManager,
 	fetchTenantKeyMetricInterval: number,
 	riddlerStorageRequestMetricInterval: number,
+	tenantKeyGenerator: ITenantKeyGenerator,
 	cache?: ICache,
 ) {
 	// Express app configuration
@@ -61,6 +63,7 @@ export function create(
 			secretManager,
 			fetchTenantKeyMetricInterval,
 			riddlerStorageRequestMetricInterval,
+			tenantKeyGenerator,
 			cache,
 		),
 	);

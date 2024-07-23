@@ -27,9 +27,3 @@ export function objectToMapTyped<
 >(objectMap: ObjectMap): ObjectToMap<ObjectMap, MapKey, MapValue> {
 	return objectToMap(objectMap) as unknown as ObjectToMap<ObjectMap, MapKey, MapValue>;
 }
-
-/**
- * Convert a Array type into a union of its value types.
- * @public
- */
-export type ArrayToUnion<T extends readonly unknown[]> = T[number];

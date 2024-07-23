@@ -6,45 +6,20 @@
 import { strict as assert } from "assert";
 
 import { type SharedTreeShim, SharedTreeShimFactory } from "@fluid-experimental/tree";
-import {
-	type ITree,
-	SharedTree,
-	type TreeView,
-	SchemaFactory,
-	TreeConfiguration,
-} from "@fluidframework/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { LoaderHeader } from "@fluidframework/container-definitions";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
+	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
-	type ITestObjectProvider,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 const treeKey = "treeKey";
-
-class TestDataObject extends DataObject {
-	// Allows us to get the SharedObject with whatever type we want
-	public async getTree(): Promise<SharedTreeShim> {
-		const handle: IFluidHandle<IChannel> | undefined =
-			this.root.get<IFluidHandle<IChannel>>(treeKey);
-		assert(handle !== undefined, "No handle found");
-		return (await handle.get()) as SharedTreeShim;
-	}
-
-	public createTree(type: string): void {
-		const channel = this.runtime.createChannel(treeKey, type);
-		this.root.set(treeKey, channel.handle);
-	}
-}
 
 // New tree schema
 const builder = new SchemaFactory("test");
@@ -52,13 +27,13 @@ class RootType extends builder.object("abc", {
 	quantity: builder.number,
 }) {}
 
-function getNewTreeView(tree: ITree): TreeView<RootType> {
-	return tree.schematize(new TreeConfiguration(RootType, () => ({ quantity: 0 })));
-}
+const treeConfig = new TreeViewConfiguration({ schema: RootType });
 
 const testValue = 5;
 
-describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider) => {
+describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider, apis) => {
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -66,8 +41,23 @@ describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider) => {
 				state: "disabled",
 			},
 		},
-		enableRuntimeIdCompressor: true,
+		enableRuntimeIdCompressor: "on",
 	};
+
+	class TestDataObject extends DataObject {
+		// Allows us to get the SharedObject with whatever type we want
+		public async getTree(): Promise<SharedTreeShim> {
+			const handle: IFluidHandle<IChannel> | undefined =
+				this.root.get<IFluidHandle<IChannel>>(treeKey);
+			assert(handle !== undefined, "No handle found");
+			return (await handle.get()) as SharedTreeShim;
+		}
+
+		public createTree(type: string): void {
+			const channel = this.runtime.createChannel(treeKey, type);
+			this.root.set(treeKey, channel.handle);
+		}
+	}
 
 	// V2 of the registry (the migration registry) -----------------------------------------
 	// V2 of the code: Registry setup to migrate the document
@@ -114,10 +104,11 @@ describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider) => {
 		const tree1 = shim1.currentTree;
 		const tree2 = shim2.currentTree;
 
-		// Schematize our tree, this sends an op since we are a live container
-		const view1 = getNewTreeView(tree1);
+		const view1 = tree1.viewWith(treeConfig);
+		// Initialize our tree, this sends an op since we are a live container
+		view1.initialize({ quantity: 0 });
 		await provider.ensureSynchronized();
-		const view2 = getNewTreeView(tree2);
+		const view2 = tree2.viewWith(treeConfig);
 
 		// This does some typing and gives us the root node.
 		const rootNode1: RootType = view1.root;
@@ -147,7 +138,7 @@ describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 		const shim3 = await testObj3.getTree();
 		const tree3 = shim3.currentTree;
-		const view3 = getNewTreeView(tree3);
+		const view3 = tree3.viewWith(treeConfig);
 		const rootNode3: RootType = view3.root;
 
 		// Verify that it matches the previous node

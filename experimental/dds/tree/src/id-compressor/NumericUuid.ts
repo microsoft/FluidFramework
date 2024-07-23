@@ -5,9 +5,9 @@
 
 /* eslint-disable no-bitwise */
 
+import { assertWithMessage, fail } from '../Common.js';
 import { SessionId, StableId } from '../Identifiers.js';
 import { generateStableId } from '../UuidUtilities.js';
-import { assertWithMessage, fail } from '../Common.js';
 
 /**
  * A UUID (128 bit identifier) optimized for use as a 128 bit unsigned integer with fast addition and toString operations.
@@ -181,9 +181,7 @@ export function incrementUuid(uuid: NumericUuid, amount: number): NumericUuid {
 				// The variant chunk overflowed but the upper string region did not. Splice in the incremented string region.
 				const newUpperChunk = padToLengthWithZeros(newUpperNumber.toString(16), 12);
 				newUuid = [
-					`${ChunkMath.Upper.hyphenate(newUpperChunk)}-4${ChunkMath.Variant.hyphenate(
-						newVariantChunkString
-					)}`,
+					`${ChunkMath.Upper.hyphenate(newUpperChunk)}-4${ChunkMath.Variant.hyphenate(newVariantChunkString)}`,
 					remainder,
 				];
 			}

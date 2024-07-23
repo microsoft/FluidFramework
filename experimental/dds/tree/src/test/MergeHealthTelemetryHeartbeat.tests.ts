@@ -3,23 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from 'chai';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
-import { SharedTreeMergeHealthTelemetryHeartbeat } from '../MergeHealth.js';
-import { SequencedEditAppliedEventArguments, SharedTree } from '../SharedTree.js';
-import { RevisionView } from '../RevisionView.js';
+import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils/internal';
+import { expect } from 'chai';
+
 import { Change, ChangeType, StablePlace, StableRange } from '../ChangeTypes.js';
-import { ConstraintEffect, EditStatus } from '../persisted-types/index.js';
+import { SharedTreeMergeHealthTelemetryHeartbeat } from '../MergeHealth.js';
+import { RevisionView } from '../RevisionView.js';
+import { SequencedEditAppliedEventArguments, SharedTree } from '../SharedTree.js';
 import { TransactionInternal } from '../TransactionInternal.js';
-import { buildLeaf, TestTree } from './utilities/TestNode.js';
+import { ConstraintEffect, EditStatus } from '../persisted-types/index.js';
+
+import { TestTree, buildLeaf } from './utilities/TestNode.js';
 import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities.js';
 
 async function setupHeartbeat() {
 	const events: ITelemetryBaseEvent[] = [];
 	const { tree, containerRuntimeFactory } = setUpTestSharedTree({
 		localMode: false,
-		logger: { send: (event) => !event.eventName.includes('IdCompressor') && events.push(event) },
+		logger: {
+			send: (event) => !event.eventName.includes('IdCompressor') && events.push(event),
+		},
 		allowInvalid: true,
 	});
 	const testTree = setUpTestTree(tree);
@@ -50,7 +54,11 @@ function flush(tree: SharedTree, containerRuntimeFactory: MockContainerRuntimeFa
 
 function itAggregates(
 	nameOfAggregatedData: string,
-	paramFunc: (params: { tree: SharedTree; testTree: TestTree; concurrentTree: SharedTree }) => {
+	paramFunc: (params: {
+		tree: SharedTree;
+		testTree: TestTree;
+		concurrentTree: SharedTree;
+	}) => {
 		edits: Change[][];
 		concurrentEdits?: Change[][];
 		action: (ITelemetryBaseEvent) => void;
@@ -149,10 +157,7 @@ describe('SharedTreeMergeHealthTelemetryHeartbeat', () => {
 		itAggregates('edit counts', ({ testTree }) => ({
 			edits: [
 				Change.insertTree([testTree.buildLeaf()], StablePlace.after(testTree.left)),
-				Change.insertTree(
-					[testTree.buildLeaf()],
-					StablePlace.after(testTree.buildLeaf(testTree.generateNodeId()))
-				),
+				Change.insertTree([testTree.buildLeaf()], StablePlace.after(testTree.buildLeaf(testTree.generateNodeId()))),
 			],
 			action: (event) => {
 				expect(event.editCount).equals(2);
@@ -171,47 +176,39 @@ describe('SharedTreeMergeHealthTelemetryHeartbeat', () => {
 			},
 		}));
 
-		itAggregates(
-			'failures for the parent of a sibling-based place being deleted',
-			({ testTree, concurrentTree }) => ({
-				concurrentEdits: [[Change.delete(StableRange.only(testTree.translateId(concurrentTree)))]],
-				edits: [Change.insertTree([testTree.buildLeaf()], StablePlace.after(testTree.left))],
-				action: (event) => {
-					expect(event.failedEditCount).equals(1);
-					expect(event.badPlaceCount).equals(1);
-					expect(event.deletedSiblingBadPlaceCount).equals(1);
-					expect(event.deletedAncestorBadPlaceCount).equals(0);
-				},
-			})
-		);
+		itAggregates('failures for the parent of a sibling-based place being deleted', ({ testTree, concurrentTree }) => ({
+			concurrentEdits: [[Change.delete(StableRange.only(testTree.translateId(concurrentTree)))]],
+			edits: [Change.insertTree([testTree.buildLeaf()], StablePlace.after(testTree.left))],
+			action: (event) => {
+				expect(event.failedEditCount).equals(1);
+				expect(event.badPlaceCount).equals(1);
+				expect(event.deletedSiblingBadPlaceCount).equals(1);
+				expect(event.deletedAncestorBadPlaceCount).equals(0);
+			},
+		}));
 
-		itAggregates(
-			'failures for a range made of valid places in different traits',
-			({ testTree, concurrentTree }) => ({
-				// Move the "right" node to another trait to make the range invalid
-				concurrentEdits: [
-					Change.move(
-						StableRange.only(testTree.left.translateId(concurrentTree)),
-						StablePlace.atEndOf(testTree.right.traitLocation.translate(concurrentTree))
+		itAggregates('failures for a range made of valid places in different traits', ({ testTree, concurrentTree }) => ({
+			// Move the "right" node to another trait to make the range invalid
+			concurrentEdits: [
+				Change.move(
+					StableRange.only(testTree.left.translateId(concurrentTree)),
+					StablePlace.atEndOf(testTree.right.traitLocation.translate(concurrentTree))
+				),
+			],
+			edits: [
+				[
+					Change.delete(
+						StableRange.from(StablePlace.before(testTree.left)).to(StablePlace.atEndOf(testTree.left.traitLocation))
 					),
 				],
-				edits: [
-					[
-						Change.delete(
-							StableRange.from(StablePlace.before(testTree.left)).to(
-								StablePlace.atEndOf(testTree.left.traitLocation)
-							)
-						),
-					],
-				],
-				action: (event) => {
-					expect(event.failedEditCount).equals(1);
-					expect(event.badRangeCount).equals(1);
-					expect(event.deletedSiblingBadRangeCount).equals(0);
-					expect(event.updatedRangeHasPlacesInDifferentTraitsCount).equals(1);
-				},
-			})
-		);
+			],
+			action: (event) => {
+				expect(event.failedEditCount).equals(1);
+				expect(event.badRangeCount).equals(1);
+				expect(event.deletedSiblingBadRangeCount).equals(0);
+				expect(event.updatedRangeHasPlacesInDifferentTraitsCount).equals(1);
+			},
+		}));
 
 		itAggregates('failures for a range made of valid places that are inverted', ({ testTree, concurrentTree }) => ({
 			// Move the "right" node to the start of the trait to make the range inverted
@@ -222,11 +219,7 @@ describe('SharedTreeMergeHealthTelemetryHeartbeat', () => {
 				),
 			],
 			edits: [
-				[
-					Change.delete(
-						StableRange.from(StablePlace.after(testTree.left)).to(StablePlace.before(testTree.right))
-					),
-				],
+				[Change.delete(StableRange.from(StablePlace.after(testTree.left)).to(StablePlace.before(testTree.right)))],
 			],
 			action: (event) => {
 				expect(event.failedEditCount).equals(1);
@@ -236,24 +229,24 @@ describe('SharedTreeMergeHealthTelemetryHeartbeat', () => {
 			},
 		}));
 
-		itAggregates(
-			'failures for the parent of a parent-based place being deleted',
-			({ testTree, concurrentTree }) => ({
-				concurrentEdits: [[Change.delete(StableRange.only(testTree.left.translateId(concurrentTree)))]],
-				edits: [
-					Change.insertTree(
-						[testTree.buildLeaf()],
-						StablePlace.atStartOf({ parent: testTree.left.identifier, label: testTree.left.traitLabel })
-					),
-				],
-				action: (event) => {
-					expect(event.failedEditCount).equals(1);
-					expect(event.badPlaceCount).equals(1);
-					expect(event.deletedSiblingBadPlaceCount).equals(0);
-					expect(event.deletedAncestorBadPlaceCount).equals(1);
-				},
-			})
-		);
+		itAggregates('failures for the parent of a parent-based place being deleted', ({ testTree, concurrentTree }) => ({
+			concurrentEdits: [[Change.delete(StableRange.only(testTree.left.translateId(concurrentTree)))]],
+			edits: [
+				Change.insertTree(
+					[testTree.buildLeaf()],
+					StablePlace.atStartOf({
+						parent: testTree.left.identifier,
+						label: testTree.left.traitLabel,
+					})
+				),
+			],
+			action: (event) => {
+				expect(event.failedEditCount).equals(1);
+				expect(event.badPlaceCount).equals(1);
+				expect(event.deletedSiblingBadPlaceCount).equals(0);
+				expect(event.deletedAncestorBadPlaceCount).equals(1);
+			},
+		}));
 
 		itAggregates('preventable range failures', ({ testTree, concurrentTree }) => ({
 			concurrentEdits: [[Change.delete(StableRange.only(testTree.left.translateId(concurrentTree)))]],

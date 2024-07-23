@@ -4,20 +4,24 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import {
-	type IEvent,
-	type IFluidHandle,
-	type IFluidLoadable,
-	type IProvideFluidHandle,
-	type IRequest,
-	type IResponse,
+import type {
+	IEvent,
+	IFluidLoadable,
+	IRequest,
+	IResponse,
 } from "@fluidframework/core-interfaces";
-import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { type AsyncFluidObjectProvider } from "@fluidframework/synthesize";
-import { create404Response } from "@fluidframework/runtime-utils";
-import { type DataObjectTypes, type IDataObjectProps } from "./types.js";
+import type {
+	IFluidHandleInternal,
+	// eslint-disable-next-line import/no-deprecated
+	IProvideFluidHandle,
+} from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import { create404Response } from "@fluidframework/runtime-utils/internal";
+import type { AsyncFluidObjectProvider } from "@fluidframework/synthesize/internal";
+
+import type { DataObjectTypes, IDataObjectProps } from "./types.js";
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
@@ -25,10 +29,12 @@ import { type DataObjectTypes, type IDataObjectProps } from "./types.js";
  * you are creating another base data store class
  *
  * @typeParam I - The optional input types used to strongly type the data object
+ * @legacy
  * @alpha
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
 	extends TypedEventEmitter<I["Events"] & IEvent>
+	// eslint-disable-next-line import/no-deprecated
 	implements IFluidLoadable, IProvideFluidHandle
 {
 	/**
@@ -68,19 +74,19 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidHandle.IFluidHandle}
 	 */
-	public get IFluidHandle(): IFluidHandle<this> {
+	public get IFluidHandle(): IFluidHandleInternal<this> {
 		return this.handle;
 	}
 
 	/**
 	 * Handle to a data store
 	 */
-	public get handle(): IFluidHandle<this> {
+	public get handle(): IFluidHandleInternal<this> {
 		// PureDataObjectFactory already provides an entryPoint initialization function to the data store runtime,
 		// so this object should always have access to a non-null entryPoint. Need to cast because PureDataObject
 		// tried to be too smart with its typing for handles :).
 		assert(this.runtime.entryPoint !== undefined, 0x46b /* EntryPoint was undefined */);
-		return this.runtime.entryPoint as IFluidHandle<this>;
+		return this.runtime.entryPoint as IFluidHandleInternal<this>;
 	}
 
 	public static async getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject> {
@@ -94,16 +100,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 		this.context = props.context;
 		this.providers = props.providers;
 		this.initProps = props.initProps;
-
-		/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-		/* eslint-disable @typescript-eslint/no-explicit-any */
-		assert(
-			(this.runtime as any)._dataObject === undefined,
-			0x0bd /* "Object runtime already has DataObject!" */,
-		);
-		(this.runtime as any)._dataObject = this;
-		/* eslint-enable @typescript-eslint/no-explicit-any */
-		/* eslint-enable @typescript-eslint/no-unsafe-member-access */
 	}
 
 	/**

@@ -2,19 +2,27 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable import/no-deprecated */
 
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	PropertiesManager,
 	PropertySet,
 	createMap,
 	reservedRangeLabelsKey,
-} from "@fluidframework/merge-tree";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { assert } from "@fluidframework/core-utils";
-import { UsageError } from "@fluidframework/telemetry-utils";
-import { SequencePlace, reservedIntervalIdKey } from "../intervalCollection";
-import { IIntervalHelpers, ISerializableInterval, ISerializedInterval } from "./intervalUtils";
+	SequencePlace,
+} from "@fluidframework/merge-tree/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import { reservedIntervalIdKey } from "../intervalCollection.js";
+
+import {
+	IIntervalHelpers,
+	ISerializableInterval,
+	ISerializedInterval,
+} from "./intervalUtils.js";
 
 /**
  * Serializable interval whose endpoints are plain-old numbers.
@@ -86,7 +94,7 @@ export class Interval implements ISerializableInterval {
 			start: this.start,
 		};
 		if (this.properties) {
-			serializedInterval.properties = this.properties;
+			serializedInterval.properties = { ...this.properties };
 		}
 		return serializedInterval;
 	}
@@ -169,12 +177,7 @@ export class Interval implements ISerializableInterval {
 		seq?: number,
 	): PropertySet | undefined {
 		if (newProps) {
-			return this.propertyManager.addProperties(
-				this.properties,
-				newProps,
-				seq,
-				collaborating,
-			);
+			return this.propertyManager.addProperties(this.properties, newProps, seq, collaborating);
 		}
 	}
 
@@ -212,7 +215,11 @@ export class Interval implements ISerializableInterval {
 	}
 }
 
-export function createInterval(label: string, start: SequencePlace, end: SequencePlace): Interval {
+export function createInterval(
+	label: string,
+	start: SequencePlace,
+	end: SequencePlace,
+): Interval {
 	if (typeof start === "string" || typeof end === "string") {
 		throw new UsageError(
 			"The start and end positions of a plain interval may not be on the special endpoint segments.",

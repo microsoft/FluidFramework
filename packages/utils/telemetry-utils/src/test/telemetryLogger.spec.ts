@@ -4,14 +4,16 @@
  */
 
 import assert from "node:assert";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+
 import {
-	ITelemetryLoggerPropertyBags,
-	ITelemetryLoggerPropertyBag,
+	type ITelemetryLoggerPropertyBag,
+	type ITelemetryLoggerPropertyBags,
 	TelemetryLogger,
 	convertToBasePropertyType,
 } from "../logger.js";
-import {
+import type {
 	ITaggedTelemetryPropertyTypeExt,
 	TelemetryEventPropertyTypeExt,
 } from "../telemetryTypes.js";

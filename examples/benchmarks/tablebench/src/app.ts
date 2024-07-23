@@ -3,22 +3,15 @@
  * Licensed under the MIT License.
  */
 
-/*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License.
- */
-
-import { TreeConfiguration } from "@fluidframework/tree";
-import { Table } from "./tree";
-import { initFluid } from "./azure";
-import { generateTable } from "./data";
+import { initFluid } from "./azure.js";
+import { generateTable } from "./data.js";
+import { Table } from "./tree/index.js";
 
 export { generateTable };
 export { Table };
 
 export async function initApp() {
-	const { tree } = await initFluid();
-	const view = tree.schematize(new TreeConfiguration(Table, () => generateTable(10000)));
+	const { view } = await initFluid();
 
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	document.getElementById("run")!.addEventListener("click", () => {

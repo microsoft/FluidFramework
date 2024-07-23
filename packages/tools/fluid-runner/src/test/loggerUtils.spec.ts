@@ -3,19 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
 import { strict as assert } from "assert";
+import path from "path";
+
 /* eslint-disable import/no-internal-modules */
-import { OutputFormat } from "../logger/fileLogger";
+import { OutputFormat } from "../logger/fileLogger.js";
 import {
 	createLogger,
 	getTelemetryFileValidationError,
 	validateAndParseTelemetryOptions,
-} from "../logger/loggerUtils";
+} from "../logger/loggerUtils.js";
 /* eslint-enable import/no-internal-modules */
 
+import { _dirname } from "./dirname.cjs";
+
 describe("logger utils", () => {
-	const folderRoot = path.join(__dirname, "../../src/test");
+	const folderRoot = path.join(_dirname, "../../src/test");
 	const telemetryFile = path.join(folderRoot, "outputFolder", "telemetryFile.txt");
 	const expectedOutputFolder = path.join(folderRoot, "telemetryExpectedOutputs");
 
@@ -140,10 +143,7 @@ describe("logger utils", () => {
 			});
 
 			it("multiple whitespace", () => {
-				const result = validateAndParseTelemetryOptions(undefined, [
-					"    prop1",
-					"value1  ",
-				]);
+				const result = validateAndParseTelemetryOptions(undefined, ["    prop1", "value1  "]);
 				if (!result.success) {
 					assert.fail(`unexpected error [${result.error}]`);
 				}
@@ -153,10 +153,7 @@ describe("logger utils", () => {
 			});
 
 			it("special characters", () => {
-				const result = validateAndParseTelemetryOptions(undefined, [
-					"prop1=aaa",
-					'aaa"bbb',
-				]);
+				const result = validateAndParseTelemetryOptions(undefined, ["prop1=aaa", 'aaa"bbb']);
 				if (!result.success) {
 					assert.fail(`unexpected error [${result.error}]`);
 				}

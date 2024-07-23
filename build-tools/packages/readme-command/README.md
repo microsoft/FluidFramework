@@ -39,14 +39,18 @@ Adds commands to README.md in current directory.
 
 ```
 USAGE
-  $ fluid-readme generate readme --dir <value> [--aliases] [--multi] [--repository-prefix <value>] [--version <value>]
+  $ fluid-readme generate readme --output-dir <value> --readme-path <value> [--aliases] [--nested-topics-depth
+    <value> --multi] [--plugin-directory <value>] [--repository-prefix <value>] [--version <value>]
 
 FLAGS
-  --[no-]aliases               include aliases in the command list
-  --dir=<value>                (required) [default: docs] output directory for multi docs
-  --multi                      create a different markdown page for each topic
-  --repository-prefix=<value>  a template string used to build links to the source code
-  --version=<value>            version to use in readme links. defaults to the version in package.json
+  --[no-]aliases                 Include aliases in the command list.
+  --multi                        Create a different markdown page for each topic.
+  --nested-topics-depth=<value>  Max nested topics depth for multi markdown page generation. Use with --multi enabled.
+  --output-dir=<value>           (required) [default: docs] Output directory for multi docs.
+  --plugin-directory=<value>     Plugin directory to generate README for. Defaults to the current directory.
+  --readme-path=<value>          (required) [default: README.md] Path to the README file.
+  --repository-prefix=<value>    A template string used to build links to the source code.
+  --version=<value>              Version to use in readme links. Defaults to the version in package.json.
 
 DESCRIPTION
   Adds commands to README.md in current directory.
@@ -87,10 +91,36 @@ in some way. Other commands could adopt this, but only the `release command` use
 The `release` command also provides a `state` flag that can be used to initialize the state machine to a specific state.
 This is intended for testing.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Contribution Guidelines
+
+There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
+
+-   Participate in Q&A in our [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+-   [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
+-   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+-   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
+
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
+
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+## Help
+
+Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
+
+Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+
+Thank you!
 
 ## Trademark
 

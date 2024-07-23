@@ -4,10 +4,15 @@
  */
 
 import { strict as assert } from "node:assert";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import {
+	ISnapshot,
+	ISnapshotTree,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser.js";
 import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
 
@@ -145,7 +150,6 @@ const snapshotTreeWithGroupId: ISnapshotTree = {
 					},
 					unreferenced: true,
 					groupId: "G2",
-					omitted: false,
 				},
 				".blobs": { blobs: {}, trees: {} },
 			},
@@ -184,6 +188,11 @@ describe("Snapshot Format Conversion Tests", () => {
 			(result.snapshotTree.id = snapshotContents.snapshotTree.id),
 			"Snapshot id should match",
 		);
+
+		assert(result.telemetryProps.slowBlobStructureCount === 0);
+		// there is { name, unreferenced } structure (i.e. empty unreferenced tree) that we do not optimize
+		assert(result.telemetryProps.slowTreeStructureCount === 1);
+
 		// Convert to compact snapshot again and then match to previous one.
 		const compactSnapshot2 = convertToCompactSnapshot(result);
 		assert.deepStrictEqual(
@@ -215,6 +224,10 @@ describe("Snapshot Format Conversion Tests", () => {
 			(result.snapshotTree.id = snapshotContents.snapshotTree.id),
 			"Snapshot id should match",
 		);
+		assert(result.telemetryProps.slowBlobStructureCount === 0);
+		// there is { name, unreferenced } structure (i.e. empty unreferenced tree) that we do not optimize
+		assert(result.telemetryProps.slowTreeStructureCount === 1);
+
 		// Convert to compact snapshot again and then match to previous one.
 		const compactSnapshot2 = convertToCompactSnapshot(result);
 		assert.deepStrictEqual(
@@ -250,6 +263,11 @@ describe("Snapshot Format Conversion Tests", () => {
 			(result.snapshotTree.id = snapshotContents.snapshotTree.id),
 			"Snapshot id should match",
 		);
+		assert(result.telemetryProps.slowBlobStructureCount === 0);
+		// there is { name, unreferenced } structure (i.e. empty unreferenced tree) that we do not optimize
+		assert(result.telemetryProps.slowTreeStructureCount === 4);
+		assert(result.telemetryProps.treeStructureCountWithGroupId === 3);
+
 		// Convert to compact snapshot again and then match to previous one.
 		const compactSnapshot2 = convertToCompactSnapshot(result);
 		assert.deepStrictEqual(

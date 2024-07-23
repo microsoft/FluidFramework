@@ -4,21 +4,25 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	TestFluidObjectFactory,
-	timeoutPromise,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import {
 	ICodeDetailsLoader,
 	IContainer,
 	IFluidCodeDetails,
-} from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+} from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	LocalDocumentServiceFactory,
+	LocalResolver,
+} from "@fluidframework/local-driver/internal";
+import { SharedMap } from "@fluidframework/map/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { SharedMap } from "@fluidframework/map";
+import {
+	TestFluidObjectFactory,
+	timeoutPromise,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 describe("Audience correctness", () => {
 	const mapId = "mapKey";
@@ -50,9 +54,7 @@ describe("Audience correctness", () => {
 							resolve();
 						}
 					};
-					container.audience.on("addMember", (newClientId: string) =>
-						listener(newClientId),
-					);
+					container.audience.on("addMember", (newClientId: string) => listener(newClientId));
 				},
 				// Wait for 2 seconds to get the client in audience. This wait is needed for a client to get added to its
 				// own audience and 2 seconds should be enough time. It it takes longer than this, we might need to

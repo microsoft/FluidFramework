@@ -10,6 +10,7 @@
  */
 
 import { expect } from "chai";
+
 import { HTTPError, HTTPErrorNoStack } from "../../index";
 
 describe("property-common.HTTPErrorNoStack", function () {

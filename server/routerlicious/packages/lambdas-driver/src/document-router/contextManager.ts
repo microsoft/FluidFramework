@@ -11,6 +11,7 @@ import {
 	IQueuedMessage,
 	IRoutingKey,
 } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { DocumentContext } from "./documentContext";
 
 const LastCheckpointedOffset: IQueuedMessage = {
@@ -60,9 +61,10 @@ export class DocumentContextManager extends EventEmitter {
 		context.addListener("checkpoint", (restartOnCheckpointFailure?: boolean) =>
 			this.updateCheckpoint(restartOnCheckpointFailure),
 		);
-		context.addListener("error", (error, errorData: IContextErrorData) =>
-			this.emit("error", error, errorData),
-		);
+		context.addListener("error", (error, errorData: IContextErrorData) => {
+			Lumberjack.verbose("Emitting error from contextManager, context error event.");
+			this.emit("error", error, errorData);
+		});
 		return context;
 	}
 

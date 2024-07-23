@@ -3,24 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	LoaderCachingPolicy,
-} from "@fluidframework/driver-definitions";
-import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
+	ISnapshotTree,
+	IVersion,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	DocumentStorageServiceProxy,
 	PrefetchDocumentStorageService,
-} from "@fluidframework/driver-utils";
-import { IRouterliciousDriverPolicies } from "./policies";
-import { ICache } from "./cache";
-import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService";
-import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService";
-import { GitManager } from "./gitManager";
-import { ISnapshotTreeVersion } from "./definitions";
-import { INormalizedWholeSnapshot } from "./contracts";
+} from "@fluidframework/driver-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+
+import { ICache } from "./cache.js";
+import { INormalizedWholeSnapshot } from "./contracts.js";
+import { ISnapshotTreeVersion } from "./definitions.js";
+import { GitManager } from "./gitManager.js";
+import { IRouterliciousDriverPolicies } from "./policies.js";
+import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService.js";
+import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService.js";
 
 export class DocumentStorageService extends DocumentStorageServiceProxy {
 	private _logTailSha: string | undefined = undefined;
@@ -52,7 +54,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 					snapshotTreeCache,
 					noCacheGitManager,
 					getStorageManager,
-			  )
+				)
 			: new ShreddedSummaryDocumentStorageService(
 					id,
 					manager,
@@ -62,7 +64,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 					blobCache,
 					shreddedSummaryTreeCache,
 					getStorageManager,
-			  );
+				);
 		// TODO: worth prefetching latest summary making version + snapshot call with WholeSummary storage?
 		if (
 			!driverPolicies?.enableWholeSummaryUpload &&

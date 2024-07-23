@@ -92,13 +92,13 @@ USAGE
 <!-- prettier-ignore-start -->
 <!-- commands -->
 * [`fluv autocomplete [SHELL]`](#fluv-autocomplete-shell)
-* [`fluv help [COMMANDS]`](#fluv-help-commands)
+* [`fluv help [COMMAND]`](#fluv-help-command)
 * [`fluv version VERSION`](#fluv-version-version)
 * [`fluv version latest`](#fluv-version-latest)
 
 ## `fluv autocomplete [SHELL]`
 
-display autocomplete installation instructions
+Display autocomplete installation instructions.
 
 ```
 USAGE
@@ -111,7 +111,7 @@ FLAGS
   -r, --refresh-cache  Refresh cache (ignores displaying instructions)
 
 DESCRIPTION
-  display autocomplete installation instructions
+  Display autocomplete installation instructions.
 
 EXAMPLES
   $ fluv autocomplete
@@ -125,18 +125,18 @@ EXAMPLES
   $ fluv autocomplete --refresh-cache
 ```
 
-_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v2.3.10/src/commands/autocomplete/index.ts)_
+_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v3.0.16/src/commands/autocomplete/index.ts)_
 
-## `fluv help [COMMANDS]`
+## `fluv help [COMMAND]`
 
 Display help for fluv.
 
 ```
 USAGE
-  $ fluv help [COMMANDS] [-n]
+  $ fluv help [COMMAND...] [-n]
 
 ARGUMENTS
-  COMMANDS  Command to show help for.
+  COMMAND...  Command to show help for.
 
 FLAGS
   -n, --nested-commands  Include all nested commands in the output.
@@ -145,7 +145,7 @@ DESCRIPTION
   Display help for fluv.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.0.4/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.0.21/src/commands/help.ts)_
 
 ## `fluv version VERSION`
 
@@ -159,9 +159,9 @@ ARGUMENTS
   VERSION  The version to convert.
 
 FLAGS
-  -t, --type=<option>      bump type
-                           <options: major|minor|patch|current>
-  --publicVersion=<value>  [default: 2.0.0] The public version to use in the Fluid internal version.
+  -t, --type=<option>          bump type
+                               <options: major|minor|patch|current>
+      --publicVersion=<value>  [default: 2.0.0] The public version to use in the Fluid internal version.
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -205,7 +205,7 @@ FLAGS
   -r, --versions=<value>...  (required) The versions to evaluate. The argument can be passed multiple times to provide
                              multiple versions, or a space-delimited list of versions can be provided using a single
                              argument.
-  --prerelease               Include prerelease versions. By default, prerelease versions are excluded.
+      --prerelease           Include prerelease versions. By default, prerelease versions are excluded.
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -238,10 +238,36 @@ PR here for an example: <https://github.com/microsoft/FluidFramework/pull/12155>
 Due to https://github.com/oclif/core/issues/630, the `build:manifest` node script uses an experimental flag. This can be
 removed once we have upgraded to Node 16 in the repo.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Contribution Guidelines
+
+There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
+
+-   Participate in Q&A in our [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+-   [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
+-   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+-   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
+
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
+
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+## Help
+
+Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
+
+Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+
+Thank you!
 
 ## Trademark
 

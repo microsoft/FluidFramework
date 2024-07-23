@@ -1,10 +1,4 @@
 #!/usr/bin/env node
-
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
-
 const fs = require("fs");
 const path = require("path");
 const getPort = require("get-port");

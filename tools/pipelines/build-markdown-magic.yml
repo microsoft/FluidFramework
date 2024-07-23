@@ -34,15 +34,16 @@ trigger:
     - .prettierignore
     - tools/markdown-magic
     - tools/pipelines/build-markdown-magic.yml
-    - tools/pipelines/templates/1ES/build-npm-package.yml
+    - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
-    - tools/pipelines/templates/1ES/include-publish-npm-package.yml
-    - tools/pipelines/templates/1ES/include-publish-npm-package-deployment.yml
+    - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
 
 pr:
@@ -57,12 +58,13 @@ pr:
     - .prettierignore
     - tools/markdown-magic
     - tools/pipelines/build-markdown-magic.yml
-    - tools/pipelines/templates/1ES/build-npm-package.yml
+    - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
 
 variables:
@@ -73,7 +75,7 @@ variables:
       buildNumberInPatch: ''
 
 extends:
-  template: /tools/pipelines/templates/1ES/build-npm-package.yml@self
+  template: /tools/pipelines/templates/build-npm-package.yml@self
   parameters:
     publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
@@ -86,6 +88,8 @@ extends:
     taskBuild: build
     taskBuildDocs: false
     taskLint: false
+    # This package is private and not published
+    taskPack: false
     taskTest:
     - test
     testResultDirs: [] # No test results to upload

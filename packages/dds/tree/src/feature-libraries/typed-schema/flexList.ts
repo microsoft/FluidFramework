@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ArrayToUnion } from "./typeUtils.js";
-
 /** A symbol used to identify a `MarkedEager`. */
 const flexListEager = Symbol("FlexList Eager");
 
@@ -35,7 +33,7 @@ export function markEager<T>(t: T): T {
 				configurable: true,
 				enumerable: false,
 				writable: false,
-		  })
+			})
 		: t;
 }
 
@@ -54,7 +52,9 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 /**
  * Given a `FlexList` of eager and lazy items, return an equivalent list where all items are lazy.
  */
-export function normalizeFlexListLazy<List extends FlexList>(t: List): FlexListToLazyArray<List> {
+export function normalizeFlexListLazy<List extends FlexList>(
+	t: List,
+): FlexListToLazyArray<List> {
 	return t.map((value: LazyItem) => {
 		if (isLazy(value)) {
 			return value;
@@ -108,9 +108,6 @@ export type ExtractListItemType<List extends FlexList> = List extends FlexList<i
 	? Item
 	: unknown;
 
-/**
- * @public
- */
 export type NormalizeLazyItem<List extends LazyItem> = List extends () => unknown
 	? List
 	: () => List;
@@ -118,15 +115,16 @@ export type NormalizeLazyItem<List extends LazyItem> = List extends () => unknow
 /**
  * Normalize FlexList type to a non-lazy array.
  */
-export type FlexListToNonLazyArray<List extends FlexList> = ArrayHasFixedLength<List> extends true
-	? ConstantFlexListToNonLazyArray<List>
-	: NormalizedFlexList<ExtractListItemType<List>>;
+export type FlexListToNonLazyArray<List extends FlexList> =
+	ArrayHasFixedLength<List> extends true
+		? ConstantFlexListToNonLazyArray<List>
+		: NormalizedFlexList<ExtractListItemType<List>>;
 
 /**
  * Normalize FlexList type to a union.
  * @public
  */
-export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUnion<TList>>;
+export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 /**
  * Normalize FlexList type to a non-lazy array.
@@ -150,9 +148,8 @@ export type ConstantFlexListToNonLazyArray<List extends FlexList> = List extends
  * losing all the type information.
  */
 // This works by determining if the length is `number` (and not a specific number).
-export type ArrayHasFixedLength<List extends readonly unknown[]> = number extends List["length"]
-	? false
-	: true;
+export type ArrayHasFixedLength<List extends readonly unknown[]> =
+	number extends List["length"] ? false : true;
 
 /**
  * Normalize FlexList type to a lazy array.

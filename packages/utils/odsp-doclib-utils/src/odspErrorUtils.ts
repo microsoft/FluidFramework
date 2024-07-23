@@ -4,27 +4,32 @@
  */
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { IFluidErrorBase, LoggingError, numberFromString } from "@fluidframework/telemetry-utils";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
 	AuthorizationError,
-	createGenericNetworkError,
 	DriverErrorTelemetryProps,
-	isOnline,
-	RetryableError,
+	FluidInvalidSchemaError,
 	NonRetryableError,
 	OnlineStatus,
-	FluidInvalidSchemaError,
-} from "@fluidframework/driver-utils";
+	RetryableError,
+	createGenericNetworkError,
+	isOnline,
+} from "@fluidframework/driver-utils/internal";
 import {
-	OdspErrorTypes,
-	OdspError,
 	IOdspErrorAugmentations,
-} from "@fluidframework/odsp-driver-definitions";
-import { parseAuthErrorClaims } from "./parseAuthErrorClaims.js";
-import { parseAuthErrorTenant } from "./parseAuthErrorTenant.js";
+	OdspError,
+	OdspErrorTypes,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	IFluidErrorBase,
+	LoggingError,
+	numberFromString,
+} from "@fluidframework/telemetry-utils/internal";
+
 // odsp-doclib-utils and odsp-driver will always release together and share the same pkgVersion
 import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { parseAuthErrorClaims } from "./parseAuthErrorClaims.js";
+import { parseAuthErrorTenant } from "./parseAuthErrorTenant.js";
 
 // no response, or can't parse response
 /**
@@ -214,6 +219,20 @@ export function createOdspNetworkError(
 	const driverProps = { driverVersion, statusCode, ...props };
 
 	switch (statusCode) {
+		// The location of file can move on Spo. If the redirect:manual header is added to network call
+		// it causes browser to not handle the redirects. Location header in such cases will contain the new location.
+		// Refer: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308
+		case 301:
+		case 302:
+		case 303:
+		case 307:
+		case 308:
+			redirectLocation = response?.headers.get("Location") ?? undefined;
+			if (redirectLocation !== undefined) {
+				error = new OdspRedirectError(errorMessage, redirectLocation, driverProps);
+				break;
+			}
+		// Don't break here. Let it be a generic network error if redirectLocation is not there.
 		case 400:
 			if (innerMostErrorCode === "fluidInvalidSchema") {
 				error = new FluidInvalidSchemaError(errorMessage, driverProps);
@@ -230,11 +249,7 @@ export function createOdspNetworkError(
 			// The server throws 403 status code with innerMostError code as "serviceReadOnly" for cases where the
 			// database on server becomes readonly. The driver retries for such cases with exponential backup logic.
 			if (innerMostErrorCode === OdspServiceReadOnlyErrorCode) {
-				error = new RetryableError(
-					errorMessage,
-					OdspErrorTypes.serviceReadOnly,
-					driverProps,
-				);
+				error = new RetryableError(errorMessage, OdspErrorTypes.serviceReadOnly, driverProps);
 			} else if (
 				innerMostErrorCode === "blockedIPAddress" ||
 				innerMostErrorCode === "conditionalAccessPolicyEnforced"
@@ -245,9 +260,7 @@ export function createOdspNetworkError(
 					driverProps,
 				);
 			} else {
-				const claims = response?.headers
-					? parseAuthErrorClaims(response.headers)
-					: undefined;
+				const claims = response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
 				const tenantId = response?.headers
 					? parseAuthErrorTenant(response.headers)
 					: undefined;
@@ -332,11 +345,7 @@ export function createOdspNetworkError(
 			);
 			break;
 		case 501:
-			error = new NonRetryableError(
-				errorMessage,
-				OdspErrorTypes.fluidNotEnabled,
-				driverProps,
-			);
+			error = new NonRetryableError(errorMessage, OdspErrorTypes.fluidNotEnabled, driverProps);
 			break;
 		case 507:
 			error = new NonRetryableError(
@@ -440,4 +449,18 @@ function numberFromHeader(header: string | null): number | undefined {
  */
 export function hasFacetCodes(x: any): x is Pick<IOdspErrorAugmentations, "facetCodes"> {
 	return Array.isArray(x?.facetCodes);
+}
+
+/**
+ * @internal
+ */
+export function hasRedirectionLocation(
+	x: unknown,
+): x is Pick<IOdspErrorAugmentations, "redirectLocation"> {
+	return (
+		x !== null &&
+		typeof x === "object" &&
+		"redirectLocation" in x &&
+		typeof x?.redirectLocation === "string"
+	);
 }

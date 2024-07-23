@@ -6,10 +6,12 @@
 /* eslint-disable no-bitwise */
 
 import { strict as assert } from "assert";
-import { makeRandom } from "..";
-import { integer } from "../distributions";
-import { makeUuid4 } from "../random";
-import { computeChiSquared, chiSquaredCriticalValues, Counter, parseUuid } from "./utils";
+
+import { integer } from "../distributions/index.js";
+import { makeRandom } from "../index.js";
+import { makeUuid4 } from "../random.js";
+
+import { Counter, chiSquaredCriticalValues, computeChiSquared, parseUuid } from "./utils.js";
 
 // For stochastic tests, we use the following predetermined seeds.
 const testSeeds: [number, number, number, number][] = [
@@ -118,9 +120,7 @@ describe("Random", () => {
 
 			assert_chi2(
 				generator,
-				new Array(range)
-					.fill(0)
-					.map<[number, number]>((_, index) => [index + min, 1 / range]),
+				new Array(range).fill(0).map<[number, number]>((_, index) => [index + min, 1 / range]),
 				numSamples,
 			);
 		}
@@ -171,10 +171,7 @@ describe("Random", () => {
 
 				for (let i = 0; i < 100; i++) {
 					const sample = random.real();
-					assert(
-						0 <= sample && sample < 1,
-						`Must be in range [0..1), but got ${sample}.`,
-					);
+					assert(0 <= sample && sample < 1, `Must be in range [0..1), but got ${sample}.`);
 				}
 			});
 		});
@@ -213,10 +210,7 @@ describe("Random", () => {
 				// Test cases handled by the divide with rejection approach
 				describe("with |max - min| < 2^53", () => {
 					for (let i = 0; i < 10; i++) {
-						const min = random.integer(
-							Number.MIN_SAFE_INTEGER,
-							Number.MAX_SAFE_INTEGER,
-						);
+						const min = random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);
 						const len = random.integer(0, Number.MAX_SAFE_INTEGER);
 						testLimits(min, min + len);
 					}
@@ -225,10 +219,7 @@ describe("Random", () => {
 				// Test cases that fall back on affine combination
 				describe("with |max - min| >= 2^53", () => {
 					for (let i = 0; i < 10; i++) {
-						const min = random.integer(
-							Number.MIN_SAFE_INTEGER,
-							Number.MAX_SAFE_INTEGER,
-						);
+						const min = random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);
 						const len = random.integer(
 							Number.MAX_SAFE_INTEGER + 1,
 							Number.MAX_SAFE_INTEGER * 2,
@@ -468,9 +459,7 @@ describe("Random", () => {
 					expected: "00000002-0000-4000-8000-000040000000",
 				},
 			]) {
-				it(`[${u32x4.map((u32) =>
-					u32.toString(16).padStart(8, "0"),
-				)}] -> ${expected}`, () => {
+				it(`[${u32x4.map((u32) => u32.toString(16).padStart(8, "0"))}] -> ${expected}`, () => {
 					const [a, b, c, d] = u32x4;
 					const actual = makeUuid4(a, b, c, d);
 					assert.equal(actual, expected);
@@ -571,8 +560,7 @@ describe("Random", () => {
 						const random = makeRandom(...seeds);
 
 						assert_chi2(
-							/* generator: */ () =>
-								clamp(-5, Math.round(random.normal(-0.5, 1.5)), 4),
+							/* generator: */ () => clamp(-5, Math.round(random.normal(-0.5, 1.5)), 4),
 							/* weights: */ [
 								[-5, 0.0038],
 								[-4, 0.0189],

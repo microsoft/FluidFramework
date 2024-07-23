@@ -2,18 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* globals sinon, expect, should */
 import { DataBinder } from "../data_binder/dataBinder";
-import { SingletonDataBinding, StatelessDataBinding } from "../data_binder/statelessDataBinding";
+import {
+	SingletonDataBinding,
+	StatelessDataBinding,
+} from "../data_binder/statelessDataBinding";
 import { catchConsoleErrors } from "./catchConsoleError";
 import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
 
 import {
-	registerTestTemplates,
 	AnimalSchema,
-	DogSchema,
 	CatSchema,
 	ChinchillaSchema,
+	DogSchema,
+	registerTestTemplates,
 } from "./testTemplates";
 
 import { PropertyFactory } from "@fluid-experimental/property-properties";
@@ -146,8 +150,16 @@ describe("Stateless Binder", function () {
 		dogSingleton = new TestStatelessBinding();
 		chinchillaSingleton = new TestStatelessBinding();
 
-		catHandle = dataBinder.registerStateless("DataBindingTest", CatSchema.typeid, catSingleton);
-		dogHandle = dataBinder.registerStateless("DataBindingTest", DogSchema.typeid, dogSingleton);
+		catHandle = dataBinder.registerStateless(
+			"DataBindingTest",
+			CatSchema.typeid,
+			catSingleton,
+		);
+		dogHandle = dataBinder.registerStateless(
+			"DataBindingTest",
+			DogSchema.typeid,
+			dogSingleton,
+		);
 		chinchillaHandle = dataBinder.registerStateless(
 			"DataBindingTest",
 			ChinchillaSchema.typeid,

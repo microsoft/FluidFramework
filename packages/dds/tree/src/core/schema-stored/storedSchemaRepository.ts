@@ -4,16 +4,18 @@
  */
 
 import { BTree } from "@tylerbu/sorted-btree-es6";
-import { createEmitter, ISubscribable } from "../../events/index.js";
+
+import { type Listenable, createEmitter } from "../../events/index.js";
 import { compareStrings } from "../../util/index.js";
+
+import type { TreeNodeSchemaIdentifier } from "./format.js";
 import {
-	StoredSchemaCollection,
-	TreeFieldStoredSchema,
-	TreeNodeStoredSchema,
-	TreeStoredSchema,
+	type StoredSchemaCollection,
+	type TreeFieldStoredSchema,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
 	storedEmptyFieldSchema,
 } from "./schema.js";
-import { TreeNodeSchemaIdentifier } from "./format.js";
 
 /**
  * Events for {@link TreeStoredSchemaSubscription}.
@@ -38,7 +40,7 @@ export interface SchemaEvents {
  * @internal
  */
 export interface TreeStoredSchemaSubscription
-	extends ISubscribable<SchemaEvents>,
+	extends Listenable<SchemaEvents>,
 		TreeStoredSchema {}
 
 /**
@@ -93,7 +95,10 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 		}
 	}
 
-	public on<K extends keyof SchemaEvents>(eventName: K, listener: SchemaEvents[K]): () => void {
+	public on<K extends keyof SchemaEvents>(
+		eventName: K,
+		listener: SchemaEvents[K],
+	): () => void {
 		return this.events.on(eventName, listener);
 	}
 
@@ -131,6 +136,8 @@ function cloneNodeSchemaData(
 	nodeSchema: StoredSchemaCollection["nodeSchema"],
 ): BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
 	// Schema objects are immutable (unlike stored schema repositories), so this shallow copy is fine.
-	const entries: [TreeNodeSchemaIdentifier, TreeNodeStoredSchema][] = [...nodeSchema.entries()];
+	const entries: [TreeNodeSchemaIdentifier, TreeNodeStoredSchema][] = [
+		...nodeSchema.entries(),
+	];
 	return new BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(entries, compareStrings);
 }

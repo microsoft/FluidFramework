@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import events_pkg from "events_pkg";
+const { EventEmitter } = events_pkg;
 import { IPubSub, ISubscriber, WebSocketSubscriber } from "@fluidframework/server-memory-orderer";
 import { IWebSocket, IWebSocketServer } from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";
@@ -43,12 +44,6 @@ export class LocalWebSocket implements IWebSocket {
 	}
 
 	public emit(event: string, ...args: any[]) {
-		// Disconnect from the "socket" if the message is greater than 1MB
-		if (JSON.stringify(args).length > 1e6) {
-			this.disconnect();
-			return;
-		}
-
 		this.events.emit(event, ...args);
 	}
 

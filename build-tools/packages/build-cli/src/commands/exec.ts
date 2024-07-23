@@ -2,11 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
 import execa from "execa";
 
-import { PackageCommand } from "../BasePackageCommand";
+import { PackageCommand } from "../BasePackageCommand.js";
+import type { PackageSelectionDefault } from "../flags.js";
 
 export default class ExecCommand extends PackageCommand<typeof ExecCommand> {
 	static readonly description =
@@ -18,6 +20,8 @@ export default class ExecCommand extends PackageCommand<typeof ExecCommand> {
 			required: true,
 		}),
 	} as const;
+
+	protected defaultSelection = "all" as PackageSelectionDefault;
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		// TODO: The shell option should not need to be true. AB#4067

@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { BaseProperty, PropertyFactory } from "@fluid-experimental/property-properties";
 /* globals should, sinon, expect */
 import { DataBinder } from "../data_binder/dataBinder";
 import { DataBinding } from "../data_binder/dataBinding";
 import { catchConsoleErrors } from "./catchConsoleError";
 import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
-import { BaseProperty, PropertyFactory } from "@fluid-experimental/property-properties";
 const NEVER = { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER };
 
 describe("ES6 DataBinding", function () {
@@ -80,21 +81,9 @@ describe("ES6 DataBinding", function () {
 				this.registerOnProperty("onProperty", ["insert"], propertyInsertCallback);
 				this.registerOnProperty("onProperty", ["modify"], propertyModifyCallback);
 				this.registerOnProperty("onProperty", ["remove"], propertyRemoveCallback);
-				this.registerOnPath(
-					"customArrayTest",
-					["collectionInsert"],
-					collectionInsertCallback,
-				);
-				this.registerOnPath(
-					"customArrayTest",
-					["collectionModify"],
-					collectionModifyCallback,
-				);
-				this.registerOnPath(
-					"customArrayTest",
-					["collectionRemove"],
-					collectionRemoveCallback,
-				);
+				this.registerOnPath("customArrayTest", ["collectionInsert"], collectionInsertCallback);
+				this.registerOnPath("customArrayTest", ["collectionModify"], collectionModifyCallback);
+				this.registerOnPath("customArrayTest", ["collectionRemove"], collectionRemoveCallback);
 				this.registerOnProperty("singleRef", ["referenceInsert"], referenceInsertCallback);
 				this.registerOnProperty("singleRef", ["referenceModify"], referenceModifyCallback);
 				this.registerOnProperty("singleRef.name", ["modify"], referencedModifyCallback);

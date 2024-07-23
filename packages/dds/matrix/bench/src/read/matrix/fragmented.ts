@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { pointwise } from "../test";
-import { createFragmentedMatrix } from "../../util";
 import { getTestArgs } from "hotloop";
+import { createFragmentedMatrix } from "../../util";
+import { pointwise } from "../test";
 
 const { row, col, rowCount, colCount } = getTestArgs();
 

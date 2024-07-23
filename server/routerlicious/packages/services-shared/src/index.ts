@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { ConfigDumper } from "./configDumper";
 export {
 	containsPathTraversal,
 	defaultErrorMessage,
@@ -20,6 +21,7 @@ export {
 export { decodeHeader, RestLessServer } from "./restLessServer";
 export { run, runService } from "./runner";
 export { runnerHttpServerStop } from "./runnerUtils";
+export { SocketIoAdapterCreator } from "./socketIoServer";
 export { DocumentStorage } from "./storage";
 export {
 	BasicWebServerFactory,
@@ -34,4 +36,3 @@ export {
 } from "./webServer";
 export { WholeSummaryReadGitManager } from "./wholeSummaryReadGitManager";
 export { WholeSummaryWriteGitManager } from "./wholeSummaryWriteGitManager";
-export { ConfigDumper } from "./configDumper";

@@ -4,48 +4,48 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
-import { ISignalEnvelope } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IClient } from "@fluidframework/driver-definitions";
+import {
+	IDocumentDeltaConnection,
+	IDocumentServicePolicies,
+	IResolvedUrl,
+	type IAnyDriverError,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/driver-definitions/internal";
+import {
+	DeltaStreamConnectionForbiddenError,
+	NonRetryableError,
+} from "@fluidframework/driver-utils/internal";
+import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
+import {
+	HostStoragePolicy,
+	type IOdspError,
+	IOdspResolvedUrl,
+	ISocketStorageDiscovery,
+	InstrumentedStorageTokenFetcher,
+	OdspErrorTypes,
+	TokenFetchOptions,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	IFluidErrorBase,
 	MonitoringContext,
 	normalizeError,
-} from "@fluidframework/telemetry-utils";
-import {
-	IDocumentDeltaConnection,
-	IResolvedUrl,
-	IDocumentServicePolicies,
-} from "@fluidframework/driver-definitions";
-import {
-	DeltaStreamConnectionForbiddenError,
-	NonRetryableError,
-} from "@fluidframework/driver-utils";
-import {
-	IClient,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-} from "@fluidframework/protocol-definitions";
-import {
-	IOdspResolvedUrl,
-	TokenFetchOptions,
-	HostStoragePolicy,
-	InstrumentedStorageTokenFetcher,
-	ISocketStorageDiscovery,
-	OdspErrorTypes,
-	type IOdspError,
-} from "@fluidframework/odsp-driver-definitions";
-import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
+} from "@fluidframework/telemetry-utils/internal";
+
+import { policyLabelsUpdatesSignalType } from "./contracts.js";
+import { EpochTracker } from "./epochTracker.js";
 import { IOdspCache } from "./odspCache.js";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection.js";
 import {
+	TokenFetchOptionsEx,
 	getJoinSessionCacheKey,
 	getWithRetryForTokenRefresh,
-	TokenFetchOptionsEx,
 } from "./odspUtils.js";
-import { fetchJoinSession } from "./vroom.js";
-import { EpochTracker } from "./epochTracker.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { policyLabelsUpdatesSignalType } from "./contracts.js";
+import { fetchJoinSession } from "./vroom.js";
 
 /**
  * This OdspDelayLoadedDeltaStream is used by OdspDocumentService.ts to delay load the delta connection
@@ -70,7 +70,7 @@ export class OdspDelayLoadedDeltaStream {
 	/**
 	 * @param odspResolvedUrl - resolved url identifying document that will be managed by this service instance.
 	 * @param policies - Document service policies.
-	 * @param getStorageToken - function that can provide the storage token. This is is also referred to as
+	 * @param getAuthHeader - function that can provide the Authentication header value. This is is also referred to as
 	 * the "Vroom" token in SPO.
 	 * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also referred
 	 * to as the "Push" token in SPO. If undefined then websocket token is expected to be returned with joinSession
@@ -85,13 +85,13 @@ export class OdspDelayLoadedDeltaStream {
 	public constructor(
 		public readonly odspResolvedUrl: IOdspResolvedUrl,
 		public policies: IDocumentServicePolicies,
-		private readonly getStorageToken: InstrumentedStorageTokenFetcher,
+		private readonly getAuthHeader: InstrumentedStorageTokenFetcher,
 		private readonly getWebsocketToken:
 			| ((options: TokenFetchOptions) => Promise<string | null>)
 			| undefined,
 		private readonly mc: MonitoringContext,
 		private readonly cache: IOdspCache,
-		private readonly hostPolicy: HostStoragePolicy,
+		_hostPolicy: HostStoragePolicy,
 		private readonly epochTracker: EpochTracker,
 		private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
 		private readonly metadataUpdateHandler: (metadata: Record<string, string>) => void,
@@ -145,15 +145,11 @@ export class OdspDelayLoadedDeltaStream {
 			const requestWebsocketTokenFromJoinSession = this.getWebsocketToken === undefined;
 			const websocketTokenPromise = requestWebsocketTokenFromJoinSession
 				? // eslint-disable-next-line unicorn/no-null
-				  Promise.resolve(null)
-				: this.getWebsocketToken!(options);
+					Promise.resolve(null)
+				: this.getWebsocketToken(options);
 
 			const annotateAndRethrowConnectionError = (step: string) => (error: unknown) => {
-				throw this.annotateConnectionError(
-					error,
-					step,
-					!requestWebsocketTokenFromJoinSession,
-				);
+				throw this.annotateConnectionError(error, step, !requestWebsocketTokenFromJoinSession);
 			};
 
 			const joinSessionPromise = this.joinSession(
@@ -170,11 +166,9 @@ export class OdspDelayLoadedDeltaStream {
 			const finalWebsocketToken = websocketToken ?? websocketEndpoint.socketToken ?? null;
 			if (finalWebsocketToken === null) {
 				throw this.annotateConnectionError(
-					new NonRetryableError(
-						"Websocket token is null",
-						OdspErrorTypes.fetchTokenError,
-						{ driverVersion },
-					),
+					new NonRetryableError("Websocket token is null", OdspErrorTypes.fetchTokenError, {
+						driverVersion,
+					}),
 					"getWebsocketToken",
 					!requestWebsocketTokenFromJoinSession,
 				);
@@ -206,8 +200,7 @@ export class OdspDelayLoadedDeltaStream {
 					if (
 						typeof error === "object" &&
 						error !== null &&
-						(error as Partial<IOdspError>).errorType ===
-							OdspErrorTypes.authorizationError
+						(error as Partial<IOdspError>).errorType === OdspErrorTypes.authorizationError
 					) {
 						this.cache.sessionJoinCache.remove(this.joinSessionKey);
 					}
@@ -219,9 +212,19 @@ export class OdspDelayLoadedDeltaStream {
 				this.currentConnection = connection;
 				return connection;
 			} catch (error) {
-				this.clearJoinSessionTimer();
-				this.cache.sessionJoinCache.remove(this.joinSessionKey);
-
+				// Remove join session information from cache only if it is an error is from socket event connect_document_error.
+				// Otherwise keep it in cache so that this session can be re-used after disconnection.
+				// Also keeping an undefined check here to account for any unknown code path that is unable to stamp the value as in that case also
+				// it is safer to clear join session cache and start over.
+				if (
+					error &&
+					typeof error === "object" &&
+					((error as IAnyDriverError).scenarioName === "connect_document_error" ||
+						(error as IAnyDriverError).scenarioName === undefined)
+				) {
+					this.clearJoinSessionTimer();
+					this.cache.sessionJoinCache.remove(this.joinSessionKey);
+				}
 				const normalizedError = this.annotateConnectionError(
 					error,
 					"createDeltaConnection",
@@ -388,13 +391,12 @@ export class OdspDelayLoadedDeltaStream {
 				"opStream/joinSession",
 				"POST",
 				this.mc.logger,
-				this.getStorageToken,
+				this.getAuthHeader,
 				this.epochTracker,
 				requestSocketToken,
 				options,
 				disableJoinSessionRefresh,
 				isRefreshingJoinSession,
-				this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
 			);
 			// Emit event only in case it is fetched from the network.
 			if (joinSessionResponse.sensitivityLabelsInfo !== undefined) {
@@ -470,16 +472,18 @@ export class OdspDelayLoadedDeltaStream {
 	}
 
 	private emitMetaDataUpdateEvent(metadata: Record<string, string>): void {
-		const label = JSON.parse(metadata.sensitivityLabelsInfo) as {
+		// TODO Why are we non null asserting here?
+		const label = JSON.parse(metadata.sensitivityLabelsInfo!) as {
 			labels: unknown;
 			timestamp: number;
 		};
 		const time = label.timestamp;
-		assert(time > 0, "time should be positive");
+		assert(time > 0, 0x8e0 /* time should be positive */);
 		if (time > this.labelUpdateTimestamp) {
 			this.labelUpdateTimestamp = time;
 			this.metadataUpdateHandler({
-				sensitivityLabelsInfo: metadata.sensitivityLabelsInfo,
+				// TODO Why are we non null asserting here?
+				sensitivityLabelsInfo: metadata.sensitivityLabelsInfo!,
 			});
 		}
 	}

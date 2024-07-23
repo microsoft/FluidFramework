@@ -4,15 +4,15 @@
  */
 
 import { strict as assert } from "assert";
-import { IAgentScheduler, TaskSubscription } from "@fluidframework/agent-scheduler";
-import { IContainer } from "@fluidframework/container-definitions";
 
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IAgentScheduler, TaskSubscription } from "@fluidframework/agent-scheduler/internal";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	ITestObjectProvider,
 	createTestContainerRuntimeFactory,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
+} from "@fluidframework/test-utils/internal";
 
 // By default, the container loads in read mode.  However, pick() attempts silently fail if not in write
 // mode.  To overcome this and test pick(), we can register a fake task (which always tries to perform
@@ -38,7 +38,14 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 			IRuntimeFactory: new TestContainerRuntimeFactory(
 				agentSchedulerFactory.type,
 				new agentSchedulerFactory(),
-				{},
+				// Ideally we should use here filterRuntimeOptionsForVersion() same way we use it in
+				// getVersionedTestObjectProviderFromApis() / getCompatVersionedTestObjectProviderFromApis(),
+				// but it's too cumbersome, so just disable all options that can screw up compat matrix
+				{
+					compressionOptions: undefined,
+					enableGroupedBatching: false,
+					enableRuntimeIdCompressor: undefined,
+				},
 			),
 		};
 	};

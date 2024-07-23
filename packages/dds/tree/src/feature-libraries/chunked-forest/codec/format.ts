@@ -3,12 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { Static, Type } from "@sinclair/typebox";
-import { unionOptions } from "../../../codec/index.js";
-import { EncodedFieldBatchGeneric, IdentifierOrIndex, ShapeIndex, Count } from "./formatGeneric.js";
+import { type Static, Type } from "@sinclair/typebox";
 
-// TODO: Versions from here and schemaIndexFormat.ts should eventually be deduplicated into one version.
-export const version = 1.0;
+import { unionOptions } from "../../../codec/index.js";
+
+import {
+	Count,
+	EncodedFieldBatchGeneric,
+	IdentifierOrIndex,
+	ShapeIndex,
+} from "./formatGeneric.js";
+
+export const version = 1;
 
 // Compatible versions used for format/version validation.
 // TODO: A proper version update policy will need to be documented.
@@ -84,6 +90,16 @@ export const EncodedCounter = Type.Object(
 );
 
 /**
+ * Used in {@link EncodedValueShape} for special field kind handling.
+ */
+export enum SpecialField {
+	/**
+	 * Special case for Identifier field kind.
+	 */
+	Identifier = 0,
+}
+
+/**
  * Shape of a value on a node.
  *
  * Due to limitations of TypeBox and differences between JavaScript objects, TypeScript types and JSON,
@@ -96,10 +112,11 @@ export const EncodedCounter = Type.Object(
  * - `false` (when there is no value) OR
  * - `true, value` when there is a value.
  *
- * For a more compact encoding, there are three options for the shape:
+ * For a more compact encoding, there are 4 options for the shape:
  * - `true`: there is a value, and it will simply be encoded by putting it in the output buffer (so `value`).
  * - `false`: there is never a value, and it takes up no space in the output buffer.
  * - `[value]`: there is a value, and its always the same.
+ * - `SpecialField.Identifier`: special case for node identifier handling.
  * Takes up no space in the output buffer: the value comes from the shape arrays's content.
  * It is wrapped in an array to differentiate value shape types.
  *
@@ -111,6 +128,7 @@ export const EncodedCounter = Type.Object(
 export const EncodedValueShape = Type.Union([
 	Type.Boolean(),
 	Type.Array(Type.Any(), { minItems: 1, maxItems: 1 }),
+	Type.Enum(SpecialField),
 	// TODO: support delta encoding and/or special node identifier handling
 	// EncodedCounter,
 ]);

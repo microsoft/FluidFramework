@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { pointwise } from "../test";
-import { createContiguousMatrix } from "../../util";
 import { getTestArgs } from "hotloop";
+import { createContiguousMatrix } from "../../util";
+import { pointwise } from "../test";
 
 const { row, col, rowCount, colCount } = getTestArgs();
 

@@ -6,22 +6,30 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { IFluidLoadable, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	IFluidHandle,
+	IFluidLoadable,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,
 	mixinRequestHandler,
-} from "@fluidframework/datastore";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+} from "@fluidframework/datastore/internal";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { SharedString, ReferenceType, reservedRangeLabelsKey } from "@fluidframework/sequence";
+} from "@fluidframework/runtime-definitions/internal";
+import { create404Response } from "@fluidframework/runtime-utils/internal";
+import {
+	ReferenceType,
+	SharedString,
+	reservedRangeLabelsKey,
+} from "@fluidframework/sequence/internal";
 import { EditorView } from "prosemirror-view";
-import { create404Response } from "@fluidframework/runtime-utils";
-
 import React, { useEffect, useRef } from "react";
 
 import { nodeTypeKey } from "./fluidBridge.js";
@@ -52,7 +60,10 @@ function insertMarkers(
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  * @internal
  */
-export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvideRichTextEditor {
+export class ProseMirror
+	extends EventEmitter
+	implements IFluidLoadable, IProvideRichTextEditor
+{
 	public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
 		const collection = new ProseMirror(runtime);
 		await collection.initialize(existing);

@@ -2,7 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { NetworkError, INetworkErrorDetails } from "@fluidframework/server-services-client";
+
+import {
+	NetworkError,
+	INetworkErrorDetails,
+	isNetworkError,
+} from "@fluidframework/server-services-client";
 
 /**
  * @internal
@@ -71,6 +76,13 @@ export class TokenRevocationError extends NetworkError {
 			...super.toJSON(),
 		};
 	}
+}
+
+/**
+ * @internal
+ */
+export function isTokenRevokedError(error: unknown): error is TokenRevokedError {
+	return isNetworkError(error) && (error as TokenRevokedError).errorType === "TokenRevoked";
 }
 
 /**

@@ -3,12 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { EventEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import { IErrorEvent } from "@fluidframework/core-interfaces";
+import {
+	DataObject,
+	DataObjectFactory,
+	createDataObjectKind,
+} from "@fluidframework/aqueduct/internal";
+import { IErrorEvent, type IEventProvider } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import { Jsonable } from "@fluidframework/datastore-definitions/internal";
+import type {
+	IFluidDataStoreFactory,
+	NamedFluidDataStoreRegistryEntry,
+} from "@fluidframework/runtime-definitions/internal";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 // TODO:
 // add way to mark with current sequence number for ordering signals relative to ops
@@ -17,7 +26,11 @@ import { IErrorEvent } from "@fluidframework/core-interfaces";
 /**
  * @internal
  */
-export type SignalListener<T> = (clientId: string, local: boolean, payload: Jsonable<T>) => void;
+export type SignalListener<T> = (
+	clientId: string,
+	local: boolean,
+	payload: Jsonable<T>,
+) => void;
 
 /**
  * ISignaler defines an interface for working with signals that is similar to the more common
@@ -25,7 +38,7 @@ export type SignalListener<T> = (clientId: string, local: boolean, payload: Json
  * provides explicit methods around signal requests to other connected clients.
  * @internal
  */
-export interface ISignaler {
+export interface ISignaler extends IEventProvider<IErrorEvent> {
 	/**
 	 * Adds a listener for the specified signal.  It behaves in the same way as EventEmitter's `on`
 	 * method regarding multiple registrations, callback order, etc.
@@ -130,11 +143,10 @@ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignal
 }
 
 /**
- * DataObject implementation of ISignaler for fluid-static plug-and-play.  Allows fluid-static
- * users to get an ISignaler without a custom DO.
- * @internal
+ * DataObject implementation of ISignaler for fluid-static plug-and-play.
+ * Allows fluid-static users to get an ISignaler without a custom DataObject.
  */
-export class Signaler
+class SignalerClass
 	extends DataObject<{ Events: IErrorEvent }>
 	implements EventEmitter, ISignaler
 {
@@ -146,7 +158,12 @@ export class Signaler
 
 	public static readonly Name = "@fluid-example/signaler";
 
-	public static readonly factory = new DataObjectFactory(Signaler.Name, Signaler, [], {});
+	public static readonly factory = new DataObjectFactory(
+		SignalerClass.Name,
+		SignalerClass,
+		[],
+		{},
+	);
 
 	protected async hasInitialized() {
 		this._signaler = new InternalSignaler(this.runtime);
@@ -171,3 +188,16 @@ export class Signaler
 		this.signaler.submitSignal(signalName, payload);
 	}
 }
+
+/**
+ * Implementation of ISignaler for declarative API.
+ * @privateRemarks
+ * `factory` part of the type is included here to satisfy the usage in `@fluid-example/presence-tracker`, which is accessing encapsulated API surfaces from this.
+ * If this eventually gets promoted to `@public` and/or part of `fluid-framework`, that part of the type should be left as `@internal` or `@alpha`.
+ * @internal
+ */
+export const Signaler: {
+	readonly factory: IFluidDataStoreFactory & {
+		readonly registryEntry: NamedFluidDataStoreRegistryEntry;
+	};
+} & SharedObjectKind<ISignaler> = createDataObjectKind(SignalerClass);

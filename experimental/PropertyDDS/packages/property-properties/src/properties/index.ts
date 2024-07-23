@@ -12,10 +12,10 @@ import { EnumProperty } from "./enumProperty";
 import { Float32Property, Float64Property } from "./floatProperties";
 import { IndexedCollectionBaseProperty } from "./indexedCollectionBaseProperty";
 import {
+	Int8Property,
 	Int16Property,
 	Int32Property,
 	Int64Property,
-	Int8Property,
 	Uint64Property,
 } from "./intProperties";
 import { MapProperty } from "./mapProperty";
@@ -28,35 +28,35 @@ import { ReferenceMapProperty } from "./referenceMapProperty";
 import { ReferenceProperty } from "./referenceProperty";
 import { SetProperty } from "./setProperty";
 import { StringProperty } from "./stringProperty";
-import { Uint16Property, Uint32Property, Uint8Property } from "./uintProperties";
+import { Uint8Property, Uint16Property, Uint32Property } from "./uintProperties";
 import {
 	BoolArrayProperty,
 	Float32ArrayProperty,
 	Float64ArrayProperty,
+	Int8ArrayProperty,
 	Int16ArrayProperty,
 	Int32ArrayProperty,
 	Int64ArrayProperty,
-	Int8ArrayProperty,
 	StringArrayProperty,
+	Uint8ArrayProperty,
 	Uint16ArrayProperty,
 	Uint32ArrayProperty,
 	Uint64ArrayProperty,
-	Uint8ArrayProperty,
 	ValueArrayProperty,
 } from "./valueArrayProperty";
 import {
 	BoolMapProperty,
 	Float32MapProperty,
 	Float64MapProperty,
+	Int8MapProperty,
 	Int16MapProperty,
 	Int32MapProperty,
 	Int64MapProperty,
-	Int8MapProperty,
 	StringMapProperty,
+	Uint8MapProperty,
 	Uint16MapProperty,
 	Uint32MapProperty,
 	Uint64MapProperty,
-	Uint8MapProperty,
 	ValueMapProperty,
 } from "./valueMapProperty";
 import { ValueProperty } from "./valueProperty";

@@ -8,6 +8,8 @@ Test interface property
 testInterfaceProperty: number;
 ```
 
+**Type:** number
+
 ### Remarks {#testinterfaceproperty-remarks}
 
 Here are some remarks about the property

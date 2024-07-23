@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../core/index.js";
+import type { RevisionMetadataSource, RevisionTag, TaggedChange } from "../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { RebaseRevisionMetadata } from "../feature-libraries/modular-schema/index.js";
+import type { RebaseRevisionMetadata } from "../feature-libraries/modular-schema/index.js";
 
 /**
  * Given a state tree, constructs the sequence of edits which led to that state.
@@ -46,7 +46,7 @@ export function getSequentialStates<TContent, TChangeset>(
 export interface BoundFieldChangeRebaser<TChangeset> {
 	invert(change: TaggedChange<TChangeset>, isRollback: boolean): TChangeset;
 	rebase(
-		change: TChangeset,
+		change: TaggedChange<TChangeset>,
 		base: TaggedChange<TChangeset>,
 		metadata?: RebaseRevisionMetadata,
 	): TChangeset;
@@ -60,7 +60,7 @@ export interface BoundFieldChangeRebaser<TChangeset> {
 	 */
 	rebaseComposed(
 		metadata: RebaseRevisionMetadata,
-		change: TChangeset,
+		change: TaggedChange<TChangeset>,
 		...baseChanges: TaggedChange<TChangeset>[]
 	): TChangeset;
 	compose(
@@ -69,9 +69,15 @@ export interface BoundFieldChangeRebaser<TChangeset> {
 		metadata?: RevisionMetadataSource,
 	): TChangeset;
 	createEmpty(): TChangeset;
+	inlineRevision(change: TChangeset, revision: RevisionTag): TChangeset;
 	assertEqual?(
 		change1: TaggedChange<TChangeset> | undefined,
 		change2: TaggedChange<TChangeset> | undefined,
+	): void;
+	isEmpty?(change1: TChangeset): boolean;
+	assertChangesetsEquivalent?(
+		change1: TaggedChange<TChangeset>,
+		change2: TaggedChange<TChangeset>,
 	): void;
 }
 

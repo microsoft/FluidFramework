@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-import Collapsible from "react-collapsible";
 import { Button } from "@fluentui/react-components";
-import { ChevronUpFilled, ChevronDownFilled, TargetEditFilled } from "@fluentui/react-icons";
+import { ChevronDownFilled, ChevronUpFilled, TargetEditFilled } from "@fluentui/react-icons";
+import React from "react";
+
+import { Collapsible } from "./collapsible.cjs";
 import { IDataObjectGridItemEntry } from "./dataObjectRegistry.js";
-import "./toolbar.css";
 import { iconMap } from "./icons.js";
+import "./toolbar.css";
 
 interface IToolbarOption {
 	/**
@@ -25,9 +26,9 @@ interface IDataObjectGridToolbarAddItemPickerProps {
 	toolbarOptions: IToolbarOption[];
 }
 
-const DataObjectGridToolbarAddItemPicker: React.FC<IDataObjectGridToolbarAddItemPickerProps> = (
-	props: React.PropsWithChildren<IDataObjectGridToolbarAddItemPickerProps>,
-) => {
+const DataObjectGridToolbarAddItemPicker: React.FC<
+	IDataObjectGridToolbarAddItemPickerProps
+> = (props: React.PropsWithChildren<IDataObjectGridToolbarAddItemPickerProps>) => {
 	const { toolbarOptions } = props;
 	const [open, setOpen] = React.useState<boolean>(false);
 

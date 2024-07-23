@@ -9,8 +9,8 @@ import cors from "cors";
 import express from "express";
 import fetch from "node-fetch";
 
+import { ITaskData, assertValidTaskData } from "../model-interface/index.js";
 import { ClientManager } from "../utilities/index.js";
-import { assertValidTaskData, ITaskData } from "../model-interface/index.js";
 
 /**
  * Expected shape of the "broadcast-signal" message that is sent to the /broadcast-signal service endpoint.
@@ -352,9 +352,10 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			}
 
 			// Removes the mapping of the given container URL from all task id's
-			const emptyTaskListRegistrationIds = clientManager.removeAllClientTaskListRegistrations(
-				{ TenantId: tenantId, DocumentId: documentId },
-			);
+			const emptyTaskListRegistrationIds = clientManager.removeAllClientTaskListRegistrations({
+				TenantId: tenantId,
+				DocumentId: documentId,
+			});
 			// If there are any task list id's that no longer have any active client sessions mapped to them
 			// then we should deregister our webhook for that task list id.
 			for (const emptyExternalTaskListId of emptyTaskListRegistrationIds) {

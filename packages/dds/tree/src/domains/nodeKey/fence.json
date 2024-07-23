@@ -1,5 +1,0 @@
-{
-	"tags": ["node-key"],
-	"exports": ["index"],
-	"imports": ["util", "core", "feature-libraries"]
-}

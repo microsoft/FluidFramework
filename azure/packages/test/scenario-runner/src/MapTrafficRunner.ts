@@ -2,21 +2,21 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { SharedMap } from "@fluidframework/map/internal";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { SharedMap } from "@fluidframework/map";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { timeoutPromise } from "@fluidframework/test-utils";
-
-import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface";
+import { ScenarioRunner } from "./ScenarioRunner.js";
+import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface.js";
+import { getLogger } from "./logger.js";
 import {
 	createAzureClient,
 	delay,
 	getScenarioRunnerTelemetryEventMap,
 	loadInitialObjSchema,
-} from "./utils";
-import { getLogger } from "./logger";
-import { ScenarioRunner } from "./ScenarioRunner";
+} from "./utils.js";
 
 // This was originally namespaced as "DocLoader"
 const eventMap = getScenarioRunnerTelemetryEventMap("MapTraffic");
@@ -36,7 +36,7 @@ export class MapTrafficRunner extends ScenarioRunner<
 	MapTrafficRunConfig,
 	void
 > {
-	protected runnerClientFilePath: string = "./dist/mapTrafficRunnerClient.js";
+	protected runnerClientFilePath: string = "./lib/mapTrafficRunnerClient.js";
 
 	public static async execRun(runConfig: MapTrafficRunConfig): Promise<void> {
 		let schema;
@@ -55,8 +55,8 @@ export class MapTrafficRunner extends ScenarioRunner<
 		const ac =
 			runConfig.client ??
 			(await createAzureClient({
-				userId: `testUserId_${runConfig.childId}`,
-				userName: `testUserName_${runConfig.childId}`,
+				id: `testUserId_${runConfig.childId}`,
+				name: `testUserName_${runConfig.childId}`,
 				logger,
 			}));
 
@@ -70,7 +70,7 @@ export class MapTrafficRunner extends ScenarioRunner<
 			logger,
 			{ eventName: "ContainerLoad", clientId: runConfig.childId },
 			async (_event) => {
-				return ac.getContainer(runConfig.docId, schema);
+				return ac.getContainer(runConfig.docId, schema, "2");
 			},
 			{ start: true, end: true, cancel: "generic" },
 		);
@@ -105,7 +105,10 @@ export class MapTrafficRunner extends ScenarioRunner<
 		});
 	}
 
-	protected async runSyncCore(config: IRunConfig, info: { clientIndex: number }): Promise<void> {
+	protected async runSyncCore(
+		config: IRunConfig,
+		info: { clientIndex: number },
+	): Promise<void> {
 		return MapTrafficRunner.execRun(
 			this.buildScenarioRunConfig(config, { childId: info.clientIndex, isSync: true }),
 		);

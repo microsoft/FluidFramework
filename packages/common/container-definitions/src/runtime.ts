@@ -4,28 +4,30 @@
  */
 
 import type {
-	ITelemetryBaseLogger,
-	IDisposable,
 	FluidObject,
+	IDisposable,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-
-import type { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
 import type {
 	IClientDetails,
-	ISequencedDocumentMessage,
-	ISnapshotTree,
-	MessageType,
-	ISummaryTree,
-	IVersion,
-	IDocumentMessage,
 	IQuorumClients,
+	ISummaryTree,
+} from "@fluidframework/driver-definitions";
+import type {
+	IDocumentStorageService,
+	ISnapshot,
+	IDocumentMessage,
+	ISnapshotTree,
 	ISummaryContent,
-} from "@fluidframework/protocol-definitions";
+	IVersion,
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager } from "./deltas.js";
 import type { ICriticalContainerError } from "./error.js";
 import type { ILoader } from "./loader.js";
-import type { IFluidCodeDetails } from "./fluidPackage.js";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
@@ -54,6 +56,7 @@ export enum AttachState {
 /**
  * The IRuntime represents an instantiation of a code package within a Container.
  * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.
+ * @legacy
  * @alpha
  */
 export interface IRuntime extends IDisposable {
@@ -111,19 +114,28 @@ export interface IRuntime extends IDisposable {
 
 /**
  * Payload type for IContainerContext.submitBatchFn()
+ * @legacy
  * @alpha
  */
 export interface IBatchMessage {
 	contents?: string;
-	metadata: Record<string, unknown> | undefined;
+	metadata?: Record<string, unknown>;
 	compression?: string;
 	referenceSequenceNumber?: number;
 }
 
 /**
  * IContainerContext is fundamentally just the set of things that an IRuntimeFactory (and IRuntime) will consume from the
- * loader layer.  It gets passed into the IRuntimeFactory.instantiateRuntime call.  Only include members on this interface
- * if you intend them to be consumed/called from the runtime layer.
+ * loader layer.
+ * It gets passed into the {@link (IRuntimeFactory:interface).instantiateRuntime} call.
+ *
+ * @privateremarks
+ * Only include members on this interface if you intend them to be consumed/called from the runtime layer.
+ *
+ * TODO: once `@alpha` tag is removed, `unknown` should be removed from submitSignalFn.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
+ *
+ * @legacy
  * @alpha
  */
 export interface IContainerContext {
@@ -143,8 +155,14 @@ export interface IContainerContext {
 	/**
 	 * @deprecated Please use submitBatchFn & submitSummaryFn
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
+	readonly submitFn: (
+		type: MessageType,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		contents: any,
+		batch: boolean,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		appData?: any,
+	) => number;
 	/**
 	 * @returns clientSequenceNumber of last message in a batch
 	 */
@@ -153,22 +171,12 @@ export interface IContainerContext {
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
-	// TODO: use `unknown` instead (API breaking)
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	readonly submitSignalFn: (contents: any, targetClientId?: string) => void;
+	readonly submitSignalFn: (contents: unknown, targetClientId?: string) => void;
 	readonly disposeFn?: (error?: ICriticalContainerError) => void;
 	readonly closeFn: (error?: ICriticalContainerError) => void;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly quorum: IQuorumClients;
-	/**
-	 * @deprecated This method is provided as a migration tool for customers currently reading the code details
-	 * from within the Container by directly accessing the Quorum proposals.  The code details should not be accessed
-	 * from within the Container as this requires coupling between the container contents and the code loader.
-	 * Direct access to Quorum proposals will be removed in an upcoming release, and in a further future release this
-	 * migration tool will be removed.
-	 */
-	getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
-	readonly audience: IAudience | undefined;
+	readonly audience: IAudience;
 	readonly loader: ILoader;
 	// The logger implementation, which would support tagged events, should be provided by the loader.
 	readonly taggedLogger: ITelemetryBaseLogger;
@@ -217,11 +225,13 @@ export interface IContainerContext {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IProvideRuntimeFactory {
@@ -233,6 +243,7 @@ export interface IProvideRuntimeFactory {
  *
  * Provides the entry point for the ContainerContext to load the proper IRuntime
  * to start up the running instance of the Container.
+ * @legacy
  * @alpha
  */
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
@@ -248,6 +259,7 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 
 /**
  * Defines list of properties expected for getPendingLocalState
+ * @legacy
  * @alpha
  */
 export interface IGetPendingLocalStateProps {
@@ -265,4 +277,15 @@ export interface IGetPendingLocalStateProps {
 	 * be preserved and collected.
 	 */
 	readonly stopBlobAttachingSignal?: AbortSignal;
+
+	/**
+	 * Date to be used as the starting time of a session. This date is updated in case we refresh the
+	 * base snapshot since we won't be referencing ops older than the new snapshot.
+	 */
+	readonly sessionExpiryTimerStarted?: number;
+
+	/**
+	 * Snapshot sequence number. It will help the runtime to know which ops should still be stashed.
+	 */
+	readonly snapshotSequenceNumber?: number;
 }

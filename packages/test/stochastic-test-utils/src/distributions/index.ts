@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { integer } from "./integer";
-export { normal } from "./normal";
-export { real } from "./real";
+export { integer } from "./integer.js";
+export { normal } from "./normal.js";
+export { real } from "./real.js";

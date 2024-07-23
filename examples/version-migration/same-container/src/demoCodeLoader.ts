@@ -3,12 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ICodeDetailsLoader,
-	IFluidCodeDetails,
-	IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
-
 /*
  * For this demo, the two "packages" are imported from the local directory.  In a more realistic scenario, these are
  * probably either:
@@ -17,6 +11,12 @@ import type {
  *        "inventory-list-2": "npm:inventory-list@^2.0.0"
  * 2. Dynamically fetched from some CDN at runtime and not included as part of the bundle at all.
  */
+import type {
+	ICodeDetailsLoader,
+	IFluidCodeDetails,
+	IFluidModuleWithDetails,
+} from "@fluidframework/container-definitions/internal";
+
 import { InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1 } from "./modelVersion1/index.js";
 import { InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory2 } from "./modelVersion2/index.js";
 

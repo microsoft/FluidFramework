@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { BaseProxifiedProperty } from "@fluid-experimental/property-proxy";
 import { BaseProperty } from "@fluid-experimental/property-properties";
-
+import { BaseProxifiedProperty } from "@fluid-experimental/property-proxy";
 import { BaseTableProps, SortOrder } from "react-base-table";
-import { IRepoExpiryGetter, IRepoExpirySetter } from "./CommonTypes";
+
+import { IRepoExpiryGetter, IRepoExpirySetter } from "./CommonTypes.js";
 
 /**
  * @internal
@@ -193,7 +193,13 @@ export interface IInspectorTableProps<T extends IRowData<T> = any>
 	 * A callback to override the child of a row,
 	 * defaults to the hierarchical child of the property the row visualizes.
 	 */
-	childGetter?: (child: any, name: string, parent: any, typeid: string, context: string) => any;
+	childGetter?: (
+		child: any,
+		name: string,
+		parent: any,
+		typeid: string,
+		context: string,
+	) => any;
 
 	/**
 	 * Current Urn
@@ -224,7 +230,10 @@ export interface IInspectorTableProps<T extends IRowData<T> = any>
 	/**
 	 * A callback that is executed to compute the name and the options available for the data creation.
 	 */
-	dataCreationOptionGenerationHandler?: (rowData: T, nameOnly: boolean) => IDataCreationOptions;
+	dataCreationOptionGenerationHandler?: (
+		rowData: T,
+		nameOnly: boolean,
+	) => IDataCreationOptions;
 
 	/**
 	 * A handler to delete (expire) a repository.

@@ -3,14 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IContainer } from "@fluidframework/container-definitions";
-import { Signaler } from "@fluid-experimental/data-objects";
-import { createServiceAudience } from "@fluidframework/fluid-static";
+import {
+	ModelContainerRuntimeFactory,
+	getDataStoreEntryPoint,
+} from "@fluid-example/example-utils";
+import { Signaler, ISignaler } from "@fluid-experimental/data-objects";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { createServiceAudience } from "@fluidframework/fluid-static/internal";
+
+import { createMockServiceMember } from "./Audience.js";
 import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
-import { createMockServiceMember } from "./Audience.js";
 
 export interface ITrackerAppModel {
 	readonly focusTracker: FocusTracker;
@@ -42,7 +46,7 @@ export class TrackerContainerRuntimeFactory extends ModelContainerRuntimeFactory
 	}
 
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		const signaler = await getDataStoreEntryPoint<Signaler>(runtime, signalerId);
+		const signaler = await getDataStoreEntryPoint<ISignaler>(runtime, signalerId);
 
 		const audience = createServiceAudience({
 			container,

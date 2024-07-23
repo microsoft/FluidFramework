@@ -2,16 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import { deflate, inflate } from "pako";
-import { compress, decompress } from "lz4js";
+
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IChannelAttributes,
+	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
+import { compress, decompress } from "lz4js";
+import { deflate, inflate } from "pako";
+
 import {
 	IPropertyTreeConfig,
 	IPropertyTreeMessage,
@@ -19,8 +22,8 @@ import {
 	ISnapshotSummary,
 	SharedPropertyTree,
 	SharedPropertyTreeOptions,
-} from "./propertyTree";
-import { DeflatedPropertyTree, LZ4PropertyTree } from "./propertyTreeExt";
+} from "./propertyTree.js";
+import { DeflatedPropertyTree, LZ4PropertyTree } from "./propertyTreeExt.js";
 
 /**
  * @internal
@@ -48,9 +51,7 @@ export abstract class CompressedPropertyTreeFactory implements IChannelFactory {
 				decode: (transferChange: IPropertyTreeMessage) => {
 					// eslint-disable-next-line @typescript-eslint/dot-notation
 					if (transferChange["isZipped"]) {
-						const zipped = new Uint8Array(
-							stringToBuffer(transferChange.changeSet, "base64"),
-						);
+						const zipped = new Uint8Array(stringToBuffer(transferChange.changeSet, "base64"));
 						const unzipped = decodeFn(zipped);
 						const changeSetStr = new TextDecoder().decode(unzipped);
 						transferChange.changeSet = JSON.parse(changeSetStr);

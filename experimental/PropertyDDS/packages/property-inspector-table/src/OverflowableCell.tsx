@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { makeStyles, Tooltip } from "@material-ui/core";
+import { Tooltip, makeStyles } from "@material-ui/core";
 import * as React from "react";
 
 const useStyles = makeStyles(
@@ -17,7 +17,8 @@ const useStyles = makeStyles(
 			overflow: "hidden",
 			textOverflow: "ellipsis",
 			whiteSpace: "nowrap",
-			width: "1px" /* flexGrow overrides the width. Need this to not exceed the vailable space */,
+			width:
+				"1px" /* flexGrow overrides the width. Need this to not exceed the vailable space */,
 		},
 	},
 	{ name: "OverflowableCell" },

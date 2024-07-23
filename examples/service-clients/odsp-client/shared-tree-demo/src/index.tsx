@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidContainer, ITree } from "fluid-framework";
 import React from "react";
 import ReactDOM from "react-dom";
-import { ITree, IFluidContainer } from "fluid-framework";
-import { loadFluidData, containerSchema, createFluidData } from "./fluid.js";
-import { treeConfiguration, Letter } from "./schema.js";
+
+import { containerSchema, createFluidData, loadFluidData } from "./fluid.js";
 // eslint-disable-next-line import/no-unassigned-import
 import "./output.css";
 import { ReactApp } from "./reactApp.js";
+import { Letter, treeConfiguration } from "./schema.js";
 
 async function start(): Promise<void> {
 	const app = document.createElement("div");
@@ -30,8 +31,14 @@ async function start(): Promise<void> {
 		({ container } = await loadFluidData(itemId, containerSchema));
 	}
 
-	// Initialize the SharedTree Data Structure
-	const appData = (container.initialObjects.appData as ITree).schematize(treeConfiguration);
+	const tree = container.initialObjects.appData as ITree;
+	const appData = tree.viewWith(treeConfiguration);
+	if (createNew) {
+		appData.initialize({
+			letters: [],
+			word: [],
+		});
+	}
 
 	const cellSize = { x: 32, y: 32 };
 	const canvasSize = { x: 10, y: 10 }; // characters across and down

@@ -5,7 +5,13 @@
 
 import { RequestHandler, Request, Response, NextFunction } from "express";
 import safeStringify from "json-stringify-safe";
-import { IThrottler, ILogger, ThrottlingError } from "@fluidframework/server-services-core";
+import {
+	IThrottler,
+	ILogger,
+	ThrottlingError,
+	IUsageData,
+	httpUsageStorageId,
+} from "@fluidframework/server-services-core";
 import {
 	CommonProperties,
 	Lumberjack,
@@ -55,6 +61,10 @@ const getThrottleId = (req: Request, throttleOptions: IThrottleMiddlewareOptions
 	return prefix ?? throttleOptions.throttleIdSuffix ?? "-";
 };
 
+const getHttpUsageId = (throttleId: string) => {
+	return `${throttleId}_${httpUsageStorageId}`;
+};
+
 function noopMiddleware(req: Request, res: Response, next: NextFunction) {
 	next();
 }
@@ -67,6 +77,7 @@ export function throttle(
 	throttler: IThrottler,
 	logger?: ILogger,
 	options?: Partial<IThrottleMiddlewareOptions>,
+	isHttpUsageCountingEnabled: boolean = false,
 ): RequestHandler {
 	const throttleOptions = {
 		...defaultThrottleMiddlewareOptions,
@@ -94,9 +105,21 @@ export function throttle(
 
 	return (req, res, next) => {
 		const throttleId = getThrottleId(req, throttleOptions);
+		let usageId: string | undefined;
+		let httpUsageData: IUsageData | undefined;
+
+		if (isHttpUsageCountingEnabled) {
+			usageId = getHttpUsageId(throttleId);
+			// Usage data for http requests, implementing a simple counter that'll just count the number of requests
+			httpUsageData = {
+				value: 0,
+				tenantId: "",
+				documentId: "",
+			};
+		}
 
 		try {
-			throttler.incrementCount(throttleId, throttleOptions.weight);
+			throttler.incrementCount(throttleId, throttleOptions.weight, usageId, httpUsageData);
 		} catch (e) {
 			if (e instanceof ThrottlingError) {
 				return res.status(e.code).json(e);

@@ -1,13 +1,16 @@
 ## testClassGetterProperty
 
-Test class getter-only property
+Test class property with both a getter and a setter.
 
 ### Signature {#testclassgetterproperty-signature}
 
 ```typescript
 /** @virtual */
 get testClassGetterProperty(): number;
+set testClassGetterProperty(newValue: number);
 ```
+
+**Type:** number
 
 ### Remarks {#testclassgetterproperty-remarks}
 

@@ -9,14 +9,13 @@
 // API-Extractor issue: https://github.com/microsoft/rushstack/issues/4507
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 import { ValueSchema } from "../../core/index.js";
-
 import {
-	FlexAllowedTypes,
 	FieldKinds,
+	type FlexAllowedTypes,
 	FlexFieldSchema,
 	SchemaBuilderInternal,
 } from "../../feature-libraries/index.js";
-import { requireAssignableTo } from "../../util/index.js";
+import type { requireAssignableTo } from "../../util/index.js";
 import { leaf } from "../leafDomain.js";
 
 const builder = new SchemaBuilderInternal({

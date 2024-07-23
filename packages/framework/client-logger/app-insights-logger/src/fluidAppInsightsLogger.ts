@@ -3,13 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { type ApplicationInsights } from "@microsoft/applicationinsights-web";
-import {
-	type ITelemetryBaseEvent,
-	type ITelemetryBaseLogger,
+import type {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
+import type { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import structuredClone from "@ungap/structured-clone";
+
+/**
+ * The categories FF uses when instrumenting the code.
+ *
+ * generic - Informational log event
+ *
+ * error - Error log event, ideally 0 of these are logged during a session
+ *
+ * performance - Includes duration, and often has _start, _end, or _cancel suffixes for activity tracking
+ * @beta
+ */
+export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 /**
  * The configuration object for creating the logger via {@link createLogger}.
@@ -115,7 +126,10 @@ export interface NamespaceFilter {
  * ```
  * @beta
  */
-export type TelemetryFilter = CategoryFilter | NamespaceFilter | (CategoryFilter & NamespaceFilter);
+export type TelemetryFilter =
+	| CategoryFilter
+	| NamespaceFilter
+	| (CategoryFilter & NamespaceFilter);
 
 /**
  * An implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
@@ -143,7 +157,7 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 						mode: "exclusive",
 						filters: [],
 					},
-			  };
+				};
 
 		if (this.config.filtering.filters) {
 			this.validateFilters(this.config.filtering.filters);

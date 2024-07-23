@@ -5,14 +5,15 @@
 
 import type { ISameContainerMigrationTool } from "@fluid-example/example-utils";
 import {
-	SameContainerMigrationToolInstantiationFactory,
 	ModelContainerRuntimeFactory,
+	SameContainerMigrationToolInstantiationFactory,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
-import type { IContainer } from "@fluidframework/container-definitions";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 
 import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
+
 import { InventoryListAppModel } from "./appModel.js";
 import { InventoryListInstantiationFactory } from "./inventoryList.js";
 
@@ -56,7 +57,9 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const inventoryList = await runtime.createDataStore(InventoryListInstantiationFactory.type);
+		const inventoryList = await runtime.createDataStore(
+			InventoryListInstantiationFactory.type,
+		);
 		await inventoryList.trySetAlias(inventoryListId);
 		const migrationTool = await runtime.createDataStore(
 			SameContainerMigrationToolInstantiationFactory.type,

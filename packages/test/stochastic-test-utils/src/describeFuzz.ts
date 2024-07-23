@@ -13,7 +13,7 @@ function createSuite<TArgs extends StressSuiteArguments>(
 		if (args.isStress) {
 			// Stress runs may have tests which are expected to take longer amounts of time.
 			// Don't override the timeout if it's already set to a higher value, though.
-			this.timeout(Math.max(10_000, this.timeout()));
+			this.timeout(this.timeout() === 0 ? 0 : Math.max(10_000, this.timeout()));
 		}
 		tests.bind(this)(args);
 	};
@@ -95,7 +95,8 @@ export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFu
 			? Number.parseInt(process.env.FUZZ_TEST_COUNT, 10)
 			: undefined;
 	const testCount = testCountFromEnv ?? options.defaultTestCount;
-	const isStress = process.env?.FUZZ_STRESS_RUN !== undefined && !!process.env?.FUZZ_STRESS_RUN;
+	const isStress =
+		process.env?.FUZZ_STRESS_RUN !== undefined && !!process.env?.FUZZ_STRESS_RUN;
 	const args = { testCount, isStress };
 	const d: DescribeFuzz = (name, tests) =>
 		(isStress ? describe.only : describe)(name, createSuite(tests, args));

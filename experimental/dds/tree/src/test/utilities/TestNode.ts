@@ -4,12 +4,14 @@
  */
 
 import { BuildTreeNode } from '../../ChangeTypes.js';
-import { memoizeGetter, fail, setPropertyIfDefined, identity } from '../../Common.js';
+import { fail, identity, memoizeGetter, setPropertyIfDefined } from '../../Common.js';
 import { convertTreeNodes } from '../../EditUtilities.js';
 import { convertNodeDataIds } from '../../IdConversion.js';
 import { Definition, NodeId, OpSpaceNodeId, SessionId, StableNodeId, TraitLabel } from '../../Identifiers.js';
 import { initialTree } from '../../InitialTree.js';
 import { NodeIdContext, NodeIdConverter, NodeIdNormalizer } from '../../NodeIdUtilities.js';
+import { RevisionView } from '../../RevisionView.js';
+import { TraitLocation } from '../../TreeView.js';
 import {
 	BuildNodeInternal,
 	ChangeNode,
@@ -19,8 +21,6 @@ import {
 	TraitMap,
 	TreeNode,
 } from '../../persisted-types/index.js';
-import { RevisionView } from '../../RevisionView.js';
-import { TraitLocation } from '../../TreeView.js';
 
 /** A legacy format of a `TestNode` */
 export type TestNode_0_0_2 = TreeNode<TestNode_0_0_2, StableNodeId>;
@@ -278,9 +278,7 @@ export class RefreshingTestTree<T extends TestTree> implements TestTree {
 	private get testTree(): T {
 		return (
 			this._testTree ??
-			fail(
-				'RefreshingTestTree should be created within a describe() block and should only be read within it() blocks'
-			)
+			fail('RefreshingTestTree should be created within a describe() block and should only be read within it() blocks')
 		);
 	}
 

@@ -4,6 +4,7 @@
  */
 
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
+
 import { DiceRollerContainerRuntimeFactory, IMountableViewAppModel } from "./containerCode.js";
 
 /**

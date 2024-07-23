@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert, expect } from "chai";
 import * as semver from "semver";
 
-import { getIsLatest, getSimpleVersion } from "../versions";
 import { getVersionRange } from "../internalVersionScheme";
+import { getIsLatest, getSimpleVersion } from "../versions";
 
 // Deliberately not sorted here; highest version is 0.59.3000
 const test_tags = [

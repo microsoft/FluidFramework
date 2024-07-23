@@ -4,23 +4,27 @@
  */
 
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { getW3CData, validateMessages } from "@fluidframework/driver-base";
+import { getW3CData, validateMessages } from "@fluidframework/driver-base/internal";
 import {
 	IDeltaStorageService,
-	IDocumentDeltaStorageService,
 	IDeltasFetchResult,
+	IDocumentDeltaStorageService,
 	IStream,
-} from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import {
+	emptyMessageStream,
 	readAndParse,
 	requestOps,
-	emptyMessageStream,
 	streamObserver,
-} from "@fluidframework/driver-utils";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { DocumentStorageService } from "./documentStorageService";
-import { RestWrapper } from "./restWrapperBase";
+} from "@fluidframework/driver-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { DocumentStorageService } from "./documentStorageService.js";
+import { RestWrapper } from "./restWrapperBase.js";
 
 /**
  * Maximum number of ops we can fetch at a time. This should be kept at 2k, as
@@ -41,9 +45,11 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 		private readonly deltaStorageService: IDeltaStorageService,
 		private readonly documentStorageService: DocumentStorageService,
 		private readonly logger: ITelemetryLoggerExt,
-	) {}
+	) {
+		this.logtailSha = documentStorageService.logTailSha;
+	}
 
-	private logtailSha: string | undefined = this.documentStorageService.logTailSha;
+	private logtailSha: string | undefined;
 	private snapshotOps: ISequencedDocumentMessage[] | undefined;
 
 	fetchMessages(
@@ -68,7 +74,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 				? await readAndParse<ISequencedDocumentMessage[]>(
 						this.documentStorageService,
 						this.logtailSha,
-				  )
+					)
 				: [];
 			this.logtailSha = undefined;
 
@@ -77,7 +83,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 					(op) => op.sequenceNumber >= from && op.sequenceNumber < to,
 				);
 				validateMessages("snapshotOps", messages, from, this.logger, false /* strict */);
-				if (messages.length > 0 && messages[0].sequenceNumber === from) {
+				if (messages.length > 0 && messages[0] && messages[0].sequenceNumber === from) {
 					this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
 					opsFromSnapshot += messages.length;
 					return { messages, partialResult: true };
@@ -157,8 +163,7 @@ export class DeltaStorageService implements IDeltaStorageService {
 					length: response.content.length,
 					details: JSON.stringify({
 						firstOpSeqNumber: response.content[0]?.sequenceNumber,
-						lastOpSeqNumber:
-							response.content[response.content.length - 1]?.sequenceNumber,
+						lastOpSeqNumber: response.content[response.content.length - 1]?.sequenceNumber,
 					}),
 					...response.propsToLog,
 					...getW3CData(response.requestUrl, "xmlhttprequest"),

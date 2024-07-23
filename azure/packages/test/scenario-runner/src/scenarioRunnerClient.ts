@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ChildRunner, ContainerFactorySchema } from "./interface";
-import { loggerP } from "./logger";
-import { DocCreatorRunner, DocCreatorRunConfig } from "./DocCreatorRunner";
-import { commanderParseIntArg, getCommander } from "./utils";
-import { DocLoaderRunConfig, DocLoaderRunner } from "./DocLoaderRunner";
-import { MapTrafficRunConfig, MapTrafficRunner } from "./MapTrafficRunner";
-import { NestedMapRunConfig, NestedMapRunner } from "./NestedMapRunner";
+
+import { DocCreatorRunConfig, DocCreatorRunner } from "./DocCreatorRunner.js";
+import { DocLoaderRunConfig, DocLoaderRunner } from "./DocLoaderRunner.js";
+import { MapTrafficRunConfig, MapTrafficRunner } from "./MapTrafficRunner.js";
+import { NestedMapRunConfig, NestedMapRunner } from "./NestedMapRunner.js";
+import { ChildRunner, ContainerFactorySchema } from "./interface.js";
+import { loggerP } from "./logger.js";
+import { commanderParseIntArg, getCommander } from "./utils.js";
 
 const scenarioRunnerName = process.argv[2];
 const scenarioRunners: Record<string, ChildRunner> = {
@@ -77,10 +78,7 @@ const scenarioRunners: Record<string, ChildRunner> = {
 		program
 			.requiredOption("-s, --schema <schema>", "Container Schema")
 			.requiredOption("-n, --numMaps <numMaps>", "Number of nested maps")
-			.requiredOption(
-				"-k, --initialMapKey <initialMapKey>",
-				"Key of initial map to nest from",
-			)
+			.requiredOption("-k, --initialMapKey <initialMapKey>", "Key of initial map to nest from")
 			.option("-d, --docId <docId>", "Document id")
 			.option(
 				"-wr, --writeRatePerMin <writeRatePerMin>",

@@ -9,7 +9,7 @@
 // These are primarily internal utilities. We want to export everything.
 /* eslint-disable no-restricted-syntax */
 
-export * from "./Helpers";
-export * from "./TableHelpers";
+export * from "./Helpers.js";
+export * from "./TableHelpers.js";
 
 /* eslint-enable no-restricted-syntax */

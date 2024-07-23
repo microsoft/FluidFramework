@@ -2,19 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Package } from "@fluidframework/build-tools";
-import { VersionBumpType } from "@fluid-tools/version-tools";
-import { Flags } from "@oclif/core";
-import chalk from "chalk";
-import humanId from "human-id";
+
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
+import { VersionBumpType } from "@fluid-tools/version-tools";
+import { Package } from "@fluidframework/build-tools";
+import { Flags } from "@oclif/core";
+import { PackageName } from "@rushstack/node-core-library";
+import chalk from "chalk";
+import { humanId } from "human-id";
 import { format as prettier } from "prettier";
 import prompts from "prompts";
 
-import { BaseCommand } from "../../base";
-import { Repository, getDefaultBumpTypeForBranch } from "../../library";
-import { releaseGroupFlag } from "../../flags";
+import { releaseGroupFlag } from "../../flags.js";
+import { BaseCommand, Repository, getDefaultBumpTypeForBranch } from "../../library/index.js";
 
 /**
  * If more than this number of packages are changed relative to the selected branch, the user will be prompted to select
@@ -353,7 +354,7 @@ async function createChangesetContent(
 }
 
 function isIncludedByDefault(pkg: Package): boolean {
-	if (pkg.packageJson.private === true || excludedScopes.has(pkg.scope)) {
+	if (pkg.packageJson.private === true || excludedScopes.has(PackageName.getScope(pkg.name))) {
 		return false;
 	}
 
@@ -382,5 +383,9 @@ function packageComparer(a: Package, b: Package, changedPackages: Package[]): nu
 	}
 
 	// Otherwise, compare by name.
-	return a.nameUnscoped < b.nameUnscoped ? -1 : a.name === b.name ? 0 : 1;
+	return PackageName.getUnscopedName(a.name) < PackageName.getUnscopedName(b.name)
+		? -1
+		: a.name === b.name
+			? 0
+			: 1;
 }

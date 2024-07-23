@@ -10,7 +10,6 @@ import {
 	ICommittedProposal,
 } from "@fluidframework/protocol-definitions";
 import { IGitCache, ISession } from "@fluidframework/server-services-client";
-import { LambdaName } from "./lambdas";
 import { INackMessagesControlMessageContents, NackMessagesType } from "./messages";
 
 /**
@@ -112,9 +111,6 @@ export interface IDeliState {
 		| INackMessagesControlMessageContents
 		| undefined;
 
-	// List of successfully started lambdas at session start
-	successfullyStartedLambdas: LambdaName[];
-
 	// Checkpoint timestamp in UTC epoch
 	checkpointTimestamp: number | undefined;
 }
@@ -148,6 +144,12 @@ export interface IScribe {
 
 	// Is document corrupted?
 	isCorrupt: boolean;
+
+	// Last summary sequence number
+	protocolHead: number | undefined;
+
+	// Time checkpoint was created
+	checkpointTimestamp: number | undefined;
 }
 
 /**

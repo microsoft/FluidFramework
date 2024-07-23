@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { SemverMap, UpgradeType } from "../internal/semvermap";
-import { getLocalOrRemoteSchema } from "./internalUtils";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
-import { DataBindingDefinition } from "./dataBinder";
 import { SharedPropertyTree } from "@fluid-experimental/property-dds";
+import { SemverMap, UpgradeType } from "../internal/semvermap.js";
+import { DataBindingDefinition } from "./dataBinder.js";
+import { getLocalOrRemoteSchema } from "./internalUtils.js";
 
 /**
  * A DataBindingRegistry allows one to register and create representations.  The type of the representation is

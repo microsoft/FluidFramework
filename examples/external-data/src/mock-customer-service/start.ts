@@ -6,6 +6,7 @@
 import { customerServicePort } from "../mock-customer-service-interface/index.js";
 import { externalDataServicePort } from "../mock-external-data-service-interface/index.js";
 import { fluidServicePort } from "../utilities/index.js";
+
 import { initializeCustomerService } from "./service.js";
 
 /**

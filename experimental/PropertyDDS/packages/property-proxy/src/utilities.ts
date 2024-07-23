@@ -2,26 +2,27 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable no-param-reassign */
 import {
-	PropertyFactory,
 	ArrayProperty,
 	BaseProperty,
-	ReferenceProperty,
+	ContainerProperty,
+	EnumArrayProperty,
+	EnumProperty,
+	MapProperty,
+	PropertyFactory,
 	ReferenceArrayProperty,
 	ReferenceMapProperty,
-	ValueProperty,
-	ContainerProperty,
-	EnumProperty,
-	EnumArrayProperty,
-	MapProperty,
+	ReferenceProperty,
 	SetProperty,
+	ValueProperty,
 } from "@fluid-experimental/property-properties";
 
-import { ComponentMap } from "./componentMap";
-import { PropertyProxy } from "./propertyProxy";
-import { PropertyProxyErrors } from "./errors";
-import { NonPrimitiveTypes, ReferenceType } from "./interfaces";
+import { ComponentMap } from "./componentMap.js";
+import { PropertyProxyErrors } from "./errors.js";
+import { NonPrimitiveTypes, ReferenceType } from "./interfaces.js";
+import { PropertyProxy } from "./propertyProxy.js";
 
 // TODO(marcus): this function should be removed in the future and a safer
 // way to determine the corrent types is useed
@@ -105,10 +106,7 @@ export namespace Utilities {
 						const idx = parseInt(idxString.substr(1).slice(0, -1), 10);
 						const removed = property.remove(idx);
 						// Put in a dummy to keep the original array length, will be overwritten anyway
-						property.insert(
-							idx,
-							PropertyFactory.create(property.getTypeid(), "single"),
-						);
+						property.insert(idx, PropertyFactory.create(property.getTypeid(), "single"));
 						return removed;
 					} else {
 						return element;
@@ -128,8 +126,7 @@ export namespace Utilities {
 				throw new Error(PropertyProxyErrors.ITERABLE_INSERTION);
 			}
 			if (property.getContext() === "array" || property.getContext() === "map") {
-				return property.isPrimitiveType() ||
-					property.getFullTypeid().includes("array<enum<")
+				return property.isPrimitiveType() || property.getFullTypeid().includes("array<enum<")
 					? element
 					: PropertyFactory.create(property.getTypeid(), "single", element);
 			} else {

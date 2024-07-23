@@ -70,9 +70,20 @@ if (!Lumberjack.isSetupCompleted()) {
 describe("Routerlicious", () => {
 	describe("Alfred", () => {
 		describe("API", async () => {
+			const appTenant1: IAlfredTenant = {
+				id: "default-tenant-1",
+				key: "tenant-key-1",
+			};
+			const appTenant2: IAlfredTenant = {
+				id: "default-tenant-2",
+				key: "tenant-key-2",
+			};
+			const defaultAppTenants: IAlfredTenant[] = [appTenant1, appTenant2];
 			const defaultTenantManager = new TestTenantManager();
 			const document1 = {
 				_id: "doc-1",
+				tenantId: appTenant1.id,
+				documentId: "doc-1",
 				content: "Hello, World!",
 			};
 			const defaultDbFactory = new TestDbFactory({
@@ -93,15 +104,6 @@ describe("Routerlicious", () => {
 				rawDeltasCollectionName,
 			);
 			const defaultStorage = new TestDocumentStorage(defaultDbManager, defaultTenantManager);
-			const appTenant1: IAlfredTenant = {
-				id: "default-tenant-1",
-				key: "tenant-key-1",
-			};
-			const appTenant2: IAlfredTenant = {
-				id: "default-tenant-2",
-				key: "tenant-key-2",
-			};
-			const defaultAppTenants: IAlfredTenant[] = [appTenant1, appTenant2];
 			const defaultSingleUseTokenCache = new TestCache();
 			const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
 			const tenantToken1 = `Basic ${generateToken(
@@ -434,6 +436,19 @@ describe("Routerlicious", () => {
 							.get(`/documents/${appTenant1.id}/${document1._id}`)
 							.set("Authorization", tenantToken1)
 							.expect(200);
+					});
+					it("/:tenantId/:id-NotFound", async () => {
+						const nonExistingDocumentId = "nonExistingDocumentId";
+						const tenantToken1OnNonExistingDocument = `Basic ${generateToken(
+							appTenant1.id,
+							nonExistingDocumentId,
+							appTenant1.key,
+							scopes,
+						)}`;
+						await supertest
+							.get(`/documents/${appTenant1.id}/${nonExistingDocumentId}`)
+							.set("Authorization", tenantToken1OnNonExistingDocument)
+							.expect(404);
 					});
 					it("/:tenantId/:id-invalidToken", async () => {
 						await supertest

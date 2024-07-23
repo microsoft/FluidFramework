@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-
-// eslint-disable-next-line import/no-unassigned-import
+import { DevtoolsFeatures } from "@fluidframework/devtools-core/internal";
 import "@testing-library/jest-dom";
 import { render, screen, within } from "@testing-library/react";
-import { MessageRelayContext } from "../MessageRelayContext";
-import { OpLatencyView } from "../components";
-import { MockMessageRelay } from "./MockMessageRelay";
+import { userEvent } from "@testing-library/user-event";
+import React from "react";
+
+import { MessageRelayContext } from "../MessageRelayContext.js";
+import { OpLatencyView } from "../components/index.js";
+
+import { assertNoAccessibilityViolations, MockMessageRelay } from "./utils/index.js";
 
 // ResizeObserver is a hook used by Recharts that needs to be mocked for unit tests to function.
 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
@@ -20,11 +22,39 @@ import { MockMessageRelay } from "./MockMessageRelay";
 	disconnect: jest.fn(),
 }));
 
+const mockMessageRelayEnabled = new MockMessageRelay(() => {
+	return {
+		type: DevtoolsFeatures.MessageType,
+		source: "OpLatencyTest",
+		data: {
+			features: {
+				telemetry: true,
+				opLatencyTelemetry: true,
+			},
+			devtoolsVersion: "1.0.0",
+			unsampledTelemetry: true,
+		},
+	};
+});
+const mockMessageRelayDisabled = new MockMessageRelay(() => {
+	return {
+		type: DevtoolsFeatures.MessageType,
+		source: "OpLatencyTest",
+		data: {
+			features: {
+				telemetry: true,
+				opLatencyTelemetry: true,
+			},
+			devtoolsVersion: "1.0.0",
+			unsampledTelemetry: false,
+		},
+	};
+});
+
 describe("OpLatencyView component tests", () => {
-	it("Renders as expected when unsampled telemetry is enabled in localStorage", async (): Promise<void> => {
-		window.localStorage.setItem("Fluid.Telemetry.DisableSampling", "true");
+	it("Renders as expected when unsampled telemetry is enabled", async (): Promise<void> => {
 		render(
-			<MessageRelayContext.Provider value={new MockMessageRelay(() => undefined)}>
+			<MessageRelayContext.Provider value={mockMessageRelayEnabled}>
 				<OpLatencyView />
 			</MessageRelayContext.Provider>,
 		);
@@ -53,10 +83,9 @@ describe("OpLatencyView component tests", () => {
 		expect(aboutHeader).toBeDefined();
 	});
 
-	it("Renders as expected when unsampled telemetry is disabled in localStorage", async (): Promise<void> => {
-		window.localStorage.setItem("Fluid.Telemetry.DisableSampling", "false");
+	it("Renders as expected when unsampled telemetry is disabled", async (): Promise<void> => {
 		render(
-			<MessageRelayContext.Provider value={new MockMessageRelay(() => undefined)}>
+			<MessageRelayContext.Provider value={mockMessageRelayDisabled}>
 				<OpLatencyView />
 			</MessageRelayContext.Provider>,
 		);
@@ -67,10 +96,52 @@ describe("OpLatencyView component tests", () => {
 		expect(opLatencyHeaderElement).toBeDefined();
 
 		// Confirm helper text header exists
-		const instructionsText = await screen.findByText(
-			`localStorage.setItem("Fluid.Telemetry.DisableSampling", "true");`,
-		);
+		const instructionsText = await screen.findByText(`Enable Unsampled Telemetry`);
 		expect(instructionsText).not.toBeNull();
 		expect(instructionsText).toBeDefined();
+	});
+});
+
+describe("OpLatencyView Accessibility Check", () => {
+	it("OpLatencyView is accessible", async () => {
+		const { container } = render(
+			<MessageRelayContext.Provider value={mockMessageRelayEnabled}>
+				<OpLatencyView />
+			</MessageRelayContext.Provider>,
+		);
+		await assertNoAccessibilityViolations(container);
+	});
+
+	it("Can tab/arrow navigate through OpLatencyView with telemetry enabled", async () => {
+		render(
+			<MessageRelayContext.Provider value={mockMessageRelayEnabled}>
+				<OpLatencyView />
+			</MessageRelayContext.Provider>,
+		);
+
+		const user = userEvent.setup();
+
+		await user.tab();
+		const opsLink = screen.getByRole("link", { name: /Fluid Framework Ops Documentation/ });
+		expect(opsLink).toHaveFocus();
+
+		await user.tab();
+		const disableTelemetryButton = screen.getByText("Disable Unsampled Telemetry");
+		expect(disableTelemetryButton).toHaveFocus();
+	});
+	it("Can tab/arrow navigate through OpLatencyView with telemetry disabled", async () => {
+		render(
+			<MessageRelayContext.Provider value={mockMessageRelayDisabled}>
+				<OpLatencyView />
+			</MessageRelayContext.Provider>,
+		);
+
+		const user = userEvent.setup();
+
+		await user.tab();
+		const enableUnsampledTelemtryButton = await screen.findByText(
+			"Enable Unsampled Telemetry",
+		);
+		expect(enableUnsampledTelemtryButton).toHaveFocus();
 	});
 });

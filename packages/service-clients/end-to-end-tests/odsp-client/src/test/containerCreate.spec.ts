@@ -2,26 +2,28 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 
-import { OdspClient } from "@fluid-experimental/odsp-client";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
-import { timeoutPromise } from "@fluidframework/test-utils";
-
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IOdspLoginCredentials, createOdspClient } from "./OdspClientFactory";
+import { ContainerSchema } from "@fluidframework/fluid-static";
+import { SharedMap } from "@fluidframework/map/internal";
+import { OdspClient } from "@fluidframework/odsp-client/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-const clientCreds: IOdspLoginCredentials = {
-	username: process.env.odsp__client__login__username as string,
-	password: process.env.odsp__client__login__password as string,
-};
+import { createOdspClient, getCredentials } from "./OdspClientFactory.js";
 
 describe("Container create scenarios", () => {
 	const connectTimeoutMs = 10_000;
 	let client: OdspClient;
 	let schema: ContainerSchema;
+
+	const [clientCreds] = getCredentials();
+
+	if (clientCreds === undefined) {
+		throw new Error("Couldn't get login credentials");
+	}
 
 	beforeEach(() => {
 		client = createOdspClient(clientCreds);

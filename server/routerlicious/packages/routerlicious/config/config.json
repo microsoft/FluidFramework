@@ -28,7 +28,7 @@
 		"operationsDbEndpoint": "mongodb://mongodb:27017",
 		"globalDbEndpoint": "mongodb://mongodb:27017",
 		"globalDbEnabled": false,
-		"expireAfterSeconds": -1,
+		"expireAfterSeconds": 9000,
 		"createCosmosDBIndexes": false,
 		"directConnection": true,
 		"softDeletionRetentionPeriodMs": 2592000000,
@@ -161,7 +161,9 @@
 			"shouldDisableDefaultNamespace": false
 		},
 		"socketIo": {
-			"perMessageDeflate": false
+			"perMessageDeflate": false,
+			"gracefulShutdownEnabled": false,
+			"pingPongLatencyTrackingEnabled": false
 		},
 		"jwtTokenCache": {
 			"enable": true
@@ -187,7 +189,9 @@
 			"maxMessages": 500
 		},
 		"restartOnCheckpointFailure": true,
-		"enableEphemeralContainerSummaryCleanup": true
+		"enableEphemeralContainerSummaryCleanup": true,
+		"enableLeaveOpNoClientServerMetadata": false,
+		"noOpConsolidationTimeout": 250
 	},
 	"scribe": {
 		"kafkaClientId": "scribe",
@@ -201,7 +205,10 @@
 		"verifyLastOpPersistence": false,
 		"restartOnCheckpointFailure": true,
 		"disableTransientTenantFiltering": true,
-		"maxLogtailLength": 2000
+		"maxLogtailLength": 2000,
+		"scrubUserDataInGlobalCheckpoints": false,
+		"scrubUserDataInLocalCheckpoints": false,
+		"scrubUserDataInSummaries": false
 	},
 	"system": {
 		"httpServer": {
@@ -213,7 +220,8 @@
 	},
 	"usage": {
 		"clientConnectivityCountingEnabled": false,
-		"signalUsageCountingEnabled": false
+		"signalUsageCountingEnabled": false,
+		"httpUsageCountingEnabled": false
 	},
 	"shared": {
 		"transientTenants": [],
@@ -275,7 +283,13 @@
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
 		"enableOfflineQueue": true,
-		"enableClustering": false
+		"enableClustering": false,
+		"retryDelayOnMoved": 100,
+		"maxRedirections": 16,
+		"retryStrategyParams": {
+			"delayPerAttemptMs": 50,
+			"maxDelayMs": 2000
+		}
 	},
 	"redisForTenantCache": {
 		"host": "redis",
@@ -286,7 +300,13 @@
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
 		"enableOfflineQueue": true,
-		"enableClustering": false
+		"enableClustering": false,
+		"retryDelayOnMoved": 100,
+		"maxRedirections": 16,
+		"retryStrategyParams": {
+			"delayPerAttemptMs": 50,
+			"maxDelayMs": 2000
+		}
 	},
 	"redis2": {
 		"host": "redis",
@@ -297,7 +317,13 @@
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
 		"enableOfflineQueue": true,
-		"enableClustering": false
+		"enableClustering": false,
+		"retryDelayOnMoved": 100,
+		"maxRedirections": 16,
+		"retryStrategyParams": {
+			"delayPerAttemptMs": 50,
+			"maxDelayMs": 2000
+		}
 	},
 	"redisForThrottling": {
 		"host": "redis",
@@ -308,7 +334,13 @@
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
 		"enableOfflineQueue": true,
-		"enableClustering": false
+		"enableClustering": false,
+		"retryDelayOnMoved": 100,
+		"maxRedirections": 16,
+		"retryStrategyParams": {
+			"delayPerAttemptMs": 50,
+			"maxDelayMs": 2000
+		}
 	},
 	"error": {
 		"track": false,

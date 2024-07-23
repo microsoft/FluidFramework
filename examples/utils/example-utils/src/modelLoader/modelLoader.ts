@@ -4,19 +4,19 @@
  */
 
 import {
-	LoaderHeader,
 	type IContainer,
 	type IHostLoader,
-} from "@fluidframework/container-definitions";
-import { ILoaderProps, Loader } from "@fluidframework/container-loader";
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
+import {
+	ILoaderProps,
+	Loader,
+	loadContainerPaused,
+} from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
+
 import type { IDetachedModel, IModelLoader } from "./interfaces.js";
 import { IModelContainerRuntimeEntryPoint } from "./modelContainerRuntimeFactory.js";
-
-// This ModelLoader works on a convention, that the container it will load a model for must respond to a specific
-// request format with the model object.  Here we export a helper function for those container authors to align to
-// that contract -- the container author provides a ModelMakerCallback that will produce the model given a container
-// runtime and container, and this helper will appropriately translate to/from the request/response format.
 
 /**
  * @internal
@@ -55,10 +55,8 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 
 	/**
 	 * The purpose of the model pattern and the model loader is to wrap the IContainer in a more useful object and
-	 * interface.  This demo uses a convention of requesting the default path and passing the container reference
-	 * in the request header.  It does this with the expectation that the model has been bundled with the container
-	 * code along with a request handler that will recognize this request format and return the model.
-	 * makeModelRequestHandler is provide to create exactly that request handler that the container author needs.
+	 * interface.  This demo uses a convention of the entrypoint providing a getModel method to do so.  It does this
+	 * with the expectation that the model has been bundled with the container code.
 	 *
 	 * Other strategies to obtain the wrapping model could also work fine here - for example a standalone model code
 	 * loader that separately fetches model code and wraps the container from the outside.
@@ -71,6 +69,8 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 
 	// It would be preferable for attaching to look more like service.attach(model) rather than returning an attach
 	// callback here, but this callback at least allows us to keep the method off the model interface.
+	// TODO: Consider making the version param optional, and in that case having a mechanism to query the codeLoader
+	// for the latest/default version to use?
 	public async createDetached(version: string): Promise<IDetachedModel<ModelType>> {
 		const container = await this.loader.createDetachedContainer({ package: version });
 		const model = await this.getModelFromContainer(container);
@@ -105,16 +105,13 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 	}
 
 	public async loadExistingPaused(id: string, sequenceNumber: number): Promise<ModelType> {
-		const container = await this.loader.resolve({
-			url: id,
-			headers: {
-				[LoaderHeader.loadMode]: {
-					opsBeforeReturn: "sequenceNumber",
-					pauseAfterLoad: true,
-				},
-				[LoaderHeader.sequenceNumber]: sequenceNumber,
+		const container = await loadContainerPaused(
+			this.loader,
+			{
+				url: id,
 			},
-		});
+			sequenceNumber,
+		);
 		const model = await this.getModelFromContainer(container);
 		return model;
 	}

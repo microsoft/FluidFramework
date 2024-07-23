@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { TestObjectProvider, timeoutAwait } from "@fluidframework/test-utils";
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { TestObjectProvider, timeoutAwait } from "@fluidframework/test-utils/internal";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Context } from "mocha";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+
 import { ExpectedEvents, createExpectsTest } from "./itExpects.js";
 
 function createSkippedTestsWithDriverType(
@@ -72,16 +73,17 @@ export const itSkipsFailureOnSpecificDrivers: SkippedTestWithDriverType = (
  *
  * @internal
  */
-export const itExpectsSkipsFailureOnSpecificDrivers: SkippedErrorExpectingTestWithDriverType = (
-	name: string,
-	orderedExpectedEvents: ExpectedEvents,
-	skippedDrivers: TestDriverTypes[],
-	test: Mocha.AsyncFunc,
-): Mocha.Test =>
-	it(
-		name,
-		createSkippedTestsWithDriverType(
-			skippedDrivers,
-			createExpectsTest(orderedExpectedEvents, test),
-		),
-	);
+export const itExpectsSkipsFailureOnSpecificDrivers: SkippedErrorExpectingTestWithDriverType =
+	(
+		name: string,
+		orderedExpectedEvents: ExpectedEvents,
+		skippedDrivers: TestDriverTypes[],
+		test: Mocha.AsyncFunc,
+	): Mocha.Test =>
+		it(
+			name,
+			createSkippedTestsWithDriverType(
+				skippedDrivers,
+				createExpectsTest(orderedExpectedEvents, test),
+			),
+		);

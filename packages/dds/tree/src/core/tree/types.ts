@@ -3,9 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { FieldKey, TreeNodeSchemaIdentifier, ValueSchema } from "../schema-stored/index.js";
-import { _InlineTrick, brand, Brand, extractFromOpaque, Opaque } from "../../util/index.js";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+
+import {
+	type Brand,
+	type Opaque,
+	brand,
+	extractFromOpaque,
+	type _InlineTrick,
+} from "../../util/index.js";
+import type {
+	FieldKey,
+	TreeNodeSchemaIdentifier,
+	ValueSchema,
+} from "../schema-stored/index.js";
 
 /**
  * @internal
@@ -147,12 +158,8 @@ export type Value = undefined | TreeValue;
 export interface NodeData {
 	/**
 	 * A payload of arbitrary serializable data.
-	 *
-	 * TODO: clarify rules for mutating this value.
-	 * For now, avoid mutating the TreeValue itself.
-	 * For example, if its an object, make a modified copy of the object instead of mutating it.
 	 */
-	value?: TreeValue;
+	readonly value?: TreeValue;
 
 	/**
 	 * The meaning of this node.

@@ -4,6 +4,7 @@
  */
 
 import { DocSegmentKind } from "../document/index.js";
+
 import { TagName } from "./tagName.js";
 
 const segmentKindToIdPrefix = {

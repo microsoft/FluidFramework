@@ -5,19 +5,23 @@
 
 import { strict as assert } from "assert";
 
-import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
-import type { SharedString } from "@fluidframework/sequence";
-import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-	createSummarizer,
-	summarizeNow,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
+import {
+	Marker,
+	ReferenceType,
+	reservedMarkerIdKey,
+} from "@fluidframework/merge-tree/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	createSummarizer,
+	getContainerEntryPointBackCompat,
+	summarizeNow,
+} from "@fluidframework/test-utils/internal";
 
 const stringId = "sharedStringKey";
 
@@ -79,7 +83,8 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider, apis) => {
 
 		// Create a initialize a new container with the same id.
 		const newContainer = await provider.loadTestContainer(testContainerConfig);
-		const newComponent = await getContainerEntryPointBackCompat<ITestFluidObject>(newContainer);
+		const newComponent =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(newContainer);
 		const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
 
 		// Wait for the ops to to be submitted and processed across the containers.
@@ -108,8 +113,16 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider, apis) => {
 		const prop = { color: detachedString2.handle };
 		detachedString1.annotateMarker(simpleMarker, prop);
 
-		assert.equal(detachedString1.isAttached(), false, "detachedString1 should not be attached");
-		assert.equal(detachedString2.isAttached(), false, "detachedString2 should not be attached");
+		assert.equal(
+			detachedString1.isAttached(),
+			false,
+			"detachedString1 should not be attached",
+		);
+		assert.equal(
+			detachedString2.isAttached(),
+			false,
+			"detachedString2 should not be attached",
+		);
 		assert.equal(sharedString1.isAttached(), true, "sharedString1 should be attached");
 
 		// When referring SharedString becomes attached, the referred SharedString becomes attached

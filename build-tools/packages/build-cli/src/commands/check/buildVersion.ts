@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Flags } from "@oclif/core";
-import { Package } from "@fluidframework/build-tools";
-import path from "node:path";
 
-import { PackageCommand } from "../../BasePackageCommand";
+import path from "node:path";
+import { Package } from "@fluidframework/build-tools";
+import { Flags } from "@oclif/core";
+
+import { PackageCommand } from "../../BasePackageCommand.js";
 
 export default class CheckBuildVersionCommand extends PackageCommand<
 	typeof CheckBuildVersionCommand
@@ -31,6 +32,8 @@ export default class CheckBuildVersionCommand extends PackageCommand<
 		}),
 		...PackageCommand.flags,
 	} as const;
+
+	protected defaultSelection = undefined;
 
 	private versionToCheck: string | undefined;
 

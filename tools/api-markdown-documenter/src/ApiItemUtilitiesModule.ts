@@ -13,20 +13,24 @@ export {
 	getHeadingForApiItem,
 	getLinkForApiItem,
 	shouldItemBeIncluded,
-} from "./api-item-transforms";
+} from "./api-item-transforms/index.js";
 export {
+	getCustomBlockComments,
 	getDefaultValueBlock,
 	getDeprecatedBlock,
 	getExampleBlocks,
 	getModifiers,
+	getModifierTags,
 	getQualifiedApiItemName,
 	getReleaseTag,
 	getReturnsBlock,
 	getSeeBlocks,
+	getSingleLineExcerptText,
 	getThrowsBlocks,
 	getUnscopedPackageName,
+	hasModifierTag,
 	isDeprecated,
 	isOptional,
 	isReadonly,
 	isStatic,
-} from "./utilities";
+} from "./utilities/index.js";

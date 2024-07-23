@@ -12,6 +12,7 @@ import {
 	IContextErrorData,
 	IRoutingKey,
 } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
  * @internal
@@ -95,6 +96,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 
 	public error(error: any, errorData: IContextErrorData) {
 		this.contextError = error;
+		Lumberjack.verbose("Emitting error from documentContext");
 		this.emit("error", error, errorData);
 	}
 

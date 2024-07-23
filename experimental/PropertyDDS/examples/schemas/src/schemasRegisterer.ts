@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ALL_SCHEMAS } from "./";
+
+import { ALL_SCHEMAS } from "./index.js";
 
 // TODO: Use something other than `any`
 // eslint-disable-next-line jsdoc/require-description

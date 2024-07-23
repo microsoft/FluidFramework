@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Class that implements the logic for an internal node of the B-Tree
  */
@@ -352,8 +353,7 @@
 				this._setNewNodes([
 					{
 						changeSet: this._encodeChildrenCS(this.children),
-						startPath:
-							this.children.length > 0 ? this.children[0].startPath : undefined,
+						startPath: this.children.length > 0 ? this.children[0].startPath : undefined,
 					},
 				]);
 			}
@@ -397,8 +397,7 @@
 			let subNodeChildren = this._getChildrenArrayFromCS(this.newNodes[0].changeSet);
 			if (
 				subNodeChildren.length === 1 &&
-				parseNodeReference(this._decodeCsChildEntry(subNodeChildren[0]).nodeRef).type ===
-					"i"
+				parseNodeReference(this._decodeCsChildEntry(subNodeChildren[0]).nodeRef).type === "i"
 			) {
 				// The node has only a single internal node as child. So this node
 				// is no longer needed and has to be removed from the tree
@@ -509,9 +508,7 @@
 			return {
 				changeSet: this._encodeChildrenCS(children),
 				startPath:
-					children.length > 0
-						? this._decodeCsChildEntry(children[0]).startPath
-						: undefined,
+					children.length > 0 ? this._decodeCsChildEntry(children[0]).startPath : undefined,
 			};
 		});
 	};
