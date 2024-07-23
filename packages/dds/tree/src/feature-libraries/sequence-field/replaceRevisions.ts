@@ -55,9 +55,10 @@ function updateEffect<TMark extends MarkEffect>(
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
 ): TMark {
-	const mark = isDetach(input) || isRename(input)
-		? updateIdOverride(input, revisionsToReplace, newRevision)
-		: input;
+	const mark =
+		isDetach(input) || isRename(input)
+			? updateIdOverride(input, revisionsToReplace, newRevision)
+			: input;
 	const type = mark.type;
 	switch (type) {
 		case "Rename":

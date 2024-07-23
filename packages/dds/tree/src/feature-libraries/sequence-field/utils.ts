@@ -326,11 +326,11 @@ export function normalizeCellRename(
 			return areEqualCellIds(outputId, cellId)
 				? { count, cellId }
 				: {
-					type: "Rename",
-					count,
-					cellId,
-					idOverride: outputId,
-				};
+						type: "Rename",
+						count,
+						cellId,
+						idOverride: outputId,
+					};
 		}
 	} else {
 		// TODO: revisit if we still need the attach information for new inserts.

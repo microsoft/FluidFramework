@@ -146,7 +146,7 @@ export type Detach = Remove | MoveOut;
  * - Insert ○ Remove
  * - Insert ○ MoveOut
  * - MoveIn ○ Remove
- * 
+ *
  * We do NOT use AttachAndDetach to represent the following compositions:
  * - Revive ○ Remove (represented by a Remove)
  * - Revive ○ MoveOut (represented by a MoveOut)
@@ -160,9 +160,9 @@ export interface AttachAndDetach {
 
 /**
  * Represents the renaming of an empty cell.
- * 
+ *
  * Only ever targets empty cells.
- * 
+ *
  * Occurs when a MoveIn is composed with a MoveOut.
  * TODO: Use Rename when an Insert/Revive is composed with a Remove.
  */
