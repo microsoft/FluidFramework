@@ -26,6 +26,7 @@ import {
 	FaultInjectionError,
 } from "./faultInjectionDriver.js";
 import { FileLogger } from "./FileLogger.js";
+import { getProfile } from "./getProfile.js";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
@@ -37,7 +38,6 @@ import {
 	configProvider,
 	createCodeLoader,
 	createTestDriver,
-	getProfile,
 	globalConfigurations,
 	printStatus,
 	safeExit,

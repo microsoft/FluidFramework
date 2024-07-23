@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-
 import {
 	DriverEndpoint,
 	ITestDriver,
@@ -34,7 +32,7 @@ import {
 	getOptionOverride,
 } from "./optionsMatrix.js";
 import { pkgName, pkgVersion } from "./packageVersion.js";
-import { ILoadTestConfig, ITestConfig } from "./testConfigFile.js";
+import { ILoadTestConfig } from "./testConfigFile.js";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
@@ -170,24 +168,6 @@ export async function createTestDriver(
 			r11sEndpointName: endpointName,
 		},
 	});
-}
-
-export function getProfile(profileArg: string) {
-	let config: ITestConfig;
-	try {
-		config = JSON.parse(fs.readFileSync("./testConfig.json", "utf-8"));
-	} catch (e) {
-		console.error("Failed to read testConfig.json");
-		console.error(e);
-		process.exit(-1);
-	}
-
-	const profile: ILoadTestConfig | undefined = config.profiles[profileArg];
-	if (profile === undefined) {
-		console.error("Invalid --profile argument not found in testConfig.json profiles");
-		process.exit(-1);
-	}
-	return profile;
 }
 
 export async function safeExit(code: number, url: string, runId?: number) {

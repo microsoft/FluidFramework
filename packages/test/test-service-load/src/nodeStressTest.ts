@@ -16,8 +16,9 @@ import commander from "commander";
 import ps from "ps-node";
 
 import { FileLogger } from "./FileLogger.js";
+import { getProfile } from "./getProfile.js";
 import { ILoadTestConfig } from "./testConfigFile.js";
-import { createTestDriver, getProfile, initialize, safeExit } from "./utils.js";
+import { createTestDriver, initialize, safeExit } from "./utils.js";
 
 interface ITestUserConfig {
 	/* Credentials' key/value description:
