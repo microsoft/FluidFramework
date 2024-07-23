@@ -14,7 +14,6 @@ overrides:
   simplemde>marked: ^4.3.0
   sharp: ^0.33.2
   '@fluentui/react-positioning>@floating-ui/dom': ~1.5.4
-  '@microsoft/api-extractor': 7.45.1
   oclif>@aws-sdk/client-cloudfront: npm:empty-npm-package@1.0.0
   oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
 
