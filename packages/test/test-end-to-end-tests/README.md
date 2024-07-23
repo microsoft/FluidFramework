@@ -117,7 +117,11 @@ That same [directory](src/test) contains more complex examples too.
 
 ## Debugging
 
-In order to debug legacy code running as part of an end-to-end test, you'll need to modify the debug launch configuration to include `node_modules` in its set of loaded files.
+This package contains a VSCode workspace with launch targets for debugging e2e tests with common configurations.
+The launch targets in this configuration allow selecting different drivers, compat modes, and setting breakpoints in dependent packages installed for compat testing.
+See `.vscode/e2e-tests.code-workspace` for details.
+
+If not using this workspace, in order to debug legacy code running as part of an end-to-end test, you'll need to modify the debug launch configuration to include `node_modules` in its set of loaded files.
 
 For example, if using "Debug Current Mocha Test" or one of its variants, remove the `node_modules` entry under `"skipFiles"`.
 

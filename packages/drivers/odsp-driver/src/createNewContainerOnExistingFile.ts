@@ -11,7 +11,10 @@ import {
 	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { IWriteSummaryResponse } from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
@@ -24,7 +27,11 @@ import { createOdspUrl } from "./createOdspUrl.js";
 import { EpochTracker } from "./epochTracker.js";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
 import { getApiRoot } from "./odspUrlHelper.js";
-import { IExistingFileInfo, createCacheSnapshotKey } from "./odspUtils.js";
+import {
+	IExistingFileInfo,
+	createCacheSnapshotKey,
+	snapshotWithLoadingGroupIdSupported,
+} from "./odspUtils.js";
 
 /**
  * Creates a new Fluid container on an existing file.
@@ -87,7 +94,13 @@ export async function createNewContainerOnExistingFile(
 			summaryHandle,
 		);
 		// caching the converted summary
-		await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), snapshot);
+		await epochTracker.put(
+			createCacheSnapshotKey(
+				odspResolvedUrl,
+				snapshotWithLoadingGroupIdSupported(loggerToMonitoringContext(logger).config),
+			),
+			snapshot,
+		);
 	}
 
 	return odspResolvedUrl;

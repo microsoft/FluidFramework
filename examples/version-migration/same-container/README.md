@@ -48,7 +48,7 @@ With the exported and transformed data in hand, we can create a new container us
 
 As clients observe the migration complete, they load the new container and swap it in for the old one. This includes loading in the approporate new container code, model code, and view code if necessary. Once complete, the client can begin collaborating on the new container.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:usesTinylicious=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_GETTING_STARTED:usesTinylicious=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

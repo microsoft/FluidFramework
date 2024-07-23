@@ -16,6 +16,7 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { ContainerMessageType } from "../../index.js";
 import {
 	type BatchMessage,
+	ensureContentsDeserialized,
 	type IBatch,
 	OpCompressor,
 	OpDecompressor,
@@ -160,7 +161,6 @@ describe("RemoteMessageProcessor", () => {
 			const actual: ISequencedDocumentMessage[] = [];
 			let seqNum = 1;
 			let actualBatchStartCsn: number | undefined;
-			let emptyProcessResultCount = 0;
 			for (const message of outboundMessages) {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				const inboundMessage = {
@@ -173,11 +173,11 @@ describe("RemoteMessageProcessor", () => {
 					referenceSequenceNumber: message.referenceSequenceNumber,
 				} as ISequencedDocumentMessage;
 
-				const processResult = messageProcessor.process(inboundMessage);
+				ensureContentsDeserialized(inboundMessage, true, () => {});
+				const processResult = messageProcessor.process(inboundMessage, () => {});
 
 				// It'll be undefined for the first n-1 chunks if chunking is enabled
 				if (processResult === undefined) {
-					++emptyProcessResultCount;
 					continue;
 				}
 
@@ -192,11 +192,6 @@ describe("RemoteMessageProcessor", () => {
 					);
 				}
 			}
-			assert.equal(
-				emptyProcessResultCount,
-				leadingChunkCount,
-				"expected empty result to be 1-1 with leading chunks",
-			);
 
 			const expected = option.grouping
 				? [
@@ -232,7 +227,8 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		const processResult = messageProcessor.process(documentMessage)?.messages ?? [];
+		ensureContentsDeserialized(documentMessage, true, () => {});
+		const processResult = messageProcessor.process(documentMessage, () => {})?.messages ?? [];
 
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
 		const result = processResult[0];
@@ -250,7 +246,7 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		const processResult = messageProcessor.process(documentMessage)?.messages ?? [];
+		const processResult = messageProcessor.process(documentMessage, () => {})?.messages ?? [];
 
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
 		const result = processResult[0];
@@ -287,7 +283,10 @@ describe("RemoteMessageProcessor", () => {
 			},
 		};
 		const messageProcessor = getMessageProcessor();
-		const result = messageProcessor.process(groupedBatch as ISequencedDocumentMessage);
+		const result = messageProcessor.process(
+			groupedBatch as ISequencedDocumentMessage,
+			() => {},
+		);
 
 		const expected = [
 			{

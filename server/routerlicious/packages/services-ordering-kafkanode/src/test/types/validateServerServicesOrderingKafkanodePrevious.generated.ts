@@ -81,6 +81,7 @@ declare function get_old_ClassDeclaration_KafkaNodeProducer():
 declare function use_current_ClassDeclaration_KafkaNodeProducer(
     use: TypeOnly<current.KafkaNodeProducer>): void;
 use_current_ClassDeclaration_KafkaNodeProducer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_KafkaNodeProducer());
 
 /*

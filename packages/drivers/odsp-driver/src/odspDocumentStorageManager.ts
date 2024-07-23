@@ -32,6 +32,7 @@ import {
 	loggerToMonitoringContext,
 	normalizeError,
 	overwriteStack,
+	type IConfigProvider,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -62,6 +63,7 @@ import {
 	getWithRetryForTokenRefresh,
 	isInstanceOfISnapshot,
 	isSnapshotFetchForLoadingGroup,
+	snapshotWithLoadingGroupIdSupported,
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
 	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
@@ -85,6 +87,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	private readonly snapshotUrl: string | undefined;
 	private readonly attachmentPOSTUrl: string | undefined;
 	private readonly attachmentGETUrl: string | undefined;
+	private readonly config: IConfigProvider;
 	// Driver specified limits for snapshot size and time.
 	/**
 	 * NOTE: While commit cfff6e3 added restrictions to prevent large payloads, snapshot failures will continue to
@@ -115,6 +118,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
 		this.attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
 		this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
+		this.config = loggerToMonitoringContext(logger).config;
 	}
 
 	public get isFirstSnapshotFromNetwork(): boolean | undefined {
@@ -278,7 +282,12 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					// Here's the logic to grab the persistent cache snapshot implemented by the host
 					// Epoch tracker is responsible for communicating with the persistent cache, handling epochs and cache versions
 					const cachedSnapshotP: Promise<ISnapshot | undefined> = this.epochTracker
-						.get(createCacheSnapshotKey(this.odspResolvedUrl))
+						.get(
+							createCacheSnapshotKey(
+								this.odspResolvedUrl,
+								snapshotWithLoadingGroupIdSupported(this.config),
+							),
+						)
 						.then(
 							async (
 								// eslint-disable-next-line import/no-deprecated
@@ -564,7 +573,10 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		// for initial snapshot, don't consult the prefetch cache.
 		if (!this.hostPolicy.avoidPrefetchSnapshotCache && this.firstSnapshotFetchCall) {
 			const prefetchCacheKey = getKeyForCacheEntry(
-				createCacheSnapshotKey(this.odspResolvedUrl),
+				createCacheSnapshotKey(
+					this.odspResolvedUrl,
+					snapshotWithLoadingGroupIdSupported(this.config),
+				),
 			);
 			const result = await this.cache.snapshotPrefetchResultCache
 				?.get(prefetchCacheKey)
@@ -627,7 +639,10 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		};
 		const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch): Promise<void> => {
 			return this.cache.persistedCache.put(
-				createCacheSnapshotKey(this.odspResolvedUrl),
+				createCacheSnapshotKey(
+					this.odspResolvedUrl,
+					snapshotWithLoadingGroupIdSupported(this.config),
+				),
 				// Epoch tracker will add the epoch and version to the value here. So just send value to cache.
 				valueWithEpoch.value,
 			);

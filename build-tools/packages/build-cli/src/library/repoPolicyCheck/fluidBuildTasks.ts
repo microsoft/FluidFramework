@@ -345,16 +345,12 @@ function hasTaskDependency(
 	const packageSpecificSearchDeps = searchDeps.filter((d) => d.includes("#"));
 	/**
 	 * Set of package dependencies
-	 * True dependencies would include peer dependencies as well. Here we are
-	 * matching {@link Package.combinedDependencies} that is used in
-	 * {@link @fluidframework/build-tools/src/fluidBuild/buildGraph.ts#BuildGraph.initializePackages}
-	 * Being more conservative is not terrible as it would just look like a miss
-	 * from ^ specification and could be fixed with an explicit dependency.
 	 */
 	const packageDependencies = new Set([
 		...Object.keys(json.dependencies ?? {}),
 		// devDeps are not regular task deps, but might happen for internal type only packages.
 		...Object.keys(json.devDependencies ?? {}),
+		...Object.keys(json.peerDependencies ?? {}),
 	]);
 	const seenDep = new Set<string>();
 	const pending: string[] = [];

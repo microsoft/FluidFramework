@@ -29,6 +29,7 @@ import type { TreeNode } from "./types.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../feature-libraries/flex-tree/lazyNode.js";
 import type { TreeMapNode } from "./mapNode.js";
+import { TreeNodeKernel } from "./treeNodeKernel.js";
 
 // This file contains various maps and helpers for supporting proxy binding (a.k.a. proxy hydration).
 // See ./ProxyBinding.md for a high-level overview of the process.
@@ -185,9 +186,31 @@ function bindProxyToAnchorNode(proxy: TreeNode, anchorNode: AnchorNode): void {
 	proxyToAnchorNode.set(proxy, anchorNode);
 	// However, it's fine for an anchor node to rotate through different proxies when the content at that place in the tree is replaced.
 	anchorNode.slots.set(proxySlot, proxy);
+	getKernel(proxy).hydrate(anchorNode);
 }
 
 /**
  * Given a node's schema, return the corresponding object in the proxy-based API.
  */
 type TypedNode<TSchema extends FlexTreeNodeSchema> = TreeNode & WithType<TSchema["name"]>;
+
+export function createKernel(node: TreeNode): void {
+	treeNodeToKernel.set(node, new TreeNodeKernel(node));
+}
+
+export function getKernel(node: TreeNode): TreeNodeKernel {
+	const kernel = treeNodeToKernel.get(node);
+	assert(kernel !== undefined, 0x9b1 /* Expected tree node to have kernel */);
+	return kernel;
+}
+
+export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
+	const treeNode = anchorNode.slots.get(proxySlot);
+	if (treeNode !== undefined) {
+		const kernel = treeNodeToKernel.get(treeNode);
+		assert(kernel !== undefined, 0x9b2 /* Expected tree node to have kernel */);
+		kernel.dispose();
+	}
+}
+
+const treeNodeToKernel = new WeakMap<TreeNode, TreeNodeKernel>();

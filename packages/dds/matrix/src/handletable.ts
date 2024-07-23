@@ -9,7 +9,9 @@ export const enum Handle {
 	 */
 	none = 0,
 
-	/** Minimum valid handle. */
+	/**
+	 * Minimum valid handle.
+	 */
 	valid = 1,
 
 	/**
@@ -19,7 +21,7 @@ export const enum Handle {
 	unallocated = -0x80000000,
 }
 
-export const isHandleValid = (handle: Handle) => handle >= Handle.valid;
+export const isHandleValid = (handle: Handle): boolean => handle >= Handle.valid;
 
 /**
  * A handle table provides a fast mapping from an integer `handle` to a value `T`.
@@ -30,7 +32,7 @@ export class HandleTable<T> {
 	//       us to delay allocate the following slot in the array on the first allocation.
 	public constructor(private readonly handles: (Handle | T)[] = [1]) {}
 
-	public clear() {
+	public clear(): void {
 		// Restore the HandleTable's initial state by deleting all items in the handles array
 		// and then re-inserting the value '1' in the 0th slot.  (See comment at `handles` decl
 		// for explanation.)
@@ -62,7 +64,7 @@ export class HandleTable<T> {
 	/**
 	 * Allocates and returns the next available `count` handles.
 	 */
-	public allocateMany(count: Handle) {
+	public allocateMany(count: Handle): Uint32Array {
 		const handles = new Uint32Array(count);
 		for (let i = 0; i < count; i++) {
 			handles[i] = this.allocate();
@@ -73,7 +75,7 @@ export class HandleTable<T> {
 	/**
 	 * Returns the given handle to the free list.
 	 */
-	public free(handle: Handle) {
+	public free(handle: Handle): void {
 		this.handles[handle] = this.next;
 		this.next = handle;
 	}
@@ -88,24 +90,24 @@ export class HandleTable<T> {
 	/**
 	 * Set the value `T` associated with the given handle.
 	 */
-	public set(handle: Handle, value: T) {
+	public set(handle: Handle, value: T): void {
 		this.handles[handle] = value;
 	}
 
 	// Private helpers to get/set the head of the free list, which is stored in the 0th slot
 	// of the handle array.
-	private get next() {
+	private get next(): Handle {
 		return this.handles[0] as Handle;
 	}
 	private set next(handle: Handle) {
 		this.handles[0] = handle;
 	}
 
-	public getSummaryContent() {
+	public getSummaryContent(): (Handle | T)[] {
 		return this.handles;
 	}
 
-	public static load<T>(data: (Handle | T)[]) {
+	public static load<T>(data: (Handle | T)[]): HandleTable<T> {
 		return new HandleTable<T>(data);
 	}
 }

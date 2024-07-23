@@ -5,36 +5,15 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { SharedCounter, type ISharedCounter } from "@fluidframework/counter/internal";
+import { SharedCounter } from "@fluidframework/counter/internal";
 import type {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
 
-const counterKey = "counter";
 export class VirtualDataStore extends DataObject {
-	public static DataStoreName = "StressTestDataStore";
-	private _counter: ISharedCounter | undefined;
-	public get counter(): ISharedCounter {
-		assert(this._counter !== undefined, "counter must be defined");
-		return this._counter;
-	}
-
-	public get loadingGroupId(): string {
-		const groupId = this.context.loadingGroupId;
-		assert(groupId !== undefined, "loadingGroupId must be provided");
-		return groupId;
-	}
-
-	protected async initializingFirstTime(): Promise<void> {
-		const sharedCounter = SharedCounter.create(this.runtime);
-		this.root.set(counterKey, sharedCounter.handle);
-	}
-
-	protected async hasInitialized(): Promise<void> {
-		const counterHandle = this.root.get(counterKey);
-		this._counter = await counterHandle.get();
-		// Might be cool to send telemetry here as this is when we've just loaded from the snapshot and haven't sent any ops.
+	public get loadingGroupId(): string | undefined {
+		return this.context.loadingGroupId;
 	}
 }
 
@@ -55,11 +34,10 @@ export class VirtualDataObjectFactory extends DataObjectFactory<VirtualDataStore
 	 */
 	public async createInstance(
 		runtime: IContainerRuntimeBase,
-		_initialState?: any,
-		loadingGroupId?: string,
+		initialState: any,
+		loadingGroupId: string,
 	): Promise<VirtualDataStore> {
-		assert(loadingGroupId !== undefined, "loadingGroupId must be provided");
-		return super.createInstance(runtime, undefined, loadingGroupId);
+		return super.createInstance(runtime, initialState, loadingGroupId);
 	}
 
 	public async createChildInstance(

@@ -161,12 +161,10 @@ describe("Pending State Manager", () => {
 		};
 
 		const process = (messages: Partial<ISequencedDocumentMessage>[], batchStartCsn: number) =>
-			messages.forEach((message) => {
-				pendingStateManager.processPendingLocalMessage(
-					message as InboundSequencedContainerRuntimeMessage,
-					batchStartCsn,
-				);
-			});
+			pendingStateManager.processPendingLocalBatch(
+				messages as InboundSequencedContainerRuntimeMessage[],
+				batchStartCsn,
+			);
 
 		it("proper batch is processed correctly", () => {
 			const messages: Partial<ISequencedDocumentMessage>[] = [
@@ -357,7 +355,7 @@ describe("Pending State Manager", () => {
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
-					clientId: () => undefined,
+					clientId: () => "CLIENT_ID",
 					close: () => {},
 					connected: () => true,
 					reSubmitBatch: () => {},
@@ -422,8 +420,8 @@ describe("Pending State Manager", () => {
 					],
 					1,
 				);
-				pendingStateManager.processPendingLocalMessage(
-					futureRuntimeMessage as ISequencedDocumentMessage & UnknownContainerRuntimeMessage,
+				pendingStateManager.processPendingLocalBatch(
+					[futureRuntimeMessage as ISequencedDocumentMessage & UnknownContainerRuntimeMessage],
 					1 /* batchStartCsn */,
 				);
 			});
@@ -445,7 +443,7 @@ describe("Pending State Manager", () => {
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
-					clientId: () => undefined,
+					clientId: () => "CLIENT_ID",
 					close: () => {},
 					connected: () => true,
 					reSubmitBatch: () => {},
@@ -546,6 +544,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 10,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
 			},
 			{
 				type: "message",
@@ -553,6 +552,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 11,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 2 },
 			},
 			{
 				type: "message",
@@ -560,6 +560,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 3 },
 			},
 			{
 				type: "message",
@@ -567,6 +568,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 3 },
 			},
 		];
 

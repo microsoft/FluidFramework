@@ -377,6 +377,7 @@ interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<
     moveToStart(sourceIndex: number, source: TMoveFrom): void;
     removeAt(index: number): void;
     removeRange(start?: number, end?: number): void;
+    values(): IterableIterator<T>;
 }
 
 // @public @sealed
@@ -430,7 +431,7 @@ export interface TreeNodeApi {
     parent(node: TreeNode): TreeNode | undefined;
     schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
     shortId(node: TreeNode): number | string | undefined;
-    readonly status: (node: TreeNode) => TreeStatus;
+    status(node: TreeNode): TreeStatus;
 }
 
 // @public

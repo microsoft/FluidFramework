@@ -6,6 +6,7 @@ Release commands are used to manage the Fluid release process.
 * [`flub release`](#flub-release)
 * [`flub release fromTag TAG`](#flub-release-fromtag-tag)
 * [`flub release history`](#flub-release-history)
+* [`flub release prepare PACKAGE_OR_RELEASE_GROUP`](#flub-release-prepare-package_or_release_group)
 * [`flub release report`](#flub-release-report)
 * [`flub release report-unreleased`](#flub-release-report-unreleased)
 * [`flub release setPackageTypesField`](#flub-release-setpackagetypesfield)
@@ -132,6 +133,40 @@ EXAMPLES
 ```
 
 _See code: [src/commands/release/history.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release/history.ts)_
+
+## `flub release prepare PACKAGE_OR_RELEASE_GROUP`
+
+Runs checks on a local branch to verify it is ready to serve as the base for a release branch.
+
+```
+USAGE
+  $ flub release prepare PACKAGE_OR_RELEASE_GROUP [-v | --quiet]
+
+ARGUMENTS
+  PACKAGE_OR_RELEASE_GROUP  [default: client] The name of a package or a release group. Defaults to the client release
+                            group if not specified.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Runs checks on a local branch to verify it is ready to serve as the base for a release branch.
+
+  Runs the following checks:
+
+  - Branch has no local changes
+  - The local branch is up to date with the microsoft/FluidFramework remote
+  - Dependencies are installed locally
+  - Has no pre-release Fluid dependencies
+  - No repo policy violations
+  - No untagged asserts
+
+ALIASES
+  $ flub release prep
+```
+
+_See code: [src/commands/release/prepare.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release/prepare.ts)_
 
 ## `flub release report`
 

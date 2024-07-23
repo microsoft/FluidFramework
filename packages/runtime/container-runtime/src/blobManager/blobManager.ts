@@ -385,9 +385,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			0x384 /* requesting handle for unknown blob */,
 		);
 		const pending = this.pendingBlobs.get(id);
+		// Create a callback function for once the blob has been attached
 		const callback = pending
 			? () => {
 					pending.attached = true;
+					// Notify listeners (e.g. serialization process) that blob has been attached
 					this.emit("blobAttached", pending);
 					this.deletePendingBlobMaybe(id);
 				}
@@ -772,6 +774,16 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
+	/**
+	 * Part of container serialization when imminent closure is enabled (Currently when calling closeAndGetPendingLocalState).
+	 * This asynchronous function resolves all pending createBlob calls and waits for each blob
+	 * to be attached. It will also send BlobAttach ops for each pending blob that hasn't sent it
+	 * yet so that serialized container can resubmit them when rehydrated.
+	 *
+	 * @param stopBlobAttachingSignal - Optional signal to abort the blob attaching process.
+	 * @returns - A promise that resolves with the details of the attached blobs,
+	 * or undefined if no blobs were processed.
+	 */
 	public async attachAndGetPendingBlobs(
 		stopBlobAttachingSignal?: AbortSignal,
 	): Promise<IPendingBlobs | undefined> {
@@ -784,12 +796,17 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				}
 				const blobs = {};
 				const localBlobs = new Set<PendingBlob>();
+				// This while is used to stash blobs created while attaching and getting blobs
 				while (localBlobs.size < this.pendingBlobs.size) {
 					const attachBlobsP: Promise<void>[] = [];
 					for (const [id, entry] of this.pendingBlobs) {
 						if (!localBlobs.has(entry)) {
 							localBlobs.add(entry);
+							// Resolving the blob handle to let hosts continue with their operations (it will resolve
+							// original createBlob call) and let them attach the blob. This is a lie we told since the upload
+							// hasn't finished yet, but it's fine since we will retry on rehydration.
 							entry.handleP.resolve(this.getBlobHandle(id));
+							// Array of promises that will resolve when blobs get attached.
 							attachBlobsP.push(
 								new Promise<void>((resolve, reject) => {
 									stopBlobAttachingSignal?.addEventListener(
@@ -815,6 +832,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 							);
 						}
 					}
+					// Wait for all blobs to be attached. This is important, otherwise serialized container
+					// could send the blobAttach op without any op that references the blob, making it useless.
 					await Promise.allSettled(attachBlobsP).catch(() => {});
 				}
 

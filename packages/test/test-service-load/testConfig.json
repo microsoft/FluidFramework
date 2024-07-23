@@ -51,6 +51,11 @@
 				"opSizeinBytes": 214800,
 				"largeOpRate": 2000,
 				"numClients": 12
+			},
+			"virtualization": {
+				"createRate": 2000,
+				"loadRate": 2000,
+				"numClients": 2
 			}
 		},
 		"ci_frs": {
@@ -104,16 +109,9 @@
 			"optionOverrides": {
 				"odsp": {
 					"configurations": {
-						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false],
-						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": [true, false]
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					}
 				}
-			},
-			"virtualization": {
-				"createRate": 60,
-				"loadRate": 60,
-				"opRate": 60,
-				"numClients": 2
 			}
 		},
 		"debug": {

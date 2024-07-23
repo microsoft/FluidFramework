@@ -271,6 +271,7 @@ function rebaseMark(
 			0x8dc /* Unexpected collision of new node changes */,
 		);
 		rebasedMark.changes = movedNodeChanges;
+		moveEffects.onMoveIn(movedNodeChanges);
 	}
 
 	return rebaseMarkIgnoreChild(rebasedMark, baseMark, moveEffects);
@@ -518,7 +519,12 @@ function getMovedEffect(
 ): MarkEffect | undefined {
 	const effect = getMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, count);
 	assert(effect.length === count, 0x6f3 /* Expected effect to cover entire mark */);
-	return effect.value?.movedEffect;
+	const movedEffect = effect.value?.movedEffect;
+	if (movedEffect !== undefined && movedEffect.type === "MoveOut") {
+		moveEffects.moveKey(CrossFieldTarget.Source, movedEffect.revision, movedEffect.id, count);
+	}
+
+	return movedEffect;
 }
 
 function getMovedChangesFromBaseMark(

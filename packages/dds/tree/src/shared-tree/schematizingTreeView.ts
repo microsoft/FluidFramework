@@ -39,7 +39,7 @@ import {
 	mapTreeFromNodeData,
 	prepareContentForHydration,
 } from "../simple-tree/index.js";
-import { disposeSymbol } from "../util/index.js";
+import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
 
 import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
 import type { TreeCheckout } from "./treeCheckout.js";
@@ -48,8 +48,9 @@ import { CheckoutFlexTreeView } from "./treeView.js";
 /**
  * Implementation of TreeView wrapping a FlexTreeView.
  */
+@breakingClass
 export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitFieldSchema>
-	implements TreeView<TRootSchema>
+	implements TreeView<TRootSchema>, WithBreakable
 {
 	/**
 	 * The view is set to undefined when this object is disposed or the view schema does not support viewing the document's stored schema.
@@ -86,6 +87,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		public readonly checkout: TreeCheckout,
 		public readonly config: TreeViewConfiguration<TRootSchema>,
 		public readonly nodeKeyManager: NodeKeyManager,
+		public readonly breaker: Breakable = new Breakable("SchematizingSimpleTreeView"),
 	) {
 		const policy = {
 			...defaultSchemaPolicy,
@@ -306,6 +308,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	}
 
 	public get root(): TreeFieldFromImplicitField<TRootSchema> {
+		this.breaker.use();
 		if (!this.compatibility.canView) {
 			throw new UsageError(
 				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",
@@ -316,6 +319,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	}
 
 	public set root(newRoot: InsertableTreeFieldFromImplicitField<TRootSchema>) {
+		this.breaker.use();
 		if (!this.compatibility.canView) {
 			throw new UsageError(
 				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",

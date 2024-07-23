@@ -64,6 +64,7 @@ import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type CheckoutEvents, type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
 import type { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
+import { breakingClass, throwIfBroken } from "../util/index.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -162,6 +163,7 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
  *
  * TODO: detail compatibility requirements.
  */
+@breakingClass
 export class SharedTree
 	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
 	implements ISharedTree
@@ -191,7 +193,9 @@ export class SharedTree
 		const forest =
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
-				: buildForest();
+				: options.forest === ForestType.Reference
+					? buildForest()
+					: buildForest(undefined, true);
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
 		const removedRoots = makeDetachedFieldIndex(
 			"repair",
@@ -288,6 +292,7 @@ export class SharedTree
 		);
 	}
 
+	@throwIfBroken
 	public contentSnapshot(): SharedTreeContentSnapshot {
 		const cursor = this.checkout.forest.allocateCursor("contentSnapshot");
 		try {
@@ -326,11 +331,13 @@ export class SharedTree
 			this.checkout,
 			config,
 			createNodeKeyManager(this.runtime.idCompressor),
+			this.breaker,
 		);
 	}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
+		this.checkout.setTipRevisionForLoadedData(this.trunkHeadRevision);
 		this._events.emit("afterBatch");
 	}
 }
@@ -419,6 +426,10 @@ export enum ForestType {
 	 * The "ChunkedForest" forest type.
 	 */
 	Optimized = 1,
+	/**
+	 * The "ObjectForest" forest type with expensive asserts for debugging.
+	 */
+	Expensive = 2,
 }
 
 export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {

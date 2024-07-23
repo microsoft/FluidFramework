@@ -3,25 +3,21 @@
  * Licensed under the MIT License.
  */
 
-/**
- * Does the metadata object look like batch metadata?
- */
-export function isBatchMetadata(metadata: any): metadata is IBatchMetadata {
-	return typeof metadata?.batch === "boolean";
-}
+import type { BatchId } from "./opLifecycle/index.js";
 
-/**
- * Cast the given metadata object to IBatchMetadata if it is so, otherwise yield undefined
- */
+/** Syntactic sugar for casting */
 export function asBatchMetadata(metadata: unknown): IBatchMetadata | undefined {
-	return isBatchMetadata(metadata) ? metadata : undefined;
+	return metadata as IBatchMetadata | undefined;
 }
 
 /**
- * Batching makes assumptions about what might be on the metadata. This interface codifies those assumptions, but does not validate them.
+ * Properties put on the op metadata object for batch tracking
  */
 export interface IBatchMetadata {
+	/** Set on first/last messages of a multi-message batch, to true/false respectively */
 	batch?: boolean;
+	/** Maybe set on first message of a batch, to the batchId generated when resubmitting (set/fixed on first resubmit) */
+	batchId?: BatchId;
 }
 
 /**

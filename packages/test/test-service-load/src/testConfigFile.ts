@@ -117,12 +117,8 @@ export interface ILoadTestConfig {
 		 */
 		loadRate?: number;
 		/**
-		 * Once every `virtualOpRate` ops, send an op from a virtualized data store
-		 */
-		opRate?: number;
-		/**
-		 * How many clients should create/load/modify virtual data stores if `createRate` is specified.
-		 * By default, only one client will send create/load/modify virtual data stores.
+		 * How many clients should create/load virtual data stores if `createRate` is specified.
+		 * By default, only one client will send create/load virtual data stores.
 		 */
 		numClients?: number;
 	};

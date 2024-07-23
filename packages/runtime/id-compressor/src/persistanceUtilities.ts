@@ -4,6 +4,8 @@
  */
 
 /* eslint-disable no-bitwise */
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { NumericUuid } from "./identifiers.js";
 
 const halfNumeric = BigInt("0xFFFFFFFFFFFFFFFF");
@@ -41,13 +43,16 @@ export interface Index {
 
 export function readNumber(index: Index): number {
 	const value = index.bufferFloat[index.index];
+	assert(value !== undefined, 0x9d9 /* value is undefined in readNumber */);
 	index.index += 1;
 	return value;
 }
 
 export function readNumericUuid(index: Index): NumericUuid {
 	const lowerHalf = index.bufferUint[index.index];
+	assert(lowerHalf !== undefined, 0x9da /* lowerHalf is undefined in readNumericUuid */);
 	const upperHalf = index.bufferUint[index.index + 1];
+	assert(upperHalf !== undefined, 0x9db /* upperHalf is undefined in readNumericUuid */);
 	const value = (upperHalf << sixtyFour) | lowerHalf;
 	index.index += 2;
 	return value as NumericUuid;

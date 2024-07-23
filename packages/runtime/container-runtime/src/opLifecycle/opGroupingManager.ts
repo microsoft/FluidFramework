@@ -65,15 +65,16 @@ export class OpGroupingManager {
 				length: batch.messages.length,
 				threshold: this.config.opCountThreshold,
 				reentrant: batch.hasReentrantOps,
-				referenceSequenceNumber: batch.messages[0].referenceSequenceNumber,
+				// Non null asserting here because of the length check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				referenceSequenceNumber: batch.messages[0]!.referenceSequenceNumber,
 			});
 		}
 
 		for (const message of batch.messages) {
 			if (message.metadata) {
-				const keys = Object.keys(message.metadata);
-				assert(keys.length < 2, 0x5dd /* cannot group ops with metadata */);
-				assert(keys.length === 0 || keys[0] === "batch", 0x5de /* unexpected op metadata */);
+				const { batch: _batch, batchId, ...rest } = message.metadata;
+				assert(Object.keys(rest).length === 0, 0x5dd /* cannot group ops with metadata */);
 			}
 		}
 
@@ -91,7 +92,9 @@ export class OpGroupingManager {
 			messages: [
 				{
 					metadata: undefined,
-					referenceSequenceNumber: batch.messages[0].referenceSequenceNumber,
+					// TODO why are we non null asserting here?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					referenceSequenceNumber: batch.messages[0]!.referenceSequenceNumber,
 					contents: serializedContent,
 				},
 			],

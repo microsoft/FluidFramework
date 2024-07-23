@@ -24,11 +24,13 @@ export interface BenchmarkAsyncFunction extends BenchmarkOptions {
 }
 
 // @public
+export function benchmarkCustom(options: CustomBenchmarkOptions): Test;
+
+// @public
 export interface BenchmarkData {
-    readonly elapsedSeconds: number;
-    readonly iterationsPerBatch: number;
-    readonly numberOfBatches: number;
-    readonly stats: Stats;
+    customData: Record<string, unknown>;
+    customDataFormatters: Record<string, (value: unknown) => string>;
+    elapsedSeconds: number;
 }
 
 // @public
@@ -39,7 +41,6 @@ export interface BenchmarkDescription {
 
 // @public
 export interface BenchmarkError {
-    // (undocumented)
     error: string;
 }
 
@@ -55,7 +56,7 @@ export class BenchmarkReporter {
     constructor(outputDirectory?: string);
     recordResultsSummary(): void;
     recordSuiteResults(suiteName: string): void;
-    recordTestResult(suiteName: string, testName: string, result: BenchmarkResult): void;
+    recordTestResult(suiteName: string, testName: string, result: Readonly<BenchmarkResult>): void;
 }
 
 // @public
@@ -110,6 +111,11 @@ export interface CustomBenchmark extends BenchmarkTimingOptions {
 export type CustomBenchmarkArguments = MochaExclusiveOptions & CustomBenchmark & BenchmarkDescription;
 
 // @public
+export interface CustomBenchmarkOptions extends Titled, BenchmarkDescription, MochaExclusiveOptions {
+    run: (reporter: IMeasurementReporter) => void | Promise<unknown>;
+}
+
+// @public
 export function geometricMean(values: number[]): number;
 
 // @public
@@ -120,6 +126,11 @@ export interface HookArguments {
 
 // @public
 export type HookFunction = () => void | Promise<unknown>;
+
+// @public
+export interface IMeasurementReporter {
+    addMeasurement(key: string, value: number): void;
+}
 
 // @public (undocumented)
 export interface IMemoryTestObject extends MemoryTestObjectProps {
@@ -177,21 +188,14 @@ export function qualifiedTitle(args: BenchmarkDescription & Titled): string;
 // @public
 export function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData>;
 
-// @public (undocumented)
+// @public
 export interface Stats {
-    // (undocumented)
     readonly arithmeticMean: number;
-    // (undocumented)
     readonly marginOfError: number;
-    // (undocumented)
     readonly marginOfErrorPercent: number;
-    // (undocumented)
     readonly samples: readonly number[];
-    // (undocumented)
     readonly standardDeviation: number;
-    // (undocumented)
     readonly standardErrorOfMean: number;
-    // (undocumented)
     readonly variance: number;
 }
 

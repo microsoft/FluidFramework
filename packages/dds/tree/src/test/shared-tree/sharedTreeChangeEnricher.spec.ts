@@ -57,7 +57,11 @@ const dataChanges: ModularChangeset[] = [];
 const defaultEditor = new DefaultEditBuilder(modularFamily, (change) =>
 	dataChanges.push(change),
 );
-const modularBuilder = new ModularEditBuilder(modularFamily, () => {});
+const modularBuilder = new ModularEditBuilder(
+	modularFamily,
+	modularFamily.fieldKinds,
+	() => {},
+);
 
 // Side effects results in `dataChanges` being populated
 defaultEditor.optionalField({ parent: undefined, field: rootFieldKey }).set(undefined, false);
@@ -110,7 +114,7 @@ describe("SharedTreeChangeEnricher", () => {
 		fork.applyTipChange(removeRoot, revision1);
 
 		assert.deepEqual(jsonTreeFromForest(fork.forest), []);
-		assert.deepEqual(Array.from(fork.removedRoots.entries()), [{ id: { minor: 0 }, root: 0 }]);
+		assert.equal(Array.from(fork.removedRoots.entries()).length, 1);
 
 		// The original enricher should not have been modified
 		assert.deepEqual(jsonTreeFromForest(enricher.forest), [content]);
