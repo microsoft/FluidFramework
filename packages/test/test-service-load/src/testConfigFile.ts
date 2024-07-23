@@ -124,7 +124,7 @@ export type TestConfiguration = {
 		 */
 		numClients?: number;
 	};
-}
+};
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type OptionOverride = {
