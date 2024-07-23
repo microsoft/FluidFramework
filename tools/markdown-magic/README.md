@@ -221,6 +221,8 @@ Arguments:
 
 Generates a README section with fluid-framework dependency guidelines.
 
+Assumes that the package is published and can be installed via `npm`.
+
 Arguments:
 
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
