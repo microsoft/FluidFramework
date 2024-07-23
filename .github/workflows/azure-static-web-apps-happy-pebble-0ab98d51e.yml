@@ -19,6 +19,18 @@ jobs:
         with:
           submodules: true
           lfs: false
+      # Step to install pnpm
+      - name: Install pnpm
+        run: npx pnpm@8 install
+
+      # Install dependencies using pnpm
+      - name: Install dependencies
+        run: pnpm install
+
+      # Build the project using pnpm
+      - name: Build the project
+        run: pnpm run build
+
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
