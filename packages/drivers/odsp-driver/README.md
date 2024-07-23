@@ -7,7 +7,7 @@ The ODSP Fluid service is not a publicly available service, and currently it is 
 to connect to it. This driver is present as an illustration of a different Fluid driver implementation.
 Developers should not depend on this driver for their own solutions.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -37,6 +37,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `legacy` APIs, import via `@fluidframework/odsp-driver/legacy`.
 
+## API Documentation
+
+API documentation for **@fluidframework/odsp-driver** is available at <https://fluidframework.com/docs/apis/odsp-driver>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -59,14 +63,10 @@ Documenting some basics about opds-driver specific apis that are relevant for cr
 -   Earlier, application needed to redeem the sharing link of the file before a /trees/latest fetch could be made. To reduce the number of round trips made to ODSP, redemption of the share link now happens along with fetching latest snapshot in the same api request by passing share link in `&sl` request parameter.
 -   This api is also preflight-less, which means it is not preceded by an OPTIONS call in the browsers to reduce the network trips to the server.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/odsp-driver** is available at <https://fluidframework.com/docs/apis/odsp-driver>.
 
 ## Minimum Client Requirements
 

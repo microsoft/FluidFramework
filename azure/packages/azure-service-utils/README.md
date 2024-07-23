@@ -6,7 +6,7 @@ A set of helper utilities for building backend APIs for use with Azure Fluid Rel
 
 This function will generate a JWT token that can be sent to an `ITokenProvider` instance that is being passed into the constructor of `AzureClient`. The `tenantId` and `key` map to the values provided to you as part of the onboarding process for the Azure Fluid Relay service. The `user` objects allows you to define the properties for the current user that this token will be used to authenticate for. The values passed in here represent the values that will be supplied as part of the `audience` in the `FluidContainer` that will be provided by the `AzureClient`.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -36,18 +36,18 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `legacy` APIs, import via `@fluidframework/azure-service-utils/legacy`.
 
+## API Documentation
+
+API documentation for **@fluidframework/azure-service-utils** is available at <https://fluidframework.com/docs/apis/azure-service-utils>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/azure-service-utils** is available at <https://fluidframework.com/docs/apis/azure-service-utils>.
 
 ## Minimum Client Requirements
 

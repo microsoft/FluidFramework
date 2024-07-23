@@ -11,7 +11,7 @@ You create an App Insights Instance and then configure your applications to send
 This could be general machine related health being automatically reported to the instance when you install a logging program on your service’s machines or custom metrics that you manually configure your applications to send. Keep in mind this logger is intended for use with browser based web applications, not pure nodeJS.
 In our case, we are sending custom metrics. [Learn more about Azure App Insights with their docs](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview?tabs=net)
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -40,6 +40,10 @@ For more information on the related support guarantees, see [API Support Levels]
 To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/app-insights-logger` like normal.
 
 To access the `beta` APIs, import via `@fluidframework/app-insights-logger/beta`.
+
+## API Documentation
+
+API documentation for **@fluidframework/app-insights-logger** is available at <https://fluidframework.com/docs/apis/app-insights-logger>.
 
 <!-- prettier-ignore-end -->
 
@@ -98,14 +102,10 @@ From the Azure web portal, navigate to your app insights instance. Now, go to th
     | where customDimensions.name == "performance"
     ```
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/app-insights-logger** is available at <https://fluidframework.com/docs/apis/app-insights-logger>.
 
 ## Minimum Client Requirements
 

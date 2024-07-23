@@ -27,7 +27,7 @@ import {
 	markContentType,
 	prepareContentForHydration,
 } from "./proxies.js";
-import { getFlexNode } from "./proxyBinding.js";
+import { getFlexNode, getKernel } from "./proxyBinding.js";
 import {
 	NodeKind,
 	type ImplicitAllowedTypes,
@@ -683,7 +683,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
 	) {
 		super(input);
-		getFlexNode(this).on("nodeChanged", () => {
+		getKernel(this).on("nodeChanged", () => {
 			this.#generationNumber += 1;
 		});
 	}

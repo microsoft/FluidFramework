@@ -22,7 +22,7 @@ functionality you need from this package.
 This package contains APIs and a CLI for working with semantic versioning version strings and ranges, especially those
 using [Fluid-specific version schemes.](./packages/version-tools/README.md#version-schemes)
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

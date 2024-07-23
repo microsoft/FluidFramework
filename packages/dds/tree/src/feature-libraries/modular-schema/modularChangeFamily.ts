@@ -60,6 +60,7 @@ import {
 	tryGetFromNestedMap,
 	type NestedMap,
 	type RangeQueryResult,
+	oob,
 } from "../../util/index.js";
 import {
 	type TreeChunk,
@@ -211,16 +212,12 @@ export class ModularChangeFamily
 		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
 		const idState: IdAllocationState = { maxId };
 
-		return changes.reduce(
-			(change1, change2) =>
-				makeAnonChange(this.composePair(change1, change2, revInfos, idState)),
-			makeAnonChange({
-				fieldChanges: new Map(),
-				nodeChanges: new Map(),
-				nodeToParent: new Map(),
-				nodeAliases: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-			}),
+		if (changes.length === 0) {
+			return makeModularChangeset();
+		}
+
+		return changes.reduce((change1, change2) =>
+			makeAnonChange(this.composePair(change1, change2, revInfos, idState)),
 		).change;
 	}
 
@@ -239,7 +236,7 @@ export class ModularChangeFamily
 		]);
 
 		return makeModularChangeset(
-			this.pruneFieldMap(fieldChanges, nodeChanges),
+			fieldChanges,
 			nodeChanges,
 			nodeToParent,
 			nodeAliases,
@@ -1024,7 +1021,10 @@ export class ModularChangeFamily
 				baseNodeId,
 			).get(fieldKey);
 
-			assert(baseFieldChange !== undefined, "Cross field key registered for empty field");
+			assert(
+				baseFieldChange !== undefined,
+				0x9c2 /* Cross field key registered for empty field */,
+			);
 			if (crossFieldTable.baseFieldToContext.has(baseFieldChange)) {
 				// This field has already been processed because there were changes to rebase.
 				continue;
@@ -1037,7 +1037,7 @@ export class ModularChangeFamily
 				baseChild: NodeId | undefined,
 				stateChange: NodeAttachState | undefined,
 			): NodeId | undefined => {
-				assert(child === undefined, "There should be no new changes in this field");
+				assert(child === undefined, 0x9c3 /* There should be no new changes in this field */);
 				return undefined;
 			};
 
@@ -1109,7 +1109,7 @@ export class ModularChangeFamily
 				return;
 			}
 
-			assert(!rebasedNode.fieldChanges.has(fieldKey), "Expected an empty field");
+			assert(!rebasedNode.fieldChanges.has(fieldKey), 0x9c4 /* Expected an empty field */);
 			rebasedNode.fieldChanges.set(fieldKey, rebasedField);
 			return;
 		}
@@ -2233,7 +2233,7 @@ class InvertManager extends CrossFieldManagerI<FieldChange> {
 		id: ChangesetLocalId,
 		count: number,
 	): void {
-		assert(false, "Keys should not be moved manually during invert");
+		assert(false, 0x9c5 /* Keys should not be moved manually during invert */);
 	}
 
 	private get table(): InvertTable {
@@ -2269,7 +2269,7 @@ class RebaseManager extends CrossFieldManagerI<FieldChange> {
 
 			assert(
 				newFieldIds.length === 0,
-				"TODO: Modifying a cross-field key from the new changeset is currently unsupported",
+				0x9c6 /* TODO: Modifying a cross-field key from the new changeset is currently unsupported */,
 			);
 
 			const baseFieldIds = getFieldsForCrossFieldKey(this.table.baseChange, [
@@ -2279,7 +2279,10 @@ class RebaseManager extends CrossFieldManagerI<FieldChange> {
 				count,
 			]);
 
-			assert(baseFieldIds.length > 0, "Cross field key not registered in base or new change");
+			assert(
+				baseFieldIds.length > 0,
+				0x9c7 /* Cross field key not registered in base or new change */,
+			);
 
 			for (const baseFieldId of baseFieldIds) {
 				this.table.affectedBaseFields.set(
@@ -2356,7 +2359,7 @@ class ComposeManager extends CrossFieldManagerI<FieldChange> {
 
 				assert(
 					baseFieldIds.length > 0,
-					"Cross field key not registered in base or new change",
+					0x9c8 /* Cross field key not registered in base or new change */,
 				);
 
 				for (const baseFieldId of baseFieldIds) {
@@ -2754,10 +2757,9 @@ function revisionFromTaggedChange(
 function revisionFromRevInfos(
 	revInfos: undefined | readonly RevisionInfo[],
 ): RevisionTag | undefined {
-	if (revInfos === undefined || revInfos.length !== 1) {
-		return undefined;
+	if (revInfos?.length === 1) {
+		return (revInfos[0] ?? oob()).revision;
 	}
-	return revInfos[0].revision;
 }
 
 function mergeBTrees<K, V>(tree1: BTree<K, V>, tree2: BTree<K, V>): BTree<K, V> {
@@ -2798,7 +2800,7 @@ function fieldMapFromNodeId(
 	}
 
 	const node = nodeChangeFromId(nodes, nodeId);
-	assert(node.fieldChanges !== undefined, "Expected node to have field changes");
+	assert(node.fieldChanges !== undefined, 0x9c9 /* Expected node to have field changes */);
 	return node.fieldChanges;
 }
 
@@ -2816,7 +2818,7 @@ function rebasedNodeIdFromBaseNodeId(table: RebaseTable, baseId: NodeId): NodeId
 
 function nodeChangeFromId(nodes: ChangeAtomIdMap<NodeChangeset>, id: NodeId): NodeChangeset {
 	const node = getFromChangeAtomIdMap(nodes, id);
-	assert(node !== undefined, "Unknown node ID");
+	assert(node !== undefined, 0x9ca /* Unknown node ID */);
 	return node;
 }
 
@@ -2850,7 +2852,7 @@ function replaceFieldIdRevision(
 
 export function getParentFieldId(changeset: ModularChangeset, nodeId: NodeId): FieldId {
 	const parentId = getFromChangeAtomIdMap(changeset.nodeToParent, nodeId);
-	assert(parentId !== undefined, "Parent field should be defined");
+	assert(parentId !== undefined, 0x9cb /* Parent field should be defined */);
 	return normalizeFieldId(parentId, changeset.nodeAliases);
 }
 

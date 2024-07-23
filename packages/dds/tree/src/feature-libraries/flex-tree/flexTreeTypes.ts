@@ -34,7 +34,6 @@ import type {
 } from "../typed-schema/index.js";
 
 import type { FlexTreeContext } from "./context.js";
-import type { FlexTreeNodeEvents } from "./treeEvents.js";
 
 /**
  * An anchor slot which records the {@link FlexTreeNode} associated with that anchor, if there is one.
@@ -158,14 +157,6 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	 * Value stored on this node.
 	 */
 	readonly value?: TreeValue;
-
-	/**
-	 * {@inheritDoc ISubscribable#on}
-	 */
-	on<K extends keyof FlexTreeNodeEvents>(
-		eventName: K,
-		listener: FlexTreeNodeEvents[K],
-	): () => void;
 
 	/**
 	 * Gets a field of this node, if it is not empty.
@@ -577,7 +568,6 @@ export const reservedObjectNodeFieldPropertyNames = [
 	"constructor",
 	"context",
 	"is",
-	"on",
 	"parentField",
 	"schema",
 	"tryGetField",

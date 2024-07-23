@@ -2,7 +2,7 @@
 
 The tinylicious-client package provides a simple and powerful way to consume collaborative Fluid data with the Tinylicious service.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -31,6 +31,10 @@ For more information on the related support guarantees, see [API Support Levels]
 To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/tinylicious-client` like normal.
 
 To access the `beta` APIs, import via `@fluidframework/tinylicious-client/beta`.
+
+## API Documentation
+
+API documentation for **@fluidframework/tinylicious-client** is available at <https://fluidframework.com/docs/apis/tinylicious-client>.
 
 <!-- prettier-ignore-end -->
 
@@ -152,14 +156,10 @@ const text = await map1.get(); // Resolve the handle to get the object
 const text = await map1.get("text-unique-id").get();
 ```
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/tinylicious-client** is available at <https://fluidframework.com/docs/apis/tinylicious-client>.
 
 ## Minimum Client Requirements
 

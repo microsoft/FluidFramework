@@ -1,28 +1,22 @@
-<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCRIPTS:includeHeading=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (API_DOCS:includeHeading=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-| Script | Description |
-|--------|-------------|
-| `test-script-1` | `echo This is a test script` |
-| `test-script-2` | `echo This is another test script` |
+API documentation for **@fluidframework/test-package** is available at <https://fluidframework.com/docs/apis/test-package>.
 
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCRIPTS) -->
+<!-- AUTO-GENERATED-CONTENT:START (API_DOCS:packageJsonPath=./package.json) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-## Scripts
+## API Documentation
 
-| Script | Description |
-|--------|-------------|
-| `test-script-1` | `echo This is a test script` |
-| `test-script-2` | `echo This is another test script` |
+API documentation for **@fluidframework/test-package** is available at <https://fluidframework.com/docs/apis/test-package>.
 
 <!-- prettier-ignore-end -->
 

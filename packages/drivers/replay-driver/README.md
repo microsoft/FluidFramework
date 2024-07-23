@@ -3,7 +3,7 @@
 This is an implementation of a driver which provides a DocumentService which uses the DocumentService provided to it to fetch ops and then replay those ops
 to mimic the web socket connection.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -24,18 +24,18 @@ To get started, install the package by running the following command:
 npm i @fluidframework/replay-driver
 ```
 
+## API Documentation
+
+API documentation for **@fluidframework/replay-driver** is available at <https://fluidframework.com/docs/apis/replay-driver>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/replay-driver** is available at <https://fluidframework.com/docs/apis/replay-driver>.
 
 ## Minimum Client Requirements
 

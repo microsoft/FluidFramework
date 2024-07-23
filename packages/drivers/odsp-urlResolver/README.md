@@ -2,7 +2,7 @@
 
 This is an implementation of a url resolver which resolves onedrive and sharepoint URLs.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -23,18 +23,18 @@ To get started, install the package by running the following command:
 npm i @fluidframework/odsp-urlresolver
 ```
 
+## API Documentation
+
+API documentation for **@fluidframework/odsp-urlresolver** is available at <https://fluidframework.com/docs/apis/odsp-urlresolver>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/odsp-urlresolver** is available at <https://fluidframework.com/docs/apis/odsp-urlresolver>.
 
 ## Minimum Client Requirements
 

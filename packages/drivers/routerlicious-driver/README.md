@@ -4,7 +4,7 @@ This is an implementation of a driver which provides a DocumentService which use
 with different endpoints like Document Storage, Delta Storage and Delta stream.
 It also provides implementation of Document Storage, Delta Storage and Delta stream.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -34,18 +34,18 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `legacy` APIs, import via `@fluidframework/routerlicious-driver/legacy`.
 
+## API Documentation
+
+API documentation for **@fluidframework/routerlicious-driver** is available at <https://fluidframework.com/docs/apis/routerlicious-driver>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/routerlicious-driver** is available at <https://fluidframework.com/docs/apis/routerlicious-driver>.
 
 ## Minimum Client Requirements
 

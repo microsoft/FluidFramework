@@ -4,7 +4,7 @@ This package contains utilities for writing stochastic tests (sometimes called f
 Such tests can be useful for stress testing systems with well-defined inputs and expected invariants.
 For example, they are useful for asserting eventual convergence properties of DDSes.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER:devDependency=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:devDependency=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -195,7 +195,7 @@ This package also exports a `describeFuzz` helper, which is a simple wrapper aro
 -   `FUZZ_TEST_COUNT`: Controls the `testCount` value passed to the fuzz test's `describeFuzz` block callback.
 -   `FUZZ_STRESS_RUN`: If set to a truthy value, test commands in packages with fuzz tests will only run `describeFuzz` blocks.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

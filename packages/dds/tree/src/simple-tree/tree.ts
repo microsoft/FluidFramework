@@ -165,7 +165,10 @@ export function walkNodeSchema(
 			walkAllowedTypes(field.allowedTypeSet, visitor, visitedSet);
 		}
 	} else {
-		assert(schema.kind === NodeKind.Array || schema.kind === NodeKind.Map, "invalid schema");
+		assert(
+			schema.kind === NodeKind.Array || schema.kind === NodeKind.Map,
+			0x9b3 /* invalid schema */,
+		);
 		const childTypes = schema.info as ImplicitAllowedTypes;
 		walkFieldSchema(childTypes, visitor, visitedSet);
 	}

@@ -2,7 +2,7 @@
 
 Interface `IFluidDataStoreRuntime` specifies the data store developer API.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -32,6 +32,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `legacy` APIs, import via `@fluidframework/datastore-definitions/legacy`.
 
+## API Documentation
+
+API documentation for **@fluidframework/datastore-definitions** is available at <https://fluidframework.com/docs/apis/datastore-definitions>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -60,14 +64,10 @@ For this reason people usually stick the currentSeq on the signal, so other clie
 You can send a signal via the container or data store runtime. The container will emit the signal event on all signals,
 but a data store will emit the signal event only on signals emitted on that data store runtime.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/datastore-definitions** is available at <https://fluidframework.com/docs/apis/datastore-definitions>.
 
 ## Minimum Client Requirements
 

@@ -41,7 +41,7 @@
 
 -   [Quorum and Proposals](../../../server/routerlicious/packages/protocol-base/README.md)
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -70,6 +70,10 @@ For more information on the related support guarantees, see [API Support Levels]
 To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/container-loader` like normal.
 
 To access the `legacy` APIs, import via `@fluidframework/container-loader/legacy`.
+
+## API Documentation
+
+API documentation for **@fluidframework/container-loader** is available at <https://fluidframework.com/docs/apis/container-loader>.
 
 <!-- prettier-ignore-end -->
 
@@ -292,14 +296,10 @@ Note that when an active connection is in place, it's just a matter of time befo
 
 `Container.isDirty` can be used to get current state of container.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/container-loader** is available at <https://fluidframework.com/docs/apis/container-loader>.
 
 ## Minimum Client Requirements
 

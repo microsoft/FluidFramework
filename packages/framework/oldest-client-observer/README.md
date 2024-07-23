@@ -1,6 +1,6 @@
 # @fluid-experimental/oldest-client-observer
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -35,18 +35,18 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluid-
 
 To access the `legacy` APIs, import via `@fluid-experimental/oldest-client-observer/legacy`.
 
+## API Documentation
+
+API documentation for **@fluid-experimental/oldest-client-observer** is available at <https://fluidframework.com/docs/apis/oldest-client-observer>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluid-experimental/oldest-client-observer** is available at <https://fluidframework.com/docs/apis/oldest-client-observer>.
 
 ## Minimum Client Requirements
 

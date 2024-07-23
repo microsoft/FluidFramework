@@ -144,6 +144,10 @@ export class TestProducer implements IProducer {
 	public once(event: string, listener: (...args: any[]) => void): this {
 		return this;
 	}
+
+	public off(event: string, listener: (...args: any[]) => void): this {
+		return this;
+	}
 }
 
 /**

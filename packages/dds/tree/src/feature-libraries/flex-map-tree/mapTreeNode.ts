@@ -14,7 +14,7 @@ import {
 	type TreeValue,
 	type Value,
 } from "../../core/index.js";
-import { brand, fail, getOrCreate, mapIterable } from "../../util/index.js";
+import { brand, fail, mapIterable, oob } from "../../util/index.js";
 import {
 	type FlexTreeContext,
 	FlexTreeEntityKind,
@@ -23,7 +23,6 @@ import {
 	type FlexTreeLeafNode,
 	type FlexTreeMapNode,
 	type FlexTreeNode,
-	type FlexTreeNodeEvents,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
@@ -53,7 +52,6 @@ import {
 import { type FlexImplicitAllowedTypes, normalizeAllowedTypes } from "../schemaBuilderBase.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 import { FieldKinds, type SequenceFieldEditBuilder } from "../default-schema/index.js";
-import { ComposableEventEmitter, type Listenable, type Off } from "../../events/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 // #region Nodes
@@ -65,7 +63,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  */
 export interface MapTreeNode extends FlexTreeNode {
 	readonly mapTree: MapTree;
-	forwardEvents(to: Listenable<FlexTreeNodeEvents>): void;
 }
 
 /**
@@ -82,38 +79,6 @@ interface LocationInField {
 }
 
 /**
- * Allows events to be forwarded to another event emitter.
- * @remarks TODO: After the eventing library is simplified, find a way to support this pattern elegantly in the library.
- */
-class ForwardingEventEmitter extends ComposableEventEmitter<FlexTreeNodeEvents> {
-	// A map from deregistration functions produced by this class to deregistration functions of Listenables that have been forwarded to
-	private readonly forwardedOffs = new Map<Off, Off[]>();
-
-	public override on<K extends keyof FlexTreeNodeEvents>(
-		eventName: K,
-		listener: FlexTreeNodeEvents[K],
-	): Off {
-		const off = super.on(eventName, listener);
-		// Return a deregister function which...
-		return (): void => {
-			off(); // ...deregisters the event in this emitter,
-			// and also deregisters the event in any Listenable that it gets forwarded to
-			(this.forwardedOffs.get(off) ?? []).forEach((f) => f());
-		};
-	}
-
-	public forwardEvents(to: Listenable<FlexTreeNodeEvents>): void {
-		for (const [eventName, listeners] of this.listeners) {
-			for (const [off, listener] of listeners) {
-				// For every one of our listeners, make the same subscription in the Listenable that we're forwarding to,
-				// and then create a mapping from our deregistration function to theirs, so we can call it later if need be.
-				getOrCreate(this.forwardedOffs, off, () => []).push(to.on(eventName, listener));
-			}
-		}
-	}
-}
-
-/**
  * A readonly implementation of {@link FlexTreeNode} which wraps a {@link MapTree}.
  * @remarks Any methods that would mutate the node will fail,
  * as will the querying of data specific to the {@link LazyTreeNode} implementation (e.g. {@link FlexTreeNode.context}).
@@ -122,10 +87,6 @@ class ForwardingEventEmitter extends ComposableEventEmitter<FlexTreeNodeEvents> 
  */
 export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements MapTreeNode {
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Node as const;
-	private readonly events = new ForwardingEventEmitter();
-	public forwardEvents(to: Listenable<FlexTreeNodeEvents>): void {
-		this.events.forwardEvents(to);
-	}
 
 	/**
 	 * Create a new MapTreeNode.
@@ -215,19 +176,6 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 		return this.mapTree.value;
 	}
 
-	public on<K extends keyof FlexTreeNodeEvents>(
-		eventName: K,
-		listener: FlexTreeNodeEvents[K],
-	): () => void {
-		switch (eventName) {
-			case "nodeChanged":
-			case "treeChanged":
-				return this.events.on(eventName, listener);
-			default:
-				throw unsupportedUsageError(`Subscribing to ${eventName}`);
-		}
-	}
-
 	public get context(): FlexTreeContext {
 		// This API is relevant to `LazyTreeNode`s, but not `MapTreeNode`s.
 		// TODO: Refactor the FlexTreeNode interface so that stubbing this out isn't necessary.
@@ -245,7 +193,7 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 			const field = getOrCreateField(this, key, mapTrees, this.schema.getFieldSchema(key));
 			for (let index = 0; index < field.length; index++) {
 				const child = getOrCreateChild(
-					mapTrees[index],
+					mapTrees[index] ?? oob(),
 					this.schema.getFieldSchema(key).allowedTypes,
 					{ parent: field, index },
 				);
@@ -433,8 +381,8 @@ class MapTreeField<T extends FlexAllowedTypes> implements FlexTreeField {
 
 		// When this field is created (which only happens one time, because it is cached), all the children become parented for the first time.
 		// "Adopt" each child by updating its parent information to point to this field.
-		for (let i = 0; i < mapTrees.length; i++) {
-			const mapTreeNodeChild = nodeCache.get(mapTrees[i]);
+		for (const [i, mapTree] of mapTrees.entries()) {
+			const mapTreeNodeChild = nodeCache.get(mapTree);
 			if (mapTreeNodeChild !== undefined) {
 				assert(
 					mapTreeNodeChild.parentField.parent === rootMapTreeField,
@@ -491,7 +439,7 @@ class MapTreeRequiredField<T extends FlexAllowedTypes>
 	implements FlexTreeRequiredField<T>
 {
 	public get content(): FlexTreeUnboxNodeUnion<T> {
-		return unboxedUnion(this.schema, this.mapTrees[0], { parent: this, index: 0 });
+		return unboxedUnion(this.schema, this.mapTrees[0] ?? oob(), { parent: this, index: 0 });
 	}
 	public set content(_: FlexTreeUnboxNodeUnion<T>) {
 		throw unsupportedUsageError("Setting an optional field");
@@ -504,7 +452,10 @@ class MapTreeOptionalField<T extends FlexAllowedTypes>
 {
 	public get content(): FlexTreeUnboxNodeUnion<T> | undefined {
 		return this.mapTrees.length > 0
-			? unboxedUnion(this.schema, this.mapTrees[0], { parent: this, index: 0 })
+			? unboxedUnion(this.schema, this.mapTrees[0] ?? oob(), {
+					parent: this,
+					index: 0,
+				})
 			: undefined;
 	}
 	public set content(_: FlexTreeUnboxNodeUnion<T> | undefined) {
@@ -521,7 +472,7 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 		if (i === undefined) {
 			return undefined;
 		}
-		return unboxedUnion(this.schema, this.mapTrees[i], { parent: this, index: i });
+		return unboxedUnion(this.schema, this.mapTrees[i] ?? oob(), { parent: this, index: i });
 	}
 	public map<U>(callbackfn: (value: FlexTreeUnboxNodeUnion<T>, index: number) => U): U[] {
 		return Array.from(this, callbackfn);
@@ -531,8 +482,8 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 	}
 
 	public *[Symbol.iterator](): IterableIterator<FlexTreeUnboxNodeUnion<T>> {
-		for (let i = 0; i < this.mapTrees.length; i++) {
-			yield unboxedUnion(this.schema, this.mapTrees[i], { parent: this, index: i });
+		for (const [i, mapTree] of this.mapTrees.entries()) {
+			yield unboxedUnion(this.schema, mapTree, { parent: this, index: i });
 		}
 	}
 
@@ -768,7 +719,7 @@ function unboxedField<TFieldSchema extends FlexFieldSchema>(
 		mapTree.fields.get(key) ?? fail("Key does not exist in unhydrated map tree");
 
 	if (fieldSchema.kind === FieldKinds.required) {
-		return unboxedUnion(fieldSchema, mapTrees[0], {
+		return unboxedUnion(fieldSchema, mapTrees[0] ?? oob(), {
 			parent: field,
 			index: 0,
 		}) as FlexTreeUnboxField<TFieldSchema>;
@@ -776,7 +727,10 @@ function unboxedField<TFieldSchema extends FlexFieldSchema>(
 	if (fieldSchema.kind === FieldKinds.optional) {
 		return (
 			mapTrees.length > 0
-				? unboxedUnion(fieldSchema, mapTrees[0], { parent: field, index: 0 })
+				? unboxedUnion(fieldSchema, mapTrees[0] ?? oob(), {
+						parent: field,
+						index: 0,
+					})
 				: undefined
 		) as FlexTreeUnboxField<TFieldSchema>;
 	}

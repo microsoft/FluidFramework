@@ -3,7 +3,7 @@
 This package is intended for sharing and promoting best-practice implementations of Fluid-agnostic utility functions
 across packages in the Fluid Framework repo.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -32,6 +32,10 @@ For more information on the related support guarantees, see [API Support Levels]
 To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/core-utils` like normal.
 
 To access the `legacy` APIs, import via `@fluidframework/core-utils/legacy`.
+
+## API Documentation
+
+API documentation for **@fluidframework/core-utils** is available at <https://fluidframework.com/docs/apis/core-utils>.
 
 <!-- prettier-ignore-end -->
 
@@ -63,14 +67,10 @@ If you want to add code that does not meet these requirements, these other packa
     **core-interfaces** package.
 -   **Shared implementation code with dependencies** should be put in the **client-utils** package.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/core-utils** is available at <https://fluidframework.com/docs/apis/core-utils>.
 
 ## Minimum Client Requirements
 

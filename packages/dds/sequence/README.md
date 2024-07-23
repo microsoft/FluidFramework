@@ -1,6 +1,6 @@
 # @fluidframework/sequence
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -29,6 +29,10 @@ For more information on the related support guarantees, see [API Support Levels]
 To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/sequence` like normal.
 
 To access the `legacy` APIs, import via `@fluidframework/sequence/legacy`.
+
+## API Documentation
+
+API documentation for **@fluidframework/sequence** is available at <https://fluidframework.com/docs/apis/sequence>.
 
 <!-- prettier-ignore-end -->
 
@@ -626,14 +630,10 @@ For further reading on attribution, see the [@fluid-experimental/attributor READ
 <!-- This line ends the content that is copied to the string.md README -->
 
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/sequence** is available at <https://fluidframework.com/docs/apis/sequence>.
 
 ## Minimum Client Requirements
 

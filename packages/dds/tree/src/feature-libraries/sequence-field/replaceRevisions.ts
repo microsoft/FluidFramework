@@ -8,6 +8,7 @@ import { type RevisionTag, replaceAtomRevisions } from "../../core/index.js";
 import { MarkListFactory } from "./markListFactory.js";
 import {
 	type Changeset,
+	type Detach,
 	type HasMoveFields,
 	type HasRevisionTag,
 	type Mark,
@@ -15,6 +16,7 @@ import {
 	NoopMarkType,
 } from "./types.js";
 import type { MoveMarkEffect } from "./helperTypes.js";
+import { isDetach } from "./utils.js";
 
 export function replaceRevisions(
 	changeset: Changeset,
@@ -48,10 +50,13 @@ function updateMark(
 }
 
 function updateEffect<TMark extends MarkEffect>(
-	mark: TMark,
+	input: TMark,
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
 ): TMark {
+	const mark = isDetach(input)
+		? updateIdOverride(input, revisionsToReplace, newRevision)
+		: input;
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType:
@@ -78,13 +83,29 @@ function updateEffect<TMark extends MarkEffect>(
 	}
 }
 
+function updateIdOverride<TEffect extends Detach>(
+	effect: TEffect,
+	revisionsToReplace: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
+): TEffect {
+	if (effect.idOverride !== undefined) {
+		const idOverride = replaceAtomRevisions(
+			effect.idOverride,
+			revisionsToReplace,
+			newRevision,
+		);
+		return { ...effect, idOverride };
+	} else {
+		return effect;
+	}
+}
+
 function updateMoveEffect<TEffect extends HasMoveFields>(
 	effect: TEffect,
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
 ): TEffect {
-	return effect.finalEndpoint !== undefined &&
-		revisionsToReplace.has(effect.finalEndpoint.revision)
+	return effect.finalEndpoint !== undefined
 		? updateRevision(
 				{
 					...effect,

@@ -6,7 +6,7 @@ It is used to power our associated [browser extension][browser-extension].
 -   Chrome: <https://aka.ms/fluid/devtool/chrome>
 -   Edge: <https://aka.ms/fluid/devtool/edge>
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER:devDependency=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:devDependency=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -37,6 +37,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 To access the `beta` APIs, import via `@fluidframework/devtools/beta`.
 
 To access the `alpha` APIs, import via `@fluidframework/devtools/alpha`.
+
+## API Documentation
+
+API documentation for **@fluidframework/devtools** is available at <https://fluidframework.com/docs/apis/devtools>.
 
 <!-- prettier-ignore-end -->
 
@@ -140,14 +144,10 @@ Next, to build the code, run `npm run build` from the root of the mono-repo, or 
 To run the tests, first ensure you have followed the [build](#build) steps above.
 Next, run `npm run test` from a terminal within this directory.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/devtools** is available at <https://fluidframework.com/docs/apis/devtools>.
 
 ## Minimum Client Requirements
 
