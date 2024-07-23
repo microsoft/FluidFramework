@@ -270,28 +270,28 @@ export class Outbox {
 	private flushInternalEvenIfEmpty(mainBatch: BatchManager, resubmittingBatchId?: BatchId) {
 		let clientSequenceNumber: number | undefined;
 		if (mainBatch.empty) {
-		if (resubmittingBatchId && this.params.config.immediateMode !== true) {
-			const referenceSequenceNumber =
-				this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
-			assert(
-				referenceSequenceNumber !== undefined,
-				"reference sequence number should be defined",
-			);
-			const emptyGroupedBatch = this.params.groupingManager.createEmptyGroupedBatch(
-				resubmittingBatchId,
-				referenceSequenceNumber,
-			);
-			if (this.params.shouldSend()) {
-				clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
+			if (resubmittingBatchId && this.params.config.immediateMode !== true) {
+				const referenceSequenceNumber =
+					this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
+				assert(
+					referenceSequenceNumber !== undefined,
+					"reference sequence number should be defined",
+				);
+				const emptyGroupedBatch = this.params.groupingManager.createEmptyGroupedBatch(
+					resubmittingBatchId,
+					referenceSequenceNumber,
+				);
+				if (this.params.shouldSend()) {
+					clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
+				}
+				this.params.pendingStateManager.onFlushBatch(
+					emptyGroupedBatch.messages, // This is the single empty Grouped Batch message
+					clientSequenceNumber,
+				);
+				return;
 			}
-			this.params.pendingStateManager.onFlushBatch(
-				emptyGroupedBatch.messages, // This is the single empty Grouped Batch message
-				clientSequenceNumber,
-			);
 			return;
 		}
-		return;
-	}
 		this.flushInternal(mainBatch, false /* disableGroupBatching */, resubmittingBatchId);
 	}
 
