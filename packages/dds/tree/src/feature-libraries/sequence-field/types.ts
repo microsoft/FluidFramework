@@ -142,9 +142,15 @@ export type Detach = Remove | MoveOut;
  *
  * Only ever targets empty cells.
  *
- * As a matter of normalization, only use an AttachAndDetach mark when the attach is a new insert or a move
- * destination. In all other cases (the attach would be a revive), we rely on the implicit reviving semantics of the
- * detach and represent that detach on its own (i.e., not wrapped in an AttachAndDetach).
+ * As a matter of normalization, we only use an AttachAndDetach to represent the following compositions:
+ * - Insert ○ Remove
+ * - Insert ○ MoveOut
+ * - MoveIn ○ Remove
+ * 
+ * We do NOT use AttachAndDetach to represent the following compositions:
+ * - Revive ○ Remove is represented Remove on an empty cell
+ * - Revive ○ MoveOut is represented MoveOut on an empty cell
+ * - MoveIn ○ MoveOut is represented with Skip or Rename
  */
 export interface AttachAndDetach {
 	type: "AttachAndDetach";
@@ -152,6 +158,14 @@ export interface AttachAndDetach {
 	detach: Detach;
 }
 
+/**
+ * Represents the renaming of an empty cell.
+ * 
+ * Only ever targets empty cells.
+ * 
+ * Occurs when a MoveIn is composed with a MoveOut.
+ * TODO: Use Rename when an Insert is composed with a Remove.
+ */
 export interface Rename {
 	type: "Rename";
 	readonly idOverride: CellId;

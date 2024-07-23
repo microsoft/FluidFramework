@@ -321,21 +321,16 @@ export function normalizeCellRename(
 	detach: Detach,
 ): CellMark<AttachAndDetach | DetachOfRemovedNodes | Rename | NoopMark> {
 	if (attach.type === "MoveIn") {
-		if (
-			detach.type === "MoveOut" &&
-			attach.finalEndpoint === undefined &&
-			detach.finalEndpoint === undefined
-		) {
+		if (detach.type === "MoveOut") {
 			const outputId = getDetachOutputCellId(detach);
-			if (areEqualCellIds(outputId, cellId)) {
-				return { count, cellId };
-			}
-			return {
-				type: "Rename",
-				count,
-				cellId,
-				idOverride: outputId,
-			};
+			return areEqualCellIds(outputId, cellId)
+				? { count, cellId }
+				: {
+					type: "Rename",
+					count,
+					cellId,
+					idOverride: outputId,
+				};
 		}
 	} else {
 		// TODO: revisit if we still need the attach information for new inserts.
