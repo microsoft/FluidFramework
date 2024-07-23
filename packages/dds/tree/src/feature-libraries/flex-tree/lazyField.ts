@@ -18,23 +18,15 @@ import {
 	iterateCursorField,
 	rootFieldKey,
 } from "../../core/index.js";
-import {
-	assertValidIndex,
-	assertValidRangeIndices,
-	disposeSymbol,
-	fail,
-	getOrCreate,
-	oob,
-} from "../../util/index.js";
+import { disposeSymbol, fail, getOrCreate, oob } from "../../util/index.js";
 // TODO: stop depending on contextuallyTyped
-import { applyTypesFromContext, cursorFromContextualData } from "../contextuallyTyped.js";
+import { cursorFromContextualData } from "../contextuallyTyped.js";
 import {
 	FieldKinds,
 	type OptionalFieldEditBuilder,
 	type SequenceFieldEditBuilder,
 	type ValueFieldEditBuilder,
 } from "../default-schema/index.js";
-import { cursorForMapTreeField } from "../mapTreeCursor.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 import type { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
 
@@ -50,7 +42,6 @@ import {
 	type FlexTreeTypedNodeUnion,
 	type FlexTreeUnboxNodeUnion,
 	type FlexibleNodeContent,
-	type FlexibleNodeSubSequence,
 	TreeStatus,
 	flexTreeMarker,
 	flexTreeSlot,
@@ -314,146 +305,6 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 		const fieldEditor = this.context.checkout.editor.sequenceField(fieldPath);
 		return fieldEditor;
 	}
-
-	public insertAt(index: number, value: FlexibleNodeSubSequence<TTypes>): void {
-		assertValidIndex(index, this, true);
-		const content: ITreeCursorSynchronous = isCursor(value)
-			? prepareFieldCursorForInsert(value)
-			: cursorForMapTreeField(
-					Array.from(value, (item) =>
-						applyTypesFromContext(this.context, this.schema.allowedTypeSet, item),
-					),
-				);
-
-		const fieldEditor = this.sequenceEditor();
-		fieldEditor.insert(index, content);
-	}
-
-	public insertAtStart(value: FlexibleNodeSubSequence<TTypes>): void {
-		this.insertAt(0, value);
-	}
-
-	public insertAtEnd(value: FlexibleNodeSubSequence<TTypes>): void {
-		this.insertAt(this.length, value);
-	}
-
-	public removeAt(index: number): void {
-		const fieldEditor = this.sequenceEditor();
-		fieldEditor.remove(index, 1);
-	}
-
-	public moveToStart(sourceIndex: number): void;
-	public moveToStart(
-		sourceIndex: number,
-		source: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void;
-	public moveToStart(
-		sourceIndex: number,
-		source?: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void {
-		this._moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
-	}
-	public moveToEnd(sourceIndex: number): void;
-	public moveToEnd(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
-	public moveToEnd(
-		sourceIndex: number,
-		source?: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void {
-		this._moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
-	}
-	public moveToIndex(index: number, sourceIndex: number): void;
-	public moveToIndex(
-		index: number,
-		sourceIndex: number,
-		source: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void;
-	public moveToIndex(
-		index: number,
-		sourceIndex: number,
-		source?: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void {
-		this._moveRangeToIndex(index, sourceIndex, sourceIndex + 1, source);
-	}
-
-	public moveRangeToStart(sourceStart: number, sourceEnd: number): void;
-	public moveRangeToStart(
-		sourceStart: number,
-		sourceEnd: number,
-		source: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void;
-	public moveRangeToStart(
-		sourceStart: number,
-		sourceEnd: number,
-		source?: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void {
-		this._moveRangeToIndex(0, sourceStart, sourceEnd, source);
-	}
-
-	public moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
-	public moveRangeToEnd(
-		sourceStart: number,
-		sourceEnd: number,
-		source: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void;
-	public moveRangeToEnd(
-		sourceStart: number,
-		sourceEnd: number,
-		source?: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void {
-		this._moveRangeToIndex(this.length, sourceStart, sourceEnd, source);
-	}
-
-	public moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
-	public moveRangeToIndex(
-		index: number,
-		sourceStart: number,
-		sourceEnd: number,
-		source: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void;
-	public moveRangeToIndex(
-		index: number,
-		sourceStart: number,
-		sourceEnd: number,
-		source?: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void {
-		this._moveRangeToIndex(index, sourceStart, sourceEnd, source);
-	}
-
-	private _moveRangeToIndex(
-		index: number,
-		sourceStart: number,
-		sourceEnd: number,
-		source?: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void {
-		const sourceField = source ?? this;
-
-		// TODO: determine support for move across different sequence types
-		assert(
-			sourceField instanceof LazySequence,
-			0x7b1 /* Unsupported sequence implementation. */,
-		);
-		assertValidRangeIndices(sourceStart, sourceEnd, sourceField);
-		if (this.schema.types !== undefined && sourceField !== this) {
-			for (let i = sourceStart; i < sourceEnd; i++) {
-				const sourceNode =
-					sourceField.boxedAt(sourceStart) ?? fail("impossible out of bounds index");
-				if (!this.schema.types.has(sourceNode.schema.name)) {
-					throw new Error("Type in source sequence is not allowed in destination.");
-				}
-			}
-		}
-		const movedCount = sourceEnd - sourceStart;
-		assertValidIndex(index, this, true);
-		const sourceFieldPath = sourceField.getFieldPath();
-		const destinationFieldPath = this.getFieldPath();
-		this.context.checkout.editor.move(
-			sourceFieldPath,
-			sourceStart,
-			movedCount,
-			destinationFieldPath,
-			index,
-		);
-	}
 }
 
 export class ReadonlyLazyValueField<TTypes extends FlexAllowedTypes>
@@ -590,16 +441,6 @@ const builderList: [FlexFieldKind, Builder][] = [
 ];
 
 const kindToClass: ReadonlyMap<FlexFieldKind, Builder> = new Map(builderList);
-
-/**
- * Prepare a fields cursor (holding a sequence of nodes) for inserting.
- */
-function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous {
-	// TODO: optionally validate content against schema.
-
-	assert(cursor.mode === CursorLocationType.Fields, 0x8cb /* should be in fields mode */);
-	return cursor;
-}
 
 /**
  * Prepare a node cursor (holding a single node) for inserting.

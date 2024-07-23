@@ -32,7 +32,6 @@ import {
 	type FlexTreeUnboxField,
 	type FlexTreeUnboxNodeUnion,
 	type FlexibleFieldContent,
-	type FlexibleNodeSubSequence,
 	flexTreeMarker,
 	indexForAt,
 } from "../flex-tree/index.js";
@@ -490,41 +489,7 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 	public sequenceEditor(): SequenceFieldEditBuilder {
 		throw unsupportedUsageError("Editing a sequence");
 	}
-	public insertAt(index: number, value: FlexibleNodeSubSequence<T>): void {
-		throw unsupportedUsageError("Editing a sequence");
-	}
-	public insertAtStart(value: FlexibleNodeSubSequence<T>): void {
-		throw unsupportedUsageError("Editing a sequence");
-	}
-	public insertAtEnd(value: FlexibleNodeSubSequence<T>): void {
-		throw unsupportedUsageError("Editing a sequence");
-	}
-	public removeAt(index: number): void {
-		throw unsupportedUsageError("Editing a sequence");
-	}
-	public moveToStart(sourceIndex: unknown, source?: unknown): void {
-		throw unsupportedUsageError("Editing a sequence");
-	}
-	public moveToEnd(sourceIndex: unknown, source?: unknown): void {
-		throw unsupportedUsageError("Editing a sequence");
-	}
-	public moveToIndex(index: unknown, sourceIndex: unknown, source?: unknown): void {
-		throw unsupportedUsageError("Editing a sequence");
-	}
-	public moveRangeToStart(sourceStart: unknown, sourceEnd: unknown, source?: unknown): void {
-		throw unsupportedUsageError("Editing a sequence");
-	}
-	public moveRangeToEnd(sourceStart: unknown, sourceEnd: unknown, source?: unknown): void {
-		throw unsupportedUsageError("Editing a sequence");
-	}
-	public moveRangeToIndex(
-		index: unknown,
-		sourceStart: unknown,
-		sourceEnd: unknown,
-		source?: unknown,
-	): void {
-		throw unsupportedUsageError("Editing a sequence");
-	}
+
 	public getFieldPath(): FieldUpPath {
 		throw unsupportedUsageError("Editing a sequence");
 	}
