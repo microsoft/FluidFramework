@@ -5,26 +5,59 @@
 
 import fs from "fs";
 
-export interface ITestUserConfig {
-	/* Credentials' key/value description:
-	 * Key    : Username for the client
-	 * Value  : Password specific to that username
-	 */
-	credentials: Record<string, string>;
+/**
+ * A Record mapping usernames (keys) to passwords (values).
+ */
+type TestUsersRecord = Record<string, string>;
+
+// TODO: Consider just having the Json format be TestUsers directly, if there's no one depending on this format already.
+interface TestUsersFileContents {
+	credentials: TestUsersRecord;
 }
 
-export async function getTestUsers(credFile?: string) {
-	if (credFile === undefined || credFile.length === 0) {
-		return undefined;
-	}
+const isTestUsersRecord = (recordObject: unknown): recordObject is TestUsersRecord => {
+	return (
+		typeof recordObject === "object" &&
+		recordObject !== null &&
+		Object.entries(recordObject).every(
+			([username, password]) => typeof username === "string" && typeof password === "string",
+		)
+	);
+};
 
-	let config: ITestUserConfig;
+const isTestUserFileContents = (contents: unknown): contents is TestUsersFileContents => {
+	return (
+		typeof contents === "object" &&
+		contents !== null &&
+		"credentials" in contents &&
+		typeof contents.credentials === "object" &&
+		contents.credentials !== null &&
+		isTestUsersRecord(contents.credentials)
+	);
+};
+
+export interface TestUser {
+	username: string;
+	password: string;
+}
+export type TestUsers = TestUser[];
+
+export function getTestUsers(credFilePath: string): TestUsers {
 	try {
-		config = JSON.parse(fs.readFileSync(credFile, "utf8"));
-		return config;
-	} catch (e) {
-		console.error(`Failed to read ${credFile}`);
-		console.error(e);
-		return undefined;
+		const contents = JSON.parse(fs.readFileSync(credFilePath, "utf8"));
+		if (!isTestUserFileContents(contents)) {
+			throw new Error("credFile provided, but incorrect format");
+		}
+		const testUsers = Object.entries(contents.credentials).map(([username, password]) => ({
+			username,
+			password,
+		}));
+		if (testUsers.length === 0) {
+			throw new Error("credFile contained no credentials");
+		}
+		return testUsers;
+	} catch (error) {
+		console.error(`Failed to read ${credFilePath}`);
+		throw error;
 	}
 }

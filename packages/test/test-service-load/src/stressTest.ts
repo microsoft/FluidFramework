@@ -10,7 +10,7 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import ps from "ps-node";
 
 import { FileLogger } from "./FileLogger.js";
-import type { ITestUserConfig } from "./getTestUsers.js";
+import type { TestUsers } from "./getTestUsers.js";
 import type { TestConfiguration } from "./testConfigFile.js";
 import { initialize, safeExit } from "./utils.js";
 
@@ -30,7 +30,7 @@ export async function stressTest(
 		seed: number;
 		enableMetrics: boolean;
 		createTestId: boolean;
-		testUsers: ITestUserConfig | undefined;
+		testUsers: TestUsers | undefined;
 		profileName: string;
 	},
 ) {
@@ -114,14 +114,14 @@ export async function stressTest(
 	}
 
 	try {
-		const usernames =
-			args.testUsers !== undefined ? Object.keys(args.testUsers.credentials) : undefined;
 		await Promise.all(
 			runnerArgs.map(async (childArgs, index) => {
-				const username =
-					usernames !== undefined ? usernames[index % usernames.length] : undefined;
-				const password =
-					username !== undefined ? args.testUsers?.credentials[username] : undefined;
+				const testUser =
+					args.testUsers !== undefined
+						? args.testUsers[index % args.testUsers.length]
+						: undefined;
+				const username = testUser !== undefined ? testUser.username : undefined;
+				const password = testUser !== undefined ? testUser.password : undefined;
 				const envVar = { ...process.env };
 				if (username !== undefined && password !== undefined) {
 					if (testDriver.endpointName === "odsp") {

@@ -7,7 +7,7 @@ import fs from "fs";
 
 import type { TestConfiguration, TestConfigurationFileContents } from "./testConfigFile.js";
 
-export function getProfile(profileName: string) {
+export function getProfile(profileName: string): TestConfiguration {
 	let config: TestConfigurationFileContents;
 	try {
 		config = JSON.parse(fs.readFileSync("./testConfig.json", "utf-8"));

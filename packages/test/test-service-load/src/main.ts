@@ -61,7 +61,7 @@ async function main() {
 		process.env.DEBUG = log;
 	}
 
-	const testUsers = await getTestUsers(credFilePath);
+	const testUsers = credFilePath !== undefined ? getTestUsers(credFilePath) : undefined;
 
 	const testDriver = await createTestDriver(
 		driver,
