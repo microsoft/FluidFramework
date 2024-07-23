@@ -65,6 +65,7 @@ function updateEffect<TMark extends MarkEffect>(
 ): TMark {
 	const type = mark.type;
 	switch (type) {
+		case "Rename":
 		case NoopMarkType:
 			return mark;
 		case "AttachAndDetach":
@@ -83,7 +84,6 @@ function updateEffect<TMark extends MarkEffect>(
 			);
 		case "Insert":
 		case "Remove":
-		case "Rename":
 			return updateRevision<TMark & HasRevisionTag>(mark, revisionsToReplace, newRevision);
 		default:
 			unreachableCase(type);

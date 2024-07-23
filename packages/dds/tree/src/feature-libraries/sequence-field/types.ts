@@ -152,7 +152,6 @@ export interface AttachAndDetach {
 	detach: Detach;
 }
 
-// DO WE NEED THE HasRevisionTag HERE?
 export interface Rename {
 	type: "Rename";
 	readonly idOverride: CellId;

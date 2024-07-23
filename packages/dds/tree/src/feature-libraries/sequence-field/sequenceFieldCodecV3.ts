@@ -9,14 +9,13 @@ import type { TAnySchema } from "@sinclair/typebox";
 import { DiscriminatedUnionDispatcher, type IJsonCodec } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
-	ChangesetLocalId,
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../../core/index.js";
-import { type JsonCompatibleReadOnly, type Mutable, brand, fail } from "../../util/index.js";
+import { type JsonCompatibleReadOnly, type Mutable, fail } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 
-import { Changeset as ChangesetSchema, type Encoded } from "./formatV2.js";
+import { Changeset as ChangesetSchema, type Encoded } from "./formatV3.js";
 import {
 	type Attach,
 	type AttachAndDetach,
@@ -35,7 +34,7 @@ import { isNoopMark } from "./utils.js";
 import type { FieldChangeEncodingContext } from "../index.js";
 import { EncodedNodeChangeset } from "../modular-schema/index.js";
 
-export function makeV2Codec(
+export function makeV3Codec(
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -120,14 +119,11 @@ export function makeV2Codec(
 						},
 					};
 				case "Rename":
-					return markEffectCodec.encode(
-						{
-							type: "AttachAndDetach",
-							attach: { type: "MoveIn", id: renameLocalId },
-							detach: { type: "MoveOut", id: renameLocalId, idOverride: effect.idOverride },
+					return {
+						rename: {
+							idOverride: changeAtomIdCodec.encode(effect.idOverride, context),
 						},
-						context,
-					);
+					};
 				case NoopMarkType:
 					fail(`Mark type: ${type} should not be encoded.`);
 				default:
@@ -212,20 +208,17 @@ export function makeV2Codec(
 		attachAndDetach(
 			encoded: Encoded.AttachAndDetach,
 			context: ChangeEncodingContext,
-		): AttachAndDetach | Rename {
-			const attach = decoderLibrary.dispatch(encoded.attach, context) as Attach;
-			const detach = decoderLibrary.dispatch(encoded.detach, context) as Detach;
-			if (attach.id === renameLocalId) {
-				assert(detach.idOverride !== undefined, "Rename must have idOverride");
-				return {
-					type: "Rename",
-					idOverride: detach.idOverride,
-				};
-			}
+		): AttachAndDetach {
 			return {
 				type: "AttachAndDetach",
-				attach,
-				detach,
+				attach: decoderLibrary.dispatch(encoded.attach, context) as Attach,
+				detach: decoderLibrary.dispatch(encoded.detach, context) as Detach,
+			};
+		},
+		rename(encoded: Encoded.Rename, context: ChangeEncodingContext): Rename {
+			return {
+				type: "Rename",
+				idOverride: changeAtomIdCodec.decode(encoded.idOverride, context),
 			};
 		},
 	});
@@ -285,8 +278,3 @@ export function makeV2Codec(
 		encodedSchema: ChangesetSchema(EncodedNodeChangeset),
 	};
 }
-
-/**
- * Arbitrary ID that is used to indicate a Rename effect.
- */
-const renameLocalId: ChangesetLocalId = brand(-1);

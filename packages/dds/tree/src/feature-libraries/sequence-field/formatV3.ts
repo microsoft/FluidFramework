@@ -47,6 +47,16 @@ const Remove = Type.Composite(
 	noAdditionalProps,
 );
 
+const Rename = Type.Composite(
+	[
+		Type.Object({
+			idOverride: CellId,
+		}),
+		HasRevisionTag,
+	],
+	noAdditionalProps,
+);
+
 const MoveOut = Type.Composite([HasMoveFields, DetachFields], noAdditionalProps);
 
 const Attach = Type.Object(
@@ -76,6 +86,7 @@ const MarkEffect = Type.Object(
 		insert: Type.Optional(Insert),
 		moveIn: Type.Optional(MoveIn),
 		remove: Type.Optional(Remove),
+		rename: Type.Optional(Rename),
 		moveOut: Type.Optional(MoveOut),
 		attachAndDetach: Type.Optional(AttachAndDetach),
 	},
@@ -123,6 +134,7 @@ export namespace Encoded {
 	export type Insert = Static<typeof Insert>;
 	export type MoveIn = Static<typeof MoveIn>;
 	export type Remove = Static<typeof Remove>;
+	export type Rename = Static<typeof Rename>;
 	export type MoveOut = Static<typeof MoveOut>;
 	export type Attach = Static<typeof Attach>;
 	export type Detach = Static<typeof Detach>;

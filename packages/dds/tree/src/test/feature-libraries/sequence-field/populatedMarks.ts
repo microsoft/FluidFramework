@@ -82,6 +82,7 @@ export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMa
 			attach,
 			detach,
 		},
+		{ type: "Rename", count: 1, cellId: atomId, changes, idOverride: atomId },
 	];
 	return populatedMarks;
 }

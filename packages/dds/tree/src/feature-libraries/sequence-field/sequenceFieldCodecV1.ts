@@ -9,10 +9,11 @@ import type { TAnySchema } from "@sinclair/typebox";
 import { DiscriminatedUnionDispatcher, type IJsonCodec } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
+	ChangesetLocalId,
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../../core/index.js";
-import { type JsonCompatibleReadOnly, type Mutable, fail } from "../../util/index.js";
+import { type JsonCompatibleReadOnly, type Mutable, brand, fail } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 
 import {
@@ -33,6 +34,7 @@ import {
 	type MoveOut,
 	NoopMarkType,
 	type Remove,
+	type Rename,
 } from "./types.js";
 import { isNoopMark } from "./utils.js";
 import type { FieldChangeEncodingContext } from "../index.js";
@@ -131,6 +133,14 @@ export function makeV1Codec(
 						},
 					};
 				case "Rename":
+					return markEffectCodec.encode(
+						{
+							type: "AttachAndDetach",
+							attach: { type: "MoveIn", id: renameLocalId },
+							detach: { type: "MoveOut", id: renameLocalId, idOverride: effect.idOverride },
+						},
+						context,
+					);
 				case NoopMarkType:
 					fail(`Mark type: ${type} should not be encoded.`);
 				default:
@@ -215,11 +225,20 @@ export function makeV1Codec(
 		attachAndDetach(
 			encoded: Encoded.AttachAndDetach,
 			context: ChangeEncodingContext,
-		): AttachAndDetach {
+		): AttachAndDetach | Rename {
+			const attach = decoderLibrary.dispatch(encoded.attach, context) as Attach;
+			const detach = decoderLibrary.dispatch(encoded.detach, context) as Detach;
+			if (attach.id === renameLocalId) {
+				assert(detach.idOverride !== undefined, "Rename must have idOverride");
+				return {
+					type: "Rename",
+					idOverride: detach.idOverride,
+				};
+			}
 			return {
 				type: "AttachAndDetach",
-				attach: decoderLibrary.dispatch(encoded.attach, context) as Attach,
-				detach: decoderLibrary.dispatch(encoded.detach, context) as Detach,
+				attach,
+				detach,
 			};
 		},
 	});
@@ -296,3 +315,8 @@ export function makeV1Codec(
 		encodedSchema: ChangesetSchema(EncodedNodeChangeset),
 	};
 }
+
+/**
+ * Arbitrary ID that is used to indicate a Rename effect.
+ */
+const renameLocalId: ChangesetLocalId = brand(-1);
