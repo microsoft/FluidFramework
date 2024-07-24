@@ -1,6 +1,20 @@
 # @fluid-example/multiview-slider-coordinate-view
 
-The slider coordinate view is a view onto a single `ICoordinate`, rendering two sliders corresponding to its X and Y coordinates. Manipulating these sliders will change the distributed state of the ICoordinate.
+The slider coordinate view is a view onto a single `ICoordinate`, rendering two sliders corresponding to its X and Y coordinates.
+Manipulating these sliders will change the distributed state of the ICoordinate.
+
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+**NOTE: This package is an example leveraging the [Fluid Framework](https://fluidframework.com).**
+**It is intended only as an example, and is not intended for external use.**
+**We make no stability guarantees regarding its APIs.**
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
