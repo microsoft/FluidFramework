@@ -6,9 +6,9 @@ import {
 	loadBiomeConfig,
 } from "../common/biomeConfig";
 import type { Configuration as BiomeConfig } from "../common/biomeConfigTypes";
-import { testDataPath } from "./init";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { GitRepo } from "../common/gitRepo";
+import { testDataPath } from "./init";
 
 describe("loadConfig", async () => {
 	it("throws on missing config", async () => {
