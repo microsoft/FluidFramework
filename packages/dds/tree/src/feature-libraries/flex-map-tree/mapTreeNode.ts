@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import {
 	type AnchorNode,
 	EmptyKey,
@@ -14,7 +14,7 @@ import {
 	type TreeValue,
 	type Value,
 } from "../../core/index.js";
-import { brand, fail, mapIterable, oob } from "../../util/index.js";
+import { brand, fail, mapIterable } from "../../util/index.js";
 import {
 	type FlexTreeContext,
 	FlexTreeEntityKind,

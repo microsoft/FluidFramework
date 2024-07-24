@@ -2,7 +2,7 @@
 
 See [examples.spec.ts](./src/test/examples.spec.ts) for usage examples.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER:installation=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:installation=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -14,7 +14,7 @@ See [examples.spec.ts](./src/test/examples.spec.ts) for usage examples.
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
