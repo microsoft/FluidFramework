@@ -2,7 +2,18 @@
 
 This library contains tools for generating and embedding documentation contents in [Markdown](https://www.markdownguide.org/) documentation.
 
-Note: this package is currently private, and only intended for use in this repository.
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+**NOTE: This package is a library intended for use within the [microsoft/FluidFramework](https://github.com/microsoft/FluidFramework) repository.**
+**It is not intended for public use.**
+**We make no stability guarantees regarding this library and its APIs.**
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Usage
 
@@ -220,6 +231,8 @@ Arguments:
 #### `DEPENDENCY_GUIDELINES`
 
 Generates a README section with fluid-framework dependency guidelines.
+
+Assumes that the package is published and can be installed via `npm`.
 
 Arguments:
 
