@@ -17,6 +17,11 @@ import { Repository } from "./git.js";
 
 export const DEFAULT_CHANGESET_PATH = ".changeset";
 
+/**
+ * The section name used for changesets that do not match any defined sections.
+ */
+export const UNKNOWN_SECTION = "_unknown";
+
 export interface FluidCustomChangesetMetadata {
 	section?: ReleaseNotesSection["name"];
 	includeInReleaseNotes?: boolean;
@@ -182,17 +187,24 @@ export function groupByMainPackage(changesets: Changeset[]): Map<ReleasePackage,
 }
 
 /**
- * Creates a map of package names to an array of all the changesets that apply to the package. Only the "main" package
- * is considered. The returned array of changesets is sorted oldest-to-newest (that is, index 0 is the earliest
- * changeset, and the last changeset in the array is the newest).
+ * Creates a map of section names to an array of all the changesets that belong in that section.
+ *
+ * The returned array of changesets is sorted oldest-to-newest (that is, index 0 is the earliest changeset, and the last
+ * changeset in the array is the newest).
+ *
+ * Any changesets that do not belong to a section will be in the {@link UNKNOWN_SECTION} (`_unknown`) key in the
+ * returned map, so callers should check the contents of that key to ensure all changesets were mapped to sections as
+ * expected.
  *
  * @param changesets - An array of changesets to be grouped.
- * @returns a Map of package names to an array of all the changesets that apply to the package.
+ * @returns a Map of section names to an array of all the changesets that apply to that section.
  */
-export function groupBySection(changesets: Changeset[]): Map<ReleasePackage, Changeset[]> {
-	const changesetMap = new Map<ReleasePackage, Changeset[]>();
+export function groupBySection(
+	changesets: Changeset[],
+): Map<ReleaseNotesSection["name"], Changeset[]> {
+	const changesetMap = new Map<ReleaseNotesSection["name"], Changeset[]>();
 	for (const changeset of changesets) {
-		const section = changeset.additionalMetadata?.section ?? "unknown";
+		const section = changeset.additionalMetadata?.section ?? UNKNOWN_SECTION;
 		const entries = changesetMap.get(section) ?? [];
 		entries.push(changeset);
 		changesetMap.set(section, entries);

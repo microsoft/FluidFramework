@@ -18,6 +18,7 @@ export {
 export { getDisplayDate, getDisplayDateRelative } from "./dates.js";
 export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "./bump.js";
 export {
+	UNKNOWN_SECTION,
 	DEFAULT_CHANGESET_PATH,
 	loadChangesets,
 	groupBySection,

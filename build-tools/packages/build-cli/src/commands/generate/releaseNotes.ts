@@ -15,6 +15,7 @@ import { releaseGroupFlag } from "../../flags.js";
 import {
 	BaseCommand,
 	DEFAULT_CHANGESET_PATH,
+	UNKNOWN_SECTION,
 	groupBySection,
 	loadChangesets,
 } from "../../library/index.js";
@@ -103,7 +104,16 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 		assert(flags.releaseType !== undefined, `Release type must be provided.`);
 
 		const bySection = groupBySection(changesets);
+
+		const unknownSection = bySection.get(UNKNOWN_SECTION);
+		for (const changeset of unknownSection ?? []) {
+			this.warning(
+				`Changeset doesn't map to known sections. Check its metadata: ${changeset.sourceFile}`,
+			);
+		}
+
 		const body = new StringBuilder();
+		// Only iterate through the known sections; the unknown section is omitted.
 		for (const { name, heading: sectionHead } of releaseNotesConfig.sections) {
 			this.verbose(`Building "${name}" section with header: ${sectionHead}`);
 			const changes = bySection.get(name)?.filter(
