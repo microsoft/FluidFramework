@@ -72,7 +72,7 @@ export class IndependentStateManager {
 	 *
 	 * @returns True if the signal was processed, false otherwise
 	 */
-	public handleSignal(
+	public processSignal(
 		address: string,
 		signal: IInboundSignalMessage,
 		local: boolean,

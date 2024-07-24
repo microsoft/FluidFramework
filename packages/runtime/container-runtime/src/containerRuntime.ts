@@ -4570,6 +4570,10 @@ class ContainerRuntimeInternal extends ContainerRuntime implements IRuntimeInter
 		signalMessage: IInboundSignalMessage,
 		local: boolean,
 	): boolean {
-		return this.independentStateManager?.handleSignal(address, signalMessage, local) ?? false;
+		if (address.startsWith("dis:")) {
+			this.independentStateManager?.processSignal(address, signalMessage, local);
+			return true;
+		}
+		return false;
 	}
 }
