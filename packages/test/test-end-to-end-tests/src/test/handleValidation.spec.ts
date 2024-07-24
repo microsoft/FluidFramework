@@ -449,7 +449,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 	}
 
 	for (const handleStorageFactory of handleStorageFactories) {
-		describe.only(handleStorageFactory.id, () => {
+		describe(handleStorageFactory.id, () => {
 			/**
 			 * General setup:
 			 *
