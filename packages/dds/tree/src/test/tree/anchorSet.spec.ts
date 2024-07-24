@@ -492,88 +492,41 @@ describe("AnchorSet", () => {
 		]);
 	});
 
-	it.only("childrenChangedAfterBatch includes the changed fields", () => {
+	it.only("childrenChangedAfterBatch event includes the changed fields", () => {
 		const fieldOne: FieldKey = brand("one");
 		const fieldTwo: FieldKey = brand("two");
+		const fieldThree: FieldKey = brand("three");
 
 		const anchors = new AnchorSet();
 
 		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
 		const node0 = anchors.locate(anchor0) ?? assert.fail();
 
-		const expectedChangedFields = new Set<FieldKey>([fieldOne, fieldTwo]);
+		const expectedChangedFields = new Set<FieldKey>([fieldOne, fieldTwo, fieldThree]);
 		let listenerFired = false;
 		node0.on("childrenChangedAfterBatch", ({ anchor, changedFields }) => {
+			// This is the main validation of this test
 			assert.deepEqual(changedFields, expectedChangedFields);
 			listenerFired = true;
 		});
 
-		const insertMark: DeltaMark = {
-			count: 1,
-			attach: buildId,
-		};
-		const detachMark: DeltaMark = {
-			count: 1,
-			detach: detachId,
-		};
+		withVisitor(anchors, (v) => {
+			v.enterField(rootFieldKey);
+			v.enterNode(0);
+			v.enterField(fieldOne);
+			v.detach({ start: 0, end: 1 }, brand("fakeDetachDestination"));
+			v.exitField(fieldOne);
+			v.enterField(fieldTwo);
+			v.attach(brand("fakeAttachSource"), 1, 0);
+			v.exitField(fieldTwo);
+			v.enterField(fieldThree);
+			v.replace(brand("fakeReplaceSource"), { start: 0, end: 1 }, brand("fakeReplaceDestination"));
+			v.exitField(fieldThree);
+			v.exitNode(0);
+			v.exitField(rootFieldKey);
+		});
 
-		const detachedNodesToCreate = [
-			{
-				id: buildId,
-				trees: [cursorForJsonableTreeNode({ type: leaf.string.name, value: "x" })],
-			},
-		];
-
-		const insertAtFieldOne = makeFieldDelta(
-			{
-				local: [insertMark],
-			},
-			makeFieldPath(fieldOne, [rootFieldKey, 0]),
-		);
-		const removeFromFieldTwo = makeFieldDelta(
-			{
-				local: [detachMark],
-			},
-			makeFieldPath(fieldTwo, [rootFieldKey, 0]),
-		);
-		const delta = new Map([
-			[
-				rootFieldKey,
-				{
-					local: [
-						{
-							count: 1,
-							fields: new Map([
-								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-								[fieldOne, insertAtFieldOne.get(rootFieldKey)!.local![1].fields!.get(fieldOne)!],
-								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-								[fieldTwo, removeFromFieldTwo.get(rootFieldKey)!.local![1].fields!.get(fieldTwo)!],
-							]),
-						},
-					],
-				},
-			],
-		]);
-
-		// const delta = makeFieldDelta(
-		// 	{
-		// 		local: [
-		// 			{
-		// 				count: 1,
-		// 				fields: new Map([
-		// 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		// 					[fieldOne, insertAtFieldOne.get(fieldOne)!],
-		// 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		// 					[fieldTwo, removeFromFieldTwo.get(fieldTwo)!],
-		// 				]),
-		// 			},
-		// 		],
-		// 	},
-		// 	rootFieldKey,
-		// );
-		// insertAtFieldOne.get(rootFieldKey)!.local = insertAtFieldOne.get(rootFieldKey)!.local!.concat([{ count: 1 }, detachMark]);
-		announceTestDelta(delta, anchors, undefined, undefined, detachedNodesToCreate);
-
+		// Make sure the listener actually fired and validated the changed fields.
 		assert.equal(listenerFired, true);
 	});
 
