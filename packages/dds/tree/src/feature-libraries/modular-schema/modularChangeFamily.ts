@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
 import type { ICodecFamily } from "../../codec/index.js";
@@ -60,7 +60,6 @@ import {
 	tryGetFromNestedMap,
 	type NestedMap,
 	type RangeQueryResult,
-	oob,
 } from "../../util/index.js";
 import {
 	type TreeChunk,
@@ -236,7 +235,7 @@ export class ModularChangeFamily
 		]);
 
 		return makeModularChangeset(
-			this.pruneFieldMap(fieldChanges, nodeChanges),
+			fieldChanges,
 			nodeChanges,
 			nodeToParent,
 			nodeAliases,

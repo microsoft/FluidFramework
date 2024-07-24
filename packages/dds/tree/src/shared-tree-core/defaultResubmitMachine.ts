@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import type { ChangeRebaser, GraphCommit } from "../core/index.js";
-import { disposeSymbol, oob } from "../util/index.js";
+import { disposeSymbol } from "../util/index.js";
 import type { ChangeEnricherReadonlyCheckout, ResubmitMachine } from "./index.js";
 
 /**
