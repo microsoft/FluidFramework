@@ -279,7 +279,7 @@ export class Package {
 		let succeeded = true;
 		// Note that this enumerates peerDeps in addition to deps and devDeps
 		for (const dep of this.combinedDependencies) {
-			if(dep.depClass === "peer") {
+			if (dep.depClass === "peer") {
 				// Skip peer dependencies because we may legitimately omit them.
 				continue;
 			}
