@@ -454,13 +454,13 @@ export interface IGCRuntimeOptions {
  */
 export interface IGarbageCollectorConfigs {
 	/**
-	 * Tracks if GC is enabled for this document. GC may not be enabled for old documents created pre-GC.
+	 * Tracks if GC is allowed for this document. GC may not be allowed for old documents created pre-GC.
 	 */
-	readonly gcEnabled: boolean;
+	readonly gcAllowed: boolean;
 	/**
-	 * Tracks if sweep phase is allowed to run in this session or not.
+	 * Tracks if sweep phase is enabled to run in this session or not.
 	 */
-	readonly sweepAllowed: boolean;
+	readonly sweepEnabled: boolean;
 	/** Is Tombstone AutoRecovery enabled? Useful for preventing the GC "TombstoneLoaded" op, for compatibility reasons */
 	readonly tombstoneAutorecoveryEnabled: boolean;
 	/**

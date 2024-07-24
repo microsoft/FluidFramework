@@ -1331,8 +1331,8 @@ export class ContainerRuntime
 	private nextSummaryNumber: number;
 
 	/**
-	 * If false, loading or using a Tombstoned object should merely log, not fail.
-	 * @deprecated - This feature has been removed.
+	 * NOT SUPPORTED - hardcoded to return false since it's deprecated.
+	 * @deprecated this feature has been removed.
 	 */
 	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get gcTombstoneEnforcementAllowed(): boolean {
@@ -1340,8 +1340,8 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * If true, throw an error when a tombstone data store is used.
-	 * @deprecated - This feature has been removed.
+	 * NOT SUPPORTED - hardcoded to return false since it's deprecated.
+	 * @deprecated this feature has been removed.
 	 */
 	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get gcThrowOnTombstoneUsage(): boolean {

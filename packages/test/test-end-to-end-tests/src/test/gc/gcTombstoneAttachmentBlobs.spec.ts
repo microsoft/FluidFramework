@@ -40,7 +40,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 	const configProvider = createTestConfigProvider();
 	const gcOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: 0,
-		gcThrowOnTombstoneLoad: true,
+		enableGCSweep: true,
 	};
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {

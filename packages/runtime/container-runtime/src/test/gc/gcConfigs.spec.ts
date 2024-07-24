@@ -169,8 +169,8 @@ describe("Garbage Collection configurations", () => {
 	describe("Existing container", () => {
 		it("No metadata", () => {
 			gc = createGcWithPrivateMembers({});
-			assert(!gc.configs.gcEnabled, "gcEnabled incorrect");
-			assert.equal(gc.configs.sweepAllowed, false, "sweepAllowed incorrect");
+			assert(!gc.configs.gcAllowed, "gcAllowed incorrect");
+			assert.equal(gc.configs.sweepEnabled, false, "sweepEnabled incorrect");
 			assert(
 				gc.configs.sessionExpiryTimeoutMs === undefined,
 				"sessionExpiryTimeoutMs incorrect",
@@ -180,7 +180,7 @@ describe("Garbage Collection configurations", () => {
 		});
 		it("gcFeature 0", () => {
 			gc = createGcWithPrivateMembers({ gcFeature: 0 });
-			assert(!gc.configs.gcEnabled, "gcEnabled incorrect");
+			assert(!gc.configs.gcAllowed, "gcAllowed incorrect");
 			assert.equal(gc.configs.gcVersionInBaseSnapshot, 0, "gcVersionInBaseSnapshot incorrect");
 		});
 		it("gcFeature 0, Sweep not allowed", () => {
@@ -188,13 +188,13 @@ describe("Garbage Collection configurations", () => {
 				{ gcFeature: 0, gcFeatureMatrix: { gcGeneration: 0 } },
 				{ [gcGenerationOptionName]: 0, enableGCSweep: true },
 			);
-			assert(!gc.configs.gcEnabled, "gcEnabled incorrect");
-			assert(!gc.configs.sweepAllowed, "sweepAllowed incorrect");
+			assert(!gc.configs.gcAllowed, "gcAllowed incorrect");
+			assert(!gc.configs.sweepEnabled, "sweepEnabled incorrect");
 			assert.equal(gc.configs.gcVersionInBaseSnapshot, 0, "gcVersionInBaseSnapshot incorrect");
 		});
 		it("gcFeature 1", () => {
 			gc = createGcWithPrivateMembers({ gcFeature: 1 });
-			assert(gc.configs.gcEnabled, "gcEnabled incorrect");
+			assert(gc.configs.gcAllowed, "gcAllowed incorrect");
 			assert.equal(gc.configs.gcVersionInBaseSnapshot, 1, "gcVersionInBaseSnapshot incorrect");
 		});
 		it("sweepEnabled value ignored", () => {
@@ -202,7 +202,7 @@ describe("Garbage Collection configurations", () => {
 				{ sweepEnabled: true },
 				{ [gcGenerationOptionName]: 1 }, // No persisted value, so sweep should not be allowed
 			);
-			assert(!gc.configs.sweepAllowed, "sweepEnabled incorrect");
+			assert(!gc.configs.sweepEnabled, "sweepEnabled incorrect");
 		});
 		it("sessionExpiryTimeoutMs set (tombstoneTimeoutMs unset)", () => {
 			gc = createGcWithPrivateMembers({
@@ -344,8 +344,8 @@ describe("Garbage Collection configurations", () => {
 	describe("New Container", () => {
 		it("No options", () => {
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {});
-			assert(gc.configs.gcEnabled, "gcEnabled incorrect");
-			assert.equal(gc.configs.sweepAllowed, false, "sweepAllowed incorrect");
+			assert(gc.configs.gcAllowed, "gcAllowed incorrect");
+			assert.equal(gc.configs.sweepEnabled, false, "sweepEnabled incorrect");
 			assert(
 				gc.configs.sessionExpiryTimeoutMs !== undefined,
 				"sessionExpiryTimeoutMs incorrect",
@@ -362,8 +362,8 @@ describe("Garbage Collection configurations", () => {
 				[gcGenerationOptionName]: 1,
 				enableGCSweep: true,
 			});
-			assert(gc.configs.gcEnabled, "gcEnabled incorrect");
-			assert(gc.configs.sweepAllowed, "sweepAllowed incorrect");
+			assert(gc.configs.gcAllowed, "gcAllowed incorrect");
+			assert(gc.configs.sweepEnabled, "sweepEnabled incorrect");
 			assert(gc.configs.tombstoneTimeoutMs !== undefined, "tombstoneTimeoutMs incorrect");
 			assert(
 				gc.configs.sessionExpiryTimeoutMs !== undefined,
@@ -375,13 +375,13 @@ describe("Garbage Collection configurations", () => {
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
 				[gcGenerationOptionName]: 1,
 			});
-			assert(gc.configs.gcEnabled, "gcEnabled incorrect");
+			assert(gc.configs.gcAllowed, "gcAllowed incorrect");
 			assert(
 				gc.configs.sessionExpiryTimeoutMs === undefined,
 				"sessionExpiryTimeoutMs incorrect",
 			);
 			assert(gc.configs.tombstoneTimeoutMs === undefined, "tombstoneTimeoutMs incorrect");
-			assert(!gc.configs.sweepAllowed, "sweepAllowed incorrect");
+			assert(!gc.configs.sweepEnabled, "sweepEnabled incorrect");
 		});
 		it("TestOverride.TombstoneTimeoutMs set, sessionExpiry on", () => {
 			configProvider.set(testOverrideTombstoneTimeoutKey, 123);
@@ -391,7 +391,7 @@ describe("Garbage Collection configurations", () => {
 				"sessionExpiryTimeoutMs incorrect",
 			);
 			assert(gc.configs.tombstoneTimeoutMs === 123, "tombstoneTimeoutMs incorrect");
-			assert(gc.configs.sweepAllowed, "sweepAllowed incorrect");
+			assert(gc.configs.sweepEnabled, "sweepEnabled incorrect");
 		});
 		it("TestOverride.TombstoneTimeoutMs set, sessionExpiry off", () => {
 			configProvider.set(testOverrideTombstoneTimeoutKey, 123);
@@ -402,7 +402,7 @@ describe("Garbage Collection configurations", () => {
 				"sessionExpiryTimeoutMs incorrect",
 			);
 			assert(gc.configs.tombstoneTimeoutMs === 123, "tombstoneTimeoutMs incorrect");
-			assert(gc.configs.sweepAllowed, "sweepAllowed incorrect");
+			assert(gc.configs.sweepEnabled, "sweepEnabled incorrect");
 		});
 		it("Metadata Roundtrip", () => {
 			const expectedMetadata: IGCMetadata = {
@@ -665,7 +665,7 @@ describe("Garbage Collection configurations", () => {
 			it("shouldRunGC should be true when gcVersionInEffect is newer than gcVersionInBaseSnapshot", () => {
 				const gcVersionInBaseSnapshot = stableGCVersion - 1;
 				gc = createGcWithPrivateMembers({ gcFeature: gcVersionInBaseSnapshot });
-				assert.equal(gc.configs.gcEnabled, true, "PRECONDITION: gcEnabled set incorrectly");
+				assert.equal(gc.configs.gcAllowed, true, "PRECONDITION: gcAllowed set incorrectly");
 				assert.equal(
 					gc.configs.gcVersionInBaseSnapshot,
 					gcVersionInBaseSnapshot,
@@ -675,7 +675,7 @@ describe("Garbage Collection configurations", () => {
 			it("shouldRunGC should be true when gcVersionInEffect is older than gcVersionInBaseSnapshot", () => {
 				const gcVersionInBaseSnapshot = nextGCVersion + 1;
 				gc = createGcWithPrivateMembers({ gcFeature: gcVersionInBaseSnapshot });
-				assert.equal(gc.configs.gcEnabled, true, "PRECONDITION: gcEnabled set incorrectly");
+				assert.equal(gc.configs.gcAllowed, true, "PRECONDITION: gcAllowed set incorrectly");
 				assert.equal(
 					gc.configs.gcVersionInBaseSnapshot,
 					gcVersionInBaseSnapshot,
@@ -683,43 +683,43 @@ describe("Garbage Collection configurations", () => {
 				);
 			});
 		});
-		describe("shouldRunSweep", () => {
+		describe("sweepEnabled", () => {
 			const testCases: {
-				gcEnabled_doc: boolean;
+				gcAllowed_doc: boolean;
 				sweepEnabled_doc: boolean;
 				sweepEnabled_session: boolean;
-				expectedSweepAllowed: IGarbageCollectorConfigs["sweepAllowed"];
+				expectedSweepEnabled: IGarbageCollectorConfigs["sweepEnabled"];
 			}[] = [
 				{
-					gcEnabled_doc: false, // Veto
+					gcAllowed_doc: false, // Veto
 					sweepEnabled_doc: true,
 					sweepEnabled_session: true,
-					expectedSweepAllowed: false,
+					expectedSweepEnabled: false,
 				},
 				{
-					gcEnabled_doc: true,
+					gcAllowed_doc: true,
 					sweepEnabled_doc: false, // Veto
 					sweepEnabled_session: true,
-					expectedSweepAllowed: false,
+					expectedSweepEnabled: false,
 				},
 				{
-					gcEnabled_doc: true,
+					gcAllowed_doc: true,
 					sweepEnabled_doc: true,
 					sweepEnabled_session: false, // Veto
-					expectedSweepAllowed: false,
+					expectedSweepEnabled: false,
 				},
 				{
-					gcEnabled_doc: true,
+					gcAllowed_doc: true,
 					sweepEnabled_doc: true,
 					sweepEnabled_session: true,
-					expectedSweepAllowed: true,
+					expectedSweepEnabled: true,
 				},
 			];
 			testCases.forEach((testCase, index) => {
 				it(`Test Case ${JSON.stringify(testCase)}`, () => {
 					gc = createGcWithPrivateMembers(
 						{
-							gcFeature: testCase.gcEnabled_doc ? stableGCVersion : 0,
+							gcFeature: testCase.gcAllowed_doc ? stableGCVersion : 0,
 							gcFeatureMatrix: { gcGeneration: 1 },
 							sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 						} /* metadata */,
@@ -729,14 +729,14 @@ describe("Garbage Collection configurations", () => {
 						} /* gcOptions */,
 					);
 					assert.equal(
-						gc.configs.gcEnabled,
-						testCase.gcEnabled_doc,
-						"PRECONDITION: gcEnabled set incorrectly",
+						gc.configs.gcAllowed,
+						testCase.gcAllowed_doc,
+						"PRECONDITION: gcAllowed set incorrectly",
 					);
 					assert.equal(
-						gc.configs.sweepAllowed,
-						testCase.expectedSweepAllowed,
-						`sweepAllowed not set as expected`,
+						gc.configs.sweepEnabled,
+						testCase.expectedSweepEnabled,
+						`sweepEnabled not set as expected`,
 					);
 				});
 			});

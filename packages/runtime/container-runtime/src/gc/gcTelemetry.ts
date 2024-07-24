@@ -21,7 +21,6 @@ import {
 	GCNodeType,
 	IGarbageCollectorConfigs,
 	UnreferencedState,
-	throwOnTombstoneLoadOverrideKey,
 } from "./gcDefinitions.js";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";
 
@@ -283,9 +282,6 @@ export class GCTelemetryTracker {
 			headers: { ...headers },
 			details: { ...detailedProps, ...additionalProps }, // Also includes some properties from INodeUsageProps type
 			gcConfigs,
-			tombstoneFlags: {
-				ThrowOnTombstoneLoad: this.mc.config.getBoolean(throwOnTombstoneLoadOverrideKey),
-			},
 		};
 
 		if (

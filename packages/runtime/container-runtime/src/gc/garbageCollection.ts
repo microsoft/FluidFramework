@@ -102,7 +102,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private readonly configs: IGarbageCollectorConfigs;
 
 	public get shouldRunGC(): boolean {
-		return this.configs.gcEnabled;
+		return this.configs.gcAllowed;
 	}
 
 	public readonly sessionExpiryTimerStarted: number | undefined;
@@ -511,7 +511,7 @@ export class GarbageCollector implements IGarbageCollector {
 					...gcStats,
 					details: {
 						timestamp: currentReferenceTimestampMs,
-						sweep: this.configs.sweepAllowed,
+						sweep: this.configs.sweepEnabled,
 						tombstone: this.configs.throwOnTombstoneLoad,
 					},
 				});
@@ -685,15 +685,15 @@ export class GarbageCollector implements IGarbageCollector {
 		// This is important because a container may never load during a node's Sweep Grace Period,
 		// so that node would directly become sweep-ready skipping over tombstone-ready state,
 		// but should be Tombstoned since Sweep is disabled.
-		const { nodesToTombstone, nodesToDelete } = {
-			nodesToTombstone: [...tombstoneReadyNodes],
-			nodesToDelete: [] as string[],
-		};
-		if (this.configs.sweepAllowed) {
-			nodesToDelete.push(...sweepReadyNodes);
-		} else {
-			nodesToTombstone.push(...sweepReadyNodes);
-		}
+		const { nodesToTombstone, nodesToDelete } = this.configs.sweepEnabled
+			? {
+					nodesToDelete: [...sweepReadyNodes],
+					nodesToTombstone: [...tombstoneReadyNodes],
+				}
+			: {
+					nodesToDelete: [],
+					nodesToTombstone: [...tombstoneReadyNodes, ...sweepReadyNodes],
+				};
 
 		this.tombstones = nodesToTombstone;
 		this.runtime.updateTombstonedRoutes(this.tombstones);
@@ -846,10 +846,10 @@ export class GarbageCollector implements IGarbageCollector {
 	public getMetadata(): IGCMetadata {
 		return {
 			/**
-			 * If GC is enabled, the GC data is written using the GC version in effect and that is the gcFeature that goes
+			 * If GC is allowed, the GC data is written using the GC version in effect and that is the gcFeature that goes
 			 * into the metadata blob. If GC is disabled, the gcFeature is 0.
 			 */
-			gcFeature: this.configs.gcEnabled ? this.configs.gcVersionInEffect : 0,
+			gcFeature: this.configs.gcAllowed ? this.configs.gcVersionInEffect : 0,
 			gcFeatureMatrix: this.configs.persistedGcFeatureMatrix,
 			sessionExpiryTimeoutMs: this.configs.sessionExpiryTimeoutMs,
 			sweepEnabled: false, // DEPRECATED - to be removed
