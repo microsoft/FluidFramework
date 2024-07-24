@@ -254,13 +254,12 @@ export abstract class FluidDataStoreContext
 		return this._tombstoned;
 	}
 	/**
-	 * NOT SUPPORTED - hardcoded to return false since it's deprecated.
-	 * @deprecated this feature has been removed.
+	 * If true, throw an error when a tombstone data store is used.
+	 * @deprecated NOT SUPPORTED - hardcoded to return false since it's deprecated.
 	 */
 	public readonly gcThrowOnTombstoneUsage: boolean = false;
 	/**
-	 * NOT SUPPORTED - hardcoded to return false since it's deprecated.
-	 * @deprecated this feature has been removed.
+	 * @deprecated NOT SUPPORTED - hardcoded to return false since it's deprecated.
 	 */
 	public readonly gcTombstoneEnforcementAllowed: boolean = false;
 
@@ -573,7 +572,7 @@ export abstract class FluidDataStoreContext
 	): void {
 		const safeTelemetryProps = extractSafePropertiesFromMessage(message);
 		// On op process, tombstone error is logged in garbage collector. So, set "checkTombstone" to false when calling
-		// "verifyNotClosed" which logs tombstone errors. Throw error if tombstoned and throwing on load is configured.
+		// "verifyNotClosed" which logs tombstone errors.
 		this.verifyNotClosed("process", false /* checkTombstone */, safeTelemetryProps);
 
 		this.summarizerNode.recordChange(message);
@@ -1370,7 +1369,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		this.mc.logger.sendErrorEvent({
 			eventName: "GC_Deleted_DataStore_Unexpected_Delete",
 			message: "Unexpected deletion of a local data store context",
-			category: "error",
 		});
 		super.delete();
 	}

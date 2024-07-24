@@ -203,9 +203,9 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // @deprecated
     ensureNoDataModelChanges<T>(callback: () => T): T;
-    // @deprecated (undocumented)
+    // @deprecated
     readonly gcThrowOnTombstoneUsage: boolean;
-    // @deprecated (undocumented)
+    // @deprecated
     readonly gcTombstoneEnforcementAllowed: boolean;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;

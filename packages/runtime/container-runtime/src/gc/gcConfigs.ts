@@ -102,15 +102,13 @@ export function generateGCConfigs(
 	);
 
 	/**
-	 * Whether sweep should is enabled for this session or not. This refers to whether Tombstones should fail on load
-	 * and whether sweep-ready nodes should be deleted.
+	 * Whether sweep is enabled for this session or not. If sweep is enabled, Tombstones should fail on load and
+	 * sweep-ready nodes should be deleted.
 	 *
 	 * Assuming overall GC is allowed and tombstoneTimeout is provided, the following conditions have to be met to run sweep:
 	 *
 	 * 1. Sweep should be allowed in this container.
-	 * 2. Sweep should be enabled for this session, optionally restricted to attachment blobs only.
-	 *
-	 * These conditions can be overridden via the RunSweep feature flag.
+	 * 2. Sweep should be enabled for this session.
 	 */
 	const sweepEnabled: boolean =
 		!gcAllowed || tombstoneTimeoutMs === undefined
@@ -144,11 +142,10 @@ export function generateGCConfigs(
 	});
 
 	const throwOnInactiveLoad: boolean | undefined = createParams.gcOptions.throwOnInactiveLoad;
-
-	const throwOnTombstoneLoadConfig =
-		mc.config.getBoolean(throwOnTombstoneLoadOverrideKey) ?? true;
 	const throwOnTombstoneLoad =
-		throwOnTombstoneLoadConfig && sweepEnabled && !createParams.isSummarizerClient;
+		mc.config.getBoolean(throwOnTombstoneLoadOverrideKey) !== false &&
+		sweepEnabled &&
+		!createParams.isSummarizerClient;
 
 	return {
 		gcAllowed, // For this document

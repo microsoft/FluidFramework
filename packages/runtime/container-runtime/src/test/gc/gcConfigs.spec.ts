@@ -688,7 +688,7 @@ describe("Garbage Collection configurations", () => {
 				gcAllowed_doc: boolean;
 				sweepEnabled_doc: boolean;
 				sweepEnabled_session: boolean;
-				expectedSweepEnabled: IGarbageCollectorConfigs["sweepEnabled"];
+				expectedSweepEnabled: boolean;
 			}[] = [
 				{
 					gcAllowed_doc: false, // Veto
