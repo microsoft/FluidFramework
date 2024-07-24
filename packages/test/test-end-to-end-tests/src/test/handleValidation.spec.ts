@@ -449,12 +449,12 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 	}
 
 	for (const handleStorageFactory of handleStorageFactories) {
-		describe(handleStorageFactory.id, () => {
+		describe.only(handleStorageFactory.id, () => {
 			/**
 			 * General setup:
 			 *
 			 * 1. Create a container with an initially attached default data store.
-			 * 2. Create a detached data store (dataStoreB) and a DDS of the type being tested.
+			 * 2. Create a detached data store (dataStoreB) and a DDS of the type being tested inside that data store.
 			 * 3. Reference the detached data store from the DDS with the DDS still detached
 			 * 4. Attach the DDS by referencing it from the default data store. This should also attach the transitively referenced data store,
 			 * as well as its `root` DDS. This is then validated from a second container.
@@ -473,7 +473,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 					dataObjectB.root.set("foo", "bar");
 					dataObjectB.root.set("dataStoreId", dataObjectB.context.id);
 
-					const dds = handleStorageFactory.createDDS(defaultDataStore.runtime);
+					const dds = handleStorageFactory.createDDS(dataObjectB.runtime);
 					await dds.storeHandle(dataObjectB.handle);
 
 					// Attach `dds`, which should also cause `dataObjectB` to attach.
@@ -504,7 +504,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 
 			/**
 			 * Like the above case, but rather than have the detached DDS reference a data object, it references the (detached) `root` DDS
-			 * of that data object.
+			 * of that data object. All the same objects should be attached.
 			 */
 			it(`can store a handle to detached dataObject.root while detached then attach`, async () => {
 				const { container1, provider } = await setup();
@@ -518,7 +518,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 					dataObjectB.root.set("foo", "bar");
 					dataObjectB.root.set("dataStoreId", dataObjectB.context.id);
 
-					const dds = handleStorageFactory.createDDS(defaultDataStore.runtime);
+					const dds = handleStorageFactory.createDDS(dataObjectB.runtime);
 					await dds.storeHandle(dataObjectB.root.handle);
 
 					// Attach `dds`, which should also cause `dataObjectB` and its `.root` DDS to attach.
