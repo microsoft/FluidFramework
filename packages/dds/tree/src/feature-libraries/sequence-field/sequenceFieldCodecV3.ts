@@ -140,7 +140,7 @@ export function makeV3Codec(
 		context: ChangeEncodingContext,
 	): RevisionTag {
 		if (encodedRevision === undefined) {
-			assert(context.revision !== undefined, 0x996 /* Implicit revision should be provided */);
+			assert(context.revision !== undefined, "Implicit revision should be provided");
 			return context.revision;
 		}
 
