@@ -165,7 +165,7 @@ function readmeFooterTransform(content, options, config) {
 	}
 
 	const includeClientRequirementsSection = parseBooleanOption(options.clientRequirements, () =>
-		isPublic(packageName),
+		isPublic(packageMetadata),
 	);
 	if (includeClientRequirementsSection) {
 		sections.push(generateClientRequirementsSection(sectionHeadingOptions));
@@ -212,8 +212,12 @@ function readmeFooterTransform(content, options, config) {
  * PRIVATE: See templates/Private-Package-Notice-Template.md.
  * TOOLS: See templates/Tools-Package-Notice-Template.md.
  * `undefined`: Inherit from package namespace (`fluid-experimental`, `fluid-internal`, `fluid-private`, `fluid-tools`, etc.).
+ * @param {"TRUE" | "FALSE" | undefined} options.dependencyGuidelines - (optional) Whether or not to include the Fluid Framework dependency guidelines section.
+ * Default: `TRUE` if the package is end-user facing (i.e., a member of the `@fluidframework` or `@fluid-experimental` namespaces, or "fluid-framework").
+ * `FALSE` otherwise.
  * @param {"TRUE" | "FALSE" | undefined} options.installation - (optional) Whether or not to include the package installation instructions section.
- * Default: `TRUE`.
+ * Default: `TRUE` if the package is end-user facing (i.e., a member of the `@fluidframework` or `@fluid-experimental` namespaces, or "fluid-framework").
+ * `FALSE` otherwise.
  * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a devDependency.
  * Only used if `installation` is specified.
  * Default: `FALSE`.
@@ -222,7 +226,8 @@ function readmeFooterTransform(content, options, config) {
  * Will include the section if the property is found, and one of our special paths is found (`/alpha`, `/beta`, or `/legacy`).
  * Can be explicitly disabled by specifying `FALSE`.
  * @param {"TRUE" | "FALSE" | undefined} options.apiDocs - (optional) Whether or not to include a section pointing readers to the package's generated API documentation on <fluidframework.com>.
- * Default: `TRUE` if the package is end-user facing (i.e., a member of the `@fluidframework` or `@fluid-experimental` namespaces, or "fluid-framework"). `FALSE` otherwise.
+ * Default: `TRUE` if the package is end-user facing (i.e., a member of the `@fluidframework` or `@fluid-experimental` namespaces, or "fluid-framework").
+ * `FALSE` otherwise.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
@@ -234,6 +239,7 @@ function libraryReadmeHeaderTransform(content, options, config) {
 	);
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
 	const packageName = packageMetadata.name;
+	const isPackagePublic = isPublic(packageMetadata);
 
 	const sectionHeadingOptions = {
 		includeHeading: true,
@@ -249,9 +255,16 @@ function libraryReadmeHeaderTransform(content, options, config) {
 		sections.push(scopeNoticeSection);
 	}
 
-	if (options.installation !== "FALSE") {
+	const includeDependencyGuidelinesSection = parseBooleanOption(options.dependencyGuidelines, isPackagePublic);
+	if (includeDependencyGuidelinesSection) {
 		sections.push(
 			generateDependencyGuidelines(sectionHeadingOptions),
+		);
+	}
+
+	const includeInstallationSection = parseBooleanOption(options.installation, isPackagePublic);
+	if (includeInstallationSection) {
+		sections.push(
 			generateInstallationInstructionsSection(
 				packageName,
 				options.devDependency,
@@ -260,11 +273,12 @@ function libraryReadmeHeaderTransform(content, options, config) {
 		);
 	}
 
-	if (options.importInstructions !== "FALSE") {
+	const includeImportInstructionsSection = parseBooleanOption(options.importInstructions, true);
+	if (includeImportInstructionsSection) {
 		sections.push(generateImportInstructionsSection(packageMetadata, sectionHeadingOptions));
 	}
 
-	const includeApiDocsSection = parseBooleanOption(options.apiDocs, () => isPublic(packageName));
+	const includeApiDocsSection = parseBooleanOption(options.apiDocs, isPackagePublic);
 	if (includeApiDocsSection) {
 		sections.push(generateApiDocsSection(packageName, sectionHeadingOptions));
 	}
@@ -460,12 +474,11 @@ module.exports = {
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		CLIENT_REQUIREMENTS: (content, options, config) => {
-			return templateTransform(
+		CLIENT_REQUIREMENTS: (content, options, config) =>
+			templateTransform(
 				"Client-Requirements-Template.md",
 				parseHeadingOptions(options, "Client Requirements"),
-			);
-		},
+			),
 
 		/**
 		 * Generates a README section with Microsoft trademark info.
