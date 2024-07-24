@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
-import { oob, type Mutable } from "../../util/index.js";
+import type { Mutable } from "../../util/index.js";
 
 import {
 	type ChangeRebaser,

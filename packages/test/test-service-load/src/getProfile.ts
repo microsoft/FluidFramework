@@ -5,22 +5,17 @@
 
 import fs from "fs";
 
-import { ILoadTestConfig, ITestConfig } from "./testConfigFile.js";
+import type { TestConfiguration, TestConfigurationFileContents } from "./testConfigFile.js";
 
-export function getProfile(profileArg: string) {
-	let config: ITestConfig;
-	try {
-		config = JSON.parse(fs.readFileSync("./testConfig.json", "utf-8"));
-	} catch (e) {
-		console.error("Failed to read testConfig.json");
-		console.error(e);
-		process.exit(-1);
-	}
+export function getProfile(profileName: string): TestConfiguration {
+	const config: TestConfigurationFileContents = JSON.parse(
+		fs.readFileSync("./testConfig.json", "utf-8"),
+	);
+	// TODO: Consider validating the file contents.
 
-	const profile: ILoadTestConfig | undefined = config.profiles[profileArg];
+	const profile: TestConfiguration | undefined = config.profiles[profileName];
 	if (profile === undefined) {
-		console.error("Invalid --profile argument not found in testConfig.json profiles");
-		process.exit(-1);
+		throw new Error("Invalid --profile argument not found in testConfig.json profiles");
 	}
 	return profile;
 }
