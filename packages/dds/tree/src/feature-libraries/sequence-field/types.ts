@@ -154,7 +154,7 @@ export type Detach = Remove | MoveOut;
  * We do NOT use AttachAndDetach to represent the following compositions:
  * - Revive ○ Remove (represented by a Remove)
  * - Revive ○ MoveOut (represented by a MoveOut)
- * - MoveIn ○ MoveOut (represented by a Skip or Rename)
+ * - MoveIn ○ MoveOut (represented by a Rename)
  */
 export interface AttachAndDetach {
 	type: "AttachAndDetach";
