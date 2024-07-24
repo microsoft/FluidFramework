@@ -32,6 +32,7 @@ export const cases: {
 	remove: SF.Changeset;
 	revive: SF.Changeset;
 	pin: SF.Changeset;
+	rename: SF.Changeset;
 	move: SF.Changeset;
 	moveAndRemove: SF.Changeset;
 	return: SF.Changeset;
@@ -52,6 +53,7 @@ export const cases: {
 	remove: createRemoveChangeset(1, 3),
 	revive: createReviveChangeset(2, 2, { revision: tag, localId: brand(0) }),
 	pin: [createPinMark(4, brand(0))],
+	rename: [createRenameMark(3, brand(2), brand(3))],
 	move: createMoveChangeset(1, 2, 4),
 	moveAndRemove: [
 		createMoveOutMark(1, brand(0)),

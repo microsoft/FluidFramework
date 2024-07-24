@@ -104,6 +104,10 @@ export interface MoveIn extends HasMoveFields {
 export interface DetachFields {
 	/**
 	 * When set, the detach should use the `CellId` specified in this object to characterize the cell being emptied.
+	 *
+	 * This is used in two situations:
+	 * - to restore the prior ID of a cell in a rollback changeset
+	 * - to represent the impact of a detach composed with a rename
 	 */
 	readonly idOverride?: CellId;
 }

@@ -6,7 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import type { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../core/index.js";
-import { type IdAllocator, brand } from "../../util/index.js";
+import { type IdAllocator, type Mutable, brand } from "../../util/index.js";
 import {
 	type CrossFieldManager,
 	CrossFieldTarget,
@@ -240,6 +240,8 @@ class RebaseQueue {
 function addMovedMarkEffect(mark: Mark, effect: MarkEffect): Mark {
 	if (isMoveIn(mark) && isMoveOut(effect)) {
 		return { ...mark, type: "Insert" };
+	} else if (isRename(mark) && isMoveOut(effect)) {
+		return { ...effect, count: mark.count, idOverride: mark.idOverride };
 	} else if (isAttachAndDetachEffect(mark) && isMoveIn(mark.attach) && isMoveOut(effect)) {
 		return { ...mark.detach, count: mark.count };
 	} else if (isTombstone(mark)) {
@@ -322,10 +324,6 @@ function rebaseMarkIgnoreChild(
 			baseMark.cellId !== undefined,
 			0x81a /* AttachAndDetach mark should target an empty cell */,
 		);
-		if (isMoveIn(baseMark.attach) && isMoveOut(baseMark.detach)) {
-			// Orphaned moves are effectively cell renames.
-			return withCellId(currMark, getDetachOutputCellId(baseMark.detach));
-		}
 		const halfRebasedMark = rebaseMarkIgnoreChild(
 			currMark,
 			{ ...baseMark.attach, cellId: cloneCellId(baseMark.cellId), count: baseMark.count },
@@ -355,8 +353,15 @@ function separateEffectsForMove(mark: MarkEffect): {
 	const type = mark.type;
 	switch (type) {
 		case "Remove":
-		case "MoveOut":
+		case "MoveOut": {
+			if (mark.idOverride !== undefined) {
+				const remains: MarkEffect = { type: "Rename", idOverride: mark.idOverride };
+				const follows: Mutable<MarkEffect> = { ...mark };
+				delete follows.idOverride;
+				return { remains, follows };
+			}
 			return { follows: mark };
+		}
 		case "AttachAndDetach":
 			return { follows: mark.detach, remains: mark.attach };
 		case "MoveIn":

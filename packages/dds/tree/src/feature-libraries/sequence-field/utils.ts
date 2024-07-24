@@ -323,14 +323,16 @@ export function normalizeCellRename(
 	if (attach.type === "MoveIn") {
 		if (detach.type === "MoveOut") {
 			const outputId = getDetachOutputCellId(detach);
-			return areEqualCellIds(outputId, cellId)
-				? { count, cellId }
-				: {
-						type: "Rename",
-						count,
-						cellId,
-						idOverride: outputId,
-					};
+			// Note that the output ID may be the same as the cellId. In such a scenario,
+			// we output an (impact-less) Rename mark anyway (as opposed to a Skip)
+			// because the resulting Rename may be rebased over other changes that rename the input cell,
+			// eventually leading to an impactful rename.
+			return {
+				type: "Rename",
+				count,
+				cellId,
+				idOverride: outputId,
+			};
 		}
 	} else {
 		// TODO: revisit if we still need the attach information for new inserts.
