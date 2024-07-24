@@ -333,6 +333,15 @@ LOGGING FLAGS
 
 GLOBAL FLAGS
   --json  Format output as json.
+
+EXAMPLES
+  Generate release notes for a minor release of the client release group.
+
+    $ flub generate releaseNotes -g client -t minor
+
+  You can output a different file using the --out flag.
+
+    $ flub generate releaseNotes -g client -t minor --out RELEASE_NOTES/2.1.0.md
 ```
 
 _See code: [src/commands/generate/releaseNotes.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/releaseNotes.ts)_

@@ -59,14 +59,15 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 	} as const;
 
 	static readonly examples = [
-		// {
-		// 	description: `Generate UPCOMING.md for the client release group using the minor changesets.`,
-		// 	command: "<%= config.bin %> <%= command.id %> -g client -t minor",
-		// },
-		// {
-		// 	description: `You can output a different file using the --out flag.`,
-		// 	command: "<%= config.bin %> <%= command.id %> -g client -t minor --out testOutput.md",
-		// },
+		{
+			description: `Generate release notes for a minor release of the client release group.`,
+			command: "<%= config.bin %> <%= command.id %> -g client -t minor",
+		},
+		{
+			description: `You can output a different file using the --out flag.`,
+			command:
+				"<%= config.bin %> <%= command.id %> -g client -t minor --out RELEASE_NOTES/2.1.0.md",
+		},
 	];
 
 	public async run(): Promise<string> {
