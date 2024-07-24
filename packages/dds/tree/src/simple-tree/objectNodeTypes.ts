@@ -40,7 +40,13 @@ export interface ObjectNodeSchema<
 	readonly fields: ReadonlyMap<string, FieldSchema>;
 }
 
+/**
+ * Extra data provided on all {@link ObjectNodeSchema} that is not included in the (soon possibly public) ObjectNodeSchema type.
+ */
 export interface ObjectNodeSchemaInternalData {
+	/**
+	 * {@inheritdoc SimpleKeyMap}
+	 */
 	readonly flexKeyMap: SimpleKeyMap;
 }
 

@@ -112,7 +112,8 @@ export function cursorFromNodeData(
  *
  * * `-0` =\> `+0`
  *
- * For fields with a default value, the field may be omitted. If `context` is not provided, so defaults (which require a context) may be left empty (which can be out of schema).
+ * For fields with a default value, the field may be omitted.
+ * If `context` is not provided, defaults which require a context will be left empty which can be out of schema.
  *
  * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
  * @param context - An optional context which, if present, will allow defaults to be created by {@link ContextualFieldProvider}s.
@@ -121,16 +122,20 @@ export function cursorFromNodeData(
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
  *
- * TODO:BUG:
- * This schema validation is done before defaults from the context are provided, which will reject required fields getting their value from a default like identifier fields.
+ * TODO:BUG: AB#9131
+ * This schema validation is done before defaults are provided.
+ * This can not easily be fixed by reordering things within this implementation since even at the end of this function defaults requiring a context may not have been filled.
+ * This means schema validation reject required fields getting their value from a default like identifier fields.
  *
  * @remarks The resulting tree will be populated with any defaults from {@link FieldProvider}s in the schema.
  *
  * @privateRemarks
- * TODO:
+ * TODO: AB#9126 AB#9131
  * When an app wants schema validation, we should ensure data is validated. Doing the validation here is not robust (since many callers to this don't have a context and thus can't opt into validation).
  * Additionally the validation here does not correctly handle default values, and introduces a second schema representation which is a bit odd API wise as its typically derivable from the view schema.
  * It may make more sense to validate when hydrating the MapTreeNode when the context is known and the defaults are available.
+ * Applying the "parse don't validate" idiom here could help ensuring we capture when the validation optionally happens in the type system to avoid missing or redundant validation,
+ * as well as ensuring validation happens after defaulting (or can handle validating data missing defaults)
  */
 export function mapTreeFromNodeData(
 	data: InsertableContent,
@@ -666,6 +671,7 @@ export function addDefaultsToMapTree(
 					const data = provideDefault(fieldProvider, context);
 					if (data !== undefined) {
 						setFieldValue(mapTree.fields, data, fieldInfo.schema, fieldInfo.storedKey);
+						// call addDefaultsToMapTree on newly inserted default values
 						for (const child of mapTree.fields.get(fieldInfo.storedKey) ??
 							fail("Expected field to be populated")) {
 							addDefaultsToMapTree(child, fieldInfo.schema.allowedTypes, context);
@@ -694,6 +700,12 @@ export function addDefaultsToMapTree(
 	}
 }
 
+/**
+ * Provides the default value (which can be undefined, for example with optional fields), or undefined if a context is required but not provided.
+ * @privateRemarks
+ * It is a bit concerning that there is no way for the caller to know when undefined is returned if that is the default value, or a context was required.
+ * TODO: maybe better formalize the two stage defaulting (without then with context), or rework this design we only do one stage.
+ */
 function provideDefault(
 	fieldProvider: FieldProvider,
 	context: NodeKeyManager | undefined,
@@ -703,6 +715,9 @@ function provideDefault(
 	} else {
 		if (isConstant(fieldProvider)) {
 			return fieldProvider();
+		} else {
+			// Leaving field empty despite it needing a default value since a context was required and non was provided.
+			// Caller better handle this case by providing the default at some other point in time when the context becomes known.
 		}
 	}
 }
