@@ -221,7 +221,7 @@ export function groupBySection(
 /**
  * Given an array of changesets, flattens the changesets into an array of ChangesetEntry objects.
  */
-function flattenChangesets(changesets: Changeset[]): ChangesetEntry[] {
+export function flattenChangesets(changesets: Changeset[]): ChangesetEntry[] {
 	const entries: ChangesetEntry[] = [];
 
 	for (const changeset of changesets) {
