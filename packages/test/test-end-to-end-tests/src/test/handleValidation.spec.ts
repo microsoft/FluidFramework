@@ -101,7 +101,7 @@ async function dereferenceToTestFluidObject(handle: IFluidHandle): Promise<ITest
 	const maybeTestFluidObject: FluidObject<ITestFluidObject> = handleGetResult;
 	assert(
 		maybeTestFluidObject.ITestFluidObject !== undefined,
-		"Expected handle to round-trip to test fluid object",
+		"Expected handle to round-trip to test Fluid object",
 	);
 	return maybeTestFluidObject.ITestFluidObject;
 }
