@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -24,7 +24,7 @@ import {
 	type NodeKeyManager,
 	isMapTreeNode,
 } from "../feature-libraries/index.js";
-import { brand, fail, isReadonlyArray, find, oob } from "../util/index.js";
+import { brand, fail, isReadonlyArray, find } from "../util/index.js";
 
 import { nullSchema } from "./leafNodeSchema.js";
 import type { InsertableContent } from "./proxies.js";

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { oob, type MapGetSet } from "./utils.js";
+import { oob } from "@fluidframework/core-utils/internal";
+import type { MapGetSet } from "./utils.js";
 
 /**
  * A dictionary whose values are keyed off of two objects (key1, key2).
