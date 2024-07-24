@@ -78,6 +78,8 @@ interface PackageDependency {
 	depClass: "prod" | "dev" | "peer";
 }
 
+const regexNpmAlias = /^npm:(?<alias>.+)@/;
+
 export class Package {
 	private static packageCount: number = 0;
 	private static readonly chalkColor = [
@@ -276,10 +278,17 @@ export class Package {
 		}
 		let succeeded = true;
 		for (const dep of this.combinedDependencies) {
+			// Note that this enumerates peerDeps as well
+			// TODO: check the installed package semver as well
 			if (
 				!lookUpDirSync(this.directory, (currentDir) => {
-					// TODO: check semver as well
-					return existsSync(path.join(currentDir, "node_modules", dep.name));
+					if (existsSync(path.join(currentDir, "node_modules", dep.name))) {
+						return true;
+					}
+					const alias = dep.version.match(regexNpmAlias)?.groups?.alias;
+					return alias === undefined
+						? false
+						: existsSync(path.join(currentDir, "node_modules", alias));
 				})
 			) {
 				succeeded = false;
