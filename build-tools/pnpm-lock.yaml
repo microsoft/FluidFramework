@@ -230,9 +230,6 @@ importers:
         specifier: ^2.19.0
         version: 2.19.0
     devDependencies:
-      '@fluid-private/readme-command':
-        specifier: workspace:~
-        version: link:../readme-command
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -521,82 +518,6 @@ importers:
         specifier: ^4.4.1
         version: 4.4.1
 
-  packages/readme-command:
-    dependencies:
-      '@oclif/core':
-        specifier: ^4.0.14
-        version: 4.0.14
-      '@oclif/plugin-help':
-        specifier: ^6.2.7
-        version: 6.2.7
-      oclif:
-        specifier: ^4.14.9
-        version: 4.14.9
-      semver:
-        specifier: ^7.5.4
-        version: 7.5.4
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~1.8.3
-        version: 1.8.3
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools-bin':
-        specifier: npm:@fluidframework/build-tools@~0.40.0
-        version: /@fluidframework/build-tools@0.40.0(@types/node@18.18.6)
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^5.3.0
-        version: 5.3.0(eslint@8.57.0)(typescript@5.4.5)
-      '@oclif/test':
-        specifier: ^3.2.12
-        version: 3.2.12
-      '@types/chai':
-        specifier: ^4.3.5
-        version: 4.3.5
-      '@types/chai-arrays':
-        specifier: ^2.0.0
-        version: 2.0.0
-      '@types/node':
-        specifier: ^18.18.6
-        version: 18.18.6
-      '@types/semver':
-        specifier: ^7.5.0
-        version: 7.5.0
-      chai:
-        specifier: ^4.3.7
-        version: 4.3.7
-      chai-arrays:
-        specifier: ^2.2.0
-        version: 2.2.0
-      concurrently:
-        specifier: ^8.2.1
-        version: 8.2.1
-      eslint:
-        specifier: ~8.57.0
-        version: 8.57.0
-      eslint-config-oclif:
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.57.0)
-      eslint-config-oclif-typescript:
-        specifier: ^3.1.8
-        version: 3.1.8(eslint@8.57.0)(typescript@5.4.5)
-      eslint-config-prettier:
-        specifier: ~9.1.0
-        version: 9.1.0(eslint@8.57.0)
-      rimraf:
-        specifier: ^4.4.1
-        version: 4.4.1
-      ts-node:
-        specifier: ^10.9.1
-        version: 10.9.1(@types/node@18.18.6)(typescript@5.4.5)
-      tslib:
-        specifier: ^2.6.0
-        version: 2.6.0
-      typescript:
-        specifier: ~5.4.5
-        version: 5.4.5
-
   packages/version-tools:
     dependencies:
       '@oclif/core':
@@ -627,9 +548,6 @@ importers:
       '@biomejs/biome':
         specifier: ~1.8.3
         version: 1.8.3
-      '@fluid-private/readme-command':
-        specifier: workspace:~
-        version: link:../readme-command
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -3486,7 +3404,7 @@ packages:
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
       '@tufjs/canonical-json': 1.0.0
-      minimatch: 9.0.4
+      minimatch: 9.0.5
 
   /@types/argparse@1.0.38:
     resolution: {integrity: sha512-ebDJ9b0e702Yr7pWgB0jzm+CX4Srzz8RcXtLJDJB+BSccqMa36uyH/zUsSYao5+BD1ytv3k3rPYCq4mAE1hsXA==}
@@ -3914,7 +3832,7 @@ packages:
     dependencies:
       '@typescript-eslint/types': 5.59.11
       '@typescript-eslint/visitor-keys': 5.59.11
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.6.2
@@ -7599,7 +7517,7 @@ packages:
     resolution: {integrity: sha512-C7FfFoTA+bI10qfeydT8aZbvr91vAEU+2W5BZUlzPec47oNb07SsOfwYrtxuvOYdUApPP/Qlh4DtAO51Ekk2QA==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
-      minimatch: 9.0.4
+      minimatch: 9.0.5
 
   /ignore@5.2.4:
     resolution: {integrity: sha512-MAb38BcSbH0eHNBxn7ql2NH/kX33OkB3lZ1BNdh7ENeRChHTYsTvWrMubiIAMNS2llXEEgZ1MUOBtXChP3kaFQ==}
@@ -11225,7 +11143,7 @@ packages:
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
       '@tufjs/models': 1.0.4
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
       make-fetch-happen: 11.1.1
     transitivePeerDependencies:
       - supports-color

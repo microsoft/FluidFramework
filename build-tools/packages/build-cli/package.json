@@ -127,7 +127,6 @@
 		"type-fest": "^2.19.0"
 	},
 	"devDependencies": {
-		"@fluid-private/readme-command": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^5.3.0",
 		"@oclif/test": "^3.2.12",
