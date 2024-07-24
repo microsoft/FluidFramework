@@ -114,19 +114,29 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 		}
 
 		const body = new StringBuilder();
-		// Only iterate through the known sections; the unknown section is omitted.
-		for (const { name, heading: sectionHead } of releaseNotesConfig.sections) {
-			this.verbose(`Building "${name}" section with header: ${sectionHead}`);
-			const changes = bySection.get(name)?.filter(
+		// Iterate through all the sections; if a section has no config a warning will be logged and it will be omitted from
+		// the output.
+		for (const [sectionName, sectionChangesets] of bySection) {
+			const sectionConfig = releaseNotesConfig.sections.find((s) => s.name === sectionName);
+			if (sectionConfig === undefined) {
+				this.warning(
+					`Could not find a configuration for a section named "${sectionName}". The ${sectionChangesets.length} changesets in this section will be omitted.`,
+				);
+				continue;
+			}
+
+			this.verbose(`Building "${sectionName}" section with header: ${sectionConfig.heading}`);
+			const changes = sectionChangesets.filter(
 				(change) =>
 					// filter out changes that shouldn't be in the release notes
 					(change.additionalMetadata?.includeInReleaseNotes ?? true) === true,
 			);
-			if (changes === undefined || changes.length === 0) {
+			if (changes.length === 0) {
+				this.verbose(`Excluding section "${sectionName}" because it has no changes.`);
 				continue;
 			}
 
-			body.append(`## ${sectionHead}\n\n`);
+			body.append(`## ${sectionConfig.heading}\n\n`);
 			for (const change of changes) {
 				if (change.changeTypes.includes("minor") || flags.releaseType === "major") {
 					body.append(`### ${change.summary}\n\n${change.content}\n\n`);

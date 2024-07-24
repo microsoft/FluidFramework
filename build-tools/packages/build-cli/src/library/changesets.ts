@@ -189,12 +189,16 @@ export function groupByMainPackage(changesets: Changeset[]): Map<ReleasePackage,
 /**
  * Creates a map of section names to an array of all the changesets that belong in that section.
  *
- * The returned array of changesets is sorted oldest-to-newest (that is, index 0 is the earliest changeset, and the last
- * changeset in the array is the newest).
+ * The returned array of changesets are sorted oldest-to-newest (that is, index 0 is the earliest changeset, and the
+ * last changeset in the array is the newest).
  *
  * Any changesets that do not belong to a section will be in the {@link UNKNOWN_SECTION} (`_unknown`) key in the
  * returned map, so callers should check the contents of that key to ensure all changesets were mapped to sections as
  * expected.
+ *
+ * Note that this groups by the section values in the changesets. Callers are expected to validate tha section names or
+ * adjust them depending on their needs. This function does not adjust section names _except_ for those with no
+ * specified section.
  *
  * @param changesets - An array of changesets to be grouped.
  * @returns a Map of section names to an array of all the changesets that apply to that section.
