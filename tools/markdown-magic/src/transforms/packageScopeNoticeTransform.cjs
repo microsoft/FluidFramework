@@ -25,6 +25,9 @@ const {
 const generatePackageScopeNotice = (kind) => {
 	let rawContents;
 	switch (kind) {
+		case "EXAMPLE":
+			rawContents = readTemplate("Example-Package-Notice-Template.md");
+			break;
 		case "EXPERIMENTAL":
 			rawContents = readTemplate("Experimental-Package-Notice-Template.md");
 			break;
