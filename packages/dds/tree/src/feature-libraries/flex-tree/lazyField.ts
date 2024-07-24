@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -24,7 +24,6 @@ import {
 	disposeSymbol,
 	fail,
 	getOrCreate,
-	oob,
 } from "../../util/index.js";
 // TODO: stop depending on contextuallyTyped
 import { applyTypesFromContext, cursorFromContextualData } from "../contextuallyTyped.js";

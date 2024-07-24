@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	UsageError,
@@ -53,13 +53,7 @@ import {
 	makeFieldBatchCodec,
 } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
-import {
-	type IDisposable,
-	TransactionResult,
-	disposeSymbol,
-	fail,
-	oob,
-} from "../util/index.js";
+import { type IDisposable, TransactionResult, disposeSymbol, fail } from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
