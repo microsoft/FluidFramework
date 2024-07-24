@@ -25,6 +25,13 @@
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
+<!-- AUTO-GENERATED-CONTENT:START (PACKAGE_SCOPE_NOTICE:scopeKind=EXAMPLE) -->
+**IMPORTANT: This package is experimental.**
+**Its APIs may change without notice.**
+
+**Do not use in production scenarios.**
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 <!-- AUTO-GENERATED-CONTENT:START (PACKAGE_SCOPE_NOTICE:scopeKind=EXPERIMENTAL) -->
 
 **IMPORTANT: This package is experimental.**
