@@ -128,7 +128,7 @@ const getScopeKindFromPackage = (packageName) => {
  * For the purposes of README content generation, this is true for "fluid-framework" and published packages in the
  * "@fluidframework" and "@fluid-experimental" scopes.
  *
- * Will always return `false` if the package.json does not specify `"private": true`.
+ * Will always return `false` if the package.json specifies`"private": true`.
  *
  * @remarks Used to determine which automatically generated sections should be included in package READMEs, etc.
  * @param {object} packageMetadata - The parsed `package.json` file for the package.
