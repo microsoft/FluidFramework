@@ -42,9 +42,9 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"@oclif/core": "^3.26.5",
-		"@oclif/plugin-help": "^6.0.21",
-		"oclif": "^4.10.1",
+		"@oclif/core": "^4.0.14",
+		"@oclif/plugin-help": "^6.2.7",
+		"oclif": "^4.14.9",
 		"semver": "^7.5.4"
 	},
 	"devDependencies": {
@@ -62,7 +62,7 @@
 		"concurrently": "^8.2.1",
 		"eslint": "~8.57.0",
 		"eslint-config-oclif": "^5.2.0",
-		"eslint-config-oclif-typescript": "^3.1.7",
+		"eslint-config-oclif-typescript": "^3.1.8",
 		"eslint-config-prettier": "~9.1.0",
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.1",
