@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	type Anchor,
@@ -29,7 +29,7 @@ import {
 	rootFieldKey,
 } from "../../core/index.js";
 import { createEmitter } from "../../events/index.js";
-import { assertValidRange, brand, fail, getOrAddEmptyToMap, oob } from "../../util/index.js";
+import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
 import type { ChunkedCursor, TreeChunk } from "./chunk.js";
