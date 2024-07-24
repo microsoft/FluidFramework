@@ -8,6 +8,7 @@ import type {
 	IDisposable,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import type { JsonSerializable } from "@fluidframework/core-interfaces/internal";
 import type {
 	IClientDetails,
 	IQuorumClients,
@@ -27,6 +28,7 @@ import type {
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager } from "./deltas.js";
 import type { ICriticalContainerError } from "./error.js";
+import type { IndependentStateManager } from "./independentState.js";
 import type { ILoader } from "./loader.js";
 
 /**
@@ -110,6 +112,25 @@ export interface IRuntime extends IDisposable {
 	 * @see {@link IContainer.getEntryPoint}
 	 */
 	getEntryPoint(): Promise<FluidObject>;
+}
+
+/**
+ * @internal
+ */
+export interface IRuntimeInternal extends IRuntime, IndependentStateManager {
+	/**
+	 * Submits the signal to be sent to other client(s).
+	 * @param address - Runtime address of the signal.
+	 * @param type - Type of the signal.
+	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
+	 */
+	submitAddressedSignal<T>(
+		address: string,
+		type: string,
+		content: JsonSerializable<T>,
+		targetClientId?: string,
+	): void;
 }
 
 /**

@@ -106,6 +106,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
         snapshotTree: ISnapshotTree;
         sequenceNumber: number;
     }>;
+    // (undocumented)
+    protected handleSignal(address: string, signalMessage: IInboundSignalMessage, local: boolean): boolean;
     get idCompressor(): (IIdCompressor & IIdCompressorCore) | undefined;
     // (undocumented)
     get idCompressorMode(): IdCompressorMode;
@@ -160,6 +162,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     submitMessage(type: ContainerMessageType.FluidDataStoreOp | ContainerMessageType.Alias | ContainerMessageType.Attach, contents: any, localOpMetadata?: unknown): void;
     submitSignal(type: string, content: unknown, targetClientId?: string): void;
+    // (undocumented)
+    protected submitSignalImpl(address: string | undefined, type: string, content: unknown, targetClientId?: string): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     summarize(options: {
         fullTree?: boolean;

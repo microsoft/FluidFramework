@@ -4,39 +4,44 @@
  */
 
 import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	AttachState,
+import type {
 	IAudience,
 	ISelf,
 	ICriticalContainerError,
-	type IAudienceEvents,
+	IAudienceEvents,
 } from "@fluidframework/container-definitions";
-import {
+import { AttachState } from "@fluidframework/container-definitions";
+import type {
 	IBatchMessage,
 	IContainerContext,
 	IGetPendingLocalStateProps,
 	ILoader,
 	IRuntime,
-	LoaderHeader,
+	IRuntimeInternal,
+	IndependentMap,
+	IndependentMapAddress,
+	IndependentMapFactory,
 	IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
-import {
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import type {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions/internal";
-import {
+import type {
 	FluidObject,
 	IFluidHandle,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import {
+import type {
 	IFluidHandleContext,
-	type IFluidHandleInternal,
+	IFluidHandleInternal,
 	IProvideFluidHandleContext,
+	ISignalEnvelope,
+	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal";
-import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
 	Deferred,
@@ -156,6 +161,7 @@ import {
 	IGarbageCollector,
 	gcGenerationOptionName,
 } from "./gc/index.js";
+import { IndependentStateManager } from "./independentStateManager.js";
 import {
 	ContainerMessageType,
 	type ContainerRuntimeDocumentSchemaMessage,
@@ -810,7 +816,7 @@ export class ContainerRuntime
 			provideEntryPoint,
 			runtimeOptions = {} satisfies IContainerRuntimeOptions,
 			containerScope = {},
-			containerRuntimeCtor = ContainerRuntime,
+			containerRuntimeCtor = ContainerRuntimeInternal,
 		} = params;
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
@@ -1669,6 +1675,8 @@ export class ContainerRuntime
 		// what is the interface of passing signals, we need the
 		// downstream stores to wrap the signal.
 		parentContext.submitSignal = (type: string, content: unknown, targetClientId?: string) => {
+			// Can the `content` argument type be IEnvelope?
+			// This does not call verifyNotClosed, but should it? Eventually use submitAddressedSignal?
 			const envelope1 = content as IEnvelope;
 			const envelope2 = this.createNewSignalEnvelope(
 				envelope1.address,
@@ -2840,6 +2848,14 @@ export class ContainerRuntime
 		this._perfSignalData.signalTimestamp = 0;
 	}
 
+	protected handleSignal(
+		address: string,
+		signalMessage: IInboundSignalMessage,
+		local: boolean,
+	): boolean {
+		return false;
+	}
+
 	public processSignal(message: ISignalMessage, local: boolean) {
 		const envelope = message.content as ISignalEnvelope;
 		const transformed: IInboundSignalMessage = {
@@ -2876,9 +2892,14 @@ export class ContainerRuntime
 			}
 		}
 
-		if (envelope.address === undefined) {
+		const address = envelope.address;
+		if (address === undefined) {
 			// No address indicates a container signal message.
 			this.emit("signal", transformed, local);
+			return;
+		}
+
+		if (this.handleSignal(address, transformed, local)) {
 			return;
 		}
 
@@ -2886,7 +2907,7 @@ export class ContainerRuntime
 		// what is the interface of passing signals, we need to adjust
 		// the signal envelope before sending it to the datastores to be processed
 		const envelope2: IEnvelope = {
-			address: envelope.address,
+			address,
 			contents: transformed.content,
 		};
 		transformed.content = envelope2;
@@ -3146,9 +3167,18 @@ export class ContainerRuntime
 	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(type: string, content: unknown, targetClientId?: string) {
+	public submitSignal(type: string, content: unknown, targetClientId?: string): void {
+		return this.submitSignalImpl(undefined /* address */, type, content, targetClientId);
+	}
+
+	protected submitSignalImpl(
+		address: string | undefined,
+		type: string,
+		content: unknown,
+		targetClientId?: string,
+	): void {
 		this.verifyNotClosed();
-		const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
+		const envelope = this.createNewSignalEnvelope(address, type, content);
 		return this.submitSignalFn(envelope, targetClientId);
 	}
 
@@ -4491,5 +4521,55 @@ export class ContainerRuntime
 
 	private get groupedBatchingEnabled(): boolean {
 		return this.sessionSchema.opGroupingEnabled === true;
+	}
+}
+
+/**
+ * Represents the runtime of the container. Contains helper functions/state of the container.
+ * It will define the store level mappings.
+ */
+class ContainerRuntimeInternal extends ContainerRuntime implements IRuntimeInternal {
+	private independentStateManager: IndependentStateManager | undefined;
+
+	/**
+	 * Internal method for experimental Distributed Independent State support
+	 * @remarks Do not use outside of Fluid Framework
+	 * @privateRemarks This is optional to make it clear that is may be removed
+	 * at any time without warning.
+	 */
+	public acquireIndependentMap<
+		T extends IndependentMap<unknown>,
+		TSchema = T extends IndependentMap<infer _TSchema> ? _TSchema : never,
+	>(
+		address: IndependentMapAddress,
+		requestedContent: TSchema,
+		factory: IndependentMapFactory<T>,
+	): T {
+		if (this.independentStateManager === undefined) {
+			this.independentStateManager = new IndependentStateManager();
+		}
+		return this.independentStateManager.acquireIndependentMap(
+			this,
+			address,
+			requestedContent,
+			factory,
+		);
+	}
+
+	public submitAddressedSignal<T>(
+		address: string,
+		type: string,
+		content: JsonSerializable<T>,
+		targetClientId?: string,
+	): void {
+		this.submitSignalImpl(address, type, content, targetClientId);
+	}
+
+	protected override handleSignal(
+		address: string,
+		signalMessage: IInboundSignalMessage,
+		local: boolean,
+	): boolean {
+		return this.independentStateManager?.handleSignal(address, signalMessage, local) ?? false;
 	}
 }

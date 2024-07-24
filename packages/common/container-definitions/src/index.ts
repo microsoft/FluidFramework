@@ -57,10 +57,17 @@ export {
 	isFluidCodeDetails,
 } from "./fluidPackage.js";
 export type {
+	IndependentMap,
+	IndependentMapAddress,
+	IndependentMapFactory,
+	IndependentStateManager,
+} from "./independentState.js";
+export type {
 	IBatchMessage,
 	IContainerContext,
 	IProvideRuntimeFactory,
 	IRuntime,
+	IRuntimeInternal,
 	IGetPendingLocalStateProps,
 } from "./runtime.js";
 export { AttachState, IRuntimeFactory } from "./runtime.js";
