@@ -13,5 +13,6 @@ module.exports = {
 		 */
 		"no-member-release-tags": require("./src/rules/no-member-release-tags"),
 		"no-restricted-tags-imports": require("./src/rules/no-restricted-tags-imports"),
+		"no-unchecked-array-access": require("./src/rules/no-unchecked-array-access"),
 	},
 };
