@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
 import {
@@ -32,7 +32,6 @@ import {
 	brand,
 	fail,
 	idAllocatorFromMaxId,
-	oob,
 } from "../../util/index.js";
 import {
 	type FieldBatchCodec,

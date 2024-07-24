@@ -29,10 +29,8 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
-	type Context,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
-	type FlexTreeSchema,
 	ForestSummarizer,
 	type ModularChangeset,
 	TreeCompressionStrategy,
@@ -53,13 +51,14 @@ import {
 import {
 	MockTreeCheckout,
 	checkoutWithContent,
+	cursorFromUnhydratedRoot,
 	flexTreeViewWithContent,
 	numberSequenceRootSchema,
 	testIdCompressor,
 } from "../../utils.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { cursorFromUnhydratedRoot, toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
+import { toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
@@ -134,33 +133,27 @@ describe("End to end chunked encoding", () => {
 		assert(!chunk.isShared());
 		const changeLog: ModularChangeset[] = [];
 
-		// This function is declared in the test to have access to push changes to the changelog declared outside of this function.
-		function createFlexTree(editableForest: IEditableForest, schema: FlexTreeSchema): Context {
-			const changeReceiver = (change: ModularChangeset) => {
-				changeLog.push(change);
-			};
-			const codec = makeModularChangeCodecFamily(
-				fieldKindConfigurations,
-				revisionTagCodec,
-				fieldBatchCodec,
-				{ jsonValidator: typeboxValidator },
-			);
-			const dummyEditor = new DefaultEditBuilder(
-				new DefaultChangeFamily(codec),
-				changeReceiver,
-			);
-			return getTreeContext(
-				schema,
-				// Note: deliberately passing an editor that doesn't have the property for schema edition; test doesn't need it
-				new MockTreeCheckout(editableForest, dummyEditor as unknown as ISharedTreeEditor),
-				new MockNodeKeyManager(),
-			);
-		}
+		const changeReceiver = (change: ModularChangeset) => {
+			changeLog.push(change);
+		};
+		const codec = makeModularChangeCodecFamily(
+			fieldKindConfigurations,
+			revisionTagCodec,
+			fieldBatchCodec,
+			{ jsonValidator: typeboxValidator },
+		);
+		const dummyEditor = new DefaultEditBuilder(new DefaultChangeFamily(codec), changeReceiver);
+		const checkout = new MockTreeCheckout(forest, dummyEditor as unknown as ISharedTreeEditor);
+		const flexTree = getTreeContext(
+			numberSequenceRootSchema,
+			// Note: deliberately passing an editor that doesn't have the property for schema edition; test doesn't need it
+			checkout,
+			new MockNodeKeyManager(),
+		);
 
-		const flexTree = createFlexTree(forest, numberSequenceRootSchema);
 		const root = flexTree.root;
 		assert(root.is(numberSequenceRootSchema.rootFieldSchema));
-		root.insertAt(0, chunk.cursor());
+		checkout.editor.sequenceField(root.getFieldPath()).insert(0, chunk.cursor());
 
 		// Check that inserted change contains chunk which is reference equal to the original chunk.
 		const insertedChange = changeLog[0];
@@ -181,7 +174,9 @@ describe("End to end chunked encoding", () => {
 			initialTree: [],
 		});
 
-		flexTree.flexTree.insertAt(0, chunk.cursor());
+		flexTree.checkout.editor
+			.sequenceField(flexTree.flexTree.getFieldPath())
+			.insert(0, chunk.cursor());
 
 		const forestSummarizer = new ForestSummarizer(
 			flexTree.context.checkout.forest as IEditableForest,
