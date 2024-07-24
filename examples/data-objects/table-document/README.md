@@ -1,5 +1,18 @@
 # @fluid-example/table-document
 
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+**NOTE: This package is an example leveraging the [Fluid Framework](https://fluidframework.com).**
+**It is intended only as an example, and is not intended for external use.**
+**We make no stability guarantees regarding its APIs.**
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## Table Slice With Interception
 
 It provides `createTableWithInterception` that accepts an ITable object, the data store context and a callback, and returns an ITable object:
