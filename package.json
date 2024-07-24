@@ -67,6 +67,7 @@
 		"generate:packageList:internal-dev": "flub list client --no-private --feed internal-dev --outFile feeds/internal-dev.txt",
 		"generate:packageList:internal-test": "flub list client --no-private --feed internal-test --outFile feeds/internal-test.txt",
 		"generate:packageList:public": "flub list client --no-private --feed public --outFile feeds/public.txt",
+		"generate:packagesMd": "flub check layers --info layerInfo.json --md .",
 		"preinstall": "node scripts/only-pnpm.cjs",
 		"layer-check": "flub check layers --info layerInfo.json",
 		"lint": "fluid-build --task lint",
@@ -265,7 +266,8 @@
 					"layer-check",
 					"syncpack:deps",
 					"syncpack:versions",
-					"check:versions"
+					"check:versions",
+					"generate:packagesMd"
 				],
 				"script": false
 			},
