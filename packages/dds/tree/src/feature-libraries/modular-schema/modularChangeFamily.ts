@@ -8,7 +8,6 @@ import { BTree } from "@tylerbu/sorted-btree-es6";
 
 import type { ICodecFamily } from "../../codec/index.js";
 import {
-	type ChangeAtomIdMap,
 	type ChangeEncodingContext,
 	type ChangeFamily,
 	type ChangeFamilyEditor,
@@ -45,19 +44,11 @@ import {
 	type IdAllocator,
 	type Mutable,
 	brand,
-	deleteFromNestedMap,
 	fail,
-	forEachInNestedMap,
 	getOrAddInMap,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
-	nestedMapFromFlatList,
-	nestedMapToFlatList,
-	populateNestedMap,
-	setInNestedMap,
-	tryGetFromNestedMap,
 	type RangeQueryResult,
-	oob,
 } from "../../util/index.js";
 import {
 	type TreeChunk,
@@ -228,10 +219,10 @@ export class ModularChangeFamily
 		const { fieldChanges, nodeChanges, nodeToParent, nodeAliases, crossFieldKeys } =
 			this.composeAllFields(change1.change, change2.change, revInfos, idState);
 
-		const { allBuilds, allDestroys, allRefreshers } = composeBuildsDestroysAndRefreshers([
-			change1,
-			change2,
-		]);
+		const { allBuilds, allDestroys, allRefreshers } = composeBuildsDestroysAndRefreshers(
+			change1.change,
+			change2.change,
+		);
 
 		return makeModularChangeset(
 			fieldChanges,
@@ -1589,122 +1580,93 @@ function replaceRevision(
 }
 
 function replaceIdMapRevisions<T>(
-	map: ChangeAtomIdMap<T>,
+	map: ChangeAtomIdBTree<T>,
 	oldRevisions: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
-): ChangeAtomIdMap<T> {
-	return nestedMapFromFlatList(
-		nestedMapToFlatList(map).map(([revision, id, value]) => [
-			replaceRevision(revision, oldRevisions, newRevision),
-			id,
-			value,
-		]),
-	);
+): ChangeAtomIdBTree<T> {
+	const updated: ChangeAtomIdBTree<T> = newTupleBTree();
+	for (const [[revision, id], value] of map.entries()) {
+		updated.set([replaceRevision(revision, oldRevisions, newRevision), id], value);
+	}
+
+	return updated;
 }
 
 interface BuildsDestroysAndRefreshers {
-	readonly allBuilds: ChangeAtomIdMap<TreeChunk>;
-	readonly allDestroys: ChangeAtomIdMap<number>;
-	readonly allRefreshers: ChangeAtomIdMap<TreeChunk>;
+	readonly allBuilds: ChangeAtomIdBTree<TreeChunk>;
+	readonly allDestroys: ChangeAtomIdBTree<number>;
+	readonly allRefreshers: ChangeAtomIdBTree<TreeChunk>;
 }
 
 function composeBuildsDestroysAndRefreshers(
-	changes: TaggedChange<ModularChangeset>[],
+	change1: ModularChangeset,
+	change2: ModularChangeset,
 ): BuildsDestroysAndRefreshers {
-	const allBuilds: ChangeAtomIdMap<TreeChunk> = new Map();
-	const allDestroys: ChangeAtomIdMap<number> = new Map();
-	const allRefreshers: ChangeAtomIdMap<TreeChunk> = new Map();
-	for (const taggedChange of changes) {
-		const revision = revisionFromTaggedChange(taggedChange);
-		const change = taggedChange.change;
-		if (change.builds) {
-			for (const [revisionKey, innerMap] of change.builds) {
-				const setRevisionKey = revisionKey ?? revision;
-				const innerDstMap = getOrAddInMap(
-					allBuilds,
-					setRevisionKey,
-					new Map<ChangesetLocalId, TreeChunk>(),
+	// Duplicate builds can happen in compositions of commits that needed to include detached tree refreshers (e.g., undos):
+	// In that case, it's possible for the refreshers to contain different trees because the latter
+	// refresher may already reflect the changes made by the commit that includes the earlier
+	// refresher. This composition includes the changes made by the commit that includes the
+	// earlier refresher, so we need to include the build for the earlier refresher, otherwise
+	// the produced changeset will build a tree one which those changes have already been applied
+	// and also try to apply the changes again, effectively applying them twice.
+	// Note that it would in principle be possible to adopt the later build and exclude from the
+	// composition all the changes already reflected on the tree, but that is not something we
+	// care to support at this time.
+	const allBuilds: ChangeAtomIdBTree<TreeChunk> = brand(
+		mergeBTrees(change1.builds ?? newTupleBTree(), change2.builds ?? newTupleBTree(), true),
+	);
+
+	const allDestroys: ChangeAtomIdBTree<number> = brand(
+		mergeBTrees(change1.destroys ?? newTupleBTree(), change2.destroys ?? newTupleBTree()),
+	);
+
+	const allRefreshers: ChangeAtomIdBTree<TreeChunk> = brand(
+		mergeBTrees(
+			change1.refreshers ?? newTupleBTree(),
+			change2.refreshers ?? newTupleBTree(),
+			true,
+		),
+	);
+
+	if (change1.destroys !== undefined && change2.builds !== undefined) {
+		for (const [key, chunk] of change2.builds.entries()) {
+			const destroyCount = change1.destroys.get(key);
+			if (destroyCount !== undefined) {
+				assert(
+					destroyCount === chunk.topLevelLength,
+					0x89b /* Expected build and destroy to have the same length */,
 				);
-				for (const [id, chunk] of innerMap) {
-					// Check for duplicate builds and prefer earlier ones.
-					// This can happen in compositions of commits that needed to include detached tree refreshers (e.g., undos):
-					// In that case, it's possible for the refreshers to contain different trees because the latter
-					// refresher may already reflect the changes made by the commit that includes the earlier
-					// refresher. This composition includes the changes made by the commit that includes the
-					// earlier refresher, so we need to include the build for the earlier refresher, otherwise
-					// the produced changeset will build a tree one which those changes have already been applied
-					// and also try to apply the changes again, effectively applying them twice.
-					// Note that it would in principle be possible to adopt the later build and exclude from the
-					// composition all the changes already reflected on the tree, but that is not something we
-					// care to support at this time.
-					if (!innerDstMap.has(id)) {
-						// Check for earlier destroys that this build might cancel-out with.
-						const destroyCount = tryGetFromNestedMap(allDestroys, setRevisionKey, id);
-						if (destroyCount === undefined) {
-							innerDstMap.set(id, chunk);
-						} else {
-							assert(
-								destroyCount === chunk.topLevelLength,
-								0x89b /* Expected build and destroy to have the same length */,
-							);
-							deleteFromNestedMap(allDestroys, setRevisionKey, id);
-						}
-					}
-				}
-				if (innerDstMap.size === 0) {
-					allBuilds.delete(setRevisionKey);
-				}
+
+				allBuilds.delete(key);
+				allDestroys.delete(key);
 			}
-		}
-		if (change.destroys !== undefined) {
-			for (const [revisionKey, innerMap] of change.destroys) {
-				const setRevisionKey = revisionKey ?? revision;
-				const innerDstMap = getOrAddInMap(
-					allDestroys,
-					setRevisionKey,
-					new Map<ChangesetLocalId, number>(),
-				);
-				for (const [id, count] of innerMap) {
-					// Check for earlier builds that this destroy might cancel-out with.
-					const chunk = tryGetFromNestedMap(allBuilds, setRevisionKey, id);
-					if (chunk === undefined) {
-						innerDstMap.set(id, count);
-					} else {
-						assert(
-							count === chunk.topLevelLength,
-							0x89c /* Expected build and destroy to have the same length */,
-						);
-						deleteFromNestedMap(allBuilds, setRevisionKey, id);
-					}
-				}
-				if (innerDstMap.size === 0) {
-					allDestroys.delete(setRevisionKey);
-				}
-			}
-		}
-		// add all refreshers while preferring earlier ones
-		if (change.refreshers) {
-			populateNestedMap(change.refreshers, allRefreshers, false);
 		}
 	}
+
+	if (change1.builds !== undefined && change2.destroys !== undefined) {
+		for (const [key, chunk] of change1.builds.entries()) {
+			const destroyCount = change2.destroys.get(key);
+			if (destroyCount !== undefined) {
+				assert(
+					destroyCount === chunk.topLevelLength,
+					0x89b /* Expected build and destroy to have the same length */,
+				);
+
+				allBuilds.delete(key);
+				allDestroys.delete(key);
+			}
+		}
+	}
+
 	return { allBuilds, allDestroys, allRefreshers };
 }
 
 function invertBuilds(
-	builds: ChangeAtomIdMap<TreeChunk> | undefined,
+	builds: ChangeAtomIdBTree<TreeChunk> | undefined,
 	fallbackRevision: RevisionTag | undefined,
-): ChangeAtomIdMap<number> | undefined {
+): ChangeAtomIdBTree<number> | undefined {
 	if (builds !== undefined) {
-		const destroys: ChangeAtomIdMap<number> = new Map();
-		for (const [revision, innerBuildMap] of builds) {
-			const initializedRevision = revision ?? fallbackRevision;
-			const innerDestroyMap: Map<ChangesetLocalId, number> = new Map();
-			for (const [id, chunk] of innerBuildMap) {
-				innerDestroyMap.set(id, chunk.topLevelLength);
-			}
-			destroys.set(initializedRevision, innerDestroyMap);
-		}
-		return destroys;
+		return brand(builds.mapValues((chunk) => chunk.topLevelLength));
 	}
 	return undefined;
 }
@@ -1769,15 +1731,13 @@ export function updateRefreshers(
 	removedRoots: Iterable<DeltaDetachedNodeId>,
 	requireRefreshers: boolean = true,
 ): ModularChangeset {
-	const refreshers: ChangeAtomIdMap<TreeChunk> = new Map();
+	const refreshers: ChangeAtomIdBTree<TreeChunk> = newTupleBTree();
 	const chunkLengths: Map<RevisionTag | undefined, BTree<number, number>> = new Map();
 
 	if (change.builds !== undefined) {
-		for (const [major, buildsMap] of change.builds) {
-			const lengthTree = getOrAddInMap(chunkLengths, major, new BTree());
-			for (const [id, chunk] of buildsMap) {
-				lengthTree.set(id, chunk.topLevelLength);
-			}
+		for (const [[revision, id], chunk] of change.builds.entries()) {
+			const lengthTree = getOrAddInMap(chunkLengths, revision, new BTree());
+			lengthTree.set(id, chunk.topLevelLength);
 		}
 	}
 
@@ -1803,7 +1763,7 @@ export function updateRefreshers(
 		if (node === undefined) {
 			assert(!requireRefreshers, 0x8cd /* detached node should exist */);
 		} else {
-			setInNestedMap(refreshers, root.major, root.minor, node);
+			refreshers.set([root.major, brand(root.minor)], node);
 		}
 	}
 
@@ -1863,12 +1823,12 @@ export function intoDelta(
 	}
 	if (change.destroys !== undefined && change.destroys.size > 0) {
 		const destroys: DeltaDetachedNodeDestruction[] = [];
-		forEachInNestedMap(change.destroys, (count, major, minor) => {
+		for (const [[major, minor], count] of change.destroys.entries()) {
 			destroys.push({
 				id: makeDetachedNodeId(major, minor),
 				count,
 			});
-		});
+		}
 		rootDelta.destroy = destroys;
 	}
 	if (change.refreshers && change.refreshers.size > 0) {
@@ -1878,10 +1838,10 @@ export function intoDelta(
 }
 
 function copyDetachedNodes(
-	detachedNodes: ChangeAtomIdMap<TreeChunk>,
+	detachedNodes: ChangeAtomIdBTree<TreeChunk>,
 ): DeltaDetachedNodeBuild[] | undefined {
 	const copiedDetachedNodes: DeltaDetachedNodeBuild[] = [];
-	forEachInNestedMap(detachedNodes, (chunk, major, minor) => {
+	for (const [[major, minor], chunk] of detachedNodes.entries()) {
 		if (chunk.topLevelLength > 0) {
 			const trees = mapCursorField(chunk.cursor(), (c) =>
 				cursorForMapTreeNode(mapTreeFromCursor(c)),
@@ -1891,7 +1851,7 @@ function copyDetachedNodes(
 				trees,
 			});
 		}
-	});
+	}
 	return copiedDetachedNodes.length > 0 ? copiedDetachedNodes : undefined;
 }
 
@@ -2393,9 +2353,9 @@ function makeModularChangeset(
 	maxId: number = -1,
 	revisions: readonly RevisionInfo[] | undefined = undefined,
 	constraintViolationCount: number | undefined = undefined,
-	builds?: ChangeAtomIdMap<TreeChunk>,
-	destroys?: ChangeAtomIdMap<number>,
-	refreshers?: ChangeAtomIdMap<TreeChunk>,
+	builds?: ChangeAtomIdBTree<TreeChunk>,
+	destroys?: ChangeAtomIdBTree<number>,
+	refreshers?: ChangeAtomIdBTree<TreeChunk>,
 ): ModularChangeset {
 	const changeset: Mutable<ModularChangeset> = {
 		fieldChanges: fieldChanges ?? new Map(),
@@ -2466,14 +2426,12 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		if (content.mode === CursorLocationType.Fields && content.getFieldLength() === 0) {
 			return { type: "global" };
 		}
-		const builds: ChangeAtomIdMap<TreeChunk> = new Map();
-		const innerMap = new Map();
-		builds.set(undefined, innerMap);
+		const builds: ChangeAtomIdBTree<TreeChunk> = newTupleBTree();
 		const chunk =
 			content.mode === CursorLocationType.Fields
 				? chunkFieldSingle(content, defaultChunkPolicy)
 				: chunkTree(content, defaultChunkPolicy);
-		innerMap.set(firstId, chunk);
+		builds.set([undefined, firstId], chunk);
 
 		return {
 			type: "global",
@@ -2686,7 +2644,7 @@ export interface FieldEditDescription {
  */
 export interface GlobalEditDescription {
 	type: "global";
-	builds?: ChangeAtomIdMap<TreeChunk>;
+	builds?: ChangeAtomIdBTree<TreeChunk>;
 }
 
 /**
@@ -2741,25 +2699,15 @@ function revisionInfoFromTaggedChange(
 	return revInfos;
 }
 
-function revisionFromTaggedChange(
-	change: TaggedChange<ModularChangeset>,
-): RevisionTag | undefined {
-	return change.revision ?? revisionFromRevInfos(change.change.revisions);
-}
-
-function revisionFromRevInfos(
-	revInfos: undefined | readonly RevisionInfo[],
-): RevisionTag | undefined {
-	if (revInfos?.length === 1) {
-		return (revInfos[0] ?? oob()).revision;
-	}
-}
-
-function mergeBTrees<K, V>(tree1: BTree<K, V>, tree2: BTree<K, V>): BTree<K, V> {
+function mergeBTrees<K, V>(
+	tree1: BTree<K, V>,
+	tree2: BTree<K, V>,
+	preferLeft = true,
+): BTree<K, V> {
 	const result = tree1.clone();
-	tree2.forEachPair((k, v) => {
-		result.set(k, v);
-	});
+	for (const [key, value] of tree2.entries()) {
+		result.set(key, value, !preferLeft);
+	}
 
 	return result;
 }

@@ -58,7 +58,6 @@ import {
 	nestedMapFromFlatList,
 	setInNestedMap,
 	tryGetFromNestedMap,
-	mapNestedMap,
 } from "../../../util/index.js";
 import {
 	type EncodingTestData,
@@ -454,12 +453,17 @@ describe("ModularChangeFamily", () => {
 		it("prioritizes earlier build entries when faced with duplicates", () => {
 			const change1: ModularChangeset = {
 				...Change.empty(),
-				builds: new Map([[undefined, new Map([[brand(0), node1Chunk]])]]),
+				builds: newTupleBTree([
+					[[undefined as RevisionTag | undefined, brand(0)], node1Chunk],
+				]),
 			};
 			const change2: ModularChangeset = {
 				...Change.empty(),
-				builds: new Map([
-					[undefined, new Map([[brand(0), treeChunkFromCursor(singleJsonCursor(2))]])],
+				builds: newTupleBTree([
+					[
+						[undefined as RevisionTag | undefined, brand(0)],
+						treeChunkFromCursor(singleJsonCursor(2)),
+					],
 				]),
 			};
 			assert.deepEqual(
@@ -627,9 +631,9 @@ describe("ModularChangeFamily", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					builds: new Map([
-						[undefined, new Map([[brand(0), node1Chunk]])],
-						[tag2, new Map([[brand(0), node1Chunk]])],
+					builds: newTupleBTree([
+						[[undefined, brand(0)], node1Chunk],
+						[[tag2, brand(0)], node1Chunk],
 					]),
 				},
 				tag1,
@@ -638,9 +642,9 @@ describe("ModularChangeFamily", () => {
 			const change2: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					destroys: new Map([
-						[tag1, new Map([[brand(0), 1]])],
-						[undefined, new Map([[brand(0), 1]])],
+					destroys: newTupleBTree([
+						[[tag1, brand(0)], 1],
+						[[undefined, brand(0)], 1],
 					]),
 				},
 				tag2,
@@ -662,9 +666,9 @@ describe("ModularChangeFamily", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					destroys: new Map([
-						[tag1, new Map([[brand(0), 1]])],
-						[undefined, new Map([[brand(0), 1]])],
+					destroys: newTupleBTree([
+						[[tag1, brand(0)], 1],
+						[[undefined, brand(0)], 1],
 					]),
 				},
 				tag2,
@@ -673,9 +677,9 @@ describe("ModularChangeFamily", () => {
 			const change2: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					builds: new Map([
-						[undefined, new Map([[brand(0), node1Chunk]])],
-						[tag2, new Map([[brand(0), node1Chunk]])],
+					builds: newTupleBTree([
+						[[undefined, brand(0)], node1Chunk],
+						[[tag2, brand(0)], node1Chunk],
 					]),
 				},
 				tag1,
@@ -697,13 +701,13 @@ describe("ModularChangeFamily", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					builds: new Map([
-						[undefined, new Map([[brand(0), treeChunkFromCursor(node1)]])],
-						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
+					builds: newTupleBTree([
+						[[undefined, brand(0)], treeChunkFromCursor(node1)],
+						[[tag3, brand(0)], treeChunkFromCursor(node1)],
 					]),
-					destroys: new Map([
-						[undefined, new Map([[brand(1), 1]])],
-						[tag3, new Map([[brand(1), 1]])],
+					destroys: newTupleBTree([
+						[[undefined, brand(1)], 1],
+						[[tag3, brand(1)], 1],
 					]),
 				},
 				tag1,
@@ -712,13 +716,13 @@ describe("ModularChangeFamily", () => {
 			const change2: TaggedChange<ModularChangeset> = tagChange(
 				{
 					...Change.empty(),
-					builds: new Map([
-						[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
-						[tag3, new Map([[brand(2), treeChunkFromCursor(node1)]])],
+					builds: newTupleBTree([
+						[[undefined, brand(2)], treeChunkFromCursor(node1)],
+						[[tag3, brand(2)], treeChunkFromCursor(node1)],
 					]),
-					destroys: new Map([
-						[undefined, new Map([[brand(3), 1]])],
-						[tag3, new Map([[brand(3), 1]])],
+					destroys: newTupleBTree([
+						[[undefined, brand(3)], 1],
+						[[tag3, brand(3)], 1],
 					]),
 					revisions: [{ revision: tag2 }],
 				},
@@ -731,27 +735,24 @@ describe("ModularChangeFamily", () => {
 
 			const expected: ModularChangeset = {
 				...Change.empty(),
-				builds: new Map([
-					[tag1, new Map([[brand(0), treeChunkFromCursor(node1)]])],
-					[tag2, new Map([[brand(2), treeChunkFromCursor(node1)]])],
+				builds: newTupleBTree([
+					[[tag1 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(node1)],
+					[[tag2, brand(2)], treeChunkFromCursor(node1)],
 					[
-						tag3,
-						new Map([
-							[brand(0), treeChunkFromCursor(node1)],
-							[brand(2), treeChunkFromCursor(node1)],
-						]),
+						[
+							tag3,
+
+							brand(0),
+						],
+						treeChunkFromCursor(node1),
 					],
+					[[tag3, brand(2)], treeChunkFromCursor(node1)],
 				]),
-				destroys: new Map([
-					[tag1, new Map([[brand(1), 1]])],
-					[tag2, new Map([[brand(3), 1]])],
-					[
-						tag3,
-						new Map([
-							[brand(1), 1],
-							[brand(3), 1],
-						]),
-					],
+				destroys: newTupleBTree([
+					[[tag1 as RevisionTag | undefined, brand(1)], 1],
+					[[tag2, brand(3)], 1],
+					[[tag3, brand(1)], 1],
+					[[tag3, brand(3)], 1],
 				]),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
@@ -763,7 +764,9 @@ describe("ModularChangeFamily", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					refreshers: new Map([[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])]]),
+					refreshers: newTupleBTree([
+						[[tag3 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(node1)],
+					]),
 				},
 				tag1,
 			);
@@ -771,9 +774,9 @@ describe("ModularChangeFamily", () => {
 			const change2: TaggedChange<ModularChangeset> = tagChange(
 				{
 					...Change.empty(),
-					refreshers: new Map([
-						[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
-						[tag3, new Map([[brand(2), treeChunkFromCursor(node1)]])],
+					refreshers: newTupleBTree([
+						[[undefined, brand(2)], treeChunkFromCursor(node1)],
+						[[tag3, brand(2)], treeChunkFromCursor(node1)],
 					]),
 					revisions: [{ revision: tag2 }],
 				},
@@ -786,15 +789,10 @@ describe("ModularChangeFamily", () => {
 
 			const expected: ModularChangeset = {
 				...Change.empty(),
-				refreshers: new Map([
-					[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
-					[
-						tag3,
-						new Map([
-							[brand(0), treeChunkFromCursor(node1)],
-							[brand(2), treeChunkFromCursor(node1)],
-						]),
-					],
+				refreshers: newTupleBTree([
+					[[undefined, brand(2)], treeChunkFromCursor(node1)],
+					[[tag3, brand(0)], treeChunkFromCursor(node1)],
+					[[tag3, brand(2)], treeChunkFromCursor(node1)],
 				]),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
@@ -806,7 +804,9 @@ describe("ModularChangeFamily", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					refreshers: new Map([[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])]]),
+					refreshers: newTupleBTree([
+						[[tag3 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(node1)],
+					]),
 				},
 				tag1,
 			);
@@ -814,8 +814,8 @@ describe("ModularChangeFamily", () => {
 			const change2: TaggedChange<ModularChangeset> = tagChange(
 				{
 					...Change.empty(),
-					refreshers: new Map([
-						[tag3, new Map([[brand(0), treeChunkFromCursor(objectNode)]])],
+					refreshers: newTupleBTree([
+						[[tag3 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(objectNode)],
 					]),
 					revisions: [{ revision: tag2 }],
 				},
@@ -828,7 +828,9 @@ describe("ModularChangeFamily", () => {
 
 			const expected: ModularChangeset = {
 				...Change.empty(),
-				refreshers: new Map([[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])]]),
+				refreshers: newTupleBTree([
+					[[tag3 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(node1)],
+				]),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
@@ -891,9 +893,9 @@ describe("ModularChangeFamily", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					builds: new Map([
-						[undefined, new Map([[brand(0), node1Chunk]])],
-						[tag2, new Map([[brand(1), node1Chunk]])],
+					builds: newTupleBTree([
+						[[undefined, brand(0)], node1Chunk],
+						[[tag2, brand(1)], node1Chunk],
 					]),
 				},
 				tag1,
@@ -901,9 +903,9 @@ describe("ModularChangeFamily", () => {
 
 			const expectedRollback: ModularChangeset = {
 				...Change.empty(),
-				destroys: new Map([
-					[tag1, new Map([[brand(0), 1]])],
-					[tag2, new Map([[brand(1), 1]])],
+				destroys: newTupleBTree([
+					[[tag1 as RevisionTag | undefined, brand(0)], 1],
+					[[tag2, brand(1)], 1],
 				]),
 			};
 			const expectedUndo: ModularChangeset = Change.empty();
@@ -990,15 +992,17 @@ describe("ModularChangeFamily", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					builds: new Map([
-						[undefined, new Map([[brand(1), node1Chunk]])],
+					builds: newTupleBTree([
+						[[undefined, brand(1)], node1Chunk],
 						[
-							tag2,
-							new Map([
-								[brand(2), node1Chunk],
-								[brand(3), nodesChunk],
-							]),
+							[
+								tag2,
+
+								brand(2),
+							],
+							node1Chunk,
 						],
+						[[tag2, brand(3)], nodesChunk],
 					]),
 				},
 				tag1,
@@ -1020,10 +1024,10 @@ describe("ModularChangeFamily", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					destroys: new Map([
-						[undefined, new Map([[brand(1), 1]])],
-						[tag2, new Map([[brand(2), 1]])],
-						[tag2, new Map([[brand(3), 10]])],
+					destroys: newTupleBTree([
+						[[undefined, brand(1)], 1],
+						[[tag2, brand(2)], 1],
+						[[tag2, brand(3)], 10],
 					]),
 				},
 				tag1,
@@ -1045,15 +1049,10 @@ describe("ModularChangeFamily", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					refreshers: new Map([
-						[undefined, new Map([[brand(1), node1Chunk]])],
-						[
-							tag2,
-							new Map([
-								[brand(2), node1Chunk],
-								[brand(3), nodesChunk],
-							]),
-						],
+					refreshers: newTupleBTree([
+						[[undefined, brand(1)], node1Chunk],
+						[[tag2, brand(2)], node1Chunk],
+						[[tag2, brand(3)], nodesChunk],
 					]),
 				},
 				tag1,
@@ -1203,12 +1202,16 @@ describe("ModularChangeFamily", () => {
 		it("preserves relevant refreshers that are present in the input", () => {
 			const input: ModularChangeset = {
 				...Change.empty(),
-				refreshers: new Map([[aMajor, new Map([[brand(2), node2Chunk]])]]),
+				refreshers: newTupleBTree([
+					[[aMajor as RevisionTag | undefined, brand(2)], node2Chunk],
+				]),
 			};
 
 			const expected: ModularChangeset = {
 				...Change.empty(),
-				refreshers: new Map([[aMajor, new Map([[brand(2), node2Chunk]])]]),
+				refreshers: newTupleBTree([
+					[[aMajor as RevisionTag | undefined, brand(2)], node2Chunk],
+				]),
 			};
 
 			const withBuilds = updateRefreshers(input, getDetachedNode, [a2]);
@@ -1218,15 +1221,10 @@ describe("ModularChangeFamily", () => {
 		it("removes irrelevant refreshers that are present in the input", () => {
 			const input: ModularChangeset = {
 				...Change.empty(),
-				refreshers: new Map([
-					[
-						aMajor,
-						new Map([
-							[brand(1), node1Chunk],
-							[brand(2), node2Chunk],
-						]),
-					],
-					[bMajor, new Map([[brand(1), node3Chunk]])],
+				refreshers: newTupleBTree([
+					[[aMajor as RevisionTag | undefined, brand(1)], node1Chunk],
+					[[aMajor, brand(2)], node2Chunk],
+					[[bMajor, brand(1)], node3Chunk],
 				]),
 			};
 
@@ -1239,12 +1237,12 @@ describe("ModularChangeFamily", () => {
 			assert.equal(nodesChunk.topLevelLength, 2);
 			const input: ModularChangeset = {
 				...Change.empty(),
-				builds: new Map([[aMajor, new Map([[brand(3), nodesChunk]])]]),
+				builds: newTupleBTree([[[aMajor as RevisionTag | undefined, brand(3)], nodesChunk]]),
 			};
 
 			const expected: ModularChangeset = {
 				...Change.empty(),
-				builds: new Map([[aMajor, new Map([[brand(3), nodesChunk]])]]),
+				builds: newTupleBTree([[[aMajor as RevisionTag | undefined, brand(3)], nodesChunk]]),
 			};
 
 			const withBuilds = updateRefreshers(input, getDetachedNode, [
@@ -1259,15 +1257,10 @@ describe("ModularChangeFamily", () => {
 
 				const expected: ModularChangeset = {
 					...Change.empty(),
-					refreshers: new Map([
-						[
-							aMajor,
-							new Map([
-								[brand(1), node1Chunk],
-								[brand(2), node2Chunk],
-							]),
-						],
-						[bMajor, new Map([[brand(1), node3Chunk]])],
+					refreshers: newTupleBTree([
+						[[aMajor as RevisionTag | undefined, brand(1)], node1Chunk],
+						[[aMajor, brand(2)], node2Chunk],
+						[[bMajor, brand(1)], node3Chunk],
 					]),
 				};
 
@@ -1278,27 +1271,17 @@ describe("ModularChangeFamily", () => {
 			it("replaces outdated refreshers", () => {
 				const input: ModularChangeset = {
 					...Change.empty(),
-					refreshers: new Map([
-						[
-							aMajor,
-							new Map([
-								[brand(1), node2Chunk],
-								[brand(2), node1Chunk],
-							]),
-						],
+					refreshers: newTupleBTree([
+						[[aMajor as RevisionTag | undefined, brand(1)], node2Chunk],
+						[[aMajor, brand(2)], node1Chunk],
 					]),
 				};
 
 				const expected: ModularChangeset = {
 					...Change.empty(),
-					refreshers: new Map([
-						[
-							aMajor,
-							new Map([
-								[brand(1), node1Chunk],
-								[brand(2), node2Chunk],
-							]),
-						],
+					refreshers: newTupleBTree([
+						[[aMajor as RevisionTag | undefined, brand(1)], node1Chunk],
+						[[aMajor, brand(2)], node2Chunk],
 					]),
 				};
 
@@ -1309,29 +1292,19 @@ describe("ModularChangeFamily", () => {
 			it("does not add a refresher that is present in the builds", () => {
 				const input: ModularChangeset = {
 					...Change.empty(),
-					builds: new Map([
-						[
-							aMajor,
-							new Map([
-								[brand(1), node1Chunk],
-								[brand(2), node2Chunk],
-							]),
-						],
-						[bMajor, new Map([[brand(1), node3Chunk]])],
+					builds: newTupleBTree([
+						[[aMajor as RevisionTag | undefined, brand(1)], node1Chunk],
+						[[aMajor, brand(2)], node2Chunk],
+						[[bMajor, brand(1)], node3Chunk],
 					]),
 				};
 
 				const expected: ModularChangeset = {
 					...Change.empty(),
-					builds: new Map([
-						[
-							aMajor,
-							new Map([
-								[brand(1), node1Chunk],
-								[brand(2), node2Chunk],
-							]),
-						],
-						[bMajor, new Map([[brand(1), node3Chunk]])],
+					builds: newTupleBTree([
+						[[aMajor as RevisionTag | undefined, brand(1)], node1Chunk],
+						[[aMajor, brand(2)], node2Chunk],
+						[[bMajor, brand(1)], node3Chunk],
 					]),
 				};
 
@@ -1377,9 +1350,9 @@ describe("ModularChangeFamily", () => {
 					inlineRevision(
 						{
 							...buildChangeset([]),
-							builds: new Map([
-								[undefined, new Map([[brand(1), node1Chunk]])],
-								[tag2, new Map([[brand(2), nodesChunk]])],
+							builds: newTupleBTree([
+								[[undefined, brand(1)], node1Chunk],
+								[[tag2, brand(2)], nodesChunk],
 							]),
 						},
 						tag1,
@@ -1391,9 +1364,9 @@ describe("ModularChangeFamily", () => {
 					inlineRevision(
 						{
 							...buildChangeset([]),
-							refreshers: new Map([
-								[undefined, new Map([[brand(1), node1Chunk]])],
-								[tag2, new Map([[brand(2), nodesChunk]])],
+							refreshers: newTupleBTree([
+								[[undefined, brand(1)], node1Chunk],
+								[[tag2, brand(2)], nodesChunk],
 							]),
 						},
 						tag1,
@@ -1533,10 +1506,10 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 
 	// The TreeChunk objects need to be deep cloned to avoid comparison issues on reference counting
 	if (change.builds !== undefined) {
-		normal.builds = mapNestedMap(change.builds, deepCloneChunkedTree);
+		normal.builds = brand(change.builds.mapValues(deepCloneChunkedTree));
 	}
 	if (change.refreshers !== undefined) {
-		normal.refreshers = mapNestedMap(change.refreshers, deepCloneChunkedTree);
+		normal.refreshers = brand(change.refreshers.mapValues(deepCloneChunkedTree));
 	}
 	return normal;
 }

@@ -6,7 +6,6 @@
 import type { BTree } from "@tylerbu/sorted-btree-es6";
 import type {
 	ChangeAtomId,
-	ChangeAtomIdMap,
 	ChangesetLocalId,
 	FieldKey,
 	FieldKindIdentifier,
@@ -59,9 +58,9 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly nodeAliases: ChangeAtomIdBTree<NodeId>;
 	readonly crossFieldKeys: CrossFieldKeyTable;
 	readonly constraintViolationCount?: number;
-	readonly builds?: ChangeAtomIdMap<TreeChunk>;
-	readonly destroys?: ChangeAtomIdMap<number>;
-	readonly refreshers?: ChangeAtomIdMap<TreeChunk>;
+	readonly builds?: ChangeAtomIdBTree<TreeChunk>;
+	readonly destroys?: ChangeAtomIdBTree<number>;
+	readonly refreshers?: ChangeAtomIdBTree<TreeChunk>;
 }
 
 export type TupleBTree<K, V> = Brand<BTree<K, V>, "TupleBTree">;
