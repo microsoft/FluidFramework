@@ -43,6 +43,8 @@ steps:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
     script: |
+      set -eux -o pipefail
+
       echo "Artifact path: ${{ parameters.artifactPath }}"
       tag="--tag rc"
       if [[ "$(release)" == "release" ]]; then
@@ -60,12 +62,13 @@ steps:
       tarballsDir=$(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
       orderFile=$(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt
 
-      # echo the command for debugging
-      echo "flub publish tarballs --dir $tarballsDir --orderFile $orderFile --publishArgs \"$tag\" --retry $maximumRetryIfNetworkError --verbose"
-
       # execute the publish command
-      flub publish tarballs --dir $tarballsDir --orderFile $orderFile --publishArgs "$tag" --retry
-      $maximumRetryIfNetworkError --verbose
+      flub publish tarballs \
+      --dir $tarballsDir \
+      --orderFile $orderFile \
+      --publishArgs "$tag" \
+      --retry $maximumRetryIfNetworkError \
+      --verbose
 
       # Clean up; remove the npmrc
       rm ~/.npmrc
