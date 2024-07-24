@@ -3,7 +3,7 @@
 Implementation of bubble bench using the legacy/experimental tree (which predated `@fluidframework/tree`).
 This exists to allow for performance comparison between the legacy shared tree and the new one.
 
-<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_GETTING_STARTED:usesTinylicious=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_README_HEADER:usesTinylicious=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

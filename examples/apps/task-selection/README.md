@@ -2,7 +2,7 @@
 
 The task selection example demonstrates a couple different ways to pick a single client amongst the connected clients to perform a task (in this case, rolling a dice once per second). This builds upon the external-views sample as a base.
 
-<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_GETTING_STARTED:usesTinylicious=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_README_HEADER:usesTinylicious=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

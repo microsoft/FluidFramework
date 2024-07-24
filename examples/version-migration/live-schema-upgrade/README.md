@@ -27,7 +27,7 @@ There are a number of ways to handle rendering the view. In this example, we inc
 -   Load the appropriate view after the model is instantiated.
 -   Only include the latest view and ensure that the model upgrades before rendering.
 
-<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_GETTING_STARTED:usesTinylicious=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_README_HEADER:usesTinylicious=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

@@ -2,7 +2,7 @@
 
 **View framework sampler** demonstrates how a data object can be integrated with the view framework of your choosing.
 
-<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_GETTING_STARTED:usesTinylicious=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_README_HEADER:usesTinylicious=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
