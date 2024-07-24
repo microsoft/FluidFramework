@@ -84,11 +84,11 @@ async function main() {
 	const seed: number = commander.seed;
 	const enableOpsMetrics: boolean = commander.enableOpsMetrics ?? false;
 
-	const profile = getProfile(profileName);
-
 	if (log !== undefined) {
 		process.env.DEBUG = log;
 	}
+
+	const profile = getProfile(profileName);
 
 	if (url === undefined) {
 		console.error("Missing --url argument needed to run child process");
@@ -204,6 +204,7 @@ async function runnerProcess(
 		endpoint,
 		seed,
 		runConfig.runId,
+		false, // supportsBrowserAuth
 	);
 
 	// Cycle between creating new factory vs. reusing factory.
