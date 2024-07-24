@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
 import {
@@ -374,7 +374,7 @@ function makeModularChangeCodec(
 		});
 		const getChunk = (index: number): TreeChunk => {
 			assert(index < chunks.length, 0x898 /* out of bounds index for build chunk */);
-			return chunkFieldSingle(chunks[index], defaultChunkPolicy);
+			return chunkFieldSingle(chunks[index] ?? oob(), defaultChunkPolicy);
 		};
 
 		const map: ModularChangeset["builds"] = new Map();
@@ -395,6 +395,7 @@ function makeModularChangeCodec(
 		if (context.revision !== undefined) {
 			assert(
 				revisions.length === 1 &&
+					revisions[0] !== undefined &&
 					revisions[0].revision === context.revision &&
 					revisions[0].rollbackOf === undefined,
 				0x964 /* A tagged change should only contain the tagged revision */,

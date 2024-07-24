@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -506,7 +506,8 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 			: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
 		const fieldEditor = this.valueFieldEditor();
 		assert(content.length === 1, 0x780 /* value field content should normalize to one item */);
-		fieldEditor.set(content[0]);
+
+		fieldEditor.set(content[0] ?? oob());
 	}
 }
 

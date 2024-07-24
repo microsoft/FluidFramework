@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { oob } from "@fluidframework/core-utils/internal";
 import type { MapGetSet } from "./utils.js";
 
 /**
@@ -336,7 +337,9 @@ export class SizedNestedMap<Key1, Key2, Value> {
 	}
 
 	public values(): IterableIterator<Value> {
-		return Array.from(this.nestedMap.values()).flatMap((innerMap) => innerMap.values())[0];
+		return (
+			Array.from(this.nestedMap.values()).flatMap((innerMap) => innerMap.values())[0] ?? oob()
+		);
 	}
 
 	public [Symbol.iterator](): IterableIterator<[Key1, Map<Key2, Value>]> {

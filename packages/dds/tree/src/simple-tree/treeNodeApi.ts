@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import { Multiplicity, rootFieldKey } from "../core/index.js";
 import {
@@ -202,7 +202,7 @@ export const treeNodeApi: TreeNodeApi = {
 			case 0:
 				return undefined;
 			case 1: {
-				const identifier = flexNode.tryGetField(identifierFieldKeys[0])?.boxedAt(0);
+				const identifier = flexNode.tryGetField(identifierFieldKeys[0] ?? oob())?.boxedAt(0);
 				assert(identifier !== undefined, 0x927 /* The identifier must exist */);
 				const identifierValue = identifier.value as string;
 				const localNodeKey =

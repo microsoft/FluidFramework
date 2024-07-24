@@ -64,7 +64,7 @@ As mentioned above, the `ModelLoader` is able to load directly to a container mo
 
 Similarly, the view used on a model must be compatible with that model. A view loader can inspect the model and load the appropriate view. This portion is still under development, but will likely be similar to the model loading flow.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:usesTinylicious=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_GETTING_STARTED:usesTinylicious=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

@@ -6,7 +6,7 @@ It is used to power our associated [browser extension][browser-extension].
 -   Chrome: <https://aka.ms/fluid/devtool/chrome>
 -   Edge: <https://aka.ms/fluid/devtool/edge>
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -139,7 +139,7 @@ To run the tests, first ensure you have followed the [build](#build) steps above
 Next, run `npm run test` from a terminal within this directory.
 
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
