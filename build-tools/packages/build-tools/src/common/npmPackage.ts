@@ -277,8 +277,13 @@ export class Package {
 			return false;
 		}
 		let succeeded = true;
+		// Note that this enumerates peerDeps in addition to deps and devDeps
 		for (const dep of this.combinedDependencies) {
-			// Note that this enumerates peerDeps as well
+			if(dep.depClass === "peer") {
+				// Skip peer dependencies because we may legitimately omit them.
+				continue;
+			}
+
 			// TODO: check the installed package semver as well
 			if (
 				!lookUpDirSync(this.directory, (currentDir) => {
