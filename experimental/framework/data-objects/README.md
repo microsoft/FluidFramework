@@ -2,7 +2,7 @@
 
 A collection of ready to use Fluid Data Objects.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
