@@ -98,12 +98,12 @@ async function dereferenceToTestFluidObject(handle: IFluidHandle): Promise<ITest
 	const handleGetResult = await handle.get();
 	assert(isObject(handleGetResult), "not an object");
 
-	const maybeDataObjectB: FluidObject<ITestFluidObject> = handleGetResult;
+	const maybeTestFluidObject: FluidObject<ITestFluidObject> = handleGetResult;
 	assert(
-		maybeDataObjectB.ITestFluidObject !== undefined,
+		maybeTestFluidObject.ITestFluidObject !== undefined,
 		"Expected handle to round-trip to test fluid object",
 	);
-	return maybeDataObjectB.ITestFluidObject;
+	return maybeTestFluidObject.ITestFluidObject;
 }
 
 /**
@@ -115,12 +115,12 @@ async function dereferenceToSharedObject<TSharedObject>(
 ): Promise<TSharedObject> {
 	const handleGetResult = await handle.get();
 	assert(isObject(handleGetResult), "Handle did not reference an object.");
-	const maybeRootMap: FluidObject<IFluidLoadable> = handleGetResult;
+	const maybeSharedObject: FluidObject<IFluidLoadable> = handleGetResult;
 	assert(
-		maybeRootMap.IFluidLoadable !== undefined,
+		maybeSharedObject.IFluidLoadable !== undefined,
 		"Handle did not reference an IFluidLoadable.",
 	);
-	const sharedObject = maybeRootMap.IFluidLoadable;
+	const sharedObject = maybeSharedObject.IFluidLoadable;
 	assert(
 		sharedObjectKind.is(sharedObject),
 		`Handle did not reference a ${sharedObjectKind.getFactory().type}.`,
