@@ -5,7 +5,7 @@
 
 import path from "node:path";
 import { VersionBumpType } from "@fluid-tools/version-tools";
-import { Logger } from "@fluidframework/build-tools";
+import { Logger, type ReleaseNotesSection } from "@fluidframework/build-tools";
 import { compareAsc, formatISO, parseISO } from "date-fns";
 import globby from "globby";
 import matter from "gray-matter";
@@ -17,31 +17,8 @@ import { Repository } from "./git.js";
 
 export const DEFAULT_CHANGESET_PATH = ".changeset";
 
-export type ChangeKind = "fix" | "feature" | "tree" | "other";
-
-// export const ChangeKindHeaders: Record<ChangeKind, { header: string; index: number }> = {
-// 	"feature": { header: "✨ New Features", index: 0 },
-// 	"tree": { header: "🌳 SharedTree DDS changes", index: 1 },
-// 	"fix": { header: "🐛 Bug Fixes", index: 2 },
-// 	"other": { header: "Other Changes", index: 3 },
-// };
-
-// export const ChangeKindHeaders = new Map<string, { header: string; index: number }>([
-//   ["feature", { header: "✨ New Features", index: 0 }],
-//   ["tree", { header: "🌳 SharedTree DDS changes", index: 1 }],
-//   ["fix", { header: "🐛 Bug Fixes", index: 2 }],
-//   ["other", { header: "Other Changes", index: 3 }],
-// ]);
-
-export const ChangeKindHeaders = new Map<string, string>([
-	["feature", "✨ New Features"],
-	["tree", "🌳 SharedTree DDS changes"],
-	["fix", "🐛 Bug Fixes"],
-	["other", "Other Changes"],
-]);
-
 export interface FluidCustomChangesetMetadata {
-	kind?: ChangeKind;
+	section?: ReleaseNotesSection["name"];
 	includeInReleaseNotes?: boolean;
 }
 
@@ -90,6 +67,8 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 	const changesets: Changeset[] = [];
 
 	for (const file of changesetFiles) {
+		log?.verbose(`Loading changeset: ${file}`);
+
 		// Get the date the changeset file was added to git.
 		// eslint-disable-next-line no-await-in-loop
 		const results = await repo.gitClient.log({ file, strictDate: true });
@@ -210,13 +189,13 @@ export function groupByMainPackage(changesets: Changeset[]): Map<ReleasePackage,
  * @param changesets - An array of changesets to be grouped.
  * @returns a Map of package names to an array of all the changesets that apply to the package.
  */
-export function groupByChangeKind(changesets: Changeset[]): Map<ReleasePackage, Changeset[]> {
+export function groupBySection(changesets: Changeset[]): Map<ReleasePackage, Changeset[]> {
 	const changesetMap = new Map<ReleasePackage, Changeset[]>();
 	for (const changeset of changesets) {
-		const kind = changeset.additionalMetadata?.kind ?? "other";
-		const entries = changesetMap.get(kind) ?? [];
+		const section = changeset.additionalMetadata?.section ?? "unknown";
+		const entries = changesetMap.get(section) ?? [];
 		entries.push(changeset);
-		changesetMap.set(kind, entries);
+		changesetMap.set(section, entries);
 	}
 
 	// Sort all the entries by date
@@ -230,7 +209,7 @@ export function groupByChangeKind(changesets: Changeset[]): Map<ReleasePackage, 
 /**
  * Given an array of changesets, flattens the changesets into an array of ChangesetEntry objects.
  */
-export function flattenChangesets(changesets: Changeset[]): ChangesetEntry[] {
+function flattenChangesets(changesets: Changeset[]): ChangesetEntry[] {
 	const entries: ChangesetEntry[] = [];
 
 	for (const changeset of changesets) {

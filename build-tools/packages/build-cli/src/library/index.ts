@@ -20,10 +20,8 @@ export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "
 export {
 	DEFAULT_CHANGESET_PATH,
 	loadChangesets,
+	groupBySection,
 	groupByMainPackage,
-	groupByChangeKind,
-	ChangeKind,
-	ChangeKindHeaders,
 } from "./changesets.js";
 export {
 	unscopedPackageNameString,

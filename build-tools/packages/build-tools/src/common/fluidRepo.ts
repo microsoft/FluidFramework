@@ -55,6 +55,11 @@ export interface IFluidBuildConfig {
 	branchReleaseTypes?: {
 		[name: string]: VersionBumpType | PreviousVersionStyle;
 	};
+
+	/**
+	 * Configuration for the `generate:releaseNotes` command.
+	 */
+	releaseNotes?: ReleaseNotesConfig;
 }
 
 /**
@@ -129,6 +134,28 @@ export type PreviousVersionStyle =
 	| "^previousMinor"
 	| "~previousMajor"
 	| "~previousMinor";
+
+/**
+ * Configuration for the `generate:releaseNotes` command.
+ */
+export interface ReleaseNotesConfig {
+	sections: ReleaseNotesSection[];
+}
+
+/**
+ * Configuration for a release notes section.
+ */
+export interface ReleaseNotesSection {
+	/**
+	 * A short, one-word name for the section. This is used as a key.
+	 */
+	name: string;
+
+	/**
+	 * A full string to serve as the heading for the section when displayed in release notes.
+	 */
+	heading: string;
+}
 
 /**
  * Policy configuration for the `check:policy` command.

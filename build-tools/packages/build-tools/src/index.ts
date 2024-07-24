@@ -24,6 +24,8 @@ export type {
 	PackageNamePolicyConfig,
 	PolicyConfig,
 	PreviousVersionStyle,
+	ReleaseNotesConfig,
+	ReleaseNotesSection,
 	ScriptRequirement,
 } from "./common/fluidRepo";
 

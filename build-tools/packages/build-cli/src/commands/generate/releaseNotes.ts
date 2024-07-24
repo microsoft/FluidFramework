@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
+import { loadFluidBuildConfig } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { StringBuilder } from "@rushstack/node-core-library";
 import { format as prettier } from "prettier";
@@ -13,9 +14,8 @@ import { format as prettier } from "prettier";
 import { releaseGroupFlag } from "../../flags.js";
 import {
 	BaseCommand,
-	ChangeKindHeaders,
 	DEFAULT_CHANGESET_PATH,
-	groupByChangeKind,
+	groupBySection,
 	loadChangesets,
 } from "../../library/index.js";
 
@@ -78,6 +78,16 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			this.exit(2);
 		}
 
+		const { releaseNotes: releaseNotesConfig } = loadFluidBuildConfig(
+			context.gitRepo.resolvedRoot,
+		);
+		if (releaseNotesConfig === undefined) {
+			this.errorLog(
+				`No releaseNotes config found. Make sure the 'releaseNotes' section of the build config exists.`,
+			);
+			this.exit(2);
+		}
+
 		const changesetDir = path.join(releaseGroup.directory, DEFAULT_CHANGESET_PATH);
 		const changesets = await loadChangesets(changesetDir, logger);
 
@@ -92,10 +102,11 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 		this.info(`Loaded ${changesets.length} changes.`);
 		assert(flags.releaseType !== undefined, `Release type must be provided.`);
 
-		const byChangeKind = groupByChangeKind(changesets);
+		const bySection = groupBySection(changesets);
 		const body = new StringBuilder();
-		for (const [kind, sectionHead] of ChangeKindHeaders.entries()) {
-			const changes = byChangeKind.get(kind)?.filter(
+		for (const { name, heading: sectionHead } of releaseNotesConfig.sections) {
+			this.verbose(`Building "${name}" section with header: ${sectionHead}`);
+			const changes = bySection.get(name)?.filter(
 				(change) =>
 					// filter out changes that shouldn't be in the release notes
 					(change.additionalMetadata?.includeInReleaseNotes ?? true) === true,
@@ -103,7 +114,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			if (changes === undefined || changes.length === 0) {
 				continue;
 			}
-			// const sectionHead = ChangeKindHeaders[kind];
+
 			body.append(`## ${sectionHead}\n\n`);
 			for (const change of changes) {
 				if (change.changeTypes.includes("minor") || flags.releaseType === "major") {
@@ -112,9 +123,6 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 						.map((pkg) => `- ${pkg}\n`)
 						.join("");
 					body.append(`#### Packages affected\n\n${affectedPackages}\n\n`);
-
-					// TODO: Remove this
-					// body.append(`**Added**: ${change.added?.toISOString()}\n\n`);
 				} else {
 					this.info(
 						`Excluding changeset: ${path.basename(change.sourceFile)} because it has no ${
