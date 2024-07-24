@@ -1,6 +1,20 @@
 # @fluid-example/multiview-coordinate-interface
 
-This package contains an interface that a Fluid component might implement to expose a 2d coordinate. It's not strictly necessary to split it to its own package, but this illustrates that it doesn't necessarily have to ship with either the model or the view.
+This package contains an interface that a Fluid component might implement to expose a 2d coordinate.
+It's not strictly necessary to split it to its own package, but this illustrates that it doesn't necessarily have to ship with either the model or the view.
+
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+**NOTE: This package is an example leveraging the [Fluid Framework](https://fluidframework.com).**
+**It is intended only as an example, and is not intended for public use.**
+**We make no stability guarantees regarding this library and its APIs.**
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
