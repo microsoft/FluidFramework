@@ -458,6 +458,11 @@ export interface IPerfSignalReport {
 	 * Expected Signal Sequence to be received.
 	 */
 	trackingSignalSequenceNumber: number | undefined;
+
+	/**
+	 * Minimum out-of-sequence signal that we expect to receive.
+	 */
+	minimumSignalSequenceNumber: number | undefined;
 }
 
 /**
