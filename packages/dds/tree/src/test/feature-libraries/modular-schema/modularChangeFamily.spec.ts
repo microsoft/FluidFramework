@@ -96,7 +96,7 @@ import type {
 } from "../../../feature-libraries/modular-schema/index.js";
 import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
-import { Change, removeAliases } from "./modularChangesetUtil.js";
+import { assertEqual, Change, removeAliases } from "./modularChangesetUtil.js";
 
 type SingleNodeChangeset = NodeId | undefined;
 const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
@@ -466,10 +466,8 @@ describe("ModularChangeFamily", () => {
 					],
 				]),
 			};
-			assert.deepEqual(
-				family.compose([makeAnonChange(change1), makeAnonChange(change2)]),
-				change1,
-			);
+
+			assertEqual(family.compose([makeAnonChange(change1), makeAnonChange(change2)]), change1);
 		});
 
 		it("compose specific ○ specific", () => {
@@ -492,7 +490,7 @@ describe("ModularChangeFamily", () => {
 				family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2)]),
 			);
 
-			assert.deepEqual(composed, expectedCompose);
+			assertEqual(composed, expectedCompose);
 		});
 
 		it("compose specific ○ generic", () => {
@@ -515,7 +513,7 @@ describe("ModularChangeFamily", () => {
 				family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2Generic)]),
 			);
 
-			assert.deepEqual(composed, expectedCompose);
+			assertEqual(composed, expectedCompose);
 		});
 
 		it("compose generic ○ specific", () => {
@@ -539,7 +537,7 @@ describe("ModularChangeFamily", () => {
 				family.compose([makeAnonChange(rootChange1aGeneric), makeAnonChange(rootChange2)]),
 			);
 
-			assert.deepEqual(composed, expectedCompose);
+			assertEqual(composed, expectedCompose);
 		});
 
 		it("compose generic ○ generic", () => {
@@ -566,7 +564,7 @@ describe("ModularChangeFamily", () => {
 				]),
 			);
 
-			assert.deepEqual(composed, expectedCompose);
+			assertEqual(composed, expectedCompose);
 		});
 
 		it("compose tagged changes", () => {
@@ -624,7 +622,7 @@ describe("ModularChangeFamily", () => {
 				),
 			);
 
-			assert.deepEqual(composed, expected);
+			assertEqual(composed, expected);
 		});
 
 		it("build ○ matching destroy = ε", () => {
@@ -659,7 +657,7 @@ describe("ModularChangeFamily", () => {
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
-			assert.deepEqual(composed, expected);
+			assertEqual(composed, expected);
 		});
 
 		it("destroy ○ matching build = ε", () => {
@@ -694,7 +692,7 @@ describe("ModularChangeFamily", () => {
 				revisions: [{ revision: tag2 }, { revision: tag1 }],
 			};
 
-			assert.deepEqual(composed, expected);
+			assertEqual(composed, expected);
 		});
 
 		it("non-matching builds and destroys", () => {
@@ -713,7 +711,7 @@ describe("ModularChangeFamily", () => {
 				tag1,
 			);
 
-			const change2: TaggedChange<ModularChangeset> = tagChange(
+			const change2: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
 					builds: newTupleBTree([
@@ -724,9 +722,8 @@ describe("ModularChangeFamily", () => {
 						[[undefined, brand(3)], 1],
 						[[tag3, brand(3)], 1],
 					]),
-					revisions: [{ revision: tag2 }],
 				},
-				undefined,
+				tag2,
 			);
 
 			deepFreeze(change1);
@@ -757,7 +754,7 @@ describe("ModularChangeFamily", () => {
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
-			assert.deepEqual(composed, expected);
+			assertEqual(composed, expected);
 		});
 
 		it("refreshers", () => {
@@ -797,7 +794,7 @@ describe("ModularChangeFamily", () => {
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
-			assert.deepEqual(composed, expected);
+			assertEqual(composed, expected);
 		});
 
 		it("refreshers with the same detached node id", () => {
@@ -834,7 +831,7 @@ describe("ModularChangeFamily", () => {
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
-			assert.deepEqual(composed, expected);
+			assertEqual(composed, expected);
 		});
 	});
 
@@ -864,7 +861,7 @@ describe("ModularChangeFamily", () => {
 				},
 			]);
 
-			assert.deepEqual(family.invert(makeAnonChange(rootChange1a), false), expectedInverse);
+			assertEqual(family.invert(makeAnonChange(rootChange1a), false), expectedInverse);
 		});
 
 		it("generic", () => {
@@ -883,10 +880,7 @@ describe("ModularChangeFamily", () => {
 				Change.field(fieldB, valueField.identifier, valueInverse2),
 			);
 
-			assert.deepEqual(
-				family.invert(makeAnonChange(rootChange1aGeneric), false),
-				expectedInverse,
-			);
+			assertEqual(family.invert(makeAnonChange(rootChange1aGeneric), false), expectedInverse);
 		});
 
 		it("build => destroy but only for rollback", () => {
@@ -916,8 +910,8 @@ describe("ModularChangeFamily", () => {
 
 			actualRollback.crossFieldKeys.unfreeze();
 			actualUndo.crossFieldKeys.unfreeze();
-			assert.deepEqual(actualRollback, expectedRollback);
-			assert.deepEqual(actualUndo, expectedUndo);
+			assertEqual(actualRollback, expectedRollback);
+			assertEqual(actualUndo, expectedUndo);
 		});
 	});
 
@@ -928,7 +922,7 @@ describe("ModularChangeFamily", () => {
 				makeAnonChange(rootChange1a),
 				revisionMetadataSourceFromInfo([]),
 			);
-			assert.deepEqual(rebased, rebasedChange);
+			assertEqual(rebased, rebasedChange);
 		});
 
 		it("rebase specific ↷ generic", () => {
@@ -937,7 +931,7 @@ describe("ModularChangeFamily", () => {
 				makeAnonChange(rootChange1aGeneric),
 				revisionMetadataSourceFromInfo([]),
 			);
-			assert.deepEqual(rebased, rebasedChange);
+			assertEqual(rebased, rebasedChange);
 		});
 
 		it("rebase generic ↷ specific", () => {
@@ -946,7 +940,7 @@ describe("ModularChangeFamily", () => {
 				makeAnonChange(rootChange1a),
 				revisionMetadataSourceFromInfo([]),
 			);
-			assert.deepEqual(rebased, genericChangeRebasedOverSpecific);
+			assertEqual(rebased, genericChangeRebasedOverSpecific);
 		});
 
 		it("rebase generic ↷ generic", () => {
@@ -955,7 +949,7 @@ describe("ModularChangeFamily", () => {
 				makeAnonChange(rootChange1aGeneric),
 				revisionMetadataSourceFromInfo([]),
 			);
-			assert.deepEqual(rebased, rebasedChangeGeneric);
+			assertEqual(rebased, rebasedChangeGeneric);
 		});
 	});
 
@@ -1136,7 +1130,7 @@ describe("ModularChangeFamily", () => {
 			};
 
 			const actual = relevantRemovedRoots(input);
-			assert.deepEqual(actual, [a1, a2, b1]);
+			assertEqual(actual, [a1, a2, b1]);
 		});
 
 		it("nested fields", () => {
@@ -1170,7 +1164,7 @@ describe("ModularChangeFamily", () => {
 			};
 
 			const actual = relevantRemovedRoots(input);
-			assert.deepEqual(actual, [a1, c1]);
+			assertEqual(actual, [a1, c1]);
 		});
 	});
 
@@ -1215,7 +1209,7 @@ describe("ModularChangeFamily", () => {
 			};
 
 			const withBuilds = updateRefreshers(input, getDetachedNode, [a2]);
-			assert.deepEqual(withBuilds, expected);
+			assertEqual(withBuilds, expected);
 		});
 
 		it("removes irrelevant refreshers that are present in the input", () => {
@@ -1230,7 +1224,7 @@ describe("ModularChangeFamily", () => {
 
 			const expected: ModularChangeset = Change.empty();
 			const filtered = updateRefreshers(input, getDetachedNode, []);
-			assert.deepEqual(filtered, expected);
+			assertEqual(filtered, expected);
 		});
 
 		it("recognizes chunks in the builds array with length longer than one", () => {
@@ -1248,7 +1242,7 @@ describe("ModularChangeFamily", () => {
 			const withBuilds = updateRefreshers(input, getDetachedNode, [
 				{ major: aMajor, minor: 4 },
 			]);
-			assert.deepEqual(withBuilds, expected);
+			assertEqual(withBuilds, expected);
 		});
 
 		describe("attempts to add relevant refreshers that are missing from the input", () => {
@@ -1265,7 +1259,7 @@ describe("ModularChangeFamily", () => {
 				};
 
 				const withBuilds = updateRefreshers(input, getDetachedNode, [a1, a2, b1]);
-				assert.deepEqual(withBuilds, expected);
+				assertEqual(withBuilds, expected);
 			});
 
 			it("replaces outdated refreshers", () => {
@@ -1286,7 +1280,7 @@ describe("ModularChangeFamily", () => {
 				};
 
 				const filtered = updateRefreshers(input, getDetachedNode, [a1, a2]);
-				assert.deepEqual(filtered, expected);
+				assertEqual(filtered, expected);
 			});
 
 			it("does not add a refresher that is present in the builds", () => {
@@ -1309,7 +1303,7 @@ describe("ModularChangeFamily", () => {
 				};
 
 				const withBuilds = updateRefreshers(input, getDetachedNode, [a1, a2, b1]);
-				assert.deepEqual(withBuilds, expected);
+				assertEqual(withBuilds, expected);
 			});
 
 			it("throws if the detached node is not available and requireRefreshers is true", () => {
@@ -1323,7 +1317,7 @@ describe("ModularChangeFamily", () => {
 		function assertEquivalent(change1: ModularChangeset, change2: ModularChangeset) {
 			const normalized1 = normalizeChangeset(change1);
 			const normalized2 = normalizeChangeset(change2);
-			assert.deepEqual(normalized1, normalized2);
+			assertEqual(normalized1, normalized2);
 		}
 
 		const sessionId = "session1" as SessionId;
@@ -1411,7 +1405,7 @@ describe("ModularChangeFamily", () => {
 			),
 		);
 
-		assert.deepEqual(changes, [expectedChange]);
+		assertEqual(changes, [expectedChange]);
 	});
 });
 

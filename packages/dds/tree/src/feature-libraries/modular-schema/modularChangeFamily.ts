@@ -2928,7 +2928,14 @@ function compareTuples(arrayA: readonly unknown[], arrayB: readonly unknown[]): 
 		const a = arrayA[i] as any;
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const b = arrayB[i] as any;
-		if (a < b) {
+
+		// Less-than and greater-than always return false if either value is undefined,
+		// so we handle undefined separately, treating it as less than all other values.
+		if (a === undefined && b !== undefined) {
+			return -1;
+		} else if (b === undefined && a !== undefined) {
+			return 1;
+		} else if (a < b) {
 			return -1;
 		} else if (a > b) {
 			return 1;

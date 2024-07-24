@@ -41,6 +41,8 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { strict as assert } from "assert";
+import { assertStructuralEquality } from "../../objMerge.js";
+import { BTree } from "@tylerbu/sorted-btree-es6";
 
 export const Change = {
 	build,
@@ -61,6 +63,12 @@ export interface NodeChangesetDescription {
 	readonly id?: NodeId;
 	readonly index: number;
 	readonly fields: FieldChangesetDescription[];
+}
+
+export function assertEqual<T>(actual: T, expected: T): void {
+	assertStructuralEquality(actual, expected, (item) =>
+		item instanceof BTree ? item.toArray() : item,
+	);
 }
 
 function empty(): ModularChangeset {
