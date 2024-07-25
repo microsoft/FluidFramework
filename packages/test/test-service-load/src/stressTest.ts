@@ -143,10 +143,10 @@ export async function stressTest(
 				return new Promise((resolve) => runnerProcess.once("close", resolve));
 			}),
 		);
-	} finally {
 		const endTime = Date.now();
 		console.log(`End time: ${endTime} ms\n`);
 		console.log(`Total run time: ${(endTime - startTime) / 1000}s\n`);
+	} finally {
 		await safeExit(0, url);
 	}
 }
