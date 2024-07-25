@@ -25,10 +25,12 @@ jobs:
 
       # Install dependencies using pnpm
       - name: Install dependencies
-        run: cd packages/tools/devtools/devtools-example && pnpm install
+        working-directory: packages/tools/devtools/devtools-example
+        run: pnpm install
 
       # Build the project using pnpm
       - name: Build the project
+        working-directory: packages/tools/devtools/devtools-example
         run: pnpm run build
 
       - name: Build And Deploy
