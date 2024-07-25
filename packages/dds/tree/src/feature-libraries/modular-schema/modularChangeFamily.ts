@@ -45,10 +45,10 @@ import {
 	type Mutable,
 	brand,
 	fail,
-	getOrAddInMap,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
 	type RangeQueryResult,
+	getOrAddInMapLazy,
 } from "../../util/index.js";
 import {
 	type TreeChunk,
@@ -1733,7 +1733,7 @@ export function updateRefreshers(
 
 	if (change.builds !== undefined) {
 		for (const [[revision, id], chunk] of change.builds.entries()) {
-			const lengthTree = getOrAddInMap(chunkLengths, revision, new BTree());
+			const lengthTree = getOrAddInMapLazy(chunkLengths, revision, () => new BTree());
 			lengthTree.set(id, chunk.topLevelLength);
 		}
 	}
@@ -2696,12 +2696,20 @@ function revisionInfoFromTaggedChange(
 	return revInfos;
 }
 
-function mergeBTrees<K, V>(
-	tree1: BTree<K, V>,
-	tree2: BTree<K, V>,
+function mergeBTrees<K extends readonly unknown[], V>(
+	tree1: TupleBTree<K, V> | undefined,
+	tree2: TupleBTree<K, V> | undefined,
 	preferLeft = true,
-): BTree<K, V> {
-	const result = tree1.clone();
+): TupleBTree<K, V> {
+	if (tree1 === undefined) {
+		return tree2 !== undefined ? brand(tree2.clone()) : newTupleBTree<K, V>();
+	}
+
+	const result: TupleBTree<K, V> = brand(tree1.clone());
+	if (tree2 === undefined) {
+		return result;
+	}
+
 	for (const [key, value] of tree2.entries()) {
 		result.set(key, value, !preferLeft);
 	}
