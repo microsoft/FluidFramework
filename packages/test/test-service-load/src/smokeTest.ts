@@ -41,58 +41,29 @@ export async function smokeTest(testDriver: ITestDriver, profileName: string) {
 	});
 
 	// Verify container creation works
-	const createContainerAndGetUrl = async () => {
-		const createdContainer: IContainer = await loader.createDetachedContainer(codeDetails);
-
-		const testId = Date.now().toString();
-		const request = testDriver.createCreateNewRequest(testId);
-
-		await createdContainer.attach(request);
-		assert(
-			createdContainer.resolvedUrl !== undefined,
-			"Container missing resolved URL after attach",
-		);
-
-		const resolvedUrl = createdContainer.resolvedUrl;
-		createdContainer.dispose();
-
-		return testDriver.createContainerUrl(testId, resolvedUrl);
-	};
 	console.log("Creating container and attaching...");
-	const url = await tryNTimes(createContainerAndGetUrl, 3, 3);
+	const createdContainer: IContainer = await loader.createDetachedContainer(codeDetails);
+
+	const testId = Date.now().toString();
+	const request = testDriver.createCreateNewRequest(testId);
+
+	await createdContainer.attach(request);
+	assert(
+		createdContainer.resolvedUrl !== undefined,
+		"Container missing resolved URL after attach",
+	);
+
+	const resolvedUrl = createdContainer.resolvedUrl;
+	createdContainer.dispose();
+
+	const url = await testDriver.createContainerUrl(testId, resolvedUrl);
 	console.log("Container successfully created and attached!");
 
 	// Verify container loading works
-	const loadContainer = async () => {
-		const loadedContainer = await loader.resolve({ url });
-		loadedContainer.dispose();
-	};
 	console.log("Loading container...");
-	await tryNTimes(loadContainer, 3, 3);
+	const loadedContainer = await loader.resolve({ url });
+	loadedContainer.dispose();
 	console.log("Container successfully loaded!");
 
 	return url;
 }
-
-const tryNTimes = async <UnwrappedCallbackReturnType>(
-	callback: () => Promise<UnwrappedCallbackReturnType>,
-	attempts: number,
-	attemptsDelaySeconds: number,
-) => {
-	for (let i = 1; i <= attempts; i++) {
-		try {
-			return await callback();
-		} catch (error) {
-			console.error(`Attempt ${i} / ${attempts} failed:`);
-			console.error(error);
-			if (i < attempts) {
-				console.error(`Trying again in ${attemptsDelaySeconds} seconds...`);
-				await new Promise((resolve) => setTimeout(resolve, attemptsDelaySeconds * 1000));
-			} else {
-				console.error(`Giving up.`);
-				throw error;
-			}
-		}
-	}
-	throw new Error("Unreachable");
-};
