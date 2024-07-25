@@ -140,7 +140,6 @@ describe("Pending State Manager", () => {
 					clientId: () => "oldClientId",
 					close: (error?: ICriticalContainerError) => (closeError = error),
 					connected: () => true,
-					reSubmit: () => {},
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
@@ -161,12 +160,11 @@ describe("Pending State Manager", () => {
 			);
 		};
 
-		const process = (messages: Partial<ISequencedDocumentMessage>[]) =>
-			messages.forEach((message) => {
-				pendingStateManager.processPendingLocalMessage(
-					message as InboundSequencedContainerRuntimeMessage,
-				);
-			});
+		const process = (messages: Partial<ISequencedDocumentMessage>[], batchStartCsn: number) =>
+			pendingStateManager.processPendingLocalBatch(
+				messages as InboundSequencedContainerRuntimeMessage[],
+				batchStartCsn,
+			);
 
 		it("proper batch is processed correctly", () => {
 			const messages: Partial<ISequencedDocumentMessage>[] = [
@@ -193,7 +191,7 @@ describe("Pending State Manager", () => {
 			];
 
 			submitBatch(messages);
-			process(messages);
+			process(messages, 0 /* batchStartCsn */);
 			assert(closeError === undefined);
 		});
 
@@ -215,7 +213,7 @@ describe("Pending State Manager", () => {
 			];
 
 			submitBatch(messages);
-			process(messages);
+			process(messages, 0 /* batchStartCsn */);
 			assert(isILoggingError(closeError));
 			assert.strictEqual(closeError.errorType, ContainerErrorTypes.dataProcessingError);
 			assert.strictEqual(closeError.getTelemetryProperties().hasBatchStart, true);
@@ -239,6 +237,7 @@ describe("Pending State Manager", () => {
 						...message,
 						type: "otherType",
 					})),
+					0 /* batchStartCsn */,
 				);
 				assert(isILoggingError(closeError));
 				assert.strictEqual(closeError.errorType, ContainerErrorTypes.dataProcessingError);
@@ -265,6 +264,7 @@ describe("Pending State Manager", () => {
 						...message,
 						contents: undefined,
 					})),
+					0 /* batchStartCsn */,
 				);
 				assert.strictEqual(closeError?.errorType, ContainerErrorTypes.dataProcessingError);
 			});
@@ -286,6 +286,7 @@ describe("Pending State Manager", () => {
 						...message,
 						contents: { prop1: true },
 					})),
+					0 /* batchStartCsn */,
 				);
 				assert.strictEqual(closeError?.errorType, ContainerErrorTypes.dataProcessingError);
 			});
@@ -308,6 +309,7 @@ describe("Pending State Manager", () => {
 					...message,
 					contents: { prop1: true },
 				})),
+				0 /* batchStartCsn */,
 			);
 			assert.strictEqual(closeError, undefined, "unexpected close");
 		});
@@ -322,7 +324,7 @@ describe("Pending State Manager", () => {
 					sequenceNumber: i + 1, // starting with sequence number 1 so first assert does not filter any op
 				}));
 				submitBatch(messages);
-				process(messages);
+				process(messages, 0 /* batchStartCsn */);
 				let pendingState = pendingStateManager.getLocalState(0).pendingStates;
 				assert.strictEqual(pendingState.length, 10);
 				pendingState = pendingStateManager.getLocalState(5).pendingStates;
@@ -353,10 +355,9 @@ describe("Pending State Manager", () => {
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
-					clientId: () => undefined,
+					clientId: () => "CLIENT_ID",
 					close: () => {},
 					connected: () => true,
-					reSubmit: () => {},
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
@@ -419,8 +420,9 @@ describe("Pending State Manager", () => {
 					],
 					1,
 				);
-				pendingStateManager.processPendingLocalMessage(
-					futureRuntimeMessage as ISequencedDocumentMessage & UnknownContainerRuntimeMessage,
+				pendingStateManager.processPendingLocalBatch(
+					[futureRuntimeMessage as ISequencedDocumentMessage & UnknownContainerRuntimeMessage],
+					1 /* batchStartCsn */,
 				);
 			});
 		});
@@ -441,10 +443,9 @@ describe("Pending State Manager", () => {
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
-					clientId: () => undefined,
+					clientId: () => "CLIENT_ID",
 					close: () => {},
 					connected: () => true,
-					reSubmit: () => {},
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
@@ -543,6 +544,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 10,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
 			},
 			{
 				type: "message",
@@ -550,6 +552,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 11,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 2 },
 			},
 			{
 				type: "message",
@@ -557,6 +560,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 3 },
 			},
 			{
 				type: "message",
@@ -564,6 +568,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 3 },
 			},
 		];
 
@@ -577,7 +582,6 @@ describe("Pending State Manager", () => {
 					clientId: () => "123",
 					close: () => {},
 					connected: () => true,
-					reSubmit: () => {},
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,

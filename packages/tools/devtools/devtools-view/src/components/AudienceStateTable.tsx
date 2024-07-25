@@ -80,6 +80,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 							{column.columnKey === "clientId" && (
 								<LabelCellLayout
 									icon={<Person12Regular />}
+									aria-label="Client ID"
 									infoTooltipContent={clientIdTooltipText}
 								>
 									{column.label}
@@ -88,6 +89,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 							{column.columnKey === "userId" && (
 								<LabelCellLayout
 									icon={<Person12Regular />}
+									aria-label="User ID"
 									infoTooltipContent={userIdTooltipText}
 								>
 									{column.label}
@@ -96,6 +98,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 							{column.columnKey === "mode" && (
 								<LabelCellLayout
 									icon={<EditRegular />}
+									aria-label="Mode"
 									infoTooltipContent={clientModeTooltipText}
 								>
 									{column.label}
@@ -104,6 +107,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 							{column.columnKey === "scopes" && (
 								<LabelCellLayout
 									icon={<Search12Regular />}
+									aria-label="Scopes"
 									infoTooltipContent={clientScopesTooltipText}
 								>
 									{column.label}

@@ -69,6 +69,7 @@ import {
 	createChildMonitoringContext,
 	extractSafePropertiesFromMessage,
 	tagCodeArtifacts,
+	type ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -562,7 +563,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		return {
 			id: localContext.id,
 			snapshot,
-			type: getLocalDataStoreType(localContext),
+			// TODO why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			type: getLocalDataStoreType(localContext)!,
 		} satisfies IAttachMessage;
 	}
 
@@ -805,6 +808,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
 			snapshotTree,
 		});
+		// add to the list of bound or remoted, as this context must be bound
+		// to had an attach message sent, and is the non-detached case is remoted.
+		this.contexts.addBoundOrRemoted(dataStoreContext);
 
 		// realize the local context, as local contexts shouldn't be delay
 		// loaded, as this client is playing the role of creating client,
@@ -812,9 +818,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		const channel = await dataStoreContext.realize();
 		await channel.entryPoint.get();
 
-		// add to the list of bound or remoted, as this context must be bound
-		// to had an attach message sent, and is the non-detached case is remoted.
-		this.contexts.addBoundOrRemoted(dataStoreContext);
 		if (this.parentContext.attachState !== AttachState.Detached) {
 			// if the client is not detached put in the pending attach list
 			// so that on ack of the stashed op, the context is found.
@@ -1113,7 +1116,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 						0x166 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
 					);
 					dataStoreSummary = convertSnapshotTreeToSummaryTree(
-						getSnapshotTree(this.baseSnapshot).trees[contextId],
+						// TODO why are we non null asserting here?
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						getSnapshotTree(this.baseSnapshot).trees[contextId]!,
 					);
 				}
 				builder.addWithStats(contextId, dataStoreSummary);
@@ -1182,6 +1187,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 */
 	private async visitContextsDuringSummary(
 		visitor: (contextId: string, context: FluidDataStoreContext) => Promise<void>,
+		telemetryProps: ITelemetryPropertiesExt,
 	): Promise<void> {
 		for (const [contextId, context] of this.contexts) {
 			// Summarizer client and hence GC works only with clients with no local changes. A data store in
@@ -1197,7 +1203,23 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			}
 
 			if (context.attachState === AttachState.Attached) {
+				// If summary / getGCData results in this data store's realization, let GC know so that it can log in
+				// case the data store is not referenced. This will help identifying scenarios that we see today where
+				// unreferenced data stores are being loaded.
+				const contextLoadedBefore = context.isLoaded;
+				const trailingOpCount = context.pendingCount;
+
 				await visitor(contextId, context);
+
+				if (!contextLoadedBefore && context.isLoaded) {
+					this.gcNodeUpdated({
+						node: { type: "DataStore", path: `/${context.id}` },
+						reason: "Realized",
+						packagePath: context.packagePath,
+						timestampMs: undefined, // This will be added by the parent context if needed.
+						additionalProps: { trailingOpCount, ...telemetryProps },
+					});
+				}
 			}
 		}
 	}
@@ -1213,6 +1235,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				const contextSummary = await context.summarize(fullTree, trackState, telemetryContext);
 				summaryBuilder.addWithStats(contextId, contextSummary);
 			},
+			{ fullTree, realizedDuring: "summarize" },
 		);
 		return summaryBuilder.getSummaryTree();
 	}
@@ -1239,6 +1262,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				// This also gradually builds the id of each node to be a path from the root.
 				builder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
 			},
+			{ fullGC, realizedDuring: "getGCData" },
 		);
 
 		// Get the outbound routes and add a GC node for this channel.
@@ -1276,9 +1300,12 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "GC_DeletingLoadedDataStore",
 				...tagCodeArtifacts({
-					id: dataStoreId,
+					id: `/${dataStoreId}`, // Make the id consistent with GC node path format by prefixing a slash.
 					pkg: dataStoreContext.packagePath.join("/"),
 				}),
+				details: {
+					aliased: this.aliasedDataStores.has(dataStoreId),
+				},
 			});
 		}
 
@@ -1300,7 +1327,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	): readonly string[] {
 		for (const route of sweepReadyDataStoreRoutes) {
 			const pathParts = route.split("/");
-			const dataStoreId = pathParts[1];
+			// TODO why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const dataStoreId = pathParts[1]!;
 
 			// Ignore sub-data store routes because a data store and its sub-routes are deleted together, so, we only
 			// need to delete the data store.
@@ -1345,7 +1374,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			if (pathParts.length > 2) {
 				continue;
 			}
-			const dataStoreId = pathParts[1];
+			// TODO why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const dataStoreId = pathParts[1]!;
 			assert(this.contexts.has(dataStoreId), 0x510 /* No data store with specified id */);
 			tombstonedDataStoresSet.add(dataStoreId);
 		}
@@ -1380,7 +1411,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	): Promise<readonly string[] | undefined> {
 		// If the node belongs to a data store, return its package path. For DDSes, we return the package path of the
 		// data store that contains it.
-		const context = this.contexts.get(nodePath.split("/")[1]);
+		// TODO why are we non null asserting here?
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const context = this.contexts.get(nodePath.split("/")[1]!);
 		return (await context?.getInitialSnapshotDetails())?.pkg;
 	}
 
@@ -1390,7 +1423,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 */
 	public getGCNodeType(nodePath: string): GCNodeType | undefined {
 		const pathParts = nodePath.split("/");
-		if (!this.contexts.has(pathParts[1])) {
+		// TODO why are we non null asserting here?
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		if (!this.contexts.has(pathParts[1]!)) {
 			return undefined;
 		}
 
@@ -1408,7 +1443,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 	public async request(request: IRequest): Promise<IResponse> {
 		const requestParser = RequestParser.create(request);
-		const id = requestParser.pathParts[0];
+		// TODO why are we non null asserting here?
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = requestParser.pathParts[0]!;
 
 		// Differentiate between requesting the dataStore directly, or one of its children
 		const requestForChild = !requestParser.isLeaf(1);

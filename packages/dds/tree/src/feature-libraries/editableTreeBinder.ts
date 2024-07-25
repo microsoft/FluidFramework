@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	type DetachedPlaceUpPath,
@@ -484,7 +484,8 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		contextType: BindingContextType,
 		downPath: DownPath,
 	): Set<Listener> | undefined {
-		const foundRoot = this.findRoot(contextType, downPath[0].field);
+		const firstDownPath = downPath[0] ?? oob();
+		const foundRoot = this.findRoot(contextType, firstDownPath.field);
 		if (foundRoot === undefined) {
 			return undefined;
 		} else {
@@ -679,8 +680,7 @@ class BufferingPathVisitor
 		const batchEvents: CallableBindingContext[] = [];
 		const collected = new Set<Listener>();
 		if (this.hasRegisteredContextType(BindingType.Batch)) {
-			for (let i = 0; i < sortedQueue.length; i++) {
-				const event = sortedQueue[i];
+			for (const [i, event] of sortedQueue.entries()) {
 				const current = toDownPath(event.path);
 				const listeners = this.getListeners(BindingType.Batch, current);
 				if (listeners !== undefined && listeners.size > 0) {
@@ -698,11 +698,10 @@ class BufferingPathVisitor
 				events: batchEvents,
 			});
 		}
-		for (let i = 0; i < sortedQueue.length; i++) {
+		for (const [i, { listeners, ...context }] of sortedQueue.entries()) {
 			if (batchEventIndices.has(i)) {
 				continue;
 			}
-			const { listeners, ...context } = sortedQueue[i];
 			for (const listener of listeners) {
 				listener({ ...context });
 			}
@@ -741,7 +740,7 @@ class AbstractDataBinder<
 		const visitor = getOrCreate(this.visitors, anchor, () => {
 			const newVisitor = this.visitorFactory(anchor);
 			this.unregisterHandles.add(
-				anchor.on("subtreeChanging", (upPath: UpPath) => {
+				anchor.anchorNode.on("subtreeChanging", (upPath: UpPath) => {
 					assert(newVisitor !== undefined, 0x6dc /* visitor expected to be defined */);
 					if (!this.visitorLocations.has(newVisitor)) {
 						this.visitorLocations.set(newVisitor, upPath);
@@ -1001,7 +1000,7 @@ export function compileSyntaxTree(
 ): BindPolicy {
 	const entries = Object.entries(syntaxTree);
 	if (entries.length === 1) {
-		const [fieldName, childNode] = entries[0];
+		const [fieldName, childNode] = entries[0] ?? oob();
 		const fieldKey: FieldKey = brand(fieldName);
 		const bindTree = compileSyntaxTreeNode(childNode as BindSyntaxTree, fieldKey);
 		return { matchPolicy: matchPolicy ?? "path", bindTree };

@@ -42,8 +42,6 @@ export { compose } from "./compose.js";
 export {
 	getInputLength,
 	isDetach,
-	newCrossFieldTable,
-	type CrossFieldTable,
 	cloneMark,
 	extractMarkEffect,
 } from "./utils.js";

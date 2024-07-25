@@ -20,11 +20,18 @@ export const maximumCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
  * @internal
  */
 export const snapshotKey = "snapshot";
+
+/**
+ * Describes key for partial snapshot with loading GroupId in cache entry.
+ * @internal
+ */
+export const snapshotWithLoadingGroupIdKey = "snapshotWithLoadingGroupId";
+
 /**
  * @legacy
  * @alpha
  */
-export type CacheContentType = "snapshot" | "ops";
+export type CacheContentType = "snapshot" | "ops" | "snapshotWithLoadingGroupId";
 
 /*
  * File / container identifier.

@@ -50,12 +50,10 @@ module.exports = async (context, { headers }) => {
 	const versionPath = path.resolve(dirname, "api", "fallback", "index.js");
 	await fs.writeFile(versionPath, content);
 } catch (error) {
-	console.error(
-		chalk.red("Could not download API doc model artifacts due to one or more errors:"),
-	);
+	console.error(chalk.red("Redirects could not be generated due to one or more errors:"));
 	console.error(error);
 	process.exit(1);
 }
 
-console.log(chalk.green("API doc model artifacts downloaded!"));
+console.log(chalk.green("Redirects generated!"));
 process.exit(0);

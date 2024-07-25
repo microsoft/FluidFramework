@@ -21,10 +21,12 @@ import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/inter
 import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import commander from "commander";
 
+import { FileLogger } from "./FileLogger.js";
 import {
 	FaultInjectionDocumentServiceFactory,
 	FaultInjectionError,
 } from "./faultInjectionDriver.js";
+import { getProfile } from "./getProfile.js";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
@@ -35,18 +37,11 @@ import {
 import {
 	configProvider,
 	createCodeLoader,
-	createLogger,
 	createTestDriver,
-	getProfile,
 	globalConfigurations,
+	printStatus,
 	safeExit,
 } from "./utils.js";
-
-function printStatus(runConfig: IRunConfig, message: string) {
-	if (runConfig.verbose) {
-		console.log(`${runConfig.runId.toString().padStart(3)}> ${message}`);
-	}
-}
 
 async function main() {
 	const parseIntArg = (value: any): number => {
@@ -89,11 +84,11 @@ async function main() {
 	const seed: number = commander.seed;
 	const enableOpsMetrics: boolean = commander.enableOpsMetrics ?? false;
 
-	const profile = getProfile(profileName);
-
 	if (log !== undefined) {
 		process.env.DEBUG = log;
 	}
+
+	const profile = getProfile(profileName);
 
 	if (url === undefined) {
 		console.error("Missing --url argument needed to run child process");
@@ -104,7 +99,7 @@ async function main() {
 	// this makes runners repeatable, but ensures each runner
 	// will get its own set of randoms
 	const random = makeRandom(seed, runId);
-	const logger = await createLogger({
+	const logger = await FileLogger.createLogger({
 		runId,
 		driverType: driver,
 		driverEndpointName: endpoint,
@@ -209,6 +204,7 @@ async function runnerProcess(
 		endpoint,
 		seed,
 		runConfig.runId,
+		false, // supportsBrowserAuth
 	);
 
 	// Cycle between creating new factory vs. reusing factory.

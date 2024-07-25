@@ -28,7 +28,7 @@ export interface IBatch<TMessages extends BatchMessage[] = BatchMessage[]> {
 	/**
 	 * All the messages in the batch
 	 */
-	readonly content: TMessages;
+	readonly messages: TMessages;
 	/**
 	 * The reference sequence number for the batch
 	 */

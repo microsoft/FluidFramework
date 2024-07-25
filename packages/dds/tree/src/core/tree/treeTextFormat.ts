@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { NodeData } from "./types.js";
@@ -94,7 +95,7 @@ export function getGenericTreeField<T>(
 
 	// Do not just read field and check for undefined: see warning on FieldMapObject.
 	if (Object.prototype.hasOwnProperty.call(children, key)) {
-		return children[key];
+		return children[key] ?? fail("This wont be undefined due to the check above");
 	}
 	// Handle missing field:
 	if (createIfMissing === false) {
@@ -169,7 +170,7 @@ export function genericTreeDeleteIfEmpty<T>(
 ): void {
 	const children = getGenericTreeFieldMap(node, false);
 	if (Object.prototype.hasOwnProperty.call(children, key)) {
-		if (children[key].length === 0) {
+		if (children[key]?.length === 0) {
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 			delete children[key];
 			if (removeMapObject) {

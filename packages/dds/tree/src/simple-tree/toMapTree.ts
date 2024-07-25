@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -13,13 +13,12 @@ import {
 	type TreeValue,
 	type ValueSchema,
 	type SchemaAndPolicy,
+	type ExclusiveMapTree,
 } from "../core/index.js";
 import {
 	type CursorWithNode,
-	cursorForMapTreeField,
 	cursorForMapTreeNode,
 	isTreeValue,
-	typeNameSymbol,
 	valueSchemaAllows,
 	type NodeKeyManager,
 	isMapTreeNode,
@@ -30,20 +29,20 @@ import { nullSchema } from "./leafNodeSchema.js";
 import type { InsertableContent } from "./proxies.js";
 import {
 	FieldKind,
-	FieldSchema,
+	type FieldSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	NodeKind,
 	type TreeNodeSchema,
 	normalizeAllowedTypes,
 	normalizeFieldSchema,
-	getStoredKey,
 	extractFieldProvider,
 	isConstant,
 	type FieldProvider,
 } from "./schemaTypes.js";
 import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
 import { tryGetFlexNode } from "./proxyBinding.js";
+import { isObjectNodeSchema } from "./objectNodeTypes.js";
 
 /**
  * Module notes:
@@ -72,20 +71,20 @@ import { tryGetFlexNode } from "./proxyBinding.js";
 export function cursorFromNodeData(
 	data: InsertableContent,
 	allowedTypes: ImplicitAllowedTypes,
-	context?: NodeKeyManager,
-	schemaValidationPolicy?: SchemaAndPolicy,
+	context: NodeKeyManager,
+	schemaValidationPolicy: SchemaAndPolicy,
 ): CursorWithNode<MapTree>;
 export function cursorFromNodeData(
 	data: InsertableContent | undefined,
 	allowedTypes: ImplicitAllowedTypes,
-	context?: NodeKeyManager,
-	schemaValidationPolicy?: SchemaAndPolicy,
+	context: NodeKeyManager,
+	schemaValidationPolicy: SchemaAndPolicy,
 ): CursorWithNode<MapTree> | undefined;
 export function cursorFromNodeData(
 	data: InsertableContent | undefined,
 	allowedTypes: ImplicitAllowedTypes,
-	context?: NodeKeyManager,
-	schemaValidationPolicy?: SchemaAndPolicy,
+	context: NodeKeyManager,
+	schemaValidationPolicy: SchemaAndPolicy,
 ): CursorWithNode<MapTree> | undefined {
 	if (data === undefined) {
 		return undefined;
@@ -97,50 +96,6 @@ export function cursorFromNodeData(
 	);
 	addDefaultsToMapTree(mappedContent, allowedTypes, context);
 	return cursorForMapTreeNode(mappedContent);
-}
-
-/**
- * Transforms an input {@link InsertableContent} tree to an array of {@link MapTree}s, and wraps the tree in a {@link CursorWithNode}.
- * @param data - The input tree to be converted.
- * @param schema - Schema of the field with which the input `data` is associated.
- * @param context - An optional context which, if present, will allow defaults to be created by {@link ContextualFieldProvider}s.
- * If absent, only defaults from {@link ConstantFieldProvider}s will be created.
- * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
- * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
- * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
- * @remarks The resulting tree will be populated with any defaults from {@link FieldProvider}s in the schema.
- */
-export function cursorFromFieldData(
-	data: InsertableContent,
-	schema: FieldSchema,
-	context?: NodeKeyManager,
-	schemaValidationPolicy?: SchemaAndPolicy,
-): CursorWithNode<MapTree>;
-export function cursorFromFieldData(
-	data: InsertableContent | undefined,
-	schema: FieldSchema,
-	context?: NodeKeyManager,
-	schemaValidationPolicy?: SchemaAndPolicy,
-): CursorWithNode<MapTree> | undefined;
-export function cursorFromFieldData(
-	data: InsertableContent | undefined,
-	schema: FieldSchema,
-	context?: NodeKeyManager,
-	schemaValidationPolicy?: SchemaAndPolicy,
-): CursorWithNode<MapTree> | undefined {
-	if (data === undefined) {
-		return undefined;
-	}
-
-	// TODO: array node content should not go through here since sequence fields don't exist at this abstraction layer.
-	const mappedContent = Array.isArray(data)
-		? arrayToMapTreeFields(data, schema.allowedTypeSet, schemaValidationPolicy)
-		: [nodeDataToMapTree(data, schema.allowedTypeSet, schemaValidationPolicy)];
-
-	for (const content of mappedContent) {
-		addDefaultsToMapTree(content, schema.allowedTypes, context);
-	}
-	return cursorForMapTreeField(mappedContent);
 }
 
 /**
@@ -157,13 +112,30 @@ export function cursorFromFieldData(
  *
  * * `-0` =\> `+0`
  *
+ * For fields with a default value, the field may be omitted.
+ * If `context` is not provided, defaults which require a context will be left empty which can be out of schema.
+ *
  * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
  * @param context - An optional context which, if present, will allow defaults to be created by {@link ContextualFieldProvider}s.
  * If absent, only defaults from {@link ConstantFieldProvider}s will be created.
  * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
+ *
+ * TODO:BUG: AB#9131
+ * This schema validation is done before defaults are provided.
+ * This can not easily be fixed by reordering things within this implementation since even at the end of this function defaults requiring a context may not have been filled.
+ * This means schema validation reject required fields getting their value from a default like identifier fields.
+ *
  * @remarks The resulting tree will be populated with any defaults from {@link FieldProvider}s in the schema.
+ *
+ * @privateRemarks
+ * TODO: AB#9126 AB#9131
+ * When an app wants schema validation, we should ensure data is validated. Doing the validation here is not robust (since many callers to this don't have a context and thus can't opt into validation).
+ * Additionally the validation here does not correctly handle default values, and introduces a second schema representation which is a bit odd API wise as its typically derivable from the view schema.
+ * It may make more sense to validate when hydrating the MapTreeNode when the context is known and the defaults are available.
+ * Applying the "parse don't validate" idiom here could help ensuring we capture when the validation optionally happens in the type system to avoid missing or redundant validation,
+ * as well as ensuring validation happens after defaulting (or can handle validating data missing defaults)
  */
 export function mapTreeFromNodeData(
 	data: InsertableContent,
@@ -200,17 +172,17 @@ function nodeDataToMapTree(
 	data: InsertableContent,
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	schemaValidationPolicy: SchemaAndPolicy | undefined,
-): MapTree;
+): ExclusiveMapTree;
 function nodeDataToMapTree(
 	data: InsertableContent | undefined,
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	schemaValidationPolicy: SchemaAndPolicy | undefined,
-): MapTree | undefined;
+): ExclusiveMapTree | undefined;
 function nodeDataToMapTree(
 	data: InsertableContent | undefined,
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	schemaValidationPolicy: SchemaAndPolicy | undefined,
-): MapTree | undefined {
+): ExclusiveMapTree | undefined {
 	if (data === undefined) {
 		return undefined;
 	}
@@ -220,7 +192,12 @@ function nodeDataToMapTree(
 	const flexNode = tryGetFlexNode(data);
 	if (flexNode !== undefined) {
 		if (isMapTreeNode(flexNode)) {
-			return flexNode.mapTree;
+			// TODO: mapTreeFromNodeData modifies the trees it gets to add defaults.
+			// Using a cached value here can result in this tree having defaults applied to it more than once.
+			// This is unnecessary and inefficient, but should be a no-op if all calls provide the same context (which they might not).
+			// A cleaner design (avoiding this cast) might be to apply defaults eagerly if they don't need a context, and lazily (when hydrating) if they do.
+			// This could avoid having to mutate the map tree to apply defaults, removing the need for this cast.
+			return flexNode.mapTree as ExclusiveMapTree;
 		} else {
 			// The node is already hydrated, meaning that it already got inserted into the tree previously
 			throw new UsageError("A node may not be inserted into the tree more than once");
@@ -229,7 +206,7 @@ function nodeDataToMapTree(
 
 	const schema = getType(data, allowedTypes);
 
-	let result: MapTree;
+	let result: ExclusiveMapTree;
 	switch (schema.kind) {
 		case NodeKind.Leaf:
 			result = leafToMapTree(data, schema, allowedTypes);
@@ -268,7 +245,7 @@ function leafToMapTree(
 	data: InsertableContent,
 	schema: TreeNodeSchema,
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
-): MapTree {
+): ExclusiveMapTree {
 	assert(schema.kind === NodeKind.Leaf, 0x921 /* Expected a leaf schema. */);
 	if (!isTreeValue(data)) {
 		// This rule exists to protect against useless `toString` output like `[object Object]`.
@@ -338,8 +315,8 @@ function arrayToMapTreeFields(
 	data: readonly InsertableContent[],
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	schemaValidationPolicy: SchemaAndPolicy | undefined,
-): MapTree[] {
-	const mappedData: MapTree[] = [];
+): ExclusiveMapTree[] {
+	const mappedData: ExclusiveMapTree[] = [];
 	for (const child of data) {
 		// We do not support undefined sequence entries.
 		// If we encounter an undefined entry, use null instead if supported by the schema, otherwise throw.
@@ -370,7 +347,7 @@ function arrayToMapTreeFields(
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
  */
-function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
+function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): ExclusiveMapTree {
 	assert(schema.kind === NodeKind.Array, 0x922 /* Expected an array schema. */);
 	if (!isReadonlyArray(data)) {
 		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
@@ -381,9 +358,9 @@ function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTre
 	const mappedData = arrayToMapTreeFields(data, allowedChildTypes, undefined);
 
 	// Array node children are represented as a single field entry denoted with `EmptyKey`
-	const fieldsEntries: [FieldKey, MapTree[]][] =
+	const fieldsEntries: [FieldKey, ExclusiveMapTree[]][] =
 		mappedData.length === 0 ? [] : [[EmptyKey, mappedData]];
-	const fields = new Map<FieldKey, MapTree[]>(fieldsEntries);
+	const fields = new Map<FieldKey, ExclusiveMapTree[]>(fieldsEntries);
 
 	return {
 		type: brand(schema.identifier),
@@ -399,16 +376,20 @@ function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTre
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
  */
-function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
+function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): ExclusiveMapTree {
 	assert(schema.kind === NodeKind.Map, 0x923 /* Expected a Map schema. */);
-	if (!(data instanceof Map)) {
+	if (!(typeof data === "object" && data !== null && Symbol.iterator in data)) {
 		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
 	}
 
 	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
-	const transformedFields = new Map<FieldKey, MapTree[]>();
-	for (const [key, value] of data) {
+	const transformedFields = new Map<FieldKey, ExclusiveMapTree[]>();
+	for (const item of data as Iterable<readonly [string, InsertableContent]>) {
+		if (!isReadonlyArray(item) || item.length !== 2 || typeof item[0] !== "string") {
+			throw new UsageError(`Input data is incompatible with map entry: ${item}`);
+		}
+		const [key, value] = item;
 		assert(!transformedFields.has(brand(key)), 0x84c /* Keys should not be duplicated */);
 
 		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
@@ -429,19 +410,19 @@ function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree 
  * @param data - The tree data to be transformed. Must be a Record-like object.
  * @param schema - The schema associated with the value.
  */
-function objectToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
-	assert(schema.kind === NodeKind.Object, 0x924 /* Expected an Object schema. */);
+function objectToMapTree(data: InsertableContent, schema: TreeNodeSchema): ExclusiveMapTree {
+	assert(isObjectNodeSchema(schema), 0x924 /* Expected an Object schema. */);
 	if (typeof data !== "object" || data === null) {
 		throw new UsageError(`Input data is incompatible with Object schema: ${data}`);
 	}
 
-	const fields = new Map<FieldKey, MapTree[]>();
+	const fields = new Map<FieldKey, ExclusiveMapTree[]>();
 
 	// Loop through field keys without data, and assign value from its default provider.
-	for (const key of Object.keys(schema.info as Record<string, ImplicitFieldSchema>)) {
-		const value = (data as Record<string, InsertableContent>)[key];
+	for (const [key, fieldInfo] of schema.flexKeyMap) {
+		const value = (data as Record<string, InsertableContent>)[key as string];
 		if (value !== undefined && Object.hasOwnProperty.call(data, key)) {
-			setFieldValue(fields, value, getObjectFieldSchema(schema, key), key);
+			setFieldValue(fields, value, fieldInfo.schema, fieldInfo.storedKey);
 		}
 	}
 
@@ -455,7 +436,7 @@ function setFieldValue(
 	fields: Map<FieldKey, readonly MapTree[]>,
 	fieldValue: InsertableContent | undefined,
 	fieldSchema: FieldSchema,
-	key: string,
+	flexKey: FieldKey,
 ): void {
 	if (fieldValue !== undefined) {
 		const mappedChildTree = nodeDataToMapTree(
@@ -463,20 +444,9 @@ function setFieldValue(
 			fieldSchema.allowedTypeSet,
 			undefined,
 		);
-		const flexKey: FieldKey = brand(getStoredKey(key, fieldSchema));
 
 		assert(!fields.has(flexKey), 0x956 /* Keys must not be duplicated */);
 		fields.set(flexKey, [mappedChildTree]);
-	}
-}
-
-function getObjectFieldSchema(schema: TreeNodeSchema, key: string): FieldSchema {
-	assert(schema.kind === NodeKind.Object, 0x926 /* Expected an Object schema. */);
-	const fields = schema.info as Record<string, ImplicitFieldSchema>;
-	if (fields[key] === undefined) {
-		fail(`Field "${key}" not found in schema "${schema.identifier}".`);
-	} else {
-		return normalizeFieldSchema(fields[key]);
 	}
 }
 
@@ -506,7 +476,7 @@ The set of possible types is ${JSON.stringify([
 Explicitly construct an unhydrated node of the desired type to disambiguate.
 For class-based schema, this can be done by replacing an expression like "{foo: 1}" with "new MySchema({foo: 1})".`,
 	);
-	return possibleTypes[0];
+	return possibleTypes[0] ?? oob();
 }
 
 /**
@@ -562,28 +532,37 @@ function shallowCompatibilityTest(
 		return false;
 	}
 
-	if (typeNameSymbol in data) {
-		return data[typeNameSymbol] === schema.identifier;
+	// TODO:
+	// current typing (of schema based constructors and thus implicit node construction)
+	// allows iterables for constructing maps and arrays.
+	// Some current users of this API may have unions of maps and arrays,
+	// and rely on Arrays ending up as array nodes and maps as Map nodes,
+	// despite both being iterable and thus compatible with both.
+	// In the future, a better solution could be a priority based system where an array would be parsed as an array when unioned with a map,
+	// but if in a map only context, could still be used as a map.
+	// Then this method would return a quality of fit, not just a boolean.
+	// For now, special case map and array before checking iterable to avoid regressing the union of map and array case.
+
+	if (data instanceof Map) {
+		return schema.kind === NodeKind.Map;
 	}
 
 	if (isReadonlyArray(data)) {
 		return schema.kind === NodeKind.Array;
 	}
-	if (schema.kind === NodeKind.Array) {
-		return false;
+
+	const mapOrArray = schema.kind === NodeKind.Array || schema.kind === NodeKind.Map;
+
+	if (Symbol.iterator in data) {
+		return mapOrArray;
 	}
 
-	if (data instanceof Map) {
-		return schema.kind === NodeKind.Map;
-	}
-	if (schema.kind === NodeKind.Map) {
+	if (mapOrArray) {
 		return false;
 	}
 
 	// Assume record-like object
-	if (schema.kind !== NodeKind.Object) {
-		return false;
-	}
+	assert(schema.kind === NodeKind.Object, "unexpected schema kind");
 
 	const fields = schema.info as Record<string, ImplicitFieldSchema>;
 
@@ -626,7 +605,10 @@ export type ContextuallyTypedNodeData =
 	| boolean
 	// eslint-disable-next-line @rushstack/no-new-null
 	| null
-	| readonly ContextuallyTypedNodeData[];
+	| readonly ContextuallyTypedNodeData[]
+	| ReadonlyMap<string, ContextuallyTypedNodeData>
+	| Iterable<ContextuallyTypedNodeData>
+	| Iterable<[string, ContextuallyTypedNodeData]>;
 
 /**
  * Content of a field which needs external schema information to interpret.
@@ -641,12 +623,6 @@ export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
  * Object case of {@link ContextuallyTypedNodeData}.
  */
 export interface ContextuallyTypedNodeDataObject {
-	/**
-	 * The type of the node.
-	 * If this node is well-formed, it must follow this schema.
-	 */
-	readonly [typeNameSymbol]?: string;
-
 	/**
 	 * Fields of this node, indexed by their field keys.
 	 *
@@ -664,23 +640,48 @@ export interface ContextuallyTypedNodeDataObject {
 }
 
 /**
- * Walk the given {@link MapTree} and provide any field defaults for fields that are missing in the tree but present in the schema.
- * @param mapTree - The tree to populate with defaults
+ * Walk the given {@link ExclusiveMapTree} and deeply provide any field defaults for fields that are missing in the tree but present in the schema.
+ * @param mapTree - The tree to populate with defaults. This is borrowed: no references to it are kept by this function.
  * @param allowedTypes - Some {@link TreeNodeSchema}, at least one of which the input tree must conform to
  * @param context - An optional context for generating defaults.
  * If present, all applicable defaults will be provided.
  * If absent, only defaults produced by a {@link ConstantFieldProvider} will be provided, and defaults produced by a {@link ContextualFieldProvider} will be ignored.
- * @remarks This function mutates the input tree by adding new fields to the field maps where applicable.
- * @privateRemarks TODO: Create a more established type for mutable MapTrees, and use where appropriate.
+ * @remarks This function mutates the input tree by deeply adding new fields to the field maps where applicable.
  */
-function addDefaultsToMapTree(
-	mapTree: MapTree,
+export function addDefaultsToMapTree(
+	mapTree: ExclusiveMapTree,
 	allowedTypes: ImplicitAllowedTypes,
 	context: NodeKeyManager | undefined,
 ): void {
 	const schema =
 		find(normalizeAllowedTypes(allowedTypes), (s) => s.identifier === mapTree.type) ??
 		fail("MapTree is incompatible with schema");
+
+	if (isObjectNodeSchema(schema)) {
+		for (const [_key, fieldInfo] of schema.flexKeyMap) {
+			const field = mapTree.fields.get(fieldInfo.storedKey);
+			if (field !== undefined) {
+				for (const child of field) {
+					addDefaultsToMapTree(child, fieldInfo.schema.allowedTypes, context);
+				}
+			} else {
+				const defaultProvider = fieldInfo.schema.props?.defaultProvider;
+				if (defaultProvider !== undefined) {
+					const fieldProvider = extractFieldProvider(defaultProvider);
+					const data = provideDefault(fieldProvider, context);
+					if (data !== undefined) {
+						setFieldValue(mapTree.fields, data, fieldInfo.schema, fieldInfo.storedKey);
+						// call addDefaultsToMapTree on newly inserted default values
+						for (const child of mapTree.fields.get(fieldInfo.storedKey) ??
+							fail("Expected field to be populated")) {
+							addDefaultsToMapTree(child, fieldInfo.schema.allowedTypes, context);
+						}
+					}
+				}
+			}
+		}
+		return;
+	}
 
 	switch (schema.kind) {
 		case NodeKind.Array:
@@ -693,46 +694,18 @@ function addDefaultsToMapTree(
 				}
 			}
 			break;
-		case NodeKind.Object:
-			{
-				for (const [key, fieldSchema] of Object.entries(
-					schema.info as Record<FieldKey, ImplicitFieldSchema>,
-				) as [FieldKey, ImplicitFieldSchema][]) {
-					const field = mapTree.fields.get(key);
-					if (field !== undefined) {
-						for (const child of field) {
-							addDefaultsToMapTree(
-								child,
-								getObjectFieldSchema(schema, key).allowedTypes,
-								context,
-							);
-						}
-					} else if (fieldSchema instanceof FieldSchema) {
-						const defaultProvider = fieldSchema.props?.defaultProvider;
-						if (defaultProvider !== undefined) {
-							const fieldProvider = extractFieldProvider(defaultProvider);
-							const data = provideDefault(fieldProvider, context);
-							if (data !== undefined) {
-								const mutableMapTree = mapTree as typeof mapTree & {
-									fields: Map<FieldKey, readonly MapTree[]>;
-								};
-								setFieldValue(mutableMapTree.fields, data, fieldSchema, key);
-								for (const child of mutableMapTree.fields.get(key) ??
-									fail("Expected field to be populated")) {
-									addDefaultsToMapTree(child, fieldSchema.allowedTypes, context);
-								}
-							}
-						}
-					}
-				}
-			}
-			break;
 		default:
 			assert(schema.kind === NodeKind.Leaf, 0x989 /* Unrecognized schema kind */);
 			break;
 	}
 }
 
+/**
+ * Provides the default value (which can be undefined, for example with optional fields), or undefined if a context is required but not provided.
+ * @privateRemarks
+ * It is a bit concerning that there is no way for the caller to know when undefined is returned if that is the default value, or a context was required.
+ * TODO: maybe better formalize the two stage defaulting (without then with context), or rework this design we only do one stage.
+ */
 function provideDefault(
 	fieldProvider: FieldProvider,
 	context: NodeKeyManager | undefined,
@@ -742,6 +715,9 @@ function provideDefault(
 	} else {
 		if (isConstant(fieldProvider)) {
 			return fieldProvider();
+		} else {
+			// Leaving field empty despite it needing a default value since a context was required and non was provided.
+			// Caller better handle this case by providing the default at some other point in time when the context becomes known.
 		}
 	}
 }

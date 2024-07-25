@@ -45,7 +45,7 @@ export function handleServerErrorAndConvertToNetworkError(
 }
 
 export class ExpirationTimer {
-	private timer: NodeJS.Timer | undefined;
+	private timer: ReturnType<typeof setInterval> | undefined;
 	constructor(private readonly onTimeout: () => void) {}
 	public clear(): void {
 		if (this.timer !== undefined) {

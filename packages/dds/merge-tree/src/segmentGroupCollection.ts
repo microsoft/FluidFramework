@@ -20,16 +20,16 @@ export class SegmentGroupCollection {
 		this.segmentGroups = new DoublyLinkedList<SegmentGroup>();
 	}
 
-	public get size() {
+	public get size(): number {
 		return this.segmentGroups.length;
 	}
 
-	public get empty() {
+	public get empty(): boolean {
 		return this.segmentGroups.empty;
 	}
 
 	// eslint-disable-next-line import/no-deprecated
-	public enqueue(segmentGroup: SegmentGroup) {
+	public enqueue(segmentGroup: SegmentGroup): void {
 		this.segmentGroups.push(segmentGroup);
 		segmentGroup.segments.push(this.segment);
 	}
@@ -54,20 +54,22 @@ export class SegmentGroupCollection {
 		return this.segmentGroups.pop ? this.segmentGroups.pop()?.data : undefined;
 	}
 
-	public copyTo(segment: ISegment) {
+	public copyTo(segment: ISegment): void {
 		walkList(this.segmentGroups, (sg) =>
 			segment.segmentGroups.enqueueOnCopy(sg.data, this.segment),
 		);
 	}
 
 	// eslint-disable-next-line import/no-deprecated
-	private enqueueOnCopy(segmentGroup: SegmentGroup, sourceSegment: ISegment) {
+	private enqueueOnCopy(segmentGroup: SegmentGroup, sourceSegment: ISegment): void {
 		this.enqueue(segmentGroup);
 		if (segmentGroup.previousProps) {
 			// duplicate the previousProps for this segment
 			const index = segmentGroup.segments.indexOf(sourceSegment);
 			if (index !== -1) {
-				segmentGroup.previousProps.push(segmentGroup.previousProps[index]);
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				segmentGroup.previousProps.push(segmentGroup.previousProps[index]!);
 			}
 		}
 	}

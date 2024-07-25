@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// Normal usage pattern for @testing-library/jest-dom
-// eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";

@@ -231,7 +231,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 	}
 }
 
-function decodeOdspUrl(url: string): {
+export function decodeOdspUrl(url: string): {
 	siteUrl: string;
 	driveId: string;
 	itemId: string;
@@ -262,7 +262,8 @@ function decodeOdspUrl(url: string): {
 	}
 
 	return {
-		siteUrl,
+		// TODO Why are we non null asserting here?
+		siteUrl: siteUrl!,
 		driveId: decodeURIComponent(driveId),
 		itemId: decodeURIComponent(itemId),
 		path: decodeURIComponent(path),

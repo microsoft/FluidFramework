@@ -31,41 +31,59 @@ const supportDocsLinkSpan = new SpanNode([
 	new PlainTextNode("."),
 ]);
 
-// Temporary workaround for items tagged as `@alpha` (to mean "legacy").
-// This messaging should be changed back to standard "alpha" terminology once we have
-// cleaned up our tag meanings.
-function createAlphaWarning(apiItem) {
+/**
+ * Creates a special import notice for the provided API item, if one is appropriate.
+ *
+ * If the item is tagged as "@legacy", displays a legacy notice with import instructions.
+ * Otherwise, if the item is `@alpha` or `@beta`, displays the appropriate warning and import instructions.
+ *
+ * @privateRemarks
+ * If we later wish to differentiate between release tags of `@legacy` items, this function will need
+ * to be updated.
+ */
+function createImportNotice(apiItem) {
 	const packageName = apiItem.getAssociatedPackage().displayName;
-	return new AlertNode(
-		[
-			new SpanNode([
-				new PlainTextNode("To use, import via "),
-				CodeSpanNode.createFromPlainText(`${packageName}/legacy`),
-				new PlainTextNode("."),
-			]),
-			LineBreakNode.Singleton,
-			supportDocsLinkSpan,
-		],
-		/* alertKind: */ "note",
-		/* title: */ "This API is provided for existing users, but is not recommended for new users.",
-	);
-}
 
-function createBetaWarning(apiItem) {
-	const packageName = apiItem.getAssociatedPackage().displayName;
-	return new AlertNode(
-		[
-			new SpanNode([
-				new PlainTextNode("To use, import via "),
-				CodeSpanNode.createFromPlainText(`${packageName}/beta`),
-				new PlainTextNode("."),
-			]),
-			LineBreakNode.Singleton,
-			supportDocsLinkSpan,
-		],
-		/* alertKind: */ "warning",
-		/* title: */ "This API is provided as a beta preview and may change without notice.",
-	);
+	function createImportAlert(importSubpath, alertTitle) {
+		return new AlertNode(
+			[
+				new SpanNode([
+					new PlainTextNode("To use, import via "),
+					CodeSpanNode.createFromPlainText(`${packageName}/${importSubpath}`),
+					new PlainTextNode("."),
+				]),
+				LineBreakNode.Singleton,
+				supportDocsLinkSpan,
+			],
+			/* alertKind: */ "warning",
+			alertTitle,
+		);
+	}
+
+	if (ApiItemUtilities.hasModifierTag(apiItem, "@legacy")) {
+		return createImportAlert(
+			"legacy",
+			"This API is provided for existing users, but is not recommended for new users.",
+		);
+	}
+
+	const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
+
+	if (releaseTag === ReleaseTag.Alpha) {
+		return createImportAlert(
+			"alpha",
+			"This API is provided as an alpha preview and may change without notice.",
+		);
+	}
+
+	if (releaseTag === ReleaseTag.Beta) {
+		return createImportAlert(
+			"beta",
+			"This API is provided as a beta preview and may change without notice.",
+		);
+	}
+
+	return undefined;
 }
 
 /**
@@ -112,12 +130,10 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 		sections.push(new SectionNode([deprecationNotice]));
 	}
 
-	// Render alpha/beta notice if applicable
-	const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
-	if (releaseTag === ReleaseTag.Alpha) {
-		sections.push(new SectionNode([createAlphaWarning(apiItem)]));
-	} else if (releaseTag === ReleaseTag.Beta) {
-		sections.push(new SectionNode([createBetaWarning(apiItem)]));
+	// Render the appropriate API notice (with import instructions), if applicable.
+	const importNotice = createImportNotice(apiItem);
+	if (importNotice !== undefined) {
+		sections.push(new SectionNode([importNotice]));
 	}
 
 	// Render signature (if any)

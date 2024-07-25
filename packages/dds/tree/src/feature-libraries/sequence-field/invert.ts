@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, oob } from "@fluidframework/core-utils/internal";
 
 import type { RevisionTag } from "../../core/index.js";
 import { type IdAllocator, type Mutable, fail } from "../../util/index.js";
@@ -194,7 +194,6 @@ function invertMark(
 			return applyMovedChanges(invertedMark, mark.revision, crossFieldManager);
 		}
 		case "AttachAndDetach": {
-			// Which should get the child change? Don't want to invert twice
 			const attach: Mark = {
 				count: mark.count,
 				cellId: mark.cellId,
@@ -222,7 +221,7 @@ function invertMark(
 				0x80d /* Only expected MoveIn marks to be split when inverting */,
 			);
 
-			let detachInverse = detachInverses[0];
+			let detachInverse = detachInverses[0] ?? oob();
 			assert(isAttach(detachInverse), 0x80e /* Inverse of a detach should be an attach */);
 
 			const inverses: Mark[] = [];
@@ -294,6 +293,7 @@ function applyMovedChanges(
 	}
 
 	if (entry.value !== undefined) {
+		manager.onMoveIn(entry.value);
 		return [withNodeChange<CellMark<MoveOut>, MoveOut>(mark, entry.value)];
 	}
 

@@ -177,7 +177,7 @@ When creating and connecting to a container, it can be tempting to have a consis
 
 However, we generally recommend that creating and connecting to containers be separated. This provides a cleaner separation of responsibilities within the code itself. Also, in typical use-cases, a user will create a new container through some UI action that results in a redirect to another page whose sole responsibility is to connect to a container. All subsequent clients will load the container by navigating directly to that page.
 
-The drawback of this approach is that when creating a container, the service connection needs to be established twice -- once for the container creation and once for the connection. This can introduce latency in the container creation process. For an example of a simple scenario in which it makes sense to combine the flows, see [Using Fluid with React]({{< relref "react.md" >}}).
+The drawback of this approach is that when creating a container, the service connection needs to be established twice -- once for the container creation and once for the connection. This can introduce latency in the container creation process.
 
 ### Multi-container example
 

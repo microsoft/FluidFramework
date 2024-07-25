@@ -59,7 +59,6 @@ import {
 	isSnapshotFetchRequiredForLoadingGroupId,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	DataCorruptionError,
 	DataProcessingError,
 	LoggingError,
 	MonitoringContext,
@@ -303,6 +302,13 @@ export abstract class FluidDataStoreContext
 	 */
 	protected isInMemoryRoot(): boolean {
 		return this._isInMemoryRoot;
+	}
+
+	/**
+	 * Returns the count of pending messages that are stored until the data store is realized.
+	 */
+	public get pendingCount(): number {
+		return this.pending?.length ?? 0;
 	}
 
 	protected registry: IFluidDataStoreRegistry | undefined;
@@ -567,8 +573,10 @@ export abstract class FluidDataStoreContext
 		// "verifyNotClosed" which logs tombstone errors. Throw error if tombstoned and throwing on load is configured.
 		this.verifyNotClosed("process", false /* checkTombstone */, safeTelemetryProps);
 		if (this.tombstoned && this.gcThrowOnTombstoneUsage) {
-			throw new DataCorruptionError(
+			throw DataProcessingError.create(
 				"Context is tombstoned! Call site [process]",
+				"process",
+				undefined /* sequencedMessage */,
 				safeTelemetryProps,
 			);
 		}
@@ -961,7 +969,12 @@ export abstract class FluidDataStoreContext
 	) {
 		if (this.deleted) {
 			const messageString = `Context is deleted! Call site [${callSite}]`;
-			const error = new DataCorruptionError(messageString, safeTelemetryProps);
+			const error = DataProcessingError.create(
+				messageString,
+				callSite,
+				undefined /* sequencedMessage */,
+				safeTelemetryProps,
+			);
 			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "GC_Deleted_DataStore_Changed",
@@ -979,7 +992,12 @@ export abstract class FluidDataStoreContext
 
 		if (checkTombstone && this.tombstoned) {
 			const messageString = `Context is tombstoned! Call site [${callSite}]`;
-			const error = new DataCorruptionError(messageString, safeTelemetryProps);
+			const error = DataProcessingError.create(
+				messageString,
+				callSite,
+				undefined /* sequencedMessage */,
+				safeTelemetryProps,
+			);
 
 			sendGCUnexpectedUsageEvent(
 				this.mc,
@@ -1058,6 +1076,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private snapshotFetchRequired: boolean | undefined;
 	private readonly runtime: IContainerRuntimeBase;
 	private readonly blobContents: Map<string, ArrayBuffer> | undefined;
+	private readonly isSnapshotInISnapshotFormat: boolean | undefined;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, false /* isLocalDataStore */, () => {
@@ -1068,8 +1087,10 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		if (isInstanceOfISnapshot(props.snapshot)) {
 			this.blobContents = props.snapshot.blobContents;
 			this._baseSnapshot = props.snapshot.snapshotTree;
+			this.isSnapshotInISnapshotFormat = true;
 		} else {
 			this._baseSnapshot = props.snapshot;
+			this.isSnapshotInISnapshotFormat = false;
 		}
 		if (this._baseSnapshot !== undefined) {
 			this.summarizerNode.updateBaseSummaryState(this._baseSnapshot);
@@ -1091,10 +1112,13 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		// Sequence number of the snapshot.
 		let sequenceNumber: number | undefined;
-		// Check whether we need to fetch the snapshot first to load.
+		// Check whether we need to fetch the snapshot first to load. The snapshot should be in new format to see
+		// whether we want to evaluate to fetch snapshot or not for loadingGroupId. Otherwise, the snapshot
+		// will contain all the blobs.
 		if (
 			this.snapshotFetchRequired === undefined &&
-			this._baseSnapshot?.groupId !== undefined
+			this._baseSnapshot?.groupId !== undefined &&
+			this.isSnapshotInISnapshotFormat
 		) {
 			assert(
 				this.blobContents !== undefined,

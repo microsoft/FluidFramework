@@ -318,8 +318,12 @@ describe("Tests1 for snapshot fetch", () => {
 		}
 		assert(ungroupedData, "should have asked for ungroupedData");
 		const cachedValue = (await epochTracker.get(
-			createCacheSnapshotKey(resolved),
+			createCacheSnapshotKey(resolved, false),
 		)) as ISnapshot;
+		const cachedValueWithLoadingGroupId = (await epochTracker.get(
+			createCacheSnapshotKey(resolved, true),
+		)) as ISnapshot;
+		assert(cachedValueWithLoadingGroupId === undefined, "snapshot should not exist");
 		assert(cachedValue.snapshotTree.id === "SnapshotId", "snapshot should have been cached");
 		assert(service["blobCache"].value.size > 0, "blobs should be cached locally");
 		assert(service["commitCache"].size > 0, "no trees should be cached");
@@ -439,7 +443,7 @@ describe("Tests1 for snapshot fetch", () => {
 			assert.fail("the getSnapshot request should succeed");
 		}
 		const cachedValue = (await epochTracker.get(
-			createCacheSnapshotKey(resolved),
+			createCacheSnapshotKey(resolved, false),
 		)) as ISnapshot;
 		assert(cachedValue.snapshotTree.id === "SnapshotId", "snapshot should have been cached");
 		assert(service["blobCache"].value.size > 0, "blobs should still be cached locally");

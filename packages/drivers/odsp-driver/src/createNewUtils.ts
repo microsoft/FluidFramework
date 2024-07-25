@@ -4,7 +4,7 @@
  */
 
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	ISummaryBlob,
 	ISummaryTree,
@@ -72,7 +72,8 @@ function convertCreateNewSummaryTreeToTreeAndBlobsCore(
 	};
 	const keys = Object.keys(summary.tree);
 	for (const key of keys) {
-		const summaryObject = summary.tree[key];
+		// Non null asserting for now this should change to Object.entries
+		const summaryObject = summary.tree[key]!;
 
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
@@ -149,7 +150,9 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 
 	const keys = Object.keys(summary.tree);
 	for (const key of keys) {
-		const summaryObject = summary.tree[key];
+		assert(!key.includes("/"), 0x9cc /* id should not include slashes */);
+		// Non null asserting for now this should change to Object.entries
+		const summaryObject = summary.tree[key]!;
 
 		let value: OdspSummaryTreeValue;
 		// Tracks if an entry is unreferenced. Currently, only tree entries can be marked as unreferenced. If the
@@ -188,7 +191,7 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 		}
 
 		const entry: OdspSummaryTreeEntry = {
-			path: encodeURIComponent(key),
+			path: key,
 			type: getGitType(summaryObject),
 			value,
 			unreferenced,

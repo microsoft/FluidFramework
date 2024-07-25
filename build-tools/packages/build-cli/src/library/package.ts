@@ -239,41 +239,61 @@ export interface PreReleaseDependencies {
  * Checks all the packages in a release group for any that are a pre-release version.
  *
  * @param context - The context.
- * @param releaseGroup - The release group.
+ * @param releaseGroup - The release group or package.
  * @returns A {@link PreReleaseDependencies} object containing the pre-release dependency names and versions.
  */
 export async function getPreReleaseDependencies(
 	context: Context,
-	releaseGroup: ReleaseGroup | ReleasePackage,
-	// depsToUpdate: ReleasePackage[],
+	releaseGroup: ReleaseGroup | ReleasePackage | MonoRepo | Package,
 ): Promise<PreReleaseDependencies> {
 	const prereleasePackages = new Map<ReleasePackage, string>();
 	const prereleaseGroups = new Map<ReleaseGroup, string>();
-	let packagesToCheck: Package[];
-	let depsToUpdate: ReleasePackage[];
+	const packagesToCheck: Package[] = [];
 
-	if (isReleaseGroup(releaseGroup)) {
-		const monorepo = context.repo.releaseGroups.get(releaseGroup);
+	/**
+	 * Array of package names; dependencies on these packages will be updated.
+	 */
+	const updateDependenciesOnThesePackages: ReleasePackage[] = [];
+
+	if (releaseGroup instanceof Package) {
+		packagesToCheck.push(releaseGroup);
+		updateDependenciesOnThesePackages.push(
+			...context.packagesNotInReleaseGroup(releaseGroup).map((p) => p.name),
+		);
+	} else if (releaseGroup instanceof MonoRepo || isReleaseGroup(releaseGroup)) {
+		const monorepo =
+			releaseGroup instanceof MonoRepo
+				? releaseGroup
+				: context.repo.releaseGroups.get(releaseGroup);
 		if (monorepo === undefined) {
-			throw new Error(`Can't find release group in context: ${releaseGroup}`);
+			throw new Error(
+				`Can't find release group in context: ${
+					releaseGroup instanceof MonoRepo ? releaseGroup.name : releaseGroup
+				}`,
+			);
 		}
 
-		packagesToCheck = monorepo.packages;
-		depsToUpdate = context.packagesNotInReleaseGroup(releaseGroup).map((p) => p.name);
+		packagesToCheck.push(...monorepo.packages);
+		updateDependenciesOnThesePackages.push(
+			...context.packagesNotInReleaseGroup(monorepo.name).map((p) => p.name),
+		);
 	} else {
+		assert(typeof releaseGroup === "string");
 		const pkg = context.fullPackageMap.get(releaseGroup);
 		if (pkg === undefined) {
 			throw new Error(`Can't find package in context: ${releaseGroup}`);
 		}
 
-		packagesToCheck = [pkg];
-		depsToUpdate = context.packagesNotInReleaseGroup(pkg).map((p) => p.name);
+		packagesToCheck.push(pkg);
+		updateDependenciesOnThesePackages.push(
+			...context.packagesNotInReleaseGroup(pkg).map((p) => p.name),
+		);
 	}
 
 	for (const pkg of packagesToCheck) {
 		for (const { name: depName, version: depVersion } of pkg.combinedDependencies) {
 			// If it's not a dep we're looking to update, skip to the next dep
-			if (!depsToUpdate.includes(depName)) {
+			if (!updateDependenciesOnThesePackages.includes(depName)) {
 				continue;
 			}
 
@@ -631,6 +651,26 @@ export async function setVersion(
 }
 
 /**
+ * Extracts the dependencies record from a package.json file based on the dependency group.
+ */
+function getDependenciesRecord(
+	packageJson: PackageJson,
+	depClass: "prod" | "dev" | "peer",
+): PackageJson["dependencies" | "devDependencies" | "peerDependencies"] | undefined {
+	switch (depClass) {
+		case "dev": {
+			return packageJson.devDependencies;
+		}
+		case "peer": {
+			return packageJson.peerDependencies;
+		}
+		default: {
+			return packageJson.dependencies;
+		}
+	}
+}
+
+/**
  * Set the version of _dependencies_ within a package according to the provided map of packages to range strings.
  *
  * @param pkg - The package whose dependencies should be updated.
@@ -655,14 +695,12 @@ async function setPackageDependencies(
 ): Promise<boolean> {
 	let changed = false;
 	let newRangeString: string;
-	for (const { name, dev } of pkg.combinedDependencies) {
+	for (const { name, depClass } of pkg.combinedDependencies) {
 		const dep = dependencyVersionMap.get(name);
 		if (dep !== undefined) {
 			const isSameReleaseGroup = MonoRepo.isSame(dep.pkg.monoRepo, pkg.monoRepo);
 			if (!isSameReleaseGroup || (updateWithinSameReleaseGroup && isSameReleaseGroup)) {
-				const dependencies = dev
-					? pkg.packageJson.devDependencies
-					: pkg.packageJson.dependencies;
+				const dependencies = getDependenciesRecord(pkg.packageJson, depClass);
 				if (dependencies === undefined) {
 					continue;
 				}

@@ -11,13 +11,11 @@ import {
 	ITestDataObject,
 	TestDataObjectType,
 	describeCompat,
-	itExpects,
 } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IContainer,
-	type ICriticalContainerError,
 	type IFluidCodeDetails,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
@@ -27,7 +25,7 @@ import {
 	IdCompressorMode,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { Deferred, delay } from "@fluidframework/core-utils/internal";
+import { delay } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -1134,69 +1132,41 @@ describeCompat(
 			assert(!value, message);
 		}
 
-		async function assertDoesNotRejectInvert(
-			block: (() => Promise<unknown>) | Promise<unknown>,
-			message?: string | Error,
-		): Promise<void> {
-			await assert.rejects(block, message);
-		}
+		it("data store id with `[` not encoded / decoded correctly in snapshot`", async () => {
+			const container = await provider.createDetachedContainer(runtimeFactory, {
+				configProvider,
+			});
+			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+			const containerRuntime = dataObject.context.containerRuntime;
 
-		itExpects(
-			"data store id with `[` not encoded / decoded correctly in snapshot`",
-			[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "No context for op" }],
-			async () => {
-				const container = await provider.createDetachedContainer(runtimeFactory, {
-					configProvider,
-				});
-				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-				const containerRuntime = dataObject.context.containerRuntime;
-
-				// The 13 datastore produces a shortId of "[" which is not decoded properly, so we need to make
-				// 13 datastores to repro the bug.
-				for (let i = 0; i < 13; i++) {
-					const ds = await containerRuntime.createDataStore(defaultFactory.type);
-					const dataObjectNew = (await ds.entryPoint.get()) as ITestFluidObject;
-					dataObject.root.set(dataObjectNew.context.id, dataObjectNew.handle);
-					if (i === 12) {
-						assert.equal(dataObjectNew.context.id, "[", "The 13th data store id should be [");
-					}
+			// The 13 datastore produces a shortId of "[" which is not decoded properly, so we need to make
+			// 13 datastores to repro the bug.
+			for (let i = 0; i < 13; i++) {
+				const ds = await containerRuntime.createDataStore(defaultFactory.type);
+				const dataObjectNew = (await ds.entryPoint.get()) as ITestFluidObject;
+				dataObject.root.set(dataObjectNew.context.id, dataObjectNew.handle);
+				if (i === 12) {
+					assert.equal(dataObjectNew.context.id, "[", "The 13th data store id should be [");
 				}
+			}
 
-				await provider.attachDetachedContainer(container);
+			await provider.attachDetachedContainer(container);
 
-				const dsWithBugHandle = dataObject.root.get<IFluidHandle<ITestFluidObject>>("[");
-				assert(dsWithBugHandle !== undefined, "data store handle not found");
-				const dsWithBug = await dsWithBugHandle.get();
-				dsWithBug.root.set(`key13`, `value13`);
+			const dsWithBugHandle = dataObject.root.get<IFluidHandle<ITestFluidObject>>("[");
+			assert(dsWithBugHandle !== undefined, "data store handle not found");
+			const dsWithBug = await dsWithBugHandle.get();
+			dsWithBug.root.set(`key13`, `value13`);
 
-				// Reset documentServiceFactory so that a new one is created. Otherwise, the snapshot will be loaded
-				// from cache for the new container which is the same one as uploaded by the first container.
-				(provider as any)._documentServiceFactory = undefined;
+			// Reset documentServiceFactory so that a new one is created. Otherwise, the snapshot will be loaded
+			// from cache for the new container which is the same one as uploaded by the first container.
+			(provider as any)._documentServiceFactory = undefined;
 
-				const container2 = await provider.loadContainer(runtimeFactory);
+			const container2 = await provider.loadContainer(runtimeFactory);
 
-				const closeErrorWait = new Deferred<void>();
-				let closeError: ICriticalContainerError | undefined;
-				container2.on("closed", (error?: ICriticalContainerError) => {
-					closeError = error;
-					closeErrorWait.resolve();
-				});
+			await provider.ensureSynchronized();
 
-				// This causes the containers to sync and thus close.
-				await provider.ensureSynchronized();
-
-				// When fixed, the promise and asserts should be removed
-				await closeErrorWait.promise;
-				assert(closeError !== undefined, "Error should be present");
-				assert(closeError.message.includes("No context for op"), "Did not detect an error!");
-
-				// When fixed, the assert should be swapped for assertInvert
-				assertInvert(
-					!container2.closed,
-					"When the problem is fixed, assert should be swapped for assertInvert",
-				);
-			},
-		);
+			assert(!container2.closed, "container should not be closed");
+		});
 
 		it("DDS id containing `[` not encoded / decoded correctly in snapshot`", async () => {
 			const loader = provider.makeTestLoader({ loaderProps: { configProvider } });
@@ -1219,10 +1189,7 @@ describeCompat(
 			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const dds2Handle = dataStore2.root.get<IFluidHandle<ISharedDirectory>>("dds1");
 			assert(dds2Handle !== undefined, "DDS handle not found");
-			await assertDoesNotRejectInvert(
-				async () => dds2Handle.get(),
-				"Should be able to get DDS",
-			);
+			await assert.doesNotReject(async () => dds2Handle.get(), "Should be able to get DDS");
 		});
 	},
 );

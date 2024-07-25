@@ -20,6 +20,7 @@ import {
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
 
+import { blobsTreeName } from "../blobManager/index.js";
 import { IGCMetadata } from "../gc/index.js";
 
 import { IDocumentSchema } from "./documentSchema.js";
@@ -208,7 +209,6 @@ export const aliasBlobName = ".aliases";
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
 export const electedSummarizerBlobName = ".electedSummarizer";
-export const blobsTreeName = ".blobs";
 export const idCompressorBlobName = ".idCompressor";
 export const blobHeadersBlobName = blobNameForBlobHeaders;
 
@@ -281,7 +281,9 @@ export async function getFluidDataStoreAttributes(
 ): Promise<ReadFluidDataStoreAttributes> {
 	const attributes = await readAndParse<ReadFluidDataStoreAttributes>(
 		storage,
-		snapshot.blobs[dataStoreAttributesBlobName],
+		// TODO why are we non null asserting here?
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		snapshot.blobs[dataStoreAttributesBlobName]!,
 	);
 	// Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
 	// For snapshotFormatVersion = "0.1" (1) or above, pkg is jsonified, otherwise it is just a string.

@@ -5,14 +5,17 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
+import { describeCompat, type ITestDataObject } from "@fluid-private/test-version-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntimeOptions,
 	ISummarizer,
+	type ContainerRuntime,
+	type ISubmitSummaryOptions,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestObjectProvider,
@@ -40,6 +43,7 @@ describeCompat(
 		const { DataObject, DataObjectFactory, FluidDataStoreRuntime } = apis.dataRuntime;
 		const { mixinSummaryHandler } = apis.dataRuntime.packages.datastore;
 		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+		const { SharedMap } = apis.dds;
 
 		function createDataStoreRuntime(
 			factory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
@@ -56,6 +60,10 @@ describeCompat(
 			}
 			public get _context() {
 				return this.context;
+			}
+
+			public get _runtime() {
+				return this.runtime;
 			}
 		}
 
@@ -109,7 +117,7 @@ describeCompat(
 			},
 		);
 
-		async function createSummarizer(summaryVersion?: string): Promise<ISummarizer> {
+		async function createSummarizerWithVersion(summaryVersion?: string): Promise<ISummarizer> {
 			const createSummarizerResult = await createSummarizerFromFactory(
 				provider,
 				mainContainer,
@@ -125,10 +133,6 @@ describeCompat(
 		let mainContainer: IContainer;
 		let mainDataStore: TestDataObject1;
 
-		const createContainer = async (): Promise<IContainer> => {
-			return provider.createContainer(runtimeFactory);
-		};
-
 		async function waitForSummary(summarizer: ISummarizer): Promise<string> {
 			// Wait for all pending ops to be processed by all clients.
 			await provider.ensureSynchronized();
@@ -138,7 +142,7 @@ describeCompat(
 
 		beforeEach("setup", async () => {
 			provider = getTestObjectProvider({ syncSummarizer: true });
-			mainContainer = await createContainer();
+			mainContainer = await provider.createContainer(runtimeFactory);
 			// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
 			// re-sent. Do it here so that the extra events don't mess with rest of the test.
 			mainDataStore = (await mainContainer.getEntryPoint()) as TestDataObject1;
@@ -147,7 +151,7 @@ describeCompat(
 		});
 
 		it("No Summary Upload Error when DS gets realized between summarize and completeSummary", async () => {
-			const summarizerClient = await createSummarizer();
+			const summarizerClient = await createSummarizerWithVersion();
 			await provider.ensureSynchronized();
 			mainDataStore._root.set("1", "2");
 
@@ -185,11 +189,95 @@ describeCompat(
 			summarizerClient.close();
 
 			// Just make sure new summarizer will be able to load and execute successfully.
-			const summarizerClient2 = await createSummarizer(summaryVersion2);
+			const summarizerClient2 = await createSummarizerWithVersion(summaryVersion2);
 
 			mainDataStore._root.set("4", "5");
 			const summaryVersion3 = await waitForSummary(summarizerClient2);
 			assert(summaryVersion3, "Summary version should be defined");
+		});
+
+		// This test was written to prevent future regressions to this scenario.
+		it("Summarization should still succeed when a datastore and its DDSes are realized between submit and ack", async () => {
+			const summarizer1 = await createSummarizerWithVersion();
+
+			// create a datastore with a dds as the default one is always realized
+			const dataObject1 = await dataStoreFactory2.createInstance(
+				mainDataStore._context.containerRuntime,
+			);
+			// create a dds
+			const dds1 = SharedMap.create(dataObject1._runtime);
+			// store the dds
+			dataObject1._root.set("handle", dds1.handle);
+			// store the datastore
+			mainDataStore._root.set("handle", dataObject1.handle);
+
+			// Generate the summary to load from
+			await provider.ensureSynchronized();
+			const { summaryVersion: summaryVersion1 } = await summarizeNow(summarizer1);
+			summarizer1.close();
+
+			// Load a summarizer that hasn't realized the datastore yet
+			const summarizer2 = await createSummarizerWithVersion(summaryVersion1);
+
+			// Override the submit summary function to realize a datastore before receiving an ack
+			const summarizerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
+			const submitSummaryFunc = summarizerRuntime.submitSummary;
+			const func = async (options: ISubmitSummaryOptions) => {
+				const submitSummaryFuncBound = submitSummaryFunc.bind(summarizerRuntime);
+				const result = await submitSummaryFuncBound(options);
+
+				const entryPoint = (await summarizerRuntime.getAliasedDataStoreEntryPoint(
+					"default",
+				)) as IFluidHandle<ITestDataObject> | undefined;
+				if (entryPoint === undefined) {
+					throw new Error("default dataStore must exist");
+				}
+				const defaultDatastore2 = await entryPoint.get();
+				const handle2 = defaultDatastore2._root.get("handle");
+				// this realizes the datastore before we get the ack
+				await handle2.get();
+				return result;
+			};
+
+			summarizerRuntime.submitSummary = func;
+			// create an op that will realize the /dataObject/dds, but not the /dataObject/root dds when summarizing
+			dds1.set("a", "op");
+
+			// Note: summarizeOnDemand was used here so the submitSummary function would properly bind to its containerRuntime.
+			// summarize, this causes the paths to become incorrect on the summarizer nodes
+			const summaryResults2 = summarizer2.summarizeOnDemand({ reason: "test" });
+
+			// During the regression, when the container runtime processed this ack, it would improperly create the root dds summarizer
+			// node with the wrong path - the regression made the summary handle path /dataObject instead of /dataObject/root
+			const ackOrNack2 = await summaryResults2.receivedSummaryAckOrNack;
+			assert(ackOrNack2.success, "should have successfully summarized!");
+			await new Promise((resolve) => process.nextTick(resolve));
+
+			// In the regression, the summarizer node state was incorrect, but in order to cause issues it needed to submit another summary that generates the incorrect handle path
+			const { summaryVersion: summaryVersion3 } = await summarizeNow(summarizer2);
+
+			// This verifies that we can correctly load the container in the right state
+			const container3 = await provider.loadContainer(
+				runtimeFactory,
+				undefined,
+				/* loaderProps */ {
+					[LoaderHeader.version]: summaryVersion3,
+				},
+			);
+			const defaultDatastore3 = (await container3.getEntryPoint()) as ITestDataObject;
+			const handle3 = defaultDatastore3._root.get<IFluidHandle<ITestDataObject>>("handle");
+			assert(
+				handle3 !== undefined,
+				"Should be able to retrieve stored datastore Fluid handle",
+			);
+
+			// Realize the datastore and root dds
+			const dataObject3 = await handle3.get();
+			const ddsHandle3 = dataObject3._root.get<IFluidHandle<ISharedMap>>("handle");
+			assert(ddsHandle3 !== undefined, "Should be able to retrieve stored dds Fluid handle");
+			// Realize the dds and verify it acts as expected
+			const dds3 = await ddsHandle3.get();
+			assert(dds3.get("a") === "op", "DDS state should be consistent across clients");
 		});
 	},
 );

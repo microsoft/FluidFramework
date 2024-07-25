@@ -167,7 +167,7 @@ describe("Tests for prefetching snapshot", () => {
 				localCache,
 				GetHostStoragePolicyInternal(),
 			);
-			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved));
+			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved, false));
 			const documentservice = await odspDocumentServiceFactory.createDocumentService(
 				resolved,
 				mockLogger,
@@ -498,7 +498,7 @@ describe("Tests for prefetching snapshot", () => {
 				localCache,
 				hostPolicy,
 			);
-			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved));
+			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved, true));
 			const documentservice = await odspDocumentServiceFactory.createDocumentService(
 				resolved,
 				mockLogger,
@@ -643,7 +643,7 @@ describe("Tests for prefetching snapshot", () => {
 				localCache,
 				GetHostStoragePolicyInternal(),
 			);
-			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved));
+			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved, false));
 			const documentservice = await odspDocumentServiceFactory.createDocumentService(
 				resolved,
 				mockLogger,
@@ -885,7 +885,7 @@ describe("Tests for prefetching snapshot", () => {
 				localCache,
 				hostPolicy,
 			);
-			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved));
+			snapshotPrefetchCacheKey = getKeyForCacheEntry(createCacheSnapshotKey(resolved, false));
 			const documentservice = await odspDocumentServiceFactory.createDocumentService(
 				resolved,
 				mockLogger,

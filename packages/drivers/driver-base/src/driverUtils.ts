@@ -117,9 +117,13 @@ export function validateMessages(
 	strict: boolean = true,
 ) {
 	if (messages.length !== 0) {
-		const start = messages[0].sequenceNumber;
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const start = messages[0]!.sequenceNumber;
 		const length = messages.length;
-		const last = messages[length - 1].sequenceNumber;
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const last = messages[length - 1]!.sequenceNumber;
 		if (last + 1 !== from + length) {
 			// If not strict, then return the first consecutive sub-block. If strict or start
 			// seq number is not what we expected, then return no ops.
@@ -129,8 +133,12 @@ export function validateMessages(
 				let validOpsCount = 1;
 				while (
 					validOpsCount < messages.length &&
-					messages[validOpsCount].sequenceNumber ===
-						messages[validOpsCount - 1].sequenceNumber + 1
+					// TODO Why are we non null asserting here
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					messages[validOpsCount]!.sequenceNumber ===
+						// TODO Why are we non null asserting here
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						messages[validOpsCount - 1]!.sequenceNumber + 1
 				) {
 					validOpsCount++;
 				}
@@ -146,7 +154,11 @@ export function validateMessages(
 				details: JSON.stringify({
 					validLength: messages.length,
 					lastValidOpSeqNumber:
-						messages.length > 0 ? messages[messages.length - 1].sequenceNumber : undefined,
+						messages.length > 0
+							? // Non null asserting here because of the length check
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								messages[messages.length - 1]!.sequenceNumber
+							: undefined,
 					strict,
 				}),
 			});

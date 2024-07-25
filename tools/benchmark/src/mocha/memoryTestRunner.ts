@@ -18,7 +18,8 @@ import {
 	userCategoriesSplitter,
 	TestType,
 } from "../Configuration";
-import { getArrayStatistics, Stats } from "../ReporterUtilities";
+import { isResultError, type BenchmarkResult, type Stats } from "../ResultTypes";
+import { getArrayStatistics, prettyNumber } from "../RunnerUtilities";
 import { timer } from "../timer";
 
 // TODO:
@@ -35,31 +36,6 @@ import { timer } from "../timer";
 // Leaks from one iteration not cleaned up before the next should be an error not silently ignored via subtracting them out
 // since the statistics assume samples are independent and that can't be true if each sample leaks memory.
 // Alternatively a mode to measure tests that work this way could be added via a separate API and characterize the grow of memory over iterations.
-
-/**
- * Contains the samples of all memory-related measurements we track for a given benchmark (a test which was
- * potentially iterated several times). Each property is an array and all should be the same length, which
- * is the number of iterations done during the benchmark.
- */
-export interface MemoryTestData {
-	memoryUsage: NodeJS.MemoryUsage[];
-	heap: v8.HeapInfo[];
-	heapSpace: v8.HeapSpaceInfo[][];
-}
-
-/**
- * Contains the full results for a benchmark (a test which was potentially iterated several times).
- * 'samples' contains the raw 'before' and 'after' measurements instead of calculated deltas
- * for flexibility, at the cost of more memory and bigger output.
- */
-export interface MemoryBenchmarkStats {
-	runs: number;
-	samples: { before: MemoryTestData; after: MemoryTestData };
-	stats: Stats;
-	aborted: boolean;
-	error?: Error;
-	totalRunTimeMs: number;
-}
 
 /**
  * @public
@@ -162,6 +138,45 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions {
 	 * in combination with mocha's --grep/--fgrep options to only execute specific tests.
 	 */
 	category?: string;
+}
+
+/**
+ * Contains the samples of all memory-related measurements we track for a given benchmark (a test which was
+ * potentially iterated several times). Each property is an array and all should be the same length, which
+ * is the number of iterations done during the benchmark.
+ * @public
+ */
+export interface MemoryTestData {
+	/**
+	 * Memory usage in bytes.
+	 */
+	memoryUsage: NodeJS.MemoryUsage[];
+
+	/**
+	 * Heap info.
+	 */
+	heap: v8.HeapInfo[];
+
+	/**
+	 * Heap space info.
+	 */
+	heapSpace: v8.HeapSpaceInfo[][];
+}
+
+/**
+ * Contains the samples of all memory-related measurements before and after a benchmark.
+ * @public
+ */
+export interface MemorySampleData {
+	/**
+	 * Memory usage before the test.
+	 */
+	before: MemoryTestData;
+
+	/**
+	 * Memory usage after the test.
+	 */
+	after: MemoryTestData;
 }
 
 /**
@@ -296,33 +311,24 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 		}
 
 		await testObject.before?.();
-		const benchmarkStats: MemoryBenchmarkStats = {
-			runs: 0,
-			samples: {
-				before: {
-					memoryUsage: [],
-					heap: [],
-					heapSpace: [],
-				},
-				after: {
-					memoryUsage: [],
-					heap: [],
-					heapSpace: [],
-				},
-			},
-			stats: {
-				marginOfError: Number.NaN,
-				marginOfErrorPercent: Number.NaN,
-				standardErrorOfMean: Number.NaN,
-				standardDeviation: Number.NaN,
-				arithmeticMean: Number.NaN,
-				samples: [],
-				variance: Number.NaN,
-			},
-			aborted: false,
-			totalRunTimeMs: -1,
+		let runs = 0;
+		let benchmarkStats: BenchmarkResult = {
+			elapsedSeconds: 0,
+			customData: {},
+			customDataFormatters: {},
 		};
-
+		const sample: MemorySampleData = {
+			before: {
+				memoryUsage: [],
+				heap: [],
+				heapSpace: [],
+			},
+			after: {
+				memoryUsage: [],
+				heap: [],
+				heapSpace: [],
+			},
+		};
 		// Do this import only if isInPerformanceTestingMode so correctness mode can work on a non-v8 runtime like the a browser.
 		const v8 = await import("node:v8");
 
@@ -337,13 +343,13 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 				samples: [],
 				variance: Number.NaN,
 			};
+
 			do {
 				await testObject.beforeIteration?.();
-
 				global.gc();
-				benchmarkStats.samples.before.memoryUsage.push(process.memoryUsage());
-				benchmarkStats.samples.before.heap.push(v8.getHeapStatistics());
-				benchmarkStats.samples.before.heapSpace.push(v8.getHeapSpaceStatistics());
+				sample.before.memoryUsage.push(process.memoryUsage());
+				sample.before.heap.push(v8.getHeapStatistics());
+				sample.before.heapSpace.push(v8.getHeapSpaceStatistics());
 
 				global.gc();
 				await testObject.run();
@@ -351,40 +357,65 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 				await testObject.afterIteration?.();
 
 				global.gc();
-				benchmarkStats.samples.after.memoryUsage.push(process.memoryUsage());
-				benchmarkStats.samples.after.heap.push(v8.getHeapStatistics());
-				benchmarkStats.samples.after.heapSpace.push(v8.getHeapSpaceStatistics());
 
-				benchmarkStats.runs++;
+				sample.after.memoryUsage.push(process.memoryUsage());
+				sample.after.heap.push(v8.getHeapStatistics());
+
+				sample.after.heapSpace.push(v8.getHeapSpaceStatistics());
+
+				runs++;
 
 				const heapUsedArray: number[] = [];
-				for (let i = 0; i < benchmarkStats.samples.before.memoryUsage.length; i++) {
+				for (let i = 0; i < sample.before.memoryUsage.length; i++) {
 					heapUsedArray.push(
-						benchmarkStats.samples.after.memoryUsage[i].heapUsed -
-							benchmarkStats.samples.before.memoryUsage[i].heapUsed,
+						sample.after.memoryUsage[i].heapUsed -
+							sample.before.memoryUsage[i].heapUsed,
 					);
 				}
 				heapUsedStats = getArrayStatistics(heapUsedArray, options.samplePercentageToUse);
 
 				// Break if max elapsed time passed, only if we've reached the min sample count
 				if (
-					benchmarkStats.runs >= options.minSampleCount &&
+					runs >= options.minSampleCount &&
 					timer.toSeconds(startTime, timer.now()) > options.maxBenchmarkDurationSeconds
 				) {
 					break;
 				}
 			} while (
-				benchmarkStats.runs < options.minSampleCount ||
+				runs < options.minSampleCount ||
 				heapUsedStats.marginOfErrorPercent > options.maxRelativeMarginOfError
 			);
-			benchmarkStats.stats = heapUsedStats;
+
+			benchmarkStats.customData["Heap Used Avg"] = heapUsedStats.arithmeticMean;
+			benchmarkStats.customDataFormatters["Heap Used Avg"] = (value): string =>
+				prettyNumber(value as number, 2);
+
+			benchmarkStats.customData["Margin of Error"] = heapUsedStats.marginOfError;
+			benchmarkStats.customDataFormatters["Margin of Error"] = (value): string =>
+				`±${prettyNumber(value as number, 2)}`;
+
+			benchmarkStats.customData["Relative Margin of Error"] =
+				heapUsedStats.marginOfErrorPercent;
+			benchmarkStats.customDataFormatters["Relative Margin of Error"] = (value): string =>
+				`±${prettyNumber(value as number, 2)}`;
+
+			benchmarkStats.customData["Heap Used StdDev"] = heapUsedStats.standardDeviation;
+			benchmarkStats.customDataFormatters["Heap Used StdDev"] = (value): string =>
+				prettyNumber(value as number, 2);
+
+			benchmarkStats.customData.Iterations = runs;
+			benchmarkStats.customDataFormatters.Iterations = (value): string =>
+				(value as number).toString();
 		} catch (error) {
 			// TODO: This results in the mocha test passing when it should fail. Fix this.
-			benchmarkStats.aborted = true;
-			benchmarkStats.error = error as Error;
+			benchmarkStats = {
+				error: (error as Error).message,
+			};
 		} finally {
 			// It's not perfect, since we don't compute it *immediately* after we stop running tests but it's good enough.
-			benchmarkStats.totalRunTimeMs = timer.toSeconds(startTime, timer.now()) * 1000;
+			if (!isResultError(benchmarkStats)) {
+				benchmarkStats.elapsedSeconds = timer.toSeconds(startTime, timer.now());
+			}
 		}
 
 		test.emit("benchmark end", benchmarkStats);

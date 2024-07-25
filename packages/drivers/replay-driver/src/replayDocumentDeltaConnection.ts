@@ -101,7 +101,9 @@ export class ReplayControllerStatic extends ReplayController {
 		}
 		if (this.unitIsTime === true) {
 			for (let i = 0; i < fetchedOps.length; i += 1) {
-				const timeStamp = fetchedOps[i].timestamp;
+				// Non null asserting here because we are iterating over fetchedOps
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const timeStamp = fetchedOps[i]!.timestamp;
 				if (timeStamp !== undefined) {
 					if (this.firstTimeStamp === undefined) {
 						this.firstTimeStamp = timeStamp;
@@ -127,7 +129,9 @@ export class ReplayControllerStatic extends ReplayController {
 			const replayNextOps = () => {
 				// Emit the ops from replay to the end every "deltainterval" milliseconds
 				// to simulate the socket stream
-				const currentOp = fetchedOps[current];
+				// TODO Why are we non null asserting here
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const currentOp = fetchedOps[current]!;
 				const playbackOps = [currentOp];
 				let nextInterval = ReplayControllerStatic.DelayInterval;
 				current += 1;
@@ -138,7 +142,9 @@ export class ReplayControllerStatic extends ReplayController {
 						// Emit more ops that is in the ReplayResolution window
 
 						while (current < fetchedOps.length) {
-							const op = fetchedOps[current];
+							// TODO Why are we non null asserting here
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							const op = fetchedOps[current]!;
 							if (op.timestamp === undefined) {
 								// Missing timestamp, just delay the standard amount of time
 								break;
@@ -333,7 +339,9 @@ export class ReplayDocumentDeltaConnection
 
 				const messages = result.value;
 				currentOp += messages.length;
-				done = controller.isDoneFetch(currentOp, messages[messages.length - 1].timestamp);
+				// TODO Why are we non null asserting here
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				done = controller.isDoneFetch(currentOp, messages[messages.length - 1]!.timestamp);
 			} while (!done);
 
 			abortController.abort();

@@ -133,6 +133,4 @@ export type JsonableTypeWith<T> = undefined | null | boolean | number | string |
 // @alpha
 export type Serializable<T> = Jsonable<T, IFluidHandle>;
 
-// (No @packageDocumentation comment for this package)
-
 ```

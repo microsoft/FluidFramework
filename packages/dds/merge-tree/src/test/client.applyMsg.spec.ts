@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
@@ -67,8 +67,9 @@ describe("client.applyMsg", () => {
 					changes.set(i, { msg, segmentGroup: client.peekPendingSegmentGroups() });
 					break;
 				}
-				default:
+				default: {
 					assert.fail("all cases should be handled");
+				}
 			}
 		}
 		for (let i = 0; i < 100; i++) {
@@ -82,18 +83,20 @@ describe("client.applyMsg", () => {
 			for (const seg of segmentGroup.segments) {
 				switch (i % 6) {
 					case 0:
-					case 5:
+					case 5: {
 						assert.equal(
 							seg.removedSeq,
 							msg.sequenceNumber,
 							"removed segment has unexpected id",
 						);
 						break;
+					}
 
 					case 1:
-					case 4:
+					case 4: {
 						assert.equal(seg.seq, msg.sequenceNumber, "inserted segment has unexpected id");
 						break;
+					}
 
 					default:
 				}
@@ -236,7 +239,7 @@ describe("client.applyMsg", () => {
 		assert.equal(client.getLength(), initialLength - (end - start));
 		assert.equal(
 			client.getText(),
-			initialText.substring(0, start) + initialText.substring(end),
+			initialText.slice(0, Math.max(0, start)) + initialText.slice(Math.max(0, end)),
 		);
 	});
 
@@ -249,7 +252,7 @@ describe("client.applyMsg", () => {
 		let seq = 0;
 		const initialMsg = client.makeOpMessage(client.insertTextLocal(0, "-"), ++seq);
 
-		clients.forEach((c) => c.applyMsg(initialMsg));
+		for (const c of clients) c.applyMsg(initialMsg);
 		logger.validate({ baseText: "-hello world" });
 
 		const messages = [
@@ -261,7 +264,7 @@ describe("client.applyMsg", () => {
 
 		while (messages.length > 0) {
 			const msg = messages.shift()!;
-			clients.forEach((c) => c.applyMsg(msg));
+			for (const c of clients) c.applyMsg(msg);
 		}
 
 		logger.validate({ baseText: "RLhello world" });
@@ -280,7 +283,7 @@ describe("client.applyMsg", () => {
 
 		while (messages.length > 0) {
 			const msg = messages.shift()!;
-			clients.all.forEach((c) => c.applyMsg(msg));
+			for (const c of clients.all) c.applyMsg(msg);
 		}
 
 		logger.validate({ baseText: "cb" });
@@ -299,7 +302,7 @@ describe("client.applyMsg", () => {
 
 		while (messages.length > 0) {
 			const msg = messages.shift()!;
-			clients.all.forEach((c) => c.applyMsg(msg));
+			for (const c of clients.all) c.applyMsg(msg);
 		}
 
 		logger.validate({ baseText: "CB" });
@@ -320,7 +323,7 @@ describe("client.applyMsg", () => {
 		const logger = new TestClientLogger(clients.all);
 		while (messages.length > 0) {
 			const msg = messages.shift()!;
-			clients.all.forEach((c) => c.applyMsg(msg));
+			for (const c of clients.all) c.applyMsg(msg);
 		}
 
 		logger.validate({ baseText: "cb" });
@@ -339,7 +342,7 @@ describe("client.applyMsg", () => {
 		const logger = new TestClientLogger(clients.all);
 		while (messages.length > 0) {
 			const msg = messages.shift()!;
-			clients.all.forEach((c) => c.applyMsg(msg));
+			for (const c of clients.all) c.applyMsg(msg);
 		}
 
 		logger.validate({ baseText: "bc" });
@@ -355,9 +358,9 @@ describe("client.applyMsg", () => {
 		];
 		while (messages.length > 0) {
 			const msg = messages.shift()!;
-			clients.all.forEach((c) => {
+			for (const c of clients.all) {
 				c.applyMsg(msg);
-			});
+			}
 		}
 		const logger = new TestClientLogger(clients.all);
 		logger.validate({ baseText: "CC" });
@@ -369,7 +372,7 @@ describe("client.applyMsg", () => {
 		);
 		while (messages.length > 0) {
 			const msg = messages.shift()!;
-			clients.all.forEach((c) => c.applyMsg(msg));
+			for (const c of clients.all) c.applyMsg(msg);
 		}
 		logger.validate({ baseText: "CCBBBC" });
 	});
@@ -396,7 +399,7 @@ describe("client.applyMsg", () => {
 		const messages = [op2, op3, op4];
 		while (messages.length > 0) {
 			const msg = messages.shift()!;
-			clients.all.forEach((c) => c.applyMsg(msg));
+			for (const c of clients.all) c.applyMsg(msg);
 		}
 
 		logger.validate({ baseText: "CB" });
@@ -421,7 +424,7 @@ describe("client.applyMsg", () => {
 		const messages = [op2, op3];
 		while (messages.length > 0) {
 			const msg = messages.shift()!;
-			clients.all.forEach((c) => c.applyMsg(msg));
+			for (const c of clients.all) c.applyMsg(msg);
 		}
 
 		logger.validate({ baseText: "CB" });
@@ -439,19 +442,21 @@ describe("client.applyMsg", () => {
 
 		let seq = 0;
 		const ops: ISequencedDocumentMessage[] = [];
-		ops.push(clients.B.makeOpMessage(clients.B.insertTextLocal(4, "B"), ++seq));
-		ops.push(clients.C.makeOpMessage(clients.C.insertTextLocal(4, "CC"), ++seq));
-		ops.push(clients.C.makeOpMessage(clients.C.removeRangeLocal(2, 8), ++seq));
+		ops.push(
+			clients.B.makeOpMessage(clients.B.insertTextLocal(4, "B"), ++seq),
+			clients.C.makeOpMessage(clients.C.insertTextLocal(4, "CC"), ++seq),
+			clients.C.makeOpMessage(clients.C.removeRangeLocal(2, 8), ++seq),
+		);
 		clients.B.applyMsg(ops[0]);
 		clients.B.applyMsg(ops[1]);
 		ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(5, 8), ++seq));
 
 		for (const op of ops) {
-			clients.all.forEach((c) => {
+			for (const c of clients.all) {
 				if (c.getCollabWindow().currentSeq < op.sequenceNumber) {
 					c.applyMsg(op);
 				}
-			});
+			}
 		}
 		logger.validate({ baseText: "ab" });
 	});
@@ -473,11 +478,11 @@ describe("client.applyMsg", () => {
 		ops.push(clients.C.makeOpMessage(clients.C.insertTextLocal(2, "X"), ++seq));
 
 		for (const op of ops) {
-			clients.all.forEach((c) => {
+			for (const c of clients.all) {
 				if (c.getCollabWindow().currentSeq < op.sequenceNumber) {
 					c.applyMsg(op);
 				}
-			});
+			}
 		}
 		logger.validate({ baseText: "ayzXd" });
 	});
@@ -587,31 +592,39 @@ describe("client.applyMsg", () => {
 		const ops: ISequencedDocumentMessage[] = [];
 		const perClientOps: ISequencedDocumentMessage[][] = clients.all.map(() => []);
 
-		ops.push(clients.D.makeOpMessage(clients.D.insertTextLocal(0, "DD"), ++seq));
-		ops.push(clients.C.makeOpMessage(clients.C.insertTextLocal(0, "C"), ++seq));
-		ops.splice(0).forEach((op) => clients.all.forEach((c) => c.applyMsg(op)));
+		ops.push(
+			clients.D.makeOpMessage(clients.D.insertTextLocal(0, "DD"), ++seq),
+			clients.C.makeOpMessage(clients.C.insertTextLocal(0, "C"), ++seq),
+		);
+		for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
 
-		ops.push(clients.D.makeOpMessage(clients.D.insertTextLocal(0, "DDD"), ++seq));
-		ops.push(clients.D.makeOpMessage(clients.D.insertTextLocal(0, "D"), ++seq));
+		ops.push(
+			clients.D.makeOpMessage(clients.D.insertTextLocal(0, "DDD"), ++seq),
+			clients.D.makeOpMessage(clients.D.insertTextLocal(0, "D"), ++seq),
+		);
 
 		// disconnect B(1)
-		ops
-			.splice(0)
-			.forEach((op) =>
-				clients.all.forEach((c, i) => (i === 1 ? perClientOps[i].push(op) : c.applyMsg(op))),
-			);
+		for (const op of ops.splice(0))
+			for (const [i, c] of clients.all.entries())
+				if (i === 1) {
+					perClientOps[i].push(op);
+				} else {
+					c.applyMsg(op);
+				}
 
-		ops.push(clients.D.makeOpMessage(clients.D.insertTextLocal(0, "DDD"), ++seq));
-		ops.push(clients.D.makeOpMessage(clients.D.removeRangeLocal(6, 9), ++seq));
+		ops.push(
+			clients.D.makeOpMessage(clients.D.insertTextLocal(0, "DDD"), ++seq),
+			clients.D.makeOpMessage(clients.D.removeRangeLocal(6, 9), ++seq),
+		);
 
 		// disconnect B(1) and C(2)
-		ops
-			.splice(0)
-			.forEach((op) =>
-				clients.all.forEach((c, i) =>
-					i === 1 || i === 2 ? perClientOps[i].push(op) : c.applyMsg(op),
-				),
-			);
+		for (const op of ops.splice(0))
+			for (const [i, c] of clients.all.entries())
+				if (i === 1 || i === 2) {
+					perClientOps[i].push(op);
+				} else {
+					c.applyMsg(op);
+				}
 
 		// apply changes to disconnected clients
 		const bOp = {
@@ -636,20 +649,19 @@ describe("client.applyMsg", () => {
 		let beforeSlides = 0;
 		let afterSlides = 0;
 		ref.callbacks = {
-			beforeSlide: (lref) => {
+			beforeSlide: (lref): void => {
 				assert(lref === ref, "wrong ref slid");
 				beforeSlides++;
 			},
-			afterSlide: (lref) => {
+			afterSlide: (lref): void => {
 				assert(lref === ref, "wrong ref slid");
 				afterSlides++;
 			},
 		};
 
 		// catch up disconnected clients
-		perClientOps.forEach((clientOps, i) =>
-			clientOps.splice(0).forEach((op) => clients.all[i].applyMsg(op)),
-		);
+		for (const [i, clientOps] of perClientOps.entries())
+			for (const op of clientOps.splice(0)) clients.all[i].applyMsg(op);
 
 		// rebase and resubmit disconnected client ops
 		ops.push(clients.B.makeOpMessage(clients.B.regeneratePendingOp(bOp.op, bOp.sg), ++seq));
@@ -667,15 +679,14 @@ describe("client.applyMsg", () => {
 		assert.equal(beforeSlides, 1, "should be 1 slide");
 		assert.equal(afterSlides, 1, "should be 1 slide");
 
-		trackedSegs.forEach((seg) => {
+		for (const seg of trackedSegs) {
 			assert(trackingGroup.has(seg), "Tracking group should still have segment.");
-		});
+		}
 		// process the resubmitted ops
-		ops.splice(0).forEach((op) =>
-			clients.all.forEach((c) => {
+		for (const op of ops.splice(0))
+			for (const c of clients.all) {
 				c.applyMsg(op);
-			}),
-		);
+			}
 
 		logger.validate({ baseText: "DDDDDDcbD" });
 	});
@@ -697,10 +708,10 @@ describe("client.applyMsg", () => {
 				),
 			);
 
-			ops.splice(0).forEach((op) => {
+			for (const op of ops.splice(0)) {
 				localClient.applyMsg(op);
 				remoteClient.applyMsg(op);
-			});
+			}
 
 			assert.equal(localClient.getCollabWindow().minSeq, 0);
 			assert.equal(remoteClient.getCollabWindow().minSeq, 0);
@@ -715,10 +726,10 @@ describe("client.applyMsg", () => {
 				),
 			);
 
-			ops.splice(0).forEach((op) => {
+			for (const op of ops.splice(0)) {
 				localClient.applyMsg(op);
 				remoteClient.applyMsg(op);
-			});
+			}
 
 			assert.equal(localClient.getCollabWindow().minSeq, 16);
 			assert.equal(remoteClient.getCollabWindow().minSeq, 16);
@@ -750,10 +761,10 @@ describe("client.applyMsg", () => {
 				),
 			);
 
-			ops.splice(0).forEach((op) => {
+			for (const op of ops.splice(0)) {
 				localClient.applyMsg(op);
 				remoteClient.applyMsg(op);
-			});
+			}
 
 			assert.equal(localClient.getCollabWindow().minSeq, 0);
 			assert.equal(remoteClient.getCollabWindow().minSeq, 16);
@@ -772,10 +783,10 @@ describe("client.applyMsg", () => {
 			);
 			localInFlightRefSeq = 16;
 
-			ops.splice(0).forEach((op) => {
+			for (const op of ops.splice(0)) {
 				localClient.applyMsg(op);
 				remoteClient.applyMsg(op);
-			});
+			}
 
 			assert.equal(localClient.getCollabWindow().minSeq, 16);
 			assert.equal(remoteClient.getCollabWindow().minSeq, 16);

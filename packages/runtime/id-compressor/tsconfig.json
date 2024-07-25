@@ -4,7 +4,6 @@
 		"rootDir": "./src",
 		"outDir": "./lib",
 		"exactOptionalPropertyTypes": false,
-		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"],
