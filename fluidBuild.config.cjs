@@ -380,7 +380,7 @@ module.exports = {
 				"server/historian/package.json",
 				"package.json",
 			],
-			"npm-package-json-script-dep": ["^build-tools/"],
+			"npm-package-json-script-dep": [],
 			"npm-public-package-requirements": [
 				// Test packages published only for the purpose of running tests in CI.
 				"^azure/packages/test/",
