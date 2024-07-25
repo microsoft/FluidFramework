@@ -42,15 +42,9 @@ describe("flub test-only-filter", () => {
 			expect(pkg.directory).to.equal("build-tools/packages/build-cli");
 		});
 
-	test
-		.stdout()
-		.command(["test-only-filter", "--quiet", "--json", "--releaseGroup", "build-tools"])
-		.it(`--releaseGroup selector`, (ctx) => {
-			const output: jsonOutput = JSON.parse(ctx.stdout);
-			const { selected, filtered } = output;
-			expect(selected).to.be.ofSize(5);
-			expect(filtered).to.be.ofSize(5);
-		});
+		expect(selected.length).to.equal(4);
+		expect(filtered.length).to.equal(4);
+	});
 
 	test
 		.stdout()
