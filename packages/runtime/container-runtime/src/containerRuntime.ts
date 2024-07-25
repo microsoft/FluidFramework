@@ -629,6 +629,7 @@ export const defaultPendingOpsRetryDelayMs = 1000;
 const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
+ * Checks whether a message.type is one of the values in ContainerMessageType
  * @deprecated please use version in driver-utils
  * @internal
  */
@@ -2672,7 +2673,7 @@ export class ContainerRuntime
 				: batch.map((message) => ({ message, localOpMetadata: undefined }));
 			messages.forEach(({ message, localOpMetadata }) => {
 				const msg: MessageWithContext = {
-					message: message as InboundSequencedContainerRuntimeMessage,
+					message,
 					local,
 					isRuntimeMessage: true,
 					savedOp,
@@ -2681,7 +2682,9 @@ export class ContainerRuntime
 				this.ensureNoDataModelChanges(() => this.processRuntimeMessage(msg));
 			});
 		} else {
-			if (messageCopy.type in ContainerMessageType) {
+			// Check if message.type is one of values in ContainerMessageType
+			// eslint-disable-next-line import/no-deprecated
+			if (isRuntimeMessage(messageCopy)) {
 				// Legacy op received
 				this.ensureNoDataModelChanges(() =>
 					this.processRuntimeMessage({
