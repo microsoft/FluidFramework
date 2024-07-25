@@ -239,8 +239,8 @@ export function generateTestTrees(options: SharedTreeOptions) {
 
 				const view3 = forkView(view1);
 				view1.root.insertAt(0, "z");
-				view2.root.insertAt(1, "d", "e");
-				view2.root.insertAt(2, "f");
+				view3.root.insertAt(1, "d", "e");
+				view3.root.insertAt(2, "f");
 				view3.checkout.rebaseOnto(view1.checkout);
 				view1.checkout.merge(view3.checkout);
 
