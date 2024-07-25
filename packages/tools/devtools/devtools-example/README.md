@@ -4,7 +4,7 @@ This package contains a simple example application aimed at demonstrating how us
 
 Note: while this example is built using [React](), the developer tools are not specific to `React`; they should be compatible with the view framework of your choice.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:usesTinylicious=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -28,7 +28,7 @@ You can run this example using the following steps:
 To run the tests, first ensure you have followed the [build](#build) steps above.
 Next, run `npm run test` from a terminal within this directory.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

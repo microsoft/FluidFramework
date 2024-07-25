@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import { Multiplicity, rootFieldKey } from "../core/index.js";
 import {
@@ -13,7 +13,7 @@ import {
 	isTreeValue,
 	FlexObjectNodeSchema,
 } from "../feature-libraries/index.js";
-import { fail, extractFromOpaque, isReadonlyArray, oob } from "../util/index.js";
+import { fail, extractFromOpaque, isReadonlyArray } from "../util/index.js";
 
 import { getOrCreateNodeProxy, isTreeNode } from "./proxies.js";
 import { getFlexNode, getKernel } from "./proxyBinding.js";
