@@ -13,16 +13,27 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgName, pkgVersion } from "./packageVersion.js";
 
+// This test expects that if a certain env variable is specified, it points to a package that will
+// pollute the global with a "getTestLogger" when imported.  getTestLogger is actually expected to be
+// "instantiateTestLogger" in practice (it creates a new one, rather than retrieving an existing one).
+// Generally speaking, this global logger type will be the one that actually knows how to log to a real
+// destination (i.e. aria-logger).
+// TODO: Consider injecting a logger rather than relying on an environment variable and dynamic import.
+// TODO: Consider just exporting the function and importing it directly rather than polluting the global.
+const maybeInstantiateGlobalLoggerType = async () => {
+	if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER !== undefined) {
+		await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
+		const logger = getTestLogger?.();
+		assert(logger !== undefined, "Expected getTestLogger to return something");
+		return logger;
+	}
+	return undefined;
+};
+
 export class FileLogger implements ITelemetryBufferedLogger {
 	private static readonly loggerP = new LazyPromise<FileLogger>(async () => {
-		if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER !== undefined) {
-			await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
-			const logger = getTestLogger?.();
-			assert(logger !== undefined, "Expected getTestLogger to return something");
-			return new FileLogger(logger);
-		} else {
-			return new FileLogger(undefined);
-		}
+		const baseLogger = await maybeInstantiateGlobalLoggerType();
+		return new FileLogger(baseLogger);
 	});
 
 	public static async createLogger(dimensions: {
