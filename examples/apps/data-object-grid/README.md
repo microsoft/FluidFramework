@@ -2,7 +2,7 @@
 
 **Data object grid** is a Fluid component that provides a grid layout for users to compose their own experiences by adding and re-arranging data objects. This example explores how modular document types could work in Fluid.
 
-<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_README_HEADER:usesTinylicious=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

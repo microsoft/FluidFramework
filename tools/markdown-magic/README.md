@@ -115,7 +115,7 @@ Arguments:
     -   Assumes that the package is published, uses [API-Extractor][], and has its documentation published under `fluidframework.com/apis/<package-name>`.
     -   See [API_DOCS](#api_docs)
 
-#### `EXAMPLE_README_HEADER`
+#### `EXAMPLE_APP_README_HEADER`
 
 Generates a complete starter `README.md` file for an `Fluid` example app package.
 
