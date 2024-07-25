@@ -6,109 +6,26 @@
 import { type ObjectOptions, type Static, type TSchema, Type } from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
-import { RevisionTagSchema } from "../../core/index.js";
-import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema/index.js";
+import {
+	CellId,
+	CellMark,
+	type Encoded as EncodedV2,
+	MarkEffect as MarkEffectV2,
+} from "./formatV2.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
-const CellCount = Type.Number({ multipleOf: 1, minimum: 1 });
-
-const MoveId = ChangesetLocalIdSchema;
-const HasMoveId = Type.Object({ id: MoveId });
-
-const IdRange = Type.Tuple([ChangesetLocalIdSchema, CellCount]);
-
-const CellId = EncodedChangeAtomId;
-
-const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
-
-const Insert = Type.Composite([HasMoveId, HasRevisionTag], noAdditionalProps);
-
-const HasMoveFields = Type.Composite([
-	HasMoveId,
-	HasRevisionTag,
-	Type.Object({ finalEndpoint: Type.Optional(EncodedChangeAtomId) }),
-]);
-
-const MoveIn = Type.Composite([HasMoveFields], noAdditionalProps);
-
-const DetachFields = Type.Object({
-	idOverride: Type.Optional(CellId),
-});
-
-const Remove = Type.Composite(
-	[
-		Type.Object({
-			id: ChangesetLocalIdSchema,
-		}),
-		HasRevisionTag,
-		DetachFields,
-	],
+const Rename = Type.Object(
+	{
+		idOverride: CellId,
+	},
 	noAdditionalProps,
 );
 
-const Rename = Type.Composite(
-	[
-		Type.Object({
-			idOverride: CellId,
-		}),
-		HasRevisionTag,
-	],
-	noAdditionalProps,
-);
-
-const MoveOut = Type.Composite([HasMoveFields, DetachFields], noAdditionalProps);
-
-const Attach = Type.Object(
-	{
-		insert: Type.Optional(Insert),
-		moveIn: Type.Optional(MoveIn),
-	},
+const MarkEffect = Type.Composite(
+	[MarkEffectV2, Type.Object({ rename: Type.Optional(Rename) })],
 	unionOptions,
 );
-
-const Detach = Type.Object(
-	{
-		remove: Type.Optional(Remove),
-		moveOut: Type.Optional(MoveOut),
-	},
-	unionOptions,
-);
-
-const AttachAndDetach = Type.Object({
-	attach: Attach,
-	detach: Detach,
-});
-
-const MarkEffect = Type.Object(
-	{
-		// Note: `noop` is encoded by omitting `effect` from the encoded cell mark, so is not included here.
-		insert: Type.Optional(Insert),
-		moveIn: Type.Optional(MoveIn),
-		remove: Type.Optional(Remove),
-		rename: Type.Optional(Rename),
-		moveOut: Type.Optional(MoveOut),
-		attachAndDetach: Type.Optional(AttachAndDetach),
-	},
-	unionOptions,
-);
-
-const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(
-	tMark: TMark,
-	tNodeChange: TNodeChange,
-	// Return type is intentionally derived.
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-) =>
-	Type.Object(
-		{
-			// If undefined, indicates a Noop mark.
-			effect: Type.Optional(tMark),
-			cellId: Type.Optional(CellId),
-			changes: Type.Optional(tNodeChange),
-			count: CellCount,
-		},
-		noAdditionalProps,
-	);
 
 // Return type is intentionally derived.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -124,26 +41,25 @@ export const Changeset = <Schema extends TSchema>(tNodeChange: Schema) =>
  * @privateRemarks - Many of these names are currently used in the sequence-field types. Putting them in a namespace makes codec code more readable.
  */
 export namespace Encoded {
-	export type CellCount = Static<typeof CellCount>;
+	export type CellCount = EncodedV2.CellCount;
 
-	export type MoveId = Static<typeof MoveId>;
-	export type IdRange = Static<typeof IdRange>;
+	export type MoveId = EncodedV2.MoveId;
+	export type IdRange = EncodedV2.IdRange;
+	export type CellId = EncodedV2.CellId;
+	export type Insert = EncodedV2.Insert;
+	export type MoveIn = EncodedV2.MoveIn;
+	export type Remove = EncodedV2.Remove;
+	export type MoveOut = EncodedV2.MoveOut;
+	export type Attach = EncodedV2.Attach;
+	export type Detach = EncodedV2.Detach;
+	export type AttachAndDetach = EncodedV2.AttachAndDetach;
+	export type CellMark<
+		Schema extends TSchema,
+		TNodeChange extends TSchema,
+	> = EncodedV2.CellMark<Schema, TNodeChange>;
 
-	export type CellId = Static<typeof CellId>;
-
-	export type Insert = Static<typeof Insert>;
-	export type MoveIn = Static<typeof MoveIn>;
-	export type Remove = Static<typeof Remove>;
 	export type Rename = Static<typeof Rename>;
-	export type MoveOut = Static<typeof MoveOut>;
-	export type Attach = Static<typeof Attach>;
-	export type Detach = Static<typeof Detach>;
-	export type AttachAndDetach = Static<typeof AttachAndDetach>;
 	export type MarkEffect = Static<typeof MarkEffect>;
-
-	export type CellMark<Schema extends TSchema, TNodeChange extends TSchema> = Static<
-		ReturnType<typeof CellMark<Schema, TNodeChange>>
-	>;
 	export type Mark<Schema extends TSchema> = Static<ReturnType<typeof Mark<Schema>>>;
 	export type Changeset<Schema extends TSchema> = Static<ReturnType<typeof Changeset<Schema>>>;
 }
