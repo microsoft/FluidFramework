@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	type DetachedPlaceUpPath,
@@ -17,7 +17,7 @@ import {
 	topDownPath,
 } from "../core/index.js";
 import type { Listeners, Listenable } from "../events/index.js";
-import { brand, getOrCreate, oob } from "../util/index.js";
+import { brand, getOrCreate } from "../util/index.js";
 
 import type { FlexTreeNode } from "./flex-tree/index.js";
 

@@ -19,12 +19,16 @@ const {
  * EXPERIMENTAL: See templates/Experimental-Package-Notice-Template.md.
  * INTERNAL: See templates/Internal-Package-Notice-Template.md.
  * PRIVATE: See templates/Private-Package-Notice-Template.md.
+ * TOOLS: See templates/Tools-Package-Notice-Template.md.
  *
  * @returns The appropriate notice, if applicable. Otherwise, `undefined`.
  */
 const generatePackageScopeNotice = (kind) => {
 	let rawContents;
 	switch (kind) {
+		case "EXAMPLE":
+			rawContents = readTemplate("Example-Package-Notice-Template.md");
+			break;
 		case "EXPERIMENTAL":
 			rawContents = readTemplate("Experimental-Package-Notice-Template.md");
 			break;
@@ -51,11 +55,13 @@ const generatePackageScopeNotice = (kind) => {
  * @param {object} options - Transform options.
  * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
  * Default: "./package.json".
- * @param {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | undefined} scopeKind - Scope kind to switch on.
+ * @param {string | undefined} scopeKind - Scope kind to switch on.
+ * EXAMPLE: See templates/Example-Package-Notice-Template.md.
  * EXPERIMENTAL: See templates/Experimental-Package-Notice-Template.md.
  * INTERNAL: See templates/Internal-Package-Notice-Template.md.
  * PRIVATE: See templates/Private-Package-Notice-Template.md.
- * `undefined`: Inherit from package namespace (fluid-experimental, fluid-internal, fluid-private).
+ * TOOLS: See templates/Tools-Package-Notice-Template.md.
+ * `undefined`: Inherit from package namespace (`fluid-experimental`, `fluid-internal`, `fluid-private`, `fluid-tools`, etc.).
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */

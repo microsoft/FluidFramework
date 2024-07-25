@@ -4,18 +4,6 @@ _Note: This tool has dependencies on Microsoft-internal systems._
 
 NodeJs-based test to simulate many clients and a high rate of op generation.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-**IMPORTANT: This package is intended strictly as an implementation detail of the Fluid Framework and is not intended for public consumption.**
-**We make no stability guarantees regarding its APIs.**
-
-<!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
 ## Pre-requisites
 
 -   Run [getkeys](/tools/getkeys/README.md) at some point to enable your machine to retrieve required OAuth tokens and passwords.
@@ -38,7 +26,7 @@ This package runs in two different modes: Orchestrator Mode and Test Runner mode
 _This is the main entry point to the test - this Orchestrator process will spawn many Test Runner processes._
 
 ```bash
-node ./dist/nodeStressTest.js [--url <url>] [--tenant <tenant>] [--profile <profile>] [--debug] [--log <filterTerm>]
+node ./dist/main.js [--url <url>] [--tenant <tenant>] [--profile <profile>] [--debug] [--log <filterTerm>]
 ```
 
 ### Test Runner Mode

@@ -4,13 +4,14 @@ This package contains utilities for writing stochastic tests (sometimes called f
 Such tests can be useful for stress testing systems with well-defined inputs and expected invariants.
 For example, they are useful for asserting eventual convergence properties of DDSes.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:devDependency=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **NOTE: This package is private to the `@microsoft/fluid-framework` repository.**
-**It is not published, and therefore may only be used as a dev dependency.**
+**It is not published, and therefore may only be used in packages within the same pnpm workspace in this repo using the [workspace:*](https://pnpm.io/workspaces#workspace-protocol-workspace) schema.**
+**Since this package is not published, it may also only be used as a dev dependency, or as a dependency in packages that are not published.**
 
 <!-- prettier-ignore-end -->
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import type { ICodecFamily, ICodecOptions } from "../codec/index.js";
 import {
@@ -33,7 +33,6 @@ import {
 	addToNestedSet,
 	fail,
 	nestedSetContains,
-	oob,
 } from "../util/index.js";
 
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
