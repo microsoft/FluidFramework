@@ -768,5 +768,51 @@ describe("treeNodeApi", () => {
 			assert.equal(nodeChanged, true, "'nodeChanged' should have fired");
 			assert.equal(treeChanged, true, "'treeChanged' should have fired");
 		});
+
+		it.only(`'nodeChanged' includes the names of changed properties`, () => {
+			const sb = new SchemaFactory("test");
+			class treeSchema extends sb.object("root", {
+				prop1: sb.optional(sb.number),
+				prop2: sb.optional(sb.number),
+				prop3: sb.optional(sb.number),
+			}) {}
+
+			const view = getView(new TreeViewConfiguration({ schema: treeSchema }));
+			view.initialize({ prop1: 1, prop2: 2, prop3: 0 });
+
+			let listenerFired = false;
+			Tree.on(view.root, "nodeChanged", ({ changedProperties }) => {
+				// This is the main validation for the test
+				assert.deepEqual(changedProperties, new Set(["prop1", "prop2", "prop3"]));
+				listenerFired = true;
+			});
+
+			const branch = view.checkout.fork();
+			const rootNode: UpPath = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 0,
+			};
+			// Replace on prop 1
+			branch.editor
+				.valueField({ parent: rootNode, field: brand("prop1") })
+				.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: 2 }));
+			// Detach on prop 2
+			branch.editor
+				.valueField({ parent: rootNode, field: brand("prop2") })
+				.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: undefined }));
+			// Attach on prop 3
+			branch.editor
+				.valueField({ parent: rootNode, field: brand("prop3") })
+				.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: 3 }));
+
+			view.checkout.merge(branch);
+
+			// Validate changes actually took place and all listeners fired
+			assert.equal(view.root.prop1, 2, "'prop1' value did not change as expected");
+			assert.equal(view.root.prop2, undefined, "'prop2' value did not change as expected");
+			assert.equal(view.root.prop3, 3, "'prop3' value did not change as expected");
+			assert.equal(listenerFired, true, "'nodeChanged' should have fired");
+		});
 	});
 });
