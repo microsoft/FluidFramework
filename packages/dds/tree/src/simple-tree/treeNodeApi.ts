@@ -4,8 +4,9 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
-import { Multiplicity, rootFieldKey } from "../core/index.js";
+import { Multiplicity, rootFieldKey, type TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
 	type LazyItem,
 	type TreeStatus,
@@ -13,7 +14,12 @@ import {
 	isTreeValue,
 	FlexObjectNodeSchema,
 } from "../feature-libraries/index.js";
-import { fail, extractFromOpaque, isReadonlyArray } from "../util/index.js";
+import {
+	fail,
+	extractFromOpaque,
+	isReadonlyArray,
+	type JsonCompatible,
+} from "../util/index.js";
 
 import { getOrCreateNodeProxy, isTreeNode } from "./proxies.js";
 import { getFlexNode, getKernel } from "./proxyBinding.js";
@@ -26,6 +32,8 @@ import {
 	FieldSchema,
 	type ImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
+	type InsertableTreeFieldFromImplicitField,
+	type TreeFieldFromImplicitField,
 } from "./schemaTypes.js";
 import type { TreeNode, TreeChangeEvents } from "./types.js";
 import {
@@ -122,6 +130,137 @@ export interface TreeNodeApi {
 	 * The same node's identifier may, for example, be different across multiple sessions for the same client and document, or different across two clients in the same session.
 	 */
 	shortId(node: TreeNode): number | string | undefined;
+
+	/**
+	 * Construct tree content compatible with a field defined by the provided `schema`.
+	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
+	 * @param data - The data used to construct the field content.
+	 * @remarks
+	 * When providing a {@link TreeNodeSchemaClass}, this is the same as invoking its constructor except that an unhydrated node can also be provided.
+	 * This function exists as a generalization that can be used in other cases as well,
+	 * such as when `undefined` might be allowed (for an optional field), or when the type should be inferred from the data when more than one type is possible.
+	 *
+	 * Like with {@link TreeNodeSchemaClass}'s constructor, its an error to provide an existing node to this API.
+	 * For that case, use {@link Tree.clone}.
+	 */
+	create<TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+		data: InsertableTreeFieldFromImplicitField<TSchema>,
+	): TreeFieldFromImplicitField<TSchema>;
+
+	/**
+	 * Construct tree content compatible with a field defined by the provided `schema`.
+	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
+	 * @param data - The data used to construct the field content. See `Tree.cloneToJSONVerbose`.
+	 */
+	createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(
+		schema: TSchema,
+		data: VerboseTree<THandle> | undefined,
+		options?: {
+			handleConverter<T extends VerboseTree<THandle>>(data: T): T | IFluidHandle;
+			useStableFieldKeys?: boolean;
+		},
+	): TreeFieldFromImplicitField<TSchema>;
+
+	/**
+	 * Construct tree content compatible with a field defined by the provided `schema`.
+	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
+	 * @param data - The data used to construct the field content. See `Tree.cloneToJSONVerbose`.
+	 */
+	createFromVerbose<TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+		data: VerboseTree | undefined,
+		options?: {
+			handleConverter?: undefined;
+			useStableFieldKeys?: boolean;
+		},
+	): TreeFieldFromImplicitField<TSchema>;
+
+	/**
+	 * Like {@link Tree.create}, except deeply clones existing nodes.
+	 * @remarks
+	 * This only clones the persisted data associated with a node.
+	 * Local state, such as properties added to customized schema classes, will not be cloned:
+	 * they will be initialized however they end up after running the constructor, just like if a remote client had inserted the same nodes.
+	 */
+	clone<TSchema extends ImplicitFieldSchema>(
+		original: TreeFieldFromImplicitField<TSchema>,
+		options?: {
+			/**
+			 * If set, all identifier's in the cloned tree (See {@link SchemaFactory.identifier}) will be replaced with new ones allocated using the default identifier allocation schema.
+			 * Otherwise any identifiers will be preserved as is.
+			 */
+			replaceIdentifiers?: true;
+		},
+	): TreeFieldFromImplicitField<TSchema>;
+
+	/**
+	 * Copy a snapshot of the current version of a TreeNode into a JSON compatible plain old JavaScript Object.
+	 *
+	 * @remarks
+	 * If the schema is compatible with {@link ITreeConfigurationOptions.ensureUnambiguous}, then the returned object will be lossless and compatible with {@link Tree.create} (unless the options are used to customize it).
+	 */
+	cloneToJSON<T>(
+		node: TreeNode,
+		options?: { handleConverter(handle: IFluidHandle): T; useStableFieldKeys?: boolean },
+	): JsonCompatible<T>;
+
+	/**
+	 *
+	 */
+	cloneToJSON(
+		node: TreeNode,
+		options?: { handleConverter?: undefined; useStableFieldKeys?: boolean },
+	): JsonCompatible<IFluidHandle>;
+
+	/**
+	 * Copy a snapshot of the current version of a TreeNode into a JSON compatible plain old JavaScript Object.
+	 * Verbose tree format, with explicit type on every node.
+	 *
+	 * @remarks
+	 * If the schema is compatible with {@link ITreeConfigurationOptions.ensureUnambiguous}, then the returned object will be lossless and compatible with {@link Tree.create} (unless the options are used to customize it).
+	 */
+	cloneToJSONVerbose<T>(
+		node: TreeNode,
+		options?: { handleConverter(handle: IFluidHandle): T; useStableFieldKeys?: boolean },
+	): VerboseTree<T>;
+
+	/**
+	 * Same as generic overload, except leaves handles as is.
+	 */
+	cloneToJSONVerbose(
+		node: TreeNode,
+		options?: { handleConverter?: undefined; useStableFieldKeys?: boolean },
+	): VerboseTree;
+}
+
+export type VerboseTreeValue<THandle = IFluidHandle> =
+	| VerboseTree<THandle>
+	| Exclude<IFluidHandle, TreeLeafValue>
+	| THandle;
+
+/**
+ * The fields required by a node in a tree.
+ *
+ * @privateRemarks A forked version of this type is used in `persistedTreeTextFormat.ts`.
+ * Changes to this type might necessitate changes to `EncodedNodeData` or codecs.
+ * See persistedTreeTextFormat's module documentation for more details.
+ *
+ * @public
+ */
+export interface VerboseTree<THandle = IFluidHandle> {
+	/**
+	 * The meaning of this node.
+	 * Provides contexts/semantics for this node and its content.
+	 * Typically used to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
+	 */
+	type: TreeNodeSchemaIdentifier;
+
+	fields:
+		| VerboseTreeValue<THandle>[]
+		| {
+				[key: string]: VerboseTreeValue<THandle>;
+		  };
 }
 
 /**
