@@ -155,9 +155,9 @@ export interface TreeNodeApi {
 	 */
 	createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(
 		schema: TSchema,
-		data: VerboseTree<THandle> | undefined,
+		data: VerboseTreeNode<THandle> | undefined,
 		options?: {
-			handleConverter<T extends VerboseTree<THandle>>(data: T): T | IFluidHandle;
+			handleConverter<T extends VerboseTreeNode<THandle>>(data: T): T | IFluidHandle;
 			useStableFieldKeys?: boolean;
 		},
 	): TreeFieldFromImplicitField<TSchema>;
@@ -169,7 +169,7 @@ export interface TreeNodeApi {
 	 */
 	createFromVerbose<TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
-		data: VerboseTree | undefined,
+		data: VerboseTreeNode | undefined,
 		options?: {
 			handleConverter?: undefined;
 			useStableFieldKeys?: boolean;
@@ -223,7 +223,7 @@ export interface TreeNodeApi {
 	cloneToJSONVerbose<T>(
 		node: TreeNode,
 		options?: { handleConverter(handle: IFluidHandle): T; useStableFieldKeys?: boolean },
-	): VerboseTree<T>;
+	): VerboseTreeNode<T>;
 
 	/**
 	 * Same as generic overload, except leaves handles as is.
@@ -231,24 +231,31 @@ export interface TreeNodeApi {
 	cloneToJSONVerbose(
 		node: TreeNode,
 		options?: { handleConverter?: undefined; useStableFieldKeys?: boolean },
-	): VerboseTree;
+	): VerboseTreeNode;
 }
 
-export type VerboseTreeValue<THandle = IFluidHandle> =
-	| VerboseTree<THandle>
+/**
+ * Verbose encoding of a {@link TreeNode} or {@link TreeValue}.
+ * @remarks
+ * This is verbose meaning that every {@link TreeNode} is a {@link VerboseTreeNode}.
+ * Any IFluidHandle values have been replaced by `THandle`.
+ * @public
+ */
+export type VerboseTree<THandle = IFluidHandle> =
+	| VerboseTreeNode<THandle>
 	| Exclude<IFluidHandle, TreeLeafValue>
 	| THandle;
 
 /**
- * The fields required by a node in a tree.
+ * Verbose encoding of a {@link TreeNode}.
+ * @remarks
+ * This is verbose meaning that every {@link TreeNode} has an explicit `type` property, and `fields`.
+ * This allowed VerboseTreeNode to be unambiguous regarding which type each node is without relying on symbols or hidden state.
  *
- * @privateRemarks A forked version of this type is used in `persistedTreeTextFormat.ts`.
- * Changes to this type might necessitate changes to `EncodedNodeData` or codecs.
- * See persistedTreeTextFormat's module documentation for more details.
- *
+ * Any IFluidHandle values have been replaced by `THandle`. If the `THandle` is JSON compatible, then this type is JSON compatible as well.
  * @public
  */
-export interface VerboseTree<THandle = IFluidHandle> {
+export interface VerboseTreeNode<THandle = IFluidHandle> {
 	/**
 	 * The meaning of this node.
 	 * Provides contexts/semantics for this node and its content.
@@ -256,10 +263,15 @@ export interface VerboseTree<THandle = IFluidHandle> {
 	 */
 	type: TreeNodeSchemaIdentifier;
 
+	/**
+	 * Content of this node.
+	 * For array nodes, an array of children.
+	 * For map and object nodes, an object which children under keys.
+	 */
 	fields:
-		| VerboseTreeValue<THandle>[]
+		| VerboseTree<THandle>[]
 		| {
-				[key: string]: VerboseTreeValue<THandle>;
+				[key: string]: VerboseTree<THandle>;
 		  };
 }
 
