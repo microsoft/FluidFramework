@@ -3,7 +3,7 @@
 **Collaborative TextArea** is a basic example that creates a SharedString and uses the react CollaborativeTextArea
 component to launch a basic collaborative HTML `<textarea>`
 
-<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_README_HEADER:usesTinylicious=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
