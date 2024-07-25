@@ -301,7 +301,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				}
 
 				await takeSnapshot(
-					generateCompleteTree(["FieldA", "FieldB", "FieldC"], 2, 3),
+					generateCompleteTree(["FieldA", "FieldB", "FieldC"], 3, 3),
 					"final",
 				);
 			},
