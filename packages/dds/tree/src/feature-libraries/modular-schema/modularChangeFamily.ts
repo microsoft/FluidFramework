@@ -1647,7 +1647,7 @@ function composeBuildsDestroysAndRefreshers(
 			if (destroyCount !== undefined) {
 				assert(
 					destroyCount === chunk.topLevelLength,
-					0x89b /* Expected build and destroy to have the same length */,
+					"Expected build and destroy to have the same length",
 				);
 
 				allBuilds.delete(key);
