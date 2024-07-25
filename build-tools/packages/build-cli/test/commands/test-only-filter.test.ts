@@ -47,6 +47,16 @@ describe("flub test-only-filter", () => {
 
 	test
 		.stdout()
+		.command(["test-only-filter", "--quiet", "--json", "--releaseGroup", "build-tools"])
+		.it(`--releaseGroup selector`, (ctx) => {
+			const output: jsonOutput = JSON.parse(ctx.stdout);
+			const { selected, filtered } = output;
+			expect(selected).to.be.ofSize(4);
+			expect(filtered).to.be.ofSize(4);
+		});
+
+	test
+		.stdout()
 		.command(["test-only-filter", "--quiet", "--json", "--all", "--private"])
 		.it(`--private filter`, (ctx) => {
 			const output: jsonOutput = JSON.parse(ctx.stdout);
