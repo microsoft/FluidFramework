@@ -94,7 +94,7 @@ export interface ITreeConfigurationOptions {
 	 * @defaultValue `false`.
 	 *
 	 * @remarks
-	 * When this is true, it ensures that the compile time type safety for data when constructing nodes is sufficient to ensure than the runtime behavior will node give data ambiguity errors.
+	 * When this is true, it ensures that the compile time type safety for data when constructing nodes is sufficient to ensure than the runtime behavior will give node data ambiguity errors.
 	 *
 	 * This ensures that the canonical JSON representation of the node (the default produce by JSON.stringify before any customization) of any union in the tree is lossless and unambiguous.
 	 *
