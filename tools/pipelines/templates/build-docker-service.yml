@@ -379,19 +379,31 @@ extends:
             # Generating package lists manually because using scripts/pack-packages.sh (like build-npm-package.yml does)
             # inside the Docker container is proving problematic.
             # See https://github.com/microsoft/FluidFramework/pull/18445 for details.
-            - task: Bash@3
-              displayName: Generate package lists
-              env:
-                RELEASE_GROUP: ${{ parameters.tagName }}
-                STAGING_PATH: $(Build.ArtifactStagingDirectory)
-              inputs:
-                targetType: 'inline'
-                workingDirectory: ${{ parameters.buildDirectory }}
-                script: |
-                  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed public > $STAGING_PATH/pack/packagePublishOrder-public.txt
-                  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-build > $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
-                  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-dev > $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
-                  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-test > $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
+            # - task: Bash@3
+            #   displayName: Generate package lists
+            #   env:
+            #     RELEASE_GROUP: ${{ parameters.tagName }}
+            #     STAGING_PATH: $(Build.ArtifactStagingDirectory)
+            #   inputs:
+            #     targetType: 'inline'
+            #     workingDirectory: ${{ parameters.buildDirectory }}
+            #     script: |
+            #       flub list --no-private --releaseGroup $RELEASE_GROUP --feed public > $STAGING_PATH/pack/packagePublishOrder-public.txt
+            #       flub list --no-private --releaseGroup $RELEASE_GROUP --feed internal-build > $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
+            #       flub list --no-private --releaseGroup $RELEASE_GROUP --feed internal-dev > $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
+            #       flub list --no-private --releaseGroup $RELEASE_GROUP --feed internal-test > $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
+
+          - task: Bash@3
+            displayName: npm pack
+            env:
+              PACKAGE_MANAGER: '${{ parameters.packageManager }}'
+              RELEASE_GROUP: '${{ parameters.tagName }}'
+              STAGING_PATH: $(Build.ArtifactStagingDirectory)
+            inputs:
+              targetType: filePath
+              workingDirectory: '${{ parameters.buildDirectory }}'
+              filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
+
 
           # At this point we want to publish the artifact with npm-packed packages, but as part of 1ES migration that's
           # now part of templateContext.outputs below.
