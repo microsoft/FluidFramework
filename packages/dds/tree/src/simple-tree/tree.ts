@@ -19,6 +19,7 @@ import {
 	type TreeFieldFromImplicitField,
 	type TreeNodeSchema,
 	FieldKind,
+	normalizeAllowedTypes,
 } from "./schemaTypes.js";
 import { toFlexSchema } from "./toFlexSchema.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
@@ -282,7 +283,7 @@ export function walkNodeSchema(
 		// nothing to do
 	} else if (isObjectNodeSchema(schema)) {
 		for (const field of schema.fields.values()) {
-			walkAllowedTypes(field.allowedTypeSet, visitor, visitedSet);
+			walkFieldSchema(field, visitor, visitedSet);
 		}
 	} else {
 		assert(
@@ -290,7 +291,7 @@ export function walkNodeSchema(
 			0x9b3 /* invalid schema */,
 		);
 		const childTypes = schema.info as ImplicitAllowedTypes;
-		walkFieldSchema(childTypes, visitor, visitedSet);
+		walkAllowedTypes(normalizeAllowedTypes(childTypes), visitor, visitedSet);
 	}
 	// This visit is done at the end so the traversal order is most inner types first.
 	// This was picked since when fixing errors,
@@ -318,8 +319,20 @@ export function walkAllowedTypes(
 	visitor.allowedTypes?.(allowedTypes);
 }
 
+/**
+ * Callbacks for use in {@link walkFieldSchema} / {@link walkAllowedTypes} / {@link walkNodeSchema}.
+ */
 export interface SchemaVisitor {
+	/**
+	 * Called once for each node schema.
+	 */
 	node?: (schema: TreeNodeSchema) => void;
+	/**
+	 * Called once for set of allowed types.
+	 * Includes implicit allowed types (when a single type was used instead of an array).
+	 *
+	 * This includes every field, but also the allowed types array for maps and arrays and the root if starting at {@link walkAllowedTypes}.
+	 */
 	allowedTypes?: (allowedTypes: Iterable<TreeNodeSchema>) => void;
 }
 
