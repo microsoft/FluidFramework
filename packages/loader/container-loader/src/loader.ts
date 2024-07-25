@@ -93,7 +93,7 @@ export class RelativeLoader implements ILoader {
 /**
  * @legacy
  * @alpha
- * @deprecated Use ILoaderOptions from container-definitions instead
+ * @deprecated Use {@link @fluidframework/container-definitions#ILoaderOptions} instead
  */
 export interface ILoaderOptions extends ILoaderOptions1 {
 	/**
