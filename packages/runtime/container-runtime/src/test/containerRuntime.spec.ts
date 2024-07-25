@@ -251,7 +251,7 @@ describe("Runtime", () => {
 				assert.strictEqual(containerRuntime.flushMode, FlushMode.Immediate);
 			});
 
-			it.only("Process empty batch", async () => {
+			it("Process empty batch", async () => {
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({
 						"Fluid.Container.enableOfflineLoad": true,
