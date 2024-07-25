@@ -23,9 +23,9 @@ import type {
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
-import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNode.js";
 import { ValueSchema } from "../core/index.js";
 import { fail } from "../util/index.js";
+import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
 
 // TODOs:
 // - Cache results on view schema to avoid redundant recomputation
