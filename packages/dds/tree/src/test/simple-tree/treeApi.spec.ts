@@ -778,7 +778,7 @@ describe("treeNodeApi", () => {
 			}) {}
 
 			const view = getView(new TreeViewConfiguration({ schema: treeSchema }));
-			view.initialize({ prop1: 1, prop2: 2, prop3: 0 });
+			view.initialize({ prop1: 1, prop2: 2 /* , prop3: 0 */ });
 
 			let listenerFired = false;
 			Tree.on(view.root, "nodeChanged", ({ changedProperties }) => {
@@ -793,18 +793,22 @@ describe("treeNodeApi", () => {
 				parentField: rootFieldKey,
 				parentIndex: 0,
 			};
+
+			// TODO: look at prod code on how we create a view, and do it here based on the branch so I don't have to
+			// do things through lower-level APIs
+
 			// Replace on prop 1
 			branch.editor
-				.valueField({ parent: rootNode, field: brand("prop1") })
-				.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: 2 }));
+				.optionalField({ parent: rootNode, field: brand("prop1") })
+				.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: 2 }), false);
 			// Detach on prop 2
 			branch.editor
-				.valueField({ parent: rootNode, field: brand("prop2") })
-				.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: undefined }));
+				.optionalField({ parent: rootNode, field: brand("prop2") })
+				.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: undefined }), false);
 			// Attach on prop 3
 			branch.editor
-				.valueField({ parent: rootNode, field: brand("prop3") })
-				.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: 3 }));
+				.optionalField({ parent: rootNode, field: brand("prop3") })
+				.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: 3 }), true);
 
 			view.checkout.merge(branch);
 
