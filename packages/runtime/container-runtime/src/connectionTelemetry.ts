@@ -440,10 +440,16 @@ class OpPerfTelemetry {
 }
 export interface IPerfSignalReport {
 	/**
-	 * Identifier for the signal being submitted in order to
-	 * allow collection of data around the roundtrip of signal messages.
+	 * Identifier for the signal being submitted in order
 	 */
 	signalSequenceNumber: number;
+
+	/**
+	 * Identifier for broadcast signals being submitted in order to
+	 * allow collection of data around the roundtrip of signal messages.
+	 */
+	broadcastSignalSequenceNumber: number;
+
 	/**
 	 * Number of signals that were expected but not received.
 	 */
@@ -458,6 +464,11 @@ export interface IPerfSignalReport {
 	 * Expected Signal Sequence to be received.
 	 */
 	trackingSignalSequenceNumber: number | undefined;
+
+	/**
+	 * Minimum out-of-sequence signal that we expect to receive.
+	 */
+	minimumSignalSequenceNumber: number | undefined;
 }
 
 /**
