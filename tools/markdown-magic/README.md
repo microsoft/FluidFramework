@@ -117,7 +117,7 @@ Arguments:
 
 #### `EXAMPLE_APP_README_HEADER`
 
-Generates a complete starter `README.md` file for an `Fluid` example app package.
+Generates a complete starter `README.md` file for a `Fluid` example app package.
 
 Notes:
 
