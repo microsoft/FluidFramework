@@ -676,6 +676,9 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
     (event: "memberRemoved", listener: MemberChangedListener<M>): void;
 }
 
+// @public
+export function isFluidHandle(value: unknown): value is IFluidHandle;
+
 // @alpha @sealed
 export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>, Omit<IDirectory, "on" | "once" | "off"> {
     // (undocumented)
