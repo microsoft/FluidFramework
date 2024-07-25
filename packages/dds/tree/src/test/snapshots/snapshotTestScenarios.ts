@@ -89,7 +89,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 					enableSchemaValidation,
 				});
 				view.initialize(new NodeSchema({ foo: ["a", "b", "c"], bar: ["d", "e", "f"] }));
-				view.root.bar.moveRangeToIndex(1, 1, 2, view.root.foo);
+				view.root.bar.moveRangeToIndex(1, 1, 3, view.root.foo);
 				provider.processMessages();
 				await takeSnapshot(provider.trees[0], "tree-0-final");
 			},
