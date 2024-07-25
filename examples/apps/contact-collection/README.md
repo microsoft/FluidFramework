@@ -15,7 +15,7 @@ The specific access mechanisms can vary -- in this example, `ContactCollection` 
 
 For another example of this pattern, consider the `SharedDirectory` DDS. The `getWorkingDirectory()` method allows granular access to an `IDirectory` that can be used separately from the remainder of the `SharedDirectory`, despite the data being stored in the same data store. Although the details differ since it is a DDS rather than a data object, the principle is the same.
 
-<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_README_HEADER:usesTinylicious=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

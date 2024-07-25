@@ -230,6 +230,9 @@ importers:
         specifier: ^2.19.0
         version: 2.19.0
     devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3

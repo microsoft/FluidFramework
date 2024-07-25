@@ -8,7 +8,7 @@ classes.
 
 There is another experimental implementation of Clicker using a WiP Fluid React Component in components/experimental/clicker-react. While it uses a state update model instead of an event-listening model that some React developers may find more familiar, the code is still being developed and may contain bugs.
 
-<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_README_HEADER:usesTinylicious=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
