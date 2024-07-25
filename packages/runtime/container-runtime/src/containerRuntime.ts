@@ -1272,7 +1272,7 @@ export class ContainerRuntime
 	private readonly _perfSignalData: IPerfSignalReport = {
 		signalsLost: 0,
 		signalSequenceNumber: 0,
-		broadcastSignalSequenceNumber: 0,
+		broadcastSignalCount: 0,
 		signalTimestamp: 0,
 		trackingSignalSequenceNumber: undefined,
 		minimumSignalSequenceNumber: undefined,
@@ -3170,7 +3170,7 @@ export class ContainerRuntime
 			this._perfSignalData.trackingSignalSequenceNumber = nextSignalSequenceNumber;
 			this._perfSignalData.minimumSignalSequenceNumber = nextSignalSequenceNumber;
 		} else {
-			this._perfSignalData.broadcastSignalSequenceNumber++;
+			this._perfSignalData.broadcastSignalCount++;
 		}
 
 		const newEnvelope: ISignalEnvelope = {
@@ -3181,8 +3181,7 @@ export class ContainerRuntime
 		};
 
 		if (
-			this._perfSignalData.broadcastSignalSequenceNumber %
-				this.defaultTelemetrySignalSampleCount ===
+			this._perfSignalData.broadcastSignalCount % this.defaultTelemetrySignalSampleCount ===
 				1 &&
 			!isTargetedSignal
 		) {

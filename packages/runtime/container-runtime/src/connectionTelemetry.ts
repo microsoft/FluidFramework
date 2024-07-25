@@ -448,7 +448,7 @@ export interface IPerfSignalReport {
 	 * Identifier for broadcast signals being submitted in order to
 	 * allow collection of data around the roundtrip of signal messages.
 	 */
-	broadcastSignalSequenceNumber: number;
+	broadcastSignalCount: number;
 
 	/**
 	 * Number of signals that were expected but not received.
