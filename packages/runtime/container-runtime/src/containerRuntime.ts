@@ -2902,13 +2902,15 @@ export class ContainerRuntime
 				}
 			} else if (
 				envelope.clientSignalSequenceNumber ===
-					this._perfSignalData.trackingSignalSequenceNumber &&
-				this._perfSignalData.signalTimestamp !== 0
+				this._perfSignalData.trackingSignalSequenceNumber
 			) {
-				// only logging for the first connection and the signal latency.
-				if (this.consecutiveReconnects === 0) {
-					this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
-				}
+				// Update the tracking signal sequence number to the next expected signal in the sequence.
+				this._perfSignalData.trackingSignalSequenceNumber++;
+			}
+
+			// only logging for the first connection and the signal latency.
+			if (this._perfSignalData.signalTimestamp !== 0 && this.consecutiveReconnects === 0) {
+				this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
 			}
 		}
 
