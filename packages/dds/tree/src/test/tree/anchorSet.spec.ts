@@ -492,7 +492,7 @@ describe("AnchorSet", () => {
 		]);
 	});
 
-	it.only("childrenChangedAfterBatch event includes the changed fields", () => {
+	it("childrenChangedAfterBatch event includes the changed fields", () => {
 		const fieldOne: FieldKey = brand("one");
 		const fieldTwo: FieldKey = brand("two");
 		const fieldThree: FieldKey = brand("three");
@@ -510,6 +510,7 @@ describe("AnchorSet", () => {
 			listenerFired = true;
 		});
 
+		// Try to test all cases of changes happening on a delta visitor: attaches, detaches, replaces
 		withVisitor(anchors, (v) => {
 			v.enterField(rootFieldKey);
 			v.enterNode(0);

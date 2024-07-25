@@ -132,7 +132,7 @@ export interface AnchorEvents {
 	 *
 	 * Compare to {@link AnchorEvents.childrenChanged} which is emitted in the middle of the batch/delta-visit.
 	 */
-	childrenChangedAfterBatch(arg: { anchor: AnchorNode, changedFields: Set<FieldKey> }): void;
+	childrenChangedAfterBatch(arg: { anchor: AnchorNode, changedFields: ReadonlySet<FieldKey> }): void;
 
 	/**
 	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if something in the subtree
