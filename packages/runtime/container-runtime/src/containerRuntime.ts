@@ -2853,7 +2853,7 @@ export class ContainerRuntime
 
 		// Only collect signal telemetry for messages sent by the current client.
 		if (message.clientId === this.clientId && this.connected) {
-			// Initialize the perf signal data in case of reconnect.
+			// Initialize the perf signal data to track next signal if undefined.
 			if (
 				this._perfSignalData.trackingSignalSequenceNumber === undefined ||
 				this._perfSignalData.minimumSignalSequenceNumber === undefined
@@ -2909,7 +2909,7 @@ export class ContainerRuntime
 				this._perfSignalData.trackingSignalSequenceNumber++;
 			}
 
-			// only logging for the first connection and the signal latency.
+			// only log roundtrip time of signals with timestamps on first connection
 			if (this._perfSignalData.signalTimestamp !== 0 && this.consecutiveReconnects === 0) {
 				this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
 			}
