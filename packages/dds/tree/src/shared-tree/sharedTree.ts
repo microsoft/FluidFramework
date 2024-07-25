@@ -54,7 +54,6 @@ import type {
 	ITree,
 	ImplicitFieldSchema,
 	TreeViewConfiguration,
-	SimpleTreeSchema,
 } from "../simple-tree/index.js";
 
 import { type InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
@@ -66,7 +65,6 @@ import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type CheckoutEvents, type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
 import type { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
 import { breakingClass, throwIfBroken } from "../util/index.js";
-import { toSimpleTreeSchema } from "./storedSchemaToSimpleSchema.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -83,16 +81,12 @@ export interface SharedTreeContentSnapshot {
 	 * This is mainly useful for debugging cases where schematize reports an incompatible view schema.
 	 */
 	readonly schema: TreeStoredSchema;
-
 	/**
 	 * All {@link TreeStatus.InDocument} content.
-	 * @privateRemarks TODO: document the structure. Why is this an array?
 	 */
 	readonly tree: JsonableTree[];
-
 	/**
 	 * All {@link TreeStatus.Removed} content.
-	 * @privateRemarks TODO: document the structure.
 	 */
 	readonly removed: [string | number | undefined, number, JsonableTree][];
 }
@@ -124,13 +118,6 @@ export interface ISharedTree extends ISharedObject, ITree {
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 		onDispose: () => void,
 	): FlexTreeView<TRoot> | undefined;
-
-	/**
-	 * TODO
-	 *
-	 * @privateRemarks TODO: promote to `ITree` once we are ready to surface this to customers.
-	 */
-	getStoredSchema(): SimpleTreeSchema;
 }
 
 /**
@@ -318,15 +305,6 @@ export class SharedTree
 		} finally {
 			cursor.free();
 		}
-	}
-
-	public getStoredSchema(): SimpleTreeSchema {
-		// TODO: Cache result somewhere?
-		return toSimpleTreeSchema(
-			this.storedSchema.nodeSchema,
-			this.storedSchema.rootFieldSchema,
-			defaultSchemaPolicy,
-		);
 	}
 
 	public schematizeFlexTree<TRoot extends FlexFieldSchema>(

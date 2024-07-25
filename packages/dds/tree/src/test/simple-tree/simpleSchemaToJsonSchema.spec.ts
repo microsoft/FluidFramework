@@ -4,13 +4,12 @@
  */
 
 import assert from "assert";
-import {
-	toJsonSchema,
-	type SimpleNodeSchema,
-	type SimpleTreeSchema,
-	type TreeJsonSchema,
-} from "../../simple-tree/index.js";
+import type { TreeJsonSchema } from "../../simple-tree/index.js";
 import { getJsonValidator } from "./jsonSchemaUtilities.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { SimpleNodeSchema, SimpleTreeSchema } from "../../simple-tree/simpleSchema.js";
+// eslint-disable-next-line import/no-internal-modules
+import { toJsonSchema } from "../../simple-tree/simpleSchemaToJsonSchema.js";
 
 // TODOs:
 // - Identifier fields
