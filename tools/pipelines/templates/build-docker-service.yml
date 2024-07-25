@@ -366,15 +366,15 @@ extends:
                   mkdir -p $(hostPathToPackArtifact)
                   mkdir -p $(hostPathToTestResultsArtifact)
 
-            - task: Docker@1
-              displayName: Pack
-              inputs:
-                command: run
-                runInBackground: false
-                imageName: $(baseContainerTag)
-                containerCommand: pnpm -rc exec mv `npm pack` /usr/src/pack
-                volumes:
-                  $(hostPathToPackArtifact)/scoped:/usr/src/pack
+            # - task: Docker@1
+            #   displayName: Pack
+            #   inputs:
+            #     command: run
+            #     runInBackground: false
+            #     imageName: $(baseContainerTag)
+            #     containerCommand: pnpm -rc exec mv `npm pack` /usr/src/pack
+            #     volumes:
+            #       $(hostPathToPackArtifact)/tarballs:/usr/src/pack
 
             # Generating package lists manually because using scripts/pack-packages.sh (like build-npm-package.yml does)
             # inside the Docker container is proving problematic.
@@ -393,17 +393,16 @@ extends:
             #       flub list --no-private --releaseGroup $RELEASE_GROUP --feed internal-dev > $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
             #       flub list --no-private --releaseGroup $RELEASE_GROUP --feed internal-test > $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
 
-          - task: Bash@3
-            displayName: npm pack
-            env:
-              PACKAGE_MANAGER: '${{ parameters.packageManager }}'
-              RELEASE_GROUP: '${{ parameters.tagName }}'
-              STAGING_PATH: $(Build.ArtifactStagingDirectory)
-            inputs:
-              targetType: filePath
-              workingDirectory: '${{ parameters.buildDirectory }}'
-              filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
-
+            - task: Bash@3
+              displayName: npm pack
+              env:
+                PACKAGE_MANAGER: '${{ parameters.packageManager }}'
+                RELEASE_GROUP: '${{ parameters.tagName }}'
+                STAGING_PATH: $(Build.ArtifactStagingDirectory)
+              inputs:
+                targetType: filePath
+                workingDirectory: '${{ parameters.buildDirectory }}'
+                filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
 
           # At this point we want to publish the artifact with npm-packed packages, but as part of 1ES migration that's
           # now part of templateContext.outputs below.
