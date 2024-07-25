@@ -32,6 +32,13 @@ jobs:
       - name: Build the project
         working-directory: packages/tools/devtools/devtools-example
         run: pnpm run build
+      # Set up environment variables for Oryx
+      - name: Set up environment variables for Oryx
+        run: |
+          echo 'export ENABLE_DYNAMIC_INSTALL=true' >> $GITHUB_ENV
+          echo 'export ENABLE_NODE_MONOREPO=true' >> $GITHUB_ENV
+          echo 'export NODE_VERSION=16' >> $GITHUB_ENV
+          echo 'LOG_LEVEL=debug' >> $GITHUB_ENV
 
       - name: Build And Deploy
         id: builddeploy
