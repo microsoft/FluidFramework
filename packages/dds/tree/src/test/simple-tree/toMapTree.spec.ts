@@ -16,6 +16,7 @@ import {
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	ValueSchema,
+	type ExclusiveMapTree,
 	type FieldKey,
 	type FieldKindData,
 	type FieldKindIdentifier,
@@ -30,18 +31,20 @@ import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { InsertableContent } from "../../simple-tree/proxies.js";
 import {
-	FieldKind,
-	createFieldSchema,
 	type TreeNodeSchema,
 	type ContextualFieldProvider,
 	type ConstantFieldProvider,
 	type FieldProvider,
 	type FieldProps,
+	createFieldSchema,
+	FieldKind,
+	getDefaultProvider,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import {
-	cursorFromFieldData,
+	addDefaultsToMapTree,
 	cursorFromNodeData,
+	getPossibleTypes,
 	mapTreeFromNodeData,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/toMapTree.js";
@@ -1405,7 +1408,7 @@ describe("toMapTree", () => {
 				cursorFromNodeData(
 					nodeData,
 					[schemaFactory.string],
-					undefined,
+					nodeKeyManager,
 					schemaValidationPolicyForSuccess,
 				);
 			});
@@ -1417,7 +1420,7 @@ describe("toMapTree", () => {
 						cursorFromNodeData(
 							content,
 							[schemaFactory.string],
-							undefined,
+							nodeKeyManager,
 							schemaValidationPolicyForFailure,
 						),
 					outOfSchemaExpectedError,
@@ -1425,25 +1428,42 @@ describe("toMapTree", () => {
 			});
 		});
 
-		describe("cursorFromFieldData", () => {
-			it("Success", () => {
-				const content = "Hello world";
-				const fieldSchema = createFieldSchema(FieldKind.Required, [schemaFactory.string]);
-				cursorFromFieldData(content, fieldSchema, undefined, schemaValidationPolicyForSuccess);
+		describe("getPossibleTypes", () => {
+			it("array vs map", () => {
+				const f = new SchemaFactory("test");
+				const arraySchema = f.array([f.null]);
+				const mapSchema = f.map([f.null]);
+				// Array makes array
+				assert.deepEqual(getPossibleTypes(new Set([mapSchema, arraySchema]), []), [
+					arraySchema,
+				]);
+				// Map makes map
+				assert.deepEqual(getPossibleTypes(new Set([mapSchema, arraySchema]), new Map()), [
+					mapSchema,
+				]);
+				// Iterator can make map or array.
+				assert.deepEqual(
+					getPossibleTypes(new Set([mapSchema, arraySchema]), new Map().keys()),
+					[mapSchema, arraySchema],
+				);
 			});
+		});
 
-			it("Failure", () => {
-				const content = "Hello world";
-				const fieldSchema = createFieldSchema(FieldKind.Required, [schemaFactory.string]);
-				assert.throws(
-					() =>
-						cursorFromFieldData(
-							content,
-							fieldSchema,
-							undefined,
-							schemaValidationPolicyForFailure,
-						),
-					outOfSchemaExpectedError,
+		describe("addDefaultsToMapTree", () => {
+			it("custom stored key", () => {
+				const f = new SchemaFactory("test");
+
+				class Test extends f.object("test", {
+					api: createFieldSchema(FieldKind.Required, [f.number], {
+						key: "stored",
+						defaultProvider: getDefaultProvider(() => 5),
+					}),
+				}) {}
+				const m: ExclusiveMapTree = { type: brand(Test.identifier), fields: new Map() };
+				addDefaultsToMapTree(m, Test, undefined);
+				assert.deepEqual(
+					m.fields,
+					new Map([["stored", [{ type: f.number.identifier, fields: new Map(), value: 5 }]]]),
 				);
 			});
 		});
