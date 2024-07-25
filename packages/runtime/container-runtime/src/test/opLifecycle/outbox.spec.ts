@@ -226,7 +226,6 @@ describe("Outbox", () => {
 				maxBatchSizeInBytes: params.maxBatchSize ?? maxBatchSizeInBytes,
 				compressionOptions: params.compressionOptions ?? DefaultCompressionOptions,
 				disablePartialFlush: params.disablePartialFlush ?? false,
-				immediateMode: params.immediateMode ?? false,
 			},
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(
@@ -344,10 +343,7 @@ describe("Outbox", () => {
 			state.batchesSubmitted[0].messages[0].contents,
 			'{"type":"groupedBatch","contents":[]}',
 		);
-		assert.equal(
-			state.batchesSubmitted[0].messages[0].metadata?.batchId,
-			batchId,
-		);
+		assert.equal(state.batchesSubmitted[0].messages[0].metadata?.batchId, batchId);
 		assert.equal(
 			asEmptyBatchMetadata(state.pendingOpContents[0].localOpMetadata)?.emptyBatch,
 			true,

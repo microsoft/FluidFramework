@@ -1219,6 +1219,7 @@ export class ContainerRuntime
 
 	private _orderSequentiallyCalls: number = 0;
 	private readonly _flushMode: FlushMode;
+	private readonly offlineEnabled: boolean;
 	private flushTaskExists = false;
 
 	private _connected: boolean;
@@ -1602,6 +1603,14 @@ export class ContainerRuntime
 		} else {
 			this._flushMode = runtimeOptions.flushMode;
 		}
+		this.offlineEnabled =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false;
+
+		if (this.offlineEnabled && this._flushMode !== FlushMode.TurnBased) {
+			const error = new UsageError("Offline mode is only supported in turn-based mode");
+			this.closeFn(error);
+			throw error;
+		}
 
 		if (context.attachState === AttachState.Attached) {
 			const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
@@ -1755,7 +1764,6 @@ export class ContainerRuntime
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
 				disablePartialFlush: disablePartialFlush === true,
-				immediateMode: this.flushMode === FlushMode.Immediate,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
@@ -2656,24 +2664,19 @@ export class ContainerRuntime
 					)
 				: batch.map((message) => ({ message, localOpMetadata: undefined }));
 			if (messages.length === 0) {
-				assert(sequenceNumber !== undefined, "sequenceNumber must be defined");
-				this.emit("batchBegin", { sequenceNumber });
-				if (!this.hasPendingMessages()) {
-					this.updateDocumentDirtyState(false);
-				}
-				this.emit("batchEnd", undefined, { sequenceNumber });
-			} else {
-				messages.forEach(({ message, localOpMetadata }) => {
-					const msg: MessageWithContext = {
-						message,
-						local,
-						modernRuntimeMessage,
-						savedOp,
-						localOpMetadata,
-					};
-					this.ensureNoDataModelChanges(() => this.processCore(msg));
-				});
+				this.ensureNoDataModelChanges(() => this.processEmptyBatch(sequenceNumber));
+				return;
 			}
+			messages.forEach(({ message, localOpMetadata }) => {
+				const msg: MessageWithContext = {
+					message,
+					local,
+					modernRuntimeMessage,
+					savedOp,
+					localOpMetadata,
+				};
+				this.ensureNoDataModelChanges(() => this.processCore(msg));
+			});
 		} else {
 			const msg: MessageWithContext = {
 				message: messageCopy as InboundSequencedContainerRuntimeMessageOrSystemMessage,
@@ -2740,6 +2743,20 @@ export class ContainerRuntime
 			throw e;
 		}
 	}
+
+	/**
+	 * Process an empty batch, which will execute expected actions while processing even if there are no messages.
+	 * This is a separate function because the processCore function expects at least one message to process.
+	 */
+	private processEmptyBatch(sequenceNumber) {
+		assert(sequenceNumber !== undefined, "sequenceNumber must be defined");
+		this.emit("batchBegin", { sequenceNumber });
+		if (!this.hasPendingMessages()) {
+			this.updateDocumentDirtyState(false);
+		}
+		this.emit("batchEnd", undefined, { sequenceNumber });
+	}
+
 	/**
 	 * Assuming the given message is also a TypedContainerRuntimeMessage,
 	 * checks its type and dispatches the message to the appropriate handler in the runtime.
@@ -4145,10 +4162,7 @@ export class ContainerRuntime
 
 		// Only include Batch ID if "Offline Load" feature is enabled
 		// It's only needed to identify batches across container forks arising from misuse of offline load.
-		const includeBatchId =
-			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false;
-
-		this.flush(includeBatchId ? batchId : undefined);
+		this.flush(this.offlineEnabled ? batchId : undefined);
 	}
 
 	private reSubmit(message: PendingMessageResubmitData) {

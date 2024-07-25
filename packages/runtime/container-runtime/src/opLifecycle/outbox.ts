@@ -34,7 +34,6 @@ export interface IOutboxConfig {
 	// The maximum size of a batch that we can send over the wire.
 	readonly maxBatchSizeInBytes: number;
 	readonly disablePartialFlush: boolean;
-	readonly immediateMode?: boolean;
 }
 
 export interface IOutboxParameters {
@@ -275,27 +274,25 @@ export class Outbox {
 	}
 
 	private flushEmptyBatch(resubmittingBatchId: BatchId) {
-		if (this.params.config.immediateMode !== true) {
-			const referenceSequenceNumber =
-				this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
-			assert(
-				referenceSequenceNumber !== undefined,
-				"reference sequence number should be defined",
-			);
-			const emptyGroupedBatch = this.params.groupingManager.createEmptyGroupedBatch(
-				resubmittingBatchId,
-				referenceSequenceNumber,
-			);
-			let clientSequenceNumber: number | undefined;
-			if (this.params.shouldSend()) {
-				clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
-			}
-			this.params.pendingStateManager.onFlushBatch(
-				emptyGroupedBatch.messages, // This is the single empty Grouped Batch message
-				clientSequenceNumber,
-			);
-			return;
+		const referenceSequenceNumber =
+			this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
+		assert(
+			referenceSequenceNumber !== undefined,
+			"reference sequence number should be defined",
+		);
+		const emptyGroupedBatch = this.params.groupingManager.createEmptyGroupedBatch(
+			resubmittingBatchId,
+			referenceSequenceNumber,
+		);
+		let clientSequenceNumber: number | undefined;
+		if (this.params.shouldSend()) {
+			clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
 		}
+		this.params.pendingStateManager.onFlushBatch(
+			emptyGroupedBatch.messages, // This is the single empty Grouped Batch message
+			clientSequenceNumber,
+		);
+		return;
 	}
 
 	private flushInternal(
