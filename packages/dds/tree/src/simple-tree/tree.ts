@@ -201,7 +201,7 @@ function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): void {
 		}
 		checked.add(schema);
 
-		if (union instanceof LeafNodeSchema) {
+		if (schema instanceof LeafNodeSchema) {
 			// nothing to do
 		} else if (isObjectNodeSchema(schema)) {
 			objects.push(schema);
