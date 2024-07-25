@@ -17,8 +17,6 @@ import {
 	brand,
 	brandedNumberType,
 	brandedStringType,
-	setInNestedMap,
-	tryGetFromNestedMap,
 } from "../../util/index.js";
 import type { TaggedChange } from "./changeRebaser.js";
 
