@@ -58,7 +58,6 @@ describe("filterPackages", async () => {
 			"@fluid-tools/build-cli",
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
-			"@fluid-private/readme-command",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -71,9 +70,10 @@ describe("filterPackages", async () => {
 			skipScope: undefined,
 		};
 		const actual = await filterPackages(packages, filters);
-		expect(actual).to.be.containingAllOf([
+		const names = actual.map((p) => p.name);
+		expect(names).to.be.containingAllOf([
 			"@fluid-private/changelog-generator-wrapper",
-			"@fluid-private/stochastic-test-utils",
+			"@fluid-tools/markdown-magic",
 		]);
 	});
 
