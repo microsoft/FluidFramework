@@ -170,17 +170,6 @@ export async function createTestDriver(
 	});
 }
 
-export async function safeExit(code: number, url: string, runId?: number) {
-	// There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
-	await new Promise((resolve) => {
-		setTimeout(resolve, 1000);
-	});
-	// Flush the logs
-	await FileLogger.flushLogger({ url, runId });
-
-	process.exit(code);
-}
-
 /**
  * Global feature gates for all tests. They can be overwritten by individual test configs.
  */

@@ -40,7 +40,6 @@ import {
 	createTestDriver,
 	globalConfigurations,
 	printStatus,
-	safeExit,
 } from "./utils.js";
 
 async function main() {
@@ -142,7 +141,15 @@ async function main() {
 	} catch (e) {
 		logger.sendErrorEvent({ eventName: "runnerFailed" }, e);
 	} finally {
-		await safeExit(result, url, runId);
+		// There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
+		// TODO: Track down the dangling promise and fix it.
+		await new Promise((resolve) => {
+			setTimeout(resolve, 1000);
+		});
+		// Flush the logs
+		await FileLogger.flushLogger({ url, runId });
+
+		process.exit(result);
 	}
 }
 

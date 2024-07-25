@@ -6,6 +6,7 @@
 import { DriverEndpoint, TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import commander from "commander";
 
+import { FileLogger } from "./FileLogger.js";
 import { getProfile } from "./getProfile.js";
 import { getTestUsers } from "./getTestUsers.js";
 import { stressTest } from "./stressTest.js";
@@ -103,7 +104,14 @@ const main = async () => {
 		supportsBrowserAuth,
 	);
 
-	await stressTest(testDriver, profile, {
+	const logger = await FileLogger.createLogger({
+		driverType: testDriver.type,
+		driverEndpointName: testDriver.endpointName,
+		profile: profileName,
+		runId: undefined,
+	});
+
+	const url = await stressTest(testDriver, profile, {
 		testId,
 		debug,
 		verbose,
@@ -112,7 +120,17 @@ const main = async () => {
 		createTestId,
 		testUsers,
 		profileName,
+		logger,
 	});
+
+	// There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
+	// TODO: Track down the dangling promise and fix it.
+	await new Promise((resolve) => {
+		setTimeout(resolve, 1000);
+	});
+	// Flush the logs
+	await FileLogger.flushLogger({ url, runId: undefined });
+	process.exit(0);
 };
 
 main().catch((error) => {
