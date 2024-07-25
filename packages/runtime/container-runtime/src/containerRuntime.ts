@@ -2566,7 +2566,6 @@ export class ContainerRuntime
 		this._connected = connected;
 
 		if (!connected) {
-			this._perfSignalData.signalsLost = 0;
 			this._perfSignalData.signalTimestamp = 0;
 			this._perfSignalData.trackingSignalSequenceNumber = undefined;
 			this._perfSignalData.minimumSignalSequenceNumber = undefined;
@@ -2853,7 +2852,7 @@ export class ContainerRuntime
 
 		// Only collect signal telemetry for messages sent by the current client.
 		if (message.clientId === this.clientId && this.connected) {
-			// If this is the first signal received, initialize the perf signal data.
+			// Initialize the perf signal data in case of reconnect.
 			if (
 				this._perfSignalData.trackingSignalSequenceNumber === undefined ||
 				this._perfSignalData.minimumSignalSequenceNumber === undefined
