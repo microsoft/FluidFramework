@@ -190,27 +190,32 @@ export class RemoteMessageProcessor {
 	}
 }
 
-/** Takes an incoming message and if the contents is a string, JSON.parse's it in place */
+/**
+ * Takes an incoming message and if the contents is a string, JSON.parse's it in place
+ * @param mutableMessage - op message received
+ * @param hasModernRuntimeMessageEnvelop - false if the message does not contain the modern op envelop where message.type is MessageType.Operation
+ * @param logLegacyCase - callback to log when legacy op is encountered
+ */
 export function ensureContentsDeserialized(
 	mutableMessage: ISequencedDocumentMessage,
-	isModernRuntimeMessage: boolean,
+	hasModernRuntimeMessageEnvelop: boolean,
 	logLegacyCase: (codePath: string) => void,
 ): void {
 	// back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
 	// System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
 	// Old ops may contain empty string (I assume noops).
-	let parsedJsonContents: boolean;
+	let hasParsedJsonContents: boolean;
 	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
 		mutableMessage.contents = JSON.parse(mutableMessage.contents);
-		parsedJsonContents = true;
+		hasParsedJsonContents = true;
 	} else {
-		parsedJsonContents = false;
+		hasParsedJsonContents = false;
 	}
 
 	// We expect Modern Runtime Messages to have JSON serialized contents,
 	// and all other messages not to (system messages and legacy runtime messages without outer "op" type envelope)
 	// Let's observe if we are wrong about this to learn about these cases.
-	if (isModernRuntimeMessage !== parsedJsonContents) {
+	if (hasModernRuntimeMessageEnvelop !== hasParsedJsonContents) {
 		logLegacyCase("ensureContentsDeserialized_unexpectedContentsType");
 	}
 }
