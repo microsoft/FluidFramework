@@ -1676,8 +1676,12 @@ export class ContainerRuntime
 		// downstream stores to wrap the signal.
 		parentContext.submitSignal = (type: string, content: unknown, targetClientId?: string) => {
 			// Can the `content` argument type be IEnvelope?
-			// This does not call verifyNotClosed, but should it? Eventually use submitAddressedSignal?
+			// verifyNotClosed is called in FluidDataStoreContext, which is *the* expected caller.
 			const envelope1 = content as IEnvelope;
+			assert(
+				!envelope1.address.startsWith("/"),
+				"Addresses beginning with '/' are reserved for container use",
+			);
 			const envelope2 = this.createNewSignalEnvelope(
 				envelope1.address,
 				type,
@@ -2848,12 +2852,21 @@ export class ContainerRuntime
 		this._perfSignalData.signalTimestamp = 0;
 	}
 
-	protected handleSignal(
+	protected routeNonContainerSignal(
 		address: string,
 		signalMessage: IInboundSignalMessage,
 		local: boolean,
-	): boolean {
-		return false;
+	): void {
+		// Due to a mismatch between different layers in terms of
+		// what is the interface of passing signals, we need to adjust
+		// the signal envelope before sending it to the datastores to be processed
+		const envelope: IEnvelope = {
+			address,
+			contents: signalMessage.content,
+		};
+		signalMessage.content = envelope;
+
+		this.channelCollection.processSignal(signalMessage, local);
 	}
 
 	public processSignal(message: ISignalMessage, local: boolean) {
@@ -2899,20 +2912,7 @@ export class ContainerRuntime
 			return;
 		}
 
-		if (this.handleSignal(address, transformed, local)) {
-			return;
-		}
-
-		// Due to a mismatch between different layers in terms of
-		// what is the interface of passing signals, we need to adjust
-		// the signal envelope before sending it to the datastores to be processed
-		const envelope2: IEnvelope = {
-			address,
-			contents: transformed.content,
-		};
-		transformed.content = envelope2;
-
-		this.channelCollection.processSignal(transformed, local);
+		this.routeNonContainerSignal(address, transformed, local);
 	}
 
 	/**
@@ -4562,18 +4562,22 @@ class ContainerRuntimeInternal extends ContainerRuntime implements IRuntimeInter
 		content: JsonSerializable<T>,
 		targetClientId?: string,
 	): void {
-		this.submitSignalImpl(address, type, content, targetClientId);
+		assert(address.startsWith("dis:"), "Only DIS is currently supported");
+		this.submitSignalImpl(`/${address}`, type, content, targetClientId);
 	}
 
-	protected override handleSignal(
+	protected override routeNonContainerSignal(
 		address: string,
 		signalMessage: IInboundSignalMessage,
 		local: boolean,
-	): boolean {
-		if (address.startsWith("dis:")) {
-			this.independentStateManager?.processSignal(address, signalMessage, local);
-			return true;
+	): void {
+		if (address.startsWith("/")) {
+			// TODO: convert to a generic registry
+			if (address.startsWith("/dis:")) {
+				this.independentStateManager?.processSignal(address.slice(1), signalMessage, local);
+			}
+		} else {
+			super.routeNonContainerSignal(address, signalMessage, local);
 		}
-		return false;
 	}
 }

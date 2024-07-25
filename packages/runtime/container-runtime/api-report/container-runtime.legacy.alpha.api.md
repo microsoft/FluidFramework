@@ -106,8 +106,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
         snapshotTree: ISnapshotTree;
         sequenceNumber: number;
     }>;
-    // (undocumented)
-    protected handleSignal(address: string, signalMessage: IInboundSignalMessage, local: boolean): boolean;
     get idCompressor(): (IIdCompressor & IIdCompressorCore) | undefined;
     // (undocumented)
     get idCompressorMode(): IdCompressorMode;
@@ -142,6 +140,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     processSignal(message: ISignalMessage, local: boolean): void;
     refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
     resolveHandle(request: IRequest): Promise<IResponse>;
+    // (undocumented)
+    protected routeNonContainerSignal(address: string, signalMessage: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     get scope(): FluidObject;
     get sessionSchema(): {
