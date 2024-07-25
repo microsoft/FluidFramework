@@ -399,6 +399,11 @@ export class FieldSchema<
 		return this.lazyTypes.value;
 	}
 
+	/**
+	 * True iff when constructing a node with this field, a value must be provided for it.
+	 */
+	public readonly requiresValue: boolean;
+
 	private constructor(
 		/**
 		 * The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind } of this field.
@@ -415,6 +420,9 @@ export class FieldSchema<
 		public readonly props?: FieldProps,
 	) {
 		this.lazyTypes = new Lazy(() => normalizeAllowedTypes(this.allowedTypes));
+		// TODO: optional fields should (by default) get a default provider that returns undefined, removing the need to special case them here:
+		this.requiresValue =
+			this.props?.defaultProvider === undefined && this.kind !== FieldKind.Optional;
 	}
 }
 

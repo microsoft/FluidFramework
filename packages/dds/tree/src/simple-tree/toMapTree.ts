@@ -31,11 +31,9 @@ import {
 	FieldKind,
 	type FieldSchema,
 	type ImplicitAllowedTypes,
-	type ImplicitFieldSchema,
 	NodeKind,
 	type TreeNodeSchema,
 	normalizeAllowedTypes,
-	normalizeFieldSchema,
 	extractFieldProvider,
 	isConstant,
 	type FieldProvider,
@@ -562,9 +560,7 @@ function shallowCompatibilityTest(
 	}
 
 	// Assume record-like object
-	assert(schema.kind === NodeKind.Object, "unexpected schema kind");
-
-	const fields = schema.info as Record<string, ImplicitFieldSchema>;
+	assert(isObjectNodeSchema(schema), "unexpected schema kind");
 
 	// TODO: Improve type inference by making this logic more thorough. Handle at least:
 	// * Types which are strict subsets of other types in the same polymorphic union
@@ -574,9 +570,8 @@ function shallowCompatibilityTest(
 	// TODO#7441: Consider allowing data to be inserted which has keys that are extraneous/unknown to the schema (those keys are ignored)
 
 	// If the schema has a required key which is not present in the input object, reject it.
-	for (const [fieldKey, fieldSchema] of Object.entries(fields)) {
-		const normalizedFieldSchema = normalizeFieldSchema(fieldSchema);
-		if (data[fieldKey] === undefined && normalizedFieldSchema.kind === FieldKind.Required) {
+	for (const [fieldKey, fieldSchema] of schema.fields) {
+		if (data[fieldKey] === undefined && fieldSchema.requiresValue) {
 			return false;
 		}
 	}
