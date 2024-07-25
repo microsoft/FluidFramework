@@ -9,7 +9,6 @@ import path from "path";
 
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { testSrcPath } from "../testSrcPath.cjs";
-import { merge } from "../objMerge.js";
 
 const regenerateSnapshots = process.argv.includes("--snapshot");
 
@@ -21,7 +20,6 @@ export function takeJsonSnapshot(data: JsonCompatibleReadOnly, suffix: string = 
 function jsonCompare(actual: string, expected: string, message: string): void {
 	const parsedA = JSON.parse(actual);
 	const parsedB = JSON.parse(expected);
-	const diff = merge(parsedA, parsedB);
 	assert.deepEqual(parsedA, parsedB, message);
 }
 

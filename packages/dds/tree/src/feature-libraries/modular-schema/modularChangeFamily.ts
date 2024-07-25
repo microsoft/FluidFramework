@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
 import type { ICodecFamily } from "../../codec/index.js";
@@ -205,23 +205,23 @@ export class ModularChangeFamily
 			return makeModularChangeset();
 		}
 
-		return changes.reduce((change1, change2) =>
-			makeAnonChange(this.composePair(change1, change2, revInfos, idState)),
-		).change;
+		return changes
+			.map((change) => change.change)
+			.reduce((change1, change2) => this.composePair(change1, change2, revInfos, idState));
 	}
 
 	private composePair(
-		change1: TaggedChange<ModularChangeset>,
-		change2: TaggedChange<ModularChangeset>,
+		change1: ModularChangeset,
+		change2: ModularChangeset,
 		revInfos: RevisionInfo[],
 		idState: IdAllocationState,
 	): ModularChangeset {
 		const { fieldChanges, nodeChanges, nodeToParent, nodeAliases, crossFieldKeys } =
-			this.composeAllFields(change1.change, change2.change, revInfos, idState);
+			this.composeAllFields(change1, change2, revInfos, idState);
 
 		const { allBuilds, allDestroys, allRefreshers } = composeBuildsDestroysAndRefreshers(
-			change1.change,
-			change2.change,
+			change1,
+			change2,
 		);
 
 		return makeModularChangeset(
@@ -665,9 +665,7 @@ export class ModularChangeFamily
 		isRollback: boolean,
 	): ModularChangeset {
 		// Rollback changesets destroy the nodes created by the change being rolled back.
-		const destroys = isRollback
-			? invertBuilds(change.change.builds, change.revision)
-			: undefined;
+		const destroys = isRollback ? invertBuilds(change.change.builds) : undefined;
 
 		// Destroys only occur in rollback changesets, which are never inverted.
 		assert(
@@ -1663,7 +1661,6 @@ function composeBuildsDestroysAndRefreshers(
 
 function invertBuilds(
 	builds: ChangeAtomIdBTree<TreeChunk> | undefined,
-	fallbackRevision: RevisionTag | undefined,
 ): ChangeAtomIdBTree<number> | undefined {
 	if (builds !== undefined) {
 		return brand(builds.mapValues((chunk) => chunk.topLevelLength));
