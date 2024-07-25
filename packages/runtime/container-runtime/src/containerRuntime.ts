@@ -2697,7 +2697,7 @@ export class ContainerRuntime
 			} else {
 				// A non container runtime message (like other system ops - join, ack, leave, nack etc.)
 				this.ensureNoDataModelChanges(() =>
-					this.observeNonRuntimeMessages({
+					this.observeNonRuntimeMessage({
 						message: messageCopy as InboundSequencedNonContainerRuntimeMessage,
 						local,
 						isRuntimeMessage: false,
@@ -2799,7 +2799,7 @@ export class ContainerRuntime
 	 * to only having the functionality that is relevant to non-runtime messages.
 	 * @param messageWithContext - non-runtime messages to process with additional context and isRuntimeMessage prop as false
 	 */
-	private observeNonRuntimeMessages(
+	private observeNonRuntimeMessage(
 		messageWithContext: MessageWithContext & { isRuntimeMessage: false },
 	) {
 		const { message, local } = messageWithContext;
