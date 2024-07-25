@@ -380,7 +380,20 @@ module.exports = {
 				"server/historian/package.json",
 				"package.json",
 			],
-			"npm-package-json-script-dep": ["^build-tools/"],
+			"npm-package-json-script-dep": [
+				// This package can't depend on build-tools because that would create a circular dependency.
+				//
+				// build-tools -> version-tools -> build-tools
+				"^build-tools/packages/version-tools/package.json",
+
+				// This package can't depend on build-tools because that would create a circular dependency:
+				//
+				// build-tools -> version-tools -> readme-command -> build-tools
+				"^build-tools/packages/readme-command/package.json",
+
+				// This package can't depend on build-tools because it _is_ build-tools.
+				"^build-tools/packages/build-tools/package.json",
+			],
 			"npm-public-package-requirements": [
 				// Test packages published only for the purpose of running tests in CI.
 				"^azure/packages/test/",
