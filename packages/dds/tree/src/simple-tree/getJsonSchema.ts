@@ -9,8 +9,12 @@ import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
 import { toSimpleTreeSchema } from "./treeNodeSchemaToSimpleSchema.js";
 
 // TODO: move to `treeNodeApi` once it is a namespace and this can remain `@internal` or `@alpha`
+// TODO: cache the results on the tree schema for faster repeat access.
 /**
- * TODO
+ * Creates a {@link https://json-schema.org/ | JSON Schema} representation of the provided {@link TreeNodeSchema}.
+ *
+ * @remarks Useful when communicating the schema to external libraries or services.
+ *
  * @internal
  */
 export function getJsonSchema(schema: TreeNodeSchema): TreeJsonSchema {
