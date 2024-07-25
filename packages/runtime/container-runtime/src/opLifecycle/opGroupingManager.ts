@@ -72,7 +72,8 @@ export class OpGroupingManager {
 			contentSizeInBytes: 0,
 			messages: [
 				{
-					metadata: { batchId: resubmittingBatchId, emptyBatch: true },
+					metadata: { batchId: resubmittingBatchId },
+					localOpMetadata: { emptyBatch: true },
 					referenceSequenceNumber,
 					contents: serializedContent,
 				},

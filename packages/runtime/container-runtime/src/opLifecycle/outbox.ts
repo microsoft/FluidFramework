@@ -255,44 +255,47 @@ export class Outbox {
 		// Don't use resubmittingBatchId for idAllocationBatch.
 		// ID Allocation messages are not directly resubmitted so we don't want to reuse the batch ID.
 		this.flushInternal(this.idAllocationBatch);
+		// We need to flush an empty batch if the main batch *becomes* empty on resubmission.
+		// The way to catch this is to check if both blobAttachBatch and mainBatch are empty. This is because
+		// blob attach batches can't *become* empty on resubmission, if it's empty it was already empty before.
+		if (resubmittingBatchId && this.blobAttachBatch.empty && this.mainBatch.empty) {
+			this.flushEmptyBatch(resubmittingBatchId);
+			return;
+		}
 		this.flushInternal(
 			this.blobAttachBatch,
 			true /* disableGroupedBatching */,
 			resubmittingBatchId,
 		);
-		this.flushInternalEvenIfEmpty(this.mainBatch, resubmittingBatchId);
+		this.flushInternal(
+			this.mainBatch,
+			false /* disableGroupedBatching */,
+			resubmittingBatchId,
+		);
 	}
 
-	/**
-	 * Flushes the main batch to the ordering service. If the batch is empty, it will create an empty grouped batch
-	 * if BatchId is present (resubmit flow) and the runtime should send.
-	 */
-	private flushInternalEvenIfEmpty(mainBatch: BatchManager, resubmittingBatchId?: BatchId) {
-		let clientSequenceNumber: number | undefined;
-		if (mainBatch.empty) {
-			if (resubmittingBatchId && this.params.config.immediateMode !== true) {
-				const referenceSequenceNumber =
-					this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
-				assert(
-					referenceSequenceNumber !== undefined,
-					"reference sequence number should be defined",
-				);
-				const emptyGroupedBatch = this.params.groupingManager.createEmptyGroupedBatch(
-					resubmittingBatchId,
-					referenceSequenceNumber,
-				);
-				if (this.params.shouldSend()) {
-					clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
-				}
-				this.params.pendingStateManager.onFlushBatch(
-					emptyGroupedBatch.messages, // This is the single empty Grouped Batch message
-					clientSequenceNumber,
-				);
-				return;
+	private flushEmptyBatch(resubmittingBatchId: BatchId) {
+		if (this.params.config.immediateMode !== true) {
+			const referenceSequenceNumber =
+				this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
+			assert(
+				referenceSequenceNumber !== undefined,
+				"reference sequence number should be defined",
+			);
+			const emptyGroupedBatch = this.params.groupingManager.createEmptyGroupedBatch(
+				resubmittingBatchId,
+				referenceSequenceNumber,
+			);
+			let clientSequenceNumber: number | undefined;
+			if (this.params.shouldSend()) {
+				clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
 			}
+			this.params.pendingStateManager.onFlushBatch(
+				emptyGroupedBatch.messages, // This is the single empty Grouped Batch message
+				clientSequenceNumber,
+			);
 			return;
 		}
-		this.flushInternal(mainBatch, false /* disableGroupBatching */, resubmittingBatchId);
 	}
 
 	private flushInternal(

@@ -24,7 +24,7 @@ import {
 	makeLegacySendBatchFn,
 } from "../../containerRuntime.js";
 import { ContainerMessageType } from "../../messageTypes.js";
-import { asBatchMetadata } from "../../metadata.js";
+import { asBatchMetadata, asEmptyBatchMetadata } from "../../metadata.js";
 import {
 	BatchMessage,
 	BatchSequenceNumbers,
@@ -130,11 +130,17 @@ describe("Outbox", () => {
 		// Similar implementation as the real PSM - queue each message 1-by-1
 		onFlushBatch: (batch: BatchMessage[], clientSequenceNumber: number | undefined): void => {
 			batch.forEach(
-				({ contents: content = "", referenceSequenceNumber, metadata: opMetadata }) =>
+				({
+					contents: content = "",
+					referenceSequenceNumber,
+					metadata: opMetadata,
+					localOpMetadata,
+				}) =>
 					state.pendingOpContents.push({
 						content,
 						referenceSequenceNumber,
 						opMetadata,
+						localOpMetadata,
 						batchStartCsn: clientSequenceNumber ?? -1,
 					}),
 			);
@@ -308,6 +314,7 @@ describe("Outbox", () => {
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
+				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: csn,
 			})),
@@ -329,8 +336,8 @@ describe("Outbox", () => {
 		assert.equal(state.batchesSubmitted.length, 0);
 		assert.equal(state.deltaManagerFlushCalls, 0);
 		assert.equal(state.pendingOpContents.length, 0);
-
-		outbox.flush("resubmittingBatchId");
+		const batchId = "batchId";
+		outbox.flush(batchId);
 		assert.equal(state.opsSubmitted, 1);
 		assert.equal(state.batchesSubmitted.length, 1);
 		assert.equal(
@@ -339,9 +346,12 @@ describe("Outbox", () => {
 		);
 		assert.equal(
 			state.batchesSubmitted[0].messages[0].metadata?.batchId,
-			"resubmittingBatchId",
+			batchId,
 		);
-		assert.equal(state.batchesSubmitted[0].messages[0].metadata?.emptyBatch, true);
+		assert.equal(
+			asEmptyBatchMetadata(state.pendingOpContents[0].localOpMetadata)?.emptyBatch,
+			true,
+		);
 	});
 
 	it("Batch ID added when applicable", () => {
@@ -349,7 +359,7 @@ describe("Outbox", () => {
 			context: getMockContext(),
 			opGroupingConfig: {
 				groupedBatchingEnabled: true,
-				opCountThreshold: 2,
+				opCountThreshold: 3,
 				reentrantBatchGroupingEnabled: true,
 			},
 		});
@@ -380,10 +390,9 @@ describe("Outbox", () => {
 			state.batchesSubmitted.map((x) => x.messages.map((m) => m.metadata?.batchId)),
 			[
 				[undefined], // Flush 1 - ID Allocation (no batch ID used)
-				["batchId-A"], // Flush 1 - Main
+				["batchId-A", undefined], // Flush 1 - Main
 				["batchId-B"], // Flush 2 - Main
 				["batchId-C", undefined], // Flush 3 - Blob Attach
-				["batchId-C"], // Flush 3 - Blob Attach, Main empty batch
 				[undefined], // Flush 4 - Main (no batch ID given)
 			],
 			"Submitted batches have incorrect batch ID",
@@ -398,7 +407,6 @@ describe("Outbox", () => {
 				"batchId-B",
 				"batchId-C",
 				undefined, // second message in batch
-				"batchId-C", // Main empty batch
 				undefined, // no batchId given
 			],
 			"Pending messages have incorrect batch ID",
@@ -434,6 +442,7 @@ describe("Outbox", () => {
 			messages.map<Partial<IPendingMessage>>((message, i) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
+				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: i === 2 ? -1 : 1, // Third batch got no CSN as it was not submitted
 			})),
@@ -482,6 +491,7 @@ describe("Outbox", () => {
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
+				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: csn,
 			})),
@@ -545,6 +555,7 @@ describe("Outbox", () => {
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
+				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: csn,
 			})),
@@ -606,6 +617,7 @@ describe("Outbox", () => {
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
+				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: csn,
 			})),
@@ -698,6 +710,7 @@ describe("Outbox", () => {
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
+				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: csn,
 			})),
@@ -784,6 +797,7 @@ describe("Outbox", () => {
 			rawMessagesInFlushOrder.map((message, i) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
+				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: i + 1, // Each message should have been in its own batch. CSN starts at 1.
 			})),
@@ -969,6 +983,7 @@ describe("Outbox", () => {
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
+				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: csn,
 			})),

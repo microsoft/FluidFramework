@@ -10,6 +10,18 @@ export function asBatchMetadata(metadata: unknown): IBatchMetadata | undefined {
 	return metadata as IBatchMetadata | undefined;
 }
 
+/** Syntactic sugar for casting */
+export function asEmptyBatchMetadata(metadata: unknown): IEmptyBatchMetadata | undefined {
+	return metadata as IEmptyBatchMetadata | undefined;
+}
+
+/**
+ * Properties put on the op metadata object for empty batches
+ */
+export interface IEmptyBatchMetadata {
+	// Set to true on localOpMetadata for empty batches
+	emptyBatch?: boolean;
+}
 /**
  * Properties put on the op metadata object for batch tracking
  */

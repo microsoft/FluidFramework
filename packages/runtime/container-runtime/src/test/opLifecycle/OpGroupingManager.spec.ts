@@ -124,6 +124,7 @@ describe("OpGroupingManager", () => {
 		});
 
 		it("create empty batch", () => {
+			const batchId = "batchId";
 			const result = new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
@@ -131,11 +132,12 @@ describe("OpGroupingManager", () => {
 					reentrantBatchGroupingEnabled: false,
 				},
 				mockLogger,
-			).createEmptyGroupedBatch("resubmittingBatchId", 0);
+			).createEmptyGroupedBatch(batchId, 0);
 			assert.deepStrictEqual(result.messages, [
 				{
 					contents: '{"type":"groupedBatch","contents":[]}',
-					metadata: { batchId: "resubmittingBatchId", emptyBatch: true },
+					metadata: { batchId },
+					localOpMetadata: { emptyBatch: true },
 					referenceSequenceNumber: 0,
 				},
 			]);

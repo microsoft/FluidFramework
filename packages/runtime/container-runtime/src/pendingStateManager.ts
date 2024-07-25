@@ -17,7 +17,7 @@ import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
 
 import { type InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
-import { asBatchMetadata, IBatchMetadata } from "./metadata.js";
+import { asBatchMetadata, asEmptyBatchMetadata, IBatchMetadata } from "./metadata.js";
 import { BatchId, BatchMessage, generateBatchId } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 
@@ -79,6 +79,11 @@ export interface IRuntimeStateHandler {
 	reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
+}
+
+function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean {
+	const content = JSON.parse(message.content);
+	return content.type === "groupedBatch" && content.contents?.length === 0;
 }
 
 /** Union of keys of T */
@@ -277,7 +282,8 @@ export class PendingStateManager implements IDisposable {
 			// Nothing to apply if the message is an empty batch.
 			// We still need to track it for resubmission.
 			try {
-				if (nextMessage.opMetadata?.emptyBatch === true) {
+				if (isEmptyBatchPendingMessage(nextMessage)) {
+					nextMessage.localOpMetadata = { emptyBatch: true }; // equivalent to applyStashedOp for empty batch
 					patchBatchIdContext(nextMessage); // Back compat
 					this.pendingMessages.push(nextMessage);
 					continue;
@@ -335,7 +341,10 @@ export class PendingStateManager implements IDisposable {
 	private processPendingLocalEmptyBatch(batchStartCsn, sequenceNumber): [] {
 		const pendingMessage = this.pendingMessages.peekFront();
 		assert(pendingMessage !== undefined, "No pending message found for this remote message");
-		assert(pendingMessage.opMetadata?.emptyBatch === true, "Expected empty batch");
+		assert(
+			asEmptyBatchMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true,
+			"Expected empty batch",
+		);
 		assert(sequenceNumber !== undefined, "Expected sequence number for empty batch");
 
 		if (pendingMessage.batchIdContext.batchStartCsn !== batchStartCsn) {
@@ -556,7 +565,7 @@ export class PendingStateManager implements IDisposable {
 					pendingMessage.batchIdContext.batchStartCsn,
 				);
 			// Ignore emptyBatch messages when resubmitting
-			if (pendingMessage.opMetadata?.emptyBatch === true) {
+			if (asEmptyBatchMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true) {
 				this.stateHandler.reSubmitBatch([], batchId);
 				continue;
 			}

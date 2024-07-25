@@ -152,12 +152,14 @@ describe("Pending State Manager", () => {
 		const submitBatch = (
 			messages: Partial<ISequencedDocumentMessage>[],
 			clientSequenceNumber?: number,
+			localOpMetadata?: unknown,
 		) => {
 			pendingStateManager.onFlushBatch(
 				messages.map<BatchMessage>((message) => ({
 					contents: JSON.stringify({ type: message.type, contents: message.contents }),
 					referenceSequenceNumber: message.referenceSequenceNumber!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
 					metadata: message.metadata as any as Record<string, unknown> | undefined,
+					localOpMetadata,
 				})),
 				clientSequenceNumber ?? messages[0]?.clientSequenceNumber,
 			);
@@ -211,10 +213,11 @@ describe("Pending State Manager", () => {
 					{
 						contents: JSON.stringify({ type: "groupedBatch", contents: [] }),
 						referenceSequenceNumber: 0,
-						metadata: { emptyBatch: true, batchId: "batchId" },
+						metadata: { batchId: "batchId" },
 					},
 				],
 				1 /* clientSequenceNumber */,
+				{ emptyBatch: true },
 			);
 			// A groupedBatch is supposed to have nested messages inside its contents,
 			// but an empty batch has no nested messages. When processing en empty grouped batch,
@@ -561,6 +564,7 @@ describe("Pending State Manager", () => {
 			);
 			await pendingStateManager.applyStashedOpsAt();
 			assert.strictEqual(applyStashedOps.length, 2);
+			assert.strictEqual(pendingStateManager.pendingMessagesCount, 2);
 		});
 
 		it("applyStashedOpsAt for empty batch", async () => {
@@ -568,10 +572,10 @@ describe("Pending State Manager", () => {
 			const messages: IPendingMessage[] = [
 				{
 					type: "message",
-					content: '{"type":"component"}',
+					content: '{"type":"groupedBatch", "contents": []}',
 					referenceSequenceNumber: 10,
+					opMetadata: undefined,
 					localOpMetadata: undefined,
-					opMetadata: { emptyBatch: true },
 					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
 				},
 			];
@@ -591,6 +595,7 @@ describe("Pending State Manager", () => {
 			);
 			await pendingStateManager.applyStashedOpsAt();
 			assert.strictEqual(applyStashedOps.length, 0);
+			assert.strictEqual(pendingStateManager.pendingMessagesCount, 1);
 		});
 	});
 
