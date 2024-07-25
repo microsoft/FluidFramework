@@ -354,6 +354,11 @@ function separateEffectsForMove(mark: MarkEffect): {
 	switch (type) {
 		case "Remove":
 		case "MoveOut": {
+			// There are two scenarios that lead to a Detach mark having an idOverride:
+			// 1. The detach is a rollback (the idOverride the original id that the cell had in the input context of the attach being rolled back).
+			// 2. The detach has been composed with a Rename (the idOverride is the cell id in the output context of the rename).
+			// Since rollbacks are never rebased, we can safely assume that the idOverride is due to a Rename (scenario #2).
+			// While the detach must follow the node that it targets, the rename must remain in place because it targets the cell.
 			if (mark.idOverride !== undefined) {
 				const remains: MarkEffect = { type: "Rename", idOverride: mark.idOverride };
 				const follows: Mutable<MarkEffect> = { ...mark };
