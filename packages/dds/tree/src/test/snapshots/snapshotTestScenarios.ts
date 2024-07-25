@@ -23,6 +23,7 @@ import {
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
+import { MockNodeKeyManager } from "../../feature-libraries/index.js";
 
 // Session ids used for the created trees' IdCompressors must be deterministic.
 // TestTreeProviderLite does this by default.
@@ -205,7 +206,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 					return new SchematizingSimpleTreeView<T>(
 						viewToFork.checkout.fork(),
 						viewToFork.config,
-						viewToFork.nodeKeyManager,
+						new MockNodeKeyManager(),
 					);
 				}
 
@@ -382,7 +383,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 					options: factoryOptions,
 				});
 
-				const sf = new SchemaFactory("has-handle");
+				const sf = new SchemaFactory("attachment-tree");
 				const view = tree.viewWith({
 					schema: [sf.array(sf.string)],
 					enableSchemaValidation,
