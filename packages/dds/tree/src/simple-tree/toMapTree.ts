@@ -28,7 +28,6 @@ import { brand, fail, isReadonlyArray, find } from "../util/index.js";
 import { nullSchema } from "./leafNodeSchema.js";
 import type { InsertableContent } from "./proxies.js";
 import {
-	FieldKind,
 	type FieldSchema,
 	type ImplicitAllowedTypes,
 	NodeKind,
