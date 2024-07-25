@@ -15,6 +15,5 @@ module.exports = {
 		"no-case-declarations": "off",
 		"prefer-arrow/prefer-arrow-functions": "off",
 		"unicorn/no-useless-spread": "off", // Off because it generates incorrect code in autofixes and cannot distinguish useful copies of arrays from useless ones
-		"@typescript-eslint/no-non-null-assertion": "off",
 	},
 };

@@ -1,4 +1,8 @@
-// custom-rules/no-unchecked-indexed-access.js
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 module.exports = {
 	meta: {
 		type: "problem",
