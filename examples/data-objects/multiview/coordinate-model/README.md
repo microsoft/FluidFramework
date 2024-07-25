@@ -2,6 +2,19 @@
 
 The coordinate model is our implementation of the `ICoordinate` interface.
 
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+**NOTE: This package is an example leveraging the [Fluid Framework](https://fluidframework.com).**
+**It is intended only as an example, and is not intended for public use.**
+**We make no stability guarantees regarding this library and its APIs.**
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
