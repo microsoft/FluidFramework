@@ -366,33 +366,6 @@ extends:
                   mkdir -p $(hostPathToPackArtifact)
                   mkdir -p $(hostPathToTestResultsArtifact)
 
-            # - task: Docker@1
-            #   displayName: Pack
-            #   inputs:
-            #     command: run
-            #     runInBackground: false
-            #     imageName: $(baseContainerTag)
-            #     containerCommand: pnpm -rc exec mv `npm pack` /usr/src/pack
-            #     volumes:
-            #       $(hostPathToPackArtifact)/tarballs:/usr/src/pack
-
-            # Generating package lists manually because using scripts/pack-packages.sh (like build-npm-package.yml does)
-            # inside the Docker container is proving problematic.
-            # See https://github.com/microsoft/FluidFramework/pull/18445 for details.
-            # - task: Bash@3
-            #   displayName: Generate package lists
-            #   env:
-            #     RELEASE_GROUP: ${{ parameters.tagName }}
-            #     STAGING_PATH: $(Build.ArtifactStagingDirectory)
-            #   inputs:
-            #     targetType: 'inline'
-            #     workingDirectory: ${{ parameters.buildDirectory }}
-            #     script: |
-            #       flub list --no-private --releaseGroup $RELEASE_GROUP --feed public > $STAGING_PATH/pack/packagePublishOrder-public.txt
-            #       flub list --no-private --releaseGroup $RELEASE_GROUP --feed internal-build > $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
-            #       flub list --no-private --releaseGroup $RELEASE_GROUP --feed internal-dev > $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
-            #       flub list --no-private --releaseGroup $RELEASE_GROUP --feed internal-test > $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
-
             - task: Bash@3
               displayName: npm pack
               env:
