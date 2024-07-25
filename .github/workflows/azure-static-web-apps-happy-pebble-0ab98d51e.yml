@@ -43,7 +43,7 @@ jobs:
           app_location: "packages/tools/devtools/devtools-example" # App source code path
           api_location: "" # Api source code path - optional
           build_timeout_in_minutes: 90
-          output_location: "lib" # Built app content directory - optional
+          output_location: "packages/tools/devtools/devtools-example/lib" # Built app content directory - optional
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
