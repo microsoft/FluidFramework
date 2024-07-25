@@ -103,6 +103,7 @@ Arguments:
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
     -   Default: `./package.json`.
+-   `packageScopeNotice`: (optional) Override the automatic scope detection behavior with an explicit scope kind: `FRAMEWORK`, `EXPERIMENTAL`, `INTERNAL`, `PRIVATE`, `TOOLS`, or `EXAMPLE`.
 -   `installation`: Whether or not to include the package "Installation" section.
     -   Default: `true`.
     -   See [INSTALLATION_INSTRUCTIONS](#installation_instructions).
@@ -114,9 +115,9 @@ Arguments:
     -   Assumes that the package is published, uses [API-Extractor][], and has its documentation published under `fluidframework.com/apis/<package-name>`.
     -   See [API_DOCS](#api_docs)
 
-#### `EXAMPLE_README_HEADER`
+#### `EXAMPLE_APP_README_HEADER`
 
-Generates a complete starter `README.md` file for an `Fluid` example app package.
+Generates a complete starter `README.md` file for a `Fluid` example app package.
 
 Notes:
 
@@ -352,7 +353,7 @@ Arguments:
 -   `packageJsonPath`: : Relative file path to the library package's `package.json` file.
     Used to read the package name's scope (when the `scopeKind` argument is not provided).
     -   Default: `./package.json`.
--   `scopeKind`: (optional) Override the automatic scope detection behavior with an explicit scope kind: `EXPERIMENTAL`, `INTERNAL`, or `PRIVATE`.
+-   `scopeKind`: (optional) Override the automatic scope detection behavior with an explicit scope kind: `FRAMEWORK`, `EXPERIMENTAL`, `INTERNAL`, `PRIVATE`, `TOOLS`, or `EXAMPLE`.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 

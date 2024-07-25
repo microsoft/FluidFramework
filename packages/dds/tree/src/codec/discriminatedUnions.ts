@@ -26,6 +26,25 @@ export const unionOptions: ObjectOptions = {
 };
 
 /**
+ * An object containing functions for each member of the union.
+ *
+ * See {@link DiscriminatedUnionDispatcher}.
+ */
+export type DiscriminatedUnionLibrary<
+	TUnion extends object,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	TArgs extends any[],
+	TResult,
+> = [
+	{
+		readonly [Property in keyof TUnion]-?: (
+			value: Required<TUnion>[Property],
+			...args: TArgs
+		) => TResult;
+	},
+][_InlineTrick];
+
+/**
  * Applies a function to the content of a [discriminated union](https://en.wikipedia.org/wiki/Tagged_union)
  * where the function to apply depends on which value from the union it holds.
  *
@@ -91,16 +110,7 @@ export class DiscriminatedUnionDispatcher<
 		(value: unknown, ...args: TArgs) => TResult
 	>;
 
-	public constructor(
-		library: [
-			{
-				readonly [Property in keyof TUnion]-?: (
-					value: Required<TUnion>[Property],
-					...args: TArgs
-				) => TResult;
-			},
-		][_InlineTrick],
-	) {
+	public constructor(library: DiscriminatedUnionLibrary<TUnion, TArgs, TResult>) {
 		this.library = objectToMap(
 			library as Record<keyof TUnion, (value: unknown, ...args: TArgs) => TResult>,
 		);

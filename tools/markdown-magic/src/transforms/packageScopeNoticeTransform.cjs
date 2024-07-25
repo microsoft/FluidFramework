@@ -25,6 +25,9 @@ const {
 const generatePackageScopeNotice = (kind) => {
 	let rawContents;
 	switch (kind) {
+		case "EXAMPLE":
+			rawContents = readTemplate("Example-Package-Notice-Template.md");
+			break;
 		case "EXPERIMENTAL":
 			rawContents = readTemplate("Experimental-Package-Notice-Template.md");
 			break;
@@ -52,6 +55,7 @@ const generatePackageScopeNotice = (kind) => {
  * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
  * Default: "./package.json".
  * @param {string | undefined} scopeKind - Scope kind to switch on.
+ * EXAMPLE: See templates/Example-Package-Notice-Template.md.
  * EXPERIMENTAL: See templates/Experimental-Package-Notice-Template.md.
  * INTERNAL: See templates/Internal-Package-Notice-Template.md.
  * PRIVATE: See templates/Private-Package-Notice-Template.md.

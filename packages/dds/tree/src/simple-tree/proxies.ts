@@ -10,7 +10,6 @@ import {
 	EmptyKey,
 	type IForestSubscription,
 	type MapTree,
-	type TreeNodeSchemaIdentifier,
 	type TreeValue,
 	type UpPath,
 } from "../core/index.js";
@@ -22,7 +21,6 @@ import {
 	type FlexTreeNode,
 	type FlexTreeTypedField,
 	tryGetMapTreeNode,
-	typeNameSymbol,
 	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
@@ -243,7 +241,7 @@ export type FactoryContent =
 	| boolean
 	// eslint-disable-next-line @rushstack/no-new-null
 	| null
-	| ReadonlyMap<string, InsertableContent>
+	| Iterable<readonly [string, InsertableContent]>
 	| readonly InsertableContent[]
 	| {
 			readonly [P in string]?: InsertableContent;
@@ -253,10 +251,3 @@ export type FactoryContent =
  * Content which can be inserted into a tree.
  */
 export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;
-
-/**
- * Brand `copy` with the type (under {@link typeNameSymbol}) to avoid ambiguity when inferring types from this data.
- */
-export function markContentType(typeName: TreeNodeSchemaIdentifier, copy: object): void {
-	Object.defineProperty(copy, typeNameSymbol, { value: typeName });
-}
