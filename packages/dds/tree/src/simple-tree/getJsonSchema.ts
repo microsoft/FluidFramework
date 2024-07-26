@@ -6,7 +6,7 @@
 import type { TreeJsonSchema } from "./jsonSchema.js";
 import type { TreeNodeSchema } from "./schemaTypes.js";
 import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
-import { toSimpleTreeSchema } from "./treeNodeSchemaToSimpleSchema.js";
+import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 
 const jsonSchemaCacheSymbol = Symbol("jsonSchemaCache");
 
