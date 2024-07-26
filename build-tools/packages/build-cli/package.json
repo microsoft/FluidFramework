@@ -114,6 +114,8 @@
 		"prettier": "~3.2.4",
 		"prompts": "^2.4.2",
 		"read-pkg-up": "^7.0.1",
+		"remark": "^15.0.1",
+		"remark-toc": "^9.0.0",
 		"replace-in-file": "^7.1.0",
 		"resolve.exports": "^2.0.2",
 		"semver": "^7.5.4",

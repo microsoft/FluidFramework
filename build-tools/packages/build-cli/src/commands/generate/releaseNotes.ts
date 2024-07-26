@@ -10,6 +10,8 @@ import { loadFluidBuildConfig } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { StringBuilder } from "@rushstack/node-core-library";
 import { format as prettier } from "prettier";
+import { remark } from "remark";
+import remarkToc from "remark-toc";
 
 import { releaseGroupFlag } from "../../flags.js";
 import {
@@ -154,7 +156,13 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			}
 		}
 
-		const contents = `${header}\n\n${intro}\n\n${body.toString()}\n\n${footer}`;
+		// const contents = `${header}\n\n${intro}\n\n${body.toString()}\n\n${footer}`;
+		const contents = String(
+			await remark()
+				.use(remarkToc)
+				.process(`${header}\n\n${intro}\n\n${body.toString()}\n\n${footer}`),
+		);
+
 		const outputPath = path.join(context.repo.resolvedRoot, flags.out);
 		this.info(`Writing output file: ${outputPath}`);
 		await writeFile(
