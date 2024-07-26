@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import globby from "globby";
 import ignore from "ignore";
@@ -132,16 +132,26 @@ export async function getClosestBiomeConfigPath(
  * always excluded.
  */
 export async function getBiomeFormattedFiles(
-	cwd: string,
+	directoryOrConfigFile: string,
 	gitRepo: GitRepo,
 ): Promise<string[]> {
+	let configFile: string | undefined;
+	let directory: string;
+
+	if ((await stat(directoryOrConfigFile)).isFile()) {
+		configFile = directoryOrConfigFile;
+		directory = path.dirname(directoryOrConfigFile);
+	} else {
+		configFile = await getClosestBiomeConfigPath(directoryOrConfigFile);
+		directory = directoryOrConfigFile;
+	}
+
 	/**
 	 * All files that could possibly be formatted before ignore entries are applied. Paths are relative to the root of
 	 * the repo.
 	 */
-	const allPossibleFiles = new Set(await gitRepo.getFiles(cwd));
+	const allPossibleFiles = new Set(await gitRepo.getFiles(directory));
 
-	const configFile = await getClosestBiomeConfigPath(cwd);
 	if (configFile === undefined) {
 		// No config, so all files are formatted
 		return [...allPossibleFiles];
@@ -159,23 +169,24 @@ export async function getBiomeFormattedFiles(
 	// This means that src/**/*.js and **/src/**/*.js are treated as identical. They match both src/file.js and
 	// test/src/file.js. This is something we plan to fix in Biome v2.0.0."
 	const prefixedIncludes = [...includeEntries].map((glob) => `**/${glob}`);
+	const prefixedIgnores = [...ignoreEntries].map((glob) => `**/${glob}`);
 
 	/**
 	 * An array of cwd-relative paths to files included via the 'include' settings in the Biome config.
 	 */
 	const includedPaths = await globby(prefixedIncludes, {
 		// We need to interpret the globs from the provided directory; the paths returned will be relative to this path
-		cwd,
+		cwd: directory,
 
 		// Don't return directories, only files; Biome includes are only applied to files.
 		// See note at https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained
 		onlyFiles: true,
 	});
 
-	const ignoreObject = ignore().add([...ignoreEntries]);
+	const ignoreObject = ignore().add([...prefixedIgnores]);
 	const filtered = ignoreObject.filter([...includedPaths]);
 
-	// Convert cwd-relative paths to absolute
+	// Convert directory-relative paths to absolute
 	const repoRoot = gitRepo.resolvedRoot;
-	return filtered.map((filePath) => path.resolve(repoRoot, cwd, filePath));
+	return filtered.map((filePath) => path.resolve(repoRoot, directory, filePath));
 }
