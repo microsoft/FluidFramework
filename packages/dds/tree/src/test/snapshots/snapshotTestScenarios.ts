@@ -130,36 +130,33 @@ export function generateTestTrees(options: SharedTreeOptions) {
 			runScenario: async (takeSnapshot) => {
 				const sf = new SchemaFactory("optional-field-scenarios");
 				const MapNode = sf.map("Map", [sf.string, sf.number]);
-				const TestNode = sf.object("RootNode", {
-					rootField: sf.optional(MapNode),
-				});
 
 				const provider = new TestTreeProviderLite(2, factory, true);
 				const tree1 = provider.trees[0];
 				const view1 = tree1.viewWith({
-					schema: [TestNode],
+					schema: sf.optional(MapNode),
 					enableSchemaValidation,
 				});
-				view1.initialize(new TestNode({}));
-				view1.root.rootField = new MapNode([]);
+				view1.initialize(undefined);
+				view1.root = new MapNode([]);
 				provider.processMessages();
 
 				const tree2 = provider.trees[1];
 				const view2 = tree2.viewWith({
-					schema: [TestNode],
+					schema: sf.optional(MapNode),
 					enableSchemaValidation,
 				});
-				view2.root.rootField?.set("root 1 child", 40);
-				view2.root.rootField = new MapNode(new Map([["root 2 child", 41]]));
+				view2.root?.set("root 1 child", 40);
+				view2.root = new MapNode(new Map([["root 2 child", 41]]));
 
 				// Transaction with a root and child change
 				Tree.runTransaction(view1, () => {
-					view1.root.rootField?.set("root 1 child", 42);
-					view1.root.rootField = new MapNode([]);
-					view1.root.rootField?.set("root 3 child", 43);
+					view1.root?.set("root 1 child", 42);
+					view1.root = new MapNode([]);
+					view1.root?.set("root 3 child", 43);
 				});
 
-				view1.root.rootField?.set("root 3 child", 44);
+				view1.root?.set("root 3 child", 44);
 
 				provider.processMessages();
 
