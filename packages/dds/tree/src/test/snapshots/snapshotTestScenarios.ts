@@ -344,7 +344,9 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				Tree.runTransaction(view, () => {
 					view.root.insertAtStart(new SequenceMap([]));
 					const map = view.root[0];
-					map.set("foo", [new SequenceMap([])]);
+					const innerArray: SequenceMap[] = [];
+					map.set("foo", [new SequenceMap([["bar", innerArray]])]);
+					innerArray.push(new SequenceMap([]));
 				});
 
 				provider.processMessages();
