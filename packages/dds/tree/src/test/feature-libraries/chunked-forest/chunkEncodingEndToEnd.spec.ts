@@ -158,7 +158,7 @@ describe("End to end chunked encoding", () => {
 		// Check that inserted change contains chunk which is reference equal to the original chunk.
 		const insertedChange = changeLog[0];
 		assert(insertedChange.builds !== undefined);
-		const insertedChunk = insertedChange.builds.get(undefined)?.get(0 as ChangesetLocalId);
+		const insertedChunk = insertedChange.builds.get([undefined, 0 as ChangesetLocalId]);
 		assert.equal(insertedChunk, chunk);
 		assert(chunk.isShared());
 	});
