@@ -25,26 +25,39 @@ export type JsonSchemaId = string;
 export type JsonRefPath = `#/definitions/${JsonSchemaId}`;
 
 /**
+ * JSON entity type.
+ * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
  * @internal
  */
 export type JsonSchemaType = "object" | "array" | JsonLeafSchemaType;
 
 /**
+ * JSON primitive types.
+ * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
  * @internal
  */
 export type JsonLeafSchemaType = "string" | "number" | "boolean" | "null";
 
 /**
+ * Base interface for node schemas represented in {@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} format.
  * @internal
  */
 export interface NodeJsonSchemaBase<
 	TNodeKind extends SimpleNodeSchemaKind,
 	TJsonSchemaType extends JsonSchemaType,
 > {
-	// TODO: represent this differently to ensure no conflict with actual JSON schema
-	readonly kind: TNodeKind;
 	/**
-	 * TODO
+	 * Kind of {@link TreeNodeSchema} this JSON Schema entry represents.
+	 *
+	 * @remarks There is not a 1:1 mapping between {@link TreeNodeSchema} types and JSON Schema types.
+	 * This is used to disambiguate the type of {@link TreeNodeSchema} this JSON Schema maps to.
+	 *
+	 * @privateRemarks TODO: represent this differently to ensure no conflict with actual JSON schema
+	 */
+	readonly kind: TNodeKind;
+
+	/**
+	 * {@inheritDoc JsonSchemaType}
 	 */
 	readonly type: TJsonSchemaType;
 }
@@ -61,16 +74,16 @@ export interface ObjectNodeJsonSchema extends NodeJsonSchemaBase<"object", "obje
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-properties}.
 	 */
 	readonly properties: Record<string, FieldJsonSchema>;
+
 	/**
 	 * List of keys for required fields.
 	 *
 	 * @remarks
 	 * Optional fields should not be included in this list.
 	 * Each key specified must have an entry in {@link ObjectNodeJsonSchema.properties}.
-	 *
-	 * @see TODO
 	 */
 	readonly required?: string[];
+
 	/**
 	 * Whether or not additional properties (properties not specified by the schema) are allowed in objects of this type.
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-additionalproperties}.
@@ -112,8 +125,11 @@ export interface MapNodeJsonSchema extends NodeJsonSchemaBase<"map", "object"> {
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-patternproperties}.
 	 */
 	readonly patternProperties: {
-		// TODO: document this pattern
-		"^(.*)+$": FieldJsonSchema;
+		/**
+		 * Types allowed in the map.
+		 * @remarks This format allows for any (JSON-compliant) key, but restricts the allowed types to only those specified.
+		 */
+		"^.*$": FieldJsonSchema;
 	};
 }
 
@@ -144,6 +160,7 @@ export interface JsonSchemaRef {
 }
 
 /**
+ * {@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} representation of a {@link TreeNodeSchema}.
  * @internal
  */
 export type NodeJsonSchema =
@@ -153,7 +170,7 @@ export type NodeJsonSchema =
 	| ObjectNodeJsonSchema;
 
 /**
- * TODO
+ *{@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} representation of a {@link FieldSchema}.
  * @internal
  */
 export interface FieldJsonSchema {
@@ -166,13 +183,19 @@ export interface FieldJsonSchema {
 }
 
 /**
- * TODO
+ * {@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} representation of a tree schema.
+ * @remarks Includes the complete set of definitions reachable from the "root" schema.
  * @internal
  */
 export interface TreeJsonSchema extends FieldJsonSchema {
 	// TODO
 	// json schema
 	// $schema: "http://json-schema.org/draft-07/schema#",
-	// json schema
+
+	/**
+	 * The set of definitions reachable from this schema's root.
+	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-schema-re-use-with-defs}
+	 * @privateRemarks TODO: `$defs` instead of `definitions`?
+	 */
 	readonly definitions: Record<JsonSchemaId, NodeJsonSchema>;
 }
