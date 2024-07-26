@@ -48,7 +48,7 @@ import {
 	type TreeObjectNode,
 	objectSchema,
 } from "./objectNode.js";
-import { type TreeMapNode, mapSchema } from "./mapNode.js";
+import { type MapNodeInsertableData, type TreeMapNode, mapSchema } from "./mapNode.js";
 import type {
 	FieldSchemaUnsafe,
 	// Adding these unused imports makes the generated d.ts file produced by TypeScript stop breaking API-Extractor's rollup generation.
@@ -297,7 +297,7 @@ export class SchemaFactory<
 		ScopedSchemaName<TScope, `Map<${string}>`>,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>,
-		Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+		MapNodeInsertableData<T>,
 		true,
 		T
 	>;
@@ -319,7 +319,7 @@ export class SchemaFactory<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
-		Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+		MapNodeInsertableData<T>,
 		true,
 		T
 	>;
@@ -327,14 +327,7 @@ export class SchemaFactory<
 	public map<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
-	): TreeNodeSchema<
-		string,
-		NodeKind.Map,
-		TreeMapNode<T>,
-		Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
-		true,
-		T
-	> {
+	): TreeNodeSchema<string, NodeKind.Map, TreeMapNode<T>, MapNodeInsertableData<T>, true, T> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Map", types);
@@ -352,7 +345,7 @@ export class SchemaFactory<
 				string,
 				NodeKind.Map,
 				TreeMapNode<T>,
-				Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+				MapNodeInsertableData<T>,
 				true,
 				T
 			>;
@@ -378,7 +371,7 @@ export class SchemaFactory<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
-		Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
 		T
 	> {
@@ -722,6 +715,8 @@ export class SchemaFactory<
 					[string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]
 				>;
 			},
+			// Ideally this would be included, but doing so breaks recursive types.
+			// | RestrictiveReadonlyRecord<string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>,
 			false,
 			T
 		>;
