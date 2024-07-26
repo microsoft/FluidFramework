@@ -686,6 +686,9 @@ async function setupOpsMetrics(
 }
 
 main().catch((error) => {
+	// Most of the time we'll exit the process through the process.exit() in main.
+	// However, if we error outside of that try/catch block we'll catch it here.
+	console.error("Error occurred during setup");
 	console.error(error);
 	process.exit(-1);
 });
