@@ -528,11 +528,11 @@ enum CompatibilityLevel {
 	 */
 	None = 0,
 	/**
-	 * Additional iterator compatibility cases added in Fluid Framework 2.2.
+	 * Additional compatibility cases added in Fluid Framework 2.2.
 	 */
 	Low = 1,
 	/**
-	 * Compatible in Fluid Framework 2.1.
+	 * Compatible in Fluid Framework 2.0.
 	 */
 	Normal = 2,
 }
@@ -560,16 +560,13 @@ function shallowCompatibilityTest(
 		return CompatibilityLevel.None;
 	}
 
-	// TODO:
-	// current typing (of schema based constructors and thus implicit node construction)
+	// Typing (of schema based constructors and thus implicit node construction)
 	// allows iterables for constructing maps and arrays.
-	// Some current users of this API may have unions of maps and arrays,
+	// Some users of this API may have unions of maps and arrays,
 	// and rely on Arrays ending up as array nodes and maps as Map nodes,
 	// despite both being iterable and thus compatible with both.
-	// In the future, a better solution could be a priority based system where an array would be parsed as an array when unioned with a map,
+	// This uses a priority based system where an array would be parsed as an array when unioned with a map,
 	// but if in a map only context, could still be used as a map.
-	// Then this method would return a quality of fit, not just a boolean.
-	// For now, special case map and array before checking iterable to avoid regressing the union of map and array case.
 
 	if (data instanceof Map) {
 		switch (schema.kind) {
