@@ -79,8 +79,7 @@ describe("MapNode", () => {
 		class Schema extends schemaFactory.map("x", schemaFactory.number) {}
 		class Root extends schemaFactory.object("root", { data: Schema }) {}
 		const data = [["x", 5]] as const;
-		// See TODO in shallowCompatibilityTest for how to enable this case.
-		it.skip("fromArray", () => {
+		it("fromArray", () => {
 			const fromArray = new Root({ data });
 			assert.deepEqual([...fromArray.data], data);
 		});

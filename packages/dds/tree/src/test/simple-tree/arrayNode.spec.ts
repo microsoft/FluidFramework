@@ -835,4 +835,48 @@ describe("ArrayNode", () => {
 			assert.deepEqual(result2, [1, 2, 3]);
 		});
 	});
+
+	it("explicit construction", () => {
+		class Schema extends schemaFactory.array(
+			"x",
+			schemaFactory.array([schemaFactory.number, schemaFactory.string]),
+		) {}
+		const data = [["x", 5]] as const;
+		const json = JSON.stringify(data);
+		const fromArray = new Schema(data);
+		assert.equal(JSON.stringify(fromArray), json);
+		const fromMap = new Schema(new Map(data));
+		assert.equal(JSON.stringify(fromMap), json);
+		const fromIterable = new Schema(new Map(data).entries());
+		assert.equal(JSON.stringify(fromIterable), json);
+	});
+
+	describe("implicit construction", () => {
+		it("fromArray", () => {
+			class Schema extends schemaFactory.array("x", schemaFactory.number) {}
+			class Root extends schemaFactory.object("root", { data: Schema }) {}
+			const fromArray = new Root({ data: [5] });
+			assert.deepEqual([...fromArray.data], [5]);
+		});
+		it("fromMap", () => {
+			class Schema extends schemaFactory.array(
+				"x",
+				schemaFactory.array([schemaFactory.number, schemaFactory.string]),
+			) {}
+			class Root extends schemaFactory.object("root", { data: Schema }) {}
+
+			const data = [["x", 5]] as const;
+			const json = JSON.stringify(data);
+
+			const fromMap = new Root({ data: new Map(data) });
+			assert.equal(JSON.stringify(fromMap.data), json);
+		});
+		it("fromIterable", () => {
+			class Schema extends schemaFactory.array("x", schemaFactory.number) {}
+			class Root extends schemaFactory.object("root", { data: Schema }) {}
+			const fromArray = new Root({ data: [5] });
+			const fromIterable = new Root({ data: new Set([5]) });
+			assert.deepEqual([...fromIterable.data], [5]);
+		});
+	});
 });
