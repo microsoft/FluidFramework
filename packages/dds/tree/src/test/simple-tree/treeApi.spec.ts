@@ -23,7 +23,7 @@ import {
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
-import { hydrate } from "./utils.js";
+import { getViewForForkedBranch, hydrate } from "./utils.js";
 import { brand } from "../../util/index.js";
 import { leaf } from "../../domains/index.js";
 
@@ -769,7 +769,7 @@ describe("treeNodeApi", () => {
 			assert.equal(treeChanged, true, "'treeChanged' should have fired");
 		});
 
-		it.only(`'nodeChanged' includes the names of changed properties`, () => {
+		it(`'nodeChanged' includes the names of changed properties`, () => {
 			const sb = new SchemaFactory("test");
 			class treeSchema extends sb.object("root", {
 				prop1: sb.optional(sb.number),
@@ -779,43 +779,29 @@ describe("treeNodeApi", () => {
 
 			const view = getView(new TreeViewConfiguration({ schema: treeSchema }));
 			view.initialize({ prop1: 1, prop2: 2 /* , prop3: 0 */ });
+			const root = view.root;
 
 			let listenerFired = false;
-			Tree.on(view.root, "nodeChanged", ({ changedProperties }) => {
+			Tree.on(root, "nodeChanged", ({ changedProperties }) => {
 				// This is the main validation for the test
 				assert.deepEqual(changedProperties, new Set(["prop1", "prop2", "prop3"]));
 				listenerFired = true;
 			});
 
-			const branch = view.checkout.fork();
-			const rootNode: UpPath = {
-				parent: undefined,
-				parentField: rootFieldKey,
-				parentIndex: 0,
-			};
+			const branchView = getViewForForkedBranch(view);
 
-			// TODO: look at prod code on how we create a view, and do it here based on the branch so I don't have to
-			// do things through lower-level APIs
+			// The implementation details of the kinds of changes that can happen inside the tree are not exposed at this layer.
+			// But since we know then, try to cover all of them.
+			branchView.root.prop1 = 2; // Replace
+			branchView.root.prop2 = undefined; // Detach
+			branchView.root.prop3 = 3; // Attach
 
-			// Replace on prop 1
-			branch.editor
-				.optionalField({ parent: rootNode, field: brand("prop1") })
-				.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: 2 }), false);
-			// Detach on prop 2
-			branch.editor
-				.optionalField({ parent: rootNode, field: brand("prop2") })
-				.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: undefined }), false);
-			// Attach on prop 3
-			branch.editor
-				.optionalField({ parent: rootNode, field: brand("prop3") })
-				.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: 3 }), true);
-
-			view.checkout.merge(branch);
+			view.checkout.merge(branchView.checkout);
 
 			// Validate changes actually took place and all listeners fired
-			assert.equal(view.root.prop1, 2, "'prop1' value did not change as expected");
-			assert.equal(view.root.prop2, undefined, "'prop2' value did not change as expected");
-			assert.equal(view.root.prop3, 3, "'prop3' value did not change as expected");
+			assert.equal(root.prop1, 2, "'prop1' value did not change as expected");
+			assert.equal(root.prop2, undefined, "'prop2' value did not change as expected");
+			assert.equal(root.prop3, 3, "'prop3' value did not change as expected");
 			assert.equal(listenerFired, true, "'nodeChanged' should have fired");
 		});
 	});
