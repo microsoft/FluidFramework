@@ -12,12 +12,16 @@ import { StringBuilder } from "@rushstack/node-core-library";
 import { format as prettier } from "prettier";
 import { remark } from "remark";
 import remarkToc from "remark-toc";
+import remarkGfm from "remark-gfm";
+import remarkGithub, { defaultBuildUrl } from "remark-github";
 
 import { releaseGroupFlag } from "../../flags.js";
 import {
 	BaseCommand,
 	DEFAULT_CHANGESET_PATH,
+	FluidCustomChangeSetMetadataDefaults,
 	UNKNOWN_SECTION,
+	difference,
 	groupBySection,
 	loadChangesets,
 } from "../../library/index.js";
@@ -101,50 +105,60 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 [Discussion](https://github.com/microsoft/FluidFramework/discussions) and
 [Issue](https://github.com/microsoft/FluidFramework/issues) pages as you adopt Fluid Framework!
 `;
-		const intro = `# Fluid Framework v${version}`;
+		const intro = `# Fluid Framework v${version}\n\n## Contents`;
 
 		this.info(`Loaded ${changesets.length} changes.`);
 		assert(flags.releaseType !== undefined, `Release type must be provided.`);
 
 		const bySection = groupBySection(changesets);
 
-		const unknownSection = bySection.get(UNKNOWN_SECTION);
-		for (const changeset of unknownSection ?? []) {
-			this.warning(
-				`Changeset doesn't map to known sections. Check its metadata: ${changeset.sourceFile}`,
+		{
+			const unknownSection = bySection.get(UNKNOWN_SECTION);
+			for (const changeset of unknownSection ?? []) {
+				if (changeset.additionalMetadata?.includeInReleaseNotes !== false) {
+					this.warning(
+						`Changeset doesn't map to known sections. Check its metadata: ${changeset.sourceFile}`,
+					);
+				}
+			}
+
+			const sectionsInChangesets = new Set<string>(bySection.keys());
+			const configuredSections = new Set<string>(
+				releaseNotesConfig.sections.map((s) => s.name),
 			);
+			const unknownSections = difference(sectionsInChangesets, configuredSections);
+			for (const section of unknownSections) {
+				if (section !== UNKNOWN_SECTION) {
+					this.warning(
+						`Could not find a configuration for a section named "${section}". The changesets in this section will be omitted.`,
+					);
+				}
+			}
 		}
 
 		const body = new StringBuilder();
-		// Iterate through all the sections; if a section has no config a warning will be logged and it will be omitted from
-		// the output.
-		for (const [sectionName, sectionChangesets] of bySection) {
-			const sectionConfig = releaseNotesConfig.sections.find((s) => s.name === sectionName);
-			if (sectionConfig === undefined) {
-				this.warning(
-					`Could not find a configuration for a section named "${sectionName}". The ${sectionChangesets.length} changesets in this section will be omitted.`,
-				);
-				continue;
-			}
-
-			this.verbose(`Building "${sectionName}" section with header: ${sectionConfig.heading}`);
-			const changes = sectionChangesets.filter(
+		// Iterate through the configured sections; unknown sections have already been handled
+		for (const { name, heading: sectionHead } of releaseNotesConfig.sections) {
+			this.verbose(`Building "${name}" section with header: ${sectionHead}`);
+			const changes = bySection.get(name)?.filter(
 				(change) =>
 					// filter out changes that shouldn't be in the release notes
-					(change.additionalMetadata?.includeInReleaseNotes ?? true) === true,
+					(change.additionalMetadata?.includeInReleaseNotes ??
+						FluidCustomChangeSetMetadataDefaults.includeInReleaseNotes) === true,
 			);
-			if (changes.length === 0) {
-				this.verbose(`Excluding section "${sectionName}" because it has no changes.`);
+			if (changes === undefined || changes.length === 0) {
+				this.info(`No changes in section "${name}", so it will be omitted.`);
 				continue;
 			}
 
-			body.append(`## ${sectionConfig.heading}\n\n`);
+			body.append(`## ${sectionHead}\n\n`);
 			for (const change of changes) {
 				if (change.changeTypes.includes("minor") || flags.releaseType === "major") {
 					body.append(`### ${change.summary}\n\n${change.content}\n\n`);
 					const affectedPackages = Object.keys(change.metadata)
 						.map((pkg) => `- ${pkg}\n`)
 						.join("");
+					body.append(`\nCommit: ${change.commitSha}\n\n`);
 					body.append(`#### Packages affected\n\n${affectedPackages}\n\n`);
 				} else {
 					this.info(
@@ -156,10 +170,16 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			}
 		}
 
-		// const contents = `${header}\n\n${intro}\n\n${body.toString()}\n\n${footer}`;
 		const contents = String(
 			await remark()
-				.use(remarkToc)
+				.use(remarkGfm)
+				.use(remarkGithub, {
+					buildUrl(values) {
+						// Disable linking mentions
+						return values.type === "mention" ? false : defaultBuildUrl(values);
+					},
+				})
+				.use(remarkToc, { maxDepth: 3, skip: ".*Start Building Today.*" })
 				.process(`${header}\n\n${intro}\n\n${body.toString()}\n\n${footer}`),
 		);
 

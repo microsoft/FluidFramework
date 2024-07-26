@@ -22,10 +22,39 @@ export const DEFAULT_CHANGESET_PATH = ".changeset";
  */
 export const UNKNOWN_SECTION = "_unknown";
 
+/**
+ * Additional metadata that can be used inside a changeset. This metadata should be set in a second fron-matter section.
+ * For example:
+ *
+ * ```
+ * ---
+ * "package-a": minor
+ * ---
+ * ---
+ * section: fix
+ * ---
+ *
+ * Changeset title.
+ *
+ * Changeset details
+ * ```
+ */
 export interface FluidCustomChangesetMetadata {
+	/**
+	 * The section in release notes in which this changeset should be included.
+	 */
 	section?: ReleaseNotesSection["name"];
+
+	/**
+	 * If false, the changeset will not be included in release notes. Defaults to true.
+	 */
 	includeInReleaseNotes?: boolean;
 }
+
+export const FluidCustomChangeSetMetadataDefaults: FluidCustomChangesetMetadata = {
+	section: undefined,
+	includeInReleaseNotes: true,
+} as const;
 
 export interface Changeset {
 	metadata: { [pkg: string]: VersionBumpType };
@@ -33,6 +62,7 @@ export interface Changeset {
 	changeTypes: VersionBumpType[];
 	content: string;
 	summary?: string;
+	commitSha?: string;
 	added?: Date;
 	additionalMetadata?: FluidCustomChangesetMetadata;
 	sourceFile: string;
@@ -77,9 +107,12 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 		// Get the date the changeset file was added to git.
 		// eslint-disable-next-line no-await-in-loop
 		const results = await repo.gitClient.log({ file, strictDate: true });
+		const commit = results.all?.at(-1);
+
+		const commitSha = commit?.hash;
 
 		// Newly added files won't have any results from git log, so default to now.
-		const added = parseISO(results.all?.at(-1)?.date ?? formatISO(Date.now()));
+		const added = parseISO(commit?.date ?? formatISO(Date.now()));
 
 		// Read the changeset file into content and metadata (front-matter)
 		// eslint-disable-next-line no-await-in-loop
@@ -117,6 +150,7 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 			mainPackage: Object.keys(packageBumpTypeMetadata)[0],
 			additionalMetadata,
 			content,
+			commitSha,
 			added,
 			summary,
 			sourceFile: file,
