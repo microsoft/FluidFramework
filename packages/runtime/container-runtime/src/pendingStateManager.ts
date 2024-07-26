@@ -338,7 +338,7 @@ export class PendingStateManager implements IDisposable {
 	 * @param sequenceNumber - The sequence number of the empty batch placeholder message.
 	 * @returns An empty array since no messages are processed. This is crucial to
 	 */
-	private processPendingLocalEmptyBatch(batchStartCsn, sequenceNumber): [] {
+	private processPendingLocalEmptyBatch(batchStartCsn: number, sequenceNumber: number): [] {
 		const pendingMessage = this.pendingMessages.peekFront();
 		assert(pendingMessage !== undefined, "No pending message found for this remote message");
 		assert(
@@ -564,7 +564,7 @@ export class PendingStateManager implements IDisposable {
 					pendingMessage.batchIdContext.clientId,
 					pendingMessage.batchIdContext.batchStartCsn,
 				);
-			// Ignore emptyBatch messages when resubmitting
+			// Resubmit no messages, with the batchId. Will result in another empty batch marker.
 			if (asEmptyBatchMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true) {
 				this.stateHandler.reSubmitBatch([], batchId);
 				continue;

@@ -16,7 +16,7 @@ export function asEmptyBatchMetadata(metadata: unknown): IEmptyBatchMetadata | u
 }
 
 /**
- * Properties put on the op metadata object for empty batches
+ * Properties put on the localOpMetadata object for empty batches
  */
 export interface IEmptyBatchMetadata {
 	// Set to true on localOpMetadata for empty batches

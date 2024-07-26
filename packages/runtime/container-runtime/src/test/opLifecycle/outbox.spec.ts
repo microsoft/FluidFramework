@@ -330,12 +330,14 @@ describe("Outbox", () => {
 			},
 		});
 		currentSeqNumbers.referenceSequenceNumber = 0;
+		// Typically, flushing with nothing submitted should be a no-op...
 		outbox.flush();
 		assert.equal(state.opsSubmitted, 0);
 		assert.equal(state.batchesSubmitted.length, 0);
 		assert.equal(state.deltaManagerFlushCalls, 0);
 		assert.equal(state.pendingOpContents.length, 0);
 		const batchId = "batchId";
+		// ...But if batchId is provided, it's resubmit, and we need to send an empty batch with the batchId
 		outbox.flush(batchId);
 		assert.equal(state.opsSubmitted, 1);
 		assert.equal(state.batchesSubmitted.length, 1);
