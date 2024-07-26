@@ -17,57 +17,58 @@
 // - For API where you can get this for a view schema, configuration options for which field names to use (stored or view) and plan for future config options.
 
 /**
+ * Kind of {@link TreeNodeSchema}.
  * @internal
  */
 export type SimpleNodeSchemaKind = "object" | "array" | "map" | "leaf";
 
 /**
- * @internal
+ * TODO
  */
 export type SimpleFieldSchemaKind = "optional" | "required" | "identifier";
 
 /**
- * @internal
+ * TODO
  */
 export type SimpleLeafSchemaKind = "string" | "number" | "boolean" | "null" | "fluid-handle";
 
 /**
- * @internal
+ * TODO
  */
 export interface SimpleNodeSchemaBase<TNodeKind extends SimpleNodeSchemaKind> {
 	readonly kind: TNodeKind;
 }
 
 /**
- * @internal
+ * TODO
  */
 export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<"object"> {
 	readonly fields: Record<string, SimpleFieldSchema>;
 }
 
 /**
- * @internal
+ * TODO
  */
 export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<"array"> {
 	readonly allowedTypes: ReadonlySet<string>;
 }
 
 /**
- * @internal
+ * TODO
  */
 export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<"map"> {
 	readonly allowedTypes: ReadonlySet<string>;
 }
 
 /**
- * @internal
+ * TODO
  */
 export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<"leaf"> {
 	readonly type: SimpleLeafSchemaKind;
 }
 
 /**
- * @internal
+ * TODO
  */
 export type SimpleNodeSchema =
 	| SimpleLeafNodeSchema
@@ -77,7 +78,6 @@ export type SimpleNodeSchema =
 
 /**
  * TODO
- * @internal
  */
 export interface SimpleFieldSchema {
 	readonly kind: SimpleFieldSchemaKind;
@@ -86,8 +86,9 @@ export interface SimpleFieldSchema {
 
 /**
  * TODO
- * @privateRemarks Currently assumes root field is required. TODO: verify this is true in simple tree world.
- * @internal
+ * @privateRemarks
+ * Currently assumes root field is required.
+ * TODO: verify this is true in simple tree world.
  */
 export interface SimpleTreeSchema {
 	readonly definitions: ReadonlyMap<string, SimpleNodeSchema>;
