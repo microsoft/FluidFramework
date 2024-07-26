@@ -14,9 +14,10 @@ import {
 	type Mark,
 	type MarkEffect,
 	NoopMarkType,
+	type Rename,
 } from "./types.js";
 import type { MoveMarkEffect } from "./helperTypes.js";
-import { isDetach } from "./utils.js";
+import { isDetach, isRename } from "./utils.js";
 
 export function replaceRevisions(
 	changeset: Changeset,
@@ -54,11 +55,13 @@ function updateEffect<TMark extends MarkEffect>(
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
 ): TMark {
-	const mark = isDetach(input)
-		? updateIdOverride(input, revisionsToReplace, newRevision)
-		: input;
+	const mark =
+		isDetach(input) || isRename(input)
+			? updateIdOverride(input, revisionsToReplace, newRevision)
+			: input;
 	const type = mark.type;
 	switch (type) {
+		case "Rename":
 		case NoopMarkType:
 			return mark;
 		case "AttachAndDetach":
@@ -83,7 +86,7 @@ function updateEffect<TMark extends MarkEffect>(
 	}
 }
 
-function updateIdOverride<TEffect extends Detach>(
+function updateIdOverride<TEffect extends Detach | Rename>(
 	effect: TEffect,
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,

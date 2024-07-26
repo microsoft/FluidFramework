@@ -100,6 +100,7 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
     get allowedTypeSet(): ReadonlySet<TreeNodeSchema>;
     readonly kind: Kind;
     readonly props?: FieldProps | undefined;
+    readonly requiresValue: boolean;
     protected _typeCheck?: MakeNominal;
 }
 
@@ -524,6 +525,9 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
     // @eventProperty
     (event: "memberRemoved", listener: MemberChangedListener<M>): void;
 }
+
+// @public
+export function isFluidHandle(value: unknown): value is IFluidHandle;
 
 // @public
 export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
