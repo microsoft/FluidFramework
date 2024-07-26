@@ -14,6 +14,13 @@ type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> =
     [FieldKind.Identifier]: DefaultsAreOptional extends true ? T | undefined : T;
 }[Kind];
 
+// @alpha
+export interface ArrayNodeJsonSchema extends NodeJsonSchemaBase<"array", "array"> {
+    readonly items: {
+        anyOf: JsonSchemaRef[];
+    };
+}
+
 // @public
 export enum CommitKind {
     Default = 0,
@@ -39,6 +46,11 @@ type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<Fiel
 
 // @public @sealed
 type FieldHasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> = T extends FieldSchemaUnsafe<FieldKind.Optional | FieldKind.Identifier, Unenforced<ImplicitAllowedTypes>> ? true : false;
+
+// @alpha
+export interface FieldJsonSchema {
+    readonly anyOf: JsonSchemaRef[];
+}
 
 // @public
 export enum FieldKind {
@@ -190,8 +202,30 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
     readonly schema: TSchema;
 }
 
+// @alpha
+export type JsonLeafSchemaType = "string" | "number" | "boolean" | "null";
+
+// @alpha
+export type JsonRefPath = `#/definitions/${JsonSchemaId}`;
+
+// @alpha
+export type JsonSchemaId = string;
+
+// @alpha
+export interface JsonSchemaRef {
+    $ref: JsonRefPath;
+}
+
+// @alpha
+export type JsonSchemaType = "object" | "array" | JsonLeafSchemaType;
+
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
+
+// @alpha
+export interface LeafNodeJsonSchema extends NodeJsonSchemaBase<"leaf", JsonLeafSchemaType> {
+    readonly type: JsonLeafSchemaType;
+}
 
 // @public @sealed
 export interface Listenable<TListeners extends object> {
@@ -205,6 +239,13 @@ export type Listeners<T extends object> = {
 
 // @public @sealed
 export interface MakeNominal {
+}
+
+// @alpha
+export interface MapNodeJsonSchema extends NodeJsonSchemaBase<"map", "object"> {
+    readonly patternProperties: {
+        "^.*$": FieldJsonSchema;
+    };
 }
 
 // @public
@@ -227,6 +268,15 @@ export interface NodeInDocumentConstraint {
     readonly type: "nodeInDocument";
 }
 
+// @alpha
+export type NodeJsonSchema = LeafNodeJsonSchema | MapNodeJsonSchema | ArrayNodeJsonSchema | ObjectNodeJsonSchema;
+
+// @alpha
+export interface NodeJsonSchemaBase<TNodeKind extends SimpleNodeSchemaKind, TJsonSchemaType extends JsonSchemaType> {
+    readonly kind: TNodeKind;
+    readonly type: TJsonSchemaType;
+}
+
 // @public
 export enum NodeKind {
     Array = 1,
@@ -244,6 +294,13 @@ type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, Implicit
 type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
+
+// @alpha
+export interface ObjectNodeJsonSchema extends NodeJsonSchemaBase<"object", "object"> {
+    readonly additionalProperties?: boolean;
+    readonly properties: Record<string, FieldJsonSchema>;
+    readonly required?: string[];
+}
 
 // @public
 export type Off = () => void;
@@ -337,6 +394,9 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 // @public
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
+// @alpha
+export type SimpleNodeSchemaKind = "object" | "array" | "map" | "leaf";
+
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
 
@@ -395,6 +455,11 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 
 // @public
 type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, false> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : unknown;
+
+// @alpha
+export interface TreeJsonSchema extends FieldJsonSchema {
+    readonly definitions: Record<JsonSchemaId, NodeJsonSchema>;
+}
 
 // @public
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;

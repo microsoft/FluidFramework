@@ -18,7 +18,7 @@
 
 /**
  * Kind of {@link TreeNodeSchema}.
- * @internal
+ * @alpha
  */
 export type SimpleNodeSchemaKind = "object" | "array" | "map" | "leaf";
 

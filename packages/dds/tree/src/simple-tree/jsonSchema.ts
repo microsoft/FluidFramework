@@ -11,7 +11,7 @@ import type { SimpleNodeSchemaKind } from "./simpleSchema.js";
 /**
  * The fully-qualified {@link TreeNodeSchemaCore.identifier}.
  * @example Schema `com.myapp.foo` would be referenced via `#/definitions/com.myapp.foo`.
- * @internal
+ * @alpha
  */
 export type JsonSchemaId = string;
 
@@ -20,27 +20,27 @@ export type JsonSchemaId = string;
  * Should be the fully-qualified {@link TreeNodeSchemaCore.identifier}.
  * @remarks Of the form `#/definitions/<schema-identifier>`, where the `schema-identifier` is the fully-qualified {@link TreeNodeSchemaCore.identifier}.
  * @example Schema `com.myapp.foo` would be referenced via `#/definitions/com.myapp.foo`.
- * @internal
+ * @alpha
  */
 export type JsonRefPath = `#/definitions/${JsonSchemaId}`;
 
 /**
  * JSON entity type.
  * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
- * @internal
+ * @alpha
  */
 export type JsonSchemaType = "object" | "array" | JsonLeafSchemaType;
 
 /**
  * JSON primitive types.
  * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
- * @internal
+ * @alpha
  */
 export type JsonLeafSchemaType = "string" | "number" | "boolean" | "null";
 
 /**
  * Base interface for node schemas represented in {@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} format.
- * @internal
+ * @alpha
  */
 export interface NodeJsonSchemaBase<
 	TNodeKind extends SimpleNodeSchemaKind,
@@ -65,7 +65,7 @@ export interface NodeJsonSchemaBase<
 /**
  * JSON Schema for an object node.
  * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
- * @internal
+ * @alpha
  */
 export interface ObjectNodeJsonSchema extends NodeJsonSchemaBase<"object", "object"> {
 	/**
@@ -94,7 +94,7 @@ export interface ObjectNodeJsonSchema extends NodeJsonSchemaBase<"object", "obje
 /**
  * JSON Schema for an array node.
  * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
- * @internal
+ * @alpha
  */
 export interface ArrayNodeJsonSchema extends NodeJsonSchemaBase<"array", "array"> {
 	/**
@@ -117,7 +117,7 @@ export interface ArrayNodeJsonSchema extends NodeJsonSchemaBase<"array", "array"
  * JSON Schema for a map node.
  * @remarks Special case for map nodes, which do not have a native JSON schema corollary.
  * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
- * @internal
+ * @alpha
  */
 export interface MapNodeJsonSchema extends NodeJsonSchemaBase<"map", "object"> {
 	/**
@@ -136,7 +136,7 @@ export interface MapNodeJsonSchema extends NodeJsonSchemaBase<"map", "object"> {
 /**
  * JSON Schema for a leaf node.
  * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
- * @internal
+ * @alpha
  */
 export interface LeafNodeJsonSchema extends NodeJsonSchemaBase<"leaf", JsonLeafSchemaType> {
 	/**
@@ -149,7 +149,7 @@ export interface LeafNodeJsonSchema extends NodeJsonSchemaBase<"leaf", JsonLeafS
 /**
  * Type entry containing a reference to a definition in the schema.
  * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-schema-references}.
- * @internal
+ * @alpha
  */
 export interface JsonSchemaRef {
 	/**
@@ -161,7 +161,7 @@ export interface JsonSchemaRef {
 
 /**
  * {@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} representation of a {@link TreeNodeSchema}.
- * @internal
+ * @alpha
  */
 export type NodeJsonSchema =
 	| LeafNodeJsonSchema
@@ -171,7 +171,7 @@ export type NodeJsonSchema =
 
 /**
  *{@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} representation of a {@link FieldSchema}.
- * @internal
+ * @alpha
  */
 export interface FieldJsonSchema {
 	/**
@@ -185,7 +185,7 @@ export interface FieldJsonSchema {
 /**
  * {@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} representation of a tree schema.
  * @remarks Includes the complete set of definitions reachable from the "root" schema.
- * @internal
+ * @alpha
  */
 export interface TreeJsonSchema extends FieldJsonSchema {
 	/**
