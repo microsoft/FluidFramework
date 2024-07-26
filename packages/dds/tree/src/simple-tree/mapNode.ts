@@ -238,8 +238,7 @@ export function mapSchema<
 			return getOrCreateMapTreeNode(
 				flexSchema,
 				mapTreeFromNodeData(
-					// Ensure input iterable is not an array. See TODO in shallowCompatibilityTest.
-					new Map(input as Iterable<readonly [string, InsertableContent]>),
+					input as Iterable<readonly [string, InsertableContent]>,
 					this as unknown as ImplicitAllowedTypes,
 				),
 			);
