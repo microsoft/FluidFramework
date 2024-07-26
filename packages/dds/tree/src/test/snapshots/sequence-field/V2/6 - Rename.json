@@ -4,38 +4,25 @@
     "effect": {
       "attachAndDetach": {
         "attach": {
-          "insert": {
-            "revision": 0,
-            "id": 0
+          "moveIn": {
+            "id": -1
           }
         },
         "detach": {
           "moveOut": {
-            "revision": 0,
-            "finalEndpoint": [
+            "idOverride": [
               0,
               0
             ],
-            "idOverride": {
-              "type": 0,
-              "id": {
-                "atom": [
-                  0,
-                  0
-                ]
-              }
-            },
-            "id": 0
+            "id": -1
           }
         }
       }
     },
-    "cellId": {
-      "atom": [
-        0,
-        0
-      ]
-    },
+    "cellId": [
+      0,
+      0
+    ],
     "changes": {
       "fieldChanges": [
         {

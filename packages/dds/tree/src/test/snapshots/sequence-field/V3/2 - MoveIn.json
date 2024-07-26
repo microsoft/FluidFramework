@@ -2,27 +2,13 @@
   {
     "count": 1,
     "effect": {
-      "attachAndDetach": {
-        "attach": {
-          "insert": {
-            "revision": 0,
-            "id": 0
-          }
-        },
-        "detach": {
-          "moveOut": {
-            "revision": 0,
-            "finalEndpoint": [
-              0,
-              0
-            ],
-            "idOverride": [
-              0,
-              0
-            ],
-            "id": 0
-          }
-        }
+      "moveIn": {
+        "revision": 0,
+        "finalEndpoint": [
+          0,
+          0
+        ],
+        "id": 0
       }
     },
     "cellId": [
