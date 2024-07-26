@@ -2857,7 +2857,7 @@ export class ContainerRuntime
 						envelope.clientSignalSequenceNumber -
 						this._perfSignalData.trackingSignalSequenceNumber;
 					this.mc.logger.sendErrorEvent({
-						eventName: "",
+						eventName: "SignalLost",
 						type: envelope.contents.type,
 						signalsLost: this._perfSignalData.signalsLost,
 						trackingSequenceNumber: this._perfSignalData.trackingSignalSequenceNumber,
