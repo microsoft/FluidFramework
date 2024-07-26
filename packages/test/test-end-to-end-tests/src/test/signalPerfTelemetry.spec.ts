@@ -45,7 +45,7 @@ describeCompat("Signal performance telemetry", "NoCompat", (getTestObjectProvide
 	});
 
 	itExpects(
-		"Signal performance telemetry",
+		"latency telemetry after 100 broadcast signals",
 		[
 			{
 				eventName: "fluid:telemetry:ContainerRuntime:SignalLatency",
