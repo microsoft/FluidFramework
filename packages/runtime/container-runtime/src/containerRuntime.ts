@@ -2564,7 +2564,6 @@ export class ContainerRuntime
 		this._connected = connected;
 
 		if (!connected) {
-			this._perfSignalData.signalsLost = 0;
 			this._perfSignalData.signalTimestamp = 0;
 			this._perfSignalData.trackingSignalSequenceNumber = undefined;
 		} else {
@@ -2836,7 +2835,6 @@ export class ContainerRuntime
 			signalsLost: this._perfSignalData.signalsLost,
 		});
 
-		this._perfSignalData.signalsLost = 0;
 		this._perfSignalData.signalTimestamp = 0;
 	}
 
@@ -2850,29 +2848,51 @@ export class ContainerRuntime
 
 		// Only collect signal telemetry for messages sent by the current client.
 		if (message.clientId === this.clientId && this.connected) {
-			// Check to see if the signal was lost.
-			if (
-				this._perfSignalData.trackingSignalSequenceNumber !== undefined &&
-				envelope.clientSignalSequenceNumber > this._perfSignalData.trackingSignalSequenceNumber
-			) {
-				this._perfSignalData.signalsLost++;
-				this._perfSignalData.trackingSignalSequenceNumber = undefined;
-				this.mc.logger.sendErrorEvent({
-					eventName: "SignalLost",
-					type: envelope.contents.type,
-					signalsLost: this._perfSignalData.signalsLost,
-					trackingSequenceNumber: this._perfSignalData.trackingSignalSequenceNumber,
-					clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
-				});
-			} else if (
-				envelope.clientSignalSequenceNumber ===
-				this._perfSignalData.trackingSignalSequenceNumber
-			) {
-				// only logging for the first connection and the trackingSignalSequenceNUmber.
-				if (this.consecutiveReconnects === 0) {
-					this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
+			if (this._perfSignalData.trackingSignalSequenceNumber !== undefined) {
+				if (
+					envelope.clientSignalSequenceNumber >
+					this._perfSignalData.trackingSignalSequenceNumber
+				) {
+					this._perfSignalData.signalsLost +=
+						envelope.clientSignalSequenceNumber -
+						this._perfSignalData.trackingSignalSequenceNumber;
+					this.mc.logger.sendErrorEvent({
+						eventName: "",
+						type: envelope.contents.type,
+						signalsLost: this._perfSignalData.signalsLost,
+						trackingSequenceNumber: this._perfSignalData.trackingSignalSequenceNumber,
+						clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
+					});
+					// Update the tracking signal sequence number to the next expected signal in the sequence.
+					this._perfSignalData.trackingSignalSequenceNumber =
+						envelope.clientSignalSequenceNumber + 1;
+				} else if (
+					envelope.clientSignalSequenceNumber <
+					this._perfSignalData.trackingSignalSequenceNumber
+				) {
+					// If the signal is received out of order, we need to adjust the signalsLost count and log the event.
+					this._perfSignalData.signalsLost--;
+
+					this.mc.logger.sendErrorEvent({
+						eventName: "SignalOutOfOrder",
+						type: envelope.contents.type,
+						signalsLost: this._perfSignalData.signalsLost,
+						trackingSequenceNumber: this._perfSignalData.trackingSignalSequenceNumber,
+						clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
+					});
+				} else {
+					// Update the tracking signal sequence number to the next expected signal in the sequence.
+					this._perfSignalData.trackingSignalSequenceNumber++;
 				}
-				this._perfSignalData.trackingSignalSequenceNumber = undefined;
+			} else {
+				// Initialize the perf signal data to track next signal if undefined.
+				this._perfSignalData.trackingSignalSequenceNumber =
+					envelope.clientSignalSequenceNumber + 1;
+			}
+
+			// only log roundtrip time of signals with timestamps on first connection
+			if (this._perfSignalData.signalTimestamp !== 0 && this.consecutiveReconnects === 0) {
+				this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
 			}
 		}
 
@@ -3128,13 +3148,8 @@ export class ContainerRuntime
 			contents: { type, content },
 		};
 
-		// We should not track any signals in case we already have a tracking number.
-		if (
-			newSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
-			this._perfSignalData.trackingSignalSequenceNumber === undefined
-		) {
+		if (newSequenceNumber % this.defaultTelemetrySignalSampleCount === 1) {
 			this._perfSignalData.signalTimestamp = Date.now();
-			this._perfSignalData.trackingSignalSequenceNumber = newSequenceNumber;
 		}
 
 		return newEnvelope;
