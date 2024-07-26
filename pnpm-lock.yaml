@@ -1958,8 +1958,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.49.0
+        version: 0.49.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7005,8 +7005,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.49.0
+        version: 0.49.0
       '@fluid-tools/build-cli':
         specifier: ^0.41.0
         version: 0.41.0(@types/node@18.19.1)
@@ -7444,8 +7444,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/test-drivers
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.49.0
+        version: 0.49.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -8034,8 +8034,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: ^0.47.0
-        version: 0.47.0
+        specifier: ^0.49.0
+        version: 0.49.0
       '@fluid-tools/build-cli':
         specifier: ^0.41.0
         version: 0.41.0(@types/node@18.19.1)
@@ -8522,8 +8522,8 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.49.0
+        version: 0.49.0
       '@fluid-tools/build-cli':
         specifier: ^0.41.0
         version: 0.41.0(@types/node@18.19.1)
@@ -8658,8 +8658,8 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.49.0
+        version: 0.49.0
       '@fluid-tools/build-cli':
         specifier: ^0.41.0
         version: 0.41.0(@types/node@18.19.1)
@@ -8794,8 +8794,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.49.0
+        version: 0.49.0
       '@fluid-tools/build-cli':
         specifier: ^0.41.0
         version: 0.41.0(@types/node@18.19.1)
@@ -9251,8 +9251,8 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.49.0
+        version: 0.49.0
       '@fluid-tools/build-cli':
         specifier: ^0.41.0
         version: 0.41.0(@types/node@18.19.1)
@@ -9871,8 +9871,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-drivers
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.49.0
+        version: 0.49.0
       '@fluid-tools/build-cli':
         specifier: ^0.41.0
         version: 0.41.0(@types/node@18.19.1)
@@ -12618,8 +12618,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.49.0
+        version: 0.49.0
       '@fluid-tools/build-cli':
         specifier: ^0.41.0
         version: 0.41.0(@types/node@18.19.1)
@@ -12967,8 +12967,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/stochastic-test-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.49.0
+        version: 0.49.0
       '@fluid-tools/build-cli':
         specifier: ^0.41.0
         version: 0.41.0(@types/node@18.19.1)
@@ -14424,8 +14424,8 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.49.0
+        version: 0.49.0
       '@fluid-tools/build-cli':
         specifier: ^0.41.0
         version: 0.41.0(@types/node@18.19.1)
@@ -14730,8 +14730,8 @@ importers:
         specifier: workspace:~
         version: link:../test-version-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.49.0
+        version: 0.49.0
       '@fluidframework/agent-scheduler':
         specifier: workspace:~
         version: link:../../framework/agent-scheduler
@@ -21036,22 +21036,8 @@ packages:
       '@fluidframework/driver-definitions': 2.1.0
     dev: true
 
-  /@fluid-tools/benchmark@0.47.0:
-    resolution: {integrity: sha512-lQ2ijhUJ68aOHqH1UxOBmAsSWfx2dIuI4vAlQ4e/ueh0a8KUZ8D8AUpJPu1k1pwuTlOuvb629BY9Q4HC6H/KBQ==}
-    dependencies:
-      chai: 4.3.10
-      chalk: 4.1.2
-      easy-table: 1.2.0
-      mocha: 10.2.0
-      mocha-json-output-reporter: 2.1.0(mocha@10.2.0)(moment@2.29.4)
-      mocha-multi-reporters: 1.5.1(mocha@10.2.0)
-      moment: 2.29.4
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
-  /@fluid-tools/benchmark@0.48.0:
-    resolution: {integrity: sha512-4eCnt4rQg+08zWGmAq1kjO0uWwDjU3aCW8Uz8ufLxASOZJ5T35RKX7REcuxNOzFVanfh4CKVV/E6a7grPDO3Lw==}
+  /@fluid-tools/benchmark@0.49.0:
+    resolution: {integrity: sha512-H+3NWaVOTJmZdjCUYCmAMUPpaTNnttkdSD8vqqebAwDFkAiBs1XnqVtN5VajJngvKYB+RJvJAqxKD5oDjFxyvw==}
     dependencies:
       chai: 4.3.10
       chalk: 4.1.2
@@ -39809,6 +39795,7 @@ packages:
   /normalize-path@2.1.1:
     resolution: {integrity: sha512-3pKJwH184Xo/lnH6oyP1q2pMd7HcypqqmRs91/6/i2CGtWwIKGCkOOMTm/zXbgTEWHw1uNpNi/igc3ePOYHb6w==}
     engines: {node: '>=0.10.0'}
+    requiresBuild: true
     dependencies:
       remove-trailing-separator: 1.1.0
     dev: true
@@ -42809,6 +42796,7 @@ packages:
 
   /remove-trailing-separator@1.1.0:
     resolution: {integrity: sha512-/hS+Y0u3aOfIETiaiirUFwDBDzmXPvO+jAfKTitUngIPzdKc6Z0LoFjM/CK5PL4C+eKwHohlHAb6H0VFfmmUsw==}
+    requiresBuild: true
     dev: true
 
   /renderkid@2.0.7:
