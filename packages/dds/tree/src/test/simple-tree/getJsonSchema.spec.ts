@@ -89,8 +89,8 @@ describe.only("getJsonSchema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.map("map", schemaFactory.string) {}
 
+		// TODO: once Map nodes are supported, update this to test the output.
 		assert.throws(() => getJsonSchema(Schema));
-		// TODO
 		// const actual = getJsonSchema(Schema);
 		// const expected: TreeJsonSchema = {
 		// 	definitions: {
@@ -98,7 +98,7 @@ describe.only("getJsonSchema", () => {
 		// 			type: "object",
 		// 			kind: "map",
 		// 			patternProperties: {
-		// 				"^(.*)+$": { anyOf: [{ $ref: "#/definitions/com.fluidframework.leaf.string" }] },
+		// 				"^.*$": { anyOf: [{ $ref: "#/definitions/com.fluidframework.leaf.string" }] },
 		// 			},
 		// 		},
 		// 		"com.fluidframework.leaf.string": {

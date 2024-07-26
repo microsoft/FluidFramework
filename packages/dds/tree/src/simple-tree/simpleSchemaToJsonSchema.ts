@@ -131,7 +131,7 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): MapNodeJsonSchema {
 	// 	type: "object",
 	// 	kind: "map",
 	// 	patternProperties: {
-	// 		"^(.*)+$": {
+	// 		"^.*$": {
 	// 			anyOf: allowedTypes,
 	// 		},
 	// 	},

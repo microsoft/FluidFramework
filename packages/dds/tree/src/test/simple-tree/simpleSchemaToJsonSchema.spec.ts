@@ -95,7 +95,7 @@ describe.only("simpleSchemaToJsonSchema", () => {
 		validator(["Hello", 42, "world"], false);
 	});
 
-	it.skip("Map schema", () => {
+	it("Map schema", () => {
 		const input: SimpleTreeSchema = {
 			definitions: new Map<string, SimpleNodeSchema>([
 				["test.map", { kind: "map", allowedTypes: new Set<string>(["test.string"]) }],
@@ -104,52 +104,54 @@ describe.only("simpleSchemaToJsonSchema", () => {
 			allowedTypes: new Set<string>(["test.map"]),
 		};
 
-		const actual = toJsonSchema(input);
+		// TODO: once Map nodes are supported, update this to test the output.
+		assert.throws(() => toJsonSchema(input));
+		// const actual = toJsonSchema(input);
 
-		const expected: TreeJsonSchema = {
-			definitions: {
-				"test.map": {
-					type: "object",
-					kind: "map",
-					patternProperties: {
-						"^(.*)+$": { anyOf: [{ $ref: "#/definitions/test.string" }] },
-					},
-				},
-				"test.string": {
-					type: "string",
-					kind: "leaf",
-				},
-			},
-			anyOf: [
-				{
-					$ref: "#/definitions/test.map",
-				},
-			],
-		};
-		assert.deepEqual(actual, expected);
+		// const expected: TreeJsonSchema = {
+		// 	definitions: {
+		// 		"test.map": {
+		// 			type: "object",
+		// 			kind: "map",
+		// 			patternProperties: {
+		// 				"^.*$": { anyOf: [{ $ref: "#/definitions/test.string" }] },
+		// 			},
+		// 		},
+		// 		"test.string": {
+		// 			type: "string",
+		// 			kind: "leaf",
+		// 		},
+		// 	},
+		// 	anyOf: [
+		// 		{
+		// 			$ref: "#/definitions/test.map",
+		// 		},
+		// 	],
+		// };
+		// assert.deepEqual(actual, expected);
 
-		// Verify that the generated schema is valid.
-		const validator = getJsonValidator(actual);
+		// // Verify that the generated schema is valid.
+		// const validator = getJsonValidator(actual);
 
-		// Verify expected data validation behavior.
-		validator("Hello world", false);
-		validator([], false);
-		validator({}, true);
-		validator(
-			{
-				foo: "Hello",
-				bar: "World",
-			},
-			true,
-		);
-		validator(
-			{
-				foo: "Hello",
-				bar: "World",
-				baz: 42,
-			},
-			false,
-		);
+		// // Verify expected data validation behavior.
+		// validator("Hello world", false);
+		// validator([], false);
+		// validator({}, true);
+		// validator(
+		// 	{
+		// 		foo: "Hello",
+		// 		bar: "World",
+		// 	},
+		// 	true,
+		// );
+		// validator(
+		// 	{
+		// 		foo: "Hello",
+		// 		bar: "World",
+		// 		baz: 42,
+		// 	},
+		// 	false,
+		// );
 	});
 
 	it("Object schema", () => {
