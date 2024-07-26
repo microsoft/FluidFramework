@@ -7,7 +7,7 @@ Allow constructing ArrayNodes from Maps and MapNodes from arrays when unambiguou
 
 Since the types for ArrayNodes and MapNodes indicate they can be constructed from iterables,
 it should work, even if those iterables are themselves arrays or maps.
-To avoid this being a breaking change, a priority systems was introduced.
+To avoid this being a breaking change, a priority system was introduced.
 ArrayNodes will only be implicitly constructable from JavaScript Map objects in contexts where no MapNodes are allowed.
 Similarly MapNodes will only be implicitly constructable from JavaScript Array objects in contexts where no ArrayNodes are allowed.
 
@@ -23,7 +23,6 @@ const fromArray = new Root({ data: [["x", 5]] });
 Prior versions used to have to do:
 ```typescript
 new Root({ data: new MyMapNode([["x", 5]]) });
-````
 or:
 ```typescript
 new Root({ data: new Map([["x", 5]]) });
