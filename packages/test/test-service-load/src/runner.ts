@@ -89,17 +89,6 @@ async function main() {
 		process.env.DEBUG = log;
 	}
 
-	const profile = getProfile(profileName);
-
-	if (url === undefined) {
-		console.error("Missing --url argument needed to run child process");
-		process.exit(-1);
-	}
-
-	// combine the runId with the seed for generating local randoms
-	// this makes runners repeatable, but ensures each runner
-	// will get its own set of randoms
-	const random = makeRandom(seed, runId);
 	const { logger, flush } = await createLogger(outputDir, runId.toString(), {
 		runId,
 		driverType: driver,
@@ -122,6 +111,18 @@ async function main() {
 			console.error("Error during logging unhandled exception: ", e);
 		}
 	});
+
+	const profile = getProfile(profileName);
+
+	if (url === undefined) {
+		console.error("Missing --url argument needed to run child process");
+		process.exit(-1);
+	}
+
+	// combine the runId with the seed for generating local randoms
+	// this makes runners repeatable, but ensures each runner
+	// will get its own set of randoms
+	const random = makeRandom(seed, runId);
 
 	let result = -1;
 	try {

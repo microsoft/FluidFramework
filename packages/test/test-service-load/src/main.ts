@@ -92,10 +92,6 @@ const main = async () => {
 		process.env.DEBUG = log;
 	}
 
-	const profile = getProfile(profileName);
-
-	const testUsers = credFilePath !== undefined ? getTestUsers(credFilePath) : undefined;
-
 	const testDriver = await createTestDriver(
 		driver,
 		endpoint,
@@ -113,26 +109,33 @@ const main = async () => {
 		runId: undefined,
 	});
 
-	await stressTest(testDriver, profile, {
-		testId,
-		debug,
-		verbose,
-		seed,
-		enableMetrics,
-		createTestId,
-		testUsers,
-		profileName,
-		logger,
-		outputDir,
-	});
+	try {
+		const profile = getProfile(profileName);
 
-	// There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
-	// TODO: Track down the dangling promise and fix it.
-	await new Promise((resolve) => {
-		setTimeout(resolve, 1000);
-	});
-	// Flush the logs
-	await flush();
+		const testUsers = credFilePath !== undefined ? getTestUsers(credFilePath) : undefined;
+
+		await stressTest(testDriver, profile, {
+			testId,
+			debug,
+			verbose,
+			seed,
+			enableMetrics,
+			createTestId,
+			testUsers,
+			profileName,
+			logger,
+			outputDir,
+		});
+	} finally {
+		// There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
+		// TODO: Track down the dangling promise and fix it.
+		await new Promise((resolve) => {
+			setTimeout(resolve, 1000);
+		});
+		// Flush the logs
+		await flush();
+	}
+
 	process.exit(0);
 };
 
