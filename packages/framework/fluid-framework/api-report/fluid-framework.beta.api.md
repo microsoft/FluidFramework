@@ -497,6 +497,9 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 }
 
 // @public
+export function isFluidHandle(value: unknown): value is IFluidHandle;
+
+// @public
 export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
 
 // @public
