@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import globby from "globby";
