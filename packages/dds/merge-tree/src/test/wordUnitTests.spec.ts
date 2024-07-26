@@ -175,9 +175,7 @@ function measureFetch(startFile: string, withBookmarks = false): void {
 	}
 	const et = elapsedMicroseconds(clockStart);
 	console.log(
-		`fetch of ${count / reps} runs over ${client.getLength()} total chars took ${(
-			et / count
-		).toFixed(1)} microseconds per run`,
+		`fetch of ${count / reps} runs over ${client.getLength()} total chars took ${(et / count).toFixed(1)} microseconds per run`,
 	);
 }
 

@@ -14,7 +14,7 @@ import {
 	type TreeView,
 } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
-import { getView } from "../utils.js";
+import { getView, validateUsageError } from "../utils.js";
 import { MockNodeKeyManager } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
 
@@ -57,6 +57,79 @@ describe("class-tree tree", () => {
 		);
 		const view: TreeView<typeof Canvas> = tree.viewWith(config);
 		view.initialize({ stuff: ["a", "b"] });
+	});
+
+	// TODO: AB#9126:
+	// This attempts to test the two main cases for validation, initial trees and inserted content.
+	// Due to multiple issues, neither actually run the validation.
+	// TODO: come up with a way to ensure the validation actually gets run so this test would fail due to not validating things.
+	it("default identifier with schema validation", () => {
+		class HasId extends schema.object("hasID", { id: schema.identifier }) {}
+		const config = new TreeViewConfiguration({ schema: HasId, enableSchemaValidation: true });
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = tree.viewWith(config);
+		// TODO: Issues prevent this test from detecting the bug this would otherwise detect.
+		// This would error (due to schema validation being done before default is provided, see note on mapTreeFromNodeData),
+		// but this issue is not detected since we fail to validate the initial tree due to issue noted in isNodeInSchema ( AB#8197 )
+		// (validation is using incorrect schema, which is empty, which we special case to not validate to work around that breaking).
+		view.initialize({});
+		const idFromInitialize = Tree.shortId(view.root);
+		assert(typeof idFromInitialize === "number");
+
+		// toMapTree skips schema validation when creating the unhydrated node since it does not have a context to opt in.
+		const newNode = new HasId({});
+		// This should validate the inserted content (this test is attempting to check validation is done after defaults are provided).
+		// TODO: `isNodeInSchema` is not actually called on this code-path, so no validation is done.
+		view.root = newNode;
+		const idFromHydration = Tree.shortId(view.root);
+		assert(typeof idFromHydration === "number");
+		assert(idFromInitialize !== idFromHydration);
+	});
+
+	// TODO: AB#9127: fix unhydrated custom identifier Tree.shortId case which blocks this from running.
+	it.skip("custom identifier copied from tree", () => {
+		class HasId extends schema.object("hasID", { id: schema.identifier }) {}
+		const config = new TreeViewConfiguration({ schema: HasId, enableSchemaValidation: true });
+		const treeSrc = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+
+		const view = treeSrc.viewWith(config);
+		view.initialize({});
+		const idFromInitialize = Tree.shortId(view.root);
+		assert(typeof idFromInitialize === "number");
+
+		const treeDst = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+
+		const viewDst = treeDst.viewWith(config);
+		viewDst.initialize({});
+		const newNode = new HasId({ id: view.root.id });
+		const idFromUnhydrated = Tree.shortId(newNode);
+		viewDst.root = newNode;
+		const idFromHydrated = Tree.shortId(newNode);
+		assert.equal(idFromUnhydrated, idFromHydrated);
+	});
+
+	// TODO: AB#9128: this asserts instead of throwing a usage error.
+	it.skip("viewWith twice errors", () => {
+		class Empty extends schema.object("Empty", {}) {}
+		const config = new TreeViewConfiguration({ schema: Empty });
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+
+		const view = tree.viewWith(config);
+		assert.throws(() => {
+			const view2 = tree.viewWith(config);
+		}, validateUsageError(/views/));
 	});
 
 	it("accessing view.root does not leak LazyEntities", () => {

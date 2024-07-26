@@ -20,7 +20,6 @@ import { TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
-// eslint-disable-next-line import/no-deprecated
 import { PropertySet, clone, createMap, type MapLike } from "./properties.js";
 import {
 	ReferencePosition,
@@ -29,6 +28,7 @@ import {
 } from "./referencePositions.js";
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
+import { Side } from "./sequencePlace.js";
 
 /**
  * Common properties for a node in a merge tree.
@@ -254,6 +254,14 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * Properties that have been added to this segment via annotation.
 	 */
 	properties?: PropertySet;
+	/**
+	 * Stores side information passed to obliterate for the start of a range.
+	 */
+	startSide?: Side.Before | Side.After;
+	/**
+	 * Stores side information passed to obliterate for the end of a range.
+	 */
+	endSide?: Side.Before | Side.After;
 
 	/**
 	 * Add properties to this segment via annotation.
@@ -451,9 +459,7 @@ export class MergeBlock implements IMergeNodeCommon {
 		// Using Array.from leads to unused children being undefined, which are counted in childCount.
 		// eslint-disable-next-line unicorn/no-new-array
 		this.children = new Array<IMergeNode>(MaxNodesInBlock);
-		// eslint-disable-next-line import/no-deprecated
 		this.rightmostTiles = createMap<Marker>();
-		// eslint-disable-next-line import/no-deprecated
 		this.leftmostTiles = createMap<Marker>();
 	}
 
@@ -524,7 +530,7 @@ export abstract class BaseSegment implements ISegment {
 	): PropertySet {
 		this.propertyManager ??= new PropertiesManager();
 		// A property set must be able to hold properties of any type, so the any is needed.
-		// eslint-disable-next-line import/no-deprecated, @typescript-eslint/no-explicit-any
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		this.properties ??= createMap<any>();
 		return this.propertyManager.addProperties(
 			this.properties,
@@ -546,7 +552,6 @@ export abstract class BaseSegment implements ISegment {
 	protected cloneInto(b: ISegment): void {
 		b.clientId = this.clientId;
 		// TODO: deep clone properties
-		// eslint-disable-next-line import/no-deprecated
 		b.properties = clone(this.properties);
 		b.removedClientIds = this.removedClientIds?.slice();
 		// TODO: copy removed client overlap and branch removal info
@@ -651,7 +656,10 @@ export abstract class BaseSegment implements ISegment {
 		// Give the leaf a temporary yet valid ordinal.
 		// when this segment is put in the tree, it will get its real ordinal,
 		// but this ordinal meets all the necessary invariants for now.
-		leafSegment.ordinal = this.ordinal + String.fromCodePoint(0);
+		// Ordinals exist purely for lexicographical sort order and use a small set of valid bytes for each string character.
+		// The extra handling fromCodePoint has for things like surrogate pairs is therefore unnecessary.
+		// eslint-disable-next-line unicorn/prefer-code-point
+		leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
 
 		leafSegment.removedClientIds = this.removedClientIds?.slice();
 		leafSegment.removedSeq = this.removedSeq;
@@ -913,15 +921,11 @@ export class CollaborationWindow {
 
 /**
  * Compares two numbers.
- *
- * @internal
  */
 export const compareNumbers = (a: number, b: number): number => a - b;
 
 /**
  * Compares two strings.
- *
- * @internal
  */
 export const compareStrings = (a: string, b: string): number => a.localeCompare(b);
 

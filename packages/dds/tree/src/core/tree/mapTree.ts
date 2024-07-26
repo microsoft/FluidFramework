@@ -19,3 +19,16 @@ import type { NodeData } from "./types.js";
 export interface MapTree extends NodeData {
 	readonly fields: ReadonlyMap<FieldKey, readonly MapTree[]>;
 }
+
+/**
+ * {@link MapTree} which is owned by a single reference, and allowed to be mutated.
+ *
+ * @remarks
+ * To not keep multiple references to a value with this type around to avoid unexpected mutations.
+ * While this type does implement MapTree, it should not be used as a MapTree while it is being mutated.
+ *
+ * @internal
+ */
+export interface ExclusiveMapTree extends NodeData, MapTree {
+	fields: Map<FieldKey, ExclusiveMapTree[]>;
+}

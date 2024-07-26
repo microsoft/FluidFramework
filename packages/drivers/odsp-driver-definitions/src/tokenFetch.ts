@@ -14,7 +14,7 @@ export interface TokenResponse {
 
 	/**
 	 * Authorization header value will be used verbatim when making network call that requires the token.
-	 * If not returned the token value will be assumed to be a Bearer token and will be used to generate the
+	 * If not provided, the token value will be assumed to be a Bearer token and will be used to generate the
 	 * Authorization header value in the following format: `Bearer ${token}`.
 	 */
 	readonly authorizationHeader?: string;

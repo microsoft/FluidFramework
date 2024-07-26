@@ -54,23 +54,6 @@ import type {
 
 describe("flexTreeTypes", () => {
 	/**
-	 * Example showing narrowing and exhaustive matches.
-	 */
-	function exhaustiveMatchSimple(root: FlexTreeField): void {
-		const schema = SchemaBuilder.required([() => leaf.number, leaf.string]);
-		assert(root.is(schema));
-		const tree = root.boxedContent;
-		if (tree.is(leaf.number)) {
-			const n: number = tree.value;
-		} else if (tree.is(leaf.string)) {
-			const s: string = tree.value;
-		} else {
-			// Proves at compile time exhaustive match checking works, and tree is typed `never`.
-			unreachableCase(tree);
-		}
-	}
-
-	/**
 	 * Example showing the node kinds used in the json domain (everything except structs),
 	 * including narrowing and exhaustive matches.
 	 */
@@ -140,7 +123,6 @@ describe("flexTreeTypes", () => {
 	 */
 	function boxingExample(mixed: Mixed): void {
 		const leafNode: number = mixed.leaf;
-		const leafBoxed: FlexTreeTypedNode<typeof leaf.number> = mixed.boxedLeaf.boxedContent;
 
 		// Current policy is to box polymorphic values so they can be checked for type with `is`.
 		// Note that this still unboxes the value field.
@@ -154,8 +136,6 @@ describe("flexTreeTypes", () => {
 		> = mixed.boxedPolymorphic;
 
 		const optionalLeaf: number | undefined = mixed.optionalLeaf;
-		const boxedOptionalLeaf: FlexTreeTypedNode<typeof leaf.number> | undefined =
-			mixed.boxedOptionalLeaf.boxedContent;
 		const sequence: FlexTreeSequenceField<readonly [typeof leaf.number]> = mixed.sequence;
 
 		const child: number | undefined = sequence.at(0);

@@ -243,13 +243,19 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				provider.processMessages();
 
 				// Insert node
-				tree1.flexTree.insertAtStart([value]);
+				tree1.flexTree.sequenceEditor().insert(
+					0,
+					cursorForJsonableTreeNode({
+						type: leaf.string.name,
+						value,
+					}),
+				);
 				provider.processMessages();
 
 				await takeSnapshot(provider.trees[0], "tree-0-after-insert");
 
 				// Remove node
-				tree1.flexTree.removeAt(0);
+				tree1.flexTree.sequenceEditor().remove(0, 1);
 
 				provider.processMessages();
 

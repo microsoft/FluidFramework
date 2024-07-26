@@ -325,7 +325,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			if (i !== 0 || !areEqualAttributionKeys(lastEntry, other.keys[i])) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				this.offsets.push(other.offsets[i]! + this.length);
-				// TODO: see line 305
+				// Looping through the keys, so we can be sure that the key is not undefined.
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				this.keys.push(other.keys[i]!);
 			}

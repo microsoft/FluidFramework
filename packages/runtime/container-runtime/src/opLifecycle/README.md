@@ -10,7 +10,6 @@
     -   [Grouped batching](#grouped-batching)
         -   [Changes in op semantics](#changes-in-op-semantics)
     -   [Chunking for compression](#chunking-for-compression)
-    -   [Disabling in case of emergency](#disabling-in-case-of-emergency)
     -   [Configuration](#configuration)
     -   [Note about performance and latency](#note-about-performance-and-latency)
     -   [How it works](#how-it-works)
@@ -102,13 +101,6 @@ The `IContainerRuntimeOptions.chunkSizeInBytes` property is the only configurati
 This config would govern chunking compressed batches only. We will not be enabling chunking across all types of ops/batches but **only when compression is enabled and when the batch is compressed**, and its payload size is more than `IContainerRuntimeOptions.chunkSizeInBytes`.
 
 Chunking is relevant for both `FlushMode.TurnBased` and `FlushMode.Immediate` as it only targets the contents of the ops and not the number of ops in a batch. Chunking is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
-
-## Disabling in case of emergency
-
-Compression and Chunking configuration can be overridden via feature gates to force-disable them:
-
--   `Fluid.ContainerRuntime.CompressionDisabled` - if set to true, will disable compression (this has a side effect of also disabling chunking, as chunking is invoked only for compressed payloads).
--   `Fluid.ContainerRuntime.CompressionChunkingDisabled` - if set to true, will disable chunking for compression.
 
 ## Configuration
 

@@ -139,7 +139,10 @@ export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment,
 	}
 
 	get ordinal(): string {
-		return String.fromCodePoint(0x00);
+		// Ordinals exist purely for lexicographical sort order and use a small set of valid bytes for each string character.
+		// The extra handling fromCodePoint has for things like surrogate pairs is therefore unnecessary.
+		// eslint-disable-next-line unicorn/prefer-code-point
+		return String.fromCharCode(0x00);
 	}
 }
 

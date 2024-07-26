@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	CursorLocationType,
-	EmptyKey,
-	type ITreeCursorSynchronous,
-	type TreeNodeSchemaIdentifier,
-} from "../core/index.js";
+import { CursorLocationType, EmptyKey, type ITreeCursorSynchronous } from "../core/index.js";
 import {
 	type FlexAllowedTypes,
 	type FlexFieldNodeSchema,
@@ -24,10 +19,9 @@ import {
 import {
 	type InsertableContent,
 	getOrCreateNodeProxy,
-	markContentType,
 	prepareContentForHydration,
 } from "./proxies.js";
-import { getFlexNode } from "./proxyBinding.js";
+import { getFlexNode, getKernel } from "./proxyBinding.js";
 import {
 	NodeKind,
 	type ImplicitAllowedTypes,
@@ -40,7 +34,12 @@ import {
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
-import { type TreeNode, TreeNodeValid, type InternalTreeNode } from "./types.js";
+import {
+	type TreeNode,
+	TreeNodeValid,
+	type InternalTreeNode,
+	type MostDerivedData,
+} from "./types.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -558,10 +557,8 @@ function createArrayNodeProxy(
 				return Reflect.get(dispatchTarget, key, receiver) as unknown;
 			}
 
-			const maybeUnboxedContent = field.at(maybeIndex);
-			return isFlexTreeNode(maybeUnboxedContent)
-				? getOrCreateNodeProxy(maybeUnboxedContent)
-				: maybeUnboxedContent;
+			const maybeContent = field.at(maybeIndex);
+			return isFlexTreeNode(maybeContent) ? getOrCreateNodeProxy(maybeContent) : maybeContent;
 		},
 		set: (target, key, newValue, receiver) => {
 			if (key === "length") {
@@ -588,7 +585,7 @@ function createArrayNodeProxy(
 					"Cannot set indexed properties on array nodes. Use array node mutation APIs to alter the array.",
 				);
 			}
-			return allowAdditionalProperties ? Reflect.set(target, key, newValue) : false;
+			return allowAdditionalProperties ? Reflect.set(target, key, newValue, receiver) : false;
 		},
 		has: (target, key) => {
 			const field = getSequenceField(proxy);
@@ -680,7 +677,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
 	) {
 		super(input);
-		getFlexNode(this).on("nodeChanged", () => {
+		getKernel(this).on("nodeChanged", () => {
 			this.#generationNumber += 1;
 		});
 	}
@@ -840,13 +837,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		const destinationField = getSequenceField(this);
 		validateIndex(destinationIndex, destinationField, "moveRangeToIndex", true);
 		validateIndexRange(sourceStart, sourceEnd, source ?? destinationField, "moveRangeToIndex");
-		const sourceField =
-			source !== undefined
-				? destinationField.isSameAs(getSequenceField(source))
-					? destinationField
-					: getSequenceField(source)
-				: destinationField;
-
+		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
 		// TODO: determine support for move across different sequence types
 		if (destinationField.schema.types !== undefined && sourceField !== destinationField) {
 			for (let i = sourceStart; i < sourceEnd; i++) {
@@ -942,8 +933,8 @@ export function arraySchema<
 			return getOrCreateMapTreeNode(
 				flexSchema,
 				mapTreeFromNodeData(
-					copyContent(
-						flexSchema.name,
+					// Ensure input iterable is not an map. See TODO in shallowCompatibilityTest.
+					Array.from(
 						input as Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 					) as object,
 					this as unknown as ImplicitAllowedTypes,
@@ -951,7 +942,7 @@ export function arraySchema<
 			);
 		}
 
-		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
+		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexFieldNodeSchema;
@@ -997,12 +988,6 @@ export function arraySchema<
 	}
 
 	return schema;
-}
-
-function copyContent<T>(typeName: TreeNodeSchemaIdentifier, content: Iterable<T>): T[] {
-	const copy = Array.from(content);
-	markContentType(typeName, copy);
-	return copy;
 }
 
 function validateSafeInteger(index: number): void {
