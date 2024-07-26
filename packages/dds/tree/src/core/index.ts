@@ -191,8 +191,6 @@ export {
 	taggedOptAtomId,
 	offsetChangeAtomId,
 	replaceAtomRevisions,
-	getFromChangeAtomIdMap,
-	setInChangeAtomIdMap,
 	replaceChange,
 	type RebaseStats,
 	type RebaseStatsWithDuration,

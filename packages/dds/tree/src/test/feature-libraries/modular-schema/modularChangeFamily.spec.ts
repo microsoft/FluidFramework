@@ -58,7 +58,6 @@ import {
 	nestedMapFromFlatList,
 	setInNestedMap,
 	tryGetFromNestedMap,
-	mapNestedMap,
 } from "../../../util/index.js";
 import {
 	type EncodingTestData,
@@ -74,6 +73,7 @@ import { type ValueChangeset, valueField } from "./basicRebasers.js";
 import { ajvValidator } from "../../codec/index.js";
 import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
 import type {
+	ChangeAtomIdBTree,
 	CrossFieldKeyTable,
 	FieldChangeMap,
 	FieldId,
@@ -86,6 +86,7 @@ import {
 	updateRefreshers,
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	newCrossFieldKeyTable,
+	newTupleBTree,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type {
@@ -95,7 +96,7 @@ import type {
 } from "../../../feature-libraries/modular-schema/index.js";
 import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
-import { Change, removeAliases } from "./modularChangesetUtil.js";
+import { assertEqual, Change, removeAliases } from "./modularChangesetUtil.js";
 
 type SingleNodeChangeset = NodeId | undefined;
 const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
@@ -451,27 +452,22 @@ describe("ModularChangeFamily", () => {
 
 		it("prioritizes earlier build entries when faced with duplicates", () => {
 			const change1: ModularChangeset = {
-				nodeChanges: new Map(),
-				fieldChanges: new Map(),
-				nodeToParent: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-				nodeAliases: new Map(),
-				builds: new Map([[undefined, new Map([[brand(0), node1Chunk]])]]),
-			};
-			const change2: ModularChangeset = {
-				nodeChanges: new Map(),
-				fieldChanges: new Map(),
-				nodeToParent: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-				nodeAliases: new Map(),
-				builds: new Map([
-					[undefined, new Map([[brand(0), treeChunkFromCursor(singleJsonCursor(2))]])],
+				...Change.empty(),
+				builds: newTupleBTree([
+					[[undefined as RevisionTag | undefined, brand(0)], node1Chunk],
 				]),
 			};
-			assert.deepEqual(
-				family.compose([makeAnonChange(change1), makeAnonChange(change2)]),
-				change1,
-			);
+			const change2: ModularChangeset = {
+				...Change.empty(),
+				builds: newTupleBTree([
+					[
+						[undefined as RevisionTag | undefined, brand(0)],
+						treeChunkFromCursor(singleJsonCursor(2)),
+					],
+				]),
+			};
+
+			assertEqual(family.compose([makeAnonChange(change1), makeAnonChange(change2)]), change1);
 		});
 
 		it("compose specific ○ specific", () => {
@@ -494,7 +490,7 @@ describe("ModularChangeFamily", () => {
 				family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2)]),
 			);
 
-			assert.deepEqual(composed, expectedCompose);
+			assertEqual(composed, expectedCompose);
 		});
 
 		it("compose specific ○ generic", () => {
@@ -517,7 +513,7 @@ describe("ModularChangeFamily", () => {
 				family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2Generic)]),
 			);
 
-			assert.deepEqual(composed, expectedCompose);
+			assertEqual(composed, expectedCompose);
 		});
 
 		it("compose generic ○ specific", () => {
@@ -541,7 +537,7 @@ describe("ModularChangeFamily", () => {
 				family.compose([makeAnonChange(rootChange1aGeneric), makeAnonChange(rootChange2)]),
 			);
 
-			assert.deepEqual(composed, expectedCompose);
+			assertEqual(composed, expectedCompose);
 		});
 
 		it("compose generic ○ generic", () => {
@@ -568,7 +564,7 @@ describe("ModularChangeFamily", () => {
 				]),
 			);
 
-			assert.deepEqual(composed, expectedCompose);
+			assertEqual(composed, expectedCompose);
 		});
 
 		it("compose tagged changes", () => {
@@ -626,20 +622,16 @@ describe("ModularChangeFamily", () => {
 				),
 			);
 
-			assert.deepEqual(composed, expected);
+			assertEqual(composed, expected);
 		});
 
 		it("build ○ matching destroy = ε", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					builds: new Map([
-						[undefined, new Map([[brand(0), node1Chunk]])],
-						[tag2, new Map([[brand(0), node1Chunk]])],
+					...Change.empty(),
+					builds: newTupleBTree([
+						[[undefined, brand(0)], node1Chunk],
+						[[tag2, brand(0)], node1Chunk],
 					]),
 				},
 				tag1,
@@ -647,14 +639,10 @@ describe("ModularChangeFamily", () => {
 
 			const change2: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					destroys: new Map([
-						[tag1, new Map([[brand(0), 1]])],
-						[undefined, new Map([[brand(0), 1]])],
+					...Change.empty(),
+					destroys: newTupleBTree([
+						[[tag1, brand(0)], 1],
+						[[undefined, brand(0)], 1],
 					]),
 				},
 				tag2,
@@ -665,28 +653,20 @@ describe("ModularChangeFamily", () => {
 			const composed = family.compose([change1, change2]);
 
 			const expected: ModularChangeset = {
-				nodeChanges: new Map(),
-				fieldChanges: new Map(),
-				nodeToParent: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-				nodeAliases: new Map(),
+				...Change.empty(),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
-			assert.deepEqual(composed, expected);
+			assertEqual(composed, expected);
 		});
 
 		it("destroy ○ matching build = ε", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					destroys: new Map([
-						[tag1, new Map([[brand(0), 1]])],
-						[undefined, new Map([[brand(0), 1]])],
+					...Change.empty(),
+					destroys: newTupleBTree([
+						[[tag1, brand(0)], 1],
+						[[undefined, brand(0)], 1],
 					]),
 				},
 				tag2,
@@ -694,14 +674,10 @@ describe("ModularChangeFamily", () => {
 
 			const change2: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					builds: new Map([
-						[undefined, new Map([[brand(0), node1Chunk]])],
-						[tag2, new Map([[brand(0), node1Chunk]])],
+					...Change.empty(),
+					builds: newTupleBTree([
+						[[undefined, brand(0)], node1Chunk],
+						[[tag2, brand(0)], node1Chunk],
 					]),
 				},
 				tag1,
@@ -712,55 +688,42 @@ describe("ModularChangeFamily", () => {
 			const composed = family.compose([change1, change2]);
 
 			const expected: ModularChangeset = {
-				nodeChanges: new Map(),
-				fieldChanges: new Map(),
-				nodeToParent: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-				nodeAliases: new Map(),
+				...Change.empty(),
 				revisions: [{ revision: tag2 }, { revision: tag1 }],
 			};
 
-			assert.deepEqual(composed, expected);
+			assertEqual(composed, expected);
 		});
 
 		it("non-matching builds and destroys", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					builds: new Map([
-						[undefined, new Map([[brand(0), treeChunkFromCursor(node1)]])],
-						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
+					...Change.empty(),
+					builds: newTupleBTree([
+						[[undefined, brand(0)], treeChunkFromCursor(node1)],
+						[[tag3, brand(0)], treeChunkFromCursor(node1)],
 					]),
-					destroys: new Map([
-						[undefined, new Map([[brand(1), 1]])],
-						[tag3, new Map([[brand(1), 1]])],
+					destroys: newTupleBTree([
+						[[undefined, brand(1)], 1],
+						[[tag3, brand(1)], 1],
 					]),
 				},
 				tag1,
 			);
 
-			const change2: TaggedChange<ModularChangeset> = tagChange(
+			const change2: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					builds: new Map([
-						[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
-						[tag3, new Map([[brand(2), treeChunkFromCursor(node1)]])],
+					...Change.empty(),
+					builds: newTupleBTree([
+						[[undefined, brand(2)], treeChunkFromCursor(node1)],
+						[[tag3, brand(2)], treeChunkFromCursor(node1)],
 					]),
-					destroys: new Map([
-						[undefined, new Map([[brand(3), 1]])],
-						[tag3, new Map([[brand(3), 1]])],
+					destroys: newTupleBTree([
+						[[undefined, brand(3)], 1],
+						[[tag3, brand(3)], 1],
 					]),
-					revisions: [{ revision: tag2 }],
 				},
-				undefined,
+				tag2,
 			);
 
 			deepFreeze(change1);
@@ -768,62 +731,49 @@ describe("ModularChangeFamily", () => {
 			const composed = family.compose([change1, change2]);
 
 			const expected: ModularChangeset = {
-				nodeChanges: new Map(),
-				fieldChanges: new Map(),
-				nodeToParent: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-				nodeAliases: new Map(),
-				builds: new Map([
-					[tag1, new Map([[brand(0), treeChunkFromCursor(node1)]])],
-					[tag2, new Map([[brand(2), treeChunkFromCursor(node1)]])],
+				...Change.empty(),
+				builds: newTupleBTree([
+					[[tag1 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(node1)],
+					[[tag2, brand(2)], treeChunkFromCursor(node1)],
 					[
-						tag3,
-						new Map([
-							[brand(0), treeChunkFromCursor(node1)],
-							[brand(2), treeChunkFromCursor(node1)],
-						]),
+						[
+							tag3,
+
+							brand(0),
+						],
+						treeChunkFromCursor(node1),
 					],
+					[[tag3, brand(2)], treeChunkFromCursor(node1)],
 				]),
-				destroys: new Map([
-					[tag1, new Map([[brand(1), 1]])],
-					[tag2, new Map([[brand(3), 1]])],
-					[
-						tag3,
-						new Map([
-							[brand(1), 1],
-							[brand(3), 1],
-						]),
-					],
+				destroys: newTupleBTree([
+					[[tag1 as RevisionTag | undefined, brand(1)], 1],
+					[[tag2, brand(3)], 1],
+					[[tag3, brand(1)], 1],
+					[[tag3, brand(3)], 1],
 				]),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
-			assert.deepEqual(composed, expected);
+			assertEqual(composed, expected);
 		});
 
 		it("refreshers", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					refreshers: new Map([[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])]]),
+					...Change.empty(),
+					refreshers: newTupleBTree([
+						[[tag3 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(node1)],
+					]),
 				},
 				tag1,
 			);
 
 			const change2: TaggedChange<ModularChangeset> = tagChange(
 				{
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					refreshers: new Map([
-						[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
-						[tag3, new Map([[brand(2), treeChunkFromCursor(node1)]])],
+					...Change.empty(),
+					refreshers: newTupleBTree([
+						[[undefined, brand(2)], treeChunkFromCursor(node1)],
+						[[tag3, brand(2)], treeChunkFromCursor(node1)],
 					]),
 					revisions: [{ revision: tag2 }],
 				},
@@ -835,49 +785,34 @@ describe("ModularChangeFamily", () => {
 			const composed = family.compose([change1, change2]);
 
 			const expected: ModularChangeset = {
-				nodeChanges: new Map(),
-				fieldChanges: new Map(),
-				nodeToParent: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-				nodeAliases: new Map(),
-				refreshers: new Map([
-					[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
-					[
-						tag3,
-						new Map([
-							[brand(0), treeChunkFromCursor(node1)],
-							[brand(2), treeChunkFromCursor(node1)],
-						]),
-					],
+				...Change.empty(),
+				refreshers: newTupleBTree([
+					[[undefined, brand(2)], treeChunkFromCursor(node1)],
+					[[tag3, brand(0)], treeChunkFromCursor(node1)],
+					[[tag3, brand(2)], treeChunkFromCursor(node1)],
 				]),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
-			assert.deepEqual(composed, expected);
+			assertEqual(composed, expected);
 		});
 
 		it("refreshers with the same detached node id", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					refreshers: new Map([[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])]]),
+					...Change.empty(),
+					refreshers: newTupleBTree([
+						[[tag3 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(node1)],
+					]),
 				},
 				tag1,
 			);
 
 			const change2: TaggedChange<ModularChangeset> = tagChange(
 				{
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					refreshers: new Map([
-						[tag3, new Map([[brand(0), treeChunkFromCursor(objectNode)]])],
+					...Change.empty(),
+					refreshers: newTupleBTree([
+						[[tag3 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(objectNode)],
 					]),
 					revisions: [{ revision: tag2 }],
 				},
@@ -889,16 +824,14 @@ describe("ModularChangeFamily", () => {
 			const composed = family.compose([change1, change2]);
 
 			const expected: ModularChangeset = {
-				nodeChanges: new Map(),
-				fieldChanges: new Map(),
-				nodeToParent: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-				nodeAliases: new Map(),
-				refreshers: new Map([[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])]]),
+				...Change.empty(),
+				refreshers: newTupleBTree([
+					[[tag3 as RevisionTag | undefined, brand(0)], treeChunkFromCursor(node1)],
+				]),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
-			assert.deepEqual(composed, expected);
+			assertEqual(composed, expected);
 		});
 	});
 
@@ -928,7 +861,7 @@ describe("ModularChangeFamily", () => {
 				},
 			]);
 
-			assert.deepEqual(family.invert(makeAnonChange(rootChange1a), false), expectedInverse);
+			assertEqual(family.invert(makeAnonChange(rootChange1a), false), expectedInverse);
 		});
 
 		it("generic", () => {
@@ -947,46 +880,29 @@ describe("ModularChangeFamily", () => {
 				Change.field(fieldB, valueField.identifier, valueInverse2),
 			);
 
-			assert.deepEqual(
-				family.invert(makeAnonChange(rootChange1aGeneric), false),
-				expectedInverse,
-			);
+			assertEqual(family.invert(makeAnonChange(rootChange1aGeneric), false), expectedInverse);
 		});
 
 		it("build => destroy but only for rollback", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					builds: new Map([
-						[undefined, new Map([[brand(0), node1Chunk]])],
-						[tag2, new Map([[brand(1), node1Chunk]])],
+					...Change.empty(),
+					builds: newTupleBTree([
+						[[undefined, brand(0)], node1Chunk],
+						[[tag2, brand(1)], node1Chunk],
 					]),
 				},
 				tag1,
 			);
 
 			const expectedRollback: ModularChangeset = {
-				nodeChanges: new Map(),
-				fieldChanges: new Map(),
-				nodeToParent: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-				nodeAliases: new Map(),
-				destroys: new Map([
-					[tag1, new Map([[brand(0), 1]])],
-					[tag2, new Map([[brand(1), 1]])],
+				...Change.empty(),
+				destroys: newTupleBTree([
+					[[tag1 as RevisionTag | undefined, brand(0)], 1],
+					[[tag2, brand(1)], 1],
 				]),
 			};
-			const expectedUndo: ModularChangeset = {
-				nodeChanges: new Map(),
-				fieldChanges: new Map(),
-				nodeToParent: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-				nodeAliases: new Map(),
-			};
+			const expectedUndo: ModularChangeset = Change.empty();
 
 			deepFreeze(change1);
 			const actualRollback = family.invert(change1, true);
@@ -994,8 +910,8 @@ describe("ModularChangeFamily", () => {
 
 			actualRollback.crossFieldKeys.unfreeze();
 			actualUndo.crossFieldKeys.unfreeze();
-			assert.deepEqual(actualRollback, expectedRollback);
-			assert.deepEqual(actualUndo, expectedUndo);
+			assertEqual(actualRollback, expectedRollback);
+			assertEqual(actualUndo, expectedUndo);
 		});
 	});
 
@@ -1006,7 +922,7 @@ describe("ModularChangeFamily", () => {
 				makeAnonChange(rootChange1a),
 				revisionMetadataSourceFromInfo([]),
 			);
-			assert.deepEqual(rebased, rebasedChange);
+			assertEqual(rebased, rebasedChange);
 		});
 
 		it("rebase specific ↷ generic", () => {
@@ -1015,7 +931,7 @@ describe("ModularChangeFamily", () => {
 				makeAnonChange(rootChange1aGeneric),
 				revisionMetadataSourceFromInfo([]),
 			);
-			assert.deepEqual(rebased, rebasedChange);
+			assertEqual(rebased, rebasedChange);
 		});
 
 		it("rebase generic ↷ specific", () => {
@@ -1024,7 +940,7 @@ describe("ModularChangeFamily", () => {
 				makeAnonChange(rootChange1a),
 				revisionMetadataSourceFromInfo([]),
 			);
-			assert.deepEqual(rebased, genericChangeRebasedOverSpecific);
+			assertEqual(rebased, genericChangeRebasedOverSpecific);
 		});
 
 		it("rebase generic ↷ generic", () => {
@@ -1033,7 +949,7 @@ describe("ModularChangeFamily", () => {
 				makeAnonChange(rootChange1aGeneric),
 				revisionMetadataSourceFromInfo([]),
 			);
-			assert.deepEqual(rebased, rebasedChangeGeneric);
+			assertEqual(rebased, rebasedChangeGeneric);
 		});
 	});
 
@@ -1069,20 +985,18 @@ describe("ModularChangeFamily", () => {
 		it("builds", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					builds: new Map([
-						[undefined, new Map([[brand(1), node1Chunk]])],
+					...Change.empty(),
+					builds: newTupleBTree([
+						[[undefined, brand(1)], node1Chunk],
 						[
-							tag2,
-							new Map([
-								[brand(2), node1Chunk],
-								[brand(3), nodesChunk],
-							]),
+							[
+								tag2,
+
+								brand(2),
+							],
+							node1Chunk,
 						],
+						[[tag2, brand(3)], nodesChunk],
 					]),
 				},
 				tag1,
@@ -1103,15 +1017,11 @@ describe("ModularChangeFamily", () => {
 		it("destroys", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					destroys: new Map([
-						[undefined, new Map([[brand(1), 1]])],
-						[tag2, new Map([[brand(2), 1]])],
-						[tag2, new Map([[brand(3), 10]])],
+					...Change.empty(),
+					destroys: newTupleBTree([
+						[[undefined, brand(1)], 1],
+						[[tag2, brand(2)], 1],
+						[[tag2, brand(3)], 10],
 					]),
 				},
 				tag1,
@@ -1132,20 +1042,11 @@ describe("ModularChangeFamily", () => {
 		it("refreshers", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					refreshers: new Map([
-						[undefined, new Map([[brand(1), node1Chunk]])],
-						[
-							tag2,
-							new Map([
-								[brand(2), node1Chunk],
-								[brand(3), nodesChunk],
-							]),
-						],
+					...Change.empty(),
+					refreshers: newTupleBTree([
+						[[undefined, brand(1)], node1Chunk],
+						[[tag2, brand(2)], node1Chunk],
+						[[tag2, brand(3)], nodesChunk],
 					]),
 				},
 				tag1,
@@ -1221,18 +1122,15 @@ describe("ModularChangeFamily", () => {
 				nested: [],
 			};
 			const input: ModularChangeset = {
-				nodeChanges: new Map(),
+				...Change.empty(),
 				fieldChanges: new Map([
 					[brand("fA"), { fieldKind, change: brand(changeA) }],
 					[brand("fB"), { fieldKind, change: brand(changeB) }],
 				]),
-				nodeToParent: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-				nodeAliases: new Map(),
 			};
 
 			const actual = relevantRemovedRoots(input);
-			assert.deepEqual(actual, [a1, a2, b1]);
+			assertEqual(actual, [a1, a2, b1]);
 		});
 
 		it("nested fields", () => {
@@ -1257,18 +1155,16 @@ describe("ModularChangeFamily", () => {
 			};
 
 			const input: ModularChangeset = {
-				nodeChanges: nestedMapFromFlatList([
-					[nodeId1.revision, nodeId1.localId, nodeChangeFromHasRemovedRootsRefs(changeB)],
-					[nodeId2.revision, nodeId2.localId, nodeChangeFromHasRemovedRootsRefs(changeC)],
+				...Change.empty(),
+				nodeChanges: newTupleBTree([
+					[[nodeId1.revision, nodeId1.localId], nodeChangeFromHasRemovedRootsRefs(changeB)],
+					[[nodeId2.revision, nodeId2.localId], nodeChangeFromHasRemovedRootsRefs(changeC)],
 				]),
 				fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
-				nodeToParent: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-				nodeAliases: new Map(),
 			};
 
 			const actual = relevantRemovedRoots(input);
-			assert.deepEqual(actual, [a1, c1]);
+			assertEqual(actual, [a1, c1]);
 		});
 	});
 
@@ -1299,204 +1195,119 @@ describe("ModularChangeFamily", () => {
 
 		it("preserves relevant refreshers that are present in the input", () => {
 			const input: ModularChangeset = {
-				nodeChanges: new Map(),
-				fieldChanges: new Map(),
-				nodeToParent: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-				nodeAliases: new Map(),
-				refreshers: new Map([[aMajor, new Map([[brand(2), node2Chunk]])]]),
-			};
-
-			const expected: ModularChangeset = {
-				nodeChanges: new Map(),
-				fieldChanges: new Map(),
-				nodeToParent: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-				nodeAliases: new Map(),
-				refreshers: new Map([[aMajor, new Map([[brand(2), node2Chunk]])]]),
-			};
-
-			const withBuilds = updateRefreshers(input, getDetachedNode, [a2]);
-			assert.deepEqual(withBuilds, expected);
-		});
-
-		it("removes irrelevant refreshers that are present in the input", () => {
-			const input: ModularChangeset = {
-				nodeChanges: new Map(),
-				fieldChanges: new Map(),
-				nodeToParent: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-				nodeAliases: new Map(),
-				refreshers: new Map([
-					[
-						aMajor,
-						new Map([
-							[brand(1), node1Chunk],
-							[brand(2), node2Chunk],
-						]),
-					],
-					[bMajor, new Map([[brand(1), node3Chunk]])],
+				...Change.empty(),
+				refreshers: newTupleBTree([
+					[[aMajor as RevisionTag | undefined, brand(2)], node2Chunk],
 				]),
 			};
 
 			const expected: ModularChangeset = {
-				nodeChanges: new Map(),
-				fieldChanges: new Map(),
-				nodeToParent: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-				nodeAliases: new Map(),
+				...Change.empty(),
+				refreshers: newTupleBTree([
+					[[aMajor as RevisionTag | undefined, brand(2)], node2Chunk],
+				]),
 			};
 
+			const withBuilds = updateRefreshers(input, getDetachedNode, [a2]);
+			assertEqual(withBuilds, expected);
+		});
+
+		it("removes irrelevant refreshers that are present in the input", () => {
+			const input: ModularChangeset = {
+				...Change.empty(),
+				refreshers: newTupleBTree([
+					[[aMajor as RevisionTag | undefined, brand(1)], node1Chunk],
+					[[aMajor, brand(2)], node2Chunk],
+					[[bMajor, brand(1)], node3Chunk],
+				]),
+			};
+
+			const expected: ModularChangeset = Change.empty();
 			const filtered = updateRefreshers(input, getDetachedNode, []);
-			assert.deepEqual(filtered, expected);
+			assertEqual(filtered, expected);
 		});
 
 		it("recognizes chunks in the builds array with length longer than one", () => {
 			assert.equal(nodesChunk.topLevelLength, 2);
 			const input: ModularChangeset = {
-				nodeChanges: new Map(),
-				fieldChanges: new Map(),
-				nodeToParent: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-				nodeAliases: new Map(),
-				builds: new Map([[aMajor, new Map([[brand(3), nodesChunk]])]]),
+				...Change.empty(),
+				builds: newTupleBTree([[[aMajor as RevisionTag | undefined, brand(3)], nodesChunk]]),
 			};
 
 			const expected: ModularChangeset = {
-				nodeChanges: new Map(),
-				fieldChanges: new Map(),
-				nodeToParent: new Map(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-				nodeAliases: new Map(),
-				builds: new Map([[aMajor, new Map([[brand(3), nodesChunk]])]]),
+				...Change.empty(),
+				builds: newTupleBTree([[[aMajor as RevisionTag | undefined, brand(3)], nodesChunk]]),
 			};
 
 			const withBuilds = updateRefreshers(input, getDetachedNode, [
 				{ major: aMajor, minor: 4 },
 			]);
-			assert.deepEqual(withBuilds, expected);
+			assertEqual(withBuilds, expected);
 		});
 
 		describe("attempts to add relevant refreshers that are missing from the input", () => {
 			it("adds the missing refresher if the detached node is available", () => {
-				const input: ModularChangeset = {
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-				};
+				const input: ModularChangeset = Change.empty();
 
 				const expected: ModularChangeset = {
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					refreshers: new Map([
-						[
-							aMajor,
-							new Map([
-								[brand(1), node1Chunk],
-								[brand(2), node2Chunk],
-							]),
-						],
-						[bMajor, new Map([[brand(1), node3Chunk]])],
+					...Change.empty(),
+					refreshers: newTupleBTree([
+						[[aMajor as RevisionTag | undefined, brand(1)], node1Chunk],
+						[[aMajor, brand(2)], node2Chunk],
+						[[bMajor, brand(1)], node3Chunk],
 					]),
 				};
 
 				const withBuilds = updateRefreshers(input, getDetachedNode, [a1, a2, b1]);
-				assert.deepEqual(withBuilds, expected);
+				assertEqual(withBuilds, expected);
 			});
 
 			it("replaces outdated refreshers", () => {
 				const input: ModularChangeset = {
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					refreshers: new Map([
-						[
-							aMajor,
-							new Map([
-								[brand(1), node2Chunk],
-								[brand(2), node1Chunk],
-							]),
-						],
+					...Change.empty(),
+					refreshers: newTupleBTree([
+						[[aMajor as RevisionTag | undefined, brand(1)], node2Chunk],
+						[[aMajor, brand(2)], node1Chunk],
 					]),
 				};
 
 				const expected: ModularChangeset = {
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					refreshers: new Map([
-						[
-							aMajor,
-							new Map([
-								[brand(1), node1Chunk],
-								[brand(2), node2Chunk],
-							]),
-						],
+					...Change.empty(),
+					refreshers: newTupleBTree([
+						[[aMajor as RevisionTag | undefined, brand(1)], node1Chunk],
+						[[aMajor, brand(2)], node2Chunk],
 					]),
 				};
 
 				const filtered = updateRefreshers(input, getDetachedNode, [a1, a2]);
-				assert.deepEqual(filtered, expected);
+				assertEqual(filtered, expected);
 			});
 
 			it("does not add a refresher that is present in the builds", () => {
 				const input: ModularChangeset = {
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					builds: new Map([
-						[
-							aMajor,
-							new Map([
-								[brand(1), node1Chunk],
-								[brand(2), node2Chunk],
-							]),
-						],
-						[bMajor, new Map([[brand(1), node3Chunk]])],
+					...Change.empty(),
+					builds: newTupleBTree([
+						[[aMajor as RevisionTag | undefined, brand(1)], node1Chunk],
+						[[aMajor, brand(2)], node2Chunk],
+						[[bMajor, brand(1)], node3Chunk],
 					]),
 				};
 
 				const expected: ModularChangeset = {
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-					builds: new Map([
-						[
-							aMajor,
-							new Map([
-								[brand(1), node1Chunk],
-								[brand(2), node2Chunk],
-							]),
-						],
-						[bMajor, new Map([[brand(1), node3Chunk]])],
+					...Change.empty(),
+					builds: newTupleBTree([
+						[[aMajor as RevisionTag | undefined, brand(1)], node1Chunk],
+						[[aMajor, brand(2)], node2Chunk],
+						[[bMajor, brand(1)], node3Chunk],
 					]),
 				};
 
 				const withBuilds = updateRefreshers(input, getDetachedNode, [a1, a2, b1]);
-				assert.deepEqual(withBuilds, expected);
+				assertEqual(withBuilds, expected);
 			});
 
 			it("throws if the detached node is not available and requireRefreshers is true", () => {
-				const input: ModularChangeset = {
-					nodeChanges: new Map(),
-					fieldChanges: new Map(),
-					nodeToParent: new Map(),
-					crossFieldKeys: newCrossFieldKeyTable(),
-					nodeAliases: new Map(),
-				};
+				const input: ModularChangeset = Change.empty();
 				assert.throws(() => updateRefreshers(input, getDetachedNode, [{ minor: 2 }]));
 			});
 		});
@@ -1506,7 +1317,7 @@ describe("ModularChangeFamily", () => {
 		function assertEquivalent(change1: ModularChangeset, change2: ModularChangeset) {
 			const normalized1 = normalizeChangeset(change1);
 			const normalized2 = normalizeChangeset(change2);
-			assert.deepEqual(normalized1, normalized2);
+			assertEqual(normalized1, normalized2);
 		}
 
 		const sessionId = "session1" as SessionId;
@@ -1533,9 +1344,9 @@ describe("ModularChangeFamily", () => {
 					inlineRevision(
 						{
 							...buildChangeset([]),
-							builds: new Map([
-								[undefined, new Map([[brand(1), node1Chunk]])],
-								[tag2, new Map([[brand(2), nodesChunk]])],
+							builds: newTupleBTree([
+								[[undefined, brand(1)], node1Chunk],
+								[[tag2, brand(2)], nodesChunk],
 							]),
 						},
 						tag1,
@@ -1547,9 +1358,9 @@ describe("ModularChangeFamily", () => {
 					inlineRevision(
 						{
 							...buildChangeset([]),
-							refreshers: new Map([
-								[undefined, new Map([[brand(1), node1Chunk]])],
-								[tag2, new Map([[brand(2), nodesChunk]])],
+							refreshers: newTupleBTree([
+								[[undefined, brand(1)], node1Chunk],
+								[[tag2, brand(2)], nodesChunk],
 							]),
 						},
 						tag1,
@@ -1594,7 +1405,7 @@ describe("ModularChangeFamily", () => {
 			),
 		);
 
-		assert.deepEqual(changes, [expectedChange]);
+		assertEqual(changes, [expectedChange]);
 	});
 });
 
@@ -1613,8 +1424,8 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 	const idAllocator = idAllocatorFromMaxId();
 
 	const idRemappings: ChangeAtomIdMap<NodeId> = new Map();
-	const nodeChanges: ChangeAtomIdMap<NodeChangeset> = new Map();
-	const nodeToParent: ChangeAtomIdMap<FieldId> = new Map();
+	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
+	const nodeToParent: ChangeAtomIdBTree<FieldId> = newTupleBTree();
 	const crossFieldKeyTable: CrossFieldKeyTable = newCrossFieldKeyTable();
 
 	const remapNodeId = (nodeId: NodeId): NodeId => {
@@ -1630,11 +1441,7 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 	};
 
 	const normalizeNodeChanges = (nodeId: NodeId): NodeId => {
-		const nodeChangeset = tryGetFromNestedMap(
-			change.nodeChanges,
-			nodeId.revision,
-			nodeId.localId,
-		);
+		const nodeChangeset = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
 		assert(nodeChangeset !== undefined, "Unknown node ID");
 
 		const normalizedNodeChangeset: NodeChangeset = { ...nodeChangeset };
@@ -1646,12 +1453,12 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 
 		const newId: NodeId = { localId: brand(idAllocator.allocate()) };
 		setInNestedMap(idRemappings, nodeId.revision, nodeId.localId, newId);
-		setInNestedMap(nodeChanges, newId.revision, newId.localId, normalizedNodeChangeset);
+		nodeChanges.set([newId.revision, newId.localId], normalizedNodeChangeset);
 
-		const parent = tryGetFromNestedMap(change.nodeToParent, nodeId.revision, nodeId.localId);
+		const parent = change.nodeToParent.get([nodeId.revision, nodeId.localId]);
 		assert(parent !== undefined, "Every node should have a parent");
 		const newParent = remapFieldId(parent);
-		setInNestedMap(nodeToParent, newId.revision, newId.localId, newParent);
+		nodeToParent.set([newId.revision, newId.localId], newParent);
 
 		return newId;
 	};
@@ -1693,10 +1500,10 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 
 	// The TreeChunk objects need to be deep cloned to avoid comparison issues on reference counting
 	if (change.builds !== undefined) {
-		normal.builds = mapNestedMap(change.builds, deepCloneChunkedTree);
+		normal.builds = brand(change.builds.mapValues(deepCloneChunkedTree));
 	}
 	if (change.refreshers !== undefined) {
-		normal.refreshers = mapNestedMap(change.refreshers, deepCloneChunkedTree);
+		normal.refreshers = brand(change.refreshers.mapValues(deepCloneChunkedTree));
 	}
 	return normal;
 }

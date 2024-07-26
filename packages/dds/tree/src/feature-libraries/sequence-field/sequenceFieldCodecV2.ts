@@ -6,7 +6,11 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
-import { DiscriminatedUnionDispatcher, type IJsonCodec } from "../../codec/index.js";
+import {
+	DiscriminatedUnionDispatcher,
+	type DiscriminatedUnionLibrary,
+	type IJsonCodec,
+} from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	EncodedRevisionTag,
@@ -32,20 +36,16 @@ import {
 import { isNoopMark } from "./utils.js";
 import type { FieldChangeEncodingContext } from "../index.js";
 import { EncodedNodeChangeset } from "../modular-schema/index.js";
+import type { SequenceCodecHelpers } from "./helperTypes.js";
 
-export function makeV2Codec(
+export function makeV2CodecHelpers(
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
 		ChangeEncodingContext
 	>,
-): IJsonCodec<
-	Changeset,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnly,
-	FieldChangeEncodingContext
-> {
+): SequenceCodecHelpers<MarkEffect, Encoded.MarkEffect> {
 	const changeAtomIdCodec = makeChangeAtomIdCodec(revisionTagCodec);
 	const markEffectCodec: IJsonCodec<
 		MarkEffect,
@@ -124,7 +124,7 @@ export function makeV2Codec(
 			}
 		},
 		decode(encoded: Encoded.MarkEffect, context: ChangeEncodingContext): MarkEffect {
-			return decoderLibrary.dispatch(encoded, context);
+			return decoderDispatcher.dispatch(encoded, context);
 		},
 	};
 
@@ -140,11 +140,11 @@ export function makeV2Codec(
 		return revisionTagCodec.decode(encodedRevision, context);
 	}
 
-	const decoderLibrary = new DiscriminatedUnionDispatcher<
+	const decoderLibrary: DiscriminatedUnionLibrary<
 		Encoded.MarkEffect,
 		/* args */ [context: ChangeEncodingContext],
 		MarkEffect
-	>({
+	> = {
 		moveIn(encoded: Encoded.MoveIn, context: ChangeEncodingContext): MoveIn {
 			const { id, finalEndpoint, revision } = encoded;
 			const mark: MoveIn = {
@@ -204,12 +204,40 @@ export function makeV2Codec(
 		): AttachAndDetach {
 			return {
 				type: "AttachAndDetach",
-				attach: decoderLibrary.dispatch(encoded.attach, context) as Attach,
-				detach: decoderLibrary.dispatch(encoded.detach, context) as Detach,
+				attach: decoderDispatcher.dispatch(encoded.attach, context) as Attach,
+				detach: decoderDispatcher.dispatch(encoded.detach, context) as Detach,
 			};
 		},
-	});
+	};
 
+	const decoderDispatcher = new DiscriminatedUnionDispatcher<
+		Encoded.MarkEffect,
+		/* args */ [context: ChangeEncodingContext],
+		MarkEffect
+	>(decoderLibrary);
+
+	return {
+		changeAtomIdCodec,
+		markEffectCodec,
+		decoderLibrary,
+		decodeRevision,
+	};
+}
+
+export function makeV2Codec(
+	revisionTagCodec: IJsonCodec<
+		RevisionTag,
+		EncodedRevisionTag,
+		EncodedRevisionTag,
+		ChangeEncodingContext
+	>,
+): IJsonCodec<
+	Changeset,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
+	FieldChangeEncodingContext
+> {
+	const { markEffectCodec, changeAtomIdCodec } = makeV2CodecHelpers(revisionTagCodec);
 	/**
 	 * If we want to make the node change aspect of this codec more type-safe, we could adjust generics
 	 * to be in terms of the schema rather than the concrete type of the node change.
