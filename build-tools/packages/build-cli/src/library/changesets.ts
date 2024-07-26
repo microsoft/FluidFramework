@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { VersionBumpType } from "@fluid-tools/version-tools";
 import { Logger, type ReleaseNotesSection } from "@fluidframework/build-tools";
 import { compareAsc, formatISO, parseISO } from "date-fns";
 import globby from "globby";
-import { readFile } from "node:fs/promises";
-import issueParser from "issue-parser";
 import matter from "gray-matter";
+import issueParser from "issue-parser";
 const { test: hasFrontMatter } = matter;
 
 import { ReleasePackage } from "../releaseGroups.js";
@@ -50,6 +50,12 @@ export interface FluidCustomChangesetMetadata {
 	 * If false, the changeset will not be included in release notes. Defaults to true.
 	 */
 	includeInReleaseNotes?: boolean;
+
+	/**
+	 * If true, the changeset will be ordered before the other changes in that section. If multiple changesets are
+	 * highlighted they will be internally sorted by date.
+	 */
+	highlight?: boolean;
 }
 
 export const FluidCustomChangeSetMetadataDefaults: FluidCustomChangesetMetadata = {
@@ -86,7 +92,19 @@ export type ChangesetEntry = Omit<Changeset, "metadata" | "mainPackage" | "chang
 	fullChangeset: Readonly<Changeset>;
 };
 
-function compareChangesets<T extends Pick<Changeset, "commit">>(a: T, b: T): number {
+function compareChangesets<T extends Pick<Changeset, "commit" | "additionalMetadata">>(
+	a: T,
+	b: T,
+): number {
+	// Sort highlighted items to the top;
+	if (a.additionalMetadata?.highlight === true && b.additionalMetadata?.highlight !== true) {
+		return -1;
+	}
+	if (a.additionalMetadata?.highlight !== true && b.additionalMetadata?.highlight === true) {
+		return 1;
+	}
+
+	// Finally sort by date
 	if (a.commit?.date === undefined || b.commit?.date === undefined) {
 		return 0;
 	}
@@ -175,7 +193,7 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 		}
 	}
 
-	// Sort all the entries by date
+	// Sort all the entries by highlighted status and date
 	changesets.sort(compareChangesets);
 
 	return changesets;
@@ -221,7 +239,7 @@ export function groupByMainPackage(changesets: Changeset[]): Map<ReleasePackage,
 		changesetMap.set(changeset.mainPackage, entries);
 	}
 
-	// Sort all the entries by date
+	// Sort all the entries by highlighted status and date
 	for (const entries of changesetMap.values()) {
 		entries.sort(compareChangesets);
 	}
@@ -301,6 +319,5 @@ const gitHubParser = issueParser("github");
  */
 function parseGitHubPRs(content: string): issueParser.Reference {
 	const { refs } = gitHubParser(content);
-	console.debug(refs);
 	return refs[0];
 }

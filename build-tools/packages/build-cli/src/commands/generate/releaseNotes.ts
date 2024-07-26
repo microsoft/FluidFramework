@@ -11,9 +11,10 @@ import { Flags } from "@oclif/core";
 import { StringBuilder } from "@rushstack/node-core-library";
 import { format as prettier } from "prettier";
 import { remark } from "remark";
-import remarkToc from "remark-toc";
 import remarkGfm from "remark-gfm";
 import remarkGithub, { defaultBuildUrl } from "remark-github";
+import admonitions from "remark-github-beta-blockquote-admonitions";
+import remarkToc from "remark-toc";
 
 import { releaseGroupFlag } from "../../flags.js";
 import {
@@ -157,10 +158,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			for (const change of changes) {
 				if (change.changeTypes.includes("minor") || flags.releaseType === "major") {
 					const pr = change.commit?.githubPullRequest;
-					const changeTitle =
-						pr === undefined
-							? change.summary
-							: `${change.summary} (#${pr})`;
+					const changeTitle = pr === undefined ? change.summary : `${change.summary} (#${pr})`;
 					body.append(`### ${changeTitle}\n\n${change.content}\n\n`);
 
 					body.append(`#### Change details\n\n`);
@@ -184,6 +182,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 		const contents = String(
 			await remark()
 				.use(remarkGfm)
+				.use(admonitions)
 				.use(remarkGithub, {
 					buildUrl(values) {
 						// Disable linking mentions

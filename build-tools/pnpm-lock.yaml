@@ -208,6 +208,9 @@ importers:
       remark-github:
         specifier: ^12.0.0
         version: 12.0.0
+      remark-github-beta-blockquote-admonitions:
+        specifier: ^3.1.1
+        version: 3.1.1
       remark-toc:
         specifier: ^9.0.0
         version: 9.0.0
@@ -10869,6 +10872,12 @@ packages:
       unified: 11.0.5
     transitivePeerDependencies:
       - supports-color
+    dev: false
+
+  /remark-github-beta-blockquote-admonitions@3.1.1:
+    resolution: {integrity: sha512-36ofXpQnz9wrZthe0WB1qtNCgflHFsz7VoUG/j+WJU/GxMpo7Tp+qN86s/Tvx6MiusQIDg0BZhWXnfklEXRiVw==}
+    dependencies:
+      unist-util-visit: 5.0.0
     dev: false
 
   /remark-github@12.0.0:
