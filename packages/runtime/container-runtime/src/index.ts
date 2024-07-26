@@ -126,4 +126,3 @@ export {
 	IFluidDataStoreContextEvents,
 } from "./dataStoreContext.js";
 export { DataStoreContexts } from "./dataStoreContexts.js";
-export type { IndependentMapEntry, IndependentMapFactory } from "./independentStateManager.js";

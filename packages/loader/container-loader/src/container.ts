@@ -30,10 +30,6 @@ import {
 	IProvideRuntimeFactory,
 	IRuntime,
 	IRuntimeInternal,
-	IndependentMap,
-	IndependentMapAddress,
-	IndependentMapFactory,
-	IndependentStateManager,
 	isFluidCodeDetails,
 	IDeltaManager,
 	ReadOnlyInfo,
@@ -1216,21 +1212,6 @@ export class Container
 			throw new Error("Runtime does not support container extensions feature");
 		}
 		return runtime.acquireExtension(id, factory, ...context);
-	}
-
-	public acquireIndependentMap<
-		T extends IndependentMap<unknown>,
-		TSchema = T extends IndependentMap<infer _TSchema> ? _TSchema : never,
-	>(
-		mapAddress: IndependentMapAddress,
-		requestedContent: TSchema,
-		factory: IndependentMapFactory<T>,
-	): T {
-		const runtime = this.runtime as Partial<IRuntimeInternal>;
-		if (runtime.acquireIndependentMap === undefined) {
-			throw new Error("Runtime does not support independent state feature");
-		}
-		return runtime.acquireIndependentMap(mapAddress, requestedContent, factory);
 	}
 
 	private async getPendingLocalStateCore(props: IGetPendingLocalStateProps): Promise<string> {
@@ -2579,10 +2560,7 @@ export class Container
  * IContainer interface that includes experimental features still under development.
  * @internal
  */
-export interface IContainerExperimental
-	extends IContainer,
-		Partial<ContainerExtensionStore>,
-		Partial<IndependentStateManager> {
+export interface IContainerExperimental extends IContainer, Partial<ContainerExtensionStore> {
 	/**
 	 * Get pending state from container. WARNING: misuse of this API can result in duplicate op
 	 * submission and potential document corruption. The blob returned MUST be deleted if and when this

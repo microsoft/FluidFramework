@@ -365,10 +365,6 @@ export type ILoaderOptions = {
 };
 
 // @alpha (undocumented)
-export class IndependentMap<TSchema> {
-}
-
-// @alpha (undocumented)
 export interface IProvideFluidCodeDetailsComparer {
     // (undocumented)
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;

@@ -21,9 +21,6 @@ import type {
 	ILoader,
 	IRuntime,
 	IRuntimeInternal,
-	IndependentMap,
-	IndependentMapAddress,
-	IndependentMapFactory,
 	IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
@@ -44,7 +41,6 @@ import type {
 	IProvideFluidHandleContext,
 	ISignalEnvelope,
 	JsonDeserialized,
-	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
@@ -165,7 +161,6 @@ import {
 	IGarbageCollector,
 	gcGenerationOptionName,
 } from "./gc/index.js";
-import { IndependentStateManager } from "./independentStateManager.js";
 import {
 	ContainerMessageType,
 	type ContainerRuntimeDocumentSchemaMessage,
@@ -4541,8 +4536,6 @@ type ExtensionEntry = ContainerExtensionFactory<unknown, unknown[]> extends new 
 class ContainerRuntimeInternal extends ContainerRuntime implements IRuntimeInternal {
 	private readonly extensions = new Map<ContainerExtensionId, ExtensionEntry>();
 
-	private independentStateManager: IndependentStateManager | undefined;
-
 	private static composeRuntime(
 		base: Omit<IExtensionRuntime, "clientId">,
 		clientIdFn: () => IExtensionRuntime["clientId"],
@@ -4576,40 +4569,6 @@ class ContainerRuntimeInternal extends ContainerRuntime implements IRuntimeInter
 		return entry.extension as T;
 	}
 
-	/**
-	 * Internal method for experimental Distributed Independent State support
-	 * @remarks Do not use outside of Fluid Framework
-	 * @privateRemarks This is optional to make it clear that is may be removed
-	 * at any time without warning.
-	 */
-	public acquireIndependentMap<
-		T extends IndependentMap<unknown>,
-		TSchema = T extends IndependentMap<infer _TSchema> ? _TSchema : never,
-	>(
-		address: IndependentMapAddress,
-		requestedContent: TSchema,
-		factory: IndependentMapFactory<T>,
-	): T {
-		if (this.independentStateManager === undefined) {
-			this.independentStateManager = new IndependentStateManager();
-		}
-		return this.independentStateManager.acquireIndependentMap(
-			this,
-			address,
-			requestedContent,
-			factory,
-		);
-	}
-
-	public submitAddressedSignal<T>(
-		address: `/${"ext/" | "dis:"}${string}`,
-		type: string,
-		content: JsonSerializable<T>,
-		targetClientId?: string,
-	): void {
-		this.submitSignalImpl(address, type, content, targetClientId);
-	}
-
 	protected override routeNonContainerSignal(
 		address: string,
 		signalMessage: IInboundSignalMessage,
@@ -4631,8 +4590,6 @@ class ContainerRuntimeInternal extends ContainerRuntime implements IRuntimeInter
 						);
 					}
 				}
-			} else if (address.startsWith("/dis:")) {
-				this.independentStateManager?.processSignal(address, signalMessage, local);
 			}
 		} else {
 			super.routeNonContainerSignal(address, signalMessage, local);

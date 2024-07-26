@@ -66,12 +66,6 @@ export {
 	isFluidCodeDetails,
 } from "./fluidPackage.js";
 export type {
-	IndependentMap,
-	IndependentMapAddress,
-	IndependentMapFactory,
-	IndependentStateManager,
-} from "./independentState.js";
-export type {
 	IBatchMessage,
 	IContainerContext,
 	IProvideRuntimeFactory,
