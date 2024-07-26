@@ -6,7 +6,7 @@
 import type { SimpleNodeSchemaKind } from "./simpleSchema.js";
 
 // TODOs:
-// - Type-assertions to guarantee JSON schema correctness.
+// - Type-assertions to guarantee JSON schema compatibility.
 
 /**
  * The fully-qualified {@link TreeNodeSchemaCore.identifier}.
