@@ -56,6 +56,8 @@ export type {
 	FluidObjectProviderKeys, // Used by FluidObject
 } from "@fluidframework/core-interfaces";
 
+export type { isFluidHandle } from "@fluidframework/runtime-utils";
+
 // Let the tree package manage its own API surface, we will simply reflect it here.
 // Note: this only surfaces the `@public` API items from the tree package. If the `@beta` and `@alpha` items are
 // desired, they can be added by re-exporting from one of the package's aliased export paths instead (e.g. `tree
