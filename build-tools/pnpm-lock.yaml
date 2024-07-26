@@ -166,6 +166,9 @@ importers:
       inquirer:
         specifier: ^8.2.5
         version: 8.2.5
+      issue-parser:
+        specifier: ^7.0.1
+        version: 7.0.1
       json5:
         specifier: ^2.2.3
         version: 2.2.3
@@ -275,6 +278,9 @@ importers:
       '@types/inquirer':
         specifier: ^8.2.6
         version: 8.2.6
+      '@types/issue-parser':
+        specifier: ^3.0.5
+        version: 3.0.5
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -3928,6 +3934,10 @@ packages:
     dependencies:
       '@types/through': 0.0.30
       rxjs: 7.8.0
+    dev: true
+
+  /@types/issue-parser@3.0.5:
+    resolution: {integrity: sha512-fvOrnb7uS6qRme16tfyxy9SjOgx47Krkt/ilLS7axP3SWtJb9GZlduWX2bAsJOnr1HuCwJh88rCidzCZ1LwuZg==}
     dev: true
 
   /@types/istanbul-lib-coverage@2.0.4:
@@ -8384,6 +8394,17 @@ packages:
   /isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
 
+  /issue-parser@7.0.1:
+    resolution: {integrity: sha512-3YZcUUR2Wt1WsapF+S/WiA2WmlW0cWAoPccMqne7AxEBhCdFeTPjfv/Axb8V2gyCgY3nRw+ksZ3xSUX+R47iAg==}
+    engines: {node: ^18.17 || >=20.6.1}
+    dependencies:
+      lodash.capitalize: 4.2.1
+      lodash.escaperegexp: 4.1.2
+      lodash.isplainobject: 4.0.6
+      lodash.isstring: 4.0.1
+      lodash.uniqby: 4.7.0
+    dev: false
+
   /istanbul-lib-coverage@3.2.0:
     resolution: {integrity: sha512-eOeJ5BHCmHYvQK7xt9GkdHuzuCGS1Y6g9Gvnx3Ym33fz/HpLRYxiS0wHNr+m/MBC8B647Xt608vCDEvhl9c6Mw==}
     engines: {node: '>=8'}
@@ -8747,6 +8768,14 @@ packages:
   /lodash.camelcase@4.3.0:
     resolution: {integrity: sha512-TwuEnCnxbc3rAvhf/LbG7tJUDzhqXyFnv3dtzLOPgCG/hODL7WFnsbwktkD7yUV0RrreP/l1PALq/YSg6VvjlA==}
     dev: true
+
+  /lodash.capitalize@4.2.1:
+    resolution: {integrity: sha512-kZzYOKspf8XVX5AvmQF94gQW0lejFVgb80G85bU4ZWzoJ6C03PQg3coYAUpSTpQWelrZELd3XWgHzw4Ck5kaIw==}
+    dev: false
+
+  /lodash.escaperegexp@4.1.2:
+    resolution: {integrity: sha512-TM9YBvyC84ZxE3rgfefxUWiQKLilstD6k7PTGt6wfbtXF8ixIJLOL3VYyV/z+ZiPLsVxAsKAFVwWlWeb2Y8Yyw==}
+    dev: false
 
   /lodash.find@4.6.0:
     resolution: {integrity: sha512-yaRZoAV3Xq28F1iafWN1+a0rflOej93l1DQUejs3SZ41h2O9UJBoS9aueGjPDgAl4B6tPC0NuuchLKaDQQ3Isg==}

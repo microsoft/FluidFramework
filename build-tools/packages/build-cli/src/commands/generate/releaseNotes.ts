@@ -26,6 +26,8 @@ import {
 	loadChangesets,
 } from "../../library/index.js";
 
+const prLinkPrefix = `https://github.com/microsoft/FluidFramework/pull/`;
+
 /**
  * Generates a summary of all changesets and outputs the results to a file. This is used to generate an UPCOMING.md file
  * that provides a single place where developers can see upcoming changes.
@@ -154,12 +156,21 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			body.append(`## ${sectionHead}\n\n`);
 			for (const change of changes) {
 				if (change.changeTypes.includes("minor") || flags.releaseType === "major") {
-					body.append(`### ${change.summary}\n\n${change.content}\n\n`);
+					const pr = change.commit?.githubPullRequest;
+					const changeTitle =
+						pr === undefined
+							? change.summary
+							: `${change.summary} (#${pr})`;
+					body.append(`### ${changeTitle}\n\n${change.content}\n\n`);
+
+					body.append(`#### Change details\n\n`);
+					if (change.commit?.sha !== undefined) {
+						body.append(`Commit: ${change.commit.sha}\n\n`);
+					}
 					const affectedPackages = Object.keys(change.metadata)
 						.map((pkg) => `- ${pkg}\n`)
 						.join("");
-					body.append(`\nCommit: ${change.commitSha}\n\n`);
-					body.append(`#### Packages affected\n\n${affectedPackages}\n\n`);
+					body.append(`Affected packages:\n\n${affectedPackages}`);
 				} else {
 					this.info(
 						`Excluding changeset: ${path.basename(change.sourceFile)} because it has no ${

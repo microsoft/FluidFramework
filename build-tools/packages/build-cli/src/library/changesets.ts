@@ -8,10 +8,11 @@ import { VersionBumpType } from "@fluid-tools/version-tools";
 import { Logger, type ReleaseNotesSection } from "@fluidframework/build-tools";
 import { compareAsc, formatISO, parseISO } from "date-fns";
 import globby from "globby";
+import { readFile } from "node:fs/promises";
+import issueParser from "issue-parser";
 import matter from "gray-matter";
 const { test: hasFrontMatter } = matter;
 
-import { readFile } from "node:fs/promises";
 import { ReleasePackage } from "../releaseGroups.js";
 import { Repository } from "./git.js";
 
@@ -62,10 +63,15 @@ export interface Changeset {
 	changeTypes: VersionBumpType[];
 	content: string;
 	summary?: string;
-	commitSha?: string;
-	added?: Date;
+	commit?: GitCommit;
 	additionalMetadata?: FluidCustomChangesetMetadata;
 	sourceFile: string;
+}
+
+interface GitCommit {
+	sha?: string;
+	date: Date;
+	githubPullRequest?: string;
 }
 
 /**
@@ -80,11 +86,11 @@ export type ChangesetEntry = Omit<Changeset, "metadata" | "mainPackage" | "chang
 	fullChangeset: Readonly<Changeset>;
 };
 
-function compareChangesets<T extends Pick<Changeset, "added">>(a: T, b: T): number {
-	if (a.added === undefined || b.added === undefined) {
+function compareChangesets<T extends Pick<Changeset, "commit">>(a: T, b: T): number {
+	if (a.commit?.date === undefined || b.commit?.date === undefined) {
 		return 0;
 	}
-	return compareAsc(a.added, b.added);
+	return compareAsc(a.commit?.date, b.commit?.date);
 }
 
 /**
@@ -107,12 +113,16 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 		// Get the date the changeset file was added to git.
 		// eslint-disable-next-line no-await-in-loop
 		const results = await repo.gitClient.log({ file, strictDate: true });
-		const commit = results.all?.at(-1);
+		const rawCommit = results.all?.at(-1);
+		const pullRequest =
+			rawCommit?.message === undefined ? undefined : parseGitHubPRs(rawCommit.message);
 
-		const commitSha = commit?.hash;
-
-		// Newly added files won't have any results from git log, so default to now.
-		const added = parseISO(commit?.date ?? formatISO(Date.now()));
+		const commit: GitCommit = {
+			// Newly added files won't have any results from git log, so default to now.
+			date: parseISO(rawCommit?.date ?? formatISO(Date.now())),
+			sha: rawCommit?.hash,
+			githubPullRequest: pullRequest?.issue,
+		};
 
 		// Read the changeset file into content and metadata (front-matter)
 		// eslint-disable-next-line no-await-in-loop
@@ -150,10 +160,9 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 			mainPackage: Object.keys(packageBumpTypeMetadata)[0],
 			additionalMetadata,
 			content,
-			commitSha,
-			added,
 			summary,
 			sourceFile: file,
+			commit,
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			changeTypes: [...new Set(Object.values(packageBumpTypeMetadata))],
 		};
@@ -263,7 +272,7 @@ export function flattenChangesets(changesets: Changeset[]): ChangesetEntry[] {
 	const entries: ChangesetEntry[] = [];
 
 	for (const changeset of changesets) {
-		const { content, summary, added, sourceFile, metadata } = changeset;
+		const { content, summary, commit, sourceFile, metadata } = changeset;
 		let index = 0;
 		for (const [pkg, changeType] of Object.entries(metadata)) {
 			entries.push({
@@ -272,7 +281,7 @@ export function flattenChangesets(changesets: Changeset[]): ChangesetEntry[] {
 				changeType,
 				content,
 				summary,
-				added,
+				commit,
 				sourceFile,
 				fullChangeset: changeset,
 			});
@@ -281,4 +290,17 @@ export function flattenChangesets(changesets: Changeset[]): ChangesetEntry[] {
 	}
 
 	return entries;
+}
+
+const gitHubParser = issueParser("github");
+
+/**
+ * Parses a string and returns the first GitHub issue reference found.
+ *
+ * @param content - The string to check for PR/issue numbers.
+ */
+function parseGitHubPRs(content: string): issueParser.Reference {
+	const { refs } = gitHubParser(content);
+	console.debug(refs);
+	return refs[0];
 }
