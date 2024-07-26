@@ -4,6 +4,7 @@
  */
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { ConnectionState } from "@fluidframework/container-loader";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -18,8 +19,16 @@ const testContainerConfig: ITestContainerConfig = {
 
 describeCompat("Signal performance telemetry", "NoCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
-	beforeEach("getTestObjectProvider", () => {
+	let dataObject: ITestFluidObject;
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider();
+		const container = await provider.makeTestContainer();
+		dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+
+		// need to be connected to send signals
+		if (container.connectionState !== ConnectionState.Connected) {
+			await new Promise((resolve) => container.once("connected", resolve));
+		}
 	});
 
 	itExpects(
@@ -32,8 +41,7 @@ describeCompat("Signal performance telemetry", "NoCompat", (getTestObjectProvide
 		],
 		async () => {
 			// Create container with read-connection
-			const container = await provider.makeTestContainer();
-			const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+
 			for (let i = 0; i < 130; i++) {
 				dataObject.context.containerRuntime.submitSignal("signal", "test");
 			}
