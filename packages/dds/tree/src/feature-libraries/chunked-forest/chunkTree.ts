@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -21,7 +21,7 @@ import {
 	mapCursorFields,
 	Multiplicity,
 } from "../../core/index.js";
-import { fail, getOrCreate, oob } from "../../util/index.js";
+import { fail, getOrCreate } from "../../util/index.js";
 import type { FullSchemaPolicy } from "../modular-schema/index.js";
 
 import { BasicChunk } from "./basicChunk.js";

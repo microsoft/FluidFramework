@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICodecFamily } from "../../codec/index.js";
@@ -22,7 +23,7 @@ import {
 	compareFieldUpPaths,
 	topDownPath,
 } from "../../core/index.js";
-import { brand, oob } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import {
 	type EditDescription,
 	type FieldChangeset,

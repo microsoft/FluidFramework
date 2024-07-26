@@ -96,6 +96,7 @@ export {
 	type DeltaDetachedNodeDestruction,
 	type DeltaDetachedNodeRename,
 	type DeltaFieldChanges,
+	type ExclusiveMapTree,
 } from "./tree/index.js";
 
 export {
@@ -190,8 +191,6 @@ export {
 	taggedOptAtomId,
 	offsetChangeAtomId,
 	replaceAtomRevisions,
-	getFromChangeAtomIdMap,
-	setInChangeAtomIdMap,
 	replaceChange,
 	type RebaseStats,
 	type RebaseStatsWithDuration,

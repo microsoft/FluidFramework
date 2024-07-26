@@ -99,7 +99,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[map1Id, SharedMap.getFactory()],
 		[map2Id, SharedMap.getFactory()],
 	];
-	const testContainerConfig: ITestContainerConfig = {
+	let testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
 		loaderProps: {
@@ -122,7 +122,16 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 	let dataObject2map1: ISharedMap;
 	let dataObject2map2: ISharedMap;
 
-	async function setupContainers(runtimeOptions?: IContainerRuntimeOptions) {
+	async function setupContainers(
+		runtimeOptions?: IContainerRuntimeOptions,
+		disableOfflineLoad = false,
+	) {
+		if (disableOfflineLoad) {
+			testContainerConfig = {
+				...testContainerConfig,
+				loaderProps: { configProvider: configProvider({}) },
+			};
+		}
 		const configCopy = { ...testContainerConfig, runtimeOptions };
 
 		// Create a Container for the first client.
@@ -191,13 +200,23 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
+	it("Can't set up a container with Immediate Mode and Offline Load", async () => {
+		await assert.rejects(
+			setupContainers({ flushMode: FlushMode.Immediate }),
+			"Offline load is not supported with Immediate mode",
+		);
+	});
+
 	describe("Batch metadata verification when ops are flushed in batches", () => {
 		let dataObject1BatchMessages: ISequencedDocumentMessage[] = [];
 		let dataObject2BatchMessages: ISequencedDocumentMessage[] = [];
 
-		function testFlushingUsingOrderSequentially(options: IContainerRuntimeOptions) {
+		function testFlushingUsingOrderSequentially(
+			options: IContainerRuntimeOptions,
+			disableOfflineLoad,
+		) {
 			beforeEach("setupBatchMessageListeners", async () => {
-				await setupContainers(options);
+				await setupContainers(options, disableOfflineLoad);
 				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
 				setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
 			});
@@ -354,11 +373,11 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 
 		describe("Flushing of batches via orderSequentially [TurnBased]", () => {
-			testFlushingUsingOrderSequentially({ flushMode: FlushMode.TurnBased });
+			testFlushingUsingOrderSequentially({ flushMode: FlushMode.TurnBased }, false);
 		});
 
 		describe("Flushing of batches via orderSequentially [Immediate]", () => {
-			testFlushingUsingOrderSequentially({ flushMode: FlushMode.Immediate });
+			testFlushingUsingOrderSequentially({ flushMode: FlushMode.Immediate }, true);
 		});
 
 		describe("TurnBased flushing of batches", () => {
@@ -594,7 +613,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		describe("Immediate flushing of ops", () => {
 			beforeEach("setupBatchMessageListeners", async () => {
-				await setupContainers({ flushMode: FlushMode.Immediate });
+				await setupContainers({ flushMode: FlushMode.Immediate }, true);
 				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
 				setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
 			});
@@ -624,13 +643,16 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		describe("Immediate flushing of ops with compression", () => {
 			beforeEach("setupBatchMessageListeners", async () => {
-				await setupContainers({
-					flushMode: FlushMode.Immediate,
-					compressionOptions: {
-						minimumBatchSizeInBytes: 1,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
+				await setupContainers(
+					{
+						flushMode: FlushMode.Immediate,
+						compressionOptions: {
+							minimumBatchSizeInBytes: 1,
+							compressionAlgorithm: CompressionAlgorithms.lz4,
+						},
 					},
-				});
+					true,
+				);
 				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
 				setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
 			});
@@ -671,9 +693,12 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert.equal(dirty, expectedState, "The document dirty state is not as expected");
 		}
 
-		function testAutomaticFlushingUsingOrderSequentially(options: IContainerRuntimeOptions) {
+		function testAutomaticFlushingUsingOrderSequentially(
+			options: IContainerRuntimeOptions,
+			disableOfflineLoad,
+		) {
 			beforeEach("setupContainers", async () => {
-				await setupContainers(options);
+				await setupContainers(options, disableOfflineLoad);
 			});
 
 			it("should clean document dirty state after a batch with single message is sent", async () => {
@@ -763,11 +788,11 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 
 		describe("Automatic flushing of batches via orderSequentially [TurnBased]", () => {
-			testAutomaticFlushingUsingOrderSequentially({ flushMode: FlushMode.TurnBased });
+			testAutomaticFlushingUsingOrderSequentially({ flushMode: FlushMode.TurnBased }, false);
 		});
 
 		describe("Automatic flushing of batches via orderSequentially [Immediate]", () => {
-			testAutomaticFlushingUsingOrderSequentially({ flushMode: FlushMode.Immediate });
+			testAutomaticFlushingUsingOrderSequentially({ flushMode: FlushMode.Immediate }, true);
 		});
 
 		describe("TurnBased flushing of batches", () => {
