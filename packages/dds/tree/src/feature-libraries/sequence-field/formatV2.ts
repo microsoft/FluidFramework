@@ -18,7 +18,7 @@ const HasMoveId = Type.Object({ id: MoveId });
 
 const IdRange = Type.Tuple([ChangesetLocalIdSchema, CellCount]);
 
-const CellId = EncodedChangeAtomId;
+export const CellId = EncodedChangeAtomId;
 
 const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
@@ -70,7 +70,7 @@ const AttachAndDetach = Type.Object({
 	detach: Detach,
 });
 
-const MarkEffect = Type.Object(
+export const MarkEffect = Type.Object(
 	{
 		// Note: `noop` is encoded by omitting `effect` from the encoded cell mark, so is not included here.
 		insert: Type.Optional(Insert),
@@ -82,7 +82,7 @@ const MarkEffect = Type.Object(
 	unionOptions,
 );
 
-const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(
+export const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(
 	tMark: TMark,
 	tNodeChange: TNodeChange,
 	// Return type is intentionally derived.
