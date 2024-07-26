@@ -400,7 +400,7 @@ export class FieldSchema<
 	}
 
 	/**
-	 * True iff when constructing a node with this field, a value must be provided for it.
+	 * True if and only if, when constructing a node with this field, a value must be provided for it.
 	 */
 	public readonly requiresValue: boolean;
 
