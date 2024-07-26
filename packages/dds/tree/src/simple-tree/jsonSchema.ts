@@ -188,10 +188,6 @@ export interface FieldJsonSchema {
  * @internal
  */
 export interface TreeJsonSchema extends FieldJsonSchema {
-	// TODO
-	// json schema
-	// $schema: "http://json-schema.org/draft-07/schema#",
-
 	/**
 	 * The set of definitions reachable from this schema's root.
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-schema-re-use-with-defs}
