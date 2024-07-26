@@ -64,6 +64,8 @@ class FileLogger implements ITelemetryBufferedLogger {
 	) {}
 
 	async flush(): Promise<void> {
+		// First ensure we flush the "real" logger, before trying to write the file.
+		await this.baseLogger?.flush();
 		const logs = this.logs;
 		if (!fs.existsSync(this.outputDirectoryPath)) {
 			fs.mkdirSync(this.outputDirectoryPath, { recursive: true });
@@ -80,7 +82,6 @@ class FileLogger implements ITelemetryBufferedLogger {
 		fs.writeFileSync(filePath, data);
 		this.schema.clear();
 		this.logs = [];
-		return this.baseLogger?.flush();
 	}
 	send(event: ITelemetryBaseEvent): void {
 		if (typeof event.testCategoryOverride === "string") {
