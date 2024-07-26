@@ -1,6 +1,9 @@
 {
 	"extends": ["biome.jsonc"],
-	"formatter": {
+	"files": {
 		"ignore": []
 	},
+	"formatter": {
+		"ignore": []
+	}
 }

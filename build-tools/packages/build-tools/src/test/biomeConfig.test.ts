@@ -160,7 +160,7 @@ describe("BiomeConfig", async () => {
 				testPath = path.resolve(testDataPath, "biome/pkg-a/");
 			});
 
-				it("returns correct file set", async () => {
+			it("returns correct file set", async () => {
 				const expected = [
 					path.resolve(testDataPath, "biome/pkg-a/pkg-a-include/sourceFile.ts"),
 					path.resolve(
@@ -170,11 +170,11 @@ describe("BiomeConfig", async () => {
 					path.resolve(testDataPath, "biome/pkg-a/pkg-a-include/include-linter/linter.ts"),
 					path.resolve(testDataPath, "biome/pkg-a/include-formatter/formatter.ts"),
 				];
-				const actual = await getBiomeFormattedFiles(testPath, gitRepo);
-				for (let i = 0; i < expected.length; i++) {
-					assert(actual[i] === expected[i]);
+				const formattedFiles = await getBiomeFormattedFiles(testPath, gitRepo);
+				for (const actual of formattedFiles) {
+					assert(expected.includes(actual));
 				}
-				assert(actual.length === 4);
+				assert(formattedFiles.length === 4);
 			});
 		});
 
@@ -190,19 +190,19 @@ describe("BiomeConfig", async () => {
 			it("returns correct file set", async () => {
 				const expected = [
 					path.resolve(testDataPath, "biome/pkg-a/pkg-a-include/sourceFile.ts"),
+					path.resolve(testDataPath, "biome/pkg-a/pkg-a-include/include-linter/linter.ts"),
 					path.resolve(
 						testDataPath,
 						"biome/pkg-a/pkg-a-include/include-formatter/formatter.ts",
 					),
-					path.resolve(testDataPath, "biome/pkg-a/pkg-a-include/include-linter/linter.ts"),
+					path.resolve(testDataPath, "biome/pkg-a/pkg-a-include/pkg-a-ignore/ignoredFile.ts"),
 					path.resolve(testDataPath, "biome/pkg-a/include-formatter/formatter.ts"),
 				];
-				const actual = await getBiomeFormattedFiles(testPath, gitRepo);
-				console.debug(actual);
-				for (let i = 0; i < expected.length; i++) {
-					assert(actual[i] === expected[i]);
+				const formattedFiles = await getBiomeFormattedFiles(testPath, gitRepo);
+				for (const actual of formattedFiles) {
+					assert(expected.includes(actual));
 				}
-				assert(actual.length === 4);
+				assert(formattedFiles.length === 5);
 			});
 		});
 	});
