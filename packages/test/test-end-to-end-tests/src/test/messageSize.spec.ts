@@ -321,7 +321,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			},
 		).timeout(chunkingBatchesTimeoutMs);
 
-		describe(`Large payloads (exceeding the 1MB limit) - ${
+		describe(`Large payloads - ${
 			enableGroupedBatching ? "grouped" : "regular"
 		} batches`, () => {
 			describe("Chunking compressed batches", () =>
