@@ -17,7 +17,7 @@ import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
 
 import { type InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
-import { asBatchMetadata, asEmptyBatchMetadata, IBatchMetadata } from "./metadata.js";
+import { asBatchMetadata, asEmptyBatchLocalOpMetadata, IBatchMetadata } from "./metadata.js";
 import { BatchId, BatchMessage, generateBatchId } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 
@@ -311,19 +311,23 @@ export class PendingStateManager implements IDisposable {
 	 * that the batch information is correct.
 	 * @param batch - The batch that is being processed.
 	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch
-	 * @param sequenceNumber - If the batch is empty, the sequence number of the empty batch placeholder message. Otherwise, undefined.
+	 * @param emptyBatchSequenceNumber - If the batch is empty, the sequence number of the empty batch placeholder message. Otherwise, undefined.
 	 */
 	public processPendingLocalBatch(
 		batch: InboundSequencedContainerRuntimeMessage[],
 		batchStartCsn: number,
-		sequenceNumber?: number,
+		emptyBatchSequenceNumber?: number,
 	): {
 		message: InboundSequencedContainerRuntimeMessage;
 		localOpMetadata: unknown;
 	}[] {
 		// If the batch is empty, we need to process it differently
 		if (batch.length === 0) {
-			return this.processPendingLocalEmptyBatch(batchStartCsn, sequenceNumber);
+			assert(
+				emptyBatchSequenceNumber !== undefined,
+				"Expected sequence number for empty batch",
+			);
+			return this.processPendingLocalEmptyBatch(batchStartCsn, emptyBatchSequenceNumber);
 		}
 
 		return batch.map((message) => ({
@@ -342,10 +346,9 @@ export class PendingStateManager implements IDisposable {
 		const pendingMessage = this.pendingMessages.peekFront();
 		assert(pendingMessage !== undefined, "No pending message found for this remote message");
 		assert(
-			asEmptyBatchMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true,
+			asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true,
 			"Expected empty batch",
 		);
-		assert(sequenceNumber !== undefined, "Expected sequence number for empty batch");
 
 		if (pendingMessage.batchIdContext.batchStartCsn !== batchStartCsn) {
 			this.stateHandler.close(
@@ -565,7 +568,7 @@ export class PendingStateManager implements IDisposable {
 					pendingMessage.batchIdContext.batchStartCsn,
 				);
 			// Resubmit no messages, with the batchId. Will result in another empty batch marker.
-			if (asEmptyBatchMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true) {
+			if (asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true) {
 				this.stateHandler.reSubmitBatch([], batchId);
 				continue;
 			}

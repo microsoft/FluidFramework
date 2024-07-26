@@ -575,7 +575,7 @@ describe("Pending State Manager", () => {
 					content: '{"type":"groupedBatch", "contents": []}',
 					referenceSequenceNumber: 10,
 					opMetadata: undefined,
-					localOpMetadata: undefined,
+					localOpMetadata: { emptyBatch: true },
 					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
 				},
 			];

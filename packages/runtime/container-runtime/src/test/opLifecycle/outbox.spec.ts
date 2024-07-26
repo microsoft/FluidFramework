@@ -24,7 +24,7 @@ import {
 	makeLegacySendBatchFn,
 } from "../../containerRuntime.js";
 import { ContainerMessageType } from "../../messageTypes.js";
-import { asBatchMetadata, asEmptyBatchMetadata } from "../../metadata.js";
+import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "../../metadata.js";
 import {
 	BatchMessage,
 	BatchSequenceNumbers,
@@ -347,7 +347,7 @@ describe("Outbox", () => {
 		);
 		assert.equal(state.batchesSubmitted[0].messages[0].metadata?.batchId, batchId);
 		assert.equal(
-			asEmptyBatchMetadata(state.pendingOpContents[0].localOpMetadata)?.emptyBatch,
+			asEmptyBatchLocalOpMetadata(state.pendingOpContents[0].localOpMetadata)?.emptyBatch,
 			true,
 		);
 	});

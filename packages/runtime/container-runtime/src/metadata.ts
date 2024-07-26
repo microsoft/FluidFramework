@@ -11,8 +11,10 @@ export function asBatchMetadata(metadata: unknown): IBatchMetadata | undefined {
 }
 
 /** Syntactic sugar for casting */
-export function asEmptyBatchMetadata(metadata: unknown): IEmptyBatchMetadata | undefined {
-	return metadata as IEmptyBatchMetadata | undefined;
+export function asEmptyBatchLocalOpMetadata(
+	localOpMetadata: unknown,
+): IEmptyBatchMetadata | undefined {
+	return localOpMetadata as IEmptyBatchMetadata | undefined;
 }
 
 /**

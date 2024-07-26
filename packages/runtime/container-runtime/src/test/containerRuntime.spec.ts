@@ -273,8 +273,6 @@ describe("Runtime", () => {
 				submitDataStoreOp(containerRuntime, "1", "test", { emptyBatch: true });
 				(containerRuntime as any).flush();
 				changeConnectionState(containerRuntime, true, mockClientId);
-				// (containerRuntime as any).flush();
-
 				containerRuntime.process(
 					{
 						clientId: mockClientId,

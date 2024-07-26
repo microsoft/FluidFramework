@@ -255,8 +255,9 @@ export class Outbox {
 		// ID Allocation messages are not directly resubmitted so we don't want to reuse the batch ID.
 		this.flushInternal(this.idAllocationBatch);
 		// We need to flush an empty batch if the main batch *becomes* empty on resubmission.
-		// The way to catch this is to check if both blobAttachBatch and mainBatch are empty. This is because
-		// blob attach batches can't *become* empty on resubmission, if it's empty it was already empty before.
+		// When resubmitting the main batch, the blobAttach batch will always be empty since we don't resubmit them simultaneously.
+		// And conversely, the blobAttach will never *become* empty on resubmit.
+		// So if both blobAttachBatch and mainBatch are empty, we must submit an empty main batch.
 		if (resubmittingBatchId && this.blobAttachBatch.empty && this.mainBatch.empty) {
 			this.flushEmptyBatch(resubmittingBatchId);
 			return;
