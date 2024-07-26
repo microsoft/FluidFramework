@@ -112,20 +112,20 @@ async function main() {
 		}
 	});
 
-	const profile = getProfile(profileName);
-
-	if (url === undefined) {
-		console.error("Missing --url argument needed to run child process");
-		process.exit(-1);
-	}
-
-	// combine the runId with the seed for generating local randoms
-	// this makes runners repeatable, but ensures each runner
-	// will get its own set of randoms
-	const random = makeRandom(seed, runId);
-
 	let result = -1;
 	try {
+		const profile = getProfile(profileName);
+
+		if (url === undefined) {
+			console.error("Missing --url argument needed to run child process");
+			throw new Error("Missing --url argument needed to run child process");
+		}
+
+		// combine the runId with the seed for generating local randoms
+		// this makes runners repeatable, but ensures each runner
+		// will get its own set of randoms
+		const random = makeRandom(seed, runId);
+
 		await runnerProcess(
 			driver,
 			endpoint,
