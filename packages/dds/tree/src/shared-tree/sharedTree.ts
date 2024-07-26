@@ -150,6 +150,10 @@ const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersio
 		3,
 		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 3, message: 3, fieldBatch: 1 },
 	],
+	[
+		4,
+		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 4, message: 4, fieldBatch: 1 },
+	],
 ]);
 
 function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
