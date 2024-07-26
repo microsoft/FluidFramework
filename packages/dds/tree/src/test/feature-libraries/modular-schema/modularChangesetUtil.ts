@@ -4,7 +4,6 @@
  */
 
 import type {
-	ChangeAtomIdMap,
 	FieldKey,
 	FieldKindIdentifier,
 	RevisionInfo,
@@ -19,6 +18,7 @@ import type {
 	NodeId,
 } from "../../../feature-libraries/index.js";
 import type {
+	ChangeAtomIdBTree,
 	CrossFieldKeyTable,
 	FieldChange,
 	FieldId,
@@ -31,23 +31,25 @@ import {
 	brand,
 	fail,
 	idAllocatorFromMaxId,
-	mapNestedMap,
-	setInNestedMap,
 } from "../../../util/index.js";
 import {
 	getChangeHandler,
 	getFieldsForCrossFieldKey,
 	getParentFieldId,
 	newCrossFieldKeyTable,
+	newTupleBTree,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { strict as assert } from "assert";
+import { assertStructuralEquality } from "../../objMerge.js";
+import { BTree } from "@tylerbu/sorted-btree-es6";
 
 export const Change = {
 	build,
 	node,
 	nodeWithId,
 	field: newField,
+	empty,
 };
 
 export interface FieldChangesetDescription {
@@ -61,6 +63,22 @@ export interface NodeChangesetDescription {
 	readonly id?: NodeId;
 	readonly index: number;
 	readonly fields: FieldChangesetDescription[];
+}
+
+export function assertEqual<T>(actual: T, expected: T): void {
+	assertStructuralEquality(actual, expected, (item) =>
+		item instanceof BTree ? item.toArray() : item,
+	);
+}
+
+function empty(): ModularChangeset {
+	return {
+		fieldChanges: new Map(),
+		nodeChanges: newTupleBTree(),
+		nodeToParent: newTupleBTree(),
+		nodeAliases: newTupleBTree(),
+		crossFieldKeys: newCrossFieldKeyTable(),
+	};
 }
 
 function node(
@@ -94,8 +112,8 @@ interface BuildArgs {
 }
 
 function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): ModularChangeset {
-	const nodeChanges: ChangeAtomIdMap<NodeChangeset> = new Map();
-	const nodeToParent: ChangeAtomIdMap<FieldId> = new Map();
+	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
+	const nodeToParent: ChangeAtomIdBTree<FieldId> = newTupleBTree();
 	const crossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();
 
 	const idAllocator = idAllocatorFromMaxId();
@@ -115,7 +133,7 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 		fieldChanges,
 		nodeToParent,
 		crossFieldKeys,
-		nodeAliases: new Map(),
+		nodeAliases: newTupleBTree(),
 		maxId: brand(args.maxId ?? idAllocator.getMaxId()),
 	};
 
@@ -130,8 +148,8 @@ function fieldChangeMapFromDescription(
 	family: ModularChangeFamily,
 	fields: FieldChangesetDescription[],
 	parent: NodeId | undefined,
-	nodes: ChangeAtomIdMap<NodeChangeset>,
-	nodeToParent: ChangeAtomIdMap<FieldId>,
+	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	nodeToParent: ChangeAtomIdBTree<FieldId>,
 	crossFieldKeys: CrossFieldKeyTable,
 	idAllocator: IdAllocator,
 ): FieldChangeMap {
@@ -180,8 +198,8 @@ function addNodeToField(
 	nodeDescription: NodeChangesetDescription,
 	parentId: FieldId,
 	changeHandler: FieldChangeHandler<unknown>,
-	nodes: ChangeAtomIdMap<NodeChangeset>,
-	nodeToParent: ChangeAtomIdMap<FieldId>,
+	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	nodeToParent: ChangeAtomIdBTree<FieldId>,
 	crossFieldKeys: CrossFieldKeyTable,
 	idAllocator: IdAllocator,
 ): unknown {
@@ -201,8 +219,8 @@ function addNodeToField(
 		),
 	};
 
-	setInNestedMap(nodes, nodeId.revision, nodeId.localId, nodeChangeset);
-	setInNestedMap(nodeToParent, nodeId.revision, nodeId.localId, parentId);
+	nodes.set([nodeId.revision, nodeId.localId], nodeChangeset);
+	nodeToParent.set([nodeId.revision, nodeId.localId], parentId);
 
 	const fieldWithChange = changeHandler.editor.buildChildChange(nodeDescription.index, nodeId);
 
@@ -233,9 +251,8 @@ const dummyRevisionMetadata: RevisionMetadataSource = {
 };
 
 export function removeAliases(changeset: ModularChangeset): ModularChangeset {
-	const updatedNodeToParent = mapNestedMap(
-		changeset.nodeToParent,
-		(_field, revision, localId) => getParentFieldId(changeset, { revision, localId }),
+	const updatedNodeToParent = changeset.nodeToParent.mapValues((_field, [revision, localId]) =>
+		getParentFieldId(changeset, { revision, localId }),
 	);
 
 	const updatedCrossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();
@@ -247,8 +264,8 @@ export function removeAliases(changeset: ModularChangeset): ModularChangeset {
 
 	return {
 		...changeset,
-		nodeToParent: updatedNodeToParent,
+		nodeToParent: brand(updatedNodeToParent),
 		crossFieldKeys: updatedCrossFieldKeys,
-		nodeAliases: new Map(),
+		nodeAliases: newTupleBTree(),
 	};
 }

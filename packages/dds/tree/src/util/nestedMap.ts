@@ -113,6 +113,25 @@ export function getOrAddInMap<Key, Value>(
 }
 
 /**
+ * Sets the value at `key` in `map` to `generateValue()` if not already present.
+ * Returns the value at `key` after setting it.
+ */
+export function getOrAddInMapLazy<Key, Value>(
+	map: MapGetSet<Key, Value>,
+	key: Key,
+	generateValue: () => Value,
+): Value {
+	const currentValue = map.get(key);
+	if (currentValue !== undefined) {
+		return currentValue;
+	}
+
+	const value = generateValue();
+	map.set(key, value);
+	return value;
+}
+
+/**
  * Returns the value at (key1, key2) in map, or undefined if not present.
  *
  * @internal

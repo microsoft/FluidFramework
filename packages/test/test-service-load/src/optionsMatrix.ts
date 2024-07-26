@@ -10,6 +10,7 @@ import {
 	generatePairwiseOptions,
 	numberCases,
 } from "@fluid-private/test-pairwise-generator";
+// eslint-disable-next-line import/no-deprecated
 import { ILoaderOptions } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
@@ -22,6 +23,7 @@ import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import type { OptionOverride, TestConfiguration } from "./testConfigFile.js";
 
+// eslint-disable-next-line import/no-deprecated
 interface ILoaderOptionsExperimental extends ILoaderOptions {
 	enableOfflineSnapshotRefresh?: boolean;
 	snapshotRefreshTimeoutMs?: number;
