@@ -1453,9 +1453,9 @@ describe("toMapTree", () => {
 				const arraySchema = f.array([f.null]);
 				const mapSchema = f.map([f.null]);
 				// Array makes map
-				assert.deepEqual(getPossibleTypes(new Set([mapSchema]), []), [arraySchema]);
+				assert.deepEqual(getPossibleTypes(new Set([mapSchema]), []), [mapSchema]);
 				// Map makes array
-				assert.deepEqual(getPossibleTypes(new Set([arraySchema]), new Map()), [mapSchema]);
+				assert.deepEqual(getPossibleTypes(new Set([arraySchema]), new Map()), [arraySchema]);
 			});
 		});
 
