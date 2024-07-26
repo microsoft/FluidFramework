@@ -15,7 +15,7 @@ import { toSimpleTreeSchema } from "./treeNodeSchemaToSimpleSchema.js";
  *
  * @remarks Useful when communicating the schema to external libraries or services.
  *
- * @internal
+ * @alpha
  */
 export function getJsonSchema(schema: TreeNodeSchema): TreeJsonSchema {
 	const simpleViewSchema = toSimpleTreeSchema(schema);
