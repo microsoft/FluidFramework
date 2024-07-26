@@ -20,6 +20,7 @@ export {
 export {
 	deleteFromNestedMap,
 	getOrAddInMap,
+	getOrAddInMapLazy,
 	getOrAddInNestedMap,
 	getOrDefaultInNestedMap,
 	forEachInNestedMap,

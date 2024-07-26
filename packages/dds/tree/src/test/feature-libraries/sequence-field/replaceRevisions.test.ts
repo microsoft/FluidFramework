@@ -64,6 +64,23 @@ function runCases(outputRev: RevisionTag | undefined) {
 		assertChangesetsEqual(actual, expected);
 	});
 
+	it("renames", () => {
+		const input: SF.Changeset = [
+			Mark.rename(1, atom0, atom0),
+			Mark.rename(1, atom1, atom1),
+			Mark.rename(1, atom2, atom2),
+			Mark.rename(1, atom3, atom3),
+		];
+		const expected: SF.Changeset = [
+			Mark.rename(1, atom0, atom0),
+			Mark.rename(1, atomOut1, atomOut1),
+			Mark.rename(1, atomOut2, atomOut2),
+			Mark.rename(1, atomOut3, atomOut3),
+		];
+		const actual = process(input);
+		assertChangesetsEqual(actual, expected);
+	});
+
 	it("child changes", () => {
 		const input: SF.Changeset = [
 			Mark.modify(atom0, atom0),
