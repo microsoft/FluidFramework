@@ -312,7 +312,7 @@ function mapValueWithFallbacks(
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
  */
 function arrayToMapTreeFields(
-	data: readonly InsertableContent[],
+	data: Iterable<InsertableContent>,
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	schemaValidationPolicy: SchemaAndPolicy | undefined,
 ): ExclusiveMapTree[] {
@@ -341,7 +341,7 @@ function arrayToMapTreeFields(
 
 /**
  * Transforms data under an Array schema.
- * @param data - The tree data to be transformed. Must be an array.
+ * @param data - The tree data to be transformed. Must be an iterable.
  * @param schema - The schema associated with the value.
  * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
@@ -349,7 +349,7 @@ function arrayToMapTreeFields(
  */
 function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): ExclusiveMapTree {
 	assert(schema.kind === NodeKind.Array, 0x922 /* Expected an array schema. */);
-	if (!isReadonlyArray(data)) {
+	if (!(typeof data === "object" && data !== null && Symbol.iterator in data)) {
 		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
 	}
 
@@ -370,7 +370,7 @@ function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): Exclus
 
 /**
  * Transforms data under a Map schema.
- * @param data - The tree data to be transformed. Must be a TypeScript Map.
+ * @param data - The tree data to be transformed. Must be an iterable.
  * @param schema - The schema associated with the value.
  * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
@@ -500,13 +500,41 @@ export function getPossibleTypes(
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	data: ContextuallyTypedNodeData,
 ): TreeNodeSchema[] {
+	let best = CompatibilityLevel.None;
 	const possibleTypes: TreeNodeSchema[] = [];
 	for (const schema of allowedTypes) {
-		if (shallowCompatibilityTest(schema, data)) {
+		const level = shallowCompatibilityTest(schema, data);
+		if (level > best) {
+			possibleTypes.length = 0;
+			best = level;
+		}
+		if (best === level) {
 			possibleTypes.push(schema);
 		}
 	}
-	return possibleTypes;
+	return best === CompatibilityLevel.None ? [] : possibleTypes;
+}
+
+/**
+ * Indicates a compatibility level for inferring a schema to apply to insertable data.
+ * @remarks
+ * Only the highest compatibility options are used.
+ * This approach allows adding new possible matching at a new lower compatibility level as a non breaking change,
+ * since that way they can't make a case that was compatible before ambiguous now.
+ */
+enum CompatibilityLevel {
+	/**
+	 * Not compatible. Constructor typing indicates incompatibility.
+	 */
+	None = 0,
+	/**
+	 * Additional iterator compatibility cases added in Fluid Framework 2.2.
+	 */
+	Low = 1,
+	/**
+	 * Compatible in Fluid Framework 2.1.
+	 */
+	Normal = 2,
 }
 
 /**
@@ -519,17 +547,17 @@ export function getPossibleTypes(
 function shallowCompatibilityTest(
 	schema: TreeNodeSchema,
 	data: ContextuallyTypedNodeData,
-): boolean {
+): CompatibilityLevel {
 	assert(
 		data !== undefined,
 		0x889 /* undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData. */,
 	);
 
 	if (isTreeValue(data)) {
-		return allowsValue(schema, data);
+		return allowsValue(schema, data) ? CompatibilityLevel.Normal : CompatibilityLevel.None;
 	}
 	if (schema.kind === NodeKind.Leaf) {
-		return false;
+		return CompatibilityLevel.None;
 	}
 
 	// TODO:
@@ -544,21 +572,37 @@ function shallowCompatibilityTest(
 	// For now, special case map and array before checking iterable to avoid regressing the union of map and array case.
 
 	if (data instanceof Map) {
-		return schema.kind === NodeKind.Map;
+		switch (schema.kind) {
+			case NodeKind.Map:
+				return CompatibilityLevel.Normal;
+			case NodeKind.Array:
+				// Maps are iterable, so type checking does allow constructing an ArrayNode from a map if the array's type is an array that includes the key and value types of the map.
+				return CompatibilityLevel.Low;
+			default:
+				return CompatibilityLevel.None;
+		}
 	}
 
 	if (isReadonlyArray(data)) {
-		return schema.kind === NodeKind.Array;
+		switch (schema.kind) {
+			case NodeKind.Array:
+				return CompatibilityLevel.Normal;
+			case NodeKind.Map:
+				// Arrays are iterable, so type checking does allow constructing an array from a MapNode from an if the array's type is key values pairs for the map.
+				return CompatibilityLevel.Low;
+			default:
+				return CompatibilityLevel.None;
+		}
 	}
 
 	const mapOrArray = schema.kind === NodeKind.Array || schema.kind === NodeKind.Map;
 
 	if (Symbol.iterator in data) {
-		return mapOrArray;
+		return mapOrArray ? CompatibilityLevel.Normal : CompatibilityLevel.None;
 	}
 
 	if (mapOrArray) {
-		return false;
+		return CompatibilityLevel.None;
 	}
 
 	// Assume record-like object
@@ -577,11 +621,11 @@ function shallowCompatibilityTest(
 	for (const [fieldKey, fieldSchema] of Object.entries(fields)) {
 		const normalizedFieldSchema = normalizeFieldSchema(fieldSchema);
 		if (data[fieldKey] === undefined && normalizedFieldSchema.kind === FieldKind.Required) {
-			return false;
+			return CompatibilityLevel.None;
 		}
 	}
 
-	return true;
+	return CompatibilityLevel.Normal;
 }
 
 function allowsValue(schema: TreeNodeSchema, value: TreeValue): boolean {
