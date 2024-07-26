@@ -52,6 +52,7 @@ export class OpGroupingManager {
 	/**
 	 * Creates a new batch with a single message of type "groupedBatch" and empty contents.
 	 * This is needed as a placeholder if a batch becomes empty on resubmit, but we are tracking batch IDs.
+	 * @param resubmittingBatchId - batch ID of the resubmitting batch
 	 * @param referenceSequenceNumber - reference sequence number
 	 * @returns - IBatch containing a single empty Grouped Batch op
 	 */
@@ -103,7 +104,7 @@ export class OpGroupingManager {
 				referenceSequenceNumber: batch.messages[0]!.referenceSequenceNumber,
 			});
 		}
-
+		// We expect this will be on the first message, if present at all.
 		let groupedBatchId;
 		for (const message of batch.messages) {
 			if (message.metadata) {
