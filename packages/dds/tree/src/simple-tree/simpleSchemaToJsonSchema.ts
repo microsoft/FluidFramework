@@ -5,8 +5,8 @@
 import type {
 	ArrayNodeJsonSchema,
 	FieldJsonSchema,
-	JsonDefinitionRef,
-	JsonSchemaId,
+	JsonSchemaRef,
+	JsonRefPath,
 	LeafNodeJsonSchema,
 	MapNodeJsonSchema,
 	NodeJsonSchema,
@@ -32,9 +32,9 @@ import type {
 export function toJsonSchema(schema: SimpleTreeSchema): TreeJsonSchema {
 	const definitions = convertDefinitions(schema.definitions);
 
-	const anyOf: JsonDefinitionRef[] = [];
+	const anyOf: JsonSchemaRef[] = [];
 	for (const allowedType of schema.allowedTypes) {
-		anyOf.push(createRefNode(allowedType));
+		anyOf.push(createSchemaRef(allowedType));
 	}
 
 	return {
@@ -69,9 +69,9 @@ function convertNodeSchema(schema: SimpleNodeSchema): NodeJsonSchema {
 }
 
 function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): ArrayNodeJsonSchema {
-	const allowedTypes: JsonDefinitionRef[] = [];
+	const allowedTypes: JsonSchemaRef[] = [];
 	schema.allowedTypes.forEach((type) => {
-		allowedTypes.push(createRefNode(type));
+		allowedTypes.push(createSchemaRef(type));
 	});
 	return {
 		type: "array",
@@ -97,9 +97,9 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): ObjectNodeJson
 	const properties: Record<string, FieldJsonSchema> = {};
 	const required: string[] = [];
 	for (const [key, value] of Object.entries(schema.fields)) {
-		const anyOf: JsonDefinitionRef[] = [];
+		const anyOf: JsonSchemaRef[] = [];
 		for (const allowedType of value.allowedTypes) {
-			anyOf.push(createRefNode(allowedType));
+			anyOf.push(createSchemaRef(allowedType));
 		}
 
 		properties[key] = {
@@ -138,12 +138,12 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): MapNodeJsonSchema {
 	// };
 }
 
-function createRefNode(schemaId: string): JsonDefinitionRef {
+function createSchemaRef(schemaId: string): JsonSchemaRef {
 	return {
-		"$ref": createRefString(schemaId),
+		"$ref": createRefPath(schemaId),
 	};
 }
 
-function createRefString(schemaId: string): JsonSchemaId {
+function createRefPath(schemaId: string): JsonRefPath {
 	return `#/definitions/${schemaId}`;
 }

@@ -5,11 +5,24 @@
 
 import type { SimpleNodeSchemaKind } from "./simpleSchema.js";
 
+// TODOs:
+// - Type-assertions to guarantee JSON schema correctness.
+
 /**
- * TODO: document expected format.
+ * The fully-qualified {@link TreeNodeSchemaCore.identifier}.
+ * @example Schema `com.myapp.foo` would be referenced via `#/definitions/com.myapp.foo`.
  * @internal
  */
 export type JsonSchemaId = string;
+
+/**
+ * Reference string pointing to a definition in the schema.
+ * Should be the fully-qualified {@link TreeNodeSchemaCore.identifier}.
+ * @remarks Of the form `#/definitions/<schema-identifier>`, where the `schema-identifier` is the fully-qualified {@link TreeNodeSchemaCore.identifier}.
+ * @example Schema `com.myapp.foo` would be referenced via `#/definitions/com.myapp.foo`.
+ * @internal
+ */
+export type JsonRefPath = `#/definitions/${JsonSchemaId}`;
 
 /**
  * @internal
@@ -30,61 +43,104 @@ export interface NodeJsonSchemaBase<
 > {
 	// TODO: represent this differently to ensure no conflict with actual JSON schema
 	readonly kind: TNodeKind;
-	// json schema
+	/**
+	 * TODO
+	 */
 	readonly type: TJsonSchemaType;
 }
 
 /**
+ * JSON Schema for an object node.
+ * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
  * @internal
  */
 export interface ObjectNodeJsonSchema extends NodeJsonSchemaBase<"object", "object"> {
-	// json schema
-	// Always refs to "definitions"
+	/**
+	 * Object fields.
+	 * @remarks Required fields should have a corresponding entry in {@link ObjectNodeJsonSchema.required}.
+	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-properties}.
+	 */
 	readonly properties: Record<string, FieldJsonSchema>;
-	// json schema
-	// Default: all are optional
+	/**
+	 * List of keys for required fields.
+	 *
+	 * @remarks
+	 * Optional fields should not be included in this list.
+	 * Each key specified must have an entry in {@link ObjectNodeJsonSchema.properties}.
+	 *
+	 * @see TODO
+	 */
 	readonly required?: string[];
-	// json schema
-	// default: false?
+	/**
+	 * Whether or not additional properties (properties not specified by the schema) are allowed in objects of this type.
+	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-additionalproperties}.
+	 */
 	readonly additionalProperties?: boolean;
 }
 
 /**
+ * JSON Schema for an array node.
+ * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
  * @internal
  */
 export interface ArrayNodeJsonSchema extends NodeJsonSchemaBase<"array", "array"> {
-	// json schema
-	// Always refs to "definitions"
+	/**
+	 * The kinds of items allowed under the array.
+	 * @remarks Always represented via references to {@link TreeJsonSchema.definitions}.
+	 *
+	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-items}.
+	 */
 	readonly items: {
-		anyOf: JsonDefinitionRef[];
+		/**
+		 * The kinds of items allowed under the array.
+		 * @remarks Always represented via references to {@link TreeJsonSchema.definitions}.
+		 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-anyof}.
+		 */
+		anyOf: JsonSchemaRef[];
 	};
 }
 
 /**
+ * JSON Schema for a map node.
  * @remarks Special case for map nodes, which do not have a native JSON schema corollary.
+ * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
  * @internal
  */
 export interface MapNodeJsonSchema extends NodeJsonSchemaBase<"map", "object"> {
-	// json schema
-	// Used to control the types of properties that can appear in the "object" representation of the map
-	// Always refs to "definitions"
+	/**
+	 * Used to control the types of properties that can appear in the "object" representation of the map.
+	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-patternproperties}.
+	 */
 	readonly patternProperties: {
+		// TODO: document this pattern
 		"^(.*)+$": FieldJsonSchema;
 	};
 }
 
 /**
+ * JSON Schema for a leaf node.
+ * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
  * @internal
  */
 export interface LeafNodeJsonSchema extends NodeJsonSchemaBase<"leaf", JsonLeafSchemaType> {
+	/**
+	 * Primitive type.
+	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
+	 */
 	readonly type: JsonLeafSchemaType;
 }
 
 /**
+ * Type entry containing a reference to a definition in the schema.
+ * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-schema-references}.
  * @internal
  */
-export interface JsonDefinitionRef {
-	$ref: JsonSchemaId;
+export interface JsonSchemaRef {
+	/**
+	 * Reference to a definition in the schema.
+	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-direct-references-with-ref}.
+	 */
+	$ref: JsonRefPath;
 }
 
 /**
@@ -101,8 +157,12 @@ export type NodeJsonSchema =
  * @internal
  */
 export interface FieldJsonSchema {
-	// json schema
-	readonly anyOf: JsonDefinitionRef[];
+	/**
+	 * The kinds of items allowed under the array.
+	 * @remarks Always represented via references to {@link TreeJsonSchema.definitions}.
+	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-anyof}.
+	 */
+	readonly anyOf: JsonSchemaRef[];
 }
 
 /**
