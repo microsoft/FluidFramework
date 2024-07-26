@@ -31,9 +31,12 @@ export class TreeNodeKernel implements Listenable<TreeChangeEvents> {
 	public constructor(public readonly node: TreeNode) {}
 
 	public hydrate(anchorNode: AnchorNode): void {
-		const offChildrenChanged = anchorNode.on("childrenChangedAfterBatch", ({ changedFields }) => {
-			this.#events.emit("nodeChanged", { changedProperties: changedFields });
-		});
+		const offChildrenChanged = anchorNode.on(
+			"childrenChangedAfterBatch",
+			({ changedFields }) => {
+				this.#events.emit("nodeChanged", { changedProperties: changedFields });
+			},
+		);
 
 		const offSubtreeChanged = anchorNode.on("subtreeChangedAfterBatch", () => {
 			this.#events.emit("treeChanged");

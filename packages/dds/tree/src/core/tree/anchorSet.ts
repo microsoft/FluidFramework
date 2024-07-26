@@ -132,7 +132,10 @@ export interface AnchorEvents {
 	 *
 	 * Compare to {@link AnchorEvents.childrenChanged} which is emitted in the middle of the batch/delta-visit.
 	 */
-	childrenChangedAfterBatch(arg: { anchor: AnchorNode, changedFields: ReadonlySet<FieldKey> }): void;
+	childrenChangedAfterBatch(arg: {
+		anchor: AnchorNode;
+		changedFields: ReadonlySet<FieldKey>;
+	}): void;
 
 	/**
 	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if something in the subtree
@@ -725,7 +728,11 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			pathVisitors: new Map<PathNode, Set<PathVisitor>>(),
 			parentField: undefined as FieldKey | undefined,
 			parent: undefined as UpPath | undefined,
-			bufferedEvents: [] as { node: PathNode; event: keyof AnchorEvents, changedField?: FieldKey }[],
+			bufferedEvents: [] as {
+				node: PathNode;
+				event: keyof AnchorEvents;
+				changedField?: FieldKey;
+			}[],
 
 			// 'currentDepth' and 'depthThresholdForSubtreeChanged' serve to keep track of when do we need to emit
 			// subtreeChangedAfterBatch events.
@@ -768,7 +775,11 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					}
 					emittedEvents?.push(event);
 					if (event === "childrenChangedAfterBatch") {
-						const changedFields = new Set(this.bufferedEvents.filter(e => e.node === node && e.event === event).map(e => e.changedField as FieldKey));
+						const changedFields = new Set(
+							this.bufferedEvents
+								.filter((e) => e.node === node && e.event === event)
+								.map((e) => e.changedField as FieldKey),
+						);
 						node.events.emit(event, { anchor: node, changedFields });
 					} else {
 						node.events.emit(event, node);
@@ -788,7 +799,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 						this.bufferedEvents.push({
 							node: p,
 							event: "childrenChangedAfterBatch",
-							changedField: field
+							changedField: field,
 						});
 					},
 					() => {},

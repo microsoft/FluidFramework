@@ -521,7 +521,11 @@ describe("AnchorSet", () => {
 			v.attach(brand("fakeAttachSource"), 1, 0);
 			v.exitField(fieldTwo);
 			v.enterField(fieldThree);
-			v.replace(brand("fakeReplaceSource"), { start: 0, end: 1 }, brand("fakeReplaceDestination"));
+			v.replace(
+				brand("fakeReplaceSource"),
+				{ start: 0, end: 1 },
+				brand("fakeReplaceDestination"),
+			);
 			v.exitField(fieldThree);
 			v.exitNode(0);
 			v.exitField(rootFieldKey);
