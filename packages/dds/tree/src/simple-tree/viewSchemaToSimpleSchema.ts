@@ -43,8 +43,6 @@ export function toSimpleTreeSchema(schema: ImplicitAllowedTypes): SimpleTreeSche
 	const definitions = new Map<string, SimpleNodeSchema>();
 	populateSchemaDefinitionsForField(normalizedSchema, definitions);
 
-	// TODO: recursive walk of schema to populate definitions
-
 	return {
 		allowedTypes,
 		definitions,
