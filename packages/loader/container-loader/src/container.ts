@@ -12,6 +12,9 @@ import {
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import {
+	ContainerExtensionFactory,
+	ContainerExtensionId,
+	ContainerExtensionStore,
 	ContainerWarning,
 	IBatchMessage,
 	ICodeDetailsLoader,
@@ -1201,6 +1204,18 @@ export class Container
 	 */
 	public async getPendingLocalState(): Promise<string> {
 		return this.getPendingLocalStateCore({ notifyImminentClosure: false });
+	}
+
+	public acquireExtension<T, TContext extends unknown[]>(
+		id: ContainerExtensionId,
+		factory: ContainerExtensionFactory<T, TContext>,
+		...context: TContext
+	): T {
+		const runtime = this.runtime as Partial<IRuntimeInternal>;
+		if (runtime.acquireExtension === undefined) {
+			throw new Error("Runtime does not support container extensions feature");
+		}
+		return runtime.acquireExtension(id, factory, ...context);
 	}
 
 	public acquireIndependentMap<
@@ -2564,7 +2579,10 @@ export class Container
  * IContainer interface that includes experimental features still under development.
  * @internal
  */
-export interface IContainerExperimental extends IContainer, Partial<IndependentStateManager> {
+export interface IContainerExperimental
+	extends IContainer,
+		Partial<ContainerExtensionStore>,
+		Partial<IndependentStateManager> {
 	/**
 	 * Get pending state from container. WARNING: misuse of this API can result in duplicate op
 	 * submission and potential document corruption. The blob returned MUST be deleted if and when this

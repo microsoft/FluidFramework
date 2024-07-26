@@ -12,8 +12,11 @@ import type {
 } from "@fluidframework/container-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import type {
+	ContainerExtensionFactory,
+	ContainerExtensionId,
 	IBatchMessage,
 	IContainerContext,
+	IExtensionRuntime,
 	IGetPendingLocalStateProps,
 	ILoader,
 	IRuntime,
@@ -40,6 +43,7 @@ import type {
 	IFluidHandleInternal,
 	IProvideFluidHandleContext,
 	ISignalEnvelope,
+	JsonDeserialized,
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal";
 import {
@@ -3172,7 +3176,7 @@ export class ContainerRuntime
 	}
 
 	protected submitSignalImpl(
-		address: string | undefined,
+		address: `/${string}` | undefined,
 		type: string,
 		content: unknown,
 		targetClientId?: string,
@@ -4524,12 +4528,53 @@ export class ContainerRuntime
 	}
 }
 
+type ExtensionEntry = ContainerExtensionFactory<unknown, unknown[]> extends new (
+	...args: any[]
+) => infer T
+	? T
+	: never;
+
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
  */
 class ContainerRuntimeInternal extends ContainerRuntime implements IRuntimeInternal {
+	private readonly extensions = new Map<ContainerExtensionId, ExtensionEntry>();
+
 	private independentStateManager: IndependentStateManager | undefined;
+
+	private static composeRuntime(
+		base: Omit<IExtensionRuntime, "clientId">,
+		clientIdFn: () => IExtensionRuntime["clientId"],
+	): IExtensionRuntime {
+		Object.defineProperty(base, "clientId", {
+			get: clientIdFn,
+		});
+		return base as IExtensionRuntime;
+	}
+
+	public acquireExtension<T, TContext extends unknown[]>(
+		id: ContainerExtensionId,
+		factory: ContainerExtensionFactory<T, TContext>,
+		...context: TContext
+	): T {
+		let entry = this.extensions.get(id);
+		if (entry !== undefined) {
+			assert(entry instanceof factory, "Extension entry is not of the expected type");
+			entry.interface.onNewContext(...context);
+		} else {
+			const runtime = ContainerRuntimeInternal.composeRuntime(
+				{
+					submitSignal: (address, type, content, targetClientId) =>
+						this.submitSignalImpl(`/ext/${id}/${address}`, type, content, targetClientId),
+				},
+				() => this.clientId,
+			);
+			entry = new factory(runtime, ...context);
+			this.extensions.set(id, entry);
+		}
+		return entry.extension as T;
+	}
 
 	/**
 	 * Internal method for experimental Distributed Independent State support
@@ -4557,13 +4602,12 @@ class ContainerRuntimeInternal extends ContainerRuntime implements IRuntimeInter
 	}
 
 	public submitAddressedSignal<T>(
-		address: string,
+		address: `/${"ext/" | "dis:"}${string}`,
 		type: string,
 		content: JsonSerializable<T>,
 		targetClientId?: string,
 	): void {
-		assert(address.startsWith("dis:"), "Only DIS is currently supported");
-		this.submitSignalImpl(`/${address}`, type, content, targetClientId);
+		this.submitSignalImpl(address, type, content, targetClientId);
 	}
 
 	protected override routeNonContainerSignal(
@@ -4572,9 +4616,23 @@ class ContainerRuntimeInternal extends ContainerRuntime implements IRuntimeInter
 		local: boolean,
 	): void {
 		if (address.startsWith("/")) {
-			// TODO: convert to a generic registry
-			if (address.startsWith("/dis:")) {
-				this.independentStateManager?.processSignal(address.slice(1), signalMessage, local);
+			if (address.startsWith("/ext/")) {
+				const idAndSubaddress = address.match(
+					/^\/ext\/(?<id>[^/]*:[^/]*)\/(?<subaddress>.*)$/,
+				);
+				const { id, subaddress } = idAndSubaddress?.groups ?? {};
+				if (id !== undefined && subaddress !== undefined) {
+					const entry = this.extensions.get(id as ContainerExtensionId);
+					if (entry !== undefined) {
+						entry.interface.processSignal?.(
+							subaddress,
+							signalMessage as JsonDeserialized<typeof signalMessage>,
+							local,
+						);
+					}
+				}
+			} else if (address.startsWith("/dis:")) {
+				this.independentStateManager?.processSignal(address, signalMessage, local);
 			}
 		} else {
 			super.routeNonContainerSignal(address, signalMessage, local);

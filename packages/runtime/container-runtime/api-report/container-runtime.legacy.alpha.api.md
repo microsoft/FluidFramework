@@ -163,7 +163,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     submitMessage(type: ContainerMessageType.FluidDataStoreOp | ContainerMessageType.Alias | ContainerMessageType.Attach, contents: any, localOpMetadata?: unknown): void;
     submitSignal(type: string, content: unknown, targetClientId?: string): void;
     // (undocumented)
-    protected submitSignalImpl(address: string | undefined, type: string, content: unknown, targetClientId?: string): void;
+    protected submitSignalImpl(address: `/${string}` | undefined, type: string, content: unknown, targetClientId?: string): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     summarize(options: {
         fullTree?: boolean;

@@ -26,6 +26,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
+import type { ContainerExtensionStore } from "./containerExtension.js";
 import type { IDeltaManager } from "./deltas.js";
 import type { ICriticalContainerError } from "./error.js";
 import type { IndependentStateManager } from "./independentState.js";
@@ -117,7 +118,10 @@ export interface IRuntime extends IDisposable {
 /**
  * @internal
  */
-export interface IRuntimeInternal extends IRuntime, IndependentStateManager {
+export interface IRuntimeInternal
+	extends IRuntime,
+		ContainerExtensionStore,
+		IndependentStateManager {
 	/**
 	 * Submits the signal to be sent to other client(s).
 	 * @param address - Runtime address of the signal.
@@ -126,7 +130,7 @@ export interface IRuntimeInternal extends IRuntime, IndependentStateManager {
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
 	submitAddressedSignal<T>(
-		address: string,
+		address: `/dis:${string}`,
 		type: string,
 		content: JsonSerializable<T>,
 		targetClientId?: string,

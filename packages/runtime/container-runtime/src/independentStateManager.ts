@@ -32,7 +32,7 @@ export type IndependentMapFactory<TSchema, T> = new (
 ) => IndependentMapEntry<TSchema, T>;
 
 export class IndependentStateManager {
-	private readonly address = "dis:bb89f4c0-80fd-4f0c-8469-4f2848ee7f4a:";
+	private readonly address = "/dis:bb89f4c0-80fd-4f0c-8469-4f2848ee7f4a/";
 	private readonly maps = new Map<string, IndependentMapEntry<unknown, unknown>>();
 
 	/**

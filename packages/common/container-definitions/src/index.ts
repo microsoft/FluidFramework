@@ -16,6 +16,15 @@ export type {
 } from "./browserPackage.js";
 export { isFluidBrowserPackage } from "./browserPackage.js";
 export type {
+	ClientConnectionId,
+	ContainerExtensionFactory,
+	ContainerExtensionId,
+	ContainerExtensionStore,
+	IContainerExtension,
+	IExtensionMessage,
+	IExtensionRuntime,
+} from "./containerExtension.js";
+export type {
 	IConnectionDetails,
 	IDeltaManager,
 	IDeltaManagerEvents,
