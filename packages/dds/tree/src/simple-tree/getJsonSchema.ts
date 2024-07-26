@@ -8,12 +8,17 @@ import type { TreeNodeSchema } from "./schemaTypes.js";
 import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
 import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 
+/**
+ * Private symbol under which the results of {@link getJsonSchema} are cached on an input {@link TreeNodeSchema}.
+ */
 const jsonSchemaCacheSymbol = Symbol("jsonSchemaCache");
 
 /**
  * Creates a {@link https://json-schema.org/ | JSON Schema} representation of the provided {@link TreeNodeSchema}.
  *
- * @remarks Useful when communicating the schema to external libraries or services.
+ * @remarks
+ * Useful when communicating the schema to external libraries or services.
+ * Caches the result on the input schema for future calls.
  *
  * @example TODO
  *

@@ -27,9 +27,14 @@ import { ValueSchema } from "../core/index.js";
 import { fail } from "../util/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
 
-// TODOs:
-// - Cache results on view schema to avoid redundant recomputation
-
+/**
+ * Converts a "view" schema to a "simple" schema representation.
+ *
+ * @privateRemarks
+ * TODO: if this code is ever exported for consumer use, we may want to add caching here.
+ * For now, it is only used as an implementation detail of {@link getJsonSchema}, which caches its own results,
+ * so this isn't strictly necessary.
+ */
 export function toSimpleTreeSchema(schema: ImplicitAllowedTypes): SimpleTreeSchema {
 	const normalizedSchema = normalizeFieldSchema(schema);
 
