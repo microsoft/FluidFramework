@@ -5,12 +5,14 @@
 
 import { describeStress } from "@fluid-private/stochastic-test-utils";
 import { assert } from "@fluidframework/core-utils/internal";
+import { strict } from "assert";
 
 import {
 	type ChangesetLocalId,
 	type RevisionInfo,
 	type RevisionTag,
 	type TaggedChange,
+	emptyDelta,
 	makeAnonChange,
 	tagChange,
 	tagRollbackInverse,
@@ -57,6 +59,7 @@ import {
 	withoutTombstones,
 	tagChangeInline,
 	inlineRevision,
+	toDeltaWrapped,
 } from "./utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
@@ -188,11 +191,8 @@ const testChanges: [
 			]),
 	],
 	[
-		"ConflictedRevive",
-		(i) =>
-			ChangesetWrapper.create(
-				Change.redundantRevive(2, 2, { revision: tag2, localId: brand(i) }),
-			),
+		"Pin",
+		(i) => ChangesetWrapper.create(Change.pin(2, 2, { revision: tag2, localId: brand(i) })),
 	],
 	["MoveOut", (i) => ChangesetWrapper.create(Change.move(i, 2, 1))],
 	["MoveIn", (i) => ChangesetWrapper.create(Change.move(1, 2, i))],
@@ -407,9 +407,8 @@ export function testRebaserAxioms() {
 						tagWrappedChangeInline(inv, tag6, taggedChange.revision),
 					];
 					const actual = composeDeep(changes);
-					const pruned = pruneDeep(actual);
-					const noTombstones = withoutTombstonesDeep(pruned);
-					assertWrappedChangesetsEqual(noTombstones, ChangesetWrapper.create([]));
+					const delta = toDeltaWrapped(actual);
+					strict.deepEqual(delta, emptyDelta);
 				});
 			}
 		});
@@ -426,9 +425,8 @@ export function testRebaserAxioms() {
 					);
 					const changes = [inv, taggedChange];
 					const actual = composeDeep(changes);
-					const pruned = pruneDeep(actual);
-					const noTombstones = withoutTombstonesDeep(pruned);
-					assertWrappedChangesetsEqual(noTombstones, ChangesetWrapper.create([]));
+					const delta = toDeltaWrapped(actual);
+					strict.deepEqual(delta, emptyDelta);
 				});
 			}
 		});

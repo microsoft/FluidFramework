@@ -164,6 +164,9 @@ export function sequenceFieldToDelta(
 						local.push(deltaMark);
 					}
 					break;
+				case "Rename":
+					assert(mark.cellId !== undefined, "Renames should only target empty cells");
+					break;
 				default:
 					unreachableCase(type);
 			}
