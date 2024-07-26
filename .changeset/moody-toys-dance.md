@@ -11,7 +11,7 @@ To avoid this being a breaking change, a priority systems was introduced.
 ArrayNodes will only be implicitly constructable from JavaScript Map objects in contexts where no MapNodes are allowed.
 Similarly MapNodes will only be implicitly constructable from JavaScript Array objects in contexts where no ArrayNodes are allowed.
 
-In practice, the main case this is likely to matter is when implicitly constructing a map node, if you provide an array of key value pairs, this now works instead of erroring, as long as no ArrayNode is valid at that location in the tree.
+In practice, the main case in which this is likely to matter is when implicitly constructing a map node. If you provide an array of key value pairs, this now works instead of erroring, as long as no ArrayNode is valid at that location in the tree.
 
 ```typescript
 class MyMapNode extends schemaFactory.map("x", schemaFactory.number) {}
