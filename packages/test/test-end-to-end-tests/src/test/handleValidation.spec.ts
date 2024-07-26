@@ -8,8 +8,6 @@ import assert from "assert";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { ISharedCell } from "@fluidframework/cell/internal";
-// eslint-disable-next-line import/no-internal-modules
-import { waitContainerToCatchUp } from "@fluidframework/container-loader/legacy";
 import {
 	IFluidHandle,
 	IFluidLoadable,
@@ -456,10 +454,9 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 					defaultDataStore.root.set("handleToDDS", dds.handle);
 				}
 
+				const container2 = await provider.loadTestContainer(testContainerConfig);
 				await provider.ensureSynchronized();
 
-				const container2 = await provider.loadTestContainer(testContainerConfig);
-				await waitContainerToCatchUp(container2);
 				container1.dispose();
 
 				// Validate that the created objects were attached and have correct data in the new container.
@@ -502,10 +499,9 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 					defaultDataStore.root.set("handleToDDS", dds.handle);
 				}
 
+				const container2 = await provider.loadTestContainer(testContainerConfig);
 				await provider.ensureSynchronized();
 
-				const container2 = await provider.loadTestContainer(testContainerConfig);
-				await waitContainerToCatchUp(container2);
 				container1.dispose();
 
 				// Validate that the created objects were attached and have correct data in the new container.
@@ -581,19 +577,14 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			const attachedDds = await attachedDdsUtils.getDDS(attachedDataStore);
 
 			/**
-			 * store handle to dds2 in attached dds (which will attach ddss 1 and 2)
+			 * store handle to dds2 in attached dds (which will attach dds 1 and 2)
 			 */
 			await attachedDds.storeHandle(createdDds2.handle);
 
-			/**
-			 * close container, get sequence number and sync
-			 */
-			await provider.ensureSynchronized(container1);
-			const seq = container1.deltaManager.lastSequenceNumber;
-			container1.dispose();
-
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			await waitContainerToCatchUp(container2);
+			await provider.ensureSynchronized();
+
+			container1.dispose();
 
 			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const attached2 = await attachedDdsUtils.getDDS(default2);
@@ -663,15 +654,10 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			 */
 			await attachedDds.storeHandle(createdDds2.handle);
 
-			/**
-			 * close container, get sequence number and sync
-			 */
-			await provider.ensureSynchronized(container1);
-			const seq = container1.deltaManager.lastSequenceNumber;
-			container1.dispose();
-
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			await waitContainerToCatchUp(container2);
+			await provider.ensureSynchronized();
+
+			container1.dispose();
 
 			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const attached2 = await attachedDdsUtils.getDDS(default2);
