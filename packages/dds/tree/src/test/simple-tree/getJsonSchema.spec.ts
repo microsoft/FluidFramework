@@ -289,4 +289,15 @@ describe.only("getJsonSchema", () => {
 		validator({ bar: "Hello world" }, false);
 		validator({ foo: { bar: "Hello world" } }, false);
 	});
+
+	it("JSON Schema cached on node schema", () => {
+		const schemaFactory = new SchemaFactory("test");
+		const Schema = schemaFactory.string;
+
+		const firstQuery = getJsonSchema(Schema);
+		const secondQuery = getJsonSchema(Schema);
+
+		// Object equality to ensure the same object is returned by subsequent calls.
+		return assert.equal(firstQuery, secondQuery);
+	});
 });
