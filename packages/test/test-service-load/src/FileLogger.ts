@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import crypto from "crypto";
 import fs from "fs";
 
 import { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
 import { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgName, pkgVersion } from "./packageVersion.js";
@@ -22,7 +21,9 @@ import { pkgName, pkgVersion } from "./packageVersion.js";
 // TODO: Consider just exporting the function and importing it directly rather than polluting the global.
 const maybeInstantiateGlobalLoggerType = async () => {
 	if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER !== undefined) {
-		await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
+		if (getTestLogger === undefined) {
+			await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
+		}
 		const logger = getTestLogger?.();
 		assert(logger !== undefined, "Expected getTestLogger to return something");
 		return logger;
@@ -30,64 +31,56 @@ const maybeInstantiateGlobalLoggerType = async () => {
 	return undefined;
 };
 
-export class FileLogger implements ITelemetryBufferedLogger {
-	private static readonly loggerP = new LazyPromise<FileLogger>(async () => {
-		const baseLogger = await maybeInstantiateGlobalLoggerType();
-		return new FileLogger(baseLogger);
-	});
-
-	public static async createLogger(dimensions: {
+export const createLogger = async (
+	outputDirectoryPath: string,
+	fileNamePrefix: string,
+	dimensions: {
 		driverType: string;
 		driverEndpointName: string | undefined;
 		profile: string;
 		runId: number | undefined;
-	}) {
-		return createChildLogger({
-			logger: await this.loggerP,
-			properties: {
-				all: dimensions,
-			},
-		});
-	}
+	},
+) => {
+	const baseLogger = await maybeInstantiateGlobalLoggerType();
+	const fileLogger = new FileLogger(outputDirectoryPath, fileNamePrefix, baseLogger);
+	const childLogger = createChildLogger({
+		logger: fileLogger,
+		properties: {
+			all: dimensions,
+		},
+	});
+	return { logger: childLogger, flush: async () => fileLogger.flush() };
+};
 
-	public static async flushLogger(runInfo?: { url: string; runId?: number }) {
-		await (await this.loggerP).flush(runInfo);
-	}
-
-	private error: boolean = false;
+class FileLogger implements ITelemetryBufferedLogger {
 	private readonly schema = new Map<string, number>();
 	private logs: ITelemetryBaseEvent[] = [];
 	public readonly minLogLevel: LogLevel = LogLevel.verbose;
 
-	private constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {}
+	public constructor(
+		private readonly outputDirectoryPath: string,
+		private readonly fileNamePrefix: string,
+		private readonly baseLogger?: ITelemetryBufferedLogger | undefined,
+	) {}
 
-	async flush(runInfo?: { url: string; runId?: number }): Promise<void> {
-		const baseFlushP = this.baseLogger?.flush();
-
-		if (this.error && runInfo !== undefined) {
-			const logs = this.logs;
-			const outputDir = `${__dirname}/output/${crypto
-				.createHash("md5")
-				.update(runInfo.url)
-				.digest("hex")}`;
-			if (!fs.existsSync(outputDir)) {
-				fs.mkdirSync(outputDir, { recursive: true });
-			}
-			// sort from most common column to least common
-			const schema = [...this.schema].sort((a, b) => b[1] - a[1]).map((v) => v[0]);
-			const data = logs.reduce(
-				(file, event) =>
-					// eslint-disable-next-line @typescript-eslint/no-base-to-string
-					`${file}\n${schema.reduce((line, k) => `${line}${event[k] ?? ""},`, "")}`,
-				schema.join(","),
-			);
-			const filePath = `${outputDir}/${runInfo.runId ?? "orchestrator"}_${Date.now()}.csv`;
-			fs.writeFileSync(filePath, data);
+	async flush(): Promise<void> {
+		const logs = this.logs;
+		if (!fs.existsSync(this.outputDirectoryPath)) {
+			fs.mkdirSync(this.outputDirectoryPath, { recursive: true });
 		}
+		// sort from most common column to least common
+		const schema = [...this.schema].sort((a, b) => b[1] - a[1]).map((v) => v[0]);
+		const data = logs.reduce(
+			(file, event) =>
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
+				`${file}\n${schema.reduce((line, k) => `${line}${event[k] ?? ""},`, "")}`,
+			schema.join(","),
+		);
+		const filePath = `${this.outputDirectoryPath}/${this.fileNamePrefix}_${Date.now()}.csv`;
+		fs.writeFileSync(filePath, data);
 		this.schema.clear();
-		this.error = false;
 		this.logs = [];
-		return baseFlushP;
+		return this.baseLogger?.flush();
 	}
 	send(event: ITelemetryBaseEvent): void {
 		if (typeof event.testCategoryOverride === "string") {
@@ -103,9 +96,6 @@ export class FileLogger implements ITelemetryBufferedLogger {
 		event.Event_Time = Date.now();
 		// keep track of the frequency of every log event, as we'll sort by most common on write
 		Object.keys(event).forEach((k) => this.schema.set(k, (this.schema.get(k) ?? 0) + 1));
-		if (event.category === "error") {
-			this.error = true;
-		}
 		this.logs.push(event);
 	}
 }

@@ -21,7 +21,7 @@ import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/inter
 import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import commander from "commander";
 
-import { FileLogger } from "./FileLogger.js";
+import { createLogger } from "./FileLogger.js";
 import {
 	FaultInjectionDocumentServiceFactory,
 	FaultInjectionError,
@@ -64,6 +64,7 @@ async function main() {
 			parseIntArg,
 		)
 		.requiredOption("-s, --seed <number>", "Seed for this runners random number generator")
+		.requiredOption("-o, --outputDir <path>", "Path for log output files")
 		.option("-e, --driverEndpoint <endpoint>", "Which endpoint should the driver target?")
 		.option(
 			"-l, --log <filter>",
@@ -81,6 +82,7 @@ async function main() {
 	const log: string | undefined = commander.log;
 	const verbose: boolean = commander.verbose ?? false;
 	const seed: number = commander.seed;
+	const outputDir: string = commander.outputDir;
 	const enableOpsMetrics: boolean = commander.enableOpsMetrics ?? false;
 
 	if (log !== undefined) {
@@ -98,7 +100,7 @@ async function main() {
 	// this makes runners repeatable, but ensures each runner
 	// will get its own set of randoms
 	const random = makeRandom(seed, runId);
-	const logger = await FileLogger.createLogger({
+	const { logger, flush } = await createLogger(outputDir, runId.toString(), {
 		runId,
 		driverType: driver,
 		driverEndpointName: endpoint,
@@ -147,7 +149,7 @@ async function main() {
 			setTimeout(resolve, 1000);
 		});
 		// Flush the logs
-		await FileLogger.flushLogger({ url, runId });
+		await flush();
 
 		process.exit(result);
 	}

@@ -32,6 +32,7 @@ export async function stressTest(
 		testUsers: TestUsers | undefined;
 		profileName: string;
 		logger: ITelemetryLoggerExt;
+		outputDir: string;
 	},
 ) {
 	const {
@@ -44,6 +45,7 @@ export async function stressTest(
 		testUsers,
 		profileName,
 		logger,
+		outputDir,
 	} = args;
 
 	const url = await (testId !== undefined && !createTestId
@@ -77,6 +79,8 @@ export async function stressTest(
 			url,
 			"--seed",
 			`0x${seed.toString(16)}`,
+			"--outputDir",
+			outputDir,
 		];
 		if (debug) {
 			const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
@@ -148,8 +152,6 @@ export async function stressTest(
 	const endTime = Date.now();
 	console.log(`End time: ${endTime} ms\n`);
 	console.log(`Total run time: ${(endTime - startTime) / 1000}s\n`);
-
-	return url;
 }
 
 /**
