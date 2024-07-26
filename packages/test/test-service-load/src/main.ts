@@ -109,6 +109,7 @@ const main = async () => {
 		runId: undefined,
 	});
 
+	let result = -1;
 	try {
 		const profile = getProfile(profileName);
 
@@ -126,6 +127,7 @@ const main = async () => {
 			logger,
 			outputDir,
 		});
+		result = 0;
 	} finally {
 		// There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
 		// TODO: Track down the dangling promise and fix it.
@@ -134,9 +136,9 @@ const main = async () => {
 		});
 		// Flush the logs
 		await flush();
-	}
 
-	process.exit(0);
+		process.exit(result);
+	}
 };
 
 main().catch((error) => {

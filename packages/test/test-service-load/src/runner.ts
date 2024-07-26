@@ -126,7 +126,7 @@ async function main() {
 
 	let result = -1;
 	try {
-		result = await runnerProcess(
+		await runnerProcess(
 			driver,
 			endpoint,
 			{
@@ -141,6 +141,7 @@ async function main() {
 			seed,
 			enableOpsMetrics,
 		);
+		result = 0;
 	} catch (e) {
 		logger.sendErrorEvent({ eventName: "runnerFailed" }, e);
 	} finally {
@@ -199,7 +200,7 @@ async function runnerProcess(
 	url: string,
 	seed: number,
 	enableOpsMetrics: boolean,
-): Promise<number> {
+): Promise<void> {
 	// Assigning no-op value due to linter.
 	let metricsCleanup: () => void = () => {};
 
@@ -354,7 +355,6 @@ async function runnerProcess(
 			metricsCleanup();
 		}
 	}
-	return 0;
 }
 
 function scheduleFaultInjection(
