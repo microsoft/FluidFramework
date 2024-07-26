@@ -23,6 +23,7 @@ const fromArray = new Root({ data: [["x", 5]] });
 Prior versions used to have to do:
 ```typescript
 new Root({ data: new MyMapNode([["x", 5]]) });
+```
 or:
 ```typescript
 new Root({ data: new Map([["x", 5]]) });
