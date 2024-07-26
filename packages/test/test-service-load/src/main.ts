@@ -11,7 +11,7 @@ import { getTestUsers } from "./getTestUsers.js";
 import { stressTest } from "./stressTest.js";
 import { createTestDriver } from "./utils.js";
 
-async function main() {
+const readRunOptions = () => {
 	commander
 		.version("0.0.1")
 		.requiredOption("-d, --driver <driver>", "Which test driver info to use", "odsp")
@@ -46,24 +46,62 @@ async function main() {
 	const endpoint: DriverEndpoint | undefined = commander.driverEndpoint;
 	const profileName: string = commander.profile;
 	const testId: string | undefined = commander.testId;
-	const debug: true | undefined = commander.debug;
+	const debug: boolean = commander.debug ?? false;
 	const log: string | undefined = commander.log;
-	const verbose: true | undefined = commander.verbose;
+	const verbose: boolean = commander.verbose ?? false;
 	const seed: number = commander.seed ?? Date.now();
-	const browserAuth: true | undefined = commander.browserAuth;
-	const credFile: string | undefined = commander.credFile;
+	const supportsBrowserAuth: boolean = commander.browserAuth ?? false;
+	const credFilePath: string | undefined = commander.credFile;
 	const enableMetrics: boolean = commander.enableMetrics ?? false;
 	const createTestId: boolean = commander.createTestId ?? false;
 
-	const profile = getProfile(profileName);
+	return {
+		driver,
+		endpoint,
+		profileName,
+		testId,
+		debug,
+		log,
+		verbose,
+		seed,
+		supportsBrowserAuth,
+		credFilePath,
+		enableMetrics,
+		createTestId,
+	};
+};
+
+const main = async () => {
+	const {
+		driver,
+		endpoint,
+		profileName,
+		testId,
+		debug,
+		log,
+		verbose,
+		seed,
+		supportsBrowserAuth,
+		credFilePath,
+		enableMetrics,
+		createTestId,
+	} = readRunOptions();
 
 	if (log !== undefined) {
 		process.env.DEBUG = log;
 	}
 
-	const testUsers = await getTestUsers(credFile);
+	const profile = getProfile(profileName);
 
-	const testDriver = await createTestDriver(driver, endpoint, seed, undefined, browserAuth);
+	const testUsers = credFilePath !== undefined ? getTestUsers(credFilePath) : undefined;
+
+	const testDriver = await createTestDriver(
+		driver,
+		endpoint,
+		seed,
+		undefined, // runId
+		supportsBrowserAuth,
+	);
 
 	await stressTest(testDriver, profile, {
 		testId,
@@ -75,7 +113,7 @@ async function main() {
 		testUsers,
 		profileName,
 	});
-}
+};
 
 main().catch((error) => {
 	console.error(error);

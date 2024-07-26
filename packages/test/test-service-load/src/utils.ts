@@ -24,7 +24,7 @@ import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal
 import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 
 import { FileLogger } from "./FileLogger.js";
-import { ILoadTest, createFluidExport, type IRunConfig } from "./loadTestDataStore.js";
+import { createFluidExport, type ILoadTest, type IRunConfig } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
 	generateLoaderOptions,
@@ -32,7 +32,7 @@ import {
 	getOptionOverride,
 } from "./optionsMatrix.js";
 import { pkgName, pkgVersion } from "./packageVersion.js";
-import { ILoadTestConfig } from "./testConfigFile.js";
+import type { TestConfiguration } from "./testConfigFile.js";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
@@ -41,7 +41,7 @@ const codeDetails: IFluidCodeDetails = {
 	config: {},
 };
 
-export const createCodeLoader = (options: IContainerRuntimeOptions) =>
+export const createCodeLoader = (options?: IContainerRuntimeOptions | undefined) =>
 	new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
 
 // eslint-disable-next-line import/no-deprecated
@@ -72,10 +72,10 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
 export async function initialize(
 	testDriver: ITestDriver,
 	seed: number,
-	testConfig: ILoadTestConfig,
+	testConfig: TestConfiguration,
 	verbose: boolean,
 	profileName: string,
-	testIdn?: string,
+	requestedTestId?: string,
 ) {
 	const random = makeRandom(seed);
 	const optionsOverride = getOptionOverride(
@@ -85,7 +85,7 @@ export async function initialize(
 	);
 
 	const loaderOptions = random.pick(generateLoaderOptions(seed, optionsOverride?.loader));
-	const containerOptions = random.pick(
+	const containerRuntimeOptions = random.pick(
 		generateRuntimeOptions(seed, optionsOverride?.container),
 	);
 	const configurations = random.pick(
@@ -103,7 +103,7 @@ export async function initialize(
 		eventName: "RunConfigOptions",
 		details: JSON.stringify({
 			loaderOptions,
-			containerOptions,
+			containerOptions: containerRuntimeOptions,
 			configurations: { ...globalConfigurations, ...configurations },
 		}),
 	});
@@ -112,7 +112,7 @@ export async function initialize(
 	const loader = new Loader({
 		urlResolver: testDriver.createUrlResolver(),
 		documentServiceFactory: testDriver.createDocumentServiceFactory(),
-		codeLoader: createCodeLoader(containerOptions),
+		codeLoader: createCodeLoader(containerRuntimeOptions),
 		logger,
 		options: loaderOptions,
 		detachedBlobStorage: new MockDetachedBlobStorage(),
@@ -134,7 +134,7 @@ export async function initialize(
 		}
 	}
 
-	const testId = testIdn ?? Date.now().toString();
+	const testId = requestedTestId ?? Date.now().toString();
 	assert(testId !== "", "testId specified cannot be an empty string");
 	const request = testDriver.createCreateNewRequest(testId);
 	await container.attach(request);
@@ -154,7 +154,7 @@ export async function createTestDriver(
 	endpointName: DriverEndpoint | undefined,
 	seed: number,
 	runId: number | undefined,
-	supportsBrowserAuth?: true,
+	supportsBrowserAuth: boolean,
 ) {
 	const options = generateOdspHostStoragePolicy(seed);
 	return createFluidTestDriver(driver, {

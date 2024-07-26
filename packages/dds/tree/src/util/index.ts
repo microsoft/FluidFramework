@@ -20,6 +20,7 @@ export {
 export {
 	deleteFromNestedMap,
 	getOrAddInMap,
+	getOrAddInMapLazy,
 	getOrAddInNestedMap,
 	getOrDefaultInNestedMap,
 	forEachInNestedMap,
@@ -58,7 +59,6 @@ export {
 	clone,
 	compareSets,
 	fail,
-	oob,
 	getOrAddEmptyToMap,
 	getOrCreate,
 	isJsonObject,

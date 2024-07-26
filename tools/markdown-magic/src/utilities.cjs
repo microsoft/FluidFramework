@@ -125,14 +125,28 @@ const getScopeKindFromPackage = (packageName) => {
 
 /**
  * Determines if the package is end-user facing or not.
- * For the purposes of README content generation, this is true for "fluid-framework" and packages in the "@fluidframework" and "@fluid-experimental" scoped.
+ * For the purposes of README content generation, this is true for "fluid-framework" and published packages in the
+ * "@fluidframework" and "@fluid-experimental" scopes.
+ *
+ * Will always return `false` if the package.json specifies`"private": true`.
  *
  * @remarks Used to determine which automatically generated sections should be included in package READMEs, etc.
- * @param {string} packageName
+ * @param {object} packageMetadata - The parsed `package.json` file for the package.
  */
-const isPublic = (packageName) => {
+const isPublic = (packageMetadata) => {
+	// If the package is not published, return `false`.
+	if (packageMetadata.private === true) {
+		return false;
+	}
+
+	// For published packages, only return `true` for package scopes for which we offer public support.
+	const packageName = packageMetadata.name;
+	if (packageName === "fluid-framework") {
+		return true;
+	}
+
 	const scope = getScopeKindFromPackage(packageName);
-	return scope === "FRAMEWORK" || scope === "EXPERIMENTAL" || packageName === "fluid-framework";
+	return scope === "FRAMEWORK" || scope === "EXPERIMENTAL";
 };
 
 /**

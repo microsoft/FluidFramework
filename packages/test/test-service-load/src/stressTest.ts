@@ -10,8 +10,8 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import ps from "ps-node";
 
 import { FileLogger } from "./FileLogger.js";
-import { type ITestUserConfig } from "./getTestUsers.js";
-import { ILoadTestConfig } from "./testConfigFile.js";
+import type { TestUsers } from "./getTestUsers.js";
+import type { TestConfiguration } from "./testConfigFile.js";
 import { initialize, safeExit } from "./utils.js";
 
 const createLoginEnv = (userName: string, password: string) =>
@@ -22,32 +22,25 @@ const createLoginEnv = (userName: string, password: string) =>
  */
 export async function stressTest(
 	testDriver: ITestDriver,
-	profile: ILoadTestConfig,
+	profile: TestConfiguration,
 	args: {
-		testId?: string;
-		debug?: true;
-		verbose?: true;
+		testId: string | undefined;
+		debug: boolean;
+		verbose: boolean;
 		seed: number;
-		enableMetrics?: boolean;
-		createTestId?: boolean;
-		testUsers?: ITestUserConfig;
+		enableMetrics: boolean;
+		createTestId: boolean;
+		testUsers: TestUsers | undefined;
 		profileName: string;
 	},
 ) {
-	const url = await (args.testId !== undefined && args.createTestId === false
+	const url = await (args.testId !== undefined && !args.createTestId
 		? // If testId is provided and createTestId is false, then load the file;
 			testDriver.createContainerUrl(args.testId)
-		: // If no testId is provided, (or) if testId is provided but createTestId is not false, then
+		: // If no testId is provided, (or) if testId is provided but createTestId is true, then
 			// create a file;
 			// In case testId is provided, name of the file to be created is taken as the testId provided
-			initialize(
-				testDriver,
-				args.seed,
-				profile,
-				args.verbose === true,
-				args.profileName,
-				args.testId,
-			));
+			initialize(testDriver, args.seed, profile, args.verbose, args.profileName, args.testId));
 
 	const estRunningTimeMin = Math.floor(
 		(2 * profile.totalSendCount) / (profile.opRatePerMin * profile.numClients),
@@ -80,14 +73,14 @@ export async function stressTest(
 			"--seed",
 			`0x${args.seed.toString(16)}`,
 		];
-		if (args.debug === true) {
+		if (args.debug) {
 			const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
 			childArgs.unshift(`--inspect-brk=${debugPort}`);
 		}
-		if (args.verbose === true) {
+		if (args.verbose) {
 			childArgs.push("--verbose");
 		}
-		if (args.enableMetrics === true) {
+		if (args.enableMetrics) {
 			childArgs.push("--enableOpsMetrics");
 		}
 
@@ -99,7 +92,7 @@ export async function stressTest(
 	}
 	console.log(runnerArgs.map((a) => a.join(" ")).join("\n"));
 
-	if (args.enableMetrics === true) {
+	if (args.enableMetrics) {
 		setInterval(() => {
 			ps.lookup(
 				{
@@ -121,14 +114,14 @@ export async function stressTest(
 	}
 
 	try {
-		const usernames =
-			args.testUsers !== undefined ? Object.keys(args.testUsers.credentials) : undefined;
 		await Promise.all(
 			runnerArgs.map(async (childArgs, index) => {
-				const username =
-					usernames !== undefined ? usernames[index % usernames.length] : undefined;
-				const password =
-					username !== undefined ? args.testUsers?.credentials[username] : undefined;
+				const testUser =
+					args.testUsers !== undefined
+						? args.testUsers[index % args.testUsers.length]
+						: undefined;
+				const username = testUser !== undefined ? testUser.username : undefined;
+				const password = testUser !== undefined ? testUser.password : undefined;
 				const envVar = { ...process.env };
 				if (username !== undefined && password !== undefined) {
 					if (testDriver.endpointName === "odsp") {
@@ -143,7 +136,7 @@ export async function stressTest(
 				});
 
 				setupTelemetry(runnerProcess, logger, index, username);
-				if (args.enableMetrics === true) {
+				if (args.enableMetrics) {
 					setupDataTelemetry(runnerProcess, logger, index, username);
 				}
 
@@ -165,7 +158,7 @@ function setupTelemetry(
 	process: child_process.ChildProcess,
 	logger: ITelemetryLoggerExt,
 	runId: number,
-	username?: string,
+	username: string | undefined,
 ) {
 	logger.send({
 		category: "metric",

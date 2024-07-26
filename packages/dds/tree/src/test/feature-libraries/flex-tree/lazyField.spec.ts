@@ -28,7 +28,6 @@ import {
 	FieldKinds,
 	type FlexAllowedTypes,
 	FlexFieldSchema,
-	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 	SchemaBuilderBase,
 } from "../../../feature-libraries/index.js";
@@ -62,12 +61,6 @@ describe("LazyField", () => {
 		const context = getReadonlyContext(forest, schema);
 		const cursor = initializeCursor(context, detachedFieldAnchor);
 
-		const sequenceField = new LazySequence(
-			context,
-			FlexFieldSchema.create(FieldKinds.sequence, [Any]),
-			cursor,
-			detachedFieldAnchor,
-		);
 		const optionalField = new LazyOptionalField(
 			context,
 			FlexFieldSchema.create(FieldKinds.optional, [Any]),
@@ -81,11 +74,6 @@ describe("LazyField", () => {
 			detachedFieldAnchor,
 		);
 		cursor.free();
-		assert.throws(
-			() => sequenceField.insertAt(0, [1]),
-			(e: Error) =>
-				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
-		);
 		assert.throws(
 			() => (optionalField.content = undefined),
 			(e: Error) =>
@@ -531,64 +519,5 @@ describe("LazySequence", () => {
 		const sequence = testSequence([37, 42]);
 		const array = [...sequence];
 		assert.deepEqual(array, [37, 42]);
-	});
-
-	describe("insertAt", () => {
-		it("basic use", () => {
-			const sequence = testMutableSequence([]);
-			assert.deepEqual([...sequence], []);
-			sequence.insertAt(0, []);
-			assert.deepEqual([...sequence], []);
-			sequence.insertAt(0, [10]);
-			assert.deepEqual([...sequence], [10]);
-			sequence.insertAt(0, [11]);
-			assert.deepEqual([...sequence], [11, 10]);
-			sequence.insertAt(1, [12]);
-			assert.deepEqual([...sequence], [11, 12, 10]);
-			sequence.insertAt(3, [13]);
-			assert.deepEqual([...sequence], [11, 12, 10, 13]);
-			sequence.insertAt(1, [1, 2, 3]);
-			assert.deepEqual([...sequence], [11, 1, 2, 3, 12, 10, 13]);
-			assert.throws(
-				() => sequence.insertAt(-1, []),
-				(e: Error) => validateAssertionError(e, /index/),
-			);
-			assert.throws(
-				() => sequence.insertAt(0.5, []),
-				(e: Error) => validateAssertionError(e, /index/),
-			);
-			assert.throws(
-				() => sequence.insertAt(NaN, []),
-				(e: Error) => validateAssertionError(e, /index/),
-			);
-			assert.throws(
-				() => sequence.insertAt(Number.POSITIVE_INFINITY, []),
-				(e: Error) => validateAssertionError(e, /index/),
-			);
-			assert.throws(
-				() => sequence.insertAt(8, []),
-				(e: Error) => validateAssertionError(e, /index/),
-			);
-		});
-
-		it("with cursors", () => {
-			const sequence = testMutableSequence([]);
-			assert.deepEqual([...sequence], []);
-			sequence.insertAt(0, cursorForJsonableTreeField([]));
-			assert.deepEqual([...sequence], []);
-			sequence.insertAt(
-				0,
-				cursorForJsonableTreeField([{ type: leaf.number.name, value: 10 }]),
-			);
-			assert.deepEqual([...sequence], [10]);
-			sequence.insertAt(
-				0,
-				cursorForJsonableTreeField([
-					{ type: leaf.number.name, value: 11 },
-					{ type: leaf.number.name, value: 12 },
-				]),
-			);
-			assert.deepEqual([...sequence], [11, 12, 10]);
-		});
 	});
 });
