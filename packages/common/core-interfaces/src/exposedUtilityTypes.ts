@@ -465,33 +465,34 @@ export namespace InternalUtilityTypes {
 			: /* unreachable else for infer */ never;
 
 	/**
+	 * Recursion limit is the count of `+` that prefix it when string.
+	 *
+	 * @beta
+	 * @system
+	 */
+	export type RecursionLimit = `+${string}` | 0;
+
+	/**
 	 * Recurses T applying {@link InternalUtilityTypes.JsonDeserializedFilter} up to RecurseLimit times.
 	 *
 	 * @beta
 	 * @system
 	 */
-	export type JsonDeserializedRecursion<T, TReplaced, RecurseLimit, TAncestorTypes> =
-		T extends TAncestorTypes
-			? RecurseLimit extends 10
-				? JsonDeserializedFilter<T, TReplaced, 9, TAncestorTypes | T>
-				: RecurseLimit extends 9
-					? JsonDeserializedFilter<T, TReplaced, 8, TAncestorTypes | T>
-					: RecurseLimit extends 8
-						? JsonDeserializedFilter<T, TReplaced, 7, TAncestorTypes | T>
-						: RecurseLimit extends 7
-							? JsonDeserializedFilter<T, TReplaced, 6, TAncestorTypes | T>
-							: RecurseLimit extends 6
-								? JsonDeserializedFilter<T, TReplaced, 5, TAncestorTypes | T>
-								: RecurseLimit extends 5
-									? JsonDeserializedFilter<T, TReplaced, 4, TAncestorTypes | T>
-									: RecurseLimit extends 4
-										? JsonDeserializedFilter<T, TReplaced, 3, TAncestorTypes | T>
-										: RecurseLimit extends 3
-											? JsonDeserializedFilter<T, TReplaced, 2, TAncestorTypes | T>
-											: RecurseLimit extends 2
-												? JsonDeserializedFilter<T, TReplaced, 1, TAncestorTypes | T>
-												: JsonTypeWith<TReplaced>
-			: JsonDeserializedFilter<T, TReplaced, RecurseLimit, TAncestorTypes | T>;
+	export type JsonDeserializedRecursion<
+		T,
+		TReplaced,
+		RecurseLimit extends RecursionLimit,
+		TAncestorTypes,
+	> = T extends TAncestorTypes
+		? RecurseLimit extends `+${infer RecursionRemainder}`
+			? JsonDeserializedFilter<
+					T,
+					TReplaced,
+					RecursionRemainder extends RecursionLimit ? RecursionRemainder : 0,
+					TAncestorTypes | T
+				>
+			: JsonTypeWith<TReplaced>
+		: JsonDeserializedFilter<T, TReplaced, RecurseLimit, TAncestorTypes | T>;
 
 	/**
 	 * Core implementation of {@link JsonDeserialized}.
@@ -502,8 +503,8 @@ export namespace InternalUtilityTypes {
 	export type JsonDeserializedFilter<
 		T,
 		TReplaced,
-		RecurseLimit = 10,
-		TAncestorTypes = never,
+		RecurseLimit extends RecursionLimit = "++++++++++" /* 10 */,
+		TAncestorTypes = T /* Always start with self as ancestor; otherwise recursion limit appears one greater */,
 	> = /* test for 'any' */ boolean extends (T extends never ? true : false)
 		? /* 'any' => */ JsonTypeWith<TReplaced>
 		: /* test for 'unknown' */ unknown extends T

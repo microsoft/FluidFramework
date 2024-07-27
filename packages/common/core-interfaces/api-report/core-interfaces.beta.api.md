@@ -265,7 +265,7 @@ export namespace InternalUtilityTypes {
     }[keyof T] ? false : true : false;
     export type IsExactlyObject<T extends object> = IsSameType<T, object>;
     export type IsSameType<X, Y> = IfSameType<X, Y, true, false>;
-    export type JsonDeserializedFilter<T, TReplaced, RecurseLimit = 10, TAncestorTypes = never> = boolean extends (T extends never ? true : false) ? JsonTypeWith<TReplaced> : unknown extends T ? JsonTypeWith<TReplaced> : T extends null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? T extends object ? T extends readonly (infer _)[] ? {
+    export type JsonDeserializedFilter<T, TReplaced, RecurseLimit extends RecursionLimit = "++++++++++", TAncestorTypes = T> = boolean extends (T extends never ? true : false) ? JsonTypeWith<TReplaced> : unknown extends T ? JsonTypeWith<TReplaced> : T extends null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? T extends object ? T extends readonly (infer _)[] ? {
         [K in keyof T]: JsonForDeserializedArrayItem<T[K], TReplaced, JsonDeserializedRecursion<T[K], TReplaced, RecurseLimit, TAncestorTypes>>;
     } : IsExactlyObject<T> extends true ? NonNullJsonObjectWith<TReplaced> : IsEnumLike<T> extends true ? T : FlattenIntersection<{
         [K in keyof T as NonSymbolWithDeserializablePropertyOf<T, TReplaced, K>]: JsonDeserializedRecursion<T[K], TReplaced, RecurseLimit, TAncestorTypes>;
@@ -273,7 +273,7 @@ export namespace InternalUtilityTypes {
         [K in keyof T as NonSymbolWithPossiblyDeserializablePropertyOf<T, TReplaced, K>]?: JsonDeserializedRecursion<T[K], TReplaced, RecurseLimit, TAncestorTypes>;
     }> : never : never;
     export type JsonDeserializedImpl<T, TReplaced> = boolean extends (T extends never ? true : false) ? JsonTypeWith<TReplaced> : ReplaceRecursionWith<T, RecursionMarker> extends infer TNoRecursion ? IsSameType<TNoRecursion, JsonDeserializedFilter<TNoRecursion, TReplaced, 0>> extends true ? HasNonPublicProperties<T> extends true ? JsonDeserializedFilter<T, TReplaced> : T : JsonDeserializedFilter<T, TReplaced> : never;
-    export type JsonDeserializedRecursion<T, TReplaced, RecurseLimit, TAncestorTypes> = T extends TAncestorTypes ? RecurseLimit extends 10 ? JsonDeserializedFilter<T, TReplaced, 9, TAncestorTypes | T> : RecurseLimit extends 9 ? JsonDeserializedFilter<T, TReplaced, 8, TAncestorTypes | T> : RecurseLimit extends 8 ? JsonDeserializedFilter<T, TReplaced, 7, TAncestorTypes | T> : RecurseLimit extends 7 ? JsonDeserializedFilter<T, TReplaced, 6, TAncestorTypes | T> : RecurseLimit extends 6 ? JsonDeserializedFilter<T, TReplaced, 5, TAncestorTypes | T> : RecurseLimit extends 5 ? JsonDeserializedFilter<T, TReplaced, 4, TAncestorTypes | T> : RecurseLimit extends 4 ? JsonDeserializedFilter<T, TReplaced, 3, TAncestorTypes | T> : RecurseLimit extends 3 ? JsonDeserializedFilter<T, TReplaced, 2, TAncestorTypes | T> : RecurseLimit extends 2 ? JsonDeserializedFilter<T, TReplaced, 1, TAncestorTypes | T> : JsonTypeWith<TReplaced> : JsonDeserializedFilter<T, TReplaced, RecurseLimit, TAncestorTypes | T>;
+    export type JsonDeserializedRecursion<T, TReplaced, RecurseLimit extends RecursionLimit, TAncestorTypes> = T extends TAncestorTypes ? RecurseLimit extends `+${infer RecursionRemainder}` ? JsonDeserializedFilter<T, TReplaced, RecursionRemainder extends RecursionLimit ? RecursionRemainder : 0, TAncestorTypes | T> : JsonTypeWith<TReplaced> : JsonDeserializedFilter<T, TReplaced, RecurseLimit, TAncestorTypes | T>;
     export type JsonForDeserializedArrayItem<T, TReplaced, TBlessed> = boolean extends (T extends never ? true : false) ? TBlessed : unknown extends T ? TBlessed : T extends null | boolean | number | string | TReplaced ? T : T extends undefined | symbol | Function ? null : TBlessed;
     export type JsonForSerializableArrayItem<T, TReplaced, TBlessed> = boolean extends (T extends never ? true : false) ? TBlessed : unknown extends T ? TBlessed : T extends null | boolean | number | string | TReplaced ? T : undefined extends T ? SerializationErrorPerUndefinedArrayElement : TBlessed;
     export type JsonSerializableFilter<T, TReplaced> = boolean extends (T extends never ? true : false) ? JsonTypeWith<TReplaced> : unknown extends T ? JsonTypeWith<TReplaced> : T extends null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? T extends object ? T extends readonly (infer _)[] ? {
@@ -307,6 +307,7 @@ export namespace InternalUtilityTypes {
     export type OptionalNonSymbolKeysOf<T extends object, Keys extends keyof T = keyof T> = Exclude<{
         [K in Keys]: T extends Record<K, T[K]> ? never : K;
     }[Keys], undefined | symbol>;
+    export type RecursionLimit = `+${string}` | 0;
     export interface RecursionMarker {
         // (undocumented)
         "recursion here": "recursion here";
