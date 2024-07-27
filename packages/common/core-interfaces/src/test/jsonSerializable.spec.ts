@@ -113,6 +113,11 @@ function passThru<
 	out: JsonDeserialized<T>;
 } {
 	const stringified = JSON.stringify(filteredIn);
+	if (expectedDeserialization !== undefined) {
+		// When there is a failure, checking the stringified value can be helpful.
+		const expectedStringified = JSON.stringify(expectedDeserialization);
+		assert.equal(stringified, expectedStringified);
+	}
 	const result = JSON.parse(stringified) as JsonDeserialized<TExpected>;
 	// Don't use nullish coalescing here to allow for `null` to be expected.
 	const expected =
@@ -161,6 +166,23 @@ function passThruIgnoreInaccessibleMembers<T, TExpected>(
 	);
 }
 
+function replaceBigInt(_key: string, value: unknown): unknown {
+	if (typeof value === "bigint") {
+		return `<bigint>${value.toString()}</bigint>`;
+	}
+	return value;
+}
+function reviveBigInt(_key: string, value: unknown): unknown {
+	if (
+		typeof value === "string" &&
+		value.startsWith("<bigint>") &&
+		value.endsWith("</bigint>")
+	) {
+		return BigInt(value.slice(8, -9));
+	}
+	return value;
+}
+
 /**
  * Similar to {@link passThru} but specifically handles `bigint` values.
  */
@@ -171,24 +193,16 @@ function passThruHandlingBigint<T, TExpected>(
 	filteredIn: JsonSerializable<T, { Replaced: bigint }>;
 	out: JsonDeserialized<T, { Replaced: bigint }>;
 } {
-	const stringified = JSON.stringify(filteredIn, (_key, value) => {
-		if (typeof value === "bigint") {
-			return `<bigint>${value.toString()}</bigint>`;
-		}
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return value;
-	});
-	const out = JSON.parse(stringified, (_key, value) => {
-		if (
-			typeof value === "string" &&
-			value.startsWith("<bigint>") &&
-			value.endsWith("</bigint>")
-		) {
-			return BigInt(value.slice(8, -9));
-		}
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return value;
-	}) as JsonDeserialized<T, { Replaced: bigint }>;
+	const stringified = JSON.stringify(filteredIn, replaceBigInt);
+	if (expectedDeserialization !== undefined) {
+		// When there is a failure, checking the stringified value can be helpful.
+		const expectedStringified = JSON.stringify(expectedDeserialization, replaceBigInt);
+		assert.equal(stringified, expectedStringified);
+	}
+	const out = JSON.parse(stringified, reviveBigInt) as JsonDeserialized<
+		T,
+		{ Replaced: bigint }
+	>;
 	const expected =
 		// Don't use nullish coalescing here to allow for `null` to be expected.
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
