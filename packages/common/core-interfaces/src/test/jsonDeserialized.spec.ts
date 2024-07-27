@@ -97,8 +97,12 @@ import {
  * @param v - value to pass through JSON serialization
  * @param expected - alternate value to compare against after round-trip
  * @returns the round-tripped value
+ *
+ * @remarks
+ * `expected` parameter type would ideally be `JsonDeserialized<T>` but that
+ * may influence the type inference of the test. So, instead, use `unknown`.
  */
-function passThru<T>(v: T, expected?: JsonDeserialized<T>): JsonDeserialized<T> {
+function passThru<T>(v: T, expected?: unknown): JsonDeserialized<T> {
 	const stringified = JSON.stringify(v);
 	const result = JSON.parse(stringified) as JsonDeserialized<T>;
 	assert.deepStrictEqual(result, expected ?? v);
@@ -124,7 +128,7 @@ function passThruThrows<T>(v: T, expectedThrow: Error): JsonDeserialized<T> {
  */
 function passThruHandlingBigint<T>(
 	v: T,
-	expected?: JsonDeserialized<T, { Replaced: bigint }>,
+	expected?: unknown,
 ): JsonDeserialized<T, { Replaced: bigint }> {
 	const stringified = JSON.stringify(v, (_key, value) => {
 		if (typeof value === "bigint") {
@@ -269,11 +273,7 @@ describe("JsonDeserialized", () => {
 				assertIdenticalTypes(resultRead, arrayOfNumbers);
 			});
 			it("sparse array is filled in with null", () => {
-				const resultRead = passThru(
-					arrayOfNumbersSparse,
-					// @ts-expect-error 'null' is injected but not detectable from type information
-					[0, null, null, 3],
-				);
+				const resultRead = passThru(arrayOfNumbersSparse, [0, null, null, 3]);
 				assertIdenticalTypes(resultRead, arrayOfNumbersSparse);
 			});
 			it("array of partially supported (numbers or undefined) is modified with null", () => {
@@ -619,7 +619,6 @@ describe("JsonDeserialized", () => {
 				it("with private data (hides private data that propagates)", () => {
 					const instanceRead = passThru(classInstanceWithPrivateData, {
 						public: "public",
-						// @ts-expect-error 'secret' does not exist in type '{ public: string; }'
 						secret: 0,
 					});
 					assertIdenticalTypes(instanceRead, {
@@ -655,20 +654,12 @@ describe("JsonDeserialized", () => {
 			describe("known defect expectations", () => {
 				describe("getters and setters preserved but do not propagate", () => {
 					it("object with `readonly` implemented via getter", () => {
-						const resultRead = passThru(
-							objectWithReadonlyViaGetter,
-							// @ts-expect-error readonly is missing, but required
-							{},
-						);
+						const resultRead = passThru(objectWithReadonlyViaGetter, {});
 						assertIdenticalTypes(resultRead, objectWithReadonlyViaGetter);
 					});
 
 					it("object with getter", () => {
-						const resultRead = passThru(
-							objectWithGetter,
-							// @ts-expect-error getter is missing, but required
-							{},
-						);
+						const resultRead = passThru(objectWithGetter, {});
 						assertIdenticalTypes(resultRead, objectWithGetter);
 
 						assert.throws(() => {
@@ -682,11 +673,7 @@ describe("JsonDeserialized", () => {
 					});
 
 					it("object with setter", () => {
-						const resultRead = passThru(
-							objectWithSetter,
-							// @ts-expect-error setter is missing, but required
-							{},
-						);
+						const resultRead = passThru(objectWithSetter, {});
 						assertIdenticalTypes(resultRead, objectWithSetter);
 
 						// Read from setter only produces `undefined` but is typed as `string`.
@@ -705,20 +692,12 @@ describe("JsonDeserialized", () => {
 					});
 
 					it("object with matched getter and setter", () => {
-						const resultRead = passThru(
-							objectWithMatchedGetterAndSetterProperty,
-							// @ts-expect-error property is missing, but required
-							{},
-						);
+						const resultRead = passThru(objectWithMatchedGetterAndSetterProperty, {});
 						assertIdenticalTypes(resultRead, objectWithMatchedGetterAndSetterProperty);
 					});
 
 					it("object with mismatched getter and setter", () => {
-						const resultRead = passThru(
-							objectWithMismatchedGetterAndSetterProperty,
-							// @ts-expect-error property is missing, but required
-							{},
-						);
+						const resultRead = passThru(objectWithMismatchedGetterAndSetterProperty, {});
 						assertIdenticalTypes(resultRead, objectWithMismatchedGetterAndSetterProperty);
 
 						// @ts-expect-error 'number' is not assignable to type 'string'
@@ -733,11 +712,7 @@ describe("JsonDeserialized", () => {
 				});
 
 				it("array of numbers with holes", () => {
-					const resultRead = passThru(
-						arrayOfNumbersSparse,
-						// @ts-expect-error 'null' is injected for holes but sparse array is not detectable from type information
-						[0, null, null, 3],
-					);
+					const resultRead = passThru(arrayOfNumbersSparse, [0, null, null, 3]);
 					assertIdenticalTypes(resultRead, arrayOfNumbersSparse);
 				});
 			});

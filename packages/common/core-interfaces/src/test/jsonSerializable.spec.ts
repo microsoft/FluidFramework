@@ -102,12 +102,12 @@ import {
  */
 function passThru<
 	T,
-	TExpected = JsonDeserialized<T>,
+	TExpected,
 	// eslint-disable-next-line @typescript-eslint/ban-types
 	Options extends { IgnoreInaccessibleMembers?: "ignore-inaccessible-members" } = {},
 >(
 	filteredIn: JsonSerializable<T, { Replaced: never } & Options>,
-	expectedDeserialization?: TExpected,
+	expectedDeserialization?: JsonDeserialized<TExpected>,
 ): {
 	filteredIn: JsonSerializable<T, { Replaced: never } & Options>;
 	out: JsonDeserialized<T>;
@@ -142,12 +142,12 @@ function passThruThrows<T>(
 /**
  * Similar to {@link passThru} but ignores hidden (private/protected) members.
  */
-function passThruIgnoreInaccessibleMembers<T, TExpected = JsonDeserialized<T>>(
+function passThruIgnoreInaccessibleMembers<T, TExpected>(
 	filteredIn: JsonSerializable<
 		T,
 		{ Replaced: never; IgnoreInaccessibleMembers: "ignore-inaccessible-members" }
 	>,
-	expected?: TExpected,
+	expected?: JsonDeserialized<TExpected>,
 ): {
 	filteredIn: JsonSerializable<
 		T,
@@ -164,9 +164,9 @@ function passThruIgnoreInaccessibleMembers<T, TExpected = JsonDeserialized<T>>(
 /**
  * Similar to {@link passThru} but specifically handles `bigint` values.
  */
-function passThruHandlingBigint<T, TExpected = JsonDeserialized<T, { Replaced: bigint }>>(
+function passThruHandlingBigint<T, TExpected>(
 	filteredIn: JsonSerializable<T, { Replaced: bigint }>,
-	expectedDeserialization?: TExpected,
+	expectedDeserialization?: JsonDeserialized<TExpected, { Replaced: bigint }>,
 ): {
 	filteredIn: JsonSerializable<T, { Replaced: bigint }>;
 	out: JsonDeserialized<T, { Replaced: bigint }>;
