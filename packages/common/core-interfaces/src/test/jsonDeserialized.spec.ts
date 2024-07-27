@@ -7,6 +7,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IFluidHandle } from "../handles.js";
 import type { JsonDeserialized } from "../jsonDeserialized.js";
 import type { JsonTypeWith, NonNullJsonObjectWith } from "../jsonType.js";
 
@@ -33,6 +34,7 @@ import {
 	unknownValueOfSimpleRecord,
 	unknownValueWithBigint,
 	voidValue,
+	functionWithProperties,
 	arrayOfNumbers,
 	arrayOfNumbersSparse,
 	arrayOfNumbersOrUndefined,
@@ -47,6 +49,7 @@ import {
 	objectWithSymbol,
 	objectWithBigint,
 	objectWithFunction,
+	objectWithFunctionWithProperties,
 	objectWithBigintOrString,
 	objectWithFunctionOrSymbol,
 	objectWithStringOrSymbol,
@@ -170,6 +173,15 @@ function passThruHandlingSpecificFunction<T>(
 	_v: T,
 ): JsonDeserialized<T, { Replaced: (_: string) => number }> {
 	return undefined as unknown as JsonDeserialized<T, { Replaced: (_: string) => number }>;
+}
+
+/**
+ * Similar to {@link passThru} but specifically handles any Fluid handle.
+ */
+function passThruHandlingFluidHandle<T>(
+	_v: T,
+): JsonDeserialized<T, { Replaced: IFluidHandle }> {
+	return undefined as unknown as JsonDeserialized<T, { Replaced: IFluidHandle }>;
 }
 
 describe("JsonDeserialized", () => {
@@ -437,6 +449,12 @@ describe("JsonDeserialized", () => {
 					assertIdenticalTypes(resultRead, {});
 					// @ts-expect-error `functionOrSymbol` missing
 					assertIdenticalTypes(resultRead, objectWithFunctionOrSymbol);
+				});
+				it("object with exactly function with properties", () => {
+					const resultRead = passThru(objectWithFunctionWithProperties, {});
+					assertIdenticalTypes(resultRead, {});
+					// @ts-expect-error `function` missing
+					assertIdenticalTypes(resultRead, objectWithFunction);
 				});
 				it("object with required exact `undefined`", () => {
 					const resultRead = passThru(objectWithUndefined, {});
@@ -773,6 +791,12 @@ describe("JsonDeserialized", () => {
 					new SyntaxError("Unexpected token u in JSON at position 0"),
 				) satisfies never;
 			});
+			it("function with properties becomes `never`", () => {
+				passThruThrows(
+					functionWithProperties,
+					new SyntaxError("Unexpected token u in JSON at position 0"),
+				) satisfies never;
+			});
 			it("`void` becomes `never`", () => {
 				passThru(
 					voidValue,
@@ -821,6 +845,12 @@ describe("JsonDeserialized", () => {
 							specificFnOrAnother?: (_: string) => number;
 						}>(),
 					);
+				});
+				it("`IFluidHandle`", () => {
+					const resultRead = passThruHandlingFluidHandle(
+						{} as unknown as IFluidHandle<number>,
+					);
+					assertIdenticalTypes(resultRead, createInstanceOf<IFluidHandle<number>>());
 				});
 			});
 

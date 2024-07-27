@@ -39,6 +39,7 @@ import {
 	unknownValueOfSimpleRecord,
 	unknownValueWithBigint,
 	voidValue,
+	functionWithProperties,
 	arrayOfNumbers,
 	arrayOfNumbersSparse,
 	arrayOfNumbersOrUndefined,
@@ -53,6 +54,7 @@ import {
 	objectWithSymbol,
 	objectWithBigint,
 	objectWithFunction,
+	objectWithFunctionWithProperties,
 	objectWithBigintOrString,
 	objectWithFunctionOrSymbol,
 	objectWithStringOrSymbol,
@@ -629,6 +631,22 @@ describe("JsonSerializable", () => {
 					new SyntaxError("Unexpected token u in JSON at position 0"),
 				);
 				filteredIn satisfies never;
+			});
+			it("function with supported properties", () => {
+				const { filteredIn } = passThruThrows(
+					// @ts-expect-error `Function & {...}` is not supported (becomes `never`)
+					functionWithProperties,
+					new SyntaxError("Unexpected token u in JSON at position 0"),
+				);
+				filteredIn satisfies never;
+			});
+			it("object with function with supported properties", () => {
+				const { filteredIn } = passThru(
+					// @ts-expect-error `{ func: Function & {...}}` is not supported (becomes `{ func: never }`)
+					objectWithFunctionWithProperties,
+					{},
+				);
+				assertIdenticalTypes(filteredIn, createInstanceOf<{ function: never }>());
 			});
 			it("`object` (plain object)", () => {
 				const { filteredIn } = passThru(

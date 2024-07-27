@@ -45,6 +45,14 @@ export const constHeterogenousEnumValue = ((): ConstHeterogenousEnum =>
 	ConstHeterogenousEnum.a)();
 export const computedEnumValue = ((): ComputedEnum => ComputedEnum.computed)();
 
+// Functions are objects and they may have arbitrary properties
+export const functionWithProperties = Object.assign(
+	(): number => {
+		return 2;
+	},
+	{ property: 5 },
+);
+
 // #region Array types
 
 export const arrayOfNumbers: number[] = [0, 1, 2];
@@ -67,6 +75,7 @@ export const objectWithString = { string: "" };
 export const objectWithSymbol = { symbol: Symbol("objectSymbol") };
 export const objectWithBigint = { bigint: 0n };
 export const objectWithFunction = { function: (): void => {} };
+export const objectWithFunctionWithProperties = { function: functionWithProperties };
 export const objectWithStringOrSymbol = {
 	stringOrSymbol: Symbol("objectSymbol") as string | symbol,
 };
