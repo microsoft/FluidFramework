@@ -15,7 +15,12 @@ import type {
 } from "../jsonSerializationErrors.js";
 import type { JsonTypeWith, NonNullJsonObjectWith } from "../jsonType.js";
 
-import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
+import {
+	assertIdenticalTypes,
+	createInstanceOf,
+	replaceBigInt,
+	reviveBigInt,
+} from "./testUtils.js";
 import type { ObjectWithSymbolOrRecursion } from "./testValues.js";
 import {
 	boolean,
@@ -115,6 +120,9 @@ function passThru<
 	out: JsonDeserialized<T>;
 } {
 	const stringified = JSON.stringify(filteredIn);
+	if (stringified === undefined) {
+		throw new Error("JSON.stringify returned undefined");
+	}
 	if (expectedDeserialization !== undefined) {
 		// When there is a failure, checking the stringified value can be helpful.
 		const expectedStringified = JSON.stringify(expectedDeserialization);
@@ -168,23 +176,6 @@ function passThruIgnoreInaccessibleMembers<T, TExpected>(
 	);
 }
 
-function replaceBigInt(_key: string, value: unknown): unknown {
-	if (typeof value === "bigint") {
-		return `<bigint>${value.toString()}</bigint>`;
-	}
-	return value;
-}
-function reviveBigInt(_key: string, value: unknown): unknown {
-	if (
-		typeof value === "string" &&
-		value.startsWith("<bigint>") &&
-		value.endsWith("</bigint>")
-	) {
-		return BigInt(value.slice(8, -9));
-	}
-	return value;
-}
-
 /**
  * Similar to {@link passThru} but specifically handles `bigint` values.
  */
@@ -196,6 +187,9 @@ function passThruHandlingBigint<T, TExpected>(
 	out: JsonDeserialized<T, { AllowExactly: bigint }>;
 } {
 	const stringified = JSON.stringify(filteredIn, replaceBigInt);
+	if (stringified === undefined) {
+		throw new Error("JSON.stringify returned undefined");
+	}
 	if (expectedDeserialization !== undefined) {
 		// When there is a failure, checking the stringified value can be helpful.
 		const expectedStringified = JSON.stringify(expectedDeserialization, replaceBigInt);
@@ -588,7 +582,7 @@ describe("JsonSerializable", () => {
 				const { filteredIn } = passThruThrows(
 					// @ts-expect-error `undefined` is not supported (becomes `never`)
 					undefined,
-					new SyntaxError("Unexpected token u in JSON at position 0"),
+					new Error("JSON.stringify returned undefined"),
 				);
 				filteredIn satisfies never;
 			});
@@ -603,7 +597,7 @@ describe("JsonSerializable", () => {
 				const { filteredIn } = passThruThrows(
 					// @ts-expect-error `symbol` is not supported (becomes `never`)
 					symbol,
-					new SyntaxError("Unexpected token u in JSON at position 0"),
+					new Error("JSON.stringify returned undefined"),
 				);
 				filteredIn satisfies never;
 			});
@@ -611,7 +605,7 @@ describe("JsonSerializable", () => {
 				const { filteredIn } = passThruThrows(
 					// @ts-expect-error [unique] `symbol` is not supported (becomes `never`)
 					uniqueSymbol,
-					new SyntaxError("Unexpected token u in JSON at position 0"),
+					new Error("JSON.stringify returned undefined"),
 				);
 				filteredIn satisfies never;
 			});
@@ -627,7 +621,7 @@ describe("JsonSerializable", () => {
 				const { filteredIn } = passThruThrows(
 					// @ts-expect-error `Function` is not supported (becomes `never`)
 					aFunction,
-					new SyntaxError("Unexpected token u in JSON at position 0"),
+					new Error("JSON.stringify returned undefined"),
 				);
 				filteredIn satisfies never;
 			});
@@ -635,7 +629,7 @@ describe("JsonSerializable", () => {
 				const { filteredIn } = passThruThrows(
 					// @ts-expect-error `Function & {...}` is not supported (becomes `never`)
 					functionWithProperties,
-					new SyntaxError("Unexpected token u in JSON at position 0"),
+					new Error("JSON.stringify returned undefined"),
 				);
 				filteredIn satisfies never;
 			});
@@ -902,7 +896,7 @@ describe("JsonSerializable", () => {
 			const { filteredIn } = passThruThrows<any>(
 				// @ts-expect-error `any` is not an open door (expects `JsonTypeWith<never>`)
 				undefined,
-				new SyntaxError("Unexpected token u in JSON at position 0"),
+				new Error("JSON.stringify returned undefined"),
 			);
 			assertIdenticalTypes(filteredIn, createInstanceOf<JsonTypeWith<never>>());
 		});
@@ -991,7 +985,7 @@ describe("JsonSerializable", () => {
 					passThruHandlingBigintThrows(
 						// @ts-expect-error `symbol` is not supported (becomes `never`)
 						symbol,
-						new SyntaxError("Unexpected token u in JSON at position 0"),
+						new Error("JSON.stringify returned undefined"),
 					) satisfies { filteredIn: never };
 				});
 				it("`object` (plain object) still becomes non-null Json object", () => {

@@ -11,7 +11,12 @@ import type { IFluidHandle } from "../handles.js";
 import type { JsonDeserialized } from "../jsonDeserialized.js";
 import type { JsonTypeWith, NonNullJsonObjectWith } from "../jsonType.js";
 
-import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
+import {
+	assertIdenticalTypes,
+	createInstanceOf,
+	replaceBigInt,
+	reviveBigInt,
+} from "./testUtils.js";
 import type { ObjectWithFluidHandleOrRecursion } from "./testValues.js";
 import {
 	boolean,
@@ -109,6 +114,9 @@ import {
  */
 function passThru<T>(v: T, expected?: unknown): JsonDeserialized<T> {
 	const stringified = JSON.stringify(v);
+	if (stringified === undefined) {
+		throw new Error("JSON.stringify returned undefined");
+	}
 	const result = JSON.parse(stringified) as JsonDeserialized<T>;
 	assert.deepStrictEqual(result, expected ?? v);
 	return result;
@@ -135,24 +143,14 @@ function passThruHandlingBigint<T>(
 	v: T,
 	expected?: unknown,
 ): JsonDeserialized<T, { AllowExactly: bigint }> {
-	const stringified = JSON.stringify(v, (_key, value) => {
-		if (typeof value === "bigint") {
-			return `<bigint>${value.toString()}</bigint>`;
-		}
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return value;
-	});
-	const result = JSON.parse(stringified, (_key, value) => {
-		if (
-			typeof value === "string" &&
-			value.startsWith("<bigint>") &&
-			value.endsWith("</bigint>")
-		) {
-			return BigInt(value.slice(8, -9));
-		}
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return value;
-	}) as JsonDeserialized<T, { AllowExactly: bigint }>;
+	const stringified = JSON.stringify(v, replaceBigInt);
+	if (stringified === undefined) {
+		throw new Error("JSON.stringify returned undefined");
+	}
+	const result = JSON.parse(stringified, reviveBigInt) as JsonDeserialized<
+		T,
+		{ AllowExactly: bigint }
+	>;
 	assert.deepStrictEqual(result, expected ?? v);
 	return result;
 }
@@ -833,7 +831,7 @@ describe("JsonDeserialized", () => {
 			it("`undefined` becomes `never`", () => {
 				passThruThrows(
 					undefined,
-					new SyntaxError("Unexpected token u in JSON at position 0"),
+					new Error("JSON.stringify returned undefined"),
 				) satisfies never;
 			});
 			it("`unknown` becomes `JsonTypeWith<never>`", () => {
@@ -844,15 +842,12 @@ describe("JsonDeserialized", () => {
 				assertIdenticalTypes(resultRead, createInstanceOf<JsonTypeWith<never>>());
 			});
 			it("`symbol` becomes `never`", () => {
-				passThruThrows(
-					symbol,
-					new SyntaxError("Unexpected token u in JSON at position 0"),
-				) satisfies never;
+				passThruThrows(symbol, new Error("JSON.stringify returned undefined")) satisfies never;
 			});
 			it("`unique symbol` becomes `never`", () => {
 				passThruThrows(
 					uniqueSymbol,
-					new SyntaxError("Unexpected token u in JSON at position 0"),
+					new Error("JSON.stringify returned undefined"),
 				) satisfies never;
 			});
 			it("`bigint` becomes `never`", () => {
@@ -864,13 +859,13 @@ describe("JsonDeserialized", () => {
 			it("function becomes `never`", () => {
 				passThruThrows(
 					aFunction,
-					new SyntaxError("Unexpected token u in JSON at position 0"),
+					new Error("JSON.stringify returned undefined"),
 				) satisfies never;
 			});
 			it("function with properties becomes `never`", () => {
 				passThruThrows(
 					functionWithProperties,
-					new SyntaxError("Unexpected token u in JSON at position 0"),
+					new Error("JSON.stringify returned undefined"),
 				) satisfies never;
 			});
 			it("`void` becomes `never`", () => {
@@ -887,7 +882,7 @@ describe("JsonDeserialized", () => {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const resultRead = passThruThrows<any>(
 				undefined,
-				new SyntaxError("Unexpected token u in JSON at position 0"),
+				new Error("JSON.stringify returned undefined"),
 			);
 			assertIdenticalTypes(resultRead, createInstanceOf<JsonTypeWith<never>>());
 		});
@@ -1024,7 +1019,7 @@ describe("JsonDeserialized", () => {
 				it("`symbol` still becomes `never`", () => {
 					passThruHandlingBigintThrows(
 						symbol,
-						new SyntaxError("Unexpected token u in JSON at position 0"),
+						new Error("JSON.stringify returned undefined"),
 					) satisfies never;
 				});
 				it("`object` (plain object) still becomes non-null Json object", () => {
