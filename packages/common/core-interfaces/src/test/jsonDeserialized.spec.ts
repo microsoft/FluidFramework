@@ -84,6 +84,7 @@ import {
 	objectWithAlternatingRecursion,
 	objectWithSymbolOrRecursion,
 	objectWithFluidHandleOrRecursion,
+	selfRecursiveFunctionWithProperties,
 	simpleJson,
 	classInstanceWithPrivateData,
 	classInstanceWithPrivateMethod,
@@ -456,6 +457,11 @@ describe("JsonDeserialized", () => {
 					// @ts-expect-error `function` missing
 					assertIdenticalTypes(resultRead, objectWithFunction);
 				});
+				it("object with function object with recursion", () => {
+					const resultRead = passThru({ outerFnOjb: selfRecursiveFunctionWithProperties }, {});
+					assertIdenticalTypes(resultRead, {});
+				});
+
 				it("object with required exact `undefined`", () => {
 					const resultRead = passThru(objectWithUndefined, {});
 					assertIdenticalTypes(resultRead, {});
@@ -865,6 +871,12 @@ describe("JsonDeserialized", () => {
 			it("function with properties becomes `never`", () => {
 				passThruThrows(
 					functionWithProperties,
+					new Error("JSON.stringify returned undefined"),
+				) satisfies never;
+			});
+			it("function object with recursion", () => {
+				passThruThrows(
+					selfRecursiveFunctionWithProperties,
 					new Error("JSON.stringify returned undefined"),
 				) satisfies never;
 			});

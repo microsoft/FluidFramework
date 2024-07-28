@@ -89,6 +89,7 @@ import {
 	objectWithAlternatingRecursion,
 	objectWithSelfReference,
 	objectWithSymbolOrRecursion,
+	selfRecursiveFunctionWithProperties,
 	simpleJson,
 	classInstanceWithPrivateData,
 	classInstanceWithPrivateMethod,
@@ -758,6 +759,24 @@ describe("JsonSerializable", () => {
 							recurse: ObjectWithSymbolOrRecursion;
 						}>(),
 					);
+				});
+
+				it("function object with recursion", () => {
+					const { filteredIn } = passThruThrows(
+						// @ts-expect-error 'SelfRecursiveFunctionWithProperties' is not assignable to parameter of type 'never' (function even with properties becomes `never`)
+						selfRecursiveFunctionWithProperties,
+						new Error("JSON.stringify returned undefined"),
+					);
+					filteredIn satisfies never;
+				});
+
+				it("nested function object with recursion", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error 'SelfRecursiveFunctionWithProperties' is not assignable to parameter of type 'never' (function even with properties becomes `never`)
+						{ outerFnOjb: selfRecursiveFunctionWithProperties },
+						{},
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<{ outerFnOjb: never }>());
 				});
 
 				describe("object with `undefined`", () => {

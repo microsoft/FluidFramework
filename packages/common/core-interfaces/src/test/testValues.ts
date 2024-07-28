@@ -251,6 +251,12 @@ export const objectWithFluidHandleOrRecursion: ObjectWithFluidHandleOrRecursion 
 	recurseToHandle: { recurseToHandle: "fake-handle" as unknown as IFluidHandle<string> },
 };
 
+export type SelfRecursiveFunctionWithProperties = (() => number) & {
+	recurse?: SelfRecursiveFunctionWithProperties;
+};
+export const selfRecursiveFunctionWithProperties: SelfRecursiveFunctionWithProperties =
+	Object.assign(() => 0, { recurse: () => 1 });
+
 /* eslint-enable @typescript-eslint/consistent-type-definitions */
 
 export const simpleJson: JsonTypeWith<never> = { a: [{ b: { b2: 8 }, c: true }] };
