@@ -104,6 +104,8 @@ import {
 	ClassWithPrivateSetter,
 	ClassWithPublicData,
 	ClassWithPublicMethod,
+	fluidHandleToNumber,
+	objectWithFluidHandle,
 } from "./testValues.js";
 
 /**
@@ -928,15 +930,11 @@ describe("JsonDeserialized", () => {
 					);
 				});
 				it("`IFluidHandle`", () => {
-					const resultRead = passThruHandlingFluidHandle(
-						{} as unknown as IFluidHandle<number>,
-					);
+					const resultRead = passThruHandlingFluidHandle(fluidHandleToNumber);
 					assertIdenticalTypes(resultRead, createInstanceOf<IFluidHandle<number>>());
 				});
 				it("object with `IFluidHandle`", () => {
-					const resultRead = passThruHandlingFluidHandle({
-						handle: {} as unknown as IFluidHandle<number>,
-					});
+					const resultRead = passThruHandlingFluidHandle(objectWithFluidHandle);
 					assertIdenticalTypes(
 						resultRead,
 						createInstanceOf<{ handle: IFluidHandle<number> }>(),

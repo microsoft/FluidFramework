@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle } from "../handles.js";
+import { fluidHandleSymbol, type IFluidHandle, type IFluidHandleErased } from "../handles.js";
 import type { JsonTypeWith } from "../jsonType.js";
 
 /* eslint-disable jsdoc/require-jsdoc */
@@ -351,6 +351,24 @@ export class ClassWithPublicMethod {
 	}
 }
 export const classInstanceWithPublicMethod = new ClassWithPublicMethod();
+
+// #endregion
+
+// #region Union types
+
+export const fluidHandleToNumber: IFluidHandle<number> = {
+	isAttached: false,
+	async get(): Promise<number> {
+		throw new Error("Function not implemented.");
+	},
+	[fluidHandleSymbol]: undefined as unknown as IFluidHandleErased<number>,
+};
+
+export const objectWithFluidHandle = {
+	handle: fluidHandleToNumber,
+};
+
+// #endregion
 
 /* eslint-enable unicorn/no-null */
 /* eslint-enable jsdoc/require-jsdoc */

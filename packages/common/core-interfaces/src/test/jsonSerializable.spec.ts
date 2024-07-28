@@ -7,6 +7,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IFluidHandle } from "../handles.js";
 import type { JsonDeserialized } from "../jsonDeserialized.js";
 import type { JsonSerializable, JsonSerializableOptions } from "../jsonSerializable.js";
 import type {
@@ -103,6 +104,8 @@ import {
 	classInstanceWithPrivateSetter,
 	classInstanceWithPublicData,
 	classInstanceWithPublicMethod,
+	fluidHandleToNumber,
+	objectWithFluidHandle,
 } from "./testValues.js";
 
 /**
@@ -237,6 +240,21 @@ function passThruHandlingSpecificFunction<T>(
 	return {
 		filteredIn,
 		out: undefined as unknown as JsonDeserialized<T, { AllowExactly: (_: string) => number }>,
+	};
+}
+
+/**
+ * Similar to {@link passThru} but specifically handles any Fluid handle.
+ */
+function passThruHandlingFluidHandle<T>(
+	filteredIn: JsonSerializable<T, { AllowExtensionOf: IFluidHandle }>,
+): {
+	filteredIn: JsonSerializable<T, { AllowExtensionOf: IFluidHandle }>;
+	out: JsonDeserialized<T, { AllowExtensionOf: IFluidHandle }>;
+} {
+	return {
+		filteredIn,
+		out: undefined as unknown as JsonDeserialized<T, { AllowExtensionOf: IFluidHandle }>,
 	};
 }
 
@@ -1016,6 +1034,23 @@ describe("JsonSerializable", () => {
 						filteredIn,
 						createInstanceOf<{
 							specificFn: (_: string) => number;
+						}>(),
+					);
+				});
+				it("`IFluidHandle`", () => {
+					// @ts-expect-error TODO FIX: SerializationErrorPerNonPublicProperties error from allowed type
+					const { filteredIn } = passThruHandlingFluidHandle(fluidHandleToNumber);
+					// @ts-expect-error TODO FIX
+					assertIdenticalTypes(filteredIn, createInstanceOf<IFluidHandle<number>>());
+				});
+				it("object with `IFluidHandle`", () => {
+					// @ts-expect-error TODO FIX: SerializationErrorPerNonPublicProperties error from allowed type
+					const { filteredIn } = passThruHandlingFluidHandle(objectWithFluidHandle);
+					assertIdenticalTypes(
+						// @ts-expect-error TODO FIX
+						filteredIn,
+						createInstanceOf<{
+							handle: IFluidHandle<number>;
 						}>(),
 					);
 				});
