@@ -17,7 +17,10 @@ import {
 	replaceBigInt,
 	reviveBigInt,
 } from "./testUtils.js";
-import type { ObjectWithFluidHandleOrRecursion } from "./testValues.js";
+import type {
+	ObjectWithFluidHandleOrRecursion,
+	SimpleObjectWithOptionalRecursion,
+} from "./testValues.js";
 import {
 	boolean,
 	number,
@@ -85,6 +88,7 @@ import {
 	objectWithSymbolOrRecursion,
 	objectWithFluidHandleOrRecursion,
 	selfRecursiveFunctionWithProperties,
+	objectInheritingOptionalRecursionAndWithNestedSymbol,
 	simpleJson,
 	classInstanceWithPrivateData,
 	classInstanceWithPrivateMethod,
@@ -460,6 +464,64 @@ describe("JsonDeserialized", () => {
 				it("object with function object with recursion", () => {
 					const resultRead = passThru({ outerFnOjb: selfRecursiveFunctionWithProperties }, {});
 					assertIdenticalTypes(resultRead, {});
+				});
+
+				it("object with inherited recursion extended with unsupported properties", () => {
+					const resultRead = passThru(
+						{ outer: objectInheritingOptionalRecursionAndWithNestedSymbol },
+						{
+							outer: {
+								recursive: { recursive: { recursive: {} } },
+								complex: { number: 0 },
+							},
+						},
+					);
+					// TODO FIX - ideally since the recursive case does not have unsupported/modified properties
+					// it would be left intact and only the unsupported portion would be modified.
+					assertIdenticalTypes(
+						// @ts-expect-error TODO FIX
+						resultRead,
+						createInstanceOf<{
+							outer: {
+								recursive: SimpleObjectWithOptionalRecursion;
+								complex: { number: number };
+							};
+						}>(),
+					);
+					// This is the actual current result:
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{
+							outer: {
+								complex: {
+									number: number;
+								};
+								recursive?: {
+									recursive?: {
+										recursive?: {
+											recursive?: {
+												recursive?: {
+													recursive?: {
+														recursive?: {
+															recursive?: {
+																recursive?: {
+																	recursive?: {
+																		recursive?: {
+																			recursive?: JsonTypeWith<never>;
+																		};
+																	};
+																};
+															};
+														};
+													};
+												};
+											};
+										};
+									};
+								};
+							};
+						}>(),
+					);
 				});
 
 				it("object with required exact `undefined`", () => {

@@ -291,20 +291,20 @@ export namespace InternalUtilityTypes {
     export type JsonForSerializableArrayItem<T, Controls extends FilterControls, TBlessed> = boolean extends (T extends never ? true : false) ? TBlessed : unknown extends T ? TBlessed : T extends null | boolean | number | string | Controls["AllowExtensionOf"] ? T : IfExactTypeInUnion<T, Controls["AllowExactly"], T, undefined extends T ? SerializationErrorPerUndefinedArrayElement : TBlessed>;
     export type JsonSerializableFilter<T, Controls extends FilterControls> = boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : unknown extends T ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : T extends null | boolean | number | string | Controls["AllowExtensionOf"] ? T : IfExactTypeInUnion<T, Controls["AllowExactly"], true, "no match"> extends true ? T : Extract<T, Function> extends never ? T extends object ? T extends readonly (infer _)[] ? {
         [K in keyof T]: JsonForSerializableArrayItem<T[K], Controls, JsonSerializableFilter<T[K], {
-            AllowExactly: Controls["AllowExactly"] | T;
-            AllowExtensionOf: Controls["AllowExtensionOf"];
+            AllowExactly: Controls["AllowExactly"];
+            AllowExtensionOf: Controls["AllowExtensionOf"] | T;
         }>>;
     } : IsExactlyObject<T> extends true ? NonNullJsonObjectWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : IsEnumLike<T> extends true ? T : FlattenIntersection<{
         [K in keyof T as RequiredNonSymbolKeysOf<T, K>]-?: undefined extends T[K] ? {
             ["error required property may not allow undefined value"]: never;
         } : JsonSerializableFilter<T[K], {
-            AllowExactly: Controls["AllowExactly"] | T;
-            AllowExtensionOf: Controls["AllowExtensionOf"];
+            AllowExactly: Controls["AllowExactly"];
+            AllowExtensionOf: Controls["AllowExtensionOf"] | T;
         }>;
     } & {
         [K in keyof T as OptionalNonSymbolKeysOf<T, K>]?: JsonSerializableFilter<T[K], {
-            AllowExactly: Controls["AllowExactly"] | T;
-            AllowExtensionOf: Controls["AllowExtensionOf"] | undefined;
+            AllowExactly: Controls["AllowExactly"];
+            AllowExtensionOf: Controls["AllowExtensionOf"] | T | undefined;
         }>;
     } & {
         [K in keyof T & symbol]: never;

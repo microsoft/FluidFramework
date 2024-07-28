@@ -21,7 +21,10 @@ import {
 	replaceBigInt,
 	reviveBigInt,
 } from "./testUtils.js";
-import type { ObjectWithSymbolOrRecursion } from "./testValues.js";
+import type {
+	ObjectWithSymbolOrRecursion,
+	SimpleObjectWithOptionalRecursion,
+} from "./testValues.js";
 import {
 	boolean,
 	number,
@@ -90,6 +93,7 @@ import {
 	objectWithSelfReference,
 	objectWithSymbolOrRecursion,
 	selfRecursiveFunctionWithProperties,
+	objectInheritingOptionalRecursionAndWithNestedSymbol,
 	simpleJson,
 	classInstanceWithPrivateData,
 	classInstanceWithPrivateMethod,
@@ -777,6 +781,24 @@ describe("JsonSerializable", () => {
 						{},
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<{ outerFnOjb: never }>());
+				});
+
+				it("object with inherited recursion extended with unsupported properties", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error 'ObjectInheritingOptionalRecursionAndWithNestedSymbol' is not assignable to parameter of type '...' (symbol at complex.symbol becomes `never`)
+						objectInheritingOptionalRecursionAndWithNestedSymbol,
+						{
+							recursive: { recursive: { recursive: {} } },
+							complex: { number: 0 },
+						},
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							recursive?: SimpleObjectWithOptionalRecursion;
+							complex: { number: number; symbol: never };
+						}>(),
+					);
 				});
 
 				describe("object with `undefined`", () => {

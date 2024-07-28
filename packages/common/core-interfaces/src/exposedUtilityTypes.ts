@@ -430,6 +430,15 @@ export namespace InternalUtilityTypes {
 	/**
 	 * Core implementation of {@link JsonSerializable}.
 	 *
+	 * @privateRemarks
+	 * Note that `T` becomes an Controls.AllowExtensionOf type during recursion.
+	 * Filtering through a single layer of recursion is all that is required
+	 * when using in prescribed filter scenario. Controls.AllowExtensionOf must
+	 * be used instead of Controls.AllowExactly to avoid possibly deep and
+	 * infinite recursion from tsc. Checking extension of is sufficient as all
+	 * extended types from the recursion type are more specific and and would
+	 * be considered before reaching the more general T currently being processed.
+	 *
 	 * @system
 	 */
 	export type JsonSerializableFilter<
@@ -468,8 +477,8 @@ export namespace InternalUtilityTypes {
 											JsonSerializableFilter<
 												T[K],
 												{
-													AllowExactly: Controls["AllowExactly"] | T;
-													AllowExtensionOf: Controls["AllowExtensionOf"];
+													AllowExactly: Controls["AllowExactly"];
+													AllowExtensionOf: Controls["AllowExtensionOf"] | T;
 												}
 											>
 										>;
@@ -493,8 +502,8 @@ export namespace InternalUtilityTypes {
 														: JsonSerializableFilter<
 																T[K],
 																{
-																	AllowExactly: Controls["AllowExactly"] | T;
-																	AllowExtensionOf: Controls["AllowExtensionOf"];
+																	AllowExactly: Controls["AllowExactly"];
+																	AllowExtensionOf: Controls["AllowExtensionOf"] | T;
 																}
 															>;
 												} & {
@@ -505,8 +514,8 @@ export namespace InternalUtilityTypes {
 													>]?: JsonSerializableFilter<
 														T[K],
 														{
-															AllowExactly: Controls["AllowExactly"] | T;
-															AllowExtensionOf: Controls["AllowExtensionOf"] | undefined;
+															AllowExactly: Controls["AllowExactly"];
+															AllowExtensionOf: Controls["AllowExtensionOf"] | T | undefined;
 														}
 													>;
 												} & {

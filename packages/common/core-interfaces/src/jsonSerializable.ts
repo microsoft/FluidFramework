@@ -99,7 +99,7 @@ export interface JsonSerializableOptions {
  * proper use, that will never be an issue as any filtering of types will happen
  * before T recursion.
  * To accomplish this behavior, during recursion type `T` is unioned with
- * `Options.AllowExactly` as nested properties are processed.
+ * `Options.AllowExtensionOf` as nested properties are processed.
  *
  * @beta
  */

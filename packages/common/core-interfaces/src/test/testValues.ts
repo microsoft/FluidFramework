@@ -259,6 +259,29 @@ export const selfRecursiveFunctionWithProperties: SelfRecursiveFunctionWithPrope
 
 /* eslint-enable @typescript-eslint/consistent-type-definitions */
 
+export interface SimpleObjectWithOptionalRecursion {
+	recursive?: SimpleObjectWithOptionalRecursion;
+}
+interface ObjectInheritingOptionalRecursionAndWithNestedSymbol
+	extends SimpleObjectWithOptionalRecursion {
+	complex: {
+		number: number;
+		symbol: symbol;
+	};
+}
+export const objectInheritingOptionalRecursionAndWithNestedSymbol: ObjectInheritingOptionalRecursionAndWithNestedSymbol =
+	{
+		recursive: {
+			recursive: {
+				recursive: {},
+			},
+		},
+		complex: {
+			number: 0,
+			symbol: Symbol("symbol"),
+		},
+	};
+
 export const simpleJson: JsonTypeWith<never> = { a: [{ b: { b2: 8 }, c: true }] };
 
 // #endregion
