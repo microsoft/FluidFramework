@@ -537,14 +537,25 @@ export namespace InternalUtilityTypes {
 	}
 
 	/**
+	 * Recursion limit is the count of `+` that prefix it when string.
+	 *
+	 * @system
+	 */
+	export type RecursionLimit = `+${string}` | 0;
+
+	/**
 	 * Outer implementation of {@link JsonDeserialized} handling meta cases
 	 * like recursive types.
+	 *
+	 * @privateRemarks
+	 * This utility is reentrant and will process a type `T` up to RecurseLimit.
 	 *
 	 * @system
 	 */
 	export type JsonDeserializedImpl<
 		T,
 		Options extends Partial<FilterControls>,
+		RecurseLimit extends RecursionLimit = "++++" /* 4 */,
 	> = /* Build Controls from Options filling in defaults for any missing properties */
 	{
 		AllowExactly: Options extends { AllowExactly: unknown } ? Options["AllowExactly"] : never;
@@ -570,20 +581,24 @@ export namespace InternalUtilityTypes {
 							HasNonPublicProperties<T> extends true
 							? /* hidden props => apply filtering to avoid retaining
 							     exact class except for any classes in allowances => */
-								JsonDeserializedFilter<T, Controls>
+								JsonDeserializedFilter<
+									T,
+									Controls,
+									// Note that use of RecurseLimit may not be needed here
+									// could have an adverse effect on correctness if there
+									// several ancestor types that require modification and
+									// are peeling away the limit. In such a case, the limit
+									// will be used for the problems and result is already
+									// messy; so deferring full understanding of the problems
+									// that could arise from a reset and being conservative.
+									RecurseLimit
+								>
 							: /* no hidden properties => deserialized T is just T */
 								T
-						: /* filtering is needed => */ JsonDeserializedFilter<T, Controls>
+						: /* filtering is needed => */ JsonDeserializedFilter<T, Controls, RecurseLimit>
 					: /* unreachable else for infer */ never
 			: never /* FilterControls assert else; should never be reached */
 		: never /* unreachable else for infer */;
-
-	/**
-	 * Recursion limit is the count of `+` that prefix it when string.
-	 *
-	 * @system
-	 */
-	export type RecursionLimit = `+${string}` | 0;
 
 	/**
 	 * Recurses T applying {@link InternalUtilityTypes.JsonDeserializedFilter} up to RecurseLimit times.
@@ -597,11 +612,13 @@ export namespace InternalUtilityTypes {
 		TAncestorTypes,
 	> = T extends TAncestorTypes
 		? RecurseLimit extends `+${infer RecursionRemainder}`
-			? JsonDeserializedFilter<
+			? /* Now that specific recursion is found, process that recursive type
+			     directly to avoid any collateral damage from ancestor type that
+			     required modification. */
+				JsonDeserializedImpl<
 					T,
 					Controls,
-					RecursionRemainder extends RecursionLimit ? RecursionRemainder : 0,
-					TAncestorTypes | T
+					RecursionRemainder extends RecursionLimit ? RecursionRemainder : 0
 				>
 			: JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]>
 		: JsonDeserializedFilter<T, Controls, RecurseLimit, TAncestorTypes | T>;
@@ -614,7 +631,7 @@ export namespace InternalUtilityTypes {
 	export type JsonDeserializedFilter<
 		T,
 		Controls extends FilterControls,
-		RecurseLimit extends RecursionLimit = "++++" /* 4 */,
+		RecurseLimit extends RecursionLimit,
 		TAncestorTypes = T /* Always start with self as ancestor; otherwise recursion limit appears one greater */,
 	> = /* test for 'any' */ boolean extends (T extends never ? true : false)
 		? /* 'any' => */ JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]>
