@@ -501,19 +501,7 @@ describe("JsonDeserialized", () => {
 										recursive?: {
 											recursive?: {
 												recursive?: {
-													recursive?: {
-														recursive?: {
-															recursive?: {
-																recursive?: {
-																	recursive?: {
-																		recursive?: {
-																			recursive?: JsonTypeWith<never>;
-																		};
-																	};
-																};
-															};
-														};
-													};
+													recursive?: JsonTypeWith<never>;
 												};
 											};
 										};
@@ -586,7 +574,7 @@ describe("JsonDeserialized", () => {
 					// @ts-expect-error { bigintOrString: string | bigint } does not satisfy { bigintOrString?: string }
 					objectWithBigintOrString satisfies typeof resultRead;
 				});
-				it("object with recursion and `symbol` unrolls 10 times and then has generic Json", () => {
+				it("object with recursion and `symbol` unrolls 4 times and then has generic Json", () => {
 					const resultRead = passThru(objectWithSymbolOrRecursion, { recurse: {} });
 					assertIdenticalTypes(
 						resultRead,
@@ -595,19 +583,7 @@ describe("JsonDeserialized", () => {
 								recurse?: {
 									recurse?: {
 										recurse?: {
-											recurse?: {
-												recurse?: {
-													recurse?: {
-														recurse?: {
-															recurse?: {
-																recurse?: {
-																	recurse?: JsonTypeWith<never>;
-																};
-															};
-														};
-													};
-												};
-											};
+											recurse?: JsonTypeWith<never>;
 										};
 									};
 								};
@@ -722,7 +698,7 @@ describe("JsonDeserialized", () => {
 						"instanceRead is not an instance of ClassWithPrivateData",
 					);
 				});
-				it("object with recursion and handle unrolls 10 times listing public properties and then has generic Json", () => {
+				it("object with recursion and handle unrolls 4 times listing public properties and then has generic Json", () => {
 					const resultRead = passThru(objectWithFluidHandleOrRecursion, {
 						recurseToHandle: { recurseToHandle: "fake-handle" },
 					});
@@ -738,43 +714,7 @@ describe("JsonDeserialized", () => {
 																recurseToHandle:
 																	| {
 																			recurseToHandle:
-																				| {
-																						recurseToHandle:
-																							| {
-																									recurseToHandle:
-																										| {
-																												recurseToHandle:
-																													| {
-																															recurseToHandle:
-																																| {
-																																		recurseToHandle:
-																																			| {
-																																					recurseToHandle:
-																																						| JsonTypeWith<never>
-																																						| {
-																																								readonly isAttached: boolean;
-																																						  };
-																																			  }
-																																			| {
-																																					readonly isAttached: boolean;
-																																			  };
-																																  }
-																																| {
-																																		readonly isAttached: boolean;
-																																  };
-																													  }
-																													| {
-																															readonly isAttached: boolean;
-																													  };
-																										  }
-																										| {
-																												readonly isAttached: boolean;
-																										  };
-																							  }
-																							| {
-																									readonly isAttached: boolean;
-																							  };
-																				  }
+																				| JsonTypeWith<never>
 																				| {
 																						readonly isAttached: boolean;
 																				  };
@@ -1036,31 +976,7 @@ describe("JsonDeserialized", () => {
 																recurseToHandle:
 																	| {
 																			recurseToHandle:
-																				| {
-																						recurseToHandle:
-																							| {
-																									recurseToHandle:
-																										| {
-																												recurseToHandle:
-																													| {
-																															recurseToHandle:
-																																| {
-																																		recurseToHandle:
-																																			| {
-																																					recurseToHandle:
-																																						| JsonTypeWith<IFluidHandle>
-																																						| IFluidHandle<string>;
-																																			  }
-																																			| IFluidHandle<string>;
-																																  }
-																																| IFluidHandle<string>;
-																													  }
-																													| IFluidHandle<string>;
-																										  }
-																										| IFluidHandle<string>;
-																							  }
-																							| IFluidHandle<string>;
-																				  }
+																				| JsonTypeWith<IFluidHandle>
 																				| IFluidHandle<string>;
 																	  }
 																	| IFluidHandle<string>;

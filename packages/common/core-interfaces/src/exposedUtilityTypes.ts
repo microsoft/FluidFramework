@@ -614,7 +614,7 @@ export namespace InternalUtilityTypes {
 	export type JsonDeserializedFilter<
 		T,
 		Controls extends FilterControls,
-		RecurseLimit extends RecursionLimit = "++++++++++" /* 10 */,
+		RecurseLimit extends RecursionLimit = "++++" /* 4 */,
 		TAncestorTypes = T /* Always start with self as ancestor; otherwise recursion limit appears one greater */,
 	> = /* test for 'any' */ boolean extends (T extends never ? true : false)
 		? /* 'any' => */ JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]>
