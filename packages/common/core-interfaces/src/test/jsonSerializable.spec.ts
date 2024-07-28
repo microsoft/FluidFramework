@@ -69,6 +69,8 @@ import {
 	objectWithUndefined,
 	objectWithOptionalUndefined,
 	objectWithOptionalBigint,
+	objectWithNumberKey,
+	objectWithSymbolKey,
 	objectWithOptionalNumberNotPresent,
 	objectWithOptionalNumberUndefined,
 	objectWithOptionalNumberDefined,
@@ -362,6 +364,11 @@ describe("JsonSerializable", () => {
 			it("object with `string`", () => {
 				const { filteredIn } = passThru(objectWithString);
 				assertIdenticalTypes(filteredIn, objectWithString);
+			});
+
+			it("object with number key", () => {
+				const { filteredIn } = passThru(objectWithNumberKey);
+				assertIdenticalTypes(filteredIn, objectWithNumberKey);
 			});
 
 			it("object with optional exact `undefined`", () => {
@@ -749,6 +756,15 @@ describe("JsonSerializable", () => {
 						// value is a string; so no runtime error.
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<{ bigintOrString: string }>());
+				});
+
+				it("object with symbol key", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error `symbol` key is not supported (property type becomes `never`)
+						objectWithSymbolKey,
+						{},
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<{ [symbol]: never }>());
 				});
 
 				it("object with recursion and `symbol`", () => {

@@ -65,6 +65,8 @@ import {
 	objectWithUndefined,
 	objectWithOptionalUndefined,
 	objectWithOptionalBigint,
+	objectWithSymbolKey,
+	objectWithNumberKey,
 	objectWithOptionalNumberNotPresent,
 	objectWithOptionalNumberUndefined,
 	objectWithOptionalNumberDefined,
@@ -330,6 +332,11 @@ describe("JsonDeserialized", () => {
 				assertIdenticalTypes(resultRead, objectWithString);
 			});
 
+			it("object with number key", () => {
+				const resultRead = passThru(objectWithNumberKey);
+				assertIdenticalTypes(resultRead, objectWithNumberKey);
+			});
+
 			it("object with possible type recursion through union", () => {
 				const resultRead = passThru(objectWithPossibleRecursion);
 				assertIdenticalTypes(resultRead, objectWithPossibleRecursion);
@@ -549,6 +556,12 @@ describe("JsonDeserialized", () => {
 					// @ts-expect-error { bigintOrString: string | bigint } does not satisfy { bigintOrString?: string }
 					objectWithBigintOrString satisfies typeof resultRead;
 				});
+
+				it("object with symbol key", () => {
+					const resultRead = passThru(objectWithSymbolKey, {});
+					assertIdenticalTypes(resultRead, {});
+				});
+
 				it("object with recursion and `symbol` unrolls 4 times and then has generic Json", () => {
 					const resultRead = passThru(objectWithSymbolOrRecursion, { recurse: {} });
 					assertIdenticalTypes(

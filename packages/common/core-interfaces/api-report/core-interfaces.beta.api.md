@@ -266,6 +266,7 @@ export namespace InternalUtilityTypes {
     export type IsEnumLike<T extends object> = T extends readonly (infer _)[] ? false : T extends {
         readonly [i: number]: string;
         readonly [p: string]: number | string;
+        readonly [s: symbol]: never;
     } ? true extends {
         [K in keyof T]: T[K] extends never ? true : never;
     }[keyof T] ? false : true : false;

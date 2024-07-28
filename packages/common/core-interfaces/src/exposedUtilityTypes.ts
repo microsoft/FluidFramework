@@ -274,6 +274,8 @@ export namespace InternalUtilityTypes {
 					readonly [i: number]: string;
 					// string indices may be string or number
 					readonly [p: string]: number | string;
+					// no symbol indices are allowed
+					readonly [s: symbol]: never;
 				}
 			? /* test for a never or any property */ true extends {
 					[K in keyof T]: T[K] extends never ? true : never;

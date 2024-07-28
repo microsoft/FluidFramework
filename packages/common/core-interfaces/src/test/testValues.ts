@@ -86,6 +86,9 @@ export const objectWithFunctionOrSymbol = {
 };
 export const objectWithOptionalBigint: { bigint?: bigint } = { bigint: 0n };
 
+export const objectWithNumberKey = { 3: "value" };
+export const objectWithSymbolKey = { [symbol]: "value" };
+
 export const objectWithUndefined = {
 	undef: undefined,
 };
