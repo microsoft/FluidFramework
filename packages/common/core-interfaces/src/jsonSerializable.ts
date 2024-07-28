@@ -12,11 +12,21 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
  */
 export interface JsonSerializableOptions {
 	/**
-	 * A type that is managed by custom serialization logic (beyond JSON.stringify).
+	 * Exact types that are managed by custom serialization logic (beyond
+	 * JSON.stringify). Only exact types matching specification will be preserved
+	 * unaltered.
 	 *
 	 * The default value is `never`.
 	 */
-	Replaced: unknown;
+	AllowExactly?: unknown;
+
+	/**
+	 * General types that are managed by custom serialization logic (beyond
+	 * JSON.stringify). Any type satisfying specification will be preserved unaltered.
+	 *
+	 * The default value is `never`.
+	 */
+	AllowExtensionOf?: unknown;
 
 	/**
 	 * When set, inaccessible (protected and private) members throughout type T are
@@ -88,13 +98,15 @@ export interface JsonSerializableOptions {
  * infinite recursion and produces a technically incorrect result type. However, with
  * proper use, that will never be an issue as any filtering of types will happen
  * before T recursion.
- * To accomplish this behavior, during recursion type `T` is unioned with `TReplaced`.
+ * To accomplish this behavior, during recursion type `T` is unioned with
+ * `Options.AllowExactly` as nested properties are processed.
  *
  * @beta
  */
 export type JsonSerializable<
 	T,
 	Options extends JsonSerializableOptions = {
-		Replaced: never;
+		AllowExactly: never;
+		AllowExtensionOf: never;
 	},
 > = InternalUtilityTypes.JsonSerializableImpl<T, Options>;

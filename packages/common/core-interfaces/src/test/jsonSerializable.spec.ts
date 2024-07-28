@@ -8,7 +8,7 @@
 import { strict as assert } from "node:assert";
 
 import type { JsonDeserialized } from "../jsonDeserialized.js";
-import type { JsonSerializable } from "../jsonSerializable.js";
+import type { JsonSerializable, JsonSerializableOptions } from "../jsonSerializable.js";
 import type {
 	SerializationErrorPerNonPublicProperties,
 	SerializationErrorPerUndefinedArrayElement,
@@ -106,12 +106,12 @@ function passThru<
 	T,
 	TExpected,
 	// eslint-disable-next-line @typescript-eslint/ban-types
-	Options extends { IgnoreInaccessibleMembers?: "ignore-inaccessible-members" } = {},
+	Options extends JsonSerializableOptions = {},
 >(
-	filteredIn: JsonSerializable<T, { Replaced: never } & Options>,
+	filteredIn: JsonSerializable<T, Options>,
 	expectedDeserialization?: JsonDeserialized<TExpected>,
 ): {
-	filteredIn: JsonSerializable<T, { Replaced: never } & Options>;
+	filteredIn: JsonSerializable<T, Options>;
 	out: JsonDeserialized<T>;
 } {
 	const stringified = JSON.stringify(filteredIn);
@@ -152,13 +152,13 @@ function passThruThrows<T>(
 function passThruIgnoreInaccessibleMembers<T, TExpected>(
 	filteredIn: JsonSerializable<
 		T,
-		{ Replaced: never; IgnoreInaccessibleMembers: "ignore-inaccessible-members" }
+		{ IgnoreInaccessibleMembers: "ignore-inaccessible-members" }
 	>,
 	expected?: JsonDeserialized<TExpected>,
 ): {
 	filteredIn: JsonSerializable<
 		T,
-		{ Replaced: never; IgnoreInaccessibleMembers: "ignore-inaccessible-members" }
+		{ IgnoreInaccessibleMembers: "ignore-inaccessible-members" }
 	>;
 	out: JsonDeserialized<T>;
 } {
@@ -189,11 +189,11 @@ function reviveBigInt(_key: string, value: unknown): unknown {
  * Similar to {@link passThru} but specifically handles `bigint` values.
  */
 function passThruHandlingBigint<T, TExpected>(
-	filteredIn: JsonSerializable<T, { Replaced: bigint }>,
-	expectedDeserialization?: JsonDeserialized<TExpected, { Replaced: bigint }>,
+	filteredIn: JsonSerializable<T, { AllowExactly: bigint }>,
+	expectedDeserialization?: JsonDeserialized<TExpected, { AllowExactly: bigint }>,
 ): {
-	filteredIn: JsonSerializable<T, { Replaced: bigint }>;
-	out: JsonDeserialized<T, { Replaced: bigint }>;
+	filteredIn: JsonSerializable<T, { AllowExactly: bigint }>;
+	out: JsonDeserialized<T, { AllowExactly: bigint }>;
 } {
 	const stringified = JSON.stringify(filteredIn, replaceBigInt);
 	if (expectedDeserialization !== undefined) {
@@ -203,7 +203,7 @@ function passThruHandlingBigint<T, TExpected>(
 	}
 	const out = JSON.parse(stringified, reviveBigInt) as JsonDeserialized<
 		T,
-		{ Replaced: bigint }
+		{ AllowExactly: bigint }
 	>;
 	const expected =
 		// Don't use nullish coalescing here to allow for `null` to be expected.
@@ -217,9 +217,9 @@ function passThruHandlingBigint<T, TExpected>(
  * Similar to {@link passThruThrows} but specifically handles `bigint` values.
  */
 function passThruHandlingBigintThrows<T>(
-	filteredIn: JsonSerializable<T, { Replaced: bigint }>,
+	filteredIn: JsonSerializable<T, { AllowExactly: bigint }>,
 	expectedThrow: Error,
-): { filteredIn: JsonSerializable<T, { Replaced: bigint }> } {
+): { filteredIn: JsonSerializable<T, { AllowExactly: bigint }> } {
 	assert.throws(() => passThruHandlingBigint(filteredIn), expectedThrow);
 	return { filteredIn };
 }
@@ -228,14 +228,14 @@ function passThruHandlingBigintThrows<T>(
  * Similar to {@link passThru} but specifically handles certain function signatures.
  */
 function passThruHandlingSpecificFunction<T>(
-	filteredIn: JsonSerializable<T, { Replaced: (_: string) => number }>,
+	filteredIn: JsonSerializable<T, { AllowExactly: (_: string) => number }>,
 ): {
-	filteredIn: JsonSerializable<T, { Replaced: (_: string) => number }>;
-	out: JsonDeserialized<T, { Replaced: (_: string) => number }>;
+	filteredIn: JsonSerializable<T, { AllowExactly: (_: string) => number }>;
+	out: JsonDeserialized<T, { AllowExactly: (_: string) => number }>;
 } {
 	return {
 		filteredIn,
-		out: undefined as unknown as JsonDeserialized<T, { Replaced: (_: string) => number }>,
+		out: undefined as unknown as JsonDeserialized<T, { AllowExactly: (_: string) => number }>,
 	};
 }
 
@@ -439,7 +439,6 @@ describe("JsonSerializable", () => {
 					});
 					assertIdenticalTypes(filteredIn, classInstanceWithPublicData);
 				});
-				// TODO FIX: add option to ignore inaccessible members
 				describe("with `ignore-inaccessible-members`", () => {
 					it("with private method ignores method", () => {
 						const { filteredIn } = passThruIgnoreInaccessibleMembers(
@@ -944,7 +943,7 @@ describe("JsonSerializable", () => {
 			});
 		});
 
-		describe("using replaced types", () => {
+		describe("using alternately allowed types", () => {
 			describe("are supported", () => {
 				it("`bigint`", () => {
 					const { filteredIn } = passThruHandlingBigint(bigint);
@@ -958,7 +957,7 @@ describe("JsonSerializable", () => {
 					const { filteredIn } = passThruHandlingBigint(objectWithOptionalBigint);
 					assertIdenticalTypes(filteredIn, objectWithOptionalBigint);
 				});
-				it("object with specific replaced function", () => {
+				it("object with specific alternately allowed function", () => {
 					const { filteredIn } = passThruHandlingSpecificFunction({
 						specificFn: (v: string) => v.length,
 					});
@@ -971,7 +970,7 @@ describe("JsonSerializable", () => {
 				});
 			});
 
-			describe("continue rejecting unsupported that are not replaced", () => {
+			describe("continue rejecting unsupported that are not alternately allowed", () => {
 				it("`unknown` (simple object) expects `JsonTypeWith<bigint>`", () => {
 					const { filteredIn } = passThruHandlingBigint(
 						// @ts-expect-error `unknown` is not supported (expects `JsonTypeWith<bigint>`)
@@ -1003,7 +1002,7 @@ describe("JsonSerializable", () => {
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<NonNullJsonObjectWith<bigint>>());
 				});
-				it("object with non-replaced function", () => {
+				it("object with non-alternately allowed too generic function", () => {
 					const { filteredIn } = passThruHandlingSpecificFunction({
 						// @ts-expect-error '() => unknown' is not assignable to type 'never'
 						genericFn: () => undefined as unknown,
@@ -1012,6 +1011,30 @@ describe("JsonSerializable", () => {
 						filteredIn,
 						createInstanceOf<{
 							genericFn: never;
+						}>(),
+					);
+				});
+				it("object with non-alternately allowed too input permissive function", () => {
+					const { filteredIn } = passThruHandlingSpecificFunction({
+						// @ts-expect-error '() => number' is not assignable to type 'never'
+						lessRequirementsFn: () => 0,
+					});
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							lessRequirementsFn: never;
+						}>(),
+					);
+				});
+				it("object with non-alternately allowed more restrictive output function", () => {
+					const { filteredIn } = passThruHandlingSpecificFunction({
+						// @ts-expect-error '(_v: string) => 0' is not assignable to type 'never'
+						stricterOutputFn: (_v: string) => 0 as const,
+					});
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							stricterOutputFn: never;
 						}>(),
 					);
 				});

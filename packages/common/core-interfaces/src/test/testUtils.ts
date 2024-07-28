@@ -14,6 +14,7 @@ export function assertIdenticalTypes<T, U>(
 ): InternalUtilityTypes.IfSameType<T, U> {
 	return undefined as InternalUtilityTypes.IfSameType<T, U>;
 }
+
 /**
  * Creates a non-viable (`undefined`) instance of type T to be used for type checking.
  */

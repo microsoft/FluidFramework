@@ -252,10 +252,16 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
 
 // @beta
 export namespace InternalUtilityTypes {
+    export type ExcludeExactly<T, U> = IfSameType<T, U, never, T>;
+    export interface FilterControls {
+        AllowExactly: unknown;
+        AllowExtensionOf: unknown;
+    }
     export type FlattenIntersection<T> = T extends Record<string | number | symbol, unknown> ? {
         [K in keyof T]: T[K];
     } : T;
     export type HasNonPublicProperties<T> = ReplaceRecursionWith<T, any> extends T ? false : true;
+    export type IfExactTypeInUnion<T, Union, IfMatch = unknown, IfNoMatch = never> = IfSameType<T, Extract<Union, T>, IfMatch, IfNoMatch>;
     export type IfSameType<X, Y, IfSame = unknown, IfDifferent = never> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? IfSame : IfDifferent;
     export type IsEnumLike<T extends object> = T extends readonly (infer _)[] ? false : T extends {
         readonly [i: number]: string;
@@ -265,41 +271,64 @@ export namespace InternalUtilityTypes {
     }[keyof T] ? false : true : false;
     export type IsExactlyObject<T extends object> = IsSameType<T, object>;
     export type IsSameType<X, Y> = IfSameType<X, Y, true, false>;
-    export type JsonDeserializedFilter<T, TReplaced, RecurseLimit extends RecursionLimit = "++++++++++", TAncestorTypes = T> = boolean extends (T extends never ? true : false) ? JsonTypeWith<TReplaced> : unknown extends T ? JsonTypeWith<TReplaced> : T extends null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? T extends object ? T extends readonly (infer _)[] ? {
-        [K in keyof T]: JsonForDeserializedArrayItem<T[K], TReplaced, JsonDeserializedRecursion<T[K], TReplaced, RecurseLimit, TAncestorTypes>>;
-    } : IsExactlyObject<T> extends true ? NonNullJsonObjectWith<TReplaced> : IsEnumLike<T> extends true ? T : FlattenIntersection<{
-        [K in keyof T as NonSymbolWithDeserializablePropertyOf<T, TReplaced, K>]: JsonDeserializedRecursion<T[K], TReplaced, RecurseLimit, TAncestorTypes>;
+    export type JsonDeserializedFilter<T, Controls extends FilterControls, RecurseLimit extends RecursionLimit = "++++++++++", TAncestorTypes = T> = boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : unknown extends T ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : T extends null | boolean | number | string | Controls["AllowExtensionOf"] ? T : IfExactTypeInUnion<T, Controls["AllowExactly"], true, "not found"> extends true ? T : Extract<T, Function> extends never ? T extends object ? T extends readonly (infer _)[] ? {
+        [K in keyof T]: JsonForDeserializedArrayItem<T[K], Controls, JsonDeserializedRecursion<T[K], Controls, RecurseLimit, TAncestorTypes>>;
+    } : IsExactlyObject<T> extends true ? NonNullJsonObjectWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : IsEnumLike<T> extends true ? T : FlattenIntersection<{
+        [K in keyof T as NonSymbolWithDeserializablePropertyOf<T, Controls["AllowExactly"], Controls["AllowExtensionOf"], K>]: JsonDeserializedRecursion<T[K], Controls, RecurseLimit, TAncestorTypes>;
     } & {
-        [K in keyof T as NonSymbolWithPossiblyDeserializablePropertyOf<T, TReplaced, K>]?: JsonDeserializedRecursion<T[K], TReplaced, RecurseLimit, TAncestorTypes>;
+        [K in keyof T as NonSymbolWithPossiblyDeserializablePropertyOf<T, Controls["AllowExactly"], Controls["AllowExtensionOf"], K>]?: JsonDeserializedRecursion<T[K], Controls, RecurseLimit, TAncestorTypes>;
     }> : never : never;
-    export type JsonDeserializedImpl<T, TReplaced> = boolean extends (T extends never ? true : false) ? JsonTypeWith<TReplaced> : ReplaceRecursionWith<T, RecursionMarker> extends infer TNoRecursion ? IsSameType<TNoRecursion, JsonDeserializedFilter<TNoRecursion, TReplaced, 0>> extends true ? HasNonPublicProperties<T> extends true ? JsonDeserializedFilter<T, TReplaced> : T : JsonDeserializedFilter<T, TReplaced> : never;
-    export type JsonDeserializedRecursion<T, TReplaced, RecurseLimit extends RecursionLimit, TAncestorTypes> = T extends TAncestorTypes ? RecurseLimit extends `+${infer RecursionRemainder}` ? JsonDeserializedFilter<T, TReplaced, RecursionRemainder extends RecursionLimit ? RecursionRemainder : 0, TAncestorTypes | T> : JsonTypeWith<TReplaced> : JsonDeserializedFilter<T, TReplaced, RecurseLimit, TAncestorTypes | T>;
-    export type JsonForDeserializedArrayItem<T, TReplaced, TBlessed> = boolean extends (T extends never ? true : false) ? TBlessed : unknown extends T ? TBlessed : T extends null | boolean | number | string | TReplaced ? T : T extends undefined | symbol | Function ? null : TBlessed;
-    export type JsonForSerializableArrayItem<T, TReplaced, TBlessed> = boolean extends (T extends never ? true : false) ? TBlessed : unknown extends T ? TBlessed : T extends null | boolean | number | string | TReplaced ? T : undefined extends T ? SerializationErrorPerUndefinedArrayElement : TBlessed;
-    export type JsonSerializableFilter<T, TReplaced> = boolean extends (T extends never ? true : false) ? JsonTypeWith<TReplaced> : unknown extends T ? JsonTypeWith<TReplaced> : T extends null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? T extends object ? T extends readonly (infer _)[] ? {
-        [K in keyof T]: JsonForSerializableArrayItem<T[K], TReplaced, JsonSerializableFilter<T[K], TReplaced | T>>;
-    } : IsExactlyObject<T> extends true ? NonNullJsonObjectWith<TReplaced> : IsEnumLike<T> extends true ? T : FlattenIntersection<{
+    export type JsonDeserializedImpl<T, Options extends Partial<FilterControls>> = {
+        AllowExactly: Options extends {
+            AllowExactly: unknown;
+        } ? Options["AllowExactly"] : never;
+        AllowExtensionOf: Options extends {
+            AllowExtensionOf: unknown;
+        } ? Options["AllowExtensionOf"] : never;
+    } extends infer Controls ? Controls extends FilterControls ? boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : ReplaceRecursionWith<T, RecursionMarker> extends infer TNoRecursion ? IsSameType<TNoRecursion, JsonDeserializedFilter<TNoRecursion, Controls, 0>> extends true ? HasNonPublicProperties<T> extends true ? JsonDeserializedFilter<T, Controls> : T : JsonDeserializedFilter<T, Controls> : never : never : never;
+    export type JsonDeserializedRecursion<T, Controls extends FilterControls, RecurseLimit extends RecursionLimit, TAncestorTypes> = T extends TAncestorTypes ? RecurseLimit extends `+${infer RecursionRemainder}` ? JsonDeserializedFilter<T, Controls, RecursionRemainder extends RecursionLimit ? RecursionRemainder : 0, TAncestorTypes | T> : JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : JsonDeserializedFilter<T, Controls, RecurseLimit, TAncestorTypes | T>;
+    export type JsonForDeserializedArrayItem<T, Controls extends FilterControls, TBlessed> = boolean extends (T extends never ? true : false) ? TBlessed : unknown extends T ? TBlessed : T extends null | boolean | number | string | Controls["AllowExtensionOf"] ? T : IfExactTypeInUnion<T, Controls["AllowExactly"], T, T extends undefined | symbol | Function ? null : TBlessed>;
+    export type JsonForSerializableArrayItem<T, Controls extends FilterControls, TBlessed> = boolean extends (T extends never ? true : false) ? TBlessed : unknown extends T ? TBlessed : T extends null | boolean | number | string | Controls["AllowExtensionOf"] ? T : IfExactTypeInUnion<T, Controls["AllowExactly"], T, undefined extends T ? SerializationErrorPerUndefinedArrayElement : TBlessed>;
+    export type JsonSerializableFilter<T, Controls extends FilterControls> = boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : unknown extends T ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : T extends null | boolean | number | string | Controls["AllowExtensionOf"] ? T : IfExactTypeInUnion<T, Controls["AllowExactly"], true, "no match"> extends true ? T : Extract<T, Function> extends never ? T extends object ? T extends readonly (infer _)[] ? {
+        [K in keyof T]: JsonForSerializableArrayItem<T[K], Controls, JsonSerializableFilter<T[K], {
+            AllowExactly: Controls["AllowExactly"] | T;
+            AllowExtensionOf: Controls["AllowExtensionOf"];
+        }>>;
+    } : IsExactlyObject<T> extends true ? NonNullJsonObjectWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : IsEnumLike<T> extends true ? T : FlattenIntersection<{
         [K in keyof T as RequiredNonSymbolKeysOf<T, K>]-?: undefined extends T[K] ? {
             ["error required property may not allow undefined value"]: never;
-        } : JsonSerializableFilter<T[K], TReplaced | T>;
+        } : JsonSerializableFilter<T[K], {
+            AllowExactly: Controls["AllowExactly"] | T;
+            AllowExtensionOf: Controls["AllowExtensionOf"];
+        }>;
     } & {
-        [K in keyof T as OptionalNonSymbolKeysOf<T, K>]?: JsonSerializableFilter<T[K], TReplaced | T | undefined>;
+        [K in keyof T as OptionalNonSymbolKeysOf<T, K>]?: JsonSerializableFilter<T[K], {
+            AllowExactly: Controls["AllowExactly"] | T;
+            AllowExtensionOf: Controls["AllowExtensionOf"] | undefined;
+        }>;
     } & {
         [K in keyof T & symbol]: never;
     }> : never : never;
-    export type JsonSerializableImpl<T, Options extends {
-        Replaced: unknown;
+    export type JsonSerializableImpl<T, Options extends Partial<FilterControls> & {
         IgnoreInaccessibleMembers?: "ignore-inaccessible-members";
-    }> = boolean extends (T extends never ? true : false) ? JsonTypeWith<Options["Replaced"]> : Options["IgnoreInaccessibleMembers"] extends "ignore-inaccessible-members" ? JsonSerializableFilter<T, Options["Replaced"]> : HasNonPublicProperties<T> extends true ? T extends readonly (infer _)[] ? {
+    }> = {
+        AllowExactly: Options extends {
+            AllowExactly: unknown;
+        } ? Options["AllowExactly"] : never;
+        AllowExtensionOf: Options extends {
+            AllowExtensionOf: unknown;
+        } ? Options["AllowExtensionOf"] : never;
+    } extends infer Controls ? Controls extends FilterControls ? boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : Options["IgnoreInaccessibleMembers"] extends "ignore-inaccessible-members" ? JsonSerializableFilter<T, Controls> : HasNonPublicProperties<T> extends true ? T extends readonly (infer _)[] ? {
         [K in keyof T]: JsonSerializableImpl<T[K], {
-            Replaced: Options["Replaced"] | T;
+            AllowExactly: Controls["AllowExactly"] | T;
+            AllowExtensionOf: Controls["AllowExtensionOf"];
         }>;
-    } : SerializationErrorPerNonPublicProperties : JsonSerializableFilter<T, Options["Replaced"]>;
-    export type NonSymbolWithDeserializablePropertyOf<T extends object, TException, Keys extends keyof T = keyof T> = Exclude<{
-        [K in Keys]: Extract<Exclude<T[K], TException>, undefined | symbol | Function | bigint> extends never ? T[K] extends never ? never : K : never;
+    } : SerializationErrorPerNonPublicProperties : JsonSerializableFilter<T, Controls> : never : never;
+    export type NonSymbolWithDeserializablePropertyOf<T extends object, TExactException, TExtendsException, Keys extends keyof T = keyof T> = Exclude<{
+        [K in Keys]: Extract<ExcludeExactly<Exclude<T[K], TExtendsException>, TExactException>, undefined | symbol | Function | bigint> extends never ? T[K] extends never ? never : K : never;
     }[Keys], undefined | symbol>;
-    export type NonSymbolWithPossiblyDeserializablePropertyOf<T extends object, TException, Keys extends keyof T = keyof T> = Exclude<{
-        [K in Keys]: Extract<Exclude<T[K], TException>, undefined | symbol | Function | bigint> extends never ? never : TestDeserializabilityOf<T[K], TException, {
+    export type NonSymbolWithPossiblyDeserializablePropertyOf<T extends object, TExactException, TExtendsException, Keys extends keyof T = keyof T> = Exclude<{
+        [K in Keys]: Extract<ExcludeExactly<Exclude<T[K], TExtendsException>, TExactException>, undefined | symbol | Function | bigint> extends never ? never : TestDeserializabilityOf<T[K], TExactException, TExtendsException, {
             WhenSomethingDeserializable: K;
             WhenNeverDeserializable: never;
         }>;
@@ -319,13 +348,13 @@ export namespace InternalUtilityTypes {
     export type RequiredNonSymbolKeysOf<T extends object, Keys extends keyof T = keyof T> = Exclude<{
         [K in Keys]: T extends Record<K, T[K]> ? K : never;
     }[Keys], undefined | symbol>;
-    export type TestDeserializabilityOf<T, TException, Result extends {
+    export type TestDeserializabilityOf<T, TExactException, TExtendsException, Result extends {
         WhenSomethingDeserializable: unknown;
         WhenNeverDeserializable: never;
     } | {
         WhenSomethingDeserializable: never;
         WhenNeverDeserializable: unknown;
-    }> = T extends Function | bigint | symbol | undefined ? T extends TException ? TException extends never ? Result["WhenNeverDeserializable"] : Result["WhenSomethingDeserializable"] : Result["WhenNeverDeserializable"] : Result["WhenSomethingDeserializable"];
+    }> = T extends Function | bigint | symbol | undefined ? T extends TExtendsException ? TExtendsException extends never ? Result["WhenNeverDeserializable"] : Result["WhenSomethingDeserializable"] : IfExactTypeInUnion<T, TExactException, TExactException extends never ? Result["WhenNeverDeserializable"] : Result["WhenSomethingDeserializable"], Result["WhenNeverDeserializable"]> : Result["WhenSomethingDeserializable"];
 }
 
 // @public (undocumented)
@@ -385,23 +414,27 @@ export interface ITelemetryBaseProperties {
 
 // @beta
 export type JsonDeserialized<T, Options extends JsonDeserializedOptions = {
-    Replaced: never;
-}> = InternalUtilityTypes.JsonDeserializedImpl<T, Options["Replaced"]>;
+    AllowExactly: never;
+    AllowExtensionOf: never;
+}> = InternalUtilityTypes.JsonDeserializedImpl<T, Options>;
 
 // @beta
 export interface JsonDeserializedOptions {
-    Replaced: unknown;
+    AllowExactly?: unknown;
+    AllowExtensionOf?: unknown;
 }
 
 // @beta
 export type JsonSerializable<T, Options extends JsonSerializableOptions = {
-    Replaced: never;
+    AllowExactly: never;
+    AllowExtensionOf: never;
 }> = InternalUtilityTypes.JsonSerializableImpl<T, Options>;
 
 // @beta
 export interface JsonSerializableOptions {
+    AllowExactly?: unknown;
+    AllowExtensionOf?: unknown;
     IgnoreInaccessibleMembers?: "ignore-inaccessible-members";
-    Replaced: unknown;
 }
 
 // @beta

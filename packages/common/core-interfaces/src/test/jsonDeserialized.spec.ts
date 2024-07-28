@@ -12,6 +12,7 @@ import type { JsonDeserialized } from "../jsonDeserialized.js";
 import type { JsonTypeWith, NonNullJsonObjectWith } from "../jsonType.js";
 
 import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
+import type { ObjectWithFluidHandleOrRecursion } from "./testValues.js";
 import {
 	boolean,
 	number,
@@ -77,6 +78,7 @@ import {
 	objectWithEmbeddedRecursion,
 	objectWithAlternatingRecursion,
 	objectWithSymbolOrRecursion,
+	objectWithFluidHandleOrRecursion,
 	simpleJson,
 	classInstanceWithPrivateData,
 	classInstanceWithPrivateMethod,
@@ -132,7 +134,7 @@ function passThruThrows<T>(v: T, expectedThrow: Error): JsonDeserialized<T> {
 function passThruHandlingBigint<T>(
 	v: T,
 	expected?: unknown,
-): JsonDeserialized<T, { Replaced: bigint }> {
+): JsonDeserialized<T, { AllowExactly: bigint }> {
 	const stringified = JSON.stringify(v, (_key, value) => {
 		if (typeof value === "bigint") {
 			return `<bigint>${value.toString()}</bigint>`;
@@ -150,7 +152,7 @@ function passThruHandlingBigint<T>(
 		}
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return value;
-	}) as JsonDeserialized<T, { Replaced: bigint }>;
+	}) as JsonDeserialized<T, { AllowExactly: bigint }>;
 	assert.deepStrictEqual(result, expected ?? v);
 	return result;
 }
@@ -161,9 +163,9 @@ function passThruHandlingBigint<T>(
 function passThruHandlingBigintThrows<T>(
 	v: T,
 	expectedThrow: Error,
-): JsonDeserialized<T, { Replaced: bigint }> {
+): JsonDeserialized<T, { AllowExactly: bigint }> {
 	assert.throws(() => passThruHandlingBigint(v), expectedThrow);
-	return undefined as unknown as JsonDeserialized<T, { Replaced: bigint }>;
+	return undefined as unknown as JsonDeserialized<T, { AllowExactly: bigint }>;
 }
 
 /**
@@ -171,8 +173,8 @@ function passThruHandlingBigintThrows<T>(
  */
 function passThruHandlingSpecificFunction<T>(
 	_v: T,
-): JsonDeserialized<T, { Replaced: (_: string) => number }> {
-	return undefined as unknown as JsonDeserialized<T, { Replaced: (_: string) => number }>;
+): JsonDeserialized<T, { AllowExactly: (_: string) => number }> {
+	return undefined as unknown as JsonDeserialized<T, { AllowExactly: (_: string) => number }>;
 }
 
 /**
@@ -180,8 +182,8 @@ function passThruHandlingSpecificFunction<T>(
  */
 function passThruHandlingFluidHandle<T>(
 	_v: T,
-): JsonDeserialized<T, { Replaced: IFluidHandle }> {
-	return undefined as unknown as JsonDeserialized<T, { Replaced: IFluidHandle }>;
+): JsonDeserialized<T, { AllowExtensionOf: IFluidHandle }> {
+	return undefined as unknown as JsonDeserialized<T, { AllowExtensionOf: IFluidHandle }>;
 }
 
 describe("JsonDeserialized", () => {
@@ -499,7 +501,6 @@ describe("JsonDeserialized", () => {
 					});
 				});
 
-				// TODO FIX: make properties optional
 				it("object with exactly `string | symbol`", () => {
 					const resultRead = passThru(
 						objectWithStringOrSymbol,
@@ -653,6 +654,81 @@ describe("JsonDeserialized", () => {
 					assert.ok(
 						!(instanceRead instanceof ClassWithPrivateData),
 						"instanceRead is not an instance of ClassWithPrivateData",
+					);
+				});
+				it("object with recursion and handle unrolls 10 times listing public properties and then has generic Json", () => {
+					const resultRead = passThru(objectWithFluidHandleOrRecursion, {
+						recurseToHandle: { recurseToHandle: "fake-handle" },
+					});
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{
+							recurseToHandle:
+								| {
+										recurseToHandle:
+											| {
+													recurseToHandle:
+														| {
+																recurseToHandle:
+																	| {
+																			recurseToHandle:
+																				| {
+																						recurseToHandle:
+																							| {
+																									recurseToHandle:
+																										| {
+																												recurseToHandle:
+																													| {
+																															recurseToHandle:
+																																| {
+																																		recurseToHandle:
+																																			| {
+																																					recurseToHandle:
+																																						| JsonTypeWith<never>
+																																						| {
+																																								readonly isAttached: boolean;
+																																						  };
+																																			  }
+																																			| {
+																																					readonly isAttached: boolean;
+																																			  };
+																																  }
+																																| {
+																																		readonly isAttached: boolean;
+																																  };
+																													  }
+																													| {
+																															readonly isAttached: boolean;
+																													  };
+																										  }
+																										| {
+																												readonly isAttached: boolean;
+																										  };
+																							  }
+																							| {
+																									readonly isAttached: boolean;
+																							  };
+																				  }
+																				| {
+																						readonly isAttached: boolean;
+																				  };
+																	  }
+																	| {
+																			readonly isAttached: boolean;
+																	  };
+														  }
+														| {
+																readonly isAttached: boolean;
+														  };
+											  }
+											| {
+													readonly isAttached: boolean;
+											  };
+								  }
+								| {
+										readonly isAttached: boolean;
+								  };
+						}>(),
 					);
 				});
 			});
@@ -816,7 +892,7 @@ describe("JsonDeserialized", () => {
 			assertIdenticalTypes(resultRead, createInstanceOf<JsonTypeWith<never>>());
 		});
 
-		describe("using replaced types", () => {
+		describe("using alternately allowed types", () => {
 			describe("are preserved", () => {
 				it("`bigint`", () => {
 					const resultRead = passThruHandlingBigint(bigint);
@@ -837,12 +913,20 @@ describe("JsonDeserialized", () => {
 						specificFnOrAnother: ((v: string) => v.length) as
 							| ((v: string) => number)
 							| ((n: number) => string),
+						specificFnWithExtraProperties: Object.assign((v: string) => v.length, {
+							number: 4,
+							otherFn: () => undefined as unknown,
+						}),
+						lessRequirementsFn: () => 0 as number,
+						moreSpecificOutputFn: (_v: string) => 0,
+						nestedWithNumberAndGenericFn: { number: 4, otherFn: () => undefined as unknown },
 					});
 					assertIdenticalTypes(
 						resultRead,
 						createInstanceOf<{
 							specificFn: (_: string) => number;
 							specificFnOrAnother?: (_: string) => number;
+							nestedWithNumberAndGenericFn: { number: number };
 						}>(),
 					);
 				});
@@ -852,9 +936,77 @@ describe("JsonDeserialized", () => {
 					);
 					assertIdenticalTypes(resultRead, createInstanceOf<IFluidHandle<number>>());
 				});
+				it("object with `IFluidHandle`", () => {
+					const resultRead = passThruHandlingFluidHandle({
+						handle: {} as unknown as IFluidHandle<number>,
+					});
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{ handle: IFluidHandle<number> }>(),
+					);
+				});
+				it("object with `IFluidHandle` and recursion", () => {
+					const resultRead = passThruHandlingFluidHandle(objectWithFluidHandleOrRecursion);
+					assertIdenticalTypes(
+						// TODO FIX: This is the incorrect result due to IFluidHandle having non-public properties in a recursive context.
+						// @ts-expect-error result is unrolled, but is perfectly supported; so bad error.
+						resultRead,
+						createInstanceOf<ObjectWithFluidHandleOrRecursion>(),
+					);
+					// This is the incorrect result due to IFluidHandle having non-public properties
+					// and over-zealus implementation of the filter.
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{
+							recurseToHandle:
+								| {
+										recurseToHandle:
+											| {
+													recurseToHandle:
+														| {
+																recurseToHandle:
+																	| {
+																			recurseToHandle:
+																				| {
+																						recurseToHandle:
+																							| {
+																									recurseToHandle:
+																										| {
+																												recurseToHandle:
+																													| {
+																															recurseToHandle:
+																																| {
+																																		recurseToHandle:
+																																			| {
+																																					recurseToHandle:
+																																						| JsonTypeWith<IFluidHandle>
+																																						| IFluidHandle<string>;
+																																			  }
+																																			| IFluidHandle<string>;
+																																  }
+																																| IFluidHandle<string>;
+																													  }
+																													| IFluidHandle<string>;
+																										  }
+																										| IFluidHandle<string>;
+																							  }
+																							| IFluidHandle<string>;
+																				  }
+																				| IFluidHandle<string>;
+																	  }
+																	| IFluidHandle<string>;
+														  }
+														| IFluidHandle<string>;
+											  }
+											| IFluidHandle<string>;
+								  }
+								| IFluidHandle<string>;
+						}>(),
+					);
+				});
 			});
 
-			describe("continue rejecting unsupported that are not replaced", () => {
+			describe("continue rejecting unsupported that are not alternately allowed", () => {
 				it("`unknown` (simple object) becomes `JsonTypeWith<bigint>`", () => {
 					const resultRead = passThruHandlingBigint(
 						unknownValueOfSimpleRecord,

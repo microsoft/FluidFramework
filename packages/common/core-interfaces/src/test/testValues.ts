@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidHandle } from "../handles.js";
 import type { JsonTypeWith } from "../jsonType.js";
 
 /* eslint-disable jsdoc/require-jsdoc */
@@ -241,6 +242,13 @@ export type ObjectWithSymbolOrRecursion = {
 };
 export const objectWithSymbolOrRecursion: ObjectWithSymbolOrRecursion = {
 	recurse: { recurse: Symbol("stop") },
+};
+
+export type ObjectWithFluidHandleOrRecursion = {
+	recurseToHandle: ObjectWithFluidHandleOrRecursion | IFluidHandle<string>;
+};
+export const objectWithFluidHandleOrRecursion: ObjectWithFluidHandleOrRecursion = {
+	recurseToHandle: { recurseToHandle: "fake-handle" as unknown as IFluidHandle<string> },
 };
 
 /* eslint-enable @typescript-eslint/consistent-type-definitions */

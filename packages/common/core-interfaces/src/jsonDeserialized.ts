@@ -12,11 +12,21 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
  */
 export interface JsonDeserializedOptions {
 	/**
-	 * A type that is managed by custom deserialization logic (beyond JSON.parse).
+	 * Exact types that are managed by custom deserialization logic (beyond
+	 * JSON.parse). Only exact types matching specification will be preserved
+	 * unaltered.
 	 *
 	 * The default value is `never`.
 	 */
-	Replaced: unknown;
+	AllowExactly?: unknown;
+
+	/**
+	 * General types that are managed by custom deserialization logic (beyond
+	 * JSON.parse). Any type satisfying specification will be preserved unaltered.
+	 *
+	 * The default value is `never`.
+	 */
+	AllowExtensionOf?: unknown;
 }
 
 /**
@@ -46,14 +56,15 @@ export interface JsonDeserializedOptions {
  * Recursive types without any required modification are preserved intact.
  * Recursive types that require modification are unrolled a limited number of
  * times and then further instances of recursion are replaced with
- * {@link JsonTypeWith|JsonTypeWith<Options.Replaced>}.
+ * {@link JsonTypeWith|JsonTypeWith<Options.AllowExactly&7C;Options.AllowExtensionOf>}.
  *
  * Under basic serialization, class instances become simple data objects that
  * lose hidden properties and prototypes that are required for `instanceof`
  * runtime checks.
  *
- * The optional 'Options.Replaced' parameter may be used to permit additional
- * leaf types handled by custom serialization/deserialization logic.
+ * The optional 'Options.AllowExactly' and 'Options.AllowExtensionOf'
+ * parameters may be used to permit additional leaf types handled by custom
+ * serialization/deserialization logic.
  *
  * @example Typical usage
  *
@@ -66,6 +77,7 @@ export interface JsonDeserializedOptions {
 export type JsonDeserialized<
 	T,
 	Options extends JsonDeserializedOptions = {
-		Replaced: never;
+		AllowExactly: never;
+		AllowExtensionOf: never;
 	},
-> = InternalUtilityTypes.JsonDeserializedImpl<T, Options["Replaced"]>;
+> = InternalUtilityTypes.JsonDeserializedImpl<T, Options>;
