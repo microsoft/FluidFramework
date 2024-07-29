@@ -77,6 +77,7 @@ export class RemoteMessageProcessor {
 		| {
 				messages: InboundSequencedContainerRuntimeMessage[];
 				batchStartCsn: number;
+				sequenceNumber?: number; // Needed by the PendingStateManager to properly track empty batches
 		  }
 		| undefined {
 		let message = remoteMessageCopy;
@@ -113,8 +114,21 @@ export class RemoteMessageProcessor {
 				this.processorBatch.length === 0,
 				0x9d4 /* Processor batch should be empty on grouped batch */,
 			);
+			const groupedMessages = this.opGroupingManager.ungroupOp(message).map(unpack);
+			// If the batch is empty, we need to return the sequence number aside
+			if (groupedMessages.length === 0) {
+				assert(
+					message.sequenceNumber !== undefined,
+					"Empty grouped batch has no sequence number",
+				);
+				return {
+					messages: groupedMessages, // empty array
+					batchStartCsn: message.clientSequenceNumber,
+					sequenceNumber: message.sequenceNumber,
+				};
+			}
 			return {
-				messages: this.opGroupingManager.ungroupOp(message).map(unpack),
+				messages: groupedMessages,
 				batchStartCsn: message.clientSequenceNumber,
 			};
 		}

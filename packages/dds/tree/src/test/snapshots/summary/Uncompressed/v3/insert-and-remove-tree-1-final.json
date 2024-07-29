@@ -19,27 +19,40 @@
                       "change": [
                         {
                           "data": {
-                            "maxId": 1,
+                            "maxId": 3,
                             "changes": [
                               {
                                 "fieldKey": "rootFieldKey",
-                                "fieldKind": "Sequence",
+                                "fieldKind": "ModularEditBuilder.Generic",
                                 "change": [
-                                  {
-                                    "count": 1,
-                                    "effect": {
-                                      "remove": {
-                                        "id": 1
-                                      }
+                                  [
+                                    0,
+                                    {
+                                      "fieldChanges": [
+                                        {
+                                          "fieldKey": "",
+                                          "fieldKind": "Sequence",
+                                          "change": [
+                                            {
+                                              "count": 1,
+                                              "effect": {
+                                                "remove": {
+                                                  "id": 2
+                                                }
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
                                     }
-                                  }
+                                  ]
                                 ]
                               }
                             ]
                           }
                         }
                       ],
-                      "revision": 3,
+                      "revision": 5,
                       "sequenceNumber": 6,
                       "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     }
@@ -48,7 +61,7 @@
                     [
                       "8f95be09-8376-4ff7-8755-ccd7e8124b06",
                       {
-                        "base": 3,
+                        "base": 5,
                         "commits": []
                       }
                     ]
@@ -71,59 +84,24 @@
                 "content": {
                   "version": 1,
                   "nodes": {
-                    "com.fluidframework.json.array": {
+                    "com.fluidframework.leaf.string": {
+                      "leaf": 1
+                    },
+                    "insert-and-remove.Array<[\"com.fluidframework.leaf.string\"]>": {
                       "object": {
                         "": {
                           "kind": "Sequence",
                           "types": [
-                            "com.fluidframework.json.object",
-                            "com.fluidframework.json.array",
-                            "com.fluidframework.leaf.number",
-                            "com.fluidframework.leaf.boolean",
-                            "com.fluidframework.leaf.string",
-                            "com.fluidframework.leaf.null"
+                            "com.fluidframework.leaf.string"
                           ]
                         }
                       }
-                    },
-                    "com.fluidframework.json.object": {
-                      "map": {
-                        "kind": "Optional",
-                        "types": [
-                          "com.fluidframework.json.object",
-                          "com.fluidframework.json.array",
-                          "com.fluidframework.leaf.number",
-                          "com.fluidframework.leaf.boolean",
-                          "com.fluidframework.leaf.string",
-                          "com.fluidframework.leaf.null"
-                        ]
-                      }
-                    },
-                    "com.fluidframework.leaf.boolean": {
-                      "leaf": 2
-                    },
-                    "com.fluidframework.leaf.handle": {
-                      "leaf": 3
-                    },
-                    "com.fluidframework.leaf.null": {
-                      "leaf": 4
-                    },
-                    "com.fluidframework.leaf.number": {
-                      "leaf": 0
-                    },
-                    "com.fluidframework.leaf.string": {
-                      "leaf": 1
                     }
                   },
                   "root": {
-                    "kind": "Sequence",
+                    "kind": "Value",
                     "types": [
-                      "com.fluidframework.json.object",
-                      "com.fluidframework.json.array",
-                      "com.fluidframework.leaf.number",
-                      "com.fluidframework.leaf.boolean",
-                      "com.fluidframework.leaf.string",
-                      "com.fluidframework.leaf.null"
+                      "insert-and-remove.Array<[\"com.fluidframework.leaf.string\"]>"
                     ]
                   }
                 },
@@ -142,7 +120,8 @@
                 "type": "blob",
                 "content": {
                   "keys": [
-                    "repair-1"
+                    "rootFieldKey",
+                    "repair-2"
                   ],
                   "fields": {
                     "version": 1,
@@ -158,6 +137,14 @@
                       }
                     ],
                     "data": [
+                      [
+                        1,
+                        [
+                          "insert-and-remove.Array<[\"com.fluidframework.leaf.string\"]>",
+                          false,
+                          []
+                        ]
+                      ],
                       [
                         1,
                         [
@@ -188,12 +175,12 @@
                   "version": 1,
                   "data": [
                     [
-                      3,
-                      1,
-                      1
+                      5,
+                      2,
+                      2
                     ]
                   ],
-                  "maxId": 1
+                  "maxId": 2
                 },
                 "encoding": "utf-8"
               }

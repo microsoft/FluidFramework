@@ -251,6 +251,53 @@ describe("Runtime", () => {
 				assert.strictEqual(containerRuntime.flushMode, FlushMode.Immediate);
 			});
 
+			it("Process empty batch", async () => {
+				let batchBegin = 0;
+				let batchEnd = 0;
+				let callsToEnsure = 0;
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext({
+						"Fluid.Container.enableOfflineLoad": true,
+					}) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				(containerRuntime as any).ensureNoDataModelChanges = (callback) => {
+					callback();
+					callsToEnsure++;
+				};
+				changeConnectionState(containerRuntime, false, mockClientId);
+
+				// Not connected, so nothing is submitted on flush - just queued in PendingStateManager
+				submitDataStoreOp(containerRuntime, "1", "test", { emptyBatch: true });
+				(containerRuntime as any).flush();
+				changeConnectionState(containerRuntime, true, mockClientId);
+
+				containerRuntime.on("batchBegin", () => batchBegin++);
+				containerRuntime.on("batchEnd", () => batchEnd++);
+				containerRuntime.process(
+					{
+						clientId: mockClientId,
+						sequenceNumber: 10,
+						clientSequenceNumber: 1,
+						type: MessageType.Operation,
+						contents: JSON.stringify({
+							type: "groupedBatch",
+							contents: [],
+						}),
+					} as any as ISequencedDocumentMessage,
+					true,
+				);
+				assert.strictEqual(callsToEnsure, 1);
+				assert.strictEqual(batchBegin, 1);
+				assert.strictEqual(batchEnd, 1);
+				assert.strictEqual(containerRuntime.isDirty, false);
+			});
+
 			[true, undefined].forEach((enableOfflineLoad) =>
 				it("Replaying ops should resend in correct order, with batch ID if applicable", async () => {
 					const containerRuntime = await ContainerRuntime.loadRuntime({
