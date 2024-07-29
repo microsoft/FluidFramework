@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { CustomAttributionKey } from "@fluidframework/runtime-definitions/internal";
+
 /**
  * Flags enum that dictates behavior of a {@link ReferencePosition}
  * @legacy
@@ -125,6 +127,7 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
 	// JSON to a segment.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	seg?: any;
+	customAttributionKey?: CustomAttributionKey;
 }
 
 /**

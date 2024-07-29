@@ -14,7 +14,15 @@ export {
 	createInsertOnlyAttributionPolicy,
 	createPropertyTrackingAttributionPolicyFactory,
 	createPropertyTrackingAndInsertionAttributionPolicyFactory,
+	createCustomAttributionTrackingAttributionPolicyFactory,
+	createPropertyWithCustomAttributionTrackingAndInsertionAttributionPolicyFactory,
+	createCustomAttributionTrackingAndInsertionAttributionPolicyFactory,
 } from "./attributionPolicy.js";
+export {
+	customAttributionKeysPropName,
+	ICustomAttributionKeyList,
+	insertCustomAttributionPropInPropertySet,
+} from "./attributionUtils.js";
 export { Client, IClientEvents } from "./client.js";
 export {
 	ConflictAction,

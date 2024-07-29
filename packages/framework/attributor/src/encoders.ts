@@ -5,7 +5,10 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { type IUser } from "@fluidframework/driver-definitions";
-import { type AttributionInfo } from "@fluidframework/runtime-definitions/internal";
+import {
+	type AttributionInfo,
+	type CustomAttributionInfo,
+} from "@fluidframework/runtime-definitions/internal";
 
 import { type IAttributor } from "./attributor.js";
 import { type InternedStringId, MutableStringInterner } from "./stringInterner.js";
@@ -52,12 +55,22 @@ export interface SerializedAttributor {
 	seqs: number[];
 	timestamps: number[];
 	attributionRefs: InternedStringId[];
+	customAttributionInfo?: ICustomAttributorInfoForSerialization;
+}
+
+export interface ICustomAttributorInfoForSerialization {
+	ids: string[];
+	timestamps: number[];
+	attributionRefs: InternedStringId[];
+	attributionPropsRefs: InternedStringId[][];
+	attributionValuesRefs: InternedStringId[][];
 }
 
 export class AttributorSerializer implements IAttributorSerializer {
 	public constructor(
 		private readonly makeAttributor: (
 			entries: Iterable<[number, AttributionInfo]>,
+			customAttributionEntries?: Iterable<[string, CustomAttributionInfo]>,
 		) => IAttributor,
 		private readonly timestampEncoder: TimestampEncoder,
 	) {}
@@ -77,6 +90,37 @@ export class AttributorSerializer implements IAttributorSerializer {
 			attributionRefs.push(ref);
 		}
 
+		const ids: string[] = [];
+		const customTimestamps: number[] = [];
+		const customAttributionRefs: InternedStringId[] = [];
+		const customAttributionPropsRefs: InternedStringId[][] = [];
+		const customAttributionValuesRefs: InternedStringId[][] = [];
+		for (const [
+			id,
+			{ user, timestamp, customAttributes },
+		] of attributor.customAttributionEntries()) {
+			ids.push(id);
+			customTimestamps.push(timestamp);
+			const ref = interner.getOrCreateInternedId(JSON.stringify(user));
+			customAttributionRefs.push(ref);
+			if (customAttributes === undefined) {
+				customAttributionPropsRefs.push([]);
+				customAttributionValuesRefs.push([]);
+			} else {
+				const attributionPropsRef: InternedStringId[] = [];
+				const attributionValueRef: InternedStringId[] = [];
+				for (const [key, value] of Object.entries(customAttributes)) {
+					const val = typeof value === "number" ? value.toString() : value;
+					const propRef = interner.getOrCreateInternedId(key);
+					const valRef = interner.getOrCreateInternedId(val);
+					attributionPropsRef.push(propRef);
+					attributionValueRef.push(valRef);
+				}
+				customAttributionPropsRefs.push(attributionPropsRef);
+				customAttributionValuesRefs.push(attributionValueRef);
+			}
+		}
+
 		const serialized: SerializedAttributor = {
 			interner: interner.getSerializable(),
 			seqs,
@@ -84,6 +128,15 @@ export class AttributorSerializer implements IAttributorSerializer {
 			attributionRefs,
 		};
 
+		if (ids.length > 0) {
+			serialized.customAttributionInfo = {
+				ids,
+				timestamps: this.timestampEncoder.encode(customTimestamps),
+				attributionRefs,
+				attributionPropsRefs: customAttributionPropsRefs,
+				attributionValuesRefs: customAttributionValuesRefs,
+			};
+		}
 		return serialized;
 	}
 
@@ -92,7 +145,12 @@ export class AttributorSerializer implements IAttributorSerializer {
 	 */
 	public decode(encoded: SerializedAttributor): IAttributor {
 		const interner = new MutableStringInterner(encoded.interner);
-		const { seqs, timestamps: encodedTimestamps, attributionRefs } = encoded;
+		const {
+			seqs,
+			timestamps: encodedTimestamps,
+			attributionRefs,
+			customAttributionInfo,
+		} = encoded;
 		const timestamps = this.timestampEncoder.decode(encodedTimestamps);
 		assert(
 			seqs.length === timestamps.length && timestamps.length === attributionRefs.length,
@@ -107,6 +165,46 @@ export class AttributorSerializer implements IAttributorSerializer {
 			const ref = attributionRefs[i]!;
 			const user = JSON.parse(interner.getString(ref)) as IUser;
 			entries[i] = [key, { user, timestamp }];
+		}
+
+		if (customAttributionInfo !== undefined) {
+			const {
+				ids,
+				timestamps: encodedTimestamps2,
+				attributionRefs: attributionRefs2,
+				attributionPropsRefs,
+				attributionValuesRefs,
+			} = customAttributionInfo;
+			const timestamps2 = this.timestampEncoder.decode(encodedTimestamps2);
+			assert(
+				ids.length === timestamps2.length &&
+					ids.length === attributionRefs2.length &&
+					ids.length === attributionPropsRefs.length &&
+					ids.length === attributionValuesRefs.length,
+				"serialized cutom attribution columns should have the same length",
+			);
+			const entries2: [string, CustomAttributionInfo][] = Array.from({ length: ids.length });
+			for (const [i, key] of ids.entries()) {
+				// Non null asserting, we asserted ids, timestamps and attributionRefs have the same length above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const timestamp = timestamps2[i]!;
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const ref = attributionRefs2[i]!;
+				const user = JSON.parse(interner.getString(ref)) as IUser;
+				const attributionPropsRef = attributionPropsRefs[i];
+				const attributionValueRef = attributionValuesRefs[i];
+				if (attributionPropsRef !== undefined && attributionValueRef !== undefined) {
+					const customAttributes = {};
+					for (const [j, key1] of attributionPropsRef.entries()) {
+						customAttributes[interner.getString(key1)] = interner.getString(
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							attributionValueRef[j]!,
+						);
+					}
+					entries2[i] = [key, { user, timestamp, customAttributes }];
+				}
+			}
+			return this.makeAttributor(entries, entries2);
 		}
 		return this.makeAttributor(entries);
 	}

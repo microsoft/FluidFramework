@@ -16,7 +16,10 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import {
+	CustomAttributionKey,
+	ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
@@ -275,11 +278,15 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param pos - The position to insert the segment at
 	 * @param segment - The segment to insert
 	 */
-	public insertSegmentLocal(pos: number, segment: ISegment): IMergeTreeInsertMsg | undefined {
+	public insertSegmentLocal(
+		pos: number,
+		segment: ISegment,
+		customAttributionKey?: CustomAttributionKey,
+	): IMergeTreeInsertMsg | undefined {
 		if (segment.cachedLength <= 0) {
 			return undefined;
 		}
-		const insertOp = createInsertSegmentOp(pos, segment);
+		const insertOp = createInsertSegmentOp(pos, segment, customAttributionKey);
 		this.applyInsertOp({ op: insertOp });
 		return insertOp;
 	}

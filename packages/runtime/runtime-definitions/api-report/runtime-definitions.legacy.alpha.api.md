@@ -14,7 +14,7 @@ export interface AttributionInfo {
 }
 
 // @alpha
-export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
+export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey | CustomAttributionKey;
 
 // @alpha (undocumented)
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
@@ -39,6 +39,21 @@ export enum CreateSummarizerNodeSource {
     FromSummary = 0,
     // (undocumented)
     Local = 2
+}
+
+// @alpha (undocumented)
+export interface CustomAttributionInfo extends AttributionInfo {
+    customAttributes?: {
+        [index: string]: string | number;
+    };
+}
+
+// @alpha (undocumented)
+export interface CustomAttributionKey {
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    type: "custom";
 }
 
 // @alpha

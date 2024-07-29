@@ -11,7 +11,10 @@ import {
 	type IDocumentMessage,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { type AttributionInfo } from "@fluidframework/runtime-definitions/internal";
+import {
+	type AttributionInfo,
+	type CustomAttributionInfo,
+} from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -37,6 +40,31 @@ export interface IAttributor {
 	 */
 	entries(): IterableIterator<[number, AttributionInfo]>;
 
+	/**
+	 * @returns an iterable of (attribution key, custom attribution info) pairs for each stored custom key.
+	 */
+	customAttributionEntries(): IterableIterator<[string, CustomAttributionInfo]>;
+
+	/**
+	 * Adds custom attribution Info for provided key.
+	 * @param key - Custom Attribution key to add.
+	 * @param attributionInfo - Custom attribution info corresponding to the provided key.
+	 */
+	addCustomAttributionInfo(key: string, attributionInfo: CustomAttributionInfo): void;
+
+	/**
+	 * Retrieves custom attribution information associated with a particular key.
+	 * @param key - Custom Attribution key to look up.
+	 * @throws If no attribution information is recorded for that key.
+	 */
+	getCustomAttributionInfo(key: string): CustomAttributionInfo;
+
+	/**
+	 * @param key - Custom Attribution key to look up.
+	 * @returns the custom attribution information associated with the provided key, or undefined if no information exists.
+	 */
+	tryGetCustomAttributionInfo(key: string): CustomAttributionInfo | undefined;
+
 	// TODO:
 	// - GC
 }
@@ -46,12 +74,17 @@ export interface IAttributor {
  */
 export class Attributor implements IAttributor {
 	protected readonly keyToInfo: Map<number, AttributionInfo>;
+	protected readonly customKeyToInfo: Map<string, CustomAttributionInfo>;
 
 	/**
 	 * @param initialEntries - Any entries which should be populated on instantiation.
 	 */
-	public constructor(initialEntries?: Iterable<[number, AttributionInfo]>) {
+	public constructor(
+		initialEntries?: Iterable<[number, AttributionInfo]>,
+		customAttributionEntries?: Iterable<[string, CustomAttributionInfo]>,
+	) {
 		this.keyToInfo = new Map(initialEntries ?? []);
+		this.customKeyToInfo = new Map(customAttributionEntries ?? []);
 	}
 
 	/**
@@ -72,11 +105,31 @@ export class Attributor implements IAttributor {
 		return this.keyToInfo.get(key);
 	}
 
+	public addCustomAttributionInfo(key: string, attributionInfo: CustomAttributionInfo): void {
+		this.customKeyToInfo.set(key, attributionInfo);
+	}
+
+	public tryGetCustomAttributionInfo(key: string): CustomAttributionInfo | undefined {
+		return this.customKeyToInfo.get(key);
+	}
+
+	public getCustomAttributionInfo(key: string): CustomAttributionInfo {
+		const result = this.tryGetCustomAttributionInfo(key);
+		if (!result) {
+			throw new UsageError(`Requested attribution information for unstored key: ${key}.`);
+		}
+		return result;
+	}
+
 	/**
 	 * {@inheritdoc IAttributor.entries}
 	 */
 	public entries(): IterableIterator<[number, AttributionInfo]> {
 		return this.keyToInfo.entries();
+	}
+
+	public customAttributionEntries(): IterableIterator<[string, CustomAttributionInfo]> {
+		return this.customKeyToInfo.entries();
 	}
 }
 
@@ -89,8 +142,9 @@ export class OpStreamAttributor extends Attributor implements IAttributor {
 		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		quorumClients: IQuorumClients,
 		initialEntries?: Iterable<[number, AttributionInfo]>,
+		customAttributionEntries?: Iterable<[string, CustomAttributionInfo]>,
 	) {
-		super(initialEntries);
+		super(initialEntries, customAttributionEntries);
 		deltaManager.on("op", (message: ISequencedDocumentMessage) => {
 			if (message.type === MessageType.Operation) {
 				assert(
