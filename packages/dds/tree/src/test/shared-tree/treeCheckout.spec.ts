@@ -203,109 +203,117 @@ describe("sharedTreeView", () => {
 
 	describe("Views", () => {
 		itView("can fork and apply edits without affecting the parent", (parent) => {
-			insertFirstNode(parent, "parent");
-			const child = parent.fork();
-			insertFirstNode(child, "child");
-			assert.equal(getTestValue(parent), "parent");
-			assert.deepEqual(getTestValues(child), ["parent", "child"]);
+			parent.root.insertAtStart("parent");
+			const child = forkView(parent);
+			parent.root.insertAtStart("child");
+			assert.equal(parent.root[0], "parent");
+			assert.deepEqual(child.root[0], ["parent", "child"]);
+		});
+
+		itView("can fork and apply edits without affecting the parent", (parent) => {
+			parent.root.insertAtStart("parent");
+			const child = forkView(parent);
+			parent.root.insertAtStart("child");
+			assert.equal(parent.root[0], "parent");
+			assert.deepEqual(child.root[0], ["parent", "child"]);
 		});
 
 		itView("can apply edits without affecting a fork", (parent) => {
-			const child = parent.fork();
-			assert.equal(getTestValue(parent), undefined);
-			assert.equal(getTestValue(child), undefined);
-			insertFirstNode(parent, "root");
-			assert.equal(getTestValue(parent), "root");
-			assert.equal(getTestValue(child), undefined);
+			const child = forkView(parent);
+			assert.equal(parent.root[0], undefined);
+			assert.equal(child.root[0], undefined);
+			parent.root.insertAtStart("root");
+			assert.equal(parent.root[0], "root");
+			assert.equal(child.root[0], undefined);
 		});
 
 		itView("can merge changes into a parent", (parent) => {
-			const child = parent.fork();
-			insertFirstNode(child, "view");
-			parent.merge(child);
-			assert.equal(getTestValue(parent), "view");
+			const child = forkView(parent);
+			child.root.insertAtStart("view");
+			parent.checkout.merge(child.checkout);
+			assert.equal(parent.root[0], "view");
 		});
 
 		itView("can rebase over a parent view", (parent) => {
-			const child = parent.fork();
-			insertFirstNode(parent, "root");
-			assert.equal(getTestValue(child), undefined);
-			child.rebaseOnto(parent);
-			assert.equal(getTestValue(child), "root");
+			const child = forkView(parent);
+			parent.root.insertAtStart("root");
+			assert.equal(child.root[0], undefined);
+			child.checkout.rebaseOnto(parent.checkout);
+			assert.equal(child.root[0], "root");
 		});
 
 		itView("can rebase over a child view", (view) => {
-			const parent = view.fork();
-			insertFirstNode(parent, "P1");
-			const child = parent.fork();
-			insertFirstNode(parent, "P2");
-			insertFirstNode(child, "C1");
-			parent.rebaseOnto(child);
-			assert.deepEqual(getTestValues(child), ["P1", "C1"]);
-			assert.deepEqual(getTestValues(parent), ["P1", "C1", "P2"]);
+			const parent = forkView(view);
+			parent.root.insertAtStart("P1");
+			const child = forkView(parent);
+			parent.root.insertAtStart("P2");
+			child.root.insertAtStart("C1");
+			parent.checkout.rebaseOnto(child.checkout);
+			assert.deepEqual(child.root[0], ["P1", "C1"]);
+			assert.deepEqual(parent.root[0], ["P1", "C1", "P2"]);
 		});
 
 		itView("merge changes through multiple views", (viewA) => {
-			const viewB = viewA.fork();
-			const viewC = viewB.fork();
-			const viewD = viewC.fork();
-			insertFirstNode(viewD, "view");
-			viewC.merge(viewD);
-			assert.equal(getTestValue(viewB), undefined);
-			assert.equal(getTestValue(viewC), "view");
-			viewB.merge(viewC);
-			assert.equal(getTestValue(viewB), "view");
-			assert.equal(getTestValue(viewC), "view");
+			const viewB = forkView(viewA);
+			const viewC = forkView(viewB);
+			const viewD = forkView(viewC);
+			viewD.root.insertAtStart("view");
+			viewC.checkout.merge(viewD.checkout);
+			assert.equal(viewB.root[0], undefined);
+			assert.equal(viewC.root[0], "view");
+			viewB.checkout.merge(viewC.checkout);
+			assert.equal(viewB.root[0], "view");
+			assert.equal(viewC.root[0], "view");
 		});
 
 		itView("merge correctly when multiple ancestors are mutated", (viewA) => {
-			const viewB = viewA.fork();
-			const viewC = viewB.fork();
-			const viewD = viewC.fork();
-			insertFirstNode(viewB, "B");
-			insertFirstNode(viewC, "C");
-			insertFirstNode(viewD, "D");
-			viewC.merge(viewD);
-			assert.equal(getTestValue(viewB), "B");
-			assert.equal(getTestValue(viewC), "D");
-			viewB.merge(viewC);
-			assert.equal(getTestValue(viewB), "D");
+			const viewB = forkView(viewA);
+			const viewC = forkView(viewB);
+			const viewD = forkView(viewC);
+			viewB.root.insertAtStart("B");
+			viewC.root.insertAtStart("C");
+			viewD.root.insertAtStart("D");
+			viewC.checkout.merge(viewD.checkout);
+			assert.equal(viewB.root[0], "B");
+			assert.equal(viewC.root[0], "D");
+			viewB.checkout.merge(viewC.checkout);
+			assert.equal(viewB.root[0], "D");
 		});
 
 		itView("can merge a parent view into a child", (view) => {
-			const parent = view.fork();
-			insertFirstNode(parent, "P1");
-			const child = parent.fork();
-			insertFirstNode(parent, "P2");
-			insertFirstNode(child, "C1");
-			child.merge(parent);
-			assert.deepEqual(getTestValues(child), ["P1", "C1", "P2"]);
-			assert.deepEqual(getTestValues(parent), ["P1", "P2"]);
+			const parent = forkView(view);
+			parent.root.insertAtStart("P1");
+			const child = forkView(parent);
+			parent.root.insertAtStart("P2");
+			child.root.insertAtStart("C1");
+			child.checkout.merge(parent.checkout);
+			assert.deepEqual(child.root[0], ["P1", "C1", "P2"]);
+			assert.deepEqual(parent.root[0], ["P1", "P2"]);
 		});
 
 		itView("can perform a complicated merge scenario", (viewA) => {
-			const viewB = viewA.fork();
-			const viewC = viewB.fork();
-			const viewD = viewC.fork();
-			insertFirstNode(viewB, "A1");
-			insertFirstNode(viewC, "B1");
-			insertFirstNode(viewD, "C1");
-			viewC.merge(viewD);
-			insertFirstNode(viewA, "R1");
-			insertFirstNode(viewB, "A2");
-			insertFirstNode(viewC, "B2");
-			viewB.merge(viewC);
-			const viewE = viewB.fork();
-			insertFirstNode(viewB, "A3");
-			viewE.rebaseOnto(viewB);
-			assert.equal(getTestValue(viewE), "A3");
-			insertFirstNode(viewB, "A4");
-			insertFirstNode(viewE, "D1");
-			insertFirstNode(viewA, "R2");
-			viewB.merge(viewE);
-			viewA.merge(viewB);
-			insertFirstNode(viewA, "R3");
-			assert.deepEqual(getTestValues(viewA), [
+			const viewB = forkView(viewA);
+			const viewC = forkView(viewB);
+			const viewD = forkView(viewC);
+			viewB.root.insertAtStart("A1");
+			viewC.root.insertAtStart("B1");
+			viewD.root.insertAtStart("C1");
+			viewC.checkout.merge(viewD.checkout);
+			viewA.root.insertAtStart("R1");
+			viewB.root.insertAtStart("A2");
+			viewC.root.insertAtStart("B2");
+			viewB.checkout.merge(viewC.checkout);
+			const viewE = forkView(viewB);
+			viewB.root.insertAtStart("A3");
+			viewE.checkout.rebaseOnto(viewB.checkout);
+			assert.equal(viewE.root[0], "A3");
+			viewB.root.insertAtStart("A4");
+			viewE.root.insertAtStart("D1");
+			viewA.root.insertAtStart("R2");
+			viewB.checkout.merge(viewE.checkout);
+			viewA.checkout.merge(viewB.checkout);
+			viewA.root.insertAtStart("R3");
+			assert.deepEqual(viewA.root, [
 				"R1",
 				"R2",
 				"A1",
