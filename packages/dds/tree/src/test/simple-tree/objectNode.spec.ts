@@ -12,6 +12,7 @@ import { SchemaFactory } from "../../simple-tree/index.js";
 import { hydrate } from "./utils.js";
 import type { requireAssignableTo } from "../../util/index.js";
 import { validateUsageError } from "../utils.js";
+import { Tree } from "../../shared-tree/index.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
@@ -89,6 +90,31 @@ describe("ObjectNode", () => {
 		});
 	});
 
+	it("accessor local properties", () => {
+		const thisList: unknown[] = [];
+		class Test extends schemaFactory.object("test", {
+			x: schemaFactory.number,
+		}) {
+			public get y() {
+				assert.equal(this, n);
+				thisList.push(this);
+				return this.x;
+			}
+			public set y(value: number) {
+				assert.equal(this, n);
+				thisList.push(this);
+				this.x = value;
+			}
+		}
+
+		const n = hydrate(Test, { x: 1 });
+		n.y = 2;
+		assert.equal(n.x, 2);
+		n.x = 3;
+		assert.equal(n.y, 3);
+		assert.deepEqual(thisList, [n, n]);
+	});
+
 	it("empty property pojo deep equals", () => {
 		const Schema = schemaFactory.object("x", {
 			foo: schemaFactory.optional(schemaFactory.number),
@@ -135,5 +161,45 @@ describe("ObjectNode", () => {
 			},
 			validateUsageError(/delete operator/),
 		);
+	});
+
+	it("assigning identifier errors", () => {
+		class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
+		const n = hydrate(HasId, {});
+		assert.throws(() => {
+			// TODO: AB:9129: this should not compile
+			n.id = "x";
+		});
+	});
+
+	it("unhydrated default identifier access errors", () => {
+		class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
+		const newNode = new HasId({});
+		assert.throws(
+			() => {
+				const id = newNode.id;
+			},
+			validateUsageError(/identifier/),
+		);
+	});
+
+	// TODO: AB#9130 throws an assert not a UsageError.
+	it.skip("unhydrated default identifier access via shortId errors", () => {
+		class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
+		const newNode = new HasId({});
+		assert.throws(
+			() => {
+				const id = Tree.shortId(newNode);
+			},
+			validateUsageError(/identifier/),
+		);
+	});
+
+	// TODO: AB#9127: Should work (or be documented not to). Currently throws an Error, and not a UsageError.
+	it.skip("unhydrated custom identifier access works", () => {
+		class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
+		const newNode = new HasId({ id: "x" });
+		assert.equal(newNode.id, "x");
+		assert.equal(Tree.shortId(newNode), "x");
 	});
 });

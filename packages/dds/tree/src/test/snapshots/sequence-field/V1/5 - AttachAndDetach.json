@@ -4,12 +4,8 @@
     "effect": {
       "attachAndDetach": {
         "attach": {
-          "moveIn": {
+          "insert": {
             "revision": 0,
-            "finalEndpoint": [
-              0,
-              0
-            ],
             "id": 0
           }
         },

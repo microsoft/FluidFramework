@@ -32,6 +32,7 @@ export const cases: {
 	remove: SF.Changeset;
 	revive: SF.Changeset;
 	pin: SF.Changeset;
+	rename: SF.Changeset;
 	move: SF.Changeset;
 	moveAndRemove: SF.Changeset;
 	return: SF.Changeset;
@@ -52,6 +53,7 @@ export const cases: {
 	remove: createRemoveChangeset(1, 3),
 	revive: createReviveChangeset(2, 2, { revision: tag, localId: brand(0) }),
 	pin: [createPinMark(4, brand(0))],
+	rename: [createRenameMark(3, brand(2), brand(3))],
 	move: createMoveChangeset(1, 2, 4),
 	moveAndRemove: [
 		createMoveOutMark(1, brand(0)),
@@ -96,7 +98,7 @@ function createRedundantRemoveChangeset(
 	return changeset;
 }
 
-function createRedundantReviveChangeset(
+function createPinChangeset(
 	startIndex: number,
 	count: number,
 	detachEvent: SF.CellId,
@@ -240,6 +242,31 @@ function createRemoveMark(
 	if (cellId.revision !== undefined) {
 		mark.revision = cellId.revision;
 	}
+	return { ...mark, ...overrides };
+}
+
+/**
+ * @param count - The number of nodes to rename.
+ * @param inputCellId - The ID associated with the first cell in the input context.
+ * @param outputId - The ID to assign to the first cell in the output context.
+ * @param overrides - Any additional properties to add to the mark.
+ */
+function createRenameMark(
+	count: number,
+	inputCellId: ChangesetLocalId | SF.CellId,
+	outputCellId: ChangesetLocalId | SF.CellId,
+	overrides?: Partial<SF.CellMark<SF.Rename>>,
+): SF.CellMark<SF.Rename> {
+	const cellId: ChangeAtomId =
+		typeof inputCellId === "object" ? inputCellId : { localId: inputCellId };
+	const outputId: ChangeAtomId =
+		typeof outputCellId === "object" ? outputCellId : { localId: outputCellId };
+	const mark: SF.CellMark<SF.Rename> = {
+		type: "Rename",
+		count,
+		idOverride: outputId,
+		cellId,
+	};
 	return { ...mark, ...overrides };
 }
 
@@ -413,6 +440,7 @@ export const MarkMaker = {
 	tomb: createTomb,
 	pin: createPinMark,
 	remove: createRemoveMark,
+	rename: createRenameMark,
 	modify: createModifyMark,
 	move: createMoveMarks,
 	moveOut: createMoveOutMark,
@@ -426,7 +454,7 @@ export const ChangeMaker = {
 	remove: createRemoveChangeset,
 	redundantRemove: createRedundantRemoveChangeset,
 	revive: createReviveChangeset,
-	redundantRevive: createRedundantReviveChangeset,
+	pin: createPinChangeset,
 	move: createMoveChangeset,
 	return: createReturnChangeset,
 	modify: createModifyChangeset,

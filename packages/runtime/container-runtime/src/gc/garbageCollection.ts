@@ -403,20 +403,21 @@ export class GarbageCollector implements IGarbageCollector {
 			this.mc.logger,
 			{
 				eventName: "InitializeOrUpdateGCState",
-				details: { initialized, unrefNodeCount: this.unreferencedNodesState.size },
 			},
-			async () => {
+			async (event) => {
 				// If the GC state hasn't been initialized yet, initialize it and return.
 				if (!initialized) {
 					await this.initializeGCStateFromBaseSnapshotP;
-					return;
+				} else {
+					// If the GC state has been initialized, update the tracking of unreferenced nodes as per the current
+					// reference timestamp.
+					for (const [, nodeStateTracker] of this.unreferencedNodesState) {
+						nodeStateTracker.updateTracking(currentReferenceTimestampMs);
+					}
 				}
-
-				// If the GC state has been initialized, update the tracking of unreferenced nodes as per the current
-				// reference timestamp.
-				for (const [, nodeStateTracker] of this.unreferencedNodesState) {
-					nodeStateTracker.updateTracking(currentReferenceTimestampMs);
-				}
+				event.end({
+					details: { initialized, unrefNodeCount: this.unreferencedNodesState.size },
+				});
 			},
 		);
 	}
@@ -1003,6 +1004,7 @@ export class GarbageCollector implements IGarbageCollector {
 		packagePath,
 		request,
 		headerData,
+		additionalProps,
 	}: IGCNodeUpdatedProps) {
 		// If there is no reference timestamp to work with, no ops have been processed after creation. If so, skip
 		// logging as nothing interesting would have happened worth logging.
@@ -1029,6 +1031,7 @@ export class GarbageCollector implements IGarbageCollector {
 			headers: headerData,
 			requestUrl: request?.url,
 			requestHeaders: JSON.stringify(request?.headers),
+			additionalProps,
 		});
 
 		// Any time we log a Tombstone Loaded error (via Telemetry Tracker),

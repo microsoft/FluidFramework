@@ -200,6 +200,9 @@ module.exports = {
 			rules: {
 				// Does not work well with describe/it block scoping
 				"unicorn/consistent-function-scoping": "off",
+				// We run most of our tests in a Node.js environment, so this rule is not important and makes
+				// file-system logic more cumbersome.
+				"unicorn/prefer-module": "off",
 			},
 		},
 		{

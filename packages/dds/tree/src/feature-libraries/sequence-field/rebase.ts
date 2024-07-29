@@ -6,7 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import type { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../core/index.js";
-import { type IdAllocator, brand } from "../../util/index.js";
+import { type IdAllocator, type Mutable, brand } from "../../util/index.js";
 import {
 	type CrossFieldManager,
 	CrossFieldTarget,
@@ -54,6 +54,7 @@ import {
 	isAttachAndDetachEffect,
 	isDetach,
 	isNewAttach,
+	isRename,
 	isTombstone,
 	markEmptiesCells,
 	markFillsCells,
@@ -239,6 +240,8 @@ class RebaseQueue {
 function addMovedMarkEffect(mark: Mark, effect: MarkEffect): Mark {
 	if (isMoveIn(mark) && isMoveOut(effect)) {
 		return { ...mark, type: "Insert" };
+	} else if (isRename(mark) && isMoveOut(effect)) {
+		return { ...effect, count: mark.count, idOverride: mark.idOverride };
 	} else if (isAttachAndDetachEffect(mark) && isMoveIn(mark.attach) && isMoveOut(effect)) {
 		return { ...mark.detach, count: mark.count };
 	} else if (isTombstone(mark)) {
@@ -270,6 +273,7 @@ function rebaseMark(
 			0x8dc /* Unexpected collision of new node changes */,
 		);
 		rebasedMark.changes = movedNodeChanges;
+		moveEffects.onMoveIn(movedNodeChanges);
 	}
 
 	return rebaseMarkIgnoreChild(rebasedMark, baseMark, moveEffects);
@@ -320,10 +324,6 @@ function rebaseMarkIgnoreChild(
 			baseMark.cellId !== undefined,
 			0x81a /* AttachAndDetach mark should target an empty cell */,
 		);
-		if (isMoveIn(baseMark.attach) && isMoveOut(baseMark.detach)) {
-			// Orphaned moves are effectively cell renames.
-			return withCellId(currMark, getDetachOutputCellId(baseMark.detach));
-		}
 		const halfRebasedMark = rebaseMarkIgnoreChild(
 			currMark,
 			{ ...baseMark.attach, cellId: cloneCellId(baseMark.cellId), count: baseMark.count },
@@ -334,6 +334,8 @@ function rebaseMarkIgnoreChild(
 			{ ...baseMark.detach, count: baseMark.count },
 			moveEffects,
 		);
+	} else if (isRename(baseMark)) {
+		return withCellId(currMark, getDetachOutputCellId(baseMark));
 	} else {
 		rebasedMark = currMark;
 	}
@@ -351,11 +353,24 @@ function separateEffectsForMove(mark: MarkEffect): {
 	const type = mark.type;
 	switch (type) {
 		case "Remove":
-		case "MoveOut":
+		case "MoveOut": {
+			// There are two scenarios that lead to a Detach mark having an idOverride:
+			// 1. The detach is a rollback (the idOverride the original id that the cell had in the input context of the attach being rolled back).
+			// 2. The detach has been composed with a Rename (the idOverride is the cell id in the output context of the rename).
+			// Since rollbacks are never rebased, we can safely assume that the idOverride is due to a Rename (scenario #2).
+			// While the detach must follow the node that it targets, the rename must remain in place because it targets the cell.
+			if (mark.idOverride !== undefined) {
+				const remains: MarkEffect = { type: "Rename", idOverride: mark.idOverride };
+				const follows: Mutable<MarkEffect> = { ...mark };
+				delete follows.idOverride;
+				return { remains, follows };
+			}
 			return { follows: mark };
+		}
 		case "AttachAndDetach":
 			return { follows: mark.detach, remains: mark.attach };
 		case "MoveIn":
+		case "Rename":
 			return { remains: mark };
 		case NoopMarkType:
 			return {};
@@ -514,7 +529,12 @@ function getMovedEffect(
 ): MarkEffect | undefined {
 	const effect = getMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, count);
 	assert(effect.length === count, 0x6f3 /* Expected effect to cover entire mark */);
-	return effect.value?.movedEffect;
+	const movedEffect = effect.value?.movedEffect;
+	if (movedEffect !== undefined && movedEffect.type === "MoveOut") {
+		moveEffects.moveKey(CrossFieldTarget.Source, movedEffect.revision, movedEffect.id, count);
+	}
+
+	return movedEffect;
 }
 
 function getMovedChangesFromBaseMark(

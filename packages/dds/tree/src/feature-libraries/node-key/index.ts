@@ -10,7 +10,6 @@ export {
 	type StableNodeKey,
 	nodeKeyTreeIdentifier,
 } from "./nodeKey.js";
-export { NodeKeyIndex } from "./nodeKeyIndex.js";
 export {
 	createNodeKeyManager,
 	isStableNodeKey,

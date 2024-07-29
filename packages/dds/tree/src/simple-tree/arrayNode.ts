@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	CursorLocationType,
-	EmptyKey,
-	type ITreeCursorSynchronous,
-	type TreeNodeSchemaIdentifier,
-} from "../core/index.js";
+import { CursorLocationType, EmptyKey, type ITreeCursorSynchronous } from "../core/index.js";
 import {
 	type FlexAllowedTypes,
 	type FlexFieldNodeSchema,
@@ -24,10 +19,9 @@ import {
 import {
 	type InsertableContent,
 	getOrCreateNodeProxy,
-	markContentType,
 	prepareContentForHydration,
 } from "./proxies.js";
-import { getFlexNode } from "./proxyBinding.js";
+import { getFlexNode, getKernel } from "./proxyBinding.js";
 import {
 	NodeKind,
 	type ImplicitAllowedTypes,
@@ -40,7 +34,12 @@ import {
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
-import { type TreeNode, TreeNodeValid } from "./types.js";
+import {
+	type TreeNode,
+	TreeNodeValid,
+	type InternalTreeNode,
+	type MostDerivedData,
+} from "./types.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -216,6 +215,11 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 		sourceEnd: number,
 		source: TMoveFrom,
 	): void;
+
+	/**
+	 * Returns a custom IterableIterator which throws usage errors if concurrent editing and iteration occurs.
+	 */
+	values(): IterableIterator<T>;
 }
 
 /**
@@ -316,7 +320,6 @@ const arrayPrototypeKeys = [
 	"some",
 	"toLocaleString",
 	"toString",
-	"values",
 
 	// "copyWithin",
 	// "fill",
@@ -490,7 +493,6 @@ declare abstract class NodeWithArrayFeatures<Input, T>
 	): boolean;
 	toLocaleString(): string;
 	toString(): string;
-	values(): IterableIterator<T>;
 }
 /* eslint-enable @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-explicit-any */
 
@@ -555,10 +557,8 @@ function createArrayNodeProxy(
 				return Reflect.get(dispatchTarget, key, receiver) as unknown;
 			}
 
-			const maybeUnboxedContent = field.at(maybeIndex);
-			return isFlexTreeNode(maybeUnboxedContent)
-				? getOrCreateNodeProxy(maybeUnboxedContent)
-				: maybeUnboxedContent;
+			const maybeContent = field.at(maybeIndex);
+			return isFlexTreeNode(maybeContent) ? getOrCreateNodeProxy(maybeContent) : maybeContent;
 		},
 		set: (target, key, newValue, receiver) => {
 			if (key === "length") {
@@ -585,7 +585,7 @@ function createArrayNodeProxy(
 					"Cannot set indexed properties on array nodes. Use array node mutation APIs to alter the array.",
 				);
 			}
-			return allowAdditionalProperties ? Reflect.set(target, key, newValue) : false;
+			return allowAdditionalProperties ? Reflect.set(target, key, newValue, receiver) : false;
 		},
 		has: (target, key) => {
 			const field = getSequenceField(proxy);
@@ -666,6 +666,21 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	public static readonly kind = NodeKind.Array;
 
 	protected abstract get simpleSchema(): T;
+
+	/**
+	 * Generation number which is incremented any time we have an edit on the node.
+	 * Used during iteration to make sure there has been no edits that were concurrently made.
+	 */
+	#generationNumber: number = 0;
+
+	public constructor(
+		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
+	) {
+		super(input);
+		getKernel(this).on("nodeChanged", () => {
+			this.#generationNumber += 1;
+		});
+	}
 
 	#cursorFromFieldData(value: Insertable<T>): ITreeCursorSynchronous {
 		if (isMapTreeNode(getFlexNode(this))) {
@@ -822,13 +837,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		const destinationField = getSequenceField(this);
 		validateIndex(destinationIndex, destinationField, "moveRangeToIndex", true);
 		validateIndexRange(sourceStart, sourceEnd, source ?? destinationField, "moveRangeToIndex");
-		const sourceField =
-			source !== undefined
-				? destinationField.isSameAs(getSequenceField(source))
-					? destinationField
-					: getSequenceField(source)
-				: destinationField;
-
+		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
 		// TODO: determine support for move across different sequence types
 		if (destinationField.schema.types !== undefined && sourceField !== destinationField) {
 			for (let i = sourceStart; i < sourceEnd; i++) {
@@ -849,6 +858,23 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			destinationFieldPath,
 			destinationIndex,
 		);
+	}
+
+	public values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
+		return this.generateValues(this.#generationNumber);
+	}
+	private *generateValues(
+		initialLastUpdatedStamp: number,
+	): Generator<TreeNodeFromImplicitAllowedTypes<T>> {
+		if (initialLastUpdatedStamp !== this.#generationNumber) {
+			throw new UsageError(`Concurrent editing and iteration is not allowed.`);
+		}
+		for (let i = 0; i < this.length; i++) {
+			yield this.at(i) ?? fail("Index is out of bounds");
+			if (initialLastUpdatedStamp !== this.#generationNumber) {
+				throw new UsageError(`Concurrent editing and iteration is not allowed.`);
+			}
+		}
 	}
 }
 
@@ -906,17 +932,11 @@ export function arraySchema<
 		): MapTreeNode {
 			return getOrCreateMapTreeNode(
 				flexSchema,
-				mapTreeFromNodeData(
-					copyContent(
-						flexSchema.name,
-						input as Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-					) as object,
-					this as unknown as ImplicitAllowedTypes,
-				),
+				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
 			);
 		}
 
-		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
+		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexFieldNodeSchema;
@@ -962,12 +982,6 @@ export function arraySchema<
 	}
 
 	return schema;
-}
-
-function copyContent<T>(typeName: TreeNodeSchemaIdentifier, content: Iterable<T>): T[] {
-	const copy = Array.from(content);
-	markContentType(typeName, copy);
-	return copy;
 }
 
 function validateSafeInteger(index: number): void {

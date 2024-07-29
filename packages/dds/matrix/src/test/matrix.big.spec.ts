@@ -49,7 +49,7 @@ async function summarize<T>(matrix: SharedMatrix<T>): Promise<SharedMatrix<T>> {
 	return matrix2;
 }
 
-[false, true].forEach((isSetCellPolicyFWW: boolean) => {
+for (const isSetCellPolicyFWW of [false, true]) {
 	describe(`Big Matrix isSetCellPolicyFWW=${isSetCellPolicyFWW}`, function () {
 		this.timeout(10000);
 
@@ -230,4 +230,4 @@ async function summarize<T>(matrix: SharedMatrix<T>): Promise<SharedMatrix<T>> {
 			});
 		});
 	});
-});
+}
