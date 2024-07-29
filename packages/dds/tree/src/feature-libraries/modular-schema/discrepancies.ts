@@ -454,7 +454,8 @@ function compareFieldKind(
 	}
 
 	// Compare the order values
-	return order[aKind] <= order[bKind];
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	return order[aKind]! <= order[bKind]!;
 }
 
 function throwUnsupportedNodeType(type: string): never {
