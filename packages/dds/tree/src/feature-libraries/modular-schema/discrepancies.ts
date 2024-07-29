@@ -390,6 +390,68 @@ function trackObjectNodeDiscrepancies(
 	return differences;
 }
 
+export function isRepoSuperset(view: TreeStoredSchema, stored: TreeStoredSchema): boolean {
+	const incompatibilities = getAllowedContentIncompatibilities(view, stored);
+
+	for (const incompatibility of incompatibilities) {
+		switch (incompatibility.mismatch) {
+			case "nodeKind":
+			case "valueSchema": {
+				return false;
+			}
+			case "allowedTypes":
+			case "fieldKind": {
+				return validateFieldIncompatibility(incompatibility);
+			}
+			case "fields": {
+				for (const difference of incompatibility.differences) {
+					if (!validateFieldIncompatibility(difference)) {
+						return false;
+					}
+				}
+				return true;
+			}
+			// No default
+		}
+	}
+	return true;
+}
+
+function validateFieldIncompatibility(incompatibility: FieldIncompatibility): boolean {
+	if (incompatibility.mismatch === "allowedTypes") {
+		return incompatibility.stored.every((item) => incompatibility.view.includes(item));
+	} else if (incompatibility.mismatch === "fieldKind") {
+		if (incompatibility.stored === undefined) {
+			// Add an optional field
+			if (incompatibility.view === "Optional") {
+				return true;
+			}
+		} else {
+			// Relax the field to make it more general
+			return compareFieldKind(incompatibility.stored, incompatibility.view);
+		}
+	}
+	return false;
+}
+
+function compareFieldKind(
+	aKind: FieldKindIdentifier | undefined,
+	bKind: FieldKindIdentifier | undefined,
+): boolean {
+	if (aKind === undefined || bKind === undefined) {
+		return false;
+	}
+	// Define the custom order
+	const order: { [key: string]: number } = {
+		"Forbidden": 1,
+		"Value": 2,
+		"Optional": 3,
+	};
+
+	// Compare the order values
+	return order[aKind] <= order[bKind];
+}
+
 function throwUnsupportedNodeType(type: string): never {
 	throw new TypeError(`Unsupported node stored schema type: ${type}`);
 }
