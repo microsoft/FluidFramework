@@ -123,12 +123,12 @@ export interface ITreeConfigurationOptions {
 	 * - Update this check to more tightly match toMapTree
 	 * - Add options to help schema authors disambiguate their types, such as "constant fields" which are not persisted, and always have a constant value.
 	 */
-	readonly ensureUnambiguous?: boolean;
+	readonly preventAmbiguity?: boolean;
 }
 
 const defaultTreeConfigurationOptions: Required<ITreeConfigurationOptions> = {
 	enableSchemaValidation: false,
-	ensureUnambiguous: false,
+	preventAmbiguity: false,
 };
 
 /**
@@ -191,7 +191,7 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 
 			node: markSchemaMostDerived,
 			allowedTypes(types): void {
-				if (config.ensureUnambiguous) {
+				if (config.preventAmbiguity) {
 					checkUnion(types, ambiguityErrors);
 				}
 			},
@@ -207,7 +207,7 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 }
 
 /**
- * Detect cases documented in {@link ITreeConfigurationOptions.ensureUnambiguous}.
+ * Detect cases documented in {@link ITreeConfigurationOptions.preventAmbiguity}.
  */
 function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): void {
 	const checked: Set<TreeNodeSchema> = new Set();
