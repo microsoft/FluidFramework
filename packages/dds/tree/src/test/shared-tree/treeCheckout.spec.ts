@@ -11,14 +11,10 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import {
 	type FieldUpPath,
 	type Revertible,
-	type TreeNodeSchemaIdentifier,
-	type TreeNodeStoredSchema,
-	type TreeStoredSchema,
 	type TreeValue,
 	type Value,
 	moveToDetachedField,
 	rootFieldKey,
-	storedEmptyFieldSchema,
 	RevertibleStatus,
 	CommitKind,
 } from "../../core/index.js";
@@ -26,7 +22,6 @@ import { leaf } from "../../domains/index.js";
 import {
 	type ContextuallyTypedNodeData,
 	FieldKinds,
-	SchemaBuilderBase,
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
@@ -38,17 +33,15 @@ import {
 import {
 	TestTreeProviderLite,
 	createTestUndoRedoStacks,
-	emptyJsonSequenceConfig,
 	forkView,
 	getView,
 	insert,
 	jsonSequenceRootSchema,
 	numberSequenceRootSchema,
-	schematizeFlexTree,
 	stringSequenceRootSchema,
 	validateTreeContent,
 } from "../utils.js";
-import { disposeSymbol } from "../../util/index.js";
+import { disposeSymbol, fail } from "../../util/index.js";
 import {
 	SchemaFactory,
 	type ImplicitFieldSchema,
@@ -59,6 +52,7 @@ import {
 import { getFlexNode } from "../../simple-tree/proxyBinding.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
+import { toFlexSchema } from "../../simple-tree/index.js";
 
 const rootField: FieldUpPath = {
 	parent: undefined,
@@ -422,68 +416,74 @@ describe("sharedTreeView", () => {
 		itView(
 			"properly fork the tree schema",
 			(parent) => {
-				const schemaB: TreeStoredSchema = {
-					nodeSchema: new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>([
-						[leaf.number.name, leaf.number.stored],
-					]),
-					rootFieldSchema: storedEmptyFieldSchema,
-				};
+				const schemaB = intoStoredSchema(
+					toFlexSchema(new SchemaFactory("fork schema branch").optional(defaultSf.number)),
+				);
 				function getSchema(t: ITreeCheckout): "schemaA" | "schemaB" {
 					return t.storedSchema.rootFieldSchema.kind === FieldKinds.required.identifier
 						? "schemaA"
-						: "schemaB";
+						: t.storedSchema.rootFieldSchema.kind === FieldKinds.optional.identifier
+							? "schemaB"
+							: fail("Unexpected schema");
 				}
 
-				assert.equal(getSchema(parent), "schemaA");
-				const child = parent.fork();
-				child.updateSchema(schemaB);
-				assert.equal(getSchema(parent), "schemaA");
-				assert.equal(getSchema(child), "schemaB");
+				assert.equal(getSchema(parent.checkout), "schemaA");
+				const child = forkView(parent);
+				child.checkout.updateSchema(schemaB);
+				assert.equal(getSchema(parent.checkout), "schemaA");
+				assert.equal(getSchema(child.checkout), "schemaB");
 			},
 			{
 				initialContent: {
-					schema: new SchemaBuilderBase(FieldKinds.required, {
-						scope: "test",
-						libraries: [leaf.library],
-					}).intoSchema(leaf.boolean),
+					schema: new SchemaFactory("fork schema").boolean,
 					initialTree: true,
 				},
 			},
 		);
 
 		it("submit edits to Fluid when merging into the root view", () => {
+			const sf = new SchemaFactory("edits submitted schema");
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = schematizeFlexTree(provider.trees[0], emptyJsonSequenceConfig).checkout;
+			const tree1 = provider.trees[0].viewWith({
+				schema: sf.array(sf.string),
+				enableSchemaValidation,
+			});
 			provider.processMessages();
-			const tree2 = schematizeFlexTree(provider.trees[1], emptyJsonSequenceConfig).checkout;
+			const tree2 = provider.trees[1].viewWith({
+				schema: sf.array(sf.string),
+				enableSchemaValidation,
+			});
 			provider.processMessages();
-			const baseView = tree1.fork();
-			const view = baseView.fork();
+			const baseView = forkView(tree1);
+			const view = forkView(baseView);
 			// Modify the view, but tree2 should remain unchanged until the edit merges all the way up
-			insertFirstNode(view, "42");
+			view.root.insertAtStart("42");
 			provider.processMessages();
-			assert.equal(getTestValue(tree2), undefined);
-			baseView.merge(view);
+			assert.equal(tree2.root[0], undefined);
+			baseView.checkout.merge(view.checkout);
 			provider.processMessages();
-			assert.equal(getTestValue(tree2), undefined);
-			tree1.merge(baseView);
+			assert.equal(tree2.root[0], undefined);
+			tree1.checkout.merge(baseView.checkout);
 			provider.processMessages();
-			assert.equal(getTestValue(tree2), "42");
+			assert.equal(tree2.root[0], "42");
 		});
 
 		it("do not squash commits", () => {
+			const sf = new SchemaFactory("no squash commits schema");
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = schematizeFlexTree(provider.trees[0], emptyJsonSequenceConfig).checkout;
+			const tree1 = provider.trees[0].viewWith({
+				schema: sf.array(sf.string),
+				enableSchemaValidation,
+			});
 			provider.processMessages();
-			const tree2 = provider.trees[1];
 			let opsReceived = 0;
-			tree2.on("op", () => (opsReceived += 1));
-			const baseView = tree1.fork();
-			const view = baseView.fork();
-			insertFirstNode(view, "A");
-			insertFirstNode(view, "B");
-			baseView.merge(view);
-			tree1.merge(baseView);
+			provider.trees[1].on("op", () => (opsReceived += 1));
+			const baseView = forkView(tree1);
+			const view = forkView(baseView);
+			view.root.insertAtStart("A");
+			view.root.insertAtStart("B");
+			baseView.checkout.merge(view.checkout);
+			tree1.checkout.merge(baseView.checkout);
 			provider.processMessages();
 			assert.equal(opsReceived, 2);
 		});
@@ -1100,8 +1100,8 @@ function getTestValues({ forest }: ITreeCheckout): Value[] {
 	return values;
 }
 
-const sf = new SchemaFactory("Checkout and view test schema");
-class RootArray extends sf.array("root", sf.string) {}
+const defaultSf = new SchemaFactory("Checkout and view test schema");
+class RootArray extends defaultSf.array("root", defaultSf.string) {}
 
 /**
  * Runs the given test function as two tests,
