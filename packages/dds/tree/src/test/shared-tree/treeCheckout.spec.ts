@@ -329,94 +329,94 @@ describe("sharedTreeView", () => {
 		});
 
 		itView("update anchors after applying a change", (view) => {
-			insertFirstNode(view, "A");
-			let cursor = view.forest.allocateCursor();
-			moveToDetachedField(view.forest, cursor);
+			view.root.insertAtStart("A");
+			let cursor = view.checkout.forest.allocateCursor();
+			moveToDetachedField(view.checkout.forest, cursor);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
 			cursor.clear();
-			insertFirstNode(view, "B");
-			cursor = view.forest.allocateCursor();
-			view.forest.tryMoveCursorToNode(anchor, cursor);
+			view.root.insertAtStart("B");
+			cursor = view.checkout.forest.allocateCursor();
+			view.checkout.forest.tryMoveCursorToNode(anchor, cursor);
 			assert.equal(cursor.value, "A");
 			cursor.clear();
 		});
 
 		itView("update anchors after merging into a parent", (parent) => {
-			insertFirstNode(parent, "A");
-			let cursor = parent.forest.allocateCursor();
-			moveToDetachedField(parent.forest, cursor);
+			parent.root.insertAtStart("A");
+			let cursor = parent.checkout.forest.allocateCursor();
+			moveToDetachedField(parent.checkout.forest, cursor);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
 			cursor.clear();
-			const child = parent.fork();
-			insertFirstNode(child, "B");
-			parent.merge(child);
-			cursor = parent.forest.allocateCursor();
-			parent.forest.tryMoveCursorToNode(anchor, cursor);
+			const child = forkView(parent);
+			child.root.insertAtStart("B");
+			parent.checkout.merge(child.checkout);
+			cursor = parent.checkout.forest.allocateCursor();
+			parent.checkout.forest.tryMoveCursorToNode(anchor, cursor);
 			assert.equal(cursor.value, "A");
 			cursor.clear();
 		});
 
 		itView("update anchors after merging a branch into a divergent parent", (parent) => {
-			insertFirstNode(parent, "A");
-			let cursor = parent.forest.allocateCursor();
-			moveToDetachedField(parent.forest, cursor);
+			parent.root.insertAtStart("A");
+			let cursor = parent.checkout.forest.allocateCursor();
+			moveToDetachedField(parent.checkout.forest, cursor);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
 			cursor.clear();
-			const child = parent.fork();
-			insertFirstNode(parent, "P");
-			insertFirstNode(child, "B");
-			parent.merge(child);
-			cursor = parent.forest.allocateCursor();
-			parent.forest.tryMoveCursorToNode(anchor, cursor);
+			const child = forkView(parent);
+			parent.root.insertAtStart("P");
+			child.root.insertAtStart("B");
+			parent.checkout.merge(child.checkout);
+			cursor = parent.checkout.forest.allocateCursor();
+			parent.checkout.forest.tryMoveCursorToNode(anchor, cursor);
 			assert.equal(cursor.value, "A");
 			cursor.clear();
 		});
 
 		itView("update anchors after undoing", (view) => {
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
-			insertFirstNode(view, "A");
-			let cursor = view.forest.allocateCursor();
-			moveToDetachedField(view.forest, cursor);
+			view.root.insertAtStart("A");
+			let cursor = view.checkout.forest.allocateCursor();
+			moveToDetachedField(view.checkout.forest, cursor);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
 			cursor.clear();
-			insertFirstNode(view, "B");
+			view.root.insertAtStart("B");
 			undoStack.pop()?.revert();
-			cursor = view.forest.allocateCursor();
-			view.forest.tryMoveCursorToNode(anchor, cursor);
+			cursor = view.checkout.forest.allocateCursor();
+			view.checkout.forest.tryMoveCursorToNode(anchor, cursor);
 			assert.equal(cursor.value, "A");
 			cursor.clear();
 			unsubscribe();
 		});
 
 		itView("can be mutated after merging", (parent) => {
-			const child = parent.fork();
-			insertFirstNode(child, "A");
-			parent.merge(child, false);
-			insertFirstNode(child, "B");
-			assert.deepEqual(getTestValues(parent), ["A"]);
-			assert.deepEqual(getTestValues(child), ["A", "B"]);
-			parent.merge(child);
-			assert.deepEqual(getTestValues(parent), ["A", "B"]);
+			const child = forkView(parent);
+			child.root.insertAtStart("A");
+			parent.checkout.merge(child.checkout, false);
+			child.root.insertAtStart("B");
+			assert.deepEqual(parent.root, ["A"]);
+			assert.deepEqual(child.root, ["A", "B"]);
+			parent.checkout.merge(child.checkout);
+			assert.deepEqual(parent.root, ["A", "B"]);
 		});
 
 		itView("can rebase after merging", (parent) => {
-			const child = parent.fork();
-			insertFirstNode(child, "A");
-			parent.merge(child, false);
-			insertFirstNode(parent, "B");
-			child.rebaseOnto(parent);
-			assert.deepEqual(getTestValues(child), ["A", "B"]);
+			const child = forkView(parent);
+			child.root.insertAtStart("A");
+			parent.checkout.merge(child.checkout, false);
+			parent.root.insertAtStart("B");
+			child.checkout.rebaseOnto(parent.checkout);
+			assert.deepEqual(child.root, ["A", "B"]);
 		});
 
 		itView("can be read after merging", (parent) => {
-			insertFirstNode(parent, "root");
-			const child = parent.fork();
-			parent.merge(child);
-			assert.equal(getTestValue(child), "root");
+			parent.root.insertAtStart("root");
+			const child = forkView(parent);
+			parent.checkout.merge(child.checkout);
+			assert.equal(child.root[0], "root");
 		});
 
 		itView(
