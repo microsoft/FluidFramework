@@ -26,6 +26,7 @@ import {
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
 import {
+	Tree,
 	TreeCheckout,
 	type ITreeCheckout,
 	type RevertibleFactory,
@@ -491,101 +492,109 @@ describe("sharedTreeView", () => {
 
 	describe("Transactions", () => {
 		itView("update the tree while open", (view) => {
-			view.transaction.start();
-			insertFirstNode(view, 42);
-			assert.equal(getTestValue(view), 42);
+			Tree.runTransaction(view, () => {
+				view.root.insertAtStart("42");
+				assert.equal(view.root[0], 42);
+			});
 		});
 
 		itView("update the tree after committing", (view) => {
-			view.transaction.start();
-			insertFirstNode(view, 42);
-			view.transaction.commit();
-			assert.equal(getTestValue(view), 42);
+			Tree.runTransaction(view, () => {
+				view.root.insertAtStart("42");
+			});
+			assert.equal(view.root[0], 42);
 		});
 
 		itView("revert the tree after aborting", (view) => {
-			view.transaction.start();
-			insertFirstNode(view, 42);
-			view.transaction.abort();
-			assert.equal(getTestValue(view), undefined);
+			Tree.runTransaction(view, () => {
+				view.root.insertAtStart("42");
+				return Tree.runTransaction.rollback;
+			});
+			assert.equal(view.root[0], undefined);
 		});
 
 		itView("can nest", (view) => {
-			view.transaction.start();
-			insertFirstNode(view, "A");
-			view.transaction.start();
-			insertFirstNode(view, "B");
-			assert.deepEqual(getTestValues(view), ["A", "B"]);
-			view.transaction.commit();
-			assert.deepEqual(getTestValues(view), ["A", "B"]);
-			view.transaction.commit();
-			assert.deepEqual(getTestValues(view), ["A", "B"]);
+			Tree.runTransaction(view, () => {
+				view.root.insertAtStart("A");
+				Tree.runTransaction(view, () => {
+					view.root.insertAtStart("B");
+					assert.deepEqual(view.root, ["A", "B"]);
+				});
+				assert.deepEqual(view.root, ["A", "B"]);
+			});
+			assert.deepEqual(view.root, ["A", "B"]);
 		});
 
 		itView("rejects merges while a transaction is in progress", (view) => {
-			const fork = view.fork();
-			insertFirstNode(fork, 42);
+			const fork = forkView(view);
+			fork.root.insertAtStart("42");
 
-			view.transaction.start();
-			insertFirstNode(view, 43);
-			assert.throws(
-				() => view.merge(fork, true),
-				(e: Error) =>
-					validateAssertionError(
-						e,
-						"Views cannot be merged into a view while it has a pending transaction",
-					),
-			);
-			view.transaction.commit();
-			assert.equal(getTestValue(view), 43);
+			Tree.runTransaction(view, () => {
+				view.root.insertAtStart("43");
+				assert.throws(
+					() => view.checkout.merge(fork.checkout, true),
+					(e: Error) =>
+						validateAssertionError(
+							e,
+							"Views cannot be merged into a view while it has a pending transaction",
+						),
+				);
+				return Tree.runTransaction.rollback;
+			});
+			assert.equal(view.root[0], "43");
 		});
 
 		itView("rejects rebases while a transaction is in progress", (view) => {
-			const fork = view.fork();
-			insertFirstNode(view, 42);
+			const fork = forkView(view);
+			view.root.insertAtStart("42");
 
-			fork.transaction.start();
-			insertFirstNode(fork, 43);
-			assert.throws(
-				() => fork.rebaseOnto(view),
-				(e: Error) =>
-					validateAssertionError(
-						e,
-						"A view cannot be rebased while it has a pending transaction",
-					),
-			);
-			fork.transaction.commit();
-			assert.equal(getTestValue(fork), 43);
+			Tree.runTransaction(fork, () => {
+				fork.root.insertAtStart("43");
+				assert.throws(
+					() => fork.checkout.rebaseOnto(view.checkout),
+					(e: Error) =>
+						validateAssertionError(
+							e,
+							"A view cannot be rebased while it has a pending transaction",
+						),
+				);
+				return Tree.runTransaction.rollback;
+			});
+			assert.equal(fork.root[0], "43");
 		});
 
 		itView("automatically commit if in progress when view merges", (view) => {
-			const fork = view.fork();
-			fork.transaction.start();
-			insertFirstNode(fork, 42);
-			insertFirstNode(fork, 43);
-			view.merge(fork, false);
-			assert.deepEqual(getTestValues(fork), [42, 43]);
-			assert.equal(fork.transaction.inProgress(), false);
+			const fork = forkView(view);
+			Tree.runTransaction(fork, () => {
+				fork.root.insertAtStart("42");
+				fork.root.insertAtStart("43");
+			});
+			view.checkout.merge(fork.checkout, false);
+			assert.deepEqual(fork.root, ["42", "43"]);
+			assert.equal(fork.checkout.transaction.inProgress(), false);
 		});
 
 		itView("do not close across forks", (view) => {
-			view.transaction.start();
-			const fork = view.fork();
-			assert.throws(
-				() => fork.transaction.commit(),
-				(e: Error) => validateAssertionError(e, "No transaction is currently in progress"),
-			);
+			Tree.runTransaction(view, () => {
+				const fork = forkView(view);
+				assert.throws(
+					() => Tree.runTransaction(fork, () => {}),
+					(e: Error) => validateAssertionError(e, "No transaction is currently in progress"),
+				);
+				return Tree.runTransaction.rollback;
+			});
 		});
 
 		itView("do not affect pre-existing forks", (view) => {
-			const fork = view.fork();
-			insertFirstNode(view, "A");
-			fork.transaction.start();
-			insertFirstNode(view, "B");
-			fork.transaction.abort();
-			insertFirstNode(view, "C");
-			view.merge(fork);
-			assert.deepEqual(getTestValues(view), ["A", "B", "C"]);
+			const fork = forkView(view);
+			view.root.insertAtStart("A");
+			Tree.runTransaction(fork, () => {
+				view.root.insertAtStart("B");
+				return Tree.runTransaction.rollback;
+			});
+			view.root.insertAtStart("C");
+			view.checkout.merge(fork.checkout);
+			assert.deepEqual(view.root, ["A", "B", "C"]);
 		});
 
 		// Disabled because rebases are not supported while a transaction is in progress
@@ -593,27 +602,27 @@ describe("sharedTreeView", () => {
 		itView(
 			"can handle a pull while in progress",
 			(view) => {
-				const fork = view.fork();
-				fork.transaction.start();
-				insertFirstNode(view, 42);
-				fork.rebaseOnto(view);
-				assert.equal(getTestValue(fork), 42);
-				fork.transaction.commit();
-				assert.equal(getTestValue(fork), 42);
+				const fork = forkView(view);
+				Tree.runTransaction(fork, () => {
+					view.root.insertAtStart("42");
+					fork.checkout.rebaseOnto(view.checkout);
+					assert.equal(fork.root[0], "42");
+				});
+				assert.equal(fork.root[0], "42");
 			},
 			{ skip: true },
 		);
 
 		itView("update anchors correctly", (view) => {
-			insertFirstNode(view, "A");
-			let cursor = view.forest.allocateCursor();
-			moveToDetachedField(view.forest, cursor);
+			view.root.insertAtStart("A");
+			let cursor = view.checkout.forest.allocateCursor();
+			moveToDetachedField(view.checkout.forest, cursor);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
 			cursor.clear();
-			insertFirstNode(view, "B");
-			cursor = view.forest.allocateCursor();
-			view.forest.tryMoveCursorToNode(anchor, cursor);
+			view.root.insertAtStart("B");
+			cursor = view.checkout.forest.allocateCursor();
+			view.checkout.forest.tryMoveCursorToNode(anchor, cursor);
 			assert.equal(cursor.value, "A");
 			cursor.clear();
 		});
@@ -623,36 +632,38 @@ describe("sharedTreeView", () => {
 		itView(
 			"can handle a complicated scenario",
 			(view) => {
-				insertFirstNode(view, "A");
-				view.transaction.start();
-				insertFirstNode(view, "B");
-				insertFirstNode(view, "C");
-				view.transaction.start();
-				insertFirstNode(view, "D");
-				const fork = view.fork();
-				insertFirstNode(fork, "E");
-				fork.transaction.start();
-				insertFirstNode(fork, "F");
-				insertFirstNode(view, "G");
-				fork.transaction.commit();
-				insertFirstNode(fork, "H");
-				fork.transaction.start();
-				insertFirstNode(fork, "I");
-				fork.transaction.abort();
-				view.merge(fork);
-				insertFirstNode(view, "J");
-				view.transaction.start();
-				const fork2 = view.fork();
-				insertFirstNode(fork2, "K");
-				insertFirstNode(fork2, "L");
-				view.merge(fork2);
-				view.transaction.abort();
-				insertFirstNode(view, "M");
-				view.transaction.commit();
-				insertFirstNode(view, "N");
-				view.transaction.commit();
-				insertFirstNode(view, "O");
-				assert.deepEqual(getTestValues(view), [
+				view.root.insertAtStart("A");
+				Tree.runTransaction(view, () => {
+					view.root.insertAtStart("B");
+					view.root.insertAtStart("C");
+					Tree.runTransaction(view, () => {
+						view.root.insertAtStart("D");
+					});
+					const fork = forkView(view);
+					fork.root.insertAtStart("E");
+					Tree.runTransaction(fork, () => {
+						fork.root.insertAtStart("F");
+					});
+					view.root.insertAtStart("G");
+					fork.root.insertAtStart("H");
+					Tree.runTransaction(fork, () => {
+						fork.root.insertAtStart("I");
+						return Tree.runTransaction.rollback;
+					});
+					view.checkout.merge(fork.checkout);
+					view.root.insertAtStart("J");
+					Tree.runTransaction(view, () => {
+						const fork2 = forkView(view);
+						fork2.root.insertAtStart("K");
+						fork2.root.insertAtStart("L");
+						view.checkout.merge(fork2.checkout);
+						return Tree.runTransaction.rollback;
+					});
+					view.root.insertAtStart("M");
+				});
+				view.root.insertAtStart("N");
+				view.root.insertAtStart("O");
+				assert.deepEqual(view.root, [
 					"A",
 					"B",
 					"C",
