@@ -375,14 +375,22 @@ function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): Exclus
  */
 function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): ExclusiveMapTree {
 	assert(schema.kind === NodeKind.Map, 0x923 /* Expected a Map schema. */);
-	if (!(typeof data === "object" && data !== null && Symbol.iterator in data)) {
+	if (!(typeof data === "object" && data !== null)) {
 		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
 	}
 
 	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
+	const fieldsIterator = (
+		Symbol.iterator in data
+			? // Support iterables of key value pairs (including Map objects)
+				data
+			: // Support record objects for JSON style Map data
+				Object.entries(data)
+	) as Iterable<readonly [string, InsertableContent]>;
+
 	const transformedFields = new Map<FieldKey, ExclusiveMapTree[]>();
-	for (const item of data as Iterable<readonly [string, InsertableContent]>) {
+	for (const item of fieldsIterator) {
 		if (!isReadonlyArray(item) || item.length !== 2 || typeof item[0] !== "string") {
 			throw new UsageError(`Input data is incompatible with map entry: ${item}`);
 		}
@@ -595,11 +603,17 @@ function shallowCompatibilityTest(
 		return mapOrArray ? CompatibilityLevel.Normal : CompatibilityLevel.None;
 	}
 
-	if (mapOrArray) {
+	// At this point, it is assumed data is a record-like object since all the other cases have been eliminated.
+
+	if (schema.kind === NodeKind.Array) {
 		return CompatibilityLevel.None;
 	}
 
-	// Assume record-like object
+	if (schema.kind === NodeKind.Map) {
+		// When not unioned with an ObjectNode, allow objects to be used to create maps.
+		return CompatibilityLevel.Low;
+	}
+
 	assert(isObjectNodeSchema(schema), "unexpected schema kind");
 
 	// TODO: Improve type inference by making this logic more thorough. Handle at least:

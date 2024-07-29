@@ -380,9 +380,19 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 			testFlushingUsingOrderSequentially({ flushMode: FlushMode.Immediate }, true);
 		});
 
-		describe("TurnBased flushing of batches", () => {
+		function testFlushingOfBatches(compressionEnabled: boolean) {
 			beforeEach("setupBatchMessageListeners", async () => {
-				await setupContainers({ flushMode: FlushMode.TurnBased });
+				const noCompressionConfig = {
+					flushMode: FlushMode.TurnBased,
+				};
+				const compressionConfig = {
+					flushMode: FlushMode.TurnBased,
+					compressionOptions: {
+						minimumBatchSizeInBytes: 1,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+				};
+				await setupContainers(compressionEnabled ? compressionConfig : noCompressionConfig);
 				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
 				setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
 			});
@@ -490,125 +500,14 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 				verifyBatchMetadata(dataObject2BatchMessages.slice(2, 4));
 				verifyBatchMetadata(dataObject2BatchMessages.slice(4, 6));
 			});
+		}
+
+		describe("TurnBased flushing of batches: compression [false]", () => {
+			testFlushingOfBatches(false);
 		});
 
-		describe("TurnBased flushing of batches with compression", () => {
-			beforeEach("setupBatchMessageListeners", async () => {
-				await setupContainers({
-					flushMode: FlushMode.TurnBased,
-					compressionOptions: {
-						minimumBatchSizeInBytes: 1,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-				});
-				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
-				setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
-			});
-
-			it("can send and receive multiple batch ops that are flushed on JS turn", async () => {
-				// Send the ops that are to be batched together.
-				dataObject1map1.set("key1", "value1");
-				dataObject1map2.set("key2", "value2");
-				dataObject1map1.set("key3", "value3");
-				dataObject1map2.set("key4", "value4");
-
-				// Yield a turn so that the ops are flushed.
-				await yieldJSTurn();
-
-				// Wait for the ops to get processed by both the containers.
-				await provider.ensureSynchronized();
-
-				assert.equal(
-					filterDatastoreOps(dataObject1BatchMessages).length,
-					4,
-					"Incorrect number of messages received on local client",
-				);
-				assert.equal(
-					filterDatastoreOps(dataObject2BatchMessages).length,
-					4,
-					"Incorrect number of messages received on remote client",
-				);
-
-				verifyBatchMetadata(dataObject1BatchMessages);
-				verifyBatchMetadata(dataObject2BatchMessages);
-			});
-
-			it("can send and receive single batch op that is flushed on JS turn", async () => {
-				dataObject1map1.set("key1", "value1");
-
-				// Yield a turn so that the op is flushed.
-				await yieldJSTurn();
-
-				// Wait for the ops to get processed by both the containers.
-				await provider.ensureSynchronized();
-
-				assert.equal(
-					dataObject1BatchMessages.length,
-					1,
-					"Incorrect number of messages received on local client",
-				);
-				assert.equal(
-					dataObject2BatchMessages.length,
-					1,
-					"Incorrect number of messages received on remote client",
-				);
-
-				verifyBatchMetadata(dataObject1BatchMessages);
-				verifyBatchMetadata(dataObject2BatchMessages);
-			});
-
-			// Disabled due to issue #9546
-			it.skip("can send and receive consecutive batches that are flushed on JS turn", async () => {
-				/**
-				 * This test verifies that among other things, the PendingStateManager's algorithm of handling
-				 * consecutive batches is correct.
-				 */
-
-				// Send the ops that are to be batched together.
-				dataObject1map1.set("key1", "value1");
-				dataObject1map2.set("key2", "value2");
-
-				// Yield a turn so that the ops are flushed.
-				await yieldJSTurn();
-
-				// Send the second set of ops that are to be batched together.
-				dataObject1map1.set("key3", "value3");
-				dataObject1map2.set("key4", "value4");
-
-				// Yield a turn so that the ops are flushed.
-				await yieldJSTurn();
-
-				// Send a third set of ops that are to be batched together.
-				dataObject1map1.set("key5", "value5");
-				dataObject1map2.set("key6", "value6");
-
-				// Yield a turn so that the ops are flushed.
-				await yieldJSTurn();
-
-				// Wait for the ops to get processed by both the containers.
-				await provider.ensureSynchronized();
-
-				assert.equal(
-					dataObject1BatchMessages.length,
-					6,
-					"Incorrect number of messages received on local client",
-				);
-				assert.equal(
-					dataObject2BatchMessages.length,
-					6,
-					"Incorrect number of messages received on remote client",
-				);
-
-				// Verify the local client's batches.
-				verifyBatchMetadata(dataObject1BatchMessages.slice(0, 2));
-				verifyBatchMetadata(dataObject1BatchMessages.slice(2, 4));
-				verifyBatchMetadata(dataObject1BatchMessages.slice(4, 6));
-
-				// Verify the remote client's batches.
-				verifyBatchMetadata(dataObject2BatchMessages.slice(0, 2));
-				verifyBatchMetadata(dataObject2BatchMessages.slice(2, 4));
-				verifyBatchMetadata(dataObject2BatchMessages.slice(4, 6));
-			});
+		describe("TurnBased flushing of batches: compression [true]", () => {
+			testFlushingOfBatches(true);
 		});
 
 		describe("Immediate flushing of ops", () => {
