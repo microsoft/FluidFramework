@@ -5,6 +5,7 @@
 
 import * as fs from "node:fs/promises";
 import path from "node:path";
+import { isTestVersion } from "@fluid-tools/version-tools";
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { formatISO } from "date-fns";
@@ -207,6 +208,11 @@ async function updateReportVersions(
 
 function extractBuildNumber(version: string): number {
 	const versionParts: string[] = version.split("-");
+
+	if (isTestVersion(version)) {
+		return Number.parseInt(versionParts[1], 10);
+	}
+
 	// Extract the last part of the version, which is the number you're looking for
 	return Number.parseInt(versionParts[versionParts.length - 1], 10);
 }
