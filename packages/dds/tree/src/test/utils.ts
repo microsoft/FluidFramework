@@ -1286,6 +1286,19 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 }
 
 /**
+ * Forks a simple tree view.
+ */
+export function forkView<T extends ImplicitFieldSchema>(
+	viewToFork: SchematizingSimpleTreeView<T>,
+): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork } {
+	return new SchematizingSimpleTreeView<T>(
+		viewToFork.checkout.fork(),
+		viewToFork.config,
+		new MockNodeKeyManager(),
+	) as SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
+}
+
+/**
  * A mock implementation of `ITreeCheckout` that provides read access to the forest, and nothing else.
  */
 export class MockTreeCheckout implements ITreeCheckout {

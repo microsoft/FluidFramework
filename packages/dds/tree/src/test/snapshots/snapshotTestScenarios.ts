@@ -11,20 +11,12 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	type ISharedTree,
-	type ITreeCheckoutFork,
 	SharedTreeFactory,
 	type SharedTreeOptions,
 	Tree,
 } from "../../shared-tree/index.js";
-import { TestTreeProviderLite, treeTestFactory } from "../utils.js";
-import {
-	SchemaFactory,
-	TreeViewConfiguration,
-	type ImplicitFieldSchema,
-} from "../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
-import { MockNodeKeyManager } from "../../feature-libraries/index.js";
+import { forkView, TestTreeProviderLite, treeTestFactory } from "../utils.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 
 // Session ids used for the created trees' IdCompressors must be deterministic.
 // TestTreeProviderLite does this by default.
@@ -198,16 +190,6 @@ export function generateTestTrees(options: SharedTreeOptions) {
 		{
 			name: "concurrent-inserts",
 			runScenario: async (takeSnapshot) => {
-				function forkView<T extends ImplicitFieldSchema>(
-					viewToFork: SchematizingSimpleTreeView<T>,
-				): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork } {
-					return new SchematizingSimpleTreeView<T>(
-						viewToFork.checkout.fork(),
-						viewToFork.config,
-						new MockNodeKeyManager(),
-					) as SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
-				}
-
 				const sf = new SchemaFactory("concurrent-inserts");
 				const provider = new TestTreeProviderLite(1, factory, true);
 				const baseTree = provider.trees[0];
