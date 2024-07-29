@@ -56,7 +56,7 @@ export interface JsonDeserializedOptions {
  * Recursive types without any required modification are preserved intact.
  * Recursive types that require modification are unrolled a limited number of
  * times (currently 4) and then further instances of recursion are replaced with
- * {@link JsonTypeWith|JsonTypeWith<Options.AllowExactly&7C;Options.AllowExtensionOf>}.
+ * {@link JsonTypeWith|JsonTypeWith<Options.AllowExactly "or" Options.AllowExtensionOf>}.
  *
  * Under basic serialization, class instances become simple data objects that
  * lose hidden properties and prototypes that are required for `instanceof`
