@@ -12,7 +12,7 @@ import ps from "ps-node";
 import { FileLogger } from "./FileLogger.js";
 import type { TestUsers } from "./getTestUsers.js";
 import type { TestConfiguration } from "./testConfigFile.js";
-import { initialize, safeExit } from "./utils.js";
+import { initialize } from "./utils.js";
 
 const createLoginEnv = (userName: string, password: string) =>
 	`{"${userName}": "${password}"}`;
@@ -143,12 +143,14 @@ export async function stressTest(
 				return new Promise((resolve) => runnerProcess.once("close", resolve));
 			}),
 		);
-	} finally {
 		const endTime = Date.now();
 		console.log(`End time: ${endTime} ms\n`);
 		console.log(`Total run time: ${(endTime - startTime) / 1000}s\n`);
-		await safeExit(0, url);
+	} catch {
+		// Swallow all errors. A previous implementation exited the process here with code 0.
 	}
+
+	return url;
 }
 
 /**

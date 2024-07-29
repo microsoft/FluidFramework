@@ -8,8 +8,9 @@ import commander from "commander";
 
 import { getProfile } from "./getProfile.js";
 import { getTestUsers } from "./getTestUsers.js";
+import { smokeTest } from "./smokeTest.js";
 import { stressTest } from "./stressTest.js";
-import { createTestDriver } from "./utils.js";
+import { createTestDriver, safeExit } from "./utils.js";
 
 const readRunOptions = () => {
 	commander
@@ -103,7 +104,15 @@ const main = async () => {
 		supportsBrowserAuth,
 	);
 
-	await stressTest(testDriver, profile, {
+	// Run in two phases.  First run a smoke test to fail fast for basic issues like service being down, auth doesn't work, etc.
+	// Then after verifying basic functionality works, run the real stress test.
+
+	console.log("Starting smoke test...");
+	await smokeTest(testDriver, profileName);
+	console.log("Smoke test complete!");
+
+	console.log("Starting stress test...");
+	const url = await stressTest(testDriver, profile, {
 		testId,
 		debug,
 		verbose,
@@ -113,6 +122,8 @@ const main = async () => {
 		testUsers,
 		profileName,
 	});
+	console.log("Stress test complete!");
+	await safeExit(0, url);
 };
 
 main().catch((error) => {
