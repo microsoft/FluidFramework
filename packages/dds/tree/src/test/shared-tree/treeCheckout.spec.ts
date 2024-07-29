@@ -9,7 +9,6 @@ import type { IMockLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	AllowedUpdateType,
 	type FieldUpPath,
 	type Revertible,
 	type TreeNodeSchemaIdentifier,
@@ -35,13 +34,12 @@ import {
 	TreeCheckout,
 	type ITreeCheckout,
 	type RevertibleFactory,
-	type TreeContent,
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
-	createCheckoutWithContent,
 	createTestUndoRedoStacks,
 	emptyJsonSequenceConfig,
+	forkView,
 	getView,
 	insert,
 	jsonSequenceRootSchema,
@@ -51,9 +49,16 @@ import {
 	validateTreeContent,
 } from "../utils.js";
 import { disposeSymbol } from "../../util/index.js";
-import { SchemaFactory } from "../../index.js";
+import {
+	SchemaFactory,
+	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
+	type TreeViewConfiguration,
+} from "../../index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getFlexNode } from "../../simple-tree/proxyBinding.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 
 const rootField: FieldUpPath = {
 	parent: undefined,
@@ -1087,6 +1092,9 @@ function getTestValues({ forest }: ITreeCheckout): Value[] {
 	return values;
 }
 
+const sf = new SchemaFactory("Checkout and view test schema");
+class RootArray extends sf.array("root", sf.string) {}
+
 /**
  * Runs the given test function as two tests,
  * one where `view` is the root SharedTree view and the other where `view` is a fork.
@@ -1095,41 +1103,86 @@ function getTestValues({ forest }: ITreeCheckout): Value[] {
  * TODO: users of this are making schema: one has been provided that might be close, but likely isn't fully correct..
  * TODO: users of this doesn't depend on SharedTree directly and should be moved to tests of SharedTreeView.
  */
+function itView<
+	T extends InsertableTreeFieldFromImplicitField<TRootSchema>,
+	TRootSchema extends ImplicitFieldSchema = typeof RootArray,
+>(
+	title: string,
+	fn: (view: SchematizingSimpleTreeView<TRootSchema>, logger: IMockLoggerExt) => void,
+	options: {
+		initialContent: { schema: TRootSchema; initialTree: T };
+		skip?: true;
+	},
+): void;
 function itView(
 	title: string,
-	fn: (view: ITreeCheckout, logger: IMockLoggerExt) => void,
-	options: { initialContent?: TreeContent; skip?: true } = {},
+	fn: (view: SchematizingSimpleTreeView<typeof RootArray>, logger: IMockLoggerExt) => void,
+	options?: {
+		skip?: true;
+	},
+): void;
+function itView<
+	T extends InsertableTreeFieldFromImplicitField<TRootSchema>,
+	TRootSchema extends ImplicitFieldSchema = typeof RootArray,
+>(
+	title: string,
+	fn: (view: SchematizingSimpleTreeView<TRootSchema>, logger: IMockLoggerExt) => void,
+	options: {
+		initialContent?: { schema: TRootSchema; initialTree: T };
+		skip?: true;
+	} = {},
 ): void {
-	const content: TreeContent = options.initialContent ?? {
-		schema: jsonSequenceRootSchema,
-		initialTree: [],
-	};
-	const config = {
-		...content,
-		allowedSchemaModifications: AllowedUpdateType.Initialize,
-	};
-
 	const itFunction = options.skip === true ? it.skip.bind(it) : it;
+
+	function callWithView(
+		thunk: typeof fn,
+		makeViewFromConfig: (
+			config: TreeViewConfiguration<TRootSchema>,
+		) => SchematizingSimpleTreeView<TRootSchema>,
+	): void {
+		const provider = new TestTreeProviderLite();
+		if (options.initialContent) {
+			const view = makeViewFromConfig({
+				schema: options.initialContent.schema,
+				enableSchemaValidation,
+			});
+			view.initialize(options.initialContent.initialTree);
+			thunk(view, provider.logger);
+		} else {
+			const view = (
+				makeViewFromConfig as unknown as (
+					config: TreeViewConfiguration<typeof RootArray>,
+				) => SchematizingSimpleTreeView<typeof RootArray>
+			)({
+				schema: RootArray,
+				enableSchemaValidation,
+			});
+			view.initialize(new RootArray([]));
+			// down cast here is safe due to overload protections
+			(
+				thunk as unknown as (
+					view: SchematizingSimpleTreeView<typeof RootArray>,
+					logger: IMockLoggerExt,
+				) => void
+			)(view, provider.logger);
+		}
+	}
 
 	itFunction(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
-		// Test an actual SharedTree.
-		fn(schematizeFlexTree(provider.trees[0], config).checkout, provider.logger);
+		callWithView(fn, (config) => provider.trees[0].viewWith(config));
 	});
 
 	itFunction(`${title} (reference view)`, () => {
-		const { checkout, logger } = createCheckoutWithContent(content);
-		fn(checkout, logger);
+		callWithView(fn, getView);
 	});
 
 	itFunction(`${title} (forked view)`, () => {
 		const provider = new TestTreeProviderLite();
-		fn(schematizeFlexTree(provider.trees[0], config).checkout.fork(), provider.logger);
+		callWithView(fn, (config) => forkView(provider.trees[0].viewWith(config)));
 	});
 
 	itFunction(`${title} (reference forked view)`, () => {
-		const { checkout, logger } = createCheckoutWithContent(content);
-		const fork = checkout.fork();
-		fn(fork, logger);
+		callWithView(fn, (config) => forkView(getView(config)));
 	});
 }
