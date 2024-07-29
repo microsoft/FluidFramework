@@ -19,7 +19,7 @@ import fs from "fs-extra";
 import path from "path";
 
 import { alertNodeType } from "./alert-node.js";
-import { layoutContent } from "./api-documentation-layout.js";
+import { ancestryHasModifierTag, layoutContent } from "./api-documentation-layout.js";
 import { buildNavBar } from "./build-api-nav.js";
 import { renderAlertNode, renderBlockQuoteNode, renderTableNode } from "./custom-renderers.js";
 import { createHugoFrontMatter } from "./front-matter.js";
@@ -83,18 +83,24 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 		createDefaultLayout: layoutContent,
 		getAlertsForItem: (apiItem) => {
 			const alerts = [];
-			if (ApiItemUtilities.isDeprecated(apiItem)) {
-				alerts.push("Deprecated");
+			if (ancestryHasModifierTag(apiItem, "@system")) {
+				alerts.push("System");
 			}
-			if (ApiItemUtilities.hasModifierTag(apiItem, "@legacy")) {
-				alerts.push("Legacy");
-			}
+			else
+			{
+				if (ApiItemUtilities.isDeprecated(apiItem)) {
+					alerts.push("Deprecated");
+				}
+				if (ApiItemUtilities.hasModifierTag(apiItem, "@legacy")) {
+					alerts.push("Legacy");
+				}
 
-			const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
-			if (releaseTag === ReleaseTag.Alpha) {
-				alerts.push("Alpha");
-			} else if (releaseTag === ReleaseTag.Beta) {
-				alerts.push("Beta");
+				const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
+				if (releaseTag === ReleaseTag.Alpha) {
+					alerts.push("Alpha");
+				} else if (releaseTag === ReleaseTag.Beta) {
+					alerts.push("Beta");
+				}
 			}
 			return alerts;
 		},
