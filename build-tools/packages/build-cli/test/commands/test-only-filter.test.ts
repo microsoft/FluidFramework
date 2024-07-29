@@ -40,6 +40,9 @@ describe("flub test-only-filter", () => {
 
 			expect(pkg.name).to.equal("@fluid-tools/build-cli");
 			expect(pkg.directory).to.equal("build-tools/packages/build-cli");
+
+			expect(selected.length).to.equal(1);
+			expect(filtered.length).to.equal(1);
 		});
 
 	test
@@ -48,8 +51,8 @@ describe("flub test-only-filter", () => {
 		.it(`--releaseGroup selector`, (ctx) => {
 			const output: jsonOutput = JSON.parse(ctx.stdout);
 			const { selected, filtered } = output;
-			expect(selected).to.be.ofSize(5);
-			expect(filtered).to.be.ofSize(5);
+			expect(selected).to.be.ofSize(4);
+			expect(filtered).to.be.ofSize(4);
 		});
 
 	test
@@ -61,7 +64,7 @@ describe("flub test-only-filter", () => {
 
 			const names = filtered.map((p) => p.name);
 			expect(names).to.be.containingAllOf([
-				"@fluid-private/readme-command",
+				"@fluid-private/changelog-generator-wrapper",
 				"@fluid-example/example-utils",
 			]);
 		});
@@ -74,7 +77,7 @@ describe("flub test-only-filter", () => {
 			const { filtered } = output;
 
 			const names = filtered.map((p) => p.name);
-			expect(names).to.not.be.containingAnyOf(["@fluid-private/readme-command"]);
+			expect(names).to.not.be.containingAnyOf(["@fluid-private/changelog-generator-wrapper"]);
 		});
 
 	test
@@ -93,7 +96,7 @@ describe("flub test-only-filter", () => {
 
 			const names = filtered.map((p) => p.name);
 			expect(names).to.be.containingAllOf([
-				"@fluid-private/readme-command",
+				"@fluid-private/changelog-generator-wrapper",
 				"@fluid-tools/build-cli",
 				"fluid-framework",
 			]);
