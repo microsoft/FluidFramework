@@ -608,7 +608,7 @@ function shallowCompatibilityTest(
 	}
 
 	if (schema.kind === NodeKind.Map) {
-		// When not unioned with an ObjectNode, allow objects to be used to crete maps.
+		// When not unioned with an ObjectNode, allow objects to be used to create maps.
 		return CompatibilityLevel.Low;
 	}
 
