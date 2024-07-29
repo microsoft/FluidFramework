@@ -12,6 +12,11 @@ import type {
 import type { JsonTypeWith, NonNullJsonObjectWith } from "./jsonType.js";
 
 /**
+ * Unique symbol for recursion meta-typing.
+ */
+const RecursionMarkerSymbol: unique symbol = Symbol("recursion here");
+
+/**
  * Collection of utility types that are not intended to be used/imported
  * directly outside of this package.
  *
@@ -535,7 +540,7 @@ export namespace InternalUtilityTypes {
 	 * @system
 	 */
 	export interface RecursionMarker {
-		"recursion here": "recursion here";
+		[RecursionMarkerSymbol]: typeof RecursionMarkerSymbol;
 	}
 
 	/**
@@ -575,7 +580,14 @@ export namespace InternalUtilityTypes {
 						> extends infer TNoRecursion
 					? /* test for no change from filtered type */ IsSameType<
 							TNoRecursion,
-							JsonDeserializedFilter<TNoRecursion, Controls, 0>
+							JsonDeserializedFilter<
+								TNoRecursion,
+								{
+									AllowExactly: Controls["AllowExactly"] | RecursionMarker;
+									AllowExtensionOf: Controls["AllowExtensionOf"];
+								},
+								0
+							>
 						> extends true
 						? /* same (no filtering needed) => test for non-public
 						     properties (class instance type) */
