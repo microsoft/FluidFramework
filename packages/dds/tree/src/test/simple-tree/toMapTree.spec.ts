@@ -1447,6 +1447,16 @@ describe("toMapTree", () => {
 					[mapSchema, arraySchema],
 				);
 			});
+
+			it("array vs map low priority matching", () => {
+				const f = new SchemaFactory("test");
+				const arraySchema = f.array([f.null]);
+				const mapSchema = f.map([f.null]);
+				// Array makes map
+				assert.deepEqual(getPossibleTypes(new Set([mapSchema]), []), [mapSchema]);
+				// Map makes array
+				assert.deepEqual(getPossibleTypes(new Set([arraySchema]), new Map()), [arraySchema]);
+			});
 		});
 
 		describe("addDefaultsToMapTree", () => {
