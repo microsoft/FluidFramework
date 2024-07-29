@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert } from "assert";
 
 import type { IMockLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
@@ -27,7 +27,6 @@ import { leaf } from "../../domains/index.js";
 import {
 	type ContextuallyTypedNodeData,
 	FieldKinds,
-	FlexFieldSchema,
 	SchemaBuilderBase,
 	cursorForJsonableTreeField,
 	intoStoredSchema,
@@ -43,7 +42,7 @@ import {
 	createCheckoutWithContent,
 	createTestUndoRedoStacks,
 	emptyJsonSequenceConfig,
-	flexTreeViewWithContent,
+	getView,
 	insert,
 	jsonSequenceRootSchema,
 	numberSequenceRootSchema,
@@ -52,36 +51,30 @@ import {
 	validateTreeContent,
 } from "../utils.js";
 import { disposeSymbol } from "../../util/index.js";
+import { SchemaFactory } from "../../index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getFlexNode } from "../../simple-tree/proxyBinding.js";
 
 const rootField: FieldUpPath = {
 	parent: undefined,
 	field: rootFieldKey,
 };
 
+const enableSchemaValidation = true;
+
 describe("sharedTreeView", () => {
 	describe("Events", () => {
-		const builder = new SchemaBuilderBase(FieldKinds.required, {
-			scope: "Events test schema",
-			libraries: [leaf.library],
-		});
-		const rootTreeNodeSchema = builder.object("root", {
-			x: leaf.number,
-		});
-		const schema = builder.intoSchema(
-			FlexFieldSchema.create(FieldKinds.optional, [rootTreeNodeSchema]),
-		);
+		const sf = new SchemaFactory("Events test schema");
+		const RootNode = sf.object("RootNode", { x: sf.number });
 
 		it("triggers events for local and subtree changes", () => {
-			const view = flexTreeViewWithContent({
-				schema,
-				initialTree: {
-					x: 24,
-				},
-			});
-			const root = view.flexTree.content ?? fail("missing root");
+			const view = getView({ enableSchemaValidation, schema: RootNode });
+			view.initialize({ x: 24 });
+			const root = view.root;
+			const anchorNode = getFlexNode(root).anchorNode;
 			const log: string[] = [];
-			const unsubscribe = root.anchorNode.on("childrenChanging", () => log.push("change"));
-			const unsubscribeSubtree = root.anchorNode.on("subtreeChanging", () => {
+			const unsubscribe = anchorNode.on("childrenChanging", () => log.push("change"));
+			const unsubscribeSubtree = anchorNode.on("subtreeChanging", () => {
 				log.push("subtree");
 			});
 			const unsubscribeAfter = view.checkout.events.on("afterBatch", () => log.push("after"));
@@ -113,18 +106,15 @@ describe("sharedTreeView", () => {
 		});
 
 		it("propagates path args for local and subtree changes", () => {
-			const view = flexTreeViewWithContent({
-				schema,
-				initialTree: {
-					x: 24,
-				},
-			});
-			const root = view.flexTree.content ?? fail("missing root");
+			const view = getView({ enableSchemaValidation, schema: RootNode });
+			view.initialize({ x: 24 });
+			const root = view.root;
+			const anchorNode = getFlexNode(root).anchorNode;
 			const log: string[] = [];
-			const unsubscribe = root.anchorNode.on("childrenChanging", (upPath) =>
+			const unsubscribe = anchorNode.on("childrenChanging", (upPath) =>
 				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}`),
 			);
-			const unsubscribeSubtree = root.anchorNode.on("subtreeChanging", (upPath) => {
+			const unsubscribeSubtree = anchorNode.on("subtreeChanging", (upPath) => {
 				log.push(`subtree-${String(upPath.parentField)}-${upPath.parentIndex}`);
 			});
 			const unsubscribeAfter = view.checkout.events.on("afterBatch", () => log.push("after"));
