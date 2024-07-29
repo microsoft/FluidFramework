@@ -349,7 +349,7 @@ function rebaseMarkIgnoreChild(
  */
 function separateEffectsForMove(mark: MarkEffect): {
 	remains?: MarkEffect;
-	follows?: MarkEffect;
+	follows?: Detach;
 } {
 	const type = mark.type;
 	switch (type) {
@@ -397,7 +397,7 @@ function separateEffectsForMove(mark: MarkEffect): {
 
 // TODO: Reduce the duplication between this and other MoveEffect helpers
 function sendEffectToDest(
-	markEffect: MarkEffect,
+	markEffect: Detach,
 	moveEffects: MoveEffectTable,
 	{ revision, localId: id }: ChangeAtomId,
 	count: number,
@@ -534,8 +534,6 @@ function getMovedEffect(
 	if (movedEffect === undefined) {
 		return undefined;
 	}
-
-	assert(isDetach(movedEffect), "Expected moved effect to be a detach ");
 	if (isMoveOut(movedEffect)) {
 		moveEffects.moveKey(CrossFieldTarget.Source, movedEffect.revision, movedEffect.id, count);
 	}
