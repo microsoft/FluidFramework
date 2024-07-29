@@ -200,7 +200,7 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 			customDataFormatters: {
 				"Batch Count": (v: unknown): string => prettyNumber(v as number, 0),
 				"Period (ns/op)": (v: unknown) => prettyNumber(1e9 * (v as number), 2),
-				"Margin of Error": (v: unknown): string => prettyNumber(v as number, 0),
+				"Margin of Error": (v: unknown): string => prettyNumber(v as number, 2),
 				"Relative Margin of Error": (v: unknown) => `±${(v as number).toFixed(2)}%`,
 				"Iterations per Batch": (v: unknown) => `${prettyNumber(v as number, 0)}`,
 			},
