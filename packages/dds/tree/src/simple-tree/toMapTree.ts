@@ -603,6 +603,8 @@ function shallowCompatibilityTest(
 		return mapOrArray ? CompatibilityLevel.Normal : CompatibilityLevel.None;
 	}
 
+	// At this point, it is assumed data is a record-like object since all the other cases have been eliminated.
+
 	if (schema.kind === NodeKind.Array) {
 		return CompatibilityLevel.None;
 	}
@@ -612,7 +614,6 @@ function shallowCompatibilityTest(
 		return CompatibilityLevel.Low;
 	}
 
-	// Assume record-like object
 	assert(isObjectNodeSchema(schema), "unexpected schema kind");
 
 	// TODO: Improve type inference by making this logic more thorough. Handle at least:
