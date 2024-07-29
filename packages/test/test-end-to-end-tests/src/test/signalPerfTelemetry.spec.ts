@@ -34,7 +34,7 @@ describeCompat("Signal performance telemetry", "NoCompat", (getTestObjectProvide
 	let containerRuntime;
 	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider();
-		const container = await provider.makeTestContainer();
+		const container = await provider.makeTestContainer(testContainerConfig);
 		dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		containerRuntime = dataObject.context.containerRuntime;
 
@@ -45,7 +45,7 @@ describeCompat("Signal performance telemetry", "NoCompat", (getTestObjectProvide
 	});
 
 	itExpects(
-		"latency telemetry after 100 broadcast signals",
+		"SignalLatency telemetry after 100 broadcast signals",
 		[
 			{
 				eventName: "fluid:telemetry:ContainerRuntime:SignalLatency",
@@ -57,6 +57,92 @@ describeCompat("Signal performance telemetry", "NoCompat", (getTestObjectProvide
 				containerRuntime.submitSignal("signal", "test");
 				await waitForSignal(containerRuntime);
 			}
+		},
+	);
+
+	itExpects(
+		"SignalLost error event after missing signal is detected",
+		[
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:SignalLatency",
+				clientType: "interactive",
+			},
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:SignalLost",
+				clientType: "interactive",
+			},
+		],
+		async () => {
+			for (let i = 0; i < 101; i++) {
+				containerRuntime.submitSignal("signal", "test");
+				await waitForSignal(containerRuntime);
+			}
+
+			containerRuntime.processSignal(
+				{
+					clientId: containerRuntime.clientId,
+					content: {
+						clientSignalSequenceNumber: 150,
+						contents: {
+							type: "signal",
+							content: "test",
+						},
+					},
+				},
+				true,
+			);
+		},
+	);
+
+	itExpects(
+		"SignalOutOfOrder error event after a missing signal is received non-sequentially",
+		[
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:SignalLatency",
+				clientType: "interactive",
+			},
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:SignalLost",
+				clientType: "interactive",
+			},
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:SignalOutOfOrder",
+				clientType: "interactive",
+			},
+		],
+		async () => {
+			for (let i = 0; i < 101; i++) {
+				containerRuntime.submitSignal("signal", "test");
+				await waitForSignal(containerRuntime);
+			}
+
+			containerRuntime.processSignal(
+				{
+					clientId: containerRuntime.clientId,
+					content: {
+						clientSignalSequenceNumber: 150,
+						contents: {
+							type: "signal",
+							content: "test",
+						},
+					},
+				},
+				true,
+			);
+
+			containerRuntime.processSignal(
+				{
+					clientId: containerRuntime.clientId,
+					content: {
+						clientSignalSequenceNumber: 148,
+						contents: {
+							type: "signal",
+							content: "test",
+						},
+					},
+				},
+				true,
+			);
 		},
 	);
 });
