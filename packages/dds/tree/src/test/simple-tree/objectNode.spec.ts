@@ -183,20 +183,18 @@ describe("ObjectNode", () => {
 		);
 	});
 
-	// TODO: AB#9130 throws an assert not a UsageError.
-	it.skip("unhydrated default identifier access via shortId errors", () => {
+	it("unhydrated default identifier access via shortId errors", () => {
 		class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
 		const newNode = new HasId({});
 		assert.throws(
 			() => {
 				const id = Tree.shortId(newNode);
 			},
-			validateUsageError(/identifier/),
+			validateUsageError(/Tree.shortId cannot access default identifiers on unhydrated nodes/),
 		);
 	});
 
-	// TODO: AB#9127: Should work (or be documented not to). Currently throws an Error, and not a UsageError.
-	it.skip("unhydrated custom identifier access works", () => {
+	it("unhydrated custom identifier access works", () => {
 		class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
 		const newNode = new HasId({ id: "x" });
 		assert.equal(newNode.id, "x");
