@@ -252,6 +252,9 @@ describe("Runtime", () => {
 			});
 
 			it("Process empty batch", async () => {
+				let batchBegin = 0;
+				let batchEnd = 0;
+				let callsToEnsure = 0;
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({
 						"Fluid.Container.enableOfflineLoad": true,
@@ -263,8 +266,8 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				let callsToEnsure = 0;
-				(containerRuntime as any).ensureNoDataModelChanges = () => {
+				(containerRuntime as any).ensureNoDataModelChanges = (callback) => {
+					callback();
 					callsToEnsure++;
 				};
 				changeConnectionState(containerRuntime, false, mockClientId);
@@ -273,6 +276,9 @@ describe("Runtime", () => {
 				submitDataStoreOp(containerRuntime, "1", "test", { emptyBatch: true });
 				(containerRuntime as any).flush();
 				changeConnectionState(containerRuntime, true, mockClientId);
+
+				containerRuntime.on("batchBegin", () => batchBegin++);
+				containerRuntime.on("batchEnd", () => batchEnd++);
 				containerRuntime.process(
 					{
 						clientId: mockClientId,
@@ -287,6 +293,9 @@ describe("Runtime", () => {
 					true,
 				);
 				assert.strictEqual(callsToEnsure, 1);
+				assert.strictEqual(batchBegin, 1);
+				assert.strictEqual(batchEnd, 1);
+				assert.strictEqual(containerRuntime.isDirty, false);
 			});
 
 			[true, undefined].forEach((enableOfflineLoad) =>

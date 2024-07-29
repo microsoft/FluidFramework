@@ -2664,7 +2664,9 @@ export class ContainerRuntime
 					)
 				: batch.map((message) => ({ message, localOpMetadata: undefined }));
 			if (messages.length === 0) {
-				this.ensureNoDataModelChanges(() => this.processEmptyBatch(sequenceNumber));
+				this.ensureNoDataModelChanges(() =>
+					this.processEmptyBatch(sequenceNumber, local, batchStartCsn),
+				);
 				return;
 			}
 			messages.forEach(({ message, localOpMetadata }) => {
@@ -2747,14 +2749,23 @@ export class ContainerRuntime
 	/**
 	 * Process an empty batch, which will execute expected actions while processing even if there are no messages.
 	 * This is a separate function because the processCore function expects at least one message to process.
+	 * It is expected to happen only when the outbox produces an empty batch due to a resubmit flow.
 	 */
-	private processEmptyBatch(sequenceNumber) {
+	private processEmptyBatch(
+		sequenceNumber: number | undefined,
+		local: boolean,
+		batchStartCsn: number,
+	) {
 		assert(sequenceNumber !== undefined, "sequenceNumber must be defined");
 		this.emit("batchBegin", { sequenceNumber });
+		this._processedClientSequenceNumber = batchStartCsn;
 		if (!this.hasPendingMessages()) {
 			this.updateDocumentDirtyState(false);
 		}
 		this.emit("batchEnd", undefined, { sequenceNumber });
+		if (local) {
+			this.resetReconnectCount();
+		}
 	}
 
 	/**
