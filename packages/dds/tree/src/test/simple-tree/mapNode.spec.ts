@@ -73,6 +73,8 @@ describe("MapNode", () => {
 		assert.deepEqual([...fromMap], data);
 		const fromIterable = new Schema(new Map(data).entries());
 		assert.deepEqual([...fromIterable], data);
+		const fromRecord = new Schema({ x: 5 });
+		assert.deepEqual([...fromRecord], data);
 	});
 
 	describe("implicit construction", () => {
@@ -90,6 +92,10 @@ describe("MapNode", () => {
 		it("fromIterable", () => {
 			const fromIterable = new Root({ data: new Map(data).entries() });
 			assert.deepEqual([...fromIterable.data], data);
+		});
+		it("fromRecord", () => {
+			const fromRecord = new Root({ data: { x: 5 } });
+			assert.deepEqual([...fromRecord.data], data);
 		});
 	});
 });
