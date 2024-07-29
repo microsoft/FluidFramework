@@ -85,9 +85,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 			const alerts = [];
 			if (ancestryHasModifierTag(apiItem, "@system")) {
 				alerts.push("System");
-			}
-			else
-			{
+			} else {
 				if (ApiItemUtilities.isDeprecated(apiItem)) {
 					alerts.push("Deprecated");
 				}

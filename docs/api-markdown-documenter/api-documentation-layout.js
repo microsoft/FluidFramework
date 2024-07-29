@@ -45,7 +45,10 @@ const supportDocsLinkSpan = new SpanNode([
  * @privateRemarks import from `@fluid-tools/api-markdown-documenter` once available.
  */
 export function ancestryHasModifierTag(apiItem, tagName) {
-	return ApiItemUtilities.hasModifierTag(apiItem, tagName) || (apiItem.parent !== undefined && ancestryHasModifierTag(apiItem.parent, tagName));
+	return (
+		ApiItemUtilities.hasModifierTag(apiItem, tagName) ||
+		(apiItem.parent !== undefined && ancestryHasModifierTag(apiItem.parent, tagName))
+	);
 }
 
 /**
@@ -164,9 +167,7 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 	const systemNotice = createSystemNotice(apiItem);
 	if (systemNotice !== undefined) {
 		sections.push(new SectionNode([systemNotice]));
-	}
-	else
-	{
+	} else {
 		// Render deprecation notice (if any)
 		const deprecationNotice = createDeprecationNoticeSection(apiItem, config);
 		if (deprecationNotice !== undefined) {
