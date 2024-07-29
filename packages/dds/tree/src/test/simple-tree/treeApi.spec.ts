@@ -863,7 +863,10 @@ describe("treeNodeApi", () => {
 			view.checkout.merge(branchView.checkout);
 
 			// Validate changes actually took place and all listeners fired
-			assert.deepEqual(Array.from(root), [3, 2]);
+			// Note: as of 2024-07-29, if the schema for the root is defined with a name
+			// (`class treeSchema extends sb.array("root", [sb.number])` where "root" is the name), we need to use Array.from()
+			// or array spread in order to compare the node to another array.
+			assert.deepEqual([...root], [3, 2]);
 			assert.equal(listenerFired, true, "'nodeChanged' should have fired");
 		});
 	});
