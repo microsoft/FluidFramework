@@ -24,7 +24,7 @@ import {
 } from "../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { createSnapshotCompressor } from "../snapshots/testTreeScenarios.js";
+import { createSnapshotCompressor } from "../snapshots/snapshotTestScenarios.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 const mintedTag = testIdCompressor.generateCompressedId();

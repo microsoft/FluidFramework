@@ -13,6 +13,7 @@ import {
 	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import {
+	type FactoryContent,
 	type InsertableContent,
 	getProxyForField,
 	prepareContentForHydration,
@@ -33,6 +34,7 @@ import { mapTreeFromNodeData } from "./toMapTree.js";
 import { type MostDerivedData, type TreeNode, TreeNodeValid } from "./types.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import type { RestrictiveReadonlyRecord } from "../util/index.js";
 
 /**
  * A map of string keys to tree objects.
@@ -125,7 +127,7 @@ const handler: ProxyHandler<TreeMapNode> = {
 };
 
 abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends TreeNodeValid<
-	Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>
+	MapNodeInsertableData<T>
 > {
 	public static readonly kind = NodeKind.Map;
 
@@ -237,11 +239,7 @@ export function mapSchema<
 		): MapTreeNode {
 			return getOrCreateMapTreeNode(
 				flexSchema,
-				mapTreeFromNodeData(
-					// Ensure input iterable is not an array. See TODO in shallowCompatibilityTest.
-					new Map(input as Iterable<readonly [string, InsertableContent]>),
-					this as unknown as ImplicitAllowedTypes,
-				),
+				mapTreeFromNodeData(input as FactoryContent, this as unknown as ImplicitAllowedTypes),
 			);
 		}
 
@@ -264,9 +262,17 @@ export function mapSchema<
 		TName,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<TName>,
-		Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
 		T
 	> = schema;
 	return schemaErased;
 }
+
+/**
+ * Content which can be used to construct a Map node, explicitly or implicitly.
+ * @system @public
+ */
+export type MapNodeInsertableData<T extends ImplicitAllowedTypes> =
+	| Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>
+	| RestrictiveReadonlyRecord<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>;
