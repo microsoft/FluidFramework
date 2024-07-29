@@ -23,7 +23,7 @@ const maybeInstantiateGlobalLoggerType = async () => {
 	if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER !== undefined) {
 		// We expect that the call to import the specified package will result in a global getTestLogger.
 		// Check that it's not already available to avoid double-importing on repeat calls.
-		if (getTestLogger === undefined) {
+		if (typeof getTestLogger === "undefined") {
 			await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
 		}
 		const logger = getTestLogger?.();
