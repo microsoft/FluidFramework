@@ -1161,7 +1161,9 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
 
 // @public @sealed
 export interface TreeChangeEvents {
-    nodeChanged(): void;
+    nodeChanged({ changedProperties }: {
+        changedProperties: ReadonlySet<string>;
+    }): void;
     treeChanged(): void;
 }
 
