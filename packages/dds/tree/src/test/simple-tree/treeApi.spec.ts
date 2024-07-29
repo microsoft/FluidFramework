@@ -810,7 +810,12 @@ describe("treeNodeApi", () => {
 			class treeSchema extends sb.map("root", [sb.number]) {}
 
 			const view = getView(new TreeViewConfiguration({ schema: treeSchema }));
-			view.initialize(new Map([["key1", 1], ["key2", 2]]));
+			view.initialize(
+				new Map([
+					["key1", 1],
+					["key2", 2],
+				]),
+			);
 			const root = view.root;
 
 			let listenerFired = false;
