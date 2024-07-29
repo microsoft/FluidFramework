@@ -53,6 +53,7 @@ describeCompat("Signal performance telemetry", "NoCompat", (getTestObjectProvide
 			},
 		],
 		async () => {
+			// Send 100+ broadcast signals to trigger latency telemetry event
 			for (let i = 0; i < 101; i++) {
 				containerRuntime.submitSignal("signal", "test");
 				await waitForSignal(containerRuntime);
@@ -78,6 +79,7 @@ describeCompat("Signal performance telemetry", "NoCompat", (getTestObjectProvide
 				await waitForSignal(containerRuntime);
 			}
 
+			// Process a signal with a sequence number that is higher than expected to simulate missing signals and trigger a SignalLost error event.
 			containerRuntime.processSignal(
 				{
 					clientId: containerRuntime.clientId,
@@ -116,6 +118,7 @@ describeCompat("Signal performance telemetry", "NoCompat", (getTestObjectProvide
 				await waitForSignal(containerRuntime);
 			}
 
+			// Create gap in signal sequence number. Should trigger SignalLost error event.
 			containerRuntime.processSignal(
 				{
 					clientId: containerRuntime.clientId,
@@ -130,6 +133,7 @@ describeCompat("Signal performance telemetry", "NoCompat", (getTestObjectProvide
 				true,
 			);
 
+			// Simulate an out-of-order signal by processing a signal in the missing sequence gap range. Should trigger SignalOutOfOrder error event.
 			containerRuntime.processSignal(
 				{
 					clientId: containerRuntime.clientId,
