@@ -684,17 +684,19 @@ describe("sharedTreeView", () => {
 
 	describe("disposal", () => {
 		itView("forks can be disposed", (view) => {
-			const fork = view.fork();
-			fork[disposeSymbol]();
+			const fork = forkView(view);
+			fork.checkout[disposeSymbol]();
 		});
 
 		itView("disposed forks cannot be edited or double-disposed", (view) => {
-			const fork = view.fork();
-			fork[disposeSymbol]();
+			const fork = forkView(view);
+			fork.checkout[disposeSymbol]();
 
-			assert.throws(() => insertFirstNode(fork, "A"));
-			assert.throws(() => fork.updateSchema(intoStoredSchema(numberSequenceRootSchema)));
-			assert.throws(() => fork[disposeSymbol]());
+			assert.throws(() => fork.root.insertAtStart("A"));
+			assert.throws(() =>
+				fork.checkout.updateSchema(intoStoredSchema(numberSequenceRootSchema)),
+			);
+			assert.throws(() => fork.checkout[disposeSymbol]());
 		});
 	});
 
