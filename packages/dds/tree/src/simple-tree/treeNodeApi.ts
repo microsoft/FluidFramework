@@ -12,6 +12,7 @@ import {
 	isLazy,
 	isTreeValue,
 	FlexObjectNodeSchema,
+	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import { fail, extractFromOpaque, isReadonlyArray } from "../util/index.js";
 
@@ -117,6 +118,8 @@ export interface TreeNodeApi {
 	 *
 	 * If the node has more than one identifier, then this will throw an error.
 	 *
+	 * If the node is unhydrated and using the field default, this will throw an error.
+	 *
 	 * The returned integer must not be serialized or preserved outside of the current process.
 	 * Its lifetime is that of the current in-memory instance of the FF container for this client, and it is not guaranteed to be unique or stable outside of that context.
 	 * The same node's identifier may, for example, be different across multiple sessions for the same client and document, or different across two clients in the same session.
@@ -203,8 +206,17 @@ export const treeNodeApi: TreeNodeApi = {
 				return undefined;
 			case 1: {
 				const identifier = flexNode.tryGetField(identifierFieldKeys[0] ?? oob())?.boxedAt(0);
+				if (isMapTreeNode(flexNode) && identifier === undefined) {
+					throw new UsageError(
+						"Tree.shortId cannot access default identifiers on unhydrated nodes",
+					);
+				}
 				assert(identifier !== undefined, 0x927 /* The identifier must exist */);
 				const identifierValue = identifier.value as string;
+
+				if (isMapTreeNode(identifier)) {
+					return identifierValue;
+				}
 				const localNodeKey =
 					identifier.context.nodeKeyManager.tryLocalizeNodeKey(identifierValue);
 				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
