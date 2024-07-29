@@ -1073,46 +1073,6 @@ describe("sharedTreeView", () => {
 	});
 });
 
-/**
- * Inserts a single node under the root of the tree with the given value.
- * Use {@link getTestValue} to read the value.
- */
-function insertFirstNode(branch: ITreeCheckout, value: ContextuallyTypedNodeData): void {
-	insert(branch, 0, value);
-}
-
-/**
- * Reads the last value added by {@link insertFirstNode} if it exists.
- */
-function getTestValue({ forest }: ITreeCheckout): TreeValue | undefined {
-	const readCursor = forest.allocateCursor();
-	moveToDetachedField(forest, readCursor);
-	if (!readCursor.firstNode()) {
-		readCursor.free();
-		return undefined;
-	}
-	const { value } = readCursor;
-	readCursor.free();
-	return value;
-}
-
-/**
- * Reads all values in a tree set by {@link insertFirstNode} in the order they were added (which is the reverse of the tree order).
- */
-function getTestValues({ forest }: ITreeCheckout): Value[] {
-	const readCursor = forest.allocateCursor();
-	moveToDetachedField(forest, readCursor);
-	const values: Value[] = [];
-	if (readCursor.firstNode()) {
-		values.unshift(readCursor.value);
-		while (readCursor.nextNode()) {
-			values.unshift(readCursor.value);
-		}
-	}
-	readCursor.free();
-	return values;
-}
-
 const defaultSf = new SchemaFactory("Checkout and view test schema");
 class RootArray extends defaultSf.array("root", defaultSf.string) {}
 
