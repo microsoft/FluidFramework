@@ -149,4 +149,121 @@ describeCompat("Signal performance telemetry", "NoCompat", (getTestObjectProvide
 			);
 		},
 	);
+
+	itExpects(
+		"Multiple SignalLost error events after multiple missing signals are detected",
+		[
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:SignalLost",
+				clientType: "interactive",
+			},
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:SignalLost",
+				clientType: "interactive",
+			},
+		],
+		async () => {
+			// Initial signal
+			containerRuntime.submitSignal("signal", "test");
+			await waitForSignal(containerRuntime);
+
+			// Process a signal with a sequence number that is higher than expected to simulate missing signals and trigger a SignalLost error event.
+			containerRuntime.processSignal(
+				{
+					clientId: containerRuntime.clientId,
+					content: {
+						clientSignalSequenceNumber: 10,
+						contents: {
+							type: "signal",
+							content: "test",
+						},
+					},
+				},
+				true,
+			);
+
+			// Process a signal with a sequence number that is higher than expected to simulate missing signals and trigger a SignalLost error event.
+			containerRuntime.processSignal(
+				{
+					clientId: containerRuntime.clientId,
+					content: {
+						clientSignalSequenceNumber: 15,
+						contents: {
+							type: "signal",
+							content: "test",
+						},
+					},
+				},
+				true,
+			);
+		},
+	);
+
+	itExpects(
+		"Multiple SignalOutOfOrder error events after multiple missing signals are received non-sequentially",
+		[
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:SignalLost",
+				clientType: "interactive",
+			},
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:SignalOutOfOrder",
+				clientType: "interactive",
+			},
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:SignalOutOfOrder",
+				clientType: "interactive",
+			},
+		],
+		async () => {
+			// Initial signal
+			containerRuntime.submitSignal("signal", "test");
+			await waitForSignal(containerRuntime);
+
+			// Create gap in signal sequence number. Should trigger SignalLost error event.
+			containerRuntime.processSignal(
+				{
+					clientId: containerRuntime.clientId,
+					content: {
+						clientSignalSequenceNumber: 10,
+						contents: {
+							type: "signal",
+							content: "test",
+						},
+					},
+				},
+				true,
+			);
+
+			// Simulate an out-of-order signal by processing a signal in the missing sequence gap range. Should trigger SignalOutOfOrder error event.
+			containerRuntime.processSignal(
+				{
+					clientId: containerRuntime.clientId,
+					content: {
+						clientSignalSequenceNumber: 7,
+						contents: {
+							type: "signal",
+							content: "test",
+						},
+					},
+				},
+				true,
+			);
+
+			// Simulate an out-of-order signal by processing a signal in the missing sequence gap range. Should trigger SignalOutOfOrder error event.
+			containerRuntime.processSignal(
+				{
+					clientId: containerRuntime.clientId,
+					content: {
+						clientSignalSequenceNumber: 8,
+						contents: {
+							type: "signal",
+							content: "test",
+						},
+					},
+				},
+				true,
+			);
+		},
+	);
 });
