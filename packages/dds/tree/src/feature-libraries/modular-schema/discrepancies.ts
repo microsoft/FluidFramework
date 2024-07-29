@@ -446,7 +446,12 @@ function compareFieldKind(
 		"Forbidden": 1,
 		"Value": 2,
 		"Optional": 3,
+		// "Sequence": 4,  // the sequence fieldKind is not supported yet
 	};
+
+	if (!(aKind in order) || !(bKind in order)) {
+		return false;
+	}
 
 	// Compare the order values
 	return order[aKind] <= order[bKind];
