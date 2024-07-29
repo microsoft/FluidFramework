@@ -20,5 +20,5 @@ which do not require unhydrated nodes to differentiate ambiguous unions,
 to construct trees entirely from JSON compatible objects using their constructors.
 
 Due to limitations of TypeScript and recursive types,
-recursive maps to not currently advertize support for this feature in their typing,
-but it does work at runtime.
+recursive maps do not advertise support for this feature in their typing,
+but it works at runtime.
