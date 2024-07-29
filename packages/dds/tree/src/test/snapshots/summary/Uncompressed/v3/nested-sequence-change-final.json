@@ -112,7 +112,14 @@
                                         [
                                           "test trees.Recursive Map",
                                           false,
-                                          []
+                                          [
+                                            "bar",
+                                            [
+                                              "test trees.Array<[\"test trees.Recursive Map\"]>",
+                                              false,
+                                              []
+                                            ]
+                                          ]
                                         ]
                                       ]
                                     ]
@@ -224,7 +231,14 @@
                                     [
                                       "test trees.Recursive Map",
                                       false,
-                                      []
+                                      [
+                                        "bar",
+                                        [
+                                          "test trees.Array<[\"test trees.Recursive Map\"]>",
+                                          false,
+                                          []
+                                        ]
+                                      ]
                                     ]
                                   ]
                                 ]
