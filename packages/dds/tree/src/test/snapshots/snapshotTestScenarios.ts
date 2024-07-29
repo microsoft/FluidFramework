@@ -11,6 +11,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	type ISharedTree,
+	type ITreeCheckoutFork,
 	SharedTreeFactory,
 	type SharedTreeOptions,
 	Tree,
@@ -199,12 +200,12 @@ export function generateTestTrees(options: SharedTreeOptions) {
 			runScenario: async (takeSnapshot) => {
 				function forkView<T extends ImplicitFieldSchema>(
 					viewToFork: SchematizingSimpleTreeView<T>,
-				): SchematizingSimpleTreeView<T> {
+				): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork } {
 					return new SchematizingSimpleTreeView<T>(
 						viewToFork.checkout.fork(),
 						viewToFork.config,
 						new MockNodeKeyManager(),
-					);
+					) as SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
 				}
 
 				const sf = new SchemaFactory("concurrent-inserts");
