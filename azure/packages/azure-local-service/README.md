@@ -6,7 +6,7 @@ Azure local service is a minimal, self-contained, test implementation of the Azu
 
 The Azure local service includes most of the basic features needed to **test** data stores and containers. While we use the [Webpack Fluid Loader](../../packages/tools/webpack-fluid-loader)'s in browser service for much of our data store and container development, the Azure local service offers some advantages because it's a standalone process. For instance, testing a Fluid container from 2+ simultaneously connected clients is much easier using the Azure local service.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -26,6 +26,10 @@ To get started, install the package by running the following command:
 ```bash
 npm i @fluidframework/azure-local-service
 ```
+
+## API Documentation
+
+API documentation for **@fluidframework/azure-local-service** is available at <https://fluidframework.com/docs/apis/azure-local-service>.
 
 <!-- prettier-ignore-end -->
 
@@ -53,14 +57,10 @@ $env:PORT=6502
 npm run start
 ```
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/azure-local-service** is available at <https://fluidframework.com/docs/apis/azure-local-service>.
 
 ## Minimum Client Requirements
 

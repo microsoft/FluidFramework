@@ -283,7 +283,6 @@ declare type current_as_old_for_TypeAlias_EnqueueSummarizeResult = requireAssign
  * typeValidation.broken:
  * "Class_FluidDataStoreContext": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_FluidDataStoreContext = requireAssignableTo<TypeOnly<old.FluidDataStoreContext>, TypeOnly<current.FluidDataStoreContext>>
 
 /*
@@ -896,7 +895,6 @@ declare type old_as_current_for_Interface_IGCNodeUpdatedProps = requireAssignabl
  * typeValidation.broken:
  * "Interface_IGCNodeUpdatedProps": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IGCNodeUpdatedProps = requireAssignableTo<TypeOnly<current.IGCNodeUpdatedProps>, TypeOnly<old.IGCNodeUpdatedProps>>
 
 /*
@@ -1617,7 +1615,6 @@ declare type current_as_old_for_Variable_InactiveResponseHeaderKey = requireAssi
  * typeValidation.broken:
  * "Class_LocalFluidDataStoreContext": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalFluidDataStoreContext = requireAssignableTo<TypeOnly<old.LocalFluidDataStoreContext>, TypeOnly<current.LocalFluidDataStoreContext>>
 
 /*
@@ -1645,7 +1642,6 @@ declare type current_as_old_for_ClassStatics_LocalFluidDataStoreContext = requir
  * typeValidation.broken:
  * "Class_LocalFluidDataStoreContextBase": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalFluidDataStoreContextBase = requireAssignableTo<TypeOnly<old.LocalFluidDataStoreContextBase>, TypeOnly<current.LocalFluidDataStoreContextBase>>
 
 /*

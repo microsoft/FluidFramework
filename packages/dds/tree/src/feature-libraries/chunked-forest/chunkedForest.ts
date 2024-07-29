@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	type Anchor,
@@ -105,7 +105,7 @@ export class ChunkedForest implements IEditableForest {
 			mutableChunk: this.roots as BasicChunk | undefined,
 			getParent(): StackNode {
 				assert(this.mutableChunkStack.length > 0, 0x532 /* invalid access to root's parent */);
-				return this.mutableChunkStack[this.mutableChunkStack.length - 1];
+				return this.mutableChunkStack[this.mutableChunkStack.length - 1] ?? oob();
 			},
 			free(): void {
 				this.mutableChunk = undefined;
@@ -204,14 +204,16 @@ export class ChunkedForest implements IEditableForest {
 					parent.mutableChunk.fields.get(parent.key) ?? fail("missing edited field");
 				let indexWithinChunk = index;
 				let indexOfChunk = 0;
-				while (indexWithinChunk >= chunks[indexOfChunk].topLevelLength) {
-					indexWithinChunk -= chunks[indexOfChunk].topLevelLength;
+				let chunk = chunks[indexOfChunk] ?? oob();
+				while (indexWithinChunk >= chunk.topLevelLength) {
+					chunk = chunks[indexOfChunk] ?? oob();
+					indexWithinChunk -= chunk.topLevelLength;
 					indexOfChunk++;
 					if (indexOfChunk === chunks.length) {
 						fail("missing edited node");
 					}
 				}
-				let found = chunks[indexOfChunk];
+				let found = chunks[indexOfChunk] ?? oob();
 				if (!(found instanceof BasicChunk)) {
 					// TODO:Perf: support in place editing of other chunk formats when possible:
 					// 1. Support updating values in uniform chunks.
@@ -226,7 +228,7 @@ export class ChunkedForest implements IEditableForest {
 					chunks.splice(indexOfChunk, 1, ...newChunks);
 					found.referenceRemoved();
 
-					found = newChunks[indexWithinChunk];
+					found = newChunks[indexWithinChunk] ?? oob();
 				}
 				assert(found instanceof BasicChunk, 0x536 /* chunk should have been normalized */);
 				if (found.isShared()) {

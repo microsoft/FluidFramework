@@ -297,7 +297,7 @@ export class SchemaFactory<
 		ScopedSchemaName<TScope, `Map<${string}>`>,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>,
-		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+		Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
 		true,
 		T
 	>;
@@ -319,7 +319,7 @@ export class SchemaFactory<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
-		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+		Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
 		true,
 		T
 	>;
@@ -331,7 +331,7 @@ export class SchemaFactory<
 		string,
 		NodeKind.Map,
 		TreeMapNode<T>,
-		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+		Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
 		true,
 		T
 	> {
@@ -352,7 +352,7 @@ export class SchemaFactory<
 				string,
 				NodeKind.Map,
 				TreeMapNode<T>,
-				Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+				Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
 				true,
 				T
 			>;
@@ -378,7 +378,7 @@ export class SchemaFactory<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
-		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+		Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
 		ImplicitlyConstructable,
 		T
 	> {

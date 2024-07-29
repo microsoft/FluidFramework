@@ -21,7 +21,7 @@ import {
 import { toFlexSchema } from "./toFlexSchema.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
 import { assert } from "@fluidframework/core-utils/internal";
-import { isObjectNodeSchema } from "./objectNode.js";
+import { isObjectNodeSchema } from "./objectNodeTypes.js";
 import { markSchemaMostDerived } from "./schemaFactory.js";
 
 /**
@@ -165,7 +165,10 @@ export function walkNodeSchema(
 			walkAllowedTypes(field.allowedTypeSet, visitor, visitedSet);
 		}
 	} else {
-		assert(schema.kind === NodeKind.Array || schema.kind === NodeKind.Map, "invalid schema");
+		assert(
+			schema.kind === NodeKind.Array || schema.kind === NodeKind.Map,
+			0x9b3 /* invalid schema */,
+		);
 		const childTypes = schema.info as ImplicitAllowedTypes;
 		walkFieldSchema(childTypes, visitor, visitedSet);
 	}

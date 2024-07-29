@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	UsageError,
@@ -429,7 +429,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// after a transaction is rolled back, revert removed roots back to the latest snapshot
 		branch.on("transactionRolledBack", () => {
 			const snapshot = this.removedRootsSnapshots.pop();
-			assert(snapshot !== undefined, "a snapshot for removed roots does not exist");
+			assert(snapshot !== undefined, 0x9ae /* a snapshot for removed roots does not exist */);
 			this.removedRoots = snapshot;
 		});
 
@@ -441,7 +441,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			if (event.change !== undefined) {
 				const revision =
 					event.type === "replace"
-						? event.newCommits[event.newCommits.length - 1].revision
+						? // Change events will always contain new commits
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							event.newCommits[event.newCommits.length - 1]!.revision
 						: event.change.revision;
 
 				// Conflicts due to schema will be empty and thus are not applied.
@@ -475,7 +477,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				this.events.emit("afterBatch");
 			}
 			if (event.type === "replace" && getChangeReplaceType(event) === "transactionCommit") {
-				const transactionRevision = event.newCommits[0].revision;
+				const firstCommit = event.newCommits[0] ?? oob();
+				const transactionRevision = firstCommit.revision;
 				for (const transactionStep of event.removedCommits) {
 					this.removedRoots.updateMajor(transactionStep.revision, transactionRevision);
 				}
@@ -617,7 +620,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.checkNotDisposed();
 		assert(
 			!view.transaction.inProgress(),
-			"A view cannot be rebased while it has a pending transaction",
+			0x9af /* A view cannot be rebased while it has a pending transaction */,
 		);
 		view.branch.rebaseOnto(this.branch);
 	}
@@ -633,7 +636,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.checkNotDisposed();
 		assert(
 			!this.transaction.inProgress(),
-			"Views cannot be merged into a view while it has a pending transaction",
+			0x9b0 /* Views cannot be merged into a view while it has a pending transaction */,
 		);
 		while (view.transaction.inProgress()) {
 			view.transaction.commit();

@@ -9,6 +9,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	NodeKind,
 	type TreeNodeSchema,
+	type TreeNodeSchemaClass,
 	type WithType,
 	typeNameSymbol,
 } from "./schemaTypes.js";
@@ -23,7 +24,7 @@ import { isTreeNode } from "./proxies.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { fail } from "../util/index.js";
-import { setFlexNode } from "./proxyBinding.js";
+import { getFlexNode, createKernel, setFlexNode } from "./proxyBinding.js";
 import { tryGetSchema } from "./treeNodeApi.js";
 
 /**
@@ -36,6 +37,81 @@ import { tryGetSchema } from "./treeNodeApi.js";
  * @public
  */
 export type Unhydrated<T> = T;
+
+/**
+ * A collection of events that can be emitted by a {@link TreeNode}.
+ *
+ * @privateRemarks
+ * TODO: add a way to subscribe to a specific field (for nodeChanged and treeChanged).
+ * Probably have object node and map node specific APIs for this.
+ *
+ * TODO: ensure that subscription API for fields aligns with API for subscribing to the root.
+ *
+ * TODO: add more wider area (avoid needing tons of nodeChanged registration) events for use-cases other than treeChanged.
+ * Some ideas:
+ *
+ * - treeChanged, but with some subtrees/fields/paths excluded
+ * - helper to batch several nodeChanged calls to a treeChanged scope
+ * - parent change (ex: registration on the parent field for a specific index: maybe allow it for a range. Ex: node event takes optional field and optional index range?)
+ * - new content inserted into subtree. Either provide event for this and/or enough info to treeChanged to find and search the new sub-trees.
+ * Add separate (non event related) API to efficiently scan tree for given set of types (using low level cursor and schema based filtering)
+ * to allow efficiently searching for new content (and initial content) of a given type.
+ *
+ * @sealed @public
+ */
+export interface TreeChangeEvents {
+	/**
+	 * Emitted by a node after a batch of changes has been applied to the tree, if a change affected the node, where a
+	 * change is:
+	 *
+	 * - For an object node, when the value of one of its properties changes (i.e., the property's value is set
+	 * to something else, including `undefined`).
+	 *
+	 * - For an array node, when an element is added, removed, or moved.
+	 *
+	 * - For a map node, when an entry is added, updated, or removed.
+	 *
+	 * @remarks
+	 * This event is not emitted when:
+	 *
+	 * - Properties of a child node change. Notably, updates to an array node or a map node (like adding or removing
+	 * elements/entries) will emit this event on the array/map node itself, but not on the node that contains the
+	 * array/map node as one of its properties.
+	 *
+	 * - The node is moved to a different location in the tree or removed from the tree.
+	 * In this case the event is emitted on the _parent_ node, not the node itself.
+	 *
+	 * For remote edits, this event is not guaranteed to occur in the same order or quantity that it did in
+	 * the client that made the original edit.
+	 *
+	 * When it is emitted, the tree is guaranteed to be in-schema.
+	 *
+	 * @privateRemarks
+	 * This event occurs whenever the apparent contents of the node instance change, regardless of what caused the change.
+	 * For example, it will fire when the local client reassigns a child, when part of a remote edit is applied to the
+	 * node, or when the node has to be updated due to resolution of a merge conflict
+	 * (for example a previously applied local change might be undone, then reapplied differently or not at all).
+	 */
+	nodeChanged(): void;
+
+	/**
+	 * Emitted by a node after a batch of changes has been applied to the tree, when something changed anywhere in the
+	 * subtree rooted at it.
+	 *
+	 * @remarks
+	 * This event is not emitted when the node itself is moved to a different location in the tree or removed from the tree.
+	 * In that case it is emitted on the _parent_ node, not the node itself.
+	 *
+	 * The node itself is part of the subtree, so this event will be emitted even if the only changes are to the properties
+	 * of the node itself.
+	 *
+	 * For remote edits, this event is not guaranteed to occur in the same order or quantity that it did in
+	 * the client that made the original edit.
+	 *
+	 * When it is emitted, the tree is guaranteed to be in-schema.
+	 */
+	treeChanged(): void;
+}
 
 /**
  * A non-{@link NodeKind.Leaf|leaf} SharedTree node. Includes objects, arrays, and maps.
@@ -239,7 +315,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 			schemaBase.constructorCached = { constructor: this, oneTimeInitialized: false };
 			assert(
 				this.constructorCached === schemaBase.constructorCached,
-				"Inheritance should work",
+				0x9b5 /* Inheritance should work */,
 			);
 			return this.constructorCached;
 		} else if (this.constructorCached.constructor === this) {
@@ -285,6 +361,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		);
 
 		const result = schema.prepareInstance(this, node);
+		createKernel(result);
 		setFlexNode(result, node);
 		return result;
 	}
@@ -322,4 +399,158 @@ export interface InternalTreeNode
 export function toFlexTreeNode(node: InternalTreeNode): FlexTreeNode {
 	assert(isFlexTreeNode(node), 0x963 /* Invalid InternalTreeNode */);
 	return node;
+}
+
+// #region NodeJS custom inspect for TreeNodes.
+
+/**
+ * Used to customize "inspect" behavior in NodeJS.
+ * See https://nodejs.org/api/util.html#utilinspectcustom for details.
+ *
+ * VS-Code's debugger also uses this to inspect objects,
+ * see https://github.com/microsoft/vscode-js-debug/blob/64df2686c92bac402909dee5c3c389bbb7a81f6d/src/adapter/templates/getStringyProps.ts#L11 for details.
+ */
+const customInspectSymbol = Symbol.for("nodejs.util.inspect.custom");
+
+/**
+ * Node inspecting function for use with {@link customInspectSymbol}.
+ */
+function inspectNodeFunction(
+	this: TreeNodeValid<unknown>,
+	depth: number,
+	options?: unknown,
+	inspect?: unknown,
+): unknown {
+	// TODO: replicated from tryGetSchema to avoid cycle.
+	// This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.
+	const schema = tryGetSimpleNodeSchema(getFlexNode(this).schema) as TreeNodeSchemaClass;
+	const title = `${schema.name}: ${NodeKind[schema.kind]} Node (${schema.identifier})`;
+
+	if (depth < 2) {
+		const short = shortContent(this);
+		if (short !== undefined) {
+			return `${title} ${short}`;
+		}
+		return title;
+	}
+	const content = `${title} ${JSON.stringify(this)}`;
+	return content;
+}
+
+/**
+ * If the node has no items, a short JSON string for it.
+ */
+function shortContent(node: TreeNodeValid<unknown>): string | undefined {
+	if (Object.values(node).length === 0) {
+		return JSON.stringify(node);
+	}
+	return undefined;
+}
+
+/**
+ * Add inherited non-enumerable symbol for NodeJS inspection to all nodes.
+ *
+ * See {@link customInspectSymbol}.
+ */
+Object.defineProperty(TreeNodeValid.prototype, customInspectSymbol, {
+	value: inspectNodeFunction,
+	enumerable: false,
+});
+
+// #endregion
+
+// #region Browser custom debug format for TreeNodes
+
+// This section has side-effects, so including it in this file ensures its loaded whenever TreeNodes could exist.
+// Supported in at least Chrome and FireFox, more details at https://firefox-source-docs.mozilla.org/devtools-user/custom_formatters/index.html
+// For this to work the browser's dev tools generally have to "Enable custom formatters".
+
+// This formatter is inspired by https://github.com/andrewdavey/immutable-devtools/blob/master/src/createFormatters.js which provides a similar formatter for the immutable.js library.
+
+const globals = typeof window === "undefined" ? globalThis : window;
+const formatters = ((
+	globals as { devtoolsFormatters?: DevtoolsFormatter.DevtoolsFormatter[] }
+).devtoolsFormatters ??= []);
+
+const nodeFormatter: DevtoolsFormatter.DevtoolsFormatter = {
+	header(object, config) {
+		if (isTreeNode(object)) {
+			return ["span", `${inspectNodeFunction.call(object, 1)}`];
+		}
+		return null;
+	},
+	body(object, config): DevtoolsFormatter.Item {
+		const children: DevtoolsFormatter.Item[] = [];
+		for (const [key, value] of Object.entries(object as TreeNode)) {
+			children.push(["li", ["span", `${key}: `], formattedReference(value)]);
+		}
+
+		// TODO:
+		// for array nodes, this isn't great since (at least in FireFox) the list items show up with a prefixed number starting from 1.
+		// This looks messy when followed by the array index.
+		// Find a way to hide the list index.
+		// { style: 'list-style-type: none` } did not seem to work.
+
+		return ["ol", ...children];
+	},
+	hasBody(object, config) {
+		return shortContent(object as TreeNodeValid<undefined>) === undefined;
+	},
+};
+
+function formattedReference(
+	object: unknown,
+	config?: DevtoolsFormatter.ObjectConfig,
+): DevtoolsFormatter.Item {
+	if (typeof object === "undefined") {
+		return ["span", "undefined"];
+	} else if (object === "null") {
+		return ["span", "null"];
+	}
+
+	return ["object", { object, config }];
+}
+
+formatters.push(nodeFormatter);
+
+// #endregion
+
+// These types are based on https://github.com/BenjaminAster/Better-TypeScript/blob/main/types/devtools-formatters.d.ts
+// however the original package causes multiple compile errors due to some of its other types it used, so the relevant part has been extracted and adjusted to better match our conventions.
+declare namespace DevtoolsFormatter {
+	type ObjectConfig = Record<string | symbol, unknown>;
+
+	type ElementTagName = "div" | "span" | "ol" | "li" | "table" | "tr" | "td";
+
+	type ElementTemplate = StyledElementTemplate | UnstyledElementTemplate;
+
+	type StyledElementTemplate = readonly [
+		ElementTagName,
+		{
+			style?: string;
+		},
+		...Item[],
+	];
+
+	type UnstyledElementTemplate = readonly [ElementTagName, ...Item[]];
+
+	type ObjectReference = readonly [
+		"object",
+		{
+			object: unknown;
+			config?: ObjectConfig;
+		},
+	];
+
+	type Item = string | ElementTemplate | ObjectReference;
+
+	interface DevtoolsFormatter {
+		header(
+			object?: unknown,
+			config?: ObjectConfig,
+			// eslint-disable-next-line @rushstack/no-new-null
+		): Item | null;
+		hasBody(object?: unknown, config?: ObjectConfig): boolean;
+		body(object?: unknown, config?: ObjectConfig): Item;
+	}
 }

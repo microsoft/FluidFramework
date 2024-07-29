@@ -80,8 +80,8 @@ describe("sharedTreeView", () => {
 			});
 			const root = view.flexTree.content ?? fail("missing root");
 			const log: string[] = [];
-			const unsubscribe = root.on("changing", () => log.push("change"));
-			const unsubscribeSubtree = root.on("subtreeChanging", () => {
+			const unsubscribe = root.anchorNode.on("childrenChanging", () => log.push("change"));
+			const unsubscribeSubtree = root.anchorNode.on("subtreeChanging", () => {
 				log.push("subtree");
 			});
 			const unsubscribeAfter = view.checkout.events.on("afterBatch", () => log.push("after"));
@@ -121,10 +121,10 @@ describe("sharedTreeView", () => {
 			});
 			const root = view.flexTree.content ?? fail("missing root");
 			const log: string[] = [];
-			const unsubscribe = root.on("changing", (upPath) =>
+			const unsubscribe = root.anchorNode.on("childrenChanging", (upPath) =>
 				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}`),
 			);
-			const unsubscribeSubtree = root.on("subtreeChanging", (upPath) => {
+			const unsubscribeSubtree = root.anchorNode.on("subtreeChanging", (upPath) => {
 				log.push(`subtree-${String(upPath.parentField)}-${upPath.parentIndex}`);
 			});
 			const unsubscribeAfter = view.checkout.events.on("afterBatch", () => log.push("after"));
