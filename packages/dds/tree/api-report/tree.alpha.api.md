@@ -245,15 +245,15 @@ export type Listeners<T extends object> = {
 export interface MakeNominal {
 }
 
+// @public
+export type MapNodeInsertableData<T extends ImplicitAllowedTypes> = Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]> | RestrictiveReadonlyRecord<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>;
+
 // @alpha
 export interface MapNodeJsonSchema extends NodeJsonSchemaBase<"map", "object"> {
     readonly patternProperties: {
         "^.*$": FieldJsonSchema;
     };
 }
-
-// @public
-export type MapNodeInsertableData<T extends ImplicitAllowedTypes> = Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]> | RestrictiveReadonlyRecord<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>;
 
 // @public
 type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
