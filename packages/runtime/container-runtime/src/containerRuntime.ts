@@ -689,7 +689,7 @@ export const makeLegacySendBatchFn =
 /** Helper type for type constraints passed through several functions.
  * local - Did this client send the op?
  * savedOp - Is this op being replayed after being serialized (having been sequenced previously)
- * localOpMetadata - The local metadata associated with the original message.
+ * localOpMetadata - Metadata maintained locally for a local op.
  */
 type MessageWithContext = {
 	local: boolean;
@@ -2646,7 +2646,6 @@ export class ContainerRuntime
 		if (hasModernRuntimeMessageEnvelope) {
 			// If the message has the modern message envelope, then process it here.
 			// Here we unpack the message (decompress, unchunk, and/or ungroup) into a batch of messages with ContainerMessageType
-
 			const processResult = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
 			if (processResult === undefined) {
 				// This means the incoming message is an incomplete part of a message or batch
@@ -2666,6 +2665,12 @@ export class ContainerRuntime
 						sequenceNumber,
 					)
 				: batch.map((message) => ({ message, localOpMetadata: undefined }));
+			if (messages.length === 0) {
+				this.ensureNoDataModelChanges(() =>
+					this.processEmptyBatch(sequenceNumber, local, batchStartCsn),
+				);
+				return;
+			}
 			messages.forEach(({ message, localOpMetadata }) => {
 				const msg: MessageWithContext = {
 					message,

@@ -134,7 +134,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     readonly options: Record<string | number, any>;
     orderSequentially<T>(callback: () => T): T;
-    process({ ...messageArg }: ISequencedDocumentMessage, local: boolean): void;
+    process({ ...messageCopy }: ISequencedDocumentMessage, local: boolean): void;
     // (undocumented)
     processSignal(message: ISignalMessage, local: boolean): void;
     refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
