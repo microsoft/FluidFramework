@@ -3,19 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// TODOs:
-// - Handle "Any"
-
-// JSON Schema
-// - Map policy
-// - FluidHandle policy
-// - How to represent types (for type disambiguation)
-//    - Allow only annotating types when required for disambiguation.
-//    - Root (type) is maybe special
-
-// Future:
-// - For API where you can get this for a view schema, configuration options for which field names to use (stored or view) and plan for future config options.
-
 /**
  * Kind of {@link TreeNodeSchema}.
  * @alpha
