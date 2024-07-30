@@ -339,7 +339,7 @@ export function testInvert() {
 					finalEndpoint: { localId: brand(2) },
 				}),
 				{ count: 1 },
-				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(2))),
+				Mark.rename(1, brand(1), brand(2)),
 				{ count: 1 },
 				Mark.moveIn(1, brand(2), { finalEndpoint: { localId: brand(0) } }),
 			];
@@ -353,11 +353,10 @@ export function testInvert() {
 					{ finalEndpoint: { localId: brand(2) } },
 				),
 				{ count: 1 },
-				Mark.attachAndDetach(
-					Mark.returnTo(1, brand(2), { revision: tag1, localId: brand(2) }),
-					Mark.moveOut(1, brand(0), {
-						idOverride: { revision: tag1, localId: brand(1) },
-					}),
+				Mark.rename(
+					1,
+					{ revision: tag1, localId: brand(2) },
+					{ revision: tag1, localId: brand(1) },
 				),
 				{ count: 1 },
 				Mark.moveOut(1, brand(2), {

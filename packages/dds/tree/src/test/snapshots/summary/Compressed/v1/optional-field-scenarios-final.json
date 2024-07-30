@@ -128,7 +128,7 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "type": "optional-field.TestNode",
+                                      "type": "optional-field-scenarios.Map",
                                       "value": false,
                                       "extraFields": 2
                                     }
@@ -274,7 +274,7 @@
                                   },
                                   {
                                     "c": {
-                                      "type": "optional-field.TestNode",
+                                      "type": "optional-field-scenarios.Map",
                                       "value": false,
                                       "extraFields": 2
                                     }
@@ -414,30 +414,18 @@
                 "content": {
                   "version": 1,
                   "nodes": {
-                    "com.fluidframework.leaf.boolean": {
-                      "leaf": 2
-                    },
-                    "com.fluidframework.leaf.handle": {
-                      "leaf": 3
-                    },
-                    "com.fluidframework.leaf.null": {
-                      "leaf": 4
-                    },
                     "com.fluidframework.leaf.number": {
                       "leaf": 0
                     },
                     "com.fluidframework.leaf.string": {
                       "leaf": 1
                     },
-                    "optional-field.TestNode": {
+                    "optional-field-scenarios.Map": {
                       "map": {
                         "kind": "Optional",
                         "types": [
-                          "com.fluidframework.leaf.handle",
-                          "com.fluidframework.leaf.null",
-                          "com.fluidframework.leaf.number",
-                          "com.fluidframework.leaf.boolean",
-                          "com.fluidframework.leaf.string"
+                          "com.fluidframework.leaf.string",
+                          "com.fluidframework.leaf.number"
                         ]
                       }
                     }
@@ -445,7 +433,7 @@
                   "root": {
                     "kind": "Optional",
                     "types": [
-                      "optional-field.TestNode"
+                      "optional-field-scenarios.Map"
                     ]
                   }
                 },
@@ -482,7 +470,7 @@
                       },
                       {
                         "c": {
-                          "type": "optional-field.TestNode",
+                          "type": "optional-field-scenarios.Map",
                           "value": false,
                           "extraFields": 2
                         }

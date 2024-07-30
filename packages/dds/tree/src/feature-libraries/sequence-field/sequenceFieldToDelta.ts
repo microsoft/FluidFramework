@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	type DeltaDetachedNodeChanges,
@@ -12,7 +12,7 @@ import {
 	type DeltaMark,
 	areEqualChangeAtomIds,
 } from "../../core/index.js";
-import { oob, type Mutable } from "../../util/index.js";
+import type { Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 
 import { isMoveIn, isMoveOut } from "./moveEffectTable.js";
@@ -163,6 +163,9 @@ export function sequenceFieldToDelta(
 					if (inputCellId === undefined) {
 						local.push(deltaMark);
 					}
+					break;
+				case "Rename":
+					assert(mark.cellId !== undefined, "Renames should only target empty cells");
 					break;
 				default:
 					unreachableCase(type);

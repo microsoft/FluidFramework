@@ -2,29 +2,14 @@
 
 Utilities for writing unit tests for DDS in Fluid Framework.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER:devDependency=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **NOTE: This package is private to the `@microsoft/fluid-framework` repository.**
-**It is not published, and therefore may only be used as a dev dependency.**
-
-## Using Fluid Framework libraries
-
-When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
-While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
-library consumers should always prefer `^`.
-
-If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
-
-## Installation
-
-To get started, install the package by running the following command:
-
-```bash
-npm i @fluid-private/test-dds-utils -D
-```
+**It is not published, and therefore may only be used in packages within the same pnpm workspace in this repo using the [workspace:*](https://pnpm.io/workspaces#workspace-protocol-workspace) schema.**
+**Since this package is not published, it may also only be used as a dev dependency, or as a dependency in packages that are not published.**
 
 <!-- prettier-ignore-end -->
 
@@ -77,7 +62,7 @@ The generic aspects of this model could be improved to fuzz test correctness a f
 -   Summarization correctness
 -   Offline (`applyStashedOp` implementation)
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

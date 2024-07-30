@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { oob, type MapGetSet } from "./utils.js";
+import { oob } from "@fluidframework/core-utils/internal";
+import type { MapGetSet } from "./utils.js";
 
 /**
  * A dictionary whose values are keyed off of two objects (key1, key2).
@@ -107,6 +108,25 @@ export function getOrAddInMap<Key, Value>(
 	if (currentValue !== undefined) {
 		return currentValue;
 	}
+	map.set(key, value);
+	return value;
+}
+
+/**
+ * Sets the value at `key` in `map` to `generateValue()` if not already present.
+ * Returns the value at `key` after setting it.
+ */
+export function getOrAddInMapLazy<Key, Value>(
+	map: MapGetSet<Key, Value>,
+	key: Key,
+	generateValue: () => Value,
+): Value {
+	const currentValue = map.get(key);
+	if (currentValue !== undefined) {
+		return currentValue;
+	}
+
+	const value = generateValue();
 	map.set(key, value);
 	return value;
 }

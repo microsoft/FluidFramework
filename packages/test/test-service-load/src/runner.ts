@@ -21,10 +21,12 @@ import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/inter
 import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import commander from "commander";
 
+import { createLogger } from "./FileLogger.js";
 import {
 	FaultInjectionDocumentServiceFactory,
 	FaultInjectionError,
 } from "./faultInjectionDriver.js";
+import { getProfile } from "./getProfile.js";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
@@ -35,12 +37,9 @@ import {
 import {
 	configProvider,
 	createCodeLoader,
-	createLogger,
 	createTestDriver,
-	getProfile,
 	globalConfigurations,
 	printStatus,
-	safeExit,
 } from "./utils.js";
 
 async function main() {
@@ -65,6 +64,7 @@ async function main() {
 			parseIntArg,
 		)
 		.requiredOption("-s, --seed <number>", "Seed for this runners random number generator")
+		.requiredOption("-o, --outputDir <path>", "Path for log output files")
 		.option("-e, --driverEndpoint <endpoint>", "Which endpoint should the driver target?")
 		.option(
 			"-l, --log <filter>",
@@ -82,24 +82,14 @@ async function main() {
 	const log: string | undefined = commander.log;
 	const verbose: boolean = commander.verbose ?? false;
 	const seed: number = commander.seed;
+	const outputDir: string = commander.outputDir;
 	const enableOpsMetrics: boolean = commander.enableOpsMetrics ?? false;
-
-	const profile = getProfile(profileName);
 
 	if (log !== undefined) {
 		process.env.DEBUG = log;
 	}
 
-	if (url === undefined) {
-		console.error("Missing --url argument needed to run child process");
-		process.exit(-1);
-	}
-
-	// combine the runId with the seed for generating local randoms
-	// this makes runners repeatable, but ensures each runner
-	// will get its own set of randoms
-	const random = makeRandom(seed, runId);
-	const logger = await createLogger({
+	const { logger, flush } = await createLogger(outputDir, runId.toString(), {
 		runId,
 		driverType: driver,
 		driverEndpointName: endpoint,
@@ -124,7 +114,19 @@ async function main() {
 
 	let result = -1;
 	try {
-		result = await runnerProcess(
+		const profile = getProfile(profileName);
+
+		if (url === undefined) {
+			console.error("Missing --url argument needed to run child process");
+			throw new Error("Missing --url argument needed to run child process");
+		}
+
+		// combine the runId with the seed for generating local randoms
+		// this makes runners repeatable, but ensures each runner
+		// will get its own set of randoms
+		const random = makeRandom(seed, runId);
+
+		await runnerProcess(
 			driver,
 			endpoint,
 			{
@@ -139,10 +141,19 @@ async function main() {
 			seed,
 			enableOpsMetrics,
 		);
+		result = 0;
 	} catch (e) {
 		logger.sendErrorEvent({ eventName: "runnerFailed" }, e);
 	} finally {
-		await safeExit(result, url, runId);
+		// There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
+		// TODO: Track down the dangling promise and fix it.
+		await new Promise((resolve) => {
+			setTimeout(resolve, 1000);
+		});
+		// Flush the logs
+		await flush();
+
+		process.exit(result);
 	}
 }
 
@@ -189,7 +200,7 @@ async function runnerProcess(
 	url: string,
 	seed: number,
 	enableOpsMetrics: boolean,
-): Promise<number> {
+): Promise<void> {
 	// Assigning no-op value due to linter.
 	let metricsCleanup: () => void = () => {};
 
@@ -204,6 +215,7 @@ async function runnerProcess(
 		endpoint,
 		seed,
 		runConfig.runId,
+		false, // supportsBrowserAuth
 	);
 
 	// Cycle between creating new factory vs. reusing factory.
@@ -343,7 +355,6 @@ async function runnerProcess(
 			metricsCleanup();
 		}
 	}
-	return 0;
 }
 
 function scheduleFaultInjection(
@@ -675,6 +686,9 @@ async function setupOpsMetrics(
 }
 
 main().catch((error) => {
+	// Most of the time we'll exit the process through the process.exit() in main.
+	// However, if we error outside of that try/catch block we'll catch it here.
+	console.error("Error occurred during setup");
 	console.error(error);
 	process.exit(-1);
 });

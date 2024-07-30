@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, compareArrays } from "@fluidframework/core-utils/internal";
+import { assert, compareArrays, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -15,7 +15,7 @@ import {
 	type UpPath,
 	type Value,
 } from "../../core/index.js";
-import { ReferenceCountedBase, fail, oob } from "../../util/index.js";
+import { ReferenceCountedBase, fail } from "../../util/index.js";
 import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
 
 import { type ChunkedCursor, type TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
