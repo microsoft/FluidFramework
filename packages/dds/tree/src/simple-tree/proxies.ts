@@ -90,7 +90,7 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 }
 
 export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeValue {
-	const cachedProxy = tryGetProxy(flexNode);
+	const cachedProxy = tryGetProxy(flexNode.anchorNode);
 	if (cachedProxy !== undefined) {
 		return cachedProxy;
 	}

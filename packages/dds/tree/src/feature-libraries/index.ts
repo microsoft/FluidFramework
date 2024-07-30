@@ -319,3 +319,12 @@ export {
 	getOrCreateMapTreeNode,
 	tryGetMapTreeNode,
 } from "./flex-map-tree/index.js";
+
+export {
+	type KeyFinder,
+	type IndexableTreeStatus,
+	AnchorTreeIndex,
+	hasElement,
+	type TreeIndex,
+	type TreeIndexNodes
+} from "./indexing/index.js";

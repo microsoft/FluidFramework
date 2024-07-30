@@ -127,13 +127,10 @@ export function tryGetFlexNode(target: unknown): FlexTreeNode | undefined {
 }
 
 /**
- * Retrieves the proxy associated with the given flex node via {@link setFlexNode}, if any.
+ * Retrieves the proxy associated with the given anchor node via {@link setFlexNode}, if any.
  */
-export function tryGetProxy(flexNode: FlexTreeNode): TreeNode | undefined {
-	if (isMapTreeNode(flexNode)) {
-		return mapTreeNodeToProxy.get(flexNode);
-	}
-	return flexNode.anchorNode.slots.get(proxySlot);
+export function tryGetProxy(anchorNode: AnchorNode): TreeNode | undefined {
+	return anchorNode.slots.get(proxySlot);
 }
 
 /**
@@ -159,7 +156,7 @@ export function setFlexNode<TProxy extends TreeNode>(
 		mapTreeNodeToProxy.set(flexNode, proxy);
 	} else {
 		assert(
-			tryGetProxy(flexNode) === undefined,
+			tryGetProxy(flexNode.anchorNode) === undefined,
 			0x7f5 /* Cannot associate an flex node with multiple targets */,
 		);
 		bindProxyToAnchorNode(proxy, flexNode.anchorNode);
