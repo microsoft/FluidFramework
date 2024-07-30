@@ -101,7 +101,7 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
     readonly kind: Kind;
     readonly props?: FieldProps | undefined;
     readonly requiresValue: boolean;
-    protected _typeCheck?: MakeNominal;
+    protected _typeCheck: MakeNominal;
 }
 
 // @public
@@ -866,6 +866,8 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
     constructor(props: ITreeViewConfiguration<TSchema>);
     readonly enableSchemaValidation: boolean;
     readonly schema: TSchema;
+    // (undocumented)
+    protected _typeCheck: MakeNominal;
 }
 
 // @public @sealed
