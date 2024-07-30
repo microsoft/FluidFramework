@@ -100,4 +100,6 @@ export interface CrossFieldManager<T = unknown> {
 		id: ChangesetLocalId,
 		count: number,
 	): void;
+
+	getRequiredBaseNodes(): NodeId[];
 }

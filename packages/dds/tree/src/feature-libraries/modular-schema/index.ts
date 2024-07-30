@@ -57,7 +57,7 @@ export {
 	genericChangeHandler,
 	genericFieldKind,
 } from "./genericFieldKind.js";
-export type { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
+export type { GenericChangeset } from "./genericFieldKindTypes.js";
 export {
 	ModularChangeFamily,
 	ModularEditBuilder,
