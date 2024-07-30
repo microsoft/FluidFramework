@@ -346,7 +346,7 @@ export namespace InternalUtilityTypes {
         [RecursionMarkerSymbol]: typeof RecursionMarkerSymbol;
     }
     export type ReplaceRecursionWith<T, TReplacement> = ReplaceRecursionWithImpl<T, TReplacement, never>;
-    export type ReplaceRecursionWithImpl<T, TReplacement, TAncestorTypes> = T extends TAncestorTypes ? TReplacement : T extends object ? T extends Function ? T : {
+    export type ReplaceRecursionWithImpl<T, TReplacement, TAncestorTypes> = T extends TAncestorTypes ? TReplacement : T extends object ? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) & (T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) & {
         [K in keyof T]: ReplaceRecursionWithImpl<T[K], TReplacement, TAncestorTypes | T>;
     } : T;
     export type RequiredNonSymbolKeysOf<T extends object, Keys extends keyof T = keyof T> = Exclude<{

@@ -20,6 +20,17 @@ const RecursionMarkerSymbol: unique symbol = Symbol("recursion here");
  * Collection of utility types that are not intended to be used/imported
  * directly outside of this package.
  *
+ * @privateRemarks
+ * There are ony three intentional exports from this module:
+ * - {@link InternalUtilityTypes.IfSameType | IfSameType}
+ * - {@link InternalUtilityTypes.JsonDeserializedImpl | JsonDeserializedImpl }
+ * - {@link InternalUtilityTypes.JsonSerializableImpl | JsonSerializableImpl }
+ *
+ * api-extractor will allow `export` to be removed from others but generates
+ * api-report a little oddly. It will promote all of the support types to
+ * appear as exported anyway. All in namespace are left exported to avoid
+ * api-extractor potentially failing to validate other modules correctly.
+ *
  * @beta
  * @system
  */
@@ -362,16 +373,22 @@ export namespace InternalUtilityTypes {
 	/**
 	 * Implementation for {@link InternalUtilityTypes.ReplaceRecursionWith}
 	 *
+	 * @privateRemarks
+	 * This implementation handles functions including function with properties.
+	 * There are no known cases where replacing recursion under such types make
+	 * a difference. Either the function (whole type) is allowed by the Json
+	 * filters or function is not allowed at all.
+	 * If the function portion is found to be problematic later, then could use
+	 * `T extends Function ? T : ...` to ignore function objects.
+	 *
 	 * @system
 	 */
 	export type ReplaceRecursionWithImpl<T, TReplacement, TAncestorTypes> =
 		/* test for recursion */ T extends TAncestorTypes
 			? /* recursion => use replacement */ TReplacement
 			: T extends object
-				? // eslint-disable-next-line @typescript-eslint/ban-types
-					/* test for function */ T extends Function
-					? /* function => */ T
-					: /* property bag => */ {
+				? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) &
+						(T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) & {
 							[K in keyof T]: ReplaceRecursionWithImpl<T[K], TReplacement, TAncestorTypes | T>;
 						}
 				: /* non-object => T as is */ T;
