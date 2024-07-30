@@ -194,39 +194,21 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 			const sharedString2 = await sharedStringFromContainer(container2);
 
 			const text = "client 1";
-			const keys = attributor1.createCustomAttributorKey([
-				{
-					user: { id: "user1@" },
-					timestamp: 1,
-					customAttributes: { "onBehalfOf": "copilot" },
-				},
-				{
-					user: { id: "user2@" },
-					timestamp: 4,
-					customAttributes: { "onBehalfOf": "copilot1" },
-				},
-			]);
-			const propertySet = {};
-			insertCustomAttributionPropInPropertySet(propertySet, [0, 2], keys);
-			sharedString1.insertText(0, text, propertySet);
+			const customAttribution = {
+				user: { id: "user1@" },
+				timestamp: 1,
+				onBehalfOf: "copilot",
+			};
+			sharedString1.insertText(0, text, {}, customAttribution);
 
 			await provider.ensureSynchronized();
 			const text2 = "client 2, ";
-			const keys2 = attributor1.createCustomAttributorKey([
-				{
-					user: { id: "user3@" },
-					timestamp: 1,
-					customAttributes: { "onBehalfOf": "copilot3" },
-				},
-				{
-					user: { id: "user4@" },
-					timestamp: 2,
-					customAttributes: { "onBehalfOf": "copilot4" },
-				},
-			]);
-			const propertySet2 = {};
-			insertCustomAttributionPropInPropertySet(propertySet2, [0, 4], keys2);
-			sharedString2.insertText(0, text2, propertySet2);
+			const customAttribution2 = {
+				user: { id: "user3@" },
+				timestamp: 1,
+				onBehalfOf: "copilot3",
+			};
+			sharedString2.insertText(0, text2, {}, customAttribution2);
 			await provider.ensureSynchronized();
 
 			assert.equal(sharedString1.getText(), "client 2, client 1");
@@ -235,37 +217,13 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 				container1.clientId !== undefined && container2.clientId !== undefined,
 				"Both containers should have client ids.",
 			);
-			const { segment } = sharedString1.getContainingSegment(13);
-			const attributionKeys1 = segment?.attribution?.getKeysInOffsetRange(
-				0,
-				undefined,
-				customAttributionKeysPropName,
+			const customAttributesVal = sharedString1.readAttributionAtPos(13);
+			assert(customAttributesVal !== undefined, "attribution should exist");
+			assert.deepStrictEqual(
+				customAttributesVal,
+				customAttribution2,
+				"attribution should match",
 			);
-			assert(attributionKeys1 !== undefined, "attribution keys should exist");
-			assert(attributionKeys1.length === 2, "2 keys should be there");
-			for (const [_, key] of attributionKeys1.entries()) {
-				assert.deepStrictEqual(
-					attributor1.getCustomAttributionInfo(key.key),
-					attributor2.getCustomAttributionInfo(key.key),
-					"values from attributors on both containers should match on segment 1",
-				);
-			}
-
-			const { segment: segment2 } = sharedString1.getContainingSegment(1);
-			const attributionKeys2 = segment2?.attribution?.getKeysInOffsetRange(
-				0,
-				undefined,
-				customAttributionKeysPropName,
-			);
-			assert(attributionKeys2 !== undefined, "attribution keys should exist");
-			assert(attributionKeys2.length === 2, "2 keys should be there");
-			for (const [_, key] of attributionKeys2.entries()) {
-				assert.deepStrictEqual(
-					attributor1.getCustomAttributionInfo(key.key),
-					attributor2.getCustomAttributionInfo(key.key),
-					"values from attributors on both containers should match on segment 2",
-				);
-			}
 		},
 	);
 
