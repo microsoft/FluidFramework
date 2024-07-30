@@ -1,10 +1,22 @@
 ---
 marp: true
+theme: gaia
+
 ---
+<style>
+  :root {
+    --color-background: #fff;
+    --color-foreground: #333;
+    --color-highlight: #f96;
+    --color-dimmed: #888;
+  }
+</style>
+
+<!-- _class: lead -->
 
 # fluid-build
 
-## why we use it, how it works and how to improve it
+## Why we use it, how it works and how to improve it
 
 Tyler Butler
 tylerbu@microsoft.com
@@ -13,7 +25,9 @@ July 30 2024
 
 ---
 
-# tylerbu presentations
+<!-- _class: lead -->
+
+# beware
 
 This presentation contains **opinion**.
 It employs **hyperbole**
@@ -24,17 +38,10 @@ and **effect**.
 
 # Brief build system theory
 
-### (We'll come back to this.)
+## Two primary functions
 
-1. Scripts (npm, make, just)
-2. Task-based (lage, lerna)
-3. Artifact-based (Bazel, Pants)
-
----
-
-1. Scripts
-2. Task-based **<-- fluid-build is here**
-3. Artifact-based
+1. Ordering/scheduling build tasks correctly and efficiently
+2. Enabling incremental builds
 
 ---
 
@@ -48,13 +55,33 @@ The challenge is in the "something changed" part. A build system with perfect in
 
 ---
 
-# Gall's law
+# Build system evolution
 
-**A complex system that works is invariably found to have evolved from a simple system that worked.** A complex system designed from scratch never works and cannot be patched up to make it work. You have to start over with a working simple system.
+### (We'll come back to this.)
+
+1. Scripts (npm, make, just)
+2. Task-based (lage, lerna)
+3. Artifact-based (Bazel, Pants)
 
 ---
 
-# A little bit of history
+# Build system evolution
+
+### (We'll come back to this.)
+
+1. Scripts
+2. Task-based **<-- fluid-build is here**
+3. Artifact-based
+
+---
+
+# Gall's law
+
+> **A complex system that works is invariably found to have evolved from a simple system that worked.** A complex system designed from scratch never works and cannot be patched up to make it work. You have to start over with a working simple system.
+
+---
+
+# Some history
 
 When Fluid was getting started, packages looked like this:
 
@@ -62,6 +89,7 @@ When Fluid was getting started, packages looked like this:
 "scripts": {
   "full": "concurrently npm:build npm:copy",
   "build": "npm run compile && concurrently npm:api npm:docs npm:lint",
+
   "api": "api-extractor",
   "compile": "tsc",
   "copy": "copyfiles",
@@ -94,103 +122,121 @@ And for an embarassingly long time, because I was dumb and naïve, I thought tha
 
 ---
 
-# Of course that wasn't true.
+# Of course that wasn't true
 
-The code had a hardcoded understanding of the relationship between the tasks of different packages.
+The code had a **hardcoded** understanding of the relationship between the tasks of different packages.
 
-For example, it knew that `lint` didn't require dependent builds, so it would schedule it accordingly. There were a lot of these, and as the repo grew we started to see a bunch of new tasks and `package.json` uses.
+For example, it knew that `compile` required its dependency's outputs, so would schedule those dependencies first.
+
+On the other hand, it knew `lint` didn't require dependent builds, so it would schedule it accordingly.
+
+There were a lot of these, and as the repo grew we started to see a bunch of new tasks and `package.json` uses.
 
 ---
 
 # As the repo grew more complex
 
-We added explicit task relationships in the code, which is how _all_ tasks are defined in a lot of similar systems like nx and lage. So now we have the best of both worlds - you can add tasks to individual packages that use `&&` and `concurrently`, and as long as they're called from one of the main build scripts.
+We moved the hard-coded relationships to configuration, which is how _all_ tasks are defined in a lot of similar systems like nx and lage.
 
-But there was still one thing missing - root level tasks, like policy-check, syncpack, etc. So as a parting gift to the team Curtis built that before he left.
+We now have the best of both worlds - you can add tasks to individual packages that use `&&` and `concurrently`, and as long as they're called from one of the main build scripts, they will "just work."
 
----
-
-# Brief build system theory
+You can also use npm lifecycle scripts like `pre` and `post`. fluid-build understands those relationships and will schedule accordingly.
 
 ---
 
-Task decomposition
-script tasks vs. non-script tasks
-Task relationships in the config file
-Task relationships in individual project overrides
-Caching and incremental builds
-	tsc special cases
+# The last piece
 
-Types of build systems
-Scripts -> task-based -> artifact-based (bazel)
+But there was still one thing missing - root level tasks, like policy-check, syncpack, etc. So as a parting gift to the team, Curtis built that before he left.
 
-These are not only general categories of build systems; they're also the typical progression of the needs from a build system as the project grows
+---
 
-Scripts work fine when you have a single project, or even a handful of projects
+# fluid-build's innovations
 
-## Tasks
+## Or: Why it's hard to quit fluid-build :)
+
+1. Building the task graph without explicit task definitions using concurrently, `&&`, and/or npm lifecycle scripts. That is, you can get most of the the benefit of scheduling and caching without learning about "fluid-build tasks."
+2. Intelligence baked into some tasks, like the TypeScript task, enables fluid-build to remove some tasks from the graph without fully checking its outputs. Bottom line - fluid-build is faster than comparable tools for building FluidFramework.
+
+---
+
+# Tasks
 
 Here's what a task definition looks like:
 
 ```js
 "lint": {
-	dependsOn: [
-		"check:format",
-		"eslint",
-		"good-fences",
-		"depcruise",
-		"check:exports",
-		"check:release-tags",
-	],
-	script: false,
+  dependsOn: [
+    "check:format",
+    "eslint",
+    "good-fences",
+    "depcruise",
+    "check:exports",
+    "check:release-tags",
+  ],
+  script: false,
 },
-
+...
 ```
 
-Tasks in the root config are defaults. If a package doesn't define a script/task matching the task, then it's just skipped. This lets packages opt in to tasks over time.
+Tasks in the root config are defaults.
+
+If a package doesn't define a script/task matching the task, then it's just skipped.
+This lets packages opt in to tasks over time.
+
+---
 
 Tasks can also be defined at the package level in the fluidBuild.tasks node in package.json. This enables two scenarios:
 
 1. Completely overriding the definition for a task with a package-specific definition.
 2. Adding additional subtasks to an existing task definition using the `...` entry in the task dependencies.
 
-An example of #2 is:
+---
+
+An example adding per-project tasks:
 
 ```js
 "lint": {
-	dependsOn: [
-		"...",
-		"package-specific-task",
-	],
-	script: false,
+  dependsOn: [
+    "...",
+    "package-specific-task",
+  ],
+  script: false,
 },
 ```
 
-This will configure the lint task to depend on all the defaults defined in the root, and also the package-specific-task that is unique to this package.
+This will configure the lint task to depend on all the defaults defined in the root, and also the package-specific task that is unique to this package.
 
-### The script property
+Tasks defined in individual packages must be defined, unlike the "task defaults" defined in the root config.
 
-The script property on tasks tells fluid-build if the command in the script should be executed or if the task definition should be used instead. This enables you to define the task graph with a combination of
+---
+
+# The script property
+
+The script property on tasks tells fluid-build if the command in the script should be executed or if the task definition should be used instead.
+
+For example, consider:
 
 ```json
 "scripts": {
-	"build": "npm run compile && concurrently npm:api npm:docs npm:lint",
-	"api": "api-extractor",
-	"compile": "tsc",
-	"docs": "build-docs",
-	"lint": "eslint",
+    "build": "npm run compile && concurrently npm:api npm:docs npm:lint",
+    "api": "api-extractor",
+    "compile": "tsc",
+    "docs": "build-docs",
+    "lint": "eslint",
 }
 ```
+
+---
 
 That is similar to:
 
 ```json
 "scripts": {
-	"build": "fluid-build --task build",
-	"api": "api-extractor",
-	"compile": "tsc",
-	"docs": "build-docs",
-	"lint": "eslint",
+    "build": "fluid-build --task build",
+    "api": "api-extractor",
+    "compile": "tsc",
+    "docs": "build-docs",
+    "lint": "eslint",
 }
 ```
 
@@ -198,20 +244,78 @@ With a task definition like this:
 
 ```js
 "lint": {
-	dependsOn: [
-		"...",
-		"package-specific-task",
-	],
-	script: false,
+  dependsOn: [
+    "api",
+    "compile",
+    "docs",
+    "lint",
+  ],
+  script: false,
 },
+
 ```
+
+The second form can run dependent tasks, which is sometimes what you want, and sometimes isn't.
 
 ---
 
-```mermaid
-stateDiagram-v2
-B --> A
-C --> A
-C --> D
-E --> D
-```
+# How incremental builds work
+
+fluid-build reads all the scripts and task definitions and builds a task graph.
+
+Each task is mapped to a `Task` subclass in code based on its command.
+
+For example, `eslint` is mapped to the `EslintTask`, `flub list` is mapped to the `FlubListTask`, etc.
+
+These task mappings are defined in code (but could be config-based instead!)
+
+---
+
+# Tasks caching
+
+A Task defines an `isUpToDate` function that can use whatever logic needed to determine if the task needs to be re-run.
+
+Any task with an unknown command is called an `UnknownTask` and is not capable of incremental builds.
+
+---
+
+# Tasks caching
+
+Many tasks have common needs, like a list of input and output files that, if changed, should trigger the task, so there are several Task variants like `LeafWithDoneFileTask` that used to define new tasks with minimal boilerplate.
+
+These tasks output a cache file, called a "donefile" that is consulted to determine whether to rebuild.
+
+Donefiles usually contain a list of paths and some metadata about the path, such as filestat info or file content hashes.
+
+---
+
+# tsc and related tasks
+
+fluid-build integrates directly with the TypeScript compiler and uses its `.buildinfo` files to inform its caching behavior.
+
+There is also a `TscDependentClass` that can be used for tasks that are closely tied to the TypeScript compilation process. This enables fluid-build to completely skip these tasks when tsc is skipped.
+
+Examples include `ApiExtractorTask` and `EslintTask`.
+
+---
+
+# Adding new tasks to the build
+
+- Within a package, you can add scripts directly and use concurrently and `&&`.
+- If it's an unknown command, then you won't get caching. To add that you'd make a task in build-tools.
+
+---
+
+# Should we keep using fluid-build?
+
+> It's easier to see what a system does wrong than what it does right.
+
+Any replacement should be at least as fast OR compensate through some other systemic benefit, such as cloud-based caching.
+
+---
+
+# Improvements to consider
+
+- Support custom tasks - tasks that can be defined outside the core fluid-build code.
+- Support an `InputOutput` task that can be used to define input/output globs and automatically build a donefile based on those config values. This is how many other systems define most of their tasks (for better or worse).
+- Cross-machine caching. If I build main in one repo, then run a main build on a second separate repo on the same machine, the second repo should benefit from the cache from the first one.
