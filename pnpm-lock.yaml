@@ -11737,6 +11737,9 @@ importers:
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../dds/map
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../dds/sequence

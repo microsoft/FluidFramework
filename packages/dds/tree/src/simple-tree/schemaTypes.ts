@@ -387,7 +387,7 @@ export class FieldSchema<
 	 * This class is used with instanceof, and therefore should have nominal typing.
 	 * This field enforces that.
 	 */
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck!: MakeNominal;
 
 	private readonly lazyTypes: Lazy<ReadonlySet<TreeNodeSchema>>;
 
@@ -398,6 +398,11 @@ export class FieldSchema<
 	public get allowedTypeSet(): ReadonlySet<TreeNodeSchema> {
 		return this.lazyTypes.value;
 	}
+
+	/**
+	 * True if and only if, when constructing a node with this field, a value must be provided for it.
+	 */
+	public readonly requiresValue: boolean;
 
 	private constructor(
 		/**
@@ -415,6 +420,9 @@ export class FieldSchema<
 		public readonly props?: FieldProps,
 	) {
 		this.lazyTypes = new Lazy(() => normalizeAllowedTypes(this.allowedTypes));
+		// TODO: optional fields should (by default) get a default provider that returns undefined, removing the need to special case them here:
+		this.requiresValue =
+			this.props?.defaultProvider === undefined && this.kind !== FieldKind.Optional;
 	}
 }
 

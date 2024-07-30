@@ -71,7 +71,8 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
     get allowedTypeSet(): ReadonlySet<TreeNodeSchema>;
     readonly kind: Kind;
     readonly props?: FieldProps | undefined;
-    protected _typeCheck?: MakeNominal;
+    readonly requiresValue: boolean;
+    protected _typeCheck: MakeNominal;
 }
 
 // @public
@@ -252,6 +253,9 @@ export interface MapNodeJsonSchema extends NodeJsonSchemaBase<"map", "object"> {
 }
 
 // @public
+export type MapNodeInsertableData<T extends ImplicitAllowedTypes> = Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]> | RestrictiveReadonlyRecord<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>;
+
+// @public
 type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
 
 // @public
@@ -373,8 +377,8 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
     readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>>;
     get identifier(): FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
-    map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
-    map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
+    map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, MapNodeInsertableData<T>, true, T>;
+    map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, MapNodeInsertableData<T>, true, T>;
     mapRecursive<Name extends TName, const T extends Unenforced<ImplicitAllowedTypes>>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>, {
         [Symbol.iterator](): Iterator<[
         string,
@@ -562,6 +566,8 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
     constructor(props: ITreeViewConfiguration<TSchema>);
     readonly enableSchemaValidation: boolean;
     readonly schema: TSchema;
+    // (undocumented)
+    protected _typeCheck: MakeNominal;
 }
 
 // @public @sealed
