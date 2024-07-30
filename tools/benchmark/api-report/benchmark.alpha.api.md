@@ -29,7 +29,7 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test;
 // @public
 export interface BenchmarkData {
     customData: Record<string, unknown>;
-    customDataFormatters: Record<string, (value: unknown) => string>;
+    customDataFormatters: Record<string, string>;
     elapsedSeconds: number;
 }
 
