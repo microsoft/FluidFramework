@@ -551,4 +551,15 @@ module.exports = {
 		"release/**": "patch",
 		"next": "major",
 	},
+
+
+	releaseNotes: {
+		sections: [
+			{ name: "feature", heading: "✨ New Features" },
+			{ name: "tree", heading: "🌳 SharedTree DDS changes" },
+			{ name: "fix", heading: "🐛 Bug Fixes" },
+			{ name: "deprecation", heading: "Deprecations" },
+			{ name: "other", heading: "Other Changes" },
+		],
+	},
 };

@@ -2,6 +2,9 @@
 "@fluidframework/tree": minor
 "fluid-framework": minor
 ---
+---
+section: tree
+---
 
 Allow constructing ArrayNodes from Maps and MapNodes from arrays when unambiguous.
 

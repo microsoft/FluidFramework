@@ -2,6 +2,9 @@
 "fluid-framework": minor
 "@fluidframework/tree": minor
 ---
+---
+section: tree
+---
 
 Allow `Record` typed object to be used to construct MapNodes.
 
