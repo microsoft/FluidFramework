@@ -826,7 +826,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					}
 					newOp = createInsertSegmentOp(segmentPosition, segInsertOp);
 					break;
-					break;
 				}
 
 				case MergeTreeDeltaType.REMOVE: {
