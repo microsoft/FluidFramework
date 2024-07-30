@@ -36,8 +36,12 @@ import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js"
 const simpleSchemaCacheSymbol = Symbol("simpleSchemaCache");
 
 /**
- * TODO
- * @remarks TODO: note caching
+ * Creates a simplified representation of the provided {@link TreeNodeSchema}.
+ *
+ * @remarks Caches the result on the input schema for future calls.
+ *
+ * @privateRemarks In the future, we may wish to move this to a more discoverable API location.
+ * For now, while still an experimental API, it is surfaced as a free function.
  */
 export function getSimpleSchema(schema: TreeNodeSchema): SimpleTreeSchema {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
