@@ -27,15 +27,36 @@ import { ValueSchema } from "../core/index.js";
 import { fail } from "../util/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
 
+// TODO: tests
+
+/**
+ * Private symbol under which the results of {@link getSimpleSchema} are cached on an input {@link TreeNodeSchema}.
+ */
+const simpleSchemaCacheSymbol = Symbol("simpleSchemaCache");
+
+/**
+ * TODO
+ * @remarks TODO: note caching
+ */
+export function getSimpleSchema(schema: TreeNodeSchema): SimpleTreeSchema {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	if ((schema as any)[simpleSchemaCacheSymbol] !== undefined) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		return (schema as any)[simpleSchemaCacheSymbol] as SimpleTreeSchema;
+	}
+
+	const simpleSchema = toSimpleTreeSchema(schema);
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	(schema as any)[simpleSchemaCacheSymbol] = simpleSchema;
+
+	return simpleSchema;
+}
+
 /**
  * Converts a "view" schema to a "simple" schema representation.
- *
- * @privateRemarks
- * TODO: if this code is ever exported for consumer use, we may want to add caching here.
- * For now, it is only used as an implementation detail of {@link getJsonSchema}, which caches its own results,
- * so this isn't strictly necessary.
  */
-export function toSimpleTreeSchema(schema: ImplicitAllowedTypes): SimpleTreeSchema {
+function toSimpleTreeSchema(schema: ImplicitAllowedTypes): SimpleTreeSchema {
 	const normalizedSchema = normalizeFieldSchema(schema);
 
 	const allowedTypes = allowedTypesFromFieldSchema(normalizedSchema);
