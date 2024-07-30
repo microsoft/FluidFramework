@@ -456,7 +456,7 @@ describe("Schema Discrepancies", () => {
 		});
 	});
 
-	describe("validate the current schema compatibility policy", () => {
+	describe("isRepoSuperset", () => {
 		const root1 = fieldSchema(FieldKinds.required);
 		const root2 = fieldSchema(FieldKinds.optional);
 
