@@ -326,5 +326,5 @@ export {
 	AnchorTreeIndex,
 	hasElement,
 	type TreeIndex,
-	type TreeIndexNodes
+	type TreeIndexNodes,
 } from "./indexing/index.js";

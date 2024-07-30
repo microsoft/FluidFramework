@@ -57,7 +57,7 @@ export function createSimpleTreeIndex<
 		| ((nodes: TreeIndexNodes<NodeFromSchema<ObjectNodeSchema>>) => TValue)
 		| ((nodes: TreeIndexNodes<NodeFromSchema<TSchema[number]>>) => TValue),
 	indexableSchema?: TSchema,
-// todo fix this
+	// todo fix this
 ): AnchorTreeIndex<TKey, NodeFromSchema<ObjectNodeSchema>> {
 	assert(context instanceof Context, "Unexpected context implementation");
 	return new AnchorTreeIndex(
