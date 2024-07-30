@@ -28,8 +28,6 @@ import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js"
 import { markSchemaMostDerived } from "./schemaFactory.js";
 import { fail, getOrCreate } from "../util/index.js";
 import type { MakeNominal } from "../util/index.js";
-import type { MakeNominal } from "../util/index.js";
-
 /**
  * Channel for a Fluid Tree DDS.
  * @remarks
