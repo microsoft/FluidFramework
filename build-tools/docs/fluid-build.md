@@ -88,9 +88,7 @@ When Fluid was getting started, packages looked like this:
 ```json
 "scripts": {
   "full": "concurrently npm:build npm:copy",
-  "build": "npm run compile && concurrently npm:api npm:docs npm:lint",
-
-  "api": "api-extractor",
+  "build": "npm run compile && concurrently npm:docs npm:lint",
   "compile": "tsc",
   "copy": "copyfiles",
   "docs": "build-docs",
@@ -180,14 +178,20 @@ Here's what a task definition looks like:
 ...
 ```
 
-Tasks in the root config are defaults.
+---
+
+# Default tasks
+
+Tasks in the root fluid-build config are defaults.
 
 If a package doesn't define a script/task matching the task, then it's just skipped.
 This lets packages opt in to tasks over time.
 
 ---
 
-Tasks can also be defined at the package level in the fluidBuild.tasks node in package.json. This enables two scenarios:
+# Package-level tasks
+
+Tasks can also be defined at the package level in the `fluidBuild.tasks` node in package.json. This enables two scenarios:
 
 1. Completely overriding the definition for a task with a package-specific definition.
 2. Adding additional subtasks to an existing task definition using the `...` entry in the task dependencies.
