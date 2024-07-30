@@ -78,7 +78,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 		],
 		newlineKind: "lf",
 		uriRoot: uriRootDir,
-		includeBreadcrumb: false, // Hugo will now be used to generate the breadcrumb
+		includeBreadcrumb: true, // Hugo will now be used to generate the breadcrumb
 		includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
 		createDefaultLayout: layoutContent,
 		getAlertsForItem: (apiItem) => {
