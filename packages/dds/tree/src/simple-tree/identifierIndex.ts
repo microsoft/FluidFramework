@@ -31,6 +31,8 @@ import type { NodeFromSchema } from "./schemaTypes.js";
 import { getSimpleNodeSchema } from "./schemaCaching.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
 
+type SimpleTreeIndex<TKey extends TreeValue, TSchema extends ObjectNodeSchema[] = ObjectNodeSchema[]> = AnchorTreeIndex<TKey, NodeFromSchema<ObjectNodeSchema>> | AnchorTreeIndex<TKey, NodeFromSchema<TSchema[number]>>;
+
 export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
 	context: FlexTreeContext,
 	indexer: (schema: ObjectNodeSchema) => KeyFinder<TKey> | undefined,
@@ -58,7 +60,7 @@ export function createSimpleTreeIndex<
 		| ((nodes: TreeIndexNodes<NodeFromSchema<TSchema[number]>>) => TValue),
 	indexableSchema?: TSchema,
 	// todo fix this
-): AnchorTreeIndex<TKey, NodeFromSchema<ObjectNodeSchema>> {
+): SimpleTreeIndex<TKey, TSchema> {
 	assert(context instanceof Context, "Unexpected context implementation");
 	return new AnchorTreeIndex(
 		context.checkout.forest,
@@ -94,6 +96,8 @@ export function createSimpleTreeIndex<
 		},
 	);
 }
+
+type IdentifierIndex = SimpleTreeIndex<string>;
 
 export function createIdentifierIndex(context: FlexTreeContext) {
 	assert(context instanceof Context, "Unexpected context implementation");
