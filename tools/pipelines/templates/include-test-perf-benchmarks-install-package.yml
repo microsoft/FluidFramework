@@ -72,7 +72,9 @@ steps:
     script: |
       echo "Installing ${{ parameters.testPackageName }}"
 
-      TEST_PACKAGE_PATH_PATTERN=$(itpbip_downloadPath)/scoped/$(itpbip_sanitizedPackageName)
+      # Note that this path must match the path that the packed packages are saved to in the build pipeline.
+      # It should be kept up to date with the path defined in scripts/pack-packages.sh.
+      TEST_PACKAGE_PATH_PATTERN=$(itpbip_downloadPath)/tarballs/$(itpbip_sanitizedPackageName)
       echo "Looking for tarball with pattern $TEST_PACKAGE_PATH_PATTERN :"
       ls -1 $TEST_PACKAGE_PATH_PATTERN
 

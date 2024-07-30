@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import type { Mutable } from "../../util/index.js";
 
@@ -228,8 +228,7 @@ export function rebaseBranch<TChange>(
 	const sourceSet = new Set(sourcePath.map((r) => r.revision));
 	let newBaseIndex = targetCommitIndex;
 
-	for (let i = 0; i < targetPath.length; i += 1) {
-		const { revision } = targetPath[i];
+	for (const [i, { revision }] of targetPath.entries()) {
 		if (sourceSet.has(revision)) {
 			sourceSet.delete(revision);
 			newBaseIndex = Math.max(newBaseIndex, i);
@@ -239,7 +238,7 @@ export function rebaseBranch<TChange>(
 	}
 
 	/** The commit on the target branch that the new source branch branches off of (i.e. the new common ancestor) */
-	const newBase = targetPath[newBaseIndex];
+	const newBase = targetPath[newBaseIndex] ?? oob();
 	// Figure out how much of the trunk to start rebasing over.
 	const targetCommits = targetPath.slice(0, newBaseIndex + 1);
 	const deletedSourceCommits = [...sourcePath];
@@ -249,7 +248,9 @@ export function rebaseBranch<TChange>(
 	const targetRebasePath = [...targetCommits];
 	const minLength = Math.min(sourcePath.length, targetRebasePath.length);
 	for (let i = 0; i < minLength; i++) {
-		if (sourcePath[0].revision === targetRebasePath[0].revision) {
+		const firstSourcePath = sourcePath[0] ?? oob();
+		const firstTargetRebasePath = targetRebasePath[0] ?? oob();
+		if (firstSourcePath.revision === firstTargetRebasePath.revision) {
 			sourcePath.shift();
 			targetRebasePath.shift();
 		}

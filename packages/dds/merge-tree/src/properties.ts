@@ -23,12 +23,18 @@ export interface MapLike<T> {
  * @legacy
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type PropertySet = MapLike<any>;
 
 /**
+ * Compares two PropertySets for equality.
+ *
  * @internal
  */
-export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined) {
+export function matchProperties(
+	a: PropertySet | undefined,
+	b: PropertySet | undefined,
+): boolean {
 	if (!a && !b) {
 		return true;
 	}
@@ -44,6 +50,7 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
 		if (b?.[key] === undefined) {
 			return false;
 		} else if (typeof b[key] === "object") {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			if (!matchProperties(a?.[key], b[key])) {
 				return false;
 			}
@@ -56,11 +63,11 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
 }
 
 /**
- * @deprecated This functionality was not intended for public export and will
- * be removed in a future release.
+ * Adds properties from one PropertySet to another.
+ *
  * @internal
  */
-export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
+export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T> {
 	if (extension !== undefined) {
 		// eslint-disable-next-line guard-for-in, no-restricted-syntax
 		for (const key in extension) {
@@ -80,11 +87,11 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
 }
 
 /**
- * @deprecated This functionality was not intended for public export and will
- * be removed in a future release.
+ * Clones properties in a given PropertySet into a new PropertySet.
+ *
  * @internal
  */
-export function clone<T>(extension: MapLike<T> | undefined) {
+export function clone<T>(extension: MapLike<T> | undefined): MapLike<T> | undefined {
 	if (extension === undefined) {
 		return undefined;
 	}
@@ -102,25 +109,30 @@ export function clone<T>(extension: MapLike<T> | undefined) {
 }
 
 /**
- * @deprecated This functionality was not intended for public export and will
- * be removed in a future release.
+ * Add properties in one PropertySet to another PropertySet. If the PropertySet we are adding
+ * to does not exist, create one.
+ *
  * @internal
  */
 export function addProperties(
 	oldProps: PropertySet | undefined,
 	newProps: PropertySet,
 ): PropertySet {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const _oldProps = oldProps ?? createMap<any>();
 	extend(_oldProps, newProps);
 	return { ..._oldProps };
 }
 
 /**
- * @deprecated This functionality was not intended for public export and will
- * be removed in a future release.
+ * Replace values of undefined in one PropertySet with values for the same key from another PropertySet.
+ *
  * @internal
  */
-export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
+export function extendIfUndefined<T>(
+	base: MapLike<T>,
+	extension: MapLike<T> | undefined,
+): MapLike<T> {
 	if (extension !== undefined) {
 		// eslint-disable-next-line no-restricted-syntax
 		for (const key in extension) {
@@ -135,11 +147,10 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | u
 }
 
 /**
- * @deprecated This functionality was not intended for public export and will
- * be removed in a future release.
+ * Create a MapLike with good performance.
+ *
  * @internal
  */
-// Create a MapLike with good performance.
 export function createMap<T>(): MapLike<T> {
 	return Object.create(null) as MapLike<T>;
 }

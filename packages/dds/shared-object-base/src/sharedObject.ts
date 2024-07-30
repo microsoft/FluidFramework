@@ -7,13 +7,15 @@ import { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseProperties, type ErasedType } from "@fluidframework/core-interfaces";
-import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import {
+	type IFluidHandleInternal,
+	type IFluidLoadable,
+} from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelServices,
 	IChannelStorageService,
-} from "@fluidframework/datastore-definitions/internal";
-import {
+	type IChannel,
 	IChannelAttributes,
 	type IChannelFactory,
 	IFluidDataStoreRuntime,
@@ -868,9 +870,14 @@ export interface ISharedObjectKind<TSharedObject> {
  * @sealed
  * @public
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface SharedObjectKind<out TSharedObject = unknown>
-	extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {}
+	extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
+	/**
+	 * Check whether an {@link @fluidframework/core-interfaces#IFluidLoadable} is an instance of this shared object kind.
+	 * @remarks This should be used in place of `instanceof` checks for shared objects, as their actual classes are not exported in Fluid's public API.
+	 */
+	is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
+}
 
 /**
  * Utility for creating ISharedObjectKind instances.
@@ -884,7 +891,8 @@ export interface SharedObjectKind<out TSharedObject = unknown>
 export function createSharedObjectKind<TSharedObject>(
 	factory: (new () => IChannelFactory<TSharedObject>) & { readonly Type: string },
 ): ISharedObjectKind<TSharedObject> & SharedObjectKind<TSharedObject> {
-	const result: ISharedObjectKind<TSharedObject> = {
+	const result: ISharedObjectKind<TSharedObject> &
+		Omit<SharedObjectKind<TSharedObject>, "brand"> = {
 		getFactory(): IChannelFactory<TSharedObject> {
 			return new factory();
 		},
@@ -892,7 +900,16 @@ export function createSharedObjectKind<TSharedObject>(
 		create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject {
 			return runtime.createChannel(id, factory.Type) as TSharedObject;
 		},
+
+		is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject {
+			return isChannel(value) && value.attributes.type === factory.Type;
+		},
 	};
 
 	return result as typeof result & SharedObjectKind<TSharedObject>;
+}
+
+function isChannel(loadable: IFluidLoadable): loadable is IChannel {
+	// This assumes no other IFluidLoadable has an `attributes` field, and thus may not be fully robust.
+	return (loadable as IChannel).attributes !== undefined;
 }

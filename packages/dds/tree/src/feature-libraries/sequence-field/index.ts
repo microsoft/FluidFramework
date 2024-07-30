@@ -22,6 +22,7 @@ export type {
 	HasMarkFields,
 	CellMark,
 	AttachAndDetach,
+	Rename,
 } from "./types.js";
 export { DetachIdOverrideType } from "./formatV1.js";
 export {
@@ -42,8 +43,6 @@ export { compose } from "./compose.js";
 export {
 	getInputLength,
 	isDetach,
-	newCrossFieldTable,
-	type CrossFieldTable,
 	cloneMark,
 	extractMarkEffect,
 } from "./utils.js";

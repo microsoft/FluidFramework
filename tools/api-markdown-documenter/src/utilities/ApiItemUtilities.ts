@@ -204,6 +204,25 @@ export function hasModifierTag(apiItem: ApiItem, tagName: string): boolean {
 }
 
 /**
+ * Checks if the provided API item or any ancestors is tagged with the specified
+ * {@link https://tsdoc.org/pages/spec/tag_kinds/#modifier-tags | modifier tag}.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ * @param tagName - The TSDoc tag name being queried for.
+ * Must be a valid TSDoc tag (including starting with `@`).
+ *
+ * @throws If the provided TSDoc tag name is invalid.
+ *
+ * @public
+ */
+export function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean {
+	return (
+		hasModifierTag(apiItem, tagName) ||
+		(apiItem.parent !== undefined && ancestryHasModifierTag(apiItem.parent, tagName))
+	);
+}
+
+/**
  * Gets all custom {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags | block comments} associated with the provided API item.
  * @returns A mapping from tag name to the associated block contents.
  *
@@ -260,7 +279,6 @@ function getCustomBlockSectionsForMultiInstanceTags(
  * @param apiItem - The API item whose documentation is being queried.
  * @param tagName - The TSDoc tag name being queried for.
  * Must start with `@`. See {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags}.
- * @param config - See {@link ApiItemTransformationConfiguration}
  *
  * @returns The list of comment blocks with the matching tag, if any. Otherwise, `undefined`.
  */

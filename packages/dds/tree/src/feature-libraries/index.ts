@@ -130,6 +130,7 @@ export {
 	type FieldChangeEncodingContext,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
+	getAllowedContentIncompatibilities,
 } from "./modular-schema/index.js";
 
 export {
@@ -203,7 +204,6 @@ export {
 	isStableNodeKey,
 	type LocalNodeKey,
 	MockNodeKeyManager,
-	NodeKeyIndex,
 	type NodeKeyManager,
 	nodeKeyTreeIdentifier,
 	type StableNodeKey,
@@ -267,7 +267,6 @@ export {
 	type FlexTreeUnboxField,
 	type FlexTreeUnboxNode,
 	type FlexTreeUnboxNodeUnion,
-	type FlexTreeNodeKeyField,
 	type IsArrayOfOne,
 	type FlexibleNodeSubSequence,
 	flexTreeMarker,
@@ -281,6 +280,9 @@ export {
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
 	getSchemaAndPolicy,
+	isFreedSymbol,
+	LazyEntity,
+	treeStatusFromAnchorCache,
 } from "./flex-tree/index.js";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";
