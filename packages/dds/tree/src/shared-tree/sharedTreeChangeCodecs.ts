@@ -56,6 +56,14 @@ export function makeSharedTreeChangeCodecFamily(
 				options,
 			),
 		],
+		[
+			4,
+			makeSharedTreeChangeCodec(
+				modularChangeCodecFamily.resolve(4).json,
+				schemaChangeCodecs.resolve(1).json,
+				options,
+			),
+		],
 	]);
 }
 

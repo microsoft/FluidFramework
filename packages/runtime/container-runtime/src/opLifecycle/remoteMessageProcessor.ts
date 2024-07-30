@@ -132,7 +132,7 @@ export class RemoteMessageProcessor {
 			assert(this.batchInProgress === undefined, 0x9d3 /* Grouped batch interrupting another batch */,);
 			const batchId = asBatchMetadata(message.metadata)?.batchId;
 			return {
-				messages: this.opGroupingManager.ungroupOp(message).map(unpack),
+				messages: groupedMessages,
 				batchStartCsn: message.clientSequenceNumber,
 				clientId,
 				batchId,

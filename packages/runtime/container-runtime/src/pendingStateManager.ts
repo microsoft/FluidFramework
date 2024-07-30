@@ -16,8 +16,9 @@ import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
 
 import { type InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
-import { asBatchMetadata } from "./metadata.js";
+import { asBatchMetadata, asEmptyBatchLocalOpMetadata, IBatchMetadata } from "./metadata.js";
 import { BatchId, BatchMessage, generateBatchId, IncomingBatch } from "./opLifecycle/index.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
@@ -77,6 +78,11 @@ export interface IRuntimeStateHandler {
 	reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
+}
+
+function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean {
+	const content = JSON.parse(message.content);
+	return content.type === "groupedBatch" && content.contents?.length === 0;
 }
 
 /** Union of keys of T */
@@ -300,7 +306,15 @@ export class PendingStateManager implements IDisposable {
 			}
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const nextMessage = this.initialMessages.shift()!;
+			// Nothing to apply if the message is an empty batch.
+			// We still need to track it for resubmission.
 			try {
+				if (isEmptyBatchPendingMessage(nextMessage)) {
+					nextMessage.localOpMetadata = { emptyBatch: true }; // equivalent to applyStashedOp for empty batch
+					patchBatchIdContext(nextMessage); // Back compat
+					this.pendingMessages.push(nextMessage);
+					continue;
+				}
 				// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
 				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
 				if (!this.stateHandler.isAttached()) {
@@ -323,6 +337,8 @@ export class PendingStateManager implements IDisposable {
 	 * Processes the incoming batch from the server that was submitted by this client.
 	 * It verifies that messages are received in the right order and that the batch information is correct.
 	 * @param batch - The batch that is being processed.
+	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch
+	 * @param emptyBatchSequenceNumber - If the batch is empty, the sequence number of the empty batch placeholder message. Otherwise, undefined.
 	 */
 	public processPendingLocalBatch(batch: IncomingBatch): {
 		message: InboundSequencedContainerRuntimeMessage;
@@ -337,6 +353,40 @@ export class PendingStateManager implements IDisposable {
 			message,
 			localOpMetadata: this.processPendingLocalMessage(message),
 		}));
+	}
+
+	/**
+	 * Verifies we are expecting an empty batch. If so, saves it and removes it from the pending queue.
+	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch
+	 * @param sequenceNumber - The sequence number of the empty batch placeholder message.
+	 * @returns An empty array since no messages are processed. This is crucial to
+	 */
+	private processPendingLocalEmptyBatch(batchStartCsn: number, sequenceNumber: number): [] {
+		const pendingMessage = this.pendingMessages.peekFront();
+		assert(pendingMessage !== undefined, "No pending message found for this remote message");
+		assert(
+			asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true,
+			"Expected empty batch",
+		);
+
+		if (pendingMessage.batchIdContext.batchStartCsn !== batchStartCsn) {
+			this.stateHandler.close(
+				DataProcessingError.create(
+					"batchStartCsn mismatch on empty batch",
+					"unexpectedAckReceived",
+					undefined,
+					{
+						expectedMessageType: JSON.parse(pendingMessage.content).type,
+					},
+				),
+			);
+			return [];
+		}
+		pendingMessage.sequenceNumber = sequenceNumber;
+		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
+
+		this.pendingMessages.shift();
+		return [];
 	}
 
 	/**

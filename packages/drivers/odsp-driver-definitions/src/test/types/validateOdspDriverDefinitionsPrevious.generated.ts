@@ -31,7 +31,6 @@ declare type old_as_current_for_TypeAlias_CacheContentType = requireAssignableTo
  * typeValidation.broken:
  * "TypeAlias_CacheContentType": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_CacheContentType = requireAssignableTo<TypeOnly<current.CacheContentType>, TypeOnly<old.CacheContentType>>
 
 /*
@@ -68,7 +67,6 @@ declare type old_as_current_for_Interface_ICacheEntry = requireAssignableTo<Type
  * typeValidation.broken:
  * "Interface_ICacheEntry": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ICacheEntry = requireAssignableTo<TypeOnly<current.ICacheEntry>, TypeOnly<old.ICacheEntry>>
 
 /*
@@ -105,7 +103,6 @@ declare type old_as_current_for_Interface_IEntry = requireAssignableTo<TypeOnly<
  * typeValidation.broken:
  * "Interface_IEntry": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IEntry = requireAssignableTo<TypeOnly<current.IEntry>, TypeOnly<old.IEntry>>
 
 /*
@@ -572,6 +569,15 @@ declare type current_as_old_for_Interface_TokenResponse = requireAssignableTo<Ty
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Variable_authHeaderFromTokenResponse": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_authHeaderFromTokenResponse = requireAssignableTo<TypeOnly<typeof current.authHeaderFromTokenResponse>, TypeOnly<typeof old.authHeaderFromTokenResponse>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Function_getKeyForCacheEntry": {"backCompat": false}
  */
 declare type current_as_old_for_Function_getKeyForCacheEntry = requireAssignableTo<TypeOnly<typeof current.getKeyForCacheEntry>, TypeOnly<typeof old.getKeyForCacheEntry>>
@@ -602,6 +608,15 @@ declare type current_as_old_for_Variable_maximumCacheDurationMs = requireAssigna
  * "Variable_snapshotKey": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_snapshotKey = requireAssignableTo<TypeOnly<typeof current.snapshotKey>, TypeOnly<typeof old.snapshotKey>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_snapshotWithLoadingGroupIdKey": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_snapshotWithLoadingGroupIdKey = requireAssignableTo<TypeOnly<typeof current.snapshotWithLoadingGroupIdKey>, TypeOnly<typeof old.snapshotWithLoadingGroupIdKey>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

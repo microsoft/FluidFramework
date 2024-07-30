@@ -206,7 +206,6 @@ describe("MapTreeNodes", () => {
 
 		it("be mutated", () => {
 			assert.throws(() => map.delete(mapKey));
-			assert.throws(() => fieldNode.content.removeAt(0));
 			assert.throws(() => fieldNode.content.sequenceEditor());
 		});
 	});

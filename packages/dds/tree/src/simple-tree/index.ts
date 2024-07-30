@@ -41,7 +41,7 @@ export {
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { getFlexNode, tryDisposeTreeNode } from "./proxyBinding.js";
 export { treeNodeApi, type TreeNodeApi } from "./treeNodeApi.js";
-export { toFlexSchema, cursorFromUnhydratedRoot } from "./toFlexSchema.js";
+export { toFlexSchema } from "./toFlexSchema.js";
 export type {
 	FieldHasDefaultUnsafe,
 	ObjectFromSchemaRecordUnsafe,
@@ -95,5 +95,5 @@ export {
 	type TreeObjectNode,
 	setField,
 } from "./objectNode.js";
-export type { TreeMapNode } from "./mapNode.js";
+export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
 export { mapTreeFromNodeData } from "./toMapTree.js";

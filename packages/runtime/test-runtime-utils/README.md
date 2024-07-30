@@ -3,7 +3,7 @@
 Test utilities for the Fluid Framework Runtime. Include mock implementation of various runtime interfaces, as well as a
 mock logger for validating a particular log sequence.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -115,7 +115,7 @@ const tokenProvider = new InsecureTokenProvider("YOUR-TENANT-KEY-HERE", {
 
 Again, this should ONLY be used for local development as including the tenant key in the client code risks allowing malicious users to sniff it from the client bundle. Please consider using the [AzureFunctionTokenProvider](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/azure-client/src/AzureFunctionTokenProvider.ts) or your own implementation that fulfills the `ITokenProvider` interface as an alternative for production scenarios.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
