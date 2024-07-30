@@ -6,9 +6,6 @@
 import assert from "assert";
 import { getJsonSchema, SchemaFactory, type TreeJsonSchema } from "../../simple-tree/index.js";
 
-// TODOs:
-// - Identifier fields
-
 import { hydrate } from "./utils.js";
 import { getJsonValidator } from "./jsonSchemaUtilities.js";
 
@@ -233,6 +230,41 @@ describe.only("getJsonSchema", () => {
 			},
 			false,
 		);
+	});
+
+	it("Object schema including an identifier field", () => {
+		const schemaFactory = new SchemaFactory("test");
+		class Schema extends schemaFactory.object("object", {
+			id: schemaFactory.identifier,
+		}) {}
+
+		const actual = getJsonSchema(Schema);
+
+		const expected: TreeJsonSchema = {
+			definitions: {
+				"test.object": {
+					type: "object",
+					kind: "object",
+					properties: {
+						id: {
+							anyOf: [{ $ref: "#/definitions/com.fluidframework.leaf.string" }],
+						},
+					},
+					required: [],
+					additionalProperties: false,
+				},
+				"com.fluidframework.leaf.string": {
+					type: "string",
+					kind: "leaf",
+				},
+			},
+			anyOf: [
+				{
+					$ref: "#/definitions/test.object",
+				},
+			],
+		};
+		assert.deepEqual(actual, expected);
 	});
 
 	it("Recursive object schema", () => {
