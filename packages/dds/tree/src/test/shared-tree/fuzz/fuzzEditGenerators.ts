@@ -14,7 +14,7 @@ import {
 	createWeightedGenerator,
 	done,
 } from "@fluid-private/stochastic-test-utils";
-import type { Client, DDSFuzzTestState, DDSRandom } from "@fluid-private/test-dds-utils";
+import type { Client, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 
 import {
 	AllowedUpdateType,
@@ -65,7 +65,6 @@ import type {
 	CrossFieldMove,
 	FieldDownPath,
 	Constraint,
-	NodeRange,
 } from "./operationTypes.js";
 
 export type FuzzView = FlexTreeView<typeof fuzzSchema.rootFieldSchema> & {
@@ -327,12 +326,13 @@ export const makeTreeEditGenerator = (
 		[
 			({ fieldInfo, random }): Remove => {
 				const field = fieldInfo.content;
+				const first = random.integer(0, field.length - 1);
+				// By avoiding large deletions we're more likely to generate more interesting outcomes.
+				// It'd be reasonable to move this to config.
+				const last = random.integer(first, Math.min(first + 3, field.length - 1));
 				return {
 					type: "remove",
-
-					// By avoiding large deletions we're more likely to generate more interesting outcomes.
-					// It'd be reasonable to move this to config.
-					range: chooseRangeWithMaxLength(random, field.length, 3),
+					range: { first, last },
 				};
 			},
 			weights.remove,
@@ -341,9 +341,11 @@ export const makeTreeEditGenerator = (
 		[
 			({ fieldInfo, random }): IntraFieldMove => {
 				const field = fieldInfo.content;
+				const first = random.integer(0, field.length - 1);
+				const last = random.integer(first, field.length - 1);
 				return {
 					type: "intraFieldMove",
-					range: chooseRange(random, field.length),
+					range: { first, last },
 					dstIndex: random.integer(0, field.length),
 				};
 			},
@@ -353,6 +355,8 @@ export const makeTreeEditGenerator = (
 		[
 			(state): CrossFieldMove => {
 				const srcField = state.fieldInfo.content;
+				const first = state.random.integer(0, srcField.length - 1);
+				const last = state.random.integer(first, srcField.length - 1);
 				const dstFieldInfo = selectTreeField(
 					viewFromState(state),
 					state.random,
@@ -364,7 +368,7 @@ export const makeTreeEditGenerator = (
 				const dstField = dstFieldInfo.content;
 				return {
 					type: "crossFieldMove",
-					range: chooseRange(state.random, srcField.length),
+					range: { first, last },
 					dstField: fieldDownPathFromField(dstField),
 					dstIndex: state.random.integer(0, dstField.length),
 				};
@@ -424,21 +428,6 @@ export const makeTreeEditGenerator = (
 			default:
 				fail("Unknown field type");
 		}
-	}
-
-	function chooseRange(random: DDSRandom, fieldLength: number): NodeRange {
-		return chooseRangeWithMaxLength(random, fieldLength, fieldLength);
-	}
-
-	function chooseRangeWithMaxLength(
-		random: DDSRandom,
-		fieldLength: number,
-		maxLength: number,
-	): NodeRange {
-		const length = random.integer(1, Math.min(fieldLength, maxLength));
-		const first = random.integer(0, fieldLength - length);
-		const last = first + length - 1;
-		return { first, last };
 	}
 
 	return (state) => {
