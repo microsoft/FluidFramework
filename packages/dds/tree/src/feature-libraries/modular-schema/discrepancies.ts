@@ -465,7 +465,7 @@ function compareFieldKind(
 		"Forbidden": 1,
 		"Value": 2,
 		"Optional": 3,
-		// "Sequence": 4,  // the sequence fieldKind is not supported yet
+		// "Sequence": 4,  // Relaxing non-sequence fields to sequences is not currently supported, though we could consider doing so in the future.
 	};
 
 	if (!(aKind in order) || !(bKind in order)) {
