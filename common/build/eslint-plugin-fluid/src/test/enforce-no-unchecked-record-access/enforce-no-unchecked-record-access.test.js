@@ -22,13 +22,14 @@ describe("ESLint Rule Tests", function () {
 			},
 			rulePaths: [path.join(__dirname, "../../rules")],
 		});
-		const fileToLint = path.join(__dirname, "../mockFiles/no-unchecked-array-access", file);
-		const results = await eslint.lintFiles(fileToLint);
+		const fileToLint = path.join(__dirname, "../mockFiles/no-unchecked-record-access", file);
+		const results = await eslint.lintFiles([fileToLint]);
 		return results[0]
 	}
 
-	it("Should report an error for unchecked record access but not array access", async function () {
-		const result = await lintFile("fileWithArrayAndRecordAccess.ts");
+	it("Should report an error for unchecked record access", async function () {
+		const result = await lintFile("fileWithOnlyRecordAccess.ts");
+		console.log(result.messages[0].message)
 		assert.strictEqual(result.errorCount, 2, "Should have two errors");
 		assert.strictEqual(
 			result.messages[0].message,
