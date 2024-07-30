@@ -788,15 +788,15 @@ describe("treeNodeApi", () => {
 				listenerFired = true;
 			});
 
-			const branchView = getViewForForkedBranch(view);
+			const { forkView, forkCheckout } = getViewForForkedBranch(view);
 
 			// The implementation details of the kinds of changes that can happen inside the tree are not exposed at this layer.
 			// But since we know then, try to cover all of them.
-			branchView.root.prop1 = 2; // Replace
-			branchView.root.prop2 = undefined; // Detach
-			branchView.root.prop3 = 3; // Attach
+			forkView.root.prop1 = 2; // Replace
+			forkView.root.prop2 = undefined; // Detach
+			forkView.root.prop3 = 3; // Attach
 
-			view.checkout.merge(branchView.checkout);
+			view.checkout.merge(forkCheckout);
 
 			// Validate changes actually took place and all listeners fired
 			assert.equal(root.prop1, 2, "'prop1' value did not change as expected");
@@ -825,15 +825,15 @@ describe("treeNodeApi", () => {
 				listenerFired = true;
 			});
 
-			const branchView = getViewForForkedBranch(view);
+			const { forkView, forkCheckout } = getViewForForkedBranch(view);
 
 			// The implementation details of the kinds of changes that can happen inside the tree are not exposed at this layer.
 			// But since we know then, try to cover all of them.
-			branchView.root.set("key1", 0); // Replace existing key
-			branchView.root.delete("key2"); // Remove a key
-			branchView.root.set("key3", 3); // Add new key
+			forkView.root.set("key1", 0); // Replace existing key
+			forkView.root.delete("key2"); // Remove a key
+			forkView.root.set("key3", 3); // Add new key
 
-			view.checkout.merge(branchView.checkout);
+			view.checkout.merge(forkCheckout);
 
 			// Validate changes actually took place and all listeners fired
 			assert.equal(root.get("key1"), 0, "'key1' value did not change as expected");
@@ -857,15 +857,15 @@ describe("treeNodeApi", () => {
 				listenerFired = true;
 			});
 
-			const branchView = getViewForForkedBranch(view);
+			const { forkView, forkCheckout } = getViewForForkedBranch(view);
 
 			// The implementation details of the kinds of changes that can happen inside the tree are not exposed at this layer.
 			// But since we know then, try to cover all of them.
-			branchView.root.insertAtEnd(3); // Append to array
-			branchView.root.removeAt(0); // Remove from arrray
-			branchView.root.moveRangeToEnd(0, 1); // Move within array
+			forkView.root.insertAtEnd(3); // Append to array
+			forkView.root.removeAt(0); // Remove from arrray
+			forkView.root.moveRangeToEnd(0, 1); // Move within array
 
-			view.checkout.merge(branchView.checkout);
+			view.checkout.merge(forkCheckout);
 
 			// Validate changes actually took place and all listeners fired
 			// Note: as of 2024-07-29, if the schema for the root is defined with a name
