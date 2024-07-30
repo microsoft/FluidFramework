@@ -33,19 +33,19 @@ declare class Empty1 {}
 declare class Empty2 {}
 
 declare class Nominal1 {
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck: MakeNominal;
 }
 
 declare class Nominal2 {
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck: MakeNominal;
 }
 
 declare class Derived1 extends Nominal1 {
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck: MakeNominal;
 }
 
 declare class Derived2 extends Nominal1 {
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck: MakeNominal;
 }
 
 declare class Generic<_T> {}
