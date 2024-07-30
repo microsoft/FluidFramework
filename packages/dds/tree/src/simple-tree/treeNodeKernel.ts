@@ -14,7 +14,6 @@ import {
 	TreeStatus,
 	treeStatusFromAnchorCache,
 } from "../feature-libraries/index.js";
-import { getFlexNode } from "./index.js";
 import { getSimpleNodeSchema } from "./schemaCaching.js";
 import { fail } from "../util/index.js";
 import { isObjectNodeSchema } from "./objectNodeTypes.js";
@@ -38,7 +37,9 @@ export class TreeNodeKernel implements Listenable<TreeChangeEvents> {
 		const offChildrenChanged = anchorNode.on(
 			"childrenChangedAfterBatch",
 			({ changedFields }) => {
-				const nodeSchema = getSimpleNodeSchema(getFlexNode(this.node).schema);
+				const flexNode = anchorNode.slots.get(flexTreeSlot);
+				assert(flexNode !== undefined, "Flex node does not exist");
+				const nodeSchema = getSimpleNodeSchema(flexNode.schema);
 				const changedProperties = isObjectNodeSchema(nodeSchema)
 					? new Set(
 							[...changedFields].map(
