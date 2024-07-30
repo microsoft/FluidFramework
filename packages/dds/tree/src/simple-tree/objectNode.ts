@@ -133,16 +133,31 @@ export type SimpleKeyMap = ReadonlyMap<
 >;
 
 /**
- * Caches the mappings from view keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
+ * Maps from stored field keys to the corresponding "view" keys.
+ *
+ * @remarks
+ * A missing entry for a given stored key indicates that no such field exists in the stored schema.
  */
-function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): SimpleKeyMap {
-	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();
+export type StoredKeyToViewKeyMap = ReadonlyMap<FieldKey, string>;
+
+/**
+ * Returns two mappings created from the specified fields: from view keys to stored keys + schema, and from stored keys
+ * to view keys.
+ */
+function createFlexKeyMappings(fields: Record<string, ImplicitFieldSchema>): {
+	viewKeyMap: SimpleKeyMap;
+	storedKeyToViewKeyMap: StoredKeyToViewKeyMap;
+} {
+	const viewKeyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> =
+		new Map();
+	const storedKeyToViewKeyMap: Map<FieldKey, string> = new Map();
 	for (const [viewKey, fieldSchema] of Object.entries(fields)) {
 		const storedKey = getStoredKey(viewKey, fieldSchema);
-		keyMap.set(viewKey, { storedKey, schema: normalizeFieldSchema(fieldSchema) });
+		viewKeyMap.set(viewKey, { storedKey, schema: normalizeFieldSchema(fieldSchema) });
+		storedKeyToViewKeyMap.set(storedKey, viewKey);
 	}
 
-	return keyMap;
+	return { viewKeyMap, storedKeyToViewKeyMap };
 }
 
 /**
@@ -311,8 +326,8 @@ export function objectSchema<
 	// implicitly derived from view keys)
 	assertUniqueKeys(identifier, info);
 
-	// Performance optimization: cache view key => stored key and schema.
-	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(info);
+	// Performance optimization: cache view key => stored key and schema, and stored key => view key.
+	const { viewKeyMap, storedKeyToViewKeyMap } = createFlexKeyMappings(info);
 
 	let handler: ProxyHandler<object>;
 	let customizable: boolean;
@@ -320,9 +335,11 @@ export function objectSchema<
 
 	class CustomObjectNode extends CustomObjectNodeBase<T> {
 		public static readonly fields: ReadonlyMap<string, FieldSchema> = new Map(
-			[...flexKeyMap].map(([key, value]) => [key as string, value.schema]),
+			[...viewKeyMap].map(([key, value]) => [key as string, value.schema]),
 		);
-		public static readonly flexKeyMap: SimpleKeyMap = flexKeyMap;
+		public static readonly flexKeyMap: SimpleKeyMap = viewKeyMap;
+		public static readonly storedKeyToViewKeyMap: StoredKeyToViewKeyMap =
+			storedKeyToViewKeyMap;
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
@@ -370,7 +387,7 @@ export function objectSchema<
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
 			customizable = (this as unknown) !== CustomObjectNode;
-			handler = createProxyHandler(flexKeyMap, customizable);
+			handler = createProxyHandler(viewKeyMap, customizable);
 			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexObjectNodeSchema;
 
 			// First run, do extra validation.
@@ -380,7 +397,7 @@ export function objectSchema<
 				let prototype: object = this.prototype;
 				// There isn't a clear cleaner way to author this loop.
 				while (prototype !== CustomObjectNode.prototype) {
-					for (const [key] of flexKeyMap) {
+					for (const [key] of viewKeyMap) {
 						if (
 							// constructor is a special case, since one is built in on the derived type, and shadowing it works fine since we only use it before fields are applied.
 							key !== "constructor" &&

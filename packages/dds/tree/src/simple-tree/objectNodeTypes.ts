@@ -8,6 +8,7 @@ import type {
 	TreeObjectNode,
 	InsertableObjectFromSchemaRecord,
 	SimpleKeyMap,
+	StoredKeyToViewKeyMap,
 } from "./objectNode.js";
 import {
 	type ImplicitFieldSchema,
@@ -48,6 +49,10 @@ export interface ObjectNodeSchemaInternalData {
 	 * {@inheritdoc SimpleKeyMap}
 	 */
 	readonly flexKeyMap: SimpleKeyMap;
+	/**
+	 * {@inheritdoc StoredKeyToViewKeyMap}
+	 */
+	readonly storedKeyToViewKeyMap: StoredKeyToViewKeyMap;
 }
 
 export const ObjectNodeSchema = {

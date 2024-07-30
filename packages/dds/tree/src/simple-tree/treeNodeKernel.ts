@@ -14,6 +14,10 @@ import {
 	TreeStatus,
 	treeStatusFromAnchorCache,
 } from "../feature-libraries/index.js";
+import { getFlexNode } from "./index.js";
+import { getSimpleNodeSchema } from "./schemaCaching.js";
+import { fail } from "../util/index.js";
+import { isObjectNodeSchema } from "./objectNodeTypes.js";
 
 /**
  * Contains state and an internal API for managing {@link TreeNode}s.
@@ -34,7 +38,17 @@ export class TreeNodeKernel implements Listenable<TreeChangeEvents> {
 		const offChildrenChanged = anchorNode.on(
 			"childrenChangedAfterBatch",
 			({ changedFields }) => {
-				this.#events.emit("nodeChanged", { changedProperties: changedFields });
+				const nodeSchema = getSimpleNodeSchema(getFlexNode(this.node).schema);
+				const changedProperties = isObjectNodeSchema(nodeSchema)
+					? new Set(
+							[...changedFields].map(
+								(field) =>
+									nodeSchema.storedKeyToViewKeyMap.get(field) ??
+									fail(`Could not find stored key '${field}' in schema.`),
+							),
+						)
+					: new Set(changedFields);
+				this.#events.emit("nodeChanged", { changedProperties });
 			},
 		);
 
