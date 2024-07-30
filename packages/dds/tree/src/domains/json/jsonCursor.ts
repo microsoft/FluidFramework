@@ -18,7 +18,12 @@ import {
 	stackTreeNodeCursor,
 	TreeNodeSchemaBase,
 } from "../../feature-libraries/index.js";
-import { brand, type JsonCompatible, type JsonCompatibleObject } from "../../util/index.js";
+import {
+	brand,
+	isReadonlyArray,
+	type JsonCompatible,
+	type JsonCompatibleObject,
+} from "../../util/index.js";
 import { leaf } from "../leafDomain.js";
 
 import { jsonArray, jsonObject } from "./jsonDomainSchema.js";
@@ -42,7 +47,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 			default:
 				if (node === null) {
 					return leaf.null.name;
-				} else if (Array.isArray(node)) {
+				} else if (isReadonlyArray(node)) {
 					return jsonArray.name;
 				} else {
 					return jsonObject.name;
@@ -54,7 +59,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 			case "object":
 				if (node === null) {
 					return [];
-				} else if (Array.isArray(node)) {
+				} else if (isReadonlyArray(node)) {
 					return node.length === 0 ? [] : [EmptyKey];
 				} else {
 					return Object.keys(node) as FieldKey[];
@@ -74,7 +79,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 			return [];
 		}
 
-		if (Array.isArray(node)) {
+		if (isReadonlyArray(node)) {
 			return key === EmptyKey ? node : [];
 		}
 
@@ -176,13 +181,21 @@ const typedAdapter: CursorAdapter<TypedJsonCompatible> = {
 	getFieldFromNode: (
 		node: TypedJsonCompatible,
 		key: FieldKey,
-	): readonly TypedJsonCompatible[] => adapter.getFieldFromNode(node, key),
+	): readonly TypedJsonCompatible[] => {
+		const field = adapter.getFieldFromNode(node, key);
+		if (isReadonlyArray(field) && field.length === 1 && isReadonlyArray(field[0])) {
+			// If the field is an array wrapping another array, then unbox to the inner array
+			return field[0];
+		}
+		return field;
+	},
 };
 
 /**
  * A variant of {@link singleJsonCursor} which allows types to be provided for nodes.
  *
  * @remarks Types are optional, but if present will be used to derive the type of the node when the cursor is read.
+ * This cursor differs from singleJsonCursor in that it inlines arrays, (arrays are not boxed into an "array node" but are directly interpreted as sequence fields).
  *
  * @example
  * ```ts
