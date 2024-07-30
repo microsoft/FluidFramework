@@ -27,7 +27,8 @@ import { ValueSchema } from "../core/index.js";
 import { fail } from "../util/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
 
-// TODO: tests
+// TODOs:
+// - tests
 
 /**
  * Private symbol under which the results of {@link getSimpleSchema} are cached on an input {@link TreeNodeSchema}.
@@ -71,6 +72,7 @@ function toSimpleTreeSchema(schema: ImplicitAllowedTypes): SimpleTreeSchema {
 }
 
 // Note: shallow
+// TODO: caching
 function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
 	const kind = schema.kind;
 	switch (kind) {
@@ -132,6 +134,7 @@ function objectSchemaToSimpleSchema(schema: ObjectNodeSchema): SimpleObjectNodeS
 	};
 }
 
+// TODO: caching
 function fieldSchemaToSimpleSchema(schema: FieldSchema): SimpleFieldSchema {
 	const kind = fieldKindToSimpleFieldKind(schema.kind);
 	const allowedTypes = allowedTypesFromFieldSchema(schema);
