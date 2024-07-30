@@ -27,6 +27,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
 import { markSchemaMostDerived } from "./schemaFactory.js";
 import { fail, getOrAddEmptyToMap } from "../util/index.js";
+import type { MakeNominal } from "../util/index.js";
 
 /**
  * Channel for a Fluid Tree DDS.
@@ -163,6 +164,8 @@ export interface ITreeViewConfiguration<
 export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>
 	implements Required<ITreeViewConfiguration<TSchema>>
 {
+	protected _typeCheck!: MakeNominal;
+
 	/**
 	 * {@inheritDoc ITreeViewConfiguration.schema}
 	 */
