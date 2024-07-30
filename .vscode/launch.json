@@ -30,6 +30,15 @@
 			"type": "node",
 		},
 		{
+			"name": "npm test version-tools",
+			"cwd": "${workspaceFolder}/build-tools/packages/version-tools",
+			"request": "launch",
+			"runtimeArgs": ["run-script", "test"],
+			"runtimeExecutable": "npm",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+		},
+		{
 			"name": "fluid-build",
 			"program": "${workspaceFolder}/build-tools/packages/build-tools/bin/fluid-build",
 			"cwd": "${workspaceFolder}/packages/common/container-definitions",

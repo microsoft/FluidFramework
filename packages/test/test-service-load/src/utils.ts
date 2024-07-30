@@ -21,9 +21,9 @@ import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/inte
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 
-import { FileLogger } from "./FileLogger.js";
 import { createFluidExport, type ILoadTest, type IRunConfig } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
@@ -74,7 +74,7 @@ export async function initialize(
 	seed: number,
 	testConfig: TestConfiguration,
 	verbose: boolean,
-	profileName: string,
+	logger: ITelemetryLoggerExt,
 	requestedTestId?: string,
 ) {
 	const random = makeRandom(seed);
@@ -91,13 +91,6 @@ export async function initialize(
 	const configurations = random.pick(
 		generateConfigurations(seed, optionsOverride?.configurations),
 	);
-
-	const logger = await FileLogger.createLogger({
-		driverType: testDriver.type,
-		driverEndpointName: testDriver.endpointName,
-		profile: profileName,
-		runId: undefined,
-	});
 
 	logger.sendTelemetryEvent({
 		eventName: "RunConfigOptions",
@@ -168,17 +161,6 @@ export async function createTestDriver(
 			r11sEndpointName: endpointName,
 		},
 	});
-}
-
-export async function safeExit(code: number, url: string, runId?: number) {
-	// There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
-	await new Promise((resolve) => {
-		setTimeout(resolve, 1000);
-	});
-	// Flush the logs
-	await FileLogger.flushLogger({ url, runId });
-
-	process.exit(code);
 }
 
 /**
