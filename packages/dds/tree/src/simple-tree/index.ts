@@ -95,6 +95,6 @@ export {
 	type TreeObjectNode,
 	setField,
 } from "./objectNode.js";
-export type { TreeMapNode } from "./mapNode.js";
+export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
 export { mapTreeFromNodeData } from "./toMapTree.js";
 export { createSimpleTreeIndex, createIdentifierIndex } from "./identifierIndex.js";

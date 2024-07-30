@@ -149,21 +149,31 @@ describe("Pending State Manager", () => {
 			);
 		});
 
-		const submitBatch = (messages: Partial<ISequencedDocumentMessage>[]) => {
+		const submitBatch = (
+			messages: Partial<ISequencedDocumentMessage>[],
+			clientSequenceNumber?: number,
+			localOpMetadata?: unknown,
+		) => {
 			pendingStateManager.onFlushBatch(
 				messages.map<BatchMessage>((message) => ({
 					contents: JSON.stringify({ type: message.type, contents: message.contents }),
 					referenceSequenceNumber: message.referenceSequenceNumber!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
 					metadata: message.metadata as any as Record<string, unknown> | undefined,
+					localOpMetadata,
 				})),
-				messages[0]?.clientSequenceNumber,
+				clientSequenceNumber ?? messages[0]?.clientSequenceNumber,
 			);
 		};
 
-		const process = (messages: Partial<ISequencedDocumentMessage>[], batchStartCsn: number) =>
+		const process = (
+			messages: Partial<ISequencedDocumentMessage>[],
+			batchStartCsn: number,
+			sequenceNumber?: number,
+		) =>
 			pendingStateManager.processPendingLocalBatch(
 				messages as InboundSequencedContainerRuntimeMessage[],
 				batchStartCsn,
+				sequenceNumber,
 			);
 
 		it("proper batch is processed correctly", () => {
@@ -193,6 +203,26 @@ describe("Pending State Manager", () => {
 			submitBatch(messages);
 			process(messages, 0 /* batchStartCsn */);
 			assert(closeError === undefined);
+		});
+
+		it("empty batch is processed correctly", () => {
+			// Empty batch is reflected in the pending state manager as a single message
+			// with the following metadata:
+			submitBatch(
+				[
+					{
+						contents: JSON.stringify({ type: "groupedBatch", contents: [] }),
+						referenceSequenceNumber: 0,
+						metadata: { batchId: "batchId" },
+					},
+				],
+				1 /* clientSequenceNumber */,
+				{ emptyBatch: true },
+			);
+			// A groupedBatch is supposed to have nested messages inside its contents,
+			// but an empty batch has no nested messages. When processing en empty grouped batch,
+			// the psm will expect the next pending message to be an "empty" message as portrayed above.
+			process([], 1 /* batchStartCsn */, 3 /* sequenceNumber */);
 		});
 
 		it("batch missing end message will call close", () => {
@@ -425,6 +455,147 @@ describe("Pending State Manager", () => {
 					1 /* batchStartCsn */,
 				);
 			});
+		});
+	});
+
+	describe("replayPendingStates", () => {
+		let pendingStateManager: PendingStateManager;
+		const resubmittedBatchIds: string[] = [];
+		const clientId = "clientId";
+
+		beforeEach(async () => {
+			resubmittedBatchIds.length = 0;
+			pendingStateManager = new PendingStateManager(
+				{
+					applyStashedOp: async () => undefined,
+					clientId: () => clientId,
+					close: () => {},
+					connected: () => true,
+					reSubmitBatch: (batch, batchId) => {
+						resubmittedBatchIds.push(batchId);
+					},
+					isActiveConnection: () => false,
+					isAttached: () => true,
+				},
+				undefined /* initialLocalState */,
+				logger,
+			) as any;
+		});
+
+		it("replays pending states", () => {
+			const messages = [
+				{
+					type: MessageType.Operation,
+					clientSequenceNumber: 0,
+					referenceSequenceNumber: 0,
+					contents: {},
+				},
+				{
+					type: MessageType.Operation,
+					clientSequenceNumber: 1,
+					referenceSequenceNumber: 0,
+					contents: {},
+				},
+			];
+			pendingStateManager.onFlushBatch(
+				messages.map<BatchMessage>((message) => ({
+					contents: JSON.stringify({ type: message.type, contents: message.contents }),
+					referenceSequenceNumber: message.referenceSequenceNumber,
+				})),
+				0,
+			);
+			pendingStateManager.replayPendingStates();
+			assert.strictEqual(resubmittedBatchIds[0], `${clientId}_[0]`);
+			assert.strictEqual(resubmittedBatchIds[1], `${clientId}_[0]`);
+		});
+
+		it("replays pending states with empty batch", () => {
+			// Empty batch is reflected in the pending state manager as a single message
+			// with the following metadata:
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						contents: JSON.stringify({ type: "groupedBatch", contents: [] }),
+						referenceSequenceNumber: 0,
+						metadata: { emptyBatch: true, batchId: "batchId" },
+					},
+				],
+				0,
+			);
+			pendingStateManager.replayPendingStates();
+			assert.strictEqual(resubmittedBatchIds[0], "batchId");
+		});
+	});
+
+	describe("applyStashedOpsAt", () => {
+		it("applyStashedOpsAt", async () => {
+			const applyStashedOps: string[] = [];
+			const messages: IPendingMessage[] = [
+				{
+					type: "message",
+					content: '{"type":"component"}',
+					referenceSequenceNumber: 10,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
+				},
+				{
+					type: "message",
+					content: '{"type": "component", "contents": {"prop1": "value"}}',
+					referenceSequenceNumber: 11,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 2 },
+				},
+			];
+
+			const pendingStateManager = new PendingStateManager(
+				{
+					applyStashedOp: async (content) => applyStashedOps.push(content),
+					clientId: () => "clientId",
+					close: () => {},
+					connected: () => true,
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
+					isAttached: () => true,
+				},
+				{ pendingStates: messages },
+				logger,
+			);
+			await pendingStateManager.applyStashedOpsAt();
+			assert.strictEqual(applyStashedOps.length, 2);
+			assert.strictEqual(pendingStateManager.pendingMessagesCount, 2);
+		});
+
+		it("applyStashedOpsAt for empty batch", async () => {
+			const applyStashedOps: string[] = [];
+			const messages: IPendingMessage[] = [
+				{
+					type: "message",
+					content: '{"type":"groupedBatch", "contents": []}',
+					referenceSequenceNumber: 10,
+					opMetadata: undefined,
+					localOpMetadata: { emptyBatch: true },
+					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
+				},
+			];
+
+			const pendingStateManager = new PendingStateManager(
+				{
+					applyStashedOp: async (content) => applyStashedOps.push(content),
+					clientId: () => "clientId",
+					close: () => {},
+					connected: () => true,
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
+					isAttached: () => true,
+				},
+				{ pendingStates: messages },
+				logger,
+			);
+			await pendingStateManager.applyStashedOpsAt();
+			assert.strictEqual(applyStashedOps.length, 0);
+			assert.strictEqual(pendingStateManager.pendingMessagesCount, 1);
 		});
 	});
 

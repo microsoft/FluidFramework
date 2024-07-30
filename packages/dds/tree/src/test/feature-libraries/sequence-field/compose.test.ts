@@ -76,7 +76,7 @@ export function testCompose() {
 								const left = composeNoVerify([makeAnonChange(ab), taggedC], revInfos);
 								const bc = composeNoVerify([taggedB, taggedC]);
 								const right = composeNoVerify([taggedA, makeAnonChange(bc)], revInfos);
-								assertChangesetsEqual(left, right);
+								assertChangesetsEqual(left, right, true);
 							});
 						}
 					}
@@ -685,7 +685,7 @@ export function testCompose() {
 
 		it("revive ○ redundant revive", () => {
 			const reviveA = Change.revive(0, 2, { revision: tag1, localId: brand(0) });
-			const reviveB = Change.redundantRevive(0, 2, { revision: tag1, localId: brand(0) });
+			const reviveB = Change.pin(0, 2, { revision: tag1, localId: brand(0) });
 			const expected = [
 				Mark.revive(2, { revision: tag1, localId: brand(0) }, { revision: tag2 }),
 			];
@@ -765,14 +765,9 @@ export function testCompose() {
 				tag4,
 			);
 			const actual = shallowCompose([return1, return2]);
-
-			// We expect vestigial moves to exist to record that the cell's ID was changed.
 			const expected = [
 				{ count: 4 },
-				Mark.attachAndDetach(
-					Mark.returnTo(1, { revision: tag3, localId: brand(0) }, cellIdA),
-					Mark.moveOut(1, { revision: tag4, localId: brand(0) }),
-				),
+				Mark.rename(1, cellIdA, { revision: tag4, localId: brand(0) }),
 			];
 			assertChangesetsEqual(actual, expected);
 		});
@@ -836,9 +831,10 @@ export function testCompose() {
 
 			const composed = compose([tagChangeInline(move1, tag1), tagChangeInline(move2, tag2)]);
 			const expected = [
-				Mark.attachAndDetach(
-					Mark.moveIn(1, { revision: tag1, localId: brand(0) }),
-					Mark.moveOut(1, { revision: tag2, localId: brand(0) }),
+				Mark.rename(
+					1,
+					{ revision: tag1, localId: brand(1) },
+					{ revision: tag2, localId: brand(0) },
 				),
 				{ count: 1 },
 				Mark.moveOut(
@@ -869,7 +865,7 @@ export function testCompose() {
 					finalEndpoint: { revision: undefined, localId: brand(2) },
 				}),
 				{ count: 1 },
-				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(2))),
+				Mark.rename(1, { localId: brand(1) }, { localId: brand(2) }),
 				{ count: 1 },
 				Mark.moveIn(1, brand(2), {
 					finalEndpoint: { revision: undefined, localId: brand(0) },
@@ -887,7 +883,7 @@ export function testCompose() {
 					finalEndpoint: { revision: undefined, localId: brand(0) },
 				}),
 				{ count: 1 },
-				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(2))),
+				Mark.rename(1, { localId: brand(1) }, { localId: brand(2) }),
 				{ count: 1 },
 				Mark.moveOut(1, brand(0), {
 					finalEndpoint: { revision: undefined, localId: brand(2) },
@@ -904,9 +900,10 @@ export function testCompose() {
 				tagChangeInline(move2, tag2),
 			]);
 			const expected = [
-				Mark.attachAndDetach(
-					Mark.moveIn(1, { revision: tag1, localId: brand(0) }),
-					Mark.moveOut(1, { revision: tag2, localId: brand(0) }),
+				Mark.rename(
+					1,
+					{ revision: tag1, localId: brand(1) },
+					{ revision: tag2, localId: brand(0) },
 				),
 				{ count: 1 },
 				Mark.moveIn(
@@ -950,9 +947,10 @@ export function testCompose() {
 					},
 				),
 				{ count: 1 },
-				Mark.attachAndDetach(
-					Mark.moveIn(1, { revision: tag1, localId: brand(0) }),
-					Mark.moveOut(1, { revision: tag2, localId: brand(0) }),
+				Mark.rename(
+					1,
+					{ revision: tag1, localId: brand(1) },
+					{ revision: tag2, localId: brand(0) },
 				),
 			];
 			assertChangesetsEqual(actual, expected);
@@ -1063,14 +1061,13 @@ export function testCompose() {
 			assertChangesetsEqual(actual, expected);
 		});
 
-		// This test leads compose to output a vestigial endpoint.
-		it.skip("return-to, remove, move-out", () => {
+		it("return-to, remove, move-out", () => {
 			const returnTo = tagChangeInline(
 				[
 					Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 					{ count: 1 },
 					Mark.moveOut(1, brand(0), {
-						idOverride: { revision: tag1, localId: brand(0) },
+						idOverride: { revision: tag1, localId: brand(1) },
 					}),
 				],
 				tag3,
@@ -1086,7 +1083,8 @@ export function testCompose() {
 				tag1,
 			);
 			const actual = shallowCompose([returnTo, del, move]);
-			assertChangesetsEqual(actual, []);
+			const expected = [Mark.tomb(tag1, brand(0))];
+			assertChangesetsEqual(actual, expected);
 		});
 
 		it("move1, move2, return2", () => {
@@ -1113,34 +1111,61 @@ export function testCompose() {
 					a < b
 						? [
 								move1,
-								makeAnonChange([Mark.tomb(tag1), Mark.skip(3), Mark.tomb(tag2, brand(1))]),
+								makeAnonChange([
+									Mark.tomb(tag1),
+									Mark.skip(1),
+									Mark.pin(1, { revision: tag2, localId: brand(0) }, { revision: tag3 }),
+									Mark.skip(1),
+									Mark.tomb(tag2, brand(1)),
+								]),
 							]
 						: [
 								move1,
-								makeAnonChange([Mark.tomb(tag2, brand(1)), Mark.skip(3), Mark.tomb(tag1)]),
+								makeAnonChange([
+									Mark.tomb(tag2, brand(1)),
+									Mark.skip(1),
+									Mark.pin(1, { revision: tag2, localId: brand(0) }, { revision: tag3 }),
+									Mark.skip(1),
+									Mark.tomb(tag1),
+								]),
 							],
 				);
-				assertChangesetsEqual(composed, expected);
+				assertChangesetsEqual(composed, expected, true);
 			}
 		});
 
+		it("rename ○ return", () => {
+			const cellId1: SF.CellId = { revision: tag1, localId: brand(1) };
+			const cellId2: SF.CellId = { revision: tag2, localId: brand(2) };
+			const ad = tagChangeInline(
+				[Mark.pin(1, brand(2)), Mark.rename(1, cellId1, brand(2))],
+				tag2,
+			);
+			const ret = tagChangeInline(
+				[
+					Mark.moveOut(1, brand(3), { revision: tag3 }),
+					Mark.returnTo(1, brand(3), cellId2, { revision: tag3 }),
+				],
+				tag3,
+			);
+			const expected = [
+				Mark.moveOut(1, brand(3), { revision: tag3 }),
+				Mark.returnTo(1, brand(3), cellId1, { revision: tag3 }),
+			];
+			const actual = shallowCompose([ad, ret]);
+			assertChangesetsEqual(actual, expected);
+		});
+
 		it("move1 ○ [return1, move2]", () => {
+			const leg1Id: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const leg3Id: ChangeAtomId = { revision: tag3, localId: brand(0) };
 			for (const [a, b, c] of [
 				[0, 1, 2],
 				[2, 1, 0],
 			]) {
 				const move1 = tagChangeInline(Change.move(a, 1, b > a ? b + 1 : b), tag1);
 				const return1 = tagChangeInline(
-					Change.return(
-						b,
-						1,
-						a > b ? a + 1 : a,
-						{ revision: tag1, localId: brand(1) },
-						{
-							revision: tag1,
-							localId: brand(0),
-						},
-					),
+					Change.return(b, 1, a > b ? a + 1 : a, { ...leg1Id, localId: brand(1) }, leg1Id),
 					tag2,
 					tag1,
 				);
@@ -1150,21 +1175,27 @@ export function testCompose() {
 					[move1, makeAnonChange(part2)],
 					[{ revision: tag1 }, { revision: tag2, rollbackOf: tag1 }, { revision: tag3 }],
 				);
+
+				const expectedMoveOut = Mark.moveOut(1, leg1Id, {
+					idOverride: leg3Id,
+					finalEndpoint: leg3Id,
+				});
+				const expectedMoveIn = Mark.moveIn(1, leg3Id, { finalEndpoint: leg1Id });
 				const expected =
 					a < b
 						? [
-								Mark.moveOut(1, { revision: tag3, localId: brand(0) }),
+								expectedMoveOut,
 								Mark.skip(1),
 								Mark.tomb(tag1, brand(1)),
 								Mark.skip(1),
-								Mark.moveIn(1, { revision: tag3, localId: brand(0) }),
+								expectedMoveIn,
 							]
 						: [
-								Mark.moveIn(1, { revision: tag3, localId: brand(0) }),
+								expectedMoveIn,
 								Mark.skip(1),
 								Mark.tomb(tag1, brand(1)),
 								Mark.skip(1),
-								Mark.moveOut(1, { revision: tag3, localId: brand(0) }),
+								expectedMoveOut,
 							];
 				assertChangesetsEqual(composed, expected);
 			}
@@ -1198,23 +1229,21 @@ export function testCompose() {
 				],
 			);
 
-			const moveId1: ChangeAtomId = { revision: tag3, localId: brand(0) };
-			const moveId2: ChangeAtomId = { revision: tag4, localId: brand(0) };
-
-			const [moveOut1, moveIn1] = Mark.move(1, moveId1);
-			moveOut1.finalEndpoint = moveId2;
-
-			const [moveOut2, moveIn2] = Mark.move(1, moveId2);
-			moveIn2.finalEndpoint = moveId1;
+			const leg1Id: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const leg3Id: ChangeAtomId = { revision: tag3, localId: brand(0) };
+			const leg4Id: ChangeAtomId = { revision: tag4, localId: brand(0) };
 
 			const expected = [
-				moveIn2,
+				Mark.moveIn(1, leg4Id, { finalEndpoint: leg1Id }),
 				Mark.skip(1),
-				Mark.attachAndDetach(moveIn1, moveOut2),
+				Mark.rename(1, { revision: tag3, localId: brand(1) }, leg4Id),
 				Mark.skip(1),
 				Mark.tomb(tag1, brand(1)),
 				Mark.skip(1),
-				moveOut1,
+				Mark.moveOut(1, leg1Id, {
+					finalEndpoint: leg4Id,
+					idOverride: leg3Id,
+				}),
 			];
 
 			assertChangesetsEqual(composed, expected);
@@ -1280,7 +1309,7 @@ export function testCompose() {
 								]),
 							],
 				);
-				assertChangesetsEqual(composed, expected);
+				assertChangesetsEqual(composed, expected, true);
 			}
 		});
 
@@ -1301,9 +1330,10 @@ export function testCompose() {
 			const composed = shallowCompose([move1, move2, return1]);
 			const expected = [
 				{ count: 2 },
-				Mark.attachAndDetach(
-					Mark.moveIn(1, { revision: tag1, localId: brand(0) }),
-					Mark.moveOut(1, { revision: tag2, localId: brand(0) }),
+				Mark.rename(
+					1,
+					{ revision: tag1, localId: brand(1) },
+					{ revision: tag2, localId: brand(0) },
 				),
 				{ count: 1 },
 				Mark.tomb(tag2, brand(1)),
@@ -1330,12 +1360,14 @@ export function testCompose() {
 			const returnAndMove = makeAnonChange(shallowCompose([return1, move2]));
 			const composed = shallowCompose([move1, returnAndMove]);
 
+			const moveId1: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const moveId3: ChangeAtomId = { revision: tag3, localId: brand(0) };
 			const expected = [
 				Mark.tomb(tag1, brand(1)),
 				Mark.skip(1),
-				Mark.moveIn(1, { revision: tag3, localId: brand(0) }),
+				Mark.moveIn(1, moveId3, { finalEndpoint: moveId1 }),
 				Mark.skip(1),
-				Mark.moveOut(1, { revision: tag3, localId: brand(0) }),
+				Mark.moveOut(1, moveId1, { finalEndpoint: moveId3, idOverride: moveId3 }),
 			];
 
 			assertChangesetsEqual(composed, expected);
