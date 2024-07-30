@@ -19,6 +19,7 @@ More specifically this causes code like this to produce a compile error:
 const view = tree.viewWith(
 	{ schema: TestNode, enableSchemaValidation: false },
 );
+```
 
 The above was never intended to work, and is not a supported use of the `viewWith` since it requires a `TreeViewConfiguration` which is sealed.
 Any code using the above pattern will break in Fluid Framework 2.2 and above. Such code will need to be updated to the pattern shown below.
@@ -27,9 +28,10 @@ The correct way to get a `TreeViewConfiguration` is by using its constructor:
 
 ```typescript
 // This pattern correctly initializes default values and validates input.
-const view = tree1.viewWith(
+const view = tree.viewWith(
 	new TreeViewConfiguration({ schema: TestNode }),
 );
+```
 
 Skipping the constructor causes the following problems:
 
