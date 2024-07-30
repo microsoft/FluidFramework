@@ -10,7 +10,6 @@ import {
 	EmptyKey,
 	type IForestSubscription,
 	type MapTree,
-	type TreeNodeSchemaIdentifier,
 	type TreeValue,
 	type UpPath,
 } from "../core/index.js";
@@ -20,11 +19,8 @@ import {
 	type FlexFieldSchema,
 	type FlexTreeField,
 	type FlexTreeNode,
-	type FlexTreeNodeEvents,
 	type FlexTreeTypedField,
-	type MapTreeNode,
 	tryGetMapTreeNode,
-	typeNameSymbol,
 	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
@@ -32,7 +28,6 @@ import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
 import { anchorProxy, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 import type { TreeNode, Unhydrated } from "./types.js";
-import type { Off } from "../events/index.js";
 
 /**
  * Detects if the given 'candidate' is a TreeNode.
@@ -116,7 +111,6 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 /** The path of a proxy, relative to the root of the content tree that the proxy belongs to */
 interface RelativeProxyPath {
 	readonly path: UpPath;
-	readonly mapTreeNode: MapTreeNode;
 	readonly proxy: TreeNode;
 }
 
@@ -150,8 +144,8 @@ export function prepareContentForHydration(
 			proxyPaths: [],
 		};
 
-		walkMapTree(content, proxies.rootPath, (p, mapTreeNode, proxy) => {
-			proxies.proxyPaths.push({ path: p, mapTreeNode, proxy });
+		walkMapTree(content, proxies.rootPath, (p, proxy) => {
+			proxies.proxyPaths.push({ path: p, proxy });
 		});
 
 		bindProxies([proxies], forest);
@@ -163,7 +157,7 @@ function prepareArrayContentForHydration(
 	forest: IForestSubscription,
 ): void {
 	const proxies: RootedProxyPaths[] = [];
-	for (let i = 0; i < content.length; i++) {
+	for (const [i, item] of content.entries()) {
 		proxies.push({
 			rootPath: {
 				parent: undefined,
@@ -172,8 +166,12 @@ function prepareArrayContentForHydration(
 			},
 			proxyPaths: [],
 		});
-		walkMapTree(content[i], proxies[i].rootPath, (p, mapTreeNode, proxy) => {
-			proxies[i].proxyPaths.push({ path: p, mapTreeNode, proxy });
+		// Non null asserting here because we are iterating over content and pushing into proxies for every content
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		walkMapTree(item, proxies[i]!.rootPath, (p, proxy) => {
+			// Non null asserting here because we are iterating over content and pushing into proxies for every content
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			proxies[i]!.proxyPaths.push({ path: p, proxy });
 		});
 	}
 
@@ -183,20 +181,20 @@ function prepareArrayContentForHydration(
 function walkMapTree(
 	mapTree: MapTree,
 	path: UpPath,
-	onVisitTreeNode: (path: UpPath, mapTreeNode: MapTreeNode, treeNode: TreeNode) => void,
+	onVisitTreeNode: (path: UpPath, treeNode: TreeNode) => void,
 ): void {
 	const mapTreeNode = tryGetMapTreeNode(mapTree);
 	if (mapTreeNode !== undefined) {
 		const treeNode = tryGetProxy(mapTreeNode);
 		if (treeNode !== undefined) {
-			onVisitTreeNode(path, mapTreeNode, treeNode);
+			onVisitTreeNode(path, treeNode);
 		}
 	}
 
 	for (const [key, field] of mapTree.fields) {
-		for (let i = 0; i < field.length; i++) {
+		for (const [i, item] of field.entries()) {
 			walkMapTree(
-				field[i],
+				item,
 				{
 					parent: path,
 					parentField: key,
@@ -214,26 +212,13 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 		// Creating a new array emits one event per element in the array, so listen to the event once for each element
 		let i = 0;
 		const off = forest.on("afterRootFieldCreated", (fieldKey) => {
-			(proxies[i].rootPath as Mutable<UpPath>).parentField = fieldKey;
-			for (const { path, mapTreeNode, proxy } of proxies[i].proxyPaths) {
-				const anchorNode = anchorProxy(forest.anchors, path, proxy);
-				mapTreeNode.forwardEvents({
-					on<K extends keyof FlexTreeNodeEvents>(
-						eventName: K,
-						listener: FlexTreeNodeEvents[K],
-					): Off {
-						switch (eventName) {
-							case "nodeChanged": {
-								return anchorNode.on("childrenChangedAfterBatch", listener);
-							}
-							case "treeChanged": {
-								return anchorNode.on("subtreeChangedAfterBatch", listener);
-							}
-							default:
-								fail("Unexpected event subscription");
-						}
-					},
-				});
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			(proxies[i]!.rootPath as Mutable<UpPath>).parentField = fieldKey;
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			for (const { path, proxy } of proxies[i]!.proxyPaths) {
+				anchorProxy(forest.anchors, path, proxy);
 			}
 			if (++i === proxies.length) {
 				off();
@@ -256,7 +241,7 @@ export type FactoryContent =
 	| boolean
 	// eslint-disable-next-line @rushstack/no-new-null
 	| null
-	| ReadonlyMap<string, InsertableContent>
+	| Iterable<readonly [string, InsertableContent]>
 	| readonly InsertableContent[]
 	| {
 			readonly [P in string]?: InsertableContent;
@@ -266,10 +251,3 @@ export type FactoryContent =
  * Content which can be inserted into a tree.
  */
 export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;
-
-/**
- * Brand `copy` with the type (under {@link typeNameSymbol}) to avoid ambiguity when inferring types from this data.
- */
-export function markContentType(typeName: TreeNodeSchemaIdentifier, copy: object): void {
-	Object.defineProperty(copy, typeNameSymbol, { value: typeName });
-}

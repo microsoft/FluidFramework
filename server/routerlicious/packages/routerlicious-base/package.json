@@ -136,6 +136,9 @@
 			},
 			"ClassDeclaration_OrdererManager": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_AlfredResources": {
+				"forwardCompat": false
 			}
 		}
 	}

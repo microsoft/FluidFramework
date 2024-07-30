@@ -713,6 +713,7 @@ export const optionalChangeHandler: FieldChangeHandler<
 	getNestedChanges,
 
 	createEmpty: () => ({ moves: [], childChanges: [] }),
+	getCrossFieldKeys: (_change) => [],
 };
 
 function getNestedChanges(change: OptionalChangeset): [NodeId, number | undefined][] {

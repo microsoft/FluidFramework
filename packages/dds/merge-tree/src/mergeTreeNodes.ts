@@ -28,6 +28,7 @@ import {
 } from "./referencePositions.js";
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
+import { Side } from "./sequencePlace.js";
 
 /**
  * Common properties for a node in a merge tree.
@@ -253,6 +254,14 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * Properties that have been added to this segment via annotation.
 	 */
 	properties?: PropertySet;
+	/**
+	 * Stores side information passed to obliterate for the start of a range.
+	 */
+	startSide?: Side.Before | Side.After;
+	/**
+	 * Stores side information passed to obliterate for the end of a range.
+	 */
+	endSide?: Side.Before | Side.After;
 
 	/**
 	 * Add properties to this segment via annotation.

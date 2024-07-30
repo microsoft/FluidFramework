@@ -18,7 +18,7 @@ import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
-import { assert } from "@fluidframework/core-utils/internal";
+import { LazyPromise, assert } from "@fluidframework/core-utils/internal";
 import { lock } from "proper-lockfile";
 import * as semver from "semver";
 
@@ -40,6 +40,12 @@ interface InstalledJson {
 	installed: string[];
 }
 
+let cachedInstalledJson: InstalledJson | undefined;
+function writeAndUpdateInstalledJson(data: InstalledJson) {
+	cachedInstalledJson = data;
+	writeFileSync(installedJsonPath, JSON.stringify(data, undefined, 2), { encoding: "utf8" });
+}
+
 async function ensureInstalledJson() {
 	if (existsSync(installedJsonPath)) {
 		return;
@@ -54,11 +60,12 @@ async function ensureInstalledJson() {
 		mkdirSync(baseModulePath, { recursive: true });
 		const data: InstalledJson = { revision, installed: [] };
 
-		writeFileSync(installedJsonPath, JSON.stringify(data, undefined, 2), { encoding: "utf8" });
+		writeAndUpdateInstalledJson(data);
 	} finally {
 		release();
 	}
 }
+const ensureInstalledJsonLazy = new LazyPromise(async () => ensureInstalledJson());
 
 function readInstalledJsonNoLock(): InstalledJson {
 	const data = readFileSync(installedJsonPath, { encoding: "utf8" });
@@ -67,11 +74,12 @@ function readInstalledJsonNoLock(): InstalledJson {
 		// if the revision doesn't match assume that it doesn't match
 		return { revision, installed: [] };
 	}
+	cachedInstalledJson = installedJson;
 	return installedJson;
 }
 
 async function readInstalledJson(): Promise<InstalledJson> {
-	await ensureInstalledJson();
+	await ensureInstalledJsonLazy;
 	const release = await lock(installedJsonPath, { retries: { forever: true } });
 	try {
 		return readInstalledJsonNoLock();
@@ -79,19 +87,21 @@ async function readInstalledJson(): Promise<InstalledJson> {
 		release();
 	}
 }
+const readInstalledJsonLazy = new LazyPromise(async () => readInstalledJson());
+async function getInstalledJson(): Promise<InstalledJson> {
+	return cachedInstalledJson ?? (await readInstalledJsonLazy);
+}
 
 const isInstalled = async (version: string) =>
-	(await readInstalledJson()).installed.includes(version);
+	(await getInstalledJson()).installed.includes(version);
 async function addInstalled(version: string) {
-	await ensureInstalledJson();
+	await ensureInstalledJsonLazy;
 	const release = await lock(installedJsonPath, { retries: { forever: true } });
 	try {
 		const installedJson = readInstalledJsonNoLock();
 		if (!installedJson.installed.includes(version)) {
 			installedJson.installed.push(version);
-			writeFileSync(installedJsonPath, JSON.stringify(installedJson, undefined, 2), {
-				encoding: "utf8",
-			});
+			writeAndUpdateInstalledJson(installedJson);
 		}
 	} finally {
 		release();
@@ -99,14 +109,12 @@ async function addInstalled(version: string) {
 }
 
 async function removeInstalled(version: string) {
-	await ensureInstalledJson();
+	await ensureInstalledJsonLazy;
 	const release = await lock(installedJsonPath, { retries: { forever: true } });
 	try {
 		const installedJson = readInstalledJsonNoLock();
 		installedJson.installed = installedJson.installed.filter((value) => value !== version);
-		writeFileSync(installedJsonPath, JSON.stringify(installedJson, undefined, 2), {
-			encoding: "utf8",
-		});
+		writeAndUpdateInstalledJson(installedJson);
 	} finally {
 		release();
 	}

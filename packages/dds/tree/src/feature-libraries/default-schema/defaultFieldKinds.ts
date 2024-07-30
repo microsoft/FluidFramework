@@ -48,6 +48,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	isEmpty: (change: 0) => true,
 	getNestedChanges: (change: 0) => [],
 	createEmpty: () => 0,
+	getCrossFieldKeys: () => [],
 };
 
 export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
@@ -222,6 +223,17 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
 			[required.identifier, { kind: required, formatVersion: 2 }],
 			[optional.identifier, { kind: optional, formatVersion: 2 }],
 			[sequence.identifier, { kind: sequence, formatVersion: 2 }],
+			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
+			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
+		]),
+	],
+	[
+		4,
+		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
+			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
+			[required.identifier, { kind: required, formatVersion: 2 }],
+			[optional.identifier, { kind: optional, formatVersion: 2 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 3 }],
 			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
 			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
 		]),

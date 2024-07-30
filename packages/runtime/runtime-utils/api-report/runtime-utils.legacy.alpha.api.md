@@ -27,6 +27,9 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
     abstract readonly isAttached: boolean;
 }
 
+// @public
+export function isFluidHandle(value: unknown): value is IFluidHandle;
+
 // @alpha
 export class RequestParser implements IRequest {
     protected constructor(request: Readonly<IRequest>);

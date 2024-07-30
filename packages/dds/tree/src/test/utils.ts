@@ -85,6 +85,8 @@ import {
 	type AnchorNode,
 	type AnchorSetRootEvents,
 	type TreeStoredSchemaSubscription,
+	type SchemaAndPolicy,
+	type ITreeCursorSynchronous,
 } from "../core/index.js";
 import {
 	cursorToJsonObject,
@@ -145,12 +147,24 @@ import {
 import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import {
 	type ImplicitFieldSchema,
+	type InsertableContent,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeViewConfiguration,
+	normalizeFieldSchema,
 	SchemaFactory,
+	toFlexSchema,
 } from "../simple-tree/index.js";
-import { type JsonCompatible, type Mutable, nestedMapFromFlatList } from "../util/index.js";
+import {
+	type JsonCompatible,
+	type Mutable,
+	nestedMapFromFlatList,
+	forEachInNestedMap,
+	tryGetFromNestedMap,
+} from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
+// eslint-disable-next-line import/no-internal-modules
+import { cursorFromNodeData } from "../simple-tree/toMapTree.js";
 
 // Testing utilities
 
@@ -629,8 +643,7 @@ export function validateSnapshotConsistency(
 		`Inconsistent document tree json representation: ${idDifferentiator}`,
 	);
 
-	// Note: removed trees are not currently garbage collected, which allows us to expect that all clients should share the same
-	// exact set of them. In the future, we will need to relax this expectation and only enforce that whenever two
+	// Removed trees are garbage collected so we only enforce that whenever two
 	// clients both have data for the same removed tree (as identified by the first two tuple entries), then they
 	// should be consistent about the content being stored (the third tuple entry).
 	const mapA = nestedMapFromFlatList(
@@ -647,11 +660,16 @@ export function validateSnapshotConsistency(
 			prepareTreeForCompare([children])[0],
 		]),
 	);
-	assert.deepEqual(
-		mapA,
-		mapB,
-		`Inconsistent removed trees json representation: ${idDifferentiator}`,
-	);
+	forEachInNestedMap(mapA, (content, major, minor) => {
+		const mapBContent = tryGetFromNestedMap(mapB, major, minor);
+		if (mapBContent !== undefined) {
+			assert.deepEqual(
+				content,
+				mapBContent,
+				`Inconsistent removed trees json representation: ${idDifferentiator}`,
+			);
+		}
+	});
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);
 }
 
@@ -1073,12 +1091,14 @@ export function applyTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	revision?: RevisionTag,
 	build?: readonly DeltaDetachedNodeBuild[],
 	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
 	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	applyDelta(
 		rootDelta,
+		revision,
 		deltaProcessor,
 		detachedFieldIndex ??
 			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),
@@ -1089,12 +1109,14 @@ export function announceTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	revision?: RevisionTag,
 	build?: readonly DeltaDetachedNodeBuild[],
 	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
 	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	announceDelta(
 		rootDelta,
+		revision,
 		deltaProcessor,
 		detachedFieldIndex ??
 			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),
@@ -1328,4 +1350,36 @@ export function validateUsageError(expectedErrorMsg: string | RegExp): (error: E
 		}
 		return true;
 	};
+}
+
+/**
+ * Returns a cursor (in nodes mode) for the root node.
+ *
+ * @privateRemarks
+ * Ideally this would work on any node, not just the root,
+ * and the schema would come from the unhydrated node.
+ * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
+ */
+export function cursorFromUnhydratedRoot(
+	schema: ImplicitFieldSchema,
+	tree: InsertableTreeNodeFromImplicitAllowedTypes,
+	nodeKeyManager: NodeKeyManager,
+): ITreeCursorSynchronous {
+	const data = tree as InsertableContent;
+	const normalizedFieldSchema = normalizeFieldSchema(schema);
+
+	const flexSchema = toFlexSchema(normalizedFieldSchema);
+	const storedSchema: SchemaAndPolicy = {
+		policy: defaultSchemaPolicy,
+		schema: intoStoredSchema(flexSchema),
+	};
+
+	return (
+		cursorFromNodeData(
+			data,
+			normalizedFieldSchema.allowedTypes,
+			nodeKeyManager,
+			storedSchema,
+		) ?? assert.fail("failed to decode tree")
+	);
 }

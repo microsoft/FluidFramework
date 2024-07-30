@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
 	type FlexMapNodeSchema,
 	type FlexTreeNode,
@@ -14,9 +13,9 @@ import {
 	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import {
+	type FactoryContent,
 	type InsertableContent,
 	getProxyForField,
-	markContentType,
 	prepareContentForHydration,
 } from "./proxies.js";
 import { getFlexNode } from "./proxyBinding.js";
@@ -32,9 +31,10 @@ import {
 	typeNameSymbol,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
-import { type TreeNode, TreeNodeValid } from "./types.js";
+import { type MostDerivedData, type TreeNode, TreeNodeValid } from "./types.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import type { RestrictiveReadonlyRecord } from "../util/index.js";
 
 /**
  * A map of string keys to tree objects.
@@ -127,7 +127,7 @@ const handler: ProxyHandler<TreeMapNode> = {
 };
 
 abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends TreeNodeValid<
-	Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>
+	MapNodeInsertableData<T>
 > {
 	public static readonly kind = NodeKind.Map;
 
@@ -239,14 +239,11 @@ export function mapSchema<
 		): MapTreeNode {
 			return getOrCreateMapTreeNode(
 				flexSchema,
-				mapTreeFromNodeData(
-					copyContent(flexSchema.name, input as Iterable<[string, InsertableContent]>),
-					this as unknown as ImplicitAllowedTypes,
-				),
+				mapTreeFromNodeData(input as FactoryContent, this as unknown as ImplicitAllowedTypes),
 			);
 		}
 
-		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
+		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexMapNodeSchema;
@@ -265,18 +262,17 @@ export function mapSchema<
 		TName,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<TName>,
-		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
 		T
 	> = schema;
 	return schemaErased;
 }
 
-function copyContent<T>(
-	typeName: TreeNodeSchemaIdentifier,
-	content: Iterable<[string, T]>,
-): Map<string, T> {
-	const copy = new Map(content);
-	markContentType(typeName, copy);
-	return copy;
-}
+/**
+ * Content which can be used to construct a Map node, explicitly or implicitly.
+ * @system @public
+ */
+export type MapNodeInsertableData<T extends ImplicitAllowedTypes> =
+	| Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>
+	| RestrictiveReadonlyRecord<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>;

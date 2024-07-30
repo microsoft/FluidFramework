@@ -96,6 +96,7 @@ export {
 	type DeltaDetachedNodeDestruction,
 	type DeltaDetachedNodeRename,
 	type DeltaFieldChanges,
+	type ExclusiveMapTree,
 } from "./tree/index.js";
 
 export {

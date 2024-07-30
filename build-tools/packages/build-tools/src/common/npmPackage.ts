@@ -5,7 +5,6 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { PackageName } from "@rushstack/node-core-library";
 import { queue } from "async";
 import * as chalk from "chalk";
 import detectIndent from "detect-indent";
@@ -148,20 +147,6 @@ export class Package {
 	 */
 	public get nameColored(): string {
 		return this.color(this.name);
-	}
-
-	/**
-	 * The name of the package excluding the scope.
-	 */
-	public get nameUnscoped(): string {
-		return PackageName.getUnscopedName(this.name);
-	}
-
-	/**
-	 * The parsed package scope, including the \@-sign, or an empty string if there is no scope.
-	 */
-	public get scope(): string {
-		return PackageName.getScope(this.name);
 	}
 
 	public get private(): boolean {

@@ -141,7 +141,8 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 			const attributor = createRuntimeAttributor();
 			const container1 = await provider.makeTestContainer(getTestConfig(attributor));
 			const sharedString1 = await sharedStringFromContainer(container1);
-			const container2 = await provider.loadTestContainer(testContainerConfig);
+			const attributor2 = createRuntimeAttributor();
+			const container2 = await provider.loadTestContainer(getTestConfig(attributor2));
 			const sharedString2 = await sharedStringFromContainer(container2);
 
 			const text = "client 1";
@@ -160,6 +161,12 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 				user: container1.audience.getMember(container2.clientId)?.user,
 			});
 			assertAttributionMatches(sharedString1, 13, attributor, {
+				user: container1.audience.getMember(container1.clientId)?.user,
+			});
+			assertAttributionMatches(sharedString2, 3, attributor2, {
+				user: container1.audience.getMember(container2.clientId)?.user,
+			});
+			assertAttributionMatches(sharedString2, 13, attributor2, {
 				user: container1.audience.getMember(container1.clientId)?.user,
 			});
 		},

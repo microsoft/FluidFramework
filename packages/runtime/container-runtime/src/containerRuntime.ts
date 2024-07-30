@@ -171,6 +171,7 @@ import { IBatchMetadata, ISavedOpMetadata } from "./metadata.js";
 import {
 	BatchId,
 	BatchMessage,
+	ensureContentsDeserialized,
 	IBatch,
 	IBatchCheckpoint,
 	OpCompressor,
@@ -1218,6 +1219,7 @@ export class ContainerRuntime
 
 	private _orderSequentiallyCalls: number = 0;
 	private readonly _flushMode: FlushMode;
+	private readonly offlineEnabled: boolean;
 	private flushTaskExists = false;
 
 	private _connected: boolean;
@@ -1600,6 +1602,14 @@ export class ContainerRuntime
 			this._flushMode = FlushMode.TurnBased;
 		} else {
 			this._flushMode = runtimeOptions.flushMode;
+		}
+		this.offlineEnabled =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false;
+
+		if (this.offlineEnabled && this._flushMode !== FlushMode.TurnBased) {
+			const error = new UsageError("Offline mode is only supported in turn-based mode");
+			this.closeFn(error);
+			throw error;
 		}
 
 		if (context.attachState === AttachState.Attached) {
@@ -2616,14 +2626,25 @@ export class ContainerRuntime
 		// or something different, like a system message.
 		const modernRuntimeMessage = messageArg.type === MessageType.Operation;
 
+		const savedOp = (messageArg.metadata as ISavedOpMetadata)?.savedOp;
+
+		// There is some ancient back-compat code that we'd like to instrument
+		// to understand if/when it is hit.
+		const logLegacyCase = (codePath: string) =>
+			this.logger.sendTelemetryEvent({
+				eventName: "LegacyMessageFormat",
+				details: { codePath, type: messageArg.type },
+			});
+
 		// Do shallow copy of message, as the processing flow will modify it.
 		// There might be multiple container instances receiving the same message.
 		// We do not need to make a deep copy. Each layer will just replace message.contents itself,
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
-		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
+		// We expect runtime messages to have JSON contents - deserialize it in place.
+		ensureContentsDeserialized(messageCopy, modernRuntimeMessage, logLegacyCase);
 		if (modernRuntimeMessage) {
-			const processResult = this.remoteMessageProcessor.process(messageCopy);
+			const processResult = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
 			if (processResult === undefined) {
 				// This means the incoming message is an incomplete part of a message or batch
 				// and we need to process more messages before the rest of the system can understand it.
@@ -2631,12 +2652,23 @@ export class ContainerRuntime
 			}
 			const batchStartCsn = processResult.batchStartCsn;
 			const batch = processResult.messages;
+			const sequenceNumber = processResult.sequenceNumber;
 			const messages: {
 				message: InboundSequencedContainerRuntimeMessage;
 				localOpMetadata: unknown;
 			}[] = local
-				? this.pendingStateManager.processPendingLocalBatch(batch, batchStartCsn)
+				? this.pendingStateManager.processPendingLocalBatch(
+						batch,
+						batchStartCsn,
+						sequenceNumber,
+					)
 				: batch.map((message) => ({ message, localOpMetadata: undefined }));
+			if (messages.length === 0) {
+				this.ensureNoDataModelChanges(() =>
+					this.processEmptyBatch(sequenceNumber, local, batchStartCsn),
+				);
+				return;
+			}
 			messages.forEach(({ message, localOpMetadata }) => {
 				const msg: MessageWithContext = {
 					message,
@@ -2713,6 +2745,29 @@ export class ContainerRuntime
 			throw e;
 		}
 	}
+
+	/**
+	 * Process an empty batch, which will execute expected actions while processing even if there are no messages.
+	 * This is a separate function because the processCore function expects at least one message to process.
+	 * It is expected to happen only when the outbox produces an empty batch due to a resubmit flow.
+	 */
+	private processEmptyBatch(
+		sequenceNumber: number | undefined,
+		local: boolean,
+		batchStartCsn: number,
+	) {
+		assert(sequenceNumber !== undefined, "sequenceNumber must be defined");
+		this.emit("batchBegin", { sequenceNumber });
+		this._processedClientSequenceNumber = batchStartCsn;
+		if (!this.hasPendingMessages()) {
+			this.updateDocumentDirtyState(false);
+		}
+		this.emit("batchEnd", undefined, { sequenceNumber });
+		if (local) {
+			this.resetReconnectCount();
+		}
+	}
+
 	/**
 	 * Assuming the given message is also a TypedContainerRuntimeMessage,
 	 * checks its type and dispatches the message to the appropriate handler in the runtime.
@@ -4118,10 +4173,7 @@ export class ContainerRuntime
 
 		// Only include Batch ID if "Offline Load" feature is enabled
 		// It's only needed to identify batches across container forks arising from misuse of offline load.
-		const includeBatchId =
-			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false;
-
-		this.flush(includeBatchId ? batchId : undefined);
+		this.flush(this.offlineEnabled ? batchId : undefined);
 	}
 
 	private reSubmit(message: PendingMessageResubmitData) {
@@ -4324,7 +4376,7 @@ export class ContainerRuntime
 						fetchSource: FetchSource.noCache,
 					});
 					const id = snapshot.snapshotTree.id;
-					assert(id !== undefined, "id of the fetched snapshot should be defined");
+					assert(id !== undefined, 0x9d0 /* id of the fetched snapshot should be defined */);
 					props.snapshotVersion = id;
 					snapshotTree = snapshot.snapshotTree;
 				} else {
