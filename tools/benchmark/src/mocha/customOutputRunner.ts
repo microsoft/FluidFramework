@@ -38,7 +38,7 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 	const itFunction = options.only === true ? it.only : it;
 	const test = itFunction(`${options.title} @CustomBenchmark`, async () => {
 		const customData: Record<string, number> = {};
-		const customDataFormatters: Record<string, (value: unknown) => string> = {};
+		const customDataFormatters: Record<string, string> = {};
 		const reporter: IMeasurementReporter = {
 			addMeasurement: (key: string, value: number) => {
 				if (key in customData) {

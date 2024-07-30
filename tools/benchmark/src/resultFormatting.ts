@@ -77,7 +77,7 @@ export function skipCell(key: string): ExpectedCell {
 export function addCells(
 	table: Table,
 	data: Record<string, unknown>,
-	dataFormatter: Record<string, (value: unknown) => string>,
+	dataFormatter: Record<string, string>,
 	expected: readonly ExpectedCell[],
 ): void {
 	const keys = new Set(Object.getOwnPropertyNames(data));
@@ -89,7 +89,7 @@ export function addCells(
 	}
 	// Add custom data cells
 	for (const [key, val] of Object.entries(data)) {
-		const displayValue = key in dataFormatter ? dataFormatter[key](val) : (val as string);
+		const displayValue = key in dataFormatter ? dataFormatter[key] : (val as string);
 		table.cell(key, displayValue, Table.padLeft);
 	}
 }

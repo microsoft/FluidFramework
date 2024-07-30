@@ -192,17 +192,17 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 			elapsedSeconds: this.timer.toSeconds(this.startTime, now),
 			customData: {
 				"Batch Count": this.samples.length,
+				"Iterations per Batch": this.iterationsPerBatch,
 				"Period (ns/op)": stats.arithmeticMean,
 				"Margin of Error": stats.marginOfError,
 				"Relative Margin of Error": stats.marginOfErrorPercent,
-				"Iterations per Batch": this.iterationsPerBatch,
 			},
 			customDataFormatters: {
-				"Batch Count": (v: unknown): string => prettyNumber(v as number, 0),
-				"Period (ns/op)": (v: unknown) => prettyNumber(1e9 * (v as number), 2),
-				"Margin of Error": (v: unknown): string => prettyNumber(v as number, 2),
-				"Relative Margin of Error": (v: unknown) => `±${(v as number).toFixed(2)}%`,
-				"Iterations per Batch": (v: unknown) => `${prettyNumber(v as number, 0)}`,
+				"Batch Count": prettyNumber(this.samples.length, 0),
+				"Iterations per Batch": prettyNumber(this.iterationsPerBatch, 0),
+				"Period (ns/op)": prettyNumber(1e9 * stats.arithmeticMean, 2),
+				"Margin of Error": `±${prettyNumber(stats.marginOfError, 2)}%`,
+				"Relative Margin of Error": `±${prettyNumber(stats.marginOfErrorPercent, 2)}%`,
 			},
 		};
 		return data;

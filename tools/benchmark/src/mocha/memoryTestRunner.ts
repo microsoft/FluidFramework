@@ -387,25 +387,32 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 			);
 
 			benchmarkStats.customData["Heap Used Avg"] = heapUsedStats.arithmeticMean;
-			benchmarkStats.customDataFormatters["Heap Used Avg"] = (value): string =>
-				prettyNumber(value as number, 2);
+			benchmarkStats.customDataFormatters["Heap Used Avg"] = prettyNumber(
+				heapUsedStats.arithmeticMean,
+				2,
+			);
+
+			benchmarkStats.customData["Heap Used StdDev"] = heapUsedStats.standardDeviation;
+			benchmarkStats.customDataFormatters["Heap Used StdDev"] = prettyNumber(
+				heapUsedStats.standardDeviation,
+				2,
+			);
 
 			benchmarkStats.customData["Margin of Error"] = heapUsedStats.marginOfError;
-			benchmarkStats.customDataFormatters["Margin of Error"] = (value): string =>
-				`±${prettyNumber(value as number, 2)}`;
+			benchmarkStats.customDataFormatters["Margin of Error"] = `±${prettyNumber(
+				heapUsedStats.marginOfError,
+				2,
+			)}`;
 
 			benchmarkStats.customData["Relative Margin of Error"] =
 				heapUsedStats.marginOfErrorPercent;
-			benchmarkStats.customDataFormatters["Relative Margin of Error"] = (value): string =>
-				`±${prettyNumber(value as number, 2)}`;
-
-			benchmarkStats.customData["Heap Used StdDev"] = heapUsedStats.standardDeviation;
-			benchmarkStats.customDataFormatters["Heap Used StdDev"] = (value): string =>
-				prettyNumber(value as number, 2);
+			benchmarkStats.customDataFormatters["Relative Margin of Error"] = `±${prettyNumber(
+				heapUsedStats.marginOfErrorPercent,
+				2,
+			)}`;
 
 			benchmarkStats.customData.Iterations = runs;
-			benchmarkStats.customDataFormatters.Iterations = (value): string =>
-				(value as number).toString();
+			benchmarkStats.customDataFormatters.Iterations = prettyNumber(runs, 0);
 		} catch (error) {
 			// TODO: This results in the mocha test passing when it should fail. Fix this.
 			benchmarkStats = {
