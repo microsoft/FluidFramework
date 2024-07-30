@@ -821,11 +821,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						isObject(resetOp.seg) && "props" in resetOp.seg && isObject(resetOp.seg.props)
 							? { ...resetOp.seg.props }
 							: undefined;
-					if (segInsertOp.properties !== undefined || opProps !== undefined) {
-						segInsertOp.properties = opProps;
-					}
+					segInsertOp.properties = opProps;
 					newOp = createInsertSegmentOp(segmentPosition, segInsertOp);
-					break;
 					break;
 				}
 
