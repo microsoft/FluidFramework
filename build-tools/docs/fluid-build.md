@@ -118,6 +118,8 @@ It read _all_ the projects scripts and the dependencies in `package.json`, and w
 
 ---
 
+<!-- _class: lead -->
+
 And for an embarassingly long time, because I was dumb and naïve, I thought that all that magic was enabled by `&&` and `concurrently`.
 
 ---
@@ -130,7 +132,7 @@ For example, it knew that `compile` required its dependency's outputs, so would 
 
 On the other hand, it knew `lint` didn't require dependent builds, so it would schedule it accordingly.
 
-There were a lot of these, and as the repo grew we started to see a bunch of new tasks and `package.json` uses.
+There were a lot of these, and as the repo grew we started to see a bunch of new tasks and package.json uses.
 
 ---
 
@@ -212,7 +214,7 @@ Tasks defined in individual packages must be defined, unlike the "task defaults"
 
 # The script property
 
-The script property on tasks tells fluid-build if the command in the script should be executed or if the task definition should be used instead.
+The `script` property on tasks tells fluid-build if the command in the script should be executed or if the task definition should be used instead.
 
 For example, consider:
 
@@ -239,6 +241,8 @@ That is similar to:
     "lint": "eslint",
 }
 ```
+
+---
 
 With a task definition like this:
 
@@ -271,15 +275,15 @@ These task mappings are defined in code (but could be config-based instead!)
 
 ---
 
-# Tasks caching
+# Task caching
 
-A Task defines an `isUpToDate` function that can use whatever logic needed to determine if the task needs to be re-run.
+A `Task` defines an `isUpToDate` function that can use whatever logic needed to determine if the task needs to be re-run.
 
 Any task with an unknown command is called an `UnknownTask` and is not capable of incremental builds.
 
 ---
 
-# Tasks caching
+# Task caching
 
 Many tasks have common needs, like a list of input and output files that, if changed, should trigger the task, so there are several Task variants like `LeafWithDoneFileTask` that used to define new tasks with minimal boilerplate.
 
@@ -303,6 +307,7 @@ Examples include `ApiExtractorTask` and `EslintTask`.
 
 - Within a package, you can add scripts directly and use concurrently and `&&`.
 - If it's an unknown command, then you won't get caching. To add that you'd make a task in build-tools.
+- If you're adding a new task to one of the main "build phases," like "compile" or "lint", it should be defined in the root fluid-build config.
 
 ---
 
