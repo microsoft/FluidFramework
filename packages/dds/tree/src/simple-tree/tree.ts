@@ -90,9 +90,7 @@ export interface ITreeConfigurationOptions {
 	enableSchemaValidation?: boolean;
 
 	/**
-	 * If `true`, constructing the configuration will error if any valid input data could parse ambiguously
-	 * (type of the node could fail to be inferred from content, thus requiring use of {@link Unhydrated} nodes to disambiguate).
-	 *
+	 * A flag used to opt into strict rules ensuring that the schema avoids cases which can make the type of nodes ambiguous when importing or exporting data.
 	 * @defaultValue `false`.
 	 *
 	 * @remarks
@@ -113,6 +111,45 @@ export interface ITreeConfigurationOptions {
 	 * This check is conservative: some complex cases may error if the current simple algorithm can not show no ambiguity is possible.
 	 * This check may become more permissive over time.
 	 *
+	 * @example
+	 * This example shows an ambiguous schema, and how to disambiguate it using {@link Unhydrated} nodes:
+	 * ```typescript
+	 * const schemaFactory = new SchemaFactory("com.example");
+	 * class Feet extends schemaFactory.object("Feet", { length: schemaFactory.number }) {}
+	 * class Meters extends schemaFactory.object("Meters", { length: schemaFactory.number }) {}
+	 * const config = new TreeViewConfiguration({
+	 * 	// This combination of schema is can lead to ambiguous cases, and would error if preventAmbiguity is true.
+	 * 	schema: [Feet, Meters],
+	 * 	preventAmbiguity: false,
+	 * });
+	 * const view = tree.viewWith(config);
+	 * // This is invalid since it is ambiguous which type of node is being constructed:
+	 * // view.initialize({ length: 5 });
+	 * // To work, an explicit type can be provided by using an {@link Unhydrated} Node:
+	 * view.initialize(new Meters({ length: 5 }));
+	 * ```
+	 *
+	 * @example
+	 * This example shows how to disambiguate a schema by adjusting the field names in a compatible way:
+	 * ```typescript
+	 * const schemaFactory = new SchemaFactory("com.example");
+	 * class Feet extends schemaFactory.object("Feet", { length: schemaFactory.number }) {}
+	 * class Meters extends schemaFactory.object("Meters", {
+	 * 	// To avoid ambiguity when parsing unions of Feet and Meters, this renames the length field to "meters".
+	 * 	// To preserve compatibility with existing data from the ambiguous case,
+	 * 	// `{ key: "length" }` is set, so when persisted in the tree "length" is used as the field name.
+	 * 	meters: schemaFactory.required(schemaFactory.number, { key: "length" }),
+	 * }) {}
+	 * const config = new TreeViewConfiguration({
+	 * 	// This combination of schema is can lead to ambiguous cases, and would error if preventAmbiguity is true.
+	 * 	schema: [Feet, Meters],
+	 * 	preventAmbiguity: true,
+	 * });
+	 * const view = tree.viewWith(config);
+	 * // This now works, since the field is sufficient to determine this is a `Meters` node.
+	 * view.initialize({ meters: 5 });
+	 * ```
+	 *
 	 * @privateRemarks
 	 * In the future, we can support lossless round tripping via the canonical JSON like representation above when unambiguous.
 	 * This could be done via methods added to `Tree` to export and import such objects, which would give us a place to explicitly define the type of this representation.
@@ -122,6 +159,8 @@ export interface ITreeConfigurationOptions {
 	 * - Make toMapTree more permissive (ex: allow disambiguation based on leaf type)
 	 * - Update this check to more tightly match toMapTree
 	 * - Add options to help schema authors disambiguate their types, such as "constant fields" which are not persisted, and always have a constant value.
+	 *
+	 * The above examples exist in executable form in this files tests, and should be updated there then copied back here.
 	 */
 	readonly preventAmbiguity?: boolean;
 }

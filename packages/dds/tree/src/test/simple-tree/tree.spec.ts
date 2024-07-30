@@ -89,13 +89,60 @@ describe("simple-tree tree", () => {
 		);
 	});
 
+	it("preventAmbiguity - example ambiguous", () => {
+		// TODO: this is left out of the example since we don't have a nice public facing way to create a test tree. We should fix that.
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+
+		const schemaFactory = new SchemaFactory("com.example");
+		class Feet extends schemaFactory.object("Feet", { length: schemaFactory.number }) {}
+		class Meters extends schemaFactory.object("Meters", { length: schemaFactory.number }) {}
+		const config = new TreeViewConfiguration({
+			// This combination of schema is can lead to ambiguous cases, and would error if preventAmbiguity is true.
+			schema: [Feet, Meters],
+			preventAmbiguity: false,
+		});
+		const view = tree.viewWith(config);
+		// This is invalid since it is ambiguous which type of node is being constructed:
+		// view.initialize({ length: 5 });
+		// To work, an explicit type can be provided by using an {@link Unhydrated} Node:
+		view.initialize(new Meters({ length: 5 }));
+	});
+
+	it("preventAmbiguity - example unambiguous", () => {
+		// TODO: this is left out of the example since we don't have a nice public facing way to create a test tree. We should fix that.
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+
+		const schemaFactory = new SchemaFactory("com.example");
+		class Feet extends schemaFactory.object("Feet", { length: schemaFactory.number }) {}
+		class Meters extends schemaFactory.object("Meters", {
+			// To avoid ambiguity when parsing unions of Feet and Meters, this renames the length field to "meters".
+			// To preserve compatibility with existing data from the ambiguous case,
+			// `{ key: "length" }` is set, so when persisted in the tree "length" is used as the field name.
+			meters: schemaFactory.required(schemaFactory.number, { key: "length" }),
+		}) {}
+		const config = new TreeViewConfiguration({
+			// This combination of schema is can lead to ambiguous cases, and would error if preventAmbiguity is true.
+			schema: [Feet, Meters],
+			preventAmbiguity: true,
+		});
+		const view = tree.viewWith(config);
+		// This now works, since the field is sufficient to determine this is a `Meters` node.
+		view.initialize({ meters: 5 });
+	});
+
 	describe("checkUnion", () => {
 		const schemaFactory = new SchemaFactory("test");
 
 		function getErrors(schemaToCheck: Iterable<TreeNodeSchema>): string[] {
 			const errors: string[] = [];
 			checkUnion(schemaToCheck, errors);
-			return [...new Set(errors)];
+			return errors;
 		}
 
 		it("arrays", () => {
