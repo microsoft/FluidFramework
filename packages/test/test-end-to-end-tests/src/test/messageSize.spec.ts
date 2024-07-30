@@ -39,6 +39,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
 	};
+	const bytesPerKB = 1024;
 
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
@@ -326,15 +327,15 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		} batches`, () => {
 			describe("Chunking compressed batches", () =>
 				[
-					{ messagesInBatch: 1, messageSize: 51 * 1024 }, // One large message (51 KB each)
-					{ messagesInBatch: 3, messageSize: 51 * 1024 }, // Three large messages (51 KB each)
-					{ messagesInBatch: 1500, messageSize: 1024 }, // Many small messages (1 KB each)
+					{ messagesInBatch: 1, messageSize: 51 * bytesPerKB }, // One large message (51 KB each)
+					{ messagesInBatch: 3, messageSize: 51 * bytesPerKB }, // Three large messages (51 KB each)
+					{ messagesInBatch: 1500, messageSize: bytesPerKB }, // Many small messages (1 KB each)
 				].forEach((testConfig) => {
 					it(
 						"Large payloads pass when compression enabled, " +
 							"compressed content is over max op size and chunking enabled. " +
 							`${testConfig.messagesInBatch.toLocaleString()} messages of ${testConfig.messageSize.toLocaleString()} bytes == ` +
-							`${((testConfig.messagesInBatch * testConfig.messageSize) / 1024).toFixed(
+							`${((testConfig.messagesInBatch * testConfig.messageSize) / bytesPerKB).toFixed(
 								2,
 							)} KB`,
 						async function () {
@@ -343,10 +344,10 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 								runtimeOptions: {
 									...containerConfig.runtimeOptions,
 									compressionOptions: {
-										minimumBatchSizeInBytes: 50 * 1024, // 50 KB
+										minimumBatchSizeInBytes: 50 * bytesPerKB, // 50 KB
 										compressionAlgorithm: CompressionAlgorithms.lz4,
 									},
-									chunkSizeInBytes: 20 * 1024, // 20 KB
+									chunkSizeInBytes: 20 * bytesPerKB, // 20 KB
 								},
 							});
 
@@ -386,12 +387,12 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					},
 				],
 				async function () {
-					const maxMessageSizeInBytes = 50 * 1024; // 50 KB
+					const maxMessageSizeInBytes = 50 * bytesPerKB; // 50 KB
 					await setupContainers({
 						...containerConfig,
 						runtimeOptions: {
 							...containerConfig.runtimeOptions,
-							maxBatchSizeInBytes: 51 * 1024, // 51 KB
+							maxBatchSizeInBytes: 51 * bytesPerKB, // 51 KB
 							chunkSizeInBytes: Infinity,
 						},
 					});
@@ -424,7 +425,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				);
 			};
 
-			const compressionSizeThreshold = 50 * 1024; // 50 KB;
+			const compressionSizeThreshold = 50 * bytesPerKB; // 50 KB;
 
 			const setup = async () => {
 				await setupContainers({
@@ -435,7 +436,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 							minimumBatchSizeInBytes: compressionSizeThreshold,
 							compressionAlgorithm: CompressionAlgorithms.lz4,
 						},
-						chunkSizeInBytes: 20 * 1024, // 20 KB
+						chunkSizeInBytes: 20 * bytesPerKB, // 20 KB
 					},
 				});
 				totalPayloadSizeInBytes = 0;
@@ -452,14 +453,14 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				[
 					{
 						messagesInBatch: 1,
-						messageSize: 10 * 1024, // 10 KB
-						expectedSize: 10 * 1024, // 10 KB
+						messageSize: 10 * bytesPerKB, // 10 KB
+						expectedSize: 10 * bytesPerKB, // 10 KB
 						payloadGenerator: generateStringOfSize,
 					}, // One small uncompressed message
 					{
 						messagesInBatch: 3,
-						messageSize: 10 * 1024, // 10 KB
-						expectedSize: 30 * 1024, // 30 KB
+						messageSize: 10 * bytesPerKB, // 10 KB
+						expectedSize: 30 * bytesPerKB, // 30 KB
 						payloadGenerator: generateStringOfSize,
 					}, // Three small uncompressed messages
 					{
@@ -488,9 +489,9 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 						"Payload size check, " +
 							"Sending " +
 							`${config.messagesInBatch.toLocaleString()} messages of ${config.messageSize.toLocaleString()} bytes == ` +
-							`${((config.messagesInBatch * config.messageSize) / 1024).toFixed(
+							`${((config.messagesInBatch * config.messageSize) / bytesPerKB).toFixed(
 								4,
-							)} KB, expecting ${(config.expectedSize / 1024).toFixed(4)} KB on the wire`,
+							)} KB, expecting ${(config.expectedSize / bytesPerKB).toFixed(4)} KB on the wire`,
 						async function () {
 							// This is not supported by the local server due to chunking. See ADO:2690
 							if (provider.driver.type === "local") {
@@ -518,17 +519,17 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	describe("Resiliency", () => {
-		const messageSize = 50 * 1024; // 50 KB
+		const messageSize = 50 * bytesPerKB; // 50 KB
 		const messagesInBatch = 3;
 		const config: ITestContainerConfig = {
 			...testContainerConfig,
 			runtimeOptions: {
 				summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 				compressionOptions: {
-					minimumBatchSizeInBytes: 51 * 1024, // 51 KB
+					minimumBatchSizeInBytes: 51 * bytesPerKB, // 51 KB
 					compressionAlgorithm: CompressionAlgorithms.lz4,
 				},
-				chunkSizeInBytes: 20 * 1024, // 20 KB
+				chunkSizeInBytes: 20 * bytesPerKB, // 20 KB
 			},
 		};
 
