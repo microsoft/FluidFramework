@@ -11,12 +11,15 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
+	type TreeNodeSchema,
 	type TreeView,
 } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 import { getView, validateUsageError } from "../utils.js";
 import { MockNodeKeyManager } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { checkUnion } from "../../simple-tree/tree.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -26,7 +29,7 @@ class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
 const factory = new TreeFactory({});
 
-describe("class-tree tree", () => {
+describe("simple-tree tree", () => {
 	it("ListRoot", () => {
 		const config = new TreeViewConfiguration({ schema: NodeList });
 		const tree = factory.create(
@@ -57,6 +60,127 @@ describe("class-tree tree", () => {
 		);
 		const view: TreeView<typeof Canvas> = tree.viewWith(config);
 		view.initialize({ stuff: ["a", "b"] });
+	});
+
+	it("preventAmbiguity", () => {
+		const config = new TreeViewConfiguration({
+			schema: [schema.array(schema.string), schema.array(schema.number)],
+			preventAmbiguity: false,
+		});
+		assert.throws(
+			() =>
+				new TreeViewConfiguration({
+					schema: [schema.array(schema.string), schema.array(schema.number)],
+					preventAmbiguity: true,
+				}),
+			validateUsageError(/More than one kind of array/),
+		);
+		const config2 = new TreeViewConfiguration({
+			schema: [schema.object("foo", {}), schema.array(schema.number)],
+			preventAmbiguity: true,
+		});
+		assert.throws(
+			() =>
+				new TreeViewConfiguration({
+					schema: schema.array([schema.array(schema.string), schema.array(schema.number)]),
+					preventAmbiguity: true,
+				}),
+			validateUsageError(/More than one kind of array/),
+		);
+	});
+
+	describe("checkUnion", () => {
+		const schemaFactory = new SchemaFactory("test");
+
+		function getErrors(schemaToCheck: Iterable<TreeNodeSchema>): string[] {
+			const errors: string[] = [];
+			checkUnion(schemaToCheck, errors);
+			return [...new Set(errors)];
+		}
+
+		it("arrays", () => {
+			assert.deepEqual(
+				getErrors([
+					schemaFactory.array("A", schemaFactory.string),
+					schemaFactory.array("B", schemaFactory.number),
+				]),
+				[
+					`More than one kind of array allowed within union (["test.A", "test.B"]). This would require type disambiguation which is not supported by arrays during import or export.`,
+				],
+			);
+		});
+		it("maps", () => {
+			assert.deepEqual(
+				getErrors([
+					schemaFactory.map("A", schemaFactory.string),
+					schemaFactory.map("B", schemaFactory.number),
+				]),
+				[
+					`More than one kind of map allowed within union (["test.A", "test.B"]). This would require type disambiguation which is not supported by maps during import or export.`,
+				],
+			);
+		});
+		it("array and map", () => {
+			assert.deepEqual(
+				getErrors([
+					schemaFactory.array("A", schemaFactory.string),
+					schemaFactory.map("B", schemaFactory.number),
+				]),
+				[
+					`Both a map and an array allowed within union (["test.A", "test.B"]). Both can be implicitly constructed from iterables like arrays, which are ambiguous when the array is empty.`,
+				],
+			);
+		});
+		it("map and object", () => {
+			assert.deepEqual(
+				getErrors([
+					schemaFactory.map("A", schemaFactory.string),
+					schemaFactory.object("B", {}),
+				]),
+				[
+					`Both a object and a map allowed within union (["test.B", "test.A"]). Both can be constructed from objects and can be ambiguous.`,
+				],
+			);
+		});
+		it("compatible", () => {
+			assert.deepEqual(
+				getErrors([
+					schemaFactory.string,
+					schemaFactory.number,
+					schemaFactory.boolean,
+					schemaFactory.null,
+					schemaFactory.handle,
+					schemaFactory.array("A", schemaFactory.string),
+					schemaFactory.object("B", {}),
+				]),
+				[],
+			);
+		});
+
+		it("compatible objects", () => {
+			assert.deepEqual(
+				getErrors([
+					schemaFactory.object("A", { a: schemaFactory.null }),
+					schemaFactory.object("B", { b: schemaFactory.null }),
+				]),
+				[],
+			);
+		});
+
+		it("incompatible objects", () => {
+			assert.deepEqual(
+				getErrors([
+					schemaFactory.object("A", { a: schemaFactory.null }),
+					schemaFactory.object("B", {
+						b: schemaFactory.null,
+						a: schemaFactory.optional(schemaFactory.null),
+					}),
+				]),
+				[
+					'The required fields of "test.A" are insufficient to differentiate it from the following types: ["test.B"]. For objects to be considered unambiguous, each must have required fields that do not all occur on any other object in the union.',
+				],
+			);
+		});
 	});
 
 	// TODO: AB#9126:

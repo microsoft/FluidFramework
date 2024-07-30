@@ -26,7 +26,7 @@ import { LeafNodeSchema } from "./leafNodeSchema.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
 import { markSchemaMostDerived } from "./schemaFactory.js";
-import { fail, getOrAddEmptyToMap } from "../util/index.js";
+import { fail, getOrCreate } from "../util/index.js";
 import type { MakeNominal } from "../util/index.js";
 
 /**
@@ -109,7 +109,7 @@ export interface ITreeConfigurationOptions {
 	 * - More than one MapNode type: it's impossible to tell which map type is intended in the case of an empty map (`{}`).
 	 * - Both a MapNode and an ArrayNode: this case is not a problem for the canonical JSON representation, but is an issues when constructing from an Iterable, which is supported for both MapNode and ArrayNode.
 	 * - Both a MapNode and an ObjectNode: when the input is valid for the ObjectNode, the current parser always considers it ambiguous with being a MapNode.
-	 * - ObjectNodes which don't each have a unique required field: currently every ObjectNode type in a union must have a required field with a name that only it uses for any field.
+	 * - ObjectNodes which which have fields (require or optional) which include all required fields of another ObjectNode: currently every ObjectNodes are differentiated by the presence of their required fields.
 	 *
 	 * This check is conservative: some complex cases may error if the current simple algorithm can not show no ambiguity is possible.
 	 * This check may become more permissive over time.
@@ -138,23 +138,11 @@ const defaultTreeConfigurationOptions: Required<ITreeConfigurationOptions> = {
  */
 export interface ITreeViewConfiguration<
 	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
-> {
+> extends ITreeConfigurationOptions {
 	/**
 	 * The schema which the application wants to view the tree with.
 	 */
 	readonly schema: TSchema;
-
-	/**
-	 * If `true`, the tree will validate new content against its stored schema at insertion time
-	 * and throw an error if the new content doesn't match the expected schema.
-	 *
-	 * @defaultValue `false`.
-	 *
-	 * @remarks Enabling schema validation has a performance penalty when inserting new content into the tree because
-	 * additional checks are done. Enable this option only in scenarios where you are ok with that operation being a
-	 * bit slower.
-	 */
-	readonly enableSchemaValidation?: boolean;
 }
 
 /**
@@ -172,9 +160,14 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 	public readonly schema: TSchema;
 
 	/**
-	 * {@inheritDoc ITreeViewConfiguration.enableSchemaValidation}
+	 * {@inheritDoc ITreeConfigurationOptions.enableSchemaValidation}
 	 */
 	public readonly enableSchemaValidation: boolean;
+
+	/**
+	 * {@inheritDoc ITreeConfigurationOptions.preventAmbiguity}
+	 */
+	public readonly preventAmbiguity: boolean;
 
 	/**
 	 * @param props - Property bag of configuration options.
@@ -183,6 +176,7 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 		const config = { ...defaultTreeConfigurationOptions, ...props };
 		this.schema = config.schema;
 		this.enableSchemaValidation = config.enableSchemaValidation;
+		this.preventAmbiguity = config.preventAmbiguity;
 
 		// Ambiguity errors are lower priority to report than invalid schema errors, so collect these in an array and report them all at once.
 		const ambiguityErrors: string[] = [];
@@ -201,7 +195,9 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 		});
 
 		if (ambiguityErrors.length !== 0) {
-			throw new UsageError(`Ambagious Schema Found:\n${ambiguityErrors.join("\n")}`);
+			// Duplicate errors are common since when two types conflict, both orders error:
+			const deduplicated = new Set(ambiguityErrors);
+			throw new UsageError(`Ambagious Schema Found:\n${[...deduplicated].join("\n")}`);
 		}
 
 		// Eagerly perform this conversion to surface errors sooner.
@@ -210,16 +206,25 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 }
 
 /**
+ * Pretty print a set of types for use in error messages.
+ */
+function formatTypes(allowed: Iterable<TreeNodeSchema>): string {
+	// Use JSON.stringify to quote and escape identifiers.
+	// Don't just use a single array JSON.stringify since that omits spaces between items
+	return `[${Array.from(allowed, (s) => JSON.stringify(s.identifier)).join(", ")}]`;
+}
+
+/**
  * Detect cases documented in {@link ITreeConfigurationOptions.preventAmbiguity}.
  */
-function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): void {
+export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): void {
 	const checked: Set<TreeNodeSchema> = new Set();
 	const maps: TreeNodeSchema[] = [];
 	const arrays: TreeNodeSchema[] = [];
 
 	const objects: ObjectNodeSchema[] = [];
 	// Map from key to schema using that key
-	const allObjectKeys: Map<string, ObjectNodeSchema[]> = new Map();
+	const allObjectKeys: Map<string, Set<TreeNodeSchema>> = new Map();
 
 	for (const schema of union) {
 		if (checked.has(schema)) {
@@ -232,7 +237,7 @@ function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): void {
 		} else if (isObjectNodeSchema(schema)) {
 			objects.push(schema);
 			for (const key of schema.fields.keys()) {
-				getOrAddEmptyToMap(allObjectKeys, key).push(schema);
+				getOrCreate(allObjectKeys, key, () => new Set()).add(schema);
 			}
 		} else if (schema.kind === NodeKind.Array) {
 			arrays.push(schema);
@@ -244,25 +249,25 @@ function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): void {
 
 	if (arrays.length > 1) {
 		errors.push(
-			`More than one kind of array allowed within union (${JSON.stringify(arrays.map((s) => s.identifier))}). This would require type disambiguation which is not supported by arrays during import or export to JSON.`,
+			`More than one kind of array allowed within union (${formatTypes(arrays)}). This would require type disambiguation which is not supported by arrays during import or export.`,
 		);
 	}
 
 	if (maps.length > 1) {
 		errors.push(
-			`More than one kind of map allowed within union (${JSON.stringify(maps.map((s) => s.identifier))}). This would require type disambiguation which is not supported by maps during import or export to JSON.`,
+			`More than one kind of map allowed within union (${formatTypes(maps)}). This would require type disambiguation which is not supported by maps during import or export.`,
 		);
 	}
 
 	if (maps.length > 0 && arrays.length > 0) {
 		errors.push(
-			`Both a map and an array allowed within union (${JSON.stringify([...arrays, ...maps].map((s) => s.identifier))}). Both can be implicitly constructed from arrays, which are ambiguous when the array is empty.`,
+			`Both a map and an array allowed within union (${formatTypes([...arrays, ...maps])}). Both can be implicitly constructed from iterables like arrays, which are ambiguous when the array is empty.`,
 		);
 	}
 
 	if (objects.length > 0 && maps.length > 0) {
 		errors.push(
-			`Both a object and a map allowed within union (${JSON.stringify([...objects, ...maps].map((s) => s.identifier))}). Support for constructing maps from objects is planned this will become ambiguous when that is supported.`,
+			`Both a object and a map allowed within union (${formatTypes([...objects, ...maps])}). Both can be constructed from objects and can be ambiguous.`,
 		);
 	}
 
@@ -271,17 +276,24 @@ function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): void {
 		// Check that each object has at least one required field which is unique to it.
 		// This is a conservative uniqueness check that ensures that its possible to disambiguate objects,
 		// even if they have extra non-field members on them (that don't collide with any fields in the union), without even checking the types of fields.
-		let hasUniqueField = false;
+
+		const possiblyAmbiguous = new Set(objects);
+
+		// A schema can't be ambiguous with itself
+		possiblyAmbiguous.delete(schema);
+
 		for (const [key, field] of schema.fields) {
 			if (field.kind === FieldKind.Required) {
 				const withKey = allObjectKeys.get(key) ?? fail("missing schema");
-				if (withKey.length === 0) {
-					hasUniqueField = true;
+				for (const candidate of possiblyAmbiguous) {
+					if (!withKey.has(candidate)) {
+						possiblyAmbiguous.delete(candidate);
+					}
 				}
 			}
 		}
 
-		if (hasUniqueField === false) {
+		if (possiblyAmbiguous.size > 0) {
 			// TODO: make this check more permissive.
 			// Allow using the type of the field to disambiguate, at least for leaf types.
 			// Add "constant" fields which can be used to disambiguate even more cases without adding persisted data: maybe make them optional in constructor?
@@ -289,7 +301,7 @@ function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): void {
 			// The policy here however must remain at least as conservative as shallowCompatibilityTest in src/simple-tree/toMapTree.ts.
 
 			errors.push(
-				`Object ${JSON.stringify(schema.identifier)} does not have a unique required field within union (${JSON.stringify([...union].map((s) => s.identifier))}). Support for constructing maps from objects is planned this will become ambiguous when that is supported.`,
+				`The required fields of ${JSON.stringify(schema.identifier)} are insufficient to differentiate it from the following types: ${formatTypes(possiblyAmbiguous)}. For objects to be considered unambiguous, each must have required fields that do not all occur on any other object in the union.`,
 			);
 		}
 	}
