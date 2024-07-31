@@ -188,10 +188,14 @@ export interface FieldJsonSchema {
  * Note: This representation only uses a limited subset of supported JSON Schema features.
  * It is scoped to a format that can be used to sufficiently represent supported Shared Tree schema.
  *
- * Also note that it may contain Fluid-specific extensions, such as the {@link NodeJsonSchemaBase._kind} property,
- * meaning that it is not a *strict* subset.
+ * Also note that this schema format contains Fluid-specific extensions, such as the {@link NodeJsonSchemaBase._kind}
+ * property, meaning that it is not a *strict* subset.
  * When using these schemas with validation tools (for example, {@link https://ajv.js.org/}), you will need to opt out
  * of *strict* validation to ensure extra properties are allowed.
+ *
+ * @privateRemarks
+ * Extending JSON Schema is permitted by the spec.
+ * See {@link https://json-schema.org/draft/2020-12/json-schema-core#name-extending-json-schema}.
  *
  * @alpha
  */
