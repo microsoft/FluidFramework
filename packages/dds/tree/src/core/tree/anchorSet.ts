@@ -790,14 +790,15 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
 				);
 			},
-			notifyChildrenChanged(field: FieldKey): void {
+			notifyChildrenChanged(): void {
 				this.maybeWithNode(
 					(p) => {
+						assert(this.parentField !== undefined, "Must be in a field");
 						p.events.emit("childrenChanged", p);
 						this.bufferedEvents.push({
 							node: p,
 							event: "childrenChangedAfterBatch",
-							changedField: field,
+							changedField: this.parentField,
 						});
 					},
 					() => {},
@@ -847,8 +848,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.notifyChildrenChanging();
 				this.attachEdit(source, count, destination);
-				assert(this.parentField !== undefined, "Must be in a field in order to attach");
-				this.notifyChildrenChanged(this.parentField);
+				this.notifyChildrenChanged();
 			},
 			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
 				assert(
@@ -912,8 +912,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			detach(source: Range, destination: FieldKey): void {
 				this.notifyChildrenChanging();
 				this.detachEdit(source, destination);
-				assert(this.parentField !== undefined, "Must be in a field in order to attach");
-				this.notifyChildrenChanged(this.parentField);
+				this.notifyChildrenChanged();
 			},
 			detachEdit(source: Range, destination: FieldKey): void {
 				assert(
@@ -999,8 +998,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 				this.notifyChildrenChanging();
 				this.detachEdit(range, oldContentDestination);
 				this.attachEdit(newContentSource, range.end - range.start, range.start);
-				assert(this.parentField !== undefined, "Must be in a field in order to attach");
-				this.notifyChildrenChanged(this.parentField);
+				this.notifyChildrenChanged();
 			},
 			destroy(detachedField: FieldKey, count: number): void {
 				this.anchorSet.removeChildren(
