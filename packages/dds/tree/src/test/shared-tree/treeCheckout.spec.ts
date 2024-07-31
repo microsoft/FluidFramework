@@ -40,9 +40,9 @@ import {
 import { disposeSymbol, fail } from "../../util/index.js";
 import {
 	SchemaFactory,
+	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
-	type TreeViewConfiguration,
 } from "../../index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getFlexNode } from "../../simple-tree/proxyBinding.js";
@@ -63,7 +63,9 @@ describe("sharedTreeView", () => {
 		const RootNode = sf.object("RootNode", { x: sf.number });
 
 		it("triggers events for local and subtree changes", () => {
-			const view = getView({ enableSchemaValidation, schema: RootNode });
+			const view = getView(
+				new TreeViewConfiguration({ enableSchemaValidation, schema: RootNode }),
+			);
 			view.initialize({ x: 24 });
 			const root = view.root;
 			const anchorNode = getFlexNode(root).anchorNode;
@@ -101,7 +103,9 @@ describe("sharedTreeView", () => {
 		});
 
 		it("propagates path args for local and subtree changes", () => {
-			const view = getView({ enableSchemaValidation, schema: RootNode });
+			const view = getView(
+				new TreeViewConfiguration({ enableSchemaValidation, schema: RootNode }),
+			);
 			view.initialize({ x: 24 });
 			const root = view.root;
 			const anchorNode = getFlexNode(root).anchorNode;
@@ -444,15 +448,19 @@ describe("sharedTreeView", () => {
 		it("submit edits to Fluid when merging into the root view", () => {
 			const sf = new SchemaFactory("edits submitted schema");
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].viewWith({
-				schema: sf.array(sf.string),
-				enableSchemaValidation,
-			});
+			const tree1 = provider.trees[0].viewWith(
+				new TreeViewConfiguration({
+					schema: sf.array(sf.string),
+					enableSchemaValidation,
+				}),
+			);
 			provider.processMessages();
-			const tree2 = provider.trees[1].viewWith({
-				schema: sf.array(sf.string),
-				enableSchemaValidation,
-			});
+			const tree2 = provider.trees[1].viewWith(
+				new TreeViewConfiguration({
+					schema: sf.array(sf.string),
+					enableSchemaValidation,
+				}),
+			);
 			provider.processMessages();
 			const baseView = forkView(tree1);
 			const view = forkView(baseView);
@@ -471,10 +479,12 @@ describe("sharedTreeView", () => {
 		it("do not squash commits", () => {
 			const sf = new SchemaFactory("no squash commits schema");
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].viewWith({
-				schema: sf.array(sf.string),
-				enableSchemaValidation,
-			});
+			const tree1 = provider.trees[0].viewWith(
+				new TreeViewConfiguration({
+					schema: sf.array(sf.string),
+					enableSchemaValidation,
+				}),
+			);
 			provider.processMessages();
 			let opsReceived = 0;
 			provider.trees[1].on("op", () => (opsReceived += 1));
@@ -704,8 +714,12 @@ describe("sharedTreeView", () => {
 		const schema1 = sf1.array([sf1.string, sf1.number]);
 
 		const provider = new TestTreeProviderLite(2);
-		const view1 = provider.trees[0].viewWith({ schema: schema1, enableSchemaValidation });
-		const view2 = provider.trees[1].viewWith({ schema: schema1, enableSchemaValidation });
+		const view1 = provider.trees[0].viewWith(
+			new TreeViewConfiguration({ schema: schema1, enableSchemaValidation }),
+		);
+		const view2 = provider.trees[1].viewWith(
+			new TreeViewConfiguration({ schema: schema1, enableSchemaValidation }),
+		);
 
 		view1.initialize(["A", 1, "B", 2]);
 		const storedSchema1 = intoStoredSchema(toFlexSchema(schema1));
@@ -765,7 +779,7 @@ describe("sharedTreeView", () => {
 
 			const provider = new TestTreeProviderLite(1);
 			const oldSchemaConfig = { schema: oldSchema, enableSchemaValidation };
-			const view1 = provider.trees[0].viewWith(oldSchemaConfig);
+			const view1 = provider.trees[0].viewWith(new TreeViewConfiguration(oldSchemaConfig));
 			view1.initialize(["A", "B", "C"]);
 
 			const sf2 = new SchemaFactory("schema1");
@@ -795,7 +809,10 @@ describe("sharedTreeView", () => {
 				intoStoredSchema(toFlexSchema(oldSchema)),
 				branch.checkout.storedSchema,
 			);
-			const branchWithOldSchema = viewCheckout(branch.checkout, oldSchemaConfig);
+			const branchWithOldSchema = viewCheckout(
+				branch.checkout,
+				new TreeViewConfiguration(oldSchemaConfig),
+			);
 			assert.deepEqual(branchWithOldSchema.root, ["C"]);
 		});
 
@@ -805,7 +822,7 @@ describe("sharedTreeView", () => {
 
 			const provider = new TestTreeProviderLite(1);
 			const oldSchemaConfig = { schema: oldSchema, enableSchemaValidation };
-			const view1 = provider.trees[0].viewWith(oldSchemaConfig);
+			const view1 = provider.trees[0].viewWith(new TreeViewConfiguration(oldSchemaConfig));
 			view1.initialize(["A", "B", "C"]);
 
 			const branch = forkView(view1);
@@ -815,15 +832,18 @@ describe("sharedTreeView", () => {
 			const sf2 = new SchemaFactory("schema1");
 			const newSchema = [sf2.array(sf2.string), sf2.array([sf2.string, sf2.number])];
 			provider.trees[0]
-				.viewWith({ schema: newSchema, enableSchemaValidation })
+				.viewWith(new TreeViewConfiguration({ schema: newSchema, enableSchemaValidation }))
 				.upgradeSchema();
 
 			// Remove "B" on the child branch
 			branch.root.removeAt(1);
-			const branchWithNewSchema = viewCheckout(branch.checkout, {
-				schema: newSchema,
-				enableSchemaValidation,
-			});
+			const branchWithNewSchema = viewCheckout(
+				branch.checkout,
+				new TreeViewConfiguration({
+					schema: newSchema,
+					enableSchemaValidation,
+				}),
+			);
 			branchWithNewSchema.upgradeSchema();
 			// Remove "C" on the child branch
 			branchWithNewSchema.root.removeAt(1);
@@ -840,7 +860,10 @@ describe("sharedTreeView", () => {
 				intoStoredSchema(toFlexSchema(oldSchema)),
 				branch.checkout.storedSchema,
 			);
-			assert.deepEqual(viewCheckout(branch.checkout, oldSchemaConfig).root, ["B", "C"]);
+			assert.deepEqual(
+				viewCheckout(branch.checkout, new TreeViewConfiguration(oldSchemaConfig)).root,
+				["B", "C"],
+			);
 		});
 	});
 
@@ -1124,10 +1147,12 @@ function itView<
 	): void {
 		const provider = new TestTreeProviderLite();
 		if (options.initialContent) {
-			const view = makeViewFromConfig({
-				schema: options.initialContent.schema,
-				enableSchemaValidation,
-			});
+			const view = makeViewFromConfig(
+				new TreeViewConfiguration({
+					schema: options.initialContent.schema,
+					enableSchemaValidation,
+				}),
+			);
 			view.initialize(options.initialContent.initialTree);
 			thunk(view, provider.logger);
 		} else {
@@ -1135,10 +1160,12 @@ function itView<
 				makeViewFromConfig as unknown as (
 					config: TreeViewConfiguration<typeof RootArray>,
 				) => SchematizingSimpleTreeView<typeof RootArray>
-			)({
-				schema: RootArray,
-				enableSchemaValidation,
-			});
+			)(
+				new TreeViewConfiguration({
+					schema: RootArray,
+					enableSchemaValidation,
+				}),
+			);
 			view.initialize(new RootArray([]));
 			// down cast here is safe due to overload protections
 			(

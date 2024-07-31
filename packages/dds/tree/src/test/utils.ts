@@ -149,7 +149,7 @@ import {
 	type ImplicitFieldSchema,
 	type InsertableContent,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type TreeViewConfiguration,
+	TreeViewConfiguration,
 	normalizeFieldSchema,
 	SchemaFactory,
 	toFlexSchema,
@@ -1311,7 +1311,10 @@ export function forkView<T extends ImplicitFieldSchema>(
 ): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork } {
 	return new SchematizingSimpleTreeView<T>(
 		viewToFork.checkout.fork(),
-		{ ...viewToFork.config, schema: schema ?? viewToFork.config.schema },
+		new TreeViewConfiguration({
+			enableSchemaValidation: viewToFork.config.enableSchemaValidation,
+			schema: schema ?? viewToFork.config.schema,
+		}),
 		new MockNodeKeyManager(),
 	) as SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
 }
