@@ -402,7 +402,7 @@ export interface SchemaVisitor {
 	 */
 	node?: (schema: TreeNodeSchema) => void;
 	/**
-	 * Called once for set of allowed types.
+	 * Called once for each set of allowed types.
 	 * Includes implicit allowed types (when a single type was used instead of an array).
 	 *
 	 * This includes every field, but also the allowed types array for maps and arrays and the root if starting at {@link walkAllowedTypes}.
