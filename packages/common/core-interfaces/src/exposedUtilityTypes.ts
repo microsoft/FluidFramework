@@ -394,16 +394,46 @@ export namespace InternalUtilityTypes {
 				: /* non-object => T as is */ T;
 
 	/**
-	 * Test for non-public properties (class instance type)
-	 * Compare original (unprocessed) to filtered case that has `any` where
-	 * recursing.
+	 * Replaces any instances of "allowed" types and recursion within with `never`.
 	 *
 	 * @system
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	export type HasNonPublicProperties<T> = ReplaceRecursionWith<T, any> extends T
-		? false
-		: true;
+	export type ReplaceAllowancesAndRecursionWithNever<
+		T,
+		Controls extends FilterControls,
+	> = T extends Controls["AllowExtensionOf"]
+		? /* allowed extension type => */ never
+		: /* test for exact allowance */ IfExactTypeInUnion<
+					T,
+					Controls["AllowExactly"],
+					true,
+					"no match"
+				> extends true
+			? /* exact allowed type => */ never
+			: T extends object
+				? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) &
+						(T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) & {
+							[K in keyof T]: ReplaceAllowancesAndRecursionWithNever<
+								T[K],
+								{
+									AllowExactly: Controls["AllowExactly"];
+									AllowExtensionOf: Controls["AllowExtensionOf"] | T;
+								}
+							>;
+						}
+				: /* non-object => T as is */ T;
+
+	/**
+	 * Test for non-public properties (class instance type)
+	 * Compare original (unprocessed) to filtered case that has `never` where
+	 * recursing or where allowed exception types are used.
+	 *
+	 * @system
+	 */
+	export type HasNonPublicProperties<
+		T,
+		Controls extends FilterControls,
+	> = ReplaceAllowancesAndRecursionWithNever<T, Controls> extends T ? false : true;
 
 	/**
 	 * Outer implementation of {@link JsonSerializable} handling meta cases
@@ -430,8 +460,7 @@ export namespace InternalUtilityTypes {
 				: Options["IgnoreInaccessibleMembers"] extends "ignore-inaccessible-members"
 					? JsonSerializableFilter<T, Controls>
 					: /* test for non-public properties (class instance type) */
-						/* TODO - make an allowance for classes with non-public properties in Allow* types */
-						HasNonPublicProperties<T> extends true
+						HasNonPublicProperties<T, Controls> extends true
 						? /* hidden props => test if it is array properties that are the problem */ T extends readonly (infer _)[]
 							? /* array => */ {
 									/* use homomorphic mapped type to preserve tuple type */
@@ -480,7 +509,7 @@ export namespace InternalUtilityTypes {
 						| number
 						| string
 						| Controls["AllowExtensionOf"]
-				? /* primitive typesor alternate => */ T
+				? /* primitive types or alternate => */ T
 				: /* test for exact alternate */ IfExactTypeInUnion<
 							T,
 							Controls["AllowExactly"],
@@ -573,6 +602,7 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @privateRemarks
 	 * This utility is reentrant and will process a type `T` up to RecurseLimit.
+	 * TODO FIX - IFluidHandle and recursion results in incorrect (unrolled) type.
 	 *
 	 * @system
 	 */
@@ -594,11 +624,11 @@ export namespace InternalUtilityTypes {
 				: /* infer non-recursive version of T */ ReplaceRecursionWith<
 							T,
 							RecursionMarker
-						> extends infer TNoRecursion
+						> extends infer TNoRecursionAndOnlyPublics
 					? /* test for no change from filtered type */ IsSameType<
-							TNoRecursion,
+							TNoRecursionAndOnlyPublics,
 							JsonDeserializedFilter<
-								TNoRecursion,
+								TNoRecursionAndOnlyPublics,
 								{
 									AllowExactly: Controls["AllowExactly"] | RecursionMarker;
 									AllowExtensionOf: Controls["AllowExtensionOf"];
@@ -608,8 +638,7 @@ export namespace InternalUtilityTypes {
 						> extends true
 						? /* same (no filtering needed) => test for non-public
 						     properties (class instance type) */
-							/* TODO - make an allowance for classes with non-public properties in Allow* types */
-							HasNonPublicProperties<T> extends true
+							HasNonPublicProperties<T, Controls> extends true
 							? /* hidden props => apply filtering to avoid retaining
 							     exact class except for any classes in allowances => */
 								JsonDeserializedFilter<

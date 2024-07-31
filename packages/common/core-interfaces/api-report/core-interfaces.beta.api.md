@@ -260,7 +260,7 @@ export namespace InternalUtilityTypes {
     export type FlattenIntersection<T> = T extends Record<string | number | symbol, unknown> ? {
         [K in keyof T]: T[K];
     } : T;
-    export type HasNonPublicProperties<T> = ReplaceRecursionWith<T, any> extends T ? false : true;
+    export type HasNonPublicProperties<T, Controls extends FilterControls> = ReplaceAllowancesAndRecursionWithNever<T, Controls> extends T ? false : true;
     export type IfExactTypeInUnion<T, Union, IfMatch = unknown, IfNoMatch = never> = IfSameType<T, Extract<Union, T>, IfMatch, IfNoMatch>;
     export type IfSameType<X, Y, IfSame = unknown, IfDifferent = never> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? IfSame : IfDifferent;
     export type IsEnumLike<T extends object> = T extends readonly (infer _)[] ? false : T extends {
@@ -286,10 +286,10 @@ export namespace InternalUtilityTypes {
         AllowExtensionOf: Options extends {
             AllowExtensionOf: unknown;
         } ? Options["AllowExtensionOf"] : never;
-    } extends infer Controls ? Controls extends FilterControls ? boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : ReplaceRecursionWith<T, RecursionMarker> extends infer TNoRecursion ? IsSameType<TNoRecursion, JsonDeserializedFilter<TNoRecursion, {
+    } extends infer Controls ? Controls extends FilterControls ? boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : ReplaceRecursionWith<T, RecursionMarker> extends infer TNoRecursionAndOnlyPublics ? IsSameType<TNoRecursionAndOnlyPublics, JsonDeserializedFilter<TNoRecursionAndOnlyPublics, {
         AllowExactly: Controls["AllowExactly"] | RecursionMarker;
         AllowExtensionOf: Controls["AllowExtensionOf"];
-    }, 0>> extends true ? HasNonPublicProperties<T> extends true ? JsonDeserializedFilter<T, Controls, RecurseLimit> : T : JsonDeserializedFilter<T, Controls, RecurseLimit> : never : never : never;
+    }, 0>> extends true ? HasNonPublicProperties<T, Controls> extends true ? JsonDeserializedFilter<T, Controls, RecurseLimit> : T : JsonDeserializedFilter<T, Controls, RecurseLimit> : never : never : never;
     export type JsonDeserializedRecursion<T, Controls extends FilterControls, RecurseLimit extends RecursionLimit, TAncestorTypes> = T extends TAncestorTypes ? RecurseLimit extends `+${infer RecursionRemainder}` ? JsonDeserializedImpl<T, Controls, RecursionRemainder extends RecursionLimit ? RecursionRemainder : 0> : JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : JsonDeserializedFilter<T, Controls, RecurseLimit, TAncestorTypes | T>;
     export type JsonForDeserializedArrayItem<T, Controls extends FilterControls, TBlessed> = boolean extends (T extends never ? true : false) ? TBlessed : unknown extends T ? TBlessed : T extends null | boolean | number | string | Controls["AllowExtensionOf"] ? T : IfExactTypeInUnion<T, Controls["AllowExactly"], T, T extends undefined | symbol | Function ? null : TBlessed>;
     export type JsonForSerializableArrayItem<T, Controls extends FilterControls, TBlessed> = boolean extends (T extends never ? true : false) ? TBlessed : unknown extends T ? TBlessed : T extends null | boolean | number | string | Controls["AllowExtensionOf"] ? T : IfExactTypeInUnion<T, Controls["AllowExactly"], T, undefined extends T ? SerializationErrorPerUndefinedArrayElement : TBlessed>;
@@ -322,7 +322,7 @@ export namespace InternalUtilityTypes {
         AllowExtensionOf: Options extends {
             AllowExtensionOf: unknown;
         } ? Options["AllowExtensionOf"] : never;
-    } extends infer Controls ? Controls extends FilterControls ? boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : Options["IgnoreInaccessibleMembers"] extends "ignore-inaccessible-members" ? JsonSerializableFilter<T, Controls> : HasNonPublicProperties<T> extends true ? T extends readonly (infer _)[] ? {
+    } extends infer Controls ? Controls extends FilterControls ? boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : Options["IgnoreInaccessibleMembers"] extends "ignore-inaccessible-members" ? JsonSerializableFilter<T, Controls> : HasNonPublicProperties<T, Controls> extends true ? T extends readonly (infer _)[] ? {
         [K in keyof T]: JsonSerializableImpl<T[K], {
             AllowExactly: Controls["AllowExactly"] | T;
             AllowExtensionOf: Controls["AllowExtensionOf"];
@@ -345,6 +345,12 @@ export namespace InternalUtilityTypes {
         // (undocumented)
         [RecursionMarkerSymbol]: typeof RecursionMarkerSymbol;
     }
+    export type ReplaceAllowancesAndRecursionWithNever<T, Controls extends FilterControls> = T extends Controls["AllowExtensionOf"] ? never : IfExactTypeInUnion<T, Controls["AllowExactly"], true, "no match"> extends true ? never : T extends object ? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) & (T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) & {
+        [K in keyof T]: ReplaceAllowancesAndRecursionWithNever<T[K], {
+            AllowExactly: Controls["AllowExactly"];
+            AllowExtensionOf: Controls["AllowExtensionOf"] | T;
+        }>;
+    } : T;
     export type ReplaceRecursionWith<T, TReplacement> = ReplaceRecursionWithImpl<T, TReplacement, never>;
     export type ReplaceRecursionWithImpl<T, TReplacement, TAncestorTypes> = T extends TAncestorTypes ? TReplacement : T extends object ? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) & (T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) & {
         [K in keyof T]: ReplaceRecursionWithImpl<T[K], TReplacement, TAncestorTypes | T>;

@@ -25,6 +25,7 @@ import {
 import type {
 	ObjectWithSymbolOrRecursion,
 	SimpleObjectWithOptionalRecursion,
+	ObjectWithFluidHandleOrRecursion,
 } from "./testValues.js";
 import {
 	boolean,
@@ -106,6 +107,7 @@ import {
 	classInstanceWithPublicMethod,
 	fluidHandleToNumber,
 	objectWithFluidHandle,
+	objectWithFluidHandleOrRecursion,
 } from "./testValues.js";
 
 /**
@@ -1038,20 +1040,23 @@ describe("JsonSerializable", () => {
 					);
 				});
 				it("`IFluidHandle`", () => {
-					// @ts-expect-error TODO FIX: SerializationErrorPerNonPublicProperties error from allowed type
 					const { filteredIn } = passThruHandlingFluidHandle(fluidHandleToNumber);
-					// @ts-expect-error TODO FIX
 					assertIdenticalTypes(filteredIn, createInstanceOf<IFluidHandle<number>>());
 				});
 				it("object with `IFluidHandle`", () => {
-					// @ts-expect-error TODO FIX: SerializationErrorPerNonPublicProperties error from allowed type
 					const { filteredIn } = passThruHandlingFluidHandle(objectWithFluidHandle);
 					assertIdenticalTypes(
-						// @ts-expect-error TODO FIX
 						filteredIn,
 						createInstanceOf<{
 							handle: IFluidHandle<number>;
 						}>(),
+					);
+				});
+				it("object with `IFluidHandle` and recursion", () => {
+					const { filteredIn } = passThruHandlingFluidHandle(objectWithFluidHandleOrRecursion);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<ObjectWithFluidHandleOrRecursion>(),
 					);
 				});
 			});
