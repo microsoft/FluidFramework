@@ -45,7 +45,7 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests.js";
  *
  * Typical usages (use one field like this at the top of a class):
  * ```typescript
- * protected _typeCheck?: MakeNominal;
+ * protected _typeCheck!: MakeNominal;
  * protected _typeCheck?: Contravariant<T>;
  * protected _typeCheck?: Covariant<T>;
  * protected _typeCheck?: Invariant<T>;
@@ -78,7 +78,7 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests.js";
  * can use this to prevent undesired assignments.
  * @example
  * ```typescript
- * protected _typeCheck?: MakeNominal;
+ * protected _typeCheck!: MakeNominal;
  * ```
  * @privateRemarks
  * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
