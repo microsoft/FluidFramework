@@ -10,52 +10,81 @@
 export type SimpleNodeSchemaKind = "object" | "array" | "map" | "leaf";
 
 /**
- * TODO
+ * Kind of {@link FieldSchema}.
  */
 export type SimpleFieldSchemaKind = "optional" | "required" | "identifier";
 
 /**
- * TODO
+ * The supported kinds of leaf nodes.
+ *
+ * @remarks TODO: point to corresponding simple tree layer concept.
  */
 export type SimpleLeafSchemaKind = "string" | "number" | "boolean" | "null" | "fluid-handle";
 
 /**
- * TODO
+ * Base interface for all {@link SimpleNodeSchema} implementations.
  */
 export interface SimpleNodeSchemaBase<TNodeKind extends SimpleNodeSchemaKind> {
+	/**
+	 * The kind of {@link SimpleNodeSchema}.
+	 *
+	 * @remarks can be used to type-switch between implementations.
+	 */
 	readonly kind: TNodeKind;
 }
 
 /**
- * TODO
+ * A {@link SimpleNodeSchema} for an object node.
  */
 export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<"object"> {
+	/**
+	 * Schemas for each of the object's fields.
+	 */
 	readonly fields: Record<string, SimpleFieldSchema>;
 }
 
 /**
- * TODO
+ * A {@link SimpleNodeSchema} for an array node.
  */
 export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<"array"> {
+	/**
+	 * The types allowed in the array.
+	 *
+	 * @remarks Refers to the types by identifier.
+	 * An {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
+	 */
 	readonly allowedTypes: ReadonlySet<string>;
 }
 
 /**
- * TODO
+ * A {@link SimpleNodeSchema} for a map node.
  */
 export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<"map"> {
+	/**
+	 * The types allowed as values in the map.
+	 *
+	 * @remarks Refers to the types by identifier.
+	 * An {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
+	 */
 	readonly allowedTypes: ReadonlySet<string>;
 }
 
 /**
- * TODO
+ * A {@link SimpleNodeSchema} for a leaf node.
  */
 export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<"leaf"> {
+	/**
+	 * The type of leaf node.
+	 */
 	readonly type: SimpleLeafSchemaKind;
 }
 
 /**
- * TODO
+ * A simple, shallow representation of a schema for a node.
+ *
+ * @remarks This definition is incomplete, and references child types by identifiers.
+ * To be useful, this generally needs to be used as a part of a complete {@link SimpleTreeSchema}, which
+ * contains backing {@link SimpleTreeSchema.definitions} for each referenced identifier.
  */
 export type SimpleNodeSchema =
 	| SimpleLeafNodeSchema
@@ -64,20 +93,36 @@ export type SimpleNodeSchema =
 	| SimpleObjectNodeSchema;
 
 /**
- * TODO
+ * A simple, shallow representation of a schema for a field.
+ *
+ * @remarks This definition is incomplete, and references child types by identifiers.
+ * To be useful, this generally needs to be used as a part of a complete {@link SimpleTreeSchema}, which
+ * contains backing {@link SimpleTreeSchema.definitions} for each referenced identifier.
  */
 export interface SimpleFieldSchema {
+	/**
+	 * The kind of object field.
+	 */
 	readonly kind: SimpleFieldSchemaKind;
+
+	/**
+	 * The types allowed under the field.
+	 *
+	 * @remarks Refers to the types by identifier.
+	 * An {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
+	 */
 	readonly allowedTypes: ReadonlySet<string>;
 }
 
 /**
- * TODO
- * @privateRemarks
- * Currently assumes root field is required.
- * TODO: verify this is true in simple tree world.
+ * A simplified representation of a schema for a tree.
+ *
+ * @remarks Contains the complete set of schema {@link SimpleTreeSchema.definitions} required to resolve references
+ * by schema identifier.
  */
-export interface SimpleTreeSchema {
+export interface SimpleTreeSchema extends SimpleFieldSchema {
+	/**
+	 * The complete set of node schema definitions recursively referenced by the tree's {@link SimpleTreeSchema.allowedTypes}.
+	 */
 	readonly definitions: ReadonlyMap<string, SimpleNodeSchema>;
-	readonly allowedTypes: ReadonlySet<string>;
 }

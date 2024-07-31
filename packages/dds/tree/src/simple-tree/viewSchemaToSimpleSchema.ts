@@ -27,9 +27,6 @@ import { ValueSchema } from "../core/index.js";
 import { fail } from "../util/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
 
-// TODOs:
-// - tests
-
 /**
  * Converts a "view" schema to a "simple" schema representation.
  */
@@ -47,8 +44,9 @@ export function toSimpleTreeSchema(schema: ImplicitAllowedTypes): SimpleTreeSche
 	};
 }
 
-// Note: shallow
-// TODO: caching
+/**
+ * Creates a {@link SimpleNodeSchema} from a {@link TreeNodeSchema}.
+ */
 function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
 	const kind = schema.kind;
 	switch (kind) {
