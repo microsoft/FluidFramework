@@ -41,6 +41,15 @@ describe("getJsonSchema", () => {
 		validator([], false);
 	});
 
+	// Fluid Handles are not supported in JSON Schema export.
+	// Ensure the code throws if a handle is encountered.
+	it("Leaf node (Fluid Handle)", async () => {
+		const schemaFactory = new SchemaFactory("test");
+		const Schema = schemaFactory.handle;
+
+		assert.throws(() => getJsonSchema(Schema));
+	});
+
 	it("Array schema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.array("array", schemaFactory.string) {}

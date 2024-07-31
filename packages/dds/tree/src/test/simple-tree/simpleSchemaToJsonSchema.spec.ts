@@ -46,6 +46,19 @@ describe("simpleSchemaToJsonSchema", () => {
 		validator([], false);
 	});
 
+	// Fluid Handles are not supported in JSON Schema export.
+	// Ensure the code throws if a handle is encountered.
+	it("Leaf node (Fluid Handle)", async () => {
+		const input: SimpleTreeSchema = {
+			definitions: new Map<string, SimpleNodeSchema>([
+				["test.handle", { type: "fluid-handle", kind: "leaf" }],
+			]),
+			allowedTypes: new Set<string>(["test.handle"]),
+		};
+
+		assert.throws(() => toJsonSchema(input));
+	});
+
 	it("Array schema", () => {
 		const input: SimpleTreeSchema = {
 			definitions: new Map<string, SimpleNodeSchema>([
