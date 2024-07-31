@@ -191,6 +191,14 @@ export interface IMergeTreeOptions {
 	 * Default value: false
 	 */
 	mergeTreeEnableObliterate?: boolean;
+
+	/**
+	 * Enables support for reconnecting when obliterate operations are present
+	 *
+	 * Obliterate is currently experimental and may not work in all scenarios.
+	 *
+	 * Default value: false
+	 */
 	mergeTreeEnableObliterateReconnect?: boolean;
 }
 export function errorIfOptionNotTrue(
