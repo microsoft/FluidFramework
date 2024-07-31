@@ -118,9 +118,17 @@ export interface SimpleFieldSchema {
  * @remarks Contains the complete set of schema {@link SimpleTreeSchema.definitions} required to resolve references
  * by schema identifier.
  */
-export interface SimpleTreeSchema extends SimpleFieldSchema {
+export interface SimpleTreeSchema {
 	/**
 	 * The complete set of node schema definitions recursively referenced by the tree's {@link SimpleTreeSchema.allowedTypes}.
 	 */
 	readonly definitions: ReadonlyMap<string, SimpleNodeSchema>;
+
+	/**
+	 * The types allowed under the root of the tree.
+	 *
+	 * @remarks Refers to the types by identifier.
+	 * {@link SimpleTreeSchema.definitions} can be used to resolve these identifiers to their associated schema definition.
+	 */
+		readonly allowedTypes: ReadonlySet<string>;
 }

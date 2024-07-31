@@ -22,9 +22,6 @@ import type {
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
 
-// TODOs:
-// - Throw an error when polymorphic schemas are ambiguous
-
 /**
  * Generates a JSON schema representation from a simple tree schema.
  * @internal
