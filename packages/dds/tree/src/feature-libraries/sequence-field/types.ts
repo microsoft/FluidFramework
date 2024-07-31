@@ -146,8 +146,7 @@ export type Detach = Remove | MoveOut;
  *
  * Only ever targets empty cells.
  *
- * As a matter of normalization, we only use an AttachAndDetach to represent the following compositions:
- * - MoveIn ○ Remove
+ * As a matter of normalization, we only use an AttachAndDetach to represent MoveIn ○ Remove.
  *
  * We do NOT use AttachAndDetach to represent the following compositions:
  * - Insert/Revive ○ Remove (represented by a Remove)
