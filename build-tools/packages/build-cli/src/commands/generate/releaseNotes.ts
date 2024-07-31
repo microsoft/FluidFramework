@@ -20,9 +20,9 @@ import { releaseGroupFlag } from "../../flags.js";
 import {
 	BaseCommand,
 	DEFAULT_CHANGESET_PATH,
-	FluidCustomChangeSetMetadataDefaults,
 	UNKNOWN_SECTION,
 	difference,
+	fluidCustomChangeSetMetadataDefaults,
 	groupBySection,
 	loadChangesets,
 } from "../../library/index.js";
@@ -82,18 +82,17 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 
 		const releaseGroup = context.repo.releaseGroups.get(flags.releaseGroup);
 		if (releaseGroup === undefined) {
-			this.errorLog(`Unknown release group: ${flags.releaseGroup}`);
-			this.exit(2);
+			this.error(`Unknown release group: ${flags.releaseGroup}`, { exit: 2 });
 		}
 
 		const { releaseNotes: releaseNotesConfig } = loadFluidBuildConfig(
 			context.gitRepo.resolvedRoot,
 		);
 		if (releaseNotesConfig === undefined) {
-			this.errorLog(
+			this.error(
 				`No releaseNotes config found. Make sure the 'releaseNotes' section of the build config exists.`,
+				{ exit: 2 },
 			);
-			this.exit(2);
 		}
 
 		const changesetDir = path.join(releaseGroup.directory, DEFAULT_CHANGESET_PATH);
@@ -108,7 +107,6 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 		const intro = `# Fluid Framework v${version}\n\n## Contents`;
 
 		this.info(`Loaded ${changesets.length} changes.`);
-		assert(flags.releaseType !== undefined, `Release type must be provided.`);
 
 		const bySection = groupBySection(changesets);
 
@@ -129,8 +127,9 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			const unknownSections = difference(sectionsInChangesets, configuredSections);
 			for (const section of unknownSections) {
 				if (section !== UNKNOWN_SECTION) {
-					this.warning(
-						`Could not find a configuration for a section named "${section}". The changesets in this section will be omitted.`,
+					this.error(
+						`Could not find a configuration for a section named "${section}". All sections must be configured.`,
+						{ exit: 2 },
 					);
 				}
 			}
@@ -144,7 +143,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 				(change) =>
 					// filter out changes that shouldn't be in the release notes
 					(change.additionalMetadata?.includeInReleaseNotes ??
-						FluidCustomChangeSetMetadataDefaults.includeInReleaseNotes) === true,
+						fluidCustomChangeSetMetadataDefaults.includeInReleaseNotes) === true,
 			);
 			if (changes === undefined || changes.length === 0) {
 				this.info(`No changes in section "${name}", so it will be omitted.`);
@@ -156,7 +155,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 				if (change.changeTypes.includes("minor") || flags.releaseType === "major") {
 					const pr = change.commit?.githubPullRequest;
 					const changeTitle = pr === undefined ? change.summary : `${change.summary} (#${pr})`;
-					body.append(`### ${changeTitle}\n\n${change.content}\n\n`);
+					body.append(`### ${changeTitle}\n\n${change.body}\n\n`);
 
 					body.append(`#### Change details\n\n`);
 					if (change.commit?.sha !== undefined) {

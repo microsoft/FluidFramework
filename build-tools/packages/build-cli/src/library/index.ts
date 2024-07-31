@@ -20,7 +20,7 @@ export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "
 export {
 	UNKNOWN_SECTION,
 	DEFAULT_CHANGESET_PATH,
-	FluidCustomChangeSetMetadataDefaults,
+	fluidCustomChangeSetMetadataDefaults,
 	loadChangesets,
 	groupBySection,
 	groupByMainPackage,

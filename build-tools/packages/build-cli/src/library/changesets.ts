@@ -25,7 +25,8 @@ export const UNKNOWN_SECTION = "_unknown";
 
 /**
  * Additional metadata that can be used inside a changeset. This metadata should be set in a second front matter
- * section. For example:
+ * section.
+ * @example
  *
  * ```markdown
  * ---
@@ -43,12 +44,14 @@ export const UNKNOWN_SECTION = "_unknown";
 export interface FluidCustomChangesetMetadata {
 	/**
 	 * The section in release notes in which this changeset should be included. If a value is not provided, the changeset
-	 * is considered part of the "unknown section" which is omitted from release notes.
+	 * is considered part of the "unknown section".
 	 */
 	section?: ReleaseNotesSection["name"];
 
 	/**
-	 * If false, the changeset will not be included in release notes. If undefined, this defaults to true.
+	 * If false, the changeset will not be included in release notes.
+	 *
+	 * @defaultValue `true`
 	 */
 	includeInReleaseNotes?: boolean;
 
@@ -56,12 +59,12 @@ export interface FluidCustomChangesetMetadata {
 	 * If true, the changeset will be ordered before the other changes in that section. If multiple changesets are
 	 * highlighted they will be internally sorted by date.
 	 *
-	 * If undefined, this defaults to false.
+	 * @defaultValue `false`
 	 */
 	highlight?: boolean;
 }
 
-export const FluidCustomChangeSetMetadataDefaults: FluidCustomChangesetMetadata = {
+export const fluidCustomChangeSetMetadataDefaults: FluidCustomChangesetMetadata = {
 	section: undefined,
 	includeInReleaseNotes: true,
 } as const;
@@ -92,10 +95,10 @@ export interface Changeset {
 
 	/**
 	 * The body of the changeset after processing. Front matter sections are removed and white space is trimmed from the
-	 * beginning and end of the string. Note that the first line of the changeset body is not considered part of the
-	 * content; it's the summary.
+	 * beginning and end of the string. Note that the first markdown paragraph of the changeset body is not considered
+	 * part of the body; it's the summary.
 	 */
-	content: string;
+	body: string;
 
 	/**
 	 * The git commit that added the changeset. For uncommitted changesets some commit data may be undefined.
@@ -244,13 +247,13 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 		}
 
 		const summary = paragraphs[0];
-		const content = paragraphs.slice(1).join("\n\n");
+		const body = paragraphs.slice(1).join("\n\n");
 
 		const newChangeset: Changeset = {
 			metadata: packageBumpTypeMetadata,
 			mainPackage: Object.keys(packageBumpTypeMetadata)[0],
 			additionalMetadata,
-			content,
+			body,
 			summary,
 			sourceFile: file,
 			commit,
@@ -304,7 +307,9 @@ export function groupByPackage(changesets: Changeset[]): Map<ReleasePackage, Cha
  * @param changesets - An array of changesets to be grouped.
  * @returns a Map of package names to an array of all the changesets that apply to the package.
  */
-export function groupByMainPackage(changesets: Changeset[]): Map<ReleasePackage, Changeset[]> {
+export function groupByMainPackage(
+	changesets: Changeset[],
+): ReadonlyMap<ReleasePackage, Changeset[]> {
 	const changesetMap = new Map<ReleasePackage, Changeset[]>();
 	for (const changeset of changesets) {
 		const entries = changesetMap.get(changeset.mainPackage) ?? [];
@@ -339,7 +344,7 @@ export function groupByMainPackage(changesets: Changeset[]): Map<ReleasePackage,
  */
 export function groupBySection(
 	changesets: Changeset[],
-): Map<ReleaseNotesSection["name"], Changeset[]> {
+): ReadonlyMap<ReleaseNotesSection["name"], Changeset[]> {
 	const changesetMap = new Map<ReleaseNotesSection["name"], Changeset[]>();
 	for (const changeset of changesets) {
 		const section = changeset.additionalMetadata?.section ?? UNKNOWN_SECTION;
@@ -362,18 +367,20 @@ export function groupBySection(
  * Changesets themselves include a mapping of package to release type. This function returns an array with an entry
  * per-package-changeset, effectively flattening the changesets.
  */
-export function flattenChangesets(changesets: Changeset[]): ChangesetEntry[] {
+export function flattenChangesets(
+	changesets: readonly Changeset[],
+): readonly ChangesetEntry[] {
 	const entries: ChangesetEntry[] = [];
 
 	for (const changeset of changesets) {
-		const { content, summary, commit, sourceFile, metadata } = changeset;
+		const { body, summary, commit, sourceFile, metadata } = changeset;
 		let index = 0;
 		for (const [pkg, changeType] of Object.entries(metadata)) {
 			entries.push({
 				pkg,
 				isMainPackage: index === 0,
 				changeType,
-				content,
+				body,
 				summary,
 				commit,
 				sourceFile,

@@ -139,7 +139,7 @@ export type PreviousVersionStyle =
  * Configuration for the `generate:releaseNotes` command.
  */
 export interface ReleaseNotesConfig {
-	sections: ReleaseNotesSection[];
+	sections: Record<string, ReleaseNotesSection>;
 }
 
 /**
@@ -147,7 +147,7 @@ export interface ReleaseNotesConfig {
  */
 export interface ReleaseNotesSection {
 	/**
-	 * A short, one-word name for the section. This is used as a key.
+	 * A short name for the section. Each section in a {@link ReleaseNotesConfig} must have a unique name.
 	 */
 	name: string;
 

@@ -557,7 +557,7 @@ module.exports = {
 			{ name: "feature", heading: "✨ New Features" },
 			{ name: "tree", heading: "🌳 SharedTree DDS changes" },
 			{ name: "fix", heading: "🐛 Bug Fixes" },
-			{ name: "deprecation", heading: "Deprecations" },
+			{ name: "deprecation", heading: "⚠️ Deprecations" },
 			{ name: "other", heading: "Other Changes" },
 		],
 	},
