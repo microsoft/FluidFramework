@@ -116,23 +116,19 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): ObjectNodeJson
 }
 
 function convertMapNodeSchema(schema: SimpleMapNodeSchema): MapNodeJsonSchema {
-	throw new Error("Map nodes are not yet round-trip supported via JSON schema.");
-
-	// TODO: once map inputs can be simple records, we should be able to make this round-trip correctly.
-	//
-	// const allowedTypes: JsonDefinitionRef[] = [];
-	// schema.allowedTypes.forEach((type) => {
-	// 	allowedTypes.push(createRefNode(type));
-	// });
-	// return {
-	// 	type: "object",
-	// 	kind: "map",
-	// 	patternProperties: {
-	// 		"^.*$": {
-	// 			anyOf: allowedTypes,
-	// 		},
-	// 	},
-	// };
+	const allowedTypes: JsonSchemaRef[] = [];
+	schema.allowedTypes.forEach((type) => {
+		allowedTypes.push(createSchemaRef(type));
+	});
+	return {
+		type: "object",
+		_kind: "map",
+		patternProperties: {
+			"^.*$": {
+				anyOf: allowedTypes,
+			},
+		},
+	};
 }
 
 function createSchemaRef(schemaId: string): JsonSchemaRef {

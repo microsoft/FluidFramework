@@ -37,18 +37,18 @@ const jsonSchemaCacheSymbol = Symbol("jsonSchemaCache");
  * 	$defs: [
  * 		"com.fluidframework.leaf.string": {
  * 			type: "string",
-* 		},
+ * 		},
  * 		"com.fluidframework.leaf.number": {
  * 			type: "number",
-* 		},
+ * 		},
  * 		"com.myapp.MyObject": {
  * 			type: "object",
  * 			properties: {
  * 				"foo": { $ref: "com.fluidframework.leaf.number" },
-* 				"bar": { $ref: "com.fluidframework.leaf.string" },
-* 			},
-* 			required: ["foo"],
-* 		},
+ * 				"bar": { $ref: "com.fluidframework.leaf.string" },
+ * 			},
+ * 			required: ["foo"],
+ * 		},
  * 	],
  * 	anyOf: [ { $ref: "#/$defs/com.myapp.MyObject" } ],
  * }
