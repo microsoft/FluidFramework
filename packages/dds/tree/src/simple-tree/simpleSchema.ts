@@ -15,9 +15,7 @@ export type SimpleNodeSchemaKind = "object" | "array" | "map" | "leaf";
 export type SimpleFieldSchemaKind = "optional" | "required" | "identifier";
 
 /**
- * The supported kinds of leaf nodes.
- *
- * @remarks TODO: point to corresponding simple tree layer concept.
+ * Kind of leaf schema.
  */
 export type SimpleLeafSchemaKind = "string" | "number" | "boolean" | "null" | "fluid-handle";
 
