@@ -148,17 +148,6 @@
 		"webpack": "^5.82.0",
 		"webpack-cli": "^4.9.2"
 	},
-	"fluidBuild": {
-		"tasks": {
-			"compile": {
-				"dependsOn": [
-					"...",
-					"webpack"
-				],
-				"script": false
-			}
-		}
-	},
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
