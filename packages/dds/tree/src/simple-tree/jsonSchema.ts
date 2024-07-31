@@ -5,9 +5,6 @@
 
 import type { SimpleNodeSchemaKind } from "./simpleSchema.js";
 
-// TODOs:
-// - Type-assertions to guarantee JSON schema compatibility.
-
 /**
  * The fully-qualified {@link TreeNodeSchemaCore.identifier}.
  * @example Schema `com.myapp.foo` would be referenced via `#/definitions/com.myapp.foo`.
@@ -175,7 +172,7 @@ export type NodeJsonSchema =
  */
 export interface FieldJsonSchema {
 	/**
-	 * The kinds of items allowed under the array.
+	 * The kinds of items allowed under the field.
 	 * @remarks Always represented via references to {@link TreeJsonSchema.definitions}.
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-anyof}.
 	 */
