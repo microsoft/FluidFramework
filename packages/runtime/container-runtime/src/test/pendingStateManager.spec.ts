@@ -23,7 +23,7 @@ import type {
 	RecentlyAddedContainerRuntimeMessageDetails,
 	UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
-import { BatchManager, BatchMessage } from "../opLifecycle/index.js";
+import { BatchManager, BatchMessage, generateBatchId } from "../opLifecycle/index.js";
 import { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
 
 type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
@@ -170,11 +170,13 @@ describe("Pending State Manager", () => {
 			batchStartCsn: number,
 			sequenceNumber?: number,
 		) =>
-			pendingStateManager.processPendingLocalBatch(
-				messages as InboundSequencedContainerRuntimeMessage[],
+			pendingStateManager.processPendingLocalBatch({
+				messages: messages as InboundSequencedContainerRuntimeMessage[],
 				batchStartCsn,
 				sequenceNumber,
-			);
+				clientId,
+				batchId: generateBatchId(clientId, batchStartCsn),
+			});
 
 		it("proper batch is processed correctly", () => {
 			const messages: Partial<ISequencedDocumentMessage>[] = [
@@ -450,10 +452,14 @@ describe("Pending State Manager", () => {
 					],
 					1,
 				);
-				pendingStateManager.processPendingLocalBatch(
-					[futureRuntimeMessage as ISequencedDocumentMessage & UnknownContainerRuntimeMessage],
-					1 /* batchStartCsn */,
-				);
+				pendingStateManager.processPendingLocalBatch({
+					messages: [
+						futureRuntimeMessage as ISequencedDocumentMessage & UnknownContainerRuntimeMessage,
+					],
+					batchStartCsn: 1 /* batchStartCsn */,
+					batchId: "batchId",
+					clientId: "clientId",
+				});
 			});
 		});
 	});

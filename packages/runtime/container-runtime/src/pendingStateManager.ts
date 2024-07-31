@@ -16,9 +16,8 @@ import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
 
 import { type InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
-import { asBatchMetadata, asEmptyBatchLocalOpMetadata, IBatchMetadata } from "./metadata.js";
+import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "./metadata.js";
 import { BatchId, BatchMessage, generateBatchId, IncomingBatch } from "./opLifecycle/index.js";
-import { pkgVersion } from "./packageVersion.js";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
@@ -124,7 +123,7 @@ function getEffectiveBatchId(pendingMessage: IPendingMessage): string {
 		asBatchMetadata(pendingMessage.opMetadata)?.batchId ??
 		generateBatchId(
 			pendingMessage.batchIdContext.clientId,
-			pendingMessage.batchIdContext.batchStartCsn
+			pendingMessage.batchIdContext.batchStartCsn,
 		)
 	);
 }
@@ -138,13 +137,7 @@ function getEffectiveBatchId(pendingMessage: IPendingMessage): string {
  * @returns The effective batch ID
  */
 function getEffectiveBatchId2(batch: IncomingBatch): string {
-	return (
-		batch.batchId ??
-		generateBatchId(
-			batch.clientId,
-			batch.batchStartCsn
-		)
-	);
+	return batch.batchId ?? generateBatchId(batch.clientId, batch.batchStartCsn);
 }
 
 /**
@@ -356,40 +349,6 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	/**
-	 * Verifies we are expecting an empty batch. If so, saves it and removes it from the pending queue.
-	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch
-	 * @param sequenceNumber - The sequence number of the empty batch placeholder message.
-	 * @returns An empty array since no messages are processed. This is crucial to
-	 */
-	private processPendingLocalEmptyBatch(batchStartCsn: number, sequenceNumber: number): [] {
-		const pendingMessage = this.pendingMessages.peekFront();
-		assert(pendingMessage !== undefined, "No pending message found for this remote message");
-		assert(
-			asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true,
-			"Expected empty batch",
-		);
-
-		if (pendingMessage.batchIdContext.batchStartCsn !== batchStartCsn) {
-			this.stateHandler.close(
-				DataProcessingError.create(
-					"batchStartCsn mismatch on empty batch",
-					"unexpectedAckReceived",
-					undefined,
-					{
-						expectedMessageType: JSON.parse(pendingMessage.content).type,
-					},
-				),
-			);
-			return [];
-		}
-		pendingMessage.sequenceNumber = sequenceNumber;
-		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
-
-		this.pendingMessages.shift();
-		return [];
-	}
-
-	/**
 	 * Processes a local message once its ack'd by the server. It verifies that there was no data corruption and that
 	 * the batch information was preserved for batch messages.
 	 * @param message - The message that got ack'd and needs to be processed.
@@ -442,12 +401,20 @@ export class PendingStateManager implements IDisposable {
 
 		//* TODO: Merge in Daniel's changes
 		// This could be undefined if this batch became empty on resubmit
-		const firstMessage = batch.messages[0];
-
+		const firstMessage = batch.messages.length > 0 ? batch.messages[0] : undefined;
+		if (firstMessage === undefined) {
+			assert(
+				asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true,
+				"Expected empty batch",
+			);
+		}
 		const pendingBatchId = getEffectiveBatchId(pendingMessage);
 		const incomingBatchId = getEffectiveBatchId2(batch);
 
-		if (pendingBatchId !== incomingBatchId || pendingMessage.batchIdContext.batchStartCsn !== batch.batchStartCsn) {
+		if (
+			pendingBatchId !== incomingBatchId ||
+			pendingMessage.batchIdContext.batchStartCsn !== batch.batchStartCsn
+		) {
 			this.logger?.sendErrorEvent({
 				eventName: "BatchIdOrCsnMismatch",
 				details: {
@@ -456,7 +423,7 @@ export class PendingStateManager implements IDisposable {
 					pendingBatchId,
 					incomingBatchId,
 					incomingBatchIdComputed: batch.batchId === undefined,
-					messageBatchMetadata: (firstMessage?.metadata as any)?.batch,
+					messageBatchMetadata: firstMessage && (firstMessage.metadata as any).batch,
 					pendingMessageBatchMetadata: (pendingMessage.opMetadata as any)?.batch,
 					emptyBatch: firstMessage === undefined,
 				},

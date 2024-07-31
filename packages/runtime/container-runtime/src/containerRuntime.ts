@@ -180,6 +180,7 @@ import {
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
+	type IncomingBatch,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -2658,6 +2659,10 @@ export class ContainerRuntime
 			}[] = local
 				? this.pendingStateManager.processPendingLocalBatch(incomingBatch)
 				: incomingBatch.messages.map((message) => ({ message, localOpMetadata: undefined }));
+			if (messages.length === 0) {
+				this.ensureNoDataModelChanges(() => this.processEmptyBatch(incomingBatch, local));
+				return;
+			}
 			messages.forEach(({ message, localOpMetadata }) => {
 				const msg: MessageWithContext = {
 					message,
@@ -2740,12 +2745,9 @@ export class ContainerRuntime
 	 * This is a separate function because the processCore function expects at least one message to process.
 	 * It is expected to happen only when the outbox produces an empty batch due to a resubmit flow.
 	 */
-	private processEmptyBatch(
-		sequenceNumber: number | undefined,
-		local: boolean,
-		batchStartCsn: number,
-	) {
-		assert(sequenceNumber !== undefined, "sequenceNumber must be defined");
+	private processEmptyBatch(incomingBatch: IncomingBatch, local: boolean) {
+		const { sequenceNumber, batchStartCsn } = incomingBatch;
+		assert(incomingBatch.sequenceNumber !== undefined, "sequenceNumber must be defined");
 		this.emit("batchBegin", { sequenceNumber });
 		this._processedClientSequenceNumber = batchStartCsn;
 		if (!this.hasPendingMessages()) {
