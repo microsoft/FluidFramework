@@ -50,19 +50,44 @@ function convertDefinitions(
 	return result;
 }
 
+/**
+ * Private symbol under which the results of {@link convertNodeSchema} are cached on an input {@link SimpleNodeSchema}.
+ */
+const nodeJsonSchemaCacheSymbol = Symbol("nodeJsonSchemaCache");
+
+/**
+ * Converts an input {@link SimpleNodeSchema} to a {@link NodeJsonSchema}.
+ *
+ * @remarks Caches the result on the input schema for future calls.
+ */
 function convertNodeSchema(schema: SimpleNodeSchema): NodeJsonSchema {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	if ((schema as any)[nodeJsonSchemaCacheSymbol] !== undefined) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		return (schema as any)[nodeJsonSchemaCacheSymbol] as NodeJsonSchema;
+	}
+
+	let result: NodeJsonSchema;
 	switch (schema.kind) {
 		case "array":
-			return convertArrayNodeSchema(schema);
+			result = convertArrayNodeSchema(schema);
+			break;
 		case "leaf":
-			return convertLeafNodeSchema(schema);
+			result = convertLeafNodeSchema(schema);
+			break;
 		case "map":
-			return convertMapNodeSchema(schema);
+			result = convertMapNodeSchema(schema);
+			break;
 		case "object":
-			return convertObjectNodeSchema(schema);
+			result = convertObjectNodeSchema(schema);
+			break;
 		default:
 			throw new TypeError(`Unknown node schema kind: ${(schema as SimpleNodeSchema).kind}`);
 	}
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	(schema as any)[nodeJsonSchemaCacheSymbol] = result;
+	return result;
 }
 
 function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): ArrayNodeJsonSchema {

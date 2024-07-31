@@ -45,28 +45,50 @@ export function toSimpleTreeSchema(schema: ImplicitAllowedTypes): SimpleTreeSche
 }
 
 /**
+ * Private symbol under which the results of {@link toSimpleNodeSchema} are cached on an input {@link TreeNodeSchema}.
+ */
+const simpleNodeSchemaCacheSymbol = Symbol("simpleNodeSchemaCache");
+
+/**
  * Creates a {@link SimpleNodeSchema} from a {@link TreeNodeSchema}.
+ *
+ * @remarks Caches the result on the input schema for future calls.
  */
 function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	if ((schema as any)[simpleNodeSchemaCacheSymbol] !== undefined) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		return (schema as any)[simpleNodeSchemaCacheSymbol] as SimpleNodeSchema;
+	}
+
 	const kind = schema.kind;
+	let result: SimpleNodeSchema;
 	switch (kind) {
 		case NodeKind.Leaf: {
-			return leafSchemaToSimpleSchema(schema);
+			result = leafSchemaToSimpleSchema(schema);
+			break;
 		}
 		case NodeKind.Map: {
-			return mapSchemaToSimpleSchema(schema);
+			result = mapSchemaToSimpleSchema(schema);
+			break;
 		}
 		case NodeKind.Array: {
-			return arraySchemaToSimpleSchema(schema);
+			result = arraySchemaToSimpleSchema(schema);
+			break;
 		}
 		case NodeKind.Object: {
 			assert(isObjectNodeSchema(schema), "Expected object schema");
-			return objectSchemaToSimpleSchema(schema);
+			result = objectSchemaToSimpleSchema(schema);
+			break;
 		}
 		default: {
 			fail(`Unrecognized node kind: ${kind}.`);
 		}
 	}
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	(schema as any)[simpleNodeSchemaCacheSymbol] = result;
+	return result;
 }
 
 // TODO: Use a stronger type for leaf schemas once one is available (see object schema handler for an example).
@@ -108,13 +130,29 @@ function objectSchemaToSimpleSchema(schema: ObjectNodeSchema): SimpleObjectNodeS
 	};
 }
 
+/**
+ * Private symbol under which the results of {@link toSimpleNodeSchema} are cached on an input {@link TreeNodeSchema}.
+ */
+const simpleFieldSchemaCacheSymbol = Symbol("simpleFieldSchemaCache");
+
 function fieldSchemaToSimpleSchema(schema: FieldSchema): SimpleFieldSchema {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	if ((schema as any)[simpleFieldSchemaCacheSymbol] !== undefined) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		return (schema as any)[simpleFieldSchemaCacheSymbol] as SimpleFieldSchema;
+	}
+
 	const kind = fieldKindToSimpleFieldKind(schema.kind);
 	const allowedTypes = allowedTypesFromFieldSchema(schema);
-	return {
+	const result = {
 		kind,
 		allowedTypes,
 	};
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	(schema as any)[simpleFieldSchemaCacheSymbol] = result;
+
+	return result;
 }
 
 function fieldKindToSimpleFieldKind(fieldKind: FieldKind): SimpleFieldSchemaKind {
