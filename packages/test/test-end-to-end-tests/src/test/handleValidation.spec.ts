@@ -157,7 +157,7 @@ async function dereferenceToSharedObject<TSharedObject>(
 }
 
 /**
- * Retrieves an (already attached) handle storage from the given test fluid object based on the pre-initialized
+ * Retrieves an (already attached) handle storage from the given TestFluidObject based on the pre-initialized
  * DDS of the given factory's type.
  */
 async function getExistingHandleStorage(
