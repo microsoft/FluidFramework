@@ -20,7 +20,33 @@ const jsonSchemaCacheSymbol = Symbol("jsonSchemaCache");
  * Useful when communicating the schema to external libraries or services.
  * Caches the result on the input schema for future calls.
  *
- * @example TODO
+ * @example
+ *
+ * A Shared Tree schema like...
+ *
+ * ```typescript
+ * class MyObject extends schemaFactory.object("MyObject", {
+ * 	foo: schemaFactory.number,
+ * 	bar: schemaFactory.optional(schemaFactory.string),
+ * });
+ * ```
+ *
+ * ...will yield JSON Schema like...
+ * ```json
+ * {
+ * 	$defs: [
+ * 		"com.myapp.MyObject": {
+ * 			type: "object",
+ * 			properties: {
+ * 				"foo": { type: "number" },
+* 				"bar": { type: "string" },
+* 			},
+* 			required: ["foo"],
+* 		},
+ * 	],
+ * 	anyOf: [ { $ref: "#/$defs/com.myapp.MyObject" } ],
+ * }
+ * ```
  *
  * @privateRemarks In the future, we may wish to move this to a more discoverable API location.
  * For now, while still an experimental API, it is surfaced as a free function.
