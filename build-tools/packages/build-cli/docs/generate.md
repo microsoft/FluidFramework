@@ -315,6 +315,8 @@ _See code: [src/commands/generate/packlist.ts](https://github.com/microsoft/Flui
 
 ## `flub generate releaseNotes`
 
+Generates release notes from individual changeset files.
+
 ```
 USAGE
   $ flub generate releaseNotes -g client|server|azure|build-tools|gitrest|historian -t major|minor --out <value> [--json]

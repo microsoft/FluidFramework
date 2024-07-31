@@ -27,16 +27,13 @@ import {
 	loadChangesets,
 } from "../../library/index.js";
 
-const prLinkPrefix = `https://github.com/microsoft/FluidFramework/pull/`;
-
 /**
- * Generates a summary of all changesets and outputs the results to a file. This is used to generate an UPCOMING.md file
- * that provides a single place where developers can see upcoming changes.
+ * Generates release notes from individual changeset files.
  */
 export default class GenerateReleaseNotesCommand extends BaseCommand<
 	typeof GenerateReleaseNotesCommand
 > {
-	static readonly summary = ``;
+	static readonly summary = `Generates release notes from individual changeset files.`;
 
 	// Enables the global JSON flag in oclif.
 	static readonly enableJsonFlag = true;

@@ -24,10 +24,10 @@ export const DEFAULT_CHANGESET_PATH = ".changeset";
 export const UNKNOWN_SECTION = "_unknown";
 
 /**
- * Additional metadata that can be used inside a changeset. This metadata should be set in a second fron-matter section.
- * For example:
+ * Additional metadata that can be used inside a changeset. This metadata should be set in a second front matter
+ * section. For example:
  *
- * ```
+ * ```markdown
  * ---
  * "package-a": minor
  * ---
@@ -35,25 +35,28 @@ export const UNKNOWN_SECTION = "_unknown";
  * section: fix
  * ---
  *
- * Changeset title.
+ * Changeset summary.
  *
  * Changeset details
  * ```
  */
 export interface FluidCustomChangesetMetadata {
 	/**
-	 * The section in release notes in which this changeset should be included.
+	 * The section in release notes in which this changeset should be included. If a value is not provided, the changeset
+	 * is considered part of the "unknown section" which is omitted from release notes.
 	 */
 	section?: ReleaseNotesSection["name"];
 
 	/**
-	 * If false, the changeset will not be included in release notes. Defaults to true.
+	 * If false, the changeset will not be included in release notes. If undefined, this defaults to true.
 	 */
 	includeInReleaseNotes?: boolean;
 
 	/**
 	 * If true, the changeset will be ordered before the other changes in that section. If multiple changesets are
 	 * highlighted they will be internally sorted by date.
+	 *
+	 * If undefined, this defaults to false.
 	 */
 	highlight?: boolean;
 }
@@ -63,20 +66,74 @@ export const FluidCustomChangeSetMetadataDefaults: FluidCustomChangesetMetadata 
 	includeInReleaseNotes: true,
 } as const;
 
+/**
+ * A type representing a changeset file's contents.
+ */
 export interface Changeset {
+	/**
+	 * The first section of front matter in the changeset, which is a mapping of package names to release types.
+	 */
 	metadata: { [pkg: string]: VersionBumpType };
+
+	/**
+	 * The main package for the changeset is the first one listed in the front matter.
+	 */
 	mainPackage: ReleasePackage;
+
+	/**
+	 * An array of all the release types (patch, minor, major) contained in the front matter.
+	 */
 	changeTypes: VersionBumpType[];
+
+	/**
+	 * The first line of the changeset body is considered the summary.
+	 */
+	summary: string;
+
+	/**
+	 * The body of the changeset after processing. Front matter sections are removed and white space is trimmed from the
+	 * beginning and end of the string. Note that the first line of the changeset body is not considered part of the
+	 * content; it's the summary.
+	 */
 	content: string;
-	summary?: string;
-	commit?: GitCommit;
+
+	/**
+	 * The git commit that added the changeset. For uncommitted changesets some commit data may be undefined.
+	 */
+	commit: GitCommit;
+
+	/**
+	 * Additional Fluid-specific metadata that can be added to a changeset in a secondary front matter section. This is
+	 * undefined if no second front matter section was present.
+	 */
 	additionalMetadata?: FluidCustomChangesetMetadata;
+
+	/**
+	 * The absolute path to the source file for this changeset.
+	 */
 	sourceFile: string;
 }
 
+/**
+ * A git commit associated with a changeset. If the changeset is not committed (i.e. it's being added in the current
+ * changes) then some values will be undefined.
+ */
 interface GitCommit {
+	/**
+	 * The full SHA for the commit. This will be undefined for uncommitted changesets.
+	 */
 	sha?: string;
+
+	/**
+	 * The date that the commit was made. This is not nullable because uncommitted changesets still need to be sortable by
+	 * commit date, so this value will default to `Date.now()` in ISO format for uncommitted changesets.
+	 */
 	date: Date;
+
+	/**
+	 * The GitHub pull request number parsed from the commit data. This will be undefined if the parsing did not find a
+	 * PR.
+	 */
 	githubPullRequest?: string;
 }
 
@@ -86,12 +143,30 @@ interface GitCommit {
  * package, effectively flattening the changesets.
  */
 export type ChangesetEntry = Omit<Changeset, "metadata" | "mainPackage" | "changeTypes"> & {
+	/**
+	 * The name of the package this ChangesetEntry applies to.
+	 */
 	pkg: string;
+
+	/**
+	 * This will be true if the package in this ChangesetEntry is the main package for the changeset.
+	 */
 	isMainPackage: boolean;
+
+	/**
+	 * The type of release this changeset represents.
+	 */
 	changeType: VersionBumpType;
+
+	/**
+	 * The original full changeset that was tthe source for this ChangesetEntry.
+	 */
 	fullChangeset: Readonly<Changeset>;
 };
 
+/**
+ * Compares a changeset by the highlight property of additional metadata if present, then by commit date.
+ */
 function compareChangesets<T extends Pick<Changeset, "commit" | "additionalMetadata">>(
 	a: T,
 	b: T,
@@ -112,13 +187,11 @@ function compareChangesets<T extends Pick<Changeset, "commit" | "additionalMetad
 }
 
 /**
- * Loads changeset files into a list of individual changes for a package. Changeset files themselves include a mapping
- * of package to version bump type. This function returns an array with an entry per-package-changeset, effectively
- * flattening the changesets.
+ * Loads changeset files into an array of {@link Changeset}s.
  *
  * @param dir - The directory containing changesets.
  * @param log - An optional logger.
- * @returns An array containing the flattened changesets.
+ * @returns An array containing the changesets.
  */
 export async function loadChangesets(dir: string, log?: Logger): Promise<Changeset[]> {
 	const repo = new Repository({ baseDir: dir });
@@ -284,7 +357,10 @@ export function groupBySection(
 }
 
 /**
- * Given an array of changesets, flattens the changesets into an array of ChangesetEntry objects.
+ * Given an array of changesets, flattens the changesets into an array of {@link ChangesetEntry} objects.
+ *
+ * Changesets themselves include a mapping of package to release type. This function returns an array with an entry
+ * per-package-changeset, effectively flattening the changesets.
  */
 export function flattenChangesets(changesets: Changeset[]): ChangesetEntry[] {
 	const entries: ChangesetEntry[] = [];

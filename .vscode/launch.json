@@ -97,8 +97,6 @@
 				"client",
 				"-t",
 				"minor",
-				"--out",
-				"RELEASE_NOTES/2.2.0.md",
 				"-v",
 			],
 		},
