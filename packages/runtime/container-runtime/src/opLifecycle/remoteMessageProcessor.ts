@@ -38,6 +38,8 @@ export interface IncomingBatch {
 	 */
 	readonly batchStartCsn: number;
 	readonly sequenceNumber?: number;
+	//* Can combine with batchStartCSN?
+	readonly emptyBatchSequenceNumber?: number;
 }
 
 function assertHasClientId(

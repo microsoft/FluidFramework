@@ -326,6 +326,18 @@ export class PendingStateManager implements IDisposable {
 		}
 	}
 
+	public checkForMatchingBatchId(batch: IncomingBatch): boolean {
+		const pendingMessage = this.pendingMessages.peekFront();
+		if (!pendingMessage) {
+			return false;
+		}
+
+		const pendingBatchId = getEffectiveBatchId(pendingMessage);
+		const incomingBatchId = getEffectiveBatchId2(batch);
+
+		return pendingBatchId === incomingBatchId;
+	}
+
 	/**
 	 * Processes the incoming batch from the server that was submitted by this client.
 	 * It verifies that messages are received in the right order and that the batch information is correct.
@@ -339,6 +351,19 @@ export class PendingStateManager implements IDisposable {
 	}[] {
 		this.processBatchBegin(batch);
 
+		//* Properly merge in empty batch stuff
+		// If the batch is empty, we need to process it differently
+		if (batch.messages.length === 0) {
+			assert(
+				batch.emptyBatchSequenceNumber !== undefined,
+				"Expected sequence number for empty batch",
+			);
+			return this.processPendingLocalEmptyBatch(
+				batch.batchStartCsn,
+				batch.emptyBatchSequenceNumber,
+			);
+		}
+
 		//* TEST CASES:
 		// Partial batch (not enough pending messages)
 
@@ -349,9 +374,44 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	/**
-	 * Processes a local message once its ack'd by the server. It verifies that there was no data corruption and that
-	 * the batch information was preserved for batch messages.
+	 * Verifies we are expecting an empty batch. If so, saves it and removes it from the pending queue.
+	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch
+	 * @param sequenceNumber - The sequence number of the empty batch placeholder message.
+	 * @returns An empty array since no messages are processed. This is crucial to
+	 */
+	private processPendingLocalEmptyBatch(batchStartCsn: number, sequenceNumber: number): [] {
+		const pendingMessage = this.pendingMessages.peekFront();
+		assert(pendingMessage !== undefined, "No pending message found for this remote message");
+		assert(
+			asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true,
+			"Expected empty batch",
+		);
+
+		if (pendingMessage.batchIdContext.batchStartCsn !== batchStartCsn) {
+			this.stateHandler.close(
+				DataProcessingError.create(
+					"batchStartCsn mismatch on empty batch",
+					"unexpectedAckReceived",
+					undefined,
+					{
+						expectedMessageType: JSON.parse(pendingMessage.content).type,
+					},
+				),
+			);
+			return [];
+		}
+		pendingMessage.sequenceNumber = sequenceNumber;
+		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
+
+		this.pendingMessages.shift();
+		return [];
+	}
+
+	/**
+	 * Processes a local message once its ack'd by the server. It verifies that there was no data corruption during sequencing.
 	 * @param message - The message that got ack'd and needs to be processed.
+	 * @returns - The localOpMetadata of the message that was processed,
+	 * to be sent to whoever submitted the original message.
 	 */
 	private processPendingLocalMessage(
 		message: InboundSequencedContainerRuntimeMessage,

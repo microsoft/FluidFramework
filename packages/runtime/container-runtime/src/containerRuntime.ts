@@ -2654,16 +2654,17 @@ export class ContainerRuntime
 				return;
 			}
 
-			//* TODO: If !local, call this.pendingStateManager.checkForMatchingBatchId
-			const messages: {
+			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
+			// or to check to ensure the *remote* messages don't match the batchId of a pending local batch.
+			let messages: {
 				message: InboundSequencedContainerRuntimeMessage;
-				localOpMetadata: unknown;
-			}[] = local
-				? this.pendingStateManager.processPendingLocalBatch(incomingBatch)
-				: incomingBatch.messages.map((message) => ({ message, localOpMetadata: undefined }));
-			if (messages.length === 0) {
-				this.ensureNoDataModelChanges(() => this.processEmptyBatch(incomingBatch, local));
-				return;
+				localOpMetadata?: unknown;
+			}[];
+			if (local) {
+				messages = this.pendingStateManager.processPendingLocalBatch(incomingBatch);
+			} else {
+				this.pendingStateManager.checkForMatchingBatchId(incomingBatch);
+				messages = incomingBatch.messages.map((message) => ({ message })); // No localOpMetadata for remote messages
 			}
 			messages.forEach(({ message, localOpMetadata }) => {
 				const msg: MessageWithContext = {
