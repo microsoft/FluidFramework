@@ -455,9 +455,14 @@ export interface IPerfSignalReport {
 	signalTimestamp: number;
 
 	/**
-	 * Expected Signal Sequence to be received.
+	 * Next expected signal sequence number to be received.
 	 */
 	trackingSignalSequenceNumber: number | undefined;
+
+	/**
+	 * Minimum expected signal sequence number to be received.
+	 */
+	minimumTrackingSignalSequenceNumber: number | undefined;
 }
 
 /**
