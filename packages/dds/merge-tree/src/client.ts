@@ -40,6 +40,7 @@ import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	CollaborationWindow,
+	IMoveInfo,
 	ISegment,
 	ISegmentAction,
 	ISegmentLeaf,
@@ -82,6 +83,14 @@ import { IMergeTreeTextHelper } from "./textSegment.js";
 
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
 	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
+
+function removeMoveInfo(segment: Partial<IMoveInfo>): void {
+	delete segment.movedSeq;
+	delete segment.movedSeqs;
+	delete segment.localMovedSeq;
+	delete segment.movedClientIds;
+	delete segment.wasMovedOnInsert;
+}
 
 /**
  * A range [start, end)
@@ -822,6 +831,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 							? { ...resetOp.seg.props }
 							: undefined;
 					segInsertOp.properties = opProps;
+					if (segment.movedSeq !== UnassignedSequenceNumber) {
+						removeMoveInfo(segment);
+					}
 					newOp = createInsertSegmentOp(segmentPosition, segInsertOp);
 					break;
 				}
