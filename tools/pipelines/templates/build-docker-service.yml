@@ -374,7 +374,7 @@ extends:
                 imageName: $(baseContainerTag)
                 containerCommand: pnpm -rc exec mv `npm pack` /usr/src/pack
                 volumes:
-                  $(hostPathToPackArtifact)/scoped:/usr/src/pack
+                  $(hostPathToPackArtifact)/tarballs:/usr/src/pack
 
             # Generating package lists manually because using scripts/pack-packages.sh (like build-npm-package.yml does)
             # inside the Docker container is proving problematic.
@@ -406,7 +406,7 @@ extends:
                 imageName: $(baseContainerTag)
                 containerCommand: npm run lint
                 volumes:
-                  $(hostPathToPackArtifact)/scoped:/usr/src/pack
+                  $(hostPathToPackArtifact)/tarballs:/usr/src/pack
 
           # Test
           - ${{ if ne(parameters.test, '') }}:
