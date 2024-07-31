@@ -37,6 +37,8 @@ If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), 
 
 ## Release Timeline
 
+This applies only to the Fluid Framework Client packages as defined in the [Code structure section](#Code-structure) below.
+
 ```mermaid
 gantt
     title Fluid Framework Release Support Schedule
