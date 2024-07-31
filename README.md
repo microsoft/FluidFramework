@@ -51,7 +51,7 @@ gantt
         3.x LTS Current        :2025-06-26, 1y
 ```
 
-The date as which 3.0 is released, and 2.x transitions to maintenance is not currently planned, and is only included as a possible example.
+The date on which 3.0 is released, and 2.x transitions to maintenance is not currently planned, and is only included as a possible example.
 The 2.x release will get maintenance for 3 years after 2.0 is released.
 
 ## Code structure
