@@ -191,18 +191,26 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 		const data: BenchmarkData = {
 			elapsedSeconds: this.timer.toSeconds(this.startTime, now),
 			customData: {
-				"Batch Count": this.samples.length,
-				"Iterations per Batch": this.iterationsPerBatch,
-				"Period (ns/op)": stats.arithmeticMean,
-				"Margin of Error": stats.marginOfError,
-				"Relative Margin of Error": stats.marginOfErrorPercent,
-			},
-			customDataFormatters: {
-				"Batch Count": prettyNumber(this.samples.length, 0),
-				"Iterations per Batch": prettyNumber(this.iterationsPerBatch, 0),
-				"Period (ns/op)": prettyNumber(1e9 * stats.arithmeticMean, 2),
-				"Margin of Error": `±${prettyNumber(stats.marginOfError, 2)}%`,
-				"Relative Margin of Error": `±${prettyNumber(stats.marginOfErrorPercent, 2)}%`,
+				"Batch Count": {
+					rawValue: this.samples.length,
+					formattedValue: prettyNumber(this.samples.length, 0),
+				},
+				"Iterations per Batch": {
+					rawValue: this.iterationsPerBatch,
+					formattedValue: prettyNumber(this.iterationsPerBatch, 0),
+				},
+				"Period (ns/op)": {
+					rawValue: 1e9 * stats.arithmeticMean,
+					formattedValue: prettyNumber(1e9 * stats.arithmeticMean, 2),
+				},
+				"Margin of Error": {
+					rawValue: stats.marginOfError,
+					formattedValue: `±${prettyNumber(stats.marginOfError, 2)}%`,
+				},
+				"Relative Margin of Error": {
+					rawValue: stats.marginOfErrorPercent,
+					formattedValue: `±${prettyNumber(stats.marginOfErrorPercent, 2)}%`,
+				},
 			},
 		};
 		return data;
