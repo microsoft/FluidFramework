@@ -14,7 +14,7 @@ import { toJsonSchema } from "../../simple-tree/simpleSchemaToJsonSchema.js";
 // TODOs:
 // - Identifier fields
 
-describe.only("simpleSchemaToJsonSchema", () => {
+describe("simpleSchemaToJsonSchema", () => {
 	it("Leaf schema", async () => {
 		const input: SimpleTreeSchema = {
 			definitions: new Map<string, SimpleNodeSchema>([

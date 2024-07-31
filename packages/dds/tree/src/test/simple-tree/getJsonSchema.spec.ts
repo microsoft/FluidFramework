@@ -9,7 +9,7 @@ import { getJsonSchema, SchemaFactory, type TreeJsonSchema } from "../../simple-
 import { hydrate } from "./utils.js";
 import { getJsonValidator } from "./jsonSchemaUtilities.js";
 
-describe.only("getJsonSchema", () => {
+describe("getJsonSchema", () => {
 	it("Leaf node", async () => {
 		const schemaFactory = new SchemaFactory("test");
 		const Schema = schemaFactory.string;
