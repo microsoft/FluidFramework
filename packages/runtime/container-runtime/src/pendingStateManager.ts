@@ -84,26 +84,6 @@ function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean 
 	return content.type === "groupedBatch" && content.contents?.length === 0;
 }
 
-/** Union of keys of T */
-type KeysOfUnion<T extends object> = T extends T ? keyof T : never;
-/** *Partial* type all possible combinations of properties and values of union T.
- * This loosens typing allowing access to all possible properties without
- * narrowing.
- */
-type AnyComboFromUnion<T extends object> = { [P in KeysOfUnion<T>]?: T[P] };
-
-function buildPendingMessageContent(
-	// AnyComboFromUnion is needed need to gain access to compatDetails that
-	// is only defined for some cases.
-	message: AnyComboFromUnion<InboundSequencedContainerRuntimeMessage>,
-): string {
-	// IMPORTANT: Order matters here, this must match the order of the properties used
-	// when submitting the message.
-	const { type, contents, compatDetails } = message;
-	// Any properties that are not defined, won't be emitted by stringify.
-	return JSON.stringify({ type, contents, compatDetails });
-}
-
 function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
 	return {
 		...message,
@@ -351,100 +331,43 @@ export class PendingStateManager implements IDisposable {
 	}[] {
 		this.processBatchBegin(batch);
 
-		//* Properly merge in empty batch stuff
-		// If the batch is empty, we need to process it differently
+		// Empty batch
 		if (batch.messages.length === 0) {
 			assert(
 				batch.emptyBatchSequenceNumber !== undefined,
 				"Expected sequence number for empty batch",
 			);
-			return this.processPendingLocalEmptyBatch(
-				batch.batchStartCsn,
-				batch.emptyBatchSequenceNumber,
+			const localOpMetadata = this.processPendingLocalMessage(batch.emptyBatchSequenceNumber);
+			assert(
+				asEmptyBatchLocalOpMetadata(localOpMetadata)?.emptyBatch === true,
+				"Expected empty batch marker",
 			);
+			// We return an empty array to match the incoming batch's empty message list
+			return [];
 		}
-
-		//* TEST CASES:
-		// Partial batch (not enough pending messages)
 
 		return batch.messages.map((message) => ({
 			message,
-			localOpMetadata: this.processPendingLocalMessage(message),
+			localOpMetadata: this.processPendingLocalMessage(message.sequenceNumber),
 		}));
 	}
 
 	/**
-	 * Verifies we are expecting an empty batch. If so, saves it and removes it from the pending queue.
-	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch
-	 * @param sequenceNumber - The sequence number of the empty batch placeholder message.
-	 * @returns An empty array since no messages are processed. This is crucial to
+	 * Processes the pending local copy of message that's been ack'd by the server.
+	 * @param sequenceNumber - The sequenceNumber from the server corresponding to the next pending message.
+	 * @returns - The localOpMetadata of the next pending message, to be sent to whoever submitted the original message.
 	 */
-	private processPendingLocalEmptyBatch(batchStartCsn: number, sequenceNumber: number): [] {
-		const pendingMessage = this.pendingMessages.peekFront();
-		assert(pendingMessage !== undefined, "No pending message found for this remote message");
-		assert(
-			asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true,
-			"Expected empty batch",
-		);
-
-		if (pendingMessage.batchIdContext.batchStartCsn !== batchStartCsn) {
-			this.stateHandler.close(
-				DataProcessingError.create(
-					"batchStartCsn mismatch on empty batch",
-					"unexpectedAckReceived",
-					undefined,
-					{
-						expectedMessageType: JSON.parse(pendingMessage.content).type,
-					},
-				),
-			);
-			return [];
-		}
-		pendingMessage.sequenceNumber = sequenceNumber;
-		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
-
-		this.pendingMessages.shift();
-		return [];
-	}
-
-	/**
-	 * Processes a local message once its ack'd by the server. It verifies that there was no data corruption during sequencing.
-	 * @param message - The message that got ack'd and needs to be processed.
-	 * @returns - The localOpMetadata of the message that was processed,
-	 * to be sent to whoever submitted the original message.
-	 */
-	private processPendingLocalMessage(
-		message: InboundSequencedContainerRuntimeMessage,
-	): unknown {
-		// Get the next message from the pending queue. Verify a message exists.
+	private processPendingLocalMessage(sequenceNumber: number): unknown {
 		const pendingMessage = this.pendingMessages.peekFront();
 		assert(
 			pendingMessage !== undefined,
 			0x169 /* "No pending message found for this remote message" */,
 		);
 
-		pendingMessage.sequenceNumber = message.sequenceNumber;
+		pendingMessage.sequenceNumber = sequenceNumber;
 		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
 
 		this.pendingMessages.shift();
-
-		const messageContent = buildPendingMessageContent(message);
-
-		// Stringified content should match
-		if (pendingMessage.content !== messageContent) {
-			this.stateHandler.close(
-				DataProcessingError.create(
-					"pending local message content mismatch",
-					"unexpectedAckReceived",
-					message,
-					{
-						expectedMessageType: JSON.parse(pendingMessage.content).type,
-					},
-				),
-			);
-			return;
-		}
-
 		return pendingMessage.localOpMetadata;
 	}
 
@@ -459,7 +382,6 @@ export class PendingStateManager implements IDisposable {
 			"No pending message found as we start processing this remote batch",
 		);
 
-		//* TODO: Merge in Daniel's changes
 		// This could be undefined if this batch became empty on resubmit
 		const firstMessage = batch.messages.length > 0 ? batch.messages[0] : undefined;
 		if (firstMessage === undefined) {

@@ -2666,6 +2666,9 @@ export class ContainerRuntime
 				this.pendingStateManager.checkForMatchingBatchId(incomingBatch);
 				messages = incomingBatch.messages.map((message) => ({ message })); // No localOpMetadata for remote messages
 			}
+			if (messages.length === 0) {
+				this.ensureNoDataModelChanges(() => this.processEmptyBatch(incomingBatch, local));
+			}
 			messages.forEach(({ message, localOpMetadata }) => {
 				const msg: MessageWithContext = {
 					message,
@@ -2770,7 +2773,7 @@ export class ContainerRuntime
 	 */
 	private processEmptyBatch(incomingBatch: IncomingBatch, local: boolean) {
 		const { sequenceNumber, batchStartCsn } = incomingBatch;
-		assert(incomingBatch.sequenceNumber !== undefined, "sequenceNumber must be defined");
+		assert(sequenceNumber !== undefined, "sequenceNumber must be defined");
 		this.emit("batchBegin", { sequenceNumber });
 		this._processedClientSequenceNumber = batchStartCsn;
 		if (!this.hasPendingMessages()) {
