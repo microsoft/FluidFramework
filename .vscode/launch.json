@@ -90,15 +90,7 @@
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": [
-				"generate",
-				"releaseNotes",
-				"-g",
-				"client",
-				"-t",
-				"minor",
-				"-v",
-			],
+			"args": ["generate", "releaseNotes", "-g", "client", "-t", "minor", "-v"],
 		},
 		{
 			"name": "flub generate packlist",
