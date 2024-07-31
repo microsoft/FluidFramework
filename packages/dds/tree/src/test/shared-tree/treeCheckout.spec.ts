@@ -34,10 +34,7 @@ import {
 	expectSchemaEqual,
 	forkView,
 	getView,
-	jsonSequenceRootSchema,
 	numberSequenceRootSchema,
-	stringSequenceRootSchema,
-	validateTreeContent,
 	viewCheckout,
 } from "../utils.js";
 import { disposeSymbol, fail } from "../../util/index.js";
@@ -857,11 +854,11 @@ describe("sharedTreeView", () => {
 				revertiblesCreated.push(revertible);
 			});
 
-			insertFirstNode(view, "A");
+			view.root.insertAtStart("A");
 
 			assert.equal(revertiblesCreated.length, 1);
 
-			insertFirstNode(view, "B");
+			view.root.insertAtStart("B");
 
 			assert.equal(revertiblesCreated.length, 2);
 
@@ -892,8 +889,8 @@ describe("sharedTreeView", () => {
 					revertiblesDisposed.push(disposed);
 				}
 
-				insertFirstNode(view, "A");
-				insertFirstNode(view, "B");
+				view.root.insertAtStart("A");
+				view.root.insertAtStart("B");
 
 				assert.equal(revertiblesCreated.length, 2);
 				assert.equal(revertiblesDisposed.length, 0);
@@ -922,7 +919,7 @@ describe("sharedTreeView", () => {
 					acquireRevertible = getRevertible;
 				});
 
-				insertFirstNode(view, "A");
+				view.root.insertAtStart("A");
 				assert(acquireRevertible !== undefined);
 				assert.throws(() => acquireRevertible?.());
 				unsubscribe();
@@ -942,7 +939,7 @@ describe("sharedTreeView", () => {
 				assert.throws(() => getRevertible());
 			});
 
-			insertFirstNode(view, "A");
+			view.root.insertAtStart("A");
 			unsubscribe1();
 			unsubscribe2();
 		});
@@ -956,7 +953,7 @@ describe("sharedTreeView", () => {
 				revertiblesCreated.push(r);
 			});
 
-			insertFirstNode(view, "A");
+			view.root.insertAtStart("A");
 
 			assert.equal(revertiblesCreated.length, 1);
 			const revertible = revertiblesCreated[0];
@@ -982,7 +979,7 @@ describe("sharedTreeView", () => {
 				commitKinds.push(kind);
 			});
 
-			insertFirstNode(view, "A");
+			view.root.insertAtStart("A");
 			revertiblesCreated[0].revert();
 			revertiblesCreated[1].revert();
 
@@ -992,7 +989,7 @@ describe("sharedTreeView", () => {
 		});
 
 		itView("disposing of a view also disposes of its revertibles", (view) => {
-			const fork = view.fork();
+			const fork = forkView(view);
 			const revertiblesCreated: Revertible[] = [];
 			const unsubscribe = fork.events.on("commitApplied", (_, getRevertible) => {
 				assert(getRevertible !== undefined, "commit should be revertible");
@@ -1007,12 +1004,12 @@ describe("sharedTreeView", () => {
 				revertiblesDisposed.push(disposed);
 			}
 
-			insertFirstNode(fork, "A");
+			fork.root.insertAtStart("A");
 
 			assert.equal(revertiblesCreated.length, 1);
 			assert.equal(revertiblesDisposed.length, 0);
 
-			fork[disposeSymbol]();
+			fork.checkout[disposeSymbol]();
 
 			assert.equal(revertiblesCreated.length, 1);
 			assert.equal(revertiblesDisposed.length, 1);
@@ -1022,24 +1019,24 @@ describe("sharedTreeView", () => {
 		});
 
 		itView("can be reverted after rebasing", (view) => {
-			const fork = view.fork();
-			insertFirstNode(fork, "A");
+			const fork = forkView(view);
+			fork.root.insertAtStart("A");
 
 			const stacks = createTestUndoRedoStacks(fork.events);
-			insertFirstNode(fork, "B");
-			insertFirstNode(fork, "C");
+			fork.root.insertAtStart("B");
+			fork.root.insertAtStart("C");
 
-			fork.rebaseOnto(view);
+			fork.checkout.rebaseOnto(view.checkout);
 
-			assert.equal(getTestValue(fork), "C");
+			assert.equal(fork.root[0], "C");
 			// It should still be possible to revert the the child branch's revertibles
 			assert.equal(stacks.undoStack.length, 2);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			stacks.undoStack.pop()!.revert();
-			assert.equal(getTestValue(fork), "B");
+			assert.equal(fork.root[0], "B");
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			stacks.undoStack.pop()!.revert();
-			assert.equal(getTestValue(fork), "A");
+			assert.equal(fork.root[0], "A");
 
 			stacks.unsubscribe();
 		});
@@ -1060,7 +1057,7 @@ describe("sharedTreeView", () => {
 
 				// Insert (`ageToTest` + 1) nodes, then revert the first.
 				for (let i = 0; i <= ageToTest; i++) {
-					insertFirstNode(view, "A");
+					view.root.insertAtStart("A");
 				}
 				assert(revertible !== undefined, "Expected revertible to be created.");
 				revertible.revert();
