@@ -183,12 +183,13 @@ describe("Garbage Collection configurations", () => {
 			assert(!gc.configs.gcAllowed, "gcAllowed incorrect");
 			assert.equal(gc.configs.gcVersionInBaseSnapshot, 0, "gcVersionInBaseSnapshot incorrect");
 		});
-		it("gcFeature 0, Sweep not allowed", () => {
+		it("gcFeature 0, Sweep allowed but disabled", () => {
 			gc = createGcWithPrivateMembers(
 				{ gcFeature: 0, gcFeatureMatrix: { gcGeneration: 0 } },
 				{ [gcGenerationOptionName]: 0, enableGCSweep: true },
 			);
 			assert(!gc.configs.gcAllowed, "gcAllowed incorrect");
+			assert(gc.configs.sweepAllowed, "sweepAllowed incorrect");
 			assert(!gc.configs.sweepEnabled, "sweepEnabled incorrect");
 			assert.equal(gc.configs.gcVersionInBaseSnapshot, 0, "gcVersionInBaseSnapshot incorrect");
 		});
@@ -360,17 +361,16 @@ describe("Garbage Collection configurations", () => {
 		it("Sweep allowed via gcGeneration", () => {
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
 				[gcGenerationOptionName]: 1,
-				enableGCSweep: true,
 			});
 			assert(gc.configs.gcAllowed, "gcAllowed incorrect");
-			assert(gc.configs.sweepEnabled, "sweepEnabled incorrect");
+			assert(gc.configs.sweepAllowed, "sweepAllowed incorrect");
 			assert(gc.configs.tombstoneTimeoutMs !== undefined, "tombstoneTimeoutMs incorrect");
 			assert(
 				gc.configs.sessionExpiryTimeoutMs !== undefined,
 				"sessionExpiryTimeoutMs incorrect",
 			);
 		});
-		it("Sweep not allowed with sessionExpiry off", () => {
+		it("Sweep allowed but disabled with sessionExpiry off", () => {
 			configProvider.set(runSessionExpiryKey, false);
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
 				[gcGenerationOptionName]: 1,
@@ -381,28 +381,31 @@ describe("Garbage Collection configurations", () => {
 				"sessionExpiryTimeoutMs incorrect",
 			);
 			assert(gc.configs.tombstoneTimeoutMs === undefined, "tombstoneTimeoutMs incorrect");
+			assert(gc.configs.sweepAllowed, "sweepAllowed incorrect");
 			assert(!gc.configs.sweepEnabled, "sweepEnabled incorrect");
 		});
 		it("TestOverride.TombstoneTimeoutMs set, sessionExpiry on", () => {
 			configProvider.set(testOverrideTombstoneTimeoutKey, 123);
-			gc = createGcWithPrivateMembers(undefined /* metadata */, { enableGCSweep: true });
+			gc = createGcWithPrivateMembers(undefined /* metadata */, {});
 			assert(
 				gc.configs.sessionExpiryTimeoutMs === defaultSessionExpiryDurationMs,
 				"sessionExpiryTimeoutMs incorrect",
 			);
 			assert(gc.configs.tombstoneTimeoutMs === 123, "tombstoneTimeoutMs incorrect");
-			assert(gc.configs.sweepEnabled, "sweepEnabled incorrect");
+			assert(gc.configs.sweepAllowed, "sweepAllowed incorrect");
+			assert(!gc.configs.sweepEnabled, "sweepEnabled incorrect");
 		});
 		it("TestOverride.TombstoneTimeoutMs set, sessionExpiry off", () => {
 			configProvider.set(testOverrideTombstoneTimeoutKey, 123);
 			configProvider.set(runSessionExpiryKey, false);
-			gc = createGcWithPrivateMembers(undefined /* metadata */, { enableGCSweep: true });
+			gc = createGcWithPrivateMembers(undefined /* metadata */, {});
 			assert(
 				gc.configs.sessionExpiryTimeoutMs === undefined,
 				"sessionExpiryTimeoutMs incorrect",
 			);
 			assert(gc.configs.tombstoneTimeoutMs === 123, "tombstoneTimeoutMs incorrect");
-			assert(gc.configs.sweepEnabled, "sweepEnabled incorrect");
+			assert(gc.configs.sweepAllowed, "sweepAllowed incorrect");
+			assert(!gc.configs.sweepEnabled, "sweepEnabled incorrect");
 		});
 		it("Metadata Roundtrip", () => {
 			const expectedMetadata: IGCMetadata = {
