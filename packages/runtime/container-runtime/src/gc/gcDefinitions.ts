@@ -56,7 +56,7 @@ export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
 /** Config key to disable throwing an error when tombstone object is loaded (requested). */
 export const disableThrowOnTombstoneLoadKey =
-	"Fluid.GarbageCollection.DisableThrowOnTombstoneLoadKey";
+	"Fluid.GarbageCollection.DisableThrowOnTombstoneLoad";
 /** Config key to enable GC version upgrade. */
 export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgradeToV4";
 /** Config key to disable auto-recovery mechanism that protects Tombstones that are loaded from being swept (use true) */

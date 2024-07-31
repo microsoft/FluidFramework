@@ -334,7 +334,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 		);
 
 		itExpects(
-			"logs error on retrieval of tombstones attachment blobs when ThrowOnTombstoneLoad is not enabled",
+			"logs tombstone event on retrieval of tombstones attachment blobs when ThrowOnTombstoneLoad is not enabled",
 			[
 				{
 					eventName:
@@ -344,7 +344,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 			],
 			async () => {
 				// Disable ThrowOnTombstoneLoad setting.
-				configProvider.set("Fluid.GarbageCollection.DisableThrowOnTombstoneLoadKey", true);
+				configProvider.set("Fluid.GarbageCollection.DisableThrowOnTombstoneLoad", true);
 
 				const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 

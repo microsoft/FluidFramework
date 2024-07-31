@@ -1202,7 +1202,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			},
 		],
 		async () => {
-			configProvider.set("Fluid.GarbageCollection.DisableThrowOnTombstoneLoadKey", true);
+			configProvider.set("Fluid.GarbageCollection.DisableThrowOnTombstoneLoad", true);
 			const { unreferencedId, summarizingContainer, summarizer } =
 				await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 			await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
@@ -1210,7 +1210,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			// The datastore should be tombstoned now
 			const { summaryVersion } = await summarize(summarizer);
 			const container = await loadContainer(summaryVersion);
-			// Requesting the tombstoned data store should succeed since DisableThrowOnTombstoneLoadKey is set to true.
+			// Requesting the tombstoned data store should succeed since DisableThrowOnTombstoneLoad is set to true.
 			// Logs a tombstone and sweep ready error
 			let dataObject: ITestDataObject;
 			const entryPoint = (await container.getEntryPoint()) as ITestDataObject;
@@ -1612,7 +1612,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				},
 			],
 			async () => {
-				configProvider.set("Fluid.GarbageCollection.DisableThrowOnTombstoneLoadKey", true);
+				configProvider.set("Fluid.GarbageCollection.DisableThrowOnTombstoneLoad", true);
 				const container = await makeContainer();
 				const defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
 				await waitForContainerConnection(container);

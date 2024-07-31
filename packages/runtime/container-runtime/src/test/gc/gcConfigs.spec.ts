@@ -864,7 +864,7 @@ describe("Garbage Collection configurations", () => {
 			assert.equal(gc.configs.throwOnTombstoneLoad, true, "throwOnTombstoneLoad incorrect");
 		});
 		it("throwOnTombstoneLoad disabled via override", () => {
-			configProvider.set(disableThrowOnTombstoneLoadKey, false);
+			configProvider.set(disableThrowOnTombstoneLoadKey, true);
 			gc = createGcWithPrivateMembers(
 				undefined /* metadata */,
 				{ enableGCSweep: true },
@@ -873,7 +873,7 @@ describe("Garbage Collection configurations", () => {
 			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
 		});
 		it("throwOnTombstoneLoad cannot be enabled via override if sweep is disabled", () => {
-			configProvider.set(disableThrowOnTombstoneLoadKey, true);
+			configProvider.set(disableThrowOnTombstoneLoadKey, false);
 			gc = createGcWithPrivateMembers(
 				undefined /* metadata */,
 				{ enableGCSweep: undefined },
