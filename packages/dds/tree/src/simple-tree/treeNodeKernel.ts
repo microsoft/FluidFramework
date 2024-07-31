@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { createEmitter, type Listenable, type Off } from "../events/index.js";
 import type { TreeChangeEvents, TreeNode } from "./types.js";
-import type { AnchorNode, FieldKey } from "../core/index.js";
+import type { AnchorNode } from "../core/index.js";
 import {
 	flexTreeSlot,
 	isFreedSymbol,
