@@ -16,7 +16,7 @@ const Ajv =
 	(ajvModuleOrClass as any);
 
 /**
- * TODO
+ * Creates a JSON Schema validator for the provided schema, using `ajv`.
  */
 export function getJsonValidator(
 	schema: TreeJsonSchema,
