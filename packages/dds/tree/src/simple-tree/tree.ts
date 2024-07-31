@@ -106,7 +106,7 @@ export interface ITreeConfigurationOptions {
 	 * - More than one MapNode type: it's impossible to tell which map type is intended in the case of an empty map (`{}`).
 	 * - Both a MapNode and an ArrayNode: this case is not a problem for the canonical JSON representation, but is an issues when constructing from an Iterable, which is supported for both MapNode and ArrayNode.
 	 * - Both a MapNode and an ObjectNode: when the input is valid for the ObjectNode, the current parser always considers it ambiguous with being a MapNode.
-	 * - ObjectNodes which which have fields (require or optional) which include all required fields of another ObjectNode: currently every ObjectNodes are differentiated by the presence of their required fields.
+	 * - ObjectNodes which have fields (required or optional) which include all required fields of another ObjectNode: currently each ObjectNode is differentiated by the presence of its required fields.
 	 *
 	 * This check is conservative: some complex cases may error if the current simple algorithm can not show no ambiguity is possible.
 	 * This check may become more permissive over time.
@@ -118,7 +118,7 @@ export interface ITreeConfigurationOptions {
 	 * class Feet extends schemaFactory.object("Feet", { length: schemaFactory.number }) {}
 	 * class Meters extends schemaFactory.object("Meters", { length: schemaFactory.number }) {}
 	 * const config = new TreeViewConfiguration({
-	 * 	// This combination of schema is can lead to ambiguous cases, and would error if preventAmbiguity is true.
+	 * 	// This combination of schema can lead to ambiguous cases, and will error if preventAmbiguity is true.
 	 * 	schema: [Feet, Meters],
 	 * 	preventAmbiguity: false,
 	 * });
@@ -141,7 +141,7 @@ export interface ITreeConfigurationOptions {
 	 * 	meters: schemaFactory.required(schemaFactory.number, { key: "length" }),
 	 * }) {}
 	 * const config = new TreeViewConfiguration({
-	 * 	// This combination of schema is can lead to ambiguous cases, and would error if preventAmbiguity is true.
+	 * 	// This combination of schema is not ambiguous because `Feet` and `Meters` have different required keys.
 	 * 	schema: [Feet, Meters],
 	 * 	preventAmbiguity: true,
 	 * });
@@ -235,7 +235,7 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 		if (ambiguityErrors.length !== 0) {
 			// Duplicate errors are common since when two types conflict, both orders error:
 			const deduplicated = new Set(ambiguityErrors);
-			throw new UsageError(`Ambagious Schema Found:\n${[...deduplicated].join("\n")}`);
+			throw new UsageError(`Ambigious schema found:\n${[...deduplicated].join("\n")}`);
 		}
 
 		// Eagerly perform this conversion to surface errors sooner.
