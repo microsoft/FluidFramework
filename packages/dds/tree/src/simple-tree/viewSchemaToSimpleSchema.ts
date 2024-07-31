@@ -69,7 +69,7 @@ function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
 	}
 }
 
-// TODO: Use a stronger type for leaf schemas once one is available
+// TODO: Use a stronger type for leaf schemas once one is available (see object schema handler for an example).
 function leafSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleLeafNodeSchema {
 	return {
 		kind: "leaf",
@@ -77,7 +77,7 @@ function leafSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleLeafNodeSchema 
 	};
 }
 
-// TODO: Use a stronger type for array schemas once one is available
+// TODO: Use a stronger type for array schemas once one is available (see object schema handler for an example).
 function arraySchemaToSimpleSchema(schema: TreeNodeSchema): SimpleArrayNodeSchema {
 	const fieldSchema = normalizeFieldSchema(schema.info as ImplicitAllowedTypes);
 	const allowedTypes = allowedTypesFromFieldSchema(fieldSchema);
@@ -87,7 +87,7 @@ function arraySchemaToSimpleSchema(schema: TreeNodeSchema): SimpleArrayNodeSchem
 	};
 }
 
-// TODO: Use a stronger type for map schemas once one is available
+// TODO: Use a stronger type for map schemas once one is available (see object schema handler for an example).
 function mapSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleMapNodeSchema {
 	const fieldSchema = normalizeFieldSchema(schema.info as ImplicitAllowedTypes);
 	const allowedTypes = allowedTypesFromFieldSchema(fieldSchema);
@@ -165,6 +165,9 @@ function leafKindFromValueSchema(schema: ValueSchema): SimpleLeafSchemaKind {
 	}
 }
 
+/**
+ * Recursively populates `definitions` by walking the input field schema tree.
+ */
 function populateSchemaDefinitionsForField(
 	schema: FieldSchema,
 	definitions: Map<string, SimpleNodeSchema>,
@@ -174,7 +177,9 @@ function populateSchemaDefinitionsForField(
 	}
 }
 
-// Note: recursive
+/**
+ * Recursively populates `definitions` by walking the input node schema tree.
+ */
 function populateSchemaDefinitionsForNode(
 	schema: TreeNodeSchema,
 	definitions: Map<string, SimpleNodeSchema>,
@@ -195,7 +200,7 @@ function populateSchemaDefinitionsForNode(
 			break;
 		}
 		case NodeKind.Map: {
-			// TODO: typeguard
+			// TODO: Utilize a map schema type-guard once one exists (see object case for an example).
 
 			// Recursively populate definitions for allowed map children
 			const fieldSchema = normalizeFieldSchema(schema.info as ImplicitAllowedTypes);
@@ -203,7 +208,7 @@ function populateSchemaDefinitionsForNode(
 			break;
 		}
 		case NodeKind.Array: {
-			// TODO: typeguard
+			// TODO: Utilize an array schema type-guard once one exists (see object case for an example).
 
 			// Recursively populate definitions for allowed map children
 			const fieldSchema = normalizeFieldSchema(schema.info as ImplicitAllowedTypes);
