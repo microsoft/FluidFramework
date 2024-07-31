@@ -5,7 +5,7 @@
 
 Add `ITreeConfigurationOptions.preventAmbiguity`
 
-The new `ITreeConfigurationOptions.preventAmbiguity` flag can set to true to enable checking of some additional rules when constructing the `TreeViewConfiguration`.
+The new `ITreeConfigurationOptions.preventAmbiguity` flag can be set to true to enable checking of some additional rules when constructing the `TreeViewConfiguration`.
 
 This example shows an ambiguous schema:
 ```typescript

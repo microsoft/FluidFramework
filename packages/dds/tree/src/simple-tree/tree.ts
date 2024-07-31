@@ -94,21 +94,21 @@ export interface ITreeConfigurationOptions {
 	 * @defaultValue `false`.
 	 *
 	 * @remarks
-	 * When this is true, it ensures that the compile time type safety for data when constructing nodes is sufficient to ensure than the runtime behavior will not give node data ambiguity errors.
+	 * When this is true, it ensures that the compile time type safety for data when constructing nodes is sufficient to ensure that the runtime behavior will not give node data ambiguity errors.
 	 *
-	 * This ensures that the canonical JSON like representation of the node of any union in the tree is lossless and unambiguous.
-	 * This canonical JSON like representation consists of arrays, plain old JavaScript objects with string keys, booleans, numbers (excluding NaN, -0 and infinities), strings, null and IFluidHandles.
+	 * This ensures that the canonical JSON-like representation of the node of any union in the tree is lossless and unambiguous.
+	 * This canonical JSON-like representation consists of arrays, plain old JavaScript objects with string keys, booleans, numbers (excluding NaN, -0 and infinities), strings, null and {@link @fluidframework/core-interfaces#IFluidHandle}s.
 	 * Assuming any IFluidHandles get special handling, its JSON compatible, as well as compatible with the node creation APIs (such as schema class constructors).
 	 *
 	 * Currently these cases can cause ambiguity in a union:
 	 *
 	 * - More than one ArrayNode type: it's impossible to tell which array type is intended in the case of empty arrays (`[]`).
 	 * - More than one MapNode type: it's impossible to tell which map type is intended in the case of an empty map (`{}`).
-	 * - Both a MapNode and an ArrayNode: this case is not a problem for the canonical JSON representation, but is an issues when constructing from an Iterable, which is supported for both MapNode and ArrayNode.
+	 * - Both a MapNode and an ArrayNode: this case is not a problem for the canonical JSON representation, but is an issue when constructing from an Iterable, which is supported for both MapNode and ArrayNode.
 	 * - Both a MapNode and an ObjectNode: when the input is valid for the ObjectNode, the current parser always considers it ambiguous with being a MapNode.
 	 * - ObjectNodes which have fields (required or optional) which include all required fields of another ObjectNode: currently each ObjectNode is differentiated by the presence of its required fields.
 	 *
-	 * This check is conservative: some complex cases may error if the current simple algorithm can not show no ambiguity is possible.
+	 * This check is conservative: some complex cases may error if the current simple algorithm cannot show no ambiguity is possible.
 	 * This check may become more permissive over time.
 	 *
 	 * @example
