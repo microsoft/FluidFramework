@@ -106,7 +106,7 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): ArrayNodeJsonSch
 
 function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): LeafNodeJsonSchema {
 	if (schema.type === "fluid-handle") {
-		throw new Error("Fluid handles are not yet round-trip supported via JSON schema.");
+		throw new Error("Fluid handles are not supported via JSON Schema.");
 	}
 
 	return {
