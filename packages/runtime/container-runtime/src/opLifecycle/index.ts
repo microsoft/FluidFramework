@@ -18,7 +18,7 @@ export { OpDecompressor } from "./opDecompressor.js";
 export { OpSplitter, splitOp, isChunkedMessage } from "./opSplitter.js";
 export {
 	ensureContentsDeserialized,
-	IncomingBatch,
+	InboundBatch,
 	RemoteMessageProcessor,
 	unpackRuntimeMessage,
 } from "./remoteMessageProcessor.js";

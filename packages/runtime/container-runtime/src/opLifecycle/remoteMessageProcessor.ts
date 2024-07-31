@@ -22,7 +22,7 @@ import { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
 import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
 
 /** Messages being received as a batch, with details needed to process the batch */
-export interface IncomingBatch {
+export interface InboundBatch {
 	/** Messages in this batch */
 	readonly messages: InboundSequencedContainerRuntimeMessage[];
 	/** Batch ID, if present */
@@ -63,7 +63,7 @@ export class RemoteMessageProcessor {
 	 *
 	 * @remarks If undefined, we are expecting the next message to start a new batch.
 	 */
-	private batchInProgress: IncomingBatch | undefined;
+	private batchInProgress: InboundBatch | undefined;
 
 	constructor(
 		private readonly opSplitter: OpSplitter,
@@ -101,7 +101,7 @@ export class RemoteMessageProcessor {
 	public process(
 		remoteMessageCopy: ISequencedDocumentMessage,
 		logLegacyCase: (codePath: string) => void,
-	): IncomingBatch | undefined {
+	): InboundBatch | undefined {
 		let message = remoteMessageCopy;
 
 		assertHasClientId(message);
