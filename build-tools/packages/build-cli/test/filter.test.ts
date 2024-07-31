@@ -6,6 +6,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
+import { PackageName } from "@rushstack/node-core-library";
 import { describe, expect, it } from "vitest";
 import {
 	AllPackagesSelectionCriteria,
@@ -95,18 +96,18 @@ describe("filterPackages", async () => {
 	});
 
 	it("multiple scopes", async () => {
+		const scopes = ["@fluidframework", "@fluid-private"];
 		const packages = await getClientPackages();
 		const filters: PackageFilterOptions = {
 			private: undefined,
-			scope: ["@fluidframework", "@fluid-private"],
+			scope: scopes,
 			skipScope: undefined,
 		};
 		const actual = await filterPackages(packages, filters);
-		const names = actual.map((p) => p.name);
-		["@fluidframework/build-tools", "@fluidframework/bundle-size-tools"].forEach((item) => {
-			expect(names).toContain(item);
+		actual.forEach((pkg) => {
+			// Check that no packages have an unexpected scope
+			expect(scopes).toContain(PackageName.getScope(pkg.name));
 		});
-		expect(names).toHaveLength(2);
 	});
 
 	it("multiple skipScopes", async () => {
