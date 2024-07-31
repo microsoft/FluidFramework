@@ -89,13 +89,13 @@ export interface Changeset {
 	changeTypes: VersionBumpType[];
 
 	/**
-	 * The first line of the changeset body is considered the summary.
+	 * The first markdown paragraph of the changeset is considered the summary.
 	 */
 	summary: string;
 
 	/**
 	 * The body of the changeset after processing. Front matter sections are removed and white space is trimmed from the
-	 * beginning and end of the string. Note that the first markdown paragraph of the changeset body is not considered
+	 * beginning and end of the string. Note that the first markdown paragraph of the changeset is not considered
 	 * part of the body; it's the summary.
 	 */
 	body: string;
