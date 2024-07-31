@@ -65,12 +65,9 @@ describe("entryPoint compat", () => {
 	});
 
 	const loaderWithRequest = "2.0.0-internal.7.0.0";
-	describeInstallVersions(
-		{
-			requestAbsoluteVersions: [loaderWithRequest],
-		},
-		180000, // timeoutMs 3 minutes
-	)("loader compat", (_) => {
+	describeInstallVersions({
+		requestAbsoluteVersions: [loaderWithRequest],
+	})("loader compat", (_) => {
 		beforeEach("getVersionedTestObjectProvider", async () => {
 			provider = await getVersionedTestObjectProvider(
 				pkgVersion, // base version
