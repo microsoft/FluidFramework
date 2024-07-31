@@ -16,8 +16,9 @@ Checks that all packages have the same version set in package.json. The packages
 USAGE
   $ flub check buildVersion [-v | --quiet] [--version <value> | --path <value>] [--fix] [--concurrency <value>]
     [--branch <value> [--changed |  |  |  | [--all | --dir <value> | --packages | -g
-    client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] | ]] [--private] [--scope <value> | --skipScope <value>]
+    client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... | --skipScope
+    <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -125,8 +126,8 @@ Checks and applies policies to the files in the repository, such as ensuring a c
 
 ```
 USAGE
-  $ flub check policy [-v | --quiet] [-D <value> | -d <value>] [-e <value>] [--listHandlers | --stdin | -p <value>
-    | -f | ]
+  $ flub check policy [-v | --quiet] [-D <value>... | -d <value>] [-e <value>] [--listHandlers | --stdin | -p
+    <value> | -f | ]
 
 FLAGS
   -D, --excludeHandler=<value>...  Exclude policy handler by name. Can be specified multiple times to exclude multiple

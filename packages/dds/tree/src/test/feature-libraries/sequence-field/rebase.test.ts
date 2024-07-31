@@ -29,6 +29,7 @@ import { TestChange } from "../../testChange.js";
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
+const tag4: RevisionTag = mintRevisionTag();
 
 function rebase(
 	change: SF.Changeset,
@@ -360,7 +361,7 @@ export function testRebase() {
 		});
 
 		it("redundant revive ↷ insert", () => {
-			const revive = Change.redundantRevive(0, 3, { revision: tag1, localId: brand(0) });
+			const revive = Change.pin(0, 3, { revision: tag1, localId: brand(0) });
 			const insert = Change.insert(1, 1);
 			const actual = rebase(revive, insert);
 			const expected = [Mark.pin(1, brand(0)), Mark.skip(1), Mark.pin(2, brand(1))];
@@ -601,6 +602,107 @@ export function testRebase() {
 				return TestNodeId.rebaseChild(change, over);
 			};
 			const rebased = rebase(modify, move, undefined, { childRebaser });
+			assertChangesetsEqual(rebased, expected);
+		});
+
+		it("rename ↷ return = move-out + idOverride", () => {
+			const nodeId: NodeId = { localId: brand(0) };
+			const baseNodeId: NodeId = { revision: tag1, localId: brand(1) };
+			const startCellId: SF.CellId = { revision: tag2, localId: brand(1) };
+			const endCellId: SF.CellId = { revision: tag3, localId: brand(0) };
+
+			const inputChildChange = TestNodeId.create(nodeId, TestChange.mint([], 2));
+			const baseChildChange = TestNodeId.create(baseNodeId, TestChange.mint([], 1));
+			const rename = [
+				Mark.moveOut(
+					1,
+					{ revision: tag2, localId: brand(0) },
+					{ changes: inputChildChange, finalEndpoint: endCellId },
+				),
+				Mark.rename(1, startCellId, endCellId),
+				Mark.moveIn(1, endCellId, {
+					finalEndpoint: { revision: tag2, localId: brand(0) },
+				}),
+			];
+			const move = [
+				Mark.moveOut(1, { revision: tag4, localId: brand(4) }, { changes: baseChildChange }),
+				Mark.returnTo(1, { revision: tag4, localId: brand(4) }, startCellId),
+			];
+			const expectedChildChange = TestNodeId.create(nodeId, TestChange.mint([1], 2));
+			const expected = [
+				Mark.tomb(tag4, brand(4)),
+				Mark.moveOut(
+					1,
+					{ revision: tag2, localId: brand(0) },
+					{ changes: expectedChildChange, idOverride: endCellId, finalEndpoint: endCellId },
+				),
+				Mark.moveIn(1, endCellId, {
+					finalEndpoint: { revision: tag2, localId: brand(0) },
+				}),
+			];
+			const childRebaser = (
+				change: NodeId | undefined,
+				over: NodeId | undefined,
+			): NodeId | undefined => {
+				// These checks ensure that we don't attempt to rebase output of `inputChildChange ↷ baseChildChange`.
+				// This may happen if the inputChildChange is rebased then sent as an effect that is then treated
+				// as nested change to be rebased when the effect is consumed.
+				assert.equal(change, inputChildChange);
+				assert.equal(over, baseChildChange);
+				return TestNodeId.rebaseChild(change, over);
+			};
+			const rebased = rebase(rename, move, undefined, { childRebaser });
+			assertChangesetsEqual(rebased, expected);
+		});
+
+		it("move-out + idOverride ↷ move-out = rename", () => {
+			const nodeId: NodeId = { localId: brand(0) };
+			const baseNodeId: NodeId = { revision: tag1, localId: brand(1) };
+			const startCellId: SF.CellId = { revision: tag2, localId: brand(1) };
+			const endCellId: SF.CellId = { revision: tag3, localId: brand(0) };
+
+			const inputChildChange = TestNodeId.create(nodeId, TestChange.mint([], 2));
+			const baseChildChange = TestNodeId.create(baseNodeId, TestChange.mint([], 1));
+			const rebasee = [
+				Mark.moveOut(
+					1,
+					{ revision: tag2, localId: brand(0) },
+					{ changes: inputChildChange, idOverride: endCellId, finalEndpoint: endCellId },
+				),
+				Mark.skip(1),
+				Mark.moveIn(1, endCellId, {
+					finalEndpoint: { revision: tag2, localId: brand(0) },
+				}),
+			];
+			const move = [
+				Mark.moveOut(1, { revision: tag4, localId: brand(4) }, { changes: baseChildChange }),
+				Mark.moveIn(1, { revision: tag4, localId: brand(4) }),
+			];
+			const expectedChildChange = TestNodeId.create(nodeId, TestChange.mint([1], 2));
+			const expected = [
+				Mark.rename(1, { revision: tag4, localId: brand(4) }, endCellId),
+				Mark.moveOut(
+					1,
+					{ revision: tag2, localId: brand(0) },
+					{ changes: expectedChildChange, finalEndpoint: endCellId },
+				),
+				Mark.skip(1),
+				Mark.moveIn(1, endCellId, {
+					finalEndpoint: { revision: tag2, localId: brand(0) },
+				}),
+			];
+			const childRebaser = (
+				change: NodeId | undefined,
+				over: NodeId | undefined,
+			): NodeId | undefined => {
+				// These checks ensure that we don't attempt to rebase output of `inputChildChange ↷ baseChildChange`.
+				// This may happen if the inputChildChange is rebased then sent as an effect that is then treated
+				// as nested change to be rebased when the effect is consumed.
+				assert.equal(change, inputChildChange);
+				assert.equal(over, baseChildChange);
+				return TestNodeId.rebaseChild(change, over);
+			};
+			const rebased = rebase(rebasee, move, undefined, { childRebaser });
 			assertChangesetsEqual(rebased, expected);
 		});
 

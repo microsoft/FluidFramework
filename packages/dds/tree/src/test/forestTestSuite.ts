@@ -29,11 +29,15 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 } from "../core/index.js";
-import { cursorToJsonObject, leaf, singleJsonCursor } from "../domains/index.js";
+import {
+	cursorToJsonObject,
+	leaf,
+	singleJsonCursor,
+	typedJsonCursor,
+} from "../domains/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	cursorForJsonableTreeNode,
-	cursorForTypedTreeData,
 	intoStoredSchema,
 	jsonableTreeFromCursor,
 } from "../feature-libraries/index.js";
@@ -1145,7 +1149,8 @@ export function testForest(config: ForestTestConfiguration): void {
 				initializeForest(
 					forest,
 					[
-						cursorForTypedTreeData({ schema }, root, {
+						typedJsonCursor({
+							[typedJsonCursor.type]: root,
 							x: [2],
 							y: [1],
 						}),
@@ -1171,8 +1176,8 @@ export function testForest(config: ForestTestConfiguration): void {
 				};
 				const delta: DeltaFieldMap = new Map([[rootFieldKey, { local: [modify] }]]);
 				applyTestDelta(delta, forest);
-				const expectedCursor = cursorForTypedTreeData({ schema }, schema, {
-					x: [],
+				const expectedCursor = typedJsonCursor({
+					[typedJsonCursor.type]: root,
 					y: [1, 2],
 				});
 				const expected: JsonableTree[] = [jsonableTreeFromCursor(expectedCursor)];

@@ -73,14 +73,15 @@ describe("MapNode", () => {
 		assert.deepEqual([...fromMap], data);
 		const fromIterable = new Schema(new Map(data).entries());
 		assert.deepEqual([...fromIterable], data);
+		const fromRecord = new Schema({ x: 5 });
+		assert.deepEqual([...fromRecord], data);
 	});
 
 	describe("implicit construction", () => {
 		class Schema extends schemaFactory.map("x", schemaFactory.number) {}
 		class Root extends schemaFactory.object("root", { data: Schema }) {}
 		const data = [["x", 5]] as const;
-		// See TODO in shallowCompatibilityTest for how to enable this case.
-		it.skip("fromArray", () => {
+		it("fromArray", () => {
 			const fromArray = new Root({ data });
 			assert.deepEqual([...fromArray.data], data);
 		});
@@ -91,6 +92,10 @@ describe("MapNode", () => {
 		it("fromIterable", () => {
 			const fromIterable = new Root({ data: new Map(data).entries() });
 			assert.deepEqual([...fromIterable.data], data);
+		});
+		it("fromRecord", () => {
+			const fromRecord = new Root({ data: { x: 5 } });
+			assert.deepEqual([...fromRecord.data], data);
 		});
 	});
 });
