@@ -150,11 +150,11 @@ export class RemoteMessageProcessor {
 		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked
 		unpackRuntimeMessage(message, logLegacyCase);
 
-		const batchEnd = this.addMessageToBatch(
+		const { batchEnded } = this.addMessageToBatch(
 			message as InboundSequencedContainerRuntimeMessage & { clientId: string },
 		);
 
-		if (!batchEnd) {
+		if (!batchEnded) {
 			// batch not yet complete
 			return undefined;
 		}
@@ -167,11 +167,11 @@ export class RemoteMessageProcessor {
 	/**
 	 * Add the given message to the current batch, and indicate whether the batch is now complete.
 	 *
-	 * @returns true if the batch is now complete, false if more messages are expected
+	 * @returns batchEnded: true if the batch is now complete, batchEnded: false if more messages are expected
 	 */
 	private addMessageToBatch(
 		message: InboundSequencedContainerRuntimeMessage & { clientId: string },
-	): boolean {
+	): { batchEnded: boolean } {
 		const batchMetadataFlag = asBatchMetadata(message.metadata)?.batch;
 		if (this.batchInProgress === undefined) {
 			// We are waiting for a new batch
@@ -186,7 +186,7 @@ export class RemoteMessageProcessor {
 					batchStartCsn: message.clientSequenceNumber,
 				};
 
-				return false;
+				return { batchEnded: false };
 			}
 
 			// Single-message batch (Since metadata flag is undefined)
@@ -196,13 +196,13 @@ export class RemoteMessageProcessor {
 				clientId: message.clientId,
 				batchId: asBatchMetadata(message.metadata)?.batchId,
 			};
-			return true;
+			return { batchEnded: true };
 		}
 		assert(batchMetadataFlag !== true, 0x9d6 /* Unexpected batch start marker */);
 
 		this.batchInProgress.messages.push(message);
 
-		return batchMetadataFlag === false;
+		return { batchEnded: batchMetadataFlag === false };
 	}
 }
 
