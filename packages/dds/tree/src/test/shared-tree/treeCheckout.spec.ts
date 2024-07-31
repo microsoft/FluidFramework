@@ -803,42 +803,47 @@ describe("sharedTreeView", () => {
 		});
 
 		it("over schema changes", () => {
+			const sf1 = new SchemaFactory("schema1");
+			const oldSchema = sf1.array(sf1.string);
+
 			const provider = new TestTreeProviderLite(1);
-			const checkout1 = provider.trees[0].checkout;
+			const oldSchemaConfig = { schema: oldSchema, enableSchemaValidation };
+			const view1 = provider.trees[0].viewWith(oldSchemaConfig);
+			view1.initialize(["A", "B", "C"]);
 
-			checkout1.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
-			checkout1.editor.sequenceField(rootField).insert(
-				0,
-				cursorForJsonableTreeField([
-					{ type: leaf.string.name, value: "A" },
-					{ type: leaf.string.name, value: "B" },
-					{ type: leaf.string.name, value: "C" },
-				]),
-			);
-
-			const branch = checkout1.fork();
+			const branch = forkView(view1);
 
 			// Remove "A" and change the schema on the parent branch
-			checkout1.editor.sequenceField(rootField).remove(0, 1);
-			checkout1.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+			view1.root.removeAt(0);
+			const sf2 = new SchemaFactory("schema1");
+			const newSchema = [sf2.array(sf2.string), sf2.array([sf2.string, sf2.number])];
+			provider.trees[0]
+				.viewWith({ schema: newSchema, enableSchemaValidation })
+				.upgradeSchema();
 
 			// Remove "B" on the child branch
-			branch.editor.sequenceField(rootField).remove(1, 1);
-			branch.updateSchema(intoStoredSchema(stringSequenceRootSchema));
-			// Remove "C" on the child branch
-			branch.editor.sequenceField(rootField).remove(1, 1);
-			validateTreeContent(branch, {
-				schema: stringSequenceRootSchema,
-				initialTree: ["A"],
+			branch.root.removeAt(1);
+			const branchWithNewSchema = viewCheckout(branch.checkout, {
+				schema: newSchema,
+				enableSchemaValidation,
 			});
+			branchWithNewSchema.upgradeSchema();
+			// Remove "C" on the child branch
+			branchWithNewSchema.root.removeAt(1);
+			expectSchemaEqual(
+				intoStoredSchema(toFlexSchema(newSchema)),
+				branchWithNewSchema.checkout.storedSchema,
+			);
+			assert.deepEqual(branchWithNewSchema.root, ["A"]);
 
-			branch.rebaseOnto(checkout1);
+			branch.checkout.rebaseOnto(view1.checkout);
 
 			// All changes on the branch should be dropped
-			validateTreeContent(branch, {
-				schema: stringSequenceRootSchema,
-				initialTree: ["B", "C"],
-			});
+			expectSchemaEqual(
+				intoStoredSchema(toFlexSchema(oldSchema)),
+				branch.checkout.storedSchema,
+			);
+			assert.deepEqual(viewCheckout(branch.checkout, oldSchemaConfig).root, ["B", "C"]);
 		});
 	});
 
