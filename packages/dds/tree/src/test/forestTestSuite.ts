@@ -1144,13 +1144,13 @@ export function testForest(config: ForestTestConfiguration): void {
 					y: schemaFactory.number,
 				});
 				const schema = toFlexSchema(schemaFactory.array(NodeSchema));
- 
+
 				const forest = factory(new TreeStoredSchemaRepository(intoStoredSchema(schema)));
 				initializeForest(
 					forest,
 					[
 						typedJsonCursor({
-							[typedJsonCursor.type]: toFlexSchema(NodeSchema),
+							[typedJsonCursor.type]: NodeSchema.identifier,
 							x: [2],
 							y: [1],
 						}),
@@ -1177,7 +1177,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				const delta: DeltaFieldMap = new Map([[rootFieldKey, { local: [modify] }]]);
 				applyTestDelta(delta, forest);
 				const expectedCursor = typedJsonCursor({
-					[typedJsonCursor.type]: NodeSchema,
+					[typedJsonCursor.type]: NodeSchema.identifier,
 					y: [1, 2],
 				});
 				const expected: JsonableTree[] = [jsonableTreeFromCursor(expectedCursor)];
