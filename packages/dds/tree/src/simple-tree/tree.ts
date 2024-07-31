@@ -118,7 +118,7 @@ export interface ITreeConfigurationOptions {
 	 * class Feet extends schemaFactory.object("Feet", { length: schemaFactory.number }) {}
 	 * class Meters extends schemaFactory.object("Meters", { length: schemaFactory.number }) {}
 	 * const config = new TreeViewConfiguration({
-	 * 	// This combination of schema can lead to ambiguous cases, and will error if preventAmbiguity is true.
+	 * 	// This combination of schema can lead to ambiguous cases and will error if `preventAmbiguity` is true.
 	 * 	schema: [Feet, Meters],
 	 * 	preventAmbiguity: false,
 	 * });
@@ -151,7 +151,7 @@ export interface ITreeConfigurationOptions {
 	 * ```
 	 *
 	 * @privateRemarks
-	 * In the future, we can support lossless round tripping via the canonical JSON like representation above when unambiguous.
+	 * In the future, we can support lossless round tripping via the canonical JSON-like representation above when unambiguous.
 	 * This could be done via methods added to `Tree` to export and import such objects, which would give us a place to explicitly define the type of this representation.
 	 *
 	 * To make this more permissive in the future we can:
