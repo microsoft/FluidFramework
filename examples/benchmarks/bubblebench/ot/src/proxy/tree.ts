@@ -111,9 +111,10 @@ const createArrayProxy = (
 	consumer: Consumer,
 	parent?: IProxy,
 	parentKey?: json1.Key,
-) =>
+): Object =>
 	new Proxy(subject, {
-		get: (target, key, receiver) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		get: (target, key, receiver): any => {
 			if (key === contextSym) {
 				return { parent, parentKey };
 			}
@@ -134,7 +135,7 @@ const createArrayProxy = (
 				: value;
 			/* eslint-enable @typescript-eslint/no-unsafe-return */
 		},
-		set: (target, key, value, receiver) => {
+		set: (target, key, value, receiver): boolean => {
 			// eslint-disable-next-line no-param-reassign
 			key = indexify(key as string) as string;
 			const path = getPath(receiver, key);
@@ -150,7 +151,7 @@ const createArrayProxy = (
 		},
 	});
 
-function getProxy(target: Object, consumer: Consumer, parent?: IProxy, parentKey?: json1.Key) {
+function getProxy(target: Object, consumer: Consumer, parent?: IProxy, parentKey?: json1.Key): IProxy | undefined {
 	let self = cache.get(target);
 	if (self === undefined) {
 		self = Array.isArray(target)
