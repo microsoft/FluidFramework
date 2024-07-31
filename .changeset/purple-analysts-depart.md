@@ -22,7 +22,7 @@ class MyObject extends schemaFactory.object("MyObject", {
 
 ```json
 {
-	"$defs": [
+	"$defs": {
 		"com.fluidframework.leaf.string": {
 			"type": "string",
 		},
@@ -37,7 +37,7 @@ class MyObject extends schemaFactory.object("MyObject", {
 			},
 			"required": ["foo"],
 		},
-	],
+	},
 	"anyOf": [ { "$ref": "#/$defs/com.myapp.MyObject" } ],
 }
 ```

@@ -34,23 +34,23 @@ const jsonSchemaCacheSymbol = Symbol("jsonSchemaCache");
  * ...will yield JSON Schema like...
  * ```json
  * {
- * 	$defs: [
+ * 	"$defs": {
  * 		"com.fluidframework.leaf.string": {
- * 			type: "string",
+ * 			"type": "string",
  * 		},
  * 		"com.fluidframework.leaf.number": {
- * 			type: "number",
+ * 			"type": "number",
  * 		},
  * 		"com.myapp.MyObject": {
- * 			type: "object",
- * 			properties: {
- * 				"foo": { $ref: "com.fluidframework.leaf.number" },
- * 				"bar": { $ref: "com.fluidframework.leaf.string" },
+ * 			"type": "object",
+ * 			"properties": {
+ * 				"foo": { "$ref": "com.fluidframework.leaf.number" },
+ * 				"bar": { "$ref": "com.fluidframework.leaf.string" },
  * 			},
- * 			required: ["foo"],
+ * 			"required": ["foo"],
  * 		},
- * 	],
- * 	anyOf: [ { $ref: "#/$defs/com.myapp.MyObject" } ],
+ * 	},
+ * 	"anyOf": [ { "$ref": "#/$defs/com.myapp.MyObject" } ],
  * }
  * ```
  *
