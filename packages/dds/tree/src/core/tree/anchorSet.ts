@@ -778,12 +778,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 						const fieldKeys = this.bufferedEvents
 							.filter((e) => e.node === node && e.event === event)
 							.map((e) => e.changedField as FieldKey);
-						// For array nodes, the field key will always be an empty string.
-						// In that case we want to emit the event with an empty set, instead of a set with the empty string as only member.
-						const changedFields = fieldKeys.every((x) => x === "")
-							? new Set<FieldKey>()
-							: new Set(fieldKeys);
-						node.events.emit(event, { anchor: node, changedFields });
+						node.events.emit(event, { anchor: node, changedFields: new Set(fieldKeys) });
 					} else {
 						node.events.emit(event, node);
 					}
