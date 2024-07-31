@@ -127,7 +127,7 @@ describe("simple-tree tree", () => {
 			meters: schemaFactory.required(schemaFactory.number, { key: "length" }),
 		}) {}
 		const config = new TreeViewConfiguration({
-			// This combination of schema is can lead to ambiguous cases, and would error if preventAmbiguity is true.
+			// This combination of schema is not ambiguous because `Feet` and `Meters` have different required keys.
 			schema: [Feet, Meters],
 			preventAmbiguity: true,
 		});
