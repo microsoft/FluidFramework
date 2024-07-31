@@ -54,9 +54,9 @@ export const gcGenerationOptionName = "gcGeneration";
 export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 /** Config key to expire a session after a set period of time. Defaults to true. */
 export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
-/** Config key to override throwing an error when tombstone object is loaded (requested). */
-export const throwOnTombstoneLoadOverrideKey =
-	"Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride";
+/** Config key to disable throwing an error when tombstone object is loaded (requested). */
+export const disableThrowOnTombstoneLoadKey =
+	"Fluid.GarbageCollection.DisableThrowOnTombstoneLoadKey";
 /** Config key to enable GC version upgrade. */
 export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgradeToV4";
 /** Config key to disable auto-recovery mechanism that protects Tombstones that are loaded from being swept (use true) */
@@ -455,11 +455,15 @@ export interface IGCRuntimeOptions {
 export interface IGarbageCollectorConfigs {
 	/**
 	 * Tracks if GC is allowed for this document. GC may not be allowed for old documents created pre-GC.
+	 * If GC is allowed for a document, it will always be enabled. It cannot be disabled per session.
 	 */
 	readonly gcAllowed: boolean;
 	/**
-	 * Tracks if sweep phase is enabled to run in this session or not.
+	 * Tracks whether sweep phase is allowed for this document. Sweep can be disabled per session via the sweepEnabled
+	 * flag defined below.
 	 */
+	readonly sweepAllowed: boolean;
+	/** Tracks if sweep phase is enabled to run in this session or not */
 	readonly sweepEnabled: boolean;
 	/** Is Tombstone AutoRecovery enabled? Useful for preventing the GC "TombstoneLoaded" op, for compatibility reasons */
 	readonly tombstoneAutorecoveryEnabled: boolean;

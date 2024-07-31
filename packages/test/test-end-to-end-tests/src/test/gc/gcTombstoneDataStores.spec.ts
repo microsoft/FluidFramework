@@ -279,10 +279,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			}),
 		};
 
-		beforeEach("extraSettings", () => {
-			configProvider.set("Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride", true);
-		});
-
 		itExpects(
 			"Requesting tombstoned datastores fails in interactive client loaded after tombstone timeout (but SubDataStore load is allowed)",
 			[
@@ -1206,7 +1202,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			},
 		],
 		async () => {
-			configProvider.set("Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride", false);
+			configProvider.set("Fluid.GarbageCollection.DisableThrowOnTombstoneLoadKey", true);
 			const { unreferencedId, summarizingContainer, summarizer } =
 				await summarizationWithUnreferencedDataStoreAfterTime(tombstoneTimeoutMs);
 			await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
@@ -1214,7 +1210,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			// The datastore should be tombstoned now
 			const { summaryVersion } = await summarize(summarizer);
 			const container = await loadContainer(summaryVersion);
-			// Requesting the tombstoned data store should succeed since ThrowOnTombstoneLoadOverride is not enabled.
+			// Requesting the tombstoned data store should succeed since DisableThrowOnTombstoneLoadKey is set to true.
 			// Logs a tombstone and sweep ready error
 			let dataObject: ITestDataObject;
 			const entryPoint = (await container.getEntryPoint()) as ITestDataObject;
@@ -1263,11 +1259,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				assert(!actualTombstones.includes(url), `${url} should not be in tombstone blob`);
 			}
 		}
-
-		beforeEach("extraSettings", () => {
-			// This is not the typical configuration we expect (usage may be allowed), but keeping it more strict for the tests
-			configProvider.set("Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride", true);
-		});
 
 		it("adds tombstone data stores information to tombstone blob in summary", async () => {
 			const mainContainer = await provider.makeTestContainer(testContainerConfig);
@@ -1603,7 +1594,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 	 */
 	describe("No unexpected tombstone revival in unreachable subtrees", () => {
 		beforeEach("extraSettings", () => {
-			configProvider.set("Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride", false);
 			// Disable AutoRecovery because these tests request tombstoned objects to validate they're tombstones,
 			// And then are testing to ensure that various neutral actions don't revive them - but AutoRecovery would!
 			configProvider.set("Fluid.GarbageCollection.DisableAutoRecovery", true);
@@ -1622,6 +1612,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				},
 			],
 			async () => {
+				configProvider.set("Fluid.GarbageCollection.DisableThrowOnTombstoneLoadKey", true);
 				const container = await makeContainer();
 				const defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
 				await waitForContainerConnection(container);
@@ -1704,7 +1695,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				},
 			],
 			async () => {
-				configProvider.set("Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride", true);
 				const container = await makeContainer();
 				const defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
 				await waitForContainerConnection(container);
@@ -1841,7 +1831,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				},
 			],
 			async () => {
-				configProvider.set("Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride", true);
 				const container = await makeContainer();
 				const defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
 				await waitForContainerConnection(container);

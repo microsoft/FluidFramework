@@ -41,7 +41,7 @@ import {
 	oneDayMs,
 	runSessionExpiryKey,
 	stableGCVersion,
-	throwOnTombstoneLoadOverrideKey,
+	disableThrowOnTombstoneLoadKey,
 } from "../../gc/index.js";
 import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";
@@ -863,20 +863,20 @@ describe("Garbage Collection configurations", () => {
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, true, "throwOnTombstoneLoad incorrect");
 		});
-		it("throwOnTombstoneLoad enabled via override", () => {
-			configProvider.set(throwOnTombstoneLoadOverrideKey, true);
+		it("throwOnTombstoneLoad disabled via override", () => {
+			configProvider.set(disableThrowOnTombstoneLoadKey, false);
 			gc = createGcWithPrivateMembers(
 				undefined /* metadata */,
 				{ enableGCSweep: true },
 				false /* isSummarizerClient */,
 			);
-			assert.equal(gc.configs.throwOnTombstoneLoad, true, "throwOnTombstoneLoad incorrect");
+			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
 		});
-		it("throwOnTombstoneLoad disabled via override", () => {
-			configProvider.set(throwOnTombstoneLoadOverrideKey, false);
+		it("throwOnTombstoneLoad cannot be enabled via override if sweep is disabled", () => {
+			configProvider.set(disableThrowOnTombstoneLoadKey, true);
 			gc = createGcWithPrivateMembers(
 				undefined /* metadata */,
-				{ enableGCSweep: true },
+				{ enableGCSweep: undefined },
 				false /* isSummarizerClient */,
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");

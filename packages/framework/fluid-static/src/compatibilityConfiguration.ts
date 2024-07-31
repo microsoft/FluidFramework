@@ -33,7 +33,8 @@ export const compatibilityModeRuntimeOptions: Record<
 		enableGroupedBatching: false,
 		// TODO: Include explicit disables for things that are currently off-by-default?
 
-		// Explicitly disable running Sweep for 1.x clients because sweep isn't supported in this version.
+		// Explicitly disable running Sweep in compat mode "1". Sweep is supported only in 2.x. So, when 1.x and 2.x
+		// clients are running in parallel, running sweep will fail 1.x clients.
 		gcOptions: { enableGCSweep: undefined },
 	},
 	"2": {
@@ -43,8 +44,8 @@ export const compatibilityModeRuntimeOptions: Record<
 		// The runtime ID compressor is a prerequisite to use SharedTree but is off by default and must be explicitly enabled.
 		// It introduces a new type of op which is not compatible with 1.x clients.
 		enableRuntimeIdCompressor: "on",
-		// Explicitly disable running Sweep for 2.x clients. Although sweep is supported for 2.x, it will break if 1.x and 2.x
-		// clients are running in parallel.
+		// Explicitly disable running Sweep in compat mode "2". Although sweep is supported in 2.x, it is disabled by default.
+		// This setting explicitly disables it to be extra safe.
 		gcOptions: { enableGCSweep: undefined },
 	},
 };

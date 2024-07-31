@@ -343,8 +343,8 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				},
 			],
 			async () => {
-				// Override ThrowOnTombstoneLoad setting to off.
-				configProvider.set("Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride", false);
+				// Disable ThrowOnTombstoneLoad setting.
+				configProvider.set("Fluid.GarbageCollection.DisableThrowOnTombstoneLoadKey", true);
 
 				const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 

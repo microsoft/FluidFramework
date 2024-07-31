@@ -32,7 +32,7 @@ export {
 	stableGCVersion,
 	disableAutoRecoveryKey,
 	UnreferencedState,
-	throwOnTombstoneLoadOverrideKey,
+	disableThrowOnTombstoneLoadKey,
 	GarbageCollectionMessage,
 	GarbageCollectionMessageType,
 	ISweepMessage,

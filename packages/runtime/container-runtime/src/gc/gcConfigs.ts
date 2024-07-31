@@ -25,7 +25,7 @@ import {
 	maxSnapshotCacheExpiryMs,
 	oneDayMs,
 	runSessionExpiryKey,
-	throwOnTombstoneLoadOverrideKey,
+	disableThrowOnTombstoneLoadKey,
 } from "./gcDefinitions.js";
 import { getGCVersion, getGCVersionInEffect, shouldAllowGcSweep } from "./gcHelpers.js";
 
@@ -143,12 +143,13 @@ export function generateGCConfigs(
 
 	const throwOnInactiveLoad: boolean | undefined = createParams.gcOptions.throwOnInactiveLoad;
 	const throwOnTombstoneLoad =
-		mc.config.getBoolean(throwOnTombstoneLoadOverrideKey) !== false &&
+		mc.config.getBoolean(disableThrowOnTombstoneLoadKey) !== true &&
 		sweepEnabled &&
 		!createParams.isSummarizerClient;
 
 	return {
 		gcAllowed, // For this document
+		sweepAllowed, // For this document
 		sweepEnabled, // For this session
 		tombstoneAutorecoveryEnabled,
 		runFullGC,
