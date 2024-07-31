@@ -30,7 +30,7 @@ describe.only("simpleSchemaToJsonSchema", () => {
 			definitions: {
 				"test.string": {
 					type: "string",
-					kind: "leaf",
+					_kind: "leaf",
 				},
 			},
 			anyOf: [
@@ -65,14 +65,14 @@ describe.only("simpleSchemaToJsonSchema", () => {
 			definitions: {
 				"test.array": {
 					type: "array",
-					kind: "array",
+					_kind: "array",
 					items: {
 						anyOf: [{ $ref: "#/definitions/test.string" }],
 					},
 				},
 				"test.string": {
 					type: "string",
-					kind: "leaf",
+					_kind: "leaf",
 				},
 			},
 			anyOf: [
@@ -179,7 +179,7 @@ describe.only("simpleSchemaToJsonSchema", () => {
 			definitions: {
 				"test.object": {
 					type: "object",
-					kind: "object",
+					_kind: "object",
 					properties: {
 						foo: {
 							anyOf: [{ $ref: "#/definitions/test.number" }],
@@ -193,11 +193,11 @@ describe.only("simpleSchemaToJsonSchema", () => {
 				},
 				"test.number": {
 					type: "number",
-					kind: "leaf",
+					_kind: "leaf",
 				},
 				"test.string": {
 					type: "string",
-					kind: "leaf",
+					_kind: "leaf",
 				},
 			},
 			anyOf: [
@@ -269,7 +269,7 @@ describe.only("simpleSchemaToJsonSchema", () => {
 			definitions: {
 				"test.recursive-object": {
 					type: "object",
-					kind: "object",
+					_kind: "object",
 					properties: {
 						foo: {
 							anyOf: [
@@ -283,7 +283,7 @@ describe.only("simpleSchemaToJsonSchema", () => {
 				},
 				"test.string": {
 					type: "string",
-					kind: "leaf",
+					_kind: "leaf",
 				},
 			},
 			anyOf: [

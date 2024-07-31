@@ -20,7 +20,7 @@ describe.only("getJsonSchema", () => {
 			definitions: {
 				"com.fluidframework.leaf.string": {
 					type: "string",
-					kind: "leaf",
+					_kind: "leaf",
 				},
 			},
 			anyOf: [
@@ -51,14 +51,14 @@ describe.only("getJsonSchema", () => {
 			definitions: {
 				"test.array": {
 					type: "array",
-					kind: "array",
+					_kind: "array",
 					items: {
 						anyOf: [{ $ref: "#/definitions/com.fluidframework.leaf.string" }],
 					},
 				},
 				"com.fluidframework.leaf.string": {
 					type: "string",
-					kind: "leaf",
+					_kind: "leaf",
 				},
 			},
 			anyOf: [
@@ -158,7 +158,7 @@ describe.only("getJsonSchema", () => {
 			definitions: {
 				"test.object": {
 					type: "object",
-					kind: "object",
+					_kind: "object",
 					properties: {
 						foo: {
 							anyOf: [{ $ref: "#/definitions/com.fluidframework.leaf.number" }],
@@ -172,11 +172,11 @@ describe.only("getJsonSchema", () => {
 				},
 				"com.fluidframework.leaf.number": {
 					type: "number",
-					kind: "leaf",
+					_kind: "leaf",
 				},
 				"com.fluidframework.leaf.string": {
 					type: "string",
-					kind: "leaf",
+					_kind: "leaf",
 				},
 			},
 			anyOf: [
@@ -244,7 +244,7 @@ describe.only("getJsonSchema", () => {
 			definitions: {
 				"test.object": {
 					type: "object",
-					kind: "object",
+					_kind: "object",
 					properties: {
 						id: {
 							anyOf: [{ $ref: "#/definitions/com.fluidframework.leaf.string" }],
@@ -255,7 +255,7 @@ describe.only("getJsonSchema", () => {
 				},
 				"com.fluidframework.leaf.string": {
 					type: "string",
-					kind: "leaf",
+					_kind: "leaf",
 				},
 			},
 			anyOf: [
@@ -279,7 +279,7 @@ describe.only("getJsonSchema", () => {
 			definitions: {
 				"test.recursive-object": {
 					type: "object",
-					kind: "object",
+					_kind: "object",
 					properties: {
 						foo: {
 							anyOf: [
@@ -293,7 +293,7 @@ describe.only("getJsonSchema", () => {
 				},
 				"com.fluidframework.leaf.string": {
 					type: "string",
-					kind: "leaf",
+					_kind: "leaf",
 				},
 			},
 			anyOf: [

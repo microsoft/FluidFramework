@@ -130,5 +130,5 @@ export interface SimpleTreeSchema {
 	 * @remarks Refers to the types by identifier.
 	 * {@link SimpleTreeSchema.definitions} can be used to resolve these identifiers to their associated schema definition.
 	 */
-		readonly allowedTypes: ReadonlySet<string>;
+	readonly allowedTypes: ReadonlySet<string>;
 }

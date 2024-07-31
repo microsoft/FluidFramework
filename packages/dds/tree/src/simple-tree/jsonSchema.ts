@@ -52,9 +52,9 @@ export interface NodeJsonSchemaBase<
 	 * @remarks There is not a 1:1 mapping between {@link TreeNodeSchema} types and JSON Schema types.
 	 * This is used to disambiguate the type of {@link TreeNodeSchema} this JSON Schema maps to.
 	 *
-	 * @privateRemarks TODO: represent this differently to ensure no conflict with actual JSON schema
+	 * Note: This property name is not a part of the JSON Schema spec. This is a Fluid-specific extension.
 	 */
-	readonly kind: TNodeKind;
+	readonly _kind: TNodeKind;
 
 	/**
 	 * {@inheritDoc JsonSchemaType}

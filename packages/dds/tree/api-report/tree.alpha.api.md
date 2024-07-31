@@ -280,7 +280,7 @@ export type NodeJsonSchema = LeafNodeJsonSchema | MapNodeJsonSchema | ArrayNodeJ
 
 // @alpha
 export interface NodeJsonSchemaBase<TNodeKind extends SimpleNodeSchemaKind, TJsonSchemaType extends JsonSchemaType> {
-    readonly kind: TNodeKind;
+    readonly _kind: TNodeKind;
     readonly type: TJsonSchemaType;
 }
 

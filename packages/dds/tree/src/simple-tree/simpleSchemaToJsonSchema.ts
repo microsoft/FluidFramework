@@ -72,7 +72,7 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): ArrayNodeJsonSch
 	});
 	return {
 		type: "array",
-		kind: "array",
+		_kind: "array",
 		items: {
 			anyOf: allowedTypes,
 		},
@@ -86,7 +86,7 @@ function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): LeafNodeJsonSchema
 
 	return {
 		type: schema.type,
-		kind: "leaf",
+		_kind: "leaf",
 	};
 }
 
@@ -108,7 +108,7 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): ObjectNodeJson
 	}
 	return {
 		type: "object",
-		kind: "object",
+		_kind: "object",
 		properties,
 		required,
 		additionalProperties: false, // TODO: get allowance from schema policy
