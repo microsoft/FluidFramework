@@ -219,7 +219,15 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 	const output = new MarkListFactory();
 
 	for (const mark of change) {
-		output.push(normalizeMark(mark));
+		let nextMark: SF.Mark | undefined = mark;
+		while (nextMark !== undefined) {
+			let currMark: SF.Mark = nextMark;
+			nextMark = undefined;
+			if (currMark.count > 1) {
+				[currMark, nextMark] = splitMark(currMark, 1);
+			}
+			output.push(normalizeMark(currMark));
+		}
 	}
 	return output.list;
 }
