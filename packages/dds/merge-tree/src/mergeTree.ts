@@ -197,7 +197,7 @@ export interface IMergeTreeOptions {
 	 *
 	 * Obliterate is currently experimental and may not work in all scenarios.
 	 *
-	 * Default value: false
+	 * @defaultValue `false`
 	 */
 	mergeTreeEnableObliterateReconnect?: boolean;
 }
