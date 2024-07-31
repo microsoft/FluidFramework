@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/version-tools",
-	"version": "0.42.0",
+	"version": "0.43.0",
 	"description": "Versioning tools for Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -77,11 +77,11 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@oclif/core": "^4.0.13",
+		"@oclif/core": "^4.0.14",
 		"@oclif/plugin-autocomplete": "^3.1.9",
-		"@oclif/plugin-commands": "^4.0.8",
-		"@oclif/plugin-help": "^6.2.6",
-		"@oclif/plugin-not-found": "^3.2.12",
+		"@oclif/plugin-commands": "^4.0.9",
+		"@oclif/plugin-help": "^6.2.7",
+		"@oclif/plugin-not-found": "^3.2.13",
 		"chalk": "^2.4.2",
 		"semver": "^7.5.4",
 		"table": "^6.8.1"
@@ -103,7 +103,7 @@
 		"eslint-config-oclif-typescript": "^3.1.8",
 		"eslint-config-prettier": "~9.1.0",
 		"moment": "^2.29.4",
-		"oclif": "^4.14.8",
+		"oclif": "^4.14.9",
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.1",
 		"tslib": "^2.6.0",

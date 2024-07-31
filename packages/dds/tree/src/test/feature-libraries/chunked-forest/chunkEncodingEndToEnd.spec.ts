@@ -51,13 +51,14 @@ import {
 import {
 	MockTreeCheckout,
 	checkoutWithContent,
+	cursorFromUnhydratedRoot,
 	flexTreeViewWithContent,
 	numberSequenceRootSchema,
 	testIdCompressor,
 } from "../../utils.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { cursorFromUnhydratedRoot, toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
+import { toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
@@ -157,7 +158,7 @@ describe("End to end chunked encoding", () => {
 		// Check that inserted change contains chunk which is reference equal to the original chunk.
 		const insertedChange = changeLog[0];
 		assert(insertedChange.builds !== undefined);
-		const insertedChunk = insertedChange.builds.get(undefined)?.get(0 as ChangesetLocalId);
+		const insertedChunk = insertedChange.builds.get([undefined, 0 as ChangesetLocalId]);
 		assert.equal(insertedChunk, chunk);
 		assert(chunk.isShared());
 	});

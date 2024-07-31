@@ -189,10 +189,22 @@ describe("schemaFactory", () => {
 			x: factory.required(factory.number),
 		}) {}
 
-		// @ts-expect-error Missing required field
-		const _check1 = new Foo({});
-		// @ts-expect-error Required field cannot be undefined
-		const _check2 = new Foo({ x: undefined });
+		assert.throws(
+			() => {
+				// @ts-expect-error Missing required field
+				const _check1 = new Foo({});
+			},
+			validateUsageError(/incompatible/),
+		);
+
+		assert.throws(
+			() => {
+				// @ts-expect-error Required field cannot be undefined
+				const _check2 = new Foo({ x: undefined });
+			},
+			validateUsageError(/incompatible/),
+		);
+
 		const _check3 = new Foo({ x: 1 });
 	});
 

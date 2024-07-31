@@ -6,8 +6,11 @@
 import { strict } from "assert";
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 
 import {
+	type ChangeAtomId,
+	type ChangeAtomIdMap,
 	type ChangesetLocalId,
 	type DeltaFieldChanges,
 	type RevisionInfo,
@@ -46,17 +49,20 @@ import {
 import {
 	areInputCellsEmpty,
 	cloneMark,
+	extractMarkEffect,
 	getInputLength,
 	isActiveReattach,
 	isDetach,
 	isNewAttach,
 	isTombstone,
 	markEmptiesCells,
+	omitMarkEffect,
 	splitMark,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils.js";
 import {
 	type IdAllocator,
+	type Mutable,
 	type RangeMap,
 	brand,
 	fail,
@@ -64,9 +70,12 @@ import {
 	getFromRangeMap,
 	getOrAddEmptyToMap,
 	idAllocatorFromMaxId,
+	setInNestedMap,
+	tryGetFromNestedMap,
 } from "../../../util/index.js";
 import {
 	assertFieldChangesEqual,
+	assertIsSessionId,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 } from "../../utils.js";
@@ -74,16 +83,154 @@ import {
 import { ChangesetWrapper } from "../../changesetWrapper.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+import {
+	type MarkEffect,
+	NoopMarkType,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/sequence-field/types.js";
 
 export function assertWrappedChangesetsEqual(
 	actual: WrappedChange,
 	expected: WrappedChange,
+	ignoreMoveIds: boolean = false,
 ): void {
-	ChangesetWrapper.assertEqual(actual, expected, assertChangesetsEqual);
+	ChangesetWrapper.assertEqual(actual, expected, (lhs, rhs) =>
+		assertChangesetsEqual(lhs, rhs, ignoreMoveIds),
+	);
 }
 
-export function assertChangesetsEqual(actual: SF.Changeset, expected: SF.Changeset): void {
-	strict.deepEqual(actual, expected);
+export function assertChangesetsEqual(
+	actual: SF.Changeset,
+	expected: SF.Changeset,
+	ignoreMoveIds: boolean = false,
+): void {
+	if (ignoreMoveIds) {
+		const normalizedActual = normalizeMoveIds(actual);
+		const normalizedExpected = normalizeMoveIds(expected);
+		strict.deepEqual(normalizedActual, normalizedExpected);
+	} else {
+		strict.deepEqual(actual, expected);
+	}
+}
+
+function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
+	const idAllocator = idAllocatorFromMaxId();
+	const revisionAllocator = createAlwaysFinalizedIdCompressor(
+		assertIsSessionId("00000000-0000-4000-b000-000000000000"),
+	);
+	const normalRevision = revisionAllocator.generateCompressedId();
+
+	// We have to keep the normalization of sources and destinations separate because we want to be able to normalize
+	// [{ MoveOut self: foo }, { MoveOut self: foo }]
+	// in a way that is equivalent to normalizing
+	// [{ MoveOut self: foo, finalEndpoint: bar }, { MoveOut self: bar, finalEndpoint: foo }]
+	// Doing so requires that we differentiate when a move ID is referring to a source endpoint,
+	// from when it is referring to a destination endpoint.
+	const normalSrcAtoms: ChangeAtomIdMap<ChangeAtomId> = new Map();
+	const normalDstAtoms: ChangeAtomIdMap<ChangeAtomId> = new Map();
+
+	function normalizeAtom(atom: ChangeAtomId, target: CrossFieldTarget): ChangeAtomId {
+		const normalAtoms = target === CrossFieldTarget.Source ? normalSrcAtoms : normalDstAtoms;
+		const normal = tryGetFromNestedMap(normalAtoms, atom.revision, atom.localId);
+		if (normal === undefined) {
+			const newId: ChangesetLocalId = brand(idAllocator.allocate());
+			const newAtom: ChangeAtomId = { revision: normalRevision, localId: newId };
+			setInNestedMap(normalAtoms, atom.revision, atom.localId, newAtom);
+			return newAtom;
+		}
+		return normal;
+	}
+
+	function normalizeMark(mark: SF.Mark): SF.Mark {
+		const effect = extractMarkEffect(mark);
+		const nonEffect = omitMarkEffect(mark);
+		return {
+			...nonEffect,
+			...normalizeEffect(effect),
+		};
+	}
+
+	function normalizeEffect<TEffect extends MarkEffect>(effect: TEffect): TEffect {
+		switch (effect.type) {
+			case "Rename":
+			case NoopMarkType:
+				return effect;
+			case "AttachAndDetach": {
+				return {
+					...effect,
+					attach: normalizeEffect(effect.attach),
+					detach: normalizeEffect(effect.detach),
+				};
+			}
+			case "Insert": {
+				const atom = normalizeAtom(
+					{ revision: effect.revision, localId: effect.id },
+					CrossFieldTarget.Source,
+				);
+				return {
+					...effect,
+					id: atom.localId,
+					revision: atom.revision,
+				};
+			}
+			case "MoveIn": {
+				const effectId = { revision: effect.revision, localId: effect.id };
+				const atom = normalizeAtom(effectId, CrossFieldTarget.Source);
+				const normalized: Mutable<SF.MoveIn> = { ...effect };
+				normalized.finalEndpoint =
+					normalized.finalEndpoint !== undefined
+						? normalizeAtom(normalized.finalEndpoint, CrossFieldTarget.Destination)
+						: normalizeAtom(effectId, CrossFieldTarget.Destination);
+				normalized.id = atom.localId;
+				normalized.revision = atom.revision;
+				return normalized as TEffect;
+			}
+			case "MoveOut": {
+				const effectId = { revision: effect.revision, localId: effect.id };
+				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
+				const normalized: Mutable<SF.MoveOut> = { ...effect };
+				if (normalized.idOverride === undefined) {
+					// Use the idOverride so we don't normalize the output cell ID
+					normalized.idOverride = effectId;
+				}
+				normalized.finalEndpoint =
+					normalized.finalEndpoint !== undefined
+						? normalizeAtom(normalized.finalEndpoint, CrossFieldTarget.Source)
+						: normalizeAtom(effectId, CrossFieldTarget.Source);
+				normalized.id = atom.localId;
+				normalized.revision = atom.revision;
+				return normalized as TEffect;
+			}
+			case "Remove": {
+				const effectId = { revision: effect.revision, localId: effect.id };
+				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
+				const normalized: Mutable<SF.Remove> = { ...effect };
+				if (normalized.idOverride === undefined) {
+					// Use the idOverride so we don't normalize the output cell ID
+					normalized.idOverride = effectId;
+				}
+				normalized.id = atom.localId;
+				normalized.revision = atom.revision;
+				return normalized as TEffect;
+			}
+			default:
+				fail(`Unexpected mark type: ${(effect as SF.Mark).type}`);
+		}
+	}
+	const output = new MarkListFactory();
+
+	for (const mark of change) {
+		let nextMark: SF.Mark | undefined = mark;
+		while (nextMark !== undefined) {
+			let currMark: SF.Mark = nextMark;
+			nextMark = undefined;
+			if (currMark.count > 1) {
+				[currMark, nextMark] = splitMark(currMark, 1);
+			}
+			output.push(normalizeMark(currMark));
+		}
+	}
+	return output.list;
 }
 
 export function composeDeep(
@@ -340,6 +487,12 @@ export function checkDeltaEquality(actual: SF.Changeset, expected: SF.Changeset)
 export function toDelta(change: SF.Changeset): DeltaFieldChanges {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(change, TestNodeId.deltaFromChild);
+}
+
+export function toDeltaWrapped(change: WrappedChange) {
+	return ChangesetWrapper.toDelta(change, (c, deltaFromChild) =>
+		SF.sequenceFieldToDelta(c, deltaFromChild),
+	);
 }
 
 export function getMaxId(...changes: SF.Changeset[]): ChangesetLocalId | undefined {

@@ -95,7 +95,7 @@ describe("filterPackages", async () => {
 	});
 
 	it("multiple scopes", async () => {
-		const packages = await getBuildToolsPackages();
+		const packages = await getClientPackages();
 		const filters: PackageFilterOptions = {
 			private: undefined,
 			scope: ["@fluidframework", "@fluid-private"],

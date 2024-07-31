@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
+	type ITelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -85,6 +86,8 @@ import {
 	type AnchorNode,
 	type AnchorSetRootEvents,
 	type TreeStoredSchemaSubscription,
+	type SchemaAndPolicy,
+	type ITreeCursorSynchronous,
 } from "../core/index.js";
 import {
 	cursorToJsonObject,
@@ -145,8 +148,12 @@ import {
 import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import {
 	type ImplicitFieldSchema,
-	type TreeViewConfiguration,
+	type InsertableContent,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	TreeViewConfiguration,
+	normalizeFieldSchema,
 	SchemaFactory,
+	toFlexSchema,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -157,6 +164,8 @@ import {
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
+// eslint-disable-next-line import/no-internal-modules
+import { cursorFromNodeData } from "../simple-tree/toMapTree.js";
 
 // Testing utilities
 
@@ -1260,6 +1269,7 @@ export function treeTestFactory(
 export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
+	logger?: ITelemetryLoggerExt,
 ): SchematizingSimpleTreeView<TSchema> {
 	const checkout = createTreeCheckout(
 		testIdCompressor,
@@ -1268,6 +1278,7 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 		{
 			forest: buildForest(),
 			schema: new TreeStoredSchemaRepository(),
+			logger,
 		},
 	);
 	return new SchematizingSimpleTreeView<TSchema>(
@@ -1275,6 +1286,40 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 		config,
 		nodeKeyManager ?? new MockNodeKeyManager(),
 	);
+}
+
+/**
+ * Views the supplied checkout with the given schema.
+ */
+export function viewCheckout<TSchema extends ImplicitFieldSchema>(
+	checkout: ITreeCheckout,
+	config: TreeViewConfiguration<TSchema>,
+): SchematizingSimpleTreeView<TSchema> {
+	return new SchematizingSimpleTreeView<TSchema>(checkout, config, new MockNodeKeyManager());
+}
+
+/**
+ * Forks a simple tree view.
+ */
+export function forkView<T extends ImplicitFieldSchema>(
+	viewToFork: SchematizingSimpleTreeView<T>,
+): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
+export function forkView<TIn extends ImplicitFieldSchema, TOut extends ImplicitFieldSchema>(
+	viewToFork: SchematizingSimpleTreeView<TIn>,
+	schema?: TOut,
+): SchematizingSimpleTreeView<TOut> & { checkout: ITreeCheckoutFork };
+export function forkView<T extends ImplicitFieldSchema>(
+	viewToFork: SchematizingSimpleTreeView<T>,
+	schema?: T,
+): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork } {
+	return new SchematizingSimpleTreeView<T>(
+		viewToFork.checkout.fork(),
+		new TreeViewConfiguration({
+			enableSchemaValidation: viewToFork.config.enableSchemaValidation,
+			schema: schema ?? viewToFork.config.schema,
+		}),
+		new MockNodeKeyManager(),
+	) as SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
 }
 
 /**
@@ -1342,4 +1387,36 @@ export function validateUsageError(expectedErrorMsg: string | RegExp): (error: E
 		}
 		return true;
 	};
+}
+
+/**
+ * Returns a cursor (in nodes mode) for the root node.
+ *
+ * @privateRemarks
+ * Ideally this would work on any node, not just the root,
+ * and the schema would come from the unhydrated node.
+ * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
+ */
+export function cursorFromUnhydratedRoot(
+	schema: ImplicitFieldSchema,
+	tree: InsertableTreeNodeFromImplicitAllowedTypes,
+	nodeKeyManager: NodeKeyManager,
+): ITreeCursorSynchronous {
+	const data = tree as InsertableContent;
+	const normalizedFieldSchema = normalizeFieldSchema(schema);
+
+	const flexSchema = toFlexSchema(normalizedFieldSchema);
+	const storedSchema: SchemaAndPolicy = {
+		policy: defaultSchemaPolicy,
+		schema: intoStoredSchema(flexSchema),
+	};
+
+	return (
+		cursorFromNodeData(
+			data,
+			normalizedFieldSchema.allowedTypes,
+			nodeKeyManager,
+			storedSchema,
+		) ?? assert.fail("failed to decode tree")
+	);
 }

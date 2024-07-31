@@ -103,6 +103,12 @@ describe("detectVersionScheme", () => {
 		assert.strictEqual(detectVersionScheme(input), expected);
 	});
 
+	it("detects 2.1.0-281035-test is semver", () => {
+		const input = `2.1.0-281035-test`;
+		const expected = "semver";
+		assert.strictEqual(detectVersionScheme(input), expected);
+	});
+
 	it("detects 2.4.3 is semver", () => {
 		const input = `2.4.3`;
 		const expected = "semver";
