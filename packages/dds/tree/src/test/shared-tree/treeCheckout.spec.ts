@@ -11,8 +11,6 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import {
 	type FieldUpPath,
 	type Revertible,
-	type TreeValue,
-	type Value,
 	moveToDetachedField,
 	rootFieldKey,
 	RevertibleStatus,
@@ -20,7 +18,6 @@ import {
 } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
 import {
-	type ContextuallyTypedNodeData,
 	FieldKinds,
 	cursorForJsonableTreeField,
 	intoStoredSchema,
@@ -34,9 +31,9 @@ import {
 import {
 	TestTreeProviderLite,
 	createTestUndoRedoStacks,
+	expectSchemaEqual,
 	forkView,
 	getView,
-	insert,
 	jsonSequenceRootSchema,
 	numberSequenceRootSchema,
 	stringSequenceRootSchema,
@@ -146,6 +143,10 @@ describe("sharedTreeView", () => {
 		});
 
 		describe("commitApplied", () => {
+			const sf1 = new SchemaFactory("commit applied schema");
+			const mixedSchema = sf1.optional([sf1.string, sf1.number]);
+			const stringSchema = sf1.optional([sf1.string]);
+
 			it("is fired for data and schema changes", () => {
 				const provider = new TestTreeProviderLite(1);
 				const checkout = provider.trees[0].checkout;
@@ -157,17 +158,17 @@ describe("sharedTreeView", () => {
 
 				assert.equal(log.length, 0);
 
-				checkout.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+				checkout.updateSchema(intoStoredSchema(toFlexSchema(mixedSchema)));
 
 				assert.equal(log.length, 1);
 
 				checkout.editor
-					.sequenceField(rootField)
-					.insert(0, cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]));
+					.optionalField(rootField)
+					.set(cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]), true);
 
 				assert.equal(log.length, 2);
 
-				checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+				checkout.updateSchema(intoStoredSchema(toFlexSchema(stringSchema)));
 
 				assert.equal(log.length, 3);
 				unsubscribe();
@@ -184,11 +185,11 @@ describe("sharedTreeView", () => {
 
 				assert.deepEqual(log, []);
 
-				checkout.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+				checkout.updateSchema(intoStoredSchema(toFlexSchema(mixedSchema)));
 				checkout.editor
-					.sequenceField(rootField)
-					.insert(0, cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]));
-				checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+					.optionalField(rootField)
+					.set(cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]), true);
+				checkout.updateSchema(intoStoredSchema(toFlexSchema(stringSchema)));
 
 				assert.deepEqual(log, ["not-revertible", "revertible", "not-revertible"]);
 				unsubscribe();
@@ -702,10 +703,15 @@ describe("sharedTreeView", () => {
 
 	it("schema edits do not cause clients to purge detached trees or revertibles", () => {
 		const provider = new TestTreeProviderLite(2);
-		const checkout1 = provider.trees[0].checkout;
-		const checkout2 = provider.trees[1].checkout;
+		const tree1 = provider.trees[0];
+		const tree2 = provider.trees[1];
+		const checkout1 = tree1.checkout;
+		const checkout2 = tree2.checkout;
 
-		checkout1.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+		const sf1 = new SchemaFactory("schema1");
+		const schema1 = sf1.array([sf1.string, sf1.number]);
+		const storedSchema1 = intoStoredSchema(toFlexSchema(schema1));
+		checkout1.updateSchema(storedSchema1);
 		checkout1.editor.sequenceField(rootField).insert(
 			0,
 			cursorForJsonableTreeField([
@@ -730,12 +736,10 @@ describe("sharedTreeView", () => {
 		checkout2Revertibles.undoStack.pop()?.revert(); // Restore 2
 		provider.processMessages();
 
-		const expectedContent = {
-			schema: jsonSequenceRootSchema,
-			initialTree: [1, 2],
-		};
-		validateTreeContent(checkout1, expectedContent);
-		validateTreeContent(checkout2, expectedContent);
+		expectSchemaEqual(storedSchema1, checkout1.storedSchema);
+		expectSchemaEqual(storedSchema1, checkout2.storedSchema);
+		assert.deepEqual(tree1.viewWith({ schema: schema1, enableSchemaValidation }).root, [1, 2]);
+		assert.deepEqual(tree2.viewWith({ schema: schema1, enableSchemaValidation }).root, [1, 2]);
 
 		assert.equal(checkout1Revertibles.undoStack.length, 1);
 		assert.equal(checkout1Revertibles.redoStack.length, 1);
@@ -745,7 +749,8 @@ describe("sharedTreeView", () => {
 		assert.equal(checkout2Revertibles.redoStack.length, 1);
 		assert.equal(checkout2.getRemovedRoots().length, 2);
 
-		checkout1.updateSchema(intoStoredSchema(numberSequenceRootSchema));
+		const sf2 = new SchemaFactory("schema2");
+		checkout1.updateSchema(intoStoredSchema(toFlexSchema(sf2.array(sf1.number))));
 
 		// The undo stack contains the removal of A but not the schema change
 		assert.equal(checkout1Revertibles.undoStack.length, 1);
