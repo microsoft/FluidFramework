@@ -31,7 +31,12 @@ import type { NodeFromSchema } from "./schemaTypes.js";
 import { getSimpleNodeSchema } from "./schemaCaching.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
 
-type SimpleTreeIndex<TKey extends TreeValue, TSchema extends ObjectNodeSchema[] = ObjectNodeSchema[]> = AnchorTreeIndex<TKey, NodeFromSchema<ObjectNodeSchema>> | AnchorTreeIndex<TKey, NodeFromSchema<TSchema[number]>>;
+type SimpleTreeIndex<
+	TKey extends TreeValue,
+	TSchema extends ObjectNodeSchema[] = ObjectNodeSchema[],
+> =
+	| AnchorTreeIndex<TKey, NodeFromSchema<ObjectNodeSchema>>
+	| AnchorTreeIndex<TKey, NodeFromSchema<TSchema[number]>>;
 
 export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
 	context: FlexTreeContext,
