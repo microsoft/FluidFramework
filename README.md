@@ -35,6 +35,25 @@ If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), 
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
+## Release Timeline
+
+```mermaid
+gantt
+    title Fluid Framework Release Support Schedule
+    dateFormat YYYY-MM-DD
+    axisFormat %b %Y
+    tickInterval 6month
+    section Section
+        1.x LTS Current        :done, 2022-06-08, 2024-06-26
+        1.x LTS Maintenance    :active, 2024-06-26, 3y
+        2.x LTS Current        :active, 2024-06-26, 2025-06-26
+        2.x LTS Maintenance    :2025-06-26, 3y
+        3.x LTS Current        :2025-06-26, 1y
+```
+
+The date as which 3.0 is released, and 2.x transitions to maintenance is not currently planned, and is only included as a possible example.
+The 2.x release will get maintenance for 3 years after 2.0 is released.
+
 ## Code structure
 
 The core code for both the Fluid client packages _and_ the reference ordering service is contained within this repo.
