@@ -60,7 +60,7 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
     readonly kind: Kind;
     readonly props?: FieldProps | undefined;
     readonly requiresValue: boolean;
-    protected _typeCheck?: MakeNominal;
+    protected _typeCheck: MakeNominal;
 }
 
 // @public
@@ -183,11 +183,11 @@ export interface ITree extends IFluidLoadable {
 // @public
 export interface ITreeConfigurationOptions {
     enableSchemaValidation?: boolean;
+    readonly preventAmbiguity?: boolean;
 }
 
 // @public
-export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-    readonly enableSchemaValidation?: boolean;
+export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeConfigurationOptions {
     readonly schema: TSchema;
 }
 
@@ -497,7 +497,10 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> implements Required<ITreeViewConfiguration<TSchema>> {
     constructor(props: ITreeViewConfiguration<TSchema>);
     readonly enableSchemaValidation: boolean;
+    readonly preventAmbiguity: boolean;
     readonly schema: TSchema;
+    // (undocumented)
+    protected _typeCheck: MakeNominal;
 }
 
 // @public @sealed
