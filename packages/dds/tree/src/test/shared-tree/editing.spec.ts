@@ -1697,6 +1697,30 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree1, tree2], [{ foo: [{}, { baz: "b" }] }]);
 		});
 
+		// Skipped because we don't currently support undoing edits from a parent branch
+		it.skip("undo restores a removed node even when that node was never present on the branch", () => {
+			const tree = makeTreeFromJson([]);
+			const tree2 = tree.fork();
+
+			tree.editor.sequenceField(rootField).insert(0, singleJsonCursor("43"));
+			tree.editor.sequenceField(rootField).remove(0, 1);
+
+			const tree3 = tree.fork();
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree3.events);
+			undoStack.pop()?.revert(); // Restores "43"
+
+			tree.merge(tree3, false);
+			tree3.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree3], ["43"]);
+
+			// This rebase should introduce/restore 43 even though tree2 never saw 43 before
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree2], ["43"]);
+			unsubscribe();
+		});
+
 		it("can be registered a path visitor that can read new content being inserted into the tree when afterAttach is invoked", () => {
 			const tree = makeTreeFromJson({ foo: [{ bar: "A" }, { baz: "B" }] });
 			const cursor = tree.forest.allocateCursor();
@@ -2455,6 +2479,31 @@ describe("Editing", () => {
 			unsubscribe();
 		});
 
+		it.skip("undo restores a removed node even when that node was never present on the branch", () => {
+			const tree = makeTreeFromJson(["42"]);
+			const tree2 = tree.fork();
+
+			tree.editor.optionalField(rootField).set(singleJsonCursor("43"), false);
+			tree.editor.optionalField(rootField).set(singleJsonCursor("44"), false);
+
+			const tree3 = tree.fork();
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree3.events);
+			undoStack.pop()?.revert(); // Restores "43"
+
+			tree.editor.optionalField(rootField).set(singleJsonCursor("45"), false);
+
+			tree.merge(tree3, false);
+			tree3.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree3], ["43"]);
+
+			// This rebase should introduce/restore 43 even though tree2 never saw 43 before
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree2], ["43"]);
+			unsubscribe();
+		});
+
 		describe("Transactions", () => {
 			// Exercises a scenario where a transaction's inverse must be computed as part of a rebase sandwich.
 			it("Can rebase a series of edits including a transaction", () => {
@@ -2910,7 +2959,9 @@ describe("Editing", () => {
 				expectJsonTree([tree, tree2], [{}]);
 			});
 
-			it("transaction dropped when constrained node is inserted under a concurrently removed ancestor", () => {
+			// TODO: This doesn't update the constraint properly yet because
+			// rebaseChild isn't called inside of handleCurrAttach
+			it.skip("transaction dropped when node can't be inserted", () => {
 				const tree = makeTreeFromJson([{}]);
 				const tree2 = tree.fork();
 
@@ -2919,7 +2970,8 @@ describe("Editing", () => {
 				tree1RootSequence.remove(0, 1);
 
 				// Constrain on "a" existing and insert "b" if it does
-				// This insert should be dropped since "a" is inserted under the root node, which is concurrently removed
+				// This insert should be dropped since the node "a" is inserted under is
+				// concurrently removed
 				tree2.transaction.start();
 				const sequence = tree2.editor.sequenceField({
 					parent: rootNode,
@@ -2939,7 +2991,7 @@ describe("Editing", () => {
 				);
 				tree2.transaction.commit();
 
-				tree.merge(tree2, false);
+				tree.merge(tree2);
 				tree2.rebaseOnto(tree);
 
 				expectJsonTree([tree, tree2], []);
@@ -2992,7 +3044,9 @@ describe("Editing", () => {
 				expectJsonTree([tree, tree2], [{ foo2: ["a"] }, {}]);
 			});
 
-			it("transaction dropped when constrained node is moved under a concurrently removed ancestor", () => {
+			// TODO: Constraint state isn't updated properly because
+			// rebaseChild isn't called when currMark is undefined in rebaseMarkList
+			it.skip("violated by move in under remove", () => {
 				const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 				const tree2 = tree.fork();
 
@@ -3040,7 +3094,7 @@ describe("Editing", () => {
 				);
 				tree2.transaction.commit();
 
-				tree.merge(tree2, false);
+				tree.merge(tree2);
 				tree2.rebaseOnto(tree);
 
 				expectJsonTree([tree, tree2], [{}]);

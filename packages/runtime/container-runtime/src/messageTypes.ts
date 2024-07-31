@@ -223,14 +223,10 @@ export type InboundSequencedContainerRuntimeMessage = Omit<
  * There should never be a runtime value of "__not_a_...".
  * Currently additionally replaces `contents` type until protocol-definitions update is taken with `unknown` instead of `any`.
  */
-type InboundSequencedNonContainerRuntimeMessage = Omit<
+export type InboundSequencedNonContainerRuntimeMessage = Omit<
 	ISequencedDocumentMessage,
 	"type" | "contents"
 > & { type: "__not_a_container_runtime_message_type__"; contents: unknown };
-
-export type InboundSequencedContainerRuntimeMessageOrSystemMessage =
-	| InboundSequencedContainerRuntimeMessage
-	| InboundSequencedNonContainerRuntimeMessage;
 
 /** A [loose] InboundSequencedContainerRuntimeMessage that is recent and may contain compat details.
  * It exists solely to to provide access to those details.
