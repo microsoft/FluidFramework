@@ -38,6 +38,7 @@ import {
 	numberSequenceRootSchema,
 	stringSequenceRootSchema,
 	validateTreeContent,
+	viewCheckout,
 } from "../utils.js";
 import { disposeSymbol, fail } from "../../util/index.js";
 import {
@@ -702,67 +703,59 @@ describe("sharedTreeView", () => {
 	});
 
 	it("schema edits do not cause clients to purge detached trees or revertibles", () => {
-		const provider = new TestTreeProviderLite(2);
-		const tree1 = provider.trees[0];
-		const tree2 = provider.trees[1];
-		const checkout1 = tree1.checkout;
-		const checkout2 = tree2.checkout;
-
 		const sf1 = new SchemaFactory("schema1");
 		const schema1 = sf1.array([sf1.string, sf1.number]);
+
+		const provider = new TestTreeProviderLite(2);
+		const view1 = provider.trees[0].viewWith({ schema: schema1, enableSchemaValidation });
+		const view2 = provider.trees[1].viewWith({ schema: schema1, enableSchemaValidation });
+
+		view1.initialize(["A", 1, "B", 2]);
 		const storedSchema1 = intoStoredSchema(toFlexSchema(schema1));
-		checkout1.updateSchema(storedSchema1);
-		checkout1.editor.sequenceField(rootField).insert(
-			0,
-			cursorForJsonableTreeField([
-				{ type: leaf.string.name, value: "A" },
-				{ type: leaf.number.name, value: 1 },
-				{ type: leaf.string.name, value: "B" },
-				{ type: leaf.number.name, value: 2 },
-			]),
-		);
-
 		provider.processMessages();
-		const checkout1Revertibles = createTestUndoRedoStacks(checkout1.events);
 
-		checkout1.editor.sequenceField(rootField).remove(0, 1); // Remove "A"
-		checkout1.editor.sequenceField(rootField).remove(0, 1); // Remove 1
+		const checkout1Revertibles = createTestUndoRedoStacks(view1.checkout.events);
+
+		view1.root.removeAt(0); // Remove "A"
+		view1.root.removeAt(0); // Remove 1
 		checkout1Revertibles.undoStack.pop()?.revert(); // Restore 1
 		provider.processMessages();
 
-		const checkout2Revertibles = createTestUndoRedoStacks(checkout2.events);
-		checkout2.editor.sequenceField(rootField).remove(1, 1); // Remove "B"
-		checkout2.editor.sequenceField(rootField).remove(1, 1); // Remove 2
+		const checkout2Revertibles = createTestUndoRedoStacks(view2.checkout.events);
+		view2.root.removeAt(1); // Remove "B"
+		view2.root.removeAt(1); // Remove 2
 		checkout2Revertibles.undoStack.pop()?.revert(); // Restore 2
 		provider.processMessages();
 
-		expectSchemaEqual(storedSchema1, checkout1.storedSchema);
-		expectSchemaEqual(storedSchema1, checkout2.storedSchema);
-		assert.deepEqual(tree1.viewWith({ schema: schema1, enableSchemaValidation }).root, [1, 2]);
-		assert.deepEqual(tree2.viewWith({ schema: schema1, enableSchemaValidation }).root, [1, 2]);
+		expectSchemaEqual(storedSchema1, view1.checkout.storedSchema);
+		expectSchemaEqual(storedSchema1, view2.checkout.storedSchema);
+		assert.deepEqual(view1.root, [1, 2]);
+		assert.deepEqual(view2.root, [1, 2]);
 
 		assert.equal(checkout1Revertibles.undoStack.length, 1);
 		assert.equal(checkout1Revertibles.redoStack.length, 1);
-		assert.equal(checkout1.getRemovedRoots().length, 2);
+		assert.equal(view1.checkout.getRemovedRoots().length, 2);
 
 		assert.equal(checkout2Revertibles.undoStack.length, 1);
 		assert.equal(checkout2Revertibles.redoStack.length, 1);
-		assert.equal(checkout2.getRemovedRoots().length, 2);
+		assert.equal(view2.checkout.getRemovedRoots().length, 2);
 
 		const sf2 = new SchemaFactory("schema2");
-		checkout1.updateSchema(intoStoredSchema(toFlexSchema(sf2.array(sf1.number))));
+		provider.trees[0].checkout.updateSchema(
+			intoStoredSchema(toFlexSchema(sf2.array(sf1.number))),
+		);
 
 		// The undo stack contains the removal of A but not the schema change
 		assert.equal(checkout1Revertibles.undoStack.length, 1);
 		assert.equal(checkout1Revertibles.redoStack.length, 1);
-		assert.deepEqual(checkout1.getRemovedRoots().length, 2);
+		assert.deepEqual(provider.trees[0].checkout.getRemovedRoots().length, 2);
 
 		provider.processMessages();
 
 		assert.equal(checkout2Revertibles.undoStack.length, 1);
 		assert.equal(checkout2Revertibles.redoStack.length, 1);
 		// trunk trimming causes a removed root to be garbage collected
-		assert.deepEqual(checkout2.getRemovedRoots().length, 1);
+		assert.deepEqual(provider.trees[1].checkout.getRemovedRoots().length, 1);
 
 		checkout1Revertibles.unsubscribe();
 		checkout2Revertibles.unsubscribe();
@@ -770,42 +763,43 @@ describe("sharedTreeView", () => {
 
 	describe("branches with schema edits can be rebased", () => {
 		it("over non-schema changes", () => {
+			const sf1 = new SchemaFactory("schema1");
+			const oldSchema = sf1.array(sf1.string);
+
 			const provider = new TestTreeProviderLite(1);
-			const checkout1 = provider.trees[0].checkout;
+			const oldSchemaConfig = { schema: oldSchema, enableSchemaValidation };
+			const view1 = provider.trees[0].viewWith(oldSchemaConfig);
+			view1.initialize(["A", "B", "C"]);
 
-			checkout1.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
-			checkout1.editor.sequenceField(rootField).insert(
-				0,
-				cursorForJsonableTreeField([
-					{ type: leaf.string.name, value: "A" },
-					{ type: leaf.string.name, value: "B" },
-					{ type: leaf.string.name, value: "C" },
-				]),
-			);
-
-			const branch = checkout1.fork();
+			const sf2 = new SchemaFactory("schema1");
+			const newSchema = [sf2.array(sf2.string), sf2.array([sf2.string, sf2.number])];
+			const branch = forkView(view1, newSchema);
 
 			// Remove "A" on the parent branch
-			checkout1.editor.sequenceField(rootField).remove(0, 1);
+			view1.root.removeAt(0);
 
 			// Remove "B" on the child branch
-			branch.editor.sequenceField(rootField).remove(1, 1);
-			branch.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+			branch.root.removeAt(1);
+			branch.upgradeSchema();
 			// Remove "C" on the child branch
-			branch.editor.sequenceField(rootField).remove(1, 1);
-			validateTreeContent(branch, {
-				schema: stringSequenceRootSchema,
-				initialTree: ["A"],
-			});
+			branch.root.removeAt(1);
 
-			branch.rebaseOnto(checkout1);
+			expectSchemaEqual(
+				intoStoredSchema(toFlexSchema(newSchema)),
+				branch.checkout.storedSchema,
+			);
+			assert.deepEqual(branch.root, ["A"]);
+
+			branch.checkout.rebaseOnto(view1.checkout);
 
 			// The schema change and any changes after that should be dropped,
 			// but the changes before the schema change should be preserved
-			validateTreeContent(branch, {
-				schema: jsonSequenceRootSchema,
-				initialTree: ["C"],
-			});
+			expectSchemaEqual(
+				intoStoredSchema(toFlexSchema(oldSchema)),
+				branch.checkout.storedSchema,
+			);
+			const branchWithOldSchema = viewCheckout(branch.checkout, oldSchemaConfig);
+			assert.deepEqual(branchWithOldSchema.root, ["C"]);
 		});
 
 		it("over schema changes", () => {
