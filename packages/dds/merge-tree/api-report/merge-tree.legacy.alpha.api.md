@@ -377,6 +377,8 @@ export interface IMergeTreeOptions {
     // (undocumented)
     catchUpBlobName?: string;
     mergeTreeEnableObliterate?: boolean;
+    // (undocumented)
+    mergeTreeEnableObliterateReconnect?: boolean;
     mergeTreeReferencesCanSlideToEndpoint?: boolean;
     // (undocumented)
     mergeTreeSnapshotChunkSize?: number;
