@@ -260,10 +260,15 @@ describe("RemoteMessageProcessor", () => {
 			type: MessageType.Operation,
 			sequenceNumber: 10,
 			clientSequenceNumber: 12,
+			clientId: "CLIENT_ID",
+			metadata: {
+				batchId: "BATCH_ID",
+			},
 			contents: {
 				type: OpGroupingManager.groupedBatchOp,
 				contents: [
 					{
+						metadata: { batch: true, batchId: "BATCH_ID" },
 						contents: {
 							type: ContainerMessageType.FluidDataStoreOp,
 							contents: {
@@ -272,6 +277,7 @@ describe("RemoteMessageProcessor", () => {
 						},
 					},
 					{
+						metadata: { batch: false },
 						contents: {
 							type: ContainerMessageType.FluidDataStoreOp,
 							contents: {
@@ -283,7 +289,7 @@ describe("RemoteMessageProcessor", () => {
 			},
 		};
 		const messageProcessor = getMessageProcessor();
-		const result = messageProcessor.process(
+		const inboundBatch = messageProcessor.process(
 			groupedBatch as ISequencedDocumentMessage,
 			() => {},
 		);
@@ -291,28 +297,36 @@ describe("RemoteMessageProcessor", () => {
 		const expected = [
 			{
 				type: ContainerMessageType.FluidDataStoreOp,
+				clientId: "CLIENT_ID",
 				sequenceNumber: 10,
 				clientSequenceNumber: 1,
 				compression: undefined,
-				metadata: undefined,
+				metadata: { batch: true, batchId: "BATCH_ID" },
 				contents: {
 					contents: "a",
 				},
 			},
 			{
 				type: ContainerMessageType.FluidDataStoreOp,
+				clientId: "CLIENT_ID",
 				sequenceNumber: 10,
 				clientSequenceNumber: 2,
 				compression: undefined,
-				metadata: undefined,
+				metadata: { batch: false },
 				contents: {
 					contents: "b",
 				},
 			},
 		];
 		assert.deepStrictEqual(
-			result,
-			{ messages: expected, batchStartCsn: 12 },
+			inboundBatch,
+			{
+				messages: expected,
+				batchStartCsn: 12,
+				clientId: "CLIENT_ID",
+				batchId: "BATCH_ID",
+				emptyBatchSequenceNumber: undefined,
+			},
 			"unexpected processing of groupedBatch",
 		);
 	});
@@ -322,6 +336,10 @@ describe("RemoteMessageProcessor", () => {
 			type: MessageType.Operation,
 			sequenceNumber: 10,
 			clientSequenceNumber: 8,
+			clientId: "CLIENT_ID",
+			metadata: {
+				batchId: "BATCH_ID",
+			},
 			contents: {
 				type: OpGroupingManager.groupedBatchOp,
 				contents: [],
@@ -334,7 +352,13 @@ describe("RemoteMessageProcessor", () => {
 		);
 		assert.deepStrictEqual(
 			processResult,
-			{ messages: [], batchStartCsn: 8, sequenceNumber: 10 },
+			{
+				messages: [],
+				batchStartCsn: 8,
+				clientId: "CLIENT_ID",
+				batchId: "BATCH_ID",
+				emptyBatchSequenceNumber: 10,
+			},
 			"unexpected processing of empty groupedBatch",
 		);
 	});
