@@ -97,7 +97,7 @@ export {
 } from "./objectNode.js";
 export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
 export { mapTreeFromNodeData } from "./toMapTree.js";
-export type { SimpleNodeSchemaKind } from "./simpleSchema.js";
+export type { SimpleNodeSchemaKind, SimpleTreeSchema } from "./simpleSchema.js";
 export {
 	type JsonSchemaId,
 	type JsonSchemaType,
@@ -114,3 +114,4 @@ export {
 	type JsonLeafSchemaType,
 } from "./jsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
+export { getSimpleSchema } from "./getSimpleSchema.js";

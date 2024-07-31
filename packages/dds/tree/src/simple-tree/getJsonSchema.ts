@@ -6,7 +6,7 @@
 import type { TreeJsonSchema } from "./jsonSchema.js";
 import type { TreeNodeSchema } from "./schemaTypes.js";
 import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
-import { getSimpleSchema } from "./viewSchemaToSimpleSchema.js";
+import { getSimpleSchema } from "./getSimpleSchema.js";
 
 /**
  * Private symbol under which the results of {@link getJsonSchema} are cached on an input {@link TreeNodeSchema}.
