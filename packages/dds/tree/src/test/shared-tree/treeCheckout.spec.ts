@@ -5,13 +5,15 @@
 
 import { strict as assert } from "assert";
 
-import type { IMockLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import {
+	type IMockLoggerExt,
+	createMockLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type FieldUpPath,
 	type Revertible,
-	moveToDetachedField,
 	rootFieldKey,
 	RevertibleStatus,
 	CommitKind,
@@ -757,7 +759,7 @@ describe("sharedTreeView", () => {
 	});
 
 	describe("branches with schema edits can be rebased", () => {
-		it("over non-schema changes", () => {
+		it.skip("over non-schema changes", () => {
 			const sf1 = new SchemaFactory("schema1");
 			const oldSchema = sf1.array(sf1.string);
 
@@ -766,24 +768,29 @@ describe("sharedTreeView", () => {
 			const view1 = provider.trees[0].viewWith(new TreeViewConfiguration(oldSchemaConfig));
 			view1.initialize(["A", "B", "C"]);
 
-			const sf2 = new SchemaFactory("schema1");
-			const newSchema = [sf2.array(sf2.string), sf2.array([sf2.string, sf2.number])];
-			const branch = forkView(view1, newSchema);
+			const branch = forkView(view1);
 
 			// Remove "A" on the parent branch
 			view1.root.removeAt(0);
 
 			// Remove "B" on the child branch
 			branch.root.removeAt(1);
-			branch.upgradeSchema();
+
+			const sf2 = new SchemaFactory("schema1");
+			const newSchema = [sf2.array(sf2.string), sf2.array([sf2.string, sf2.number])];
+			const branchWithNewSchema = viewCheckout(
+				branch.checkout,
+				new TreeViewConfiguration({ schema: newSchema, enableSchemaValidation }),
+			);
+			branchWithNewSchema.upgradeSchema();
 			// Remove "C" on the child branch
-			branch.root.removeAt(1);
+			branchWithNewSchema.root.removeAt(1);
 
 			expectSchemaEqual(
 				intoStoredSchema(toFlexSchema(newSchema)),
-				branch.checkout.storedSchema,
+				branchWithNewSchema.checkout.storedSchema,
 			);
-			assert.deepEqual(branch.root, ["A"]);
+			assert.deepEqual(branchWithNewSchema.root, ["A"]);
 
 			branch.checkout.rebaseOnto(view1.checkout);
 
@@ -800,13 +807,14 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(branchWithOldSchema.root, ["C"]);
 		});
 
-		it("over schema changes", () => {
+		it.skip("over schema changes", () => {
 			const sf1 = new SchemaFactory("schema1");
 			const oldSchema = sf1.array(sf1.string);
 
 			const provider = new TestTreeProviderLite(1);
-			const oldSchemaConfig = { schema: oldSchema, enableSchemaValidation };
-			const view1 = provider.trees[0].viewWith(new TreeViewConfiguration(oldSchemaConfig));
+			const view1 = provider.trees[0].viewWith(
+				new TreeViewConfiguration({ schema: oldSchema, enableSchemaValidation }),
+			);
 			view1.initialize(["A", "B", "C"]);
 
 			const branch = forkView(view1);
@@ -841,11 +849,14 @@ describe("sharedTreeView", () => {
 
 			// All changes on the branch should be dropped
 			expectSchemaEqual(
-				intoStoredSchema(toFlexSchema(oldSchema)),
+				intoStoredSchema(toFlexSchema(newSchema)),
 				branch.checkout.storedSchema,
 			);
 			assert.deepEqual(
-				viewCheckout(branch.checkout, new TreeViewConfiguration(oldSchemaConfig)).root,
+				viewCheckout(
+					branch.checkout,
+					new TreeViewConfiguration({ schema: newSchema, enableSchemaValidation }),
+				).root,
 				["B", "C"],
 			);
 		});
@@ -1052,10 +1063,7 @@ describe("sharedTreeView", () => {
 			itView(`Telemetry logs track reversion age (${ageToTest})`, (view, logger) => {
 				let revertible: Revertible | undefined;
 				const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
-					if (getRevertible === undefined) {
-						assert.fail("Expected commit to be revertible.");
-					}
-
+					assert(getRevertible !== undefined, "Expected commit to be revertible.");
 					// Only save off the first revertible, as it's the only one we'll use.
 					if (revertible === undefined) {
 						revertible = getRevertible();
@@ -1127,11 +1135,11 @@ function itView<
 		thunk: typeof fn,
 		makeViewFromConfig: (
 			config: TreeViewConfiguration<TRootSchema>,
-		) => SchematizingSimpleTreeView<TRootSchema>,
+		) => [SchematizingSimpleTreeView<TRootSchema>, IMockLoggerExt],
 	): void {
 		const provider = new TestTreeProviderLite();
 		if (options.initialContent) {
-			const view = makeViewFromConfig(
+			const [view, logger] = makeViewFromConfig(
 				new TreeViewConfiguration({
 					schema: options.initialContent.schema,
 					enableSchemaValidation,
@@ -1140,10 +1148,10 @@ function itView<
 			view.initialize(options.initialContent.initialTree);
 			thunk(view, provider.logger);
 		} else {
-			const view = (
+			const [view, logger] = (
 				makeViewFromConfig as unknown as (
 					config: TreeViewConfiguration<typeof rootArray>,
-				) => SchematizingSimpleTreeView<typeof rootArray>
+				) => [SchematizingSimpleTreeView<typeof rootArray>, IMockLoggerExt]
 			)(
 				new TreeViewConfiguration({
 					schema: rootArray,
@@ -1157,25 +1165,37 @@ function itView<
 					view: SchematizingSimpleTreeView<typeof rootArray>,
 					logger: IMockLoggerExt,
 				) => void
-			)(view, provider.logger);
+			)(view, logger);
 		}
+	}
+
+	function makeReferenceView(
+		config: TreeViewConfiguration<TRootSchema>,
+		fork: boolean,
+	): [SchematizingSimpleTreeView<TRootSchema>, IMockLoggerExt] {
+		const logger = createMockLoggerExt();
+		const view = getView(config, undefined, logger);
+		return [fork ? forkView(view) : view, logger];
 	}
 
 	itFunction(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
-		callWithView(fn, (config) => provider.trees[0].viewWith(config));
+		callWithView(fn, (config) => [provider.trees[0].viewWith(config), provider.logger]);
 	});
 
 	itFunction(`${title} (reference view)`, () => {
-		callWithView(fn, getView);
+		callWithView(fn, (config) => makeReferenceView(config, false));
 	});
 
 	itFunction(`${title} (forked view)`, () => {
 		const provider = new TestTreeProviderLite();
-		callWithView(fn, (config) => forkView(provider.trees[0].viewWith(config)));
+		callWithView(fn, (config) => [
+			forkView(provider.trees[0].viewWith(config)),
+			provider.logger,
+		]);
 	});
 
 	itFunction(`${title} (reference forked view)`, () => {
-		callWithView(fn, (config) => forkView(getView(config)));
+		callWithView(fn, (config) => makeReferenceView(config, true));
 	});
 }

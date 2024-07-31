@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
+	type ITelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -1268,6 +1269,7 @@ export function treeTestFactory(
 export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
+	logger?: ITelemetryLoggerExt,
 ): SchematizingSimpleTreeView<TSchema> {
 	const checkout = createTreeCheckout(
 		testIdCompressor,
@@ -1276,6 +1278,7 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 		{
 			forest: buildForest(),
 			schema: new TreeStoredSchemaRepository(),
+			logger,
 		},
 	);
 	return new SchematizingSimpleTreeView<TSchema>(
