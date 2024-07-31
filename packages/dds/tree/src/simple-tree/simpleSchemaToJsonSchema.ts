@@ -35,7 +35,7 @@ export function toJsonSchema(schema: SimpleTreeSchema): TreeJsonSchema {
 	}
 
 	return {
-		definitions,
+		$defs: definitions,
 		anyOf,
 	};
 }
@@ -142,5 +142,5 @@ function createSchemaRef(schemaId: string): JsonSchemaRef {
 }
 
 function createRefPath(schemaId: string): JsonRefPath {
-	return `#/definitions/${schemaId}`;
+	return `#/$defs/${schemaId}`;
 }

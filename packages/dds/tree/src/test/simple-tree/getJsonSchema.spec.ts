@@ -17,7 +17,7 @@ describe.only("getJsonSchema", () => {
 		const actual = getJsonSchema(Schema);
 
 		const expected: TreeJsonSchema = {
-			definitions: {
+			$defs: {
 				"com.fluidframework.leaf.string": {
 					type: "string",
 					_kind: "leaf",
@@ -25,7 +25,7 @@ describe.only("getJsonSchema", () => {
 			},
 			anyOf: [
 				{
-					$ref: "#/definitions/com.fluidframework.leaf.string",
+					$ref: "#/$defs/com.fluidframework.leaf.string",
 				},
 			],
 		};
@@ -48,12 +48,12 @@ describe.only("getJsonSchema", () => {
 		const actual = getJsonSchema(Schema);
 
 		const expected: TreeJsonSchema = {
-			definitions: {
+			$defs: {
 				"test.array": {
 					type: "array",
 					_kind: "array",
 					items: {
-						anyOf: [{ $ref: "#/definitions/com.fluidframework.leaf.string" }],
+						anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.string" }],
 					},
 				},
 				"com.fluidframework.leaf.string": {
@@ -63,7 +63,7 @@ describe.only("getJsonSchema", () => {
 			},
 			anyOf: [
 				{
-					$ref: "#/definitions/test.array",
+					$ref: "#/$defs/test.array",
 				},
 			],
 		};
@@ -95,7 +95,7 @@ describe.only("getJsonSchema", () => {
 		// 			type: "object",
 		// 			kind: "map",
 		// 			patternProperties: {
-		// 				"^.*$": { anyOf: [{ $ref: "#/definitions/com.fluidframework.leaf.string" }] },
+		// 				"^.*$": { anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.string" }] },
 		// 			},
 		// 		},
 		// 		"com.fluidframework.leaf.string": {
@@ -105,7 +105,7 @@ describe.only("getJsonSchema", () => {
 		// 	},
 		// 	anyOf: [
 		// 		{
-		// 			$ref: "#/definitions/test.map",
+		// 			$ref: "#/$defs/test.map",
 		// 		},
 		// 	],
 		// };
@@ -155,16 +155,16 @@ describe.only("getJsonSchema", () => {
 		const actual = getJsonSchema(Schema);
 
 		const expected: TreeJsonSchema = {
-			definitions: {
+			$defs: {
 				"test.object": {
 					type: "object",
 					_kind: "object",
 					properties: {
 						foo: {
-							anyOf: [{ $ref: "#/definitions/com.fluidframework.leaf.number" }],
+							anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.number" }],
 						},
 						bar: {
-							anyOf: [{ $ref: "#/definitions/com.fluidframework.leaf.string" }],
+							anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.string" }],
 						},
 					},
 					required: ["bar"],
@@ -181,7 +181,7 @@ describe.only("getJsonSchema", () => {
 			},
 			anyOf: [
 				{
-					$ref: "#/definitions/test.object",
+					$ref: "#/$defs/test.object",
 				},
 			],
 		};
@@ -241,13 +241,13 @@ describe.only("getJsonSchema", () => {
 		const actual = getJsonSchema(Schema);
 
 		const expected: TreeJsonSchema = {
-			definitions: {
+			$defs: {
 				"test.object": {
 					type: "object",
 					_kind: "object",
 					properties: {
 						id: {
-							anyOf: [{ $ref: "#/definitions/com.fluidframework.leaf.string" }],
+							anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.string" }],
 						},
 					},
 					required: [],
@@ -260,7 +260,7 @@ describe.only("getJsonSchema", () => {
 			},
 			anyOf: [
 				{
-					$ref: "#/definitions/test.object",
+					$ref: "#/$defs/test.object",
 				},
 			],
 		};
@@ -276,15 +276,15 @@ describe.only("getJsonSchema", () => {
 		const actual = getJsonSchema(Schema);
 
 		const expected: TreeJsonSchema = {
-			definitions: {
+			$defs: {
 				"test.recursive-object": {
 					type: "object",
 					_kind: "object",
 					properties: {
 						foo: {
 							anyOf: [
-								{ $ref: "#/definitions/com.fluidframework.leaf.string" },
-								{ $ref: "#/definitions/test.recursive-object" },
+								{ $ref: "#/$defs/com.fluidframework.leaf.string" },
+								{ $ref: "#/$defs/test.recursive-object" },
 							],
 						},
 					},
@@ -298,7 +298,7 @@ describe.only("getJsonSchema", () => {
 			},
 			anyOf: [
 				{
-					$ref: "#/definitions/test.recursive-object",
+					$ref: "#/$defs/test.recursive-object",
 				},
 			],
 		};

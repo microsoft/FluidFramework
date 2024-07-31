@@ -7,7 +7,7 @@ import type { SimpleNodeSchemaKind } from "./simpleSchema.js";
 
 /**
  * The fully-qualified {@link TreeNodeSchemaCore.identifier}.
- * @example Schema `com.myapp.foo` would be referenced via `#/definitions/com.myapp.foo`.
+ * @example Schema `com.myapp.foo` would be referenced via `#/$defs/com.myapp.foo`.
  * @alpha
  */
 export type JsonSchemaId = string;
@@ -15,11 +15,11 @@ export type JsonSchemaId = string;
 /**
  * Reference string pointing to a definition in the schema.
  * Should be the fully-qualified {@link TreeNodeSchemaCore.identifier}.
- * @remarks Of the form `#/definitions/<schema-identifier>`, where the `schema-identifier` is the fully-qualified {@link TreeNodeSchemaCore.identifier}.
- * @example Schema `com.myapp.foo` would be referenced via `#/definitions/com.myapp.foo`.
+ * @remarks Of the form `#/$defs/<schema-identifier>`, where the `schema-identifier` is the fully-qualified {@link TreeNodeSchemaCore.identifier}.
+ * @example Schema `com.myapp.foo` would be referenced via `#/$defs/com.myapp.foo`.
  * @alpha
  */
-export type JsonRefPath = `#/definitions/${JsonSchemaId}`;
+export type JsonRefPath = `#/$defs/${JsonSchemaId}`;
 
 /**
  * JSON entity type.
@@ -96,14 +96,14 @@ export interface ObjectNodeJsonSchema extends NodeJsonSchemaBase<"object", "obje
 export interface ArrayNodeJsonSchema extends NodeJsonSchemaBase<"array", "array"> {
 	/**
 	 * The kinds of items allowed under the array.
-	 * @remarks Always represented via references to {@link TreeJsonSchema.definitions}.
+	 * @remarks Always represented via references to {@link TreeJsonSchema.$defs}.
 	 *
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-items}.
 	 */
 	readonly items: {
 		/**
 		 * The kinds of items allowed under the array.
-		 * @remarks Always represented via references to {@link TreeJsonSchema.definitions}.
+		 * @remarks Always represented via references to {@link TreeJsonSchema.$defs}.
 		 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-anyof}.
 		 */
 		anyOf: JsonSchemaRef[];
@@ -173,7 +173,7 @@ export type NodeJsonSchema =
 export interface FieldJsonSchema {
 	/**
 	 * The kinds of items allowed under the field.
-	 * @remarks Always represented via references to {@link TreeJsonSchema.definitions}.
+	 * @remarks Always represented via references to {@link TreeJsonSchema.$defs}.
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-anyof}.
 	 */
 	readonly anyOf: JsonSchemaRef[];
@@ -203,7 +203,6 @@ export interface TreeJsonSchema extends FieldJsonSchema {
 	/**
 	 * The set of definitions reachable from this schema's root.
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-schema-re-use-with-defs}
-	 * @privateRemarks TODO: `$defs` instead of `definitions`?
 	 */
-	readonly definitions: Record<JsonSchemaId, NodeJsonSchema>;
+	readonly $defs: Record<JsonSchemaId, NodeJsonSchema>;
 }

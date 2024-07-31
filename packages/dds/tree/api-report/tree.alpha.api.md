@@ -210,7 +210,7 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 export type JsonLeafSchemaType = "string" | "number" | "boolean" | "null";
 
 // @alpha
-export type JsonRefPath = `#/definitions/${JsonSchemaId}`;
+export type JsonRefPath = `#/$defs/${JsonSchemaId}`;
 
 // @alpha
 export type JsonSchemaId = string;
@@ -465,7 +465,7 @@ type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSc
 
 // @alpha
 export interface TreeJsonSchema extends FieldJsonSchema {
-    readonly definitions: Record<JsonSchemaId, NodeJsonSchema>;
+    readonly $defs: Record<JsonSchemaId, NodeJsonSchema>;
 }
 
 // @public

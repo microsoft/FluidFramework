@@ -27,7 +27,7 @@ describe.only("simpleSchemaToJsonSchema", () => {
 		const actual = toJsonSchema(input);
 
 		const expected: TreeJsonSchema = {
-			definitions: {
+			$defs: {
 				"test.string": {
 					type: "string",
 					_kind: "leaf",
@@ -35,7 +35,7 @@ describe.only("simpleSchemaToJsonSchema", () => {
 			},
 			anyOf: [
 				{
-					$ref: "#/definitions/test.string",
+					$ref: "#/$defs/test.string",
 				},
 			],
 		};
@@ -62,12 +62,12 @@ describe.only("simpleSchemaToJsonSchema", () => {
 		const actual = toJsonSchema(input);
 
 		const expected: TreeJsonSchema = {
-			definitions: {
+			$defs: {
 				"test.array": {
 					type: "array",
 					_kind: "array",
 					items: {
-						anyOf: [{ $ref: "#/definitions/test.string" }],
+						anyOf: [{ $ref: "#/$defs/test.string" }],
 					},
 				},
 				"test.string": {
@@ -77,7 +77,7 @@ describe.only("simpleSchemaToJsonSchema", () => {
 			},
 			anyOf: [
 				{
-					$ref: "#/definitions/test.array",
+					$ref: "#/$defs/test.array",
 				},
 			],
 		};
@@ -114,7 +114,7 @@ describe.only("simpleSchemaToJsonSchema", () => {
 		// 			type: "object",
 		// 			kind: "map",
 		// 			patternProperties: {
-		// 				"^.*$": { anyOf: [{ $ref: "#/definitions/test.string" }] },
+		// 				"^.*$": { anyOf: [{ $ref: "#/$defs/test.string" }] },
 		// 			},
 		// 		},
 		// 		"test.string": {
@@ -124,7 +124,7 @@ describe.only("simpleSchemaToJsonSchema", () => {
 		// 	},
 		// 	anyOf: [
 		// 		{
-		// 			$ref: "#/definitions/test.map",
+		// 			$ref: "#/$defs/test.map",
 		// 		},
 		// 	],
 		// };
@@ -176,16 +176,16 @@ describe.only("simpleSchemaToJsonSchema", () => {
 		const actual = toJsonSchema(input);
 
 		const expected: TreeJsonSchema = {
-			definitions: {
+			$defs: {
 				"test.object": {
 					type: "object",
 					_kind: "object",
 					properties: {
 						foo: {
-							anyOf: [{ $ref: "#/definitions/test.number" }],
+							anyOf: [{ $ref: "#/$defs/test.number" }],
 						},
 						bar: {
-							anyOf: [{ $ref: "#/definitions/test.string" }],
+							anyOf: [{ $ref: "#/$defs/test.string" }],
 						},
 					},
 					required: ["bar"],
@@ -202,7 +202,7 @@ describe.only("simpleSchemaToJsonSchema", () => {
 			},
 			anyOf: [
 				{
-					$ref: "#/definitions/test.object",
+					$ref: "#/$defs/test.object",
 				},
 			],
 		};
@@ -266,15 +266,15 @@ describe.only("simpleSchemaToJsonSchema", () => {
 		const actual = toJsonSchema(input);
 
 		const expected: TreeJsonSchema = {
-			definitions: {
+			$defs: {
 				"test.recursive-object": {
 					type: "object",
 					_kind: "object",
 					properties: {
 						foo: {
 							anyOf: [
-								{ $ref: "#/definitions/test.string" },
-								{ $ref: "#/definitions/test.recursive-object" },
+								{ $ref: "#/$defs/test.string" },
+								{ $ref: "#/$defs/test.recursive-object" },
 							],
 						},
 					},
@@ -288,7 +288,7 @@ describe.only("simpleSchemaToJsonSchema", () => {
 			},
 			anyOf: [
 				{
-					$ref: "#/definitions/test.recursive-object",
+					$ref: "#/$defs/test.recursive-object",
 				},
 			],
 		};
