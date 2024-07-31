@@ -210,7 +210,7 @@ export function find<T>(iterable: Iterable<T>, predicate: (t: T) => boolean): T 
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @internal
+ * @public
  */
 export type JsonCompatible<TExtra = never> =
 	| string
@@ -227,7 +227,7 @@ export type JsonCompatible<TExtra = never> =
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @internal
+ * @public
  */
 export type JsonCompatibleObject<TExtra = never> = { [P in string]?: JsonCompatible<TExtra> };
 

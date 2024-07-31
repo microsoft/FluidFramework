@@ -36,7 +36,7 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type TreeFieldFromImplicitField,
 } from "./schemaTypes.js";
-import type { TreeNode, TreeChangeEvents } from "./types.js";
+import type { TreeNode, TreeChangeEvents, Unhydrated } from "./types.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -148,7 +148,7 @@ export interface TreeNodeApi {
 	create<TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: InsertableTreeFieldFromImplicitField<TSchema>,
-	): TreeFieldFromImplicitField<TSchema>;
+	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 	/**
 	 * Construct tree content compatible with a field defined by the provided `schema`.
@@ -159,10 +159,13 @@ export interface TreeNodeApi {
 		schema: TSchema,
 		data: VerboseTreeNode<THandle> | undefined,
 		options?: {
-			handleConverter<T extends VerboseTreeNode<THandle>>(data: T): T | IFluidHandle;
-			useStableFieldKeys?: boolean;
+			handleConverter<T extends VerboseTreeNode<THandle>>(
+				data: T,
+				location: FieldSchema,
+			): VerboseTreeNode<THandle>;
+			readonly useStableFieldKeys?: boolean;
 		},
-	): TreeFieldFromImplicitField<TSchema>;
+	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 	/**
 	 * Construct tree content compatible with a field defined by the provided `schema`.
@@ -173,10 +176,10 @@ export interface TreeNodeApi {
 		schema: TSchema,
 		data: VerboseTreeNode | undefined,
 		options?: {
-			handleConverter?: undefined;
-			useStableFieldKeys?: boolean;
+			readonly handleConverter?: undefined;
+			readonly useStableFieldKeys?: boolean;
 		},
-	): TreeFieldFromImplicitField<TSchema>;
+	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 	/**
 	 * Like {@link Tree.create}, except deeply clones existing nodes.
@@ -200,15 +203,18 @@ export interface TreeNodeApi {
 	 * Copy a snapshot of the current version of a TreeNode into a JSON compatible plain old JavaScript Object.
 	 *
 	 * @remarks
-	 * If the schema is compatible with {@link ITreeConfigurationOptions.ensureUnambiguous}, then the returned object will be lossless and compatible with {@link Tree.create} (unless the options are used to customize it).
+	 * If the schema is compatible with {@link ITreeConfigurationOptions.preventAmbiguity}, then the returned object will be lossless and compatible with {@link Tree.create} (unless the options are used to customize it).
 	 */
 	cloneToJSON<T>(
 		node: TreeNode,
-		options?: { handleConverter(handle: IFluidHandle): T; useStableFieldKeys?: boolean },
+		options?: {
+			handleConverter(handle: IFluidHandle): T;
+			readonly useStableFieldKeys?: boolean;
+		},
 	): JsonCompatible<T>;
 
 	/**
-	 *
+	 * Same as generic overload, except leaves handles as is.
 	 */
 	cloneToJSON(
 		node: TreeNode,
@@ -220,11 +226,21 @@ export interface TreeNodeApi {
 	 * Verbose tree format, with explicit type on every node.
 	 *
 	 * @remarks
-	 * If the schema is compatible with {@link ITreeConfigurationOptions.ensureUnambiguous}, then the returned object will be lossless and compatible with {@link Tree.create} (unless the options are used to customize it).
+	 * There are several cases this may be preferred to {@link Tree.clone}:
+	 *
+	 * 1. When not using {@link ITreeConfigurationOptions.preventAmbiguity} (or when using `useStableFieldKeys`), {@link Tree.clone} can produce ambiguous data (the type may be unclear on some nodes).
+	 * This may be a good alternative to {@link Tree.clone} since it is lossless.
+	 *
+	 * 2. When the data might be interpreted without access to the exact same view schema. In such cases, the types may be unknowable if not included.
+	 *
+	 * 3. When easy access to the type is desired, or a more uniform simple to parse format is desired.
 	 */
 	cloneToJSONVerbose<T>(
 		node: TreeNode,
-		options?: { handleConverter(handle: IFluidHandle): T; useStableFieldKeys?: boolean },
+		options?: {
+			handleConverter(handle: IFluidHandle): T;
+			readonly useStableFieldKeys?: boolean;
+		},
 	): VerboseTreeNode<T>;
 
 	/**
@@ -232,7 +248,7 @@ export interface TreeNodeApi {
 	 */
 	cloneToJSONVerbose(
 		node: TreeNode,
-		options?: { handleConverter?: undefined; useStableFieldKeys?: boolean },
+		options?: { readonly handleConverter?: undefined; readonly useStableFieldKeys?: boolean },
 	): VerboseTreeNode;
 }
 
@@ -255,6 +271,15 @@ export type VerboseTree<THandle = IFluidHandle> =
  * This allowed VerboseTreeNode to be unambiguous regarding which type each node is without relying on symbols or hidden state.
  *
  * Any IFluidHandle values have been replaced by `THandle`. If the `THandle` is JSON compatible, then this type is JSON compatible as well.
+ *
+ * @privateRemarks
+ * This type is only used for data which is copied into and out of the tree.
+ * When being copied out, its fine to have the data be mutable since its a copy.
+ *
+ * When being copied in, we don't need to mutate, so we could use a readonly variant of this type.
+ * however the copy in case (createFromVerbose) probably isn't harmed much by just reusing this type as is,
+ * since if the caller has immutable data, TypeScript doesn't prevent assigning immutable data to a mutable type anyway.
+ * Also relaxing the input methods to take readonly data would be a non-breaking change so it can be done later if desired.
  * @public
  */
 export interface VerboseTreeNode<THandle = IFluidHandle> {
