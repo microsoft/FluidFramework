@@ -15,6 +15,7 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
 import {
+	BatchManager,
 	type BatchMessage,
 	ensureContentsDeserialized,
 	type IBatch,
@@ -215,7 +216,127 @@ describe("RemoteMessageProcessor", () => {
 	});
 
 	it("Processes multiple batches", () => {
-		//* Work in progress to test addMessageToBatch logic
+		let csn = 1;
+		const batchManager = new BatchManager({
+			canRebase: false,
+			hardLimit: Number.MAX_VALUE,
+		});
+		batchManager.push({ contents: "A1", referenceSequenceNumber: 1 }, false /* reentrant */);
+		batchManager.push({ contents: "A2", referenceSequenceNumber: 1 }, false /* reentrant */);
+		batchManager.push({ contents: "A3", referenceSequenceNumber: 1 }, false /* reentrant */);
+		const batchA = batchManager.popBatch();
+		batchManager.push({ contents: "B1", referenceSequenceNumber: 1 }, false /* reentrant */);
+		const batchB = batchManager.popBatch();
+		batchManager.push({ contents: "C1", referenceSequenceNumber: 1 }, false /* reentrant */);
+		batchManager.push({ contents: "C2", referenceSequenceNumber: 1 }, false /* reentrant */);
+		const batchC = batchManager.popBatch("C" /* batchId */);
+		batchManager.push({ contents: "D1", referenceSequenceNumber: 1 }, false /* reentrant */);
+		const batchD = batchManager.popBatch("D" /* batchId */);
+
+		const processor = getMessageProcessor();
+
+		// Add clientId and CSN as would happen on final stage of submit
+		const inboundMessages: ISequencedDocumentMessage[] = [
+			...batchA.messages,
+			...batchB.messages,
+			...batchC.messages,
+			...batchD.messages,
+		].map((message) => ({
+			...(message as ISequencedDocumentMessage),
+			clientId: "CLIENT_ID",
+			clientSequenceNumber: csn++,
+		}));
+
+		const processResults = inboundMessages.map((message) =>
+			processor.process(message, () => {}),
+		);
+
+		const x = [
+			// A
+			undefined,
+			undefined,
+			{
+				messages: [
+					{
+						"contents": "A1",
+						"referenceSequenceNumber": 1,
+						"clientSequenceNumber": 1,
+						"metadata": { "batch": true },
+						"clientId": "CLIENT_ID",
+					},
+					{
+						"contents": "A2",
+						"referenceSequenceNumber": 1,
+						"clientSequenceNumber": 2,
+						"clientId": "CLIENT_ID",
+					},
+					{
+						"contents": "A3",
+						"referenceSequenceNumber": 1,
+						"clientSequenceNumber": 3,
+						"metadata": { "batch": false },
+						"clientId": "CLIENT_ID",
+					},
+				],
+				clientId: "CLIENT_ID",
+				batchId: undefined,
+				batchStartCsn: 1,
+			},
+			// B
+			{
+				messages: [
+					{
+						"contents": "B1",
+						"referenceSequenceNumber": 1,
+						"clientSequenceNumber": 4,
+						"clientId": "CLIENT_ID",
+					},
+				],
+				clientId: "CLIENT_ID",
+				batchId: undefined,
+				batchStartCsn: 4,
+			},
+			// C
+			undefined,
+			{
+				messages: [
+					{
+						"contents": "C1",
+						"referenceSequenceNumber": 1,
+						"clientSequenceNumber": 5,
+						"metadata": { "batch": true, "batchId": "C" },
+						"clientId": "CLIENT_ID",
+					},
+					{
+						"contents": "C2",
+						"referenceSequenceNumber": 1,
+						"clientSequenceNumber": 6,
+						"metadata": { "batch": false },
+						"clientId": "CLIENT_ID",
+					},
+				],
+				batchId: "C",
+				clientId: "CLIENT_ID",
+				batchStartCsn: 5,
+			},
+			// D
+			{
+				messages: [
+					{
+						"contents": "D1",
+						"referenceSequenceNumber": 1,
+						"clientSequenceNumber": 7,
+						"metadata": { "batchId": "D" },
+						"clientId": "CLIENT_ID",
+					},
+				],
+				clientId: "CLIENT_ID",
+				batchId: "D",
+				batchStartCsn: 7,
+			},
+		];
+
+		assert.deepStrictEqual(processResults, x, "unexpected output from process");
 	});
 
 	it("Processes legacy string-content message", () => {
