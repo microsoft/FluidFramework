@@ -828,7 +828,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 							// the segment was remotely obliterated, so is considered removed
 							// we set the seq to the universal seq and remove the local seq,
 							// so its length is not considered for subsequent local changes
-							// this allows us to not send the op to even create it remotely
+							// this allows us to not send the op as even the local client will ignore the segment
 							segment.seq = UniversalSequenceNumber;
 							segment.localSeq = undefined;
 							break;
