@@ -18,12 +18,7 @@ import {
 	stackTreeNodeCursor,
 	TreeNodeSchemaBase,
 } from "../../feature-libraries/index.js";
-import {
-	brand,
-	isReadonlyArray,
-	type JsonCompatible,
-	type JsonCompatibleObject,
-} from "../../util/index.js";
+import { brand, isReadonlyArray, type JsonCompatible } from "../../util/index.js";
 import { leaf } from "../leafDomain.js";
 
 import { jsonArray, jsonObject } from "./jsonDomainSchema.js";
@@ -150,11 +145,17 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 
 // #region TypedJsonCursor
 
-type TypedJsonCompatibleObject = JsonCompatibleObject & {
+/** Used to construct a {@link TypedJsonCursor} */
+export interface TypedJsonCompatibleObject {
+	[key: string]: TypedJsonCompatible;
 	[typedJsonSymbol]: string | TreeNodeSchemaBase;
-};
+}
 
-type TypedJsonCompatible = JsonCompatible | TypedJsonCompatibleObject;
+/** Used to construct a {@link TypedJsonCursor} */
+export type TypedJsonCompatible =
+	| JsonCompatible
+	| TypedJsonCompatibleObject
+	| TypedJsonCompatible[];
 
 const typedJsonSymbol = Symbol("JSON Cursor Type");
 
