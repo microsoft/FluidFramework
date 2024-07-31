@@ -185,7 +185,7 @@ function walkMapTree(
 ): void {
 	const mapTreeNode = tryGetMapTreeNode(mapTree);
 	if (mapTreeNode !== undefined) {
-		const treeNode = tryGetProxy(mapTreeNode);
+		const treeNode = tryGetProxy(mapTreeNode.anchorNode);
 		if (treeNode !== undefined) {
 			onVisitTreeNode(path, treeNode);
 		}

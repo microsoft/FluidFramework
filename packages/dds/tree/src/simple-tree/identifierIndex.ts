@@ -30,6 +30,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { NodeFromSchema } from "./schemaTypes.js";
 import { getSimpleNodeSchema } from "./schemaCaching.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
+import { Tree } from "../shared-tree/index.js";
 
 type SimpleTreeIndex<
 	TKey extends TreeValue,
@@ -104,7 +105,7 @@ export function createSimpleTreeIndex<
 
 type IdentifierIndex = SimpleTreeIndex<string>;
 
-export function createIdentifierIndex(context: FlexTreeContext) {
+export function createIdentifierIndex(context: FlexTreeContext): IdentifierIndex {
 	assert(context instanceof Context, "Unexpected context implementation");
 
 	// For each node schema, find which field key the identifier field is under.
@@ -142,7 +143,7 @@ export function createIdentifierIndex(context: FlexTreeContext) {
 				);
 			}
 			const [node] = nodes;
-			if (treeApi.status(node) !== TreeStatus.InDocument) {
+			if (Tree.status(node) !== TreeStatus.InDocument) {
 				return undefined;
 			}
 		},
@@ -162,8 +163,8 @@ function getOrCreateSimpleTree(
 }
 
 function makeFlexNode(context: Context, anchorNode: AnchorNode): FlexTreeNode {
-	const cursor = context.forest.allocateCursor();
-	context.forest.moveCursorToPath(anchorNode, cursor);
+	const cursor = context.checkout.forest.allocateCursor();
+	context.checkout.forest.moveCursorToPath(anchorNode, cursor);
 	const flexNode = makeTree(context, cursor);
 	cursor.free();
 	return flexNode;

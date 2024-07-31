@@ -17,13 +17,13 @@ import {
 	forEachNode,
 } from "../../core/index.js";
 import type { TreeIndex, TreeIndexNodes } from "./types.js";
-import type { TreeStatus } from "../flex-tree/flexTreeTypes.js";
+import type { TreeStatus } from "../flex-tree/index.js";
 
 export type IndexableTreeStatus =
 	| keyof Pick<typeof TreeStatus, "InDocument" | "Removed">
 	| "InDocumentAndRemoved";
 
-// tODO: document cursor ownership
+// TODO: document cursor ownership
 export type KeyFinder<TKey extends TreeValue> = (tree: ITreeSubscriptionCursor) => TKey;
 
 export class AnchorTreeIndex<TKey extends TreeValue, TValue>
