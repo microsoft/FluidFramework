@@ -118,6 +118,8 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 	const revisionAllocator = createAlwaysFinalizedIdCompressor(
 		assertIsSessionId("00000000-0000-4000-b000-000000000000"),
 	);
+	const normalRevision = revisionAllocator.generateCompressedId();
+
 	// We have to keep the normalization of sources and destinations separate because we want to be able to normalize
 	// [{ MoveOut self: foo }, { MoveOut self: foo }]
 	// in a way that is equivalent to normalizing
@@ -131,9 +133,8 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 		const normalAtoms = target === CrossFieldTarget.Source ? normalSrcAtoms : normalDstAtoms;
 		const normal = tryGetFromNestedMap(normalAtoms, atom.revision, atom.localId);
 		if (normal === undefined) {
-			const newRevision = revisionAllocator.generateCompressedId();
 			const newId: ChangesetLocalId = brand(idAllocator.allocate());
-			const newAtom: ChangeAtomId = { revision: newRevision, localId: newId };
+			const newAtom: ChangeAtomId = { revision: normalRevision, localId: newId };
 			setInNestedMap(normalAtoms, atom.revision, atom.localId, newAtom);
 			return newAtom;
 		}
