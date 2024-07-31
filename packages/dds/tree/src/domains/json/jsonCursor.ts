@@ -145,12 +145,17 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 
 // #region TypedJsonCursor
 
-interface TypedJsonCompatibleObject {
+/** Used to construct a {@link TypedJsonCursor} */
+export interface TypedJsonCompatibleObject {
 	[key: string]: TypedJsonCompatible;
 	[typedJsonSymbol]: string | TreeNodeSchemaBase;
 }
 
-type TypedJsonCompatible = JsonCompatible | TypedJsonCompatibleObject;
+/** Used to construct a {@link TypedJsonCursor} */
+export type TypedJsonCompatible =
+	| JsonCompatible
+	| TypedJsonCompatibleObject
+	| TypedJsonCompatible[];
 
 const typedJsonSymbol = Symbol("JSON Cursor Type");
 
