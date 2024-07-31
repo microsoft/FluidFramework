@@ -387,7 +387,7 @@ export class FieldSchema<
 	 * This class is used with instanceof, and therefore should have nominal typing.
 	 * This field enforces that.
 	 */
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck!: MakeNominal;
 
 	private readonly lazyTypes: Lazy<ReadonlySet<TreeNodeSchema>>;
 
