@@ -99,10 +99,12 @@ export interface ObjectWithOptionalNumber {
 	optNumber?: number;
 }
 export const objectWithOptionalNumberNotPresent: ObjectWithOptionalNumber = {};
-// @ts-expect-error exactOptionalPropertyTypes requires `optNumber?: number` to allow `undefined` for this assignment
-export const objectWithOptionalNumberUndefined: ObjectWithOptionalNumber = {
+// This case is present for exactOptionalPropertyTypes=false Typescript configuration.
+// When built with exactOptionalPropertyTypes=true, simple cast is an error;
+// so, to enable build with either setting cast through unknown.
+export const objectWithOptionalNumberUndefined = {
 	optNumber: undefined,
-};
+} as unknown as ObjectWithOptionalNumber;
 export const objectWithOptionalNumberDefined: ObjectWithOptionalNumber = { optNumber: 4 };
 export interface ObjectWithNumberOrUndefined {
 	numOrUndef: number | undefined;
