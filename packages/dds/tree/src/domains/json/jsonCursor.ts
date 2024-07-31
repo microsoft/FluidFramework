@@ -150,7 +150,7 @@ interface TypedJsonCompatibleObject {
 	[typedJsonSymbol]: string | TreeNodeSchemaBase;
 }
 
-type TypedJsonCompatible = JsonCompatible | TypedJsonCompatibleObject;
+type TypedJsonCompatible = JsonCompatible | TypedJsonCompatibleObject | TypedJsonCompatible[];
 
 const typedJsonSymbol = Symbol("JSON Cursor Type");
 
