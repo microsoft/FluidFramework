@@ -11,9 +11,6 @@ import type { SimpleNodeSchema, SimpleTreeSchema } from "../../simple-tree/simpl
 // eslint-disable-next-line import/no-internal-modules
 import { toJsonSchema } from "../../simple-tree/simpleSchemaToJsonSchema.js";
 
-// TODOs:
-// - Identifier fields
-
 describe("simpleSchemaToJsonSchema", () => {
 	it("Leaf schema", async () => {
 		const input: SimpleTreeSchema = {
@@ -239,6 +236,52 @@ describe("simpleSchemaToJsonSchema", () => {
 			},
 			false,
 		);
+	});
+
+	it("Object schema including an identifier field", () => {
+		const input: SimpleTreeSchema = {
+			definitions: new Map<string, SimpleNodeSchema>([
+				[
+					"test.object",
+					{
+						kind: "object",
+						fields: {
+							"id": { kind: "identifier", allowedTypes: new Set<string>(["test.identifier"]) },
+						},
+					},
+				],
+				["test.identifier", { type: "string", kind: "leaf" }],
+			]),
+			allowedTypes: new Set<string>(["test.object"]),
+		};
+
+		const actual = toJsonSchema(input);
+
+		const expected: TreeJsonSchema = {
+			$defs: {
+				"test.object": {
+					type: "object",
+					_kind: "object",
+					properties: {
+						id: {
+							anyOf: [{ $ref: "#/$defs/test.identifier" }],
+						},
+					},
+					required: [],
+					additionalProperties: false,
+				},
+				"test.identifier": {
+					type: "string",
+					_kind: "leaf",
+				},
+			},
+			anyOf: [
+				{
+					$ref: "#/$defs/test.object",
+				},
+			],
+		};
+		assert.deepEqual(actual, expected);
 	});
 
 	it("Recursive object schema", () => {
