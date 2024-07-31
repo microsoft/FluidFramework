@@ -164,8 +164,6 @@ export class RemoteMessageProcessor {
 		return completedBatch;
 	}
 
-	//* TODO: Review test coverage of batch metadata validation
-
 	/**
 	 * Add the given message to the current batch, and indicate whether the batch is now complete.
 	 *

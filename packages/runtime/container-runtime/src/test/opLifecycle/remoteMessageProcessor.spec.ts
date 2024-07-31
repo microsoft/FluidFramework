@@ -107,7 +107,7 @@ describe("RemoteMessageProcessor", () => {
 	});
 
 	messageGenerationOptions.forEach((option) => {
-		it(`Correctly processes incoming messages: compression [${option.compressionAndChunking.compression}] chunking [${option.compressionAndChunking.chunking}] grouping [${option.grouping}]`, () => {
+		it(`Correctly processes single batch: compression [${option.compressionAndChunking.compression}] chunking [${option.compressionAndChunking.chunking}] grouping [${option.grouping}]`, () => {
 			let batch: IBatch = {
 				contentSizeInBytes: 1,
 				referenceSequenceNumber: Infinity,
@@ -212,6 +212,10 @@ describe("RemoteMessageProcessor", () => {
 			assert.deepStrictEqual(actual, expected, "unexpected output");
 			assert.equal(actualBatchStartCsn, leadingChunkCount + 1, "unexpected batchStartCsn");
 		});
+	});
+
+	it("Processes multiple batches", () => {
+		//* Work in progress to test addMessageToBatch logic
 	});
 
 	it("Processes legacy string-content message", () => {
