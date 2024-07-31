@@ -10,6 +10,7 @@ import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
+	GenericError,
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
@@ -318,8 +319,18 @@ export class PendingStateManager implements IDisposable {
 		return pendingBatchId === inboundBatchId;
 	}
 
-	//* Returns an array of the same length as batch.messages
-	public onInboundBatch(
+	/**
+	 * Processes an inbound batch of messages.
+	 *
+	 * @param batch - The inbound batch of messages to process. Could be local or remote.
+	 * @param local - true if we submitted this batch and expect corresponding pending messages
+	 * @returns The inbound batch's messages with localOpMetadata "zipped" in.
+	 *
+	 * @remarks Closes the container in either of these cases:
+	 * - The batch ID or batchStartCsn don't match for local batches
+	 * - The batch ID *does* match but it's not a local batch (indicates Container forking).
+	 */
+	public processInboundBatch(
 		batch: InboundBatch,
 		local: boolean,
 	): {
@@ -330,17 +341,24 @@ export class PendingStateManager implements IDisposable {
 			return this.processPendingLocalBatch(batch);
 		}
 
-		//* TODO: Throw/close here
-		this.checkForMatchingBatchId(batch);
-		return batch.messages.map((message) => ({ message })); // No localOpMetadata for remote messages
+		// An inbound remote batch should not match the pending batch ID for this client.
+		// That would indicate the container forked (two instances trying to submit the same local state)
+		if (this.checkForMatchingBatchId(batch)) {
+			const forkedContainerError = new GenericError(
+				"Forked Container Error! Matching batchIds but mismatched clientId",
+			);
+			//* TRY: Throwing (DeltaQueue will close)
+			this.stateHandler.close(forkedContainerError);
+		}
+
+		// No localOpMetadata for remote messages
+		return batch.messages.map((message) => ({ message }));
 	}
 
 	/**
 	 * Processes the incoming batch from the server that was submitted by this client.
 	 * It verifies that messages are received in the right order and that the batch information is correct.
-	 * @param batch - The batch that is being processed.
-	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch
-	 * @param emptyBatchSequenceNumber - If the batch is empty, the sequence number of the empty batch placeholder message. Otherwise, undefined.
+	 * @param batch - The inbound batch (originating from this client) to correlate with the pending local state
 	 */
 	//* TODO: Switch to private
 	public processPendingLocalBatch(batch: InboundBatch): {
@@ -360,10 +378,9 @@ export class PendingStateManager implements IDisposable {
 				asEmptyBatchLocalOpMetadata(localOpMetadata)?.emptyBatch === true,
 				"Expected empty batch marker",
 			);
-			// We return an empty array to match the incoming batch's empty message list
-			return [];
 		}
 
+		// Note this will correctly return empty array for an empty batch
 		return batch.messages.map((message) => ({
 			message,
 			localOpMetadata: this.processPendingLocalMessage(message.sequenceNumber),

@@ -2656,7 +2656,7 @@ export class ContainerRuntime
 
 			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
 			// or to check to ensure the *remote* messages don't match the batchId of a pending local batch.
-			const messagesWithPendingState = this.pendingStateManager.onInboundBatch(
+			const messagesWithPendingState = this.pendingStateManager.processInboundBatch(
 				inboundBatch,
 				local,
 			);
@@ -2767,8 +2767,8 @@ export class ContainerRuntime
 	 * It is expected to happen only when the outbox produces an empty batch due to a resubmit flow.
 	 */
 	private processEmptyBatch(emptyBatch: InboundBatch, local: boolean) {
-		const { sequenceNumber, batchStartCsn } = emptyBatch;
-		assert(sequenceNumber !== undefined, "sequenceNumber must be defined");
+		const { emptyBatchSequenceNumber: sequenceNumber, batchStartCsn } = emptyBatch;
+		assert(sequenceNumber !== undefined, "emptyBatchSequenceNumber must be defined");
 		this.emit("batchBegin", { sequenceNumber });
 		this._processedClientSequenceNumber = batchStartCsn;
 		if (!this.hasPendingMessages()) {

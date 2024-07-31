@@ -37,8 +37,7 @@ export interface InboundBatch {
 	 * For grouped batches, clientSequenceNumber on messages is overwritten, so we track this original value here.
 	 */
 	readonly batchStartCsn: number;
-	readonly sequenceNumber?: number;
-	//* Can combine with batchStartCSN?
+	/** For an empty batch (with no messages), we need to remember the empty grouped batch's sequence number */
 	readonly emptyBatchSequenceNumber?: number;
 }
 
@@ -135,27 +134,17 @@ export class RemoteMessageProcessor {
 				this.batchInProgress === undefined,
 				0x9d3 /* Grouped batch interrupting another batch */,
 			);
+			//* TODO: Double-check we promote batchId to grouped batch message on submit
 			const batchId = asBatchMetadata(message.metadata)?.batchId;
 			const groupedMessages = this.opGroupingManager.ungroupOp(message).map(unpack);
-			// If the batch is empty, we need to return the sequence number aside
-			if (groupedMessages.length === 0) {
-				assert(
-					message.sequenceNumber !== undefined,
-					"Empty grouped batch has no sequence number",
-				);
-				return {
-					messages: groupedMessages, // empty array
-					batchStartCsn: message.clientSequenceNumber,
-					clientId,
-					batchId,
-					sequenceNumber: message.sequenceNumber,
-				};
-			}
 			return {
-				messages: groupedMessages,
+				messages: groupedMessages, // Will be [] for an empty batch
 				batchStartCsn: message.clientSequenceNumber,
 				clientId,
 				batchId,
+				// If the batch is empty, we need to return the sequence number aside
+				emptyBatchSequenceNumber:
+					groupedMessages.length === 0 ? message.sequenceNumber : undefined,
 			};
 		}
 

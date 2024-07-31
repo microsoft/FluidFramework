@@ -168,12 +168,12 @@ describe("Pending State Manager", () => {
 		const process = (
 			messages: Partial<ISequencedDocumentMessage>[],
 			batchStartCsn: number,
-			sequenceNumber?: number,
+			emptyBatchSequenceNumber?: number,
 		) =>
 			pendingStateManager.processPendingLocalBatch({
 				messages: messages as InboundSequencedContainerRuntimeMessage[],
 				batchStartCsn,
-				sequenceNumber,
+				emptyBatchSequenceNumber,
 				clientId,
 				batchId: generateBatchId(clientId, batchStartCsn),
 			});
