@@ -771,45 +771,39 @@ describe("treeNodeApi", () => {
 
 		it(`'nodeChanged' includes the names of changed properties (objectNode)`, () => {
 			const sb = new SchemaFactory("test");
-			class treeSchema extends sb.object("root", {
+			class TestNode extends sb.object("root", {
 				prop1: sb.optional(sb.number),
 				prop2: sb.optional(sb.number),
 				prop3: sb.optional(sb.number),
 			}) {}
 
-			const view = getView(new TreeViewConfiguration({ schema: treeSchema }));
-			view.initialize({ prop1: 1, prop2: 2 /* , prop3: 0 */ });
+			const view = getView(new TreeViewConfiguration({ schema: TestNode }));
+			view.initialize({ prop1: 1, prop2: 2 });
 			const root = view.root;
 
-			let listenerFired = false;
-			Tree.on(root, "nodeChanged", ({ changedProperties }) => {
-				// This is the main validation for the test
-				assert.deepEqual(changedProperties, new Set(["prop1", "prop2", "prop3"]));
-				listenerFired = true;
-			});
+			const eventLog: ReadonlySet<string>[] = [];
+			Tree.on(root, "nodeChanged", ({ changedProperties }) =>
+				eventLog.push(changedProperties),
+			);
 
 			const { forkView, forkCheckout } = getViewForForkedBranch(view);
 
 			// The implementation details of the kinds of changes that can happen inside the tree are not exposed at this layer.
-			// But since we know then, try to cover all of them.
+			// But since we know them, try to cover all of them.
 			forkView.root.prop1 = 2; // Replace
 			forkView.root.prop2 = undefined; // Detach
 			forkView.root.prop3 = 3; // Attach
 
 			view.checkout.merge(forkCheckout);
 
-			// Validate changes actually took place and all listeners fired
-			assert.equal(root.prop1, 2, "'prop1' value did not change as expected");
-			assert.equal(root.prop2, undefined, "'prop2' value did not change as expected");
-			assert.equal(root.prop3, 3, "'prop3' value did not change as expected");
-			assert.equal(listenerFired, true, "'nodeChanged' should have fired");
+			assert.deepEqual(eventLog, [new Set(["prop1", "prop2", "prop3"])]);
 		});
 
 		it(`'nodeChanged' includes the names of changed properties (mapNode)`, () => {
 			const sb = new SchemaFactory("test");
-			class treeSchema extends sb.map("root", [sb.number]) {}
+			class TestNode extends sb.map("root", [sb.number]) {}
 
-			const view = getView(new TreeViewConfiguration({ schema: treeSchema }));
+			const view = getView(new TreeViewConfiguration({ schema: TestNode }));
 			view.initialize(
 				new Map([
 					["key1", 1],
@@ -818,97 +812,72 @@ describe("treeNodeApi", () => {
 			);
 			const root = view.root;
 
-			let listenerFired = false;
-			Tree.on(root, "nodeChanged", ({ changedProperties }) => {
-				// This is the main validation for the test
-				assert.deepEqual(changedProperties, new Set(["key1", "key2", "key3"]));
-				listenerFired = true;
-			});
+			const eventLog: ReadonlySet<string>[] = [];
+			Tree.on(root, "nodeChanged", ({ changedProperties }) =>
+				eventLog.push(changedProperties),
+			);
 
 			const { forkView, forkCheckout } = getViewForForkedBranch(view);
 
 			// The implementation details of the kinds of changes that can happen inside the tree are not exposed at this layer.
-			// But since we know then, try to cover all of them.
+			// But since we know them, try to cover all of them.
 			forkView.root.set("key1", 0); // Replace existing key
 			forkView.root.delete("key2"); // Remove a key
 			forkView.root.set("key3", 3); // Add new key
 
 			view.checkout.merge(forkCheckout);
 
-			// Validate changes actually took place and all listeners fired
-			assert.equal(root.get("key1"), 0, "'key1' value did not change as expected");
-			assert.equal(root.get("key2"), undefined, "'key2' value did not change as expected");
-			assert.equal(root.get("key3"), 3, "'key3' value did not change as expected");
-			assert.equal(listenerFired, true, "'nodeChanged' should have fired");
+			assert.deepEqual(eventLog, [new Set(["key1", "key2", "key3"])]);
 		});
 
-		it(`'nodeChanged' includes the names of changed properties (arrayNode)`, () => {
+		it(`'nodeChanged' does not include the names of changed properties (arrayNode)`, () => {
 			const sb = new SchemaFactory("test");
-			class treeSchema extends sb.array("root", [sb.number]) {}
+			class TestNode extends sb.array("root", [sb.number]) {}
 
-			const view = getView(new TreeViewConfiguration({ schema: treeSchema }));
+			const view = getView(new TreeViewConfiguration({ schema: TestNode }));
 			view.initialize([1, 2]);
 			const root = view.root;
 
-			let listenerFired = false;
-			Tree.on(root, "nodeChanged", ({ changedProperties }) => {
-				// This is the main validation for the test
-				assert.deepEqual(changedProperties, new Set());
-				listenerFired = true;
-			});
+			const eventLog: ReadonlySet<string>[] = [];
+			Tree.on(root, "nodeChanged", ({ changedProperties }) =>
+				eventLog.push(changedProperties),
+			);
 
 			const { forkView, forkCheckout } = getViewForForkedBranch(view);
 
 			// The implementation details of the kinds of changes that can happen inside the tree are not exposed at this layer.
-			// But since we know then, try to cover all of them.
+			// But since we know them, try to cover all of them.
 			forkView.root.insertAtEnd(3); // Append to array
 			forkView.root.removeAt(0); // Remove from arrray
 			forkView.root.moveRangeToEnd(0, 1); // Move within array
 
 			view.checkout.merge(forkCheckout);
 
-			// Validate changes actually took place and all listeners fired
-			// Note: as of 2024-07-29, if the schema for the root is defined with a name
-			// (`class treeSchema extends sb.array("root", [sb.number])` where "root" is the name), we need to use Array.from()
-			// or array spread in order to compare the node to another array.
-			assert.deepEqual([...root], [3, 2]);
-			assert.equal(listenerFired, true, "'nodeChanged' should have fired");
+			assert.deepEqual(eventLog, [new Set()]);
 		});
 
 		it(`'nodeChanged' uses view keys, not stored keys, for the list of changed properties`, () => {
 			const sb = new SchemaFactory("test");
-			class treeSchema extends sb.object("root", {
+			class TestNode extends sb.object("root", {
 				prop1: sb.optional(sb.number, { key: "stored-prop1" }),
-				prop2: sb.optional(sb.number, { key: "stored-prop2" }),
-				prop3: sb.optional(sb.number, { key: "stored-prop3" }),
 			}) {}
 
-			const view = getView(new TreeViewConfiguration({ schema: treeSchema }));
-			view.initialize({ prop1: 1, prop2: 2 /* , prop3: 0 */ });
+			const view = getView(new TreeViewConfiguration({ schema: TestNode }));
+			view.initialize({ prop1: 1 });
 			const root = view.root;
 
-			let listenerFired = false;
-			Tree.on(root, "nodeChanged", ({ changedProperties }) => {
-				// This is the main validation for the test
-				assert.deepEqual(changedProperties, new Set(["prop1", "prop2", "prop3"]));
-				listenerFired = true;
-			});
+			const eventLog: ReadonlySet<string>[] = [];
+			Tree.on(root, "nodeChanged", ({ changedProperties }) =>
+				eventLog.push(changedProperties),
+			);
 
 			const { forkView, forkCheckout } = getViewForForkedBranch(view);
 
-			// The implementation details of the kinds of changes that can happen inside the tree are not exposed at this layer.
-			// But since we know then, try to cover all of them.
-			forkView.root.prop1 = 2; // Replace
-			forkView.root.prop2 = undefined; // Detach
-			forkView.root.prop3 = 3; // Attach
+			forkView.root.prop1 = 2;
 
 			view.checkout.merge(forkCheckout);
 
-			// Validate changes actually took place and all listeners fired
-			assert.equal(root.prop1, 2, "'prop1' value did not change as expected");
-			assert.equal(root.prop2, undefined, "'prop2' value did not change as expected");
-			assert.equal(root.prop3, 3, "'prop3' value did not change as expected");
-			assert.equal(listenerFired, true, "'nodeChanged' should have fired");
+			assert.deepEqual(eventLog, [new Set(["prop1"])]);
 		});
 	});
 });

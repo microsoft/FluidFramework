@@ -42,13 +42,14 @@ export class TreeNodeKernel implements Listenable<TreeChangeEvents> {
 				const nodeSchema = getSimpleNodeSchema(flexNode.schema);
 				const changedProperties = isObjectNodeSchema(nodeSchema)
 					? new Set(
-							[...changedFields].map(
+							Array.from(
+								changedFields,
 								(field) =>
 									nodeSchema.storedKeyToViewKeyMap.get(field) ??
 									fail(`Could not find stored key '${field}' in schema.`),
 							),
 						)
-					: new Set(changedFields);
+					: changedFields;
 				this.#events.emit("nodeChanged", { changedProperties });
 			},
 		);

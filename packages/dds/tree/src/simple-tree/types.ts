@@ -92,7 +92,9 @@ export interface TreeChangeEvents {
 	 * node, or when the node has to be updated due to resolution of a merge conflict
 	 * (for example a previously applied local change might be undone, then reapplied differently or not at all).
 	 */
-	nodeChanged({ changedProperties }: { changedProperties: ReadonlySet<string> }): void;
+	nodeChanged({
+		changedProperties,
+	}: { readonly changedProperties: ReadonlySet<string> }): void;
 
 	/**
 	 * Emitted by a node after a batch of changes has been applied to the tree, when something changed anywhere in the
