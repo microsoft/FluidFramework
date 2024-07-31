@@ -105,7 +105,7 @@ interface HandleStorageFactory {
 	 */
 	id: string;
 	/**
-	 * {@link IChannelAttributes.type} of the DDS that this factory creates.
+	 * `IChannel.attributes.type` of the DDS that this factory creates.
 	 */
 	type: string;
 	/**
