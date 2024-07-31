@@ -89,7 +89,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 		);
 		if (releaseNotesConfig === undefined) {
 			this.error(
-				`No releaseNotes config found. Make sure the 'releaseNotes' section of the build config exists.`,
+				`No release notes config found. Make sure the 'releaseNotes' section of the build config exists.`,
 				{ exit: 2 },
 			);
 		}
@@ -109,6 +109,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 
 		const bySection = groupBySection(changesets);
 
+		// Create a new scope since this code section is standalone
 		{
 			const unknownSection = bySection.get(UNKNOWN_SECTION);
 			for (const changeset of unknownSection ?? []) {
@@ -120,9 +121,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			}
 
 			const sectionsInChangesets = new Set<string>(bySection.keys());
-			const configuredSections = new Set<string>(
-				releaseNotesConfig.sections.map((s) => s.name),
-			);
+			const configuredSections = new Set<string>(Object.keys(releaseNotesConfig.sections));
 			const unknownSections = difference(sectionsInChangesets, configuredSections);
 			for (const section of unknownSections) {
 				if (section !== UNKNOWN_SECTION) {
@@ -136,7 +135,9 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 
 		const body = new StringBuilder();
 		// Iterate through the configured sections; unknown sections have already been handled
-		for (const { name, heading: sectionHead } of releaseNotesConfig.sections) {
+		for (const [name, { heading: sectionHead }] of Object.entries(
+			releaseNotesConfig.sections,
+		)) {
 			this.verbose(`Building "${name}" section with header: ${sectionHead}`);
 			const changes = bySection.get(name)?.filter(
 				(change) =>

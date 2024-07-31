@@ -6,7 +6,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { VersionBumpType } from "@fluid-tools/version-tools";
-import { Logger, type ReleaseNotesSection } from "@fluidframework/build-tools";
+import { Logger, type ReleaseNotesSectionName } from "@fluidframework/build-tools";
 import { compareAsc, formatISO, parseISO } from "date-fns";
 import globby from "globby";
 import matter from "gray-matter";
@@ -46,7 +46,7 @@ export interface FluidCustomChangesetMetadata {
 	 * The section in release notes in which this changeset should be included. If a value is not provided, the changeset
 	 * is considered part of the "unknown section".
 	 */
-	section?: ReleaseNotesSection["name"];
+	section?: ReleaseNotesSectionName;
 
 	/**
 	 * If false, the changeset will not be included in release notes.
@@ -344,8 +344,8 @@ export function groupByMainPackage(
  */
 export function groupBySection(
 	changesets: Changeset[],
-): ReadonlyMap<ReleaseNotesSection["name"], Changeset[]> {
-	const changesetMap = new Map<ReleaseNotesSection["name"], Changeset[]>();
+): ReadonlyMap<ReleaseNotesSectionName, Changeset[]> {
+	const changesetMap = new Map<ReleaseNotesSectionName, Changeset[]>();
 	for (const changeset of changesets) {
 		const section = changeset.additionalMetadata?.section ?? UNKNOWN_SECTION;
 		const entries = changesetMap.get(section) ?? [];
