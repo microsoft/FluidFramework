@@ -205,6 +205,7 @@ describe("simple-tree tree", () => {
 		});
 
 		it("compatible objects", () => {
+			// Disjoint field sets
 			assert.deepEqual(
 				getErrors([
 					schemaFactory.object("A", { a: schemaFactory.null }),
@@ -212,6 +213,17 @@ describe("simple-tree tree", () => {
 				]),
 				[],
 			);
+			// overlapping fields sets
+			assert.deepEqual(
+				getErrors([
+					schemaFactory.object("A", { a: schemaFactory.null, b: schemaFactory.null }),
+					schemaFactory.object("B", { b: schemaFactory.null, c: schemaFactory.null }),
+					schemaFactory.object("C", { c: schemaFactory.null, a: schemaFactory.null }),
+				]),
+				[],
+			);
+			// empty case
+			assert.deepEqual(getErrors([schemaFactory.object("A", {})]), []);
 		});
 
 		it("incompatible objects", () => {

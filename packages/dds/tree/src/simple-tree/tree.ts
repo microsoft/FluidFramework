@@ -96,23 +96,25 @@ export interface ITreeConfigurationOptions {
 	 * @remarks
 	 * When this is true, it ensures that the compile time type safety for data when constructing nodes is sufficient to ensure that the runtime behavior will not give node data ambiguity errors.
 	 *
-	 * This ensures that the canonical JSON-like representation of the node of any union in the tree is lossless and unambiguous.
+	 * This ensures that the canonical JSON-like representation of all unions in the tree are lossless and unambiguous.
 	 * This canonical JSON-like representation consists of arrays, plain old JavaScript objects with string keys, booleans, numbers (excluding NaN, -0 and infinities), strings, null and {@link @fluidframework/core-interfaces#IFluidHandle}s.
-	 * Assuming any IFluidHandles get special handling, its JSON compatible, as well as compatible with the node creation APIs (such as schema class constructors).
-	 *
+	 * It is compatible with the node creation APIs (such as schema class constructors) and is also compatible with JSON assuming any IFluidHandles get special handling (since they are not JSON compatible).
 	 * Currently these cases can cause ambiguity in a union:
 	 *
 	 * - More than one ArrayNode type: it's impossible to tell which array type is intended in the case of empty arrays (`[]`).
+	 *
 	 * - More than one MapNode type: it's impossible to tell which map type is intended in the case of an empty map (`{}`).
+	 *
 	 * - Both a MapNode and an ArrayNode: this case is not a problem for the canonical JSON representation, but is an issue when constructing from an Iterable, which is supported for both MapNode and ArrayNode.
+	 *
 	 * - Both a MapNode and an ObjectNode: when the input is valid for the ObjectNode, the current parser always considers it ambiguous with being a MapNode.
+	 *
 	 * - ObjectNodes which have fields (required or optional) which include all required fields of another ObjectNode: currently each ObjectNode is differentiated by the presence of its required fields.
 	 *
 	 * This check is conservative: some complex cases may error if the current simple algorithm cannot show no ambiguity is possible.
 	 * This check may become more permissive over time.
 	 *
-	 * @example
-	 * This example shows an ambiguous schema, and how to disambiguate it using {@link Unhydrated} nodes:
+	 * @example Ambiguous schema (with `preventAmbiguity: false`), and how to disambiguate it using {@link Unhydrated} nodes:
 	 * ```typescript
 	 * const schemaFactory = new SchemaFactory("com.example");
 	 * class Feet extends schemaFactory.object("Feet", { length: schemaFactory.number }) {}
@@ -129,8 +131,7 @@ export interface ITreeConfigurationOptions {
 	 * view.initialize(new Meters({ length: 5 }));
 	 * ```
 	 *
-	 * @example
-	 * This example shows how to disambiguate a schema by adjusting the field names in a compatible way:
+	 * @example Schema disambiguated by adjusting field names, validated with `preventAmbiguity: true:`
 	 * ```typescript
 	 * const schemaFactory = new SchemaFactory("com.example");
 	 * class Feet extends schemaFactory.object("Feet", { length: schemaFactory.number }) {}
@@ -311,15 +312,13 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
 
 	// Check for objects which fully overlap:
 	for (const schema of objects) {
-		// Check that each object has at least one required field which is unique to it.
-		// This is a conservative uniqueness check that ensures that its possible to disambiguate objects,
-		// even if they have extra non-field members on them (that don't collide with any fields in the union), without even checking the types of fields.
-
+		// All objects which might be ambiguous relative to `schema`.
 		const possiblyAmbiguous = new Set(objects);
 
 		// A schema can't be ambiguous with itself
 		possiblyAmbiguous.delete(schema);
 
+		// For each field of schema, remove schema from possiblyAmbiguous that do not have that field
 		for (const [key, field] of schema.fields) {
 			if (field.kind === FieldKind.Required) {
 				const withKey = allObjectKeys.get(key) ?? fail("missing schema");
