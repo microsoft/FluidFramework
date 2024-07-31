@@ -15,6 +15,7 @@ import {
 	rootFieldKey,
 	RevertibleStatus,
 	CommitKind,
+	EmptyKey,
 } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
 import {
@@ -203,17 +204,9 @@ describe("sharedTreeView", () => {
 		itView("can fork and apply edits without affecting the parent", (parent) => {
 			parent.root.insertAtStart("parent");
 			const child = forkView(parent);
-			parent.root.insertAtStart("child");
-			assert.equal(parent.root[0], "parent");
-			assert.deepEqual(child.root[0], ["parent", "child"]);
-		});
-
-		itView("can fork and apply edits without affecting the parent", (parent) => {
-			parent.root.insertAtStart("parent");
-			const child = forkView(parent);
-			parent.root.insertAtStart("child");
-			assert.equal(parent.root[0], "parent");
-			assert.deepEqual(child.root[0], ["parent", "child"]);
+			child.root.insertAtStart("child");
+			assert.deepEqual([...parent.root], ["parent"]);
+			assert.deepEqual([...child.root], ["child", "parent"]);
 		});
 
 		itView("can apply edits without affecting a fork", (parent) => {
@@ -247,8 +240,8 @@ describe("sharedTreeView", () => {
 			parent.root.insertAtStart("P2");
 			child.root.insertAtStart("C1");
 			parent.checkout.rebaseOnto(child.checkout);
-			assert.deepEqual(child.root[0], ["P1", "C1"]);
-			assert.deepEqual(parent.root[0], ["P1", "C1", "P2"]);
+			assert.deepEqual([...child.root], ["C1", "P1"]);
+			assert.deepEqual([...parent.root], ["P2", "C1", "P1"]);
 		});
 
 		itView("merge changes through multiple views", (viewA) => {
@@ -285,8 +278,8 @@ describe("sharedTreeView", () => {
 			parent.root.insertAtStart("P2");
 			child.root.insertAtStart("C1");
 			child.checkout.merge(parent.checkout);
-			assert.deepEqual(child.root[0], ["P1", "C1", "P2"]);
-			assert.deepEqual(parent.root[0], ["P1", "P2"]);
+			assert.deepEqual([...child.root], ["P2", "C1", "P1"]);
+			assert.deepEqual([...parent.root], ["P2", "P1"]);
 		});
 
 		itView("can perform a complicated merge scenario", (viewA) => {
@@ -312,24 +305,25 @@ describe("sharedTreeView", () => {
 			viewA.checkout.merge(viewB.checkout);
 			viewA.root.insertAtStart("R3");
 			assert.deepEqual(viewA.root, [
-				"R1",
-				"R2",
-				"A1",
-				"A2",
-				"B1",
-				"C1",
-				"B2",
-				"A3",
-				"A4",
-				"D1",
 				"R3",
+				"D1",
+				"A4",
+				"A3",
+				"B2",
+				"C1",
+				"B1",
+				"A2",
+				"A1",
+				"R2",
+				"R1",
 			]);
 		});
 
 		itView("update anchors after applying a change", (view) => {
 			view.root.insertAtStart("A");
 			let cursor = view.checkout.forest.allocateCursor();
-			moveToDetachedField(view.checkout.forest, cursor);
+			view.checkout.forest.moveCursorToPath(getFlexNode(view.root).anchorNode, cursor);
+			cursor.enterField(EmptyKey);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
 			cursor.clear();
@@ -343,7 +337,8 @@ describe("sharedTreeView", () => {
 		itView("update anchors after merging into a parent", (parent) => {
 			parent.root.insertAtStart("A");
 			let cursor = parent.checkout.forest.allocateCursor();
-			moveToDetachedField(parent.checkout.forest, cursor);
+			parent.checkout.forest.moveCursorToPath(getFlexNode(parent.root).anchorNode, cursor);
+			cursor.enterField(EmptyKey);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
 			cursor.clear();
@@ -359,7 +354,8 @@ describe("sharedTreeView", () => {
 		itView("update anchors after merging a branch into a divergent parent", (parent) => {
 			parent.root.insertAtStart("A");
 			let cursor = parent.checkout.forest.allocateCursor();
-			moveToDetachedField(parent.checkout.forest, cursor);
+			parent.checkout.forest.moveCursorToPath(getFlexNode(parent.root).anchorNode, cursor);
+			cursor.enterField(EmptyKey);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
 			cursor.clear();
@@ -377,7 +373,8 @@ describe("sharedTreeView", () => {
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 			view.root.insertAtStart("A");
 			let cursor = view.checkout.forest.allocateCursor();
-			moveToDetachedField(view.checkout.forest, cursor);
+			view.checkout.forest.moveCursorToPath(getFlexNode(view.root).anchorNode, cursor);
+			cursor.enterField(EmptyKey);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
 			cursor.clear();
@@ -395,10 +392,10 @@ describe("sharedTreeView", () => {
 			child.root.insertAtStart("A");
 			parent.checkout.merge(child.checkout, false);
 			child.root.insertAtStart("B");
-			assert.deepEqual(parent.root, ["A"]);
-			assert.deepEqual(child.root, ["A", "B"]);
+			assert.deepEqual([...parent.root], ["A"]);
+			assert.deepEqual([...child.root], ["B", "A"]);
 			parent.checkout.merge(child.checkout);
-			assert.deepEqual(parent.root, ["A", "B"]);
+			assert.deepEqual([...parent.root], ["B", "A"]);
 		});
 
 		itView("can rebase after merging", (parent) => {
@@ -407,7 +404,7 @@ describe("sharedTreeView", () => {
 			parent.checkout.merge(child.checkout, false);
 			parent.root.insertAtStart("B");
 			child.checkout.rebaseOnto(parent.checkout);
-			assert.deepEqual(child.root, ["A", "B"]);
+			assert.deepEqual([...child.root], ["B", "A"]);
 		});
 
 		itView("can be read after merging", (parent) => {
@@ -454,6 +451,7 @@ describe("sharedTreeView", () => {
 					enableSchemaValidation,
 				}),
 			);
+			tree1.initialize([]);
 			provider.processMessages();
 			const tree2 = provider.trees[1].viewWith(
 				new TreeViewConfiguration({
@@ -461,7 +459,6 @@ describe("sharedTreeView", () => {
 					enableSchemaValidation,
 				}),
 			);
-			provider.processMessages();
 			const baseView = forkView(tree1);
 			const view = forkView(baseView);
 			// Modify the view, but tree2 should remain unchanged until the edit merges all the way up
@@ -485,6 +482,7 @@ describe("sharedTreeView", () => {
 					enableSchemaValidation,
 				}),
 			);
+			tree1.initialize([]);
 			provider.processMessages();
 			let opsReceived = 0;
 			provider.trees[1].on("op", () => (opsReceived += 1));
@@ -1098,7 +1096,7 @@ describe("sharedTreeView", () => {
 });
 
 const defaultSf = new SchemaFactory("Checkout and view test schema");
-class RootArray extends defaultSf.array("root", defaultSf.string) {}
+const rootArray = defaultSf.array(defaultSf.string);
 
 /**
  * Runs the given test function as two tests,
@@ -1110,7 +1108,7 @@ class RootArray extends defaultSf.array("root", defaultSf.string) {}
  */
 function itView<
 	T extends InsertableTreeFieldFromImplicitField<TRootSchema>,
-	TRootSchema extends ImplicitFieldSchema = typeof RootArray,
+	TRootSchema extends ImplicitFieldSchema = typeof rootArray,
 >(
 	title: string,
 	fn: (view: SchematizingSimpleTreeView<TRootSchema>, logger: IMockLoggerExt) => void,
@@ -1121,14 +1119,14 @@ function itView<
 ): void;
 function itView(
 	title: string,
-	fn: (view: SchematizingSimpleTreeView<typeof RootArray>, logger: IMockLoggerExt) => void,
+	fn: (view: SchematizingSimpleTreeView<typeof rootArray>, logger: IMockLoggerExt) => void,
 	options?: {
 		skip?: true;
 	},
 ): void;
 function itView<
 	T extends InsertableTreeFieldFromImplicitField<TRootSchema>,
-	TRootSchema extends ImplicitFieldSchema = typeof RootArray,
+	TRootSchema extends ImplicitFieldSchema = typeof rootArray,
 >(
 	title: string,
 	fn: (view: SchematizingSimpleTreeView<TRootSchema>, logger: IMockLoggerExt) => void,
@@ -1158,19 +1156,19 @@ function itView<
 		} else {
 			const view = (
 				makeViewFromConfig as unknown as (
-					config: TreeViewConfiguration<typeof RootArray>,
-				) => SchematizingSimpleTreeView<typeof RootArray>
+					config: TreeViewConfiguration<typeof rootArray>,
+				) => SchematizingSimpleTreeView<typeof rootArray>
 			)(
 				new TreeViewConfiguration({
-					schema: RootArray,
+					schema: rootArray,
 					enableSchemaValidation,
 				}),
 			);
-			view.initialize(new RootArray([]));
+			view.initialize([]);
 			// down cast here is safe due to overload protections
 			(
 				thunk as unknown as (
-					view: SchematizingSimpleTreeView<typeof RootArray>,
+					view: SchematizingSimpleTreeView<typeof rootArray>,
 					logger: IMockLoggerExt,
 				) => void
 			)(view, provider.logger);
