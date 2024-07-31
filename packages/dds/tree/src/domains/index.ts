@@ -11,6 +11,7 @@ export {
 	jsonRoot,
 	jsonSchema,
 	singleJsonCursor,
+	typedJsonCursor,
 } from "./json/index.js";
 
 export { leaf } from "./leafDomain.js";
