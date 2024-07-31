@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
 import { runCommand } from "@oclif/test";
 import { describe, expect, it } from "vitest";
 
