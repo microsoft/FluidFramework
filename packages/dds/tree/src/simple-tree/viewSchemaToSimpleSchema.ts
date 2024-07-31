@@ -69,7 +69,7 @@ function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
 	}
 }
 
-// TODO: stronger type
+// TODO: Use a stronger type for leaf schemas once one is available
 function leafSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleLeafNodeSchema {
 	return {
 		kind: "leaf",
@@ -77,7 +77,7 @@ function leafSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleLeafNodeSchema 
 	};
 }
 
-// TODO: stronger type
+// TODO: Use a stronger type for array schemas once one is available
 function arraySchemaToSimpleSchema(schema: TreeNodeSchema): SimpleArrayNodeSchema {
 	const fieldSchema = normalizeFieldSchema(schema.info as ImplicitAllowedTypes);
 	const allowedTypes = allowedTypesFromFieldSchema(fieldSchema);
@@ -87,7 +87,7 @@ function arraySchemaToSimpleSchema(schema: TreeNodeSchema): SimpleArrayNodeSchem
 	};
 }
 
-// TODO: stronger type
+// TODO: Use a stronger type for map schemas once one is available
 function mapSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleMapNodeSchema {
 	const fieldSchema = normalizeFieldSchema(schema.info as ImplicitAllowedTypes);
 	const allowedTypes = allowedTypesFromFieldSchema(fieldSchema);
@@ -108,7 +108,6 @@ function objectSchemaToSimpleSchema(schema: ObjectNodeSchema): SimpleObjectNodeS
 	};
 }
 
-// TODO: caching
 function fieldSchemaToSimpleSchema(schema: FieldSchema): SimpleFieldSchema {
 	const kind = fieldKindToSimpleFieldKind(schema.kind);
 	const allowedTypes = allowedTypesFromFieldSchema(schema);
