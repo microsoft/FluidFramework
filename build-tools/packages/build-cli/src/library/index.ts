@@ -18,12 +18,13 @@ export {
 export { getDisplayDate, getDisplayDateRelative } from "./dates.js";
 export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "./bump.js";
 export {
-	UNKNOWN_SECTION,
 	DEFAULT_CHANGESET_PATH,
 	fluidCustomChangeSetMetadataDefaults,
-	loadChangesets,
-	groupBySection,
 	groupByMainPackage,
+	groupBySection,
+	loadChangesets,
+	type FluidCustomChangesetMetadata,
+	UNKNOWN_SECTION,
 } from "./changesets.js";
 export {
 	unscopedPackageNameString,

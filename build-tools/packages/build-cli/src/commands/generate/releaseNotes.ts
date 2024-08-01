@@ -5,7 +5,7 @@
 
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
-import { loadFluidBuildConfig } from "@fluidframework/build-tools";
+import { type ReleaseNotesSection, loadFluidBuildConfig } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { StringBuilder } from "@rushstack/node-core-library";
 import { format as prettier } from "prettier";
@@ -60,6 +60,11 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			default: "RELEASE_NOTES.md",
 			// exists: true
 		}),
+		includeUnknown: Flags.boolean({
+			default: false,
+			description:
+				"Pass this flag to include changesets in unknown sections in the generated release notes. By default, these are excluded.",
+		}),
 		...BaseCommand.flags,
 	} as const;
 
@@ -108,6 +113,9 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 		this.info(`Loaded ${changesets.length} changes.`);
 
 		const bySection = groupBySection(changesets);
+		const sectionsToBuild: Map<string, ReleaseNotesSection> = new Map(
+			Object.entries(releaseNotesConfig.sections),
+		);
 
 		// Create a new scope since this code section is standalone
 		{
@@ -122,22 +130,28 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 
 			const sectionsInChangesets = new Set<string>(bySection.keys());
 			const configuredSections = new Set<string>(Object.keys(releaseNotesConfig.sections));
-			const unknownSections = difference(sectionsInChangesets, configuredSections);
-			for (const section of unknownSections) {
-				if (section !== UNKNOWN_SECTION) {
-					this.error(
-						`Could not find a configuration for a section named "${section}". All sections must be configured.`,
-						{ exit: 2 },
-					);
+			const unknownSections = difference(sectionsInChangesets, configuredSections).add(
+				UNKNOWN_SECTION,
+			);
+
+			if (flags.includeUnknown) {
+				for (const sectionName of unknownSections) {
+					sectionsToBuild.set(sectionName, { heading: `Unknown section: ${sectionName}` });
+				}
+			} else {
+				for (const section of unknownSections) {
+					if (section !== UNKNOWN_SECTION) {
+						this.error(
+							`Could not find a configuration for a section named "${section}". All sections must be configured.`,
+							{ exit: 2 },
+						);
+					}
 				}
 			}
 		}
 
 		const body = new StringBuilder();
-		// Iterate through the configured sections; unknown sections have already been handled
-		for (const [name, { heading: sectionHead }] of Object.entries(
-			releaseNotesConfig.sections,
-		)) {
+		for (const [name, { heading: sectionHead }] of sectionsToBuild.entries()) {
 			this.verbose(`Building "${name}" section with header: ${sectionHead}`);
 			const changes = bySection.get(name)?.filter(
 				(change) =>
@@ -180,7 +194,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 				.use(remarkGfm)
 				.use(admonitions)
 				.use(remarkGithub, {
-					buildUrl(values) {
+					buildUrl(values: { type: string }) {
 						// Disable linking mentions
 						return values.type === "mention" ? false : defaultBuildUrl(values);
 					},

@@ -75,7 +75,7 @@ describe("simple-tree types", () => {
 			});
 		});
 
-		it("instancof public", () => {
+		it("instanceof public", () => {
 			assert.throws(() => {
 				// @ts-expect-error TreeNode is only type exported, preventing external code from extending it.
 				const x = {} instanceof TreeNodePublic;
