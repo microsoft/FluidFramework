@@ -11,9 +11,8 @@ on:
     inputs:
       issueNumber:
         description: 'Issue number to update'
-        default: 26
+        default: ${{ secrets.RELEASE_NOTES_ISSUE }}
         required: true
-
 
 permissions:
   issues: write
@@ -40,7 +39,7 @@ jobs:
         env:
           ISSUE_VAL: ${{ github.event_name == 'push' && 'secrets.RELEASE_NOTES_ISSUE' || github.event.inputs.issueNumber }}
         run: |
-          echo "ISSUE='$ISSUE_VAL'" >> $GITHUB_ENV
+          echo "ISSUE=$ISSUE_VAL" >> "$GITHUB_OUTPUT"
 
       - name: Set version output variable
         id: setVersion
