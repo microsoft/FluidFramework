@@ -114,8 +114,7 @@ const createArrayProxy = (
 	parentKey?: json1.Key,
 ): Object =>
 	new Proxy(subject, {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		get: (target: Object, key: string | symbol, receiver: IProxy): any => {
+		get: (target: Object, key: string | symbol, receiver: IProxy): unknown => {
 			if (key === contextSym) {
 				return { parent, parentKey };
 			}
