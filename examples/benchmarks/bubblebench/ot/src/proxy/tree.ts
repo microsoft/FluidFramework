@@ -140,19 +140,18 @@ const createArrayProxy = (
 			value: json1.Doc,
 			receiver: IProxy,
 		): boolean => {
-			// eslint-disable-next-line no-param-reassign
-			key = indexify(key as string) as string;
-			const path = getPath(receiver, key);
+			const indexifiedKey = indexify(key as string) as string;
+			const path = getPath(receiver, indexifiedKey);
 
-			if (Object.prototype.hasOwnProperty.call(target, key)) {
+			if (Object.prototype.hasOwnProperty.call(target, indexifiedKey)) {
 				consumer(
-					json1.replaceOp(path, /* oldVal: */ target[key] as json1.Doc, /* newVal: */ value),
+					json1.replaceOp(path, /* oldVal: */ target[indexifiedKey] as json1.Doc, /* newVal: */ value),
 				);
 			} else {
 				consumer(json1.insertOp(path, value));
 			}
 
-			target[key] = value;
+			target[indexifiedKey] = value;
 			return true;
 		},
 	});
