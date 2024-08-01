@@ -55,7 +55,7 @@ jobs:
 
       - name: Generate release notes file
         run: |
-          flub generate releaseNotes -g client -t minor --out RELEASE_NOTES.md -v
+          flub generate releaseNotes -g client -t minor --includeUnknown --out RELEASE_NOTES.md -v
 
       - name: Read release notes file
         id: relNotes
@@ -63,14 +63,8 @@ jobs:
         with:
           path: ./RELEASE_NOTES.md
 
-      # - name: Set issue number from push
-      #   id: issueNum
-      #   if: github.event_name == 'push'
-      #   run: echo "ISSUE_NUMBER=26" >> $GITHUB_ENV
-
       - name: Set issue number
         id: issueNum
-        # if: github.event_name == 'workflow_dispatch'
         env:
           ISSUE: ${{ github.event_name == 'push' && '26' || github.event.inputs.issueNumber }}
         run: |
@@ -81,14 +75,6 @@ jobs:
         run: |
           echo "VERSION=$(jq -r '.version' package.json)" >> "$GITHUB_OUTPUT"
 
-      - name: Update issue title
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ISSUE_NUMBER=${{ steps.issueNum.outputs.ISSUE_NUMBER }}
-          NEW_TITLE="Upcoming Release: FluidFramework v${{ steps.setVersion.outputs.VERSION }}"
-          gh issue edit $ISSUE_NUMBER --title "$NEW_TITLE"
-
       - name: Update issue body
         uses: julien-deramond/update-issue-body@v1
         with:
@@ -96,6 +82,10 @@ jobs:
           body: ${{ steps.relNotes.outputs.content }}
           edit-mode: replace
 
-      # - uses: JasonEtco/create-an-issue@v2
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # This job checks that PR template placeholder content has been removed from the PR body.
+      - name: Update issue title
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUMBER=${{ steps.issueNum.outputs.ISSUE_NUMBER }}
+          NEW_TITLE="Upcoming Release: FluidFramework v${{ steps.setVersion.outputs.VERSION }}"
+          gh issue edit $ISSUE_NUMBER --title "$NEW_TITLE"
