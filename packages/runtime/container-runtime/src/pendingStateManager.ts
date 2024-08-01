@@ -425,6 +425,9 @@ export class PendingStateManager implements IDisposable {
 				"Expected empty batch",
 			);
 		}
+
+		//* For a pending local batch, we don't need the "effective" calculation.
+		//* Just compare the actual batchIds, they should match since we sent this message.
 		const pendingBatchId = getEffectiveBatchId(pendingMessage);
 		const inboundBatchId = getEffectiveBatchId2(batch);
 
@@ -440,7 +443,7 @@ export class PendingStateManager implements IDisposable {
 					pendingBatchId,
 					inboundBatchId,
 					inboundBatchIdComputed: batch.batchId === undefined,
-					messageBatchMetadata: firstMessage && (firstMessage.metadata as any).batch,
+					messageBatchMetadata: firstMessage && (firstMessage.metadata as any)?.batch,
 					pendingMessageBatchMetadata: (pendingMessage.opMetadata as any)?.batch,
 					emptyBatch: firstMessage === undefined,
 				},
