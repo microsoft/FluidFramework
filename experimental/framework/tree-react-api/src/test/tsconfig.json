@@ -8,6 +8,8 @@
 		"noUnusedLocals": false,
 		// Allow testing that declarations work properly
 		"declaration": true,
+		// Needed to ensure testExport's produce a valid d.ts
+		"skipLibCheck": false,
 	},
 	"include": ["./**/*"],
 	"references": [
