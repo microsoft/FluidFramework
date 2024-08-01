@@ -194,7 +194,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 				.use(remarkGfm)
 				.use(admonitions)
 				.use(remarkGithub, {
-					buildUrl(values: { type: string }) {
+					buildUrl(values) {
 						// Disable linking mentions
 						return values.type === "mention" ? false : defaultBuildUrl(values);
 					},
