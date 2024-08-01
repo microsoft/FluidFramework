@@ -230,31 +230,6 @@ describe("Pending State Manager", () => {
 			process([], 1 /* batchStartCsn */, 3 /* sequenceNumber */);
 		});
 
-		it("batch missing end message will call close", () => {
-			const messages: Partial<ISequencedDocumentMessage>[] = [
-				{
-					clientId,
-					type: MessageType.Operation,
-					clientSequenceNumber: 0,
-					referenceSequenceNumber: 0,
-					metadata: { batch: true },
-				},
-				{
-					clientId,
-					type: MessageType.Operation,
-					clientSequenceNumber: 1,
-					referenceSequenceNumber: 0,
-				},
-			];
-
-			submitBatch(messages);
-			process(messages, 0 /* batchStartCsn */);
-			assert(isILoggingError(closeError));
-			assert.strictEqual(closeError.errorType, ContainerErrorTypes.dataProcessingError);
-			assert.strictEqual(closeError.getTelemetryProperties().hasBatchStart, true);
-			assert.strictEqual(closeError.getTelemetryProperties().hasBatchEnd, false);
-		});
-
 		describe("processing out of sync messages will call close", () => {
 			it("messageTypes do not match", () => {
 				const messages: Partial<ISequencedDocumentMessage>[] = [

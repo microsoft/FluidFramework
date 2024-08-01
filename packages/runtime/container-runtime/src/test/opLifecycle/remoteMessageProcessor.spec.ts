@@ -251,7 +251,7 @@ describe("RemoteMessageProcessor", () => {
 			processor.process(message, () => {}),
 		);
 
-		const x = [
+		const expectedResults = [
 			// A
 			undefined,
 			undefined,
@@ -336,7 +336,44 @@ describe("RemoteMessageProcessor", () => {
 			},
 		];
 
-		assert.deepStrictEqual(processResults, x, "unexpected output from process");
+		assert.deepStrictEqual(processResults, expectedResults, "unexpected output from process");
+	});
+
+	it("Throws on invalid batches", () => {
+		let csn = 1;
+		const batchManager = new BatchManager({
+			canRebase: false,
+			hardLimit: Number.MAX_VALUE,
+		});
+		batchManager.push({ contents: "A1", referenceSequenceNumber: 1 }, false /* reentrant */);
+		batchManager.push({ contents: "A2", referenceSequenceNumber: 1 }, false /* reentrant */);
+		batchManager.push({ contents: "A3", referenceSequenceNumber: 1 }, false /* reentrant */);
+		const batchA = batchManager.popBatch();
+		batchA.messages[2].metadata = undefined; // Wipe out the ending metadata
+		batchManager.push({ contents: "B1", referenceSequenceNumber: 1 }, false /* reentrant */);
+		batchManager.push({ contents: "B2", referenceSequenceNumber: 1 }, false /* reentrant */);
+		const batchB = batchManager.popBatch();
+
+		const processor = getMessageProcessor();
+
+		// Add clientId and CSN as would happen on final stage of submit
+		const inboundMessages: ISequencedDocumentMessage[] = [
+			...batchA.messages,
+			...batchB.messages,
+		].map((message) => ({
+			...(message as ISequencedDocumentMessage),
+			clientId: "CLIENT_ID",
+			clientSequenceNumber: csn++,
+		}));
+
+		assert.throws(
+			() => {
+				inboundMessages.map((message) => processor.process(message, () => {}));
+			},
+			(e: any) => {
+				return e.message === "0x9d6";
+			},
+		);
 	});
 
 	it("Processes legacy string-content message", () => {
