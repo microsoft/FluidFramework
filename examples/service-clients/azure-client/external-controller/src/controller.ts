@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IValueChanged } from "@fluidframework/map/internal";
 import events_pkg from "events_pkg";
+// eslint-disable-next-line import/no-internal-modules
+import { IValueChanged } from "fluid-framework/legacy";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.

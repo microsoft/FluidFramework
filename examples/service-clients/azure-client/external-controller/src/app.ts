@@ -10,10 +10,11 @@ import {
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/internal";
-import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { IFluidContainer } from "fluid-framework";
+import { IFluidContainer, ContainerSchema } from "fluid-framework";
+// eslint-disable-next-line import/no-internal-modules
+import { ISharedMap, IValueChanged, SharedMap } from "fluid-framework/legacy";
 import { v4 as uuid } from "uuid";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
@@ -66,7 +67,7 @@ const containerSchema = {
 		map1: SharedMap,
 		map2: SharedMap,
 	},
-};
+} as const satisfies ContainerSchema;
 
 function createDiceRollerControllerProps(map: ISharedMap): DiceRollerControllerProps {
 	return {
@@ -90,17 +91,17 @@ function createDiceRollerControllerProps(map: ISharedMap): DiceRollerControllerP
 }
 
 function createDiceRollerControllerPropsFromContainer(
-	container: IFluidContainer,
+	container: IFluidContainer<typeof containerSchema>,
 ): [DiceRollerControllerProps, DiceRollerControllerProps] {
 	const diceRollerController1Props: DiceRollerControllerProps =
-		createDiceRollerControllerProps(container.initialObjects.map1 as ISharedMap);
+		createDiceRollerControllerProps(container.initialObjects.map1);
 	const diceRollerController2Props: DiceRollerControllerProps =
-		createDiceRollerControllerProps(container.initialObjects.map2 as ISharedMap);
+		createDiceRollerControllerProps(container.initialObjects.map2);
 	return [diceRollerController1Props, diceRollerController2Props];
 }
 
 async function initializeNewContainer(
-	container: IFluidContainer,
+	container: IFluidContainer<typeof containerSchema>,
 ): Promise<[DiceRollerControllerProps, DiceRollerControllerProps]> {
 	const [diceRollerController1Props, diceRollerController2Props] =
 		createDiceRollerControllerPropsFromContainer(container);
@@ -127,7 +128,7 @@ async function start(): Promise<void> {
 		logger: devtoolsLogger,
 	};
 	const client = new AzureClient(clientProps);
-	let container: IFluidContainer;
+	let container: IFluidContainer<typeof containerSchema>;
 	let services: AzureContainerServices;
 	let id: string;
 
@@ -139,9 +140,9 @@ async function start(): Promise<void> {
 		// The client will create a new detached container using the schema
 		// A detached container will enable the app to modify the container before attaching it to the client
 		({ container, services } = await client.createContainer(containerSchema, "2"));
-		// const map1 = container.initialObjects.map1 as ISharedMap;
+		// const map1 = container.initialObjects.map1;
 		// map1.set("diceValue", 1);
-		// const map2 = container.initialObjects.map1 as ISharedMap;
+		// const map2 = container.initialObjects.map1;
 		// map2.set("diceValue", 1);
 		// console.log(map1.get("diceValue"));
 		// Initialize our models so they are ready for use with our controllers
