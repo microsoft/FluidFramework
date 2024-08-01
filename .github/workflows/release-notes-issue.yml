@@ -63,15 +63,18 @@ jobs:
         with:
           path: ./RELEASE_NOTES.md
 
-      - name: Set issue number from push
-        id: issueNum
-        if: github.event_name == 'push'
-        run: echo "ISSUE_NUMBER=26" >> $GITHUB_ENV
+      # - name: Set issue number from push
+      #   id: issueNum
+      #   if: github.event_name == 'push'
+      #   run: echo "ISSUE_NUMBER=26" >> $GITHUB_ENV
 
-      - name: Set issue number from manual input
+      - name: Set issue number
         id: issueNum
-        if: github.event_name == 'workflow_dispatch'
-        run: echo "ISSUE_NUMBER=${{ github.event.inputs.issueNumber }}" >> $GITHUB_ENV
+        # if: github.event_name == 'workflow_dispatch'
+        env:
+          ISSUE: ${{ github.event_name == 'push' && '26' || github.event.inputs.issueNumber }}
+        run: |
+          echo "ISSUE_NUMBER=$ISSUE" >> $GITHUB_ENV
 
       - name: Set version output variable
         id: setVersion
