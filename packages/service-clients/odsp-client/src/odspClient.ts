@@ -90,27 +90,91 @@ function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigPr
 }
 
 /**
+ * Creates OdspClient
+ * @param properties - properties
+ * @returns OdspClient
+ */
+export function createOdspClientCore(
+	driverFactory: IDocumentServiceFactory,
+	urlResolver: OdspDriverUrlResolver,
+	logger?: ITelemetryBaseLogger,
+	configProvider?: IConfigProviderBase,
+): OdspClient {
+	return new OdspClient(driverFactory, urlResolver, logger, configProvider);
+}
+
+/**
+ * Creates OdspClient
+ * @param properties - properties
+ * @returns OdspClient
+ */
+export function createOdspClient(
+	properties: OdspClientProps,
+): OdspClient {
+	return createOdspClientCore(
+		new OdspDocumentServiceFactory(
+			async (options) => getStorageToken(options, properties.connection.tokenProvider),
+			async (options) => getWebsocketToken(options, properties.connection.tokenProvider),
+		),
+		new OdspDriverUrlResolver(),
+		properties.logger,
+		properties.configProvider,
+	);
+}
+
+/**
  * OdspClient provides the ability to have a Fluid object backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
  * @sealed
  * @beta
  */
-export class OdspClient {
-	private readonly documentServiceFactory: IDocumentServiceFactory;
-	private readonly urlResolver: OdspDriverUrlResolver;
-	private readonly configProvider: IConfigProviderBase | undefined;
-	private readonly connectionConfig: OdspConnectionConfig;
-	private readonly logger: ITelemetryBaseLogger | undefined;
-
-	public constructor(properties: OdspClientProps) {
-		this.connectionConfig = properties.connection;
-		this.logger = properties.logger;
-		this.documentServiceFactory = new OdspDocumentServiceFactory(
-			async (options) => getStorageToken(options, this.connectionConfig.tokenProvider),
-			async (options) => getWebsocketToken(options, this.connectionConfig.tokenProvider),
+export class OdspClient extends OdspClientCore {
+	public constructor(
+		documentServiceFactory: IDocumentServiceFactory,
+		urlResolver: OdspDriverUrlResolver,
+		logger?: ITelemetryBaseLogger,
+		configProvider?: IConfigProviderBase,
+	) {
+		super(
+			documentServiceFactory,
+			urlResolver,
+			logger,
+			configProvider,
 		);
+	}
 
-		this.urlResolver = new OdspDriverUrlResolver();
-		this.configProvider = wrapConfigProvider(properties.configProvider);
+	public override async getContainer<T extends ContainerSchema>(
+		id: string,
+		containerSchema: T,
+	): Promise<{
+		container: IFluidContainer<T>;
+		services: OdspContainerServices;
+	}> {
+		const url = createOdspUrl({
+			siteUrl: this.connectionConfig.siteUrl,
+			driveId: this.connectionConfig.driveId,
+			itemId: id,
+			dataStorePath: "",
+		});
+		return super.getContainer(url, containerSchema);
+	}
+
+}
+
+/**
+ * OdspClient provides the ability to have a Fluid object backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
+ * @sealed
+ * @beta
+ */
+export class OdspClientCore {
+	private readonly connectionConfig: OdspConnectionConfig;
+
+	public constructor(
+		private readonly documentServiceFactory: IDocumentServiceFactory,
+		private readonly urlResolver: OdspDriverUrlResolver,
+		private readonly logger?: ITelemetryBaseLogger,
+		private readonly configProvider?: IConfigProviderBase,
+	) {
+		this.connectionConfig = properties.connection;
 	}
 
 	public async createContainer<T extends ContainerSchema>(
@@ -126,7 +190,10 @@ export class OdspClient {
 			config: {},
 		});
 
-		const fluidContainer = await this.createFluidContainer(container, this.connectionConfig);
+		const rootDataObject = await this.getContainerEntryPoint(container);
+		const fluidContainer = createFluidContainer({ container, rootDataObject });
+
+		this.addAttachCallback(container, fluidContainer);
 
 		const services = await this.getContainerServices(container);
 
@@ -134,19 +201,13 @@ export class OdspClient {
 	}
 
 	public async getContainer<T extends ContainerSchema>(
-		id: string,
+		url: string,
 		containerSchema: T,
 	): Promise<{
 		container: IFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
-		const url = createOdspUrl({
-			siteUrl: this.connectionConfig.siteUrl,
-			driveId: this.connectionConfig.driveId,
-			itemId: id,
-			dataStorePath: "",
-		});
 		const container = await loader.resolve({ url });
 
 		const fluidContainer = createFluidContainer({
@@ -190,21 +251,20 @@ export class OdspClient {
 		});
 	}
 
-	private async createFluidContainer(
+	private addAttachCallback<T extends ContainerSchema>(
 		container: IContainer,
-		connection: OdspConnectionConfig,
-	): Promise<IFluidContainer> {
-		const rootDataObject = await this.getContainerEntryPoint(container);
+		fluidContainer: IFluidContainer<T>,
+	): void {
 
 		/**
 		 * See {@link FluidContainer.attach}
 		 */
-		const attach = async (
+		fluidContainer.attach = async (
 			odspProps?: ContainerAttachProps<OdspContainerAttachProps>,
 		): Promise<string> => {
 			const createNewRequest: IRequest = createOdspCreateContainerRequest(
-				connection.siteUrl,
-				connection.driveId,
+				this.connectionConfig.siteUrl,
+				this.connectionConfig.driveId,
 				odspProps?.filePath ?? "",
 				odspProps?.fileName ?? uuid(),
 			);
@@ -226,9 +286,6 @@ export class OdspClient {
 			 */
 			return resolvedUrl.itemId;
 		};
-		const fluidContainer = createFluidContainer({ container, rootDataObject });
-		fluidContainer.attach = attach;
-		return fluidContainer;
 	}
 
 	private async getContainerServices(container: IContainer): Promise<OdspContainerServices> {

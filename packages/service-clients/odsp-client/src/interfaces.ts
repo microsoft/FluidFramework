@@ -32,11 +32,6 @@ export interface OdspConnectionConfig {
 	 * SharePoint Embedded Container Id of the tenant where Fluid containers are created
 	 */
 	driveId: string;
-
-	/**
-	 * Specifies the file path where Fluid files are created. If passed an empty string, the Fluid files will be created at the root level.
-	 */
-	filePath: string;
 }
 /**
  * @beta
