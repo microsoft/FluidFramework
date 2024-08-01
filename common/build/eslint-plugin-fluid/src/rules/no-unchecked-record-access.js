@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
-const hasIndexSignature = (type) => type.getStringIndexType() || type.getNumberIndexType();
+hasIndexSignature = (type) => type.getStringIndexType() || type.getNumberIndexType();
+
+isArrayType = (type) => type.symbol && type.symbol.name === "Array";
 
 module.exports = {
 	meta: {
 		type: "problem",
 		docs: {
-			description: "Disallow accessing properties on objects with dynamic types",
+			description: "Disallow unchecked property access on index signature types",
 			category: "Possible Errors",
 		},
 		schema: [],
@@ -40,6 +42,10 @@ module.exports = {
 
 			const tsNode = services.esTreeNodeToTSNodeMap.get(node.object);
 			const type = checker.getTypeAtLocation(tsNode);
+
+			if (isArrayType(type)) {
+				return;
+			}
 
 			if (hasIndexSignature(type)) {
 				context.report({

@@ -29,7 +29,7 @@ describe("ESLint Rule Tests", function () {
 
 	it("Should report an error for unchecked record access", async function () {
 		const result = await lintFile("fileWithOnlyRecordAccess.ts");
-		assert.strictEqual(result.errorCount, 5, "Should have five errors");
+		assert.strictEqual(result.errorCount, 8, "Should have eight errors");
 		assert.strictEqual(result.messages[0].message, "'someObj.a' is possibly 'undefined'");
 		assert.strictEqual(
 			result.messages[1].message,
@@ -43,6 +43,12 @@ describe("ESLint Rule Tests", function () {
 		assert.strictEqual(
 			result.messages[4].message,
 			"'someNestedObj.a.a' is possibly 'undefined'",
+		);
+		assert.strictEqual(result.messages[5].message, "'indexObj.a' is possibly 'undefined'");
+		assert.strictEqual(result.messages[6].message, "'indexObj.b' is possibly 'undefined'");
+		assert.strictEqual(
+			result.messages[7].message,
+			"'nestedObj.nested.a' is possibly 'undefined'",
 		);
 	});
 
