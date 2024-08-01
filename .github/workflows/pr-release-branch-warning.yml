@@ -4,7 +4,7 @@ on:
     types:
       - opened
 
-      # this is triggered when the  base branch changes; this ensures you can't open a PR against main then change the
+      # This is triggered when the base branch changes; handles the case where you open a PR against main then change the
       # base branch to a release branch.
       - edited
     branches:
