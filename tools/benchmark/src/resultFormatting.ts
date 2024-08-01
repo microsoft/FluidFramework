@@ -6,6 +6,8 @@
 import chalk from "chalk";
 import Table from "easy-table";
 
+import type { CustomData } from "./ResultTypes";
+
 /**
  * Library for converting a `Record<string, unknown>` into formatted table cells.
  * In the future this library can be used to provide extensible formatting for customized benchmarks which report different fields.
@@ -74,12 +76,7 @@ export function skipCell(key: string): ExpectedCell {
 	return { key, cell: (): void => {} };
 }
 
-export function addCells(
-	table: Table,
-	data: Record<string, unknown>,
-	dataFormatter: Record<string, (value: unknown) => string>,
-	expected: readonly ExpectedCell[],
-): void {
+export function addCells(table: Table, data: CustomData, expected: readonly ExpectedCell[]): void {
 	const keys = new Set(Object.getOwnPropertyNames(data));
 	// Add expected cells, with their custom formatting and canonical order
 	for (const cell of expected) {
@@ -89,7 +86,7 @@ export function addCells(
 	}
 	// Add custom data cells
 	for (const [key, val] of Object.entries(data)) {
-		const displayValue = key in dataFormatter ? dataFormatter[key](val) : (val as string);
+		const displayValue = val.formattedValue;
 		table.cell(key, displayValue, Table.padLeft);
 	}
 }

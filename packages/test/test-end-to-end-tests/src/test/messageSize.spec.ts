@@ -339,6 +339,10 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 								2,
 							)} KB`,
 						async function () {
+							// This test is flaky on tinylicious (1500 messages being sent sometimes slows the system down)
+							if (provider.driver.type === "tinylicious") {
+								this.skip();
+							}
 							await setupContainers({
 								...containerConfig,
 								runtimeOptions: {

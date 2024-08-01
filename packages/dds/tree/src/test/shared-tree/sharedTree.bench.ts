@@ -278,7 +278,7 @@ describe("SharedTree benchmarks", () => {
 
 						// Setup
 						const tree = checkoutWithContent({
-							initialTree: makeJsWideTreeWithEndValue(numberOfNodes),
+							initialTree: typedJsonCursor(makeJsWideTreeWithEndValue(numberOfNodes)),
 							schema: wideSchema,
 						});
 
