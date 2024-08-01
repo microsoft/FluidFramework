@@ -63,11 +63,13 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * Returns 0 if there is not yet an acked summary.
 	 */
 	public get referenceSequenceNumber() {
-		return this._latestSummary?.referenceSequenceNumber ?? 0;
+		// return this._latestSummary?.referenceSequenceNumber ?? 0;
+		return this._lastSummaryReferenceSequenceNumber ?? 0;
 	}
 
 	protected readonly children = new Map<string, SummarizerNode>();
-	protected readonly pendingSummaries = new Map<string, SummaryNode>();
+	/** Key value pair of summaries submitted by this client which are not yet acked. Key is the proposalHandle and value is the summary op's referece sequence number */
+	protected readonly pendingSummaries = new Map<string, number>();
 	protected wipReferenceSequenceNumber: number | undefined;
 	private wipLocalPaths: { localPath: EscapedPath; additionalPath?: EscapedPath } | undefined;
 	private wipSkipRecursion = false;
@@ -83,8 +85,8 @@ export class SummarizerNode implements IRootSummarizerNode {
 		private readonly summarizeInternalFn: SummarizeInternalFn,
 		config: ISummarizerNodeConfig,
 		private _changeSequenceNumber: number,
-		/** Undefined means created without summary */
-		private _latestSummary?: SummaryNode,
+		/** Summary reference sequence number, i.e. last sequence number seen when it was created */
+		private _lastSummaryReferenceSequenceNumber?: number,
 		protected wipSummaryLogger?: ITelemetryBaseLogger,
 		/** A unique id of this node to be logged when sending telemetry. */
 		protected telemetryNodeId?: string,
@@ -124,10 +126,10 @@ export class SummarizerNode implements IRootSummarizerNode {
 			0x1a0 /* "Already tracking a summary" */,
 		);
 
-		let nodes = 1;
+		let nodes = 1; // number of summarizerNodes at the start of the summary
 		let invalidNodes = 0;
 		const sequenceNumberMismatchKeySet = new Set<string>();
-		const nodeLatestSummaryRefSeqNum = this._latestSummary?.referenceSequenceNumber;
+		const nodeLatestSummaryRefSeqNum = this._lastSummaryReferenceSequenceNumber;
 		if (
 			nodeLatestSummaryRefSeqNum !== undefined &&
 			latestSummaryRefSeqNum !== nodeLatestSummaryRefSeqNum
@@ -184,7 +186,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 				return {
 					summary: {
 						type: SummaryType.Handle,
-						handle: latestSummary.fullPath.path,
+						handle: latestSummary.fullPath.path, // PRAGYA: where do I get this from? proposalHandle from pendingSummaries map?
 						handleType: SummaryType.Tree,
 					},
 					stats,
@@ -204,7 +206,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 							summarySequenceNumber: this.wipReferenceSequenceNumber,
 							latestSummarySequenceNumber: this._latestSummary.referenceSequenceNumber,
 							// TODO: remove summaryPath
-							summaryPath: this._latestSummary.fullPath.path,
+							summaryPath: this._latestSummary.fullPath.path, // PRAGYA: where do I get this from? proposalHandle from pendingSummaries map?
 						}
 					: undefined;
 		}
@@ -380,7 +382,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		// can return the same proposalHandle for a different summary,
 		// this should still be okay, because we should be proposing the
 		// newer one later which would have to overwrite the previous one.
-		this.pendingSummaries.set(proposalHandle, summary);
+		this.pendingSummaries.set(proposalHandle, this.wipReferenceSequenceNumber);
 		this.clearSummary();
 	}
 
@@ -398,7 +400,8 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * Refreshes the latest summary tracked by this node. If we have a pending summary for the given proposal handle,
 	 * it becomes the latest summary. If the current summary is already ahead, we skip the update.
 	 * If the current summary is behind, then we do not refresh.
-	 *
+	 * @param proposalHandle - Handle from the summary ack op
+	 * @param summaryRefSeq - Reference sequence of the summary ack op
 	 * @returns true if the summary is tracked by this node, false otherwise.
 	 */
 	public async refreshLatestSummary(
@@ -437,13 +440,18 @@ export class SummarizerNode implements IRootSummarizerNode {
 				if (summaryRefSeq > this.referenceSequenceNumber) {
 					isSummaryNewer = true;
 				}
-				const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
-				if (maybeSummaryNode !== undefined) {
+
+				// If the acked summary is found in the pendingSummaries, it means the summary was created and tracked by the current client
+				// so set the isSummaryTracked to true.
+				const summaryReferenceSequenceNumber = this.pendingSummaries.get(proposalHandle);
+				if (summaryReferenceSequenceNumber !== undefined) {
+					isSummaryTracked = true;
+					// update the pendingSummariesMap for the root and all child summarizerNodes
+					// PRAGYA: Why are we maintaining pendingSummaries in child nodes??? - This map makes sense only at the root level.
 					this.refreshLatestSummaryFromPending(
 						proposalHandle,
-						maybeSummaryNode.referenceSequenceNumber,
+						summaryReferenceSequenceNumber,
 					);
-					isSummaryTracked = true;
 				}
 				event.end({ ...eventProps, isSummaryNewer, pendingSummaryFound: isSummaryTracked });
 				return { isSummaryTracked, isSummaryNewer };
@@ -461,17 +469,17 @@ export class SummarizerNode implements IRootSummarizerNode {
 		proposalHandle: string,
 		referenceSequenceNumber: number,
 	): void {
-		const summaryNode = this.pendingSummaries.get(proposalHandle);
-		if (summaryNode === undefined) {
+		const summaryReferenceSequenceNumber = this.pendingSummaries.get(proposalHandle);
+		if (summaryReferenceSequenceNumber === undefined) {
 			// This should only happen if parent skipped recursion AND no prior summary existed.
 			assert(
-				this._latestSummary === undefined,
+				this._lastSummaryReferenceSequenceNumber === undefined,
 				0x1a6 /* "Not found pending summary, but this node has previously completed a summary" */,
 			);
 			return;
 		} else {
 			assert(
-				referenceSequenceNumber === summaryNode.referenceSequenceNumber,
+				referenceSequenceNumber === summaryReferenceSequenceNumber,
 				0x1a7 /* Pending summary reference sequence number should be consistent */,
 			);
 
@@ -479,30 +487,29 @@ export class SummarizerNode implements IRootSummarizerNode {
 			this.pendingSummaries.delete(proposalHandle);
 		}
 
-		this.refreshLatestSummaryCore(referenceSequenceNumber);
-
-		this._latestSummary = summaryNode;
+		// Delete all summaries whose reference sequence number is smaller than the one just acked.
+		for (const [key, value] of this.pendingSummaries) {
+			if (value < referenceSequenceNumber) {
+				this.pendingSummaries.delete(key);
+			}
+		}
+		// Now that a new ack is received, update the _lastSummaryReferenceSequenceNumber
+		// PRAGYA: Every child node is tracking this _lastSummaryReferenceSequenceNumber value, which seems redundant. This seems like a prop that only root node needs to save.?
+		 this._lastSummaryReferenceSequenceNumber = summaryReferenceSequenceNumber;
 		// Propagate update to all child nodes
 		for (const child of this.children.values()) {
 			child.refreshLatestSummaryFromPending(proposalHandle, referenceSequenceNumber);
 		}
 	}
 
-	private refreshLatestSummaryCore(referenceSequenceNumber: number): void {
-		for (const [key, value] of this.pendingSummaries) {
-			if (value.referenceSequenceNumber < referenceSequenceNumber) {
-				this.pendingSummaries.delete(key);
-			}
-		}
-	}
-
 	public updateBaseSummaryState(snapshot: ISnapshotTree) {
+		// PRAGYA: TODO remove function and it's invocation.
 		// Check base summary to see if it has any additional path parts
 		// separating child SummarizerNodes. Checks for .channels subtrees.
-		const { childrenPathPart } = parseSummaryForSubtrees(snapshot);
-		if (childrenPathPart !== undefined && this._latestSummary !== undefined) {
-			this._latestSummary.additionalPath = EscapedPath.create(childrenPathPart);
-		}
+		// const { childrenPathPart } = parseSummaryForSubtrees(snapshot);
+		// if (childrenPathPart !== undefined && this._latestSummary !== undefined) {
+		// 	this._latestSummary.additionalPath = EscapedPath.create(childrenPathPart);
+		// }
 	}
 
 	public recordChange(op: ISequencedDocumentMessage): void {
@@ -522,10 +529,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 */
 	protected hasChanged(): boolean {
 		return this._changeSequenceNumber > this.referenceSequenceNumber;
-	}
-
-	public get latestSummary(): Readonly<SummaryNode> | undefined {
-		return this._latestSummary;
 	}
 
 	protected readonly canReuseHandle: boolean;
@@ -551,7 +554,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 			summarizeInternalFn,
 			config,
 			createDetails.changeSequenceNumber,
-			createDetails.latestSummary,
+			this._lastSummaryReferenceSequenceNumber,
 			this.wipSummaryLogger,
 			createDetails.telemetryNodeId,
 		);
@@ -579,26 +582,25 @@ export class SummarizerNode implements IRootSummarizerNode {
 		id: string,
 		createParam: CreateChildSummarizerNodeParam,
 	): ICreateChildDetails {
-		let latestSummary: SummaryNode | undefined;
 		let changeSequenceNumber: number;
 
-		const parentLatestSummary = this._latestSummary;
+
 		switch (createParam.type) {
 			case CreateSummarizerNodeSource.FromAttach: {
 				if (
-					parentLatestSummary !== undefined &&
-					createParam.sequenceNumber <= parentLatestSummary.referenceSequenceNumber
+					this._lastSummaryReferenceSequenceNumber !== undefined &&
+					createParam.sequenceNumber <= this._lastSummaryReferenceSequenceNumber
 				) {
-					// Prioritize latest summary if it was after this node was attached.
-					latestSummary = parentLatestSummary.createForChild(id);
+					// Prioritize latest summary if it was after this node was attached. // PRAGYA
+					// latestSummary = parentLatestSummary.createForChild(id);
 				}
 				changeSequenceNumber = createParam.sequenceNumber;
 				break;
 			}
 			case CreateSummarizerNodeSource.FromSummary:
 			case CreateSummarizerNodeSource.Local: {
-				latestSummary = parentLatestSummary?.createForChild(id);
-				changeSequenceNumber = parentLatestSummary?.referenceSequenceNumber ?? -1;
+				// latestSummary = parentLatestSummary?.createForChild(id);
+				changeSequenceNumber = this._lastSummaryReferenceSequenceNumber ?? -1;
 				break;
 			}
 			default: {
@@ -610,7 +612,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 		const childTelemetryNodeId = `${this.telemetryNodeId ?? ""}/${id}`;
 
 		return {
-			latestSummary,
 			changeSequenceNumber,
 			telemetryNodeId: childTelemetryNodeId,
 		};
@@ -632,21 +633,17 @@ export class SummarizerNode implements IRootSummarizerNode {
 			child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
 		}
 		// In case we have pending summaries on the parent, let's initialize it on the child.
-		if (child._latestSummary !== undefined) {
-			for (const [key, value] of this.pendingSummaries.entries()) {
-				const newLatestSummaryNode = new SummaryNode({
-					referenceSequenceNumber: value.referenceSequenceNumber,
-					basePath: child._latestSummary.basePath,
-					localPath: child._latestSummary.localPath,
-				});
-
-				child.addPendingSummary(key, newLatestSummaryNode);
-			}
-		}
+		// if (child._latestSummary !== undefined) {
+		// PRAGYA: removed condition. Even if the child doesn't have any last summary, we can still add/update pendingsummary state proactively?
+		// PRAGYA: It doesn't look like child maintains any different pending summaries than the parent.
+			this.pendingSummaries.forEach((summaryReferenceSequenceNumber,proposedHandle) => {
+				child.addPendingSummary(proposedHandle, summaryReferenceSequenceNumber);
+			})
+		// }
 	}
 
-	protected addPendingSummary(key: string, summary: SummaryNode) {
-		this.pendingSummaries.set(key, summary);
+	protected addPendingSummary(key: string, summaryReferenceSequenceNumber: number) {
+		this.pendingSummaries.set(key, summaryReferenceSequenceNumber);
 	}
 
 	/**
@@ -693,9 +690,7 @@ export const createRootSummarizerNode = (
 		summarizeInternalFn,
 		config,
 		changeSequenceNumber,
-		referenceSequenceNumber === undefined
-			? undefined
-			: SummaryNode.createForRoot(referenceSequenceNumber),
+		referenceSequenceNumber,
 		undefined /* wipSummaryLogger */,
 		"" /* telemetryNodeId */,
 	);

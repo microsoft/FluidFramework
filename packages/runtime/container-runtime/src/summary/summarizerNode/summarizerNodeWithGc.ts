@@ -396,6 +396,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	}
 
 	/**
+	 * PRAGYA: TODO - update this function to not use latestSummary
 	 * Updates the state of the child if required. For example, if a summary is currently being  tracked, the child's
 	 * summary tracking state needs to be updated too.
 	 * Also, in case a child node gets realized in between Summary Op and Summary Ack, let's initialize the child's
