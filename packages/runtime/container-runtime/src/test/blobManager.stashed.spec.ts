@@ -5,14 +5,16 @@
 
 import { strict as assert } from "assert";
 
-import { bufferToString } from "@fluid-internal/client-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import { AttachState } from "@fluidframework/container-definitions";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { BlobManager, IBlobManagerRuntime, type IPendingBlobs } from "../blobManager/index.js";
+import { BlobManager, IBlobManagerRuntime, IPendingBlobs } from "../blobManager/index.js";
+import { ContainerFluidHandleContext } from "../containerHandleContext.js";
 
 export const failProxy = <T extends object>(handler: Partial<T> = {}) => {
 	const proxy: T = new Proxy<T>(handler as T, {
@@ -34,7 +36,10 @@ function createBlobManager(overrides?: Partial<ConstructorParameters<typeof Blob
 	return new BlobManager(
 		failProxy({
 			// defaults, these can still be overridden below
-			runtime: failProxy<IBlobManagerRuntime>({ baseLogger: createChildLogger() }),
+			runtime: failProxy<IBlobManagerRuntime>({
+				baseLogger: createChildLogger(),
+				attachState: AttachState.Attached,
+			}),
 			snapshot: {},
 			stashedBlobs: undefined,
 
@@ -71,6 +76,32 @@ describe("BlobManager.stashed", () => {
 	});
 
 	it("Stashed blob", async () => {
+		const routeContext = new ContainerFluidHandleContext("/", failProxy(), undefined);
+		const createResponse = new Deferred<ICreateBlobResponse>();
+		const blobManager = createBlobManager({
+			routeContext,
+			sendBlobAttachOp(_localId, _storageId) {},
+			stashedBlobs: {},
+			getStorage: () =>
+				failProxy<IDocumentStorageService>({
+					createBlob: async () => {
+						return createResponse.promise;
+					},
+				}),
+		});
+		const blob: ArrayBufferLike = stringToBuffer("content", "utf8");
+		const sameBlobAsStashedP = blobManager.createBlob(blob);
+		const pendingBlobsP = blobManager.attachAndGetPendingBlobs();
+		const sameBlobAsStashed = await sameBlobAsStashedP;
+		sameBlobAsStashed.attachGraph();
+		const pendingBlobs = await pendingBlobsP;
+		const blobManager2 = createBlobManager({
+			stashedBlobs: pendingBlobs,
+		});
+		assert.strictEqual(blobManager2.hasPendingStashedUploads(), true);
+	});
+
+	it("Already stashed blob", async () => {
 		const createResponse = new Deferred<ICreateBlobResponse>();
 		const blobManager = createBlobManager({
 			stashedBlobs: {
