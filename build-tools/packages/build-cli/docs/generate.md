@@ -320,13 +320,15 @@ Generates release notes from individual changeset files.
 ```
 USAGE
   $ flub generate releaseNotes -g client|server|azure|build-tools|gitrest|historian -t major|minor --out <value> [--json]
-    [-v | --quiet]
+    [-v | --quiet] [--includeUnknown]
 
 FLAGS
   -g, --releaseGroup=<option>  (required) Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
   -t, --releaseType=<option>   (required) The type of release for which the release notes are being generated.
                                <options: major|minor>
+      --includeUnknown         Pass this flag to include changesets in unknown sections in the generated release notes.
+                               By default, these are excluded.
       --out=<value>            (required) [default: RELEASE_NOTES.md] Output the results to this file.
 
 LOGGING FLAGS
