@@ -4,6 +4,8 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - "docs/**"
+      - "*.md"
+      - "**/*.md"
 
 defaults:
   run:
