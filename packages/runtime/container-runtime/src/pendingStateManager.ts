@@ -85,6 +85,26 @@ function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean 
 	return content.type === "groupedBatch" && content.contents?.length === 0;
 }
 
+/** Union of keys of T */
+type KeysOfUnion<T extends object> = T extends T ? keyof T : never;
+/** *Partial* type all possible combinations of properties and values of union T.
+ * This loosens typing allowing access to all possible properties without
+ * narrowing.
+ */
+type AnyComboFromUnion<T extends object> = { [P in KeysOfUnion<T>]?: T[P] };
+
+function buildPendingMessageContent(
+	// AnyComboFromUnion is needed need to gain access to compatDetails that
+	// is only defined for some cases.
+	message: AnyComboFromUnion<InboundSequencedContainerRuntimeMessage>,
+): string {
+	// IMPORTANT: Order matters here, this must match the order of the properties used
+	// when submitting the message.
+	const { type, contents, compatDetails } = message;
+	// Any properties that are not defined, won't be emitted by stringify.
+	return JSON.stringify({ type, contents, compatDetails });
+}
+
 function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
 	return {
 		...message,
@@ -383,16 +403,20 @@ export class PendingStateManager implements IDisposable {
 		// Note this will correctly return empty array for an empty batch
 		return batch.messages.map((message) => ({
 			message,
-			localOpMetadata: this.processPendingLocalMessage(message.sequenceNumber),
+			localOpMetadata: this.processPendingLocalMessage(message.sequenceNumber, message),
 		}));
 	}
 
 	/**
 	 * Processes the pending local copy of message that's been ack'd by the server.
 	 * @param sequenceNumber - The sequenceNumber from the server corresponding to the next pending message.
+	 * @param message - [optional] The entire incoming message, for comparing contents with the pending message for extra validation.
 	 * @returns - The localOpMetadata of the next pending message, to be sent to whoever submitted the original message.
 	 */
-	private processPendingLocalMessage(sequenceNumber: number): unknown {
+	private processPendingLocalMessage(
+		sequenceNumber: number,
+		message?: InboundSequencedContainerRuntimeMessage,
+	): unknown {
 		const pendingMessage = this.pendingMessages.peekFront();
 		assert(
 			pendingMessage !== undefined,
@@ -403,6 +427,28 @@ export class PendingStateManager implements IDisposable {
 		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
 
 		this.pendingMessages.shift();
+
+		// message is undefined in the Empty Batch case,
+		// because we don't have an incoming message to compare and pendingMessage is just a placeholder anyway.
+		if (message !== undefined) {
+			const messageContent = buildPendingMessageContent(message);
+
+			// Stringified content should match
+			if (pendingMessage.content !== messageContent) {
+				this.stateHandler.close(
+					DataProcessingError.create(
+						"pending local message content mismatch",
+						"unexpectedAckReceived",
+						message,
+						{
+							expectedMessageType: JSON.parse(pendingMessage.content).type,
+						},
+					),
+				);
+				return;
+			}
+		}
+
 		return pendingMessage.localOpMetadata;
 	}
 
