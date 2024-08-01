@@ -103,7 +103,8 @@ extends:
     interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
-    testCoverage: ${{ variables.testCoverage }}
+    # testCoverage: ${{ variables.testCoverage }}
+    testCoverage: true
     buildDirectory: build-tools
     tagName: build-tools
     isReleaseGroup: true
