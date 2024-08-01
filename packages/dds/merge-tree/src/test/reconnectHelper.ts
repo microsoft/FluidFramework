@@ -24,7 +24,7 @@ export class ReconnectTestHelper {
 	clients = createClientsAtInitialState(
 		{
 			initialState: "",
-			options: { mergeTreeEnableObliterate: true },
+			options: { mergeTreeEnableObliterate: true, mergeTreeEnableObliterateReconnect: true },
 		},
 		...ClientIds,
 	);

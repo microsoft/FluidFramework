@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
+	type ITelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -149,7 +150,7 @@ import {
 	type ImplicitFieldSchema,
 	type InsertableContent,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type TreeViewConfiguration,
+	TreeViewConfiguration,
 	normalizeFieldSchema,
 	SchemaFactory,
 	toFlexSchema,
@@ -1268,6 +1269,7 @@ export function treeTestFactory(
 export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
+	logger?: ITelemetryLoggerExt,
 ): SchematizingSimpleTreeView<TSchema> {
 	const checkout = createTreeCheckout(
 		testIdCompressor,
@@ -1276,6 +1278,7 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 		{
 			forest: buildForest(),
 			schema: new TreeStoredSchemaRepository(),
+			logger,
 		},
 	);
 	return new SchematizingSimpleTreeView<TSchema>(
@@ -1283,6 +1286,40 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 		config,
 		nodeKeyManager ?? new MockNodeKeyManager(),
 	);
+}
+
+/**
+ * Views the supplied checkout with the given schema.
+ */
+export function viewCheckout<TSchema extends ImplicitFieldSchema>(
+	checkout: ITreeCheckout,
+	config: TreeViewConfiguration<TSchema>,
+): SchematizingSimpleTreeView<TSchema> {
+	return new SchematizingSimpleTreeView<TSchema>(checkout, config, new MockNodeKeyManager());
+}
+
+/**
+ * Forks a simple tree view.
+ */
+export function forkView<T extends ImplicitFieldSchema>(
+	viewToFork: SchematizingSimpleTreeView<T>,
+): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
+export function forkView<TIn extends ImplicitFieldSchema, TOut extends ImplicitFieldSchema>(
+	viewToFork: SchematizingSimpleTreeView<TIn>,
+	schema?: TOut,
+): SchematizingSimpleTreeView<TOut> & { checkout: ITreeCheckoutFork };
+export function forkView<T extends ImplicitFieldSchema>(
+	viewToFork: SchematizingSimpleTreeView<T>,
+	schema?: T,
+): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork } {
+	return new SchematizingSimpleTreeView<T>(
+		viewToFork.checkout.fork(),
+		new TreeViewConfiguration({
+			enableSchemaValidation: viewToFork.config.enableSchemaValidation,
+			schema: schema ?? viewToFork.config.schema,
+		}),
+		new MockNodeKeyManager(),
+	) as SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
 }
 
 /**

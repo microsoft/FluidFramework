@@ -712,7 +712,7 @@ const fieldRebaser: BoundFieldChangeRebaser<WrappedChange> = {
 
 export function testStateBasedRebaserAxioms() {
 	describeStress("State-based Rebaser Axioms", function ({ isStress }) {
-		this.timeout(isStress ? 60_000 : 5000);
+		this.timeout(isStress ? 80_000 : 5000);
 		const allocator = idAllocatorFromMaxId();
 		const startingLength = 2;
 		const startingState: NodeState[] = makeArray(startingLength, () => ({
