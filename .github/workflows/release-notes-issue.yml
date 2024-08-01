@@ -11,7 +11,7 @@ on:
     inputs:
       issueNumber:
         description: 'Issue number to update'
-        default: ${{ secrets.RELEASE_NOTES_ISSUE }}
+        default: 26
         required: true
 
 permissions:
