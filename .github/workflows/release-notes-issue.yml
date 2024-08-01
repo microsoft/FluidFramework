@@ -35,6 +35,18 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: pnpm-lock.yaml
 
+      - name: Set issue number
+        id: issueNum
+        env:
+          ISSUE: ${{ github.event_name == 'push' && '26' || github.event.inputs.issueNumber }}
+        run: |
+          echo "ISSUE=$ISSUE" >> $GITHUB_ENV
+
+      - name: Set version output variable
+        id: setVersion
+        run: |
+          echo "VERSION=$(jq -r '.version' package.json)" >> "$GITHUB_OUTPUT"
+
       - name: Install Fluid build tools
         continue-on-error: true
         run: |
@@ -63,29 +75,16 @@ jobs:
         with:
           path: ./RELEASE_NOTES.md
 
-      - name: Set issue number
-        id: issueNum
-        env:
-          ISSUE: ${{ github.event_name == 'push' && '26' || github.event.inputs.issueNumber }}
-        run: |
-          echo "ISSUE_NUMBER=$ISSUE" >> $GITHUB_ENV
-
-      - name: Set version output variable
-        id: setVersion
-        run: |
-          echo "VERSION=$(jq -r '.version' package.json)" >> "$GITHUB_OUTPUT"
-
-      - name: Update issue body
-        uses: julien-deramond/update-issue-body@v1
-        with:
-          issue-number: ${{ steps.issueNum.outputs.ISSUE_NUMBER }}
-          body: ${{ steps.relNotes.outputs.content }}
-          edit-mode: replace
-
       - name: Update issue title
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ISSUE_NUMBER=${{ steps.issueNum.outputs.ISSUE_NUMBER }}
           NEW_TITLE="Upcoming Release: FluidFramework v${{ steps.setVersion.outputs.VERSION }}"
-          gh issue edit $ISSUE_NUMBER --title "$NEW_TITLE"
+          gh issue edit ${{ steps.issueNum.outputs.ISSUE }} --title "$NEW_TITLE"
+
+      - name: Update issue body
+        uses: julien-deramond/update-issue-body@v1
+        with:
+          issue-number: ${{ steps.issueNum.outputs.ISSUE }}
+          body: ${{ steps.relNotes.outputs.content }}
+          edit-mode: replace
