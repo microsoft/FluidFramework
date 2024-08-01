@@ -62,19 +62,34 @@ jobs:
         uses: juliangruber/read-file-action@v1
         with:
           path: ./RELEASE_NOTES.md
-      - name: Echo package.json
-        run: echo ""
-      # - name: Set issue number from push
-      #   if: github.event_name == 'push'
-      #   run: echo "ISSUE_NUMBER=${GITHUB_REF}" >> $GITHUB_ENV
-      # - name: Set issue number from manual input
-      #   if: github.event_name == 'workflow_dispatch'
-      #   run: echo "TAG_NAME=refs/tags/${{ github.event.inputs.tag }}" >> $GITHUB_ENV
 
-      - name: Update Issue Body
+      - name: Set issue number from push
+        id: issueNum
+        if: github.event_name == 'push'
+        run: echo "ISSUE_NUMBER=26" >> $GITHUB_ENV
+
+      - name: Set issue number from manual input
+        id: issueNum
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "ISSUE_NUMBER=${{ github.event.inputs.issueNumber }}" >> $GITHUB_ENV
+
+      - name: Set version output variable
+        id: setVersion
+        run: |
+          echo "VERSION=$(jq -r '.version' package.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Update issue title
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUMBER=${{ steps.issueNum.outputs.ISSUE_NUMBER }}
+          NEW_TITLE="Upcoming Release: FluidFramework v${{ steps.setVersion.outputs.VERSION }}"
+          gh issue edit $ISSUE_NUMBER --title "$NEW_TITLE"
+
+      - name: Update issue body
         uses: julien-deramond/update-issue-body@v1
         with:
-          issue-number: 26
+          issue-number: ${{ steps.issueNum.outputs.ISSUE_NUMBER }}
           body: ${{ steps.relNotes.outputs.content }}
           edit-mode: replace
 
