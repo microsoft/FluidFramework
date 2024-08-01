@@ -691,7 +691,7 @@ export const createRootSummarizerNode = (
 		config,
 		changeSequenceNumber,
 		referenceSequenceNumber,
-		"" /* summaryHandleId */,
+		"" /* summaryHandleId */, // PRAGYA?
 		undefined /* wipSummaryLogger */,
 		"" /* telemetryNodeId */,
 	);
