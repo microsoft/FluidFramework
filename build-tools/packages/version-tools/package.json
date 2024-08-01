@@ -52,7 +52,7 @@
 		"lint:fix": "npm run eslint:fix",
 		"postpack": "npm run clean:manifest",
 		"test": "npm run test:vitest",
-		"test:coverage": "npm run test:vitest --coverage",
+		"test:coverage": "npm run test:vitest -- --coverage",
 		"test:vitest": "vitest run test",
 		"tsc": "tsc"
 	},

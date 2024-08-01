@@ -10,3 +10,4 @@ nyc
 packlist.txt
 src
 test
+vitest.config.ts

@@ -15,7 +15,7 @@ export default defineConfig({
 			provider: "v8",
 			all: true,
 			include: ["src/**/*.*ts", "lib/**/*.*js"],
-			// exclude: ["src/test/**/*.*ts", "lib/test/**/*.*js"],
+			exclude: ["src/test/**/*.*ts", "lib/test/**/*.*js"],
 			reporter: ["cobertura", "html", "text"],
 			reportsDirectory: "./nyc/report",
 		},

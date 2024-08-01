@@ -52,7 +52,7 @@
 		"test:mocha": "pnpm run -r --no-sort --stream --no-bail test:mocha --color",
 		"test:mocha:bail": "pnpm run -r --no-sort --stream test:mocha",
 		"test:vitest": "pnpm run -r --no-sort --stream --no-bail -- test:vitest --reporter basic",
-		"test:vitest:coverage": "pnpm run -r --no-sort --stream --no-bail -- test:vitest --reporter basic --coverage",
+		"test:vitest:coverage": "pnpm run -r --no-sort --stream --no-bail -- test:coverage",
 		"tsc": "fluid-build --task tsc",
 		"tsc:fast": "fluid-build --root . --task tsc --worker",
 		"watch": "pnpm run -r --parallel tsc --watch"
