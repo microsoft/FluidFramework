@@ -39,7 +39,12 @@ import * as path from "node:path";
 import chalk from "chalk";
 import Table from "easy-table";
 
-import { isResultError, type BenchmarkData, type BenchmarkResult } from "./ResultTypes";
+import {
+	isResultError,
+	type BenchmarkData,
+	type BenchmarkResult,
+	type CustomData,
+} from "./ResultTypes";
 import { pad, prettyNumber } from "./RunnerUtilities";
 import { ExpectedCell, addCells, numberCell, stringCell } from "./resultFormatting";
 
@@ -130,12 +135,7 @@ export class BenchmarkReporter {
 		// Using this utility to print the data means missing fields don't crash and extra fields are reported.
 		// This is useful if this reporter is given unexpected data (such as from a memory test).
 		// It can also be used as a way to add extensible data formatting in the future.
-		addCells(
-			table,
-			(result as BenchmarkData).customData,
-			(result as BenchmarkData).customDataFormatters,
-			expectedKeys,
-		);
+		addCells(table, (result as BenchmarkData).customData, expectedKeys);
 
 		table.newRow();
 	}
@@ -271,8 +271,9 @@ export class BenchmarkReporter {
 		const benchmarkArray: unknown[] = [];
 		for (const [key, bench] of benchmarks.entries()) {
 			if (!isResultError(bench)) {
+				const benchData = bench as BenchmarkData; // the if statement above guarantees the `bench` to be of type `BenchmarkData`.
 				benchmarkArray.push(
-					this.outputFriendlyObjectFromBenchmark(key, bench as Record<string, unknown>),
+					this.outputFriendlyObjectFromBenchmark(key, benchData.customData),
 				);
 			}
 		}
@@ -296,14 +297,14 @@ export class BenchmarkReporter {
 	 */
 	private outputFriendlyObjectFromBenchmark(
 		benchmarkName: string,
-		benchmark: Record<string, unknown>,
+		benchmark: CustomData,
 	): Record<string, unknown> {
 		const keys = new Set(Object.getOwnPropertyNames(benchmark));
 		const obj = {
 			benchmarkName,
 		};
 		for (const key of keys) {
-			obj[key] = benchmark[key];
+			obj[key] = benchmark[key].rawValue;
 		}
 		return obj;
 	}
