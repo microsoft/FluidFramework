@@ -79,7 +79,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     get flushMode(): FlushMode;
+    // @deprecated
     get gcThrowOnTombstoneUsage(): boolean;
+    // @deprecated
     get gcTombstoneEnforcementAllowed(): boolean;
     generateDocumentUniqueId(): string | (number & {
         readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
