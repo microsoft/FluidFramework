@@ -34,41 +34,42 @@ import { Tree } from "../shared-tree/index.js";
 
 type SimpleTreeIndex<
 	TKey extends TreeValue,
-	TSchema extends ObjectNodeSchema[] = ObjectNodeSchema[],
+	TSchema extends ObjectNodeSchema
 > =
 	| AnchorTreeIndex<TKey, NodeFromSchema<ObjectNodeSchema>>
-	| AnchorTreeIndex<TKey, NodeFromSchema<TSchema[number]>>;
+	| AnchorTreeIndex<TKey, NodeFromSchema<TSchema>>;
 
+// use Tree.is for downcasting
 export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
 	context: FlexTreeContext,
 	indexer: (schema: ObjectNodeSchema) => KeyFinder<TKey> | undefined,
-	getValue: (nodes: TreeIndexNodes<NodeFromSchema<ObjectNodeSchema>>) => TValue,
-): AnchorTreeIndex<TKey, NodeFromSchema<ObjectNodeSchema>>;
+	getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue,
+): AnchorTreeIndex<TKey, TreeNode>;
 export function createSimpleTreeIndex<
 	TKey extends TreeValue,
 	TValue,
-	TSchema extends ObjectNodeSchema[] = ObjectNodeSchema[],
+	TSchema extends ObjectNodeSchema,
 >(
 	context: FlexTreeContext,
 	indexer: (schema: TSchema) => KeyFinder<TKey> | undefined,
-	getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema[number]>>) => TValue,
-	indexableSchema: TSchema,
-): AnchorTreeIndex<TKey, NodeFromSchema<TSchema[number]>>;
+	getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue,
+	indexableSchema: readonly TSchema[],
+): AnchorTreeIndex<TKey, NodeFromSchema<TSchema>>;
 export function createSimpleTreeIndex<
 	TKey extends TreeValue,
 	TValue,
-	TSchema extends ObjectNodeSchema[] = ObjectNodeSchema[],
+	TSchema extends ObjectNodeSchema,
 >(
 	context: FlexTreeContext,
 	indexer: (schema: ObjectNodeSchema) => KeyFinder<TKey> | undefined,
 	getValue:
 		| ((nodes: TreeIndexNodes<NodeFromSchema<ObjectNodeSchema>>) => TValue)
-		| ((nodes: TreeIndexNodes<NodeFromSchema<TSchema[number]>>) => TValue),
-	indexableSchema?: TSchema,
+		| ((nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue),
+	indexableSchema?: readonly TSchema[],
 	// todo fix this
 ): SimpleTreeIndex<TKey, TSchema> {
 	assert(context instanceof Context, "Unexpected context implementation");
-	return new AnchorTreeIndex(
+	const index = new AnchorTreeIndex<TKey, TValue>(
 		context.checkout.forest,
 		(schemaIdentifier) => {
 			if (indexableSchema !== undefined) {
@@ -88,11 +89,11 @@ export function createSimpleTreeIndex<
 			}
 		},
 		(anchorNodes) => {
-			const simpleTreeNodes: NodeFromSchema<TSchema[number]>[] = [];
+			const simpleTreeNodes: NodeFromSchema<TSchema>[] = [];
 			for (const a of anchorNodes) {
 				const simpleTree = getOrCreateSimpleTree(context, a);
 				if (!isTreeValue(simpleTree)) {
-					simpleTreeNodes.push(simpleTree as NodeFromSchema<TSchema[number]>);
+					simpleTreeNodes.push(simpleTree as NodeFromSchema<TSchema>);
 				}
 			}
 
@@ -101,6 +102,9 @@ export function createSimpleTreeIndex<
 			}
 		},
 	);
+	// all the type checking guarantees that we put nodes of the correct type in the index
+	// but it's not captured in the type system
+	return index as SimpleTreeIndex<TKey, TSchema>;
 }
 
 type IdentifierIndex = SimpleTreeIndex<string>;
