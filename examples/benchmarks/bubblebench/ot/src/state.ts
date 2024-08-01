@@ -75,4 +75,8 @@ export class AppState implements IAppState {
 			bubbles.pop();
 		}
 	}
+
+	public runTransaction(inner: () => void): void {
+		inner();
+	}
 }
