@@ -12,17 +12,6 @@ const someObj: SomeObj = { a: "hello", b: "goodbye" };
 someObj.a; // This will report an error
 someObj.a.length; // This will report 2 errors because a is undefined and length on the undefined value is not allowed
 
-type SomeNestedObj = { a: { [key: string]: string } };
-const someNestedObj: SomeNestedObj = { a: { b: "goodbye" } };
-someNestedObj.a.a.length; // This will report 2 errors because a is undefined and length on the undefined value is not allowed
-
-interface IndexProps {
-	[key: string]: string;
-}
-const indexObj: IndexProps = { a: "hello", b: "goodbye" };
-indexObj.a; // This should report an error
-indexObj.b; // This should report an error
-
 interface NestedIndexProps {
 	nested: {
 		[key: string]: string;
@@ -30,3 +19,4 @@ interface NestedIndexProps {
 }
 const nestedObj: NestedIndexProps = { nested: { a: "hello" } };
 nestedObj.nested.a; // This should report an error
+nestedObj.nested.a.length; // This should report an error
