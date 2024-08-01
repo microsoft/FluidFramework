@@ -112,6 +112,8 @@ extends:
     tasktest:
     - ci:test
     - test:copyresults
+    testResultDirs:
+    - nyc/packages
     taskLint: true
     taskLintName: ci:eslint
     poolBuild: NewLarge-linux-1ES
