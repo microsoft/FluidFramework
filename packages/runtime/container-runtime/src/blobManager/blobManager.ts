@@ -490,6 +490,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		).then(
 			(response) => this.onUploadResolve(localId, response),
 			(error) => {
+				this.mc.logger.sendTelemetryEvent({
+					eventName: "UploadBlobReject",
+					error,
+					localId,
+				});
 				// it will only reject if we haven't sent an op
 				// and is a non-retriable error. It will only reject
 				// the promise but not throw any error outside.
@@ -526,6 +531,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const entry = this.pendingBlobs.get(localId);
 		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
 		if ((entry.abortSignal?.aborted === true && !entry.opsent) || this.stopAttaching) {
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "BlobAborted",
+				localId,
+			});
 			this.deletePendingBlob(localId);
 			return;
 		}

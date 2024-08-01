@@ -2,7 +2,18 @@
 
 This library contains tools for generating and embedding documentation contents in [Markdown](https://www.markdownguide.org/) documentation.
 
-Note: this package is currently private, and only intended for use in this repository.
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+**NOTE: This package is a library intended for use within the [microsoft/FluidFramework](https://github.com/microsoft/FluidFramework) repository.**
+**It is not intended for public use.**
+**We make no stability guarantees regarding this library and its APIs.**
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Usage
 
@@ -92,6 +103,7 @@ Arguments:
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
     -   Default: `./package.json`.
+-   `packageScopeNotice`: (optional) Override the automatic scope detection behavior with an explicit scope kind: `FRAMEWORK`, `EXPERIMENTAL`, `INTERNAL`, `PRIVATE`, `TOOLS`, or `EXAMPLE`.
 -   `installation`: Whether or not to include the package "Installation" section.
     -   Default: `true`.
     -   See [INSTALLATION_INSTRUCTIONS](#installation_instructions).
@@ -103,9 +115,9 @@ Arguments:
     -   Assumes that the package is published, uses [API-Extractor][], and has its documentation published under `fluidframework.com/apis/<package-name>`.
     -   See [API_DOCS](#api_docs)
 
-#### `EXAMPLE_README_HEADER`
+#### `EXAMPLE_APP_README_HEADER`
 
-Generates a complete starter `README.md` file for an `Fluid` example app package.
+Generates a complete starter `README.md` file for a `Fluid` example app package.
 
 Notes:
 
@@ -220,6 +232,8 @@ Arguments:
 #### `DEPENDENCY_GUIDELINES`
 
 Generates a README section with fluid-framework dependency guidelines.
+
+Assumes that the package is published and can be installed via `npm`.
 
 Arguments:
 
@@ -339,7 +353,7 @@ Arguments:
 -   `packageJsonPath`: : Relative file path to the library package's `package.json` file.
     Used to read the package name's scope (when the `scopeKind` argument is not provided).
     -   Default: `./package.json`.
--   `scopeKind`: (optional) Override the automatic scope detection behavior with an explicit scope kind: `EXPERIMENTAL`, `INTERNAL`, or `PRIVATE`.
+-   `scopeKind`: (optional) Override the automatic scope detection behavior with an explicit scope kind: `FRAMEWORK`, `EXPERIMENTAL`, `INTERNAL`, `PRIVATE`, `TOOLS`, or `EXAMPLE`.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 

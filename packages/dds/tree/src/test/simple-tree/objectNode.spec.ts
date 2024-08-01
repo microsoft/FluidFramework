@@ -12,6 +12,7 @@ import { SchemaFactory } from "../../simple-tree/index.js";
 import { hydrate } from "./utils.js";
 import type { requireAssignableTo } from "../../util/index.js";
 import { validateUsageError } from "../utils.js";
+import { Tree } from "../../shared-tree/index.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
@@ -160,5 +161,43 @@ describe("ObjectNode", () => {
 			},
 			validateUsageError(/delete operator/),
 		);
+	});
+
+	it("assigning identifier errors", () => {
+		class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
+		const n = hydrate(HasId, {});
+		assert.throws(() => {
+			// TODO: AB:9129: this should not compile
+			n.id = "x";
+		});
+	});
+
+	it("unhydrated default identifier access errors", () => {
+		class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
+		const newNode = new HasId({});
+		assert.throws(
+			() => {
+				const id = newNode.id;
+			},
+			validateUsageError(/identifier/),
+		);
+	});
+
+	it("unhydrated default identifier access via shortId errors", () => {
+		class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
+		const newNode = new HasId({});
+		assert.throws(
+			() => {
+				const id = Tree.shortId(newNode);
+			},
+			validateUsageError(/Tree.shortId cannot access default identifiers on unhydrated nodes/),
+		);
+	});
+
+	it("unhydrated custom identifier access works", () => {
+		class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
+		const newNode = new HasId({ id: "x" });
+		assert.equal(newNode.id, "x");
+		assert.equal(Tree.shortId(newNode), "x");
 	});
 });

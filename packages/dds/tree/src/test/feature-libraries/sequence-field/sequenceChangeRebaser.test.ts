@@ -5,12 +5,14 @@
 
 import { describeStress } from "@fluid-private/stochastic-test-utils";
 import { assert } from "@fluidframework/core-utils/internal";
+import { strict } from "assert";
 
 import {
 	type ChangesetLocalId,
 	type RevisionInfo,
 	type RevisionTag,
 	type TaggedChange,
+	emptyDelta,
 	makeAnonChange,
 	tagChange,
 	tagRollbackInverse,
@@ -57,6 +59,7 @@ import {
 	withoutTombstones,
 	tagChangeInline,
 	inlineRevision,
+	toDeltaWrapped,
 } from "./utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
@@ -188,11 +191,8 @@ const testChanges: [
 			]),
 	],
 	[
-		"ConflictedRevive",
-		(i) =>
-			ChangesetWrapper.create(
-				Change.redundantRevive(2, 2, { revision: tag2, localId: brand(i) }),
-			),
+		"Pin",
+		(i) => ChangesetWrapper.create(Change.pin(2, 2, { revision: tag2, localId: brand(i) })),
 	],
 	["MoveOut", (i) => ChangesetWrapper.create(Change.move(i, 2, 1))],
 	["MoveIn", (i) => ChangesetWrapper.create(Change.move(1, 2, i))],
@@ -407,9 +407,8 @@ export function testRebaserAxioms() {
 						tagWrappedChangeInline(inv, tag6, taggedChange.revision),
 					];
 					const actual = composeDeep(changes);
-					const pruned = pruneDeep(actual);
-					const noTombstones = withoutTombstonesDeep(pruned);
-					assertWrappedChangesetsEqual(noTombstones, ChangesetWrapper.create([]));
+					const delta = toDeltaWrapped(actual);
+					strict.deepEqual(delta, emptyDelta);
 				});
 			}
 		});
@@ -426,9 +425,8 @@ export function testRebaserAxioms() {
 					);
 					const changes = [inv, taggedChange];
 					const actual = composeDeep(changes);
-					const pruned = pruneDeep(actual);
-					const noTombstones = withoutTombstonesDeep(pruned);
-					assertWrappedChangesetsEqual(noTombstones, ChangesetWrapper.create([]));
+					const delta = toDeltaWrapped(actual);
+					strict.deepEqual(delta, emptyDelta);
 				});
 			}
 		});
@@ -537,22 +535,21 @@ const generateChildStates: ChildStateGenerator<TestState, WrappedChange> = funct
 	const { currentState, config } = state.content;
 
 	// TODO: support for undoing earlier edits
-	// TODO: fix bugs encountered when this is enabled
 	// Undo the most recent edit
-	// if (state.mostRecentEdit !== undefined) {
-	// 	assert(state.parent?.content !== undefined, "Must have parent state to undo");
-	// 	const undoIntention = mintIntention();
-	// 	const invertedEdit = invertDeep(state.mostRecentEdit.changeset);
-	// 	yield {
-	// 		content: state.parent.content,
-	// 		mostRecentEdit: {
-	// 			changeset: tagChangeInline(invertedEdit, tagFromIntention(undoIntention)),
-	// 			intention: undoIntention,
-	// 			description: `Undo(${state.mostRecentEdit.description})`,
-	// 		},
-	// 		parent: state,
-	// 	};
-	// }
+	if (state.mostRecentEdit !== undefined) {
+		assert(state.parent?.content !== undefined, "Must have parent state to undo");
+		const undoIntention = mintIntention();
+		const invertedEdit = invertDeep(state.mostRecentEdit.changeset);
+		yield {
+			content: state.parent.content,
+			mostRecentEdit: {
+				changeset: tagWrappedChangeInline(invertedEdit, tagFromIntention(undoIntention)),
+				intention: undoIntention,
+				description: `Undo(${state.mostRecentEdit.description})`,
+			},
+			parent: state,
+		};
+	}
 
 	for (const nodeCount of config.numNodes) {
 		// Insert nodeCount nodes
@@ -695,7 +692,7 @@ const fieldRebaser: BoundFieldChangeRebaser<WrappedChange> = {
 		const pruned1 = pruneDeep(change1.change);
 		const pruned2 = pruneDeep(change2.change);
 
-		return assertWrappedChangesetsEqual(pruned1, pruned2);
+		return assertWrappedChangesetsEqual(pruned1, pruned2, true);
 	},
 	isEmpty: (change): boolean => {
 		return withoutTombstonesDeep(pruneDeep(change)).fieldChange.length === 0;
@@ -708,13 +705,14 @@ const fieldRebaser: BoundFieldChangeRebaser<WrappedChange> = {
 		return assertWrappedChangesetsEqual(
 			withoutTombstonesDeep(pruned1),
 			withoutTombstonesDeep(pruned2),
+			true,
 		);
 	},
 };
 
 export function testStateBasedRebaserAxioms() {
 	describeStress("State-based Rebaser Axioms", function ({ isStress }) {
-		this.timeout(isStress ? 60_000 : 5000);
+		this.timeout(isStress ? 80_000 : 5000);
 		const allocator = idAllocatorFromMaxId();
 		const startingLength = 2;
 		const startingState: NodeState[] = makeArray(startingLength, () => ({
@@ -804,12 +802,10 @@ export function testSandwichRebasing() {
 			assertChangesetsEqual(actual, []);
 		});
 
-		// See bug 4104
-		it.skip("sandwich rebase [move, undo]", () => {
+		it("sandwich rebase [move, undo]", () => {
 			const move = tagChangeInline(Change.move(1, 1, 0), tag1);
-			const moveInverse = invert(move);
-			const undo = tagChangeInline(moveInverse, tag2);
-			const moveRollback = tagChangeInline(moveInverse, tag3, tag1);
+			const undo = tagChangeInline(invert(move, false), tag2);
+			const moveRollback = tagChangeInline(invert(move, true), tag3, tag1);
 			const rebasedUndo = rebaseOverChanges(undo, [moveRollback, move]);
 			assertChangesetsEqual(rebasedUndo.change, undo.change);
 		});
