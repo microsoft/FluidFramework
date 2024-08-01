@@ -180,6 +180,7 @@ import {
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
+	type InboundBatch,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -1329,14 +1330,22 @@ export class ContainerRuntime
 	 */
 	private nextSummaryNumber: number;
 
-	/** If false, loading or using a Tombstoned object should merely log, not fail */
+	/**
+	 * If false, loading or using a Tombstoned object should merely log, not fail.
+	 * @deprecated NOT SUPPORTED - hardcoded to return false since it's deprecated.
+	 */
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get gcTombstoneEnforcementAllowed(): boolean {
-		return this.garbageCollector.tombstoneEnforcementAllowed;
+		return false;
 	}
 
-	/** If true, throw an error when a tombstone data store is used. */
+	/**
+	 * If true, throw an error when a tombstone data store is used.
+	 * @deprecated NOT SUPPORTED - hardcoded to return false since it's deprecated.
+	 */
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get gcThrowOnTombstoneUsage(): boolean {
-		return this.garbageCollector.throwOnTombstoneUsage;
+		return false;
 	}
 
 	/**
@@ -2646,29 +2655,25 @@ export class ContainerRuntime
 		if (hasModernRuntimeMessageEnvelope) {
 			// If the message has the modern message envelope, then process it here.
 			// Here we unpack the message (decompress, unchunk, and/or ungroup) into a batch of messages with ContainerMessageType
-			const processResult = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
-			if (processResult === undefined) {
+			const inboundBatch = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
+			if (inboundBatch === undefined) {
 				// This means the incoming message is an incomplete part of a message or batch
 				// and we need to process more messages before the rest of the system can understand it.
 				return;
 			}
-			const batchStartCsn = processResult.batchStartCsn;
-			const batch = processResult.messages;
-			const sequenceNumber = processResult.sequenceNumber;
+
 			const messages: {
 				message: InboundSequencedContainerRuntimeMessage;
 				localOpMetadata: unknown;
 			}[] = local
 				? this.pendingStateManager.processPendingLocalBatch(
-						batch,
-						batchStartCsn,
-						sequenceNumber,
+						inboundBatch.messages,
+						inboundBatch.batchStartCsn,
+						inboundBatch.emptyBatchSequenceNumber,
 					)
-				: batch.map((message) => ({ message, localOpMetadata: undefined }));
+				: inboundBatch.messages.map((message) => ({ message, localOpMetadata: undefined }));
 			if (messages.length === 0) {
-				this.ensureNoDataModelChanges(() =>
-					this.processEmptyBatch(sequenceNumber, local, batchStartCsn),
-				);
+				this.ensureNoDataModelChanges(() => this.processEmptyBatch(inboundBatch, local));
 				return;
 			}
 			messages.forEach(({ message, localOpMetadata }) => {
@@ -2773,12 +2778,9 @@ export class ContainerRuntime
 	 * This is a separate function because the processCore function expects at least one message to process.
 	 * It is expected to happen only when the outbox produces an empty batch due to a resubmit flow.
 	 */
-	private processEmptyBatch(
-		sequenceNumber: number | undefined,
-		local: boolean,
-		batchStartCsn: number,
-	) {
-		assert(sequenceNumber !== undefined, "sequenceNumber must be defined");
+	private processEmptyBatch(emptyBatch: InboundBatch, local: boolean) {
+		const { emptyBatchSequenceNumber: sequenceNumber, batchStartCsn } = emptyBatch;
+		assert(sequenceNumber !== undefined, "emptyBatchSequenceNumber must be defined");
 		this.emit("batchBegin", { sequenceNumber });
 		this._processedClientSequenceNumber = batchStartCsn;
 		if (!this.hasPendingMessages()) {
