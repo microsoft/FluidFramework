@@ -170,13 +170,16 @@ describe("Pending State Manager", () => {
 			batchStartCsn: number,
 			emptyBatchSequenceNumber?: number,
 		) =>
-			pendingStateManager.processPendingLocalBatch({
-				messages: messages as InboundSequencedContainerRuntimeMessage[],
-				batchStartCsn,
-				emptyBatchSequenceNumber,
-				clientId,
-				batchId: generateBatchId(clientId, batchStartCsn),
-			});
+			pendingStateManager.processInboundBatch(
+				{
+					messages: messages as InboundSequencedContainerRuntimeMessage[],
+					batchStartCsn,
+					emptyBatchSequenceNumber,
+					clientId,
+					batchId: generateBatchId(clientId, batchStartCsn),
+				},
+				true /* local */,
+			);
 
 		it("proper batch is processed correctly", () => {
 			const messages: Partial<ISequencedDocumentMessage>[] = [
@@ -452,14 +455,18 @@ describe("Pending State Manager", () => {
 					],
 					1,
 				);
-				pendingStateManager.processPendingLocalBatch({
-					messages: [
-						futureRuntimeMessage as ISequencedDocumentMessage & UnknownContainerRuntimeMessage,
-					],
-					batchStartCsn: 1 /* batchStartCsn */,
-					batchId: "batchId",
-					clientId: "clientId",
-				});
+				pendingStateManager.processInboundBatch(
+					{
+						messages: [
+							futureRuntimeMessage as ISequencedDocumentMessage &
+								UnknownContainerRuntimeMessage,
+						],
+						batchStartCsn: 1 /* batchStartCsn */,
+						batchId: "batchId",
+						clientId: "clientId",
+					},
+					true /* local */,
+				);
 			});
 		});
 	});
