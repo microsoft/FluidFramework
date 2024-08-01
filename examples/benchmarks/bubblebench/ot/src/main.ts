@@ -39,6 +39,7 @@ export class Bubblebench extends DataObject {
 			/* numBubbles: */ 1,
 		);
 
+		// eslint-disable-next-line unicorn/consistent-function-scoping
 		const onConnected = (): void => {
 			// Out of paranoia, we periodically check to see if your client Id has changed and
 			// update the tree if it has.
@@ -59,8 +60,7 @@ export class Bubblebench extends DataObject {
 	}
 
 	private get tree(): SharedJson1 {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.maybeTree!;
+		return this.maybeTree ?? fail("tree not initialized");
 	}
 
 	public get appState(): AppState {
