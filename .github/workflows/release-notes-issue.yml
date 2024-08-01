@@ -20,12 +20,12 @@ permissions:
 
 jobs:
   create-issue:
-    name: Create GitHub release
+    name: Update release notes
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
-          fetch-depth: "100" # all history
+          fetch-depth: "100"
           persist-credentials: false
 
       - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
