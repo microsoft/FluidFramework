@@ -11,7 +11,6 @@ import { Flags } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
 import chalk from "chalk";
 import { humanId } from "human-id";
-import { format as prettier } from "prettier";
 import prompts from "prompts";
 
 import { releaseGroupFlag } from "../../flags.js";
