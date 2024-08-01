@@ -80,7 +80,7 @@ export {
 	RecursiveObjectPojoMode as test_RecursiveObjectPojoMode,
 } from "./testRecursiveDomain.js";
 
-// TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instancof.
+// TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instanceof.
 // See docs on TreeNode for more details.
 export type { TreeChangeEvents, TreeNode, Unhydrated, InternalTreeNode } from "./types.js";
 export {
