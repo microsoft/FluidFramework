@@ -203,6 +203,9 @@ export interface ISummarizerNode {
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult>;
 	/**
+	 * @deprecated - We the code always assumes that all summary nodes have .channels
+	 * in their handle so there is no need to main tain additional path information.
+	 *
 	 * Checks if there are any additional path parts for children that need to
 	 * be loaded from the base summary. Additional path parts represent parts
 	 * of the path between this SummarizerNode and any child SummarizerNodes

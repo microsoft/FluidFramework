@@ -1733,10 +1733,6 @@ export class ContainerRuntime
 			async () => this.garbageCollector.getBaseGCDetails(),
 		);
 
-		if (baseSnapshot) {
-			this.summarizerNode.updateBaseSummaryState(baseSnapshot);
-		}
-
 		const parentContext = wrapContext(this);
 
 		if (snapshotWithContents !== undefined) {

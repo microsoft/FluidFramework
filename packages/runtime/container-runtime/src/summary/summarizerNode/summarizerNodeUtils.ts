@@ -84,72 +84,9 @@ export class EscapedPath {
 		return new EscapedPath(`${this.path}/${path.path}`);
 	}
 }
-
-/** Information about a summary relevant to a specific node in the tree */
-export class SummaryNode {
-	/** Creates an instance that is valid for the root with specific basePath and localPath */
-	public static createForRoot(referenceSequenceNumber: number): SummaryNode {
-		return new SummaryNode({
-			referenceSequenceNumber,
-			basePath: undefined,
-			localPath: EscapedPath.create(""), // root hard-coded to ""
-		});
-	}
-
-	/** Summary reference sequence number, i.e. last sequence number seen when it was created */
-	public get referenceSequenceNumber(): number {
-		return this.summary.referenceSequenceNumber;
-	}
-	/** Full path to parent node, or undefined if this is the root */
-	public get basePath(): EscapedPath | undefined {
-		return this.summary.basePath;
-	}
-	/** Relative path to this node from its parent node */
-	public get localPath(): EscapedPath {
-		return this.summary.localPath;
-	}
-	/** Relative path from this node to its node innermost base summary */
-	public get additionalPath(): EscapedPath | undefined {
-		return this.summary.additionalPath;
-	}
-	public set additionalPath(additionalPath: EscapedPath | undefined) {
-		this.summary.additionalPath = additionalPath;
-	}
-	constructor(
-		private readonly summary: {
-			readonly referenceSequenceNumber: number;
-			readonly basePath: EscapedPath | undefined;
-			readonly localPath: EscapedPath;
-			additionalPath?: EscapedPath;
-		},
-	) {}
-
-	/** Gets the full path to this node, to be used when sending a handle */
-	public get fullPath(): EscapedPath {
-		return this.basePath?.concat(this.localPath) ?? this.localPath;
-	}
-
-	/**
-	 * Gets the full path to this node's innermost base summary.
-	 * The children nodes can use this as their basePath to determine their path.
-	 */
-	public get fullPathForChildren(): EscapedPath {
-		return this.additionalPath !== undefined
-			? this.fullPath.concat(this.additionalPath)
-			: this.fullPath;
-	}
-
-	/**
-	 * Creates a new node within the same summary for a child of this node.
-	 * @param id - id of the child node
-	 */
-	public createForChild(id: string): SummaryNode {
-		return new SummaryNode({
-			referenceSequenceNumber: this.referenceSequenceNumber,
-			basePath: this.fullPathForChildren,
-			localPath: EscapedPath.create(id),
-		});
-	}
+export interface PendingSummaryInfo {
+	/** The sequence number up until which the summary was created. */
+	referenceSequenceNumber: number
 }
 
 /**
@@ -160,6 +97,10 @@ export interface ICreateChildDetails {
 	changeSequenceNumber: number;
 	/** A unique id of this child to be logged when sending telemetry. */
 	telemetryNodeId: string;
+	/** Summary handle for child node */
+	summaryHandleId: string;
+	/** last reference sequence number seen when last successful summary was created */
+	lastSummaryreferenceSequenceNumber: number|undefined;
 }
 
 export interface ISubtreeInfo<T extends ISnapshotTree | SummaryObject> {
