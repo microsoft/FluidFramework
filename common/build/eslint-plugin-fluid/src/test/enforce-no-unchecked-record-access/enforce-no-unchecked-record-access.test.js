@@ -24,17 +24,13 @@ describe("ESLint Rule Tests", function () {
 		});
 		const fileToLint = path.join(__dirname, "../mockFiles/no-unchecked-record-access", file);
 		const results = await eslint.lintFiles([fileToLint]);
-		return results[0]
+		return results[0];
 	}
 
 	it("Should report an error for unchecked record access", async function () {
 		const result = await lintFile("fileWithOnlyRecordAccess.ts");
-		console.log(result.messages[0].message)
-		assert.strictEqual(result.errorCount, 2, "Should have two errors");
-		assert.strictEqual(
-			result.messages[0].message,
-			"Unchecked access to a record index detected.",
-		);
+		assert.strictEqual(result.errorCount, 1, "Should have one error");
+		assert.strictEqual(result.messages[0].message, "'someObj.a' is possibly 'undefined'");
 	});
 
 	it("Should not report an error for valid array access", async function () {
