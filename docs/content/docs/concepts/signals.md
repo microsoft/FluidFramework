@@ -44,7 +44,7 @@ const containerSchema: ContainerSchema = {
 
 const { container, services } = await client.createContainer(containerSchema);
 
-const signaler = container.initialObjects.signaler;
+const signaler = container.initialObjects.signaler; // type is ISignaler
 ```
 
 `signaler` can then be directly used in your Fluid application!
@@ -53,7 +53,7 @@ For more information on using `ContainerSchema` to create objects please see [Da
 
 ### API
 
-`Signaler` provides a few simple methods to send signals and add/remove listeners to specific signals as well:
+`ISignaler` provides a few simple methods to send signals and add/remove listeners to specific signals as well:
 
 -   `submitSignal(signalName: string, payload?: Jsonable)` - Sends a signal with a payload to its connected listeners
 -   `onSignal(signalName: string, listener: SignalListener)` - Adds a listener for the specified signal. Similar behavior as EventEmitter's `on` method.
