@@ -87,6 +87,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		private _changeSequenceNumber: number,
 		/** Summary reference sequence number, i.e. last sequence number seen when it was created */
 		private _lastSummaryReferenceSequenceNumber?: number,
+		private readonly _summaryHandleId?: string, // PRAGYA - initialized with ""?
 		protected wipSummaryLogger?: ITelemetryBaseLogger,
 		/** A unique id of this node to be logged when sending telemetry. */
 		protected telemetryNodeId?: string,
@@ -174,19 +175,14 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 		// Try to reuse the tree if unchanged
 		if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
-			const latestSummary = this._latestSummary;
-			if (latestSummary !== undefined) {
-				this.wipLocalPaths = {
-					localPath: latestSummary.localPath,
-					additionalPath: latestSummary.additionalPath,
-				};
+			if (this._lastSummaryReferenceSequenceNumber !== undefined) {
 				this.wipSkipRecursion = true;
 				const stats = mergeStats();
 				stats.handleNodeCount++;
 				return {
 					summary: {
 						type: SummaryType.Handle,
-						handle: latestSummary.fullPath.path, // PRAGYA: where do I get this from? proposalHandle from pendingSummaries map?
+						handle: this._summaryHandleId,
 						handleType: SummaryType.Tree,
 					},
 					stats,
@@ -201,12 +197,12 @@ export class SummarizerNode implements IRootSummarizerNode {
 				0x5df /* Summarize should not be called when not tracking the summary */,
 			);
 			incrementalSummaryContext =
-				this._latestSummary !== undefined
+				this._lastSummaryReferenceSequenceNumber !== undefined
 					? {
 							summarySequenceNumber: this.wipReferenceSequenceNumber,
-							latestSummarySequenceNumber: this._latestSummary.referenceSequenceNumber,
-							// TODO: remove summaryPath
-							summaryPath: this._latestSummary.fullPath.path, // PRAGYA: where do I get this from? proposalHandle from pendingSummaries map?
+							latestSummarySequenceNumber: this._lastSummaryReferenceSequenceNumber,
+							// TODO: remove summaryPath. PRAGYA: Not used anywhere?
+							summaryPath: this._summaryHandleId,
 						}
 					: undefined;
 		}
@@ -548,13 +544,14 @@ export class SummarizerNode implements IRootSummarizerNode {
 	): ISummarizerNode {
 		assert(!this.children.has(id), 0x1ab /* "Create SummarizerNode child already exists" */);
 
-		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
+		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, "summaryHandlePrefix", createParam); // PRAGYA --- changes public api. Can we somehow use id?
 		const child = new SummarizerNode(
 			this.logger,
 			summarizeInternalFn,
 			config,
 			createDetails.changeSequenceNumber,
 			this._lastSummaryReferenceSequenceNumber,
+			createDetails._summaryHandleId,
 			this.wipSummaryLogger,
 			createDetails.telemetryNodeId,
 		);
@@ -580,6 +577,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 */
 	protected getCreateDetailsForChild(
 		id: string,
+		summaryHandlePrefix: string,
 		createParam: CreateChildSummarizerNodeParam,
 	): ICreateChildDetails {
 		let changeSequenceNumber: number;
@@ -610,10 +608,12 @@ export class SummarizerNode implements IRootSummarizerNode {
 		}
 
 		const childTelemetryNodeId = `${this.telemetryNodeId ?? ""}/${id}`;
+		const childSummaryHandleId = this._summaryHandleId.concat("/", summaryHandlePrefix, "/", id); // PRAGYA: Should we use encodeURIComponent used by EscapedPath class?
 
 		return {
 			changeSequenceNumber,
 			telemetryNodeId: childTelemetryNodeId,
+			summaryHandleId: childSummaryHandleId
 		};
 	}
 
@@ -636,9 +636,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 		// if (child._latestSummary !== undefined) {
 		// PRAGYA: removed condition. Even if the child doesn't have any last summary, we can still add/update pendingsummary state proactively?
 		// PRAGYA: It doesn't look like child maintains any different pending summaries than the parent.
-			this.pendingSummaries.forEach((summaryReferenceSequenceNumber,proposedHandle) => {
-				child.addPendingSummary(proposedHandle, summaryReferenceSequenceNumber);
-			})
+			// this.pendingSummaries.forEach((summaryReferenceSequenceNumber,proposedHandle) => {
+			// 	child.addPendingSummary(proposedHandle, summaryReferenceSequenceNumber);
+			// })
 		// }
 	}
 
@@ -691,6 +691,7 @@ export const createRootSummarizerNode = (
 		config,
 		changeSequenceNumber,
 		referenceSequenceNumber,
+		"" /* summaryHandleId */,
 		undefined /* wipSummaryLogger */,
 		"" /* telemetryNodeId */,
 	);
