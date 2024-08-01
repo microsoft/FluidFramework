@@ -34,23 +34,23 @@ const urlResolver = new LocalResolver();
 
 /**
  * Connect to the local SessionStorage Fluid service and retrieve a Container with the given ID running the given code.
- * @param documentId - The document id to retrieve or create
+ * @param containerId - The document id to retrieve or create
  * @param containerRuntimeFactory - The container factory to be loaded in the container
  * @internal
  */
 export async function getSessionStorageContainer(
-	documentId: string,
+	containerId: string,
 	containerRuntimeFactory: IRuntimeFactory,
 	createNew: boolean,
 ): Promise<{ container: IContainer; attach: (() => Promise<void>) | undefined }> {
-	let localServer = localServerMap.get(documentId);
+	let localServer = localServerMap.get(containerId);
 	if (localServer === undefined) {
 		localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
-		localServerMap.set(documentId, localServer);
+		localServerMap.set(containerId, localServer);
 	}
 
 	const documentServiceFactory = new LocalDocumentServiceFactory(localServer);
-	const url = `${window.location.origin}/${documentId}`;
+	const url = `${window.location.origin}/${containerId}`;
 
 	// To bypass proposal-based loading, we need a codeLoader that will return our already-in-memory container factory.
 	// The expected format of that response is an IFluidModule with a fluidExport.
@@ -112,14 +112,14 @@ async function initializeNewContainer(
  * requires making async calls.
  */
 async function createContainerAndRenderInElement(
-	documentId: string,
+	containerId: string,
 	element: HTMLDivElement,
 	createNewFlag: boolean,
 ): Promise<void> {
 	// The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
 	// to store ops.
 	const { container, attach } = await getSessionStorageContainer(
-		documentId,
+		containerId,
 		createDOProviderContainerRuntimeFactory({
 			schema: containerConfig,
 			compatibilityMode: "2",
@@ -153,19 +153,19 @@ async function setup(): Promise<void> {
 	if (createNew) {
 		window.location.hash = Date.now().toString();
 	}
-	const documentId = window.location.hash.substring(1);
+	const containerId = window.location.hash.substring(1);
 
 	const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
 	if (leftElement === undefined) {
 		throw new Error("sbs-left does not exist");
 	}
-	await createContainerAndRenderInElement(documentId, leftElement, createNew);
+	await createContainerAndRenderInElement(containerId, leftElement, createNew);
 	const rightElement = document.getElementById("sbs-right") as HTMLDivElement;
 	if (rightElement === undefined) {
 		throw new Error("sbs-right does not exist");
 	}
 	// The second time we don't need to createNew because we know a Container exists.
-	await createContainerAndRenderInElement(documentId, rightElement, false);
+	await createContainerAndRenderInElement(containerId, rightElement, false);
 
 	// Setting "fluidStarted" is just for our test automation
 	// eslint-disable-next-line @typescript-eslint/dot-notation
