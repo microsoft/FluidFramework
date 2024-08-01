@@ -2,9 +2,9 @@
 
 ## 0.50.0
 
-- Fixes the time execution test to have correct key-value pairs to avoid logging `undefined`.
-- Removes `customDataFormatters` in the log output files.
-- Unifies the logging format for time execution and memory tests.
+-   Fixes the time execution test to have correct key-value pairs to avoid logging `undefined`.
+-   Removes `customDataFormatters` in the log output files.
+-   Unifies the logging format for time execution and memory tests.
 
 ## 0.49.0
 
