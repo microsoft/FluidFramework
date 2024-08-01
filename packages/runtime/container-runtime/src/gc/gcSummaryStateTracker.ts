@@ -66,7 +66,7 @@ export class GCSummaryStateTracker {
 		// Tells whether GC should run or not.
 		private readonly configs: Pick<
 			IGarbageCollectorConfigs,
-			"gcEnabled" | "tombstoneMode" | "gcVersionInBaseSnapshot" | "gcVersionInEffect"
+			"gcAllowed" | "gcVersionInBaseSnapshot" | "gcVersionInEffect"
 		>,
 	) {}
 
@@ -100,7 +100,7 @@ export class GCSummaryStateTracker {
 		deletedNodes: Set<string>,
 		tombstones: string[],
 	): ISummarizeResult | undefined {
-		if (!this.configs.gcEnabled) {
+		if (!this.configs.gcAllowed) {
 			return;
 		}
 
@@ -109,12 +109,9 @@ export class GCSummaryStateTracker {
 		// to identify deleted nodes' usage.
 		const serializedDeletedNodes =
 			deletedNodes.size > 0 ? JSON.stringify(Array.from(deletedNodes).sort()) : undefined;
-		// If running in tombstone mode, serialize and write tombstones, if any.
-		const serializedTombstones = this.configs.tombstoneMode
-			? tombstones.length > 0
-				? JSON.stringify(tombstones.sort())
-				: undefined
-			: undefined;
+		// Serialize and write tombstones, if any.
+		const serializedTombstones =
+			tombstones.length > 0 ? JSON.stringify(tombstones.sort()) : undefined;
 
 		/**
 		 * Incremental summary of GC data - If none of GC state, deleted nodes or tombstones changed since last summary,
@@ -231,7 +228,7 @@ export class GCSummaryStateTracker {
 	 * Called to refresh the latest summary state. This happens when a pending summary is acked.
 	 */
 	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
-		if (!this.configs.gcEnabled || !result.isSummaryTracked) {
+		if (!this.configs.gcAllowed || !result.isSummaryTracked) {
 			return;
 		}
 
