@@ -156,8 +156,6 @@ export class SummaryNode {
  * Represents the details needed to create a child summarizer node.
  */
 export interface ICreateChildDetails {
-	/** Latest summary from server node data */
-	latestSummary: SummaryNode | undefined;
 	/** Sequence number of latest known change to the node */
 	changeSequenceNumber: number;
 	/** A unique id of this child to be logged when sending telemetry. */
