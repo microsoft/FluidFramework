@@ -6,6 +6,9 @@ on:
       - "docs/**"
       - "*.md"
       - "**/*.md"
+    paths-ignore:
+      - "build-tools/**"
+      - "server/**"
 
 defaults:
   run:
