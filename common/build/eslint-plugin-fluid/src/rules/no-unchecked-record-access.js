@@ -3,52 +3,54 @@
  * Licensed under the MIT License.
  */
 
+const hasIndexSignature = (type) => type.getStringIndexType() || type.getNumberIndexType();
+
 module.exports = {
 	meta: {
 		type: "problem",
 		docs: {
 			description: "Disallow accessing properties on objects with dynamic types",
 			category: "Possible Errors",
-			recommended: false,
 		},
-		schema: [], // no options
+		schema: [],
 	},
+
 	create(context) {
-		return {
-			MemberExpression(node) {
-				if (node.object.type === "Identifier" && node.property.type === "Identifier") {
-					const variable = context
-						.getScope()
-						.variables.find((v) => v.name === node.object.name);
-					if (variable && variable.defs.length > 0) {
-						const typeAnnotation = variable.defs[0].node.id.typeAnnotation;
-						if (
-							typeAnnotation &&
-							typeAnnotation.typeAnnotation.type === "TSTypeReference"
-						) {
-							const typeName = typeAnnotation.typeAnnotation.typeName.name;
-							const typeDef = context
-								.getSourceCode()
-								.scopeManager.globalScope.set.get(typeName);
-							if (typeDef && typeDef.defs.length > 0) {
-								const typeNode = typeDef.defs[0].node;
-								if (typeNode.typeAnnotation && typeNode.typeAnnotation.members) {
-									const members = typeNode.typeAnnotation.members;
-									const indexSignature = members.find(
-										(member) => member.type === "TSIndexSignature",
-									);
-									if (indexSignature) {
-										context.report({
-											node,
-											message: `'${node.object.name}.${node.property.name}' is possibly 'undefined'`,
-										});
-									}
-								}
-							}
-						}
-					}
+		function checkMemberExpression(node) {
+			const services = context.parserServices;
+
+			if (!services || !services.program || !services.esTreeNodeToTSNodeMap) {
+				return;
+			}
+
+			const checker = services.program.getTypeChecker();
+			let currentNode = node;
+			let accessPath = [];
+
+			while (currentNode.type === "MemberExpression") {
+				if (currentNode.property.type === "Identifier") {
+					accessPath.unshift(currentNode.property.name);
 				}
-			},
+				currentNode = currentNode.object;
+			}
+
+			if (currentNode.type === "Identifier") {
+				accessPath.unshift(currentNode.name);
+			}
+
+			const tsNode = services.esTreeNodeToTSNodeMap.get(node.object);
+			const type = checker.getTypeAtLocation(tsNode);
+
+			if (hasIndexSignature(type)) {
+				context.report({
+					node: node,
+					message: `'${accessPath.join(".")}' is possibly 'undefined'`,
+				});
+			}
+		}
+
+		return {
+			MemberExpression: checkMemberExpression,
 		};
 	},
 };
