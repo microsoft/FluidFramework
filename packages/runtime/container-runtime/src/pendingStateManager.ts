@@ -32,8 +32,9 @@ export interface IPendingMessage {
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
 	sequenceNumber?: number;
-	/** Info needed to compute the batchId on reconnect */
-	batchIdContext: {
+	/** Context about the batch this message belongs to, for validation and for computing the batchId on reconnect */
+	batchContext: {
+		//* Find/replace new name
 		/** The Batch's original clientId, from when it was first flushed to be submitted */
 		clientId: string;
 		/**
@@ -41,13 +42,15 @@ export interface IPendingMessage {
 		 *	@remarks A negative value means it was not yet submitted when queued here (e.g. disconnected right before flush fired)
 		 */
 		batchStartCsn: number;
+		/** length of the batch (how many messages) */
+		length?: number; //* TODO: Make required
 	};
 }
 
 type Patch<T, U> = U & Omit<T, keyof U>;
 
-/** First version of the type (pre-dates batchIdContext) */
-type IPendingMessageV0 = Patch<IPendingMessage, { batchIdContext?: undefined }>;
+/** First version of the type (pre-dates batchContext) */
+type IPendingMessageV0 = Patch<IPendingMessage, { batchContext?: undefined }>;
 
 /**
  * Union of all supported schemas for when applying stashed ops
@@ -84,26 +87,6 @@ function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean 
 	return content.type === "groupedBatch" && content.contents?.length === 0;
 }
 
-/** Union of keys of T */
-type KeysOfUnion<T extends object> = T extends T ? keyof T : never;
-/** *Partial* type all possible combinations of properties and values of union T.
- * This loosens typing allowing access to all possible properties without
- * narrowing.
- */
-type AnyComboFromUnion<T extends object> = { [P in KeysOfUnion<T>]?: T[P] };
-
-function buildPendingMessageContent(
-	// AnyComboFromUnion is needed need to gain access to compatDetails that
-	// is only defined for some cases.
-	message: AnyComboFromUnion<InboundSequencedContainerRuntimeMessage>,
-): string {
-	// IMPORTANT: Order matters here, this must match the order of the properties used
-	// when submitting the message.
-	const { type, contents, compatDetails } = message;
-	// Any properties that are not defined, won't be emitted by stringify.
-	return JSON.stringify({ type, contents, compatDetails });
-}
-
 function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
 	return {
 		...message,
@@ -122,8 +105,8 @@ function getEffectiveBatchId(pendingMessage: IPendingMessage): string {
 	return (
 		asBatchMetadata(pendingMessage.opMetadata)?.batchId ??
 		generateBatchId(
-			pendingMessage.batchIdContext.clientId,
-			pendingMessage.batchIdContext.batchStartCsn,
+			pendingMessage.batchContext.clientId,
+			pendingMessage.batchContext.batchStartCsn,
 		)
 	);
 }
@@ -262,7 +245,7 @@ export class PendingStateManager implements IDisposable {
 				localOpMetadata,
 				opMetadata,
 				// Note: We only need this on the first message.
-				batchIdContext: { clientId, batchStartCsn },
+				batchContext: { clientId, batchStartCsn, length: batch.length },
 			};
 			this.pendingMessages.push(pendingMessage);
 		}
@@ -289,10 +272,11 @@ export class PendingStateManager implements IDisposable {
 			const nextMessage = this.initialMessages.shift()!;
 			// Nothing to apply if the message is an empty batch.
 			// We still need to track it for resubmission.
+			//* Remove/simplify back compat?  Just assert?
 			try {
 				if (isEmptyBatchPendingMessage(nextMessage)) {
 					nextMessage.localOpMetadata = { emptyBatch: true }; // equivalent to applyStashedOp for empty batch
-					patchBatchIdContext(nextMessage); // Back compat
+					patchbatchContext(nextMessage); // Back compat
 					this.pendingMessages.push(nextMessage);
 					continue;
 				}
@@ -305,7 +289,7 @@ export class PendingStateManager implements IDisposable {
 				} else {
 					nextMessage.localOpMetadata = localOpMetadata;
 					// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
-					patchBatchIdContext(nextMessage); // Back compat
+					patchbatchContext(nextMessage); // Back compat
 					this.pendingMessages.push(nextMessage);
 				}
 			} catch (error) {
@@ -362,25 +346,21 @@ export class PendingStateManager implements IDisposable {
 				asEmptyBatchLocalOpMetadata(localOpMetadata)?.emptyBatch === true,
 				"Expected empty batch marker",
 			);
+			return [];
 		}
 
-		// Note this will correctly return empty array for an empty batch
 		return batch.messages.map((message) => ({
 			message,
-			localOpMetadata: this.processNextPendingMessage(message.sequenceNumber, message),
+			localOpMetadata: this.processNextPendingMessage(message.sequenceNumber),
 		}));
 	}
 
 	/**
 	 * Processes the pending local copy of message that's been ack'd by the server.
 	 * @param sequenceNumber - The sequenceNumber from the server corresponding to the next pending message.
-	 * @param message - [optional] The entire incoming message, for comparing contents with the pending message for extra validation.
 	 * @returns - The localOpMetadata of the next pending message, to be sent to whoever submitted the original message.
 	 */
-	private processNextPendingMessage(
-		sequenceNumber: number,
-		message?: InboundSequencedContainerRuntimeMessage,
-	): unknown {
+	private processNextPendingMessage(sequenceNumber: number): unknown {
 		const pendingMessage = this.pendingMessages.peekFront();
 		assert(
 			pendingMessage !== undefined,
@@ -391,27 +371,6 @@ export class PendingStateManager implements IDisposable {
 		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
 
 		this.pendingMessages.shift();
-
-		// message is undefined in the Empty Batch case,
-		// because we don't have an incoming message to compare and pendingMessage is just a placeholder anyway.
-		if (message !== undefined) {
-			const messageContent = buildPendingMessageContent(message);
-
-			// Stringified content should match
-			if (pendingMessage.content !== messageContent) {
-				this.stateHandler.close(
-					DataProcessingError.create(
-						"pending local message content mismatch",
-						"unexpectedAckReceived",
-						message,
-						{
-							expectedMessageType: JSON.parse(pendingMessage.content).type,
-						},
-					),
-				);
-				return;
-			}
-		}
 
 		return pendingMessage.localOpMetadata;
 	}
@@ -433,11 +392,15 @@ export class PendingStateManager implements IDisposable {
 		// a different fork of this container also submitted the same batch (and it may not be empty for that fork).
 		const firstMessage = batch.messages.length > 0 ? batch.messages[0] : undefined;
 
-		if (pendingMessage.batchIdContext.batchStartCsn !== batch.batchStartCsn) {
+		//* Double-check this
+		if (
+			pendingMessage.batchContext.batchStartCsn !== batch.batchStartCsn ||
+			pendingMessage.batchContext.length !== batch.length
+		) {
 			this.logger?.sendErrorEvent({
 				eventName: "BatchIdOrCsnMismatch",
 				details: {
-					pendingBatchCsn: pendingMessage.batchIdContext.batchStartCsn,
+					pendingBatchCsn: pendingMessage.batchContext.batchStartCsn,
 					batchStartCsn: batch.batchStartCsn,
 					inboundBatchIdComputed: batch.batchId === undefined,
 					messageBatchMetadata: firstMessage && (firstMessage.metadata as any)?.batch,
@@ -564,13 +527,13 @@ export class PendingStateManager implements IDisposable {
 	}
 }
 
-/** For back-compat if trying to apply stashed ops that pre-date batchIdContext */
-function patchBatchIdContext(
+/** For back-compat if trying to apply stashed ops that pre-date batchContext */
+function patchbatchContext(
 	message: IPendingMessageFromStash,
 ): asserts message is IPendingMessage {
-	const batchIdContext: IPendingMessageFromStash["batchIdContext"] = message.batchIdContext;
-	if (batchIdContext === undefined) {
+	const batchContext: IPendingMessageFromStash["batchContext"] = message.batchContext;
+	if (batchContext === undefined) {
 		// Using uuid guarantees uniqueness, retaining existing behavior
-		message.batchIdContext = { clientId: uuid(), batchStartCsn: -1 };
+		message.batchContext = { clientId: uuid(), batchStartCsn: -1, length: 1 };
 	}
 }

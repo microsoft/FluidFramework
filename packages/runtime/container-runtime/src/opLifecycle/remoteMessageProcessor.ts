@@ -39,6 +39,8 @@ export interface InboundBatch {
 	readonly batchStartCsn: number;
 	/** For an empty batch (with no messages), we need to remember the empty grouped batch's sequence number */
 	readonly emptyBatchSequenceNumber?: number;
+	/** How many runtime messages in the batch? */
+	readonly length?: number; //* TODO: Make required
 }
 
 function assertHasClientId(
