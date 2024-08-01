@@ -2887,14 +2887,6 @@ export class ContainerRuntime
 						trackingSequenceNumber: this._signalTracking.trackingSignalSequenceNumber,
 						clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
 					});
-
-					// If we receive the minimum expected signal, we update to a new minimum.
-					if (
-						envelope.clientSignalSequenceNumber ===
-						this._signalTracking.minimumTrackingSignalSequenceNumber
-					) {
-						this._signalTracking.minimumTrackingSignalSequenceNumber++;
-					}
 				} else {
 					// Update the tracking signal sequence number to the next expected signal in the sequence.
 					this._signalTracking.trackingSignalSequenceNumber++;
