@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "0.42.0",
+	"version": "0.43.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -114,11 +114,16 @@
 				"@aws-sdk/*"
 			]
 		},
+		"overrideComments": [
+			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently."
+		],
 		"overrides": {
 			"json5@<1.0.2": "^1.0.2",
 			"json5@>=2.0.0 <2.2.2": "^2.2.2",
 			"qs": "^6.11.0",
-			"sharp": "^0.33.2"
+			"sharp": "^0.33.2",
+			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
+			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0"
 		},
 		"patchedDependencies": {
 			"jssm@5.98.2": "patches/jssm@5.98.2.patch"

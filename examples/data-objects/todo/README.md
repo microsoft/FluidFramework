@@ -4,7 +4,7 @@
 
 ![Todo Example](./resources/todo-screen-capture.gif)
 
-<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_README_HEADER:usesTinylicious=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

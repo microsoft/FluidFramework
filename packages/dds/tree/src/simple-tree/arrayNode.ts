@@ -932,13 +932,7 @@ export function arraySchema<
 		): MapTreeNode {
 			return getOrCreateMapTreeNode(
 				flexSchema,
-				mapTreeFromNodeData(
-					// Ensure input iterable is not an map. See TODO in shallowCompatibilityTest.
-					Array.from(
-						input as Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-					) as object,
-					this as unknown as ImplicitAllowedTypes,
-				),
+				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
 			);
 		}
 

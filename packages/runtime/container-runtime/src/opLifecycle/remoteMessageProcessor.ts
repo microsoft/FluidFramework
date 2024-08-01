@@ -77,6 +77,7 @@ export class RemoteMessageProcessor {
 		| {
 				messages: InboundSequencedContainerRuntimeMessage[];
 				batchStartCsn: number;
+				sequenceNumber?: number; // Needed by the PendingStateManager to properly track empty batches
 		  }
 		| undefined {
 		let message = remoteMessageCopy;
@@ -113,8 +114,21 @@ export class RemoteMessageProcessor {
 				this.processorBatch.length === 0,
 				0x9d4 /* Processor batch should be empty on grouped batch */,
 			);
+			const groupedMessages = this.opGroupingManager.ungroupOp(message).map(unpack);
+			// If the batch is empty, we need to return the sequence number aside
+			if (groupedMessages.length === 0) {
+				assert(
+					message.sequenceNumber !== undefined,
+					"Empty grouped batch has no sequence number",
+				);
+				return {
+					messages: groupedMessages, // empty array
+					batchStartCsn: message.clientSequenceNumber,
+					sequenceNumber: message.sequenceNumber,
+				};
+			}
 			return {
-				messages: this.opGroupingManager.ungroupOp(message).map(unpack),
+				messages: groupedMessages,
 				batchStartCsn: message.clientSequenceNumber,
 			};
 		}
@@ -176,27 +190,32 @@ export class RemoteMessageProcessor {
 	}
 }
 
-/** Takes an incoming message and if the contents is a string, JSON.parse's it in place */
+/**
+ * Takes an incoming message and if the contents is a string, JSON.parse's it in place
+ * @param mutableMessage - op message received
+ * @param hasModernRuntimeMessageEnvelope - false if the message does not contain the modern op envelop where message.type is MessageType.Operation
+ * @param logLegacyCase - callback to log when legacy op is encountered
+ */
 export function ensureContentsDeserialized(
 	mutableMessage: ISequencedDocumentMessage,
-	modernRuntimeMessage: boolean,
+	hasModernRuntimeMessageEnvelope: boolean,
 	logLegacyCase: (codePath: string) => void,
 ): void {
 	// back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
 	// System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
 	// Old ops may contain empty string (I assume noops).
-	let parsedJsonContents: boolean;
+	let didParseJsonContents: boolean;
 	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
 		mutableMessage.contents = JSON.parse(mutableMessage.contents);
-		parsedJsonContents = true;
+		didParseJsonContents = true;
 	} else {
-		parsedJsonContents = false;
+		didParseJsonContents = false;
 	}
 
 	// We expect Modern Runtime Messages to have JSON serialized contents,
 	// and all other messages not to (system messages and legacy runtime messages without outer "op" type envelope)
 	// Let's observe if we are wrong about this to learn about these cases.
-	if (modernRuntimeMessage !== parsedJsonContents) {
+	if (hasModernRuntimeMessageEnvelope !== didParseJsonContents) {
 		logLegacyCase("ensureContentsDeserialized_unexpectedContentsType");
 	}
 }

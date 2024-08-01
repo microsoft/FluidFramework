@@ -13,8 +13,8 @@ List packages in a release group in topological order.
 USAGE
   $ flub list [PACKAGE_OR_RELEASE_GROUP] [--json] [-v | --quiet] [-g
     client|server|azure|build-tools|gitrest|historian | ] [--feed
-    public|internal-build|internal-test|internal-dev|official|internal] [--private] [--scope <value> | --skipScope
-    <value>] [--tarball] [--outFile <value>]
+    public|internal-build|internal-test|internal-dev|official|internal] [--private] [--scope <value>... | --skipScope
+    <value>...] [--tarball] [--outFile <value>]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.

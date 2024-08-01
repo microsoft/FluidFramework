@@ -303,7 +303,7 @@ function libraryReadmeHeaderTransform(content, options, config) {
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
-function exampleReadmeHeaderTransform(content, options, config) {
+function exampleAppReadmeHeaderTransform(content, options, config) {
 	const { packageJsonPath: relativePackageJsonPath } = options;
 
 	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
@@ -374,16 +374,16 @@ module.exports = {
 		LIBRARY_README_HEADER: libraryReadmeHeaderTransform,
 
 		/**
-		 * See {@link exampleReadmeHeaderTransform}.
+		 * See {@link exampleAppReadmeHeaderTransform}.
 		 *
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_README_HEADER:packageJsonPath=./package.json&gettingStarted=TRUE&usesTinylicious=TRUE&scripts=FALSE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:packageJsonPath=./package.json&gettingStarted=TRUE&usesTinylicious=TRUE&scripts=FALSE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		EXAMPLE_README_HEADER: exampleReadmeHeaderTransform,
+		EXAMPLE_APP_README_HEADER: exampleAppReadmeHeaderTransform,
 
 		/**
 		 * See {@link readmeFooterTransform}.
