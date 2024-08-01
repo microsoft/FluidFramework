@@ -122,7 +122,7 @@ const createArrayProxy = (
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const maybePatch = arrayPatch[key];
 			if (maybePatch !== undefined) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 				return maybePatch(target, consumer, receiver);
 			}
 
