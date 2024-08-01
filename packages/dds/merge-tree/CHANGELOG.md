@@ -1,5 +1,20 @@
 # @fluidframework/merge-tree
 
+## 2.1.0
+
+### Minor Changes
+
+-   The Marker.fromJSONObject and TextSegment.fromJSONObject argument types have been corrected ([#21684](https://github.com/microsoft/FluidFramework/pull/21684)) [d2d472bd88](https://github.com/microsoft/FluidFramework/commit/d2d472bd88d8360bb77303079eebef16d5a69131)
+
+    Previously, the arguments of `Marker.fromJSONObject` and `TextSegment.fromJSONObject` were of type `any`. However, at
+    runtime only certain types were expected and using other types would cause errors.
+
+    Now, the argument for the Marker implementation is of type `IJSONSegment` and the argument for the TextSegment
+    implementation is of type `string | IJSONSegment`. This reflects actual runtime support.
+
+    This change should have no impact on existing code unless the code is using incorrect types. Such code already does not
+    function and should be corrected.
+
 ## 2.0.0-rc.5.0.0
 
 ### Minor Changes

@@ -31,7 +31,7 @@ import {
 	type ChangeFamilyEditor,
 	EmptyKey,
 } from "../../core/index.js";
-import { leaf } from "../../domains/index.js";
+import { leaf, singleJsonCursor, typedJsonCursor } from "../../domains/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	ChunkedForest,
@@ -46,6 +46,7 @@ import {
 	SchemaBuilderBase,
 	SchemaBuilderInternal,
 	TreeCompressionStrategy,
+	TreeStatus,
 	ViewSchema,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
@@ -102,6 +103,7 @@ import {
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import { TestAnchor } from "../testAnchor.js";
 
 const enableSchemaValidation = true;
 
@@ -143,7 +145,7 @@ describe("SharedTree", () => {
 			const content = {
 				schema: stringSequenceRootSchema,
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
-				initialTree: ["x"],
+				initialTree: [typedJsonCursor("x")],
 			} satisfies InitializeAndSchematizeConfiguration;
 			const tree1 = schematizeFlexTree(provider.trees[0], content);
 			schematizeFlexTree(provider.trees[1], content);
@@ -158,7 +160,7 @@ describe("SharedTree", () => {
 
 			const view = schematizeFlexTree(tree, {
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
-				initialTree: 10,
+				initialTree: singleJsonCursor(10),
 				schema,
 			});
 			assert.equal(view.flexTree.content, 10);
@@ -171,7 +173,7 @@ describe("SharedTree", () => {
 			// No op upgrade with AllowedUpdateType.None does not error
 			const schematized = schematizeFlexTree(tree, {
 				allowedSchemaModifications: AllowedUpdateType.None,
-				initialTree: 10,
+				initialTree: singleJsonCursor(10),
 				schema,
 			});
 			// And does not add initial tree:
@@ -184,7 +186,7 @@ describe("SharedTree", () => {
 			assert.throws(() => {
 				schematizeFlexTree(tree, {
 					allowedSchemaModifications: AllowedUpdateType.Initialize,
-					initialTree: 5,
+					initialTree: singleJsonCursor(5),
 					schema,
 				});
 			});
@@ -195,7 +197,7 @@ describe("SharedTree", () => {
 			tree.checkout.updateSchema(storedSchema);
 			const schematized = schematizeFlexTree(tree, {
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
-				initialTree: 5,
+				initialTree: singleJsonCursor(5),
 				schema: schemaGeneralized,
 			});
 			// Initial tree should not be applied
@@ -306,10 +308,12 @@ describe("SharedTree", () => {
 
 	it("end-to-end", () => {
 		const sharedTree = treeTestFactory();
-		const view = sharedTree.viewWith({
-			schema: new SchemaFactory(undefined).number,
-			enableSchemaValidation,
-		});
+		const view = sharedTree.viewWith(
+			new TreeViewConfiguration({
+				schema: new SchemaFactory(undefined).number,
+				enableSchemaValidation,
+			}),
+		);
 		view.initialize(1);
 		assert.equal(view.root, 1);
 		view.root = 2;
@@ -327,7 +331,9 @@ describe("SharedTree", () => {
 			});
 		}
 
-		sharedTree.viewWith({ schema: StringArray, enableSchemaValidation }).initialize(["x"]);
+		sharedTree
+			.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }))
+			.initialize(["x"]);
 
 		{
 			const snapshot = sharedTree.contentSnapshot();
@@ -351,10 +357,12 @@ describe("SharedTree", () => {
 		const value = "42";
 
 		// Apply an edit to the first tree which inserts a node with a value
-		const view = provider.trees[0].viewWith({
-			schema: StringArray,
-			enableSchemaValidation,
-		});
+		const view = provider.trees[0].viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
 		view.initialize([value]);
 
 		// Ensure that the first tree has the state we expect
@@ -375,7 +383,9 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const value = 42;
 		provider.trees[0]
-			.viewWith({ schema: JsonArray, enableSchemaValidation: false })
+			.viewWith(
+				new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation: false }),
+			)
 			.initialize(new JsonArray([value]));
 
 		await provider.summarize();
@@ -383,7 +393,10 @@ describe("SharedTree", () => {
 		const loadingTree = await provider.createTree();
 		validateTreeContent(loadingTree.checkout, {
 			schema: toFlexSchema(JsonArray),
-			initialTree: [value],
+			initialTree: typedJsonCursor({
+				[typedJsonCursor.type]: JsonArray.identifier,
+				[EmptyKey]: [value],
+			}),
 		});
 	});
 
@@ -445,10 +458,12 @@ describe("SharedTree", () => {
 					child: sf.optionalRecursive([() => node, sf.number]),
 				});
 
-				const view = tree1.viewWith({
-					schema: sf.optional(node),
-					enableSchemaValidation,
-				});
+				const view = tree1.viewWith(
+					new TreeViewConfiguration({
+						schema: sf.optional(node),
+						enableSchemaValidation,
+					}),
+				);
 				view.initialize(undefined);
 
 				view.root = new node({ child: undefined });
@@ -494,7 +509,9 @@ describe("SharedTree", () => {
 				const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 				await provider.ensureSynchronized();
 				const tree = provider.trees[0];
-				const view = tree.viewWith({ schema: StringArray, enableSchemaValidation });
+				const view = tree.viewWith(
+					new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+				);
 				view.initialize([]);
 				await provider.ensureSynchronized();
 				await provider.summarize();
@@ -523,14 +540,18 @@ describe("SharedTree", () => {
 				const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 				await provider.ensureSynchronized();
 				const tree = provider.trees[0];
-				const view = tree.viewWith({ schema: StringArray, enableSchemaValidation });
+				const view = tree.viewWith(
+					new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+				);
 				view.initialize([]);
 				await provider.ensureSynchronized();
 				await provider.summarize();
 				view.root.insertAtStart("A");
 				await provider.ensureSynchronized();
 				await validateSchemaStringType(provider, provider.trees[0].id, SummaryType.Handle);
-				const view2 = tree.viewWith({ schema: JsonArray, enableSchemaValidation });
+				const view2 = tree.viewWith(
+					new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation }),
+				);
 				view2.upgradeSchema();
 				await provider.ensureSynchronized();
 				await validateSchemaStringType(provider, provider.trees[0].id, SummaryType.Blob);
@@ -543,12 +564,18 @@ describe("SharedTree", () => {
 		const [container1, container2, container3] = provider.containers;
 		const [tree1, tree2, tree3] = provider.trees;
 
-		const view1 = tree1.viewWith({ schema: StringArray, enableSchemaValidation });
+		const view1 = tree1.viewWith(
+			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+		);
 		view1.initialize(["Z", "A", "C"]);
 		await provider.ensureSynchronized();
 
-		const view2 = tree2.viewWith({ schema: StringArray, enableSchemaValidation });
-		const view3 = tree3.viewWith({ schema: StringArray, enableSchemaValidation });
+		const view2 = tree2.viewWith(
+			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+		);
+		const view3 = tree3.viewWith(
+			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+		);
 
 		// Stop the processing of incoming changes on tree3 so that it does not learn about the deletion of Z
 		await provider.opProcessingController.pauseProcessing(container3);
@@ -580,10 +607,12 @@ describe("SharedTree", () => {
 		await provider.ensureSynchronized();
 
 		// Load the last summary (state: "AC") and process the deletion of Z and insertion of B
-		const view4 = (await provider.createTree()).viewWith({
-			schema: StringArray,
-			enableSchemaValidation,
-		});
+		const view4 = (await provider.createTree()).viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
 
 		// Ensure tree4 has a chance to process trailing ops.
 		await provider.ensureSynchronized();
@@ -606,10 +635,12 @@ describe("SharedTree", () => {
 	it("can load a summary from a tree and receive edits of the new state", async () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const [summarizingTree] = provider.trees;
-		const view = summarizingTree.viewWith({
-			schema: StringArray,
-			enableSchemaValidation,
-		});
+		const view = summarizingTree.viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
 		view.initialize(["a", "b", "c"]);
 		await provider.ensureSynchronized();
 		await provider.summarize();
@@ -618,17 +649,22 @@ describe("SharedTree", () => {
 		await provider.ensureSynchronized();
 		validateTreeContent(loadingTree.checkout, {
 			schema: toFlexSchema(StringArray),
-			initialTree: ["b", "c"],
+			initialTree: typedJsonCursor({
+				[typedJsonCursor.type]: StringArray.identifier,
+				[EmptyKey]: ["b", "c"],
+			}),
 		});
 	});
 
 	it("can load a summary from a tree and receive edits that require detached tree refreshers", async () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const [summarizingTree] = provider.trees;
-		const view = summarizingTree.viewWith({
-			schema: StringArray,
-			enableSchemaValidation,
-		});
+		const view = summarizingTree.viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
 		view.initialize(["a", "b", "c"]);
 
 		const { undoStack, unsubscribe } = createTestUndoRedoStacks(
@@ -639,7 +675,10 @@ describe("SharedTree", () => {
 
 		validateTreeContent(summarizingTree.checkout, {
 			schema: toFlexSchema(StringArray),
-			initialTree: ["b", "c"],
+			initialTree: typedJsonCursor({
+				[typedJsonCursor.type]: StringArray.identifier,
+				[EmptyKey]: ["b", "c"],
+			}),
 		});
 
 		await provider.ensureSynchronized();
@@ -653,21 +692,29 @@ describe("SharedTree", () => {
 
 		validateTreeContent(summarizingTree.checkout, {
 			schema: toFlexSchema(StringArray),
-			initialTree: ["a", "b", "c"],
+			initialTree: typedJsonCursor({
+				[typedJsonCursor.type]: StringArray.identifier,
+				[EmptyKey]: ["a", "b", "c"],
+			}),
 		});
 
 		await provider.ensureSynchronized();
 
 		validateTreeContent(loadingTree.checkout, {
 			schema: toFlexSchema(StringArray),
-			initialTree: ["a", "b", "c"],
+			initialTree: typedJsonCursor({
+				[typedJsonCursor.type]: StringArray.identifier,
+				[EmptyKey]: ["a", "b", "c"],
+			}),
 		});
 		unsubscribe();
 	});
 
 	it("can summarize local edits in the attach summary", async () => {
 		const onCreate = (tree: SharedTree) => {
-			const view = tree.viewWith({ schema: StringArray, enableSchemaValidation });
+			const view = tree.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
 			view.initialize([]);
 			view.root.insertAtStart("A");
 			view.root.insertAtEnd("C");
@@ -680,11 +727,15 @@ describe("SharedTree", () => {
 			new SharedTreeTestFactory(onCreate),
 		);
 		const tree1 = provider.trees[0];
-		const view1 = tree1.viewWith({ schema: StringArray, enableSchemaValidation });
+		const view1 = tree1.viewWith(
+			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+		);
 		assert.deepEqual([...view1.root], ["A", "C"]);
 		await provider.ensureSynchronized();
 		const tree2 = await provider.createTree();
-		const view2 = tree2.viewWith({ schema: StringArray, enableSchemaValidation });
+		const view2 = tree2.viewWith(
+			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+		);
 
 		// Check that the joining tree was initialized with data from the attach summary
 		assert.deepEqual([...view2.root], ["A", "C"]);
@@ -699,7 +750,9 @@ describe("SharedTree", () => {
 	it("can tolerate local edits submitted as part of a transaction in the attach summary", async () => {
 		const onCreate = (tree: SharedTree) => {
 			// Schematize uses a transaction as well
-			const view = tree.viewWith({ schema: StringArray, enableSchemaValidation });
+			const view = tree.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
 			view.initialize([]);
 			Tree.runTransaction(view, () => {
 				view.root.insertAtStart("A");
@@ -714,10 +767,14 @@ describe("SharedTree", () => {
 			new SharedTreeTestFactory(onCreate),
 		);
 		const tree1 = provider.trees[0];
-		const view1 = tree1.viewWith({ schema: StringArray, enableSchemaValidation });
+		const view1 = tree1.viewWith(
+			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+		);
 		assert.deepEqual([...view1.root], ["A", "C"]);
 		const tree2 = await provider.createTree();
-		const view2 = tree2.viewWith({ schema: StringArray, enableSchemaValidation });
+		const view2 = tree2.viewWith(
+			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+		);
 		// Check that the joining tree was initialized with data from the attach summary
 		assert.deepEqual([...view2.root], ["A", "C"]);
 
@@ -732,9 +789,13 @@ describe("SharedTree", () => {
 	// TODO: above mentioned task is done, but this still fails. Fix it.
 	it.skip("can tolerate incomplete transactions when attaching", async () => {
 		const onCreate = (tree: SharedTree) => {
-			const view = tree.viewWith({ schema: StringArray, enableSchemaValidation });
+			const view = tree.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
 			view.initialize([]);
-			const viewUpgrade = tree.viewWith({ schema: JsonArray, enableSchemaValidation });
+			const viewUpgrade = tree.viewWith(
+				new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation }),
+			);
 			viewUpgrade.upgradeSchema();
 			tree.checkout.transaction.start();
 			viewUpgrade.root.insertAtStart("A");
@@ -748,11 +809,15 @@ describe("SharedTree", () => {
 			new SharedTreeTestFactory(onCreate),
 		);
 		const tree1 = provider.trees[0];
-		const view1 = tree1.viewWith({ schema: StringArray, enableSchemaValidation });
+		const view1 = tree1.viewWith(
+			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+		);
 		view1.initialize([]);
 		assert.deepEqual([...view1.root], ["A", "C"]);
 		const tree2 = await provider.createTree();
-		const view2 = tree2.viewWith({ schema: StringArray, enableSchemaValidation });
+		const view2 = tree2.viewWith(
+			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+		);
 		tree1.checkout.transaction.commit();
 		// Check that the joining tree was initialized with data from the attach summary
 		assert.deepEqual(tree2, []);
@@ -770,16 +835,18 @@ describe("SharedTree", () => {
 
 	it("has bounded memory growth in EditManager", () => {
 		const provider = new TestTreeProviderLite(2);
-		const viewInit = provider.trees[0].viewWith({
-			schema: StringArray,
-			enableSchemaValidation,
-		});
+		const viewInit = provider.trees[0].viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
 		viewInit.initialize([]);
 		viewInit.dispose();
 		provider.processMessages();
 
 		const [view1, view2] = provider.trees.map((t) =>
-			t.viewWith({ schema: StringArray, enableSchemaValidation }),
+			t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
 		);
 
 		// Make some arbitrary number of edits
@@ -823,7 +890,9 @@ describe("SharedTree", () => {
 
 	it("can process changes while detached", async () => {
 		const onCreate = (t: SharedTree) => {
-			const viewInit = t.viewWith({ schema: StringArray, enableSchemaValidation });
+			const viewInit = t.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
 			viewInit.initialize([]);
 			viewInit.root.insertAtStart("B");
 			viewInit.root.insertAtStart("A");
@@ -835,10 +904,12 @@ describe("SharedTree", () => {
 			undefined,
 			new SharedTreeTestFactory(onCreate),
 		);
-		const view = provider.trees[0].viewWith({
-			schema: StringArray,
-			enableSchemaValidation,
-		});
+		const view = provider.trees[0].viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
 		assert.deepEqual([...view.root], ["A", "B"]);
 	});
 
@@ -847,14 +918,18 @@ describe("SharedTree", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0];
-			const view1 = tree1.viewWith({ schema: StringArray, enableSchemaValidation });
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
 			view1.initialize([]);
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
 				tree1.checkout.events,
 			);
 			provider.processMessages();
 			const tree2 = provider.trees[1];
-			const view2 = tree2.viewWith({ schema: StringArray, enableSchemaValidation });
+			const view2 = tree2.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
 			provider.processMessages();
 
 			// Insert node
@@ -886,16 +961,20 @@ describe("SharedTree", () => {
 			const value3 = "C";
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0];
-			const view1 = tree1.viewWith({ schema: StringArray, enableSchemaValidation });
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
 			view1.initialize([]);
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
 				tree1.checkout.events,
 			);
 			provider.processMessages();
-			const view2 = provider.trees[1].viewWith({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
+			const view2 = provider.trees[1].viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
 			provider.processMessages();
 
 			// Insert node
@@ -941,7 +1020,9 @@ describe("SharedTree", () => {
 		it("rebased edits", () => {
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0];
-			const view1 = tree1.viewWith({ schema: StringArray, enableSchemaValidation });
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
 			view1.initialize(["A", "B", "C", "D"]);
 
 			const {
@@ -952,7 +1033,9 @@ describe("SharedTree", () => {
 
 			provider.processMessages();
 			const tree2 = provider.trees[1];
-			const view2 = tree2.viewWith({ schema: StringArray, enableSchemaValidation });
+			const view2 = tree2.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
 			const {
 				undoStack: undoStack2,
 				redoStack: redoStack2,
@@ -961,7 +1044,10 @@ describe("SharedTree", () => {
 
 			const initialState = {
 				schema: toFlexSchema(StringArray),
-				initialTree: ["A", "B", "C", "D"],
+				initialTree: typedJsonCursor({
+					[typedJsonCursor.type]: StringArray.identifier,
+					[EmptyKey]: ["A", "B", "C", "D"],
+				}),
 			};
 
 			// Validate insertion
@@ -1016,7 +1102,9 @@ describe("SharedTree", () => {
 		it("refresher for detached trees out of collab window", () => {
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0];
-			const view1 = tree1.viewWith({ schema: StringArray, enableSchemaValidation });
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
 			view1.initialize(["A", "B", "C", "D"]);
 
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
@@ -1025,18 +1113,26 @@ describe("SharedTree", () => {
 
 			provider.processMessages();
 			const tree2 = provider.trees[1];
-			const view2 = tree2.viewWith({ schema: StringArray, enableSchemaValidation });
+			const view2 = tree2.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
 
 			const root1 = view1.root;
 			const root2 = view2.root;
 
-			// remove in first tree
+			// get an anchor to the node we're removing
+			const anchorAOnTree2 = TestAnchor.fromValue(tree2.checkout.forest, "A");
+
+			// remove in first treex
 			root1.removeAt(0);
 
 			provider.processMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
 			assert.deepEqual([...root1], ["B", "C", "D"]);
 			assert.deepEqual([...root2], ["B", "C", "D"]);
+
+			// check the detached field on the peer
+			assert.equal(anchorAOnTree2.treeStatus, TreeStatus.Removed);
 
 			// send edits to move the collab window up
 			root2.insertAt(3, "y");
@@ -1053,6 +1149,9 @@ describe("SharedTree", () => {
 
 			// ensure the remove is out of the collab window
 			assert(removeSequenceNumber < provider.minimumSequenceNumber);
+			// check that the repair data on the peer is destroyed
+			assert.equal(anchorAOnTree2.treeStatus, TreeStatus.Deleted);
+
 			undoStack[0]?.revert();
 
 			provider.processMessages();
@@ -1071,13 +1170,16 @@ describe("SharedTree", () => {
 
 		describe("can concurrently restore and edit removed tree", () => {
 			const sf = new SchemaFactory(undefined);
-			const schema = sf.array(sf.array(sf.string));
+			const innerSchema = sf.array(sf.string);
+			const schema = sf.array(innerSchema);
 
 			for (const scenario of ["restore then change", "change then restore"]) {
 				it(`with the ${scenario} sequenced`, () => {
 					const provider = new TestTreeProviderLite(2);
 					const tree1 = provider.trees[0];
-					const view1 = tree1.viewWith({ schema, enableSchemaValidation });
+					const view1 = tree1.viewWith(
+						new TreeViewConfiguration({ schema, enableSchemaValidation }),
+					);
 					view1.initialize([["a"]]);
 
 					const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
@@ -1088,7 +1190,9 @@ describe("SharedTree", () => {
 					provider.processMessages();
 
 					const tree2 = provider.trees[1];
-					const view2 = tree2.viewWith({ schema, enableSchemaValidation });
+					const view2 = tree2.viewWith(
+						new TreeViewConfiguration({ schema, enableSchemaValidation }),
+					);
 					const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
 						createTestUndoRedoStacks(tree2.checkout.events);
 
@@ -1097,7 +1201,12 @@ describe("SharedTree", () => {
 					// Validate insertion
 					validateTreeContent(tree2.checkout, {
 						schema: toFlexSchema(schema),
-						initialTree: [["a"]],
+						initialTree: typedJsonCursor({
+							[typedJsonCursor.type]: schema.identifier,
+							[EmptyKey]: [
+								{ [typedJsonCursor.type]: innerSchema.identifier, [EmptyKey]: "a" },
+							],
+						}),
 					});
 
 					// edit subtree
@@ -1174,7 +1283,9 @@ describe("SharedTree", () => {
 			}
 
 			function peerFromSharedTree(tree: SharedTreeWithConnectionStateSetter): Peer {
-				const view = tree.viewWith({ schema, enableSchemaValidation });
+				const view = tree.viewWith(
+					new TreeViewConfiguration({ schema, enableSchemaValidation }),
+				);
 				if (view.compatibility.canInitialize) {
 					view.initialize([["a"]]);
 				}
@@ -1319,7 +1430,7 @@ describe("SharedTree", () => {
 				// edit the removed tree on the fork
 				const branchView = new SchematizingSimpleTreeView(
 					branch,
-					{ schema, enableSchemaValidation },
+					new TreeViewConfiguration({ schema, enableSchemaValidation }),
 					new MockNodeKeyManager(),
 				);
 				const outerList = branchView.root;
@@ -1350,14 +1461,18 @@ describe("SharedTree", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0];
-			const view1 = tree1.viewWith({ schema: StringArray, enableSchemaValidation });
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
 			view1.initialize([]);
 			provider.processMessages();
 			const tree2 = provider.trees[1];
-			const view2 = tree2.viewWith({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
+			const view2 = tree2.viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
 
 			const {
 				undoStack: undoStack1,
@@ -1407,11 +1522,15 @@ describe("SharedTree", () => {
 			const provider = new TestTreeProviderLite(2);
 			// Initialize the tree
 			const tree1 = provider.trees[0];
-			const view1 = tree1.viewWith({ schema: StringArray, enableSchemaValidation });
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
 			view1.initialize(["A", "B", "C", "D"]);
 			provider.processMessages();
 			const tree2 = provider.trees[1];
-			const view2 = tree2.viewWith({ schema: StringArray, enableSchemaValidation });
+			const view2 = tree2.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
 
 			// Validate initialization
 			validateViewConsistency(tree1.checkout, tree2.checkout);
@@ -1451,7 +1570,9 @@ describe("SharedTree", () => {
 		it("rebases stashed ops with prior state present", async () => {
 			const provider = await TestTreeProvider.create(2);
 			const tree1 = provider.trees[0];
-			const view1 = tree1.viewWith({ schema: StringArray, enableSchemaValidation });
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
 			view1.initialize(["a"]);
 			await provider.ensureSynchronized();
 
@@ -1464,10 +1585,12 @@ describe("SharedTree", () => {
 			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
 			provider.opProcessingController.resumeProcessing();
 
-			const otherLoadedView = provider.trees[1].viewWith({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
+			const otherLoadedView = provider.trees[1].viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
 			otherLoadedView.root.insertAtStart("d");
 			await provider.ensureSynchronized();
 
@@ -1475,7 +1598,9 @@ describe("SharedTree", () => {
 			const loadedContainer = await loader.resolve({ url }, pendingOps);
 			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
 			const tree = await dataStore.getSharedObject<SharedTree>("TestSharedTree");
-			const view = tree.viewWith({ schema: StringArray, enableSchemaValidation });
+			const view = tree.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
 			await waitForContainerConnection(loadedContainer, true);
 			await provider.ensureSynchronized();
 			assert.deepEqual([...view.root], ["d", "a", "b", "c"]);
@@ -1487,7 +1612,7 @@ describe("SharedTree", () => {
 		it("Anchors can be created and dereferenced", () => {
 			const provider = new TestTreeProviderLite();
 			provider.trees[0]
-				.viewWith({ schema: NumberArray, enableSchemaValidation })
+				.viewWith(new TreeViewConfiguration({ schema: NumberArray, enableSchemaValidation }))
 				.initialize([0, 1, 2]);
 			const checkout = provider.trees[0].checkout;
 			const cursor = checkout.forest.allocateCursor();
@@ -1516,7 +1641,9 @@ describe("SharedTree", () => {
 	it("don't send ops before committing", () => {
 		const provider = new TestTreeProviderLite(2);
 		const tree1 = provider.trees[0];
-		const view1 = tree1.viewWith({ schema: StringArray, enableSchemaValidation });
+		const view1 = tree1.viewWith(
+			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+		);
 		view1.initialize([]);
 		provider.processMessages();
 		const tree2 = provider.trees[1];
@@ -1530,7 +1657,11 @@ describe("SharedTree", () => {
 		provider.processMessages();
 		assert.equal(opsReceived, 1);
 		assert.deepEqual(
-			[...tree2.viewWith({ schema: StringArray, enableSchemaValidation }).root],
+			[
+				...tree2.viewWith(
+					new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+				).root,
+			],
 			["x"],
 		);
 	});
@@ -1538,7 +1669,9 @@ describe("SharedTree", () => {
 	it("send only one op after committing", () => {
 		const provider = new TestTreeProviderLite(2);
 		const tree1 = provider.trees[0];
-		const view1 = tree1.viewWith({ schema: StringArray, enableSchemaValidation });
+		const view1 = tree1.viewWith(
+			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+		);
 		view1.initialize([]);
 		provider.processMessages();
 		const tree2 = provider.trees[1];
@@ -1551,7 +1684,11 @@ describe("SharedTree", () => {
 		provider.processMessages();
 		assert.equal(opsReceived, 1);
 		assert.deepEqual(
-			[...tree2.viewWith({ schema: StringArray, enableSchemaValidation }).root],
+			[
+				...tree2.viewWith(
+					new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+				).root,
+			],
 			["A", "B"],
 		);
 	});
@@ -1559,13 +1696,17 @@ describe("SharedTree", () => {
 	it("do not send an op after committing if nested", () => {
 		const provider = new TestTreeProviderLite(2);
 		const tree1 = provider.trees[0];
-		const view1 = tree1.viewWith({ schema: StringArray, enableSchemaValidation });
+		const view1 = tree1.viewWith(
+			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+		);
 		view1.initialize([]);
 		provider.processMessages();
 		const tree2 = provider.trees[1];
 		let opsReceived = 0;
 		tree2.on("op", () => (opsReceived += 1));
-		const view2 = tree2.viewWith({ schema: StringArray, enableSchemaValidation });
+		const view2 = tree2.viewWith(
+			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+		);
 		Tree.runTransaction(view1, () => {
 			Tree.runTransaction(view1, () => {
 				view1.root.insertAtStart("A");
@@ -1582,10 +1723,12 @@ describe("SharedTree", () => {
 
 	it("process changes while detached", async () => {
 		const onCreate = (parentTree: SharedTree) => {
-			const parentView = parentTree.viewWith({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
+			const parentView = parentTree.viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
 			parentView.initialize(["A"]);
 			Tree.runTransaction(parentView, () => {
 				parentView.root.insertAtStart("B");
@@ -1593,10 +1736,10 @@ describe("SharedTree", () => {
 			const childCheckout = parentTree.checkout.fork();
 			const childView = new SchematizingSimpleTreeView(
 				childCheckout,
-				{
+				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
-				},
+				}),
 				new MockNodeKeyManager(),
 			);
 			Tree.runTransaction(childView, () => {
@@ -1614,7 +1757,11 @@ describe("SharedTree", () => {
 		);
 		const [tree] = provider.trees;
 		assert.deepEqual(
-			[...tree.viewWith({ schema: StringArray, enableSchemaValidation }).root],
+			[
+				...tree.viewWith(
+					new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+				).root,
+			],
 			["C", "B", "A"],
 		);
 	});
@@ -1644,17 +1791,21 @@ describe("SharedTree", () => {
 			const value1 = "42";
 			const value2 = "42";
 
-			const view1 = tree1.viewWith({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
 			view1.initialize([value1]);
 
 			tree2
-				.viewWith({
-					schema: StringArray,
-					enableSchemaValidation,
-				})
+				.viewWith(
+					new TreeViewConfiguration({
+						schema: StringArray,
+						enableSchemaValidation,
+					}),
+				)
 				.initialize([value2]);
 
 			await provider.ensureSynchronized();
@@ -1666,7 +1817,9 @@ describe("SharedTree", () => {
 		it("do not break encoding for resubmitted data changes", () => {
 			const provider = new TestTreeProviderLite(1);
 			const tree1 = provider.trees[0];
-			const view1 = tree1.viewWith({ schema: StringArray, enableSchemaValidation });
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
 			view1.initialize(["42"]);
 
 			provider.processMessages();
@@ -1674,7 +1827,9 @@ describe("SharedTree", () => {
 			tree1.setConnected(false);
 
 			view1.root.insertAtEnd("43");
-			const view1Json = tree1.viewWith({ schema: JsonArray, enableSchemaValidation });
+			const view1Json = tree1.viewWith(
+				new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation }),
+			);
 			view1Json.upgradeSchema();
 			// TODO:#8915: This should be able to insert the _number_ 44, not the string, but currently cannot - see bug #8915
 			view1Json.root.insertAtEnd("44");
@@ -1694,11 +1849,15 @@ describe("SharedTree", () => {
 			const tree = provider.trees[0];
 			const { undoStack } = createTestUndoRedoStacks(tree.checkout.events);
 
-			const view = tree.viewWith({ schema: StringArray, enableSchemaValidation });
+			const view = tree.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
 			view.initialize([]);
 			expectSchemaEqual(tree.storedSchema, intoStoredSchema(toFlexSchema(StringArray)));
 
-			tree.viewWith({ schema: JsonArray, enableSchemaValidation }).upgradeSchema();
+			tree
+				.viewWith(new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation }))
+				.upgradeSchema();
 			expectSchemaEqual(tree.storedSchema, intoStoredSchema(toFlexSchema(JsonArray)));
 
 			const revertible = undoStack.pop();
@@ -1719,10 +1878,12 @@ describe("SharedTree", () => {
 			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
 			const pausedTree = provider.trees[0];
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
-			const pausedView = pausedTree.viewWith({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
+			const pausedView = pausedTree.viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
 			pausedView.initialize([]);
 			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
 			provider.opProcessingController.resumeProcessing();
@@ -1757,7 +1918,7 @@ describe("SharedTree", () => {
 			assert.equal(trees[0].checkout.forest instanceof ObjectForest, true);
 		});
 
-		it("ForestType.Reference uses ObjectForest", () => {
+		it("ForestType.Reference uses ObjectForest with additionalAsserts flag set to false", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				new SharedTreeFactory({
@@ -1765,7 +1926,9 @@ describe("SharedTree", () => {
 					forest: ForestType.Reference,
 				}),
 			);
-			assert.equal(trees[0].checkout.forest instanceof ObjectForest, true);
+			const forest = trees[0].checkout.forest;
+			assert(forest instanceof ObjectForest);
+			assert.equal(forest.additionalAsserts, false);
 		});
 
 		it("ForestType.Optimized uses ChunkedForest", () => {
@@ -1777,6 +1940,19 @@ describe("SharedTree", () => {
 				}),
 			);
 			assert.equal(trees[0].checkout.forest instanceof ChunkedForest, true);
+		});
+
+		it("ForestType.Expensive uses ObjectForest with additionalAsserts flag set to true", () => {
+			const { trees } = new TestTreeProviderLite(
+				1,
+				new SharedTreeFactory({
+					jsonValidator: typeboxValidator,
+					forest: ForestType.Expensive,
+				}),
+			);
+			const forest = trees[0].checkout.forest;
+			assert(forest instanceof ObjectForest);
+			assert.equal(forest.additionalAsserts, true);
 		});
 	});
 	describe("Schema based op encoding", () => {
@@ -1799,22 +1975,30 @@ describe("SharedTree", () => {
 				foo: sf.array("array", [sf.boolean, sf.number, sf.string]),
 			});
 
-			const view = tree.viewWith({ schema, enableSchemaValidation });
+			const view = tree.viewWith(
+				new TreeViewConfiguration({ schema, enableSchemaValidation }),
+			);
 			Tree.runTransaction(view, () => {
 				view.initialize({ foo: [] });
 				view.root.foo.insertAtStart("a");
 				view.root.foo.insertAtStart("b");
 
 				// Update schema which now allows all primitives under field "foo".
-				const view2 = tree.viewWith({ schema: schema2, enableSchemaValidation });
+				const view2 = tree.viewWith(
+					new TreeViewConfiguration({ schema: schema2, enableSchemaValidation }),
+				);
 				view2.upgradeSchema();
 				view2.root.foo.insertAtStart(1);
 			});
 			provider.processMessages();
 
-			assert.deepEqual(tree.viewWith({ schema: schema2, enableSchemaValidation }).root, {
-				foo: [1, "b", "a"],
-			});
+			assert.deepEqual(
+				tree.viewWith(new TreeViewConfiguration({ schema: schema2, enableSchemaValidation }))
+					.root,
+				{
+					foo: [1, "b", "a"],
+				},
+			);
 		});
 
 		it("properly encodes ops using specified compression strategy", async () => {
@@ -1825,7 +2009,7 @@ describe("SharedTree", () => {
 			});
 			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand, factory);
 			provider.trees[0]
-				.viewWith({ schema: StringArray, enableSchemaValidation })
+				.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }))
 				.initialize(["A", "B", "C"]);
 
 			await provider.ensureSynchronized();
@@ -1869,10 +2053,12 @@ describe("SharedTree", () => {
 			const provider2 = await TestTreeProvider.create(1, SummarizeType.onDemand, factory2);
 
 			provider2.trees[0]
-				.viewWith({
-					schema: StringArray,
-					enableSchemaValidation,
-				})
+				.viewWith(
+					new TreeViewConfiguration({
+						schema: StringArray,
+						enableSchemaValidation,
+					}),
+				)
 				.initialize(["A", "B", "C"]);
 
 			await provider2.ensureSynchronized();

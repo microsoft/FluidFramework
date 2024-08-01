@@ -5,10 +5,10 @@
 
 import { strict as assert } from "assert";
 
+import { Side } from "@fluidframework/merge-tree/internal";
 import { useStrictPartialLengthChecks } from "@fluidframework/merge-tree/internal/test";
 import { MockContainerRuntimeFactoryForReconnection } from "@fluidframework/test-runtime-utils/internal";
 
-import { Side } from "../intervalCollection.js";
 import { IntervalStickiness } from "../intervals/index.js";
 
 import { Client, assertConsistent, assertSequenceIntervals } from "./intervalTestUtils.js";

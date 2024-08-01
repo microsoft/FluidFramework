@@ -187,6 +187,14 @@ export class CollaborationWindow {
 // @alpha
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]): void;
 
+// @alpha
+export function endpointPosAndSide(start: SequencePlace | undefined, end: SequencePlace | undefined): {
+    startSide: Side | undefined;
+    endSide: Side | undefined;
+    startPos: number | "start" | "end" | undefined;
+    endPos: number | "start" | "end" | undefined;
+};
+
 // @alpha (undocumented)
 export interface IAttributionCollection<T> {
     // (undocumented)
@@ -369,6 +377,7 @@ export interface IMergeTreeOptions {
     // (undocumented)
     catchUpBlobName?: string;
     mergeTreeEnableObliterate?: boolean;
+    mergeTreeEnableObliterateReconnect?: boolean;
     mergeTreeReferencesCanSlideToEndpoint?: boolean;
     // (undocumented)
     mergeTreeSnapshotChunkSize?: number;
@@ -412,6 +421,14 @@ export interface IMoveInfo {
 }
 
 // @alpha
+export interface InteriorSequencePlace {
+    // (undocumented)
+    pos: number;
+    // (undocumented)
+    side: Side;
+}
+
+// @alpha
 export interface IRelativePosition {
     before?: boolean;
     id?: string;
@@ -439,6 +456,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
     // (undocumented)
     clone(): ISegment;
     readonly endpointType?: "start" | "end";
+    endSide?: Side.Before | Side.After;
     localRefs?: LocalReferenceCollection;
     localRemovedSeq?: number;
     localSeq?: number;
@@ -449,6 +467,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
     seq?: number;
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
+    startSide?: Side.Before | Side.After;
     // (undocumented)
     toJSONObject(): any;
     // (undocumented)
@@ -714,6 +733,9 @@ export interface SequenceOffsets {
     seqs: (number | AttributionKey | null)[];
 }
 
+// @alpha
+export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
+
 // @alpha (undocumented)
 export interface SerializedAttributionCollection extends SequenceOffsets {
     // (undocumented)
@@ -722,6 +744,14 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
     };
     // (undocumented)
     length: number;
+}
+
+// @alpha
+export enum Side {
+    // (undocumented)
+    After = 1,
+    // (undocumented)
+    Before = 0
 }
 
 // @alpha
