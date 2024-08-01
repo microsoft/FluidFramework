@@ -16,7 +16,7 @@ on:
 
 
 permissions:
-  contents: write
+  issues: write
 
 jobs:
   create-issue:
