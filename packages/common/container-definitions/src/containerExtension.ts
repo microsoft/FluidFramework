@@ -9,15 +9,16 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 
 /**
- * While connected the id of a client within a session.
+ * While connected, the id of a client within a session.
  *
  * @internal
  */
 export type ClientConnectionId = string;
 
 /**
- * Common interface between incoming and outgoing signals.
+ * Common interface between incoming and outgoing extension signals.
  *
+ * @sealed
  * @internal
  */
 export interface IExtensionMessage<TType extends string = string, TContent = unknown> {
@@ -46,6 +47,8 @@ export interface IExtensionMessage<TType extends string = string, TContent = unk
 }
 
 /**
+ * Defines requirements for a component to register with container as an extension.
+ *
  * @internal
  */
 export interface IContainerExtension<TContext extends unknown[]> {
@@ -67,11 +70,28 @@ export interface IContainerExtension<TContext extends unknown[]> {
 }
 
 /**
+ * Defines the runtime interface an extension may access.
+ * In most cases this is a subset of {@link @fluidframework/container-runtime-definitions#IContainerRuntime}.
+ *
  * @sealed
  * @internal
  */
 export interface IExtensionRuntime {
+	/**
+	 * {@inheritdoc @fluidframework/container-runtime-definitions#IContainerRuntime.clientId}
+	 */
 	get clientId(): ClientConnectionId | undefined;
+
+	/**
+	 * Submits a signal to be sent to other clients.
+	 * @param address - Custom address for the signal.
+	 * @param type - Custom type of the signal.
+	 * @param content - Custom content of the signal. Should be a JSON serializable object or primitive via {@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify|JSON.stringify}.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
+	 *
+	 * Upon reciept of signal, {@link IContainerExtension.processSignal} will called with the same
+	 * address, type, and content (less any non-{@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify|JSON.stringify}-able data).
+	 */
 	submitSignal<T>(
 		address: string,
 		type: string,
@@ -81,6 +101,22 @@ export interface IExtensionRuntime {
 }
 
 /**
+ * Factory method to create an extension instance.
+ *
+ * Any such method provided to {@link ContainerExtensionStore.acquireExtension}
+ * must use the same value for a given {@link ContainerExtensionId} so that an
+ * `instanceof` check may be performed at runtime.
+ *
+ * @typeParam T - Type of extension to create
+ * @typeParam TContext - Array of optional custom context
+ *
+ * @param runtime - Runtime for extension to work against
+ * @param context - Custom context for extension.
+ * @returns Record providing:
+ * `extension` instance (type `T`) that is provided to caller of
+ * {@link ContainerExtensionStore.acquireExtension} and
+ * `interface` store/runtime uses to interact with extension.
+ *
  * @internal
  */
 export type ContainerExtensionFactory<T, TContext extends unknown[]> = new (
