@@ -227,7 +227,7 @@ describe("Pending State Manager", () => {
 			// A groupedBatch is supposed to have nested messages inside its contents,
 			// but an empty batch has no nested messages. When processing en empty grouped batch,
 			// the psm will expect the next pending message to be an "empty" message as portrayed above.
-			process([], 1 /* batchStartCsn */, 3 /* sequenceNumber */);
+			process([], 1 /* batchStartCsn */, 3 /* emptyBatchSequenceNumber */);
 		});
 
 		describe("processing out of sync messages will call close", () => {

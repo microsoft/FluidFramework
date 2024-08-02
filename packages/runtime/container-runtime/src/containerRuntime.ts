@@ -2667,9 +2667,7 @@ export class ContainerRuntime
 				inboundBatch,
 				local,
 			);
-			if (messagesWithPendingState.length === 0) {
-				this.ensureNoDataModelChanges(() => this.processEmptyBatch(inboundBatch, local));
-			} else {
+			if (messagesWithPendingState.length > 0) {
 				messagesWithPendingState.forEach(({ message, localOpMetadata }) => {
 					const msg: MessageWithContext = {
 						message,
@@ -2680,6 +2678,8 @@ export class ContainerRuntime
 					};
 					this.ensureNoDataModelChanges(() => this.processRuntimeMessage(msg));
 				});
+			} else {
+				this.ensureNoDataModelChanges(() => this.processEmptyBatch(inboundBatch, local));
 			}
 		} else {
 			// Check if message.type is one of values in ContainerMessageType
