@@ -506,7 +506,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 export const createRootSummarizerNodeWithGC = (
 	logger: ITelemetryBaseLogger,
 	summarizeInternalFn: SummarizeInternalFn,
-
 	changeSequenceNumber: number,
 	referenceSequenceNumber: number | undefined,
 	config: ISummarizerNodeConfigWithGC = {},

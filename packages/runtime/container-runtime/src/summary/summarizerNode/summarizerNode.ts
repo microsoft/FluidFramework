@@ -33,7 +33,6 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	EscapedPath,
 	ICreateChildDetails,
 	IRefreshSummaryResult,
 	IStartSummaryResult,
@@ -77,7 +76,12 @@ export class SummarizerNode implements IRootSummarizerNode {
 	/** Key value pair of summaries submitted by this client which are not yet acked. Key is the proposalHandle and value is the summary op's referece sequence number */
 	protected readonly pendingSummaries = new Map<string, PendingSummaryInfo>();
 	protected wipReferenceSequenceNumber: number | undefined;
-	private wipLocalPaths: { localPath: EscapedPath; additionalPath?: EscapedPath } | undefined;
+	/**
+	 * True if the current node was summarized during the current summary process
+	 * This flag is used to identify scenarios where a node may not have been summarized during the summary
+	 * because of application code creating data structures for data stores which were already summarized.
+	*/
+	private wipSummary: boolean = false;
 	private wipSkipRecursion = false;
 
 	protected readonly logger: ITelemetryLoggerExt;
@@ -174,6 +178,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 		trackState: boolean = true,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
+		// Set to wipSummary true to represent that current node was included in the summary process.
+		this.wipSummary = true;
+
 		// If trackState is false, call summarize internal directly and don't track any state.
 		if (!trackState) {
 			return this.summarizeInternalFn(fullTree, trackState, telemetryContext);
@@ -219,12 +226,12 @@ export class SummarizerNode implements IRootSummarizerNode {
 			telemetryContext,
 			incrementalSummaryContext,
 		);
-		this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
-		if (result.pathPartsForChildren !== undefined) {
-			this.wipLocalPaths.additionalPath = EscapedPath.createAndConcat(
-				result.pathPartsForChildren,
-			);
-		}
+		// this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
+		// if (result.pathPartsForChildren !== undefined) {
+		// 	this.wipLocalPaths.additionalPath = EscapedPath.createAndConcat(
+		// 		result.pathPartsForChildren,
+		// 	);
+		//}
 		return { summary: result.summary, stats: result.stats };
 	}
 
@@ -285,7 +292,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		// If the parent node skipped recursion, it did not call summarize on this node. So, summarize was not missed
 		// but was intentionally not called.
 		// Otherwise, summarize should have been called on this node and wipLocalPaths must be set.
-		if (parentSkipRecursion || this.wipLocalPaths !== undefined) {
+		if (parentSkipRecursion || this.wipSummary) {
 			return false;
 		}
 
@@ -358,7 +365,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 	public clearSummary() {
 		this.wipReferenceSequenceNumber = undefined;
-		this.wipLocalPaths = undefined;
+		this.wipSummary = false;
 		this.wipSkipRecursion = false;
 		this.wipSummaryLogger = undefined;
 		for (const child of this.children.values()) {
