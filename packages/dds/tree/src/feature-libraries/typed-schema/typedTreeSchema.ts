@@ -75,7 +75,7 @@ export abstract class TreeNodeSchemaBase<
 	const out Name extends string = string,
 	const out Specification = unknown,
 > {
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck!: MakeNominal;
 	protected constructor(
 		public readonly builder: Named<string>,
 		public readonly name: TreeNodeSchemaIdentifier<Name>,
@@ -375,7 +375,7 @@ export class FlexFieldSchema<
 		return new FlexFieldSchema(kind, allowedTypes);
 	}
 
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck!: MakeNominal;
 
 	/**
 	 * This is computed lazily since types can be recursive, which makes evaluating this have to happen after all the schema are defined.

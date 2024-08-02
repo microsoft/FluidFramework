@@ -2135,14 +2135,14 @@ export class Container
 		lastProcessedSequenceNumber?: number,
 	): Promise<void> {
 		return this._deltaManager.attachOpHandler(
-			attributes.minimumSequenceNumber,
-			attributes.sequenceNumber,
+			attributes.minimumSequenceNumber /* minimumSequenceNumber */,
+			attributes.sequenceNumber /* snapshotSequenceNumber */,
 			{
 				process: (message) => this.processRemoteMessage(message),
 				processSignal: (message) => {
 					this.processSignal(message);
 				},
-			},
+			} /* handler to process incoming delta messages */,
 			prefetchType,
 			lastProcessedSequenceNumber,
 		);
@@ -2335,6 +2335,10 @@ export class Container
 		);
 	}
 
+	/**
+	 * Processes incoming delta messages
+	 * @param message - delta message received from the server
+	 */
 	private processRemoteMessage(message: ISequencedDocumentMessage): void {
 		const local = this.clientId === message.clientId;
 
