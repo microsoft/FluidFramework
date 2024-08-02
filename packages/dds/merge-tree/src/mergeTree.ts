@@ -1959,7 +1959,7 @@ export class MergeTree {
 				endSide !== undefined &&
 				startPos !== "end" &&
 				endPos !== "start",
-			"start and end cannot be undefined because they were not passed in as undefined",
+			0x9e2 /* start and end cannot be undefined because they were not passed in as undefined */,
 		);
 
 		this.ensureIntervalBoundary(startPos, refSeq, clientId);
@@ -2724,7 +2724,7 @@ export class MergeTree {
 				: endPos;
 		assert(
 			startPos !== "end" && endPos !== "start",
-			"start cannot be 'end' and end cannot be 'start'",
+			0x9e3 /* start cannot be 'end' and end cannot be 'start' */,
 		);
 		depthFirstNodeWalk(
 			this.root,

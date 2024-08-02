@@ -131,6 +131,7 @@ export {
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
 	getAllowedContentIncompatibilities,
+	isRepoSuperset,
 } from "./modular-schema/index.js";
 
 export {

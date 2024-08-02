@@ -293,7 +293,7 @@ function trackFieldDiscrepancies(
 ): FieldIncompatibility[] {
 	const differences: FieldIncompatibility[] = [];
 
-	// Only track the intersection of the two sets.
+	// Only track the symmetric differences of two sets.
 	const findSetDiscrepancies = (
 		a: TreeTypeSet,
 		b: TreeTypeSet,
@@ -388,6 +388,122 @@ function trackObjectNodeDiscrepancies(
 	}
 
 	return differences;
+}
+
+/**
+ * @remarks
+ *
+ * This function uses incompatibilities to determine if changes to a document schema are backward-compatible, i.e., it determines
+ * whether the `view` schema allows a superset of the documents that the `stored` schema allows.
+ * According to the policy of schema evolution, `isRepoSuperset` supports three types of changes:
+ * 1. Adding an optional field to an object node.
+ * 2. Expanding the set of allowed types for a field.
+ * 3. Relaxing a field kind to a more general field kind.
+ *
+ * Notes: We expect isRepoSuperset to return consistent results with allowsRepoSuperset. However, currently there are some scenarios
+ * where the inconsistency will occur:
+ *
+ * - Different Node Kinds: If a and b have different node kinds (e.g., a is an objectNodeSchema and b is a mapNodeSchema),
+ * `isRepoSuperset` will determine that a can never be the superset of b. In contrast, `allowsRepoSuperset` will continue
+ * validating internal fields.
+ */
+export function isRepoSuperset(view: TreeStoredSchema, stored: TreeStoredSchema): boolean {
+	const incompatibilities = getAllowedContentIncompatibilities(view, stored);
+
+	for (const incompatibility of incompatibilities) {
+		switch (incompatibility.mismatch) {
+			case "nodeKind": {
+				return false;
+			}
+			case "valueSchema":
+			case "allowedTypes":
+			case "fieldKind": {
+				if (!validateFieldIncompatibility(incompatibility)) {
+					return false;
+				}
+				break;
+			}
+			case "fields": {
+				if (
+					incompatibility.differences.some(
+						(difference) => !validateFieldIncompatibility(difference),
+					)
+				) {
+					return false;
+				}
+				break;
+			}
+			// No default
+		}
+	}
+	return true;
+}
+
+function validateFieldIncompatibility(incompatibility: FieldIncompatibility): boolean {
+	switch (incompatibility.mismatch) {
+		case "allowedTypes": {
+			// Since we only track the symmetric difference between the allowed types in the view and
+			// stored schemas, it's sufficient to check if any extra allowed types still exist in the
+			// stored schema.
+			return incompatibility.stored.length === 0;
+		}
+		case "fieldKind": {
+			if (incompatibility.stored === undefined) {
+				// Add an optional field
+				if (incompatibility.view === "Optional") {
+					return true;
+				}
+			} else {
+				// Relax the field to make it more general
+				return compareFieldKind(incompatibility.stored, incompatibility.view);
+			}
+
+			break;
+		}
+		case "valueSchema": {
+			return false;
+		}
+		// No default
+	}
+	return false;
+}
+
+/**
+ * A mapping that defines the order of field kinds for comparison purposes.
+ * The numeric values indicate the hierarchy or "strength" of each field kind, where lower numbers are more restrictive.
+ * This is used to determine if one field kind can be considered a superset of another.
+ *
+ * - "Forbidden": The most restrictive, represented by 1. Indicates a forbidden field.
+ * - "Value": Represented by 2. Indicates a required field with a specific value.
+ * - "Optional": Represented by 3. Indicates an optional field.
+ *
+ * Note:
+ * - "Sequence": (Currently commented out) was intended to represent a sequence field kind with a value of 4.
+ * Relaxing non-sequence fields to sequences is not currently supported but may be considered in the future.
+ *
+ * TODO: We may need more coverage in realm to prove the correctness of the Forbidden -\> Value transaction
+ */
+const fieldKindOrder: { [key: string]: number } = {
+	"Forbidden": 1,
+	"Value": 2,
+	"Optional": 3,
+	// "Sequence": 4,  // Relaxing non-sequence fields to sequences is not currently supported, though we could consider doing so in the future.
+};
+
+function compareFieldKind(
+	aKind: FieldKindIdentifier | undefined,
+	bKind: FieldKindIdentifier | undefined,
+): boolean {
+	if (aKind === undefined || bKind === undefined) {
+		return false;
+	}
+
+	if (!(aKind in fieldKindOrder) || !(bKind in fieldKindOrder)) {
+		return false;
+	}
+
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	return fieldKindOrder[aKind]! <= fieldKindOrder[bKind]!;
 }
 
 function throwUnsupportedNodeType(type: string): never {

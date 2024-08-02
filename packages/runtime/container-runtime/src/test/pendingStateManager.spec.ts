@@ -170,13 +170,16 @@ describe("Pending State Manager", () => {
 			batchStartCsn: number,
 			emptyBatchSequenceNumber?: number,
 		) =>
-			pendingStateManager.processPendingLocalBatch({
-				messages: messages as InboundSequencedContainerRuntimeMessage[],
-				batchStartCsn,
-				emptyBatchSequenceNumber,
-				clientId,
-				batchId: generateBatchId(clientId, batchStartCsn),
-			});
+			pendingStateManager.processInboundBatch(
+				{
+					messages: messages as InboundSequencedContainerRuntimeMessage[],
+					batchStartCsn,
+					emptyBatchSequenceNumber,
+					clientId,
+					batchId: generateBatchId(clientId, batchStartCsn),
+				},
+				true /* local */,
+			);
 
 		it("proper batch is processed correctly", () => {
 			const messages: Partial<ISequencedDocumentMessage>[] = [
@@ -224,32 +227,7 @@ describe("Pending State Manager", () => {
 			// A groupedBatch is supposed to have nested messages inside its contents,
 			// but an empty batch has no nested messages. When processing en empty grouped batch,
 			// the psm will expect the next pending message to be an "empty" message as portrayed above.
-			process([], 1 /* batchStartCsn */, 3 /* sequenceNumber */);
-		});
-
-		it("batch missing end message will call close", () => {
-			const messages: Partial<ISequencedDocumentMessage>[] = [
-				{
-					clientId,
-					type: MessageType.Operation,
-					clientSequenceNumber: 0,
-					referenceSequenceNumber: 0,
-					metadata: { batch: true },
-				},
-				{
-					clientId,
-					type: MessageType.Operation,
-					clientSequenceNumber: 1,
-					referenceSequenceNumber: 0,
-				},
-			];
-
-			submitBatch(messages);
-			process(messages, 0 /* batchStartCsn */);
-			assert(isILoggingError(closeError));
-			assert.strictEqual(closeError.errorType, ContainerErrorTypes.dataProcessingError);
-			assert.strictEqual(closeError.getTelemetryProperties().hasBatchStart, true);
-			assert.strictEqual(closeError.getTelemetryProperties().hasBatchEnd, false);
+			process([], 1 /* batchStartCsn */, 3 /* emptyBatchSequenceNumber */);
 		});
 
 		describe("processing out of sync messages will call close", () => {
@@ -452,14 +430,18 @@ describe("Pending State Manager", () => {
 					],
 					1,
 				);
-				pendingStateManager.processPendingLocalBatch({
-					messages: [
-						futureRuntimeMessage as ISequencedDocumentMessage & UnknownContainerRuntimeMessage,
-					],
-					batchStartCsn: 1 /* batchStartCsn */,
-					batchId: "batchId",
-					clientId: "clientId",
-				});
+				pendingStateManager.processInboundBatch(
+					{
+						messages: [
+							futureRuntimeMessage as ISequencedDocumentMessage &
+								UnknownContainerRuntimeMessage,
+						],
+						batchStartCsn: 1 /* batchStartCsn */,
+						batchId: "batchId",
+						clientId: "clientId",
+					},
+					true /* local */,
+				);
 			});
 		});
 	});

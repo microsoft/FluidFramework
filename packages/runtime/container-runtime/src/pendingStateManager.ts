@@ -340,7 +340,7 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	/**
-	 * Processes an inbound batch of messages.
+	 * Processes an inbound batch of messages - May be local or remote.
 	 *
 	 * @param batch - The inbound batch of messages to process. Could be local or remote.
 	 * @param local - true if we submitted this batch and expect corresponding pending messages
@@ -379,21 +379,21 @@ export class PendingStateManager implements IDisposable {
 	 * Processes the incoming batch from the server that was submitted by this client.
 	 * It verifies that messages are received in the right order and that the batch information is correct.
 	 * @param batch - The inbound batch (originating from this client) to correlate with the pending local state
+	 * @returns The inbound batch's messages with localOpMetadata "zipped" in.
 	 */
-	//* TODO: Switch to private
-	public processPendingLocalBatch(batch: InboundBatch): {
+	private processPendingLocalBatch(batch: InboundBatch): {
 		message: InboundSequencedContainerRuntimeMessage;
 		localOpMetadata: unknown;
 	}[] {
-		this.processBatchBegin(batch);
+		this.onLocalBatchBegin(batch);
 
 		// Empty batch
 		if (batch.messages.length === 0) {
 			assert(
 				batch.emptyBatchSequenceNumber !== undefined,
-				"Expected sequence number for empty batch",
+				0x9fb /* Expected sequence number for empty batch */,
 			);
-			const localOpMetadata = this.processPendingLocalMessage(batch.emptyBatchSequenceNumber);
+			const localOpMetadata = this.processNextPendingMessage(batch.emptyBatchSequenceNumber);
 			assert(
 				asEmptyBatchLocalOpMetadata(localOpMetadata)?.emptyBatch === true,
 				"Expected empty batch marker",
@@ -403,7 +403,7 @@ export class PendingStateManager implements IDisposable {
 		// Note this will correctly return empty array for an empty batch
 		return batch.messages.map((message) => ({
 			message,
-			localOpMetadata: this.processPendingLocalMessage(message.sequenceNumber, message),
+			localOpMetadata: this.processNextPendingMessage(message.sequenceNumber, message),
 		}));
 	}
 
@@ -413,7 +413,7 @@ export class PendingStateManager implements IDisposable {
 	 * @param message - [optional] The entire incoming message, for comparing contents with the pending message for extra validation.
 	 * @returns - The localOpMetadata of the next pending message, to be sent to whoever submitted the original message.
 	 */
-	private processPendingLocalMessage(
+	private processNextPendingMessage(
 		sequenceNumber: number,
 		message?: InboundSequencedContainerRuntimeMessage,
 	): unknown {
@@ -455,7 +455,7 @@ export class PendingStateManager implements IDisposable {
 	/**
 	 * Do some bookkeeping for the new batch
 	 */
-	private processBatchBegin(batch: InboundBatch) {
+	private onLocalBatchBegin(batch: InboundBatch) {
 		// Get the next message from the pending queue. Verify a message exists.
 		const pendingMessage = this.pendingMessages.peekFront();
 		assert(
@@ -463,14 +463,11 @@ export class PendingStateManager implements IDisposable {
 			"No pending message found as we start processing this remote batch",
 		);
 
-		// This could be undefined if this batch became empty on resubmit
+		// Note: This could be undefined if this batch became empty on resubmit.
+		// In this case the next pending message is an empty batch marker.
+		// Empty batches became empty on Resubmit, and submit them and track them in case
+		// a different fork of this container also submitted the same batch (and it may not be empty for that fork).
 		const firstMessage = batch.messages.length > 0 ? batch.messages[0] : undefined;
-		if (firstMessage === undefined) {
-			assert(
-				asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true,
-				"Expected empty batch",
-			);
-		}
 
 		//* For a pending local batch, we don't need the "effective" calculation.
 		//* Just compare the actual batchIds, they should match since we sent this message.
@@ -537,6 +534,12 @@ export class PendingStateManager implements IDisposable {
 
 			// The next message starts a batch (possibly single-message), and we'll need its batchId.
 			const batchId = getEffectiveBatchId(pendingMessage);
+
+			// Resubmit no messages, with the batchId. Will result in another empty batch marker.
+			if (asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true) {
+				this.stateHandler.reSubmitBatch([], batchId);
+				continue;
+			}
 
 			/**
 			 * We must preserve the distinct batches on resubmit.

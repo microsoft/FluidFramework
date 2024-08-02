@@ -47,6 +47,12 @@ export interface Stats {
 }
 
 /**
+ * Custom data type for a benchmark.
+ * @public
+ */
+export type CustomData = Record<string, { rawValue: unknown; formattedValue: string }>;
+
+/**
  * Result of successfully running a benchmark.
  * @public
  */
@@ -59,12 +65,7 @@ export interface BenchmarkData {
 	/**
 	 * Custom data.
 	 */
-	customData: Record<string, unknown>;
-
-	/**
-	 * Custom data formatters.
-	 */
-	customDataFormatters: Record<string, (value: unknown) => string>;
+	customData: CustomData;
 }
 
 /**

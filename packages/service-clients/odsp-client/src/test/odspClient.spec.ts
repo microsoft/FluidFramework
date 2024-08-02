@@ -99,18 +99,18 @@ describe("OdspClient", () => {
 	it("GC is disabled by default", async () => {
 		const { container: container_defaultConfig } = await client.createContainer(schema);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const { shouldRunSweep, tombstoneAutorecoveryEnabled, throwOnTombstoneLoad } =
+		const { sweepEnabled, tombstoneAutorecoveryEnabled, throwOnTombstoneLoad } =
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 			(container_defaultConfig as any).container._runtime.garbageCollector.configs;
 
 		const expectedConfigs = {
-			shouldRunSweep: "NO",
+			sweepEnabled: false,
 			tombstoneAutorecoveryEnabled: false,
 			throwOnTombstoneLoad: false,
 		};
 		assert.deepStrictEqual(
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			{ shouldRunSweep, tombstoneAutorecoveryEnabled, throwOnTombstoneLoad },
+			{ sweepEnabled, tombstoneAutorecoveryEnabled, throwOnTombstoneLoad },
 			expectedConfigs,
 			"Expected GC to be disabled per compatibilityModeRuntimeOptions",
 		);

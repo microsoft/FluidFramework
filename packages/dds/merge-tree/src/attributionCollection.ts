@@ -426,7 +426,10 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			assignToSegment: (collection: AttributionCollection, segment: ISegment) => void,
 		): void => {
 			if (seqs.length === 0) {
-				assert(posBreakpoints.length === 0, "seqs and posBreakpoints length should match");
+				assert(
+					posBreakpoints.length === 0,
+					0x9e1 /* seqs and posBreakpoints length should match */,
+				);
 				return;
 			}
 			let curIndex = 0;

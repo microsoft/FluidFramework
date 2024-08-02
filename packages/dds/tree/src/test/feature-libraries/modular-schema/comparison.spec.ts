@@ -20,7 +20,11 @@ import {
 	storedEmptyFieldSchema,
 	type TreeStoredSchema,
 } from "../../../core/index.js";
-import { FieldKinds, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import {
+	FieldKinds,
+	defaultSchemaPolicy,
+	isRepoSuperset,
+} from "../../../feature-libraries/index.js";
 import {
 	allowsFieldSuperset,
 	allowsRepoSuperset,
@@ -219,35 +223,123 @@ describe("Schema Comparison", () => {
 			return allowsRepoSuperset(defaultSchemaPolicy, a, b);
 		};
 
-		const createTestTree = (fields: [string, TreeFieldStoredSchema][]) => ({
-			name: brand<TreeNodeSchemaIdentifier>("testTree"),
-			schema: new ObjectNodeStoredSchema(
-				new Map(fields.map(([key, schema]) => [brand(key), schema])),
-			),
-		});
+		const validateMethodsConsistent = (
+			view: TreeStoredSchema,
+			stored: TreeStoredSchema,
+			isSuperset: boolean,
+		): void => {
+			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, view), isSuperset);
+			assert.equal(isRepoSuperset(view, stored), isSuperset);
+		};
 
 		it("Fix the rootFieldSchema and validate repo superset with different TreeNodeStoredSchemas", () => {
-			const rootFieldSchema = fieldSchema(FieldKinds.forbidden);
+			const rootFieldSchema = fieldSchema(FieldKinds.optional);
 
-			const testTrees = [
-				createTestTree([["x", fieldSchema(FieldKinds.required, [emptyTree.name])]]),
-				createTestTree([]),
-				createTestTree([["x", fieldSchema(FieldKinds.optional, [emptyTree.name])]]),
-				createTestTree([
-					["x", fieldSchema(FieldKinds.optional, [emptyTree.name])],
-					["y", fieldSchema(FieldKinds.optional, [emptyTree.name])],
-				]),
-				{ name: brand<TreeNodeSchemaIdentifier>("testTree"), schema: anyTreeWithoutValue },
-			];
-
-			const repos = testTrees.map((testTree) => {
-				return new TreeStoredSchemaRepository({
-					rootFieldSchema,
-					nodeSchema: new Map([[testTree.name, testTree.schema]]),
-				});
+			const emptyTreeRepo = new TreeStoredSchemaRepository({
+				rootFieldSchema,
+				nodeSchema: new Map([[brand<TreeNodeSchemaIdentifier>("testTree"), emptyTree.schema]]),
 			});
 
-			testOrder(compareTwoRepo, repos);
+			const emptyLocalFieldTreeRepo = new TreeStoredSchemaRepository({
+				rootFieldSchema,
+				nodeSchema: new Map([
+					[brand<TreeNodeSchemaIdentifier>("testTree"), emptyLocalFieldTree.schema],
+				]),
+			});
+
+			const valueLocalFieldTreeRepo = new TreeStoredSchemaRepository({
+				rootFieldSchema,
+				nodeSchema: new Map([
+					[brand<TreeNodeSchemaIdentifier>("testTree"), valueLocalFieldTree.schema],
+					[emptyTree.name, emptyTree.schema],
+				]),
+			});
+
+			const optionalLocalFieldTreeRepo = new TreeStoredSchemaRepository({
+				rootFieldSchema,
+				nodeSchema: new Map([
+					[brand<TreeNodeSchemaIdentifier>("testTree"), optionalLocalFieldTree.schema],
+					[emptyTree.name, emptyTree.schema],
+				]),
+			});
+
+			const optionalTreeRepoWithoutValue = new TreeStoredSchemaRepository({
+				rootFieldSchema,
+				nodeSchema: new Map([
+					[
+						brand<TreeNodeSchemaIdentifier>("testTree"),
+						new ObjectNodeStoredSchema(
+							new Map([[brand("x"), fieldSchema(FieldKinds.optional)]]),
+						),
+					],
+				]),
+			});
+
+			const optionalTreeRepoWithMultipleValues = new TreeStoredSchemaRepository({
+				rootFieldSchema,
+				nodeSchema: new Map([
+					[
+						brand<TreeNodeSchemaIdentifier>("testTree"),
+						new ObjectNodeStoredSchema(
+							new Map([
+								[brand("x"), fieldSchema(FieldKinds.optional)],
+								[brand("y"), fieldSchema(FieldKinds.optional)],
+							]),
+						),
+					],
+				]),
+			});
+
+			const anyLocalFieldTreeRepo = new TreeStoredSchemaRepository({
+				rootFieldSchema,
+				nodeSchema: new Map([
+					[
+						brand<TreeNodeSchemaIdentifier>("testTree"),
+						new ObjectNodeStoredSchema(
+							new Map([[brand("x"), fieldSchema(FieldKinds.sequence)]]),
+						),
+					],
+				]),
+			});
+
+			testPartialOrder(
+				compareTwoRepo,
+				[
+					valueLocalFieldTreeRepo,
+					emptyLocalFieldTreeRepo,
+					emptyTreeRepo,
+					optionalLocalFieldTreeRepo,
+					optionalTreeRepoWithoutValue,
+					optionalTreeRepoWithMultipleValues,
+					anyLocalFieldTreeRepo,
+				],
+				[[emptyLocalFieldTreeRepo, emptyTreeRepo]],
+			);
+
+			// Validate the consistent results of 'allowsRepoSuperset' and 'isRepoSuperset'
+			validateMethodsConsistent(emptyTreeRepo, valueLocalFieldTreeRepo, false);
+			validateMethodsConsistent(optionalTreeRepoWithoutValue, valueLocalFieldTreeRepo, false);
+			validateMethodsConsistent(
+				optionalTreeRepoWithMultipleValues,
+				optionalLocalFieldTreeRepo,
+				false,
+			);
+
+			validateMethodsConsistent(optionalLocalFieldTreeRepo, valueLocalFieldTreeRepo, true);
+			validateMethodsConsistent(optionalTreeRepoWithMultipleValues, emptyTreeRepo, true);
+			validateMethodsConsistent(
+				optionalTreeRepoWithMultipleValues,
+				optionalTreeRepoWithoutValue,
+				true,
+			);
+
+			validateMethodsConsistent(anyLocalFieldTreeRepo, optionalLocalFieldTreeRepo, false);
+			validateMethodsConsistent(anyLocalFieldTreeRepo, valueLocalFieldTreeRepo, false);
+			validateMethodsConsistent(
+				anyLocalFieldTreeRepo,
+				optionalTreeRepoWithMultipleValues,
+				false,
+			);
 		});
 
 		it("Fix the TreeNodeStoredSchema and validate repo superset with different rootFieldSchemas", () => {
@@ -270,6 +362,7 @@ describe("Schema Comparison", () => {
 			});
 
 			testOrder(compareTwoRepo, repos);
+			assert.equal(isRepoSuperset(repos[1], repos[0]), true);
 		});
 
 		it("Validate the ordering when the identifiers are different", () => {

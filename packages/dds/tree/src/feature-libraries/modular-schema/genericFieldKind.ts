@@ -49,14 +49,14 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 				const nodeIndex1 = next1?.index ?? Infinity;
 				const nodeIndex2 = next2?.index ?? Infinity;
 				if (nodeIndex1 < nodeIndex2) {
-					assert(next1 !== undefined, "next1 should not be undefined");
+					assert(next1 !== undefined, 0x9e8 /* next1 should not be undefined */);
 					composed.push({
 						index: nodeIndex1,
 						nodeChange: composeChildren(next1.nodeChange, undefined),
 					});
 					listIndex1 += 1;
 				} else if (nodeIndex2 < nodeIndex1) {
-					assert(next2 !== undefined, "next2 should not be undefined");
+					assert(next2 !== undefined, 0x9e9 /* next2 should not be undefined */);
 					composed.push({
 						index: nodeIndex2,
 						nodeChange: composeChildren(undefined, next2.nodeChange),
@@ -64,8 +64,8 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 					listIndex2 += 1;
 				} else {
 					// Both nodes are at the same position.
-					assert(next1 !== undefined, "next1 should not be undefined");
-					assert(next2 !== undefined, "next2 should not be undefined");
+					assert(next1 !== undefined, 0x9ea /* next1 should not be undefined */);
+					assert(next2 !== undefined, 0x9eb /* next2 should not be undefined */);
 					composed.push({
 						index: nodeIndex1,
 						nodeChange: composeChildren(next1.nodeChange, next2.nodeChange),
@@ -131,20 +131,20 @@ function rebaseGenericChange(
 		let nodeChangeB: NodeId | undefined;
 		let index: number;
 		if (aIndex === bIndex) {
-			assert(a !== undefined, "a should not be undefined if aIndex === bIndex");
-			assert(b !== undefined, "b should not be undefined if aIndex === bIndex");
+			assert(a !== undefined, 0x9ec /* a should not be undefined if aIndex === bIndex */);
+			assert(b !== undefined, 0x9ed /* b should not be undefined if aIndex === bIndex */);
 			index = a.index;
 			nodeChangeA = a.nodeChange;
 			nodeChangeB = b.nodeChange;
 			iChange += 1;
 			iOver += 1;
 		} else if (aIndex < bIndex) {
-			assert(a !== undefined, "a should not be undefined if aIndex < bIndex");
+			assert(a !== undefined, 0x9ee /* a should not be undefined if aIndex < bIndex */);
 			index = a.index;
 			nodeChangeA = a.nodeChange;
 			iChange += 1;
 		} else {
-			assert(b !== undefined, "b should not be undefined if aIndex > bIndex");
+			assert(b !== undefined, 0x9ef /* b should not be undefined if aIndex > bIndex */);
 			index = b.index;
 			nodeChangeB = b.nodeChange;
 			iOver += 1;

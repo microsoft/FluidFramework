@@ -1312,7 +1312,7 @@ describe("Garbage Collection Tests", () => {
 				);
 				assert.strictEqual(garbageCollector.deletedNodes.size, 1, "Expecting 1 deleted node");
 				assert.strictEqual(
-					garbageCollector.configs.gcEnabled,
+					garbageCollector.configs.gcAllowed,
 					true,
 					"Expected GC to be enabled",
 				);
@@ -1355,7 +1355,7 @@ describe("Garbage Collection Tests", () => {
 				);
 				assert.strictEqual(garbageCollector.deletedNodes.size, 1, "Expecting 1 deleted node");
 				assert.strictEqual(
-					garbageCollector.configs.gcEnabled,
+					garbageCollector.configs.gcAllowed,
 					true,
 					"Expected GC to be enabled",
 				);
@@ -1387,7 +1387,7 @@ describe("Garbage Collection Tests", () => {
 				);
 				assert.strictEqual(garbageCollector.deletedNodes.size, 0, "Expecting no deleted node");
 				assert.strictEqual(
-					garbageCollector.configs.gcEnabled,
+					garbageCollector.configs.gcAllowed,
 					true,
 					"Expected GC to be enabled to run",
 				);

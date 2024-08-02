@@ -46,7 +46,7 @@ function assertHasClientId(
 ): asserts message is ISequencedDocumentMessage & { clientId: string } {
 	assert(
 		message.clientId !== null,
-		"Server-generated message should not reach RemoteMessageProcessor",
+		0xa02 /* Server-generated message should not reach RemoteMessageProcessor */,
 	);
 }
 

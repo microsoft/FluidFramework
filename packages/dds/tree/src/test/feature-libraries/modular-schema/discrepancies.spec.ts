@@ -15,11 +15,32 @@ import {
 	type TreeStoredSchema,
 } from "../../../core/index.js";
 import {
+	defaultSchemaPolicy,
 	FieldKinds,
 	getAllowedContentIncompatibilities,
+	allowsRepoSuperset,
+	isRepoSuperset,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { fieldSchema } from "./comparison.spec.js";
+
+/**
+ * Validates the consistency between `isRepoSuperset` and `allowsRepoSuperset` functions.
+ *
+ * @param view - The view schema to compare.
+ * @param stored - The stored schema to compare.
+ */
+function validateSuperset(view: TreeStoredSchema, stored: TreeStoredSchema) {
+	assert.equal(isRepoSuperset(view, stored), true);
+	assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, view), true);
+}
+
+function validateStrictSuperset(view: TreeStoredSchema, stored: TreeStoredSchema) {
+	validateSuperset(view, stored);
+	// assert the superset relationship does not keep in reversed direction
+	assert.equal(isRepoSuperset(stored, view), false);
+	assert.equal(allowsRepoSuperset(defaultSchemaPolicy, view, stored), false);
+}
 
 describe("Schema Discrepancies", () => {
 	const createObjectNodeSchema = (
@@ -103,6 +124,22 @@ describe("Schema Discrepancies", () => {
 		]);
 
 		assert.deepEqual(getAllowedContentIncompatibilities(mapNodeSchema, mapNodeSchema), []);
+
+		/**
+		 * Below is an inconsistency between 'isRepoSuperset' and 'allowsRepoSuperset'. The 'isRepoSuperset' will
+		 * halt further validation if an inconsistency in `nodeKind` is found. However, the current logic of
+		 * 'allowsRepoSuperset' permits relaxing an object node to a map node, which allows for a union of all types
+		 * permitted on the object node's fields. It is unclear if this behavior is desired, as
+		 * 'getAllowedContentIncompatibilities' currently does not support it.
+		 *
+		 * TODO: If we decide to support this behavior, we will need better e2e tests for this scenario. Additionally,
+		 * we may need to adjust the encoding of map nodes and object nodes to ensure consistent encoding.
+		 */
+		assert.equal(isRepoSuperset(objectNodeSchema, mapNodeSchema), false);
+		assert.equal(
+			allowsRepoSuperset(defaultSchemaPolicy, objectNodeSchema, mapNodeSchema),
+			true,
+		);
 	});
 
 	it("Field kind difference for each possible combination (including root)", () => {
@@ -131,6 +168,15 @@ describe("Schema Discrepancies", () => {
 			]),
 			"tree",
 			root2,
+		);
+
+		const mapNodeSchema4 = createMapNodeSchema(
+			fieldSchema(FieldKinds.optional, [
+				brand<TreeNodeSchemaIdentifier>("number"),
+				brand<TreeNodeSchemaIdentifier>("string"),
+			]),
+			"tree",
+			root1,
 		);
 
 		assert.deepEqual(getAllowedContentIncompatibilities(mapNodeSchema1, mapNodeSchema2), [
@@ -162,6 +208,8 @@ describe("Schema Discrepancies", () => {
 				stored: ["array"],
 			},
 		]);
+
+		validateStrictSuperset(mapNodeSchema4, mapNodeSchema1);
 	});
 
 	it("Differing schema identifiers", () => {
@@ -407,6 +455,102 @@ describe("Schema Discrepancies", () => {
 					},
 				],
 			);
+		});
+	});
+
+	describe("isRepoSuperset", () => {
+		const root1 = fieldSchema(FieldKinds.required);
+		const root2 = fieldSchema(FieldKinds.optional);
+
+		const mapNodeSchema1 = createMapNodeSchema(
+			fieldSchema(FieldKinds.required, [brand<TreeNodeSchemaIdentifier>("number")]),
+			"tree",
+			root1,
+		);
+
+		it("Relaxing a field kind to more general field kind", () => {
+			const mapNodeSchema2 = createMapNodeSchema(
+				fieldSchema(FieldKinds.required, [brand<TreeNodeSchemaIdentifier>("number")]),
+				"tree",
+				root2,
+			);
+
+			const mapNodeSchema3 = createMapNodeSchema(
+				fieldSchema(FieldKinds.optional, [brand<TreeNodeSchemaIdentifier>("number")]),
+				"tree",
+				root2,
+			);
+
+			validateStrictSuperset(mapNodeSchema2, mapNodeSchema1);
+			validateStrictSuperset(mapNodeSchema3, mapNodeSchema2);
+		});
+
+		it("Adding to the set of allowed types for a field", () => {
+			const mapNodeSchema2 = createMapNodeSchema(
+				fieldSchema(FieldKinds.optional, []),
+				"tree",
+				root1,
+			);
+
+			const mapNodeSchema3 = createMapNodeSchema(
+				fieldSchema(FieldKinds.optional, [
+					brand<TreeNodeSchemaIdentifier>("number"),
+					brand<TreeNodeSchemaIdentifier>("string"),
+				]),
+				"tree",
+				root1,
+			);
+
+			const mapNodeSchema4 = createMapNodeSchema(
+				fieldSchema(FieldKinds.optional, [brand<TreeNodeSchemaIdentifier>("number")]),
+				"tree",
+				root1,
+			);
+
+			validateStrictSuperset(mapNodeSchema4, mapNodeSchema2);
+			validateStrictSuperset(mapNodeSchema3, mapNodeSchema4);
+		});
+
+		it("Adding an optional field to an object node", () => {
+			const objectNodeSchema1 = createObjectNodeSchema(
+				[["x", fieldSchema(FieldKinds.optional, [brand<TreeNodeSchemaIdentifier>("number")])]],
+				"tree",
+				root1,
+			);
+
+			const objectNodeSchema2 = createObjectNodeSchema(
+				[
+					["x", fieldSchema(FieldKinds.optional, [brand<TreeNodeSchemaIdentifier>("number")])],
+					["y", fieldSchema(FieldKinds.optional, [brand<TreeNodeSchemaIdentifier>("string")])],
+				],
+				"tree",
+				root1,
+			);
+
+			validateStrictSuperset(objectNodeSchema2, objectNodeSchema1);
+		});
+
+		it("No superset for node kind incompatibility", () => {
+			const objectNodeSchema = createObjectNodeSchema(
+				[["x", fieldSchema(FieldKinds.optional, [brand<TreeNodeSchemaIdentifier>("number")])]],
+				"tree",
+				root2,
+			);
+
+			const mapNodeSchema = createMapNodeSchema(
+				fieldSchema(FieldKinds.optional, [brand<TreeNodeSchemaIdentifier>("number")]),
+				"tree",
+				root2,
+			);
+
+			assert.equal(isRepoSuperset(objectNodeSchema, mapNodeSchema), false);
+		});
+
+		it("Leaf schema incompatibilities", () => {
+			const leafNodeSchema1 = createLeafNodeSchema(ValueSchema.Number, "tree", root2);
+			const leafNodeSchema2 = createLeafNodeSchema(ValueSchema.Boolean, "tree", root2);
+
+			assert.equal(isRepoSuperset(leafNodeSchema1, leafNodeSchema2), false);
 		});
 	});
 });

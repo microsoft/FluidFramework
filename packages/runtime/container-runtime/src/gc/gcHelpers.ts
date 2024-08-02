@@ -241,7 +241,10 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 		}
 
 		const childId = id.split("/")[1];
-		assert(childId !== undefined, "node id should be an absolute route with child id part");
+		assert(
+			childId !== undefined,
+			0x9fe /* node id should be an absolute route with child id part */,
+		);
 		let childGCNodeId = id.slice(childId.length + 1);
 		// GC node id always begins with "/". Handle the special case where a child's id in the parent's GC nodes is
 		// of format `/root`. In this case, the childId is root and childGCNodeId is "". Make childGCNodeId = "/".
@@ -270,7 +273,10 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 	const usedRoutes = gcDetails.usedRoutes.filter((route) => route !== "" && route !== "/");
 	for (const route of usedRoutes) {
 		const childId = route.split("/")[1];
-		assert(childId !== undefined, "used route should be an absolute route with child id part");
+		assert(
+			childId !== undefined,
+			0x9ff /* used route should be an absolute route with child id part */,
+		);
 		const childUsedRoute = route.slice(childId.length + 1);
 
 		const childGCDetails = childGCDetailsMap.get(childId);

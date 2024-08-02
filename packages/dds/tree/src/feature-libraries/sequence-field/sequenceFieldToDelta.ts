@@ -165,7 +165,10 @@ export function sequenceFieldToDelta(
 					}
 					break;
 				case "Rename":
-					assert(mark.cellId !== undefined, "Renames should only target empty cells");
+					assert(
+						mark.cellId !== undefined,
+						0x9f9 /* Renames should only target empty cells */,
+					);
 					break;
 				default:
 					unreachableCase(type);

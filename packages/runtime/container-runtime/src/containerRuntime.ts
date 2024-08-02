@@ -1330,14 +1330,22 @@ export class ContainerRuntime
 	 */
 	private nextSummaryNumber: number;
 
-	/** If false, loading or using a Tombstoned object should merely log, not fail */
+	/**
+	 * If false, loading or using a Tombstoned object should merely log, not fail.
+	 * @deprecated NOT SUPPORTED - hardcoded to return false since it's deprecated.
+	 */
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get gcTombstoneEnforcementAllowed(): boolean {
-		return this.garbageCollector.tombstoneEnforcementAllowed;
+		return false;
 	}
 
-	/** If true, throw an error when a tombstone data store is used. */
+	/**
+	 * If true, throw an error when a tombstone data store is used.
+	 * @deprecated NOT SUPPORTED - hardcoded to return false since it's deprecated.
+	 */
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get gcThrowOnTombstoneUsage(): boolean {
-		return this.garbageCollector.throwOnTombstoneUsage;
+		return false;
 	}
 
 	/**
@@ -2660,9 +2668,7 @@ export class ContainerRuntime
 				inboundBatch,
 				local,
 			);
-			if (messagesWithPendingState.length === 0) {
-				this.ensureNoDataModelChanges(() => this.processEmptyBatch(inboundBatch, local));
-			} else {
+			if (messagesWithPendingState.length > 0) {
 				messagesWithPendingState.forEach(({ message, localOpMetadata }) => {
 					const msg: MessageWithContext = {
 						message,
@@ -2673,6 +2679,8 @@ export class ContainerRuntime
 					};
 					this.ensureNoDataModelChanges(() => this.processRuntimeMessage(msg));
 				});
+			} else {
+				this.ensureNoDataModelChanges(() => this.processEmptyBatch(inboundBatch, local));
 			}
 		} else {
 			// Check if message.type is one of values in ContainerMessageType
@@ -2768,7 +2776,7 @@ export class ContainerRuntime
 	 */
 	private processEmptyBatch(emptyBatch: InboundBatch, local: boolean) {
 		const { emptyBatchSequenceNumber: sequenceNumber, batchStartCsn } = emptyBatch;
-		assert(sequenceNumber !== undefined, "emptyBatchSequenceNumber must be defined");
+		assert(sequenceNumber !== undefined, 0x9fa /* emptyBatchSequenceNumber must be defined */);
 		this.emit("batchBegin", { sequenceNumber });
 		this._processedClientSequenceNumber = batchStartCsn;
 		if (!this.hasPendingMessages()) {
