@@ -524,7 +524,7 @@ export const TombstoneResponseHeaderKey = "isTombstoned";
  * @legacy
  * @alpha
  *
- * @deprecated - This header is deprecated and will be removed in the future. The functionality corresponding
+ * @deprecated this header is deprecated and will be removed in the future. The functionality corresponding
  * to this was experimental and is no longer supported.
  */
 export const InactiveResponseHeaderKey = "isInactive";
