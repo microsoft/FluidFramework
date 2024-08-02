@@ -391,6 +391,8 @@ function trackObjectNodeDiscrepancies(
 }
 
 /**
+ * @remarks
+ *
  * This function uses incompatibilities to determine if changes to a document schema are backward-compatible.
  * According to the policy of schema evolution, `isRepoSuperset` supports three types of changes:
  * 1. Adding an optional field to an object node.
@@ -414,21 +416,26 @@ export function isRepoSuperset(view: TreeStoredSchema, stored: TreeStoredSchema)
 
 	for (const incompatibility of incompatibilities) {
 		switch (incompatibility.mismatch) {
-			case "nodeKind":
-			case "valueSchema": {
+			case "nodeKind": {
 				return false;
 			}
+			case "valueSchema":
 			case "allowedTypes":
 			case "fieldKind": {
-				return validateFieldIncompatibility(incompatibility);
+				if (!validateFieldIncompatibility(incompatibility)) {
+					return false;
+				}
+				break;
 			}
 			case "fields": {
-				for (const difference of incompatibility.differences) {
-					if (!validateFieldIncompatibility(difference)) {
-						return false;
-					}
+				if (
+					incompatibility.differences.some(
+						(difference) => !validateFieldIncompatibility(difference),
+					)
+				) {
+					return false;
 				}
-				return true;
+				break;
 			}
 			// No default
 		}
@@ -437,21 +444,50 @@ export function isRepoSuperset(view: TreeStoredSchema, stored: TreeStoredSchema)
 }
 
 function validateFieldIncompatibility(incompatibility: FieldIncompatibility): boolean {
-	if (incompatibility.mismatch === "allowedTypes") {
-		return incompatibility.stored.every((item) => incompatibility.view.includes(item));
-	} else if (incompatibility.mismatch === "fieldKind") {
-		if (incompatibility.stored === undefined) {
-			// Add an optional field
-			if (incompatibility.view === "Optional") {
-				return true;
-			}
-		} else {
-			// Relax the field to make it more general
-			return compareFieldKind(incompatibility.stored, incompatibility.view);
+	switch (incompatibility.mismatch) {
+		case "allowedTypes": {
+			return incompatibility.stored.every((item) => incompatibility.view.includes(item));
 		}
+		case "fieldKind": {
+			if (incompatibility.stored === undefined) {
+				// Add an optional field
+				if (incompatibility.view === "Optional") {
+					return true;
+				}
+			} else {
+				// Relax the field to make it more general
+				return compareFieldKind(incompatibility.stored, incompatibility.view);
+			}
+
+			break;
+		}
+		case "valueSchema": {
+			return false;
+		}
+		// No default
 	}
 	return false;
 }
+
+/**
+ * A mapping that defines the order of field kinds for comparison purposes.
+ * The numeric values indicate the hierarchy or "strength" of each field kind, where lower numbers are more restrictive.
+ * This is used to determine if one field kind can be considered a superset of another.
+ *
+ * - "Forbidden": The most restrictive, represented by 1. Indicates a forbidden field.
+ * - "Value": Represented by 2. Indicates a required field with a specific value.
+ * - "Optional": Represented by 3. Indicates an optional field.
+ *
+ * Note:
+ * - "Sequence": (Currently commented out) was intended to represent a sequence field kind with a value of 4.
+ * Relaxing non-sequence fields to sequences is not currently supported but may be considered in the future.
+ */
+const fieldKindOrder: { [key: string]: number } = {
+	"Forbidden": 1,
+	"Value": 2,
+	"Optional": 3,
+	// "Sequence": 4,  // Relaxing non-sequence fields to sequences is not currently supported, though we could consider doing so in the future.
+};
 
 function compareFieldKind(
 	aKind: FieldKindIdentifier | undefined,
@@ -460,21 +496,13 @@ function compareFieldKind(
 	if (aKind === undefined || bKind === undefined) {
 		return false;
 	}
-	// Define the custom order
-	const order: { [key: string]: number } = {
-		"Forbidden": 1,
-		"Value": 2,
-		"Optional": 3,
-		// "Sequence": 4,  // Relaxing non-sequence fields to sequences is not currently supported, though we could consider doing so in the future.
-	};
 
-	if (!(aKind in order) || !(bKind in order)) {
+	if (!(aKind in fieldKindOrder) || !(bKind in fieldKindOrder)) {
 		return false;
 	}
 
-	// Compare the order values
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	return order[aKind]! <= order[bKind]!;
+	return fieldKindOrder[aKind]! <= fieldKindOrder[bKind]!;
 }
 
 function throwUnsupportedNodeType(type: string): never {

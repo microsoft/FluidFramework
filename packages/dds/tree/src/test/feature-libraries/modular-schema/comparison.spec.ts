@@ -223,6 +223,11 @@ describe("Schema Comparison", () => {
 			return allowsRepoSuperset(defaultSchemaPolicy, a, b);
 		};
 
+		const validateMethodsConsistent = (view: TreeStoredSchema, stored: TreeStoredSchema, isSuperset: boolean): void => {
+			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, view), isSuperset);
+			assert.equal(isRepoSuperset(view, stored), isSuperset);
+		}
+
 		it("Fix the rootFieldSchema and validate repo superset with different TreeNodeStoredSchemas", () => {
 			const rootFieldSchema = fieldSchema(FieldKinds.optional);
 
@@ -242,6 +247,7 @@ describe("Schema Comparison", () => {
 				rootFieldSchema,
 				nodeSchema: new Map([
 					[brand<TreeNodeSchemaIdentifier>("testTree"), valueLocalFieldTree.schema],
+					[emptyTree.name, emptyTree.schema],
 				]),
 			});
 
@@ -249,6 +255,7 @@ describe("Schema Comparison", () => {
 				rootFieldSchema,
 				nodeSchema: new Map([
 					[brand<TreeNodeSchemaIdentifier>("testTree"), optionalLocalFieldTree.schema],
+					[emptyTree.name, emptyTree.schema],
 				]),
 			});
 
@@ -279,6 +286,18 @@ describe("Schema Comparison", () => {
 				]),
 			});
 
+			const anyLocalFieldTreeRepo = new TreeStoredSchemaRepository({
+				rootFieldSchema,
+				nodeSchema: new Map([
+					[
+						brand<TreeNodeSchemaIdentifier>("testTree"),
+						new ObjectNodeStoredSchema(
+							new Map([[brand("x"), fieldSchema(FieldKinds.sequence)]]),
+						),
+					],
+				]),
+			});
+
 			testPartialOrder(
 				compareTwoRepo,
 				[
@@ -288,39 +307,19 @@ describe("Schema Comparison", () => {
 					optionalLocalFieldTreeRepo,
 					optionalTreeRepoWithoutValue,
 					optionalTreeRepoWithMultipleValues,
+					anyLocalFieldTreeRepo,
 				],
 				[[emptyLocalFieldTreeRepo, emptyTreeRepo]],
 			);
 
-			assert(isRepoSuperset(optionalLocalFieldTreeRepo, valueLocalFieldTreeRepo) === true);
+			// Validate the consistent results of 'allowsRepoSuperset' and 'isRepoSuperset'
+			validateMethodsConsistent(emptyTreeRepo, valueLocalFieldTreeRepo, false);
+			validateMethodsConsistent(optionalTreeRepoWithoutValue, valueLocalFieldTreeRepo, false);
+			validateMethodsConsistent(optionalTreeRepoWithMultipleValues, optionalLocalFieldTreeRepo, false);
 
-			assert(isRepoSuperset(optionalLocalFieldTreeRepo, emptyTreeRepo) === true);
-			assert(isRepoSuperset(optionalTreeRepoWithMultipleValues, emptyTreeRepo) === true);
-			assert(
-				isRepoSuperset(optionalTreeRepoWithMultipleValues, optionalTreeRepoWithoutValue) ===
-					true,
-			);
-			// There exist scenarios where `allowsRepoSuperset` and `isRepoSuperset` return different results.
-			/**
-			 * The incompatibilities indicate that `stored` has an additional non-optional field compared to
-			 * `view`, making them non-comparable when using isRepoSuperset.
-			 */
-			assert(isRepoSuperset(emptyTreeRepo, valueLocalFieldTreeRepo) === false);
-
-			/**
-			 * The incompatibilities indicate that although the `view` relaxes the field 'x' from required to
-			 * optional, it includes an additional 'empty' allowed type compared to the `stored` schema, making
-			 * them non-comparable when using isRepoSuperset.
-			 */
-			assert(isRepoSuperset(optionalTreeRepoWithoutValue, valueLocalFieldTreeRepo) === false);
-			/**
-			 * Similar to the reason above, `view` includes an additional 'empty' allowed type compared to the
-			 * `stored` schema, making them non-comparable when using isRepoSuperset.
-			 */
-			assert(
-				isRepoSuperset(optionalTreeRepoWithMultipleValues, optionalLocalFieldTreeRepo) ===
-					false,
-			);
+			validateMethodsConsistent(optionalLocalFieldTreeRepo, valueLocalFieldTreeRepo, true);
+			validateMethodsConsistent(optionalTreeRepoWithMultipleValues, emptyTreeRepo, true);
+			validateMethodsConsistent(optionalTreeRepoWithMultipleValues, optionalTreeRepoWithoutValue, true);
 		});
 
 		it("Fix the TreeNodeStoredSchema and validate repo superset with different rootFieldSchemas", () => {
@@ -343,7 +342,7 @@ describe("Schema Comparison", () => {
 			});
 
 			testOrder(compareTwoRepo, repos);
-			assert(isRepoSuperset(repos[1], repos[0]) === true);
+			assert.equal(isRepoSuperset(repos[1], repos[0]), true);
 		});
 
 		it("Validate the ordering when the identifiers are different", () => {

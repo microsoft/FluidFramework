@@ -26,23 +26,20 @@ import { fieldSchema } from "./comparison.spec.js";
 
 /**
  * Validates the consistency between `isRepoSuperset` and `allowsRepoSuperset` functions.
- * Also ensures that the reversed relationship is false if `antisymmetric` is true.
  *
  * @param view - The view schema to compare.
  * @param stored - The stored schema to compare.
- * @param antisymmetric - If true (default), checks that the reverse relationship is false.
  */
-function validateSuperset(
-	view: TreeStoredSchema,
-	stored: TreeStoredSchema,
-	antisymmetric?: boolean,
-) {
-	assert(isRepoSuperset(view, stored) === true);
-	assert(allowsRepoSuperset(defaultSchemaPolicy, stored, view) === true);
-	if (antisymmetric ?? true) {
-		assert(isRepoSuperset(stored, view) === false);
-		assert(allowsRepoSuperset(defaultSchemaPolicy, view, stored) === false);
-	}
+function validateSuperset(view: TreeStoredSchema, stored: TreeStoredSchema) {
+	assert.equal(isRepoSuperset(view, stored), true);
+	assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, view), true);
+}
+
+function validateStrictSuperset(view: TreeStoredSchema, stored: TreeStoredSchema) {
+	validateSuperset(view, stored);
+	// assert the superset relationship does not keep in reversed direction
+	assert.equal(isRepoSuperset(stored, view), false);
+	assert.equal(allowsRepoSuperset(defaultSchemaPolicy, view, stored), false);
 }
 
 describe("Schema Discrepancies", () => {
@@ -203,11 +200,7 @@ describe("Schema Discrepancies", () => {
 			},
 		]);
 
-		assert.equal(isRepoSuperset(mapNodeSchema4, mapNodeSchema1), true);
-		assert.equal(
-			allowsRepoSuperset(defaultSchemaPolicy, mapNodeSchema1, mapNodeSchema4),
-			true,
-		);
+		validateStrictSuperset(mapNodeSchema4, mapNodeSchema1);
 	});
 
 	it("Differing schema identifiers", () => {
@@ -479,8 +472,8 @@ describe("Schema Discrepancies", () => {
 				root2,
 			);
 
-			validateSuperset(mapNodeSchema2, mapNodeSchema1);
-			validateSuperset(mapNodeSchema3, mapNodeSchema2);
+			validateStrictSuperset(mapNodeSchema2, mapNodeSchema1);
+			validateStrictSuperset(mapNodeSchema3, mapNodeSchema2);
 		});
 
 		it("Adding to the set of allowed types for a field", () => {
@@ -505,8 +498,8 @@ describe("Schema Discrepancies", () => {
 				root1,
 			);
 
-			validateSuperset(mapNodeSchema4, mapNodeSchema2);
-			validateSuperset(mapNodeSchema3, mapNodeSchema4);
+			validateStrictSuperset(mapNodeSchema4, mapNodeSchema2);
+			validateStrictSuperset(mapNodeSchema3, mapNodeSchema4);
 		});
 
 		it("Adding an optional field to an object node", () => {
@@ -525,7 +518,7 @@ describe("Schema Discrepancies", () => {
 				root1,
 			);
 
-			validateSuperset(objectNodeSchema2, objectNodeSchema1);
+			validateStrictSuperset(objectNodeSchema2, objectNodeSchema1);
 		});
 
 		it("No superset for node kind incompatibility", () => {
