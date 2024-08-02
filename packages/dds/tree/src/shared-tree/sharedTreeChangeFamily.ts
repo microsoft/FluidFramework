@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import type { ICodecFamily, ICodecOptions } from "../codec/index.js";
 import {
@@ -173,8 +173,8 @@ export class SharedTreeChangeFamily
 			0x884 /* SharedTreeChange should have exactly one inner change if no schema change is present. */,
 		);
 
-		const dataChangeIntention = change.change.changes[0];
-		const dataChangeOver = over.change.changes[0];
+		const dataChangeIntention = change.change.changes[0] ?? oob();
+		const dataChangeOver = over.change.changes[0] ?? oob();
 		assert(
 			dataChangeIntention.type === "data" && dataChangeOver.type === "data",
 			0x885 /* Data change should be present. */,

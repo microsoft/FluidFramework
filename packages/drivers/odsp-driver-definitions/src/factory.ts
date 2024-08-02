@@ -67,13 +67,12 @@ export interface IOpsCachingPolicy {
  */
 export interface ICollabSessionOptions {
 	/**
-	 * @deprecated starting in 2.0-RC3. No longer needed.
 	 * Value indicating the display name for session that admits unauthenticated user.
 	 * This name will be used in attribution associated with edits made by such user.
+	 * @deprecated starting in 2.0-RC3. No longer needed.
 	 */
 	unauthenticatedUserDisplayName?: string;
 	/**
-	 * @deprecated Due to security reasons we will be passing the token via Authorization header only.
 	 * Value indicating session preference to always pass access token via Authorization header.
 	 * Default behavior is to pass access token via query parameter unless overall href string
 	 * length exceeds 2048 characters. Using query param is performance optimization which results
@@ -81,6 +80,7 @@ export interface ICollabSessionOptions {
 	 * validate CORS. However, not all ODSP implementations understand this optimization.
 	 * For instance, auth layer on Converged stack will fail request with access token passed via
 	 * query param.
+	 * @deprecated Due to security reasons we will be passing the token via Authorization header only.
 	 */
 	forceAccessTokenViaAuthorizationHeader?: boolean;
 }

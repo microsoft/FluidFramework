@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -158,7 +158,7 @@ export class Chunker implements IChunker {
  * @param cursor - cursor in nodes mode
  */
 export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): TreeChunk {
-	return chunkRange(cursor, policy, 1, true)[0];
+	return chunkRange(cursor, policy, 1, true)[0] ?? oob();
 }
 
 /**
@@ -182,7 +182,7 @@ export function chunkFieldSingle(
 ): TreeChunk {
 	const chunks = chunkField(cursor, policy);
 	if (chunks.length === 1) {
-		return chunks[0];
+		return chunks[0] ?? oob();
 	}
 	return new SequenceChunk(chunks);
 }
@@ -278,7 +278,7 @@ export function tryShapeFromFieldSchema(
 	if (type.types?.size !== 1) {
 		return undefined;
 	}
-	const childType = [...type.types][0];
+	const childType = [...type.types][0] ?? oob();
 	const childShape = tryShapeFromSchema(schema, policy, childType, shapes);
 	if (childShape instanceof Polymorphic) {
 		return undefined;

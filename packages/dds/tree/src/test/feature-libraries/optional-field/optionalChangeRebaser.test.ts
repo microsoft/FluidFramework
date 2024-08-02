@@ -100,6 +100,8 @@ const OptionalChange = {
 const failCrossFieldManager: CrossFieldManager = {
 	get: () => assert.fail("Should not query CrossFieldManager"),
 	set: () => assert.fail("Should not modify CrossFieldManager"),
+	onMoveIn: () => assert.fail("Should not modify CrossFieldManager"),
+	moveKey: () => assert.fail("Should not modify CrossFieldManager"),
 };
 
 function toDelta(
@@ -220,10 +222,12 @@ function rebaseComposedWrapped(
 	change: TaggedChange<WrappedChangeset>,
 	...baseChanges: TaggedChange<WrappedChangeset>[]
 ): WrappedChangeset {
-	const composed = baseChanges.reduce(
-		(change1, change2) => makeAnonChange(composeWrapped(change1, change2)),
-		makeAnonChange(ChangesetWrapper.create(Change.empty())),
-	);
+	const composed =
+		baseChanges.length === 0
+			? makeAnonChange(ChangesetWrapper.create(Change.empty()))
+			: baseChanges.reduce((change1, change2) =>
+					makeAnonChange(composeWrapped(change1, change2)),
+				);
 
 	return rebaseWrapped(change, composed, metadata);
 }

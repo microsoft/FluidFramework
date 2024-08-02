@@ -941,7 +941,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			// Do GC every once in a while...
 			if (
 				this.messagesSinceMSNChange.length > 20 &&
-				this.messagesSinceMSNChange[20].sequenceNumber < message.minimumSequenceNumber
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.messagesSinceMSNChange[20]!.sequenceNumber < message.minimumSequenceNumber
 			) {
 				this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
 			}
@@ -951,7 +953,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	private processMinSequenceNumberChanged(minSeq: number) {
 		let index = 0;
 		for (; index < this.messagesSinceMSNChange.length; index++) {
-			if (this.messagesSinceMSNChange[index].sequenceNumber > minSeq) {
+			// TODO Non null asserting, why is this not null?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			if (this.messagesSinceMSNChange[index]!.sequenceNumber > minSeq) {
 				break;
 			}
 		}

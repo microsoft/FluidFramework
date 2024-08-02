@@ -612,7 +612,9 @@ export class MapKernel {
 				assert(
 					localOpMetadata !== undefined &&
 						isMapKeyLocalOpMetadata(localOpMetadata) &&
-						localOpMetadata.pendingMessageId < this.pendingClearMessageIds[0],
+						// Non null asserting, above we checked that the length is greater than 0.
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						localOpMetadata.pendingMessageId < this.pendingClearMessageIds[0]!,
 					0x013 /* "Received out of order op when there is an unackd clear message" */,
 				);
 			}

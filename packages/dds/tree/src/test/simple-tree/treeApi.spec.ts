@@ -181,8 +181,7 @@ describe("treeNodeApi", () => {
 		const newChild = new Point({});
 		assert.equal(Tree.status(root), TreeStatus.InDocument);
 		assert.equal(Tree.status(child), TreeStatus.InDocument);
-		// TODO: This API layer should have an Unhydrated status:
-		// assert.equal(nodeApi.status(newChild), TreeStatus.Unhydrated);
+		assert.equal(Tree.status(newChild), TreeStatus.New);
 		root.x = newChild;
 		assert.equal(Tree.status(root), TreeStatus.InDocument);
 		assert.equal(Tree.status(child), TreeStatus.Removed);
@@ -260,6 +259,15 @@ describe("treeNodeApi", () => {
 						/may not be called on a node with more than one identifier/,
 					),
 			);
+		});
+
+		it("Returns undefined for non-object nodes", () => {
+			const config = new TreeViewConfiguration({
+				schema: schema.array("parent", schema.number),
+			});
+			const view = getView(config);
+			view.initialize([1, 2, 3]);
+			assert.equal(Tree.shortId(view.root), undefined);
 		});
 	});
 

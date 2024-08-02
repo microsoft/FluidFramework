@@ -20,33 +20,24 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_RuntimeRequestHandler": {"forwardCompat": false}
+ * "TypeAlias_RuntimeRequestHandler": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAliasDeclaration_RuntimeRequestHandler = requireAssignableTo<TypeOnly<old.RuntimeRequestHandler>, TypeOnly<current.RuntimeRequestHandler>>
+declare type old_as_current_for_TypeAlias_RuntimeRequestHandler = requireAssignableTo<TypeOnly<old.RuntimeRequestHandler>, TypeOnly<current.RuntimeRequestHandler>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_RuntimeRequestHandler": {"backCompat": false}
+ * "TypeAlias_RuntimeRequestHandler": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAliasDeclaration_RuntimeRequestHandler = requireAssignableTo<TypeOnly<current.RuntimeRequestHandler>, TypeOnly<old.RuntimeRequestHandler>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "FunctionDeclaration_buildRuntimeRequestHandler": {"forwardCompat": false}
- */
-declare type old_as_current_for_FunctionDeclaration_buildRuntimeRequestHandler = requireAssignableTo<TypeOnly<typeof old.buildRuntimeRequestHandler>, TypeOnly<typeof current.buildRuntimeRequestHandler>>
+declare type current_as_old_for_TypeAlias_RuntimeRequestHandler = requireAssignableTo<TypeOnly<current.RuntimeRequestHandler>, TypeOnly<old.RuntimeRequestHandler>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_buildRuntimeRequestHandler": {"backCompat": false}
+ * "Function_buildRuntimeRequestHandler": {"backCompat": false}
  */
-declare type current_as_old_for_FunctionDeclaration_buildRuntimeRequestHandler = requireAssignableTo<TypeOnly<typeof current.buildRuntimeRequestHandler>, TypeOnly<typeof old.buildRuntimeRequestHandler>>
+declare type current_as_old_for_Function_buildRuntimeRequestHandler = requireAssignableTo<TypeOnly<typeof current.buildRuntimeRequestHandler>, TypeOnly<typeof old.buildRuntimeRequestHandler>>

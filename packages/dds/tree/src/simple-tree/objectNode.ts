@@ -5,7 +5,7 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
+import type { FieldKey } from "../core/index.js";
 import {
 	cursorForMapTreeNode,
 	FieldKinds,
@@ -23,14 +23,12 @@ import {
 import {
 	type InsertableContent,
 	getProxyForField,
-	markContentType,
 	prepareContentForHydration,
 } from "./proxies.js";
 import { getFlexNode } from "./proxyBinding.js";
 import {
 	NodeKind,
 	type ImplicitFieldSchema,
-	type TreeNodeSchemaClass,
 	type WithType,
 	type TreeNodeSchema,
 	getStoredKey,
@@ -44,9 +42,15 @@ import {
 	FieldKind,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
-import { type InternalTreeNode, type TreeNode, TreeNodeValid } from "./types.js";
+import {
+	type InternalTreeNode,
+	type MostDerivedData,
+	type TreeNode,
+	TreeNodeValid,
+} from "./types.js";
 import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
+import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
 
 /**
  * Helper used to produce types for object nodes.
@@ -123,7 +127,10 @@ export type InsertableObjectFromSchemaRecord<
  * Keys with symbols are currently never used, but allowed to make lookups on non-field things
  * (returning undefined) easier.
  */
-type SimpleKeyMap = ReadonlyMap<string | symbol, { storedKey: FieldKey; schema: FieldSchema }>;
+export type SimpleKeyMap = ReadonlyMap<
+	string | symbol,
+	{ storedKey: FieldKey; schema: FieldSchema }
+>;
 
 /**
  * Caches the mappings from view keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
@@ -187,7 +194,8 @@ function createProxyHandler(
 		set(target, viewKey, value: InsertableContent | undefined, proxy) {
 			const fieldInfo = flexKeyMap.get(viewKey);
 			if (fieldInfo === undefined) {
-				return allowAdditionalProperties ? Reflect.set(target, viewKey, value) : false;
+				// Pass the proxy as the receiver here, so that setters on the prototype receive `proxy` as `this`.
+				return allowAdditionalProperties ? Reflect.set(target, viewKey, value, proxy) : false;
 			}
 
 			const flexNode = getFlexNode(proxy);
@@ -298,7 +306,7 @@ export function objectSchema<
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
-): ObjectNodeSchema<TName, T, ImplicitlyConstructable> {
+): ObjectNodeSchema<TName, T, ImplicitlyConstructable> & ObjectNodeSchemaInternalData {
 	// Ensure no collisions between final set of view keys, and final set of stored keys (including those
 	// implicitly derived from view keys)
 	assertUniqueKeys(identifier, info);
@@ -314,6 +322,7 @@ export function objectSchema<
 		public static readonly fields: ReadonlyMap<string, FieldSchema> = new Map(
 			[...flexKeyMap].map(([key, value]) => [key as string, value.schema]),
 		);
+		public static readonly flexKeyMap: SimpleKeyMap = flexKeyMap;
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
@@ -352,14 +361,11 @@ export function objectSchema<
 		): MapTreeNode {
 			return getOrCreateMapTreeNode(
 				flexSchema,
-				mapTreeFromNodeData(
-					copyContent(flexSchema.name, input as object),
-					this as unknown as ImplicitAllowedTypes,
-				),
+				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
 			);
 		}
 
-		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
+		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
@@ -447,44 +453,4 @@ function assertUniqueKeys<
 		}
 		derivedStoredKeys.add(storedKey);
 	}
-}
-
-function copyContent<T extends object>(typeName: TreeNodeSchemaIdentifier, content: T): T {
-	const copy = { ...content };
-	markContentType(typeName, copy);
-	return copy;
-}
-
-/**
- * A schema for {@link TreeObjectNode}s.
- * @privateRemarks
- * This is a candidate for being promoted to the public package API.
- */
-export interface ObjectNodeSchema<
-	TName extends string = string,
-	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema> = RestrictiveReadonlyRecord<
-		string,
-		ImplicitFieldSchema
-	>,
-	ImplicitlyConstructable extends boolean = boolean,
-> extends TreeNodeSchemaClass<
-		TName,
-		NodeKind.Object,
-		TreeObjectNode<T, TName>,
-		object & InsertableObjectFromSchemaRecord<T>,
-		ImplicitlyConstructable,
-		T
-	> {
-	readonly fields: ReadonlyMap<string, FieldSchema>;
-}
-
-export const ObjectNodeSchema = {
-	// instanceof-based narrowing support for Javascript and TypeScript 5.3 or newer.
-	[Symbol.hasInstance](value: TreeNodeSchema): value is ObjectNodeSchema {
-		return isObjectNodeSchema(value);
-	},
-} as const;
-
-export function isObjectNodeSchema(schema: TreeNodeSchema): schema is ObjectNodeSchema {
-	return schema.kind === NodeKind.Object;
 }

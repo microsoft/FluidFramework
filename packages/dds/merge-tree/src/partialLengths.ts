@@ -33,7 +33,7 @@ class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number>
 	public addOrUpdate(
 		newItem: PartialSequenceLength,
 		update?: (existingItem: PartialSequenceLength, newItem: PartialSequenceLength) => void,
-	) {
+	): void {
 		const prev = this.latestLeq(newItem.seq);
 
 		if (prev?.seq !== newItem.seq) {
@@ -362,7 +362,7 @@ export class PartialSequenceLengths {
 			if (computeLocalPartials) {
 				combinedPartialLengths.unsequencedRecords = {
 					partialLengths: mergePartialLengths(childUnsequencedPartialLengths),
-					overlappingRemoves: Array.from(mergeSortedListsBySeq(childOverlapRemoves)),
+					overlappingRemoves: [...mergeSortedListsBySeq(childOverlapRemoves)],
 					cachedOverlappingByRefSeq: new Map(),
 				};
 			}
@@ -381,8 +381,8 @@ export class PartialSequenceLengths {
 	}
 
 	/**
-	 * @returns a PartialSequenceLengths structure which tracks only lengths of leaf children of the provided
-	 * MergeBlock.
+	 * Creates and returns a PartialSequenceLengths structure that tracks the lengths of only the
+	 * leaf children of the provided MergeBlock.
 	 */
 	private static fromLeaves(
 		block: MergeBlock,
@@ -450,7 +450,10 @@ export class PartialSequenceLengths {
 		return combinedPartialLengths;
 	}
 
-	private static getOverlapClients(overlapClientIds: number[], seglen: number) {
+	private static getOverlapClients(
+		overlapClientIds: number[],
+		seglen: number,
+	): RedBlackTree<number, IOverlapClient> {
 		const bst = new RedBlackTree<number, IOverlapClient>(compareNumbers);
 		for (const clientId of overlapClientIds) {
 			bst.put(clientId, { clientId, seglen });
@@ -462,14 +465,14 @@ export class PartialSequenceLengths {
 		partialLength: PartialSequenceLength,
 		overlapRemoveClientIds: number[],
 		seglen: number,
-	) {
+	): void {
 		if (partialLength.overlapRemoveClients) {
 			for (const clientId of overlapRemoveClientIds) {
 				const overlapClientNode = partialLength.overlapRemoveClients.get(clientId);
-				if (!overlapClientNode) {
-					partialLength.overlapRemoveClients.put(clientId, { clientId, seglen });
-				} else {
+				if (overlapClientNode) {
 					overlapClientNode.data.seglen += seglen;
+				} else {
+					partialLength.overlapRemoveClients.put(clientId, { clientId, seglen });
 				}
 			}
 		} else {
@@ -484,14 +487,14 @@ export class PartialSequenceLengths {
 		partialLength: PartialSequenceLength,
 		overlapMoveClientIds: number[],
 		seglen: number,
-	) {
+	): void {
 		if (partialLength.overlapObliterateClients) {
 			for (const clientId of overlapMoveClientIds) {
 				const overlapClientNode = partialLength.overlapObliterateClients.get(clientId);
-				if (!overlapClientNode) {
-					partialLength.overlapObliterateClients.put(clientId, { clientId, seglen });
-				} else {
+				if (overlapClientNode) {
 					overlapClientNode.data.seglen += seglen;
+				} else {
+					partialLength.overlapObliterateClients.put(clientId, { clientId, seglen });
 				}
 			}
 		} else {
@@ -516,7 +519,7 @@ export class PartialSequenceLengths {
 		segment: ISegment,
 		firstGte: PartialSequenceLength,
 		clientIds: number[],
-	) {
+	): void {
 		const nonInsertingClientIds = clientIds.filter((id) => id !== segment.clientId);
 
 		PartialSequenceLengths.accumulateMoveClientOverlap(
@@ -539,6 +542,8 @@ export class PartialSequenceLengths {
 	}
 
 	/**
+	 * Tracks which clients have made concurrent obliterates.
+	 *
 	 * @param obliterateOverlapLen - Length of segment with overlap
 	 * @param clientIds - Ids of clients that have concurrently obliterated this
 	 * segment
@@ -574,7 +579,7 @@ export class PartialSequenceLengths {
 		clientId: number,
 		removeClientOverlap: number[] | undefined,
 		moveClientOverlap: number[] | undefined,
-	) {
+	): void {
 		const firstGte = partials.firstGte(seq);
 
 		let partialLengthEntry: PartialSequenceLength;
@@ -648,7 +653,7 @@ export class PartialSequenceLengths {
 		segment: ISegment,
 		removalInfo?: IRemovalInfo,
 		moveInfo?: IMoveInfo,
-	) {
+	): void {
 		const removalIsLocal =
 			!!removalInfo && removalInfo.removedSeq === UnassignedSequenceNumber;
 		const moveIsLocal = !!moveInfo && moveInfo.movedSeq === UnassignedSequenceNumber;
@@ -831,7 +836,7 @@ export class PartialSequenceLengths {
 		seqSeglen: number,
 		remoteObliteratedLen?: number,
 		clientId?: number,
-	) {
+	): void {
 		let seqPartialLen: PartialSequenceLength | undefined;
 		let penultPartialLen: PartialSequenceLength | undefined;
 		let pLen = partialLengths.latestLeq(seq);
@@ -846,7 +851,7 @@ export class PartialSequenceLengths {
 				penultPartialLen = pLen;
 			}
 		}
-		const len = penultPartialLen !== undefined ? penultPartialLen.len + seqSeglen : seqSeglen;
+		const len = penultPartialLen === undefined ? seqSeglen : penultPartialLen.len + seqSeglen;
 		if (seqPartialLen === undefined) {
 			seqPartialLen = {
 				clientId,
@@ -927,7 +932,7 @@ export class PartialSequenceLengths {
 		clientId: number,
 		// eslint-disable-next-line import/no-deprecated
 		collabWindow: CollaborationWindow,
-	) {
+	): void {
 		let seqSeglen = 0;
 		let remoteObliteratedLen = 0;
 		let segCount = 0;
@@ -936,18 +941,7 @@ export class PartialSequenceLengths {
 			// TODO Non null asserting, why is this not null?
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const child = node.children[i]!;
-			if (!child.isLeaf()) {
-				const childBlock = child;
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const branchPartialLengths = childBlock.partialLengths!;
-				const partialLengths = branchPartialLengths.partialLengths;
-				const leqPartial = partialLengths.latestLeq(seq);
-				if (leqPartial && leqPartial.seq === seq) {
-					seqSeglen += leqPartial.seglen;
-					remoteObliteratedLen += leqPartial.remoteObliteratedLen ?? 0;
-				}
-				segCount += branchPartialLengths.segmentCount;
-			} else {
+			if (child.isLeaf()) {
 				const segment = child;
 				const removalInfo = toRemovalInfo(segment);
 				const moveInfo = toMoveInfo(segment);
@@ -1004,6 +998,17 @@ export class PartialSequenceLengths {
 					}
 				}
 				segCount++;
+			} else {
+				const childBlock = child;
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const branchPartialLengths = childBlock.partialLengths!;
+				const partialLengths = branchPartialLengths.partialLengths;
+				const leqPartial = partialLengths.latestLeq(seq);
+				if (leqPartial && leqPartial.seq === seq) {
+					seqSeglen += leqPartial.seglen;
+					remoteObliteratedLen += leqPartial.remoteObliteratedLen ?? 0;
+				}
+				segCount += branchPartialLengths.segmentCount;
 			}
 		}
 		this.segmentCount = segCount;
@@ -1043,7 +1048,7 @@ export class PartialSequenceLengths {
 	 * Note: the local case (where `localSeq !== undefined`) is only supported on a PartialSequenceLength object
 	 * constructed with `computeLocalPartials` set to true and not subsequently updated with `update`.
 	 */
-	public getPartialLength(refSeq: number, clientId: number, localSeq?: number) {
+	public getPartialLength(refSeq: number, clientId: number, localSeq?: number): number {
 		let pLen = this.minLength;
 		const cliLatestIndex = this.cliLatest(clientId);
 		// TODO Non null asserting, why is this not null?
@@ -1135,7 +1140,7 @@ export class PartialSequenceLengths {
 		return overlap?.len ?? 0;
 	}
 
-	public toString(glc?: (id: number) => string, indentCount = 0) {
+	public toString(glc?: (id: number) => string, indentCount = 0): string {
 		let buf = "";
 		for (const partial of this.partialLengths.items) {
 			buf += `(${partial.seq},${partial.len}) `;
@@ -1161,7 +1166,7 @@ export class PartialSequenceLengths {
 
 	// Clear away partial sums for sequence numbers earlier than the current window
 	// eslint-disable-next-line import/no-deprecated
-	private zamboni(segmentWindow: CollaborationWindow) {
+	private zamboni(segmentWindow: CollaborationWindow): void {
 		this.minLength += this.partialLengths.copyDown(segmentWindow.minSeq);
 		this.minSeq = segmentWindow.minSeq;
 		// eslint-disable-next-line @typescript-eslint/no-for-in-array, guard-for-in, no-restricted-syntax
@@ -1173,7 +1178,7 @@ export class PartialSequenceLengths {
 		}
 	}
 
-	private addClientSeqNumber(clientId: number, seq: number, seglen: number) {
+	private addClientSeqNumber(clientId: number, seq: number, seglen: number): void {
 		this.clientSeqNumbers[clientId] ??= new PartialSequenceLengthsSet();
 		// TODO Non null asserting, why is this not null?
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1182,7 +1187,7 @@ export class PartialSequenceLengths {
 	}
 
 	// Assumes sequence number already coalesced and that this is called in increasing `seq` order.
-	private addClientSeqNumberFromPartial(partialLength: PartialSequenceLength) {
+	private addClientSeqNumberFromPartial(partialLength: PartialSequenceLength): void {
 		const seglen = partialLength.seglen + (partialLength.remoteObliteratedLen ?? 0);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this.addClientSeqNumber(partialLength.clientId!, partialLength.seq, seglen);
@@ -1210,7 +1215,7 @@ export class PartialSequenceLengths {
 		return this.clientSeqNumbers[clientId]?.latestLeq(refSeq);
 	}
 
-	private cliLatest(clientId: number) {
+	private cliLatest(clientId: number): number {
 		const cliSeqs = this.clientSeqNumbers[clientId];
 		return cliSeqs && cliSeqs.size > 0 ? cliSeqs.size - 1 : -1;
 	}
@@ -1304,7 +1309,7 @@ export function verifyExpectedPartialLengths(
 	refSeq: number,
 	clientId: number,
 	localSeq?: number,
-) {
+): void {
 	if (
 		(!mergeTree.collabWindow.collaborating || mergeTree.collabWindow.clientId === clientId) &&
 		(node.isLeaf() || localSeq === undefined)
@@ -1337,7 +1342,7 @@ export function verifyExpectedPartialLengths(
 	}
 }
 
-export function verifyPartialLengths(partialSeqLengths: PartialSequenceLengths) {
+export function verifyPartialLengths(partialSeqLengths: PartialSequenceLengths): void {
 	if (partialSeqLengths["clientSeqNumbers"]) {
 		for (const cliSeq of partialSeqLengths["clientSeqNumbers"]) {
 			if (cliSeq) {
@@ -1379,6 +1384,27 @@ function cloneOverlapRemoveClients(
 	return newTree;
 }
 
+function combineForOverlapClients(
+	treeA: RedBlackTree<number, IOverlapClient> | undefined,
+	treeB: RedBlackTree<number, IOverlapClient> | undefined,
+): RedBlackTree<number, IOverlapClient> | undefined {
+	if (treeA) {
+		if (treeB) {
+			treeB.map((bProp: Property<number, IOverlapClient>) => {
+				const aProp = treeA.get(bProp.key);
+				if (aProp) {
+					aProp.data.seglen += bProp.data.seglen;
+				} else {
+					treeA.put(bProp.data.clientId, { ...bProp.data });
+				}
+				return true;
+			});
+		}
+	} else {
+		return cloneOverlapRemoveClients(treeB);
+	}
+}
+
 /**
  * Combines the `overlapRemoveClients` and `overlapObliterateClients` fields of
  * two `PartialSequenceLength` objects, modifying the first PartialSequenceLength's
@@ -1386,34 +1412,19 @@ function cloneOverlapRemoveClients(
  *
  * Combination is performed additively on `seglen` on a per-client basis.
  */
-export function combineOverlapClients(a: PartialSequenceLength, b: PartialSequenceLength) {
-	function combine(
-		treeA: RedBlackTree<number, IOverlapClient> | undefined,
-		treeB: RedBlackTree<number, IOverlapClient> | undefined,
-	): RedBlackTree<number, IOverlapClient> | undefined {
-		if (treeA) {
-			if (treeB) {
-				treeB.map((bProp: Property<number, IOverlapClient>) => {
-					const aProp = treeA.get(bProp.key);
-					if (aProp) {
-						aProp.data.seglen += bProp.data.seglen;
-					} else {
-						treeA.put(bProp.data.clientId, { ...bProp.data });
-					}
-					return true;
-				});
-			}
-		} else {
-			return cloneOverlapRemoveClients(treeB);
-		}
-	}
-
-	const overlapRemoveClients = combine(a.overlapRemoveClients, b.overlapRemoveClients);
+export function combineOverlapClients(
+	a: PartialSequenceLength,
+	b: PartialSequenceLength,
+): void {
+	const overlapRemoveClients = combineForOverlapClients(
+		a.overlapRemoveClients,
+		b.overlapRemoveClients,
+	);
 	if (overlapRemoveClients) {
 		a.overlapRemoveClients = overlapRemoveClients;
 	}
 
-	const overlapObliterateClients = combine(
+	const overlapObliterateClients = combineForOverlapClients(
 		a.overlapObliterateClients,
 		b.overlapObliterateClients,
 	);
@@ -1469,7 +1480,7 @@ function mergeSortedListsBySeq<T extends PartialSequenceLength>(lists: T[][]): I
 		private readonly nextSmallestIndex: number[];
 
 		constructor(private readonly sublists: T[][]) {
-			this.nextSmallestIndex = new Array(sublists.length);
+			this.nextSmallestIndex = Array.from({ length: sublists.length });
 			for (let i = 0; i < sublists.length; i++) {
 				this.nextSmallestIndex[i] = 0;
 			}

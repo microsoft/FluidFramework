@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha (undocumented)
+// @alpha
 export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @alpha @sealed
@@ -130,9 +130,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     };
     // (undocumented)
     protected getShortClientId(longClientId: string): number;
-    // (undocumented)
     insertAtReferencePositionLocal(refPos: ReferencePosition, segment: ISegment): IMergeTreeInsertMsg | undefined;
-    // (undocumented)
     insertSegmentLocal(pos: number, segment: ISegment): IMergeTreeInsertMsg | undefined;
     // (undocumented)
     load(runtime: IFluidDataStoreRuntime, storage: IChannelStorageService, serializer: IFluidSerializer): Promise<{
@@ -154,7 +152,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
-    rollback?(op: any, localOpMetadata: unknown): void;
+    rollback?(op: unknown, localOpMetadata: unknown): void;
     searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;
     serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void;
     // (undocumented)
@@ -186,8 +184,16 @@ export class CollaborationWindow {
     minSeq: number;
 }
 
-// @alpha (undocumented)
+// @alpha
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]): void;
+
+// @alpha
+export function endpointPosAndSide(start: SequencePlace | undefined, end: SequencePlace | undefined): {
+    startSide: Side | undefined;
+    endSide: Side | undefined;
+    startPos: number | "start" | "end" | undefined;
+    endPos: number | "start" | "end" | undefined;
+};
 
 // @alpha (undocumented)
 export interface IAttributionCollection<T> {
@@ -371,6 +377,7 @@ export interface IMergeTreeOptions {
     // (undocumented)
     catchUpBlobName?: string;
     mergeTreeEnableObliterate?: boolean;
+    mergeTreeEnableObliterateReconnect?: boolean;
     mergeTreeReferencesCanSlideToEndpoint?: boolean;
     // (undocumented)
     mergeTreeSnapshotChunkSize?: number;
@@ -414,6 +421,14 @@ export interface IMoveInfo {
 }
 
 // @alpha
+export interface InteriorSequencePlace {
+    // (undocumented)
+    pos: number;
+    // (undocumented)
+    side: Side;
+}
+
+// @alpha
 export interface IRelativePosition {
     before?: boolean;
     id?: string;
@@ -441,6 +456,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
     // (undocumented)
     clone(): ISegment;
     readonly endpointType?: "start" | "end";
+    endSide?: Side.Before | Side.After;
     localRefs?: LocalReferenceCollection;
     localRemovedSeq?: number;
     localSeq?: number;
@@ -451,6 +467,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
     seq?: number;
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
+    startSide?: Side.Before | Side.After;
     // (undocumented)
     toJSONObject(): any;
     // (undocumented)
@@ -481,33 +498,24 @@ export interface ITrackingGroup {
 
 // @alpha @sealed
 export class LocalReferenceCollection {
-    // (undocumented)
     [Symbol.iterator](): {
         next(): IteratorResult<LocalReferencePosition>;
-        [Symbol.iterator](): any;
+        [Symbol.iterator](): IterableIterator<LocalReferencePosition>;
     };
-    // (undocumented)
     addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
-    // (undocumented)
     addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
-    // (undocumented)
     addLocalRef(lref: LocalReferencePosition, offset: number): void;
     // (undocumented)
     static append(seg1: ISegment, seg2: ISegment): void;
     append(other: LocalReferenceCollection): void;
-    // (undocumented)
     createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
-    // (undocumented)
     get empty(): boolean;
     has(lref: ReferencePosition): boolean;
-    // (undocumented)
     isAfterTombstone(lref: LocalReferencePosition): boolean;
-    // (undocumented)
     removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     // (undocumented)
     static setOrGet(segment: ISegment): LocalReferenceCollection;
     split(offset: number, splitSeg: ISegment): void;
-    // (undocumented)
     walkReferences(visitor: (lref: LocalReferencePosition) => boolean | void | undefined, start?: LocalReferencePosition, forward?: boolean): boolean;
 }
 
@@ -538,7 +546,7 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
     // (undocumented)
     protected createSplitSegmentAt(pos: number): undefined;
     // (undocumented)
-    static fromJSONObject(spec: any): Marker | undefined;
+    static fromJSONObject(spec: IJSONSegment): Marker | undefined;
     // (undocumented)
     getId(): string | undefined;
     // (undocumented)
@@ -546,7 +554,7 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
     // (undocumented)
     getProperties(): PropertySet | undefined;
     // (undocumented)
-    getSegment(): this;
+    getSegment(): Marker;
     // (undocumented)
     static is(segment: ISegment): segment is Marker;
     // (undocumented)
@@ -635,7 +643,6 @@ export class PropertiesManager {
     addProperties(oldProps: PropertySet, newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
     // (undocumented)
     copyTo(oldProps: PropertySet, newProps: PropertySet | undefined, newManager: PropertiesManager): PropertySet | undefined;
-    // (undocumented)
     hasPendingProperties(props: PropertySet): boolean;
     // (undocumented)
     hasPendingProperty(key: string): boolean;
@@ -676,16 +683,16 @@ export enum ReferenceType {
     Transient = 256
 }
 
-// @alpha (undocumented)
+// @alpha
 export const refGetTileLabels: (refPos: ReferencePosition) => string[] | undefined;
 
-// @alpha (undocumented)
+// @alpha
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean;
 
 // @alpha
 export const reservedMarkerIdKey = "markerId";
 
-// @alpha (undocumented)
+// @alpha
 export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @alpha @deprecated (undocumented)
@@ -726,6 +733,9 @@ export interface SequenceOffsets {
     seqs: (number | AttributionKey | null)[];
 }
 
+// @alpha
+export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
+
 // @alpha (undocumented)
 export interface SerializedAttributionCollection extends SequenceOffsets {
     // (undocumented)
@@ -734,6 +744,14 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
     };
     // (undocumented)
     length: number;
+}
+
+// @alpha
+export enum Side {
+    // (undocumented)
+    After = 1,
+    // (undocumented)
+    Before = 0
 }
 
 // @alpha
@@ -757,7 +775,7 @@ export class TextSegment extends BaseSegment {
     // (undocumented)
     protected createSplitSegmentAt(pos: number): TextSegment | undefined;
     // (undocumented)
-    static fromJSONObject(spec: any): TextSegment | undefined;
+    static fromJSONObject(spec: string | IJSONSegment): TextSegment | undefined;
     // (undocumented)
     static is(segment: ISegment): segment is TextSegment;
     // (undocumented)

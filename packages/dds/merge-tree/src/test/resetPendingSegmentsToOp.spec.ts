@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
@@ -32,7 +32,7 @@ describe("resetPendingSegmentsToOp", () => {
 		let opList: { op: IMergeTreeOp; refSeq: number }[];
 		let opCount: number = 0;
 
-		function applyOpList(cli: TestClient) {
+		function applyOpList(cli: TestClient): void {
 			while (opList.length > 0) {
 				const op = opList.shift();
 				if (op) {
@@ -76,12 +76,14 @@ describe("resetPendingSegmentsToOp", () => {
 				"localPartialsComputed",
 				{
 					get() {
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 						return this._localPartialsComputed as boolean;
 					},
 					set(newValue) {
 						if (newValue) {
 							localPartialsComputeCount++;
 						}
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 						this._localPartialsComputed = newValue;
 					},
 				},
@@ -131,6 +133,7 @@ describe("resetPendingSegmentsToOp", () => {
 				op: client.removeRangeLocal(0, client.getLength())!,
 				refSeq: client.getCurrentSeq(),
 			});
+			// eslint-disable-next-line unicorn/no-array-push-push
 			opList.push({
 				op: client.regeneratePendingOp(
 					opList.shift()!.op,
@@ -185,6 +188,7 @@ describe("resetPendingSegmentsToOp", () => {
 				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" })!,
 				refSeq: client.getCurrentSeq(),
 			});
+			// eslint-disable-next-line unicorn/no-array-push-push
 			opList.push({
 				op: client.regeneratePendingOp(
 					opList.shift()!.op,
@@ -268,6 +272,24 @@ describe("resetPendingSegmentsToOp", () => {
 			assert(otherSegment !== undefined && TextSegment.is(otherSegment));
 			assert.deepStrictEqual(otherSegment.properties, clone({ prop1: "foo" }));
 		});
+
+		it("for text segments with no initial properties", () => {
+			const insertOp = client.insertTextLocal(0, "abc");
+			assert(insertOp);
+			client.annotateRangeLocal(0, 3, { prop2: "bar" });
+
+			const otherClient = new TestClient();
+			otherClient.startOrUpdateCollaboration("other user");
+			const regeneratedInsert = client.regeneratePendingOp(
+				insertOp,
+				client.mergeTree.pendingSegments.first!.data,
+			);
+			otherClient.applyMsg(client.makeOpMessage(regeneratedInsert, 1), false);
+
+			const { segment: otherSegment } = otherClient.getContainingSegment(0);
+			assert(otherSegment !== undefined && TextSegment.is(otherSegment));
+			assert.deepStrictEqual(otherSegment.properties, undefined);
+		});
 	});
 });
 
@@ -298,7 +320,7 @@ describe("resetPendingSegmentsToOp.rebase", () => {
 				]),
 		);
 
-		ops.forEach(([op]) => clients.all.forEach((c) => c.applyMsg(op)));
+		for (const [op] of ops) for (const c of clients.all) c.applyMsg(op);
 		logger.validate();
 	});
 });

@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
+	type ITelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -85,6 +86,8 @@ import {
 	type AnchorNode,
 	type AnchorSetRootEvents,
 	type TreeStoredSchemaSubscription,
+	type SchemaAndPolicy,
+	type ITreeCursorSynchronous,
 } from "../core/index.js";
 import {
 	cursorToJsonObject,
@@ -113,6 +116,7 @@ import {
 	mapTreeFromCursor,
 	MockNodeKeyManager,
 	normalizeNewFieldContent,
+	type FlexTreeSchema,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
@@ -142,10 +146,26 @@ import {
 } from "../shared-tree/schematizingTreeView.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
-import type { ImplicitFieldSchema, TreeViewConfiguration } from "../simple-tree/index.js";
-import { type JsonCompatible, type Mutable, nestedMapFromFlatList } from "../util/index.js";
+import {
+	type ImplicitFieldSchema,
+	type InsertableContent,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	TreeViewConfiguration,
+	normalizeFieldSchema,
+	SchemaFactory,
+	toFlexSchema,
+} from "../simple-tree/index.js";
+import {
+	type JsonCompatible,
+	type Mutable,
+	nestedMapFromFlatList,
+	forEachInNestedMap,
+	tryGetFromNestedMap,
+} from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
+// eslint-disable-next-line import/no-internal-modules
+import { cursorFromNodeData } from "../simple-tree/toMapTree.js";
 
 // Testing utilities
 
@@ -624,8 +644,7 @@ export function validateSnapshotConsistency(
 		`Inconsistent document tree json representation: ${idDifferentiator}`,
 	);
 
-	// Note: removed trees are not currently garbage collected, which allows us to expect that all clients should share the same
-	// exact set of them. In the future, we will need to relax this expectation and only enforce that whenever two
+	// Removed trees are garbage collected so we only enforce that whenever two
 	// clients both have data for the same removed tree (as identified by the first two tuple entries), then they
 	// should be consistent about the content being stored (the third tuple entry).
 	const mapA = nestedMapFromFlatList(
@@ -642,11 +661,16 @@ export function validateSnapshotConsistency(
 			prepareTreeForCompare([children])[0],
 		]),
 	);
-	assert.deepEqual(
-		mapA,
-		mapB,
-		`Inconsistent removed trees json representation: ${idDifferentiator}`,
-	);
+	forEachInNestedMap(mapA, (content, major, minor) => {
+		const mapBContent = tryGetFromNestedMap(mapB, major, minor);
+		if (mapBContent !== undefined) {
+			assert.deepEqual(
+				content,
+				mapBContent,
+				`Inconsistent removed trees json representation: ${idDifferentiator}`,
+			);
+		}
+	});
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);
 }
 
@@ -744,26 +768,42 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	return forest;
 }
 
-export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
-	content: TreeContent<TRoot>,
+export function flexTreeFromForest<TRoot extends FlexFieldSchema>(
+	schema: FlexTreeSchema<TRoot>,
+	forest: IEditableForest,
 	args?: {
-		forest?: IEditableForest;
 		nodeKeyManager?: NodeKeyManager;
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
 ): FlexTreeTypedField<TRoot> {
-	const forest = args?.forest ?? forestWithContent(content);
 	const branch = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
 		...args,
 		forest,
-		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
+		schema: new TreeStoredSchemaRepository(intoStoredSchema(schema)),
 	});
 	const manager = args?.nodeKeyManager ?? new MockNodeKeyManager();
-	const view = new CheckoutFlexTreeView(branch, content.schema, manager);
+	const view = new CheckoutFlexTreeView(branch, schema, manager);
 	return view.flexTree;
 }
+
+const sf = new SchemaFactory(undefined);
+
+export const NumberArray = sf.array("array", sf.number);
+export const StringArray = sf.array("array", sf.string);
+
+const jsonPrimitiveSchema = [sf.null, sf.boolean, sf.number, sf.string] as const;
+export const JsonObject = sf.mapRecursive("object", [
+	() => JsonObject,
+	() => JsonArray,
+	...jsonPrimitiveSchema,
+]);
+export const JsonArray = sf.arrayRecursive("array", [
+	JsonObject,
+	() => JsonArray,
+	...jsonPrimitiveSchema,
+]);
 
 export const jsonSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence, {
 	scope: "JsonSequenceRoot",
@@ -1052,12 +1092,14 @@ export function applyTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	revision?: RevisionTag,
 	build?: readonly DeltaDetachedNodeBuild[],
 	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
 	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	applyDelta(
 		rootDelta,
+		revision,
 		deltaProcessor,
 		detachedFieldIndex ??
 			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),
@@ -1068,12 +1110,14 @@ export function announceTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	revision?: RevisionTag,
 	build?: readonly DeltaDetachedNodeBuild[],
 	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
 	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	announceDelta(
 		rootDelta,
+		revision,
 		deltaProcessor,
 		detachedFieldIndex ??
 			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),
@@ -1225,6 +1269,7 @@ export function treeTestFactory(
 export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
+	logger?: ITelemetryLoggerExt,
 ): SchematizingSimpleTreeView<TSchema> {
 	const checkout = createTreeCheckout(
 		testIdCompressor,
@@ -1233,6 +1278,7 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 		{
 			forest: buildForest(),
 			schema: new TreeStoredSchemaRepository(),
+			logger,
 		},
 	);
 	return new SchematizingSimpleTreeView<TSchema>(
@@ -1240,6 +1286,40 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 		config,
 		nodeKeyManager ?? new MockNodeKeyManager(),
 	);
+}
+
+/**
+ * Views the supplied checkout with the given schema.
+ */
+export function viewCheckout<TSchema extends ImplicitFieldSchema>(
+	checkout: ITreeCheckout,
+	config: TreeViewConfiguration<TSchema>,
+): SchematizingSimpleTreeView<TSchema> {
+	return new SchematizingSimpleTreeView<TSchema>(checkout, config, new MockNodeKeyManager());
+}
+
+/**
+ * Forks a simple tree view.
+ */
+export function forkView<T extends ImplicitFieldSchema>(
+	viewToFork: SchematizingSimpleTreeView<T>,
+): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
+export function forkView<TIn extends ImplicitFieldSchema, TOut extends ImplicitFieldSchema>(
+	viewToFork: SchematizingSimpleTreeView<TIn>,
+	schema?: TOut,
+): SchematizingSimpleTreeView<TOut> & { checkout: ITreeCheckoutFork };
+export function forkView<T extends ImplicitFieldSchema>(
+	viewToFork: SchematizingSimpleTreeView<T>,
+	schema?: T,
+): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork } {
+	return new SchematizingSimpleTreeView<T>(
+		viewToFork.checkout.fork(),
+		new TreeViewConfiguration({
+			enableSchemaValidation: viewToFork.config.enableSchemaValidation,
+			schema: schema ?? viewToFork.config.schema,
+		}),
+		new MockNodeKeyManager(),
+	) as SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
 }
 
 /**
@@ -1307,4 +1387,36 @@ export function validateUsageError(expectedErrorMsg: string | RegExp): (error: E
 		}
 		return true;
 	};
+}
+
+/**
+ * Returns a cursor (in nodes mode) for the root node.
+ *
+ * @privateRemarks
+ * Ideally this would work on any node, not just the root,
+ * and the schema would come from the unhydrated node.
+ * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
+ */
+export function cursorFromUnhydratedRoot(
+	schema: ImplicitFieldSchema,
+	tree: InsertableTreeNodeFromImplicitAllowedTypes,
+	nodeKeyManager: NodeKeyManager,
+): ITreeCursorSynchronous {
+	const data = tree as InsertableContent;
+	const normalizedFieldSchema = normalizeFieldSchema(schema);
+
+	const flexSchema = toFlexSchema(normalizedFieldSchema);
+	const storedSchema: SchemaAndPolicy = {
+		policy: defaultSchemaPolicy,
+		schema: intoStoredSchema(flexSchema),
+	};
+
+	return (
+		cursorFromNodeData(
+			data,
+			normalizedFieldSchema.allowedTypes,
+			nodeKeyManager,
+			storedSchema,
+		) ?? assert.fail("failed to decode tree")
+	);
 }
