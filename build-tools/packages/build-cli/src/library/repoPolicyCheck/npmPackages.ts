@@ -11,6 +11,7 @@ import { createRequire } from "node:module";
 import { EOL as newline } from "node:os";
 import path from "node:path";
 import * as readline from "node:readline";
+import { isFluidBuildScript } from "@fluidframework/build-tools";
 import { writeJson } from "fs-extra/esm";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
@@ -1573,7 +1574,7 @@ export const handlers: Handler[] = [
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (cleanScript) {
 				// Ignore clean scripts that are root of the release group
-				if (cleanScript.startsWith("pnpm") || cleanScript.startsWith("fluid-build")) {
+				if (cleanScript.startsWith("pnpm") || isFluidBuildScript(cleanScript)) {
 					return undefined;
 				}
 
@@ -2005,8 +2006,7 @@ function missingCleanDirectories(scripts: { [key: string]: string | undefined })
 		expectedClean.push("lib");
 	}
 
-	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-	if (scripts.build?.startsWith("fluid-build")) {
+	if (isFluidBuildScript(scripts.build)) {
 		expectedClean.push("*.tsbuildinfo", "*.build.log");
 	}
 

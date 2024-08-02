@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { makeFluidBuildScript } from "../../common/fluidBuild";
 import { getExecutableFromCommand } from "../../common/utils";
 import { BuildPackage } from "../buildGraph";
 import { GroupTask } from "./groupTask";
@@ -176,7 +177,7 @@ export class TaskFactory {
 	 * @returns the target task
 	 */
 	public static CreateTargetTask(node: BuildPackage, taskName: string | undefined) {
-		return new GroupTask(node, `fluid-build -t ${taskName}`, [], taskName);
+		return new GroupTask(node, makeFluidBuildScript(`-t ${taskName}`), [], taskName);
 	}
 
 	public static CreateTaskWithLifeCycle(

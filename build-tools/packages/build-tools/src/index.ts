@@ -27,6 +27,8 @@ export type {
 	ScriptRequirement,
 } from "./common/fluidRepo";
 
+export { isFluidBuildScript } from "./common/fluidBuild";
+
 // For repo policy check
 export {
 	normalizeGlobalTaskDefinitions,

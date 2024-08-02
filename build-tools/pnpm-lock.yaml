@@ -428,6 +428,9 @@ importers:
       '@types/async':
         specifier: ^3.2.20
         version: 3.2.20
+      '@types/debug':
+        specifier: ^4.1.12
+        version: 4.1.12
       '@types/fs-extra':
         specifier: ^11.0.4
         version: 11.0.4
