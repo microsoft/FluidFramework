@@ -33,7 +33,6 @@ export interface IPendingMessage {
 	content: string;
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
-	sequenceNumber?: number;
 	/** Info needed to compute the batchId on reconnect */
 	batchIdContext: {
 		/** The Batch's original clientId, from when it was first flushed to be submitted */
@@ -44,6 +43,23 @@ export interface IPendingMessage {
 		 */
 		batchStartCsn: number;
 	};
+}
+
+/**
+ * IPendingMessage but without localOpMetadata, which isn't suitable for stashing
+ * (it's not serializable and will be regenerated when applying stashed ops)
+ */
+export interface IMessageToStash extends IPendingMessage {
+	localOpMetadata: undefined;
+}
+
+/**
+ * This represents a message that has been sequenced by the service and processed by this client (aka saved).
+ * It will be included in pending local state, since it may need to be replayed locally on rehydrate.
+ */
+interface ISavedMessage extends IMessageToStash {
+	sequenceNumber: number;
+	localOpMetadata: undefined;
 }
 
 type Patch<T, U> = U & Omit<T, keyof U>;
@@ -62,7 +78,7 @@ export interface IPendingLocalState {
 	/**
 	 * list of pending states, including ops and batch information
 	 */
-	pendingStates: IPendingMessage[];
+	pendingStates: IMessageToStash[];
 }
 
 /** Info needed to replay/resubmit a pending message */
@@ -106,9 +122,17 @@ function buildPendingMessageContent(
 	return JSON.stringify({ type, contents, compatDetails });
 }
 
-function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
+export function toStash(message: IPendingMessage): IMessageToStash {
 	return {
 		...message,
+		localOpMetadata: undefined,
+	};
+}
+
+function toSavedMessage(message: IPendingMessage, sequenceNumber: number): ISavedMessage {
+	return {
+		...message,
+		sequenceNumber,
 		localOpMetadata: undefined,
 	};
 }
@@ -131,7 +155,7 @@ export class PendingStateManager implements IDisposable {
 	/**
 	 * Sequenced local ops that are saved when stashing since pending ops may depend on them
 	 */
-	private savedOps: IPendingMessage[] = [];
+	private savedOps: ISavedMessage[] = [];
 
 	/** Used to stand in for batchStartCsn for messages that weren't submitted (so no CSN) */
 	private negativeCounter: number = -1;
@@ -185,10 +209,6 @@ export class PendingStateManager implements IDisposable {
 		// Such ops should not be declared in pending/stashed state. Snapshot seq num will not
 		// be available when the container is not attached. Therefore, no filtering is needed.
 		const newSavedOps = [...this.savedOps].filter((message) => {
-			assert(
-				message.sequenceNumber !== undefined,
-				0x97c /* saved op should already have a sequence number */,
-			);
 			return message.sequenceNumber > (snapshotSequenceNumber ?? 0);
 		});
 		this.pendingMessages.toArray().forEach((message) => {
@@ -200,10 +220,7 @@ export class PendingStateManager implements IDisposable {
 			}
 		});
 		return {
-			pendingStates: [
-				...newSavedOps,
-				...this.pendingMessages.toArray().map(withoutLocalOpMetadata),
-			],
+			pendingStates: [...newSavedOps, ...this.pendingMessages.toArray().map(toStash)],
 		};
 	}
 
@@ -391,8 +408,7 @@ export class PendingStateManager implements IDisposable {
 		// This may be the start of a batch.
 		this.maybeProcessBatchBegin(message, batchStartCsn, pendingMessage);
 
-		pendingMessage.sequenceNumber = message.sequenceNumber;
-		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
+		this.savedOps.push(toSavedMessage(pendingMessage, message.sequenceNumber));
 
 		this.pendingMessages.shift();
 
