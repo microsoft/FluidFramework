@@ -1076,11 +1076,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		// Watch the minimum sequence number and be ready to update as needed
 		if (this.minSequenceNumber > message.minimumSequenceNumber) {
-			// pre-0.58 error message: msnMovesBackwards
-			throw new DataCorruptionError(
-				"Found a lower minimumSequenceNumber (msn) than previously recorded",
+			// This happens when something changes out from under the file on the server,
+			// e.g. Database rollback or storage otherwise being modified outside of Fluid's purview.
+			// This is a fatal error with data loss for this client, but others will likely be able to connect and continue.
+			throw DataProcessingError.create(
+				// error message through v0.57: msnMovesBackwards
+				// error message through v2.1: "Found a lower minimumSequenceNumber (msn) than previously recorded",
+				"Invalid MinimumSequenceNumber from service - document was likely restored to previous state",
+				"DeltaManager.processInboundMessage",
+				message,
 				{
-					...extractSafePropertiesFromMessage(message),
 					clientId: this.connectionManager.clientId,
 				},
 			);
