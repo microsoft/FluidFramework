@@ -223,10 +223,14 @@ describe("Schema Comparison", () => {
 			return allowsRepoSuperset(defaultSchemaPolicy, a, b);
 		};
 
-		const validateMethodsConsistent = (view: TreeStoredSchema, stored: TreeStoredSchema, isSuperset: boolean): void => {
+		const validateMethodsConsistent = (
+			view: TreeStoredSchema,
+			stored: TreeStoredSchema,
+			isSuperset: boolean,
+		): void => {
 			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, view), isSuperset);
 			assert.equal(isRepoSuperset(view, stored), isSuperset);
-		}
+		};
 
 		it("Fix the rootFieldSchema and validate repo superset with different TreeNodeStoredSchemas", () => {
 			const rootFieldSchema = fieldSchema(FieldKinds.optional);
@@ -315,11 +319,19 @@ describe("Schema Comparison", () => {
 			// Validate the consistent results of 'allowsRepoSuperset' and 'isRepoSuperset'
 			validateMethodsConsistent(emptyTreeRepo, valueLocalFieldTreeRepo, false);
 			validateMethodsConsistent(optionalTreeRepoWithoutValue, valueLocalFieldTreeRepo, false);
-			validateMethodsConsistent(optionalTreeRepoWithMultipleValues, optionalLocalFieldTreeRepo, false);
+			validateMethodsConsistent(
+				optionalTreeRepoWithMultipleValues,
+				optionalLocalFieldTreeRepo,
+				false,
+			);
 
 			validateMethodsConsistent(optionalLocalFieldTreeRepo, valueLocalFieldTreeRepo, true);
 			validateMethodsConsistent(optionalTreeRepoWithMultipleValues, emptyTreeRepo, true);
-			validateMethodsConsistent(optionalTreeRepoWithMultipleValues, optionalTreeRepoWithoutValue, true);
+			validateMethodsConsistent(
+				optionalTreeRepoWithMultipleValues,
+				optionalTreeRepoWithoutValue,
+				true,
+			);
 		});
 
 		it("Fix the TreeNodeStoredSchema and validate repo superset with different rootFieldSchemas", () => {
