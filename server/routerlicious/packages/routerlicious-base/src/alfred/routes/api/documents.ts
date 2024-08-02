@@ -345,7 +345,10 @@ export function create(
 				);
 			}
 			if (tokenRevocationManager) {
-				const correlationId = getTelemetryContextPropertiesWithHttpInfo(request, response).correlationId;
+				const correlationId = getTelemetryContextPropertiesWithHttpInfo(
+					request,
+					response,
+				).correlationId;
 				const options: IRevokeTokenOptions = {
 					correlationId,
 				};

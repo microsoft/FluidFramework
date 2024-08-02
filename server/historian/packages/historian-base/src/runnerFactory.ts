@@ -82,7 +82,6 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		const riddler = new historianServices.RiddlerService(
 			riddlerEndpoint,
 			tenantCache,
-			asyncLocalStorage,
 		);
 
 		// Redis connection for throttling.

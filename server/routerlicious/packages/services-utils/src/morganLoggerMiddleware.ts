@@ -116,7 +116,10 @@ export function jsonMorganLoggerMiddleware(
 				[HttpProperties.requestContentLength]: tokens.req(req, res, "content-length"),
 				[HttpProperties.responseContentLength]: tokens.res(req, res, "content-length"),
 				[HttpProperties.responseTime]: tokens["response-time"](req, res),
-				[BaseTelemetryProperties.correlationId]: getTelemetryContextPropertiesWithHttpInfo(req, res).correlationId,
+				[BaseTelemetryProperties.correlationId]: getTelemetryContextPropertiesWithHttpInfo(
+					req,
+					res,
+				).correlationId,
 				[CommonProperties.serviceName]: serviceName,
 				[CommonProperties.telemetryGroupName]: "http_requests",
 				[HttpProperties.retryCount]: Number.parseInt(

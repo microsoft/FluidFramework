@@ -156,7 +156,6 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		tenantId,
 		documentId,
 		cache,
-		asyncLocalStorage,
 		calculatedStorageName,
 		storageUrl,
 		isEphemeral,

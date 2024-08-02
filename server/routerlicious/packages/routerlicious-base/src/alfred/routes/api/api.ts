@@ -23,7 +23,11 @@ import {
 	verifyStorageToken,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
-import { Lumberjack, getLumberBaseProperties, getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
+import {
+	Lumberjack,
+	getLumberBaseProperties,
+	getGlobalTelemetryContext,
+} from "@fluidframework/server-services-telemetry";
 import { Request, Router } from "express";
 import sillyname from "sillyname";
 import { Provider } from "nconf";
