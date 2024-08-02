@@ -1039,6 +1039,12 @@ export class GarbageCollector implements IGarbageCollector {
 	 * before runnint GC next.
 	 */
 	private triggerAutoRecovery(nodePath: string) {
+		// If sweep isn't enabled, auto-recovery isn't needed since its purpose is to prevent this object from being
+		// deleted. It also would end up sending a GC op which can break clients running FF version 1.x.
+		if (!this.configs.sweepEnabled) {
+			return;
+		}
+
 		// Use compat behavior "Ignore" since this is an optimization to opportunistically protect
 		// objects from deletion, so it's fine for older clients to ignore this op.
 		const containerGCMessage: ContainerRuntimeGCMessage = {

@@ -149,7 +149,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 			[{ eventName: changedEvent }, { eventName: loadedEvent }, { eventName: revivedEvent }],
 			async () => {
 				const summarizerRuntime = await createSummarizerClient({
-					...testContainerConfig, // But summarizer should NOT throw
+					...testContainerConfig,
 					loaderProps: { logger: mockLogger },
 				});
 				const dataObject = await createNewDataObject();
@@ -340,7 +340,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 			[{ eventName: changedEvent }, { eventName: loadedEvent }],
 			async () => {
 				const summarizerRuntime = await createSummarizerClient({
-					...testContainerConfig, // But summarizer should NOT throw
+					...testContainerConfig,
 					loaderProps: { logger: mockLogger },
 				});
 				const dataObject = await createNewDataObject();
