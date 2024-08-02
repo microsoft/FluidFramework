@@ -293,7 +293,7 @@ function trackFieldDiscrepancies(
 ): FieldIncompatibility[] {
 	const differences: FieldIncompatibility[] = [];
 
-	// Only track the intersection of the two sets.
+	// Only track the symmetric differences of two sets.
 	const findSetDiscrepancies = (
 		a: TreeTypeSet,
 		b: TreeTypeSet,
