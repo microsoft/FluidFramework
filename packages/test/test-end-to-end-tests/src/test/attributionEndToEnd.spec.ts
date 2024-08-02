@@ -16,7 +16,13 @@ import {
 } from "@fluid-private/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
+import {
+	createCustomAttributionTrackingAndInsertionAttributionPolicyFactory,
+	createInsertOnlyAttributionPolicy,
+	customAttributionKeysPropName,
+	insertCustomAttributionPropInPropertySet,
+	type AttributionPolicy,
+} from "@fluidframework/merge-tree/internal";
 import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import {
@@ -111,7 +117,10 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 		return dataObject.getSharedObject<SharedString>(stringId);
 	};
 
-	const getTestConfig = (runtimeAttributor?: IRuntimeAttributor): ITestContainerConfig => ({
+	const getTestConfig = (
+		runtimeAttributor?: IRuntimeAttributor,
+		attributionPolicy: () => AttributionPolicy = createInsertOnlyAttributionPolicy,
+	): ITestContainerConfig => ({
 		...testContainerConfig,
 		enableAttribution: runtimeAttributor !== undefined,
 		loaderProps: {
@@ -124,7 +133,7 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 			options: {
 				attribution: {
 					track: runtimeAttributor !== undefined,
-					policyFactory: createInsertOnlyAttributionPolicy,
+					policyFactory: attributionPolicy,
 				},
 			} as any,
 		},
@@ -169,6 +178,59 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 			assertAttributionMatches(sharedString2, 13, attributor2, {
 				user: container1.audience.getMember(container1.clientId)?.user,
 			});
+		},
+	);
+
+	itSkipsFailureOnSpecificDrivers(
+		"Can custom attribute content from multiple collaborators",
+		["tinylicious", "t9s"],
+		async () => {
+			const attributor1 = createRuntimeAttributor();
+			const container1 = await provider.makeTestContainer(
+				getTestConfig(
+					attributor1,
+					createCustomAttributionTrackingAndInsertionAttributionPolicyFactory(),
+				),
+			);
+			const sharedString1 = await sharedStringFromContainer(container1);
+			const attributor2 = createRuntimeAttributor();
+			const container2 = await provider.loadTestContainer(
+				getTestConfig(attributor2),
+				createCustomAttributionTrackingAndInsertionAttributionPolicyFactory(),
+			);
+			const sharedString2 = await sharedStringFromContainer(container2);
+
+			const text = "client 1";
+			const customAttribution = {
+				user: { id: "user1@" },
+				timestamp: 1,
+				onBehalfOf: "copilot",
+			};
+			sharedString1.insertText(0, text, {}, customAttribution);
+
+			await provider.ensureSynchronized();
+			const text2 = "client 2, ";
+			const customAttribution2 = {
+				user: { id: "user3@" },
+				timestamp: 1,
+				onBehalfOf: "copilot3",
+			};
+			sharedString2.insertText(0, text2, {}, customAttribution2);
+			await provider.ensureSynchronized();
+
+			assert.equal(sharedString1.getText(), "client 2, client 1");
+
+			assert(
+				container1.clientId !== undefined && container2.clientId !== undefined,
+				"Both containers should have client ids.",
+			);
+			const customAttributesVal = sharedString1.readAttributionAtPos(13);
+			assert(customAttributesVal !== undefined, "attribution should exist");
+			assert.deepStrictEqual(
+				customAttributesVal,
+				customAttribution2,
+				"attribution should match",
+			);
 		},
 	);
 

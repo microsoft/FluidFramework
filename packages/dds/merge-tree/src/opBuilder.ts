@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { CustomAttributionKey } from "@fluidframework/runtime-definitions/internal";
+
 import { ISegment, Marker } from "./mergeTreeNodes.js";
 import {
 	IMergeTreeAnnotateMsg,
@@ -105,8 +107,12 @@ export function createObliterateRangeOp(start: number, end: number): IMergeTreeO
  *
  * @internal
  */
-export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTreeInsertMsg {
-	return createInsertOp(pos, segment.toJSONObject());
+export function createInsertSegmentOp(
+	pos: number,
+	segment: ISegment,
+	customAttributionKey?: CustomAttributionKey,
+): IMergeTreeInsertMsg {
+	return createInsertOp(pos, segment.toJSONObject(), customAttributionKey);
 }
 
 /**
@@ -115,10 +121,15 @@ export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTre
  *
  * @internal
  */
-export function createInsertOp(pos: number, segSpec: unknown): IMergeTreeInsertMsg {
+export function createInsertOp(
+	pos: number,
+	segSpec: unknown,
+	customAttributionKey?: CustomAttributionKey,
+): IMergeTreeInsertMsg {
 	return {
 		pos1: pos,
 		seg: segSpec,
+		customAttributionKey,
 		type: MergeTreeDeltaType.INSERT,
 	};
 }

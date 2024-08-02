@@ -1021,6 +1021,7 @@ declare type current_as_old_for_TypeAlias_SharedString = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Class_SharedStringClass": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_SharedStringClass = requireAssignableTo<TypeOnly<old.SharedStringClass>, TypeOnly<current.SharedStringClass>>
 
 /*

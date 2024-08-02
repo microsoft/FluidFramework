@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -19,6 +20,10 @@ import {
 	TextSegment,
 	refHasTileLabel,
 } from "@fluidframework/merge-tree/internal";
+import {
+	type CustomAttributionKey,
+	IRuntimeAttributor, // Shared string will take dependency on the attributor interface in this case.
+} from "@fluidframework/runtime-definitions/internal";
 
 import { SharedSegmentSequence, type ISharedSegmentSequence } from "./sequence.js";
 import { SharedStringFactory } from "./sequenceFactory.js";
@@ -35,7 +40,12 @@ export interface ISharedString extends ISharedSegmentSequence<SharedStringSegmen
 	 * @param text - The text to insert
 	 * @param props - The properties of the text
 	 */
-	insertText(pos: number, text: string, props?: PropertySet): void;
+	insertText(
+		pos: number,
+		text: string,
+		props?: PropertySet,
+		customAttribution?: PropertySet,
+	): void;
 
 	/**
 	 * Inserts a marker at the position.
@@ -43,7 +53,12 @@ export interface ISharedString extends ISharedSegmentSequence<SharedStringSegmen
 	 * @param refType - The reference type of the marker
 	 * @param props - The properties of the marker
 	 */
-	insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void;
+	insertMarker(
+		pos: number,
+		refType: ReferenceType,
+		props?: PropertySet,
+		customAttribution?: PropertySet,
+	): void;
 
 	/**
 	 * Inserts a marker at a relative position.
@@ -152,13 +167,14 @@ export class SharedStringClass
 
 	// eslint-disable-next-line import/no-deprecated
 	private readonly mergeTreeTextHelper: IMergeTreeTextHelper;
-
+	private readonly attributor: any | undefined;
 	constructor(
 		document: IFluidDataStoreRuntime,
 		public id: string,
 		attributes: IChannelAttributes,
 	) {
 		super(document, id, attributes, SharedStringFactory.segmentFromSpec as any);
+		this.attributor = document.options.attribution?.attributor;
 		this.mergeTreeTextHelper = this.client.createTextHelper();
 	}
 
@@ -179,16 +195,60 @@ export class SharedStringClass
 		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
 
+	private addAttribution(customAttribution: PropertySet): CustomAttributionKey {
+		const key = this.attributor.addAttribution(customAttribution);
+		return key as CustomAttributionKey;
+	}
+
+	public readAttributionAtPos(pos: number, propName?: string): unknown {
+		const { segment, offset } = this.getContainingSegment(pos);
+		assert(segment !== undefined && offset !== undefined, "segment is present");
+		const attributionKey = segment.attribution?.getAtOffset(offset, propName);
+		if (attributionKey !== undefined) {
+			return this.attributor.get(attributionKey);
+		}
+	}
+
+	public readAllAttributionInSegmentFromPos(
+		pos: number,
+		propName?: string,
+	): { offset: number; attribution: unknown }[] | undefined {
+		const { segment, offset } = this.getContainingSegment(pos);
+		assert(segment !== undefined && offset !== undefined, "segment is present");
+		const attributionKeysList = segment.attribution?.getKeysInOffsetRange(
+			offset,
+			undefined,
+			propName,
+		);
+		if (attributionKeysList === undefined) {
+			return undefined;
+		}
+		const attributionValues: { offset: number; attribution: PropertySet }[] = [];
+		for (const { offset: offset1, key } of attributionKeysList) {
+			attributionValues.push({ offset: offset1, attribution: this.attributor.get(key) });
+		}
+		return attributionValues;
+	}
+
 	/**
 	 * {@inheritDoc ISharedString.insertMarker}
 	 */
-	public insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void {
+	public insertMarker(
+		pos: number,
+		refType: ReferenceType,
+		props?: PropertySet,
+		customAttribution?: PropertySet,
+	): void {
 		const segment = new Marker(refType);
 		if (props) {
 			segment.addProperties(props);
 		}
+		let attributionKey: CustomAttributionKey | undefined;
+		if (customAttribution) {
+			attributionKey = this.addAttribution(customAttribution);
+		}
 
-		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
+		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment, attributionKey));
 	}
 
 	/**
@@ -211,13 +271,22 @@ export class SharedStringClass
 	/**
 	 * {@inheritDoc ISharedString.insertText}
 	 */
-	public insertText(pos: number, text: string, props?: PropertySet): void {
+	public insertText(
+		pos: number,
+		text: string,
+		props?: PropertySet,
+		customAttribution?: PropertySet,
+	): void {
 		const segment = new TextSegment(text);
 		if (props) {
 			segment.addProperties(props);
 		}
+		let attributionKey: CustomAttributionKey | undefined;
+		if (customAttribution) {
+			attributionKey = this.addAttribution(customAttribution);
+		}
 
-		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
+		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment, attributionKey));
 	}
 
 	/**

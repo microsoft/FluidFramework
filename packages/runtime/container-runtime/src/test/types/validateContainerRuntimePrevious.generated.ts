@@ -139,6 +139,7 @@ declare type old_as_current_for_Enum_ContainerMessageType = requireAssignableTo<
  * typeValidation.broken:
  * "Enum_ContainerMessageType": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Enum_ContainerMessageType = requireAssignableTo<TypeOnly<current.ContainerMessageType>, TypeOnly<old.ContainerMessageType>>
 
 /*
@@ -148,6 +149,7 @@ declare type current_as_old_for_Enum_ContainerMessageType = requireAssignableTo<
  * typeValidation.broken:
  * "Class_ContainerRuntime": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_ContainerRuntime = requireAssignableTo<TypeOnly<old.ContainerRuntime>, TypeOnly<current.ContainerRuntime>>
 
 /*

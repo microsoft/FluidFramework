@@ -191,6 +191,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"Class_SharedStringClass": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

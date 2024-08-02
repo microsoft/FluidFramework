@@ -176,6 +176,13 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"Interface_SequenceOffsets": {
+				"backCompat": false
+			},
+			"Interface_SerializedAttributionCollection": {
+				"backCompat": false
+			}
+		}
 	}
 }
