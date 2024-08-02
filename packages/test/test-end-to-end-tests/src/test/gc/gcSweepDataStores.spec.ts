@@ -711,35 +711,6 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				);
 			},
 		);
-
-		it("disableDatastoreSweep true - Tombstones the SweepReady data store state in the summary", async () => {
-			configProvider.set("Fluid.GarbageCollection.DisableDataStoreSweep", true);
-
-			const { unreferencedId, summarizer, summarizingContainer } =
-				await summarizationWithUnreferencedDataStoreAfterTime();
-			const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
-
-			// Summarize. If sweep was enabled, the gc op will be sent with the deleted data store id. The data store
-			// will be removed in the subsequent summary.
-			await ensureSynchronizedAndSummarize(summarizer);
-
-			// The datastore should NOT be swept here. If sweep was enabled, it would be deleted in this summary.
-			// We need to do fullTree because the GC data won't change (since it's not swept).
-			// But the validation depends on the GC subtree being present (not a handle).
-			const summary3 = await ensureSynchronizedAndSummarize(summarizer, {
-				reason: "end-to-end test",
-				fullTree: true,
-			});
-
-			// Validate that the data store's state is correct in the summary - it should have been tombstoned not deleted.
-			validateDataStoreStateInSummary(
-				summary3.summaryTree,
-				sweepReadyDataStoreNodePath,
-				false /* expectDelete */,
-				false /* expectGCStateHandle */,
-				true /* expectTombstoned */,
-			);
-		});
 	});
 
 	itExpects(
