@@ -34,7 +34,8 @@ export class ExternalStorageManager implements IExternalStorageManager {
 		return {
 			"Accept": "application/json",
 			"Content-Type": "application/json",
-			"x-correlation-id": getGlobalTelemetryContext().getProperties().correlationId ?? uuid.v4(),
+			"x-correlation-id":
+				getGlobalTelemetryContext().getProperties().correlationId ?? uuid.v4(),
 		};
 	}
 

@@ -20,7 +20,11 @@ import {
 import { ITenantStorage, runWithRetry } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
 import * as winston from "winston";
-import { BaseTelemetryProperties, Lumberjack, getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
+import {
+	BaseTelemetryProperties,
+	Lumberjack,
+	getGlobalTelemetryContext,
+} from "@fluidframework/server-services-telemetry";
 import { Constants, getRequestErrorTranslator } from "../utils";
 import { ICache } from "./definitions";
 

@@ -6,7 +6,11 @@
 import { ITenantConfig, ITenantConfigManager } from "@fluidframework/server-services-core";
 import { BasicRestWrapper, RestWrapper } from "@fluidframework/server-services-client";
 import * as uuid from "uuid";
-import { BaseTelemetryProperties, Lumberjack, getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
+import {
+	BaseTelemetryProperties,
+	Lumberjack,
+	getGlobalTelemetryContext,
+} from "@fluidframework/server-services-telemetry";
 import { getRequestErrorTranslator, getTokenLifetimeInSec } from "../utils";
 import { ITenantService } from "./definitions";
 import { RedisTenantCache } from "./redisTenantCache";

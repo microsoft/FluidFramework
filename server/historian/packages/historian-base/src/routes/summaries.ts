@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import {
 	IWholeFlatSummary,
 	IWholeSummaryPayload,
@@ -37,7 +36,6 @@ export function create(
 	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
 	cache?: ICache,
-	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
 ): Router {
@@ -102,7 +100,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
 		});
 		return service.getSummary(sha, useCache);
@@ -125,7 +122,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			initialUpload: initial,
 			storageName,
 			isEphemeralContainer,
@@ -147,7 +143,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			allowDisabledTenant: true,
 			denyList,
 		});
