@@ -279,7 +279,7 @@ export class Outbox {
 			this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
 		assert(
 			referenceSequenceNumber !== undefined,
-			"reference sequence number should be defined",
+			0xa01 /* reference sequence number should be defined */,
 		);
 		const emptyGroupedBatch = this.params.groupingManager.createEmptyGroupedBatch(
 			resubmittingBatchId,

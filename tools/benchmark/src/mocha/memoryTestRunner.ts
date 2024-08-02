@@ -401,7 +401,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 			};
 
 			benchmarkStats.customData["Relative Margin of Error"] = {
-				rawValue: heapUsedStats,
+				rawValue: heapUsedStats.marginOfErrorPercent,
 				formattedValue: `±${prettyNumber(heapUsedStats.marginOfErrorPercent, 2)}`,
 			};
 
