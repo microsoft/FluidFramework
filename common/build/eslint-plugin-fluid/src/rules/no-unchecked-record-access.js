@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+const ts = require("typescript");
+
 hasIndexSignature = (type) => type.getStringIndexType() || type.getNumberIndexType();
 
 isArrayType = (type) => type.symbol && type.symbol.name === "Array";
@@ -48,6 +50,14 @@ module.exports = {
 			}
 
 			if (hasIndexSignature(type)) {
+				const property = node.property.name || node.property.value;
+				const propertyType = checker.getTypeOfPropertyOfType(type, property);
+
+				// Skip reporting if the property exists on the type
+				if (propertyType && propertyType.flags !== ts.TypeFlags.Undefined) {
+					return;
+				}
+
 				context.report({
 					node: node,
 					message: `'${accessPath.join(".")}' is possibly 'undefined'`,

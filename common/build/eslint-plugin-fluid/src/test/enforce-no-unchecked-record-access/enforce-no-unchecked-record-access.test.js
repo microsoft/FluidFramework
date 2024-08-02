@@ -31,22 +31,22 @@ describe("ESLint Rule Tests", function () {
 		const result = await lintFile("fileWithOnlyRecordAccess.ts");
 		assert.strictEqual(result.errorCount, 6, "Should have six errors");
 		assert.strictEqual(result.messages[0].message, "'someObj.a' is possibly 'undefined'");
+		assert.strictEqual(result.messages[1].message, "'someObj.a' is possibly 'undefined'");
 		assert.strictEqual(
-			result.messages[1].message,
-			"'someObj.a.length' is possibly 'undefined'",
+			result.messages[2].message,
+			"'nestedObj.nested.a' is possibly 'undefined'",
 		);
-		assert.strictEqual(result.messages[2].message, "'someObj.a' is possibly 'undefined'");
 		assert.strictEqual(
 			result.messages[3].message,
 			"'nestedObj.nested.a' is possibly 'undefined'",
 		);
 		assert.strictEqual(
 			result.messages[4].message,
-			"'nestedObj.nested.a.length' is possibly 'undefined'",
+			"'someObjWithDynamicType.a' is possibly 'undefined'",
 		);
 		assert.strictEqual(
 			result.messages[5].message,
-			"'nestedObj.nested.a' is possibly 'undefined'",
+			"'someObjWithDynamicType.a' is possibly 'undefined'",
 		);
 	});
 
