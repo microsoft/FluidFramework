@@ -1,0 +1,25 @@
+name: Release branch warning
+on:
+  pull_request:
+    types:
+      - opened
+
+      # This is triggered when the base branch changes; handles the case where you open a PR against main then change the
+      # base branch to a release branch.
+      - edited
+    branches:
+      - release/client/**
+      - release/server/**
+
+permissions:
+  pull-requests: write
+
+jobs:
+  warning:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post warning in comment
+        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
+        with:
+          path: ${{ github.workspace }}/.github/workflows/data/release-branch-warning.md
+          only_create: true
