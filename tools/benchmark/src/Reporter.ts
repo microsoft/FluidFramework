@@ -122,6 +122,11 @@ export class BenchmarkReporter {
 		table.cell("name", chalk.italic(testName));
 		table.cell("total time (s)", prettyNumber((result as BenchmarkData).elapsedSeconds, 2));
 
+		// Additional if-statement to display columns in more readble order.
+		if (isResultError(result)) {
+			table.cell("error", result.error);
+		}
+
 		// Using this utility to print the data means missing fields don't crash and extra fields are reported.
 		// This is useful if this reporter is given unexpected data (such as from a memory test).
 		// It can also be used as a way to add extensible data formatting in the future.
