@@ -30,8 +30,7 @@ type GCSummaryStateTrackerWithPrivates = Omit<
 describe("GCSummaryStateTracker tests", () => {
 	it("Autorecovery: requesting Full GC", async () => {
 		const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker({
-			gcEnabled: true,
-			tombstoneMode: false,
+			gcAllowed: true,
 			gcVersionInBaseSnapshot: 1,
 			gcVersionInEffect: 1,
 		}) as any;
@@ -75,8 +74,7 @@ describe("GCSummaryStateTracker tests", () => {
 		beforeEach(async () => {
 			// Creates a summary state tracker and initialize it.
 			summaryStateTracker = new GCSummaryStateTracker({
-				gcEnabled: true,
-				tombstoneMode: true,
+				gcAllowed: true,
 				gcVersionInBaseSnapshot: nextGCVersion,
 				gcVersionInEffect: nextGCVersion,
 			});
@@ -202,8 +200,7 @@ describe("GCSummaryStateTracker tests", () => {
 		};
 
 		const summaryStateTracker = new GCSummaryStateTracker({
-			gcEnabled: true,
-			tombstoneMode: true,
+			gcAllowed: true,
 			gcVersionInBaseSnapshot: nextGCVersion,
 			gcVersionInEffect: nextGCVersion,
 		});

@@ -355,7 +355,7 @@ export class PendingStateManager implements IDisposable {
 		if (batch.messages.length === 0) {
 			assert(
 				batch.emptyBatchSequenceNumber !== undefined,
-				"Expected sequence number for empty batch",
+				0x9fb /* Expected sequence number for empty batch */,
 			);
 			const localOpMetadata = this.processNextPendingMessage(batch.emptyBatchSequenceNumber);
 			assert(
