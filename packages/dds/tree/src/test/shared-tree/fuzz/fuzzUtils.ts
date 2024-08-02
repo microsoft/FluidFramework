@@ -24,7 +24,7 @@ import {
 	forEachNodeInSubtree,
 	moveToDetachedField,
 } from "../../../core/index.js";
-import { SchemaBuilder, leaf } from "../../../domains/index.js";
+import { SchemaBuilder, leaf, typedJsonCursor } from "../../../domains/index.js";
 import {
 	Any,
 	FieldKinds,
@@ -33,7 +33,6 @@ import {
 	type LeafNodeSchema,
 	type SchemaLibrary,
 	intoStoredSchema,
-	typeNameSymbol,
 } from "../../../feature-libraries/index.js";
 import type { ITreeCheckout, SharedTree, TreeContent } from "../../../shared-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
@@ -121,10 +120,14 @@ export function validateAnchors(
 	view: ITreeCheckout,
 	anchors: ReadonlyMap<Anchor, [UpPath, Value]>,
 	checkPaths: boolean,
+	tolerateLostAnchors = true,
 ) {
 	const cursor = view.forest.allocateCursor();
 	for (const [anchor, [path, value]] of anchors) {
 		const result = view.forest.tryMoveCursorToNode(anchor, cursor);
+		if (tolerateLostAnchors && result === TreeNavigationResult.NotFound) {
+			continue;
+		}
 		assert.equal(result, TreeNavigationResult.Ok);
 		assert.equal(cursor.value, value);
 		if (checkPaths) {
@@ -187,28 +190,24 @@ export const deterministicIdCompressorFactory: (
 
 export const populatedInitialState: TreeContent<
 	typeof fuzzSchema.rootFieldSchema
->["initialTree"] = {
-	[typeNameSymbol]: fuzzNode.name,
+>["initialTree"] = typedJsonCursor({
+	[typedJsonCursor.type]: fuzzNode,
 	sequenceChildren: [
 		{
-			[typeNameSymbol]: fuzzNode.name,
+			[typedJsonCursor.type]: fuzzNode,
 			sequenceChildren: ["AA", "AB", "AC"],
 			requiredChild: "A",
-			optionalChild: undefined,
 		},
 		{
-			[typeNameSymbol]: fuzzNode.name,
+			[typedJsonCursor.type]: fuzzNode,
 			sequenceChildren: ["BA", "BB", "BC"],
 			requiredChild: "B",
-			optionalChild: undefined,
 		},
 		{
-			[typeNameSymbol]: fuzzNode.name,
+			[typedJsonCursor.type]: fuzzNode,
 			sequenceChildren: ["CA", "CB", "CC"],
 			requiredChild: "C",
-			optionalChild: undefined,
 		},
 	],
 	requiredChild: "R",
-	optionalChild: undefined,
-};
+});

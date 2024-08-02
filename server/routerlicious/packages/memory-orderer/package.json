@@ -95,6 +95,13 @@
 		"webpack": "^5.82.0"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_LocalKafka": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_LocalOrderer": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

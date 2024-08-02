@@ -189,12 +189,6 @@ for (const testOpts of testMatrix) {
 		 * a signal sent by any 1 client should be recieved by all 3 clients, regardless of read/write permissions.
 		 */
 		it("can send and receive read-only client signals", async function () {
-			// TODO: Fix tests when ran against local service - ADO:7876
-			const useAzure = process.env.FLUID_CLIENT === "azure";
-			if (!useAzure) {
-				this.skip();
-			}
-
 			const { signaler: writeSignaler, containerId } = await getOrCreateSignalerContainer(
 				undefined,
 				user1,

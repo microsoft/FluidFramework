@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	type Anchor,
@@ -55,7 +55,6 @@ import {
 	type FlexibleFieldContent,
 	type FlexibleNodeContent,
 	type PropertyNameFromFieldKey,
-	TreeStatus,
 	flexTreeMarker,
 	flexTreeSlot,
 	reservedObjectNodeFieldPropertyNamePrefixes,
@@ -66,13 +65,10 @@ import {
 	anchorSymbol,
 	cursorSymbol,
 	forgetAnchorSymbol,
-	isFreedSymbol,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
-import type { FlexTreeNodeEvents } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
-import { treeStatusFromAnchorCache } from "./utilities.js";
 
 /**
  * @param cursor - This does not take ownership of this cursor: Node will fork it as needed.
@@ -255,43 +251,6 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		cursor.enterNode(index);
 
 		return { parent: proxifiedField, index };
-	}
-
-	public override treeStatus(): TreeStatus {
-		if (this[isFreedSymbol]()) {
-			return TreeStatus.Deleted;
-		}
-		return treeStatusFromAnchorCache(this.anchorNode);
-	}
-
-	public on<K extends keyof FlexTreeNodeEvents>(
-		eventName: K,
-		listener: FlexTreeNodeEvents[K],
-	): () => void {
-		switch (eventName) {
-			case "changing": {
-				const unsubscribeFromChildrenChange = this.anchorNode.on(
-					"childrenChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode),
-				);
-				return unsubscribeFromChildrenChange;
-			}
-			case "subtreeChanging": {
-				const unsubscribeFromSubtreeChange = this.anchorNode.on(
-					"subtreeChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode),
-				);
-				return unsubscribeFromSubtreeChange;
-			}
-			case "nodeChanged": {
-				return this.anchorNode.on("childrenChangedAfterBatch", listener);
-			}
-			case "treeChanged": {
-				return this.anchorNode.on("subtreeChangedAfterBatch", listener);
-			}
-			default:
-				unreachableCase(eventName);
-		}
 	}
 }
 

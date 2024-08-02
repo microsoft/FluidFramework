@@ -332,8 +332,6 @@ extends:
                       tagName: '${{ parameters.tagName }}'
                       interdependencyRange: '${{ parameters.interdependencyRange }}'
                       packageTypesOverride: '${{ parameters.packageTypesOverride }}'
-                      STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
-                      STORAGE_KEY: $(STORAGE_KEY)
 
               # Build and Lint
               - template: /tools/pipelines/templates/include-build-lint.yml@self
@@ -580,22 +578,14 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
 
-                # This condition should be kept in sync with the one in include-set-package-version, which decides if
-                # upload-dev-manifest.yml should be included or not.
-                - ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(parameters.tagName, 'client'), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))) }}:
-                  - output: pipelineArtifact
-                    displayName: Publish Artifact - release_reports
-                    targetPath: $(Build.ArtifactStagingDirectory)/release_reports
-                    artifactName: release_reports
-                    sbomEnabled: false
-                    publishLocation: pipeline
-
       # Publish stage
       - ${{ if eq(parameters.publish, true) }}:
         - template: include-publish-npm-package.yml
           parameters:
             tagName: ${{ parameters.tagName }}
             isReleaseGroup: ${{ parameters.isReleaseGroup }}
+            buildDirectory: ${{ parameters.buildDirectory }}
+            buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
 
       # Capture pipeline stage results
       - ${{ if eq(parameters.telemetry, true) }}:

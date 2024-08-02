@@ -10,7 +10,7 @@ import { readFileAsync } from "../../../common/utils";
 import { LeafWithDoneFileTask } from "./leafTask";
 
 export class FlubListTask extends LeafWithDoneFileTask {
-	private getResourceGroup() {
+	private getReleaseGroup() {
 		const split = this.command.split(" ");
 		for (let i = 0; i < split.length; i++) {
 			const arg = split[i];
@@ -18,10 +18,13 @@ export class FlubListTask extends LeafWithDoneFileTask {
 				return split[i + 1];
 			}
 		}
-		return undefined;
+
+		// no release group flag, so assume the third argument is the release group.
+		return split.length < 3 || split[2].startsWith("-") ? undefined : split[2];
 	}
+
 	public async getDoneFileContent(): Promise<string | undefined> {
-		const resourceGroup = this.getResourceGroup();
+		const resourceGroup = this.getReleaseGroup();
 		if (resourceGroup === undefined) {
 			return undefined;
 		}

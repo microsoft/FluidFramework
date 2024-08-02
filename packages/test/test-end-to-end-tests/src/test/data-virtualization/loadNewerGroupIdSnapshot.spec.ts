@@ -5,7 +5,11 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import {
+	describeCompat,
+	itExpects,
+	versionToComparisonNumber,
+} from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	type ContainerRuntime,
@@ -28,7 +32,12 @@ import {
 
 import { TestSnapshotCache } from "../../testSnapshotCache.js";
 
-import { clearCacheIfOdsp, supportsDataVirtualization } from "./utils.js";
+import {
+	clearCacheIfOdsp,
+	isGroupIdLoaderVersion,
+	isSupportedLoaderVersion,
+	supportsDataVirtualization,
+} from "./utils.js";
 
 const interceptResult = <T>(
 	parent: any,
@@ -58,7 +67,7 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 
 describeCompat(
 	"Create data store with group id",
-	"NoCompat",
+	"LoaderCompat",
 	(getTestObjectProvider, apis) => {
 		const { DataObjectFactory, DataObject } = apis.dataRuntime;
 		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
@@ -67,6 +76,10 @@ describeCompat(
 		class TestDataObject extends DataObject {
 			public get _root() {
 				return this.root;
+			}
+
+			public get logger() {
+				return this.context.baseLogger;
 			}
 
 			public get containerRuntime() {
@@ -130,7 +143,10 @@ describeCompat(
 		const persistedCache = new TestSnapshotCache();
 		beforeEach("setup", async function () {
 			provider = getTestObjectProvider({ persistedCache });
-			if (!supportsDataVirtualization(provider)) {
+			if (
+				!supportsDataVirtualization(provider) ||
+				!isSupportedLoaderVersion(apis.loader.version)
+			) {
 				this.skip();
 			}
 		});
@@ -200,34 +216,44 @@ describeCompat(
 			assert(handleA2 !== undefined, "handleA2 should not be undefined");
 
 			const snapshotADeferred: Deferred<ISnapshot> = new Deferred();
-			assert(
-				runtime2.storage.getSnapshot !== undefined,
-				"getSnapshot not defined for runtime2",
-			);
-			interceptResult(runtime2.storage, runtime2.storage.getSnapshot, (snapshot) => {
-				snapshotADeferred.resolve(snapshot);
-			});
+			if (isGroupIdLoaderVersion(apis.loader.version)) {
+				assert(
+					runtime2.storage.getSnapshot !== undefined,
+					"getSnapshot not defined for runtime2",
+				);
+				interceptResult(runtime2.storage, runtime2.storage.getSnapshot, (snapshot) => {
+					snapshotADeferred.resolve(snapshot);
+				});
+			}
 
 			// loading group call
 			const dataObjectA2 = await handleA2.get();
 			assert.equal(dataObjectA2._root.get("A"), "A", "A should be set");
 			assert.equal(dataObjectA2._root.get("B"), "B", "B should be set");
 
-			const groupSnapshot = await snapshotADeferred.promise;
-			const snapshotTreeA =
-				groupSnapshot.snapshotTree.trees[".channels"].trees[dataObjectA2.id];
-			assertPopulatedGroupIdTree(
-				snapshotTreeA,
-				groupSnapshot.blobContents,
-				"Should be a populated groupId tree",
-			);
-			assert(
-				groupSnapshot.sequenceNumber === summaryRefSeq,
-				"failed to load snapshot with correct sequence number",
-			);
+			if (isGroupIdLoaderVersion(apis.loader.version)) {
+				const groupSnapshot = await snapshotADeferred.promise;
+				const snapshotTreeA =
+					groupSnapshot.snapshotTree.trees[".channels"].trees[dataObjectA2.id];
+				assertPopulatedGroupIdTree(
+					snapshotTreeA,
+					groupSnapshot.blobContents,
+					"Should be a populated groupId tree",
+				);
+				assert(
+					groupSnapshot.sequenceNumber === summaryRefSeq,
+					"failed to load snapshot with correct sequence number",
+				);
+			}
 		});
 
 		it("Load datastore via groupId with snapshot in the future, with seq > some ops", async () => {
+			if (
+				versionToComparisonNumber(apis.loader.version) <
+				versionToComparisonNumber("2.0.0-internal.5")
+			) {
+				return; // getAliasedEntryPoint isn't supported for versions < 2.0.0-internal.5
+			}
 			// Load basic container stuff
 			const container = await provider.createContainer(runtimeFactory, {
 				configProvider: configProvider({
@@ -314,7 +340,9 @@ describeCompat(
 			await delay(100);
 
 			// Loading group call should wait for ops to come through
-			assert(!deferred.isCompleted, "Promise should not be resolved yet");
+			if (isGroupIdLoaderVersion(apis.loader.version)) {
+				assert(!deferred.isCompleted, "Promise should not be resolved yet");
+			}
 
 			// This should cause the ops to come through
 			container2.connect();
@@ -336,7 +364,13 @@ describeCompat(
 					error: "Summarizer client behind, loaded newer snapshot with loadingGroupId",
 				},
 			],
-			async () => {
+			async function () {
+				if (
+					versionToComparisonNumber(apis.loader.version) <
+					versionToComparisonNumber("2.0.0-internal.5")
+				) {
+					this.skip(); // getAliasedEntryPoint isn't supported for versions < 2.0.0-internal.5
+				}
 				// Load basic container stuff
 				const container = await provider.createContainer(runtimeFactory, {
 					configProvider: configProvider({
@@ -447,12 +481,20 @@ describeCompat(
 					latestSummaryRefSeqNum: 0,
 				});
 
-				assert(result.stage === "base", "submitSummary should fail in base stage");
-				assert.equal(
-					result.error?.message,
-					"Summarizer client behind, loaded newer snapshot with loadingGroupId",
-					"submitSummary should fail in base stage because summarizer is behind",
-				);
+				if (isGroupIdLoaderVersion(apis.loader.version)) {
+					assert(result.stage === "base", "submitSummary should fail in base stage");
+					assert.equal(
+						result.error?.message,
+						"Summarizer client behind, loaded newer snapshot with loadingGroupId",
+						"submitSummary should fail in base stage because summarizer is behind",
+					);
+				} else {
+					dataObjectA1.logger.send({
+						category: "error",
+						eventName: "FluidDataStoreContext:RealizeError",
+						error: "Summarizer client behind, loaded newer snapshot with loadingGroupId",
+					});
+				}
 			},
 		);
 
@@ -520,25 +562,29 @@ describeCompat(
 				mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
 			assert(dataObjectA2Handle !== undefined, "dataObjectA2Handle should not be undefined");
 
-			assert(
-				runtime2.storage.getSnapshot !== undefined,
-				"getSnapshot not defined for runtime2",
-			);
-			overrideResult(runtime2.storage, runtime2.storage.getSnapshot, olderSnapshot);
 			// TODO: update when this assert changes to a hex.
-			await assert.rejects(
-				dataObjectA2Handle.get(),
-				(error: Error & any) => {
-					const correctError: boolean =
-						error.errorFromRequestFluidObject === true &&
-						error.code === 500 &&
-						error.message !== undefined &&
-						error.message.includes("Downloaded snapshot older than snapshot we loaded from");
+			if (isGroupIdLoaderVersion(apis.loader.version)) {
+				assert(
+					runtime2.storage.getSnapshot !== undefined,
+					"getSnapshot not defined for runtime2",
+				);
+				overrideResult(runtime2.storage, runtime2.storage.getSnapshot, olderSnapshot);
+				await assert.rejects(
+					dataObjectA2Handle.get(),
+					(error: Error & any) => {
+						const correctError: boolean =
+							error.errorFromRequestFluidObject === true &&
+							error.code === 500 &&
+							error.message !== undefined &&
+							error.message.includes("Downloaded snapshot older than snapshot we loaded from");
 
-					return correctError;
-				},
-				"Loading an older snapshot than the snapshot the runtime loaded from should fail",
-			);
+						return correctError;
+					},
+					"Loading an older snapshot than the snapshot the runtime loaded from should fail",
+				);
+			} else {
+				await dataObjectA2Handle.get();
+			}
 		});
 	},
 );

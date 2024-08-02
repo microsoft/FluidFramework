@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-experimental/azure-scenario-runner";
-export const pkgVersion = "2.1.0";
+export const pkgVersion = "2.2.0";

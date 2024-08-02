@@ -20,141 +20,204 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_FileSnapshotReader": {"forwardCompat": false}
+ * "Class_FileSnapshotReader": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_FileSnapshotReader = requireAssignableTo<TypeOnly<old.FileSnapshotReader>, TypeOnly<current.FileSnapshotReader>>
+declare type old_as_current_for_Class_FileSnapshotReader = requireAssignableTo<TypeOnly<old.FileSnapshotReader>, TypeOnly<current.FileSnapshotReader>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_FileSnapshotReader": {"backCompat": false}
+ * "Class_FileSnapshotReader": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_FileSnapshotReader = requireAssignableTo<TypeOnly<current.FileSnapshotReader>, TypeOnly<old.FileSnapshotReader>>
+declare type current_as_old_for_Class_FileSnapshotReader = requireAssignableTo<TypeOnly<current.FileSnapshotReader>, TypeOnly<old.FileSnapshotReader>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_FileSnapshotReader": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_FileSnapshotReader = requireAssignableTo<TypeOnly<typeof current.FileSnapshotReader>, TypeOnly<typeof old.FileSnapshotReader>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IFileSnapshot": {"forwardCompat": false}
+ * "Interface_IFileSnapshot": {"forwardCompat": false}
  */
-declare type old_as_current_for_InterfaceDeclaration_IFileSnapshot = requireAssignableTo<TypeOnly<old.IFileSnapshot>, TypeOnly<current.IFileSnapshot>>
+declare type old_as_current_for_Interface_IFileSnapshot = requireAssignableTo<TypeOnly<old.IFileSnapshot>, TypeOnly<current.IFileSnapshot>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IFileSnapshot": {"backCompat": false}
+ * "Interface_IFileSnapshot": {"backCompat": false}
  */
-declare type current_as_old_for_InterfaceDeclaration_IFileSnapshot = requireAssignableTo<TypeOnly<current.IFileSnapshot>, TypeOnly<old.IFileSnapshot>>
+declare type current_as_old_for_Interface_IFileSnapshot = requireAssignableTo<TypeOnly<current.IFileSnapshot>, TypeOnly<old.IFileSnapshot>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_ReadDocumentStorageServiceBase": {"forwardCompat": false}
+ * "Class_ReadDocumentStorageServiceBase": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_ReadDocumentStorageServiceBase = requireAssignableTo<TypeOnly<old.ReadDocumentStorageServiceBase>, TypeOnly<current.ReadDocumentStorageServiceBase>>
+declare type old_as_current_for_Class_ReadDocumentStorageServiceBase = requireAssignableTo<TypeOnly<old.ReadDocumentStorageServiceBase>, TypeOnly<current.ReadDocumentStorageServiceBase>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_ReadDocumentStorageServiceBase": {"backCompat": false}
+ * "Class_ReadDocumentStorageServiceBase": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_ReadDocumentStorageServiceBase = requireAssignableTo<TypeOnly<current.ReadDocumentStorageServiceBase>, TypeOnly<old.ReadDocumentStorageServiceBase>>
+declare type current_as_old_for_Class_ReadDocumentStorageServiceBase = requireAssignableTo<TypeOnly<current.ReadDocumentStorageServiceBase>, TypeOnly<old.ReadDocumentStorageServiceBase>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_ReadDocumentStorageServiceBase": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_ReadDocumentStorageServiceBase = requireAssignableTo<TypeOnly<typeof current.ReadDocumentStorageServiceBase>, TypeOnly<typeof old.ReadDocumentStorageServiceBase>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_ReplayController": {"forwardCompat": false}
+ * "Class_ReplayController": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_ReplayController = requireAssignableTo<TypeOnly<old.ReplayController>, TypeOnly<current.ReplayController>>
+declare type old_as_current_for_Class_ReplayController = requireAssignableTo<TypeOnly<old.ReplayController>, TypeOnly<current.ReplayController>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_ReplayController": {"backCompat": false}
+ * "Class_ReplayController": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_ReplayController = requireAssignableTo<TypeOnly<current.ReplayController>, TypeOnly<old.ReplayController>>
+declare type current_as_old_for_Class_ReplayController = requireAssignableTo<TypeOnly<current.ReplayController>, TypeOnly<old.ReplayController>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_ReplayController": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_ReplayController = requireAssignableTo<TypeOnly<typeof current.ReplayController>, TypeOnly<typeof old.ReplayController>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_ReplayDocumentService": {"forwardCompat": false}
+ * "Class_ReplayDocumentService": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_ReplayDocumentService = requireAssignableTo<TypeOnly<old.ReplayDocumentService>, TypeOnly<current.ReplayDocumentService>>
+declare type old_as_current_for_Class_ReplayDocumentService = requireAssignableTo<TypeOnly<old.ReplayDocumentService>, TypeOnly<current.ReplayDocumentService>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_ReplayDocumentService": {"backCompat": false}
+ * "Class_ReplayDocumentService": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_ReplayDocumentService = requireAssignableTo<TypeOnly<current.ReplayDocumentService>, TypeOnly<old.ReplayDocumentService>>
+declare type current_as_old_for_Class_ReplayDocumentService = requireAssignableTo<TypeOnly<current.ReplayDocumentService>, TypeOnly<old.ReplayDocumentService>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_ReplayDocumentService": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_ReplayDocumentService = requireAssignableTo<TypeOnly<typeof current.ReplayDocumentService>, TypeOnly<typeof old.ReplayDocumentService>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_ReplayDocumentServiceFactory": {"forwardCompat": false}
+ * "Class_ReplayDocumentServiceFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_ReplayDocumentServiceFactory = requireAssignableTo<TypeOnly<old.ReplayDocumentServiceFactory>, TypeOnly<current.ReplayDocumentServiceFactory>>
+declare type old_as_current_for_Class_ReplayDocumentServiceFactory = requireAssignableTo<TypeOnly<old.ReplayDocumentServiceFactory>, TypeOnly<current.ReplayDocumentServiceFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_ReplayDocumentServiceFactory": {"backCompat": false}
+ * "Class_ReplayDocumentServiceFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_ReplayDocumentServiceFactory = requireAssignableTo<TypeOnly<current.ReplayDocumentServiceFactory>, TypeOnly<old.ReplayDocumentServiceFactory>>
+declare type current_as_old_for_Class_ReplayDocumentServiceFactory = requireAssignableTo<TypeOnly<current.ReplayDocumentServiceFactory>, TypeOnly<old.ReplayDocumentServiceFactory>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_ReplayDocumentServiceFactory": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_ReplayDocumentServiceFactory = requireAssignableTo<TypeOnly<typeof current.ReplayDocumentServiceFactory>, TypeOnly<typeof old.ReplayDocumentServiceFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_SnapshotStorage": {"forwardCompat": false}
+ * "Class_SnapshotStorage": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_SnapshotStorage = requireAssignableTo<TypeOnly<old.SnapshotStorage>, TypeOnly<current.SnapshotStorage>>
+declare type old_as_current_for_Class_SnapshotStorage = requireAssignableTo<TypeOnly<old.SnapshotStorage>, TypeOnly<current.SnapshotStorage>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_SnapshotStorage": {"backCompat": false}
+ * "Class_SnapshotStorage": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_SnapshotStorage = requireAssignableTo<TypeOnly<current.SnapshotStorage>, TypeOnly<old.SnapshotStorage>>
+declare type current_as_old_for_Class_SnapshotStorage = requireAssignableTo<TypeOnly<current.SnapshotStorage>, TypeOnly<old.SnapshotStorage>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_SnapshotStorage": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_SnapshotStorage = requireAssignableTo<TypeOnly<typeof current.SnapshotStorage>, TypeOnly<typeof old.SnapshotStorage>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_StaticStorageDocumentServiceFactory": {"forwardCompat": false}
+ * "Class_StaticStorageDocumentServiceFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_ClassDeclaration_StaticStorageDocumentServiceFactory = requireAssignableTo<TypeOnly<old.StaticStorageDocumentServiceFactory>, TypeOnly<current.StaticStorageDocumentServiceFactory>>
+declare type old_as_current_for_Class_StaticStorageDocumentServiceFactory = requireAssignableTo<TypeOnly<old.StaticStorageDocumentServiceFactory>, TypeOnly<current.StaticStorageDocumentServiceFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_StaticStorageDocumentServiceFactory": {"backCompat": false}
+ * "Class_StaticStorageDocumentServiceFactory": {"backCompat": false}
  */
-declare type current_as_old_for_ClassDeclaration_StaticStorageDocumentServiceFactory = requireAssignableTo<TypeOnly<current.StaticStorageDocumentServiceFactory>, TypeOnly<old.StaticStorageDocumentServiceFactory>>
+declare type current_as_old_for_Class_StaticStorageDocumentServiceFactory = requireAssignableTo<TypeOnly<current.StaticStorageDocumentServiceFactory>, TypeOnly<old.StaticStorageDocumentServiceFactory>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_StaticStorageDocumentServiceFactory": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_StaticStorageDocumentServiceFactory = requireAssignableTo<TypeOnly<typeof current.StaticStorageDocumentServiceFactory>, TypeOnly<typeof old.StaticStorageDocumentServiceFactory>>

@@ -131,6 +131,7 @@ export {
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
 	getAllowedContentIncompatibilities,
+	isRepoSuperset,
 } from "./modular-schema/index.js";
 
 export {
@@ -280,6 +281,9 @@ export {
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
 	getSchemaAndPolicy,
+	isFreedSymbol,
+	LazyEntity,
+	treeStatusFromAnchorCache,
 } from "./flex-tree/index.js";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";

@@ -12,9 +12,10 @@ import {
 	type NodeKeyManager,
 	getTreeContext,
 } from "../feature-libraries/index.js";
+import { tryDisposeTreeNode } from "../simple-tree/index.js";
 import { type IDisposable, disposeSymbol } from "../util/index.js";
 
-import type { ITreeCheckout, ITreeCheckoutFork, TreeCheckout } from "./treeCheckout.js";
+import type { ITreeCheckout, ITreeCheckoutFork } from "./treeCheckout.js";
 
 /**
  * The portion of {@link FlexTreeView} that does not depend on the schema's type.
@@ -77,7 +78,7 @@ export interface ITreeViewFork<in out TRoot extends FlexFieldSchema>
  */
 export class CheckoutFlexTreeView<
 	in out TRoot extends FlexFieldSchema,
-	out TCheckout extends TreeCheckout = TreeCheckout,
+	out TCheckout extends ITreeCheckout = ITreeCheckout,
 > implements FlexTreeView<TRoot>
 {
 	public readonly context: Context;
@@ -94,11 +95,15 @@ export class CheckoutFlexTreeView<
 	}
 
 	public [disposeSymbol](): void {
+		for (const anchorNode of this.checkout.forest.anchors) {
+			tryDisposeTreeNode(anchorNode);
+		}
+
 		this.context[disposeSymbol]();
 		this.onDispose?.();
 	}
 
-	public fork(): CheckoutFlexTreeView<TRoot, TreeCheckout & ITreeCheckoutFork> {
+	public fork(): CheckoutFlexTreeView<TRoot, ITreeCheckout & ITreeCheckoutFork> {
 		const branch = this.checkout.fork();
 		return new CheckoutFlexTreeView(branch, this.schema, this.nodeKeyManager);
 	}

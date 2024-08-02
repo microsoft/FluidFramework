@@ -43,6 +43,7 @@ export {
 	type FieldChangeEncodingContext,
 } from "./fieldChangeHandler.js";
 export type {
+	CrossFieldKeyRange,
 	FieldChange,
 	FieldChangeMap,
 	FieldChangeset,
@@ -73,4 +74,4 @@ export type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
 } from "./fieldKindConfiguration.js";
-export { getAllowedContentIncompatibilities } from "./discrepancies.js";
+export { getAllowedContentIncompatibilities, isRepoSuperset } from "./discrepancies.js";

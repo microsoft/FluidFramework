@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { convertPropertyToSharedTreeSchema } from "./schemaConverter.js";
+// TODO: add conversion/migration tools to this package
