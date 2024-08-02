@@ -5,7 +5,6 @@
 
 import { SummaryObject } from "@fluidframework/driver-definitions";
 import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	TelemetryDataTag,
@@ -86,7 +85,7 @@ export class EscapedPath {
 }
 export interface PendingSummaryInfo {
 	/** The sequence number up until which the summary was created. */
-	referenceSequenceNumber: number
+	referenceSequenceNumber: number;
 }
 
 /**
@@ -100,7 +99,7 @@ export interface ICreateChildDetails {
 	/** Summary handle for child node */
 	summaryHandleId: string;
 	/** last reference sequence number seen when last successful summary was created */
-	lastSummaryreferenceSequenceNumber: number|undefined;
+	lastSummaryreferenceSequenceNumber: number | undefined;
 }
 
 export interface ISubtreeInfo<T extends ISnapshotTree | SummaryObject> {
@@ -108,26 +107,4 @@ export interface ISubtreeInfo<T extends ISnapshotTree | SummaryObject> {
 	childrenTree: T;
 	/** Additional path part where children are isolated */
 	childrenPathPart: string | undefined;
-}
-
-/**
- * Checks if the summary contains .channels subtree where the children subtrees
- * would be located if exists.
- * @param baseSummary - summary to check
- */
-export function parseSummaryForSubtrees(
-	baseSummary: ISnapshotTree,
-): ISubtreeInfo<ISnapshotTree> {
-	// New versions of snapshots have child nodes isolated in .channels subtree
-	const channelsSubtree = baseSummary.trees[channelsTreeName];
-	if (channelsSubtree !== undefined) {
-		return {
-			childrenTree: channelsSubtree,
-			childrenPathPart: channelsTreeName,
-		};
-	}
-	return {
-		childrenTree: baseSummary,
-		childrenPathPart: undefined,
-	};
 }

@@ -477,9 +477,9 @@ describe("SummarizerNodeWithGC Tests", () => {
 			assert(result.isSummaryTracked, "should be tracked");
 			assert(result.isSummaryNewer === true, "should be newer");
 			const leafNodePath = `${ids[0]}/${ids[1]}/${ids[2]}`;
-			const leafNodeLatestSummary = (leafNode as SummarizerNodeWithGC).latestSummary;
+			const leafNodeLatestSummaryHandle = (leafNode as SummarizerNodeWithGC).summaryHandleId;
 			assert.strictEqual(
-				leafNodeLatestSummary?.fullPath.toString(),
+				leafNodeLatestSummaryHandle,
 				leafNodePath,
 				"The child node's latest summary path is incorrect",
 			);
@@ -516,9 +516,9 @@ describe("SummarizerNodeWithGC Tests", () => {
 			assert(result.isSummaryTracked, "should be tracked");
 			assert(result.isSummaryNewer === true, "should be newer");
 			const leafNodePath = `${ids[0]}/${ids[1]}/${ids[2]}`;
-			const leafNodeLatestSummary = (leafNode as SummarizerNodeWithGC).latestSummary;
+			const leafNodeLatestSummaryHandle = (leafNode as SummarizerNodeWithGC).summaryHandleId;
 			assert.strictEqual(
-				leafNodeLatestSummary?.fullPath.toString(),
+				leafNodeLatestSummaryHandle,
 				leafNodePath,
 				"The child node's latest summary path is incorrect",
 			);

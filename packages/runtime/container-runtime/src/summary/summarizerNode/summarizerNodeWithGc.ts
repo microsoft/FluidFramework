@@ -37,7 +37,7 @@ export interface IRootSummarizerNodeWithGC
 
 // Extend SummaryNode to add used routes tracking to it.
 interface PendingSummaryInfoWithGC extends PendingSummaryInfo {
-	serializedUsedRoutes: string | undefined,
+	serializedUsedRoutes: string | undefined;
 }
 
 /**
@@ -92,10 +92,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		logger: ITelemetryBaseLogger,
 		summarizeInternalFn: SummarizeInternalFn,
 		config: ISummarizerNodeConfigWithGC,
-		private readonly _summaryHandleId: string,
+		_summaryHandleId: string,
 		changeSequenceNumber: number,
 		/** Summary reference sequence number, i.e. last sequence number seen when it was created */
-		private _lastSummaryReferenceSequenceNumber?: number,
+		_lastSummaryReferenceSequenceNumber?: number,
 		wipSummaryLogger?: ITelemetryBaseLogger,
 		private readonly getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 		getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
@@ -262,10 +262,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * @param parentSkipRecursion - true if the parent of this node skipped recursing the child nodes when summarizing.
 	 * In that case, the children will not have work-in-progress state.
 	 */
-	protected completeSummaryCore(
-		proposalHandle: string,
-		parentSkipRecursion: boolean,
-	) {
+	protected completeSummaryCore(proposalHandle: string, parentSkipRecursion: boolean) {
 		let wipSerializedUsedRoutes: string | undefined;
 		// If GC is disabled, don't set wip used routes.
 		if (!this.gcDisabled) {
@@ -278,7 +275,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		if (!this.gcDisabled) {
 			const pendingSummaryInfo = this.pendingSummaries.get(proposalHandle);
 			if (pendingSummaryInfo !== undefined) {
-				const summaryNodeWithGC = {serializedUsedRoutes: wipSerializedUsedRoutes, ...pendingSummaryInfo};
+				const summaryNodeWithGC = {
+					serializedUsedRoutes: wipSerializedUsedRoutes,
+					...pendingSummaryInfo,
+				};
 				this.pendingSummaries.set(proposalHandle, summaryNodeWithGC);
 			}
 		}
@@ -412,7 +412,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		}
 
 		// In case we have pending summaries on the parent, let's initialize it on the child.
-		if (child._lastSummaryReferenceSequenceNumber !== undefined) {
+		if (child.referenceSequenceNumber !== undefined) {
 			for (const [key, pendingSummary] of this.pendingSummaries.entries()) {
 				const pendingSummaryeWithGC = pendingSummary as PendingSummaryInfoWithGC;
 				if (pendingSummaryeWithGC.serializedUsedRoutes !== undefined) {
@@ -420,7 +420,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 						JSON.parse(pendingSummaryeWithGC.serializedUsedRoutes),
 					);
 					const newSerializedRoutes = childNodeUsedRoutes.get(id) ?? [""];
-					const newLatestSummaryNode = {...pendingSummaryeWithGC, serializedUsedRoutes: JSON.stringify(newSerializedRoutes)}
+					const newLatestSummaryNode = {
+						...pendingSummaryeWithGC,
+						serializedUsedRoutes: JSON.stringify(newSerializedRoutes),
+					};
 					child.addPendingSummary(key, newLatestSummaryNode);
 				}
 			}
