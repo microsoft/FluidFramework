@@ -69,7 +69,7 @@ export abstract class BrandedType<out ValueType, Name> {
 	 */
 	public static [Symbol.hasInstance](value: never): value is never {
 		throw new UsageError(
-			"BrandedType is a compile time type brand not a real class that can be used with `instancof` at runtime.",
+			"BrandedType is a compile time type brand not a real class that can be used with `instanceof` at runtime.",
 		);
 	}
 }

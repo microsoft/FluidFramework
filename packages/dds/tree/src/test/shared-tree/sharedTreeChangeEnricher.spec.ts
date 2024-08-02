@@ -5,9 +5,11 @@
 
 import { strict as assert } from "assert";
 import {
+	type ChangesetLocalId,
 	DetachedFieldIndex,
 	type ForestRootId,
 	type IEditableForest,
+	type RevisionTag,
 	TreeStoredSchemaRepository,
 	initializeForest,
 	mapCursorField,
@@ -22,6 +24,7 @@ import {
 	ModularChangeFamily,
 	type ModularChangeset,
 	ModularEditBuilder,
+	type TreeChunk,
 	buildForest,
 	fieldKinds,
 } from "../../feature-libraries/index.js";
@@ -38,7 +41,6 @@ import {
 	brand,
 	disposeSymbol,
 	idAllocatorFromMaxId,
-	nestedMapToFlatList,
 } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { Change } from "../feature-libraries/optional-field/optionalFieldUtils.js";
@@ -154,7 +156,11 @@ describe("SharedTreeChangeEnricher", () => {
 		// Check that the enriched change now sports the adequate refresher
 		assert.equal(enriched.changes[0].type, "data");
 		assert.equal(enriched.changes[0].innerChange.refreshers?.size, 1);
-		const refreshers = nestedMapToFlatList(enriched.changes[0].innerChange.refreshers);
+		const refreshers: [RevisionTag | undefined, ChangesetLocalId, TreeChunk][] =
+			enriched.changes[0].innerChange.refreshers
+				.toArray()
+				.map(([[revision, id], value]) => [revision, id, value]);
+
 		assert.equal(refreshers[0][0], undefined);
 		assert.equal(refreshers[0][1], 0);
 		const refreshedTree = mapCursorField(refreshers[0][2].cursor(), cursorToJsonObject);

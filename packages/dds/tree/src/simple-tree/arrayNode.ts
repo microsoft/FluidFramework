@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	CursorLocationType,
-	EmptyKey,
-	type ITreeCursorSynchronous,
-	type TreeNodeSchemaIdentifier,
-} from "../core/index.js";
+import { CursorLocationType, EmptyKey, type ITreeCursorSynchronous } from "../core/index.js";
 import {
 	type FlexAllowedTypes,
 	type FlexFieldNodeSchema,
@@ -24,7 +19,6 @@ import {
 import {
 	type InsertableContent,
 	getOrCreateNodeProxy,
-	markContentType,
 	prepareContentForHydration,
 } from "./proxies.js";
 import { getFlexNode, getKernel } from "./proxyBinding.js";
@@ -938,13 +932,7 @@ export function arraySchema<
 		): MapTreeNode {
 			return getOrCreateMapTreeNode(
 				flexSchema,
-				mapTreeFromNodeData(
-					copyContent(
-						flexSchema.name,
-						input as Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-					) as object,
-					this as unknown as ImplicitAllowedTypes,
-				),
+				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
 			);
 		}
 
@@ -994,12 +982,6 @@ export function arraySchema<
 	}
 
 	return schema;
-}
-
-function copyContent<T>(typeName: TreeNodeSchemaIdentifier, content: Iterable<T>): T[] {
-	const copy = Array.from(content);
-	markContentType(typeName, copy);
-	return copy;
 }
 
 function validateSafeInteger(index: number): void {

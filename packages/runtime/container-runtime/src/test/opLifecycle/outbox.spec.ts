@@ -24,7 +24,7 @@ import {
 	makeLegacySendBatchFn,
 } from "../../containerRuntime.js";
 import { ContainerMessageType } from "../../messageTypes.js";
-import { asBatchMetadata } from "../../metadata.js";
+import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "../../metadata.js";
 import {
 	BatchMessage,
 	BatchSequenceNumbers,
@@ -130,11 +130,17 @@ describe("Outbox", () => {
 		// Similar implementation as the real PSM - queue each message 1-by-1
 		onFlushBatch: (batch: BatchMessage[], clientSequenceNumber: number | undefined): void => {
 			batch.forEach(
-				({ contents: content = "", referenceSequenceNumber, metadata: opMetadata }) =>
+				({
+					contents: content = "",
+					referenceSequenceNumber,
+					metadata: opMetadata,
+					localOpMetadata,
+				}) =>
 					state.pendingOpContents.push({
 						content,
 						referenceSequenceNumber,
 						opMetadata,
+						localOpMetadata,
 						batchStartCsn: clientSequenceNumber ?? -1,
 					}),
 			);
@@ -200,6 +206,7 @@ describe("Outbox", () => {
 		disablePartialFlush?: boolean;
 		chunkSizeInBytes?: number;
 		opGroupingConfig?: OpGroupingManagerConfig;
+		immediateMode?: boolean;
 	}) => {
 		const { submitFn, submitBatchFn, deltaManager } = params.context;
 
@@ -306,15 +313,54 @@ describe("Outbox", () => {
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
+				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: csn,
 			})),
 		);
 	});
 
-	it("Batch ID added when applicable", () => {
-		const outbox = getOutbox({ context: getMockContext() });
+	it("Flush empty (GroupedBatching enabled)", () => {
+		const outbox = getOutbox({
+			context: getMockContext(),
+			opGroupingConfig: {
+				groupedBatchingEnabled: true,
+				opCountThreshold: 2,
+				reentrantBatchGroupingEnabled: true,
+			},
+		});
+		currentSeqNumbers.referenceSequenceNumber = 0;
+		// Typically, flushing with nothing submitted should be a no-op...
+		outbox.flush();
+		assert.equal(state.opsSubmitted, 0);
+		assert.equal(state.batchesSubmitted.length, 0);
+		assert.equal(state.deltaManagerFlushCalls, 0);
+		assert.equal(state.pendingOpContents.length, 0);
+		const batchId = "batchId";
+		// ...But if batchId is provided, it's resubmit, and we need to send an empty batch with the batchId
+		outbox.flush(batchId);
+		assert.equal(state.opsSubmitted, 1);
+		assert.equal(state.batchesSubmitted.length, 1);
+		assert.equal(
+			state.batchesSubmitted[0].messages[0].contents,
+			'{"type":"groupedBatch","contents":[]}',
+		);
+		assert.equal(state.batchesSubmitted[0].messages[0].metadata?.batchId, batchId);
+		assert.equal(
+			asEmptyBatchLocalOpMetadata(state.pendingOpContents[0].localOpMetadata)?.emptyBatch,
+			true,
+		);
+	});
 
+	it("Batch ID added when applicable", () => {
+		const outbox = getOutbox({
+			context: getMockContext(),
+			opGroupingConfig: {
+				groupedBatchingEnabled: true,
+				opCountThreshold: 3,
+				reentrantBatchGroupingEnabled: true,
+			},
+		});
 		// Flush 1 - resubmit multi-message batch including ID Allocation
 		outbox.submitIdAllocation(createMessage(ContainerMessageType.IdAllocation, "0")); // Separate batch, batch ID not used
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "1"));
@@ -328,6 +374,7 @@ describe("Outbox", () => {
 		// Flush 3 - resubmit blob attach batch
 		outbox.submitBlobAttach(createMessage(ContainerMessageType.BlobAttach, "4"));
 		outbox.submitBlobAttach(createMessage(ContainerMessageType.BlobAttach, "5"));
+		currentSeqNumbers.referenceSequenceNumber = 0;
 		outbox.flush("batchId-C");
 
 		// Flush 4 - no batch ID given
@@ -393,6 +440,7 @@ describe("Outbox", () => {
 			messages.map<Partial<IPendingMessage>>((message, i) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
+				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: i === 2 ? -1 : 1, // Third batch got no CSN as it was not submitted
 			})),
@@ -441,6 +489,7 @@ describe("Outbox", () => {
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
+				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: csn,
 			})),
@@ -504,6 +553,7 @@ describe("Outbox", () => {
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
+				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: csn,
 			})),
@@ -565,6 +615,7 @@ describe("Outbox", () => {
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
+				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: csn,
 			})),
@@ -657,6 +708,7 @@ describe("Outbox", () => {
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
+				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: csn,
 			})),
@@ -743,6 +795,7 @@ describe("Outbox", () => {
 			rawMessagesInFlushOrder.map((message, i) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
+				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: i + 1, // Each message should have been in its own batch. CSN starts at 1.
 			})),
@@ -928,6 +981,7 @@ describe("Outbox", () => {
 			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
+				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: csn,
 			})),

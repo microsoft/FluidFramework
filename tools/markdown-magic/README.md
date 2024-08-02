@@ -2,7 +2,18 @@
 
 This library contains tools for generating and embedding documentation contents in [Markdown](https://www.markdownguide.org/) documentation.
 
-Note: this package is currently private, and only intended for use in this repository.
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+**NOTE: This package is a library intended for use within the [microsoft/FluidFramework](https://github.com/microsoft/FluidFramework) repository.**
+**It is not intended for public use.**
+**We make no stability guarantees regarding this library and its APIs.**
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Usage
 
@@ -69,7 +80,7 @@ Arguments:
 -   `start`: (optional) First line from the target file to be embedded (inclusive). If positive, the value is relative to the beginning of the file. If negative, the value is relative to the end of the file.
 -   `end`: (optional) Limit line from the target file to be embedded (exclusive). If positive, the value is relative to the beginning of the file. If negative, the value is relative to the end of the file.
 
-#### `LIBRARY_PACKAGE_README_HEADER`
+#### `LIBRARY_README_HEADER`
 
 Generates simple "header" contents for a library package README.
 Contains instructions for installing the package and importing its contents.
@@ -82,30 +93,55 @@ Notes:
     You will still need to fill in semantic and usage information.
 -   This is effectively just a wrapper around lower-level templates.
     If you want more fine-grained control over the content structure, we recommend using other templates.
-    -   [README_PACKAGE_SCOPE_NOTICE](#readme_package_scope_notice)
-    -   [README_INSTALLATION_SECTION](#readme_installation_section)
-    -   [README_IMPORT_INSTRUCTIONS](#readme_import_instructions)
-    -   [API_DOCS_LINK_SECTION](#api_docs_link_section)
+    -   [PACKAGE_SCOPE_NOTICE](#package_scope_notice)
+    -   [INSTALLATION_INSTRUCTIONS](#installation_instructions)
+    -   [IMPORT_INSTRUCTIONS](#import_instructions)
+    -   [API_DOCS](#api_docs)
 
 Arguments:
 
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
     -   Default: `./package.json`.
+-   `packageScopeNotice`: (optional) Override the automatic scope detection behavior with an explicit scope kind: `FRAMEWORK`, `EXPERIMENTAL`, `INTERNAL`, `PRIVATE`, `TOOLS`, or `EXAMPLE`.
 -   `installation`: Whether or not to include the package "Installation" section.
     -   Default: `true`.
-    -   See [README_INSTALLATION_SECTION](#readme_installation_section).
+    -   See [INSTALLATION_INSTRUCTIONS](#installation_instructions).
 -   `devDependency`: Whether or not the package is intended to be installed as a dev dependency.
     -   Default: `false`.
     -   Only observed if `installation` is `true`.
 -   `apiDocs`: Whether or not to include a section pointing to the library's generated API documentation on `fluidframework.com`.
     -   Default: `true` if the package is intended for direct public use. `false` otherwise.
     -   Assumes that the package is published, uses [API-Extractor][], and has its documentation published under `fluidframework.com/apis/<package-name>`.
-    -   See [API_DOCS_LINK_SECTION](#api_docs_link_section)
+    -   See [API_DOCS](#api_docs)
 
-#### `LIBRARY_PACKAGE_README_FOOTER`
+#### `EXAMPLE_APP_README_HEADER`
 
-Generates simple "footer" contents for a library package README.
+Generates a complete starter `README.md` file for a `Fluid` example app package.
+
+Notes:
+
+-   This strictly intended as a starter template to remove the need for some handwritten boilerplate.
+    You will still need to fill in semantic and usage information.
+-   This is effectively just a wrapper around lower-level templates.
+    If you want more fine-grained control over the content structure, we recommend using other templates.
+    -   [EXAMPLE_GETTING_STARTED](#example-getting-started)
+
+Arguments:
+
+-   `packageJsonPath`: Relative file path to the library package's `package.json` file.
+    Used for generation of package metadata.
+    -   Default: `./package.json`.
+-   `gettingStarted`: Whether or not to include a simple "getting started" usage section.
+    -   Default: `true`.
+    -   See [EXAMPLE_GETTING_STARTED](#example_getting_started).
+-   `usesTinylicious`: Whether or not running the example app requires running [Tinylicious][] from another terminal.
+    -   Default: `true`.
+    -   Only observed if `gettingStarted` is `true`.
+
+#### `README_FOOTER`
+
+Generates simple "footer" contents for a package README.
 
 Generally recommended for inclusion at the end of the README.
 
@@ -115,11 +151,11 @@ Notes:
     You will still need to fill in semantic and usage information.
 -   This is effectively just a wrapper around lower-level templates.
     If you want more fine-grained control over the content structure, we recommend using other templates.
-    -   [README_PACKAGE_SCRIPTS](#readme_package_scripts)
-    -   [README_CLIENT_REQUIREMENTS_SECTION](#readme_client_requirements_section)
-    -   [README_CONTRIBUTION_GUIDELINES_SECTION](#contribution-guidelines)
-    -   [README_HELP_SECTION](#readme_help_section)
-    -   [README_TRADEMARK_SECTION](#readme_trademark_section)
+    -   [PACKAGE_SCRIPTS](#package_scripts)
+    -   [CLIENT_REQUIREMENTS](#client_requirements)
+    -   [CONTRIBUTION_GUIDELINES](#contribution-guidelines)
+    -   [HELP](#help)
+    -   [TRADEMARK](#trademark)
 
 Arguments:
 
@@ -128,56 +164,21 @@ Arguments:
     -   Default: `./package.json`.
 -   `scripts`: Whether or not to include a section listing the package's `npm` scripts.
     -   Default: `false`.
-    -   See [README_PACKAGE_SCRIPTS](#readme-package_scripts).
+    -   See [PACKAGE_SCRIPTS](#readme-package_scripts).
 -   `clientRequirements`: Whether or not to include a section outlining the minimum client requirements for using Fluid Framework packages.
     -   Default: `true` if the package is intended for direct public use. `false` otherwise.
-    -   See [README_CLIENT_REQUIREMENTS_SECTION](#readme_client_requirements_section).
+    -   See [CLIENT_REQUIREMENTS](#client_requirements).
 -   `contributionGuidelines`: Whether or not to include a section enumerating `fluid-framework`'s contribution guidelines.
     -   Default: `true`.
-    -   See [README_CONTRIBUTION_GUIDELINES_SECTION](#readme_contribution_guidelines_section).
+    -   See [CONTRIBUTION_GUIDELINES](#readme_contribution_guidelines_section).
 -   `help`: Whether or not to include a simple "help" section, which points the reader to various resources.
     -   Default: `true`.
-    -   See [README_HELP_SECTION](#readme_help_section).
+    -   See [HELP](#help).
 -   `trademark`: Whether or not to include a section containing our `Microsoft` trademark.
     -   Default: `true`.
-    -   See [README_TRADEMARK_SECTION](#readme_trademark_section).
+    -   See [TRADEMARK](#trademark).
 
-#### `EXAMPLE_PACKAGE_README`
-
-Generates a complete starter `README.md` file for an `Fluid` example app package.
-
-Notes:
-
--   This strictly intended as a starter template to remove the need for some handwritten boilerplate.
-    You will still need to fill in semantic and usage information.
--   This is effectively just a wrapper around lower-level templates.
-    If you want more fine-grained control over the content structure, we recommend using other templates.
-
-Arguments:
-
--   `packageJsonPath`: Relative file path to the library package's `package.json` file.
-    Used for generation of package metadata.
-    -   Default: `./package.json`.
--   `gettingStarted`: Whether or not to include a simple "getting started" usage section.
-    -   Default: `true`.
-    -   See [README_EXAMPLE_GETTING_STARTED_SECTION](#readme_example_getting_started_section).
--   `usesTinylicious`: Whether or not running the example app requires running [Tinylicious][] from another terminal.
-    -   Default: `true`.
-    -   Only observed if `gettingStarted` is `true`.
--   `scripts`: Whether or not to include a section listing the package's `npm` scripts.
-    -   Default: `false`.
-    -   See [README_PACKAGE_SCRIPTS](#readme-package_scripts).
--   `contributionGuidelines`: Whether or not to include a section enumerating `fluid-framework`'s contribution guidelines.
-    -   Default: `true`.
-    -   See [README_CONTRIBUTION_GUIDELINES_SECTION](#readme_contribution_guidelines_section).
--   `help`: Whether or not to include a simple "help" section, which points the reader to various resources.
-    -   Default: `true`.
-    -   See [README_HELP_SECTION](#readme_help_section).
--   `trademark`: Whether or not to include a section containing our `Microsoft` trademark.
-    -   Default: `true`.
-    -   See [README_TRADEMARK_SECTION](#readme_trademark_section).
-
-#### `README_EXAMPLE_GETTING_STARTED_SECTION`
+#### `EXAMPLE_GETTING_STARTED`
 
 Generates a simple "getting started" usage section for a `Fluid` example app README.
 
@@ -194,7 +195,7 @@ Arguments:
     Must be a positive integer.
     -   Default: 2.
 
-#### `API_DOCS_LINK_SECTION`
+#### `API_DOCS`
 
 Generates a README section pointing to the library's generated API documentation on `fluidframework.com`.
 
@@ -211,7 +212,7 @@ Arguments:
     Must be a positive integer.
     -   Default: 2.
 
-#### `README_INSTALLATION_SECTION`
+#### `INSTALLATION_INSTRUCTIONS`
 
 Generates a README section including package installation instructions.
 
@@ -228,7 +229,24 @@ Arguments:
     Must be a positive integer.
     -   Default: 2.
 
-#### `README_IMPORT_INSTRUCTIONS`
+#### `DEPENDENCY_GUIDELINES`
+
+Generates a README section with fluid-framework dependency guidelines.
+
+Assumes that the package is published and can be installed via `npm`.
+
+Arguments:
+
+-   `packageJsonPath`: Relative file path to the library package's `package.json` file.
+    Used for generation of package metadata.
+    -   Default: `./package.json`.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
+    -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
+
+#### `IMPORT_INSTRUCTIONS`
 
 Generates a README section including instructions for how to import from Fluid Framework library packages.
 Accounts for our use of package.json exports.
@@ -243,7 +261,18 @@ Arguments:
     Must be a positive integer.
     -   Default: 2.
 
-#### `README_CLIENT_REQUIREMENTS_SECTION`
+#### `EXAMPLE_GETTING_STARTED`
+
+Generates a "Getting Started" section for an example app README.
+Arguments:
+
+-   `packageJsonPath`: Relative file path to the library package's `package.json` file.
+    Used for generation of package metadata.
+    -   Default: `./package.json`.
+-   `usesTinylicious`: Whether or not running the example app requires running [Tinylicious][] from another terminal.
+    -   Default: `true`.
+
+#### `CLIENT_REQUIREMENTS`
 
 Generates a section containing minimum client requirements for using Fluid Framework packages.
 
@@ -257,7 +286,7 @@ Arguments:
     Must be a positive integer.
     -   Default: 2.
 
-#### `README_TRADEMARK_SECTION`
+#### `TRADEMARK`
 
 Generates a section containing our `Microsoft` trademark.
 
@@ -271,7 +300,7 @@ Arguments:
     Must be a positive integer.
     -   Default: 2.
 
-#### `README_CONTRIBUTION_GUIDELINES_SECTION`
+#### `CONTRIBUTION_GUIDELINES`
 
 Generates a section enumerating `fluid-framework`'s contribution guidelines.
 
@@ -285,7 +314,7 @@ Arguments:
     Must be a positive integer.
     -   Default: 2.
 
-#### `README_HELP_SECTION`
+#### `HELP`
 
 Generates a simple "help" section, which points the reader to various resources.
 
@@ -299,7 +328,7 @@ Arguments:
     Must be a positive integer.
     -   Default: 2.
 
-#### `README_PACKAGE_SCRIPTS`
+#### `PACKAGE_SCRIPTS`
 
 Generates a section containing a table enumerating the package's `npm` scripts.
 
@@ -314,7 +343,7 @@ Arguments:
     Must be a positive integer.
     -   Default: 2.
 
-#### `README_PACKAGE_SCOPE_NOTICE`
+#### `PACKAGE_SCOPE_NOTICE`
 
 Generates a user-facing notice about target audience and support characteristics of the package based on its scope.
 By default, it generates the appropriate notice based on the package name's scope (if it's one the system recognizes), but this can be overridden by specifying `scopeKind`.
@@ -324,9 +353,9 @@ Arguments:
 -   `packageJsonPath`: : Relative file path to the library package's `package.json` file.
     Used to read the package name's scope (when the `scopeKind` argument is not provided).
     -   Default: `./package.json`.
--   `scopeKind`: (optional) Override the automatic scope detection behavior with an explicit scope kind: `EXPERIMENTAL`, `INTERNAL`, or `PRIVATE`.
+-   `scopeKind`: (optional) Override the automatic scope detection behavior with an explicit scope kind: `FRAMEWORK`, `EXPERIMENTAL`, `INTERNAL`, `PRIVATE`, `TOOLS`, or `EXAMPLE`.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

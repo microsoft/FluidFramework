@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, oob } from "@fluidframework/core-utils/internal";
 
 import type { RevisionTag } from "../../core/index.js";
 import { type IdAllocator, type Mutable, fail } from "../../util/index.js";
@@ -27,6 +27,7 @@ import {
 	type NoopMark,
 	NoopMarkType,
 	type Remove,
+	type Rename,
 } from "./types.js";
 import {
 	extractMarkEffect,
@@ -87,6 +88,21 @@ function invertMark(
 	switch (type) {
 		case NoopMarkType: {
 			return [mark];
+		}
+		case "Rename": {
+			const inputId = getInputCellId(mark);
+			assert(inputId !== undefined, 0x9f5 /* Rename mark must have cell ID */);
+			const inverse: Mutable<CellMark<Rename>> = {
+				type: "Rename",
+				count: mark.count,
+				cellId: mark.idOverride,
+				// Unlike a remove or move-out, which follow a node, there is no way for this mark to assign the original input cell ID to another cell.
+				// This means it should be safe to always restore the input cell ID (as opposed to only doing it on rollbacks).
+				// Despite that, we still only do it on rollback for the sake of consistency: once a cell has been assigned an ID,
+				// the only way for that cell to be assigned that ID again is if it is rolled back to that state.
+				idOverride: isRollback ? inputId : { localId: inputId.localId },
+			};
+			return [withNodeChange(inverse, mark.changes)];
 		}
 		case "Remove": {
 			assert(mark.revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
@@ -221,7 +237,7 @@ function invertMark(
 				0x80d /* Only expected MoveIn marks to be split when inverting */,
 			);
 
-			let detachInverse = detachInverses[0];
+			let detachInverse = detachInverses[0] ?? oob();
 			assert(isAttach(detachInverse), 0x80e /* Inverse of a detach should be an attach */);
 
 			const inverses: Mark[] = [];
@@ -243,28 +259,22 @@ function invertMark(
 					continue;
 				}
 				assert(isDetach(attachInverse), 0x810 /* Inverse of an attach should be a detach */);
-
-				const inverted: Mark = {
-					type: "AttachAndDetach",
-					count: attachInverse.count,
-					attach: extractMarkEffect(detachInverseCurr),
-					detach: extractMarkEffect(attachInverse),
-				};
-
-				if (detachInverseCurr.cellId !== undefined) {
-					inverted.cellId = detachInverseCurr.cellId;
-				}
-
-				if (detachInverseCurr.changes !== undefined) {
-					inverted.changes = detachInverseCurr.changes;
+				assert(detachInverseCurr.cellId !== undefined, 0x9f6 /* Expected empty cell */);
+				const inverted = normalizeCellRename(
+					detachInverseCurr.cellId,
+					attachInverse.count,
+					extractMarkEffect(detachInverseCurr),
+					extractMarkEffect(attachInverse),
+				);
+				if (detachInverse.changes !== undefined) {
+					inverted.changes = detachInverse.changes;
 				}
 
 				if (attachInverse.changes !== undefined) {
 					assert(inverted.changes === undefined, 0x811 /* Unexpected node changes */);
 					inverted.changes = attachInverse.changes;
 				}
-
-				inverses.push(normalizeCellRename(inverted));
+				inverses.push(inverted);
 			}
 
 			return inverses;

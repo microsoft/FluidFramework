@@ -113,7 +113,7 @@ export class SnapshotLegacy {
 			chunkSequenceNumber: this.header!.seq,
 			segmentTexts: segs.map((seg) => seg.toJSONObject() as JsonSegmentSpecs),
 			attribution:
-				segsWithAttribution > 0
+				segsWithAttribution > 0 || this.mergeTree.attributionPolicy?.isAttached
 					? attributionSerializer?.serializeAttributionCollections(segs)
 					: undefined,
 		};

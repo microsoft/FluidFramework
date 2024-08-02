@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { oob } from "@fluidframework/core-utils/internal";
 import type { MapGetSet } from "./utils.js";
 
 /**
@@ -107,6 +108,25 @@ export function getOrAddInMap<Key, Value>(
 	if (currentValue !== undefined) {
 		return currentValue;
 	}
+	map.set(key, value);
+	return value;
+}
+
+/**
+ * Sets the value at `key` in `map` to `generateValue()` if not already present.
+ * Returns the value at `key` after setting it.
+ */
+export function getOrAddInMapLazy<Key, Value>(
+	map: MapGetSet<Key, Value>,
+	key: Key,
+	generateValue: () => Value,
+): Value {
+	const currentValue = map.get(key);
+	if (currentValue !== undefined) {
+		return currentValue;
+	}
+
+	const value = generateValue();
 	map.set(key, value);
 	return value;
 }
@@ -336,7 +356,9 @@ export class SizedNestedMap<Key1, Key2, Value> {
 	}
 
 	public values(): IterableIterator<Value> {
-		return Array.from(this.nestedMap.values()).flatMap((innerMap) => innerMap.values())[0];
+		return (
+			Array.from(this.nestedMap.values()).flatMap((innerMap) => innerMap.values())[0] ?? oob()
+		);
 	}
 
 	public [Symbol.iterator](): IterableIterator<[Key1, Map<Key2, Value>]> {

@@ -24,14 +24,14 @@ import {
 	minReferencePosition,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
+	SequencePlace,
+	Side,
+	endpointPosAndSide,
 } from "@fluidframework/merge-tree/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	SequencePlace,
-	Side,
 	computeStickinessFromSide,
-	endpointPosAndSide,
 	reservedIntervalIdKey,
 	sidesFromStickiness,
 } from "../intervalCollection.js";

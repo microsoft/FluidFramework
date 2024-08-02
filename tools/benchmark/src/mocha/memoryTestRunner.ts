@@ -315,7 +315,6 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 		let benchmarkStats: BenchmarkResult = {
 			elapsedSeconds: 0,
 			customData: {},
-			customDataFormatters: {},
 		};
 		const sample: MemorySampleData = {
 			before: {
@@ -386,26 +385,30 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 				heapUsedStats.marginOfErrorPercent > options.maxRelativeMarginOfError
 			);
 
-			benchmarkStats.customData["Heap Used Avg"] = heapUsedStats.arithmeticMean;
-			benchmarkStats.customDataFormatters["Heap Used Avg"] = (value): string =>
-				prettyNumber(value as number, 2);
+			benchmarkStats.customData["Heap Used Avg"] = {
+				rawValue: heapUsedStats.arithmeticMean,
+				formattedValue: prettyNumber(heapUsedStats.arithmeticMean, 2),
+			};
 
-			benchmarkStats.customData["Margin of Error"] = heapUsedStats.marginOfError;
-			benchmarkStats.customDataFormatters["Margin of Error"] = (value): string =>
-				`±${prettyNumber(value as number, 2)}`;
+			benchmarkStats.customData["Heap Used StdDev"] = {
+				rawValue: heapUsedStats.standardDeviation,
+				formattedValue: prettyNumber(heapUsedStats.standardDeviation, 2),
+			};
 
-			benchmarkStats.customData["Relative Margin of Error"] =
-				heapUsedStats.marginOfErrorPercent;
-			benchmarkStats.customDataFormatters["Relative Margin of Error"] = (value): string =>
-				`±${prettyNumber(value as number, 2)}`;
+			benchmarkStats.customData["Margin of Error"] = {
+				rawValue: heapUsedStats.marginOfError,
+				formattedValue: `±${prettyNumber(heapUsedStats.marginOfError, 2)}`,
+			};
 
-			benchmarkStats.customData["Heap Used StdDev"] = heapUsedStats.standardDeviation;
-			benchmarkStats.customDataFormatters["Heap Used StdDev"] = (value): string =>
-				prettyNumber(value as number, 2);
+			benchmarkStats.customData["Relative Margin of Error"] = {
+				rawValue: heapUsedStats.marginOfErrorPercent,
+				formattedValue: `±${prettyNumber(heapUsedStats.marginOfErrorPercent, 2)}`,
+			};
 
-			benchmarkStats.customData.Iterations = runs;
-			benchmarkStats.customDataFormatters.Iterations = (value): string =>
-				(value as number).toString();
+			benchmarkStats.customData.Iterations = {
+				rawValue: runs,
+				formattedValue: prettyNumber(runs, 0),
+			};
 		} catch (error) {
 			// TODO: This results in the mocha test passing when it should fail. Fix this.
 			benchmarkStats = {

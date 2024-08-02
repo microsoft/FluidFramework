@@ -14,21 +14,19 @@ maintainable CLI using [oclif](https://oclif.io).
 
 # Usage
 
-<!-- prettier-ignore-start -->
-<!-- usage -->
+<!-- This is hardcoded because `oclif readme` creates different output per
+platform, and we generate readmes during build -->
 ```sh-session
 $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version|-V)
-@fluid-tools/build-cli/1.0.0
+@fluid-tools/build-cli/0.0.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
 ...
 ```
-<!-- usagestop -->
-<!-- prettier-ignore-stop -->
 
 <!-- prettier-ignore-start -->
 <!-- commands -->
@@ -37,7 +35,7 @@ USAGE
 * [`flub autocomplete`](docs/autocomplete.md) - Display autocomplete installation instructions.
 * [`flub bump`](docs/bump.md) - Bump the version of packages, release groups, and their dependencies.
 * [`flub check`](docs/check.md) - Check commands are used to verify repo state, apply policy, etc.
-* [`flub commands`](docs/commands.md) - list all the commands
+* [`flub commands`](docs/commands.md) - List all flub commands.
 * [`flub exec`](docs/exec.md) - Run a shell command in the context of a package or release group.
 * [`flub generate`](docs/generate.md) - Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub help`](docs/help.md) - Display help for flub.
@@ -90,7 +88,7 @@ For client that is:
 
 This approach can be used with `flub generate typetests` to ensure that the `--level` configuration from the scripts is included, and can be done from a JavaScript Debug console to debug, though breakpoints will need to be set in the `.js` files in `node_modules` (for example in `node_modules/.pnpm/file+build-tools+packages+build-cli_@types+node@18.19.1/node_modules/@fluid-tools/build-cli/lib/commands/generate/typetests.js`).
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
