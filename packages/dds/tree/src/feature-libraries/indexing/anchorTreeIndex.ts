@@ -19,13 +19,24 @@ import {
 import type { TreeIndex, TreeIndexNodes } from "./types.js";
 import type { TreeStatus } from "../flex-tree/index.js";
 
+/**
+ * this type specifies whether an indexable tree is currently in the document,
+ * removed, or both (meaning it is in a detached state)
+ */
 export type IndexableTreeStatus =
 	| keyof Pick<typeof TreeStatus, "InDocument" | "Removed">
 	| "InDocumentAndRemoved";
 
 // TODO: document cursor ownership
+/**
+ * a function that returns some key given a cursor to a node where the key is what the node
+ * is indexed on
+ */
 export type KeyFinder<TKey extends TreeValue> = (tree: ITreeSubscriptionCursor) => TKey;
 
+/**
+ * an index from some arbitrary keys to anchor nodes
+ */
 export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 	implements TreeIndex<TKey, TValue>
 {
