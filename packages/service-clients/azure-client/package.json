@@ -136,6 +136,10 @@
 		"uuid": "^9.0.0"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"TypeAlias_CompatibilityMode": {
+				"backCompat": false
+			}
+		}
 	}
 }

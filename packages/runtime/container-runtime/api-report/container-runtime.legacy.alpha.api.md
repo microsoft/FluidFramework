@@ -142,7 +142,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    protected routeNonContainerSignal(address: string, signalMessage: IInboundSignalMessage, local: boolean): void;
+    protected routeNonContainerSignal(address: NonContainerAddressInfo, signalMessage: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     get scope(): FluidObject;
     get sessionSchema(): {
@@ -164,7 +164,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     submitMessage(type: ContainerMessageType.FluidDataStoreOp | ContainerMessageType.Alias | ContainerMessageType.Attach, contents: any, localOpMetadata?: unknown): void;
     submitSignal(type: string, content: unknown, targetClientId?: string): void;
     // (undocumented)
-    protected submitSignalImpl(address: `/${string}` | undefined, type: string, content: unknown, targetClientId?: string): void;
+    protected submitSignalImpl(address: `/${string}/${string}` | undefined, type: string, content: unknown, targetClientId?: string): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     summarize(options: {
         fullTree?: boolean;
@@ -343,6 +343,7 @@ export interface IContainerRuntimeOptions {
     readonly chunkSizeInBytes?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
     readonly enableGroupedBatching?: boolean;
+    readonly enablePathBasedAddressing?: boolean;
     readonly enableRuntimeIdCompressor?: IdCompressorMode;
     readonly explicitSchemaControl?: boolean;
     readonly flushMode?: FlushMode;
@@ -715,6 +716,21 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
     readonly uploadDuration: number;
 }
 
+// @alpha
+export interface LegacyAddressInfo {
+    // (undocumented)
+    critical: false;
+    // (undocumented)
+    fullAddress: string;
+    // (undocumented)
+    subaddress: undefined;
+    // (undocumented)
+    top: undefined;
+}
+
+// @alpha
+export type NonContainerAddressInfo = PathedAddressInfo | LegacyAddressInfo;
+
 // @alpha @deprecated (undocumented)
 export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 
@@ -723,6 +739,14 @@ export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 // @alpha (undocumented)
 export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
+
+// @alpha
+export interface PathedAddressInfo {
+    critical: boolean;
+    fullAddress: string;
+    subaddress: string;
+    top: string;
+}
 
 // @alpha @deprecated
 export type ReadFluidDataStoreAttributes = IFluidDataStoreAttributes0 | IFluidDataStoreAttributes1 | IFluidDataStoreAttributes2;
