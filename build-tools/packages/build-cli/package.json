@@ -58,26 +58,6 @@
 		"test:vitest": "vitest run test",
 		"tsc": "tsc"
 	},
-	"c8": {
-		"all": true,
-		"cache-dir": "nyc/.cache",
-		"exclude": [
-			"src/test/**/*.*ts",
-			"lib/test/**/*.*js"
-		],
-		"exclude-after-remap": false,
-		"include": [
-			"src/**/*.*ts",
-			"lib/**/*.*js"
-		],
-		"report-dir": "nyc/report",
-		"reporter": [
-			"cobertura",
-			"html",
-			"text"
-		],
-		"temp-directory": "nyc/.nyc_output"
-	},
 	"dependencies": {
 		"@andrewbranch/untar.js": "^1.0.3",
 		"@fluid-tools/version-tools": "workspace:~",
@@ -143,7 +123,6 @@
 		"@types/semver-utils": "^1.1.1",
 		"@types/sort-json": "^2.0.1",
 		"@vitest/coverage-v8": "^2.0.3",
-		"c8": "^7.14.0",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.57.0",
