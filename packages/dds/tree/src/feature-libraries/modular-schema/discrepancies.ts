@@ -393,23 +393,19 @@ function trackObjectNodeDiscrepancies(
 /**
  * @remarks
  *
- * This function uses incompatibilities to determine if changes to a document schema are backward-compatible.
+ * This function uses incompatibilities to determine if changes to a document schema are backward-compatible, i.e., it determines
+ * whether the `view` schema allows a superset of the documents that the `stored` schema allows.
  * According to the policy of schema evolution, `isRepoSuperset` supports three types of changes:
  * 1. Adding an optional field to an object node.
  * 2. Expanding the set of allowed types for a field.
  * 3. Relaxing a field kind to a more general field kind.
  *
- * Notes: We expect isRepoSuperset to return consistent results with allowsRepoSuperset. However, currently there are some inconsistencies:
+ * Notes: We expect isRepoSuperset to return consistent results with allowsRepoSuperset. However, currently there are some scenarios
+ * where the inconsistency will occur:
  *
  * - Different Node Kinds: If a and b have different node kinds (e.g., a is an objectNodeSchema and b is a mapNodeSchema),
  * `isRepoSuperset` will determine that a can never be the superset of b. In contrast, `allowsRepoSuperset` will continue
  * validating internal fields.
- *
- * - Sequence Field Kind: `isRepoSuperset` does not support comparing fields with the sequence field kind.
- *
- * - Empty Fields: If a has an empty field and b has a field with the same identifier but includes a non-optional field
- * with values, `allowsRepoSuperset` will consider a as a superset of b due to its more flexible field. However,
- * `isRepoSuperset` will produce different results, as the incompatibilities indicate that b has more content than a.
  */
 export function isRepoSuperset(view: TreeStoredSchema, stored: TreeStoredSchema): boolean {
 	const incompatibilities = getAllowedContentIncompatibilities(view, stored);
@@ -481,6 +477,8 @@ function validateFieldIncompatibility(incompatibility: FieldIncompatibility): bo
  * Note:
  * - "Sequence": (Currently commented out) was intended to represent a sequence field kind with a value of 4.
  * Relaxing non-sequence fields to sequences is not currently supported but may be considered in the future.
+ *
+ * TODO: We may need more coverage in realm to prove the correctness of the Forbidden -\> Value transaction
  */
 const fieldKindOrder: { [key: string]: number } = {
 	"Forbidden": 1,

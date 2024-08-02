@@ -332,6 +332,14 @@ describe("Schema Comparison", () => {
 				optionalTreeRepoWithoutValue,
 				true,
 			);
+
+			validateMethodsConsistent(anyLocalFieldTreeRepo, optionalLocalFieldTreeRepo, false);
+			validateMethodsConsistent(anyLocalFieldTreeRepo, valueLocalFieldTreeRepo, false);
+			validateMethodsConsistent(
+				anyLocalFieldTreeRepo,
+				optionalTreeRepoWithMultipleValues,
+				false,
+			);
 		});
 
 		it("Fix the TreeNodeStoredSchema and validate repo superset with different rootFieldSchemas", () => {

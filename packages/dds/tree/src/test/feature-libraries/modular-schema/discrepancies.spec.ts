@@ -125,8 +125,17 @@ describe("Schema Discrepancies", () => {
 
 		assert.deepEqual(getAllowedContentIncompatibilities(mapNodeSchema, mapNodeSchema), []);
 
+		/**
+		 * Below is an inconsistency between 'isRepoSuperset' and 'allowsRepoSuperset'. The 'isRepoSuperset' will
+		 * halt further validation if an inconsistency in `nodeKind` is found. However, the current logic of
+		 * 'allowsRepoSuperset' permits relaxing an object node to a map node, which allows for a union of all types
+		 * permitted on the object node's fields. It is unclear if this behavior is desired, as
+		 * 'getAllowedContentIncompatibilities' currently does not support it.
+		 *
+		 * TODO: If we decide to support this behavior, we will need better e2e tests for this scenario. Additionally,
+		 * we may need to adjust the encoding of map nodes and object nodes to ensure consistent encoding.
+		 */
 		assert.equal(isRepoSuperset(objectNodeSchema, mapNodeSchema), false);
-		// there is inconsistency
 		assert.equal(
 			allowsRepoSuperset(defaultSchemaPolicy, objectNodeSchema, mapNodeSchema),
 			true,
