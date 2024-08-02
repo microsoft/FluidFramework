@@ -37,7 +37,7 @@ const RecursionMarkerSymbol: unique symbol = Symbol("recursion here");
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace InternalUtilityTypes {
 	/**
-	 * Metatype for controlling filtering utilities.
+	 * Meta-type for controlling filtering utilities.
 	 *
 	 * @system
 	 */
@@ -318,7 +318,7 @@ export namespace InternalUtilityTypes {
 	/**
 	 * Test for type equality with union of other types.
 	 *
-	 * @typeParam T - Type to find in Union. If this is itself a union, then all types must befound in Union.
+	 * @typeParam T - Type to find in Union. If this is itself a union, then all types must be found in Union.
 	 * @typeParam Union - Union of types to test against.
 	 *
 	 * @system
