@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import { ITenantConfig, ITenantConfigManager } from "@fluidframework/server-services-core";
-import { getCorrelationId } from "@fluidframework/server-services-utils";
 import { BasicRestWrapper, RestWrapper } from "@fluidframework/server-services-client";
 import * as uuid from "uuid";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, Lumberjack, getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
 import { getRequestErrorTranslator, getTokenLifetimeInSec } from "../utils";
 import { ITenantService } from "./definitions";
 import { RedisTenantCache } from "./redisTenantCache";
@@ -18,7 +16,6 @@ export class RiddlerService implements ITenantService, ITenantConfigManager {
 	constructor(
 		endpoint: string,
 		private readonly cache: RedisTenantCache,
-		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 	) {
 		this.restWrapper = new BasicRestWrapper(
 			endpoint,
@@ -32,7 +29,7 @@ export class RiddlerService implements ITenantService, ITenantConfigManager {
 			undefined,
 			undefined,
 			undefined,
-			() => getCorrelationId(this.asyncLocalStorage) || uuid.v4(),
+			() => getGlobalTelemetryContext().getProperties().correlationId ?? uuid.v4(),
 		);
 	}
 

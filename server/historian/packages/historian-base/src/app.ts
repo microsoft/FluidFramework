@@ -18,7 +18,6 @@ import * as nconf from "nconf";
 import { DriverVersionHeaderName } from "@fluidframework/server-services-client";
 import {
 	alternativeMorganLoggerMiddleware,
-	bindCorrelationId,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
@@ -97,7 +96,6 @@ export function create(
 
 	app.use(compression());
 	app.use(cors());
-	app.use(bindCorrelationId(asyncLocalStorage));
 
 	const apiRoutes = routes.create(
 		config,

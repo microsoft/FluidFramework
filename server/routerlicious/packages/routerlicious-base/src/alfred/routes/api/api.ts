@@ -18,13 +18,12 @@ import {
 	throttle,
 	IThrottleMiddlewareOptions,
 	getParam,
-	getCorrelationId,
 	getBooleanFromConfig,
 	verifyToken,
 	verifyStorageToken,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
-import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import { Lumberjack, getLumberBaseProperties, getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
 import { Request, Router } from "express";
 import sillyname from "sillyname";
 import { Provider } from "nconf";
@@ -353,7 +352,7 @@ const uploadBlob = async (
 		undefined,
 		undefined,
 		undefined,
-		() => getCorrelationId() || uuid(),
+		() => getGlobalTelemetryContext().getProperties().correlationId ?? uuid(),
 	);
 	return restWrapper.post(uri, blobData, undefined, {
 		"Content-Type": "application/json",

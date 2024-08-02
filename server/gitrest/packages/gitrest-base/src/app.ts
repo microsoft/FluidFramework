@@ -13,7 +13,6 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import {
 	alternativeMorganLoggerMiddleware,
-	bindCorrelationId,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
@@ -82,8 +81,6 @@ export function create(
 	const requestSize = store.get("requestSizeLimit");
 	app.use(json({ limit: requestSize }));
 	app.use(urlencoded({ limit: requestSize, extended: false }));
-
-	app.use(bindCorrelationId(asyncLocalStorage));
 
 	app.use(cors());
 
