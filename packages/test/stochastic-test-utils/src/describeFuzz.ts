@@ -39,10 +39,13 @@ function createSuite<TArgs extends StressSuiteArguments>(
  */
 export interface StressSuiteArguments {
 	/**
-	 * It indicates the "stress level" of tests. A value of 0 means the test is not run in stress mode, while
-	 * higher values indicate increasingly stressful testing. This value also acts as a multiplier for the
-	 * test count and timeout threshold. A stress run generally takes longer time or more programatically generated
-	 * tests.
+	 * Indicates the "stress level" of the tests. The number of test seeds and the timeout threshold
+	 * will be adjusted according to the selected mode.
+	 *
+	 * - Short: Runs only half of the test seeds randomly, with a timeout set to half of the default value.
+	 * - Normal: Runs all test seeds with the default timeout.
+	 * - Long: Runs all test seeds twice, with the timeout threshold doubled.
+	 * - undefined: Indicates that no stress mode is applied, and no tests will be run in stress mode.
 	 */
 	stressMode: StressMode | undefined;
 }
@@ -51,9 +54,9 @@ export interface StressSuiteArguments {
  * @internal
  */
 export enum StressMode {
-	Short,
-	Normal,
-	Long,
+	Short = "short",
+	Normal = "normal",
+	Long = "long",
 }
 
 /**

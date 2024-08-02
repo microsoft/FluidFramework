@@ -1596,20 +1596,20 @@ export function generateTestSeeds(testCount: number, stressMode: StressMode): nu
 
 	switch (stressMode) {
 		case StressMode.Short: {
+			const halfCount = Math.ceil(testCount / 2);
+			const initialSeed = random.pick(seeds);
 			const selectedSeeds: number[] = [];
-			for (let i = 0; i < Math.ceil(testCount / 2); i++) {
-				const seed = random.pick(seeds.filter((s) => !selectedSeeds.includes(s)));
+
+			for (let i = 0; i < halfCount; i++) {
+				const seed = (initialSeed + i) % testCount;
 				selectedSeeds.push(seed);
 			}
+
 			return selectedSeeds;
 		}
 		case StressMode.Long: {
-			const additionalSeeds: number[] = [];
-			for (let i = 0; i < testCount; i++) {
-				const seed = random.pick(seeds.filter((s) => !additionalSeeds.includes(s)));
-				additionalSeeds.push(seed);
-			}
-			return [...seeds, ...additionalSeeds];
+			// Currently the long mode just double the test seeds.
+			return [...seeds, ...seeds];
 		}
 
 		default: {
