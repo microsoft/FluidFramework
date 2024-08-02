@@ -2780,7 +2780,7 @@ export class ContainerRuntime
 	 */
 	private processEmptyBatch(emptyBatch: InboundBatch, local: boolean) {
 		const { emptyBatchSequenceNumber: sequenceNumber, batchStartCsn } = emptyBatch;
-		assert(sequenceNumber !== undefined, "emptyBatchSequenceNumber must be defined");
+		assert(sequenceNumber !== undefined, 0x9fa /* emptyBatchSequenceNumber must be defined */);
 		this.emit("batchBegin", { sequenceNumber });
 		this._processedClientSequenceNumber = batchStartCsn;
 		if (!this.hasPendingMessages()) {

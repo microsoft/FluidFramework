@@ -83,11 +83,11 @@ export function getChangeReplaceType(
 	// B' is removed and replaced by B because both have the same revision.
 	assert(
 		change.removedCommits[0] !== undefined,
-		"This wont run due to the length check above",
+		0x9e4 /* This wont run due to the length check above */,
 	);
 	assert(
 		change.newCommits[0] !== undefined,
-		"This wont run because a replace operation always has new commits",
+		0x9e5 /* This wont run because a replace operation always has new commits */,
 	);
 	if (
 		change.removedCommits.length === 1 &&
