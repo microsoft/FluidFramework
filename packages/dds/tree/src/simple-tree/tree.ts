@@ -281,7 +281,7 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
 		} else if (schema.kind === NodeKind.Array) {
 			arrays.push(schema);
 		} else {
-			assert(schema.kind === NodeKind.Map, "invalid schema");
+			assert(schema.kind === NodeKind.Map, 0x9e7 /* invalid schema */);
 			maps.push(schema);
 		}
 	}

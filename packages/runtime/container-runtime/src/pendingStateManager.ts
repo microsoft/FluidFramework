@@ -325,7 +325,7 @@ export class PendingStateManager implements IDisposable {
 		if (batch.length === 0) {
 			assert(
 				emptyBatchSequenceNumber !== undefined,
-				"Expected sequence number for empty batch",
+				0x9fb /* Expected sequence number for empty batch */,
 			);
 			return this.processPendingLocalEmptyBatch(batchStartCsn, emptyBatchSequenceNumber);
 		}
@@ -344,10 +344,13 @@ export class PendingStateManager implements IDisposable {
 	 */
 	private processPendingLocalEmptyBatch(batchStartCsn: number, sequenceNumber: number): [] {
 		const pendingMessage = this.pendingMessages.peekFront();
-		assert(pendingMessage !== undefined, "No pending message found for this remote message");
+		assert(
+			pendingMessage !== undefined,
+			0x9fc /* No pending message found for this remote message */,
+		);
 		assert(
 			asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true,
-			"Expected empty batch",
+			0x9fd /* Expected empty batch */,
 		);
 
 		if (pendingMessage.batchIdContext.batchStartCsn !== batchStartCsn) {
