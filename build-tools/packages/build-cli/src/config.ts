@@ -11,8 +11,8 @@ import {
 } from "@fluid-tools/version-tools";
 import { MonoRepo } from "@fluidframework/build-tools";
 import { cosmiconfigSync } from "cosmiconfig";
-import type { ReleaseGroup } from "./releaseGroups.js";
 import { Context } from "./library/index.js";
+import type { ReleaseGroup } from "./releaseGroups.js";
 
 /**
  * Fluid repo build configuration that is expected in the fluidRepo config file or package.json.

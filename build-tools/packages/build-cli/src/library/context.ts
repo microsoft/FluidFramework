@@ -9,12 +9,12 @@ import { ReleaseVersion } from "@fluid-tools/version-tools";
 import {
 	FluidRepo,
 	GitRepo,
+	IRepoBuildConfig,
 	Package,
 	getRepoBuildConfig,
-	IRepoBuildConfig,
 } from "@fluidframework/build-tools";
 import * as semver from "semver";
-import { getFlubConfig, type FlubConfig } from "../config.js";
+import { type FlubConfig, getFlubConfig } from "../config.js";
 
 /**
  * Represents a release version and its release date, if applicable.
