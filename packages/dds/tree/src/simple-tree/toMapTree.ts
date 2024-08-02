@@ -614,7 +614,7 @@ function shallowCompatibilityTest(
 		return CompatibilityLevel.Low;
 	}
 
-	assert(isObjectNodeSchema(schema), "unexpected schema kind");
+	assert(isObjectNodeSchema(schema), 0x9e6 /* unexpected schema kind */);
 
 	// TODO: Improve type inference by making this logic more thorough. Handle at least:
 	// * Types which are strict subsets of other types in the same polymorphic union
