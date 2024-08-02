@@ -442,7 +442,10 @@ export function isRepoSuperset(view: TreeStoredSchema, stored: TreeStoredSchema)
 function validateFieldIncompatibility(incompatibility: FieldIncompatibility): boolean {
 	switch (incompatibility.mismatch) {
 		case "allowedTypes": {
-			return incompatibility.stored.every((item) => incompatibility.view.includes(item));
+			// Since we only track the symmetric difference between the allowed types in the view and
+			// stored schemas, it's sufficient to check if any extra allowed types still exist in the
+			// stored schema.
+			return incompatibility.stored.length === 0;
 		}
 		case "fieldKind": {
 			if (incompatibility.stored === undefined) {
