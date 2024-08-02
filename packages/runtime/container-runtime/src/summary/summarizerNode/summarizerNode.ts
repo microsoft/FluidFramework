@@ -19,7 +19,7 @@ import {
 	ISummarizerNode,
 	ISummarizerNodeConfig,
 	SummarizeInternalFn,
-	channelsTreeName
+	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import { type ITelemetryErrorEventExt } from "@fluidframework/telemetry-utils/internal";
@@ -40,7 +40,6 @@ import {
 	ISummarizerNodeRootContract,
 	ValidateSummaryResult,
 	PendingSummaryInfo,
-	parseSummaryForSubtrees,
 } from "./summarizerNodeUtils.js";
 
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {}
@@ -64,8 +63,14 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * Returns 0 if there is not yet an acked summary.
 	 */
 	public get referenceSequenceNumber() {
-		// return this._latestSummary?.referenceSequenceNumber ?? 0;
 		return this._lastSummaryReferenceSequenceNumber ?? 0;
+	}
+
+	/**
+	 * returns the handle of the last successful summary of this summarizerNode
+	 */
+	public get summaryHandleId() {
+		return this._summaryHandleId;
 	}
 
 	protected readonly children = new Map<string, SummarizerNode>();
@@ -306,10 +311,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * @param proposalHandle - The handle of the summary that was uploaded to the server.
 	 */
 	public completeSummary(proposalHandle: string) {
-		this.completeSummaryCore(
-			proposalHandle,
-			false /* parentSkipRecursion */,
-		);
+		this.completeSummaryCore(proposalHandle, false /* parentSkipRecursion */);
 	}
 
 	/**
@@ -320,10 +322,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * In that case, the children will not have work-in-progress state.
 	 * @param validate - true to validate that the in-progress summary is correct for all nodes.
 	 */
-	protected completeSummaryCore(
-		proposalHandle: string,
-		parentSkipRecursion: boolean,
-	) {
+	protected completeSummaryCore(proposalHandle: string, parentSkipRecursion: boolean) {
 		assert(
 			this.wipReferenceSequenceNumber !== undefined,
 			0x1a4 /* "Not tracking a summary" */,
@@ -343,10 +342,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		}
 
 		for (const child of this.children.values()) {
-			child.completeSummaryCore(
-				proposalHandle,
-				this.wipSkipRecursion || parentSkipRecursion,
-			);
+			child.completeSummaryCore(proposalHandle, this.wipSkipRecursion || parentSkipRecursion);
 		}
 		// Note that this overwrites existing pending summary with
 		// the same proposalHandle. If proposalHandle is something like
@@ -354,7 +350,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 		// can return the same proposalHandle for a different summary,
 		// this should still be okay, because we should be proposing the
 		// newer one later which would have to overwrite the previous one.
-		this.pendingSummaries.set(proposalHandle, {referenceSequenceNumber: this.wipReferenceSequenceNumber});
+		this.pendingSummaries.set(proposalHandle, {
+			referenceSequenceNumber: this.wipReferenceSequenceNumber,
+		});
 		this.clearSummary();
 	}
 
@@ -465,7 +463,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 			}
 		}
 		// Update the latest successful summary reference number
-		 this._lastSummaryReferenceSequenceNumber = pendingSummary.referenceSequenceNumber;
+		this._lastSummaryReferenceSequenceNumber = pendingSummary.referenceSequenceNumber;
 		// Propagate update to all child nodes
 		for (const child of this.children.values()) {
 			child.refreshLatestSummaryFromPending(proposalHandle, referenceSequenceNumber);
@@ -512,7 +510,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	): ISummarizerNode {
 		assert(!this.children.has(id), 0x1ab /* "Create SummarizerNode child already exists" */);
 
-		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id,createParam);
+		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
 		const child = new SummarizerNode(
 			this.logger,
 			summarizeInternalFn,
@@ -547,10 +545,10 @@ export class SummarizerNode implements IRootSummarizerNode {
 		id: string,
 		createParam: CreateChildSummarizerNodeParam,
 	): ICreateChildDetails {
-		let childLastSummaryReferenceSequenceNumber: number|undefined;
+		let childLastSummaryReferenceSequenceNumber: number | undefined;
 		let changeSequenceNumber: number;
 
-		const parentLastSummaryReferenceSequenceNumber= this._lastSummaryReferenceSequenceNumber;
+		const parentLastSummaryReferenceSequenceNumber = this._lastSummaryReferenceSequenceNumber;
 		switch (createParam.type) {
 			case CreateSummarizerNodeSource.FromAttach: {
 				if (
@@ -582,7 +580,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 			changeSequenceNumber,
 			telemetryNodeId: childTelemetryNodeId,
 			summaryHandleId: childSummaryHandleId,
-			lastSummaryreferenceSequenceNumber: childLastSummaryReferenceSequenceNumber
+			lastSummaryreferenceSequenceNumber: childLastSummaryReferenceSequenceNumber,
 		};
 	}
 
@@ -603,9 +601,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 		}
 		// In case we have pending summaries on the parent, let's initialize it on the child.
 		if (child._lastSummaryReferenceSequenceNumber !== undefined) {
-			this.pendingSummaries.forEach((summary,proposedHandle) => {
+			this.pendingSummaries.forEach((summary, proposedHandle) => {
 				child.addPendingSummary(proposedHandle, summary);
-			})
+			});
 		}
 	}
 
