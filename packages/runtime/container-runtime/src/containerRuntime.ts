@@ -1711,6 +1711,13 @@ export class ContainerRuntime
 		});
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
+		// If the base snapshot was generated when isolated channels were disabled, set the summary reference
+		// sequence to undefined so that this snapshot will not be used for incremental summaries. This is for
+		// back-compat and will rarely happen so its okay to re-summarize everything in the first summary.
+		const summaryReferenceSequenceNumber =
+			baseSnapshot === undefined || metadata?.disableIsolatedChannels === true
+				? undefined
+				: loadedFromSequenceNumber;
 		this.summarizerNode = createRootSummarizerNodeWithGC(
 			createChildLogger({ logger: this.logger, namespace: "SummarizerNode" }),
 			// Summarize function to call when summarize is called. Summarizer node always tracks summary state.
@@ -1718,8 +1725,7 @@ export class ContainerRuntime
 				this.summarizeInternal(fullTree, trackState, telemetryContext),
 			// Latest change sequence number, no changes since summary applied yet
 			loadedFromSequenceNumber,
-			// Summary reference sequence number, undefined if no summary yet
-			baseSnapshot !== undefined ? loadedFromSequenceNumber : undefined,
+			summaryReferenceSequenceNumber,
 			{
 				// Must set to false to prevent sending summary handle which would be pointing to
 				// a summary with an older protocol state.
