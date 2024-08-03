@@ -261,7 +261,8 @@ export namespace InternalUtilityTypes {
         [K in keyof T]: T[K];
     } : T;
     export type HasNonPublicProperties<T, Controls extends FilterControls> = ReplaceAllowancesAndRecursionWithNever<T, Controls> extends T ? false : true;
-    export type IfExactTypeInUnion<T, Union, IfMatch = unknown, IfNoMatch = never> = IfSameType<T, Extract<Union, T>, IfMatch, IfNoMatch>;
+    export type IfExactTypeInTuple<T, Tuple extends unknown[], IfMatch = unknown, IfNoMatch = never> = Tuple extends [infer First, ...infer Rest] ? IfSameType<T, First, IfMatch, IfExactTypeInTuple<T, Rest, IfMatch, IfNoMatch>> : IfNoMatch;
+    export type IfExactTypeInUnion<T, Union, IfMatch = unknown, IfNoMatch = never> = IfSameType<T, never, IfSameType<Union, never, IfMatch, IfNoMatch>, IfSameType<T, Extract<Union, T>, IfMatch, IfNoMatch>>;
     export type IfSameType<X, Y, IfSame = unknown, IfDifferent = never> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? IfSame : IfDifferent;
     export type IsEnumLike<T extends object> = T extends readonly (infer _)[] ? false : T extends {
         readonly [i: number]: string;
@@ -345,15 +346,19 @@ export namespace InternalUtilityTypes {
         // (undocumented)
         [RecursionMarkerSymbol]: typeof RecursionMarkerSymbol;
     }
-    export type ReplaceAllowancesAndRecursionWithNever<T, Controls extends FilterControls> = T extends Controls["AllowExtensionOf"] ? never : IfExactTypeInUnion<T, Controls["AllowExactly"], true, "no match"> extends true ? never : T extends object ? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) & (T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) & {
-        [K in keyof T]: ReplaceAllowancesAndRecursionWithNever<T[K], {
-            AllowExactly: Controls["AllowExactly"];
-            AllowExtensionOf: Controls["AllowExtensionOf"] | T;
-        }>;
+    export type ReplaceAllowancesAndRecursionWithNever<T, Controls extends FilterControls, TAncestorTypes extends unknown[] = [], TNextAncestor = T> = IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true ? never : T extends Controls["AllowExtensionOf"] ? never : IfExactTypeInUnion<T, Controls["AllowExactly"], true, "no match"> extends true ? never : T extends object ? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) & (T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) & {
+        [K in keyof T]: ReplaceAllowancesAndRecursionWithNever<T[K], Controls, [
+        TNextAncestor,
+        ...TAncestorTypes
+        ]>;
     } : T;
-    export type ReplaceRecursionWith<T, TReplacement> = ReplaceRecursionWithImpl<T, TReplacement, never>;
-    export type ReplaceRecursionWithImpl<T, TReplacement, TAncestorTypes> = T extends TAncestorTypes ? TReplacement : T extends object ? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) & (T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) & {
-        [K in keyof T]: ReplaceRecursionWithImpl<T[K], TReplacement, TAncestorTypes | T>;
+    export type ReplaceRecursionWith<T, TReplacement> = ReplaceRecursionWithImpl<T, TReplacement, [
+    ]>;
+    export type ReplaceRecursionWithImpl<T, TReplacement, TAncestorTypes extends unknown[], TNextAncestor = T> = IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true ? TReplacement : T extends object ? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) & (T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) & {
+        [K in keyof T]: ReplaceRecursionWithImpl<T[K], TReplacement, [
+        TNextAncestor,
+        ...TAncestorTypes
+        ]>;
     } : T;
     export type RequiredNonSymbolKeysOf<T extends object, Keys extends keyof T = keyof T> = Exclude<{
         [K in Keys]: T extends Record<K, T[K]> ? K : never;

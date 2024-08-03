@@ -27,9 +27,10 @@ const RecursionMarkerSymbol: unique symbol = Symbol("recursion here");
  * - {@link InternalUtilityTypes.JsonSerializableImpl | JsonSerializableImpl }
  *
  * api-extractor will allow `export` to be removed from others but generates
- * api-report a little oddly. It will promote all of the support types to
- * appear as exported anyway. All in namespace are left exported to avoid
- * api-extractor potentially failing to validate other modules correctly.
+ * api-report a little oddly with a rogue `{};` floating at end of namespace
+ * in api.md file. It will promote all of the support types to appear as
+ * exported anyway. All in namespace are left exported to avoid api-extractor
+ * potentially failing to validate other modules correctly.
  *
  * @beta
  * @system
@@ -43,15 +44,26 @@ export namespace InternalUtilityTypes {
 	 */
 	export interface FilterControls {
 		/**
-		 * Exact types that are managed by custom deserialization logic (beyond
-		 * JSON.parse). Only exact types matching specification will be preserved
-		 * unaltered.
+		 * Exact types that are managed by custom serialization/deserialization
+		 * logic (beyond JSON.stringify and JSON.parse without replacers/revivers).
+		 * Only exact types matching specification will be preserved unaltered.
+		 *
+		 * @privateRemarks
+		 * This could be a tuple of types that would support replacing exactly
+		 * specified unions. However that would not be useful in the context of
+		 * serializers/deserializers as those must work only with the specific
+		 * data given at runtime and have no knowledge of the alternate data
+		 * that could be encountered in that space.
+		 *
+		 * Such union matching is only known to be useful for matching recursion
+		 * cases.
 		 */
 		AllowExactly: unknown;
 
 		/**
-		 * General types that are managed by custom deserialization logic (beyond
-		 * JSON.parse). Any type satisfying specification will be preserved unaltered.
+		 * General types that are managed by custom serialization/deserialization
+		 * logic (beyond JSON.stringify and JSON.parse without replacers/revivers).
+		 * Any type satisfying specification will be preserved unaltered.
 		 */
 		AllowExtensionOf: unknown;
 	}
@@ -316,18 +328,48 @@ export namespace InternalUtilityTypes {
 		: IfDifferent;
 
 	/**
+	 * Test for type equality with tuple of other types.
+	 *
+	 * @typeParam T - Type to find in Tuple.
+	 * @typeParam Tuple - Tuple of types to test against.
+	 * @typeParam IfMatch - Type to return if match is found.
+	 * @typeParam IfNoMatch - Type to return if no match is found.
+	 *
+	 * @privateRemarks
+	 * Tests for an extact match of `T` in `Tuple[0]`. If not found,
+	 * recurses with the remainder of the tuple.
+	 */
+	export type IfExactTypeInTuple<
+		T,
+		Tuple extends unknown[],
+		IfMatch = unknown,
+		IfNoMatch = never,
+	> = Tuple extends [infer First, ...infer Rest]
+		? IfSameType<T, First, IfMatch, IfExactTypeInTuple<T, Rest, IfMatch, IfNoMatch>>
+		: IfNoMatch;
+
+	/**
 	 * Test for type equality with union of other types.
 	 *
 	 * @typeParam T - Type to find in Union. If this is itself a union, then all types must be found in Union.
 	 * @typeParam Union - Union of types to test against.
+	 * @typeParam IfMatch - Type to return if match is found.
+	 * @typeParam IfNoMatch - Type to return if no match is found.
 	 *
+	 * @remarks
+	 * In a recursive context, use {@link InternalUtilityTypes.IfExactTypeInTuple} to manage ancestry.
+	 *
+	 * @privateRemarks
+	 * Perhaps it is a Typescript defect but a simple check that `T` is `never`
+	 * via `T extends never` does not work as expected in this context.
+	 * Workaround using `IfSameType<..., never,...>`.
 	 * @system
 	 */
 	export type IfExactTypeInUnion<T, Union, IfMatch = unknown, IfNoMatch = never> = IfSameType<
 		T,
-		Extract<Union, T>,
-		IfMatch,
-		IfNoMatch
+		never,
+		/* T is never => */ IfSameType<Union, never, IfMatch, IfNoMatch>,
+		/* T is NOT never => */ IfSameType<T, Extract<Union, T>, IfMatch, IfNoMatch>
 	>;
 
 	/**
@@ -367,11 +409,17 @@ export namespace InternalUtilityTypes {
 	export type ReplaceRecursionWith<T, TReplacement> = ReplaceRecursionWithImpl<
 		T,
 		TReplacement,
-		never
+		[]
 	>;
 
 	/**
 	 * Implementation for {@link InternalUtilityTypes.ReplaceRecursionWith}
+	 *
+	 * @typeParam T - Type to process.
+	 * @typeParam TReplacement - Replacement type.
+	 * @typeParam TAncestorTypes - Types that are ancestors of T.
+	 * @typeParam TNextAncestor - Set exactly to T. This is passed separately
+	 * such that T union types remain intact as exact ancestors.
 	 *
 	 * @privateRemarks
 	 * This implementation handles functions including function with properties.
@@ -383,45 +431,67 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type ReplaceRecursionWithImpl<T, TReplacement, TAncestorTypes> =
-		/* test for recursion */ T extends TAncestorTypes
-			? /* recursion => use replacement */ TReplacement
-			: T extends object
-				? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) &
-						(T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) & {
-							[K in keyof T]: ReplaceRecursionWithImpl<T[K], TReplacement, TAncestorTypes | T>;
-						}
-				: /* non-object => T as is */ T;
+	export type ReplaceRecursionWithImpl<
+		T,
+		TReplacement,
+		TAncestorTypes extends unknown[],
+		TNextAncestor = T,
+	> = /* test for recursion */
+	IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true
+		? /* recursion => use replacement */ TReplacement
+		: T extends object
+			? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) &
+					(T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) & {
+						[K in keyof T]: ReplaceRecursionWithImpl<
+							T[K],
+							TReplacement,
+							[TNextAncestor, ...TAncestorTypes]
+						>;
+					}
+			: /* non-object => T as is */ T;
 
 	/**
 	 * Replaces any instances of "allowed" types and recursion within with `never`.
+	 *
+	 * @typeParam T - Type to process.
+	 * @typeParam Controls - Allowances to replace.
+	 * @typeParam TAncestorTypes - Types that are ancestors of T.
+	 * @typeParam TNextAncestor - Set exactly to T. This is passed separately
+	 * such that T union types remain intact as exact ancestors.
 	 *
 	 * @system
 	 */
 	export type ReplaceAllowancesAndRecursionWithNever<
 		T,
 		Controls extends FilterControls,
-	> = T extends Controls["AllowExtensionOf"]
-		? /* allowed extension type => */ never
-		: /* test for exact allowance */ IfExactTypeInUnion<
-					T,
-					Controls["AllowExactly"],
-					true,
-					"no match"
-				> extends true
-			? /* exact allowed type => */ never
-			: T extends object
-				? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) &
-						(T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) & {
-							[K in keyof T]: ReplaceAllowancesAndRecursionWithNever<
-								T[K],
-								{
-									AllowExactly: Controls["AllowExactly"];
-									AllowExtensionOf: Controls["AllowExtensionOf"] | T;
-								}
-							>;
-						}
-				: /* non-object => T as is */ T;
+		TAncestorTypes extends unknown[] = [],
+		TNextAncestor = T,
+	> = /* test for exact recursion first */ IfExactTypeInTuple<
+		T,
+		TAncestorTypes,
+		true,
+		"no match"
+	> extends true
+		? /* recursion => */ never
+		: /* test for general allowance */ T extends Controls["AllowExtensionOf"]
+			? /* allowed extension type => */ never
+			: /* test for exact allowance */ IfExactTypeInUnion<
+						T,
+						Controls["AllowExactly"],
+						true,
+						"no match"
+					> extends true
+				? /* exact allowed type => */ never
+				: T extends object
+					? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) &
+							(T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) & {
+								[K in keyof T]: ReplaceAllowancesAndRecursionWithNever<
+									T[K],
+									Controls,
+									[TNextAncestor, ...TAncestorTypes]
+								>;
+							}
+					: /* non-object => T as is */ T;
 
 	/**
 	 * Test for non-public properties (class instance type)
@@ -434,6 +504,8 @@ export namespace InternalUtilityTypes {
 		T,
 		Controls extends FilterControls,
 	> = ReplaceAllowancesAndRecursionWithNever<T, Controls> extends T ? false : true;
+
+	// #region JsonSerializable implementation
 
 	/**
 	 * Outer implementation of {@link JsonSerializable} handling meta cases
@@ -578,6 +650,10 @@ export namespace InternalUtilityTypes {
 											>
 							: /* not an object => */ never
 						: /* function => */ never;
+
+	// #endregion
+
+	// #region JsonDeserialized implementation
 
 	/**
 	 * Sentinel type for use when marking points of recursion (in a recursive type).
@@ -764,4 +840,6 @@ export namespace InternalUtilityTypes {
 											>
 							: /* not an object => */ never
 						: /* function => */ never;
+
+	// #endregion
 }

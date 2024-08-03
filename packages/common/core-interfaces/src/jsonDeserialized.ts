@@ -13,8 +13,9 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 export interface JsonDeserializedOptions {
 	/**
 	 * Exact types that are managed by custom deserialization logic (beyond
-	 * JSON.parse). Only exact types matching specification will be preserved
-	 * unaltered.
+	 * {@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse|JSON.parse}
+	 * without a reviver). Only exact types matching specification will be
+	 * preserved unaltered.
 	 *
 	 * The default value is `never`.
 	 */
@@ -22,7 +23,9 @@ export interface JsonDeserializedOptions {
 
 	/**
 	 * General types that are managed by custom deserialization logic (beyond
-	 * JSON.parse). Any type satisfying specification will be preserved unaltered.
+	 * {@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse|JSON.parse}
+	 * without a reviver). Any type satisfying specification will be preserved
+	 * unaltered.
 	 *
 	 * The default value is `never`.
 	 */

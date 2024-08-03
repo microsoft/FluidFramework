@@ -13,8 +13,9 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 export interface JsonSerializableOptions {
 	/**
 	 * Exact types that are managed by custom serialization logic (beyond
-	 * JSON.stringify). Only exact types matching specification will be preserved
-	 * unaltered.
+	 * {@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify|JSON.stringify}
+	 * without a replacer). Only exact types matching specification will be
+	 * preserved unaltered.
 	 *
 	 * The default value is `never`.
 	 */
@@ -22,7 +23,9 @@ export interface JsonSerializableOptions {
 
 	/**
 	 * General types that are managed by custom serialization logic (beyond
-	 * JSON.stringify). Any type satisfying specification will be preserved unaltered.
+	 * {@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify|JSON.stringify}
+	 * without a replacer). Any type satisfying specification will be preserved
+	 * unaltered.
 	 *
 	 * The default value is `never`.
 	 */
