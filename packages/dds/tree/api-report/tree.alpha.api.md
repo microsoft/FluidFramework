@@ -253,8 +253,6 @@ type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord
 // @public
 export type Off = () => void;
 
-export { Range_2 as Range }
-
 // @public @sealed
 interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypes>> {
     [Symbol.iterator](): IterableIterator<[K, TreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
@@ -270,8 +268,6 @@ interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypes>> {
     readonly size: number;
     values(): IterableIterator<TreeNodeFromImplicitAllowedTypesUnsafe<T>>;
 }
-
-export { Required_2 as Required }
 
 // @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
