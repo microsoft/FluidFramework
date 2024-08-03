@@ -2,6 +2,8 @@
 "fluid-framework": minor
 "@fluidframework/tree": minor
 ---
+includeInReleaseNotes: false
+---
 
 Add a function `isRepoSuperset` to determine if changes to a document schema are backward-compatible.
 
