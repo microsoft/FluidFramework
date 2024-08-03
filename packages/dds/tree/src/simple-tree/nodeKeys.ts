@@ -12,7 +12,6 @@ import type { TreeNode } from "./types.js";
  * @remarks {@link LocalNodeKey}s are put on {@link FlexTreeObjectNode}s via a special field.
  * A node with a node key in its schema must always have a node key.
  * TODO: A node key index leveraging this {@link NodeKeys} interface should be implemented for the simple tree layer.
- * @internal
  */
 export interface NodeKeys {
 	/**

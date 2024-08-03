@@ -28,8 +28,6 @@ import type { PathVisitor, UpPath } from "../../core/index.js";
  * - Add more events.
  * - Have some events (or a way to defer events) until the tree can be read.
  * - Consider removing this and just using AnchorEvents and simple-tree's events (and extending them as needed).
- *
- * @internal
  */
 export interface FlexTreeNodeEvents {
 	/**
