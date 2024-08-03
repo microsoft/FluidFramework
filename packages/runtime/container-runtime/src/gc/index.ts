@@ -30,7 +30,6 @@ export {
 	oneDayMs,
 	runSessionExpiryKey,
 	stableGCVersion,
-	disableAutoRecoveryKey,
 	UnreferencedState,
 	disableThrowOnTombstoneLoadKey,
 	GarbageCollectionMessage,

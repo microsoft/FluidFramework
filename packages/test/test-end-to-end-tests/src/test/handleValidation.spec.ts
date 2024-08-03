@@ -46,7 +46,7 @@ import {
 	TreeViewConfiguration,
 	type TreeView,
 } from "@fluidframework/tree";
-import { SharedTree, type ISharedTree } from "@fluidframework/tree/internal";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 const mapId = "map";
 const stringId = "sharedString";
@@ -323,7 +323,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				return this.downCast(tree);
 			},
 			downCast(channel): HandleStorage {
-				const view: TreeView<typeof Bar> = treeSetup(channel as ISharedTree);
+				const view: TreeView<typeof Bar> = treeSetup(channel as IFluidLoadable as ITree);
 
 				return {
 					id: channel.id,
