@@ -410,22 +410,17 @@ export namespace InternalUtilityTypes {
 	 * Replaces any instance where a type T recurses into itself or a portion of
 	 * itself with TReplacement.
 	 *
-	 * @system
-	 */
-	export type ReplaceRecursionWith<T, TReplacement> = ReplaceRecursionWithImpl<
-		T,
-		TReplacement,
-		[]
-	>;
-
-	/**
-	 * Implementation for {@link InternalUtilityTypes.ReplaceRecursionWith}
-	 *
 	 * @typeParam T - Type to process.
-	 * @typeParam TReplacement - Replacement type.
+	 * @typeParam TRecursionMarker - Replacement marker type.
+	 * @typeParam Controls - Allowances are preserved as-is.
 	 * @typeParam TAncestorTypes - Types that are ancestors of T.
 	 * @typeParam TNextAncestor - Set exactly to T. This is passed separately
 	 * such that T union types remain intact as exact ancestors.
+	 *
+	 * @remarks
+	 * Filtering applied to class instances with non-public properties will not
+	 * preserve the class instance unless those classes are known and listed as
+	 * allowances via `Controls`.
 	 *
 	 * @privateRemarks
 	 * This implementation handles functions including function with properties.
@@ -437,24 +432,42 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type ReplaceRecursionWithImpl<
+	export type ReplaceRecursionWithMarkerAndPreserveAllowances<
 		T,
-		TReplacement,
-		TAncestorTypes extends unknown[],
+		TRecursionMarker,
+		Controls extends FilterControls,
+		TAncestorTypes extends unknown[] = [],
 		TNextAncestor = T,
 	> = /* test for recursion */
 	IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true
-		? /* recursion => use replacement */ TReplacement
-		: T extends object
-			? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) &
-					(T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) & {
-						[K in keyof T]: ReplaceRecursionWithImpl<
-							T[K],
-							TReplacement,
-							[TNextAncestor, ...TAncestorTypes]
-						>;
-					}
-			: /* non-object => T as is */ T;
+		? /* recursion => use replacement */ TRecursionMarker
+		: /* test for general allowance */ T extends Controls["AllowExtensionOf"]
+			? /* allowed extension type => */ T
+			: /* test for exact allowance */ IfExactTypeInUnion<
+						T,
+						Controls["AllowExactly"],
+						true,
+						"no match"
+					> extends true
+				? /* exact allowed type => */ T
+				: T extends object
+					? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) &
+							(T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) &
+							(Exclude<
+								T,
+								// eslint-disable-next-line @typescript-eslint/ban-types
+								Function
+							> extends never
+								? unknown
+								: {
+										[K in keyof T]: ReplaceRecursionWithMarkerAndPreserveAllowances<
+											T[K],
+											TRecursionMarker,
+											Controls,
+											[TNextAncestor, ...TAncestorTypes]
+										>;
+									})
+					: /* non-object => T as is */ T;
 
 	/**
 	 * Replaces any instances of "allowed" types and recursion within with `never`.
@@ -691,7 +704,6 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @privateRemarks
 	 * This utility is reentrant and will process a type `T` up to RecurseLimit.
-	 * TODO FIX - IFluidHandle and recursion results in incorrect (unrolled) type.
 	 *
 	 * @system
 	 */
@@ -710,9 +722,10 @@ export namespace InternalUtilityTypes {
 			Controls extends FilterControls
 			? /* test for 'any' */ boolean extends (T extends never ? true : false)
 				? /* 'any' => */ JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]>
-				: /* infer non-recursive version of T */ ReplaceRecursionWith<
+				: /* infer non-recursive version of T */ ReplaceRecursionWithMarkerAndPreserveAllowances<
 							T,
-							RecursionMarker
+							RecursionMarker,
+							Controls
 						> extends infer TNoRecursionAndOnlyPublics
 					? /* test for no change from filtered type */ IsSameType<
 							TNoRecursionAndOnlyPublics,

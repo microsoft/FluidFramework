@@ -287,7 +287,7 @@ export namespace InternalUtilityTypes {
         AllowExtensionOf: Options extends {
             AllowExtensionOf: unknown;
         } ? Options["AllowExtensionOf"] : never;
-    } extends infer Controls ? Controls extends FilterControls ? boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : ReplaceRecursionWith<T, RecursionMarker> extends infer TNoRecursionAndOnlyPublics ? IsSameType<TNoRecursionAndOnlyPublics, JsonDeserializedFilter<TNoRecursionAndOnlyPublics, {
+    } extends infer Controls ? Controls extends FilterControls ? boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : ReplaceRecursionWithMarkerAndPreserveAllowances<T, RecursionMarker, Controls> extends infer TNoRecursionAndOnlyPublics ? IsSameType<TNoRecursionAndOnlyPublics, JsonDeserializedFilter<TNoRecursionAndOnlyPublics, {
         AllowExactly: Controls["AllowExactly"] | RecursionMarker;
         AllowExtensionOf: Controls["AllowExtensionOf"];
     }, 0>> extends true ? HasNonPublicProperties<T, Controls> extends true ? JsonDeserializedFilter<T, Controls, RecurseLimit> : T : JsonDeserializedFilter<T, Controls, RecurseLimit> : never : never : never;
@@ -352,14 +352,12 @@ export namespace InternalUtilityTypes {
         ...TAncestorTypes
         ]>;
     } : T;
-    export type ReplaceRecursionWith<T, TReplacement> = ReplaceRecursionWithImpl<T, TReplacement, [
-    ]>;
-    export type ReplaceRecursionWithImpl<T, TReplacement, TAncestorTypes extends unknown[], TNextAncestor = T> = IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true ? TReplacement : T extends object ? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) & (T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) & {
-        [K in keyof T]: ReplaceRecursionWithImpl<T[K], TReplacement, [
+    export type ReplaceRecursionWithMarkerAndPreserveAllowances<T, TRecursionMarker, Controls extends FilterControls, TAncestorTypes extends unknown[] = [], TNextAncestor = T> = IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true ? TRecursionMarker : T extends Controls["AllowExtensionOf"] ? T : IfExactTypeInUnion<T, Controls["AllowExactly"], true, "no match"> extends true ? T : T extends object ? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) & (T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) & (Exclude<T, Function> extends never ? unknown : {
+        [K in keyof T]: ReplaceRecursionWithMarkerAndPreserveAllowances<T[K], TRecursionMarker, Controls, [
         TNextAncestor,
         ...TAncestorTypes
         ]>;
-    } : T;
+    }) : T;
     export type RequiredNonSymbolKeysOf<T extends object, Keys extends keyof T = keyof T> = Exclude<{
         [K in Keys]: T extends Record<K, T[K]> ? K : never;
     }[Keys], undefined | symbol>;

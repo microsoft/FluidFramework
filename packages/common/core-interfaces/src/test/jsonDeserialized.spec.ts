@@ -943,36 +943,8 @@ describe("JsonDeserialized", () => {
 				it("object with `IFluidHandle` and recursion", () => {
 					const resultRead = passThruHandlingFluidHandle(objectWithFluidHandleOrRecursion);
 					assertIdenticalTypes(
-						// TODO FIX: This is the incorrect result due to IFluidHandle having non-public properties in a recursive context.
-						// @ts-expect-error result is unrolled, but is perfectly supported; so bad error.
 						resultRead,
 						createInstanceOf<ObjectWithFluidHandleOrRecursion>(),
-					);
-					// This is the incorrect result due to IFluidHandle having non-public properties
-					// and over-zealus implementation of the filter.
-					assertIdenticalTypes(
-						resultRead,
-						createInstanceOf<{
-							recurseToHandle:
-								| {
-										recurseToHandle:
-											| {
-													recurseToHandle:
-														| {
-																recurseToHandle:
-																	| {
-																			recurseToHandle:
-																				| JsonTypeWith<IFluidHandle>
-																				| IFluidHandle<string>;
-																	  }
-																	| IFluidHandle<string>;
-														  }
-														| IFluidHandle<string>;
-											  }
-											| IFluidHandle<string>;
-								  }
-								| IFluidHandle<string>;
-						}>(),
 					);
 				});
 			});
