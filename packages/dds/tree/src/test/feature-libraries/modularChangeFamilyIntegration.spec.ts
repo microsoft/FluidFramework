@@ -425,6 +425,65 @@ describe("ModularChangeFamily integration", () => {
 			assertDeltaEqual(rebasedDelta, expectedDelta);
 		});
 
+		// This test demonstrates that a field may need three rebasing passes.
+		it("over change which moves into moved subtree", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver);
+			const nodePath1: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 1 };
+
+			// The base changeset consists of the following two move edits.
+			// This edit moves node2 from field B into field C which is under node1 in field A.
+			editor.move(
+				{ parent: undefined, field: fieldB },
+				0,
+				1,
+				{ parent: nodePath1, field: fieldC },
+				0,
+			);
+
+			// This edit moves node1 in field A to the beginning of the field.
+			editor.sequenceField({ parent: undefined, field: fieldA }).move(1, 1, 0);
+
+			// The changeset to be rebased consists of the following two edits.
+			// This is an arbitrary edit to field A.
+			editor.sequenceField({ parent: undefined, field: fieldA }).remove(2, 1);
+
+			// This is an edit which targets node2.
+			editor.sequenceField({ parent: undefined, field: fieldB }).remove(0, 1);
+
+			const [base1, base2, new1, new2] = getChanges();
+			const baseChangeset = tagChangeInline(
+				family.compose([makeAnonChange(base1), makeAnonChange(base2)]),
+				tag1,
+			);
+
+			const newChangeset = makeAnonChange(
+				family.compose([makeAnonChange(new1), makeAnonChange(new2)]),
+			);
+
+			const rebased = family.rebase(
+				newChangeset,
+				baseChangeset,
+				revisionMetadataSourceFromInfo([{ revision: tag1 }]),
+			);
+
+			const expected = Change.build(
+				{ family, maxId: 6 },
+				Change.field(
+					fieldA,
+					sequence.identifier,
+					[MarkMaker.skip(2), MarkMaker.tomb(tag1, brand(3)), MarkMaker.remove(1, brand(5))],
+					Change.nodeWithId(
+						0,
+						{ revision: tag1, localId: brand(2) },
+						Change.field(fieldC, sequence.identifier, [MarkMaker.remove(1, brand(6))]),
+					),
+				),
+			);
+
+			assertEqual(rebased, expected);
+		});
+
 		it("prunes its output", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, changeReceiver);

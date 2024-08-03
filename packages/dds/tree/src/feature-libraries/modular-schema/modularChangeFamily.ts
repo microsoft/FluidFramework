@@ -266,7 +266,7 @@ export class ModularChangeFamily
 
 		// We merge nodeChanges, nodeToParent, and nodeAliases from the two changesets.
 		// The merged tables will have correct entries for all nodes which are only referenced in one of the input changesets.
-		// During composeFieldMaps and processInvalidatedElements we will find all nodes referenced in both input changesets
+		// During composeFieldMaps and composeInvalidatedElements we will find all nodes referenced in both input changesets
 		// and adjust these tables as necessary.
 		// Note that when merging these tables we may encounter key collisions and will arbitrarily drop values in that case.
 		// A collision for a node ID means that that node is referenced in both changesets
@@ -291,7 +291,7 @@ export class ModularChangeFamily
 			revisionMetadata,
 		);
 
-		this.processInvalidatedElements(
+		this.composeInvalidatedElements(
 			crossFieldTable,
 			composedFields,
 			composedNodeChanges,
@@ -357,7 +357,7 @@ export class ModularChangeFamily
 	 *
 	 * Updating an element may invalidate further elements. This function runs until there is no more invalidation.
 	 */
-	private processInvalidatedElements(
+	private composeInvalidatedElements(
 		table: ComposeTable,
 		composedFields: FieldChangeMap,
 		composedNodes: ChangeAtomIdBTree<NodeChangeset>,
@@ -843,9 +843,10 @@ export class ModularChangeFamily
 			rebasedCrossFieldKeys: brand(change.crossFieldKeys.clone()),
 			nodeIdPairs: [],
 			affectedBaseFields: newTupleBTree(),
+			fieldsWithUnattachedChild: new Set(),
 		};
 
-		let constraintState = newConstraintState(change.constraintViolationCount ?? 0);
+		const constraintState = newConstraintState(change.constraintViolationCount ?? 0);
 
 		const getBaseRevisions = (): RevisionTag[] =>
 			revisionInfoFromTaggedChange(over).map((info) => info.revision);
@@ -866,63 +867,13 @@ export class ModularChangeFamily
 			rebaseMetadata,
 		);
 
-		this.rebaseFieldsWithoutNewChanges(
+		this.rebaseInvalidatedElements(
 			rebasedFields,
 			rebasedNodes,
 			crossFieldTable,
-			genId,
 			rebaseMetadata,
+			genId,
 		);
-
-		if (crossFieldTable.invalidatedFields.size > 0) {
-			const fieldsToUpdate = crossFieldTable.invalidatedFields;
-			crossFieldTable.invalidatedFields = new Set();
-			constraintState = newConstraintState(change.constraintViolationCount ?? 0);
-			for (const field of fieldsToUpdate) {
-				const context = crossFieldTable.baseFieldToContext.get(field);
-				assert(context !== undefined, 0x852 /* Every field should have a context */);
-				const {
-					changeHandler,
-					change1: fieldChangeset,
-					change2: baseChangeset,
-				} = this.normalizeFieldChanges(
-					context.newChange,
-					context.baseChange,
-					genId,
-					revisionMetadata,
-				);
-
-				const rebaseChild = (
-					curr: NodeId | undefined,
-					base: NodeId | undefined,
-				): NodeId | undefined => {
-					if (curr !== undefined) {
-						return curr;
-					}
-
-					if (base !== undefined) {
-						for (const id of context.baseNodeIds) {
-							if (areEqualChangeAtomIds(base, id)) {
-								return base;
-							}
-						}
-					}
-
-					return undefined;
-				};
-
-				context.rebasedChange.change = brand(
-					changeHandler.rebaser.rebase(
-						fieldChangeset,
-						baseChangeset,
-						rebaseChild,
-						genId,
-						new RebaseManager(crossFieldTable, field, context.fieldId),
-						rebaseMetadata,
-					),
-				);
-			}
-		}
 
 		this.updateConstraintsForFields(
 			rebasedFields,
@@ -1073,6 +1024,99 @@ export class ModularChangeFamily
 		}
 	}
 
+	private rebaseInvalidatedElements(
+		rebasedFields: FieldChangeMap,
+		rebasedNodes: ChangeAtomIdBTree<NodeChangeset>,
+		table: RebaseTable,
+		metadata: RebaseRevisionMetadata,
+		idAllocator: IdAllocator,
+	): void {
+		this.rebaseFieldsWithoutNewChanges(
+			rebasedFields,
+			rebasedNodes,
+			table,
+			idAllocator,
+			metadata,
+		);
+
+		this.rebaseFieldsWithUnattachedChild(table, metadata, idAllocator);
+		this.rebaseInvalidatedFields(table, metadata, idAllocator);
+	}
+
+	private rebaseInvalidatedFields(
+		crossFieldTable: RebaseTable,
+		rebaseMetadata: RebaseRevisionMetadata,
+		genId: IdAllocator,
+	): void {
+		const fieldsToUpdate = crossFieldTable.invalidatedFields;
+		crossFieldTable.invalidatedFields = new Set();
+		for (const field of fieldsToUpdate) {
+			this.rebaseInvalidatedField(field, crossFieldTable, rebaseMetadata, genId);
+		}
+	}
+
+	private rebaseFieldsWithUnattachedChild(
+		table: RebaseTable,
+		metadata: RebaseRevisionMetadata,
+		idAllocator: IdAllocator,
+	): void {
+		for (const field of table.fieldsWithUnattachedChild) {
+			table.invalidatedFields.delete(field);
+			this.rebaseInvalidatedField(field, table, metadata, idAllocator, true);
+		}
+	}
+
+	private rebaseInvalidatedField(
+		baseField: FieldChange,
+		crossFieldTable: RebaseTable,
+		rebaseMetadata: RebaseRevisionMetadata,
+		genId: IdAllocator,
+		allowInval = false,
+	): void {
+		const context = crossFieldTable.baseFieldToContext.get(baseField);
+		assert(context !== undefined, 0x852 /* Every field should have a context */);
+		const {
+			changeHandler,
+			change1: fieldChangeset,
+			change2: baseChangeset,
+		} = this.normalizeFieldChanges(
+			context.newChange,
+			context.baseChange,
+			genId,
+			rebaseMetadata,
+		);
+
+		const rebaseChild = (
+			curr: NodeId | undefined,
+			base: NodeId | undefined,
+		): NodeId | undefined => {
+			if (curr !== undefined) {
+				return curr;
+			}
+
+			if (base !== undefined) {
+				for (const id of context.baseNodeIds) {
+					if (areEqualChangeAtomIds(base, id)) {
+						return base;
+					}
+				}
+			}
+
+			return undefined;
+		};
+
+		context.rebasedChange.change = brand(
+			changeHandler.rebaser.rebase(
+				fieldChangeset,
+				baseChangeset,
+				rebaseChild,
+				genId,
+				new RebaseManager(crossFieldTable, baseField, context.fieldId, allowInval),
+				rebaseMetadata,
+			),
+		);
+	}
+
 	private attachRebasedField(
 		rebasedFields: FieldChangeMap,
 		rebasedNodes: ChangeAtomIdBTree<NodeChangeset>,
@@ -1139,9 +1183,9 @@ export class ModularChangeFamily
 		const context = table.baseFieldToContext.get(baseFieldChange);
 		if (context !== undefined) {
 			// We've already processed this field.
-			// The new child node can be attached when processing invalidated fields.
+			// The new child node will be attached in rebaseFieldsWithUnattachedChild.
 			context.baseNodeIds.push(baseNodeId);
-			table.invalidatedFields.add(baseFieldChange);
+			table.fieldsWithUnattachedChild.add(baseFieldChange);
 			return;
 		}
 
@@ -1985,6 +2029,11 @@ interface RebaseTable extends CrossFieldTable<FieldChange> {
 	 */
 	readonly nodeIdPairs: [NodeId, NodeId, NodeAttachState | undefined][];
 	readonly affectedBaseFields: TupleBTree<FieldIdKey, boolean>;
+
+	/**
+	 * Set of base fields which contain a node which needs to be attached in the rebased changeset.
+	 */
+	readonly fieldsWithUnattachedChild: Set<FieldChange>;
 }
 
 type FieldIdKey = [RevisionTag | undefined, ChangesetLocalId | undefined, FieldKey];
