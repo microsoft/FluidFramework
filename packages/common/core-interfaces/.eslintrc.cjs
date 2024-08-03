@@ -6,7 +6,11 @@
 module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
 	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+		project: [
+			"./tsconfig.json",
+			"./src/test/tsconfig.json",
+			"./src/test/tsconfig.no-exactOptionalPropertyTypes.json",
+		],
 	},
 	rules: {
 		// TODO: Enabling this may require breaking changes.

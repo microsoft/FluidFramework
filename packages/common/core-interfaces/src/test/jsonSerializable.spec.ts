@@ -69,7 +69,7 @@ import {
 	objectWithFunctionOrSymbol,
 	objectWithStringOrSymbol,
 	objectWithUndefined,
-	objectWithOptionalUndefined,
+	objectWithOptionalSymbol,
 	objectWithOptionalBigint,
 	objectWithNumberKey,
 	objectWithSymbolKey,
@@ -119,7 +119,7 @@ import {
  * @param expectedDeserialization - alternate value to compare against after round-trip
  * @returns the round-tripped value cast to the filter result type
  */
-function passThru<
+export function passThru<
 	T,
 	TExpected,
 	// eslint-disable-next-line @typescript-eslint/ban-types
@@ -389,11 +389,6 @@ describe("JsonSerializable", () => {
 			it("object with number key", () => {
 				const { filteredIn } = passThru(objectWithNumberKey);
 				assertIdenticalTypes(filteredIn, objectWithNumberKey);
-			});
-
-			it("object with optional exact `undefined`", () => {
-				const { filteredIn } = passThru(objectWithOptionalUndefined, {});
-				assertIdenticalTypes(filteredIn, objectWithOptionalUndefined);
 			});
 
 			it("object with possible type recursion through union", () => {
@@ -737,6 +732,14 @@ describe("JsonSerializable", () => {
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<{ bigint: never }>());
 				});
+				it("object with optional `bigint`", () => {
+					const { filteredIn } = passThruThrows(
+						// @ts-expect-error `bigint` is not supported (becomes `never`)
+						objectWithOptionalBigint,
+						new TypeError("Do not know how to serialize a BigInt"),
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<{ bigint?: never }>());
+				});
 				it("object with exactly `symbol`", () => {
 					const { filteredIn } = passThru(
 						// @ts-expect-error `symbol` is not supported (becomes `never`)
@@ -744,6 +747,14 @@ describe("JsonSerializable", () => {
 						{},
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<{ symbol: never }>());
+				});
+				it("object with optional `symbol`", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error `symbol` is not supported (becomes `never`)
+						objectWithOptionalSymbol,
+						{},
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<{ symbol?: never }>());
 				});
 				it("object with exactly `function`", () => {
 					const { filteredIn } = passThru(
@@ -874,6 +885,11 @@ describe("JsonSerializable", () => {
 							}>(),
 						);
 					});
+
+					it("as optional exact property type > varies by exactOptionalPropertyTypes setting", () => {
+						// See sibling test files
+					});
+
 					it("under an optional property", () => {
 						const { filteredIn } = passThru(
 							// @ts-expect-error not assignable to `{ "error required property may not allow undefined value": never; }`

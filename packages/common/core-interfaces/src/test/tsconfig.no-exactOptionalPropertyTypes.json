@@ -8,6 +8,7 @@
 		"exactOptionalPropertyTypes": false,
 		"noEmit": true,
 	},
+	"exclude": ["jsonSerializable.exactOptionalPropertyTypes.true.spec.ts"],
 	"references": [
 		{
 			"path": "../..",

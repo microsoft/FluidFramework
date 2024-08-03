@@ -84,6 +84,9 @@ export const objectWithBigintOrString = { bigintOrString: "not bigint" as string
 export const objectWithFunctionOrSymbol = {
 	functionOrSymbol: ((): void => {}) as (() => void) | symbol,
 };
+export const objectWithOptionalSymbol: { symbol?: symbol } = {
+	symbol: Symbol("objectSymbol"),
+};
 export const objectWithOptionalBigint: { bigint?: bigint } = { bigint: 0n };
 
 export const objectWithNumberKey = { 3: "value" };

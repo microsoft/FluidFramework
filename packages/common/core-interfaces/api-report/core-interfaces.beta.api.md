@@ -293,42 +293,42 @@ export namespace InternalUtilityTypes {
     }, 0>> extends true ? HasNonPublicProperties<T, Controls> extends true ? JsonDeserializedFilter<T, Controls, RecurseLimit> : T : JsonDeserializedFilter<T, Controls, RecurseLimit> : never : never : never;
     export type JsonDeserializedRecursion<T, Controls extends FilterControls, RecurseLimit extends RecursionLimit, TAncestorTypes> = T extends TAncestorTypes ? RecurseLimit extends `+${infer RecursionRemainder}` ? JsonDeserializedImpl<T, Controls, RecursionRemainder extends RecursionLimit ? RecursionRemainder : 0> : JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : JsonDeserializedFilter<T, Controls, RecurseLimit, TAncestorTypes | T>;
     export type JsonForDeserializedArrayItem<T, Controls extends FilterControls, TBlessed> = boolean extends (T extends never ? true : false) ? TBlessed : unknown extends T ? TBlessed : T extends null | boolean | number | string | Controls["AllowExtensionOf"] ? T : IfExactTypeInUnion<T, Controls["AllowExactly"], T, T extends undefined | symbol | Function ? null : TBlessed>;
-    export type JsonForSerializableArrayItem<T, Controls extends FilterControls, TBlessed> = boolean extends (T extends never ? true : false) ? TBlessed : unknown extends T ? TBlessed : T extends null | boolean | number | string | Controls["AllowExtensionOf"] ? T : IfExactTypeInUnion<T, Controls["AllowExactly"], T, undefined extends T ? SerializationErrorPerUndefinedArrayElement : TBlessed>;
-    export type JsonSerializableFilter<T, Controls extends FilterControls> = boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : unknown extends T ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : T extends null | boolean | number | string | Controls["AllowExtensionOf"] ? T : IfExactTypeInUnion<T, Controls["AllowExactly"], true, "no match"> extends true ? T : Extract<T, Function> extends never ? T extends object ? T extends readonly (infer _)[] ? {
-        [K in keyof T]: JsonForSerializableArrayItem<T[K], Controls, JsonSerializableFilter<T[K], {
-            AllowExactly: Controls["AllowExactly"];
-            AllowExtensionOf: Controls["AllowExtensionOf"] | T;
-        }>>;
+    export type JsonForSerializableArrayItem<T, Controls extends FilterControls, TAncestorTypes extends unknown[], TBlessed> = boolean extends (T extends never ? true : false) ? TBlessed : unknown extends T ? TBlessed : IfExactTypeInTuple<T, TAncestorTypes, T, T extends null | boolean | number | string | Controls["AllowExtensionOf"] ? T : IfExactTypeInUnion<T, Controls["AllowExactly"], T, undefined extends T ? SerializationErrorPerUndefinedArrayElement : TBlessed>>;
+    export type JsonSerializableFilter<T, Controls extends FilterControls, TAncestorTypes extends unknown[], TNextAncestor = T> = boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : unknown extends T ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true ? T : T extends null | boolean | number | string | Controls["AllowExtensionOf"] ? T : IfExactTypeInUnion<T, Controls["AllowExactly"], true, "no match"> extends true ? T : Extract<T, Function> extends never ? T extends object ? T extends readonly (infer _)[] ? {
+        [K in keyof T]: JsonForSerializableArrayItem<T[K], Controls, TAncestorTypes, JsonSerializableFilter<T[K], Controls, [
+        TNextAncestor,
+        ...TAncestorTypes
+        ]>>;
     } : IsExactlyObject<T> extends true ? NonNullJsonObjectWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : IsEnumLike<T> extends true ? T : FlattenIntersection<{
         [K in keyof T as RequiredNonSymbolKeysOf<T, K>]-?: undefined extends T[K] ? {
             ["error required property may not allow undefined value"]: never;
-        } : JsonSerializableFilter<T[K], {
-            AllowExactly: Controls["AllowExactly"];
-            AllowExtensionOf: Controls["AllowExtensionOf"] | T;
-        }>;
+        } : JsonSerializableFilter<T[K], Controls, [
+        TNextAncestor,
+        ...TAncestorTypes
+        ]>;
     } & {
-        [K in keyof T as OptionalNonSymbolKeysOf<T, K>]?: JsonSerializableFilter<T[K], {
-            AllowExactly: Controls["AllowExactly"];
-            AllowExtensionOf: Controls["AllowExtensionOf"] | T | undefined;
-        }>;
+        [K in keyof T as OptionalNonSymbolKeysOf<T, K>]?: JsonSerializableFilter<T[K], Controls, [
+        TNextAncestor,
+        ...TAncestorTypes
+        ]>;
     } & {
         [K in keyof T & symbol]: never;
     }> : never : never;
     export type JsonSerializableImpl<T, Options extends Partial<FilterControls> & {
         IgnoreInaccessibleMembers?: "ignore-inaccessible-members";
-    }> = {
+    }, TAncestorTypes extends unknown[] = [], TNextAncestor = T> = {
         AllowExactly: Options extends {
             AllowExactly: unknown;
         } ? Options["AllowExactly"] : never;
         AllowExtensionOf: Options extends {
             AllowExtensionOf: unknown;
         } ? Options["AllowExtensionOf"] : never;
-    } extends infer Controls ? Controls extends FilterControls ? boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : Options["IgnoreInaccessibleMembers"] extends "ignore-inaccessible-members" ? JsonSerializableFilter<T, Controls> : HasNonPublicProperties<T, Controls> extends true ? T extends readonly (infer _)[] ? {
-        [K in keyof T]: JsonSerializableImpl<T[K], {
-            AllowExactly: Controls["AllowExactly"] | T;
-            AllowExtensionOf: Controls["AllowExtensionOf"];
-        }>;
-    } : SerializationErrorPerNonPublicProperties : JsonSerializableFilter<T, Controls> : never : never;
+    } extends infer Controls ? Controls extends FilterControls ? boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : Options["IgnoreInaccessibleMembers"] extends "ignore-inaccessible-members" ? JsonSerializableFilter<T, Controls, TAncestorTypes, TNextAncestor> : HasNonPublicProperties<T, Controls> extends true ? T extends readonly (infer _)[] ? {
+        [K in keyof T]: JsonSerializableImpl<T[K], Controls, [
+        TNextAncestor,
+        ...TAncestorTypes
+        ]>;
+    } : SerializationErrorPerNonPublicProperties : JsonSerializableFilter<T, Controls, TAncestorTypes, TNextAncestor> : never : never;
     export type NonSymbolWithDeserializablePropertyOf<T extends object, TExactException, TExtendsException, Keys extends keyof T = keyof T> = Exclude<{
         [K in Keys]: Extract<ExcludeExactly<Exclude<T[K], TExtendsException>, TExactException>, undefined | symbol | Function | bigint> extends never ? T[K] extends never ? never : K : never;
     }[Keys], undefined | symbol>;

@@ -232,6 +232,7 @@ export namespace InternalUtilityTypes {
 	export type JsonForSerializableArrayItem<
 		T,
 		Controls extends FilterControls,
+		TAncestorTypes extends unknown[],
 		TBlessed,
 	> = /* Some initial filtering must be provided before a test for undefined. */
 	/* These tests are expected to match those in JsonSerializableImpl. */
@@ -239,21 +240,26 @@ export namespace InternalUtilityTypes {
 		? /* 'any' => */ TBlessed
 		: /* test for 'unknown' */ unknown extends T
 			? /* 'unknown' => */ TBlessed
-			: /* test for JSON primitive types or given alternative */ T extends
+			: /* test for exact recursion */ IfExactTypeInTuple<
+					T,
+					TAncestorTypes,
+					/* recursion; stop here => */ T,
+					/* test for JSON primitive types or given alternative */ T extends
 						| null
 						| boolean
 						| number
 						| string
 						| Controls["AllowExtensionOf"]
-				? /* primitive types or alternative => */ T
-				: /* test for exact alternative */ IfExactTypeInUnion<
-						T,
-						Controls["AllowExactly"],
-						T,
-						/* test for undefined possibility */ undefined extends T
-							? /* undefined | ... => */ SerializationErrorPerUndefinedArrayElement
-							: TBlessed
-					>;
+						? /* primitive types or alternative => */ T
+						: /* test for exact alternative */ IfExactTypeInUnion<
+								T,
+								Controls["AllowExactly"],
+								T,
+								/* test for undefined possibility */ undefined extends T
+									? /* undefined | ... => */ SerializationErrorPerUndefinedArrayElement
+									: TBlessed
+							>
+				>;
 
 	/**
 	 * Filters a type `T` for types that become null through JSON serialization.
@@ -518,6 +524,8 @@ export namespace InternalUtilityTypes {
 		Options extends Partial<FilterControls> & {
 			IgnoreInaccessibleMembers?: "ignore-inaccessible-members";
 		},
+		TAncestorTypes extends unknown[] = [],
+		TNextAncestor = T,
 	> = /* Build Controls from Options filling in defaults for any missing properties */
 	{
 		AllowExactly: Options extends { AllowExactly: unknown } ? Options["AllowExactly"] : never;
@@ -530,7 +538,7 @@ export namespace InternalUtilityTypes {
 			? /* test for 'any' */ boolean extends (T extends never ? true : false)
 				? /* 'any' => */ JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]>
 				: Options["IgnoreInaccessibleMembers"] extends "ignore-inaccessible-members"
-					? JsonSerializableFilter<T, Controls>
+					? JsonSerializableFilter<T, Controls, TAncestorTypes, TNextAncestor>
 					: /* test for non-public properties (class instance type) */
 						HasNonPublicProperties<T, Controls> extends true
 						? /* hidden props => test if it is array properties that are the problem */ T extends readonly (infer _)[]
@@ -538,16 +546,16 @@ export namespace InternalUtilityTypes {
 									/* use homomorphic mapped type to preserve tuple type */
 									[K in keyof T]: JsonSerializableImpl<
 										T[K],
-										{
-											AllowExactly: Controls["AllowExactly"] | T;
-											AllowExtensionOf: Controls["AllowExtensionOf"];
-										}
+										Controls,
+										[TNextAncestor, ...TAncestorTypes]
 									>;
 								}
 							: /* not array => error */ SerializationErrorPerNonPublicProperties
 						: /* no hidden properties => apply filtering => */ JsonSerializableFilter<
 								T,
-								Controls
+								Controls,
+								TAncestorTypes,
+								TNextAncestor
 							>
 			: never /* FilterControls assert else; should never be reached */
 		: never /* unreachable else for infer */;
@@ -569,87 +577,92 @@ export namespace InternalUtilityTypes {
 	export type JsonSerializableFilter<
 		T,
 		Controls extends FilterControls,
+		TAncestorTypes extends unknown[],
+		TNextAncestor = T,
 	> = /* test for 'any' */ boolean extends (T extends never ? true : false)
 		? /* 'any' => */ JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]>
 		: /* test for 'unknown' */ unknown extends T
 			? /* 'unknown' => */ JsonTypeWith<
 					Controls["AllowExactly"] | Controls["AllowExtensionOf"]
 				>
-			: /* test for JSON Encodable primitive types or given alternate base */ T extends
-						| null
-						| boolean
-						| number
-						| string
-						| Controls["AllowExtensionOf"]
-				? /* primitive types or alternate => */ T
-				: /* test for exact alternate */ IfExactTypeInUnion<
-							T,
-							Controls["AllowExactly"],
-							true,
-							"no match"
-						> extends true
-					? /* exact alternate type => */ T
-					: // eslint-disable-next-line @typescript-eslint/ban-types
-						/* test for not a function */ Extract<T, Function> extends never
-						? /* not a function => test for object */ T extends object
-							? /* object => test for array */ T extends readonly (infer _)[]
-								? /* array => */ {
-										/* array items may not not allow undefined */
-										/* use homomorphic mapped type to preserve tuple type */
-										[K in keyof T]: JsonForSerializableArrayItem<
-											T[K],
-											Controls,
-											JsonSerializableFilter<
+			: /* test for recursion */ IfExactTypeInTuple<
+						T,
+						TAncestorTypes,
+						true,
+						"no match"
+					> extends true
+				? /* exact recursion; stop here => */ T
+				: /* test for JSON Encodable primitive types or given alternate base */ T extends
+							| null
+							| boolean
+							| number
+							| string
+							| Controls["AllowExtensionOf"]
+					? /* primitive types or alternate => */ T
+					: /* test for exact alternate */ IfExactTypeInUnion<
+								T,
+								Controls["AllowExactly"],
+								true,
+								"no match"
+							> extends true
+						? /* exact alternate type => */ T
+						: // eslint-disable-next-line @typescript-eslint/ban-types
+							/* test for not a function */ Extract<T, Function> extends never
+							? /* not a function => test for object */ T extends object
+								? /* object => test for array */ T extends readonly (infer _)[]
+									? /* array => */ {
+											/* array items may not not allow undefined */
+											/* use homomorphic mapped type to preserve tuple type */
+											[K in keyof T]: JsonForSerializableArrayItem<
 												T[K],
-												{
-													AllowExactly: Controls["AllowExactly"];
-													AllowExtensionOf: Controls["AllowExtensionOf"] | T;
-												}
+												Controls,
+												TAncestorTypes,
+												JsonSerializableFilter<
+													T[K],
+													Controls,
+													[TNextAncestor, ...TAncestorTypes]
+												>
+											>;
+										}
+									: /* not an array => test for exactly `object` */ IsExactlyObject<T> extends true
+										? /* `object` => */ NonNullJsonObjectWith<
+												Controls["AllowExactly"] | Controls["AllowExtensionOf"]
 											>
-										>;
-									}
-								: /* not an array => test for exactly `object` */ IsExactlyObject<T> extends true
-									? /* `object` => */ NonNullJsonObjectWith<
-											Controls["AllowExactly"] | Controls["AllowExtensionOf"]
-										>
-									: /* test for enum like types */ IsEnumLike<T> extends true
-										? /* enum or similar simple type (return as-is) => */ T
-										: /* property bag => */ FlattenIntersection<
-												{
-													/* required properties are recursed and may not have undefined values. */
-													[K in keyof T as RequiredNonSymbolKeysOf<
-														T,
-														K
-													>]-?: undefined extends T[K]
-														? {
-																["error required property may not allow undefined value"]: never;
-															}
-														: JsonSerializableFilter<
-																T[K],
-																{
-																	AllowExactly: Controls["AllowExactly"];
-																	AllowExtensionOf: Controls["AllowExtensionOf"] | T;
+										: /* test for enum like types */ IsEnumLike<T> extends true
+											? /* enum or similar simple type (return as-is) => */ T
+											: /* property bag => */ FlattenIntersection<
+													{
+														/* required properties are recursed and may not have undefined values. */
+														[K in keyof T as RequiredNonSymbolKeysOf<
+															T,
+															K
+														>]-?: undefined extends T[K]
+															? {
+																	["error required property may not allow undefined value"]: never;
 																}
-															>;
-												} & {
-													/* optional properties are recursed and allowed to preserve undefined value type. */
-													[K in keyof T as OptionalNonSymbolKeysOf<
-														T,
-														K
-													>]?: JsonSerializableFilter<
-														T[K],
-														{
-															AllowExactly: Controls["AllowExactly"];
-															AllowExtensionOf: Controls["AllowExtensionOf"] | T | undefined;
-														}
-													>;
-												} & {
-													/* symbol properties are rejected */
-													[K in keyof T & symbol]: never;
-												}
-											>
-							: /* not an object => */ never
-						: /* function => */ never;
+															: JsonSerializableFilter<
+																	T[K],
+																	Controls,
+																	[TNextAncestor, ...TAncestorTypes]
+																>;
+													} & {
+														/* optional properties are recursed and, when exactOptionalPropertyTypes is
+														   false, are allowed to preserve undefined value type. */
+														[K in keyof T as OptionalNonSymbolKeysOf<
+															T,
+															K
+														>]?: JsonSerializableFilter<
+															T[K],
+															Controls,
+															[TNextAncestor, ...TAncestorTypes]
+														>;
+													} & {
+														/* symbol properties are rejected */
+														[K in keyof T & symbol]: never;
+													}
+												>
+								: /* not an object => */ never
+							: /* function => */ never;
 
 	// #endregion
 
