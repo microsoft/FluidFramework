@@ -12,12 +12,11 @@ on:
 
   # Allow manually triggering this workflow from the web UI
   workflow_dispatch:
-    inputs:
-      issueNumber:
-        description: 'Issue number to update'
-        default: ${{ vars.RELEASE_NOTES_ISSUE }}
-        type: string
-        required: true
+
+# This makes the RELEASE_NOTES_ISSUE variable set in the GitHub UI available as an environment variable.
+# It's available to all jobs/steps in the workflow.
+env:
+  ISSUE: ${{ vars.RELEASE_NOTES_ISSUE }}
 
 permissions:
   issues: write
@@ -38,16 +37,6 @@ jobs:
           node-version-file: .nvmrc
           cache: "pnpm"
           cache-dependency-path: pnpm-lock.yaml
-
-      # Set the issue number as an output variable. If the event that started this workflow was the push event,
-      # then the issue number from the RELEASE_NOTES_ISSUE variable (set in the GitHub UI) will be used.
-      # Otherwise, the value provided by the user when manually running the workflow will be used.
-      - name: Set issue number
-        id: issueNum
-        env:
-          ISSUE_VAL: ${{ github.event_name == 'push' && vars.RELEASE_NOTES_ISSUE || github.event.inputs.issueNumber }}
-        run: |
-          echo "ISSUE=$ISSUE_VAL" >> "$GITHUB_OUTPUT"
 
       # Get the version of the client release group by reading the root package.json and set it as an output variable.
       # This way we can use the version in subsequent steps.
@@ -99,7 +88,7 @@ jobs:
       - name: Replace issue body with release notes
         uses: julien-deramond/update-issue-body@a7fae45395cac5a23318d38f7b09a58650dfe84f # ratchet:julien-deramond/update-issue-body@v1
         with:
-          issue-number: ${{ steps.issueNum.outputs.ISSUE }}
+          issue-number: ${{ env.ISSUE }}
           body: ${{ steps.relNotes.outputs.content }}
           edit-mode: replace
 
@@ -107,7 +96,7 @@ jobs:
       - name: Prepend issue intro
         uses: julien-deramond/update-issue-body@a7fae45395cac5a23318d38f7b09a58650dfe84f # ratchet:julien-deramond/update-issue-body@v1
         with:
-          issue-number: ${{ steps.issueNum.outputs.ISSUE }}
+          issue-number: ${{ env.ISSUE }}
           body: ${{ steps.intro.outputs.content }}
           edit-mode: prepend
 
@@ -117,4 +106,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           NEW_TITLE="Upcoming Release: FluidFramework v${{ steps.setVersion.outputs.VERSION }}"
-          gh issue edit ${{ steps.issueNum.outputs.ISSUE }} --title "$NEW_TITLE"
+          gh issue edit ${{ env.ISSUE }} --title "$NEW_TITLE"
