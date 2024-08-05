@@ -62,7 +62,7 @@ export class OpGroupingManager {
 	): IBatch<[BatchMessage]> {
 		assert(
 			this.config.groupedBatchingEnabled,
-			"cannot create empty grouped batch when grouped batching is disabled",
+			0xa00 /* cannot create empty grouped batch when grouped batching is disabled */,
 		);
 		const serializedContent = JSON.stringify({
 			type: OpGroupingManager.groupedBatchOp,
