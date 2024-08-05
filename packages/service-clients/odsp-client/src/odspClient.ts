@@ -199,7 +199,7 @@ class OdspClient implements IOdspClient {
 	}
 
 	public async getContainer<T extends ContainerSchema>(
-		request: OdspGetContainerArgType,
+		containerIdentity: OdspGetContainerArgType,
 		containerSchema: T,
 	): Promise<{
 		container: IOdspFluidContainer<T>;
@@ -207,22 +207,25 @@ class OdspClient implements IOdspClient {
 	}> {
 		const loader = this.createLoader(containerSchema);
 
-		const locator: OdspFluidDataStoreLocator = {
-			siteUrl: this.connectionConfig.siteUrl,
-			driveId: this.connectionConfig.driveId,
-			itemId: request.itemId,
-			dataStorePath: "",
-		}
-		const url = new URL(baseUrl);
-		storeLocatorInOdspUrl(url, locator);
-		// return url.href;
+		const request: IRequest =
+			"itemId" in containerIdentity
+				? {
+						url: createOdspUrl({
+							siteUrl: this.connectionConfig.siteUrl,
+							driveId: this.connectionConfig.driveId,
+							itemId: containerIdentity.itemId,
+							dataStorePath: "",
+						}),
+					}
+				: {
+						url: containerIdentity.sharingLinkToRedeem,
+						headers: {
+							[SharingLinkHeader.isSharingLinkToRedeem]:
+								containerIdentity.sharingLinkToRedeem !== undefined,
+						},
+					};
 
-		const container = await loader.resolve({
-			url: createOdspUrl(locator),
-			headers: {
-				[SharingLinkHeader.isSharingLinkToRedeem]: request.sharingLinkToRedeem !== undefined,
-			},
-		});
+		const container = await loader.resolve(request);
 
 		const fluidContainer = createFluidContainer<T, OdspContainerAttachType>({
 			container,
@@ -309,7 +312,25 @@ class OdspClient implements IOdspClient {
 			 * a new `itemId` is created in the user's drive, which developers can use for various operations
 			 * like updating, renaming, moving the Fluid file, changing permissions, and more. `itemId` is used to load the container.
 			 */
-			return { itemId: resolvedUrl.itemId, shareLinkInfo: resolvedUrl.shareLinkInfo };
+
+			let sharingLink: string | undefined;
+			if (resolvedUrl.shareLinkInfo?.createLink?.link) {
+				const url = new URL(resolvedUrl.shareLinkInfo?.createLink?.link?.webUrl);
+				const locator: OdspFluidDataStoreLocator = {
+					siteUrl: connectionConfig.siteUrl,
+					driveId: connectionConfig.driveId,
+					itemId: resolvedUrl.itemId,
+					dataStorePath: "",
+				};
+				storeLocatorInOdspUrl(url, locator);
+				sharingLink = url.href;
+			}
+
+			return {
+				itemId: resolvedUrl.itemId,
+				sharingLink,
+				shareLinkInfo: resolvedUrl.shareLinkInfo,
+			};
 		};
 	}
 

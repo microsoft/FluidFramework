@@ -58,6 +58,7 @@ export type OdspContainerAttachArgType = {
 export interface OdspContainerAttachReturnType {
     itemId: string;
     shareLinkInfo?: ShareLinkInfoType;
+    sharingLink?: string;
 }
 
 // @alpha
@@ -71,7 +72,9 @@ export interface OdspContainerServices {
 // @alpha
 export type OdspGetContainerArgType = {
     itemId: string;
-} | IRequest;
+} | {
+    sharingLinkToRedeem: string;
+};
 
 // @alpha
 export interface OdspMember extends IMember {

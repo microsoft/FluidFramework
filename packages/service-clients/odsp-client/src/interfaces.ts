@@ -6,7 +6,6 @@
 import type {
 	IConfigProviderBase,
 	ITelemetryBaseLogger,
-	IRequest,
 } from "@fluidframework/core-interfaces";
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import type {
@@ -82,10 +81,7 @@ export interface OdspClientProps {
 /**
  * Argument type of IFluidContainer.attach() for containers created by IOdspClient
  * Specifies location / name of the file.
- * 1. If undefined, file with random name (uuid) will be created.
- * 2. Specifies file path / file name to be created. If file with such name exists, file with different name is created -
- * Sharepoint will add (2), (3), ... to file name to make it unique and avoid conflict on creation
- * 3. (Microsoft internal only) files supporting FF format on alternate parition could point to existing file.
+ * If no argument is provided, file with random name (uuid) will be created.
  * @alpha
  */
 export type OdspContainerAttachArgType =
@@ -97,6 +93,8 @@ export type OdspContainerAttachArgType =
 
 			/**
 			 * The file name of the Fluid file. If undefined, the file is named with a GUID.
+			 * If a file with such name exists, file with different name is created - Sharepoint will
+			 * add (2), (3), ... to file name to make it unique and avoid conflict on creation.
 			 */
 			fileName?: string | undefined;
 
@@ -106,6 +104,9 @@ export type OdspContainerAttachArgType =
 			createShareLinkType?: ISharingLinkKind;
 	  }
 	| {
+			/**
+			 * (Microsoft internal only) Files supporting FF format on alternate partition could point to existing file.
+			 */
 			itemId: string;
 	  };
 
@@ -118,15 +119,26 @@ export interface OdspContainerAttachReturnType {
 	 * An ID of the document created. This ID could be passed to future IOdspClient.getContainer() call
 	 */
 	itemId: string;
+
 	/**
 	 * If OdspContainerAttachArgType.createShareLinkType was provided at the time of IOdspFluidContainer.attach() call,
-	 * this value will contain sharing link to just created file.
+	 * this value will contain sharing link information for created file.
 	 */
 	shareLinkInfo?: ShareLinkInfoType;
+
+	/**
+	 * If sharing link info was requested to be generated and successfully was obtained, this property will
+	 * contain sharing link that could be used with IOdspClient.getContainer() to open such container by anyone
+	 * who poses such link (and is within the sharing scope of a link)
+	 * This link is sufficient to identify a file in Sharepoint. In other words, it encodes information like driveId, itemId, siteUrl.
+	 */
+	sharingLink?: string;
 }
 
 /**
  * IFluidContainer.attach() function signature for IOdspClient
+ * @param param - Specifies where file should be created and how it should be named. If not provided,
+ * file with random name (uuid) will be created in the root of the drive.
  * @alpha
  */
 export type OdspContainerAttachType = (
@@ -137,15 +149,26 @@ export type OdspContainerAttachType = (
  * Type of argument to IOdspClient.getContainer()
  * @alpha
  */
-export interface OdspGetContainerArgType {
-	itemId: string;
-
-	/**
-	 * This is used to save the network calls while doing trees/latest call as if the client does not have
-	 * permission then this link can be redeemed for the permissions in the same network call.
-	 */
-	sharingLinkToRedeem?: string;
-}
+export type OdspGetContainerArgType =
+	| {
+			/**
+			 * If itemId is provided, then OdspSiteIdentification information (see OdspClientProps.connection) passed to createOdspClient()
+			 * is used together with itemId to identify a file in Sharepoint.
+			 */
+			itemId: string;
+	  }
+	| {
+			/**
+			 * A sharing link could be provided to identify a file. This link has to be in very specific format - see
+			 * OdspContainerAttachReturnType.sharingLink, result of calling IOdspFluidContainer.
+			 * When sharing link is provided, it uniquely identifies a file in Sharepoint - OdspSiteIdentification information
+			 * (part of OdspClientProps.connection provided to createOdspClient()) is ignored in such case.
+			 *
+			 * This is used to save the network calls while doing trees/latest call as if the client does not have
+			 * permission then this link can be redeemed for the permissions in the same network call.
+			 */
+			sharingLinkToRedeem: string;
+	  };
 
 /**
  * OdspContainerServices is returned by the OdspClient alongside a FluidContainer. It holds the
