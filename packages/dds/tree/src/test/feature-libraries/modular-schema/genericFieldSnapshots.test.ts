@@ -14,7 +14,7 @@ import { TestNodeId } from "../../testNodeId.js";
 import { TestChange } from "../../testChange.js";
 import { testIdCompressor } from "../../utils.js";
 // eslint-disable-next-line import/no-internal-modules
-import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKind.js";
+import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 
 const nodeChange = TestNodeId.create({ localId: brand(0) }, TestChange.mint([], 1));
 const testChangesets: { name: string; change: GenericChangeset }[] = [

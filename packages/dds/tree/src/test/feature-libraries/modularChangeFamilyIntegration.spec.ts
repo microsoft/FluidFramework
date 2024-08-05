@@ -59,7 +59,7 @@ import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules
 import { assertEqual, Change, removeAliases } from "./modular-schema/modularChangesetUtil.js";
 // eslint-disable-next-line import/no-internal-modules
-import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKind.js";
+import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map([
 	[sequence.identifier, sequence],

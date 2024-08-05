@@ -25,7 +25,7 @@ import type {
 } from "./fieldChangeHandler.js";
 import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
-import type { GenericChangeset } from "./genericFieldKindTypes.js";
+import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";
 import type { NodeId } from "./modularChangeTypes.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
@@ -91,7 +91,7 @@ function rebaseGenericChange(
 	over: GenericChangeset,
 	rebaseChild: NodeChangeRebaser,
 ): GenericChangeset {
-	const rebased: GenericChangeset = change.clone();
+	const rebased: GenericChangeset = new BTree();
 	let nextIndex = 0;
 
 	// eslint-disable-next-line no-constant-condition
@@ -209,9 +209,6 @@ const invalidCrossFieldManager: CrossFieldManager = {
 	onMoveIn: invalidFunc,
 	moveKey: invalidFunc,
 };
-export function newGenericChangeset(nodes: [number, NodeId][] = []): GenericChangeset {
-	return new BTree(nodes);
-}
 
 function* relevantRemovedRoots(
 	change: GenericChangeset,

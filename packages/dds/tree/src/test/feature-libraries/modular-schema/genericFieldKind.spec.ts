@@ -31,7 +31,7 @@ import { TestNodeId } from "../../testNodeId.js";
 import { TestChange } from "../../testChange.js";
 import { testSnapshots } from "./genericFieldSnapshots.test.js";
 // eslint-disable-next-line import/no-internal-modules
-import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKind.js";
+import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
