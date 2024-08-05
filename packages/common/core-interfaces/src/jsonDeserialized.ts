@@ -34,15 +34,23 @@ export interface JsonDeserializedOptions {
 
 /**
  * Produces a type that results from a type `T` serialized and deserialized
- * through JSON.
+ * through JSON using {@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify|JSON.stringify}
+ * (without replacer) and {@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse|JSON.parse}
+ * (reviver), respectively as base model.
  *
  * @typeParam T - The type that was serialized.
+ * @typeParam Options - Options for the filter. See {@link JsonDeserializedOptions}.
  *
  * @remarks
+ * This filter can be used to derive the expected type of a JSON deserialized
+ * value whether or not the type of value serialized meets serialization
+ * constraints (see {@link JsonSerializable} including serialization pitfalls).
+ *
  * When used as a filter to inferred generic `T`, a compile-time error can be
  * produced trying to assign `JsonDeserialized<T>` to `T`.
  *
- * Deserialized JSON never contains `undefined`, `symbol`, or function values.
+ * Simply deserialized JSON never contains `bigint`, `undefined`, `symbol`,
+ * or function values.
  * Object properties with values of those types are absent. So properties
  * become optional (when there are other supported types in union) or are
  * removed (when nothing else in union is supported).

@@ -44,11 +44,14 @@ import {
 	unknownValueWithBigint,
 	voidValue,
 	functionWithProperties,
+	objectAndFunction,
 	arrayOfNumbers,
 	arrayOfNumbersSparse,
 	arrayOfNumbersOrUndefined,
 	arrayOfSymbols,
 	arrayOfFunctions,
+	arrayOfFunctionsWithProperties,
+	arrayOfObjectAndFunctions,
 	arrayOfSymbolsAndObjects,
 	object,
 	emptyObject,
@@ -59,6 +62,7 @@ import {
 	objectWithBigint,
 	objectWithFunction,
 	objectWithFunctionWithProperties,
+	objectWithObjectAndFunction,
 	objectWithBigintOrString,
 	objectWithFunctionOrSymbol,
 	objectWithStringOrSymbol,
@@ -90,6 +94,7 @@ import {
 	objectWithSymbolOrRecursion,
 	objectWithFluidHandleOrRecursion,
 	selfRecursiveFunctionWithProperties,
+	selfRecursiveObjectAndFunction,
 	objectInheritingOptionalRecursionAndWithNestedSymbol,
 	simpleJson,
 	classInstanceWithPrivateData,
@@ -98,6 +103,10 @@ import {
 	classInstanceWithPrivateSetter,
 	classInstanceWithPublicData,
 	classInstanceWithPublicMethod,
+	functionObjectWithPrivateData,
+	functionObjectWithPublicData,
+	classInstanceWithPrivateDataAndIsFunction,
+	classInstanceWithPublicDataAndIsFunction,
 	ClassWithPrivateData,
 	ClassWithPrivateMethod,
 	ClassWithPrivateGetter,
@@ -313,6 +322,14 @@ describe("JsonDeserialized", () => {
 				const resultRead = passThru(arrayOfFunctions, [null]);
 				assertIdenticalTypes(resultRead, createInstanceOf<null[]>());
 			});
+			it("array of functions with properties becomes ({...}|null)[]", () => {
+				const resultRead = passThru(arrayOfFunctionsWithProperties, [null]);
+				assertIdenticalTypes(resultRead, createInstanceOf<({ property: number } | null)[]>());
+			});
+			it("array of objects and functions becomes ({...}|null)[]", () => {
+				const resultRead = passThru(arrayOfObjectAndFunctions, [{ property: 6 }]);
+				assertIdenticalTypes(resultRead, createInstanceOf<({ property: number } | null)[]>());
+			});
 		});
 
 		describe("fully supported object types are preserved", () => {
@@ -464,16 +481,6 @@ describe("JsonDeserialized", () => {
 					// @ts-expect-error `functionOrSymbol` missing
 					assertIdenticalTypes(resultRead, objectWithFunctionOrSymbol);
 				});
-				it("object with exactly function with properties", () => {
-					const resultRead = passThru(objectWithFunctionWithProperties, {});
-					assertIdenticalTypes(resultRead, {});
-					// @ts-expect-error `function` missing
-					assertIdenticalTypes(resultRead, objectWithFunction);
-				});
-				it("object with function object with recursion", () => {
-					const resultRead = passThru({ outerFnOjb: selfRecursiveFunctionWithProperties }, {});
-					assertIdenticalTypes(resultRead, {});
-				});
 
 				it("object with inherited recursion extended with unsupported properties", () => {
 					const resultRead = passThru(
@@ -566,6 +573,157 @@ describe("JsonDeserialized", () => {
 
 				it("object with recursion and `symbol` unrolls 4 times and then has generic Json", () => {
 					const resultRead = passThru(objectWithSymbolOrRecursion, { recurse: {} });
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{
+							recurse?: {
+								recurse?: {
+									recurse?: {
+										recurse?: {
+											recurse?: JsonTypeWith<never>;
+										};
+									};
+								};
+							};
+						}>(),
+					);
+				});
+
+				it("object with exactly function with properties", () => {
+					const resultRead = passThru(objectWithFunctionWithProperties, {});
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{
+							function?: {
+								property: number;
+							};
+						}>(),
+					);
+				});
+				it("object with exactly object and function", () => {
+					const resultRead = passThru(objectWithObjectAndFunction, {
+						object: { property: 6 },
+					});
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{
+							object?: {
+								property: number;
+							};
+						}>(),
+					);
+				});
+				it("object with function object with recursion", () => {
+					const resultRead = passThru({ outerFnOjb: selfRecursiveFunctionWithProperties }, {});
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{
+							outerFnOjb?: {
+								recurse?: {
+									recurse?: {
+										recurse?: {
+											recurse?: {
+												recurse?: JsonTypeWith<never>;
+											};
+										};
+									};
+								};
+							};
+						}>(),
+					);
+				});
+				it("object with object and function with recursion", () => {
+					const resultRead = passThru(
+						{ outerFnOjb: selfRecursiveObjectAndFunction },
+						{ outerFnOjb: { recurse: {} } },
+					);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{
+							outerFnOjb?: {
+								recurse?: {
+									recurse?: {
+										recurse?: {
+											recurse?: {
+												recurse?: JsonTypeWith<never>;
+											};
+										};
+									};
+								};
+							};
+						}>(),
+					);
+				});
+			});
+
+			describe("function & object intersections preserve object portion", () => {
+				it("function with properties", () => {
+					const resultRead = passThruThrows(
+						functionWithProperties,
+						new Error("JSON.stringify returned undefined"),
+					);
+					assertIdenticalTypes(resultRead, createInstanceOf<{ property: number }>());
+				});
+				it("object and function", () => {
+					const resultRead = passThru(objectAndFunction, { property: 6 });
+					assertIdenticalTypes(resultRead, createInstanceOf<{ property: number }>());
+				});
+				it("function with class instance with private data", () => {
+					const resultRead = passThruThrows(
+						functionObjectWithPrivateData,
+						new Error("JSON.stringify returned undefined"),
+					);
+					assertIdenticalTypes(resultRead, createInstanceOf<{ public: string }>());
+				});
+				it("function with class instance with public data", () => {
+					const resultRead = passThruThrows(
+						functionObjectWithPublicData,
+						new Error("JSON.stringify returned undefined"),
+					);
+					assertIdenticalTypes(resultRead, createInstanceOf<{ public: string }>());
+				});
+				it("class instance with private data and is function", () => {
+					const resultRead = passThru(classInstanceWithPrivateDataAndIsFunction, {
+						public: "public",
+						// secret is also not allowed but is present
+						secret: 0,
+					});
+					assertIdenticalTypes(resultRead, createInstanceOf<{ public: string }>());
+					// Keep this assert at end of scope to avoid assertion altering type
+					const varTypeof = typeof classInstanceWithPrivateDataAndIsFunction;
+					assert(
+						varTypeof === "object",
+						"class instance that is also a function is an object at runtime",
+					);
+				});
+				it("class instance with public data and is function", () => {
+					const resultRead = passThru(classInstanceWithPublicDataAndIsFunction, {
+						public: "public",
+					});
+					assertIdenticalTypes(resultRead, createInstanceOf<{ public: string }>());
+				});
+				it("function object with recursion", () => {
+					const resultRead = passThruThrows(
+						selfRecursiveFunctionWithProperties,
+						new Error("JSON.stringify returned undefined"),
+					);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{
+							recurse?: {
+								recurse?: {
+									recurse?: {
+										recurse?: {
+											recurse?: JsonTypeWith<never>;
+										};
+									};
+								};
+							};
+						}>(),
+					);
+				});
+				it("object and function with recursion", () => {
+					const resultRead = passThru(selfRecursiveObjectAndFunction, { recurse: {} });
 					assertIdenticalTypes(
 						resultRead,
 						createInstanceOf<{
@@ -860,18 +1018,6 @@ describe("JsonDeserialized", () => {
 					new Error("JSON.stringify returned undefined"),
 				) satisfies never;
 			});
-			it("function with properties becomes `never`", () => {
-				passThruThrows(
-					functionWithProperties,
-					new Error("JSON.stringify returned undefined"),
-				) satisfies never;
-			});
-			it("function object with recursion", () => {
-				passThruThrows(
-					selfRecursiveFunctionWithProperties,
-					new Error("JSON.stringify returned undefined"),
-				) satisfies never;
-			});
 			it("`void` becomes `never`", () => {
 				passThru(
 					voidValue,
@@ -925,6 +1071,9 @@ describe("JsonDeserialized", () => {
 						createInstanceOf<{
 							specificFn: (_: string) => number;
 							specificFnOrAnother?: (_: string) => number;
+							specificFnWithExtraProperties?: {
+								number: number;
+							};
 							nestedWithNumberAndGenericFn: { number: number };
 						}>(),
 					);

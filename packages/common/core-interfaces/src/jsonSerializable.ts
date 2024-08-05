@@ -41,12 +41,15 @@ export interface JsonSerializableOptions {
 }
 
 /**
- * Used to constrain a type `T` to types that are serializable as JSON.
+ * Used to constrain a type `T` to types that are serializable as JSON
+ * using {@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify|JSON.stringify}
+ * (without a replacer) as base model.
  *
  * Under typical use a compile-time error is produced if `T` contains
  * non-JsonSerializable members.
  *
  * @typeParam T - The type to be constrained.
+ * @typeParam Options - Options for the filter. See {@link JsonSerializableOptions}.
  *
  * @remarks
  * Note that this does NOT prevent use of values with non-JSON compatible data,
@@ -66,11 +69,18 @@ export interface JsonSerializableOptions {
  *
  * - Non-finite numbers (`NaN`, `+/-Infinity`) are coerced to `null`.
  *
- * - prototypes and non-enumerable properties are lost.
+ * - Prototypes and non-enumerable properties are lost.
  *
  * - `ArrayLike` types that are not arrays and are serialized as `{ length: number }`.
  *
- * - getter and setters properties are lost. (Though appear supported.)
+ * - Getter and setters properties are lost. (Though appear supported.)
+ *
+ * - Functions with properties may be absent or the properties may be perserved
+ * depending on the runtime typo of the value. (If built via Object.assign the
+ * target member's type is preserved.) typeof =\> 'function' is lost whereas when
+ * typeof =\> 'object' the properties are preserved.
+ *
+ * - Sparse arrays are filled with `null`.
  *
  * Also, `JsonSerializable<T>` does not prevent the construction of circular references.
  *
@@ -101,8 +111,6 @@ export interface JsonSerializableOptions {
  * infinite recursion and produces a technically incorrect result type. However, with
  * proper use, that will never be an issue as any filtering of types will happen
  * before T recursion.
- * To accomplish this behavior, during recursion type `T` is unioned with
- * `Options.AllowExtensionOf` as nested properties are processed.
  *
  * @beta
  */

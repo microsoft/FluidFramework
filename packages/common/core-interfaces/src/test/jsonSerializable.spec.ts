@@ -50,11 +50,14 @@ import {
 	unknownValueWithBigint,
 	voidValue,
 	functionWithProperties,
+	objectAndFunction,
 	arrayOfNumbers,
 	arrayOfNumbersSparse,
 	arrayOfNumbersOrUndefined,
 	arrayOfSymbols,
 	arrayOfFunctions,
+	arrayOfFunctionsWithProperties,
+	arrayOfObjectAndFunctions,
 	arrayOfSymbolsAndObjects,
 	object,
 	emptyObject,
@@ -65,6 +68,7 @@ import {
 	objectWithBigint,
 	objectWithFunction,
 	objectWithFunctionWithProperties,
+	objectWithObjectAndFunction,
 	objectWithBigintOrString,
 	objectWithFunctionOrSymbol,
 	objectWithStringOrSymbol,
@@ -97,6 +101,7 @@ import {
 	objectWithSelfReference,
 	objectWithSymbolOrRecursion,
 	selfRecursiveFunctionWithProperties,
+	selfRecursiveObjectAndFunction,
 	objectInheritingOptionalRecursionAndWithNestedSymbol,
 	simpleJson,
 	classInstanceWithPrivateData,
@@ -105,6 +110,10 @@ import {
 	classInstanceWithPrivateSetter,
 	classInstanceWithPublicData,
 	classInstanceWithPublicMethod,
+	functionObjectWithPrivateData,
+	functionObjectWithPublicData,
+	classInstanceWithPrivateDataAndIsFunction,
+	classInstanceWithPublicDataAndIsFunction,
 	fluidHandleToNumber,
 	objectWithFluidHandle,
 	objectWithFluidHandleOrRecursion,
@@ -651,6 +660,9 @@ describe("JsonSerializable", () => {
 					new Error("JSON.stringify returned undefined"),
 				);
 				filteredIn satisfies never;
+				// Keep this assert at end of scope to avoid assertion altering type
+				const varTypeof = typeof aFunction;
+				assert(varTypeof === "function", "plain function is a function at runtime");
 			});
 			it("function with supported properties", () => {
 				const { filteredIn } = passThruThrows(
@@ -659,14 +671,90 @@ describe("JsonSerializable", () => {
 					new Error("JSON.stringify returned undefined"),
 				);
 				filteredIn satisfies never;
+				// Keep this assert at end of scope to avoid assertion altering type
+				const varTypeof = typeof functionWithProperties;
+				assert(varTypeof === "function", "function with properties is a function at runtime");
+			});
+			it("object and function", () => {
+				const { filteredIn } = passThru(
+					// @ts-expect-error `{...} & Function` is not supported (becomes `never`)
+					objectAndFunction,
+					{ property: 6 },
+				);
+				filteredIn satisfies never;
+				// Keep this assert at end of scope to avoid assertion altering type
+				const varTypeof = typeof objectAndFunction;
+				assert(varTypeof === "object", "object assigned a function is an object at runtime");
 			});
 			it("object with function with supported properties", () => {
 				const { filteredIn } = passThru(
-					// @ts-expect-error `{ func: Function & {...}}` is not supported (becomes `{ func: never }`)
+					// @ts-expect-error `{ function: Function & {...}}` is not supported (becomes `{ function: never }`)
 					objectWithFunctionWithProperties,
 					{},
 				);
 				assertIdenticalTypes(filteredIn, createInstanceOf<{ function: never }>());
+			});
+			it("object with object and function", () => {
+				const { filteredIn } = passThru(
+					// @ts-expect-error `{ object: {...} & Function }` is not supported (becomes `{ object: never }`)
+					objectWithObjectAndFunction,
+					{ object: { property: 6 } },
+				);
+				assertIdenticalTypes(filteredIn, createInstanceOf<{ object: never }>());
+			});
+			it("function with class instance with private data", () => {
+				const { filteredIn } = passThruThrows(
+					// @ts-expect-error SerializationErrorPerNonPublicProperties
+					functionObjectWithPrivateData,
+					new Error("JSON.stringify returned undefined"),
+				);
+				assertIdenticalTypes(
+					filteredIn,
+					createInstanceOf<SerializationErrorPerNonPublicProperties>(),
+				);
+				// Keep this assert at end of scope to avoid assertion altering type
+				const varTypeof = typeof functionObjectWithPrivateData;
+				assert(
+					varTypeof === "function",
+					"function that is also a class instance is a function at runtime",
+				);
+			});
+			it("function with class instance with public data", () => {
+				const { filteredIn } = passThruThrows(
+					// @ts-expect-error `Function & {...}` is not supported (becomes `never`)
+					functionObjectWithPublicData,
+					new Error("JSON.stringify returned undefined"),
+				);
+				filteredIn satisfies never;
+			});
+			it("class instance with private data and is function", () => {
+				const { filteredIn } = passThru(
+					// @ts-expect-error SerializationErrorPerNonPublicProperties
+					classInstanceWithPrivateDataAndIsFunction,
+					{
+						public: "public",
+						// secret is also not allowed but is present
+						secret: 0,
+					},
+				);
+				assertIdenticalTypes(
+					filteredIn,
+					createInstanceOf<SerializationErrorPerNonPublicProperties>(),
+				);
+				// Keep this assert at end of scope to avoid assertion altering type
+				const varTypeof = typeof classInstanceWithPrivateDataAndIsFunction;
+				assert(
+					varTypeof === "object",
+					"class instance that is also a function is an object at runtime",
+				);
+			});
+			it("class instance with public data and is function", () => {
+				const { filteredIn } = passThru(
+					// @ts-expect-error `Function & {...}` is not supported (becomes `never`)
+					classInstanceWithPublicDataAndIsFunction,
+					{ public: "public" },
+				);
+				filteredIn satisfies never;
 			});
 			it("`object` (plain object)", () => {
 				const { filteredIn } = passThru(
@@ -696,9 +784,25 @@ describe("JsonSerializable", () => {
 				});
 				it("array of functions", () => {
 					const { filteredIn } = passThru(
-						// @ts-expect-error 'symbol' is not supported (becomes 'never')
+						// @ts-expect-error `Function` is not supported (becomes 'never')
 						arrayOfFunctions,
 						[null],
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<never[]>());
+				});
+				it("array of functions with properties", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error 'Function & {...}' is not supported (becomes 'never')
+						arrayOfFunctionsWithProperties,
+						[null],
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<never[]>());
+				});
+				it("array of objects and functions", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error '{...} & Function' is not supported (becomes 'never')
+						arrayOfObjectAndFunctions,
+						[{ property: 6 }],
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<never[]>());
 				});
@@ -819,6 +923,26 @@ describe("JsonSerializable", () => {
 						new Error("JSON.stringify returned undefined"),
 					);
 					filteredIn satisfies never;
+					// Keep this assert at end of scope to avoid assertion altering
+					const varTypeof = typeof selfRecursiveFunctionWithProperties;
+					assert(
+						varTypeof === "function",
+						"self recursive function with properties is a function at runtime",
+					);
+				});
+				it("object and function with recursion", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error 'SelfRecursiveObjectAndFunction' is not assignable to parameter of type 'never' (function even with properties becomes `never`)
+						selfRecursiveObjectAndFunction,
+						{ recurse: {} },
+					);
+					filteredIn satisfies never;
+					// Keep this assert at end of scope to avoid assertion altering
+					const varTypeof = typeof selfRecursiveObjectAndFunction;
+					assert(
+						varTypeof === "object",
+						"self recursive object and function is an object at runtime",
+					);
 				});
 
 				it("nested function object with recursion", () => {
@@ -826,6 +950,14 @@ describe("JsonSerializable", () => {
 						// @ts-expect-error 'SelfRecursiveFunctionWithProperties' is not assignable to parameter of type 'never' (function even with properties becomes `never`)
 						{ outerFnOjb: selfRecursiveFunctionWithProperties },
 						{},
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<{ outerFnOjb: never }>());
+				});
+				it("nested object and function with recursion", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error 'SelfRecursiveObjectAndFunction' is not assignable to parameter of type 'never' (function even with properties becomes `never`)
+						{ outerFnOjb: selfRecursiveObjectAndFunction },
+						{ outerFnOjb: { recurse: {} } },
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<{ outerFnOjb: never }>());
 				});

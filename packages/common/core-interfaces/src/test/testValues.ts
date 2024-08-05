@@ -6,6 +6,8 @@
 import { fluidHandleSymbol, type IFluidHandle, type IFluidHandleErased } from "../handles.js";
 import type { JsonTypeWith } from "../jsonType.js";
 
+import { assertIdenticalTypes } from "./testUtils.js";
+
 /* eslint-disable jsdoc/require-jsdoc */
 /* eslint-disable unicorn/no-null */
 
@@ -53,6 +55,11 @@ export const functionWithProperties = Object.assign(
 	},
 	{ property: 5 },
 );
+// Regular objects may also be functions
+// eslint-disable-next-line prefer-object-spread
+export const objectAndFunction = Object.assign({ property: 6 }, (): number => {
+	return 3;
+});
 
 // #region Array types
 
@@ -62,6 +69,8 @@ arrayOfNumbersSparse[3] = 3;
 export const arrayOfNumbersOrUndefined = [0, undefined, 2];
 export const arrayOfSymbols: symbol[] = [Symbol("symbol")];
 export const arrayOfFunctions = [aFunction];
+export const arrayOfFunctionsWithProperties = [functionWithProperties];
+export const arrayOfObjectAndFunctions = [objectAndFunction];
 export const arrayOfSymbolsAndObjects: (symbol | { property: string })[] = [Symbol("symbol")];
 
 // #endregion
@@ -77,6 +86,7 @@ export const objectWithSymbol = { symbol: Symbol("objectSymbol") };
 export const objectWithBigint = { bigint: 0n };
 export const objectWithFunction = { function: (): void => {} };
 export const objectWithFunctionWithProperties = { function: functionWithProperties };
+export const objectWithObjectAndFunction = { object: objectAndFunction };
 export const objectWithStringOrSymbol = {
 	stringOrSymbol: Symbol("objectSymbol") as string | symbol,
 };
@@ -263,7 +273,17 @@ export type SelfRecursiveFunctionWithProperties = (() => number) & {
 	recurse?: SelfRecursiveFunctionWithProperties;
 };
 export const selfRecursiveFunctionWithProperties: SelfRecursiveFunctionWithProperties =
-	Object.assign(() => 0, { recurse: () => 1 });
+	Object.assign(() => 0, { recurse: Object.assign(() => 1, { recurse: () => 2 }) });
+export type SelfRecursiveObjectAndFunction = {
+	recurse?: SelfRecursiveObjectAndFunction;
+} & (() => number);
+export const selfRecursiveObjectAndFunction: SelfRecursiveObjectAndFunction =
+	// eslint-disable-next-line prefer-object-spread
+	Object.assign({ recurse: Object.assign({ recurse: () => 2 }, () => 1) }, () => 0);
+// Visualization of the two types appear different in ordering of intersection.
+// There is no known way to distinguish the two at compile time nor does tsc prevent
+// assignment of one to the other.
+assertIdenticalTypes(selfRecursiveObjectAndFunction, selfRecursiveFunctionWithProperties);
 
 /* eslint-enable @typescript-eslint/consistent-type-definitions */
 
@@ -356,6 +376,20 @@ export class ClassWithPublicMethod {
 	}
 }
 export const classInstanceWithPublicMethod = new ClassWithPublicMethod();
+
+export const functionObjectWithPrivateData = Object.assign(
+	() => 23,
+	new ClassWithPrivateData(),
+);
+export const functionObjectWithPublicData = Object.assign(() => 24, new ClassWithPublicData());
+export const classInstanceWithPrivateDataAndIsFunction = Object.assign(
+	new ClassWithPrivateData(),
+	() => 25,
+);
+export const classInstanceWithPublicDataAndIsFunction = Object.assign(
+	new ClassWithPublicData(),
+	() => 26,
+);
 
 // #endregion
 

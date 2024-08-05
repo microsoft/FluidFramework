@@ -105,10 +105,10 @@ export namespace InternalUtilityTypes {
 	>;
 
 	/**
-	 * Returns Result.WhenSomethingDeserializable if T is sometimes at least
-	 * a partially deserializable type, otherwise Result.WhenNeverDeserializable.
-	 * Fully not deserializable (functions, bigints, symbols, and undefined
-	 * less intersection with TException) produce Result.WhenNeverDeserializable.
+	 * Returns Result.WhenSomethingDeserializable if T is sometimes at least a
+	 * partially deserializable type, otherwise Result.WhenNeverDeserializable.
+	 * Fully not deserializable (bigints, symbols, undefined and functions without
+	 * other properties less overlap with T*Exception) produce Result.WhenNeverDeserializable.
 	 * An object would have a defined result even if parts of its content are
 	 * not deserializable.
 	 *
@@ -130,24 +130,28 @@ export namespace InternalUtilityTypes {
 		Result extends
 			| { WhenSomethingDeserializable: unknown; WhenNeverDeserializable: never }
 			| { WhenSomethingDeserializable: never; WhenNeverDeserializable: unknown },
-	> = /* check for only non-serializable value types */ T extends // eslint-disable-next-line @typescript-eslint/ban-types
-		| Function
-		| bigint
-		| symbol
-		| undefined
-		? /* not serializable => check for extends exception */ T extends TExtendsException
-			? /* extends exception => ensure extends exception is not `never` */ TExtendsException extends never
-				? /* `never` extends exception => no exception */ Result["WhenNeverDeserializable"]
-				: /* proper exception => */ Result["WhenSomethingDeserializable"]
+	> = /* ensure working with more than never */ T extends never
+		? /* never => */ Result["WhenNeverDeserializable"]
+		: /* check for extends exception */ T extends TExtendsException
+			? /* extends exception => */ Result["WhenSomethingDeserializable"]
 			: /* no extends exception => check for exact exception */ IfExactTypeInUnion<
 					T,
 					TExactException,
-					/* exact exception => ensure exact exception is not `never` */ TExactException extends never
-						? /* `never` exact exception => no exception */ Result["WhenNeverDeserializable"]
-						: /* proper exception => */ Result["WhenSomethingDeserializable"],
-					/* no exception => */ Result["WhenNeverDeserializable"]
-				>
-		: /* at least partially serializable */ Result["WhenSomethingDeserializable"];
+					/* exact exception => */ Result["WhenSomethingDeserializable"],
+					/* no exception => check for only non-serializable value types */ T extends
+						| bigint
+						| symbol
+						| undefined
+						? /* not serializable => */ Result["WhenNeverDeserializable"]
+						: // eslint-disable-next-line @typescript-eslint/ban-types
+							T extends Function
+							? ExtractFunctionFromIntersection<T> extends {
+									classification: "exactly Function";
+								}
+								? /* not serializable => */ Result["WhenNeverDeserializable"]
+								: /* at least partially serializable */ Result["WhenSomethingDeserializable"]
+							: /* at least partially serializable */ Result["WhenSomethingDeserializable"]
+				>;
 
 	/**
 	 * Similar to `Exclude` but only excludes exact `U`s from `T`
@@ -159,8 +163,8 @@ export namespace InternalUtilityTypes {
 
 	/**
 	 * Returns non-symbol keys for defined, (likely) serializable properties of an
-	 * object type. Keys with fully unsupported properties (functions, bigints, and
-	 * symbols) are excluded.
+	 * object type. Keys with fully unsupported properties (bigints, symbols, and
+	 * undefined) and sometimes unsupported functions are excluded.
 	 *
 	 * For homomorphic mapping use with `as` to filter. Example:
 	 * `[K in keyof T as NonSymbolWithDeserializablePropertyOf<T, never, never, K>]: ...`
@@ -174,8 +178,11 @@ export namespace InternalUtilityTypes {
 		Keys extends keyof T = keyof T,
 	> = Exclude<
 		{
-			[K in Keys]: Extract<
+			[K in Keys]: /* extract types that might lead to missing property */
+			Extract<
+				/* all possible types that aren't already allowed */
 				ExcludeExactly<Exclude<T[K], TExtendsException>, TExactException>,
+				/* types that might lead to missing property */
 				// eslint-disable-next-line @typescript-eslint/ban-types
 				undefined | symbol | Function | bigint
 			> extends never
@@ -190,8 +197,8 @@ export namespace InternalUtilityTypes {
 
 	/**
 	 * Returns non-symbol keys for partially supported properties of an object type.
-	 * Keys with fully unsupported properties (functions, bigints, and symbols) are
-	 * excluded.
+	 * Keys with fully unsupported properties (bigints, symbols, undefined, and
+	 * functions without other properties) are excluded.
 	 *
 	 * For homomorphic mapping use with `as` to filter. Example:
 	 * `[K in keyof T as NonSymbolWithPossiblyDeserializablePropertyOf<T, never, never, K>]: ...`
@@ -206,7 +213,9 @@ export namespace InternalUtilityTypes {
 	> = Exclude<
 		{
 			[K in Keys]: Extract<
+				/* all possible types that aren't already allowed */
 				ExcludeExactly<Exclude<T[K], TExtendsException>, TExactException>,
+				/* types that might lead to missing property */
 				// eslint-disable-next-line @typescript-eslint/ban-types
 				undefined | symbol | Function | bigint
 			> extends never
@@ -287,13 +296,16 @@ export namespace InternalUtilityTypes {
 						T,
 						Controls["AllowExactly"],
 						/* exactly replaced => */ T,
-						/* test for known types that become null */ T extends
-							| undefined
-							| symbol
-							// eslint-disable-next-line @typescript-eslint/ban-types
-							| Function
+						/* test for known types that become null */ T extends undefined | symbol
 							? /* => */ null
-							: TBlessed
+							: // eslint-disable-next-line @typescript-eslint/ban-types
+								T extends Function
+								? ExtractFunctionFromIntersection<T> extends {
+										classification: "exactly Function";
+									}
+									? null
+									: null | TBlessed
+								: TBlessed
 					>;
 
 	/**
@@ -303,20 +315,23 @@ export namespace InternalUtilityTypes {
 	 */
 	export type IsEnumLike<T extends object> = T extends readonly (infer _)[]
 		? /* array => */ false
-		: T extends {
-					// all numerical indices should refer to a string
-					readonly [i: number]: string;
-					// string indices may be string or number
-					readonly [p: string]: number | string;
-					// no symbol indices are allowed
-					readonly [s: symbol]: never;
-				}
-			? /* test for a never or any property */ true extends {
-					[K in keyof T]: T[K] extends never ? true : never;
-				}[keyof T]
-				? false
-				: true
-			: false;
+		: // eslint-disable-next-line @typescript-eslint/ban-types
+			T extends Function
+			? /* function => */ false
+			: T extends {
+						// all numerical indices should refer to a string
+						readonly [i: number]: string;
+						// string indices may be string or number
+						readonly [p: string]: number | string;
+						// no symbol indices are allowed
+						readonly [s: symbol]: never;
+					}
+				? /* test for a never or any property */ true extends {
+						[K in keyof T]: T[K] extends never ? true : never;
+					}[keyof T]
+					? false
+					: true
+				: false;
 
 	/**
 	 * Test for type equality
@@ -396,15 +411,68 @@ export namespace InternalUtilityTypes {
 
 	/**
 	 * Creates a simple object type from an intersection of multiple.
-	 * @privateRemarks `T extends Record` encourages tsc to process intersections within unions.
+	 * @privateRemarks
+	 * `T extends Record` within the implementation encourages tsc to process
+	 * intersections within unions.
 	 *
 	 * @system
 	 */
-	export type FlattenIntersection<T> = T extends Record<string | number | symbol, unknown>
+	export type FlattenIntersection<T extends Record<string | number | symbol, unknown>> =
+		T extends Record<string | number | symbol, unknown>
+			? {
+					[K in keyof T]: T[K];
+				}
+			: T;
+
+	/**
+	 * Extracts Function portion from an intersection (&) type returning
+	 * the extracted portion in the `function` property or `unknown` if
+	 * no function is found.
+	 * The returned `classification` property has one of three values:
+	 * - "no Function" if the type is not a function.
+	 * - "exactly Function" if the type is exactly a function.
+	 * - "Function and more" if the type is a function and has other properties.
+	 *
+	 * @system
+	 */
+	export type ExtractFunctionFromIntersection<T extends object> = (T extends new (
+		...args: infer A
+	) => infer R
+		? new (
+				...args: A
+			) => R
+		: unknown) &
+		(T extends (...args: infer A) => infer R
+			? (...args: A) => R
+			: unknown) extends infer Functional
 		? {
-				[K in keyof T]: T[K];
+				classification: unknown extends Functional
+					? "no Function"
+					: Functional extends Required<T>
+						? "exactly Function"
+						: "Function and more";
+				function: Functional;
 			}
-		: T;
+		: never;
+
+	/**
+	 * Returns `Filtered` & any Function intersection from `Original`.
+	 * If `Original` is exactly a Function, then `Filtered` is left out
+	 * under the assumption that it is not useful/applicable.
+	 *
+	 * @system
+	 */
+	export type FilterPreservingFunction<
+		Original extends object,
+		Filtered,
+	> = ExtractFunctionFromIntersection<Original> extends {
+		classification: infer TClassification;
+		function: infer TFunction;
+	}
+		? TClassification extends "exactly Function"
+			? TFunction
+			: TFunction & Filtered
+		: never;
 
 	/**
 	 * Replaces any instance where a type T recurses into itself or a portion of
@@ -451,22 +519,17 @@ export namespace InternalUtilityTypes {
 					> extends true
 				? /* exact allowed type => */ T
 				: T extends object
-					? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) &
-							(T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) &
-							(Exclude<
-								T,
-								// eslint-disable-next-line @typescript-eslint/ban-types
-								Function
-							> extends never
-								? unknown
-								: {
-										[K in keyof T]: ReplaceRecursionWithMarkerAndPreserveAllowances<
-											T[K],
-											TRecursionMarker,
-											Controls,
-											[TNextAncestor, ...TAncestorTypes]
-										>;
-									})
+					? FilterPreservingFunction<
+							T,
+							{
+								[K in keyof T]: ReplaceRecursionWithMarkerAndPreserveAllowances<
+									T[K],
+									TRecursionMarker,
+									Controls,
+									[TNextAncestor, ...TAncestorTypes]
+								>;
+							}
+						>
 					: /* non-object => T as is */ T;
 
 	/**
@@ -502,14 +565,16 @@ export namespace InternalUtilityTypes {
 					> extends true
 				? /* exact allowed type => */ never
 				: T extends object
-					? (T extends new (...args: infer A) => infer R ? new (...args: A) => R : unknown) &
-							(T extends (...args: infer A) => infer R ? (...args: A) => R : unknown) & {
+					? FilterPreservingFunction<
+							T,
+							{
 								[K in keyof T]: ReplaceAllowancesAndRecursionWithNever<
 									T[K],
 									Controls,
 									[TNextAncestor, ...TAncestorTypes]
 								>;
 							}
+						>
 					: /* non-object => T as is */ T;
 
 	/**
@@ -815,10 +880,13 @@ export namespace InternalUtilityTypes {
 							"not found"
 						> extends true
 					? /* exact alternate type => */ T
-					: // eslint-disable-next-line @typescript-eslint/ban-types
-						/* test for not a function */ Extract<T, Function> extends never
-						? /* not a function => test for object */ T extends object
-							? /* object => test for array */ T extends readonly (infer _)[]
+					: /* test for object */ T extends object
+						? /* object => */ ExtractFunctionFromIntersection<T> extends {
+								classification: "exactly Function";
+							}
+							? /* exactly function => */ never
+							: /* not exactly a function (Function portion, if any, is omitted) */
+								/* => test for array */ T extends readonly (infer _)[]
 								? /* array => */ {
 										/* array items may not not allow undefined */
 										/* use homomorphic mapped type to preserve tuple type */
@@ -864,8 +932,7 @@ export namespace InternalUtilityTypes {
 													>;
 												}
 											>
-							: /* not an object => */ never
-						: /* function => */ never;
+						: /* not an object => */ never;
 
 	// #endregion
 }
