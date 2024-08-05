@@ -24,7 +24,7 @@ import type {
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
 import { ValueSchema } from "../core/index.js";
-import { fail, transformWithSymbolCache } from "../util/index.js";
+import { fail, transformWithWeakMapCache } from "../util/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
 
 /**
@@ -45,9 +45,9 @@ export function toSimpleTreeSchema(schema: ImplicitAllowedTypes): SimpleTreeSche
 }
 
 /**
- * Private symbol under which the results of {@link toSimpleNodeSchema} are cached on an input {@link TreeNodeSchema}.
+ * Cache in which the results of {@link toSimpleNodeSchema} are saved.
  */
-const simpleNodeSchemaCacheSymbol = Symbol("simpleNodeSchemaCache");
+const simpleNodeSchemaCache = new WeakMap<TreeNodeSchema, SimpleNodeSchema>();
 
 /**
  * Creates a {@link SimpleNodeSchema} from a {@link TreeNodeSchema}.
@@ -55,7 +55,7 @@ const simpleNodeSchemaCacheSymbol = Symbol("simpleNodeSchemaCache");
  * @remarks Caches the result on the input schema for future calls.
  */
 function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
-	return transformWithSymbolCache(schema, simpleNodeSchemaCacheSymbol, (_symbol) => {
+	return transformWithWeakMapCache(schema, simpleNodeSchemaCache, (_symbol) => {
 		const kind = _symbol.kind;
 		switch (kind) {
 			case NodeKind.Leaf: {

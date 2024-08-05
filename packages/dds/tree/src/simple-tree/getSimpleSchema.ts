@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { transformWithSymbolCache } from "../util/index.js";
+import { transformWithWeakMapCache } from "../util/index.js";
 import type { TreeNodeSchema } from "./schemaTypes.js";
 import type { SimpleTreeSchema } from "./simpleSchema.js";
 import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 
 /**
- * Private symbol under which the results of {@link getSimpleSchema} are cached on an input {@link TreeNodeSchema}.
+ * Cache in which the results of {@link getSimpleSchema} saved.
  */
-const simpleSchemaCacheSymbol = Symbol("simpleSchemaCache");
+const simpleSchemaCache = new WeakMap<TreeNodeSchema, SimpleTreeSchema>();
 
 /**
  * Creates a simplified representation of the provided {@link TreeNodeSchema}.
@@ -64,5 +64,5 @@ const simpleSchemaCacheSymbol = Symbol("simpleSchemaCache");
  * For now, while still an experimental API, it is surfaced as a free function.
  */
 export function getSimpleSchema(schema: TreeNodeSchema): SimpleTreeSchema {
-	return transformWithSymbolCache(schema, simpleSchemaCacheSymbol, toSimpleTreeSchema);
+	return transformWithWeakMapCache(schema, simpleSchemaCache, toSimpleTreeSchema);
 }

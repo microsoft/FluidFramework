@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { transformWithSymbolCache } from "../util/index.js";
+import { transformWithWeakMapCache } from "../util/index.js";
 import type {
 	ArrayNodeJsonSchema,
 	FieldJsonSchema,
@@ -55,7 +55,7 @@ function convertDefinitions(
 /**
  * Private symbol under which the results of {@link convertNodeSchema} are cached on an input {@link SimpleNodeSchema}.
  */
-const nodeJsonSchemaCacheSymbol = Symbol("nodeJsonSchemaCache");
+const nodeJsonSchemaCache = new WeakMap<SimpleNodeSchema, NodeJsonSchema>();
 
 /**
  * Converts an input {@link SimpleNodeSchema} to a {@link NodeJsonSchema}.
@@ -63,7 +63,7 @@ const nodeJsonSchemaCacheSymbol = Symbol("nodeJsonSchemaCache");
  * @remarks Caches the result on the input schema for future calls.
  */
 function convertNodeSchema(schema: SimpleNodeSchema): NodeJsonSchema {
-	return transformWithSymbolCache(schema, nodeJsonSchemaCacheSymbol, (_schema) => {
+	return transformWithWeakMapCache(schema, nodeJsonSchemaCache, (_schema) => {
 		switch (_schema.kind) {
 			case "array":
 				return convertArrayNodeSchema(_schema);

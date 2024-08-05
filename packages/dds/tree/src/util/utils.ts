@@ -473,26 +473,24 @@ export function compareStrings<T extends string>(a: T, b: T): number {
 }
 
 /**
- * Transforms the provided input with the provided transform function, caching the result on the input object behind the specified symbol.
- * Subsequent calls to this function with the same input object and symbol will return the cached result.
+ * Transforms the provided input with the provided transform function, caching the result in the provided map.
+ * Subsequent calls to this function with the same input and cache will return the cached result.
  *
  * @param input - The input data to transform.
- * @param cacheSymbol - The symbol behind which the transformation output will be cached on the input object.
- * @param transform - The transformation to apply to the input data. Will only be run if the cache is not present.
+ * @param cache - The map in which the transformation output will be cached.
+ * @param transform - The transformation to apply to the input data. Will only be run if no output is already cached.
  */
-export function transformWithSymbolCache<TIn, TOut>(
+export function transformWithWeakMapCache<TIn extends object, TOut>(
 	input: TIn,
-	cacheSymbol: symbol,
+	cache: WeakMap<TIn, TOut>,
 	transform: (input: TIn) => TOut,
 ): TOut {
-	/* eslint-disable @typescript-eslint/no-explicit-any */
-	const cache = (input as any)[cacheSymbol];
-	if (cache !== undefined) {
-		return cache as TOut;
+	const cached = cache.get(input);
+	if (cached !== undefined) {
+		return cached;
 	}
 
 	const output = transform(input);
-	(input as any)[cacheSymbol] = output;
+	cache.set(input, output);
 	return output;
-	/* eslint-enable @typescript-eslint/no-explicit-any */
 }

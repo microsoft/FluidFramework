@@ -7,19 +7,19 @@ import type { TreeJsonSchema } from "./jsonSchema.js";
 import type { TreeNodeSchema } from "./schemaTypes.js";
 import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
 import { getSimpleSchema } from "./getSimpleSchema.js";
-import { transformWithSymbolCache } from "../util/index.js";
+import { transformWithWeakMapCache } from "../util/index.js";
 
 /**
- * Private symbol under which the results of {@link getJsonSchema} are cached on an input {@link TreeNodeSchema}.
+ * Cache in which the results of {@link getJsonSchema} are saved.
  */
-const jsonSchemaCacheSymbol = Symbol("jsonSchemaCache");
+const jsonSchemaCache = new WeakMap<TreeNodeSchema, TreeJsonSchema>();
 
 /**
  * Creates a {@link https://json-schema.org/ | JSON Schema} representation of the provided {@link TreeNodeSchema}.
  *
  * @remarks
  * Useful when communicating the schema to external libraries or services.
- * Caches the result on the input schema for future calls.
+ * Caches the result for future calls.
  *
  * @example
  *
@@ -62,7 +62,7 @@ const jsonSchemaCacheSymbol = Symbol("jsonSchemaCache");
  * @alpha
  */
 export function getJsonSchema(schema: TreeNodeSchema): TreeJsonSchema {
-	return transformWithSymbolCache(schema, jsonSchemaCacheSymbol, (_schema) => {
+	return transformWithWeakMapCache(schema, jsonSchemaCache, (_schema) => {
 		const simpleSchema = getSimpleSchema(_schema);
 		return toJsonSchema(simpleSchema);
 	});
