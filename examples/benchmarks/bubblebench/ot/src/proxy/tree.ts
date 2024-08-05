@@ -145,7 +145,11 @@ const createArrayProxy = (
 
 			if (Object.prototype.hasOwnProperty.call(target, indexifiedKey)) {
 				consumer(
-					json1.replaceOp(path, /* oldVal: */ target[indexifiedKey] as json1.Doc, /* newVal: */ value),
+					json1.replaceOp(
+						path,
+						/* oldVal: */ target[indexifiedKey] as json1.Doc,
+						/* newVal: */ value,
+					),
 				);
 			} else {
 				consumer(json1.insertOp(path, value));
