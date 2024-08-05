@@ -243,7 +243,7 @@ export class RuntimeAttributorDataStoreChannel
 	): Promise<ISummaryTreeWithStats> {
 		assert(
 			this.opAttributor !== undefined,
-			0x50b /* RuntimeAttributor should be initialized before summarization */,
+			"RuntimeAttributor should be initialized before summarization",
 		);
 		const builder = new SummaryTreeBuilder();
 		builder.addBlob(opBlobName, this.encoder.encode(this.opAttributor));
