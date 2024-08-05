@@ -38,7 +38,7 @@ import {
 	type FieldProvider,
 } from "./schemaTypes.js";
 import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
-import { tryGetFlexNode } from "./proxyBinding.js";
+import { tryGetInnerNode } from "./proxyBinding.js";
 import { isObjectNodeSchema } from "./objectNodeTypes.js";
 
 /**
@@ -186,7 +186,7 @@ function nodeDataToMapTree(
 
 	// A special cache path for processing unhydrated nodes.
 	// They already have the mapTree, so there is no need to recompute it.
-	const flexNode = tryGetFlexNode(data);
+	const flexNode = tryGetInnerNode(data);
 	if (flexNode !== undefined) {
 		if (isMapTreeNode(flexNode)) {
 			// TODO: mapTreeFromNodeData modifies the trees it gets to add defaults.
