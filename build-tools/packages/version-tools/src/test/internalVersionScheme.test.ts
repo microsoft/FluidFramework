@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "chai";
 import * as semver from "semver";
+import { assert, describe, it } from "vitest";
 
 import {
 	detectInternalVersionConstraintType,

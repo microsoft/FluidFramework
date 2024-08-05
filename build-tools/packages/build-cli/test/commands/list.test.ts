@@ -9,7 +9,7 @@ import {
 	type PackageNamePolicyConfig,
 	getResolvedFluidRoot,
 } from "@fluidframework/build-tools";
-import { expect } from "chai";
+import { describe, expect, it } from "vitest";
 
 import { Context } from "../../src/library/index.js";
 import {

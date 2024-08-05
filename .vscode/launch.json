@@ -24,7 +24,7 @@
 			"name": "npm test build-cli",
 			"cwd": "${workspaceFolder}/build-tools/packages/build-cli",
 			"request": "launch",
-			"runtimeArgs": ["run-script", "test"],
+			"runtimeArgs": ["run-script", "test:vitest"],
 			"runtimeExecutable": "npm",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
