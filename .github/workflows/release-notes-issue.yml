@@ -22,7 +22,7 @@ permissions:
   issues: write
 
 jobs:
-  create-issue:
+  update-issue:
     name: Update release notes
     runs-on: ubuntu-latest
     steps:
