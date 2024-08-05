@@ -81,7 +81,7 @@ export const fluidCustomChangeSetMetadataDefaults: RequiredKeysAllowUndefined<
 > = {
 	section: undefined,
 	includeInReleaseNotes: true,
-	highlight: false
+	highlight: false,
 } as const;
 
 /**
