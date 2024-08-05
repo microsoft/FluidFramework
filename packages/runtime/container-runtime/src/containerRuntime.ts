@@ -523,6 +523,9 @@ export const TombstoneResponseHeaderKey = "isTombstoned";
  * Inactive error responses will have this header set to true
  * @legacy
  * @alpha
+ *
+ * @deprecated this header is deprecated and will be removed in the future. The functionality corresponding
+ * to this was experimental and is no longer supported.
  */
 export const InactiveResponseHeaderKey = "isInactive";
 
@@ -534,7 +537,6 @@ export interface RuntimeHeaderData {
 	wait?: boolean;
 	viaHandle?: boolean;
 	allowTombstone?: boolean;
-	allowInactive?: boolean;
 }
 
 /** Default values for Runtime Headers */
@@ -542,7 +544,6 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 	wait: true,
 	viaHandle: false,
 	allowTombstone: false,
-	allowInactive: false,
 };
 
 /**
@@ -2662,30 +2663,25 @@ export class ContainerRuntime
 				return;
 			}
 
-			const messages: {
-				message: InboundSequencedContainerRuntimeMessage;
-				localOpMetadata: unknown;
-			}[] = local
-				? this.pendingStateManager.processPendingLocalBatch(
-						inboundBatch.messages,
-						inboundBatch.batchStartCsn,
-						inboundBatch.emptyBatchSequenceNumber,
-					)
-				: inboundBatch.messages.map((message) => ({ message, localOpMetadata: undefined }));
-			if (messages.length === 0) {
+			// Reach out to PendingStateManager to zip localOpMetadata into the message list if it's a local batch
+			const messagesWithPendingState = this.pendingStateManager.processInboundBatch(
+				inboundBatch,
+				local,
+			);
+			if (messagesWithPendingState.length > 0) {
+				messagesWithPendingState.forEach(({ message, localOpMetadata }) => {
+					const msg: MessageWithContext = {
+						message,
+						local,
+						isRuntimeMessage: true,
+						savedOp,
+						localOpMetadata,
+					};
+					this.ensureNoDataModelChanges(() => this.processRuntimeMessage(msg));
+				});
+			} else {
 				this.ensureNoDataModelChanges(() => this.processEmptyBatch(inboundBatch, local));
-				return;
 			}
-			messages.forEach(({ message, localOpMetadata }) => {
-				const msg: MessageWithContext = {
-					message,
-					local,
-					isRuntimeMessage: true,
-					savedOp,
-					localOpMetadata,
-				};
-				this.ensureNoDataModelChanges(() => this.processRuntimeMessage(msg));
-			});
 		} else {
 			// Check if message.type is one of values in ContainerMessageType
 			// eslint-disable-next-line import/no-deprecated

@@ -374,7 +374,6 @@ export function rebaseChange<TChange>(
 }
 
 /**
- * @internal
  */
 export function revisionMetadataSourceFromInfo(
 	revInfos: readonly RevisionInfo[],

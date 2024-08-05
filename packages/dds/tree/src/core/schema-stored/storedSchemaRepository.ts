@@ -21,7 +21,6 @@ import {
  * Events for {@link TreeStoredSchemaSubscription}.
  *
  * TODO: consider having before and after events per subtree instead while applying anchor (and this just shows what happens at the root).
- * @internal
  */
 export interface SchemaEvents {
 	/**
@@ -37,7 +36,6 @@ export interface SchemaEvents {
 
 /**
  * A collection of stored schema that fires events in response to changes.
- * @internal
  */
 export interface TreeStoredSchemaSubscription
 	extends Listenable<SchemaEvents>,
@@ -45,7 +43,6 @@ export interface TreeStoredSchemaSubscription
 
 /**
  * Mutable collection of stored schema.
- * @internal
  */
 export interface MutableTreeStoredSchema extends TreeStoredSchemaSubscription {
 	/**

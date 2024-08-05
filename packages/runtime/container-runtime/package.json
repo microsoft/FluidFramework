@@ -230,6 +230,10 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedVariable_AllowInactiveRequestHeaderKey": {
+				"backCompat": false
+			}
+		}
 	}
 }
