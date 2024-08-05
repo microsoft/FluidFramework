@@ -23,7 +23,7 @@ const jsonSchemaCacheSymbol = Symbol("jsonSchemaCache");
  *
  * @example
  *
- * A Shared Tree schema like...
+ * A Shared Tree schema like the following:
  *
  * ```typescript
  * class MyObject extends schemaFactory.object("MyObject", {
@@ -32,7 +32,8 @@ const jsonSchemaCacheSymbol = Symbol("jsonSchemaCache");
  * });
  * ```
  *
- * ...will yield JSON Schema like...
+ * Will yield JSON Schema like the following:
+ *
  * ```json
  * {
  * 	"$defs": {
