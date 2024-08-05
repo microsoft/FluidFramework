@@ -2,9 +2,9 @@
 "@fluidframework/tree": minor
 ---
 
-Support generation of [JSON Schema](https://json-schema.org/docs) from Shared Tree view schema (alpha).
+Support generation of JSON Schema from Shared Tree view schema (alpha)
 
-Adds canonical `JSON Schema` representation of Shared Tree schema, and adds `getJsonSchema` function for getting that representation for a given `TreeNodeSchema.
+Adds alpha-quality support for canonical [JSON Schema](https://json-schema.org/docs) representation of Shared Tree schema and adds a `getJsonSchema` function for getting that representation for a given `TreeNodeSchema`.
 This `JSON Schema` representation can be used to describe schema requirements to external systems, and can be used with validation tools like [ajv](https://ajv.js.org/) to validate data before inserting it into a Shared Tree.
 
 Example:
