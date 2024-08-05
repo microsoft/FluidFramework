@@ -136,14 +136,6 @@ export type PreviousVersionStyle =
 	| "~previousMinor";
 
 /**
- * Configuration for the `generate:releaseNotes` command. If this configuration is not present in the config, the
- * `generate:releaseNotes` command will report an error.
- */
-export interface ReleaseNotesConfig {
-	sections: Record<string, ReleaseNotesSection>;
-}
-
-/**
  * A short name for the section. Each section in a {@link ReleaseNotesConfig} must have a unique name.
  */
 export type ReleaseNotesSectionName = string;
@@ -156,6 +148,14 @@ export interface ReleaseNotesSection {
 	 * A full string to serve as the heading for the section when displayed in release notes.
 	 */
 	heading: string;
+}
+
+/**
+ * Configuration for the `generate:releaseNotes` command. If this configuration is not present in the config, the
+ * `generate:releaseNotes` command will report an error.
+ */
+export interface ReleaseNotesConfig {
+	sections: Record<ReleaseNotesSectionName, ReleaseNotesSection>;
 }
 
 /**

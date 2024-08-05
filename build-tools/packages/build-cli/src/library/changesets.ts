@@ -64,9 +64,24 @@ export interface FluidCustomChangesetMetadata {
 	highlight?: boolean;
 }
 
-export const fluidCustomChangeSetMetadataDefaults: FluidCustomChangesetMetadata = {
+/**
+ * A utility type that makes all the keys in a type required, but allows those keys to be set to undefined explicitly.
+ * This is useful when creating objects that are the "default values" for an interface. If you want to ensure there are
+ * explicit defaults for every value in the interface, this type ensures that at compile time.
+ */
+type RequiredKeysAllowUndefined<T> = {
+	[K in keyof T]: T[K] | undefined;
+};
+
+/**
+ * Default values used when additional changeset metadata is omitted.
+ */
+export const fluidCustomChangeSetMetadataDefaults: RequiredKeysAllowUndefined<
+	Required<FluidCustomChangesetMetadata>
+> = {
 	section: undefined,
 	includeInReleaseNotes: true,
+	highlight: false
 } as const;
 
 /**
@@ -207,6 +222,7 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 		// Get the date the changeset file was added to git.
 		// eslint-disable-next-line no-await-in-loop
 		const results = await repo.gitClient.log({ file, strictDate: true });
+		// git log returns commits ordered newest -> oldest, so we want the last item, which is the earliest commit
 		const rawCommit = results.all?.at(-1);
 		const pullRequest =
 			rawCommit?.message === undefined ? undefined : parseGitHubPRs(rawCommit.message);
