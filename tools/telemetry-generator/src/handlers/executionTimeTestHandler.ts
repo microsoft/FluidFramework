@@ -18,7 +18,7 @@ module.exports = function handler(fileData, logger): void {
 			benchmarkType: "ExecutionTime",
 			suiteName: fileData.suiteName,
 			benchmarkName: testData.benchmarkName,
-			arithmeticMean: testData.customData["period (ns/op)"],
+			arithmeticMean: testData.customData["Period (ns/op)"],
 			marginOfError: testData.customData["Margin of Error"],
 			driverEndpointName: process.env.FLUID_ENDPOINTNAME ?? "",
 		});

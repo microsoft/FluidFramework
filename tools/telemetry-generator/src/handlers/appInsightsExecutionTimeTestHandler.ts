@@ -15,7 +15,7 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 		const arithmeticMeanMetricName = `${fileData.suiteName}_${testData.benchmarkName}_arithmeticMean`;
 		try {
 			console.log(
-				`emitting metric ${arithmeticMeanMetricName} with value ${testData.customData["Heap Used Avg"]}`,
+				`emitting metric ${arithmeticMeanMetricName} with value ${testData.customData["Period (ns/op)"]}`,
 			);
 			telemetryClient.trackMetric({
 				name: arithmeticMeanMetricName,
