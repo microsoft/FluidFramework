@@ -71,8 +71,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		const { level: levelFlag, outDir, outFile } = this.flags;
-		const level: ApiLevel =
-			(pkg.packageJson.typeValidation?.apiLevel?.[0] as ApiLevel) ?? levelFlag;
+		const level: ApiLevel = pkg.packageJson.typeValidation?.apiLevel ?? levelFlag;
 		const fallbackLevel = this.flags.publicFallback ? ApiLevel.public : undefined;
 
 		this.verbose(
