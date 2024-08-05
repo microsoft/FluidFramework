@@ -489,7 +489,13 @@ export class LinkNode extends DocumentationParentNodeBase<SingleLineDocumentatio
 }
 
 // @public
-export function loadModel(reportsDirectoryPath: string, logger?: Logger): Promise<ApiModel>;
+export function loadModel(options: LoadModelOptions): Promise<ApiModel>;
+
+// @public
+export interface LoadModelOptions {
+    readonly logger?: Logger;
+    modelDirectoryPath: string;
+}
 
 // @public
 export interface Logger {
