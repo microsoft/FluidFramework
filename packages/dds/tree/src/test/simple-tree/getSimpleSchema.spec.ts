@@ -169,6 +169,51 @@ describe("getSimpleSchema", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	it("Object schema including a union field", () => {
+		const schemaFactory = new SchemaFactory("test");
+		class Schema extends schemaFactory.object("object", {
+			foo: schemaFactory.required([schemaFactory.number, schemaFactory.string]),
+		}) {}
+
+		const actual = getSimpleSchema(Schema);
+
+		const expected: SimpleTreeSchema = {
+			definitions: new Map([
+				[
+					"test.object",
+					{
+						kind: "object",
+						fields: {
+							foo: {
+								kind: "required",
+								allowedTypes: new Set([
+									"com.fluidframework.leaf.number",
+									"com.fluidframework.leaf.string",
+								]),
+							},
+						},
+					},
+				],
+				[
+					"com.fluidframework.leaf.number",
+					{
+						type: "number",
+						kind: "leaf",
+					},
+				],
+				[
+					"com.fluidframework.leaf.string",
+					{
+						type: "string",
+						kind: "leaf",
+					},
+				],
+			]),
+			allowedTypes: new Set(["test.object"]),
+		};
+		assert.deepEqual(actual, expected);
+	});
+
 	it("Recursive object schema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.objectRecursive("recursive-object", {

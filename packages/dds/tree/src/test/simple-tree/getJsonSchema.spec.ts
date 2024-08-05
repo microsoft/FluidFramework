@@ -274,6 +274,48 @@ describe("getJsonSchema", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	it("Object schema including a union field", () => {
+		const schemaFactory = new SchemaFactory("test");
+		class Schema extends schemaFactory.object("object", {
+			foo: schemaFactory.required([schemaFactory.number, schemaFactory.string]),
+		}) {}
+
+		const actual = getJsonSchema(Schema);
+
+		const expected: TreeJsonSchema = {
+			$defs: {
+				"test.object": {
+					type: "object",
+					_kind: "object",
+					properties: {
+						foo: {
+							anyOf: [
+								{ $ref: "#/$defs/com.fluidframework.leaf.number" },
+								{ $ref: "#/$defs/com.fluidframework.leaf.string" },
+							],
+						},
+					},
+					required: ["foo"],
+					additionalProperties: false,
+				},
+				"com.fluidframework.leaf.number": {
+					type: "number",
+					_kind: "leaf",
+				},
+				"com.fluidframework.leaf.string": {
+					type: "string",
+					_kind: "leaf",
+				},
+			},
+			anyOf: [
+				{
+					$ref: "#/$defs/test.object",
+				},
+			],
+		};
+		assert.deepEqual(actual, expected);
+	});
+
 	it("Recursive object schema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.objectRecursive("recursive-object", {

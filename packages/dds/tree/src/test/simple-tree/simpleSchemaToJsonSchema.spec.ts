@@ -297,6 +297,60 @@ describe("simpleSchemaToJsonSchema", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	it("Object schema including a union field", () => {
+		const input: SimpleTreeSchema = {
+			definitions: new Map<string, SimpleNodeSchema>([
+				[
+					"test.object",
+					{
+						kind: "object",
+						fields: {
+							"foo": {
+								kind: "required",
+								allowedTypes: new Set<string>(["test.number", "test.string"]),
+							},
+						},
+					},
+				],
+				["test.number", { type: "number", kind: "leaf" }],
+				["test.string", { type: "string", kind: "leaf" }],
+			]),
+			allowedTypes: new Set<string>(["test.object"]),
+		};
+
+		const actual = toJsonSchema(input);
+
+		const expected: TreeJsonSchema = {
+			$defs: {
+				"test.object": {
+					type: "object",
+					_kind: "object",
+					properties: {
+						foo: {
+							anyOf: [{ $ref: "#/$defs/test.number" }, { $ref: "#/$defs/test.string" }],
+						},
+					},
+					required: ["foo"],
+					additionalProperties: false,
+				},
+				"test.number": {
+					type: "number",
+					_kind: "leaf",
+				},
+				"test.string": {
+					type: "string",
+					_kind: "leaf",
+				},
+			},
+			anyOf: [
+				{
+					$ref: "#/$defs/test.object",
+				},
+			],
+		};
+		assert.deepEqual(actual, expected);
+	});
+
 	it("Recursive object schema", () => {
 		const input: SimpleTreeSchema = {
 			definitions: new Map<string, SimpleNodeSchema>([
