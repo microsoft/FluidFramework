@@ -9,7 +9,7 @@ highlight: true
 
 ✨ New! `Record`-typed objects can now be used to construct MapNodes
 
-IYou can now construct MapNodes from `Record` typed objects, similar to how maps are expressed in JSON.
+You can now construct MapNodes from `Record` typed objects, similar to how maps are expressed in JSON.
 
 Before this change, an `Iterable<string, Child>` was required, but now an object like `{key1: Child1, key2: Child2}` is allowed.
 
