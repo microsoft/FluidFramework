@@ -24,7 +24,7 @@ import type {
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
 import { ValueSchema } from "../core/index.js";
-import { fail } from "../util/index.js";
+import { fail, transformWithSymbolCache } from "../util/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
 
 /**
@@ -55,40 +55,27 @@ const simpleNodeSchemaCacheSymbol = Symbol("simpleNodeSchemaCache");
  * @remarks Caches the result on the input schema for future calls.
  */
 function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	if ((schema as any)[simpleNodeSchemaCacheSymbol] !== undefined) {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		return (schema as any)[simpleNodeSchemaCacheSymbol] as SimpleNodeSchema;
-	}
-
-	const kind = schema.kind;
-	let result: SimpleNodeSchema;
-	switch (kind) {
-		case NodeKind.Leaf: {
-			result = leafSchemaToSimpleSchema(schema);
-			break;
+	return transformWithSymbolCache(schema, simpleNodeSchemaCacheSymbol, (_symbol) => {
+		const kind = _symbol.kind;
+		switch (kind) {
+			case NodeKind.Leaf: {
+				return leafSchemaToSimpleSchema(_symbol);
+			}
+			case NodeKind.Map: {
+				return mapSchemaToSimpleSchema(_symbol);
+			}
+			case NodeKind.Array: {
+				return arraySchemaToSimpleSchema(_symbol);
+			}
+			case NodeKind.Object: {
+				assert(isObjectNodeSchema(_symbol), "Expected object schema");
+				return objectSchemaToSimpleSchema(_symbol);
+			}
+			default: {
+				fail(`Unrecognized node kind: ${kind}.`);
+			}
 		}
-		case NodeKind.Map: {
-			result = mapSchemaToSimpleSchema(schema);
-			break;
-		}
-		case NodeKind.Array: {
-			result = arraySchemaToSimpleSchema(schema);
-			break;
-		}
-		case NodeKind.Object: {
-			assert(isObjectNodeSchema(schema), "Expected object schema");
-			result = objectSchemaToSimpleSchema(schema);
-			break;
-		}
-		default: {
-			fail(`Unrecognized node kind: ${kind}.`);
-		}
-	}
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	(schema as any)[simpleNodeSchemaCacheSymbol] = result;
-	return result;
+	});
 }
 
 // TODO: Use a stronger type for leaf schemas once one is available (see object schema handler for an example).
