@@ -11,7 +11,7 @@ on:
     inputs:
       issueNumber:
         description: 'Issue number to update'
-        default: 26
+        default: 22101
         required: true
 
 permissions:
@@ -22,13 +22,13 @@ jobs:
     name: Update release notes
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v4
         with:
           fetch-depth: "100"
           persist-credentials: false
 
       - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
-      - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # ratchet:actions/setup-node@v3
+      - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # ratchet:actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: "pnpm"
@@ -74,16 +74,29 @@ jobs:
         with:
           path: ./RELEASE_NOTES.md
 
+      - name: Read issue intro file
+        id: intro
+        uses: juliangruber/read-file-action@v1
+        with:
+          path: ${{ github.workspace }}/.github/workflows/data/release-notes-issue-intro.md
+
+      - name: Replace issue body with release notes
+        uses: julien-deramond/update-issue-body@v1
+        with:
+          issue-number: ${{ steps.issueNum.outputs.ISSUE }}
+          body: ${{ steps.relNotes.outputs.content }}
+          edit-mode: replace
+
+      - name: Prepend issue intro
+        uses: julien-deramond/update-issue-body@v1
+        with:
+          issue-number: ${{ steps.issueNum.outputs.ISSUE }}
+          body: ${{ steps.relNotes.outputs.content }}
+          edit-mode: prepend
+
       - name: Update issue title
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           NEW_TITLE="Upcoming Release: FluidFramework v${{ steps.setVersion.outputs.VERSION }}"
           gh issue edit ${{ steps.issueNum.outputs.ISSUE }} --title "$NEW_TITLE"
-
-      - name: Update issue body
-        uses: julien-deramond/update-issue-body@v1
-        with:
-          issue-number: ${{ steps.issueNum.outputs.ISSUE }}
-          body: ${{ steps.relNotes.outputs.content }}
-          edit-mode: replace
