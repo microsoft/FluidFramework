@@ -19,7 +19,7 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 			);
 			telemetryClient.trackMetric({
 				name: arithmeticMeanMetricName,
-				value: testData.customData["Heap Used Avg"],
+				value: testData.customData["Period (ns/op)"],
 				namespace: "performance_benchmark_executionTime",
 				properties: {
 					buildId: process.env.BUILD_ID,
