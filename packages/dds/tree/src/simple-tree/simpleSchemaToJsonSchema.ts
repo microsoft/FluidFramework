@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { transformWithSymbolCache } from "../util/index.js";
 import type {
 	ArrayNodeJsonSchema,
 	FieldJsonSchema,
@@ -62,33 +63,20 @@ const nodeJsonSchemaCacheSymbol = Symbol("nodeJsonSchemaCache");
  * @remarks Caches the result on the input schema for future calls.
  */
 function convertNodeSchema(schema: SimpleNodeSchema): NodeJsonSchema {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	if ((schema as any)[nodeJsonSchemaCacheSymbol] !== undefined) {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		return (schema as any)[nodeJsonSchemaCacheSymbol] as NodeJsonSchema;
-	}
-
-	let result: NodeJsonSchema;
-	switch (schema.kind) {
-		case "array":
-			result = convertArrayNodeSchema(schema);
-			break;
-		case "leaf":
-			result = convertLeafNodeSchema(schema);
-			break;
-		case "map":
-			result = convertMapNodeSchema(schema);
-			break;
-		case "object":
-			result = convertObjectNodeSchema(schema);
-			break;
-		default:
-			throw new TypeError(`Unknown node schema kind: ${(schema as SimpleNodeSchema).kind}`);
-	}
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	(schema as any)[nodeJsonSchemaCacheSymbol] = result;
-	return result;
+	return transformWithSymbolCache(schema, nodeJsonSchemaCacheSymbol, (_schema) => {
+		switch (_schema.kind) {
+			case "array":
+				return convertArrayNodeSchema(_schema);
+			case "leaf":
+				return convertLeafNodeSchema(_schema);
+			case "map":
+				return convertMapNodeSchema(_schema);
+			case "object":
+				return convertObjectNodeSchema(_schema);
+			default:
+				throw new TypeError(`Unknown node schema kind: ${(_schema as SimpleNodeSchema).kind}`);
+		}
+	});
 }
 
 function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): ArrayNodeJsonSchema {

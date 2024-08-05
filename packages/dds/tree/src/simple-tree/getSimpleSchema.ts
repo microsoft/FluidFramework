@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { transformWithSymbolCache } from "../util/index.js";
 import type { TreeNodeSchema } from "./schemaTypes.js";
 import type { SimpleTreeSchema } from "./simpleSchema.js";
 import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
@@ -21,16 +22,5 @@ const simpleSchemaCacheSymbol = Symbol("simpleSchemaCache");
  * For now, while still an experimental API, it is surfaced as a free function.
  */
 export function getSimpleSchema(schema: TreeNodeSchema): SimpleTreeSchema {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	if ((schema as any)[simpleSchemaCacheSymbol] !== undefined) {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		return (schema as any)[simpleSchemaCacheSymbol] as SimpleTreeSchema;
-	}
-
-	const simpleSchema = toSimpleTreeSchema(schema);
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	(schema as any)[simpleSchemaCacheSymbol] = simpleSchema;
-
-	return simpleSchema;
+	return transformWithSymbolCache(schema, simpleSchemaCacheSymbol, toSimpleTreeSchema);
 }

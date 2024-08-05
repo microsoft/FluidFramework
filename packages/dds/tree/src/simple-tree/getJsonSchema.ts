@@ -7,6 +7,7 @@ import type { TreeJsonSchema } from "./jsonSchema.js";
 import type { TreeNodeSchema } from "./schemaTypes.js";
 import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
 import { getSimpleSchema } from "./getSimpleSchema.js";
+import { transformWithSymbolCache } from "../util/index.js";
 
 /**
  * Private symbol under which the results of {@link getJsonSchema} are cached on an input {@link TreeNodeSchema}.
@@ -60,17 +61,8 @@ const jsonSchemaCacheSymbol = Symbol("jsonSchemaCache");
  * @alpha
  */
 export function getJsonSchema(schema: TreeNodeSchema): TreeJsonSchema {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	if ((schema as any)[jsonSchemaCacheSymbol] !== undefined) {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		return (schema as any)[jsonSchemaCacheSymbol] as TreeJsonSchema;
-	}
-
-	const simpleSchema = getSimpleSchema(schema);
-	const jsonSchema = toJsonSchema(simpleSchema);
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	(schema as any)[jsonSchemaCacheSymbol] = jsonSchema;
-
-	return jsonSchema;
+	return transformWithSymbolCache(schema, jsonSchemaCacheSymbol, (_schema) => {
+		const simpleSchema = getSimpleSchema(_schema);
+		return toJsonSchema(simpleSchema);
+	});
 }
