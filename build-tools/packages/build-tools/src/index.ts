@@ -8,6 +8,7 @@ export {
 	type ITypeValidationConfig,
 	FluidRepo,
 	type BrokenCompatTypes,
+	defaultTypeValidationConfig,
 } from "./common/fluidRepo";
 export { getResolvedFluidRoot, loadFluidBuildConfig } from "./common/fluidUtils";
 export type { Logger } from "./common/logging";
