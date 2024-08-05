@@ -5,8 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { type NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { isNewAttach } from "../../../feature-libraries/sequence-field/utils.js";
 import { type Mutable, brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
@@ -68,7 +66,7 @@ export const cases: {
 	),
 	transient_insert: [
 		{ count: 1 },
-		createAttachAndDetachMark(createInsertMark(2, brand(1)), createRemoveMark(2, brand(2))),
+		createRemoveMark(2, brand(2), { cellId: { localId: brand(1) } }),
 	],
 };
 
@@ -395,9 +393,9 @@ function createTomb(
 	return { count, cellId };
 }
 
-function createAttachAndDetachMark<TChange>(
-	attach: SF.CellMark<SF.Attach>,
-	detach: SF.CellMark<SF.Detach>,
+function createAttachAndDetachMark(
+	attach: SF.CellMark<SF.MoveIn>,
+	detach: SF.CellMark<SF.Remove>,
 	overrides?: Partial<SF.CellMark<SF.AttachAndDetach>>,
 ): SF.CellMark<SF.AttachAndDetach> {
 	assert(attach.count === detach.count, "Attach and detach must have the same count");
@@ -410,9 +408,6 @@ function createAttachAndDetachMark<TChange>(
 		attach.changes === undefined && detach.changes === undefined,
 		"Attach and detach must not carry changes",
 	);
-	// As a matter of normalization, we only use AttachAndDetach marks to represent cases where the detach's
-	// implicit revival semantics would not be a sufficient representation.
-	assert(attach.type === "MoveIn" || isNewAttach(attach), "Unnecessary AttachAndDetach mark");
 	const mark: SF.CellMark<SF.AttachAndDetach> = {
 		type: "AttachAndDetach",
 		count: attach.count,

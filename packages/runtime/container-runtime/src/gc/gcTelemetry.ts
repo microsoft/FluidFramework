@@ -10,7 +10,6 @@ import {
 	MonitoringContext,
 	generateStack,
 	tagCodeArtifacts,
-	type ITelemetryGenericEventExt,
 	type ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -22,11 +21,7 @@ import {
 	GCNodeType,
 	IGarbageCollectorConfigs,
 	UnreferencedState,
-	disableTombstoneKey,
-	throwOnTombstoneLoadOverrideKey,
-	throwOnTombstoneUsageKey,
 } from "./gcDefinitions.js";
-import { getGCVersionInEffect } from "./gcHelpers.js";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived" | "Realized";
@@ -287,18 +282,12 @@ export class GCTelemetryTracker {
 			headers: { ...headers },
 			details: { ...detailedProps, ...additionalProps }, // Also includes some properties from INodeUsageProps type
 			gcConfigs,
-			tombstoneFlags: {
-				DisableTombstone: this.mc.config.getBoolean(disableTombstoneKey),
-				ThrowOnTombstoneUsage: this.mc.config.getBoolean(throwOnTombstoneUsageKey),
-				ThrowOnTombstoneLoad: this.mc.config.getBoolean(throwOnTombstoneLoadOverrideKey),
-			},
 		};
 
 		if (
-			(usageType === "Loaded" &&
-				this.configs.throwOnTombstoneLoad &&
-				!headers?.allowTombstone) ||
-			(usageType === "Changed" && this.configs.throwOnTombstoneUsage)
+			usageType === "Loaded" &&
+			this.configs.throwOnTombstoneLoad &&
+			!headers?.allowTombstone
 		) {
 			this.mc.logger.sendErrorEvent(event);
 		} else {
@@ -418,28 +407,4 @@ export class GCTelemetryTracker {
 		}
 		this.pendingEventsQueue = [];
 	}
-}
-
-/**
- * Consolidates info / logic for logging when we encounter unexpected usage of GC'd objects. For example, when a
- * tombstoned or deleted object is loaded.
- */
-export function sendGCUnexpectedUsageEvent(
-	mc: MonitoringContext,
-	event: ITelemetryGenericEventExt & {
-		category: "error" | "generic";
-		gcTombstoneEnforcementAllowed: boolean | undefined;
-	},
-	packagePath: readonly string[] | undefined,
-	error?: unknown,
-) {
-	event.pkg = tagCodeArtifacts({ pkg: packagePath?.join("/") })?.pkg;
-	event.tombstoneFlags = JSON.stringify({
-		DisableTombstone: mc.config.getBoolean(disableTombstoneKey),
-		ThrowOnTombstoneUsage: mc.config.getBoolean(throwOnTombstoneUsageKey),
-		ThrowOnTombstoneLoad: mc.config.getBoolean(throwOnTombstoneLoadOverrideKey),
-	});
-	event.gcVersion = getGCVersionInEffect(mc.config);
-
-	mc.logger.sendTelemetryEvent(event, error);
 }

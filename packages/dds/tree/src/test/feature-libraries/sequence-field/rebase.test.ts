@@ -249,7 +249,7 @@ export function testRebase() {
 			assertChangesetsEqual(actual, expected);
 		});
 
-		it("return ↷ orphaned attach+detach", () => {
+		it("return ↷ rename", () => {
 			const cellId1: SF.CellId = { revision: tag1, localId: brand(1) };
 			const cellId2: SF.CellId = { revision: tag2, localId: brand(2) };
 			const ret = [
@@ -258,10 +258,7 @@ export function testRebase() {
 			];
 			const ad = [
 				Mark.skip(1),
-				Mark.attachAndDetach(
-					Mark.returnTo(1, brand(2), cellId1, { revision: tag2 }),
-					Mark.moveOut(1, brand(2), { revision: tag2 }),
-				),
+				Mark.rename(1, cellId1, { revision: tag2, localId: brand(2) }),
 			];
 			const actual = rebase(ret, ad);
 			const expected = [
@@ -809,28 +806,28 @@ export function testRebase() {
 		});
 
 		it("remove ↷ composite move", () => {
-			const [mo1, mi1] = Mark.move(1, brand(0));
-			const [mo2, mi2] = Mark.move(1, brand(1));
-			const [mo3, mi3] = Mark.move(1, brand(2));
-			const src: SF.CellMark<SF.MoveOut> = { ...mo1, finalEndpoint: { localId: brand(2) } };
-			const dst: SF.CellMark<SF.MoveIn> = { ...mi3, finalEndpoint: { localId: brand(0) } };
-			const move: SF.Changeset = [
+			const [mo1, mi1] = Mark.move(1, brand(1));
+			const [mo2, mi2] = Mark.move(1, brand(10));
+			const [mo3, mi3] = Mark.move(1, brand(20));
+			const src: SF.CellMark<SF.MoveOut> = { ...mo1, finalEndpoint: { localId: brand(20) } };
+			const dst: SF.CellMark<SF.MoveIn> = { ...mi3, finalEndpoint: { localId: brand(1) } };
+			const move = [
 				src,
 				Mark.skip(1),
-				Mark.attachAndDetach(mi1, mo2),
+				Mark.rename(1, brand(2), brand(10)),
 				Mark.skip(1),
-				Mark.attachAndDetach(mi2, mo3),
+				Mark.rename(1, brand(11), brand(20)),
 				Mark.skip(1),
 				dst,
 			];
 			const del = [Mark.remove(1, brand(0))];
 			const rebased = rebase(del, move);
 			const expected = [
-				Mark.tomb(tag1, brand(0)),
-				Mark.skip(1),
 				Mark.tomb(tag1, brand(1)),
 				Mark.skip(1),
-				Mark.tomb(tag1, brand(2)),
+				Mark.tomb(tag1, brand(10)),
+				Mark.skip(1),
+				Mark.tomb(tag1, brand(20)),
 				Mark.skip(1),
 				Mark.remove(1, brand(0)),
 			];
@@ -858,9 +855,7 @@ export function testRebase() {
 
 		it("rebasing over transient adds tombstones", () => {
 			const insert = Change.insert(0, 1);
-			const transient = [
-				Mark.attachAndDetach(Mark.insert(2, brand(0)), Mark.remove(2, brand(2))),
-			];
+			const transient = [Mark.remove(2, brand(2), { cellId: { localId: brand(0) } })];
 			const rebased = rebase(insert, transient);
 			const expected = [Mark.insert(1, { localId: brand(0) }), Mark.tomb(tag1, brand(2), 2)];
 
@@ -993,24 +988,24 @@ export function testRebase() {
 			const del = Change.remove(0, 1);
 			const move = [
 				Mark.moveOut(1, brand(0), {
-					finalEndpoint: { localId: brand(1) },
+					finalEndpoint: { localId: brand(10) },
 				}),
 				{ count: 1 },
-				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
+				Mark.rename(1, brand(1), brand(10)),
 				{ count: 1 },
-				Mark.moveIn(1, brand(1), { finalEndpoint: { localId: brand(0) } }),
+				Mark.moveIn(1, brand(10), { finalEndpoint: { localId: brand(0) } }),
 			];
 
 			const rebased = rebase(move, del);
 			const expected = [
 				Mark.moveOut(1, brand(0), {
 					cellId: { revision: tag1, localId: brand(0) },
-					finalEndpoint: { localId: brand(1) },
+					finalEndpoint: { localId: brand(10) },
 				}),
 				{ count: 1 },
-				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
+				Mark.rename(1, brand(1), brand(10)),
 				{ count: 1 },
-				Mark.moveIn(1, brand(1), {
+				Mark.moveIn(1, brand(10), {
 					finalEndpoint: { localId: brand(0) },
 				}),
 			];
