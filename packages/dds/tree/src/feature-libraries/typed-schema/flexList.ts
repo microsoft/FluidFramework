@@ -87,7 +87,6 @@ export function normalizeFlexListEager<List extends FlexList>(
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
 /**
- * @internal
  */
 export type NormalizedFlexList<Item> = readonly Item[];
 
@@ -102,7 +101,6 @@ export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Re
 	: Item;
 
 /**
- * @internal
  */
 export type ExtractListItemType<List extends FlexList> = List extends FlexList<infer Item>
 	? Item
@@ -128,7 +126,6 @@ export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[numb
 
 /**
  * Normalize FlexList type to a non-lazy array.
- * @internal
  */
 export type ConstantFlexListToNonLazyArray<List extends FlexList> = List extends readonly [
 	infer Head,

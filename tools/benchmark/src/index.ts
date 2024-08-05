@@ -55,6 +55,7 @@ export {
 	BenchmarkError,
 	BenchmarkResult,
 	Stats,
+	CustomData,
 	isResultError,
 } from "./ResultTypes";
 export { Timer } from "./timer";

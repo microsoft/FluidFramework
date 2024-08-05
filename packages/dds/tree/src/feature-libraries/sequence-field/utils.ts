@@ -335,16 +335,13 @@ export function normalizeCellRename(
 			};
 		}
 	} else {
-		// TODO: revisit if we still need the attach information for new inserts.
-		if (!isNewAttachEffect(attach, cellId)) {
-			// Normalization: when the attach is a revive, we rely on the implicit reviving semantics of the
-			// detach instead of using an explicit revive effect in an AttachAndDetach
-			return {
-				...detach,
-				count,
-				cellId,
-			};
-		}
+		// Normalization: when the attach is an insert/revive, we rely on the implicit reviving semantics of the
+		// detach instead of using an explicit revive effect in an AttachAndDetach
+		return {
+			...detach,
+			count,
+			cellId,
+		};
 	}
 	return {
 		type: "AttachAndDetach",

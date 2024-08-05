@@ -158,7 +158,7 @@ declare namespace InternalTypes {
         TreeArrayNodeBase,
         ScopedSchemaName,
         DefaultProvider,
-        typeNameSymbol_2 as typeNameSymbol,
+        typeNameSymbol,
         InsertableObjectFromSchemaRecord,
         ObjectFromSchemaRecord,
         FieldHasDefaultUnsafe,
@@ -198,11 +198,11 @@ export interface ITree extends IFluidLoadable {
 // @public
 export interface ITreeConfigurationOptions {
     enableSchemaValidation?: boolean;
+    readonly preventAmbiguity?: boolean;
 }
 
 // @public
-export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-    readonly enableSchemaValidation?: boolean;
+export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeConfigurationOptions {
     readonly schema: TSchema;
 }
 
@@ -311,10 +311,6 @@ export interface ObjectNodeJsonSchema extends NodeJsonSchemaBase<"object", "obje
 
 // @public
 export type Off = () => void;
-
-export { Range_2 as Range }
-
-export { Required_2 as Required }
 
 // @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
@@ -491,7 +487,7 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>> e
 export abstract class TreeNode implements WithType {
     static [Symbol.hasInstance](value: unknown): value is TreeNode;
     static [Symbol.hasInstance]<TSchema extends abstract new (...args: any[]) => TreeNode>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
-    abstract get [typeNameSymbol_2](): string;
+    abstract get [typeNameSymbol](): string;
     protected constructor();
 }
 
@@ -552,7 +548,7 @@ export enum TreeStatus {
 }
 
 // @public @sealed
-export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable_2 {
+export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
     readonly compatibility: SchemaCompatibilityStatus;
     readonly events: Listenable<TreeViewEvents>;
     initialize(content: InsertableTreeFieldFromImplicitField<TSchema>): void;
@@ -565,6 +561,7 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> implements Required<ITreeViewConfiguration<TSchema>> {
     constructor(props: ITreeViewConfiguration<TSchema>);
     readonly enableSchemaValidation: boolean;
+    readonly preventAmbiguity: boolean;
     readonly schema: TSchema;
     // (undocumented)
     protected _typeCheck: MakeNominal;
@@ -578,7 +575,7 @@ export interface TreeViewEvents {
 }
 
 // @public
-const typeNameSymbol_2: unique symbol;
+const typeNameSymbol: unique symbol;
 
 // @public
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
@@ -599,7 +596,7 @@ export type ValidateRecursiveSchema<T extends TreeNodeSchemaClass<string, NodeKi
 
 // @public @sealed
 export interface WithType<TName extends string = string> {
-    get [typeNameSymbol_2](): TName;
+    get [typeNameSymbol](): TName;
 }
 
 // (No @packageDocumentation comment for this package)
