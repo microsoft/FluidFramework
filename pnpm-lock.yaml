@@ -8034,8 +8034,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: ^0.50.0
-        version: 0.50.0
+        specifier: ^0.47.0
+        version: 0.47.0
       '@fluid-tools/build-cli':
         specifier: ^0.42.0
         version: 0.42.0(@types/node@18.19.1)(webpack-cli@4.10.0)
@@ -21050,8 +21050,8 @@ packages:
       - supports-color
     dev: true
 
-  /@fluid-tools/benchmark@0.48.0:
-    resolution: {integrity: sha512-4eCnt4rQg+08zWGmAq1kjO0uWwDjU3aCW8Uz8ufLxASOZJ5T35RKX7REcuxNOzFVanfh4CKVV/E6a7grPDO3Lw==}
+  /@fluid-tools/benchmark@0.50.0:
+    resolution: {integrity: sha512-UGvRHYYGp0aRI90oDA8CFT2d8SdJMZMrDqQAJ9Qbw6VSGR3L9ii9xc43NWU33+qGrt3p1NpAzBppX1sVT55rag==}
     dependencies:
       chai: 4.3.10
       chalk: 4.1.2
@@ -24794,7 +24794,7 @@ packages:
   /@pm2/pm2-version-check@1.0.4:
     resolution: {integrity: sha512-SXsM27SGH3yTWKc2fKR4SYNxsmnvuBQ9dd6QHtEWmiZ/VqaOYPAIlS8+vMcn27YLtAEBGvNRSh3TPNvtjZgfqA==}
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.6
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -33071,7 +33071,7 @@ packages:
       is-glob: 4.0.3
       minimatch: 3.1.2
       resolve: 1.22.8
-      semver: 7.6.0
+      semver: 7.6.3
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-typescript
