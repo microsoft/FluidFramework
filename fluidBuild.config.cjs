@@ -554,11 +554,11 @@ module.exports = {
 
 	releaseNotes: {
 		sections: {
-			feature: { heading: "✨ New Features" },
-			tree: { heading: "🌳 SharedTree DDS changes" },
-			fix: { heading: "🐛 Bug Fixes" },
-			deprecation: { heading: "⚠️ Deprecations" },
-			other: { heading: "Other Changes" },
+			"feature": { heading: "✨ New Features" },
+			"tree": { heading: "🌳 SharedTree DDS changes" },
+			"fix": { heading: "🐛 Bug Fixes" },
+			"deprecation": { heading: "⚠️ Deprecations" },
+			"other": { heading: "Other Changes" },
 		},
 	},
 };
