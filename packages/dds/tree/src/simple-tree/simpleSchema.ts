@@ -49,7 +49,7 @@ export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<"array"> {
 	 * The types allowed in the array.
 	 *
 	 * @remarks Refers to the types by identifier.
-	 * An {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
+	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
 	readonly allowedTypes: ReadonlySet<string>;
 }
@@ -62,7 +62,7 @@ export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<"map"> {
 	 * The types allowed as values in the map.
 	 *
 	 * @remarks Refers to the types by identifier.
-	 * An {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
+	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
 	readonly allowedTypes: ReadonlySet<string>;
 }
@@ -107,7 +107,7 @@ export interface SimpleFieldSchema {
 	 * The types allowed under the field.
 	 *
 	 * @remarks Refers to the types by identifier.
-	 * An {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
+	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
 	readonly allowedTypes: ReadonlySet<string>;
 }
