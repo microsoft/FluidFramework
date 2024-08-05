@@ -32,6 +32,8 @@ import {
 	createOdspUrl,
 	isOdspResolvedUrl,
 	SharingLinkHeader,
+	type OdspFluidDataStoreLocator,
+	storeLocatorInOdspUrl,
 } from "@fluidframework/odsp-driver/internal";
 import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
@@ -204,13 +206,19 @@ class OdspClient implements IOdspClient {
 		services: OdspContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
+
+		const locator: OdspFluidDataStoreLocator = {
+			siteUrl: this.connectionConfig.siteUrl,
+			driveId: this.connectionConfig.driveId,
+			itemId: request.itemId,
+			dataStorePath: "",
+		}
+		const url = new URL(baseUrl);
+		storeLocatorInOdspUrl(url, locator);
+		// return url.href;
+
 		const container = await loader.resolve({
-			url: createOdspUrl({
-				siteUrl: this.connectionConfig.siteUrl,
-				driveId: this.connectionConfig.driveId,
-				itemId: request.itemId,
-				dataStorePath: "",
-			}),
+			url: createOdspUrl(locator),
 			headers: {
 				[SharingLinkHeader.isSharingLinkToRedeem]: request.sharingLinkToRedeem !== undefined,
 			},
