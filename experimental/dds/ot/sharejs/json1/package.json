@@ -119,6 +119,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"apiLevel": "legacy"
 	}
 }

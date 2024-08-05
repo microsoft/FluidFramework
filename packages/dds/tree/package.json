@@ -194,16 +194,7 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"Interface_FieldSchemaUnsafe": {
-				"forwardCompat": false
-			},
-			"Interface_ITreeViewConfiguration": {
-				"forwardCompat": false
-			},
-			"TypeAlias_ImplicitFieldSchema": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {},
+		"apiLevel": "legacy"
 	}
 }
