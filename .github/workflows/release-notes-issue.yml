@@ -16,6 +16,7 @@ on:
       issueNumber:
         description: 'Issue number to update'
         default: ${{ vars.RELEASE_NOTES_ISSUE }}
+        type: string
         required: true
 
 permissions:
