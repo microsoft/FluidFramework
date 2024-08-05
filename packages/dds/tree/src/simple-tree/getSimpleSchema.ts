@@ -18,6 +18,48 @@ const simpleSchemaCacheSymbol = Symbol("simpleSchemaCache");
  *
  * @remarks Caches the result on the input schema for future calls.
  *
+ * @example
+ *
+ * A Shared Tree schema like the following:
+ *
+ * ```typescript
+ * class MyObject extends schemaFactory.object("MyObject", {
+ * 	foo: schemaFactory.number,
+ * 	bar: schemaFactory.optional(schemaFactory.string),
+ * });
+ * ```
+ *
+ * Will yield JSON Schema like the following:
+ *
+ * ```typescript
+ * {
+ * 	definitions: [
+ * 		["com.fluidframework.leaf.number", {
+ * 			kind: "leaf",
+ * 			type: "number",
+ * 		}],
+ * 		["com.fluidframework.leaf.string", {
+ * 			kind: "leaf",
+ * 			type: "string",
+ * 		}],
+ * 		["com.myapp.MyObject", {
+ * 			kind: "object",
+ * 			fields: {
+ * 				foo: {
+ * 					kind: "required",
+ * 					allowedTypes: ["com.fluidframework.leaf.number"]
+ * 				},
+ * 				bar: {
+ * 					kind: "optional",
+ * 					allowedTypes: ["com.fluidframework.leaf.string"]
+ * 				},
+ * 			},
+ * 		}],
+ * 	],
+ * 	allowedTypes: ["com.myapp.MyObject"],
+ * }
+ * ```
+ *
  * @privateRemarks In the future, we may wish to move this to a more discoverable API location.
  * For now, while still an experimental API, it is surfaced as a free function.
  */
