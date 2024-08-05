@@ -168,7 +168,7 @@ export type ChangesetEntry = Omit<Changeset, "metadata" | "mainPackage" | "chang
 };
 
 /**
- * Compares a changeset by the highlight property of additional metadata if present, then by commit date.
+ * Compares two changesets by the highlight property of additional metadata if present, then by commit date.
  */
 function compareChangesets<T extends Pick<Changeset, "commit" | "additionalMetadata">>(
 	a: T,
