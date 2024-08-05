@@ -198,7 +198,7 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const url = await container1.getAbsoluteUrl("");
 		assert(url !== undefined);
-		const loader2 = provider.makeTestLoader(getTestConfig());
+		const loader2 = provider.makeTestLoader(getTestConfig(true));
 		const container2 = await loader2.resolve({ url });
 
 		const sharedString2 = await sharedStringFromContainer(container2);

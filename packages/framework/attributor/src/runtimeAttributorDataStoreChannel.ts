@@ -321,7 +321,7 @@ export class RuntimeAttributorDataStoreChannel
 
 				assert(
 					this.visibilityState === VisibilityState.LocallyVisible,
-					0x2d1 /* "Data store should be locally visible before it can become globally visible." */,
+					"Data store should be locally visible before it can become globally visible.",
 				);
 
 				// Mark the data store globally visible and make its child channels visible as well.
