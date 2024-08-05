@@ -40,7 +40,7 @@ function packageWithTypeValidation(enabled = true): PackageJson {
 			"test-package-previous": "4.0.0",
 		},
 		typeValidation: {
-			apiLevelsToOutput: ["legacy"],
+			apiLevel: ["legacy"],
 			broken: {
 				"broken-api": {
 					backCompat: false,

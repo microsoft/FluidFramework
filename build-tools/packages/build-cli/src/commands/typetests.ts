@@ -112,7 +112,7 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 				json.typeValidation = {
 					disabled: json.typeValidation?.disabled === true ? true : undefined,
 					broken: json.typeValidation?.broken ?? {},
-					apiLevelsToOutput: json.typeValidation?.apiLevelsToOutput ?? ["public"],
+					apiLevel: json.typeValidation?.apiLevel ?? ["public"],
 				};
 			}
 		});

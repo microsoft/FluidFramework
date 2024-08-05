@@ -277,7 +277,10 @@ export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
 export type ApiLevel = "public" | "beta" | "alpha" | "internal" | "legacy";
 
 export interface ITypeValidationConfig {
-	apiLevelsToOutput: ApiLevel[];
+/**
+ *
+ */
+	apiLevel: ApiLevel;
 
 	/**
 	 * An object containing types that are known to be broken.
@@ -291,7 +294,7 @@ export interface ITypeValidationConfig {
 }
 
 export const defaultTypeValidationConfig: ITypeValidationConfig = {
-	apiLevelsToOutput: ["legacy"],
+	apiLevel: "legacy",
 	broken: {},
 	disabled: undefined,
 };

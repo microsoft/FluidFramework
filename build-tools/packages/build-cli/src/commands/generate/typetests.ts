@@ -46,7 +46,8 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 
 	static readonly flags = {
 		level: Flags.custom<ApiLevel>({
-			description: "What API level to generate tests for.",
+			description:
+				"What API level to generate tests for. If this flag is provided it will override the typeValidation.apiLevel setting in the package's package.json.",
 			default: ApiLevel.legacy,
 			options: knownApiLevels,
 		})(),
@@ -70,11 +71,11 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		const { level: levelFlag, outDir, outFile } = this.flags;
-		const level = pkg.packageJson.typeValidation?.apiLevelsToOutput?.[0] ?? levelFlag;
+		const level = pkg.packageJson.typeValidation?.apiLevel?.[0] ?? levelFlag;
 		const fallbackLevel = this.flags.publicFallback ? ApiLevel.public : undefined;
 
 		this.verbose(
-			`Generatingtype tests for "${level}" ApiLevel with "${fallbackLevel}" as a fallback.`,
+			`Generating type tests for "${level}" ApiLevel with "${fallbackLevel}" as a fallback.`,
 		);
 
 		// Do not check that file exists before opening:
