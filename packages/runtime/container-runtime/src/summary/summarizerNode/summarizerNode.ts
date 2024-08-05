@@ -226,12 +226,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 			telemetryContext,
 			incrementalSummaryContext,
 		);
-		// this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
-		// if (result.pathPartsForChildren !== undefined) {
-		// 	this.wipLocalPaths.additionalPath = EscapedPath.createAndConcat(
-		// 		result.pathPartsForChildren,
-		// 	);
-		//}
+
 		return { summary: result.summary, stats: result.stats };
 	}
 
