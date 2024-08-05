@@ -24418,7 +24418,7 @@ packages:
     dependencies:
       '@oclif/core': 4.0.17
       ansis: 3.3.2
-      debug: 4.3.6
+      debug: 4.3.5(supports-color@8.1.1)
       ejs: 3.1.10
     transitivePeerDependencies:
       - supports-color
@@ -33071,7 +33071,7 @@ packages:
       is-glob: 4.0.3
       minimatch: 3.1.2
       resolve: 1.22.8
-      semver: 7.6.3
+      semver: 7.6.0
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-typescript
