@@ -406,8 +406,6 @@ function createChangesetContent(
 		lines.push(frontMatterSeparator);
 	}
 
-	// Add an extra newline so that the front matter sections are separated from the content
-	// lines.push("\n");
 	const frontMatter = lines.join("\n");
 	const changesetContents = [frontMatter, body].join("\n");
 	return changesetContents;
