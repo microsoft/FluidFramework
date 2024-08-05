@@ -335,7 +335,7 @@ export class RuntimeAttributorDataStoreChannel
 			case AttachState.Attached: {
 				assert(
 					this.visibilityState === VisibilityState.GloballyVisible,
-					0x2d2 /* "Data store should be globally visible when its attached." */,
+					"Data store should be globally visible when its attached.",
 				);
 				this._attachState = AttachState.Attached;
 				this.emit("attached");
