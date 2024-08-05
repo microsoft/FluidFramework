@@ -33,6 +33,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	EscapedPath,
 	ICreateChildDetails,
 	IRefreshSummaryResult,
 	IStartSummaryResult,
@@ -66,10 +67,11 @@ export class SummarizerNode implements IRootSummarizerNode {
 	}
 
 	/**
-	 * returns the handle of the last successful summary of this summarizerNode
+	 * returns the handle of the last successful summary of this summarizerNode in string format
+	 * (this getter is primarily only used in the test code)
 	 */
-	public get summaryHandleId() {
-		return this._summaryHandleId;
+	public get summaryHandleId(): string {
+		return this._summaryHandleId.toString();
 	}
 
 	protected readonly children = new Map<string, SummarizerNode>();
@@ -80,7 +82,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * True if the current node was summarized during the current summary process
 	 * This flag is used to identify scenarios where a node may not have been summarized during the summary
 	 * because of application code creating data structures for data stores which were already summarized.
-	*/
+	 */
 	private wipSummary: boolean = false;
 	private wipSkipRecursion = false;
 
@@ -94,7 +96,8 @@ export class SummarizerNode implements IRootSummarizerNode {
 		baseLogger: ITelemetryBaseLogger,
 		private readonly summarizeInternalFn: SummarizeInternalFn,
 		config: ISummarizerNodeConfig,
-		private readonly _summaryHandleId: string,
+		/** Encoded handle or path to the node */
+		private readonly _summaryHandleId: EscapedPath,
 		private _changeSequenceNumber: number,
 		/** Summary reference sequence number, i.e. last sequence number seen when last successful summary was created */
 		private _lastSummaryReferenceSequenceNumber?: number,
@@ -195,7 +198,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 				return {
 					summary: {
 						type: SummaryType.Handle,
-						handle: this._summaryHandleId,
+						handle: this._summaryHandleId.toString(),
 						handleType: SummaryType.Tree,
 					},
 					stats,
@@ -215,7 +218,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 							summarySequenceNumber: this.wipReferenceSequenceNumber,
 							latestSummarySequenceNumber: this._lastSummaryReferenceSequenceNumber,
 							// TODO: remove summaryPath.
-							summaryPath: this._summaryHandleId,
+							summaryPath: this._summaryHandleId.toString(),
 						}
 					: undefined;
 		}
@@ -576,7 +579,10 @@ export class SummarizerNode implements IRootSummarizerNode {
 		}
 
 		const childTelemetryNodeId = `${this.telemetryNodeId ?? ""}/${id}`;
-		const childSummaryHandleId = this._summaryHandleId.concat("/", channelsTreeName, "/", id);
+		const childSummaryHandleId = this._summaryHandleId.concatWith(
+			EscapedPath.create(id),
+			channelsTreeName,
+		);
 
 		return {
 			changeSequenceNumber,
@@ -656,7 +662,7 @@ export const createRootSummarizerNode = (
 		logger,
 		summarizeInternalFn,
 		config,
-		"" /* summaryHandleId */,
+		EscapedPath.create("") /* summaryHandleId */,
 		changeSequenceNumber,
 		referenceSequenceNumber,
 		undefined /* wipSummaryLogger */,

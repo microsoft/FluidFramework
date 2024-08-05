@@ -24,6 +24,7 @@ import { cloneGCData, unpackChildNodesGCDetails } from "../../gc/index.js";
 
 import { SummarizerNode } from "./summarizerNode.js";
 import {
+	EscapedPath,
 	ICreateChildDetails,
 	IStartSummaryResult,
 	ISummarizerNodeRootContract,
@@ -92,7 +93,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		logger: ITelemetryBaseLogger,
 		summarizeInternalFn: SummarizeInternalFn,
 		config: ISummarizerNodeConfigWithGC,
-		_summaryHandleId: string,
+		_summaryHandleId: EscapedPath,
 		changeSequenceNumber: number,
 		/** Summary reference sequence number, i.e. last sequence number seen when it was created */
 		_lastSummaryReferenceSequenceNumber?: number,
@@ -516,7 +517,7 @@ export const createRootSummarizerNodeWithGC = (
 		logger,
 		summarizeInternalFn,
 		config,
-		"" /* summaryHandleId */,
+		EscapedPath.create("") /* summaryHandleId */,
 		changeSequenceNumber,
 		referenceSequenceNumber,
 		undefined /* wipSummaryLogger */,

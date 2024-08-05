@@ -297,6 +297,7 @@ export interface ISummarizerNode {
     recordChange(op: ISequencedDocumentMessage): void;
     readonly referenceSequenceNumber: number;
     summarize(fullTree: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
+    // @deprecated (undocumented)
     updateBaseSummaryState(snapshot: ISnapshotTree): void;
 }
 

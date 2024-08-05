@@ -15,7 +15,7 @@ import {
 	ISummarizerNodeConfig,
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
-	channelsTreeName
+	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
 import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
@@ -319,7 +319,8 @@ describe("SummarizerNodeWithGC Tests", () => {
 		const nodeIds = {
 			rootId: "", // emptry string to emulate the current behaviour of the summarizerNode for root.
 			midId: "midId",
-			leafId: "leafId"};
+			leafId: "leafId",
+		};
 		let rootNode: IRootSummarizerNodeWithGC;
 		let midNode: ISummarizerNodeWithGC | undefined;
 		let leafNode: ISummarizerNodeWithGC | undefined;
@@ -354,11 +355,19 @@ describe("SummarizerNodeWithGC Tests", () => {
 		}
 
 		function createMid(createParam: CreateChildSummarizerNodeParam) {
-			midNode = rootNode.createChild(getSummarizeInternalFn(nodeIds.midId), nodeIds.midId, createParam);
+			midNode = rootNode.createChild(
+				getSummarizeInternalFn(nodeIds.midId),
+				nodeIds.midId,
+				createParam,
+			);
 		}
 
 		function createLeaf(createParam: CreateChildSummarizerNodeParam) {
-			leafNode = midNode?.createChild(getSummarizeInternalFn(nodeIds.leafId), nodeIds.leafId, createParam);
+			leafNode = midNode?.createChild(
+				getSummarizeInternalFn(nodeIds.leafId),
+				nodeIds.leafId,
+				createParam,
+			);
 		}
 
 		it("summary validation should fail if GC not run on root node", () => {
@@ -467,7 +476,11 @@ describe("SummarizerNodeWithGC Tests", () => {
 			assert(result.isSummaryNewer === true, "should be newer");
 
 			rootNode.startSummary(summaryRefSeq++, logger, latestSummaryRefSeqNum);
-			rootNode.updateUsedRoutes([`/`, `/${nodeIds.midId}`, `/${nodeIds.midId}/${nodeIds.leafId}`]);
+			rootNode.updateUsedRoutes([
+				`/`,
+				`/${nodeIds.midId}`,
+				`/${nodeIds.midId}/${nodeIds.leafId}`,
+			]);
 			midNode?.updateUsedRoutes([`/`, `/${nodeIds.leafId}`]);
 
 			await rootNode.summarize(false);

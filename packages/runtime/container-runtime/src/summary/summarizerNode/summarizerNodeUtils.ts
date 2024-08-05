@@ -69,15 +69,11 @@ export class EscapedPath {
 	public static create(path: string): EscapedPath {
 		return new EscapedPath(encodeURIComponent(path));
 	}
-	public static createAndConcat(pathParts: string[]): EscapedPath {
-		let ret = EscapedPath.create(pathParts[0] ?? "");
-		for (let i = 1; i < pathParts.length; i++) {
-			ret = ret.concat(EscapedPath.create(pathParts[i]));
-		}
-		return ret;
-	}
 	public toString(): string {
 		return this.path;
+	}
+	public concatWith(path: EscapedPath, concatWith: string): EscapedPath {
+		return new EscapedPath(`${this.path}/${encodeURIComponent(concatWith)}/${path.path}`);
 	}
 	public concat(path: EscapedPath): EscapedPath {
 		return new EscapedPath(`${this.path}/${path.path}`);
@@ -97,7 +93,7 @@ export interface ICreateChildDetails {
 	/** A unique id of this child to be logged when sending telemetry. */
 	telemetryNodeId: string;
 	/** Summary handle for child node */
-	summaryHandleId: string;
+	summaryHandleId: EscapedPath;
 	/** last reference sequence number seen when last successful summary was created */
 	lastSummaryreferenceSequenceNumber: number | undefined;
 }
