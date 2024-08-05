@@ -110,9 +110,12 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 
 			if (this.flags.normalize) {
 				json.typeValidation = {
-					disabled: json.typeValidation?.disabled === true ? true : undefined,
-					broken: json.typeValidation?.broken ?? {},
-					apiLevel: json.typeValidation?.apiLevel ?? ["public"],
+					disabled:
+						json.typeValidation?.disabled === true
+							? true
+							: defaultTypeValidationConfig.disabled,
+					broken: json.typeValidation?.broken ?? defaultTypeValidationConfig.broken,
+					apiLevel: json.typeValidation?.apiLevel ?? defaultTypeValidationConfig.apiLevel,
 				};
 			}
 		});

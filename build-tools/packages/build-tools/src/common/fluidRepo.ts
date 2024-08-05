@@ -277,9 +277,9 @@ export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
 export type ApiLevel = "public" | "beta" | "alpha" | "internal" | "legacy";
 
 export interface ITypeValidationConfig {
-/**
- *
- */
+	/**
+	 *
+	 */
 	apiLevel: ApiLevel;
 
 	/**
