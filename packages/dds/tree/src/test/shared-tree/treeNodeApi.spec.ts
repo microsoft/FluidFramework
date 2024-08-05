@@ -47,7 +47,7 @@ describe("treeApi", () => {
 		/**
 		 * Runs a set of transaction tests, either passing the TreeView or the root node to the `runTransaction` function depending on the configuration.
 		 * @remarks This allows for code coverage of both of those variants of the `runTransaction` API without duplicating these tests entirely.
-		 * */
+		 */
 		function runCommonTransactionTests(inputType: "view" | "root"): void {
 			function run<TResult>(
 				view: TreeView<typeof TestObject>,

@@ -18,7 +18,6 @@ export interface DetachedFieldSummaryData {
  * ID used to create a detached field key for a removed subtree.
  *
  * TODO: Move to Forest once forests can support multiple roots.
- * @internal
  */
 export type ForestRootId = Brand<number, "tree.ForestRootId">;
 
