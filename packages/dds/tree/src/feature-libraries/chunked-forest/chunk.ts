@@ -75,7 +75,7 @@ interface WithChunk {
 	 *
 	 * As more optimizations get implemented, this API may need to change to better address these issues.
 	 */
-	readonly [cursorChunk]?: TreeChunk;
+	readonly [cursorChunk]?: TreeChunk | undefined;
 }
 
 /**
