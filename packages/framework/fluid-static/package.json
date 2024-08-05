@@ -139,6 +139,11 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedTypeAlias_ContainerAttachProps": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

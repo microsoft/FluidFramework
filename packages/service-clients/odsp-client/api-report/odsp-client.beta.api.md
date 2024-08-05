@@ -5,54 +5,20 @@
 ```ts
 
 // @beta
-export type IOdspAudience = IServiceAudience<OdspMember>;
-
-// @beta
 export interface IOdspTokenProvider {
     fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
     fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
 }
 
-// @beta @sealed
-export class OdspClient {
-    constructor(properties: OdspClientProps);
-    // (undocumented)
-    createContainer<T extends ContainerSchema>(containerSchema: T): Promise<{
-        container: IFluidContainer<T>;
-        services: OdspContainerServices;
-    }>;
-    // (undocumented)
-    getContainer<T extends ContainerSchema>(id: string, containerSchema: T): Promise<{
-        container: IFluidContainer<T>;
-        services: OdspContainerServices;
-    }>;
-}
-
-// @beta (undocumented)
-export interface OdspClientProps {
-    readonly configProvider?: IConfigProviderBase;
-    readonly connection: OdspConnectionConfig;
-    readonly logger?: ITelemetryBaseLogger;
-}
-
 // @beta
-export interface OdspConnectionConfig {
-    driveId: string;
-    filePath: string;
-    siteUrl: string;
+export interface OdspConnectionConfig extends OdspSiteIdentification {
     tokenProvider: IOdspTokenProvider;
 }
 
 // @beta
-export interface OdspContainerServices {
-    audience: IOdspAudience;
-}
-
-// @beta
-export interface OdspMember extends IMember {
-    email: string;
-    id: string;
-    name: string;
+export interface OdspSiteIdentification {
+    driveId: string;
+    siteUrl: string;
 }
 
 // @beta

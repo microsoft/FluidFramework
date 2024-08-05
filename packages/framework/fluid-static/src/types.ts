@@ -58,12 +58,6 @@ export interface DataObjectClass<T extends IFluidLoadable> {
 }
 
 /**
- * Represents properties that can be attached to a container.
- * @public
- */
-export type ContainerAttachProps<T = unknown> = T;
-
-/**
  * Declares the Fluid objects that will be available in the {@link IFluidContainer | Container}.
  *
  * @remarks

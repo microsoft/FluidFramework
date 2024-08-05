@@ -112,7 +112,7 @@ export class TinyliciousClient {
 			return container.resolvedUrl.id;
 		};
 
-		const fluidContainer = createFluidContainer<TContainerSchema>({
+		const fluidContainer = createFluidContainer<TContainerSchema, () => Promise<string>>({
 			container,
 			rootDataObject,
 		});
@@ -140,7 +140,7 @@ export class TinyliciousClient {
 		const loader = this.createLoader(containerSchema, compatibilityMode);
 		const container = await loader.resolve({ url: id });
 		const rootDataObject = await this.getContainerEntryPoint(container);
-		const fluidContainer = createFluidContainer<TContainerSchema>({
+		const fluidContainer = createFluidContainer<TContainerSchema, () => Promise<string>>({
 			container,
 			rootDataObject,
 		});

@@ -21,7 +21,6 @@ export type {
 export { AttachState } from "@fluidframework/container-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";
 export type {
-	ContainerAttachProps,
 	ContainerSchema,
 	IConnection,
 	IFluidContainer,

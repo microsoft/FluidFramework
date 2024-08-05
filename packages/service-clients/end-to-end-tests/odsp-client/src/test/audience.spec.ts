@@ -10,7 +10,7 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
-import { OdspClient } from "@fluidframework/odsp-client/internal";
+import { type IOdspClient } from "@fluidframework/odsp-client/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { createOdspClient, getCredentials } from "./OdspClientFactory.js";
@@ -22,7 +22,7 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 
 describe("Fluid audience", () => {
 	const connectTimeoutMs = 10_000;
-	let client: OdspClient;
+	let client: IOdspClient;
 	let schema: ContainerSchema;
 	const [client1Creds, client2Creds] = getCredentials();
 
@@ -46,7 +46,8 @@ describe("Fluid audience", () => {
 	 */
 	it("can find original member", async () => {
 		const { container, services } = await client.createContainer(schema);
-		const itemId = await container.attach();
+		const res = await container.attach();
+		const itemId = res.itemId;
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -80,7 +81,8 @@ describe("Fluid audience", () => {
 	 */
 	it.skip("can find partner member", async () => {
 		const { container, services } = await client.createContainer(schema);
-		const itemId = await container.attach();
+		const res = await container.attach();
+		const itemId = res.itemId;
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -108,7 +110,7 @@ describe("Fluid audience", () => {
 				"Fluid.Container.ForceWriteConnection": true,
 			}),
 		);
-		const { services: servicesGet } = await client2.getContainer(itemId, schema);
+		const { services: servicesGet } = await client2.getContainer({ itemId }, schema);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
 		const partner = await waitForMember(servicesGet.audience, client2Creds.email);
@@ -134,7 +136,8 @@ describe("Fluid audience", () => {
 	 */
 	it.skip("can observe member leaving", async () => {
 		const { container } = await client.createContainer(schema);
-		const itemId = await container.attach();
+		const res = await container.attach();
+		const itemId = res.itemId;
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -151,7 +154,7 @@ describe("Fluid audience", () => {
 				"Fluid.Container.ForceWriteConnection": true,
 			}),
 		);
-		const { services: servicesGet } = await client2.getContainer(itemId, schema);
+		const { services: servicesGet } = await client2.getContainer({ itemId }, schema);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
 		const partner = await waitForMember(servicesGet.audience, client2Creds.email);

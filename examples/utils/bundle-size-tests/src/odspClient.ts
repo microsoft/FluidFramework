@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { OdspClient } from "@fluidframework/odsp-client/internal";
+import { createOdspClient } from "@fluidframework/odsp-client/internal";
 
 export function apisToBundle() {
-	new OdspClient({} as any);
+	createOdspClient({} as any);
 }

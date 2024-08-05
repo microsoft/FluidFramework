@@ -7,7 +7,7 @@
 // @alpha (undocumented)
 export type CacheContentType = "snapshot" | "ops" | "snapshotWithLoadingGroupId";
 
-// @alpha (undocumented)
+// @alpha
 export interface HostStoragePolicy {
     avoidPrefetchSnapshotCache?: boolean;
     cacheCreateNewSummary?: boolean;

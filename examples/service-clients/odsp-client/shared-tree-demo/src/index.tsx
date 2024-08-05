@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidContainer, ITree } from "fluid-framework";
+// eslint-disable-next-line import/no-internal-modules
+import { IOdspFluidContainer } from "@fluidframework/odsp-client/internal";
+import { ITree } from "fluid-framework";
 import React from "react";
 import ReactDOM from "react-dom";
 
@@ -23,7 +25,7 @@ async function start(): Promise<void> {
 	// a new container.
 	let itemId: string = location.hash.slice(1);
 	const createNew = itemId.length === 0;
-	let container: IFluidContainer;
+	let container: IOdspFluidContainer;
 
 	if (createNew) {
 		({ container } = await createFluidData(containerSchema));
@@ -95,7 +97,8 @@ async function start(): Promise<void> {
 
 		// If the app is in a `createNew` state - no itemId, and the container is detached, we attach the container.
 		// This uploads the container to the service and connects to the collaboration session.
-		itemId = await container.attach({ filePath: "foo/bar", fileName: "shared-tree-demo" });
+		const res = await container.attach({ filePath: "foo/bar", fileName: "shared-tree-demo" });
+		itemId = res.itemId;
 
 		// The newly attached container is given a unique ID that can be used to access the container in another session
 		// eslint-disable-next-line require-atomic-updates

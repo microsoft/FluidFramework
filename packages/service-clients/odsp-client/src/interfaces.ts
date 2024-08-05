@@ -6,8 +6,15 @@
 import type {
 	IConfigProviderBase,
 	ITelemetryBaseLogger,
+	IRequest,
 } from "@fluidframework/core-interfaces";
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
+import type {
+	ISharingLinkKind,
+	ShareLinkInfoType,
+	IPersistedCache,
+	HostStoragePolicy,
+} from "@fluidframework/odsp-driver-definitions/internal";
 
 import type { IOdspTokenProvider } from "./token.js";
 
@@ -17,12 +24,7 @@ import type { IOdspTokenProvider } from "./token.js";
  * required for ODSP.
  * @beta
  */
-export interface OdspConnectionConfig {
-	/**
-	 * Instance that provides AAD endpoint tokens for Push and SharePoint
-	 */
-	tokenProvider: IOdspTokenProvider;
-
+export interface OdspSiteIdentification {
 	/**
 	 * Site url representing ODSP resource location. It points to the specific SharePoint site where you can store and access the containers you create.
 	 */
@@ -33,8 +35,22 @@ export interface OdspConnectionConfig {
 	 */
 	driveId: string;
 }
+
 /**
+ * Defines the necessary properties that will be applied to all containers
+ * created by an OdspClient instance. This includes callbacks for the authentication tokens
+ * required for ODSP.
  * @beta
+ */
+export interface OdspConnectionConfig extends OdspSiteIdentification {
+	/**
+	 * Instance that provides AAD endpoint tokens for Push and SharePoint
+	 */
+	tokenProvider: IOdspTokenProvider;
+}
+
+/**
+ * @alpha
  */
 export interface OdspClientProps {
 	/**
@@ -51,22 +67,84 @@ export interface OdspClientProps {
 	 * Base interface for providing configurations to control experimental features. If unsure, leave this undefined.
 	 */
 	readonly configProvider?: IConfigProviderBase;
+
+	/**
+	 * Optional. This interface can be implemented by the host to provide durable caching across sessions.
+	 */
+	readonly persistedCache?: IPersistedCache;
+
+	/**
+	 * Optional. Defines various policies controlling behavior of ODSP driver
+	 */
+	readonly hostPolicy?: HostStoragePolicy;
 }
 
 /**
- * @legacy
+ * Argument type of IFluidContainer.attach() for containers created by IOdspClient
+ * Specifies location / name of the file.
+ * 1. If undefined, file with random name (uuid) will be created.
+ * 2. Specifies file path / file name to be created. If file with such name exists, file with different name is created -
+ * Sharepoint will add (2), (3), ... to file name to make it unique and avoid conflict on creation
+ * 3. (Microsoft internal only) files supporting FF format on alternate parition could point to existing file.
  * @alpha
  */
-export interface OdspContainerAttachProps {
+export type OdspContainerAttachArgType =
+	| {
+			/**
+			 * The file path where Fluid containers are created. If undefined, the file is created at the root.
+			 */
+			filePath?: string | undefined;
+
+			/**
+			 * The file name of the Fluid file. If undefined, the file is named with a GUID.
+			 */
+			fileName?: string | undefined;
+
+			/**
+			 * If provided, will instrcuct Sharepoint to create a sharing link as part of file creation flow.
+			 */
+			createShareLinkType?: ISharingLinkKind;
+	  }
+	| {
+			itemId: string;
+	  };
+
+/**
+ * An object type returned by IOdspFluidContainer.attach() call. *
+ * @alpha
+ */
+export interface OdspContainerAttachReturnType {
 	/**
-	 * The file path where Fluid containers are created. If undefined, the file is created at the root.
+	 * An ID of the document created. This ID could be passed to future IOdspClient.getContainer() call
 	 */
-	filePath: string | undefined;
+	itemId: string;
+	/**
+	 * If OdspContainerAttachArgType.createShareLinkType was provided at the time of IOdspFluidContainer.attach() call,
+	 * this value will contain sharing link to just created file.
+	 */
+	shareLinkInfo?: ShareLinkInfoType;
+}
+
+/**
+ * IFluidContainer.attach() function signature for IOdspClient
+ * @alpha
+ */
+export type OdspContainerAttachType = (
+	param?: OdspContainerAttachArgType,
+) => Promise<OdspContainerAttachReturnType>;
+
+/**
+ * Type of argument to IOdspClient.getContainer()
+ * @alpha
+ */
+export interface OdspGetContainerArgType {
+	itemId: string;
 
 	/**
-	 * The file name of the Fluid file. If undefined, the file is named with a GUID.
+	 * This is used to save the network calls while doing trees/latest call as if the client does not have
+	 * permission then this link can be redeemed for the permissions in the same network call.
 	 */
-	fileName: string | undefined;
+	sharingLinkToRedeem?: string;
 }
 
 /**
@@ -75,7 +153,7 @@ export interface OdspContainerAttachProps {
  * FluidContainer is persisted in the backend and consumed by users. Any functionality regarding
  * how the data is handled within the FluidContainer itself, i.e. which data objects or DDSes to
  * use, will not be included here but rather on the FluidContainer class itself.
- * @beta
+ * @alpha
  */
 export interface OdspContainerServices {
 	/**
@@ -88,7 +166,7 @@ export interface OdspContainerServices {
  * Since ODSP provides user names and email for all of its members, we extend the
  * {@link @fluidframework/fluid-static#IMember} interface to include this service-specific value.
  * It will be returned for all audience members connected.
- * @beta
+ * @alpha
  */
 export interface OdspMember extends IMember {
 	/**
@@ -107,7 +185,7 @@ export interface OdspMember extends IMember {
 
 /**
  * Audience object for ODSP containers
- * @beta
+ * @alpha
  */
 export type IOdspAudience = IServiceAudience<OdspMember>;
 

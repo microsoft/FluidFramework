@@ -9,14 +9,14 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
-import { OdspClient } from "@fluidframework/odsp-client/internal";
+import { type IOdspClient } from "@fluidframework/odsp-client/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { createOdspClient, getCredentials } from "./OdspClientFactory.js";
 
 describe("Container create scenarios", () => {
 	const connectTimeoutMs = 10_000;
-	let client: OdspClient;
+	let client: IOdspClient;
 	let schema: ContainerSchema;
 
 	const [clientCreds] = getCredentials();
@@ -50,7 +50,8 @@ describe("Container create scenarios", () => {
 		);
 
 		// Make sure we can attach.
-		const itemId = await container.attach();
+		const res = await container.attach();
+		const itemId = res.itemId;
 		assert.strictEqual(typeof itemId, "string", "Attach did not return a string ID");
 	});
 
@@ -62,7 +63,8 @@ describe("Container create scenarios", () => {
 	 */
 	it("can attach a container", async () => {
 		const { container } = await client.createContainer(schema);
-		const itemId = await container.attach();
+		const res = await container.attach();
+		const itemId = res.itemId;
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -87,7 +89,8 @@ describe("Container create scenarios", () => {
 	 */
 	it("cannot attach a container twice", async () => {
 		const { container } = await client.createContainer(schema);
-		const itemId = await container.attach();
+		const res = await container.attach();
+		const itemId = res.itemId;
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -113,7 +116,8 @@ describe("Container create scenarios", () => {
 	 */
 	it("can retrieve existing ODSP container successfully", async () => {
 		const { container: newContainer } = await client.createContainer(schema);
-		const itemId = await newContainer.attach();
+		const res = await newContainer.attach();
+		const itemId = res.itemId;
 
 		if (newContainer.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
@@ -122,7 +126,7 @@ describe("Container create scenarios", () => {
 			});
 		}
 
-		const resources = client.getContainer(itemId, schema);
+		const resources = client.getContainer({ itemId }, schema);
 		await assert.doesNotReject(
 			resources,
 			() => true,
@@ -136,7 +140,7 @@ describe("Container create scenarios", () => {
 	 * Expected behavior: an error should be thrown when trying to get a non-existent container.
 	 */
 	it("cannot load improperly created container (cannot load a non-existent container)", async () => {
-		const containerAndServicesP = client.getContainer("containerConfig", schema);
+		const containerAndServicesP = client.getContainer({ itemId: "containerConfig" }, schema);
 
 		const errorFn = (error: Error): boolean => {
 			assert.notStrictEqual(error.message, undefined, "Odsp Client error is undefined");

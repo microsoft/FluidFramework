@@ -18,11 +18,7 @@ import {
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import type {
-	ContainerAttachProps,
-	ContainerSchema,
-	IFluidContainer,
-} from "@fluidframework/fluid-static";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import type { IRootDataObject } from "@fluidframework/fluid-static/internal";
 import {
 	createDOProviderContainerRuntimeFactory,
@@ -35,17 +31,21 @@ import {
 	createOdspCreateContainerRequest,
 	createOdspUrl,
 	isOdspResolvedUrl,
+	SharingLinkHeader,
 } from "@fluidframework/odsp-driver/internal";
 import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import type { TokenResponse } from "./interfaces.js";
 import type {
+	TokenResponse,
 	OdspClientProps,
-	OdspConnectionConfig,
-	OdspContainerAttachProps,
+	OdspSiteIdentification,
+	OdspContainerAttachArgType,
+	OdspContainerAttachType,
 	OdspContainerServices,
+	OdspContainerAttachReturnType,
+	OdspGetContainerArgType,
 } from "./interfaces.js";
 import { createOdspAudienceMember } from "./odspAudience.js";
 import { type IOdspTokenProvider } from "./token.js";
@@ -54,22 +54,14 @@ async function getStorageToken(
 	options: OdspResourceTokenFetchOptions,
 	tokenProvider: IOdspTokenProvider,
 ): Promise<TokenResponse> {
-	const tokenResponse: TokenResponse = await tokenProvider.fetchStorageToken(
-		options.siteUrl,
-		options.refresh,
-	);
-	return tokenResponse;
+	return tokenProvider.fetchStorageToken(options.siteUrl, options.refresh);
 }
 
 async function getWebsocketToken(
 	options: OdspResourceTokenFetchOptions,
 	tokenProvider: IOdspTokenProvider,
 ): Promise<TokenResponse> {
-	const tokenResponse: TokenResponse = await tokenProvider.fetchWebsocketToken(
-		options.siteUrl,
-		options.refresh,
-	);
-	return tokenResponse;
+	return tokenProvider.fetchWebsocketToken(options.siteUrl, options.refresh);
 }
 
 /**
@@ -94,93 +86,94 @@ function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigPr
  * @param properties - properties
  * @returns OdspClient
  */
-export function createOdspClientCore(
+function createOdspClientCore(
 	driverFactory: IDocumentServiceFactory,
 	urlResolver: OdspDriverUrlResolver,
+	connectionConfig: OdspSiteIdentification,
 	logger?: ITelemetryBaseLogger,
 	configProvider?: IConfigProviderBase,
-): OdspClient {
-	return new OdspClient(driverFactory, urlResolver, logger, configProvider);
+): IOdspClient {
+	return new OdspClient(driverFactory, urlResolver, connectionConfig, logger, configProvider);
 }
 
 /**
  * Creates OdspClient
  * @param properties - properties
  * @returns OdspClient
+ * @alpha
  */
-export function createOdspClient(
-	properties: OdspClientProps,
-): OdspClient {
+export function createOdspClient(properties: OdspClientProps): IOdspClient {
 	return createOdspClientCore(
 		new OdspDocumentServiceFactory(
 			async (options) => getStorageToken(options, properties.connection.tokenProvider),
 			async (options) => getWebsocketToken(options, properties.connection.tokenProvider),
+			properties.persistedCache,
+			properties.hostPolicy,
 		),
 		new OdspDriverUrlResolver(),
+		properties.connection,
 		properties.logger,
 		properties.configProvider,
 	);
 }
 
 /**
- * OdspClient provides the ability to have a Fluid object backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
- * @sealed
- * @beta
+ * Fluid Container type
+ * @alpha
  */
-export class OdspClient extends OdspClientCore {
-	public constructor(
-		documentServiceFactory: IDocumentServiceFactory,
-		urlResolver: OdspDriverUrlResolver,
-		logger?: ITelemetryBaseLogger,
-		configProvider?: IConfigProviderBase,
-	) {
-		super(
-			documentServiceFactory,
-			urlResolver,
-			logger,
-			configProvider,
-		);
-	}
+export type IOdspFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> =
+	IFluidContainer<TContainerSchema, OdspContainerAttachType>;
 
-	public override async getContainer<T extends ContainerSchema>(
-		id: string,
+/**
+ * IOdspClient provides the ability to manipulate Fluid containers backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
+ * @alpha
+ */
+export interface IOdspClient {
+	/**
+	 * Creates a new container in memory. Calling attach() on returned container will create container in storage.
+	 * @param containerSchema - schema of the created container
+	 */
+	createContainer<T extends ContainerSchema>(
 		containerSchema: T,
 	): Promise<{
-		container: IFluidContainer<T>;
+		container: IOdspFluidContainer<T>;
 		services: OdspContainerServices;
-	}> {
-		const url = createOdspUrl({
-			siteUrl: this.connectionConfig.siteUrl,
-			driveId: this.connectionConfig.driveId,
-			itemId: id,
-			dataStorePath: "",
-		});
-		return super.getContainer(url, containerSchema);
-	}
+	}>;
 
+	/**
+	 * Opens existing container. If container does not exist, the call will fail with an error with errorType = DriverErrorTypes.fileNotFoundOrAccessDeniedError.
+	 * @param request - identification of the container
+	 * @param containerSchema - schema of the container.
+	 */
+	getContainer<T extends ContainerSchema>(
+		request: OdspGetContainerArgType,
+		containerSchema: T,
+	): Promise<{
+		container: IOdspFluidContainer<T>;
+		services: OdspContainerServices;
+	}>;
 }
 
 /**
  * OdspClient provides the ability to have a Fluid object backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
- * @sealed
- * @beta
  */
-export class OdspClientCore {
-	private readonly connectionConfig: OdspConnectionConfig;
+class OdspClient implements IOdspClient {
+	private readonly configProvider: IConfigProviderBase;
 
 	public constructor(
 		private readonly documentServiceFactory: IDocumentServiceFactory,
 		private readonly urlResolver: OdspDriverUrlResolver,
+		protected readonly connectionConfig: OdspSiteIdentification,
 		private readonly logger?: ITelemetryBaseLogger,
-		private readonly configProvider?: IConfigProviderBase,
+		configProvider?: IConfigProviderBase,
 	) {
-		this.connectionConfig = properties.connection;
+		this.configProvider = wrapConfigProvider(configProvider);
 	}
 
 	public async createContainer<T extends ContainerSchema>(
 		containerSchema: T,
 	): Promise<{
-		container: IFluidContainer<T>;
+		container: IOdspFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
@@ -191,31 +184,44 @@ export class OdspClientCore {
 		});
 
 		const rootDataObject = await this.getContainerEntryPoint(container);
-		const fluidContainer = createFluidContainer({ container, rootDataObject });
+		const fluidContainer = createFluidContainer<T, OdspContainerAttachType>({
+			container,
+			rootDataObject,
+		}) as IOdspFluidContainer<T>;
 
-		this.addAttachCallback(container, fluidContainer);
+		OdspClient.addAttachCallback(container, fluidContainer, this.connectionConfig);
 
 		const services = await this.getContainerServices(container);
 
-		return { container: fluidContainer as IFluidContainer<T>, services };
+		return { container: fluidContainer, services };
 	}
 
 	public async getContainer<T extends ContainerSchema>(
-		url: string,
+		request: OdspGetContainerArgType,
 		containerSchema: T,
 	): Promise<{
-		container: IFluidContainer<T>;
+		container: IOdspFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
-		const container = await loader.resolve({ url });
+		const container = await loader.resolve({
+			url: createOdspUrl({
+				siteUrl: this.connectionConfig.siteUrl,
+				driveId: this.connectionConfig.driveId,
+				itemId: request.itemId,
+				dataStorePath: "",
+			}),
+			headers: {
+				[SharingLinkHeader.isSharingLinkToRedeem]: request.sharingLinkToRedeem !== undefined,
+			},
+		});
 
-		const fluidContainer = createFluidContainer({
+		const fluidContainer = createFluidContainer<T, OdspContainerAttachType>({
 			container,
 			rootDataObject: await this.getContainerEntryPoint(container),
 		});
 		const services = await this.getContainerServices(container);
-		return { container: fluidContainer as IFluidContainer<T>, services };
+		return { container: fluidContainer, services };
 	}
 
 	private createLoader(schema: ContainerSchema): Loader {
@@ -251,23 +257,34 @@ export class OdspClientCore {
 		});
 	}
 
-	private addAttachCallback<T extends ContainerSchema>(
+	private static addAttachCallback<T extends ContainerSchema>(
 		container: IContainer,
-		fluidContainer: IFluidContainer<T>,
+		fluidContainer: IOdspFluidContainer<T>,
+		connectionConfig: OdspSiteIdentification,
 	): void {
-
 		/**
 		 * See {@link FluidContainer.attach}
 		 */
 		fluidContainer.attach = async (
-			odspProps?: ContainerAttachProps<OdspContainerAttachProps>,
-		): Promise<string> => {
-			const createNewRequest: IRequest = createOdspCreateContainerRequest(
-				this.connectionConfig.siteUrl,
-				this.connectionConfig.driveId,
-				odspProps?.filePath ?? "",
-				odspProps?.fileName ?? uuid(),
-			);
+			odspProps?: OdspContainerAttachArgType,
+		): Promise<OdspContainerAttachReturnType> => {
+			const createNewRequest: IRequest =
+				odspProps !== undefined && "itemId" in odspProps
+					? {
+							url: createOdspUrl({
+								siteUrl: connectionConfig.siteUrl,
+								driveId: connectionConfig.driveId,
+								itemId: odspProps.itemId,
+								dataStorePath: "",
+							}),
+						}
+					: createOdspCreateContainerRequest(
+							connectionConfig.siteUrl,
+							connectionConfig.driveId,
+							odspProps?.filePath ?? "",
+							odspProps?.fileName ?? uuid(),
+							odspProps?.createShareLinkType,
+						);
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}
@@ -284,7 +301,7 @@ export class OdspClientCore {
 			 * a new `itemId` is created in the user's drive, which developers can use for various operations
 			 * like updating, renaming, moving the Fluid file, changing permissions, and more. `itemId` is used to load the container.
 			 */
-			return resolvedUrl.itemId;
+			return { itemId: resolvedUrl.itemId, shareLinkInfo: resolvedUrl.shareLinkInfo };
 		};
 	}
 

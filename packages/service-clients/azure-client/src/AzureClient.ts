@@ -174,7 +174,7 @@ export class AzureClient {
 		url.searchParams.append("containerId", encodeURIComponent(id));
 		const container = await loader.resolve({ url: url.href });
 		const rootDataObject = await this.getContainerEntryPoint(container);
-		const fluidContainer = createFluidContainer<TContainerSchema>({
+		const fluidContainer = createFluidContainer<TContainerSchema, () => Promise<string>>({
 			container,
 			rootDataObject,
 		});
@@ -213,7 +213,7 @@ export class AzureClient {
 			headers: { [LoaderHeader.version]: version.id },
 		});
 		const rootDataObject = await this.getContainerEntryPoint(container);
-		const fluidContainer = createFluidContainer<TContainerSchema>({
+		const fluidContainer = createFluidContainer<TContainerSchema, () => Promise<string>>({
 			container,
 			rootDataObject,
 		});
@@ -322,7 +322,7 @@ export class AzureClient {
 			}
 			return container.resolvedUrl.id;
 		};
-		const fluidContainer = createFluidContainer<TContainerSchema>({
+		const fluidContainer = createFluidContainer<TContainerSchema, () => Promise<string>>({
 			container,
 			rootDataObject,
 		});

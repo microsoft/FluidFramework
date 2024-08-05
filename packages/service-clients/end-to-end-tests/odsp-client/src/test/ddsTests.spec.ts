@@ -9,7 +9,7 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
-import { OdspClient } from "@fluidframework/odsp-client/internal";
+import { type IOdspClient } from "@fluidframework/odsp-client/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { createOdspClient, getCredentials } from "./OdspClientFactory.js";
@@ -18,7 +18,7 @@ import { mapWait } from "./utils.js";
 
 describe("Fluid data updates", () => {
 	const connectTimeoutMs = 10_000;
-	let client: OdspClient;
+	let client: IOdspClient;
 	const schema = {
 		initialObjects: {
 			map1: SharedMap,
@@ -44,7 +44,8 @@ describe("Fluid data updates", () => {
 	 */
 	it("can set DDSes as initial objects for a container", async () => {
 		const { container: newContainer } = await client.createContainer(schema);
-		const itemId = await newContainer.attach();
+		const res = await newContainer.attach();
+		const itemId = res.itemId;
 
 		if (newContainer.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
@@ -53,7 +54,7 @@ describe("Fluid data updates", () => {
 			});
 		}
 
-		const resources = client.getContainer(itemId, schema);
+		const resources = client.getContainer({ itemId }, schema);
 		await assert.doesNotReject(
 			resources,
 			() => true,
@@ -75,7 +76,8 @@ describe("Fluid data updates", () => {
 	 */
 	it("can change DDSes within initialObjects value", async () => {
 		const { container } = await client.createContainer(schema);
-		const itemId = await container.attach();
+		const res = await container.attach();
+		const itemId = res.itemId;
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -89,7 +91,7 @@ describe("Fluid data updates", () => {
 		map1Create.set("new-key", "new-value");
 		const valueCreate: string | undefined = map1Create.get("new-key");
 
-		const { container: containerGet } = await client.getContainer(itemId, schema);
+		const { container: containerGet } = await client.getContainer({ itemId }, schema);
 		const map1Get = containerGet.initialObjects.map1;
 		const valueGet: string | undefined = await mapWait(map1Get, "new-key");
 		assert.strictEqual(valueGet, valueCreate, "container can't change initial objects");
@@ -108,7 +110,8 @@ describe("Fluid data updates", () => {
 			},
 		};
 		const { container } = await client.createContainer(doSchema);
-		const itemId = await container.attach();
+		const res = await container.attach();
+		const itemId = res.itemId;
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -127,7 +130,7 @@ describe("Fluid data updates", () => {
 			"container returns the wrong type for mdo2",
 		);
 
-		const { container: containerGet } = await client.getContainer(itemId, doSchema);
+		const { container: containerGet } = await client.getContainer({ itemId }, doSchema);
 		const initialObjectsGet = containerGet.initialObjects;
 		assert(
 			initialObjectsGet.mdo1 instanceof TestDataObject,
@@ -155,7 +158,8 @@ describe("Fluid data updates", () => {
 			},
 		};
 		const { container } = await client.createContainer(doSchema);
-		const itemId = await container.attach();
+		const res = await container.attach();
+		const itemId = res.itemId;
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -178,7 +182,7 @@ describe("Fluid data updates", () => {
 			"container returns the wrong type for mdo3",
 		);
 
-		const { container: containerGet } = await client.getContainer(itemId, doSchema);
+		const { container: containerGet } = await client.getContainer({ itemId }, doSchema);
 		const initialObjectsGet = containerGet.initialObjects;
 		assert(
 			initialObjectsGet.mdo1 instanceof TestDataObject,
@@ -215,7 +219,8 @@ describe("Fluid data updates", () => {
 
 		assert.strictEqual(mdo2.value, 3);
 
-		const itemId = await container.attach();
+		const res = await container.attach();
+		const itemId = res.itemId;
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -224,7 +229,7 @@ describe("Fluid data updates", () => {
 			});
 		}
 
-		const { container: containerGet } = await client.getContainer(itemId, doSchema);
+		const { container: containerGet } = await client.getContainer({ itemId }, doSchema);
 		const initialObjectsGet = containerGet.initialObjects;
 		const mdo2get: CounterTestDataObject = initialObjectsGet.mdo2;
 

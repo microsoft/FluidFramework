@@ -86,6 +86,7 @@ export interface ICollabSessionOptions {
 }
 
 /**
+ * Various policies controlling behavior of ODSP driver
  * @legacy
  * @alpha
  */
