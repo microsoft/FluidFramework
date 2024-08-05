@@ -16,6 +16,7 @@ import {
 } from "@fluid-private/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { delay } from "@fluidframework/core-utils/internal";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
@@ -153,6 +154,10 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 			await provider.ensureSynchronized();
 			assert.equal(sharedString1.getText(), "client 2, client 1");
 
+			// Add delay as we were seeing that keys were not present in the attributor for r11s.
+			if (provider.driver.type !== "local") {
+				await delay(200);
+			}
 			assert(
 				container1.clientId !== undefined && container2.clientId !== undefined,
 				"Both containers should have client ids.",

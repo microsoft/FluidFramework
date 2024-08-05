@@ -17,6 +17,7 @@ import {
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { delay } from "@fluidframework/core-utils/internal";
 import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import {
 	ChannelFactoryRegistry,
@@ -120,47 +121,57 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 	 * Tracked by AB#4997, if no error event is detected within one sprint, we will remove
 	 * the skipping or take actions accordingly if it is.
 	 */
-	itSkipsFailureOnSpecificDrivers(
-		"Can attribute content from multiple collaborators",
-		["tinylicious", "t9s"],
-		async () => {
-			const attributor = createRuntimeAttributor();
-			const container1 = await provider.makeTestContainer(getTestConfig(attributor));
-			const sharedCell1 = await sharedCellFromContainer(container1);
-			const attributor2 = createRuntimeAttributor();
-			const container2 = await provider.loadTestContainer(getTestConfig(attributor2));
-			const sharedCell2 = await sharedCellFromContainer(container2);
+	for (let i = 0; i < 20; i++) {
+		itSkipsFailureOnSpecificDrivers(
+			"Can attribute content from multiple collaborators",
+			["tinylicious", "t9s"],
+			async () => {
+				const attributor = createRuntimeAttributor();
+				const container1 = await provider.makeTestContainer(getTestConfig(attributor));
+				const sharedCell1 = await sharedCellFromContainer(container1);
+				const attributor2 = createRuntimeAttributor();
+				const container2 = await provider.loadTestContainer(getTestConfig(attributor2));
+				const sharedCell2 = await sharedCellFromContainer(container2);
 
-			assert(
-				container1.clientId !== undefined && container2.clientId !== undefined,
-				"Both containers should have client ids.",
-			);
+				assert(
+					container1.clientId !== undefined && container2.clientId !== undefined,
+					"Both containers should have client ids.",
+				);
 
-			sharedCell1.set(1);
-			assertAttributionMatches(sharedCell1, attributor, "local");
-			await provider.ensureSynchronized();
+				sharedCell1.set(1);
+				assertAttributionMatches(sharedCell1, attributor, "local");
+				await provider.ensureSynchronized();
 
-			sharedCell2.set(2);
-			await provider.ensureSynchronized();
+				sharedCell2.set(2);
+				await provider.ensureSynchronized();
 
-			assertAttributionMatches(sharedCell1, attributor, {
-				user: container1.audience.getMember(container2.clientId)?.user,
-			});
+				// Add delay as we were seeing that keys were not present in the attributor for r11s.
+				if (provider.driver.type !== "local") {
+					await delay(200);
+				}
+				assertAttributionMatches(sharedCell1, attributor, {
+					user: container1.audience.getMember(container2.clientId)?.user,
+				});
 
-			assertAttributionMatches(sharedCell2, attributor2, {
-				user: container1.audience.getMember(container2.clientId)?.user,
-			});
-			sharedCell1.set(3);
-			await provider.ensureSynchronized();
+				assertAttributionMatches(sharedCell2, attributor2, {
+					user: container1.audience.getMember(container2.clientId)?.user,
+				});
+				sharedCell1.set(3);
+				await provider.ensureSynchronized();
 
-			assertAttributionMatches(sharedCell1, attributor, {
-				user: container2.audience.getMember(container1.clientId)?.user,
-			});
-			assertAttributionMatches(sharedCell2, attributor2, {
-				user: container2.audience.getMember(container1.clientId)?.user,
-			});
-		},
-	);
+				// Add delay as we were seeing that keys were not present in the attributor for r11s.
+				if (provider.driver.type !== "local") {
+					await delay(200);
+				}
+				assertAttributionMatches(sharedCell1, attributor, {
+					user: container2.audience.getMember(container1.clientId)?.user,
+				});
+				assertAttributionMatches(sharedCell2, attributor2, {
+					user: container2.audience.getMember(container1.clientId)?.user,
+				});
+			},
+		);
+	}
 
 	it("attributes content created in a detached state", async () => {
 		const attributor = createRuntimeAttributor();
