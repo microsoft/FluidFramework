@@ -49,7 +49,7 @@ export function isTreeNode(candidate: unknown): candidate is TreeNode | Unhydrat
 
 /**
  * Retrieve the associated proxy for the given field.
- * */
+ */
 export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
 	function tryToUnboxLeaves(
 		flexField: FlexTreeTypedField<

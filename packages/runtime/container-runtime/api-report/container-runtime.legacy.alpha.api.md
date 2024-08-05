@@ -79,7 +79,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     get flushMode(): FlushMode;
+    // @deprecated
     get gcThrowOnTombstoneUsage(): boolean;
+    // @deprecated
     get gcTombstoneEnforcementAllowed(): boolean;
     generateDocumentUniqueId(): string | (number & {
         readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
@@ -134,8 +136,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     readonly options: Record<string | number, any>;
     orderSequentially<T>(callback: () => T): T;
-    // (undocumented)
-    process(messageArg: ISequencedDocumentMessage, local: boolean): void;
+    process({ ...messageCopy }: ISequencedDocumentMessage, local: boolean): void;
     // (undocumented)
     processSignal(message: ISignalMessage, local: boolean): void;
     refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
@@ -489,7 +490,7 @@ export interface INackSummaryResult {
     readonly summaryNackOp: ISummaryNackMessage;
 }
 
-// @alpha
+// @alpha @deprecated
 export const InactiveResponseHeaderKey = "isInactive";
 
 // @alpha (undocumented)

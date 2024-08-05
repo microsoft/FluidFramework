@@ -21,7 +21,6 @@ import type { ITreeCheckout, ITreeCheckoutFork } from "./treeCheckout.js";
  * The portion of {@link FlexTreeView} that does not depend on the schema's type.
  * @privateRemarks
  * Since {@link FlexTreeView}'s schema is invariant, `FlexTreeView<FlexFieldSchema>` does not cover this use case.
- * @internal
  */
 export interface FlexTreeViewGeneric extends IDisposable {
 	/**
@@ -46,7 +45,6 @@ export interface FlexTreeViewGeneric extends IDisposable {
  * @privateRemarks
  * TODO:
  * If schema aware APIs are removed from flex tree, this can be combined with {@link FlexTreeViewGeneric}.
- * @internal
  */
 export interface FlexTreeView<in out TRoot extends FlexFieldSchema>
 	extends FlexTreeViewGeneric {
@@ -66,7 +64,6 @@ export interface FlexTreeView<in out TRoot extends FlexFieldSchema>
  * Branch (like in a version control system) of SharedTree.
  *
  * {@link FlexTreeView} that has forked off of the main trunk/branch.
- * @internal
  */
 export interface ITreeViewFork<in out TRoot extends FlexFieldSchema>
 	extends FlexTreeView<TRoot> {

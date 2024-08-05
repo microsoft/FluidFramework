@@ -65,8 +65,6 @@ export type TreeTypeSet = ReadonlySet<TreeNodeSchemaIdentifier> | undefined;
  *
  * @remarks
  * Enough info about a field kind to know if a given tree is is schema.
- *
- * @internal
  */
 export interface FieldKindData {
 	readonly identifier: FieldKindIdentifier;
@@ -83,7 +81,6 @@ export interface SchemaAndPolicy {
 
 /**
  * Extra data needed to interpret schema.
- * @internal
  */
 export interface SchemaPolicy {
 	/**
@@ -122,8 +119,6 @@ export interface TreeFieldStoredSchema {
  * This mainly show up in:
  * 1. The root default field for documents.
  * 2. The schema used for out of schema fields (which thus must be empty/not exist) on object and leaf nodes.
- *
- * @internal
  */
 export const forbiddenFieldKindIdentifier = "Forbidden";
 
@@ -140,8 +135,6 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 
 /**
  * Identifier used for the FieldKind for fields of type identifier.
- *
- * @internal
  */
 export const identifierFieldKindIdentifier = "Identifier";
 

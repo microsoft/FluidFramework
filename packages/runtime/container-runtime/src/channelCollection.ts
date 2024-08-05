@@ -119,11 +119,6 @@ export enum RuntimeHeaders {
  * @alpha
  */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
-/**
- * [IRRELEVANT IF throwOnInactiveLoad OPTION NOT SET] True if an inactive object should be returned without erroring
- * @internal
- */
-export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the enum above, but avoiding the breaking change
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -1460,14 +1455,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		if (typeof request.headers?.[AllowTombstoneRequestHeaderKey] === "boolean") {
 			headerData.allowTombstone = request.headers[AllowTombstoneRequestHeaderKey];
 		}
-		if (typeof request.headers?.[AllowInactiveRequestHeaderKey] === "boolean") {
-			headerData.allowInactive = request.headers[AllowInactiveRequestHeaderKey];
-		}
 
-		// We allow Tombstone/Inactive requests for sub-DataStore objects
+		// We allow Tombstone requests for sub-DataStore objects
 		if (requestForChild) {
 			headerData.allowTombstone = true;
-			headerData.allowInactive = true;
 		}
 
 		await this.waitIfPendingAlias(id);

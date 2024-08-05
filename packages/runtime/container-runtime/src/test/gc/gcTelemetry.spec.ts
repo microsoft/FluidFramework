@@ -72,20 +72,16 @@ describe("GC Telemetry Tracker", () => {
 			return GCNodeType.Other;
 		};
 		const configs: IGarbageCollectorConfigs = {
-			gcEnabled: true,
+			gcAllowed: true,
+			sweepAllowed: false,
 			sweepEnabled: false,
-			shouldRunSweep: "NO",
-			tombstoneAutorecoveryEnabled: false,
 			runFullGC: false,
 			testMode: false,
-			tombstoneMode: false,
 			inactiveTimeoutMs,
 			sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 			tombstoneTimeoutMs: enableSweep ? tombstoneTimeoutMs : undefined,
 			sweepGracePeriodMs,
 			throwOnTombstoneLoad: false,
-			throwOnTombstoneUsage: false,
-			throwOnInactiveLoad: false,
 			persistedGcFeatureMatrix: undefined,
 			gcVersionInBaseSnapshot: stableGCVersion,
 			gcVersionInEffect: stableGCVersion,

@@ -31,7 +31,7 @@ import {
 	type ChangeFamilyEditor,
 	EmptyKey,
 } from "../../core/index.js";
-import { leaf } from "../../domains/index.js";
+import { leaf, singleJsonCursor, typedJsonCursor } from "../../domains/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	ChunkedForest,
@@ -145,7 +145,7 @@ describe("SharedTree", () => {
 			const content = {
 				schema: stringSequenceRootSchema,
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
-				initialTree: ["x"],
+				initialTree: [typedJsonCursor("x")],
 			} satisfies InitializeAndSchematizeConfiguration;
 			const tree1 = schematizeFlexTree(provider.trees[0], content);
 			schematizeFlexTree(provider.trees[1], content);
@@ -160,7 +160,7 @@ describe("SharedTree", () => {
 
 			const view = schematizeFlexTree(tree, {
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
-				initialTree: 10,
+				initialTree: singleJsonCursor(10),
 				schema,
 			});
 			assert.equal(view.flexTree.content, 10);
@@ -173,7 +173,7 @@ describe("SharedTree", () => {
 			// No op upgrade with AllowedUpdateType.None does not error
 			const schematized = schematizeFlexTree(tree, {
 				allowedSchemaModifications: AllowedUpdateType.None,
-				initialTree: 10,
+				initialTree: singleJsonCursor(10),
 				schema,
 			});
 			// And does not add initial tree:
@@ -186,7 +186,7 @@ describe("SharedTree", () => {
 			assert.throws(() => {
 				schematizeFlexTree(tree, {
 					allowedSchemaModifications: AllowedUpdateType.Initialize,
-					initialTree: 5,
+					initialTree: singleJsonCursor(5),
 					schema,
 				});
 			});
@@ -197,7 +197,7 @@ describe("SharedTree", () => {
 			tree.checkout.updateSchema(storedSchema);
 			const schematized = schematizeFlexTree(tree, {
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
-				initialTree: 5,
+				initialTree: singleJsonCursor(5),
 				schema: schemaGeneralized,
 			});
 			// Initial tree should not be applied
@@ -393,7 +393,10 @@ describe("SharedTree", () => {
 		const loadingTree = await provider.createTree();
 		validateTreeContent(loadingTree.checkout, {
 			schema: toFlexSchema(JsonArray),
-			initialTree: [value],
+			initialTree: typedJsonCursor({
+				[typedJsonCursor.type]: JsonArray.identifier,
+				[EmptyKey]: [value],
+			}),
 		});
 	});
 
@@ -646,7 +649,10 @@ describe("SharedTree", () => {
 		await provider.ensureSynchronized();
 		validateTreeContent(loadingTree.checkout, {
 			schema: toFlexSchema(StringArray),
-			initialTree: ["b", "c"],
+			initialTree: typedJsonCursor({
+				[typedJsonCursor.type]: StringArray.identifier,
+				[EmptyKey]: ["b", "c"],
+			}),
 		});
 	});
 
@@ -669,7 +675,10 @@ describe("SharedTree", () => {
 
 		validateTreeContent(summarizingTree.checkout, {
 			schema: toFlexSchema(StringArray),
-			initialTree: ["b", "c"],
+			initialTree: typedJsonCursor({
+				[typedJsonCursor.type]: StringArray.identifier,
+				[EmptyKey]: ["b", "c"],
+			}),
 		});
 
 		await provider.ensureSynchronized();
@@ -683,14 +692,20 @@ describe("SharedTree", () => {
 
 		validateTreeContent(summarizingTree.checkout, {
 			schema: toFlexSchema(StringArray),
-			initialTree: ["a", "b", "c"],
+			initialTree: typedJsonCursor({
+				[typedJsonCursor.type]: StringArray.identifier,
+				[EmptyKey]: ["a", "b", "c"],
+			}),
 		});
 
 		await provider.ensureSynchronized();
 
 		validateTreeContent(loadingTree.checkout, {
 			schema: toFlexSchema(StringArray),
-			initialTree: ["a", "b", "c"],
+			initialTree: typedJsonCursor({
+				[typedJsonCursor.type]: StringArray.identifier,
+				[EmptyKey]: ["a", "b", "c"],
+			}),
 		});
 		unsubscribe();
 	});
@@ -1029,7 +1044,10 @@ describe("SharedTree", () => {
 
 			const initialState = {
 				schema: toFlexSchema(StringArray),
-				initialTree: ["A", "B", "C", "D"],
+				initialTree: typedJsonCursor({
+					[typedJsonCursor.type]: StringArray.identifier,
+					[EmptyKey]: ["A", "B", "C", "D"],
+				}),
 			};
 
 			// Validate insertion
@@ -1152,7 +1170,8 @@ describe("SharedTree", () => {
 
 		describe("can concurrently restore and edit removed tree", () => {
 			const sf = new SchemaFactory(undefined);
-			const schema = sf.array(sf.array(sf.string));
+			const innerSchema = sf.array(sf.string);
+			const schema = sf.array(innerSchema);
 
 			for (const scenario of ["restore then change", "change then restore"]) {
 				it(`with the ${scenario} sequenced`, () => {
@@ -1182,7 +1201,12 @@ describe("SharedTree", () => {
 					// Validate insertion
 					validateTreeContent(tree2.checkout, {
 						schema: toFlexSchema(schema),
-						initialTree: [["a"]],
+						initialTree: typedJsonCursor({
+							[typedJsonCursor.type]: schema.identifier,
+							[EmptyKey]: [
+								{ [typedJsonCursor.type]: innerSchema.identifier, [EmptyKey]: "a" },
+							],
+						}),
 					});
 
 					// edit subtree
