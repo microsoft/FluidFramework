@@ -37,7 +37,7 @@ jobs:
       - name: Set issue number
         id: issueNum
         env:
-          ISSUE_VAL: ${{ github.event_name == 'push' && 'secrets.RELEASE_NOTES_ISSUE' || github.event.inputs.issueNumber }}
+          ISSUE_VAL: ${{ github.event_name == 'push' && secrets.RELEASE_NOTES_ISSUE || github.event.inputs.issueNumber }}
         run: |
           echo "ISSUE=$ISSUE_VAL" >> "$GITHUB_OUTPUT"
 
