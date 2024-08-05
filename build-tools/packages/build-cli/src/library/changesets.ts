@@ -162,7 +162,7 @@ export type ChangesetEntry = Omit<Changeset, "metadata" | "mainPackage" | "chang
 	changeType: VersionBumpType;
 
 	/**
-	 * The original full changeset that was tthe source for this ChangesetEntry.
+	 * The original full changeset that was the source for this ChangesetEntry.
 	 */
 	fullChangeset: Readonly<Changeset>;
 };
