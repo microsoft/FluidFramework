@@ -1,5 +1,5 @@
 # release-notes-issue.yml
-# Updates a release notes tracking issue with the generated release notes.
+# Updates an issue that tracks release notes with the generated release notes.
 # The issue to update is set in the RELEASE_NOTES_ISSUE secret.
 
 name: "Update release notes issue"
