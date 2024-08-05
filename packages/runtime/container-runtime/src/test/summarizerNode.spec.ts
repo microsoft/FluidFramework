@@ -128,37 +128,6 @@ describe("Runtime", () => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				({ sequenceNumber }) as ISequencedDocumentMessage;
 
-			// const emptySnapshot: ISnapshotTree = { blobs: {}, trees: {} };
-			// const protocolTree: ISnapshotTree = {
-			// 	blobs: { attributes: "protocolAttributes" },
-			// 	trees: {},
-			// };
-			// const coreSnapshot: ISnapshotTree = {
-			// 	blobs: {},
-			// 	trees: {
-			// 		[ids[1]]: {
-			// 			blobs: {},
-			// 			trees: {
-			// 				[ids[2]]: emptySnapshot,
-			// 			},
-			// 		},
-			// 	},
-			// };
-			// const simpleSnapshot: ISnapshotTree = {
-			// 	blobs: {},
-			// 	trees: {
-			// 		...coreSnapshot.trees,
-			// 		".protocol": protocolTree,
-			// 	},
-			// };
-			// const channelsSnapshot: ISnapshotTree = {
-			// 	blobs: {},
-			// 	trees: {
-			// 		[channelsTreeName]: coreSnapshot,
-			// 		".protocol": protocolTree,
-			// 	},
-			// };
-
 			beforeEach(() => {
 				summarizeCalls = [0, 0, 0];
 			});
@@ -175,34 +144,6 @@ describe("Runtime", () => {
 					);
 				});
 			});
-
-			// describe("Load Base Summary", () => {
-			// 	it("Load base summary should do nothing for simple snapshot", async () => {
-			// 		createRoot({ refSeq: 1 });
-			// 		rootNode.updateBaseSummaryState(simpleSnapshot);
-
-			// 		const latestSummary = (rootNode as SummarizerNode).latestSummary;
-			// 		assert(latestSummary !== undefined, "latest summary should exist");
-			// 		assert.strictEqual(
-			// 			latestSummary.additionalPath?.path,
-			// 			undefined,
-			// 			"should not have any path parts for children",
-			// 		);
-			// 	});
-
-			// 	it("Load base summary should strip channels subtree", async () => {
-			// 		createRoot({ refSeq: 1 });
-			// 		rootNode.updateBaseSummaryState(channelsSnapshot);
-
-			// 		const latestSummary = (rootNode as SummarizerNode).latestSummary;
-			// 		assert(latestSummary !== undefined, "latest summary should exist");
-			// 		assert.strictEqual(
-			// 			latestSummary.additionalPath?.path,
-			// 			channelsTreeName,
-			// 			"should have channels path for children",
-			// 		);
-			// 	});
-			// });
 
 			describe("Start Summary", () => {
 				it("Should fail startSummary if previous attempt is not completed/cleared", () => {
