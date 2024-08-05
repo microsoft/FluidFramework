@@ -39,7 +39,6 @@ export type EmptyObject = {};
 
 /**
  * Collects the various parts of the API together.
- * @internal
  */
 export type CollectOptions<
 	TTypedFields,
@@ -58,7 +57,6 @@ export type CollectOptions<
 
 /**
  * Remove type brand from name.
- * @internal
  */
 export type UnbrandedName<TName> = [
 	TName extends TreeNodeSchemaIdentifier<infer S> ? S : string,
@@ -68,7 +66,6 @@ export type UnbrandedName<TName> = [
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
  *
  * In Editable mode, unwraps the fields.
- * @internal
  */
 export type TypedFields<
 	TFields extends undefined | { readonly [key: string]: FlexFieldSchema },
@@ -82,7 +79,6 @@ export type TypedFields<
 
 /**
  * `TreeFieldSchema` to `TypedField`. May unwrap to child depending on FieldKind.
- * @internal
  */
 export type InsertableFlexField<TField extends FlexFieldSchema> = [
 	ApplyMultiplicity<
@@ -93,7 +89,6 @@ export type InsertableFlexField<TField extends FlexFieldSchema> = [
 
 /**
  * Adjusts the API for a field based on its Multiplicity.
- * @internal
  */
 export type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = {
 	[Multiplicity.Forbidden]: undefined;
@@ -104,7 +99,6 @@ export type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = 
 
 /**
  * Takes in `AllowedTypes` and returns a TypedTree union.
- * @internal
  */
 export type AllowedTypesToFlexInsertableTree<T extends FlexAllowedTypes> = [
 	T extends readonly LazyItem<FlexTreeNodeSchema>[]
@@ -114,7 +108,6 @@ export type AllowedTypesToFlexInsertableTree<T extends FlexAllowedTypes> = [
 
 /**
  * Generate a schema aware API for a single tree schema.
- * @internal
  */
 export type InsertableFlexNode<TSchema extends FlexTreeNodeSchema> = FlattenKeys<
 	CollectOptions<

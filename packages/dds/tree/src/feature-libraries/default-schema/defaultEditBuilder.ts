@@ -113,8 +113,6 @@ export function relevantRemovedRoots(change: ModularChangeset): Iterable<DeltaDe
  * At some point it will likely be worth supporting at least some of these, possibly using a mechanism that could support all of them if desired.
  * If/when such a mechanism becomes available, an evaluation should be done to determine if any existing editing operations should be changed to leverage it
  * (Possibly by adding opt ins at the view schema layer).
- *
- * @internal
  */
 export interface IDefaultEditBuilder {
 	/**
@@ -387,7 +385,6 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 }
 
 /**
- * @internal
  */
 export interface ValueFieldEditBuilder {
 	/**
@@ -399,7 +396,6 @@ export interface ValueFieldEditBuilder {
 }
 
 /**
- * @internal
  */
 export interface OptionalFieldEditBuilder {
 	/**
@@ -412,7 +408,6 @@ export interface OptionalFieldEditBuilder {
 }
 
 /**
- * @internal
  */
 export interface SequenceFieldEditBuilder {
 	/**
