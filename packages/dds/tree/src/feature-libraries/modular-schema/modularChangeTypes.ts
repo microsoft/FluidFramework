@@ -17,7 +17,6 @@ import type { TreeChunk } from "../chunked-forest/index.js";
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
 
 /**
- * @internal
  */
 export interface ModularChangeset extends HasFieldChanges {
 	/**
@@ -89,7 +88,6 @@ export interface FieldId {
 }
 
 /**
- * @internal
  */
 export interface NodeExistsConstraint {
 	violated: boolean;
@@ -97,7 +95,6 @@ export interface NodeExistsConstraint {
 
 /**
  * Changeset for a subtree rooted at a specific node.
- * @internal
  */
 export interface NodeChangeset extends HasFieldChanges {
 	nodeExistsConstraint?: NodeExistsConstraint;
@@ -106,19 +103,16 @@ export interface NodeChangeset extends HasFieldChanges {
 export type NodeId = ChangeAtomId;
 
 /**
- * @internal
  */
 export interface HasFieldChanges {
 	fieldChanges?: FieldChangeMap;
 }
 
 /**
- * @internal
  */
 export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 /**
- * @internal
  */
 export interface FieldChange {
 	fieldKind: FieldKindIdentifier;
@@ -126,6 +120,5 @@ export interface FieldChange {
 }
 
 /**
- * @internal
  */
 export type FieldChangeset = Brand<unknown, "FieldChangeset">;

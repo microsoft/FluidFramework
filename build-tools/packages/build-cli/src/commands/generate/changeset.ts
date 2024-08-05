@@ -261,8 +261,6 @@ export default class GenerateChangesetCommand extends BaseCommand<
 			}
 		}
 
-		/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
-
 		const sectionChoices: Choice[] =
 			context.rootFluidBuildConfig.releaseNotes?.sections === undefined
 				? []
@@ -276,6 +274,24 @@ export default class GenerateChangesetCommand extends BaseCommand<
 						},
 					);
 
+		/**
+		 * The prompts typing for the `onState` function doesn't include the shape of the `state` object, so this interface
+		 * serves as that type. Based on the documentation at: https://www.npmjs.com/package/prompts#onstate
+		 */
+		interface PromptState {
+			/**
+			 * The documentation isn't clear about what the type of `value` is. It is likely a string, but since we don't use
+			 * it in this code, `unknown` is safer.
+			 */
+			value: unknown;
+
+			/**
+			 * This is set to true when the prompt has been aborted.
+			 */
+			aborted: boolean;
+		}
+
+		// One of the items is typed as any - see below.
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const questions: prompts.PromptObject[] = [
 			{
@@ -285,13 +301,15 @@ export default class GenerateChangesetCommand extends BaseCommand<
 				instructions: INSTRUCTIONS,
 				message: "Choose which packages to include in the changeset. Type to filter the list.",
 				optionsPerPage: 5,
-				onState: (state: any) => {
-					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+				onState: (state: PromptState): void => {
 					if (state.aborted) {
 						process.nextTick(() => this.exit(0));
 					}
 				},
-			} as any, // Typed as any because the typings don't include the optionsPerPage property.
+				// This is typed as any because the typings don't include the optionsPerPage property.
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			} as any,
+			// This question should only be asked if the releaseNotes config is available
 			context.rootFluidBuildConfig.releaseNotes === undefined
 				? undefined
 				: {
@@ -299,10 +317,8 @@ export default class GenerateChangesetCommand extends BaseCommand<
 						type: "select",
 						choices: sectionChoices,
 						instructions: INSTRUCTIONS,
-						message: "What type of change is this?",
-						// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-						onState: (state: any) => {
-							// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+						message: "What section of the release notes should this change be in?",
+						onState: (state: PromptState): void => {
 							if (state.aborted) {
 								process.nextTick(() => this.exit(0));
 							}
@@ -311,10 +327,8 @@ export default class GenerateChangesetCommand extends BaseCommand<
 			{
 				name: "summary",
 				type: "text",
-				message: "Enter a summary of the change.",
-				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-				onState: (state: any) => {
-					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+				message: "Enter a single sentence summary of the change.",
+				onState: (state: PromptState): void => {
 					if (state.aborted) {
 						process.nextTick(() => this.exit(0));
 					}
@@ -323,10 +337,9 @@ export default class GenerateChangesetCommand extends BaseCommand<
 			{
 				name: "description",
 				type: "text",
-				message: "Enter a longer description of the change.",
-				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-				onState: (state: any) => {
-					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+				message:
+					"Enter a longer description of the change. If you have a lot to type, consider adding it to the changeset after it's created.",
+				onState: (state: PromptState): void => {
 					if (state.aborted) {
 						process.nextTick(() => this.exit(0));
 					}
@@ -337,11 +350,8 @@ export default class GenerateChangesetCommand extends BaseCommand<
 			(p) => p !== undefined,
 		);
 
-		/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
-
 		const response = await prompts(questions);
-		// eslint-disable-next-line prefer-destructuring, @typescript-eslint/no-unsafe-assignment
-		const selectedPackages: Package[] = response.selectedPackages;
+		const selectedPackages: Package[] = response.selectedPackages as Package[];
 		const bumpType = getDefaultBumpTypeForBranch(branch, releaseGroup) ?? "minor";
 
 		const newFile = await createChangesetFile(
@@ -396,8 +406,6 @@ function createChangesetContent(
 		lines.push(frontMatterSeparator);
 	}
 
-	// Add an extra newline so that the front matter sections are separated from the content
-	// lines.push("\n");
 	const frontMatter = lines.join("\n");
 	const changesetContents = [frontMatter, body].join("\n");
 	return changesetContents;

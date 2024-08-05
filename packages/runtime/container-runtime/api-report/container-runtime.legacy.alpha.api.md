@@ -490,7 +490,7 @@ export interface INackSummaryResult {
     readonly summaryNackOp: ISummaryNackMessage;
 }
 
-// @alpha
+// @alpha @deprecated
 export const InactiveResponseHeaderKey = "isInactive";
 
 // @alpha (undocumented)

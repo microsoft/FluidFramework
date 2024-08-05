@@ -148,7 +148,7 @@
 		"@types/node": "^18.18.6",
 		"@types/node-fetch": "^2.5.10",
 		"@types/prettier": "^2.7.3",
-		"@types/prompts": "^2.4.4",
+		"@types/prompts": "^2.4.9",
 		"@types/semver": "^7.5.0",
 		"@types/semver-utils": "^1.1.1",
 		"@types/sort-json": "^2.0.1",

@@ -26,7 +26,6 @@ import type { ITreeCheckout } from "../../shared-tree/index.js";
 /**
  * A common context of a "forest" of FlexTrees.
  * It handles group operations like transforming cursors into anchors for edits.
- * @internal
  */
 export interface FlexTreeContext extends Listenable<ForestEvents> {
 	/**
