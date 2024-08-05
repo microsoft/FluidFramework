@@ -172,7 +172,7 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
  * This is the same as `ReadonlyMap<K, TreeNodeFromImplicitAllowedTypesUnsafe<T>>` (Checked in test),
  * except that it avoids the above mentioned compile error.
  * Authored by manually inlining ReadonlyMap from from the TypeScript lib which can be found by navigating to the definition of `ReadonlyMap`.
- * @sealed @public
+ * @system @sealed @public
  */
 export interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypes>> {
 	/** Returns an iterable of entries in the map. */
