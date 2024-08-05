@@ -154,7 +154,7 @@ export type ValidateRecursiveSchema<
 > = true;
 
 /**
- * Workaround for fixing errors an issue with recursive ArrayNode schema exports.
+ * Workaround for fixing errors resulting from an issue with recursive ArrayNode schema exports.
  * @remarks
  * Importing a recursive ArrayNode schema via a d.ts file can produce an error like
  * `error TS2310: Type 'RecursiveArray' recursively references itself as a base type.`
@@ -179,7 +179,7 @@ export type ValidateRecursiveSchema<
  * }
  * ```
  *
- * This type always evaluates to undefined to ensure the dummy export (which doesn't exist at runtime) is typed correctly.
+ * This type always evaluates to `undefined` to ensure the dummy export (which doesn't exist at runtime) is typed correctly.
  * @alpha
  */
 export type FixRecursiveArraySchema<T> = T extends TreeNodeSchema ? undefined : undefined;
