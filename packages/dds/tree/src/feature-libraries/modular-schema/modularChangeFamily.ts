@@ -1892,7 +1892,6 @@ function deltaFromNodeChange(
 }
 
 /**
- * @internal
  * @param revInfos - This should describe the revision being rebased and all revisions in the rebase path,
  * even if not part of the current base changeset.
  * For example, when rebasing change B from a local branch [A, B, C] over a branch [X, Y], the `revInfos` must include
@@ -2072,7 +2071,6 @@ function newCrossFieldTable<T>(): CrossFieldTable<T> {
 }
 
 /**
- * @internal
  */
 interface ConstraintState {
 	violationCount: number;
@@ -2627,7 +2625,6 @@ function buildModularChangesetFromNode(
 }
 
 /**
- * @internal
  */
 export interface FieldEditDescription {
 	type: "field";
@@ -2637,7 +2634,6 @@ export interface FieldEditDescription {
 }
 
 /**
- * @internal
  */
 export interface GlobalEditDescription {
 	type: "global";
@@ -2645,7 +2641,6 @@ export interface GlobalEditDescription {
 }
 
 /**
- * @internal
  */
 export type EditDescription = FieldEditDescription | GlobalEditDescription;
 
