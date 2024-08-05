@@ -140,6 +140,6 @@
 	},
 	"typeValidation": {
 		"broken": {},
-		"apiLevel": "legacy"
+		"apiLevel": "public"
 	}
 }

@@ -152,6 +152,6 @@
 	},
 	"typeValidation": {
 		"broken": {},
-		"apiLevel": "legacy"
+		"apiLevel": "alpha"
 	}
 }
