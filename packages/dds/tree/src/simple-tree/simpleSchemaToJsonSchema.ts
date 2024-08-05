@@ -25,7 +25,7 @@ import type {
 } from "./simpleSchema.js";
 
 /**
- * Generates a JSON schema representation from a simple tree schema.
+ * Generates a JSON Schema representation from a simple tree schema.
  * @internal
  */
 export function toJsonSchema(schema: SimpleTreeSchema): TreeJsonSchema {
