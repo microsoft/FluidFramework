@@ -13,6 +13,7 @@ import {
 	replaceAtomRevisions,
 } from "../../core/index.js";
 import { type IdAllocator, fail } from "../../util/index.js";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { CrossFieldManager } from "./crossFieldQueries.js";
 import type {
 	FieldChangeHandler,
@@ -95,30 +96,39 @@ function rebaseGenericChange(
 
 	// eslint-disable-next-line no-constant-condition
 	while (true) {
-		// XXX: Handle the case where there is no new child but we must include the base changes anyway.
-		const pair = change.getPairOrNextHigher(nextIndex);
-		if (pair === undefined) {
+		const newEntry = change.getPairOrNextHigher(nextIndex);
+		const baseEntry = over.getPairOrNextHigher(nextIndex);
+
+		if (baseEntry === undefined && newEntry === undefined) {
 			break;
 		}
 
-		const [index, node] = pair;
-		const basePair = over.getPairOrNextHigher(pair[0]);
-		if (basePair === undefined) {
-			break;
-		}
-
-		const [baseIndex, baseNode] = basePair;
-		if (index === baseIndex) {
-			const rebasedChild = rebaseChild(node, baseNode);
-			if (rebasedChild !== undefined) {
-				rebased.set(index, rebasedChild);
-			} else {
-				rebased.delete(index);
-			}
-			nextIndex = index + 1;
+		const newIndex = newEntry?.[0] ?? Infinity;
+		const baseIndex = baseEntry?.[0] ?? Infinity;
+		let newNodeChange: NodeId | undefined;
+		let baseNodeChange: NodeId | undefined;
+		let index: number;
+		if (newIndex === baseIndex) {
+			assert(newEntry !== undefined && baseEntry !== undefined, "Entries should be defined");
+			index = newIndex;
+			newNodeChange = newEntry[1];
+			baseNodeChange = baseEntry[1];
+		} else if (newIndex < baseIndex) {
+			assert(newEntry !== undefined, "Entry should be defined");
+			index = newIndex;
+			newNodeChange = newEntry[1];
 		} else {
-			nextIndex = baseIndex;
+			assert(baseEntry !== undefined, "Entry should be defined");
+			index = baseIndex;
+			baseNodeChange = baseEntry[1];
 		}
+
+		const nodeChange = rebaseChild(newNodeChange, baseNodeChange);
+		if (nodeChange !== undefined) {
+			rebased.set(index, nodeChange);
+		}
+
+		nextIndex = index + 1;
 	}
 
 	return rebased;
