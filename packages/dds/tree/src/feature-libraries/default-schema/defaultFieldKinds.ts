@@ -257,30 +257,24 @@ export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> =
 // TODO: ensure thy work in generated docs.
 // TODO: add these comments to the rest of the cases below.
 /**
- * @internal
  */
 export interface Required extends FlexFieldKind<"Value", Multiplicity.Single> {}
 /**
- * @internal
  */
 export interface Optional extends FlexFieldKind<"Optional", Multiplicity.Optional> {}
 /**
- * @internal
  */
 export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequence> {}
 /**
- * @internal
  */
 export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {}
 /**
- * @internal
  */
 export interface Forbidden
 	extends FlexFieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
 
 /**
  * Default FieldKinds with their editor types erased.
- * @internal
  */
 export const FieldKinds: {
 	// TODO: inheritDoc for these somehow
