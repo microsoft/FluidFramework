@@ -36,7 +36,7 @@ export interface SimpleNodeSchemaBase<TNodeKind extends SimpleNodeSchemaKind> {
  */
 export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<"object"> {
 	/**
-	 * Schemas for each of the object's fields.
+	 * Schemas for each of the object's fields, keyed off of schema's view keys.
 	 */
 	readonly fields: Record<string, SimpleFieldSchema>;
 }
