@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "node:assert";
 import type { TreeJsonSchema } from "../../simple-tree/index.js";
 import { getJsonValidator } from "./jsonSchemaUtilities.js";
 // eslint-disable-next-line import/no-internal-modules
