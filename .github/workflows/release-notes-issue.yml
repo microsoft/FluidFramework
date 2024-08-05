@@ -91,7 +91,7 @@ jobs:
         uses: julien-deramond/update-issue-body@v1
         with:
           issue-number: ${{ steps.issueNum.outputs.ISSUE }}
-          body: ${{ steps.relNotes.outputs.content }}
+          body: ${{ steps.intro.outputs.content }}
           edit-mode: prepend
 
       - name: Update issue title
