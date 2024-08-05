@@ -9,7 +9,6 @@ import { fail } from "./utils.js";
 
 /**
  * Used for allocating IDs unique to a particular instance of the allocator.
- * @internal
  */
 export interface IdAllocator<TId = number> {
 	/**
@@ -28,7 +27,6 @@ export interface IdAllocationState {
 }
 
 /**
- * @internal
  */
 export function idAllocatorFromMaxId(maxId: number | undefined = undefined): IdAllocator {
 	return idAllocatorFromState({ maxId: maxId ?? -1 });

@@ -253,8 +253,6 @@ export function ensureSchema(
 
 /**
  * View Schema for a `SharedTree`.
- *
- * @internal
  */
 export interface SchemaConfiguration<TRoot extends FlexFieldSchema = FlexFieldSchema> {
 	/**
@@ -265,8 +263,6 @@ export interface SchemaConfiguration<TRoot extends FlexFieldSchema = FlexFieldSc
 
 /**
  * Content that can populate a `SharedTree`.
- *
- * @internal
  */
 export interface TreeContent<TRoot extends FlexFieldSchema = FlexFieldSchema>
 	extends SchemaConfiguration<TRoot> {
@@ -282,8 +278,6 @@ export interface TreeContent<TRoot extends FlexFieldSchema = FlexFieldSchema>
 
 /**
  * Options used to schematize a `SharedTree`.
- *
- * @internal
  */
 export interface SchematizeConfiguration<TRoot extends FlexFieldSchema = FlexFieldSchema>
 	extends SchemaConfiguration<TRoot> {
@@ -295,8 +289,6 @@ export interface SchematizeConfiguration<TRoot extends FlexFieldSchema = FlexFie
 
 /**
  * Options used to initialize (if needed) and schematize a `SharedTree`.
- *
- * @internal
  */
 export interface InitializeAndSchematizeConfiguration<
 	TRoot extends FlexFieldSchema = FlexFieldSchema,
@@ -307,7 +299,6 @@ export interface InitializeAndSchematizeConfiguration<
  * Options used to initialize (if needed) and schematize a `SharedTree`.
  * @remarks
  * Using this builder improves type safety and error quality over just constructing the configuration as a object.
- * @internal
  */
 export function buildTreeConfiguration<T extends FlexFieldSchema>(
 	config: InitializeAndSchematizeConfiguration<T>,
