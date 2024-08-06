@@ -27,7 +27,7 @@ export interface LoadModelOptions {
 	 * Path to the API model directory.
 	 * I.e., the directory containing the set of `.api.json` files that comprise the API model.
 	 */
-	modelDirectoryPath: string;
+	readonly modelDirectoryPath: string;
 
 	/**
 	 * Optional receiver of system log data.

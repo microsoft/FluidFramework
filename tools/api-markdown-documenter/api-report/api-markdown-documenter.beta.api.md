@@ -494,7 +494,7 @@ export function loadModel(options: LoadModelOptions): Promise<ApiModel>;
 // @public
 export interface LoadModelOptions {
     readonly logger?: Logger;
-    modelDirectoryPath: string;
+    readonly modelDirectoryPath: string;
 }
 
 // @public

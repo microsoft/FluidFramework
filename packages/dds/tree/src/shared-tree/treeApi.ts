@@ -11,7 +11,7 @@ import {
 	type TreeNode,
 	type TreeNodeApi,
 	type TreeView,
-	getFlexNode,
+	getOrCreateInnerNode,
 	treeNodeApi,
 } from "../simple-tree/index.js";
 import { fail } from "../util/index.js";
@@ -435,7 +435,7 @@ export function runTransaction<
 	} else {
 		const node = treeOrNode as TNode;
 		const t = transaction as (node: TNode) => TResult | typeof rollback;
-		const context = getFlexNode(node).context;
+		const context = getOrCreateInnerNode(node).context;
 		assert(context instanceof Context, 0x901 /* Unsupported context */);
 		const treeView =
 			contextToTreeView.get(context) ?? fail("Expected view to be registered for context");
@@ -453,7 +453,7 @@ function runTransactionInCheckout<TResult>(
 	for (const constraint of preconditions) {
 		switch (constraint.type) {
 			case "nodeInDocument": {
-				const node = getFlexNode(constraint.node);
+				const node = getOrCreateInnerNode(constraint.node);
 				assert(
 					treeApi.status(constraint.node) === TreeStatus.InDocument,
 					0x90f /* Attempted to apply "nodeExists" constraint when building a transaction, but the node is not in the document. */,
