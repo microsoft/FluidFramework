@@ -75,7 +75,7 @@ module.exports = {
 		},
 		"build:copy": [],
 		"build:genver": [],
-		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
+		"typetests:gen": ["^tsc", "tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
 		"ts2esm": [],
 		"tsc": tscDependsOn,
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
@@ -87,7 +87,6 @@ module.exports = {
 		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext", "typetests:gen"],
-			// dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
@@ -234,9 +233,20 @@ module.exports = {
 				"^packages/tools/fluid-runner/package.json",
 			],
 			"fluid-build-tasks-tsc": [
-				// This can be removed once the client release group is using build-tools 0.39.0+.
-				// See https://github.com/microsoft/FluidFramework/pull/21238
-				"^packages/test/test-end-to-end-tests/package.json",
+				// The packages below are excluded because the policy expects the tsc task to depend on "typetests:gen",
+				// but that is not the case any longer, and the policy is out of date.
+				"^common/lib/protocol-definitions/package.json",
+				"^packages/common/driver-definitions/package.json",
+				"^packages/drivers/debugger/package.json",
+				"^packages/drivers/file-driver/package.json",
+				"^packages/drivers/replay-driver/package.json",
+				"^packages/framework/client-logger/app-insights-logger/package.json",
+				"^packages/framework/client-logger/fluid-telemetry/package.json",
+				"^packages/framework/fluid-framework/package.json",
+				"^packages/framework/oldest-client-observer/package.json",
+				"^packages/test/test-pairwise-generator/package.json",
+				"^packages/tools/devtools/devtools-core/package.json",
+				"^packages/tools/devtools/devtools/package.json",
 			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts

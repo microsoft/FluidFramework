@@ -301,7 +301,15 @@ export interface BrokenCompatSettings {
  */
 export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
 
+// Duplicate of what's defined in build-cli/src/library/apiLevel.ts
+export type ApiLevel = "public" | "beta" | "alpha" | "internal" | "legacy";
+
 export interface ITypeValidationConfig {
+	/**
+	 *
+	 */
+	apiLevel: ApiLevel;
+
 	/**
 	 * An object containing types that are known to be broken.
 	 */
@@ -312,6 +320,12 @@ export interface ITypeValidationConfig {
 	 */
 	disabled?: boolean;
 }
+
+export const defaultTypeValidationConfig: ITypeValidationConfig = {
+	apiLevel: "legacy",
+	broken: {},
+	disabled: undefined,
+};
 
 /**
  * Configures a package or release group

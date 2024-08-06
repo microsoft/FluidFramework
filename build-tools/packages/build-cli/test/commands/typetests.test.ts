@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITypeValidationConfig, PackageJson } from "@fluidframework/build-tools";
+import {
+	type ITypeValidationConfig,
+	type PackageJson,
+	defaultTypeValidationConfig,
+} from "@fluidframework/build-tools";
 import { assert, expect } from "chai";
 
 import {
@@ -36,6 +40,7 @@ function packageWithTypeValidation(enabled = true): PackageJson {
 			"test-package-previous": "4.0.0",
 		},
 		typeValidation: {
+			apiLevel: ["legacy"],
 			broken: {
 				"broken-api": {
 					backCompat: false,
@@ -125,9 +130,7 @@ describe("typetests tests", () => {
 	describe("resetBrokenTests", () => {
 		it("empty", () => {
 			const pkgJson: { typeValidation?: ITypeValidationConfig } = {
-				typeValidation: {
-					broken: {},
-				},
+				typeValidation: defaultTypeValidationConfig,
 			};
 			resetBrokenTests(pkgJson);
 			assert.deepEqual(pkgJson, { typeValidation: { broken: {} } });

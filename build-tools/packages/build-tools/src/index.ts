@@ -4,17 +4,17 @@
  */
 
 export { GitRepo } from "./common/gitRepo";
-export { FluidRepo } from "./common/fluidRepo";
+export { defaultTypeValidationConfig, FluidRepo } from "./common/fluidRepo";
 export type {
-	ITypeValidationConfig,
+	BrokenCompatTypes,
 	IFluidBuildConfig,
+	ITypeValidationConfig,
 	PackageNamePolicyConfig,
 	PolicyConfig,
-	BrokenCompatTypes,
 	PreviousVersionStyle,
-	ReleaseNotesSectionName,
 	ReleaseNotesConfig,
 	ReleaseNotesSection,
+	ReleaseNotesSectionName,
 	ScriptRequirement,
 } from "./common/fluidRepo";
 export { getResolvedFluidRoot, loadFluidBuildConfig } from "./common/fluidUtils";
