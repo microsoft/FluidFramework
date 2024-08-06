@@ -21,8 +21,6 @@ import {
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 	intoStoredSchema,
-	type FlexAllowedTypes,
-	type FlexibleNodeContent,
 	type Any,
 } from "../../../feature-libraries/index.js";
 import type { SharedTreeFactory } from "../../../shared-tree/index.js";
@@ -201,9 +199,7 @@ function applyRequiredFieldEdit(
 ): void {
 	switch (change.type) {
 		case "set": {
-			field.content = cursorForJsonableTreeNode(
-				change.value,
-			) as FlexibleNodeContent<FlexAllowedTypes>;
+			field.content = cursorForJsonableTreeNode(change.value);
 			break;
 		}
 		default:

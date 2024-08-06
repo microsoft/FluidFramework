@@ -71,6 +71,7 @@ export {
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
+	type EmptyObject,
 } from "./schemaCreationUtilities.js";
 
 // Exporting the schema (RecursiveObject) to test that recursive types are working correctly.
