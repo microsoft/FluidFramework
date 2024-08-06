@@ -169,15 +169,19 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 
 		const classSchema = getSimpleNodeSchema(node.schema);
 		const mapTree = mapTreeFromNodeData(
-			value as InsertableContent,
+			value as InsertableContent | undefined,
 			classSchema.info as ImplicitAllowedTypes,
 			node.context.nodeKeyManager,
 			getSchemaAndPolicy(node),
 		);
 
+		if (mapTree === undefined) {
+			node.delete(key);
+			return this;
+		}
+
 		prepareContentForHydration(mapTree, node.context.checkout.forest);
-		const cursor = mapTree !== undefined ? cursorForMapTreeNode(mapTree) : undefined;
-		node.set(key, cursor);
+		node.set(key, cursorForMapTreeNode(mapTree));
 		return this;
 	}
 	public get size(): number {
