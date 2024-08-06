@@ -10,7 +10,7 @@ module.exports = function handler(fileData, logger): void {
 		console.log("ENDPOINTNAME", process.env.FLUID_ENDPOINTNAME);
 	}
 
-	for (const testData of fileData.tests) {
+	for (const testData of fileData.benchmarks) {
 		logger.send({
 			namespace: "FFEngineering", // Transfer the telemetry associated with tests performance measurement to namespace "FFEngineering"
 			category: "performance",
