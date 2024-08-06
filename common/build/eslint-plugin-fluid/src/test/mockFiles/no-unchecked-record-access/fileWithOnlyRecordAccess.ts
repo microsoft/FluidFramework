@@ -26,6 +26,12 @@ someObjWithStaticType.a.length; // This should not report an error because lengt
 const someObjWithDynamicType: DynamicType = someObjWithStaticType;
 someObjWithDynamicType.a; // This should not report an error, it should be undefined
 someObjWithDynamicType.a.length; // This will report an error
+someObjWithDynamicType.a?.length; // This should not report an error
 if (someObjWithDynamicType.a) {
 	someObjWithDynamicType.a.length; // This should not report an error because its inside a truthy check
+}
+
+for (const key in someObjWithDynamicType) {
+	someObjWithDynamicType[key]; // This should not report an error
+	someObjWithDynamicType[key].length; // This should not report an error
 }
