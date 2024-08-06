@@ -61,7 +61,6 @@ import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditB
 
 /**
  * Events for {@link ITreeCheckout}.
- * @internal
  */
 export interface CheckoutEvents {
 	/**
@@ -110,7 +109,6 @@ export type RevertibleFactory = (
  * @privateRemarks
  * API for interacting with a {@link SharedTreeBranch}.
  * Implementations of this interface must implement the {@link branchKey} property.
- * @internal
  */
 export interface ITreeCheckout extends AnchorLocator {
 	/**
@@ -278,7 +276,6 @@ export function createTreeCheckout(
  *
  * To avoid updating observers of the view state with intermediate results during a transaction,
  * use {@link ITreeCheckout#fork} and {@link ISharedTreeFork#merge}.
- * @internal
  */
 export interface ITransaction {
 	/**
@@ -342,7 +339,6 @@ class Transaction implements ITransaction {
  * Branch (like in a version control system) of SharedTree.
  *
  * {@link ITreeCheckout} that has forked off of the main trunk/branch.
- * @internal
  */
 export interface ITreeCheckoutFork extends ITreeCheckout, IDisposable {
 	/**
@@ -752,7 +748,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
  * @param transaction - the transaction function. This will be executed immediately. It is passed `view` as an argument for convenience.
  * If this function returns an `Abort` result then the transaction will be aborted. Otherwise, it will be committed.
  * @returns whether or not the transaction was committed or aborted
- * @internal
  */
 export function runSynchronous(
 	view: ITreeCheckout,
