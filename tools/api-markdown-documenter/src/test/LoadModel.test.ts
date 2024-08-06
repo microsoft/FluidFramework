@@ -14,16 +14,11 @@ const dirname = Path.dirname(fileURLToPath(import.meta.url));
 const testModelsDirectoryPath = Path.resolve(dirname, "..", "..", "src", "test", "test-data");
 
 describe("loadModel", () => {
-	it("Model directory with a single API report", async () => {
+	it("Model directory with a single API report (smoke test)", async () => {
 		const modelDirectoryPath = Path.resolve(testModelsDirectoryPath, "simple-suite-test");
 
-		try {
-			await loadModel({ modelDirectoryPath });
-		} catch (error: unknown) {
-			expect.fail(
-				`Expected no error to be thrown, but one was: "${(error as Error)?.message}".`,
-			);
-		}
+		// Shouldn't throw
+		await loadModel({ modelDirectoryPath });
 	});
 
 	it("Invalid model directory throws", async () => {
