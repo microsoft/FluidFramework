@@ -43,7 +43,7 @@ const snapshotsDirectoryPath = Path.resolve(
 
 // Relative to lib/test
 const testDataDirectoryPath = Path.resolve(dirname, "..", "..", "src", "test", "test-data");
-const testModelPaths = [Path.resolve(testDataDirectoryPath, "simple-suite-test.json")];
+const testModelPaths = [Path.resolve(testDataDirectoryPath, "simple-suite-test.api.json")];
 
 /**
  * Simple integration test that validates complete output from simple test package.
