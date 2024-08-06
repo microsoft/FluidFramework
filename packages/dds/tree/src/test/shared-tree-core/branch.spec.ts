@@ -466,6 +466,35 @@ describe("Branches", () => {
 			branch.commitTransaction();
 			assert.deepEqual(log, [false, false, true]);
 		});
+
+		it(`emit a transactionRolledBack event after a transaction scope is rolled back ${withCommitsTitle}`, () => {
+			const branch = create();
+			const log: boolean[] = [];
+			branch.on("transactionRolledBack", (isOuterTransaction) => {
+				log.push(isOuterTransaction);
+			});
+			branch.startTransaction();
+			{
+				potentiallyAddCommit(branch);
+				branch.startTransaction();
+				{
+					potentiallyAddCommit(branch);
+					assert.deepEqual(log, []);
+				}
+				branch.abortTransaction();
+				assert.deepEqual(log, [false]);
+				potentiallyAddCommit(branch);
+				branch.startTransaction();
+				{
+					potentiallyAddCommit(branch);
+				}
+				branch.abortTransaction();
+				assert.deepEqual(log, [false, false]);
+				potentiallyAddCommit(branch);
+			}
+			branch.abortTransaction();
+			assert.deepEqual(log, [false, false, true]);
+		});
 	}
 
 	it("can be read after disposal", () => {

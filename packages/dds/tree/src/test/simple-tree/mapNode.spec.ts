@@ -9,7 +9,7 @@ import { SchemaFactory } from "../../simple-tree/index.js";
 import { hydrate } from "./utils.js";
 import { Tree } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { isTreeNode } from "../../simple-tree/proxies.js";
+import { isTreeNode } from "../../simple-tree/treeNodeKernel.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
@@ -61,6 +61,41 @@ describe("MapNode", () => {
 			const Schema = schemaFactory.map(schemaFactory.number);
 			const node = hydrate(Schema, new Map());
 			assert.equal(Reflect.getPrototypeOf(node), Map.prototype);
+		});
+	});
+
+	it("explicit construction", () => {
+		class Schema extends schemaFactory.map("x", schemaFactory.number) {}
+		const data = [["x", 5]] as const;
+		const fromArray = new Schema(data);
+		assert.deepEqual([...fromArray], data);
+		const fromMap = new Schema(new Map(data));
+		assert.deepEqual([...fromMap], data);
+		const fromIterable = new Schema(new Map(data).entries());
+		assert.deepEqual([...fromIterable], data);
+		const fromRecord = new Schema({ x: 5 });
+		assert.deepEqual([...fromRecord], data);
+	});
+
+	describe("implicit construction", () => {
+		class Schema extends schemaFactory.map("x", schemaFactory.number) {}
+		class Root extends schemaFactory.object("root", { data: Schema }) {}
+		const data = [["x", 5]] as const;
+		it("fromArray", () => {
+			const fromArray = new Root({ data });
+			assert.deepEqual([...fromArray.data], data);
+		});
+		it("fromMap", () => {
+			const fromMap = new Root({ data: new Map(data) });
+			assert.deepEqual([...fromMap.data], data);
+		});
+		it("fromIterable", () => {
+			const fromIterable = new Root({ data: new Map(data).entries() });
+			assert.deepEqual([...fromIterable.data], data);
+		});
+		it("fromRecord", () => {
+			const fromRecord = new Root({ data: { x: 5 } });
+			assert.deepEqual([...fromRecord.data], data);
 		});
 	});
 });

@@ -28,13 +28,15 @@
 			"optionOverrides": {
 				"odsp": {
 					"configurations": {
-						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false],
+						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": [true, false]
 					}
 				},
 				"odsp-odsp-df": {
 					"configurations": {
 						"Fluid.Driver.Odsp.snapshotFormatFetchType": [2],
-						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false],
+						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": [true, false]
 					}
 				},
 				"tinylicious": {
@@ -49,6 +51,11 @@
 				"opSizeinBytes": 214800,
 				"largeOpRate": 2000,
 				"numClients": 12
+			},
+			"virtualization": {
+				"createRate": 2000,
+				"loadRate": 2000,
+				"numClients": 2
 			}
 		},
 		"ci_frs": {

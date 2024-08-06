@@ -8,6 +8,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import {
 	type InternalTreeNode,
+	type MostDerivedData,
 	TreeNode,
 	TreeNodeValid,
 	inPrototypeChain,
@@ -74,7 +75,7 @@ describe("simple-tree types", () => {
 			});
 		});
 
-		it("instancof public", () => {
+		it("instanceof public", () => {
 			assert.throws(() => {
 				// @ts-expect-error TreeNode is only type exported, preventing external code from extending it.
 				const x = {} instanceof TreeNodePublic;
@@ -120,7 +121,7 @@ describe("simple-tree types", () => {
 		it("Valid subclass", () => {
 			const log: string[] = [];
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			const customThis: TreeNodeValid<unknown> = {} as TreeNodeValid<unknown>;
+			let customThis: TreeNodeValid<unknown> = {} as TreeNodeValid<unknown>;
 
 			class Subclass extends TreeNodeValid<number> {
 				public static readonly kind = NodeKind.Array;
@@ -151,8 +152,7 @@ describe("simple-tree types", () => {
 					return new MockFlexNode(Subclass);
 				}
 
-				protected static override constructorCached: typeof TreeNodeValid | undefined =
-					undefined;
+				protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 				protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
 					log.push("oneTimeSetup");
@@ -168,6 +168,12 @@ describe("simple-tree types", () => {
 			}
 
 			const node = new Subclass(1);
+			assert.equal(node, customThis);
+			// Avoid creating two nodes with same object, as that errors due to tree node kernel association.
+			// Suggested way to avoid this lint is impossible in this case, so suppress the lint.
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			customThis = {} as TreeNodeValid<unknown>;
+
 			const node2 = new Subclass(2);
 			assert.deepEqual(log, [
 				"oneTimeSetup",
@@ -180,8 +186,6 @@ describe("simple-tree types", () => {
 				"prepareInstance",
 				"done",
 			]);
-
-			assert.equal(node, customThis);
 			assert.equal(node2, customThis);
 		});
 
@@ -198,12 +202,12 @@ describe("simple-tree types", () => {
 
 			assert.throws(
 				() => new Subclass(),
-				(error: Error) => validateAssertionError(error, /constructorCached/),
+				(error: Error) => validateAssertionError(error, /invalid schema class/),
 			);
 			// Ensure oneTimeSetup doesn't prevent error from rethrowing
 			assert.throws(
 				() => new Subclass(),
-				(error: Error) => validateAssertionError(error, /constructorCached/),
+				(error: Error) => validateAssertionError(error, /invalid schema class/),
 			);
 		});
 
@@ -232,8 +236,7 @@ describe("simple-tree types", () => {
 			}
 
 			class A extends Subclass {
-				protected static override constructorCached: typeof TreeNodeValid | undefined =
-					undefined;
+				protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 				protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
 					log.push("A");
@@ -241,8 +244,7 @@ describe("simple-tree types", () => {
 			}
 
 			class B extends Subclass {
-				protected static override constructorCached: typeof TreeNodeValid | undefined =
-					undefined;
+				protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 				protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
 					log.push("B");
@@ -281,8 +283,7 @@ describe("simple-tree types", () => {
 			}
 
 			class A extends Subclass {
-				protected static override constructorCached: typeof TreeNodeValid | undefined =
-					undefined;
+				protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 				protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
 					log.push(this.name);
@@ -297,7 +298,7 @@ describe("simple-tree types", () => {
 			assert.throws(
 				() => new A(),
 				validateUsageError(
-					`Two schema classes were instantiated (A and B) which derived from the same SchemaFactory generated class. This is invalid`,
+					`Two schema classes were used (A and B) which derived from the same SchemaFactory generated class ("Subclass"). This is invalid.`,
 				),
 			);
 		});

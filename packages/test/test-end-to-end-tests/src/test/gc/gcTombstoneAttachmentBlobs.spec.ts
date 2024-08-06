@@ -40,7 +40,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 	const configProvider = createTestConfigProvider();
 	const gcOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: 0,
-		gcThrowOnTombstoneLoad: true,
+		enableGCSweep: true,
 	};
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
@@ -334,7 +334,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 		);
 
 		itExpects(
-			"logs error on retrieval of tombstones attachment blobs when ThrowOnTombstoneUsage is not enabled",
+			"logs tombstone event on retrieval of tombstones attachment blobs when ThrowOnTombstoneLoad is not enabled",
 			[
 				{
 					eventName:
@@ -343,8 +343,8 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				},
 			],
 			async () => {
-				// Override ThrowOnTombstoneLoad setting to off.
-				configProvider.set("Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride", false);
+				// Disable ThrowOnTombstoneLoad setting.
+				configProvider.set("Fluid.GarbageCollection.DisableThrowOnTombstoneLoad", true);
 
 				const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 

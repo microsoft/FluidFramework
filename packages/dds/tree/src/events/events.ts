@@ -112,7 +112,6 @@ export type Off = () => void;
 
 /**
  * Interface for an event emitter that can emit typed events to subscribed listeners.
- * @internal
  */
 export interface IEmitter<TListeners extends Listeners<TListeners>> {
 	/**
@@ -146,7 +145,6 @@ export interface IEmitter<TListeners extends Listeners<TListeners>> {
  *
  * A class can delegate handling {@link Listenable} to the returned value while using it to emit the events.
  * See also `EventEmitter` which be used as a base class to implement {@link Listenable} via extension.
- * @internal
  */
 export function createEmitter<TListeners extends object>(
 	noListeners?: NoListenersCallback<TListeners>,
@@ -157,14 +155,12 @@ export function createEmitter<TListeners extends object>(
 /**
  * Called when the last listener for `eventName` is removed.
  * Useful for determining when to clean up resources related to detecting when the event might occurs.
- * @internal
  */
 export type NoListenersCallback<TListeners extends object> = (
 	eventName: keyof Listeners<TListeners>,
 ) => void;
 
 /**
- * @internal
  */
 export interface HasListeners<TListeners extends Listeners<TListeners>> {
 	/**

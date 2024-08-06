@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import { SegmentGroup } from "../index.js";
+import { SegmentGroup, endpointPosAndSide, type SequencePlace } from "../index.js";
 import {
 	IMergeTreeDeltaOp,
 	type IMergeTreeInsertMsg,
@@ -24,7 +24,7 @@ export class ReconnectTestHelper {
 	clients = createClientsAtInitialState(
 		{
 			initialState: "",
-			options: { mergeTreeEnableObliterate: true },
+			options: { mergeTreeEnableObliterate: true, mergeTreeEnableObliterateReconnect: true },
 		},
 		...ClientIds,
 	);
@@ -50,9 +50,26 @@ export class ReconnectTestHelper {
 		this.ops.push(client.makeOpMessage(client.removeRangeLocal(start, end), ++this.seq));
 	}
 
-	public obliterateRange(clientName: ClientName, start: number, end: number): void {
+	public obliterateRange(
+		clientName: ClientName,
+		start: SequencePlace,
+		end: SequencePlace,
+	): void {
 		const client = this.clients[clientName];
-		this.ops.push(client.makeOpMessage(client.obliterateRangeLocal(start, end), ++this.seq));
+		let { startPos, endPos } = endpointPosAndSide(start, end);
+		assert(
+			startPos !== undefined && endPos !== undefined,
+			"start and end positions must be defined",
+		);
+		startPos = startPos === "start" ? 0 : startPos;
+		endPos = endPos === "end" ? client.getLength() : endPos;
+		assert(
+			startPos !== "end" && endPos !== "start",
+			"start cannot be end and end cannot be start",
+		);
+		this.ops.push(
+			client.makeOpMessage(client.obliterateRangeLocal(startPos, endPos), ++this.seq),
+		);
 	}
 
 	public insertTextLocal(
@@ -91,15 +108,26 @@ export class ReconnectTestHelper {
 
 	public obliterateRangeLocal(
 		clientName: ClientName,
-		start: number,
-		end: number,
+		start: SequencePlace,
+		end: SequencePlace,
 	): {
 		op: IMergeTreeObliterateMsg;
 		seg: SegmentGroup;
 		refSeq: number;
 	} {
 		const client = this.clients[clientName];
-		const op = client.obliterateRangeLocal(start, end);
+		let { startPos, endPos } = endpointPosAndSide(start, end);
+		assert(
+			startPos !== undefined && endPos !== undefined,
+			"start and end positions must be defined",
+		);
+		startPos = startPos === "start" ? 0 : startPos;
+		endPos = endPos === "end" ? client.getLength() : endPos;
+		assert(
+			startPos !== "end" && endPos !== "start",
+			"start cannot be end and end cannot be start",
+		);
+		const op = client.obliterateRangeLocal(startPos, endPos);
 		assert(op);
 		const seg = client.peekPendingSegmentGroups();
 		assert(seg);

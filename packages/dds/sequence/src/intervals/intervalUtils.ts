@@ -12,9 +12,9 @@ import {
 	PropertiesManager,
 	PropertySet,
 	SlidingPreference,
+	SequencePlace,
+	Side,
 } from "@fluidframework/merge-tree/internal";
-
-import { SequencePlace, Side } from "../intervalCollection.js";
 
 /**
  * Basic interval abstraction
@@ -235,9 +235,9 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	 * @param op - If this create came from a remote client, op that created it. Default is undefined (i.e. local)
 	 * @param fromSnapshot - If this create came from loading a snapshot. Default is false.
 	 * @param startSide - The side on which the start position lays. See
-	 * {@link SequencePlace} for additional context
+	 * {@link @fluidframework/merge-tree#SequencePlace} for additional context
 	 * @param endSide - The side on which the end position lays. See
-	 * {@link SequencePlace} for additional context
+	 * {@link @fluidframework/merge-tree#SequencePlace} for additional context
 	 */
 	create(
 		label: string,

@@ -21,8 +21,6 @@ import {
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 	intoStoredSchema,
-	type FlexAllowedTypes,
-	type FlexibleNodeContent,
 	type Any,
 } from "../../../feature-libraries/index.js";
 import type { SharedTreeFactory } from "../../../shared-tree/index.js";
@@ -105,7 +103,7 @@ export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory
 }
 
 // TODO: Update this function to be done in a more ergonomic way using libraries
-function generateLeafNodeSchemas(nodeTypes: string[]) {
+export function generateLeafNodeSchemas(nodeTypes: string[]) {
 	const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.leaf" });
 	const leafNodeSchemas = [];
 	for (const nodeType of nodeTypes) {
@@ -162,7 +160,7 @@ function applySequenceFieldEdit(
 ): void {
 	switch (change.type) {
 		case "insert": {
-			field.insertAt(change.index, cursorForJsonableTreeField(change.content));
+			field.sequenceEditor().insert(change.index, cursorForJsonableTreeField(change.content));
 			break;
 		}
 		case "remove": {
@@ -172,17 +170,20 @@ function applySequenceFieldEdit(
 			break;
 		}
 		case "intraFieldMove": {
-			field.moveRangeToIndex(change.dstIndex, change.range.first, change.range.last + 1);
+			field
+				.sequenceEditor()
+				.move(change.range.first, change.range.last + 1 - change.range.first, change.dstIndex);
 			break;
 		}
 		case "crossFieldMove": {
 			const dstField = navigateToField(tree, change.dstField);
 			assert(dstField.is(tree.currentSchema.objectNodeFieldsObject.sequenceChildren));
-			dstField.moveRangeToIndex(
-				change.dstIndex,
+			dstField.context.checkout.editor.move(
+				field.getFieldPath(),
 				change.range.first,
-				change.range.last + 1,
-				field,
+				change.range.last + 1 - change.range.first,
+				dstField.getFieldPath(),
+				change.dstIndex,
 			);
 			break;
 		}
@@ -198,9 +199,7 @@ function applyRequiredFieldEdit(
 ): void {
 	switch (change.type) {
 		case "set": {
-			field.content = cursorForJsonableTreeNode(
-				change.value,
-			) as FlexibleNodeContent<FlexAllowedTypes>;
+			field.content = cursorForJsonableTreeNode(change.value);
 			break;
 		}
 		default:

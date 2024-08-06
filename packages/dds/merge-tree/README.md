@@ -5,7 +5,7 @@ sequence of collaboratively edited items. MergeTree is used in both SharedSequen
 
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER:) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -34,6 +34,10 @@ For more information on the related support guarantees, see [API Support Levels]
 To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/merge-tree` like normal.
 
 To access the `legacy` APIs, import via `@fluidframework/merge-tree/legacy`.
+
+## API Documentation
+
+API documentation for **@fluidframework/merge-tree** is available at <https://fluidframework.com/docs/apis/merge-tree>.
 
 <!-- prettier-ignore-end -->
 
@@ -132,14 +136,10 @@ consequently should be ignored during the search.
 Note that any locally applied operations that are still pending sequencing by the Fluid service are unknown to
 remote clients and should be ignored when processing remote ops.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER:) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/merge-tree** is available at <https://fluidframework.com/docs/apis/merge-tree>.
 
 ## Minimum Client Requirements
 
