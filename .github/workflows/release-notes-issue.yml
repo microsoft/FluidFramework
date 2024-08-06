@@ -84,21 +84,21 @@ jobs:
         with:
           path: ${{ github.workspace }}/.github/workflows/data/release-notes-issue-intro.md
 
-      # Replace the current issue body with the release notes we generated.
+      # Replace the issue body with the intro; we'll append the new release notes in the next step.
+      - name: Replace issue body with intro
+        uses: julien-deramond/update-issue-body@a7fae45395cac5a23318d38f7b09a58650dfe84f # ratchet:julien-deramond/update-issue-body@v1
+        with:
+          issue-number: ${{ env.ISSUE }}
+          body: ${{ steps.intro.outputs.content }}
+          edit-mode: replace
+
+      # Append the release notes we generated to the issue body.
       - name: Replace issue body with release notes
         uses: julien-deramond/update-issue-body@a7fae45395cac5a23318d38f7b09a58650dfe84f # ratchet:julien-deramond/update-issue-body@v1
         with:
           issue-number: ${{ env.ISSUE }}
           body: ${{ steps.relNotes.outputs.content }}
-          edit-mode: replace
-
-      # Prepend the issue intro to the issue.
-      - name: Prepend issue intro
-        uses: julien-deramond/update-issue-body@a7fae45395cac5a23318d38f7b09a58650dfe84f # ratchet:julien-deramond/update-issue-body@v1
-        with:
-          issue-number: ${{ env.ISSUE }}
-          body: ${{ steps.intro.outputs.content }}
-          edit-mode: prepend
+          edit-mode: append
 
       # Update the issue title with the (possibly new) version
       - name: Update issue title
