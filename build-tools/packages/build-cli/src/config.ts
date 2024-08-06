@@ -44,6 +44,11 @@ export interface FlubConfig {
 	branchReleaseTypes?: {
 		[name: string]: VersionBumpType | PreviousVersionStyle;
 	};
+
+	/**
+	 * Configuration for the `generate:releaseNotes` command.
+	 */
+	releaseNotes?: ReleaseNotesConfig;
 }
 
 /**
@@ -116,6 +121,29 @@ export type PreviousVersionStyle =
 	| "^previousMinor"
 	| "~previousMajor"
 	| "~previousMinor";
+
+/**
+ * A short name for the section. Each section in a {@link ReleaseNotesConfig} must have a unique name.
+ */
+export type ReleaseNotesSectionName = string;
+
+/**
+ * Configuration for a release notes section.
+ */
+export interface ReleaseNotesSection {
+	/**
+	 * A full string to serve as the heading for the section when displayed in release notes.
+	 */
+	heading: string;
+}
+
+/**
+ * Configuration for the `generate:releaseNotes` command. If this configuration is not present in the config, the
+ * `generate:releaseNotes` command will report an error.
+ */
+export interface ReleaseNotesConfig {
+	sections: Record<ReleaseNotesSectionName, ReleaseNotesSection>;
+}
 
 /**
  * Policy configuration for the `check:policy` command.
