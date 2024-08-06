@@ -14487,58 +14487,6 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
 
-  packages/test/test-app-insights-logger:
-    dependencies:
-      '@fluid-internal/test-driver-definitions':
-        specifier: workspace:~
-        version: link:../test-driver-definitions
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../common/core-interfaces
-      applicationinsights:
-        specifier: ^2.1.9
-        version: 2.9.1
-    devDependencies:
-      '@arethetypeswrong/cli':
-        specifier: ^0.15.2
-        version: 0.15.2
-      '@biomejs/biome':
-        specifier: ~1.8.3
-        version: 1.8.3
-      '@fluid-tools/build-cli':
-        specifier: ^0.42.0
-        version: 0.42.0(webpack-cli@4.10.0)
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: ^0.42.0
-        version: 0.42.0
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^5.3.0
-        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
-      '@microsoft/api-extractor':
-        specifier: ^7.45.1
-        version: 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)(@types/node@18.19.1)
-      concurrently:
-        specifier: ^8.2.1
-        version: 8.2.2
-      copyfiles:
-        specifier: ^2.4.1
-        version: 2.4.1
-      eslint:
-        specifier: ~8.55.0
-        version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
-      rimraf:
-        specifier: ^4.4.0
-        version: 4.4.1
-      typescript:
-        specifier: ~5.4.5
-        version: 5.4.5
-
   packages/test/test-driver-definitions:
     dependencies:
       '@fluidframework/core-interfaces':
