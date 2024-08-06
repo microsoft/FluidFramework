@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICodecFamily } from "../../codec/index.js";
@@ -112,8 +113,6 @@ export function relevantRemovedRoots(change: ModularChangeset): Iterable<DeltaDe
  * At some point it will likely be worth supporting at least some of these, possibly using a mechanism that could support all of them if desired.
  * If/when such a mechanism becomes available, an evaluation should be done to determine if any existing editing operations should be changed to leverage it
  * (Possibly by adding opt ins at the view schema layer).
- *
- * @internal
  */
 export interface IDefaultEditBuilder {
 	/**
@@ -170,7 +169,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		changeReceiver: (change: DefaultChangeset) => void,
 	) {
-		this.modularBuilder = new ModularEditBuilder(family, changeReceiver);
+		this.modularBuilder = new ModularEditBuilder(family, fieldKinds, changeReceiver);
 	}
 
 	public enterTransaction(): void {
@@ -286,14 +285,15 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						// in the composition performed by `submitChanges`.
 						attachAncestorIndex -= count;
 						let parent: UpPath | undefined = attachPath[sharedDepth - 1];
+						const parentField = attachPath[sharedDepth] ?? oob();
 						parent = {
 							parent,
 							parentIndex: attachAncestorIndex,
-							parentField: attachPath[sharedDepth].parentField,
+							parentField: parentField.parentField,
 						};
 						for (let i = sharedDepth + 1; i < attachPath.length; i += 1) {
 							parent = {
-								...attachPath[i],
+								...(attachPath[i] ?? oob()),
 								parent,
 							};
 						}
@@ -385,7 +385,6 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 }
 
 /**
- * @internal
  */
 export interface ValueFieldEditBuilder {
 	/**
@@ -397,7 +396,6 @@ export interface ValueFieldEditBuilder {
 }
 
 /**
- * @internal
  */
 export interface OptionalFieldEditBuilder {
 	/**
@@ -410,7 +408,6 @@ export interface OptionalFieldEditBuilder {
 }
 
 /**
- * @internal
  */
 export interface SequenceFieldEditBuilder {
 	/**
@@ -443,8 +440,8 @@ function getSharedPrefixLength(pathA: readonly UpPath[], pathB: readonly UpPath[
 	const minDepth = Math.min(pathA.length, pathB.length);
 	let sharedDepth = 0;
 	while (sharedDepth < minDepth) {
-		const detachStep = pathA[sharedDepth];
-		const attachStep = pathB[sharedDepth];
+		const detachStep = pathA[sharedDepth] ?? oob();
+		const attachStep = pathB[sharedDepth] ?? oob();
 		if (detachStep !== attachStep) {
 			if (
 				detachStep.parentField !== attachStep.parentField ||

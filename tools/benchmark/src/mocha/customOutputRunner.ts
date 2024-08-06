@@ -5,7 +5,9 @@
 
 import { Test } from "mocha";
 
-import type { BenchmarkDescription, MochaExclusiveOptions } from "../Configuration";
+import type { BenchmarkDescription, MochaExclusiveOptions, Titled } from "../Configuration";
+import type { BenchmarkData, CustomData } from "../ResultTypes";
+import { prettyNumber } from "../RunnerUtilities";
 import { timer } from "../timer";
 
 /**
@@ -13,17 +15,16 @@ import { timer } from "../timer";
  *
  * @public
  */
-export interface CustomBenchmarkOptions extends BenchmarkDescription, MochaExclusiveOptions {
-	/**
-	 * Title about benchmark option
-	 */
-	title: string;
-
+export interface CustomBenchmarkOptions
+	extends Titled,
+		BenchmarkDescription,
+		MochaExclusiveOptions {
 	/**
 	 * Runs the benchmark.
 	 */
 	run: (reporter: IMeasurementReporter) => void | Promise<unknown>;
 }
+
 /**
  * This is a wrapper for Mocha's `it` function which runs the specified function {@link CustomBenchmarkOptions.run}
  * and gives it full control over the measurements that will be reported as benchmark output.
@@ -37,21 +38,22 @@ export interface CustomBenchmarkOptions extends BenchmarkDescription, MochaExclu
 export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 	const itFunction = options.only === true ? it.only : it;
 	const test = itFunction(`${options.title} @CustomBenchmark`, async () => {
-		const customData: Record<string, number> = {};
+		const customData: CustomData = {};
 		const reporter: IMeasurementReporter = {
 			addMeasurement: (key: string, value: number) => {
 				if (key in customData) {
 					throw new Error(`Measurement key '${key}' was already used.`);
 				}
-				customData[key] = value;
+				customData[key] = { rawValue: value, formattedValue: prettyNumber(value) };
 			},
 		};
 
 		const startTime = timer.now();
 		await options.run(reporter);
+		const elapsedSeconds = timer.toSeconds(startTime, timer.now());
 
-		const results = {
-			elapsedSeconds: timer.toSeconds(startTime, timer.now()),
+		const results: BenchmarkData = {
+			elapsedSeconds,
 			customData,
 		};
 

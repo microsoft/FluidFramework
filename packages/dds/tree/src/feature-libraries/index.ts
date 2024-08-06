@@ -41,26 +41,6 @@ export {
 	comparePipeline,
 	compileSyntaxTree,
 } from "./editableTreeBinder.js";
-export {
-	typeNameSymbol,
-	valueSymbol,
-	type ContextuallyTypedNodeDataObject,
-	type ContextuallyTypedNodeData,
-	type MarkedArrayLike,
-	isContextuallyTypedNodeDataObject,
-	getFieldKind,
-	type ArrayLikeMut,
-	cursorFromContextualData,
-	cursorsFromContextualData,
-	type ContextuallyTypedFieldData,
-	cursorForTypedData,
-	cursorForTypedTreeData,
-	cursorsForTypedFieldData,
-	normalizeNewFieldContent,
-	type NewFieldContent,
-	getPossibleTypes,
-	getAllowedTypes,
-} from "./contextuallyTyped.js";
 
 export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.js";
 
@@ -131,6 +111,7 @@ export {
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
 	getAllowedContentIncompatibilities,
+	isRepoSuperset,
 } from "./modular-schema/index.js";
 
 export {
@@ -280,6 +261,9 @@ export {
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
 	getSchemaAndPolicy,
+	isFreedSymbol,
+	LazyEntity,
+	treeStatusFromAnchorCache,
 } from "./flex-tree/index.js";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";
@@ -287,18 +271,6 @@ export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";
 export { TreeCompressionStrategy } from "./treeCompressionUtils.js";
 
 export { valueSchemaAllows } from "./valueUtilities.js";
-
-export type {
-	InsertableFlexNode,
-	InsertableFlexField,
-	AllowedTypesToFlexInsertableTree,
-	ApplyMultiplicity,
-	// Internal
-	CollectOptions,
-	TypedFields,
-	UnbrandedName,
-	EmptyObject,
-} from "./schema-aware/index.js";
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer.js";
 

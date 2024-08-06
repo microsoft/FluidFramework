@@ -30,7 +30,7 @@ import {
 	type TreeFieldFromImplicitField,
 	type TreeView,
 	type TreeViewEvents,
-	getProxyForField,
+	getTreeNodeForField,
 	toFlexSchema,
 	setField,
 	normalizeFieldSchema,
@@ -42,7 +42,7 @@ import {
 import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
 
 import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
-import type { TreeCheckout } from "./treeCheckout.js";
+import type { ITreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView } from "./treeView.js";
 
 /**
@@ -84,7 +84,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	private readonly rootFieldSchema: FieldSchema;
 
 	public constructor(
-		public readonly checkout: TreeCheckout,
+		public readonly checkout: ITreeCheckout,
 		public readonly config: TreeViewConfiguration<TRootSchema>,
 		public readonly nodeKeyManager: NodeKeyManager,
 		public readonly breaker: Breakable = new Breakable("SchematizingSimpleTreeView"),
@@ -315,7 +315,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			);
 		}
 		const view = this.getView();
-		return getProxyForField(view.flexTree) as TreeFieldFromImplicitField<TRootSchema>;
+		return getTreeNodeForField(view.flexTree) as TreeFieldFromImplicitField<TRootSchema>;
 	}
 
 	public set root(newRoot: InsertableTreeFieldFromImplicitField<TRootSchema>) {
@@ -335,7 +335,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
  * This may only be called when the schema is already known to be compatible (typically via ensureSchema).
  */
 export function requireSchema<TRoot extends FlexFieldSchema>(
-	checkout: TreeCheckout,
+	checkout: ITreeCheckout,
 	viewSchema: ViewSchema<TRoot>,
 	onDispose: () => void,
 	nodeKeyManager: NodeKeyManager,

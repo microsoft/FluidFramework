@@ -13,7 +13,6 @@ import {
 	type TestCaseTypeData,
 	type TypeData,
 	buildTestCase,
-	getFullTypeName,
 	getTypeTestPreviousPackageDetails,
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
@@ -357,7 +356,7 @@ export function typeDataFromFile(
 				log,
 				addStringScope(namespacePrefix, exportedName),
 			)) {
-				const fullName = getFullTypeName(typeDefinition);
+				const fullName = typeDefinition.testCaseName;
 				if (typeData.has(fullName)) {
 					// This system does not properly handle overloads: instead it only keeps the last signature.
 					log.warning(
@@ -445,14 +444,46 @@ function getNodeTypeData(node: Node, log: Logger, exportedName: string): TypeDat
 			? node.getFirstAncestorByKindOrThrow(SyntaxKind.VariableStatement).getJsDocs()
 			: node.getJsDocs();
 
-		const typeData: TypeData[] = [
-			{
-				name: exportedName,
-				kind: node.getKindName(),
-				node,
-				tags: getTags(docs),
-			},
-		];
+		const typeData: TypeData[] = [];
+
+		const dataCommon = {
+			name: exportedName,
+			node,
+			tags: getTags(docs),
+		};
+
+		const escapedTypeName = exportedName.replace(/\./g, "_");
+		const trimmedKind = node.getKindName().replace(/Declaration/g, "");
+
+		if (
+			// Covers instance type of the class (including generics of it)
+			Node.isClassDeclaration(node) ||
+			Node.isEnumDeclaration(node) ||
+			Node.isInterfaceDeclaration(node) ||
+			Node.isTypeAliasDeclaration(node)
+		) {
+			typeData.push({
+				...dataCommon,
+				useTypeof: false,
+				testCaseName: `${trimmedKind}_${escapedTypeName}`,
+			});
+		}
+
+		if (
+			// Covers statics of the class (non-generic)
+			Node.isClassDeclaration(node) ||
+			Node.isVariableDeclaration(node) ||
+			Node.isFunctionDeclaration(node)
+		) {
+			typeData.push({
+				...dataCommon,
+				useTypeof: true,
+				testCaseName: `${
+					Node.isClassDeclaration(node) ? "ClassStatics" : trimmedKind
+				}_${escapedTypeName}`,
+			});
+		}
+
 		return typeData;
 	}
 
@@ -514,7 +545,7 @@ export function generateCompatibilityTestCases(
 			...oldTypeData,
 			removed: false,
 		};
-		const currentTypeData = currentTypeMap.get(getFullTypeName(oldTypeData));
+		const currentTypeData = currentTypeMap.get(oldTypeData.testCaseName);
 		// if the current package is missing a type, we will use the old type data.
 		// this can represent a breaking change which can be disable in the package.json.
 		// this can also happen for type changes, like type to interface, which can remain
@@ -524,7 +555,7 @@ export function generateCompatibilityTestCases(
 				? {
 						prefix: "current",
 						...oldTypeData,
-						kind: `Removed${oldTypeData.kind}`,
+						testCaseName: `Removed${oldTypeData.testCaseName}`,
 						removed: true,
 					}
 				: {
@@ -534,7 +565,7 @@ export function generateCompatibilityTestCases(
 					};
 
 		// look for settings not under version, then fall back to version for back compat
-		const brokenData = broken?.[getFullTypeName(currentType)];
+		const brokenData = broken?.[currentType.testCaseName];
 
 		const typePreprocessor = selectTypePreprocessor(currentType);
 		if (typePreprocessor !== undefined) {
@@ -544,6 +575,12 @@ export function generateCompatibilityTestCases(
 				// but trying to implement it based on the old version should not occur and is not a supported usage.
 				// This means that adding members to sealed types, as well as making their members have more specific types is allowed as a non-breaking change.
 				// This check implements skipping generation of type tests which would flag such changes to sealed types as errors.
+			} else if (oldTypeData.useTypeof) {
+				// If the type was using typeof treat it like `@sealed`.
+				// This assumes adding members to existing variables (and class statics) is non-breaking.
+				// This is true in most cases, though there are some edge cases where this assumption is wrong
+				// (for example name collisions with inherited statics in subclasses, and explicit use of typeof in user code to define a type which it implements),
+				// but overall skipping this case seems preferable to the large amount of false positives keeping it produces.
 			} else {
 				testString.push(
 					`/*`,
@@ -551,7 +588,7 @@ export function generateCompatibilityTestCases(
 					` * If this test starts failing, it indicates a change that is not forward compatible.`,
 					` * To acknowledge the breaking change, add the following to package.json under`,
 					` * typeValidation.broken:`,
-					` * "${getFullTypeName(currentType)}": {"forwardCompat": false}`,
+					` * "${currentType.testCaseName}": {"forwardCompat": false}`,
 					" */",
 					...buildTestCase(
 						oldType,
@@ -568,7 +605,7 @@ export function generateCompatibilityTestCases(
 				` * If this test starts failing, it indicates a change that is not backward compatible.`,
 				` * To acknowledge the breaking change, add the following to package.json under`,
 				` * typeValidation.broken:`,
-				` * "${getFullTypeName(currentType)}": {"backCompat": false}`,
+				` * "${currentType.testCaseName}": {"backCompat": false}`,
 				" */",
 				...buildTestCase(
 					currentType,

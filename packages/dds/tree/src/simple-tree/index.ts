@@ -39,9 +39,9 @@ export {
 	type ApplyKind,
 } from "./schemaTypes.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
-export { getFlexNode } from "./proxyBinding.js";
-export { treeNodeApi, type TreeNodeApi, type TreeChangeEvents } from "./treeNodeApi.js";
-export { toFlexSchema, cursorFromUnhydratedRoot } from "./toFlexSchema.js";
+export { getOrCreateInnerNode, tryDisposeTreeNode } from "./proxyBinding.js";
+export { treeNodeApi, type TreeNodeApi } from "./treeNodeApi.js";
+export { toFlexSchema } from "./toFlexSchema.js";
 export type {
 	FieldHasDefaultUnsafe,
 	ObjectFromSchemaRecordUnsafe,
@@ -57,10 +57,11 @@ export type {
 	InsertableTypedNodeUnsafe,
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
+	ReadonlyMapInlined,
 } from "./typesUnsafe.js";
 export type { ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
 export {
-	getProxyForField,
+	getTreeNodeForField,
 	type InsertableContent,
 	prepareContentForHydration,
 } from "./proxies.js";
@@ -70,6 +71,7 @@ export {
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
+	type EmptyObject,
 } from "./schemaCreationUtilities.js";
 
 // Exporting the schema (RecursiveObject) to test that recursive types are working correctly.
@@ -80,9 +82,9 @@ export {
 	RecursiveObjectPojoMode as test_RecursiveObjectPojoMode,
 } from "./testRecursiveDomain.js";
 
-// TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instancof.
+// TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instanceof.
 // See docs on TreeNode for more details.
-export type { TreeNode, Unhydrated, InternalTreeNode } from "./types.js";
+export type { TreeChangeEvents, TreeNode, Unhydrated, InternalTreeNode } from "./types.js";
 export {
 	TreeArrayNode,
 	IterableTreeArrayContent,
@@ -95,5 +97,5 @@ export {
 	type TreeObjectNode,
 	setField,
 } from "./objectNode.js";
-export type { TreeMapNode } from "./mapNode.js";
+export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
 export { mapTreeFromNodeData } from "./toMapTree.js";

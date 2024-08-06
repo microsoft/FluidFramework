@@ -2,22 +2,29 @@
 
 This package contains tools and utilities that should help application developers migrate their projects
 from `PropertyDDS` to the new `SharedTree` DDS (see the
-[@fluidframework/tree](https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree2/README.md)).
+[@fluidframework/tree](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/README.md)).
 
 ## Schema converter (runtime)
 
-A [`schema-converter`](./src/schemaConverter.ts) converts a `PropertyDDS` schema template into a [`TreeSchema`](https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree2/src/feature-libraries/modular-schema/typedSchema/schemaBuilder.ts) at runtime, so that the resulting schema can be used by the `SharedTree`, for example:
+This packages used to contain a [runtime schema converter](https://github.com/microsoft/FluidFramework/blob/614392a6ff0f83e279d851a009fb4fd37de10201/experimental/PropertyDDS/packages/property-shared-tree-interop/src/schemaConverter.ts) to converts a `PropertyDDS` schema template into a `SharedTree` schema.
+
+This converter had two main issues:
+
+1. It targeted the "FlexTree" schema system, which is now internal and planned to be removed from the tree package. Resolving this requires porting the schema converter to target either the stored schema abstraction or the new public [`TreeSchema`](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/simple-tree/schemaFactory.ts). Doing so would require some rework with support for `any` is likely the biggest change since it is not supported anymore so instead an explicit list of all types would have to be used.
+2. A more appropriate workflow, allowing use of schema aware APIs and a more standard tree usage experience, will require generating source code for the new tree schema which can be pasted into the updated application. A tool to take in a schema at runtime and generate such code was planned, but never implemented.
+
+Usage if restored and updated could look something like:
 
 ```ts
 PropertyFactory.register(propertyDDSSchemas);
-const fullDocumentSchema = convertPropertyToSharedTreeStorageSchema(
+const rootSchema = convertPropertyToSharedTreeStorageSchema(
 	rootFieldKind,
 	new Set([...allowedRootTypeNames]),
 );
-sharedTree.storedSchema.update(fullDocumentSchema);
+writeSource(fullDocumentSchema, "schema.ts");
 ```
 
-The converter comprehensively adds `array` and `map` collection schemas for all types referenced in the `PropertyDDS` schema.
+The converter comprehensively added `array` and `map` collection schemas for all types referenced in the `PropertyDDS` schema.
 
 ### Built-in schemas
 
@@ -42,9 +49,7 @@ This includes the following primitive types:
 
 as well as `NodeProperty`, `NamedProperty`, `NamedNodeProperty` and `RelationshipProperty` types.
 
-### Limitations
-
-The main limitation is currently the runtime nature of the converter, which means that developers can only buid applications using the general purpose APIs of the `EditableTree` without static types. Using the resulting schema to generate static types using e.g. a `schema-aware` API (see [`schema-aware`](https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree2/src/feature-libraries/schema-aware/README.md)) of the `SharedTree` is currently still a work in progress.
+### Additional Limitations
 
 In addition, the following concepts are currently not supported by the schema converter and/or the `SharedTree`:
 

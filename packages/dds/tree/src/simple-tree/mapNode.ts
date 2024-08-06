@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
 	type FlexMapNodeSchema,
 	type FlexTreeNode,
@@ -14,12 +13,12 @@ import {
 	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import {
+	type FactoryContent,
 	type InsertableContent,
-	getProxyForField,
-	markContentType,
+	getTreeNodeForField,
 	prepareContentForHydration,
 } from "./proxies.js";
-import { getFlexNode } from "./proxyBinding.js";
+import { getOrCreateInnerNode } from "./proxyBinding.js";
 import { getSimpleNodeSchema } from "./schemaCaching.js";
 import {
 	NodeKind,
@@ -32,9 +31,10 @@ import {
 	typeNameSymbol,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
-import { type TreeNode, TreeNodeValid } from "./types.js";
+import { type MostDerivedData, type TreeNode, TreeNodeValid } from "./types.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import type { RestrictiveReadonlyRecord } from "../util/index.js";
 
 /**
  * A map of string keys to tree objects.
@@ -127,7 +127,7 @@ const handler: ProxyHandler<TreeMapNode> = {
 };
 
 abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends TreeNodeValid<
-	Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>
+	MapNodeInsertableData<T>
 > {
 	public static readonly kind = NodeKind.Map;
 
@@ -135,7 +135,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		return this.entries();
 	}
 	public delete(key: string): void {
-		const node = getFlexNode(this);
+		const node = getOrCreateInnerNode(this);
 		if (isMapTreeNode(node)) {
 			throw new UsageError(`A map cannot be mutated before being inserted into the tree`);
 		}
@@ -143,45 +143,52 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		node.delete(key);
 	}
 	public *entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
-		const node = getFlexNode(this);
+		const node = getOrCreateInnerNode(this);
 		for (const key of node.keys()) {
-			yield [key, getProxyForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>];
+			yield [
+				key,
+				getTreeNodeForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>,
+			];
 		}
 	}
 	public get(key: string): TreeNodeFromImplicitAllowedTypes<T> {
-		const node = getFlexNode(this);
+		const node = getOrCreateInnerNode(this);
 		const field = node.getBoxed(key);
-		return getProxyForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
+		return getTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 	}
 	public has(key: string): boolean {
-		const node = getFlexNode(this);
+		const node = getOrCreateInnerNode(this);
 		return node.has(key);
 	}
 	public keys(): IterableIterator<string> {
-		const node = getFlexNode(this);
+		const node = getOrCreateInnerNode(this);
 		return node.keys();
 	}
 	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): TreeMapNode {
-		const node = getFlexNode(this);
+		const node = getOrCreateInnerNode(this);
 		if (isMapTreeNode(node)) {
 			throw new UsageError(`A map cannot be mutated before being inserted into the tree`);
 		}
 
 		const classSchema = getSimpleNodeSchema(node.schema);
 		const mapTree = mapTreeFromNodeData(
-			value as InsertableContent,
+			value as InsertableContent | undefined,
 			classSchema.info as ImplicitAllowedTypes,
 			node.context.nodeKeyManager,
 			getSchemaAndPolicy(node),
 		);
 
+		if (mapTree === undefined) {
+			node.delete(key);
+			return this;
+		}
+
 		prepareContentForHydration(mapTree, node.context.checkout.forest);
-		const cursor = mapTree !== undefined ? cursorForMapTreeNode(mapTree) : undefined;
-		node.set(key, cursor);
+		node.set(key, cursorForMapTreeNode(mapTree));
 		return this;
 	}
 	public get size(): number {
-		return getFlexNode(this).size;
+		return getOrCreateInnerNode(this).size;
 	}
 	public *values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
 		for (const [, value] of this.entries()) {
@@ -193,8 +200,8 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		callbackFn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: TThis) => void,
 		thisArg?: unknown,
 	): void {
-		for (const field of getFlexNode(this).boxedIterator()) {
-			const node = getProxyForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
+		for (const field of getOrCreateInnerNode(this).boxedIterator()) {
+			const node = getTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 			callbackFn.call(thisArg, node, field.key, this);
 		}
 	}
@@ -239,14 +246,11 @@ export function mapSchema<
 		): MapTreeNode {
 			return getOrCreateMapTreeNode(
 				flexSchema,
-				mapTreeFromNodeData(
-					copyContent(flexSchema.name, input as Iterable<[string, InsertableContent]>),
-					this as unknown as ImplicitAllowedTypes,
-				),
+				mapTreeFromNodeData(input as FactoryContent, this as unknown as ImplicitAllowedTypes),
 			);
 		}
 
-		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
+		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexMapNodeSchema;
@@ -265,18 +269,17 @@ export function mapSchema<
 		TName,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<TName>,
-		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
 		T
 	> = schema;
 	return schemaErased;
 }
 
-function copyContent<T>(
-	typeName: TreeNodeSchemaIdentifier,
-	content: Iterable<[string, T]>,
-): Map<string, T> {
-	const copy = new Map(content);
-	markContentType(typeName, copy);
-	return copy;
-}
+/**
+ * Content which can be used to construct a Map node, explicitly or implicitly.
+ * @system @public
+ */
+export type MapNodeInsertableData<T extends ImplicitAllowedTypes> =
+	| Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>
+	| RestrictiveReadonlyRecord<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>;

@@ -96,6 +96,11 @@ describeCompat(
 
 			await setupContainers(testContainerConfig);
 
+			// ! We need to force container1 to be in "write" mode to ensure its messages are sent before container2
+			// ! Saw some flakiness against r11s where container2 would sometimes reconnect faster
+			sharedMap1.set("key3", "3");
+			await provider.ensureSynchronized();
+
 			sharedMap1.on("valueChanged", (changed) => {
 				if (changed.key !== "key2") {
 					sharedMap1.set("key2", `${sharedMap1.get("key1")} updated`);
@@ -113,6 +118,7 @@ describeCompat(
 			// The other container is fine
 			assert.equal(sharedMap2.get("key1"), "1");
 			assert.equal(sharedMap2.get("key2"), "2");
+			assert.equal(sharedMap2.get("key3"), "3");
 			assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
 		});
 

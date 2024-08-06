@@ -425,6 +425,13 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			{ seqs, posBreakpoints }: SequenceOffsets,
 			assignToSegment: (collection: AttributionCollection, segment: ISegment) => void,
 		): void => {
+			if (seqs.length === 0) {
+				assert(
+					posBreakpoints.length === 0,
+					0x9e1 /* seqs and posBreakpoints length should match */,
+				);
+				return;
+			}
 			let curIndex = 0;
 			let cumulativeSegPos = 0;
 
@@ -474,8 +481,11 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		if (channels) {
 			for (const [name, collectionSpec] of Object.entries(channels)) {
 				extractOntoSegments(collectionSpec, (collection, segment) => {
-					// Cast is valid as we just assigned this field above
-					((segment.attribution as AttributionCollection).channels ??= {})[name] = collection;
+					if (segment.attribution !== undefined) {
+						// Cast is valid as we just assigned this field above
+						((segment.attribution as AttributionCollection).channels ??= {})[name] =
+							collection;
+					}
 				});
 			}
 		}
