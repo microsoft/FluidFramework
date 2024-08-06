@@ -45,6 +45,8 @@ export interface Logger {
 	verbose: LoggingFunction;
 }
 
+function noop(): void {}
+
 /**
  * Default logger, configured to log to the console.
  *
@@ -55,9 +57,7 @@ export const defaultConsoleLogger: Logger = {
 	warning: logWarningToConsole,
 	error: logErrorToConsole,
 	success: logSuccessToConsole,
-	verbose: () => {
-		/* no-op */
-	},
+	verbose: noop,
 };
 
 /**
@@ -68,6 +68,17 @@ export const defaultConsoleLogger: Logger = {
 export const verboseConsoleLogger: Logger = {
 	...defaultConsoleLogger,
 	verbose: console.log,
+};
+
+/**
+ * No-op logger - configured to do nothing.
+ */
+export const noopLogger: Logger = {
+	info: noop,
+	warning: noop,
+	error: noop,
+	success: noop,
+	verbose: noop,
 };
 
 /**
