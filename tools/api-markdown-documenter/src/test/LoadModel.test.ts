@@ -21,6 +21,7 @@ describe("loadModel", () => {
 			"src",
 			"test",
 			"test-data",
+			"simple-suite-test",
 		);
 
 		try {
