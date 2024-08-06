@@ -29,4 +29,32 @@ describe("lintApiModel", () => {
 		}
 		expect.fail("Expected an error to be thrown, but none was.");
 	});
+
+	it("Invalid model directory throws", async () => {
+		const modelDirectoryPath = Path.resolve(testModelsDirectoryPath, "non-existent-directory");
+
+		try {
+			await lintApiModel({ modelDirectoryPath });
+		} catch (error: unknown) {
+			expect(error).to.be.an.instanceOf(Error);
+			expect((error as Error).message).to.match(/^Provided directory does not exist/);
+			return;
+		}
+		expect.fail("Expected an error to be thrown, but none was.");
+	});
+
+	it("Empty model directory throws", async () => {
+		const modelDirectoryPath = Path.resolve(testModelsDirectoryPath, "empty-model");
+
+		try {
+			await lintApiModel({ modelDirectoryPath });
+		} catch (error: unknown) {
+			expect(error).to.be.an.instanceOf(Error);
+			expect((error as Error).message).to.match(
+				/^No ".api.json" files found under provided directory path/,
+			);
+			return;
+		}
+		expect.fail("Expected an error to be thrown, but none was.");
+	});
 });
