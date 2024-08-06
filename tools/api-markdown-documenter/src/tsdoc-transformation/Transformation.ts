@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	DocNode,
-} from "@microsoft/tsdoc";
+import type { DocNode } from "@microsoft/tsdoc";
 
 import type { TransformationContext } from "./Configuration.js";
 
@@ -35,5 +33,4 @@ export function transformTsdocNode<TOut>(
 		);
 	}
 	return context.transformations[node.kind](node, context);
-
 }

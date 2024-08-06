@@ -4,10 +4,7 @@
  */
 
 import type { ApiItem } from "@microsoft/api-extractor-model";
-import {
-	type DocDeclarationReference,
-	type DocNode,
-} from "@microsoft/tsdoc";
+import { type DocDeclarationReference, type DocNode } from "@microsoft/tsdoc";
 
 /**
  * Configuration for transforming TSDoc `DocNode`s based on their "kind".
