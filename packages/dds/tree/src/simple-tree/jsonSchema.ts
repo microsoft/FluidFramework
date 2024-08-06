@@ -7,7 +7,6 @@ import type { SimpleNodeSchemaKind } from "./simpleSchema.js";
 
 /**
  * The fully-qualified {@link TreeNodeSchemaCore.identifier}.
- * @example Schema `com.myapp.foo` would be referenced via `#/$defs/com.myapp.foo`.
  * @alpha
  */
 export type JsonSchemaId = string;
@@ -186,7 +185,7 @@ export interface FieldJsonSchema {
  * Includes the complete set of definitions reachable from the "root" schema.
  *
  * Note: This representation only uses a limited subset of supported JSON Schema features.
- * It is scoped to a format that can be used to sufficiently represent supported Shared Tree schema.
+ * It is scoped to a format that can be used to sufficiently represent supported SharedTree schema.
  *
  * Also note that this schema format contains Fluid-specific extensions, such as the {@link NodeJsonSchemaBase._kind}
  * property, meaning that it is not a *strict* subset.
