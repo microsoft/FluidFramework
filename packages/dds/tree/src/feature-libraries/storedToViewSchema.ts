@@ -35,7 +35,6 @@ import {
  * If the input schema came from a view schema, it will not return the same view schema, and will not be compatible:
  * the returned TreeSchema is simply one which schematize will not object to.
  * Assumes the schema uses the default field kinds.
- * @internal
  */
 export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSchema {
 	const map: Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema> = new Map();
