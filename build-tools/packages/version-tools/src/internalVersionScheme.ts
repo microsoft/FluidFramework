@@ -497,3 +497,50 @@ export function detectInternalVersionConstraintType(
 	const maxSatisfying = semver.maxSatisfying([patch, minor], range);
 	return maxSatisfying === patch ? "patch" : maxSatisfying === minor ? "minor" : "exact";
 }
+
+/**
+ * Checks if the provided version is a test version.
+ *
+ * Test versions are generated from test/ branches and are published to the test feed.
+ *
+ * @param version - The version to check
+ * @returns - True if the version string is a test version, otherwise false
+ *
+ * @example
+ * returns true
+ * isInternalTestVersion("0.0.0-260312-test");
+ *
+ * @example
+ * returns false
+ * isInternalTestVersion("2.1.0-260312");
+ */
+export function isInternalTestVersion(version: semver.SemVer | string): boolean {
+	const parsedVersion = semver.parse(version);
+
+	if (parsedVersion === null) {
+		throw new Error(`Couldn't parse ${version} as a semver.`);
+	}
+
+	if (parsedVersion.prerelease.length === 0) {
+		throw new Error(`No prerelease section in ${version}`);
+	}
+
+	if (typeof parsedVersion.prerelease[0] !== "string") {
+		throw new TypeError(
+			`Expected a string; found a ${typeof parsedVersion?.prerelease[0]} instead: ${
+				parsedVersion?.prerelease[0]
+			}`,
+		);
+	}
+
+	if (
+		parsedVersion.minor === 0 &&
+		parsedVersion.major === 0 &&
+		parsedVersion.patch === 0 &&
+		parsedVersion.prerelease[0].startsWith("test-")
+	) {
+		return true;
+	}
+
+	return false;
+}

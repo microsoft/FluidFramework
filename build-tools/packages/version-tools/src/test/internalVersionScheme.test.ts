@@ -10,6 +10,7 @@ import {
 	detectInternalVersionConstraintType,
 	fromInternalScheme,
 	getVersionRange,
+	isInternalTestVersion,
 	isInternalVersionRange,
 	isInternalVersionScheme,
 	toInternalScheme,
@@ -385,6 +386,31 @@ describe("internalScheme", () => {
 			assert.throws(() =>
 				detectInternalVersionConstraintType("workspace:~2.0.0-internal.1.0.23"),
 			);
+		});
+	});
+
+	describe("checking test version schema", () => {
+		it("0.0.0-test-123456 is test version", () => {
+			const input = `0.0.0-test-123456`;
+			const result = isInternalTestVersion(input);
+			assert.isTrue(result);
+		});
+
+		it("2.1.0-test-123456 is not test version", () => {
+			const input = `2.1.0-test-123456`;
+			const result = isInternalTestVersion(input);
+			assert.isFalse(result);
+		});
+
+		it("2.1.0-123456-test is not test version", () => {
+			const input = `2.1.0-123456-test`;
+			const result = isInternalTestVersion(input);
+			assert.isFalse(result);
+		});
+
+		it("2.1.0-123456 is not test version", () => {
+			const input = `2.1.0-123456`;
+			assert.throws(() => isInternalTestVersion(input));
 		});
 	});
 });

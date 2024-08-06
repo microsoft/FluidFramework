@@ -29,6 +29,7 @@ export {
 	fromInternalScheme,
 	isInternalVersionRange,
 	isInternalVersionScheme,
+	isInternalTestVersion,
 	toInternalScheme,
 } from "./internalVersionScheme";
 export {
@@ -40,5 +41,8 @@ export {
 	VersionScheme,
 } from "./schemes";
 export { bumpRange, detectBumpType, isPrereleaseVersion, getPreviousVersions } from "./semver";
-export { getIsLatest, getSimpleVersion, isTestVersion } from "./versions";
+export {
+	getIsLatest,
+	getSimpleVersion,
+} from "./versions";
 export { fromVirtualPatchScheme, toVirtualPatchScheme } from "./virtualPatchScheme";

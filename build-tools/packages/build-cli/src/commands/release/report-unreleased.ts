@@ -5,7 +5,7 @@
 
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import { isTestVersion } from "@fluid-tools/version-tools";
+import { isInternalTestVersion } from "@fluid-tools/version-tools";
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { formatISO } from "date-fns";
@@ -209,7 +209,7 @@ async function updateReportVersions(
 function extractBuildNumber(version: string): number {
 	const versionParts: string[] = version.split("-");
 
-	if (isTestVersion(version)) {
+	if (isInternalTestVersion(version)) {
 		return Number.parseInt(versionParts[1], 10);
 	}
 

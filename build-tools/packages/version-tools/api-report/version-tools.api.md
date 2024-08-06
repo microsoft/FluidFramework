@@ -61,6 +61,9 @@ export type InterdependencyRange = WorkspaceRange | RangeOperator | RangeOperato
 export function isInterdependencyRange(r: unknown): r is InterdependencyRange;
 
 // @public
+export function isInternalTestVersion(version: semver.SemVer | string): boolean;
+
+// @public
 export function isInternalVersionRange(range: string, allowAnyPrereleaseId?: boolean): boolean;
 
 // @public
@@ -71,9 +74,6 @@ export function isPrereleaseVersion(version: string | semver.SemVer | undefined)
 
 // @public
 export function isRangeOperator(r: unknown): r is RangeOperator;
-
-// @public
-export function isTestVersion(version: string): boolean;
 
 // @public
 export function isVersionBumpType(type: VersionChangeType | string | undefined): type is VersionBumpType;
