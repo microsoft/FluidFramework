@@ -63,7 +63,6 @@ describe("Summary benchmarks", () => {
 						assert(summarySize > minLength);
 						assert(summarySize < maxLength);
 					},
-
 				});
 			});
 		}
