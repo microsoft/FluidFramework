@@ -134,7 +134,7 @@ function applyInheritDoc(apiItem: ApiItem, apiModel: ApiModel, logger: Logger): 
 
 			if (result.errorMessage !== undefined) {
 				logger.warning(
-					`Unresolved @inheritDoc tag for ${apiItem.displayName}: ${result.errorMessage}.`,
+					`Unresolved @inheritDoc tag for "${apiItem.displayName}": ${result.errorMessage}.`,
 				);
 			} else if (
 				result.resolvedApiItem instanceof ApiDocumentedItem &&
