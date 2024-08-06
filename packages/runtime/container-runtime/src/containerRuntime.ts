@@ -2626,6 +2626,8 @@ export class ContainerRuntime
 		await this.pendingStateManager.applyStashedOpsAt(message.sequenceNumber);
 	}
 
+	private noMoreLoggingLegacyCase = false;
+
 	/**
 	 * Processes the op.
 	 * @param messageCopy - Sequenced message for a distributed document.
@@ -2645,18 +2647,29 @@ export class ContainerRuntime
 
 		// There is some ancient back-compat code that we'd like to instrument
 		// to understand if/when it is hit.
-		const logLegacyCase = (codePath: string) =>
+		const logLegacyCaseOnce = (codePath: string) => {
+			// We only want to log this once per ContainerRuntime instance, to avoid spamming telemetry.
+			if (this.noMoreLoggingLegacyCase) {
+				return;
+			}
+			this.noMoreLoggingLegacyCase = true;
+
 			this.logger.sendTelemetryEvent({
 				eventName: "LegacyMessageFormat",
 				details: { codePath, type: messageCopy.type },
 			});
+		};
 
 		// We expect runtime messages to have JSON contents - deserialize it in place.
-		ensureContentsDeserialized(messageCopy, hasModernRuntimeMessageEnvelope, logLegacyCase);
+		ensureContentsDeserialized(
+			messageCopy,
+			hasModernRuntimeMessageEnvelope,
+			logLegacyCaseOnce,
+		);
 		if (hasModernRuntimeMessageEnvelope) {
 			// If the message has the modern message envelope, then process it here.
 			// Here we unpack the message (decompress, unchunk, and/or ungroup) into a batch of messages with ContainerMessageType
-			const inboundBatch = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
+			const inboundBatch = this.remoteMessageProcessor.process(messageCopy, logLegacyCaseOnce);
 			if (inboundBatch === undefined) {
 				// This means the incoming message is an incomplete part of a message or batch
 				// and we need to process more messages before the rest of the system can understand it.
