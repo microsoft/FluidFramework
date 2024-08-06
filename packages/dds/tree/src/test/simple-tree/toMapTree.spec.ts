@@ -54,6 +54,7 @@ import {
 	MockNodeKeyManager,
 	type NodeKeyManager,
 } from "../../feature-libraries/index.js";
+import { validateUsageError } from "../utils.js";
 
 /**
  * Helper for building {@link TreeFieldStoredSchema}.
@@ -540,17 +541,34 @@ describe("toMapTree", () => {
 
 		it("Throws on schema-incompatible entries", () => {
 			const schemaFactory = new SchemaFactory("test");
-			const schema = schemaFactory.map("map", schemaFactory.string);
+			const schema = schemaFactory.object("testObject", {
+				field1: schemaFactory.string,
+			});
 
-			const entries: [string, InsertableContent][] = [
-				["a", "Hello world"],
-				["b", true], // Boolean input is not allowed by the schema
-			];
+			const entries: [string, InsertableContent][] = [["a", "Hello world"]];
 			const tree = new Map<string, InsertableContent>(entries);
 
 			assert.throws(
 				() => mapTreeFromNodeData(tree, schema),
 				/The provided data is incompatible with all of the types allowed by the schema/,
+			);
+		});
+
+		it("Throws for structurally valid data, but created with a different schema.", () => {
+			const schemaFactory = new SchemaFactory("test");
+			class TestSchema extends schemaFactory.object("testObject", {
+				field: schemaFactory.string,
+			}) {}
+
+			class TestSchema2 extends schemaFactory.object("testObject", {
+				field: schemaFactory.string,
+			}) {}
+
+			const testData = new TestSchema2({ field: "test" });
+
+			assert.throws(
+				() => mapTreeFromNodeData(testData, TestSchema),
+				validateUsageError("Invalid schema for this context."),
 			);
 		});
 	});
