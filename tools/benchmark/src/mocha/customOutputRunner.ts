@@ -68,6 +68,9 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
  * @see {@link benchmarkCustom}
  * @see {@link CustomBenchmarkOptions.run}
  *
+ * @see {@link benchmarkCustom}
+ * @see {@link CustomBenchmarkOptions.run}
+ *
  * @public
  */
 export interface IMeasurementReporter {
