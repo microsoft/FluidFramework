@@ -40,6 +40,7 @@ describe("loadModel", () => {
 			"..",
 			"src",
 			"test",
+			"test-data",
 			"non-existent-directory",
 		);
 
@@ -48,6 +49,29 @@ describe("loadModel", () => {
 		} catch (error: unknown) {
 			expect(error).to.be.an.instanceOf(Error);
 			expect((error as Error).message).to.match(/^Provided directory does not exist/);
+			return;
+		}
+		expect.fail("Expected an error to be thrown, but none was.");
+	});
+
+	it("Empty model directory throws", async () => {
+		const invalidTestModelDirectoryPath = Path.resolve(
+			dirname,
+			"..",
+			"..",
+			"src",
+			"test",
+			"test-data",
+			"empty-model",
+		);
+
+		try {
+			await loadModel({ modelDirectoryPath: invalidTestModelDirectoryPath });
+		} catch (error: unknown) {
+			expect(error).to.be.an.instanceOf(Error);
+			expect((error as Error).message).to.match(
+				/^No ".api.json" files found under provided directory path/,
+			);
 			return;
 		}
 		expect.fail("Expected an error to be thrown, but none was.");
