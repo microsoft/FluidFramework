@@ -24,6 +24,7 @@ import {
 } from "@fluid-tools/version-tools";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args.js";
+import { getDefaultInterdependencyRange } from "../config.js";
 import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags.js";
 import {
 	BaseCommand,
@@ -171,7 +172,8 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			repoVersion = releaseRepo.version;
 			scheme = flags.scheme ?? detectVersionScheme(repoVersion);
 			// Update the interdependency range to the configured default if the one provided isn't valid
-			interdependencyRange = interdependencyRange ?? releaseRepo.interdependencyRange;
+			interdependencyRange =
+				interdependencyRange ?? getDefaultInterdependencyRange(releaseRepo, context);
 			updatedPackages.push(...releaseRepo.packages);
 			packageOrReleaseGroup = releaseRepo;
 		} else {

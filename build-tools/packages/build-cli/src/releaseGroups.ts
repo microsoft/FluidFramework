@@ -17,8 +17,6 @@ export type ReleasePackage = string;
 
 /**
  * An array of known release groups.
- *
- * @internal
  */
 export const knownReleaseGroups = [
 	"build-tools",
@@ -30,15 +28,11 @@ export const knownReleaseGroups = [
 
 /**
  * A type that represents release groups.
- *
- * @internal
  */
 export type ReleaseGroup = (typeof knownReleaseGroups)[number];
 
 /**
  * A type guard used to determine if a string is a ReleaseGroup.
- *
- * @internal
  */
 export function isReleaseGroup(str: string | undefined): str is ReleaseGroup {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any

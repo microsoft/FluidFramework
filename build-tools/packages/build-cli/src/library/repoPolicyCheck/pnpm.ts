@@ -5,7 +5,8 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { PackageJson, loadFluidBuildConfig } from "@fluidframework/build-tools";
+import { PackageJson } from "@fluidframework/build-tools";
+import { getFlubConfig } from "../../config.js";
 import { Handler, readFile } from "./common.js";
 
 const match = /(?:^|\/)pnpm-lock\.yaml$/i;
@@ -17,7 +18,7 @@ export const handlers: Handler[] = [
 		handler: async (file: string, root: string): Promise<string | undefined> => {
 			const dirname = path.dirname(file);
 			const packageJsonFile = path.join(dirname, "package.json");
-			const manifest = loadFluidBuildConfig(root);
+			const manifest = getFlubConfig(root);
 
 			let json: PackageJson;
 			try {

@@ -6,18 +6,18 @@
 import * as childProcess from "node:child_process";
 import { existsSync } from "node:fs";
 import * as path from "node:path";
-import { cosmiconfigSync } from "cosmiconfig";
-
 import { getPackages } from "@manypkg/get-packages";
+import { cosmiconfigSync } from "cosmiconfig";
+import registerDebug from "debug";
 import { readJson } from "fs-extra";
+
 import { commonOptions } from "./commonOptions";
-import { IFluidBuildConfig } from "./fluidRepo";
+import { IRepoBuildConfig } from "./fluidRepo";
 import { realpathAsync } from "./utils";
 
 // switch to regular import once building ESM
 const findUp = import("find-up");
 
-import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");
 
 async function isFluidRootPackage(dir: string) {
@@ -127,40 +127,36 @@ export async function getResolvedFluidRoot(buildRoot = false) {
 	return await realpathAsync(resolvedRoot);
 }
 
+const configName = "repoBuild";
 /**
  * A cosmiconfig explorer to find the fluidBuild config. First looks for javascript config files and falls back to the
  * fluidBuild property in package.json. We create a single explorer here because cosmiconfig internally caches configs
  * for performance. The cache is per-explorer, so re-using the same explorer is a minor perf improvement.
  */
-const configExplorer = cosmiconfigSync("fluidBuild", {
-	searchPlaces: [`fluidBuild.config.cjs`, `fluidBuild.config.js`, "package.json"],
-	packageProp: "fluidBuild",
+const configExplorer = cosmiconfigSync(configName, {
+	searchPlaces: [
+		`${configName}.config.cjs`,
+		`${configName}.config.js`,
+		// Back-compat entries - we'll load settings from the old fluidBuild config files if present.
+		"fluidBuild.config.cjs",
+		"fluidBuild.config.js",
+		"package.json",
+	],
+	packageProp: [
+		configName,
+		// Back-compat entry
+		"fluidBuild",
+	],
 });
 
 /**
- * Loads an IFluidBuildConfig from the fluidBuild property in a package.json file, or from fluidBuild.config.[c]js.
- * Throw if not found.
- *
- * @param rootDir - The path to the root package.json to load.
- * @param noCache - If true, the config cache will be cleared and the config will be reloaded.
- * @returns The fluidBuild section of the package.json.
- */
-export function loadFluidBuildConfig(rootDir: string, noCache = false): IFluidBuildConfig {
-	const config = getFluidBuildConfig(rootDir, noCache);
-	if (config === undefined) {
-		throw new Error(`Error loading config.`);
-	}
-	return config;
-}
-
-/**
- * Get an IFluidBuildConfig from the fluidBuild property in a package.json file, or from fluidBuild.config.[c]js.
+ * Get an IRepoBuildConfig from the fluidBuild property in a package.json file, or from fluidBuild.config.[c]js.
  *
  * @param rootDir - The path to the root package.json to load.
  * @param noCache - If true, the config cache will be cleared and the config will be reloaded.
  * @returns The fluidBuild section of the package.json, or undefined if not found
  */
-export function getFluidBuildConfig(rootDir: string, noCache = false): IFluidBuildConfig {
+export function getRepoBuildConfig(rootDir: string, noCache = false): IRepoBuildConfig {
 	if (noCache === true) {
 		configExplorer.clearCaches();
 	}

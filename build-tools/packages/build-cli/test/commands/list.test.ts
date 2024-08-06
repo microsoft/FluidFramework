@@ -3,14 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	GitRepo,
-	type Package,
-	type PackageNamePolicyConfig,
-	getResolvedFluidRoot,
-} from "@fluidframework/build-tools";
+import { GitRepo, type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { expect } from "chai";
 
+import { type PackageNamePolicyConfig } from "../../src/config.js";
 import { Context } from "../../src/library/index.js";
 import {
 	type Feed,
