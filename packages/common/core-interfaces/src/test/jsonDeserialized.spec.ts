@@ -48,10 +48,12 @@ import {
 	arrayOfNumbers,
 	arrayOfNumbersSparse,
 	arrayOfNumbersOrUndefined,
+	arrayOfBigints,
 	arrayOfSymbols,
 	arrayOfFunctions,
 	arrayOfFunctionsWithProperties,
 	arrayOfObjectAndFunctions,
+	arrayOfBigintAndObjects,
 	arrayOfSymbolsAndObjects,
 	object,
 	emptyObject,
@@ -310,9 +312,23 @@ describe("JsonDeserialized", () => {
 				const resultRead = passThru(arrayOfNumbersOrUndefined, [0, null, 2]);
 				assertIdenticalTypes(resultRead, createInstanceOf<(number | null)[]>());
 			});
+			it("array of partially supported (bigint or basic object) becomes basic object only", () => {
+				const resultRead = passThruThrows(
+					arrayOfBigintAndObjects,
+					new TypeError("Do not know how to serialize a BigInt"),
+				);
+				assertIdenticalTypes(resultRead, createInstanceOf<{ property: string }[]>());
+			});
 			it("array of partially supported (symbols or basic object) is modified with null", () => {
 				const resultRead = passThru(arrayOfSymbolsAndObjects, [null]);
 				assertIdenticalTypes(resultRead, createInstanceOf<({ property: string } | null)[]>());
+			});
+			it("array of unsupported (bigint) becomes never[]", () => {
+				const resultRead = passThruThrows(
+					arrayOfBigints,
+					new TypeError("Do not know how to serialize a BigInt"),
+				);
+				assertIdenticalTypes(resultRead, createInstanceOf<never[]>());
 			});
 			it("array of unsupported (symbols) becomes null[]", () => {
 				const resultRead = passThru(arrayOfSymbols, [null]);
@@ -1050,6 +1066,14 @@ describe("JsonDeserialized", () => {
 				it("object with optional `bigint`", () => {
 					const resultRead = passThruHandlingBigint(objectWithOptionalBigint);
 					assertIdenticalTypes(resultRead, objectWithOptionalBigint);
+				});
+				it("array of `bigint`s", () => {
+					const resultRead = passThruHandlingBigint(arrayOfBigints);
+					assertIdenticalTypes(resultRead, arrayOfBigints);
+				});
+				it("array of `bigint` or basic object", () => {
+					const resultRead = passThruHandlingBigint(arrayOfBigintAndObjects);
+					assertIdenticalTypes(resultRead, arrayOfBigintAndObjects);
 				});
 				it("object with specific function", () => {
 					const resultRead = passThruHandlingSpecificFunction({

@@ -54,10 +54,12 @@ import {
 	arrayOfNumbers,
 	arrayOfNumbersSparse,
 	arrayOfNumbersOrUndefined,
+	arrayOfBigints,
 	arrayOfSymbols,
 	arrayOfFunctions,
 	arrayOfFunctionsWithProperties,
 	arrayOfObjectAndFunctions,
+	arrayOfBigintAndObjects,
 	arrayOfSymbolsAndObjects,
 	object,
 	emptyObject,
@@ -774,6 +776,14 @@ describe("JsonSerializable", () => {
 			});
 
 			describe("array", () => {
+				it("array of `bigint`s", () => {
+					const { filteredIn } = passThruThrows(
+						// @ts-expect-error 'bigint' is not supported (becomes 'never')
+						arrayOfBigints,
+						new TypeError("Do not know how to serialize a BigInt"),
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<never[]>());
+				});
 				it("array of `symbol`s", () => {
 					const { filteredIn } = passThru(
 						// @ts-expect-error 'symbol' is not supported (becomes 'never')
@@ -816,6 +826,14 @@ describe("JsonSerializable", () => {
 						filteredIn,
 						createInstanceOf<(number | SerializationErrorPerUndefinedArrayElement)[]>(),
 					);
+				});
+				it("array of `bigint` or basic object", () => {
+					const { filteredIn } = passThruThrows(
+						// @ts-expect-error 'bigint' is not supported (becomes 'never')
+						arrayOfBigintAndObjects,
+						new TypeError("Do not know how to serialize a BigInt"),
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<{ property: string }[]>());
 				});
 				it("array of `symbol` or basic object", () => {
 					const { filteredIn } = passThru(
@@ -1175,6 +1193,14 @@ describe("JsonSerializable", () => {
 				it("object with optional `bigint`", () => {
 					const { filteredIn } = passThruHandlingBigint(objectWithOptionalBigint);
 					assertIdenticalTypes(filteredIn, objectWithOptionalBigint);
+				});
+				it("array of `bigint`s", () => {
+					const { filteredIn } = passThruHandlingBigint(arrayOfBigints);
+					assertIdenticalTypes(filteredIn, arrayOfBigints);
+				});
+				it("array of `bigint` or basic object", () => {
+					const { filteredIn } = passThruHandlingBigint(arrayOfBigintAndObjects);
+					assertIdenticalTypes(filteredIn, arrayOfBigintAndObjects);
 				});
 				it("object with specific alternately allowed function", () => {
 					const { filteredIn } = passThruHandlingSpecificFunction({

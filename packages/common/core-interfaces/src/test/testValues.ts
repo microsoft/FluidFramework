@@ -67,10 +67,15 @@ export const arrayOfNumbers: number[] = [0, 1, 2];
 export const arrayOfNumbersSparse: number[] = [0];
 arrayOfNumbersSparse[3] = 3;
 export const arrayOfNumbersOrUndefined = [0, undefined, 2];
+export const arrayOfBigints = [bigint];
 export const arrayOfSymbols: symbol[] = [Symbol("symbol")];
 export const arrayOfFunctions = [aFunction];
 export const arrayOfFunctionsWithProperties = [functionWithProperties];
 export const arrayOfObjectAndFunctions = [objectAndFunction];
+export const arrayOfBigintAndObjects: (bigint | { property: string })[] = [
+	{ property: "string" },
+	bigint,
+];
 export const arrayOfSymbolsAndObjects: (symbol | { property: string })[] = [Symbol("symbol")];
 
 // #endregion
