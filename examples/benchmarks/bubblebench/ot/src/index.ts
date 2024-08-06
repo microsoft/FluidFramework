@@ -10,7 +10,7 @@ import React from "react";
 import { Bubblebench, BubblebenchInstantiationFactory } from "./main.js";
 export { Bubblebench, BubblebenchInstantiationFactory } from "./main.js";
 
-const bubblebenchViewCallback = (model: Bubblebench) =>
+const bubblebenchViewCallback = (model: Bubblebench): React.ReactElement =>
 	React.createElement(AppView, { app: model.appState });
 
 /**

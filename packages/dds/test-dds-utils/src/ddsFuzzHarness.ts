@@ -123,7 +123,8 @@ export interface ChangeConnectionState {
  */
 export interface StashClient {
 	type: "stashClient";
-	clientId: string;
+	existingClientId: string;
+	newClientId: string;
 }
 
 /**
@@ -1107,9 +1108,16 @@ export function mixinStashedClient<
 			);
 
 			if (!state.isDetached && stashable.length > 0 && state.random.bool(0.5)) {
+				const existingClientId = state.random.pick(stashable).channel.id;
+				const instanceIndex = existingClientId.lastIndexOf("_");
+				const instance =
+					instanceIndex < 0
+						? 0
+						: Number.parseInt(existingClientId.slice(instanceIndex + 1), 10);
 				return {
 					type: "stashClient",
-					clientId: state.random.pick(stashable).containerRuntime.clientId,
+					existingClientId,
+					newClientId: `${existingClientId}_${instance + 1}`,
 				};
 			}
 			return baseGenerator(state);
@@ -1119,7 +1127,7 @@ export function mixinStashedClient<
 	const reducer: AsyncReducer<TOperation | StashClient, TState> = async (state, operation) => {
 		const { clients, containerRuntimeFactory } = state;
 		if (isOperationType<StashClient>("stashClient", operation)) {
-			const client = clients.find((c) => c.containerRuntime.clientId === operation.clientId);
+			const client = clients.find((c) => c.channel.id === operation.existingClientId);
 			if (!hasStashData(client)) {
 				throw new ReducerPreconditionError("client not stashable");
 			}
@@ -1130,7 +1138,7 @@ export function mixinStashedClient<
 				containerRuntimeFactory,
 				loadData,
 				model.factory,
-				client.containerRuntime.clientId,
+				operation.newClientId,
 				options,
 			);
 
@@ -1139,12 +1147,7 @@ export function mixinStashedClient<
 			// replace the old client with the new client
 			return {
 				...state,
-				clients: [
-					...clients.filter(
-						(c) => c.containerRuntime.clientId !== client.containerRuntime.clientId,
-					),
-					newClient,
-				],
+				clients: [...clients.filter((c) => c.channel.id !== client.channel.id), newClient],
 			};
 		}
 

@@ -85,7 +85,7 @@ export default class GenerateUpcomingCommand extends BaseCommand<
 		let body: string = "";
 		for (const change of changes) {
 			if (change.changeTypes.includes("minor") || flags.releaseType === "major") {
-				body += `## ${change.summary}\n\n${change.content}\n\n`;
+				body += `## ${change.summary}\n\n${change.body}\n\n`;
 			} else {
 				this.info(
 					`Excluding changeset: ${path.basename(change.sourceFile)} because it has no ${

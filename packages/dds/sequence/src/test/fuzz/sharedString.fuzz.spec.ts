@@ -61,7 +61,7 @@ const baseSharedStringModel = {
 
 describe("SharedString fuzz testing", () => {
 	createDDSFuzzSuite(
-		{ ...baseSharedStringModel, workloadName: "default" },
+		{ ...baseSharedStringModel, workloadName: "SharedString default" },
 		{
 			...defaultFuzzOptions,
 			// Uncomment this line to replay a specific seed from its failure file:
@@ -72,7 +72,7 @@ describe("SharedString fuzz testing", () => {
 
 describe("SharedString fuzz with stashing", () => {
 	createDDSFuzzSuite(
-		{ ...baseSharedStringModel, workloadName: "default" },
+		{ ...baseSharedStringModel, workloadName: "SharedString with stashing" },
 		{
 			...defaultFuzzOptions,
 			clientJoinOptions: {

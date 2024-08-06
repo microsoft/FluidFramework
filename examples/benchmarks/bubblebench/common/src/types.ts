@@ -38,6 +38,7 @@ export interface IAppState {
 	increaseBubbles(): void;
 	decreaseBubbles(): void;
 	applyEdits(): void;
+	runTransaction(inner: () => void);
 }
 
 // eslint-disable-next-line jsdoc/require-description
