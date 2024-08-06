@@ -32,6 +32,7 @@ import {
 	createOdspUrl,
 	isOdspResolvedUrl,
 	SharingLinkHeader,
+	ClpCompliantAppHeader,
 	type OdspFluidDataStoreLocator,
 	storeLocatorInOdspUrl,
 } from "@fluidframework/odsp-driver/internal";
@@ -42,12 +43,12 @@ import { v4 as uuid } from "uuid";
 import type {
 	TokenResponse,
 	OdspClientProps,
-	OdspSiteIdentification,
-	OdspContainerAttachArgType,
+	OdspSiteLocation,
+	OdspContainerAttachInfo,
 	OdspContainerAttachType,
 	OdspContainerServices,
-	OdspContainerAttachReturnType,
-	OdspGetContainerArgType,
+	OdspContainerAttachResult,
+	OdspContainerIdentifier,
 } from "./interfaces.js";
 import { createOdspAudienceMember } from "./odspAudience.js";
 import { type IOdspTokenProvider } from "./token.js";
@@ -91,7 +92,7 @@ function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigPr
 function createOdspClientCore(
 	driverFactory: IDocumentServiceFactory,
 	urlResolver: OdspDriverUrlResolver,
-	connectionConfig: OdspSiteIdentification,
+	connectionConfig: OdspSiteLocation,
 	logger?: ITelemetryBaseLogger,
 	configProvider?: IConfigProviderBase,
 ): IOdspClient {
@@ -145,11 +146,14 @@ export interface IOdspClient {
 	/**
 	 * Opens existing container. If container does not exist, the call will fail with an error with errorType = DriverErrorTypes.fileNotFoundOrAccessDeniedError.
 	 * @param request - identification of the container
+	 * @param isClpCompliant - Should be set to true only by application that is CLP compliant, for CLP compliant workflow.
+	 * This argument has no impact if application is not properly registered with Sharepoint.
 	 * @param containerSchema - schema of the container.
 	 */
 	getContainer<T extends ContainerSchema>(
-		request: OdspGetContainerArgType,
+		request: OdspContainerIdentifier,
 		containerSchema: T,
+		isClpCompliant?: boolean,
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: OdspContainerServices;
@@ -165,7 +169,7 @@ class OdspClient implements IOdspClient {
 	public constructor(
 		private readonly documentServiceFactory: IDocumentServiceFactory,
 		private readonly urlResolver: OdspDriverUrlResolver,
-		protected readonly connectionConfig: OdspSiteIdentification,
+		protected readonly connectionConfig: OdspSiteLocation,
 		private readonly logger?: ITelemetryBaseLogger,
 		configProvider?: IConfigProviderBase,
 	) {
@@ -199,33 +203,34 @@ class OdspClient implements IOdspClient {
 	}
 
 	public async getContainer<T extends ContainerSchema>(
-		containerIdentity: OdspGetContainerArgType,
+		containerIdentity: OdspContainerIdentifier,
 		containerSchema: T,
+		isClpCompliant?: boolean,
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
 
-		const request: IRequest =
-			"itemId" in containerIdentity
-				? {
-						url: createOdspUrl({
-							siteUrl: this.connectionConfig.siteUrl,
-							driveId: this.connectionConfig.driveId,
-							itemId: containerIdentity.itemId,
-							dataStorePath: "",
-						}),
-					}
-				: {
-						url: containerIdentity.sharingLinkToRedeem,
-						headers: {
-							[SharingLinkHeader.isSharingLinkToRedeem]:
-								containerIdentity.sharingLinkToRedeem !== undefined,
-						},
-					};
+		const headers = {};
+		if (isClpCompliant === true) {
+			headers[ClpCompliantAppHeader.isClpCompliantApp] = true;
+		}
 
-		const container = await loader.resolve(request);
+		let url: string;
+		if ("itemId" in containerIdentity) {
+			url = createOdspUrl({
+				siteUrl: this.connectionConfig.siteUrl,
+				driveId: this.connectionConfig.driveId,
+				itemId: containerIdentity.itemId,
+				dataStorePath: "",
+			});
+		} else {
+			headers[SharingLinkHeader.isSharingLinkToRedeem] = true;
+			url = containerIdentity.sharingLinkToRedeem;
+		}
+
+		const container = await loader.resolve({ url, headers });
 
 		const fluidContainer = createFluidContainer<T, OdspContainerAttachType>({
 			container,
@@ -271,14 +276,15 @@ class OdspClient implements IOdspClient {
 	private static addAttachCallback<T extends ContainerSchema>(
 		container: IContainer,
 		fluidContainer: IOdspFluidContainer<T>,
-		connectionConfig: OdspSiteIdentification,
+		connectionConfig: OdspSiteLocation,
 	): void {
 		/**
 		 * See {@link FluidContainer.attach}
 		 */
 		fluidContainer.attach = async (
-			odspProps?: OdspContainerAttachArgType,
-		): Promise<OdspContainerAttachReturnType> => {
+			odspProps?: OdspContainerAttachInfo,
+			isClpCompliant?: boolean,
+		): Promise<OdspContainerAttachResult> => {
 			const createNewRequest: IRequest =
 				odspProps !== undefined && "itemId" in odspProps
 					? {
@@ -296,6 +302,14 @@ class OdspClient implements IOdspClient {
 							odspProps?.fileName ?? uuid(),
 							odspProps?.createShareLinkType,
 						);
+
+			if (isClpCompliant === true) {
+				if (createNewRequest.headers === undefined) {
+					createNewRequest.headers = {};
+				}
+				createNewRequest.headers[ClpCompliantAppHeader.isClpCompliantApp] = true;
+			}
+
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}

@@ -16,7 +16,7 @@ export interface IOdspClient {
         container: IOdspFluidContainer<T>;
         services: OdspContainerServices;
     }>;
-    getContainer<T extends ContainerSchema>(request: OdspGetContainerArgType, containerSchema: T): Promise<{
+    getContainer<T extends ContainerSchema>(request: OdspContainerIdentifier, containerSchema: T, isClpCompliant?: boolean): Promise<{
         container: IOdspFluidContainer<T>;
         services: OdspContainerServices;
     }>;
@@ -41,12 +41,12 @@ export interface OdspClientProps {
 }
 
 // @beta
-export interface OdspConnectionConfig extends OdspSiteIdentification {
+export interface OdspConnectionConfig extends OdspSiteLocation {
     tokenProvider: IOdspTokenProvider;
 }
 
 // @alpha
-export type OdspContainerAttachArgType = {
+export type OdspContainerAttachInfo = {
     filePath?: string | undefined;
     fileName?: string | undefined;
     createShareLinkType?: ISharingLinkKind;
@@ -55,26 +55,26 @@ export type OdspContainerAttachArgType = {
 };
 
 // @alpha
-export interface OdspContainerAttachReturnType {
+export interface OdspContainerAttachResult {
     itemId: string;
     shareLinkInfo?: ShareLinkInfoType;
     sharingLink?: string;
 }
 
 // @alpha
-export type OdspContainerAttachType = (param?: OdspContainerAttachArgType) => Promise<OdspContainerAttachReturnType>;
+export type OdspContainerAttachType = (param?: OdspContainerAttachInfo, isClpCompliant?: boolean) => Promise<OdspContainerAttachResult>;
+
+// @alpha
+export type OdspContainerIdentifier = {
+    itemId: string;
+} | {
+    sharingLinkToRedeem: string;
+};
 
 // @alpha
 export interface OdspContainerServices {
     audience: IOdspAudience;
 }
-
-// @alpha
-export type OdspGetContainerArgType = {
-    itemId: string;
-} | {
-    sharingLinkToRedeem: string;
-};
 
 // @alpha
 export interface OdspMember extends IMember {
@@ -84,7 +84,7 @@ export interface OdspMember extends IMember {
 }
 
 // @beta
-export interface OdspSiteIdentification {
+export interface OdspSiteLocation {
     driveId: string;
     siteUrl: string;
 }

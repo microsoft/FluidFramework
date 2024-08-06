@@ -23,7 +23,7 @@ import type { IOdspTokenProvider } from "./token.js";
  * required for ODSP.
  * @beta
  */
-export interface OdspSiteIdentification {
+export interface OdspSiteLocation {
 	/**
 	 * Site url representing ODSP resource location. It points to the specific SharePoint site where you can store and access the containers you create.
 	 */
@@ -41,7 +41,7 @@ export interface OdspSiteIdentification {
  * required for ODSP.
  * @beta
  */
-export interface OdspConnectionConfig extends OdspSiteIdentification {
+export interface OdspConnectionConfig extends OdspSiteLocation {
 	/**
 	 * Instance that provides AAD endpoint tokens for Push and SharePoint
 	 */
@@ -84,7 +84,7 @@ export interface OdspClientProps {
  * If no argument is provided, file with random name (uuid) will be created.
  * @alpha
  */
-export type OdspContainerAttachArgType =
+export type OdspContainerAttachInfo =
 	| {
 			/**
 			 * The file path where Fluid containers are created. If undefined, the file is created at the root.
@@ -114,14 +114,14 @@ export type OdspContainerAttachArgType =
  * An object type returned by IOdspFluidContainer.attach() call. *
  * @alpha
  */
-export interface OdspContainerAttachReturnType {
+export interface OdspContainerAttachResult {
 	/**
 	 * An ID of the document created. This ID could be passed to future IOdspClient.getContainer() call
 	 */
 	itemId: string;
 
 	/**
-	 * If OdspContainerAttachArgType.createShareLinkType was provided at the time of IOdspFluidContainer.attach() call,
+	 * If OdspContainerAttachInfo.createShareLinkType was provided at the time of IOdspFluidContainer.attach() call,
 	 * this value will contain sharing link information for created file.
 	 */
 	shareLinkInfo?: ShareLinkInfoType;
@@ -139,20 +139,24 @@ export interface OdspContainerAttachReturnType {
  * IFluidContainer.attach() function signature for IOdspClient
  * @param param - Specifies where file should be created and how it should be named. If not provided,
  * file with random name (uuid) will be created in the root of the drive.
+ * @param isClpCompliant - Should be set to true only by application that is CLP compliant, for CLP compliant workflow.
+ * This argument has no impact if application is not properly registered with Sharepoint.
  * @alpha
  */
 export type OdspContainerAttachType = (
-	param?: OdspContainerAttachArgType,
-) => Promise<OdspContainerAttachReturnType>;
+	param?: OdspContainerAttachInfo,
+	isClpCompliant?: boolean,
+) => Promise<OdspContainerAttachResult>;
 
 /**
  * Type of argument to IOdspClient.getContainer()
+ * Identifies a container instance in storage.
  * @alpha
  */
-export type OdspGetContainerArgType =
+export type OdspContainerIdentifier =
 	| {
 			/**
-			 * If itemId is provided, then OdspSiteIdentification information (see OdspClientProps.connection) passed to createOdspClient()
+			 * If itemId is provided, then OdspSiteLocation information (see OdspClientProps.connection) passed to createOdspClient()
 			 * is used together with itemId to identify a file in Sharepoint.
 			 */
 			itemId: string;
@@ -160,8 +164,8 @@ export type OdspGetContainerArgType =
 	| {
 			/**
 			 * A sharing link could be provided to identify a file. This link has to be in very specific format - see
-			 * OdspContainerAttachReturnType.sharingLink, result of calling IOdspFluidContainer.
-			 * When sharing link is provided, it uniquely identifies a file in Sharepoint - OdspSiteIdentification information
+			 * OdspContainerAttachResult.sharingLink, result of calling IOdspFluidContainer.
+			 * When sharing link is provided, it uniquely identifies a file in Sharepoint - OdspSiteLocation information
 			 * (part of OdspClientProps.connection provided to createOdspClient()) is ignored in such case.
 			 *
 			 * This is used to save the network calls while doing trees/latest call as if the client does not have

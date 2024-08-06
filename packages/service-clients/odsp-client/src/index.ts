@@ -14,17 +14,17 @@
  */
 
 export type {
-	OdspSiteIdentification,
+	OdspSiteLocation,
 	OdspConnectionConfig,
 	OdspClientProps,
 	OdspContainerServices,
 	IOdspAudience,
 	OdspMember,
 	TokenResponse,
-	OdspContainerAttachArgType,
+	OdspContainerAttachInfo,
 	OdspContainerAttachType,
-	OdspContainerAttachReturnType,
-	OdspGetContainerArgType,
+	OdspContainerAttachResult,
+	OdspContainerIdentifier,
 } from "./interfaces.js";
 export {
 	type IOdspClient,
