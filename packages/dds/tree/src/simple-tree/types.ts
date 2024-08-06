@@ -20,12 +20,12 @@ import {
 	markEager,
 } from "../feature-libraries/index.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
-import { isTreeNode } from "./proxies.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { fail } from "../util/index.js";
-import { getFlexNode, createKernel, setFlexNode } from "./proxyBinding.js";
+import { getOrCreateInnerNode, setInnerNode } from "./proxyBinding.js";
 import { tryGetSchema } from "./treeNodeApi.js";
+import { isTreeNode, TreeNodeKernel } from "./treeNodeKernel.js";
 
 /**
  * Type alias to document which values are un-hydrated.
@@ -361,8 +361,8 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		);
 
 		const result = schema.prepareInstance(this, node);
-		createKernel(result);
-		setFlexNode(result, node);
+		new TreeNodeKernel(result);
+		setInnerNode(result, node);
 		return result;
 	}
 }
@@ -423,7 +423,9 @@ function inspectNodeFunction(
 ): unknown {
 	// TODO: replicated from tryGetSchema to avoid cycle.
 	// This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.
-	const schema = tryGetSimpleNodeSchema(getFlexNode(this).schema) as TreeNodeSchemaClass;
+	const schema = tryGetSimpleNodeSchema(
+		getOrCreateInnerNode(this).schema,
+	) as TreeNodeSchemaClass;
 	const title = `${schema.name}: ${NodeKind[schema.kind]} Node (${schema.identifier})`;
 
 	if (depth < 2) {
