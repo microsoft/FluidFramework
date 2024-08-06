@@ -190,7 +190,9 @@ function nodeDataToMapTree(
 	const flexNode = tryGetFlexNode(data);
 	if (flexNode !== undefined) {
 		if (isMapTreeNode(flexNode)) {
-			if (!allowedTypes.has(tryGetSimpleNodeSchema(flexNode.schema) ?? fail("missing schema"))) {
+			if (
+				!allowedTypes.has(tryGetSimpleNodeSchema(flexNode.schema) ?? fail("missing schema"))
+			) {
 				throw new UsageError("Invalid schema for this context.");
 			}
 			// TODO: mapTreeFromNodeData modifies the trees it gets to add defaults.
