@@ -16,31 +16,19 @@ import { type DocComment, type DocInheritDocTag } from "@microsoft/tsdoc";
 import { FileSystem } from "@rushstack/node-core-library";
 
 import { defaultConsoleLogger, type Logger } from "./Logging.js";
+import type { ConfigurationBase } from "./ConfigurationBase.js";
 
 /**
  * {@link loadModel} options.
  *
  * @public
  */
-export interface LoadModelOptions {
+export interface LoadModelOptions extends ConfigurationBase {
 	/**
 	 * Path to the API model directory.
 	 * I.e., the directory containing the set of `.api.json` files that comprise the API model.
 	 */
 	readonly modelDirectoryPath: string;
-
-	/**
-	 * Optional receiver of system log data.
-	 *
-	 * @defaultValue {@link defaultConsoleLogger}
-	 *
-	 * @remarks
-	 *
-	 * A custom logger can be provided for customized policy, or for a target other than the console.
-	 *
-	 * If you wish to enable `verbose` logging, consider using {@link verboseConsoleLogger}.
-	 */
-	readonly logger?: Logger;
 }
 
 /**
