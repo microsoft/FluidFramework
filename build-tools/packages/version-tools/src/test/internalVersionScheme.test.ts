@@ -391,7 +391,7 @@ describe("internalScheme", () => {
 
 	describe("checking test version schema", () => {
 		it("0.0.0-test-123456 is test version", () => {
-			const input = `0.0.0-test-123456`;
+			const input = `0.0.0-123456-test`;
 			const result = isInternalTestVersion(input);
 			assert.isTrue(result);
 		});

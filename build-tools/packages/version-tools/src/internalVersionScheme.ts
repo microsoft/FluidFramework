@@ -537,7 +537,7 @@ export function isInternalTestVersion(version: semver.SemVer | string): boolean 
 		parsedVersion.minor === 0 &&
 		parsedVersion.major === 0 &&
 		parsedVersion.patch === 0 &&
-		parsedVersion.prerelease[0].startsWith("test-")
+		parsedVersion.prerelease[0].endsWith("-test")
 	) {
 		return true;
 	}
