@@ -288,6 +288,7 @@ export interface ScriptRequirement {
 }
 
 const configName = "flub";
+
 /**
  * A cosmiconfig explorer to find the fluidBuild config. First looks for javascript config files and falls back to the
  * fluidBuild property in package.json. We create a single explorer here because cosmiconfig internally caches configs
@@ -329,6 +330,9 @@ export function getFlubConfig(configPath: string, noCache = false): FlubConfig {
 	return config?.config as FlubConfig;
 }
 
+/**
+ * Convenience function to extract the default interdependency range for a release group from the flub config.
+ */
 export function getDefaultInterdependencyRange(
 	releaseGroup: ReleaseGroup | MonoRepo,
 	context: Context,

@@ -12,6 +12,9 @@ export type {
 	PackageRequirements,
 	PolicyConfig,
 	PreviousVersionStyle,
+	ReleaseNotesConfig,
+	ReleaseNotesSection,
+	ReleaseNotesSectionName,
 	ScriptRequirement,
 } from "./config.js";
 export type { knownReleaseGroups, ReleaseGroup, ReleasePackage } from "./releaseGroups.js";

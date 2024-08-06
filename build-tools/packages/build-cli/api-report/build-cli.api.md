@@ -31,6 +31,7 @@ export interface FlubConfig {
     };
     bump?: BumpConfig;
     policy?: PolicyConfig;
+    releaseNotes?: ReleaseNotesConfig;
 }
 
 // @public
@@ -88,6 +89,20 @@ export type PreviousVersionStyle = "baseMajor" | "baseMinor" | "previousPatch" |
 
 // @public
 export type ReleaseGroup = (typeof knownReleaseGroups)[number];
+
+// @public
+export interface ReleaseNotesConfig {
+    // (undocumented)
+    sections: Record<ReleaseNotesSectionName, ReleaseNotesSection>;
+}
+
+// @public
+export interface ReleaseNotesSection {
+    heading: string;
+}
+
+// @public
+export type ReleaseNotesSectionName = string;
 
 // @internal
 export type ReleasePackage = string;
