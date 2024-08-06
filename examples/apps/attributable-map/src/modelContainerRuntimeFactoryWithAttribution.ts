@@ -4,7 +4,7 @@
  */
 
 import { IModelContainerRuntimeEntryPoint } from "@fluid-example/example-utils";
-import { createRuntimeAttributor, mixinAttributor } from "@fluid-experimental/attributor";
+import { mixinAttributor } from "@fluid-experimental/attributor";
 import {
 	IContainer,
 	IContainerContext,
@@ -54,7 +54,6 @@ export abstract class ModelContainerRuntimeFactoryWithAttribution<ModelType>
 					this.createModel(containerRuntime, container),
 			}),
 			runtimeOptions: this.runtimeOptions,
-			containerScope: { IRuntimeAttributor: createRuntimeAttributor() },
 			existing,
 		});
 
