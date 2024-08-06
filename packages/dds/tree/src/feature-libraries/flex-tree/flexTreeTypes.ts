@@ -15,10 +15,6 @@ import type { Assume, FlattenKeys } from "../../util/index.js";
 import type { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 import type {
-	AllowedTypesToFlexInsertableTree,
-	InsertableFlexField,
-} from "../schema-aware/index.js";
-import type {
 	Any,
 	FlexAllowedTypes,
 	FlexFieldNodeSchema,
@@ -355,7 +351,7 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema>
 	 * @param key - The key of the element to add to the map.
 	 * @param value - The value of the element to add to the map.
 	 */
-	set(key: string, value: FlexibleFieldContent<TSchema["info"]>): void;
+	set(key: string, value: FlexibleFieldContent | undefined): void;
 
 	/**
 	 * Removes the specified element from this map by its `key`.
@@ -536,7 +532,7 @@ export type FlexTreeObjectNodeFieldsInner<TFields extends FlexObjectNodeFields> 
 		// Setter method (when the field is of a kind that has a logical set operation).
 		readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
 			? `set${Capitalize<key & string>}`
-			: never]: (content: FlexibleFieldContent<TFields[key]>) => void;
+			: never]: (content: FlexibleFieldContent) => void;
 	}
 >;
 
@@ -616,18 +612,14 @@ export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKind
  *
  * If a cursor is provided, it must be in Fields mode.
  */
-export type FlexibleFieldContent<TSchema extends FlexFieldSchema> =
-	| InsertableFlexField<TSchema>
-	| ITreeCursorSynchronous;
+export type FlexibleFieldContent = ITreeCursorSynchronous;
 
 /**
  * Strongly typed tree literals for inserting as a node.
  *
  * If a cursor is provided, it must be in Nodes mode.
  */
-export type FlexibleNodeContent<TTypes extends FlexAllowedTypes> =
-	| AllowedTypesToFlexInsertableTree<TTypes>
-	| ITreeCursorSynchronous;
+export type FlexibleNodeContent = ITreeCursorSynchronous;
 
 /**
  * Strongly typed tree literals for inserting a subsequence of nodes.
@@ -636,9 +628,7 @@ export type FlexibleNodeContent<TTypes extends FlexAllowedTypes> =
  *
  * If a cursor is provided, it must be in Fields mode.
  */
-export type FlexibleNodeSubSequence<TTypes extends FlexAllowedTypes> =
-	| Iterable<AllowedTypesToFlexInsertableTree<TTypes>>
-	| ITreeCursorSynchronous;
+export type FlexibleNodeSubSequence = ITreeCursorSynchronous;
 
 /**
  * Type to ensures two types overlap in at least one way.
@@ -722,7 +712,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 export interface FlexTreeRequiredField<in out TTypes extends FlexAllowedTypes>
 	extends FlexTreeField {
 	get content(): FlexTreeUnboxNodeUnion<TTypes>;
-	set content(content: FlexibleNodeContent<TTypes>);
+	set content(content: FlexibleNodeContent);
 }
 
 /**
@@ -741,7 +731,7 @@ export interface FlexTreeRequiredField<in out TTypes extends FlexAllowedTypes>
 export interface FlexTreeOptionalField<in out TTypes extends FlexAllowedTypes>
 	extends FlexTreeField {
 	get content(): FlexTreeUnboxNodeUnion<TTypes> | undefined;
-	set content(newContent: FlexibleNodeContent<TTypes> | undefined);
+	set content(newContent: FlexibleNodeContent | undefined);
 }
 
 // #endregion

@@ -16,8 +16,8 @@ import {
 } from "../feature-libraries/index.js";
 import { fail, extractFromOpaque, isReadonlyArray } from "../util/index.js";
 
-import { getOrCreateNodeProxy, isTreeNode } from "./proxies.js";
-import { getFlexNode, getKernel } from "./proxyBinding.js";
+import { getOrCreateNodeFromFlexTreeNode } from "./proxies.js";
+import { getOrCreateInnerNode } from "./proxyBinding.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 import {
 	NodeKind,
@@ -39,6 +39,7 @@ import {
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { Off } from "../events/index.js";
+import { getKernel, isTreeNode } from "./treeNodeKernel.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -131,12 +132,12 @@ export interface TreeNodeApi {
  */
 export const treeNodeApi: TreeNodeApi = {
 	parent(node: TreeNode): TreeNode | undefined {
-		const editNode = getFlexNode(node).parentField.parent.parent;
+		const editNode = getOrCreateInnerNode(node).parentField.parent.parent;
 		if (editNode === undefined) {
 			return undefined;
 		}
 
-		const output = getOrCreateNodeProxy(editNode);
+		const output = getOrCreateNodeFromFlexTreeNode(editNode);
 		assert(
 			!isTreeValue(output),
 			0x87f /* Parent can't be a leaf, so it should be a node not a value */,
@@ -195,7 +196,7 @@ export const treeNodeApi: TreeNodeApi = {
 		return tryGetSchema(node) ?? fail("Not a tree node");
 	},
 	shortId(node: TreeNode): number | string | undefined {
-		const flexNode = getFlexNode(node);
+		const flexNode = getOrCreateInnerNode(node);
 		const flexSchema = flexNode.schema;
 		const identifierFieldKeys =
 			flexSchema instanceof FlexObjectNodeSchema ? flexSchema.identifierFieldKeys : [];
@@ -246,7 +247,7 @@ export function tryGetSchema<T>(
 		case "object": {
 			if (isTreeNode(value)) {
 				// This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.
-				return tryGetSimpleNodeSchema(getFlexNode(value).schema) as TOut;
+				return tryGetSimpleNodeSchema(getOrCreateInnerNode(value).schema) as TOut;
 			}
 			if (value === null) {
 				return nullSchema as TOut;
@@ -266,7 +267,7 @@ export function tryGetSchema<T>(
 function getStoredKey(node: TreeNode): string | number {
 	// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
 	// "view keys".
-	const parentField = getFlexNode(node).parentField;
+	const parentField = getOrCreateInnerNode(node).parentField;
 	if (parentField.parent.schema.kind.multiplicity === Multiplicity.Sequence) {
 		// The parent of `node` is an array node
 		return parentField.index;

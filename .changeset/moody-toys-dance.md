@@ -7,7 +7,7 @@ section: tree
 highlight: true
 ---
 
-✨ New! ArrayNodes can now be constructed from Maps, and MapNodes from arrays when unambiguous
+✨ New! When unambiguous, ArrayNodes can now be constructed from Maps and MapNodes from arrays
 
 Since the types for ArrayNodes and MapNodes indicate they can be constructed from iterables,
 it should work, even if those iterables are themselves arrays or maps.

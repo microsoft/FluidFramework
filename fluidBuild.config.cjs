@@ -385,7 +385,6 @@ module.exports = {
 				// Test packages published only for the purpose of running tests in CI.
 				"^azure/packages/test/",
 				"^packages/service-clients/end-to-end-tests/",
-				"^packages/test/test-app-insights-logger/",
 				"^packages/test/test-service-load/",
 				"^packages/test/test-end-to-end-tests/",
 
@@ -440,7 +439,6 @@ module.exports = {
 				// internal partners or internal CI requirements.
 				internalFeed: [
 					// TODO: We may not need to publish test packages to the internal feed, remove these exceptions if possible.
-					"@fluid-internal/test-app-insights-logger",
 					"@fluid-internal/test-service-load",
 					// Most examples should be private, but table-document needs to publish internally for legacy compat
 					"@fluid-example/table-document",
