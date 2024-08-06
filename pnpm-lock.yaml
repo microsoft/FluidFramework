@@ -8034,8 +8034,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: ^0.47.0
-        version: 0.47.0
+        specifier: ^0.50.0
+        version: 0.50.0
       '@fluid-tools/build-cli':
         specifier: ^0.42.0
         version: 0.42.0(@types/node@18.19.1)(webpack-cli@4.10.0)
@@ -21036,20 +21036,6 @@ packages:
       '@fluidframework/driver-definitions': 2.1.0
     dev: true
 
-  /@fluid-tools/benchmark@0.47.0:
-    resolution: {integrity: sha512-lQ2ijhUJ68aOHqH1UxOBmAsSWfx2dIuI4vAlQ4e/ueh0a8KUZ8D8AUpJPu1k1pwuTlOuvb629BY9Q4HC6H/KBQ==}
-    dependencies:
-      chai: 4.3.10
-      chalk: 4.1.2
-      easy-table: 1.2.0
-      mocha: 10.2.0
-      mocha-json-output-reporter: 2.1.0(mocha@10.2.0)(moment@2.29.4)
-      mocha-multi-reporters: 1.5.1(mocha@10.2.0)
-      moment: 2.29.4
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
   /@fluid-tools/benchmark@0.50.0:
     resolution: {integrity: sha512-UGvRHYYGp0aRI90oDA8CFT2d8SdJMZMrDqQAJ9Qbw6VSGR3L9ii9xc43NWU33+qGrt3p1NpAzBppX1sVT55rag==}
     dependencies:
@@ -24418,7 +24404,7 @@ packages:
     dependencies:
       '@oclif/core': 4.0.17
       ansis: 3.3.2
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.6
       ejs: 3.1.10
     transitivePeerDependencies:
       - supports-color
@@ -33071,7 +33057,7 @@ packages:
       is-glob: 4.0.3
       minimatch: 3.1.2
       resolve: 1.22.8
-      semver: 7.6.0
+      semver: 7.6.3
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-typescript
@@ -40424,7 +40410,7 @@ packages:
       got: 12.6.1
       registry-auth-token: 5.0.2
       registry-url: 6.0.1
-      semver: 7.6.0
+      semver: 7.6.3
     dev: true
 
   /pacote@15.2.0:
@@ -41634,7 +41620,7 @@ packages:
     engines: {node: '>= 14'}
     dependencies:
       agent-base: 7.1.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.6
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.4
       lru-cache: 7.18.3
@@ -43320,7 +43306,7 @@ packages:
     resolution: {integrity: sha512-0Ju4+6A8iOnpL/Thra7dZsSlOHYAHIeMxfhWQRI1/VLcT3WDBZKKtQt/QkBOsiIN9ZpuvHE6cGZ0x4glCMmfiA==}
     engines: {node: '>=12'}
     dependencies:
-      semver: 7.6.0
+      semver: 7.6.3
     dev: true
 
   /semver-try-require@6.2.3:
