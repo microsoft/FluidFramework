@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { Unenforced } from "../feature-libraries/index.js";
-import type { RestrictiveReadonlyRecord } from "../util/index.js";
-import type { InsertableObjectFromSchemaRecord } from "./objectNode.js";
+import type { Unenforced } from "../../feature-libraries/index.js";
+import type { RestrictiveReadonlyRecord } from "../../util/index.js";
+import type { InsertableObjectFromSchemaRecord } from "../objectNode.js";
 
 import {
 	type FieldKind,
@@ -17,9 +17,9 @@ import {
 	type NodeKind,
 	type TreeNodeSchemaClass,
 	type WithType,
-} from "./schemaTypes.js";
-import type { TreeNode } from "./types.js";
-import type { FieldSchemaUnsafe } from "./typesUnsafe.js";
+} from "../schemaTypes.js";
+import type { TreeNode } from "../types.js";
+import type { FieldSchemaUnsafe } from "../typesUnsafe.js";
 
 export function createFieldSchemaUnsafe<
 	Kind extends FieldKind,

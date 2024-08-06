@@ -5,15 +5,15 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { fail } from "../util/index.js";
+import { fail } from "../../util/index.js";
 
 import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
-import type { NodeFromSchema, NodeKind, TreeNodeSchemaClass } from "./schemaTypes.js";
-import type { TreeNode } from "./types.js";
+import type { NodeFromSchema, NodeKind, TreeNodeSchemaClass } from "../schemaTypes.js";
+import type { TreeNode } from "../types.js";
 import type {
 	InsertableObjectFromSchemaRecord,
 	ObjectFromSchemaRecord,
-} from "./objectNode.js";
+} from "../objectNode.js";
 
 /**
  * Empty Object for use in type computations that should contribute no fields when `&`ed with another type.

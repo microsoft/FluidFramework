@@ -5,7 +5,7 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
-import { Multiplicity, rootFieldKey } from "../core/index.js";
+import { Multiplicity, rootFieldKey } from "../../core/index.js";
 import {
 	type LazyItem,
 	type TreeStatus,
@@ -13,12 +13,11 @@ import {
 	isTreeValue,
 	FlexObjectNodeSchema,
 	isMapTreeNode,
-} from "../feature-libraries/index.js";
-import { fail, extractFromOpaque, isReadonlyArray } from "../util/index.js";
+} from "../../feature-libraries/index.js";
+import { fail, extractFromOpaque, isReadonlyArray } from "../../util/index.js";
 
-import { getOrCreateNodeFromFlexTreeNode } from "./proxies.js";
-import { getOrCreateInnerNode } from "./proxyBinding.js";
-import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
+import { getOrCreateNodeFromFlexTreeNode } from "../proxies.js";
+import { getOrCreateInnerNode } from "../proxyBinding.js";
 import {
 	NodeKind,
 	type TreeLeafValue,
@@ -27,19 +26,19 @@ import {
 	FieldSchema,
 	type ImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
-} from "./schemaTypes.js";
-import type { TreeNode, TreeChangeEvents } from "./types.js";
+} from "../schemaTypes.js";
+import { type TreeNode, type TreeChangeEvents, tryGetTreeNodeSchema } from "../types.js";
 import {
 	booleanSchema,
 	handleSchema,
 	nullSchema,
 	numberSchema,
 	stringSchema,
-} from "./leafNodeSchema.js";
+} from "../leafNodeSchema.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { Off } from "../events/index.js";
-import { getKernel, isTreeNode } from "./treeNodeKernel.js";
+import type { Off } from "../../events/index.js";
+import { getKernel, isTreeNode } from "../core/index.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -247,7 +246,7 @@ export function tryGetSchema<T>(
 		case "object": {
 			if (isTreeNode(value)) {
 				// This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.
-				return tryGetSimpleNodeSchema(getOrCreateInnerNode(value).schema) as TOut;
+				return tryGetTreeNodeSchema(value) as TOut;
 			}
 			if (value === null) {
 				return nullSchema as TOut;
