@@ -5,9 +5,8 @@
 
 const ts = require("typescript");
 
-hasIndexSignature = (type) => type.getStringIndexType() || type.getNumberIndexType();
-
-isArrayType = (type) => type.symbol && type.symbol.name === "Array";
+const hasIndexSignature = (type) => type.getStringIndexType() || type.getNumberIndexType();
+const isArrayType = (type) => type.symbol && type.symbol.name === "Array";
 
 module.exports = {
 	meta: {
@@ -18,55 +17,66 @@ module.exports = {
 		},
 		schema: [],
 	},
-
 	create(context) {
-		function checkMemberExpression(node) {
-			const services = context.parserServices;
+		const checkedProperties = new Set();
 
-			if (!services || !services.program || !services.esTreeNodeToTSNodeMap) {
-				return;
-			}
-
-			const checker = services.program.getTypeChecker();
-			let currentNode = node;
-			let accessPath = [];
-
-			while (currentNode.type === "MemberExpression") {
-				if (currentNode.property.type === "Identifier") {
-					accessPath.unshift(currentNode.property.name);
+		return {
+			IfStatement(node) {
+				if (node.test.type === "MemberExpression") {
+					const propertyName = node.test.property.name;
+					checkedProperties.add(propertyName);
 				}
-				currentNode = currentNode.object;
-			}
-
-			if (currentNode.type === "Identifier") {
-				accessPath.unshift(currentNode.name);
-			}
-
-			const tsNode = services.esTreeNodeToTSNodeMap.get(node.object);
-			const type = checker.getTypeAtLocation(tsNode);
-
-			if (isArrayType(type)) {
-				return;
-			}
-
-			if (hasIndexSignature(type)) {
-				const property = node.property.name || node.property.value;
-				const propertyType = checker.getTypeOfPropertyOfType(type, property);
-
-				// Skip reporting if the property exists on the type
-				if (propertyType && propertyType.flags !== ts.TypeFlags.Undefined) {
+			},
+			MemberExpression: function checkMemberExpression(node) {
+				const services = context.parserServices;
+				if (!services || !services.program || !services.esTreeNodeToTSNodeMap) {
 					return;
 				}
 
-				context.report({
-					node: node,
-					message: `'${accessPath.join(".")}' is possibly 'undefined'`,
-				});
-			}
-		}
+				const checker = services.program.getTypeChecker();
 
-		return {
-			MemberExpression: checkMemberExpression,
+				let currentNode = node;
+				let accessPath = [];
+				while (currentNode.type === "MemberExpression") {
+					if (currentNode.property.type === "Identifier") {
+						accessPath.unshift(currentNode.property.name);
+					}
+					currentNode = currentNode.object;
+				}
+				if (currentNode.type === "Identifier") {
+					accessPath.unshift(currentNode.name);
+				}
+
+				const tsNode = services.esTreeNodeToTSNodeMap.get(node.object);
+				const type = checker.getTypeAtLocation(tsNode);
+
+				if (isArrayType(type)) {
+					return;
+				}
+
+				if (hasIndexSignature(type)) {
+					const property = node.property.name || node.property.value;
+					const propertyType = checker.getTypeOfPropertyOfType(type, property);
+
+					// If this is a nested access (e.g., obj.prop.nestedProp)
+					if (node.parent.type === "MemberExpression" && node.parent.object === node) {
+						// Check if the property has been checked in a truthy condition
+						if (checkedProperties.has(property)) {
+							return;
+						}
+
+						// Check if the property type is string (for cases like .length on a string)
+						if (propertyType && propertyType.flags === ts.TypeFlags.String) {
+							return;
+						}
+
+						context.report({
+							node: node.parent,
+							message: `'${accessPath.join(".")}' is possibly 'undefined'`,
+						});
+					}
+				}
+			},
 		};
 	},
 };
