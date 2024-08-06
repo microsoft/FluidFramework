@@ -541,11 +541,12 @@ describe("toMapTree", () => {
 
 		it("Throws on schema-incompatible entries", () => {
 			const schemaFactory = new SchemaFactory("test");
-			const schema = schemaFactory.object("testObject", {
-				field1: schemaFactory.string,
-			});
+			const schema = schemaFactory.map("map", schemaFactory.string);
 
-			const entries: [string, InsertableContent][] = [["a", "Hello world"]];
+			const entries: [string, InsertableContent][] = [
+				["a", "Hello world"],
+				["b", true], // Boolean input is not allowed by the schema
+			];
 			const tree = new Map<string, InsertableContent>(entries);
 
 			assert.throws(
