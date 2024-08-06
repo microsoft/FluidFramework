@@ -390,26 +390,37 @@ describe("internalScheme", () => {
 	});
 
 	describe("checking test version schema", () => {
-		it("0.0.0-test-123456 is test version", () => {
-			const input = `0.0.0-123456-test`;
+		it("0.0.0-285010-test is test version", () => {
+			const input = `0.0.0-285010-test`;
 			const result = isInternalTestVersion(input);
 			assert.isTrue(result);
 		});
 
-		it("2.1.0-test-123456 is not test version", () => {
-			const input = `2.1.0-test-123456`;
+		it("0.0.0-test-285010 is test version", () => {
+			const input = `0.0.0-test-285010`;
 			const result = isInternalTestVersion(input);
 			assert.isFalse(result);
 		});
 
-		it("2.1.0-123456-test is not test version", () => {
-			const input = `2.1.0-123456-test`;
+		it("2.1.0-test-285010 is not test version", () => {
+			const input = `2.1.0-test-285010`;
 			const result = isInternalTestVersion(input);
 			assert.isFalse(result);
 		});
 
-		it("2.1.0-123456 is not test version", () => {
-			const input = `2.1.0-123456`;
+		it("2.1.0-285010-test is not test version", () => {
+			const input = `2.1.0-285010-test`;
+			const result = isInternalTestVersion(input);
+			assert.isFalse(result);
+		});
+
+		it("2.1.0-285010 is not test version", () => {
+			const input = `2.1.0-285010`;
+			assert.throws(() => isInternalTestVersion(input));
+		});
+
+		it("2.1.0 is not test version", () => {
+			const input = `2.1.0`;
 			assert.throws(() => isInternalTestVersion(input));
 		});
 	});
