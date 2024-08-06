@@ -27,7 +27,7 @@ export interface ILumberjackOptions {
 	enableSanitization?: boolean;
 }
 const defaultLumberjackOptions: ILumberjackOptions = {
-	enableGlobalTelemetryContext: false,
+	enableGlobalTelemetryContext: true,
 	enableSanitization: false,
 };
 

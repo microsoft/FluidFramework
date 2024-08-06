@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import assert from "assert";
 import express from "express";
 import * as sinon from "sinon";
@@ -116,7 +115,6 @@ describe("routes", () => {
 				const clusterThrottlers = new Map<string, TestThrottler>();
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 
 				app = historianApp.create(
 					defaultProvider,
@@ -126,7 +124,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					undefined,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -222,7 +219,6 @@ describe("routes", () => {
 				const clusterThrottlers = new Map<string, TestThrottler>();
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 
 				app = historianApp.create(
 					defaultProvider,
@@ -232,7 +228,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					undefined,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -342,7 +337,6 @@ describe("routes", () => {
 				const clusterThrottlers = new Map<string, TestThrottler>();
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 
 				app = historianApp.create(
 					defaultProvider,
@@ -352,7 +346,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					undefined,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -451,7 +444,6 @@ describe("routes", () => {
 				const clusterThrottlers = new Map<string, TestThrottler>();
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
@@ -460,7 +452,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					undefined,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -522,7 +513,6 @@ describe("routes", () => {
 				const clusterThrottlers = new Map<string, TestThrottler>();
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
@@ -531,7 +521,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					undefined,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -585,7 +574,6 @@ describe("routes", () => {
 				const clusterThrottlers = new Map<string, TestThrottler>();
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
@@ -594,7 +582,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					undefined,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -647,7 +634,6 @@ describe("routes", () => {
 				const clusterThrottlers = new Map<string, TestThrottler>();
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
@@ -656,7 +642,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					undefined,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -737,7 +722,6 @@ describe("routes", () => {
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
 
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
@@ -746,7 +730,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					undefined,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -831,7 +814,6 @@ describe("routes", () => {
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
 
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
@@ -840,7 +822,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					undefined,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -939,7 +920,6 @@ describe("routes", () => {
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
 
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
@@ -948,7 +928,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					undefined,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -1028,7 +1007,6 @@ describe("routes", () => {
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
 
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
@@ -1037,7 +1015,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					undefined,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -1091,7 +1068,6 @@ describe("routes", () => {
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
 
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
@@ -1100,7 +1076,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					undefined,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -1146,7 +1121,6 @@ describe("routes", () => {
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
 
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
@@ -1155,7 +1129,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					undefined,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -1204,7 +1177,6 @@ describe("routes", () => {
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
 
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 				app = historianApp.create(
 					defaultProvider,
 					defaultTenantService,
@@ -1213,7 +1185,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					undefined,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});

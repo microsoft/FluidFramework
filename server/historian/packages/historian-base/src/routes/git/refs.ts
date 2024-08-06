@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import * as git from "@fluidframework/gitresources";
 import {
 	ICreateRefParamsExternal,
@@ -35,7 +34,6 @@ export function create(
 	restTenantThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
 	cache?: ICache,
-	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
 ): Router {
@@ -58,7 +56,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
 		});
 		return service.getRefs();
@@ -73,7 +70,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
 		});
 		return service.getRef(ref);
@@ -92,7 +88,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
 		});
 		return service.createRef(params);
@@ -112,7 +107,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
 		});
 		return service.updateRef(ref, params);
@@ -127,7 +121,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
 		});
 		return service.deleteRef(ref);

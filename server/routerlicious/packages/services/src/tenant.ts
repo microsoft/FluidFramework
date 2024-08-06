@@ -12,12 +12,13 @@ import {
 	getAuthorizationTokenFromCredentials,
 	IGitManager,
 } from "@fluidframework/server-services-client";
-import { generateToken, getCorrelationId } from "@fluidframework/server-services-utils";
+import { generateToken } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import {
 	CommonProperties,
 	getLumberBaseProperties,
+	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
 import { RawAxiosRequestHeaders } from "axios";
 import { IsEphemeralContainer } from ".";
@@ -68,7 +69,8 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			undefined /* axios */,
 			undefined /* refreshDefaultQureyString */,
 			undefined /* refreshDefaultHeaders */,
-			getCorrelationId,
+			() => getGlobalTelemetryContext().getProperties().correlationId,
+			() => getGlobalTelemetryContext().getProperties(),
 		);
 		const result = await restWrapper.post<core.ITenantConfig & { key: string }>(
 			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId || "")}`,
@@ -146,7 +148,8 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			undefined,
 			undefined,
 			getDefaultHeaders,
-			getCorrelationId,
+			() => getGlobalTelemetryContext().getProperties().correlationId,
+			() => getGlobalTelemetryContext().getProperties(),
 		);
 		const historian = new Historian(baseUrl, true, false, tenantRestWrapper);
 		const gitManager = new GitManager(historian);
@@ -164,7 +167,8 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			undefined /* axios */,
 			undefined /* refreshDefaultQureyString */,
 			undefined /* refreshDefaultHeaders */,
-			getCorrelationId,
+			() => getGlobalTelemetryContext().getProperties().correlationId,
+			() => getGlobalTelemetryContext().getProperties(),
 		);
 		await restWrapper.post(
 			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/validate`,
@@ -182,7 +186,8 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			undefined /* axios */,
 			undefined /* refreshDefaultQureyString */,
 			undefined /* refreshDefaultHeaders */,
-			getCorrelationId,
+			() => getGlobalTelemetryContext().getProperties().correlationId,
+			() => getGlobalTelemetryContext().getProperties(),
 		);
 		const result = await restWrapper.get<core.ITenantKeys>(
 			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/keys`,
@@ -212,7 +217,8 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			undefined /* axios */,
 			undefined /* refreshDefaultQureyString */,
 			undefined /* refreshDefaultHeaders */,
-			getCorrelationId,
+			() => getGlobalTelemetryContext().getProperties().correlationId,
+			() => getGlobalTelemetryContext().getProperties(),
 		);
 		return restWrapper.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`, {
 			includeDisabledTenant,

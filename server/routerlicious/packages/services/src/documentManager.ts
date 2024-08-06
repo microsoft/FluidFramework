@@ -12,8 +12,12 @@ import {
 	IDocumentStaticProperties,
 	ICache,
 } from "@fluidframework/server-services-core";
-import { generateToken, getCorrelationId } from "@fluidframework/server-services-utils";
-import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import { generateToken } from "@fluidframework/server-services-utils";
+import {
+	Lumberjack,
+	getLumberBaseProperties,
+	getGlobalTelemetryContext,
+} from "@fluidframework/server-services-telemetry";
 
 /**
  * Manager to fetch document from Alfred using the internal URL.
@@ -120,7 +124,8 @@ export class DocumentManager implements IDocumentManager {
 			undefined /* Axios */,
 			undefined /* refreshDefaultQueryString */,
 			getDefaultHeaders /* refreshDefaultHeaders */,
-			getCorrelationId /* getCorrelationId */,
+			() => getGlobalTelemetryContext().getProperties().correlationId /* getCorrelationId */,
+			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 		);
 		return restWrapper;
 	}

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import {
 	IStorageNameRetriever,
 	IThrottler,
@@ -49,7 +48,6 @@ export function create(
 	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
 	cache?: ICache,
-	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
 ): IRoutes {
@@ -62,7 +60,6 @@ export function create(
 				restTenantThrottlers,
 				documentManager,
 				cache,
-				asyncLocalStorage,
 				revokedTokenChecker,
 				denyList,
 			),
@@ -73,7 +70,6 @@ export function create(
 				restTenantThrottlers,
 				documentManager,
 				cache,
-				asyncLocalStorage,
 				revokedTokenChecker,
 				denyList,
 			),
@@ -84,7 +80,6 @@ export function create(
 				restTenantThrottlers,
 				documentManager,
 				cache,
-				asyncLocalStorage,
 				revokedTokenChecker,
 				denyList,
 			),
@@ -95,7 +90,6 @@ export function create(
 				restTenantThrottlers,
 				documentManager,
 				cache,
-				asyncLocalStorage,
 				revokedTokenChecker,
 				denyList,
 			),
@@ -106,7 +100,6 @@ export function create(
 				restTenantThrottlers,
 				documentManager,
 				cache,
-				asyncLocalStorage,
 				revokedTokenChecker,
 				denyList,
 			),
@@ -119,7 +112,6 @@ export function create(
 				restTenantThrottlers,
 				documentManager,
 				cache,
-				asyncLocalStorage,
 				revokedTokenChecker,
 				denyList,
 			),
@@ -130,7 +122,6 @@ export function create(
 				restTenantThrottlers,
 				documentManager,
 				cache,
-				asyncLocalStorage,
 				revokedTokenChecker,
 				denyList,
 			),
@@ -141,7 +132,6 @@ export function create(
 				restTenantThrottlers,
 				documentManager,
 				cache,
-				asyncLocalStorage,
 				revokedTokenChecker,
 				denyList,
 			),
@@ -154,7 +144,6 @@ export function create(
 			restClusterThrottlers,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			revokedTokenChecker,
 			denyList,
 		),
