@@ -24,6 +24,11 @@ export const unknownValueWithBigint = { bigint: 1n } as unknown;
 export const voidValue = null as unknown as void;
 const never = null as never;
 
+export const stringOrSymbol = Symbol("objectSymbol") as string | symbol;
+export const bigintOrString = "not bigint" as string | bigint;
+export const bigintOrSymbol = Symbol("objectSymbol") as symbol | bigint;
+export const numberOrBigintOrSymbol = 7 as number | bigint | symbol;
+
 export enum NumericEnum {
 	zero,
 	one,
@@ -92,10 +97,10 @@ export const objectWithBigint = { bigint: 0n };
 export const objectWithFunction = { function: (): void => {} };
 export const objectWithFunctionWithProperties = { function: functionWithProperties };
 export const objectWithObjectAndFunction = { object: objectAndFunction };
-export const objectWithStringOrSymbol = {
-	stringOrSymbol: Symbol("objectSymbol") as string | symbol,
-};
-export const objectWithBigintOrString = { bigintOrString: "not bigint" as string | bigint };
+export const objectWithStringOrSymbol = { stringOrSymbol };
+export const objectWithBigintOrString = { bigintOrString };
+export const objectWithBigintOrSymbol = { bigintOrSymbol };
+export const objectWithNumberOrBigintOrSymbol = { numberOrBigintOrSymbol };
 export const objectWithFunctionOrSymbol = {
 	functionOrSymbol: ((): void => {}) as (() => void) | symbol,
 };

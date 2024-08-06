@@ -49,6 +49,10 @@ import {
 	unknownValueOfSimpleRecord,
 	unknownValueWithBigint,
 	voidValue,
+	stringOrSymbol,
+	bigintOrString,
+	bigintOrSymbol,
+	numberOrBigintOrSymbol,
 	functionWithProperties,
 	objectAndFunction,
 	arrayOfNumbers,
@@ -72,6 +76,8 @@ import {
 	objectWithFunctionWithProperties,
 	objectWithObjectAndFunction,
 	objectWithBigintOrString,
+	objectWithBigintOrSymbol,
+	objectWithNumberOrBigintOrSymbol,
 	objectWithFunctionOrSymbol,
 	objectWithStringOrSymbol,
 	objectWithUndefined,
@@ -775,6 +781,40 @@ describe("JsonSerializable", () => {
 				filteredIn satisfies never;
 			});
 
+			describe("unions with unsupported primitive types", () => {
+				it("`string | symbol`", () => {
+					const { filteredIn } = passThruThrows(
+						// @ts-expect-error `string | symbol` is not assignable to `string`
+						stringOrSymbol,
+						new Error("JSON.stringify returned undefined"),
+					);
+					assertIdenticalTypes(filteredIn, string);
+				});
+				it("`bigint | string`", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error `bigint | symbol` is not assignable to `string`
+						bigintOrString,
+					);
+					assertIdenticalTypes(filteredIn, string);
+				});
+				it("`bigint | symbol`", () => {
+					const { filteredIn } = passThruThrows(
+						// @ts-expect-error `bigint | symbol` is not assignable to `never`
+						bigintOrSymbol,
+						new Error("JSON.stringify returned undefined"),
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<never>());
+				});
+				it("`number | bigint | symbol`", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error `number | bigint | symbol` is not assignable to `number`
+						numberOrBigintOrSymbol,
+						7,
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<number>());
+				});
+			});
+
 			describe("array", () => {
 				it("array of `bigint`s", () => {
 					const { filteredIn } = passThruThrows(
@@ -843,6 +883,22 @@ describe("JsonSerializable", () => {
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<{ property: string }[]>());
 				});
+				it("array of `bigint | symbol`s", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error 'bigint | symbol' is not assignable to 'never'
+						[bigintOrSymbol],
+						[null],
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<never[]>());
+				});
+				it("array of `number | bigint | symbol`s", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error 'number | bigint | symbol' is not assignable to 'number'
+						[numberOrBigintOrSymbol],
+						[7],
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<number[]>());
+				});
 			});
 
 			describe("object", () => {
@@ -904,11 +960,30 @@ describe("JsonSerializable", () => {
 				});
 				it("object with exactly `bigint | string`", () => {
 					const { filteredIn } = passThru(
-						// @ts-expect-error `bigint` | `string` is not assignable to `string`
+						// @ts-expect-error `bigint | string` is not assignable to `string`
 						objectWithBigintOrString,
 						// value is a string; so no runtime error.
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<{ bigintOrString: string }>());
+				});
+				it("object with exactly `bigint | symbol`", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error `bigint | symbol` is not assignable to `never`
+						objectWithBigintOrSymbol,
+						{},
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<{ bigintOrSymbol: never }>());
+				});
+				it("object with exactly `number | bigint | symbol`", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error `number | bigint | symbol` is not assignable to `number`
+						objectWithNumberOrBigintOrSymbol,
+						{ numberOrBigintOrSymbol: 7 },
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{ numberOrBigintOrSymbol: number }>(),
+					);
 				});
 
 				it("object with symbol key", () => {

@@ -342,10 +342,10 @@ export namespace InternalUtilityTypes {
         ]>;
     } : SerializationErrorPerNonPublicProperties : JsonSerializableFilter<T, Controls, TAncestorTypes, TNextAncestor> : never : never;
     export type NonSymbolWithDeserializablePropertyOf<T extends object, TExactException, TExtendsException, Keys extends keyof T = keyof T> = Exclude<{
-        [K in Keys]: Extract<ExcludeExactly<Exclude<T[K], TExtendsException>, TExactException>, undefined | symbol | Function | bigint> extends never ? T[K] extends never ? never : K : never;
+        [K in Keys]: ExcludeExactly<Exclude<T[K], TExtendsException>, TExactException> extends infer PossibleTypeLessAllowed ? Extract<PossibleTypeLessAllowed, undefined | symbol | Function> extends never ? IfSameType<PossibleTypeLessAllowed, bigint, never, T[K] extends never ? never : K> : never : never;
     }[Keys], undefined | symbol>;
     export type NonSymbolWithPossiblyDeserializablePropertyOf<T extends object, TExactException, TExtendsException, Keys extends keyof T = keyof T> = Exclude<{
-        [K in Keys]: Extract<ExcludeExactly<Exclude<T[K], TExtendsException>, TExactException>, undefined | symbol | Function | bigint> extends never ? never : TestDeserializabilityOf<T[K], TExactException, TExtendsException, {
+        [K in Keys]: Extract<ExcludeExactly<Exclude<T[K], TExtendsException>, TExactException>, undefined | symbol | Function> extends never ? never : TestDeserializabilityOf<T[K], TExactException, TExtendsException, {
             WhenSomethingDeserializable: K;
             WhenNeverDeserializable: never;
         }>;

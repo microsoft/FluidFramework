@@ -163,8 +163,9 @@ export namespace InternalUtilityTypes {
 
 	/**
 	 * Returns non-symbol keys for defined, (likely) serializable properties of an
-	 * object type. Keys with fully unsupported properties (bigints, symbols, and
-	 * undefined) and sometimes unsupported functions are excluded.
+	 * object type. Keys with fully unsupported properties (undefined, symbol, and
+	 * bigint) and sometimes unsupported (functions) are excluded. An exception to
+	 * that is when there are supported types in union with just bigint.
 	 *
 	 * For homomorphic mapping use with `as` to filter. Example:
 	 * `[K in keyof T as NonSymbolWithDeserializablePropertyOf<T, never, never, K>]: ...`
@@ -178,26 +179,35 @@ export namespace InternalUtilityTypes {
 		Keys extends keyof T = keyof T,
 	> = Exclude<
 		{
-			[K in Keys]: /* extract types that might lead to missing property */
-			Extract<
-				/* all possible types that aren't already allowed */
-				ExcludeExactly<Exclude<T[K], TExtendsException>, TExactException>,
-				/* types that might lead to missing property */
-				// eslint-disable-next-line @typescript-eslint/ban-types
-				undefined | symbol | Function | bigint
-			> extends never
-				? /* exclusively supported types or exactly `never` => check for `never` */
-					T[K] extends never
-					? never
-					: K
-				: /* value might not be supported => exclude K */ never;
+			[K in Keys]: /* all possible types that aren't already allowed */
+			ExcludeExactly<
+				Exclude<T[K], TExtendsException>,
+				TExactException
+			> extends infer PossibleTypeLessAllowed
+				? /* extract types that might lead to missing property */
+					Extract<
+						PossibleTypeLessAllowed,
+						/* types that might lead to missing property, except `bigint` */
+						// eslint-disable-next-line @typescript-eslint/ban-types
+						undefined | symbol | Function
+					> extends never
+					? /* all types are supported plus possibly `bigint` => */
+						/* check for only `bigint` remaining */ IfSameType<
+							PossibleTypeLessAllowed,
+							bigint,
+							/* only `bigint` => nothing supported */ never,
+							/* exclusively supported types (and maybe `bigint`) or exactly `never` */
+							/* => check for `never` */ T[K] extends never ? never : K
+						>
+					: /* value might not be supported => exclude K */ never
+				: never;
 		}[Keys],
 		undefined | symbol
 	>;
 
 	/**
 	 * Returns non-symbol keys for partially supported properties of an object type.
-	 * Keys with fully unsupported properties (bigints, symbols, undefined, and
+	 * Keys with only unsupported properties (undefined, symbol, bigint, and
 	 * functions without other properties) are excluded.
 	 *
 	 * For homomorphic mapping use with `as` to filter. Example:
@@ -217,7 +227,7 @@ export namespace InternalUtilityTypes {
 				ExcludeExactly<Exclude<T[K], TExtendsException>, TExactException>,
 				/* types that might lead to missing property */
 				// eslint-disable-next-line @typescript-eslint/ban-types
-				undefined | symbol | Function | bigint
+				undefined | symbol | Function
 			> extends never
 				? /* exclusively supported types or exactly `never` */ never
 				: /* at least some unsupported type => check for any supported */ TestDeserializabilityOf<

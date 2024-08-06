@@ -43,6 +43,10 @@ import {
 	unknownValueOfSimpleRecord,
 	unknownValueWithBigint,
 	voidValue,
+	stringOrSymbol,
+	bigintOrString,
+	bigintOrSymbol,
+	numberOrBigintOrSymbol,
 	functionWithProperties,
 	objectAndFunction,
 	arrayOfNumbers,
@@ -66,6 +70,8 @@ import {
 	objectWithFunctionWithProperties,
 	objectWithObjectAndFunction,
 	objectWithBigintOrString,
+	objectWithBigintOrSymbol,
+	objectWithNumberOrBigintOrSymbol,
 	objectWithFunctionOrSymbol,
 	objectWithStringOrSymbol,
 	objectWithUndefined,
@@ -237,6 +243,31 @@ describe("JsonDeserialized", () => {
 			});
 		});
 
+		describe("unions with unsupported primitive types preserve supported types", () => {
+			it("`string | symbol`", () => {
+				const resultRead = passThruThrows(
+					stringOrSymbol,
+					new Error("JSON.stringify returned undefined"),
+				);
+				assertIdenticalTypes(resultRead, string);
+			});
+			it("`bigint | string`", () => {
+				const resultRead = passThru(bigintOrString);
+				assertIdenticalTypes(resultRead, string);
+			});
+			it("`bigint | symbol`", () => {
+				const resultRead = passThruThrows(
+					bigintOrSymbol,
+					new Error("JSON.stringify returned undefined"),
+				);
+				assertIdenticalTypes(resultRead, createInstanceOf<never>());
+			});
+			it("`number | bigint | symbol`", () => {
+				const resultRead = passThru(numberOrBigintOrSymbol, 7);
+				assertIdenticalTypes(resultRead, createInstanceOf<number>());
+			});
+		});
+
 		describe("supported literal types are preserved", () => {
 			it("`true`", () => {
 				const resultRead = passThru(true as const);
@@ -345,6 +376,14 @@ describe("JsonDeserialized", () => {
 			it("array of objects and functions becomes ({...}|null)[]", () => {
 				const resultRead = passThru(arrayOfObjectAndFunctions, [{ property: 6 }]);
 				assertIdenticalTypes(resultRead, createInstanceOf<({ property: number } | null)[]>());
+			});
+			it("array of `bigint | symbol` becomes null[]", () => {
+				const resultRead = passThru([bigintOrSymbol], [null]);
+				assertIdenticalTypes(resultRead, createInstanceOf<null[]>());
+			});
+			it("array of `number | bigint | symbol` becomes (number|null)[]", () => {
+				const resultRead = passThru([numberOrBigintOrSymbol], [7]);
+				assertIdenticalTypes(resultRead, createInstanceOf<(number | null)[]>());
 			});
 		});
 
@@ -577,9 +616,22 @@ describe("JsonDeserialized", () => {
 						objectWithBigintOrString,
 						// value is a string; so no runtime error.
 					);
-					assertIdenticalTypes(resultRead, createInstanceOf<{ bigintOrString?: string }>());
-					// @ts-expect-error { bigintOrString: string | bigint } does not satisfy { bigintOrString?: string }
+					assertIdenticalTypes(resultRead, createInstanceOf<{ bigintOrString: string }>());
+					// @ts-expect-error { bigintOrString: string | bigint } does not satisfy { bigintOrString: string }
 					objectWithBigintOrString satisfies typeof resultRead;
+				});
+				it("object with exactly `bigint | symbol`", () => {
+					const resultRead = passThru(objectWithBigintOrSymbol, {});
+					assertIdenticalTypes(resultRead, {});
+				});
+				it("object with exactly `number | bigint | symbol`", () => {
+					const resultRead = passThru(objectWithNumberOrBigintOrSymbol, {
+						numberOrBigintOrSymbol: 7,
+					});
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{ numberOrBigintOrSymbol?: number }>(),
+					);
 				});
 
 				it("object with symbol key", () => {

@@ -50,14 +50,31 @@ export interface JsonDeserializedOptions {
  * produced trying to assign `JsonDeserialized<T>` to `T`.
  *
  * Simply deserialized JSON never contains `bigint`, `undefined`, `symbol`,
- * or function values.
- * Object properties with values of those types are absent. So properties
- * become optional (when there are other supported types in union) or are
- * removed (when nothing else in union is supported).
- * In an array, such values are replaced with `null`.
+ * or function values. (Object properties which had those types before encoding
+ * are omitted during serialization and thus won't be present after
+ * deserialization.) Therefore, through this filter, such properties:
  *
- * `bigint` valued properties are simply removed as serialization attempts
- * will throw.
+ * - become optional with those types excluded (when there are other supported
+ * types in union)
+ *
+ * - are removed (when nothing else in union is supported)
+ *
+ * - in an array are (1) replaced with `null` if `undefined`, `symbol`, and
+ * function values or (2) simply removed (become `never`) if `bigint` value as
+ * serialization attempts will throw.
+ *
+ * Examples results:
+ *
+ * | Before serialization  | After deserialization | After in record    |       After in array |
+ * | --------------------- | --------------------- | ------------------ | --------------------:|
+ * | `undefined \| number` | `number`              | `prop?: number`    | `(number \| null)[]` |
+ * | `symbol \| number`    | `number`              | `prop?: number`    | `(number \| null)[]` |
+ * | `bigint \| number`    | `number`              | `prop: number`     |           `number[]` |
+ * | `undefined`           | N/A `never`           | (prop not present) |             `null[]` |
+ * | `symbol`              | N/A `never`           | (prop not present) |             `null[]` |
+ * | `bigint`              | N/A `never`           | N/A (prop not present) |    N/A `never[]` |
+ * | `bigint \| symbol`    | N/A `never`           | (prop not present) |             `null[]` |
+ * | `bigint \| number \| symbol` | `number`       | `prop?: number`    | `(number \| null)[]` |
  *
  * Setter and getter properties become value properties after filtering
  * although no data will be persisted assuming those properties are backed
