@@ -1,7 +1,7 @@
 {
 	"metadata": {
 		"toolPackage": "@microsoft/api-extractor",
-		"toolVersion": "7.42.3",
+		"toolVersion": "7.47.5",
 		"schemaVersion": 1011,
 		"oldestForwardsCompatibleVersion": 1001,
 		"tsdocConfig": {
@@ -1381,6 +1381,33 @@
 							"isStatic": false,
 							"isProtected": false,
 							"isAbstract": false
+						},
+						{
+							"kind": "PropertySignature",
+							"canonicalReference": "simple-suite-test!TestInterface#propertyWithBadInheritDocTarget:member",
+							"docComment": "/**\n * {@inheritDoc BadInheritDocTarget}\n */\n",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "propertyWithBadInheritDocTarget: "
+								},
+								{
+									"kind": "Content",
+									"text": "boolean"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "propertyWithBadInheritDocTarget",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							}
 						},
 						{
 							"kind": "Property",
