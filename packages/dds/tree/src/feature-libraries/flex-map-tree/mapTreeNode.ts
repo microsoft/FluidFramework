@@ -301,7 +301,7 @@ export class EagerMapTreeMapNode<TSchema extends FlexMapNodeSchema>
 		return super.getBoxed(key) as FlexTreeTypedField<TSchema["info"]>;
 	}
 
-	public set(key: string, value: FlexibleFieldContent<TSchema["info"]> | undefined): void {
+	public set(key: string, value: FlexibleFieldContent | undefined): void {
 		// `MapTreeNode`s cannot be mutated
 		throw unsupportedUsageError("Setting a map entry");
 	}

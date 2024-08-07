@@ -3,24 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
 	type FieldAnchor,
 	type FieldKey,
 	type FieldUpPath,
-	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
 	type TreeNavigationResult,
 	inCursorNode,
-	isCursor,
 	iterateCursorField,
 	rootFieldKey,
 } from "../../core/index.js";
 import { disposeSymbol, fail, getOrCreate } from "../../util/index.js";
-// TODO: stop depending on contextuallyTyped
-import { cursorFromContextualData } from "../contextuallyTyped.js";
 import {
 	FieldKinds,
 	type OptionalFieldEditBuilder,
@@ -324,7 +320,7 @@ export class ReadonlyLazyValueField<TTypes extends FlexAllowedTypes>
 		return this.atIndex(0);
 	}
 
-	public set content(newContent: FlexibleNodeContent<TTypes>) {
+	public set content(newContent: FlexibleNodeContent) {
 		fail("cannot set content in readonly field");
 	}
 }
@@ -352,14 +348,10 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 		return this.atIndex(0);
 	}
 
-	public override set content(newContent: FlexibleNodeContent<TTypes>) {
-		const content: ITreeCursorSynchronous[] = isCursor(newContent)
-			? prepareNodeCursorForInsert(newContent)
-			: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
-		const fieldEditor = this.valueFieldEditor();
-		assert(content.length === 1, 0x780 /* value field content should normalize to one item */);
-
-		fieldEditor.set(content[0] ?? oob());
+	public override set content(newContent: FlexibleNodeContent) {
+		assert(newContent !== undefined, "Cannot set a required field to undefined");
+		assert(newContent.mode === CursorLocationType.Nodes, "should be in nodes mode");
+		this.valueFieldEditor().set(newContent);
 	}
 }
 
@@ -400,19 +392,8 @@ export class LazyOptionalField<TTypes extends FlexAllowedTypes>
 		return this.length === 0 ? undefined : this.atIndex(0);
 	}
 
-	public set content(newContent: FlexibleNodeContent<TTypes> | undefined) {
-		const content: ITreeCursorSynchronous[] =
-			newContent === undefined
-				? []
-				: isCursor(newContent)
-					? prepareNodeCursorForInsert(newContent)
-					: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
-		const fieldEditor = this.optionalEditor();
-		assert(
-			content.length <= 1,
-			0x781 /* optional field content should normalize at most one item */,
-		);
-		fieldEditor.set(content.length === 0 ? undefined : content[0], this.length === 0);
+	public set content(newContent: FlexibleNodeContent | undefined) {
+		this.optionalEditor().set(newContent, this.length === 0);
 	}
 }
 
@@ -441,13 +422,3 @@ const builderList: [FlexFieldKind, Builder][] = [
 ];
 
 const kindToClass: ReadonlyMap<FlexFieldKind, Builder> = new Map(builderList);
-
-/**
- * Prepare a node cursor (holding a single node) for inserting.
- */
-function prepareNodeCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous[] {
-	// TODO: optionally validate content against schema.
-
-	assert(cursor.mode === CursorLocationType.Nodes, 0x805 /* should be in nodes mode */);
-	return [cursor];
-}

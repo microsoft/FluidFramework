@@ -39,7 +39,7 @@ export {
 	type ApplyKind,
 } from "./schemaTypes.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
-export { getFlexNode, tryDisposeTreeNode } from "./proxyBinding.js";
+export { getOrCreateInnerNode, tryDisposeTreeNode } from "./proxyBinding.js";
 export { treeNodeApi, type TreeNodeApi } from "./treeNodeApi.js";
 export { toFlexSchema } from "./toFlexSchema.js";
 export type {
@@ -57,10 +57,11 @@ export type {
 	InsertableTypedNodeUnsafe,
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
+	ReadonlyMapInlined,
 } from "./typesUnsafe.js";
 export type { ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
 export {
-	getProxyForField,
+	getTreeNodeForField,
 	type InsertableContent,
 	prepareContentForHydration,
 } from "./proxies.js";
@@ -70,6 +71,7 @@ export {
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
+	type EmptyObject,
 } from "./schemaCreationUtilities.js";
 
 // Exporting the schema (RecursiveObject) to test that recursive types are working correctly.

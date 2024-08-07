@@ -45,7 +45,6 @@ export function getFirstFromCrossFieldMap<T>(
 }
 
 /**
- * @internal
  */
 export enum CrossFieldTarget {
 	Source,
@@ -55,7 +54,6 @@ export enum CrossFieldTarget {
 /**
  * Used by {@link FieldChangeHandler} implementations for exchanging information across other fields
  * while rebasing, composing, or inverting a change.
- * @internal
  */
 export interface CrossFieldManager<T = unknown> {
 	/**

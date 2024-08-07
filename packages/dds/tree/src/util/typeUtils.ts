@@ -16,7 +16,6 @@ export type FlattenKeys<T> = [{ [Property in keyof T]: T[Property] }][_InlineTri
 
 /**
  * Remove all fields which permit undefined from `T`.
- * @internal
  */
 export type RequiredFields<T> = [
 	{
@@ -26,7 +25,6 @@ export type RequiredFields<T> = [
 
 /**
  * Extract fields which permit undefined but can also hold other types.
- * @internal
  */
 export type OptionalFields<T> = [
 	{
@@ -48,7 +46,6 @@ export type OptionalFields<T> = [
  * flattening since it causes complication issues.
  *
  * See also `AllowOptional`.
- * @internal
  */
 // export type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_InlineTrick];
 export type AllowOptionalNotFlattened<T> = [
@@ -58,7 +55,6 @@ export type AllowOptionalNotFlattened<T> = [
 /**
  * Converts properties of an object which permit undefined into optional properties.
  * Removes fields which only allow undefined.
- * @internal
  */
 export type AllowOptional<T> = [
 	FlattenKeys<RequiredFields<T> & OptionalFields<T>>,
@@ -126,7 +122,6 @@ export type _InlineTrick = 0;
  *
  * This constant is defined to provide a way to find this documentation from types which use this pattern,
  * and to locate types which use this pattern in case they need updating for compiler changes.
- * @internal
  */
 export type _RecursiveTrick = never;
 
@@ -180,8 +175,6 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
  * In these cases `TInput` can be replaced with `Assume<TInput, TAssumeToBe>` to allow compilation of the generic code.
  * When the generic code is parameterized with a concrete type, if that type actually does extend `TAssumeToBe`,
  * it will behave like `TInput` was used directly.
- *
- * @internal
  */
 export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe]
 	? TInput
