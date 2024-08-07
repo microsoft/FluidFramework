@@ -1,7 +1,7 @@
 {
 	"compilerOptions": {
 		"rootDir": "./mockFiles",
-		"target": "ES5",
+		"target": "ESNext",
 		"composite": true,
 	},
 	"include": ["./mockFiles/**/*"],
