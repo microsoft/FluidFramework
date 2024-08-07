@@ -36,6 +36,8 @@ export type JsonLeafSchemaType = "string" | "number" | "boolean" | "null";
 
 /**
  * Base interface for node schemas represented in {@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} format.
+ *
+ * @sealed
  * @alpha
  */
 export interface JsonNodeSchemaBase<
@@ -60,7 +62,10 @@ export interface JsonNodeSchemaBase<
 
 /**
  * JSON Schema for an object node.
+ *
  * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
+ *
+ * @sealed
  * @alpha
  */
 export interface JsonObjectNodeSchema extends JsonNodeSchemaBase<"object", "object"> {
@@ -89,7 +94,10 @@ export interface JsonObjectNodeSchema extends JsonNodeSchemaBase<"object", "obje
 
 /**
  * JSON Schema for an array node.
+ *
  * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
+ *
+ * @sealed
  * @alpha
  */
 export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<"array", "array"> {
@@ -111,8 +119,12 @@ export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<"array", "array"
 
 /**
  * JSON Schema for a map node.
+ *
  * @remarks Special case for map nodes, which do not have a native JSON schema corollary.
+ *
  * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
+ *
+ * @sealed
  * @alpha
  */
 export interface JsonMapNodeSchema extends JsonNodeSchemaBase<"map", "object"> {
@@ -131,7 +143,10 @@ export interface JsonMapNodeSchema extends JsonNodeSchemaBase<"map", "object"> {
 
 /**
  * JSON Schema for a leaf node.
+ *
  * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
+ *
+ * @sealed
  * @alpha
  */
 export interface JsonLeafNodeSchema extends JsonNodeSchemaBase<"leaf", JsonLeafSchemaType> {
@@ -144,7 +159,10 @@ export interface JsonLeafNodeSchema extends JsonNodeSchemaBase<"leaf", JsonLeafS
 
 /**
  * Type entry containing a reference to a definition in the schema.
+ *
  * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-schema-references}.
+ *
+ * @sealed
  * @alpha
  */
 export interface JsonSchemaRef {
@@ -157,6 +175,7 @@ export interface JsonSchemaRef {
 
 /**
  * {@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} representation of a {@link TreeNodeSchema}.
+ *
  * @alpha
  */
 export type JsonNodeSchema =
@@ -167,6 +186,8 @@ export type JsonNodeSchema =
 
 /**
  *{@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} representation of a {@link FieldSchema}.
+ *
+ * @sealed
  * @alpha
  */
 export interface JsonFieldSchema {
@@ -196,6 +217,7 @@ export interface JsonFieldSchema {
  * Extending JSON Schema is permitted by the spec.
  * See {@link https://json-schema.org/draft/2020-12/json-schema-core#name-extending-json-schema}.
  *
+ * @sealed
  * @alpha
  */
 export interface JsonTreeSchema extends JsonFieldSchema {

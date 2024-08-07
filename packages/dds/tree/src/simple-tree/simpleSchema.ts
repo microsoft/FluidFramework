@@ -21,6 +21,8 @@ export type SimpleLeafSchemaKind = "string" | "number" | "boolean" | "null" | "f
 
 /**
  * Base interface for all {@link SimpleNodeSchema} implementations.
+ *
+ * @sealed
  */
 export interface SimpleNodeSchemaBase<TNodeKind extends SimpleNodeSchemaKind> {
 	/**
@@ -33,6 +35,8 @@ export interface SimpleNodeSchemaBase<TNodeKind extends SimpleNodeSchemaKind> {
 
 /**
  * A {@link SimpleNodeSchema} for an object node.
+ *
+ * @sealed
  */
 export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<"object"> {
 	/**
@@ -43,6 +47,8 @@ export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<"object"> {
 
 /**
  * A {@link SimpleNodeSchema} for an array node.
+ *
+ * @sealed
  */
 export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<"array"> {
 	/**
@@ -56,6 +62,8 @@ export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<"array"> {
 
 /**
  * A {@link SimpleNodeSchema} for a map node.
+ *
+ * @sealed
  */
 export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<"map"> {
 	/**
@@ -69,6 +77,8 @@ export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<"map"> {
 
 /**
  * A {@link SimpleNodeSchema} for a leaf node.
+ *
+ * @sealed
  */
 export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<"leaf"> {
 	/**
@@ -96,6 +106,8 @@ export type SimpleNodeSchema =
  * @remarks This definition is incomplete, and references child types by identifiers.
  * To be useful, this generally needs to be used as a part of a complete {@link SimpleTreeSchema}, which
  * contains backing {@link SimpleTreeSchema.definitions} for each referenced identifier.
+ *
+ * @sealed
  */
 export interface SimpleFieldSchema {
 	/**
@@ -117,6 +129,8 @@ export interface SimpleFieldSchema {
  *
  * @remarks Contains the complete set of schema {@link SimpleTreeSchema.definitions} required to resolve references
  * by schema identifier.
+ *
+ * @sealed
  */
 export interface SimpleTreeSchema {
 	/**

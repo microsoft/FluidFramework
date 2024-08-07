@@ -195,19 +195,19 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
     readonly schema: TSchema;
 }
 
-// @alpha
+// @alpha @sealed
 export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<"array", "array"> {
     readonly items: {
         anyOf: JsonSchemaRef[];
     };
 }
 
-// @alpha
+// @alpha @sealed
 export interface JsonFieldSchema {
     readonly anyOf: JsonSchemaRef[];
 }
 
-// @alpha
+// @alpha @sealed
 export interface JsonLeafNodeSchema extends JsonNodeSchemaBase<"leaf", JsonLeafSchemaType> {
     readonly type: JsonLeafSchemaType;
 }
@@ -215,7 +215,7 @@ export interface JsonLeafNodeSchema extends JsonNodeSchemaBase<"leaf", JsonLeafS
 // @alpha
 export type JsonLeafSchemaType = "string" | "number" | "boolean" | "null";
 
-// @alpha
+// @alpha @sealed
 export interface JsonMapNodeSchema extends JsonNodeSchemaBase<"map", "object"> {
     readonly patternProperties: {
         "^.*$": JsonFieldSchema;
@@ -225,13 +225,13 @@ export interface JsonMapNodeSchema extends JsonNodeSchemaBase<"map", "object"> {
 // @alpha
 export type JsonNodeSchema = JsonLeafNodeSchema | JsonMapNodeSchema | JsonArrayNodeSchema | JsonObjectNodeSchema;
 
-// @alpha
+// @alpha @sealed
 export interface JsonNodeSchemaBase<TNodeKind extends SimpleNodeSchemaKind, TJsonSchemaType extends JsonSchemaType> {
     readonly _kind: TNodeKind;
     readonly type: TJsonSchemaType;
 }
 
-// @alpha
+// @alpha @sealed
 export interface JsonObjectNodeSchema extends JsonNodeSchemaBase<"object", "object"> {
     readonly additionalProperties?: boolean;
     readonly properties: Record<string, JsonFieldSchema>;
@@ -244,7 +244,7 @@ export type JsonRefPath = `#/$defs/${JsonSchemaId}`;
 // @alpha
 export type JsonSchemaId = string;
 
-// @alpha
+// @alpha @sealed
 export interface JsonSchemaRef {
     $ref: JsonRefPath;
 }
@@ -252,7 +252,7 @@ export interface JsonSchemaRef {
 // @alpha
 export type JsonSchemaType = "object" | "array" | JsonLeafSchemaType;
 
-// @alpha
+// @alpha @sealed
 export interface JsonTreeSchema extends JsonFieldSchema {
     readonly $defs: Record<JsonSchemaId, JsonNodeSchema>;
 }
