@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/build-tools",
-	"version": "0.42.0",
+	"version": "0.43.0",
 	"description": "Fluid Build tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -39,14 +39,10 @@
 	},
 	"dependencies": {
 		"@fluid-tools/version-tools": "workspace:~",
-		"@fluidframework/bundle-size-tools": "workspace:~",
 		"@manypkg/get-packages": "^2.2.0",
-		"@octokit/core": "^4.2.4",
-		"@rushstack/node-core-library": "^3.59.5",
 		"async": "^3.2.4",
 		"chalk": "^2.4.2",
 		"cosmiconfig": "^8.2.0",
-		"danger": "^11.3.0",
 		"date-fns": "^2.30.0",
 		"debug": "^4.3.4",
 		"detect-indent": "^6.1.0",

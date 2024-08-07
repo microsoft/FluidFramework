@@ -13,13 +13,11 @@ import {
 } from "@fluid-tools/benchmark";
 
 import { rootFieldKey } from "../../core/index.js";
-import { singleJsonCursor } from "../../domains/index.js";
+import { singleJsonCursor, typedJsonCursor } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
 import {
 	TreeCompressionStrategy,
-	cursorForTypedData,
-	cursorForTypedTreeData,
 	jsonableTreeFromCursor,
 } from "../../feature-libraries/index.js";
 import { type FlexTreeView, SharedTreeFactory } from "../../shared-tree/index.js";
@@ -27,7 +25,7 @@ import {
 	type JSDeepTree,
 	type JSWideTree,
 	deepPath,
-	deepSchema,
+	type deepSchema,
 	localFieldKey,
 	makeDeepContent,
 	makeJsDeepTree,
@@ -39,7 +37,6 @@ import {
 	readWideCursorTree,
 	readWideFlexTree,
 	readWideTreeAsJSObject,
-	wideRootSchema,
 	wideSchema,
 } from "../scalableTestTrees.js";
 import {
@@ -214,13 +211,9 @@ describe("SharedTree benchmarks", () => {
 				type: benchmarkType,
 				title: `Wide Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					const numbers = [];
-					for (let index = 0; index < numberOfNodes; index++) {
-						numbers.push(index);
-						expected += index;
-					}
+					expected = ((numberOfNodes - 1) * numberOfNodes) / 2; // Arithmetic sum of [0, numberOfNodes)
 					tree = flexTreeViewWithContent({
-						initialTree: { foo: numbers },
+						initialTree: typedJsonCursor(makeJsWideTreeWithEndValue(numberOfNodes)),
 						schema: wideSchema,
 					});
 				},
@@ -261,11 +254,7 @@ describe("SharedTree benchmarks", () => {
 
 						// Cleanup + validation
 						const expected = jsonableTreeFromCursor(
-							cursorForTypedData(
-								{ schema: deepSchema },
-								deepSchema.rootFieldSchema.allowedTypes,
-								makeJsDeepTree(numberOfNodes, setCount),
-							),
+							typedJsonCursor(makeJsDeepTree(numberOfNodes, setCount)),
 						);
 						const actual = toJsonableTree(tree);
 						assert.deepEqual(actual, [expected]);
@@ -288,12 +277,8 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const numbers = [];
-						for (let index = 0; index < numberOfNodes; index++) {
-							numbers.push(index);
-						}
 						const tree = checkoutWithContent({
-							initialTree: { foo: numbers },
+							initialTree: typedJsonCursor(makeJsWideTreeWithEndValue(numberOfNodes)),
 							schema: wideSchema,
 						});
 
@@ -319,13 +304,7 @@ describe("SharedTree benchmarks", () => {
 
 						// Cleanup + validation
 						const expected = jsonableTreeFromCursor(
-							cursorForTypedTreeData(
-								{
-									schema: wideSchema,
-								},
-								wideRootSchema,
-								makeJsWideTreeWithEndValue(numberOfNodes, setCount),
-							),
+							typedJsonCursor(makeJsWideTreeWithEndValue(numberOfNodes, setCount)),
 						);
 						const actual = toJsonableTree(tree);
 						assert.deepEqual(actual, [expected]);

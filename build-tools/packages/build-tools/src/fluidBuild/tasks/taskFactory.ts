@@ -47,7 +47,6 @@ const executableToLeafTask: {
 	"gen-version": GenVerTask,
 	"gf": GoodFence,
 	"api-extractor": ApiExtractorTask,
-	"flub list": FlubListTask,
 	"flub check layers": FlubCheckLayerTask,
 	"flub check policy": FlubCheckPolicyTask,
 	"flub generate entrypoints": GenerateEntrypointsTask,
@@ -56,6 +55,15 @@ const executableToLeafTask: {
 	"depcruise": DepCruiseTask,
 	"biome check": BiomeTask,
 	"biome format": BiomeTask,
+
+	// flub list does not require a -g flag - the third argument is the release group. Rather than add custom handling for
+	// that, we just add mappings for all three.
+	"flub list": FlubListTask,
+	"flub list build-tools": FlubListTask,
+	"flub list client": FlubListTask,
+	"flub list server": FlubListTask,
+	"flub list gitrest": FlubListTask,
+	"flub list historian": FlubListTask,
 
 	// Note that this assumes that "renamer" is ONLY used for renaming types. If it is used in a different task in the
 	// pipeline then this mapping will have to be updated.

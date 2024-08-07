@@ -15,10 +15,6 @@ import type { Assume, FlattenKeys } from "../../util/index.js";
 import type { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 import type {
-	AllowedTypesToFlexInsertableTree,
-	InsertableFlexField,
-} from "../schema-aware/index.js";
-import type {
 	Any,
 	FlexAllowedTypes,
 	FlexFieldNodeSchema,
@@ -34,7 +30,6 @@ import type {
 } from "../typed-schema/index.js";
 
 import type { FlexTreeContext } from "./context.js";
-import type { FlexTreeNodeEvents } from "./treeEvents.js";
 
 /**
  * An anchor slot which records the {@link FlexTreeNode} associated with that anchor, if there is one.
@@ -44,7 +39,6 @@ export const flexTreeSlot = anchorSlot<FlexTreeNode>();
 
 /**
  * Indicates that an object is a flex tree.
- * @internal
  */
 export const flexTreeMarker = Symbol("flexTreeMarker");
 
@@ -57,7 +51,6 @@ export function isFlexTreeNode(t: unknown): t is FlexTreeNode {
 }
 
 /**
- * @internal
  */
 export enum FlexTreeEntityKind {
 	Node,
@@ -77,8 +70,6 @@ export enum FlexTreeEntityKind {
  * TODO:
  * Design and document iterator invalidation rules and ordering rules.
  * Providing a custom iterator type with place anchor semantics would be a good approach.
- *
- * @internal
  */
 export interface FlexTreeEntity<out TSchema = unknown> {
 	/**
@@ -97,14 +88,6 @@ export interface FlexTreeEntity<out TSchema = unknown> {
 	 * A common context of a "forest" of FlexTrees.
 	 */
 	readonly context: FlexTreeContext;
-
-	/**
-	 * Gets the {@link TreeStatus} of this tree.
-	 *
-	 * @remarks
-	 * For non-root fields, this is the status of the parent node, since fields do not have a separate lifetime.
-	 */
-	treeStatus(): TreeStatus;
 
 	/**
 	 * Iterate through all nodes/fields in this field/node.
@@ -156,8 +139,6 @@ export enum TreeStatus {
  * All content in the tree is accessible without down-casting, but if the schema is known,
  * the schema aware API may be more ergonomic.
  * All editing is actually done via {@link FlexTreeField}s: the nodes are immutable other than that they contain mutable fields.
- *
- * @internal
  */
 export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	readonly [flexTreeMarker]: FlexTreeEntityKind.Node;
@@ -166,14 +147,6 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	 * Value stored on this node.
 	 */
 	readonly value?: TreeValue;
-
-	/**
-	 * {@inheritDoc ISubscribable#on}
-	 */
-	on<K extends keyof FlexTreeNodeEvents>(
-		eventName: K,
-		listener: FlexTreeNodeEvents[K],
-	): () => void;
 
 	/**
 	 * Gets a field of this node, if it is not empty.
@@ -231,8 +204,6 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
  * Down-casting (via {@link FlexTreeField.is}) is required to access Schema-Aware APIs, including editing.
  * All content in the tree is accessible without down-casting, but if the schema is known,
  * the schema aware API may be more ergonomic.
- *
- * @internal
  */
 export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
 	readonly [flexTreeMarker]: FlexTreeEntityKind.Field;
@@ -286,8 +257,6 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
  * and that sequence can be used to insert new items into the field.
  * Additionally empty fields (those containing no nodes) are not distinguished from fields which do not exist.
  * This differs from JavaScript Maps which have a subtle distinction between storing undefined as a value in the map and deleting an entry from the map.
- *
- * @internal
  */
 export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema>
 	extends FlexTreeNode {
@@ -382,7 +351,7 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema>
 	 * @param key - The key of the element to add to the map.
 	 * @param value - The value of the element to add to the map.
 	 */
-	set(key: string, value: FlexibleFieldContent<TSchema["info"]>): void;
+	set(key: string, value: FlexibleFieldContent | undefined): void;
 
 	/**
 	 * Removes the specified element from this map by its `key`.
@@ -447,7 +416,6 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema>
  * @privateRemarks
  * FieldNodes do not unbox to their content, so in schema aware APIs which do unboxing, the FieldNode will NOT be skipped over.
  * This is a change from the old behavior to simplify unboxing and prevent cases where arbitrary deep chains of field nodes could unbox omitting information about the tree depth.
- * @internal
  */
 export interface FlexTreeFieldNode<in out TSchema extends FlexFieldNodeSchema>
 	extends FlexTreeNode {
@@ -477,8 +445,6 @@ export interface FlexTreeFieldNode<in out TSchema extends FlexFieldNodeSchema>
  * The name "Record" is avoided (in favor of Object) here because it has less precise connotations for most TypeScript developers.
  * For example, TypeScript has a built in `Record` type, but it requires all of the fields to have the same type,
  * putting its semantics half way between this library's "Object" schema and {@link FlexTreeMapNode}.
- *
- * @internal
  */
 export interface FlexTreeObjectNode extends FlexTreeNode {
 	readonly schema: FlexObjectNodeSchema;
@@ -490,7 +456,6 @@ export interface FlexTreeObjectNode extends FlexTreeNode {
  * @remarks
  * Leaves are immutable and have no children.
  * Leaf unboxes its content, so in schema aware APIs which do unboxing, the Leaf itself will be skipped over and its value will be returned directly.
- * @internal
  */
 export interface FlexTreeLeafNode<in out TSchema extends LeafNodeSchema> extends FlexTreeNode {
 	readonly schema: TSchema;
@@ -508,8 +473,6 @@ export interface FlexTreeLeafNode<in out TSchema extends LeafNodeSchema> extends
  *
  * The corresponding implementation logic for this lives in `LazyTree.ts` under `buildStructClass`.
  * If you change the signature here, you will need to update that logic to match.
- *
- * @internal
  */
 export type FlexTreeObjectNodeTyped<TSchema extends FlexObjectNodeSchema> =
 	FlexObjectNodeSchema extends TSchema
@@ -521,7 +484,6 @@ export type FlexTreeObjectNodeTyped<TSchema extends FlexObjectNodeSchema> =
  *
  * @privateRemarks
  * TODO: Support custom field keys.
- * @internal
  */
 export type FlexTreeObjectNodeFields<TFields extends FlexObjectNodeFields> =
 	FlexTreeObjectNodeFieldsInner<
@@ -545,8 +507,6 @@ export type FlexTreeObjectNodeFields<TFields extends FlexObjectNodeFields> =
  * @privateRemarks
  * TODO: Do we keep assignment operator + "setFoo" methods, or just use methods?
  * Inconsistency in the API experience could confusing for consumers.
- *
- * @internal
  */
 export type FlexTreeObjectNodeFieldsInner<TFields extends FlexObjectNodeFields> = FlattenKeys<
 	{
@@ -572,23 +532,20 @@ export type FlexTreeObjectNodeFieldsInner<TFields extends FlexObjectNodeFields> 
 		// Setter method (when the field is of a kind that has a logical set operation).
 		readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
 			? `set${Capitalize<key & string>}`
-			: never]: (content: FlexibleFieldContent<TFields[key]>) => void;
+			: never]: (content: FlexibleFieldContent) => void;
 	}
 >;
 
 /**
  * Reserved object node field property names to avoid collisions with the rest of the object node API.
- * @internal
  */
 export const reservedObjectNodeFieldPropertyNames = [
 	"anchorNode",
 	"constructor",
 	"context",
 	"is",
-	"on",
 	"parentField",
 	"schema",
-	"treeStatus",
 	"tryGetField",
 	"type",
 	"value",
@@ -602,7 +559,6 @@ export const reservedObjectNodeFieldPropertyNames = [
  * These are reserved to avoid collisions with properties derived from field other field names.
  *
  * Field names starting with these must be followed by a lowercase letter, or be escaped.
- * @internal
  */
 export const reservedObjectNodeFieldPropertyNamePrefixes = [
 	"set",
@@ -613,14 +569,12 @@ export const reservedObjectNodeFieldPropertyNamePrefixes = [
 
 /**
  * {@link reservedObjectNodeFieldPropertyNamePrefixes} as a type union.
- * @internal
  */
 export type ReservedObjectNodeFieldPropertyNames =
 	(typeof reservedObjectNodeFieldPropertyNames)[number];
 
 /**
  * {@link reservedObjectNodeFieldPropertyNamePrefixes} as a type union.
- * @internal
  */
 export type ReservedObjectNodeFieldPropertyNamePrefixes =
 	(typeof reservedObjectNodeFieldPropertyNamePrefixes)[number];
@@ -636,8 +590,6 @@ export type ReservedObjectNodeFieldPropertyNamePrefixes =
  * Another approach would be to support custom field names (separate from keys),
  * and do the escaping (if needed) when creating the flex tree schema (both when manually creating them and when doing so automatically):
  * this would enable better intellisense for escaped fields, as well as allow the feature of custom field property names.
- *
- * @internal
  */
 export type PropertyNameFromFieldKey<T extends string> =
 	T extends ReservedObjectNodeFieldPropertyNames
@@ -648,8 +600,6 @@ export type PropertyNameFromFieldKey<T extends string> =
 
 /**
  * Field kinds that allow value assignment.
- *
- * @internal
  */
 export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKinds.required;
 
@@ -661,21 +611,15 @@ export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKind
  * Strongly typed tree literals for inserting as the content of a field.
  *
  * If a cursor is provided, it must be in Fields mode.
- * @internal
  */
-export type FlexibleFieldContent<TSchema extends FlexFieldSchema> =
-	| InsertableFlexField<TSchema>
-	| ITreeCursorSynchronous;
+export type FlexibleFieldContent = ITreeCursorSynchronous;
 
 /**
  * Strongly typed tree literals for inserting as a node.
  *
  * If a cursor is provided, it must be in Nodes mode.
- * @internal
  */
-export type FlexibleNodeContent<TTypes extends FlexAllowedTypes> =
-	| AllowedTypesToFlexInsertableTree<TTypes>
-	| ITreeCursorSynchronous;
+export type FlexibleNodeContent = ITreeCursorSynchronous;
 
 /**
  * Strongly typed tree literals for inserting a subsequence of nodes.
@@ -683,11 +627,8 @@ export type FlexibleNodeContent<TTypes extends FlexAllowedTypes> =
  * Used to insert a batch of 0 or more nodes into some location in a {@link FlexTreeSequenceField}.
  *
  * If a cursor is provided, it must be in Fields mode.
- * @internal
  */
-export type FlexibleNodeSubSequence<TTypes extends FlexAllowedTypes> =
-	| Iterable<AllowedTypesToFlexInsertableTree<TTypes>>
-	| ITreeCursorSynchronous;
+export type FlexibleNodeSubSequence = ITreeCursorSynchronous;
 
 /**
  * Type to ensures two types overlap in at least one way.
@@ -695,7 +636,6 @@ export type FlexibleNodeSubSequence<TTypes extends FlexAllowedTypes> =
  * Examples:
  * CheckTypesOverlap\<number | boolean, number | object\> = number | boolean
  * CheckTypesOverlap\<number | boolean, string | object\> = never
- * @internal
  */
 export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? never : T][0];
 
@@ -714,7 +654,6 @@ export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? n
  * TODO:
  * Add anchor API that can actually hold onto locations in a sequence.
  * Currently only nodes can be held onto with anchors, and this does not replicate the behavior implemented for editing.
- * @internal
  */
 export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	extends FlexTreeField {
@@ -754,188 +693,6 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 */
 	sequenceEditor(): SequenceFieldEditBuilder;
 
-	/*
-	 * TODO:
-	 * Remove these editing methods and replace their use with use of `sequenceEditor`.
-	 * These editing methods replicate the API exposed by simple-tree, but using flex-tree types.
-	 * As these methods just re-abstract the lower level SequenceFieldEditBuilder API, they add little value.
-	 * Migrating the logic implementing them to simple-tree (and having it just use `sequenceEditor` directly)
-	 * avoids duplicating the API surface (and documentation), as well as makes it simpler to implement the desired user facing validation and errors
-	 * since simple-tree becomes responsible for all the validation and can produce usage errors in terms of the public package API.
-	 */
-	// #region Editing Methods
-
-	/**
-	 * Inserts new item(s) at a specified location.
-	 * @param index - The index at which to insert `value`.
-	 * @param value - The content to insert.
-	 * @throws Throws if `index` is not in the range [0, `list.length`).
-	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
-	 */
-	insertAt(index: number, value: FlexibleNodeSubSequence<TTypes>): void;
-
-	/**
-	 * Inserts new item(s) at the start of the sequence.
-	 * @param value - The content to insert.
-	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
-	 */
-	insertAtStart(value: FlexibleNodeSubSequence<TTypes>): void;
-
-	/**
-	 * Inserts new item(s) at the end of the sequence.
-	 * @param value - The content to insert.
-	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
-	 */
-	insertAtEnd(value: FlexibleNodeSubSequence<TTypes>): void;
-
-	/**
-	 * Removes the item at the specified location.
-	 * @param index - The index at which to remove the item.
-	 * @throws Throws if `index` is not in the range [0, `list.length`).
-	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
-	 */
-	removeAt(index: number): void;
-
-	/**
-	 * Moves the specified item to the start of the sequence.
-	 * @param sourceIndex - The index of the item to move.
-	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
-	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
-	 */
-	moveToStart(sourceIndex: number): void;
-
-	/**
-	 * Moves the specified item to the start of the sequence.
-	 * @param sourceIndex - The index of the item to move.
-	 * @param source - The source sequence to move the item out of.
-	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
-	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
-	 */
-	moveToStart(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
-
-	/**
-	 * Moves the specified item to the end of the sequence.
-	 * @param sourceIndex - The index of the item to move.
-	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
-	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
-	 */
-	moveToEnd(sourceIndex: number): void;
-
-	/**
-	 * Moves the specified item to the end of the sequence.
-	 * @param sourceIndex - The index of the item to move.
-	 * @param source - The source sequence to move the item out of.
-	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
-	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
-	 */
-	moveToEnd(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
-
-	/**
-	 * Moves the specified item to the desired location in the sequence.
-	 * @param index - The index to move the item to.
-	 * This is based on the state of the sequence before moving the source item.
-	 * @param sourceIndex - The index of the item to move.
-	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
-	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
-	 */
-	moveToIndex(index: number, sourceIndex: number): void;
-
-	/**
-	 * Moves the specified item to the desired location in the sequence.
-	 * @param index - The index to move the item to.
-	 * @param sourceIndex - The index of the item to move.
-	 * @param source - The source sequence to move the item out of.
-	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
-	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
-	 */
-	moveToIndex(
-		index: number,
-		sourceIndex: number,
-		source: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void;
-
-	/**
-	 * Moves the specified items to the start of the sequence.
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
-	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
-	 */
-	moveRangeToStart(sourceStart: number, sourceEnd: number): void;
-
-	/**
-	 * Moves the specified items to the start of the sequence.
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @param source - The source sequence to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence,
-	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
-	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
-	 */
-	moveRangeToStart(
-		sourceStart: number,
-		sourceEnd: number,
-		source: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void;
-
-	/**
-	 * Moves the specified items to the end of the sequence.
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
-	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
-	 */
-	moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
-
-	/**
-	 * Moves the specified items to the end of the sequence.
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @param source - The source sequence to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence,
-	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
-	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
-	 */
-	moveRangeToEnd(
-		sourceStart: number,
-		sourceEnd: number,
-		source: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void;
-
-	/**
-	 * Moves the specified items to the desired location within the sequence.
-	 * @param index - The index to move the items to.
-	 * This is based on the state of the sequence before moving the source items.
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if any of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
-	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
-	 */
-	moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
-
-	/**
-	 * Moves the specified items to the desired location within the sequence.
-	 * @param index - The index to move the items to.
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @param source - The source sequence to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence,
-	 * if any of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
-	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
-	 */
-	moveRangeToIndex(
-		index: number,
-		sourceStart: number,
-		sourceEnd: number,
-		// FlexTreeSequenceField is invariant over its schema so any is required here.
-		// This use of any can be removed by migrating off this deprecated API and deleting it.
-		// If kept, this function should be fixed by making it generic and constraining it to fields which are safe to move content from.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		source: FlexTreeSequenceField<any>,
-	): void;
-
-	// #endregion
-
 	boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>>;
 
 	/**
@@ -951,12 +708,11 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
  *
  * @remarks
  * Unboxes its content, so in schema aware APIs which do unboxing, the RequiredField itself will be skipped over and its content will be returned directly.
- * @internal
  */
 export interface FlexTreeRequiredField<in out TTypes extends FlexAllowedTypes>
 	extends FlexTreeField {
 	get content(): FlexTreeUnboxNodeUnion<TTypes>;
-	set content(content: FlexibleNodeContent<TTypes>);
+	set content(content: FlexibleNodeContent);
 }
 
 /**
@@ -971,12 +727,11 @@ export interface FlexTreeRequiredField<in out TTypes extends FlexAllowedTypes>
  * TODO:
  * Better centralize the documentation about what kinds of merge semantics are available for field kinds.
  * Maybe link editor?
- * @internal
  */
 export interface FlexTreeOptionalField<in out TTypes extends FlexAllowedTypes>
 	extends FlexTreeField {
 	get content(): FlexTreeUnboxNodeUnion<TTypes> | undefined;
-	set content(newContent: FlexibleNodeContent<TTypes> | undefined);
+	set content(newContent: FlexibleNodeContent | undefined);
 }
 
 // #endregion
@@ -985,7 +740,6 @@ export interface FlexTreeOptionalField<in out TTypes extends FlexAllowedTypes>
 
 /**
  * Schema aware specialization of {@link FlexTreeField}.
- * @internal
  */
 export type FlexTreeTypedField<TSchema extends FlexFieldSchema> = FlexTreeTypedFieldInner<
 	TSchema["kind"],
@@ -994,7 +748,6 @@ export type FlexTreeTypedField<TSchema extends FlexFieldSchema> = FlexTreeTypedF
 
 /**
  * Helper for implementing {@link FlexTreeTypedField}.
- * @internal
  */
 export type FlexTreeTypedFieldInner<
 	Kind extends FlexFieldKind,
@@ -1009,7 +762,6 @@ export type FlexTreeTypedFieldInner<
 
 /**
  * Schema aware specialization of {@link FlexTreeNode} for a given {@link FlexAllowedTypes}.
- * @internal
  */
 export type FlexTreeTypedNodeUnion<T extends FlexAllowedTypes> =
 	T extends FlexList<FlexTreeNodeSchema>
@@ -1018,7 +770,6 @@ export type FlexTreeTypedNodeUnion<T extends FlexAllowedTypes> =
 
 /**
  * Schema aware specialization of {@link FlexTreeNode} for a given {@link FlexTreeNodeSchema}.
- * @internal
  */
 export type FlexTreeTypedNode<TSchema extends FlexTreeNodeSchema> =
 	TSchema extends LeafNodeSchema
@@ -1040,7 +791,6 @@ export type FlexTreeTypedNode<TSchema extends FlexTreeNodeSchema> =
  * @remarks
  * Unboxes fields to their content if appropriate for the kind.
  * Recursively unboxes that content (then its content etc.) as well if the node union does unboxing.
- * @internal
  */
 export type FlexTreeUnboxField<
 	TSchema extends FlexFieldSchema,
@@ -1050,7 +800,6 @@ export type FlexTreeUnboxField<
 
 /**
  * Helper for implementing FlexTreeUnboxField.
- * @internal
  */
 export type FlexTreeUnboxFieldInner<
 	Kind extends FlexFieldKind,
@@ -1070,7 +819,6 @@ export type FlexTreeUnboxFieldInner<
  * @remarks
  * Unboxes when not polymorphic.
  * Recursively unboxes that content as well if the node kind does unboxing.
- * @internal
  */
 export type FlexTreeUnboxNodeUnion<TTypes extends FlexAllowedTypes> = TTypes extends readonly [
 	LazyItem<infer InnerType>,
@@ -1089,7 +837,6 @@ export type FlexTreeUnboxNodeUnion<TTypes extends FlexAllowedTypes> = TTypes ext
  * `true` if T is known to be an array of one item.
  * `false` if T is known not to be an array of one item.
  * `boolean` if it is unknown if T is an array of one item or not.
- * @internal
  */
 export type IsArrayOfOne<T extends readonly unknown[]> = T["length"] extends 1
 	? true
@@ -1102,7 +849,6 @@ export type IsArrayOfOne<T extends readonly unknown[]> = T["length"] extends 1
  * @remarks
  * Unboxes if the node kind does unboxing.
  * Recursively unboxes that content as well if it does unboxing.
- * @internal
  */
 export type FlexTreeUnboxNode<TSchema extends FlexTreeNodeSchema> =
 	TSchema extends LeafNodeSchema
@@ -1117,7 +863,6 @@ export type FlexTreeUnboxNode<TSchema extends FlexTreeNodeSchema> =
 
 /**
  * Unboxed tree type for unknown schema cases.
- * @internal
  */
 export type FlexTreeUnknownUnboxed = TreeValue | FlexTreeNode;
 

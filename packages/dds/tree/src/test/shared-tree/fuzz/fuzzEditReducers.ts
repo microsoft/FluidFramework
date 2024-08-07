@@ -13,7 +13,7 @@ import { type Revertible, rootFieldKey } from "../../../core/index.js";
 import {
 	type DownPath,
 	intoStoredSchema,
-	jsonableTreeFromForest,
+	type Any,
 } from "../../../feature-libraries/index.js";
 import { Tree, type SharedTreeFactory } from "../../../shared-tree/index.js";
 import { brand, fail } from "../../../util/index.js";

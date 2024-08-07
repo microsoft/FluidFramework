@@ -142,21 +142,6 @@ describe("flexTreeTypes", () => {
 		const childBoxed: FlexTreeTypedNode<typeof leaf.number> | undefined = sequence.boxedAt(0);
 	}
 
-	function recursiveStructExample(struct: Recursive): void {
-		const child: Recursive | undefined = struct.foo;
-		const data = struct.x + (struct.foo?.foo?.foo?.x ?? 0);
-		assert(child);
-
-		child.foo?.foo?.foo?.foo?.setX(5);
-		child.foo?.boxedFoo.content?.foo?.foo?.setFoo({ x: 5, foo: { x: 5, foo: undefined } });
-
-		struct.boxedFoo.content = undefined;
-
-		// Shorthand for the above.
-		struct.setFoo(undefined);
-		struct.foo = undefined;
-	}
-
 	function iteratorsExample(mixed: Mixed): void {
 		const unboxedListIteration: number[] = [...mixed.sequence];
 		const boxedListIteration: FlexTreeTypedNode<typeof leaf.number>[] = [

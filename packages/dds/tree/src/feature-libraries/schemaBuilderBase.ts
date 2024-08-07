@@ -36,7 +36,6 @@ import {
 
 /**
  * Configuration for a SchemaBuilder.
- * @internal
  */
 export interface SchemaBuilderOptions<TScope extends string = string> {
 	/**
@@ -74,8 +73,7 @@ export interface SchemaBuilderOptions<TScope extends string = string> {
 
 /**
  * Builds schema libraries, and the schema within them.
- * @internal
- *
+ * *
  * @privateRemarks
  * This class does not directly depend on any specific field kinds,
  * or bake in any defaults that might have compatibility implications.
@@ -361,7 +359,6 @@ export class SchemaBuilderBase<
 /**
  * Schema information collected by a SchemaBuilder, including referenced libraries.
  * Can be aggregated into other libraries by adding to their builders.
- * @internal
  */
 export interface SchemaLibrary extends SchemaCollection {
 	/**
@@ -372,13 +369,11 @@ export interface SchemaLibrary extends SchemaCollection {
 
 /**
  * Generalized version of AllowedTypes allowing for more concise expressions in some cases.
- * @internal
  */
 export type FlexImplicitAllowedTypes = FlexAllowedTypes | FlexTreeNodeSchema | Any;
 
 /**
  * Normalizes an {@link FlexImplicitAllowedTypes} into  {@link FlexAllowedTypes}.
- * @internal
  */
 export type NormalizeAllowedTypes<TSchema extends FlexImplicitAllowedTypes> =
 	TSchema extends FlexTreeNodeSchema
@@ -405,7 +400,6 @@ export function normalizeAllowedTypes<TSchema extends FlexImplicitAllowedTypes>(
 
 /**
  * Normalizes an {@link FlexImplicitFieldSchema} into a {@link FlexFieldSchema}.
- * @internal
  */
 export type NormalizeField<
 	TSchema extends FlexImplicitFieldSchema,
@@ -436,6 +430,5 @@ export function normalizeField<
 
 /**
  * Type that when combined with a default {@link FlexFieldKind} can be normalized into a {@link FlexFieldSchema}.
- * @internal
  */
 export type FlexImplicitFieldSchema = FlexFieldSchema | FlexImplicitAllowedTypes;

@@ -1,5 +1,43 @@
 # @fluidframework/tree
 
+## 2.1.0
+
+### Minor Changes
+
+-   Detect arrayNode iterator invalidation ([#21760](https://github.com/microsoft/FluidFramework/pull/21760)) [6fd320c385](https://github.com/microsoft/FluidFramework/commit/6fd320c38561e272a1acaf4248f47fc386c650e4)
+
+    When `arrayNode`s are edited concurrently during iteration, an error will be thrown.
+
+-   tree: Improved performance for accessing identifiers in shortId API ([#21944](https://github.com/microsoft/FluidFramework/pull/21944)) [6b4cf26d9c](https://github.com/microsoft/FluidFramework/commit/6b4cf26d9cc14c1a36cf07fd7408f1d1227e373a)
+
+    Users should see improved performance when calling the `Tree.shortId` API. Identifier field keys are now cached in the schema for faster access.
+
+-   ✨ New! Debug visualizers for TreeNodes in NodeJS and browsers ([#21895](https://github.com/microsoft/FluidFramework/pull/21895)) [0d197fefec](https://github.com/microsoft/FluidFramework/commit/0d197fefec852df2911151217ac1b71cde528a70)
+
+    TreeNodes now have custom debug visualizers to improve the debug experience in NodeJS and in browsers. Note that custom formatters must be enabled in the browser developer tools for that visualizer to be used.
+
+-   Using "delete" on tree fields now throws an error instead of not working correctly ([#21609](https://github.com/microsoft/FluidFramework/pull/21609)) [416849b1fd](https://github.com/microsoft/FluidFramework/commit/416849b1fda029870ee1c1742100de4f8dde45b7)
+
+    TypeScript allows `delete` on object node optional fields if the `exactOptionalPropertyTypes` tsconfig setting is not
+    enabled. This does not work correctly at runtime and now produces an informative error.
+
+-   SharedTree content that is removed is now deleted ([#21372](https://github.com/microsoft/FluidFramework/pull/21372)) [a6e412159a](https://github.com/microsoft/FluidFramework/commit/a6e412159a4df6aceb84aac35288b108a5351905)
+
+    SharedTree now supports garbage collection so that removed content is not retained forever.
+    This is an internal change and users of SharedTree won't need to adapt any existing code.
+
+    This change could cause errors with cross-version collaboration where an older client does not send data that a newer
+    version may need. In this case, a "refresher data not found" error will be thrown.
+
+-   Improved error reporting ([#21940](https://github.com/microsoft/FluidFramework/pull/21940)) [3b8a366dd1](https://github.com/microsoft/FluidFramework/commit/3b8a366dd15660f9c916832040faf772534c0755)
+
+    Several cases of invalid usage patterns for tree APIs have gained improved error reporting, as well as improved documentation on the APIs detailing what usage is supported.
+    These improvements include:
+
+    -   Unsupported usages of schema classes: using more than one schema class derived from a single SchemaFactory generated base class. This used to hit internal asserts, but now has a descriptive user-facing UsageError. Most of this work was done in [9fb3dcf](https://github.com/microsoft/FluidFramework/commit/9fb3dcf491a7f0d66f4abbdc64ab97ccabef4707).
+    -   Improved detection of when prior exception may have left SharedTree in an invalid state.
+        These cases now report a UsageError including a reference to the prior exception. This was mainly done in [9fb3dcf](https://github.com/microsoft/FluidFramework/commit/9fb3dcf491a7f0d66f4abbdc64ab97ccabef4707) and [b77d530](https://github.com/microsoft/FluidFramework/commit/b77d530b9252201c40a90d1a2a6315f76f1a4a4b).
+
 ## 2.0.0-rc.5.0.0
 
 ### Minor Changes

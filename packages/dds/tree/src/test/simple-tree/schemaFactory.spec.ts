@@ -25,7 +25,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/types.js";
 // eslint-disable-next-line import/no-internal-modules
-import { isTreeNode } from "../../simple-tree/proxies.js";
+import { isTreeNode } from "../../simple-tree/treeNodeKernel.js";
 import {
 	SchemaFactory,
 	schemaFromValue,
@@ -189,10 +189,22 @@ describe("schemaFactory", () => {
 			x: factory.required(factory.number),
 		}) {}
 
-		// @ts-expect-error Missing required field
-		const _check1 = new Foo({});
-		// @ts-expect-error Required field cannot be undefined
-		const _check2 = new Foo({ x: undefined });
+		assert.throws(
+			() => {
+				// @ts-expect-error Missing required field
+				const _check1 = new Foo({});
+			},
+			validateUsageError(/incompatible/),
+		);
+
+		assert.throws(
+			() => {
+				// @ts-expect-error Required field cannot be undefined
+				const _check2 = new Foo({ x: undefined });
+			},
+			validateUsageError(/incompatible/),
+		);
+
 		const _check3 = new Foo({ x: 1 });
 	});
 

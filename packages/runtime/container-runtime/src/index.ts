@@ -37,7 +37,6 @@ export {
 	RuntimeHeaders,
 	ChannelCollectionFactory,
 	AllowTombstoneRequestHeaderKey,
-	AllowInactiveRequestHeaderKey,
 } from "./channelCollection.js";
 export {
 	GCNodeType,

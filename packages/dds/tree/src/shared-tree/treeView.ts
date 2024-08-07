@@ -12,15 +12,15 @@ import {
 	type NodeKeyManager,
 	getTreeContext,
 } from "../feature-libraries/index.js";
+import { tryDisposeTreeNode } from "../simple-tree/index.js";
 import { type IDisposable, disposeSymbol } from "../util/index.js";
 
-import type { ITreeCheckout, ITreeCheckoutFork, TreeCheckout } from "./treeCheckout.js";
+import type { ITreeCheckout, ITreeCheckoutFork } from "./treeCheckout.js";
 
 /**
  * The portion of {@link FlexTreeView} that does not depend on the schema's type.
  * @privateRemarks
  * Since {@link FlexTreeView}'s schema is invariant, `FlexTreeView<FlexFieldSchema>` does not cover this use case.
- * @internal
  */
 export interface FlexTreeViewGeneric extends IDisposable {
 	/**
@@ -45,7 +45,6 @@ export interface FlexTreeViewGeneric extends IDisposable {
  * @privateRemarks
  * TODO:
  * If schema aware APIs are removed from flex tree, this can be combined with {@link FlexTreeViewGeneric}.
- * @internal
  */
 export interface FlexTreeView<in out TRoot extends FlexFieldSchema>
 	extends FlexTreeViewGeneric {
@@ -65,7 +64,6 @@ export interface FlexTreeView<in out TRoot extends FlexFieldSchema>
  * Branch (like in a version control system) of SharedTree.
  *
  * {@link FlexTreeView} that has forked off of the main trunk/branch.
- * @internal
  */
 export interface ITreeViewFork<in out TRoot extends FlexFieldSchema>
 	extends FlexTreeView<TRoot> {
@@ -77,7 +75,7 @@ export interface ITreeViewFork<in out TRoot extends FlexFieldSchema>
  */
 export class CheckoutFlexTreeView<
 	in out TRoot extends FlexFieldSchema,
-	out TCheckout extends TreeCheckout = TreeCheckout,
+	out TCheckout extends ITreeCheckout = ITreeCheckout,
 > implements FlexTreeView<TRoot>
 {
 	public readonly context: Context;
@@ -94,11 +92,15 @@ export class CheckoutFlexTreeView<
 	}
 
 	public [disposeSymbol](): void {
+		for (const anchorNode of this.checkout.forest.anchors) {
+			tryDisposeTreeNode(anchorNode);
+		}
+
 		this.context[disposeSymbol]();
 		this.onDispose?.();
 	}
 
-	public fork(): CheckoutFlexTreeView<TRoot, TreeCheckout & ITreeCheckoutFork> {
+	public fork(): CheckoutFlexTreeView<TRoot, ITreeCheckout & ITreeCheckoutFork> {
 		const branch = this.checkout.fork();
 		return new CheckoutFlexTreeView(branch, this.schema, this.nodeKeyManager);
 	}

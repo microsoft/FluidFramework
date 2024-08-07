@@ -14,58 +14,58 @@
 // 	createDDSFuzzSuite,
 // } from "@fluid-private/test-dds-utils";
 
-// import type { Anchor, UpPath, Value } from "../../../core/index.js";
-// import {
-// 	cursorsFromContextualData,
-// 	jsonableTreeFromFieldCursor,
-// 	typeNameSymbol,
-// } from "../../../feature-libraries/index.js";
-// import type { TreeContent } from "../../../shared-tree/index.js";
-// import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
+import type { Anchor, UpPath, Value } from "../../../core/index.js";
+import {
+	cursorsFromContextualData,
+	jsonableTreeFromFieldCursor,
+	typeNameSymbol,
+} from "../../../feature-libraries/index.js";
+import type { TreeContent } from "../../../shared-tree/index.js";
+import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
 
-// import {
-// 	type EditGeneratorOpWeights,
-// 	type FuzzTestState,
-// 	makeOpGenerator,
-// 	viewFromState,
-// } from "./fuzzEditGenerators.js";
-// import { fuzzReducer } from "./fuzzEditReducers.js";
-// import {
-// 	type RevertibleSharedTreeView,
-// 	createAnchors,
-// 	deterministicIdCompressorFactory,
-// 	failureDirectory,
-// 	FuzzNode,
-// 	initialFuzzSchema,
-// 	validateAnchors,
-// } from "./fuzzUtils.js";
-// import type { Operation } from "./operationTypes.js";
+import {
+	type EditGeneratorOpWeights,
+	type FuzzTestState,
+	makeOpGenerator,
+	viewFromState,
+} from "./fuzzEditGenerators.js";
+import { fuzzReducer } from "./fuzzEditReducers.js";
+import {
+	type RevertibleSharedTreeView,
+	createAnchors,
+	deterministicIdCompressorFactory,
+	failureDirectory,
+	fuzzNode,
+	initialFuzzSchema,
+	validateAnchors,
+} from "./fuzzUtils.js";
+import type { Operation } from "./operationTypes.js";
 
-// interface AnchorFuzzTestState extends FuzzTestState {
-// 	// Parallel array to `clients`: set in testStart
-// 	anchors?: Map<Anchor, [UpPath, Value]>[];
-// }
+interface AnchorFuzzTestState extends FuzzTestState {
+	// Parallel array to `clients`: set in testStart
+	anchors?: Map<Anchor, [UpPath, Value]>[];
+}
 
-// const config = {
-// 	schema: initialFuzzSchema,
-// 	// Setting the tree to have an initial value is more interesting for this targeted test than if it's empty:
-// 	// returning to an empty state is arguably "easier" than returning to a non-empty state after some undos.
-// 	initialTree: {
-// 		[typeNameSymbol]: FuzzNode.name,
-// 		sequenceChildren: [1, 2, 3],
-// 		requiredChild: {
-// 			[typeNameSymbol]: FuzzNode.name,
-// 			requiredChild: 0,
-// 			optionalChild: undefined,
-// 			sequenceChildren: [4, 5, 6],
-// 		},
-// 		optionalChild: undefined,
-// 	},
-// } satisfies TreeContent;
+const config = {
+	schema: initialFuzzSchema,
+	// Setting the tree to have an initial value is more interesting for this targeted test than if it's empty:
+	// returning to an empty state is arguably "easier" than returning to a non-empty state after some undos.
+	initialTree: {
+		[typeNameSymbol]: fuzzNode.name,
+		sequenceChildren: [1, 2, 3],
+		requiredChild: {
+			[typeNameSymbol]: fuzzNode.name,
+			requiredChild: 0,
+			optionalChild: undefined,
+			sequenceChildren: [4, 5, 6],
+		},
+		optionalChild: undefined,
+	},
+} satisfies TreeContent;
 
-// const initialTreeJson = jsonableTreeFromFieldCursor(
-// 	cursorsFromContextualData(config, config.schema.rootFieldSchema, config.initialTree),
-// );
+const initialTreeJson = jsonableTreeFromFieldCursor(
+	cursorsFromContextualData(config, config.schema.rootFieldSchema, config.initialTree),
+);
 
 // /**
 //  * Fuzz tests in this suite are meant to exercise specific code paths or invariants.

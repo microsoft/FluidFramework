@@ -35,6 +35,7 @@ import {
 	jsonSchema,
 	leaf,
 	singleJsonCursor,
+	typedJsonCursor,
 } from "../domains/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
@@ -42,7 +43,6 @@ import {
 	FlexFieldSchema,
 	SchemaBuilderBase,
 	cursorForJsonableTreeNode,
-	cursorForTypedTreeData,
 	defaultSchemaPolicy,
 	intoStoredSchema,
 	isNeverField,
@@ -206,9 +206,13 @@ export function testForest(config: ForestTestConfiguration): void {
 			const insert: DeltaFieldChanges = {
 				local: [{ count: 1, attach: { minor: 1 } }],
 			};
-			applyTestDelta(new Map([[brand("different root"), insert]]), forest, undefined, [
-				{ id: { minor: 1 }, trees: [singleJsonCursor([])] },
-			]);
+			applyTestDelta(
+				new Map([[brand("different root"), insert]]),
+				forest,
+				undefined,
+				undefined,
+				[{ id: { minor: 1 }, trees: [singleJsonCursor([])] }],
+			);
 			assert(!forest.isEmpty);
 		});
 
@@ -443,8 +447,10 @@ export function testForest(config: ForestTestConfiguration): void {
 
 			const mark: DeltaMark = { count: 1, detach: detachId };
 			const delta: DeltaFieldMap = new Map([[rootFieldKey, { local: [mark] }]]);
-			applyTestDelta(delta, forest, undefined, undefined, [{ id: detachId, count: 1 }]);
-			applyTestDelta(delta, forest.anchors, undefined, undefined, [
+			applyTestDelta(delta, forest, undefined, undefined, undefined, [
+				{ id: detachId, count: 1 },
+			]);
+			applyTestDelta(delta, forest.anchors, undefined, undefined, undefined, [
 				{ id: detachId, count: 1 },
 			]);
 
@@ -700,7 +706,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					]),
 				};
 				const delta: DeltaFieldMap = new Map([[rootFieldKey, { local: [setField] }]]);
-				applyTestDelta(delta, forest, undefined, [
+				applyTestDelta(delta, forest, undefined, undefined, [
 					{
 						id: buildId,
 						trees: [
@@ -738,7 +744,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					]),
 				};
 				const delta: DeltaFieldMap = new Map([[rootFieldKey, { local: [setField] }]]);
-				applyTestDelta(delta, forest, undefined, [
+				applyTestDelta(delta, forest, undefined, undefined, [
 					{
 						id: buildId,
 						trees: [
@@ -832,7 +838,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				const delta: DeltaFieldMap = new Map([
 					[rootFieldKey, { local: [{ count: 1, attach: buildId }] }],
 				]);
-				applyTestDelta(delta, forest, undefined, [
+				applyTestDelta(delta, forest, undefined, undefined, [
 					{ id: buildId, trees: [singleJsonCursor(3)] },
 				]);
 
@@ -876,7 +882,7 @@ export function testForest(config: ForestTestConfiguration): void {
 						},
 					],
 				]);
-				applyTestDelta(delta, forest, undefined, [
+				applyTestDelta(delta, forest, undefined, undefined, [
 					{ id: buildId, trees: [singleJsonCursor({ x: 0 })] },
 				]);
 
@@ -959,7 +965,7 @@ export function testForest(config: ForestTestConfiguration): void {
 						},
 					],
 				]);
-				applyTestDelta(delta, forest, undefined, [
+				applyTestDelta(delta, forest, undefined, undefined, [
 					{
 						id: buildId,
 						trees: [
@@ -1070,7 +1076,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					]),
 				};
 				const delta: DeltaFieldMap = new Map([[rootFieldKey, { local: [mark] }]]);
-				applyTestDelta(delta, forest, undefined, [
+				applyTestDelta(delta, forest, undefined, undefined, [
 					{ id: buildId, trees: [singleJsonCursor(3)] },
 				]);
 
@@ -1150,7 +1156,8 @@ export function testForest(config: ForestTestConfiguration): void {
 				initializeForest(
 					forest,
 					[
-						cursorForTypedTreeData({ schema }, root, {
+						typedJsonCursor({
+							[typedJsonCursor.type]: root,
 							x: [2],
 							y: [1],
 						}),
@@ -1176,8 +1183,8 @@ export function testForest(config: ForestTestConfiguration): void {
 				};
 				const delta: DeltaFieldMap = new Map([[rootFieldKey, { local: [modify] }]]);
 				applyTestDelta(delta, forest);
-				const expectedCursor = cursorForTypedTreeData({ schema }, root, {
-					x: [],
+				const expectedCursor = typedJsonCursor({
+					[typedJsonCursor.type]: root,
 					y: [1, 2],
 				});
 				const expected: JsonableTree[] = [jsonableTreeFromCursor(expectedCursor)];

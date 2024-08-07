@@ -13,9 +13,9 @@ import {
 	TreeArrayNode,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
-// TODO: test other things from "proxies" file.
-// eslint-disable-next-line import/no-internal-modules
-import { isTreeNode } from "../../simple-tree/proxies.js";
+
+// TODO: import and unit test other things from "proxies" file.
+// // eslint-disable-next-line import/no-internal-modules
 
 import { hydrate, pretty } from "./utils.js";
 import { getView } from "../utils.js";
@@ -64,17 +64,6 @@ describe("simple-tree proxies", () => {
 		const mapProxy = root.map;
 		const mapProxyAgain = root.map;
 		assert.equal(mapProxyAgain, mapProxy);
-	});
-
-	it("isTreeNode", () => {
-		// Non object
-		assert(!isTreeNode(5));
-		// Non node object
-		assert(!isTreeNode({}));
-		// Unhydrated node:
-		assert(isTreeNode(new childSchema({ content: 5 })));
-		// Hydrated node:
-		assert(isTreeNode(hydrate(schema, initialTree)));
 	});
 });
 

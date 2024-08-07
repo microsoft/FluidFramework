@@ -22,7 +22,7 @@ import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { Client } from "../client.js";
 import { DoublyLinkedList } from "../collections/index.js";
 import { UnassignedSequenceNumber } from "../constants.js";
-import { IMergeTreeOptions, ReferencePosition } from "../index.js";
+import { IMergeTreeOptions, ReferencePosition, type SequencePlace } from "../index.js";
 import { MergeTree, getSlideToSegoff } from "../mergeTree.js";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import {
@@ -198,8 +198,8 @@ export class TestClient extends Client {
 		overwrite = false,
 		opArgs,
 	}: {
-		start: number;
-		end: number;
+		start: SequencePlace;
+		end: SequencePlace;
 		refSeq: number;
 		clientId: number;
 		seq: number;
