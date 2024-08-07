@@ -18,10 +18,10 @@ import {
 } from "../feature-libraries/index.js";
 import {
 	type InsertableContent,
-	getOrCreateNodeProxy,
+	getOrCreateNodeFromFlexTreeNode,
 	prepareContentForHydration,
 } from "./proxies.js";
-import { getFlexNode, getKernel } from "./proxyBinding.js";
+import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
 	NodeKind,
 	type ImplicitAllowedTypes,
@@ -44,6 +44,7 @@ import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import { getKernel } from "./treeNodeKernel.js";
 
 /**
  * A generic array type, used to defined types like {@link (TreeArrayNode:interface)}.
@@ -288,7 +289,7 @@ function getSequenceField<
 	TTypes extends FlexAllowedTypes,
 	TSimpleType extends ImplicitAllowedTypes,
 >(arrayNode: TreeArrayNode<TSimpleType>): FlexTreeSequenceField<TTypes> {
-	return getFlexNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField<TTypes>;
+	return getOrCreateInnerNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField<TTypes>;
 }
 
 // For compatibility, we are initially implement 'readonly T[]' by applying the Array.prototype methods
@@ -558,7 +559,9 @@ function createArrayNodeProxy(
 			}
 
 			const maybeContent = field.at(maybeIndex);
-			return isFlexTreeNode(maybeContent) ? getOrCreateNodeProxy(maybeContent) : maybeContent;
+			return isFlexTreeNode(maybeContent)
+				? getOrCreateNodeFromFlexTreeNode(maybeContent)
+				: maybeContent;
 		},
 		set: (target, key, newValue, receiver) => {
 			if (key === "length") {
@@ -620,7 +623,7 @@ function createArrayNodeProxy(
 					// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 					//       as simple as calling '.at' since this skips the node and returns the FieldNode's
 					//       inner field.
-					value: val === undefined ? val : getOrCreateNodeProxy(val),
+					value: val === undefined ? val : getOrCreateNodeFromFlexTreeNode(val),
 					writable: true, // For MVP, disallow setting indexed properties.
 					enumerable: true,
 					configurable: true,
@@ -683,7 +686,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	}
 
 	#cursorFromFieldData(value: Insertable<T>): ITreeCursorSynchronous {
-		if (isMapTreeNode(getFlexNode(this))) {
+		if (isMapTreeNode(getOrCreateInnerNode(this))) {
 			throw new UsageError(`An array cannot be mutated before being inserted into the tree`);
 		}
 
@@ -748,7 +751,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			return val;
 		}
 
-		return getOrCreateNodeProxy(val) as TreeNodeFromImplicitAllowedTypes<T>;
+		return getOrCreateNodeFromFlexTreeNode(val) as TreeNodeFromImplicitAllowedTypes<T>;
 	}
 	public insertAt(index: number, ...value: Insertable<T>): void {
 		const field = getSequenceField(this);

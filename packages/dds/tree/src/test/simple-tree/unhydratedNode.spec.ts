@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { Tree } from "../../shared-tree/index.js";
 import { rootFieldKey } from "../../core/index.js";
 import {
-	getFlexNode,
+	getOrCreateInnerNode,
 	SchemaFactory,
 	type FieldProps,
 	type TreeNode,
@@ -40,15 +40,15 @@ describe("Unhydrated nodes", () => {
 		const map = new TestMap([]);
 		const array = new TestArray([leaf]);
 		const object = new TestObject({ map, array });
-		assert.equal(isMapTreeNode(getFlexNode(leaf)), true);
-		assert.equal(isMapTreeNode(getFlexNode(map)), true);
-		assert.equal(isMapTreeNode(getFlexNode(array)), true);
-		assert.equal(isMapTreeNode(getFlexNode(object)), true);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(leaf)), true);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(map)), true);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(array)), true);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(object)), true);
 		const hydratedObject = hydrate(TestObject, object);
-		assert.equal(isMapTreeNode(getFlexNode(leaf)), false);
-		assert.equal(isMapTreeNode(getFlexNode(map)), false);
-		assert.equal(isMapTreeNode(getFlexNode(array)), false);
-		assert.equal(isMapTreeNode(getFlexNode(object)), false);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(leaf)), false);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(map)), false);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(array)), false);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(object)), false);
 		assert.equal(hydratedObject, object);
 		assert.equal(hydratedObject.array, array);
 		assert.equal(hydratedObject.map, map);

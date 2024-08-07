@@ -472,7 +472,7 @@ describe("LazyNode", () => {
 		it("Value assignment generates edits", () => {
 			assert.equal(editCallCount, 0);
 
-			node.foo = "First edit";
+			node.setFoo(singleJsonCursor("First edit"));
 			assert.equal(editCallCount, 1);
 
 			node.setFoo(singleJsonCursor("Second edit"));
