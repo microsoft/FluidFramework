@@ -56,6 +56,11 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 	 */
 	private readonly anchors = new Map<AnchorNode, Anchor>();
 
+	/**
+	 * @param forest - the forest that is being indexed
+	 * @param indexer - a function that retrieves the key finder based on a given schema or undefined if the schema does not have an associated key finder
+	 * @param getValue - a function that returns the value or undefined given at least one anchor node
+	 */
 	public constructor(
 		private readonly forest: IForestSubscription,
 		indexer: (schemaId: TreeNodeSchemaIdentifier) => KeyFinder<TKey> | undefined,
