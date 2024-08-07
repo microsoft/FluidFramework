@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { FieldKey, JsonableTree } from "../../../core/index.js";
+import type { FieldKey } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 export type Operation = TreeOperation | Synchronize;
 
@@ -53,13 +54,41 @@ export interface FieldEdit {
 	change: SequenceFieldEdit | RequiredFieldEdit | OptionalFieldEdit;
 }
 
+interface GUIDNodeValue {
+	guid: number;
+}
+
+interface NodeObjectValue {
+	requiredChild: number;
+}
+
+export type GeneratedFuzzValue =
+	| number
+	| string
+	| IFluidHandle
+	| GUIDNodeValue
+	| NodeObjectValue
+	| (number | string | IFluidHandle | GUIDNodeValue | NodeObjectValue)[];
+
+export enum GeneratedFuzzValueType {
+	Number,
+	String,
+	Handle,
+	GUIDNode,
+	NodeObject,
+}
+export interface GeneratedFuzzNode {
+	type: GeneratedFuzzValueType;
+	value: GeneratedFuzzValue;
+}
+
 export interface Insert {
 	type: "insert";
 	/**
 	 * Index to insert at within the field.
 	 */
 	index: number;
-	content: JsonableTree[];
+	content: GeneratedFuzzNode | GeneratedFuzzNode[];
 }
 
 export interface SetField {
@@ -68,7 +97,7 @@ export interface SetField {
 	 * @privateRemarks - Optional fields use {@link ClearField} to mean "remove the field's contents" rather than
 	 * a `SetField` with undefined value, hence why this property is required.
 	 */
-	value: JsonableTree;
+	value: GeneratedFuzzNode;
 }
 
 export interface SequenceFieldEdit {

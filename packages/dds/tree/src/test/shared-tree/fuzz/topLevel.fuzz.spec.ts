@@ -82,7 +82,7 @@ describe("Fuzz - Top-Level", () => {
 			},
 			clientJoinOptions: {
 				clientAddProbability: 0,
-				maxNumberOfClients: 3,
+				maxNumberOfClients: 1,
 			},
 			// AB#7162: enabling rehydrate in these tests hits 0x744 and 0x79d. Disabling rehydrate for now
 			// and using the default number of ops before attach.

@@ -44,6 +44,7 @@ import {
 } from "./schemaTypes.js";
 import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
 import { tryGetFlexNode } from "./proxyBinding.js";
+import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 
 /**
  * Module notes:
@@ -219,6 +220,9 @@ function nodeDataToMapTree(
 	// They already have the mapTree, so there is no need to recompute it.
 	const flexNode = tryGetFlexNode(data);
 	if (flexNode !== undefined) {
+		if (!allowedTypes.has(tryGetSimpleNodeSchema(flexNode.schema) ?? fail("missing schema"))) {
+			throw new UsageError("Invalid schema for this context.");
+		}
 		if (isMapTreeNode(flexNode)) {
 			return flexNode.mapTree;
 		} else {

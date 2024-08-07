@@ -24,25 +24,63 @@ import {
 	forEachNodeInSubtree,
 	moveToDetachedField,
 } from "../../../core/index.js";
-import { SchemaBuilder, leaf } from "../../../domains/index.js";
-import {
-	Any,
-	FieldKinds,
-	FlexFieldSchema,
-	type FlexTreeObjectNodeTyped,
-	type LeafNodeSchema,
-	type SchemaLibrary,
-	intoStoredSchema,
-	typeNameSymbol,
-} from "../../../feature-libraries/index.js";
-import type { ITreeCheckout, SharedTree, TreeContent } from "../../../shared-tree/index.js";
+import { intoStoredSchema } from "../../../feature-libraries/index.js";
+import type { ITreeCheckout, SharedTree } from "../../../shared-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { expectEqualPaths } from "../../utils.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SchemaFactory } from "../../../simple-tree/schemaFactory.js";
+import type {
+	NodeBuilderData,
+	TreeNodeSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../simple-tree/schemaTypes.js";
+// eslint-disable-next-line import/no-internal-modules
+import { toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
+import type {
+	ValidateRecursiveSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../simple-tree/schemaFactoryRecursive.js";
 
-const builder = new SchemaBuilder({ scope: "treefuzz", libraries: [leaf.library] });
+const builder = new SchemaFactory("treeFuzz");
+export class GUIDNode extends builder.object("GuidNode", {
+	value: builder.optional(builder.string),
+}) {}
+
+export class FuzzStringNode extends builder.object("FuzzStringNode", {
+	stringValue: builder.required(builder.string),
+}) {}
+export class FuzzNumberNode extends builder.object("FuzzNumberNode", {
+	value: builder.required(builder.number),
+}) {}
+export class FuzzHandleNode extends builder.object("FuzzHandleNode", {
+	value: builder.required(builder.handle),
+}) {}
+
+export type InitialAllowedFuzzTypes =
+	| FuzzStringNode
+	| FuzzNumberNode
+	| FuzzHandleNode
+	| GUIDNode
+	| FuzzNode;
+
+const initialAllowedTypes = [
+	FuzzStringNode,
+	FuzzNumberNode,
+	FuzzHandleNode,
+	GUIDNode,
+	() => FuzzNode,
+] as const;
+
+export class SequenceChildren extends builder.arrayRecursive(
+	"sequenceChildren",
+	initialAllowedTypes,
+) {}
+
+type _checkSequenceChildren = ValidateRecursiveSchema<typeof SequenceChildren>;
 
 /**
- * We use any here to give compile-time flexibility, but during a fuzz test's runtime,
+ * We use a more flexible set of allowed types to help during compile time, but during a fuzz test's runtime,
  * different trees will have different views over the currently allowed schema.
  * This extremely permissive schema is a valid superset over all possible schema and is a reasonable type to use at compile time,
  * but generators/reducers working with trees over the course of a fuzz test need to be careful
@@ -51,66 +89,53 @@ const builder = new SchemaBuilder({ scope: "treefuzz", libraries: [leaf.library]
  * During the fuzz test, {@link SchemaChange} can be generated which extends the allowed node types (with the node type being a generated uuid)
  * for each of our fields in our tree's current schema.
  */
-export const fuzzNode = builder.object("node", {
-	optionalChild: FlexFieldSchema.create(FieldKinds.optional, [Any]),
-	requiredChild: FlexFieldSchema.create(FieldKinds.required, [Any]),
-	sequenceChildren: FlexFieldSchema.create(FieldKinds.sequence, [Any]),
-});
+export class FuzzNode extends builder.objectRecursive("node", {
+	optionalChild: builder.optionalRecursive(initialAllowedTypes),
+	requiredChild: builder.requiredRecursive(initialAllowedTypes),
+	sequenceChildren: SequenceChildren,
+}) {}
+type _checkFuzzNode = ValidateRecursiveSchema<typeof FuzzNode>;
 
-export type FuzzNodeSchema = typeof fuzzNode;
+export type FuzzNodeSchema = typeof FuzzNode;
 
-export type FuzzNode = FlexTreeObjectNodeTyped<FuzzNodeSchema>;
+export const initialFuzzSchema = createTreeViewSchema([]);
+export const fuzzFieldSchema = FuzzNode.info.optionalChild;
 
-export const initialFuzzSchema = createTreeViewSchema([], leaf.library);
-
-export const fuzzSchema = builder.intoSchema(fuzzNode.objectNodeFieldsObject.optionalChild);
-
-export function createFuzzNode(
-	nodeTypes: LeafNodeSchema[],
-	schemaBuilder: SchemaBuilder,
-): typeof fuzzNode {
-	const node = schemaBuilder.objectRecursive("node", {
-		requiredChild: FlexFieldSchema.createUnsafe(FieldKinds.required, [
-			() => node,
-			leaf.number,
-			leaf.string,
-			leaf.handle,
+export function createFuzzNodeSchema(
+	nodeTypes: TreeNodeSchema[],
+	schemaFactory: SchemaFactory<"treeFuzz">,
+): FuzzNodeSchema {
+	class SequenceChildren2 extends schemaFactory.arrayRecursive("sequenceChildren", [
+		() => Node,
+		FuzzStringNode,
+		FuzzNumberNode,
+		FuzzHandleNode,
+		...nodeTypes,
+	]) {}
+	class Node extends schemaFactory.objectRecursive("node", {
+		requiredChild: [() => Node, FuzzStringNode, FuzzNumberNode, FuzzHandleNode, ...nodeTypes],
+		optionalChild: schemaFactory.optionalRecursive([
+			() => Node,
+			FuzzStringNode,
+			FuzzNumberNode,
+			FuzzHandleNode,
 			...nodeTypes,
 		]),
-		optionalChild: FlexFieldSchema.createUnsafe(FieldKinds.optional, [
-			() => node,
-			leaf.number,
-			leaf.string,
-			leaf.handle,
-			...nodeTypes,
-		]),
-		sequenceChildren: FlexFieldSchema.createUnsafe(FieldKinds.sequence, [
-			() => node,
-			leaf.number,
-			leaf.string,
-			leaf.handle,
-			...nodeTypes,
-		]),
-	});
-	return node as unknown as typeof fuzzNode;
+		sequenceChildren: SequenceChildren2,
+	}) {}
+
+	type _check = ValidateRecursiveSchema<typeof Node>;
+	return Node as unknown as FuzzNodeSchema;
 }
 
-export function createTreeViewSchema(
-	allowedTypes: LeafNodeSchema[],
-	schemaLibrary?: SchemaLibrary,
-): typeof fuzzSchema {
-	const schemaBuilder = new SchemaBuilder({
-		scope: "treefuzz",
-		libraries: schemaLibrary === undefined ? [leaf.library] : [leaf.library, schemaLibrary],
-	});
-	const node = createFuzzNode(allowedTypes, schemaBuilder);
-	return schemaBuilder.intoSchema(
-		node.objectNodeFieldsObject.optionalChild,
-	) as unknown as typeof fuzzSchema;
+export function createTreeViewSchema(allowedTypes: TreeNodeSchema[]): typeof fuzzFieldSchema {
+	const schemaFactory = new SchemaFactory("treeFuzz");
+	const node = createFuzzNodeSchema(allowedTypes, schemaFactory).info.optionalChild;
+	return node as unknown as typeof fuzzFieldSchema;
 }
 
 export const onCreate = (tree: SharedTree) => {
-	tree.checkout.updateSchema(intoStoredSchema(initialFuzzSchema));
+	tree.checkout.updateSchema(intoStoredSchema(toFlexSchema(initialFuzzSchema)));
 };
 
 /**
@@ -185,30 +210,20 @@ export const deterministicIdCompressorFactory: (
 	};
 };
 
-export const populatedInitialState: TreeContent<
-	typeof fuzzSchema.rootFieldSchema
->["initialTree"] = {
-	[typeNameSymbol]: fuzzNode.name,
+export const populatedInitialState: NodeBuilderData<typeof FuzzNode> = {
 	sequenceChildren: [
 		{
-			[typeNameSymbol]: fuzzNode.name,
-			sequenceChildren: ["AA", "AB", "AC"],
-			requiredChild: "A",
-			optionalChild: undefined,
+			sequenceChildren: [{ stringValue: "AA" }, { stringValue: "AB" }, { stringValue: "AC" }],
+			requiredChild: { stringValue: "A" },
 		},
 		{
-			[typeNameSymbol]: fuzzNode.name,
-			sequenceChildren: ["BA", "BB", "BC"],
-			requiredChild: "B",
-			optionalChild: undefined,
+			sequenceChildren: [{ stringValue: "BA" }, { stringValue: "BB" }, { stringValue: "BC" }],
+			requiredChild: { stringValue: "B" },
 		},
 		{
-			[typeNameSymbol]: fuzzNode.name,
-			sequenceChildren: ["CA", "CB", "CC"],
-			requiredChild: "C",
-			optionalChild: undefined,
+			sequenceChildren: [{ stringValue: "CA" }, { stringValue: "CB" }, { stringValue: "CC" }],
+			requiredChild: { stringValue: "C" },
 		},
 	],
-	requiredChild: "R",
-	optionalChild: undefined,
-};
+	requiredChild: { stringValue: "R" },
+} as unknown as NodeBuilderData<typeof FuzzNode>;

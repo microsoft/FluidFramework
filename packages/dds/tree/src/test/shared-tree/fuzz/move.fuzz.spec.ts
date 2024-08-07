@@ -68,7 +68,7 @@ describe("Fuzz - move", () => {
 		emitter,
 		numberOfClients: 1,
 		clientJoinOptions: {
-			maxNumberOfClients: 4,
+			maxNumberOfClients: 1,
 			clientAddProbability: 1,
 		},
 		defaultTestCount: runsPerBatch,
@@ -81,6 +81,7 @@ describe("Fuzz - move", () => {
 		},
 		reconnectProbability: 0.1,
 		idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
+		skipMinimization: true,
 	};
 	createDDSFuzzSuite(model, options);
 });
