@@ -72,9 +72,9 @@ export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<"map"> {
  */
 export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<"leaf"> {
 	/**
-	 * The type of leaf node.
+	 * The kind of leaf node.
 	 */
-	readonly type: SimpleLeafSchemaKind;
+	readonly leafKind: SimpleLeafSchemaKind;
 }
 
 /**

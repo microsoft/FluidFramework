@@ -15,7 +15,7 @@ describe("simpleSchemaToJsonSchema", () => {
 	it("Leaf schema", async () => {
 		const input: SimpleTreeSchema = {
 			definitions: new Map<string, SimpleNodeSchema>([
-				["test.string", { type: "string", kind: "leaf" }],
+				["test.string", { leafKind: "string", kind: "leaf" }],
 			]),
 			allowedTypes: new Set<string>(["test.string"]),
 		};
@@ -51,7 +51,7 @@ describe("simpleSchemaToJsonSchema", () => {
 	it("Leaf node (Fluid Handle)", async () => {
 		const input: SimpleTreeSchema = {
 			definitions: new Map<string, SimpleNodeSchema>([
-				["test.handle", { type: "fluid-handle", kind: "leaf" }],
+				["test.handle", { leafKind: "fluid-handle", kind: "leaf" }],
 			]),
 			allowedTypes: new Set<string>(["test.handle"]),
 		};
@@ -63,7 +63,7 @@ describe("simpleSchemaToJsonSchema", () => {
 		const input: SimpleTreeSchema = {
 			definitions: new Map<string, SimpleNodeSchema>([
 				["test.array", { kind: "array", allowedTypes: new Set<string>(["test.string"]) }],
-				["test.string", { type: "string", kind: "leaf" }],
+				["test.string", { leafKind: "string", kind: "leaf" }],
 			]),
 			allowedTypes: new Set<string>(["test.array"]),
 		};
@@ -108,7 +108,7 @@ describe("simpleSchemaToJsonSchema", () => {
 		const input: SimpleTreeSchema = {
 			definitions: new Map<string, SimpleNodeSchema>([
 				["test.map", { kind: "map", allowedTypes: new Set<string>(["test.string"]) }],
-				["test.string", { type: "string", kind: "leaf" }],
+				["test.string", { leafKind: "string", kind: "leaf" }],
 			]),
 			allowedTypes: new Set<string>(["test.map"]),
 		};
@@ -174,8 +174,8 @@ describe("simpleSchemaToJsonSchema", () => {
 						},
 					},
 				],
-				["test.string", { type: "string", kind: "leaf" }],
-				["test.number", { type: "number", kind: "leaf" }],
+				["test.string", { leafKind: "string", kind: "leaf" }],
+				["test.number", { leafKind: "number", kind: "leaf" }],
 			]),
 			allowedTypes: new Set<string>(["test.object"]),
 		};
@@ -263,7 +263,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						},
 					},
 				],
-				["test.identifier", { type: "string", kind: "leaf" }],
+				["test.identifier", { leafKind: "string", kind: "leaf" }],
 			]),
 			allowedTypes: new Set<string>(["test.object"]),
 		};
@@ -312,8 +312,8 @@ describe("simpleSchemaToJsonSchema", () => {
 						},
 					},
 				],
-				["test.number", { type: "number", kind: "leaf" }],
-				["test.string", { type: "string", kind: "leaf" }],
+				["test.number", { leafKind: "number", kind: "leaf" }],
+				["test.string", { leafKind: "string", kind: "leaf" }],
 			]),
 			allowedTypes: new Set<string>(["test.object"]),
 		};
@@ -366,7 +366,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						},
 					},
 				],
-				["test.string", { type: "string", kind: "leaf" }],
+				["test.string", { leafKind: "string", kind: "leaf" }],
 			]),
 			allowedTypes: new Set<string>(["test.recursive-object"]),
 		};

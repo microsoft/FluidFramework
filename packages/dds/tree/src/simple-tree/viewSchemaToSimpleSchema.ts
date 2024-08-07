@@ -82,7 +82,7 @@ function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
 function leafSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleLeafNodeSchema {
 	return {
 		kind: "leaf",
-		type: leafKindFromValueSchema(schema.info as ValueSchema),
+		leafKind: leafKindFromValueSchema(schema.info as ValueSchema),
 	};
 }
 

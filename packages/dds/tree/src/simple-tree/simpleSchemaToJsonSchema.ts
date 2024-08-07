@@ -94,12 +94,12 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): ArrayNodeJsonSch
 }
 
 function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): LeafNodeJsonSchema {
-	if (schema.type === "fluid-handle") {
+	if (schema.leafKind === "fluid-handle") {
 		throw new Error("Fluid handles are not supported via JSON Schema.");
 	}
 
 	return {
-		type: schema.type,
+		type: schema.leafKind,
 		_kind: "leaf",
 	};
 }
