@@ -22,10 +22,14 @@ nestedObj.nested.a.length; // This should report an error
 const someObjWithStaticType: StaticType = { a: "hello", b: "goodbye" };
 someObjWithStaticType.a; // This should not report an error
 someObjWithStaticType.a.length; // This should not report an error because length exists on strings
+someObjWithStaticType['a']; // This should not report an error
+someObjWithStaticType['a'].length; // This should not report an error
 
 const someObjWithDynamicType: DynamicType = someObjWithStaticType;
 someObjWithDynamicType.a; // This should not report an error, it should be undefined
 someObjWithDynamicType.a.length; // This should report an error
+someObjWithStaticType['a']; // This should not report an error
+someObjWithStaticType['a'].length; // This should not report an error
 someObjWithDynamicType.a?.length; // This should not report an error
 
 if (someObjWithDynamicType.a) {
