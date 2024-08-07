@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const ts = require("typescript");
 
 const hasIndexSignature = (type) => type.getStringIndexType() || type.getNumberIndexType();
