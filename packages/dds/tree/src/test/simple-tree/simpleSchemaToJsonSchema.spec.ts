@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import type { JsonTreeSchema } from "../../simple-tree/index.js";
+import { FieldKind, type JsonTreeSchema } from "../../simple-tree/index.js";
 import { getJsonValidator } from "./jsonSchemaUtilities.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SimpleNodeSchema, SimpleTreeSchema } from "../../simple-tree/simpleSchema.js";
@@ -169,8 +169,14 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: "object",
 						fields: {
-							"foo": { kind: "optional", allowedTypes: new Set<string>(["test.number"]) },
-							"bar": { kind: "required", allowedTypes: new Set<string>(["test.string"]) },
+							"foo": {
+								kind: FieldKind.Optional,
+								allowedTypes: new Set<string>(["test.number"]),
+							},
+							"bar": {
+								kind: FieldKind.Required,
+								allowedTypes: new Set<string>(["test.string"]),
+							},
 						},
 					},
 				],
@@ -259,7 +265,10 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: "object",
 						fields: {
-							"id": { kind: "identifier", allowedTypes: new Set<string>(["test.identifier"]) },
+							"id": {
+								kind: FieldKind.Identifier,
+								allowedTypes: new Set<string>(["test.identifier"]),
+							},
 						},
 					},
 				],
@@ -306,7 +315,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						kind: "object",
 						fields: {
 							"foo": {
-								kind: "required",
+								kind: FieldKind.Required,
 								allowedTypes: new Set<string>(["test.number", "test.string"]),
 							},
 						},
@@ -360,7 +369,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						kind: "object",
 						fields: {
 							"foo": {
-								kind: "optional",
+								kind: FieldKind.Optional,
 								allowedTypes: new Set<string>(["test.string", "test.recursive-object"]),
 							},
 						},

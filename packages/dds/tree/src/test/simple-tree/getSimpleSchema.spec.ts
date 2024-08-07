@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import {
+	FieldKind,
 	getSimpleSchema,
 	SchemaFactory,
 	type SimpleTreeSchema,
@@ -135,11 +136,11 @@ describe("getSimpleSchema", () => {
 						kind: "object",
 						fields: {
 							foo: {
-								kind: "optional",
+								kind: FieldKind.Optional,
 								allowedTypes: new Set(["com.fluidframework.leaf.number"]),
 							},
 							bar: {
-								kind: "required",
+								kind: FieldKind.Required,
 								allowedTypes: new Set(["com.fluidframework.leaf.string"]),
 							},
 						},
@@ -181,7 +182,7 @@ describe("getSimpleSchema", () => {
 						kind: "object",
 						fields: {
 							id: {
-								kind: "identifier",
+								kind: FieldKind.Identifier,
 								allowedTypes: new Set(["com.fluidframework.leaf.string"]),
 							},
 						},
@@ -216,7 +217,7 @@ describe("getSimpleSchema", () => {
 						kind: "object",
 						fields: {
 							foo: {
-								kind: "required",
+								kind: FieldKind.Required,
 								allowedTypes: new Set([
 									"com.fluidframework.leaf.number",
 									"com.fluidframework.leaf.string",
@@ -261,7 +262,7 @@ describe("getSimpleSchema", () => {
 						kind: "object",
 						fields: {
 							foo: {
-								kind: "optional",
+								kind: FieldKind.Optional,
 								allowedTypes: new Set([
 									"com.fluidframework.leaf.string",
 									"test.recursive-object",

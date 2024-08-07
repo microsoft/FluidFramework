@@ -5,7 +5,6 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	FieldKind,
 	NodeKind,
 	normalizeFieldSchema,
 	type FieldSchema,
@@ -15,7 +14,6 @@ import {
 import type {
 	SimpleArrayNodeSchema,
 	SimpleFieldSchema,
-	SimpleFieldSchemaKind,
 	SimpleLeafNodeSchema,
 	SimpleLeafSchemaKind,
 	SimpleMapNodeSchema,
@@ -129,10 +127,9 @@ function fieldSchemaToSimpleSchema(schema: FieldSchema): SimpleFieldSchema {
 		return (schema as any)[simpleFieldSchemaCacheSymbol] as SimpleFieldSchema;
 	}
 
-	const kind = fieldKindToSimpleFieldKind(schema.kind);
 	const allowedTypes = allowedTypesFromFieldSchema(schema);
 	const result = {
-		kind,
+		kind: schema.kind,
 		allowedTypes,
 	};
 
@@ -140,23 +137,6 @@ function fieldSchemaToSimpleSchema(schema: FieldSchema): SimpleFieldSchema {
 	(schema as any)[simpleFieldSchemaCacheSymbol] = result;
 
 	return result;
-}
-
-function fieldKindToSimpleFieldKind(fieldKind: FieldKind): SimpleFieldSchemaKind {
-	switch (fieldKind) {
-		case FieldKind.Optional: {
-			return "optional";
-		}
-		case FieldKind.Required: {
-			return "required";
-		}
-		case FieldKind.Identifier: {
-			return "identifier";
-		}
-		default: {
-			unreachableCase(fieldKind);
-		}
-	}
 }
 
 function allowedTypesFromFieldSchema(schema: FieldSchema): Set<string> {

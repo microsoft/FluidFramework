@@ -3,16 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import type { FieldKind } from "./schemaTypes.js";
+
 /**
  * Kind of {@link TreeNodeSchema}.
  * @alpha
  */
 export type SimpleNodeSchemaKind = "object" | "array" | "map" | "leaf";
-
-/**
- * Kind of {@link FieldSchema}.
- */
-export type SimpleFieldSchemaKind = "optional" | "required" | "identifier";
 
 /**
  * Kind of leaf schema.
@@ -113,7 +110,7 @@ export interface SimpleFieldSchema {
 	/**
 	 * The kind of object field.
 	 */
-	readonly kind: SimpleFieldSchemaKind;
+	readonly kind: FieldKind;
 
 	/**
 	 * The types allowed under the field.

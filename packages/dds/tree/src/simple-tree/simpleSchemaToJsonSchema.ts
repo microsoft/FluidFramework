@@ -15,6 +15,7 @@ import type {
 	JsonObjectNodeSchema,
 	JsonTreeSchema,
 } from "./jsonSchema.js";
+import { FieldKind } from "./schemaTypes.js";
 import type {
 	SimpleArrayNodeSchema,
 	SimpleLeafNodeSchema,
@@ -116,7 +117,7 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 		properties[key] = {
 			anyOf,
 		};
-		if (value.kind === "required") {
+		if (value.kind === FieldKind.Required) {
 			required.push(key);
 		}
 	}
