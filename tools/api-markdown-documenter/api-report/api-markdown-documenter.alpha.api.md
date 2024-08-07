@@ -520,8 +520,7 @@ export class LinkNode extends DocumentationParentNodeBase<SingleLineDocumentatio
 export function loadModel(options: LoadModelOptions): Promise<ApiModel>;
 
 // @public
-export interface LoadModelOptions {
-    readonly logger?: Logger;
+export interface LoadModelOptions extends ConfigurationBase {
     readonly modelDirectoryPath: string;
 }
 

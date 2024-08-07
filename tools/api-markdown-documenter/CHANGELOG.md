@@ -7,6 +7,11 @@
 -   Updated `loadModel` to take a configuration object, rather than individual parameters.
     -   Also allows default use of the console logger when no logger is explicitly given.
 
+### ⚠ BREAKING CHANGES
+
+-   Updated `loadModel` to take a configuration object, rather than individual parameters.
+    -   Also allows default use of the console logger when no logger is explicitly given.
+
 ## 0.15.0
 
 -   Added the following new utility functions to `ApiItemUtilities`:
