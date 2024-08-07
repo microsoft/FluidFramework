@@ -25,6 +25,10 @@ import { DocumentWriter } from "./renderers/index.js";
 import { getScopedMemberNameForDiagnostics, resolveSymbolicReference } from "./utilities/index.js";
 import assert from "node:assert";
 
+// TODOs:
+// - See how reasonable it is to implement `@link` checking via generic transform infra.
+// - Restructure validation walk to be more general (e.g. it should error for malformed `@inheritDoc` tags).
+
 /**
  * Linter check options.
  *
