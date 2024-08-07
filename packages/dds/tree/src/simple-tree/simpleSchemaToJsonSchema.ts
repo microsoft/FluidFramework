@@ -4,6 +4,7 @@
  */
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { ValueSchema } from "../core/index.js";
 import { getOrCreate } from "../util/index.js";
 import type {
@@ -113,7 +114,7 @@ function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): JsonLeafNodeSchema
 			type = "null";
 			break;
 		case ValueSchema.FluidHandle:
-			throw new Error("Fluid handles are not supported via JSON Schema.");
+			throw new UsageError("Fluid handles are not supported via JSON Schema.");
 		default:
 			unreachableCase(schema.leafKind);
 	}
