@@ -22,7 +22,7 @@ import type {
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
 import { ValueSchema } from "../core/index.js";
-import { fail, getOrCreate } from "../util/index.js";
+import { getOrCreate } from "../util/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
 
 /**
@@ -70,7 +70,7 @@ function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
 				return objectSchemaToSimpleSchema(schema);
 			}
 			default: {
-				fail(`Unrecognized node kind: ${kind}.`);
+				unreachableCase(kind);
 			}
 		}
 	});
@@ -79,7 +79,7 @@ function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
 // TODO: Use a stronger type for leaf schemas once one is available (see object schema handler for an example).
 function leafSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleLeafNodeSchema {
 	return {
-		kind: "leaf",
+		kind: NodeKind.Leaf,
 		leafKind: leafKindFromValueSchema(schema.info as ValueSchema),
 	};
 }
@@ -89,7 +89,7 @@ function arraySchemaToSimpleSchema(schema: TreeNodeSchema): SimpleArrayNodeSchem
 	const fieldSchema = normalizeFieldSchema(schema.info as ImplicitAllowedTypes);
 	const allowedTypes = allowedTypesFromFieldSchema(fieldSchema);
 	return {
-		kind: "array",
+		kind: NodeKind.Array,
 		allowedTypes,
 	};
 }
@@ -99,7 +99,7 @@ function mapSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleMapNodeSchema {
 	const fieldSchema = normalizeFieldSchema(schema.info as ImplicitAllowedTypes);
 	const allowedTypes = allowedTypesFromFieldSchema(fieldSchema);
 	return {
-		kind: "map",
+		kind: NodeKind.Map,
 		allowedTypes,
 	};
 }
@@ -110,7 +110,7 @@ function objectSchemaToSimpleSchema(schema: ObjectNodeSchema): SimpleObjectNodeS
 		fields[key] = fieldSchemaToSimpleSchema(field);
 	}
 	return {
-		kind: "object",
+		kind: NodeKind.Object,
 		fields,
 	};
 }

@@ -3,13 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { FieldKind } from "./schemaTypes.js";
-
-/**
- * Kind of {@link TreeNodeSchema}.
- * @alpha
- */
-export type SimpleNodeSchemaKind = "object" | "array" | "map" | "leaf";
+import type { FieldKind, NodeKind } from "./schemaTypes.js";
 
 /**
  * Kind of leaf schema.
@@ -21,7 +15,7 @@ export type SimpleLeafSchemaKind = "string" | "number" | "boolean" | "null" | "f
  *
  * @sealed
  */
-export interface SimpleNodeSchemaBase<TNodeKind extends SimpleNodeSchemaKind> {
+export interface SimpleNodeSchemaBase<TNodeKind extends NodeKind> {
 	/**
 	 * The kind of {@link SimpleNodeSchema}.
 	 *
@@ -35,7 +29,7 @@ export interface SimpleNodeSchemaBase<TNodeKind extends SimpleNodeSchemaKind> {
  *
  * @sealed
  */
-export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<"object"> {
+export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<NodeKind.Object> {
 	/**
 	 * Schemas for each of the object's fields, keyed off of schema's view keys.
 	 */
@@ -47,7 +41,7 @@ export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<"object"> {
  *
  * @sealed
  */
-export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<"array"> {
+export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<NodeKind.Array> {
 	/**
 	 * The types allowed in the array.
 	 *
@@ -62,7 +56,7 @@ export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<"array"> {
  *
  * @sealed
  */
-export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<"map"> {
+export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<NodeKind.Map> {
 	/**
 	 * The types allowed as values in the map.
 	 *
@@ -77,7 +71,7 @@ export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<"map"> {
  *
  * @sealed
  */
-export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<"leaf"> {
+export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<NodeKind.Leaf> {
 	/**
 	 * The kind of leaf node.
 	 */

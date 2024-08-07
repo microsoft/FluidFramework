@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 import {
 	FieldKind,
 	getSimpleSchema,
+	NodeKind,
 	SchemaFactory,
 	type SimpleTreeSchema,
 } from "../../simple-tree/index.js";
@@ -24,7 +25,7 @@ describe("getSimpleSchema", () => {
 					"com.fluidframework.leaf.string",
 					{
 						leafKind: "string",
-						kind: "leaf",
+						kind: NodeKind.Leaf,
 					},
 				],
 			]),
@@ -45,14 +46,14 @@ describe("getSimpleSchema", () => {
 					"com.fluidframework.leaf.number",
 					{
 						leafKind: "number",
-						kind: "leaf",
+						kind: NodeKind.Leaf,
 					},
 				],
 				[
 					"com.fluidframework.leaf.string",
 					{
 						leafKind: "string",
-						kind: "leaf",
+						kind: NodeKind.Leaf,
 					},
 				],
 			]),
@@ -75,7 +76,7 @@ describe("getSimpleSchema", () => {
 				[
 					"test.array",
 					{
-						kind: "array",
+						kind: NodeKind.Array,
 						allowedTypes: new Set(["com.fluidframework.leaf.string"]),
 					},
 				],
@@ -83,7 +84,7 @@ describe("getSimpleSchema", () => {
 					"com.fluidframework.leaf.string",
 					{
 						leafKind: "string",
-						kind: "leaf",
+						kind: NodeKind.Leaf,
 					},
 				],
 			]),
@@ -102,7 +103,7 @@ describe("getSimpleSchema", () => {
 				[
 					"test.map",
 					{
-						kind: "map",
+						kind: NodeKind.Map,
 						allowedTypes: new Set(["com.fluidframework.leaf.string"]),
 					},
 				],
@@ -110,7 +111,7 @@ describe("getSimpleSchema", () => {
 					"com.fluidframework.leaf.string",
 					{
 						leafKind: "string",
-						kind: "leaf",
+						kind: NodeKind.Leaf,
 					},
 				],
 			]),
@@ -133,7 +134,7 @@ describe("getSimpleSchema", () => {
 				[
 					"test.object",
 					{
-						kind: "object",
+						kind: NodeKind.Object,
 						fields: {
 							foo: {
 								kind: FieldKind.Optional,
@@ -150,14 +151,14 @@ describe("getSimpleSchema", () => {
 					"com.fluidframework.leaf.number",
 					{
 						leafKind: "number",
-						kind: "leaf",
+						kind: NodeKind.Leaf,
 					},
 				],
 				[
 					"com.fluidframework.leaf.string",
 					{
 						leafKind: "string",
-						kind: "leaf",
+						kind: NodeKind.Leaf,
 					},
 				],
 			]),
@@ -179,7 +180,7 @@ describe("getSimpleSchema", () => {
 				[
 					"test.object",
 					{
-						kind: "object",
+						kind: NodeKind.Object,
 						fields: {
 							id: {
 								kind: FieldKind.Identifier,
@@ -192,7 +193,7 @@ describe("getSimpleSchema", () => {
 					"com.fluidframework.leaf.string",
 					{
 						leafKind: "string",
-						kind: "leaf",
+						kind: NodeKind.Leaf,
 					},
 				],
 			]),
@@ -214,7 +215,7 @@ describe("getSimpleSchema", () => {
 				[
 					"test.object",
 					{
-						kind: "object",
+						kind: NodeKind.Object,
 						fields: {
 							foo: {
 								kind: FieldKind.Required,
@@ -230,14 +231,14 @@ describe("getSimpleSchema", () => {
 					"com.fluidframework.leaf.number",
 					{
 						leafKind: "number",
-						kind: "leaf",
+						kind: NodeKind.Leaf,
 					},
 				],
 				[
 					"com.fluidframework.leaf.string",
 					{
 						leafKind: "string",
-						kind: "leaf",
+						kind: NodeKind.Leaf,
 					},
 				],
 			]),
@@ -259,7 +260,7 @@ describe("getSimpleSchema", () => {
 				[
 					"test.recursive-object",
 					{
-						kind: "object",
+						kind: NodeKind.Object,
 						fields: {
 							foo: {
 								kind: FieldKind.Optional,
@@ -275,7 +276,7 @@ describe("getSimpleSchema", () => {
 					"com.fluidframework.leaf.string",
 					{
 						leafKind: "string",
-						kind: "leaf",
+						kind: NodeKind.Leaf,
 					},
 				],
 			]),

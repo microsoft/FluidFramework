@@ -196,7 +196,7 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 }
 
 // @alpha @sealed
-export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<"array", "array"> {
+export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<NodeKind.Array, "array"> {
     readonly items: {
         anyOf: JsonSchemaRef[];
     };
@@ -208,7 +208,7 @@ export interface JsonFieldSchema {
 }
 
 // @alpha @sealed
-export interface JsonLeafNodeSchema extends JsonNodeSchemaBase<"leaf", JsonLeafSchemaType> {
+export interface JsonLeafNodeSchema extends JsonNodeSchemaBase<NodeKind.Leaf, JsonLeafSchemaType> {
     readonly type: JsonLeafSchemaType;
 }
 
@@ -216,7 +216,7 @@ export interface JsonLeafNodeSchema extends JsonNodeSchemaBase<"leaf", JsonLeafS
 export type JsonLeafSchemaType = "string" | "number" | "boolean" | "null";
 
 // @alpha @sealed
-export interface JsonMapNodeSchema extends JsonNodeSchemaBase<"map", "object"> {
+export interface JsonMapNodeSchema extends JsonNodeSchemaBase<NodeKind.Map, "object"> {
     readonly patternProperties: {
         "^.*$": JsonFieldSchema;
     };
@@ -226,13 +226,13 @@ export interface JsonMapNodeSchema extends JsonNodeSchemaBase<"map", "object"> {
 export type JsonNodeSchema = JsonLeafNodeSchema | JsonMapNodeSchema | JsonArrayNodeSchema | JsonObjectNodeSchema;
 
 // @alpha @sealed
-export interface JsonNodeSchemaBase<TNodeKind extends SimpleNodeSchemaKind, TJsonSchemaType extends JsonSchemaType> {
+export interface JsonNodeSchemaBase<TNodeKind extends NodeKind, TJsonSchemaType extends JsonSchemaType> {
     readonly _treeNodeSchemaKind: TNodeKind;
     readonly type: TJsonSchemaType;
 }
 
 // @alpha @sealed
-export interface JsonObjectNodeSchema extends JsonNodeSchemaBase<"object", "object"> {
+export interface JsonObjectNodeSchema extends JsonNodeSchemaBase<NodeKind.Object, "object"> {
     readonly additionalProperties?: boolean;
     readonly properties: Record<string, JsonFieldSchema>;
     readonly required?: string[];
@@ -418,9 +418,6 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 
 // @public
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
-
-// @alpha
-export type SimpleNodeSchemaKind = "object" | "array" | "map" | "leaf";
 
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;

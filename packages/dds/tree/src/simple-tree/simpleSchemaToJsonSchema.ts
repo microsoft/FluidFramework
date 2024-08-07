@@ -15,7 +15,7 @@ import type {
 	JsonObjectNodeSchema,
 	JsonTreeSchema,
 } from "./jsonSchema.js";
-import { FieldKind } from "./schemaTypes.js";
+import { FieldKind, NodeKind } from "./schemaTypes.js";
 import type {
 	SimpleArrayNodeSchema,
 	SimpleLeafNodeSchema,
@@ -66,13 +66,13 @@ const nodeJsonSchemaCache = new WeakMap<SimpleNodeSchema, JsonNodeSchema>();
 function convertNodeSchema(schema: SimpleNodeSchema): JsonNodeSchema {
 	return getOrCreate(nodeJsonSchemaCache, schema, () => {
 		switch (schema.kind) {
-			case "array":
+			case NodeKind.Array:
 				return convertArrayNodeSchema(schema);
-			case "leaf":
+			case NodeKind.Leaf:
 				return convertLeafNodeSchema(schema);
-			case "map":
+			case NodeKind.Map:
 				return convertMapNodeSchema(schema);
-			case "object":
+			case NodeKind.Object:
 				return convertObjectNodeSchema(schema);
 			default:
 				throw new TypeError(`Unknown node schema kind: ${(schema as SimpleNodeSchema).kind}`);
@@ -87,7 +87,7 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 	});
 	return {
 		type: "array",
-		_treeNodeSchemaKind: "array",
+		_treeNodeSchemaKind: NodeKind.Array,
 		items: {
 			anyOf: allowedTypes,
 		},
@@ -101,7 +101,7 @@ function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): JsonLeafNodeSchema
 
 	return {
 		type: schema.leafKind,
-		_treeNodeSchemaKind: "leaf",
+		_treeNodeSchemaKind: NodeKind.Leaf,
 	};
 }
 
@@ -123,7 +123,7 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 	}
 	return {
 		type: "object",
-		_treeNodeSchemaKind: "object",
+		_treeNodeSchemaKind: NodeKind.Object,
 		properties,
 		required,
 		additionalProperties: false, // TODO: get allowance from schema policy
@@ -137,7 +137,7 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 	});
 	return {
 		type: "object",
-		_treeNodeSchemaKind: "map",
+		_treeNodeSchemaKind: NodeKind.Map,
 		patternProperties: {
 			"^.*$": {
 				anyOf: allowedTypes,

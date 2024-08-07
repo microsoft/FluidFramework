@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { SimpleNodeSchemaKind } from "./simpleSchema.js";
+import type { NodeKind } from "./schemaTypes.js";
 
 /**
  * The fully-qualified {@link TreeNodeSchemaCore.identifier}.
@@ -41,7 +41,7 @@ export type JsonLeafSchemaType = "string" | "number" | "boolean" | "null";
  * @alpha
  */
 export interface JsonNodeSchemaBase<
-	TNodeKind extends SimpleNodeSchemaKind,
+	TNodeKind extends NodeKind,
 	TJsonSchemaType extends JsonSchemaType,
 > {
 	/**
@@ -68,7 +68,7 @@ export interface JsonNodeSchemaBase<
  * @sealed
  * @alpha
  */
-export interface JsonObjectNodeSchema extends JsonNodeSchemaBase<"object", "object"> {
+export interface JsonObjectNodeSchema extends JsonNodeSchemaBase<NodeKind.Object, "object"> {
 	/**
 	 * Object fields.
 	 * @remarks Required fields should have a corresponding entry in {@link JsonObjectNodeSchema.required}.
@@ -100,7 +100,7 @@ export interface JsonObjectNodeSchema extends JsonNodeSchemaBase<"object", "obje
  * @sealed
  * @alpha
  */
-export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<"array", "array"> {
+export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<NodeKind.Array, "array"> {
 	/**
 	 * The kinds of items allowed under the array.
 	 * @remarks Always represented via references to {@link JsonTreeSchema.$defs}.
@@ -127,7 +127,7 @@ export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<"array", "array"
  * @sealed
  * @alpha
  */
-export interface JsonMapNodeSchema extends JsonNodeSchemaBase<"map", "object"> {
+export interface JsonMapNodeSchema extends JsonNodeSchemaBase<NodeKind.Map, "object"> {
 	/**
 	 * Used to control the types of properties that can appear in the "object" representation of the map.
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-patternproperties}.
@@ -149,7 +149,8 @@ export interface JsonMapNodeSchema extends JsonNodeSchemaBase<"map", "object"> {
  * @sealed
  * @alpha
  */
-export interface JsonLeafNodeSchema extends JsonNodeSchemaBase<"leaf", JsonLeafSchemaType> {
+export interface JsonLeafNodeSchema
+	extends JsonNodeSchemaBase<NodeKind.Leaf, JsonLeafSchemaType> {
 	/**
 	 * Primitive type.
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.

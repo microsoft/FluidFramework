@@ -4,7 +4,12 @@
  */
 
 import { strict as assert } from "node:assert";
-import { getJsonSchema, SchemaFactory, type JsonTreeSchema } from "../../simple-tree/index.js";
+import {
+	getJsonSchema,
+	NodeKind,
+	SchemaFactory,
+	type JsonTreeSchema,
+} from "../../simple-tree/index.js";
 
 import { hydrate } from "./utils.js";
 import { getJsonValidator } from "./jsonSchemaUtilities.js";
@@ -20,7 +25,7 @@ describe("getJsonSchema", () => {
 			$defs: {
 				"com.fluidframework.leaf.string": {
 					type: "string",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
 			anyOf: [
@@ -52,11 +57,11 @@ describe("getJsonSchema", () => {
 			$defs: {
 				"com.fluidframework.leaf.number": {
 					type: "number",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 				"com.fluidframework.leaf.string": {
 					type: "string",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
 			anyOf: [
@@ -102,14 +107,14 @@ describe("getJsonSchema", () => {
 			$defs: {
 				'test.Array<["com.fluidframework.leaf.string"]>': {
 					type: "array",
-					_treeNodeSchemaKind: "array",
+					_treeNodeSchemaKind: NodeKind.Array,
 					items: {
 						anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.string" }],
 					},
 				},
 				"com.fluidframework.leaf.string": {
 					type: "string",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
 			anyOf: [
@@ -143,14 +148,14 @@ describe("getJsonSchema", () => {
 			$defs: {
 				"test.array": {
 					type: "array",
-					_treeNodeSchemaKind: "array",
+					_treeNodeSchemaKind: NodeKind.Array,
 					items: {
 						anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.string" }],
 					},
 				},
 				"com.fluidframework.leaf.string": {
 					type: "string",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
 			anyOf: [
@@ -183,14 +188,14 @@ describe("getJsonSchema", () => {
 			$defs: {
 				'test.Map<["com.fluidframework.leaf.string"]>': {
 					type: "object",
-					_treeNodeSchemaKind: "map",
+					_treeNodeSchemaKind: NodeKind.Map,
 					patternProperties: {
 						"^.*$": { anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.string" }] },
 					},
 				},
 				"com.fluidframework.leaf.string": {
 					type: "string",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
 			anyOf: [
@@ -244,14 +249,14 @@ describe("getJsonSchema", () => {
 			$defs: {
 				"test.map": {
 					type: "object",
-					_treeNodeSchemaKind: "map",
+					_treeNodeSchemaKind: NodeKind.Map,
 					patternProperties: {
 						"^.*$": { anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.string" }] },
 					},
 				},
 				"com.fluidframework.leaf.string": {
 					type: "string",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
 			anyOf: [
@@ -309,7 +314,7 @@ describe("getJsonSchema", () => {
 			$defs: {
 				"test.object": {
 					type: "object",
-					_treeNodeSchemaKind: "object",
+					_treeNodeSchemaKind: NodeKind.Object,
 					properties: {
 						foo: {
 							anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.number" }],
@@ -323,11 +328,11 @@ describe("getJsonSchema", () => {
 				},
 				"com.fluidframework.leaf.number": {
 					type: "number",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 				"com.fluidframework.leaf.string": {
 					type: "string",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
 			anyOf: [
@@ -396,7 +401,7 @@ describe("getJsonSchema", () => {
 			$defs: {
 				"test.object": {
 					type: "object",
-					_treeNodeSchemaKind: "object",
+					_treeNodeSchemaKind: NodeKind.Object,
 					properties: {
 						foo: {
 							anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.number" }],
@@ -410,11 +415,11 @@ describe("getJsonSchema", () => {
 				},
 				"com.fluidframework.leaf.number": {
 					type: "number",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 				"com.fluidframework.leaf.string": {
 					type: "string",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
 			anyOf: [
@@ -482,7 +487,7 @@ describe("getJsonSchema", () => {
 			$defs: {
 				"test.object": {
 					type: "object",
-					_treeNodeSchemaKind: "object",
+					_treeNodeSchemaKind: NodeKind.Object,
 					properties: {
 						id: {
 							anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.string" }],
@@ -493,7 +498,7 @@ describe("getJsonSchema", () => {
 				},
 				"com.fluidframework.leaf.string": {
 					type: "string",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
 			anyOf: [
@@ -517,7 +522,7 @@ describe("getJsonSchema", () => {
 			$defs: {
 				"test.object": {
 					type: "object",
-					_treeNodeSchemaKind: "object",
+					_treeNodeSchemaKind: NodeKind.Object,
 					properties: {
 						foo: {
 							anyOf: [
@@ -531,11 +536,11 @@ describe("getJsonSchema", () => {
 				},
 				"com.fluidframework.leaf.number": {
 					type: "number",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 				"com.fluidframework.leaf.string": {
 					type: "string",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
 			anyOf: [
@@ -559,7 +564,7 @@ describe("getJsonSchema", () => {
 			$defs: {
 				"test.recursive-object": {
 					type: "object",
-					_treeNodeSchemaKind: "object",
+					_treeNodeSchemaKind: NodeKind.Object,
 					properties: {
 						foo: {
 							anyOf: [
@@ -573,7 +578,7 @@ describe("getJsonSchema", () => {
 				},
 				"com.fluidframework.leaf.string": {
 					type: "string",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
 			anyOf: [

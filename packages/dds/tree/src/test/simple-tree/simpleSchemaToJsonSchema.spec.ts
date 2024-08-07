@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { FieldKind, type JsonTreeSchema } from "../../simple-tree/index.js";
+import { FieldKind, NodeKind, type JsonTreeSchema } from "../../simple-tree/index.js";
 import { getJsonValidator } from "./jsonSchemaUtilities.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SimpleNodeSchema, SimpleTreeSchema } from "../../simple-tree/simpleSchema.js";
@@ -15,7 +15,7 @@ describe("simpleSchemaToJsonSchema", () => {
 	it("Leaf schema", async () => {
 		const input: SimpleTreeSchema = {
 			definitions: new Map<string, SimpleNodeSchema>([
-				["test.string", { leafKind: "string", kind: "leaf" }],
+				["test.string", { leafKind: "string", kind: NodeKind.Leaf }],
 			]),
 			allowedTypes: new Set<string>(["test.string"]),
 		};
@@ -26,7 +26,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			$defs: {
 				"test.string": {
 					type: "string",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
 			anyOf: [
@@ -51,7 +51,7 @@ describe("simpleSchemaToJsonSchema", () => {
 	it("Leaf node (Fluid Handle)", async () => {
 		const input: SimpleTreeSchema = {
 			definitions: new Map<string, SimpleNodeSchema>([
-				["test.handle", { leafKind: "fluid-handle", kind: "leaf" }],
+				["test.handle", { leafKind: "fluid-handle", kind: NodeKind.Leaf }],
 			]),
 			allowedTypes: new Set<string>(["test.handle"]),
 		};
@@ -62,8 +62,11 @@ describe("simpleSchemaToJsonSchema", () => {
 	it("Array schema", () => {
 		const input: SimpleTreeSchema = {
 			definitions: new Map<string, SimpleNodeSchema>([
-				["test.array", { kind: "array", allowedTypes: new Set<string>(["test.string"]) }],
-				["test.string", { leafKind: "string", kind: "leaf" }],
+				[
+					"test.array",
+					{ kind: NodeKind.Array, allowedTypes: new Set<string>(["test.string"]) },
+				],
+				["test.string", { leafKind: "string", kind: NodeKind.Leaf }],
 			]),
 			allowedTypes: new Set<string>(["test.array"]),
 		};
@@ -74,14 +77,14 @@ describe("simpleSchemaToJsonSchema", () => {
 			$defs: {
 				"test.array": {
 					type: "array",
-					_treeNodeSchemaKind: "array",
+					_treeNodeSchemaKind: NodeKind.Array,
 					items: {
 						anyOf: [{ $ref: "#/$defs/test.string" }],
 					},
 				},
 				"test.string": {
 					type: "string",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
 			anyOf: [
@@ -107,8 +110,8 @@ describe("simpleSchemaToJsonSchema", () => {
 	it("Map schema", () => {
 		const input: SimpleTreeSchema = {
 			definitions: new Map<string, SimpleNodeSchema>([
-				["test.map", { kind: "map", allowedTypes: new Set<string>(["test.string"]) }],
-				["test.string", { leafKind: "string", kind: "leaf" }],
+				["test.map", { kind: NodeKind.Map, allowedTypes: new Set<string>(["test.string"]) }],
+				["test.string", { leafKind: "string", kind: NodeKind.Leaf }],
 			]),
 			allowedTypes: new Set<string>(["test.map"]),
 		};
@@ -119,14 +122,14 @@ describe("simpleSchemaToJsonSchema", () => {
 			$defs: {
 				"test.map": {
 					type: "object",
-					_treeNodeSchemaKind: "map",
+					_treeNodeSchemaKind: NodeKind.Map,
 					patternProperties: {
 						"^.*$": { anyOf: [{ $ref: "#/$defs/test.string" }] },
 					},
 				},
 				"test.string": {
 					type: "string",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
 			anyOf: [
@@ -167,7 +170,7 @@ describe("simpleSchemaToJsonSchema", () => {
 				[
 					"test.object",
 					{
-						kind: "object",
+						kind: NodeKind.Object,
 						fields: {
 							"foo": {
 								kind: FieldKind.Optional,
@@ -180,8 +183,8 @@ describe("simpleSchemaToJsonSchema", () => {
 						},
 					},
 				],
-				["test.string", { leafKind: "string", kind: "leaf" }],
-				["test.number", { leafKind: "number", kind: "leaf" }],
+				["test.string", { leafKind: "string", kind: NodeKind.Leaf }],
+				["test.number", { leafKind: "number", kind: NodeKind.Leaf }],
 			]),
 			allowedTypes: new Set<string>(["test.object"]),
 		};
@@ -192,7 +195,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			$defs: {
 				"test.object": {
 					type: "object",
-					_treeNodeSchemaKind: "object",
+					_treeNodeSchemaKind: NodeKind.Object,
 					properties: {
 						foo: {
 							anyOf: [{ $ref: "#/$defs/test.number" }],
@@ -206,11 +209,11 @@ describe("simpleSchemaToJsonSchema", () => {
 				},
 				"test.number": {
 					type: "number",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 				"test.string": {
 					type: "string",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
 			anyOf: [
@@ -263,7 +266,7 @@ describe("simpleSchemaToJsonSchema", () => {
 				[
 					"test.object",
 					{
-						kind: "object",
+						kind: NodeKind.Object,
 						fields: {
 							"id": {
 								kind: FieldKind.Identifier,
@@ -272,7 +275,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						},
 					},
 				],
-				["test.identifier", { leafKind: "string", kind: "leaf" }],
+				["test.identifier", { leafKind: "string", kind: NodeKind.Leaf }],
 			]),
 			allowedTypes: new Set<string>(["test.object"]),
 		};
@@ -283,7 +286,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			$defs: {
 				"test.object": {
 					type: "object",
-					_treeNodeSchemaKind: "object",
+					_treeNodeSchemaKind: NodeKind.Object,
 					properties: {
 						id: {
 							anyOf: [{ $ref: "#/$defs/test.identifier" }],
@@ -294,7 +297,7 @@ describe("simpleSchemaToJsonSchema", () => {
 				},
 				"test.identifier": {
 					type: "string",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
 			anyOf: [
@@ -312,7 +315,7 @@ describe("simpleSchemaToJsonSchema", () => {
 				[
 					"test.object",
 					{
-						kind: "object",
+						kind: NodeKind.Object,
 						fields: {
 							"foo": {
 								kind: FieldKind.Required,
@@ -321,8 +324,8 @@ describe("simpleSchemaToJsonSchema", () => {
 						},
 					},
 				],
-				["test.number", { leafKind: "number", kind: "leaf" }],
-				["test.string", { leafKind: "string", kind: "leaf" }],
+				["test.number", { leafKind: "number", kind: NodeKind.Leaf }],
+				["test.string", { leafKind: "string", kind: NodeKind.Leaf }],
 			]),
 			allowedTypes: new Set<string>(["test.object"]),
 		};
@@ -333,7 +336,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			$defs: {
 				"test.object": {
 					type: "object",
-					_treeNodeSchemaKind: "object",
+					_treeNodeSchemaKind: NodeKind.Object,
 					properties: {
 						foo: {
 							anyOf: [{ $ref: "#/$defs/test.number" }, { $ref: "#/$defs/test.string" }],
@@ -344,11 +347,11 @@ describe("simpleSchemaToJsonSchema", () => {
 				},
 				"test.number": {
 					type: "number",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 				"test.string": {
 					type: "string",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
 			anyOf: [
@@ -366,7 +369,7 @@ describe("simpleSchemaToJsonSchema", () => {
 				[
 					"test.recursive-object",
 					{
-						kind: "object",
+						kind: NodeKind.Object,
 						fields: {
 							"foo": {
 								kind: FieldKind.Optional,
@@ -375,7 +378,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						},
 					},
 				],
-				["test.string", { leafKind: "string", kind: "leaf" }],
+				["test.string", { leafKind: "string", kind: NodeKind.Leaf }],
 			]),
 			allowedTypes: new Set<string>(["test.recursive-object"]),
 		};
@@ -385,7 +388,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			$defs: {
 				"test.recursive-object": {
 					type: "object",
-					_treeNodeSchemaKind: "object",
+					_treeNodeSchemaKind: NodeKind.Object,
 					properties: {
 						foo: {
 							anyOf: [
@@ -399,7 +402,7 @@ describe("simpleSchemaToJsonSchema", () => {
 				},
 				"test.string": {
 					type: "string",
-					_treeNodeSchemaKind: "leaf",
+					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
 			anyOf: [

@@ -121,7 +121,6 @@ export {
 	test_RecursiveObject,
 	test_RecursiveObject_base,
 	test_RecursiveObjectPojoMode,
-	type SimpleNodeSchemaKind,
 	type JsonTreeSchema,
 	type JsonSchemaId,
 	type JsonNodeSchema,
