@@ -36,7 +36,7 @@ export interface JsonDeserializedOptions {
  * Produces a type that results from a type `T` serialized and deserialized
  * through JSON using {@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify|JSON.stringify}
  * (without replacer) and {@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse|JSON.parse}
- * (reviver), respectively as base model.
+ * (without reviver), respectively as base model.
  *
  * @typeParam T - The type that was serialized.
  * @typeParam Options - Options for the filter. See {@link JsonDeserializedOptions}.
