@@ -20,28 +20,40 @@ import type { TreeIndex, TreeIndexNodes } from "./types.js";
 import type { TreeStatus } from "../flex-tree/index.js";
 
 /**
- * this type specifies whether an indexable tree is currently in the document,
- * removed, or both (meaning it is in a detached state)
+ * Specifies whether an indexable tree is currently in the document,
+ * removed, or both (meaning it is in a detached state).
  */
 export type IndexableTreeStatus =
 	| keyof Pick<typeof TreeStatus, "InDocument" | "Removed">
 	| "InDocumentAndRemoved";
 
-// TODO: document cursor ownership
 /**
- * a function that returns some key given a cursor to a node where the key is what the node
- * is indexed on
+ * A function that returns some key given a cursor to a node where the key is what the node
+ * is indexed on.
+ * 
+ * TODO: document cursor ownership
  */
 export type KeyFinder<TKey extends TreeValue> = (tree: ITreeSubscriptionCursor) => TKey;
 
 /**
- * an index from some arbitrary keys to anchor nodes
+ * An index from some arbitrary keys to anchor nodes. Keys can be anything that is a {@link TreeValue}.
  */
 export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 	implements TreeIndex<TKey, TValue>
 {
+	/**
+	 * Caches {@link KeyFinder}s for each schema definition. If a schema maps to null, it does not
+	 * need to be considered at all for this index. This allows us to skip subtrees that aren't relevant
+	 * as a performance optimization.
+	 */
 	private readonly keyFinders = new Map<TreeNodeSchemaIdentifier, KeyFinder<TKey> | null>();
+	/**
+	 * The actual index from keys to anchor nodes.
+	 */
 	private readonly nodes = new Map<TKey, TreeIndexNodes<AnchorNode>>();
+	/**
+	 * Keeps track of anchors for disposal.
+	 */
 	private readonly anchors = new Map<AnchorNode, Anchor>();
 
 	public constructor(
@@ -174,7 +186,7 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 		}
 	}
 
-	public [disposeSymbol]() {
+	public [disposeSymbol](): void {
 		for (const anchor of this.anchors.values()) {
 			this.forest.forgetAnchor(anchor);
 		}
