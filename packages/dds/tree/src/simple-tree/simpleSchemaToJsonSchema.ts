@@ -145,7 +145,7 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 		_treeNodeSchemaKind: NodeKind.Object,
 		properties,
 		required,
-		additionalProperties: false, // TODO: get allowance from schema policy
+		additionalProperties: false,
 	};
 }
 
