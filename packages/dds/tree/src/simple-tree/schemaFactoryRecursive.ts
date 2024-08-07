@@ -163,10 +163,12 @@ export type ValidateRecursiveSchema<
  * This error occurs due to the TypeScript compiler splitting the class definition into two separate declarations in the d.ts file (one for the base, and one for the actual class).
  * For unknown reasons, splitting the class declaration in this way breaks the recursive type handling, leading to the mentioned error.
  *
+ * This type always evaluates to `undefined` to ensure the dummy export (which doesn't exist at runtime) is typed correctly.
+ *
+ * @example Usage
  * Since recursive type handling in TypeScript is order dependent, putting just the right kind of usages of the type before the declarations can cause it to not hit this error.
  * For the case of ArrayNodes, this can be done via usage that looks like this:
  *
- * @example
  * This example should use a doc comment to ensure the workaround comment shows up in the intellisense for the dummy export,
  * however doing so is impossible due to how this example is included in a doc comment.
  * ```typescript
@@ -179,7 +181,6 @@ export type ValidateRecursiveSchema<
  * }
  * ```
  *
- * This type always evaluates to `undefined` to ensure the dummy export (which doesn't exist at runtime) is typed correctly.
  * @alpha
  */
 export type FixRecursiveArraySchema<T> = T extends TreeNodeSchema ? undefined : undefined;
