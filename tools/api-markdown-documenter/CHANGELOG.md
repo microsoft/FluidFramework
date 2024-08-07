@@ -4,6 +4,9 @@
 
 -   Added the following new utility function to `ApiItemUtilities`:
     1. `ancestryHasModifierTag`: Checks if the provided API item or ancestor items are tagged with the specified [modifier tag](https://tsdoc.org/pages/spec/tag_kinds/#modifier-tags).
+
+### ⚠ BREAKING CHANGES
+
 -   Updated `loadModel` to take a configuration object, rather than individual parameters.
     -   Also allows default use of the console logger when no logger is explicitly given.
 

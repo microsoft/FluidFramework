@@ -217,9 +217,10 @@ export function ensureContentsDeserialized(
 	hasModernRuntimeMessageEnvelope: boolean,
 	logLegacyCase: (codePath: string) => void,
 ): void {
-	// back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
-	// System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
-	// Old ops may contain empty string (I assume noops).
+	// Currently the loader layer is parsing the contents of the message as JSON if it is a string,
+	// so we never expect to see this case.
+	// We intend to remove that logic from the Loader, at which point we will have it here.
+	// Only hasModernRuntimeMessageEnvelope true will be expected to have JSON contents.
 	let didParseJsonContents: boolean;
 	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
 		mutableMessage.contents = JSON.parse(mutableMessage.contents);

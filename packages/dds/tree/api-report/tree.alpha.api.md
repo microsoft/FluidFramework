@@ -70,6 +70,9 @@ export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends
     readonly kind: Kind;
 }
 
+// @alpha
+export type FixRecursiveArraySchema<T> = T extends TreeNodeSchema ? undefined : undefined;
+
 // @public
 type FlattenKeys<T> = [{
     [Property in keyof T]: T[Property];

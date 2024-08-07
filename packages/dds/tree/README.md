@@ -410,12 +410,12 @@ flowchart
     package-->runtime["Fluid runtime"]
 ```
 
-# Open Design Questions
+## Open Design Questions
 
 The design issues here all impact the architectural role of top-level modules in this package in a way that when fixed will likely require changes to the architectural details covered above.
 Smaller scoped issues which will not impact the overall architecture should be documented in more localized locations.
 
-## How should specialized sub-tree handling compose?
+### How should specialized sub-tree handling compose?
 
 Applications should have a domain model that can mix tree nodes with custom implementations as needed.
 Custom implementations should probably be able to be projections of flex trees, the forest content (via cursors), and updated via either regeneration from the input, or updated by a delta.
