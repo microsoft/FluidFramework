@@ -100,8 +100,7 @@ function checkLinks(apiItem: ApiItem, apiModel: ApiModel): string[] {
 			errors.push(inheritDocError);
 		}
 
-		// Check link tags
-		errors.push(...checkLinkTags(apiItem, apiModel));
+		// TODO: Check link tags
 	}
 
 	// Recurse members
@@ -110,14 +109,6 @@ function checkLinks(apiItem: ApiItem, apiModel: ApiModel): string[] {
 			errors.push(...checkLinks(member, apiModel));
 		}
 	}
-
-	return errors;
-}
-
-function checkLinkTags(apiItem: ApiDocumentedItem, apiModel: ApiModel): string[] {
-	const errors: string[] = [];
-
-	// TODO
 
 	return errors;
 }
