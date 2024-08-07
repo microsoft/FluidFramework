@@ -59,8 +59,6 @@ export const disableThrowOnTombstoneLoadKey =
 	"Fluid.GarbageCollection.DisableThrowOnTombstoneLoad";
 /** Config key to enable GC version upgrade. */
 export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgradeToV4";
-/** Config key to disable auto-recovery mechanism that protects Tombstones that are loaded from being swept (use true) */
-export const disableAutoRecoveryKey = "Fluid.GarbageCollection.DisableAutoRecovery";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -465,8 +463,6 @@ export interface IGarbageCollectorConfigs {
 	readonly sweepAllowed: boolean;
 	/** Tracks if sweep phase is enabled to run in this session or not */
 	readonly sweepEnabled: boolean;
-	/** Is Tombstone AutoRecovery enabled? Useful for preventing the GC "TombstoneLoaded" op, for compatibility reasons */
-	readonly tombstoneAutorecoveryEnabled: boolean;
 	/**
 	 * If true, bypass optimizations and generate GC data for all nodes irrespective of whether a node changed or not.
 	 */
@@ -490,8 +486,6 @@ export interface IGarbageCollectorConfigs {
 	readonly gcVersionInBaseSnapshot: GCVersion | undefined;
 	/** The current version of GC data in the running code */
 	readonly gcVersionInEffect: GCVersion;
-	/** It is easier for users to diagnose InactiveObject usage if we throw on load, which this option enables */
-	readonly throwOnInactiveLoad: boolean | undefined;
 	/** If true, throw an error when a tombstone data store is retrieved */
 	readonly throwOnTombstoneLoad: boolean;
 }

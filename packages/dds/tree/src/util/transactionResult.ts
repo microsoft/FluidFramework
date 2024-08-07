@@ -6,7 +6,6 @@
 /**
  * Describes the result of a transaction.
  * Transactions may either succeed and commit, or fail and abort.
- * @internal
  */
 export enum TransactionResult {
 	/**

@@ -115,10 +115,6 @@ export function generateGCConfigs(
 			? false
 			: sweepAllowed && createParams.gcOptions.enableGCSweep === true;
 
-	// If we aren't running sweep, also disable AutoRecovery which also emits the GC op.
-	// This gives a simple control surface for compatibility concerns around introducing the new op.
-	const tombstoneAutorecoveryEnabled = sweepEnabled;
-
 	// Override inactive timeout if test config or gc options to override it is set.
 	const inactiveTimeoutMs =
 		mc.config.getNumber("Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs") ??
@@ -141,7 +137,6 @@ export function generateGCConfigs(
 		sweepGracePeriodMs,
 	});
 
-	const throwOnInactiveLoad: boolean | undefined = createParams.gcOptions.throwOnInactiveLoad;
 	const throwOnTombstoneLoad =
 		mc.config.getBoolean(disableThrowOnTombstoneLoadKey) !== true &&
 		sweepEnabled &&
@@ -151,7 +146,6 @@ export function generateGCConfigs(
 		gcAllowed, // For this document
 		sweepAllowed, // For this document
 		sweepEnabled, // For this session
-		tombstoneAutorecoveryEnabled,
 		runFullGC,
 		testMode,
 		sessionExpiryTimeoutMs,
@@ -161,7 +155,6 @@ export function generateGCConfigs(
 		persistedGcFeatureMatrix,
 		gcVersionInBaseSnapshot,
 		gcVersionInEffect: getGCVersionInEffect(mc.config),
-		throwOnInactiveLoad,
 		throwOnTombstoneLoad,
 	};
 }

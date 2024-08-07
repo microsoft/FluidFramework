@@ -228,11 +228,11 @@ export function ensureContentsDeserialized(
 		didParseJsonContents = false;
 	}
 
-	// We expect Modern Runtime Messages to have JSON serialized contents,
-	// and all other messages not to (system messages and legacy runtime messages without outer "op" type envelope)
+	// The DeltaManager parses the contents of the message as JSON if it is a string,
+	// so we should never end up parsing it here.
 	// Let's observe if we are wrong about this to learn about these cases.
-	if (hasModernRuntimeMessageEnvelope !== didParseJsonContents) {
-		logLegacyCase("ensureContentsDeserialized_unexpectedContentsType");
+	if (didParseJsonContents) {
+		logLegacyCase("ensureContentsDeserialized_foundJsonContents");
 	}
 }
 

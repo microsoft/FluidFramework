@@ -93,7 +93,8 @@ const adapter: CursorAdapter<JsonCompatible> = {
 };
 
 /**
- * Used to read a Jsonable tree for testing and benchmarking.
+ * Used to read generic json compatible data as a tree in the JSON domain.
+ * The returned tree will have a schema in the json domain as defined by {@link jsonRoot}.
  *
  * @returns an {@link ITreeCursorSynchronous} for a single {@link JsonCompatible}.
  */

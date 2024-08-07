@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { createEmitter, type Listenable, type Off } from "../events/index.js";
-import type { TreeChangeEvents, TreeNode } from "./types.js";
+import type { TreeChangeEvents, TreeNode, Unhydrated } from "./types.js";
 import type { AnchorNode } from "../core/index.js";
 import {
 	flexTreeSlot,
@@ -14,6 +14,32 @@ import {
 	TreeStatus,
 	treeStatusFromAnchorCache,
 } from "../feature-libraries/index.js";
+
+const treeNodeToKernel = new WeakMap<TreeNode, TreeNodeKernel>();
+
+export function getKernel(node: TreeNode): TreeNodeKernel {
+	const kernel = treeNodeToKernel.get(node);
+	assert(kernel !== undefined, 0x9b1 /* Expected tree node to have kernel */);
+	return kernel;
+}
+
+/**
+ * Detects if the given 'candidate' is a TreeNode.
+ *
+ * @remarks
+ * Supports both Hydrated and {@link Unhydrated} TreeNodes, both of which return true.
+ *
+ * Because the common usage is to check if a value being inserted/set is a TreeNode,
+ * this function permits calling with primitives as well as objects.
+ *
+ * Primitives will always return false (as they are copies of data, not references to nodes).
+ *
+ * @param candidate - Value which may be a TreeNode
+ * @returns true if the given 'candidate' is a hydrated TreeNode.
+ */
+export function isTreeNode(candidate: unknown): candidate is TreeNode | Unhydrated<TreeNode> {
+	return treeNodeToKernel.has(candidate as TreeNode);
+}
 
 /**
  * Contains state and an internal API for managing {@link TreeNode}s.
@@ -28,7 +54,15 @@ export class TreeNodeKernel implements Listenable<TreeChangeEvents> {
 	};
 	#events = createEmitter<TreeChangeEvents>();
 
-	public constructor(public readonly node: TreeNode) {}
+	/**
+	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
+	 * @remarks
+	 * Exactly one kernel per TreeNode should be created.
+	 */
+	public constructor(public readonly node: TreeNode) {
+		assert(!treeNodeToKernel.has(node), "only one kernel per node can be made");
+		treeNodeToKernel.set(node, this);
+	}
 
 	public hydrate(anchorNode: AnchorNode): void {
 		const offChildrenChanged = anchorNode.on("childrenChangedAfterBatch", () => {

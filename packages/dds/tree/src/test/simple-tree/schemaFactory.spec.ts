@@ -25,7 +25,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/types.js";
 // eslint-disable-next-line import/no-internal-modules
-import { isTreeNode } from "../../simple-tree/proxies.js";
+import { isTreeNode } from "../../simple-tree/treeNodeKernel.js";
 import {
 	SchemaFactory,
 	schemaFromValue,

@@ -5,7 +5,6 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { EmptyObject } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
 
 import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
@@ -15,6 +14,15 @@ import type {
 	InsertableObjectFromSchemaRecord,
 	ObjectFromSchemaRecord,
 } from "./objectNode.js";
+
+/**
+ * Empty Object for use in type computations that should contribute no fields when `&`ed with another type.
+ * @internal
+ */
+// Using {} instead of interface {} or Record<string, never> for empty object here produces better IntelliSense in the generated types than `Record<string, never>` recommended by the linter.
+// Making this a type instead of an interface prevents it from showing up in IntelliSense, and also avoids breaking the typing somehow.
+// eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/consistent-type-definitions
+export type EmptyObject = {};
 
 /**
  * Create a schema for a node with no state.
