@@ -13,6 +13,7 @@ export {
 	createFluidContainer,
 	type IFluidContainer,
 	type IFluidContainerEvents,
+	type IFluidContainerInternal,
 	type InitialObjects,
 } from "./fluidContainer.js";
 export { createDOProviderContainerRuntimeFactory } from "./rootDataObject.js";

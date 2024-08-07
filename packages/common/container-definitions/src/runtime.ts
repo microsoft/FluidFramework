@@ -25,6 +25,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
+import type { ContainerExtensionStore } from "./containerExtension.js";
 import type { IDeltaManager } from "./deltas.js";
 import type { ICriticalContainerError } from "./error.js";
 import type { ILoader } from "./loader.js";
@@ -113,6 +114,11 @@ export interface IRuntime extends IDisposable {
 	 */
 	getEntryPoint(): Promise<FluidObject>;
 }
+
+/**
+ * @internal
+ */
+export interface IRuntimeInternal extends IRuntime, ContainerExtensionStore {}
 
 /**
  * Payload type for IContainerContext.submitBatchFn()

@@ -250,6 +250,83 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
     readonly handle: IFluidHandle;
 }
 
+// @beta
+export namespace InternalUtilityTypes {
+    export type FlattenIntersection<T> = T extends Record<string | number | symbol, unknown> ? {
+        [K in keyof T]: T[K];
+    } : T;
+    export type HasNonPublicProperties<T> = ReplaceRecursionWith<T, any> extends T ? false : true;
+    export type IfSameType<X, Y, IfSame = unknown, IfDifferent = never> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? IfSame : IfDifferent;
+    export type IsEnumLike<T extends object> = T extends readonly (infer _)[] ? false : T extends {
+        readonly [i: number]: string;
+        readonly [p: string]: number | string;
+    } ? true extends {
+        [K in keyof T]: T[K] extends never ? true : never;
+    }[keyof T] ? false : true : false;
+    export type IsExactlyObject<T extends object> = IsSameType<T, object>;
+    export type IsSameType<X, Y> = IfSameType<X, Y, true, false>;
+    export type JsonDeserializedFilter<T, TReplaced, RecurseLimit = 10, TAncestorTypes = never> = boolean extends (T extends never ? true : false) ? JsonTypeWith<TReplaced> : unknown extends T ? JsonTypeWith<TReplaced> : T extends null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? T extends object ? T extends readonly (infer _)[] ? {
+        [K in keyof T]: JsonForDeserializedArrayItem<T[K], TReplaced, JsonDeserializedRecursion<T[K], TReplaced, RecurseLimit, TAncestorTypes>>;
+    } : IsExactlyObject<T> extends true ? NonNullJsonObjectWith<TReplaced> : IsEnumLike<T> extends true ? T : FlattenIntersection<{
+        [K in keyof T as NonSymbolWithDeserializablePropertyOf<T, TReplaced, K>]: JsonDeserializedRecursion<T[K], TReplaced, RecurseLimit, TAncestorTypes>;
+    } & {
+        [K in keyof T as NonSymbolWithPossiblyDeserializablePropertyOf<T, TReplaced, K>]?: JsonDeserializedRecursion<T[K], TReplaced, RecurseLimit, TAncestorTypes>;
+    }> : never : never;
+    export type JsonDeserializedImpl<T, TReplaced> = boolean extends (T extends never ? true : false) ? JsonTypeWith<TReplaced> : ReplaceRecursionWith<T, RecursionMarker> extends infer TNoRecursion ? IsSameType<TNoRecursion, JsonDeserializedFilter<TNoRecursion, TReplaced, 0>> extends true ? HasNonPublicProperties<T> extends true ? JsonDeserializedFilter<T, TReplaced> : T : JsonDeserializedFilter<T, TReplaced> : never;
+    export type JsonDeserializedRecursion<T, TReplaced, RecurseLimit, TAncestorTypes> = T extends TAncestorTypes ? RecurseLimit extends 10 ? JsonDeserializedFilter<T, TReplaced, 9, TAncestorTypes | T> : RecurseLimit extends 9 ? JsonDeserializedFilter<T, TReplaced, 8, TAncestorTypes | T> : RecurseLimit extends 8 ? JsonDeserializedFilter<T, TReplaced, 7, TAncestorTypes | T> : RecurseLimit extends 7 ? JsonDeserializedFilter<T, TReplaced, 6, TAncestorTypes | T> : RecurseLimit extends 6 ? JsonDeserializedFilter<T, TReplaced, 5, TAncestorTypes | T> : RecurseLimit extends 5 ? JsonDeserializedFilter<T, TReplaced, 4, TAncestorTypes | T> : RecurseLimit extends 4 ? JsonDeserializedFilter<T, TReplaced, 3, TAncestorTypes | T> : RecurseLimit extends 3 ? JsonDeserializedFilter<T, TReplaced, 2, TAncestorTypes | T> : RecurseLimit extends 2 ? JsonDeserializedFilter<T, TReplaced, 1, TAncestorTypes | T> : JsonTypeWith<TReplaced> : JsonDeserializedFilter<T, TReplaced, RecurseLimit, TAncestorTypes | T>;
+    export type JsonForDeserializedArrayItem<T, TReplaced, TBlessed> = boolean extends (T extends never ? true : false) ? TBlessed : unknown extends T ? TBlessed : T extends null | boolean | number | string | TReplaced ? T : T extends undefined | symbol | Function ? null : TBlessed;
+    export type JsonForSerializableArrayItem<T, TReplaced, TBlessed> = boolean extends (T extends never ? true : false) ? TBlessed : unknown extends T ? TBlessed : T extends null | boolean | number | string | TReplaced ? T : undefined extends T ? SerializationErrorPerUndefinedArrayElement : TBlessed;
+    export type JsonSerializableFilter<T, TReplaced> = boolean extends (T extends never ? true : false) ? JsonTypeWith<TReplaced> : unknown extends T ? JsonTypeWith<TReplaced> : T extends null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? T extends object ? T extends readonly (infer _)[] ? {
+        [K in keyof T]: JsonForSerializableArrayItem<T[K], TReplaced, JsonSerializableFilter<T[K], TReplaced | T>>;
+    } : IsExactlyObject<T> extends true ? NonNullJsonObjectWith<TReplaced> : IsEnumLike<T> extends true ? T : FlattenIntersection<{
+        [K in keyof T as RequiredNonSymbolKeysOf<T, K>]-?: undefined extends T[K] ? {
+            ["error required property may not allow undefined value"]: never;
+        } : JsonSerializableFilter<T[K], TReplaced | T>;
+    } & {
+        [K in keyof T as OptionalNonSymbolKeysOf<T, K>]?: JsonSerializableFilter<T[K], TReplaced | T | undefined>;
+    } & {
+        [K in keyof T & symbol]: never;
+    }> : never : never;
+    export type JsonSerializableImpl<T, Options extends {
+        Replaced: unknown;
+        IgnoreInaccessibleMembers?: "ignore-inaccessible-members";
+    }> = boolean extends (T extends never ? true : false) ? JsonTypeWith<Options["Replaced"]> : Options["IgnoreInaccessibleMembers"] extends "ignore-inaccessible-members" ? JsonSerializableFilter<T, Options["Replaced"]> : HasNonPublicProperties<T> extends true ? T extends readonly (infer _)[] ? {
+        [K in keyof T]: JsonSerializableImpl<T[K], {
+            Replaced: Options["Replaced"] | T;
+        }>;
+    } : SerializationErrorPerNonPublicProperties : JsonSerializableFilter<T, Options["Replaced"]>;
+    export type NonSymbolWithDeserializablePropertyOf<T extends object, TException, Keys extends keyof T = keyof T> = Exclude<{
+        [K in Keys]: Extract<Exclude<T[K], TException>, undefined | symbol | Function | bigint> extends never ? T[K] extends never ? never : K : never;
+    }[Keys], undefined | symbol>;
+    export type NonSymbolWithPossiblyDeserializablePropertyOf<T extends object, TException, Keys extends keyof T = keyof T> = Exclude<{
+        [K in Keys]: Extract<Exclude<T[K], TException>, undefined | symbol | Function | bigint> extends never ? never : TestDeserializabilityOf<T[K], TException, {
+            WhenSomethingDeserializable: K;
+            WhenNeverDeserializable: never;
+        }>;
+    }[Keys], undefined | symbol>;
+    export type OptionalNonSymbolKeysOf<T extends object, Keys extends keyof T = keyof T> = Exclude<{
+        [K in Keys]: T extends Record<K, T[K]> ? never : K;
+    }[Keys], undefined | symbol>;
+    export interface RecursionMarker {
+        // (undocumented)
+        "recursion here": "recursion here";
+    }
+    export type ReplaceRecursionWith<T, TReplacement> = ReplaceRecursionWithImpl<T, TReplacement, never>;
+    export type ReplaceRecursionWithImpl<T, TReplacement, TAncestorTypes> = T extends TAncestorTypes ? TReplacement : T extends object ? T extends Function ? T : {
+        [K in keyof T]: ReplaceRecursionWithImpl<T[K], TReplacement, TAncestorTypes | T>;
+    } : T;
+    export type RequiredNonSymbolKeysOf<T extends object, Keys extends keyof T = keyof T> = Exclude<{
+        [K in Keys]: T extends Record<K, T[K]> ? K : never;
+    }[Keys], undefined | symbol>;
+    export type TestDeserializabilityOf<T, TException, Result extends {
+        WhenSomethingDeserializable: unknown;
+        WhenNeverDeserializable: never;
+    } | {
+        WhenSomethingDeserializable: never;
+        WhenNeverDeserializable: unknown;
+    }> = T extends Function | bigint | symbol | undefined ? T extends TException ? TException extends never ? Result["WhenNeverDeserializable"] : Result["WhenSomethingDeserializable"] : Result["WhenNeverDeserializable"] : Result["WhenSomethingDeserializable"];
+}
+
 // @public (undocumented)
 export interface IProvideFluidLoadable {
     // (undocumented)
@@ -305,6 +382,32 @@ export interface ITelemetryBaseProperties {
     [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
 }
 
+// @beta
+export type JsonDeserialized<T, Options extends JsonDeserializedOptions = {
+    Replaced: never;
+}> = InternalUtilityTypes.JsonDeserializedImpl<T, Options["Replaced"]>;
+
+// @beta
+export interface JsonDeserializedOptions {
+    Replaced: unknown;
+}
+
+// @beta
+export type JsonSerializable<T, Options extends JsonSerializableOptions = {
+    Replaced: never;
+}> = InternalUtilityTypes.JsonSerializableImpl<T, Options>;
+
+// @beta
+export interface JsonSerializableOptions {
+    IgnoreInaccessibleMembers?: "ignore-inaccessible-members";
+    Replaced: unknown;
+}
+
+// @beta
+export type JsonTypeWith<T> = null | boolean | number | string | T | {
+    [key: string | number]: JsonTypeWith<T>;
+} | JsonTypeWith<T>[];
+
 // @public
 export const LogLevel: {
     readonly verbose: 10;
@@ -315,10 +418,25 @@ export const LogLevel: {
 // @public
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
+// @beta
+export type NonNullJsonObjectWith<T> = {
+    [key: string | number]: JsonTypeWith<T>;
+} | JsonTypeWith<T>[];
+
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
 } : L;
+
+// @beta
+export type SerializationErrorPerNonPublicProperties = {
+    "object serialization error": "non-public properties are not supported";
+};
+
+// @beta
+export type SerializationErrorPerUndefinedArrayElement = {
+    "array serialization error": "undefined elements are not supported";
+};
 
 // @public
 export interface Tagged<V, T extends string = string> {
