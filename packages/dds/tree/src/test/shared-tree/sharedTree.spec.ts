@@ -339,7 +339,7 @@ describe("SharedTree", () => {
 			const snapshot = sharedTree.contentSnapshot();
 			assert.deepEqual(snapshot.tree, [
 				{
-					type: `array`,
+					type: `com.fluidframework.json.array`,
 					fields: {
 						[EmptyKey]: [{ type: "com.fluidframework.leaf.string", value: "x" }],
 					},
@@ -2023,7 +2023,7 @@ describe("SharedTree", () => {
 			const changesSummary = JSON.parse(editManagerSummaryBlob.content as string);
 			const encodedTreeData = changesSummary.trunk[0].change[1].data.builds.trees;
 			const expectedUncompressedTreeData = [
-				"array",
+				"com.fluidframework.json.array",
 				false,
 				[
 					EmptyKey,
