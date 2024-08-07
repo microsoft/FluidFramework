@@ -49,6 +49,9 @@ module.exports = (env) => {
 				}),
 				// new CleanWebpackPlugin(),
 			],
+			// Use this example to confirm actual apps are compatible with the browserslist documented in ClientRequirements.md.
+			// This example was picked since it does not include the local server (which throws errors) and instead uses a regular client to connect to a service.
+			target: "browserslist",
 		},
 		isProduction ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
 	);
