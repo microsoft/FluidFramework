@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { getJsonSchema, SchemaFactory, type TreeJsonSchema } from "../../simple-tree/index.js";
+import { getJsonSchema, SchemaFactory, type JsonTreeSchema } from "../../simple-tree/index.js";
 
 import { hydrate } from "./utils.js";
 import { getJsonValidator } from "./jsonSchemaUtilities.js";
@@ -16,7 +16,7 @@ describe("getJsonSchema", () => {
 
 		const actual = getJsonSchema(Schema);
 
-		const expected: TreeJsonSchema = {
+		const expected: JsonTreeSchema = {
 			$defs: {
 				"com.fluidframework.leaf.string": {
 					type: "string",
@@ -56,7 +56,7 @@ describe("getJsonSchema", () => {
 
 		const actual = getJsonSchema(Schema);
 
-		const expected: TreeJsonSchema = {
+		const expected: JsonTreeSchema = {
 			$defs: {
 				"test.array": {
 					type: "array",
@@ -96,7 +96,7 @@ describe("getJsonSchema", () => {
 		class Schema extends schemaFactory.map("map", schemaFactory.string) {}
 
 		const actual = getJsonSchema(Schema);
-		const expected: TreeJsonSchema = {
+		const expected: JsonTreeSchema = {
 			$defs: {
 				"test.map": {
 					type: "object",
@@ -161,7 +161,7 @@ describe("getJsonSchema", () => {
 
 		const actual = getJsonSchema(Schema);
 
-		const expected: TreeJsonSchema = {
+		const expected: JsonTreeSchema = {
 			$defs: {
 				"test.object": {
 					type: "object",
@@ -247,7 +247,7 @@ describe("getJsonSchema", () => {
 
 		const actual = getJsonSchema(Schema);
 
-		const expected: TreeJsonSchema = {
+		const expected: JsonTreeSchema = {
 			$defs: {
 				"test.object": {
 					type: "object",
@@ -282,7 +282,7 @@ describe("getJsonSchema", () => {
 
 		const actual = getJsonSchema(Schema);
 
-		const expected: TreeJsonSchema = {
+		const expected: JsonTreeSchema = {
 			$defs: {
 				"test.object": {
 					type: "object",
@@ -324,7 +324,7 @@ describe("getJsonSchema", () => {
 
 		const actual = getJsonSchema(Schema);
 
-		const expected: TreeJsonSchema = {
+		const expected: JsonTreeSchema = {
 			$defs: {
 				"test.recursive-object": {
 					type: "object",

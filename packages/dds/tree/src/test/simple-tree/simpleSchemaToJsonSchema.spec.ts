@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import type { TreeJsonSchema } from "../../simple-tree/index.js";
+import type { JsonTreeSchema } from "../../simple-tree/index.js";
 import { getJsonValidator } from "./jsonSchemaUtilities.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SimpleNodeSchema, SimpleTreeSchema } from "../../simple-tree/simpleSchema.js";
@@ -22,7 +22,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 		const actual = toJsonSchema(input);
 
-		const expected: TreeJsonSchema = {
+		const expected: JsonTreeSchema = {
 			$defs: {
 				"test.string": {
 					type: "string",
@@ -70,7 +70,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 		const actual = toJsonSchema(input);
 
-		const expected: TreeJsonSchema = {
+		const expected: JsonTreeSchema = {
 			$defs: {
 				"test.array": {
 					type: "array",
@@ -115,7 +115,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 		const actual = toJsonSchema(input);
 
-		const expected: TreeJsonSchema = {
+		const expected: JsonTreeSchema = {
 			$defs: {
 				"test.map": {
 					type: "object",
@@ -182,7 +182,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 		const actual = toJsonSchema(input);
 
-		const expected: TreeJsonSchema = {
+		const expected: JsonTreeSchema = {
 			$defs: {
 				"test.object": {
 					type: "object",
@@ -270,7 +270,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 		const actual = toJsonSchema(input);
 
-		const expected: TreeJsonSchema = {
+		const expected: JsonTreeSchema = {
 			$defs: {
 				"test.object": {
 					type: "object",
@@ -320,7 +320,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 		const actual = toJsonSchema(input);
 
-		const expected: TreeJsonSchema = {
+		const expected: JsonTreeSchema = {
 			$defs: {
 				"test.object": {
 					type: "object",
@@ -372,7 +372,7 @@ describe("simpleSchemaToJsonSchema", () => {
 		};
 		const actual = toJsonSchema(input);
 
-		const expected: TreeJsonSchema = {
+		const expected: JsonTreeSchema = {
 			$defs: {
 				"test.recursive-object": {
 					type: "object",

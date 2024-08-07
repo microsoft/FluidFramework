@@ -22,7 +22,7 @@ describe("getSimpleSchema", () => {
 				[
 					"com.fluidframework.leaf.string",
 					{
-						type: "string",
+						leafKind: "string",
 						kind: "leaf",
 					},
 				],
@@ -50,7 +50,7 @@ describe("getSimpleSchema", () => {
 				[
 					"com.fluidframework.leaf.string",
 					{
-						type: "string",
+						leafKind: "string",
 						kind: "leaf",
 					},
 				],
@@ -77,7 +77,7 @@ describe("getSimpleSchema", () => {
 				[
 					"com.fluidframework.leaf.string",
 					{
-						type: "string",
+						leafKind: "string",
 						kind: "leaf",
 					},
 				],
@@ -117,14 +117,14 @@ describe("getSimpleSchema", () => {
 				[
 					"com.fluidframework.leaf.number",
 					{
-						type: "number",
+						leafKind: "number",
 						kind: "leaf",
 					},
 				],
 				[
 					"com.fluidframework.leaf.string",
 					{
-						type: "string",
+						leafKind: "string",
 						kind: "leaf",
 					},
 				],
@@ -159,7 +159,7 @@ describe("getSimpleSchema", () => {
 				[
 					"com.fluidframework.leaf.string",
 					{
-						type: "string",
+						leafKind: "string",
 						kind: "leaf",
 					},
 				],
@@ -197,14 +197,14 @@ describe("getSimpleSchema", () => {
 				[
 					"com.fluidframework.leaf.number",
 					{
-						type: "number",
+						leafKind: "number",
 						kind: "leaf",
 					},
 				],
 				[
 					"com.fluidframework.leaf.string",
 					{
-						type: "string",
+						leafKind: "string",
 						kind: "leaf",
 					},
 				],
@@ -242,7 +242,7 @@ describe("getSimpleSchema", () => {
 				[
 					"com.fluidframework.leaf.string",
 					{
-						type: "string",
+						leafKind: "string",
 						kind: "leaf",
 					},
 				],

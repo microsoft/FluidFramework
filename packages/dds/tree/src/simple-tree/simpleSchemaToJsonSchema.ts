@@ -5,15 +5,15 @@
 
 import { transformWithWeakMapCache } from "../util/index.js";
 import type {
-	ArrayNodeJsonSchema,
-	FieldJsonSchema,
+	JsonArrayNodeSchema,
+	JsonFieldSchema,
 	JsonSchemaRef,
 	JsonRefPath,
-	LeafNodeJsonSchema,
-	MapNodeJsonSchema,
-	NodeJsonSchema,
-	ObjectNodeJsonSchema,
-	TreeJsonSchema,
+	JsonLeafNodeSchema,
+	JsonMapNodeSchema,
+	JsonNodeSchema,
+	JsonObjectNodeSchema,
+	JsonTreeSchema,
 } from "./jsonSchema.js";
 import type {
 	SimpleArrayNodeSchema,
@@ -28,7 +28,7 @@ import type {
  * Generates a JSON Schema representation from a simple tree schema.
  * @internal
  */
-export function toJsonSchema(schema: SimpleTreeSchema): TreeJsonSchema {
+export function toJsonSchema(schema: SimpleTreeSchema): JsonTreeSchema {
 	const definitions = convertDefinitions(schema.definitions);
 
 	const anyOf: JsonSchemaRef[] = [];
@@ -44,8 +44,8 @@ export function toJsonSchema(schema: SimpleTreeSchema): TreeJsonSchema {
 
 function convertDefinitions(
 	definitions: ReadonlyMap<string, SimpleNodeSchema>,
-): Record<string, NodeJsonSchema> {
-	const result: Record<string, NodeJsonSchema> = {};
+): Record<string, JsonNodeSchema> {
+	const result: Record<string, JsonNodeSchema> = {};
 	for (const [key, value] of definitions) {
 		result[key] = convertNodeSchema(value);
 	}
@@ -55,14 +55,14 @@ function convertDefinitions(
 /**
  * Private symbol under which the results of {@link convertNodeSchema} are cached on an input {@link SimpleNodeSchema}.
  */
-const nodeJsonSchemaCache = new WeakMap<SimpleNodeSchema, NodeJsonSchema>();
+const nodeJsonSchemaCache = new WeakMap<SimpleNodeSchema, JsonNodeSchema>();
 
 /**
- * Converts an input {@link SimpleNodeSchema} to a {@link NodeJsonSchema}.
+ * Converts an input {@link SimpleNodeSchema} to a {@link JsonNodeSchema}.
  *
  * @remarks Caches the result on the input schema for future calls.
  */
-function convertNodeSchema(schema: SimpleNodeSchema): NodeJsonSchema {
+function convertNodeSchema(schema: SimpleNodeSchema): JsonNodeSchema {
 	return transformWithWeakMapCache(schema, nodeJsonSchemaCache, (_schema) => {
 		switch (_schema.kind) {
 			case "array":
@@ -79,7 +79,7 @@ function convertNodeSchema(schema: SimpleNodeSchema): NodeJsonSchema {
 	});
 }
 
-function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): ArrayNodeJsonSchema {
+function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSchema {
 	const allowedTypes: JsonSchemaRef[] = [];
 	schema.allowedTypes.forEach((type) => {
 		allowedTypes.push(createSchemaRef(type));
@@ -93,7 +93,7 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): ArrayNodeJsonSch
 	};
 }
 
-function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): LeafNodeJsonSchema {
+function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): JsonLeafNodeSchema {
 	if (schema.leafKind === "fluid-handle") {
 		throw new Error("Fluid handles are not supported via JSON Schema.");
 	}
@@ -104,8 +104,8 @@ function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): LeafNodeJsonSchema
 	};
 }
 
-function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): ObjectNodeJsonSchema {
-	const properties: Record<string, FieldJsonSchema> = {};
+function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNodeSchema {
+	const properties: Record<string, JsonFieldSchema> = {};
 	const required: string[] = [];
 	for (const [key, value] of Object.entries(schema.fields)) {
 		const anyOf: JsonSchemaRef[] = [];
@@ -129,7 +129,7 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): ObjectNodeJson
 	};
 }
 
-function convertMapNodeSchema(schema: SimpleMapNodeSchema): MapNodeJsonSchema {
+function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 	const allowedTypes: JsonSchemaRef[] = [];
 	schema.allowedTypes.forEach((type) => {
 		allowedTypes.push(createSchemaRef(type));

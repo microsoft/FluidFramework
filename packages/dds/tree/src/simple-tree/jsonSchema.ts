@@ -38,7 +38,7 @@ export type JsonLeafSchemaType = "string" | "number" | "boolean" | "null";
  * Base interface for node schemas represented in {@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} format.
  * @alpha
  */
-export interface NodeJsonSchemaBase<
+export interface JsonNodeSchemaBase<
 	TNodeKind extends SimpleNodeSchemaKind,
 	TJsonSchemaType extends JsonSchemaType,
 > {
@@ -63,20 +63,20 @@ export interface NodeJsonSchemaBase<
  * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
  * @alpha
  */
-export interface ObjectNodeJsonSchema extends NodeJsonSchemaBase<"object", "object"> {
+export interface JsonObjectNodeSchema extends JsonNodeSchemaBase<"object", "object"> {
 	/**
 	 * Object fields.
-	 * @remarks Required fields should have a corresponding entry in {@link ObjectNodeJsonSchema.required}.
+	 * @remarks Required fields should have a corresponding entry in {@link JsonObjectNodeSchema.required}.
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-properties}.
 	 */
-	readonly properties: Record<string, FieldJsonSchema>;
+	readonly properties: Record<string, JsonFieldSchema>;
 
 	/**
 	 * List of keys for required fields.
 	 *
 	 * @remarks
 	 * Optional fields should not be included in this list.
-	 * Each key specified must have an entry in {@link ObjectNodeJsonSchema.properties}.
+	 * Each key specified must have an entry in {@link JsonObjectNodeSchema.properties}.
 	 */
 	readonly required?: string[];
 
@@ -92,17 +92,17 @@ export interface ObjectNodeJsonSchema extends NodeJsonSchemaBase<"object", "obje
  * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
  * @alpha
  */
-export interface ArrayNodeJsonSchema extends NodeJsonSchemaBase<"array", "array"> {
+export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<"array", "array"> {
 	/**
 	 * The kinds of items allowed under the array.
-	 * @remarks Always represented via references to {@link TreeJsonSchema.$defs}.
+	 * @remarks Always represented via references to {@link JsonTreeSchema.$defs}.
 	 *
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-items}.
 	 */
 	readonly items: {
 		/**
 		 * The kinds of items allowed under the array.
-		 * @remarks Always represented via references to {@link TreeJsonSchema.$defs}.
+		 * @remarks Always represented via references to {@link JsonTreeSchema.$defs}.
 		 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-anyof}.
 		 */
 		anyOf: JsonSchemaRef[];
@@ -115,7 +115,7 @@ export interface ArrayNodeJsonSchema extends NodeJsonSchemaBase<"array", "array"
  * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
  * @alpha
  */
-export interface MapNodeJsonSchema extends NodeJsonSchemaBase<"map", "object"> {
+export interface JsonMapNodeSchema extends JsonNodeSchemaBase<"map", "object"> {
 	/**
 	 * Used to control the types of properties that can appear in the "object" representation of the map.
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-patternproperties}.
@@ -125,7 +125,7 @@ export interface MapNodeJsonSchema extends NodeJsonSchemaBase<"map", "object"> {
 		 * Types allowed in the map.
 		 * @remarks This format allows for any (JSON-compliant) key, but restricts the allowed types to only those specified.
 		 */
-		"^.*$": FieldJsonSchema;
+		"^.*$": JsonFieldSchema;
 	};
 }
 
@@ -134,7 +134,7 @@ export interface MapNodeJsonSchema extends NodeJsonSchemaBase<"map", "object"> {
  * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
  * @alpha
  */
-export interface LeafNodeJsonSchema extends NodeJsonSchemaBase<"leaf", JsonLeafSchemaType> {
+export interface JsonLeafNodeSchema extends JsonNodeSchemaBase<"leaf", JsonLeafSchemaType> {
 	/**
 	 * Primitive type.
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
@@ -159,20 +159,20 @@ export interface JsonSchemaRef {
  * {@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} representation of a {@link TreeNodeSchema}.
  * @alpha
  */
-export type NodeJsonSchema =
-	| LeafNodeJsonSchema
-	| MapNodeJsonSchema
-	| ArrayNodeJsonSchema
-	| ObjectNodeJsonSchema;
+export type JsonNodeSchema =
+	| JsonLeafNodeSchema
+	| JsonMapNodeSchema
+	| JsonArrayNodeSchema
+	| JsonObjectNodeSchema;
 
 /**
  *{@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} representation of a {@link FieldSchema}.
  * @alpha
  */
-export interface FieldJsonSchema {
+export interface JsonFieldSchema {
 	/**
 	 * The kinds of items allowed under the field.
-	 * @remarks Always represented via references to {@link TreeJsonSchema.$defs}.
+	 * @remarks Always represented via references to {@link JsonTreeSchema.$defs}.
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-anyof}.
 	 */
 	readonly anyOf: JsonSchemaRef[];
@@ -187,7 +187,7 @@ export interface FieldJsonSchema {
  * Note: This representation only uses a limited subset of supported JSON Schema features.
  * It is scoped to a format that can be used to sufficiently represent supported SharedTree schema.
  *
- * Also note that this schema format contains Fluid-specific extensions, such as the {@link NodeJsonSchemaBase._kind}
+ * Also note that this schema format contains Fluid-specific extensions, such as the {@link JsonNodeSchemaBase._kind}
  * property, meaning that it is not a *strict* subset.
  * When using these schemas with validation tools (for example, {@link https://ajv.js.org/}), you will need to opt out
  * of *strict* validation to ensure extra properties are allowed.
@@ -198,10 +198,10 @@ export interface FieldJsonSchema {
  *
  * @alpha
  */
-export interface TreeJsonSchema extends FieldJsonSchema {
+export interface JsonTreeSchema extends JsonFieldSchema {
 	/**
 	 * The set of definitions reachable from this schema's root.
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-schema-re-use-with-defs}
 	 */
-	readonly $defs: Record<JsonSchemaId, NodeJsonSchema>;
+	readonly $defs: Record<JsonSchemaId, JsonNodeSchema>;
 }

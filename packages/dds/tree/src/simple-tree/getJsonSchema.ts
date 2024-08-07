@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeJsonSchema } from "./jsonSchema.js";
+import type { JsonTreeSchema } from "./jsonSchema.js";
 import type { TreeNodeSchema } from "./schemaTypes.js";
 import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
 import { getSimpleSchema } from "./getSimpleSchema.js";
@@ -12,7 +12,7 @@ import { transformWithWeakMapCache } from "../util/index.js";
 /**
  * Cache in which the results of {@link getJsonSchema} are saved.
  */
-const jsonSchemaCache = new WeakMap<TreeNodeSchema, TreeJsonSchema>();
+const jsonSchemaCache = new WeakMap<TreeNodeSchema, JsonTreeSchema>();
 
 /**
  * Creates a {@link https://json-schema.org/ | JSON Schema} representation of the provided {@link TreeNodeSchema}.
@@ -61,7 +61,7 @@ const jsonSchemaCache = new WeakMap<TreeNodeSchema, TreeJsonSchema>();
  *
  * @alpha
  */
-export function getJsonSchema(schema: TreeNodeSchema): TreeJsonSchema {
+export function getJsonSchema(schema: TreeNodeSchema): JsonTreeSchema {
 	return transformWithWeakMapCache(schema, jsonSchemaCache, (_schema) => {
 		const simpleSchema = getSimpleSchema(_schema);
 		return toJsonSchema(simpleSchema);
