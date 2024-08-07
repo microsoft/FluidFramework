@@ -165,6 +165,8 @@ export type ValidateRecursiveSchema<
  *
  * This type always evaluates to `undefined` to ensure the dummy export (which doesn't exist at runtime) is typed correctly.
  *
+ * [TypeScript Issue 59550](https://github.com/microsoft/TypeScript/issues/59550) tracks a suggestion which would make this workaround unnecessary.
+ *
  * @example Usage
  * Since recursive type handling in TypeScript is order dependent, putting just the right kind of usages of the type before the declarations can cause it to not hit this error.
  * For the case of ArrayNodes, this can be done via usage that looks like this:
