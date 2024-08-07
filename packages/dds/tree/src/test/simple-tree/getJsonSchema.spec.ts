@@ -92,7 +92,7 @@ describe("getJsonSchema", () => {
 		assert.throws(() => getJsonSchema(Schema));
 	});
 
-	it("Array schema", () => {
+	it("Array schema (POJO)", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const Schema = schemaFactory.array(schemaFactory.string);
 
@@ -133,7 +133,109 @@ describe("getJsonSchema", () => {
 		validator(["Hello", 42, "world"], false);
 	});
 
-	it("Map schema", () => {
+	it("Array schema (class-based)", () => {
+		const schemaFactory = new SchemaFactory("test");
+		class Schema extends schemaFactory.array("array", schemaFactory.string) {}
+
+		const actual = getJsonSchema(Schema);
+
+		const expected: JsonTreeSchema = {
+			$defs: {
+				"test.array": {
+					type: "array",
+					_treeNodeSchemaKind: "array",
+					items: {
+						anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.string" }],
+					},
+				},
+				"com.fluidframework.leaf.string": {
+					type: "string",
+					_treeNodeSchemaKind: "leaf",
+				},
+			},
+			anyOf: [
+				{
+					$ref: "#/$defs/test.array",
+				},
+			],
+		};
+		assert.deepEqual(actual, expected);
+
+		// Verify that the generated schema is valid.
+		const validator = getJsonValidator(actual);
+
+		// Verify expected data validation behavior.
+		validator(hydrate(Schema, ["Hello", "world"]), false); // TODO: this should work
+		validator([], true);
+		validator(["Hello", "world"], true);
+		validator("Hello world", false);
+		validator({}, false);
+		validator([42], false);
+		validator(["Hello", 42, "world"], false);
+	});
+
+	it("Map schema (POJO)", () => {
+		const schemaFactory = new SchemaFactory("test");
+		const Schema = schemaFactory.map(schemaFactory.string);
+
+		const actual = getJsonSchema(Schema);
+		const expected: JsonTreeSchema = {
+			$defs: {
+				'test.Map<["com.fluidframework.leaf.string"]>': {
+					type: "object",
+					_treeNodeSchemaKind: "map",
+					patternProperties: {
+						"^.*$": { anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.string" }] },
+					},
+				},
+				"com.fluidframework.leaf.string": {
+					type: "string",
+					_treeNodeSchemaKind: "leaf",
+				},
+			},
+			anyOf: [
+				{
+					$ref: '#/$defs/test.Map<["com.fluidframework.leaf.string"]>',
+				},
+			],
+		};
+		assert.deepEqual(actual, expected);
+
+		// Verify that the generated schema is valid.
+		const validator = getJsonValidator(actual);
+
+		// Verify expected data validation behavior.
+		validator(
+			hydrate(
+				Schema,
+				new Map([
+					["foo", "Hello"],
+					["bar", "World"],
+				]),
+			),
+			true,
+		);
+		validator({}, true);
+		validator(
+			{
+				foo: "Hello",
+				bar: "World",
+			},
+			true,
+		);
+		validator("Hello world", false);
+		validator([], false);
+		validator(
+			{
+				foo: "Hello",
+				bar: "World",
+				baz: 42,
+			},
+			false,
+		);
+	});
+
+	it("Map schema (class-based)", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.map("map", schemaFactory.string) {}
 
@@ -194,7 +296,94 @@ describe("getJsonSchema", () => {
 		);
 	});
 
-	it("Object schema", () => {
+	it("Object schema (POJO)", () => {
+		const schemaFactory = new SchemaFactory("test");
+		const Schema = schemaFactory.object("object", {
+			foo: schemaFactory.optional(schemaFactory.number),
+			bar: schemaFactory.required(schemaFactory.string),
+		});
+
+		const actual = getJsonSchema(Schema);
+
+		const expected: JsonTreeSchema = {
+			$defs: {
+				"test.object": {
+					type: "object",
+					_treeNodeSchemaKind: "object",
+					properties: {
+						foo: {
+							anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.number" }],
+						},
+						bar: {
+							anyOf: [{ $ref: "#/$defs/com.fluidframework.leaf.string" }],
+						},
+					},
+					required: ["bar"],
+					additionalProperties: false,
+				},
+				"com.fluidframework.leaf.number": {
+					type: "number",
+					_treeNodeSchemaKind: "leaf",
+				},
+				"com.fluidframework.leaf.string": {
+					type: "string",
+					_treeNodeSchemaKind: "leaf",
+				},
+			},
+			anyOf: [
+				{
+					$ref: "#/$defs/test.object",
+				},
+			],
+		};
+		assert.deepEqual(actual, expected);
+
+		// Verify that the generated schema is valid.
+		const validator = getJsonValidator(actual);
+
+		// Verify expected data validation behavior.
+		validator(
+			hydrate(Schema, {
+				foo: 42,
+				bar: "Hello World",
+			}),
+			true,
+		);
+
+		validator(
+			{
+				bar: "Hello World",
+			},
+			true,
+		);
+
+		validator(
+			{
+				foo: 42,
+				bar: "Hello World",
+			},
+			true,
+		);
+		validator("Hello world", false);
+		validator([], false);
+		validator({}, false);
+		validator(
+			{
+				foo: 42,
+			},
+			false,
+		);
+		validator(
+			{
+				foo: 42,
+				bar: "Hello World",
+				baz: true,
+			},
+			false,
+		);
+	});
+
+	it("Object schema (class-based)", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.object("object", {
 			foo: schemaFactory.optional(schemaFactory.number),
