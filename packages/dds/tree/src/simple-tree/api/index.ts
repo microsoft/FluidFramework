@@ -13,7 +13,10 @@ export {
 	type ITreeConfigurationOptions,
 } from "./tree.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
-export type { ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
+export type {
+	ValidateRecursiveSchema,
+	FixRecursiveArraySchema,
+} from "./schemaFactoryRecursive.js";
 export {
 	adaptEnum,
 	enumFromStrings,

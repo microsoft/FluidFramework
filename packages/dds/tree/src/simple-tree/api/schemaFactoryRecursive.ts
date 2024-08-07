@@ -17,6 +17,7 @@ import {
 	type NodeKind,
 	type TreeNodeSchemaClass,
 	type WithType,
+	type TreeNodeSchema,
 } from "../schemaTypes.js";
 import type { TreeNode } from "../types.js";
 import type { FieldSchemaUnsafe } from "../typesUnsafe.js";
@@ -151,3 +152,37 @@ export type ValidateRecursiveSchema<
 		}[T["kind"]]
 	>,
 > = true;
+
+/**
+ * Workaround for fixing errors resulting from an issue with recursive ArrayNode schema exports.
+ * @remarks
+ * Importing a recursive ArrayNode schema via a d.ts file can produce an error like
+ * `error TS2310: Type 'RecursiveArray' recursively references itself as a base type.`
+ * if using a tsconfig with `"skipLibCheck": false`.
+ *
+ * This error occurs due to the TypeScript compiler splitting the class definition into two separate declarations in the d.ts file (one for the base, and one for the actual class).
+ * For unknown reasons, splitting the class declaration in this way breaks the recursive type handling, leading to the mentioned error.
+ *
+ * This type always evaluates to `undefined` to ensure the dummy export (which doesn't exist at runtime) is typed correctly.
+ *
+ * [TypeScript Issue 59550](https://github.com/microsoft/TypeScript/issues/59550) tracks a suggestion which would make this workaround unnecessary.
+ *
+ * @example Usage
+ * Since recursive type handling in TypeScript is order dependent, putting just the right kind of usages of the type before the declarations can cause it to not hit this error.
+ * For the case of ArrayNodes, this can be done via usage that looks like this:
+ *
+ * This example should use a doc comment to ensure the workaround comment shows up in the intellisense for the dummy export,
+ * however doing so is impossible due to how this example is included in a doc comment.
+ * ```typescript
+ *  // Workaround to avoid
+ *  // `error TS2310: Type 'RecursiveArray' recursively references itself as a base type.` in the d.ts file.
+ * export declare const _RecursiveArrayWorkaround: FixRecursiveArraySchema<typeof RecursiveArray>;
+ * export class RecursiveArray extends schema.arrayRecursive("RA", [() => RecursiveArray]) {}
+ * {
+ * 	type _check = ValidateRecursiveSchema<typeof RecursiveArray>;
+ * }
+ * ```
+ *
+ * @alpha
+ */
+export type FixRecursiveArraySchema<T> = T extends TreeNodeSchema ? undefined : undefined;

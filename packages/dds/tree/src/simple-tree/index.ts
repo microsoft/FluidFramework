@@ -14,6 +14,7 @@ export {
 	SchemaFactory,
 	type ScopedSchemaName,
 	type ValidateRecursiveSchema,
+	type FixRecursiveArraySchema,
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
@@ -70,7 +71,6 @@ export type {
 	NodeFromSchemaUnsafe,
 	ReadonlyMapInlined,
 } from "./typesUnsafe.js";
-
 export {
 	getTreeNodeForField,
 	type InsertableContent,
