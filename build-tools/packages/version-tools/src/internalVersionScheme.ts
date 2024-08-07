@@ -517,20 +517,17 @@ export function detectInternalVersionConstraintType(
 export function isInternalTestVersion(version: semver.SemVer | string): boolean {
 	const parsedVersion = semver.parse(version);
 
+	console.log(parsedVersion);
+
 	if (parsedVersion === null) {
 		throw new Error(`Couldn't parse ${version} as a semver.`);
 	}
 
-	if (parsedVersion.prerelease.length === 0) {
-		throw new Error(`No prerelease section in ${version}`);
-	}
-
-	if (typeof parsedVersion.prerelease[0] !== "string") {
-		throw new TypeError(
-			`Expected a string; found a ${typeof parsedVersion?.prerelease[0]} instead: ${
-				parsedVersion?.prerelease[0]
-			}`,
-		);
+	if (
+		parsedVersion.prerelease.length === 0 ||
+		typeof parsedVersion.prerelease[0] !== "string"
+	) {
+		return false;
 	}
 
 	const isTestVersion =

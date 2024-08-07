@@ -389,20 +389,20 @@ describe("internalScheme", () => {
 		});
 	});
 
-	describe("checking test version schema", () => {
-		it("0.0.0-285010-test is test version", () => {
+	describe("checking test version scheme", () => {
+		it("0.0.0-285010-test is a valid test version", () => {
 			const input = `0.0.0-285010-test`;
 			const result = isInternalTestVersion(input);
 			assert.isTrue(result);
 		});
 
-		it("0.0.0-test-285010 is test version", () => {
+		it("0.0.0-test-285010 is not a valid test version", () => {
 			const input = `0.0.0-test-285010`;
 			const result = isInternalTestVersion(input);
 			assert.isFalse(result);
 		});
 
-		it("2.1.0-test-285010 is not test version", () => {
+		it("2.1.0-test-285010 is not a valid test version", () => {
 			const input = `2.1.0-test-285010`;
 			const result = isInternalTestVersion(input);
 			assert.isFalse(result);
@@ -414,14 +414,34 @@ describe("internalScheme", () => {
 			assert.isFalse(result);
 		});
 
-		it("2.1.0-285010 is not test version", () => {
+		it("2.1.0-285010 is a prerelease version", () => {
 			const input = `2.1.0-285010`;
-			assert.throws(() => isInternalTestVersion(input));
+			const result = isInternalTestVersion(input);
+			assert.isFalse(result);
 		});
 
-		it("2.1.0 is not test version", () => {
+		it("2.1.0 is a release version", () => {
 			const input = `2.1.0`;
-			assert.throws(() => isInternalTestVersion(input));
+			const result = isInternalTestVersion(input);
+			assert.isFalse(result);
+		});
+
+		it("2.0.0-internal.1.0.0 is internal scheme", () => {
+			const input = `2.0.0-internal.1.0.0`;
+			const result = isInternalTestVersion(input);
+			assert.isFalse(result);
+		});
+
+		it("2.0.0-rc.1.0.0 is internal scheme", () => {
+			const input = `2.0.0-rc.1.0.0`;
+			const result = isInternalTestVersion(input);
+			assert.isFalse(result);
+		});
+
+		it("2.0.0-dev.1.1.0.123 is an internal dev version", () => {
+			const input = `2.0.0-dev.1.1.0.123`;
+			const result = isInternalTestVersion(input);
+			assert.isFalse(result);
 		});
 	});
 });
