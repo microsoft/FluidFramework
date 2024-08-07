@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getOrAddInMapLazy } from "../util/index.js";
+import { getOrCreate } from "../util/index.js";
 import type {
 	JsonArrayNodeSchema,
 	JsonFieldSchema,
@@ -63,7 +63,7 @@ const nodeJsonSchemaCache = new WeakMap<SimpleNodeSchema, JsonNodeSchema>();
  * @remarks Caches the result on the input schema for future calls.
  */
 function convertNodeSchema(schema: SimpleNodeSchema): JsonNodeSchema {
-	return getOrAddInMapLazy(nodeJsonSchemaCache, schema, () => {
+	return getOrCreate(nodeJsonSchemaCache, schema, () => {
 		switch (schema.kind) {
 			case "array":
 				return convertArrayNodeSchema(schema);

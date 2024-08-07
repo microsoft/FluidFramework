@@ -24,7 +24,7 @@ import type {
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
 import { ValueSchema } from "../core/index.js";
-import { fail, getOrAddInMapLazy } from "../util/index.js";
+import { fail, getOrCreate } from "../util/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
 
 /**
@@ -55,7 +55,7 @@ const simpleNodeSchemaCache = new WeakMap<TreeNodeSchema, SimpleNodeSchema>();
  * @remarks Caches the result on the input schema for future calls.
  */
 function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
-	return getOrAddInMapLazy(simpleNodeSchemaCache, schema, () => {
+	return getOrCreate(simpleNodeSchemaCache, schema, () => {
 		const kind = schema.kind;
 		switch (kind) {
 			case NodeKind.Leaf: {

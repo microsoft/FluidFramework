@@ -94,13 +94,13 @@ describe("getJsonSchema", () => {
 
 	it("Array schema", () => {
 		const schemaFactory = new SchemaFactory("test");
-		class Schema extends schemaFactory.array("array", schemaFactory.string) {}
+		const Schema = schemaFactory.array(schemaFactory.string);
 
 		const actual = getJsonSchema(Schema);
 
 		const expected: JsonTreeSchema = {
 			$defs: {
-				"test.array": {
+				'test.Array<["com.fluidframework.leaf.string"]>': {
 					type: "array",
 					_treeNodeSchemaKind: "array",
 					items: {
@@ -114,7 +114,7 @@ describe("getJsonSchema", () => {
 			},
 			anyOf: [
 				{
-					$ref: "#/$defs/test.array",
+					$ref: '#/$defs/test.Array<["com.fluidframework.leaf.string"]>',
 				},
 			],
 		};
@@ -124,7 +124,7 @@ describe("getJsonSchema", () => {
 		const validator = getJsonValidator(actual);
 
 		// Verify expected data validation behavior.
-		validator(hydrate(Schema, ["Hello", "world"]), false); // TODO: this should work
+		validator(hydrate(Schema, ["Hello", "world"]), true);
 		validator([], true);
 		validator(["Hello", "world"], true);
 		validator("Hello world", false);
