@@ -2479,5 +2479,27 @@ describe("Runtime", () => {
 				assert(opsStart === 3, "first op processed should have seq number 3");
 			});
 		});
+
+		it("Only log legacy codepath once", async () => {
+			const mockLogger = new MockLogger();
+			const containerRuntime = await ContainerRuntime.loadRuntime({
+				context: getMockContext({}, mockLogger) as IContainerContext,
+				registryEntries: [],
+				existing: false,
+				provideEntryPoint: mockProvideEntryPoint,
+			});
+			const json = JSON.stringify({ hello: "world" });
+			const messageBase = { contents: json, clientId: "CLIENT_ID" };
+			containerRuntime.process(
+				{ ...messageBase, sequenceNumber: 1 } as unknown as ISequencedDocumentMessage,
+				false /* local */,
+			);
+			mockLogger.assertMatch([{ eventName: "LegacyMessageFormat" }]);
+			containerRuntime.process(
+				{ ...messageBase, sequenceNumber: 2 } as unknown as ISequencedDocumentMessage,
+				false /* local */,
+			);
+			assert.equal(mockLogger.events.length, 0, "Expected no more events logged");
+		});
 	});
 });
