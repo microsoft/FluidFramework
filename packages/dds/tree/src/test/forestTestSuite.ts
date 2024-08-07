@@ -116,10 +116,6 @@ export function testForest(config: ForestTestConfiguration): void {
 
 					const forest = factory(schema);
 
-					// TODO: fix this if we really want it and remove otherwise
-					// Check schema is actually valid. If we forgot to add some required types this would fail.
-					// assert(!isNeverField(defaultSchemaPolicy, schema, rootFieldSchema));
-
 					initializeForest(
 						forest,
 						[singleJsonCursor(data)],
