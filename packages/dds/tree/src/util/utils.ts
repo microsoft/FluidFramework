@@ -471,26 +471,3 @@ export function capitalize<S extends string>(s: S): Capitalize<S> {
 export function compareStrings<T extends string>(a: T, b: T): number {
 	return a > b ? 1 : a === b ? 0 : -1;
 }
-
-/**
- * Transforms the provided input with the provided transform function, caching the result in the provided map.
- * Subsequent calls to this function with the same input and cache will return the cached result.
- *
- * @param input - The input data to transform.
- * @param cache - The map in which the transformation output will be cached.
- * @param transform - The transformation to apply to the input data. Will only be run if no output is already cached.
- */
-export function transformWithWeakMapCache<TIn extends object, TOut>(
-	input: TIn,
-	cache: MapGetSet<TIn, TOut>,
-	transform: (input: TIn) => TOut,
-): TOut {
-	const cached = cache.get(input);
-	if (cached !== undefined) {
-		return cached;
-	}
-
-	const output = transform(input);
-	cache.set(input, output);
-	return output;
-}

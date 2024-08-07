@@ -7,7 +7,7 @@ import type { JsonTreeSchema } from "./jsonSchema.js";
 import type { ImplicitAllowedTypes, TreeNodeSchema } from "./schemaTypes.js";
 import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
 import { getSimpleSchema } from "./getSimpleSchema.js";
-import { transformWithWeakMapCache } from "../util/index.js";
+import { getOrAddInMapLazy } from "../util/index.js";
 
 /**
  * Cache in which the results of {@link getJsonSchema} are saved.
@@ -62,8 +62,8 @@ const jsonSchemaCache = new WeakMap<TreeNodeSchema, JsonTreeSchema>();
  * @alpha
  */
 export function getJsonSchema(schema: ImplicitAllowedTypes): JsonTreeSchema {
-	return transformWithWeakMapCache(schema, jsonSchemaCache, (_schema) => {
-		const simpleSchema = getSimpleSchema(_schema);
+	return getOrAddInMapLazy(jsonSchemaCache, schema, () => {
+		const simpleSchema = getSimpleSchema(schema);
 		return toJsonSchema(simpleSchema);
 	});
 }

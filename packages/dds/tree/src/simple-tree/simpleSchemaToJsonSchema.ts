@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { transformWithWeakMapCache } from "../util/index.js";
+import { getOrAddInMapLazy } from "../util/index.js";
 import type {
 	JsonArrayNodeSchema,
 	JsonFieldSchema,
@@ -63,18 +63,18 @@ const nodeJsonSchemaCache = new WeakMap<SimpleNodeSchema, JsonNodeSchema>();
  * @remarks Caches the result on the input schema for future calls.
  */
 function convertNodeSchema(schema: SimpleNodeSchema): JsonNodeSchema {
-	return transformWithWeakMapCache(schema, nodeJsonSchemaCache, (_schema) => {
-		switch (_schema.kind) {
+	return getOrAddInMapLazy(nodeJsonSchemaCache, schema, () => {
+		switch (schema.kind) {
 			case "array":
-				return convertArrayNodeSchema(_schema);
+				return convertArrayNodeSchema(schema);
 			case "leaf":
-				return convertLeafNodeSchema(_schema);
+				return convertLeafNodeSchema(schema);
 			case "map":
-				return convertMapNodeSchema(_schema);
+				return convertMapNodeSchema(schema);
 			case "object":
-				return convertObjectNodeSchema(_schema);
+				return convertObjectNodeSchema(schema);
 			default:
-				throw new TypeError(`Unknown node schema kind: ${(_schema as SimpleNodeSchema).kind}`);
+				throw new TypeError(`Unknown node schema kind: ${(schema as SimpleNodeSchema).kind}`);
 		}
 	});
 }

@@ -24,7 +24,7 @@ import type {
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
 import { ValueSchema } from "../core/index.js";
-import { fail, transformWithWeakMapCache } from "../util/index.js";
+import { fail, getOrAddInMapLazy } from "../util/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
 
 /**
@@ -55,21 +55,21 @@ const simpleNodeSchemaCache = new WeakMap<TreeNodeSchema, SimpleNodeSchema>();
  * @remarks Caches the result on the input schema for future calls.
  */
 function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
-	return transformWithWeakMapCache(schema, simpleNodeSchemaCache, (_symbol) => {
-		const kind = _symbol.kind;
+	return getOrAddInMapLazy(simpleNodeSchemaCache, schema, () => {
+		const kind = schema.kind;
 		switch (kind) {
 			case NodeKind.Leaf: {
-				return leafSchemaToSimpleSchema(_symbol);
+				return leafSchemaToSimpleSchema(schema);
 			}
 			case NodeKind.Map: {
-				return mapSchemaToSimpleSchema(_symbol);
+				return mapSchemaToSimpleSchema(schema);
 			}
 			case NodeKind.Array: {
-				return arraySchemaToSimpleSchema(_symbol);
+				return arraySchemaToSimpleSchema(schema);
 			}
 			case NodeKind.Object: {
-				assert(isObjectNodeSchema(_symbol), "Expected object schema");
-				return objectSchemaToSimpleSchema(_symbol);
+				assert(isObjectNodeSchema(schema), "Expected object schema");
+				return objectSchemaToSimpleSchema(schema);
 			}
 			default: {
 				fail(`Unrecognized node kind: ${kind}.`);

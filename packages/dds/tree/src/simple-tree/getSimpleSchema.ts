@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { transformWithWeakMapCache } from "../util/index.js";
+import { getOrAddInMapLazy } from "../util/index.js";
 import type { ImplicitAllowedTypes, TreeNodeSchema } from "./schemaTypes.js";
 import type { SimpleTreeSchema } from "./simpleSchema.js";
 import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
@@ -64,5 +64,5 @@ const simpleSchemaCache = new WeakMap<TreeNodeSchema, SimpleTreeSchema>();
  * For now, while still an experimental API, it is surfaced as a free function.
  */
 export function getSimpleSchema(schema: ImplicitAllowedTypes): SimpleTreeSchema {
-	return transformWithWeakMapCache(schema, simpleSchemaCache, toSimpleTreeSchema);
+	return getOrAddInMapLazy(simpleSchemaCache, schema, () => toSimpleTreeSchema(schema));
 }
