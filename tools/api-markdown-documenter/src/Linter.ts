@@ -9,12 +9,21 @@ import {
 	ApiItemContainerMixin,
 	type ApiModel,
 } from "@microsoft/api-extractor-model";
-import type { DocInheritDocTag } from "@microsoft/tsdoc";
+import {
+	DocBlock,
+	type DocInheritDocTag,
+	DocInlineTag,
+	type DocLinkTag,
+	type DocNode,
+	DocNodeContainer,
+	DocNodeKind,
+} from "@microsoft/tsdoc";
 
 import { defaultLoadModelOptions, loadModel, type LoadModelOptions } from "./LoadModel.js";
-import { noopLogger } from "./Logging.js";
+import { noopLogger, type Logger } from "./Logging.js";
 import { DocumentWriter } from "./renderers/index.js";
-import { resolveSymbolicReference } from "./utilities/index.js";
+import { getScopedMemberNameForDiagnostics, resolveSymbolicReference } from "./utilities/index.js";
+import assert from "node:assert";
 
 /**
  * Linter check options.
@@ -67,7 +76,7 @@ export async function lintApiModel(options: LintApiModelOptions): Promise<void> 
 	// Run "lint" checks on the model. Collect errors and throw an aggregate error if any are found.
 	let linkErrors: string[] = [];
 	if (optionsWithDefaults.checkLinks) {
-		linkErrors = checkLinks(apiModel, apiModel);
+		linkErrors = checkLinks(apiModel, apiModel, logger);
 	}
 
 	const anyErrors: boolean = linkErrors.length > 0;
@@ -89,7 +98,7 @@ export async function lintApiModel(options: LintApiModelOptions): Promise<void> 
 	}
 }
 
-function checkLinks(apiItem: ApiItem, apiModel: ApiModel): string[] {
+function checkLinks(apiItem: ApiItem, apiModel: ApiModel, logger: Logger): string[] {
 	const errors: string[] = [];
 
 	if (apiItem instanceof ApiDocumentedItem) {
@@ -101,25 +110,192 @@ function checkLinks(apiItem: ApiItem, apiModel: ApiModel): string[] {
 		}
 
 		// Check link tags
-		errors.push(...checkLinkTags(apiItem, apiModel));
+		errors.push(...checkLinkTags(apiItem, apiModel, logger));
 	}
 
 	// Recurse members
 	if (ApiItemContainerMixin.isBaseClassOf(apiItem)) {
 		for (const member of apiItem.members) {
-			errors.push(...checkLinks(member, apiModel));
+			errors.push(...checkLinks(member, apiModel, logger));
 		}
 	}
 
 	return errors;
 }
 
-function checkLinkTags(apiItem: ApiDocumentedItem, apiModel: ApiModel): string[] {
+function checkLinkTags(
+	apiItem: ApiDocumentedItem,
+	apiModel: ApiModel,
+	logger: Logger,
+): readonly string[] {
+	const tsdocComment = apiItem.tsdocComment;
+	if (tsdocComment === undefined) {
+		return [];
+	}
+
 	const errors: string[] = [];
 
-	// TODO
+	const summaryErrors = checkLinkTagsUnderTsdocNode(
+		tsdocComment.summarySection,
+		apiItem,
+		apiModel,
+		logger,
+	);
+	errors.push(...summaryErrors);
+
+	if (tsdocComment.deprecatedBlock !== undefined) {
+		const deprecatedBlockErrors = checkLinkTagsUnderTsdocNode(
+			tsdocComment.deprecatedBlock,
+			apiItem,
+			apiModel,
+			logger,
+		);
+		errors.push(...deprecatedBlockErrors);
+	}
+
+	if (tsdocComment.remarksBlock !== undefined) {
+		const remarksBlockErrors = checkLinkTagsUnderTsdocNode(
+			tsdocComment.remarksBlock,
+			apiItem,
+			apiModel,
+			logger,
+		);
+		errors.push(...remarksBlockErrors);
+	}
+
+	if (tsdocComment.privateRemarks !== undefined) {
+		const privateRemarksBlockErrors = checkLinkTagsUnderTsdocNode(
+			tsdocComment.privateRemarks,
+			apiItem,
+			apiModel,
+			logger,
+		);
+		errors.push(...privateRemarksBlockErrors);
+	}
+
+	const parametersErrors = checkLinkTagsUnderTsdocNodes(
+		tsdocComment.params.blocks,
+		apiItem,
+		apiModel,
+		logger,
+	);
+	errors.push(...parametersErrors);
+
+	const typeParametersErrors = checkLinkTagsUnderTsdocNodes(
+		tsdocComment.typeParams.blocks,
+		apiItem,
+		apiModel,
+		logger,
+	);
+	errors.push(...typeParametersErrors);
+
+	const customBlocksErrors = checkLinkTagsUnderTsdocNodes(
+		tsdocComment.customBlocks,
+		apiItem,
+		apiModel,
+		logger,
+	);
+	errors.push(...customBlocksErrors);
 
 	return errors;
+}
+
+function checkLinkTagsUnderTsdocNode(
+	node: DocNode,
+	apiItem: ApiItem,
+	apiModel: ApiModel,
+	logger: Logger,
+): readonly string[] {
+	switch (node.kind) {
+		// Nodes under which links cannot occur
+		case DocNodeKind.CodeSpan:
+		case DocNodeKind.BlockTag:
+		case DocNodeKind.EscapedText:
+		case DocNodeKind.FencedCode:
+		case DocNodeKind.HtmlStartTag:
+		case DocNodeKind.HtmlEndTag:
+		case DocNodeKind.InheritDocTag:
+		case DocNodeKind.PlainText:
+		case DocNodeKind.SoftBreak: {
+			return [];
+		}
+		case DocNodeKind.Block:
+		case DocNodeKind.ParamBlock: {
+			assert(node instanceof DocBlock, 'Expected a "DocBlock" node.');
+			return checkLinkTagsUnderTsdocNode(node.content, apiItem, apiModel, logger);
+		}
+		// Nodes with children
+		case DocNodeKind.Paragraph:
+		case DocNodeKind.Section: {
+			assert(node instanceof DocNodeContainer, 'Expected a "DocNodeContainer" node.');
+			return checkLinkTagsUnderTsdocNodes(node.nodes, apiItem, apiModel, logger);
+		}
+		case DocNodeKind.InlineTag: {
+			assert(node instanceof DocInlineTag, 'Expected a "DocInlineTag" node.');
+
+			// If the tag is a "@link" tag, then the parser was unable to parse it correctly.
+			// This is indicative of a syntax error in the tag, and therefore should be reported.
+			if (node.tagName in ["@link", "@inheritDoc"]) {
+				return [
+					`Malformed "${
+						node.tagName
+					}" tag encountered on "${getScopedMemberNameForDiagnostics(apiItem)}": "${
+						node.tagContent
+					}".
+For correct syntax, see <https://tsdoc.org/pages/tags/link/>.`,
+				];
+			}
+			return [];
+		}
+		case DocNodeKind.LinkTag: {
+			const result = checkLinkTag(node as DocLinkTag, apiItem, apiModel);
+			return result === undefined ? [] : [result];
+		}
+		default: {
+			logger.error(`Unsupported DocNode kind: "${node.kind}".`, node);
+			throw new Error(`Unsupported DocNode kind: "${node.kind}".`);
+			// return [];
+		}
+	}
+}
+
+function checkLinkTagsUnderTsdocNodes(
+	nodes: readonly DocNode[],
+	apiItem: ApiItem,
+	apiModel: ApiModel,
+	logger: Logger,
+): readonly string[] {
+	const errors: string[] = [];
+	for (const node of nodes) {
+		errors.push(...checkLinkTagsUnderTsdocNode(node, apiItem, apiModel, logger));
+	}
+	return errors;
+}
+
+function checkLinkTag(node: DocLinkTag, apiItem: ApiItem, apiModel: ApiModel): string | undefined {
+	// If the link tag was parsed correctly (which we know it was in this case, because we have a `DocLinkTag`), then we don't have to worry about syntax validation.
+
+	// If the link points to some external URL, no-op.
+	// In the future, we could potentially leverage some sort of URL validator here,
+	// but for now our primary concern is validating symbolic links.
+	if (node.urlDestination !== undefined) {
+		return undefined;
+	}
+
+	assert(
+		node.codeDestination !== undefined,
+		"Expected a `codeDestination` or `urlDestination` to be defined, but neither was.",
+	);
+
+	// If the link is a symbolic reference, validate it.
+	try {
+		resolveSymbolicReference(apiItem, node.codeDestination, apiModel);
+	} catch (error: unknown) {
+		assert(error instanceof Error, "Expected an error.");
+		return error.message;
+	}
+
+	return undefined;
 }
 
 // eslint-disable-next-line unicorn/prevent-abbreviations

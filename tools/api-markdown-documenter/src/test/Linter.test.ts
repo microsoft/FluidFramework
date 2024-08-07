@@ -18,6 +18,8 @@ describe("lintApiModel", () => {
 		const modelDirectoryPath = Path.resolve(testModelsDirectoryPath, "simple-suite-test");
 		const expectedError = `API model linting failed with the following errors:
   Link errors:
+    - Unable to resolve reference "InvalidItem" from "simple-suite-test": The member reference "InvalidItem" was not found
+    - Unable to resolve reference "InvalidItem" from "simple-suite-test": The member reference "InvalidItem" was not found
     - Unable to resolve reference "BadInheritDocTarget" from "simple-suite-test#TestInterface.propertyWithBadInheritDocTarget": The member reference "BadInheritDocTarget" was not found`;
 
 		try {
