@@ -59,7 +59,10 @@ export type {
 	NodeFromSchemaUnsafe,
 	ReadonlyMapInlined,
 } from "./typesUnsafe.js";
-export type { ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
+export type {
+	ValidateRecursiveSchema,
+	FixRecursiveArraySchema,
+} from "./schemaFactoryRecursive.js";
 export {
 	getTreeNodeForField,
 	type InsertableContent,
