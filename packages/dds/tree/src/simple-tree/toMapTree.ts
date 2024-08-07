@@ -140,19 +140,19 @@ export function mapTreeFromNodeData(
 	allowedTypes: ImplicitAllowedTypes,
 	context?: NodeKeyManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
-): MapTree;
+): ExclusiveMapTree;
 export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
 	allowedTypes: ImplicitAllowedTypes,
 	context?: NodeKeyManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
-): MapTree | undefined;
+): ExclusiveMapTree | undefined;
 export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
 	allowedTypes: ImplicitAllowedTypes,
 	context?: NodeKeyManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
-): MapTree | undefined {
+): ExclusiveMapTree | undefined {
 	if (data === undefined) {
 		return undefined;
 	}

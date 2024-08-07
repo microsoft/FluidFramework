@@ -178,6 +178,7 @@ function applySequenceFieldEdit(
 		case "crossFieldMove": {
 			const dstField = navigateToField(tree, change.dstField);
 			assert(dstField.is(tree.currentSchema.objectNodeFieldsObject.sequenceChildren));
+			assert(dstField.context !== undefined, "Expected LazyField");
 			dstField.context.checkout.editor.move(
 				field.getFieldPath(),
 				change.range.first,

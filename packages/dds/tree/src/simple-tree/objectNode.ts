@@ -272,11 +272,14 @@ export function setField(
 			const mapTree = mapTreeFromNodeData(
 				value,
 				simpleFieldSchema.allowedTypes,
-				field.context.nodeKeyManager,
+				field.context?.nodeKeyManager,
 				getSchemaAndPolicy(field),
 			);
 
-			prepareContentForHydration(mapTree, field.context.checkout.forest);
+			if (field.context !== undefined) {
+				prepareContentForHydration(mapTree, field.context.checkout.forest);
+			}
+
 			typedField.content = mapTree !== undefined ? cursorForMapTreeNode(mapTree) : undefined;
 			break;
 		}
