@@ -482,7 +482,7 @@ export function compareStrings<T extends string>(a: T, b: T): number {
  */
 export function transformWithWeakMapCache<TIn extends object, TOut>(
 	input: TIn,
-	cache: WeakMap<TIn, TOut>,
+	cache: MapGetSet<TIn, TOut>,
 	transform: (input: TIn) => TOut,
 ): TOut {
 	const cached = cache.get(input);
