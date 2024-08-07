@@ -14,7 +14,7 @@ const dirname = Path.dirname(fileURLToPath(import.meta.url));
 const testModelsDirectoryPath = Path.resolve(dirname, "..", "..", "src", "test", "test-data");
 
 describe("lintApiModel", () => {
-	it("simple-suite-test", async () => {
+	it("API Model with invalid links yields the expected errors", async () => {
 		const modelDirectoryPath = Path.resolve(testModelsDirectoryPath, "simple-suite-test");
 		const expectedError = `API model linting failed with the following errors:
   Link errors:
