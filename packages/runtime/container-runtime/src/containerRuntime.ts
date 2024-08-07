@@ -762,6 +762,23 @@ function lastMessageFromMetadata(metadata: IContainerRuntimeMetadata | undefined
 }
 
 /**
+ * There is some ancient back-compat code that we'd like to instrument
+ * to understand if/when it is hit.
+ * We only want to log this once, to avoid spamming telemetry if we are wrong and these cases are hit commonly.
+ */
+let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) => {
+	// We only want to log this once per ContainerRuntime instance, to avoid spamming telemetry.
+	getSingleUseLegacyLogCallback = () => () => {};
+
+	return (codePath: string) => {
+		logger.sendTelemetryEvent({
+			eventName: "LegacyMessageFormat",
+			details: { codePath, type },
+		});
+	};
+};
+
+/**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
  * @legacy
@@ -2642,14 +2659,7 @@ export class ContainerRuntime
 		// or something different, like a system message.
 		const hasModernRuntimeMessageEnvelope = messageCopy.type === MessageType.Operation;
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
-
-		// There is some ancient back-compat code that we'd like to instrument
-		// to understand if/when it is hit.
-		const logLegacyCase = (codePath: string) =>
-			this.logger.sendTelemetryEvent({
-				eventName: "LegacyMessageFormat",
-				details: { codePath, type: messageCopy.type },
-			});
+		const logLegacyCase = getSingleUseLegacyLogCallback(this.logger, messageCopy.type);
 
 		// We expect runtime messages to have JSON contents - deserialize it in place.
 		ensureContentsDeserialized(messageCopy, hasModernRuntimeMessageEnvelope, logLegacyCase);
