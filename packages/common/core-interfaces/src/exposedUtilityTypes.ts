@@ -588,9 +588,17 @@ export namespace InternalUtilityTypes {
 					: /* non-object => T as is */ T;
 
 	/**
-	 * Test for non-public properties (class instance type)
+	 * Test for non-public properties (which can only exist on class instance types).
+	 *
+	 * Returns true if `T` deeply may contain a private or protected field.
+	 *
+	 * @remarks
 	 * Compare original (unprocessed) to filtered case that has `never` where
 	 * recursing or where allowed exception types are used.
+	 *
+	 * Note that this a test of the type and not the actual data. So, if an
+	 * interface is given as `T` where implemented by a class, any private or
+	 * protected fields within the class will not be detected.
 	 *
 	 * @system
 	 */
