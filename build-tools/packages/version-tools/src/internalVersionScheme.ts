@@ -513,6 +513,8 @@ export function detectInternalVersionConstraintType(
  * @example
  * returns false
  * isInternalTestVersion("2.1.0-260312");
+ *
+ * @throws error - If the version string cannot be parsed as a valid semantic version.
  */
 export function isInternalTestVersion(version: semver.SemVer | string): boolean {
 	const parsedVersion = semver.parse(version);
