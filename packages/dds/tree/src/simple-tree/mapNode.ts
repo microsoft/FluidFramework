@@ -174,7 +174,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		const mapTree = mapTreeFromNodeData(
 			value as InsertableContent | undefined,
 			classSchema.info as ImplicitAllowedTypes,
-			node.context.nodeKeyManager,
+			node.context?.nodeKeyManager,
 			getSchemaAndPolicy(node),
 		);
 
@@ -183,7 +183,10 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 			return this;
 		}
 
-		prepareContentForHydration(mapTree, node.context.checkout.forest);
+		if (node.context !== undefined) {
+			prepareContentForHydration(mapTree, node.context.checkout.forest);
+		}
+
 		node.set(key, cursorForMapTreeNode(mapTree));
 		return this;
 	}

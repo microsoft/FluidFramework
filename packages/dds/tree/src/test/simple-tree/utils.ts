@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { initializeForest } from "../../core/index.js";
 import {
 	buildForest,
@@ -41,6 +42,7 @@ export function hydrate<TSchema extends ImplicitFieldSchema>(
 ): TreeFieldFromImplicitField<TSchema> {
 	const forest = buildForest();
 	const field = flexTreeFromForest(toFlexSchema(schema), forest, { nodeKeyManager });
+	assert(field.context !== undefined, "Expected LazyField");
 	const mapTree = mapTreeFromNodeData(
 		initialTree as InsertableContent,
 		normalizeFieldSchema(schema).allowedTypes,
