@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 import { expect } from "chai";
 
-import { lintApiModel } from "../Linter.js";
+import { lintApiModel } from "../LintApiModel.js";
 
 const dirname = Path.dirname(fileURLToPath(import.meta.url));
 const testModelsDirectoryPath = Path.resolve(dirname, "..", "..", "src", "test", "test-data");
