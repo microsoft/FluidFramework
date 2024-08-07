@@ -32,6 +32,37 @@ describe("getSimpleSchema", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	it("Union root", async () => {
+		const schemaFactory = new SchemaFactory("test");
+		const Schema = [schemaFactory.number, schemaFactory.string];
+
+		const actual = getSimpleSchema(Schema);
+
+		const expected: SimpleTreeSchema = {
+			definitions: new Map([
+				[
+					"com.fluidframework.leaf.number",
+					{
+						leafKind: "number",
+						kind: "leaf",
+					},
+				],
+				[
+					"com.fluidframework.leaf.string",
+					{
+						leafKind: "string",
+						kind: "leaf",
+					},
+				],
+			]),
+			allowedTypes: new Set([
+				"com.fluidframework.leaf.number",
+				"com.fluidframework.leaf.string",
+			]),
+		};
+		assert.deepEqual(actual, expected);
+	});
+
 	it("Array schema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.array("array", schemaFactory.string) {}

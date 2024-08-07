@@ -37,6 +37,48 @@ describe("getJsonSchema", () => {
 		// Verify expected data validation behavior.
 		validator(hydrate(Schema, "Hello world"), true);
 		validator("Hello world", true);
+		validator(42, false);
+		validator({}, false);
+		validator([], false);
+	});
+
+	it("Union root", async () => {
+		const schemaFactory = new SchemaFactory("test");
+		const Schema = [schemaFactory.number, schemaFactory.string];
+
+		const actual = getJsonSchema(Schema);
+
+		const expected: JsonTreeSchema = {
+			$defs: {
+				"com.fluidframework.leaf.number": {
+					type: "number",
+					_kind: "leaf",
+				},
+				"com.fluidframework.leaf.string": {
+					type: "string",
+					_kind: "leaf",
+				},
+			},
+			anyOf: [
+				{
+					$ref: "#/$defs/com.fluidframework.leaf.number",
+				},
+				{
+					$ref: "#/$defs/com.fluidframework.leaf.string",
+				},
+			],
+		};
+		assert.deepEqual(actual, expected);
+
+		// Verify that the generated schema is valid.
+		const validator = getJsonValidator(actual);
+
+		// Verify expected data validation behavior.
+		validator(hydrate(Schema, "Hello world"), true);
+		validator(hydrate(Schema, 42), true);
+		validator("Hello world", true);
+		validator(42, true);
+		validator(true, false);
 		validator({}, false);
 		validator([], false);
 	});

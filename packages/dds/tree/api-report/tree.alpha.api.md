@@ -82,7 +82,7 @@ type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 // @alpha
-export function getJsonSchema(schema: TreeNodeSchema): JsonTreeSchema;
+export function getJsonSchema(schema: ImplicitAllowedTypes): JsonTreeSchema;
 
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
