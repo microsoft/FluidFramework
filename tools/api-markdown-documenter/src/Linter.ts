@@ -27,6 +27,7 @@ import assert from "node:assert";
 
 // TODOs:
 // - See how reasonable it is to implement `@link` checking via generic transform infra.
+// - Improve error messages for invalid link targets.
 // - Restructure validation walk to be more general (e.g. it should error for malformed `@inheritDoc` tags).
 
 /**
