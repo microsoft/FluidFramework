@@ -78,8 +78,6 @@ export interface ForestTestConfiguration {
 	skipCursorErrorCheck?: true;
 }
 
-// const enableSchemaValidation = true;
-
 const buildId = { minor: 42 };
 const buildId2 = { minor: 442 };
 const detachId = { minor: 43 };
