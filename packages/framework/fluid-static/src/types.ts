@@ -12,7 +12,7 @@ import type { ISharedObjectKind } from "@fluidframework/shared-object-base/inter
  * Valid compatibility modes that may be specified when creating a DOProviderContainerRuntimeFactory.
  * @public
  */
-export type CompatibilityMode = "1" | "2";
+export type CompatibilityMode = "1" | "2" | "2.2";
 
 /**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.

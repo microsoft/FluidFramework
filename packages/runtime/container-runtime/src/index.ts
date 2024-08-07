@@ -22,6 +22,9 @@ export {
 	CompressionAlgorithms,
 	RuntimeHeaderData,
 	disabledCompressionConfig,
+	LegacyAddressInfo,
+	NonContainerAddressInfo,
+	PathedAddressInfo,
 } from "./containerRuntime.js";
 export {
 	ContainerMessageType,

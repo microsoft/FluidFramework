@@ -5,7 +5,7 @@
 ```ts
 
 // @public
-export type CompatibilityMode = "1" | "2";
+export type CompatibilityMode = "1" | "2" | "2.2";
 
 // @public
 export type ContainerAttachProps<T = unknown> = T;
