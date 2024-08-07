@@ -10,12 +10,13 @@ import { getJsonValidator } from "./jsonSchemaUtilities.js";
 import type { SimpleNodeSchema, SimpleTreeSchema } from "../../simple-tree/simpleSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toJsonSchema } from "../../simple-tree/simpleSchemaToJsonSchema.js";
+import { ValueSchema } from "../../core/index.js";
 
 describe("simpleSchemaToJsonSchema", () => {
 	it("Leaf schema", async () => {
 		const input: SimpleTreeSchema = {
 			definitions: new Map<string, SimpleNodeSchema>([
-				["test.string", { leafKind: "string", kind: NodeKind.Leaf }],
+				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
 			allowedTypes: new Set<string>(["test.string"]),
 		};
@@ -51,7 +52,7 @@ describe("simpleSchemaToJsonSchema", () => {
 	it("Leaf node (Fluid Handle)", async () => {
 		const input: SimpleTreeSchema = {
 			definitions: new Map<string, SimpleNodeSchema>([
-				["test.handle", { leafKind: "fluid-handle", kind: NodeKind.Leaf }],
+				["test.handle", { leafKind: ValueSchema.FluidHandle, kind: NodeKind.Leaf }],
 			]),
 			allowedTypes: new Set<string>(["test.handle"]),
 		};
@@ -66,7 +67,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					"test.array",
 					{ kind: NodeKind.Array, allowedTypes: new Set<string>(["test.string"]) },
 				],
-				["test.string", { leafKind: "string", kind: NodeKind.Leaf }],
+				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
 			allowedTypes: new Set<string>(["test.array"]),
 		};
@@ -111,7 +112,7 @@ describe("simpleSchemaToJsonSchema", () => {
 		const input: SimpleTreeSchema = {
 			definitions: new Map<string, SimpleNodeSchema>([
 				["test.map", { kind: NodeKind.Map, allowedTypes: new Set<string>(["test.string"]) }],
-				["test.string", { leafKind: "string", kind: NodeKind.Leaf }],
+				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
 			allowedTypes: new Set<string>(["test.map"]),
 		};
@@ -183,8 +184,8 @@ describe("simpleSchemaToJsonSchema", () => {
 						},
 					},
 				],
-				["test.string", { leafKind: "string", kind: NodeKind.Leaf }],
-				["test.number", { leafKind: "number", kind: NodeKind.Leaf }],
+				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
+				["test.number", { leafKind: ValueSchema.Number, kind: NodeKind.Leaf }],
 			]),
 			allowedTypes: new Set<string>(["test.object"]),
 		};
@@ -275,7 +276,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						},
 					},
 				],
-				["test.identifier", { leafKind: "string", kind: NodeKind.Leaf }],
+				["test.identifier", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
 			allowedTypes: new Set<string>(["test.object"]),
 		};
@@ -324,8 +325,8 @@ describe("simpleSchemaToJsonSchema", () => {
 						},
 					},
 				],
-				["test.number", { leafKind: "number", kind: NodeKind.Leaf }],
-				["test.string", { leafKind: "string", kind: NodeKind.Leaf }],
+				["test.number", { leafKind: ValueSchema.Number, kind: NodeKind.Leaf }],
+				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
 			allowedTypes: new Set<string>(["test.object"]),
 		};
@@ -378,7 +379,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						},
 					},
 				],
-				["test.string", { leafKind: "string", kind: NodeKind.Leaf }],
+				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
 			allowedTypes: new Set<string>(["test.recursive-object"]),
 		};

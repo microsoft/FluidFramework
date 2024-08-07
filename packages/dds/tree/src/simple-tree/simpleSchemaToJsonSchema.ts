@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { ValueSchema } from "../core/index.js";
 import { getOrCreate } from "../util/index.js";
 import type {
 	JsonArrayNodeSchema,
@@ -14,6 +16,7 @@ import type {
 	JsonNodeSchema,
 	JsonObjectNodeSchema,
 	JsonTreeSchema,
+	JsonLeafSchemaType,
 } from "./jsonSchema.js";
 import { FieldKind, NodeKind } from "./schemaTypes.js";
 import type {
@@ -95,12 +98,28 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 }
 
 function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): JsonLeafNodeSchema {
-	if (schema.leafKind === "fluid-handle") {
-		throw new Error("Fluid handles are not supported via JSON Schema.");
+	let type: JsonLeafSchemaType;
+	switch (schema.leafKind) {
+		case ValueSchema.String:
+			type = "string";
+			break;
+		case ValueSchema.Number:
+			type = "number";
+			break;
+		case ValueSchema.Boolean:
+			type = "boolean";
+			break;
+		case ValueSchema.Null:
+			type = "null";
+			break;
+		case ValueSchema.FluidHandle:
+			throw new Error("Fluid handles are not supported via JSON Schema.");
+		default:
+			unreachableCase(schema.leafKind);
 	}
 
 	return {
-		type: schema.leafKind,
+		type,
 		_treeNodeSchemaKind: NodeKind.Leaf,
 	};
 }

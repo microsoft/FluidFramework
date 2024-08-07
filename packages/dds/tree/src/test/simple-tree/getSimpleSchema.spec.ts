@@ -11,6 +11,7 @@ import {
 	SchemaFactory,
 	type SimpleTreeSchema,
 } from "../../simple-tree/index.js";
+import { ValueSchema } from "../../core/index.js";
 
 describe("getSimpleSchema", () => {
 	it("Leaf node", async () => {
@@ -24,7 +25,7 @@ describe("getSimpleSchema", () => {
 				[
 					"com.fluidframework.leaf.string",
 					{
-						leafKind: "string",
+						leafKind: ValueSchema.String,
 						kind: NodeKind.Leaf,
 					},
 				],
@@ -45,14 +46,14 @@ describe("getSimpleSchema", () => {
 				[
 					"com.fluidframework.leaf.number",
 					{
-						leafKind: "number",
+						leafKind: ValueSchema.Number,
 						kind: NodeKind.Leaf,
 					},
 				],
 				[
 					"com.fluidframework.leaf.string",
 					{
-						leafKind: "string",
+						leafKind: ValueSchema.String,
 						kind: NodeKind.Leaf,
 					},
 				],
@@ -83,7 +84,7 @@ describe("getSimpleSchema", () => {
 				[
 					"com.fluidframework.leaf.string",
 					{
-						leafKind: "string",
+						leafKind: ValueSchema.String,
 						kind: NodeKind.Leaf,
 					},
 				],
@@ -110,7 +111,7 @@ describe("getSimpleSchema", () => {
 				[
 					"com.fluidframework.leaf.string",
 					{
-						leafKind: "string",
+						leafKind: ValueSchema.String,
 						kind: NodeKind.Leaf,
 					},
 				],
@@ -150,14 +151,14 @@ describe("getSimpleSchema", () => {
 				[
 					"com.fluidframework.leaf.number",
 					{
-						leafKind: "number",
+						leafKind: ValueSchema.Number,
 						kind: NodeKind.Leaf,
 					},
 				],
 				[
 					"com.fluidframework.leaf.string",
 					{
-						leafKind: "string",
+						leafKind: ValueSchema.String,
 						kind: NodeKind.Leaf,
 					},
 				],
@@ -192,7 +193,7 @@ describe("getSimpleSchema", () => {
 				[
 					"com.fluidframework.leaf.string",
 					{
-						leafKind: "string",
+						leafKind: ValueSchema.String,
 						kind: NodeKind.Leaf,
 					},
 				],
@@ -230,14 +231,14 @@ describe("getSimpleSchema", () => {
 				[
 					"com.fluidframework.leaf.number",
 					{
-						leafKind: "number",
+						leafKind: ValueSchema.Number,
 						kind: NodeKind.Leaf,
 					},
 				],
 				[
 					"com.fluidframework.leaf.string",
 					{
-						leafKind: "string",
+						leafKind: ValueSchema.String,
 						kind: NodeKind.Leaf,
 					},
 				],
@@ -275,7 +276,7 @@ describe("getSimpleSchema", () => {
 				[
 					"com.fluidframework.leaf.string",
 					{
-						leafKind: "string",
+						leafKind: ValueSchema.String,
 						kind: NodeKind.Leaf,
 					},
 				],

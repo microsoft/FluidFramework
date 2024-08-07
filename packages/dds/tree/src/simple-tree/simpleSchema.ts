@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { ValueSchema } from "../core/index.js";
 import type { FieldKind, NodeKind } from "./schemaTypes.js";
-
-/**
- * Kind of leaf schema.
- */
-export type SimpleLeafSchemaKind = "string" | "number" | "boolean" | "null" | "fluid-handle";
 
 /**
  * Base interface for all {@link SimpleNodeSchema} implementations.
@@ -75,7 +71,7 @@ export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<NodeKind.Leaf
 	/**
 	 * The kind of leaf node.
 	 */
-	readonly leafKind: SimpleLeafSchemaKind;
+	readonly leafKind: ValueSchema;
 }
 
 /**

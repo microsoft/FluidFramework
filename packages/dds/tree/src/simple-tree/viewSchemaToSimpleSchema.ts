@@ -15,13 +15,12 @@ import type {
 	SimpleArrayNodeSchema,
 	SimpleFieldSchema,
 	SimpleLeafNodeSchema,
-	SimpleLeafSchemaKind,
 	SimpleMapNodeSchema,
 	SimpleNodeSchema,
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
-import { ValueSchema } from "../core/index.js";
+import type { ValueSchema } from "../core/index.js";
 import { getOrCreate } from "../util/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
 
@@ -80,7 +79,7 @@ function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
 function leafSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleLeafNodeSchema {
 	return {
 		kind: NodeKind.Leaf,
-		leafKind: leafKindFromValueSchema(schema.info as ValueSchema),
+		leafKind: schema.info as ValueSchema,
 	};
 }
 
@@ -145,29 +144,6 @@ function allowedTypesFromFieldSchema(schema: FieldSchema): Set<string> {
 		allowedTypes.add(type.identifier);
 	}
 	return allowedTypes;
-}
-
-function leafKindFromValueSchema(schema: ValueSchema): SimpleLeafSchemaKind {
-	switch (schema) {
-		case ValueSchema.String: {
-			return "string";
-		}
-		case ValueSchema.Number: {
-			return "number";
-		}
-		case ValueSchema.Boolean: {
-			return "boolean";
-		}
-		case ValueSchema.Null: {
-			return "null";
-		}
-		case ValueSchema.FluidHandle: {
-			return "fluid-handle";
-		}
-		default: {
-			unreachableCase(schema);
-		}
-	}
 }
 
 /**
