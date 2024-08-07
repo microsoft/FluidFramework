@@ -323,11 +323,15 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type IsEnumLike<T extends object> = T extends readonly (infer _)[]
-		? /* array => */ false
+	export type IfEnumLike<
+		T extends object,
+		EnumLike = never,
+		NotEnumLike = unknown,
+	> = T extends readonly (infer _)[]
+		? /* array => */ NotEnumLike
 		: // eslint-disable-next-line @typescript-eslint/ban-types
 			T extends Function
-			? /* function => */ false
+			? /* function => */ NotEnumLike
 			: T extends {
 						// all numerical indices should refer to a string
 						readonly [i: number]: string;
@@ -339,9 +343,9 @@ export namespace InternalUtilityTypes {
 				? /* test for a never or any property */ true extends {
 						[K in keyof T]: T[K] extends never ? true : never;
 					}[keyof T]
-					? false
-					: true
-				: false;
+					? NotEnumLike
+					: EnumLike
+				: NotEnumLike;
 
 	/**
 	 * Test for type equality
@@ -519,28 +523,33 @@ export namespace InternalUtilityTypes {
 	> = /* test for recursion */
 	IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true
 		? /* recursion => use replacement */ TRecursionMarker
-		: /* test for general allowance */ T extends Controls["AllowExtensionOf"]
-			? /* allowed extension type => */ T
-			: /* test for exact allowance */ IfExactTypeInUnion<
-						T,
-						Controls["AllowExactly"],
-						true,
-						"no match"
-					> extends true
-				? /* exact allowed type => */ T
-				: T extends object
-					? FilterPreservingFunction<
-							T,
-							{
-								[K in keyof T]: ReplaceRecursionWithMarkerAndPreserveAllowances<
-									T[K],
-									TRecursionMarker,
-									Controls,
-									[TNextAncestor, ...TAncestorTypes]
-								>;
-							}
-						>
-					: /* non-object => T as is */ T;
+		: /* force union separation hereafter */ T extends infer _
+			? /* test for recursion among union elements */
+				IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true
+				? TRecursionMarker
+				: /* test for general allowance */ T extends Controls["AllowExtensionOf"]
+					? /* allowed extension type => */ T
+					: /* test for exact allowance */ IfExactTypeInUnion<
+								T,
+								Controls["AllowExactly"],
+								true,
+								"no match"
+							> extends true
+						? /* exact allowed type => */ T
+						: T extends object
+							? FilterPreservingFunction<
+									T,
+									{
+										[K in keyof T]: ReplaceRecursionWithMarkerAndPreserveAllowances<
+											T[K],
+											TRecursionMarker,
+											Controls,
+											[TNextAncestor, ...TAncestorTypes]
+										>;
+									}
+								>
+							: /* non-object => T as is */ T
+			: never;
 
 	/**
 	 * Replaces any instances of "allowed" types and recursion within with `never`.
@@ -565,7 +574,7 @@ export namespace InternalUtilityTypes {
 		"no match"
 	> extends true
 		? /* recursion => */ never
-		: /* test for general allowance */ T extends Controls["AllowExtensionOf"]
+		: /* test for general allowance (also forces union separation) */ T extends Controls["AllowExtensionOf"]
 			? /* allowed extension type => */ never
 			: /* test for exact allowance */ IfExactTypeInUnion<
 						T,
@@ -574,23 +583,31 @@ export namespace InternalUtilityTypes {
 						"no match"
 					> extends true
 				? /* exact allowed type => */ never
-				: T extends object
-					? FilterPreservingFunction<
+				: /* test for recursion among union elements */ IfExactTypeInTuple<
 							T,
-							{
-								[K in keyof T]: ReplaceAllowancesAndRecursionWithNever<
-									T[K],
-									Controls,
-									[TNextAncestor, ...TAncestorTypes]
-								>;
-							}
-						>
-					: /* non-object => T as is */ T;
+							TAncestorTypes,
+							true,
+							"no match"
+						> extends true
+					? /* recursion => */ never
+					: T extends object
+						? FilterPreservingFunction<
+								T,
+								{
+									[K in keyof T]: ReplaceAllowancesAndRecursionWithNever<
+										T[K],
+										Controls,
+										[TNextAncestor, ...TAncestorTypes]
+									>;
+								}
+							>
+						: /* non-object => T as is */ T;
 
 	/**
 	 * Test for non-public properties (which can only exist on class instance types).
 	 *
-	 * Returns true if `T` deeply may contain a private or protected field.
+	 * Returns `HasNonPublic` if `T` deeply may contain a private or protected field
+	 * and `OnlyPublics` otherwise.
 	 *
 	 * @remarks
 	 * Compare original (unprocessed) to filtered case that has `never` where
@@ -602,10 +619,14 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type HasNonPublicProperties<
+	export type IfNonPublicProperties<
 		T,
 		Controls extends FilterControls,
-	> = ReplaceAllowancesAndRecursionWithNever<T, Controls> extends T ? false : true;
+		HasNonPublic = never,
+		OnlyPublics = unknown,
+	> = ReplaceAllowancesAndRecursionWithNever<T, Controls> extends T
+		? OnlyPublics
+		: HasNonPublic;
 
 	// #region JsonSerializable implementation
 
@@ -636,7 +657,12 @@ export namespace InternalUtilityTypes {
 				: Options["IgnoreInaccessibleMembers"] extends "ignore-inaccessible-members"
 					? JsonSerializableFilter<T, Controls, TAncestorTypes, TNextAncestor>
 					: /* test for non-public properties (class instance type) */
-						HasNonPublicProperties<T, Controls> extends true
+						IfNonPublicProperties<
+								T,
+								Controls,
+								"found non-publics",
+								"only publics"
+							> extends "found non-publics"
 						? /* hidden props => test if it is array properties that are the problem */ T extends readonly (infer _)[]
 							? /* array => */ {
 									/* use homomorphic mapped type to preserve tuple type */
@@ -724,7 +750,7 @@ export namespace InternalUtilityTypes {
 										? /* `object` => */ NonNullJsonObjectWith<
 												Controls["AllowExactly"] | Controls["AllowExtensionOf"]
 											>
-										: /* test for enum like types */ IsEnumLike<T> extends true
+										: /* test for enum like types */ IfEnumLike<T> extends never
 											? /* enum or similar simple type (return as-is) => */ T
 											: /* property bag => */ FlattenIntersection<
 													{
@@ -823,7 +849,12 @@ export namespace InternalUtilityTypes {
 						> extends true
 						? /* same (no filtering needed) => test for non-public
 						     properties (class instance type) */
-							HasNonPublicProperties<T, Controls> extends true
+							IfNonPublicProperties<
+								T,
+								Controls,
+								"found non-publics",
+								"only publics"
+							> extends "found non-publics"
 							? /* hidden props => apply filtering to avoid retaining
 							     exact class except for any classes in allowances => */
 								JsonDeserializedFilter<
@@ -918,7 +949,7 @@ export namespace InternalUtilityTypes {
 									? /* `object` => */ NonNullJsonObjectWith<
 											Controls["AllowExactly"] | Controls["AllowExtensionOf"]
 										>
-									: /* test for enum like types */ IsEnumLike<T> extends true
+									: /* test for enum like types */ IfEnumLike<T> extends never
 										? /* enum or similar simple type (return as-is) => */ T
 										: /* property bag => */ FlattenIntersection<
 												/* properties with symbol keys or wholly unsupported values are removed */

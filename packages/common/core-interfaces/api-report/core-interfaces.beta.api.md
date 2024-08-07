@@ -268,24 +268,24 @@ export namespace InternalUtilityTypes {
     export type FlattenIntersection<T extends Record<string | number | symbol, unknown>> = T extends Record<string | number | symbol, unknown> ? {
         [K in keyof T]: T[K];
     } : T;
-    export type HasNonPublicProperties<T, Controls extends FilterControls> = ReplaceAllowancesAndRecursionWithNever<T, Controls> extends T ? false : true;
-    export type IfExactTypeInTuple<T, Tuple extends unknown[], IfMatch = unknown, IfNoMatch = never> = Tuple extends [infer First, ...infer Rest] ? IfSameType<T, First, IfMatch, IfExactTypeInTuple<T, Rest, IfMatch, IfNoMatch>> : IfNoMatch;
-    export type IfExactTypeInUnion<T, Union, IfMatch = unknown, IfNoMatch = never> = IfSameType<T, never, IfSameType<Union, never, IfMatch, IfNoMatch>, IfSameType<T, Extract<Union, T>, IfMatch, IfNoMatch>>;
-    export type IfSameType<X, Y, IfSame = unknown, IfDifferent = never> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? IfSame : IfDifferent;
-    export type IsEnumLike<T extends object> = T extends readonly (infer _)[] ? false : T extends Function ? false : T extends {
+    export type IfEnumLike<T extends object, EnumLike = never, NotEnumLike = unknown> = T extends readonly (infer _)[] ? NotEnumLike : T extends Function ? NotEnumLike : T extends {
         readonly [i: number]: string;
         readonly [p: string]: number | string;
         readonly [s: symbol]: never;
     } ? true extends {
         [K in keyof T]: T[K] extends never ? true : never;
-    }[keyof T] ? false : true : false;
+    }[keyof T] ? NotEnumLike : EnumLike : NotEnumLike;
+    export type IfExactTypeInTuple<T, Tuple extends unknown[], IfMatch = unknown, IfNoMatch = never> = Tuple extends [infer First, ...infer Rest] ? IfSameType<T, First, IfMatch, IfExactTypeInTuple<T, Rest, IfMatch, IfNoMatch>> : IfNoMatch;
+    export type IfExactTypeInUnion<T, Union, IfMatch = unknown, IfNoMatch = never> = IfSameType<T, never, IfSameType<Union, never, IfMatch, IfNoMatch>, IfSameType<T, Extract<Union, T>, IfMatch, IfNoMatch>>;
+    export type IfNonPublicProperties<T, Controls extends FilterControls, HasNonPublic = never, OnlyPublics = unknown> = ReplaceAllowancesAndRecursionWithNever<T, Controls> extends T ? OnlyPublics : HasNonPublic;
+    export type IfSameType<X, Y, IfSame = unknown, IfDifferent = never> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? IfSame : IfDifferent;
     export type IsExactlyObject<T extends object> = IsSameType<T, object>;
     export type IsSameType<X, Y> = IfSameType<X, Y, true, false>;
     export type JsonDeserializedFilter<T, Controls extends FilterControls, RecurseLimit extends RecursionLimit, TAncestorTypes = T> = boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : unknown extends T ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : T extends null | boolean | number | string | Controls["AllowExtensionOf"] ? T : IfExactTypeInUnion<T, Controls["AllowExactly"], true, "not found"> extends true ? T : T extends object ? ExtractFunctionFromIntersection<T> extends {
         classification: "exactly Function";
     } ? never : T extends readonly (infer _)[] ? {
         [K in keyof T]: JsonForDeserializedArrayItem<T[K], Controls, JsonDeserializedRecursion<T[K], Controls, RecurseLimit, TAncestorTypes>>;
-    } : IsExactlyObject<T> extends true ? NonNullJsonObjectWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : IsEnumLike<T> extends true ? T : FlattenIntersection<{
+    } : IsExactlyObject<T> extends true ? NonNullJsonObjectWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : IfEnumLike<T> extends never ? T : FlattenIntersection<{
         [K in keyof T as NonSymbolWithDeserializablePropertyOf<T, Controls["AllowExactly"], Controls["AllowExtensionOf"], K>]: JsonDeserializedRecursion<T[K], Controls, RecurseLimit, TAncestorTypes>;
     } & {
         [K in keyof T as NonSymbolWithPossiblyDeserializablePropertyOf<T, Controls["AllowExactly"], Controls["AllowExtensionOf"], K>]?: JsonDeserializedRecursion<T[K], Controls, RecurseLimit, TAncestorTypes>;
@@ -300,7 +300,7 @@ export namespace InternalUtilityTypes {
     } extends infer Controls ? Controls extends FilterControls ? boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : ReplaceRecursionWithMarkerAndPreserveAllowances<T, RecursionMarker, Controls> extends infer TNoRecursionAndOnlyPublics ? IsSameType<TNoRecursionAndOnlyPublics, JsonDeserializedFilter<TNoRecursionAndOnlyPublics, {
         AllowExactly: Controls["AllowExactly"] | RecursionMarker;
         AllowExtensionOf: Controls["AllowExtensionOf"];
-    }, 0>> extends true ? HasNonPublicProperties<T, Controls> extends true ? JsonDeserializedFilter<T, Controls, RecurseLimit> : T : JsonDeserializedFilter<T, Controls, RecurseLimit> : never : never : never;
+    }, 0>> extends true ? IfNonPublicProperties<T, Controls, "found non-publics", "only publics"> extends "found non-publics" ? JsonDeserializedFilter<T, Controls, RecurseLimit> : T : JsonDeserializedFilter<T, Controls, RecurseLimit> : never : never : never;
     export type JsonDeserializedRecursion<T, Controls extends FilterControls, RecurseLimit extends RecursionLimit, TAncestorTypes> = T extends TAncestorTypes ? RecurseLimit extends `+${infer RecursionRemainder}` ? JsonDeserializedImpl<T, Controls, RecursionRemainder extends RecursionLimit ? RecursionRemainder : 0> : JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : JsonDeserializedFilter<T, Controls, RecurseLimit, TAncestorTypes | T>;
     export type JsonForDeserializedArrayItem<T, Controls extends FilterControls, TBlessed> = boolean extends (T extends never ? true : false) ? TBlessed : unknown extends T ? TBlessed : T extends null | boolean | number | string | Controls["AllowExtensionOf"] ? T : IfExactTypeInUnion<T, Controls["AllowExactly"], T, T extends undefined | symbol ? null : T extends Function ? ExtractFunctionFromIntersection<T> extends {
         classification: "exactly Function";
@@ -311,7 +311,7 @@ export namespace InternalUtilityTypes {
         TNextAncestor,
         ...TAncestorTypes
         ]>>;
-    } : IsExactlyObject<T> extends true ? NonNullJsonObjectWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : IsEnumLike<T> extends true ? T : FlattenIntersection<{
+    } : IsExactlyObject<T> extends true ? NonNullJsonObjectWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : IfEnumLike<T> extends never ? T : FlattenIntersection<{
         [K in keyof T as RequiredNonSymbolKeysOf<T, K>]-?: undefined extends T[K] ? {
             ["error required property may not allow undefined value"]: never;
         } : JsonSerializableFilter<T[K], Controls, [
@@ -335,7 +335,7 @@ export namespace InternalUtilityTypes {
         AllowExtensionOf: Options extends {
             AllowExtensionOf: unknown;
         } ? Options["AllowExtensionOf"] : never;
-    } extends infer Controls ? Controls extends FilterControls ? boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : Options["IgnoreInaccessibleMembers"] extends "ignore-inaccessible-members" ? JsonSerializableFilter<T, Controls, TAncestorTypes, TNextAncestor> : HasNonPublicProperties<T, Controls> extends true ? T extends readonly (infer _)[] ? {
+    } extends infer Controls ? Controls extends FilterControls ? boolean extends (T extends never ? true : false) ? JsonTypeWith<Controls["AllowExactly"] | Controls["AllowExtensionOf"]> : Options["IgnoreInaccessibleMembers"] extends "ignore-inaccessible-members" ? JsonSerializableFilter<T, Controls, TAncestorTypes, TNextAncestor> : IfNonPublicProperties<T, Controls, "found non-publics", "only publics"> extends "found non-publics" ? T extends readonly (infer _)[] ? {
         [K in keyof T]: JsonSerializableImpl<T[K], Controls, [
         TNextAncestor,
         ...TAncestorTypes
@@ -358,18 +358,18 @@ export namespace InternalUtilityTypes {
         // (undocumented)
         [RecursionMarkerSymbol]: typeof RecursionMarkerSymbol;
     }
-    export type ReplaceAllowancesAndRecursionWithNever<T, Controls extends FilterControls, TAncestorTypes extends unknown[] = [], TNextAncestor = T> = IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true ? never : T extends Controls["AllowExtensionOf"] ? never : IfExactTypeInUnion<T, Controls["AllowExactly"], true, "no match"> extends true ? never : T extends object ? FilterPreservingFunction<T, {
+    export type ReplaceAllowancesAndRecursionWithNever<T, Controls extends FilterControls, TAncestorTypes extends unknown[] = [], TNextAncestor = T> = IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true ? never : T extends Controls["AllowExtensionOf"] ? never : IfExactTypeInUnion<T, Controls["AllowExactly"], true, "no match"> extends true ? never : IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true ? never : T extends object ? FilterPreservingFunction<T, {
         [K in keyof T]: ReplaceAllowancesAndRecursionWithNever<T[K], Controls, [
         TNextAncestor,
         ...TAncestorTypes
         ]>;
     }> : T;
-    export type ReplaceRecursionWithMarkerAndPreserveAllowances<T, TRecursionMarker, Controls extends FilterControls, TAncestorTypes extends unknown[] = [], TNextAncestor = T> = IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true ? TRecursionMarker : T extends Controls["AllowExtensionOf"] ? T : IfExactTypeInUnion<T, Controls["AllowExactly"], true, "no match"> extends true ? T : T extends object ? FilterPreservingFunction<T, {
+    export type ReplaceRecursionWithMarkerAndPreserveAllowances<T, TRecursionMarker, Controls extends FilterControls, TAncestorTypes extends unknown[] = [], TNextAncestor = T> = IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true ? TRecursionMarker : T extends infer _ ? IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true ? TRecursionMarker : T extends Controls["AllowExtensionOf"] ? T : IfExactTypeInUnion<T, Controls["AllowExactly"], true, "no match"> extends true ? T : T extends object ? FilterPreservingFunction<T, {
         [K in keyof T]: ReplaceRecursionWithMarkerAndPreserveAllowances<T[K], TRecursionMarker, Controls, [
         TNextAncestor,
         ...TAncestorTypes
         ]>;
-    }> : T;
+    }> : T : never;
     export type RequiredNonSymbolKeysOf<T extends object, Keys extends keyof T = keyof T> = Exclude<{
         [K in Keys]: T extends Record<K, T[K]> ? K : never;
     }[Keys], undefined | symbol>;
