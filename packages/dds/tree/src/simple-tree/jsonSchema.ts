@@ -52,7 +52,7 @@ export interface JsonNodeSchemaBase<
 	 *
 	 * Note: This property name is not a part of the JSON Schema spec. This is a Fluid-specific extension.
 	 */
-	readonly _kind: TNodeKind;
+	readonly _treeNodeSchemaKind: TNodeKind;
 
 	/**
 	 * {@inheritDoc JsonSchemaType}
@@ -208,7 +208,7 @@ export interface JsonFieldSchema {
  * Note: This representation only uses a limited subset of supported JSON Schema features.
  * It is scoped to a format that can be used to sufficiently represent supported SharedTree schema.
  *
- * Also note that this schema format contains Fluid-specific extensions, such as the {@link JsonNodeSchemaBase._kind}
+ * Also note that this schema format contains Fluid-specific extensions, such as the {@link JsonNodeSchemaBase._treeNodeSchemaKind}
  * property, meaning that it is not a *strict* subset.
  * When using these schemas with validation tools (for example, {@link https://ajv.js.org/}), you will need to opt out
  * of *strict* validation to ensure extra properties are allowed.

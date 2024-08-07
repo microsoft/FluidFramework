@@ -86,7 +86,7 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 	});
 	return {
 		type: "array",
-		_kind: "array",
+		_treeNodeSchemaKind: "array",
 		items: {
 			anyOf: allowedTypes,
 		},
@@ -100,7 +100,7 @@ function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): JsonLeafNodeSchema
 
 	return {
 		type: schema.leafKind,
-		_kind: "leaf",
+		_treeNodeSchemaKind: "leaf",
 	};
 }
 
@@ -122,7 +122,7 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 	}
 	return {
 		type: "object",
-		_kind: "object",
+		_treeNodeSchemaKind: "object",
 		properties,
 		required,
 		additionalProperties: false, // TODO: get allowance from schema policy
@@ -136,7 +136,7 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 	});
 	return {
 		type: "object",
-		_kind: "map",
+		_treeNodeSchemaKind: "map",
 		patternProperties: {
 			"^.*$": {
 				anyOf: allowedTypes,

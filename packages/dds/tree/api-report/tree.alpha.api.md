@@ -227,7 +227,7 @@ export type JsonNodeSchema = JsonLeafNodeSchema | JsonMapNodeSchema | JsonArrayN
 
 // @alpha @sealed
 export interface JsonNodeSchemaBase<TNodeKind extends SimpleNodeSchemaKind, TJsonSchemaType extends JsonSchemaType> {
-    readonly _kind: TNodeKind;
+    readonly _treeNodeSchemaKind: TNodeKind;
     readonly type: TJsonSchemaType;
 }
 
