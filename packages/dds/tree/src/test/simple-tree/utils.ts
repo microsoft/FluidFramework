@@ -18,7 +18,7 @@ import {
 	type TreeFieldFromImplicitField,
 } from "../../simple-tree/index.js";
 import {
-	getProxyForField,
+	getTreeNodeForField,
 	prepareContentForHydration,
 	type InsertableContent,
 	// eslint-disable-next-line import/no-internal-modules
@@ -31,6 +31,8 @@ import { flexTreeFromForest, testIdCompressor, testRevisionTagCodec } from "../u
  * Given the schema and initial tree data, returns a hydrated tree node.
  *
  * For minimal/concise targeted unit testing of specific simple-tree content.
+ *
+ * TODO: determine and document if this produces "cooked" or "marinated" nodes.
  */
 export function hydrate<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
@@ -48,7 +50,7 @@ export function hydrate<TSchema extends ImplicitFieldSchema>(
 	prepareContentForHydration(mapTree, field.context.checkout.forest);
 	const cursor = cursorForMapTreeNode(mapTree);
 	initializeForest(forest, [cursor], testRevisionTagCodec, testIdCompressor, true);
-	return getProxyForField(field) as TreeFieldFromImplicitField<TSchema>;
+	return getTreeNodeForField(field) as TreeFieldFromImplicitField<TSchema>;
 }
 
 /**

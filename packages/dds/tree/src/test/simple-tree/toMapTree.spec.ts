@@ -54,6 +54,7 @@ import {
 	MockNodeKeyManager,
 	type NodeKeyManager,
 } from "../../feature-libraries/index.js";
+import { validateUsageError } from "../utils.js";
 
 /**
  * Helper for building {@link TreeFieldStoredSchema}.
@@ -551,6 +552,24 @@ describe("toMapTree", () => {
 			assert.throws(
 				() => mapTreeFromNodeData(tree, schema),
 				/The provided data is incompatible with all of the types allowed by the schema/,
+			);
+		});
+
+		it("Throws for structurally valid data, but created with a different schema.", () => {
+			const schemaFactory = new SchemaFactory("test");
+			class TestSchema extends schemaFactory.object("testObject", {
+				field: schemaFactory.string,
+			}) {}
+
+			class TestSchema2 extends schemaFactory.object("testObject", {
+				field: schemaFactory.string,
+			}) {}
+
+			const testData = new TestSchema2({ field: "test" });
+
+			assert.throws(
+				() => mapTreeFromNodeData(testData, TestSchema),
+				validateUsageError("Invalid schema for this context."),
 			);
 		});
 	});

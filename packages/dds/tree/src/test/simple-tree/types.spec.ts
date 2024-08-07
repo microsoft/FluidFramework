@@ -121,7 +121,7 @@ describe("simple-tree types", () => {
 		it("Valid subclass", () => {
 			const log: string[] = [];
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			const customThis: TreeNodeValid<unknown> = {} as TreeNodeValid<unknown>;
+			let customThis: TreeNodeValid<unknown> = {} as TreeNodeValid<unknown>;
 
 			class Subclass extends TreeNodeValid<number> {
 				public static readonly kind = NodeKind.Array;
@@ -168,6 +168,12 @@ describe("simple-tree types", () => {
 			}
 
 			const node = new Subclass(1);
+			assert.equal(node, customThis);
+			// Avoid creating two nodes with same object, as that errors due to tree node kernel association.
+			// Suggested way to avoid this lint is impossible in this case, so suppress the lint.
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			customThis = {} as TreeNodeValid<unknown>;
+
 			const node2 = new Subclass(2);
 			assert.deepEqual(log, [
 				"oneTimeSetup",
@@ -180,8 +186,6 @@ describe("simple-tree types", () => {
 				"prepareInstance",
 				"done",
 			]);
-
-			assert.equal(node, customThis);
 			assert.equal(node2, customThis);
 		});
 
