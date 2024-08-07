@@ -116,6 +116,7 @@ export {
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
+	type EmptyObject,
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
@@ -148,8 +149,6 @@ export {
 	type RestrictiveReadonlyRecord,
 	type MakeNominal,
 } from "./util/index.js";
-
-export { type EmptyObject } from "./feature-libraries/index.js";
 
 import * as InternalTypes from "./internalTypes.js";
 export {

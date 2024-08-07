@@ -213,7 +213,7 @@ describe("SharedTree benchmarks", () => {
 				before: () => {
 					expected = ((numberOfNodes - 1) * numberOfNodes) / 2; // Arithmetic sum of [0, numberOfNodes)
 					tree = flexTreeViewWithContent({
-						initialTree: makeJsWideTreeWithEndValue(numberOfNodes),
+						initialTree: typedJsonCursor(makeJsWideTreeWithEndValue(numberOfNodes)),
 						schema: wideSchema,
 					});
 				},
