@@ -75,7 +75,7 @@
 		"editor.defaultFormatter": "biomejs.biome",
 	},
 	"[typescript]": {
-		"editor.defaultFormatter": "vscode.typescript-language-features",
+		"editor.defaultFormatter": "biomejs.biome",
 	},
 	// Handle trailing whitespace and newlines for all files, in a way that matches how we configure the repo-wide formatter.
 	// They're specified here so they apply to files we don't format explicitly (e.g. yml files).
