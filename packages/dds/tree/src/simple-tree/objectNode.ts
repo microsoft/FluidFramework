@@ -29,7 +29,6 @@ import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
 	NodeKind,
 	type ImplicitFieldSchema,
-	type WithType,
 	type TreeNodeSchema,
 	getStoredKey,
 	getExplicitStoredKey,
@@ -37,10 +36,10 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type FieldSchema,
 	normalizeFieldSchema,
-	typeNameSymbol,
 	type ImplicitAllowedTypes,
 	FieldKind,
 } from "./schemaTypes.js";
+import { type WithType, typeNameSymbol } from "./core/index.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import {
 	type InternalTreeNode,

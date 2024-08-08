@@ -16,9 +16,9 @@ import {
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeKind,
 	type TreeNodeSchemaClass,
-	type WithType,
 	type TreeNodeSchema,
 } from "../schemaTypes.js";
+import type { WithType } from "../core/index.js";
 import type { TreeNode } from "../types.js";
 import type { FieldSchemaUnsafe } from "../typesUnsafe.js";
 

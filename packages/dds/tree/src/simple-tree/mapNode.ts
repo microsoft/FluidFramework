@@ -25,11 +25,10 @@ import {
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
-	type WithType,
 	type TreeNodeSchema,
 	type TreeNodeFromImplicitAllowedTypes,
-	typeNameSymbol,
 } from "./schemaTypes.js";
+import { type WithType, typeNameSymbol } from "./core/index.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import { type MostDerivedData, type TreeNode, TreeNodeValid } from "./types.js";
 import { getFlexSchema } from "./toFlexSchema.js";
