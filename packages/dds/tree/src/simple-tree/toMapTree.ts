@@ -30,17 +30,15 @@ import type { InsertableContent } from "./proxies.js";
 import {
 	type FieldSchema,
 	type ImplicitAllowedTypes,
-	NodeKind,
-	type TreeNodeSchema,
 	normalizeAllowedTypes,
 	extractFieldProvider,
 	isConstant,
 	type FieldProvider,
 } from "./schemaTypes.js";
+import { NodeKind, tryGetSimpleNodeSchema, type TreeNodeSchema } from "./core/index.js";
 import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
 import { tryGetInnerNode } from "./proxyBinding.js";
 import { isObjectNodeSchema } from "./objectNodeTypes.js";
-import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 
 /**
  * Module notes:
@@ -140,19 +138,19 @@ export function mapTreeFromNodeData(
 	allowedTypes: ImplicitAllowedTypes,
 	context?: NodeKeyManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
-): MapTree;
+): ExclusiveMapTree;
 export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
 	allowedTypes: ImplicitAllowedTypes,
 	context?: NodeKeyManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
-): MapTree | undefined;
+): ExclusiveMapTree | undefined;
 export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
 	allowedTypes: ImplicitAllowedTypes,
 	context?: NodeKeyManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
-): MapTree | undefined {
+): ExclusiveMapTree | undefined {
 	if (data === undefined) {
 		return undefined;
 	}

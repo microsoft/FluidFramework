@@ -19,22 +19,25 @@ import {
 	prepareContentForHydration,
 } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
-import { getSimpleNodeSchema } from "./schemaCaching.js";
+import { getSimpleNodeSchema } from "./core/index.js";
+import type {
+	ImplicitAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
+	TreeNodeFromImplicitAllowedTypes,
+} from "./schemaTypes.js";
 import {
 	NodeKind,
-	type ImplicitAllowedTypes,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
-	type WithType,
 	type TreeNodeSchema,
-	type TreeNodeFromImplicitAllowedTypes,
+	type WithType,
 	typeNameSymbol,
-} from "./schemaTypes.js";
+	type TreeNode,
+} from "./core/index.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
-import { type MostDerivedData, type TreeNode, TreeNodeValid } from "./types.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { RestrictiveReadonlyRecord } from "../util/index.js";
+import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 
 /**
  * A map of string keys to tree objects.
@@ -174,7 +177,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		const mapTree = mapTreeFromNodeData(
 			value as InsertableContent | undefined,
 			classSchema.info as ImplicitAllowedTypes,
-			node.context.nodeKeyManager,
+			node.context?.nodeKeyManager,
 			getSchemaAndPolicy(node),
 		);
 
@@ -183,7 +186,10 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 			return this;
 		}
 
-		prepareContentForHydration(mapTree, node.context.checkout.forest);
+		if (node.context !== undefined) {
+			prepareContentForHydration(mapTree, node.context.checkout.forest);
+		}
+
 		node.set(key, cursorForMapTreeNode(mapTree));
 		return this;
 	}

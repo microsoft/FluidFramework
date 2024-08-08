@@ -143,13 +143,15 @@ const compressionSuite = (getProvider) => {
 					this.skip();
 				}
 				await setupContainers({
-					compressionOptions: option.compressionAndChunking.compression
-						? {
-								minimumBatchSizeInBytes: 10,
-								compressionAlgorithm: CompressionAlgorithms.lz4,
-							}
-						: undefined,
-					chunkSizeInBytes: option.compressionAndChunking.chunking ? 100 : undefined,
+					compressionOptions: {
+						minimumBatchSizeInBytes: option.compressionAndChunking.compression
+							? 10
+							: Number.POSITIVE_INFINITY,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					chunkSizeInBytes: option.compressionAndChunking.chunking
+						? 100
+						: Number.POSITIVE_INFINITY,
 					enableGroupedBatching: option.grouping,
 				});
 				const values = [
