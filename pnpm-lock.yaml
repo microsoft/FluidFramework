@@ -15000,6 +15000,9 @@ importers:
       tinylicious:
         specifier: ^5.0.0
         version: 5.0.0
+      xml:
+        specifier: ^1.0.0
+        version: 1.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.8.3
@@ -15025,6 +15028,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.1
+      '@types/xml':
+        specifier: ^1.0.0
+        version: 1.0.11
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -27598,6 +27604,12 @@ packages:
     resolution: {integrity: sha512-vmQSUcfalpIq0R9q7uTo2lXs6eGIpt9wtnLdMv9LVpIjCA/+ufZRozlVoVelIYixx1ugCBKDhn89vnsEGOCx9A==}
     dependencies:
       '@types/node': 18.19.1
+
+  /@types/xml@1.0.11:
+    resolution: {integrity: sha512-9gktTjxBWoz4+X8ZOS+QRFM2/liMQgBv8Z36wuNnomK5jtXFq4IJa7Az4Hzoy+rYux343NkH9Dq+nzIdejVrjw==}
+    dependencies:
+      '@types/node': 18.19.1
+    dev: true
 
   /@types/yargs-parser@21.0.3:
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
