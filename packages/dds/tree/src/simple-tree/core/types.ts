@@ -16,10 +16,11 @@ import {
 } from "../../feature-libraries/index.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { getFlexSchema } from "../toFlexSchema.js";
 import { fail } from "../../util/index.js";
-import { getOrCreateInnerNode, setInnerNode } from "../proxyBinding.js";
 import { isTreeNode, TreeNodeKernel } from "./treeNodeKernel.js";
+
+import { getFlexSchema } from "../toFlexSchema.js";
+import { getOrCreateInnerNode } from "../proxyBinding.js";
 
 /**
  * Type alias to document which values are un-hydrated.
