@@ -1500,30 +1500,37 @@ describe("toMapTree", () => {
 	});
 });
 
-describe("mapTrees", () => {
-	it("can be deep copied", () => {
-		function generateMapTree(depth: number, i = 0): ExclusiveMapTree {
-			return {
-				type: brand(String(depth + i)),
-				value: depth + i,
-				fields: new Map(
-					depth === 0
-						? []
-						: [
-								[
-									brand("a"),
-									[generateMapTree(depth - 1, i + 1), generateMapTree(depth - 1, i + 2)],
-								],
-								[
-									brand("b"),
-									[generateMapTree(depth - 1, i + 3), generateMapTree(depth - 1, i + 4)],
-								],
-							],
-				),
-			};
-		}
+describe("deepCopyMapTree", () => {
+	/** Used by `generateMapTree` to give unique types and values to each MapTree */
+	let mapTreeGeneration = 0;
+	function generateMapTree(depth: number): ExclusiveMapTree {
+		const generation = mapTreeGeneration++;
+		return {
+			type: brand(String(generation)),
+			value: generation,
+			fields: new Map(
+				depth === 0
+					? []
+					: [
+							[brand("a"), [generateMapTree(depth - 1), generateMapTree(depth - 1)]],
+							[brand("b"), [generateMapTree(depth - 1), generateMapTree(depth - 1)]],
+						],
+			),
+		};
+	}
 
-		const mapTree = generateMapTree(3);
+	it("empty tree", () => {
+		const mapTree = generateMapTree(0);
+		assert.deepEqual(deepCopyMapTree(mapTree), mapTree);
+	});
+
+	it("shallow tree", () => {
+		const mapTree = generateMapTree(1);
+		assert.deepEqual(deepCopyMapTree(mapTree), mapTree);
+	});
+
+	it("deep tree", () => {
+		const mapTree = generateMapTree(2);
 		assert.deepEqual(deepCopyMapTree(mapTree), mapTree);
 	});
 });
