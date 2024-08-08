@@ -340,7 +340,9 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		);
 
 		const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
-		const ephemeralDocumentTTLSec = config.get("storage:ephemeralDocumentTTLSec") as number | undefined;
+		const ephemeralDocumentTTLSec = config.get("storage:ephemeralDocumentTTLSec") as
+			| number
+			| undefined;
 		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
 		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
 		const storageNameAllocator = storagePerDocEnabled
