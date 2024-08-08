@@ -28,11 +28,10 @@ import {
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
-	type WithType,
 	type TreeNodeSchema,
-	typeNameSymbol,
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
+import { type WithType, typeNameSymbol } from "./core/index.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import {
 	type TreeNode,
@@ -44,7 +43,7 @@ import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { getKernel } from "./treeNodeKernel.js";
+import { getKernel } from "./core/index.js";
 
 /**
  * A generic array type, used to defined types like {@link (TreeArrayNode:interface)}.

@@ -9,7 +9,7 @@ import { SchemaFactory } from "../../simple-tree/index.js";
 import { describeHydration, hydrate } from "./utils.js";
 import { Tree } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { isTreeNode } from "../../simple-tree/treeNodeKernel.js";
+import { isTreeNode } from "../../simple-tree/core/index.js";
 
 const schemaFactory = new SchemaFactory("Test");
 

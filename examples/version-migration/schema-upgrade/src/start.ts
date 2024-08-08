@@ -99,7 +99,7 @@ async function start(): Promise<void> {
 		id,
 		inventoryListDataTransformationCallback,
 	);
-	migrator.on("migrated", () => {
+	migrator.events.on("migrated", () => {
 		model.close();
 		model = migrator.currentModel;
 		render(model);
@@ -111,7 +111,7 @@ async function start(): Promise<void> {
 	// However, this will never be hit in this demo since we have a finite set of models to support.  If the model
 	// code loader pulls in the appropriate model dynamically, this might also never be hit since all clients
 	// are theoretically referencing the same model library.
-	migrator.on("migrationNotSupported", (version: string) => {
+	migrator.events.on("migrationNotSupported", (version: string) => {
 		// To move forward, we would need to acquire a model loader capable of loading the given model, retry the
 		// load, and set up a new Migrator with the new model loader.
 		console.error(

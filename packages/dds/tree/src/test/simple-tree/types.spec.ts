@@ -61,7 +61,7 @@ describe("simple-tree types", () => {
 					throw new Error("Method not implemented.");
 				}
 				public constructor() {
-					super();
+					super({});
 				}
 			}
 

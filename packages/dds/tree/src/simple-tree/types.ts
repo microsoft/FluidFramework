@@ -6,13 +6,8 @@
 import type { ErasedType } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import {
-	NodeKind,
-	type TreeNodeSchema,
-	type TreeNodeSchemaClass,
-	type WithType,
-	typeNameSymbol,
-} from "./schemaTypes.js";
+import { NodeKind, type TreeNodeSchema, type TreeNodeSchemaClass } from "./schemaTypes.js";
+import { type WithType, typeNameSymbol } from "./core/index.js";
 import {
 	type FlexTreeNode,
 	type MapTreeNode,
@@ -24,8 +19,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { fail } from "../util/index.js";
 import { getOrCreateInnerNode, setInnerNode } from "./proxyBinding.js";
-import { tryGetSchema } from "./treeNodeApi.js";
-import { isTreeNode, TreeNodeKernel } from "./treeNodeKernel.js";
+import { isTreeNode, TreeNodeKernel } from "./core/index.js";
 
 /**
  * Type alias to document which values are un-hydrated.
@@ -195,7 +189,7 @@ export abstract class TreeNode implements WithType {
 	>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
 
 	public static [Symbol.hasInstance](this: { prototype: object }, value: unknown): boolean {
-		const schema = tryGetSchema(value);
+		const schema = tryGetTreeNodeSchema(value);
 
 		if (schema === undefined || schema.kind === NodeKind.Leaf) {
 			return false;
@@ -205,11 +199,42 @@ export abstract class TreeNode implements WithType {
 		return inPrototypeChain(schema.prototype, this.prototype);
 	}
 
-	protected constructor() {
-		if (!inPrototypeChain(Reflect.getPrototypeOf(this), TreeNodeValid.prototype)) {
+	/**
+	 * TreeNodes must extend schema classes created by SchemaFactory, and therefore this constructor should not be invoked directly by code outside this package.
+	 * @privateRemarks
+	 * `token` must be the {@link privateToken} value, which is not package exported.
+	 * This is used to detect invalid subclasses.
+	 *
+	 * All valid subclass should use {@link TreeNodeValid}, but this code doesn't directly reference it to avoid cyclic dependencies.
+	 */
+	protected constructor(token: unknown) {
+		if (token !== privateToken) {
 			throw new UsageError("TreeNodes must extend schema classes created by SchemaFactory");
 		}
 	}
+}
+
+/**
+ * `token` to pass to {@link TreeNode}'s constructor used to detect invalid subclasses.
+ */
+const privateToken = {};
+
+/**
+ * Returns a schema for a value if the value is a {@link TreeNode}.
+ *
+ * Returns undefined for other values.
+ * @remarks
+ * Does not give schema for a {@link TreeLeafValue}.
+ */
+export function tryGetTreeNodeSchema<T>(
+	value: T,
+): undefined | TreeNodeSchema<string, NodeKind, unknown, T> {
+	type TOut = TreeNodeSchema<string, NodeKind, unknown, T>;
+	if (isTreeNode(value)) {
+		// This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.
+		return tryGetSimpleNodeSchema(getOrCreateInnerNode(value).schema) as TOut;
+	}
+	return undefined;
 }
 
 /**
@@ -332,7 +357,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	}
 
 	public constructor(input: TInput | InternalTreeNode) {
-		super();
+		super(privateToken);
 		const schema = this.constructor as typeof TreeNodeValid & TreeNodeSchema;
 		const cache = schema.markMostDerived();
 		if (!cache.oneTimeInitialized) {

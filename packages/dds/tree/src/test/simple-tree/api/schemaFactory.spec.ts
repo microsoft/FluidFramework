@@ -13,40 +13,40 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { TreeStatus } from "../../feature-libraries/index.js";
+import { TreeStatus } from "../../../feature-libraries/index.js";
 import {
 	treeNodeApi as Tree,
 	TreeViewConfiguration,
 	type TreeView,
-} from "../../simple-tree/index.js";
+} from "../../../simple-tree/index.js";
 import {
 	// Import directly to get the non-type import to allow testing of the package only instanceof
 	TreeNode,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/types.js";
+} from "../../../simple-tree/types.js";
 // eslint-disable-next-line import/no-internal-modules
-import { isTreeNode } from "../../simple-tree/treeNodeKernel.js";
+import { isTreeNode } from "../../../simple-tree/core/index.js";
 import {
 	SchemaFactory,
 	schemaFromValue,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/schemaFactory.js";
+} from "../../../simple-tree/api/schemaFactory.js";
 import type {
 	NodeFromSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/schemaTypes.js";
-import { TreeFactory } from "../../treeFactory.js";
+} from "../../../simple-tree/schemaTypes.js";
+import { TreeFactory } from "../../../treeFactory.js";
 import type {
 	areSafelyAssignable,
 	requireAssignableTo,
 	requireTrue,
-} from "../../util/index.js";
+} from "../../../util/index.js";
 
-import { hydrate } from "./utils.js";
-import { validateUsageError } from "../utils.js";
+import { hydrate } from "../utils.js";
+import { validateUsageError } from "../../utils.js";
 
 {
 	const schema = new SchemaFactory("Blah");
