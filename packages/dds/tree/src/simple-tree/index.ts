@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { typeNameSymbol, type WithType } from "./core/index.js";
 export {
 	type ITree,
 	type TreeView,
@@ -39,8 +40,6 @@ export {
 	type TreeNodeFromImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeLeafValue,
-	typeNameSymbol,
-	type WithType,
 	type AllowedTypes,
 	FieldKind,
 	FieldSchema,

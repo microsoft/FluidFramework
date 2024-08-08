@@ -4,3 +4,4 @@
  */
 
 export { isTreeNode, TreeNodeKernel, getKernel } from "./treeNodeKernel.js";
+export { type WithType, typeNameSymbol } from "./withType.js";

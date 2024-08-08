@@ -40,12 +40,12 @@ import {
 	type NodeKind,
 	type TreeNodeSchema,
 	type TreeNodeSchemaClass,
-	type WithType,
 	type FieldProps,
 	createFieldSchema,
 	type DefaultProvider,
 	getDefaultProvider,
 } from "../schemaTypes.js";
+import type { WithType } from "../core/index.js";
 import { type TreeArrayNode, arraySchema } from "../arrayNode.js";
 import {
 	type InsertableObjectFromSchemaRecord,

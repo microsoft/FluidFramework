@@ -28,11 +28,10 @@ import {
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
-	type WithType,
 	type TreeNodeSchema,
-	typeNameSymbol,
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
+import { type WithType, typeNameSymbol } from "./core/index.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import {
 	type TreeNode,

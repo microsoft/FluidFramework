@@ -6,13 +6,8 @@
 import type { ErasedType } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import {
-	NodeKind,
-	type TreeNodeSchema,
-	type TreeNodeSchemaClass,
-	type WithType,
-	typeNameSymbol,
-} from "./schemaTypes.js";
+import { NodeKind, type TreeNodeSchema, type TreeNodeSchemaClass } from "./schemaTypes.js";
+import { type WithType, typeNameSymbol } from "./core/index.js";
 import {
 	type FlexTreeNode,
 	type MapTreeNode,
@@ -204,12 +199,25 @@ export abstract class TreeNode implements WithType {
 		return inPrototypeChain(schema.prototype, this.prototype);
 	}
 
-	protected constructor() {
-		if (!inPrototypeChain(Reflect.getPrototypeOf(this), TreeNodeValid.prototype)) {
+	/**
+	 * TreeNodes must extend schema classes created by SchemaFactory, and therefore this constructor should not be invoked directly by code outside this package.
+	 * @privateRemarks
+	 * `token` must be the {@link privateToken} value, which is not package exported.
+	 * This is used to detect invalid subclasses.
+	 *
+	 * All valid subclass should use {@link TreeNodeValid}, but this code doesn't directly reference it to avoid cyclic dependencies.
+	 */
+	protected constructor(token: unknown) {
+		if (token !== privateToken) {
 			throw new UsageError("TreeNodes must extend schema classes created by SchemaFactory");
 		}
 	}
 }
+
+/**
+ * `token` to pass to {@link TreeNode}'s constructor used to detect invalid subclasses.
+ */
+const privateToken = {};
 
 /**
  * Returns a schema for a value if the value is a {@link TreeNode}.
@@ -349,7 +357,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	}
 
 	public constructor(input: TInput | InternalTreeNode) {
-		super();
+		super(privateToken);
 		const schema = this.constructor as typeof TreeNodeValid & TreeNodeSchema;
 		const cache = schema.markMostDerived();
 		if (!cache.oneTimeInitialized) {
