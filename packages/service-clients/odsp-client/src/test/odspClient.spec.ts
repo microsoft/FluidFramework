@@ -10,8 +10,8 @@ import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { type ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
 
-import type { OdspConnectionConfig } from "../interfaces.js";
-import { type IOdspClient, createOdspClient as createOdspClientCore } from "../odspClient.js";
+import type { OdspConnectionConfig, IOdspClient } from "../interfaces.js";
+import { createOdspClient as createOdspClientCore } from "../odspClient.js";
 
 import { OdspTestTokenProvider } from "./odspTestTokenProvider.js";
 

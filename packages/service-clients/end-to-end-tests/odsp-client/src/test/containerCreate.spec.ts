@@ -126,7 +126,7 @@ describe("Container create scenarios", () => {
 			});
 		}
 
-		const resources = client.getContainer({ itemId }, schema);
+		const resources = client.getContainer(itemId, schema);
 		await assert.doesNotReject(
 			resources,
 			() => true,
@@ -140,7 +140,7 @@ describe("Container create scenarios", () => {
 	 * Expected behavior: an error should be thrown when trying to get a non-existent container.
 	 */
 	it("cannot load improperly created container (cannot load a non-existent container)", async () => {
-		const containerAndServicesP = client.getContainer({ itemId: "containerConfig" }, schema);
+		const containerAndServicesP = client.getContainer("containerConfig" /* itemId */, schema);
 
 		const errorFn = (error: Error): boolean => {
 			assert.notStrictEqual(error.message, undefined, "Odsp Client error is undefined");

@@ -11,14 +11,11 @@ export interface IOdspTokenProvider {
 }
 
 // @beta
-export interface OdspConnectionConfig extends OdspSiteLocation {
-    tokenProvider: IOdspTokenProvider;
-}
-
-// @beta
-export interface OdspSiteLocation {
+export interface OdspConnectionConfig {
     driveId: string;
+    isClpCompliant?: boolean;
     siteUrl: string;
+    tokenProvider: IOdspTokenProvider;
 }
 
 // @beta

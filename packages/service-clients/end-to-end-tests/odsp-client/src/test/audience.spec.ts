@@ -110,7 +110,7 @@ describe("Fluid audience", () => {
 				"Fluid.Container.ForceWriteConnection": true,
 			}),
 		);
-		const { services: servicesGet } = await client2.getContainer({ itemId }, schema);
+		const { services: servicesGet } = await client2.getContainer(itemId, schema);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
 		const partner = await waitForMember(servicesGet.audience, client2Creds.email);
@@ -154,7 +154,7 @@ describe("Fluid audience", () => {
 				"Fluid.Container.ForceWriteConnection": true,
 			}),
 		);
-		const { services: servicesGet } = await client2.getContainer({ itemId }, schema);
+		const { services: servicesGet } = await client2.getContainer(itemId, schema);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
 		const partner = await waitForMember(servicesGet.audience, client2Creds.email);

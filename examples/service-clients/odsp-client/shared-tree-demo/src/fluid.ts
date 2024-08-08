@@ -32,7 +32,7 @@ export const loadFluidData = async (
 		container,
 		services,
 	}: { container: IOdspFluidContainer; services: OdspContainerServices } =
-		await client.getContainer({ itemId }, schema);
+		await client.getContainer(itemId, schema);
 
 	return { services, container };
 };

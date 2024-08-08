@@ -14,23 +14,18 @@
  */
 
 export type {
-	OdspSiteLocation,
 	OdspConnectionConfig,
 	OdspClientProps,
 	OdspContainerServices,
 	IOdspAudience,
 	OdspMember,
 	TokenResponse,
-	OdspContainerAttachInfo,
+	OdspContainerAttachRequest,
 	OdspContainerAttachType,
 	OdspContainerAttachResult,
-	OdspContainerIdentifier,
 	OdspContainerOpenOptions,
-	OdspContainerCreateOptions,
+	IOdspClient,
+	IOdspFluidContainer,
 } from "./interfaces.js";
-export {
-	type IOdspClient,
-	type IOdspFluidContainer,
-	createOdspClient,
-} from "./odspClient.js";
+export { createOdspClient } from "./odspClient.js";
 export { type IOdspTokenProvider } from "./token.js";

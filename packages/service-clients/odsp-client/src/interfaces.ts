@@ -7,7 +7,12 @@ import type {
 	IConfigProviderBase,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
+import type {
+	IMember,
+	IServiceAudience,
+	ContainerSchema,
+	IFluidContainer,
+} from "@fluidframework/fluid-static";
 import type {
 	ISharingLinkKind,
 	ShareLinkInfoType,
@@ -23,7 +28,12 @@ import type { IOdspTokenProvider } from "./token.js";
  * required for ODSP.
  * @beta
  */
-export interface OdspSiteLocation {
+export interface OdspConnectionConfig {
+	/**
+	 * Instance that provides AAD endpoint tokens for Push and SharePoint
+	 */
+	tokenProvider: IOdspTokenProvider;
+
 	/**
 	 * Site url representing ODSP resource location. It points to the specific SharePoint site where you can store and access the containers you create.
 	 */
@@ -33,19 +43,12 @@ export interface OdspSiteLocation {
 	 * SharePoint Embedded Container Id of the tenant where Fluid containers are created
 	 */
 	driveId: string;
-}
 
-/**
- * Defines the necessary properties that will be applied to all containers
- * created by an OdspClient instance. This includes callbacks for the authentication tokens
- * required for ODSP.
- * @beta
- */
-export interface OdspConnectionConfig extends OdspSiteLocation {
 	/**
-	 * Instance that provides AAD endpoint tokens for Push and SharePoint
+	 * Should be set to true only by application that is CLP compliant, for CLP compliant workflow.
+	 * This argument has no impact if application is not properly registered with Sharepoint.
 	 */
-	tokenProvider: IOdspTokenProvider;
+	isClpCompliant?: boolean;
 }
 
 /**
@@ -84,7 +87,7 @@ export interface OdspClientProps {
  * If no argument is provided, file with random name (uuid) will be created.
  * @alpha
  */
-export type OdspContainerAttachInfo =
+export type OdspContainerAttachRequest =
 	| {
 			/**
 			 * The file path where Fluid containers are created. If undefined, the file is created at the root.
@@ -121,18 +124,10 @@ export interface OdspContainerAttachResult {
 	itemId: string;
 
 	/**
-	 * If OdspContainerAttachInfo.createShareLinkType was provided at the time of IOdspFluidContainer.attach() call,
+	 * If OdspContainerAttachRequest.createShareLinkType was provided at the time of IOdspFluidContainer.attach() call,
 	 * this value will contain sharing link information for created file.
 	 */
 	shareLinkInfo?: ShareLinkInfoType;
-
-	/**
-	 * If sharing link info was requested to be generated and successfully was obtained, this property will
-	 * contain sharing link that could be used with IOdspClient.getContainer() to open such container by anyone
-	 * who poses such link (and is within the sharing scope of a link)
-	 * This link is sufficient to identify a file in Sharepoint. In other words, it encodes information like driveId, itemId, siteUrl.
-	 */
-	sharingLink?: string;
 }
 
 /**
@@ -143,22 +138,8 @@ export interface OdspContainerAttachResult {
  * @alpha
  */
 export type OdspContainerAttachType = (
-	param?: OdspContainerAttachInfo,
-	options?: OdspContainerCreateOptions,
+	param?: OdspContainerAttachRequest,
 ) => Promise<OdspContainerAttachResult>;
-
-/**
- * Type of argument to IOdspClient.getContainer()
- * Identifies a container instance in storage.
- * @alpha
- */
-export interface OdspContainerIdentifier {
-	/**
-	 * If itemId is provided, then OdspSiteLocation information (see OdspClientProps.connection) passed to createOdspClient()
-	 * is used together with itemId to identify a file in Sharepoint.
-	 */
-	itemId: string;
-}
 
 /**
  * Interface describing various options controling container open
@@ -168,7 +149,7 @@ export interface OdspContainerOpenOptions {
 	/**
 	 * A sharing link could be provided to identify a file. This link has to be in very specific format - see
 	 * OdspContainerAttachResult.sharingLink, result of calling IOdspFluidContainer.
-	 * When sharing link is provided, it uniquely identifies a file in Sharepoint - OdspSiteLocation information
+	 * When sharing link is provided, it uniquely identifies a file in Sharepoint - OdspConnectionConfig information
 	 * (part of OdspClientProps.connection provided to createOdspClient()) is ignored in such case.
 	 *
 	 * This is used to save the network calls while doing trees/latest call as if the client does not have
@@ -177,28 +158,10 @@ export interface OdspContainerOpenOptions {
 	sharingLinkToRedeem?: string;
 
 	/**
-	 * Should be set to true only by application that is CLP compliant, for CLP compliant workflow.
-	 * This argument has no impact if application is not properly registered with Sharepoint.
-	 */
-	isClpCompliant?: boolean;
-
-	/**
 	 * Can specify specific file version to open. If specified, opened container will be read-only.
 	 * If not specified, current (latest, read-write) version of the file is opened.
 	 */
 	fileVersion?: string;
-}
-
-/**
- * Interface describing various options controling container open
- * @alpha
- */
-export interface OdspContainerCreateOptions {
-	/**
-	 * Should be set to true only by application that is CLP compliant, for CLP compliant workflow.
-	 * This argument has no impact if application is not properly registered with Sharepoint.
-	 */
-	isClpCompliant?: boolean;
 }
 
 /**
@@ -258,4 +221,44 @@ export interface TokenResponse {
 	 * @remarks `undefined` indicates that it could not be determined whether or not the token was obtained this way.
 	 */
 	fromCache?: boolean;
+}
+
+/**
+ * Fluid Container type
+ * @alpha
+ */
+export type IOdspFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> =
+	IFluidContainer<TContainerSchema, OdspContainerAttachType>;
+
+/**
+ * IOdspClient provides the ability to manipulate Fluid containers backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
+ * @alpha
+ */
+export interface IOdspClient {
+	/**
+	 * Creates a new container in memory. Calling attach() on returned container will create container in storage.
+	 * @param containerSchema - schema of the created container
+	 */
+	createContainer<T extends ContainerSchema>(
+		containerSchema: T,
+	): Promise<{
+		container: IOdspFluidContainer<T>;
+		services: OdspContainerServices;
+	}>;
+
+	/**
+	 * Opens existing container. If container does not exist, the call will fail with an error with errorType = DriverErrorTypes.fileNotFoundOrAccessDeniedError.
+	 * @param itemId - ID of the container in storage. Used together with OdspClientProps.connection info (see createOdspClient()) to identify a file in Sharepoint.
+	 * @param options - various options controlling container flow.
+	 * This argument has no impact if application is not properly registered with Sharepoint.
+	 * @param containerSchema - schema of the container.
+	 */
+	getContainer<T extends ContainerSchema>(
+		itemId: string,
+		containerSchema: T,
+		options?: OdspContainerOpenOptions,
+	): Promise<{
+		container: IOdspFluidContainer<T>;
+		services: OdspContainerServices;
+	}>;
 }

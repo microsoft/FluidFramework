@@ -22,7 +22,7 @@ import type {
 	IUrlResolver,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import type { ContainerSchema } from "@fluidframework/fluid-static";
 import type { IRootDataObject } from "@fluidframework/fluid-static/internal";
 import {
 	createDOProviderContainerRuntimeFactory,
@@ -46,17 +46,19 @@ import { v4 as uuid } from "uuid";
 import type {
 	TokenResponse,
 	OdspClientProps,
-	OdspSiteLocation,
-	OdspContainerAttachInfo,
+	OdspContainerAttachRequest,
 	OdspContainerAttachType,
 	OdspContainerServices,
 	OdspContainerAttachResult,
-	OdspContainerIdentifier,
 	OdspContainerOpenOptions,
-	OdspContainerCreateOptions,
+	OdspConnectionConfig,
+	IOdspClient,
+	IOdspFluidContainer,
 } from "./interfaces.js";
 import { createOdspAudienceMember } from "./odspAudience.js";
 import { type IOdspTokenProvider } from "./token.js";
+
+type OdspSiteLocation = Omit<OdspConnectionConfig, "tokenProvider">;
 
 async function getStorageToken(
 	options: OdspResourceTokenFetchOptions,
@@ -123,8 +125,11 @@ class OdspFileCreateUrlResolver implements IUrlResolver {
 
 /**
  * Creates OdspClient
- * @param properties - properties
- * @returns OdspClient
+ * @param driverFactory - driver factory to use
+ * @param connectionConfig - connection config, specifis token callback and location of the files
+ * @param logger - (options) logger to use
+ * @param configProvider - (optional) overwrires
+ * @returns IOdspClient
  */
 function createOdspClientCore(
 	driverFactory: IDocumentServiceFactory,
@@ -138,7 +143,7 @@ function createOdspClientCore(
 /**
  * Creates OdspClient
  * @param properties - properties
- * @returns OdspClient
+ * @returns IOdspClient
  * @alpha
  */
 export function createOdspClient(properties: OdspClientProps): IOdspClient {
@@ -153,46 +158,6 @@ export function createOdspClient(properties: OdspClientProps): IOdspClient {
 		properties.logger,
 		properties.configProvider,
 	);
-}
-
-/**
- * Fluid Container type
- * @alpha
- */
-export type IOdspFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> =
-	IFluidContainer<TContainerSchema, OdspContainerAttachType>;
-
-/**
- * IOdspClient provides the ability to manipulate Fluid containers backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
- * @alpha
- */
-export interface IOdspClient {
-	/**
-	 * Creates a new container in memory. Calling attach() on returned container will create container in storage.
-	 * @param containerSchema - schema of the created container
-	 */
-	createContainer<T extends ContainerSchema>(
-		containerSchema: T,
-	): Promise<{
-		container: IOdspFluidContainer<T>;
-		services: OdspContainerServices;
-	}>;
-
-	/**
-	 * Opens existing container. If container does not exist, the call will fail with an error with errorType = DriverErrorTypes.fileNotFoundOrAccessDeniedError.
-	 * @param request - identification of the container
-	 * @param isClpCompliant - Should be set to true only by application that is CLP compliant, for CLP compliant workflow.
-	 * This argument has no impact if application is not properly registered with Sharepoint.
-	 * @param containerSchema - schema of the container.
-	 */
-	getContainer<T extends ContainerSchema>(
-		request: OdspContainerIdentifier,
-		containerSchema: T,
-		options?: OdspContainerOpenOptions,
-	): Promise<{
-		container: IOdspFluidContainer<T>;
-		services: OdspContainerServices;
-	}>;
 }
 
 /**
@@ -238,7 +203,7 @@ class OdspClient implements IOdspClient {
 	}
 
 	public async getContainer<T extends ContainerSchema>(
-		containerIdentity: OdspContainerIdentifier,
+		itemId: string,
 		containerSchema: T,
 		options?: OdspContainerOpenOptions,
 	): Promise<{
@@ -251,13 +216,13 @@ class OdspClient implements IOdspClient {
 			// Identity of a file
 			siteUrl: this.connectionConfig.siteUrl,
 			driveId: this.connectionConfig.driveId,
-			itemId: containerIdentity.itemId,
+			itemId,
 
 			fileVersion: options?.fileVersion,
 
 			sharingLinkToRedeem: options?.sharingLinkToRedeem,
 
-			isClpCompliantApp: options?.isClpCompliant === true,
+			isClpCompliantApp: this.connectionConfig.isClpCompliant === true,
 		};
 
 		const loader = this.createLoader(
@@ -319,8 +284,7 @@ class OdspClient implements IOdspClient {
 		 * See {@link FluidContainer.attach}
 		 */
 		fluidContainer.attach = async (
-			odspProps?: OdspContainerAttachInfo,
-			options?: OdspContainerCreateOptions,
+			odspProps?: OdspContainerAttachRequest,
 		): Promise<OdspContainerAttachResult> => {
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
@@ -329,7 +293,7 @@ class OdspClient implements IOdspClient {
 			const base = {
 				siteUrl: connectionConfig.siteUrl,
 				driveId: connectionConfig.driveId,
-				isClpCompliantApp: options?.isClpCompliant === true,
+				isClpCompliantApp: connectionConfig.isClpCompliant === true,
 			};
 
 			const resolved: IOdspCreateRequest =
