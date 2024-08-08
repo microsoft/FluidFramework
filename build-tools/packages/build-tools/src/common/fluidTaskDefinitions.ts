@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { PackageJson } from "./npmPackage";
+import { isFluidBuildScript } from "./fluidBuild";
+import type { PackageJson } from "./npmPackage";
 
 /**
  * Task definitions (type `TaskDefinitions`) is an object describing build tasks for fluid-build.
@@ -246,8 +247,10 @@ export function getTaskDefinitions(
 				const script = json.scripts?.[name];
 				if (script === undefined) {
 					throw new Error(`Script not found for task definition '${name}'`);
-				} else if (script.startsWith("fluid-build ")) {
-					throw new Error(`Script task should not invoke 'fluid-build' in '${name}'`);
+				} else if (isFluidBuildScript(script)) {
+					throw new Error(
+						`Script task should not invoke the fluid-build executable in '${name}'`,
+					);
 				}
 			} else {
 				if (full.before.length !== 0 || full.after.length !== 0) {

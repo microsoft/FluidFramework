@@ -16,6 +16,12 @@ import { ISymlinkOptions } from "./symlinkUtils";
 const { log, warning, errorLog } = defaultLogger;
 
 interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
+/**
+ * The name of the executable that should be parsed and interpreted as fluid-build itself. This enables alternative
+ * front-end CLIs to re-use the fluid-build core but under a different name.
+ */
+	executableName: string,
+
 	nolint: boolean;
 	lintonly: boolean;
 	showExec: boolean;
@@ -38,6 +44,7 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
 
 // defaults
 export const options: FastBuildOptions = {
+	executableName: "fluid-build",
 	nolint: false,
 	lintonly: false,
 	showExec: false,

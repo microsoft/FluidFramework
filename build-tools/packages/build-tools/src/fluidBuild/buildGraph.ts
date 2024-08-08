@@ -10,6 +10,7 @@ import * as semver from "semver";
 import * as assert from "assert";
 import registerDebug from "debug";
 import { FileHashCache } from "../common/fileHashCache";
+import { isFluidBuildScript } from "../common/fluidBuild";
 import {
 	TaskDefinition,
 	TaskDefinitions,
@@ -138,9 +139,9 @@ export class BuildPackage {
 		if (
 			// Only enable release group root script if it is explicitly defined, for places that don't use it yet
 			!isReleaseGroupRootScriptEnabled ||
-			// if there is no script or the script starts with "fluid-build", then use the default
+			// if there is no script or the script is a fluid-build script, then use the default
 			script === undefined ||
-			script.startsWith("fluid-build ")
+			isFluidBuildScript(script)
 		) {
 			// default for release group root is to depend on the task of all packages in the release group
 			return {
@@ -165,7 +166,7 @@ export class BuildPackage {
 
 	private createScriptTask(taskName: string, pendingInitDep: Task[]) {
 		const command = this.pkg.getScript(taskName);
-		if (command !== undefined && !command.startsWith("fluid-build ")) {
+		if (command !== undefined && !isFluidBuildScript(command)) {
 			// Find the script task (without the lifecycle task)
 			let scriptTask = this.scriptTasks.get(taskName);
 			if (scriptTask === undefined) {

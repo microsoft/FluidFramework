@@ -28,6 +28,8 @@ export {
 } from "./common/npmPackage";
 export { Timer } from "./common/timer";
 
+export { isFluidBuildScript } from "./common/fluidBuild";
+
 // For repo policy check
 export {
 	normalizeGlobalTaskDefinitions,
