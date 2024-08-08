@@ -10,10 +10,25 @@ function createSuite<TArgs extends StressSuiteArguments>(
 	args: TArgs,
 ) {
 	return function (this: Mocha.Suite) {
-		if (args.isStress) {
-			// Stress runs may have tests which are expected to take longer amounts of time.
-			// Don't override the timeout if it's already set to a higher value, though.
-			this.timeout(this.timeout() === 0 ? 0 : Math.max(10_000, this.timeout()));
+		// Stress runs may have tests which are expected to take longer amounts of time.
+		// Don't override the timeout if it's already set to a higher value, though.
+		switch (args.stressMode) {
+			case StressMode.Normal: {
+				this.timeout(this.timeout() === 0 ? 0 : Math.max(10_000, this.timeout()));
+
+				break;
+			}
+			case StressMode.Long: {
+				this.timeout(this.timeout() === 0 ? 0 : Math.max(20_000, this.timeout()));
+
+				break;
+			}
+			case StressMode.Short: {
+				this.timeout(this.timeout() === 0 ? 0 : Math.max(5_000, this.timeout()));
+
+				break;
+			}
+			// No default
 		}
 		tests.bind(this)(args);
 	};
@@ -24,12 +39,24 @@ function createSuite<TArgs extends StressSuiteArguments>(
  */
 export interface StressSuiteArguments {
 	/**
-	 * Whether the current run is a stress run, which generally runs longer or more programatically generated tests.
+	 * Indicates the "stress level" of the tests. The number of test seeds and the timeout threshold
+	 * will be adjusted according to the selected mode.
 	 *
-	 * Packages which use this should generally have a `test:stress` script in their package.json for conveniently running
-	 * the equivalent checks locally.
+	 * - Short: Runs only half of the test seeds randomly, with a timeout set to half of the default value.
+	 * - Normal: Runs all test seeds with the default timeout.
+	 * - Long: Runs all test seeds twice, with the timeout threshold doubled.
+	 * - undefined: Indicates that no stress mode is applied, and no tests will be run in stress mode.
 	 */
-	isStress: boolean;
+	stressMode: StressMode | undefined;
+}
+
+/**
+ * @internal
+ */
+export enum StressMode {
+	Short = "short",
+	Normal = "normal",
+	Long = "long",
 }
 
 /**
@@ -95,11 +122,23 @@ export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFu
 			? Number.parseInt(process.env.FUZZ_TEST_COUNT, 10)
 			: undefined;
 	const testCount = testCountFromEnv ?? options.defaultTestCount;
-	const isStress =
-		process.env?.FUZZ_STRESS_RUN !== undefined && !!process.env?.FUZZ_STRESS_RUN;
-	const args = { testCount, isStress };
+
+	const stressMode = (() => {
+		switch (process.env?.FUZZ_TEST_RUN) {
+			case "short":
+				return StressMode.Short;
+			case "normal":
+				return StressMode.Normal;
+			case "long":
+				return StressMode.Long;
+			default:
+				return undefined;
+		}
+	})();
+
+	const args = { testCount, stressMode };
 	const d: DescribeFuzz = (name, tests) =>
-		(isStress ? describe.only : describe)(name, createSuite(tests, args));
+		(stressMode != null ? describe.only : describe)(name, createSuite(tests, args));
 	d.skip = (name, tests) => describe.skip(name, createSuite(tests, args));
 	d.only = (name, tests) => describe.only(name, createSuite(tests, args));
 	return d;

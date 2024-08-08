@@ -540,7 +540,7 @@ export function testRebaserAxioms() {
 			runSingleEditRebaseAxiomSuite({ content: "A" });
 		});
 
-		describeStress("Exhaustive", ({ isStress }) => {
+		describeStress("Exhaustive", ({ stressMode }) => {
 			runExhaustiveComposeRebaseSuite(
 				[{ content: undefined }, { content: "A" }],
 				generateChildStates,
@@ -557,8 +557,8 @@ export function testRebaserAxioms() {
 				},
 				{
 					numberOfEditsToRebase: 3,
-					numberOfEditsToRebaseOver: isStress ? 5 : 3,
-					numberOfEditsToVerifyAssociativity: isStress ? 6 : 3,
+					numberOfEditsToRebaseOver: stressMode !== undefined ? 5 : 3,
+					numberOfEditsToVerifyAssociativity: stressMode !== undefined ? 6 : 3,
 				},
 			);
 		});

@@ -16,6 +16,7 @@ export {
 	FuzzSuiteArguments,
 	MochaSuiteWithArguments,
 	StressSuiteArguments,
+	StressMode,
 } from "./describeFuzz.js";
 export {
 	asyncGeneratorFromArray,

@@ -711,8 +711,8 @@ const fieldRebaser: BoundFieldChangeRebaser<WrappedChange> = {
 };
 
 export function testStateBasedRebaserAxioms() {
-	describeStress("State-based Rebaser Axioms", function ({ isStress }) {
-		this.timeout(isStress ? 80_000 : 5000);
+	describeStress("State-based Rebaser Axioms", function ({ stressMode }) {
+		this.timeout(stressMode !== undefined ? 80_000 : 5000);
 		const allocator = idAllocatorFromMaxId();
 		const startingLength = 2;
 		const startingState: NodeState[] = makeArray(startingLength, () => ({
@@ -732,7 +732,7 @@ export function testStateBasedRebaserAxioms() {
 			fieldRebaser,
 			{
 				groupSubSuites: true,
-				numberOfEditsToVerifyAssociativity: isStress ? 4 : 3,
+				numberOfEditsToVerifyAssociativity: stressMode !== undefined ? 4 : 3,
 				skipRebaseOverCompose: false,
 			},
 		);

@@ -9,7 +9,7 @@ import * as path from "node:path";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { AsyncGenerator } from "@fluid-private/stochastic-test-utils";
-import { chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
+import { chainAsync, done, StressMode, takeAsync } from "@fluid-private/stochastic-test-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { Counter } from "@fluid-private/stochastic-test-utils/internal/test/utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
@@ -33,6 +33,7 @@ import type {
 } from "../ddsFuzzHarness.js";
 import {
 	defaultDDSFuzzSuiteOptions,
+	generateTestSeeds,
 	mixinAttach,
 	mixinClientSelection,
 	mixinNewClient,
@@ -1054,6 +1055,39 @@ describe("DDS Fuzz Harness", () => {
 			it("successfully references the replay file", () => {
 				assert.equal(runResults.stats.passes, 1);
 				assert.equal(runResults.stats.failures, 0);
+			});
+		});
+
+		describe("generate different seeds given distinct stress modes", () => {
+			it("should generate all seeds for StressMode.Normal", () => {
+				const testCount = 100;
+				const seeds: number[] = generateTestSeeds(testCount, StressMode.Normal);
+				assert.deepEqual(
+					seeds,
+					Array.from({ length: testCount }, (_, i) => i),
+				);
+			});
+
+			it("should generate half seeds for StressMode.Short", () => {
+				const testCount = 100;
+				const seeds: number[] = generateTestSeeds(testCount, StressMode.Short);
+				assert.equal(seeds.length, Math.ceil(testCount / 2));
+				// it should generate unique seeds for StressMode.Short
+				const uniqueSeeds = new Set(seeds);
+				assert.equal(seeds.length, uniqueSeeds.size);
+			});
+
+			it("should generate double the seeds for StressMode.Long", () => {
+				const testCount = 100;
+				const seeds: number[] = generateTestSeeds(testCount, StressMode.Long);
+				assert.equal(seeds.length, testCount * 2);
+				const firstHalf = seeds.slice(0, testCount);
+				const secondHalf = seeds.slice(testCount);
+				// it should generate unique seeds for StressMode.Long in each half
+				const uniqueFirstHalf = new Set(firstHalf);
+				const uniqueSecondHalf = new Set(secondHalf);
+				assert.equal(firstHalf.length, uniqueFirstHalf.size);
+				assert.equal(secondHalf.length, uniqueSecondHalf.size);
 			});
 		});
 	});
