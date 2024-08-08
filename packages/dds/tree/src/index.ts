@@ -111,6 +111,7 @@ export {
 	type FieldSchemaUnsafe,
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
+	type FixRecursiveArraySchema,
 	// experimental @internal APIs:
 	adaptEnum,
 	enumFromStrings,

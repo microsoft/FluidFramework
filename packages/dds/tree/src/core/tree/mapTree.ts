@@ -8,23 +8,24 @@ import type { FieldKey } from "../schema-stored/index.js";
 import type { NodeData } from "./types.js";
 
 /**
- * This modules provides a simple in memory tree format.
+ * This module provides a simple in-memory tree format.
  */
 
 /**
- * Simple in memory tree representation based on Maps.
- * MapTrees should not store empty fields.
+ * Simple in-memory tree representation based on Maps.
+ * @remarks MapTrees should not store empty fields.
  */
 export interface MapTree extends NodeData {
 	readonly fields: ReadonlyMap<FieldKey, readonly MapTree[]>;
 }
 
 /**
- * {@link MapTree} which is owned by a single reference, and allowed to be mutated.
+ * A {@link MapTree} which is owned by a single reference, and therefore allowed to be mutated.
  *
  * @remarks
- * To not keep multiple references to a value with this type around to avoid unexpected mutations.
- * While this type does implement MapTree, it should not be used as a MapTree while it is being mutated.
+ * To ensure unexpected mutations, this object should have a single owner/context.
+ * Though this type does implement MapTree, it should not be used as a MapTree while it can possibly be mutated.
+ * If it is shared to other contexts, it should first be upcast to a {@link MapTree} and further mutations should be avoided.
  */
 export interface ExclusiveMapTree extends NodeData, MapTree {
 	fields: Map<FieldKey, ExclusiveMapTree[]>;

@@ -6,9 +6,9 @@
 import type { IFluidLoadable, IDisposable } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { CommitMetadata } from "../core/index.js";
-import type { Listenable } from "../events/index.js";
-import type { RevertibleFactory } from "../shared-tree/index.js";
+import type { CommitMetadata } from "../../core/index.js";
+import type { Listenable } from "../../events/index.js";
+import type { RevertibleFactory } from "../../shared-tree/index.js";
 
 import {
 	type ImplicitAllowedTypes,
@@ -20,14 +20,14 @@ import {
 	type TreeNodeSchema,
 	FieldKind,
 	normalizeAllowedTypes,
-} from "./schemaTypes.js";
-import { toFlexSchema } from "./toFlexSchema.js";
-import { LeafNodeSchema } from "./leafNodeSchema.js";
+} from "../schemaTypes.js";
+import { toFlexSchema } from "../toFlexSchema.js";
+import { LeafNodeSchema } from "../leafNodeSchema.js";
 import { assert } from "@fluidframework/core-utils/internal";
-import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
+import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
 import { markSchemaMostDerived } from "./schemaFactory.js";
-import { fail, getOrCreate } from "../util/index.js";
-import type { MakeNominal } from "../util/index.js";
+import { fail, getOrCreate } from "../../util/index.js";
+import type { MakeNominal } from "../../util/index.js";
 /**
  * Channel for a Fluid Tree DDS.
  * @remarks

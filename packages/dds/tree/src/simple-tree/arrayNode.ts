@@ -44,7 +44,7 @@ import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { getKernel } from "./treeNodeKernel.js";
+import { getKernel } from "./core/index.js";
 
 /**
  * A generic array type, used to defined types like {@link (TreeArrayNode:interface)}.
@@ -707,12 +707,15 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 				mapTreeFromNodeData(
 					c,
 					simpleFieldSchema.allowedTypes,
-					sequenceField.context.nodeKeyManager,
+					sequenceField.context?.nodeKeyManager,
 					getSchemaAndPolicy(sequenceField),
 				),
 			);
 
-		prepareContentForHydration(mapTrees, sequenceField.context.checkout.forest);
+		if (sequenceField.context !== undefined) {
+			prepareContentForHydration(mapTrees, sequenceField.context.checkout.forest);
+		}
+
 		return cursorForMapTreeField(mapTrees);
 	}
 
@@ -838,6 +841,10 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		source?: TreeArrayNode,
 	): void {
 		const destinationField = getSequenceField(this);
+		if (destinationField.context === undefined) {
+			throw new UsageError(`An array cannot be mutated before being inserted into the tree`);
+		}
+
 		validateIndex(destinationIndex, destinationField, "moveRangeToIndex", true);
 		validateIndexRange(sourceStart, sourceEnd, source ?? destinationField, "moveRangeToIndex");
 		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
