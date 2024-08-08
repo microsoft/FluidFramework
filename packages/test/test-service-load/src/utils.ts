@@ -36,7 +36,6 @@ import {
 } from "./optionsMatrix.js";
 import { pkgName, pkgVersion } from "./packageVersion.js";
 import type { IRunConfig, ITestRunner, TestConfiguration } from "./testConfigFile.js";
-import { VirtualDataStoreFactory } from "./virtualDataStore.js";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
@@ -72,7 +71,9 @@ export async function createCodeLoader(
 		defaultFactory: dataStoreFactory,
 		registryEntries: [
 			[dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
-			VirtualDataStoreFactory.registryEntry, //* TODO: Do we want this present for all workloads? Not sure what it does
+			//* TODO: Broken ("Registry does not contain entry for the package")
+			//* Not sure how this fits into each individual workload anyway.
+			//* VirtualDataStoreFactory.registryEntry,
 		],
 		runtimeOptions,
 	});
