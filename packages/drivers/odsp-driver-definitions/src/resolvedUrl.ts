@@ -161,7 +161,8 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	summarizer: boolean;
 
 	/*
-	 * containerPackageName is used for adding the package name to the request headers.
+	 * Contains hints to the application on what code version to load to interact with data model.
+	 * containerPackageName property is used for adding the package name to the request headers.
 	 * This may be used for preloading the container package when loading Fluid content.
 	 */
 	codeHint?: {
@@ -169,7 +170,7 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	};
 
 	/**
-	 * If privided, tells version of a file to open
+	 * If provided, tells version of a file to open
 	 */
 	fileVersion: string | undefined;
 
@@ -193,7 +194,7 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 }
 
 /**
- * Input arguments required to create IOdspResolvedUrl that OdspDriver can work with.
+ * A set of inputs to the driver for file open scenarios.
  * @legacy
  * @alpha
  */
@@ -247,7 +248,7 @@ export interface IOdspOpenRequest {
 }
 
 /**
- * Input arguments required to create IOdspResolvedUrl that OdspDriver can work with.
+ * A set of inputs for the driver to create a new file or a FF partition on existing file.
  * @legacy
  * @alpha
  */
@@ -281,7 +282,9 @@ export type IOdspCreateRequest = {
 } & (
 	| {
 			/**
-			 * {@inheritDoc (IOdspUrlParts:interface).itemId}
+			 * Microsoft internal only. Creates alternate partition with FF content.
+			 * Can be only used for a files that provisioned to support FF protocol on alternative paritions.
+			 * {@link (IOdspUrlParts:interface).itemId}
 			 */
 			itemId: string;
 	  }
