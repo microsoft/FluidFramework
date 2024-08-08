@@ -496,6 +496,7 @@ declare namespace InternalTypes {
         InsertableTypedNodeUnsafe,
         NodeBuilderDataUnsafe,
         NodeFromSchemaUnsafe,
+        ReadonlyMapInlined,
         FlexList,
         FlexListToUnion,
         ExtractItemType,
@@ -632,6 +633,22 @@ type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord
 
 // @public
 export type Off = () => void;
+
+// @public @sealed
+interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypes>> {
+    [Symbol.iterator](): IterableIterator<[K, TreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
+    entries(): IterableIterator<[K, TreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
+    // (undocumented)
+    forEach(callbackfn: (value: TreeNodeFromImplicitAllowedTypesUnsafe<T>, key: K, map: ReadonlyMap<K, TreeNodeFromImplicitAllowedTypesUnsafe<T>>) => void, thisArg?: any): void;
+    // (undocumented)
+    get(key: K): TreeNodeFromImplicitAllowedTypesUnsafe<T> | undefined;
+    // (undocumented)
+    has(key: K): boolean;
+    keys(): IterableIterator<K>;
+    // (undocumented)
+    readonly size: number;
+    values(): IterableIterator<TreeNodeFromImplicitAllowedTypesUnsafe<T>>;
+}
 
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
@@ -822,7 +839,7 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 }
 
 // @public @sealed
-export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>> extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypesUnsafe<T>>, TreeNode {
+export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>> extends ReadonlyMapInlined<string, T>, TreeNode {
     delete(key: string): void;
     set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T> | undefined): void;
 }
@@ -832,7 +849,7 @@ export abstract class TreeNode implements WithType {
     static [Symbol.hasInstance](value: unknown): value is TreeNode;
     static [Symbol.hasInstance]<TSchema extends abstract new (...args: any[]) => TreeNode>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
     abstract get [typeNameSymbol](): string;
-    protected constructor();
+    protected constructor(token: unknown);
 }
 
 // @public @sealed

@@ -86,7 +86,7 @@ describe("LazyField", () => {
 				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
 		);
 		assert.throws(
-			() => (valueField.content = {}),
+			() => (valueField.content = singleJsonCursor({})),
 			(e: Error) =>
 				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
 		);
@@ -447,7 +447,7 @@ describe("LazyValueField", () => {
 			initialTree: singleJsonCursor("X"),
 		});
 		assert.equal(view.flexTree.content, "X");
-		view.flexTree.content = "Y";
+		view.flexTree.content = singleJsonCursor("Y");
 		assert.equal(view.flexTree.content, "Y");
 		const zCursor = cursorForJsonableTreeNode({ type: leaf.string.name, value: "Z" });
 		view.flexTree.content = zCursor;

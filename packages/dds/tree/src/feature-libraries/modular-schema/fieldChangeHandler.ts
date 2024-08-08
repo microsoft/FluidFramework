@@ -184,17 +184,14 @@ export interface FieldEditor<TChangeset> {
 /**
  * The `index` represents the index of the child node in the input context.
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
- * @internal
  */
 export type ToDelta = (child: NodeId) => DeltaFieldMap;
 
 /**
- * @internal
  */
 export type NodeChangeInverter = (change: NodeId) => NodeId;
 
 /**
- * @internal
  */
 export enum NodeAttachState {
 	Attached,
@@ -202,7 +199,6 @@ export enum NodeAttachState {
 }
 
 /**
- * @internal
  */
 export type NodeChangeRebaser = (
 	change: NodeId | undefined,
@@ -215,7 +211,6 @@ export type NodeChangeRebaser = (
 ) => NodeId | undefined;
 
 /**
- * @internal
  */
 export type NodeChangeComposer = (
 	change1: NodeId | undefined,
@@ -223,14 +218,11 @@ export type NodeChangeComposer = (
 ) => NodeId;
 
 /**
- * @internal
  */
 export type NodeChangePruner = (change: NodeId) => NodeId | undefined;
 
 /**
  * A function that returns the set of removed roots that should be in memory for a given node changeset to be applied.
- *
- * @internal
  */
 export type RelevantRemovedRootsFromChild = (child: NodeId) => Iterable<DeltaDetachedNodeId>;
 

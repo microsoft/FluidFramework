@@ -76,7 +76,7 @@
 		"@fluid-experimental/property-properties": "workspace:~",
 		"@fluid-experimental/property-proxy": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.41.0",
+		"@fluidframework/build-tools": "0.43.0-285387",
 		"@storybook/addon-actions": "^6.4.22",
 		"@storybook/addon-essentials": "^6.4.22",
 		"@storybook/addon-links": "^6.4.22",

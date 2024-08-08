@@ -30,15 +30,14 @@ import type { InsertableContent } from "./proxies.js";
 import {
 	type FieldSchema,
 	type ImplicitAllowedTypes,
-	NodeKind,
-	type TreeNodeSchema,
 	normalizeAllowedTypes,
 	extractFieldProvider,
 	isConstant,
 	type FieldProvider,
 } from "./schemaTypes.js";
+import { NodeKind, tryGetSimpleNodeSchema, type TreeNodeSchema } from "./core/index.js";
 import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
-import { tryGetFlexNode } from "./proxyBinding.js";
+import { tryGetInnerNode } from "./proxyBinding.js";
 import { isObjectNodeSchema } from "./objectNodeTypes.js";
 
 /**
@@ -139,19 +138,19 @@ export function mapTreeFromNodeData(
 	allowedTypes: ImplicitAllowedTypes,
 	context?: NodeKeyManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
-): MapTree;
+): ExclusiveMapTree;
 export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
 	allowedTypes: ImplicitAllowedTypes,
 	context?: NodeKeyManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
-): MapTree | undefined;
+): ExclusiveMapTree | undefined;
 export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
 	allowedTypes: ImplicitAllowedTypes,
 	context?: NodeKeyManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
-): MapTree | undefined {
+): ExclusiveMapTree | undefined {
 	if (data === undefined) {
 		return undefined;
 	}
@@ -186,9 +185,14 @@ function nodeDataToMapTree(
 
 	// A special cache path for processing unhydrated nodes.
 	// They already have the mapTree, so there is no need to recompute it.
-	const flexNode = tryGetFlexNode(data);
+	const flexNode = tryGetInnerNode(data);
 	if (flexNode !== undefined) {
 		if (isMapTreeNode(flexNode)) {
+			if (
+				!allowedTypes.has(tryGetSimpleNodeSchema(flexNode.schema) ?? fail("missing schema"))
+			) {
+				throw new UsageError("Invalid schema for this context.");
+			}
 			// TODO: mapTreeFromNodeData modifies the trees it gets to add defaults.
 			// Using a cached value here can result in this tree having defaults applied to it more than once.
 			// This is unnecessary and inefficient, but should be a no-op if all calls provide the same context (which they might not).
@@ -614,7 +618,7 @@ function shallowCompatibilityTest(
 		return CompatibilityLevel.Low;
 	}
 
-	assert(isObjectNodeSchema(schema), "unexpected schema kind");
+	assert(isObjectNodeSchema(schema), 0x9e6 /* unexpected schema kind */);
 
 	// TODO: Improve type inference by making this logic more thorough. Handle at least:
 	// * Types which are strict subsets of other types in the same polymorphic union

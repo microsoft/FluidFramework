@@ -12,6 +12,8 @@ export {
 	jsonSchema,
 	singleJsonCursor,
 	typedJsonCursor,
+	type TypedJsonCompatible,
+	type TypedJsonCompatibleObject,
 } from "./json/index.js";
 
 export { leaf } from "./leafDomain.js";

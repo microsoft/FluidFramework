@@ -25,7 +25,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",
-		"@fluidframework/build-tools": "^0.41.0",
+		"@fluidframework/build-tools": "0.43.0-285387",
 		"jest-environment-puppeteer": "^9.0.2",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0"

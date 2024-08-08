@@ -180,6 +180,7 @@ import {
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
+	type InboundBatch,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -522,6 +523,9 @@ export const TombstoneResponseHeaderKey = "isTombstoned";
  * Inactive error responses will have this header set to true
  * @legacy
  * @alpha
+ *
+ * @deprecated this header is deprecated and will be removed in the future. The functionality corresponding
+ * to this was experimental and is no longer supported.
  */
 export const InactiveResponseHeaderKey = "isInactive";
 
@@ -533,7 +537,6 @@ export interface RuntimeHeaderData {
 	wait?: boolean;
 	viaHandle?: boolean;
 	allowTombstone?: boolean;
-	allowInactive?: boolean;
 }
 
 /** Default values for Runtime Headers */
@@ -541,7 +544,6 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 	wait: true,
 	viaHandle: false,
 	allowTombstone: false,
-	allowInactive: false,
 };
 
 /**
@@ -758,6 +760,23 @@ function lastMessageFromMetadata(metadata: IContainerRuntimeMetadata | undefined
 		? metadata?.lastMessage
 		: metadata?.message;
 }
+
+/**
+ * There is some ancient back-compat code that we'd like to instrument
+ * to understand if/when it is hit.
+ * We only want to log this once, to avoid spamming telemetry if we are wrong and these cases are hit commonly.
+ */
+let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) => {
+	// We only want to log this once per ContainerRuntime instance, to avoid spamming telemetry.
+	getSingleUseLegacyLogCallback = () => () => {};
+
+	return (codePath: string) => {
+		logger.sendTelemetryEvent({
+			eventName: "LegacyMessageFormat",
+			details: { codePath, type },
+		});
+	};
+};
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
@@ -1329,14 +1348,22 @@ export class ContainerRuntime
 	 */
 	private nextSummaryNumber: number;
 
-	/** If false, loading or using a Tombstoned object should merely log, not fail */
+	/**
+	 * If false, loading or using a Tombstoned object should merely log, not fail.
+	 * @deprecated NOT SUPPORTED - hardcoded to return false since it's deprecated.
+	 */
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get gcTombstoneEnforcementAllowed(): boolean {
-		return this.garbageCollector.tombstoneEnforcementAllowed;
+		return false;
 	}
 
-	/** If true, throw an error when a tombstone data store is used. */
+	/**
+	 * If true, throw an error when a tombstone data store is used.
+	 * @deprecated NOT SUPPORTED - hardcoded to return false since it's deprecated.
+	 */
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get gcThrowOnTombstoneUsage(): boolean {
-		return this.garbageCollector.throwOnTombstoneUsage;
+		return false;
 	}
 
 	/**
@@ -2632,55 +2659,39 @@ export class ContainerRuntime
 		// or something different, like a system message.
 		const hasModernRuntimeMessageEnvelope = messageCopy.type === MessageType.Operation;
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
-
-		// There is some ancient back-compat code that we'd like to instrument
-		// to understand if/when it is hit.
-		const logLegacyCase = (codePath: string) =>
-			this.logger.sendTelemetryEvent({
-				eventName: "LegacyMessageFormat",
-				details: { codePath, type: messageCopy.type },
-			});
+		const logLegacyCase = getSingleUseLegacyLogCallback(this.logger, messageCopy.type);
 
 		// We expect runtime messages to have JSON contents - deserialize it in place.
 		ensureContentsDeserialized(messageCopy, hasModernRuntimeMessageEnvelope, logLegacyCase);
 		if (hasModernRuntimeMessageEnvelope) {
 			// If the message has the modern message envelope, then process it here.
 			// Here we unpack the message (decompress, unchunk, and/or ungroup) into a batch of messages with ContainerMessageType
-			const processResult = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
-			if (processResult === undefined) {
+			const inboundBatch = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
+			if (inboundBatch === undefined) {
 				// This means the incoming message is an incomplete part of a message or batch
 				// and we need to process more messages before the rest of the system can understand it.
 				return;
 			}
-			const batchStartCsn = processResult.batchStartCsn;
-			const batch = processResult.messages;
-			const sequenceNumber = processResult.sequenceNumber;
-			const messages: {
-				message: InboundSequencedContainerRuntimeMessage;
-				localOpMetadata: unknown;
-			}[] = local
-				? this.pendingStateManager.processPendingLocalBatch(
-						batch,
-						batchStartCsn,
-						sequenceNumber,
-					)
-				: batch.map((message) => ({ message, localOpMetadata: undefined }));
-			if (messages.length === 0) {
-				this.ensureNoDataModelChanges(() =>
-					this.processEmptyBatch(sequenceNumber, local, batchStartCsn),
-				);
-				return;
+
+			// Reach out to PendingStateManager to zip localOpMetadata into the message list if it's a local batch
+			const messagesWithPendingState = this.pendingStateManager.processInboundBatch(
+				inboundBatch,
+				local,
+			);
+			if (messagesWithPendingState.length > 0) {
+				messagesWithPendingState.forEach(({ message, localOpMetadata }) => {
+					const msg: MessageWithContext = {
+						message,
+						local,
+						isRuntimeMessage: true,
+						savedOp,
+						localOpMetadata,
+					};
+					this.ensureNoDataModelChanges(() => this.processRuntimeMessage(msg));
+				});
+			} else {
+				this.ensureNoDataModelChanges(() => this.processEmptyBatch(inboundBatch, local));
 			}
-			messages.forEach(({ message, localOpMetadata }) => {
-				const msg: MessageWithContext = {
-					message,
-					local,
-					isRuntimeMessage: true,
-					savedOp,
-					localOpMetadata,
-				};
-				this.ensureNoDataModelChanges(() => this.processRuntimeMessage(msg));
-			});
 		} else {
 			// Check if message.type is one of values in ContainerMessageType
 			// eslint-disable-next-line import/no-deprecated
@@ -2773,12 +2784,9 @@ export class ContainerRuntime
 	 * This is a separate function because the processCore function expects at least one message to process.
 	 * It is expected to happen only when the outbox produces an empty batch due to a resubmit flow.
 	 */
-	private processEmptyBatch(
-		sequenceNumber: number | undefined,
-		local: boolean,
-		batchStartCsn: number,
-	) {
-		assert(sequenceNumber !== undefined, "sequenceNumber must be defined");
+	private processEmptyBatch(emptyBatch: InboundBatch, local: boolean) {
+		const { emptyBatchSequenceNumber: sequenceNumber, batchStartCsn } = emptyBatch;
+		assert(sequenceNumber !== undefined, 0x9fa /* emptyBatchSequenceNumber must be defined */);
 		this.emit("batchBegin", { sequenceNumber });
 		this._processedClientSequenceNumber = batchStartCsn;
 		if (!this.hasPendingMessages()) {

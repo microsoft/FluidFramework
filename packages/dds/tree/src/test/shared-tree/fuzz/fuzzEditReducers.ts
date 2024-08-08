@@ -21,8 +21,6 @@ import {
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 	intoStoredSchema,
-	type FlexAllowedTypes,
-	type FlexibleNodeContent,
 	type Any,
 } from "../../../feature-libraries/index.js";
 import type { SharedTreeFactory } from "../../../shared-tree/index.js";
@@ -180,6 +178,7 @@ function applySequenceFieldEdit(
 		case "crossFieldMove": {
 			const dstField = navigateToField(tree, change.dstField);
 			assert(dstField.is(tree.currentSchema.objectNodeFieldsObject.sequenceChildren));
+			assert(dstField.context !== undefined, "Expected LazyField");
 			dstField.context.checkout.editor.move(
 				field.getFieldPath(),
 				change.range.first,
@@ -201,9 +200,7 @@ function applyRequiredFieldEdit(
 ): void {
 	switch (change.type) {
 		case "set": {
-			field.content = cursorForJsonableTreeNode(
-				change.value,
-			) as FlexibleNodeContent<FlexAllowedTypes>;
+			field.content = cursorForJsonableTreeNode(change.value);
 			break;
 		}
 		default:

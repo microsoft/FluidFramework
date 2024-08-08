@@ -22,35 +22,34 @@ import {
 } from "../feature-libraries/index.js";
 import {
 	type InsertableContent,
-	getProxyForField,
+	getTreeNodeForField,
 	prepareContentForHydration,
 } from "./proxies.js";
-import { getFlexNode } from "./proxyBinding.js";
+import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
-	NodeKind,
 	type ImplicitFieldSchema,
-	type WithType,
-	type TreeNodeSchema,
 	getStoredKey,
 	getExplicitStoredKey,
 	type TreeFieldFromImplicitField,
 	type InsertableTreeFieldFromImplicitField,
 	type FieldSchema,
 	normalizeFieldSchema,
-	typeNameSymbol,
 	type ImplicitAllowedTypes,
 	FieldKind,
 } from "./schemaTypes.js";
-import { mapTreeFromNodeData } from "./toMapTree.js";
 import {
+	type TreeNodeSchema,
+	NodeKind,
+	type WithType,
+	typeNameSymbol,
 	type InternalTreeNode,
-	type MostDerivedData,
 	type TreeNode,
-	TreeNodeValid,
-} from "./types.js";
+} from "./core/index.js";
+import { mapTreeFromNodeData } from "./toMapTree.js";
 import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
+import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 
 /**
  * Helper used to produce types for object nodes.
@@ -170,10 +169,10 @@ function createProxyHandler(
 			const fieldInfo = flexKeyMap.get(viewKey);
 
 			if (fieldInfo !== undefined) {
-				const flexNode = getFlexNode(proxy);
+				const flexNode = getOrCreateInnerNode(proxy);
 				const field = flexNode.tryGetField(fieldInfo.storedKey);
 				if (field !== undefined) {
-					return getProxyForField(field);
+					return getTreeNodeForField(field);
 				}
 
 				// Check if the user is trying to read an identifier field of an unhydrated node, but the identifier is not present.
@@ -198,7 +197,7 @@ function createProxyHandler(
 				return allowAdditionalProperties ? Reflect.set(target, viewKey, value, proxy) : false;
 			}
 
-			const flexNode = getFlexNode(proxy);
+			const flexNode = getOrCreateInnerNode(proxy);
 			if (isMapTreeNode(flexNode)) {
 				throw new UsageError(
 					`An object cannot be mutated before being inserted into the tree`,
@@ -239,10 +238,10 @@ function createProxyHandler(
 			// If a refactoring is done to associated flex tree data with the target not the proxy, this extra map could be removed,
 			// and the design would be more compatible with proxyless nodes.
 			const proxy = targetToProxy.get(target) ?? fail("missing proxy");
-			const field = getFlexNode(proxy).tryGetField(fieldInfo.storedKey);
+			const field = getOrCreateInnerNode(proxy).tryGetField(fieldInfo.storedKey);
 
 			const p: PropertyDescriptor = {
-				value: field === undefined ? undefined : getProxyForField(field),
+				value: field === undefined ? undefined : getTreeNodeForField(field),
 				writable: true,
 				// Report empty fields as own properties so they shadow inherited properties (even when empty) to match TypeScript typing.
 				// Make empty fields not enumerable so they get skipped when iterating over an object to better align with
@@ -272,11 +271,14 @@ export function setField(
 			const mapTree = mapTreeFromNodeData(
 				value,
 				simpleFieldSchema.allowedTypes,
-				field.context.nodeKeyManager,
+				field.context?.nodeKeyManager,
 				getSchemaAndPolicy(field),
 			);
 
-			prepareContentForHydration(mapTree, field.context.checkout.forest);
+			if (field.context !== undefined) {
+				prepareContentForHydration(mapTree, field.context.checkout.forest);
+			}
+
 			typedField.content = mapTree !== undefined ? cursorForMapTreeNode(mapTree) : undefined;
 			break;
 		}
