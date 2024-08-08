@@ -519,8 +519,6 @@ export function detectInternalVersionConstraintType(
 export function isInternalTestVersion(version: semver.SemVer | string): boolean {
 	const parsedVersion = semver.parse(version);
 
-	console.log(parsedVersion);
-
 	if (parsedVersion === null) {
 		throw new Error(`Couldn't parse ${version} as a semver.`);
 	}
