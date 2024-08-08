@@ -198,7 +198,7 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
  * @legacy
  * @alpha
  */
-export interface IOdspOpenRequest {
+export interface IOdspOpenArgs {
 	/**
 	 * {@inheritDoc (IOdspUrlParts:interface).siteUrl}
 	 */
@@ -233,18 +233,6 @@ export interface IOdspOpenRequest {
 	 * {@inheritDoc (ShareLinkInfoType:interface).sharingLinkToRedeem}
 	 */
 	sharingLinkToRedeem?: string;
-
-	/**
-	 * {@inheritDoc (IOdspResolvedUrl:interface).dataStorePath}
-	 */
-	dataStorePath?: string;
-
-	/**
-	 * {@inheritDoc (IOdspResolvedUrl:interface).codeHint}
-	 */
-	codeHint?: {
-		containerPackageName?: string;
-	};
 }
 
 /**
@@ -252,7 +240,7 @@ export interface IOdspOpenRequest {
  * @legacy
  * @alpha
  */
-export type IOdspCreateRequest = {
+export type IOdspCreateArgs = {
 	/**
 	 * {@inheritDoc (IOdspUrlParts:interface).siteUrl}
 	 */
@@ -262,18 +250,6 @@ export type IOdspCreateRequest = {
 	 * {@inheritDoc (IOdspUrlParts:interface).driveId}
 	 */
 	driveId: string;
-
-	/**
-	 * {@inheritDoc (IOdspResolvedUrl:interface).dataStorePath}
-	 */
-	dataStorePath?: string;
-
-	/**
-	 * {@inheritDoc (IOdspResolvedUrl:interface).codeHint}
-	 */
-	codeHint?: {
-		containerPackageName?: string;
-	};
 
 	/**
 	 * {@inheritDoc (IOdspResolvedUrl:interface).isClpCompliantApp}

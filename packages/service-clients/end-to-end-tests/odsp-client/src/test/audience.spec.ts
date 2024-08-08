@@ -46,8 +46,7 @@ describe("Fluid audience", () => {
 	 */
 	it("can find original member", async () => {
 		const { container, services } = await client.createContainer(schema);
-		const res = await container.attach();
-		const itemId = res.itemId;
+		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -81,8 +80,7 @@ describe("Fluid audience", () => {
 	 */
 	it.skip("can find partner member", async () => {
 		const { container, services } = await client.createContainer(schema);
-		const res = await container.attach();
-		const itemId = res.itemId;
+		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -136,8 +134,7 @@ describe("Fluid audience", () => {
 	 */
 	it.skip("can observe member leaving", async () => {
 		const { container } = await client.createContainer(schema);
-		const res = await container.attach();
-		const itemId = res.itemId;
+		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {

@@ -44,8 +44,7 @@ describe("Fluid data updates", () => {
 	 */
 	it("can set DDSes as initial objects for a container", async () => {
 		const { container: newContainer } = await client.createContainer(schema);
-		const res = await newContainer.attach();
-		const itemId = res.itemId;
+		const itemId = await newContainer.attach();
 
 		if (newContainer.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
@@ -76,8 +75,7 @@ describe("Fluid data updates", () => {
 	 */
 	it("can change DDSes within initialObjects value", async () => {
 		const { container } = await client.createContainer(schema);
-		const res = await container.attach();
-		const itemId = res.itemId;
+		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -110,8 +108,7 @@ describe("Fluid data updates", () => {
 			},
 		};
 		const { container } = await client.createContainer(doSchema);
-		const res = await container.attach();
-		const itemId = res.itemId;
+		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -158,8 +155,7 @@ describe("Fluid data updates", () => {
 			},
 		};
 		const { container } = await client.createContainer(doSchema);
-		const res = await container.attach();
-		const itemId = res.itemId;
+		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -219,8 +215,7 @@ describe("Fluid data updates", () => {
 
 		assert.strictEqual(mdo2.value, 3);
 
-		const res = await container.attach();
-		const itemId = res.itemId;
+		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {

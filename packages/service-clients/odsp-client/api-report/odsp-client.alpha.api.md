@@ -13,17 +13,15 @@ export type IOdspAudience = IServiceAudience<OdspMember>;
 // @alpha
 export interface IOdspClient {
     createContainer<T extends ContainerSchema>(containerSchema: T): Promise<{
-        container: IOdspFluidContainer<T>;
+        container: IFluidContainer<T>;
         services: OdspContainerServices;
+        createFn: OdspContainerAttachFunctor;
     }>;
     getContainer<T extends ContainerSchema>(itemId: string, containerSchema: T, options?: OdspContainerOpenOptions): Promise<{
-        container: IOdspFluidContainer<T>;
+        container: IFluidContainer<T>;
         services: OdspContainerServices;
     }>;
 }
-
-// @alpha
-export type IOdspFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> = IFluidContainer<TContainerSchema, OdspContainerAttachType>;
 
 // @beta
 export interface IOdspTokenProvider {
@@ -49,7 +47,7 @@ export interface OdspConnectionConfig {
 }
 
 // @alpha
-export type OdspContainerAttachRequest = {
+export type OdspContainerAttachArgs = {
     filePath?: string;
     fileName?: string;
     createShareLinkType?: ISharingLinkKind;
@@ -58,13 +56,13 @@ export type OdspContainerAttachRequest = {
 };
 
 // @alpha
+export type OdspContainerAttachFunctor = (param?: OdspContainerAttachArgs) => Promise<OdspContainerAttachResult>;
+
+// @alpha
 export interface OdspContainerAttachResult {
     itemId: string;
     shareLinkInfo?: ShareLinkInfoType;
 }
-
-// @alpha
-export type OdspContainerAttachType = (param?: OdspContainerAttachRequest) => Promise<OdspContainerAttachResult>;
 
 // @alpha
 export interface OdspContainerOpenOptions {

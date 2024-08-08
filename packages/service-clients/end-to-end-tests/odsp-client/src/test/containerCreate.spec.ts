@@ -50,8 +50,7 @@ describe("Container create scenarios", () => {
 		);
 
 		// Make sure we can attach.
-		const res = await container.attach();
-		const itemId = res.itemId;
+		const itemId = await container.attach();
 		assert.strictEqual(typeof itemId, "string", "Attach did not return a string ID");
 	});
 
@@ -63,8 +62,7 @@ describe("Container create scenarios", () => {
 	 */
 	it("can attach a container", async () => {
 		const { container } = await client.createContainer(schema);
-		const res = await container.attach();
-		const itemId = res.itemId;
+		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -89,8 +87,7 @@ describe("Container create scenarios", () => {
 	 */
 	it("cannot attach a container twice", async () => {
 		const { container } = await client.createContainer(schema);
-		const res = await container.attach();
-		const itemId = res.itemId;
+		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -116,8 +113,7 @@ describe("Container create scenarios", () => {
 	 */
 	it("can retrieve existing ODSP container successfully", async () => {
 		const { container: newContainer } = await client.createContainer(schema);
-		const res = await newContainer.attach();
-		const itemId = res.itemId;
+		const itemId = await newContainer.attach();
 
 		if (newContainer.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {

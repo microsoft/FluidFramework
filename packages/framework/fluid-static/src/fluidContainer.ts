@@ -106,10 +106,8 @@ export interface IFluidContainerEvents extends IEvent {
  * @sealed
  * @public
  */
-export interface IFluidContainer<
-	TContainerSchema extends ContainerSchema = ContainerSchema,
-	TAttachType = () => Promise<string>,
-> extends IEventProvider<IFluidContainerEvents> {
+export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
+	extends IEventProvider<IFluidContainerEvents> {
 	/**
 	 * Provides the current connected state of the container
 	 */
@@ -172,7 +170,7 @@ export interface IFluidContainer<
 	 *
 	 * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
 	 */
-	attach: TAttachType;
+	attach(param?: unknown): Promise<string>;
 
 	/**
 	 * Attempts to connect the container to the delta stream and process operations.
@@ -240,15 +238,11 @@ export interface IFluidContainer<
 export function createFluidContainer<
 	TContainerSchema extends ContainerSchema,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	TAttachType extends (...args: any[]) => unknown,
 >(props: {
 	container: IContainer;
 	rootDataObject: IRootDataObject;
-}): IFluidContainer<TContainerSchema, TAttachType> {
-	return new FluidContainer<TContainerSchema, TAttachType>(
-		props.container,
-		props.rootDataObject,
-	);
+}): IFluidContainer<TContainerSchema> {
+	return new FluidContainer<TContainerSchema>(props.container, props.rootDataObject);
 }
 
 /**
@@ -260,13 +254,9 @@ export function createFluidContainer<
  * Note: this implementation is not complete. Consumers who rely on {@link IFluidContainer.attach}
  * will need to utilize or provide a service-specific implementation of this type that implements that method.
  */
-class FluidContainer<
-		TContainerSchema extends ContainerSchema,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		TAttachType extends (...args: any[]) => unknown,
-	>
+class FluidContainer<TContainerSchema extends ContainerSchema>
 	extends TypedEventEmitter<IFluidContainerEvents>
-	implements IFluidContainer<TContainerSchema, TAttachType>
+	implements IFluidContainer<TContainerSchema>
 {
 	private readonly connectedHandler = (): boolean => this.emit("connected");
 	private readonly disconnectedHandler = (): boolean => this.emit("disconnected");
@@ -334,12 +324,12 @@ class FluidContainer<
 	 * The reason is because externally we are presenting a separation between the service and the `FluidContainer`,
 	 * but internally this separation is not there.
 	 */
-	public readonly attach = ((...args: Parameters<TAttachType>): ReturnType<TAttachType> => {
+	public async attach(param?: unknown): Promise<string> {
 		if (this.container.attachState !== AttachState.Detached) {
 			throw new Error("Cannot attach container. Container is not in detached state.");
 		}
 		throw new Error("Cannot attach container. Attach method not provided.");
-	}) as TAttachType;
+	}
 
 	/**
 	 * {@inheritDoc IFluidContainer.connect}

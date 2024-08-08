@@ -59,13 +59,9 @@ export interface IFileEntry {
 }
 
 // @alpha
-export type IOdspCreateRequest = {
+export type IOdspCreateArgs = {
     siteUrl: string;
     driveId: string;
-    dataStorePath?: string;
-    codeHint?: {
-        containerPackageName?: string;
-    };
     isClpCompliantApp?: boolean;
 } & ({
     itemId: string;
@@ -89,12 +85,7 @@ export interface IOdspErrorAugmentations {
 }
 
 // @alpha
-export interface IOdspOpenRequest {
-    // (undocumented)
-    codeHint?: {
-        containerPackageName?: string;
-    };
-    dataStorePath?: string;
+export interface IOdspOpenArgs {
     driveId: string;
     fileVersion: string | undefined;
     isClpCompliantApp?: boolean;

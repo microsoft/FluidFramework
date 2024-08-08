@@ -5,9 +5,7 @@
 
 /* eslint-disable prefer-template */
 
-// eslint-disable-next-line import/no-internal-modules
-import { IOdspFluidContainer } from "@fluidframework/odsp-client/internal";
-import { Tree, TreeView } from "fluid-framework";
+import { Tree, TreeView, IFluidContainer } from "fluid-framework";
 import React, { ReactNode, useEffect, useState } from "react";
 
 import { App, Letter } from "./schema.js";
@@ -130,7 +128,7 @@ function TopRow(props: { app: App }): JSX.Element {
 
 export function ReactApp(props: {
 	data: TreeView<typeof App>;
-	container: IOdspFluidContainer;
+	container: IFluidContainer;
 	cellSize: { x: number; y: number };
 	canvasSize: { x: number; y: number };
 }): JSX.Element {

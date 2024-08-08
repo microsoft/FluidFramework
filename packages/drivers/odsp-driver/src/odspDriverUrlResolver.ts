@@ -14,8 +14,8 @@ import {
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
 	IOdspResolvedUrl,
-	IOdspOpenRequest,
-	IOdspCreateRequest,
+	IOdspOpenArgs,
+	IOdspCreateArgs,
 	OdspErrorTypes,
 	SharingLinkRole,
 	SharingLinkScope,
@@ -105,15 +105,25 @@ export function removeNavParam(link: string): string {
 }
 
 /**
- * Creates IOdspResolvedUrl from IOdspOpenRequest
- * @param input - IOdspOpenRequest
+ * Generates IOdspResolvedUrl.rul value.
+ * @param hashedDocumentId - documentId
+ * @param dataStorePath - data store path
+ * @returns url
+ */
+function getUrlForOdspResolvedUrl(hashedDocumentId: string, dataStorePath: string): string {
+	return `https://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(dataStorePath)}`;
+}
+
+/**
+ * Creates IOdspResolvedUrl from IOdspOpenArgs
+ * @param input - IOdspOpenArgs
  * @returns IOdspResolvedUrl
  * @alpha
  */
 export async function createOpenOdspResolvedUrl(
-	input: IOdspOpenRequest,
+	input: IOdspOpenArgs,
 ): Promise<IOdspResolvedUrl> {
-	const { siteUrl, driveId, itemId, fileVersion, dataStorePath = "", codeHint } = input;
+	const { siteUrl, driveId, itemId, fileVersion } = input;
 
 	const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
 	assert(!hashedDocumentId.includes("/"), 0x0a8 /* "Docid should not contain slashes!!" */);
@@ -133,6 +143,8 @@ export async function createOpenOdspResolvedUrl(
 		deltaStorageUrl: getDeltaStorageUrl(siteUrl, driveId, itemId, fileVersion),
 	};
 
+	const dataStorePath = "";
+
 	return {
 		...input,
 
@@ -147,7 +159,7 @@ export async function createOpenOdspResolvedUrl(
 		// only used in create-new flows
 		fileName: "",
 
-		url: `https://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(dataStorePath)}`,
+		url: getUrlForOdspResolvedUrl(hashedDocumentId, dataStorePath),
 
 		endpoints,
 
@@ -156,28 +168,23 @@ export async function createOpenOdspResolvedUrl(
 		},
 
 		dataStorePath,
-		codeHint,
 	};
 }
 
 /**
- * Creates IOdspResolvedUrl from IOdspOpenRequest
- * @param input - IOdspOpenRequest
+ * Creates IOdspResolvedUrl from IOdspOpenArgs
+ * @param input - IOdspOpenArgs
  * @returns IOdspResolvedUrl
  * @alpha
  */
-export async function createCreateOdspResolvedUrl(
-	input: IOdspCreateRequest,
-): Promise<IOdspResolvedUrl> {
+export function createCreateOdspResolvedUrl(input: IOdspCreateArgs): IOdspResolvedUrl {
 	const {
 		siteUrl,
-		dataStorePath,
-		codeHint,
 		itemId = "",
 		fileName = "",
 		filePath = "",
 		createShareLinkType,
-	} = input as IOdspCreateRequest & {
+	} = input as IOdspCreateArgs & {
 		createShareLinkType?: ISharingLinkKind;
 	} & (
 			| {
@@ -228,9 +235,6 @@ export async function createCreateOdspResolvedUrl(
 							createKind: createShareLinkType,
 						},
 					},
-
-		dataStorePath,
-		codeHint,
 	};
 }
 
@@ -268,34 +272,48 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 
 			const createKind = getSharingLinkParams(searchParams);
 
-			return createCreateOdspResolvedUrl({
+			const createResolvedUrl = createCreateOdspResolvedUrl({
 				siteUrl: siteURL,
 				driveId: driveID,
 				filePath,
 				fileName,
-				codeHint: {
-					containerPackageName: packageName ?? undefined,
-				},
 				createShareLinkType: createKind,
 				isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
 			});
+			return {
+				...createResolvedUrl,
+				codeHint: {
+					containerPackageName: packageName ?? undefined,
+				},
+			};
 		}
-		const { siteUrl, driveId, itemId, path, containerPackageName, fileVersion } =
-			decodeOdspUrl(request.url);
-
-		const summarizer = !!request.headers?.[DriverHeader.summarizingClient];
-		return createOpenOdspResolvedUrl({
+		const {
 			siteUrl,
 			driveId,
 			itemId,
-			dataStorePath: path,
+			path: dataStorePath,
+			containerPackageName,
+			fileVersion,
+		} = decodeOdspUrl(request.url);
+
+		const summarizer = !!request.headers?.[DriverHeader.summarizingClient];
+		const openResolvedUrl = await createOpenOdspResolvedUrl({
+			siteUrl,
+			driveId,
+			itemId,
 			summarizer,
-			codeHint: {
-				containerPackageName,
-			},
 			fileVersion,
 			isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
 		});
+
+		return {
+			...openResolvedUrl,
+			dataStorePath,
+			url: getUrlForOdspResolvedUrl(openResolvedUrl.hashedDocumentId, dataStorePath),
+			codeHint: {
+				containerPackageName,
+			},
+		};
 	}
 
 	/**

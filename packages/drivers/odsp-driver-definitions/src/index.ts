@@ -23,8 +23,8 @@ export {
 } from "./odspCache.js";
 export {
 	IOdspResolvedUrl,
-	IOdspOpenRequest,
-	IOdspCreateRequest,
+	IOdspOpenArgs,
+	IOdspCreateArgs,
 	IOdspUrlParts,
 	ISharingLink,
 	ISharingLinkKind,

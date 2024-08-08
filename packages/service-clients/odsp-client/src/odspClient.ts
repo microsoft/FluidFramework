@@ -22,7 +22,7 @@ import type {
 	IUrlResolver,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import type { ContainerSchema } from "@fluidframework/fluid-static";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import type { IRootDataObject } from "@fluidframework/fluid-static/internal";
 import {
 	createDOProviderContainerRuntimeFactory,
@@ -37,8 +37,8 @@ import {
 } from "@fluidframework/odsp-driver/internal";
 import type {
 	OdspResourceTokenFetchOptions,
-	IOdspOpenRequest,
-	IOdspCreateRequest,
+	IOdspOpenArgs,
+	IOdspCreateArgs,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -46,14 +46,13 @@ import { v4 as uuid } from "uuid";
 import type {
 	TokenResponse,
 	OdspClientProps,
-	OdspContainerAttachRequest,
-	OdspContainerAttachType,
+	OdspContainerAttachArgs,
+	OdspContainerAttachFunctor,
 	OdspContainerServices,
 	OdspContainerAttachResult,
 	OdspContainerOpenOptions,
 	OdspConnectionConfig,
 	IOdspClient,
-	IOdspFluidContainer,
 } from "./interfaces.js";
 import { createOdspAudienceMember } from "./odspAudience.js";
 import { type IOdspTokenProvider } from "./token.js";
@@ -92,7 +91,7 @@ function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigPr
 }
 
 class OdspFileOpenUrlResolver implements IUrlResolver {
-	public constructor(private readonly input: IOdspOpenRequest) {}
+	public constructor(private readonly input: IOdspOpenArgs) {}
 
 	public async resolve(_request: IRequest): Promise<IResolvedUrl | undefined> {
 		return createOpenOdspResolvedUrl(this.input);
@@ -104,11 +103,11 @@ class OdspFileOpenUrlResolver implements IUrlResolver {
 }
 
 class OdspFileCreateUrlResolver implements IUrlResolver {
-	private input?: IOdspCreateRequest;
+	private input?: IOdspCreateArgs;
 
 	public constructor() {}
 
-	public update(input: IOdspCreateRequest): void {
+	public update(input: IOdspCreateArgs): void {
 		assert(this.input === undefined, "Can update only once");
 		this.input = input;
 	}
@@ -178,8 +177,9 @@ class OdspClient implements IOdspClient {
 	public async createContainer<T extends ContainerSchema>(
 		containerSchema: T,
 	): Promise<{
-		container: IOdspFluidContainer<T>;
+		container: IFluidContainer<T>;
 		services: OdspContainerServices;
+		createFn: OdspContainerAttachFunctor;
 	}> {
 		const resolver = new OdspFileCreateUrlResolver();
 		const loader = this.createLoader(containerSchema, resolver);
@@ -190,16 +190,25 @@ class OdspClient implements IOdspClient {
 		});
 
 		const rootDataObject = await this.getContainerEntryPoint(container);
-		const fluidContainer = createFluidContainer<T, OdspContainerAttachType>({
+		const fluidContainer = createFluidContainer<T>({
 			container,
 			rootDataObject,
-		}) as IOdspFluidContainer<T>;
+		});
 
-		OdspClient.addAttachCallback(container, fluidContainer, this.connectionConfig, resolver);
+		const createFn = OdspClient.createContainerAttachCallback(
+			container,
+			this.connectionConfig,
+			resolver,
+		);
+
+		fluidContainer.attach = async (): Promise<string> => {
+			const res = await createFn();
+			return res.itemId;
+		};
 
 		const services = await this.getContainerServices(container);
 
-		return { container: fluidContainer, services };
+		return { container: fluidContainer, services, createFn };
 	}
 
 	public async getContainer<T extends ContainerSchema>(
@@ -207,10 +216,10 @@ class OdspClient implements IOdspClient {
 		containerSchema: T,
 		options?: OdspContainerOpenOptions,
 	): Promise<{
-		container: IOdspFluidContainer<T>;
+		container: IFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
-		const resolvedUrl: IOdspOpenRequest = {
+		const resolvedUrl: IOdspOpenArgs = {
 			summarizer: false,
 
 			// Identity of a file
@@ -233,7 +242,7 @@ class OdspClient implements IOdspClient {
 		// Put some easily editifiable string for easier debugging
 		const container = await loader.resolve({ url: "<OdspClient dummy url>" });
 
-		const fluidContainer = createFluidContainer<T, OdspContainerAttachType>({
+		const fluidContainer = createFluidContainer<T>({
 			container,
 			rootDataObject: await this.getContainerEntryPoint(container),
 		});
@@ -274,18 +283,15 @@ class OdspClient implements IOdspClient {
 		});
 	}
 
-	private static addAttachCallback<T extends ContainerSchema>(
+	private static createContainerAttachCallback(
 		container: IContainer,
-		fluidContainer: IOdspFluidContainer<T>,
 		connectionConfig: OdspSiteLocation,
 		resolver: OdspFileCreateUrlResolver,
-	): void {
+	): OdspContainerAttachFunctor {
 		/**
 		 * See {@link FluidContainer.attach}
 		 */
-		fluidContainer.attach = async (
-			odspProps?: OdspContainerAttachRequest,
-		): Promise<OdspContainerAttachResult> => {
+		return async (odspProps?: OdspContainerAttachArgs): Promise<OdspContainerAttachResult> => {
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}
@@ -296,7 +302,7 @@ class OdspClient implements IOdspClient {
 				isClpCompliantApp: connectionConfig.isClpCompliant === true,
 			};
 
-			const resolved: IOdspCreateRequest =
+			const resolved: IOdspCreateArgs =
 				odspProps !== undefined && "itemId" in odspProps
 					? {
 							...base,

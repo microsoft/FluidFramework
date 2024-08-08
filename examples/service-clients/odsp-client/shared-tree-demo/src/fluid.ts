@@ -6,10 +6,10 @@
 import {
 	createOdspClient,
 	OdspContainerServices,
-	IOdspFluidContainer,
+	OdspContainerAttachFunctor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/odsp-client/internal";
-import { ContainerSchema, SharedTree } from "fluid-framework";
+import { ContainerSchema, SharedTree, IFluidContainer } from "fluid-framework";
 
 import { clientProps } from "./clientProps.js";
 
@@ -26,12 +26,12 @@ export const loadFluidData = async (
 	schema: ContainerSchema,
 ): Promise<{
 	services: OdspContainerServices;
-	container: IOdspFluidContainer;
+	container: IFluidContainer;
 }> => {
 	const {
 		container,
 		services,
-	}: { container: IOdspFluidContainer; services: OdspContainerServices } =
+	}: { container: IFluidContainer; services: OdspContainerServices } =
 		await client.getContainer(itemId, schema);
 
 	return { services, container };
@@ -41,17 +41,14 @@ export const createFluidData = async (
 	schema: ContainerSchema,
 ): Promise<{
 	services: OdspContainerServices;
-	container: IOdspFluidContainer;
+	container: IFluidContainer;
+	createFn: OdspContainerAttachFunctor;
 }> => {
 	// The client will create a new detached container using the schema
 	// A detached container will enable the app to modify the container before attaching it to the client
-	const {
-		container,
-		services,
-	}: { container: IOdspFluidContainer; services: OdspContainerServices } =
-		await client.createContainer(schema);
+	const { container, services, createFn } = await client.createContainer(schema);
 
-	return { services, container };
+	return { services, container, createFn };
 };
 
 export const containerSchema: ContainerSchema = {
