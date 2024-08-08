@@ -12,6 +12,7 @@ import {
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+
 import { IRunConfig, ITestRunner, TestRunResult } from "../../testConfigFile.js";
 
 /**
@@ -79,7 +80,10 @@ const LeafActivityType = {
 };
 type LeafActivityType = (typeof LeafActivityType)[keyof typeof LeafActivityType];
 
-function logEvent(logger: ITelemetryLoggerExt, props: ITelemetryGenericEventExt & { id?: string }) {
+function logEvent(
+	logger: ITelemetryLoggerExt,
+	props: ITelemetryGenericEventExt & { id?: string },
+) {
 	logger.sendTelemetryEvent(props);
 	const toId = props.id !== undefined ? `-> ${props.id}` : "";
 	console.log(`########## ${props.eventName}: ${props.fromId} ${toId}`);
@@ -428,7 +432,8 @@ export class RootDataObject extends BaseDataObject implements ITestRunner {
 		 */
 		const maxDataObjects = maxLeafDataObjects + 1;
 		const totalSendCount = Math.ceil(config.testConfig.totalSendCount / maxDataObjects);
-		const opRatePerMinPerClient = config.testConfig.opRatePerMin / config.testConfig.numClients;
+		const opRatePerMinPerClient =
+			config.testConfig.opRatePerMin / config.testConfig.numClients;
 		const opRatePerMin = Math.ceil(opRatePerMinPerClient / maxDataObjects);
 		this._childRunConfig = {
 			...config,
@@ -488,9 +493,7 @@ export class RootDataObject extends BaseDataObject implements ITestRunner {
 			case RootActivityType.Create:
 				{
 					const activityFn = async () => {
-						const dataObject = await leafDataObjectFactory.createChildInstance(
-							this.context,
-						);
+						const dataObject = await leafDataObjectFactory.createChildInstance(this.context);
 						const dataObjectId = `${this.nodeId}/ds-${dataObject.id}`;
 						logEvent(this.logger, {
 							eventName: "DS+",

@@ -31,11 +31,8 @@ import {
 	ITestRunner,
 	TestRunResult,
 } from "../../testConfigFile.js";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-
-import { printStatus } from "./utils.js";
-import { VirtualDataStoreFactory, type VirtualDataStore } from "./virtualDataStore.js";
-
+import { printStatus } from "../../utils.js";
+import { VirtualDataStoreFactory, type VirtualDataStore } from "../../virtualDataStore.js";
 
 export interface ILoadTest {
 	run(config: IRunConfig, reset: boolean): Promise<boolean>;
@@ -62,7 +59,9 @@ const defaultBlobSize = 1024;
  */
 //* MERGE_TODO: Need to export?
 export class LoadTestDataStoreModel implements IDetachedTestRunner {
-	private static async waitForCatchupOrDispose(runtime: IFluidDataStoreRuntime): Promise<void> {
+	private static async waitForCatchupOrDispose(
+		runtime: IFluidDataStoreRuntime,
+	): Promise<void> {
 		await new Promise<void>((resolve) => {
 			const resolveIfConnectedOrDisposed = () => {
 				if (runtime.connected || runtime.disposed) {

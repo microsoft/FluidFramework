@@ -27,14 +27,13 @@ import {
 	FaultInjectionError,
 } from "./faultInjectionDriver.js";
 import { getProfile } from "./getProfile.js";
-import { IRunConfig } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
 	generateLoaderOptions,
 	generateRuntimeOptions,
 	getOptionOverride,
 } from "./optionsMatrix.js";
-import { ITestRunner } from "./testConfigFile.js";
+import { IRunConfig, ITestRunner } from "./testConfigFile.js";
 import {
 	configProvider,
 	createCodeLoader,
@@ -234,7 +233,8 @@ async function runnerProcess(
 		() => new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory()),
 	);
 
-	let exitCode: number = 0;
+	//* MERGE_TODO: Needed for reporting results?
+	//* let exitCode: number = 0;
 	let done = false;
 	// Reset the workload once, on the first iteration
 	let reset = true;
@@ -340,7 +340,7 @@ async function runnerProcess(
 			printStatus(runConfig, `running`);
 			const result = await test.run(runConfig, reset);
 			if (result.abort) {
-				exitCode = result.errorCode;
+				//* exitCode = result.errorCode;
 				done = true;
 			} else {
 				done = result.done;
@@ -375,7 +375,7 @@ async function runnerProcess(
 		}
 	}
 	//* MERGE_TODO: Matt removed return value here, but we started actually using it!!
-	// return exitCode;
+	//* return exitCode;
 }
 
 function scheduleFaultInjection(

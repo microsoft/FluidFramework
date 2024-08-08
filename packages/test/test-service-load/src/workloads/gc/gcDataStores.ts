@@ -5,9 +5,10 @@
 
 /* eslint-disable jsdoc/check-indentation */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle, ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { Deferred, assert, delay } from "@fluidframework/core-utils/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { IValueChanged, SharedMap } from "@fluidframework/map/internal";
@@ -16,8 +17,13 @@ import {
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { GcFailureExitCode, IRunConfig, ITestRunner, TestRunResult } from "../../testConfigFile.js";
+
+import {
+	GcFailureExitCode,
+	IRunConfig,
+	ITestRunner,
+	TestRunResult,
+} from "../../testConfigFile.js";
 
 /**
  * The maximum number of leaf data objects that can be running at a given time per client. This is used to limit the
@@ -61,7 +67,10 @@ interface IActivityObjectDetails {
 	object: IGCActivityObject;
 }
 
-function logEvent(logger: ITelemetryLoggerExt, props: ITelemetryGenericEventExt & { id: string }) {
+function logEvent(
+	logger: ITelemetryLoggerExt,
+	props: ITelemetryGenericEventExt & { id: string },
+) {
 	logger.sendTelemetryEvent(props);
 	const toId = props.id !== undefined ? `-> ${props.id}` : "";
 	console.log(`########## ${props.eventName}: ${props.fromId} ${toId}`);
@@ -92,7 +101,8 @@ const ReferenceActivityType = {
 	/** The count of enum values. This is used as the max value for generating an activity at random. */
 	Count: 5,
 };
-type ReferenceActivityType = (typeof ReferenceActivityType)[keyof typeof ReferenceActivityType];
+type ReferenceActivityType =
+	(typeof ReferenceActivityType)[keyof typeof ReferenceActivityType];
 
 /**
  * Activities that can be performed by the attachment blob object.
@@ -709,14 +719,11 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 			case ReferenceActivityType.Unreference: {
 				if (this.referencedDataObjects.length > 0) {
 					const dataObjectDetails = this.referencedDataObjects.shift();
-					assert(
-						dataObjectDetails !== undefined,
-						"Cannot find data object to unreference",
-					);
+					assert(dataObjectDetails !== undefined, "Cannot find data object to unreference");
 
-					const dataObjectHandle = this.dataObjectMap.get<
-						IFluidHandle<IGCActivityObject>
-					>(dataObjectDetails.id);
+					const dataObjectHandle = this.dataObjectMap.get<IFluidHandle<IGCActivityObject>>(
+						dataObjectDetails.id,
+					);
 					assert(dataObjectHandle !== undefined, "Could not get handle for data object");
 
 					dataObjectDetails.object.stop();
@@ -759,7 +766,9 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 	 * 3. Revive - Re-reference the oldest unreferenced attachment blob.
 	 * 4. None - Do nothing. This is to have summaries where no references changed leading to incremental GC.
 	 */
-	private async runBlobActivity(activityType: ReferenceActivityType): Promise<ActivityRunResult> {
+	private async runBlobActivity(
+		activityType: ReferenceActivityType,
+	): Promise<ActivityRunResult> {
 		switch (activityType) {
 			case ReferenceActivityType.CreateAndReference: {
 				const blobContents = `Content: ${this.blobContentPrefix}-${this.blobCount++}`;
@@ -792,9 +801,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 						id: blobDetails.id,
 					});
 
-					const blobHandle = this.blobMap.get<IFluidHandle<ArrayBufferLike>>(
-						blobDetails.id,
-					);
+					const blobHandle = this.blobMap.get<IFluidHandle<ArrayBufferLike>>(blobDetails.id);
 					assert(blobHandle !== undefined, "Could not get handle for blob");
 
 					blobDetails.object.stop();
@@ -845,7 +852,10 @@ export const singleCollabDataObjectFactory = new DataObjectFactory(
  * other clients (i.e., it has multiple collaborators). This emulates user scenarios where multiple users are working on
  * the same part of a document.
  */
-export class MultiCollabDataObject extends SingleCollabDataObject implements IGCActivityObject {
+export class MultiCollabDataObject
+	extends SingleCollabDataObject
+	implements IGCActivityObject
+{
 	public static type = "MultiCollabDataObject";
 
 	// A map of partner activity objects that are running in this client.
@@ -940,13 +950,7 @@ export class MultiCollabDataObject extends SingleCollabDataObject implements IGC
 		this.blobMap.on("valueChanged", (changed, local) => {
 			this.activityRunnerReporterSync(
 				async () =>
-					runPartnerActivity(
-						changed,
-						local,
-						this.blobMap,
-						[partnerId1],
-						true /* isBlob */,
-					),
+					runPartnerActivity(changed, local, this.blobMap, [partnerId1], true /* isBlob */),
 				"PartnerBlobActivityFailed",
 			);
 		});
@@ -1013,10 +1017,7 @@ export class RootDataObject extends DataObject implements ITestRunner {
 		const sendOverride = (event: ITelemetryBaseEvent, logLevel?: LogLevel) => {
 			sendFunc = sendFunc.bind(config.logger);
 			sendFunc(event, logLevel);
-			if (
-				event.eventName.includes("GC_Tombstone") ||
-				event.eventName.includes("GC_Deleted")
-			) {
+			if (event.eventName.includes("GC_Tombstone") || event.eventName.includes("GC_Deleted")) {
 				abortP.resolve({ abort: true, errorCode: GcFailureExitCode });
 			}
 		};
@@ -1039,7 +1040,8 @@ export class RootDataObject extends DataObject implements ITestRunner {
 		 * - Each data object sends half the number of ops per min.
 		 * - Each data object sends half the total number of ops.
 		 */
-		const opRatePerMinPerClient = config.testConfig.opRatePerMin / config.testConfig.numClients;
+		const opRatePerMinPerClient =
+			config.testConfig.opRatePerMin / config.testConfig.numClients;
 		const opRatePerMinPerChild = Math.ceil(opRatePerMinPerClient / 2);
 		const totalSendCountPerChild = Math.ceil(config.testConfig.totalSendCount / 2);
 		const childConfig: IRunConfig = {

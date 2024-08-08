@@ -55,17 +55,6 @@ export const createLogger = async (
 	return { logger: childLogger, flush: async () => fileLogger.flush() };
 };
 
-//* MERGE_TODO: Only used elsewhere now
-export function writeToFile(data: string, relativeDirPath: string, fileName: string) {
-	const outputDir = `${__dirname}/${relativeDirPath}`;
-	if (!fs.existsSync(outputDir)) {
-		fs.mkdirSync(outputDir, { recursive: true });
-	}
-	const filePath = `${outputDir}/${fileName}`;
-	console.log(`Writing to file: ${filePath}`);
-	fs.writeFileSync(filePath, data);
-}
-
 class FileLogger implements ITelemetryBufferedLogger {
 	private readonly schema = new Map<string, number>();
 	private logs: ITelemetryBaseEvent[] = [];

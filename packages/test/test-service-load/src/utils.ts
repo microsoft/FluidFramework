@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
+import fs from "fs";
+
 import {
 	DriverEndpoint,
 	ITestDriver,
@@ -15,6 +16,7 @@ import {
 	createFluidTestDriver,
 	generateOdspHostStoragePolicy,
 } from "@fluid-private/test-drivers";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 // eslint-disable-next-line import/no-deprecated
 import { type IDetachedBlobStorage, Loader } from "@fluidframework/container-loader/internal";
@@ -23,6 +25,7 @@ import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interface
 import { assert } from "@fluidframework/core-utils/internal";
 import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 
 import {
@@ -32,9 +35,20 @@ import {
 	getOptionOverride,
 } from "./optionsMatrix.js";
 import { pkgName, pkgVersion } from "./packageVersion.js";
-import type { ITestRunner, TestConfiguration } from "./testConfigFile.js";
+import type { IRunConfig, ITestRunner, TestConfiguration } from "./testConfigFile.js";
 
 const packageName = `${pkgName}@${pkgVersion}`;
+
+//* MERGE_TODO: Only used elsewhere now
+export function writeToFile(data: string, relativeDirPath: string, fileName: string) {
+	const outputDir = `${__dirname}/${relativeDirPath}`;
+	if (!fs.existsSync(outputDir)) {
+		fs.mkdirSync(outputDir, { recursive: true });
+	}
+	const filePath = `${outputDir}/${fileName}`;
+	console.log(`Writing to file: ${filePath}`);
+	fs.writeFileSync(filePath, data);
+}
 
 const codeDetails: IFluidCodeDetails = {
 	package: packageName,

@@ -115,6 +115,7 @@ const main = async () => {
 		driverEndpointName: testDriver.endpointName,
 		profile: profileName,
 		runId: undefined,
+		workLoadPath,
 	});
 
 	let result = -1;

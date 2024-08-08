@@ -11,15 +11,11 @@ import ps from "ps-node";
 import xml from "xml";
 
 import type { TestUsers } from "./getTestUsers.js";
-import { GcFailureExitCode, } from "./testConfigFile.js";
-import {
-	initialize,
-	writeToFile,
-} from "./utils.js";
+import { GcFailureExitCode, type TestConfiguration } from "./testConfigFile.js";
+import { initialize, writeToFile } from "./utils.js";
 
 const createLoginEnv = (userName: string, password: string) =>
 	`{"${userName}": "${password}"}`;
-
 
 function msSinceTime(time: Date) {
 	return new Date().valueOf() - time.valueOf();
@@ -39,7 +35,7 @@ export async function stressTest(
 	testDriver: ITestDriver,
 	profile: TestConfiguration,
 	args: {
-		workLoadPath: string, //* MERGE_TODO: Optional or not?
+		workLoadPath: string; //* MERGE_TODO: Optional or not?
 		testId: string | undefined;
 		debug: boolean;
 		verbose: boolean;
@@ -172,7 +168,7 @@ export async function stressTest(
 					resolve({ returnCode, index, durationMs: msSinceTime(runnerStartTime) });
 				}),
 			);
-	}),
+		}),
 	);
 
 	//* MERGE_TODO: What if the above throws?  This was in a finally block.
@@ -187,9 +183,8 @@ export async function stressTest(
 
 	const endTime = Date.now();
 	console.log(`End time: ${endTime} ms\n`);
-	console.log(`Total run time: ${(endTime - startTime) / 1000}s\n`);
+	console.log(`Total run time: ${durationMs / 1000}s\n`);
 }
-
 
 /** Format the runner results into the JUnit XML format expected by ADO and write to a file */
 function writeTestResultXmlFile(results: RunnerResult[], durationSec: number) {
