@@ -14,7 +14,7 @@ import {
 	TreeViewConfiguration,
 	type TreeNodeSchema,
 	type TreeView,
-	NodeBuilderData,
+	type NodeBuilderData,
 } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 import { getView, validateUsageError } from "../utils.js";
@@ -25,6 +25,15 @@ import {
 import { Tree } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { checkUnion } from "../../simple-tree/tree.js";
+import {
+	FuzzStringNode,
+	SequenceChildren,
+	createTreeViewSchema,
+	FuzzNode,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../shared-tree/fuzz/fuzzUtils.js";
+// eslint-disable-next-line import/no-internal-modules
+import { isObjectNodeSchema } from "../../simple-tree/objectNodeTypes.js";
 
 const schema = new SchemaFactory("com.example");
 

@@ -68,7 +68,7 @@ describe("Fuzz - move", () => {
 		emitter,
 		numberOfClients: 1,
 		clientJoinOptions: {
-			maxNumberOfClients: 1,
+			maxNumberOfClients: 3,
 			clientAddProbability: 1,
 		},
 		defaultTestCount: runsPerBatch,
