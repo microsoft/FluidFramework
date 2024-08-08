@@ -112,7 +112,11 @@ export class FluidRepoBuild extends FluidRepo {
 				const tsxFiles = await globFn(`${pkg.directory}/**/*.tsx`, {
 					ignore: `${pkg.directory}/node_modules/**`,
 				});
+				const ctsFiles = await globFn(`${pkg.directory}/**/*.cts`, {
+					ignore: `${pkg.directory}/node_modules/**`,
+				});
 				checkFiles = tsFiles.concat(tsxFiles);
+				checkFiles = checkFiles.concat(ctsFiles);
 			} else {
 				checkFiles = [];
 			}
