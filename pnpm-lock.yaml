@@ -4120,15 +4120,18 @@ importers:
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../../../../packages/service-clients/azure-client
-      '@fluidframework/map':
+      '@fluidframework/devtools':
         specifier: workspace:~
-        version: link:../../../../packages/dds/map
+        version: link:../../../../packages/tools/devtools/devtools
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../../../packages/drivers/routerlicious-driver
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../../../packages/utils/telemetry-utils
+      '@fluidframework/test-runtime-utils':
+        specifier: workspace:~
+        version: link:../../../../packages/runtime/test-runtime-utils
       assert:
         specifier: ^2.0.0
         version: 2.1.0
@@ -4160,9 +4163,6 @@ importers:
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../../packages/loader/container-loader
-      '@fluidframework/devtools':
-        specifier: workspace:~
-        version: link:../../../../packages/tools/devtools/devtools
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -4175,9 +4175,6 @@ importers:
       '@fluidframework/server-local-server':
         specifier: ^5.0.0
         version: 5.0.0
-      '@fluidframework/test-runtime-utils':
-        specifier: workspace:~
-        version: link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
