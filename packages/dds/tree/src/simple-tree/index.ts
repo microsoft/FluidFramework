@@ -43,6 +43,7 @@ export {
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
+	isTreeNodeSchemaClass,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
 	type ImplicitAllowedTypes,

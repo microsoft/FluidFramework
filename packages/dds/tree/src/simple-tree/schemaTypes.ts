@@ -14,9 +14,30 @@ import {
 	type FlexListToUnion,
 } from "../feature-libraries/index.js";
 import { type MakeNominal, brand, isReadonlyArray } from "../util/index.js";
-import type { Unhydrated, NodeKind, TreeNodeSchema } from "./core/index.js";
+import type {
+	Unhydrated,
+	NodeKind,
+	TreeNodeSchema,
+	TreeNodeSchemaClass,
+} from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
 import type { InsertableContent } from "./proxies.js";
+
+/**
+ * Returns true if the given schema is a {@link TreeNodeSchemaClass}, or otherwise false if it is a {@link TreeNodeSchemaNonClass}.
+ */
+export function isTreeNodeSchemaClass<
+	Name extends string,
+	Kind extends NodeKind,
+	TNode,
+	TBuild,
+	ImplicitlyConstructable extends boolean,
+	Info,
+>(
+	schema: TreeNodeSchema<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>,
+): schema is TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info> {
+	return schema.constructor !== undefined;
+}
 
 /**
  * Types for use in fields.
