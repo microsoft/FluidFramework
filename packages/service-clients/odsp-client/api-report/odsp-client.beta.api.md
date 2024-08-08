@@ -5,6 +5,9 @@
 ```ts
 
 // @beta
+export type IOdspAudience = IServiceAudience<OdspMember>;
+
+// @beta
 export interface IOdspTokenProvider {
     fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
     fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
@@ -16,6 +19,18 @@ export interface OdspConnectionConfig {
     isClpCompliant?: boolean;
     siteUrl: string;
     tokenProvider: IOdspTokenProvider;
+}
+
+// @beta
+export interface OdspContainerServices {
+    audience: IOdspAudience;
+}
+
+// @beta
+export interface OdspMember extends IMember {
+    email: string;
+    id: string;
+    name: string;
 }
 
 // @beta

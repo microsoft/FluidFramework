@@ -104,9 +104,9 @@ const containerSchema = {
 	],
 };
 const odspClient = new OdspClient(clientProps);
-const { container, services } = await odspClient.createContainer(containerSchema);
+const { container, services, createFn } = await odspClient.createContainer(containerSchema);
 
-const response = await container.attach();
+const response = await createFn();
 const itemId = response.itemId;
 
 ```

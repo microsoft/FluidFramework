@@ -170,7 +170,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 *
 	 * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
 	 */
-	attach(param?: unknown): Promise<string>;
+	attach(props?: unknown): Promise<string>;
 
 	/**
 	 * Attempts to connect the container to the delta stream and process operations.
@@ -236,8 +236,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
  * @internal
  */
 export function createFluidContainer<
-	TContainerSchema extends ContainerSchema,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	TContainerSchema extends ContainerSchema = ContainerSchema,
 >(props: {
 	container: IContainer;
 	rootDataObject: IRootDataObject;
@@ -254,7 +253,7 @@ export function createFluidContainer<
  * Note: this implementation is not complete. Consumers who rely on {@link IFluidContainer.attach}
  * will need to utilize or provide a service-specific implementation of this type that implements that method.
  */
-class FluidContainer<TContainerSchema extends ContainerSchema>
+class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends TypedEventEmitter<IFluidContainerEvents>
 	implements IFluidContainer<TContainerSchema>
 {

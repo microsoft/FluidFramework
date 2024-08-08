@@ -21,11 +21,11 @@ import {
 	IOdspUrlParts,
 	IPersistedCache,
 	IRelaySessionAwareDriverFactory,
+	ISharingLinkKind,
 	ISocketStorageDiscovery,
 	OdspResourceTokenFetchOptions,
 	TokenFetchOptions,
 	TokenFetcher,
-	ISharingLinkKind,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";

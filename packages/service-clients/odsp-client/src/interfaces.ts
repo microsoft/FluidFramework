@@ -172,7 +172,7 @@ export interface OdspContainerOpenOptions {
  * FluidContainer is persisted in the backend and consumed by users. Any functionality regarding
  * how the data is handled within the FluidContainer itself, i.e. which data objects or DDSes to
  * use, will not be included here but rather on the FluidContainer class itself.
- * @alpha
+ * @beta
  */
 export interface OdspContainerServices {
 	/**
@@ -185,7 +185,7 @@ export interface OdspContainerServices {
  * Since ODSP provides user names and email for all of its members, we extend the
  * {@link @fluidframework/fluid-static#IMember} interface to include this service-specific value.
  * It will be returned for all audience members connected.
- * @alpha
+ * @beta
  */
 export interface OdspMember extends IMember {
 	/**
@@ -204,7 +204,7 @@ export interface OdspMember extends IMember {
 
 /**
  * Audience object for ODSP containers
- * @alpha
+ * @beta
  */
 export type IOdspAudience = IServiceAudience<OdspMember>;
 

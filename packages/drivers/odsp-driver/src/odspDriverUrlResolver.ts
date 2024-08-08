@@ -217,7 +217,6 @@ export function createCreateOdspResolvedUrl(input: IOdspCreateArgs): IOdspResolv
 		filePath,
 		fileName,
 
-		// Is url even used?
 		url: `https://${siteUrl}?&version=null`,
 
 		endpoints: {

@@ -21,7 +21,7 @@ export interface IConnection {
 
 // @public @sealed
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
-    attach(param?: unknown): Promise<string>;
+    attach(props?: unknown): Promise<string>;
     readonly attachState: AttachState;
     connect(): void;
     readonly connectionState: ConnectionState;

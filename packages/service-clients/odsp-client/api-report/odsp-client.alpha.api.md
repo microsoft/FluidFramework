@@ -7,7 +7,7 @@
 // @alpha
 export function createOdspClient(properties: OdspClientProps): IOdspClient;
 
-// @alpha
+// @beta
 export type IOdspAudience = IServiceAudience<OdspMember>;
 
 // @alpha
@@ -70,12 +70,12 @@ export interface OdspContainerOpenOptions {
     sharingLinkToRedeem?: string;
 }
 
-// @alpha
+// @beta
 export interface OdspContainerServices {
     audience: IOdspAudience;
 }
 
-// @alpha
+// @beta
 export interface OdspMember extends IMember {
     email: string;
     id: string;
