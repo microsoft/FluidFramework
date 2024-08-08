@@ -290,37 +290,22 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		container.on("dirty", this.dirtyHandler);
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainer.isDirty}
-	 */
 	public get isDirty(): boolean {
 		return this.container.isDirty;
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainer.attachState}
-	 */
 	public get attachState(): AttachState {
 		return this.container.attachState;
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainer.disposed}
-	 */
 	public get disposed(): boolean {
 		return this.container.closed;
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainer.connectionState}
-	 */
 	public get connectionState(): ConnectionState {
 		return this.container.connectionState;
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainer.initialObjects}
-	 */
 	public get initialObjects(): InitialObjects<TContainerSchema> {
 		return this.rootDataObject.initialObjects as InitialObjects<TContainerSchema>;
 	}
@@ -344,30 +329,18 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		throw new Error("Cannot attach container. Attach method not provided.");
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainer.connect}
-	 */
 	public async connect(): Promise<void> {
 		this.container.connect?.();
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainer.connect}
-	 */
 	public async disconnect(): Promise<void> {
 		this.container.disconnect?.();
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainer.create}
-	 */
 	public async create<T extends IFluidLoadable>(objectClass: SharedObjectKind<T>): Promise<T> {
 		return this.rootDataObject.create(objectClass);
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainer.dispose}
-	 */
 	public dispose(): void {
 		this.container.close();
 		this.container.off("connected", this.connectedHandler);
@@ -377,9 +350,6 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.container.off("dirty", this.dirtyHandler);
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainerInternal.INTERNAL_CONTAINER_DO_NOT_USE}
-	 */
 	public INTERNAL_CONTAINER_DO_NOT_USE(): IContainer {
 		return this.container;
 	}
