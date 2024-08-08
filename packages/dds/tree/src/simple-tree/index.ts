@@ -16,6 +16,7 @@ export {
 	type TreeNodeSchema,
 	type NodeFromSchema,
 	NodeKind,
+	isTreeNodeSchemaClass,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
 	type TreeNodeSchemaCore,
@@ -99,3 +100,4 @@ export {
 } from "./objectNode.js";
 export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
 export { mapTreeFromNodeData } from "./toMapTree.js";
+export { isTreeNode } from "./treeNodeKernel.js";
