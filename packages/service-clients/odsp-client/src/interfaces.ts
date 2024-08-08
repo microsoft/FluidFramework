@@ -89,14 +89,14 @@ export type OdspContainerAttachInfo =
 			/**
 			 * The file path where Fluid containers are created. If undefined, the file is created at the root.
 			 */
-			filePath?: string | undefined;
+			filePath?: string;
 
 			/**
 			 * The file name of the Fluid file. If undefined, the file is named with a GUID.
 			 * If a file with such name exists, file with different name is created - Sharepoint will
 			 * add (2), (3), ... to file name to make it unique and avoid conflict on creation.
 			 */
-			fileName?: string | undefined;
+			fileName?: string;
 
 			/**
 			 * If provided, will instrcuct Sharepoint to create a sharing link as part of file creation flow.
@@ -139,13 +139,12 @@ export interface OdspContainerAttachResult {
  * IFluidContainer.attach() function signature for IOdspClient
  * @param param - Specifies where file should be created and how it should be named. If not provided,
  * file with random name (uuid) will be created in the root of the drive.
- * @param isClpCompliant - Should be set to true only by application that is CLP compliant, for CLP compliant workflow.
- * This argument has no impact if application is not properly registered with Sharepoint.
+ * @param options - options controlling creation.
  * @alpha
  */
 export type OdspContainerAttachType = (
 	param?: OdspContainerAttachInfo,
-	isClpCompliant?: boolean,
+	options?: OdspContainerCreateOptions,
 ) => Promise<OdspContainerAttachResult>;
 
 /**
@@ -153,26 +152,54 @@ export type OdspContainerAttachType = (
  * Identifies a container instance in storage.
  * @alpha
  */
-export type OdspContainerIdentifier =
-	| {
-			/**
-			 * If itemId is provided, then OdspSiteLocation information (see OdspClientProps.connection) passed to createOdspClient()
-			 * is used together with itemId to identify a file in Sharepoint.
-			 */
-			itemId: string;
-	  }
-	| {
-			/**
-			 * A sharing link could be provided to identify a file. This link has to be in very specific format - see
-			 * OdspContainerAttachResult.sharingLink, result of calling IOdspFluidContainer.
-			 * When sharing link is provided, it uniquely identifies a file in Sharepoint - OdspSiteLocation information
-			 * (part of OdspClientProps.connection provided to createOdspClient()) is ignored in such case.
-			 *
-			 * This is used to save the network calls while doing trees/latest call as if the client does not have
-			 * permission then this link can be redeemed for the permissions in the same network call.
-			 */
-			sharingLinkToRedeem: string;
-	  };
+export interface OdspContainerIdentifier {
+	/**
+	 * If itemId is provided, then OdspSiteLocation information (see OdspClientProps.connection) passed to createOdspClient()
+	 * is used together with itemId to identify a file in Sharepoint.
+	 */
+	itemId: string;
+}
+
+/**
+ * Interface describing various options controling container open
+ * @alpha
+ */
+export interface OdspContainerOpenOptions {
+	/**
+	 * A sharing link could be provided to identify a file. This link has to be in very specific format - see
+	 * OdspContainerAttachResult.sharingLink, result of calling IOdspFluidContainer.
+	 * When sharing link is provided, it uniquely identifies a file in Sharepoint - OdspSiteLocation information
+	 * (part of OdspClientProps.connection provided to createOdspClient()) is ignored in such case.
+	 *
+	 * This is used to save the network calls while doing trees/latest call as if the client does not have
+	 * permission then this link can be redeemed for the permissions in the same network call.
+	 */
+	sharingLinkToRedeem?: string;
+
+	/**
+	 * Should be set to true only by application that is CLP compliant, for CLP compliant workflow.
+	 * This argument has no impact if application is not properly registered with Sharepoint.
+	 */
+	isClpCompliant?: boolean;
+
+	/**
+	 * Can specify specific file version to open. If specified, opened container will be read-only.
+	 * If not specified, current (latest, read-write) version of the file is opened.
+	 */
+	fileVersion?: string;
+}
+
+/**
+ * Interface describing various options controling container open
+ * @alpha
+ */
+export interface OdspContainerCreateOptions {
+	/**
+	 * Should be set to true only by application that is CLP compliant, for CLP compliant workflow.
+	 * This argument has no impact if application is not properly registered with Sharepoint.
+	 */
+	isClpCompliant?: boolean;
+}
 
 /**
  * OdspContainerServices is returned by the OdspClient alongside a FluidContainer. It holds the

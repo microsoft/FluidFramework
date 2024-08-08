@@ -59,6 +59,23 @@ export interface IFileEntry {
 }
 
 // @alpha
+export type IOdspCreateRequest = {
+    siteUrl: string;
+    driveId: string;
+    dataStorePath?: string;
+    codeHint?: {
+        containerPackageName?: string;
+    };
+    isClpCompliantApp?: boolean;
+} & ({
+    itemId: string;
+} | {
+    filePath?: string;
+    fileName: string;
+    createShareLinkType?: ISharingLinkKind;
+});
+
+// @alpha
 export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
     // (undocumented)
     readonly errorType: OdspErrorTypes;
@@ -71,15 +88,29 @@ export interface IOdspErrorAugmentations {
     serverEpoch?: string;
 }
 
+// @alpha
+export interface IOdspOpenRequest {
+    // (undocumented)
+    codeHint?: {
+        containerPackageName?: string;
+    };
+    dataStorePath?: string;
+    driveId: string;
+    fileVersion: string | undefined;
+    isClpCompliantApp?: boolean;
+    itemId: string;
+    sharingLinkToRedeem?: string;
+    siteUrl: string;
+    summarizer: boolean;
+}
+
 // @alpha (undocumented)
 export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
     // (undocumented)
     codeHint?: {
         containerPackageName?: string;
     };
-    // (undocumented)
     dataStorePath?: string;
-    // (undocumented)
     endpoints: {
         snapshotStorageUrl: string;
         attachmentPOSTStorageUrl: string;
@@ -88,18 +119,14 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
     };
     // (undocumented)
     fileName: string;
-    // (undocumented)
+    filePath?: string;
     fileVersion: string | undefined;
-    // (undocumented)
     hashedDocumentId: string;
-    // (undocumented)
     isClpCompliantApp?: boolean;
     // (undocumented)
     odspResolvedUrl: true;
     shareLinkInfo?: ShareLinkInfoType;
-    // (undocumented)
     summarizer: boolean;
-    // (undocumented)
     tokens: {};
     // (undocumented)
     type: "fluid";
@@ -107,13 +134,10 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
     url: string;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface IOdspUrlParts {
-    // (undocumented)
     driveId: string;
-    // (undocumented)
     itemId: string;
-    // (undocumented)
     siteUrl: string;
 }
 
@@ -233,6 +257,7 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
 // @alpha
 export interface ShareLinkInfoType {
     createLink?: {
+        createKind: ISharingLinkKind;
         link?: ISharingLink;
         error?: any;
         shareId?: string;

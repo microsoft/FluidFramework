@@ -25,6 +25,8 @@ export type {
 	OdspContainerAttachType,
 	OdspContainerAttachResult,
 	OdspContainerIdentifier,
+	OdspContainerOpenOptions,
+	OdspContainerCreateOptions,
 } from "./interfaces.js";
 export {
 	type IOdspClient,

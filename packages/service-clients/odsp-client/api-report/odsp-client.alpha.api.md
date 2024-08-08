@@ -16,7 +16,7 @@ export interface IOdspClient {
         container: IOdspFluidContainer<T>;
         services: OdspContainerServices;
     }>;
-    getContainer<T extends ContainerSchema>(request: OdspContainerIdentifier, containerSchema: T, isClpCompliant?: boolean): Promise<{
+    getContainer<T extends ContainerSchema>(request: OdspContainerIdentifier, containerSchema: T, options?: OdspContainerOpenOptions): Promise<{
         container: IOdspFluidContainer<T>;
         services: OdspContainerServices;
     }>;
@@ -47,8 +47,8 @@ export interface OdspConnectionConfig extends OdspSiteLocation {
 
 // @alpha
 export type OdspContainerAttachInfo = {
-    filePath?: string | undefined;
-    fileName?: string | undefined;
+    filePath?: string;
+    fileName?: string;
     createShareLinkType?: ISharingLinkKind;
 } | {
     itemId: string;
@@ -62,14 +62,24 @@ export interface OdspContainerAttachResult {
 }
 
 // @alpha
-export type OdspContainerAttachType = (param?: OdspContainerAttachInfo, isClpCompliant?: boolean) => Promise<OdspContainerAttachResult>;
+export type OdspContainerAttachType = (param?: OdspContainerAttachInfo, options?: OdspContainerCreateOptions) => Promise<OdspContainerAttachResult>;
 
 // @alpha
-export type OdspContainerIdentifier = {
+export interface OdspContainerCreateOptions {
+    isClpCompliant?: boolean;
+}
+
+// @alpha
+export interface OdspContainerIdentifier {
     itemId: string;
-} | {
-    sharingLinkToRedeem: string;
-};
+}
+
+// @alpha
+export interface OdspContainerOpenOptions {
+    fileVersion?: string;
+    isClpCompliant?: boolean;
+    sharingLinkToRedeem?: string;
+}
 
 // @alpha
 export interface OdspContainerServices {

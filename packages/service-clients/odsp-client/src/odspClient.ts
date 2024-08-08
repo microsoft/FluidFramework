@@ -16,8 +16,12 @@ import {
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IClient } from "@fluidframework/driver-definitions";
-import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type {
+	IDocumentServiceFactory,
+	IClient,
+	IUrlResolver,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import type { IRootDataObject } from "@fluidframework/fluid-static/internal";
 import {
@@ -27,16 +31,15 @@ import {
 } from "@fluidframework/fluid-static/internal";
 import {
 	OdspDocumentServiceFactory,
-	OdspDriverUrlResolver,
-	createOdspCreateContainerRequest,
-	createOdspUrl,
 	isOdspResolvedUrl,
-	SharingLinkHeader,
-	ClpCompliantAppHeader,
-	type OdspFluidDataStoreLocator,
-	storeLocatorInOdspUrl,
+	createOpenOdspResolvedUrl,
+	createCreateOdspResolvedUrl,
 } from "@fluidframework/odsp-driver/internal";
-import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
+import type {
+	OdspResourceTokenFetchOptions,
+	IOdspOpenRequest,
+	IOdspCreateRequest,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -49,6 +52,8 @@ import type {
 	OdspContainerServices,
 	OdspContainerAttachResult,
 	OdspContainerIdentifier,
+	OdspContainerOpenOptions,
+	OdspContainerCreateOptions,
 } from "./interfaces.js";
 import { createOdspAudienceMember } from "./odspAudience.js";
 import { type IOdspTokenProvider } from "./token.js";
@@ -84,6 +89,38 @@ function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigPr
 	return wrapConfigProviderWithDefaults(baseConfigProvider, odspClientFeatureGates);
 }
 
+class OdspFileOpenUrlResolver implements IUrlResolver {
+	public constructor(private readonly input: IOdspOpenRequest) {}
+
+	public async resolve(_request: IRequest): Promise<IResolvedUrl | undefined> {
+		return createOpenOdspResolvedUrl(this.input);
+	}
+
+	public async getAbsoluteUrl(): Promise<string> {
+		throw new Error("getAbsoluteUrl() calls are not supported in OdspClient scenarios.");
+	}
+}
+
+class OdspFileCreateUrlResolver implements IUrlResolver {
+	private input?: IOdspCreateRequest;
+
+	public constructor() {}
+
+	public update(input: IOdspCreateRequest): void {
+		assert(this.input === undefined, "Can update only once");
+		this.input = input;
+	}
+
+	public async resolve(_request: IRequest): Promise<IResolvedUrl | undefined> {
+		assert(this.input !== undefined, "update() not called");
+		return createCreateOdspResolvedUrl(this.input);
+	}
+
+	public async getAbsoluteUrl(): Promise<string> {
+		throw new Error("getAbsoluteUrl() calls are not supported in OdspClient scenarios.");
+	}
+}
+
 /**
  * Creates OdspClient
  * @param properties - properties
@@ -91,12 +128,11 @@ function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigPr
  */
 function createOdspClientCore(
 	driverFactory: IDocumentServiceFactory,
-	urlResolver: OdspDriverUrlResolver,
 	connectionConfig: OdspSiteLocation,
 	logger?: ITelemetryBaseLogger,
 	configProvider?: IConfigProviderBase,
 ): IOdspClient {
-	return new OdspClient(driverFactory, urlResolver, connectionConfig, logger, configProvider);
+	return new OdspClient(driverFactory, connectionConfig, logger, configProvider);
 }
 
 /**
@@ -113,7 +149,6 @@ export function createOdspClient(properties: OdspClientProps): IOdspClient {
 			properties.persistedCache,
 			properties.hostPolicy,
 		),
-		new OdspDriverUrlResolver(),
 		properties.connection,
 		properties.logger,
 		properties.configProvider,
@@ -153,7 +188,7 @@ export interface IOdspClient {
 	getContainer<T extends ContainerSchema>(
 		request: OdspContainerIdentifier,
 		containerSchema: T,
-		isClpCompliant?: boolean,
+		options?: OdspContainerOpenOptions,
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: OdspContainerServices;
@@ -168,7 +203,6 @@ class OdspClient implements IOdspClient {
 
 	public constructor(
 		private readonly documentServiceFactory: IDocumentServiceFactory,
-		private readonly urlResolver: OdspDriverUrlResolver,
 		protected readonly connectionConfig: OdspSiteLocation,
 		private readonly logger?: ITelemetryBaseLogger,
 		configProvider?: IConfigProviderBase,
@@ -182,7 +216,8 @@ class OdspClient implements IOdspClient {
 		container: IOdspFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema);
+		const resolver = new OdspFileCreateUrlResolver();
+		const loader = this.createLoader(containerSchema, resolver);
 
 		const container = await loader.createDetachedContainer({
 			package: "no-dynamic-package",
@@ -195,7 +230,7 @@ class OdspClient implements IOdspClient {
 			rootDataObject,
 		}) as IOdspFluidContainer<T>;
 
-		OdspClient.addAttachCallback(container, fluidContainer, this.connectionConfig);
+		OdspClient.addAttachCallback(container, fluidContainer, this.connectionConfig, resolver);
 
 		const services = await this.getContainerServices(container);
 
@@ -205,32 +240,33 @@ class OdspClient implements IOdspClient {
 	public async getContainer<T extends ContainerSchema>(
 		containerIdentity: OdspContainerIdentifier,
 		containerSchema: T,
-		isClpCompliant?: boolean,
+		options?: OdspContainerOpenOptions,
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema);
+		const resolvedUrl: IOdspOpenRequest = {
+			summarizer: false,
 
-		const headers = {};
-		if (isClpCompliant === true) {
-			headers[ClpCompliantAppHeader.isClpCompliantApp] = true;
-		}
+			// Identity of a file
+			siteUrl: this.connectionConfig.siteUrl,
+			driveId: this.connectionConfig.driveId,
+			itemId: containerIdentity.itemId,
 
-		let url: string;
-		if ("itemId" in containerIdentity) {
-			url = createOdspUrl({
-				siteUrl: this.connectionConfig.siteUrl,
-				driveId: this.connectionConfig.driveId,
-				itemId: containerIdentity.itemId,
-				dataStorePath: "",
-			});
-		} else {
-			headers[SharingLinkHeader.isSharingLinkToRedeem] = true;
-			url = containerIdentity.sharingLinkToRedeem;
-		}
+			fileVersion: options?.fileVersion,
 
-		const container = await loader.resolve({ url, headers });
+			sharingLinkToRedeem: options?.sharingLinkToRedeem,
+
+			isClpCompliantApp: options?.isClpCompliant === true,
+		};
+
+		const loader = this.createLoader(
+			containerSchema,
+			new OdspFileOpenUrlResolver(resolvedUrl),
+		);
+		// Url does not matter, as our URL resolver will provide fixed output.
+		// Put some easily editifiable string for easier debugging
+		const container = await loader.resolve({ url: "<OdspClient dummy url>" });
 
 		const fluidContainer = createFluidContainer<T, OdspContainerAttachType>({
 			container,
@@ -240,7 +276,7 @@ class OdspClient implements IOdspClient {
 		return { container: fluidContainer, services };
 	}
 
-	private createLoader(schema: ContainerSchema): Loader {
+	private createLoader(schema: ContainerSchema, urlResolver: IUrlResolver): Loader {
 		const runtimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
 			compatibilityMode: "2",
@@ -264,7 +300,7 @@ class OdspClient implements IOdspClient {
 		};
 
 		return new Loader({
-			urlResolver: this.urlResolver,
+			urlResolver,
 			documentServiceFactory: this.documentServiceFactory,
 			codeLoader,
 			logger: this.logger,
@@ -277,43 +313,43 @@ class OdspClient implements IOdspClient {
 		container: IContainer,
 		fluidContainer: IOdspFluidContainer<T>,
 		connectionConfig: OdspSiteLocation,
+		resolver: OdspFileCreateUrlResolver,
 	): void {
 		/**
 		 * See {@link FluidContainer.attach}
 		 */
 		fluidContainer.attach = async (
 			odspProps?: OdspContainerAttachInfo,
-			isClpCompliant?: boolean,
+			options?: OdspContainerCreateOptions,
 		): Promise<OdspContainerAttachResult> => {
-			const createNewRequest: IRequest =
-				odspProps !== undefined && "itemId" in odspProps
-					? {
-							url: createOdspUrl({
-								siteUrl: connectionConfig.siteUrl,
-								driveId: connectionConfig.driveId,
-								itemId: odspProps.itemId,
-								dataStorePath: "",
-							}),
-						}
-					: createOdspCreateContainerRequest(
-							connectionConfig.siteUrl,
-							connectionConfig.driveId,
-							odspProps?.filePath ?? "",
-							odspProps?.fileName ?? uuid(),
-							odspProps?.createShareLinkType,
-						);
-
-			if (isClpCompliant === true) {
-				if (createNewRequest.headers === undefined) {
-					createNewRequest.headers = {};
-				}
-				createNewRequest.headers[ClpCompliantAppHeader.isClpCompliantApp] = true;
-			}
-
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}
-			await container.attach(createNewRequest);
+
+			const base = {
+				siteUrl: connectionConfig.siteUrl,
+				driveId: connectionConfig.driveId,
+				isClpCompliantApp: options?.isClpCompliant === true,
+			};
+
+			const resolved: IOdspCreateRequest =
+				odspProps !== undefined && "itemId" in odspProps
+					? {
+							...base,
+							itemId: odspProps.itemId,
+						}
+					: {
+							...base,
+							filePath: odspProps?.filePath ?? "",
+							fileName: odspProps?.fileName ?? uuid(),
+							createShareLinkType: odspProps?.createShareLinkType,
+						};
+
+			resolver.update(resolved);
+
+			// Url does not matter, as our URL resolver will provide fixed output.
+			// Put some easily editifiable string for easier debugging
+			await container.attach({ url: "OdspClient dummy url" });
 
 			const resolvedUrl = container.resolvedUrl;
 
@@ -321,28 +357,8 @@ class OdspClient implements IOdspClient {
 				throw new Error("Resolved Url not available on attached container");
 			}
 
-			/**
-			 * A unique identifier for the file within the provided SharePoint Embedded container ID. When you attach a container,
-			 * a new `itemId` is created in the user's drive, which developers can use for various operations
-			 * like updating, renaming, moving the Fluid file, changing permissions, and more. `itemId` is used to load the container.
-			 */
-
-			let sharingLink: string | undefined;
-			if (resolvedUrl.shareLinkInfo?.createLink?.link) {
-				const url = new URL(resolvedUrl.shareLinkInfo?.createLink?.link?.webUrl);
-				const locator: OdspFluidDataStoreLocator = {
-					siteUrl: connectionConfig.siteUrl,
-					driveId: connectionConfig.driveId,
-					itemId: resolvedUrl.itemId,
-					dataStorePath: "",
-				};
-				storeLocatorInOdspUrl(url, locator);
-				sharingLink = url.href;
-			}
-
 			return {
 				itemId: resolvedUrl.itemId,
-				sharingLink,
 				shareLinkInfo: resolvedUrl.shareLinkInfo,
 			};
 		};

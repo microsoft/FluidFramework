@@ -21,13 +21,11 @@ import {
 	IOdspUrlParts,
 	IPersistedCache,
 	IRelaySessionAwareDriverFactory,
-	ISharingLinkKind,
 	ISocketStorageDiscovery,
 	OdspResourceTokenFetchOptions,
-	SharingLinkRole,
-	SharingLinkScope,
 	TokenFetchOptions,
 	TokenFetcher,
+	ISharingLinkKind,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -105,7 +103,7 @@ export class OdspDocumentServiceFactoryCore
 		};
 
 		let fileInfo: INewFileInfo | IExistingFileInfo;
-		let createShareLinkParam: ISharingLinkKind | undefined;
+		let createLinkType: ISharingLinkKind | undefined;
 		if (odspResolvedUrl.itemId) {
 			fileInfo = {
 				type: "Existing",
@@ -114,20 +112,22 @@ export class OdspDocumentServiceFactoryCore
 				itemId: odspResolvedUrl.itemId,
 			};
 		} else if (odspResolvedUrl.fileName) {
-			const [, queryString] = odspResolvedUrl.url.split("?");
-			const searchParams = new URLSearchParams(queryString);
-			const filePath = searchParams.get("path");
+			const filePath = odspResolvedUrl.filePath;
 			if (filePath === undefined || filePath === null) {
 				throw new Error("File path should be provided!!");
 			}
-			createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
+
+			createLinkType = this.hostPolicy.enableSingleRequestForShareLinkWithCreate
+				? odspResolvedUrl.shareLinkInfo?.createLink?.createKind
+				: undefined;
+
 			fileInfo = {
 				type: "New",
 				driveId: odspResolvedUrl.driveId,
 				siteUrl: odspResolvedUrl.siteUrl,
 				filePath,
 				filename: odspResolvedUrl.fileName,
-				createLinkType: createShareLinkParam,
+				createLinkType,
 			};
 		} else {
 			throw new Error("A new or existing file must be specified to create container!");
@@ -161,9 +161,7 @@ export class OdspDocumentServiceFactoryCore
 			{
 				eventName: "CreateNew",
 				isWithSummaryUpload: true,
-				createShareLinkParam: createShareLinkParam
-					? JSON.stringify(createShareLinkParam)
-					: undefined,
+				createShareLinkParam: createLinkType ? JSON.stringify(createLinkType) : undefined,
 				enableSingleRequestForShareLinkWithCreate:
 					this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
 			},
@@ -322,30 +320,4 @@ export class OdspDocumentServiceFactoryCore
 			clientIsSummarizer,
 		);
 	}
-}
-
-/**
- * Extract the sharing link kind from the resolved URL's query paramerters
- */
-function getSharingLinkParams(
-	hostPolicy: HostStoragePolicy,
-	searchParams: URLSearchParams,
-): ISharingLinkKind | undefined {
-	// extract request parameters for creation of sharing link (if provided) if the feature is enabled
-	let createShareLinkParam: ISharingLinkKind | undefined;
-	if (hostPolicy.enableSingleRequestForShareLinkWithCreate) {
-		const createLinkScope = searchParams.get("createLinkScope");
-		const createLinkRole = searchParams.get("createLinkRole");
-		if (createLinkScope && SharingLinkScope[createLinkScope]) {
-			createShareLinkParam = {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				scope: SharingLinkScope[createLinkScope],
-				...(createLinkRole && SharingLinkRole[createLinkRole]
-					? // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-						{ role: SharingLinkRole[createLinkRole] }
-					: {}),
-			};
-		}
-	}
-	return createShareLinkParam;
 }

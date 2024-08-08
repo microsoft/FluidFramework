@@ -21,12 +21,8 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic.js";
 import { createOdspUrl } from "./createOdspUrl.js";
 import { getFileLink } from "./getFileLink.js";
-import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
-import {
-	getLocatorFromOdspUrl,
-	locatorQueryParamName,
-	storeLocatorInOdspUrl,
-} from "./odspFluidFileLink.js";
+import { OdspDriverUrlResolver, removeNavParam } from "./odspDriverUrlResolver.js";
+import { getLocatorFromOdspUrl, storeLocatorInOdspUrl } from "./odspFluidFileLink.js";
 import { createOdspLogger, getOdspResolvedUrl } from "./odspUtils.js";
 
 /**
@@ -152,7 +148,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			// when redeeming the share link during the redeem fallback for trees latest call becomes greater than
 			// the eligible length.
 			odspResolvedUrl.shareLinkInfo = Object.assign(odspResolvedUrl.shareLinkInfo ?? {}, {
-				sharingLinkToRedeem: this.removeNavParam(request.url),
+				sharingLinkToRedeem: removeNavParam(request.url),
 			});
 		}
 		if (odspResolvedUrl.itemId) {
@@ -161,14 +157,6 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			this.getShareLinkPromise(odspResolvedUrl).catch(() => {});
 		}
 		return odspResolvedUrl;
-	}
-
-	private removeNavParam(link: string): string {
-		const url = new URL(link);
-		const params = new URLSearchParams(url.search);
-		params.delete(locatorQueryParamName);
-		url.search = params.toString();
-		return url.href;
 	}
 
 	private async getShareLinkPromise(resolvedUrl: IOdspResolvedUrl): Promise<string> {

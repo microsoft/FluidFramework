@@ -10,7 +10,7 @@ import { OdspFluidDataStoreLocator } from "./contractsPublic.js";
  */
 
 /**
- * Encodes ODC/SPO information into a URL format that can be handled by the Loader
+ * Encodes ODC/SPO information into a URL format that can be parsed later by decodeOdspUrl().
  * @param l -The property bag of necessary properties to locate a Fluid data store and craft a url for it
  * @legacy
  * @alpha
