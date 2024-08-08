@@ -237,11 +237,11 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
  */
 export interface IFluidContainerInternal {
 	/**
-	 * Gets the underlying {@link @fluidframework/container-definitions#IContainer}.
+	 * The underlying {@link @fluidframework/container-definitions#IContainer}.
 	 *
 	 * @remarks Used to power debug tooling and experimental features.
 	 */
-	INTERNAL_CONTAINER_DO_NOT_USE?(): IContainer;
+	readonly container: IContainer;
 }
 
 /**
@@ -259,7 +259,21 @@ export function createFluidContainer<
 }
 
 /**
- * Base {@link IFluidContainer} implementation.
+ * Check that the provided `container` is an internal {@link IFluidContainerInternal}.
+ *
+ * @internal
+ */
+export function isInternalFluidContainer<TContainerSchema extends ContainerSchema>(
+	container: IFluidContainer<TContainerSchema> | IFluidContainerInternal,
+): container is IFluidContainerInternal {
+	// IFluidContainer is sealed; so we never expect an `IFluidContainer` not to be
+	// `IFluidContainerInternal` implemented by `FluidContainer`. To be caution,
+	// we use `instanceof` to confirm.
+	return container instanceof FluidContainer;
+}
+
+/**
+ * {@link IFluidContainer} implementation.
  *
  * @typeparam TContainerSchema - Used to determine the type of 'initialObjects'.
  * @remarks
@@ -269,7 +283,7 @@ export function createFluidContainer<
  */
 class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends TypedEventEmitter<IFluidContainerEvents>
-	implements IFluidContainer<TContainerSchema>, Required<IFluidContainerInternal>
+	implements IFluidContainer<TContainerSchema>, IFluidContainerInternal
 {
 	private readonly connectedHandler = (): boolean => this.emit("connected");
 	private readonly disconnectedHandler = (): boolean => this.emit("disconnected");
@@ -279,7 +293,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	private readonly dirtyHandler = (): boolean => this.emit("dirty");
 
 	public constructor(
-		private readonly container: IContainer,
+		public readonly container: IContainer,
 		private readonly rootDataObject: IRootDataObject,
 	) {
 		super();
@@ -348,9 +362,5 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.container.off("disconnected", this.disconnectedHandler);
 		this.container.off("saved", this.savedHandler);
 		this.container.off("dirty", this.dirtyHandler);
-	}
-
-	public INTERNAL_CONTAINER_DO_NOT_USE(): IContainer {
-		return this.container;
 	}
 }

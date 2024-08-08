@@ -27,7 +27,7 @@ import {
 	initializeDevtools as initializeDevtoolsBase,
 } from "@fluidframework/devtools-core/internal";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
-import type { IFluidContainerInternal } from "@fluidframework/fluid-static/internal";
+import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal";
 
 /**
  * Properties for configuring {@link IDevtools}.
@@ -113,9 +113,7 @@ class Devtools implements IDevtools {
 	 */
 	public registerContainerDevtools(props: ContainerDevtoolsProps): void {
 		const mappedProps = mapContainerProps(props);
-		if (mappedProps !== undefined) {
-			this._devtools.registerContainerDevtools(mappedProps);
-		}
+		this._devtools.registerContainerDevtools(mappedProps);
 	}
 
 	/**
@@ -149,16 +147,7 @@ class Devtools implements IDevtools {
 export function initializeDevtools(props: DevtoolsProps): IDevtools {
 	const { initialContainers, logger } = props;
 
-	let mappedInitialContainers: ContainerDevtoolsPropsBase[] | undefined;
-	if (initialContainers !== undefined) {
-		mappedInitialContainers = [];
-		for (const containerProps of initialContainers) {
-			const mappedContainerProps = mapContainerProps(containerProps);
-			if (mappedContainerProps !== undefined) {
-				mappedInitialContainers.push(mappedContainerProps);
-			}
-		}
-	}
+	const mappedInitialContainers = initialContainers?.map((p) => mapContainerProps(p));
 
 	const baseDevtools = initializeDevtoolsBase({
 		logger,
@@ -173,18 +162,14 @@ export function initializeDevtools(props: DevtoolsProps): IDevtools {
  */
 function mapContainerProps(
 	containerProps: ContainerDevtoolsProps,
-): ContainerDevtoolsPropsBase | undefined {
+): ContainerDevtoolsPropsBase {
 	const { container, containerKey } = containerProps;
-	const fluidContainer = container as IFluidContainerInternal;
-
-	if (fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE === undefined) {
-		console.error("Missing Container accessor on FluidContainer.");
-		return undefined;
+	if (!isInternalFluidContainer(container)) {
+		throw new TypeError("Container is not required FluidContainer.");
 	}
 
-	const innerContainer = fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE();
 	return {
-		container: innerContainer,
+		container: container.container,
 		containerKey,
 		containerData: container.initialObjects as Record<string, IFluidLoadable>,
 	};

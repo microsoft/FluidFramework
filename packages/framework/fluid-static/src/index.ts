@@ -11,6 +11,7 @@
 
 export {
 	createFluidContainer,
+	isInternalFluidContainer,
 	type IFluidContainer,
 	type IFluidContainerEvents,
 	type IFluidContainerInternal,
