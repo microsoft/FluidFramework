@@ -511,15 +511,17 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 
 	protected async initializingFirstTime() {
 		this.root.set(taskManagerKey, TaskManager.create(this.runtime).handle);
-		const virtualDataStore = await VirtualDataStoreFactory.createInstance(
-			this.context.containerRuntime,
-			undefined,
-			"0",
-		);
-		this.root.set("0", virtualDataStore.handle);
+		//* Disabling virtual datastore for now
+		// const virtualDataStore = await VirtualDataStoreFactory.createInstance(
+		// 	this.context.containerRuntime,
+		// 	undefined,
+		// 	"0",
+		// );
+		// this.root.set("0", virtualDataStore.handle);
 		const dataStoresMap = SharedMap.create(this.runtime);
 		this.root.set(dataStoresSharedMapKey, dataStoresMap.handle);
-		dataStoresMap.set("0", virtualDataStore.handle);
+		//* Disabling virtual datastore for now
+		// dataStoresMap.set("0", virtualDataStore.handle);
 	}
 
 	public async detached(config: Omit<IRunConfig, "runId">) {
@@ -894,7 +896,8 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 		maxClients: number,
 		runId: number,
 	) {
-		return runId < maxClients && createRate !== undefined && opsSent % createRate === 0;
+		//* Disabling virtual datastore for now
+		return false; //* runId < maxClients && createRate !== undefined && opsSent % createRate === 0;
 	}
 
 	/**
