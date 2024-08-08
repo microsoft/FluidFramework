@@ -6,20 +6,20 @@
 import type { ErasedType } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { NodeKind, type TreeNodeSchema, type TreeNodeSchemaClass } from "./schemaTypes.js";
-import { type WithType, typeNameSymbol } from "./core/index.js";
+import { type TreeNodeSchema, type TreeNodeSchemaClass, NodeKind } from "./treeNodeSchema.js";
+import { type WithType, typeNameSymbol } from "./withType.js";
 import {
 	type FlexTreeNode,
 	type MapTreeNode,
 	isFlexTreeNode,
 	markEager,
-} from "../feature-libraries/index.js";
+} from "../../feature-libraries/index.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { getFlexSchema } from "./toFlexSchema.js";
-import { fail } from "../util/index.js";
-import { getOrCreateInnerNode, setInnerNode } from "./proxyBinding.js";
-import { isTreeNode, TreeNodeKernel } from "./core/index.js";
+import { getFlexSchema } from "../toFlexSchema.js";
+import { fail } from "../../util/index.js";
+import { getOrCreateInnerNode, setInnerNode } from "../proxyBinding.js";
+import { isTreeNode, TreeNodeKernel } from "./treeNodeKernel.js";
 
 /**
  * Type alias to document which values are un-hydrated.

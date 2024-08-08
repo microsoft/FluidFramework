@@ -19,15 +19,15 @@ import { fail, extractFromOpaque, isReadonlyArray } from "../../util/index.js";
 import { getOrCreateNodeFromFlexTreeNode } from "../proxies.js";
 import { getOrCreateInnerNode } from "../proxyBinding.js";
 import {
-	NodeKind,
 	type TreeLeafValue,
-	type TreeNodeSchema,
 	type ImplicitFieldSchema,
 	FieldSchema,
 	type ImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
 } from "../schemaTypes.js";
-import { type TreeNode, type TreeChangeEvents, tryGetTreeNodeSchema } from "../types.js";
+import { NodeKind } from "../core/treeNodeSchema.js";
+import { type TreeNodeSchema } from "../core/treeNodeSchema.js";
+import { type TreeNode, type TreeChangeEvents, tryGetTreeNodeSchema } from "../core/types.js";
 import {
 	booleanSchema,
 	handleSchema,

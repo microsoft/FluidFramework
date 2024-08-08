@@ -22,9 +22,8 @@ import {
 	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
-import type { WithType } from "./core/index.js";
+import type { WithType, TreeNode } from "./core/index.js";
 import type { TreeArrayNode } from "./arrayNode.js";
-import type { TreeNode } from "./types.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../feature-libraries/flex-tree/lazyNode.js";

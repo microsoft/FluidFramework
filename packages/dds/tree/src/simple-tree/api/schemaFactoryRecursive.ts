@@ -14,12 +14,14 @@ import {
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type NodeKind,
-	type TreeNodeSchemaClass,
-	type TreeNodeSchema,
 } from "../schemaTypes.js";
-import type { WithType } from "../core/index.js";
-import type { TreeNode } from "../types.js";
+import type {
+	NodeKind,
+	TreeNodeSchemaClass,
+	TreeNodeSchema,
+	WithType,
+	TreeNode,
+} from "../core/index.js";
 import type { FieldSchemaUnsafe } from "../typesUnsafe.js";
 
 export function createFieldSchemaUnsafe<

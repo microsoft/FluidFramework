@@ -28,16 +28,16 @@ import {
 	cachedFlexSchemaFromClassSchema,
 	setFlexSchemaFromClassSchema,
 	tryGetSimpleNodeSchema,
-} from "./schemaCaching.js";
+} from "./core/schemaCaching.js";
 import {
 	FieldKind,
 	FieldSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
-	NodeKind,
-	type TreeNodeSchema,
 	getStoredKey,
 } from "./schemaTypes.js";
+import { NodeKind } from "./core/treeNodeSchema.js";
+import type { TreeNodeSchema } from "./core/index.js";
 
 interface SchemaInfo {
 	readonly toFlex: () => FlexTreeNodeSchema;

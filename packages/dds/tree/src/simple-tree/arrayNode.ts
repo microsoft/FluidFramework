@@ -23,22 +23,23 @@ import {
 } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
-	NodeKind,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
-	type TreeNodeSchemaClass,
-	type TreeNodeSchema,
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
-import { type WithType, typeNameSymbol } from "./core/index.js";
-import { mapTreeFromNodeData } from "./toMapTree.js";
 import {
+	type WithType,
+	typeNameSymbol,
+	NodeKind,
 	type TreeNode,
 	TreeNodeValid,
 	type InternalTreeNode,
 	type MostDerivedData,
-} from "./types.js";
+	type TreeNodeSchemaClass,
+	type TreeNodeSchema,
+} from "./core/index.js";
+import { mapTreeFromNodeData } from "./toMapTree.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";

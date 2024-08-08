@@ -19,18 +19,23 @@ import {
 	prepareContentForHydration,
 } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
-import { getSimpleNodeSchema } from "./schemaCaching.js";
+import { getSimpleNodeSchema } from "./core/index.js";
+import type {
+	ImplicitAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
+	TreeNodeFromImplicitAllowedTypes,
+} from "./schemaTypes.js";
 import {
 	NodeKind,
-	type ImplicitAllowedTypes,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchema,
-	type TreeNodeFromImplicitAllowedTypes,
-} from "./schemaTypes.js";
-import { type WithType, typeNameSymbol } from "./core/index.js";
+	type WithType,
+	typeNameSymbol,
+	type MostDerivedData,
+	type TreeNode,
+	TreeNodeValid,
+} from "./core/index.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
-import { type MostDerivedData, type TreeNode, TreeNodeValid } from "./types.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { RestrictiveReadonlyRecord } from "../util/index.js";

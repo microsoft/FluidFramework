@@ -30,17 +30,15 @@ import type { InsertableContent } from "./proxies.js";
 import {
 	type FieldSchema,
 	type ImplicitAllowedTypes,
-	NodeKind,
-	type TreeNodeSchema,
 	normalizeAllowedTypes,
 	extractFieldProvider,
 	isConstant,
 	type FieldProvider,
 } from "./schemaTypes.js";
+import { NodeKind, tryGetSimpleNodeSchema, type TreeNodeSchema } from "./core/index.js";
 import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
 import { tryGetInnerNode } from "./proxyBinding.js";
 import { isObjectNodeSchema } from "./objectNodeTypes.js";
-import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 
 /**
  * Module notes:
