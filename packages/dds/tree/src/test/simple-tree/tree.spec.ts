@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
@@ -30,10 +31,14 @@ import {
 	SequenceChildren,
 	createTreeViewSchema,
 	FuzzNode,
+	initialFuzzSchema,
+	populatedInitialState,
+	FuzzHandleNode,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../shared-tree/fuzz/fuzzUtils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isObjectNodeSchema } from "../../simple-tree/objectNodeTypes.js";
+import { toFlexTreeNode, type InternalTreeNode } from "../../simple-tree/types.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -348,6 +353,20 @@ describe("simple-tree tree", () => {
 		assert.equal(countBefore, countAfter);
 	});
 
+	it("Test fuzz handle", () => {
+		const config = new TreeViewConfiguration({ schema: initialFuzzSchema });
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = tree.viewWith(config);
+		view.initialize(populatedInitialState);
+
+		const sequence = (view.root as FuzzNode).sequenceChildren;
+		const random = makeRandom();
+		// sequence.insertAt(0, [new FuzzHandleNode({ value: random.handle() })]);
+	});
+
 	it("accessing root via Tree.parent does not leak LazyEntities", () => {
 		const config = new TreeViewConfiguration({ schema: Canvas });
 		const tree = factory.create(
@@ -423,6 +442,23 @@ describe("simple-tree tree", () => {
 		const view = tree.viewWith(config);
 		view.initialize("x");
 		assert.equal(view.root, "x");
+	});
+
+	it("optional Root - test", () => {
+		class node extends schema.object("field", { value: schema.string }) {}
+		const config = new TreeViewConfiguration({
+			schema: schema.object("test", {
+				field: schema.optional(node),
+			}),
+		});
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = tree.viewWith(config);
+		view.initialize({});
+		view.root.field = new node({ value: "s" });
+		Tree.parent(new node({ value: "s" }));
 	});
 
 	it("Nested list", () => {
@@ -570,10 +606,15 @@ describe("object allocation tests", () => {
 
 		const simpleSchema = simpleNodeSchema as unknown as new (dummy: unknown) => TreeNode;
 		const newNode = new simpleSchema({ value: 1 });
+
 		// assert(not undefined)
 		const newSchema = Tree.schema(newNode);
 		const schema1 = Tree.parent(view.root.field1);
 		const test = 1;
+
+		const testSchema = getNodeSchema(view.root, "field1");
+		const testNode = new testSchema({ value: 37 });
+		const a = 1;
 	});
 
 	it("Test 2", () => {
@@ -589,6 +630,22 @@ describe("object allocation tests", () => {
 			requiredChild: new FuzzStringNode({ stringValue: "a" }),
 		});
 		view.initialize(initialFuzzState);
+	});
+
+	it("Test 3", () => {
+		const fuzzSchema = createTreeViewSchema([]);
+		const config = new TreeViewConfiguration({ schema: fuzzSchema });
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = tree.viewWith(config);
+		const initialFuzzState = {
+			requiredChild: { requiredChild: { stringValue: "test" }, sequenceChildren: [] },
+			sequenceChildren: [],
+		};
+		view.initialize(initialFuzzState);
+		const flexTree = toFlexTreeNode(view.root as unknown as InternalTreeNode);
 	});
 
 	it("select tree field", () => {
@@ -650,3 +707,14 @@ describe("object allocation tests", () => {
 		const a = 1;
 	});
 });
+function getNodeSchema(node: TreeNode, nodeType: string) {
+	const nodeSchema = Tree.schema(node);
+	assert(isObjectNodeSchema(nodeSchema));
+	const nodeSchemaField = nodeSchema.fields.get("field1");
+	assert(nodeSchemaField !== undefined);
+
+	const simpleNodeSchema = nodeSchemaField.allowedTypes;
+
+	const simpleSchema = simpleNodeSchema as unknown as new (dummy: unknown) => TreeNode;
+	return simpleSchema;
+}

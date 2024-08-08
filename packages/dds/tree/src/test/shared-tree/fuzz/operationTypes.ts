@@ -6,8 +6,7 @@
 import type { FieldKey } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { SequenceChildren } from "./fuzzUtils.js";
-import type { TreeNode } from "../../../simple-tree/types.js";
+import type { FuzzNode } from "./fuzzUtils.js";
 
 export type Operation = TreeOperation | Synchronize;
 
@@ -31,7 +30,7 @@ export interface Constraint {
 export interface NodeConstraint {
 	type: "nodeConstraint";
 	/** Undefined when it is the parent of a detached field. */
-	path: undefined | DownPath;
+	selectedNode: FuzzNode;
 }
 export interface TransactionBoundary {
 	type: "transactionBoundary";
@@ -45,13 +44,13 @@ export interface UndoRedo {
 
 export interface SchemaChange {
 	type: "schemaChange";
-	operation: SchemaOp;
+	contents: SchemaOp;
 }
 
 export interface FieldEdit {
 	type: "fieldEdit";
 	/** The field being edited */
-	field: TreeNode;
+	field: FuzzNode;
 	/** The edit performed on the field */
 	change: SequenceFieldEdit | RequiredFieldEdit | OptionalFieldEdit;
 }
@@ -60,8 +59,9 @@ interface GUIDNodeValue {
 	guid: number;
 }
 
-interface NodeObjectValue {
+export interface NodeObjectValue {
 	requiredChild: number;
+	sequenceChildren: number[];
 }
 
 export type GeneratedFuzzValue =
@@ -90,7 +90,7 @@ export interface Insert {
 	 * Index to insert at within the field.
 	 */
 	index: number;
-	content: GeneratedFuzzNode | GeneratedFuzzNode[];
+	content: GeneratedFuzzNode[];
 }
 
 export interface SetField {
@@ -139,7 +139,7 @@ export interface Move {
 
 export interface IntraFieldMove extends Move {
 	type: "intraFieldMove";
-	field: SequenceChildren;
+	field: FuzzNode;
 }
 
 export interface CrossFieldMove extends Move {
@@ -148,7 +148,7 @@ export interface CrossFieldMove extends Move {
 	 * The field to move the content to.
 	 * May be the same as the source field.
 	 */
-	dstField: SequenceChildren;
+	dstField: FuzzNode;
 }
 
 export interface SchemaOp {

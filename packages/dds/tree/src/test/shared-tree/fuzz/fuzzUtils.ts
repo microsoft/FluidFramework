@@ -24,7 +24,6 @@ import {
 	forEachNodeInSubtree,
 	moveToDetachedField,
 } from "../../../core/index.js";
-import { intoStoredSchema } from "../../../feature-libraries/index.js";
 import type { ITreeCheckout, SharedTree } from "../../../shared-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { expectEqualPaths } from "../../utils.js";
@@ -35,12 +34,12 @@ import type {
 	TreeNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/schemaTypes.js";
-// eslint-disable-next-line import/no-internal-modules
-import { toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
 import type {
 	ValidateRecursiveSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/schemaFactoryRecursive.js";
+// eslint-disable-next-line import/no-internal-modules
+import { TreeViewConfiguration } from "../../../simple-tree/tree.js";
 
 const builder = new SchemaFactory("treeFuzz");
 export class GUIDNode extends builder.object("GuidNode", {
@@ -135,7 +134,10 @@ export function createTreeViewSchema(allowedTypes: TreeNodeSchema[]): typeof fuz
 }
 
 export const onCreate = (tree: SharedTree) => {
-	tree.checkout.updateSchema(intoStoredSchema(toFlexSchema(initialFuzzSchema)));
+	// tree.checkout.updateSchema(intoStoredSchema(toFlexSchema(initialFuzzSchema)));
+	const view = tree.viewWith(new TreeViewConfiguration({ schema: initialFuzzSchema }));
+	view.initialize(populatedInitialState);
+	view.dispose();
 };
 
 /**
@@ -219,15 +221,19 @@ export const populatedInitialState: NodeBuilderData<typeof FuzzNode> = {
 		{
 			sequenceChildren: [{ stringValue: "AA" }, { stringValue: "AB" }, { stringValue: "AC" }],
 			requiredChild: { stringValue: "A" },
+			optionalChild: undefined,
 		},
 		{
 			sequenceChildren: [{ stringValue: "BA" }, { stringValue: "BB" }, { stringValue: "BC" }],
 			requiredChild: { stringValue: "B" },
+			optionalChild: undefined,
 		},
 		{
 			sequenceChildren: [{ stringValue: "CA" }, { stringValue: "CB" }, { stringValue: "CC" }],
 			requiredChild: { stringValue: "C" },
+			optionalChild: undefined,
 		},
 	],
 	requiredChild: { stringValue: "R" },
+	optionalChild: undefined,
 } as unknown as NodeBuilderData<typeof FuzzNode>;

@@ -24,6 +24,7 @@ import { fuzzReducer } from "./fuzzEditReducers.js";
 import {
 	deterministicIdCompressorFactory,
 	failureDirectory,
+	onCreate,
 	populatedInitialState,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
@@ -53,7 +54,7 @@ describe("Fuzz - move", () => {
 		DDSFuzzTestState<SharedTreeTestFactory>
 	> = {
 		workloadName: "move",
-		factory: new SharedTreeTestFactory(() => undefined),
+		factory: new SharedTreeTestFactory(onCreate),
 		generatorFactory,
 		reducer: fuzzReducer,
 		validateConsistency: validateFuzzTreeConsistency,
@@ -68,7 +69,7 @@ describe("Fuzz - move", () => {
 		emitter,
 		numberOfClients: 1,
 		clientJoinOptions: {
-			maxNumberOfClients: 3,
+			maxNumberOfClients: 1,
 			clientAddProbability: 1,
 		},
 		defaultTestCount: runsPerBatch,

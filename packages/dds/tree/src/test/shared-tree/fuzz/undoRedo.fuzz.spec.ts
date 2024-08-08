@@ -39,6 +39,7 @@ import {
 	createAnchors,
 	deterministicIdCompressorFactory,
 	failureDirectory,
+	onCreate,
 	populatedInitialState,
 	validateAnchors,
 } from "./fuzzUtils.js";
@@ -76,7 +77,7 @@ describe("Fuzz - revert", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "revert sequenced commits last-to-first",
-			factory: new SharedTreeTestFactory(() => {}),
+			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,
@@ -167,7 +168,7 @@ describe("Fuzz - revert", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "revert unsequenced commits first-to-last",
-			factory: new SharedTreeTestFactory(() => {}),
+			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,
