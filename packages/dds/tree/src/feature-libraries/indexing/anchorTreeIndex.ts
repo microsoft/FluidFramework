@@ -37,6 +37,7 @@ export type KeyFinder<TKey extends TreeValue> = (tree: ITreeSubscriptionCursor) 
 
 /**
  * An index from some arbitrary keys to anchor nodes. Keys can be anything that is a {@link TreeValue}.
+ * A key can map to multiple nodes.
  */
 export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 	implements TreeIndex<TKey, TValue>
@@ -71,25 +72,30 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 				const keyFinder = getOrCreate(
 					this.keyFinders,
 					fieldCursor.type,
+					// if the indexer does not return a key finder for this schema, we cache a null value to indicate the indexer
+					// does not need to be called if this schema is encountered in the future
 					(schema) => indexer(schema) ?? null,
 				);
 				if (keyFinder !== null) {
 					const key = keyFinder(fieldCursor);
 					const anchor = fieldCursor.buildAnchor();
-					const anchorNode = forest.anchors.locate(anchor) ?? fail("Expected anchor node");
+					const anchorNode = forest.anchors.locate(anchor) ?? fail("expected anchor node");
 
 					const nodes = this.nodes.get(key);
 					if (nodes !== undefined) {
+						// if the key already exists in the index, the anchor node is appended to its list of nodes
 						this.nodes.set(key, [...nodes, anchorNode]);
 					} else {
 						this.nodes.set(key, [anchorNode]);
 					}
+
 					this.anchors.set(anchorNode, anchor);
+					// when the anchor node is destroyed, delete it from the index
 					anchorNode.on("afterDestroy", () => {
 						const ns = this.nodes.get(key);
-						assert(ns !== undefined, "Destroyed anchor node should be tracked by index");
+						assert(ns !== undefined, "destroyed anchor node should be tracked by index");
 						const index = ns.indexOf(anchorNode);
-						assert(index !== -1, "Destroyed anchor node should be tracked by index");
+						assert(index !== -1, "destroyed anchor node should be tracked by index");
 						const newNodes = filterNodes(nodes, (n) => n !== anchorNode);
 						if (newNodes !== undefined) {
 							this.nodes.set(key, newNodes);
@@ -98,7 +104,7 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 						}
 						assert(
 							this.anchors.delete(anchorNode),
-							"Destroyed anchor should be tracked by index",
+							"destroyed anchor should be tracked by index",
 						);
 					});
 				}
@@ -115,7 +121,7 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 			detachedFieldKeys.push(field.getFieldKey());
 		});
 
-		// Index all existing trees (this includes the primary document tree and all other detached/removed trees)
+		// index all existing trees (this includes the primary document tree and all other detached/removed trees)
 		for (const fieldKey of detachedFieldKeys) {
 			const cursor = forest.allocateCursor();
 			forest.tryMoveCursorToField({ fieldKey, parent: undefined }, cursor);
@@ -123,7 +129,7 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 			cursor.free();
 		}
 
-		// Index any new trees that are created later
+		// index any new trees that are created later
 		forest.on("afterRootFieldCreated", (fieldKey) => {
 			const cursor = forest.allocateCursor();
 			forest.tryMoveCursorToField({ fieldKey, parent: undefined }, cursor);
@@ -132,6 +138,9 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 		});
 	}
 
+	/**
+	 * @returns the value associated with a particular key if it has been indexed
+	 */
 	public get(key: TKey): TValue | undefined {
 		return this.filterNodes(this.nodes.get(key));
 	}
