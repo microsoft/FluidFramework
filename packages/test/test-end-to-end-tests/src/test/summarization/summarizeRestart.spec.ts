@@ -47,7 +47,7 @@ describeCompat(
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			// Run these tests only for Local and ODSP drivers. Ideally we only need to run tests with local server since we are only testing the summarizer's logic independednt of the service,
 			// but keeping ODSP in the mix to also test code with single commit summaries. (ODSP has single commit summaries enabled by default)
-			if (["local", "odsp"].includes(provider.driver.type)) {
+			if (!["local", "odsp"].includes(provider.driver.type)) {
 				this.skip();
 			}
 			configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 0);
