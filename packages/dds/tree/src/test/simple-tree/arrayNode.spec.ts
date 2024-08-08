@@ -5,7 +5,12 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
-import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	TreeViewConfiguration,
+	type FixRecursiveArraySchema,
+	type ValidateRecursiveSchema,
+} from "../../simple-tree/index.js";
 import { hydrate } from "./utils.js";
 import type { Mutable } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -880,3 +885,23 @@ describe("ArrayNode", () => {
 		});
 	});
 });
+
+// Workaround to avoid
+// `error TS2310: Type 'RecursiveArray' recursively references itself as a base type.` in the d.ts file.
+
+// Example workaround, see experimental/framework/tree-react-api/src/testExports.ts for an actual test of this including an import.
+declare const _RecursiveArrayWorkaround: FixRecursiveArraySchema<typeof RecursiveArray>;
+class RecursiveArray extends schemaFactory.arrayRecursive("RA", [() => RecursiveArray]) {}
+{
+	type _check = ValidateRecursiveSchema<typeof RecursiveArray>;
+}
+
+// Invalid case similar to ones generated in d.ts
+const Base = schemaFactory.arrayRecursive("RA", [() => RecursiveArray2]);
+// @ts-expect-error Separated Base from schema errors.
+class RecursiveArray2 extends Base {}
+
+// Invalid case similar to ones generated in d.ts, with workaround:
+declare const _RecursiveArrayWorkaround3: FixRecursiveArraySchema<typeof RecursiveArray3>;
+const Base3 = schemaFactory.arrayRecursive("RA", [() => RecursiveArray3]);
+class RecursiveArray3 extends Base3 {}

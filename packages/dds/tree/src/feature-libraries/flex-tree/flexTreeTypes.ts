@@ -86,8 +86,9 @@ export interface FlexTreeEntity<out TSchema = unknown> {
 
 	/**
 	 * A common context of a "forest" of FlexTrees.
+	 * @remarks This is `undefined` for unhydrated nodes or fields that have not yet been inserted into the tree.
 	 */
-	readonly context: FlexTreeContext;
+	readonly context?: FlexTreeContext;
 
 	/**
 	 * Iterate through all nodes/fields in this field/node.
