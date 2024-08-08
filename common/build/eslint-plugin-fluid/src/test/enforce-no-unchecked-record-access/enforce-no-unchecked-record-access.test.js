@@ -29,26 +29,38 @@ describe("ESLint Rule Tests", function () {
 
 	it("Should report an error for unchecked record access", async function () {
 		const result = await lintFile("fileWithOnlyRecordAccess.ts");
-		assert.strictEqual(result.errorCount, 5, "Should have five errors");
+		assert.strictEqual(result.errorCount, 8, "Should have eight errors");
 		assert.strictEqual(
 			result.messages[0].message,
 			"'nestedObj.nested.a' is possibly 'undefined'",
 		);
 		assert.strictEqual(
 			result.messages[1].message,
-			"'someObjWithPotenciallyUndefinedProperties.a' is possibly 'undefined'",
+			"'someObjWithStaticType[c]' is possibly 'undefined'",
 		);
 		assert.strictEqual(
 			result.messages[2].message,
-			"'nonNullObj.maybeString' is possibly 'undefined'",
+			"'someObjWithPotenciallyUndefinedProperties.a' is possibly 'undefined'",
 		);
 		assert.strictEqual(
 			result.messages[3].message,
-			"'aExpectingString' is assigned a value that might be 'undefined'",
+			"'someObjWithPotenciallyUndefinedProperties[a]' is possibly 'undefined'",
 		);
 		assert.strictEqual(
 			result.messages[4].message,
-			"'aImplicitType.length' might be 'undefined'",
+			"'someObjWithPotenciallyUndefinedProperties[a]' is possibly 'undefined'",
+		);
+		assert.strictEqual(
+			result.messages[5].message,
+			"'someObjWithPotenciallyUndefinedProperties[b]' is possibly 'undefined'",
+		);
+		assert.strictEqual(
+			result.messages[6].message,
+			"'someObjWithPotenciallyUndefinedProperties[c]' is possibly 'undefined'",
+		);
+		assert.strictEqual(
+			result.messages[7].message,
+			"'nonNullObj.maybeString' is possibly 'undefined'",
 		);
 	});
 

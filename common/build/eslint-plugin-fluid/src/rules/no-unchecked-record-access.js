@@ -5,11 +5,22 @@
 
 const ts = require("typescript");
 
-const hasIndexSignature = (type) => type.getStringIndexType() || type.getNumberIndexType();
-const isArrayType = (type) => type.symbol && type.symbol.name === "Array";
+const hasIndexSignature = (type) => {
+    if (!type || typeof type.getStringIndexType !== 'function' || typeof type.getNumberIndexType !== 'function') return false;
+    return Boolean(type.getStringIndexType()) || Boolean(type.getNumberIndexType());
+};
+
+const isArrayType = (type) => type && type.symbol && type.symbol.name === "Array";
+
 const isOptionalProperty = (type, propertyName) => {
+    if (!type || !propertyName || typeof type.getProperty !== 'function') return false;
     const symbol = type.getProperty(propertyName);
     return symbol && (symbol.flags & ts.SymbolFlags.Optional) !== 0;
+};
+
+const hasProperty = (type, propertyName) => {
+    if (!type || !propertyName || typeof type.getProperties !== 'function') return false;
+    return type.getProperties().some(prop => prop.name === propertyName);
 };
 
 module.exports = {
@@ -25,8 +36,14 @@ module.exports = {
         const checkedProperties = new Set();
         const possiblyUndefinedVariables = new Set();
         const forInLoopVariables = new Set();
+        const declaredVariables = new Map();
 
         return {
+            VariableDeclarator(node) {
+                if (node.id.type === "Identifier" && node.init && node.init.type === "Literal") {
+                    declaredVariables.set(node.id.name, node.init.value);
+                }
+            },
             ForInStatement(node) {
                 if (node.left.type === "VariableDeclaration") {
                     const variableName = node.left.declarations[0].id.name;
@@ -37,34 +54,6 @@ module.exports = {
                 if (node.test.type === "MemberExpression") {
                     const propertyName = node.test.property.name;
                     checkedProperties.add(propertyName);
-                }
-            },
-            VariableDeclarator(node) {
-                const services = context.parserServices;
-                if (!services || !services.program || !services.esTreeNodeToTSNodeMap) {
-                    return;
-                }
-                const checker = services.program.getTypeChecker();
-
-                if (node.init && node.init.type === "MemberExpression") {
-                    const tsNode = services.esTreeNodeToTSNodeMap.get(node.init.object);
-                    const type = checker.getTypeAtLocation(tsNode);
-                    const property = node.init.property.name;
-
-                    if (hasIndexSignature(type) || isOptionalProperty(type, property)) {
-                        const variableName = node.id.name;
-                        possiblyUndefinedVariables.add(variableName);
-
-                        if (
-                            node.id.typeAnnotation &&
-                            node.id.typeAnnotation.typeAnnotation.type === "TSStringKeyword"
-                        ) {
-                            context.report({
-                                node: node,
-                                message: `'${variableName}' is assigned a value that might be 'undefined'`,
-                            });
-                        }
-                    }
                 }
             },
             MemberExpression: function checkMemberExpression(node) {
@@ -91,7 +80,8 @@ module.exports = {
                     }
                     if (currentNode.computed) {
                         if (currentNode.property.type === "Identifier") {
-                            accessPath.unshift(`[${currentNode.property.name}]`);
+                            const propertyValue = declaredVariables.get(currentNode.property.name);
+                            accessPath.unshift(propertyValue !== undefined ? `[${propertyValue}]` : `[${currentNode.property.name}]`);
                         } else if (currentNode.property.type === "Literal") {
                             accessPath.unshift(`[${currentNode.property.value}]`);
                         } else {
@@ -106,25 +96,26 @@ module.exports = {
                 }
                 if (currentNode.type === "Identifier") {
                     accessPath.unshift(currentNode.name);
-                    if (possiblyUndefinedVariables.has(currentNode.name) && !isOptionalChain) {
-                        context.report({
-                            node: node,
-                            message: `'${accessPath.join("")}' might be 'undefined'`,
-                        });
-                        return;
-                    }
                 }
 
                 const tsNode = services.esTreeNodeToTSNodeMap.get(node.object);
+                if (!tsNode) return;
                 const type = checker.getTypeAtLocation(tsNode);
+                if (!type) return;
                 if (isArrayType(type)) {
                     return;
                 }
-                const property = node.computed
-                    ? node.property
-                    : node.property.name || node.property.value;
 
-                if (hasIndexSignature(type) || isOptionalProperty(type, property)) {
+                const property = node.computed
+                    ? node.property.type === "Identifier"
+                        ? declaredVariables.get(node.property.name)
+                        : node.property.value
+                    : node.property.name;
+
+                const propertyExists = hasProperty(type, property);
+                const isIndexAccess = node.computed && !propertyExists;
+
+                if (hasIndexSignature(type) || isOptionalProperty(type, property) || isIndexAccess) {
                     if (node.parent.type === "MemberExpression" && node.parent.object === node) {
                         if (checkedProperties.has(property)) {
                             return;
