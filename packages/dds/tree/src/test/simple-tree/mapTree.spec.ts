@@ -11,6 +11,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	deepCopyMapTree,
 	EmptyKey,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -1496,5 +1497,33 @@ describe("toMapTree", () => {
 				);
 			});
 		});
+	});
+});
+
+describe("mapTrees", () => {
+	it("can be deep copied", () => {
+		function generateMapTree(depth: number, i = 0): ExclusiveMapTree {
+			return {
+				type: brand(String(depth + i)),
+				value: depth + i,
+				fields: new Map(
+					depth === 0
+						? []
+						: [
+								[
+									brand("a"),
+									[generateMapTree(depth - 1, i + 1), generateMapTree(depth - 1, i + 2)],
+								],
+								[
+									brand("b"),
+									[generateMapTree(depth - 1, i + 3), generateMapTree(depth - 1, i + 4)],
+								],
+							],
+				),
+			};
+		}
+
+		const mapTree = generateMapTree(3);
+		assert.deepEqual(deepCopyMapTree(mapTree), mapTree);
 	});
 });
