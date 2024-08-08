@@ -27,11 +27,10 @@ import {
 	type TreeNodeStoredSchema,
 } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
-import { SchemaFactory } from "../../simple-tree/index.js";
+import { SchemaFactory, type TreeNodeSchema } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { InsertableContent } from "../../simple-tree/proxies.js";
 import {
-	type TreeNodeSchema,
 	type ContextualFieldProvider,
 	type ConstantFieldProvider,
 	type FieldProvider,

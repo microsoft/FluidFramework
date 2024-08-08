@@ -4,7 +4,8 @@
  */
 
 import { getOrCreate } from "../util/index.js";
-import type { ImplicitAllowedTypes, TreeNodeSchema } from "./schemaTypes.js";
+import type { TreeNodeSchema } from "./core/index.js";
+import type { ImplicitAllowedTypes } from "./schemaTypes.js";
 import type { SimpleTreeSchema } from "./simpleSchema.js";
 import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 

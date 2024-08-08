@@ -3,7 +3,22 @@
  * Licensed under the MIT License.
  */
 
-export { typeNameSymbol, type WithType, isTreeNode } from "./core/index.js";
+export {
+	typeNameSymbol,
+	type WithType,
+	type TreeNodeSchema,
+	NodeKind,
+	type TreeNodeSchemaClass,
+	type TreeNodeSchemaNonClass,
+	type TreeNodeSchemaCore,
+	type TreeChangeEvents,
+	// TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instanceof.
+	// See docs on TreeNode for more details.
+	type TreeNode,
+	type Unhydrated,
+	type InternalTreeNode,
+	isTreeNode,
+} from "./core/index.js";
 export {
 	type ITree,
 	type TreeView,
@@ -28,13 +43,8 @@ export {
 	type TreeNodeApi,
 } from "./api/index.js";
 export {
-	type TreeNodeSchema,
 	type NodeFromSchema,
-	NodeKind,
 	isTreeNodeSchemaClass,
-	type TreeNodeSchemaClass,
-	type TreeNodeSchemaNonClass,
-	type TreeNodeSchemaCore,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
 	type ImplicitAllowedTypes,
@@ -77,9 +87,6 @@ export {
 	prepareContentForHydration,
 } from "./proxies.js";
 
-// TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instanceof.
-// See docs on TreeNode for more details.
-export type { TreeChangeEvents, TreeNode, Unhydrated, InternalTreeNode } from "./types.js";
 export {
 	TreeArrayNode,
 	IterableTreeArrayContent,

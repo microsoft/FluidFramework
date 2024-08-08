@@ -19,7 +19,7 @@ import type {
 	JsonTreeSchema,
 	JsonLeafSchemaType,
 } from "./jsonSchema.js";
-import { FieldKind, NodeKind } from "./schemaTypes.js";
+import { FieldKind } from "./schemaTypes.js";
 import type {
 	SimpleArrayNodeSchema,
 	SimpleLeafNodeSchema,
@@ -28,6 +28,7 @@ import type {
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
+import { NodeKind } from "./core/index.js";
 
 /**
  * Generates a JSON Schema representation from a simple tree schema.

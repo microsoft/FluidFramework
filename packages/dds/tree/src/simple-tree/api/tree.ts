@@ -12,15 +12,14 @@ import type { RevertibleFactory } from "../../shared-tree/index.js";
 
 import {
 	type ImplicitAllowedTypes,
-	NodeKind,
 	normalizeFieldSchema,
 	type ImplicitFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
 	type TreeFieldFromImplicitField,
-	type TreeNodeSchema,
 	FieldKind,
 	normalizeAllowedTypes,
 } from "../schemaTypes.js";
+import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { toFlexSchema } from "../toFlexSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 import { assert } from "@fluidframework/core-utils/internal";
