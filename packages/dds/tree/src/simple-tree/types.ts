@@ -24,8 +24,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { fail } from "../util/index.js";
 import { getOrCreateInnerNode, setInnerNode } from "./proxyBinding.js";
-import { tryGetSchema } from "./treeNodeApi.js";
-import { isTreeNode, TreeNodeKernel } from "./treeNodeKernel.js";
+import { isTreeNode, TreeNodeKernel } from "./core/index.js";
 
 /**
  * Type alias to document which values are un-hydrated.
@@ -195,7 +194,7 @@ export abstract class TreeNode implements WithType {
 	>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
 
 	public static [Symbol.hasInstance](this: { prototype: object }, value: unknown): boolean {
-		const schema = tryGetSchema(value);
+		const schema = tryGetTreeNodeSchema(value);
 
 		if (schema === undefined || schema.kind === NodeKind.Leaf) {
 			return false;
@@ -210,6 +209,24 @@ export abstract class TreeNode implements WithType {
 			throw new UsageError("TreeNodes must extend schema classes created by SchemaFactory");
 		}
 	}
+}
+
+/**
+ * Returns a schema for a value if the value is a {@link TreeNode}.
+ *
+ * Returns undefined for other values.
+ * @remarks
+ * Does not give schema for a {@link TreeLeafValue}.
+ */
+export function tryGetTreeNodeSchema<T>(
+	value: T,
+): undefined | TreeNodeSchema<string, NodeKind, unknown, T> {
+	type TOut = TreeNodeSchema<string, NodeKind, unknown, T>;
+	if (isTreeNode(value)) {
+		// This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.
+		return tryGetSimpleNodeSchema(getOrCreateInnerNode(value).schema) as TOut;
+	}
+	return undefined;
 }
 
 /**

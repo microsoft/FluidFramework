@@ -4,16 +4,16 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { createEmitter, type Listenable, type Off } from "../events/index.js";
-import type { TreeChangeEvents, TreeNode, Unhydrated } from "./types.js";
-import type { AnchorNode } from "../core/index.js";
+import { createEmitter, type Listenable, type Off } from "../../events/index.js";
+import type { TreeChangeEvents, TreeNode, Unhydrated } from "../types.js";
+import type { AnchorNode } from "../../core/index.js";
 import {
 	flexTreeSlot,
 	isFreedSymbol,
 	LazyEntity,
 	TreeStatus,
 	treeStatusFromAnchorCache,
-} from "../feature-libraries/index.js";
+} from "../../feature-libraries/index.js";
 
 const treeNodeToKernel = new WeakMap<TreeNode, TreeNodeKernel>();
 

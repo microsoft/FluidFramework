@@ -13,13 +13,13 @@ import {
 	TreeViewConfiguration,
 	type TreeNodeSchema,
 	type TreeView,
-} from "../../simple-tree/index.js";
-import { TreeFactory } from "../../treeFactory.js";
-import { getView, validateUsageError } from "../utils.js";
-import { MockNodeKeyManager } from "../../feature-libraries/index.js";
-import { Tree } from "../../shared-tree/index.js";
+} from "../../../simple-tree/index.js";
+import { TreeFactory } from "../../../treeFactory.js";
+import { getView, validateUsageError } from "../../utils.js";
+import { MockNodeKeyManager } from "../../../feature-libraries/index.js";
+import { Tree } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { checkUnion } from "../../simple-tree/tree.js";
+import { checkUnion } from "../../../simple-tree/api/tree.js";
 
 const schema = new SchemaFactory("com.example");
 
