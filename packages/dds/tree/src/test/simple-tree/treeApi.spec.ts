@@ -23,7 +23,7 @@ import {
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
-import { hydrate } from "./utils.js";
+import { getViewForForkedBranch, hydrate } from "./utils.js";
 import { brand } from "../../util/index.js";
 import { leaf } from "../../domains/index.js";
 
@@ -767,6 +767,117 @@ describe("treeNodeApi", () => {
 			assert.equal(view.root.prop1.value, 2, "'prop1' value did not change as expected");
 			assert.equal(nodeChanged, true, "'nodeChanged' should have fired");
 			assert.equal(treeChanged, true, "'treeChanged' should have fired");
+		});
+
+		it(`'nodeChanged' includes the names of changed properties (objectNode)`, () => {
+			const sb = new SchemaFactory("test");
+			class TestNode extends sb.object("root", {
+				prop1: sb.optional(sb.number),
+				prop2: sb.optional(sb.number),
+				prop3: sb.optional(sb.number),
+			}) {}
+
+			const view = getView(new TreeViewConfiguration({ schema: TestNode }));
+			view.initialize({ prop1: 1, prop2: 2 });
+			const root = view.root;
+
+			const eventLog: ReadonlySet<string>[] = [];
+			Tree.on(root, "nodeChanged", ({ changedProperties }) =>
+				eventLog.push(changedProperties),
+			);
+
+			const { forkView, forkCheckout } = getViewForForkedBranch(view);
+
+			// The implementation details of the kinds of changes that can happen inside the tree are not exposed at this layer.
+			// But since we know them, try to cover all of them.
+			forkView.root.prop1 = 2; // Replace
+			forkView.root.prop2 = undefined; // Detach
+			forkView.root.prop3 = 3; // Attach
+
+			view.checkout.merge(forkCheckout);
+
+			assert.deepEqual(eventLog, [new Set(["prop1", "prop2", "prop3"])]);
+		});
+
+		it(`'nodeChanged' includes the names of changed properties (mapNode)`, () => {
+			const sb = new SchemaFactory("test");
+			class TestNode extends sb.map("root", [sb.number]) {}
+
+			const view = getView(new TreeViewConfiguration({ schema: TestNode }));
+			view.initialize(
+				new Map([
+					["key1", 1],
+					["key2", 2],
+				]),
+			);
+			const root = view.root;
+
+			const eventLog: ReadonlySet<string>[] = [];
+			Tree.on(root, "nodeChanged", ({ changedProperties }) =>
+				eventLog.push(changedProperties),
+			);
+
+			const { forkView, forkCheckout } = getViewForForkedBranch(view);
+
+			// The implementation details of the kinds of changes that can happen inside the tree are not exposed at this layer.
+			// But since we know them, try to cover all of them.
+			forkView.root.set("key1", 0); // Replace existing key
+			forkView.root.delete("key2"); // Remove a key
+			forkView.root.set("key3", 3); // Add new key
+
+			view.checkout.merge(forkCheckout);
+
+			assert.deepEqual(eventLog, [new Set(["key1", "key2", "key3"])]);
+		});
+
+		it(`'nodeChanged' does not include the names of changed properties (arrayNode)`, () => {
+			const sb = new SchemaFactory("test");
+			class TestNode extends sb.array("root", [sb.number]) {}
+
+			const view = getView(new TreeViewConfiguration({ schema: TestNode }));
+			view.initialize([1, 2]);
+			const root = view.root;
+
+			const eventLog: ReadonlySet<string>[] = [];
+			Tree.on(root, "nodeChanged", ({ changedProperties }) =>
+				eventLog.push(changedProperties),
+			);
+
+			const { forkView, forkCheckout } = getViewForForkedBranch(view);
+
+			// The implementation details of the kinds of changes that can happen inside the tree are not exposed at this layer.
+			// But since we know them, try to cover all of them.
+			forkView.root.insertAtEnd(3); // Append to array
+			forkView.root.removeAt(0); // Remove from arrray
+			forkView.root.moveRangeToEnd(0, 1); // Move within array
+
+			view.checkout.merge(forkCheckout);
+
+			assert.deepEqual(eventLog, [new Set()]);
+		});
+
+		it(`'nodeChanged' uses view keys, not stored keys, for the list of changed properties`, () => {
+			const sb = new SchemaFactory("test");
+			class TestNode extends sb.object("root", {
+				prop1: sb.optional(sb.number, { key: "stored-prop1" }),
+			}) {}
+
+			const view = getView(new TreeViewConfiguration({ schema: TestNode }));
+			view.initialize({ prop1: 1 });
+			const root = view.root;
+
+			const eventLog: ReadonlySet<string>[] = [];
+			Tree.on(root, "nodeChanged", ({ changedProperties }) =>
+				eventLog.push(changedProperties),
+			);
+
+			const { forkView, forkCheckout } = getViewForForkedBranch(view);
+
+			forkView.root.prop1 = 2;
+
+			view.checkout.merge(forkCheckout);
+
+			assert.deepEqual(eventLog, [new Set(["prop1"])]);
 		});
 	});
 });

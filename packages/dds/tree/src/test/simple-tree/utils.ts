@@ -12,6 +12,10 @@ import {
 	type NodeKeyManager,
 } from "../../feature-libraries/index.js";
 import {
+	SchematizingSimpleTreeView,
+	type ITreeCheckoutFork,
+} from "../../shared-tree/index.js";
+import {
 	mapTreeFromNodeData,
 	normalizeFieldSchema,
 	type ImplicitFieldSchema,
@@ -66,4 +70,28 @@ export function pretty(arg: unknown): number | string {
 		return arg;
 	}
 	return JSON.stringify(arg);
+}
+
+/**
+ * Creates a branch of the input tree view and returns a new tree view for the branch.
+ *
+ * @remarks To merge the branch back into the original view after applying changes on the branch view, use
+ * `<originalView>.checkout.merge(<branchView>.checkout)`.
+ *
+ * @param originalView - The tree view to branch.
+ * @returns A new tree view for a branch of the input tree view, and an {@link ITreeCheckoutFork} object that can be
+ * used to merge the branch back into the original view.
+ */
+export function getViewForForkedBranch<TSchema extends ImplicitFieldSchema>(
+	originalView: SchematizingSimpleTreeView<TSchema>,
+): { forkView: SchematizingSimpleTreeView<TSchema>; forkCheckout: ITreeCheckoutFork } {
+	const forkCheckout = originalView.checkout.fork();
+	return {
+		forkView: new SchematizingSimpleTreeView<TSchema>(
+			forkCheckout,
+			originalView.config,
+			originalView.nodeKeyManager,
+		),
+		forkCheckout,
+	};
 }

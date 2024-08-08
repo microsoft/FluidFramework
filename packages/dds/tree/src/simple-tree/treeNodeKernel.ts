@@ -14,6 +14,10 @@ import {
 	TreeStatus,
 	treeStatusFromAnchorCache,
 } from "../feature-libraries/index.js";
+import { getSimpleNodeSchema } from "./schemaCaching.js";
+import { fail } from "../util/index.js";
+import { isObjectNodeSchema } from "./objectNodeTypes.js";
+import { NodeKind } from "./schemaTypes.js";
 
 const treeNodeToKernel = new WeakMap<TreeNode, TreeNodeKernel>();
 
@@ -65,9 +69,35 @@ export class TreeNodeKernel implements Listenable<TreeChangeEvents> {
 	}
 
 	public hydrate(anchorNode: AnchorNode): void {
-		const offChildrenChanged = anchorNode.on("childrenChangedAfterBatch", () => {
-			this.#events.emit("nodeChanged");
-		});
+		const offChildrenChanged = anchorNode.on(
+			"childrenChangedAfterBatch",
+			({ changedFields }) => {
+				const flexNode = anchorNode.slots.get(flexTreeSlot);
+				assert(flexNode !== undefined, "Flex node does not exist");
+				const nodeSchema = getSimpleNodeSchema(flexNode.schema);
+				let changedProperties: ReadonlySet<string>;
+				if (isObjectNodeSchema(nodeSchema)) {
+					changedProperties = new Set(
+						Array.from(
+							changedFields,
+							(field) =>
+								nodeSchema.storedKeyToViewKeyMap.get(field) ??
+								fail(`Could not find stored key '${field}' in schema.`),
+						),
+					);
+				} else if (nodeSchema.kind === NodeKind.Array) {
+					// For array nodes, for now we don't have a good story of what we should expose as changed properties (indices?
+					// even if that means including all indices if something is added/removed at the beginning of the array?), so
+					// for now we just provide an empty set. In particular, we don't want to say "the key <empty string> changed"
+					// which is what would happen if we just used the changedFields as the changedProperties because of the way
+					// array nodes work.
+					changedProperties = new Set();
+				} else {
+					changedProperties = changedFields;
+				}
+				this.#events.emit("nodeChanged", { changedProperties });
+			},
+		);
 
 		const offSubtreeChanged = anchorNode.on("subtreeChangedAfterBatch", () => {
 			this.#events.emit("treeChanged");
