@@ -42,7 +42,7 @@ import {
 	type DefaultProvider,
 	getDefaultProvider,
 } from "../schemaTypes.js";
-import { inPrototypeChain, TreeNodeValid } from "../core/index.js";
+import { inPrototypeChain } from "../core/index.js";
 import type {
 	NodeKind,
 	WithType,
@@ -73,6 +73,7 @@ import type {
 	TreeObjectNodeUnsafe,
 } from "../typesUnsafe.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
+import { TreeNodeValid } from "../treeNodeValid.js";
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */

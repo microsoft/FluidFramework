@@ -3,16 +3,20 @@
  * Licensed under the MIT License.
  */
 
-export { isTreeNode, TreeNodeKernel, getKernel } from "./treeNodeKernel.js";
+export {
+	isTreeNode,
+	TreeNodeKernel,
+	getKernel,
+	tryGetTreeNodeSchema,
+} from "./treeNodeKernel.js";
 export { type WithType, typeNameSymbol } from "./withType.js";
 export {
 	type TreeChangeEvents,
 	TreeNode,
-	TreeNodeValid,
 	type Unhydrated,
-	type InternalTreeNode,
-	type MostDerivedData,
 	inPrototypeChain,
+	type InternalTreeNode,
+	privateToken,
 } from "./types.js";
 export {
 	type TreeNodeSchema,
@@ -25,4 +29,5 @@ export {
 	getSimpleNodeSchema,
 	setFlexSchemaFromClassSchema,
 	tryGetSimpleNodeSchema,
+	cachedFlexSchemaFromClassSchema,
 } from "./schemaCaching.js";

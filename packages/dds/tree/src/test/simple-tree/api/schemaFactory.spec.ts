@@ -20,12 +20,12 @@ import {
 	type TreeView,
 } from "../../../simple-tree/index.js";
 import {
+	type TreeNodeSchema,
+	isTreeNode,
 	// Import directly to get the non-type import to allow testing of the package only instanceof
 	TreeNode,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../simple-tree/types.js";
-// eslint-disable-next-line import/no-internal-modules
-import { isTreeNode } from "../../../simple-tree/core/index.js";
+} from "../../../simple-tree/core/index.js";
 import {
 	SchemaFactory,
 	schemaFromValue,
@@ -35,7 +35,6 @@ import type {
 	NodeFromSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
-	TreeNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/schemaTypes.js";
 import { TreeFactory } from "../../../treeFactory.js";

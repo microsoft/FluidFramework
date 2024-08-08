@@ -31,14 +31,13 @@ import {
 	type TreeNodeSchema,
 	type WithType,
 	typeNameSymbol,
-	type MostDerivedData,
 	type TreeNode,
-	TreeNodeValid,
 } from "./core/index.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { RestrictiveReadonlyRecord } from "../util/index.js";
+import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 
 /**
  * A map of string keys to tree objects.

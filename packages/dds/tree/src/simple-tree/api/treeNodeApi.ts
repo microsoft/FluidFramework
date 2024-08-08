@@ -25,9 +25,6 @@ import {
 	type ImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
 } from "../schemaTypes.js";
-import { NodeKind } from "../core/treeNodeSchema.js";
-import { type TreeNodeSchema } from "../core/treeNodeSchema.js";
-import { type TreeNode, type TreeChangeEvents, tryGetTreeNodeSchema } from "../core/types.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -38,7 +35,15 @@ import {
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { Off } from "../../events/index.js";
-import { getKernel, isTreeNode } from "../core/index.js";
+import {
+	getKernel,
+	isTreeNode,
+	type TreeNodeSchema,
+	NodeKind,
+	type TreeNode,
+	type TreeChangeEvents,
+	tryGetTreeNodeSchema,
+} from "../core/index.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -186,6 +191,8 @@ export const treeNodeApi: TreeNodeApi = {
 			}
 			return false;
 		} else {
+			// Linter is incorrect about this bering unnecessary: it does not compile without the type assertion.
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 			return (schema as TreeNodeSchema) === actualSchema;
 		}
 	},

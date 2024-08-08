@@ -43,14 +43,13 @@ import {
 	type WithType,
 	typeNameSymbol,
 	type InternalTreeNode,
-	type MostDerivedData,
 	type TreeNode,
-	TreeNodeValid,
 } from "./core/index.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
+import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 
 /**
  * Helper used to produce types for object nodes.

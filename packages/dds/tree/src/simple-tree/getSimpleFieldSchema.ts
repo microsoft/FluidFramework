@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import type { FlexFieldSchema } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -8,8 +13,8 @@ import {
 /**
  * A symbol for storing {@link FieldSchema}s on a {@link FlexFieldSchema}.
  */
-
 const simpleFieldSchemaSymbol: unique symbol = Symbol(`simpleFieldSchema`);
+
 /**
  * Gets the {@link FieldSchema} which corresponds with the provided {@link FlexFieldSchema | flexSchema}.
  * Caches the result on the provided `flexSchema` for future access.
