@@ -200,7 +200,7 @@ export abstract class TreeNode implements WithType {
 	}
 
 	/**
-	 * TreeNodes must extend schema classes created by SchemaFactory, and therefor this constructor should not be invoked directly by code outside this package.
+	 * TreeNodes must extend schema classes created by SchemaFactory, and therefore this constructor should not be invoked directly by code outside this package.
 	 * @privateRemarks
 	 * `token` must be the {@link privateToken} value, which is not package exported.
 	 * This is used to detect invalid subclasses.
