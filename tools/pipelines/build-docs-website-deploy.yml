@@ -1,0 +1,205 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# build-docs-website-deploy pipeline
+# This pipeline triggers on the completion of the build-docs pipeline (main branch run).
+# After the build-docs pipeline completes, this pipeline downloads the generated fluidframework-docs
+# artifacts and deploys the content using AzureStaticWebApp.
+# Note: this pipeline should be triggering on changes to "release/*" branches as well. However, we
+# only want to trigger on changes to the latest release minor versions (since triggering on old
+# minor release versions would update the website with old content).
+# Item for tracking minor release versions: ADO 6739. Until this item is complete, we will only deploy
+# on changes to main.
+name: $(Build.BuildId)
+
+pr: none
+
+parameters:
+- name: deployOverride
+  displayName: Deployment Override (default = based on branch)
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+    - force
+- name: deployEnvironment
+  displayName: Static web app environment to deploy to
+  type: string
+  default: new
+  values:
+    - new
+    - old
+
+variables:
+- group: storage-vars
+- name: shouldDeploy
+  value: ${{ or(
+    eq(parameters.deployOverride, 'force'),
+    and(eq(variables['Build.SourceBranchName'], 'main'), eq(parameters.deployOverride, 'default'))
+    )}}
+- name: deploymentToken
+  ${{ if eq( parameters['deployEnvironment'], 'new' ) }}:
+    value: "$(FLUID_WEBSITE_TORUS_API_TOKEN)"
+  ${{ if eq( parameters['deployEnvironment'], 'old') }}:
+    value: "$(AZURE_STATIC_WEB_APPS_API_TOKEN)"
+
+# We are setting up a pipeline resource that references the build-docs
+# pipeline and setting up a pipeline completion trigger so that our build-docs-website-deploy
+# pipeline runs when a run of the build-docs pipeline completes
+resources:
+  pipelines:
+  - pipeline: build-docs # "Local" name by which the resource is referenced inside this pipeline's definition
+    source: build-docs # The name of the pipeline referenced by this pipeline resource.
+    trigger:
+      branches:
+        include:
+        - main # Runs this deploy pipeline when build-docs main branch pipeline completes
+
+stages:
+  # BEGIN Secure development tasks
+- stage: guardian
+  displayName: Guardian
+  dependsOn: [] # run in parallel
+  pool: Large
+  jobs:
+    - job: guardian_tasks
+      displayName: Guardian tasks
+      steps:
+        - checkout: self
+          submodules: false
+          clean: true
+
+        - template: templates/include-use-node-version.yml
+
+        - task: UseDotNet@2
+          displayName: 'Use .NET Core 3.x'
+          condition: succeededOrFailed()
+          inputs:
+            packageType: sdk
+            version: 3.x
+
+        - task: securedevelopmentteam.vss-secure-development-tools.build-task-eslint.ESLint@1
+          displayName: 'Run ESLint'
+          condition: succeededOrFailed()
+
+        - task: securedevelopmentteam.vss-secure-development-tools.build-task-publishsecurityanalysislogs.PublishSecurityAnalysisLogs@3
+          displayName: 'Publish Guardian Artifacts - All Tools'
+          condition: succeededOrFailed()
+          inputs:
+            ArtifactType: M365
+
+        - task: AssetRetention@5
+          displayName: Guardian Asset Retention
+          condition: and(succeeded(), eq(variables.shouldRetainGuardianAssets, true))
+          inputs:
+            ArrowServiceConnection: 'ff-internal-arrow-sc'
+            AssetGroupName: 'fluidframework_$(System.TeamProject)_$(Build.DefinitionName)'
+            AssetNumber: '$(Build.BuildId)'
+            IsShipped: false # based on value of arrow.releasedtoproduction variable
+            DropsToRetain: 'CodeAnalysisLogs'
+
+        - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@2
+          displayName: 'Guardian Break'
+          condition: succeededOrFailed()
+          continueOnError: false
+          inputs:
+            GdnBreakPolicyMinSev: Warning
+            GdnBreakAllTools: true
+            GdnBreakBaselineFiles: '$(Build.SourcesDirectory)/docs/.gdnbaselines'
+            GdnBreakGdnToolESLint: true
+            GdnBreakGdnToolESLintSeverity: Warning
+            GdnBreakPolicy: M365
+            GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)/'
+
+        - task: PublishPipelineArtifact@1
+          displayName: 'Publish Baselines'
+          condition: eq('${{ parameters.publishGuardianBaselines }}', 'true')
+          inputs:
+            targetPath: '$(Build.ArtifactStagingDirectory)/.gdnbaselines'
+            artifactName: .gdn
+# END Secure development tasks
+
+- stage: link_check
+  displayName: 'Website Link Check'
+  dependsOn: [] # run in parallel
+  pool: Large
+  jobs:
+    - job: link_check
+      displayName: 'Website Link Check'
+      continueOnError: true
+      steps:
+        - checkout: self
+          submodules: false
+          clean: true
+
+        - template: templates/include-use-node-version.yml
+
+        - template: templates/include-install-pnpm.yml
+          parameters:
+            buildDirectory: $(Build.SourcesDirectory)/docs
+
+        - task: Bash@3
+          displayName: Install dependencies
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)/docs
+            script: |
+              pnpm i --frozen-lockfile
+
+        - task: Npm@1
+          displayName: npm run build
+          inputs:
+            command: 'custom'
+            workingDir: $(Build.SourcesDirectory)/docs
+            customCommand: 'run ci:build'
+
+        - task: Npm@1
+          displayName: npm run ci:linkcheck
+          inputs:
+            command: 'custom'
+            workingDir: $(Build.SourcesDirectory)/docs
+            customCommand: 'run ci:linkcheck'
+
+- stage: deploy
+  displayName: 'Deploy website'
+  pool: Small
+  jobs:
+    - job: deploy_site
+      displayName: 'Deploy website'
+      steps:
+        - task: DownloadPipelineArtifact@2
+          displayName: 'Copy fluidframework-docs to public folder'
+          inputs:
+            source: specific
+            project: internal
+            pipeline: build-docs
+            branchName: main
+            buildVersionToDownload: latestFromBranch
+            artifact: fluidframework-docs
+            path: '$(Build.SourcesDirectory)/docs/public'
+
+        # Note: Downloading a separate published artifact for docs/api since this pipeline does
+        # not checkout the repo. However, the directory for docs/api is needed in the deploy step
+        - task: DownloadPipelineArtifact@2
+          displayName: 'Copy fluidframework-docs-api to api folder'
+          inputs:
+            source: specific
+            project: internal
+            pipeline: build-docs
+            branchName: main
+            buildVersionToDownload: latestFromBranch
+            artifact: fluidframework-docs-api
+            path: '$(Build.SourcesDirectory)/docs/api'
+
+        - task: AzureStaticWebApp@0
+          displayName: 'Deploy website to ASWA'
+          condition: eq(variables.shouldDeploy, true)
+          inputs:
+            skip_app_build: true # site was built in previous stage
+            skip_api_build: true # api is written in js, no build needed
+            cwd: $(Build.SourcesDirectory)
+            app_location: 'docs/public'
+            api_location: 'docs/api'
+            output_location: ''
+            azure_static_web_apps_api_token: '${{ variables.deploymentToken }}'
