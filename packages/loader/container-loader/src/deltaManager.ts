@@ -1076,13 +1076,17 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		// Watch the minimum sequence number and be ready to update as needed
 		if (this.minSequenceNumber > message.minimumSequenceNumber) {
-			// This happens when something changes out from under the file on the server,
-			// e.g. Database rollback or storage otherwise being modified outside of Fluid's purview.
-			// This is a fatal error with data loss for this client, but others will likely be able to connect and continue.
+			// This indicates that an invalid series of ops was received by this client.
+			// In the unlikely case where these ops have been truly sequenced and persisted to storage,
+			// this document is corrupted - It will fail here on boot every time.
+			// The more likely scenario, based on the realities of production service operation, is that
+			// something has changed out from under the file on the server, such that the service lost some ops
+			// which this client already processed - the very ops that made this _next_ op to appear invalid.
+			// In this case, only this client will fail (and lose this recent data), but others will be able to connect and continue.
 			throw DataProcessingError.create(
 				// error message through v0.57: msnMovesBackwards
 				// error message through v2.1: "Found a lower minimumSequenceNumber (msn) than previously recorded",
-				"Invalid MinimumSequenceNumber from service - document was likely restored to previous state",
+				"Invalid MinimumSequenceNumber from service - document may have been restored to previous state",
 				"DeltaManager.processInboundMessage",
 				message,
 				{
