@@ -19,6 +19,22 @@ import type { FieldKey } from "../core/index.js";
 import type { InsertableContent } from "./proxies.js";
 
 /**
+ * Returns true if the given schema is a {@link TreeNodeSchemaClass}, or otherwise false if it is a {@link TreeNodeSchemaNonClass}.
+ */
+export function isTreeNodeSchemaClass<
+	Name extends string,
+	Kind extends NodeKind,
+	TNode,
+	TBuild,
+	ImplicitlyConstructable extends boolean,
+	Info,
+>(
+	schema: TreeNodeSchema<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>,
+): schema is TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info> {
+	return schema.constructor !== undefined;
+}
+
+/**
  * Schema for a tree node.
  * @typeParam Name - The full (including scope) name/identifier for the schema.
  * @typeParam Kind - Which kind of node this schema is for.

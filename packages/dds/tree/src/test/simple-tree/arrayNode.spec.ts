@@ -5,13 +5,13 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { describeHydration, hydrate } from "./utils.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	type FixRecursiveArraySchema,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
-import { hydrate } from "./utils.js";
 import type { Mutable } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { asIndex } from "../../simple-tree/arrayNode.js";
@@ -26,44 +26,48 @@ describe("ArrayNode", () => {
 		testArrayFromSchemaType(PojoEmulationNumberArray);
 	});
 
-	describe("created in customizable mode", () => {
-		testArrayFromSchemaType(CustomizableNumberArray);
+	describeHydration(
+		"created in customizable mode",
+		(init) => {
+			testArrayFromSchemaType(CustomizableNumberArray);
 
-		it("doesn't stringify extra properties", () => {
-			class ExtraArray extends schemaFactory.array("ArrayWithExtra", schemaFactory.number) {
-				public extra = "foo";
-			}
-
-			const jsArray = [0, 1, 2];
-			const array = hydrate(ExtraArray, jsArray);
-			assert.equal(array.extra, "foo");
-			// "extra" should not be stringified
-			assert.equal(JSON.stringify(array), JSON.stringify(jsArray));
-		});
-
-		it("accessor local properties", () => {
-			const thisList: unknown[] = [];
-			class Test extends schemaFactory.array("test", schemaFactory.number) {
-				public get y() {
-					assert.equal(this, n);
-					thisList.push(this);
-					return this[0];
+			it("doesn't stringify extra properties", () => {
+				class ExtraArray extends schemaFactory.array("ArrayWithExtra", schemaFactory.number) {
+					public extra = "foo";
 				}
-				public set y(value: number) {
-					assert.equal(this, n);
-					thisList.push(this);
-					this.insertAtStart(value);
-				}
-			}
 
-			const n = hydrate(Test, [1]);
-			n.y = 2;
-			assert.equal(n[0], 2);
-			n.insertAtStart(3);
-			assert.equal(n.y, 3);
-			assert.deepEqual(thisList, [n, n]);
-		});
-	});
+				const jsArray = [0, 1, 2];
+				const array = init(ExtraArray, jsArray);
+				assert.equal(array.extra, "foo");
+				// "extra" should not be stringified
+				assert.equal(JSON.stringify(array), JSON.stringify(jsArray));
+			});
+		},
+		() => {
+			it("accessor local properties", () => {
+				const thisList: unknown[] = [];
+				class Test extends schemaFactory.array("test", schemaFactory.number) {
+					public get y() {
+						assert.equal(this, n);
+						thisList.push(this);
+						return this[0];
+					}
+					public set y(value: number) {
+						assert.equal(this, n);
+						thisList.push(this);
+						this.insertAtStart(value);
+					}
+				}
+
+				const n = hydrate(Test, [1]);
+				n.y = 2;
+				assert.equal(n[0], 2);
+				n.insertAtStart(3);
+				assert.equal(n.y, 3);
+				assert.deepEqual(thisList, [n, n]);
+			});
+		},
+	);
 
 	// Tests which should behave the same for both "structurally named" "POJO emulation mode" arrays and "customizable" arrays can be added in this function to avoid duplication.
 	function testArrayFromSchemaType(
@@ -662,184 +666,180 @@ describe("ArrayNode", () => {
 		assert.equal(asIndex("1 ", Number.POSITIVE_INFINITY), undefined);
 	});
 
-	describe("shadowing", () => {
-		// Apps compiled targeting es2020 will hit the "fails at runtime if attempting to set content via index assignment" case tested above instead of these due to using assignment in the constructor to implement fields defaulting.
+	describeHydration(
+		"shadowing",
+		(init) => {
+			// Apps compiled targeting es2020 will hit the "fails at runtime if attempting to set content via index assignment" case tested above instead of these due to using assignment in the constructor to implement fields defaulting.
 
-		it("Shadowing index property with incompatible type", () => {
-			class Array extends schemaFactory.array(
-				"ArrayWithTypeIncompatibleShadow",
-				schemaFactory.number,
-			) {
-				// @ts-expect-error Cannot shadow property with incompatible type.
-				public 5: string = "foo";
-			}
-
-			assert.throws(
-				() => new Array([0, 1, 2]),
-				(error: Error) =>
-					validateAssertionError(error, /Shadowing of array indices is not permitted/),
-			);
-
-			assert.throws(
-				() => hydrate(Array, [0, 1, 2]),
-				(error: Error) =>
-					validateAssertionError(error, /Shadowing of array indices is not permitted/),
-			);
-		});
-
-		it("Shadowing index property with compatible type", () => {
-			class Array extends schemaFactory.array(
-				"ArrayWithTypeCompatibleShadow",
-				schemaFactory.number,
-			) {
-				// Shadowing with compatible type is allowed by the type-system, but will throw at construction.
-				public 5: number = 42;
-			}
-
-			assert.throws(
-				() => new Array([0, 1, 2]),
-				(error: Error) =>
-					validateAssertionError(error, /Shadowing of array indices is not permitted/),
-			);
-
-			assert.throws(
-				() => hydrate(Array, [0, 1, 2]),
-				(error: Error) =>
-					validateAssertionError(error, /Shadowing of array indices is not permitted/),
-			);
-		});
-
-		it("Shadowing index property with compatible type (getter)", () => {
-			class Array extends schemaFactory.array("ArrayWithGetterShadow", schemaFactory.number) {
-				// Shadowing with compatible type is allowed by the type-system, but will throw at construction.
-				// eslint-disable-next-line @typescript-eslint/class-literal-property-style
-				public get 5(): number {
-					return 42;
+			it("Shadowing index property with incompatible type", () => {
+				class Array extends schemaFactory.array(
+					"ArrayWithTypeIncompatibleShadow",
+					schemaFactory.number,
+				) {
+					// @ts-expect-error Cannot shadow property with incompatible type.
+					public 5: string = "foo";
 				}
-			}
 
-			assert.throws(
-				() => new Array([0, 1, 2]),
-				(error: Error) =>
-					validateAssertionError(error, /Shadowing of array indices is not permitted/),
-			);
+				assert.throws(
+					() => init(Array, [0, 1, 2]),
+					(error: Error) =>
+						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+				);
+			});
 
-			assert.throws(
-				() => hydrate(Array, [0, 1, 2]),
-				(error: Error) =>
-					validateAssertionError(error, /Shadowing of array indices is not permitted/),
-			);
-		});
-
-		it("Shadowing index property with constructor-initialized property", () => {
-			class Array extends schemaFactory.array("ArrayWithGetterShadow", schemaFactory.number) {
-				public readonly 5: number;
-				public constructor(data: number[], five: number) {
-					super(data);
-					this[5] = five;
+			it("Shadowing index property with compatible type", () => {
+				class Array extends schemaFactory.array(
+					"ArrayWithTypeCompatibleShadow",
+					schemaFactory.number,
+				) {
+					// Shadowing with compatible type is allowed by the type-system, but will throw at construction.
+					public 5: number = 42;
 				}
-			}
 
-			assert.throws(
-				// False positive
-				// eslint-disable-next-line @typescript-eslint/no-array-constructor
-				() => new Array([0, 1, 2], 42),
-				(error: Error) =>
-					validateAssertionError(error, /Shadowing of array indices is not permitted/),
-			);
-		});
-	});
+				assert.throws(
+					() => init(Array, [0, 1, 2]),
+					(error: Error) =>
+						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+				);
+			});
 
-	describe("Iteration", () => {
-		it("Concurrently iterating and editing should throw an error.", () => {
-			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
-			const values = array.values();
-			values.next();
-			array.removeRange(1, 3);
-			assert.throws(
-				() => {
-					values.next();
-				},
-				validateUsageError(/Concurrent editing and iteration is not allowed./),
-			);
-			// Checks that new iterator still works
-			const values2 = array.values();
-			values2.next();
-		});
+			it("Shadowing index property with compatible type (getter)", () => {
+				class Array extends schemaFactory.array(
+					"ArrayWithGetterShadow",
+					schemaFactory.number,
+				) {
+					// Shadowing with compatible type is allowed by the type-system, but will throw at construction.
+					// eslint-disable-next-line @typescript-eslint/class-literal-property-style
+					public get 5(): number {
+						return 42;
+					}
+				}
 
-		it("Iterator of an unhydrated node works after it's been inserted, and throws during iteration once a concurrent edit is made.", () => {
-			class TestArray extends schemaFactory.array("Array", schemaFactory.number) {}
+				assert.throws(
+					() => init(Array, [0, 1, 2]),
+					(error: Error) =>
+						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+				);
+			});
+		},
+		() => {
+			it("Shadowing index property with constructor-initialized property", () => {
+				class Array extends schemaFactory.array(
+					"ArrayWithGetterShadow",
+					schemaFactory.number,
+				) {
+					public readonly 5: number;
+					public constructor(data: number[], five: number) {
+						super(data);
+						this[5] = five;
+					}
+				}
 
-			// Create unhydrated array node
-			const array = new TestArray([1, 2]);
+				assert.throws(
+					// False positive
+					// eslint-disable-next-line @typescript-eslint/no-array-constructor
+					() => new Array([0, 1, 2], 42),
+					(error: Error) =>
+						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+				);
+			});
+		},
+	);
 
-			const provider = new TestTreeProviderLite();
-			const tree = provider.trees[0];
-			const view = tree.viewWith(new TreeViewConfiguration({ schema: TestArray }));
-			const values = array.values();
+	describeHydration(
+		"Iteration",
+		(init) => {
+			it("Iterator of an unhydrated node works after it's been inserted, and throws during iteration once a concurrent edit is made.", () => {
+				class TestArray extends schemaFactory.array("Array", schemaFactory.number) {}
 
-			// Initialize the tree with unhydrated array node
-			view.initialize(array);
+				// Create unhydrated array node
+				const array = new TestArray([1, 2]);
 
-			// Checks that the iterator works after hydrating the node.
-			values.next();
+				const provider = new TestTreeProviderLite();
+				const tree = provider.trees[0];
+				const view = tree.viewWith(new TreeViewConfiguration({ schema: TestArray }));
+				const values = array.values();
 
-			// Make an edit
-			array.insertAtEnd(3);
+				// Initialize the tree with unhydrated array node
+				view.initialize(array);
 
-			// Checks that the iterator throws after
-			assert.throws(
-				() => {
-					values.next();
-				},
-				validateUsageError(/Concurrent editing and iteration is not allowed./),
-			);
-		});
+				// Checks that the iterator works after hydrating the node.
+				values.next();
 
-		it("Iterating when edits were made after the iterator was returned from ArrayNode.values should throw an error.  ", () => {
-			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
-			const values = array.values();
-			array.removeRange();
-			assert.throws(
-				() => {
-					values.next();
-				},
-				validateUsageError(/Concurrent editing and iteration is not allowed./),
-			);
-		});
+				// Make an edit
+				array.insertAtEnd(3);
 
-		it("Iterates through the values of the array", () => {
-			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
-			const result = [];
-			for (const nodeChild of array) {
-				result.push(nodeChild);
-			}
-			assert.deepEqual(result, [1, 2, 3]);
-		});
+				// Checks that the iterator throws after
+				assert.throws(
+					() => {
+						values.next();
+					},
+					validateUsageError(/Concurrent editing and iteration is not allowed./),
+				);
+			});
 
-		it("Iterates through the values of an empty array", () => {
-			const array = hydrate(CustomizableNumberArray, []);
-			const result = [];
-			for (const nodeChild of array) {
-				result.push(nodeChild);
-			}
-			assert.deepEqual(result, []);
-		});
+			it("Iterates through the values of the array", () => {
+				const array = init(CustomizableNumberArray, [1, 2, 3]);
+				const result = [];
+				for (const nodeChild of array) {
+					result.push(nodeChild);
+				}
+				assert.deepEqual(result, [1, 2, 3]);
+			});
 
-		it("Iterates through the values of two concurrent iterators", () => {
-			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
-			const values1 = array.values();
-			const values2 = array.values();
-			const result1 = [];
-			const result2 = [];
-			for (const value of values1) {
-				result1.push(value);
-				result2.push(values2.next().value);
-			}
-			assert.deepEqual(result1, [1, 2, 3]);
-			assert.deepEqual(result2, [1, 2, 3]);
-		});
-	});
+			it("Iterates through the values of an empty array", () => {
+				const array = init(CustomizableNumberArray, []);
+				const result = [];
+				for (const nodeChild of array) {
+					result.push(nodeChild);
+				}
+				assert.deepEqual(result, []);
+			});
+
+			it("Iterates through the values of two concurrent iterators", () => {
+				const array = init(CustomizableNumberArray, [1, 2, 3]);
+				const values1 = array.values();
+				const values2 = array.values();
+				const result1 = [];
+				const result2 = [];
+				for (const value of values1) {
+					result1.push(value);
+					result2.push(values2.next().value);
+				}
+				assert.deepEqual(result1, [1, 2, 3]);
+				assert.deepEqual(result2, [1, 2, 3]);
+			});
+		},
+		() => {
+			it("Concurrently iterating and editing should throw an error.", () => {
+				const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
+				const values = array.values();
+				values.next();
+				array.removeRange(1, 3);
+				assert.throws(
+					() => {
+						values.next();
+					},
+					validateUsageError(/Concurrent editing and iteration is not allowed./),
+				);
+				// Checks that new iterator still works
+				const values2 = array.values();
+				values2.next();
+			});
+
+			it("Iterating when edits were made after the iterator was returned from ArrayNode.values should throw an error.  ", () => {
+				const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
+				const values = array.values();
+				array.removeRange();
+				assert.throws(
+					() => {
+						values.next();
+					},
+					validateUsageError(/Concurrent editing and iteration is not allowed./),
+				);
+			});
+		},
+	);
 
 	it("explicit construction", () => {
 		class Schema extends schemaFactory.array(
