@@ -57,8 +57,7 @@ const defaultBlobSize = 1024;
  * and provide common abstractions for workload scheduling
  * via task picking.
  */
-//* MERGE_TODO: Need to export?
-export class LoadTestDataStoreModel implements IDetachedTestRunner {
+class LoadTestDataStoreModel implements IDetachedTestRunner {
 	private static async waitForCatchupOrDispose(
 		runtime: IFluidDataStoreRuntime,
 	): Promise<void> {

@@ -35,7 +35,7 @@ export async function stressTest(
 	testDriver: ITestDriver,
 	profile: TestConfiguration,
 	args: {
-		workLoadPath: string; //* MERGE_TODO: Optional or not?
+		workLoadPath: string;
 		testId: string | undefined;
 		debug: boolean;
 		verbose: boolean;
@@ -76,8 +76,6 @@ export async function stressTest(
 	console.log(`Selected test profile: ${profileName}`);
 	console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 	console.log(`Start time: ${startTime.toTimeString()}`);
-
-	//* MERGE_TODO: Add workload to logger that was created here
 
 	const runnerArgs: string[][] = [];
 	for (let i = 0; i < profile.numClients; i++) {
@@ -172,6 +170,7 @@ export async function stressTest(
 	);
 
 	//* MERGE_TODO: What if the above throws?  This was in a finally block.
+	//* Check response to https://github.com/microsoft/FluidFramework/pull/22037/files#r1710012004
 	const durationMs = msSinceTime(startTime);
 	console.log(`Duration: ${new Date(durationMs).toISOString().split(/T|Z/)[1]}`);
 

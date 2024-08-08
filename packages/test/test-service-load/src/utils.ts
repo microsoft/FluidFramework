@@ -36,10 +36,10 @@ import {
 } from "./optionsMatrix.js";
 import { pkgName, pkgVersion } from "./packageVersion.js";
 import type { IRunConfig, ITestRunner, TestConfiguration } from "./testConfigFile.js";
+import { VirtualDataStoreFactory } from "./virtualDataStore.js";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
-//* MERGE_TODO: Only used elsewhere now
 export function writeToFile(data: string, relativeDirPath: string, fileName: string) {
 	const outputDir = `${__dirname}/${relativeDirPath}`;
 	if (!fs.existsSync(outputDir)) {
@@ -56,8 +56,8 @@ const codeDetails: IFluidCodeDetails = {
 };
 
 export async function createCodeLoader(
-	runtimeOptions: IContainerRuntimeOptions | undefined, //* MERGE_TODO: Reorder params and make optional
 	workLoadPath: string,
+	runtimeOptions?: IContainerRuntimeOptions,
 ) {
 	// The work load path must contain a `fluidExport` which provides IFluidDataStoreFactory.
 	const module = await import(`./${workLoadPath}/fluidExport.js`);
@@ -70,14 +70,10 @@ export async function createCodeLoader(
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataStoreFactory,
-		//* MERGE_TODO: Reconcile with Tyler's change:
-		/*
 		registryEntries: [
-			LoadTestDataStoreInstantiationFactory.registryEntry,
-			VirtualDataStoreFactory.registryEntry,
+			[dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
+			VirtualDataStoreFactory.registryEntry, //* TODO: Do we want this present for all workloads? Not sure what it does
 		],
-		*/
-		registryEntries: [[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]],
 		runtimeOptions,
 	});
 	const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
@@ -115,7 +111,6 @@ export async function initialize(
 	testConfig: TestConfiguration,
 	workLoadPath: string,
 	verbose: boolean,
-	//* POST_MERGE: include workLoadPath in the logger's props
 	logger: ITelemetryLoggerExt,
 	requestedTestId?: string,
 ) {
@@ -143,7 +138,7 @@ export async function initialize(
 		}),
 	});
 
-	const codeLoader = await createCodeLoader(containerRuntimeOptions, workLoadPath);
+	const codeLoader = await createCodeLoader(workLoadPath, containerRuntimeOptions);
 
 	// Construct the loader
 	const loader = new Loader({

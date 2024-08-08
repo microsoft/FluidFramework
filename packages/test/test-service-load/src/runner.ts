@@ -133,7 +133,7 @@ async function main() {
 		// will get its own set of randoms
 		const random = makeRandom(seed, runId);
 
-		await runnerProcess(
+		result = await runnerProcess(
 			driver,
 			endpoint,
 			workLoadPath,
@@ -209,7 +209,7 @@ async function runnerProcess(
 	url: string,
 	seed: number,
 	enableOpsMetrics: boolean,
-): Promise<void> {
+): Promise<number> {
 	// Assigning no-op value due to linter.
 	let metricsCleanup: () => void = () => {};
 
@@ -233,8 +233,7 @@ async function runnerProcess(
 		() => new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory()),
 	);
 
-	//* MERGE_TODO: Needed for reporting results?
-	//* let exitCode: number = 0;
+	let exitCode: number = 0;
 	let done = false;
 	// Reset the workload once, on the first iteration
 	let reset = true;
@@ -261,8 +260,8 @@ async function runnerProcess(
 				}),
 			});
 			const codeLoader = await createCodeLoader(
-				containerOptions[runConfig.runId % containerOptions.length],
 				workLoadPath,
+				containerOptions[runConfig.runId % containerOptions.length],
 			);
 			const loader = new Loader({
 				urlResolver: testDriver.createUrlResolver(),
@@ -340,7 +339,7 @@ async function runnerProcess(
 			printStatus(runConfig, `running`);
 			const result = await test.run(runConfig, reset);
 			if (result.abort) {
-				//* exitCode = result.errorCode;
+				exitCode = result.errorCode;
 				done = true;
 			} else {
 				done = result.done;
@@ -374,8 +373,7 @@ async function runnerProcess(
 			metricsCleanup();
 		}
 	}
-	//* MERGE_TODO: Matt removed return value here, but we started actually using it!!
-	//* return exitCode;
+	return exitCode;
 }
 
 function scheduleFaultInjection(
