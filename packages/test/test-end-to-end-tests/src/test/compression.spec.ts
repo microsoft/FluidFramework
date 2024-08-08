@@ -134,6 +134,14 @@ const compressionSuite = (getProvider) => {
 				if (provider.type === "TestObjectProviderWithVersionedLoad") {
 					this.skip();
 				}
+				// This test has unreproducible flakiness against r11s (non-FRS).
+				// This test simply verifies all combinations of compression, chunking, and op grouping work end-to-end.
+				if (
+					provider.driver.type === "routerlicious" &&
+					provider.driver.endpointName !== "frs"
+				) {
+					this.skip();
+				}
 				await setupContainers({
 					compressionOptions: {
 						minimumBatchSizeInBytes: option.compressionAndChunking.compression
