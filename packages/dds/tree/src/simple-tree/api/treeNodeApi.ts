@@ -213,7 +213,7 @@ export const treeNodeApi: TreeNodeApi = {
 					}
 					return identifier.value as string;
 				}
-				assert(identifier !== undefined, 0x927 /* The identifier must exist */);
+				assert(identifier?.context !== undefined, "Expected LazyIdentifierField");
 				const identifierValue = identifier.value as string;
 
 				const localNodeKey =

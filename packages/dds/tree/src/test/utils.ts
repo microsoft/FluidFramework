@@ -784,7 +784,7 @@ export function flexTreeFromForest<TRoot extends FlexFieldSchema>(
 	return view.flexTree;
 }
 
-const sf = new SchemaFactory(undefined);
+const sf = new SchemaFactory("com.fluidframework.json");
 
 export const NumberArray = sf.array("array", sf.number);
 export const StringArray = sf.array("array", sf.string);
