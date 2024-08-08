@@ -11,8 +11,10 @@ import {
 	IChannelServices,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { MessageType } from "@fluidframework/driver-definitions/internal";
+import {
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidSerializer,
@@ -74,6 +76,7 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {

@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	Anchor,
-	AnchorNode,
+	type Anchor,
+	type AnchorNode,
 	CursorLocationType,
 	EmptyKey,
-	FieldKey,
-	ITreeSubscriptionCursor,
-	TreeNavigationResult,
-	TreeNodeSchemaIdentifier,
-	TreeValue,
-	Value,
+	type FieldKey,
+	type ITreeSubscriptionCursor,
+	type TreeNavigationResult,
+	type TreeNodeSchemaIdentifier,
+	type TreeValue,
+	type Value,
 	forEachField,
 	inCursorField,
 	mapCursorFields,
@@ -25,37 +25,36 @@ import { brand, capitalize, disposeSymbol, fail, getOrCreate } from "../../util/
 import { FieldKinds } from "../default-schema/index.js";
 import {
 	Any,
-	FlexAllowedTypes,
-	FlexFieldNodeSchema,
+	type FlexAllowedTypes,
+	type FlexFieldNodeSchema,
 	FlexFieldSchema,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	LeafNodeSchema,
+	type FlexMapNodeSchema,
+	type FlexObjectNodeSchema,
+	type FlexTreeNodeSchema,
+	type LeafNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
 } from "../typed-schema/index.js";
 
-import { Context } from "./context.js";
+import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
-	FlexTreeField,
-	FlexTreeFieldNode,
-	FlexTreeLeafNode,
-	FlexTreeMapNode,
-	FlexTreeNode,
-	FlexTreeObjectNodeTyped,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
-	FlexTreeTypedField,
-	FlexTreeTypedNode,
-	FlexTreeUnboxField,
-	FlexibleFieldContent,
-	FlexibleNodeContent,
-	PropertyNameFromFieldKey,
-	TreeStatus,
+	type FlexTreeField,
+	type FlexTreeFieldNode,
+	type FlexTreeLeafNode,
+	type FlexTreeMapNode,
+	type FlexTreeNode,
+	type FlexTreeObjectNodeTyped,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
+	type FlexTreeTypedField,
+	type FlexTreeTypedNode,
+	type FlexTreeUnboxField,
+	type FlexibleFieldContent,
+	type FlexibleNodeContent,
+	type PropertyNameFromFieldKey,
 	flexTreeMarker,
 	flexTreeSlot,
 	reservedObjectNodeFieldPropertyNamePrefixes,
@@ -66,13 +65,10 @@ import {
 	anchorSymbol,
 	cursorSymbol,
 	forgetAnchorSymbol,
-	isFreedSymbol,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
-import { FlexTreeNodeEvents } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
-import { treeStatusFromAnchorCache } from "./utilities.js";
 
 /**
  * @param cursor - This does not take ownership of this cursor: Node will fork it as needed.
@@ -256,37 +252,6 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 
 		return { parent: proxifiedField, index };
 	}
-
-	public override treeStatus(): TreeStatus {
-		if (this[isFreedSymbol]()) {
-			return TreeStatus.Deleted;
-		}
-		return treeStatusFromAnchorCache(this.anchorNode);
-	}
-
-	public on<K extends keyof FlexTreeNodeEvents>(
-		eventName: K,
-		listener: FlexTreeNodeEvents[K],
-	): () => void {
-		switch (eventName) {
-			case "changing": {
-				const unsubscribeFromChildrenChange = this.anchorNode.on(
-					"childrenChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode),
-				);
-				return unsubscribeFromChildrenChange;
-			}
-			case "subtreeChanging": {
-				const unsubscribeFromSubtreeChange = this.anchorNode.on(
-					"subtreeChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode),
-				);
-				return unsubscribeFromSubtreeChange;
-			}
-			default:
-				unreachableCase(eventName);
-		}
-	}
 }
 
 export class LazyMap<TSchema extends FlexMapNodeSchema>
@@ -367,7 +332,7 @@ export class LazyMap<TSchema extends FlexMapNodeSchema>
 		return super.getBoxed(brand(key)) as FlexTreeTypedField<TSchema["info"]>;
 	}
 
-	public set(key: string, content: FlexibleFieldContent<TSchema["info"]> | undefined): void {
+	public set(key: string, content: FlexibleFieldContent | undefined): void {
 		const field = this.getBoxed(key);
 		const fieldSchema = this.schema.info;
 
@@ -428,12 +393,6 @@ export class LazyFieldNode<TSchema extends FlexFieldNodeSchema>
 			unboxedField(this.context, this.schema.info, cursor),
 		) as FlexTreeUnboxField<TSchema["info"]>;
 	}
-
-	public get boxedContent(): FlexTreeTypedField<TSchema["info"]> {
-		return inCursorField(this[cursorSymbol], EmptyKey, (cursor) =>
-			makeField(this.context, this.schema.info, cursor),
-		) as FlexTreeTypedField<TSchema["info"]>;
-	}
 }
 
 /**
@@ -443,7 +402,9 @@ export const reservedObjectNodeFieldPropertyNameSet: ReadonlySet<string> = new S
 	reservedObjectNodeFieldPropertyNames,
 );
 
-export function propertyNameFromFieldKey<T extends string>(key: T): PropertyNameFromFieldKey<T> {
+export function propertyNameFromFieldKey<T extends string>(
+	key: T,
+): PropertyNameFromFieldKey<T> {
 	if (reservedObjectNodeFieldPropertyNameSet.has(key)) {
 		return `field${capitalize(key)}` as PropertyNameFromFieldKey<T>;
 	}
@@ -504,12 +465,12 @@ function buildStructClass<TSchema extends FlexObjectNodeSchema>(
 
 	for (const [key, fieldSchema] of schema.objectNodeFields) {
 		const escapedKey = propertyNameFromFieldKey(key);
-		let setter: ((newContent: FlexibleNodeContent<FlexAllowedTypes>) => void) | undefined;
+		let setter: ((newContent: FlexibleNodeContent) => void) | undefined;
 		switch (fieldSchema.kind) {
 			case FieldKinds.optional: {
 				setter = function (
 					this: CustomStruct,
-					newContent: FlexibleNodeContent<FlexAllowedTypes> | undefined,
+					newContent: FlexibleNodeContent | undefined,
 				): void {
 					const field = getBoxedField(
 						this,
@@ -521,10 +482,7 @@ function buildStructClass<TSchema extends FlexObjectNodeSchema>(
 				break;
 			}
 			case FieldKinds.required: {
-				setter = function (
-					this: CustomStruct,
-					newContent: FlexibleNodeContent<FlexAllowedTypes>,
-				): void {
+				setter = function (this: CustomStruct, newContent: FlexibleNodeContent): void {
 					const field = getBoxedField(
 						this,
 						key,

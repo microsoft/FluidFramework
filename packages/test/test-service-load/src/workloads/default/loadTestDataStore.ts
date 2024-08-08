@@ -14,11 +14,16 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	IDirectory,
+	ISharedDirectory,
+	ISharedMap,
+	SharedMap,
+} from "@fluidframework/map/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
-import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
+import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 
 import {
 	IDetachedTestRunner,
@@ -26,6 +31,11 @@ import {
 	ITestRunner,
 	TestRunResult,
 } from "../../testConfigFile.js";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+
+import { printStatus } from "./utils.js";
+import { VirtualDataStoreFactory, type VirtualDataStore } from "./virtualDataStore.js";
+
 
 export interface ILoadTest {
 	run(config: IRunConfig, reset: boolean): Promise<boolean>;
@@ -38,6 +48,7 @@ export interface ILoadTest {
 const taskManagerKey = "taskManager";
 const counterKey = "counter";
 const sharedMapKey = "sharedMap";
+const dataStoresSharedMapKey = "dataStoresSharedMap";
 const startTimeKey = "startTime";
 const taskTimeKey = "taskTime";
 const gcDataStoreKey = "dataStore";
@@ -49,6 +60,7 @@ const defaultBlobSize = 1024;
  * and provide common abstractions for workload scheduling
  * via task picking.
  */
+//* MERGE_TODO: Need to export?
 export class LoadTestDataStoreModel implements IDetachedTestRunner {
 	private static async waitForCatchupOrDispose(runtime: IFluidDataStoreRuntime): Promise<void> {
 		await new Promise<void>((resolve) => {
@@ -154,6 +166,9 @@ export class LoadTestDataStoreModel implements IDetachedTestRunner {
 		const counter = await runDir.get<IFluidHandle<ISharedCounter>>(counterKey)?.get();
 		const taskmanager = await root.get<IFluidHandle<ITaskManager>>(taskManagerKey)?.get();
 		const sharedmap = await runDir.get<IFluidHandle<ISharedMap>>(sharedMapKey)?.get();
+		const dataStoresSharedMap = await root
+			.get<IFluidHandle<ISharedMap>>(dataStoresSharedMapKey)
+			?.get();
 
 		if (counter === undefined) {
 			throw new Error("counter not available");
@@ -163,6 +178,9 @@ export class LoadTestDataStoreModel implements IDetachedTestRunner {
 		}
 		if (sharedmap === undefined) {
 			throw new Error("sharedmap not available");
+		}
+		if (dataStoresSharedMap === undefined) {
+			throw new Error("dataStoresSharedMap not available");
 		}
 
 		const gcDataStore = await this.getGCDataStore(config, root, containerRuntime);
@@ -177,6 +195,8 @@ export class LoadTestDataStoreModel implements IDetachedTestRunner {
 			sharedmap,
 			runDir,
 			gcDataStore.handle,
+			containerRuntime,
+			dataStoresSharedMap,
 		);
 
 		if (reset) {
@@ -213,6 +233,8 @@ export class LoadTestDataStoreModel implements IDetachedTestRunner {
 		public readonly sharedmap: ISharedMap,
 		private readonly runDir: IDirectory,
 		private readonly gcDataStoreHandle: IFluidHandle,
+		public readonly containerRuntime: IContainerRuntimeBase,
+		public readonly dataStoresSharedMap: ISharedMap,
 	) {
 		const halfClients = Math.floor(this.config.testConfig.numClients / 2);
 		// The runners are paired up and each pair shares a single taskId
@@ -261,10 +283,7 @@ export class LoadTestDataStoreModel implements IDetachedTestRunner {
 						const value = this.counter.value;
 						if (!local) {
 							// this is an old op, we should have already uploaded this blob
-							this.blobCount = Math.max(
-								this.blobCount,
-								Math.trunc(value * blobsPerOp),
-							);
+							this.blobCount = Math.max(this.blobCount, Math.trunc(value * blobsPerOp));
 							return;
 						}
 						const newBlobs =
@@ -274,9 +293,7 @@ export class LoadTestDataStoreModel implements IDetachedTestRunner {
 
 						if (newBlobs > 0) {
 							this.blobUploads.push(
-								...[...Array(newBlobs)].map(async () =>
-									this.writeBlob(this.blobCount++),
-								),
+								...[...Array(newBlobs)].map(async () => this.writeBlob(this.blobCount++)),
 							);
 						}
 					},
@@ -469,9 +486,7 @@ export class LoadTestDataStoreModel implements IDetachedTestRunner {
 			const blobSize = this.config.testConfig.blobSize ?? defaultBlobSize;
 			console.log(
 				`${this.config.runId.toString().padStart(3)}>` +
-					` seen: ${opCount.toString().padStart(8)} (${opRate
-						.toString()
-						.padStart(4)}/min),` +
+					` seen: ${opCount.toString().padStart(8)} (${opRate.toString().padStart(4)}/min),` +
 					` sent: ${this.counter.value.toString().padStart(8)} (${sendRate
 						.toString()
 						.padStart(2)}/min),` +
@@ -498,6 +513,15 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 
 	protected async initializingFirstTime() {
 		this.root.set(taskManagerKey, TaskManager.create(this.runtime).handle);
+		const virtualDataStore = await VirtualDataStoreFactory.createInstance(
+			this.context.containerRuntime,
+			undefined,
+			"0",
+		);
+		this.root.set("0", virtualDataStore.handle);
+		const dataStoresMap = SharedMap.create(this.runtime);
+		this.root.set(dataStoresSharedMapKey, dataStoresMap.handle);
+		dataStoresMap.set("0", virtualDataStore.handle);
 	}
 
 	public async detached(config: Omit<IRunConfig, "runId">) {
@@ -598,18 +622,30 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 				? Math.floor(Math.random() * opSizeinBytes)
 				: opSizeinBytes;
 		const largeOpRate = Math.max(
-			Math.floor(
-				(config.testConfig.content?.largeOpRate ?? 1) / config.testConfig.numClients,
-			),
+			Math.floor((config.testConfig.content?.largeOpRate ?? 1) / config.testConfig.numClients),
 			1,
 		);
 		// To avoid having all clients send their large payloads at roughly the same time
 		const largeOpJitter = Math.min(config.runId, largeOpRate);
 		// To avoid growing the file size unnecessarily, not all clients should be sending large ops
 		const maxClientsSendingLargeOps = config.testConfig.content?.numClients ?? 1;
+
+		// Data Virtualization rates
+		const maxClientsForVirtualDatastores = config.testConfig.virtualization?.numClients ?? 1;
+		const virtualCreateRate =
+			config.testConfig.virtualization?.createRate !== undefined
+				? config.testConfig.virtualization.createRate / config.testConfig.numClients
+				: undefined;
+		const virtualLoadRate =
+			config.testConfig.virtualization?.loadRate !== undefined
+				? config.testConfig.virtualization.loadRate / config.testConfig.numClients
+				: undefined;
+
 		let opsSent = 0;
 		let largeOpsSent = 0;
 		let futureOpsSent = 0;
+		let virtualDataStoresCreated = 0;
+		let virtualDataStoresLoaded = 0;
 
 		const reportOpCount = (reason: string, error?: Error) => {
 			config.logger.sendTelemetryEvent(
@@ -621,6 +657,8 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 					localOpCount: opsSent,
 					localLargeOpCount: largeOpsSent,
 					localFutureOpCount: futureOpsSent,
+					localVirtualDataStoresCreated: virtualDataStoresCreated,
+					virtualDataStoresLoaded,
 				},
 				error,
 			);
@@ -657,6 +695,98 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 				largeOpsSent++;
 			}
 
+			// This creates a virtual data store
+			if (
+				this.shouldCreateVirtualDataStore(
+					virtualCreateRate,
+					opsSent,
+					maxClientsForVirtualDatastores,
+					config.runId,
+				)
+			) {
+				// create virtual data store
+				const validGroupIds = dataModel.dataStoresSharedMap.size - 1;
+				const groupId = config.random.integer(0, validGroupIds);
+				const virtualDataStoreCreation = VirtualDataStoreFactory.createInstance(
+					dataModel.containerRuntime,
+					undefined,
+					groupId.toString(),
+				);
+				const opsSentCurrent = opsSent;
+				virtualDataStoreCreation
+					.then((virtualDataStore) => {
+						dataModel.dataStoresSharedMap.set(
+							`${config.runId}${opsSentCurrent}`,
+							virtualDataStore.handle,
+						);
+						config.logger.sendTelemetryEvent({
+							eventName: "VirtualDataStoreCreation",
+							runId: config.runId,
+							localOpCount: opsSentCurrent,
+							virtualCreateRate,
+							groupId: virtualDataStore.loadingGroupId,
+						});
+						virtualDataStoresCreated++;
+						printStatus(config, `Virtual data store created`);
+					})
+					.catch((error) => {
+						config.logger.sendErrorEvent(
+							{
+								eventName: "VirtualDataStoreCreationFailed",
+								runId: config.runId,
+								localOpCount: opsSentCurrent,
+								virtualCreateRate,
+							},
+							error,
+						);
+					});
+			}
+
+			// This starts loading a virtual data store
+			if (
+				this.shouldLoadVirtualDataStore(
+					virtualLoadRate,
+					opsSent,
+					maxClientsForVirtualDatastores,
+					config.runId,
+				)
+			) {
+				// load random virtual data store
+				const dataStoreHandles = Array.from(
+					dataModel.dataStoresSharedMap.values(),
+				) as IFluidHandle<VirtualDataStore>[];
+				const handle = config.random.pick(dataStoreHandles);
+				const opsSentCurrent = opsSent;
+				const loadStartMs = Date.now();
+				handle
+					.get()
+					.then((virtualDataStore) => {
+						const loadEndMs = Date.now();
+						config.logger.sendTelemetryEvent({
+							eventName: "VirtualDataStoreLoaded",
+							runId: config.runId,
+							localOpCount: opsSentCurrent,
+							virtualLoadRate,
+							groupId: virtualDataStore.loadingGroupId,
+							loadTimeMs: loadEndMs - loadStartMs,
+						});
+						printStatus(config, `Virtual data store loaded`);
+						virtualDataStoresLoaded++;
+					})
+					.catch((error) => {
+						config.logger.sendErrorEvent(
+							{
+								eventName: "VirtualDataStoreLoadFailed",
+								runId: config.runId,
+								localOpCount: opsSentCurrent,
+								virtualLoadRate,
+							},
+							error,
+						);
+					});
+			}
+
+			// [DEPRECATED] This flow is deprecated and is expected to be removed from FF soon.
 			if (futureOpPeriod !== undefined && opsSent % futureOpPeriod === 0) {
 				(
 					this.context.containerRuntime as unknown as {
@@ -692,11 +822,11 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 						} else {
 							await dataModel.volunteerForTask();
 						}
-				  }
+					}
 				: async () => {
 						sendSingleOp();
 						await delay(opsGapMs * config.random.real(1, 1.5));
-				  };
+					};
 
 		try {
 			while (dataModel.counter.value < clientSendCount && !this.runtime.disposed) {
@@ -705,8 +835,7 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 				// and it's partner is done, return true to complete the runner.
 				if (enableQuickRampDown()) {
 					if (
-						this.runtime.getAudience().getMembers().size <
-							config.testConfig.numClients / 2 &&
+						this.runtime.getAudience().getMembers().size < config.testConfig.numClients / 2 &&
 						((await dataModel.getPartnerCounter())?.value ?? 0) >= clientSendCount
 					) {
 						return true;
@@ -715,8 +844,9 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 				await sendSingleOpAndThenWait();
 			}
 
-			reportOpCount("Completed");
-			return !this.runtime.disposed;
+			const doneSendingOps = !this.runtime.disposed;
+			reportOpCount(doneSendingOps ? "Completed" : "Not Completed");
+			return doneSendingOps;
 		} catch (error: any) {
 			reportOpCount("Exception", error);
 			throw error;
@@ -750,6 +880,40 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 			largeOpRate > 0 &&
 			opsSent % largeOpRate === largeOpJitter
 		);
+	}
+
+	/**
+	 * @param createRate - how often should a virtual data store be created, every so op count
+	 * @param jitter - how much jitter to add to the create rate. Jitter was added so creates didn't happen at the same time
+	 * @param opsSent - how many ops have been sent by the client
+	 * @param maxClients - how many clients should be creating virtual data stores
+	 * @param runId - run id of the current test
+	 * @returns true if a virtual data store should be created, false otherwise
+	 */
+	private shouldCreateVirtualDataStore(
+		createRate: number | undefined,
+		opsSent: number,
+		maxClients: number,
+		runId: number,
+	) {
+		return runId < maxClients && createRate !== undefined && opsSent % createRate === 0;
+	}
+
+	/**
+	 *
+	 * @param loadRate - how often should a virtual data store be loaded, every so op count
+	 * @param opsSent - how many ops have been sent by the client
+	 * @param maxClients - how many clients should be creating virtual data stores
+	 * @param runId - run id of the current test
+	 * @returns true if a virtual data store should be loaded, false otherwise
+	 */
+	private shouldLoadVirtualDataStore(
+		loadRate: number | undefined,
+		opsSent: number,
+		maxClients: number,
+		runId: number,
+	) {
+		return runId < maxClients && loadRate !== undefined && opsSent % loadRate === 0;
 	}
 
 	async sendSignals(config: IRunConfig) {

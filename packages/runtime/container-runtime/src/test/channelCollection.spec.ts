@@ -69,11 +69,7 @@ describe("Runtime", () => {
 				const snapshot = getSummaryForDatastores(testSnapshot, undefined);
 				assert(snapshot, "Snapshot should be defined");
 				assert.strictEqual(snapshot.id, "root-id", "Should be top-level");
-				assert.strictEqual(
-					Object.keys(snapshot.trees).length,
-					3,
-					"Should have 3 datastores",
-				);
+				assert.strictEqual(Object.keys(snapshot.trees).length, 3, "Should have 3 datastores");
 				assert.strictEqual(
 					snapshot.trees[channelsTreeName]?.id,
 					"channels-id",
@@ -95,11 +91,7 @@ describe("Runtime", () => {
 				const snapshot = getSummaryForDatastores(testSnapshot, disabledMetadata);
 				assert(snapshot, "Snapshot should be defined");
 				assert.strictEqual(snapshot.id, "root-id", "Should be top-level");
-				assert.strictEqual(
-					Object.keys(snapshot.trees).length,
-					3,
-					"Should have 3 datastores",
-				);
+				assert.strictEqual(Object.keys(snapshot.trees).length, 3, "Should have 3 datastores");
 				assert.strictEqual(
 					snapshot.trees[channelsTreeName]?.id,
 					"channels-id",
@@ -121,11 +113,7 @@ describe("Runtime", () => {
 				const snapshot = getSummaryForDatastores(testSnapshot, enabledMetadata);
 				assert(snapshot, "Snapshot should be defined");
 				assert.strictEqual(snapshot.id, "channels-id", "Should be lower-level");
-				assert.strictEqual(
-					Object.keys(snapshot.trees).length,
-					4,
-					"Should have 4 datastores",
-				);
+				assert.strictEqual(Object.keys(snapshot.trees).length, 4, "Should have 4 datastores");
 				// Put in variable to avoid type-narrowing bug
 				const nonDataStore1 = snapshot.trees[nonDataStorePaths[0]];
 				assert.strictEqual(

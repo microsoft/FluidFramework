@@ -3,19 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 
-import { ChangeEncodingContext } from "../../../core/index.js";
+import type { ChangeEncodingContext } from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeEditManagerCodecs } from "../../../shared-tree-core/editManagerCodecs.js";
-import { SummaryData } from "../../../shared-tree-core/index.js";
+import type { SummaryData } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import {
-	EncodingTestData,
+	type EncodingTestData,
 	makeEncodingTestSuite,
 	mintRevisionTag,
+	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
 
@@ -43,7 +44,11 @@ const trunkCommits: SummaryData<TestChange>["trunk"] = [
 ];
 
 // Dummy context object created to pass through the codec.
-const dummyContext = { originatorId: "dummySessionID" as SessionId, revision: undefined };
+const dummyContext = {
+	originatorId: "dummySessionID" as SessionId,
+	revision: undefined,
+	idCompressor: testIdCompressor,
+};
 const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodingContext> = {
 	successes: [
 		["empty", { trunk: [], peerLocalBranches: new Map() }, dummyContext],

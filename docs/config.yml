@@ -64,13 +64,13 @@ params:
     version: "0.50"
     urlRef: "docs/updates/v0.50.md"
     message: | # if set, this will override the release notes updates
-      Fluid Framework 2.0 preview is available now! <a href="https://aka.ms/fluid/preview_blog"><u>Learn more.</u></a>
+      Fluid Framework 2 is now in General Availability! <a href="https://aka.ms/fluid/release_blog"><u>Learn more.</u></a>
 
 menu:
   main:
     - name: "Getting started"
       url: "/docs/start/quick-start/"
-      weight: -100    
+      weight: -100
     - name: "Docs"
       url: "/docs/"
       weight: -80
@@ -98,7 +98,7 @@ menu:
   docs:
     - identifier: "start"
       name: "Getting started"
-      weight: -800    
+      weight: -800
     - identifier: "build"
       name: "Build with Fluid"
       weight: -600

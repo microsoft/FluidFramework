@@ -12,7 +12,12 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { type ISharedDirectory, type ISharedMap, SharedDirectory, SharedMap } from "../../index.js";
+import {
+	type ISharedDirectory,
+	type ISharedMap,
+	SharedDirectory,
+	SharedMap,
+} from "../../index.js";
 
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 
@@ -377,10 +382,8 @@ describe("Reconnection", () => {
 				"/subDir/subDir should exist",
 			);
 			assert(
-				directory1
-					.getSubDirectory(subDirName)
-					?.getSubDirectory(subDirName)
-					?.get(subDirKey) === subDirValue,
+				directory1.getSubDirectory(subDirName)?.getSubDirectory(subDirName)?.get(subDirKey) ===
+					subDirValue,
 				"/subDir/subDir(subDirKey) should exist",
 			);
 			await assertEquivalentDirectories(directory1, directory2);

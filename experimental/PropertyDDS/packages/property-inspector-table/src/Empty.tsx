@@ -74,7 +74,7 @@ export const computeIconSize = (width: number): IIconSize =>
 		: {
 				height: `${(width * 0.5) / iconAspectRatio}px`,
 				width: `${width * 0.5}px`,
-		  };
+			};
 
 const Empty: React.FunctionComponent<IEmptyProps & WithStyles<typeof styles>> = (props) => {
 	const { description, iconId, iconSize, message } = props;

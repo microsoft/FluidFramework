@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EmptyKey, FieldKey } from "../../../core/index.js";
+import { EmptyKey, type FieldKey } from "../../../core/index.js";
 import { jsonArray, jsonObject, leaf } from "../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { dummyRoot } from "../../../feature-libraries/chunked-forest/index.js";
@@ -13,7 +13,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import { brand, makeArray } from "../../../util/index.js";
-import { TestField, emptySchema } from "../../cursorTestSuite.js";
+import { type TestField, emptySchema } from "../../cursorTestSuite.js";
 
 export const emptyShape = new TreeShape(emptySchema.name, false, []);
 
@@ -72,9 +72,9 @@ const testTrees = [
 		name: "child sequence",
 		dataFactory: () =>
 			new UniformChunk(
-				new TreeShape(jsonArray.name, false, [
-					[EmptyKey, numberShape, 3],
-				]).withTopLevelLength(1),
+				new TreeShape(jsonArray.name, false, [[EmptyKey, numberShape, 3]]).withTopLevelLength(
+					1,
+				),
 				[1, 2, 3],
 			),
 		reference: [

@@ -102,9 +102,7 @@ function stripReversibleChangeSet() {
 							let newRemove = [];
 							let removedTypes = Object.keys(nestedChangeset.remove);
 							for (let t = 0; t < removedTypes.length; t++) {
-								let removedKeys = Object.keys(
-									nestedChangeset.remove[removedTypes[t]],
-								);
+								let removedKeys = Object.keys(nestedChangeset.remove[removedTypes[t]]);
 								for (let i = 0; i < removedKeys.length; i++) {
 									newRemove.push(removedKeys[i]);
 								}

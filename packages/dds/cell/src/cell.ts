@@ -4,27 +4,32 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
-	type IChannelAttributes,
-	type IFluidDataStoreRuntime,
-	type Serializable,
-	type IChannelStorageService,
+import type {
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+	Serializable,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
+import {
+	MessageType,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { MessageType } from "@fluidframework/driver-definitions/internal";
-import {
-	type ISummaryTreeWithStats,
-	type AttributionKey,
+import type {
+	ISummaryTreeWithStats,
+	AttributionKey,
 } from "@fluidframework/runtime-definitions/internal";
-import { type IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
-
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	type ICellLocalOpMetadata,
-	type ICellOptions,
-	type ISharedCell,
-	type ISharedCellEvents,
+	SharedObject,
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
+
+import type {
+	ICellLocalOpMetadata,
+	ICellOptions,
+	ISharedCell,
+	ISharedCellEvents,
 } from "./interfaces.js";
 
 /**
@@ -173,8 +178,8 @@ export class SharedCell<T = any>
 			this.attribution = message
 				? { type: "op", seq: message.sequenceNumber }
 				: this.isAttached()
-				? { type: "local" }
-				: { type: "detached", id: 0 };
+					? { type: "local" }
+					: { type: "detached", id: 0 };
 		}
 	}
 

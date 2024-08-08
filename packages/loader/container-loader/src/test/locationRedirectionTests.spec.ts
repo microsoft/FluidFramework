@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
@@ -32,13 +32,15 @@ describe("Location Redirection Handling Tests", () => {
 				return "newRequestUrl";
 			},
 		};
-		const api = async (request: IRequest) => {
+		const api = async (request: IRequest): Promise<boolean> => {
 			// Throw error first time.
 			if (turn === 0) {
 				turn += 1;
 				const error = new Error("Location Redirection");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 				(error as any).errorType = DriverErrorTypes.locationRedirection;
 				resolved.url = "RedirectedUrl";
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 				(error as any).redirectUrl = resolved;
 				throw error;
 			}

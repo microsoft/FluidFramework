@@ -5,23 +5,23 @@
 
 import { strict as assert } from "assert";
 
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 
 import {
-	ChangeEncodingContext,
-	FieldKey,
-	RevisionMetadataSource,
-	RevisionTag,
-	TaggedChange,
+	type ChangeEncodingContext,
+	type FieldKey,
+	type RevisionMetadataSource,
+	type RevisionTag,
+	type TaggedChange,
 	makeAnonChange,
 	tagChange,
 } from "../core/index.js";
 import { brand } from "../util/index.js";
 
-import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
+import type { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
 import { TestChange } from "./testChange.js";
-import { mintRevisionTag } from "./utils.js";
+import { mintRevisionTag, testIdCompressor } from "./utils.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 describe("TestChange", () => {
@@ -96,6 +96,7 @@ describe("TestChange", () => {
 		const context: ChangeEncodingContext = {
 			originatorId: "session1" as SessionId,
 			revision: undefined,
+			idCompressor: testIdCompressor,
 		};
 		const normal = TestChange.mint([0, 1], [2, 3]);
 		assert.deepEqual(empty, codec.decode(codec.encode(empty, context), context));
@@ -154,9 +155,7 @@ describe("TestChange", () => {
 				generateChildStates,
 				{
 					rebase: (change, base) => {
-						return (
-							TestChange.rebase(change.change, base.change) ?? TestChange.emptyChange
-						);
+						return TestChange.rebase(change.change, base.change) ?? TestChange.emptyChange;
 					},
 					compose: (change1, change2) => {
 						return TestChange.compose(change1.change, change2.change);

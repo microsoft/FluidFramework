@@ -14,6 +14,13 @@ import { strict as assert } from "assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
+	IClient,
+	ISummaryBlob,
+	ISummaryHandle,
+	ISummaryTree,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
+import {
 	FetchSource,
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
@@ -29,13 +36,6 @@ import {
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	IClient,
-	ISummaryBlob,
-	ISummaryHandle,
-	ISummaryTree,
-	SummaryType,
-} from "@fluidframework/driver-definitions";
 
 import {
 	ICompressionStorageConfig,

@@ -18,11 +18,11 @@ import { strict as assert } from "node:assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedMap, SharedDirectory } from "@fluidframework/map/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/driver-definitions/internal";
-import { type ConnectionMode } from "@fluidframework/driver-definitions";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { SharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver/internal";
 
@@ -157,10 +157,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		});
 
 		it("creates a container with detached state", async function () {
-			const { container } = await tinyliciousClient.createContainer(
-				schema,
-				compatibilityMode,
-			);
+			const { container } = await tinyliciousClient.createContainer(schema, compatibilityMode);
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Detached,
@@ -169,10 +166,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		});
 
 		it("creates a container that can only be attached once", async function () {
-			const { container } = await tinyliciousClient.createContainer(
-				schema,
-				compatibilityMode,
-			);
+			const { container } = await tinyliciousClient.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
 
 			assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");

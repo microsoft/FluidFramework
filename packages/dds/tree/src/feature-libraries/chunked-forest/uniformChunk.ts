@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { assert, compareArrays } from "@fluidframework/core-utils/internal";
+import { assert, compareArrays, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
-	FieldKey,
-	FieldUpPath,
-	PathRootPrefix,
-	TreeNodeSchemaIdentifier,
-	TreeValue,
-	UpPath,
-	Value,
+	type FieldKey,
+	type FieldUpPath,
+	type PathRootPrefix,
+	type TreeNodeSchemaIdentifier,
+	type TreeValue,
+	type UpPath,
+	type Value,
 } from "../../core/index.js";
 import { ReferenceCountedBase, fail } from "../../util/index.js";
 import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
 
-import { ChunkedCursor, TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
+import { type ChunkedCursor, type TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
 
 /**
  * Create a tree chunk with ref count 1.
@@ -312,10 +312,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.positionIndex = positionIndex;
 		if (this.nodePositionInfo === undefined) {
 			assert(positionIndex === 0, 0x561 /* expected root at start */);
-			assert(
-				this.mode === CursorLocationType.Fields,
-				0x562 /* expected root to be a field */,
-			);
+			assert(this.mode === CursorLocationType.Fields, 0x562 /* expected root to be a field */);
 		}
 	}
 
@@ -342,7 +339,8 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.indexOfField++;
 		const fields = this.nodeInfo(CursorLocationType.Fields).shape.fieldsArray;
 		if (this.indexOfField < fields.length) {
-			this.fieldKey = fields[this.indexOfField][0];
+			const fieldArr = fields[this.indexOfField] ?? oob();
+			this.fieldKey = fieldArr[0];
 			return true;
 		}
 		this.exitField();
@@ -418,7 +416,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		if (this.indexOfField >= fields.length) {
 			return false; // Handle empty field (indexed by key into empty field)
 		}
-		const f = shape.fieldsOffsetArray[this.indexOfField];
+		const f = shape.fieldsOffsetArray[this.indexOfField] ?? oob();
 		if (childIndex >= f.topLevelLength) {
 			return false;
 		}
@@ -500,7 +498,8 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		}
 		this.indexOfField = 0;
 		this.mode = CursorLocationType.Fields;
-		this.fieldKey = fieldsArray[0][0];
+		const fields = fieldsArray[0] ?? oob();
+		this.fieldKey = fields[0];
 		return true;
 	}
 

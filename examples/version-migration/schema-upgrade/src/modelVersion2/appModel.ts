@@ -3,18 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigrationTool } from "@fluid-example/example-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IMigratableModel, IMigrationTool } from "@fluid-example/example-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ConnectionState } from "@fluidframework/container-loader";
 
 import { parseStringDataVersionTwo, readVersion } from "../dataTransform.js";
-import type {
-	IInventoryList,
-	IInventoryListAppModel,
-	IInventoryListAppModelEvents,
-} from "../modelInterfaces.js";
+import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
 
 // This type represents a stronger expectation than just any string - it needs to be in the right format.
 export type InventoryListAppModelExportFormat2 = string;
@@ -25,10 +19,7 @@ export type InventoryListAppModelExportFormat2 = string;
  * the Container (e.g. no direct access to the Loader).  It does not have a goal of being general-purpose like
  * Container does -- instead it is specially designed for the specific container code.
  */
-export class InventoryListAppModel
-	extends TypedEventEmitter<IInventoryListAppModelEvents>
-	implements IInventoryListAppModel
-{
+export class InventoryListAppModel implements IInventoryListAppModel, IMigratableModel {
 	// To be used by the consumer of the model to pair with an appropriate view.
 	public readonly version = "two";
 
@@ -36,12 +27,7 @@ export class InventoryListAppModel
 		public readonly inventoryList: IInventoryList,
 		public readonly migrationTool: IMigrationTool,
 		private readonly container: IContainer,
-	) {
-		super();
-		this.container.on("connected", () => {
-			this.emit("connected");
-		});
-	}
+	) {}
 
 	public readonly supportsDataFormat = (
 		initialData: unknown,
@@ -74,10 +60,6 @@ export class InventoryListAppModel
 		});
 		return `version:two\n${inventoryItemStrings.join("\n")}`;
 	};
-
-	public connected() {
-		return this.container.connectionState === ConnectionState.Connected;
-	}
 
 	public close() {
 		this.container.close();

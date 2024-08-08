@@ -52,7 +52,9 @@ export class Throttler implements IThrottler {
 	 * by adding the delay time to the actual time.
 	 */
 	public get latestAttemptTime() {
-		return this.startTimes.length > 0 ? this.startTimes[this.startTimes.length - 1] : undefined;
+		return this.startTimes.length > 0
+			? this.startTimes[this.startTimes.length - 1]
+			: undefined;
 	}
 
 	constructor(

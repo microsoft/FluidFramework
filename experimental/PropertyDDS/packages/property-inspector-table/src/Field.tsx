@@ -14,7 +14,11 @@ import { Utils } from "./typeUtils.js";
 function onInlineEditEnd(val: string | number | boolean, props: IEditableValueCellProps) {
 	const { rowData } = props;
 	// Convert to number if it is possible and the type is not an integer with 64 bits.
-	if (rowData.typeid !== "Uint64" && rowData.typeid !== "Int64" && rowData.typeid !== "String") {
+	if (
+		rowData.typeid !== "Uint64" &&
+		rowData.typeid !== "Int64" &&
+		rowData.typeid !== "String"
+	) {
 		val = !isNaN(+val) ? +val : val;
 	}
 

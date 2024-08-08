@@ -7,16 +7,20 @@ import { strict as assert } from "assert";
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 
-import { EmptyKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../../../core/index.js";
+import {
+	EmptyKey,
+	type ITreeCursorSynchronous,
+	type TreeNodeSchemaIdentifier,
+} from "../../../core/index.js";
 import { cursorToJsonObject, singleJsonCursor } from "../../../domains/index.js";
 import {
-	ChunkShape,
+	type ChunkShape,
 	TreeShape,
 	uniformChunk,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
-	TreeChunk,
+	type TreeChunk,
 	cursorForJsonableTreeNode,
 	cursorForMapTreeNode,
 	jsonableTreeFromCursor,

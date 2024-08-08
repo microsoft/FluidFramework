@@ -232,8 +232,7 @@ function makeOperationGenerator(
 		[
 			deleteSubDirectory,
 			options.deleteSubDirWeight,
-			(state: FuzzTestState): boolean =>
-				(state.client.channel.countSubDirectory?.() ?? 0) > 0,
+			(state: FuzzTestState): boolean => (state.client.channel.countSubDirectory?.() ?? 0) > 0,
 		],
 		[setKey, options.setKeyWeight],
 		[

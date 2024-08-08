@@ -30,7 +30,8 @@ module.exports = {
 		// Ideally this section would be empty (and removed).
 		// Items should be removed from here when possible.
 		{
-			label: "Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
+			label:
+				"Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
 			dependencies: ["@oclif/core"],
 			dependencyTypes: ["pnpmOverrides"],
 			packages: ["**"],
@@ -115,6 +116,7 @@ module.exports = {
 		{
 			label: "Must use tilde dependency ranges",
 			dependencies: [
+				"@biomejs/biome",
 				"eslint-plugin-*",
 				"eslint-config-prettier",
 				"eslint",
@@ -152,7 +154,8 @@ module.exports = {
 		// Ideally this section would be empty (and removed).
 		// Items should be removed from here when possible.
 		{
-			label: "Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
+			label:
+				"Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
 			dependencies: ["react-virtualized-auto-sizer", "@types/react", "@types/react-dom"],
 			packages: ["**"],
 			isIgnored: true,
@@ -170,11 +173,15 @@ module.exports = {
 		{
 			label: "Versions of common Fluid packages should all match",
 			dependencies: [
+				"@fluid-internal/eslint-plugin-fluid",
+				"@fluid-tools/benchmark",
+				"@fluid-tools/build-cli",
 				"@fluidframework/build-common",
+				"@fluidframework/build-tools",
 				"@fluidframework/common-utils",
 				"@fluidframework/eslint-config-fluid",
-				"@fluidframework/build-tools",
-				"@fluid-tools/build-cli",
+				"@fluidframework/protocol-definitions",
+				"@fluidframework/test-tools",
 			],
 			packages: ["**"],
 		},
@@ -194,7 +201,8 @@ module.exports = {
 		},
 
 		{
-			label: "Ignore interdependencies on other Fluid packages. This is needed because syncpack doesn't understand our >= < semver ranges",
+			label:
+				"Ignore interdependencies on other Fluid packages. This is needed because syncpack doesn't understand our >= < semver ranges",
 			isIgnored: true,
 			packages: [
 				"@fluid-example/**",

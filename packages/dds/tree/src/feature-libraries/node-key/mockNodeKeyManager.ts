@@ -6,8 +6,8 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 import { assertIsStableId } from "@fluidframework/id-compressor/internal";
-import { LocalNodeKey, StableNodeKey } from "./nodeKey.js";
-import { isStableNodeKey, NodeKeyManager } from "./nodeKeyManager.js";
+import type { LocalNodeKey, StableNodeKey } from "./nodeKey.js";
+import { isStableNodeKey, type NodeKeyManager } from "./nodeKeyManager.js";
 import { brand, extractFromOpaque, fail } from "../../util/index.js";
 
 /**

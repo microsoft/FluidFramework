@@ -681,9 +681,7 @@ describe("Reversible ChangeSets", function () {
 
 		it("should work for custom array properties", function () {
 			var prop = PropertyFactory.create("autodesk.tests:CustomArrayChangesetTestID-1.0.0");
-			var propCopy = PropertyFactory.create(
-				"autodesk.tests:CustomArrayChangesetTestID-1.0.0",
-			);
+			var propCopy = PropertyFactory.create("autodesk.tests:CustomArrayChangesetTestID-1.0.0");
 
 			var A = PropertyFactory.create("autodesk.tests:AnonymousMapTestPropertyID-1.0.0");
 			var B = PropertyFactory.create("autodesk.tests:AnonymousMapTestPropertyID-1.0.0");
@@ -767,9 +765,7 @@ describe("Reversible ChangeSets", function () {
 			root.insert("prop", prop);
 
 			var rootCopy = PropertyFactory.create("NodeProperty");
-			var propCopy = PropertyFactory.create(
-				"autodesk.tests:SimpleInheritsNodeProperty-1.0.0",
-			);
+			var propCopy = PropertyFactory.create("autodesk.tests:SimpleInheritsNodeProperty-1.0.0");
 			rootCopy.insert("prop", propCopy);
 
 			var A = PropertyFactory.create("autodesk.tests:AnonymousMapTestPropertyID-1.0.0");
@@ -1307,7 +1303,9 @@ describe("Reversible ChangeSets", function () {
 		// forward and reverse:
 		cs.applyChangeSet(cs2Rev);
 		// cs now should be 42
-		expect(cs.getSerializedChangeSet()).to.deep.equal({ insert: { Float32: { myFloat: 42 } } });
+		expect(cs.getSerializedChangeSet()).to.deep.equal({
+			insert: { Float32: { myFloat: 42 } },
+		});
 
 		var invCS = cs2Rev.clone();
 		invCS.toInverseChangeSet();
@@ -1317,7 +1315,9 @@ describe("Reversible ChangeSets", function () {
 
 		cs.applyChangeSet(invCS);
 		// cs now should be 23
-		expect(cs.getSerializedChangeSet()).to.deep.equal({ insert: { Float32: { myFloat: 23 } } });
+		expect(cs.getSerializedChangeSet()).to.deep.equal({
+			insert: { Float32: { myFloat: 23 } },
+		});
 	});
 
 	it("should work for templated properties", function () {
@@ -1873,8 +1873,7 @@ describe("Reversible ChangeSets", function () {
 											"autodesk.compute:context-1.0.0": {
 												computeContext: {
 													"Reference<autodesk.compute:resource-2.0.0>": {
-														resource:
-															"/8ce10fdd-b2b6-7152-21dc-c0e199b579e3",
+														resource: "/8ce10fdd-b2b6-7152-21dc-c0e199b579e3",
 													},
 												},
 											},
@@ -1882,26 +1881,21 @@ describe("Reversible ChangeSets", function () {
 												computeNodes: {
 													modify: {
 														"autodesk.test:testCN-1.0.0": {
-															"1e924300-92ef-eaad-391f-53b77fe01099":
-																{
-																	"enum<Enum>": { status: 1 },
-																	"autodesk.compute:context-1.0.0":
-																		{
-																			computeContext: {
-																				"Reference<autodesk.compute:resource-2.0.0>":
-																					{
-																						resource:
-																							"/c1a811ea-608e-5fcc-1487-c74ab6939dee",
-																					},
-																			},
+															"1e924300-92ef-eaad-391f-53b77fe01099": {
+																"enum<Enum>": { status: 1 },
+																"autodesk.compute:context-1.0.0": {
+																	computeContext: {
+																		"Reference<autodesk.compute:resource-2.0.0>": {
+																			resource: "/c1a811ea-608e-5fcc-1487-c74ab6939dee",
 																		},
-																	"Reference<autodesk.core:user-1.0.0>":
-																		{
-																			"inputs.input":
-																				"/5eb6ebe1-92c8-52fa-984b-b0b65c46d2a7.computeNodes[a7e7d213-1202-9ee4-a3c1-8a33d6f36122]" +
-																				".intermediateProperties[2c06da5c-8614-e9c2-3bd6-75ae739eba4f]",
-																		},
+																	},
 																},
+																"Reference<autodesk.core:user-1.0.0>": {
+																	"inputs.input":
+																		"/5eb6ebe1-92c8-52fa-984b-b0b65c46d2a7.computeNodes[a7e7d213-1202-9ee4-a3c1-8a33d6f36122]" +
+																		".intermediateProperties[2c06da5c-8614-e9c2-3bd6-75ae739eba4f]",
+																},
+															},
 														},
 													},
 												},
@@ -1935,22 +1929,17 @@ describe("Reversible ChangeSets", function () {
 												computeNodes: {
 													insert: {
 														"autodesk.test:testCN-1.0.0": {
-															"1e924300-92ef-eaad-391f-53b77fe01099":
-																{
-																	"enum<Enum>": { status: 0 },
-																	"autodesk.compute:context-1.0.0":
-																		{
-																			computeContext: {
-																				"Reference<autodesk.compute:resource-2.0.0>":
-																					{
-																						resource:
-																							"",
-																					},
-																			},
+															"1e924300-92ef-eaad-391f-53b77fe01099": {
+																"enum<Enum>": { status: 0 },
+																"autodesk.compute:context-1.0.0": {
+																	computeContext: {
+																		"Reference<autodesk.compute:resource-2.0.0>": {
+																			resource: "",
 																		},
-																	"Reference<autodesk.core:user-1.0.0>":
-																		{ "inputs.input": "" },
+																	},
 																},
+																"Reference<autodesk.core:user-1.0.0>": { "inputs.input": "" },
+															},
 														},
 													},
 												},

@@ -9,14 +9,14 @@ import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
-	TreeFieldStoredSchema,
-	TreeNodeStoredSchema,
-	TreeStoredSchema,
+	type TreeFieldStoredSchema,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
 	Multiplicity,
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
 
-import { FullSchemaPolicy } from "./fieldKind.js";
+import type { FullSchemaPolicy } from "./fieldKind.js";
 
 /**
  * @internal

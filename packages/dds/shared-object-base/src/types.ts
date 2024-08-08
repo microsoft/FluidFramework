@@ -9,11 +9,12 @@ import {
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
 import { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Events emitted by {@link ISharedObject}.
+ * @legacy
  * @alpha
  */
 export interface ISharedObjectEvents extends IErrorEvent {
@@ -54,6 +55,7 @@ export interface ISharedObjectEvents extends IErrorEvent {
 
 /**
  * Base interface for shared objects from which other interfaces derive. Implemented by SharedObject
+ * @legacy
  * @alpha
  */
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>

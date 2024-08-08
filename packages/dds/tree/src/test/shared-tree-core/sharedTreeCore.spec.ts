@@ -6,11 +6,15 @@
 import { strict as assert } from "assert";
 
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { IEvent } from "@fluidframework/core-interfaces";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
 import {
+	type ISummaryTree,
+	type SummaryObject,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
+import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -25,25 +29,19 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	AllowedUpdateType,
-	ChangeFamily,
-	ChangeFamilyEditor,
-	GraphCommit,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
+	type GraphCommit,
 	rootFieldKey,
 } from "../../core/index.js";
-import { leaf } from "../../domains/index.js";
 import {
-	DefaultChangeset,
-	DefaultEditBuilder,
-	FieldKinds,
-	FlexFieldSchema,
-	ModularChangeset,
-	SchemaBuilderBase,
+	type DefaultChangeset,
+	type DefaultEditBuilder,
+	type ModularChangeset,
 	cursorForJsonableTreeNode,
-	typeNameSymbol,
 } from "../../feature-libraries/index.js";
-import { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
-import {
+import { Tree } from "../../shared-tree/index.js";
+import type {
 	ChangeEnricherReadonlyCheckout,
 	EditManager,
 	ResubmitMachine,
@@ -53,9 +51,12 @@ import {
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import { brand, disposeSymbol } from "../../util/index.js";
-import { SharedTreeTestFactory, schematizeFlexTree } from "../utils.js";
+import { SharedTreeTestFactory, StringArray, TestTreeProviderLite } from "../utils.js";
 
 import { TestSharedTreeCore } from "./utils.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+
+const enableSchemaValidation = true;
 
 describe("SharedTreeCore", () => {
 	it("summarizes without indexes", async () => {
@@ -292,14 +293,10 @@ describe("SharedTreeCore", () => {
 			objectStorage: new MockStorage(),
 		});
 
-		const b = new SchemaBuilderBase(FieldKinds.optional, {
-			scope: "0x4a6 repro",
-			libraries: [leaf.library],
+		const sf = new SchemaFactory("0x4a6 repro");
+		const TestNode = sf.objectRecursive("test node", {
+			child: sf.optionalRecursive([() => TestNode, sf.number]),
 		});
-		const node = b.objectRecursive("test node", {
-			child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
-		});
-		const schema = b.intoSchema(node);
 
 		const tree2 = await factory.load(
 			dataStoreRuntime2,
@@ -311,36 +308,124 @@ describe("SharedTreeCore", () => {
 			factory.attributes,
 		);
 
-		const config = {
-			schema,
-			initialTree: undefined,
-			allowedSchemaModifications: AllowedUpdateType.Initialize,
-		} satisfies InitializeAndSchematizeConfiguration;
-
-		const view1 = schematizeFlexTree(tree1, config);
+		const view1 = tree1.viewWith(
+			new TreeViewConfiguration({ schema: TestNode, enableSchemaValidation }),
+		);
+		view1.initialize(new TestNode({}));
 		containerRuntimeFactory.processAllMessages();
-		const view2 = schematizeFlexTree(tree2, config);
-		const editable1 = view1.flexTree;
-		const editable2 = view2.flexTree;
+		const view2 = tree2.viewWith(
+			new TreeViewConfiguration({ schema: TestNode, enableSchemaValidation }),
+		);
 
-		editable2.content = { [typeNameSymbol]: node.name, child: undefined };
-		editable1.content = { [typeNameSymbol]: node.name, child: undefined };
-		const rootNode = editable2.content;
-		assert(rootNode?.is(node), "Expected set operation to set root node");
-		rootNode.boxedChild.content = 42;
-		editable1.content = { [typeNameSymbol]: node.name, child: undefined };
-		rootNode.boxedChild.content = 43;
+		view2.root = new TestNode({});
+		view1.root = new TestNode({});
+		assert(Tree.is(view2.root, TestNode), "Expected set operation to set root node");
+		view2.root.child = 42;
+		view1.root = new TestNode({});
+		view2.root.child = 43;
 		containerRuntimeFactory.processAllMessages();
 		assert.deepEqual(tree1.contentSnapshot().tree, [
 			{
-				type: node.name,
+				type: TestNode.identifier,
 			},
 		]);
 		assert.deepEqual(tree2.contentSnapshot().tree, [
 			{
-				type: node.name,
+				type: TestNode.identifier,
 			},
 		]);
+	});
+
+	it("Does not submit changes that were aborted in an outer transaction", async () => {
+		const provider = new TestTreeProviderLite(2);
+		const view1 = provider.trees[0].viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
+		view1.initialize(["A", "B"]);
+		provider.processMessages();
+		const view2 = provider.trees[1].viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
+
+		const root1 = view1.root;
+		const root2 = view2.root;
+
+		Tree.runTransaction(root1, () => {
+			// Remove A as part of the aborted transaction
+			root1.removeAt(0);
+			Tree.runTransaction(root1, () => {
+				// Remove B as part of the committed inner transaction
+				root1.removeAt(0);
+			});
+			return Tree.runTransaction.rollback;
+		});
+
+		provider.processMessages();
+		assert.deepEqual([...root1], ["A", "B"]);
+		assert.deepEqual([...root2], ["A", "B"]);
+
+		// Make an additional change to ensure that all changes from the previous transactions were flushed
+		Tree.runTransaction(root1, () => {
+			root1.insertAtEnd("C");
+		});
+
+		provider.processMessages();
+		assert.deepEqual([...root1], ["A", "B", "C"]);
+		assert.deepEqual([...root2], ["A", "B", "C"]);
+	});
+
+	it("Does not submit changes that were aborted in an inner transaction", async () => {
+		const provider = new TestTreeProviderLite(2);
+		const view1 = provider.trees[0].viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
+		view1.initialize(["A", "B"]);
+		provider.processMessages();
+		const view2 = provider.trees[1].viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
+
+		const root1 = view1.root;
+		const root2 = view2.root;
+
+		Tree.runTransaction(root1, () => {
+			// Remove A as part of the committed transaction
+			root1.removeAt(0);
+			Tree.runTransaction(root1, () => {
+				// Remove B as part of the aborted transaction
+				root1.removeAt(0);
+				return Tree.runTransaction.rollback;
+			});
+		});
+
+		assert.deepEqual([...root1], ["B"]);
+		assert.deepEqual([...root2], ["A", "B"]);
+
+		provider.processMessages();
+
+		assert.deepEqual([...root1], ["B"]);
+		assert.deepEqual([...root2], ["B"]);
+
+		// Make an additional change to ensure that all changes from the previous transactions were flushed
+		Tree.runTransaction(root1, () => {
+			root1.insertAtEnd("C");
+		});
+
+		provider.processMessages();
+		assert.deepEqual([...root2], ["B", "C"]);
+		assert.deepEqual([...root2], ["B", "C"]);
 	});
 
 	describe("commit enrichment", () => {
@@ -474,6 +559,29 @@ describe("SharedTreeCore", () => {
 			assert.equal(enricher.enrichmentLog.length, 2);
 			assert.equal(machine.submissionLog.length, 1);
 			assert.notEqual(machine.submissionLog[0], tree.getLocalBranch().getHead().change);
+		});
+
+		it("handles aborted outer transaction", () => {
+			const enricher = new MockChangeEnricher<ModularChangeset>();
+			const machine = new MockResubmitMachine();
+			const tree = createTree([], machine, enricher);
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+				idCompressor: createIdCompressor(),
+			});
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			tree.connect({
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+			tree.getLocalBranch().startTransaction();
+			assert.equal(enricher.enrichmentLog.length, 0);
+			changeTree(tree);
+			assert.equal(enricher.enrichmentLog.length, 1);
+			assert.equal(enricher.enrichmentLog[0].input, tree.getLocalBranch().getHead().change);
+			tree.getLocalBranch().abortTransaction();
+			assert.equal(enricher.enrichmentLog.length, 1);
+			assert.equal(machine.submissionLog.length, 0);
 		});
 
 		it("update commit enrichments on re-submit", () => {

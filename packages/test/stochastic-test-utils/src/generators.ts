@@ -46,7 +46,8 @@ import {
 export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 	weights: Weights<T, TState>,
 ): Generator<T, TState> {
-	const cumulativeSums: [T | Generator<T, TState>, number, AcceptanceCondition<TState>?][] = [];
+	const cumulativeSums: [T | Generator<T, TState>, number, AcceptanceCondition<TState>?][] =
+		[];
 	let totalWeight = 0;
 	for (const [tOrGenerator, weight, shouldAccept] of weights) {
 		const cumulativeWeight = totalWeight + weight;
@@ -93,7 +94,10 @@ export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
  * Higher-order generator operator which creates a new generator producing the first `n` elements of `generator`.
  * @internal
  */
-export function take<T, TState>(n: number, generator: Generator<T, TState>): Generator<T, TState> {
+export function take<T, TState>(
+	n: number,
+	generator: Generator<T, TState>,
+): Generator<T, TState> {
 	let count = 0;
 	return (state) => {
 		if (count < n) {
@@ -297,8 +301,11 @@ export function repeat<T, TState = void>(t: T): Generator<T, TState> {
 export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState>(
 	weights: AsyncWeights<T, TState>,
 ): AsyncGenerator<T, TState> {
-	const cumulativeSums: [T | AsyncGenerator<T, TState>, number, AcceptanceCondition<TState>?][] =
-		[];
+	const cumulativeSums: [
+		T | AsyncGenerator<T, TState>,
+		number,
+		AcceptanceCondition<TState>?,
+	][] = [];
 	let totalWeight = 0;
 	for (const [tOrGenerator, weight, shouldAccept] of weights) {
 		const cumulativeWeight = totalWeight + weight;

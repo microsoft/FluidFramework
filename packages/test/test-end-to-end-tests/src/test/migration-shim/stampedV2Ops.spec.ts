@@ -22,20 +22,14 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IChannel } from "@fluidframework/datastore-definitions/internal";
-import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import {
-	type ITree,
-	SchemaFactory,
-	TreeConfiguration,
-	type TreeView,
-	disposeSymbol,
-} from "@fluidframework/tree";
+import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
@@ -61,10 +55,7 @@ const builder = new SchemaFactory("test");
 class QuantityType extends builder.object("quantityObj", {
 	quantity: builder.number,
 }) {}
-
-function getNewTreeView(tree: ITree): TreeView<typeof QuantityType> {
-	return tree.schematize(new TreeConfiguration(QuantityType, () => ({ quantity: 0 })));
-}
+const treeConfig = new TreeViewConfiguration({ schema: QuantityType });
 
 describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
@@ -168,13 +159,9 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 			}
 			// migrate data
 			const quantity = getQuantity(legacyTree);
-			newTree
-				.schematize(
-					new TreeConfiguration(QuantityType, () => ({
-						quantity,
-					})),
-				)
-				[disposeSymbol]();
+			const view = newTree.viewWith(treeConfig);
+			view.initialize({ quantity });
+			view.dispose();
 		},
 	);
 
@@ -254,9 +241,9 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const newTree1 = shim1.currentTree as ITree;
 		const newTree2 = shim2.currentTree as ITree;
-		const view1 = getNewTreeView(newTree1);
+		const view1 = newTree1.viewWith(treeConfig);
 		await provider.ensureSynchronized();
-		const view2 = getNewTreeView(newTree2);
+		const view2 = newTree2.viewWith(treeConfig);
 		const node1 = view1.root;
 		const node2 = view2.root;
 		assert.equal(node1.quantity, node2.quantity, "expected to migrate to the same value");
@@ -322,9 +309,9 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const newTree1 = shim1.currentTree as ITree;
 		const newTree2 = shim2.currentTree;
-		const view1 = getNewTreeView(newTree1);
+		const view1 = newTree1.viewWith(treeConfig);
 		await provider.ensureSynchronized();
-		const view2 = getNewTreeView(newTree2);
+		const view2 = newTree2.viewWith(treeConfig);
 		const node1 = view1.root;
 		const node2 = view2.root;
 		assert.equal(node1.quantity, originalValue, "Node1 should be the original value");

@@ -4,6 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
 	IDocumentServiceEvents,
 	IDocumentService,
@@ -12,7 +13,6 @@ import {
 	IResolvedUrl,
 	IDocumentDeltaStorageService,
 } from "@fluidframework/driver-definitions/internal";
-import { IClient } from "@fluidframework/driver-definitions";
 
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService.js";
 import { ReplayController } from "./replayController.js";

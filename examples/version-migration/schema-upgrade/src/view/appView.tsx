@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IMigratableModel } from "@fluid-example/example-utils";
 import React, { useEffect, useState } from "react";
 
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
@@ -10,7 +11,9 @@ import type { IInventoryListAppModel } from "../modelInterfaces.js";
 import { InventoryListView } from "./inventoryView.js";
 
 export interface IInventoryListAppViewProps {
-	model: IInventoryListAppModel;
+	// TODO: All we really want here is a "readonly" indicator - maybe don't need the full IMigratableModel interface.
+	// Would maybe be better to grab that info from the Migrator rather than the MigrationTool anyway.
+	model: IInventoryListAppModel & IMigratableModel;
 }
 
 /**
@@ -32,14 +35,14 @@ export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = (
 		const migrationStateChangedHandler = () => {
 			setDisableInput(model.migrationTool.migrationState !== "collaborating");
 		};
-		model.migrationTool.on("stopping", migrationStateChangedHandler);
-		model.migrationTool.on("migrating", migrationStateChangedHandler);
-		model.migrationTool.on("migrated", migrationStateChangedHandler);
+		model.migrationTool.events.on("stopping", migrationStateChangedHandler);
+		model.migrationTool.events.on("migrating", migrationStateChangedHandler);
+		model.migrationTool.events.on("migrated", migrationStateChangedHandler);
 		migrationStateChangedHandler();
 		return () => {
-			model.migrationTool.off("stopping", migrationStateChangedHandler);
-			model.migrationTool.off("migrating", migrationStateChangedHandler);
-			model.migrationTool.off("migrated", migrationStateChangedHandler);
+			model.migrationTool.events.off("stopping", migrationStateChangedHandler);
+			model.migrationTool.events.off("migrating", migrationStateChangedHandler);
+			model.migrationTool.events.off("migrated", migrationStateChangedHandler);
 		};
 	}, [model]);
 

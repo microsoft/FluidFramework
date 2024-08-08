@@ -10,6 +10,7 @@
 export * from "./data-visualization/index.js";
 
 export * from "./AudienceHistoryTable.js";
+export * from "./AudienceStateTable.js";
 export * from "./AudienceView.js";
 export * from "./ContainerDevtoolsView.js";
 export * from "./ContainerHistoryView.js";

@@ -4,7 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { type SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	type MockContainerRuntime,
@@ -13,8 +13,12 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
-import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
-import { SharedTree, SharedTreeFactory, SharedTreeFormatVersion } from "../../shared-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+import {
+	type SharedTree,
+	SharedTreeFactory,
+	SharedTreeFormatVersion,
+} from "../../shared-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 
 /**
@@ -65,15 +69,15 @@ describe("SharedTree op format snapshots", () => {
 
 			it("schema change", () => {
 				const messages = spyOnFutureMessages(containerRuntime);
-				tree.schematize(new TreeConfiguration(Point, () => new Point({ x: 0, y: 0 })));
+				const view = tree.viewWith(new TreeViewConfiguration({ schema: Point }));
+				view.initialize(new Point({ x: 0, y: 0 }));
 
 				takeJsonSnapshot(messages);
 			});
 
 			it("field change", () => {
-				const view = tree.schematize(
-					new TreeConfiguration(Point, () => new Point({ x: 0, y: 2 })),
-				);
+				const view = tree.viewWith(new TreeViewConfiguration({ schema: Point }));
+				view.initialize(new Point({ x: 0, y: 2 }));
 
 				const messages = spyOnFutureMessages(containerRuntime);
 				view.root.x = 1;

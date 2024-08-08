@@ -587,7 +587,10 @@ export class DataBindingTree {
 	 * @param io_parentNode - parent node whose child we convert
 	 * @param in_key - key (index) of the child we want to replace
 	 */
-	private _convertToMapNode(io_parentNode: DataBindingTree | MapNode, in_key: string | number) {
+	private _convertToMapNode(
+		io_parentNode: DataBindingTree | MapNode,
+		in_key: string | number,
+	) {
 		let replacementNode = new MapNode();
 		// this syntax should work both for ArrayNodes and DataBindingTree parent nodes
 		let oldDataBindingTreeNode = io_parentNode._childNodes[in_key];
@@ -692,7 +695,11 @@ export class DataBindingTree {
 	 * @param - The path up to this node
 	 * @package
 	 */
-	forEachChild(callback: Function, postCallback?: Function, in_path: (string | number)[] = []) {
+	forEachChild(
+		callback: Function,
+		postCallback?: Function,
+		in_path: (string | number)[] = [],
+	) {
 		callback(this._value, in_path, this);
 
 		let keys = _.keys(this._childNodes);
@@ -1231,11 +1238,7 @@ export class ArrayNode extends DataBindingTree {
 		//      ' length: ' + length + ' high: ' + this._highestPathCallbackIndex);
 		if (isNaN(in_index) || in_index < 0 || in_index > length) {
 			throw new Error(
-				"Invalid removal index " +
-					in_index +
-					". Index should be in range [0, " +
-					length +
-					"]",
+				"Invalid removal index " + in_index + ". Index should be in range [0, " + length + "]",
 			);
 		}
 		// If this array contains references we can only remove from the end of the array (that is filled in so far) *or*
@@ -1277,7 +1280,11 @@ export class ArrayNode extends DataBindingTree {
 	 * @param in_path - The path up to this node
 	 * @package
 	 */
-	forEachChild(callback: Function, postCallback?: Function, in_path: (string | number)[] = []) {
+	forEachChild(
+		callback: Function,
+		postCallback?: Function,
+		in_path: (string | number)[] = [],
+	) {
 		callback(this._value, in_path, this);
 
 		let i = 0;

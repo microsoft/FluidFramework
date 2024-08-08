@@ -21,8 +21,8 @@ import {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
+import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,

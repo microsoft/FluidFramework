@@ -10,10 +10,10 @@ import {
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/internal";
+import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { IFluidContainer } from "fluid-framework";
-import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
 import { v4 as uuid } from "uuid";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
@@ -50,12 +50,12 @@ const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig
 			tenantId: "",
 			tokenProvider: new AzureFunctionTokenProvider("", azureUser),
 			endpoint: "",
-	  }
+		}
 	: {
 			type: "local",
 			tokenProvider: new InsecureTokenProvider("fooBar", user),
 			endpoint: "http://localhost:7070",
-	  };
+		};
 
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created
@@ -92,12 +92,10 @@ function createDiceRollerControllerProps(map: ISharedMap): DiceRollerControllerP
 function createDiceRollerControllerPropsFromContainer(
 	container: IFluidContainer,
 ): [DiceRollerControllerProps, DiceRollerControllerProps] {
-	const diceRollerController1Props: DiceRollerControllerProps = createDiceRollerControllerProps(
-		container.initialObjects.map1 as ISharedMap,
-	);
-	const diceRollerController2Props: DiceRollerControllerProps = createDiceRollerControllerProps(
-		container.initialObjects.map2 as ISharedMap,
-	);
+	const diceRollerController1Props: DiceRollerControllerProps =
+		createDiceRollerControllerProps(container.initialObjects.map1 as ISharedMap);
+	const diceRollerController2Props: DiceRollerControllerProps =
+		createDiceRollerControllerProps(container.initialObjects.map2 as ISharedMap);
 	return [diceRollerController1Props, diceRollerController2Props];
 }
 

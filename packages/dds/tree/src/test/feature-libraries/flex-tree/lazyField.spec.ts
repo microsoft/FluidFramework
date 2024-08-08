@@ -9,8 +9,19 @@ import { strict as assert } from "assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import { FieldAnchor, FieldKey, UpPath, rootFieldKey } from "../../../core/index.js";
-import { SchemaBuilder, leaf, leaf as leafDomain } from "../../../domains/index.js";
+import {
+	type FieldAnchor,
+	type FieldKey,
+	type UpPath,
+	rootFieldKey,
+} from "../../../core/index.js";
+import {
+	SchemaBuilder,
+	leaf,
+	leaf as leafDomain,
+	singleJsonCursor,
+	typedJsonCursor,
+} from "../../../domains/index.js";
 import { isFreedSymbol } from "../../../feature-libraries/flex-tree/lazyEntity.js";
 import {
 	LazyField,
@@ -23,7 +34,6 @@ import {
 	FieldKinds,
 	type FlexAllowedTypes,
 	FlexFieldSchema,
-	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 	SchemaBuilderBase,
 } from "../../../feature-libraries/index.js";
@@ -53,16 +63,10 @@ describe("LazyField", () => {
 		const builder = new SchemaBuilder({ scope: "lazyTree" });
 		builder.object("empty", {});
 		const schema = builder.intoSchema(FlexFieldSchema.create(FieldKinds.optional, [Any]));
-		const forest = forestWithContent({ schema, initialTree: {} });
+		const forest = forestWithContent({ schema, initialTree: singleJsonCursor({}) });
 		const context = getReadonlyContext(forest, schema);
 		const cursor = initializeCursor(context, detachedFieldAnchor);
 
-		const sequenceField = new LazySequence(
-			context,
-			FlexFieldSchema.create(FieldKinds.sequence, [Any]),
-			cursor,
-			detachedFieldAnchor,
-		);
 		const optionalField = new LazyOptionalField(
 			context,
 			FlexFieldSchema.create(FieldKinds.optional, [Any]),
@@ -77,28 +81,14 @@ describe("LazyField", () => {
 		);
 		cursor.free();
 		assert.throws(
-			() => sequenceField.insertAt(0, [1]),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					/only allowed on fields with TreeStatus.InDocument status/,
-				),
-		);
-		assert.throws(
 			() => (optionalField.content = undefined),
 			(e: Error) =>
-				validateAssertionError(
-					e,
-					/only allowed on fields with TreeStatus.InDocument status/,
-				),
+				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
 		);
 		assert.throws(
-			() => (valueField.content = {}),
+			() => (valueField.content = singleJsonCursor({})),
 			(e: Error) =>
-				validateAssertionError(
-					e,
-					/only allowed on fields with TreeStatus.InDocument status/,
-				),
+				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
 		);
 	});
 
@@ -113,7 +103,10 @@ describe("LazyField", () => {
 
 		// Note: this tree initialization is strictly to enable construction of the lazy field.
 		// The test cases below are strictly in terms of the schema of the created fields.
-		const { context, cursor } = readonlyTreeWithContent({ schema, initialTree: {} });
+		const { context, cursor } = readonlyTreeWithContent({
+			schema,
+			initialTree: singleJsonCursor({}),
+		});
 
 		// #endregion
 
@@ -205,9 +198,10 @@ describe("LazyField", () => {
 
 		const { context, cursor } = readonlyTreeWithContent({
 			schema,
-			initialTree: {
+			initialTree: typedJsonCursor({
+				[typedJsonCursor.type]: struct,
 				foo: "Hello world",
-			},
+			}),
 		});
 
 		const rootField = new TestLazyField(context, rootSchema, cursor, rootFieldAnchor);
@@ -243,7 +237,7 @@ describe("LazyField", () => {
 		});
 		builder.object("empty", {});
 		const schema = builder.intoSchema(FlexFieldSchema.create(FieldKinds.optional, [Any]));
-		const forest = forestWithContent({ schema, initialTree: {} });
+		const forest = forestWithContent({ schema, initialTree: singleJsonCursor({}) });
 		const context = getReadonlyContext(forest, schema);
 		const cursor = initializeCursor(context, detachedFieldAnchor);
 
@@ -266,7 +260,10 @@ describe("LazyField", () => {
 		});
 		const Holder = builder.object("holder", { f: leafDomain.number });
 		const schema = builder.intoSchema(FlexFieldSchema.create(FieldKinds.optional, [Any]));
-		const forest = forestWithContent({ schema, initialTree: { f: 5 } });
+		const forest = forestWithContent({
+			schema,
+			initialTree: typedJsonCursor({ [typedJsonCursor.type]: Holder, f: 5 }),
+		});
 		const context = getReadonlyContext(forest, schema);
 
 		const holder = [...context.root.boxedIterator()][0];
@@ -290,7 +287,10 @@ describe("LazyField", () => {
 		});
 		const Holder = builder.object("holder", { f: leafDomain.number });
 		const schema = builder.intoSchema(FlexFieldSchema.create(FieldKinds.optional, [Any]));
-		const forest = forestWithContent({ schema, initialTree: { f: 5 } });
+		const forest = forestWithContent({
+			schema,
+			initialTree: typedJsonCursor({ [typedJsonCursor.type]: Holder, f: 5 }),
+		});
 		const context = getReadonlyContext(forest, schema);
 
 		const holder = [...context.root.boxedIterator()][0];
@@ -313,7 +313,10 @@ describe("LazyOptionalField", () => {
 	const schema = builder.intoSchema(rootSchema);
 
 	describe("Field with value", () => {
-		const { context, cursor } = readonlyTreeWithContent({ schema, initialTree: 42 });
+		const { context, cursor } = readonlyTreeWithContent({
+			schema,
+			initialTree: singleJsonCursor(42),
+		});
 		const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
 
 		it("atIndex", () => {
@@ -382,10 +385,10 @@ describe("LazyOptionalField", () => {
 	it("content", () => {
 		const view = flexTreeViewWithContent({
 			schema,
-			initialTree: 5,
+			initialTree: singleJsonCursor(5),
 		});
 		assert.equal(view.flexTree.content, 5);
-		view.flexTree.content = 6;
+		view.flexTree.content = singleJsonCursor(6);
 		assert.equal(view.flexTree.content, 6);
 		view.flexTree.content = undefined;
 		assert.equal(view.flexTree.content, undefined);
@@ -404,7 +407,10 @@ describe("LazyValueField", () => {
 
 	const initialTree = "Hello world";
 
-	const { context, cursor } = readonlyTreeWithContent({ schema, initialTree });
+	const { context, cursor } = readonlyTreeWithContent({
+		schema,
+		initialTree: singleJsonCursor(initialTree),
+	});
 
 	const field = new LazyValueField(context, rootSchema, cursor, rootFieldAnchor);
 
@@ -438,10 +444,10 @@ describe("LazyValueField", () => {
 	it("content", () => {
 		const view = flexTreeViewWithContent({
 			schema,
-			initialTree: "X",
+			initialTree: singleJsonCursor("X"),
 		});
 		assert.equal(view.flexTree.content, "X");
-		view.flexTree.content = "Y";
+		view.flexTree.content = singleJsonCursor("Y");
 		assert.equal(view.flexTree.content, "Y");
 		const zCursor = cursorForJsonableTreeNode({ type: leaf.string.name, value: "Z" });
 		view.flexTree.content = zCursor;
@@ -460,17 +466,9 @@ describe("LazySequence", () => {
 	function testSequence(data: number[]) {
 		const { context, cursor } = readonlyTreeWithContent({
 			schema,
-			initialTree: data,
+			initialTree: data.map((n) => singleJsonCursor(n)),
 		});
 		return new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
-	}
-
-	function testMutableSequence(data: number[]) {
-		const view = flexTreeViewWithContent({
-			schema,
-			initialTree: data,
-		});
-		return view.flexTree;
 	}
 
 	it("atIndex", () => {
@@ -535,64 +533,5 @@ describe("LazySequence", () => {
 		const sequence = testSequence([37, 42]);
 		const array = [...sequence];
 		assert.deepEqual(array, [37, 42]);
-	});
-
-	describe("insertAt", () => {
-		it("basic use", () => {
-			const sequence = testMutableSequence([]);
-			assert.deepEqual([...sequence], []);
-			sequence.insertAt(0, []);
-			assert.deepEqual([...sequence], []);
-			sequence.insertAt(0, [10]);
-			assert.deepEqual([...sequence], [10]);
-			sequence.insertAt(0, [11]);
-			assert.deepEqual([...sequence], [11, 10]);
-			sequence.insertAt(1, [12]);
-			assert.deepEqual([...sequence], [11, 12, 10]);
-			sequence.insertAt(3, [13]);
-			assert.deepEqual([...sequence], [11, 12, 10, 13]);
-			sequence.insertAt(1, [1, 2, 3]);
-			assert.deepEqual([...sequence], [11, 1, 2, 3, 12, 10, 13]);
-			assert.throws(
-				() => sequence.insertAt(-1, []),
-				(e: Error) => validateAssertionError(e, /index/),
-			);
-			assert.throws(
-				() => sequence.insertAt(0.5, []),
-				(e: Error) => validateAssertionError(e, /index/),
-			);
-			assert.throws(
-				() => sequence.insertAt(NaN, []),
-				(e: Error) => validateAssertionError(e, /index/),
-			);
-			assert.throws(
-				() => sequence.insertAt(Number.POSITIVE_INFINITY, []),
-				(e: Error) => validateAssertionError(e, /index/),
-			);
-			assert.throws(
-				() => sequence.insertAt(8, []),
-				(e: Error) => validateAssertionError(e, /index/),
-			);
-		});
-
-		it("with cursors", () => {
-			const sequence = testMutableSequence([]);
-			assert.deepEqual([...sequence], []);
-			sequence.insertAt(0, cursorForJsonableTreeField([]));
-			assert.deepEqual([...sequence], []);
-			sequence.insertAt(
-				0,
-				cursorForJsonableTreeField([{ type: leaf.number.name, value: 10 }]),
-			);
-			assert.deepEqual([...sequence], [10]);
-			sequence.insertAt(
-				0,
-				cursorForJsonableTreeField([
-					{ type: leaf.number.name, value: 11 },
-					{ type: leaf.number.name, value: 12 },
-				]),
-			);
-			assert.deepEqual([...sequence], [11, 12, 10]);
-		});
 	});
 });

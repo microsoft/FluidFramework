@@ -5,18 +5,21 @@
 
 import { strict as assert } from "assert";
 
-import { FieldKey, UpPath, moveToDetachedField, rootFieldKey } from "../core/index.js";
-import { jsonSchema, leaf } from "../domains/index.js";
 import {
-	FieldKinds,
-	FlexFieldSchema,
-	InsertableFlexField,
-	InsertableFlexNode,
-	SchemaBuilderBase,
-	typeNameSymbol,
-} from "../feature-libraries/index.js";
-import { FlexTreeView, TreeContent } from "../shared-tree/index.js";
-import { brand, requireAssignableTo } from "../util/index.js";
+	type FieldKey,
+	type UpPath,
+	moveToDetachedField,
+	rootFieldKey,
+} from "../core/index.js";
+import {
+	jsonSchema,
+	leaf,
+	typedJsonCursor,
+	type TypedJsonCompatible,
+} from "../domains/index.js";
+import { FieldKinds, FlexFieldSchema, SchemaBuilderBase } from "../feature-libraries/index.js";
+import type { FlexTreeView, TreeContent } from "../shared-tree/index.js";
+import { brand } from "../util/index.js";
 
 /**
  * Test trees which can be parametrically scaled to any size.
@@ -35,7 +38,10 @@ const deepBuilder = new SchemaBuilderBase(FieldKinds.required, {
 
 // Test data in "deep" mode: a linked list with a number at the end.
 const linkedListSchema = deepBuilder.objectRecursive("linkedList", {
-	foo: FlexFieldSchema.createUnsafe(FieldKinds.required, [() => linkedListSchema, leaf.number]),
+	foo: FlexFieldSchema.createUnsafe(FieldKinds.required, [
+		() => linkedListSchema,
+		leaf.number,
+	]),
 });
 
 const wideBuilder = new SchemaBuilderBase(FieldKinds.required, {
@@ -52,39 +58,21 @@ export const wideSchema = wideBuilder.intoSchema(wideRootSchema);
 
 export const deepSchema = deepBuilder.intoSchema([linkedListSchema, leaf.number]);
 
-/**
- * JS object like a deep tree.
- * Compatible with ContextuallyTypedNodeData
- */
 export interface JSDeepTree {
-	[typeNameSymbol]?: typeof linkedListSchema.name | undefined;
 	foo: JSDeepTree | number;
 }
 
-type JSDeepTree2 = InsertableFlexNode<typeof linkedListSchema>;
-type JSDeepTreeRoot2 = InsertableFlexField<typeof deepSchema.rootFieldSchema>;
-
-{
-	type _check = requireAssignableTo<JSDeepTree, JSDeepTree2>;
-	type _check2 = requireAssignableTo<JSDeepTree | number, JSDeepTreeRoot2>;
-}
-
-/**
- * JS object like a wide tree.
- * Compatible with ContextuallyTypedNodeData
- */
 export interface JSWideTree {
 	foo: number[];
 }
 
-type JSWideTreeRoot2 = InsertableFlexField<typeof wideSchema.rootFieldSchema>;
-
-{
-	type _check2 = requireAssignableTo<JSWideTree, JSWideTreeRoot2>;
-}
-
-export function makeJsDeepTree(depth: number, leafValue: number): JSDeepTree | number {
-	return depth === 0 ? leafValue : { foo: makeJsDeepTree(depth - 1, leafValue) };
+export function makeJsDeepTree(
+	depth: number,
+	leafValue: number,
+): TypedJsonCompatible & (JSDeepTree | number) {
+	return depth === 0
+		? leafValue
+		: { [typedJsonCursor.type]: linkedListSchema, foo: makeJsDeepTree(depth - 1, leafValue) };
 }
 
 export function makeDeepContent(
@@ -92,9 +80,9 @@ export function makeDeepContent(
 	leafValue: number = 1,
 ): TreeContent<typeof deepSchema.rootFieldSchema> {
 	// Implicit type conversion is needed here to make this compile.
-	const initialTree: JSDeepTreeRoot2 = makeJsDeepTree(depth, leafValue);
+	const initialTree = makeJsDeepTree(depth, leafValue);
 	return {
-		initialTree,
+		initialTree: typedJsonCursor(initialTree),
 		schema: deepSchema,
 	};
 }
@@ -110,9 +98,9 @@ export function makeWideContentWithEndValue(
 	endLeafValue: number,
 ): TreeContent<typeof wideSchema.rootFieldSchema> {
 	// Implicit type conversion is needed here to make this compile.
-	const initialTree: JSWideTreeRoot2 = makeJsWideTreeWithEndValue(numberOfNodes, endLeafValue);
+	const initialTree = makeJsWideTreeWithEndValue(numberOfNodes, endLeafValue);
 	return {
-		initialTree,
+		initialTree: typedJsonCursor(initialTree),
 		schema: wideSchema,
 	};
 }
@@ -125,14 +113,14 @@ export function makeWideContentWithEndValue(
  */
 export function makeJsWideTreeWithEndValue(
 	numberOfNodes: number,
-	endLeafValue: number,
-): JSWideTree {
+	endLeafValue?: number,
+): TypedJsonCompatible & JSWideTree {
 	const numbers = [];
 	for (let index = 0; index < numberOfNodes - 1; index++) {
 		numbers.push(index);
 	}
-	numbers.push(endLeafValue);
-	return { foo: numbers };
+	numbers.push(endLeafValue ?? numberOfNodes - 1);
+	return { [typedJsonCursor.type]: wideRootSchema, foo: numbers };
 }
 
 export function readDeepTreeAsJSObject(tree: JSDeepTree): { depth: number; value: number } {

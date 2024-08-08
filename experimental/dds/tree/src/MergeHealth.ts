@@ -23,8 +23,7 @@ export function useFailedSequencedEditTelemetry(tree: SharedTree): { disable: ()
 		if (wasLocal && outcome.status !== EditStatus.Applied) {
 			logger.send({
 				category: 'generic',
-				eventName:
-					outcome.status === EditStatus.Malformed ? 'MalformedSharedTreeEdit' : 'InvalidSharedTreeEdit',
+				eventName: outcome.status === EditStatus.Malformed ? 'MalformedSharedTreeEdit' : 'InvalidSharedTreeEdit',
 			});
 		}
 	}

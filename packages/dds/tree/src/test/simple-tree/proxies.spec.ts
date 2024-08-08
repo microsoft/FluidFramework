@@ -8,19 +8,19 @@ import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	NodeFromSchema,
+	type NodeFromSchema,
 	SchemaFactory,
 	TreeArrayNode,
-	TreeConfiguration,
+	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
-// TODO: test other things from "proxies" file.
-// eslint-disable-next-line import/no-internal-modules
-import { isTreeNode } from "../../simple-tree/proxies.js";
+
+// TODO: import and unit test other things from "proxies" file.
+// // eslint-disable-next-line import/no-internal-modules
 
 import { hydrate, pretty } from "./utils.js";
 import { getView } from "../utils.js";
 import { MockNodeKeyManager } from "../../feature-libraries/index.js";
-import { requireAssignableTo } from "../../util/index.js";
+import type { requireAssignableTo } from "../../util/index.js";
 
 describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");
@@ -33,6 +33,7 @@ describe("simple-tree proxies", () => {
 		object: childSchema,
 		list: sb.array(sb.number),
 		map: sb.map("map", sb.string),
+		optionalFlag: sb.optional(sb.boolean),
 	});
 
 	const initialTree = {
@@ -63,17 +64,6 @@ describe("simple-tree proxies", () => {
 		const mapProxy = root.map;
 		const mapProxyAgain = root.map;
 		assert.equal(mapProxyAgain, mapProxy);
-	});
-
-	it("isTreeNode", () => {
-		// Non object
-		assert(!isTreeNode(5));
-		// Non node object
-		assert(!isTreeNode({}));
-		// Unhydrated node:
-		assert(isTreeNode(new childSchema({ content: 5 })));
-		// Hydrated node:
-		assert(isTreeNode(hydrate(schema, initialTree)));
 	});
 });
 
@@ -176,11 +166,12 @@ describe("SharedTreeObject", () => {
 		});
 		const nodeKeyManager = new MockNodeKeyManager();
 		const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
-		const config = new TreeConfiguration(schemaWithIdentifier, () => ({
-			identifier: id,
-		}));
+		const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
 
-		const root = getView(config, nodeKeyManager).root;
+		const view = getView(config, nodeKeyManager);
+		view.initialize({ identifier: id });
+		const { root } = view;
+
 		type _ = requireAssignableTo<typeof root.identifier, string>;
 		assert.equal(root.identifier, id);
 	});
@@ -482,8 +473,8 @@ describe("ArrayNode Proxy", () => {
 						index <= start
 							? index // If the index is <= start, it is unmodified
 							: index >= end
-							? index - moved.length // If the index is >= end, subtract the number of moved items.
-							: start, // If the index is inside the moved window, slide it left to the starting position.
+								? index - moved.length // If the index is >= end, subtract the number of moved items.
+								: start, // If the index is inside the moved window, slide it left to the starting position.
 						/* deleteCount: */ 0,
 						...moved,
 					);

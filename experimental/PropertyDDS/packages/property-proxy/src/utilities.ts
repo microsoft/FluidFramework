@@ -106,10 +106,7 @@ export namespace Utilities {
 						const idx = parseInt(idxString.substr(1).slice(0, -1), 10);
 						const removed = property.remove(idx);
 						// Put in a dummy to keep the original array length, will be overwritten anyway
-						property.insert(
-							idx,
-							PropertyFactory.create(property.getTypeid(), "single"),
-						);
+						property.insert(idx, PropertyFactory.create(property.getTypeid(), "single"));
 						return removed;
 					} else {
 						return element;
@@ -129,8 +126,7 @@ export namespace Utilities {
 				throw new Error(PropertyProxyErrors.ITERABLE_INSERTION);
 			}
 			if (property.getContext() === "array" || property.getContext() === "map") {
-				return property.isPrimitiveType() ||
-					property.getFullTypeid().includes("array<enum<")
+				return property.isPrimitiveType() || property.getFullTypeid().includes("array<enum<")
 					? element
 					: PropertyFactory.create(property.getTypeid(), "single", element);
 			} else {

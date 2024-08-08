@@ -4,8 +4,8 @@
  */
 
 import {
-	AnchorNode,
-	DetachedField,
+	type AnchorNode,
+	type DetachedField,
 	anchorSlot,
 	getDetachedFieldContainingPath,
 	rootField,
@@ -84,4 +84,28 @@ export function getSchemaAndPolicy(nodeOrField: FlexTreeEntity): SchemaAndPolicy
 		schema: nodeOrField.context.checkout.storedSchema,
 		policy: nodeOrField.context.schema.policy,
 	};
+}
+
+/**
+ * Indexing for {@link FlexTreeField.boxedAt} and {@link FlexTreeSequenceField.at} supports the
+ * usage of negative indices, which regular indexing using `[` and `]` does not.
+ *
+ * See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+ * for additional context on the semantics.
+ *
+ * @returns A positive index that can be used in regular indexing. Returns
+ * undefined if that index would be out-of-bounds.
+ */
+export function indexForAt(index: number, length: number): number | undefined {
+	let finalIndex = Math.trunc(+index);
+	if (isNaN(finalIndex)) {
+		finalIndex = 0;
+	}
+	if (finalIndex < -length || finalIndex >= length) {
+		return undefined;
+	}
+	if (finalIndex < 0) {
+		finalIndex = finalIndex + length;
+	}
+	return finalIndex;
 }

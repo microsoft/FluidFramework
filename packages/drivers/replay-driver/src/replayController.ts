@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ICreateBlobResponse,
 	IDocumentService,
@@ -10,12 +11,8 @@ import {
 	ISnapshotTree,
 	ISummaryContext,
 	IVersion,
-} from "@fluidframework/driver-definitions/internal";
-import {
 	ISequencedDocumentMessage,
-	ISummaryHandle,
-	ISummaryTree,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Partial implementation of IDocumentStorageService

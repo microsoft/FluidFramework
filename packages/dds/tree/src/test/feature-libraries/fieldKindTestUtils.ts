@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, ITreeCursorSynchronous, JsonableTree } from "../../core/index.js";
+import type { FieldKey, ITreeCursorSynchronous, JsonableTree } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
 import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";

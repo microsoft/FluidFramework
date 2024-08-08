@@ -5,21 +5,26 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import {
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 
-import { IJsonCodec } from "../codec/index.js";
-import { ChangeFamily, ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
-import { JsonCompatibleReadOnly } from "../util/index.js";
+import type { IJsonCodec } from "../codec/index.js";
+import type { ChangeFamily, ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
+import type { JsonCompatibleReadOnly } from "../util/index.js";
 
-import { EditManager, SummaryData } from "./editManager.js";
-import { EditManagerEncodingContext } from "./editManagerCodecs.js";
-import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore.js";
+import type { EditManager, SummaryData } from "./editManager.js";
+import type { EditManagerEncodingContext } from "./editManagerCodecs.js";
+import type {
+	Summarizable,
+	SummaryElementParser,
+	SummaryElementStringifier,
+} from "./sharedTreeCore.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 const stringKey = "String";
 
@@ -41,6 +46,7 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 			JsonCompatibleReadOnly,
 			EditManagerEncodingContext
 		>,
+		private readonly idCompressor: IIdCompressor,
 		private readonly schemaAndPolicy?: SchemaAndPolicy,
 	) {}
 
@@ -64,7 +70,9 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 
 	private summarizeCore(stringify: SummaryElementStringifier): ISummaryTreeWithStats {
 		const context: EditManagerEncodingContext =
-			this.schemaAndPolicy !== undefined ? { schema: this.schemaAndPolicy } : {};
+			this.schemaAndPolicy !== undefined
+				? { schema: this.schemaAndPolicy, idCompressor: this.idCompressor }
+				: { idCompressor: this.idCompressor };
 		const jsonCompatible = this.codec.encode(this.editManager.getSummaryData(), context);
 		const dataString = stringify(jsonCompatible);
 		return createSingleBlobSummary(stringKey, dataString);
@@ -95,7 +103,7 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 		);
 
 		const summary = parse(bufferToString(schemaBuffer, "utf-8")) as JsonCompatibleReadOnly;
-		const data = this.codec.decode(summary, {});
+		const data = this.codec.decode(summary, { idCompressor: this.idCompressor });
 		this.editManager.loadSummaryData(data);
 	}
 }

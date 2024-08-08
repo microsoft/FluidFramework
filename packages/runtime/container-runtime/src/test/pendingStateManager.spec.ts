@@ -7,16 +7,23 @@ import assert from "assert";
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { MessageType } from "@fluidframework/driver-definitions/internal";
-import { isILoggingError } from "@fluidframework/telemetry-utils/internal";
+import {
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import {
+	MockLogger2,
+	createChildLogger,
+	isILoggingError,
+} from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
 import type {
+	InboundSequencedContainerRuntimeMessage,
 	RecentlyAddedContainerRuntimeMessageDetails,
 	UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
-import { BatchManager, BatchMessage } from "../opLifecycle/index.js";
+import { BatchManager, BatchMessage, generateBatchId } from "../opLifecycle/index.js";
 import { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
 
 type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
@@ -24,6 +31,16 @@ type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessag
 };
 
 describe("Pending State Manager", () => {
+	const mockLogger = new MockLogger2();
+	const logger = createChildLogger({ logger: mockLogger });
+
+	afterEach("ThrowOnErrorLogs", () => {
+		// Note: If mockLogger is used within a test,
+		// it may inadvertently clear errors such that they're not noticed here
+		mockLogger.assertNoErrors();
+		mockLogger.clear();
+	});
+
 	describe("Rollback", () => {
 		let rollbackCalled;
 		let rollbackContent;
@@ -109,7 +126,7 @@ describe("Pending State Manager", () => {
 	});
 
 	describe("Op processing", () => {
-		let pendingStateManager;
+		let pendingStateManager: PendingStateManager;
 		let closeError: ICriticalContainerError | undefined;
 		const clientId = "clientId";
 
@@ -123,31 +140,46 @@ describe("Pending State Manager", () => {
 					clientId: () => "oldClientId",
 					close: (error?: ICriticalContainerError) => (closeError = error),
 					connected: () => true,
-					reSubmit: () => {},
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
 				},
 				undefined /* initialLocalState */,
-				undefined /* logger */,
+				logger,
 			);
 		});
 
-		const submitBatch = (messages: Partial<ISequencedDocumentMessage>[]) => {
-			messages.forEach((message) => {
-				pendingStateManager.onSubmitMessage(
-					JSON.stringify({ type: message.type, contents: message.contents }),
-					message.referenceSequenceNumber,
-					undefined,
-					message.metadata,
-				);
-			});
+		const submitBatch = (
+			messages: Partial<ISequencedDocumentMessage>[],
+			clientSequenceNumber?: number,
+			localOpMetadata?: unknown,
+		) => {
+			pendingStateManager.onFlushBatch(
+				messages.map<BatchMessage>((message) => ({
+					contents: JSON.stringify({ type: message.type, contents: message.contents }),
+					referenceSequenceNumber: message.referenceSequenceNumber!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
+					metadata: message.metadata as any as Record<string, unknown> | undefined,
+					localOpMetadata,
+				})),
+				clientSequenceNumber ?? messages[0]?.clientSequenceNumber,
+			);
 		};
 
-		const process = (messages: Partial<ISequencedDocumentMessage>[]) =>
-			messages.forEach((message) => {
-				pendingStateManager.processPendingLocalMessage(message);
-			});
+		const process = (
+			messages: Partial<ISequencedDocumentMessage>[],
+			batchStartCsn: number,
+			emptyBatchSequenceNumber?: number,
+		) =>
+			pendingStateManager.processInboundBatch(
+				{
+					messages: messages as InboundSequencedContainerRuntimeMessage[],
+					batchStartCsn,
+					emptyBatchSequenceNumber,
+					clientId,
+					batchId: generateBatchId(clientId, batchStartCsn),
+				},
+				true /* local */,
+			);
 
 		it("proper batch is processed correctly", () => {
 			const messages: Partial<ISequencedDocumentMessage>[] = [
@@ -174,33 +206,28 @@ describe("Pending State Manager", () => {
 			];
 
 			submitBatch(messages);
-			process(messages);
+			process(messages, 0 /* batchStartCsn */);
 			assert(closeError === undefined);
 		});
 
-		it("batch missing end message will call close", () => {
-			const messages: Partial<ISequencedDocumentMessage>[] = [
-				{
-					clientId,
-					type: MessageType.Operation,
-					clientSequenceNumber: 0,
-					referenceSequenceNumber: 0,
-					metadata: { batch: true },
-				},
-				{
-					clientId,
-					type: MessageType.Operation,
-					clientSequenceNumber: 1,
-					referenceSequenceNumber: 0,
-				},
-			];
-
-			submitBatch(messages);
-			process(messages);
-			assert(isILoggingError(closeError));
-			assert.strictEqual(closeError.errorType, ContainerErrorTypes.dataProcessingError);
-			assert.strictEqual(closeError.getTelemetryProperties().hasBatchStart, true);
-			assert.strictEqual(closeError.getTelemetryProperties().hasBatchEnd, false);
+		it("empty batch is processed correctly", () => {
+			// Empty batch is reflected in the pending state manager as a single message
+			// with the following metadata:
+			submitBatch(
+				[
+					{
+						contents: JSON.stringify({ type: "groupedBatch", contents: [] }),
+						referenceSequenceNumber: 0,
+						metadata: { batchId: "batchId" },
+					},
+				],
+				1 /* clientSequenceNumber */,
+				{ emptyBatch: true },
+			);
+			// A groupedBatch is supposed to have nested messages inside its contents,
+			// but an empty batch has no nested messages. When processing en empty grouped batch,
+			// the psm will expect the next pending message to be an "empty" message as portrayed above.
+			process([], 1 /* batchStartCsn */, 3 /* emptyBatchSequenceNumber */);
 		});
 
 		describe("processing out of sync messages will call close", () => {
@@ -220,6 +247,7 @@ describe("Pending State Manager", () => {
 						...message,
 						type: "otherType",
 					})),
+					0 /* batchStartCsn */,
 				);
 				assert(isILoggingError(closeError));
 				assert.strictEqual(closeError.errorType, ContainerErrorTypes.dataProcessingError);
@@ -246,6 +274,7 @@ describe("Pending State Manager", () => {
 						...message,
 						contents: undefined,
 					})),
+					0 /* batchStartCsn */,
 				);
 				assert.strictEqual(closeError?.errorType, ContainerErrorTypes.dataProcessingError);
 			});
@@ -267,6 +296,7 @@ describe("Pending State Manager", () => {
 						...message,
 						contents: { prop1: true },
 					})),
+					0 /* batchStartCsn */,
 				);
 				assert.strictEqual(closeError?.errorType, ContainerErrorTypes.dataProcessingError);
 			});
@@ -289,6 +319,7 @@ describe("Pending State Manager", () => {
 					...message,
 					contents: { prop1: true },
 				})),
+				0 /* batchStartCsn */,
 			);
 			assert.strictEqual(closeError, undefined, "unexpected close");
 		});
@@ -300,10 +331,10 @@ describe("Pending State Manager", () => {
 					type: MessageType.Operation,
 					clientSequenceNumber: 0,
 					contents: { prop1: true },
-					sequenceNumber: i,
+					sequenceNumber: i + 1, // starting with sequence number 1 so first assert does not filter any op
 				}));
 				submitBatch(messages);
-				process(messages);
+				process(messages, 0 /* batchStartCsn */);
 				let pendingState = pendingStateManager.getLocalState(0).pendingStates;
 				assert.strictEqual(pendingState.length, 10);
 				pendingState = pendingStateManager.getLocalState(5).pendingStates;
@@ -334,16 +365,15 @@ describe("Pending State Manager", () => {
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
-					clientId: () => undefined,
+					clientId: () => "CLIENT_ID",
 					close: () => {},
 					connected: () => true,
-					reSubmit: () => {},
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
 				},
 				{ pendingStates },
-				undefined /* logger */,
+				logger,
 			) as any;
 		}
 
@@ -380,24 +410,180 @@ describe("Pending State Manager", () => {
 		describe("Future op compat behavior", () => {
 			it("pending op roundtrip", async () => {
 				const pendingStateManager = createPendingStateManager([]);
-				const futureRuntimeMessage: Pick<ISequencedDocumentMessage, "type" | "contents"> &
+				const futureRuntimeMessage: Pick<
+					ISequencedDocumentMessage,
+					"type" | "contents" | "clientSequenceNumber"
+				> &
 					RecentlyAddedContainerRuntimeMessageDetails = {
 					type: "FROM_THE_FUTURE",
 					contents: "Hello",
 					compatDetails: { behavior: "FailToProcess" },
+					clientSequenceNumber: 1,
 				};
 
-				pendingStateManager.onSubmitMessage(
-					JSON.stringify(futureRuntimeMessage),
-					0,
-					undefined,
-					undefined,
+				pendingStateManager.onFlushBatch(
+					[
+						{
+							contents: JSON.stringify(futureRuntimeMessage),
+							referenceSequenceNumber: 0,
+						},
+					],
+					1,
 				);
-				pendingStateManager.processPendingLocalMessage(
-					futureRuntimeMessage as ISequencedDocumentMessage &
-						UnknownContainerRuntimeMessage,
+				pendingStateManager.processInboundBatch(
+					{
+						messages: [
+							futureRuntimeMessage as ISequencedDocumentMessage &
+								UnknownContainerRuntimeMessage,
+						],
+						batchStartCsn: 1 /* batchStartCsn */,
+						batchId: "batchId",
+						clientId: "clientId",
+					},
+					true /* local */,
 				);
 			});
+		});
+	});
+
+	describe("replayPendingStates", () => {
+		let pendingStateManager: PendingStateManager;
+		const resubmittedBatchIds: string[] = [];
+		const clientId = "clientId";
+
+		beforeEach(async () => {
+			resubmittedBatchIds.length = 0;
+			pendingStateManager = new PendingStateManager(
+				{
+					applyStashedOp: async () => undefined,
+					clientId: () => clientId,
+					close: () => {},
+					connected: () => true,
+					reSubmitBatch: (batch, batchId) => {
+						resubmittedBatchIds.push(batchId);
+					},
+					isActiveConnection: () => false,
+					isAttached: () => true,
+				},
+				undefined /* initialLocalState */,
+				logger,
+			) as any;
+		});
+
+		it("replays pending states", () => {
+			const messages = [
+				{
+					type: MessageType.Operation,
+					clientSequenceNumber: 0,
+					referenceSequenceNumber: 0,
+					contents: {},
+				},
+				{
+					type: MessageType.Operation,
+					clientSequenceNumber: 1,
+					referenceSequenceNumber: 0,
+					contents: {},
+				},
+			];
+			pendingStateManager.onFlushBatch(
+				messages.map<BatchMessage>((message) => ({
+					contents: JSON.stringify({ type: message.type, contents: message.contents }),
+					referenceSequenceNumber: message.referenceSequenceNumber,
+				})),
+				0,
+			);
+			pendingStateManager.replayPendingStates();
+			assert.strictEqual(resubmittedBatchIds[0], `${clientId}_[0]`);
+			assert.strictEqual(resubmittedBatchIds[1], `${clientId}_[0]`);
+		});
+
+		it("replays pending states with empty batch", () => {
+			// Empty batch is reflected in the pending state manager as a single message
+			// with the following metadata:
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						contents: JSON.stringify({ type: "groupedBatch", contents: [] }),
+						referenceSequenceNumber: 0,
+						metadata: { emptyBatch: true, batchId: "batchId" },
+					},
+				],
+				0,
+			);
+			pendingStateManager.replayPendingStates();
+			assert.strictEqual(resubmittedBatchIds[0], "batchId");
+		});
+	});
+
+	describe("applyStashedOpsAt", () => {
+		it("applyStashedOpsAt", async () => {
+			const applyStashedOps: string[] = [];
+			const messages: IPendingMessage[] = [
+				{
+					type: "message",
+					content: '{"type":"component"}',
+					referenceSequenceNumber: 10,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
+				},
+				{
+					type: "message",
+					content: '{"type": "component", "contents": {"prop1": "value"}}',
+					referenceSequenceNumber: 11,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 2 },
+				},
+			];
+
+			const pendingStateManager = new PendingStateManager(
+				{
+					applyStashedOp: async (content) => applyStashedOps.push(content),
+					clientId: () => "clientId",
+					close: () => {},
+					connected: () => true,
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
+					isAttached: () => true,
+				},
+				{ pendingStates: messages },
+				logger,
+			);
+			await pendingStateManager.applyStashedOpsAt();
+			assert.strictEqual(applyStashedOps.length, 2);
+			assert.strictEqual(pendingStateManager.pendingMessagesCount, 2);
+		});
+
+		it("applyStashedOpsAt for empty batch", async () => {
+			const applyStashedOps: string[] = [];
+			const messages: IPendingMessage[] = [
+				{
+					type: "message",
+					content: '{"type":"groupedBatch", "contents": []}',
+					referenceSequenceNumber: 10,
+					opMetadata: undefined,
+					localOpMetadata: { emptyBatch: true },
+					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
+				},
+			];
+
+			const pendingStateManager = new PendingStateManager(
+				{
+					applyStashedOp: async (content) => applyStashedOps.push(content),
+					clientId: () => "clientId",
+					close: () => {},
+					connected: () => true,
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
+					isAttached: () => true,
+				},
+				{ pendingStates: messages },
+				logger,
+			);
+			await pendingStateManager.applyStashedOpsAt();
+			assert.strictEqual(applyStashedOps.length, 0);
+			assert.strictEqual(pendingStateManager.pendingMessagesCount, 1);
 		});
 	});
 
@@ -416,16 +602,15 @@ describe("Pending State Manager", () => {
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
-					clientId: () => undefined,
+					clientId: () => "CLIENT_ID",
 					close: () => {},
 					connected: () => true,
-					reSubmit: () => {},
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
 				},
 				{ pendingStates },
-				undefined /* logger */,
+				logger,
 			) as any;
 		}
 
@@ -445,12 +630,16 @@ describe("Pending State Manager", () => {
 
 		it("has pending messages but no initial messages", () => {
 			const pendingStateManager = createPendingStateManager(undefined);
+			// let each message be its own batch
 			for (const message of messages) {
-				pendingStateManager.onSubmitMessage(
-					JSON.stringify(message.content),
+				pendingStateManager.onFlushBatch(
+					[
+						{
+							contents: message.content,
+							referenceSequenceNumber: message.referenceSequenceNumber,
+						},
+					],
 					0,
-					undefined /* localOpMetadata */,
-					undefined /* opMetadata */,
 				);
 			}
 			assert.strictEqual(
@@ -481,12 +670,16 @@ describe("Pending State Manager", () => {
 
 		it("has both pending messages and initial messages", () => {
 			const pendingStateManager = createPendingStateManager(messages);
+			// let each message be its own batch
 			for (const message of messages) {
-				pendingStateManager.onSubmitMessage(
-					JSON.stringify(message.content),
+				pendingStateManager.onFlushBatch(
+					[
+						{
+							contents: message.content,
+							referenceSequenceNumber: message.referenceSequenceNumber,
+						},
+					],
 					0,
-					undefined /* localOpMetadata */,
-					undefined /* opMetadata */,
 				);
 			}
 			assert.strictEqual(
@@ -510,6 +703,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 10,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
 			},
 			{
 				type: "message",
@@ -517,6 +711,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 11,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 2 },
 			},
 			{
 				type: "message",
@@ -524,6 +719,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 3 },
 			},
 			{
 				type: "message",
@@ -531,10 +727,13 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 3 },
 			},
 		];
 
-		function createPendingStateManager(pendingStates?: IPendingMessage[]): PendingStateManager {
+		function createPendingStateManager(
+			pendingStates?: IPendingMessage[],
+		): PendingStateManager {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return new PendingStateManager(
 				{
@@ -542,13 +741,12 @@ describe("Pending State Manager", () => {
 					clientId: () => "123",
 					close: () => {},
 					connected: () => true,
-					reSubmit: () => {},
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
 				},
 				pendingStates ? { pendingStates } : undefined /* initialLocalState */,
-				undefined /* logger */,
+				logger,
 			) as any;
 		}
 
@@ -578,12 +776,16 @@ describe("Pending State Manager", () => {
 				undefined,
 				"No pending messages should mean no minimum seq number",
 			);
+			// Each message has a different reference sequence number so let them each be their own batch
 			for (const message of messages) {
-				pendingStateManager.onSubmitMessage(
-					message.content,
-					message.referenceSequenceNumber,
-					message.localOpMetadata,
-					message.opMetadata,
+				pendingStateManager.onFlushBatch(
+					[
+						{
+							contents: message.content,
+							referenceSequenceNumber: message.referenceSequenceNumber,
+						},
+					],
+					0,
 				);
 			}
 

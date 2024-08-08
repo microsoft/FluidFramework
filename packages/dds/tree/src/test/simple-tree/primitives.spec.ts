@@ -6,8 +6,8 @@
 import { strict as assert } from "assert";
 
 import {
-	ImplicitFieldSchema,
-	InsertableTreeFieldFromImplicitField,
+	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
 	SchemaFactory,
 } from "../../simple-tree/index.js";
 

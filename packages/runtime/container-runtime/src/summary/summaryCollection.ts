@@ -7,18 +7,19 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { IDisposable, IEvent } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	IDocumentMessage,
 	ISummaryAck,
 	ISummaryContent,
 	ISummaryNack,
 	MessageType,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Interface for summary op messages with typed contents.
+ * @legacy
  * @alpha
  */
 export interface ISummaryOpMessage extends ISequencedDocumentMessage {
@@ -28,6 +29,7 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 
 /**
  * Interface for summary ack messages with typed contents.
+ * @legacy
  * @alpha
  */
 export interface ISummaryAckMessage extends ISequencedDocumentMessage {
@@ -37,6 +39,7 @@ export interface ISummaryAckMessage extends ISequencedDocumentMessage {
 
 /**
  * Interface for summary nack messages with typed contents.
+ * @legacy
  * @alpha
  */
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {
@@ -47,6 +50,7 @@ export interface ISummaryNackMessage extends ISequencedDocumentMessage {
 /**
  * A single summary which can be tracked as it goes through its life cycle.
  * The life cycle is: Local to Broadcast to Acked/Nacked.
+ * @legacy
  * @alpha
  */
 export interface ISummary {
@@ -58,6 +62,7 @@ export interface ISummary {
 
 /**
  * A single summary which has already been acked by the server.
+ * @legacy
  * @alpha
  */
 export interface IAckedSummary {
@@ -145,6 +150,7 @@ class Summary implements ISummary {
 
 /**
  * Watches summaries created by a specific client.
+ * @legacy
  * @alpha
  */
 export interface IClientSummaryWatcher extends IDisposable {
@@ -214,6 +220,7 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
 	}
 }
 /**
+ * @legacy
  * @alpha
  */
 export type OpActionEventName =
@@ -223,11 +230,13 @@ export type OpActionEventName =
 	| "default";
 
 /**
+ * @legacy
  * @alpha
  */
 export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISummaryCollectionOpEvents extends IEvent {
@@ -238,6 +247,7 @@ export interface ISummaryCollectionOpEvents extends IEvent {
  * Data structure that looks at the op stream to track summaries as they
  * are broadcast, acked and nacked.
  * It provides functionality for watching specific summaries.
+ * @legacy
  * @alpha
  */
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
@@ -298,7 +308,10 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		this.summaryWatchers.delete(clientId);
 	}
 
-	public setPendingAckTimerTimeoutCallback(maxAckWaitTime: number, timeoutCallback: () => void) {
+	public setPendingAckTimerTimeoutCallback(
+		maxAckWaitTime: number,
+		timeoutCallback: () => void,
+	) {
 		this.maxAckWaitTime = maxAckWaitTime;
 		this.pendingAckTimerTimeoutCallback = timeoutCallback;
 	}

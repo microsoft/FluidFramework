@@ -18,7 +18,8 @@ const base58 = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
 // 6 predetermined bits (bits 48..51 for the version and bits 64..65 for the variant).
 // Consequently, only 122 of the provided 128 bits are used.
 export function makeUuid4(u32_0: number, u32_1: number, u32_2: number, u32_3: number) {
-	const hex = (value: number, digits: number) => (value >>> 0).toString(16).padStart(digits, "0");
+	const hex = (value: number, digits: number) =>
+		(value >>> 0).toString(16).padStart(digits, "0");
 
 	// Note: We prefer to discard low bits as low bits are weaker with the XSadd engine.
 	//       (We discard bit 0 of u32[0..1] and bits 0..1 of u32[2..3]).

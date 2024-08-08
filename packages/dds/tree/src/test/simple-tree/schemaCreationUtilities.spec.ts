@@ -9,10 +9,10 @@ import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	NodeFromSchema,
+	type NodeFromSchema,
 	SchemaFactory,
-	TreeConfiguration,
-	TreeView,
+	TreeViewConfiguration,
+	type TreeView,
 } from "../../simple-tree/index.js";
 import {
 	adaptEnum,
@@ -29,20 +29,19 @@ describe("schemaCreationUtilities", () => {
 	it("enum type switch", () => {
 		const Mode = enumFromStrings(schema, ["Fun", "Cool", "Bonus"]);
 		class Parent extends schema.object("Parent", { mode: Object.values(Mode) }) {}
-		const config = new TreeConfiguration(
-			Parent,
-			() =>
-				new Parent({
-					mode: new Mode.Bonus({}),
-				}),
-		);
+		const config = new TreeViewConfiguration({ schema: Parent });
 
 		const factory = new TreeFactory({});
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
 			"tree",
 		);
-		const view: TreeView<typeof Parent> = tree.schematize(config);
+		const view: TreeView<typeof Parent> = tree.viewWith(config);
+		view.initialize(
+			new Parent({
+				mode: new Mode.Bonus({}),
+			}),
+		);
 		const mode = view.root.mode;
 		switch (true) {
 			case mode instanceof Mode.Bonus: {
@@ -103,20 +102,19 @@ describe("schemaCreationUtilities", () => {
 	it("enum value switch", () => {
 		const Mode = enumFromStrings(schema, ["Fun", "Cool", "Bonus"]);
 		class Parent extends schema.object("Parent", { mode: typedObjectValues(Mode) }) {}
-		const config = new TreeConfiguration(
-			Parent,
-			() =>
-				new Parent({
-					mode: new Mode.Bonus({}),
-				}),
-		);
+		const config = new TreeViewConfiguration({ schema: Parent });
 
 		const factory = new TreeFactory({});
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
 			"tree",
 		);
-		const view: TreeView<typeof Parent> = tree.schematize(config);
+		const view: TreeView<typeof Parent> = tree.viewWith(config);
+		view.initialize(
+			new Parent({
+				mode: new Mode.Bonus({}),
+			}),
+		);
 		const mode = view.root.mode;
 		switch (mode.value) {
 			case "Fun": {
@@ -151,9 +149,10 @@ describe("schemaCreationUtilities", () => {
 
 		const day = Day.Today;
 
-		const view = tree.schematize(
-			new TreeConfiguration(typedObjectValues(DayNodes), () => DayNodes(day)),
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: typedObjectValues(DayNodes) }),
 		);
+		view.initialize(DayNodes(day));
 
 		switch (view.root.value) {
 			case Day.Today: {
@@ -188,9 +187,10 @@ describe("schemaCreationUtilities", () => {
 		// Can construct unhydrated node from enum's key:
 		const y = new DayNodes.Today({});
 
-		const view = tree.schematize(
-			new TreeConfiguration(typedObjectValues(DayNodes), () => DayNodes(Day.Today)),
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: typedObjectValues(DayNodes) }),
 		);
+		view.initialize(DayNodes(Day.Today));
 
 		switch (view.root.value) {
 			case Day.Today: {

@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import {
-	DetachedPlaceUpPath,
-	DetachedRangeUpPath,
-	FieldKey,
-	PathVisitor,
-	PlaceUpPath,
-	ProtoNodes,
-	RangeUpPath,
-	UpPath,
+	type DetachedPlaceUpPath,
+	type DetachedRangeUpPath,
+	type FieldKey,
+	type PathVisitor,
+	type PlaceUpPath,
+	type ProtoNodes,
+	type RangeUpPath,
+	type UpPath,
 	topDownPath,
 } from "../core/index.js";
-import { Events, ISubscribable } from "../events/index.js";
+import type { Listeners, Listenable } from "../events/index.js";
 import { brand, getOrCreate } from "../util/index.js";
 
-import { FlexTreeNode } from "./flex-tree/index.js";
+import type { FlexTreeNode } from "./flex-tree/index.js";
 
 // TODO:
 // Tests for this file were removed along with the old editable-tree implementation in the commit that includes this note.
@@ -27,7 +27,6 @@ import { FlexTreeNode } from "./flex-tree/index.js";
 
 /**
  * Binder events reflecting atomic data operations
- * @internal
  */
 export interface OperationBinderEvents {
 	remove(context: RemoveBindingContext): void;
@@ -37,7 +36,6 @@ export interface OperationBinderEvents {
 
 /**
  * Binder events signaling state invalidation
- * @internal
  */
 export interface InvalidationBinderEvents {
 	invalidation(context: InvalidationBindingContext): void;
@@ -45,22 +43,16 @@ export interface InvalidationBinderEvents {
 
 /**
  * Compare function, generic.
- *
- * @internal
  */
 export type CompareFunction<T> = (a: T, b: T) => number;
 
 /**
  * Compare function for binder events.
- *
- * @internal
  */
 export type BinderEventsCompare = CompareFunction<VisitorBindingContext>;
 
 /**
  * Compare function for anchors.
- *
- * @internal
  */
 export type AnchorsCompare = CompareFunction<UpPath>;
 
@@ -70,7 +62,6 @@ export type AnchorsCompare = CompareFunction<UpPath>;
  * TODO: add more options:
  * `filterFn?: (context: BindingContext) => boolean;`
  * `pathPolicy?: "relative" | "absolute";`
- * @internal
  */
 export interface BinderOptions {
 	sortFn?: BinderEventsCompare;
@@ -78,12 +69,10 @@ export interface BinderOptions {
 
 /**
  * Specialized binder options for flushable binders.
- *
- * @internal
  */
-export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptions {
+export interface FlushableBinderOptions<E extends Listeners<E>> extends BinderOptions {
 	autoFlush: boolean;
-	autoFlushPolicy: keyof Events<E>;
+	autoFlushPolicy: keyof Listeners<E>;
 	sortAnchorsFn?: AnchorsCompare;
 }
 
@@ -97,15 +86,11 @@ export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptio
  * - `path` match policy means that path filtering would return events matching the _exact_ path only. In this case
  * _exact_ semantics include interpreting an `undefined` _index_ field in the {@link PathStep} as a wildcard.
  *
- *
- * @internal
  */
 export type MatchPolicy = SubtreePolicy | "subtree" | "path";
 
 /**
  * Subtree match policy where max depth can be specified.
- *
- * @internal
  */
 export interface SubtreePolicy {
 	maxDepth: number;
@@ -113,8 +98,6 @@ export interface SubtreePolicy {
 
 /**
  * The data binder interface
- *
- * @internal
  */
 export interface DataBinder<B extends OperationBinderEvents | InvalidationBinderEvents> {
 	/**
@@ -125,7 +108,7 @@ export interface DataBinder<B extends OperationBinderEvents | InvalidationBinder
 	 * @param eventTrees - The {@link BindPolicy}s to filter on.
 	 * @param listener - The listener to register
 	 */
-	register<K extends keyof Events<B>>(
+	register<K extends keyof Listeners<B>>(
 		anchor: FlexTreeNode,
 		eventType: K,
 		eventTrees: BindPolicy[],
@@ -140,8 +123,6 @@ export interface DataBinder<B extends OperationBinderEvents | InvalidationBinder
 
 /**
  * An interface describing the ability to flush.
- *
- * @internal
  */
 export interface Flushable<T> {
 	flush(): T;
@@ -149,17 +130,14 @@ export interface Flushable<T> {
 
 /**
  * An interface describing a flushable data binder.
- *
- * @internal
  */
-export interface FlushableDataBinder<B extends OperationBinderEvents | InvalidationBinderEvents>
-	extends DataBinder<B>,
+export interface FlushableDataBinder<
+	B extends OperationBinderEvents | InvalidationBinderEvents,
+> extends DataBinder<B>,
 		Flushable<FlushableDataBinder<B>> {}
 
 /**
  * A step in a bind path
- *
- * @internal
  */
 export interface PathStep {
 	/**
@@ -175,15 +153,11 @@ export interface PathStep {
 
 /**
  * The default type for a bind tree
- *
- * @internal
  */
 export type BindTreeDefault = BindTree;
 
 /**
  * A bind tree is a compact representation of related {@link BindPath}s.
- *
- * @internal
  */
 export interface BindTree<T = BindTreeDefault> extends PathStep {
 	readonly children: Map<FieldKey, T>;
@@ -191,8 +165,6 @@ export interface BindTree<T = BindTreeDefault> extends PathStep {
 
 /**
  * A bind policy is a combination of a {@link BindTree} and a {@link MatchPolicy}.
- *
- * @internal
  */
 export interface BindPolicy {
 	readonly bindTree: BindTree;
@@ -201,8 +173,6 @@ export interface BindPolicy {
 
 /**
  * Index symbol for syntax tree
- *
- * @internal
  */
 export const indexSymbol = Symbol("flex-tree-binder:index");
 
@@ -214,8 +184,6 @@ export const indexSymbol = Symbol("flex-tree-binder:index");
  *
  * see {@link BindTree}
  * see {@link compileSyntaxTree}
- *
- * @internal
  */
 export interface BindSyntaxTree {
 	readonly [indexSymbol]?: number;
@@ -227,29 +195,21 @@ export interface BindSyntaxTree {
  *
  * see {@link BindTree}
  * see {@link UpPath}
- *
- * @internal
  */
 export type DownPath = PathStep[];
 
 /**
  * A bind path is a top down path in a bind tree
- *
- * @internal
  */
 export type BindPath = DownPath;
 
 /**
  * A binding context specialized for {@link PathVisitor} triggered binding events.
- *
- * @internal
  */
 export type VisitorBindingContext = RemoveBindingContext | InsertBindingContext;
 
 /**
  * Enumeration of binding categories
- *
- * @internal
  */
 export const BindingType = {
 	Remove: "remove",
@@ -260,15 +220,11 @@ export const BindingType = {
 
 /**
  * The type of a binding context
- *
- * @internal
  */
 export type BindingContextType = (typeof BindingType)[keyof typeof BindingType];
 
 /**
  * The binding context attribution common to all binding events
- *
- * @internal
  */
 export interface BindingContext {
 	readonly type: BindingContextType;
@@ -276,8 +232,6 @@ export interface BindingContext {
 
 /**
  * The binding context for a remove event
- *
- * @internal
  */
 export interface RemoveBindingContext extends BindingContext {
 	readonly type: typeof BindingType.Remove;
@@ -287,8 +241,6 @@ export interface RemoveBindingContext extends BindingContext {
 
 /**
  * The binding context for an insert event
- *
- * @internal
  */
 export interface InsertBindingContext extends BindingContext {
 	readonly type: typeof BindingType.Insert;
@@ -298,8 +250,6 @@ export interface InsertBindingContext extends BindingContext {
 
 /**
  * The binding context for an invalidation event
- *
- * @internal
  */
 export interface InvalidationBindingContext extends BindingContext {
 	readonly type: typeof BindingType.Invalidation;
@@ -307,8 +257,6 @@ export interface InvalidationBindingContext extends BindingContext {
 
 /**
  * The binding context for a batch event
- *
- * @internal
  */
 export interface BatchBindingContext extends BindingContext {
 	readonly type: typeof BindingType.Batch;
@@ -317,15 +265,11 @@ export interface BatchBindingContext extends BindingContext {
 
 /**
  * The listener interface. Internal.
- *
- * @internal
  */
 type Listener = (...args: unknown[]) => void;
 
 /**
  * A call tree is a {@link BindTree} augmented with listeners. Internal.
- *
- * @internal
  */
 type CallTree = BindTree<CallTree> & { listeners: Set<Listener>; matchPolicy?: MatchPolicy };
 
@@ -483,7 +427,8 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		contextType: BindingContextType,
 		downPath: DownPath,
 	): Set<Listener> | undefined {
-		const foundRoot = this.findRoot(contextType, downPath[0].field);
+		const firstDownPath = downPath[0] ?? oob();
+		const foundRoot = this.findRoot(contextType, firstDownPath.field);
 		if (foundRoot === undefined) {
 			return undefined;
 		} else {
@@ -637,7 +582,10 @@ type CallableBindingContext = VisitorBindingContext & {
  * A visitor that buffers all events which match the registered event categories and corresponding paths.
  * Listeners are invoked when flushed. Flushing has also the ability to sort and batch the events.
  */
-class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<BufferingPathVisitor> {
+class BufferingPathVisitor
+	extends AbstractPathVisitor
+	implements Flushable<BufferingPathVisitor>
+{
 	private readonly eventQueue: CallableBindingContext[] = [];
 
 	public onRemove(path: UpPath, count: number): void {
@@ -675,8 +623,7 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 		const batchEvents: CallableBindingContext[] = [];
 		const collected = new Set<Listener>();
 		if (this.hasRegisteredContextType(BindingType.Batch)) {
-			for (let i = 0; i < sortedQueue.length; i++) {
-				const event = sortedQueue[i];
+			for (const [i, event] of sortedQueue.entries()) {
 				const current = toDownPath(event.path);
 				const listeners = this.getListeners(BindingType.Batch, current);
 				if (listeners !== undefined && listeners.size > 0) {
@@ -694,11 +641,10 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 				events: batchEvents,
 			});
 		}
-		for (let i = 0; i < sortedQueue.length; i++) {
+		for (const [i, { listeners, ...context }] of sortedQueue.entries()) {
 			if (batchEventIndices.has(i)) {
 				continue;
 			}
-			const { listeners, ...context } = sortedQueue[i];
 			for (const listener of listeners) {
 				listener({ ...context });
 			}
@@ -727,7 +673,7 @@ class AbstractDataBinder<
 		protected readonly visitorFactory: (anchor: FlexTreeNode) => V,
 	) {}
 
-	public register<K extends keyof Events<B>>(
+	public register<K extends keyof Listeners<B>>(
 		anchor: FlexTreeNode,
 		eventType: K,
 		eventTrees: BindPolicy[],
@@ -737,7 +683,7 @@ class AbstractDataBinder<
 		const visitor = getOrCreate(this.visitors, anchor, () => {
 			const newVisitor = this.visitorFactory(anchor);
 			this.unregisterHandles.add(
-				anchor.on("subtreeChanging", (upPath: UpPath) => {
+				anchor.anchorNode.on("subtreeChanging", (upPath: UpPath) => {
 					assert(newVisitor !== undefined, 0x6dc /* visitor expected to be defined */);
 					if (!this.visitorLocations.has(newVisitor)) {
 						this.visitorLocations.set(newVisitor, upPath);
@@ -775,7 +721,7 @@ class AbstractDataBinder<
 	}
 }
 
-class BufferingDataBinder<E extends Events<E>>
+class BufferingDataBinder<E extends Listeners<E>>
 	extends AbstractDataBinder<
 		OperationBinderEvents,
 		BufferingPathVisitor,
@@ -783,9 +729,9 @@ class BufferingDataBinder<E extends Events<E>>
 	>
 	implements FlushableDataBinder<OperationBinderEvents>
 {
-	protected readonly view: ISubscribable<E>;
-	protected readonly autoFlushPolicy: keyof Events<E>;
-	public constructor(view: ISubscribable<E>, options: FlushableBinderOptions<E>) {
+	protected readonly view: Listenable<E>;
+	protected readonly autoFlushPolicy: keyof Listeners<E>;
+	public constructor(view: Listenable<E>, options: FlushableBinderOptions<E>) {
 		super(options, (anchor: FlexTreeNode) => new BufferingPathVisitor(options));
 		this.view = view;
 		this.autoFlushPolicy = options.autoFlushPolicy;
@@ -814,24 +760,24 @@ class BufferingDataBinder<E extends Events<E>>
 	private enableAutoFlush(): FlushableDataBinder<OperationBinderEvents> {
 		const callbackFn = (() => {
 			this.flush();
-		}) as E[keyof Events<E>];
+		}) as E[keyof Listeners<E>];
 		const unregisterFlushing = this.view.on(this.autoFlushPolicy, callbackFn);
 		this.unregisterHandles.add(unregisterFlushing);
 		return this;
 	}
 }
 
-class DirectDataBinder<E extends Events<E>> extends AbstractDataBinder<
+class DirectDataBinder<E extends Listeners<E>> extends AbstractDataBinder<
 	OperationBinderEvents,
 	DirectPathVisitor,
 	BinderOptions
 > {
-	public constructor(view: ISubscribable<E>, options: BinderOptions) {
+	public constructor(view: Listenable<E>, options: BinderOptions) {
 		super(options, (anchor: FlexTreeNode) => new DirectPathVisitor(options));
 	}
 }
 
-class InvalidateDataBinder<E extends Events<E>>
+class InvalidateDataBinder<E extends Listeners<E>>
 	extends AbstractDataBinder<
 		InvalidationBinderEvents,
 		InvalidatingPathVisitor,
@@ -839,9 +785,9 @@ class InvalidateDataBinder<E extends Events<E>>
 	>
 	implements FlushableDataBinder<InvalidationBinderEvents>
 {
-	protected readonly view: ISubscribable<E>;
-	protected readonly autoFlushPolicy: keyof Events<E>;
-	public constructor(view: ISubscribable<E>, options: FlushableBinderOptions<E>) {
+	protected readonly view: Listenable<E>;
+	protected readonly autoFlushPolicy: keyof Listeners<E>;
+	public constructor(view: Listenable<E>, options: FlushableBinderOptions<E>) {
 		super(options, (anchor: FlexTreeNode) => new InvalidatingPathVisitor(options));
 		this.view = view;
 		this.autoFlushPolicy = options.autoFlushPolicy;
@@ -858,7 +804,7 @@ class InvalidateDataBinder<E extends Events<E>>
 	private enableAutoFlush(): FlushableDataBinder<InvalidationBinderEvents> {
 		const callbackFn = (() => {
 			this.flush();
-		}) as E[keyof Events<E>];
+		}) as E[keyof Listeners<E>];
 		const unregisterFlushing = this.view.on(this.autoFlushPolicy, callbackFn);
 		this.unregisterHandles.add(unregisterFlushing);
 		return this;
@@ -867,8 +813,6 @@ class InvalidateDataBinder<E extends Events<E>>
 
 /**
  * Compute a top-town {@link DownPath} from an {@link UpPath}.
- *
- * @internal
  */
 export function toDownPath(upPath: UpPath): DownPath {
 	const downPath: UpPath[] = topDownPath(upPath);
@@ -881,11 +825,9 @@ export function toDownPath(upPath: UpPath): DownPath {
 
 /**
  * Create a buffering data binder.
- *
- * @internal
  */
-export function createDataBinderBuffering<E extends Events<E>>(
-	view: ISubscribable<E>,
+export function createDataBinderBuffering<E extends Listeners<E>>(
+	view: Listenable<E>,
 	options: FlushableBinderOptions<E>,
 ): FlushableDataBinder<OperationBinderEvents> {
 	return new BufferingDataBinder(view, options);
@@ -893,11 +835,9 @@ export function createDataBinderBuffering<E extends Events<E>>(
 
 /**
  * Create a direct data binder.
- *
- * @internal
  */
-export function createDataBinderDirect<E extends Events<E>>(
-	view: ISubscribable<E>,
+export function createDataBinderDirect<E extends Listeners<E>>(
+	view: Listenable<E>,
 	options: BinderOptions,
 ): DataBinder<OperationBinderEvents> {
 	return new DirectDataBinder(view, options);
@@ -905,11 +845,9 @@ export function createDataBinderDirect<E extends Events<E>>(
 
 /**
  * Create an invalidating data binder.
- *
- * @internal
  */
-export function createDataBinderInvalidating<E extends Events<E>>(
-	view: ISubscribable<E>,
+export function createDataBinderInvalidating<E extends Listeners<E>>(
+	view: Listenable<E>,
 	options: FlushableBinderOptions<E>,
 ): FlushableDataBinder<InvalidationBinderEvents> {
 	return new InvalidateDataBinder(view, options);
@@ -918,10 +856,10 @@ export function createDataBinderInvalidating<E extends Events<E>>(
 /**
  * Create binder options. If not specified, the default values are:
  * - sortFn: no sorting
- *
- * @internal
  */
-export function createBinderOptions({ sortFn }: { sortFn?: BinderEventsCompare }): BinderOptions {
+export function createBinderOptions({
+	sortFn,
+}: { sortFn?: BinderEventsCompare }): BinderOptions {
 	return { sortFn };
 }
 
@@ -930,10 +868,8 @@ export function createBinderOptions({ sortFn }: { sortFn?: BinderEventsCompare }
  * - sortFn: no sorting
  * - sortAnchorsFn: no sorting
  * - autoFlush: true
- *
- * @internal
  */
-export function createFlushableBinderOptions<E extends Events<E>>({
+export function createFlushableBinderOptions<E extends Listeners<E>>({
 	sortFn,
 	sortAnchorsFn,
 	autoFlush = true,
@@ -942,7 +878,7 @@ export function createFlushableBinderOptions<E extends Events<E>>({
 	sortFn?: BinderEventsCompare;
 	sortAnchorsFn?: AnchorsCompare;
 	autoFlush?: boolean;
-	autoFlushPolicy: keyof Events<E>;
+	autoFlushPolicy: keyof Listeners<E>;
 }): FlushableBinderOptions<E> {
 	return {
 		sortFn,
@@ -957,7 +893,6 @@ export function createFlushableBinderOptions<E extends Events<E>>({
  *
  * @param fns - a list of compare functions
  * @returns a compare function that can be used for sorting
- * @internal
  */
 export function comparePipeline<T>(...fns: CompareFunction<T>[]): CompareFunction<T> {
 	return (a: T, b: T): number => {
@@ -987,7 +922,6 @@ function nativeSort<T>(arr: T[], compareFn: CompareFunction<T>): T[] {
  * The syntax tree is a compact representation of related {@link BindPath}s.
  * The match policy can be specified. If not specified, the default value is "path".
  * @returns a {@link BindPolicy} object
- * @internal
  */
 export function compileSyntaxTree(
 	syntaxTree: BindSyntaxTree,
@@ -995,7 +929,7 @@ export function compileSyntaxTree(
 ): BindPolicy {
 	const entries = Object.entries(syntaxTree);
 	if (entries.length === 1) {
-		const [fieldName, childNode] = entries[0];
+		const [fieldName, childNode] = entries[0] ?? oob();
 		const fieldKey: FieldKey = brand(fieldName);
 		const bindTree = compileSyntaxTreeNode(childNode as BindSyntaxTree, fieldKey);
 		return { matchPolicy: matchPolicy ?? "path", bindTree };

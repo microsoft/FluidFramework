@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type EditType, type FluidObjectId } from "../CommonInterfaces.js";
+import type { EditType, FluidObjectId } from "../CommonInterfaces.js";
 
 /**
  * This module contains a type system for describing visual descriptors of data objects in a serializable
@@ -242,7 +242,10 @@ export type VisualNode =
  *
  * @internal
  */
-export type FluidObjectNode = FluidObjectTreeNode | FluidObjectValueNode | FluidUnknownObjectNode;
+export type FluidObjectNode =
+	| FluidObjectTreeNode
+	| FluidObjectValueNode
+	| FluidUnknownObjectNode;
 
 /**
  * A visual tree that can be the child of a {@link FluidObjectNodeBase}.

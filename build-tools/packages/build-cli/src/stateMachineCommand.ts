@@ -7,9 +7,9 @@ import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 import { Machine } from "jssm";
 
-import { testModeFlag } from "./flags";
-import { StateHandler } from "./handlers";
-import { BaseCommand } from "./library";
+import { testModeFlag } from "./flags.js";
+import { StateHandler } from "./handlers/index.js";
+import { BaseCommand } from "./library/index.js";
 
 /**
  * A base CLI command that uses an internal state machine to govern its behavior. Subclasses must provide a state

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import events_pkg from "events_pkg";
 import { IValueChanged } from "@fluidframework/map/internal";
+import events_pkg from "events_pkg";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.
@@ -39,7 +39,10 @@ export interface DiceRollerControllerProps {
 /**
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
-export class DiceRollerController extends events_pkg.EventEmitter implements IDiceRollerController {
+export class DiceRollerController
+	extends events_pkg.EventEmitter
+	implements IDiceRollerController
+{
 	/**
 	 * Initialize a new model for its first use with this controller.
 	 * The model must be initialized before trying to use it in a DiceRollerController instance.

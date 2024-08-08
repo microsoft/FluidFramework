@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	IGitBlob,
 	IGitCommitDetails,
@@ -11,7 +12,6 @@ import type {
 	IGitCreateTreeParams,
 	IGitTree,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IWholeSummaryPayload,
 	IWholeSummaryPayloadType,
@@ -41,7 +41,10 @@ export interface IGitManager {
 	getCommits(sha: string, count: number): Promise<IR11sResponse<IGitCommitDetails[]>>;
 	getTree(root: string, recursive: boolean): Promise<IR11sResponse<IGitTree>>;
 	getBlob(sha: string): Promise<IR11sResponse<IGitBlob>>;
-	createBlob(content: string, encoding: string): Promise<IR11sResponse<IGitCreateBlobResponse>>;
+	createBlob(
+		content: string,
+		encoding: string,
+	): Promise<IR11sResponse<IGitCreateBlobResponse>>;
 	createGitTree(params: IGitCreateTreeParams): Promise<IR11sResponse<IGitTree>>;
 	createSummary(
 		summary: IWholeSummaryPayload,

@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { TAnySchema } from "@sinclair/typebox";
+import type { TAnySchema } from "@sinclair/typebox";
 
-import { IJsonCodec } from "../../codec/index.js";
-import {
+import type { IJsonCodec } from "../../codec/index.js";
+import type {
 	ChangeAtomId,
 	ChangeEncodingContext,
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../../core/index.js";
-import { Mutable } from "../../util/index.js";
+import type { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {
 	EncodedNodeChangeset,
@@ -81,10 +81,7 @@ export function makeOptionalFieldCodec(
 					d: changeAtomIdCodec.encode(change.valueReplace.dst, context.baseContext),
 				};
 				if (change.valueReplace.src !== undefined) {
-					encoded.r.s = registerIdCodec.encode(
-						change.valueReplace.src,
-						context.baseContext,
-					);
+					encoded.r.s = registerIdCodec.encode(change.valueReplace.src, context.baseContext);
 				}
 			}
 

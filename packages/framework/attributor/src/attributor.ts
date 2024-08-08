@@ -5,11 +5,12 @@
 
 import { type IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import { type IQuorumClients } from "@fluidframework/driver-definitions";
 import {
-	type IQuorumClients,
+	MessageType,
+	type IDocumentMessage,
 	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions";
-import { MessageType, type IDocumentMessage } from "@fluidframework/driver-definitions/internal";
+} from "@fluidframework/driver-definitions/internal";
 import { type AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 

@@ -1,0 +1,13 @@
+{
+	// This config must be used in a "type": "commonjs" environment. (Use fluid-tsc commonjs.)
+	"extends": "./tsconfig.jest.json",
+	"compilerOptions": {
+		"outDir": "../../dist/test",
+		"noUncheckedIndexedAccess": false,
+	},
+	"references": [
+		{
+			"path": "../../tsconfig.cjs.json",
+		},
+	],
+}

@@ -7,22 +7,26 @@ import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import { TreeValue } from "../../core/index.js";
+import type { TreeValue } from "../../core/index.js";
 import { SchemaFactory } from "../../simple-tree/index.js";
 import {
-	InsertableTreeFieldFromImplicitField,
-	InsertableTypedNode,
-	NodeBuilderData,
-	NodeFromSchema,
-	TreeFieldFromImplicitField,
-	TreeLeafValue,
-	TreeNodeFromImplicitAllowedTypes,
+	type InsertableTreeFieldFromImplicitField,
+	type InsertableTypedNode,
+	type NodeBuilderData,
+	type NodeFromSchema,
+	type TreeFieldFromImplicitField,
+	type TreeLeafValue,
+	type TreeNodeFromImplicitAllowedTypes,
 	normalizeAllowedTypes,
 	type TreeNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import { TreeFactory } from "../../treeFactory.js";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
+import type {
+	areSafelyAssignable,
+	requireAssignableTo,
+	requireTrue,
+} from "../../util/index.js";
 
 const schema = new SchemaFactory("com.example");
 

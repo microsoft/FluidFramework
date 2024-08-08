@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { ContainerProperty, EnumArrayProperty } from "@fluid-experimental/property-properties";
+import type {
+	ContainerProperty,
+	EnumArrayProperty,
+} from "@fluid-experimental/property-properties";
 import MenuItem from "@material-ui/core/MenuItem";
 import Select, { type SelectProps } from "@material-ui/core/Select";
 import * as React from "react";

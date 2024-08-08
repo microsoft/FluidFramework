@@ -14,7 +14,7 @@ import {
 	createPullRequest,
 	getCommitInfo,
 	pullRequestExists,
-} from "../../library";
+} from "../../library/index.js";
 
 interface CleanupBranch {
 	branch: string;

@@ -5,6 +5,7 @@
 
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -17,7 +18,6 @@ import {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { runWithRetry } from "@fluidframework/driver-utils/internal";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	GenericError,
@@ -31,7 +31,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		private readonly internalStorageServiceP: Promise<IDocumentStorageService>,
 		private readonly logger: ITelemetryLoggerExt,
 	) {
-		this.internalStorageServiceP.then((s) => (this.internalStorageService = s)).catch(() => {});
+		this.internalStorageServiceP
+			.then((s) => (this.internalStorageService = s))
+			.catch(() => {});
 	}
 
 	public get policies(): IDocumentStorageServicePolicies | undefined {
@@ -40,16 +42,17 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		}
 		throw new Error("storage service not yet instantiated");
 	}
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
-	public dispose() {
+	public dispose(): void {
 		this._disposed = true;
 	}
 
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
+		// eslint-disable-next-line @rushstack/no-new-null -- API used below returns null
 	): Promise<ISnapshotTree | null> {
 		return this.runWithRetry(
 			async () =>
@@ -83,6 +86,8 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 	}
 
 	public async getVersions(
+		// API used below returns null
+		// eslint-disable-next-line @rushstack/no-new-null
 		versionId: string | null,
 		count: number,
 		scenarioName?: string,
@@ -144,7 +149,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		);
 	}
 
-	private checkStorageDisposed(callName: string, error: unknown) {
+	private checkStorageDisposed(callName: string, error: unknown): void {
 		if (this._disposed) {
 			this.logger.sendTelemetryEvent(
 				{

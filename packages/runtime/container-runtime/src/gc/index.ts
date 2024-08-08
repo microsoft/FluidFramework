@@ -11,8 +11,6 @@ export {
 	defaultSessionExpiryDurationMs,
 	GCNodeType,
 	gcTestModeKey,
-	gcDisableDataStoreSweepOptionName,
-	gcDisableThrowOnTombstoneLoadOptionName,
 	gcGenerationOptionName,
 	GCFeatureMatrix,
 	GCVersion,
@@ -31,13 +29,9 @@ export {
 	IGCStats,
 	oneDayMs,
 	runSessionExpiryKey,
-	runSweepKey,
 	stableGCVersion,
-	disableAutoRecoveryKey,
-	disableDatastoreSweepKey,
-	detectOutboundRoutesViaDDSKey,
 	UnreferencedState,
-	throwOnTombstoneLoadOverrideKey,
+	disableThrowOnTombstoneLoadKey,
 	GarbageCollectionMessage,
 	GarbageCollectionMessageType,
 	ISweepMessage,
@@ -61,5 +55,5 @@ export {
 	GCSummaryStateTracker,
 	IGCSummaryTrackingData,
 } from "./gcSummaryStateTracker.js";
-export { GCTelemetryTracker, sendGCUnexpectedUsageEvent } from "./gcTelemetry.js";
+export { GCTelemetryTracker } from "./gcTelemetry.js";
 export { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";

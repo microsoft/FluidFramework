@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { createChildLogger, raiseConnectedEvent } from "@fluidframework/telemetry-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	createChildLogger,
+	raiseConnectedEvent,
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {
@@ -17,6 +20,7 @@ import {
 
 /**
  * Specialized implementation of MockContainerRuntime for testing ops during reconnection.
+ * @legacy
  * @alpha
  */
 export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
@@ -201,6 +205,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 
 /**
  * Specialized implementation of MockContainerRuntimeFactory for testing ops during reconnection.
+ * @legacy
  * @alpha
  */
 export class MockContainerRuntimeFactoryForReconnection extends MockContainerRuntimeFactory {

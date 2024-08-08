@@ -58,8 +58,20 @@ describe('deepCompareNodes', () => {
 			definition: testTree.definition,
 			identifier: testTree.identifier,
 			traits: {
-				left: [{ definition: testTree.left.definition, identifier: testTree.left.identifier, traits: {} }],
-				right: [{ definition: testTree.right.definition, identifier: testTree.right.identifier, traits: {} }],
+				left: [
+					{
+						definition: testTree.left.definition,
+						identifier: testTree.left.identifier,
+						traits: {},
+					},
+				],
+				right: [
+					{
+						definition: testTree.right.definition,
+						identifier: testTree.right.identifier,
+						traits: {},
+					},
+				],
 			},
 		};
 		expect(deepCompareNodes(testTree, otherTree)).to.be.true;
@@ -67,10 +79,7 @@ describe('deepCompareNodes', () => {
 
 	it('returns false for unequal nodes', () => {
 		expect(
-			deepCompareNodes(
-				testTree.buildLeaf(testTree.generateNodeId()),
-				testTree.buildLeaf(testTree.generateNodeId())
-			)
+			deepCompareNodes(testTree.buildLeaf(testTree.generateNodeId()), testTree.buildLeaf(testTree.generateNodeId()))
 		).to.be.false;
 		expect(deepCompareNodes(testTree.buildLeaf(testTree.identifier), testTree)).to.be.false;
 		expect(deepCompareNodes(testTree.buildLeaf(testTree.identifier), testTree)).to.be.false;

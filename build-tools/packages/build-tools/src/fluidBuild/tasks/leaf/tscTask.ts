@@ -52,6 +52,7 @@ export class TscTask extends LeafTask {
 			// `tsc -b` by design doesn't rebuild if dependent packages changed
 			// but not a referenced project. Just force it if we detected the change and
 			// invoke the build.
+			// `--force` is not fully supported, due to workaround in createTscUtil, so this may not actually work.
 			return `${this.command} --force`;
 		}
 		return this.command;

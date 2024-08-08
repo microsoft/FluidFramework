@@ -6,7 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import { ISnapshot, IDocumentAttributes } from "@fluidframework/driver-definitions/internal";
 import {
 	IFileEntry,
 	IOdspResolvedUrl,
@@ -14,8 +15,6 @@ import {
 	SharingLinkRole,
 	SharingLinkScope,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { IDocumentAttributes } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { createNewFluidFile } from "../createFile.js";
@@ -166,7 +165,12 @@ describe("Create New Utils Tests", () => {
 			{ "x-fluid-epoch": "epoch1" },
 		);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
+		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl, false));
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const snapshotWithLoadingGroupId = await epochTracker.get(
+			createCacheSnapshotKey(odspResolvedUrl, true),
+		);
+		assert(snapshotWithLoadingGroupId === undefined, "snapshot should not exist");
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		test(snapshot);
 		await epochTracker.removeEntries().catch(() => {});
@@ -195,7 +199,12 @@ describe("Create New Utils Tests", () => {
 			{ "x-fluid-epoch": "epoch1" },
 		);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
+		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl, false));
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const snapshotWithLoadingGroupId = await epochTracker.get(
+			createCacheSnapshotKey(odspResolvedUrl, true),
+		);
+		assert(snapshotWithLoadingGroupId === undefined, "snapshot should not exist");
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		test(snapshot);
 		await epochTracker.removeEntries().catch(() => {});

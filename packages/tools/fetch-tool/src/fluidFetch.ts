@@ -41,10 +41,15 @@ async function fluidFetchOneFile(urlStr: string, name?: string) {
 async function tryFluidFetchOneSharePointFile(server: string, driveItem: IOdspDriveItem) {
 	const { path, name, driveId, itemId } = driveItem;
 	console.log(`File: ${path}/${name}`);
-	await fluidFetchOneFile(`https://${server}/_api/v2.1/drives/${driveId}/items/${itemId}`, name);
+	await fluidFetchOneFile(
+		`https://${server}/_api/v2.1/drives/${driveId}/items/${itemId}`,
+		name,
+	);
 }
 
-function getSharePointSpecificDriveItem(url: URL): { driveId: string; itemId: string } | undefined {
+function getSharePointSpecificDriveItem(
+	url: URL,
+): { driveId: string; itemId: string } | undefined {
 	if (url.searchParams.has("driveId") && url.searchParams.has("itemId")) {
 		return {
 			driveId: url.searchParams.get("driveId") as string,
@@ -124,9 +129,7 @@ fluidFetchMain()
 			}
 			console.error(`ERROR: ${error.stack}${extraMsg}`);
 		} else if (typeof error === "object") {
-			console.error(
-				`ERROR: Unknown exception object\n${JSON.stringify(error, undefined, 2)}`,
-			);
+			console.error(`ERROR: Unknown exception object\n${JSON.stringify(error, undefined, 2)}`);
 		} else {
 			console.error(`ERROR: ${error}`);
 		}

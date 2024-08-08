@@ -4,23 +4,25 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	type ITestObjectProvider,
 	createTestConfigProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
-import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import { TestSnapshotCache } from "./testSnapshotCache.js";
+import { TestSnapshotCache } from "../../testSnapshotCache.js";
+
 import { clearCacheIfOdsp, supportsDataVirtualization } from "./utils.js";
 
 const interceptResult = <T>(
@@ -66,7 +68,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		},
 	};
 	const configProvider = createTestConfigProvider();
-	configProvider.set("Fluid.Container.UseLoadingGroupIdForSnapshotFetch", true);
+	configProvider.set("Fluid.Container.UseLoadingGroupIdForSnapshotFetch2", true);
 	configProvider.set("Fluid.Container.enableOfflineLoad", true);
 
 	const testDataObjectType = "TestDataObject";
@@ -351,12 +353,6 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		dataObjectA2._root.set("A2", "A2");
 		dataObjectB2._root.set("B2", "B2");
 
-		// Hack to make sure we don't immediately fail/close the container on pending ops
-		// Another way around this is to simply have a different container send remote messages.
-		// What happens is that the last two synced ops we made are considered "saved", This may be useful for testing an offline edge case
-		// The last two saved ops (setting A and B) have reference sequence numbers that point to a sequence number
-		// before the snapshot
-		(dataObjectA2.containerRuntime as any).pendingStateManager.savedOps = [];
 		// Get Pending state and close
 		assert(container2.closeAndGetPendingLocalState !== undefined, "Missing method!");
 		const pendingState = await container2.closeAndGetPendingLocalState();

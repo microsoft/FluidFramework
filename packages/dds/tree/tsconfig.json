@@ -12,5 +12,6 @@
 		// Linter is used to enforce "_" prefix for unused locals to prevent accidentally having unused locals.
 		"noUnusedLocals": false,
 		"noImplicitOverride": true,
+		"exactOptionalPropertyTypes": false,
 	},
 }

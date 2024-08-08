@@ -4,6 +4,7 @@
 	"compilerOptions": {
 		"outDir": "./lib",
 		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*", "tests/**/*"],
 }

@@ -14,8 +14,8 @@ export function Explanation(): JSX.Element {
 	return (
 		<div className="flex flex-col max-w-md gap-4 justify-left my-32 select-none">
 			<BlackBox>
-				Copy the full URL to another browser tab or send it to someone to see that the data
-				is synched between clients.
+				Copy the full URL to another browser tab or send it to someone to see that the data is
+				synched between clients.
 			</BlackBox>
 		</div>
 	);

@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as childProcess from "node:child_process";
 import * as fs from "node:fs";
 import { Flags } from "@oclif/core";
 
 import { getIsLatest, getSimpleVersion } from "@fluid-tools/version-tools";
 
-import { BaseCommand } from "../../library";
+import { BaseCommand } from "../../library/index.js";
 
 /**
  * This command class is used to compute the version number of Fluid packages. The release version number is based on
@@ -101,10 +100,12 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			this.error("Test build shouldn't be released");
 		}
 
+		const context = await this.getContext();
+		const tags = flags.tags ?? (await context.gitRepo.getAllTags());
+
 		if (!useSimplePatchVersion && flags.tag !== undefined) {
 			const tagName = `${flags.tag}_v${fileVersion}`;
-			const out = childProcess.execSync(`git tag -l ${tagName}`, { encoding: "utf8" });
-			if (out.trim() === tagName) {
+			if (tags.includes(tagName)) {
 				if (isRelease) {
 					this.error(`Tag ${tagName} already exists.`);
 				}
@@ -154,8 +155,6 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		this.log(`version=${version}`);
 		this.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
 
-		const context = await this.getContext();
-		const tags = flags.tags ?? (await context.gitRepo.getAllTags());
 		if (flags.tag !== undefined) {
 			const isLatest = getIsLatest(
 				flags.tag,

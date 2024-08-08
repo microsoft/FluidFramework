@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import * as semver from "semver";
 
 import { VersionBumpTypeExtended } from "./bumpTypes";
@@ -21,9 +22,13 @@ export const MINIMUM_PUBLIC_VERSION = "2.0.0";
 const MINIMUM_PUBLIC_MAJOR = semver.major(MINIMUM_PUBLIC_VERSION);
 
 /**
- * The minimum number of prerelease sections a version should have to be considered a Fluid internal version.
+ * The expected number of prerelease sections a version should have to be considered a Fluid internal version. Any
+ * version string with fewer than this number of prerelease sections is not a Fluid internal version.
+ *
+ * If a version has more than this number of prerelease sections, it may be considered a prerelease Fluid internal
+ * version.
  */
-const MINIMUM_SEMVER_PRERELEASE_SECTIONS = 4;
+const EXPECTED_PRERELEASE_SECTIONS = 4;
 
 /**
  * The first part of the semver prerelease value is called the "prerelease identifier". For Fluid internal versions,
@@ -228,12 +233,15 @@ export function validateVersionScheme(
 		);
 	}
 
-	if (parsedVersion.prerelease.length > MINIMUM_SEMVER_PRERELEASE_SECTIONS) {
-		if (allowPrereleases) {
-			return true;
-		}
+	if (
+		// All versions with fewer than the min prerelease sections should not be considered internal
+		parsedVersion.prerelease.length < EXPECTED_PRERELEASE_SECTIONS ||
+		// If the version has more than the minimum prerelease sections, then it's not considered an internal version unless
+		// allowPrereleases === true
+		(parsedVersion.prerelease.length > EXPECTED_PRERELEASE_SECTIONS && !allowPrereleases)
+	) {
 		throw new Error(
-			`Prerelease value contains ${parsedVersion.prerelease.length} components; expected ${MINIMUM_SEMVER_PRERELEASE_SECTIONS}.`,
+			`Prerelease value contains ${parsedVersion.prerelease.length} components; expected ${EXPECTED_PRERELEASE_SECTIONS}.`,
 		);
 	}
 

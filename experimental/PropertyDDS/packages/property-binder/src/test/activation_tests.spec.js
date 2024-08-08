@@ -333,9 +333,7 @@ describe("DataBinder ActivationQueryCacheHelper", function () {
 				true,
 			);
 			// A cube in an array is considered a child
-			expect(scenario.helper.childrenMayHaveBindings("array<test3:cube-1.0.0>")).toEqual(
-				true,
-			);
+			expect(scenario.helper.childrenMayHaveBindings("array<test3:cube-1.0.0>")).toEqual(true);
 
 			tearDownScenario(scenario);
 		});
@@ -497,9 +495,7 @@ describe("DataBinder ActivationQueryCacheHelper", function () {
 			const scenario = setupScenario("map<test4:thing-1.0.0>", dataBinder);
 
 			// map<test4:thing-1.0.0> does not match map<test4:cube-1.0.0>
-			expect(scenario.helper.hierarchyMayHaveBindings("map<test4:cube-1.0.0>")).toEqual(
-				false,
-			);
+			expect(scenario.helper.hierarchyMayHaveBindings("map<test4:cube-1.0.0>")).toEqual(false);
 			// map<test4:thing-1.0.0> matches map<test4:inheritedThing-1.0.0>
 			expect(
 				scenario.helper.hierarchyMayHaveBindings("map<test4:inheritedThing-1.0.0>"),

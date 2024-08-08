@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ObjectOptions, Static, Type } from "@sinclair/typebox";
+import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
 
-import { ChangesetLocalId, RevisionTagSchema, schemaFormat } from "../../core/index.js";
+import { type ChangesetLocalId, RevisionTagSchema, schemaFormat } from "../../core/index.js";
 import {
-	JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
 	brandedNumberType,
 } from "../../util/index.js";
@@ -130,8 +130,14 @@ export const EncodedModularChangeset = Type.Object(
 		maxId: Type.Optional(ChangesetLocalIdSchema),
 		changes: EncodedFieldChangeMap,
 		revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
+		// TODO#8574: separating `builds` and `refreshers` here means that we encode their `EncodedBuilds.trees` separately.
+		// This can lead to a less efficient wire representation because of duplicated schema/shape information.
 		builds: Type.Optional(EncodedBuilds),
 		refreshers: Type.Optional(EncodedBuilds),
+		/**
+		 * The number of constraints within this changeset that are violated.
+		 */
+		violations: Type.Optional(Type.Number({ minimum: 0, multipleOf: 1 })),
 	},
 	noAdditionalProps,
 );

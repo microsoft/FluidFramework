@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ISharedObject,
-	type ISharedObjectEvents,
+import type {
+	ISharedObject,
+	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
 
 /**

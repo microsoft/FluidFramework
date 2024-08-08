@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { AzureMember, AzureUser } from "@fluidframework/azure-client/internal";
+import type { AzureMember } from "@fluidframework/azure-client";
+import type { AzureUser } from "@fluidframework/azure-client/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 
 export function createMockServiceMember(audienceMember: IClient): AzureMember {

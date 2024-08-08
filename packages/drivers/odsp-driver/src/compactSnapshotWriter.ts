@@ -5,8 +5,12 @@
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISnapshot, IBlob, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import {
+	ISnapshot,
+	IBlob,
+	ISnapshotTree,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 
 import { TreeBuilderSerializer } from "./WriteBufferUtils.js";
 import { snapshotMinReadVersion } from "./compactSnapshotParser.js";
@@ -34,7 +38,10 @@ function writeSnapshotProps(node: NodeCore, latestSequenceNumber: number): void 
  * @param snapshotNode - node to serialize to.
  * @param blobs - blobs that is being serialized
  */
-function writeBlobsSection(snapshotNode: NodeCore, blobs: Map<string, IBlob | ArrayBuffer>): void {
+function writeBlobsSection(
+	snapshotNode: NodeCore,
+	blobs: Map<string, IBlob | ArrayBuffer>,
+): void {
 	snapshotNode.addDictionaryString("blobs");
 	const blobsNode = snapshotNode.addNode("list");
 	for (const [storageBlobId, blob] of blobs) {
@@ -44,9 +51,7 @@ function writeBlobsSection(snapshotNode: NodeCore, blobs: Map<string, IBlob | Ar
 		if (blob instanceof ArrayBuffer) {
 			blobNode.addBlob(new Uint8Array(blob));
 		} else {
-			blobNode.addBlob(
-				new Uint8Array(stringToBuffer(blob.contents, blob.encoding ?? "utf8")),
-			);
+			blobNode.addBlob(new Uint8Array(stringToBuffer(blob.contents, blob.encoding ?? "utf8")));
 		}
 	}
 }
@@ -125,7 +130,8 @@ function writeSnapshotSection(
 function writeOpsSection(rootNode: NodeCore, ops: ISequencedDocumentMessage[]): void {
 	let firstSequenceNumber: number | undefined;
 	if (ops.length > 0) {
-		firstSequenceNumber = ops[0].sequenceNumber;
+		// Non null asserting here because of the length check above
+		firstSequenceNumber = ops[0]!.sequenceNumber;
 	}
 	if (firstSequenceNumber !== undefined) {
 		rootNode.addDictionaryString("deltas");
@@ -157,13 +163,18 @@ export function convertToCompactSnapshot(snapshotContents: ISnapshot): Uint8Arra
 	if (latestSequenceNumber === undefined) {
 		latestSequenceNumber =
 			snapshotContents.ops.length > 0
-				? snapshotContents.ops[snapshotContents.ops.length - 1].sequenceNumber
+				? // Non null asserting here because of the length check above
+					snapshotContents.ops[snapshotContents.ops.length - 1]!.sequenceNumber
 				: snapshotContents.sequenceNumber;
 	}
 
 	writeSnapshotProps(rootNode, latestSequenceNumber);
 
-	writeSnapshotSection(rootNode, snapshotContents.snapshotTree, snapshotContents.sequenceNumber);
+	writeSnapshotSection(
+		rootNode,
+		snapshotContents.snapshotTree,
+		snapshotContents.sequenceNumber,
+	);
 
 	// Add Blobs
 	writeBlobsSection(rootNode, snapshotContents.blobContents);

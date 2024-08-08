@@ -10,13 +10,13 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { DataStoreMessageType } from "@fluidframework/datastore/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	ISummaryAck,
 	ISummaryNack,
 	ISummaryProposal,
 	MessageType,
 	TreeEntry,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions/internal";
 
@@ -78,7 +78,9 @@ class ActiveSession {
 // Format a number separating 3 digits by comma
 export const formatNumber = (num: number): string =>
 	// eslint-disable-next-line unicorn/no-unsafe-regex
-	num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+	num
+		.toString()
+		.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
 function dumpStats(
 	map: Map<string, [number, number]>,
@@ -341,9 +343,9 @@ class MessageDensityAnalyzer implements IMessageAnalyzer {
 		if (message.sequenceNumber >= this.opLimit) {
 			if (message.sequenceNumber !== 1) {
 				const timeDiff = durationFromTime(message.timestamp - this.timeStart);
-				const opsString = `ops = [${this.opLimit - this.opChunk}, ${
-					this.opLimit - 1
-				}]`.padEnd(26);
+				const opsString = `ops = [${this.opLimit - this.opChunk}, ${this.opLimit - 1}]`.padEnd(
+					26,
+				);
 				const timeString = `time = [${durationFromTime(
 					this.timeStart - this.doctimerStart,
 				)}, ${durationFromTime(message.timestamp - this.doctimerStart)}]`;
@@ -504,8 +506,7 @@ export async function printMessageStats(
 			const msgSize = JSON.stringify(message).length;
 			lastMessage = message;
 
-			const skipMessage =
-				messageTypeFilter.size !== 0 && !messageTypeFilter.has(message.type);
+			const skipMessage = messageTypeFilter.size !== 0 && !messageTypeFilter.has(message.type);
 
 			for (const analyzer of analyzers) {
 				analyzer.processOp(message, msgSize, skipMessage);

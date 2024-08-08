@@ -4,9 +4,12 @@
  */
 
 import { validateMessages } from "@fluidframework/driver-base/internal";
-import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentDeltaStorageService,
+	IStream,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { Queue, emptyMessageStream } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -35,7 +38,8 @@ export class LocalOdspDeltaStorageService implements IDocumentDeltaStorageServic
 		);
 		validateMessages("cached", messages, from, this.logger);
 
-		if (messages.length === 0 || messages[0].sequenceNumber !== from) {
+		// Non null asserting here because of the length check
+		if (messages.length === 0 || messages[0]!.sequenceNumber !== from) {
 			this.snapshotOps = [];
 		}
 		this.snapshotOps = this.snapshotOps.filter(

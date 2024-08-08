@@ -8,4 +8,7 @@ export {
 	ICollaborativeInputState,
 	CollaborativeInput,
 } from "./CollaborativeInput.js";
-export { CollaborativeTextArea, ICollaborativeTextAreaProps } from "./CollaborativeTextArea.js";
+export {
+	CollaborativeTextArea,
+	ICollaborativeTextAreaProps,
+} from "./CollaborativeTextArea.js";

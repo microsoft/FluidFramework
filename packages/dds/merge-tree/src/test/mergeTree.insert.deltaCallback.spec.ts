@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
-import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants.js";
+import {
+	LocalClientId,
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
+} from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
@@ -41,7 +45,7 @@ describe("MergeTree", () => {
 		it("Insert starting text", () => {
 			let eventCalled: number = 0;
 
-			mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs) => {
+			mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs): void => {
 				eventCalled++;
 			};
 
@@ -63,7 +67,7 @@ describe("MergeTree", () => {
 			const textLength = mergeTree.getLength(currentSequenceNumber, localClientId);
 			let eventCalled: number = 0;
 
-			mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs) => {
+			mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs): void => {
 				eventCalled++;
 			};
 

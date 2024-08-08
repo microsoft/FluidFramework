@@ -5,6 +5,8 @@
 		"outDir": "./lib",
 		"types": ["jest"], // Required because of the comingled building of test and src files
 		"skipLibCheck": true,
+		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
 	},
 	"exclude": ["dist", "node_modules"],
 	"include": [

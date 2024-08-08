@@ -6,9 +6,12 @@
 import fs from "fs";
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentDeltaStorageService,
+	IStream,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { emptyMessageStream } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 
 /**
  * Provides access to the underlying delta storage on the local file storage for file driver.
@@ -64,12 +67,16 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
 		}
 
 		// Optimizations for multiple readers (replay tool)
-		if (this.lastOps.length > 0 && this.lastOps[0].sequenceNumber === readFrom + 1) {
+		// Non null asserting here because of the length check
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		if (this.lastOps.length > 0 && this.lastOps[0]!.sequenceNumber === readFrom + 1) {
 			return this.lastOps;
 		}
 		this.lastOps = this.messages.slice(readFrom, readTo);
 		assert(
-			this.lastOps[0].sequenceNumber === readFrom + 1,
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.lastOps[0]!.sequenceNumber === readFrom + 1,
 			0x091 /* "Retrieved ops' first sequence number has unexpected value!" */,
 		);
 		return this.lastOps;

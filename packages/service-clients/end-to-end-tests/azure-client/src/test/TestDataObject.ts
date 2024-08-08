@@ -112,7 +112,10 @@ export class SignalerTestDataObjectClass extends DataObject<{ Events: IErrorEven
 		return this;
 	}
 
-	public offSignal<T>(signalName: string, listener: SignalListener<T>): SignalerTestDataObject {
+	public offSignal<T>(
+		signalName: string,
+		listener: SignalListener<T>,
+	): SignalerTestDataObject {
 		this.emitter.off(signalName, listener);
 		return this;
 	}

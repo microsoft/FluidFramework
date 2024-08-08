@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { type Serializable } from "@fluidframework/datastore-definitions/internal";
-import { type ISharedObject } from "@fluidframework/shared-object-base/internal";
+import type { Serializable } from "@fluidframework/datastore-definitions/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
-import { type EditType, type HasFluidObjectId } from "../CommonInterfaces.js";
+import type { EditType, HasFluidObjectId } from "../CommonInterfaces.js";
 
 /**
  * Applies an edit to {@link @fluidframework/shared-object-base#ISharedObject}.

@@ -21,32 +21,27 @@ import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/inter
 import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import commander from "commander";
 
+import { createLogger } from "./FileLogger.js";
 import {
 	FaultInjectionDocumentServiceFactory,
 	FaultInjectionError,
 } from "./faultInjectionDriver.js";
+import { getProfile } from "./getProfile.js";
+import { IRunConfig } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
 	generateLoaderOptions,
 	generateRuntimeOptions,
 	getOptionOverride,
 } from "./optionsMatrix.js";
-import { IRunConfig, ITestRunner } from "./testConfigFile.js";
+import { ITestRunner } from "./testConfigFile.js";
 import {
 	configProvider,
 	createCodeLoader,
-	createLogger,
 	createTestDriver,
-	getProfile,
 	globalConfigurations,
-	safeExit,
+	printStatus,
 } from "./utils.js";
-
-function printStatus(runConfig: IRunConfig, message: string) {
-	if (runConfig.verbose) {
-		console.log(`${runConfig.runId.toString().padStart(3)}> ${message}`);
-	}
-}
 
 async function main() {
 	const parseIntArg = (value: any): number => {
@@ -75,6 +70,7 @@ async function main() {
 			"The test workload directory path relative to the test directory",
 			"default",
 		)
+		.requiredOption("-o, --outputDir <path>", "Path for log output files")
 		.option("-e, --driverEndpoint <endpoint>", "Which endpoint should the driver target?")
 		.option(
 			"-l, --log <filter>",
@@ -93,24 +89,14 @@ async function main() {
 	const log: string | undefined = commander.log;
 	const verbose: boolean = commander.verbose ?? false;
 	const seed: number = commander.seed;
+	const outputDir: string = commander.outputDir;
 	const enableOpsMetrics: boolean = commander.enableOpsMetrics ?? false;
-
-	const profile = getProfile(profileName, workLoadPath);
 
 	if (log !== undefined) {
 		process.env.DEBUG = log;
 	}
 
-	if (url === undefined) {
-		console.error("Missing --url argument needed to run child process");
-		process.exit(-1);
-	}
-
-	// combine the runId with the seed for generating local randoms
-	// this makes runners repeatable, but ensures each runner
-	// will get its own set of randoms
-	const random = makeRandom(seed, runId);
-	const logger = await createLogger({
+	const { logger, flush } = await createLogger(outputDir, runId.toString(), {
 		runId,
 		driverType: driver,
 		driverEndpointName: endpoint,
@@ -136,7 +122,19 @@ async function main() {
 
 	let result = 255;
 	try {
-		result = await runnerProcess(
+		const profile = getProfile(profileName, workLoadPath);
+
+		if (url === undefined) {
+			console.error("Missing --url argument needed to run child process");
+			throw new Error("Missing --url argument needed to run child process");
+		}
+
+		// combine the runId with the seed for generating local randoms
+		// this makes runners repeatable, but ensures each runner
+		// will get its own set of randoms
+		const random = makeRandom(seed, runId);
+
+		await runnerProcess(
 			driver,
 			endpoint,
 			workLoadPath,
@@ -152,10 +150,19 @@ async function main() {
 			seed,
 			enableOpsMetrics,
 		);
+		result = 0;
 	} catch (e) {
 		logger.sendErrorEvent({ eventName: "runnerFailed" }, e);
 	} finally {
-		await safeExit(result, url, runId);
+		// There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
+		// TODO: Track down the dangling promise and fix it.
+		await new Promise((resolve) => {
+			setTimeout(resolve, 1000);
+		});
+		// Flush the logs
+		await flush();
+
+		process.exit(result);
 	}
 }
 
@@ -203,7 +210,7 @@ async function runnerProcess(
 	url: string,
 	seed: number,
 	enableOpsMetrics: boolean,
-): Promise<number> {
+): Promise<void> {
 	// Assigning no-op value due to linter.
 	let metricsCleanup: () => void = () => {};
 
@@ -212,7 +219,13 @@ async function runnerProcess(
 	const containerOptions = generateRuntimeOptions(seed, optionsOverride?.container);
 	const configurations = generateConfigurations(seed, optionsOverride?.configurations);
 
-	const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
+	const testDriver: ITestDriver = await createTestDriver(
+		driver,
+		endpoint,
+		seed,
+		runConfig.runId,
+		false, // supportsBrowserAuth
+	);
 
 	// Cycle between creating new factory vs. reusing factory.
 	// Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
@@ -301,12 +314,7 @@ async function runnerProcess(
 			// If undefined then no fault injection.
 			const faultInjection = runConfig.testConfig.faultInjectionMs;
 			if (faultInjection) {
-				scheduleContainerClose(
-					container,
-					runConfig,
-					faultInjection.min,
-					faultInjection.max,
-				);
+				scheduleContainerClose(container, runConfig, faultInjection.min, faultInjection.max);
 				scheduleFaultInjection(
 					documentServiceFactory,
 					container,
@@ -366,7 +374,8 @@ async function runnerProcess(
 			metricsCleanup();
 		}
 	}
-	return exitCode;
+	//* MERGE_TODO: Matt removed return value here, but we started actually using it!!
+	// return exitCode;
 }
 
 function scheduleFaultInjection(
@@ -388,8 +397,9 @@ function scheduleFaultInjection(
 				container.connectionState === ConnectionState.Connected &&
 				container.resolvedUrl !== undefined
 			) {
-				const deltaConn = ds.documentServices.get(container.resolvedUrl)
-					?.documentDeltaConnection;
+				const deltaConn = ds.documentServices.get(
+					container.resolvedUrl,
+				)?.documentDeltaConnection;
 				if (deltaConn !== undefined && !deltaConn.disposed) {
 					// 1 in numClients chance of non-retritable error to not overly conflict with container close
 					const canRetry = random.bool(1 - 1 / runConfig.testConfig.numClients);
@@ -467,9 +477,7 @@ function scheduleContainerClose(
 						);
 						setTimeout(() => {
 							if (!container.closed) {
-								container.close(
-									new FaultInjectionError("scheduleContainerClose", false),
-								);
+								container.close(new FaultInjectionError("scheduleContainerClose", false));
 							}
 						}, leaveTime);
 					}
@@ -699,6 +707,9 @@ async function setupOpsMetrics(
 }
 
 main().catch((error) => {
+	// Most of the time we'll exit the process through the process.exit() in main.
+	// However, if we error outside of that try/catch block we'll catch it here.
+	console.error("Error occurred during setup");
 	console.error(error);
 	process.exit(-1);
 });

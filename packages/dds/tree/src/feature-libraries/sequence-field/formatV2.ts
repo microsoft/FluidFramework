@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ObjectOptions, Static, TSchema, Type } from "@sinclair/typebox";
+import { type ObjectOptions, type Static, type TSchema, Type } from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
 import { RevisionTagSchema } from "../../core/index.js";
@@ -18,7 +18,7 @@ const HasMoveId = Type.Object({ id: MoveId });
 
 const IdRange = Type.Tuple([ChangesetLocalIdSchema, CellCount]);
 
-const CellId = EncodedChangeAtomId;
+export const CellId = EncodedChangeAtomId;
 
 const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
@@ -70,7 +70,7 @@ const AttachAndDetach = Type.Object({
 	detach: Detach,
 });
 
-const MarkEffect = Type.Object(
+export const MarkEffect = Type.Object(
 	{
 		// Note: `noop` is encoded by omitting `effect` from the encoded cell mark, so is not included here.
 		insert: Type.Optional(Insert),
@@ -82,7 +82,7 @@ const MarkEffect = Type.Object(
 	unionOptions,
 );
 
-const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(
+export const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(
 	tMark: TMark,
 	tNodeChange: TNodeChange,
 	// Return type is intentionally derived.
@@ -101,7 +101,8 @@ const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(
 
 // Return type is intentionally derived.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-const Mark = <Schema extends TSchema>(tNodeChange: Schema) => CellMark(MarkEffect, tNodeChange);
+const Mark = <Schema extends TSchema>(tNodeChange: Schema) =>
+	CellMark(MarkEffect, tNodeChange);
 
 // Return type is intentionally derived.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

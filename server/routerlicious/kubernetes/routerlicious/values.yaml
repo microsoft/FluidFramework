@@ -59,6 +59,8 @@ nexus:
     shouldDisableDefaultNamespace: false
   socketIo:
     perMessageDeflate: true
+    gracefulShutdownEnabled: false
+    pingPongLatencyTrackingEnabled: false
 
 storage:
   enableWholeSummaryUpload: false

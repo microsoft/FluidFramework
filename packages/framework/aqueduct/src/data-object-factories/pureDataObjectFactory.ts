@@ -4,40 +4,40 @@
  */
 
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { type FluidObject, type IRequest } from "@fluidframework/core-interfaces";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FluidDataStoreRuntime,
 	type ISharedObjectRegistry,
 	mixinRequestHandler,
 } from "@fluidframework/datastore/internal";
-import {
-	type IChannelFactory,
-	type IFluidDataStoreRuntime,
+import type {
+	IChannelFactory,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	type IContainerRuntimeBase,
-	type IDataStore,
-	type IFluidDataStoreChannel,
-	type IFluidDataStoreContext,
-	type IFluidDataStoreContextDetached,
-	type IFluidDataStoreFactory,
-	type IFluidDataStoreRegistry,
-	type IProvideFluidDataStoreRegistry,
-	type NamedFluidDataStoreRegistryEntries,
-	type NamedFluidDataStoreRegistryEntry,
+import type {
+	IContainerRuntimeBase,
+	IDataStore,
+	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
+	IFluidDataStoreContextDetached,
+	IFluidDataStoreFactory,
+	IFluidDataStoreRegistry,
+	IProvideFluidDataStoreRegistry,
+	NamedFluidDataStoreRegistryEntries,
+	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	type AsyncFluidObjectProvider,
-	type FluidObjectSymbolProvider,
-	type IFluidDependencySynthesizer,
+import type {
+	AsyncFluidObjectProvider,
+	FluidObjectSymbolProvider,
+	IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize/internal";
 
-import {
-	type DataObjectTypes,
-	type IDataObjectProps,
-	type PureDataObject,
+import type {
+	DataObjectTypes,
+	IDataObjectProps,
+	PureDataObject,
 } from "../data-objects/index.js";
 
 /**
@@ -79,7 +79,8 @@ async function createDataObject<
 	// Create a new runtime for our data store, as if via new FluidDataStoreRuntime,
 	// but using the runtimeClass that's been augmented with mixins
 	// The runtime is what Fluid uses to create DDS' and route to your data store
-	const runtime: FluidDataStoreRuntime = new runtimeClass( // calls new FluidDataStoreRuntime(...)
+	const runtime: FluidDataStoreRuntime = new runtimeClass(
+		// calls new FluidDataStoreRuntime(...)
 		context,
 		sharedObjectRegistry,
 		existing,
@@ -132,13 +133,13 @@ async function createDataObject<
  *
  * @typeParam TObj - DataObject (concrete type)
  * @typeParam I - The input types for the DataObject
+ * @legacy
  * @alpha
  */
 export class PureDataObjectFactory<
-		TObj extends PureDataObject<I>,
-		I extends DataObjectTypes = DataObjectTypes,
-	>
-	implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
+	TObj extends PureDataObject<I>,
+	I extends DataObjectTypes = DataObjectTypes,
+> implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
 {
 	private readonly sharedObjectRegistry: ISharedObjectRegistry;
 	private readonly registry: IFluidDataStoreRegistry | undefined;

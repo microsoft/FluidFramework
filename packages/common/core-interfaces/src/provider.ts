@@ -32,12 +32,12 @@
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp
 	? never
 	: number extends TProp
-	? never // exclude indexers [key:string |number]: any
-	: TProp extends keyof Required<T>[TProp] // TProp is a property of T, and T[TProp]
-	? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] // T[TProp] is the same type as T[TProp][TProp]
-		? TProp
-		: never
-	: never;
+		? never // exclude indexers [key:string |number]: any
+		: TProp extends keyof Required<T>[TProp] // TProp is a property of T, and T[TProp]
+			? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] // T[TProp] is the same type as T[TProp][TProp]
+				? TProp
+				: never
+			: never;
 
 /**
  * This utility type take interface(s) that follow the FluidObject pattern, and produces

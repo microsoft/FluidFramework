@@ -5,10 +5,10 @@
 
 import { IsoBuffer, Uint8ArrayToString, gitHashFile } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IGitCreateTreeEntry } from "@fluidframework/driver-definitions/internal";
-import { getGitMode, getGitType } from "@fluidframework/protocol-base";
 import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
+import type { IGitCreateTreeEntry } from "@fluidframework/driver-definitions/internal";
 import { ISnapshotTreeEx } from "@fluidframework/driver-definitions/internal";
+import { getGitMode, getGitType } from "@fluidframework/driver-utils/internal";
 import { IWholeSummaryPayloadType } from "@fluidframework/server-services-client";
 
 import { IGitManager, ISummaryUploadManager } from "./storageContracts.js";
@@ -41,8 +41,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		previousFullSnapshot: ISnapshotTreeEx | undefined,
 	): Promise<string> {
 		const entries = await Promise.all(
-			Object.keys(summaryTree.tree).map(async (key) => {
-				const entry = summaryTree.tree[key];
+			Object.entries(summaryTree.tree).map(async ([key, entry]) => {
 				const pathHandle = await this.writeSummaryTreeObject(entry, previousFullSnapshot);
 				const treeEntry: IGitCreateTreeEntry = {
 					mode: getGitMode(entry),
@@ -123,8 +122,8 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		/** Previous snapshot, subtree relative to this path part */
 		previousSnapshot: ISnapshotTreeEx,
 	): string {
-		assert(path.length > 0, 0x0b3 /* "Expected at least 1 path part" */);
 		const key = path[0];
+		assert(path.length > 0 && key !== undefined, 0x0b3 /* "Expected at least 1 path part" */);
 		if (path.length === 1) {
 			switch (handleType) {
 				case SummaryType.Blob: {
@@ -147,6 +146,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 					throw Error(`Unexpected handle summary object type: "${handleType}".`);
 			}
 		}
-		return this.getIdFromPathCore(handleType, path.slice(1), previousSnapshot.trees[key]);
+		// TODO why are we non null asserting here?
+		return this.getIdFromPathCore(handleType, path.slice(1), previousSnapshot.trees[key]!);
 	}
 }

@@ -5,34 +5,37 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { Adapters, TreeNodeSchemaIdentifier } from "../core/index.js";
-import { Assume, RestrictiveReadonlyRecord, transformObjectMap } from "../util/index.js";
+import type { Adapters, TreeNodeSchemaIdentifier } from "../core/index.js";
+import {
+	type Assume,
+	type RestrictiveReadonlyRecord,
+	transformObjectMap,
+} from "../util/index.js";
 
 import { defaultSchemaPolicy } from "./default-schema/index.js";
-import { FlexFieldKind } from "./modular-schema/index.js";
+import type { FlexFieldKind } from "./modular-schema/index.js";
 import {
 	Any,
-	FlexAllowedTypes,
+	type FlexAllowedTypes,
 	FlexFieldNodeSchema,
 	FlexFieldSchema,
-	FlexList,
-	FlexMapFieldSchema,
+	type FlexList,
+	type FlexMapFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	FlexTreeSchema,
-	SchemaCollection,
-	SchemaLibraryData,
-	SchemaLintConfiguration,
+	type FlexTreeNodeSchema,
+	type FlexTreeSchema,
+	type SchemaCollection,
+	type SchemaLibraryData,
+	type SchemaLintConfiguration,
 	TreeNodeSchemaBase,
-	Unenforced,
+	type Unenforced,
 	aggregateSchemaLibraries,
 	schemaLintDefault,
 } from "./typed-schema/index.js";
 
 /**
  * Configuration for a SchemaBuilder.
- * @internal
  */
 export interface SchemaBuilderOptions<TScope extends string = string> {
 	/**
@@ -70,8 +73,7 @@ export interface SchemaBuilderOptions<TScope extends string = string> {
 
 /**
  * Builds schema libraries, and the schema within them.
- * @internal
- *
+ * *
  * @privateRemarks
  * This class does not directly depend on any specific field kinds,
  * or bake in any defaults that might have compatibility implications.
@@ -85,7 +87,8 @@ export class SchemaBuilderBase<
 	private readonly lintConfiguration: SchemaLintConfiguration;
 	private readonly libraries: Set<SchemaLibraryData>;
 	private finalized: boolean = false;
-	private readonly treeNodeSchema: Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema> = new Map();
+	private readonly treeNodeSchema: Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema> =
+		new Map();
 	private readonly adapters: Adapters = {};
 	/**
 	 * Prefix appended to the identifiers of all {@link FlexTreeNodeSchema} produced by this builder.
@@ -136,7 +139,10 @@ export class SchemaBuilderBase<
 	}
 
 	protected addNodeSchema<T extends FlexTreeNodeSchema>(schema: T): void {
-		assert(!this.treeNodeSchema.has(schema.name), 0x799 /* Conflicting TreeNodeSchema names */);
+		assert(
+			!this.treeNodeSchema.has(schema.name),
+			0x799 /* Conflicting TreeNodeSchema names */,
+		);
 		this.treeNodeSchema.set(schema.name, schema);
 	}
 
@@ -255,7 +261,10 @@ export class SchemaBuilderBase<
 		name: Name,
 		t: T,
 	): FlexMapNodeSchema<`${TScope}.${Name}`, T> {
-		return this.map(name, t as FlexMapFieldSchema) as FlexMapNodeSchema<`${TScope}.${Name}`, T>;
+		return this.map(name, t as FlexMapFieldSchema) as FlexMapNodeSchema<
+			`${TScope}.${Name}`,
+			T
+		>;
 	}
 
 	/**
@@ -350,7 +359,6 @@ export class SchemaBuilderBase<
 /**
  * Schema information collected by a SchemaBuilder, including referenced libraries.
  * Can be aggregated into other libraries by adding to their builders.
- * @internal
  */
 export interface SchemaLibrary extends SchemaCollection {
 	/**
@@ -361,20 +369,18 @@ export interface SchemaLibrary extends SchemaCollection {
 
 /**
  * Generalized version of AllowedTypes allowing for more concise expressions in some cases.
- * @internal
  */
 export type FlexImplicitAllowedTypes = FlexAllowedTypes | FlexTreeNodeSchema | Any;
 
 /**
  * Normalizes an {@link FlexImplicitAllowedTypes} into  {@link FlexAllowedTypes}.
- * @internal
  */
 export type NormalizeAllowedTypes<TSchema extends FlexImplicitAllowedTypes> =
 	TSchema extends FlexTreeNodeSchema
 		? readonly [TSchema]
 		: TSchema extends Any
-		? readonly [Any]
-		: TSchema;
+			? readonly [Any]
+			: TSchema;
 
 /**
  * Normalizes an {@link FlexImplicitAllowedTypes} into  {@link FlexAllowedTypes}.
@@ -394,14 +400,16 @@ export function normalizeAllowedTypes<TSchema extends FlexImplicitAllowedTypes>(
 
 /**
  * Normalizes an {@link FlexImplicitFieldSchema} into a {@link FlexFieldSchema}.
- * @internal
  */
 export type NormalizeField<
 	TSchema extends FlexImplicitFieldSchema,
 	TDefault extends FlexFieldKind,
 > = TSchema extends FlexFieldSchema
 	? TSchema
-	: FlexFieldSchema<TDefault, NormalizeAllowedTypes<Assume<TSchema, FlexImplicitAllowedTypes>>>;
+	: FlexFieldSchema<
+			TDefault,
+			NormalizeAllowedTypes<Assume<TSchema, FlexImplicitAllowedTypes>>
+		>;
 
 /**
  * Normalizes an {@link FlexImplicitFieldSchema} into a {@link FlexFieldSchema}.
@@ -422,6 +430,5 @@ export function normalizeField<
 
 /**
  * Type that when combined with a default {@link FlexFieldKind} can be normalized into a {@link FlexFieldSchema}.
- * @internal
  */
 export type FlexImplicitFieldSchema = FlexFieldSchema | FlexImplicitAllowedTypes;

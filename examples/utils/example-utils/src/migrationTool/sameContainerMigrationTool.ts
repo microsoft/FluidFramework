@@ -8,7 +8,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 
 import type {
@@ -28,7 +28,10 @@ const newVersionKey = "newVersion";
 /**
  * @internal
  */
-export class SameContainerMigrationTool extends DataObject implements ISameContainerMigrationTool {
+export class SameContainerMigrationTool
+	extends DataObject
+	implements ISameContainerMigrationTool
+{
 	private _pactMap: IPactMap<string> | undefined;
 	private readonly _containerP: Promise<IContainer>;
 
@@ -258,9 +261,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 				this.pactMap.get(newVersionKey) !== undefined ||
 				this.pactMap.getPending(newVersionKey) !== undefined
 			) {
-				console.log(
-					"Resolving this._pendingP: Pending proposal already exists at load time",
-				);
+				console.log("Resolving this._pendingP: Pending proposal already exists at load time");
 				resolve();
 				return;
 			}
@@ -379,10 +380,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 				// Would be good if we can verify the contents somehow too.
 				// TODO: Not appropriate to be watching _seenV1SummaryAck here, I'm just doing this to simulate second ack after acceptance
 				if (op.type === MessageType.SummaryAck) {
-					assert(
-						this.acceptedSeqNum !== undefined,
-						"this.acceptedSeqNum should be defined",
-					);
+					assert(this.acceptedSeqNum !== undefined, "this.acceptedSeqNum should be defined");
 					acksSeen++;
 					// TODO Is this also where I want to emit an internal state event of the ack coming in to help with abort flows?
 					// Or maybe set that up in ensureV1Summary().  Note as mentioned above, waiting for 2 acks here is a hack.

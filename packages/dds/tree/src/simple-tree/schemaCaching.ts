@@ -5,17 +5,17 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import {
-	type FlexFieldSchema,
-	type FlexTreeNodeSchema,
+import type {
+	FlexFieldSchema,
+	FlexTreeNodeSchema,
 	TreeNodeSchemaBase,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
 
 import {
-	FieldSchema,
+	type FieldSchema,
 	type ImplicitFieldSchema,
-	TreeNodeSchema,
+	type TreeNodeSchema,
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
 
@@ -58,7 +58,9 @@ export function setFlexSchemaFromClassSchema(
  * Gets the {@link TreeNodeSchema} cached on the provided {@link FlexTreeNodeSchema | flexSchema}.
  * Returns `undefined` if no cached value is found.
  */
-export function tryGetSimpleNodeSchema(flexSchema: FlexTreeNodeSchema): TreeNodeSchema | undefined {
+export function tryGetSimpleNodeSchema(
+	flexSchema: FlexTreeNodeSchema,
+): TreeNodeSchema | undefined {
 	if (simpleNodeSchemaSymbol in flexSchema) {
 		return flexSchema[simpleNodeSchemaSymbol] as TreeNodeSchema;
 	}

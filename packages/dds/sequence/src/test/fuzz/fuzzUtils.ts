@@ -13,17 +13,21 @@ import {
 	combineReducersAsync,
 	createWeightedAsyncGenerator,
 } from "@fluid-private/stochastic-test-utils";
-import { DDSFuzzModel, DDSFuzzSuiteOptions, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import {
+	DDSFuzzModel,
+	DDSFuzzSuiteOptions,
+	DDSFuzzTestState,
+} from "@fluid-private/test-dds-utils";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	type Serializable,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
-import { PropertySet } from "@fluidframework/merge-tree/internal";
+import { PropertySet, Side } from "@fluidframework/merge-tree/internal";
 
 import type { SequenceInterval, SharedStringClass } from "../../index.js";
-import { type IIntervalCollection, Side } from "../../intervalCollection.js";
+import { type IIntervalCollection } from "../../intervalCollection.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
 import { ISharedString } from "../../sharedString.js";
@@ -136,7 +140,8 @@ export interface SharedStringOperationGenerationConfig {
 	propertyNamePool?: string[];
 }
 
-export interface IntervalOperationGenerationConfig extends SharedStringOperationGenerationConfig {
+export interface IntervalOperationGenerationConfig
+	extends SharedStringOperationGenerationConfig {
 	/**
 	 * Maximum number of intervals (locally) before no further AddInterval operations are generated.
 	 * Note due to concurrency, during test execution the actual number of intervals may exceed this.
@@ -242,7 +247,10 @@ export function makeReducer(
 		obliterateRange: async ({ client }, { start, end }) => {
 			client.channel.obliterateRange(start, end);
 		},
-		addInterval: async ({ client }, { start, end, collectionName, id, startSide, endSide }) => {
+		addInterval: async (
+			{ client },
+			{ start, end, collectionName, id, startSide, endSide },
+		) => {
 			const collection = client.channel.getIntervalCollection(collectionName);
 			collection.add({
 				start: { pos: start, side: startSide },
@@ -582,7 +590,8 @@ export function makeIntervalOperationGenerator(
 		<T>(...clauses: AcceptanceCondition<T>[]): AcceptanceCondition<T> =>
 		(t: T) =>
 			clauses.reduce<boolean>((prev, cond) => prev && cond(t), true);
-	const usableWeights = optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
+	const usableWeights =
+		optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
 	return createWeightedAsyncGenerator<Operation, ClientOpState>([
 		[addText, usableWeights.addText, isShorterThanMaxLength],
 		[
@@ -591,7 +600,7 @@ export function makeIntervalOperationGenerator(
 			alwaysLeaveChar
 				? lengthSatisfies((length) => {
 						return length > 1;
-				  })
+					})
 				: hasNonzeroLength,
 		],
 		[annotateRange, usableWeights.annotateRange, hasNonzeroLength],

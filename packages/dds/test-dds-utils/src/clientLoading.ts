@@ -4,11 +4,11 @@
  */
 
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
-import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
@@ -51,8 +51,8 @@ export type FuzzSerializedIdCompressor =
 /**
  * @internal
  */
-export type ClientWithStashData<TChannelFactory extends IChannelFactory> = Client<TChannelFactory> &
-	Partial<Record<"stashData", ClientStashData>>;
+export type ClientWithStashData<TChannelFactory extends IChannelFactory> =
+	Client<TChannelFactory> & Partial<Record<"stashData", ClientStashData>>;
 
 export const hasStashData = <TChannelFactory extends IChannelFactory>(
 	client?: Client<TChannelFactory>,
@@ -79,8 +79,8 @@ export function createLoadData(
 				compressor === undefined
 					? undefined
 					: withSession
-					? { withSession: true, serializedCompressor: compressor.serialize(true) }
-					: { withSession: false, serializedCompressor: compressor.serialize(false) },
+						? { withSession: true, serializedCompressor: compressor.serialize(true) }
+						: { withSession: false, serializedCompressor: compressor.serialize(false) },
 		},
 	};
 }

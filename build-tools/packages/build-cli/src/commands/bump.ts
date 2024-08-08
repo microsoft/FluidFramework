@@ -23,14 +23,14 @@ import {
 	isInterdependencyRange,
 } from "@fluid-tools/version-tools";
 
-import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args";
-import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args.js";
+import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags.js";
 import {
 	BaseCommand,
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
 	setVersion,
-} from "../library";
+} from "../library/index.js";
 
 export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 	static readonly summary =

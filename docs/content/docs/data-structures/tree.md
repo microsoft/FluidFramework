@@ -59,7 +59,7 @@ The `SharedTree` library can be found in the [fluid-framework](https://www.npmjs
 To get started, run the following from a terminal in your project folder:
 
 ```bash
-npm install fluid-framework@rc
+npm install fluid-framework@latest
 ```
 
 ## Usage
@@ -208,16 +208,13 @@ class App extends sf.object('App', {
 }) {}
 ```
 
-The final step is to create a configuration object that will be used when a `SharedTree` object is created. See [Creation](#creation). The following is an example of doing this. Note that the second parameter returns an object that initializes the tree with an object that must conform to the root schema, `App`. So in this example, it has a single `items` property. The value of the `items` property specifies that the items array is empty. It is not a requirement that the initial tree be empty: you can assign one or more groups or notes to the initial tree.
+The final step is to create a configuration object that will be used when a `SharedTree` object is created or loaded. See [Creation](#creation). The following is an example of doing this.
 
 ```typescript
-export const appTreeConfiguration = new TreeConfiguration(
-    App, // root node schema
-    () => ({
-        // initial tree
-        items: [],
-    })
-);
+export const appTreeConfiguration = new TreeViewConfiguration({
+    // root node schema
+    schema: App
+});
 ```
 
 #### Map schema
@@ -258,7 +255,7 @@ class Proposal = sf.object('Proposal', {
 
 ### Creation
 
-To create a `TreeView` object, create a container with an initial object of type `SharedTree` and then apply the schema to it. The code in this section continues the sticky note example. Start by creating a container schema with an initial object of type `SharedTree` and use it to create a container.
+To create a `TreeView` object, create a container with an initial object of type `SharedTree` and then call `viewWith` with some schema. The code in this section continues the sticky note example. Start by creating a container schema with an initial object of type `SharedTree` and use it to create a container.
 
 ```typescript
 const containerSchema: ContainerSchema = {
@@ -267,13 +264,28 @@ const containerSchema: ContainerSchema = {
     },
 };
 
-const { container, services } = await client.createContainer(containerSchema);
+const { container, services } = await client.createContainer(containerSchema, "2");
 ```
 
-Apply the schema to the tree by passing the tree configuration object to the `ITree.schematize()` method.
+Use `ITree.viewWith` to create a `TreeView` based on your tree configuration.
+Tree views provide schema-dependent APIs for viewing and editing tree data.
 
 ```typescript
-const stickyNotesTreeView = container.initialObjects.appData.schematize(appTreeConfiguration);
+const stickyNotesTreeView = container.initialObjects.appData.viewWith(appTreeConfiguration);
+```
+
+When the tree is first created, this schema along with some initial data can be applied to the tree using `TreeView.initialize`.
+Note that the data used to initialize the tree must conform to the root schema, `App`. So in this example, it has a single `items` property. The value of the `items` property specifies that the items array is empty. It is not a requirement that the initial tree be empty: you can assign one or more groups or notes to the initial tree.
+
+```typescript
+// Both of the following options are equivalent ways to initialize the tree.
+// See documentation about plain-old javascript objects (POJO) on `SchemaFactory` for more details.
+
+// Option 1:
+stickyNotesTreeView.initialize({ items: [] });
+
+// Option 2:
+stickyNotesTreeView.initialize(new App({ items: [] }));
 ```
 
 You can now add child items to the `stickyNotesTreeView` object using the methods described in [API](#api) below.
@@ -305,7 +317,7 @@ Your code reads object nodes and their properties exactly as it would read a Jav
 ```typescript
 const pointsForDetroitTigers: number = seasonTree.tigersTeam.game1.points;
 
-const counterHandle: FluidHandle = myTree.myObjectNode.myHandle; 
+const counterHandle: FluidHandle = myTree.myObjectNode.myHandle;
 
 const myItems: Array = stickyNotesTree.items;
 ```
@@ -408,7 +420,7 @@ The `delete()` method removes the item with the specified key. If one client set
 ##### Map node properties
 
 ```typescript
-size: number 
+size: number
 ```
 
 The total number of entries in the map node.
@@ -500,11 +512,9 @@ For the meaning of "simultaneously", see [Types of distributed data structures](
 
 `SharedTree` supports two node level events: `nodeChanged` and `treeChanged`. Your code can create handlers for these events using the utility class `Tree`. See [Tree utility APIs](#tree-utility-apis).
 
-Additionally, the `TreeView` object includes 3 events that operate over the whole tree. These are `rootChanged`, `afterBatch`, and `commitApplied`.
+Additionally, the `TreeView` object includes 2 events that operate over the whole tree. These are `rootChanged` and `commitApplied`.
 
 `rootChanged` fires when the root field (the field that contains the root node) changes. That is, if a new root node is assigned or the schema changes. This will not fire when the node itself changes.
-
-`afterBatch` fires when a batch of changes has been processed by the Fluid Framework and the `TreeView` object is updated.
 
 `commitApplied` fires whenever a local change is applied outside of a transaction or when a local transaction is committed. This is used to get `Revertible` objects to put on the undo or redo stacks. See [Undo/Redo support](#undoredo-support) and [Transactions](#transactions).
 
@@ -535,16 +545,22 @@ on<K extends keyof TreeChangeEvents>(
 	): () => void;
 ```
 
-`Tree.on` assigns the specified `listener` function to the specified `eventType` for the specified `node`. The `node` can be any node of the tree. The `eventType` can be either "treeChanged" or "nodeChanged". `nodeChanged` fires whenever the given node changes. `treeChanged` fires whenever the given node or any of the nodes in its child subtree changes.
 
-An `event` object is automatically passed to the `listener`. It has one member:
-
--   `event.target`: The node on which the event was triggered.
+`Tree.on` assigns the specified `listener` function to the specified `eventName` for the specified `node`.
+The `node` can be any node of the tree.
+The `eventName` can be either "treeChanged" or "nodeChanged".
+`nodeChanged` fires whenever one or more properties of the specified node change.
+`treeChanged` fires whenever one or more properties of the specified node or any node in its subtree, change.
+We recommend looking at the documentation of each of the events for more details.
 
 The `Tree.on()` method returns a function that unsubscribes the handler from the event. This method is typically called in clean up code when the node is being removed. For example:
 
 ```typescript
-const unsubscribe = Tree.on(myTreeNode, "treeChanged", () => {...});
+const unsubscribe = Tree.on(myTreeNode, "nodeChanged", () => {...});
+
+// Later at some point when the event subscription is not needed anymore
+unsubscribe();
+
 ```
 
 ### Type guard

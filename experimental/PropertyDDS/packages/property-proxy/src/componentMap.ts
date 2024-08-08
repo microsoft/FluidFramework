@@ -128,7 +128,7 @@ class ComponentMap extends Map {
 							this.property.get(key, {
 								referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS,
 							})!,
-					  )
+						)
 					: Utilities.proxifyInternal(this.property, key, caretFound, isReferenceMap);
 			}
 		} else {
@@ -192,10 +192,7 @@ class ComponentMap extends Map {
 			) {
 				Utilities.setValueOfReferencedProperty(this.property, key, value);
 			} else {
-				if (
-					asteriskFound &&
-					!PropertyFactory.instanceOf(this.property, "Reference", "map")
-				) {
+				if (asteriskFound && !PropertyFactory.instanceOf(this.property, "Reference", "map")) {
 					throw new Error(PropertyProxyErrors.NON_REFERENCE_ASSIGN);
 				}
 				this.property.set(key, Utilities.prepareElementForInsertion(this.property, value));

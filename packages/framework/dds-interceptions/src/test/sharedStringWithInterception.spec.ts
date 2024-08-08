@@ -73,12 +73,7 @@ describe("Shared String with Interception", () => {
 			let text: string = "123";
 			let syleProps: PropertySet = { style: "bold" };
 			sharedStringWithInterception.insertText(0, text, syleProps);
-			verifyString(
-				sharedStringWithInterception,
-				text,
-				{ ...syleProps, ...userAttributes },
-				2,
-			);
+			verifyString(sharedStringWithInterception, text, { ...syleProps, ...userAttributes }, 2);
 
 			// Replace text in the shared string.
 			text = "aaa";
@@ -221,12 +216,7 @@ describe("Shared String with Interception", () => {
 			useWrapper = false;
 			text = "test";
 			sharedStringWithInterception.replaceText(2, 3, text, props);
-			verifyString(
-				sharedStringWithInterception,
-				"12test",
-				{ ...props, ...userAttributes },
-				2,
-			);
+			verifyString(sharedStringWithInterception, "12test", { ...props, ...userAttributes }, 2);
 
 			// Verify that the annotate on position 0 in the recursiveInterceptionCb annotated the attributes.
 			verifyString(

@@ -3,31 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import { IIdCompressor } from "@fluidframework/id-compressor";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import {
+	UsageError,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import { noopValidator } from "../codec/index.js";
 import {
-	Anchor,
-	AnchorLocator,
-	AnchorNode,
+	type Anchor,
+	type AnchorLocator,
+	type AnchorNode,
 	AnchorSet,
-	AnchorSetRootEvents,
-	ChangeFamily,
+	type AnchorSetRootEvents,
+	type ChangeFamily,
 	CommitKind,
-	CommitMetadata,
-	DeltaVisitor,
-	DetachedFieldIndex,
-	IEditableForest,
-	IForestSubscription,
-	JsonableTree,
-	Revertible,
+	type CommitMetadata,
+	type DeltaVisitor,
+	type DetachedFieldIndex,
+	type IEditableForest,
+	type IForestSubscription,
+	type JsonableTree,
+	type Revertible,
 	RevertibleStatus,
-	RevisionTag,
-	RevisionTagCodec,
-	TreeStoredSchema,
+	type RevisionTag,
+	type RevisionTagCodec,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
-	TreeStoredSchemaSubscription,
+	type TreeStoredSchemaSubscription,
 	combineVisitors,
 	makeAnonChange,
 	makeDetachedFieldIndex,
@@ -35,25 +38,29 @@ import {
 	tagChange,
 	visitDelta,
 } from "../core/index.js";
-import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
 import {
-	FieldBatchCodec,
-	TreeCompressionStrategy,
+	type HasListeners,
+	type IEmitter,
+	type Listenable,
+	createEmitter,
+} from "../events/index.js";
+import {
+	type FieldBatchCodec,
+	type TreeCompressionStrategy,
 	buildForest,
 	intoDelta,
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
 } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
-import { IDisposable, TransactionResult, disposeSymbol, fail } from "../util/index.js";
+import { type IDisposable, TransactionResult, disposeSymbol, fail } from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
-import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
  * Events for {@link ITreeCheckout}.
- * @internal
  */
 export interface CheckoutEvents {
 	/**
@@ -89,7 +96,7 @@ export interface CheckoutEvents {
  * whichever happens first.
  * This is typically used to clean up any resources associated with the `Revertible` in the host application.
  *
- * @public
+ * @sealed @public
  */
 export type RevertibleFactory = (
 	onRevertibleDisposed?: (revertible: Revertible) => void,
@@ -102,7 +109,6 @@ export type RevertibleFactory = (
  * @privateRemarks
  * API for interacting with a {@link SharedTreeBranch}.
  * Implementations of this interface must implement the {@link branchKey} property.
- * @internal
  */
 export interface ITreeCheckout extends AnchorLocator {
 	/**
@@ -177,12 +183,12 @@ export interface ITreeCheckout extends AnchorLocator {
 	/**
 	 * Events about this view.
 	 */
-	readonly events: ISubscribable<CheckoutEvents>;
+	readonly events: Listenable<CheckoutEvents>;
 
 	/**
 	 * Events about the root of the tree in this view.
 	 */
-	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+	readonly rootEvents: Listenable<AnchorSetRootEvents>;
 
 	/**
 	 * Returns a JsonableTree for each tree that was removed from (and not restored to) the document.
@@ -211,11 +217,12 @@ export function createTreeCheckout(
 		schema?: TreeStoredSchemaRepository;
 		forest?: IEditableForest;
 		fieldBatchCodec?: FieldBatchCodec;
-		events?: ISubscribable<CheckoutEvents> &
+		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		removedRoots?: DetachedFieldIndex;
 		chunkCompressionStrategy?: TreeCompressionStrategy;
+		logger?: ITelemetryLoggerExt;
 	},
 ): TreeCheckout {
 	const forest = args?.forest ?? buildForest();
@@ -254,7 +261,9 @@ export function createTreeCheckout(
 		events,
 		mintRevisionTag,
 		revisionTagCodec,
+		idCompressor,
 		args?.removedRoots,
+		args?.logger,
 	);
 }
 
@@ -267,7 +276,6 @@ export function createTreeCheckout(
  *
  * To avoid updating observers of the view state with intermediate results during a transaction,
  * use {@link ITreeCheckout#fork} and {@link ISharedTreeFork#merge}.
- * @internal
  */
 export interface ITransaction {
 	/**
@@ -331,7 +339,6 @@ class Transaction implements ITransaction {
  * Branch (like in a version control system) of SharedTree.
  *
  * {@link ITreeCheckout} that has forked off of the main trunk/branch.
- * @internal
  */
 export interface ITreeCheckoutFork extends ITreeCheckout, IDisposable {
 	/**
@@ -339,6 +346,20 @@ export interface ITreeCheckoutFork extends ITreeCheckout, IDisposable {
 	 * @param view - Either the root view or a view that was created by a call to `fork()`. It is not modified by this operation.
 	 */
 	rebaseOnto(view: ITreeCheckout): void;
+}
+
+/**
+ * Metrics derived from a revert operation.
+ *
+ * @see {@link TreeCheckout.revertRevertible}.
+ */
+export interface RevertMetrics {
+	/**
+	 * The age of the revertible commit relative to the head of the branch to which the reversion will be applied.
+	 */
+	readonly age: number;
+
+	// TODO: add other stats as needed for telemetry, etc.
 }
 
 /**
@@ -362,36 +383,71 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>
 	>();
 
+	/**
+	 * copies of the removed roots used as snapshots for reverting to previous state when transactions are aborted
+	 */
+	private readonly removedRootsSnapshots: DetachedFieldIndex[] = [];
+
+	/**
+	 * The name of the telemetry event logged for calls to {@link TreeCheckout.revertRevertible}.
+	 * @privateRemarks Exposed for testing purposes.
+	 */
+	public static readonly revertTelemetryEventName = "RevertRevertible";
+
 	public constructor(
 		public readonly transaction: ITransaction,
 		private readonly branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 		private readonly changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
 		public readonly storedSchema: TreeStoredSchemaRepository,
 		public readonly forest: IEditableForest,
-		public readonly events: ISubscribable<CheckoutEvents> &
+		public readonly events: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly revisionTagCodec: RevisionTagCodec,
-		private readonly removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
+		private readonly idCompressor: IIdCompressor,
+		private removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
 			"repair",
 			revisionTagCodec,
+			idCompressor,
 		),
+		/** Optional logger for telemetry. */
+		private readonly logger?: ITelemetryLoggerExt,
 	) {
+		// when a transaction is started, take a snapshot of the current state of removed roots
+		branch.on("transactionStarted", () => {
+			this.removedRootsSnapshots.push(this.removedRoots.clone());
+		});
+		// when a transaction is committed, the latest snapshot of removed roots can be discarded
+		branch.on("transactionCommitted", () => {
+			this.removedRootsSnapshots.pop();
+		});
+		// after a transaction is rolled back, revert removed roots back to the latest snapshot
+		branch.on("transactionRolledBack", () => {
+			const snapshot = this.removedRootsSnapshots.pop();
+			assert(snapshot !== undefined, 0x9ae /* a snapshot for removed roots does not exist */);
+			this.removedRoots = snapshot;
+		});
+
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
 		// For example, a bug in the editor might produce a malformed change object and thus applying the change to the forest will throw an error.
 		// In such a case we will crash here, preventing the change from being added to the commit graph, and preventing `afterChange` from firing.
 		// One important consequence of this is that we will not submit the op containing the invalid change, since op submissions happens in response to `afterChange`.
 		branch.on("beforeChange", (event) => {
 			if (event.change !== undefined) {
+				const revision =
+					event.type === "replace"
+						? // Change events will always contain new commits
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							event.newCommits[event.newCommits.length - 1]!.revision
+						: event.change.revision;
+
 				// Conflicts due to schema will be empty and thus are not applied.
 				for (const change of event.change.change.changes) {
 					if (change.type === "data") {
-						const delta = intoDelta(
-							tagChange(change.innerChange, event.change.revision),
-						);
+						const delta = intoDelta(tagChange(change.innerChange, revision));
 						this.withCombinedVisitor((visitor) => {
-							visitDelta(delta, visitor, this.removedRoots);
+							visitDelta(delta, visitor, this.removedRoots, revision);
 						});
 					} else if (change.type === "schema") {
 						// Schema changes from a current to a new schema are expected to be backwards compatible.
@@ -417,7 +473,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				this.events.emit("afterBatch");
 			}
 			if (event.type === "replace" && getChangeReplaceType(event) === "transactionCommit") {
-				const transactionRevision = event.newCommits[0].revision;
+				const firstCommit = event.newCommits[0] ?? oob();
+				const transactionRevision = firstCommit.revision;
 				for (const transactionStep of event.removedCommits) {
 					this.removedRoots.updateMajor(transactionStep.revision, transactionRevision);
 				}
@@ -455,12 +512,17 @@ export class TreeCheckout implements ITreeCheckoutFork {
 										"Unable to revert a revertible that has been disposed.",
 									);
 								}
-								this.revertRevertible(revision, data.kind);
+
+								const revertMetrics = this.revertRevertible(revision, data.kind);
+								this.logger?.sendTelemetryEvent({
+									eventName: TreeCheckout.revertTelemetryEventName,
+									...revertMetrics,
+								});
+
 								if (release) {
-									revertible[disposeSymbol]();
+									revertible.dispose();
 								}
 							},
-							[disposeSymbol]: () => revertible.dispose(),
 							dispose: () => {
 								if (revertible.status === RevertibleStatus.Disposed) {
 									throw new UsageError(
@@ -475,10 +537,28 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						this.revertibleCommitBranches.set(revision, branch.fork());
 						this.revertibles.add(revertible);
 						return revertible;
-				  };
+					};
 
 			this.events.emit("commitApplied", data, getRevertible);
 			withinEventContext = false;
+		});
+
+		// When the branch is trimmed, we can garbage collect any repair data whose latest relevant revision is one of the
+		// trimmed revisions.
+		branch.on("ancestryTrimmed", (revisions) => {
+			this.withCombinedVisitor((visitor) => {
+				revisions.forEach((revision) => {
+					// get all the roots last created or used by the revision
+					const roots = this.removedRoots.getRootsLastTouchedByRevision(revision);
+
+					// get the detached field for the root and delete it from the removed roots
+					for (const root of roots) {
+						visitor.destroy(this.removedRoots.toFieldKey(root), 1);
+					}
+
+					this.removedRoots.deleteRootsLastTouchedByRevision(revision);
+				});
+			});
 		});
 	}
 
@@ -496,7 +576,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		assert(!this.isDisposed, 0x911 /* Invalid operation on a disposed TreeCheckout */);
 	}
 
-	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
+	public get rootEvents(): Listenable<AnchorSetRootEvents> {
 		return this.forest.anchors;
 	}
 
@@ -526,12 +606,18 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			createEmitter(),
 			this.mintRevisionTag,
 			this.revisionTagCodec,
+			this.idCompressor,
 			this.removedRoots.clone(),
+			this.logger,
 		);
 	}
 
 	public rebase(view: TreeCheckout): void {
 		this.checkNotDisposed();
+		assert(
+			!view.transaction.inProgress(),
+			0x9af /* A view cannot be rebased while it has a pending transaction */,
+		);
 		view.branch.rebaseOnto(this.branch);
 	}
 
@@ -545,8 +631,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	public merge(view: TreeCheckout, disposeView = true): void {
 		this.checkNotDisposed();
 		assert(
-			!this.transaction.inProgress() || disposeView,
-			0x710 /* A view that is merged into an in-progress transaction must be disposed */,
+			!this.transaction.inProgress(),
+			0x9b0 /* Views cannot be merged into a view while it has a pending transaction */,
 		);
 		while (view.transaction.inProgress()) {
 			view.transaction.commit();
@@ -571,22 +657,26 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
 		const trees: [string | number | undefined, number, JsonableTree][] = [];
-		const cursor = this.forest.allocateCursor();
+		const cursor = this.forest.allocateCursor("getRemovedRoots");
 		for (const { id, root } of this.removedRoots.entries()) {
 			const parentField = this.removedRoots.toFieldKey(root);
-			this.forest.moveCursorToPath(
-				{ parent: undefined, parentField, parentIndex: 0 },
-				cursor,
-			);
+			this.forest.moveCursorToPath({ parent: undefined, parentField, parentIndex: 0 }, cursor);
 			const tree = jsonableTreeFromCursor(cursor);
 			// This method is used for tree consistency comparison.
 			const { major, minor } = id;
-			const finalizedMajor =
-				major !== undefined ? this.revisionTagCodec.encode(major) : major;
+			const finalizedMajor = major !== undefined ? this.revisionTagCodec.encode(major) : major;
 			trees.push([finalizedMajor, minor, tree]);
 		}
 		cursor.free();
 		return trees;
+	}
+
+	/**
+	 * This sets the tip revision as the latest relevant revision for any removed roots that are loaded from a summary.
+	 * This needs to be called right after loading {@link this.removedRoots} from a summary to allow loaded data to be garbage collected.
+	 */
+	public setTipRevisionForLoadedData(revision: RevisionTag): void {
+		this.removedRoots.setRevisionsForLoadedData(revision);
 	}
 
 	private purgeRevertibles(): void {
@@ -601,7 +691,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.revertibles.delete(revertible);
 	}
 
-	private revertRevertible(revision: RevisionTag, kind: CommitKind): void {
+	private revertRevertible(revision: RevisionTag, kind: CommitKind): RevertMetrics {
 		if (this.branch.isTransacting()) {
 			throw new UsageError("Undo is not yet supported during transactions.");
 		}
@@ -624,7 +714,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					commitToRevert,
 					headCommit,
 					this.mintRevisionTag,
-				),
+				).change,
 			);
 		}
 
@@ -635,6 +725,19 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				? CommitKind.Undo
 				: CommitKind.Redo,
 		);
+
+		// Derive some stats about the reversion to return to the caller.
+		let revertAge = 0;
+		let currentCommit = headCommit;
+		while (commitToRevert.revision !== currentCommit.revision) {
+			revertAge++;
+
+			const parentCommit = currentCommit.parent;
+			assert(parentCommit !== undefined, 0x9a9 /* expected to find a parent commit */);
+			currentCommit = parentCommit;
+		}
+
+		return { age: revertAge };
 	}
 }
 
@@ -645,7 +748,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
  * @param transaction - the transaction function. This will be executed immediately. It is passed `view` as an argument for convenience.
  * If this function returns an `Abort` result then the transaction will be aborted. Otherwise, it will be committed.
  * @returns whether or not the transaction was committed or aborted
- * @internal
  */
 export function runSynchronous(
 	view: ITreeCheckout,

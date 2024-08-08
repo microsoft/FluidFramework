@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { runWithRetry } from "@fluidframework/driver-utils/internal";
 import type {
 	IGitCommitDetails,
 	IGitBlob,
@@ -11,6 +10,7 @@ import type {
 	IGitCreateTreeParams,
 	IGitTree,
 } from "@fluidframework/driver-definitions/internal";
+import { runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,

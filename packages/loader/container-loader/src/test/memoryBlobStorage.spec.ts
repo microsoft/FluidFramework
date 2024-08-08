@@ -3,19 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
+
+import type { IDetachedBlobStorage } from "../loader.js";
 import {
 	createMemoryDetachedBlobStorage,
 	serializeMemoryDetachedBlobStorage,
 	tryInitializeMemoryDetachedBlobStorage,
 } from "../memoryBlobStorage.js";
-import type { IDetachedBlobStorage } from "../loader.js";
 
 describe("MemoryBlobStorage", () => {
 	it("Can create and read blobs", async () => {
-		const blobContent = stringToBuffer("test content", "utf-8"); // Add the encoding argument
+		const blobContent = stringToBuffer("test content", "utf8"); // Add the encoding argument
 
 		const storage = createMemoryDetachedBlobStorage();
 		const blobResponse = await storage.createBlob(blobContent);
@@ -37,8 +38,8 @@ describe("MemoryBlobStorage", () => {
 	});
 
 	it("Can handle multiple blobs", async () => {
-		const blobContent1 = stringToBuffer("test content 1", "utf-8");
-		const blobContent2 = stringToBuffer("test content 2", "utf-8");
+		const blobContent1 = stringToBuffer("test content 1", "utf8");
+		const blobContent2 = stringToBuffer("test content 2", "utf8");
 
 		const storage = createMemoryDetachedBlobStorage();
 		const blobResponse1 = await storage.createBlob(blobContent1);
@@ -61,7 +62,7 @@ describe("MemoryBlobStorage", () => {
 	});
 
 	it("Can serialize and initialize blob storage", async () => {
-		const blobContent = stringToBuffer("test content", "utf-8");
+		const blobContent = stringToBuffer("test content", "utf8");
 
 		// Create and populate blob storage
 		const storage = createMemoryDetachedBlobStorage();
@@ -94,7 +95,7 @@ describe("MemoryBlobStorage", () => {
 	});
 
 	it("Throws error when tryInitializeMemoryDetachedBlobStorage is called on storage with existing blobs", async () => {
-		const blobContent = stringToBuffer("test content", "utf-8");
+		const blobContent = stringToBuffer("test content", "utf8");
 
 		// Create and populate blob storage
 		const storage = createMemoryDetachedBlobStorage();
@@ -107,7 +108,7 @@ describe("MemoryBlobStorage", () => {
 
 		const newStorage = createMemoryDetachedBlobStorage();
 		// Add another blob to the storage
-		await newStorage.createBlob(stringToBuffer("another test content", "utf-8"));
+		await newStorage.createBlob(stringToBuffer("another test content", "utf8"));
 		assert.throws(() => {
 			tryInitializeMemoryDetachedBlobStorage(newStorage, serializedStorage);
 		}, "Expected an error when initializing storage that already has blobs");

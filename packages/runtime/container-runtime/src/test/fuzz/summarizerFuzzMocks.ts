@@ -4,13 +4,14 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { type ISequencedDocumentMessage, SummaryType } from "@fluidframework/driver-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentMessage,
 	type ISummaryAck,
 	type ISummaryContent,
 	type ISummaryNack,
 	MessageType,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
@@ -61,7 +62,8 @@ export class MockContainerRuntimeFactoryForSummarizer extends MockContainerRunti
 	}
 }
 
-export interface IMockContainerRuntimeForSummarizerOptions extends IMockContainerRuntimeOptions {
+export interface IMockContainerRuntimeForSummarizerOptions
+	extends IMockContainerRuntimeOptions {
 	summaryConfiguration?: ISummaryConfiguration;
 }
 
@@ -272,7 +274,10 @@ class MockSummarizerClientElection
 	}
 }
 
-class MockConnectedState extends TypedEventEmitter<IConnectedEvents> implements IConnectedState {
+class MockConnectedState
+	extends TypedEventEmitter<IConnectedEvents>
+	implements IConnectedState
+{
 	public connected: boolean = false;
 
 	constructor(

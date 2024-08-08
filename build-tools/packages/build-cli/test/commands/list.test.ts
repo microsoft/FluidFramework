@@ -3,10 +3,48 @@
  * Licensed under the MIT License.
  */
 
-import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
+import {
+	GitRepo,
+	type Package,
+	type PackageNamePolicyConfig,
+	getResolvedFluidRoot,
+} from "@fluidframework/build-tools";
 import { expect } from "chai";
-import { FeedsForPackages } from "../../src/commands/list";
-import { Context } from "../../src/library";
+
+import { Context } from "../../src/library/index.js";
+import {
+	type Feed,
+	feeds,
+	packagePublishesToFeed,
+} from "../../src/library/repoPolicyCheck/npmPackages.js";
+
+/**
+ * Calculates the packages that should be published to a feed and returns a map of Feed to the packages that should be
+ * published there.
+ */
+function FeedsForPackages(
+	packages: Package[],
+	config: PackageNamePolicyConfig,
+): Map<Feed, Package[]> {
+	const mapping = new Map<Feed, Package[]>();
+	for (const pkg of packages) {
+		for (const feed of feeds) {
+			let pkgList = mapping.get(feed);
+			if (pkgList === undefined) {
+				pkgList = [];
+			}
+
+			if (!mapping.has(feed)) {
+				mapping.set(feed, []);
+			}
+
+			if (packagePublishesToFeed(pkg.name, config, feed)) {
+				mapping.get(feed)?.push(pkg);
+			}
+		}
+	}
+	return mapping;
+}
 
 describe("feeds", async () => {
 	const resolvedRoot = await getResolvedFluidRoot();

@@ -3,9 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export {
-	InventoryListContainerRuntimeFactory,
-	inventoryListId,
-	migrationToolId,
-} from "./containerCode.js";
+export { InventoryListContainerRuntimeFactory } from "./containerCode.js";
 export { InventoryList, InventoryListInstantiationFactory } from "./inventoryList.js";

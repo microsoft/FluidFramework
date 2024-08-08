@@ -6,11 +6,11 @@
 import { strict as assert } from "assert";
 
 import {
-	ImplicitFieldSchema,
-	NodeKind,
+	type ImplicitFieldSchema,
+	type NodeKind,
 	SchemaFactory,
-	TreeFieldFromImplicitField,
-	TreeNodeSchema,
+	type TreeFieldFromImplicitField,
+	type TreeNodeSchema,
 } from "../../simple-tree/index.js";
 
 import { hydrate, pretty } from "./utils.js";
@@ -75,9 +75,9 @@ function testObjectLike(testCases: TestCase[]) {
 					for (const [key, descriptor] of Object.entries(
 						Object.getOwnPropertyDescriptors(Object.prototype),
 					)) {
-						it(`Object.getOwnPropertyDescriptor(${pretty(
-							initialTree,
-						)}, ${key}) -> ${pretty(descriptor)}`, () => {
+						it(`Object.getOwnPropertyDescriptor(${pretty(initialTree)}, ${key}) -> ${pretty(
+							descriptor,
+						)}`, () => {
 							const root = hydrate(schema, initialTree);
 							assert.deepEqual(
 								Object.getOwnPropertyDescriptor(findObjectPrototype(root), key),
@@ -106,10 +106,7 @@ function testObjectLike(testCases: TestCase[]) {
 
 				describe(`${pretty(initialTree)}.propertyIsEnumerable`, () => {
 					for (const key of Object.getOwnPropertyNames(initialTree)) {
-						const expected = Object.prototype.propertyIsEnumerable.call(
-							initialTree,
-							key,
-						);
+						const expected = Object.prototype.propertyIsEnumerable.call(initialTree, key);
 
 						it(`${key} -> ${expected}`, () => {
 							const root = hydrate(schema, initialTree);
@@ -311,6 +308,18 @@ const tcs: TestCase[] = [
 			foo: 42,
 			bar: "hello world",
 			baz: null,
+		},
+	},
+	// Case with omitted optional property
+	{
+		schema: (() => {
+			const schemaFactoryInner = new SchemaFactory("test-inner");
+			return schemaFactoryInner.object("object", {
+				foo: schemaFactoryInner.optional(schemaFactoryInner.number),
+			});
+		})(),
+		initialTree: {
+			// `foo` property omitted - property should be implicitly treated as `undefined`.
 		},
 	},
 	{

@@ -13,13 +13,13 @@
  * @packageDocumentation
  */
 
-export { type TokenResponse } from "@fluidframework/odsp-driver-definitions/internal";
 export type {
 	OdspConnectionConfig,
 	OdspClientProps,
 	OdspContainerServices,
 	IOdspAudience,
 	OdspMember,
+	TokenResponse,
 } from "./interfaces.js";
 export { OdspClient } from "./odspClient.js";
 export { type IOdspTokenProvider } from "./token.js";

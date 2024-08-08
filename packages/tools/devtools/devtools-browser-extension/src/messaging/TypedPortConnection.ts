@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ISourcedDevtoolsMessage } from "@fluidframework/devtools-core/internal";
+import type { ISourcedDevtoolsMessage } from "@fluidframework/devtools-core/internal";
 
 /**
  * A {@link chrome.runtime.Port} with specific types which it expects to send and receive.

@@ -10,7 +10,9 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import { SchemaFactory } from "../../simple-tree/index.js";
 
 import { hydrate } from "./utils.js";
-import { requireAssignableTo } from "../../util/index.js";
+import type { requireAssignableTo } from "../../util/index.js";
+import { validateUsageError } from "../utils.js";
+import { Tree } from "../../shared-tree/index.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
@@ -23,7 +25,6 @@ describe("ObjectNode", () => {
 			{
 				const n = hydrate(Schema, { toString: 1 });
 				assert.equal(n.toString, 1);
-				// @ts-expect-error Intellisense (which allows this) and the actual compiler (which errors) disagree on this.
 				n.toString = undefined;
 				assert.equal(n.toString, undefined);
 			}
@@ -89,6 +90,31 @@ describe("ObjectNode", () => {
 		});
 	});
 
+	it("accessor local properties", () => {
+		const thisList: unknown[] = [];
+		class Test extends schemaFactory.object("test", {
+			x: schemaFactory.number,
+		}) {
+			public get y() {
+				assert.equal(this, n);
+				thisList.push(this);
+				return this.x;
+			}
+			public set y(value: number) {
+				assert.equal(this, n);
+				thisList.push(this);
+				this.x = value;
+			}
+		}
+
+		const n = hydrate(Test, { x: 1 });
+		n.y = 2;
+		assert.equal(n.x, 2);
+		n.x = 3;
+		assert.equal(n.y, 3);
+		assert.deepEqual(thisList, [n, n]);
+	});
+
 	it("empty property pojo deep equals", () => {
 		const Schema = schemaFactory.object("x", {
 			foo: schemaFactory.optional(schemaFactory.number),
@@ -121,5 +147,57 @@ describe("ObjectNode", () => {
 		assert.equal(descriptor.value, 0);
 		const keys = Object.keys(n);
 		assert.deepEqual(keys, ["foo"]);
+	});
+
+	it("delete operator", () => {
+		class Schema extends schemaFactory.object("x", {
+			foo: schemaFactory.optional(schemaFactory.number),
+		}) {}
+		const n = hydrate(Schema, { foo: 0 });
+		assert.throws(
+			() => {
+				// Since we do not have exactOptionalPropertyTypes enabled, this compiles, but should error at runtime:
+				delete n.foo;
+			},
+			validateUsageError(/delete operator/),
+		);
+	});
+
+	it("assigning identifier errors", () => {
+		class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
+		const n = hydrate(HasId, {});
+		assert.throws(() => {
+			// TODO: AB:9129: this should not compile
+			n.id = "x";
+		});
+	});
+
+	it("unhydrated default identifier access errors", () => {
+		class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
+		const newNode = new HasId({});
+		assert.throws(
+			() => {
+				const id = newNode.id;
+			},
+			validateUsageError(/identifier/),
+		);
+	});
+
+	it("unhydrated default identifier access via shortId errors", () => {
+		class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
+		const newNode = new HasId({});
+		assert.throws(
+			() => {
+				const id = Tree.shortId(newNode);
+			},
+			validateUsageError(/Tree.shortId cannot access default identifiers on unhydrated nodes/),
+		);
+	});
+
+	it("unhydrated custom identifier access works", () => {
+		class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
+		const newNode = new HasId({ id: "x" });
+		assert.equal(newNode.id, "x");
+		assert.equal(Tree.shortId(newNode), "x");
 	});
 });

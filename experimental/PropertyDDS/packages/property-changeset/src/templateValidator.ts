@@ -15,7 +15,7 @@
 
 import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
 import { queue } from "async";
-import { copy as cloneDeep } from "fastest-json-copy";
+import cloneDeep from "lodash/cloneDeep.js";
 import difference from "lodash/difference.js";
 import each from "lodash/each.js";
 import every from "lodash/every.js";
@@ -208,12 +208,7 @@ const _psetDeepEquals = function (
 
 				for (let i = 0; i < source.length && result.isEqual; i++) {
 					const sourceId = source[i].id;
-					result = _depthFirstDeepEquals.call(
-						this,
-						source[i],
-						targetMap[sourceId],
-						sourceId,
-					);
+					result = _depthFirstDeepEquals.call(this, source[i], targetMap[sourceId], sourceId);
 					idPath.pop();
 				}
 			} else {
@@ -570,7 +565,9 @@ const _validateSameVersion = function (
 	const result = _psetDeepEquals.call(this, in_templatePrevious, in_template);
 	if (!result.isEqual) {
 		// Violates rule 3a.
-		this._resultBuilder.addError(new Error(MSG.MODIFIED_TEMPLATE_SAME_VERSION_1 + result.path));
+		this._resultBuilder.addError(
+			new Error(MSG.MODIFIED_TEMPLATE_SAME_VERSION_1 + result.path),
+		);
 	}
 };
 
@@ -611,7 +608,9 @@ const _validateSemanticAndSyntax = function (in_template: PropertySchema) {
  * @return {Promise} a promise that resolved to nothing
  * @ignore
  */
-const _validateSemanticAndSyntaxAsync = async function (in_template: PropertySchema): Promise<any> {
+const _validateSemanticAndSyntaxAsync = async function (
+	in_template: PropertySchema,
+): Promise<any> {
 	return _validateSyntaxAsync.call(this, in_template);
 };
 
@@ -825,11 +824,11 @@ const _processValidationResults = function (in_template: PropertySchema) {
 							error.schemaPath === "#/definitions/typed-reference-typeid/pattern"
 								? ""
 								: `${error.instancePath} should follow this pattern: <namespace>:<typeid>-<version> ` +
-								  `(for example: Sample:Rectangle-1.0.0) or match one of the Primitive Types (Float32, Float64, ` +
-								  `Int8, Uint8, Int16, Uint16, Int32, Uint32, Bool, String, Reference, Enum, Int64, Uint64) or ` +
-								  `Reserved Types (BaseProperty, NamedProperty, NodeProperty, NamedNodeProperty, ` +
-								  // eslint-disable-next-line @typescript-eslint/no-base-to-string
-								  `RelationshipProperty). '${error.data}' is not valid`;
+									`(for example: Sample:Rectangle-1.0.0) or match one of the Primitive Types (Float32, Float64, ` +
+									`Int8, Uint8, Int16, Uint16, Int32, Uint32, Bool, String, Reference, Enum, Int64, Uint64) or ` +
+									`Reserved Types (BaseProperty, NamedProperty, NodeProperty, NamedNodeProperty, ` +
+									// eslint-disable-next-line @typescript-eslint/no-base-to-string
+									`RelationshipProperty). '${error.data}' is not valid`;
 					}
 					break;
 
@@ -837,7 +836,7 @@ const _processValidationResults = function (in_template: PropertySchema) {
 					error.message = regexTypeId.test(error.instancePath)
 						? ""
 						: // eslint-disable-next-line @typescript-eslint/no-base-to-string
-						  `${error.instancePath} should match one of the following: ${error.schema}`;
+							`${error.instancePath} should match one of the following: ${error.schema}`;
 					break;
 
 				case "type":
@@ -1024,7 +1023,10 @@ export class TemplateValidator {
 	private _resultBuilder: ValidationResultBuilder;
 	public _inheritsFrom: (source: PropertySchema, target: PropertySchema) => boolean;
 	public _hasSchema: (schema: PropertySchema, typeid: string) => boolean;
-	public _inheritsFromAsync: (source: PropertySchema, target: PropertySchema) => Promise<boolean>;
+	public _inheritsFromAsync: (
+		source: PropertySchema,
+		target: PropertySchema,
+	) => Promise<boolean>;
 	public _hasSchemaAsync: (schema: PropertySchema, typeid: string) => Promise<boolean>;
 	private readonly _allowDraft: boolean;
 	private readonly _skipSemver: boolean;

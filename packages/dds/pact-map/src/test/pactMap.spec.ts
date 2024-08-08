@@ -13,7 +13,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { type IPactMap } from "../interfaces.js";
+import type { IPactMap } from "../interfaces.js";
 import { PactMapClass } from "../pactMap.js";
 import { PactMapFactory } from "../pactMapFactory.js";
 
@@ -213,16 +213,8 @@ describe("PactMap", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			await Promise.all([pactMap1AcceptanceP, pactMap2AcceptanceP]);
-			assert.strictEqual(
-				pactMap1.get(expectedKey),
-				expectedValue,
-				"Wrong value in PactMap 1",
-			);
-			assert.strictEqual(
-				pactMap2.get(expectedKey),
-				expectedValue,
-				"Wrong value in PactMap 2",
-			);
+			assert.strictEqual(pactMap1.get(expectedKey), expectedValue, "Wrong value in PactMap 1");
+			assert.strictEqual(pactMap2.get(expectedKey), expectedValue, "Wrong value in PactMap 2");
 		});
 
 		it("Resolves simultaneous sets and deletes with first-write-wins", async () => {
@@ -255,11 +247,7 @@ describe("PactMap", () => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime();
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 
-			const pactMap = new PactMapClass(
-				"pactMap",
-				dataStoreRuntime,
-				PactMapFactory.Attributes,
-			);
+			const pactMap = new PactMapClass("pactMap", dataStoreRuntime, PactMapFactory.Attributes);
 			assert.strict(!pactMap.isAttached(), "PactMap is attached earlier than expected");
 
 			const accept1P = new Promise<void>((resolve) => {

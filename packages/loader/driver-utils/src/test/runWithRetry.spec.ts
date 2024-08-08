@@ -11,8 +11,11 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { runWithRetry } from "../runWithRetry.js";
 
 const _setTimeout = global.setTimeout;
-const fastSetTimeout: any = (callback: (...cbArgs: any[]) => void, ms: number, ...args: any[]) =>
-	_setTimeout(callback, ms / 1000.0, ...args);
+const fastSetTimeout: any = (
+	callback: (...cbArgs: any[]) => void,
+	ms: number,
+	...args: any[]
+) => _setTimeout(callback, ms / 1000.0, ...args);
 async function runWithFastSetTimeout<T>(callback: () => Promise<T>): Promise<T> {
 	global.setTimeout = fastSetTimeout;
 	return callback().finally(() => {
@@ -104,9 +107,7 @@ describe("runWithRetry Tests", () => {
 			return true;
 		};
 		try {
-			success = await runWithFastSetTimeout(async () =>
-				runWithRetry(api, "test", logger, {}),
-			);
+			success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
 		} catch (error) {}
 		assert.strictEqual(retryTimes, 0, "Should retry");
 		assert.strictEqual(success, true, "Should succeed as retry should be successful");
@@ -125,9 +126,7 @@ describe("runWithRetry Tests", () => {
 			return true;
 		};
 		try {
-			success = await runWithFastSetTimeout(async () =>
-				runWithRetry(api, "test", logger, {}),
-			);
+			success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
 			assert.fail("Should not succeed");
 		} catch (error) {}
 		assert.strictEqual(retryTimes, 0, "Should not retry");
@@ -146,9 +145,7 @@ describe("runWithRetry Tests", () => {
 			return true;
 		};
 		try {
-			success = await runWithFastSetTimeout(async () =>
-				runWithRetry(api, "test", logger, {}),
-			);
+			success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
 			assert.fail("Should not succeed");
 		} catch (error) {}
 		assert.strictEqual(retryTimes, 0, "Should not retry");

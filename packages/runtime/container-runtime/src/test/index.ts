@@ -4,4 +4,4 @@
  */
 
 export { IPendingRuntimeState } from "../containerRuntime.js";
-export { IPendingBlobs } from "../blobManager.js";
+export { IPendingBlobs } from "../blobManager/index.js";

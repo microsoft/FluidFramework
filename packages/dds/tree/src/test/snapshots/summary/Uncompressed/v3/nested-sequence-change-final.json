@@ -1,0 +1,280 @@
+{
+  "type": "tree",
+  "tree": {
+    "type": "tree",
+    "indexes": {
+      "type": "tree",
+      "entries": [
+        {
+          "type": "tree",
+          "EditManager": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "String": {
+                "type": "blob",
+                "content": {
+                  "trunk": [
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 5,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "ModularEditBuilder.Generic",
+                                "change": [
+                                  [
+                                    0,
+                                    {
+                                      "fieldChanges": [
+                                        {
+                                          "fieldKey": "",
+                                          "fieldKind": "Sequence",
+                                          "change": [
+                                            {
+                                              "count": 1,
+                                              "effect": {
+                                                "insert": {
+                                                  "id": 0
+                                                }
+                                              },
+                                              "cellId": 0,
+                                              "changes": {
+                                                "fieldChanges": [
+                                                  {
+                                                    "fieldKey": "foo",
+                                                    "fieldKind": "Optional",
+                                                    "change": {
+                                                      "r": {
+                                                        "e": true,
+                                                        "d": 2,
+                                                        "s": 3
+                                                      }
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              }
+                            ],
+                            "builds": {
+                              "builds": [
+                                [
+                                  [
+                                    [
+                                      0,
+                                      0
+                                    ],
+                                    [
+                                      3,
+                                      1
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "trees": {
+                                "version": 1,
+                                "identifiers": [],
+                                "shapes": [
+                                  {
+                                    "c": {
+                                      "extraFields": 1
+                                    }
+                                  },
+                                  {
+                                    "a": 0
+                                  }
+                                ],
+                                "data": [
+                                  [
+                                    1,
+                                    [
+                                      "test trees.Recursive Map",
+                                      false,
+                                      []
+                                    ]
+                                  ],
+                                  [
+                                    1,
+                                    [
+                                      "test trees.Array<[\"test trees.Recursive Map\"]>",
+                                      false,
+                                      [
+                                        "",
+                                        [
+                                          "test trees.Recursive Map",
+                                          false,
+                                          [
+                                            "bar",
+                                            [
+                                              "test trees.Array<[\"test trees.Recursive Map\"]>",
+                                              false,
+                                              []
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "revision": 6,
+                      "sequenceNumber": 4,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                    }
+                  ],
+                  "branches": [],
+                  "version": 3
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Schema": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "SchemaString": {
+                "type": "blob",
+                "content": {
+                  "version": 1,
+                  "nodes": {
+                    "test trees.Array<[\"test trees.Recursive Map\"]>": {
+                      "object": {
+                        "": {
+                          "kind": "Sequence",
+                          "types": [
+                            "test trees.Recursive Map"
+                          ]
+                        }
+                      }
+                    },
+                    "test trees.Recursive Map": {
+                      "map": {
+                        "kind": "Optional",
+                        "types": [
+                          "test trees.Array<[\"test trees.Recursive Map\"]>"
+                        ]
+                      }
+                    }
+                  },
+                  "root": {
+                    "kind": "Value",
+                    "types": [
+                      "test trees.Array<[\"test trees.Recursive Map\"]>"
+                    ]
+                  }
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Forest": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "ForestTree": {
+                "type": "blob",
+                "content": {
+                  "keys": [
+                    "rootFieldKey"
+                  ],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [
+                      {
+                        "c": {
+                          "extraFields": 1
+                        }
+                      },
+                      {
+                        "a": 0
+                      }
+                    ],
+                    "data": [
+                      [
+                        1,
+                        [
+                          "test trees.Array<[\"test trees.Recursive Map\"]>",
+                          false,
+                          [
+                            "",
+                            [
+                              "test trees.Recursive Map",
+                              false,
+                              [
+                                "foo",
+                                [
+                                  "test trees.Array<[\"test trees.Recursive Map\"]>",
+                                  false,
+                                  [
+                                    "",
+                                    [
+                                      "test trees.Recursive Map",
+                                      false,
+                                      [
+                                        "bar",
+                                        [
+                                          "test trees.Array<[\"test trees.Recursive Map\"]>",
+                                          false,
+                                          []
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  },
+                  "version": 1
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "version": 1,
+                  "data": [],
+                  "maxId": 2
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

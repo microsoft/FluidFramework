@@ -14,15 +14,16 @@ import {
 	ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/driver-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	IDocumentMessage,
 	ISummaryAck,
 	ISummaryNack,
 	ISummaryProposal,
 	MessageType,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
@@ -321,10 +322,7 @@ describe("Runtime", () => {
 				lastClientSeq = -1000; // negative/decrement for test
 				lastSummarySeq = 0; // negative/decrement for test
 				settings = {};
-				mockLogger = mixinMonitoringContext(
-					new MockLogger(),
-					configProvider(settings),
-				).logger;
+				mockLogger = mixinMonitoringContext(new MockLogger(), configProvider(settings)).logger;
 				mockDeltaManager = new MockDeltaManager();
 				mockRuntime = new MockRuntime(mockDeltaManager);
 				summaryCollection = new SummaryCollection(
@@ -405,8 +403,7 @@ describe("Runtime", () => {
 					const idlesPerActive = Math.floor(
 						(summaryConfig.maxTime + 1) / (summaryConfig.minIdleTime - 1),
 					);
-					const remainingTime =
-						(summaryConfig.maxTime + 1) % (summaryConfig.minIdleTime - 1);
+					const remainingTime = (summaryConfig.maxTime + 1) % (summaryConfig.minIdleTime - 1);
 					await emitNextOp();
 
 					// too early should not run yet
@@ -808,26 +805,23 @@ describe("Runtime", () => {
 						const retryAfterSeconds = 5;
 						let currentStage: SummaryStage = stage;
 
-						await startRunningSummarizer(
-							undefined /* disableHeuristics */,
-							async () => {
-								if (currentStage === "submit") {
-									return successfulSubmitSummary();
-								} else {
-									const error = new RetriableSummaryError(
-										`Fail summarization at ${currentStage}`,
-										retryAfterSeconds,
-									);
-									const failedResult: Partial<SubmitSummaryResult> = {
-										stage: currentStage,
-										referenceSequenceNumber: lastRefSeq,
-										minimumSequenceNumber: 0,
-										error,
-									};
-									return failedResult as SubmitSummaryResult;
-								}
-							},
-						);
+						await startRunningSummarizer(undefined /* disableHeuristics */, async () => {
+							if (currentStage === "submit") {
+								return successfulSubmitSummary();
+							} else {
+								const error = new RetriableSummaryError(
+									`Fail summarization at ${currentStage}`,
+									retryAfterSeconds,
+								);
+								const failedResult: Partial<SubmitSummaryResult> = {
+									stage: currentStage,
+									referenceSequenceNumber: lastRefSeq,
+									minimumSequenceNumber: 0,
+									error,
+								};
+								return failedResult as SubmitSummaryResult;
+							}
+						});
 
 						await emitNextOp();
 						// This should run a summarization because max ops has reached.
@@ -865,8 +859,7 @@ describe("Runtime", () => {
 							stage === "submit"
 								? defaultMaxAttempts
 								: defaultMaxAttemptsForSubmitFailures - 1;
-						settings["Fluid.Summarizer.AttemptsForSubmitFailures"] =
-							maxAttemptsOverride;
+						settings["Fluid.Summarizer.AttemptsForSubmitFailures"] = maxAttemptsOverride;
 
 						await startRunningSummarizer(undefined /* disableHeuristics */, async () =>
 							submitSummaryCallback(stage, retryAfterSeconds),
@@ -916,26 +909,23 @@ describe("Runtime", () => {
 						const retryAfterSeconds = 5;
 						let currentStage: SummaryStage = maxAttempts === 1 ? "submit" : "generate";
 
-						await startRunningSummarizer(
-							undefined /* disableHeuristics */,
-							async () => {
-								if (currentStage === "submit") {
-									return successfulSubmitSummary();
-								} else {
-									const error = new RetriableSummaryError(
-										`Fail summarization at ${currentStage}`,
-										retryAfterSeconds,
-									);
-									const failedResult: Partial<SubmitSummaryResult> = {
-										stage: currentStage,
-										referenceSequenceNumber: lastRefSeq,
-										minimumSequenceNumber: 0,
-										error,
-									};
-									return failedResult as SubmitSummaryResult;
-								}
-							},
-						);
+						await startRunningSummarizer(undefined /* disableHeuristics */, async () => {
+							if (currentStage === "submit") {
+								return successfulSubmitSummary();
+							} else {
+								const error = new RetriableSummaryError(
+									`Fail summarization at ${currentStage}`,
+									retryAfterSeconds,
+								);
+								const failedResult: Partial<SubmitSummaryResult> = {
+									stage: currentStage,
+									referenceSequenceNumber: lastRefSeq,
+									minimumSequenceNumber: 0,
+									error,
+								};
+								return failedResult as SubmitSummaryResult;
+							}
+						});
 
 						// Fail at the "generate" stage 2 times.
 						await emitNextOp();
@@ -1043,10 +1033,7 @@ describe("Runtime", () => {
 					);
 
 					assert.strictEqual(submitResult.data.referenceSequenceNumber, 2, "ref seq num");
-					assert(
-						submitResult.data.summaryTree !== undefined,
-						"summary tree should exist",
-					);
+					assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
 
 					const broadcastResult = await result.summaryOpBroadcasted;
 					assert(broadcastResult.success, "summary op should be broadcast");
@@ -1128,10 +1115,7 @@ describe("Runtime", () => {
 					);
 
 					assert.strictEqual(submitResult.data.referenceSequenceNumber, 2, "ref seq num");
-					assert(
-						submitResult.data.summaryTree !== undefined,
-						"summary tree should exist",
-					);
+					assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
 
 					const broadcastResult = await result.summaryOpBroadcasted;
 					assert(broadcastResult.success, "summary op should be broadcast");
@@ -1179,8 +1163,7 @@ describe("Runtime", () => {
 						"should be nack",
 					);
 					assert(
-						JSON.parse((ackNackResult.data.summaryNackOp as any).data).message ===
-							"test-nack",
+						JSON.parse((ackNackResult.data.summaryNackOp as any).data).message === "test-nack",
 						"summary nack error should be test-nack",
 					);
 				});
@@ -1280,10 +1263,7 @@ describe("Runtime", () => {
 					);
 
 					assert.strictEqual(submitResult.data.referenceSequenceNumber, 9, "ref seq num");
-					assert(
-						submitResult.data.summaryTree !== undefined,
-						"summary tree should exist",
-					);
+					assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
 
 					const broadcastResult = await result.summaryOpBroadcasted;
 					assert(broadcastResult.success, "summary op should be broadcast");
@@ -1387,10 +1367,7 @@ describe("Runtime", () => {
 						expectedRefSeqNum,
 						"ref seq num",
 					);
-					assert(
-						submitResult.data.summaryTree !== undefined,
-						"summary tree should exist",
-					);
+					assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
 
 					const broadcastResult = await result.summaryOpBroadcasted;
 					assert(broadcastResult.success, "summary op should be broadcast");
@@ -1550,9 +1527,7 @@ describe("Runtime", () => {
 					// clock.tick(summaryConfig.maxAckWaitTime + 1000);
 					await emitNextOp(1, summaryTimestamp + summaryConfig.maxAckWaitTime);
 					assert(
-						mockLogger.matchEvents([
-							{ eventName: "Running:MissingSummaryAckFoundByOps" },
-						]),
+						mockLogger.matchEvents([{ eventName: "Running:MissingSummaryAckFoundByOps" }]),
 						"unexpected log sequence 1",
 					);
 
@@ -1659,9 +1634,7 @@ describe("Runtime", () => {
 					// clock.tick(summaryConfig.maxAckWaitTime + 1000);
 					await emitNextOp(1, summaryTimestamp + summaryConfig.maxAckWaitTime);
 					assert(
-						mockLogger.matchEvents([
-							{ eventName: "Running:MissingSummaryAckFoundByOps" },
-						]),
+						mockLogger.matchEvents([{ eventName: "Running:MissingSummaryAckFoundByOps" }]),
 						"unexpected log sequence 1",
 					);
 
@@ -1765,11 +1738,7 @@ describe("Runtime", () => {
 					await emitNextOp(summaryConfig.maxOps + 1);
 
 					// Nack failures are attempted defaultMaxAttempts times. Each attempt should emit "summarize" event.
-					for (
-						let attemptNumber = 1;
-						attemptNumber <= defaultMaxAttempts;
-						attemptNumber++
-					) {
+					for (let attemptNumber = 1; attemptNumber <= defaultMaxAttempts; attemptNumber++) {
 						await emitNack(retryAfterSeconds);
 						const { error, ...eventProps } = await summarizePromiseP;
 						const expectedEventProps: ISummarizeEventProps = {

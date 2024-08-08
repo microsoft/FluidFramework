@@ -34,6 +34,6 @@ export function generateHandleContextPath(
 			? `/${normalizedPath}`
 			: `${
 					routeContext.absolutePath === "/" ? "" : routeContext.absolutePath
-			  }/${normalizedPath}`;
+				}/${normalizedPath}`;
 	}
 }

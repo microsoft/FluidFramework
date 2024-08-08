@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
+import type {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
@@ -13,8 +13,8 @@ import {
 
 import { mixinMonitoringContext } from "../config.js";
 import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger.js";
-import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes.js";
-import { IEventSampler, createSampledLogger } from "../utils.js";
+import type { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes.js";
+import { type IEventSampler, createSampledLogger } from "../utils.js";
 
 describe("tagData", () => {
 	it("tagData with data", () => {

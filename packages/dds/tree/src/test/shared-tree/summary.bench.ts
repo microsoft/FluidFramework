@@ -7,9 +7,9 @@ import { strict as assert } from "assert";
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
-import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
-import { ITree } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import type { ITree } from "@fluidframework/driver-definitions/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
 	MockDeltaConnection,
@@ -18,7 +18,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { AllowedUpdateType } from "../../core/index.js";
-import { SharedTreeFactory, TreeContent } from "../../shared-tree/index.js";
+import { SharedTreeFactory, type TreeContent } from "../../shared-tree/index.js";
 import { makeDeepContent, makeWideContentWithEndValue } from "../scalableTestTrees.js";
 import { TestTreeProviderLite, schematizeFlexTree, testIdCompressor } from "../utils.js";
 

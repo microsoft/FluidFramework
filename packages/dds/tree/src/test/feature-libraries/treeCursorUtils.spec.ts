@@ -7,10 +7,10 @@ import { strict as assert } from "assert";
 
 import {
 	CursorLocationType,
-	DetachedField,
-	FieldUpPath,
-	TreeNodeSchemaIdentifier,
-	UpPath,
+	type DetachedField,
+	type FieldUpPath,
+	type TreeNodeSchemaIdentifier,
+	type UpPath,
 	compareFieldUpPaths,
 	compareUpPaths,
 } from "../../core/index.js";
@@ -76,10 +76,7 @@ describe("treeCursorUtils", () => {
 			);
 			assert(
 				compareUpPaths(
-					prefixPath(
-						{ indexOffset: 2, rootFieldOverride: brand("y"), parent: child },
-						root,
-					),
+					prefixPath({ indexOffset: 2, rootFieldOverride: brand("y"), parent: child }, root),
 					{
 						parent: child,
 						parentField: brand("y"),
@@ -125,10 +122,7 @@ describe("treeCursorUtils", () => {
 			);
 			assert(
 				compareUpPaths(
-					prefixPath(
-						{ indexOffset: 2, rootFieldOverride: brand("y"), parent: child },
-						child,
-					),
+					prefixPath({ indexOffset: 2, rootFieldOverride: brand("y"), parent: child }, child),
 					{
 						parent: {
 							parent: child,

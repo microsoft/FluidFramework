@@ -6,7 +6,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PackageJson, loadFluidBuildConfig } from "@fluidframework/build-tools";
-import { Handler, readFile } from "./common";
+import { Handler, readFile } from "./common.js";
 
 const match = /(?:^|\/)pnpm-lock\.yaml$/i;
 export const handlers: Handler[] = [

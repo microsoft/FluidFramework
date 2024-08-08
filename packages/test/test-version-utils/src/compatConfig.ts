@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { fromInternalScheme } from "@fluid-tools/version-tools";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import * as semver from "semver";
 
@@ -205,19 +204,16 @@ const genDriverLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] 
 };
 
 const getNumberOfVersionsToGoBack = (numOfVersionsAboveV2Int1: number = 0): number => {
-	const [, semverInternal, prereleaseIndentifier] = fromInternalScheme(codeVersion, true, true);
-	assert(semverInternal !== undefined, "Unexpected pkg version");
+	const semverVersion = semver.parse(codeVersion);
+	assert(semverVersion !== null, `Unexpected pkg version '${codeVersion}'`);
 
-	// Here we check if the release is an RC release. If so, we also need to account for internal releases when
-	// generating back compat configs. For back compat purposes, we consider RC major release 1 to be treated as internal
-	// major release 9. This will ensure we generate back compat configs for all RC and internal major releases.
-	const greatestInternalMajor = 8;
-	const numOfVersionsToV2Int1 =
-		prereleaseIndentifier === "rc" || prereleaseIndentifier === "dev-rc"
-			? semverInternal.major + greatestInternalMajor
-			: semverInternal.major; // this happens to be the greatest major version
-	// This allows us to increase our "LTS" support for certain versions above 2.0.0.internal.1.y.z
-	return numOfVersionsToV2Int1 - numOfVersionsAboveV2Int1;
+	// We have 8 internal and 5 RC versions.
+	// We want to generate back compat configs for all of them because they are all considered major releases.
+	// RCs can be thought of as internal 9 through 13 for this purpose, so just add them.
+	const numOfInternalMajorsBeforePublic2dot0 = 8 + 5;
+	// This allows us to increase our "LTS" support for certain versions above 2.0.0.internal.1.y.z, where
+	// we don't want to go that far.
+	return numOfInternalMajorsBeforePublic2dot0 - numOfVersionsAboveV2Int1;
 };
 
 const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatConfig[] => {
@@ -355,9 +351,7 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 					break;
 				}
 				case "V2_INT_3": {
-					_configList.push(
-						...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1),
-					);
+					_configList.push(...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1));
 					break;
 				}
 				case "CROSS_VERSION": {

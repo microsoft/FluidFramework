@@ -11,7 +11,7 @@ import {
 	previousVersion,
 	resetBrokenTests,
 	updateTypeTestDependency,
-} from "../../src/commands/typetests";
+} from "../../src/commands/typetests.js";
 
 /**
  * A minimal test package.json. It defines only the required fields according to the type definition.

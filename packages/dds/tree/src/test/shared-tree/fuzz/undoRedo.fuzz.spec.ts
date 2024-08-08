@@ -6,27 +6,31 @@
 import { strict as assert } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
+import { type AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
-	DDSFuzzHarnessEvents,
-	DDSFuzzModel,
-	DDSFuzzTestState,
+	type DDSFuzzHarnessEvents,
+	type DDSFuzzModel,
+	type DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
 import {
-	Anchor,
+	type Anchor,
 	CommitKind,
-	JsonableTree,
-	Revertible,
-	UpPath,
-	Value,
+	type JsonableTree,
+	type Revertible,
+	type UpPath,
+	type Value,
 } from "../../../core/index.js";
-import { SharedTreeTestFactory, toJsonableTree, validateFuzzTreeConsistency } from "../../utils.js";
+import {
+	SharedTreeTestFactory,
+	toJsonableTree,
+	validateFuzzTreeConsistency,
+} from "../../utils.js";
 
 import {
-	EditGeneratorOpWeights,
-	FuzzTestState,
+	type EditGeneratorOpWeights,
+	type FuzzTestState,
 	makeOpGenerator,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
@@ -38,7 +42,7 @@ import {
 	populatedInitialState,
 	validateAnchors,
 } from "./fuzzUtils.js";
-import { Operation } from "./operationTypes.js";
+import type { Operation } from "./operationTypes.js";
 
 interface UndoRedoFuzzTestState extends FuzzTestState {
 	initialTreeState?: JsonableTree[];

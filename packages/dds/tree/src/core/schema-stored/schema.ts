@@ -5,16 +5,16 @@
 
 import type { ErasedType } from "@fluidframework/core-interfaces";
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
-import { MakeNominal, brand, fail, invertMap } from "../../util/index.js";
+import { type MakeNominal, brand, fail, invertMap } from "../../util/index.js";
 import {
-	FieldKey,
-	FieldKindIdentifier,
-	FieldSchemaFormat,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type FieldSchemaFormat,
 	PersistedValueSchema,
-	TreeNodeSchemaDataFormat,
-	TreeNodeSchemaIdentifier,
+	type TreeNodeSchemaDataFormat,
+	type TreeNodeSchemaIdentifier,
 } from "./format.js";
-import { Multiplicity } from "./multiplicity.js";
+import type { Multiplicity } from "./multiplicity.js";
 
 /**
  * Schema for what {@link TreeValue} is allowed on a Leaf node.
@@ -65,8 +65,6 @@ export type TreeTypeSet = ReadonlySet<TreeNodeSchemaIdentifier> | undefined;
  *
  * @remarks
  * Enough info about a field kind to know if a given tree is is schema.
- *
- * @internal
  */
 export interface FieldKindData {
 	readonly identifier: FieldKindIdentifier;
@@ -83,7 +81,6 @@ export interface SchemaAndPolicy {
 
 /**
  * Extra data needed to interpret schema.
- * @internal
  */
 export interface SchemaPolicy {
 	/**
@@ -122,8 +119,6 @@ export interface TreeFieldStoredSchema {
  * This mainly show up in:
  * 1. The root default field for documents.
  * 2. The schema used for out of schema fields (which thus must be empty/not exist) on object and leaf nodes.
- *
- * @internal
  */
 export const forbiddenFieldKindIdentifier = "Forbidden";
 
@@ -139,10 +134,16 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 };
 
 /**
+ * Identifier used for the FieldKind for fields of type identifier.
+ */
+export const identifierFieldKindIdentifier = "Identifier";
+
+/**
  * Opaque type erased handle to the encoded representation of the contents of a stored schema.
  * @internal
  */
-export interface ErasedTreeNodeSchemaDataFormat extends ErasedType<"TreeNodeSchemaDataFormat"> {}
+export interface ErasedTreeNodeSchemaDataFormat
+	extends ErasedType<"TreeNodeSchemaDataFormat"> {}
 
 function toErasedTreeNodeSchemaDataFormat(
 	data: TreeNodeSchemaDataFormat,
@@ -263,7 +264,9 @@ export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
 	TreeNodeStoredSchema
 > = new DiscriminatedUnionDispatcher({
 	leaf: (data: PersistedValueSchema) => new LeafNodeStoredSchema(decodeValueSchema(data)),
-	object: (data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>): TreeNodeStoredSchema => {
+	object: (
+		data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>,
+	): TreeNodeStoredSchema => {
 		const map = new Map();
 		for (const [key, value] of Object.entries(data)) {
 			map.set(key, decodeFieldSchema(value));

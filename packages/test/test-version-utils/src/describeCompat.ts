@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import type { OdspTestDriver } from "@fluid-private/test-drivers";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IPersistedCache } from "@fluidframework/odsp-driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	getUnexpectedLogErrorException,
 	ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
-import type { IPersistedCache } from "@fluidframework/odsp-driver-definitions/internal";
-import type { OdspTestDriver } from "@fluid-private/test-drivers";
 import { testBaseVersion } from "./baseVersion.js";
 import {
 	CompatConfig,
@@ -80,14 +80,14 @@ function createCompatSuite(
 											r11s: { r11sEndpointName },
 											odsp: { tenantIndex, odspEndpointName },
 										},
-								  })
+									})
 								: await getVersionedTestObjectProviderFromApis(apis, {
 										type: driver,
 										config: {
 											r11s: { r11sEndpointName },
 											odsp: { tenantIndex, odspEndpointName },
 										},
-								  });
+									});
 					} catch (error) {
 						const logger = createChildLogger({
 							logger: getTestLogger?.(),
@@ -112,9 +112,7 @@ function createCompatSuite(
 						provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
 					}
 					if (options?.persistedCache !== undefined && provider.driver.type === "odsp") {
-						(provider.driver as OdspTestDriver).setPersistedCache(
-							options.persistedCache,
-						);
+						(provider.driver as OdspTestDriver).setPersistedCache(options.persistedCache);
 					}
 					return provider;
 				}, apis);

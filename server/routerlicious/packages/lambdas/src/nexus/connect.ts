@@ -13,7 +13,9 @@ import {
 	type ConnectionMode,
 } from "@fluidframework/protocol-definitions";
 import {
+	createFluidServiceNetworkError,
 	NetworkError,
+	InternalErrorCode,
 	isNetworkError,
 	validateTokenClaims,
 	validateTokenClaimsExpiration,
@@ -115,7 +117,7 @@ async function connectOrderer(
 	claims: ITokenClaims,
 	version: string,
 	clients: ISignalClient[],
-): Promise<IConnected> {
+): Promise<{ connectedMessage: IConnected; disposeOrdererConnectionListener: () => void }> {
 	const { ordererManager, logger } = lambdaDependencies;
 	const { numberOfMessagesPerTrace } = lambdaSettings;
 	const { expirationTimer, connectionsMap } = lambdaConnectionStateTrackers;
@@ -158,7 +160,7 @@ async function connectOrderer(
 		});
 
 	// Eventually we will send disconnect reason as headers to client.
-	connection.once("error", (error) => {
+	const connectionErrorListener = (error: unknown): void => {
 		const messageMetaData = getMessageMetadata(connection.documentId, connection.tenantId);
 
 		logger.error(
@@ -172,7 +174,8 @@ async function connectOrderer(
 		);
 		expirationTimer.clear();
 		socket.disconnect(true);
-	});
+	};
+	connection.once("error", connectionErrorListener);
 
 	let clientJoinMessageServerMetadata: any;
 	if (DefaultServiceConfiguration.enableTraces && sampleMessages(numberOfMessagesPerTrace)) {
@@ -209,7 +212,7 @@ async function connectOrderer(
 
 	connectDocumentOrdererConnectionMetric.success("Successfully established orderer connection");
 
-	return composeConnectedMessage(
+	const connectedMessage = composeConnectedMessage(
 		connection.maxMessageSize,
 		"write",
 		connection.serviceConfiguration.blockSize,
@@ -219,6 +222,13 @@ async function connectOrderer(
 		version,
 		clients,
 	);
+
+	return {
+		connectedMessage,
+		disposeOrdererConnectionListener: (): void => {
+			connection.off("error", connectionErrorListener);
+		},
+	};
 }
 
 function trackSocket(
@@ -334,7 +344,11 @@ async function checkClusterDraining(
 			...properties,
 			tenantId: message.tenantId,
 		});
-		throw new NetworkError(503, "Cluster is not available. Please retry later.");
+		const error = createFluidServiceNetworkError(503, {
+			message: "Cluster is not available. Please retry later.",
+			internalErrorCode: InternalErrorCode.ClusterDraining,
+		});
+		throw error;
 	}
 }
 
@@ -493,52 +507,56 @@ async function addMessageClientToClientManager(
 	}
 }
 
+/**
+ * Sets up a listener for broadcast signals from external API and broadcasts them to the room.
+ *
+ * @param socket - Websocket instance
+ * @param room - Current room
+ * @param lambdaDependencies - Lambda dependencies including collaborationSessionEventEmitter and logger
+ * @returns Dispose function to remove the added listener
+ */
 function setUpSignalListenerForRoomBroadcasting(
 	socket: IWebSocket,
 	room: IRoom,
-	documentId: string,
-	tenantId: string,
 	{ collaborationSessionEventEmitter, logger }: INexusLambdaDependencies,
-): void {
-	collaborationSessionEventEmitter?.on(
-		"broadcastSignal",
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		async (broadcastSignal: IBroadcastSignalEventPayload) => {
-			const { signalRoom, signalContent } = broadcastSignal;
+): () => void {
+	const broadCastSignalListener = (broadcastSignal: IBroadcastSignalEventPayload): void => {
+		const { signalRoom, signalContent } = broadcastSignal;
 
-			// No-op if the room (collab session) that signal came in from is different
-			// than the current room. We reuse websockets so there could be multiple rooms
-			// that we are sending the signal to, and we don't want to do that.
-			if (
-				signalRoom.documentId === room.documentId &&
-				signalRoom.tenantId === room.tenantId
-			) {
+		// No-op if the room (collab session) that signal came in from is different
+		// than the current room. We reuse websockets so there could be multiple rooms
+		// that we are sending the signal to, and we don't want to do that.
+		if (signalRoom.documentId === room.documentId && signalRoom.tenantId === room.tenantId) {
+			try {
+				const runtimeMessage = createRuntimeMessage(signalContent);
+
 				try {
-					const runtimeMessage = createRuntimeMessage(signalContent);
-
-					try {
-						socket.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage);
-					} catch (error) {
-						const errorMsg = `Failed to broadcast signal from external API.`;
-						Lumberjack.error(
-							errorMsg,
-							getLumberBaseProperties(signalRoom.documentId, signalRoom.tenantId),
-							error,
-						);
-					}
+					socket.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage);
 				} catch (error) {
-					const errorMsg = `broadcast-signal content body is malformed`;
-					throw handleServerErrorAndConvertToNetworkError(
-						logger,
+					const errorMsg = `Failed to broadcast signal from external API.`;
+					Lumberjack.error(
 						errorMsg,
-						documentId,
-						tenantId,
+						getLumberBaseProperties(signalRoom.documentId, signalRoom.tenantId),
 						error,
 					);
 				}
+			} catch (error) {
+				const errorMsg = `broadcast-signal content body is malformed`;
+				throw handleServerErrorAndConvertToNetworkError(
+					logger,
+					errorMsg,
+					room.documentId,
+					room.tenantId,
+					error,
+				);
 			}
-		},
-	);
+		}
+	};
+	collaborationSessionEventEmitter?.on("broadcastSignal", broadCastSignalListener);
+	const disposeBroadcastSignalListener = (): void => {
+		collaborationSessionEventEmitter?.off("broadcastSignal", broadCastSignalListener);
+	};
+	return disposeBroadcastSignalListener;
 }
 
 export async function connectDocument(
@@ -630,7 +648,7 @@ export async function connectDocument(
 
 		const isWriterClient = isWriter(messageClient.scopes ?? [], message.mode);
 		connectMetric.setProperty("IsWriterClient", isWriterClient);
-		const connectedMessage = isWriterClient
+		const { connectedMessage, disposeOrdererConnectionListener } = isWriterClient
 			? await connectOrderer(
 					socket,
 					subMetricProperties,
@@ -646,16 +664,19 @@ export async function connectDocument(
 					version,
 					clients,
 			  )
-			: composeConnectedMessage(
-					1024 /* messageSize */,
-					"read",
-					DefaultServiceConfiguration.blockSize,
-					DefaultServiceConfiguration.maxMessageSize,
-					clientId,
-					claims,
-					version,
-					clients,
-			  );
+			: {
+					connectedMessage: composeConnectedMessage(
+						1024 /* messageSize */,
+						"read",
+						DefaultServiceConfiguration.blockSize,
+						DefaultServiceConfiguration.maxMessageSize,
+						clientId,
+						claims,
+						version,
+						clients,
+					),
+					disposeOrdererConnectionListener: (): void => {},
+			  };
 		// back-compat: remove cast to any once new definition of IConnected comes through.
 		(connectedMessage as any).timestamp = connectedTimestamp;
 		connectionTrace.stampStage(ConnectDocumentStage.MessageClientConnected);
@@ -663,11 +684,9 @@ export async function connectDocument(
 		trackSocket(socket, tenantId, documentId, claims, lambdaDependencies);
 		connectionTrace.stampStage(ConnectDocumentStage.SocketTrackerAppended);
 
-		setUpSignalListenerForRoomBroadcasting(
+		const disposeSignalListenerForRoomBroadcasting = setUpSignalListenerForRoomBroadcasting(
 			socket,
 			room,
-			documentId,
-			tenantId,
 			lambdaDependencies,
 		);
 		connectionTrace.stampStage(ConnectDocumentStage.SignalListenerSetUp);
@@ -695,6 +714,10 @@ export async function connectDocument(
 			connection: connectedMessage,
 			connectVersions,
 			details: messageClient as IClient,
+			dispose: (): void => {
+				disposeSignalListenerForRoomBroadcasting();
+				disposeOrdererConnectionListener();
+			},
 		};
 	} catch (error) {
 		uncaughtError = error;
@@ -704,6 +727,12 @@ export async function connectDocument(
 		if (uncaughtError) {
 			if (uncaughtError.code !== undefined) {
 				connectMetric.setProperty(CommonProperties.errorCode, uncaughtError.code);
+			}
+			if (uncaughtError.internalErrorCode !== undefined) {
+				connectMetric.setProperty(
+					CommonProperties.internalErrorCode,
+					uncaughtError.internalErrorCode,
+				);
 			}
 			connectMetric.error(`Connect document failed`, uncaughtError);
 		} else {

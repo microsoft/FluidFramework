@@ -137,7 +137,10 @@ export abstract class ScenarioRunner<
 	/**
 	 * Create a child run in the same process.
 	 */
-	protected abstract runSyncCore(config: IRunConfig, info: { clientIndex: number }): Promise<S>;
+	protected abstract runSyncCore(
+		config: IRunConfig,
+		info: { clientIndex: number },
+	): Promise<S>;
 
 	public stop(): void {}
 

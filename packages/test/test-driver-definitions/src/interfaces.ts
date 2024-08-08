@@ -15,7 +15,13 @@ import type {
  * These values are replicated in {@link @fluid-private/test-version-utils#compatOptions.d.ts}. Ensure that any revisions here are also reflected in test-version-utils.
  * @internal
  */
-export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
+export type TestDriverTypes =
+	| "tinylicious"
+	| "t9s"
+	| "routerlicious"
+	| "r11s"
+	| "odsp"
+	| "local";
 
 /**
  * Types of Routerlicious endpoints.

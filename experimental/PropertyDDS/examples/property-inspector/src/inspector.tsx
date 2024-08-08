@@ -98,12 +98,7 @@ export const InspectorApp = (props: any) => {
 						<div className={classes.tableContainer}>
 							<AutoSizer>
 								{({ width, height }) => (
-									<InspectorTable
-										{...tableProps}
-										width={width}
-										height={height}
-										{...props}
-									/>
+									<InspectorTable {...tableProps} width={width} height={height} {...props} />
 								)}
 							</AutoSizer>
 						</div>

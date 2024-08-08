@@ -5,13 +5,24 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyObject } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
 
-import { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
-import { NodeFromSchema, NodeKind, TreeNodeSchemaClass } from "./schemaTypes.js";
-import { TreeNode } from "./types.js";
-import { InsertableObjectFromSchemaRecord, ObjectFromSchemaRecord } from "./objectNode.js";
+import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
+import type { NodeFromSchema, NodeKind, TreeNodeSchemaClass } from "./schemaTypes.js";
+import type { TreeNode } from "./types.js";
+import type {
+	InsertableObjectFromSchemaRecord,
+	ObjectFromSchemaRecord,
+} from "./objectNode.js";
+
+/**
+ * Empty Object for use in type computations that should contribute no fields when `&`ed with another type.
+ * @internal
+ */
+// Using {} instead of interface {} or Record<string, never> for empty object here produces better IntelliSense in the generated types than `Record<string, never>` recommended by the linter.
+// Making this a type instead of an interface prevents it from showing up in IntelliSense, and also avoids breaking the typing somehow.
+// eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/consistent-type-definitions
+export type EmptyObject = {};
 
 /**
  * Create a schema for a node with no state.
@@ -41,7 +52,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 
 	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 	// for the private brand field of TreeNode.
-	// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs if the API extractor reports.
+	// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
 	// This is avoided by doing this type conversion.
 	// The conversion is done via assignment instead of `as` to get stronger type safety.
 	const toReturn: TreeNodeSchemaClass<
@@ -154,7 +165,7 @@ export function typedObjectValues<TKey extends string, TValues>(
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function enumFromStrings<TScope extends string, const Members extends string>(
 	factory: SchemaFactory<TScope>,
-	members: Members[],
+	members: readonly Members[],
 ) {
 	const names = new Set(members);
 	if (names.size !== members.length) {
@@ -182,7 +193,7 @@ export function enumFromStrings<TScope extends string, const Members extends str
 }
 
 // TODO: Why does this one generate an invalid d.ts file if exported?
-// Tracked by https://github.com/microsoft/TypeScript/issues/56718
+// Tracked by https://github.com/microsoft/TypeScript/issues/58688
 // TODO: replace enumFromStrings above with this simpler implementation when the TypeScript bug is resolved.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function _enumFromStrings2<TScope extends string, const Members extends readonly string[]>(
@@ -190,7 +201,9 @@ function _enumFromStrings2<TScope extends string, const Members extends readonly
 	members: Members,
 ) {
 	const enumObject: {
-		[key in keyof Members as Members[key] extends string ? Members[key] : string]: Members[key];
+		[key in keyof Members as Members[key] extends string
+			? Members[key]
+			: string]: Members[key] extends string ? Members[key] : string;
 	} = Object.create(null);
 	for (const name of members) {
 		Object.defineProperty(enumObject, name, {

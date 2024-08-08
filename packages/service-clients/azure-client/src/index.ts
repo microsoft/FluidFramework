@@ -10,7 +10,6 @@
  */
 
 export { AzureClient } from "./AzureClient.js";
-export { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
 export type {
 	AzureClientProps,
 	AzureConnectionConfig,
@@ -30,4 +29,10 @@ export type { IUser } from "@fluidframework/driver-definitions";
 export { type ITokenClaims, ScopeType } from "@fluidframework/driver-definitions/internal";
 
 // Re-export so developers can build loggers without pulling in core-interfaces
-export type { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+export type {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+
+// Re-export so developers have access to parameter types for createContainer/getContainer without pulling in fluid-static
+export type { CompatibilityMode } from "@fluidframework/fluid-static";

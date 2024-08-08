@@ -4,6 +4,7 @@
 		"rootDir": "./",
 		"outDir": "../../../dist/test/jest",
 		"types": ["jest", "jest-environment-puppeteer", "node", "puppeteer"],
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["./**/*"],
 	"references": [

@@ -105,7 +105,10 @@ export class MapTrafficRunner extends ScenarioRunner<
 		});
 	}
 
-	protected async runSyncCore(config: IRunConfig, info: { clientIndex: number }): Promise<void> {
+	protected async runSyncCore(
+		config: IRunConfig,
+		info: { clientIndex: number },
+	): Promise<void> {
 		return MapTrafficRunner.execRun(
 			this.buildScenarioRunConfig(config, { childId: info.clientIndex, isSync: true }),
 		);

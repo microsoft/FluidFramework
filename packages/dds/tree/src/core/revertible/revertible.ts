@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { disposeSymbol } from "../../util/index.js";
-
 /**
  * Allows reversion of a change made to SharedTree.
  *
  * @remarks
  * Applications wanting to implement undo/redo support might typically maintain two stacks of Revertibles, with optional eviction policy to free up memory.
  *
- * @public
+ * @sealed @public
  */
 export interface Revertible {
 	/**
@@ -35,7 +33,7 @@ export interface Revertible {
 	/**
 	 * Disposes this revertible, allowing associated resources to be released.
 	 */
-	[disposeSymbol](): void;
+	dispose(): void;
 }
 
 /**

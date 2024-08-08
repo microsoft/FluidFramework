@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-const { MSG } = require("@fluid-experimental/property-common").constants;
 const { TypeIdHelper } = require("@fluid-experimental/property-changeset");
+const { MSG } = require("@fluid-experimental/property-common").constants;
 const { BaseDataArray } = require("@fluid-experimental/property-common");
 const _ = require("lodash");
 

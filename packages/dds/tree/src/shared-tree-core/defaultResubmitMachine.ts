@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import { ChangeRebaser, GraphCommit } from "../core/index.js";
+import { assert, oob } from "@fluidframework/core-utils/internal";
+import type { ChangeRebaser, GraphCommit } from "../core/index.js";
 import { disposeSymbol } from "../util/index.js";
-import { ChangeEnricherReadonlyCheckout, ResubmitMachine } from "./index.js";
+import type { ChangeEnricherReadonlyCheckout, ResubmitMachine } from "./index.js";
 
 /**
  * Default implementation of {@link ResubmitMachine}.
@@ -49,7 +49,10 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 	public onCommitSubmitted(commit: GraphCommit<TChange>): void {
 		if (this.isInResubmitPhase) {
 			const toResubmit = this.resubmitQueue.shift();
-			assert(toResubmit === commit, "Unexpected commit submitted during resubmit phase");
+			assert(
+				toResubmit === commit,
+				0x981 /* Unexpected commit submitted during resubmit phase */,
+			);
 		}
 		this.inFlightQueue.push(commit);
 	}
@@ -71,7 +74,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 			const checkout = this.tip.fork();
 			// Roll back the checkout to the state before the oldest commit
 			for (let iCommit = toResubmit.length - 1; iCommit >= 0; iCommit -= 1) {
-				const commit = toResubmit[iCommit];
+				const commit = toResubmit[iCommit] ?? oob();
 				const rollback = this.inverter(commit, true);
 				// WARNING: it's not currently possible to roll back past a schema change (see AB#7265).
 				// Either we have to make it possible to do so, or this logic will have to change to work
@@ -84,7 +87,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 				iCommit <= this.latestInFlightCommitWithStaleEnrichments;
 				iCommit += 1
 			) {
-				const commit = toResubmit[iCommit];
+				const commit = toResubmit[iCommit] ?? oob();
 				const enrichedChange = checkout.updateChangeEnrichments(
 					commit.change,
 					commit.revision,
@@ -107,8 +110,11 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 	}
 
 	public peekNextCommit(): GraphCommit<TChange> {
-		assert(this.isInResubmitPhase, "No available commit to resubmit outside of resubmit phase");
-		return this.resubmitQueue[0];
+		assert(
+			this.isInResubmitPhase,
+			0x982 /* No available commit to resubmit outside of resubmit phase */,
+		);
+		return this.resubmitQueue[0] ?? oob();
 	}
 
 	public get isInResubmitPhase(): boolean {

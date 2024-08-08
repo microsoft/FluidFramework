@@ -88,7 +88,7 @@
             {{ if eq $subcategoryName "Types" }}
                 {{ $link = printf "%s/%s-typealias" $FFLink (lower $api) }}
             {{ end }}
-            
+
             {{ if in $current.RelPermalink $link }}
                 {{ $activeCategory = $categoryName }}
                 {{ $activeSubCategory = $subcategoryName }}
@@ -164,31 +164,97 @@
     </ul>
     <ul class="nav" id="fluid-framework-nav">
         <li class="panel {{ if $isAnythingInFFNavActive }}active expanded{{ end }}">
-            <a class="area" href="#fluid-framework-reference" data-parent="#fluid-framework-nav" data-toggle="collapse">Fluid Framework</a>
-            <ul id="fluid-framework-reference" class="collapse {{ if $isAnythingInFFNavActive }}in{{ end }}">
-                <li class="panel {{if $isFFActive }}active{{ end }}">
-                    <a class="area{{if $isFFActive }} active expanded{{ end }} nav-page" href="{{ $FFLink }}">Complete Reference</a>
-                </li>
-                {{ range $categoryName := $.Scratch.Get "specificCategories" }}
-                    {{ $categories := index $FluidFramework $categoryName }}
-                    {{ $isCategoryActive := eq $activeCategory $categoryName }}
-                    <li class="panel {{ if $isCategoryActive }}active expanded{{ else }}collapsed{{ end }}">
-                        <a class="area" href="#{{ $categoryName }}-articles" data-toggle="collapse">{{ $categoryName }}</a>
-                        <ul id="{{ $categoryName }}-articles" class="collapse {{ if $isCategoryActive }}in{{ end }}">
-                            {{ range $subCategoryName, $APIs := $categories }}
-                                {{ $isSubCategoryActive := and (eq $activeSubCategory $subCategoryName) $isCategoryActive }}
-                                <li class="panel type-definitions {{ if $isSubCategoryActive }}active expanded{{ else }}collapsed{{ end }}">
-                                    <a class="area padding-35px" href="#{{ $categoryName }}-{{ $subCategoryName }}-articles" data-toggle="collapse">{{ $subCategoryName }}</a>
-                                    <ul id="{{ $categoryName }}-{{ $subCategoryName }}-articles" class="collapse {{ if $isSubCategoryActive }}in{{ end }}">
-                                        {{ range $api := $APIs }}
-                                            {{ $apiLink := printf "%s/%s-%s" $FFLink (lower $api) (lower $subCategoryName | singularize) }}
-                                            {{ if eq $subCategoryName "Types" }}
-                                                {{ $apiLink = printf "%s/%s-typealias" $FFLink (lower $api) }}                                               
+            {{/* If the user is on v1 of the API docs, clicking on FluidFramework in the left nav should redirect to the complete reference instead of showing options. AB#7513 */}}
+            {{if eq $currentApiVersion "v1" }}
+                <a class="area{{if $isFFActive }} active expanded{{ end }} nav-page" href="{{ $FFLink }}">Fluid Framework</a>
+            {{ else }}
+                <a class="area" href="#fluid-framework-reference" data-parent="#fluid-framework-nav" data-toggle="collapse">Fluid Framework</a>
+                <ul id="fluid-framework-reference" class="collapse {{ if $isAnythingInFFNavActive }}in{{ end }}">
+                    <li class="panel {{if $isFFActive }}active{{ end }}">
+                        <a class="area{{if $isFFActive }} active expanded{{ end }} nav-page" href="{{ $FFLink }}">Complete Reference</a>
+                    </li>
+                    {{ range $categoryName := $.Scratch.Get "specificCategories" }}
+                        {{ $categories := index $FluidFramework $categoryName }}
+                        {{ $isCategoryActive := eq $activeCategory $categoryName }}
+                        <li class="panel {{ if $isCategoryActive }}active expanded{{ else }}collapsed{{ end }}">
+                            <a class="area" href="#{{ $categoryName }}-articles" data-toggle="collapse">{{ $categoryName }}</a>
+                            <ul id="{{ $categoryName }}-articles" class="collapse {{ if $isCategoryActive }}in{{ end }}">
+                                {{ range $subCategoryName, $APIs := $categories }}
+                                    {{ $isSubCategoryActive := and (eq $activeSubCategory $subCategoryName) $isCategoryActive }}
+                                    <li class="panel type-definitions {{ if $isSubCategoryActive }}active expanded{{ else }}collapsed{{ end }}">
+                                        <a class="area padding-35px" href="#{{ $categoryName }}-{{ $subCategoryName }}-articles" data-toggle="collapse">{{ $subCategoryName }}</a>
+                                        <ul id="{{ $categoryName }}-{{ $subCategoryName }}-articles" class="collapse {{ if $isSubCategoryActive }}in{{ end }}">
+                                            {{ range $api := $APIs }}
+                                                {{ $apiLink := printf "%s/%s-%s" $FFLink (lower $api) (lower $subCategoryName | singularize) }}
+                                                {{ if eq $subCategoryName "Types" }}
+                                                    {{ $apiLink = printf "%s/%s-typealias" $FFLink (lower $api) }}
+                                                {{ end }}
+                                                <li class="panel {{ if eq $activeAPI $api }}active expanded{{ else }}collapsed{{ end }}">
+                                                    <a class="leaf-node nav-page padding-45px" href="{{ $apiLink }}">
+                                                        {{ partial "breakOnCapitals.html" $api }}
+                                                    </a>
+                                                </li>
                                             {{ end }}
-                                            <li class="panel {{ if eq $activeAPI $api }}active expanded{{ else }}collapsed{{ end }}">
-                                                <a class="leaf-node nav-page padding-45px" href="{{ $apiLink }}">
-                                                    {{ partial "breakOnCapitals.html" $api }}
-                                                </a>
+                                        </ul>
+                                    </li>
+                                {{ end }}
+                            </ul>
+                        </li>
+                    {{ end }}
+                    {{ $isDDSActive := false }}
+                    {{ range after 1 $resultArray }}
+                        {{ if in $current.RelPermalink . }}
+                            {{ $isDDSActive = true }}
+                        {{ end }}
+                    {{ end }}
+
+                    <li class="panel {{ if $isDDSActive }}active expanded{{ else }}collapsed{{ end }}">
+                        <a class="area" href="#dds-articles" data-toggle="collapse">DDSes</a>
+                        <ul id="dds-articles" class="collapse {{ if $isDDSActive }}in{{ end }}">
+                            {{ range $DDS, $subCategories := $DDSes }}
+                                {{ $DDSLink := print $versionLink "/" (lower $DDS) }}
+                                {{ $isCurrentPage := in (trim $current.RelPermalink " ") (trim $DDSLink " ") }}
+                                {{ $hasActiveLeaf := false }}
+                                {{ range $category, $APIs := $subCategories }}
+                                    {{ $categoryLower := lower $category | singularize }}
+                                    {{ range $api := $APIs }}
+                                        {{ $isActiveItem := in $currentTrimmedLink (trim (print (lower $api) "-" $categoryLower "/") " ") }}
+                                        {{ if $isActiveItem }} {{ $hasActiveLeaf = true }} {{ end }}
+                                    {{ end }}
+                                {{ end }}
+
+                                <li class="panel {{ if $isCurrentPage }}active{{ end }} {{ if $hasActiveLeaf }}active-leaf{{ end }}">
+                                    <a href="{{ $DDSLink }}"
+                                    class="packages nav-page padding-35px"
+                                    data-toggle="collapse"
+                                    data-target="#leaf-docs-nav"
+                                    {{ if $isCurrentPage }}aria-label="Current Page: {{ $DDS | humanize | title }}"{{ end }}>
+                                        {{ $DDS | humanize | title }}
+                                    </a>
+                                    <ul id="leaf-docs-nav" class="leaf-docs-nav collapse {{ if $isCurrentPage }}in{{ end }}">
+
+                                        {{ range $category, $APIs := $subCategories }}
+                                            {{ $categoryLower := lower $category | singularize }}
+                                            {{ $isCategoryActive := in $currentTrimmedLink $categoryLower }}
+
+                                            <li class="panel type-definitions {{ if $isCategoryActive }}active expanded{{ else }}collapsed{{ end }}">
+                                                <div href="#" class="api-item-kind {{ $categoryLower }}-link padding-45px"
+                                                    data-toggle="collapse" data-target="#dds-{{ $DDS }}-{{ $categoryLower }}-content"
+                                                >
+                                                    {{ $category }}
+                                                </div>
+
+                                                <ul id="dds-{{ $DDS }}-{{ $categoryLower }}-content" class="collapse {{ if $isCategoryActive }}in{{ end }}">
+                                                    {{ range $api := $APIs }}
+                                                        {{ $apiLink := print $apiOverviewPage "/" (lower $DDS) "/" (lower $api) "-" ($categoryLower | singularize) }}
+                                                        {{ $isActiveAPI := in $currentTrimmedLink (trim (print (lower $api) "-" $categoryLower "/") " ") }}
+                                                        <li class="{{ if $isActiveAPI }}active expanded{{ else }}collapsed{{ end }}">
+                                                            <a class="leaf-node nav-page padding-55px" href="{{ $apiLink }}" {{ if $isActiveAPI }}aria-label="Current Page: {{ $api }} {{ $category }}"{{ end }}>
+                                                                {{ partial "breakOnCapitals.html" $api }}
+                                                            </a>
+                                                        </li>
+                                                    {{ end }}
+                                                </ul>
                                             </li>
                                         {{ end }}
                                     </ul>
@@ -196,72 +262,11 @@
                             {{ end }}
                         </ul>
                     </li>
-                {{ end }}
-                {{ $isDDSActive := false }}
-                {{ range after 1 $resultArray }}
-                    {{ if in $current.RelPermalink . }}
-                        {{ $isDDSActive = true }}
-                    {{ end }}
-                {{ end }}
-
-                <li class="panel {{ if $isDDSActive }}active expanded{{ else }}collapsed{{ end }}">
-                    <a class="area" href="#dds-articles" data-toggle="collapse">DDSes</a>
-                    <ul id="dds-articles" class="collapse {{ if $isDDSActive }}in{{ end }}">
-                        {{ range $DDS, $subCategories := $DDSes }}
-                            {{ $DDSLink := print $versionLink "/" (lower $DDS) }}
-                            {{ $isCurrentPage := in (trim $current.RelPermalink " ") (trim $DDSLink " ") }}
-                            {{ $hasActiveLeaf := false }}
-                            {{ range $category, $APIs := $subCategories }}
-                                {{ $categoryLower := lower $category | singularize }}
-                                {{ range $api := $APIs }}
-                                    {{ $isActiveItem := in $currentTrimmedLink (trim (print (lower $api) "-" $categoryLower "/") " ") }}
-                                    {{ if $isActiveItem }} {{ $hasActiveLeaf = true }} {{ end }}
-                                {{ end }}
-                            {{ end }}
-
-                            <li class="panel {{ if $isCurrentPage }}active{{ end }} {{ if $hasActiveLeaf }}active-leaf{{ end }}">
-                                <a href="{{ $DDSLink }}"
-                                class="packages nav-page padding-35px"
-                                data-toggle="collapse"
-                                data-target="#leaf-docs-nav"
-                                {{ if $isCurrentPage }}aria-label="Current Page: {{ $DDS | humanize | title }}"{{ end }}>
-                                    {{ $DDS | humanize | title }}
-                                </a>
-                                <ul id="leaf-docs-nav" class="leaf-docs-nav collapse {{ if $isCurrentPage }}in{{ end }}">
-
-                                    {{ range $category, $APIs := $subCategories }}
-                                        {{ $categoryLower := lower $category | singularize }}
-                                        {{ $isCategoryActive := in $currentTrimmedLink $categoryLower }}
-
-                                        <li class="panel type-definitions {{ if $isCategoryActive }}active expanded{{ else }}collapsed{{ end }}">
-                                            <div href="#" class="api-item-kind {{ $categoryLower }}-link padding-45px" 
-                                                data-toggle="collapse" data-target="#dds-{{ $DDS }}-{{ $categoryLower }}-content"
-                                            >
-                                                {{ $category }}
-                                            </div>
-                                            
-                                            <ul id="dds-{{ $DDS }}-{{ $categoryLower }}-content" class="collapse {{ if $isCategoryActive }}in{{ end }}">
-                                                {{ range $api := $APIs }}
-                                                    {{ $apiLink := print $apiOverviewPage "/" (lower $DDS) "/" (lower $api) "-" ($categoryLower | singularize) }}
-                                                    {{ $isActiveAPI := in $currentTrimmedLink (trim (print (lower $api) "-" $categoryLower "/") " ") }}
-                                                    <li class="{{ if $isActiveAPI }}active expanded{{ else }}collapsed{{ end }}">
-                                                        <a class="leaf-node nav-page padding-55px" href="{{ $apiLink }}" {{ if $isActiveAPI }}aria-label="Current Page: {{ $api }} {{ $category }}"{{ end }}>
-                                                            {{ partial "breakOnCapitals.html" $api }}
-                                                        </a>
-                                                    </li>
-                                                {{ end }}
-                                            </ul>
-                                        </li>
-                                    {{ end }}
-                                </ul>
-                            </li>
-                        {{ end }}
-                    </ul>
-                </li>
-            </ul>
+                </ul>
+            {{ end }}
         </li>
     </ul>
-    <ul class="nav" id="secondary-nav">       
+    <ul class="nav" id="secondary-nav">
         {{ $isCurrentArea := eq "serviceClients" $area }}
         <li class="panel {{if $isCurrentArea}}active expanded{{else}}collapsed{{end}}">
             <a class="area" aria-label="Service Clients drop down" href="#service-clients-articles"
@@ -271,12 +276,12 @@
                     {{- range (where $packagePages "Params.package" .) -}}
                         {{ $targetPage := . }}
                         {{ $targetPageApiVersion := index (split (trim $targetPage.RelPermalink "/" ) "/") 2 }}
-                        {{ if eq $targetPageApiVersion $selectedApiVersion }} 
+                        {{ if eq $targetPageApiVersion $selectedApiVersion }}
                             {{ $versionData := index $.Site.Data $selectedApiVersion }}
-                            
+
                             {{ $packageNameToDisplayName := index $versionData "packageNameToDisplayName"}}
                             {{ $packageKey := index $packageNameToDisplayName $targetPage.Params.package }}
-                            
+
                             {{ $allApis := index $versionData "allAPIs"}}
                             {{ $apiDetails := index $allApis $packageKey }}
 
@@ -291,15 +296,15 @@
                                 {{ end }}
                             {{ end }}
                             <li class="panel {{ if $isCurrentPage }}active{{ end }} {{ if $hasActiveLeaf }}active-leaf{{ end }}">
-                                <a href="{{$targetPage.RelPermalink}}" 
-                                    class="packages nav-page" 
-                                    data-toggle="collapse" 
-                                    data-target="#leaf-docs-nav-{{ $isCurrentPage }}" 
+                                <a href="{{$targetPage.RelPermalink}}"
+                                    class="packages nav-page"
+                                    data-toggle="collapse"
+                                    data-target="#leaf-docs-nav-{{ $isCurrentPage }}"
                                     {{ if $isCurrentPage }}aria-label="Current Page: {{ (path.Base $targetPage.RelPermalink) | humanize | title }}"{{ end }}>
                                     {{ (path.Base $targetPage.RelPermalink) | humanize | title }}
                                 </a>
                                 <ul id="leaf-docs-nav-{{ $isCurrentPage }}" class="leaf-docs-nav collapse {{ if $isCurrentPage }}in{{ end }}">
-                                    
+
 
                                     {{ range $category := $possibleAPICategories }}
                                         {{ if isset $apiDetails $category }}
@@ -308,12 +313,12 @@
                                             {{ $categoryPlural := index $plurals $category }}
 
                                             <li class="panel type-definitions {{ if $isCategoryActive }}active expanded{{ else }}collapsed{{ end }}">
-                                                <div href="#" class="api-item-kind {{ $categoryLower }}-link" 
+                                                <div href="#" class="api-item-kind {{ $categoryLower }}-link"
                                                     data-toggle="collapse" data-target="#{{ $categoryLower }}-{{ $isCurrentPage }}-content"
                                                 >
                                                     {{ $categoryPlural }}
                                                 </div>
-                                                
+
                                                 <ul id="{{ $categoryLower }}-{{ $isCurrentPage }}-content" class="collapse {{ if $isCategoryActive }}in{{ end }}">
                                                     {{ range $item := index $apiDetails $category }}
                                                         {{ $itemLink := print $apiOverviewPage "/" $packageKey "/" (lower $item) "-" $categoryLower }}
@@ -335,7 +340,7 @@
                 {{- end }}
             </ul>
         </li>
-    
+
     </ul>
 </nav>
 <nav id="small-nav" aria-label="Topics" class="docs-nav hidden-md hidden-lg">
@@ -368,7 +373,7 @@
                     {{ range $api := $APIs }}
                     {{ $apiLink := printf "%s/%s-%s" $FFLink (lower $api) (lower $subcategoryName | singularize) }}
                     {{ if eq $subcategoryName "Types" }}
-                        {{ $apiLink = printf "%s/%s-typealias" $FFLink (lower $api) }}                                               
+                        {{ $apiLink = printf "%s/%s-typealias" $FFLink (lower $api) }}
                     {{ end }}
                     <option value="{{ $apiLink }}" {{ if eq $activeAPI $api }}selected{{ end }}>&nbsp;&nbsp;&nbsp;&nbsp;{{ $api }}</option>
                     {{ end }}

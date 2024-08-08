@@ -15,7 +15,10 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
-import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils/internal";
+import {
+	ITestContainerConfig,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 
 const defaultDataStoreId = "default";
 const testContainerConfig: ITestContainerConfig = {
@@ -56,8 +59,7 @@ describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectP
 
 			const { stats, summary } = await containerRuntime.summarize({
 				runGC: false,
-				fullTree: false,
-				trackState: false,
+				fullTree: true,
 			});
 
 			// Validate stats

@@ -5,8 +5,8 @@
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import { IUser } from "@fluidframework/driver-definitions";
+import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 import { Provider } from "./nconf.cjs";
 
@@ -62,11 +62,17 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 			documentId = this.config.documentId;
 			provider = this.config.provider;
 		} else if (path.length >= 4) {
-			tenantId = path[2];
-			documentId = path[3];
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			tenantId = path[2]!;
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			documentId = path[3]!;
 		} else {
 			tenantId = "fluid";
-			documentId = path[2];
+			// TODO why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			documentId = path[2]!;
 		}
 
 		const token = await this.getToken();
@@ -79,9 +85,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 		let fluidUrl =
 			"https://" +
 			`${
-				this.config
-					? new URL(this.config.provider.get("worker:serverUrl")).host
-					: serverSuffix
+				this.config ? new URL(this.config.provider.get("worker:serverUrl")).host : serverSuffix
 			}/` +
 			`${encodeURIComponent(tenantId)}/` +
 			`${encodeURIComponent(documentId)}`;
@@ -141,7 +145,10 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 		return resolved;
 	}
 
-	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+	public async getAbsoluteUrl(
+		resolvedUrl: IResolvedUrl,
+		relativeUrl: string,
+	): Promise<string> {
 		const parsedUrl = new URL(resolvedUrl.url);
 		assert(!!parsedUrl.pathname, 0x0b9 /* "PathName should exist" */);
 		const [, tenantId, documentId] = parsedUrl.pathname.split("/");

@@ -8,6 +8,7 @@ import { strict as assert } from "assert";
 import { type CompatApis, describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { loadContainerPaused } from "@fluidframework/container-loader/internal";
 import { IFluidHandle, IRequestHeader } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
@@ -25,7 +26,6 @@ import {
 	createLoader,
 	createSummarizerFromFactory,
 } from "@fluidframework/test-utils/internal";
-import { loadContainerPaused } from "@fluidframework/container-loader/internal";
 
 const counterKey = "count";
 
