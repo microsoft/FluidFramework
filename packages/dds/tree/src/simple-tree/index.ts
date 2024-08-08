@@ -17,6 +17,7 @@ export {
 	type TreeNode,
 	type Unhydrated,
 	type InternalTreeNode,
+	isTreeNode,
 } from "./core/index.js";
 export {
 	type ITree,
