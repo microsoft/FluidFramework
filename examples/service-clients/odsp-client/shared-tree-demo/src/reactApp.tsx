@@ -5,7 +5,7 @@
 
 /* eslint-disable prefer-template */
 
-import { IFluidContainer, Tree, TreeView } from "fluid-framework";
+import { Tree, type TreeView } from "fluid-framework";
 import React, { ReactNode, useEffect, useState } from "react";
 
 import { App, Letter } from "./schema.js";
@@ -128,7 +128,6 @@ function TopRow(props: { app: App }): JSX.Element {
 
 export function ReactApp(props: {
 	data: TreeView<typeof App>;
-	container: IFluidContainer;
 	cellSize: { x: number; y: number };
 	canvasSize: { x: number; y: number };
 }): JSX.Element {
