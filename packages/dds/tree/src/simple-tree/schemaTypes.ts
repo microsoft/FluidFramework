@@ -19,6 +19,7 @@ import type {
 	NodeKind,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
+	TreeNode,
 } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
 import type { InsertableContent } from "./proxies.js";
@@ -378,7 +379,7 @@ export type TreeNodeFromImplicitAllowedTypes<
 	? NodeFromSchema<TSchema>
 	: TSchema extends AllowedTypes
 		? NodeFromSchema<FlexListToUnion<TSchema>>
-		: unknown;
+		: TreeNode | TreeLeafValue;
 
 /**
  * Type of content that can be inserted into the tree for a node of the given schema.

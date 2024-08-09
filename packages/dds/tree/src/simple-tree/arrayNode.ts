@@ -655,7 +655,7 @@ type Insertable<T extends ImplicitAllowedTypes> = readonly (
 	| IterableTreeArrayContent<InsertableTreeNodeFromImplicitAllowedTypes<T>>
 )[];
 
-abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
+export abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	extends TreeNodeWithArrayFeatures<
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		TreeNodeFromImplicitAllowedTypes<T>

@@ -150,11 +150,10 @@ import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import {
 	type ImplicitFieldSchema,
 	type InsertableContent,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeViewConfiguration,
-	normalizeFieldSchema,
 	SchemaFactory,
 	toFlexSchema,
+	type InsertableTreeFieldFromImplicitField,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -1391,25 +1390,20 @@ export function validateUsageError(expectedErrorMsg: string | RegExp): (error: E
  */
 export function cursorFromUnhydratedRoot(
 	schema: ImplicitFieldSchema,
-	tree: InsertableTreeNodeFromImplicitAllowedTypes,
+	tree: InsertableTreeFieldFromImplicitField,
 	nodeKeyManager: NodeKeyManager,
 ): ITreeCursorSynchronous {
-	const data = tree as InsertableContent;
-	const normalizedFieldSchema = normalizeFieldSchema(schema);
+	const data = tree as InsertableContent | undefined;
 
-	const flexSchema = toFlexSchema(normalizedFieldSchema);
+	const flexSchema = toFlexSchema(schema);
 	const storedSchema: SchemaAndPolicy = {
 		policy: defaultSchemaPolicy,
 		schema: intoStoredSchema(flexSchema),
 	};
 
 	return (
-		cursorFromNodeData(
-			data,
-			normalizedFieldSchema.allowedTypes,
-			nodeKeyManager,
-			storedSchema,
-		) ?? assert.fail("failed to decode tree")
+		cursorFromNodeData(data, schema, nodeKeyManager, storedSchema) ??
+		assert.fail("failed to decode tree")
 	);
 }
 

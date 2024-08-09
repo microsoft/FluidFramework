@@ -34,6 +34,9 @@ import {
 	extractFieldProvider,
 	isConstant,
 	type FieldProvider,
+	type ImplicitFieldSchema,
+	normalizeFieldSchema,
+	FieldKind,
 } from "./schemaTypes.js";
 import { NodeKind, tryGetSimpleNodeSchema, type TreeNodeSchema } from "./core/index.js";
 import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
@@ -67,30 +70,36 @@ import { isObjectNodeSchema } from "./objectNodeTypes.js";
 export function cursorFromNodeData(
 	data: InsertableContent,
 	allowedTypes: ImplicitAllowedTypes,
-	context: NodeKeyManager,
-	schemaValidationPolicy: SchemaAndPolicy,
+	context: NodeKeyManager | undefined,
+	schemaValidationPolicy: SchemaAndPolicy | undefined,
 ): CursorWithNode<MapTree>;
 export function cursorFromNodeData(
 	data: InsertableContent | undefined,
-	allowedTypes: ImplicitAllowedTypes,
-	context: NodeKeyManager,
+	allowedTypes: ImplicitFieldSchema,
+	context: NodeKeyManager | undefined,
 	schemaValidationPolicy: SchemaAndPolicy,
-): CursorWithNode<MapTree> | undefined;
+): CursorWithNode<MapTree> | undefined | undefined;
 export function cursorFromNodeData(
 	data: InsertableContent | undefined,
-	allowedTypes: ImplicitAllowedTypes,
-	context: NodeKeyManager,
-	schemaValidationPolicy: SchemaAndPolicy,
+	allowedTypes: ImplicitFieldSchema,
+	context: NodeKeyManager | undefined,
+	schemaValidationPolicy: SchemaAndPolicy | undefined,
 ): CursorWithNode<MapTree> | undefined {
+	const normalizedFieldSchema = normalizeFieldSchema(allowedTypes);
+
 	if (data === undefined) {
+		// TODO: this code-path should support defaults
+		if (normalizedFieldSchema.kind !== FieldKind.Optional) {
+			throw new UsageError("Got undefined for non-optional field.");
+		}
 		return undefined;
 	}
 	const mappedContent = nodeDataToMapTree(
 		data,
-		normalizeAllowedTypes(allowedTypes),
+		normalizedFieldSchema.allowedTypeSet,
 		schemaValidationPolicy,
 	);
-	addDefaultsToMapTree(mappedContent, allowedTypes, context);
+	addDefaultsToMapTree(mappedContent, normalizedFieldSchema.allowedTypes, context);
 	return cursorForMapTreeNode(mappedContent);
 }
 
@@ -226,13 +235,20 @@ function nodeDataToMapTree(
 	}
 
 	if (schemaValidationPolicy?.policy.validateSchema === true) {
-		const maybeError = isNodeInSchema(result, schemaValidationPolicy);
-		if (maybeError !== SchemaValidationErrors.NoError) {
-			throw new UsageError("Tree does not conform to schema.");
-		}
+		inSchemaOrThrow(schemaValidationPolicy, result);
 	}
 
 	return result;
+}
+
+export function inSchemaOrThrow(
+	schemaValidationPolicy: SchemaAndPolicy,
+	mapTree: MapTree,
+): void {
+	const maybeError = isNodeInSchema(mapTree, schemaValidationPolicy);
+	if (maybeError !== SchemaValidationErrors.NoError) {
+		throw new UsageError("Tree does not conform to schema.");
+	}
 }
 
 /**
