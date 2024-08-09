@@ -607,8 +607,8 @@ function processOp(
 					type: string;
 				};
 				const address = envelope.address;
-				type = `${type}/${innerContent.type}`;
-				switch (innerContent.type) {
+				type = `${type}/${innerContent?.type}`;
+				switch (innerContent?.type) {
 					case DataStoreMessageType.Attach: {
 						const attachMessage = innerContent.content as IAttachMessage;
 						let objectType = attachMessage.type;
@@ -620,13 +620,13 @@ function processOp(
 					}
 					case DataStoreMessageType.ChannelOp:
 					default: {
-						const innerEnvelope = innerContent.content as IEnvelope;
-						const innerContent2 = innerEnvelope.contents as {
+						const innerEnvelope = innerContent?.content as IEnvelope;
+						const innerContent2 = innerEnvelope?.contents as {
 							type?: string;
 							value?: any;
 						};
 
-						const objectId = getObjectId(address, innerEnvelope.address);
+						const objectId = getObjectId(address, innerEnvelope?.address);
 						incr(objectStats, objectId, totalMsgSize, opCount);
 						let objectType = dataType.get(objectId);
 						if (objectType === undefined) {
@@ -637,9 +637,9 @@ function processOp(
 						incr(dataTypeStats, objectType, totalMsgSize, opCount);
 						recorded = true;
 
-						let subType = innerContent2.type;
+						let subType = innerContent2?.type;
 						if (
-							innerContent2.type === "set" &&
+							innerContent2?.type === "set" &&
 							typeof innerContent2.value === "object" &&
 							innerContent2.value !== null
 						) {
