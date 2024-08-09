@@ -12,7 +12,12 @@ import {
 	anchorSlot,
 } from "../../core/index.js";
 import type { Assume, FlattenKeys } from "../../util/index.js";
-import type { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
+import type {
+	FieldKinds,
+	SequenceFieldEditBuilder,
+	ValueFieldEditBuilder,
+	OptionalFieldEditBuilder,
+} from "../default-schema/index.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 import type {
 	Any,
@@ -686,7 +691,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	/**
 	 * Get an editor for this sequence.
 	 */
-	sequenceEditor(): SequenceFieldEditBuilder;
+	editor: SequenceFieldEditBuilder<FlexibleFieldContent>;
 
 	boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>>;
 
@@ -707,7 +712,8 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 export interface FlexTreeRequiredField<in out TTypes extends FlexAllowedTypes>
 	extends FlexTreeField {
 	get content(): FlexTreeUnboxNodeUnion<TTypes>;
-	set content(content: FlexibleNodeContent);
+
+	editor: ValueFieldEditBuilder<FlexibleNodeContent>;
 }
 
 /**
@@ -726,7 +732,8 @@ export interface FlexTreeRequiredField<in out TTypes extends FlexAllowedTypes>
 export interface FlexTreeOptionalField<in out TTypes extends FlexAllowedTypes>
 	extends FlexTreeField {
 	get content(): FlexTreeUnboxNodeUnion<TTypes> | undefined;
-	set content(newContent: FlexibleNodeContent | undefined);
+
+	editor: OptionalFieldEditBuilder<FlexibleNodeContent>;
 }
 
 // #endregion
