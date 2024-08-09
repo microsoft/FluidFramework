@@ -4,13 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
+import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Command, Flags, ux } from "@oclif/core";
 import chalk from "chalk";
 import { differenceInBusinessDays, formatDistanceToNow } from "date-fns";
-import { writeJson } from "fs-extra/esm";
 import inquirer from "inquirer";
-import sortJson from "sort-json";
+import { sortJsonc } from "sort-jsonc";
 import { table } from "table";
 
 import {
@@ -722,7 +722,7 @@ async function writeReport(
 	const reportPath = path.join(dir, reportName);
 	log?.info(`${kind} report written to ${reportPath}`);
 	const reportOutput = toReportKind(report, kind);
+	const jsonOutput = sortJsonc(JSON.stringify(reportOutput, undefined, "\t"));
 
-	await writeJson(reportPath, reportOutput, { spaces: 2 });
-	sortJson.overwrite(reportPath);
+	await writeFile(reportPath, jsonOutput);
 }
