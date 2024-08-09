@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigratableModel, IVersionedModel } from "@fluid-example/example-utils";
-import { Migrator, ModelLoader } from "@fluid-example/example-utils";
+import type { IMigratableModel2, IMigrationTool, IVersionedModel } from "@fluid-example/example-utils";
+import { MigratableModelLoader, Migrator } from "@fluid-example/example-utils";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
 	InsecureTinyliciousTokenProvider,
@@ -29,20 +29,20 @@ const updateTabForId = (id: string) => {
 
 const isIInventoryListAppModel = (
 	model: IVersionedModel,
-): model is IInventoryListAppModel & IMigratableModel => {
+): model is IInventoryListAppModel & IMigratableModel2 => {
 	return model.version === "one" || model.version === "two";
 };
 
 const getUrlForContainerId = (containerId: string) => `/#${containerId}`;
 
-const render = (model: IVersionedModel) => {
+const render = (model: IVersionedModel, migrationTool: IMigrationTool) => {
 	const appDiv = document.getElementById("app") as HTMLDivElement;
 	ReactDOM.unmountComponentAtNode(appDiv);
 	// This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
 	// versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
 	// view code loader to pull in the view dynamically based on the version we discover.
 	if (isIInventoryListAppModel(model)) {
-		ReactDOM.render(React.createElement(InventoryListAppView, { model }), appDiv);
+		ReactDOM.render(React.createElement(InventoryListAppView, { model, migrationTool }), appDiv);
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 		const debugDiv = document.getElementById("debug") as HTMLDivElement;
@@ -50,6 +50,7 @@ const render = (model: IVersionedModel) => {
 		ReactDOM.render(
 			React.createElement(DebugView, {
 				model,
+				migrationTool,
 				getUrlForContainerId,
 			}),
 			debugDiv,
@@ -66,7 +67,7 @@ async function start(): Promise<void> {
 	// container.getEntryPoint().model if we knew that was the model.
 	// TODO: This is really loading an IInventoryListAppModel & IMigratableModel (we know this because of what the
 	// DemoCodeLoader supports).  Should we just use that more-specific type in the typing here?
-	const modelLoader = new ModelLoader<IMigratableModel>({
+	const modelLoader = new MigratableModelLoader<IMigratableModel2>({
 		urlResolver: new InsecureTinyliciousUrlResolver(),
 		documentServiceFactory: new RouterliciousDocumentServiceFactory(
 			new InsecureTinyliciousTokenProvider(),
@@ -76,17 +77,21 @@ async function start(): Promise<void> {
 	});
 
 	let id: string;
-	let model: IMigratableModel;
+	let model: IMigratableModel2;
+	let migrationTool: IMigrationTool;
 
 	if (location.hash.length === 0) {
 		// Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
 		// Normally we would create with the most-recent version.
 		const createResponse = await modelLoader.createDetached("one");
 		model = createResponse.model;
+		migrationTool = createResponse.migrationTool
 		id = await createResponse.attach();
 	} else {
 		id = location.hash.substring(1);
-		model = await modelLoader.loadExisting(id);
+		const loadResponse = await modelLoader.loadExisting(id);
+		model = loadResponse.model;
+		migrationTool = loadResponse.migrationTool;
 	}
 
 	// The Migrator takes the starting state (model and id) and watches for a migration proposal.  It encapsulates
@@ -98,13 +103,15 @@ async function start(): Promise<void> {
 	const migrator = new Migrator(
 		modelLoader,
 		model,
+		migrationTool,
 		id,
 		inventoryListDataTransformationCallback,
 	);
 	migrator.events.on("migrated", () => {
 		model.close();
 		model = migrator.currentModel;
-		render(model);
+		migrationTool = migrator.currentMigrationTool;
+		render(model, migrationTool);
 		updateTabForId(migrator.currentModelId);
 	});
 	// If the ModelLoader doesn't know how to load the model required for migration, it emits "migrationNotSupported".
@@ -133,7 +140,7 @@ async function start(): Promise<void> {
 	// }
 	// In this demo however, we trigger the proposal through the debug buttons.
 
-	render(model);
+	render(model, migrationTool);
 	updateTabForId(id);
 }
 

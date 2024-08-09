@@ -57,3 +57,19 @@ export interface IMigratableModel
 	 */
 	close(): void;
 }
+
+// TODO: Is there a better way to express the unknown format here?  I think I'd prefer to put the burden of calling
+// supportsDataFormat() on the callers of importData() (and allow implementers of IMigratableModel to assume
+// importData() is called with valid data).
+/**
+ * @internal
+ */
+export interface IMigratableModel2
+	extends IVersionedModel,
+		IImportExportModel<unknown, unknown> {
+	/**
+	 * Close the model, rendering it inoperable and closing connections.
+	 * TODO: Decide whether the closing is an integral part of the migration, or if the caller should do the closing.
+	 */
+	close(): void;
+}

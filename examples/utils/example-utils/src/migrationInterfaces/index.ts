@@ -3,14 +3,24 @@
  * Licensed under the MIT License.
  */
 
-export { IImportExportModel, IMigratableModel, IVersionedModel } from "./migratableModel.js";
+export {
+	IImportExportModel,
+	IMigratableModel,
+	IMigratableModel2,
+	IVersionedModel,
+} from "./migratableModel.js";
 export {
 	IAcceptedMigrationDetails,
 	IMigrationTool,
 	IMigrationToolEvents,
 	MigrationState,
 } from "./migrationTool.js";
-export { DataTransformationCallback, IMigrator, IMigratorEvents } from "./migrator.js";
+export {
+	DataTransformationCallback,
+	IMigrator,
+	IMigrator2,
+	IMigratorEvents,
+} from "./migrator.js";
 export {
 	ISameContainerMigratableModel,
 	ISameContainerMigratableModelEvents,

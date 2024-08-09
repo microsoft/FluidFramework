@@ -9,20 +9,26 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type {
 	DataTransformationCallback,
-	IMigratableModel,
-	IMigrator,
+	IMigratableModel2,
+	IMigrationTool,
+	IMigrator2,
 	IMigratorEvents,
 	MigrationState,
 } from "../migrationInterfaces/index.js";
-import type { IDetachedModel, IModelLoader } from "../modelLoader/index.js";
+import type { IDetachedModel, IMigratableModelLoader } from "../modelLoader/index.js";
 
 /**
  * @internal
  */
-export class Migrator implements IMigrator {
-	private _currentModel: IMigratableModel;
-	public get currentModel(): IMigratableModel {
+export class Migrator implements IMigrator2 {
+	private _currentModel: IMigratableModel2;
+	public get currentModel(): IMigratableModel2 {
 		return this._currentModel;
+	}
+
+	private _currentMigrationTool: IMigrationTool;
+	public get currentMigrationTool(): IMigrationTool {
+		return this._currentMigrationTool;
 	}
 
 	private _currentModelId: string;
@@ -31,11 +37,11 @@ export class Migrator implements IMigrator {
 	}
 
 	public get migrationState(): MigrationState {
-		return this._currentModel.migrationTool.migrationState;
+		return this._currentMigrationTool.migrationState;
 	}
 
 	public get connected(): boolean {
-		return this._currentModel.migrationTool.connected;
+		return this._currentMigrationTool.connected;
 	}
 
 	private readonly _events = new TypedEventEmitter<IMigratorEvents>();
@@ -58,7 +64,7 @@ export class Migrator implements IMigrator {
 	/**
 	 * Detached model that is ready to attach. This is stored for retry scenarios.
 	 */
-	private _preparedDetachedModel: IDetachedModel<IMigratableModel> | undefined;
+	private _preparedDetachedModel: IDetachedModel<IMigratableModel2> | undefined;
 
 	/**
 	 * After attaching the prepared model, but before we have written its ID into the current model, we'll store the ID
@@ -67,12 +73,14 @@ export class Migrator implements IMigrator {
 	private _preparedModelId: string | undefined;
 
 	public constructor(
-		private readonly modelLoader: IModelLoader<IMigratableModel>,
-		initialMigratable: IMigratableModel,
+		private readonly modelLoader: IMigratableModelLoader<IMigratableModel2>,
+		initialMigratable: IMigratableModel2,
+		initialMigrationTool: IMigrationTool,
 		initialId: string,
 		private readonly dataTransformationCallback?: DataTransformationCallback,
 	) {
 		this._currentModel = initialMigratable;
+		this._currentMigrationTool = initialMigrationTool;
 		this._currentModelId = initialId;
 		this.takeAppropriateActionForCurrentMigratable();
 	}
@@ -84,13 +92,13 @@ export class Migrator implements IMigrator {
 	 * that a freshly-loaded migrated container is in collaborating state.
 	 */
 	private readonly takeAppropriateActionForCurrentMigratable = () => {
-		const migrationState = this._currentModel.migrationTool.migrationState;
+		const migrationState = this._currentMigrationTool.migrationState;
 		if (migrationState === "migrating") {
 			this.ensureMigrating();
 		} else if (migrationState === "migrated") {
 			this.ensureLoading();
 		} else {
-			this._currentModel.migrationTool.events.once(
+			this._currentMigrationTool.events.once(
 				"migrating",
 				this.takeAppropriateActionForCurrentMigratable,
 			);
@@ -104,7 +112,7 @@ export class Migrator implements IMigrator {
 		if (!this.connected) {
 			// If we are not connected we should wait until we reconnect and try again. Note: we re-enter the state
 			// machine, since it's possible another client has already completed the migration by the time we reconnect.
-			this.currentModel.migrationTool.events.once(
+			this.currentMigrationTool.events.once(
 				"connected",
 				this.takeAppropriateActionForCurrentMigratable,
 			);
@@ -119,8 +127,8 @@ export class Migrator implements IMigrator {
 			throw new Error("Cannot perform migration, we are currently trying to load");
 		}
 
-		const migratable = this._currentModel;
-		const acceptedMigration = migratable.migrationTool.acceptedMigration;
+		const migrationTool = this._currentMigrationTool;
+		const acceptedMigration = migrationTool.acceptedMigration;
 		if (acceptedMigration === undefined) {
 			throw new Error("Expect an accepted migration before migration starts");
 		}
@@ -160,7 +168,7 @@ export class Migrator implements IMigrator {
 				// 2. Have the paused loading logic know how to load a different older snapshot version (though old versions may get deleted).
 				// 3. Have a acceptance rollback or acceptance update path, to either retry or update the acceptance sequence number to be reachable
 				// 4. Use a non-paused load, and accept that some late-arriving data might get included.
-				const exportModel = await this.modelLoader.loadExistingPaused(
+				const { model: exportModel } = await this.modelLoader.loadExistingPaused(
 					this._currentModelId,
 					acceptedMigration.migrationSequenceNumber,
 				);
@@ -211,7 +219,7 @@ export class Migrator implements IMigrator {
 				// Volunteer to complete the migration.
 				let isAssigned: boolean;
 				try {
-					isAssigned = await this.currentModel.migrationTool.volunteerForMigration();
+					isAssigned = await this.currentMigrationTool.volunteerForMigration();
 				} catch (error) {
 					// volunteerForMigration() will throw an error on disconnection. In this case, we should exit and
 					// re-enter the state machine which will wait until we reconnect.
@@ -221,7 +229,7 @@ export class Migrator implements IMigrator {
 					return;
 				}
 
-				if (this.currentModel.migrationTool.newContainerId !== undefined) {
+				if (this.currentMigrationTool.newContainerId !== undefined) {
 					// If newContainerId is already set, then another client already completed the migration.
 					return;
 				}
@@ -233,14 +241,14 @@ export class Migrator implements IMigrator {
 				}
 
 				// Check to make sure we still have the task assignment.
-				if (!this.currentModel.migrationTool.haveMigrationTask()) {
+				if (!this.currentMigrationTool.haveMigrationTask()) {
 					// Exit early if we lost the task assignment, we are most likely disconnected.
 					return;
 				}
 
-				await migratable.migrationTool.finalizeMigration(this._preparedModelId);
+				await migrationTool.finalizeMigration(this._preparedModelId);
 
-				this.currentModel.migrationTool.completeMigrationTask();
+				this.currentMigrationTool.completeMigrationTask();
 			};
 
 			// Prepare the detached model if we haven't already.
@@ -266,7 +274,7 @@ export class Migrator implements IMigrator {
 					// We assume if we are still connected after exiting the loop, then we should be in the "migrated"
 					// state. The following assert validates this assumption.
 					assert(
-						this.currentModel.migrationTool.newContainerId !== undefined,
+						this.currentMigrationTool.newContainerId !== undefined,
 						"newContainerId should be defined",
 					);
 				}
@@ -287,13 +295,13 @@ export class Migrator implements IMigrator {
 			throw new Error("Cannot start loading the migrated before migration is complete");
 		}
 
-		const migratable = this._currentModel;
-		const acceptedMigration = migratable.migrationTool.acceptedMigration;
+		const migrationTool = this._currentMigrationTool;
+		const acceptedMigration = migrationTool.acceptedMigration;
 		if (acceptedMigration === undefined) {
 			throw new Error("Expect an accepted version before migration starts");
 		}
 
-		const migratedId = migratable.migrationTool.newContainerId;
+		const migratedId = migrationTool.newContainerId;
 		if (migratedId === undefined) {
 			throw new Error("Migration ended without a new container being created");
 		}
@@ -309,12 +317,14 @@ export class Migrator implements IMigrator {
 				this._migratedLoadP = undefined;
 				return;
 			}
-			const migrated = await this.modelLoader.loadExisting(migratedId);
+			const { model: migrated, migrationTool: migratedMigrationTool } =
+				await this.modelLoader.loadExisting(migratedId);
 			// Note: I'm choosing not to close the old migratable here, and instead allow the lifecycle management
 			// of the migratable to be the responsibility of whoever created the Migrator (and handed it its first
 			// migratable).  It could also be fine to close here, just need to have an explicit contract to clarify
 			// who is responsible for managing that.
 			this._currentModel = migrated;
+			this._currentMigrationTool = migratedMigrationTool;
 			this._currentModelId = migratedId;
 			this._events.emit("migrated", migrated, migratedId);
 			this._migratedLoadP = undefined;
