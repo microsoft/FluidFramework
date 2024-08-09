@@ -281,12 +281,26 @@ export async function getSession(
 	sessionStickinessDurationMs: number = defaultSessionStickinessDurationMs,
 	messageBrokerId?: string,
 	clusterDrainingChecker?: IClusterDrainingChecker,
+	ephemeralDocumentTTLSec?: number,
 ): Promise<ISession> {
 	const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
 	const document: IDocument = await documentRepository.readOne({ tenantId, documentId });
 	if (!document || document.scheduledDeletionTime !== undefined) {
 		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
+	}
+	if (document.isEphemeralContainer && ephemeralDocumentTTLSec !== undefined) {
+		// Check if the document is ephemeral and has expired.
+		const currentTime = Date.now();
+		const ephemeralDocumentExpiryTime = document.createTime + ephemeralDocumentTTLSec * 1000;
+		if (currentTime > ephemeralDocumentExpiryTime) {
+			throw new NetworkError(
+				404,
+				`Ephemeral Container Expired: ${Math.floor(
+					(ephemeralDocumentExpiryTime - currentTime) / 1000,
+				)} seconds older than ephemeral document TTL of ${ephemeralDocumentTTLSec} seconds.`,
+			);
+		}
 	}
 	// Session can be undefined for documents that existed before the concept of service sessions.
 	const existingSession: ISession | undefined = document.session;
