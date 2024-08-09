@@ -13,8 +13,8 @@ import type { DocInheritDocTag } from "@microsoft/tsdoc";
 
 import { defaultLoadModelOptions, loadModel, type LoadModelOptions } from "./LoadModel.js";
 import { noopLogger } from "./Logging.js";
-import { DocumentWriter } from "./renderers/index.js";
 import { resolveSymbolicReference } from "./utilities/index.js";
+import { fail } from "node:assert";
 
 /**
  * Linter check options.
@@ -23,10 +23,10 @@ import { resolveSymbolicReference } from "./utilities/index.js";
  */
 export interface LinterOptions {
 	/**
-	 * Whether or not to evaluate `{@link}` and `{@inheritDoc}` links as a part of the linting process.
+	 * Whether or not to evaluate `{@link}` and `{@inheritDoc}` references as a part of the linting process.
 	 * @defaultValue `true`
 	 */
-	checkLinks?: boolean;
+	checkReferences?: boolean;
 }
 
 /**
@@ -39,20 +39,141 @@ export interface LintApiModelOptions extends LoadModelOptions, LinterOptions {}
  */
 const defaultLintApiModelOptions: Required<Omit<LintApiModelOptions, "modelDirectoryPath">> = {
 	...defaultLoadModelOptions,
-	checkLinks: true,
+	checkReferences: true,
 };
+
+/**
+ * Kinds of linter errors reported by {@link lintApiModel}.
+ */
+export enum LinterErrorKind {
+	/**
+	 * Indicates an `{@inheritDoc}` tag included an invalid reference.
+	 */
+	// eslint-disable-next-line unicorn/prevent-abbreviations
+	InheritDocReferenceError = "inheritDocReferenceError",
+
+	/**
+	 * Indicates a `{@link}` tag included an invalid reference.
+	 */
+	LinkReferenceError = "linkReferenceError",
+}
+
+/**
+ * A linter error found while checking the API model.
+ */
+export interface LinterErrorBase<TError extends LinterErrorKind> {
+	/**
+	 * The kind of error.
+	 */
+	readonly kind: TError;
+}
+
+/**
+ * An error resulting from a reference tag with an invalid target.
+ */
+export interface ReferenceError {
+	/**
+	 * Name of the item that included a reference to an invalid target.
+	 */
+	readonly sourceItem: string;
+
+	/**
+	 * The string provided as the reference in a reference tag.
+	 */
+	readonly referenceTarget: string;
+
+	/**
+	 * The name of the package that the {@link ReferenceError.sourceItem} belongs to.
+	 */
+	readonly packageName: string;
+}
+
+/**
+ * An error resulting from an `{@inheritDoc}` tag with an invalid target.
+ */
+// eslint-disable-next-line unicorn/prevent-abbreviations
+export interface InheritDocReferenceError
+	extends LinterErrorBase<LinterErrorKind.InheritDocReferenceError>,
+		ReferenceError {
+	/**
+	 * {@inheritDoc LinterErrorBase.kind}
+	 */
+	readonly kind: LinterErrorKind.InheritDocReferenceError;
+}
+
+/**
+ * An error resulting from a `{@link}` tag with an invalid target.
+ */
+export interface LinkReferenceError
+	extends LinterErrorBase<LinterErrorKind.LinkReferenceError>,
+		ReferenceError {
+	/**
+	 * {@inheritDoc LinterErrorBase.kind}
+	 */
+	readonly kind: LinterErrorKind.LinkReferenceError;
+}
+
+/**
+ * {@link LinterResult} base type.
+ */
+export interface LinterResultBase<TSuccess extends boolean> {
+	/**
+	 * Result "success" status.
+	 */
+	readonly success: TSuccess;
+}
+
+/**
+ * A successful linter result. No issues were found.
+ */
+export interface LinterSuccessResult extends LinterResultBase<true> {
+	/**
+	 * {@inheritDoc LinterResultBase.status}
+	 */
+	readonly success: true;
+}
+
+/**
+ * Success result singleton.
+ */
+const successResult: LinterSuccessResult = { success: true };
+
+/**
+ * A linter failure result. One or more issues were found.
+ */
+export interface LinterFailureResult extends LinterResultBase<false> {
+	/**
+	 * {@inheritDoc LinterResultBase.status}
+	 */
+	readonly success: false;
+
+	/**
+	 * `{@inheritDoc}` reference errors found in the API model.
+	 */
+	readonly inheritDocReferenceErrors: readonly InheritDocReferenceError[];
+
+	/**
+	 * `{@link}` reference errors found in the API model.
+	 */
+	readonly linkReferenceErrors: readonly LinkReferenceError[];
+}
+
+/**
+ * Result of {@link lintApiModel}.
+ * @remarks Includes a {@link LinterResult.success} indicating whether or not the check was a "success" (no issues found) or "failure" (issues found).
+ */
+export type LinterResult = LinterSuccessResult | LinterFailureResult;
 
 /**
  * Validates the given API model.
  *
+ * @returns A "Result" object indicating whether or not the check was a "success" (no issues found) or "failure" (issues found).
+ * In the case of a "failure", all issues found are included.
+ *
  * @throws
  * If the specified {@link LoadModelOptions.modelDirectoryPath} doesn't exist, or if no `.api.json` files are found directly under it.
- *
- * If any issues are detected in the API model. Including:
- *
- * - Invalid `{@link}` or `{@inheritDoc}` links.
  */
-export async function lintApiModel(options: LintApiModelOptions): Promise<void> {
+export async function lintApiModel(options: LintApiModelOptions): Promise<LinterResult> {
 	const optionsWithDefaults: Required<LintApiModelOptions> = {
 		...defaultLintApiModelOptions,
 		...options,
@@ -67,74 +188,112 @@ export async function lintApiModel(options: LintApiModelOptions): Promise<void> 
 
 	logger.verbose("API model loaded.");
 
-	logger.info("Linting API model...");
+	logger.verbose("Linting API model...");
 
-	// Run "lint" checks on the model. Collect errors and throw an aggregate error if any are found.
-	let linkErrors: string[] = [];
-	if (optionsWithDefaults.checkLinks) {
-		linkErrors = checkLinks(apiModel, apiModel);
-	}
+	const result = lintApiItem(apiModel, apiModel, optionsWithDefaults);
 
-	const anyErrors: boolean = linkErrors.length > 0;
-	if (anyErrors) {
-		const writer = DocumentWriter.create();
-		writer.writeLine("API model linting failed with the following errors:");
-		writer.increaseIndent();
-		if (linkErrors.length > 0) {
-			writer.writeLine("Link errors:");
-			writer.increaseIndent("  - ");
-			for (const linkError of linkErrors) {
-				writer.writeLine(linkError.trim());
-			}
-		}
-
-		throw new Error(writer.getText().trim());
-	} else {
-		logger.success("API model linting passed.");
-	}
+	logger.verbose("API model linting completed.");
+	return result;
 }
 
 /**
- * Checks link tags in the provided API item and its descendants, ensuring any reference targets are valid within the API model.
+ * Recursively validates the given API item and all its descendants within the API model.
  */
-function checkLinks(apiItem: ApiItem, apiModel: ApiModel): string[] {
-	const errors: string[] = [];
+function lintApiItem(
+	apiItem: ApiItem,
+	apiModel: ApiModel,
+	options: Required<LintApiModelOptions>,
+): LinterResult {
+	// eslint-disable-next-line unicorn/prevent-abbreviations
+	let inheritDocReferenceError: InheritDocReferenceError | undefined;
+	const linkReferenceErrors: LinkReferenceError[] | undefined = undefined;
 
 	// If the item is documented, check its link tags for errors.
-	if (apiItem instanceof ApiDocumentedItem) {
+	if (options.checkReferences && apiItem instanceof ApiDocumentedItem) {
 		// Check `{@inheritDoc}` tag
-		// eslint-disable-next-line unicorn/prevent-abbreviations
-		const inheritDocError = checkInheritDocTag(apiItem, apiModel);
-		if (inheritDocError !== undefined) {
-			errors.push(inheritDocError);
-		}
+		inheritDocReferenceError = checkInheritDocTag(apiItem, apiModel);
 
 		// TODO: Check `{@link}` tags
 	}
 
-	// If the item has children, recurse into them to verify tags of all descendants.
+	const myResult: LinterResult =
+		inheritDocReferenceError === undefined && linkReferenceErrors === undefined
+			? successResult
+			: {
+					success: false,
+					inheritDocReferenceErrors:
+						inheritDocReferenceError === undefined ? [] : [inheritDocReferenceError],
+					linkReferenceErrors: linkReferenceErrors ?? [],
+			  };
+
+	// If the item has children, recursively validate them.
+	let membersResult: LinterResult = successResult;
 	if (ApiItemContainerMixin.isBaseClassOf(apiItem)) {
-		for (const member of apiItem.members) {
-			errors.push(...checkLinks(member, apiModel));
-		}
+		const memberResults = apiItem.members.map((member) =>
+			lintApiItem(member, apiModel, options),
+		);
+
+		// eslint-disable-next-line unicorn/no-array-reduce
+		membersResult = memberResults.reduce(
+			(previous, current) => mergeLinterResults(previous, current),
+			successResult,
+		);
 	}
 
-	return errors;
+	return mergeLinterResults(myResult, membersResult);
+}
+
+/**
+ * Merges two {@link LinterResult}s into a single result.
+ */
+function mergeLinterResults(a: LinterResult, b: LinterResult): LinterResult {
+	if (a.success && b.success) {
+		return successResult;
+	}
+
+	if (a.success) {
+		return b;
+	}
+
+	if (b.success) {
+		return a;
+	}
+
+	// eslint-disable-next-line unicorn/prevent-abbreviations
+	const inheritDocReferenceErrors = [
+		...a.inheritDocReferenceErrors,
+		...b.inheritDocReferenceErrors,
+	];
+	const linkReferenceErrors = [...a.linkReferenceErrors, ...b.linkReferenceErrors];
+
+	return {
+		success: false,
+		inheritDocReferenceErrors,
+		linkReferenceErrors,
+	};
 }
 
 /**
  * Checks the provided API item's `{@inheritDoc}` tag, ensuring that the target reference is valid within the API model.
  */
 // eslint-disable-next-line unicorn/prevent-abbreviations
-function checkInheritDocTag(apiItem: ApiDocumentedItem, apiModel: ApiModel): string | undefined {
+function checkInheritDocTag(
+	apiItem: ApiDocumentedItem,
+	apiModel: ApiModel,
+): InheritDocReferenceError | undefined {
 	// eslint-disable-next-line unicorn/prevent-abbreviations
 	const inheritDocTag: DocInheritDocTag | undefined = apiItem.tsdocComment?.inheritDocTag;
 
 	if (inheritDocTag?.declarationReference !== undefined) {
 		try {
 			resolveSymbolicReference(apiItem, inheritDocTag.declarationReference, apiModel);
-		} catch (error: unknown) {
-			return (error as Error).message;
+		} catch {
+			return {
+				kind: LinterErrorKind.InheritDocReferenceError,
+				sourceItem: apiItem.getScopedNameWithinPackage(),
+				packageName: apiItem.getAssociatedPackage()?.name ?? fail("Package name not found"),
+				referenceTarget: inheritDocTag.declarationReference.emitAsTsdoc(),
+			};
 		}
 
 		return undefined;

@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 import { expect } from "chai";
 
-import { lintApiModel } from "../LintApiModel.js";
+import { lintApiModel, LinterErrorKind, type LinterResult } from "../LintApiModel.js";
 
 const dirname = Path.dirname(fileURLToPath(import.meta.url));
 const testModelsDirectoryPath = Path.resolve(dirname, "..", "..", "src", "test", "test-data");
@@ -16,18 +16,22 @@ const testModelsDirectoryPath = Path.resolve(dirname, "..", "..", "src", "test",
 describe("lintApiModel", () => {
 	it("API Model with invalid links yields the expected errors", async () => {
 		const modelDirectoryPath = Path.resolve(testModelsDirectoryPath, "simple-suite-test");
-		const expectedError = `API model linting failed with the following errors:
-  Link errors:
-    - Unable to resolve reference "BadInheritDocTarget" from "simple-suite-test#TestInterface.propertyWithBadInheritDocTarget": The member reference "BadInheritDocTarget" was not found`;
 
-		try {
-			await lintApiModel({ modelDirectoryPath });
-		} catch (error: unknown) {
-			expect(error).to.be.an.instanceOf(Error);
-			expect((error as Error).message).to.equal(expectedError);
-			return;
-		}
-		expect.fail("Expected an error to be thrown, but none was.");
+		const expected: LinterResult = {
+			success: false,
+			inheritDocReferenceErrors: [
+				{
+					kind: LinterErrorKind.InheritDocReferenceError,
+					sourceItem: "TestInterface.propertyWithBadInheritDocTarget",
+					packageName: "simple-suite-test",
+					referenceTarget: "BadInheritDocTarget",
+				},
+			],
+			linkReferenceErrors: [], // TODO: fill in once link checking is added.
+		};
+
+		const result = await lintApiModel({ modelDirectoryPath });
+		expect(result).to.deep.equal(expected);
 	});
 
 	it("Invalid model directory throws", async () => {
