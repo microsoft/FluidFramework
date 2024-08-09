@@ -766,10 +766,7 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * Submits the signal to be sent to other clients.
-	 * @param type - Type of the signal.
-	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
-	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreContext.submitSignal}
 	 */
 	public submitSignal(type: string, content: unknown, targetClientId?: string) {
 		this.verifyNotClosed("submitSignal");
