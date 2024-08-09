@@ -338,7 +338,7 @@ export class LazyMap<TSchema extends FlexMapNodeSchema>
 
 		if (fieldSchema.kind === FieldKinds.optional) {
 			const optionalField = field as FlexTreeOptionalField<FlexAllowedTypes>;
-			optionalField.content = content;
+			optionalField.content = content?.[0];
 		} else {
 			assert(fieldSchema.kind === FieldKinds.sequence, 0x807 /* Unexpected map field kind */);
 

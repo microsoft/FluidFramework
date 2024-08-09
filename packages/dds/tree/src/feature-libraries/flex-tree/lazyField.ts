@@ -54,6 +54,7 @@ import { type LazyTreeNode, makeTree } from "./lazyNode.js";
 import { unboxedUnion } from "./unboxed.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { cursorForMapTreeNode } from "../mapTreeCursor.js";
 
 /**
  * Reuse fields.
@@ -350,8 +351,7 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 
 	public override set content(newContent: FlexibleNodeContent) {
 		assert(newContent !== undefined, "Cannot set a required field to undefined");
-		assert(newContent.mode === CursorLocationType.Nodes, "should be in nodes mode");
-		this.valueFieldEditor().set(newContent);
+		this.valueFieldEditor().set(cursorForMapTreeNode(newContent));
 	}
 }
 
@@ -393,7 +393,10 @@ export class LazyOptionalField<TTypes extends FlexAllowedTypes>
 	}
 
 	public set content(newContent: FlexibleNodeContent | undefined) {
-		this.optionalEditor().set(newContent, this.length === 0);
+		this.optionalEditor().set(
+			newContent !== undefined ? cursorForMapTreeNode(newContent) : undefined,
+			this.length === 0,
+		);
 	}
 }
 

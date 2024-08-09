@@ -48,6 +48,7 @@ import {
 	type FlexTreeField,
 	type FlexTreeNode,
 	type FlexTreeNodeSchema,
+	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import type { TreeContent, ITreeCheckout } from "../../../shared-tree/index.js";
 import { brand, capitalize } from "../../../util/index.js";
@@ -374,12 +375,12 @@ describe("LazyNode", () => {
 			const mapNode = view.flexTree.content;
 			assert(mapNode.is(mapNodeSchema));
 
-			mapNode.set("baz", singleJsonCursor("First edit"));
-			mapNode.set("foo", singleJsonCursor("Second edit"));
+			mapNode.set("baz", [mapTreeFromCursor(singleJsonCursor("First edit"))]);
+			mapNode.set("foo", [mapTreeFromCursor(singleJsonCursor("Second edit"))]);
 			assert.equal(mapNode.get("baz"), "First edit");
 			assert.equal(mapNode.get("foo"), "Second edit");
 
-			mapNode.set("foo", singleJsonCursor("X"));
+			mapNode.set("foo", [mapTreeFromCursor(singleJsonCursor("X"))]);
 			assert.equal(mapNode.get("foo"), "X");
 			mapNode.set("foo", undefined);
 			assert.equal(mapNode.get("foo"), undefined);
@@ -472,10 +473,10 @@ describe("LazyNode", () => {
 		it("Value assignment generates edits", () => {
 			assert.equal(editCallCount, 0);
 
-			node.setFoo(singleJsonCursor("First edit"));
+			node.setFoo(mapTreeFromCursor(singleJsonCursor("First edit")));
 			assert.equal(editCallCount, 1);
 
-			node.setFoo(singleJsonCursor("Second edit"));
+			node.setFoo(mapTreeFromCursor(singleJsonCursor("Second edit")));
 			assert.equal(editCallCount, 2);
 		});
 	});

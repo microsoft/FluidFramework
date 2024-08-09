@@ -7,7 +7,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { FieldKey } from "../core/index.js";
 import {
-	cursorForMapTreeNode,
 	FieldKinds,
 	type FlexAllowedTypes,
 	type FlexObjectNodeSchema,
@@ -279,7 +278,7 @@ export function setField(
 				prepareContentForHydration(mapTree, field.context.checkout.forest);
 			}
 
-			typedField.content = mapTree !== undefined ? cursorForMapTreeNode(mapTree) : undefined;
+			typedField.content = mapTree;
 			break;
 		}
 
