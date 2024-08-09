@@ -6,7 +6,6 @@
 export {
 	IImportExportModel,
 	IMigratableModel,
-	IMigratableModel2,
 	IVersionedModel,
 } from "./migratableModel.js";
 export {
@@ -18,7 +17,6 @@ export {
 export {
 	DataTransformationCallback,
 	IMigrator,
-	IMigrator2,
 	IMigratorEvents,
 } from "./migrator.js";
 export {

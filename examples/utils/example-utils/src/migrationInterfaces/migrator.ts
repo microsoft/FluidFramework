@@ -5,11 +5,7 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 
-import type {
-	IMigratableModel,
-	IMigratableModel2,
-	MigrationState,
-} from "../migrationInterfaces/index.js";
+import type { IMigratableModel, MigrationState } from "../migrationInterfaces/index.js";
 
 /**
  * The DataTransformationCallback gives an opportunity to modify the exported data before attempting an import
@@ -41,30 +37,6 @@ export interface IMigrator {
 	 * migrated model and emit a "migrated" event.
 	 */
 	readonly currentModel: IMigratableModel;
-
-	/**
-	 * The container id of the current model.
-	 */
-	readonly currentModelId: string;
-
-	/**
-	 * The migration state of the current model.  Note that since we swap out for the new model as soon as migration
-	 * completes, we'll only ever see this as collaborating or migrating, never migrated.
-	 */
-	readonly migrationState: MigrationState;
-}
-
-/**
- * @internal
- */
-export interface IMigrator2 {
-	readonly events: IEventProvider<IMigratorEvents>;
-
-	/**
-	 * The currently monitored migratable model.  As the Migrator completes a migration, it will swap in the new
-	 * migrated model and emit a "migrated" event.
-	 */
-	readonly currentModel: IMigratableModel2;
 
 	/**
 	 * The container id of the current model.

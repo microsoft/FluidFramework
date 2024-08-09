@@ -9,9 +9,9 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type {
 	DataTransformationCallback,
-	IMigratableModel2,
+	IMigratableModel,
 	IMigrationTool,
-	IMigrator2,
+	IMigrator,
 	IMigratorEvents,
 	MigrationState,
 } from "../migrationInterfaces/index.js";
@@ -20,9 +20,9 @@ import type { IDetachedModel, IMigratableModelLoader } from "../modelLoader/inde
 /**
  * @internal
  */
-export class Migrator implements IMigrator2 {
-	private _currentModel: IMigratableModel2;
-	public get currentModel(): IMigratableModel2 {
+export class Migrator implements IMigrator {
+	private _currentModel: IMigratableModel;
+	public get currentModel(): IMigratableModel {
 		return this._currentModel;
 	}
 
@@ -64,7 +64,7 @@ export class Migrator implements IMigrator2 {
 	/**
 	 * Detached model that is ready to attach. This is stored for retry scenarios.
 	 */
-	private _preparedDetachedModel: IDetachedModel<IMigratableModel2> | undefined;
+	private _preparedDetachedModel: IDetachedModel<IMigratableModel> | undefined;
 
 	/**
 	 * After attaching the prepared model, but before we have written its ID into the current model, we'll store the ID
@@ -73,8 +73,8 @@ export class Migrator implements IMigrator2 {
 	private _preparedModelId: string | undefined;
 
 	public constructor(
-		private readonly modelLoader: IMigratableModelLoader<IMigratableModel2>,
-		initialMigratable: IMigratableModel2,
+		private readonly modelLoader: IMigratableModelLoader<IMigratableModel>,
+		initialMigratable: IMigratableModel,
 		initialMigrationTool: IMigrationTool,
 		initialId: string,
 		private readonly dataTransformationCallback?: DataTransformationCallback,

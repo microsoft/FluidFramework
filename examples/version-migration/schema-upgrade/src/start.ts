@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigratableModel2, IMigrationTool, IVersionedModel } from "@fluid-example/example-utils";
+import type {
+	IMigratableModel,
+	IMigrationTool,
+	IVersionedModel,
+} from "@fluid-example/example-utils";
 import { MigratableModelLoader, Migrator } from "@fluid-example/example-utils";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
@@ -29,7 +33,7 @@ const updateTabForId = (id: string) => {
 
 const isIInventoryListAppModel = (
 	model: IVersionedModel,
-): model is IInventoryListAppModel & IMigratableModel2 => {
+): model is IInventoryListAppModel & IMigratableModel => {
 	return model.version === "one" || model.version === "two";
 };
 
@@ -42,7 +46,10 @@ const render = (model: IVersionedModel, migrationTool: IMigrationTool) => {
 	// versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
 	// view code loader to pull in the view dynamically based on the version we discover.
 	if (isIInventoryListAppModel(model)) {
-		ReactDOM.render(React.createElement(InventoryListAppView, { model, migrationTool }), appDiv);
+		ReactDOM.render(
+			React.createElement(InventoryListAppView, { model, migrationTool }),
+			appDiv,
+		);
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 		const debugDiv = document.getElementById("debug") as HTMLDivElement;
@@ -67,7 +74,7 @@ async function start(): Promise<void> {
 	// container.getEntryPoint().model if we knew that was the model.
 	// TODO: This is really loading an IInventoryListAppModel & IMigratableModel (we know this because of what the
 	// DemoCodeLoader supports).  Should we just use that more-specific type in the typing here?
-	const modelLoader = new MigratableModelLoader<IMigratableModel2>({
+	const modelLoader = new MigratableModelLoader<IMigratableModel>({
 		urlResolver: new InsecureTinyliciousUrlResolver(),
 		documentServiceFactory: new RouterliciousDocumentServiceFactory(
 			new InsecureTinyliciousTokenProvider(),
@@ -77,7 +84,7 @@ async function start(): Promise<void> {
 	});
 
 	let id: string;
-	let model: IMigratableModel2;
+	let model: IMigratableModel;
 	let migrationTool: IMigrationTool;
 
 	if (location.hash.length === 0) {
@@ -85,7 +92,7 @@ async function start(): Promise<void> {
 		// Normally we would create with the most-recent version.
 		const createResponse = await modelLoader.createDetached("one");
 		model = createResponse.model;
-		migrationTool = createResponse.migrationTool
+		migrationTool = createResponse.migrationTool;
 		id = await createResponse.attach();
 	} else {
 		id = location.hash.substring(1);

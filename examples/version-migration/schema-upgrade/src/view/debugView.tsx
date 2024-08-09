@@ -3,13 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigratableModel2, IMigrationTool, MigrationState } from "@fluid-example/example-utils";
+import type {
+	IMigratableModel,
+	IMigrationTool,
+	MigrationState,
+} from "@fluid-example/example-utils";
 import React, { useEffect, useState } from "react";
 
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
 
 export interface IDebugViewProps {
-	model: IInventoryListAppModel & IMigratableModel2;
+	model: IInventoryListAppModel & IMigratableModel;
 	migrationTool: IMigrationTool;
 	getUrlForContainerId?: (containerId: string) => string;
 }
@@ -39,7 +43,11 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 	return (
 		<div>
 			<h2 style={{ textDecoration: "underline" }}>Debug info</h2>
-			<MigrationStatusView model={model} migrationTool={migrationTool} getUrlForContainerId={getUrlForContainerId} />
+			<MigrationStatusView
+				model={model}
+				migrationTool={migrationTool}
+				getUrlForContainerId={getUrlForContainerId}
+			/>
 			<ControlsView
 				proposeVersion={migrationTool.proposeVersion}
 				addItem={model.inventoryList.addItem}
@@ -50,7 +58,7 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 };
 
 interface IMigrationStatusViewProps {
-	readonly model: IMigratableModel2;
+	readonly model: IMigratableModel;
 	readonly migrationTool: IMigrationTool;
 	readonly getUrlForContainerId?: (containerId: string) => string;
 }
@@ -95,10 +103,7 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 		}
 
 		const navToNewContainer = () => {
-			if (
-				migrationTool.newContainerId !== undefined &&
-				getUrlForContainerId !== undefined
-			) {
+			if (migrationTool.newContainerId !== undefined && getUrlForContainerId !== undefined) {
 				location.href = getUrlForContainerId(migrationTool.newContainerId);
 				location.reload();
 			}

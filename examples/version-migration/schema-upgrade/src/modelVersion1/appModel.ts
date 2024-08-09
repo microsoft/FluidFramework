@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigratableModel, IMigrationTool } from "@fluid-example/example-utils";
+import type { IMigratableModel } from "@fluid-example/example-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 
@@ -25,7 +25,6 @@ export class InventoryListAppModel implements IInventoryListAppModel, IMigratabl
 
 	public constructor(
 		public readonly inventoryList: IInventoryList,
-		public readonly migrationTool: IMigrationTool,
 		private readonly container: IContainer,
 	) {}
 
