@@ -94,21 +94,25 @@ export async function lintApiModel(options: LintApiModelOptions): Promise<void> 
 	}
 }
 
+/**
+ * Checks link tags in the provided API item and its descendants, ensuring any reference targets are valid within the API model.
+ */
 function checkLinks(apiItem: ApiItem, apiModel: ApiModel): string[] {
 	const errors: string[] = [];
 
+	// If the item is documented, check its link tags for errors.
 	if (apiItem instanceof ApiDocumentedItem) {
-		// Check `@inheritDoc` tag
+		// Check `{@inheritDoc}` tag
 		// eslint-disable-next-line unicorn/prevent-abbreviations
 		const inheritDocError = checkInheritDocTag(apiItem, apiModel);
 		if (inheritDocError !== undefined) {
 			errors.push(inheritDocError);
 		}
 
-		// TODO: Check link tags
+		// TODO: Check `{@link}` tags
 	}
 
-	// Recurse members
+	// If the item has children, recurse into them to verify tags of all descendants.
 	if (ApiItemContainerMixin.isBaseClassOf(apiItem)) {
 		for (const member of apiItem.members) {
 			errors.push(...checkLinks(member, apiModel));
@@ -118,6 +122,9 @@ function checkLinks(apiItem: ApiItem, apiModel: ApiModel): string[] {
 	return errors;
 }
 
+/**
+ * Checks the provided API item's `{@inheritDoc}` tag, ensuring that the target reference is valid within the API model.
+ */
 // eslint-disable-next-line unicorn/prevent-abbreviations
 function checkInheritDocTag(apiItem: ApiDocumentedItem, apiModel: ApiModel): string | undefined {
 	// eslint-disable-next-line unicorn/prevent-abbreviations
