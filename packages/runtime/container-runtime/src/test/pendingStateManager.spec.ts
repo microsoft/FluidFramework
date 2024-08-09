@@ -407,15 +407,11 @@ describe("Pending State Manager", () => {
 		describe("Future op compat behavior", () => {
 			it("pending op roundtrip", async () => {
 				const pendingStateManager = createPendingStateManager([]);
-				const futureRuntimeMessage: Pick<
-					ISequencedDocumentMessage,
-					"type" | "contents" | "clientSequenceNumber"
-				> &
+				const futureRuntimeMessage: Pick<ISequencedDocumentMessage, "type" | "contents"> &
 					RecentlyAddedContainerRuntimeMessageDetails = {
 					type: "FROM_THE_FUTURE",
 					contents: "Hello",
 					compatDetails: { behavior: "FailToProcess" },
-					clientSequenceNumber: 1,
 				};
 
 				pendingStateManager.onFlushBatch(
