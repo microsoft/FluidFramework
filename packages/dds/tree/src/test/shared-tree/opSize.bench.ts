@@ -5,21 +5,20 @@
 
 import { strict as assert, fail } from "assert";
 
-import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import { BenchmarkType, benchmarkCustom, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import Table from "easy-table";
 
 import {
 	AllowedUpdateType,
-	type FieldKey,
-	type JsonableTree,
-	type Value,
+	FieldKey,
+	JsonableTree,
+	Value,
 	forEachNode,
 	moveToDetachedField,
 	rootFieldKey,
@@ -30,8 +29,8 @@ import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeNode,
 } from "../../feature-libraries/index.js";
-import type { ISharedTree, ITreeCheckout, SharedTree } from "../../shared-tree/index.js";
-import { type JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util/index.js";
+import { ISharedTree, ITreeCheckout, SharedTree } from "../../shared-tree/index.js";
+import { JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util/index.js";
 import { schematizeFlexTree, treeTestFactory } from "../utils.js";
 
 // Notes:
@@ -394,25 +393,17 @@ describe("Op Size", () => {
 	let currentBenchmarkName = "";
 	const currentTestOps: ISequencedDocumentMessage[] = [];
 
-	function registerOpListener(
-		tree: ISharedTree,
-		resultArray: ISequencedDocumentMessage[],
-	): void {
+	function registerOpListener(tree: ISharedTree, resultArray: ISequencedDocumentMessage[]): void {
 		// TODO: better way to hook this up. Needs to detect local ops exactly once.
-		/* eslint-disable @typescript-eslint/no-explicit-any */
 		const oldSubmitLocalMessage = (tree as any).submitLocalMessage.bind(tree);
-		function submitLocalMessage(
-			content: ISequencedDocumentMessage,
-			localOpMetadata: unknown = undefined,
-		): void {
+		function submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
 			resultArray.push(content);
 			oldSubmitLocalMessage(content, localOpMetadata);
 		}
 		(tree as any).submitLocalMessage = submitLocalMessage;
-		/* eslint-enable @typescript-eslint/no-explicit-any */
 	}
 
-	const getOperationsStats = (operations: ISequencedDocumentMessage[]) => {
+	const getOperationsStats = (operations: ISequencedDocumentMessage[]): Record<string, any> => {
 		const lengths = operations.map((operation) =>
 			utf8Length(operation as unknown as JsonCompatibleReadOnly),
 		);
@@ -456,25 +447,6 @@ describe("Op Size", () => {
 		currentTestOps.length = 0;
 	});
 
-	after(() => {
-		const allBenchmarkOpStats: Record<string, unknown>[] = [];
-		for (const [benchmarkName, ops] of opsByBenchmarkName) {
-			allBenchmarkOpStats.push({
-				"Test name": benchmarkName,
-				...getOperationsStats(ops),
-			});
-		}
-		const table = new Table();
-		allBenchmarkOpStats.forEach((data) => {
-			Object.keys(data).forEach((key) => table.cell(key, data[key]));
-			table.newRow();
-		});
-		table.sort(["Avg. Op Size (Bytes)|des"]);
-
-		console.log("-- Op Size Benchmark Statistics -- ");
-		console.log(table.toString());
-	});
-
 	describe("Insert Nodes", () => {
 		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
 			const tree = createConnectedTree();
@@ -496,8 +468,17 @@ describe("Op Size", () => {
 		for (const { description, style, extraDescription } of styles) {
 			describe(description, () => {
 				for (const { percentile, word } of sizes) {
-					it(`${BENCHMARK_NODE_COUNT} ${word} nodes in ${extraDescription}`, () => {
-						benchmarkOps(style, percentile);
+					benchmarkCustom({
+						only: false,
+						type: BenchmarkType.Measurement,
+						title: `${BENCHMARK_NODE_COUNT} ${word} nodes in ${extraDescription}`,
+						run: async (reporter) => {
+							benchmarkOps(style, percentile);
+							const opStats = getOperationsStats(currentTestOps);
+							for (const key of Object.keys(opStats)) {
+								reporter.addMeasurement(key, opStats[key]);
+							}
+						},
 					});
 				}
 			});
@@ -526,12 +507,22 @@ describe("Op Size", () => {
 		for (const { description, style, extraDescription } of styles) {
 			describe(description, () => {
 				for (const { percentile, word } of sizes) {
-					it(`${BENCHMARK_NODE_COUNT} ${word} nodes in ${
+					const title = `${BENCHMARK_NODE_COUNT} ${word} nodes in ${
 						style === TransactionStyle.Individual
 							? extraDescription
 							: `1 transactions containing 1 removal of ${BENCHMARK_NODE_COUNT} nodes`
-					}`, () => {
-						benchmarkOps(style, percentile);
+					}`;
+					benchmarkCustom({
+						only: false,
+						type: BenchmarkType.Measurement,
+						title,
+						run: async (reporter) => {
+							benchmarkOps(style, percentile);
+							const opStats = getOperationsStats(currentTestOps);
+							for (const key of Object.keys(opStats)) {
+								reporter.addMeasurement(key, opStats[key]);
+							}
+						},
 					});
 				}
 			});
@@ -559,10 +550,22 @@ describe("Op Size", () => {
 		for (const { description, style, extraDescription } of styles) {
 			describe(description, () => {
 				for (const { percentile, word } of sizes) {
-					it(`${BENCHMARK_NODE_COUNT} ${word} changes in ${extraDescription} containing ${
-						style === TransactionStyle.Individual ? "1 edit" : `${BENCHMARK_NODE_COUNT} edits`
-					}`, () => {
-						benchmarkOps(style, percentile);
+					const title = `${BENCHMARK_NODE_COUNT} ${word} changes in ${extraDescription} containing ${
+						style === TransactionStyle.Individual
+							? "1 edit"
+							: `${BENCHMARK_NODE_COUNT} edits`
+					}`;
+					benchmarkCustom({
+						only: false,
+						type: BenchmarkType.Measurement,
+						title,
+						run: async (reporter) => {
+							benchmarkOps(style, percentile);
+							const opStats = getOperationsStats(currentTestOps);
+							for (const key of Object.keys(opStats)) {
+								reporter.addMeasurement(key, opStats[key]);
+							}
+						},
 					});
 				}
 			});
@@ -631,7 +634,11 @@ describe("Op Size", () => {
 
 				// insert
 				const insertChildNode = createTreeWithSize(
-					getSuccessfulOpByteSize(Operation.Insert, TransactionStyle.Individual, percentile),
+					getSuccessfulOpByteSize(
+						Operation.Insert,
+						TransactionStyle.Individual,
+						percentile,
+					),
 				);
 				insertNodesWithIndividualTransactions(view, insertChildNode, insertNodeCount);
 				assertChildNodeCount(view, insertNodeCount);
@@ -649,7 +656,11 @@ describe("Op Size", () => {
 					deleteCurrentOps(); // We don't want to record the ops from re-initializing the tree.
 				}
 				const editPayload = createStringFromLength(
-					getSuccessfulOpByteSize(Operation.Edit, TransactionStyle.Individual, percentile),
+					getSuccessfulOpByteSize(
+						Operation.Edit,
+						TransactionStyle.Individual,
+						percentile,
+					),
 				);
 				editNodesWithIndividualTransactions(view, editNodeCount, editPayload);
 				expectChildrenValues(view, editPayload, editNodeCount);
@@ -660,7 +671,10 @@ describe("Op Size", () => {
 				describe(suiteDescription, () => {
 					for (const { percentile } of sizes) {
 						it(`Percentile: ${percentile}`, () => {
-							benchmarkInsertRemoveEditNodesWithInvidiualTxs(percentile, distribution);
+							benchmarkInsertRemoveEditNodesWithInvidiualTxs(
+								percentile,
+								distribution,
+							);
 						});
 					}
 				});
