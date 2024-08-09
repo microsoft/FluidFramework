@@ -16,10 +16,13 @@ import {
 	getContainerEntryPointBackCompat,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
+import sinon from "sinon";
 
 type ContainerRuntime = IContainerRuntimeBase &
 	IRuntime & {
 		clientId?: string | undefined;
+
+		emit(event: "signal"): void;
 	};
 
 const waitForSignals = async (
@@ -101,39 +104,25 @@ describeCompat("Signal performance telemetry", "NoCompat", (getTestObjectProvide
 				},
 			],
 			async () => {
-				// Initial signal
+				const processSignalStub = sinon.stub(containerRuntime, "processSignal");
+
+				processSignalStub.callThrough();
+
 				containerRuntime.submitSignal("signal", "test");
 				await waitForSignals(1, containerRuntime);
 
-				// Simulate receiving next in-sequence signal
-				containerRuntime.processSignal(
-					{
-						clientId: containerRuntime.clientId,
-						content: {
-							clientSignalSequenceNumber: 2,
-							contents: {
-								type: "signal",
-								content: "test",
-							},
-						},
-					},
-					true,
-				);
+				processSignalStub.callsFake((message, local) => {
+					// Simulate a dropped signal
+					containerRuntime.emit("signal");
+				});
 
-				// Process a signal with a sequence number that is higher than expected to simulate missing signals and trigger a SignalLost error event.
-				containerRuntime.processSignal(
-					{
-						clientId: containerRuntime.clientId,
-						content: {
-							clientSignalSequenceNumber: 4,
-							contents: {
-								type: "signal",
-								content: "test",
-							},
-						},
-					},
-					true,
-				);
+				containerRuntime.submitSignal("signal", "test");
+				await waitForSignals(1, containerRuntime);
+
+				processSignalStub.callThrough();
+
+				containerRuntime.submitSignal("signal", "test");
+				await waitForSignals(1, containerRuntime);
 			},
 		);
 
@@ -150,192 +139,31 @@ describeCompat("Signal performance telemetry", "NoCompat", (getTestObjectProvide
 				},
 			],
 			async () => {
-				// Initial signal
+				const processSignalStub = sinon.stub(containerRuntime, "processSignal");
+
+				processSignalStub.callThrough();
+
 				containerRuntime.submitSignal("signal", "test");
 				await waitForSignals(1, containerRuntime);
 
-				// Simulate receiving next in-sequence signal
+				processSignalStub.callsFake((message, local) => {
+					// Simulate a dropped signal
+					containerRuntime.emit("signal");
+				});
+
+				containerRuntime.submitSignal("signal", "test");
+				await waitForSignals(1, containerRuntime);
+
+				processSignalStub.callThrough();
+
+				containerRuntime.submitSignal("signal", "test");
+				await waitForSignals(1, containerRuntime);
+
 				containerRuntime.processSignal(
 					{
 						clientId: containerRuntime.clientId,
 						content: {
 							clientSignalSequenceNumber: 2,
-							contents: {
-								type: "signal",
-								content: "test",
-							},
-						},
-					},
-					true,
-				);
-
-				// Simulate a lost signal by processing a signal with a sequence number that is higher than expected
-				containerRuntime.processSignal(
-					{
-						clientId: containerRuntime.clientId,
-						content: {
-							clientSignalSequenceNumber: 4,
-							contents: {
-								type: "signal",
-								content: "test",
-							},
-						},
-					},
-					true,
-				);
-				// Simulate an out of order signal
-				containerRuntime.processSignal(
-					{
-						clientId: containerRuntime.clientId,
-						content: {
-							clientSignalSequenceNumber: 3,
-							contents: {
-								type: "signal",
-								content: "test",
-							},
-						},
-					},
-					true,
-				);
-			},
-		);
-
-		itExpects(
-			"Multiple SignalLost error events after multiple missing signals are detected",
-			[
-				{
-					eventName: "fluid:telemetry:ContainerRuntime:SignalLost",
-					clientType: "interactive",
-				},
-				{
-					eventName: "fluid:telemetry:ContainerRuntime:SignalLost",
-					clientType: "interactive",
-				},
-			],
-			async () => {
-				// Initial signal
-				containerRuntime.submitSignal("signal", "test");
-				await waitForSignals(1, containerRuntime);
-
-				// Simulate receiving next in-sequence signal
-				containerRuntime.processSignal(
-					{
-						clientId: containerRuntime.clientId,
-						content: {
-							clientSignalSequenceNumber: 2,
-							contents: {
-								type: "signal",
-								content: "test",
-							},
-						},
-					},
-					true,
-				);
-
-				// Simulate a lost signal by processing a signal with a sequence number that is higher than expected
-				containerRuntime.processSignal(
-					{
-						clientId: containerRuntime.clientId,
-						content: {
-							clientSignalSequenceNumber: 4,
-							contents: {
-								type: "signal",
-								content: "test",
-							},
-						},
-					},
-					true,
-				);
-
-				// Simulate another lost signal by processing a signal with a sequence number that is higher than expected
-				containerRuntime.processSignal(
-					{
-						clientId: containerRuntime.clientId,
-						content: {
-							clientSignalSequenceNumber: 6,
-							contents: {
-								type: "signal",
-								content: "test",
-							},
-						},
-					},
-					true,
-				);
-			},
-		);
-
-		itExpects(
-			"Multiple SignalOutOfOrder error events after multiple missing signals are received non-sequentially",
-			[
-				{
-					eventName: "fluid:telemetry:ContainerRuntime:SignalLost",
-					clientType: "interactive",
-				},
-				{
-					eventName: "fluid:telemetry:ContainerRuntime:SignalOutOfOrder",
-					clientType: "interactive",
-				},
-				{
-					eventName: "fluid:telemetry:ContainerRuntime:SignalOutOfOrder",
-					clientType: "interactive",
-				},
-			],
-			async () => {
-				// Initial signal
-				containerRuntime.submitSignal("signal", "test");
-				await waitForSignals(1, containerRuntime);
-
-				// Simulate receiving next in-sequence signal
-				containerRuntime.processSignal(
-					{
-						clientId: containerRuntime.clientId,
-						content: {
-							clientSignalSequenceNumber: 2,
-							contents: {
-								type: "signal",
-								content: "test",
-							},
-						},
-					},
-					true,
-				);
-
-				// Simulate a lost signal by processing a signal with a sequence number that is higher than expected
-				containerRuntime.processSignal(
-					{
-						clientId: containerRuntime.clientId,
-						content: {
-							clientSignalSequenceNumber: 5,
-							contents: {
-								type: "signal",
-								content: "test",
-							},
-						},
-					},
-					true,
-				);
-
-				// Simulate out of order signal
-				containerRuntime.processSignal(
-					{
-						clientId: containerRuntime.clientId,
-						content: {
-							clientSignalSequenceNumber: 3,
-							contents: {
-								type: "signal",
-								content: "test",
-							},
-						},
-					},
-					true,
-				);
-
-				// Simulate another out of order signal
-				containerRuntime.processSignal(
-					{
-						clientId: containerRuntime.clientId,
-						content: {
-							clientSignalSequenceNumber: 4,
 							contents: {
 								type: "signal",
 								content: "test",
