@@ -45,7 +45,12 @@ const defaultLintApiModelOptions: Required<Omit<LintApiModelOptions, "modelDirec
 /**
  * Validates the given API model.
  *
- * @throws If the specified {@link LoadModelOptions.modelDirectoryPath} doesn't exist, or if no `.api.json` files are found directly under it.
+ * @throws
+ * If the specified {@link LoadModelOptions.modelDirectoryPath} doesn't exist, or if no `.api.json` files are found directly under it.
+ *
+ * If any issues are detected in the API model. Including:
+ *
+ * - Invalid `{@link}` or `{@inheritDoc}` links.
  */
 export async function lintApiModel(options: LintApiModelOptions): Promise<void> {
 	const optionsWithDefaults: Required<LintApiModelOptions> = {
