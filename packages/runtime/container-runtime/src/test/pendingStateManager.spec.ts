@@ -525,7 +525,7 @@ describe("Pending State Manager", () => {
 					referenceSequenceNumber: 10,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1 },
 				},
 				{
 					type: "message",
@@ -533,7 +533,7 @@ describe("Pending State Manager", () => {
 					referenceSequenceNumber: 11,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchContext: { clientId: "CLIENT_ID", batchStartCsn: 2 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1 },
 				},
 			];
 
@@ -564,7 +564,7 @@ describe("Pending State Manager", () => {
 					referenceSequenceNumber: 10,
 					opMetadata: undefined,
 					localOpMetadata: { emptyBatch: true },
-					batchContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1 },
 				},
 			];
 
@@ -703,7 +703,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 10,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
+				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1 },
 			},
 			{
 				type: "message",
@@ -711,7 +711,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 11,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchContext: { clientId: "CLIENT_ID", batchStartCsn: 2 },
+				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1 },
 			},
 			{
 				type: "message",
@@ -719,7 +719,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchContext: { clientId: "CLIENT_ID", batchStartCsn: 3 },
+				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 3, length: 1 },
 			},
 			{
 				type: "message",
@@ -727,7 +727,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchContext: { clientId: "CLIENT_ID", batchStartCsn: 3 },
+				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 4, length: 1 },
 			},
 		];
 
