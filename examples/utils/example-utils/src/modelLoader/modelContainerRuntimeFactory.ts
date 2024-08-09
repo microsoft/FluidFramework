@@ -30,9 +30,10 @@ type CreateModelCallback<ModelType> = (
 /**
  * @internal
  */
-export interface IModelContainerRuntimeEntryPoint2<T> {
-	getModel(container: IContainer): Promise<T>;
-	getMigrationTool(): Promise<IMigrationTool>;
+export interface IMigratableModelContainerRuntimeEntryPoint<T> {
+	getModelAndMigrationTool(
+		container: IContainer,
+	): Promise<{ model: T; migrationTool: IMigrationTool }>;
 }
 
 const migrationToolId = "migration-tool";
@@ -56,9 +57,12 @@ const instantiateMigratableRuntime = async <ModelType>(
 		registryEntries: combinedRegistryEntries, // combinedRegistryEntries
 		provideEntryPoint: async (
 			containerRuntime: IContainerRuntime,
-		): Promise<IModelContainerRuntimeEntryPoint2<ModelType>> => ({
-			getModel: async (container: IContainer) => createModel(containerRuntime, container),
-			getMigrationTool: async () => getDataStoreEntryPoint(containerRuntime, migrationToolId),
+		): Promise<IMigratableModelContainerRuntimeEntryPoint<ModelType>> => ({
+			getModelAndMigrationTool: async (container: IContainer) => ({
+				// TODO: Think about the timing and order of the awaits
+				model: await createModel(containerRuntime, container),
+				migrationTool: await getDataStoreEntryPoint(containerRuntime, migrationToolId),
+			}),
 		}),
 		runtimeOptions,
 		existing,

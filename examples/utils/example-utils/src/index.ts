@@ -45,14 +45,17 @@ export {
 } from "./migrationTool/index.js";
 export { Migrator, SameContainerMigrator } from "./migrator/index.js";
 export {
+	IAttachedMigratableModel,
+	IDetachedMigratableModel,
 	IDetachedModel,
+	IMigratableModelLoader,
+	IModelContainerRuntimeEntryPoint,
 	IModelLoader,
 	ModelContainerRuntimeFactory,
 	ModelLoader,
 	SessionStorageModelLoader,
 	StaticCodeLoader,
 	TinyliciousModelLoader,
-	IModelContainerRuntimeEntryPoint,
 } from "./modelLoader/index.js";
 export {
 	type IFluidMountableView,
