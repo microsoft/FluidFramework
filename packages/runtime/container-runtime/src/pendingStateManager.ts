@@ -288,7 +288,6 @@ export class PendingStateManager implements IDisposable {
 			const nextMessage = this.initialMessages.shift()!;
 			// Nothing to apply if the message is an empty batch.
 			// We still need to track it for resubmission.
-			//* Remove/simplify back compat?  Just assert?
 			try {
 				if (isEmptyBatchPendingMessage(nextMessage)) {
 					nextMessage.localOpMetadata = { emptyBatch: true }; // equivalent to applyStashedOp for empty batch
@@ -397,9 +396,9 @@ export class PendingStateManager implements IDisposable {
 		if (message !== undefined) {
 			const messageContent = buildPendingMessageContent(message);
 
-			// Stringified content should match,
-			// especially since we're comparing batch info at batch start.
-			// We do see some rare cases of this in production - hopefully those "switch" to BatchInfoMismatch errors instead and we can remove this.
+			// Stringified content should match
+			// especially now that we're comparing batch info at batch start.
+			// We do see some rare cases of this in production, we will see whether batchInfo matches or not in those cases.
 			if (pendingMessage.content !== messageContent) {
 				this.stateHandler.close(
 					DataProcessingError.create(
@@ -436,18 +435,17 @@ export class PendingStateManager implements IDisposable {
 		// a different fork of this container also submitted the same batch (and it may not be empty for that fork).
 		const firstMessage = batch.messages.length > 0 ? batch.messages[0] : undefined;
 
+		// We expect the incoming batch to be of the same length, starting at the same clientSequenceNumber,
+		// as the batch we originally submitted.  If not, bail - we can't continue processing.
 		if (
 			pendingMessage.batchInfo.batchStartCsn !== batch.batchStartCsn ||
-			pendingMessage.batchInfo.length !== batch.messages.length
+			(pendingMessage.batchInfo.length >= 0 && // -1 length is back compat and isn't suitable for this check
+				pendingMessage.batchInfo.length !== batch.messages.length)
 		) {
 			const error = DataProcessingError.create(
 				"pending local message batch info mismatch",
-				"BatchInfoMismatch",
+				"PendingBatchInfoMismatch",
 				firstMessage,
-				//* Put this back?  What about empty batch?
-				// {
-				// 	expectedMessageType: JSON.parse(pendingMessage.content).type,
-				// },
 			);
 
 			this.logger?.sendErrorEvent(
@@ -458,7 +456,6 @@ export class PendingStateManager implements IDisposable {
 						batchStartCsn: batch.batchStartCsn,
 						pendingBatchLength: pendingMessage.batchInfo.length,
 						batchLength: batch.messages.length,
-						inboundBatchIdComputed: batch.batchId === undefined,
 						pendingMessageBatchMetadata: asBatchMetadata(pendingMessage.opMetadata)?.batch,
 						messageBatchMetadata: asBatchMetadata(firstMessage?.metadata)?.batch,
 					},
