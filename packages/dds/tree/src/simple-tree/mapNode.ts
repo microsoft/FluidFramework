@@ -7,7 +7,6 @@ import {
 	type FlexMapNodeSchema,
 	type FlexTreeNode,
 	type MapTreeNode,
-	cursorForMapTreeNode,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 	isMapTreeNode,
@@ -190,7 +189,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 			prepareContentForHydration(mapTree, node.context.checkout.forest);
 		}
 
-		node.set(key, cursorForMapTreeNode(mapTree));
+		node.set(key, [mapTree]);
 		return this;
 	}
 	public get size(): number {

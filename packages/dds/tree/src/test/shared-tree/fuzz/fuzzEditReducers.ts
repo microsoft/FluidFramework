@@ -22,6 +22,7 @@ import {
 	cursorForJsonableTreeNode,
 	intoStoredSchema,
 	type Any,
+	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import type { SharedTreeFactory } from "../../../shared-tree/index.js";
 import { brand, fail } from "../../../util/index.js";
@@ -200,7 +201,7 @@ function applyRequiredFieldEdit(
 ): void {
 	switch (change.type) {
 		case "set": {
-			field.content = cursorForJsonableTreeNode(change.value);
+			field.content = mapTreeFromCursor(cursorForJsonableTreeNode(change.value));
 			break;
 		}
 		default:
@@ -215,7 +216,7 @@ function applyOptionalFieldEdit(
 ): void {
 	switch (change.type) {
 		case "set": {
-			field.content = cursorForJsonableTreeNode(change.value);
+			field.content = mapTreeFromCursor(cursorForJsonableTreeNode(change.value));
 			break;
 		}
 		case "clear": {

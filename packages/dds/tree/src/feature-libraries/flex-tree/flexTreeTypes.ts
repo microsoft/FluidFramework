@@ -5,9 +5,9 @@
 
 import {
 	type AnchorNode,
+	type ExclusiveMapTree,
 	type FieldKey,
 	type FieldUpPath,
-	type ITreeCursorSynchronous,
 	type TreeValue,
 	anchorSlot,
 } from "../../core/index.js";
@@ -533,7 +533,7 @@ export type FlexTreeObjectNodeFieldsInner<TFields extends FlexObjectNodeFields> 
 		// Setter method (when the field is of a kind that has a logical set operation).
 		readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
 			? `set${Capitalize<key & string>}`
-			: never]: (content: FlexibleFieldContent) => void;
+			: never]: (content: FlexibleNodeContent) => void;
 	}
 >;
 
@@ -610,26 +610,20 @@ export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKind
 
 /**
  * Strongly typed tree literals for inserting as the content of a field.
- *
- * If a cursor is provided, it must be in Fields mode.
  */
-export type FlexibleFieldContent = ITreeCursorSynchronous;
+export type FlexibleFieldContent = ExclusiveMapTree[];
 
 /**
  * Strongly typed tree literals for inserting as a node.
- *
- * If a cursor is provided, it must be in Nodes mode.
  */
-export type FlexibleNodeContent = ITreeCursorSynchronous;
+export type FlexibleNodeContent = ExclusiveMapTree;
 
 /**
  * Strongly typed tree literals for inserting a subsequence of nodes.
  *
  * Used to insert a batch of 0 or more nodes into some location in a {@link FlexTreeSequenceField}.
- *
- * If a cursor is provided, it must be in Fields mode.
  */
-export type FlexibleNodeSubSequence = ITreeCursorSynchronous;
+export type FlexibleNodeSubSequence = ExclusiveMapTree[];
 
 /**
  * Type to ensures two types overlap in at least one way.
