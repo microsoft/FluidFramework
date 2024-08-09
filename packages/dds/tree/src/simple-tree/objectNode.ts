@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { FieldKey } from "../core/index.js";
@@ -260,25 +261,27 @@ export function setField(
 	simpleFieldSchema: FieldSchema,
 	value: InsertableContent | undefined,
 ): void {
+	const mapTree = mapTreeFromNodeData(
+		value,
+		simpleFieldSchema.allowedTypes,
+		field.context?.nodeKeyManager,
+		getSchemaAndPolicy(field),
+	);
+
+	if (field.context !== undefined) {
+		prepareContentForHydration(mapTree, field.context.checkout.forest);
+	}
+
 	switch (field.schema.kind) {
-		case FieldKinds.required:
+		case FieldKinds.required: {
+			assert(mapTree !== undefined, "Cannot set a required field to undefined");
+			const typedField = field as FlexTreeRequiredField<FlexAllowedTypes>;
+			typedField.editor.set(mapTree);
+			break;
+		}
 		case FieldKinds.optional: {
-			const typedField = field as
-				| FlexTreeRequiredField<FlexAllowedTypes>
-				| FlexTreeOptionalField<FlexAllowedTypes>;
-
-			const mapTree = mapTreeFromNodeData(
-				value,
-				simpleFieldSchema.allowedTypes,
-				field.context?.nodeKeyManager,
-				getSchemaAndPolicy(field),
-			);
-
-			if (field.context !== undefined) {
-				prepareContentForHydration(mapTree, field.context.checkout.forest);
-			}
-
-			typedField.content = mapTree;
+			const typedField = field as FlexTreeOptionalField<FlexAllowedTypes>;
+			typedField.editor.set(mapTree, typedField.length === 0);
 			break;
 		}
 

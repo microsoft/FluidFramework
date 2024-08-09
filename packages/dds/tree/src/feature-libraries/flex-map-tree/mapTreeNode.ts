@@ -50,7 +50,12 @@ import {
 } from "../typed-schema/index.js";
 import { type FlexImplicitAllowedTypes, normalizeAllowedTypes } from "../schemaBuilderBase.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
-import { FieldKinds, type SequenceFieldEditBuilder } from "../default-schema/index.js";
+import {
+	FieldKinds,
+	type OptionalFieldEditBuilder,
+	type SequenceFieldEditBuilder,
+	type ValueFieldEditBuilder,
+} from "../default-schema/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 // #region Nodes
@@ -431,11 +436,12 @@ class EagerMapTreeRequiredField<T extends FlexAllowedTypes>
 	extends EagerMapTreeField<T>
 	implements FlexTreeRequiredField<T>
 {
+	public get editor(): ValueFieldEditBuilder<ExclusiveMapTree> {
+		throw unsupportedUsageError("Setting a required field");
+	}
+
 	public get content(): FlexTreeUnboxNodeUnion<T> {
 		return unboxedUnion(this.schema, this.mapTrees[0] ?? oob(), { parent: this, index: 0 });
-	}
-	public set content(_: FlexTreeUnboxNodeUnion<T>) {
-		throw unsupportedUsageError("Setting an optional field");
 	}
 }
 
@@ -443,6 +449,10 @@ class EagerMapTreeOptionalField<T extends FlexAllowedTypes>
 	extends EagerMapTreeField<T>
 	implements FlexTreeOptionalField<T>
 {
+	public get editor(): OptionalFieldEditBuilder<ExclusiveMapTree> {
+		throw unsupportedUsageError("Setting an optional field");
+	}
+
 	public get content(): FlexTreeUnboxNodeUnion<T> | undefined {
 		return this.mapTrees.length > 0
 			? unboxedUnion(this.schema, this.mapTrees[0] ?? oob(), {
@@ -451,15 +461,16 @@ class EagerMapTreeOptionalField<T extends FlexAllowedTypes>
 				})
 			: undefined;
 	}
-	public set content(_: FlexTreeUnboxNodeUnion<T> | undefined) {
-		throw unsupportedUsageError("Setting an optional field");
-	}
 }
 
 class EagerMapTreeSequenceField<T extends FlexAllowedTypes>
 	extends EagerMapTreeField<T>
 	implements FlexTreeSequenceField<T>
 {
+	public get editor(): SequenceFieldEditBuilder<ExclusiveMapTree[]> {
+		throw unsupportedUsageError("Editing an array");
+	}
+
 	public at(index: number): FlexTreeUnboxNodeUnion<T> | undefined {
 		const i = indexForAt(index, this.length);
 		if (i === undefined) {
@@ -480,12 +491,8 @@ class EagerMapTreeSequenceField<T extends FlexAllowedTypes>
 		}
 	}
 
-	public sequenceEditor(): SequenceFieldEditBuilder {
-		throw unsupportedUsageError("Editing a sequence");
-	}
-
 	public getFieldPath(): FieldUpPath {
-		throw unsupportedUsageError("Editing a sequence");
+		throw unsupportedUsageError("Editing an array");
 	}
 }
 

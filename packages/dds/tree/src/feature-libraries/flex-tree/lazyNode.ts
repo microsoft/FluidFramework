@@ -338,7 +338,7 @@ export class LazyMap<TSchema extends FlexMapNodeSchema>
 
 		if (fieldSchema.kind === FieldKinds.optional) {
 			const optionalField = field as FlexTreeOptionalField<FlexAllowedTypes>;
-			optionalField.content = content?.[0];
+			optionalField.editor.set(content?.[0], optionalField.length === 0);
 		} else {
 			assert(fieldSchema.kind === FieldKinds.sequence, 0x807 /* Unexpected map field kind */);
 
@@ -477,7 +477,7 @@ function buildStructClass<TSchema extends FlexObjectNodeSchema>(
 						key,
 						fieldSchema,
 					) as FlexTreeOptionalField<FlexAllowedTypes>;
-					field.content = newContent;
+					field.editor.set(newContent, field.length === 0);
 				};
 				break;
 			}
@@ -488,7 +488,7 @@ function buildStructClass<TSchema extends FlexObjectNodeSchema>(
 						key,
 						fieldSchema,
 					) as FlexTreeRequiredField<FlexAllowedTypes>;
-					field.content = newContent;
+					field.editor.set(newContent);
 				};
 				break;
 			}
