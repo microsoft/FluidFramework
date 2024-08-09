@@ -6,6 +6,7 @@
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer, IRuntime } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -23,6 +24,12 @@ type ContainerRuntime = IContainerRuntimeBase &
 		clientId?: string | undefined;
 
 		emit(event: "signal"): void;
+
+		createNewSignalEnvelope(
+			address: string | undefined,
+			type: string,
+			content: any,
+		): ISignalEnvelope;
 	};
 
 const waitForSignals = async (
@@ -113,11 +120,9 @@ describeCompat("Signal performance telemetry", "NoCompat", (getTestObjectProvide
 
 				processSignalStub.callsFake((message, local) => {
 					// Simulate a dropped signal
-					containerRuntime.emit("signal");
 				});
 
 				containerRuntime.submitSignal("signal", "test");
-				await waitForSignals(1, containerRuntime);
 
 				processSignalStub.callThrough();
 
@@ -159,19 +164,23 @@ describeCompat("Signal performance telemetry", "NoCompat", (getTestObjectProvide
 				containerRuntime.submitSignal("signal", "test");
 				await waitForSignals(1, containerRuntime);
 
-				containerRuntime.processSignal(
-					{
-						clientId: containerRuntime.clientId,
-						content: {
+				sinon
+					.stub(containerRuntime, "createNewSignalEnvelope")
+					.callsFake((addresss, type, content) => {
+						const signalEnvelope: ISignalEnvelope = {
+							address: addresss,
 							clientSignalSequenceNumber: 2,
 							contents: {
-								type: "signal",
-								content: "test",
+								type,
+								content,
 							},
-						},
-					},
-					true,
-				);
+						};
+
+						return signalEnvelope;
+					});
+
+				containerRuntime.submitSignal("signal", "test");
+				await waitForSignals(1, containerRuntime);
 			},
 		);
 	});
