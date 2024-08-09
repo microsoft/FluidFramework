@@ -5,19 +5,10 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type {
-	FlexFieldSchema,
-	FlexTreeNodeSchema,
-	TreeNodeSchemaBase,
-} from "../feature-libraries/index.js";
-import { fail } from "../util/index.js";
+import type { FlexTreeNodeSchema, TreeNodeSchemaBase } from "../../feature-libraries/index.js";
+import { fail } from "../../util/index.js";
 
-import {
-	type FieldSchema,
-	type ImplicitFieldSchema,
-	type TreeNodeSchema,
-	normalizeFieldSchema,
-} from "./schemaTypes.js";
+import type { TreeNodeSchema } from "./treeNodeSchema.js";
 
 /**
  * A symbol for storing FlexTreeSchema on TreeNodeSchema.
@@ -29,11 +20,6 @@ const flexSchemaSymbol: unique symbol = Symbol(`flexSchema`);
  * A symbol for storing TreeNodeSchema on FlexTreeNode's schema.
  */
 const simpleNodeSchemaSymbol: unique symbol = Symbol(`simpleNodeSchema`);
-
-/**
- * A symbol for storing {@link FieldSchema}s on a {@link FlexFieldSchema}.
- */
-const simpleFieldSchemaSymbol: unique symbol = Symbol(`simpleFieldSchema`);
 
 export function cachedFlexSchemaFromClassSchema(
 	schema: TreeNodeSchema,
@@ -73,24 +59,4 @@ export function tryGetSimpleNodeSchema(
  */
 export function getSimpleNodeSchema(flexSchema: FlexTreeNodeSchema): TreeNodeSchema {
 	return tryGetSimpleNodeSchema(flexSchema) ?? fail("missing simple schema");
-}
-
-/**
- * Gets the {@link FieldSchema} which corresponds with the provided {@link FlexFieldSchema | flexSchema}.
- * Caches the result on the provided `flexSchema` for future access.
- * @param flexSchema - The flex schema on which the result will be cached.
- * @param implicitSimpleSchema - The allowed types from which the `FieldSchema` will be derived.
- */
-export function getSimpleFieldSchema(
-	flexSchema: FlexFieldSchema,
-	implicitSimpleSchema: ImplicitFieldSchema,
-): FieldSchema {
-	if (simpleFieldSchemaSymbol in flexSchema) {
-		return flexSchema[simpleFieldSchemaSymbol] as FieldSchema;
-	}
-
-	const fieldSchema = normalizeFieldSchema(implicitSimpleSchema);
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	(flexSchema as any)[simpleFieldSchemaSymbol] = fieldSchema;
-	return fieldSchema;
 }

@@ -23,28 +23,27 @@ import {
 } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
-	NodeKind,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
-	type TreeNodeSchemaClass,
-	type WithType,
-	type TreeNodeSchema,
-	typeNameSymbol,
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
-import { mapTreeFromNodeData } from "./toMapTree.js";
 import {
+	type WithType,
+	typeNameSymbol,
+	NodeKind,
 	type TreeNode,
-	TreeNodeValid,
 	type InternalTreeNode,
-	type MostDerivedData,
-} from "./types.js";
+	type TreeNodeSchemaClass,
+	type TreeNodeSchema,
+} from "./core/index.js";
+import { mapTreeFromNodeData } from "./toMapTree.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { getKernel } from "./treeNodeKernel.js";
+import { getKernel } from "./core/index.js";
+import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 
 /**
  * A generic array type, used to defined types like {@link (TreeArrayNode:interface)}.

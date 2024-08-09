@@ -27,30 +27,29 @@ import {
 } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
-	NodeKind,
 	type ImplicitFieldSchema,
-	type WithType,
-	type TreeNodeSchema,
 	getStoredKey,
 	getExplicitStoredKey,
 	type TreeFieldFromImplicitField,
 	type InsertableTreeFieldFromImplicitField,
 	type FieldSchema,
 	normalizeFieldSchema,
-	typeNameSymbol,
 	type ImplicitAllowedTypes,
 	FieldKind,
 } from "./schemaTypes.js";
-import { mapTreeFromNodeData } from "./toMapTree.js";
 import {
+	type TreeNodeSchema,
+	NodeKind,
+	type WithType,
+	typeNameSymbol,
 	type InternalTreeNode,
-	type MostDerivedData,
 	type TreeNode,
-	TreeNodeValid,
-} from "./types.js";
+} from "./core/index.js";
+import { mapTreeFromNodeData } from "./toMapTree.js";
 import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
+import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 
 /**
  * Helper used to produce types for object nodes.

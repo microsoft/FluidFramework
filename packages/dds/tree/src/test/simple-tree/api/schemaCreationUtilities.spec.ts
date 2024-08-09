@@ -13,15 +13,15 @@ import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeView,
-} from "../../simple-tree/index.js";
+} from "../../../simple-tree/index.js";
 import {
 	adaptEnum,
 	enumFromStrings,
 	typedObjectValues,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/schemaCreationUtilities.js";
-import { TreeFactory } from "../../treeFactory.js";
-import { testIdCompressor } from "../utils.js";
+} from "../../../simple-tree/api/schemaCreationUtilities.js";
+import { TreeFactory } from "../../../treeFactory.js";
+import { testIdCompressor } from "../../utils.js";
 
 const schema = new SchemaFactory("test");
 
