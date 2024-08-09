@@ -5,7 +5,7 @@
 
 import type { IMigrationTool } from "@fluid-example/example-utils";
 import {
-	MigrationToolFactory,
+	// MigrationToolFactory,
 	ModelContainerRuntimeFactory,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
@@ -20,8 +20,8 @@ import { InventoryListInstantiationFactory } from "./inventoryList.js";
 const inventoryListId = "default-inventory-list";
 const migrationToolId = "migration-tool";
 
-const migrationToolRegistryKey = "migration-tool";
-const migrationToolFactory = new MigrationToolFactory();
+// const migrationToolRegistryKey = "migration-tool";
+// const migrationToolFactory = new MigrationToolFactory();
 
 /**
  * @internal
@@ -35,7 +35,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 		super(
 			new Map([
 				InventoryListInstantiationFactory.registryEntry,
-				[migrationToolRegistryKey, Promise.resolve(migrationToolFactory)],
+				// [migrationToolRegistryKey, Promise.resolve(migrationToolFactory)],
 			]), // registryEntries
 			testMode
 				? {
@@ -55,8 +55,8 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 			InventoryListInstantiationFactory.type,
 		);
 		await inventoryList.trySetAlias(inventoryListId);
-		const migrationTool = await runtime.createDataStore(migrationToolRegistryKey);
-		await migrationTool.trySetAlias(migrationToolId);
+		// const migrationTool = await runtime.createDataStore(migrationToolRegistryKey);
+		// await migrationTool.trySetAlias(migrationToolId);
 	}
 
 	/**
@@ -66,7 +66,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 		// Force the MigrationTool to instantiate in all cases.  The Quorum it uses must be loaded and running in
 		// order to respond with accept ops, and without this call the MigrationTool won't be instantiated on the
 		// summarizer client.
-		await getDataStoreEntryPoint(runtime, migrationToolId);
+		// await getDataStoreEntryPoint(runtime, migrationToolId);
 	}
 
 	/**

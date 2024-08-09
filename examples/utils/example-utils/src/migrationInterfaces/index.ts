@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
-	IImportExportModel,
-	IMigratableModel,
-	IVersionedModel,
-} from "./migratableModel.js";
+export { IImportExportModel, IMigratableModel, IVersionedModel } from "./migratableModel.js";
 export {
 	IAcceptedMigrationDetails,
 	IMigrationTool,

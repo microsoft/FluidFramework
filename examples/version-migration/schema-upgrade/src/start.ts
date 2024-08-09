@@ -93,6 +93,8 @@ async function start(): Promise<void> {
 	// the migration logic and just lets us know when a new model is loaded and available (with the "migrated" event).
 	// It also takes a dataTransformationCallback to help in transforming data export format to be compatible for
 	// import with newly created models.
+	// TODO: Consider just passing the ModelLoader (or even the model loader construction args?) and kind of wrapping it.
+	// Then this becomes something like a MigratingModelLoader.  Then the model can have a migrationTool but sort of hide it.
 	const migrator = new Migrator(
 		modelLoader,
 		model,
