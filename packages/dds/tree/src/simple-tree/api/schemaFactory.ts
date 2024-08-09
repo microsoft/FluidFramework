@@ -37,15 +37,18 @@ import {
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type NodeKind,
-	type TreeNodeSchema,
-	type TreeNodeSchemaClass,
 	type FieldProps,
 	createFieldSchema,
 	type DefaultProvider,
 	getDefaultProvider,
 } from "../schemaTypes.js";
-import type { WithType } from "../core/index.js";
+import { inPrototypeChain } from "../core/index.js";
+import type {
+	NodeKind,
+	WithType,
+	TreeNodeSchema,
+	TreeNodeSchemaClass,
+} from "../core/index.js";
 import { type TreeArrayNode, arraySchema } from "../arrayNode.js";
 import {
 	type InsertableObjectFromSchemaRecord,
@@ -70,7 +73,7 @@ import type {
 	TreeObjectNodeUnsafe,
 } from "../typesUnsafe.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
-import { inPrototypeChain, TreeNodeValid } from "../types.js";
+import { TreeNodeValid } from "../treeNodeValid.js";
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */
