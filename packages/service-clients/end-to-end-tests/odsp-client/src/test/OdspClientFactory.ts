@@ -7,7 +7,11 @@ import {
 	IConfigProviderBase,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { OdspClient, OdspConnectionConfig } from "@fluidframework/odsp-client/internal";
+import {
+	type IOdspClient,
+	createOdspClient as createOdspClientCore,
+	OdspConnectionConfig,
+} from "@fluidframework/odsp-client/internal";
 import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { OdspTestTokenProvider } from "./OdspTokenFactory.js";
@@ -107,13 +111,13 @@ export function getCredentials(): IOdspLoginCredentials[] {
 
 /**
  * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new
- * {@link OdspClient} instance based on the mode by setting the Connection config accordingly.
+ * {@link IOdspClient} instance based on the mode by setting the Connection config accordingly.
  */
 export function createOdspClient(
 	creds: IOdspLoginCredentials,
 	logger?: MockLogger,
 	configProvider?: IConfigProviderBase,
-): OdspClient {
+): IOdspClient {
 	const siteUrl = process.env.odsp__client__siteUrl as string;
 	const driveId = process.env.odsp__client__driveId as string;
 	const clientId = process.env.odsp__client__clientId as string;
@@ -137,7 +141,6 @@ export function createOdspClient(
 		siteUrl,
 		tokenProvider: new OdspTestTokenProvider(credentials),
 		driveId,
-		filePath: "",
 	};
 	const getLogger = (): ITelemetryBaseLogger | undefined => {
 		const testLogger = getTestLogger?.();
@@ -149,7 +152,7 @@ export function createOdspClient(
 		}
 		return logger ?? testLogger;
 	};
-	return new OdspClient({
+	return createOdspClientCore({
 		connection: connectionProps,
 		logger: getLogger(),
 		configProvider,

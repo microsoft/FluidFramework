@@ -3,12 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { OdspClient, OdspContainerServices } from "@fluidframework/odsp-client/beta";
-import { ContainerSchema, IFluidContainer, SharedTree } from "fluid-framework";
+import {
+	createOdspClient,
+	OdspContainerServices,
+	OdspContainerAttachFunctor,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/odsp-client/internal";
+import { ContainerSchema, SharedTree, IFluidContainer } from "fluid-framework";
 
 import { clientProps } from "./clientProps.js";
 
-const client = new OdspClient(clientProps);
+const client = createOdspClient(clientProps);
 
 /**
  * This function will create a container if no item Id is passed on the hash portion of the URL.
@@ -37,16 +42,13 @@ export const createFluidData = async (
 ): Promise<{
 	services: OdspContainerServices;
 	container: IFluidContainer;
+	createFn: OdspContainerAttachFunctor;
 }> => {
 	// The client will create a new detached container using the schema
 	// A detached container will enable the app to modify the container before attaching it to the client
-	const {
-		container,
-		services,
-	}: { container: IFluidContainer; services: OdspContainerServices } =
-		await client.createContainer(schema);
+	const { container, services, createFn } = await client.createContainer(schema);
 
-	return { services, container };
+	return { services, container, createFn };
 };
 
 export const containerSchema: ContainerSchema = {

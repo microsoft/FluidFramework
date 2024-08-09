@@ -9,14 +9,14 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
-import { OdspClient } from "@fluidframework/odsp-client/internal";
+import { type IOdspClient } from "@fluidframework/odsp-client/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { createOdspClient, getCredentials } from "./OdspClientFactory.js";
 
 describe("Container create scenarios", () => {
 	const connectTimeoutMs = 10_000;
-	let client: OdspClient;
+	let client: IOdspClient;
 	let schema: ContainerSchema;
 
 	const [clientCreds] = getCredentials();
@@ -136,7 +136,7 @@ describe("Container create scenarios", () => {
 	 * Expected behavior: an error should be thrown when trying to get a non-existent container.
 	 */
 	it("cannot load improperly created container (cannot load a non-existent container)", async () => {
-		const containerAndServicesP = client.getContainer("containerConfig", schema);
+		const containerAndServicesP = client.getContainer("containerConfig" /* itemId */, schema);
 
 		const errorFn = (error: Error): boolean => {
 			assert.notStrictEqual(error.message, undefined, "Odsp Client error is undefined");

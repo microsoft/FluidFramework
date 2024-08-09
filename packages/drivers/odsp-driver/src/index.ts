@@ -35,7 +35,11 @@ export { OdspDocumentServiceFactoryWithCodeSplit } from "./odspDocumentServiceFa
 export { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest.js";
 
 // URI Resolver functionality, URI management
-export { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
+export {
+	OdspDriverUrlResolver,
+	createOpenOdspResolvedUrl,
+	createCreateOdspResolvedUrl,
+} from "./odspDriverUrlResolver.js";
 export {
 	OdspDriverUrlResolverForShareLink,
 	ShareLinkFetcherProps,

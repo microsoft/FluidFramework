@@ -14,11 +14,17 @@ import {
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
 	IOdspResolvedUrl,
+	IOdspOpenArgs,
+	IOdspCreateArgs,
 	OdspErrorTypes,
+	SharingLinkRole,
+	SharingLinkScope,
+	ISharingLinkKind,
 } from "@fluidframework/odsp-driver-definitions/internal";
 
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import { createOdspUrl } from "./createOdspUrl.js";
+import { locatorQueryParamName } from "./odspFluidFileLink.js";
 import { getHashedDocumentId } from "./odspPublicUtils.js";
 import { getApiRoot } from "./odspUrlHelper.js";
 import { getOdspResolvedUrl } from "./odspUtils.js";
@@ -90,6 +96,147 @@ function removeBeginningSlash(str: string): string {
 const isFluidPackage = (pkg: Record<string, unknown>): boolean =>
 	typeof pkg === "object" && typeof pkg?.name === "string" && typeof pkg?.fluid === "object";
 
+export function removeNavParam(link: string): string {
+	const url = new URL(link);
+	const params = new URLSearchParams(url.search);
+	params.delete(locatorQueryParamName);
+	url.search = params.toString();
+	return url.href;
+}
+
+/**
+ * Generates IOdspResolvedUrl.rul value.
+ * @param hashedDocumentId - documentId
+ * @param dataStorePath - data store path
+ * @returns url
+ */
+function getUrlForOdspResolvedUrl(hashedDocumentId: string, dataStorePath: string): string {
+	return `https://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(dataStorePath)}`;
+}
+
+/**
+ * Creates IOdspResolvedUrl from IOdspOpenArgs
+ * @param input - IOdspOpenArgs
+ * @returns IOdspResolvedUrl
+ * @alpha
+ */
+export async function createOpenOdspResolvedUrl(
+	input: IOdspOpenArgs,
+): Promise<IOdspResolvedUrl> {
+	const { siteUrl, driveId, itemId, fileVersion } = input;
+
+	const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
+	assert(!hashedDocumentId.includes("/"), 0x0a8 /* "Docid should not contain slashes!!" */);
+
+	// We need to remove the nav param if set by host when setting the sharelink as otherwise the shareLinkId
+	// when redeeming the share link during the redeem fallback for trees latest call becomes greater than
+	// the eligible length.
+	const sharingLinkToRedeem =
+		input.sharingLinkToRedeem === undefined
+			? undefined
+			: removeNavParam(input.sharingLinkToRedeem);
+
+	const endpoints = {
+		snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId, fileVersion),
+		attachmentPOSTStorageUrl: getAttachmentPOSTUrl(siteUrl, driveId, itemId, fileVersion),
+		attachmentGETStorageUrl: getAttachmentGETUrl(siteUrl, driveId, itemId, fileVersion),
+		deltaStorageUrl: getDeltaStorageUrl(siteUrl, driveId, itemId, fileVersion),
+	};
+
+	const dataStorePath = "";
+
+	return {
+		...input,
+
+		type: "fluid",
+		odspResolvedUrl: true,
+
+		id: hashedDocumentId,
+		hashedDocumentId,
+
+		tokens: {},
+
+		// only used in create-new flows
+		fileName: "",
+
+		url: getUrlForOdspResolvedUrl(hashedDocumentId, dataStorePath),
+
+		endpoints,
+
+		shareLinkInfo: {
+			sharingLinkToRedeem,
+		},
+
+		dataStorePath,
+	};
+}
+
+/**
+ * Creates IOdspResolvedUrl from IOdspOpenArgs
+ * @param input - IOdspOpenArgs
+ * @returns IOdspResolvedUrl
+ * @alpha
+ */
+export function createCreateOdspResolvedUrl(input: IOdspCreateArgs): IOdspResolvedUrl {
+	const {
+		siteUrl,
+		itemId = "",
+		fileName = "",
+		filePath = "",
+		createShareLinkType,
+	} = input as IOdspCreateArgs & {
+		createShareLinkType?: ISharingLinkKind;
+	} & (
+			| {
+					itemId: string;
+					fileName?: undefined;
+					filePath?: undefined;
+			  }
+			| {
+					itemId?: undefined;
+					filePath: string;
+					fileName: string;
+			  }
+		);
+
+	return {
+		...input,
+
+		type: "fluid",
+		odspResolvedUrl: true,
+		summarizer: false,
+
+		id: "odspCreateNew",
+		hashedDocumentId: "",
+
+		tokens: {},
+
+		fileVersion: undefined,
+
+		itemId,
+		filePath,
+		fileName,
+
+		url: `https://${siteUrl}?&version=null`,
+
+		endpoints: {
+			snapshotStorageUrl: "",
+			attachmentGETStorageUrl: "",
+			attachmentPOSTStorageUrl: "",
+			deltaStorageUrl: "",
+		},
+
+		shareLinkInfo:
+			createShareLinkType === undefined
+				? undefined
+				: {
+						createLink: {
+							createKind: createShareLinkType,
+						},
+					},
+	};
+}
+
 /**
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
  * url format. Ex: `${siteUrl}?driveId=${driveId}&itemId=${itemId}&path=${path}`
@@ -110,6 +257,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			const fileName: string = request.headers[DriverHeader.createNew].fileName;
 			const driveID = searchParams.get("driveId");
+			// Be carefully here - this is filePath (see createOdspCreateContainerRequest()), not dataStorePath (see createOdspUrl())
 			const filePath = searchParams.get("path");
 			const packageName = searchParams.get("containerPackageName");
 			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- false positive
@@ -120,66 +268,50 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 					{ driverVersion: pkgVersion },
 				);
 			}
-			return {
-				endpoints: {
-					snapshotStorageUrl: "",
-					attachmentGETStorageUrl: "",
-					attachmentPOSTStorageUrl: "",
-					deltaStorageUrl: "",
-				},
-				tokens: {},
-				type: "fluid",
-				odspResolvedUrl: true,
-				id: "odspCreateNew",
-				url: `https://${siteURL}?${queryString}&version=null`,
+
+			const createKind = getSharingLinkParams(searchParams);
+
+			const createResolvedUrl = createCreateOdspResolvedUrl({
 				siteUrl: siteURL,
-				hashedDocumentId: "",
 				driveId: driveID,
-				itemId: "",
+				filePath,
 				fileName,
-				summarizer: false,
+				createShareLinkType: createKind,
+				isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
+			});
+			return {
+				...createResolvedUrl,
 				codeHint: {
 					containerPackageName: packageName ?? undefined,
 				},
-				fileVersion: undefined,
-				shareLinkInfo: undefined,
-				isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
 			};
 		}
-		const { siteUrl, driveId, itemId, path, containerPackageName, fileVersion } =
-			decodeOdspUrl(request.url);
-		const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
-		assert(!hashedDocumentId.includes("/"), 0x0a8 /* "Docid should not contain slashes!!" */);
-
-		const documentUrl = `https://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(
-			path,
-		)}`;
-
-		const summarizer = !!request.headers?.[DriverHeader.summarizingClient];
-		return {
-			type: "fluid",
-			odspResolvedUrl: true,
-			endpoints: {
-				snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId, fileVersion),
-				attachmentPOSTStorageUrl: getAttachmentPOSTUrl(siteUrl, driveId, itemId, fileVersion),
-				attachmentGETStorageUrl: getAttachmentGETUrl(siteUrl, driveId, itemId, fileVersion),
-				deltaStorageUrl: getDeltaStorageUrl(siteUrl, driveId, itemId, fileVersion),
-			},
-			id: hashedDocumentId,
-			tokens: {},
-			url: documentUrl,
-			hashedDocumentId,
+		const {
 			siteUrl,
 			driveId,
 			itemId,
-			dataStorePath: path,
-			fileName: "",
+			path: dataStorePath,
+			containerPackageName,
+			fileVersion,
+		} = decodeOdspUrl(request.url);
+
+		const summarizer = !!request.headers?.[DriverHeader.summarizingClient];
+		const openResolvedUrl = await createOpenOdspResolvedUrl({
+			siteUrl,
+			driveId,
+			itemId,
 			summarizer,
+			fileVersion,
+			isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
+		});
+
+		return {
+			...openResolvedUrl,
+			dataStorePath,
+			url: getUrlForOdspResolvedUrl(openResolvedUrl.hashedDocumentId, dataStorePath),
 			codeHint: {
 				containerPackageName,
 			},
-			fileVersion,
-			isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
 		};
 	}
 
@@ -231,10 +363,19 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 	}
 }
 
+/**
+ * Decodes URL created by createOdspUrl()
+ * @param url - Url to decode
+ * @returns a structure with all decoded fields
+ */
 export function decodeOdspUrl(url: string): {
 	siteUrl: string;
 	driveId: string;
 	itemId: string;
+	/**
+	 * Note - path is the OdspFluidDataStoreLocator.dataStorePath !
+	 * Not filePath
+	 */
 	path: string;
 	containerPackageName?: string;
 	fileVersion?: string;
@@ -272,4 +413,24 @@ export function decodeOdspUrl(url: string): {
 			: undefined,
 		fileVersion: fileVersion ? decodeURIComponent(fileVersion) : undefined,
 	};
+}
+
+/**
+ * Extract the sharing link kind from the resolved URL's query paramerters
+ */
+function getSharingLinkParams(searchParams: URLSearchParams): ISharingLinkKind | undefined {
+	// extract request parameters for creation of sharing link (if provided) if the feature is enabled
+	const createLinkScope = searchParams.get("createLinkScope");
+	const createLinkRole = searchParams.get("createLinkRole");
+	if (createLinkScope && SharingLinkScope[createLinkScope]) {
+		return {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			scope: SharingLinkScope[createLinkScope],
+			...(createLinkRole && SharingLinkRole[createLinkRole]
+				? // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+					{ role: SharingLinkRole[createLinkRole] }
+				: {}),
+		};
+	}
+	return undefined;
 }
