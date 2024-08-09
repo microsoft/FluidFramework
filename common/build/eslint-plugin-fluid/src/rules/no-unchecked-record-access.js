@@ -43,21 +43,21 @@ module.exports = {
 		const declaredVariables = new Map();
 
 		return {
-			VariableDeclarator(node) {
-				if (node.id.type === "Identifier" && node.init && node.init.type === "Literal") {
-					declaredVariables.set(node.id.name, node.init.value);
-				}
+			Program() {
+				context.getScope().variables.forEach((variable) => {
+					if (variable.defs[0] && variable.defs[0].node.init) {
+						declaredVariables.set(variable.name, variable.defs[0].node.init.value);
+					}
+				});
 			},
 			ForInStatement(node) {
 				if (node.left.type === "VariableDeclaration") {
-					const variableName = node.left.declarations[0].id.name;
-					forInLoopVariables.add(variableName);
+					forInLoopVariables.add(node.left.declarations[0].id.name);
 				}
 			},
 			IfStatement(node) {
 				if (node.test.type === "MemberExpression") {
-					const propertyName = node.test.property.name;
-					checkedProperties.add(propertyName);
+					checkedProperties.add(node.test.property.name);
 				}
 			},
 			MemberExpression: function checkMemberExpression(node) {
@@ -84,14 +84,9 @@ module.exports = {
 					}
 					if (currentNode.computed) {
 						if (currentNode.property.type === "Identifier") {
-							const propertyValue = declaredVariables.get(currentNode.property.name);
-							accessPath.unshift(
-								propertyValue !== undefined
-									? `[${propertyValue}]`
-									: `[${currentNode.property.name}]`,
-							);
+							accessPath.unshift(`[${currentNode.property.name}]`);
 						} else if (currentNode.property.type === "Literal") {
-							accessPath.unshift(`[${currentNode.property.value}]`);
+							accessPath.unshift(`["${currentNode.property.value}"]`);
 						} else {
 							accessPath.unshift(`[...]`);
 						}
@@ -107,54 +102,64 @@ module.exports = {
 				}
 
 				const tsNode = services.esTreeNodeToTSNodeMap.get(node.object);
-				if (!tsNode) return;
+				if (!tsNode) {
+					return;
+				}
 				const type = checker.getTypeAtLocation(tsNode);
-				if (!type) return;
-				if (isArrayType(type)) {
+				if (!type || isArrayType(type)) {
 					return;
 				}
 
 				const property = node.computed
 					? node.property.type === "Identifier"
-						? declaredVariables.get(node.property.name)
+						? node.property.name
 						: node.property.value
 					: node.property.name;
 
 				const propertyExists = hasProperty(type, property);
 				const isIndexAccess = node.computed && !propertyExists;
+				const isIndexSignatureType = hasIndexSignature(type);
 
-				if (
-					hasIndexSignature(type) ||
-					isOptionalProperty(type, property) ||
-					isIndexAccess
-				) {
-					if (node.parent.type === "MemberExpression" && node.parent.object === node) {
-						if (checkedProperties.has(property)) {
-							return;
-						}
-						const isInForInLoop =
-							node.object.type === "Identifier" &&
-							forInLoopVariables.has(node.object.name);
-						const isComputedPropertyAccess =
-							node.computed &&
-							node.property.type === "Identifier" &&
-							forInLoopVariables.has(node.property.name);
-						if (
-							!node.optional &&
-							!isOptionalChain &&
-							!(
-								node.parent.parent && node.parent.parent.type === "ChainExpression"
-							) &&
-							!isInForInLoop &&
-							!isComputedPropertyAccess
-						) {
-							context.report({
-								node: node.parent,
-								message: `'${accessPath.join("")}' is possibly 'undefined'`,
-							});
-						}
-					}
+				const isRelevantParent =
+					(node.parent.type === "MemberExpression" && node.parent.object === node) ||
+					(node.parent.type === "CallExpression" && node.parent.callee === node);
+
+				if (!isRelevantParent) {
+					return;
 				}
+
+				const isChecked = checkedProperties.has(property);
+				if (isChecked) {
+					return;
+				}
+
+				const isInForInLoop =
+					node.object.type === "Identifier" && forInLoopVariables.has(node.object.name);
+				if (isInForInLoop) {
+					return;
+				}
+
+				const isOptionalAccess =
+					node.optional ||
+					isOptionalChain ||
+					(node.parent.parent && node.parent.parent.type === "ChainExpression");
+				if (isOptionalAccess) {
+					return;
+				}
+
+				const isPossiblyUndefined =
+					isIndexSignatureType ||
+					isIndexAccess ||
+					!propertyExists ||
+					isOptionalProperty(type, property);
+				if (!isPossiblyUndefined) {
+					return;
+				}
+
+				context.report({
+					node: node.parent,
+					message: `'${accessPath.join("")}' is possibly 'undefined'`,
+				});
 			},
 		};
 	},
