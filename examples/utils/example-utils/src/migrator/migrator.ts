@@ -17,11 +17,11 @@ import type {
 } from "../migrationInterfaces/index.js";
 import type { IDetachedModel, IMigratableModelLoader } from "../modelLoader/index.js";
 
-type MigratableParts = {
+interface MigratableParts {
 	model: IMigratableModel;
 	migrationTool: IMigrationTool;
 	id: string;
-};
+}
 
 /**
  * @internal
@@ -323,18 +323,18 @@ export class Migrator implements IMigrator {
 				this._migratedLoadP = undefined;
 				return;
 			}
-			const { model: migrated, migrationTool: migratedMigrationTool } =
+			const { model: migratedModel, migrationTool: migratedMigrationTool } =
 				await this.modelLoader.loadExisting(migratedId);
 			// Note: I'm choosing not to close the old migratable here, and instead allow the lifecycle management
 			// of the migratable to be the responsibility of whoever created the Migrator (and handed it its first
 			// migratable).  It could also be fine to close here, just need to have an explicit contract to clarify
 			// who is responsible for managing that.
 			this._currentMigratable = {
-				model: migrated,
+				model: migratedModel,
 				migrationTool: migratedMigrationTool,
 				id: migratedId,
 			};
-			this._events.emit("migrated", migrated, migratedId);
+			this._events.emit("migrated", migratedModel, migratedId);
 			this._migratedLoadP = undefined;
 
 			// Reset retry values

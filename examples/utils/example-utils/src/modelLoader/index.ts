@@ -12,6 +12,7 @@ export {
 } from "./interfaces.js";
 export { MigratableModelLoader } from "./migratableModelLoader.js";
 export {
+	MigratableModelContainerRuntimeFactory,
 	ModelContainerRuntimeFactory,
 	IModelContainerRuntimeEntryPoint,
 } from "./modelContainerRuntimeFactory.js";

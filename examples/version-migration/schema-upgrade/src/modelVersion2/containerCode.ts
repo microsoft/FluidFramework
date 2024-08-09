@@ -4,7 +4,7 @@
  */
 
 import {
-	ModelContainerRuntimeFactory,
+	MigratableModelContainerRuntimeFactory,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
@@ -17,7 +17,7 @@ import { InventoryListInstantiationFactory } from "./inventoryList.js";
 
 const inventoryListId = "default-inventory-list";
 
-export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IInventoryListAppModel> {
+export class InventoryListContainerRuntimeFactory extends MigratableModelContainerRuntimeFactory<IInventoryListAppModel> {
 	/**
 	 * Constructor for the factory. Supports a test mode which spawns the summarizer instantly.
 	 * @param testMode - True to enable instant summarizer spawning.
@@ -36,7 +36,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	}
 
 	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
+	 * {@inheritDoc MigratableModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
 		const inventoryList = await runtime.createDataStore(
@@ -46,7 +46,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	}
 
 	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
+	 * {@inheritDoc MigratableModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
 		return new InventoryListAppModel(
