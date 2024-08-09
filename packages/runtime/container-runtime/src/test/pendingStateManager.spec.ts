@@ -5,17 +5,12 @@
 
 import assert from "assert";
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	MockLogger2,
-	createChildLogger,
-	isILoggingError,
-} from "@fluidframework/telemetry-utils/internal";
+import { MockLogger2, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
 import type {
@@ -127,18 +122,15 @@ describe("Pending State Manager", () => {
 
 	describe("Op processing", () => {
 		let pendingStateManager: PendingStateManager;
-		let closeError: ICriticalContainerError | undefined;
 		const clientId = "clientId";
 
 		beforeEach(async () => {
-			closeError = undefined;
 			pendingStateManager = new PendingStateManager(
 				{
 					applyStashedOp: () => {
 						throw new Error();
 					},
 					clientId: () => "oldClientId",
-					close: (error?: ICriticalContainerError) => (closeError = error),
 					connected: () => true,
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
@@ -207,7 +199,6 @@ describe("Pending State Manager", () => {
 
 			submitBatch(messages);
 			process(messages, 0 /* batchStartCsn */);
-			assert(closeError === undefined);
 		});
 
 		it("empty batch is processed correctly", () => {
@@ -242,18 +233,18 @@ describe("Pending State Manager", () => {
 				];
 
 				submitBatch(messages);
-				process(
-					messages.map((message) => ({
-						...message,
-						type: "otherType",
-					})),
-					0 /* batchStartCsn */,
-				);
-				assert(isILoggingError(closeError));
-				assert.strictEqual(closeError.errorType, ContainerErrorTypes.dataProcessingError);
-				assert.strictEqual(
-					closeError.getTelemetryProperties().expectedMessageType,
-					MessageType.Operation,
+				assert.throws(
+					() =>
+						process(
+							messages.map((message) => ({
+								...message,
+								type: "otherType",
+							})),
+							0 /* batchStartCsn */,
+						),
+					(closeError: any) =>
+						closeError.errorType === ContainerErrorTypes.dataProcessingError &&
+						closeError.getTelemetryProperties().expectedMessageType === MessageType.Operation,
 				);
 			});
 
@@ -269,14 +260,18 @@ describe("Pending State Manager", () => {
 				];
 
 				submitBatch(messages);
-				process(
-					messages.map((message) => ({
-						...message,
-						contents: undefined,
-					})),
-					0 /* batchStartCsn */,
+				assert.throws(
+					() =>
+						process(
+							messages.map((message) => ({
+								...message,
+								contents: undefined,
+							})),
+							0 /* batchStartCsn */,
+						),
+					(closeError: any) =>
+						closeError.errorType === ContainerErrorTypes.dataProcessingError,
 				);
-				assert.strictEqual(closeError?.errorType, ContainerErrorTypes.dataProcessingError);
 			});
 
 			it("stringified message content does not match", () => {
@@ -291,14 +286,18 @@ describe("Pending State Manager", () => {
 				];
 
 				submitBatch(messages);
-				process(
-					messages.map((message) => ({
-						...message,
-						contents: { prop1: true },
-					})),
-					0 /* batchStartCsn */,
+				assert.throws(
+					() =>
+						process(
+							messages.map((message) => ({
+								...message,
+								contents: { prop1: true },
+							})),
+							0 /* batchStartCsn */,
+						),
+					(closeError: any) =>
+						closeError.errorType === ContainerErrorTypes.dataProcessingError,
 				);
-				assert.strictEqual(closeError?.errorType, ContainerErrorTypes.dataProcessingError);
 			});
 		});
 
@@ -321,7 +320,6 @@ describe("Pending State Manager", () => {
 				})),
 				0 /* batchStartCsn */,
 			);
-			assert.strictEqual(closeError, undefined, "unexpected close");
 		});
 
 		describe("getLocalState", () => {
@@ -366,7 +364,6 @@ describe("Pending State Manager", () => {
 				{
 					applyStashedOp: async () => undefined,
 					clientId: () => "CLIENT_ID",
-					close: () => {},
 					connected: () => true,
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
@@ -457,7 +454,6 @@ describe("Pending State Manager", () => {
 				{
 					applyStashedOp: async () => undefined,
 					clientId: () => clientId,
-					close: () => {},
 					connected: () => true,
 					reSubmitBatch: (batch, batchId) => {
 						resubmittedBatchIds.push(batchId);
@@ -541,7 +537,6 @@ describe("Pending State Manager", () => {
 				{
 					applyStashedOp: async (content) => applyStashedOps.push(content),
 					clientId: () => "clientId",
-					close: () => {},
 					connected: () => true,
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
@@ -572,7 +567,6 @@ describe("Pending State Manager", () => {
 				{
 					applyStashedOp: async (content) => applyStashedOps.push(content),
 					clientId: () => "clientId",
-					close: () => {},
 					connected: () => true,
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
@@ -603,7 +597,6 @@ describe("Pending State Manager", () => {
 				{
 					applyStashedOp: async () => undefined,
 					clientId: () => "CLIENT_ID",
-					close: () => {},
 					connected: () => true,
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
@@ -739,7 +732,6 @@ describe("Pending State Manager", () => {
 				{
 					applyStashedOp: async () => undefined,
 					clientId: () => "123",
-					close: () => {},
 					connected: () => true,
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,

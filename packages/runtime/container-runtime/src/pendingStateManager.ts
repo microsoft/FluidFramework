@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
@@ -72,7 +71,6 @@ export type PendingMessageResubmitData = Pick<
 export interface IRuntimeStateHandler {
 	connected(): boolean;
 	clientId(): string | undefined;
-	close(error?: ICriticalContainerError): void;
 	applyStashedOp(content: string): Promise<unknown>;
 	reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId): void;
 	isActiveConnection: () => boolean;
@@ -375,6 +373,7 @@ export class PendingStateManager implements IDisposable {
 	 * Processes the pending local copy of message that's been ack'd by the server.
 	 * @param sequenceNumber - The sequenceNumber from the server corresponding to the next pending message.
 	 * @param message - [optional] The entire incoming message, for comparing contents with the pending message for extra validation.
+	 * @throws DataProcessingError if the pending message content doesn't match the incoming message content.
 	 * @returns - The localOpMetadata of the next pending message, to be sent to whoever submitted the original message.
 	 */
 	private processNextPendingMessage(
@@ -399,17 +398,14 @@ export class PendingStateManager implements IDisposable {
 
 			// Stringified content should match
 			if (pendingMessage.content !== messageContent) {
-				this.stateHandler.close(
-					DataProcessingError.create(
-						"pending local message content mismatch",
-						"unexpectedAckReceived",
-						message,
-						{
-							expectedMessageType: JSON.parse(pendingMessage.content).type,
-						},
-					),
+				throw DataProcessingError.create(
+					"pending local message content mismatch",
+					"unexpectedAckReceived",
+					message,
+					{
+						expectedMessageType: JSON.parse(pendingMessage.content).type,
+					},
 				);
-				return;
 			}
 		}
 
