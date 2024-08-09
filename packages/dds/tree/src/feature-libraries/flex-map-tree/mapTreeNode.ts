@@ -335,6 +335,11 @@ class EagerMapTreeLeafNode<TSchema extends LeafNodeSchema>
 
 // #region Fields
 
+/**
+ * A readonly {@link FlexTreeField} which wraps an array of {@link MapTrees}.
+ * @remarks Reading data from the MapTreeField will read the corresponding data from the {@link MapTree}s.
+ * Create a `MapTreeField` by calling {@link getOrCreateField}.
+ */
 interface MapTreeField extends FlexTreeField {
 	readonly mapTrees: readonly MapTree[];
 }
