@@ -86,6 +86,26 @@ function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean 
 	return content.type === "groupedBatch" && content.contents?.length === 0;
 }
 
+/** Union of keys of T */
+type KeysOfUnion<T extends object> = T extends T ? keyof T : never;
+/** *Partial* type all possible combinations of properties and values of union T.
+ * This loosens typing allowing access to all possible properties without
+ * narrowing.
+ */
+type AnyComboFromUnion<T extends object> = { [P in KeysOfUnion<T>]?: T[P] };
+
+function buildPendingMessageContent(
+	// AnyComboFromUnion is needed need to gain access to compatDetails that
+	// is only defined for some cases.
+	message: AnyComboFromUnion<InboundSequencedContainerRuntimeMessage>,
+): string {
+	// IMPORTANT: Order matters here, this must match the order of the properties used
+	// when submitting the message.
+	const { type, contents, compatDetails } = message;
+	// Any properties that are not defined, won't be emitted by stringify.
+	return JSON.stringify({ type, contents, compatDetails });
+}
+
 function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
 	return {
 		...message,
@@ -354,9 +374,13 @@ export class PendingStateManager implements IDisposable {
 	/**
 	 * Processes the pending local copy of message that's been ack'd by the server.
 	 * @param sequenceNumber - The sequenceNumber from the server corresponding to the next pending message.
+	 * @param message - [optional] The entire incoming message, for comparing contents with the pending message for extra validation.
 	 * @returns - The localOpMetadata of the next pending message, to be sent to whoever submitted the original message.
 	 */
-	private processNextPendingMessage(sequenceNumber: number): unknown {
+	private processNextPendingMessage(
+		sequenceNumber: number,
+		message?: InboundSequencedContainerRuntimeMessage,
+	): unknown {
 		const pendingMessage = this.pendingMessages.peekFront();
 		assert(
 			pendingMessage !== undefined,
@@ -368,11 +392,35 @@ export class PendingStateManager implements IDisposable {
 
 		this.pendingMessages.shift();
 
+		// message is undefined in the Empty Batch case,
+		// because we don't have an incoming message to compare and pendingMessage is just a placeholder anyway.
+		if (message !== undefined) {
+			const messageContent = buildPendingMessageContent(message);
+
+			// Stringified content should match,
+			// especially since we're comparing batch info at batch start.
+			// We do see some rare cases of this in production - hopefully those "switch" to BatchInfoMismatch errors instead and we can remove this.
+			if (pendingMessage.content !== messageContent) {
+				this.stateHandler.close(
+					DataProcessingError.create(
+						"pending local message content mismatch",
+						"unexpectedAckReceived",
+						message,
+						{
+							expectedMessageType: JSON.parse(pendingMessage.content).type,
+						},
+					),
+				);
+				return;
+			}
+		}
+
 		return pendingMessage.localOpMetadata;
 	}
 
 	/**
-	 * Do some bookkeeping for the new batch
+	 * Validate that the incoming batch matches the batch info for the next pending message.
+	 *
 	 */
 	private onLocalBatchBegin(batch: InboundBatch) {
 		// Get the next message from the pending queue. Verify a message exists.
@@ -388,24 +436,40 @@ export class PendingStateManager implements IDisposable {
 		// a different fork of this container also submitted the same batch (and it may not be empty for that fork).
 		const firstMessage = batch.messages.length > 0 ? batch.messages[0] : undefined;
 
-		//* Double-check this
 		if (
 			pendingMessage.batchInfo.batchStartCsn !== batch.batchStartCsn ||
 			pendingMessage.batchInfo.length !== batch.messages.length
 		) {
-			this.logger?.sendErrorEvent({
-				eventName: "BatchIdOrCsnMismatch",
-				details: {
-					pendingBatchCsn: pendingMessage.batchInfo.batchStartCsn,
-					batchStartCsn: batch.batchStartCsn,
-					pendingBatchLength: pendingMessage.batchInfo.length,
-					batchLength: batch.messages.length,
-					inboundBatchIdComputed: batch.batchId === undefined,
-					pendingMessageBatchMetadata: asBatchMetadata(pendingMessage.opMetadata)?.batch,
-					messageBatchMetadata: asBatchMetadata(firstMessage?.metadata)?.batch,
+			const error = DataProcessingError.create(
+				"pending local message batch info mismatch",
+				"BatchInfoMismatch",
+				firstMessage,
+				//* Put this back?  What about empty batch?
+				// {
+				// 	expectedMessageType: JSON.parse(pendingMessage.content).type,
+				// },
+			);
+
+			this.logger?.sendErrorEvent(
+				{
+					eventName: "BatchInfoMismatch",
+					details: {
+						pendingBatchCsn: pendingMessage.batchInfo.batchStartCsn,
+						batchStartCsn: batch.batchStartCsn,
+						pendingBatchLength: pendingMessage.batchInfo.length,
+						batchLength: batch.messages.length,
+						inboundBatchIdComputed: batch.batchId === undefined,
+						pendingMessageBatchMetadata: asBatchMetadata(pendingMessage.opMetadata)?.batch,
+						messageBatchMetadata: asBatchMetadata(firstMessage?.metadata)?.batch,
+					},
+					messageDetails: firstMessage && extractSafePropertiesFromMessage(firstMessage),
 				},
-				messageDetails: firstMessage && extractSafePropertiesFromMessage(firstMessage),
-			});
+				error,
+			);
+
+			//* TODO: Decide control flow.  Throw only?  Return bool and early return from caller?
+			this.stateHandler.close(error);
+			throw error;
 		}
 	}
 
@@ -531,6 +595,6 @@ function patchbatchInfo(
 	const batchInfo: IPendingMessageFromStash["batchInfo"] = message.batchInfo;
 	if (batchInfo === undefined) {
 		// Using uuid guarantees uniqueness, retaining existing behavior
-		message.batchInfo = { clientId: uuid(), batchStartCsn: -1, length: 1 };
+		message.batchInfo = { clientId: uuid(), batchStartCsn: -1, length: -1 };
 	}
 }
