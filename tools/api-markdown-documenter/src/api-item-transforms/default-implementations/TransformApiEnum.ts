@@ -14,7 +14,7 @@ import type { DocumentationNode, SectionNode } from "../../documentation-domain/
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createMemberTables, wrapInSection } from "../helpers/index.js";
 import { filterChildMembers } from "../ApiItemTransformUtilities.js";
-import { getScopedMemberNameForDiagnostics } from "../Utilities.js";
+import { getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
 
 /**
  * Default documentation transform for `Enum` items.

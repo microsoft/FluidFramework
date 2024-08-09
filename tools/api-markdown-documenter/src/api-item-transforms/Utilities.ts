@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ApiItemKind,
-	type ApiItem,
-	type IResolveDeclarationReferenceResult,
-	type ApiPackage,
-} from "@microsoft/api-extractor-model";
+import type { ApiItem } from "@microsoft/api-extractor-model";
 import { type DocDeclarationReference } from "@microsoft/tsdoc";
 
 import { DocumentNode, type SectionNode } from "../documentation-domain/index.js";
@@ -21,6 +16,7 @@ import {
 import { type TsdocNodeTransformOptions } from "./TsdocNodeTransforms.js";
 import { type ApiItemTransformationConfiguration } from "./configuration/index.js";
 import { wrapInSection } from "./helpers/index.js";
+import { resolveSymbolicReference } from "../utilities/index.js";
 
 /**
  * Creates a {@link DocumentNode} representing the provided API item.
@@ -82,40 +78,19 @@ function resolveSymbolicLink(
 ): Link | undefined {
 	const { apiModel, logger } = config;
 
-	const resolvedReference: IResolveDeclarationReferenceResult =
-		apiModel.resolveDeclarationReference(codeDestination, contextApiItem);
-
-	if (resolvedReference.resolvedApiItem === undefined) {
-		logger.warning(
-			`Unable to resolve reference "${codeDestination.emitAsTsdoc()}" from "${getScopedMemberNameForDiagnostics(
-				contextApiItem,
-			)}":`,
-			resolvedReference.errorMessage,
-		);
-
+	let resolvedReference: ApiItem;
+	try {
+		resolvedReference = resolveSymbolicReference(contextApiItem, codeDestination, apiModel);
+	} catch (error: unknown) {
+		logger.warning((error as Error).message);
 		return undefined;
 	}
-	const resolvedApiItem = resolvedReference.resolvedApiItem;
 
 	// Return undefined if the resolved API item should be excluded based on release tags
-	if (!shouldItemBeIncluded(resolvedApiItem, config)) {
+	if (!shouldItemBeIncluded(resolvedReference, config)) {
 		logger.verbose("Excluding link to item based on release tags");
 		return undefined;
 	}
 
-	return getLinkForApiItem(resolvedReference.resolvedApiItem, config);
-}
-
-/**
- * Creates a scoped member specifier for the provided API item, including the name of the package the item belongs to
- * if applicable.
- *
- * Intended for use in diagnostic messaging.
- */
-export function getScopedMemberNameForDiagnostics(apiItem: ApiItem): string {
-	return apiItem.kind === ApiItemKind.Package
-		? (apiItem as ApiPackage).displayName
-		: `${
-				apiItem.getAssociatedPackage()?.displayName ?? "<NO-PACKAGE>"
-		  }#${apiItem.getScopedNameWithinPackage()}`;
+	return getLinkForApiItem(resolvedReference, config);
 }

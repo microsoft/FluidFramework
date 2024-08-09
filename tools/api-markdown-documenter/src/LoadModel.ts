@@ -50,7 +50,7 @@ export const defaultLoadModelOptions: Required<Omit<LoadModelOptions, "modelDire
  * @param reportsDirectoryPath - Path to the directory containing the API reports.
  * @param logger - Optional logger for reporting system events while loading the model.
  *
- * @throws If {@link LoadModelOptions.modelDirectoryPath} doesn't exist, or if no `.api.json` files are found directly under it.
+ * @throws If the specified {@link LoadModelOptions.modelDirectoryPath} doesn't exist, or if no `.api.json` files are found directly under it.
  *
  * @public
  */
