@@ -36,6 +36,7 @@ import {
 	FlexFieldSchema,
 	cursorForJsonableTreeNode,
 	SchemaBuilderBase,
+	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import { brand, disposeSymbol } from "../../../util/index.js";
 import { flexTreeViewWithContent, forestWithContent } from "../../utils.js";
@@ -86,7 +87,7 @@ describe("LazyField", () => {
 				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
 		);
 		assert.throws(
-			() => (valueField.content = singleJsonCursor({})),
+			() => (valueField.content = mapTreeFromCursor(singleJsonCursor({}))),
 			(e: Error) =>
 				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
 		);
@@ -388,14 +389,16 @@ describe("LazyOptionalField", () => {
 			initialTree: singleJsonCursor(5),
 		});
 		assert.equal(view.flexTree.content, 5);
-		view.flexTree.content = singleJsonCursor(6);
+		view.flexTree.content = mapTreeFromCursor(singleJsonCursor(6));
 		assert.equal(view.flexTree.content, 6);
 		view.flexTree.content = undefined;
 		assert.equal(view.flexTree.content, undefined);
-		view.flexTree.content = cursorForJsonableTreeNode({
-			type: leaf.string.name,
-			value: 7,
-		});
+		view.flexTree.content = mapTreeFromCursor(
+			cursorForJsonableTreeNode({
+				type: leaf.string.name,
+				value: 7,
+			}),
+		);
 		assert.equal(view.flexTree.content, 7);
 	});
 });
@@ -447,10 +450,10 @@ describe("LazyValueField", () => {
 			initialTree: singleJsonCursor("X"),
 		});
 		assert.equal(view.flexTree.content, "X");
-		view.flexTree.content = singleJsonCursor("Y");
+		view.flexTree.content = mapTreeFromCursor(singleJsonCursor("Y"));
 		assert.equal(view.flexTree.content, "Y");
 		const zCursor = cursorForJsonableTreeNode({ type: leaf.string.name, value: "Z" });
-		view.flexTree.content = zCursor;
+		view.flexTree.content = mapTreeFromCursor(zCursor);
 		assert.equal(view.flexTree.content, "Z");
 	});
 });
