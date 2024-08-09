@@ -17,31 +17,35 @@ import type {
 } from "../migrationInterfaces/index.js";
 import type { IDetachedModel, IMigratableModelLoader } from "../modelLoader/index.js";
 
+type MigratableParts = {
+	model: IMigratableModel;
+	migrationTool: IMigrationTool;
+	id: string;
+};
+
 /**
  * @internal
  */
 export class Migrator implements IMigrator {
-	private _currentModel: IMigratableModel;
+	private _currentMigratable: MigratableParts;
 	public get currentModel(): IMigratableModel {
-		return this._currentModel;
+		return this._currentMigratable.model;
 	}
 
-	private _currentMigrationTool: IMigrationTool;
 	public get currentMigrationTool(): IMigrationTool {
-		return this._currentMigrationTool;
+		return this._currentMigratable.migrationTool;
 	}
 
-	private _currentModelId: string;
 	public get currentModelId(): string {
-		return this._currentModelId;
+		return this._currentMigratable.id;
 	}
 
 	public get migrationState(): MigrationState {
-		return this._currentMigrationTool.migrationState;
+		return this.currentMigrationTool.migrationState;
 	}
 
 	public get connected(): boolean {
-		return this._currentMigrationTool.connected;
+		return this.currentMigrationTool.connected;
 	}
 
 	private readonly _events = new TypedEventEmitter<IMigratorEvents>();
@@ -79,9 +83,11 @@ export class Migrator implements IMigrator {
 		initialId: string,
 		private readonly dataTransformationCallback?: DataTransformationCallback,
 	) {
-		this._currentModel = initialMigratable;
-		this._currentMigrationTool = initialMigrationTool;
-		this._currentModelId = initialId;
+		this._currentMigratable = {
+			model: initialMigratable,
+			migrationTool: initialMigrationTool,
+			id: initialId,
+		};
 		this.takeAppropriateActionForCurrentMigratable();
 	}
 
@@ -92,13 +98,13 @@ export class Migrator implements IMigrator {
 	 * that a freshly-loaded migrated container is in collaborating state.
 	 */
 	private readonly takeAppropriateActionForCurrentMigratable = () => {
-		const migrationState = this._currentMigrationTool.migrationState;
+		const migrationState = this.currentMigrationTool.migrationState;
 		if (migrationState === "migrating") {
 			this.ensureMigrating();
 		} else if (migrationState === "migrated") {
 			this.ensureLoading();
 		} else {
-			this._currentMigrationTool.events.once(
+			this.currentMigrationTool.events.once(
 				"migrating",
 				this.takeAppropriateActionForCurrentMigratable,
 			);
@@ -127,7 +133,7 @@ export class Migrator implements IMigrator {
 			throw new Error("Cannot perform migration, we are currently trying to load");
 		}
 
-		const migrationTool = this._currentMigrationTool;
+		const migrationTool = this.currentMigrationTool;
 		const acceptedMigration = migrationTool.acceptedMigration;
 		if (acceptedMigration === undefined) {
 			throw new Error("Expect an accepted migration before migration starts");
@@ -169,7 +175,7 @@ export class Migrator implements IMigrator {
 				// 3. Have a acceptance rollback or acceptance update path, to either retry or update the acceptance sequence number to be reachable
 				// 4. Use a non-paused load, and accept that some late-arriving data might get included.
 				const { model: exportModel } = await this.modelLoader.loadExistingPaused(
-					this._currentModelId,
+					this.currentModelId,
 					acceptedMigration.migrationSequenceNumber,
 				);
 				const exportedData = await exportModel.exportData();
@@ -295,7 +301,7 @@ export class Migrator implements IMigrator {
 			throw new Error("Cannot start loading the migrated before migration is complete");
 		}
 
-		const migrationTool = this._currentMigrationTool;
+		const migrationTool = this.currentMigrationTool;
 		const acceptedMigration = migrationTool.acceptedMigration;
 		if (acceptedMigration === undefined) {
 			throw new Error("Expect an accepted version before migration starts");
@@ -323,9 +329,11 @@ export class Migrator implements IMigrator {
 			// of the migratable to be the responsibility of whoever created the Migrator (and handed it its first
 			// migratable).  It could also be fine to close here, just need to have an explicit contract to clarify
 			// who is responsible for managing that.
-			this._currentModel = migrated;
-			this._currentMigrationTool = migratedMigrationTool;
-			this._currentModelId = migratedId;
+			this._currentMigratable = {
+				model: migrated,
+				migrationTool: migratedMigrationTool,
+				id: migratedId,
+			};
 			this._events.emit("migrated", migrated, migratedId);
 			this._migratedLoadP = undefined;
 
