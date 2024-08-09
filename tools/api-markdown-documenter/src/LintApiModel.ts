@@ -24,6 +24,12 @@ import { fail } from "node:assert";
 export interface LinterOptions {
 	/**
 	 * Whether or not to evaluate `{@link}` and `{@inheritDoc}` references as a part of the linting process.
+	 *
+	 * @remarks
+	 * Note: these checks do not evaluate the *syntax* of reference tags.
+	 * API-Extractor does that as a part of its model generation process.
+	 * This option is for verifying that symbolic references point to valid targets within the API model..
+	 *
 	 * @defaultValue `true`
 	 */
 	checkReferences?: boolean;
