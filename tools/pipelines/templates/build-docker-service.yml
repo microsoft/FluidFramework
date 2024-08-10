@@ -336,6 +336,14 @@ extends:
                 echo "$(containerTagSuffix)"
                 echo "##vso[task.setvariable variable=version;isOutput=true]$(containerTagSuffix)"
 
+        # Is this what's missing, because the context for the docker build task is ${{ parameters.buildDirectory }}?
+        - task: CopyFiles@2
+          displayName: Copy CredScan suppressions file to root directory for container build
+          inputs:
+            sourceFolder: $(Build.SourcesDirectory)
+            contents: 'CredScanSuppressions.json'
+            targetFolder: ${{ parameters.buildDirectory }}
+
         # The GitSSH Dockerfile does not have a 'base' target nor does it run pack/lint/test/docs tasks, so skip
         # all that for it. This feels hacky but it's a simple solution for now to the issue of trying to use variables
         # which aren't available at compile-time, for expression-syntax conditionals that are evaluated at compile-time.
