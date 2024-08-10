@@ -1,0 +1,47 @@
+{
+    "suiteName": "Summary benchmarks size of",
+    "benchmarks": [
+        {
+            "benchmarkName": "a wide tree with 1 nodes. @CustomBenchmark",
+            "elapsedSeconds": 0.067204738,
+            "customData": {
+                "summarySize": 5509
+            }
+        },
+        {
+            "benchmarkName": "a wide tree with 10 nodes. @CustomBenchmark",
+            "elapsedSeconds": 0.034632536,
+            "customData": {
+                "summarySize": 5545
+            }
+        },
+        {
+            "benchmarkName": "a wide tree with 100 nodes. @CustomBenchmark",
+            "elapsedSeconds": 0.067017461,
+            "customData": {
+                "summarySize": 6083
+            }
+        },
+        {
+            "benchmarkName": "a deep tree with 10 nodes. @CustomBenchmark",
+            "elapsedSeconds": 0.067476428,
+            "customData": {
+                "summarySize": 5789
+            }
+        },
+        {
+            "benchmarkName": "a deep tree with 100 nodes. @CustomBenchmark",
+            "elapsedSeconds": 0.066026081,
+            "customData": {
+                "summarySize": 6149
+            }
+        },
+        {
+            "benchmarkName": "a deep tree with 200 nodes. @CustomBenchmark",
+            "elapsedSeconds": 0.0719669,
+            "customData": {
+                "summarySize": 6549
+            }
+        }
+    ]
+}
