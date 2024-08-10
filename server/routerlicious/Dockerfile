@@ -28,8 +28,6 @@ RUN chmod +x /tini
 WORKDIR /usr
 COPY --from=root packages/tools/changelog-generator-wrapper/package*.json packages/tools/changelog-generator-wrapper/
 
-COPY --from=root CredScanSuppressions.json src/
-
 # Copy over and build the server
 WORKDIR /usr/src/server
 
