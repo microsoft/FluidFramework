@@ -251,6 +251,7 @@ describe("Pending State Manager", () => {
 							eventName: "unexpectedAckReceived",
 							pendingContentScrubbed: JSON.stringify({ type: "op" }),
 							incomingContentScrubbed: JSON.stringify({ type: "otherType" }),
+							contentsMatch: true,
 						},
 					],
 					"Expected to log scrubbed messages",
@@ -288,6 +289,7 @@ describe("Pending State Manager", () => {
 							eventName: "unexpectedAckReceived",
 							pendingContentScrubbed: JSON.stringify({ type: "op", contents: {} }),
 							incomingContentScrubbed: JSON.stringify({ type: "op" }),
+							contentsMatch: false,
 						},
 					],
 					"Expected to log scrubbed messages",
@@ -328,6 +330,7 @@ describe("Pending State Manager", () => {
 								type: "op",
 								contents: { prop1: "boolean" },
 							}),
+							contentsMatch: false,
 						},
 					],
 					"Expected to log scrubbed messages",
@@ -335,7 +338,7 @@ describe("Pending State Manager", () => {
 				);
 			});
 
-			it("stringified message content when stringified out of order", () => {
+			it("stringified message content out of order", () => {
 				const message: Partial<ISequencedDocumentMessage> = {
 					clientId,
 					type: MessageType.Operation,
@@ -344,10 +347,10 @@ describe("Pending State Manager", () => {
 					contents: {},
 				};
 
+				// contents and type are swapped in the stringified message relative to what we typically do/expect
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							// Switch the order when stringifying
 							contents: JSON.stringify({ contents: message.contents, type: message.type }),
 							referenceSequenceNumber: 0,
 						},
@@ -356,15 +359,7 @@ describe("Pending State Manager", () => {
 				);
 
 				assert.throws(
-					() =>
-						process(
-							[
-								{
-									...message,
-								},
-							],
-							0 /* batchStartCsn */,
-						),
+					() => process([message], 0 /* batchStartCsn */),
 					(closeError: any) =>
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
 				);
@@ -374,12 +369,59 @@ describe("Pending State Manager", () => {
 							eventName: "unexpectedAckReceived",
 							pendingContentScrubbed: JSON.stringify({ contents: {}, type: "op" }),
 							incomingContentScrubbed: JSON.stringify({ type: "op", contents: {} }),
+							contentsMatch: true,
 						},
 					],
 					"Expected to log scrubbed messages",
 					true /* inlineDetailsProp */,
 				);
 			});
+		});
+
+		it("stringified message content with unexpected keys", () => {
+			const message: Partial<ISequencedDocumentMessage> = {
+				clientId,
+				type: MessageType.Operation,
+				clientSequenceNumber: 0,
+				referenceSequenceNumber: 0,
+				contents: {},
+			};
+
+			// contents and type are swapped in the stringified message relative to what we typically do/expect
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						contents: JSON.stringify({
+							contents: message.contents,
+							type: message.type,
+							somethingElse: 123, // Unexpected key
+						}),
+						referenceSequenceNumber: 0,
+					},
+				],
+				0 /* clientSequenceNumber */,
+			);
+
+			assert.throws(
+				() => process([message], 0 /* batchStartCsn */),
+				(closeError: any) => closeError.errorType === ContainerErrorTypes.dataProcessingError,
+			);
+			mockLogger.assertMatch(
+				[
+					{
+						eventName: "unexpectedAckReceived",
+						pendingContentScrubbed: JSON.stringify({
+							contents: {},
+							type: "op",
+							somethingElse: "number",
+						}),
+						incomingContentScrubbed: JSON.stringify({ type: "op", contents: {} }),
+						contentsMatch: true,
+					},
+				],
+				"Expected to log scrubbed messages",
+				true /* inlineDetailsProp */,
+			);
 		});
 
 		it("processing in sync messages will not throw", () => {

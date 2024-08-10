@@ -104,16 +104,16 @@ function typesOfKeys<T extends object>(obj: T): Record<keyof T, string> {
 function scrubAndStringify(
 	message: InboundContainerRuntimeMessage | LocalContainerRuntimeMessage,
 ): string {
-	//* TODO: Preserve order here
-	const { type, contents, compatDetails, ...rest } = message;
-	const scrubbedContents = contents && typesOfKeys(contents);
-	const scrubbedRest = typesOfKeys(rest); // We don't expect anything here
-	return JSON.stringify({
-		type,
-		contents: scrubbedContents,
-		compatDetails,
-		...scrubbedRest,
-	});
+	// Scrub the whole object in case there are unexpected keys
+	const scrubbed: Record<string, unknown> = typesOfKeys(message);
+
+	// For these known/expected keys, we can either drill in (for contents)
+	// or just use the value as-is (since it's not personal info)
+	scrubbed.contents = message.contents && typesOfKeys(message.contents);
+	scrubbed.compatDetails = message.compatDetails;
+	scrubbed.type = message.type;
+
+	return JSON.stringify(scrubbed);
 }
 
 function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
@@ -419,11 +419,19 @@ export class PendingStateManager implements IDisposable {
 					messageContent,
 				) as InboundContainerRuntimeMessage;
 
+				const contentsMatch =
+					pendingContentObj.contents === incomingContentObj.contents ||
+					(pendingContentObj.contents !== undefined &&
+						incomingContentObj.contents !== undefined &&
+						JSON.stringify(pendingContentObj.contents) ===
+							JSON.stringify(incomingContentObj.contents));
+
 				this.logger.sendErrorEvent({
 					eventName: "unexpectedAckReceived",
 					details: {
 						pendingContentScrubbed: scrubAndStringify(pendingContentObj),
 						incomingContentScrubbed: scrubAndStringify(incomingContentObj),
+						contentsMatch,
 					},
 				});
 
