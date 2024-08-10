@@ -337,12 +337,15 @@ extends:
                 echo "##vso[task.setvariable variable=version;isOutput=true]$(containerTagSuffix)"
 
         # Is this what's missing, because the context for the docker build task is ${{ parameters.buildDirectory }}?
-        - task: CopyFiles@2
-          displayName: Copy CredScan suppressions file to root directory for container build
+        # Note: ADO's CopyFiles task is unusable to copy files when the source folder has a lot of subfolders/files
+        # because it tries to enumerate *everything* (.git, node_modules, etc) before deciding what to copy.
+        - task: Bash@3
+          displayName: Copy CredScan suppressions file to root context directory used by container build
           inputs:
-            sourceFolder: '$(Build.SourcesDirectory)'
-            contents: './CredScanSuppressions.json'
-            targetFolder: '${{ parameters.buildDirectory }}'
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)
+            script: |
+              cp ./CredScanSuppressions.json ${{ parameters.buildDirectory }}
 
         # The GitSSH Dockerfile does not have a 'base' target nor does it run pack/lint/test/docs tasks, so skip
         # all that for it. This feels hacky but it's a simple solution for now to the issue of trying to use variables
