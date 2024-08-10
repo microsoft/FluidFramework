@@ -14,7 +14,11 @@ import {
 import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
 
-import { type InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
+import {
+	type InboundContainerRuntimeMessage,
+	type InboundSequencedContainerRuntimeMessage,
+	type LocalContainerRuntimeMessage,
+} from "./messageTypes.js";
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "./metadata.js";
 import { BatchId, BatchMessage, generateBatchId, InboundBatch } from "./opLifecycle/index.js";
 
@@ -82,24 +86,34 @@ function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean 
 	return content.type === "groupedBatch" && content.contents?.length === 0;
 }
 
-/** Union of keys of T */
-type KeysOfUnion<T extends object> = T extends T ? keyof T : never;
-/** *Partial* type all possible combinations of properties and values of union T.
- * This loosens typing allowing access to all possible properties without
- * narrowing.
- */
-type AnyComboFromUnion<T extends object> = { [P in KeysOfUnion<T>]?: T[P] };
-
-function buildPendingMessageContent(
-	// AnyComboFromUnion is needed need to gain access to compatDetails that
-	// is only defined for some cases.
-	message: AnyComboFromUnion<InboundSequencedContainerRuntimeMessage>,
-): string {
+function buildPendingMessageContent(message: InboundSequencedContainerRuntimeMessage): string {
 	// IMPORTANT: Order matters here, this must match the order of the properties used
 	// when submitting the message.
-	const { type, contents, compatDetails } = message;
+	const { type, contents, compatDetails }: InboundContainerRuntimeMessage = message;
 	// Any properties that are not defined, won't be emitted by stringify.
 	return JSON.stringify({ type, contents, compatDetails });
+}
+
+function typesOfKeys<T extends object>(obj: T): Record<keyof T, string> {
+	return Object.keys(obj).reduce((acc, key) => {
+		acc[key] = typeof obj[key];
+		return acc;
+	}, {}) as Record<keyof T, string>;
+}
+
+function scrubAndStringify(
+	message: InboundContainerRuntimeMessage | LocalContainerRuntimeMessage,
+): string {
+	//* TODO: Preserve order here
+	const { type, contents, compatDetails, ...rest } = message;
+	const scrubbedContents = contents && typesOfKeys(contents);
+	const scrubbedRest = typesOfKeys(rest); // We don't expect anything here
+	return JSON.stringify({
+		type,
+		contents: scrubbedContents,
+		compatDetails,
+		...scrubbedRest,
+	});
 }
 
 function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
@@ -398,13 +412,25 @@ export class PendingStateManager implements IDisposable {
 
 			// Stringified content should match
 			if (pendingMessage.content !== messageContent) {
+				const pendingContentObj = JSON.parse(
+					pendingMessage.content,
+				) as LocalContainerRuntimeMessage;
+				const incomingContentObj = JSON.parse(
+					messageContent,
+				) as InboundContainerRuntimeMessage;
+
+				this.logger.sendErrorEvent({
+					eventName: "unexpectedAckReceived",
+					details: {
+						pendingContentScrubbed: scrubAndStringify(pendingContentObj),
+						incomingContentScrubbed: scrubAndStringify(incomingContentObj),
+					},
+				});
+
 				throw DataProcessingError.create(
 					"pending local message content mismatch",
 					"unexpectedAckReceived",
 					message,
-					{
-						expectedMessageType: JSON.parse(pendingMessage.content).type,
-					},
 				);
 			}
 		}
