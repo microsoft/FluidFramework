@@ -724,7 +724,10 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 					const dataObjectHandle = this.dataObjectMap.get<IFluidHandle<IGCActivityObject>>(
 						dataObjectDetails.id,
 					);
-					assert(dataObjectHandle !== undefined, `Could not get handle for data object ${dataObjectDetails.id}`);
+					assert(
+						dataObjectHandle !== undefined,
+						`Could not get handle for data object ${dataObjectDetails.id}`,
+					);
 
 					dataObjectDetails.object.stop();
 					this.dataObjectMap.delete(dataObjectDetails.id);
@@ -1026,13 +1029,19 @@ export class RootDataObject extends DataObject implements ITestRunner {
 		const nonCollabDataObjectHandle = this.root.get<IFluidHandle<IGCActivityObject>>(
 			this.singleCollabDataObjectKey,
 		);
-		assert(nonCollabDataObjectHandle !== undefined, `Single collab data object not present - ${this.singleCollabDataObjectKey}`);
+		assert(
+			nonCollabDataObjectHandle !== undefined,
+			`Single collab data object not present - ${this.singleCollabDataObjectKey}`,
+		);
 		this.singleCollabDataObject = await nonCollabDataObjectHandle.get();
 
 		const collabDataObjectHandle = this.root.get<IFluidHandle<IGCActivityObject>>(
 			this.multiCollabDataObjectKey,
 		);
-		assert(collabDataObjectHandle !== undefined, `Multi collab data object not present - ${this.multiCollabDataObjectKey}`);
+		assert(
+			collabDataObjectHandle !== undefined,
+			`Multi collab data object not present - ${this.multiCollabDataObjectKey}`,
+		);
 		this.multiCollabDataObject = await collabDataObjectHandle.get();
 
 		/**
