@@ -340,9 +340,9 @@ extends:
         - task: CopyFiles@2
           displayName: Copy CredScan suppressions file to root directory for container build
           inputs:
-            sourceFolder: $(Build.SourcesDirectory)
-            contents: 'CredScanSuppressions.json'
-            targetFolder: ${{ parameters.buildDirectory }}
+            sourceFolder: '$(Build.SourcesDirectory)'
+            contents: './CredScanSuppressions.json'
+            targetFolder: '${{ parameters.buildDirectory }}'
 
         # The GitSSH Dockerfile does not have a 'base' target nor does it run pack/lint/test/docs tasks, so skip
         # all that for it. This feels hacky but it's a simple solution for now to the issue of trying to use variables
