@@ -29,11 +29,10 @@ describe("ESLint Rule Tests", function () {
 
 	it("Should report an error for unchecked record access", async function () {
 		const result = await lintFile("fileWithOnlyRecordAccess.ts");
-		console.log(result)
-		assert.strictEqual(result.errorCount, 8, "Should have 8 errors");
+		assert.strictEqual(result.errorCount, 7, "Should have 7 errors");
 		assert.strictEqual(
 			result.messages[0].message,
-			"'someObjWithStaticType[c]' is possibly 'undefined'",
+			"'nestedObj.nested.a' is possibly 'undefined'",
 		);
 		assert.strictEqual(
 			result.messages[1].message,
@@ -52,17 +51,10 @@ describe("ESLint Rule Tests", function () {
 			"'indexedRecordOfStrings[b]' is possibly 'undefined'",
 		);
 		assert.strictEqual(
-			result.messages[5].message,
-			"'indexedRecordOfStrings[c]' is possibly 'undefined'",
-		);
-		assert.strictEqual(
 			result.messages[6].message,
-			"'indexedRecordOfStrings[key]' is possibly 'undefined'",
+			"Type 'string | undefined' is not assignable to type 'string'. \nType 'undefined' is not assignable to type 'string'.",
 		);
-		assert.strictEqual(
-			result.messages[7].message,
-			"'indexedRecordOfStrings[key]' is possibly 'undefined'",
-		);
+		assert.strictEqual(result.messages[7].message, "'aImplicitType' is possibly 'undefined'");
 	});
 
 	it("Should not report an error for valid array access", async function () {

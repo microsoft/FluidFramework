@@ -38,10 +38,18 @@ module.exports = {
 		schema: [],
 	},
 	create(context) {
+		const parserServices = context.parserServices;
+
+		if (parserServices && parserServices.program && parserServices.esTreeNodeToTSNodeMap) {
+			const compilerOptions = parserServices.program.getCompilerOptions();
+
+			if (compilerOptions.noUncheckedIndexedAccess) {
+				return {};
+			}
+		}
 		const checkedProperties = new Set();
 		const forInLoopVariables = new Set();
 		const declaredVariables = new Map();
-
 		return {
 			Program() {
 				context.getScope().variables.forEach((variable) => {
@@ -61,11 +69,7 @@ module.exports = {
 				}
 			},
 			MemberExpression: function checkMemberExpression(node) {
-				const services = context.parserServices;
-				if (!services || !services.program || !services.esTreeNodeToTSNodeMap) {
-					return;
-				}
-				const checker = services.program.getTypeChecker();
+				const checker = parserServices.program.getTypeChecker();
 				let currentNode = node;
 				let accessPath = [];
 				let isOptionalChain = false;
@@ -101,7 +105,7 @@ module.exports = {
 					accessPath.unshift(currentNode.name);
 				}
 
-				const tsNode = services.esTreeNodeToTSNodeMap.get(node.object);
+				const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node.object);
 				if (!tsNode) {
 					return;
 				}

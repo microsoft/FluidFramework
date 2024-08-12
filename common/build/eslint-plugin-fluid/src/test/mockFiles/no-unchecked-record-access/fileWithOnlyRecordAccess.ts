@@ -17,7 +17,7 @@ type IndexSignatureType = { [key: string]: string };
 
 const nestedObj: NestedIndexProps = { nested: { a: "hello" } };
 nestedObj.nested.a; // ok: Accessing nested index property 'a' without requiring a particular result
-nestedObj.nested.a.length; // defect: Accessing length of a nested undefined property
+nestedObj.nested.a.length; // defect: Accessing length of a nested possibly undefined or missing property
 
 const a = "a";
 const b = "b";
@@ -29,7 +29,6 @@ someObjWithStaticType["a"]; // ok: Accessing property 'a' using bracket notation
 someObjWithStaticType["a"].length; // ok: Accessing length of string property 'a' using bracket notation
 someObjWithStaticType[a].length; // ok: Accessing length of string property 'a' using bracket notation
 someObjWithStaticType[b].length; // ok: Accessing length of string property 'b' using bracket notation
-someObjWithStaticType[c].length; // defect: Accessing length of missing property 'c' using bracket notation
 const aExpectingStringFromStaticType: string = someObjWithStaticType.a; // ok: Assigning string property to a strict string variable
 const aExpectingStringOrUndefinedFromStaticType: string | undefined = someObjWithStaticType.a; // ok: Assigning string property to a string or undefined variable
 
@@ -40,24 +39,17 @@ indexedRecordOfStrings["a"]; // ok: Accessing property 'a' using bracket notatio
 indexedRecordOfStrings["a"].length; // defect: Accessing length of index property 'a' using bracket notation, but 'a' might not be present
 indexedRecordOfStrings[a].length; // defect: Accessing length of index property 'a' using bracket notation, but 'a' might not be present
 indexedRecordOfStrings[b].length; // defect: Accessing length of index property 'b' using bracket notation, but 'b' might not be present
-indexedRecordOfStrings[c].length; // defect: Accessing length of missing property 'c' using bracket notation
 indexedRecordOfStrings.a?.length; // ok: Using optional chaining to access length safely handles 'undefined'
-indexedRecordOfStrings.a!.length; // ok: Using non null assert to access length safely handles 'undefined'
+indexedRecordOfStrings.a!.length; // ok: The author says they understand the question raised by check and acknowledge that they have other information expecting that it is actually defined or that they are okay with an exception being raise here if "a" is not present and defined
 indexedRecordOfStrings["a"]?.length; // ok: Using optional chaining to access length using bracket notation safely handles 'undefined'
-indexedRecordOfStrings["a"]!.length; // ok: Using non null assert to access length using bracket notation safely handles 'undefined'
+indexedRecordOfStrings["a"]!.length; // ok: The author says they understand the question raised by check and acknowledge that they have other information expecting that it is actually defined or that they are okay with an exception being raise here if "a" is not present and defined
 
 if (indexedRecordOfStrings.a) {
 	indexedRecordOfStrings.a.length; // ok: Within a truthy check, 'a' is guaranteed to be defined
 }
 
-for (const key in indexedRecordOfStrings) {
-	indexedRecordOfStrings[key]; // ok: Accessing property while looping though records which acts like a `has` property check
-	indexedRecordOfStrings[key].length; // ok: Accessing property while looping though records which acts like a `has` property check
-}
-
 for (const [key, value] of Object.entries(indexedRecordOfStrings)) {
-	value; // ok: Access is always okay because the result is not checked
-	value.length; // ok: Accessing property while looping though records which acts like a `has` property check
+	value.length; // ok: Object.entries provides only present values
 	indexedRecordOfStrings[key]; // ok: Accessing property while looping though records which acts like a `has` property check
 	indexedRecordOfStrings[key].length; // ok: Accessing property while looping though records which acts like a `has` property check
 }
@@ -67,7 +59,7 @@ const aExpectingStringOrUndefined: string | undefined = indexedRecordOfStrings.a
 const aImplicitType = indexedRecordOfStrings.a; // ok: Assigning index property with inferred type
 aImplicitType.length; // defect: Accessing length of inferred type, 'a' might be undefined
 aImplicitType?.length; // ok: Using optional chaining to access length safely handles 'undefined'
-aImplicitType!.length; // ok: Using non null assert to access length safely handles 'undefined'
+aImplicitType!.length; // ok: The author says they understand the question raised by check and acknowledge that they have other information expecting that it is actually defined or that they are okay with an exception being raise here if "a" is not present and defined
 
 if ("a" in indexedRecordOfStrings) {
 	indexedRecordOfStrings.a.length; // ok: Accessing length of property inside an 'in' check, 'a' is guaranteed to be defined
@@ -80,9 +72,7 @@ interface NonNullableProps {
 
 const nonNullObj: NonNullableProps = { definitelyString: "hello" };
 nonNullObj.definitelyString.length; // ok: Accessing length of non-nullable property
-nonNullObj.maybeString.length; // defect: Accessing length of potentially undefined property
-nonNullObj.maybeString!.length; // ok: Non-null assertion, we assert it is not null
-nonNullObj.maybeString?.length; // ok: Optional chaining, safely handles 'undefined'
+nonNullObj.maybeString.length; // ok: This should be caught by tsc, not by this custom lint rule
 
 let possiblyUndefined: string | undefined;
 possiblyUndefined = nonNullObj.maybeString; // ok: Assigning optional property to variable of type 'string | undefined'
