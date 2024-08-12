@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { mkdir, writeFile, rm } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
 	type BrokenCompatTypes,
@@ -161,8 +161,9 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		const buildToolsPackageName = "@fluidframework/build-tools";
 		const buildToolsImport = `import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "${buildToolsPackageName}";`;
 
-		// Most API levels are always imported from the API-specific entrypoint, but 'legacy' is imported from
-		// /internal. This is consistent with our policy for code within the repo - all non-public
+		// Public API levels are always imported from the primary entrypoint, but everything else is importedx from the
+		// /internal entrypoint. This is consistent with our policy for code within the repo - all non-public APIs are
+		// imported from the /internal entrypoint for consistency
 		const previousImport = `import type * as old from "${previousPackageName}${
 			previousPackageLevel === ApiLevel.public
 				? ""
