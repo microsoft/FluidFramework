@@ -247,7 +247,7 @@ export class TestClient extends Client {
 	): IMergeTreeInsertMsg | undefined {
 		const segment = new TextSegment(text);
 		if (props) {
-			segment.addProperties(props);
+			segment.properties = { ...props };
 		}
 		return this.insertSegmentLocal(pos, segment);
 	}
@@ -262,7 +262,7 @@ export class TestClient extends Client {
 	): void {
 		const segment = new TextSegment(text);
 		if (props) {
-			segment.addProperties(props);
+			segment.properties = { ...props };
 		}
 		this.applyMsg(
 			this.makeOpMessage(createInsertSegmentOp(pos, segment), seq, refSeq, longClientId),
@@ -301,7 +301,7 @@ export class TestClient extends Client {
 	): IMergeTreeInsertMsg | undefined {
 		const segment = new Marker(behaviors);
 		if (props) {
-			segment.addProperties(props);
+			segment.properties = { ...props };
 		}
 		return this.insertSegmentLocal(pos, segment);
 	}
@@ -316,7 +316,7 @@ export class TestClient extends Client {
 	): void {
 		const segment = new Marker(markerDef.refType ?? ReferenceType.Tile);
 		if (props) {
-			segment.addProperties(props);
+			segment.properties = { ...props };
 		}
 		this.applyMsg(
 			this.makeOpMessage(createInsertSegmentOp(pos, segment), seq, refSeq, longClientId),

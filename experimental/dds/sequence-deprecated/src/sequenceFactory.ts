@@ -51,7 +51,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 		if (runSegment.items) {
 			const seg = new SubSequence<object>(runSegment.items);
 			if (runSegment.props) {
-				seg.addProperties(runSegment.props);
+				seg.properties = { ...runSegment.props };
 			}
 			return seg;
 		}
@@ -134,7 +134,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
 		if (runSegment.items) {
 			const seg = new SubSequence<number>(runSegment.items);
 			if (runSegment.props) {
-				seg.addProperties(runSegment.props);
+				seg.properties = { ...runSegment.props };
 			}
 			return seg;
 		}

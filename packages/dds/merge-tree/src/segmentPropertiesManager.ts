@@ -14,6 +14,10 @@ import { MapLike, PropertySet, createMap } from "./properties.js";
 /**
  * @legacy
  * @alpha
+ *
+ * @deprecated - This enum should not be used externally and will be removed in a subsequent release.
+ *
+ * @privateRemarks This enum should be made internal after the deprecation period
  */
 export enum PropertiesRollback {
 	/**
@@ -30,6 +34,10 @@ export enum PropertiesRollback {
 /**
  * @legacy
  * @alpha
+ *
+ * @deprecated - This class should not be used externally and will be removed in a subsequent release.
+ *
+ * @privateRemarks This class should be made internal after the deprecation period
  */
 export class PropertiesManager {
 	private pendingKeyUpdateCount: MapLike<number> | undefined;

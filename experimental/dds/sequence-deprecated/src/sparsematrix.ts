@@ -41,7 +41,7 @@ export class PaddingSegment extends BaseSegment {
 		if (spec && typeof spec === "object" && "pad" in spec) {
 			const segment = new PaddingSegment(spec.pad);
 			if (spec.props) {
-				segment.addProperties(spec.props);
+				segment.properties = { ...spec.props };
 			}
 			return segment;
 		}
@@ -113,7 +113,7 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
 		if (spec && typeof spec === "object" && "items" in spec) {
 			const segment = new RunSegment(spec.items);
 			if (spec.props) {
-				segment.addProperties(spec.props);
+				segment.properties = { ...spec.props };
 			}
 			return segment;
 		}
@@ -263,7 +263,7 @@ export class SparseMatrixClass extends SharedSegmentSequence<MatrixSegment> {
 		const end = start + values.length;
 		const segment = new RunSegment(values);
 		if (props) {
-			segment.addProperties(props);
+			segment.properties = { ...props };
 		}
 
 		this.replaceRange(start, end, segment);

@@ -36,7 +36,7 @@ class SubSequenceTestClient extends TestClient {
 	) {
 		const segment = new SubSequence(items);
 		if (props) {
-			segment.addProperties(props);
+			segment.properties = { ...props };
 		}
 		this.applyMsg(
 			this.makeOpMessage(createInsertSegmentOp(pos, segment), seq, refSeq, longClientId),

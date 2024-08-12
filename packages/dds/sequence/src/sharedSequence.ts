@@ -41,7 +41,7 @@ export class SubSequence<T> extends BaseSegment {
 		if (spec && typeof spec === "object" && "items" in spec) {
 			const segment = new SubSequence<U>(spec.items);
 			if (spec.props) {
-				segment.addProperties(spec.props);
+				segment.properties = { ...spec.props };
 			}
 			return segment;
 		}
@@ -137,7 +137,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 	public insert(pos: number, items: Serializable<T>[], props?: PropertySet) {
 		const segment = new SubSequence<T>(items);
 		if (props) {
-			segment.addProperties(props);
+			segment.properties = { ...props };
 		}
 		this.client.insertSegmentLocal(pos, segment);
 	}

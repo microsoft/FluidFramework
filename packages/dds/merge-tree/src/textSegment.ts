@@ -43,7 +43,7 @@ export class TextSegment extends BaseSegment {
 	public static make(text: string, props?: PropertySet): TextSegment {
 		const seg = new TextSegment(text);
 		if (props) {
-			seg.addProperties(props);
+			seg.properties = { ...props };
 		}
 		return seg;
 	}

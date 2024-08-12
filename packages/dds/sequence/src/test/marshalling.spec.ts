@@ -42,7 +42,7 @@ describe("Segment Marshalling", () => {
 				// Ensure that a segment w/'props' correctly round-trips
 				it("annotated", () => {
 					const expected = ctor();
-					expected.addProperties({ hasProperties: true, numProperties: 2 });
+					expected.properties = { hasProperties: true, numProperties: 2 };
 					const spec = expected.toJSONObject();
 					const actual = fromJSON(spec);
 					assert.deepStrictEqual(expected, actual);
