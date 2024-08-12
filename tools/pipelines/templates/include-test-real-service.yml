@@ -328,10 +328,11 @@ jobs:
         timeoutInMinutes: 3
         continueOnError: true
         inputs:
-          key: 'compat-version-installs | "$(Agent.OS)"'
+          key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}"'
           path: $(Build.SourcesDirectory)/packages/test/test-version-utils/node_modules/.legacy/
           restoreKeys: |
-            compat-version-installs | "$(Agent.OS)"
+            "compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}"
+            "compat-version-installs" | "$(Agent.OS)"
 
       # run the test
       - task: Npm@1
