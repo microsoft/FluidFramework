@@ -2,6 +2,7 @@
 "fluid-framework": minor
 "@fluidframework/tree": minor
 ---
+---
 "section": "tree"
 ---
 `Tree.schema` now returns `TreeNodeSchema`.
