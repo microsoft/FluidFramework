@@ -133,14 +133,15 @@ export class PropertiesManager {
 			if (!newManager) {
 				throw new Error("Must provide new PropertyManager");
 			}
-			for (const key of Object.keys(oldProps)) {
+			for (const [key, value] of Object.entries(oldProps)) {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				newProps[key] = oldProps[key];
+				newProps[key] = value;
 			}
-			newManager.pendingKeyUpdateCount = createMap<number>();
-			for (const key of Object.keys(this.pendingKeyUpdateCount!)) {
-				// TODO Non null asserting, why is this not null?
-				newManager.pendingKeyUpdateCount[key] = this.pendingKeyUpdateCount![key]!;
+			if (this.pendingKeyUpdateCount) {
+				newManager.pendingKeyUpdateCount = createMap<number>();
+				for (const [key, value] of Object.entries(this.pendingKeyUpdateCount)) {
+					newManager.pendingKeyUpdateCount[key] = value;
+				}
 			}
 		}
 		return newProps;

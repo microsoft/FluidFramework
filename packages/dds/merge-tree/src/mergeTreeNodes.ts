@@ -703,14 +703,18 @@ export abstract class BaseSegment implements ISegment {
 	}
 
 	private copyPropertiesTo(other: ISegment): void {
-		if (this.propertyManager && this.properties) {
-			// eslint-disable-next-line import/no-deprecated
-			other.propertyManager = new PropertiesManager();
-			other.properties = this.propertyManager.copyTo(
-				this.properties,
-				other.properties,
-				other.propertyManager,
-			);
+		if (this.properties !== undefined) {
+			if (this.propertyManager) {
+				// eslint-disable-next-line import/no-deprecated
+				other.propertyManager = new PropertiesManager();
+				other.properties = this.propertyManager.copyTo(
+					this.properties,
+					other.properties,
+					other.propertyManager,
+				);
+			} else {
+				other.properties = addProperties(other.properties, this.properties);
+			}
 		}
 	}
 

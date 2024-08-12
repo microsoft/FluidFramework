@@ -20,7 +20,7 @@ const baseIntervalModel = {
 		takeAsync(100, makeIntervalOperationGenerator(defaultIntervalOperationGenerationConfig)),
 };
 
-describe.only("IntervalCollection fuzz testing", () => {
+describe("IntervalCollection fuzz testing", () => {
 	const model = {
 		...baseIntervalModel,
 		workloadName: "default interval collection",
