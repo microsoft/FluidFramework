@@ -122,6 +122,7 @@ describe("Runtime", () => {
 	});
 
 	let submittedOps: any[] = [];
+	let submittedSignals: any[] = [];
 	let opFakeSequenceNumber = 1;
 	let clock: SinonFakeTimers;
 
@@ -132,6 +133,7 @@ describe("Runtime", () => {
 	beforeEach(() => {
 		submittedOps = [];
 		opFakeSequenceNumber = 1;
+		submittedSignals = [];
 	});
 
 	afterEach(() => {
@@ -169,6 +171,9 @@ describe("Runtime", () => {
 			submitFn: (_type: MessageType, contents: any, _batch: boolean, metadata?: unknown) => {
 				submittedOps.push({ ...contents, metadata }); // Note: this object shape is for testing only. Not representative of real ops.
 				return opFakeSequenceNumber++;
+			},
+			submitSignalFn: (content: unknown, targetClientId?: string) => {
+				submittedSignals.push(content); // Note: this object shape is for testing only. Not representative of real signals.
 			},
 			clientId: mockClientId,
 			connected: true,
@@ -2430,6 +2435,123 @@ describe("Runtime", () => {
 
 				assert(opsProcessed === 2, "only 2 ops should be processed with seq number 3 and 4");
 				assert(opsStart === 3, "first op processed should have seq number 3");
+			});
+		});
+		describe("Signals", () => {
+			let containerRuntime: ContainerRuntime;
+			let logger: MockLogger;
+			beforeEach(async () => {
+				logger = new MockLogger();
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext({}, logger) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					requestHandler: undefined,
+					runtimeOptions: {
+						enableGroupedBatching: false,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				clock.restore();
+			});
+
+			function sendSignals(numberOfSignals: number = 1) {
+				const testSignalType = "TestSignalType";
+				const testSignalContent = "TestSignalContent";
+				for (let i = 0; i < numberOfSignals; i++) {
+					containerRuntime.submitSignal(testSignalType, testSignalContent);
+				}
+			}
+
+			function processSignals(signalSequenceNumber: number, numberOfSignals: number = 1) {
+				for (let i = 0; i < numberOfSignals; i++) {
+					containerRuntime.processSignal(
+						{
+							clientId: containerRuntime.clientId as string,
+							content: {
+								clientSignalSequenceNumber: signalSequenceNumber + i,
+								contents: {
+									type: "TestSignalType",
+									content: "TestSignalContent",
+								},
+							},
+						},
+						true,
+					);
+				}
+			}
+
+			it("emits signal latency telemetry after 100 signals", async () => {
+				sendSignals(101);
+				processSignals(101);
+
+				assert.strictEqual(submittedSignals.length, 101);
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+						},
+					],
+					"Signal latency telemetry should be logged after 100 signals",
+				);
+			});
+
+			it("emits SignalLost error event when signal is dropped", async () => {
+				// Send 3 signals
+				sendSignals(3);
+
+				// Drop second signal
+				processSignals(1);
+				processSignals(3);
+
+				assert.strictEqual(submittedSignals.length, 3);
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLost",
+						},
+					],
+					"SignalLost telemetry should be logged when signal is dropped",
+				);
+			});
+
+			it("emits SignalOutOfOrder error event when missing signal is received non-sequentially", async () => {
+				// Send 3 signals
+				sendSignals(3);
+
+				// Process Signals out of order
+				processSignals(1);
+				processSignals(3);
+				processSignals(2);
+
+				assert.strictEqual(submittedSignals.length, 3);
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalOutOfOrder",
+						},
+					],
+					"SignalOutOfOrder telemetry should be logged when missing signal is received non-sequentially",
+				);
+			});
+
+			it("does not emit error events when signals are processed in order", async () => {
+				// Send 100 signals and process them in order
+				sendSignals(100);
+				processSignals(100);
+
+				assert.strictEqual(submittedSignals.length, 100);
+				logger.assertMatchNone(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLost",
+						},
+						{
+							eventName: "ContainerRuntime:SignalOutOfOrder",
+						},
+					],
+					"SignalLost and SignalOutOfOrder telemetry should not be logged when signals are processed in order",
+				);
 			});
 		});
 	});
