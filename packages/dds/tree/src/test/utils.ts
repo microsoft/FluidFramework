@@ -86,7 +86,6 @@ import {
 	type AnchorNode,
 	type AnchorSetRootEvents,
 	type TreeStoredSchemaSubscription,
-	type SchemaAndPolicy,
 	type ITreeCursorSynchronous,
 	CursorLocationType,
 	type MapTree,
@@ -149,12 +148,9 @@ import {
 import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import {
 	type ImplicitFieldSchema,
-	type InsertableContent,
 	TreeViewConfiguration,
 	SchemaFactory,
-	toFlexSchema,
 	type InsertableTreeFieldFromImplicitField,
-	mapTreeFromNodeData,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -166,6 +162,7 @@ import {
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
+import { cursorFromInsertable } from "../simple-tree/index.js";
 
 // Testing utilities
 
@@ -1392,16 +1389,7 @@ export function cursorFromInsertableTreeField(
 	tree: InsertableTreeFieldFromImplicitField,
 	nodeKeyManager: NodeKeyManager,
 ): ITreeCursorSynchronous | undefined {
-	const data = tree as InsertableContent | undefined;
-
-	const flexSchema = toFlexSchema(schema);
-	const storedSchema: SchemaAndPolicy = {
-		policy: defaultSchemaPolicy,
-		schema: intoStoredSchema(flexSchema),
-	};
-
-	const mappedContent = mapTreeFromNodeData(data, schema, nodeKeyManager, storedSchema);
-	return mappedContent === undefined ? undefined : cursorForMapTreeNode(mappedContent);
+	return cursorFromInsertable(schema, tree, nodeKeyManager);
 }
 
 function normalizeNewFieldContent(
