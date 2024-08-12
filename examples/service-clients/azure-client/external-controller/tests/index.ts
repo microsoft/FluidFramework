@@ -172,10 +172,12 @@ async function setup(): Promise<void> {
 	window["fluidStarted"] = true;
 }
 
-await setup().catch((error) => {
+try {
+	await setup();
+} catch (error) {
 	console.error(error);
 	console.log(
 		"%cThere were issues setting up and starting the in memory FLuid Server",
 		"font-size:30px",
 	);
-});
+}
