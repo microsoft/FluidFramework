@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdir, writeFile, rm } from "node:fs/promises";
 import path from "node:path";
 import {
 	type BrokenCompatTypes,
@@ -18,7 +18,7 @@ import {
 import { Flags } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
 import * as changeCase from "change-case";
-import { readJson } from "fs-extra/esm";
+import { pathExists, readJson } from "fs-extra/esm";
 import * as resolve from "resolve.exports";
 import {
 	JSDoc,
@@ -46,8 +46,9 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 
 	static readonly flags = {
 		level: Flags.custom<ApiLevel>({
-			description: "What API level to generate tests for.",
-			default: ApiLevel.internal,
+			description:
+				"What API level to generate tests for. If this flag is provided it will override the typeValidation.apiLevel setting in the package's package.json.",
+			default: ApiLevel.legacy,
 			options: knownApiLevels,
 		})(),
 		outDir: Flags.directory({
@@ -69,8 +70,13 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 	protected defaultSelection = "dir" as PackageSelectionDefault;
 
 	protected async processPackage(pkg: Package): Promise<void> {
-		const { level, outDir, outFile } = this.flags;
+		const { level: levelFlag, outDir, outFile } = this.flags;
+		const level: ApiLevel = pkg.packageJson.typeValidation?.apiLevel ?? levelFlag;
 		const fallbackLevel = this.flags.publicFallback ? ApiLevel.public : undefined;
+
+		this.verbose(
+			`${pkg.nameColored}: Generating type tests for "${level}" ApiLevel with "${fallbackLevel}" as a fallback.`,
+		);
 
 		// Do not check that file exists before opening:
 		// Doing so is a time of use vs time of check issue so opening the file could fail anyway.
@@ -83,21 +89,21 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		const typeTestOutputFile = getTypeTestFilePath(pkg, outDir, outFile);
 		if (currentPackageJson.typeValidation?.disabled === true) {
 			this.info(
-				"Skipping type test generation because typeValidation.disabled is true in package.json",
+				`${pkg.nameColored}: Skipping type test generation because typeValidation.disabled is true in package.json`,
 			);
-			rmSync(
+			await rm(
 				typeTestOutputFile,
 				// force means to ignore the error if the file does not exist.
 				{ force: true },
 			);
-			this.verbose(`Deleted file: ${typeTestOutputFile}`);
+			this.verbose(`${pkg.nameColored}: Deleted file: ${typeTestOutputFile}`);
 
 			// Early exit; no error.
 			return;
 		}
 
 		ensureDevDependencyExists(currentPackageJson, previousPackageName);
-		this.verbose(`Reading package.json at ${previousPackageJsonPath}`);
+		this.verbose(`${pkg.nameColored}: Reading package.json at ${previousPackageJsonPath}`);
 		const previousPackageJson = (await readJson(previousPackageJsonPath)) as PackageJson;
 		// Set the name in the JSON to the calculated previous package name, since the name in the previous package.json is
 		// the same as current. This enables us to pass the package.json object to more general functions but ensure those
@@ -109,7 +115,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 			getTypesPathWithFallback(currentPackageJson, level, this.logger, fallbackLevel);
 		const currentTypesPath = path.resolve(path.join(pkg.directory, currentTypesPathRelative));
 		this.verbose(
-			`Found ${currentPackageLevel} type definitions for ${currentPackageJson.name}: ${currentTypesPath}`,
+			`${pkg.nameColored}: Found ${currentPackageLevel} type definitions for ${currentPackageJson.name}: ${currentTypesPath}`,
 		);
 
 		const { typesPath: previousTypesPathRelative, levelUsed: previousPackageLevel } =
@@ -118,27 +124,28 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 			path.join(previousBasePath, previousTypesPathRelative),
 		);
 		this.verbose(
-			`Found ${previousPackageLevel} type definitions for ${previousPackageJson.name}: ${previousTypesPath}`,
+			`${pkg.nameColored}: Found ${previousPackageLevel} type definitions for ${previousPackageJson.name}: ${previousTypesPath}`,
 		);
 
-		// For the current version, we load the package-local tsconfig and return index.ts as the source file. This ensures
-		// we don't need to build before running type test generation. It's tempting to load the .d.ts files and use the
-		// same code path as is used below for the previous version (loadTypesSourceFile()), but that approach requires that
-		// the local project be built.
-		//
-		// One drawback to this approach is that it will always enumerate the full (internal) API for the current version.
-		// There's no way to scope it to just alpha, beta, etc. for example. If that capability is eventually needed we can
-		// revisit this.
-		const currentFile = new Project({
-			skipFileDependencyResolution: true,
-			tsConfigFilePath: path.join(pkg.directory, "tsconfig.json"),
-		}).getSourceFileOrThrow("index.ts");
+		// For the current version, we load the built .d.ts files and use the same code path as is used below for the
+		// previous version (loadTypesSourceFile()). This approach requires that the local project be built before
+		// generating type tests.
+		let currentFile: SourceFile | undefined;
+		const currentTypesPathExists = await pathExists(currentTypesPath);
+		if (currentTypesPathExists) {
+			currentFile = loadTypesSourceFile(currentTypesPath);
+		} else {
+			this.error(
+				`${pkg.nameColored}: Couldn't find source file "${currentTypesPath}". Make sure that the project has been compiled before generating type tests.`,
+			);
+		}
 		this.verbose(
-			`Loaded source file for current version (${pkg.version}): ${currentFile.getFilePath()}`,
+			`${pkg.nameColored}: Loaded source file for current version (${pkg.version}): ${currentFile?.getFilePath()}`,
 		);
+
 		const previousFile = loadTypesSourceFile(previousTypesPath);
 		this.verbose(
-			`Loaded source file for previous version (${
+			`${pkg.nameColored}: Loaded source file for previous version (${
 				previousPackageJson.version
 			}): ${previousFile.getFilePath()}`,
 		);
@@ -153,8 +160,15 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// Sort import statements to respect linting rules.
 		const buildToolsPackageName = "@fluidframework/build-tools";
 		const buildToolsImport = `import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "${buildToolsPackageName}";`;
+
+		// Most API levels are always imported from the API-specific entrypoint, but 'legacy' is imported from
+		// /internal. This is consistent with our policy for code within the repo - all non-public
 		const previousImport = `import type * as old from "${previousPackageName}${
-			previousPackageLevel === ApiLevel.public ? "" : `/${previousPackageLevel}`
+			previousPackageLevel === ApiLevel.public
+				? ""
+				: previousPackageLevel === ApiLevel.legacy
+					? `/${ApiLevel.internal}`
+					: `/${previousPackageLevel}`
 		}";`;
 		const imports =
 			buildToolsPackageName < previousPackageName
@@ -187,10 +201,12 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
 			fileHeader,
 		);
 
-		mkdirSync(outDir, { recursive: true });
+		await mkdir(outDir, { recursive: true });
 
-		writeFileSync(typeTestOutputFile, testCases.join("\n"));
-		this.info(`Generated type test file: ${path.resolve(typeTestOutputFile)}`);
+		await writeFile(typeTestOutputFile, testCases.join("\n"));
+		this.info(
+			`${pkg.nameColored}: Generated type test file: ${path.resolve(typeTestOutputFile)}`,
+		);
 	}
 }
 
@@ -217,7 +233,7 @@ function getTypesPathWithFallback(
 		chosenLevel = fallbackLevel ?? level;
 		if (typesPath === undefined) {
 			throw new Error(
-				`No type definitions found for "${chosenLevel}" API level in ${packageJson.name}`,
+				`${packageJson.name}: No type definitions found for "${chosenLevel}" API level.`,
 			);
 		}
 	}

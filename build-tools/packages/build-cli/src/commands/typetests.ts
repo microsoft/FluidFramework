@@ -4,9 +4,10 @@
  */
 
 import {
-	ITypeValidationConfig,
+	type ITypeValidationConfig,
 	Package,
 	PackageJson,
+	defaultTypeValidationConfig,
 	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
@@ -54,15 +55,15 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 			exclusive: ["remove", "previous", "disable"],
 		}),
 		enable: Flags.boolean({
-			description: `Remove the "typeValidation.disabled" setting in the package.json`,
+			description: `Remove the "typeValidation.disabled" setting in the package.json.`,
 		}),
 		disable: Flags.boolean({
-			description: `Set the "typeValidation.disabled" setting to "true" in the package.json`,
+			description: `Set the "typeValidation.disabled" setting to "true" in the package.json.`,
 			exclusive: ["enable"],
 		}),
 		normalize: Flags.boolean({
 			char: "n",
-			description: `Removes any unrecognized data from "typeValidation" in the package.json`,
+			description: `Removes any unrecognized data from "typeValidation" in the package.json and adds any missing default settings.`,
 			exclusive: ["enable"],
 		}),
 		...PackageCommand.flags,
@@ -93,7 +94,7 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 					: VersionOptions.ClearIfDisabled);
 		updatePackageJsonFile(pkg.directory, (json) => {
 			if (this.flags.disable) {
-				json.typeValidation ??= { broken: {} };
+				json.typeValidation ??= defaultTypeValidationConfig;
 				json.typeValidation.disabled = true;
 			} else if (this.flags.enable && json.typeValidation !== undefined) {
 				delete json.typeValidation.disabled;
@@ -109,8 +110,12 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 
 			if (this.flags.normalize) {
 				json.typeValidation = {
-					disabled: json.typeValidation?.disabled === true ? true : undefined,
-					broken: json.typeValidation?.broken ?? {},
+					disabled:
+						json.typeValidation?.disabled === true
+							? true
+							: defaultTypeValidationConfig.disabled,
+					broken: json.typeValidation?.broken ?? defaultTypeValidationConfig.broken,
+					apiLevel: json.typeValidation?.apiLevel ?? defaultTypeValidationConfig.apiLevel,
 				};
 			}
 		});
