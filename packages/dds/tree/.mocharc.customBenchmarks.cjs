@@ -28,6 +28,6 @@ module.exports = {
 	"node-option": nodeOptions, // without leading "--"
 	"recursive": true,
 	"reporter": "@fluid-tools/benchmark/dist/MochaReporter.js",
-	"reporterOptions": ["reportDir=.memoryTestsOutput/"],
+	"reporterOptions": ["reportDir=.customBenchmarksOutput/"],
 	"spec": ["lib/test/**/*.*js", "--perfMode"],
 };
