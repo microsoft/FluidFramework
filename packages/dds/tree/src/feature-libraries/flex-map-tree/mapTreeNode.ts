@@ -91,7 +91,6 @@ interface LocationInField {
  */
 export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements MapTreeNode {
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Node as const;
-	private location: LocationInField;
 
 	/**
 	 * Create a new MapTreeNode.
@@ -105,9 +104,8 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 		public readonly schema: TSchema,
 		/** The underlying {@link MapTree} that this `MapTreeNode` reads its data from */
 		public readonly mapTree: ExclusiveMapTree,
-		location: LocationInField | undefined,
+		private location = unparentedLocation,
 	) {
-		this.location = location ?? unparentedLocation;
 		assert(!nodeCache.has(mapTree), 0x98b /* A node already exists for the given MapTree */);
 		nodeCache.set(mapTree, this);
 
@@ -345,6 +343,7 @@ interface MapTreeField extends FlexTreeField {
  * If a {@link EagerMapTreeNode} is created without a parent, its {@link EagerMapTreeNode.parentField} property will point to this object.
  * However, this field cannot be used in any practical way because it is empty, i.e. it does not actually contain the children that claim to be parented under it.
  * It has the "empty" schema and it will always contain zero children if queried.
+ * Any nodes with this location will have a dummy parent index of `-1`.
  */
 const unparentedLocation: LocationInField = {
 	parent: {
