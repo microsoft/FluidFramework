@@ -329,7 +329,7 @@ jobs:
         continueOnError: true
         inputs:
           key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}"'
-          path: $(Build.SourcesDirectory)/packages/test/test-version-utils/node_modules/.legacy/
+          path: ${{ parameters.testWorkspace }}/node_modules/@fluid-private/test-version-utils/node_modules/.legacy/
           restoreKeys: |
             "compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}"
             "compat-version-installs" | "$(Agent.OS)"
