@@ -13,6 +13,7 @@ import {
 	type TestCaseTypeData,
 	type TypeData,
 	buildTestCase,
+	defaultTypeValidationConfig,
 	getTypeTestPreviousPackageDetails,
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
@@ -48,7 +49,6 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		level: Flags.custom<ApiLevel>({
 			description:
 				"What API level to generate tests for. If this flag is provided it will override the typeValidation.apiLevel setting in the package's package.json.",
-			default: ApiLevel.legacy,
 			options: knownApiLevels,
 		})(),
 		outDir: Flags.directory({
@@ -71,7 +71,10 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		const { level: levelFlag, outDir, outFile } = this.flags;
-		const level: ApiLevel = pkg.packageJson.typeValidation?.apiLevel ?? levelFlag;
+		const level: ApiLevel =
+			levelFlag ??
+			pkg.packageJson.typeValidation?.apiLevel ??
+			defaultTypeValidationConfig.apiLevel;
 		const fallbackLevel = this.flags.publicFallback ? ApiLevel.public : undefined;
 
 		this.verbose(

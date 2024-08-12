@@ -364,8 +364,8 @@ USAGE
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
-  --level=<option>       [default: legacy] What API level to generate tests for. If this flag is provided it will
-                         override the typeValidation.apiLevel setting in the package's package.json.
+  --level=<option>       What API level to generate tests for. If this flag is provided it will override the
+                         typeValidation.apiLevel setting in the package's package.json.
                          <options: public|alpha|beta|internal|legacy>
   --outDir=<value>       [default: ./src/test/types] Where to emit the type tests file.
   --outFile=<value>      [default: validate{@unscopedPackageName}Previous.generated.ts] File name for the generated type
