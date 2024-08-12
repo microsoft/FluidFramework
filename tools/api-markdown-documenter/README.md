@@ -20,9 +20,11 @@ The following terms are leveraged heavily in this package's APIs and documentati
     It is generally represented via the [ApiModel][] type, from the [@microsoft/api-extractor-model](https://github.com/microsoft/rushstack/tree/main/libraries/api-extractor-model) library.
     -   In some places, this library refers to an `API Model` in terms of a directory or directory path.
         In these cases, it is referring to a directory that contains the set of `.api.json` files (generated per-package by `API-Extractor`).
--   **API Item**: Refers to a single item exported by one or more packages in the `API Model`.
+-   **API Item**: Refers to a single TypeScript item exported by one or more packages in the `API Model`.
     It is generally represented via the [ApiItem][] type, from the [@microsoft/api-extractor-model](https://github.com/microsoft/rushstack/tree/main/libraries/api-extractor-model) library.
-    -   This is the granularity at which most configuration options in this library correspond.
+    E.g., an exported interface `Foo` would be captured by API Extractor as a single API item (an [ApiInterface](https://api.rushstack.io/pages/api-extractor-model.apiinterface/)).
+    Alternatively, an exported enum `Foo` with flags `Bar` and `Baz` would be captured as 1 API item (an [ApiEnum](https://api.rushstack.io/pages/api-extractor-model.apiEnum/)) for `Foo`, with 2 child API items for the flags `Bar` and `Baz` ([ApiEnumMember](https://api.rushstack.io/pages/api-extractor-model.apienummember/)s).
+    -   This is the granularity by which documentation is generated, and the granularity at which most configuration options are presented.
 
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:installation=TRUE&devDependency=TRUE) -->
 
