@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	CheckoutFlexTreeView,
 	type TransactionConstraint,
@@ -17,6 +19,8 @@ import {
 	type ValidateRecursiveSchema,
 	type TreeView,
 	type InsertableTypedNode,
+	type TreeNodeSchema,
+	type NodeFromSchema,
 } from "../../simple-tree/index.js";
 import { TestTreeProviderLite, createTestUndoRedoStacks, getView } from "../utils.js";
 
@@ -216,26 +220,50 @@ describe("treeApi", () => {
 			});
 
 			// TODO: Either enable when afterBatch is implemented, or delete if no longer relevant
-			it.skip("emits change events", () => {
+			it("emits change events", () => {
 				const view = getTestObjectView();
-				let event = false;
-				view.events.on("rootChanged", () => (event = true));
+				let eventCount = 0;
+				view.events.on("rootChanged", () => (eventCount += 1));
 				view.root.content = 44;
+				assert.equal(eventCount, 1);
 				Tree.runTransaction(view, (root) => {
 					root.content = 43;
 				});
-				assert.equal(event, true);
+				assert.equal(eventCount, 2);
 			});
 
-			it.skip("emits change events on rollback", () => {
+			it("emits change events on rollback", () => {
 				const view = getTestObjectView();
 				let eventCount = 0;
 				view.events.on("rootChanged", () => (eventCount += 1));
 				Tree.runTransaction(view, (r) => {
 					r.content = 43;
+					assert.equal(eventCount, 1);
 					return Tree.runTransaction.rollback;
 				});
 				assert.equal(eventCount, 2);
+			});
+		});
+
+		describe("schema", () => {
+			it("leaf", () => {
+				assert.equal(Tree.schema(null), schemaFactory.null);
+				assert.equal(Tree.schema(0), schemaFactory.number);
+				assert.equal(Tree.schema(false), schemaFactory.boolean);
+				assert.equal(Tree.schema(""), schemaFactory.string);
+				assert.equal(Tree.schema(new MockHandle(0)), schemaFactory.handle);
+
+				// Inferring the node type from the node in Tree.schema can incorrectly over-narrow.
+				// Ensure this does not happen:
+				const schema = Tree.schema(0);
+				type _check1 = requireAssignableTo<2, NodeFromSchema<typeof schema>>;
+			});
+
+			it("node", () => {
+				class Test extends schemaFactory.object("Test", {}) {}
+
+				const schema: TreeNodeSchema = Tree.schema(new Test({}));
+				assert.equal(schema, Test);
 			});
 		});
 
