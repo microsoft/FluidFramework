@@ -9,7 +9,7 @@ import {
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
-import { IJSONSegment } from "@fluidframework/merge-tree/internal";
+import { IJSONSegment, addProperties } from "@fluidframework/merge-tree/internal";
 import { IJSONRunSegment, SubSequence } from "@fluidframework/sequence/internal";
 import {
 	ISharedObject,
@@ -51,7 +51,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 		if (runSegment.items) {
 			const seg = new SubSequence<object>(runSegment.items);
 			if (runSegment.props) {
-				seg.properties = { ...runSegment.props };
+				seg.properties = addProperties(seg.properties, runSegment.props);
 			}
 			return seg;
 		}
@@ -134,7 +134,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
 		if (runSegment.items) {
 			const seg = new SubSequence<number>(runSegment.items);
 			if (runSegment.props) {
-				seg.properties = { ...runSegment.props };
+				seg.properties = addProperties(seg.properties, runSegment.props);
 			}
 			return seg;
 		}

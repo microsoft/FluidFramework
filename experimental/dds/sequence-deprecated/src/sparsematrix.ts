@@ -17,6 +17,7 @@ import {
 	IJSONSegment,
 	ISegment,
 	PropertySet,
+	addProperties,
 } from "@fluidframework/merge-tree/internal";
 import { SharedSegmentSequence } from "@fluidframework/sequence/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
@@ -41,7 +42,7 @@ export class PaddingSegment extends BaseSegment {
 		if (spec && typeof spec === "object" && "pad" in spec) {
 			const segment = new PaddingSegment(spec.pad);
 			if (spec.props) {
-				segment.properties = { ...spec.props };
+				segment.properties = addProperties(segment.properties, spec.props);
 			}
 			return segment;
 		}
@@ -113,7 +114,7 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
 		if (spec && typeof spec === "object" && "items" in spec) {
 			const segment = new RunSegment(spec.items);
 			if (spec.props) {
-				segment.properties = { ...spec.props };
+				segment.properties = addProperties(segment.properties, spec.props);
 			}
 			return segment;
 		}
@@ -263,7 +264,7 @@ export class SparseMatrixClass extends SharedSegmentSequence<MatrixSegment> {
 		const end = start + values.length;
 		const segment = new RunSegment(values);
 		if (props) {
-			segment.properties = { ...props };
+			segment.properties = addProperties(segment.properties, props);
 		}
 
 		this.replaceRange(start, end, segment);

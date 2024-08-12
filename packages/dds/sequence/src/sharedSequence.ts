@@ -14,6 +14,7 @@ import {
 	IJSONSegment,
 	ISegment,
 	PropertySet,
+	addProperties,
 } from "@fluidframework/merge-tree/internal";
 
 import { SharedSegmentSequence } from "./sequence.js";
@@ -41,7 +42,7 @@ export class SubSequence<T> extends BaseSegment {
 		if (spec && typeof spec === "object" && "items" in spec) {
 			const segment = new SubSequence<U>(spec.items);
 			if (spec.props) {
-				segment.properties = { ...spec.props };
+				segment.properties = addProperties(segment.properties, spec.props);
 			}
 			return segment;
 		}
@@ -137,7 +138,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 	public insert(pos: number, items: Serializable<T>[], props?: PropertySet) {
 		const segment = new SubSequence<T>(items);
 		if (props) {
-			segment.properties = { ...props };
+			segment.properties = addProperties(segment.properties, props);
 		}
 		this.client.insertSegmentLocal(pos, segment);
 	}
