@@ -31,7 +31,6 @@ import {
 	type FlexTreeTypedNodeUnion,
 	type FlexTreeUnboxField,
 	type FlexTreeUnboxNodeUnion,
-	type FlexibleFieldContent,
 	flexTreeMarker,
 	indexForAt,
 } from "../flex-tree/index.js";
@@ -236,22 +235,6 @@ export class EagerMapTreeMapNode<TSchema extends FlexMapNodeSchema>
 	extends EagerMapTreeNode<TSchema>
 	implements FlexTreeMapNode<TSchema>
 {
-	public get size(): number {
-		return this.mapTree.fields.size;
-	}
-
-	public has(key: string): boolean {
-		return this.tryGetField(brand(key)) !== undefined;
-	}
-
-	public get(key: string): FlexTreeUnboxField<TSchema["info"]> {
-		const field = this.tryGetField(brand(key));
-		if (field === undefined) {
-			return undefined as FlexTreeUnboxField<TSchema["info"]>;
-		}
-		return unboxedField(field, brand(key), this.mapTree, this);
-	}
-
 	public keys(): IterableIterator<FieldKey> {
 		return this.mapTree.fields.keys();
 	}
@@ -299,16 +282,6 @@ export class EagerMapTreeMapNode<TSchema extends FlexMapNodeSchema>
 
 	public override getBoxed(key: string): FlexTreeTypedField<TSchema["info"]> {
 		return super.getBoxed(key) as FlexTreeTypedField<TSchema["info"]>;
-	}
-
-	public set(key: string, value: FlexibleFieldContent | undefined): void {
-		// `MapTreeNode`s cannot be mutated
-		throw unsupportedUsageError("Setting a map entry");
-	}
-
-	public delete(key: string): void {
-		// `MapTreeNode`s cannot be mutated
-		throw unsupportedUsageError("Deleting a map entry");
 	}
 
 	public [Symbol.iterator](): IterableIterator<
