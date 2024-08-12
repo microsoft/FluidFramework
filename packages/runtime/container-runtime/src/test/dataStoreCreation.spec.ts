@@ -21,7 +21,6 @@ import {
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { wrapContextForInnerChannel } from "../channelCollection.js";
 import { LocalFluidDataStoreContext } from "../dataStoreContext.js";
 import { createRootSummarizerNodeWithGC } from "../summary/index.js";
 
@@ -130,7 +129,7 @@ describe("Data Store Creation Tests", () => {
 			const context: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
 				pkg: [defaultName],
-				parentContext: wrapContextForInnerChannel(dataStoreId, parentContext),
+				parentContext,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -154,7 +153,7 @@ describe("Data Store Creation Tests", () => {
 			const context: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
 				pkg: [dataStoreAName],
-				parentContext: wrapContextForInnerChannel(dataStoreId, parentContext),
+				parentContext,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -178,7 +177,7 @@ describe("Data Store Creation Tests", () => {
 			const contextA: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
 				pkg: [defaultName, dataStoreAName],
-				parentContext: wrapContextForInnerChannel(dataStoreId, parentContext),
+				parentContext,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -202,7 +201,7 @@ describe("Data Store Creation Tests", () => {
 			const contextB: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
 				pkg: [defaultName, dataStoreBName],
-				parentContext: wrapContextForInnerChannel(dataStoreId, parentContext),
+				parentContext,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -226,7 +225,7 @@ describe("Data Store Creation Tests", () => {
 			const contextB: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreBId,
 				pkg: [defaultName, dataStoreAName, dataStoreBName],
-				parentContext: wrapContextForInnerChannel(dataStoreBId, parentContext),
+				parentContext,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreBId),
@@ -247,7 +246,7 @@ describe("Data Store Creation Tests", () => {
 			const contextC: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreCId,
 				pkg: [defaultName, dataStoreAName, dataStoreCName],
-				parentContext: wrapContextForInnerChannel(dataStoreCId, parentContext),
+				parentContext,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreCId),
@@ -271,7 +270,7 @@ describe("Data Store Creation Tests", () => {
 			const contextFake: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
 				pkg: [defaultName, dataStoreAName, "fake"],
-				parentContext: wrapContextForInnerChannel(dataStoreId, parentContext),
+				parentContext,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -295,7 +294,7 @@ describe("Data Store Creation Tests", () => {
 			const contextFake: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
 				pkg: [defaultName, dataStoreAName, "fake"],
-				parentContext: wrapContextForInnerChannel(dataStoreId, parentContext),
+				parentContext,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -319,7 +318,7 @@ describe("Data Store Creation Tests", () => {
 			const contextC: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
 				pkg: [defaultName, dataStoreAName, dataStoreBName, dataStoreCName],
-				parentContext: wrapContextForInnerChannel(dataStoreId, parentContext),
+				parentContext,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
