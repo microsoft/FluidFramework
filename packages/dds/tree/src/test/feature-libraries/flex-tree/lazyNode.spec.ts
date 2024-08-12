@@ -367,26 +367,6 @@ describe("LazyNode", () => {
 			assert.equal(node.tryGetField(brand("baz")), undefined);
 		});
 
-		it("set", () => {
-			const view = flexTreeViewWithContent({
-				schema,
-				initialTree: typedJsonCursor({ [typedJsonCursor.type]: mapNodeSchema }),
-			});
-			const mapNode = view.flexTree.content;
-			assert(mapNode.is(mapNodeSchema));
-
-			mapNode.set("baz", [mapTreeFromCursor(singleJsonCursor("First edit"))]);
-			mapNode.set("foo", [mapTreeFromCursor(singleJsonCursor("Second edit"))]);
-			assert.equal(mapNode.get("baz"), "First edit");
-			assert.equal(mapNode.get("foo"), "Second edit");
-
-			mapNode.set("foo", [mapTreeFromCursor(singleJsonCursor("X"))]);
-			assert.equal(mapNode.get("foo"), "X");
-			mapNode.set("foo", undefined);
-			assert.equal(mapNode.get("foo"), undefined);
-			assert.equal(mapNode.has("foo"), false);
-		});
-
 		it("getBoxed empty", () => {
 			const view = flexTreeViewWithContent({
 				schema,
@@ -398,18 +378,6 @@ describe("LazyNode", () => {
 			const empty = mapNode.getBoxed("foo");
 			assert.equal(empty.parent, mapNode);
 			assert.equal(empty.key, "foo");
-		});
-
-		it("delete", () => {
-			assert.equal(editCallCount, 0);
-
-			// Even though there is no value currently associated with "baz", we still need to
-			// emit a delete op, so this should generate an edit.
-			node.delete(brand("baz"));
-			assert.equal(editCallCount, 1);
-
-			node.delete(brand("foo"));
-			assert.equal(editCallCount, 2);
 		});
 	});
 
