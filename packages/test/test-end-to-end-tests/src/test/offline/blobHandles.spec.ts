@@ -31,7 +31,7 @@ const interceptResult = <T>(
 	return fn;
 };
 
-describeCompat("Odsp Network calls", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Offline and Blobs", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObjectFactory, DataObject } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
@@ -102,7 +102,7 @@ describeCompat("Odsp Network calls", "NoCompat", (getTestObjectProvider, apis) =
 		);
 	});
 
-	it("Should have blob when handle op is sequenced", async () => {
+	it("Slow blob create request before container closes", async () => {
 		const container = (await provider.createContainer(runtimeFactory, {
 			configProvider,
 		})) as IContainerExperimental;
@@ -115,13 +115,19 @@ describeCompat("Odsp Network calls", "NoCompat", (getTestObjectProvider, apis) =
 			mainObject._root.set("blobHandle", blobHandle);
 		};
 
-		// Start promise
+		// Start blob creation
 		const storeBlobHandlePromise = storeBlobHandleAsync();
+		// Start closing the container and get the pending local state before blob creation through the network completes
 		const serializedStatePromise = container.closeAndGetPendingLocalState?.();
+		// wait for blob creation to finish first so that the handle op is created
 		await storeBlobHandlePromise;
+		// Let the rest of the close and get pending local state finish.
 		const serializedState = await serializedStatePromise;
 		assert(serializedState !== undefined, "Serialized state should exist");
 
+		// One potential solution could be to fix the serialized state.
+
+		// Load the remote container
 		const container3 = await provider.loadContainer(runtimeFactory);
 		const mainObject3 = (await container3.getEntryPoint()) as TestDataObject;
 
@@ -131,10 +137,15 @@ describeCompat("Odsp Network calls", "NoCompat", (getTestObjectProvider, apis) =
 			undefined,
 			serializedState,
 		);
+		// Finish the blob creation after the container is loaded so that the blob attach op is sent after the handle op
 		throwOnBlobCreate = true;
 		deferred.resolve();
 		await container2.getEntryPoint();
+
+		// send the ops
 		await provider.ensureSynchronized();
+
+		// So the handleGetPromise executes as soon as the handle op is processed, before the blob attach op is processed
 		await assert.rejects(
 			mainObject3.handleGetPromise.promise,
 			(error: Error) => error.message === "Error: 0x11f",
