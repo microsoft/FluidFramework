@@ -89,11 +89,80 @@ async function updateIsEphemeralCache(
 		getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
 	).catch((error) => {
 		Lumberjack.error(
-			`Error setting ${isEphemeralKey} in redis`,
-			getLumberBaseProperties(documentId, tenantId),
+			"Error setting isEphemeral flag in cache.",
+			{ ...getLumberBaseProperties(documentId, tenantId), isEphemeralKey },
 			error,
 		);
 	});
+}
+
+async function getDocumentCachedEphemeralProperties(
+	cache: ICache,
+	documentId: string,
+	tenantId: string,
+): Promise<boolean | undefined> {
+	const isEphemeralKey: string = getEphemeralContainerCacheKey(documentId);
+	try {
+		const cachedIsEphemeral: boolean | undefined = await runWithRetry<boolean | undefined>(
+			async () => cache?.get(isEphemeralKey) /* api */,
+			"utils.createGitService.get" /* callName */,
+			3 /* maxRetries */,
+			1000 /* retryAfterMs */,
+			getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
+		);
+		if (typeof cachedIsEphemeral === "boolean") {
+			return cachedIsEphemeral;
+		}
+	} catch (error) {
+		Lumberjack.error(
+			"Error getting isEphemeral flag from cache.",
+			{ ...getLumberBaseProperties(documentId, tenantId), isEphemeralKey },
+			error,
+		);
+	}
+	return undefined;
+}
+
+/**
+ * Whether a document is an Ephemeral Container and when it was created.
+ * If the document does not exist or an error is encountered when accessing the document,
+ * the document is considered _not_ ephemeral, with an undefined create time.
+ *
+ * If the document exists and the isEphemeralContainer flag is not set, the document is considered _not_ ephemeral.
+ */
+async function getDocumentStaticEphemeralProperties(
+	documentManager: IDocumentManager,
+	tenantId: string,
+	documentId: string,
+): Promise<{ isEphemeralContainer: boolean; createTime: number | undefined }> {
+	try {
+		const staticProps: IDocumentStaticProperties | undefined =
+			await runWithRetry<IDocumentStaticProperties>(
+				async () => documentManager.readStaticProperties(tenantId, documentId) /* api */,
+				"utils.createGitService.readStaticProperties" /* callName */,
+				3 /* maxRetries */,
+				1000 /* retryAfterMs */,
+				getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
+			);
+		if (!staticProps) {
+			Lumberjack.error(
+				`Static data not found when checking isEphemeral flag.`,
+				getLumberBaseProperties(documentId, tenantId),
+			);
+			return { isEphemeralContainer: false, createTime: undefined };
+		}
+		return {
+			isEphemeralContainer: staticProps.isEphemeralContainer ?? false,
+			createTime: staticProps.createTime,
+		};
+	} catch (error) {
+		Lumberjack.error(
+			`Failed to retrieve static data from document when checking isEphemeral flag.`,
+			getLumberBaseProperties(documentId, tenantId),
+			error,
+		);
+		return { isEphemeralContainer: false, createTime: undefined };
+	}
 }
 
 /**
@@ -123,7 +192,6 @@ async function checkAndCacheIsEphemeral({
 	isEphemeralContainerOverride?: boolean;
 	cache?: ICache;
 }): Promise<boolean> {
-	const isEphemeralKey = getEphemeralContainerCacheKey(documentId);
 	if (typeof isEphemeralContainerOverride === "boolean") {
 		// If an isEphemeralContainerOverride flag was passed in, cache it and return it.
 		// This typically happens on the first request to the document.
@@ -131,66 +199,32 @@ async function checkAndCacheIsEphemeral({
 		return isEphemeralContainerOverride;
 	}
 	// When no override is provided, check the cache first.
-	const cachedIsEphemeral: boolean | undefined = await runWithRetry<boolean | undefined>(
-		async () => cache?.get(isEphemeralKey) /* api */,
-		"utils.createGitService.get" /* callName */,
-		3 /* maxRetries */,
-		1000 /* retryAfterMs */,
-		getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
-	).catch((error) => {
-		Lumberjack.error(
-			`Error getting ${isEphemeralKey} from redis`,
-			getLumberBaseProperties(documentId, tenantId),
-			error,
-		);
-		return undefined;
-	});
-	if (typeof cachedIsEphemeral === "boolean") {
+	const cachedIsEphemeral: boolean | undefined = await getDocumentCachedEphemeralProperties(
+		cache,
+		documentId,
+		tenantId,
+	);
+	if (cachedIsEphemeral !== undefined) {
 		return cachedIsEphemeral;
 	}
 
 	// Finally, if isEphemeral was not in the cache, fetch the value from database.
-	const staticProps: IDocumentStaticProperties | undefined =
-		await runWithRetry<IDocumentStaticProperties>(
-			async () => documentManager.readStaticProperties(tenantId, documentId) /* api */,
-			"utils.createGitService.readStaticProperties" /* callName */,
-			3 /* maxRetries */,
-			1000 /* retryAfterMs */,
-			getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
-		).catch((error) => {
-			Lumberjack.error(
-				`Failed to retrieve static data from document when checking isEphemeral flag.`,
-				getLumberBaseProperties(documentId, tenantId),
-				error,
-			);
-			return undefined;
-		});
-	if (staticProps?.isEphemeralContainer === undefined) {
-		Lumberjack.warning(
-			`No isEphemeralContainer flag found in static data for document.`,
-			getLumberBaseProperties(documentId, tenantId),
-		);
-		return false;
-	}
-	const staticPropsIsEphemeral = staticProps.isEphemeralContainer;
-	if (staticPropsIsEphemeral === true) {
+	const { isEphemeralContainer: staticPropsIsEphemeral, createTime } =
+		await getDocumentStaticEphemeralProperties(documentManager, tenantId, documentId);
+
+	if (staticPropsIsEphemeral === true && createTime !== undefined) {
 		// Explicitly check for ephemeral document expiration.
 		const currentTime = Date.now();
-		const documentExpirationTime = staticProps.createTime + ephemeralDocumentTTLSec * 1000;
+		const documentExpirationTime = createTime + ephemeralDocumentTTLSec * 1000;
 		if (currentTime > documentExpirationTime) {
 			// If the document is ephemeral and older than the max ephemeral document TTL, throw an error indicating that it can't be accessed.
 			const documentExpiredByMs = currentTime - documentExpirationTime;
-			const error = new NetworkError(
-				404,
-				`Ephemeral Container Expired: ${Math.floor(
-					documentExpiredByMs / 1000,
-				)} seconds older than ephemeral document TTL of ${ephemeralDocumentTTLSec} seconds.`,
-			);
-			Lumberjack.error(
-				`Document is older than the max ephemeral document TTL.`,
+			const error = new NetworkError(404, "Ephemeral Container Expired");
+			Lumberjack.warning(
+				"Document is older than the max ephemeral document TTL.",
 				{
 					...getLumberBaseProperties(documentId, tenantId),
-					documentCreateTime: staticProps.createTime,
+					documentCreateTime: createTime,
 					documentExpirationTime,
 					documentExpiredByMs,
 				},
@@ -199,7 +233,7 @@ async function checkAndCacheIsEphemeral({
 			throw error;
 		}
 	}
-	await updateIsEphemeralCache(documentId, tenantId, isEphemeralContainerOverride, cache);
+	await updateIsEphemeralCache(documentId, tenantId, staticPropsIsEphemeral, cache);
 	return staticPropsIsEphemeral;
 }
 

@@ -292,14 +292,22 @@ export async function getSession(
 	if (document.isEphemeralContainer && ephemeralDocumentTTLSec !== undefined) {
 		// Check if the document is ephemeral and has expired.
 		const currentTime = Date.now();
-		const ephemeralDocumentExpiryTime = document.createTime + ephemeralDocumentTTLSec * 1000;
-		if (currentTime > ephemeralDocumentExpiryTime) {
-			throw new NetworkError(
-				404,
-				`Ephemeral Container Expired: ${Math.floor(
-					(ephemeralDocumentExpiryTime - currentTime) / 1000,
-				)} seconds older than ephemeral document TTL of ${ephemeralDocumentTTLSec} seconds.`,
+		const documentExpirationTime = document.createTime + ephemeralDocumentTTLSec * 1000;
+		if (currentTime > documentExpirationTime) {
+			// If the document is ephemeral and older than the max ephemeral document TTL, throw an error indicating that it can't be accessed.
+			const documentExpiredByMs = currentTime - documentExpirationTime;
+			const error = new NetworkError(404, "Ephemeral Container Expired");
+			Lumberjack.warning(
+				"Document is older than the max ephemeral document TTL.",
+				{
+					...getLumberBaseProperties(documentId, tenantId),
+					documentCreateTime: document.createTime,
+					documentExpirationTime,
+					documentExpiredByMs,
+				},
+				error,
 			);
+			throw error;
 		}
 	}
 	// Session can be undefined for documents that existed before the concept of service sessions.
