@@ -130,9 +130,9 @@ const handler: ProxyHandler<TreeMapNode> = {
 	},
 };
 
-export abstract class CustomMapNodeBase<
-	const T extends ImplicitAllowedTypes,
-> extends TreeNodeValid<MapNodeInsertableData<T>> {
+abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends TreeNodeValid<
+	MapNodeInsertableData<T>
+> {
 	public static readonly kind = NodeKind.Map;
 
 	public [Symbol.iterator](): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {

@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeLeafValue } from "../schemaTypes.js";
-import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
+import type { InternalTreeNode, Unhydrated } from "./types.js";
 
 /**
  * Schema for a tree node.
@@ -20,7 +19,7 @@ import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
 export type TreeNodeSchema<
 	Name extends string = string,
 	Kind extends NodeKind = NodeKind,
-	TNode = TreeNode | TreeLeafValue,
+	TNode = unknown,
 	TBuild = never,
 	ImplicitlyConstructable extends boolean = boolean,
 	Info = unknown,

@@ -24,6 +24,7 @@ import type {
 } from "../schemaTypes.js";
 import { getSimpleNodeSchema, type Unhydrated } from "../core/index.js";
 import {
+	cursorForMapTreeNode,
 	defaultSchemaPolicy,
 	intoStoredSchema,
 	isTreeValue,
@@ -40,10 +41,10 @@ import {
 	numberSchema,
 	stringSchema,
 } from "../leafNodeSchema.js";
-import { getOrCreateNodeFromFlexTreeNode } from "../proxies.js";
+import { getOrCreateNodeFromFlexTreeNode, type InsertableContent } from "../proxies.js";
 import { getOrCreateMapTreeNode } from "../../feature-libraries/index.js";
 import { toFlexSchema } from "../toFlexSchema.js";
-import { cursorFromNodeData, inSchemaOrThrow } from "../toMapTree.js";
+import { inSchemaOrThrow, mapTreeFromNodeData } from "../toMapTree.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
 
 /**
@@ -70,8 +71,16 @@ export function create<TSchema extends ImplicitFieldSchema>(
 		schema: intoStoredSchema(flexSchema),
 	};
 
-	const cursor = cursorFromNodeData(data, schema, context, schemaValidationPolicy);
-	const result = cursor === undefined ? undefined : createFromCursor(schema, cursor);
+	const mapTree = mapTreeFromNodeData(
+		data as InsertableContent | undefined,
+		schema,
+		context,
+		schemaValidationPolicy,
+	);
+	const result =
+		mapTree === undefined
+			? undefined
+			: createFromCursor(schema, cursorForMapTreeNode(mapTree));
 	return result as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 }
 
