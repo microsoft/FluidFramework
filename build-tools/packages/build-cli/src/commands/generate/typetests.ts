@@ -164,15 +164,11 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		const buildToolsPackageName = "@fluidframework/build-tools";
 		const buildToolsImport = `import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "${buildToolsPackageName}";`;
 
-		// Public API levels are always imported from the primary entrypoint, but everything else is importedx from the
+		// Public API levels are always imported from the primary entrypoint, but everything else is imported from the
 		// /internal entrypoint. This is consistent with our policy for code within the repo - all non-public APIs are
 		// imported from the /internal entrypoint for consistency
 		const previousImport = `import type * as old from "${previousPackageName}${
-			previousPackageLevel === ApiLevel.public
-				? ""
-				: previousPackageLevel === ApiLevel.legacy
-					? `/${ApiLevel.internal}`
-					: `/${previousPackageLevel}`
+			previousPackageLevel === ApiLevel.public ? "" : `/${ApiLevel.internal}`
 		}";`;
 		const imports =
 			buildToolsPackageName < previousPackageName
