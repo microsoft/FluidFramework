@@ -37,7 +37,7 @@ import {
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { RestrictiveReadonlyRecord } from "../util/index.js";
+import { brand, count, type RestrictiveReadonlyRecord } from "../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 
 /**
@@ -144,7 +144,8 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 			throw new UsageError(`A map cannot be mutated before being inserted into the tree`);
 		}
 
-		node.delete(key);
+		const field = node.getBoxed(key);
+		field.editor.set(undefined, field.length === 0);
 	}
 	public *entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
 		const node = getOrCreateInnerNode(this);
@@ -161,8 +162,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		return getTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 	}
 	public has(key: string): boolean {
-		const node = getOrCreateInnerNode(this);
-		return node.has(key);
+		return getOrCreateInnerNode(this).tryGetField(brand(key)) !== undefined;
 	}
 	public keys(): IterableIterator<string> {
 		const node = getOrCreateInnerNode(this);
@@ -182,20 +182,16 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 			getSchemaAndPolicy(node),
 		);
 
-		if (mapTree === undefined) {
-			node.delete(key);
-			return this;
-		}
-
+		const field = node.getBoxed(key);
 		if (node.context !== undefined) {
 			prepareContentForHydration(mapTree, node.context.checkout.forest);
 		}
 
-		node.set(key, [mapTree]);
+		field.editor.set(mapTree, field.length === 0);
 		return this;
 	}
 	public get size(): number {
-		return getOrCreateInnerNode(this).size;
+		return count(getOrCreateInnerNode(this).keys());
 	}
 	public *values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
 		for (const [, value] of this.entries()) {

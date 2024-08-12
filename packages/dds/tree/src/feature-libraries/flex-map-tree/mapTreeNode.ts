@@ -31,7 +31,6 @@ import {
 	type FlexTreeTypedNodeUnion,
 	type FlexTreeUnboxField,
 	type FlexTreeUnboxNodeUnion,
-	type FlexibleFieldContent,
 	flexTreeMarker,
 	indexForAt,
 } from "../flex-tree/index.js";
@@ -104,7 +103,7 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 		public readonly schema: TSchema,
 		/** The underlying {@link MapTree} that this `MapTreeNode` reads its data from */
 		public readonly mapTree: ExclusiveMapTree,
-		private location: LocationInField | undefined,
+		private location = unparentedLocation,
 	) {
 		assert(!nodeCache.has(mapTree), 0x98b /* A node already exists for the given MapTree */);
 		nodeCache.set(mapTree, this);
@@ -129,7 +128,7 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 	 */
 	public adoptBy(parent: MapTreeField, index: number): void {
 		assert(
-			this.location === undefined,
+			this.location === unparentedLocation,
 			0x98c /* Node may not be adopted if it already has a parent */,
 		);
 		this.location = { parent, index };
@@ -137,16 +136,9 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 
 	/**
 	 * The field this tree is in, and the index within that field.
-	 * @remarks If this node is unparented, this method will return the special {@link rootMapTreeField} as the parent.
+	 * @remarks If this node is unparented, this method will return the special {@link unparentedLocation} as the parent.
 	 */
 	public get parentField(): LocationInField {
-		if (this.location === undefined) {
-			return {
-				parent: rootMapTreeField,
-				index: -1,
-			};
-		}
-
 		return this.location;
 	}
 
@@ -236,22 +228,6 @@ export class EagerMapTreeMapNode<TSchema extends FlexMapNodeSchema>
 	extends EagerMapTreeNode<TSchema>
 	implements FlexTreeMapNode<TSchema>
 {
-	public get size(): number {
-		return this.mapTree.fields.size;
-	}
-
-	public has(key: string): boolean {
-		return this.tryGetField(brand(key)) !== undefined;
-	}
-
-	public get(key: string): FlexTreeUnboxField<TSchema["info"]> {
-		const field = this.tryGetField(brand(key));
-		if (field === undefined) {
-			return undefined as FlexTreeUnboxField<TSchema["info"]>;
-		}
-		return unboxedField(field, brand(key), this.mapTree, this);
-	}
-
 	public keys(): IterableIterator<FieldKey> {
 		return this.mapTree.fields.keys();
 	}
@@ -301,16 +277,6 @@ export class EagerMapTreeMapNode<TSchema extends FlexMapNodeSchema>
 		return super.getBoxed(key) as FlexTreeTypedField<TSchema["info"]>;
 	}
 
-	public set(key: string, value: FlexibleFieldContent | undefined): void {
-		// `MapTreeNode`s cannot be mutated
-		throw unsupportedUsageError("Setting a map entry");
-	}
-
-	public delete(key: string): void {
-		// `MapTreeNode`s cannot be mutated
-		throw unsupportedUsageError("Deleting a map entry");
-	}
-
 	public [Symbol.iterator](): IterableIterator<
 		[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]
 	> {
@@ -345,29 +311,33 @@ interface MapTreeField extends FlexTreeField {
 }
 
 /**
- * A special singleton that is the implicit parent field of all un-parented {@link EagerMapTreeNode}s.
+ * A special singleton that is the implicit {@link LocationInField} of all un-parented {@link EagerMapTreeNode}s.
  * @remarks This exists because {@link EagerMapTreeNode.parentField} must return a field.
  * If a {@link EagerMapTreeNode} is created without a parent, its {@link EagerMapTreeNode.parentField} property will point to this object.
  * However, this field cannot be used in any practical way because it is empty, i.e. it does not actually contain the children that claim to be parented under it.
  * It has the "empty" schema and it will always contain zero children if queried.
+ * Any nodes with this location will have a dummy parent index of `-1`.
  */
-export const rootMapTreeField: MapTreeField = {
-	[flexTreeMarker]: FlexTreeEntityKind.Field as const,
-	length: 0,
-	key: EmptyKey,
-	parent: undefined,
-	is<TSchema extends FlexFieldSchema>(schema: TSchema) {
-		return schema === (FlexFieldSchema.empty as FlexFieldSchema);
+const unparentedLocation: LocationInField = {
+	parent: {
+		[flexTreeMarker]: FlexTreeEntityKind.Field as const,
+		length: 0,
+		key: EmptyKey,
+		parent: undefined,
+		is<TSchema extends FlexFieldSchema>(schema: TSchema) {
+			return schema === (FlexFieldSchema.empty as FlexFieldSchema);
+		},
+		boxedIterator(): IterableIterator<FlexTreeNode> {
+			return [].values();
+		},
+		boxedAt(index: number): FlexTreeNode | undefined {
+			return undefined;
+		},
+		schema: FlexFieldSchema.empty,
+		context: undefined,
+		mapTrees: [],
 	},
-	boxedIterator(): IterableIterator<FlexTreeNode> {
-		return [].values();
-	},
-	boxedAt(index: number): FlexTreeNode | undefined {
-		return undefined;
-	},
-	schema: FlexFieldSchema.empty,
-	context: undefined,
-	mapTrees: [],
+	index: -1,
 };
 
 class EagerMapTreeField<T extends FlexAllowedTypes> implements MapTreeField {
@@ -388,7 +358,7 @@ class EagerMapTreeField<T extends FlexAllowedTypes> implements MapTreeField {
 			const mapTreeNodeChild = nodeCache.get(mapTree);
 			if (mapTreeNodeChild !== undefined) {
 				assert(
-					mapTreeNodeChild.parentField.parent === rootMapTreeField,
+					mapTreeNodeChild.parentField === unparentedLocation,
 					0x991 /* Node is already parented under a different field */,
 				);
 				mapTreeNodeChild.adoptBy(this, i);
