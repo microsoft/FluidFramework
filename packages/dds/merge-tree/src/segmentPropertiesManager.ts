@@ -9,7 +9,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 import { IMergeTreeAnnotateMsg } from "./ops.js";
-import { MapLike, PropertySet, createMap } from "./properties.js";
+import { MapLike, PropertySet, clone, createMap, extend } from "./properties.js";
 
 /**
  * @legacy
@@ -133,15 +133,10 @@ export class PropertiesManager {
 			if (!newManager) {
 				throw new Error("Must provide new PropertyManager");
 			}
-			for (const [key, value] of Object.entries(oldProps)) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				newProps[key] = value;
-			}
+			extend(newProps, oldProps);
+
 			if (this.pendingKeyUpdateCount) {
-				newManager.pendingKeyUpdateCount = createMap<number>();
-				for (const [key, value] of Object.entries(this.pendingKeyUpdateCount)) {
-					newManager.pendingKeyUpdateCount[key] = value;
-				}
+				newManager.pendingKeyUpdateCount = clone(this.pendingKeyUpdateCount);
 			}
 		}
 		return newProps;
