@@ -150,11 +150,11 @@ import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import {
 	type ImplicitFieldSchema,
 	type InsertableContent,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeViewConfiguration,
-	normalizeFieldSchema,
 	SchemaFactory,
 	toFlexSchema,
+	type InsertableTreeFieldFromImplicitField,
+	mapTreeFromNodeData,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -166,8 +166,6 @@ import {
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { cursorFromNodeData } from "../simple-tree/toMapTree.js";
 
 // Testing utilities
 
@@ -784,7 +782,7 @@ export function flexTreeFromForest<TRoot extends FlexFieldSchema>(
 	return view.flexTree;
 }
 
-const sf = new SchemaFactory(undefined);
+const sf = new SchemaFactory("com.fluidframework.json");
 
 export const NumberArray = sf.array("array", sf.number);
 export const StringArray = sf.array("array", sf.string);
@@ -1389,28 +1387,21 @@ export function validateUsageError(expectedErrorMsg: string | RegExp): (error: E
  * and the schema would come from the unhydrated node.
  * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
  */
-export function cursorFromUnhydratedRoot(
+export function cursorFromInsertableTreeField(
 	schema: ImplicitFieldSchema,
-	tree: InsertableTreeNodeFromImplicitAllowedTypes,
+	tree: InsertableTreeFieldFromImplicitField,
 	nodeKeyManager: NodeKeyManager,
-): ITreeCursorSynchronous {
-	const data = tree as InsertableContent;
-	const normalizedFieldSchema = normalizeFieldSchema(schema);
+): ITreeCursorSynchronous | undefined {
+	const data = tree as InsertableContent | undefined;
 
-	const flexSchema = toFlexSchema(normalizedFieldSchema);
+	const flexSchema = toFlexSchema(schema);
 	const storedSchema: SchemaAndPolicy = {
 		policy: defaultSchemaPolicy,
 		schema: intoStoredSchema(flexSchema),
 	};
 
-	return (
-		cursorFromNodeData(
-			data,
-			normalizedFieldSchema.allowedTypes,
-			nodeKeyManager,
-			storedSchema,
-		) ?? assert.fail("failed to decode tree")
-	);
+	const mappedContent = mapTreeFromNodeData(data, schema, nodeKeyManager, storedSchema);
+	return mappedContent === undefined ? undefined : cursorForMapTreeNode(mappedContent);
 }
 
 function normalizeNewFieldContent(

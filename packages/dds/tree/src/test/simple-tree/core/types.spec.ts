@@ -8,32 +8,35 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import {
 	type InternalTreeNode,
-	type MostDerivedData,
 	TreeNode,
-	TreeNodeValid,
 	inPrototypeChain,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/types.js";
+} from "../../../simple-tree/core/types.js";
+import {
+	type MostDerivedData,
+	TreeNodeValid,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../simple-tree/treeNodeValid.js";
 import {
 	NodeKind,
 	type TreeNodeSchema,
 	typeNameSymbol,
 	// Used to test that TreeNode is a type only export.
 	TreeNode as TreeNodePublic,
-} from "../../simple-tree/index.js";
+} from "../../../simple-tree/index.js";
 import type {
 	FlexTreeNode,
 	FlexTreeNodeSchema,
 	MapTreeNode,
-} from "../../feature-libraries/index.js";
+} from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
+import { numberSchema } from "../../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getFlexSchema } from "../../simple-tree/toFlexSchema.js";
-import { validateUsageError } from "../utils.js";
-import { brand } from "../../util/index.js";
+import { getFlexSchema } from "../../../simple-tree/toFlexSchema.js";
+import { validateUsageError } from "../../utils.js";
+import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { EagerMapTreeNode } from "../../feature-libraries/flex-map-tree/mapTreeNode.js";
+import { EagerMapTreeNode } from "../../../feature-libraries/flex-map-tree/mapTreeNode.js";
 
 describe("simple-tree types", () => {
 	describe("TreeNode", () => {
@@ -61,7 +64,7 @@ describe("simple-tree types", () => {
 					throw new Error("Method not implemented.");
 				}
 				public constructor() {
-					super();
+					super({});
 				}
 			}
 
