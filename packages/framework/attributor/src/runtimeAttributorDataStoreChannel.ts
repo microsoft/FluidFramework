@@ -223,7 +223,7 @@ export class RuntimeAttributorDataStoreChannel
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		throw new Error("Attributor should not receive messages");
+		throw new Error("Attributor should not receive messages yet");
 	}
 
 	/**
@@ -254,6 +254,7 @@ export class RuntimeAttributorDataStoreChannel
 	 * {@inheritdoc IFluidDataStoreChannel.getGCData}
 	 */
 	public async getGCData(fullGC?: boolean): Promise<IGarbageCollectionData> {
+		// Nothing to be GCed from the attributor.
 		const garbageCollectionData: IGarbageCollectionData = { gcNodes: {} };
 		return garbageCollectionData;
 	}
@@ -276,6 +277,7 @@ export class RuntimeAttributorDataStoreChannel
 	 * {@inheritdoc IFluidDataStoreChannel.reSubmit}
 	 */
 	public reSubmit(type: string, content: unknown, localOpMetadata: unknown): void {
+		// Should not resubmit anything from the attributor as the attributor does not send ops yet.
 		throw new Error("Should not resubmit anything from the attributor");
 	}
 
@@ -283,6 +285,7 @@ export class RuntimeAttributorDataStoreChannel
 	 * {@inheritdoc IFluidDataStoreChannel.applyStashedOp}
 	 */
 	public async applyStashedOp(content: unknown): Promise<unknown> {
+		// Should not apply stashed ops to the attributor as the attributor does not send ops yet.
 		throw new Error("Should not apply stashed ops to the attributor");
 	}
 
@@ -290,6 +293,7 @@ export class RuntimeAttributorDataStoreChannel
 	 * {@inheritdoc IFluidDataStoreChannel.rollback}
 	 */
 	public rollback?(type: string, content: unknown, localOpMetadata: unknown): void {
+		// Should not rollback anything from the attributor as it does not send ops yet.
 		throw new Error("Should not rollback anything from the attributor");
 	}
 
@@ -302,6 +306,7 @@ export class RuntimeAttributorDataStoreChannel
 	 * {@inheritdoc IFluidDataStoreChannel.request}
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
+		// Should not request anything from the attributor as the attributor does not have any channels further.
 		throw new Error("Should not request anything from the attributor");
 	}
 
