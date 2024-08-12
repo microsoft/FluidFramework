@@ -38,18 +38,16 @@ declare type current_as_old_for_TypeAlias_CompatibilityMode = requireAssignableT
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_ContainerAttachProps": {"forwardCompat": false}
+ * "RemovedTypeAlias_ContainerAttachProps": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ContainerAttachProps = requireAssignableTo<TypeOnly<old.ContainerAttachProps>, TypeOnly<current.ContainerAttachProps>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_ContainerAttachProps": {"backCompat": false}
+ * "RemovedTypeAlias_ContainerAttachProps": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ContainerAttachProps = requireAssignableTo<TypeOnly<current.ContainerAttachProps>, TypeOnly<old.ContainerAttachProps>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

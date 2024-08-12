@@ -22,7 +22,6 @@ export { createServiceAudience } from "./serviceAudience.js";
 export type {
 	CompatibilityMode,
 	ContainerSchema,
-	ContainerAttachProps,
 	IConnection,
 	IMember,
 	IProvideRootDataObject,

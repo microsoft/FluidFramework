@@ -10,8 +10,8 @@ import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { type ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
 
-import type { OdspConnectionConfig } from "../interfaces.js";
-import { OdspClient } from "../odspClient.js";
+import type { OdspConnectionConfig, IOdspClient } from "../interfaces.js";
+import { createOdspClient as createOdspClientCore } from "../odspClient.js";
 
 import { OdspTestTokenProvider } from "./odspTestTokenProvider.js";
 
@@ -36,18 +36,17 @@ const clientCreds: OdspTestCredentials = {
 /**
  * Creates an instance of the odsp-client with the specified test credentials.
  *
- * @returns OdspClient - An instance of the odsp-client.
+ * @returns IOdspClient - An instance of the odsp-client.
  */
-function createOdspClient(props: { configProvider?: IConfigProviderBase } = {}): OdspClient {
+function createOdspClient(props: { configProvider?: IConfigProviderBase } = {}): IOdspClient {
 	// Configuration for connecting to the ODSP service.
 	const connectionProperties: OdspConnectionConfig = {
 		tokenProvider: new OdspTestTokenProvider(clientCreds), // Token provider using the provided test credentials.
 		siteUrl: "<site_url>",
 		driveId: "<sharepoint_embedded_container_id>",
-		filePath: "<file_path>",
 	};
 
-	return new OdspClient({
+	return createOdspClientCore({
 		connection: connectionProperties,
 		configProvider: props.configProvider,
 	});
@@ -55,7 +54,7 @@ function createOdspClient(props: { configProvider?: IConfigProviderBase } = {}):
 
 describe("OdspClient", () => {
 	// const connectTimeoutMs = 5000;
-	let client: OdspClient;
+	let client: IOdspClient;
 	let schema: ContainerSchema;
 
 	beforeEach(() => {

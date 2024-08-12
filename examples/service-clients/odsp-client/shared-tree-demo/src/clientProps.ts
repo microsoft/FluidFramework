@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { OdspClientProps, OdspConnectionConfig } from "@fluidframework/odsp-client/beta";
+// eslint-disable-next-line import/no-internal-modules
+import { OdspClientProps, OdspConnectionConfig } from "@fluidframework/odsp-client/internal";
 
 import { OdspTestTokenProvider } from "./tokenProvider.js";
 
@@ -23,7 +24,6 @@ const connectionConfig: OdspConnectionConfig = {
 	tokenProvider: new OdspTestTokenProvider(props.clientId),
 	siteUrl: props.siteUrl,
 	driveId: props.driveId,
-	filePath: "",
 };
 
 export const clientProps: OdspClientProps = {

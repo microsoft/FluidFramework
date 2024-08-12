@@ -13,6 +13,7 @@ import {
 	InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 	ShareLinkInfoType,
+	ISharingLinkKind,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
@@ -90,7 +91,10 @@ export async function createNewFluidFile(
 		itemId = content.itemId;
 		summaryHandle = content.id;
 
-		shareLinkInfo = extractShareLinkData(content, enableSingleRequestForShareLinkWithCreate);
+		shareLinkInfo =
+			!enableSingleRequestForShareLinkWithCreate || newFileInfo.createLinkType === undefined
+				? undefined
+				: extractShareLinkData(content, newFileInfo.createLinkType);
 	}
 
 	const odspUrl = createOdspUrl({ ...newFileInfo, itemId, dataStorePath: "/" });
@@ -129,38 +133,36 @@ export async function createNewFluidFile(
  * the response if it is available.
  * In case there was an error in creation of the sharing link, error is provided back in the response,
  * and does not impact the creation of file in ODSP.
- * @param requestedSharingLinkKind - Kind of sharing link requested to be created along with the creation of file.
  * @param response - Response object received from the /snapshot api call
+ * @param createKind - kind of link client asked for
  * @returns Sharing link information received in the response from a successful creation of a file.
  */
 function extractShareLinkData(
 	response: ICreateFileResponse,
-	enableSingleRequestForShareLinkWithCreate?: boolean,
+	createKind: ISharingLinkKind,
 ): ShareLinkInfoType | undefined {
-	let shareLinkInfo: ShareLinkInfoType | undefined;
-	if (enableSingleRequestForShareLinkWithCreate) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const { sharing } = response;
-		if (!sharing) {
-			return;
-		}
-		/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
-		shareLinkInfo = {
-			createLink: {
-				link: sharing.sharingLink
-					? {
-							scope: sharing.sharingLink.scope,
-							role: sharing.sharingLink.type,
-							webUrl: sharing.sharingLink.webUrl,
-							...sharing.sharingLink,
-						}
-					: undefined,
-				error: sharing.error,
-				shareId: sharing.shareId,
-			},
-		};
-		/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	const { sharing } = response;
+	if (!sharing) {
+		return;
 	}
+	/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
+	const shareLinkInfo: ShareLinkInfoType = {
+		createLink: {
+			createKind,
+			link: sharing.sharingLink
+				? {
+						scope: sharing.sharingLink.scope,
+						role: sharing.sharingLink.type,
+						webUrl: sharing.sharingLink.webUrl,
+						...sharing.sharingLink,
+					}
+				: undefined,
+			error: sharing.error,
+			shareId: sharing.shareId,
+		},
+	};
+	/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 	return shareLinkInfo;
 }
 

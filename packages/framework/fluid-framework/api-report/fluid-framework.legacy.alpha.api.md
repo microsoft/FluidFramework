@@ -54,9 +54,6 @@ export namespace ConnectionStateType {
 export type ConnectionStateType = ConnectionStateType.Disconnected | ConnectionStateType.EstablishingConnection | ConnectionStateType.CatchingUp | ConnectionStateType.Connected;
 
 // @public
-export type ContainerAttachProps<T = unknown> = T;
-
-// @public
 export interface ContainerSchema {
     readonly dynamicObjectTypes?: readonly SharedObjectKind[];
     readonly initialObjects: Record<string, SharedObjectKind>;
@@ -371,7 +368,7 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 
 // @public @sealed
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
-    attach(props?: ContainerAttachProps): Promise<string>;
+    attach(props?: unknown): Promise<string>;
     readonly attachState: AttachState;
     connect(): void;
     readonly connectionState: ConnectionStateType;

@@ -166,6 +166,7 @@ declare type current_as_old_for_Interface_IOdspErrorAugmentations = requireAssig
  * typeValidation.broken:
  * "Interface_IOdspResolvedUrl": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IOdspResolvedUrl = requireAssignableTo<TypeOnly<old.IOdspResolvedUrl>, TypeOnly<current.IOdspResolvedUrl>>
 
 /*
@@ -463,6 +464,7 @@ declare type current_as_old_for_Interface_OdspResourceTokenFetchOptions = requir
  * typeValidation.broken:
  * "Interface_ShareLinkInfoType": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ShareLinkInfoType = requireAssignableTo<TypeOnly<old.ShareLinkInfoType>, TypeOnly<current.ShareLinkInfoType>>
 
 /*

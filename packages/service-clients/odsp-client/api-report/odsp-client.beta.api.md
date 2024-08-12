@@ -13,32 +13,10 @@ export interface IOdspTokenProvider {
     fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
 }
 
-// @beta @sealed
-export class OdspClient {
-    constructor(properties: OdspClientProps);
-    // (undocumented)
-    createContainer<T extends ContainerSchema>(containerSchema: T): Promise<{
-        container: IFluidContainer<T>;
-        services: OdspContainerServices;
-    }>;
-    // (undocumented)
-    getContainer<T extends ContainerSchema>(id: string, containerSchema: T): Promise<{
-        container: IFluidContainer<T>;
-        services: OdspContainerServices;
-    }>;
-}
-
-// @beta (undocumented)
-export interface OdspClientProps {
-    readonly configProvider?: IConfigProviderBase;
-    readonly connection: OdspConnectionConfig;
-    readonly logger?: ITelemetryBaseLogger;
-}
-
 // @beta
 export interface OdspConnectionConfig {
     driveId: string;
-    filePath: string;
+    isClpCompliant?: boolean;
     siteUrl: string;
     tokenProvider: IOdspTokenProvider;
 }

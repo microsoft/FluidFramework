@@ -4268,6 +4268,9 @@ importers:
       '@azure/msal-browser':
         specifier: ^2.34.0
         version: 2.38.3
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../../../packages/common/core-utils
       '@fluidframework/odsp-client':
         specifier: workspace:~
         version: link:../../../../packages/service-clients/odsp-client
