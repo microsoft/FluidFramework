@@ -24,13 +24,10 @@ nodeOptions.push("expose-gc", "gc-global", "unhandled-rejections=strict");
 
 module.exports = {
 	...baseConfig,
-	"exit": true,
-	"fgrep": ["@Benchmark", "@CustomBenchmark"],
+	"fgrep": ["@CustomBenchmark"],
 	"node-option": nodeOptions, // without leading "--"
 	"recursive": true,
 	"reporter": "@fluid-tools/benchmark/dist/MochaReporter.js",
 	"reporterOptions": ["reportDir=.memoryTestsOutput/"],
-	"require": ["node_modules/@fluid-internal/mocha-test-setup"],
 	"spec": ["lib/test/**/*.*js", "--perfMode"],
-	"timeout": "90000",
 };
