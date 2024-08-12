@@ -10,7 +10,8 @@
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 
 /**
- * The dependencies for the compile task -- excluding building the test files.
+ * The dependencies for the compile task. The build:test task is excluded and added only to the compile task definition
+ * because other tasks need these same dependent tasks, but not the build:test task.
  */
 const compileDependsOn = ["commonjs", "build:esnext", "api", "build:copy"];
 
@@ -81,9 +82,9 @@ module.exports = {
 		"build:copy": [],
 		"build:genver": [],
 		"typetests:gen": [
-			// We may reexport types from dependent packages so we need to build them first.
+			// type tests are generated from the built files, so we need to compile first
 			...compileDependsOn,
-			"^typetests:gen",
+			// "^typetests:gen",
 		],
 		"ts2esm": [],
 		"tsc": tscDependsOn,
