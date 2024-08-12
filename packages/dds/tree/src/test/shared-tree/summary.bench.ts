@@ -50,37 +50,33 @@ describe("Summary benchmarks", () => {
 			assert(summarySize < 700);
 		});
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountWide) {
-			it(`a wide tree with ${numberOfNodes} nodes.`, async () => {
-				benchmarkCustom({
-					only: false,
-					type: BenchmarkType.Measurement,
-					title: `a wide tree with ${numberOfNodes} nodes.`,
-					run: async (reporter) => {
-						const summaryTree = getSummaryTree(makeWideContentWithEndValue(numberOfNodes, 1));
-						const summaryString = JSON.stringify(summaryTree);
-						const summarySize = IsoBuffer.from(summaryString).byteLength;
-						reporter.addMeasurement("summarySize", summarySize);
-						assert(summarySize > minLength);
-						assert(summarySize < maxLength);
-					},
-				});
+			benchmarkCustom({
+				only: false,
+				type: BenchmarkType.Measurement,
+				title: `a wide tree with ${numberOfNodes} nodes.`,
+				run: async (reporter) => {
+					const summaryTree = getSummaryTree(makeWideContentWithEndValue(numberOfNodes, 1));
+					const summaryString = JSON.stringify(summaryTree);
+					const summarySize = IsoBuffer.from(summaryString).byteLength;
+					reporter.addMeasurement("summarySize", summarySize);
+					assert(summarySize > minLength);
+					assert(summarySize < maxLength);
+				},
 			});
 		}
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountDeep) {
-			it(`a deep tree with ${numberOfNodes} nodes.`, async () => {
-				benchmarkCustom({
-					only: false,
-					type: BenchmarkType.Measurement,
-					title: `a deep tree with ${numberOfNodes} nodes.`,
-					run: async (reporter) => {
-						const summaryTree = getSummaryTree(makeDeepContent(numberOfNodes));
-						const summaryString = JSON.stringify(summaryTree);
-						const summarySize = IsoBuffer.from(summaryString).byteLength;
-						reporter.addMeasurement("summarySize", summarySize);
-						assert(summarySize > minLength);
-						assert(summarySize < maxLength);
-					},
-				});
+			benchmarkCustom({
+				only: false,
+				type: BenchmarkType.Measurement,
+				title: `a deep tree with ${numberOfNodes} nodes.`,
+				run: async (reporter) => {
+					const summaryTree = getSummaryTree(makeDeepContent(numberOfNodes));
+					const summaryString = JSON.stringify(summaryTree);
+					const summarySize = IsoBuffer.from(summaryString).byteLength;
+					reporter.addMeasurement("summarySize", summarySize);
+					assert(summarySize > minLength);
+					assert(summarySize < maxLength);
+				},
 			});
 		}
 	});
