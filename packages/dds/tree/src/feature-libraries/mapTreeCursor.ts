@@ -76,3 +76,11 @@ export function mapTreeFromCursor(cursor: ITreeCursor): ExclusiveMapTree {
 
 	return node;
 }
+
+/**
+ * Extract an array of MapTrees (a field) from the contents of the given ITreeCursor's current field.
+ */
+export function mapTreeFieldFromCursor(cursor: ITreeCursor): ExclusiveMapTree[] {
+	assert(cursor.mode === CursorLocationType.Fields, "must start at field");
+	return mapCursorField(cursor, mapTreeFromCursor);
+}

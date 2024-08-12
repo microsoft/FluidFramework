@@ -82,12 +82,12 @@ describe("LazyField", () => {
 		);
 		cursor.free();
 		assert.throws(
-			() => (optionalField.content = undefined),
+			() => optionalField.editor.set(undefined, optionalField.length === undefined),
 			(e: Error) =>
 				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
 		);
 		assert.throws(
-			() => (valueField.content = mapTreeFromCursor(singleJsonCursor({}))),
+			() => valueField.editor.set(mapTreeFromCursor(singleJsonCursor({}))),
 			(e: Error) =>
 				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
 		);
@@ -389,15 +389,21 @@ describe("LazyOptionalField", () => {
 			initialTree: singleJsonCursor(5),
 		});
 		assert.equal(view.flexTree.content, 5);
-		view.flexTree.content = mapTreeFromCursor(singleJsonCursor(6));
+		view.flexTree.editor.set(
+			mapTreeFromCursor(singleJsonCursor(6)),
+			view.flexTree.length === 0,
+		);
 		assert.equal(view.flexTree.content, 6);
-		view.flexTree.content = undefined;
+		view.flexTree.editor.set(undefined, view.flexTree.length === 0);
 		assert.equal(view.flexTree.content, undefined);
-		view.flexTree.content = mapTreeFromCursor(
-			cursorForJsonableTreeNode({
-				type: leaf.string.name,
-				value: 7,
-			}),
+		view.flexTree.editor.set(
+			mapTreeFromCursor(
+				cursorForJsonableTreeNode({
+					type: leaf.string.name,
+					value: 7,
+				}),
+			),
+			view.flexTree.length === 0,
 		);
 		assert.equal(view.flexTree.content, 7);
 	});
@@ -450,10 +456,10 @@ describe("LazyValueField", () => {
 			initialTree: singleJsonCursor("X"),
 		});
 		assert.equal(view.flexTree.content, "X");
-		view.flexTree.content = mapTreeFromCursor(singleJsonCursor("Y"));
+		view.flexTree.editor.set(mapTreeFromCursor(singleJsonCursor("Y")));
 		assert.equal(view.flexTree.content, "Y");
 		const zCursor = cursorForJsonableTreeNode({ type: leaf.string.name, value: "Z" });
-		view.flexTree.content = mapTreeFromCursor(zCursor);
+		view.flexTree.editor.set(mapTreeFromCursor(zCursor));
 		assert.equal(view.flexTree.content, "Z");
 	});
 });

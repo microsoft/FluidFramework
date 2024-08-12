@@ -16,8 +16,6 @@ import {
 	type ExclusiveMapTree,
 } from "../core/index.js";
 import {
-	type CursorWithNode,
-	cursorForMapTreeNode,
 	isTreeValue,
 	valueSchemaAllows,
 	type NodeKeyManager,
@@ -53,55 +51,6 @@ import { isObjectNodeSchema } from "./objectNodeTypes.js";
  * array of key/value tuples to instantiate a map) we may need to rethink the structure here to be based more on the
  * schema than on the input data.
  */
-
-/**
- * Transforms an input {@link TypedNode} tree to a {@link MapTree}, and wraps the tree in a {@link CursorWithNode}.
- * @param data - The input tree to be converted.
- * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
- * @param context - An optional context which, if present, will allow defaults to be created by {@link ContextualFieldProvider}s.
- * If absent, only defaults from {@link ConstantFieldProvider}s will be created.
- * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
- * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
- * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
- *
- * @returns A cursor (in nodes mode) for the mapped tree if the input data was defined. Otherwise, returns `undefined`.
- * @remarks The resulting tree will be populated with any defaults from {@link FieldProvider}s in the schema.
- */
-export function cursorFromNodeData(
-	data: InsertableContent,
-	allowedTypes: ImplicitAllowedTypes,
-	context: NodeKeyManager | undefined,
-	schemaValidationPolicy: SchemaAndPolicy | undefined,
-): CursorWithNode<MapTree>;
-export function cursorFromNodeData(
-	data: InsertableContent | undefined,
-	allowedTypes: ImplicitFieldSchema,
-	context: NodeKeyManager | undefined,
-	schemaValidationPolicy: SchemaAndPolicy,
-): CursorWithNode<MapTree> | undefined | undefined;
-export function cursorFromNodeData(
-	data: InsertableContent | undefined,
-	allowedTypes: ImplicitFieldSchema,
-	context: NodeKeyManager | undefined,
-	schemaValidationPolicy: SchemaAndPolicy | undefined,
-): CursorWithNode<MapTree> | undefined {
-	const normalizedFieldSchema = normalizeFieldSchema(allowedTypes);
-
-	if (data === undefined) {
-		// TODO: this code-path should support defaults
-		if (normalizedFieldSchema.kind !== FieldKind.Optional) {
-			throw new UsageError("Got undefined for non-optional field.");
-		}
-		return undefined;
-	}
-	const mappedContent = nodeDataToMapTree(
-		data,
-		normalizedFieldSchema.allowedTypeSet,
-		schemaValidationPolicy,
-	);
-	addDefaultsToMapTree(mappedContent, normalizedFieldSchema.allowedTypes, context);
-	return cursorForMapTreeNode(mappedContent);
-}
 
 /**
  * Transforms an input {@link TypedNode} tree to a {@link MapTree}.
@@ -150,26 +99,32 @@ export function mapTreeFromNodeData(
 ): ExclusiveMapTree;
 export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
-	allowedTypes: ImplicitAllowedTypes,
+	allowedTypes: ImplicitFieldSchema,
 	context?: NodeKeyManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): ExclusiveMapTree | undefined;
 export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
-	allowedTypes: ImplicitAllowedTypes,
+	allowedTypes: ImplicitFieldSchema,
 	context?: NodeKeyManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): ExclusiveMapTree | undefined {
+	const normalizedFieldSchema = normalizeFieldSchema(allowedTypes);
+
 	if (data === undefined) {
+		// TODO: this code-path should support defaults
+		if (normalizedFieldSchema.kind !== FieldKind.Optional) {
+			throw new UsageError("Got undefined for non-optional field.");
+		}
 		return undefined;
 	}
 
 	const mapTree = nodeDataToMapTree(
 		data,
-		normalizeAllowedTypes(allowedTypes),
+		normalizedFieldSchema.allowedTypeSet,
 		schemaValidationPolicy,
 	);
-	addDefaultsToMapTree(mapTree, allowedTypes, context);
+	addDefaultsToMapTree(mapTree, normalizedFieldSchema.allowedTypes, context);
 	return mapTree;
 }
 
@@ -241,6 +196,12 @@ function nodeDataToMapTree(
 	return result;
 }
 
+/**
+ * Throws a UsageError if mapTree is out of schema.
+ * @remarks
+ * This requires mapTree to have all required default values,
+ * like identifiers for identifier fields.
+ */
 export function inSchemaOrThrow(
 	schemaValidationPolicy: SchemaAndPolicy,
 	mapTree: MapTree,

@@ -154,6 +154,7 @@ import {
 	SchemaFactory,
 	toFlexSchema,
 	type InsertableTreeFieldFromImplicitField,
+	mapTreeFromNodeData,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -165,8 +166,6 @@ import {
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { cursorFromNodeData } from "../simple-tree/toMapTree.js";
 
 // Testing utilities
 
@@ -1388,11 +1387,11 @@ export function validateUsageError(expectedErrorMsg: string | RegExp): (error: E
  * and the schema would come from the unhydrated node.
  * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
  */
-export function cursorFromUnhydratedRoot(
+export function cursorFromInsertableTreeField(
 	schema: ImplicitFieldSchema,
 	tree: InsertableTreeFieldFromImplicitField,
 	nodeKeyManager: NodeKeyManager,
-): ITreeCursorSynchronous {
+): ITreeCursorSynchronous | undefined {
 	const data = tree as InsertableContent | undefined;
 
 	const flexSchema = toFlexSchema(schema);
@@ -1401,10 +1400,8 @@ export function cursorFromUnhydratedRoot(
 		schema: intoStoredSchema(flexSchema),
 	};
 
-	return (
-		cursorFromNodeData(data, schema, nodeKeyManager, storedSchema) ??
-		assert.fail("failed to decode tree")
-	);
+	const mappedContent = mapTreeFromNodeData(data, schema, nodeKeyManager, storedSchema);
+	return mappedContent === undefined ? undefined : cursorForMapTreeNode(mappedContent);
 }
 
 function normalizeNewFieldContent(

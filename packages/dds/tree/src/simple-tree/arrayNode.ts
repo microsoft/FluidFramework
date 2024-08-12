@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { CursorLocationType, EmptyKey, type ITreeCursorSynchronous } from "../core/index.js";
+import { EmptyKey, type ExclusiveMapTree } from "../core/index.js";
 import {
 	type FlexAllowedTypes,
 	type FlexFieldNodeSchema,
 	type FlexTreeNode,
 	type FlexTreeSequenceField,
 	type MapTreeNode,
-	cursorForMapTreeField,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 	isMapTreeNode,
@@ -41,7 +40,6 @@ import { mapTreeFromNodeData } from "./toMapTree.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { assert } from "@fluidframework/core-utils/internal";
 import { getKernel } from "./core/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 
@@ -684,7 +682,7 @@ export abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		});
 	}
 
-	#cursorFromFieldData(value: Insertable<T>): ITreeCursorSynchronous {
+	#mapTreesFromFieldData(value: Insertable<T>): ExclusiveMapTree[] {
 		if (isMapTreeNode(getOrCreateInnerNode(this))) {
 			throw new UsageError(`An array cannot be mutated before being inserted into the tree`);
 		}
@@ -715,7 +713,7 @@ export abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			prepareContentForHydration(mapTrees, sequenceField.context.checkout.forest);
 		}
 
-		return cursorForMapTreeField(mapTrees);
+		return mapTrees;
 	}
 
 	public toJSON(): unknown {
@@ -758,9 +756,8 @@ export abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	public insertAt(index: number, ...value: Insertable<T>): void {
 		const field = getSequenceField(this);
 		validateIndex(index, field, "insertAt", true);
-		const content = prepareFieldCursorForInsert(this.#cursorFromFieldData(value));
-		const fieldEditor = field.sequenceEditor();
-		fieldEditor.insert(index, content);
+		const content = this.#mapTreesFromFieldData(value);
+		field.editor.insert(index, content);
 	}
 	public insertAtStart(...value: Insertable<T>): void {
 		this.insertAt(0, ...value);
@@ -771,11 +768,10 @@ export abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	public removeAt(index: number): void {
 		const field = getSequenceField(this);
 		validateIndex(index, field, "removeAt");
-		field.sequenceEditor().remove(index, 1);
+		field.editor.remove(index, 1);
 	}
 	public removeRange(start?: number, end?: number): void {
 		const field = getSequenceField(this);
-		const fieldEditor = field.sequenceEditor();
 		const { length } = field;
 		const removeStart = start ?? 0;
 		const removeEnd = Math.min(length, end ?? length);
@@ -785,7 +781,7 @@ export abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			// This catches both the case where start is > array.length and when start is > end.
 			throw new UsageError('Too large of "start" value passed to TreeArrayNode.removeRange.');
 		}
-		fieldEditor.remove(removeStart, removeEnd - removeStart);
+		field.editor.remove(removeStart, removeEnd - removeStart);
 	}
 	public moveToStart(sourceIndex: number, source?: TreeArrayNode): void {
 		const sourceArray = source ?? this;
@@ -1041,14 +1037,4 @@ function validateIndexRange(
 			`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
 		);
 	}
-}
-
-/**
- * Prepare a fields cursor (holding a sequence of nodes) for inserting.
- */
-function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous {
-	// TODO: optionally validate content against schema.
-
-	assert(cursor.mode === CursorLocationType.Fields, 0x9a8 /* should be in fields mode */);
-	return cursor;
 }
