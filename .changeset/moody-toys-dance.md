@@ -2,8 +2,12 @@
 "@fluidframework/tree": minor
 "fluid-framework": minor
 ---
+---
+section: tree
+highlight: true
+---
 
-Allow constructing ArrayNodes from Maps and MapNodes from arrays when unambiguous.
+✨ New! When unambiguous, ArrayNodes can now be constructed from Maps and MapNodes from arrays
 
 Since the types for ArrayNodes and MapNodes indicate they can be constructed from iterables,
 it should work, even if those iterables are themselves arrays or maps.

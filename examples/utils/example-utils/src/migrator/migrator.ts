@@ -4,6 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type {
@@ -18,7 +19,7 @@ import type { IDetachedModel, IModelLoader } from "../modelLoader/index.js";
 /**
  * @internal
  */
-export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMigrator {
+export class Migrator implements IMigrator {
 	private _currentModel: IMigratableModel;
 	public get currentModel(): IMigratableModel {
 		return this._currentModel;
@@ -35,6 +36,11 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
 	public get connected(): boolean {
 		return this._currentModel.migrationTool.connected;
+	}
+
+	private readonly _events = new TypedEventEmitter<IMigratorEvents>();
+	public get events(): IEventProvider<IMigratorEvents> {
+		return this._events;
 	}
 
 	/**
@@ -66,7 +72,6 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 		initialId: string,
 		private readonly dataTransformationCallback?: DataTransformationCallback,
 	) {
-		super();
 		this._currentModel = initialMigratable;
 		this._currentModelId = initialId;
 		this.takeAppropriateActionForCurrentMigratable();
@@ -137,7 +142,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 					acceptedMigration.newVersion,
 				);
 				if (!migrationSupported) {
-					this.emit("migrationNotSupported", acceptedMigration.newVersion);
+					this._events.emit("migrationNotSupported", acceptedMigration.newVersion);
 					this._migrationP = undefined;
 					return;
 				}
@@ -181,13 +186,13 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 					} catch {
 						// TODO: This implies that the contract is to throw if the data can't be transformed, which
 						// isn't great.  How should the dataTransformationCallback indicate failure?
-						this.emit("migrationNotSupported", acceptedMigration.newVersion);
+						this._events.emit("migrationNotSupported", acceptedMigration.newVersion);
 						this._migrationP = undefined;
 						return;
 					}
 				} else {
 					// We can't get the data into a format that we can import, give up.
-					this.emit("migrationNotSupported", acceptedMigration.newVersion);
+					this._events.emit("migrationNotSupported", acceptedMigration.newVersion);
 					this._migrationP = undefined;
 					return;
 				}
@@ -251,7 +256,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 			await completeTheMigration();
 		};
 
-		this.emit("migrating");
+		this._events.emit("migrating");
 
 		this._migrationP = doTheMigration()
 			.then(() => {
@@ -300,7 +305,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 				acceptedMigration.newVersion,
 			);
 			if (!migrationSupported) {
-				this.emit("migrationNotSupported", acceptedMigration.newVersion);
+				this._events.emit("migrationNotSupported", acceptedMigration.newVersion);
 				this._migratedLoadP = undefined;
 				return;
 			}
@@ -311,7 +316,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 			// who is responsible for managing that.
 			this._currentModel = migrated;
 			this._currentModelId = migratedId;
-			this.emit("migrated", migrated, migratedId);
+			this._events.emit("migrated", migrated, migratedId);
 			this._migratedLoadP = undefined;
 
 			// Reset retry values

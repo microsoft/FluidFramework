@@ -7,6 +7,7 @@ import { assert, oob } from "@fluidframework/core-utils/internal";
 import {
 	type AnchorNode,
 	EmptyKey,
+	type ExclusiveMapTree,
 	type FieldKey,
 	type FieldUpPath,
 	type MapTree,
@@ -14,9 +15,8 @@ import {
 	type TreeValue,
 	type Value,
 } from "../../core/index.js";
-import { brand, fail, mapIterable } from "../../util/index.js";
+import { brand, fail, getOrCreate, mapIterable } from "../../util/index.js";
 import {
-	type FlexTreeContext,
 	FlexTreeEntityKind,
 	type FlexTreeField,
 	type FlexTreeFieldNode,
@@ -50,7 +50,12 @@ import {
 } from "../typed-schema/index.js";
 import { type FlexImplicitAllowedTypes, normalizeAllowedTypes } from "../schemaBuilderBase.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
-import { FieldKinds, type SequenceFieldEditBuilder } from "../default-schema/index.js";
+import {
+	FieldKinds,
+	type OptionalFieldEditBuilder,
+	type SequenceFieldEditBuilder,
+	type ValueFieldEditBuilder,
+} from "../default-schema/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 // #region Nodes
@@ -73,7 +78,7 @@ export function isMapTreeNode(flexNode: FlexTreeNode): flexNode is MapTreeNode {
 
 /** A node's parent field and its index in that field */
 interface LocationInField {
-	readonly parent: MapTreeField<FlexAllowedTypes>;
+	readonly parent: MapTreeField;
 	readonly index: number;
 }
 
@@ -98,7 +103,7 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 	public constructor(
 		public readonly schema: TSchema,
 		/** The underlying {@link MapTree} that this `MapTreeNode` reads its data from */
-		public readonly mapTree: MapTree,
+		public readonly mapTree: ExclusiveMapTree,
 		private location: LocationInField | undefined,
 	) {
 		assert(!nodeCache.has(mapTree), 0x98b /* A node already exists for the given MapTree */);
@@ -122,7 +127,7 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 	 * Set this node's parentage (see {@link FlexTreeNode.parentField}).
 	 * @remarks A node may only be adopted to a new parent one time, and only if it was not constructed with a parent.
 	 */
-	public adopt(parent: MapTreeField<FlexAllowedTypes>, index: number): void {
+	public adoptBy(parent: MapTreeField, index: number): void {
 		assert(
 			this.location === undefined,
 			0x98c /* Node may not be adopted if it already has a parent */,
@@ -151,23 +156,22 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 		return (schema as unknown) === this.schema;
 	}
 
-	public tryGetField(key: FieldKey): MapTreeField<FlexAllowedTypes> | undefined {
+	public tryGetField(key: FieldKey): EagerMapTreeField<FlexAllowedTypes> | undefined {
 		const field = this.mapTree.fields.get(key);
 		// Only return the field if it is not empty, in order to fulfill the contract of `tryGetField`.
 		if (field !== undefined && field.length > 0) {
-			return getOrCreateField(this, key, field, this.schema.getFieldSchema(key));
+			return getOrCreateField(this, key, this.schema.getFieldSchema(key));
 		}
 	}
 
 	public getBoxed(key: string): FlexTreeField {
 		const fieldKey: FieldKey = brand(key);
-		const field = this.mapTree.fields.get(fieldKey) ?? [];
-		return getOrCreateField(this, fieldKey, field, this.schema.getFieldSchema(fieldKey));
+		return getOrCreateField(this, fieldKey, this.schema.getFieldSchema(fieldKey));
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeField> {
-		return mapIterable(this.mapTree.fields.entries(), ([key, field]) =>
-			getOrCreateField(this, key, field, this.schema.getFieldSchema(key)),
+		return mapIterable(this.mapTree.fields.entries(), ([key]) =>
+			getOrCreateField(this, key, this.schema.getFieldSchema(key)),
 		);
 	}
 
@@ -175,11 +179,7 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 		return this.mapTree.value;
 	}
 
-	public get context(): FlexTreeContext {
-		// This API is relevant to `LazyTreeNode`s, but not `MapTreeNode`s.
-		// TODO: Refactor the FlexTreeNode interface so that stubbing this out isn't necessary.
-		return fail("MapTreeNode does not implement context");
-	}
+	public context = undefined;
 
 	public get anchorNode(): AnchorNode {
 		// This API is relevant to `LazyTreeNode`s, but not `MapTreeNode`s.
@@ -189,7 +189,7 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 
 	private walkTree(): void {
 		for (const [key, mapTrees] of this.mapTree.fields) {
-			const field = getOrCreateField(this, key, mapTrees, this.schema.getFieldSchema(key));
+			const field = getOrCreateField(this, key, this.schema.getFieldSchema(key));
 			for (let index = 0; index < field.length; index++) {
 				const child = getOrCreateChild(
 					mapTrees[index] ?? oob(),
@@ -301,7 +301,7 @@ export class EagerMapTreeMapNode<TSchema extends FlexMapNodeSchema>
 		return super.getBoxed(key) as FlexTreeTypedField<TSchema["info"]>;
 	}
 
-	public set(key: string, value: FlexibleFieldContent<TSchema["info"]> | undefined): void {
+	public set(key: string, value: FlexibleFieldContent | undefined): void {
 		// `MapTreeNode`s cannot be mutated
 		throw unsupportedUsageError("Setting a map entry");
 	}
@@ -336,13 +336,22 @@ class EagerMapTreeLeafNode<TSchema extends LeafNodeSchema>
 // #region Fields
 
 /**
+ * A readonly {@link FlexTreeField} which wraps an array of {@link MapTrees}.
+ * @remarks Reading data from the MapTreeField will read the corresponding data from the {@link MapTree}s.
+ * Create a `MapTreeField` by calling {@link getOrCreateField}.
+ */
+interface MapTreeField extends FlexTreeField {
+	readonly mapTrees: readonly MapTree[];
+}
+
+/**
  * A special singleton that is the implicit parent field of all un-parented {@link EagerMapTreeNode}s.
  * @remarks This exists because {@link EagerMapTreeNode.parentField} must return a field.
  * If a {@link EagerMapTreeNode} is created without a parent, its {@link EagerMapTreeNode.parentField} property will point to this object.
  * However, this field cannot be used in any practical way because it is empty, i.e. it does not actually contain the children that claim to be parented under it.
  * It has the "empty" schema and it will always contain zero children if queried.
  */
-export const rootMapTreeField: MapTreeField<FlexAllowedTypes> = {
+export const rootMapTreeField: MapTreeField = {
 	[flexTreeMarker]: FlexTreeEntityKind.Field as const,
 	length: 0,
 	key: EmptyKey,
@@ -357,39 +366,38 @@ export const rootMapTreeField: MapTreeField<FlexAllowedTypes> = {
 		return undefined;
 	},
 	schema: FlexFieldSchema.empty,
-	get context(): FlexTreeContext {
-		return fail("MapTreeField does not implement context");
-	},
+	context: undefined,
 	mapTrees: [],
 };
 
-class MapTreeField<T extends FlexAllowedTypes> implements FlexTreeField {
+class EagerMapTreeField<T extends FlexAllowedTypes> implements MapTreeField {
 	public [flexTreeMarker] = FlexTreeEntityKind.Field as const;
 
 	public constructor(
 		public readonly schema: FlexFieldSchema<FlexFieldKind, T>,
 		public readonly key: FieldKey,
-		public readonly parent: FlexTreeNode | undefined,
-		public readonly mapTrees: readonly MapTree[],
+		public readonly parent: EagerMapTreeNode<FlexTreeNodeSchema>,
 	) {
-		assert(
-			!fieldCache.has(mapTrees),
-			0x990 /* A field already exists for the given MapTrees */,
-		);
-		fieldCache.set(mapTrees, this);
+		const fieldKeyCache = getFieldKeyCache(parent);
+		assert(!fieldKeyCache.has(key), 0x990 /* A field already exists for the given MapTrees */);
+		fieldKeyCache.set(key, this);
 
 		// When this field is created (which only happens one time, because it is cached), all the children become parented for the first time.
 		// "Adopt" each child by updating its parent information to point to this field.
-		for (const [i, mapTree] of mapTrees.entries()) {
+		for (const [i, mapTree] of this.mapTrees.entries()) {
 			const mapTreeNodeChild = nodeCache.get(mapTree);
 			if (mapTreeNodeChild !== undefined) {
 				assert(
 					mapTreeNodeChild.parentField.parent === rootMapTreeField,
 					0x991 /* Node is already parented under a different field */,
 				);
-				mapTreeNodeChild.adopt(this, i);
+				mapTreeNodeChild.adoptBy(this, i);
 			}
 		}
+	}
+
+	public get mapTrees(): readonly ExclusiveMapTree[] {
+		return this.parent.mapTree.fields.get(this.key) ?? [];
 	}
 
 	public get length(): number {
@@ -428,27 +436,30 @@ class MapTreeField<T extends FlexAllowedTypes> implements FlexTreeField {
 		}
 	}
 
-	public get context(): FlexTreeContext {
-		return fail("MapTreeField does not implement context");
-	}
+	public context: undefined;
 }
 
-class MapTreeRequiredField<T extends FlexAllowedTypes>
-	extends MapTreeField<T>
+class EagerMapTreeRequiredField<T extends FlexAllowedTypes>
+	extends EagerMapTreeField<T>
 	implements FlexTreeRequiredField<T>
 {
+	public get editor(): ValueFieldEditBuilder<ExclusiveMapTree> {
+		throw unsupportedUsageError("Setting a required field");
+	}
+
 	public get content(): FlexTreeUnboxNodeUnion<T> {
 		return unboxedUnion(this.schema, this.mapTrees[0] ?? oob(), { parent: this, index: 0 });
 	}
-	public set content(_: FlexTreeUnboxNodeUnion<T>) {
-		throw unsupportedUsageError("Setting an optional field");
-	}
 }
 
-class MapTreeOptionalField<T extends FlexAllowedTypes>
-	extends MapTreeField<T>
+class EagerMapTreeOptionalField<T extends FlexAllowedTypes>
+	extends EagerMapTreeField<T>
 	implements FlexTreeOptionalField<T>
 {
+	public get editor(): OptionalFieldEditBuilder<ExclusiveMapTree> {
+		throw unsupportedUsageError("Setting an optional field");
+	}
+
 	public get content(): FlexTreeUnboxNodeUnion<T> | undefined {
 		return this.mapTrees.length > 0
 			? unboxedUnion(this.schema, this.mapTrees[0] ?? oob(), {
@@ -457,15 +468,16 @@ class MapTreeOptionalField<T extends FlexAllowedTypes>
 				})
 			: undefined;
 	}
-	public set content(_: FlexTreeUnboxNodeUnion<T> | undefined) {
-		throw unsupportedUsageError("Setting an optional field");
-	}
 }
 
-class MapTreeSequenceField<T extends FlexAllowedTypes>
-	extends MapTreeField<T>
+class EagerMapTreeSequenceField<T extends FlexAllowedTypes>
+	extends EagerMapTreeField<T>
 	implements FlexTreeSequenceField<T>
 {
+	public get editor(): SequenceFieldEditBuilder<ExclusiveMapTree[]> {
+		throw unsupportedUsageError("Editing an array");
+	}
+
 	public at(index: number): FlexTreeUnboxNodeUnion<T> | undefined {
 		const i = indexForAt(index, this.length);
 		if (i === undefined) {
@@ -486,12 +498,8 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 		}
 	}
 
-	public sequenceEditor(): SequenceFieldEditBuilder {
-		throw unsupportedUsageError("Editing a sequence");
-	}
-
 	public getFieldPath(): FieldUpPath {
-		throw unsupportedUsageError("Editing a sequence");
+		throw unsupportedUsageError("Editing an array");
 	}
 }
 
@@ -500,7 +508,16 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 // #region Caching and unboxing utilities
 
 const nodeCache = new WeakMap<MapTree, EagerMapTreeNode<FlexTreeNodeSchema>>();
-const fieldCache = new WeakMap<readonly MapTree[], MapTreeField<FlexAllowedTypes>>();
+/** Node Parent -\> Field Key -\> Field */
+const fieldCache = new WeakMap<
+	MapTreeNode,
+	Map<FieldKey, EagerMapTreeField<FlexAllowedTypes>>
+>();
+function getFieldKeyCache(
+	parent: MapTreeNode,
+): WeakMap<FieldKey, EagerMapTreeField<FlexAllowedTypes>> {
+	return getOrCreate(fieldCache, parent, () => new Map());
+}
 
 /**
  * If there exists a {@link EagerMapTreeNode} for the given {@link MapTree}, returns it, otherwise returns `undefined`.
@@ -518,7 +535,7 @@ export function tryGetMapTreeNode(mapTree: MapTree): MapTreeNode | undefined {
  */
 export function getOrCreateMapTreeNode(
 	nodeSchema: FlexTreeNodeSchema,
-	mapTree: MapTree,
+	mapTree: ExclusiveMapTree,
 ): MapTreeNode {
 	return getOrCreateNode(nodeSchema, mapTree);
 }
@@ -532,23 +549,23 @@ export function getOrCreateMapTreeNode(
  */
 export function getOrCreateNode<TSchema extends LeafNodeSchema>(
 	nodeSchema: TSchema,
-	mapTree: MapTree,
+	mapTree: ExclusiveMapTree,
 ): EagerMapTreeLeafNode<TSchema>;
 export function getOrCreateNode<TSchema extends FlexMapNodeSchema>(
 	nodeSchema: TSchema,
-	mapTree: MapTree,
+	mapTree: ExclusiveMapTree,
 ): EagerMapTreeMapNode<TSchema>;
 export function getOrCreateNode<TSchema extends FlexFieldNodeSchema>(
 	nodeSchema: TSchema,
-	mapTree: MapTree,
+	mapTree: ExclusiveMapTree,
 ): EagerMapTreeFieldNode<TSchema>;
 export function getOrCreateNode<TSchema extends FlexTreeNodeSchema>(
 	nodeSchema: TSchema,
-	mapTree: MapTree,
+	mapTree: ExclusiveMapTree,
 ): EagerMapTreeNode<TSchema>;
 export function getOrCreateNode<TSchema extends FlexTreeNodeSchema>(
 	nodeSchema: TSchema,
-	mapTree: MapTree,
+	mapTree: ExclusiveMapTree,
 ): EagerMapTreeNode<TSchema> {
 	const cached = tryGetMapTreeNode(mapTree);
 	if (cached !== undefined) {
@@ -559,7 +576,7 @@ export function getOrCreateNode<TSchema extends FlexTreeNodeSchema>(
 
 /** Helper for creating a `MapTreeNode` given the parent field (e.g. when "walking down") */
 function getOrCreateChild(
-	mapTree: MapTree,
+	mapTree: ExclusiveMapTree,
 	implicitAllowedTypes: FlexImplicitAllowedTypes,
 	parent: LocationInField | undefined,
 ): EagerMapTreeNode<FlexTreeNodeSchema> {
@@ -583,27 +600,27 @@ function getOrCreateChild(
 /** Always constructs a new node, therefore may not be called twice for the same `MapTree`. */
 function createNode<TSchema extends LeafNodeSchema>(
 	nodeSchema: TSchema,
-	mapTree: MapTree,
+	mapTree: ExclusiveMapTree,
 	parentField: LocationInField | undefined,
 ): EagerMapTreeLeafNode<TSchema>;
 function createNode<TSchema extends FlexMapNodeSchema>(
 	nodeSchema: TSchema,
-	mapTree: MapTree,
+	mapTree: ExclusiveMapTree,
 	parentField: LocationInField | undefined,
 ): EagerMapTreeMapNode<TSchema>;
 function createNode<TSchema extends FlexFieldNodeSchema>(
 	nodeSchema: TSchema,
-	mapTree: MapTree,
+	mapTree: ExclusiveMapTree,
 	parentField: LocationInField | undefined,
 ): EagerMapTreeFieldNode<TSchema>;
 function createNode<TSchema extends FlexTreeNodeSchema>(
 	nodeSchema: TSchema,
-	mapTree: MapTree,
+	mapTree: ExclusiveMapTree,
 	parentField: LocationInField | undefined,
 ): EagerMapTreeNode<TSchema>;
 function createNode<TSchema extends FlexTreeNodeSchema>(
 	nodeSchema: TSchema,
-	mapTree: MapTree,
+	mapTree: ExclusiveMapTree,
 	parentField: LocationInField | undefined,
 ): EagerMapTreeNode<TSchema> {
 	if (schemaIsLeaf(nodeSchema)) {
@@ -623,12 +640,11 @@ function createNode<TSchema extends FlexTreeNodeSchema>(
 
 /** Creates a field with the given attributes, or returns a cached field if there is one */
 function getOrCreateField(
-	parent: FlexTreeNode,
+	parent: EagerMapTreeNode<FlexTreeNodeSchema>,
 	key: FieldKey,
-	mapTrees: readonly MapTree[],
 	schema: FlexFieldSchema,
-): MapTreeField<FlexFieldSchema["allowedTypes"]> {
-	const cached = fieldCache.get(mapTrees);
+): EagerMapTreeField<FlexFieldSchema["allowedTypes"]> {
+	const cached = getFieldKeyCache(parent).get(key);
 	if (cached !== undefined) {
 		return cached;
 	}
@@ -637,24 +653,24 @@ function getOrCreateField(
 		schema.kind.identifier === FieldKinds.required.identifier ||
 		schema.kind.identifier === FieldKinds.identifier.identifier
 	) {
-		return new MapTreeRequiredField(schema, key, parent, mapTrees);
+		return new EagerMapTreeRequiredField(schema, key, parent);
 	}
 
 	if (schema.kind.identifier === FieldKinds.optional.identifier) {
-		return new MapTreeOptionalField(schema, key, parent, mapTrees);
+		return new EagerMapTreeOptionalField(schema, key, parent);
 	}
 
 	if (schema.kind.identifier === FieldKinds.sequence.identifier) {
-		return new MapTreeSequenceField(schema, key, parent, mapTrees);
+		return new EagerMapTreeSequenceField(schema, key, parent);
 	}
 
-	return new MapTreeField(schema, key, parent, mapTrees);
+	return new EagerMapTreeField(schema, key, parent);
 }
 
 /** Unboxes non-polymorphic leaf nodes to their values, if applicable */
 function unboxedUnion<TTypes extends FlexAllowedTypes>(
 	schema: FlexFieldSchema<FlexFieldKind, TTypes>,
-	mapTree: MapTree,
+	mapTree: ExclusiveMapTree,
 	parent: LocationInField,
 ): FlexTreeUnboxNodeUnion<TTypes> {
 	const type = schema.monomorphicChildType;
@@ -674,10 +690,10 @@ function unboxedUnion<TTypes extends FlexAllowedTypes>(
 
 /** Unboxes non-polymorphic required and optional fields holding leaf nodes to their values, if applicable */
 function unboxedField<TFieldSchema extends FlexFieldSchema>(
-	field: MapTreeField<FlexAllowedTypes>,
+	field: EagerMapTreeField<FlexAllowedTypes>,
 	key: FieldKey,
-	mapTree: MapTree,
-	parentNode: FlexTreeNode,
+	mapTree: ExclusiveMapTree,
+	parentNode: EagerMapTreeNode<FlexTreeNodeSchema>,
 ): FlexTreeUnboxField<TFieldSchema> {
 	const fieldSchema = field.schema;
 	const mapTrees =
@@ -700,12 +716,7 @@ function unboxedField<TFieldSchema extends FlexFieldSchema>(
 		) as FlexTreeUnboxField<TFieldSchema>;
 	}
 
-	return getOrCreateField(
-		parentNode,
-		key,
-		mapTrees,
-		fieldSchema,
-	) as FlexTreeUnboxField<TFieldSchema>;
+	return getOrCreateField(parentNode, key, fieldSchema) as FlexTreeUnboxField<TFieldSchema>;
 }
 
 // #endregion Caching and unboxing utilities

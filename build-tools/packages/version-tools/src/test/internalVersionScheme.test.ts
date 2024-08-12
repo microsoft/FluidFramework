@@ -10,6 +10,7 @@ import {
 	detectInternalVersionConstraintType,
 	fromInternalScheme,
 	getVersionRange,
+	isInternalTestVersion,
 	isInternalVersionRange,
 	isInternalVersionScheme,
 	toInternalScheme,
@@ -385,6 +386,62 @@ describe("internalScheme", () => {
 			assert.throws(() =>
 				detectInternalVersionConstraintType("workspace:~2.0.0-internal.1.0.23"),
 			);
+		});
+	});
+
+	describe("checking test version scheme", () => {
+		it("0.0.0-285010-test is a valid test version", () => {
+			const input = `0.0.0-285010-test`;
+			const result = isInternalTestVersion(input);
+			assert.isTrue(result);
+		});
+
+		it("0.0.0-test-285010 is not a valid test version", () => {
+			const input = `0.0.0-test-285010`;
+			const result = isInternalTestVersion(input);
+			assert.isFalse(result);
+		});
+
+		it("2.1.0-test-285010 is not a valid test version", () => {
+			const input = `2.1.0-test-285010`;
+			const result = isInternalTestVersion(input);
+			assert.isFalse(result);
+		});
+
+		it("2.1.0-285010-test is not a valid test version", () => {
+			const input = `2.1.0-285010-test`;
+			const result = isInternalTestVersion(input);
+			assert.isFalse(result);
+		});
+
+		it("2.1.0-285010 is a prerelease version but not a test version", () => {
+			const input = `2.1.0-285010`;
+			const result = isInternalTestVersion(input);
+			assert.isFalse(result);
+		});
+
+		it("2.1.0 is a release version but not a test version", () => {
+			const input = `2.1.0`;
+			const result = isInternalTestVersion(input);
+			assert.isFalse(result);
+		});
+
+		it("2.0.0-internal.1.0.0 is internal scheme but not a test version", () => {
+			const input = `2.0.0-internal.1.0.0`;
+			const result = isInternalTestVersion(input);
+			assert.isFalse(result);
+		});
+
+		it("2.0.0-rc.1.0.0 is internal scheme but not a test version", () => {
+			const input = `2.0.0-rc.1.0.0`;
+			const result = isInternalTestVersion(input);
+			assert.isFalse(result);
+		});
+
+		it("2.0.0-dev.1.1.0.123 is an internal dev version but not a test version", () => {
+			const input = `2.0.0-dev.1.1.0.123`;
+			const result = isInternalTestVersion(input);
+			assert.isFalse(result);
 		});
 	});
 });

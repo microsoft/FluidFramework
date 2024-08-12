@@ -24,12 +24,9 @@ ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
-# There are some packages/files outside the routerlicious folder that we need to build,
-# so we copy them to the /usr directory
+# There are some packages outside the routerlicious folder that we need to build, so we copy the package to the /usr directory
 WORKDIR /usr
 COPY --from=root packages/tools/changelog-generator-wrapper/package*.json packages/tools/changelog-generator-wrapper/
-# This is the scripts folder in the root of the repo; below we also copy the scripts folder in the server folder
-COPY --from=root scripts/*.* scripts/
 
 # Copy over and build the server
 WORKDIR /usr/src/server

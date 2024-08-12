@@ -25,39 +25,22 @@ import {
 } from "../feature-libraries/index.js";
 import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
 
-import { anchorProxy, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
-import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
-import type { TreeNode, Unhydrated } from "./types.js";
+import { anchorProxy, tryGetCachedTreeNode } from "./proxyBinding.js";
+import { tryGetSimpleNodeSchema, type TreeNode, type Unhydrated } from "./core/index.js";
 
 /**
- * Detects if the given 'candidate' is a TreeNode.
- *
- * @remarks
- * Supports both Hydrated and {@link Unhydrated} TreeNodes, both of which return true.
- *
- * Because the common usage is to check if a value being inserted/set is a TreeNode,
- * this function permits calling with primitives as well as objects.
- *
- * Primitives will always return false (as they are copies of data, not references to nodes).
- *
- * @param candidate - Value which may be a TreeNode
- * @returns true if the given 'candidate' is a hydrated TreeNode.
+ * Retrieve the associated {@link TreeNode} for the given field's content.
  */
-export function isTreeNode(candidate: unknown): candidate is TreeNode | Unhydrated<TreeNode> {
-	return tryGetFlexNode(candidate) !== undefined;
-}
-
-/**
- * Retrieve the associated proxy for the given field.
- * */
-export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
+export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
 	function tryToUnboxLeaves(
 		flexField: FlexTreeTypedField<
 			FlexFieldSchema<typeof FieldKinds.required | typeof FieldKinds.optional>
 		>,
 	): TreeNode | TreeValue | undefined {
 		const maybeContent = flexField.content;
-		return isFlexTreeNode(maybeContent) ? getOrCreateNodeProxy(maybeContent) : maybeContent;
+		return isFlexTreeNode(maybeContent)
+			? getOrCreateNodeFromFlexTreeNode(maybeContent)
+			: maybeContent;
 	}
 	switch (field.schema.kind) {
 		case FieldKinds.required: {
@@ -89,8 +72,8 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 	}
 }
 
-export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeValue {
-	const cachedProxy = tryGetProxy(flexNode);
+export function getOrCreateNodeFromFlexTreeNode(flexNode: FlexTreeNode): TreeNode | TreeValue {
+	const cachedProxy = tryGetCachedTreeNode(flexNode);
 	if (cachedProxy !== undefined) {
 		return cachedProxy;
 	}
@@ -185,7 +168,7 @@ function walkMapTree(
 ): void {
 	const mapTreeNode = tryGetMapTreeNode(mapTree);
 	if (mapTreeNode !== undefined) {
-		const treeNode = tryGetProxy(mapTreeNode);
+		const treeNode = tryGetCachedTreeNode(mapTreeNode);
 		if (treeNode !== undefined) {
 			onVisitTreeNode(path, treeNode);
 		}

@@ -191,6 +191,23 @@ export interface IMergeTreeOptions {
 	 * Default value: false
 	 */
 	mergeTreeEnableObliterate?: boolean;
+
+	/**
+	 * Enables support for reconnecting when obliterate operations are present
+	 *
+	 * Obliterate is currently experimental and may not work in all scenarios.
+	 *
+	 * @defaultValue `false`
+	 */
+	mergeTreeEnableObliterateReconnect?: boolean;
+}
+export function errorIfOptionNotTrue(
+	options: IMergeTreeOptions | undefined,
+	option: keyof IMergeTreeOptions,
+): void {
+	if (options?.[option] !== true) {
+		throw new Error(`${option} is not enabled.`);
+	}
 }
 
 /**
@@ -1931,9 +1948,7 @@ export class MergeTree {
 		overwrite: boolean = false,
 		opArgs: IMergeTreeDeltaOpArgs,
 	): void {
-		if (!this.options?.mergeTreeEnableObliterate) {
-			throw new UsageError("Attempted to send obliterate op without enabling feature flag.");
-		}
+		errorIfOptionNotTrue(this.options, "mergeTreeEnableObliterate");
 
 		const { startPos, startSide, endPos, endSide } = endpointPosAndSide(start, end);
 
@@ -1944,7 +1959,7 @@ export class MergeTree {
 				endSide !== undefined &&
 				startPos !== "end" &&
 				endPos !== "start",
-			"start and end cannot be undefined because they were not passed in as undefined",
+			0x9e2 /* start and end cannot be undefined because they were not passed in as undefined */,
 		);
 
 		this.ensureIntervalBoundary(startPos, refSeq, clientId);
@@ -2709,7 +2724,7 @@ export class MergeTree {
 				: endPos;
 		assert(
 			startPos !== "end" && endPos !== "start",
-			"start cannot be 'end' and end cannot be 'start'",
+			0x9e3 /* start cannot be 'end' and end cannot be 'start' */,
 		);
 		depthFirstNodeWalk(
 			this.root,

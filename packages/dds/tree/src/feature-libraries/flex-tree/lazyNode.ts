@@ -332,13 +332,13 @@ export class LazyMap<TSchema extends FlexMapNodeSchema>
 		return super.getBoxed(brand(key)) as FlexTreeTypedField<TSchema["info"]>;
 	}
 
-	public set(key: string, content: FlexibleFieldContent<TSchema["info"]> | undefined): void {
+	public set(key: string, content: FlexibleFieldContent | undefined): void {
 		const field = this.getBoxed(key);
 		const fieldSchema = this.schema.info;
 
 		if (fieldSchema.kind === FieldKinds.optional) {
 			const optionalField = field as FlexTreeOptionalField<FlexAllowedTypes>;
-			optionalField.content = content;
+			optionalField.editor.set(content?.[0], optionalField.length === 0);
 		} else {
 			assert(fieldSchema.kind === FieldKinds.sequence, 0x807 /* Unexpected map field kind */);
 
@@ -465,33 +465,30 @@ function buildStructClass<TSchema extends FlexObjectNodeSchema>(
 
 	for (const [key, fieldSchema] of schema.objectNodeFields) {
 		const escapedKey = propertyNameFromFieldKey(key);
-		let setter: ((newContent: FlexibleNodeContent<FlexAllowedTypes>) => void) | undefined;
+		let setter: ((newContent: FlexibleNodeContent) => void) | undefined;
 		switch (fieldSchema.kind) {
 			case FieldKinds.optional: {
 				setter = function (
 					this: CustomStruct,
-					newContent: FlexibleNodeContent<FlexAllowedTypes> | undefined,
+					newContent: FlexibleNodeContent | undefined,
 				): void {
 					const field = getBoxedField(
 						this,
 						key,
 						fieldSchema,
 					) as FlexTreeOptionalField<FlexAllowedTypes>;
-					field.content = newContent;
+					field.editor.set(newContent, field.length === 0);
 				};
 				break;
 			}
 			case FieldKinds.required: {
-				setter = function (
-					this: CustomStruct,
-					newContent: FlexibleNodeContent<FlexAllowedTypes>,
-				): void {
+				setter = function (this: CustomStruct, newContent: FlexibleNodeContent): void {
 					const field = getBoxedField(
 						this,
 						key,
 						fieldSchema,
 					) as FlexTreeRequiredField<FlexAllowedTypes>;
-					field.content = newContent;
+					field.editor.set(newContent);
 				};
 				break;
 			}
