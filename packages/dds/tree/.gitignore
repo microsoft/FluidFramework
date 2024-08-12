@@ -57,3 +57,6 @@ temp_modules/
 
 # Output folder for memory profiling tests
 .memoryTestsOutput
+
+# Output folder for custom benchmark tests
+.customBenchmarksOutput
