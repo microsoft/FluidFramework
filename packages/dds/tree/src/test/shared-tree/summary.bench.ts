@@ -6,7 +6,12 @@
 import { strict as assert } from "assert";
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
-import { BenchmarkType, benchmarkCustom, benchmark } from "@fluid-tools/benchmark";
+import {
+	BenchmarkType,
+	benchmarkCustom,
+	benchmark,
+	type IMeasurementReporter,
+} from "@fluid-tools/benchmark";
 import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import type { ITree } from "@fluidframework/driver-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
@@ -49,6 +54,20 @@ describe("Summary benchmarks", () => {
 			const summarySize = IsoBuffer.from(summaryString).byteLength;
 			assert(summarySize < 700);
 		});
+
+		function processSummary(
+			summaryTree: ISummaryTree,
+			reporter: IMeasurementReporter,
+			minLength: number,
+			maxLength: number,
+		) {
+			const summaryString = JSON.stringify(summaryTree);
+			const summarySize = IsoBuffer.from(summaryString).byteLength;
+			reporter.addMeasurement("summarySize", summarySize);
+			assert(summarySize > minLength);
+			assert(summarySize < maxLength);
+		}
+
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountWide) {
 			benchmarkCustom({
 				only: false,
@@ -56,11 +75,7 @@ describe("Summary benchmarks", () => {
 				title: `a wide tree with ${numberOfNodes} nodes.`,
 				run: async (reporter) => {
 					const summaryTree = getSummaryTree(makeWideContentWithEndValue(numberOfNodes, 1));
-					const summaryString = JSON.stringify(summaryTree);
-					const summarySize = IsoBuffer.from(summaryString).byteLength;
-					reporter.addMeasurement("summarySize", summarySize);
-					assert(summarySize > minLength);
-					assert(summarySize < maxLength);
+					processSummary(summaryTree, reporter, minLength, maxLength);
 				},
 			});
 		}
@@ -71,11 +86,7 @@ describe("Summary benchmarks", () => {
 				title: `a deep tree with ${numberOfNodes} nodes.`,
 				run: async (reporter) => {
 					const summaryTree = getSummaryTree(makeDeepContent(numberOfNodes));
-					const summaryString = JSON.stringify(summaryTree);
-					const summarySize = IsoBuffer.from(summaryString).byteLength;
-					reporter.addMeasurement("summarySize", summarySize);
-					assert(summarySize > minLength);
-					assert(summarySize < maxLength);
+					processSummary(summaryTree, reporter, minLength, maxLength);
 				},
 			});
 		}
