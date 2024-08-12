@@ -43,7 +43,6 @@ import {
 } from "../../simple-tree/schemaTypes.js";
 import {
 	addDefaultsToMapTree,
-	cursorFromNodeData,
 	getPossibleTypes,
 	mapTreeFromNodeData,
 	// eslint-disable-next-line import/no-internal-modules
@@ -54,7 +53,7 @@ import {
 	MockNodeKeyManager,
 	type NodeKeyManager,
 } from "../../feature-libraries/index.js";
-import { validateUsageError } from "../utils.js";
+import { cursorFromInsertableTreeField, validateUsageError } from "../utils.js";
 
 /**
  * Helper for building {@link TreeFieldStoredSchema}.
@@ -1421,28 +1420,16 @@ describe("toMapTree", () => {
 			new Map(),
 		);
 
-		describe("cursorFromNodeData", () => {
+		describe("cursorFromInsertableTreeField", () => {
 			it("Success", () => {
-				const nodeData = "Hello world";
-				cursorFromNodeData(
-					nodeData,
-					[schemaFactory.string],
-					nodeKeyManager,
-					schemaValidationPolicyForSuccess,
-				);
+				cursorFromInsertableTreeField(schemaFactory.string, "Hello world", nodeKeyManager);
 			});
 
 			it("Failure", () => {
-				const content = "Hello world";
 				assert.throws(
 					() =>
-						cursorFromNodeData(
-							content,
-							[schemaFactory.string],
-							nodeKeyManager,
-							schemaValidationPolicyForFailure,
-						),
-					outOfSchemaExpectedError,
+						cursorFromInsertableTreeField(schemaFactory.number, "Hello world", nodeKeyManager),
+					validateUsageError(/incompatible/),
 				);
 			});
 		});
