@@ -49,12 +49,7 @@ import {
 } from "../typed-schema/index.js";
 import { type FlexImplicitAllowedTypes, normalizeAllowedTypes } from "../schemaBuilderBase.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
-import {
-	FieldKinds,
-	type OptionalFieldEditBuilder,
-	type SequenceFieldEditBuilder,
-	type ValueFieldEditBuilder,
-} from "../default-schema/index.js";
+import { FieldKinds, type SequenceFieldEditBuilder } from "../default-schema/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 // #region Nodes
@@ -124,14 +119,28 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 
 	/**
 	 * Set this node's parentage (see {@link FlexTreeNode.parentField}).
-	 * @remarks A node may only be adopted to a new parent one time, and only if it was not constructed with a parent.
+	 * @remarks The node may be given a parent if it has none, or may have its parent removed (by passing `undefined`).
+	 * However, a node with a parent may not be directly re-assigned a different parent.
+	 * That likely indicates either an attempted multi-parenting or an attempt to "move" the node, neither of which are supported.
+	 * Removing a node's parent twice in a row is also not supported, as it likely indicates a bug.
 	 */
-	public adoptBy(parent: MapTreeField, index: number): void {
-		assert(
-			this.location === unparentedLocation,
-			0x98c /* Node may not be adopted if it already has a parent */,
-		);
-		this.location = { parent, index };
+	public adoptBy(parent: undefined): void;
+	public adoptBy(parent: MapTreeField, index: number): void;
+	public adoptBy(parent: MapTreeField | undefined, index?: number): void {
+		if (parent !== undefined) {
+			assert(
+				this.location === unparentedLocation,
+				0x98c /* Node may not be adopted if it already has a parent */,
+			);
+			assert(index !== undefined, "Expected index");
+			this.location = { parent, index };
+		} else {
+			assert(
+				this.location !== unparentedLocation,
+				"Node may not be un-adopted if it does not have a parent",
+			);
+			this.location = unparentedLocation;
+		}
 	}
 
 	/**
@@ -407,18 +416,17 @@ class EagerMapTreeField<T extends FlexAllowedTypes> implements MapTreeField {
 	}
 
 	public context: undefined;
-}
 
-class EagerMapTreeRequiredField<T extends FlexAllowedTypes>
-	extends EagerMapTreeField<T>
-	implements FlexTreeRequiredField<T>
-{
-	public get editor(): ValueFieldEditBuilder<ExclusiveMapTree> {
-		throw unsupportedUsageError("Setting a required field");
-	}
-
-	public get content(): FlexTreeUnboxNodeUnion<T> {
-		return unboxedUnion(this.schema, this.mapTrees[0] ?? oob(), { parent: this, index: 0 });
+	// All edits to the field (i.e. mutations of the field's MapTrees) should be directed through this function.
+	// This function ensures that the parent MapTree has no empty fields (which is an invariant of `MapTree`) after the mutation.
+	protected edit(mutation: (mapTrees: ExclusiveMapTree[]) => void): void {
+		const mapTrees = this.parent.mapTree.fields.get(this.key) ?? [];
+		mutation(mapTrees);
+		if (mapTrees.length > 0) {
+			this.parent.mapTree.fields.set(this.key, mapTrees);
+		} else {
+			this.parent.mapTree.fields.delete(this.key);
+		}
 	}
 }
 
@@ -426,17 +434,47 @@ class EagerMapTreeOptionalField<T extends FlexAllowedTypes>
 	extends EagerMapTreeField<T>
 	implements FlexTreeOptionalField<T>
 {
-	public get editor(): OptionalFieldEditBuilder<ExclusiveMapTree> {
-		throw unsupportedUsageError("Setting an optional field");
-	}
+	public editor = {
+		set: (newContent: ExclusiveMapTree | undefined) => {
+			// If the new content is a MapTreeNode, it needs to have its parent pointer updated
+			if (newContent !== undefined) {
+				nodeCache.get(newContent)?.adoptBy(this, 0);
+			}
+			// If the old content is a MapTreeNode, it needs to have its parent pointer unset
+			const oldContent = this.mapTrees[0];
+			if (oldContent !== undefined) {
+				nodeCache.get(oldContent)?.adoptBy(undefined);
+			}
+
+			this.edit((mapTrees) => {
+				if (newContent !== undefined) {
+					mapTrees[0] = newContent;
+				} else {
+					mapTrees.length = 0;
+				}
+			});
+		},
+	};
 
 	public get content(): FlexTreeUnboxNodeUnion<T> | undefined {
-		return this.mapTrees.length > 0
-			? unboxedUnion(this.schema, this.mapTrees[0] ?? oob(), {
-					parent: this,
-					index: 0,
-				})
-			: undefined;
+		const value = this.mapTrees[0];
+		if (value !== undefined) {
+			return unboxedUnion(this.schema, value, {
+				parent: this,
+				index: 0,
+			});
+		}
+
+		return undefined;
+	}
+}
+
+class EagerMapTreeRequiredField<T extends FlexAllowedTypes>
+	extends EagerMapTreeOptionalField<T>
+	implements FlexTreeRequiredField<T>
+{
+	public override get content(): FlexTreeUnboxNodeUnion<T> {
+		return super.content ?? fail("Expected EagerMapTree required field to have a value");
 	}
 }
 
