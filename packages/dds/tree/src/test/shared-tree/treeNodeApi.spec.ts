@@ -220,7 +220,7 @@ describe("treeApi", () => {
 			});
 
 			// TODO: Either enable when afterBatch is implemented, or delete if no longer relevant
-			it("emits change events", () => {
+			it.skip("emits change events", () => {
 				const view = getTestObjectView();
 				let eventCount = 0;
 				view.events.on("rootChanged", () => (eventCount += 1));
@@ -232,7 +232,7 @@ describe("treeApi", () => {
 				assert.equal(eventCount, 2);
 			});
 
-			it("emits change events on rollback", () => {
+			it.skip("emits change events on rollback", () => {
 				const view = getTestObjectView();
 				let eventCount = 0;
 				view.events.on("rootChanged", () => (eventCount += 1));
