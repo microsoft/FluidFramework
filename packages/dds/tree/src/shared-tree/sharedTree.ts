@@ -31,11 +31,9 @@ import {
 } from "../events/index.js";
 import {
 	DetachedFieldIndexSummarizer,
-	type FlexFieldSchema,
 	ForestSummarizer,
 	SchemaSummarizer,
 	TreeCompressionStrategy,
-	ViewSchema,
 	buildChunkedForest,
 	buildForest,
 	createNodeKeyManager,
@@ -56,14 +54,12 @@ import type {
 	TreeViewConfiguration,
 } from "../simple-tree/index.js";
 
-import { type InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
-import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type CheckoutEvents, type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
-import type { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
 import { breakingClass, throwIfBroken } from "../util/index.js";
 
 /**
@@ -82,20 +78,17 @@ export interface SharedTreeContentSnapshot {
 	 */
 	readonly schema: TreeStoredSchema;
 	/**
-	 * All {@link TreeStatus#InDocument} content.
+	 * All {@link TreeStatus.InDocument} content.
 	 */
 	readonly tree: JsonableTree[];
 	/**
-	 * All {@link TreeStatus#Removed} content.
+	 * All {@link TreeStatus.Removed} content.
 	 */
 	readonly removed: [string | number | undefined, number, JsonableTree][];
 }
 
 /**
- * Collaboratively editable tree distributed data-structure,
- * powered by {@link @fluidframework/shared-object-base#ISharedObject}.
- *
- * See [the README](../../README.md) for details.
+ * {@link ITree} extended with some non-public APIs.
  * @internal
  */
 export interface ISharedTree extends ISharedObject, ITree {
@@ -107,17 +100,6 @@ export interface ISharedTree extends ISharedObject, ITree {
 	 * This does not include everything that is included in a tree summary, since information about how to merge future edits is omitted.
 	 */
 	contentSnapshot(): SharedTreeContentSnapshot;
-
-	/**
-	 * Like {@link ITree.viewWith}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
-	 *
-	 * Returned view is disposed when the stored schema becomes incompatible with the view schema.
-	 * Undefined is returned if the stored data could not be made compatible with the view schema.
-	 */
-	schematizeFlexTree<TRoot extends FlexFieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-		onDispose: () => void,
-	): FlexTreeView<TRoot> | undefined;
 }
 
 /**
@@ -149,6 +131,10 @@ const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersio
 	[
 		3,
 		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 3, message: 3, fieldBatch: 1 },
+	],
+	[
+		4,
+		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 4, message: 4, fieldBatch: 1 },
 	],
 ]);
 
@@ -305,23 +291,6 @@ export class SharedTree
 		} finally {
 			cursor.free();
 		}
-	}
-
-	public schematizeFlexTree<TRoot extends FlexFieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-		onDispose: () => void,
-	): CheckoutFlexTreeView<TRoot> | undefined {
-		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, config.schema);
-		if (!ensureSchema(viewSchema, config.allowedSchemaModifications, this.checkout, config)) {
-			return undefined;
-		}
-
-		return requireSchema(
-			this.checkout,
-			viewSchema,
-			onDispose,
-			createNodeKeyManager(this.runtime.idCompressor),
-		);
 	}
 
 	public viewWith<TRoot extends ImplicitFieldSchema>(

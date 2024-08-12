@@ -62,6 +62,7 @@ import {
 	isImpactfulCellRename,
 	isNewAttach,
 	isNoopMark,
+	isRename,
 	markEmptiesCells,
 	markFillsCells,
 	markHasCellEffect,
@@ -179,8 +180,36 @@ function composeMarksIgnoreChild(
 	newMark: Mark,
 	moveEffects: MoveEffectTable,
 ): Mark {
+	if (isNoopMark(baseMark)) {
+		return newMark;
+	} else if (isNoopMark(newMark)) {
+		return baseMark;
+	}
+
+	if (isRename(baseMark) && isRename(newMark)) {
+		return { ...baseMark, idOverride: newMark.idOverride };
+	} else if (isRename(baseMark)) {
+		assert(
+			isAttach(newMark) || isAttachAndDetachEffect(newMark),
+			0x9f1 /* Unexpected mark type */,
+		);
+		return { ...newMark, cellId: baseMark.cellId };
+	} else if (isRename(newMark)) {
+		assert(
+			isDetach(baseMark) || isAttachAndDetachEffect(baseMark),
+			0x9f2 /* Unexpected mark type */,
+		);
+		return isDetach(baseMark)
+			? { ...baseMark, idOverride: newMark.idOverride }
+			: { ...baseMark, detach: { ...baseMark.detach, idOverride: newMark.idOverride } };
+	}
+
 	if (isImpactfulCellRename(newMark)) {
 		const newAttachAndDetach = asAttachAndDetach(newMark);
+		assert(
+			newAttachAndDetach.cellId !== undefined,
+			0x9f3 /* Impactful cell rename must target empty cell */,
+		);
 		const newDetachRevision = newAttachAndDetach.detach.revision;
 		if (markEmptiesCells(baseMark)) {
 			// baseMark is a detach which cancels with the attach portion of the AttachAndDetach,
@@ -241,6 +270,10 @@ function composeMarksIgnoreChild(
 		}
 
 		if (isImpactfulCellRename(baseMark)) {
+			assert(
+				baseMark.cellId !== undefined,
+				0x9f4 /* Impactful cell rename must target empty cell */,
+			);
 			const baseAttachAndDetach = asAttachAndDetach(baseMark);
 			const newOutputId = getOutputCellId(newAttachAndDetach);
 
@@ -256,16 +289,15 @@ function composeMarksIgnoreChild(
 				finalDetach.revision = detachRevision;
 			}
 
-			return normalizeCellRename({
-				type: "AttachAndDetach",
-				cellId: baseMark.cellId,
-				count: baseMark.count,
-				attach: originalAttach,
-				detach: finalDetach,
-			});
+			return normalizeCellRename(baseMark.cellId, baseMark.count, originalAttach, finalDetach);
 		}
 
-		return normalizeCellRename(newAttachAndDetach);
+		return normalizeCellRename(
+			newAttachAndDetach.cellId,
+			newAttachAndDetach.count,
+			newAttachAndDetach.attach,
+			newAttachAndDetach.detach,
+		);
 	}
 	if (isImpactfulCellRename(baseMark)) {
 		const baseAttachAndDetach = asAttachAndDetach(baseMark);
@@ -324,11 +356,6 @@ function composeMarksIgnoreChild(
 	}
 
 	if (!markHasCellEffect(baseMark) && !markHasCellEffect(newMark)) {
-		if (isNoopMark(baseMark)) {
-			return newMark;
-		} else if (isNoopMark(newMark)) {
-			return baseMark;
-		}
 		return createNoopMark(newMark.count, undefined, getInputCellId(baseMark));
 	} else if (!markHasCellEffect(baseMark)) {
 		return newMark;
@@ -407,13 +434,7 @@ function composeMarksIgnoreChild(
 			// The output and input cell IDs are the same, so this mark has no effect.
 			return { count: baseMark.count, cellId: baseMark.cellId };
 		}
-		return normalizeCellRename({
-			type: "AttachAndDetach",
-			cellId: baseMark.cellId,
-			count: baseMark.count,
-			attach,
-			detach,
-		});
+		return normalizeCellRename(baseMark.cellId, baseMark.count, attach, detach);
 	} else {
 		const length = baseMark.count;
 		return createNoopMark(length, undefined);

@@ -1,5 +1,5 @@
 ---
-title: Signals and SignalManager
+title: Signals and Signaler
 menuPosition: 6
 aliases:
   - "/docs/advanced/signals/"
@@ -20,40 +20,40 @@ Signals are the most appropriate data channel in many user presence scenarios, w
 
 ## How can I use signals in Fluid?
 
-The [SignalManager](https://github.com/microsoft/FluidFramework/tree/lts/experimental/framework/data-objects/src/signalManager) DataObject can be used to send communications via signals in a Fluid application. `SignalManager` allows clients to send signals to other connected clients and add/remove listeners for specified signal types.
+The [Signaler](https://github.com/microsoft/FluidFramework/tree/main/experimental/framework/data-objects/src/signaler) DataObject can be used to send communications via signals in a Fluid application. `Signaler` allows clients to send signals to other connected clients and add/remove listeners for specified signal types.
 
-{{< callout important >}}
+{{< callout note >}}
 
-The `SignalManager` will be renamed to `Signaler` in an upcoming release.
+The `Signaler` was named `SignalManager` in 1.x.
 
 {{< /callout >}}
 
 
 ### Creation
 
-Just like with DDSes, you can include `SignalManager` as a shared object you would like to load in your [FluidContainer][] schema.
+Just like with DDSes, you can include `Signaler` as a shared object you would like to load in your [FluidContainer][] schema.
 
-Here is a look at how you would go about loading `SignalManager` as part of the initial objects of the container:
+Here is a look at how you would go about loading `Signaler` as part of the initial objects of the container:
 
 ```typescript
 const containerSchema: ContainerSchema = {
     initialObjects: {
-        signalManager: SignalManager,
+        signaler: Signaler,
     },
 };
 
 const { container, services } = await client.createContainer(containerSchema);
 
-const signalManager = container.initialObjects.signalManager as SignalManager;
+const signaler = container.initialObjects.signaler; // type is ISignaler
 ```
 
-`signalManager` can then be directly used in your Fluid application!
+`signaler` can then be directly used in your Fluid application!
 
 For more information on using `ContainerSchema` to create objects please see [Data modeling](https://fluidframework.com/docs/build/data-modeling/).
 
 ### API
 
-`SignalManager` provides a few simple methods to send signals and add/remove listeners to specific signals as well:
+`ISignaler` provides a few simple methods to send signals and add/remove listeners to specific signals as well:
 
 -   `submitSignal(signalName: string, payload?: Jsonable)` - Sends a signal with a payload to its connected listeners
 -   `onSignal(signalName: string, listener: SignalListener)` - Adds a listener for the specified signal. Similar behavior as EventEmitter's `on` method.
@@ -71,14 +71,14 @@ private static readonly focusRequestType = "focusRequest";
 
 ```typescript
 container.on("connected", () => {
-    this.signalManager.submitSignal(FocusTracker.focusRequestType);
+    this.signaler.submitSignal(FocusTracker.focusRequestType);
 });
 ```
 
 The connected clients are listening to this focus request signal, and they respond with their current focus state:
 
 ```typescript
-this.signalManager.onSignal(FocusTracker.focusRequestType, () => {
+this.signaler.onSignal(FocusTracker.focusRequestType, () => {
     this.sendFocusSignal(document.hasFocus());
 });
 ```
@@ -91,20 +91,20 @@ Rather than submitting multiple signals in response to an event, it is more cost
 
 ```typescript
 container.on("connected", () => {
-    this.signalManager.submitSignal("colorRequest");
-    this.signalManager.submitSignal("focusRequest");
-    this.signalManager.submitSignal("currentlySelectedObjectRequest");
+    this.signaler.submitSignal("colorRequest");
+    this.signaler.submitSignal("focusRequest");
+    this.signaler.submitSignal("currentlySelectedObjectRequest");
 });
 ```
 
 ```typescript
-this.signalManager.onSignal("colorRequest", (clientId, local, payload) => {
+this.signaler.onSignal("colorRequest", (clientId, local, payload) => {
     /*...*/
 });
-this.signalManager.onSignal("focusRequest", (clientId, local, payload) => {
+this.signaler.onSignal("focusRequest", (clientId, local, payload) => {
     /*...*/
 });
-this.signalManager.onSignal("currentlySelectedObject", (clientId, local, payload) => {
+this.signaler.onSignal("currentlySelectedObject", (clientId, local, payload) => {
     /*...*/
 });
 ```
@@ -114,12 +114,12 @@ _N_ signals total, we can group these requests into a single request that captur
 
 ```typescript
 container.on("connected", () => {
-    this.signalManager.submitSignal("connectRequest");
+    this.signaler.submitSignal("connectRequest");
 });
 ```
 
 ```typescript
-this.signalManager.onSignal("connectRequest", (clientId, local, payload) => {
+this.signaler.onSignal("connectRequest", (clientId, local, payload) => {
     /*...*/
 });
 ```

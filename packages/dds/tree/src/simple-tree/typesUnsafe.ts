@@ -14,13 +14,16 @@ import type {
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	NodeFromSchema,
-	NodeKind,
 	TreeNodeFromImplicitAllowedTypes,
+} from "./schemaTypes.js";
+import type {
+	NodeKind,
 	TreeNodeSchema,
 	WithType,
-} from "./schemaTypes.js";
+	TreeNode,
+	Unhydrated,
+} from "./core/index.js";
 import type { TreeArrayNodeBase, TreeArrayNode } from "./arrayNode.js";
-import type { TreeNode, Unhydrated } from "./types.js";
 
 /*
  * TODO:
@@ -147,7 +150,7 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
  * @sealed @public
  */
 export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
-	extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypesUnsafe<T>>,
+	extends ReadonlyMapInlined<string, T>,
 		TreeNode {
 	/**
 	 * {@inheritdoc TreeMapNode.set}
@@ -161,6 +164,49 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
 	 * {@inheritdoc TreeMapNode.delete}
 	 */
 	delete(key: string): void;
+}
+
+/**
+ * Copy of TypeScript's ReadonlyMap, but with `TreeNodeFromImplicitAllowedTypesUnsafe<T>` inlined into it.
+ * Using this instead of ReadonlyMap in TreeMapNodeUnsafe is necessary to make recursive map schema not generate compile errors in the d.ts files when exported.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @privateRemarks
+ * This is the same as `ReadonlyMap<K, TreeNodeFromImplicitAllowedTypesUnsafe<T>>` (Checked in test),
+ * except that it avoids the above mentioned compile error.
+ * Authored by manually inlining ReadonlyMap from from the TypeScript lib which can be found by navigating to the definition of `ReadonlyMap`.
+ * @system @sealed @public
+ */
+export interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypes>> {
+	/** Returns an iterable of entries in the map. */
+	[Symbol.iterator](): IterableIterator<[K, TreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
+
+	/**
+	 * Returns an iterable of key, value pairs for every entry in the map.
+	 */
+	entries(): IterableIterator<[K, TreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
+
+	/**
+	 * Returns an iterable of keys in the map
+	 */
+	keys(): IterableIterator<K>;
+
+	/**
+	 * Returns an iterable of values in the map
+	 */
+	values(): IterableIterator<TreeNodeFromImplicitAllowedTypesUnsafe<T>>;
+
+	forEach(
+		callbackfn: (
+			value: TreeNodeFromImplicitAllowedTypesUnsafe<T>,
+			key: K,
+			map: ReadonlyMap<K, TreeNodeFromImplicitAllowedTypesUnsafe<T>>,
+		) => void,
+		thisArg?: any,
+	): void;
+	get(key: K): TreeNodeFromImplicitAllowedTypesUnsafe<T> | undefined;
+	has(key: K): boolean;
+	readonly size: number;
 }
 
 /**

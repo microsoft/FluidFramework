@@ -10,7 +10,7 @@ import {
 	FlexFieldSchema,
 	SchemaBuilderBase,
 } from "../../../feature-libraries/index.js";
-import { EmptyKey, type FieldKey, type MapTree } from "../../../core/index.js";
+import { EmptyKey, type ExclusiveMapTree, type FieldKey } from "../../../core/index.js";
 import { leaf as leafDomain } from "../../../domains/index.js";
 import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -38,28 +38,28 @@ describe("MapTreeNodes", () => {
 
 	// #region The `MapTree`s used to construct the `MapTreeNode`s
 	const childValue = "childValue";
-	const mapChildMapTree: MapTree = {
+	const mapChildMapTree: ExclusiveMapTree = {
 		type: leafDomain.string.name,
 		value: childValue,
 		fields: new Map(),
 	};
 	const mapKey = "key" as FieldKey;
-	const mapMapTree: MapTree = {
+	const mapMapTree: ExclusiveMapTree = {
 		type: brand("map"),
 		fields: new Map([[mapKey, [mapChildMapTree]]]),
 	};
-	const fieldNodeChildMapTree: MapTree = {
+	const fieldNodeChildMapTree: ExclusiveMapTree = {
 		type: leafDomain.string.name,
 		value: childValue,
 		fields: new Map(),
 	};
-	const fieldNodeMapTree: MapTree = {
+	const fieldNodeMapTree: ExclusiveMapTree = {
 		type: brand("array"),
 		fields: new Map([[EmptyKey, [fieldNodeChildMapTree]]]),
 	};
 	const objectMapKey = "map" as FieldKey;
 	const objectFieldNodeKey = "fieldNode" as FieldKey;
-	const objectMapTree: MapTree = {
+	const objectMapTree: ExclusiveMapTree = {
 		type: brand("object"),
 		fields: new Map([
 			[objectMapKey, [mapMapTree]],
@@ -156,7 +156,7 @@ describe("MapTreeNodes", () => {
 			}),
 		);
 
-		const duplicateChild: MapTree = {
+		const duplicateChild: ExclusiveMapTree = {
 			type: leafDomain.string.name,
 			value: childValue,
 			fields: new Map(),
@@ -193,9 +193,9 @@ describe("MapTreeNodes", () => {
 
 	describe("cannot", () => {
 		it("get their context", () => {
-			assert.throws(() => map.context);
-			assert.throws(() => fieldNode.context);
-			assert.throws(() => object.context);
+			assert.equal(map.context, undefined);
+			assert.equal(fieldNode.context, undefined);
+			assert.equal(object.context, undefined);
 		});
 
 		it("get their anchor node", () => {
@@ -206,7 +206,7 @@ describe("MapTreeNodes", () => {
 
 		it("be mutated", () => {
 			assert.throws(() => map.delete(mapKey));
-			assert.throws(() => fieldNode.content.sequenceEditor());
+			assert.throws(() => fieldNode.content.editor);
 		});
 	});
 });

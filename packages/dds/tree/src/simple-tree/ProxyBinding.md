@@ -24,6 +24,8 @@ This feature is supported by doing some bookkeeping to ensure that the proxy obj
 flex tree nodes and anchor nodes in the tree get associated and disassociated at the right times.
 There are three states that a node proxy can be in: "raw", "marinated" and "cooked".
 
+Note from the public API perspective, `Unhydrated` nodes are "raw", and hydrated nodes are either "marinated" or "cooked".
+
 ### Raw Proxies
 
 A newly created proxy, a.k.a. a **raw** proxy. A raw proxy is produced by invoking the schema-provided constructor for a node:

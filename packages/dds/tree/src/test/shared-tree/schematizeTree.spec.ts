@@ -15,13 +15,12 @@ import {
 	TreeStoredSchemaRepository,
 	type AnchorSetRootEvents,
 } from "../../core/index.js";
-import { SchemaBuilder, leaf } from "../../domains/index.js";
+import { SchemaBuilder, leaf, singleJsonCursor } from "../../domains/index.js";
 import {
 	Any,
 	FieldKinds,
 	FlexFieldSchema,
 	type FlexTreeSchema,
-	type NewFieldContent,
 	SchemaBuilderBase,
 	ViewSchema,
 	allowsRepoSuperset,
@@ -124,7 +123,7 @@ describe("schematizeTree", () => {
 						previousSchema = new TreeStoredSchemaRepository(storedSchema);
 					});
 
-					let currentData: NewFieldContent;
+					let currentData: typeof content.initialTree;
 					initializeContent(makeSchemaRepository(storedSchema), content.schema, () => {
 						// TODO: check currentData is compatible with current schema.
 						// TODO: check data in cursors is compatible with current schema.
@@ -158,8 +157,8 @@ describe("schematizeTree", () => {
 		}
 
 		testInitialize("optional-empty", { schema, initialTree: undefined });
-		testInitialize("optional-full", { schema, initialTree: 5 });
-		testInitialize("value", { schema: schemaValueRoot, initialTree: 6 });
+		testInitialize("optional-full", { schema, initialTree: singleJsonCursor(5) });
+		testInitialize("value", { schema: schemaValueRoot, initialTree: singleJsonCursor(6) });
 
 		// TODO: Test schema validation of initial tree (once we have a utility for it)
 	});
@@ -276,7 +275,7 @@ describe("schematizeTree", () => {
 			const emptyCheckout = checkoutWithContent(emptyContent);
 			const content: TreeContent<typeof schemaGeneralized.rootFieldSchema> = {
 				schema: schemaGeneralized,
-				initialTree: 5,
+				initialTree: singleJsonCursor(5),
 			};
 			const initializedCheckout = checkoutWithContent(content);
 			// Schema upgraded, but content not initialized
@@ -358,7 +357,7 @@ describe("schematizeTree", () => {
 			const emptyCheckout = checkoutWithContent(emptyContent);
 			const content: TreeContent<typeof schemaValueRoot.rootFieldSchema> = {
 				schema: schemaValueRoot,
-				initialTree: 5,
+				initialTree: singleJsonCursor(5),
 			};
 			const initializedCheckout = checkoutWithContent(content);
 
@@ -413,12 +412,14 @@ describe("schematizeTree", () => {
 		it("update non-empty", () => {
 			const initialContent = {
 				schema,
-				initialTree: 5,
+				get initialTree() {
+					return singleJsonCursor(5);
+				},
 			};
 			const initialCheckout = checkoutWithContent(initialContent);
 			const content: TreeContent<typeof schemaGeneralized.rootFieldSchema> = {
 				schema: schemaGeneralized,
-				initialTree: "Should not be used",
+				initialTree: singleJsonCursor("Should not be used"),
 			};
 			const updatedCheckout = checkoutWithContent({
 				schema: schemaGeneralized,

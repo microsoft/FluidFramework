@@ -127,7 +127,8 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 			const attributor = createRuntimeAttributor();
 			const container1 = await provider.makeTestContainer(getTestConfig(attributor));
 			const sharedCell1 = await sharedCellFromContainer(container1);
-			const container2 = await provider.loadTestContainer(testContainerConfig);
+			const attributor2 = createRuntimeAttributor();
+			const container2 = await provider.loadTestContainer(getTestConfig(attributor2));
 			const sharedCell2 = await sharedCellFromContainer(container2);
 
 			assert(
@@ -146,10 +147,16 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 				user: container1.audience.getMember(container2.clientId)?.user,
 			});
 
+			assertAttributionMatches(sharedCell2, attributor2, {
+				user: container1.audience.getMember(container2.clientId)?.user,
+			});
 			sharedCell1.set(3);
 			await provider.ensureSynchronized();
 
 			assertAttributionMatches(sharedCell1, attributor, {
+				user: container2.audience.getMember(container1.clientId)?.user,
+			});
+			assertAttributionMatches(sharedCell2, attributor2, {
 				user: container2.audience.getMember(container1.clientId)?.user,
 			});
 		},

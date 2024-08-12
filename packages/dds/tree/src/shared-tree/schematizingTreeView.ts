@@ -30,7 +30,7 @@ import {
 	type TreeFieldFromImplicitField,
 	type TreeView,
 	type TreeViewEvents,
-	getProxyForField,
+	getTreeNodeForField,
 	toFlexSchema,
 	setField,
 	normalizeFieldSchema,
@@ -124,7 +124,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		this.runSchemaEdit(() => {
 			const mapTree = mapTreeFromNodeData(
 				content as InsertableContent,
-				this.rootFieldSchema.allowedTypes,
+				this.rootFieldSchema,
 				this.nodeKeyManager,
 				{
 					schema: this.checkout.storedSchema,
@@ -315,7 +315,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			);
 		}
 		const view = this.getView();
-		return getProxyForField(view.flexTree) as TreeFieldFromImplicitField<TRootSchema>;
+		return getTreeNodeForField(view.flexTree) as TreeFieldFromImplicitField<TRootSchema>;
 	}
 
 	public set root(newRoot: InsertableTreeFieldFromImplicitField<TRootSchema>) {

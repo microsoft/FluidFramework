@@ -374,7 +374,7 @@ extends:
                 imageName: $(baseContainerTag)
                 containerCommand: pnpm -rc exec mv `npm pack` /usr/src/pack
                 volumes:
-                  $(hostPathToPackArtifact)/scoped:/usr/src/pack
+                  $(hostPathToPackArtifact)/tarballs:/usr/src/pack
 
             # Generating package lists manually because using scripts/pack-packages.sh (like build-npm-package.yml does)
             # inside the Docker container is proving problematic.
@@ -388,10 +388,10 @@ extends:
                 targetType: 'inline'
                 workingDirectory: ${{ parameters.buildDirectory }}
                 script: |
-                  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed public > $STAGING_PATH/pack/packagePublishOrder-public.txt
-                  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-build > $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
-                  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-dev > $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
-                  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-test > $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
+                  flub list --no-private $RELEASE_GROUP --tarball --feed public > $STAGING_PATH/pack/packagePublishOrder-public.txt
+                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-build > $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
+                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-dev > $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
+                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-test > $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
 
           # At this point we want to publish the artifact with npm-packed packages, but as part of 1ES migration that's
           # now part of templateContext.outputs below.
@@ -406,7 +406,7 @@ extends:
                 imageName: $(baseContainerTag)
                 containerCommand: npm run lint
                 volumes:
-                  $(hostPathToPackArtifact)/scoped:/usr/src/pack
+                  $(hostPathToPackArtifact)/tarballs:/usr/src/pack
 
           # Test
           - ${{ if ne(parameters.test, '') }}:
@@ -560,6 +560,7 @@ extends:
           tagName: ${{ parameters.tagName }}
           isReleaseGroup: ${{ parameters.isReleaseGroup }}
           buildDirectory: ${{ parameters.buildDirectory }}
+          buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
 
     - ${{ if eq(parameters.shouldReleaseDockerImage, true) }}:
       - template: /tools/pipelines/templates/include-publish-docker-service.yml@self

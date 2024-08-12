@@ -38,6 +38,9 @@ import type { Root } from 'hast';
 import { TypeParameter } from '@microsoft/api-extractor-model';
 
 // @public
+function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean;
+
+// @public
 export type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
 
 export { ApiItem }
@@ -77,6 +80,7 @@ declare namespace ApiItemUtilities {
         getHeadingForApiItem,
         getLinkForApiItem,
         shouldItemBeIncluded,
+        ancestryHasModifierTag,
         getCustomBlockComments,
         getDefaultValueBlock,
         getDeprecatedBlock,
@@ -513,7 +517,12 @@ export class LinkNode extends DocumentationParentNodeBase<SingleLineDocumentatio
 }
 
 // @public
-export function loadModel(reportsDirectoryPath: string, logger?: Logger): Promise<ApiModel>;
+export function loadModel(options: LoadModelOptions): Promise<ApiModel>;
+
+// @public
+export interface LoadModelOptions extends ConfigurationBase {
+    readonly modelDirectoryPath: string;
+}
 
 // @public
 export interface Logger {

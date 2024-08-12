@@ -15,7 +15,13 @@ import {
 	type UpPath,
 	rootFieldKey,
 } from "../../../core/index.js";
-import { SchemaBuilder, leaf, leaf as leafDomain } from "../../../domains/index.js";
+import {
+	SchemaBuilder,
+	leaf,
+	leaf as leafDomain,
+	singleJsonCursor,
+	typedJsonCursor,
+} from "../../../domains/index.js";
 import { isFreedSymbol } from "../../../feature-libraries/flex-tree/lazyEntity.js";
 import {
 	LazyField,
@@ -30,6 +36,7 @@ import {
 	FlexFieldSchema,
 	cursorForJsonableTreeNode,
 	SchemaBuilderBase,
+	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import { brand, disposeSymbol } from "../../../util/index.js";
 import { flexTreeViewWithContent, forestWithContent } from "../../utils.js";
@@ -57,7 +64,7 @@ describe("LazyField", () => {
 		const builder = new SchemaBuilder({ scope: "lazyTree" });
 		builder.object("empty", {});
 		const schema = builder.intoSchema(FlexFieldSchema.create(FieldKinds.optional, [Any]));
-		const forest = forestWithContent({ schema, initialTree: {} });
+		const forest = forestWithContent({ schema, initialTree: singleJsonCursor({}) });
 		const context = getReadonlyContext(forest, schema);
 		const cursor = initializeCursor(context, detachedFieldAnchor);
 
@@ -75,12 +82,12 @@ describe("LazyField", () => {
 		);
 		cursor.free();
 		assert.throws(
-			() => (optionalField.content = undefined),
+			() => optionalField.editor.set(undefined, optionalField.length === undefined),
 			(e: Error) =>
 				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
 		);
 		assert.throws(
-			() => (valueField.content = {}),
+			() => valueField.editor.set(mapTreeFromCursor(singleJsonCursor({}))),
 			(e: Error) =>
 				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
 		);
@@ -97,7 +104,10 @@ describe("LazyField", () => {
 
 		// Note: this tree initialization is strictly to enable construction of the lazy field.
 		// The test cases below are strictly in terms of the schema of the created fields.
-		const { context, cursor } = readonlyTreeWithContent({ schema, initialTree: {} });
+		const { context, cursor } = readonlyTreeWithContent({
+			schema,
+			initialTree: singleJsonCursor({}),
+		});
 
 		// #endregion
 
@@ -189,9 +199,10 @@ describe("LazyField", () => {
 
 		const { context, cursor } = readonlyTreeWithContent({
 			schema,
-			initialTree: {
+			initialTree: typedJsonCursor({
+				[typedJsonCursor.type]: struct,
 				foo: "Hello world",
-			},
+			}),
 		});
 
 		const rootField = new TestLazyField(context, rootSchema, cursor, rootFieldAnchor);
@@ -227,7 +238,7 @@ describe("LazyField", () => {
 		});
 		builder.object("empty", {});
 		const schema = builder.intoSchema(FlexFieldSchema.create(FieldKinds.optional, [Any]));
-		const forest = forestWithContent({ schema, initialTree: {} });
+		const forest = forestWithContent({ schema, initialTree: singleJsonCursor({}) });
 		const context = getReadonlyContext(forest, schema);
 		const cursor = initializeCursor(context, detachedFieldAnchor);
 
@@ -250,7 +261,10 @@ describe("LazyField", () => {
 		});
 		const Holder = builder.object("holder", { f: leafDomain.number });
 		const schema = builder.intoSchema(FlexFieldSchema.create(FieldKinds.optional, [Any]));
-		const forest = forestWithContent({ schema, initialTree: { f: 5 } });
+		const forest = forestWithContent({
+			schema,
+			initialTree: typedJsonCursor({ [typedJsonCursor.type]: Holder, f: 5 }),
+		});
 		const context = getReadonlyContext(forest, schema);
 
 		const holder = [...context.root.boxedIterator()][0];
@@ -274,7 +288,10 @@ describe("LazyField", () => {
 		});
 		const Holder = builder.object("holder", { f: leafDomain.number });
 		const schema = builder.intoSchema(FlexFieldSchema.create(FieldKinds.optional, [Any]));
-		const forest = forestWithContent({ schema, initialTree: { f: 5 } });
+		const forest = forestWithContent({
+			schema,
+			initialTree: typedJsonCursor({ [typedJsonCursor.type]: Holder, f: 5 }),
+		});
 		const context = getReadonlyContext(forest, schema);
 
 		const holder = [...context.root.boxedIterator()][0];
@@ -297,7 +314,10 @@ describe("LazyOptionalField", () => {
 	const schema = builder.intoSchema(rootSchema);
 
 	describe("Field with value", () => {
-		const { context, cursor } = readonlyTreeWithContent({ schema, initialTree: 42 });
+		const { context, cursor } = readonlyTreeWithContent({
+			schema,
+			initialTree: singleJsonCursor(42),
+		});
 		const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
 
 		it("atIndex", () => {
@@ -366,17 +386,25 @@ describe("LazyOptionalField", () => {
 	it("content", () => {
 		const view = flexTreeViewWithContent({
 			schema,
-			initialTree: 5,
+			initialTree: singleJsonCursor(5),
 		});
 		assert.equal(view.flexTree.content, 5);
-		view.flexTree.content = 6;
+		view.flexTree.editor.set(
+			mapTreeFromCursor(singleJsonCursor(6)),
+			view.flexTree.length === 0,
+		);
 		assert.equal(view.flexTree.content, 6);
-		view.flexTree.content = undefined;
+		view.flexTree.editor.set(undefined, view.flexTree.length === 0);
 		assert.equal(view.flexTree.content, undefined);
-		view.flexTree.content = cursorForJsonableTreeNode({
-			type: leaf.string.name,
-			value: 7,
-		});
+		view.flexTree.editor.set(
+			mapTreeFromCursor(
+				cursorForJsonableTreeNode({
+					type: leaf.string.name,
+					value: 7,
+				}),
+			),
+			view.flexTree.length === 0,
+		);
 		assert.equal(view.flexTree.content, 7);
 	});
 });
@@ -388,7 +416,10 @@ describe("LazyValueField", () => {
 
 	const initialTree = "Hello world";
 
-	const { context, cursor } = readonlyTreeWithContent({ schema, initialTree });
+	const { context, cursor } = readonlyTreeWithContent({
+		schema,
+		initialTree: singleJsonCursor(initialTree),
+	});
 
 	const field = new LazyValueField(context, rootSchema, cursor, rootFieldAnchor);
 
@@ -422,13 +453,13 @@ describe("LazyValueField", () => {
 	it("content", () => {
 		const view = flexTreeViewWithContent({
 			schema,
-			initialTree: "X",
+			initialTree: singleJsonCursor("X"),
 		});
 		assert.equal(view.flexTree.content, "X");
-		view.flexTree.content = "Y";
+		view.flexTree.editor.set(mapTreeFromCursor(singleJsonCursor("Y")));
 		assert.equal(view.flexTree.content, "Y");
 		const zCursor = cursorForJsonableTreeNode({ type: leaf.string.name, value: "Z" });
-		view.flexTree.content = zCursor;
+		view.flexTree.editor.set(mapTreeFromCursor(zCursor));
 		assert.equal(view.flexTree.content, "Z");
 	});
 });
@@ -444,17 +475,9 @@ describe("LazySequence", () => {
 	function testSequence(data: number[]) {
 		const { context, cursor } = readonlyTreeWithContent({
 			schema,
-			initialTree: data,
+			initialTree: data.map((n) => singleJsonCursor(n)),
 		});
 		return new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
-	}
-
-	function testMutableSequence(data: number[]) {
-		const view = flexTreeViewWithContent({
-			schema,
-			initialTree: data,
-		});
-		return view.flexTree;
 	}
 
 	it("atIndex", () => {
