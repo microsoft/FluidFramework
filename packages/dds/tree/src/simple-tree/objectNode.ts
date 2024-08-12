@@ -263,7 +263,7 @@ export function setField(
 ): void {
 	const mapTree = mapTreeFromNodeData(
 		value,
-		simpleFieldSchema.allowedTypes,
+		simpleFieldSchema,
 		field.context?.nodeKeyManager,
 		getSchemaAndPolicy(field),
 	);

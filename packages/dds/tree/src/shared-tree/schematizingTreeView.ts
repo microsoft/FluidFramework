@@ -124,7 +124,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		this.runSchemaEdit(() => {
 			const mapTree = mapTreeFromNodeData(
 				content as InsertableContent,
-				this.rootFieldSchema.allowedTypes,
+				this.rootFieldSchema,
 				this.nodeKeyManager,
 				{
 					schema: this.checkout.storedSchema,

@@ -19,10 +19,12 @@ import {
 } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
 import { getSimpleNodeSchema } from "./core/index.js";
-import type {
-	ImplicitAllowedTypes,
-	InsertableTreeNodeFromImplicitAllowedTypes,
-	TreeNodeFromImplicitAllowedTypes,
+import {
+	createFieldSchema,
+	FieldKind,
+	type ImplicitAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
 	NodeKind,
@@ -175,7 +177,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		const classSchema = getSimpleNodeSchema(node.schema);
 		const mapTree = mapTreeFromNodeData(
 			value as InsertableContent | undefined,
-			classSchema.info as ImplicitAllowedTypes,
+			createFieldSchema(FieldKind.Optional, classSchema.info as ImplicitAllowedTypes),
 			node.context?.nodeKeyManager,
 			getSchemaAndPolicy(node),
 		);
