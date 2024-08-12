@@ -111,11 +111,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedInterface_ISignalEnvelope": {
-				"backCompat": false,
-				"forwardCompat": false
-			}
-		}
+		"broken": {},
+		"apiLevel": "legacy"
 	}
 }
