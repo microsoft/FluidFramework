@@ -2456,10 +2456,8 @@ describe("Runtime", () => {
 			});
 
 			function sendSignals(numberOfSignals: number = 1) {
-				const testSignalType = "TestSignalType";
-				const testSignalContent = "TestSignalContent";
 				for (let i = 0; i < numberOfSignals; i++) {
-					containerRuntime.submitSignal(testSignalType, testSignalContent);
+					containerRuntime.submitSignal("TestSignalType", "TestSignalContent");
 				}
 			}
 
