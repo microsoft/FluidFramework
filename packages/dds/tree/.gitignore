@@ -54,3 +54,6 @@ temp_modules/
 # Fuzz test operation files
 **/fuzz/failures/**
 **/fuzz/successes/**
+
+# Output folder for memory profiling tests
+.memoryTestsOutput
