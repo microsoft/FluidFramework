@@ -16,7 +16,6 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeValue,
 	type Value,
-	forEachField,
 	inCursorField,
 	mapCursorFields,
 	rootFieldKey,
@@ -52,7 +51,6 @@ import {
 	type FlexTreeTypedField,
 	type FlexTreeTypedNode,
 	type FlexTreeUnboxField,
-	type FlexibleFieldContent,
 	type FlexibleNodeContent,
 	type PropertyNameFromFieldKey,
 	flexTreeMarker,
@@ -268,12 +266,6 @@ export class LazyMap<TSchema extends FlexMapNodeSchema>
 		super(context, schema, cursor, anchorNode, anchor);
 	}
 
-	public get size(): number {
-		let fieldCount = 0;
-		forEachField(this[cursorSymbol], () => (fieldCount += 1));
-		return fieldCount;
-	}
-
 	public keys(): IterableIterator<FieldKey> {
 		return mapCursorFields(this[cursorSymbol], (cursor) => cursor.getFieldKey()).values();
 	}
@@ -318,40 +310,8 @@ export class LazyMap<TSchema extends FlexMapNodeSchema>
 		}
 	}
 
-	public has(key: string): boolean {
-		return this.tryGetField(brand(key)) !== undefined;
-	}
-
-	public get(key: string): FlexTreeUnboxField<TSchema["info"]> {
-		return inCursorField(this[cursorSymbol], brand(key), (cursor) =>
-			unboxedField(this.context, this.schema.info, cursor),
-		) as FlexTreeUnboxField<TSchema["info"]>;
-	}
-
 	public override getBoxed(key: string): FlexTreeTypedField<TSchema["info"]> {
 		return super.getBoxed(brand(key)) as FlexTreeTypedField<TSchema["info"]>;
-	}
-
-	public set(key: string, content: FlexibleFieldContent | undefined): void {
-		const field = this.getBoxed(key);
-		const fieldSchema = this.schema.info;
-
-		if (fieldSchema.kind === FieldKinds.optional) {
-			const optionalField = field as FlexTreeOptionalField<FlexAllowedTypes>;
-			optionalField.editor.set(content?.[0], optionalField.length === 0);
-		} else {
-			assert(fieldSchema.kind === FieldKinds.sequence, 0x807 /* Unexpected map field kind */);
-
-			// TODO: implement setting of sequence fields once we have defined clear merged semantics for doing so.
-			// For now, we will throw an error, since the public API does not currently expose a way to do this anyways.
-			throw new Error("Setting of sequence values in maps is not yet supported.");
-		}
-	}
-
-	public delete(key: FieldKey): void {
-		// Since all keys implicitly exist under a Map node, and we represent "no value" with `undefined`,
-		// "deleting" a key/value pair is the same as setting the value to `undefined`.
-		this.set(key, undefined);
 	}
 
 	public override boxedIterator(): IterableIterator<FlexTreeTypedField<TSchema["info"]>> {
