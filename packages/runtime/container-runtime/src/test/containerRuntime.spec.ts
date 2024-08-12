@@ -2484,7 +2484,7 @@ describe("Runtime", () => {
 				assert(opsStart === 3, "first op processed should have seq number 3");
 			});
 		});
-    
+
 		it("Only log legacy codepath once", async () => {
 			const mockLogger = new MockLogger();
 			const containerRuntime = await ContainerRuntime.loadRuntime({
@@ -2505,7 +2505,7 @@ describe("Runtime", () => {
 				false /* local */,
 			);
 			assert.equal(mockLogger.events.length, 0, "Expected no more events logged");
-    });
+		});
 
 		describe("Signals", () => {
 			let containerRuntime: ContainerRuntime;
