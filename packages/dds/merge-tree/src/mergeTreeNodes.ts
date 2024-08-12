@@ -20,7 +20,7 @@ import { TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
-import { PropertySet, addProperties, clone, createMap, type MapLike } from "./properties.js";
+import { PropertySet, clone, createMap, type MapLike } from "./properties.js";
 import {
 	ReferencePosition,
 	refGetTileLabels,
@@ -713,7 +713,7 @@ export abstract class BaseSegment implements ISegment {
 					other.propertyManager,
 				);
 			} else {
-				other.properties = addProperties(other.properties, this.properties);
+				other.properties = clone(this.properties);
 			}
 		}
 	}
@@ -789,7 +789,7 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 	public static make(refType: ReferenceType, props?: PropertySet): Marker {
 		const marker = new Marker(refType);
 		if (props) {
-			marker.properties = addProperties(marker.properties, props);
+			marker.properties = clone(props);
 		}
 		return marker;
 	}

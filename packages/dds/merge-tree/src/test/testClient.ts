@@ -50,7 +50,7 @@ import {
 	ReferenceType,
 	type IMergeTreeInsertMsg,
 } from "../ops.js";
-import { addProperties, PropertySet } from "../properties.js";
+import { PropertySet } from "../properties.js";
 import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions.js";
 import { MergeTreeRevertibleDriver } from "../revertibles.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
@@ -245,10 +245,7 @@ export class TestClient extends Client {
 		text: string,
 		props?: PropertySet,
 	): IMergeTreeInsertMsg | undefined {
-		const segment = new TextSegment(text);
-		if (props) {
-			segment.properties = addProperties(segment.properties, props);
-		}
+		const segment = TextSegment.make(text, props);
 		return this.insertSegmentLocal(pos, segment);
 	}
 
@@ -260,10 +257,7 @@ export class TestClient extends Client {
 		refSeq: number,
 		longClientId: string,
 	): void {
-		const segment = new TextSegment(text);
-		if (props) {
-			segment.properties = addProperties(segment.properties, props);
-		}
+		const segment = TextSegment.make(text, props);
 		this.applyMsg(
 			this.makeOpMessage(createInsertSegmentOp(pos, segment), seq, refSeq, longClientId),
 		);
@@ -299,10 +293,8 @@ export class TestClient extends Client {
 		behaviors: ReferenceType,
 		props?: PropertySet,
 	): IMergeTreeInsertMsg | undefined {
-		const segment = new Marker(behaviors);
-		if (props) {
-			segment.properties = addProperties(segment.properties, props);
-		}
+		const segment = Marker.make(behaviors, props);
+
 		return this.insertSegmentLocal(pos, segment);
 	}
 
@@ -314,10 +306,8 @@ export class TestClient extends Client {
 		refSeq: number,
 		longClientId: string,
 	): void {
-		const segment = new Marker(markerDef.refType ?? ReferenceType.Tile);
-		if (props) {
-			segment.properties = addProperties(segment.properties, props);
-		}
+		const segment = Marker.make(markerDef.refType ?? ReferenceType.Tile, props);
+
 		this.applyMsg(
 			this.makeOpMessage(createInsertSegmentOp(pos, segment), seq, refSeq, longClientId),
 		);

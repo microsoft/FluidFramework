@@ -93,16 +93,7 @@ export function clone<T>(extension: MapLike<T> | undefined): MapLike<T> | undefi
 		return undefined;
 	}
 	const cloneMap = createMap<T>();
-	// eslint-disable-next-line guard-for-in, no-restricted-syntax
-	for (const key in extension) {
-		const v = extension[key];
-		if (v !== null) {
-			// If `v` is undefined, undefined must have been assignable to `T`.
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			cloneMap[key] = v!;
-		}
-	}
-	return cloneMap;
+	return extend(cloneMap, extension);
 }
 
 /**
