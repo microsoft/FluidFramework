@@ -90,6 +90,7 @@ import {
 	type ITreeCursorSynchronous,
 	CursorLocationType,
 	type MapTree,
+	type TreeNodeSchemaIdentifier,
 } from "../core/index.js";
 import {
 	cursorToJsonObject,
@@ -163,6 +164,7 @@ import {
 	forEachInNestedMap,
 	tryGetFromNestedMap,
 	isReadonlyArray,
+	brand,
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
@@ -789,14 +791,23 @@ const sf = new SchemaFactory("com.fluidframework.json");
 export const NumberArray = sf.array("array", sf.number);
 export const StringArray = sf.array("array", sf.string);
 
+export const IdentifierSchema = sf.object("identifier-object", {
+	identifier: sf.identifier,
+});
+
 const jsonPrimitiveSchema = [sf.null, sf.boolean, sf.number, sf.string] as const;
 export const JsonObject = sf.mapRecursive("object", [
 	() => JsonObject,
 	() => JsonArray,
 	...jsonPrimitiveSchema,
 ]);
+export const jsonObjectSchemaIdentifier: TreeNodeSchemaIdentifier = brand(
+	JsonObject.identifier,
+);
+
 export const JsonArray = sf.arrayRecursive("array", [
 	JsonObject,
+	IdentifierSchema,
 	() => JsonArray,
 	...jsonPrimitiveSchema,
 ]);

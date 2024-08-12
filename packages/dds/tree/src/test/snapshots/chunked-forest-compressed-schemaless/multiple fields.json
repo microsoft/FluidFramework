@@ -14,17 +14,17 @@
   "data": [
     [
       0,
-      "Cursor Test Suite.Map",
+      "com.fluidframework.json.object",
       false,
       [
         "a",
         0,
-        "Cursor Test Suite.Empty object",
+        "cursor test suite.empty object",
         false,
         [],
         "b",
         0,
-        "Cursor Test Suite.Empty object 2",
+        "cursor test suite.empty object 2",
         false,
         []
       ]
