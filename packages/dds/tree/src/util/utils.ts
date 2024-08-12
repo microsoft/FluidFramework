@@ -205,6 +205,19 @@ export function find<T>(iterable: Iterable<T>, predicate: (t: T) => boolean): T 
 }
 
 /**
+ * Counts the number of elements in the given iterable.
+ * @param iterable - the iterable to enumerate
+ * @returns the number of elements that were iterated after exhausting the iterable
+ */
+export function count(iterable: Iterable<unknown>): number {
+	let n = 0;
+	for (const _ of iterable) {
+		n += 1;
+	}
+	return n;
+}
+
+/**
  * Use for Json compatible data.
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
