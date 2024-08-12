@@ -168,7 +168,7 @@ export interface ISerializableInterval extends IInterval {
 	/***/
 	serialize(): ISerializedInterval;
 	/**
-	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
+	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
 	 */
 	addProperties(
 		props: PropertySet,
