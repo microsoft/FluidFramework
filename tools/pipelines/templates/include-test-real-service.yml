@@ -323,6 +323,16 @@ jobs:
             customCommand: 'install'
             customRegistry: 'useNpmrc'
 
+      - task: Cache@2
+        displayName: Cache compat versions install location
+        timeoutInMinutes: 3
+        continueOnError: true
+        inputs:
+          key: 'compat-version-installs | "$(Agent.OS)"'
+          path: $(Build.SourcesDirectory)/packages/test/test-version-utils/node_modules/.legacy/
+          restoreKeys: |
+            compat-version-installs | "$(Agent.OS)"
+
       # run the test
       - task: Npm@1
         displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
