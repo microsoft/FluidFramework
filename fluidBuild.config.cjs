@@ -84,7 +84,6 @@ module.exports = {
 		"typetests:gen": [
 			// type tests are generated from the built files, so we need to compile first
 			...compileDependsOn,
-			// "^typetests:gen",
 		],
 		"ts2esm": [],
 		"tsc": tscDependsOn,
