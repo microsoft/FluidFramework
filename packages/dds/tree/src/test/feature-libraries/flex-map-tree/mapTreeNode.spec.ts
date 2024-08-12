@@ -108,7 +108,6 @@ describe("MapTreeNodes", () => {
 		assert.equal(map.getBoxed(mapKey).length, 1);
 		assert.equal(map.tryGetField(brand("unknown key")), undefined);
 		assert.equal(map.getBoxed("unknown key").length, 0);
-		assert.equal(map.get(mapKey), childValue);
 		assert.equal([...map.boxedIterator()].length, 1);
 		assert.equal([...map.boxedIterator()][0].boxedAt(0)?.value, childValue);
 		assert.deepEqual([...map.keys()], [mapKey]);
@@ -205,8 +204,8 @@ describe("MapTreeNodes", () => {
 		});
 
 		it("be mutated", () => {
-			assert.throws(() => map.delete(mapKey));
-			assert.throws(() => fieldNode.content.sequenceEditor());
+			assert.throws(() => map.getBoxed(mapKey).editor);
+			assert.throws(() => fieldNode.content.editor);
 		});
 	});
 });

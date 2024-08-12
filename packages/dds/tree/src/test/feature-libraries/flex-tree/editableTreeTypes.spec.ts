@@ -78,7 +78,7 @@ describe("flexTreeTypes", () => {
 				const a: FlexTreeSequenceField<typeof jsonRoot> = tree.content;
 				jsonExample(a);
 			} else if (tree.is(jsonObject)) {
-				const x = tree.get(EmptyKey);
+				const x = tree.getBoxed(EmptyKey);
 			} else if (tree.is(leaf.null)) {
 				const x: null = tree.value;
 			} else {

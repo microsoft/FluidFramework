@@ -61,9 +61,7 @@ export interface TreeNodeApi {
 	/**
 	 * The schema information for this node.
 	 */
-	schema<T extends TreeNode | TreeLeafValue>(
-		node: T,
-	): TreeNodeSchema<string, NodeKind, unknown, T>;
+	schema(node: TreeNode | TreeLeafValue): TreeNodeSchema;
 
 	/**
 	 * Narrow the type of the given value if it satisfies the given schema.
@@ -196,9 +194,7 @@ export const treeNodeApi: TreeNodeApi = {
 			return (schema as TreeNodeSchema) === actualSchema;
 		}
 	},
-	schema<T extends TreeNode | TreeLeafValue>(
-		node: T,
-	): TreeNodeSchema<string, NodeKind, unknown, T> {
+	schema(node: TreeNode | TreeLeafValue): TreeNodeSchema {
 		return tryGetSchema(node) ?? fail("Not a tree node");
 	},
 	shortId(node: TreeNode): number | string | undefined {
