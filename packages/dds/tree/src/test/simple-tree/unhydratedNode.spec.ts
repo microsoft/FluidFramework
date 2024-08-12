@@ -136,7 +136,7 @@ describe("Unhydrated nodes", () => {
 		assert.equal(Tree.schema(object), TestObject);
 	});
 
-	it("disallow mutation", () => {
+	it("disallow mutation of sequences", () => {
 		function validateUnhydratedMutationError(error: Error): boolean {
 			return validateAssertionError(
 				error,
@@ -145,16 +145,10 @@ describe("Unhydrated nodes", () => {
 		}
 
 		const leaf = new TestLeaf({ value: "value" });
-		assert.throws(() => (leaf.value = "new value"), validateUnhydratedMutationError);
-		const map = new TestMap([]);
-		assert.throws(() => map.set("key", leaf), validateUnhydratedMutationError);
-		assert.throws(() => map.delete("key"), validateUnhydratedMutationError);
 		const array = new TestArray([]);
 		assert.throws(() => array.insertAtStart(leaf), validateUnhydratedMutationError);
 		assert.throws(() => array.insertAtEnd(leaf), validateUnhydratedMutationError);
 		assert.throws(() => array.insertAt(0, leaf), validateUnhydratedMutationError);
-		const object = new TestObject({ map, array });
-		assert.throws(() => (object.array = array), validateUnhydratedMutationError);
 	});
 
 	it("have the correct tree status", () => {

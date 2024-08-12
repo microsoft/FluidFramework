@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { SchemaFactory } from "../../simple-tree/index.js";
-import { describeHydration, hydrate } from "./utils.js";
+import { describeHydration } from "./utils.js";
 import { Tree } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../../simple-tree/core/index.js";
@@ -146,6 +146,47 @@ describeHydration(
 			assert.equal(root.map.has("bar"), true);
 			assert.equal(root.map.has("baz"), false);
 		});
+
+		it("set", () => {
+			const root = init(schema, initialTree);
+			// Insert new value
+			root.map.set("baz", "42");
+			assert.equal(root.map.size, 3);
+			assert(root.map.has("baz"));
+			assert.equal(root.map.get("baz"), "42");
+
+			// Override existing value
+			root.map.set("baz", "37");
+			root.map.set("baz", "37"); // Check that we can do a "no-op" change (a change which does not change the tree's content).
+			assert.equal(root.map.size, 3);
+			assert(root.map.has("baz"));
+			assert.equal(root.map.get("baz"), "37");
+
+			// "Un-set" existing value
+			root.map.set("baz", undefined);
+			assert.equal(root.map.size, 2);
+			assert(!root.map.has("baz"));
+		});
+
+		it("set object", () => {
+			const root = init(schema, initialTree);
+			const o = new object({ content: 42 });
+			root.objectMap.set("foo", o);
+			assert.equal(root.objectMap.get("foo"), o); // Check that the inserted and read proxies are the same object
+			assert.equal(root.objectMap.get("foo")?.content, o.content);
+		});
+
+		it("delete", () => {
+			const root = init(schema, initialTree);
+			// Delete existing value
+			root.map.delete("bar");
+			assert.equal(root.map.size, 1);
+			assert(!root.map.has("bar"));
+
+			// Delete non-present value
+			root.map.delete("baz");
+			assert.equal(root.map.size, 1);
+		});
 	},
 	() => {
 		it("explicit construction", () => {
@@ -181,47 +222,6 @@ describeHydration(
 				const fromRecord = new Root({ data: { x: 5 } });
 				assert.deepEqual([...fromRecord.data], data);
 			});
-		});
-
-		it("set", () => {
-			const root = hydrate(schema, initialTree);
-			// Insert new value
-			root.map.set("baz", "42");
-			assert.equal(root.map.size, 3);
-			assert(root.map.has("baz"));
-			assert.equal(root.map.get("baz"), "42");
-
-			// Override existing value
-			root.map.set("baz", "37");
-			root.map.set("baz", "37"); // Check that we can do a "no-op" change (a change which does not change the tree's content).
-			assert.equal(root.map.size, 3);
-			assert(root.map.has("baz"));
-			assert.equal(root.map.get("baz"), "37");
-
-			// "Un-set" existing value
-			root.map.set("baz", undefined);
-			assert.equal(root.map.size, 2);
-			assert(!root.map.has("baz"));
-		});
-
-		it("set object", () => {
-			const root = hydrate(schema, initialTree);
-			const o = new object({ content: 42 });
-			root.objectMap.set("foo", o);
-			assert.equal(root.objectMap.get("foo"), o); // Check that the inserted and read proxies are the same object
-			assert.equal(root.objectMap.get("foo")?.content, o.content);
-		});
-
-		it("delete", () => {
-			const root = hydrate(schema, initialTree);
-			// Delete existing value
-			root.map.delete("bar");
-			assert.equal(root.map.size, 1);
-			assert(!root.map.has("bar"));
-
-			// Delete non-present value
-			root.map.delete("baz");
-			assert.equal(root.map.size, 1);
 		});
 	},
 );
