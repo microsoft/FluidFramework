@@ -5,7 +5,7 @@
 
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import { isInternalVersionRange, isInternalVersionScheme } from "@fluid-tools/version-tools";
+import { isInternalTestVersion } from "@fluid-tools/version-tools";
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { formatISO } from "date-fns";
@@ -154,19 +154,41 @@ async function updateReportVersions(
 	version: string,
 	log: Logger,
 ): Promise<void> {
+	const clientPackageName = "fluid-framework";
+
+	const packageReleaseDetails = report[clientPackageName];
+
+	if (packageReleaseDetails === undefined) {
+		throw new Error(`Client package ${clientPackageName} is not defined in the report.`);
+	}
+
+	if (packageReleaseDetails.ranges?.caret === undefined) {
+		throw new Error(`Caret version for ${clientPackageName} is not defined in the report.`);
+	}
+
+	if (packageReleaseDetails.version === undefined) {
+		throw new Error(`Simple version for ${clientPackageName} is not defined in the report.`);
+	}
+
+	const clientVersionCaret = report[clientPackageName].ranges.caret;
+	const clientVersionSimple = report[clientPackageName].version;
+
+	log.log(`Caret version: ${clientVersionCaret}`);
+	log.log(`Simple version: ${clientVersionSimple}`);
+
 	for (const packageName of Object.keys(report)) {
 		if (ignorePackageList.has(packageName)) {
 			continue;
 		}
 
-		// updates caret ranges
-		if (isInternalVersionRange(report[packageName].ranges.caret, true)) {
-			// If the caret range is a range, reset it to an exact version.
-			// Note: Post 2.0 release, the versions will no longer be internal versions so another condition will be required that will work after 2.0.
+		const packageInfo = report[packageName];
+
+		// todo: add better checks
+		if (packageInfo.ranges.caret && packageInfo.ranges.caret === clientVersionCaret) {
 			report[packageName].ranges.caret = version;
 		}
 
-		if (isInternalVersionScheme(report[packageName].version)) {
+		if (packageInfo.version && packageInfo.version === clientVersionSimple) {
 			report[packageName].version = version;
 		}
 	}
@@ -186,6 +208,11 @@ async function updateReportVersions(
 
 function extractBuildNumber(version: string): number {
 	const versionParts: string[] = version.split("-");
+
+	if (isInternalTestVersion(version)) {
+		return Number.parseInt(versionParts[1], 10);
+	}
+
 	// Extract the last part of the version, which is the number you're looking for
 	return Number.parseInt(versionParts[versionParts.length - 1], 10);
 }
