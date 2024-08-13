@@ -14,13 +14,16 @@ import type {
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	NodeFromSchema,
-	NodeKind,
 	TreeNodeFromImplicitAllowedTypes,
-	TreeNodeSchema,
 } from "./schemaTypes.js";
-import type { WithType } from "./core/index.js";
+import type {
+	NodeKind,
+	TreeNodeSchema,
+	WithType,
+	TreeNode,
+	Unhydrated,
+} from "./core/index.js";
 import type { TreeArrayNodeBase, TreeArrayNode } from "./arrayNode.js";
-import type { TreeNode, Unhydrated } from "./types.js";
 
 /*
  * TODO:

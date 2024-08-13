@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { NodeKind } from "./schemaTypes.js";
+import type { NodeKind } from "./core/index.js";
 
 /**
  * The fully-qualified {@link TreeNodeSchemaCore.identifier}.

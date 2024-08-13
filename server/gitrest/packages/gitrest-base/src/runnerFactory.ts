@@ -82,6 +82,8 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			config.get("git:ephemeralfilesystem:name") ?? "redisFs";
 		const ephemeralFileSystemMaxFileSizeBytes: number | undefined =
 			config.get("git:ephemeralfilesystem:maxFileSizeBytes") ?? 0;
+		const ephemeralDocumentTTLSec: number | undefined =
+			config.get("git:ephemeralDocumentTTLSec") ?? 60 * 60 * 24; // 24 hours default
 
 		// Creating two customizations for redisClientConnectionManager for now.
 		// This may be changed to a single customization in the future.
@@ -96,6 +98,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			config,
 			customizations?.redisClientConnectionManagerForEphemeralFileSystem,
 			ephemeralFileSystemMaxFileSizeBytes,
+			ephemeralDocumentTTLSec,
 		);
 
 		return {
@@ -109,6 +112,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		config: Provider,
 		redisClientConnectionManagerCustomization?: IRedisClientConnectionManager,
 		maxFileSizeBytes?: number,
+		documentTtlSec?: number,
 	) {
 		if (!fileSystemName || fileSystemName === "nodeFs") {
 			return new NodeFsManagerFactory(maxFileSizeBytes);
@@ -126,6 +130,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 				config,
 				redisClientConnectionManager,
 				maxFileSizeBytes,
+				documentTtlSec,
 			);
 		}
 		throw new Error("Invalid file system name.");

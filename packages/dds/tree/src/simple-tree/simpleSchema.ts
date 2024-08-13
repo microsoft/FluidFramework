@@ -4,7 +4,8 @@
  */
 
 import type { ValueSchema } from "../core/index.js";
-import type { FieldKind, NodeKind } from "./schemaTypes.js";
+import type { NodeKind } from "./core/index.js";
+import type { FieldKind } from "./schemaTypes.js";
 
 /**
  * Base interface for all {@link SimpleNodeSchema} implementations.

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { FieldKey } from "../core/index.js";
 import {
-	cursorForMapTreeNode,
 	FieldKinds,
 	type FlexAllowedTypes,
 	type FlexObjectNodeSchema,
@@ -27,9 +27,7 @@ import {
 } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
-	NodeKind,
 	type ImplicitFieldSchema,
-	type TreeNodeSchema,
 	getStoredKey,
 	getExplicitStoredKey,
 	type TreeFieldFromImplicitField,
@@ -39,17 +37,19 @@ import {
 	type ImplicitAllowedTypes,
 	FieldKind,
 } from "./schemaTypes.js";
-import { type WithType, typeNameSymbol } from "./core/index.js";
-import { mapTreeFromNodeData } from "./toMapTree.js";
 import {
+	type TreeNodeSchema,
+	NodeKind,
+	type WithType,
+	typeNameSymbol,
 	type InternalTreeNode,
-	type MostDerivedData,
 	type TreeNode,
-	TreeNodeValid,
-} from "./types.js";
+} from "./core/index.js";
+import { mapTreeFromNodeData } from "./toMapTree.js";
 import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
+import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 
 /**
  * Helper used to produce types for object nodes.
@@ -197,14 +197,11 @@ function createProxyHandler(
 				return allowAdditionalProperties ? Reflect.set(target, viewKey, value, proxy) : false;
 			}
 
-			const flexNode = getOrCreateInnerNode(proxy);
-			if (isMapTreeNode(flexNode)) {
-				throw new UsageError(
-					`An object cannot be mutated before being inserted into the tree`,
-				);
-			}
-
-			setField(flexNode.getBoxed(fieldInfo.storedKey), fieldInfo.schema, value);
+			setField(
+				getOrCreateInnerNode(proxy).getBoxed(fieldInfo.storedKey),
+				fieldInfo.schema,
+				value,
+			);
 			return true;
 		},
 		deleteProperty(target, viewKey): boolean {
@@ -261,25 +258,27 @@ export function setField(
 	simpleFieldSchema: FieldSchema,
 	value: InsertableContent | undefined,
 ): void {
+	const mapTree = mapTreeFromNodeData(
+		value,
+		simpleFieldSchema,
+		field.context?.nodeKeyManager,
+		getSchemaAndPolicy(field),
+	);
+
+	if (field.context !== undefined) {
+		prepareContentForHydration(mapTree, field.context.checkout.forest);
+	}
+
 	switch (field.schema.kind) {
-		case FieldKinds.required:
+		case FieldKinds.required: {
+			assert(mapTree !== undefined, "Cannot set a required field to undefined");
+			const typedField = field as FlexTreeRequiredField<FlexAllowedTypes>;
+			typedField.editor.set(mapTree);
+			break;
+		}
 		case FieldKinds.optional: {
-			const typedField = field as
-				| FlexTreeRequiredField<FlexAllowedTypes>
-				| FlexTreeOptionalField<FlexAllowedTypes>;
-
-			const mapTree = mapTreeFromNodeData(
-				value,
-				simpleFieldSchema.allowedTypes,
-				field.context?.nodeKeyManager,
-				getSchemaAndPolicy(field),
-			);
-
-			if (field.context !== undefined) {
-				prepareContentForHydration(mapTree, field.context.checkout.forest);
-			}
-
-			typedField.content = mapTree !== undefined ? cursorForMapTreeNode(mapTree) : undefined;
+			const typedField = field as FlexTreeOptionalField<FlexAllowedTypes>;
+			typedField.editor.set(mapTree, typedField.length === 0);
 			break;
 		}
 

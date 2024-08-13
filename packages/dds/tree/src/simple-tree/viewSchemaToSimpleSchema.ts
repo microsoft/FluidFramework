@@ -5,11 +5,9 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	NodeKind,
 	normalizeFieldSchema,
 	type FieldSchema,
 	type ImplicitAllowedTypes,
-	type TreeNodeSchema,
 } from "./schemaTypes.js";
 import type {
 	SimpleArrayNodeSchema,
@@ -23,6 +21,7 @@ import type {
 import type { ValueSchema } from "../core/index.js";
 import { getOrCreate } from "../util/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
+import { NodeKind, type TreeNodeSchema } from "./core/index.js";
 
 /**
  * Converts a "view" schema to a "simple" schema representation.

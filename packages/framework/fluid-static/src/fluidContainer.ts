@@ -231,6 +231,20 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 }
 
 /**
+ * Internal interface for {@link IFluidContainer}.
+ *
+ * @internal
+ */
+export interface IFluidContainerInternal {
+	/**
+	 * The underlying {@link @fluidframework/container-definitions#IContainer}.
+	 *
+	 * @remarks Used to power debug tooling and experimental features.
+	 */
+	readonly container: IContainer;
+}
+
+/**
  * Creates an {@link IFluidContainer} from the provided `container` and `rootDataObject`.
  *
  * @internal
@@ -245,7 +259,21 @@ export function createFluidContainer<
 }
 
 /**
- * Base {@link IFluidContainer} implementation.
+ * Check that the provided `container` is an internal {@link IFluidContainerInternal}.
+ *
+ * @internal
+ */
+export function isInternalFluidContainer<TContainerSchema extends ContainerSchema>(
+	container: IFluidContainer<TContainerSchema> | IFluidContainerInternal,
+): container is IFluidContainerInternal {
+	// IFluidContainer is sealed; so we never expect an `IFluidContainer` not to be
+	// `IFluidContainerInternal` implemented by `FluidContainer`. To be caution,
+	// we use `instanceof` to confirm.
+	return container instanceof FluidContainer;
+}
+
+/**
+ * {@link IFluidContainer} implementation.
  *
  * @typeparam TContainerSchema - Used to determine the type of 'initialObjects'.
  * @remarks
@@ -255,7 +283,7 @@ export function createFluidContainer<
  */
 class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends TypedEventEmitter<IFluidContainerEvents>
-	implements IFluidContainer<TContainerSchema>
+	implements IFluidContainer<TContainerSchema>, IFluidContainerInternal
 {
 	private readonly connectedHandler = (): boolean => this.emit("connected");
 	private readonly disconnectedHandler = (): boolean => this.emit("disconnected");
@@ -265,7 +293,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	private readonly dirtyHandler = (): boolean => this.emit("dirty");
 
 	public constructor(
-		private readonly container: IContainer,
+		public readonly container: IContainer,
 		private readonly rootDataObject: IRootDataObject,
 	) {
 		super();
@@ -276,37 +304,22 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		container.on("dirty", this.dirtyHandler);
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainer.isDirty}
-	 */
 	public get isDirty(): boolean {
 		return this.container.isDirty;
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainer.attachState}
-	 */
 	public get attachState(): AttachState {
 		return this.container.attachState;
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainer.disposed}
-	 */
 	public get disposed(): boolean {
 		return this.container.closed;
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainer.connectionState}
-	 */
 	public get connectionState(): ConnectionState {
 		return this.container.connectionState;
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainer.initialObjects}
-	 */
 	public get initialObjects(): InitialObjects<TContainerSchema> {
 		return this.rootDataObject.initialObjects as InitialObjects<TContainerSchema>;
 	}
@@ -330,30 +343,18 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		throw new Error("Cannot attach container. Attach method not provided.");
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainer.connect}
-	 */
 	public async connect(): Promise<void> {
 		this.container.connect?.();
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainer.connect}
-	 */
 	public async disconnect(): Promise<void> {
 		this.container.disconnect?.();
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainer.create}
-	 */
 	public async create<T extends IFluidLoadable>(objectClass: SharedObjectKind<T>): Promise<T> {
 		return this.rootDataObject.create(objectClass);
 	}
 
-	/**
-	 * {@inheritDoc IFluidContainer.dispose}
-	 */
 	public dispose(): void {
 		this.container.close();
 		this.container.off("connected", this.connectedHandler);
@@ -362,16 +363,4 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.container.off("saved", this.savedHandler);
 		this.container.off("dirty", this.dirtyHandler);
 	}
-
-	/**
-	 * FOR INTERNAL USE ONLY. NOT FOR EXTERNAL USE.
-	 * We make no stability guarantees here whatsoever.
-	 *
-	 * Gets the underlying {@link @fluidframework/container-definitions#IContainer}.
-	 *
-	 * @remarks Used to power debug tooling.
-	 */
-	public readonly INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer = () => {
-		return this.container;
-	};
 }
