@@ -1739,7 +1739,7 @@ describe("Runtime", () => {
 						sequenceNumber: 0,
 						contents: {
 							type: ContainerMessageType.Rejoin,
-							contents: "something",
+							contents: undefined,
 						},
 					} as any as ISequencedDocumentMessage,
 					true /* local */,
