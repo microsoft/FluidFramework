@@ -59,7 +59,7 @@ export const instantiateMigratableRuntime = async <ModelType>(
 	];
 	const runtime = await ContainerRuntime.loadRuntime({
 		context,
-		registryEntries: combinedRegistryEntries, // combinedRegistryEntries
+		registryEntries: combinedRegistryEntries,
 		provideEntryPoint: async (
 			containerRuntime: IContainerRuntime,
 		): Promise<IMigratableModelContainerRuntimeEntryPoint<ModelType>> => ({

@@ -151,7 +151,7 @@ export class Migrator implements IMigrator {
 				// they're stuck. Ideally the app developer would find a way to acquire a new ModelLoader and move
 				// forward, or at least advise the end user to refresh the page or something.
 				// TODO: Does the app developer have everything they need to dispose gracefully when recovering with
-				// a new ModelLoader?
+				// a new MigratableModelLoader?
 				const migrationSupported = await this.modelLoader.supportsVersion(
 					acceptedMigration.newVersion,
 				);
@@ -183,8 +183,8 @@ export class Migrator implements IMigrator {
 
 				// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
 				// exported data into a format that the new model can import?  If we can determine it early, then
-				// clients with old ModelLoaders can use that opportunity to dispose early and try to get new
-				// ModelLoaders.
+				// clients with old MigratableModelLoaders can use that opportunity to dispose early and try to get new
+				// MigratableModelLoaders.
 				let transformedData: unknown;
 				if (migratedModel.supportsDataFormat(exportedData)) {
 					// If the migrated model already supports the data format, go ahead with the migration.
@@ -325,9 +325,9 @@ export class Migrator implements IMigrator {
 			}
 			const { model: migratedModel, migrationTool: migratedMigrationTool } =
 				await this.modelLoader.loadExisting(migratedId);
-			// Note: I'm choosing not to close the old migratable here, and instead allow the lifecycle management
+			// Note: I'm choosing not to dispose the old migratable here, and instead allow the lifecycle management
 			// of the migratable to be the responsibility of whoever created the Migrator (and handed it its first
-			// migratable).  It could also be fine to close here, just need to have an explicit contract to clarify
+			// migratable).  It could also be fine to dispose here, just need to have an explicit contract to clarify
 			// who is responsible for managing that.
 			this._currentMigratable = {
 				model: migratedModel,

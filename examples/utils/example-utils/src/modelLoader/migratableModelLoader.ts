@@ -59,8 +59,8 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 
 	/**
 	 * The purpose of the model pattern and the model loader is to wrap the IContainer in a more useful object and
-	 * interface.  This demo uses a convention of the entrypoint providing a getModel method to do so.  It does this
-	 * with the expectation that the model has been bundled with the container code.
+	 * interface.  This demo uses a convention of the entrypoint providing a getModelAndMigrationTool method to do so.
+	 * It does this with the expectation that the model has been bundled with the container code.
 	 *
 	 * Other strategies to obtain the wrapping model could also work fine here - for example a standalone model code
 	 * loader that separately fetches model code and wraps the container from the outside.

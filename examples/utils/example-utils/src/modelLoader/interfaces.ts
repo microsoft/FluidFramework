@@ -5,6 +5,7 @@
 
 import type { IMigrationTool } from "../migrationInterfaces/index.js";
 
+// TODO: Consider just extending IAttachedMigratableModel
 /**
  * Object returned from calling IModelLoader.createDetached().
  * @internal
@@ -14,6 +15,9 @@ export interface IDetachedMigratableModel<ModelType> {
 	 * The newly created, detached model object.
 	 */
 	model: ModelType;
+	/**
+	 * The migration tool that will be used to migrate away from this model.
+	 */
 	migrationTool: IMigrationTool;
 	/**
 	 * A function that will attach the model object to the service when called.
@@ -32,6 +36,9 @@ export interface IAttachedMigratableModel<ModelType> {
 	 * The newly created, detached model object.
 	 */
 	model: ModelType;
+	/**
+	 * The migration tool that will be used to migrate away from this model.
+	 */
 	migrationTool: IMigrationTool;
 }
 
@@ -40,7 +47,7 @@ export interface IAttachedMigratableModel<ModelType> {
  */
 export interface IMigratableModelLoader<ModelType> {
 	/**
-	 * Check if the IModelLoader knows how to instantiate an appropriate model for the provided container code version.
+	 * Check if the IMigratableModelLoader knows how to instantiate an appropriate model for the provided container code version.
 	 * It is async to permit dynamic model loading - e.g. referring to a remote service to determine if the requested
 	 * model is available.
 	 * @param version - the container code version to check
@@ -53,7 +60,7 @@ export interface IMigratableModelLoader<ModelType> {
 	 * returns a promise that will resolve after attach has completed with the id of the container.
 	 * @param version - the container code version to create a model for
 	 */
-	createDetached(version: string): Promise<IDetachedModel<ModelType>>;
+	createDetached(version: string): Promise<IDetachedMigratableModel<ModelType>>;
 
 	/**
 	 * Load a model for the container with the given id.
