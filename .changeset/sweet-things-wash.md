@@ -1,6 +1,9 @@
 ---
 "@fluidframework/tree": minor
 ---
+---
+section: tree
+---
 
 Add `@alpha` API `FixRecursiveArraySchema` as a workaround around an issue with recursive ArrayNode schema.
 
