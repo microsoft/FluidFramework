@@ -87,6 +87,10 @@ describe("Unhydrated nodes", () => {
 	});
 
 	it("get their parent", () => {
+		// For each node type, this test checks that the parent of each newly created nodes is correct.
+		// It also creates children and checks that the parent of each is updated when the child is inserted under a node, and again when it is removed.
+
+		// Map
 		const mapLeaf = new TestLeaf({ value: "value" });
 		assert.equal(Tree.parent(mapLeaf), undefined);
 		const map = new TestMap({ key: mapLeaf });
@@ -97,7 +101,7 @@ describe("Unhydrated nodes", () => {
 		assert.equal(Tree.parent(newMapLeaf), undefined);
 		map.set("key", newMapLeaf);
 		assert.equal(Tree.parent(newMapLeaf), map);
-
+		// Array
 		const arrayLeaf = new TestLeaf({ value: "value" });
 		assert.equal(Tree.parent(arrayLeaf), undefined);
 		const array = new TestArray([arrayLeaf]);
@@ -108,7 +112,7 @@ describe("Unhydrated nodes", () => {
 		assert.equal(Tree.parent(newArrayLeaf), undefined);
 		array.insertAtEnd(newArrayLeaf);
 		assert.equal(Tree.parent(newArrayLeaf), array);
-
+		// Object
 		const object = new TestObject({ array, map });
 		assert.equal(Tree.parent(object), undefined);
 		assert.equal(Tree.parent(map), object);

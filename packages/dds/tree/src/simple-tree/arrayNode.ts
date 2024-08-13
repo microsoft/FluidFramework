@@ -833,7 +833,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		const destinationField = getSequenceField(this);
 		if (destinationField.context === undefined) {
 			throw new UsageError(
-				`Array elements cannot be moved before being inserted into the tree`,
+				`Cannot move elements of an array before the array is inserted into the tree`,
 			);
 		}
 
