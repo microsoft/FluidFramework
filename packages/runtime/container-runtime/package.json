@@ -235,6 +235,6 @@
 				"backCompat": false
 			}
 		},
-		"apiLevel": "legacy"
+		"entrypoint": "legacy"
 	}
 }

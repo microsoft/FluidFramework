@@ -205,6 +205,6 @@
 				"forwardCompat": false
 			}
 		},
-		"apiLevel": "public"
+		"entrypoint": "public"
 	}
 }

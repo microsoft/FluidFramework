@@ -158,6 +158,6 @@
 	},
 	"typeValidation": {
 		"broken": {},
-		"apiLevel": "alpha"
+		"entrypoint": "alpha"
 	}
 }

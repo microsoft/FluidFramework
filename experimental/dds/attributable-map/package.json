@@ -130,6 +130,6 @@
 	"typeValidation": {
 		"disabled": true,
 		"broken": {},
-		"apiLevel": "public"
+		"entrypoint": "public"
 	}
 }

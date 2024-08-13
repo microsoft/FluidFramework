@@ -135,6 +135,6 @@
 	},
 	"typeValidation": {
 		"broken": {},
-		"apiLevel": "internal"
+		"entrypoint": "internal"
 	}
 }

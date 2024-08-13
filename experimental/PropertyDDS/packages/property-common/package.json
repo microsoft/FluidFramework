@@ -98,6 +98,6 @@
 	"typeValidation": {
 		"disabled": true,
 		"broken": {},
-		"apiLevel": "legacy"
+		"entrypoint": "legacy"
 	}
 }

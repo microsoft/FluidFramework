@@ -226,6 +226,6 @@
 	},
 	"typeValidation": {
 		"broken": {},
-		"apiLevel": "public"
+		"entrypoint": "public"
 	}
 }
