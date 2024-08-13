@@ -18,10 +18,12 @@ development to roll out and control functionalities. The  corresponding features
 disabled or controlled:
 
 GC runtime options removed:
+
 - `gcDisableThrowOnTombstoneLoad`
 - `disableDataStoreSweep`
 
 GC configs removed:
+
 - `"Fluid.GarbageCollection.DisableTombstone"`
 - `"Fluid.GarbageCollection.ThrowOnTombstoneUsage"`
 - `"Fluid.GarbageCollection.DisableDataStoreSweep"`
