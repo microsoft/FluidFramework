@@ -17,7 +17,6 @@ import {
 	IJSONSegment,
 	ISegment,
 	PropertySet,
-	addProperties,
 } from "@fluidframework/merge-tree/internal";
 import { SharedSegmentSequence } from "@fluidframework/sequence/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
