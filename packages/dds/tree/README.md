@@ -151,6 +151,13 @@ To workaround this, create an unhydrated node:
 node.data = new Empty({}); // The unhydrated node's type matches the type returned by the getter, and thus is compatible with the setter
 ```
 
+Insertable content can still be used in other places, like when nested in other insertable content, in ArrayNode editing methods and initializing views.
+
+``` typescript
+// The empty node can be implicitly constructed from `{}` here, since this context allows insertable content, not just nodes.
+const node = new Test({ data: {} });
+```
+
 ## Architecture
 
 This section covers the internal structure of the Tree DDS.
