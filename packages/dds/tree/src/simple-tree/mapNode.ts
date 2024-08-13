@@ -9,7 +9,6 @@ import {
 	type MapTreeNode,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
-	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import {
 	type FactoryContent,
@@ -36,7 +35,6 @@ import {
 } from "./core/index.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import { getFlexSchema } from "./toFlexSchema.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { brand, count, type RestrictiveReadonlyRecord } from "../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 
@@ -139,12 +137,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		return this.entries();
 	}
 	public delete(key: string): void {
-		const node = getOrCreateInnerNode(this);
-		if (isMapTreeNode(node)) {
-			throw new UsageError(`A map cannot be mutated before being inserted into the tree`);
-		}
-
-		const field = node.getBoxed(key);
+		const field = getOrCreateInnerNode(this).getBoxed(key);
 		field.editor.set(undefined, field.length === 0);
 	}
 	public *entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
@@ -170,10 +163,6 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	}
 	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): TreeMapNode {
 		const node = getOrCreateInnerNode(this);
-		if (isMapTreeNode(node)) {
-			throw new UsageError(`A map cannot be mutated before being inserted into the tree`);
-		}
-
 		const classSchema = getSimpleNodeSchema(node.schema);
 		const mapTree = mapTreeFromNodeData(
 			value as InsertableContent | undefined,
