@@ -28,14 +28,14 @@ import {
 	cachedFlexSchemaFromClassSchema,
 	setFlexSchemaFromClassSchema,
 	tryGetSimpleNodeSchema,
-} from "./schemaCaching.js";
+	NodeKind,
+	type TreeNodeSchema,
+} from "./core/index.js";
 import {
 	FieldKind,
 	FieldSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
-	NodeKind,
-	type TreeNodeSchema,
 	getStoredKey,
 } from "./schemaTypes.js";
 

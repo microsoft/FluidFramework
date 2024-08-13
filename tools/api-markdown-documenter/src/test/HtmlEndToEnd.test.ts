@@ -6,7 +6,7 @@
 import * as Path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ApiItemKind, ApiModel, ReleaseTag } from "@microsoft/api-extractor-model";
+import { ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { type Suite } from "mocha";
@@ -19,6 +19,7 @@ import {
 import { type DocumentNode } from "../documentation-domain/index.js";
 import { type HtmlRenderConfiguration } from "../renderers/index.js";
 import { compareDocumentationSuiteSnapshot } from "./SnapshotTestUtilities.js";
+import { loadModel } from "../LoadModel.js";
 
 const dirname = Path.dirname(fileURLToPath(import.meta.url));
 
@@ -43,7 +44,7 @@ const snapshotsDirectoryPath = Path.resolve(
 
 // Relative to lib/test
 const testDataDirectoryPath = Path.resolve(dirname, "..", "..", "src", "test", "test-data");
-const testModelPaths = [Path.resolve(testDataDirectoryPath, "simple-suite-test.json")];
+const testModelDirectoryPath = Path.resolve(testDataDirectoryPath, "simple-suite-test");
 
 /**
  * Simple integration test that validates complete output from simple test package.
@@ -102,12 +103,12 @@ interface ConfigurationTestProperties {
  * If a change in the Markdown rendering is expected, it should be checked in.
  *
  * @param modelName - Name of the model for which the docs are being generated.
- * @param apiReportFilePaths - List of paths to package API report files to be loaded into the model.
+ * @param apiModelDirectoryPath - Path to the directory serving as the API model.
  * @param configs - Configurations to test against.
  */
 function apiTestSuite(
 	modelName: string,
-	apiReportFilePaths: string[],
+	apiModelDirectoryPath: string,
 	configs: ConfigurationTestProperties[],
 ): Suite {
 	return describe(modelName, () => {
@@ -124,16 +125,11 @@ function apiTestSuite(
 				let renderConfig: HtmlRenderConfiguration;
 
 				before(async () => {
-					const apiModel = new ApiModel();
-					for (const apiReportFilePath of apiReportFilePaths) {
-						apiModel.loadPackage(apiReportFilePath);
-					}
-
+					const apiModel = await loadModel({ modelDirectoryPath: apiModelDirectoryPath });
 					transformConfig = {
 						...configurationProperties.transformConfigLessApiModel,
 						apiModel,
 					};
-
 					renderConfig = configurationProperties.renderConfig;
 				});
 
@@ -242,5 +238,5 @@ describe("HTML rendering end-to-end tests", () => {
 	});
 
 	// Run the test suite against a sample report
-	apiTestSuite("simple-suite-test", testModelPaths, configs);
+	apiTestSuite("simple-suite-test", testModelDirectoryPath, configs);
 });
