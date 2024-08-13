@@ -482,9 +482,31 @@ class EagerMapTreeSequenceField<T extends FlexAllowedTypes>
 	extends EagerMapTreeField<T>
 	implements FlexTreeSequenceField<T>
 {
-	public get editor(): SequenceFieldEditBuilder<ExclusiveMapTree[]> {
-		throw unsupportedUsageError("Editing an array");
-	}
+	public editor: SequenceFieldEditBuilder<ExclusiveMapTree[]> = {
+		insert: (index, newContent) => {
+			for (let i = 0; i < newContent.length; i++) {
+				const c = newContent[i];
+				assert(c !== undefined, "Unexpected sparse array content");
+				nodeCache.get(c)?.adoptBy(this, index + i);
+			}
+			this.edit((mapTrees) => {
+				mapTrees.splice(index, 0, ...newContent);
+			});
+		},
+		remove: (index, count) => {
+			for (let i = index; i < index + count; i++) {
+				const c = this.mapTrees[i];
+				assert(c !== undefined, "Unexpected sparse array");
+				nodeCache.get(c)?.adoptBy(undefined);
+			}
+			this.edit((mapTrees) => {
+				mapTrees.splice(index, count);
+			});
+		},
+		move: (sourceIndex, count, destIndex) => {
+			throw unsupportedUsageError("Moving nodes in an array");
+		},
+	};
 
 	public at(index: number): FlexTreeUnboxNodeUnion<T> | undefined {
 		const i = indexForAt(index, this.length);

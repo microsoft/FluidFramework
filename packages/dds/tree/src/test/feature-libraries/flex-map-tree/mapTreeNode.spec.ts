@@ -210,8 +210,8 @@ describe("MapTreeNodes", () => {
 			assert.throws(() => object.anchorNode);
 		});
 
-		it("mutate arrays", () => {
-			assert.throws(() => fieldNode.content.editor);
+		it("move elements in arrays", () => {
+			assert.throws(() => fieldNode.content.editor.move(0, 1, 0));
 		});
 	});
 
@@ -252,6 +252,27 @@ describe("MapTreeNodes", () => {
 			assert.notEqual(newValue, oldValue);
 			field.editor.set(undefined, false);
 			assert.equal(field.boxedAt(0)?.value, undefined);
+		});
+
+		it("arrays", () => {
+			const mutableFieldNode = getOrCreateNode(
+				fieldNodeSchema,
+				deepCopyMapTree(fieldNodeMapTree),
+			);
+			const field = mutableFieldNode.getBoxed(EmptyKey);
+			const values = () => Array.from(field.boxedIterator(), (n) => n.value);
+			assert.deepEqual(values(), [childValue]);
+			field.editor.insert(1, [
+				{ ...mapChildMapTree, value: "c" },
+				{ ...mapChildMapTree, value: "d" },
+			]);
+			field.editor.insert(0, [
+				{ ...mapChildMapTree, value: "a" },
+				{ ...mapChildMapTree, value: "b" },
+			]);
+			assert.deepEqual(values(), ["a", "b", childValue, "c", "d"]);
+			field.editor.remove(2, 1);
+			assert.deepEqual(values(), ["a", "b", "c", "d"]);
 		});
 	});
 });

@@ -12,7 +12,6 @@ import {
 	type MapTreeNode,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
-	isMapTreeNode,
 	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 import {
@@ -683,10 +682,6 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	}
 
 	#mapTreesFromFieldData(value: Insertable<T>): ExclusiveMapTree[] {
-		if (isMapTreeNode(getOrCreateInnerNode(this))) {
-			throw new UsageError(`An array cannot be mutated before being inserted into the tree`);
-		}
-
 		const sequenceField = getSequenceField(this);
 		// TODO: this is not valid since this is a value field schema, not a sequence one (which does not exist in the simple tree layer),
 		// but it works since cursorFromFieldData special cases arrays.
@@ -837,7 +832,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	): void {
 		const destinationField = getSequenceField(this);
 		if (destinationField.context === undefined) {
-			throw new UsageError(`An array cannot be mutated before being inserted into the tree`);
+			throw new UsageError(
+				`Array elements cannot be moved before being inserted into the tree`,
+			);
 		}
 
 		validateIndex(destinationIndex, destinationField, "moveRangeToIndex", true);
