@@ -49,6 +49,7 @@ export {
 	IAttachedMigratableModel,
 	IDetachedMigratableModel,
 	IDetachedModel,
+	IMigratableModelContainerRuntimeEntryPoint,
 	IMigratableModelLoader,
 	IModelContainerRuntimeEntryPoint,
 	IModelLoader,
