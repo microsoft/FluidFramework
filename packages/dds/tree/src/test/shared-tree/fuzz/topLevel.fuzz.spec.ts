@@ -59,7 +59,7 @@ describe("Fuzz - Top-Level", () => {
 		abort: 1,
 		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
 		schema: 0,
-		nodeConstraint: 1,
+		nodeConstraint: 3,
 	};
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 	/**
@@ -82,10 +82,12 @@ describe("Fuzz - Top-Level", () => {
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,
 			defaultTestCount: runsPerBatch,
-			saveFailures: false,
+			saveFailures: {
+				directory: failureDirectory,
+			},
 			clientJoinOptions: {
 				clientAddProbability: 0,
-				maxNumberOfClients: 4,
+				maxNumberOfClients: 3,
 			},
 			// AB#7162: enabling rehydrate in these tests hits 0x744 and 0x79d. Disabling rehydrate for now
 			// and using the default number of ops before attach.

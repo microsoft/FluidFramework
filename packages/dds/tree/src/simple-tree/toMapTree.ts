@@ -189,9 +189,6 @@ function nodeDataToMapTree(
 	// They already have the mapTree, so there is no need to recompute it.
 	const flexNode = tryGetInnerNode(data);
 	if (flexNode !== undefined) {
-		if (!allowedTypes.has(tryGetSimpleNodeSchema(flexNode.schema) ?? fail("missing schema"))) {
-			throw new UsageError("Invalid schema for this context.");
-		}
 		if (isMapTreeNode(flexNode)) {
 			if (
 				!allowedTypes.has(tryGetSimpleNodeSchema(flexNode.schema) ?? fail("missing schema"))

@@ -40,7 +40,6 @@ import type {
 } from "../../../simple-tree/schemaFactoryRecursive.js";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeViewConfiguration } from "../../../simple-tree/tree.js";
-import type { FuzzTestState } from "./fuzzEditGenerators.js";
 
 const builder = new SchemaFactory("treeFuzz");
 export class GUIDNode extends builder.object("GuidNode", {
@@ -254,11 +253,3 @@ export const populatedInitialState: NodeBuilderData<typeof FuzzNode> = {
 	requiredChild: { stringValue: "R" },
 	optionalChild: undefined,
 } as unknown as NodeBuilderData<typeof FuzzNode>;
-
-export function clearTreesAndReInitialize(
-	data: NodeBuilderData<typeof FuzzNode>,
-	state: FuzzTestState,
-) {
-	for (const client of state.clients) {
-	}
-}

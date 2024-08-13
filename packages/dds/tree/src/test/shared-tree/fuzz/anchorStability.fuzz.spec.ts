@@ -14,8 +14,8 @@ import {
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
-import type { Anchor, UpPath, Value } from "../../../core/index.js";
-import { SharedTreeTestFactory, createTestUndoRedoStacks } from "../../utils.js";
+import type { Anchor, JsonableTree, UpPath, Value } from "../../../core/index.js";
+import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
 
 import {
 	type EditGeneratorOpWeights,
@@ -31,21 +31,24 @@ import {
 	failureDirectory,
 	validateAnchors,
 	type FuzzNode,
-	onCreate,
+	createOnCreate,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 import type { NodeBuilderData } from "../../../internalTypes.js";
+// eslint-disable-next-line import/no-internal-modules
+import { jsonableTreeFromForest } from "../../../feature-libraries/treeTextCursor.js";
 
 interface AnchorFuzzTestState extends FuzzTestState {
 	// Parallel array to `clients`: set in testStart
 	anchors?: Map<Anchor, [UpPath, Value]>[];
+	initialJsonableTree?: JsonableTree[];
 }
 
 const initialTreeState: NodeBuilderData<typeof FuzzNode> = {
-	sequenceChildren: [{ stringValue: "A" }, { stringValue: "B" }, { stringValue: "C" }],
+	sequenceChildren: [{ stringValue: "1" }, { stringValue: "2" }, { stringValue: "3" }],
 	requiredChild: {
-		requiredChild: { stringValue: "D" },
-		sequenceChildren: [{ stringValue: "E" }, { stringValue: "F" }, { stringValue: "G" }],
+		requiredChild: { stringValue: "0" },
+		sequenceChildren: [{ stringValue: "4" }, { stringValue: "5" }, { stringValue: "6" }],
 	},
 	optionalChild: undefined,
 } as unknown as NodeBuilderData<typeof FuzzNode>;
@@ -85,7 +88,7 @@ describe("Fuzz - anchor stability", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "anchors",
-			factory: new SharedTreeTestFactory(onCreate),
+			factory: new SharedTreeTestFactory(createOnCreate(initialTreeState)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: () => {},
@@ -95,6 +98,8 @@ describe("Fuzz - anchor stability", () => {
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
 			const tree = viewFromState(initialState, initialState.clients[0]).checkout;
 			tree.transaction.start();
+			const initialJsonableTree = jsonableTreeFromForest(tree.forest);
+			initialState.initialJsonableTree = initialJsonableTree;
 			// These tests are hard coded to a single client, so this is fine.
 			initialState.anchors = [createAnchors(tree)];
 		});
@@ -105,7 +110,8 @@ describe("Fuzz - anchor stability", () => {
 			// aborts any transactions that may still be in progress
 			const tree = viewFromState(finalState, finalState.clients[0]).checkout;
 			tree.transaction.abort();
-			// validateTree(tree, []);
+			assert(finalState.initialJsonableTree !== undefined);
+			validateTree(tree, finalState.initialJsonableTree);
 			validateAnchors(tree, anchors[0], true);
 		});
 
@@ -150,7 +156,7 @@ describe("Fuzz - anchor stability", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "anchors-undo-redo",
-			factory: new SharedTreeTestFactory(onCreate),
+			factory: new SharedTreeTestFactory(createOnCreate(initialTreeState)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: () => {},

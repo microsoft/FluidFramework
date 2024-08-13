@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
@@ -15,7 +14,6 @@ import {
 	TreeViewConfiguration,
 	type TreeNodeSchema,
 	type TreeView,
-	type NodeBuilderData,
 } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 import { getView, validateUsageError } from "../utils.js";
@@ -26,19 +24,8 @@ import {
 import { Tree } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { checkUnion } from "../../simple-tree/tree.js";
-import {
-	FuzzStringNode,
-	SequenceChildren,
-	createTreeViewSchema,
-	FuzzNode,
-	initialFuzzSchema,
-	populatedInitialState,
-	FuzzHandleNode,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../shared-tree/fuzz/fuzzUtils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isObjectNodeSchema } from "../../simple-tree/objectNodeTypes.js";
-import { toFlexTreeNode, type InternalTreeNode } from "../../simple-tree/types.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -353,20 +340,6 @@ describe("simple-tree tree", () => {
 		assert.equal(countBefore, countAfter);
 	});
 
-	it("Test fuzz handle", () => {
-		const config = new TreeViewConfiguration({ schema: initialFuzzSchema });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
-		view.initialize(populatedInitialState);
-
-		const sequence = (view.root as FuzzNode).sequenceChildren;
-		const random = makeRandom();
-		// sequence.insertAt(0, [new FuzzHandleNode({ value: random.handle() })]);
-	});
-
 	it("accessing root via Tree.parent does not leak LazyEntities", () => {
 		const config = new TreeViewConfiguration({ schema: Canvas });
 		const tree = factory.create(
@@ -583,138 +556,4 @@ describe("object allocation tests", () => {
 		// The array test is deliberately distinct from the object and map ones, see the comment above for the rationale.
 		assert.equal(countAfter, countBefore);
 	});
-
-	it("Test", () => {
-		class TreeWithLeaves extends schema.object("ArrayOfLeaves", {
-			field1: schema.object("field1", { value: schema.number }),
-			field2: schema.array("field2", [schema.number]),
-		}) {}
-		const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
-		view.initialize({ field1: { value: 1 }, field2: [1, 2, 3] });
-
-		const nodeSchema = Tree.schema(view.root);
-		assert(isObjectNodeSchema(nodeSchema));
-		const nodeSchemaField = nodeSchema.fields.get("field1");
-		assert(nodeSchemaField !== undefined);
-
-		const simpleNodeSchema = nodeSchemaField.allowedTypes;
-
-		const simpleSchema = simpleNodeSchema as unknown as new (dummy: unknown) => TreeNode;
-		const newNode = new simpleSchema({ value: 1 });
-
-		// assert(not undefined)
-		const newSchema = Tree.schema(newNode);
-		const schema1 = Tree.parent(view.root.field1);
-		const test = 1;
-
-		const testSchema = getNodeSchema(view.root, "field1");
-		const testNode = new testSchema({ value: 37 });
-		const a = 1;
-	});
-
-	it("Test 2", () => {
-		const fuzzSchema = createTreeViewSchema([]);
-		const config = new TreeViewConfiguration({ schema: fuzzSchema });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
-		const initialFuzzState = new FuzzNode({
-			sequenceChildren: new SequenceChildren([]),
-			requiredChild: new FuzzStringNode({ stringValue: "a" }),
-		});
-		view.initialize(initialFuzzState);
-	});
-
-	it("Test 3", () => {
-		const fuzzSchema = createTreeViewSchema([]);
-		const config = new TreeViewConfiguration({ schema: fuzzSchema });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
-		const initialFuzzState = {
-			requiredChild: { requiredChild: { stringValue: "test" }, sequenceChildren: [] },
-			sequenceChildren: [],
-		};
-		view.initialize(initialFuzzState);
-		const flexTree = toFlexTreeNode(view.root as unknown as InternalTreeNode);
-	});
-
-	it("select tree field", () => {
-		const testSchema = createTreeViewSchema([]);
-		const config = new TreeViewConfiguration({ schema: testSchema });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
-		const initialFuzzState: NodeBuilderData<typeof FuzzNode> = {
-			sequenceChildren: [
-				{
-					sequenceChildren: [{ stringValue: "AB" }],
-					requiredChild: { stringValue: "A" },
-				},
-				{
-					sequenceChildren: [],
-					requiredChild: { stringValue: "A" },
-				},
-				{
-					sequenceChildren: [],
-					requiredChild: {
-						sequenceChildren: [],
-						requiredChild: {
-							sequenceChildren: [],
-							requiredChild: { stringValue: "A" },
-						},
-					},
-				},
-			],
-			requiredChild: { stringValue: "R" },
-		} as unknown as NodeBuilderData<typeof FuzzNode>;
-		view.initialize(initialFuzzState);
-		const fuzzNodeSchema = Array.from(testSchema.allowedTypeSet).find(
-			(item) => item.identifier === "treeFuzz.node",
-		) as typeof FuzzNode | undefined;
-		assert(fuzzNodeSchema !== undefined);
-		const selectedNodes = selectRandomField(view.root as FuzzNode, [], fuzzNodeSchema);
-		function selectRandomField(
-			node: FuzzNode,
-			nodes: FuzzNode[],
-			nodeSchema: typeof FuzzNode,
-		) {
-			nodes.push(node);
-			if (Tree.is(node.optionalChild, nodeSchema)) {
-				selectRandomField(node.optionalChild, nodes, nodeSchema);
-			}
-			if (Tree.is(node.requiredChild, nodeSchema)) {
-				selectRandomField(node.requiredChild, nodes, nodeSchema);
-			}
-			for (const childNode of node.sequenceChildren) {
-				if (Tree.is(childNode, nodeSchema)) {
-					selectRandomField(childNode, nodes, nodeSchema);
-				}
-			}
-			return nodes;
-		}
-		const a = 1;
-	});
 });
-function getNodeSchema(node: TreeNode, nodeType: string) {
-	const nodeSchema = Tree.schema(node);
-	assert(isObjectNodeSchema(nodeSchema));
-	const nodeSchemaField = nodeSchema.fields.get("field1");
-	assert(nodeSchemaField !== undefined);
-
-	const simpleNodeSchema = nodeSchemaField.allowedTypes;
-
-	const simpleSchema = simpleNodeSchema as unknown as new (dummy: unknown) => TreeNode;
-	return simpleSchema;
-}

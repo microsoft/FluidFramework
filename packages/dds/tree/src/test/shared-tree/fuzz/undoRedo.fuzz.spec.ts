@@ -37,9 +37,10 @@ import {
 import { checkTreesAreSynchronized, fuzzReducer } from "./fuzzEditReducers.js";
 import {
 	createAnchors,
+	createOnCreate,
 	deterministicIdCompressorFactory,
 	failureDirectory,
-	onCreate,
+	populatedInitialState,
 	validateAnchors,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
@@ -76,7 +77,7 @@ describe("Fuzz - revert", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "revert sequenced commits last-to-first",
-			factory: new SharedTreeTestFactory(onCreate),
+			factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,
@@ -167,7 +168,7 @@ describe("Fuzz - revert", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "revert unsequenced commits first-to-last",
-			factory: new SharedTreeTestFactory(onCreate),
+			factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,

@@ -10,7 +10,7 @@ import type { DDSFuzzTestState, Client } from "@fluid-private/test-dds-utils";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
-import { type Revertible, rootFieldKey } from "../../../core/index.js";
+import type { Revertible } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
 import {
 	Tree,
@@ -40,7 +40,6 @@ import {
 } from "./fuzzUtils.js";
 
 import {
-	type FieldDownPath,
 	type FieldEdit,
 	type ClearField,
 	type Insert,
@@ -353,7 +352,7 @@ export function applyConstraint(state: FuzzTestState, constraint: Constraint) {
 		case "nodeConstraint": {
 			const constraintNode = constraint.content.nodePath
 				? navigateToNode(tree, constraint.content.nodePath)
-				: tree.root;
+				: undefined;
 
 			if (constraintNode !== undefined) {
 				tree.checkout.editor.addNodeExistsConstraint(
@@ -367,35 +366,6 @@ export function applyConstraint(state: FuzzTestState, constraint: Constraint) {
 	}
 }
 
-/**
- * Parent node and key to provide information about the field location.
- * If parent node is an arrayNode, the key will be an index. Otherwise, a FieldKey.
- * If both values are undefined, it is at the root.
- */
-interface FuzzFieldLocation {
-	parentNode: TreeNode | undefined;
-	key: string | number | undefined;
-}
-
-function navigateToField(tree: FuzzView, path: FieldDownPath): FuzzFieldLocation {
-	const nodeSchema = tree.currentSchema;
-	assert(Tree.is(tree.root, tree.currentSchema));
-	if (path.parent === undefined) {
-		return { parentNode: undefined, key: rootFieldKey };
-	} else {
-		const parent = navigateToNode(tree, path.parent);
-		const test = Tree.key(parent);
-		assert(Tree.is(parent, nodeSchema), "Defined down-path should point to a valid parent");
-		switch (path.key) {
-			case "sequenceChildren":
-			case "optionalChild":
-			case "requiredChild":
-				return { parentNode: parent, key: path.key };
-			default:
-				fail("Unknown field key");
-		}
-	}
-}
 function navigateToNode(tree: FuzzView, path: DownPath): TreeNode {
 	let currentNode = tree.root as TreeNode;
 	for (const pathStep of path) {

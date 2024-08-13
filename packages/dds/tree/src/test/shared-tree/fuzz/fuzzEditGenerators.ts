@@ -26,7 +26,6 @@ import {
 	type DownPath,
 	toDownPath,
 	treeSchemaFromStoredSchema,
-	jsonableTreeFromForest,
 } from "../../../feature-libraries/index.js";
 import {
 	Tree,
@@ -111,7 +110,7 @@ export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	 * SharedTrees undergoing a transaction will have a forked view in {@link transactionViews} instead,
 	 * which should be used in place of this view until the transaction is complete.
 	 */
-	clientStates?: Map<SharedTree, FuzzView>;
+	clientViews?: Map<SharedTree, FuzzView>;
 	/**
 	 * Schematized view of clients undergoing transactions with their nodeSchemas.
 	 * Edits to this view are not visible to other clients until the transaction is closed.
@@ -126,10 +125,10 @@ export function viewFromState(
 	state: FuzzTestState,
 	client: Client<SharedTreeFactory> = state.client,
 ): FuzzView {
-	state.clientStates ??= new Map();
+	state.clientViews ??= new Map();
 	const view =
 		state.transactionViews?.get(client.channel) ??
-		(getOrCreate(state.clientStates, client.channel, (tree) => {
+		(getOrCreate(state.clientViews, client.channel, (tree) => {
 			const treeSchema = simpleSchemaFromStoredSchema(tree.storedSchema);
 			const config = new TreeViewConfiguration({
 				schema: treeSchema,
@@ -139,7 +138,7 @@ export function viewFromState(
 			treeView.events.on("schemaChanged", () => {
 				if (!treeView.compatibility.canView) {
 					treeView.dispose();
-					state.clientStates?.delete(client.channel);
+					state.clientViews?.delete(client.channel);
 				}
 			});
 
@@ -154,13 +153,13 @@ export function viewFromState(
 	return view;
 }
 function filterFuzzNodeSchemas<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>(
-	map: ReadonlyMap<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>,
+	nodeSchemas: ReadonlyMap<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>,
 	prefix: string,
 	omitInitialNodeSchemas: string[],
 ): FlexTreeNodeSchema[] {
 	const values: FlexTreeNodeSchema[] = [];
 
-	map.forEach((value, key) => {
+	nodeSchemas.forEach((value, key) => {
 		if (
 			typeof key === "string" &&
 			key.startsWith(prefix) &&
@@ -495,12 +494,8 @@ export const makeTreeEditGenerator = (
 
 			change = fieldEditChangeGenerator({ ...state, fieldInfo });
 			attemptsRemaining -= 1;
-		} while (change === "no-valid-selections" && attemptsRemaining > 0); // TODO: make check here to make sure it's not unhydrated node
-		const check = typeof fieldInfo.parentFuzzNode;
+		} while (change === "no-valid-selections" && attemptsRemaining > 0);
 		assert(change !== "no-valid-selections", "No valid field edit found");
-		// assert(tryGetSchema(fieldInfo.parentFuzzNode) !== undefined);
-		const downPath = maybeDownPathFromNode(fieldInfo.parentFuzzNode);
-		const jsonableTree = jsonableTreeFromForest(state.client.channel.checkout.forest);
 		return {
 			type: "treeEdit",
 			edit: {
@@ -697,7 +692,7 @@ export function fieldDownPathFromParentNode(
 	};
 }
 
-// A parentFuzzNode of undefined means that the root of the tree is undefined.
+// Using TreeNode instead of FuzzNode to handle the case where the root node is not a FuzzNode (like a leafNode or undefined)
 interface OptionalFuzzField {
 	type: "optional";
 	parentFuzzNode: TreeNode;

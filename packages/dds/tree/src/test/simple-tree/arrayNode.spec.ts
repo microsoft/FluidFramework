@@ -488,7 +488,7 @@ describe("ArrayNode", () => {
 		describe("moveRangeToIndex", () => {
 			it("move within field", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
-				array.moveRangeToIndex(1, 0, 3);
+				array.moveRangeToIndex(0, 1, 3);
 				assert.deepEqual([...array], [2, 3, 1]);
 			});
 

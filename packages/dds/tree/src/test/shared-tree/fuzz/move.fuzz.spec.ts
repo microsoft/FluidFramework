@@ -21,7 +21,12 @@ import {
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
-import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils.js";
+import {
+	createOnCreate,
+	deterministicIdCompressorFactory,
+	failureDirectory,
+	populatedInitialState,
+} from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
@@ -49,7 +54,7 @@ describe("Fuzz - move", () => {
 		DDSFuzzTestState<SharedTreeTestFactory>
 	> = {
 		workloadName: "move",
-		factory: new SharedTreeTestFactory(onCreate),
+		factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState)),
 		generatorFactory,
 		reducer: fuzzReducer,
 		validateConsistency: validateFuzzTreeConsistency,
@@ -64,7 +69,7 @@ describe("Fuzz - move", () => {
 		emitter,
 		numberOfClients: 1,
 		clientJoinOptions: {
-			maxNumberOfClients: 1,
+			maxNumberOfClients: 4,
 			clientAddProbability: 1,
 		},
 		defaultTestCount: runsPerBatch,
@@ -77,7 +82,6 @@ describe("Fuzz - move", () => {
 		},
 		reconnectProbability: 0.1,
 		idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
-		skipMinimization: true,
 	};
 	createDDSFuzzSuite(model, options);
 });

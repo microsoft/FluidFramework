@@ -42,11 +42,11 @@ import {
 	generateLeafNodeSchemas,
 } from "./fuzzEditReducers.js";
 import {
+	createOnCreate,
 	createTreeViewSchema,
 	deterministicIdCompressorFactory,
 	isRevertibleSharedTreeView,
 	nodeSchemaFromTreeSchema,
-	onCreate,
 	type FuzzNode,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
@@ -172,7 +172,7 @@ describe("Fuzz - composed vs individual changes", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "SharedTree",
-			factory: new SharedTreeTestFactory(onCreate),
+			factory: new SharedTreeTestFactory(createOnCreate(undefined)),
 			generatorFactory,
 			reducer: fuzzComposedVsIndividualReducer,
 			validateConsistency: () => {},
