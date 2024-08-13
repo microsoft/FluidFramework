@@ -176,7 +176,7 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 			},
 		);
 
-	it.skip("attributes content created in a detached state", async () => {
+	it("attributes content created in a detached state", async () => {
 		const attributor = createRuntimeAttributor();
 		const loader = provider.makeTestLoader(getTestConfig(attributor));
 		const defaultCodeDetails: IFluidCodeDetails = {
