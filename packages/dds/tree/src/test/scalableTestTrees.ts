@@ -6,20 +6,21 @@
 import { strict as assert } from "assert";
 
 import {
+	EmptyKey,
 	type FieldKey,
 	type UpPath,
 	moveToDetachedField,
 	rootFieldKey,
 } from "../core/index.js";
-import {
-	jsonSchema,
-	leaf,
-	typedJsonCursor,
-	type TypedJsonCompatible,
-} from "../domains/index.js";
+import { jsonSchema, leaf } from "../domains/index.js";
 import { FieldKinds, FlexFieldSchema, SchemaBuilderBase } from "../feature-libraries/index.js";
 import type { FlexTreeView, TreeContent } from "../shared-tree/index.js";
 import { brand } from "../util/index.js";
+import {
+	cursorFromInsertable,
+	SchemaFactory,
+	type ValidateRecursiveSchema,
+} from "../simple-tree/index.js";
 
 /**
  * Test trees which can be parametrically scaled to any size.
@@ -51,8 +52,18 @@ const wideBuilder = new SchemaBuilderBase(FieldKinds.required, {
 });
 
 export const wideRootSchema = wideBuilder.object("WideRoot", {
-	foo: FlexFieldSchema.create(FieldKinds.sequence, [leaf.number]),
+	[EmptyKey]: FlexFieldSchema.create(FieldKinds.sequence, [leaf.number]),
 });
+
+const sf = new SchemaFactory("scalable");
+export class LinkedList extends sf.objectRecursive("linkedList", {
+	foo: [() => LinkedList, sf.number],
+}) {}
+{
+	type _check = ValidateRecursiveSchema<typeof LinkedList>;
+}
+
+export class WideRoot extends sf.array("WideRoot", sf.number) {}
 
 export const wideSchema = wideBuilder.intoSchema(wideRootSchema);
 
@@ -62,17 +73,10 @@ export interface JSDeepTree {
 	foo: JSDeepTree | number;
 }
 
-export interface JSWideTree {
-	foo: number[];
-}
+export type JSWideTree = number[];
 
-export function makeJsDeepTree(
-	depth: number,
-	leafValue: number,
-): TypedJsonCompatible & (JSDeepTree | number) {
-	return depth === 0
-		? leafValue
-		: { [typedJsonCursor.type]: linkedListSchema, foo: makeJsDeepTree(depth - 1, leafValue) };
+export function makeJsDeepTree(depth: number, leafValue: number): JSDeepTree | number {
+	return depth === 0 ? leafValue : { foo: makeJsDeepTree(depth - 1, leafValue) };
 }
 
 export function makeDeepContent(
@@ -82,7 +86,9 @@ export function makeDeepContent(
 	// Implicit type conversion is needed here to make this compile.
 	const initialTree = makeJsDeepTree(depth, leafValue);
 	return {
-		initialTree: typedJsonCursor(initialTree),
+		// Types do now allow implicitly constructing recursive types, so cast is required.
+		// TODO: Find a better alternative.
+		initialTree: cursorFromInsertable(LinkedList, initialTree as LinkedList),
 		schema: deepSchema,
 	};
 }
@@ -95,12 +101,12 @@ export function makeDeepContent(
  */
 export function makeWideContentWithEndValue(
 	numberOfNodes: number,
-	endLeafValue: number,
+	endLeafValue?: number,
 ): TreeContent<typeof wideSchema.rootFieldSchema> {
 	// Implicit type conversion is needed here to make this compile.
 	const initialTree = makeJsWideTreeWithEndValue(numberOfNodes, endLeafValue);
 	return {
-		initialTree: typedJsonCursor(initialTree),
+		initialTree: cursorFromInsertable(WideRoot, initialTree),
 		schema: wideSchema,
 	};
 }
@@ -114,13 +120,13 @@ export function makeWideContentWithEndValue(
 export function makeJsWideTreeWithEndValue(
 	numberOfNodes: number,
 	endLeafValue?: number,
-): TypedJsonCompatible & JSWideTree {
+): JSWideTree {
 	const numbers = [];
 	for (let index = 0; index < numberOfNodes - 1; index++) {
 		numbers.push(index);
 	}
 	numbers.push(endLeafValue ?? numberOfNodes - 1);
-	return { [typedJsonCursor.type]: wideRootSchema, foo: numbers };
+	return numbers;
 }
 
 export function readDeepTreeAsJSObject(tree: JSDeepTree): { depth: number; value: number } {
@@ -138,11 +144,12 @@ export function readDeepTreeAsJSObject(tree: JSDeepTree): { depth: number; value
 	return { depth, value };
 }
 
-export function readWideTreeAsJSObject(tree: JSWideTree): { nodesCount: number; sum: number } {
+export function readWideTreeAsJSObject(nodes: JSWideTree): {
+	nodesCount: number;
+	sum: number;
+} {
 	let sum = 0;
 
-	const nodes = tree.foo;
-	assert(nodes !== undefined);
 	for (const node of nodes) {
 		sum += node;
 	}
@@ -218,7 +225,7 @@ export function wideLeafPath(index: number): UpPath {
 			parentField: rootFieldKey,
 			parentIndex: 0,
 		},
-		parentField: localFieldKey,
+		parentField: EmptyKey,
 		parentIndex: index,
 	};
 	return path;
@@ -231,7 +238,7 @@ export function readWideFlexTree(tree: FlexTreeView<typeof wideSchema.rootFieldS
 	let sum = 0;
 	let nodesCount = 0;
 	const root = tree.flexTree;
-	const field = root.content.foo;
+	const field = root.content[""];
 	assert(field.length !== 0);
 	for (const currentNode of field) {
 		sum += currentNode;
