@@ -11,7 +11,7 @@ import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import { type Revertible, rootFieldKey } from "../../../core/index.js";
-import { type DownPath, jsonableTreeFromForest } from "../../../feature-libraries/index.js";
+import type { DownPath } from "../../../feature-libraries/index.js";
 import {
 	Tree,
 	type ITreeCheckoutFork,
@@ -35,6 +35,8 @@ import {
 	FuzzStringNode,
 	FuzzNumberNode,
 	FuzzHandleNode,
+	type SequenceChildren,
+	nodeSchemaFromTreeSchema,
 } from "./fuzzUtils.js";
 
 import {
@@ -146,6 +148,8 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
 	const leafNodeSchemas = generateLeafNodeSchemas(nodeTypes);
 	const newSchema = createTreeViewSchema(leafNodeSchemas);
 
+	// Because we need the view for a schema change, and we can only have one view at a time,
+	// we must dispose of the client's view early.
 	const view = viewFromState(state, state.client);
 	view.dispose();
 	state.transactionViews?.delete(state.client.channel);
@@ -161,19 +165,20 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
  * TODO: Maybe take in a schema aware strongly typed Tree node or field.
  */
 export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
-	assert(Tree.is(fieldEdit.field, tree.currentSchema));
+	const parentNode = fieldEdit.parentNodePath
+		? navigateToNode(tree, fieldEdit.parentNodePath) ?? tree.root
+		: tree.root;
+	assert(Tree.is(parentNode, tree.currentSchema));
 
-	const testTree = jsonableTreeFromForest(tree.checkout.forest);
 	switch (fieldEdit.change.type) {
 		case "sequence":
-			applySequenceFieldEdit(tree, fieldEdit.field, fieldEdit.change.edit);
+			applySequenceFieldEdit(tree, parentNode, fieldEdit.change.edit);
 			break;
 		case "required":
-			applyRequiredFieldEdit(tree, fieldEdit.field, fieldEdit.change.edit);
+			applyRequiredFieldEdit(tree, parentNode, fieldEdit.change.edit);
 			break;
 		case "optional":
-			assert(Tree.is(fieldEdit.field, tree.currentSchema));
-			applyOptionalFieldEdit(tree, fieldEdit.field, fieldEdit.change.edit);
+			applyOptionalFieldEdit(tree, parentNode, fieldEdit.change.edit);
 			break;
 		default:
 			break;
@@ -201,27 +206,24 @@ function applySequenceFieldEdit(
 			break;
 		}
 		case "intraFieldMove": {
-			const l = parentNode.sequenceChildren.length;
-
 			parentNode.sequenceChildren.moveRangeToIndex(
 				change.dstIndex,
 				change.range.first,
 				change.range.last + 1,
 			);
-			const test = jsonableTreeFromForest(tree.checkout.forest);
 			break;
 		}
 		case "crossFieldMove": {
-			const dstField = change.dstField.sequenceChildren;
-			// assert(dstField.is(tree.currentSchema.objectNodeFieldsObject.sequenceChildren));
-
-			dstField.moveRangeToIndex(
+			const dstParentNode = change.dstField
+				? navigateToNode(tree, change.dstField)
+				: tree.root;
+			assert(Tree.is(dstParentNode, tree.currentSchema));
+			dstParentNode.sequenceChildren.moveRangeToIndex(
 				change.dstIndex,
 				change.range.first,
 				change.range.last + 1,
 				parentNode.sequenceChildren,
 			);
-			const test = jsonableTreeFromForest(tree.checkout.forest);
 
 			break;
 		}
@@ -278,9 +280,7 @@ export function applyTransactionBoundary(
 			new TreeViewConfiguration({ schema: treeSchema }),
 		);
 		view = treeView as FuzzTransactionView;
-		const nodeSchema = Array.from(treeSchema.allowedTypeSet).find(
-			(treeNodeSchema) => treeNodeSchema.identifier === "treeFuzz.node",
-		) as typeof FuzzNode | undefined;
+		const nodeSchema = nodeSchemaFromTreeSchema(treeSchema);
 		view.currentSchema = nodeSchema ?? assert.fail("nodeSchema should not be undefined");
 		state.transactionViews.set(state.client.channel, view);
 	}
@@ -334,7 +334,9 @@ export function applyConstraint(state: FuzzTestState, constraint: Constraint) {
 	const tree = viewFromState(state);
 	switch (constraint.content.type) {
 		case "nodeConstraint": {
-			const constraintNode = constraint.content.selectedNode;
+			const constraintNode = constraint.content.nodePath
+				? navigateToNode(tree, constraint.content.nodePath)
+				: tree.root;
 
 			if (constraintNode !== undefined) {
 				tree.checkout.editor.addNodeExistsConstraint(
@@ -383,19 +385,19 @@ function navigateToNode(tree: FuzzView, path: DownPath): TreeNode {
 		switch (pathStep.field) {
 			case "rootFieldKey":
 				break;
+			case "":
+				assert(pathStep.index !== undefined);
+				currentNode = (currentNode as SequenceChildren).at(pathStep.index) as TreeNode;
+				break;
 			case "sequenceChildren": {
 				const sequenceChildren =
 					(currentNode as FuzzNode).sequenceChildren ??
 					fail(`Unexpected field type: ${pathStep.field}`);
 
-				assert(pathStep.index !== undefined);
-				currentNode =
-					(sequenceChildren.at(pathStep.index) as TreeNode) ?? fail("Index out of bounds.");
-				if (!Tree.is(currentNode, tree.currentSchema)) {
-					return sequenceChildren;
-				}
+				currentNode = sequenceChildren;
 				break;
 			}
+
 			case "optionalChild": {
 				const optionalChild =
 					(currentNode as FuzzNode).optionalChild ??
@@ -437,7 +439,6 @@ function generateFuzzLeafNode(node: GeneratedFuzzNode, tree: TreeNode) {
 			return new FuzzNumberNode({ value: node.value as number });
 		case GeneratedFuzzValueType.Handle:
 			return new FuzzHandleNode({ value: node.value as IFluidHandle });
-		// return new FuzzNumberNode({ value: 1 });
 		case GeneratedFuzzValueType.NodeObject: {
 			const nodeObjectSchema = getNodeSchemaForNodeType(tree, "treeFuzz.node");
 			return new nodeObjectSchema({

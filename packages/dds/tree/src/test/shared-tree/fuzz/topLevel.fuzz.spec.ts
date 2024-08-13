@@ -40,7 +40,7 @@ const baseOptions: Partial<DDSFuzzSuiteOptions> = {
  */
 describe("Fuzz - Top-Level", () => {
 	const runsPerBatch = 50;
-	const opsPerRun = 3;
+	const opsPerRun = 20;
 	// TODO: Enable other types of ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 		set: 3,
@@ -52,7 +52,7 @@ describe("Fuzz - Top-Level", () => {
 		start: 1,
 		commit: 1,
 		abort: 1,
-		fieldSelection: { optional: 0, required: 1, sequence: 3, recurse: 3 },
+		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
 		schema: 0,
 		nodeConstraint: 1,
 	};
@@ -80,7 +80,7 @@ describe("Fuzz - Top-Level", () => {
 			saveFailures: false,
 			clientJoinOptions: {
 				clientAddProbability: 0,
-				maxNumberOfClients: 3,
+				maxNumberOfClients: 4,
 			},
 			// AB#7162: enabling rehydrate in these tests hits 0x744 and 0x79d. Disabling rehydrate for now
 			// and using the default number of ops before attach.

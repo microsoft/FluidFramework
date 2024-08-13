@@ -42,25 +42,6 @@ interface AnchorFuzzTestState extends FuzzTestState {
 	anchors?: Map<Anchor, [UpPath, Value]>[];
 }
 
-// const config = {
-// 	schema: initialFuzzSchema,
-// 	// Setting the tree to have an initial value is more interesting for this targeted test than if it's empty:
-// 	// returning to an empty state is arguably "easier" than returning to a non-empty state after some undos.
-// 	get initialTree() {
-// 		return typedJsonCursor({
-// 			[typedJsonCursor.type]: fuzzNode,
-// 			sequenceChildren: [1, 2, 3],
-// 			requiredChild: {
-// 				[typedJsonCursor.type]: fuzzNode,
-// 				requiredChild: 0,
-// 				sequenceChildren: [4, 5, 6],
-// 			},
-// 		});
-// 	},
-// } satisfies TreeContent;
-
-// const initialTreeJson = [jsonableTreeFromCursor(config.initialTree)];
-
 const initialTreeState: NodeBuilderData<typeof FuzzNode> = {
 	sequenceChildren: [{ stringValue: "A" }, { stringValue: "B" }, { stringValue: "C" }],
 	requiredChild: {
@@ -194,8 +175,7 @@ describe("Fuzz - anchor stability", () => {
 			}
 			initialState.anchors = [];
 			for (const client of initialState.clients) {
-				const view = viewFromState(initialState, client, initialTreeState)
-					.checkout as RevertibleSharedTreeView;
+				const view = viewFromState(initialState, client).checkout as RevertibleSharedTreeView;
 				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;

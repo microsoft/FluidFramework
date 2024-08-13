@@ -6,7 +6,6 @@
 import type { FieldKey } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { FuzzNode } from "./fuzzUtils.js";
 
 export type Operation = TreeOperation | Synchronize;
 
@@ -30,7 +29,7 @@ export interface Constraint {
 export interface NodeConstraint {
 	type: "nodeConstraint";
 	/** Undefined when it is the parent of a detached field. */
-	selectedNode: FuzzNode;
+	nodePath: DownPath | undefined;
 }
 export interface TransactionBoundary {
 	type: "transactionBoundary";
@@ -50,7 +49,7 @@ export interface SchemaChange {
 export interface FieldEdit {
 	type: "fieldEdit";
 	/** The field being edited */
-	field: FuzzNode;
+	parentNodePath: DownPath | undefined;
 	/** The edit performed on the field */
 	change: SequenceFieldEdit | RequiredFieldEdit | OptionalFieldEdit;
 }
@@ -139,7 +138,6 @@ export interface Move {
 
 export interface IntraFieldMove extends Move {
 	type: "intraFieldMove";
-	field: FuzzNode;
 }
 
 export interface CrossFieldMove extends Move {
@@ -148,7 +146,7 @@ export interface CrossFieldMove extends Move {
 	 * The field to move the content to.
 	 * May be the same as the source field.
 	 */
-	dstField: FuzzNode;
+	dstField: DownPath | undefined;
 }
 
 export interface SchemaOp {

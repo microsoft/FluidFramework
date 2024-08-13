@@ -16,12 +16,11 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 import type { Client, DDSFuzzTestState, DDSRandom } from "@fluid-private/test-dds-utils";
 
-import {
-	type TreeStoredSchemaRepository,
-	type FieldKey,
-	type FieldUpPath,
-	type UpPath,
-	rootFieldKey,
+import type {
+	TreeStoredSchemaRepository,
+	FieldKey,
+	FieldUpPath,
+	UpPath,
 } from "../../../core/index.js";
 import {
 	type DownPath,
@@ -35,7 +34,7 @@ import {
 	type SharedTree,
 	type SharedTreeFactory,
 } from "../../../shared-tree/index.js";
-import { brand, fail, getOrCreate, makeArray } from "../../../util/index.js";
+import { fail, getOrCreate, makeArray } from "../../../util/index.js";
 
 import {
 	type FuzzNode,
@@ -43,6 +42,7 @@ import {
 	type FuzzNodeSchema,
 	type fuzzFieldSchema,
 	populatedInitialState,
+	nodeSchemaFromTreeSchema,
 } from "./fuzzUtils.js";
 import {
 	type Insert,
@@ -71,11 +71,13 @@ import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizi
 // eslint-disable-next-line import/no-internal-modules
 import { TreeViewConfiguration } from "../../../simple-tree/tree.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toFlexTreeNode, type TreeNode } from "../../../simple-tree/types.js";
+import type { TreeNode } from "../../../simple-tree/types.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SchemaFactory } from "../../../simple-tree/schemaFactory.js";
 import type { NodeBuilderData } from "../../../internalTypes.js";
+// eslint-disable-next-line import/no-internal-modules
 import { tryGetSchema } from "../../../simple-tree/treeNodeApi.js";
+// eslint-disable-next-line import/no-internal-modules
 import { getOrCreateInnerNode } from "../../../simple-tree/proxyBinding.js";
 
 export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
@@ -139,21 +141,19 @@ export function viewFromState(
 			});
 
 			const treeView = tree.viewWith(config);
-			// treeView.events.on("schemaChanged", () => {
-			// 	if (!treeView.compatibility.canView) {
-			// 		treeView.dispose();
-			// 		state.clientStates?.delete(client.channel);
-			// 	}
-			// });
+			treeView.events.on("schemaChanged", () => {
+				if (!treeView.compatibility.canView) {
+					treeView.dispose();
+					state.clientStates?.delete(client.channel);
+				}
+			});
 
 			assert(treeView.compatibility.isEquivalent);
 			const fuzzView = treeView as FuzzView;
 			assert.equal(fuzzView.currentSchema, undefined);
-			const nodeSchema = Array.from(treeSchema.allowedTypeSet).find(
-				(treeNodeSchema) => treeNodeSchema.identifier === "treeFuzz.node",
-			) as typeof FuzzNode | undefined;
+			const nodeSchema = nodeSchemaFromTreeSchema(treeSchema);
+
 			fuzzView.currentSchema = nodeSchema ?? assert.fail("nodeSchema should not be undefined");
-			const testTree = jsonableTreeFromForest(fuzzView.checkout.forest);
 			assert(Tree.is(fuzzView.root, fuzzView.currentSchema));
 			return fuzzView;
 		}) as unknown as FuzzView);
@@ -201,11 +201,6 @@ export function simpleSchemaFromStoredSchema(storedSchema: TreeStoredSchemaRepos
 	return createTreeViewSchema(fuzzNodeSchemas);
 }
 
-function isEmptyStoredSchema(tree: SharedTree): boolean {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const rootFieldSchemaData = (tree.storedSchema as any).rootFieldSchemaData;
-	return rootFieldSchemaData.types.size === 0;
-}
 /**
  * When performing an operation, a random field must be selected. Rather than enumerate all fields of the tree, this is
  * performed recursively starting at the root field.
@@ -393,7 +388,6 @@ export const makeTreeEditGenerator = (
 				return {
 					type: "intraFieldMove",
 					range: chooseRange(random, field.sequenceChildren.length),
-					field,
 					dstIndex: random.integer(0, field.sequenceChildren.length),
 				};
 			},
@@ -415,7 +409,7 @@ export const makeTreeEditGenerator = (
 				return {
 					type: "crossFieldMove",
 					range: chooseRange(state.random, srcField.length),
-					dstField,
+					dstField: maybeDownPathFromNode(dstField),
 					dstIndex: state.random.integer(0, dstField.sequenceChildren.length),
 				};
 			},
@@ -511,11 +505,13 @@ export const makeTreeEditGenerator = (
 		const check = typeof fieldInfo.parentFuzzNode;
 		assert(change !== "no-valid-selections", "No valid field edit found");
 		assert(tryGetSchema(fieldInfo.parentFuzzNode) !== undefined);
+		const downPath = maybeDownPathFromNode(fieldInfo.parentFuzzNode);
+		const jsonableTree = jsonableTreeFromForest(state.client.channel.checkout.forest);
 		return {
 			type: "treeEdit",
 			edit: {
 				type: "fieldEdit",
-				field: fieldInfo.parentFuzzNode,
+				parentNodePath: maybeDownPathFromNode(fieldInfo.parentFuzzNode),
 				change,
 			},
 		};
@@ -596,7 +592,7 @@ export const makeConstraintEditGenerator = (
 					type: "constraint",
 					content: {
 						type: "nodeConstraint",
-						selectedNode: selectedField.parentFuzzNode,
+						nodePath: maybeDownPathFromNode(selectedField.parentFuzzNode),
 					},
 				};
 			},
@@ -683,59 +679,24 @@ export interface FieldPathWithCount {
 	count: number;
 }
 
-// function isField1UnderField2(field1: TreeNode, field2: TreeNode): boolean {
-// 	let parentField = Tree.parent(field1);
-// 	if (parentField !== undefined) {
-// 		parentField = Tree.parent(parentField);
-// 	}
-// 	while (parentField !== undefined) {
-// 		if (
-// 			Tree.key(parentField) === Tree.key(field2) &&
-// 			Tree.parent(parentField) === Tree.parent(field2)
-// 		) {
-// 			return true;
-// 		}
-// 		parentField = Tree.parent(parentField);
-// 		if (parentField !== undefined) {
-// 			parentField = Tree.parent(parentField);
-// 		}
-// 	}
-// 	return false;
-// }
-
 function upPathFromNode(node: TreeNode): UpPath {
-	const parentField = Tree.parent(node);
-
-	return {
-		parent: parentField ? upPathFromNode(parentField) : undefined,
-		parentField: parentField
-			? typeof Tree.key(parentField) === "number"
-				? brand("SequenceChildren")
-				: (Tree.key(parentField) as string as FieldKey)
-			: rootFieldKey,
-		parentIndex: parentField
-			? typeof Tree.key(parentField) === "number"
-				? (Tree.key(parentField) as number)
-				: 0
-			: 0,
-	};
-}
-
-function upPathFromNode2(node: TreeNode): UpPath {
 	const flexNode = getOrCreateInnerNode(node);
 	const anchorNode = flexNode.anchorNode;
 	return anchorNode;
 }
 
 function downPathFromNode(node: TreeNode): DownPath {
-	return toDownPath(upPathFromNode2(node));
+	return toDownPath(upPathFromNode(node));
 }
 
-function maybeDownPathFromNode(node: TreeNode | undefined): DownPath | undefined {
+export function maybeDownPathFromNode(node: TreeNode | undefined): DownPath | undefined {
 	return node === undefined ? undefined : downPathFromNode(node);
 }
 
-function fieldDownPathFromField(parentNode: TreeNode, key: FieldKey): FieldDownPath {
+export function fieldDownPathFromParentNode(
+	parentNode: TreeNode,
+	key: FieldKey,
+): FieldDownPath {
 	return {
 		parent: maybeDownPathFromNode(parentNode),
 		key,
@@ -800,11 +761,6 @@ function selectField(
 				childNodes.push(child);
 			}
 		});
-		// for (const child of node.sequenceChildren) {
-		// 	if (Tree.is(child, nodeSchema)) {
-		// 		childNodes.push(child);
-		// 	}
-		// }
 		state.random.shuffle(childNodes);
 		for (const child of childNodes) {
 			const childResult = selectField(child, random, weights, filter, nodeSchema);
@@ -821,72 +777,10 @@ function selectField(
 		[sequence, weights.sequence, () => filter(sequence)],
 		[recurse, weights.recurse],
 	]);
-	if (filter(sequence) === false) {
-		const a = 1;
-	}
 
 	const result = generator({ random });
 	assert(result !== done, "createWeightedGenerators should never return done");
 	return result;
-}
-
-function selectRandomField(
-	node: FuzzNode,
-	nodes: FuzzNode[],
-	state: FuzzView,
-	random: IRandom,
-	filter: FieldFilter = () => true,
-	weights: Omit<FieldSelectionWeights, "filter">,
-): FuzzField | "no-valid-selections" {
-	if (!Tree.is(node, state.currentSchema)) {
-		return "no-valid-selections";
-	}
-	nodes.push(node);
-	if (Tree.is(node.optionalChild, state.currentSchema)) {
-		selectRandomField(node.optionalChild, nodes, state, random, filter, weights);
-	}
-	if (Tree.is(node.requiredChild, state.currentSchema)) {
-		selectRandomField(node.requiredChild, nodes, state, random, filter, weights);
-	}
-	for (const childNode of node.sequenceChildren) {
-		if (Tree.is(childNode, state.currentSchema)) {
-			selectRandomField(childNode, nodes, state, random, filter, weights);
-		}
-	}
-	if (nodes.length === 0) {
-		return "no-valid-selections";
-	} else {
-		const selectedNode = random.pick(nodes);
-		const optional: FuzzField = {
-			type: "optional",
-			parentFuzzNode: selectedNode,
-		} as const;
-
-		const value: FuzzField = {
-			type: "required",
-			parentFuzzNode: selectedNode,
-		} as const;
-
-		const sequence: FuzzField = {
-			type: "sequence",
-			parentFuzzNode: selectedNode,
-		} as const;
-
-		const testFilter = filter(sequence);
-		const generator = createWeightedGeneratorWithBailout<FuzzField, BaseFuzzTestState>([
-			[optional, weights.optional, () => filter(optional)],
-			[value, weights.required, () => filter(value)],
-			[sequence, weights.sequence, () => filter(sequence)],
-		]);
-
-		const result = generator({ random });
-		if (result === "no-valid-selections") {
-			const a = 1;
-			const d = filter(sequence);
-		}
-		assert(result !== done, "createWeightedGenerators should never return done");
-		return result;
-	}
 }
 
 function trySelectTreeField(
@@ -896,7 +790,6 @@ function trySelectTreeField(
 	filter: FieldFilter = () => true,
 ): FuzzField | "no-valid-fields" {
 	const editable = tree.root;
-	assert(editable !== undefined);
 	const nodeSchema = tree.currentSchema;
 	assert(Tree.is(editable, nodeSchema));
 	const options =

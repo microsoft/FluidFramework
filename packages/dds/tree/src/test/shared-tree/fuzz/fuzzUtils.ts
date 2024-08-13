@@ -40,6 +40,7 @@ import type {
 } from "../../../simple-tree/schemaFactoryRecursive.js";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeViewConfiguration } from "../../../simple-tree/tree.js";
+import type { FuzzTestState } from "./fuzzEditGenerators.js";
 
 const builder = new SchemaFactory("treeFuzz");
 export class GUIDNode extends builder.object("GuidNode", {
@@ -133,12 +134,28 @@ export function createTreeViewSchema(allowedTypes: TreeNodeSchema[]): typeof fuz
 	return node as unknown as typeof fuzzFieldSchema;
 }
 
+export function nodeSchemaFromTreeSchema(treeSchema: typeof fuzzFieldSchema) {
+	const nodeSchema = Array.from(treeSchema.allowedTypeSet).find(
+		(treeNodeSchema) => treeNodeSchema.identifier === "treeFuzz.node",
+	) as typeof FuzzNode | undefined;
+	return nodeSchema;
+}
+
 export const onCreate = (tree: SharedTree) => {
-	// tree.checkout.updateSchema(intoStoredSchema(toFlexSchema(initialFuzzSchema)));
 	const view = tree.viewWith(new TreeViewConfiguration({ schema: initialFuzzSchema }));
 	view.initialize(populatedInitialState);
 	view.dispose();
 };
+
+export function createOnCreate(
+	initialState: NodeBuilderData<typeof FuzzNode>,
+): (tree: SharedTree) => void {
+	return (tree: SharedTree) => {
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: initialFuzzSchema }));
+		view.initialize(initialState);
+		view.dispose();
+	};
+}
 
 /**
  * Asserts that each anchor in `anchors` points to a node in `view` holding the provided value.
@@ -237,3 +254,11 @@ export const populatedInitialState: NodeBuilderData<typeof FuzzNode> = {
 	requiredChild: { stringValue: "R" },
 	optionalChild: undefined,
 } as unknown as NodeBuilderData<typeof FuzzNode>;
+
+export function clearTreesAndReInitialize(
+	data: NodeBuilderData<typeof FuzzNode>,
+	state: FuzzTestState,
+) {
+	for (const client of state.clients) {
+	}
+}
