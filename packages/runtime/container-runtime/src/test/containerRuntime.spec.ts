@@ -18,7 +18,8 @@ import {
 	IConfigProviderBase,
 	IErrorBase,
 	IResponse,
-} from "@fluidframework/core-interfaces";
+	ISignalEnvelope,
+} from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
@@ -122,7 +123,7 @@ describe("Runtime", () => {
 	});
 
 	let submittedOps: any[] = [];
-	let submittedSignals: any[] = [];
+	let submittedSignals: ISignalEnvelope[] = [];
 	let opFakeSequenceNumber = 1;
 	let clock: SinonFakeTimers;
 
@@ -173,7 +174,7 @@ describe("Runtime", () => {
 				return opFakeSequenceNumber++;
 			},
 			submitSignalFn: (content: unknown, targetClientId?: string) => {
-				submittedSignals.push(content); // Note: this object shape is for testing only. Not representative of real signals.
+				submittedSignals.push(content as ISignalEnvelope); // Note: this object shape is for testing only. Not representative of real signals.
 			},
 			clientId: mockClientId,
 			connected: true,
@@ -2510,6 +2511,7 @@ describe("Runtime", () => {
 		describe("Signals", () => {
 			let containerRuntime: ContainerRuntime;
 			let logger: MockLogger;
+			const droppedSignals: ISignalEnvelope[] = [];
 			beforeEach(async () => {
 				logger = new MockLogger();
 				containerRuntime = await ContainerRuntime.loadRuntime({
@@ -2531,18 +2533,31 @@ describe("Runtime", () => {
 				}
 			}
 
-			function processSignals(signalSequenceNumber: number, numberOfSignals: number = 1) {
-				for (let i = 0; i < numberOfSignals; i++) {
+			function processSignals(numberOfSignals: number = 1) {
+				const signalsToProcess = submittedSignals.splice(0, numberOfSignals);
+				for (const signal of signalsToProcess) {
 					containerRuntime.processSignal(
 						{
 							clientId: containerRuntime.clientId as string,
-							content: {
-								clientSignalSequenceNumber: signalSequenceNumber + i,
-								contents: {
-									type: "TestSignalType",
-									content: "TestSignalContent",
-								},
-							},
+							content: signal,
+						},
+						true,
+					);
+				}
+			}
+
+			function dropSignals(numberOfSignals: number = 1) {
+				const signalsToDrop = submittedSignals.splice(0, numberOfSignals);
+				droppedSignals.push(...signalsToDrop);
+			}
+
+			function processDroppedSignals(numberOfSignals: number = 1) {
+				const signalsToProcess = droppedSignals.splice(0, numberOfSignals);
+				for (const signal of signalsToProcess) {
+					containerRuntime.processSignal(
+						{
+							clientId: containerRuntime.clientId as string,
+							content: signal,
 						},
 						true,
 					);
@@ -2552,8 +2567,6 @@ describe("Runtime", () => {
 			it("emits signal latency telemetry after 100 signals", async () => {
 				sendSignals(101);
 				processSignals(101);
-
-				assert.strictEqual(submittedSignals.length, 101);
 				logger.assertMatch(
 					[
 						{
@@ -2568,11 +2581,15 @@ describe("Runtime", () => {
 				// Send 3 signals
 				sendSignals(3);
 
-				// Drop second signal
-				processSignals(1);
-				processSignals(3);
+				// Process the first signal
+				processSignals();
 
-				assert.strictEqual(submittedSignals.length, 3);
+				// Drop the second signal
+				dropSignals();
+
+				// Process the third signal
+				processSignals();
+
 				logger.assertMatch(
 					[
 						{
@@ -2587,12 +2604,18 @@ describe("Runtime", () => {
 				// Send 3 signals
 				sendSignals(3);
 
-				// Process Signals out of order
-				processSignals(1);
-				processSignals(3);
-				processSignals(2);
+				// Process the first signal
+				processSignals();
 
-				assert.strictEqual(submittedSignals.length, 3);
+				// Temporarily lose the second signal
+				dropSignals();
+
+				// Process the third signal
+				processSignals();
+
+				// Process the "lost" second signal out of order
+				processDroppedSignals();
+
 				logger.assertMatch(
 					[
 						{
@@ -2608,7 +2631,6 @@ describe("Runtime", () => {
 				sendSignals(100);
 				processSignals(100);
 
-				assert.strictEqual(submittedSignals.length, 100);
 				logger.assertMatchNone(
 					[
 						{
