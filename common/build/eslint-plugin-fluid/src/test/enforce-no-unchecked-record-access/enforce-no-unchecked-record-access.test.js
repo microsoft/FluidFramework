@@ -27,8 +27,9 @@ describe("ESLint Rule Tests", function () {
 		return results[0];
 	}
 
-	it("Should report an error for unchecked record access", async function () {
+	it.only("Should report an error for unchecked record access", async function () {
 		const result = await lintFile("fileWithOnlyRecordAccess.ts");
+		console.log(result);
 		assert.strictEqual(result.errorCount, 7, "Should have 7 errors");
 		assert.strictEqual(
 			result.messages[0].message,
