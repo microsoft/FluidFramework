@@ -153,10 +153,6 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 			sharedCell1.set(3);
 			await provider.ensureSynchronized();
 
-			// Add delay as we were seeing that keys were not present in the attributor for r11s.
-			if (provider.driver.type !== "local") {
-				await delay(200);
-			}
 			assertAttributionMatches(sharedCell1, attributor, {
 				user: container2.audience.getMember(container1.clientId)?.user,
 			});
