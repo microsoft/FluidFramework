@@ -788,14 +788,20 @@ const sf = new SchemaFactory("com.fluidframework.json");
 export const NumberArray = sf.array("array", sf.number);
 export const StringArray = sf.array("array", sf.string);
 
+export const IdentifierSchema = sf.object("identifier-object", {
+	identifier: sf.identifier,
+});
+
 const jsonPrimitiveSchema = [sf.null, sf.boolean, sf.number, sf.string] as const;
 export const JsonObject = sf.mapRecursive("object", [
 	() => JsonObject,
 	() => JsonArray,
 	...jsonPrimitiveSchema,
 ]);
+
 export const JsonArray = sf.arrayRecursive("array", [
 	JsonObject,
+	IdentifierSchema,
 	() => JsonArray,
 	...jsonPrimitiveSchema,
 ]);
