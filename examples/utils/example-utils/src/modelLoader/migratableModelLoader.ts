@@ -68,7 +68,21 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 	private async getModelAndMigrationToolFromContainer(container: IContainer) {
 		const entryPoint =
 			(await container.getEntryPoint()) as IMigratableModelContainerRuntimeEntryPoint<ModelType>;
-		return entryPoint.getModelAndMigrationTool(container);
+		// If the user tries to use this model loader with an incompatible container runtime, we want to give them
+		// a comprehensible error message.  So distrust the type by default and do some basic type checking.
+		if (typeof entryPoint.getModelAndMigrationTool !== "function") {
+			throw new TypeError(
+				"Incompatible container runtime: doesn't provide getModelAndMigrationTool",
+			);
+		}
+		const modelAndMigrationTool = await entryPoint.getModelAndMigrationTool(container);
+		if (typeof modelAndMigrationTool.model !== "object") {
+			throw new TypeError("Incompatible container runtime: doesn't provide model");
+		}
+		if (typeof modelAndMigrationTool.migrationTool !== "object") {
+			throw new TypeError("Incompatible container runtime: doesn't provide migrationTool");
+		}
+		return modelAndMigrationTool;
 	}
 
 	// It would be preferable for attaching to look more like service.attach(model) rather than returning an attach
