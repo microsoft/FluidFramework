@@ -417,13 +417,19 @@ class EagerMapTreeField<T extends FlexAllowedTypes> implements MapTreeField {
 
 	public context: undefined;
 
-	// All edits to the field (i.e. mutations of the field's MapTrees) should be directed through this function.
-	// This function ensures that the parent MapTree has no empty fields (which is an invariant of `MapTree`) after the mutation.
-	protected edit(mutation: (mapTrees: ExclusiveMapTree[]) => void): void {
-		const mapTrees = this.parent.mapTree.fields.get(this.key) ?? [];
-		mutation(mapTrees);
-		if (mapTrees.length > 0) {
-			this.parent.mapTree.fields.set(this.key, mapTrees);
+	/**
+	 * Mutate this field.
+	 * @param edit - A function which receives the current `MapTree`s that comprise the contents of the field so that it may be mutated.
+	 * The function may mutate the array in place or return a new array.
+	 * If a new array is returned then it will be used as the new contents of the field, otherwise the original array will be continue to be used.
+	 * @remarks All edits to the field (i.e. mutations of the field's MapTrees) should be directed through this function.
+	 * This function ensures that the parent MapTree has no empty fields (which is an invariant of `MapTree`) after the mutation.
+	 */
+	protected edit(edit: (mapTrees: ExclusiveMapTree[]) => void | ExclusiveMapTree[]): void {
+		const oldMapTrees = this.parent.mapTree.fields.get(this.key) ?? [];
+		const newMapTrees = edit(oldMapTrees) ?? oldMapTrees;
+		if (newMapTrees.length > 0) {
+			this.parent.mapTree.fields.set(this.key, newMapTrees);
 		} else {
 			this.parent.mapTree.fields.delete(this.key);
 		}
@@ -490,7 +496,13 @@ class EagerMapTreeSequenceField<T extends FlexAllowedTypes>
 				nodeCache.get(c)?.adoptBy(this, index + i);
 			}
 			this.edit((mapTrees) => {
-				mapTrees.splice(index, 0, ...newContent);
+				if (newContent.length < 1000) {
+					// For "smallish arrays" (`1000` is not empirically derived), the `splice` function is appropriate...
+					mapTrees.splice(index, 0, ...newContent);
+				} else {
+					// ...but we avoid using `splice` + spread for very large input arrays since there is a limit on how many elements can be spread (too many will overflow the stack).
+					return mapTrees.slice(0, index).concat(newContent, mapTrees.slice(index));
+				}
 			});
 		},
 		remove: (index, count) => {

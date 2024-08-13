@@ -274,5 +274,24 @@ describe("MapTreeNodes", () => {
 			field.editor.remove(2, 1);
 			assert.deepEqual(values(), ["a", "b", "c", "d"]);
 		});
+
+		it("arrays with a large sequence of new content", () => {
+			// This exercises a special code path for inserting large arrays, since large arrays are treated differently to avoid overflow with `splice` + spread.
+			const mutableFieldNode = getOrCreateNode(fieldNodeSchema, {
+				...fieldNodeMapTree,
+				fields: new Map(),
+			});
+			const field = mutableFieldNode.getBoxed(EmptyKey);
+			const newContent: ExclusiveMapTree[] = [];
+			for (let i = 0; i < 1000000; i++) {
+				newContent.push({ ...mapChildMapTree, value: String(i) });
+			}
+			field.editor.insert(0, newContent);
+			assert.equal(field.length, newContent.length);
+			assert.deepEqual(
+				Array.from(field.boxedIterator(), (n) => n.value),
+				newContent.map((c) => c.value),
+			);
+		});
 	});
 });
