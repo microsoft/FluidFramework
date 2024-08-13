@@ -35,6 +35,22 @@ module.exports = {
 
 			const parentNode = node.parent;
 
+			if (
+				parentNode.type !== "VariableDeclarator" &&
+				parentNode.type !== "MemberExpression"
+			) {
+				return;
+			}
+
+			const fullName = getFullName(node);
+
+			if (parentNode.type === "VariableDeclarator" && !parentNode.id.typeAnnotation) {
+				return context.report({
+					node,
+					message: `Implicit typing for '${fullName}' from an index signature type is not allowed. Please provide an explicit type annotation or enable noUncheckedIndexedAccess`,
+				});
+			}
+
 			if (parentNode.type === "VariableDeclarator" && parentNode.id.typeAnnotation) {
 				const expectedType = parentNode.id.typeAnnotation.typeAnnotation;
 				const isStrictType =
@@ -42,19 +58,20 @@ module.exports = {
 						? !expectedType.types.some((type) => type.type === "TSUndefinedKeyword")
 						: true;
 
-				if (isStrictType) {
-					context.report({
-						node,
-						message:
-							"Unchecked property access on index signature type. The variable expects a non-optional type.",
-					});
+				if (!isStrictType) {
+					return;
 				}
+
+				return context.report({
+					node,
+					message: `'${fullName}' is possibly 'undefined'. The variable expects a non-optional type`,
+				});
 			}
 
 			if (parentNode.type === "MemberExpression" && parentNode.object === node) {
 				context.report({
 					node,
-					message: "Unchecked property access on index signature type.",
+					message: `'${fullName}' is possibly 'undefined'`,
 				});
 			}
 		}
@@ -131,4 +148,24 @@ function isDefined(node) {
 	}
 
 	return false;
+}
+
+function getFullName(node) {
+	let fullPath = "";
+	let currentNode = node;
+
+	while (currentNode && currentNode.type === "MemberExpression") {
+		const propertyPart = currentNode.computed
+			? `[${currentNode.property.name || currentNode.property.raw}]`
+			: `.${currentNode.property.name}`;
+
+		fullPath = propertyPart + fullPath;
+
+		if (currentNode.object && currentNode.object.type === "Identifier") {
+			fullPath = currentNode.object.name + fullPath;
+		}
+
+		currentNode = currentNode.object;
+	}
+	return fullPath;
 }

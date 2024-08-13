@@ -60,10 +60,10 @@ for (const [key, value] of Object.entries(indexedRecordOfStrings)) {
 
 const aExpectingString: string = indexedRecordOfStrings.a; // defect: Assigning index property 'a' to a strict string variable, but 'a' might not be present
 const aExpectingStringOrUndefined: string | undefined = indexedRecordOfStrings.a; // ok: Assigning index property 'a' to string or undefined variable, 'a' might not be present
-const aImplicitType = indexedRecordOfStrings.a; // ok: Assigning index property with inferred type
-aImplicitType.length; // defect: Accessing length of inferred type, 'a' might be undefined
-aImplicitType?.length; // ok: Using optional chaining to access length safely handles 'undefined'
-aImplicitType!.length; // ok: The author says they understand the question raised by check and acknowledge that they have other information expecting that it is actually defined or that they are okay with an exception being raise here if "a" is not present and defined
+const aImplicitType = indexedRecordOfStrings.a; // defect: Assigning index property with inferred type
+aImplicitType.length; // ok: This should be caught by tsc, not by this custom lint rule
+aImplicitType?.length; // ok: This should be caught by tsc, not by this custom lint rule
+aImplicitType!.length; // ok: This should be caught by tsc, not by this custom lint rule
 
 interface NonNullableProps {
 	definitelyString: string;

@@ -29,8 +29,7 @@ describe("ESLint Rule Tests", function () {
 
 	it.only("Should report an error for unchecked record access", async function () {
 		const result = await lintFile("fileWithOnlyRecordAccess.ts");
-		console.log(result);
-		assert.strictEqual(result.errorCount, 6, "Should have 6 errors");
+		assert.strictEqual(result.errorCount, 7, "Should have 7 errors");
 		assert.strictEqual(
 			result.messages[0].message,
 			"'nestedObj.nested.a' is possibly 'undefined'",
@@ -52,10 +51,13 @@ describe("ESLint Rule Tests", function () {
 			"'indexedRecordOfStrings[b]' is possibly 'undefined'",
 		);
 		assert.strictEqual(
-			result.messages[6].message,
-			"Unchecked property access on index signature type. The variable expects a non-optional type.",
+			result.messages[5].message,
+			"'indexedRecordOfStrings.a' is possibly 'undefined'. The variable expects a non-optional type",
 		);
-		assert.strictEqual(result.messages[7].message, "'aImplicitType' is possibly 'undefined'");
+		assert.strictEqual(
+			result.messages[6].message,
+			"Implicit typing for 'indexedRecordOfStrings.a' from an index signature type is not allowed. Please provide an explicit type annotation or enable noUncheckedIndexedAccess",
+		);
 	});
 
 	it("Should not report an error for valid array access", async function () {
