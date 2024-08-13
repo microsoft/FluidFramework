@@ -133,6 +133,128 @@ describeHydration(
 				});
 			});
 		});
+
+		describe("supports setting", () => {
+			describe("primitives", () => {
+				function check<const TNode>(
+					schema: TreeNodeSchema<string, NodeKind, TNode>,
+					before: TNode,
+					after: TNode,
+				) {
+					describe(`required ${typeof before} `, () => {
+						it(`(${pretty(before)} -> ${pretty(after)})`, () => {
+							const Root = schemaFactory.object("", { value: schema });
+							const root = init(Root, { value: before });
+							assert.equal(root.value, before);
+							root.value = after;
+							assert.equal(root.value, after);
+						});
+					});
+
+					describe(`optional ${typeof before}`, () => {
+						it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
+							const root = init(
+								schemaFactory.object("", { value: schemaFactory.optional(schema) }),
+								{ value: undefined },
+							);
+							assert.equal(root.value, undefined);
+							root.value = before;
+							assert.equal(root.value, before);
+							root.value = after;
+							assert.equal(root.value, after);
+						});
+					});
+				}
+
+				check(schemaFactory.boolean, false, true);
+				check(schemaFactory.number, 0, 1);
+				check(schemaFactory.string, "", "!");
+			});
+
+			describe("required object", () => {
+				const Child = schemaFactory.object("child", {
+					objId: schemaFactory.number,
+				});
+				const Schema = schemaFactory.object("parent", {
+					child: Child,
+				});
+
+				const before = { objId: 0 };
+				const after = { objId: 1 };
+
+				it(`(${pretty(before)} -> ${pretty(after)})`, () => {
+					const root = init(Schema, { child: before });
+					assert.equal(root.child.objId, 0);
+					root.child = new Child(after);
+					assert.equal(root.child.objId, 1);
+				});
+			});
+
+			describe("optional object", () => {
+				const Child = schemaFactory.object("child", {
+					objId: schemaFactory.number,
+				});
+				const Schema = schemaFactory.object("parent", {
+					child: schemaFactory.optional(Child),
+				});
+
+				const before = { objId: 0 };
+				const after = { objId: 1 };
+
+				it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
+					const root = init(Schema, { child: undefined });
+					assert.equal(root.child, undefined);
+					root.child = new Child(before);
+					assert.equal(root.child.objId, 0);
+					root.child = new Child(after);
+					assert.equal(root.child.objId, 1);
+				});
+			});
+
+			describe.skip("required list", () => {
+				// const _ = new SchemaFactory("test");
+				// const list = _.fieldNode("List<string>", _.sequence(_.string));
+				// const parent = _.struct("parent", {
+				// 	list,
+				// });
+				// const schema = _.intoSchema(parent);
+				// const before: string[] = [];
+				// const after = ["A"];
+				// it(`(${pretty(before)} -> ${pretty(after)})`, () => {
+				// 	const root = getRoot(schema, { list: before });
+				// 	assert.deepEqual(root.list, before);
+				// 	root.list = after;
+				// 	assert.deepEqual(root.list, after);
+				// });
+			});
+
+			describe.skip("optional list", () => {
+				// const _ = new SchemaFactory("test");
+				// const list = _.fieldNode("List<string>", _.sequence(_.string));
+				// const parent = _.struct("parent", {
+				// 	list: _.optional(list),
+				// });
+				// const schema = _.intoSchema(parent);
+				// const before: string[] = [];
+				// const after = ["A"];
+				// it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
+				// 	const root = getRoot(schema, { list: undefined });
+				// 	assert.equal(root.list, undefined);
+				// 	root.list = before;
+				// 	assert.deepEqual(root.list, before);
+				// 	root.list = after;
+				// 	assert.deepEqual(root.list, after);
+				// });
+			});
+
+			describe.skip("required map", () => {
+				// TODO
+			});
+
+			describe.skip("optional map", () => {
+				// TODO
+			});
+		});
 	},
 	() => {
 		describe("shadowing", () => {
@@ -192,128 +314,6 @@ describeHydration(
 					() => new Schema({ foo: undefined }),
 					(e: Error) => validateAssertionError(e, /this shadowing will not work/),
 				);
-			});
-		});
-
-		describe("supports setting", () => {
-			describe("primitives", () => {
-				function check<const TNode>(
-					schema: TreeNodeSchema<string, NodeKind, TNode>,
-					before: TNode,
-					after: TNode,
-				) {
-					describe(`required ${typeof before} `, () => {
-						it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-							const Root = schemaFactory.object("", { value: schema });
-							const root = hydrate(Root, { value: before });
-							assert.equal(root.value, before);
-							root.value = after;
-							assert.equal(root.value, after);
-						});
-					});
-
-					describe(`optional ${typeof before}`, () => {
-						it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-							const root = hydrate(
-								schemaFactory.object("", { value: schemaFactory.optional(schema) }),
-								{ value: undefined },
-							);
-							assert.equal(root.value, undefined);
-							root.value = before;
-							assert.equal(root.value, before);
-							root.value = after;
-							assert.equal(root.value, after);
-						});
-					});
-				}
-
-				check(schemaFactory.boolean, false, true);
-				check(schemaFactory.number, 0, 1);
-				check(schemaFactory.string, "", "!");
-			});
-
-			describe("required object", () => {
-				const Child = schemaFactory.object("child", {
-					objId: schemaFactory.number,
-				});
-				const Schema = schemaFactory.object("parent", {
-					child: Child,
-				});
-
-				const before = { objId: 0 };
-				const after = { objId: 1 };
-
-				it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-					const root = hydrate(Schema, { child: before });
-					assert.equal(root.child.objId, 0);
-					root.child = new Child(after);
-					assert.equal(root.child.objId, 1);
-				});
-			});
-
-			describe("optional object", () => {
-				const Child = schemaFactory.object("child", {
-					objId: schemaFactory.number,
-				});
-				const Schema = schemaFactory.object("parent", {
-					child: schemaFactory.optional(Child),
-				});
-
-				const before = { objId: 0 };
-				const after = { objId: 1 };
-
-				it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-					const root = hydrate(Schema, { child: undefined });
-					assert.equal(root.child, undefined);
-					root.child = new Child(before);
-					assert.equal(root.child.objId, 0);
-					root.child = new Child(after);
-					assert.equal(root.child.objId, 1);
-				});
-			});
-
-			describe.skip("required list", () => {
-				// const _ = new SchemaFactory("test");
-				// const list = _.fieldNode("List<string>", _.sequence(_.string));
-				// const parent = _.struct("parent", {
-				// 	list,
-				// });
-				// const schema = _.intoSchema(parent);
-				// const before: string[] = [];
-				// const after = ["A"];
-				// it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-				// 	const root = getRoot(schema, { list: before });
-				// 	assert.deepEqual(root.list, before);
-				// 	root.list = after;
-				// 	assert.deepEqual(root.list, after);
-				// });
-			});
-
-			describe.skip("optional list", () => {
-				// const _ = new SchemaFactory("test");
-				// const list = _.fieldNode("List<string>", _.sequence(_.string));
-				// const parent = _.struct("parent", {
-				// 	list: _.optional(list),
-				// });
-				// const schema = _.intoSchema(parent);
-				// const before: string[] = [];
-				// const after = ["A"];
-				// it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-				// 	const root = getRoot(schema, { list: undefined });
-				// 	assert.equal(root.list, undefined);
-				// 	root.list = before;
-				// 	assert.deepEqual(root.list, before);
-				// 	root.list = after;
-				// 	assert.deepEqual(root.list, after);
-				// });
-			});
-
-			describe.skip("required map", () => {
-				// TODO
-			});
-
-			describe.skip("optional map", () => {
-				// TODO
 			});
 		});
 

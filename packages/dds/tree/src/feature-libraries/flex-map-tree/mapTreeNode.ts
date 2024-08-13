@@ -31,7 +31,6 @@ import {
 	type FlexTreeTypedNodeUnion,
 	type FlexTreeUnboxField,
 	type FlexTreeUnboxNodeUnion,
-	type FlexibleFieldContent,
 	flexTreeMarker,
 	indexForAt,
 } from "../flex-tree/index.js";
@@ -50,12 +49,7 @@ import {
 } from "../typed-schema/index.js";
 import { type FlexImplicitAllowedTypes, normalizeAllowedTypes } from "../schemaBuilderBase.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
-import {
-	FieldKinds,
-	type OptionalFieldEditBuilder,
-	type SequenceFieldEditBuilder,
-	type ValueFieldEditBuilder,
-} from "../default-schema/index.js";
+import { FieldKinds, type SequenceFieldEditBuilder } from "../default-schema/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 // #region Nodes
@@ -104,7 +98,7 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 		public readonly schema: TSchema,
 		/** The underlying {@link MapTree} that this `MapTreeNode` reads its data from */
 		public readonly mapTree: ExclusiveMapTree,
-		private location: LocationInField | undefined,
+		private location = unparentedLocation,
 	) {
 		assert(!nodeCache.has(mapTree), 0x98b /* A node already exists for the given MapTree */);
 		nodeCache.set(mapTree, this);
@@ -125,28 +119,35 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 
 	/**
 	 * Set this node's parentage (see {@link FlexTreeNode.parentField}).
-	 * @remarks A node may only be adopted to a new parent one time, and only if it was not constructed with a parent.
+	 * @remarks The node may be given a parent if it has none, or may have its parent removed (by passing `undefined`).
+	 * However, a node with a parent may not be directly re-assigned a different parent.
+	 * That likely indicates either an attempted multi-parenting or an attempt to "move" the node, neither of which are supported.
+	 * Removing a node's parent twice in a row is also not supported, as it likely indicates a bug.
 	 */
-	public adoptBy(parent: MapTreeField, index: number): void {
-		assert(
-			this.location === undefined,
-			0x98c /* Node may not be adopted if it already has a parent */,
-		);
-		this.location = { parent, index };
+	public adoptBy(parent: undefined): void;
+	public adoptBy(parent: MapTreeField, index: number): void;
+	public adoptBy(parent: MapTreeField | undefined, index?: number): void {
+		if (parent !== undefined) {
+			assert(
+				this.location === unparentedLocation,
+				0x98c /* Node may not be adopted if it already has a parent */,
+			);
+			assert(index !== undefined, "Expected index");
+			this.location = { parent, index };
+		} else {
+			assert(
+				this.location !== unparentedLocation,
+				"Node may not be un-adopted if it does not have a parent",
+			);
+			this.location = unparentedLocation;
+		}
 	}
 
 	/**
 	 * The field this tree is in, and the index within that field.
-	 * @remarks If this node is unparented, this method will return the special {@link rootMapTreeField} as the parent.
+	 * @remarks If this node is unparented, this method will return the special {@link unparentedLocation} as the parent.
 	 */
 	public get parentField(): LocationInField {
-		if (this.location === undefined) {
-			return {
-				parent: rootMapTreeField,
-				index: -1,
-			};
-		}
-
 		return this.location;
 	}
 
@@ -236,22 +237,6 @@ export class EagerMapTreeMapNode<TSchema extends FlexMapNodeSchema>
 	extends EagerMapTreeNode<TSchema>
 	implements FlexTreeMapNode<TSchema>
 {
-	public get size(): number {
-		return this.mapTree.fields.size;
-	}
-
-	public has(key: string): boolean {
-		return this.tryGetField(brand(key)) !== undefined;
-	}
-
-	public get(key: string): FlexTreeUnboxField<TSchema["info"]> {
-		const field = this.tryGetField(brand(key));
-		if (field === undefined) {
-			return undefined as FlexTreeUnboxField<TSchema["info"]>;
-		}
-		return unboxedField(field, brand(key), this.mapTree, this);
-	}
-
 	public keys(): IterableIterator<FieldKey> {
 		return this.mapTree.fields.keys();
 	}
@@ -301,16 +286,6 @@ export class EagerMapTreeMapNode<TSchema extends FlexMapNodeSchema>
 		return super.getBoxed(key) as FlexTreeTypedField<TSchema["info"]>;
 	}
 
-	public set(key: string, value: FlexibleFieldContent | undefined): void {
-		// `MapTreeNode`s cannot be mutated
-		throw unsupportedUsageError("Setting a map entry");
-	}
-
-	public delete(key: string): void {
-		// `MapTreeNode`s cannot be mutated
-		throw unsupportedUsageError("Deleting a map entry");
-	}
-
 	public [Symbol.iterator](): IterableIterator<
 		[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]
 	> {
@@ -345,29 +320,33 @@ interface MapTreeField extends FlexTreeField {
 }
 
 /**
- * A special singleton that is the implicit parent field of all un-parented {@link EagerMapTreeNode}s.
+ * A special singleton that is the implicit {@link LocationInField} of all un-parented {@link EagerMapTreeNode}s.
  * @remarks This exists because {@link EagerMapTreeNode.parentField} must return a field.
  * If a {@link EagerMapTreeNode} is created without a parent, its {@link EagerMapTreeNode.parentField} property will point to this object.
  * However, this field cannot be used in any practical way because it is empty, i.e. it does not actually contain the children that claim to be parented under it.
  * It has the "empty" schema and it will always contain zero children if queried.
+ * Any nodes with this location will have a dummy parent index of `-1`.
  */
-export const rootMapTreeField: MapTreeField = {
-	[flexTreeMarker]: FlexTreeEntityKind.Field as const,
-	length: 0,
-	key: EmptyKey,
-	parent: undefined,
-	is<TSchema extends FlexFieldSchema>(schema: TSchema) {
-		return schema === (FlexFieldSchema.empty as FlexFieldSchema);
+const unparentedLocation: LocationInField = {
+	parent: {
+		[flexTreeMarker]: FlexTreeEntityKind.Field as const,
+		length: 0,
+		key: EmptyKey,
+		parent: undefined,
+		is<TSchema extends FlexFieldSchema>(schema: TSchema) {
+			return schema === (FlexFieldSchema.empty as FlexFieldSchema);
+		},
+		boxedIterator(): IterableIterator<FlexTreeNode> {
+			return [].values();
+		},
+		boxedAt(index: number): FlexTreeNode | undefined {
+			return undefined;
+		},
+		schema: FlexFieldSchema.empty,
+		context: undefined,
+		mapTrees: [],
 	},
-	boxedIterator(): IterableIterator<FlexTreeNode> {
-		return [].values();
-	},
-	boxedAt(index: number): FlexTreeNode | undefined {
-		return undefined;
-	},
-	schema: FlexFieldSchema.empty,
-	context: undefined,
-	mapTrees: [],
+	index: -1,
 };
 
 class EagerMapTreeField<T extends FlexAllowedTypes> implements MapTreeField {
@@ -388,7 +367,7 @@ class EagerMapTreeField<T extends FlexAllowedTypes> implements MapTreeField {
 			const mapTreeNodeChild = nodeCache.get(mapTree);
 			if (mapTreeNodeChild !== undefined) {
 				assert(
-					mapTreeNodeChild.parentField.parent === rootMapTreeField,
+					mapTreeNodeChild.parentField === unparentedLocation,
 					0x991 /* Node is already parented under a different field */,
 				);
 				mapTreeNodeChild.adoptBy(this, i);
@@ -437,18 +416,23 @@ class EagerMapTreeField<T extends FlexAllowedTypes> implements MapTreeField {
 	}
 
 	public context: undefined;
-}
 
-class EagerMapTreeRequiredField<T extends FlexAllowedTypes>
-	extends EagerMapTreeField<T>
-	implements FlexTreeRequiredField<T>
-{
-	public get editor(): ValueFieldEditBuilder<ExclusiveMapTree> {
-		throw unsupportedUsageError("Setting a required field");
-	}
-
-	public get content(): FlexTreeUnboxNodeUnion<T> {
-		return unboxedUnion(this.schema, this.mapTrees[0] ?? oob(), { parent: this, index: 0 });
+	/**
+	 * Mutate this field.
+	 * @param edit - A function which receives the current `MapTree`s that comprise the contents of the field so that it may be mutated.
+	 * The function may mutate the array in place or return a new array.
+	 * If a new array is returned then it will be used as the new contents of the field, otherwise the original array will be continue to be used.
+	 * @remarks All edits to the field (i.e. mutations of the field's MapTrees) should be directed through this function.
+	 * This function ensures that the parent MapTree has no empty fields (which is an invariant of `MapTree`) after the mutation.
+	 */
+	protected edit(edit: (mapTrees: ExclusiveMapTree[]) => void | ExclusiveMapTree[]): void {
+		const oldMapTrees = this.parent.mapTree.fields.get(this.key) ?? [];
+		const newMapTrees = edit(oldMapTrees) ?? oldMapTrees;
+		if (newMapTrees.length > 0) {
+			this.parent.mapTree.fields.set(this.key, newMapTrees);
+		} else {
+			this.parent.mapTree.fields.delete(this.key);
+		}
 	}
 }
 
@@ -456,17 +440,47 @@ class EagerMapTreeOptionalField<T extends FlexAllowedTypes>
 	extends EagerMapTreeField<T>
 	implements FlexTreeOptionalField<T>
 {
-	public get editor(): OptionalFieldEditBuilder<ExclusiveMapTree> {
-		throw unsupportedUsageError("Setting an optional field");
-	}
+	public readonly editor = {
+		set: (newContent: ExclusiveMapTree | undefined) => {
+			// If the new content is a MapTreeNode, it needs to have its parent pointer updated
+			if (newContent !== undefined) {
+				nodeCache.get(newContent)?.adoptBy(this, 0);
+			}
+			// If the old content is a MapTreeNode, it needs to have its parent pointer unset
+			const oldContent = this.mapTrees[0];
+			if (oldContent !== undefined) {
+				nodeCache.get(oldContent)?.adoptBy(undefined);
+			}
+
+			this.edit((mapTrees) => {
+				if (newContent !== undefined) {
+					mapTrees[0] = newContent;
+				} else {
+					mapTrees.length = 0;
+				}
+			});
+		},
+	};
 
 	public get content(): FlexTreeUnboxNodeUnion<T> | undefined {
-		return this.mapTrees.length > 0
-			? unboxedUnion(this.schema, this.mapTrees[0] ?? oob(), {
-					parent: this,
-					index: 0,
-				})
-			: undefined;
+		const value = this.mapTrees[0];
+		if (value !== undefined) {
+			return unboxedUnion(this.schema, value, {
+				parent: this,
+				index: 0,
+			});
+		}
+
+		return undefined;
+	}
+}
+
+class EagerMapTreeRequiredField<T extends FlexAllowedTypes>
+	extends EagerMapTreeOptionalField<T>
+	implements FlexTreeRequiredField<T>
+{
+	public override get content(): FlexTreeUnboxNodeUnion<T> {
+		return super.content ?? fail("Expected EagerMapTree required field to have a value");
 	}
 }
 
@@ -474,9 +488,34 @@ class EagerMapTreeSequenceField<T extends FlexAllowedTypes>
 	extends EagerMapTreeField<T>
 	implements FlexTreeSequenceField<T>
 {
-	public get editor(): SequenceFieldEditBuilder<ExclusiveMapTree[]> {
-		throw unsupportedUsageError("Editing an array");
-	}
+	public readonly editor: SequenceFieldEditBuilder<ExclusiveMapTree[]> = {
+		insert: (index, newContent) => {
+			for (let i = 0; i < newContent.length; i++) {
+				const c = newContent[i];
+				assert(c !== undefined, "Unexpected sparse array content");
+				nodeCache.get(c)?.adoptBy(this, index + i);
+			}
+			this.edit((mapTrees) => {
+				if (newContent.length < 1000) {
+					// For "smallish arrays" (`1000` is not empirically derived), the `splice` function is appropriate...
+					mapTrees.splice(index, 0, ...newContent);
+				} else {
+					// ...but we avoid using `splice` + spread for very large input arrays since there is a limit on how many elements can be spread (too many will overflow the stack).
+					return mapTrees.slice(0, index).concat(newContent, mapTrees.slice(index));
+				}
+			});
+		},
+		remove: (index, count) => {
+			for (let i = index; i < index + count; i++) {
+				const c = this.mapTrees[i];
+				assert(c !== undefined, "Unexpected sparse array");
+				nodeCache.get(c)?.adoptBy(undefined);
+			}
+			this.edit((mapTrees) => {
+				mapTrees.splice(index, count);
+			});
+		},
+	};
 
 	public at(index: number): FlexTreeUnboxNodeUnion<T> | undefined {
 		const i = indexForAt(index, this.length);

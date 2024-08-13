@@ -305,9 +305,6 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 		remove: (index, count) => {
 			this.sequenceEditor().remove(index, count);
 		},
-		move: (sourceIndex, count, destIndex) => {
-			this.sequenceEditor().move(sourceIndex, count, destIndex);
-		},
 	};
 
 	private sequenceEditor(): SequenceFieldEditBuilder<ITreeCursorSynchronous> {

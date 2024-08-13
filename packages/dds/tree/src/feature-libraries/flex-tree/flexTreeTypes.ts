@@ -269,29 +269,6 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema>
 	readonly schema: TSchema;
 
 	/**
-	 * The number of elements in the map.
-	 *
-	 * @remarks
-	 * All fields under a map implicitly exist, but `size` will count only the fields which contain one or more nodes.
-	 */
-	readonly size: number;
-
-	/**
-	 * Checks whether a value exists for the given key.
-	 * @param key - Which map entry to look up.
-	 *
-	 * @remarks
-	 * All fields under a map implicitly exist, but `has` will only return true if there are one or more nodes present in the given field.
-	 */
-	has(key: string): boolean;
-
-	/**
-	 * Get the value associated with `key`.
-	 * @param key - which map entry to look up.
-	 */
-	get(key: string): FlexTreeUnboxField<TSchema["info"]>;
-
-	/**
 	 * Get the field for `key`.
 	 * @param key - which map entry to look up.
 	 *
@@ -350,30 +327,6 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema>
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
 	): void;
-
-	/**
-	 * Adds or updates an entry in the map with a specified `key` and a `value`.
-	 *
-	 * @param key - The key of the element to add to the map.
-	 * @param value - The value of the element to add to the map.
-	 */
-	set(key: string, value: FlexibleFieldContent | undefined): void;
-
-	/**
-	 * Removes the specified element from this map by its `key`.
-	 *
-	 * @remarks
-	 * Note: unlike JavaScript's Map API, this method does not return a flag indicating whether or not the value was
-	 * deleted.
-	 *
-	 * @privateRemarks
-	 * Regarding the choice to not return a boolean: Since this data structure is distributed in nature, it isn't
-	 * possible to tell whether or not the item was deleted as a result of this method call. Returning a "best guess"
-	 * is more likely to create issues / promote bad usage patterns than offer useful information.
-	 *
-	 * @param key - The key of the element to remove from the map.
-	 */
-	delete(key: string): void;
 
 	/**
 	 * Iterate through all fields in the map.
@@ -691,7 +644,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	/**
 	 * Get an editor for this sequence.
 	 */
-	editor: SequenceFieldEditBuilder<FlexibleFieldContent>;
+	readonly editor: SequenceFieldEditBuilder<FlexibleFieldContent>;
 
 	boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>>;
 
@@ -713,7 +666,7 @@ export interface FlexTreeRequiredField<in out TTypes extends FlexAllowedTypes>
 	extends FlexTreeField {
 	get content(): FlexTreeUnboxNodeUnion<TTypes>;
 
-	editor: ValueFieldEditBuilder<FlexibleNodeContent>;
+	readonly editor: ValueFieldEditBuilder<FlexibleNodeContent>;
 }
 
 /**
@@ -733,7 +686,7 @@ export interface FlexTreeOptionalField<in out TTypes extends FlexAllowedTypes>
 	extends FlexTreeField {
 	get content(): FlexTreeUnboxNodeUnion<TTypes> | undefined;
 
-	editor: OptionalFieldEditBuilder<FlexibleNodeContent>;
+	readonly editor: OptionalFieldEditBuilder<FlexibleNodeContent>;
 }
 
 // #endregion
