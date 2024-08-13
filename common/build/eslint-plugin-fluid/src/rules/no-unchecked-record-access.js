@@ -23,35 +23,26 @@ module.exports = {
 		if (compilerOptions.noUncheckedIndexedAccess) {
 			return {};
 		}
-		const typeChecker = parserServices.program.getTypeChecker();
-
-		function isIndexSignatureType(node) {
-			const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node.object);
-			const type = typeChecker.getTypeAtLocation(tsNode);
-			return type.getStringIndexType() !== undefined;
-		}
 
 		function checkPropertyAccess(node) {
-			if (!isIndexSignatureType(node)) {
+			if (!isIndexSignatureType(parserServices, node)) {
 				return;
 			}
-			let current = node;
 
-			while (current) {
-				if (isDefined(current)) {
-					return;
-				}
-				current = current.parent;
+			if (propertyHasBeenChecked(node)) {
+				return;
 			}
 
 			const parentNode = node.parent;
 
 			if (parentNode.type === "VariableDeclarator" && parentNode.id.typeAnnotation) {
 				const expectedType = parentNode.id.typeAnnotation.typeAnnotation;
-				if (
-					expectedType.type !== "TSUnionType" ||
-					!expectedType.types.some((type) => type.type === "TSUndefinedKeyword")
-				) {
+				const isStrictType =
+					expectedType.type === "TSUnionType"
+						? !expectedType.types.some((type) => type.type === "TSUndefinedKeyword")
+						: true;
+
+				if (isStrictType) {
 					context.report({
 						node,
 						message:
@@ -74,17 +65,41 @@ module.exports = {
 	},
 };
 
-function isDefined(node) {
-	if (!node.parent) return false;
+function isIndexSignatureType(parserServices, node) {
+	const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node.object);
+	const typeChecker = parserServices.program.getTypeChecker();
+	const type = typeChecker.getTypeAtLocation(tsNode);
+	return type.getStringIndexType() !== undefined;
+}
 
+function propertyHasBeenChecked(node) {
+	let current = node;
+
+	while (current) {
+		if (isDefined(current)) {
+			return true;
+		}
+		current = current.parent;
+	}
+	return false;
+}
+
+function isDefined(node) {
+	if (!node.parent) {
+		return false;
+	}
+
+	// Check for optional chaining (?.) or non-null assertion (!)
 	if (node.optional === true || node.parent.type === "TSNonNullExpression") {
 		return true;
 	}
 
+	// Check if the node is directly used as a condition in an if statement
 	if (node.parent.type === "IfStatement" && node.parent.test === node) {
 		return true;
 	}
 
+	// Check for existence using the `in` operator, e.g., "a" in indexedRecordOfStrings
 	if (
 		node.parent.type === "BinaryExpression" &&
 		node.parent.operator === "in" &&
@@ -93,6 +108,7 @@ function isDefined(node) {
 		return true;
 	}
 
+	// Check if the node is used in a for-of loop with Object.entries, indicating a safe access
 	if (
 		node.parent.type === "ForOfStatement" &&
 		node.parent.right &&
@@ -103,7 +119,7 @@ function isDefined(node) {
 		return true;
 	}
 
-	// Check if the current node is inside a block scope that has a preceding truthy check
+	// Check if the node is inside a block that is conditionally executed, e.g., in an if or for-of statement
 	if (node.parent.type === "BlockStatement") {
 		const blockParent = node.parent.parent;
 		if (
