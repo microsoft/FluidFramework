@@ -29,6 +29,9 @@ export const enum SchemaValidationErrors {
 	UnknownError,
 }
 
+/**
+ * Deeply checks that the provided node complies with the schema based on its identifier.
+ */
 export function isNodeInSchema(
 	node: MapTree,
 	schemaAndPolicy: SchemaAndPolicy,
@@ -90,6 +93,9 @@ export function isNodeInSchema(
 	return SchemaValidationErrors.NoError;
 }
 
+/**
+ * Deeply checks that the nodes comply with the field schema and included schema.
+ */
 export function isFieldInSchema(
 	childNodes: readonly MapTree[],
 	schema: TreeFieldStoredSchema,
