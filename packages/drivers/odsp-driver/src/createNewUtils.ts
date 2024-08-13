@@ -253,8 +253,9 @@ export async function createNewFluidContainerCore<T>(args: {
 					`\r\n--${formBoundary}--`;
 
 				let postBody = snapshotBody;
+				// We use the byte length of the post body to determine if we should use the multipart/form-data or not.
 				if (
-					postBodyWithAuth.length <= maxUmpPostBodySize &&
+					new TextEncoder().encode(postBodyWithAuth).length <= maxUmpPostBodySize &&
 					authHeader?.startsWith("Bearer")
 				) {
 					url = authInBodyUrl;
