@@ -434,7 +434,7 @@ class EagerMapTreeOptionalField<T extends FlexAllowedTypes>
 	extends EagerMapTreeField<T>
 	implements FlexTreeOptionalField<T>
 {
-	public editor = {
+	public readonly editor = {
 		set: (newContent: ExclusiveMapTree | undefined) => {
 			// If the new content is a MapTreeNode, it needs to have its parent pointer updated
 			if (newContent !== undefined) {
@@ -482,7 +482,7 @@ class EagerMapTreeSequenceField<T extends FlexAllowedTypes>
 	extends EagerMapTreeField<T>
 	implements FlexTreeSequenceField<T>
 {
-	public editor: SequenceFieldEditBuilder<ExclusiveMapTree[]> = {
+	public readonly editor: SequenceFieldEditBuilder<ExclusiveMapTree[]> = {
 		insert: (index, newContent) => {
 			for (let i = 0; i < newContent.length; i++) {
 				const c = newContent[i];
