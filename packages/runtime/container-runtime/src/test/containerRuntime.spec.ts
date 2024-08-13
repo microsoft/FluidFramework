@@ -2534,8 +2534,8 @@ describe("Runtime", () => {
 				}
 			}
 
-			function processSignals(numberOfSignals: number = 1) {
-				const signalsToProcess = submittedSignals.splice(0, numberOfSignals);
+			function processSignals(signals: ISignalEnvelope[], numberOfSignals: number = 1) {
+				const signalsToProcess = signals.splice(0, numberOfSignals);
 				for (const signal of signalsToProcess) {
 					containerRuntime.processSignal(
 						{
@@ -2552,22 +2552,9 @@ describe("Runtime", () => {
 				droppedSignals.push(...signalsToDrop);
 			}
 
-			function processDroppedSignals(numberOfSignals: number = 1) {
-				const signalsToProcess = droppedSignals.splice(0, numberOfSignals);
-				for (const signal of signalsToProcess) {
-					containerRuntime.processSignal(
-						{
-							clientId: containerRuntime.clientId as string,
-							content: signal,
-						},
-						true,
-					);
-				}
-			}
-
 			it("emits signal latency telemetry after 100 signals", async () => {
 				sendSignals(101);
-				processSignals(101);
+				processSignals(submittedSignals, 101);
 				logger.assertMatch(
 					[
 						{
@@ -2583,13 +2570,13 @@ describe("Runtime", () => {
 				sendSignals(3);
 
 				// Process the first signal
-				processSignals();
+				processSignals(submittedSignals);
 
 				// Drop the second signal
 				dropSignals();
 
 				// Process the third signal
-				processSignals();
+				processSignals(submittedSignals);
 
 				logger.assertMatch(
 					[
@@ -2606,16 +2593,16 @@ describe("Runtime", () => {
 				sendSignals(3);
 
 				// Process the first signal
-				processSignals();
+				processSignals(submittedSignals);
 
 				// Temporarily lose the second signal
 				dropSignals();
 
 				// Process the third signal
-				processSignals();
+				processSignals(submittedSignals);
 
 				// Process the "lost" second signal out of order
-				processDroppedSignals();
+				processSignals(droppedSignals);
 
 				logger.assertMatch(
 					[
@@ -2630,7 +2617,7 @@ describe("Runtime", () => {
 			it("does not emit error events when signals are processed in order", async () => {
 				// Send 100 signals and process them in order
 				sendSignals(100);
-				processSignals(100);
+				processSignals(submittedSignals, 100);
 
 				logger.assertMatchNone(
 					[
