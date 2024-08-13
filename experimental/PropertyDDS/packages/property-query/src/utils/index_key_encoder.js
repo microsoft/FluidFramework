@@ -451,10 +451,7 @@ class IndexKeyEncoder {
 				encodedValue.substring(startIndex + 1, startIndex + 1 + (hexLength - 8)),
 			);
 			let low = this._bigEndianBytesToNumber(
-				encodedValue.substring(
-					startIndex + 1 + (hexLength - 8),
-					startIndex + 1 + hexLength,
-				),
+				encodedValue.substring(startIndex + 1 + (hexLength - 8), startIndex + 1 + hexLength),
 			);
 			if (codeDiff < 0) {
 				const int64 = new Long(~low, ~high).negate();
@@ -519,8 +516,7 @@ class IndexKeyEncoder {
 		const bytes = new Uint8Array(value.buffer);
 		const hex = encodedValue.substring(startIndex + 1, startIndex + 1 + length * 2);
 		for (let i = 0; i < hex.length; i += 2) {
-			bytes[(hex.length - i) / 2 - 1] =
-				(parseInt(hex[i], 16) << 4) + parseInt(hex[i + 1], 16);
+			bytes[(hex.length - i) / 2 - 1] = (parseInt(hex[i], 16) << 4) + parseInt(hex[i + 1], 16);
 		}
 		if (bytes[bytes.length - 1] & 0x80) {
 			bytes[bytes.length - 1] &= 0x7f;

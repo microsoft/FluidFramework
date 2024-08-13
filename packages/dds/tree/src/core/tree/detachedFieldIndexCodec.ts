@@ -3,20 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
-import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
-import { EncodedRevisionTag, RevisionTagCodec, type RevisionTag } from "../rebase/index.js";
-
-import { ForestRootId } from "./detachedFieldIndex.js";
 import {
-	EncodedRootsForRevision,
+	type ICodecOptions,
+	type IJsonCodec,
+	makeVersionedValidatedCodec,
+} from "../../codec/index.js";
+import type { EncodedRevisionTag, RevisionTagCodec, RevisionTag } from "../rebase/index.js";
+
+import {
+	type EncodedRootsForRevision,
 	Format,
-	RootRanges,
+	type RootRanges,
 	version,
 } from "./detachedFieldIndexFormat.js";
-import { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import type {
+	DetachedField,
+	DetachedFieldSummaryData,
+	Major,
+} from "./detachedFieldIndexTypes.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 class MajorCodec implements IJsonCodec<Major> {
 	public constructor(
@@ -72,12 +79,16 @@ export function makeDetachedNodeToFieldCodec(
 			const rootsForRevisions: EncodedRootsForRevision[] = [];
 			for (const [major, innerMap] of data.data) {
 				const encodedRevision = majorCodec.encode(major);
-				const rootRanges: RootRanges = [...innerMap];
+				const rootRanges: RootRanges = [];
+				for (const [minor, detachedField] of innerMap) {
+					rootRanges.push([minor, detachedField.root]);
+				}
 				if (rootRanges.length === 1) {
+					const firstRootRange = rootRanges[0] ?? oob();
 					const rootsForRevision: EncodedRootsForRevision = [
 						encodedRevision,
-						rootRanges[0][0],
-						rootRanges[0][1],
+						firstRootRange[0],
+						firstRootRange[1],
 					];
 					rootsForRevisions.push(rootsForRevision);
 				} else {
@@ -95,11 +106,14 @@ export function makeDetachedNodeToFieldCodec(
 		decode: (parsed: Format): DetachedFieldSummaryData => {
 			const map = new Map();
 			for (const rootsForRevision of parsed.data) {
-				const innerMap = new Map<number, ForestRootId>(
-					rootsForRevision.length === 2
-						? rootsForRevision[1]
-						: [[rootsForRevision[1], rootsForRevision[2]]],
-				);
+				const innerMap = new Map<number, DetachedField>();
+				if (rootsForRevision.length === 2) {
+					for (const [minor, root] of rootsForRevision[1]) {
+						innerMap.set(minor, { root });
+					}
+				} else {
+					innerMap.set(rootsForRevision[1], { root: rootsForRevision[2] });
+				}
 				map.set(majorCodec.decode(rootsForRevision[0]), innerMap);
 			}
 			return {

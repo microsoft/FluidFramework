@@ -3,28 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { TAnySchema, Type } from "@sinclair/typebox";
+import { type TAnySchema, Type } from "@sinclair/typebox";
 
 import {
 	type ICodecFamily,
-	ICodecOptions,
-	IJsonCodec,
+	type ICodecOptions,
+	type IJsonCodec,
 	makeCodecFamily,
 	makeVersionDispatchingCodec,
 	withSchemaValidation,
 } from "../codec/index.js";
-import {
+import type {
 	ChangeEncodingContext,
 	ChangeFamilyCodec,
 	EncodedRevisionTag,
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { JsonCompatibleReadOnly } from "../util/index.js";
+import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 import { Message } from "./messageFormat.js";
-import { DecodedMessage } from "./messageTypes.js";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import type { DecodedMessage } from "./messageTypes.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export interface MessageEncodingContext {
 	idCompressor: IIdCompressor;
@@ -76,6 +76,7 @@ export function makeMessageCodecs<TChangeset>(
 		[1, v1Codec],
 		[2, makeV1CodecWithVersion(changeCodecs.resolve(2).json, revisionTagCodec, options, 2)],
 		[3, makeV1CodecWithVersion(changeCodecs.resolve(3).json, revisionTagCodec, options, 3)],
+		[4, makeV1CodecWithVersion(changeCodecs.resolve(4).json, revisionTagCodec, options, 4)],
 	]);
 }
 
@@ -88,7 +89,7 @@ function makeV1CodecWithVersion<TChangeset>(
 		ChangeEncodingContext
 	>,
 	options: ICodecOptions,
-	version: 1 | 2 | 3,
+	version: 1 | 2 | 3 | 4,
 ): IJsonCodec<
 	DecodedMessage<TChangeset>,
 	JsonCompatibleReadOnly,

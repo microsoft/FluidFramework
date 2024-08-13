@@ -22,7 +22,7 @@ import {
 	PlugDisconnected20Regular,
 	Warning20Regular,
 } from "@fluentui/react-icons";
-import { type ConnectionStateChangeLogEntry } from "@fluidframework/devtools-core/internal";
+import type { ConnectionStateChangeLogEntry } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import { ThemeContext, ThemeOption } from "../ThemeHelper.js";
@@ -98,7 +98,7 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 			}
 			case "disconnected": {
 				// orange
-				return tokens.colorPaletteDarkOrangeBorderActive;
+				return tokens.colorPaletteDarkOrangeBorder1;
 			}
 			case "disposed": {
 				// dark red
@@ -120,14 +120,10 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 					{containerHistoryColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
 							{column.columnKey === "state" && (
-								<LabelCellLayout icon={<AlertBadgeRegular />}>
-									{column.label}
-								</LabelCellLayout>
+								<LabelCellLayout icon={<AlertBadgeRegular />}>{column.label}</LabelCellLayout>
 							)}
 							{column.columnKey === "time" && (
-								<LabelCellLayout icon={<Clock12Regular />}>
-									{column.label}
-								</LabelCellLayout>
+								<LabelCellLayout icon={<Clock12Regular />}>{column.label}</LabelCellLayout>
 							)}
 						</TableHeaderCell>
 					))}
@@ -174,9 +170,7 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 								backgroundColor: getBackgroundColorForState(item.newState),
 							}}
 						>
-							<TableCell
-								style={{ color: setThemeStyle(themeInfo.name, item.newState) }}
-							>
+							<TableCell style={{ color: setThemeStyle(themeInfo.name, item.newState) }}>
 								<LabelCellLayout icon={getStateIcon(item.newState)}>
 									<span
 										style={{
@@ -187,9 +181,7 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 									</span>
 								</LabelCellLayout>
 							</TableCell>
-							<TableCell
-								style={{ color: setThemeStyle(themeInfo.name, item.newState) }}
-							>
+							<TableCell style={{ color: setThemeStyle(themeInfo.name, item.newState) }}>
 								{timestampDisplay}
 							</TableCell>
 						</TableRow>

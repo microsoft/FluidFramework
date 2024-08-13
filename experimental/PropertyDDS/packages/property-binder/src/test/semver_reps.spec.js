@@ -44,18 +44,12 @@ describe("DataBinder runtime representations", () => {
 			);
 
 			// Get a workspace and insert a new property
-			workspace.root.insert(
-				"Older",
-				PropertyFactory.create("Test:Versioned-1.0.0", "single"),
-			);
+			workspace.root.insert("Older", PropertyFactory.create("Test:Versioned-1.0.0", "single"));
 			workspace.root.insert(
 				"Patched",
 				PropertyFactory.create("Test:Versioned-1.0.1", "single"),
 			);
-			workspace.root.insert(
-				"Newer",
-				PropertyFactory.create("Test:Versioned-1.1.0", "single"),
-			);
+			workspace.root.insert("Newer", PropertyFactory.create("Test:Versioned-1.1.0", "single"));
 			workspace.root.insert(
 				"Newest",
 				PropertyFactory.create("Test:Versioned-2.0.0", "single"),
@@ -106,18 +100,12 @@ describe("DataBinder runtime representations", () => {
 			);
 
 			// Get a workspace and insert a new property
-			workspace.root.insert(
-				"Older",
-				PropertyFactory.create("Test:Versioned-1.0.0", "single"),
-			);
+			workspace.root.insert("Older", PropertyFactory.create("Test:Versioned-1.0.0", "single"));
 			workspace.root.insert(
 				"Patched",
 				PropertyFactory.create("Test:Versioned-1.0.1", "single"),
 			);
-			workspace.root.insert(
-				"Newer",
-				PropertyFactory.create("Test:Versioned-1.1.0", "single"),
-			);
+			workspace.root.insert("Newer", PropertyFactory.create("Test:Versioned-1.1.0", "single"));
 			workspace.root.insert(
 				"Newest",
 				PropertyFactory.create("Test:Versioned-2.0.0", "single"),

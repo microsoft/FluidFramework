@@ -8,13 +8,18 @@ import path from "node:path";
 import { VersionBumpType } from "@fluid-tools/version-tools";
 import { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
+import { PackageName } from "@rushstack/node-core-library";
 import chalk from "chalk";
 import { humanId } from "human-id";
-import { format as prettier } from "prettier";
 import prompts from "prompts";
 
 import { releaseGroupFlag } from "../../flags.js";
-import { BaseCommand, Repository, getDefaultBumpTypeForBranch } from "../../library/index.js";
+import {
+	BaseCommand,
+	type FluidCustomChangesetMetadata,
+	Repository,
+	getDefaultBumpTypeForBranch,
+} from "../../library/index.js";
 
 /**
  * If more than this number of packages are changed relative to the selected branch, the user will be prompted to select
@@ -38,7 +43,7 @@ const excludedScopes = new Set(["@fluid-example", "@fluid-internal", "@fluid-tes
  */
 interface Choice {
 	title: string;
-	value?: Package;
+	value?: Package | string;
 	disabled?: boolean;
 	selected?: boolean;
 	heading?: boolean;
@@ -205,10 +210,10 @@ export default class GenerateChangesetCommand extends BaseCommand<
 			);
 		}
 
-		const choices: Choice[] = [];
+		const packageChoices: Choice[] = [];
 
 		// Handle the selected release group first so it shows up in the list first.
-		choices.push(
+		packageChoices.push(
 			{ title: `${chalk.bold(monorepo.name)}`, heading: true, disabled: true },
 			...monorepo.packages
 				.filter((pkg) => (all ? true : isIncludedByDefault(pkg)))
@@ -230,7 +235,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 				continue;
 			}
 			const changed = changedPackages.some((cp) => cp.name === pkg.name);
-			choices.push({
+			packageChoices.push({
 				title: changed ? `${pkg.name} ${chalk.red.bold("(changed)")}` : pkg.name,
 				value: pkg,
 				selected: changed,
@@ -240,7 +245,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		// Finally list the remaining (unchanged) release groups and their packages
 		for (const rg of context.repo.releaseGroups.values()) {
 			if (rg.name !== releaseGroup) {
-				choices.push(
+				packageChoices.push(
 					{ title: `${chalk.bold(rg.kind)}`, heading: true, disabled: true },
 					...rg.packages
 						.filter((pkg) => (all ? true : isIncludedByDefault(pkg)))
@@ -256,31 +261,74 @@ export default class GenerateChangesetCommand extends BaseCommand<
 			}
 		}
 
-		/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+		const sectionChoices: Choice[] =
+			context.rootFluidBuildConfig.releaseNotes?.sections === undefined
+				? []
+				: Object.entries(context.rootFluidBuildConfig.releaseNotes.sections).map(
+						([name, { heading }]) => {
+							const choice: Choice = {
+								title: heading,
+								value: name,
+							};
+							return choice;
+						},
+					);
 
+		/**
+		 * The prompts typing for the `onState` function doesn't include the shape of the `state` object, so this interface
+		 * serves as that type. Based on the documentation at: https://www.npmjs.com/package/prompts#onstate
+		 */
+		interface PromptState {
+			/**
+			 * The documentation isn't clear about what the type of `value` is. It is likely a string, but since we don't use
+			 * it in this code, `unknown` is safer.
+			 */
+			value: unknown;
+
+			/**
+			 * This is set to true when the prompt has been aborted.
+			 */
+			aborted: boolean;
+		}
+
+		// One of the items is typed as any - see below.
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const questions: prompts.PromptObject[] = [
 			{
 				name: "selectedPackages",
 				type: uiMode === "default" ? "autocompleteMultiselect" : "multiselect",
-				choices: [...choices, { title: " ", heading: true, disabled: true }],
+				choices: [...packageChoices, { title: " ", heading: true, disabled: true }],
 				instructions: INSTRUCTIONS,
 				message: "Choose which packages to include in the changeset. Type to filter the list.",
 				optionsPerPage: 5,
-				onState: (state: any) => {
-					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+				onState: (state: PromptState): void => {
 					if (state.aborted) {
 						process.nextTick(() => this.exit(0));
 					}
 				},
-			} as any, // Typed as any because the typings don't include the optionsPerPage property.
+				// This is typed as any because the typings don't include the optionsPerPage property.
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			} as any,
+			// This question should only be asked if the releaseNotes config is available
+			context.rootFluidBuildConfig.releaseNotes === undefined
+				? undefined
+				: {
+						name: "section",
+						type: "select",
+						choices: sectionChoices,
+						instructions: INSTRUCTIONS,
+						message: "What section of the release notes should this change be in?",
+						onState: (state: PromptState): void => {
+							if (state.aborted) {
+								process.nextTick(() => this.exit(0));
+							}
+						},
+					},
 			{
 				name: "summary",
 				type: "text",
-				message: "Enter a summary of the change.",
-				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-				onState: (state: any) => {
-					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+				message: "Enter a single sentence summary of the change.",
+				onState: (state: PromptState): void => {
 					if (state.aborted) {
 						process.nextTick(() => this.exit(0));
 					}
@@ -289,27 +337,28 @@ export default class GenerateChangesetCommand extends BaseCommand<
 			{
 				name: "description",
 				type: "text",
-				message: "Enter a longer description of the change.",
-				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-				onState: (state: any) => {
-					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+				message:
+					"Enter a longer description of the change. If you have a lot to type, consider adding it to the changeset after it's created.",
+				onState: (state: PromptState): void => {
 					if (state.aborted) {
 						process.nextTick(() => this.exit(0));
 					}
 				},
 			},
-		];
-		/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+		].filter(
+			// Filter out undefined items
+			(p) => p !== undefined,
+		);
 
 		const response = await prompts(questions);
-		// eslint-disable-next-line prefer-destructuring, @typescript-eslint/no-unsafe-assignment
-		const selectedPackages: Package[] = response.selectedPackages;
+		const selectedPackages: Package[] = response.selectedPackages as Package[];
 		const bumpType = getDefaultBumpTypeForBranch(branch, releaseGroup) ?? "minor";
 
 		const newFile = await createChangesetFile(
 			monorepo.directory ?? context.gitRepo.resolvedRoot,
 			new Map(selectedPackages.map((p) => [p, bumpType])),
 			`${(response.summary as string).trim()}\n\n${response.description}`,
+			{ section: response.section as string },
 		);
 		const changesetPath = path.relative(context.gitRepo.resolvedRoot, newFile);
 
@@ -327,33 +376,43 @@ async function createChangesetFile(
 	rootPath: string,
 	packages: Map<Package, VersionBumpType>,
 	body?: string,
+	additionalMetadata?: FluidCustomChangesetMetadata,
 ): Promise<string> {
 	const changesetID = humanId({ separator: "-", capitalize: false });
 	const changesetPath = path.join(rootPath, ".changeset", `${changesetID}.md`);
-	const changesetContent = await createChangesetContent(packages, body);
-	await writeFile(
-		changesetPath,
-		await prettier(changesetContent, { proseWrap: "never", parser: "markdown" }),
-	);
+	const changesetContent = createChangesetContent(packages, body, additionalMetadata);
+	await writeFile(changesetPath, changesetContent);
 	return changesetPath;
 }
 
-async function createChangesetContent(
+function createChangesetContent(
 	packages: Map<Package, VersionBumpType>,
 	body?: string,
-): Promise<string> {
-	const lines: string[] = ["---"];
+	additionalMetadata?: FluidCustomChangesetMetadata,
+): string {
+	const frontMatterSeparator = "---";
+
+	const lines: string[] = [frontMatterSeparator];
 	for (const [pkg, bump] of packages.entries()) {
 		lines.push(`"${pkg.name}": ${bump}`);
 	}
-	lines.push("---", "\n");
+	lines.push(frontMatterSeparator);
+
+	if (additionalMetadata !== undefined) {
+		lines.push(frontMatterSeparator);
+		for (const [name, value] of Object.entries(additionalMetadata)) {
+			lines.push(`"${name}": "${value}"`);
+		}
+		lines.push(frontMatterSeparator);
+	}
+
 	const frontMatter = lines.join("\n");
 	const changesetContents = [frontMatter, body].join("\n");
 	return changesetContents;
 }
 
 function isIncludedByDefault(pkg: Package): boolean {
-	if (pkg.packageJson.private === true || excludedScopes.has(pkg.scope)) {
+	if (pkg.packageJson.private === true || excludedScopes.has(PackageName.getScope(pkg.name))) {
 		return false;
 	}
 
@@ -382,5 +441,9 @@ function packageComparer(a: Package, b: Package, changedPackages: Package[]): nu
 	}
 
 	// Otherwise, compare by name.
-	return a.nameUnscoped < b.nameUnscoped ? -1 : a.name === b.name ? 0 : 1;
+	return PackageName.getUnscopedName(a.name) < PackageName.getUnscopedName(b.name)
+		? -1
+		: a.name === b.name
+			? 0
+			: 1;
 }

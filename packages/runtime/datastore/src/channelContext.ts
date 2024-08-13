@@ -41,7 +41,11 @@ export interface IChannelContext {
 
 	setConnectionState(connected: boolean, clientId?: string);
 
-	processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
+	processOp(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata?: unknown,
+	): void;
 
 	summarize(
 		fullTree?: boolean,

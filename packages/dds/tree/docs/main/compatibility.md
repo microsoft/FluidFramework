@@ -24,7 +24,7 @@ It also empowers the container author (rather than the host--if they differ) to 
 
 In the SharedTree MVP, there is currently no mechanism for safely changing the persisted format version.
 However, it is feasible to add such a mechanism in the future, and specifying the persisted format explicity in configuration sets us up to easily do so.
-One example of prior art in the space is `@fluid-experimental/tree`'s [format-breaking migration strategy](../../../tree/docs/Breaking-Change-Migration.md),
+One example of prior art in the space is `@fluid-experimental/tree`'s [format-breaking migration strategy](../../../../../experimental/dds/tree/docs/Breaking-Change-Migration.md),
 though we would likely want to make the mechanism usable across the Fluid Framework.
 
 ## Code Organization

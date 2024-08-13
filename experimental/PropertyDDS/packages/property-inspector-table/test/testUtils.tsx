@@ -219,8 +219,7 @@ export const typeNewName = (wrapper, name) => {
 	const dataForm = wrapper.find("NewDataForm");
 	const input = dataForm
 		.findWhere(
-			(node) =>
-				node.props().placeholder && node.props().placeholder.startsWith("Name of the"),
+			(node) => node.props().placeholder && node.props().placeholder.startsWith("Name of the"),
 		)
 		.find("input");
 	input.simulate("change", { target: { value: name } });

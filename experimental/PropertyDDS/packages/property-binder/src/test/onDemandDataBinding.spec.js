@@ -716,7 +716,9 @@ describe("on demand DataBindings", function () {
 		expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
 		dataBinder._resetDebugCounters();
 		let parentDataBinding = dataBinder.resolve("/root.myFloatMap", "BINDING");
-		expect(parentDataBinding.getProperty()).toEqual(workspace.root.get(["root", "myFloatMap"]));
+		expect(parentDataBinding.getProperty()).toEqual(
+			workspace.root.get(["root", "myFloatMap"]),
+		);
 		// Register an on demand DataBinding for the array
 		dataBinder.register("BINDING", "array<Float64>", ParentDataBinding, {
 			exactPath: "root.myFloatArray",
@@ -756,7 +758,9 @@ describe("on demand DataBindings", function () {
 		expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
 		dataBinder._resetDebugCounters();
 		parentDataBinding = dataBinder.resolve("/root.myFloatMap", "BINDING");
-		expect(parentDataBinding.getProperty()).toEqual(workspace.root.get(["root", "myFloatMap"]));
+		expect(parentDataBinding.getProperty()).toEqual(
+			workspace.root.get(["root", "myFloatMap"]),
+		);
 
 		// Register an on demand DataBinding for the array of BaseProperty - note the special syntax!
 		dataBinder.register("BINDING", "array<>", ParentDataBinding, {

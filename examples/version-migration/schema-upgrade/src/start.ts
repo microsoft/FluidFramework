@@ -27,7 +27,9 @@ const updateTabForId = (id: string) => {
 	document.title = id;
 };
 
-const isIInventoryListAppModel = (model: IVersionedModel): model is IInventoryListAppModel => {
+const isIInventoryListAppModel = (
+	model: IVersionedModel,
+): model is IInventoryListAppModel & IMigratableModel => {
 	return model.version === "one" || model.version === "two";
 };
 
@@ -62,6 +64,8 @@ async function start(): Promise<void> {
 	// in here as well as in the Migrator -- both places just need a reliable way to get a model regardless of the
 	// (unknown) container version.  So the ModelLoader would be replaced by e.g. container.getEntryPoint() or
 	// container.getEntryPoint().model if we knew that was the model.
+	// TODO: This is really loading an IInventoryListAppModel & IMigratableModel (we know this because of what the
+	// DemoCodeLoader supports).  Should we just use that more-specific type in the typing here?
 	const modelLoader = new ModelLoader<IMigratableModel>({
 		urlResolver: new InsecureTinyliciousUrlResolver(),
 		documentServiceFactory: new RouterliciousDocumentServiceFactory(
@@ -89,12 +93,17 @@ async function start(): Promise<void> {
 	// the migration logic and just lets us know when a new model is loaded and available (with the "migrated" event).
 	// It also takes a dataTransformationCallback to help in transforming data export format to be compatible for
 	// import with newly created models.
-	const migrator = new Migrator(modelLoader, model, id, inventoryListDataTransformationCallback);
-	migrator.on("migrated", () => {
+	const migrator = new Migrator(
+		modelLoader,
+		model,
+		id,
+		inventoryListDataTransformationCallback,
+	);
+	migrator.events.on("migrated", () => {
 		model.close();
-		render(migrator.currentModel);
-		updateTabForId(migrator.currentModelId);
 		model = migrator.currentModel;
+		render(model);
+		updateTabForId(migrator.currentModelId);
 	});
 	// If the ModelLoader doesn't know how to load the model required for migration, it emits "migrationNotSupported".
 	// For example, this might be hit if another client has a newer ModelLoader and proposes a version our
@@ -102,7 +111,7 @@ async function start(): Promise<void> {
 	// However, this will never be hit in this demo since we have a finite set of models to support.  If the model
 	// code loader pulls in the appropriate model dynamically, this might also never be hit since all clients
 	// are theoretically referencing the same model library.
-	migrator.on("migrationNotSupported", (version: string) => {
+	migrator.events.on("migrationNotSupported", (version: string) => {
 		// To move forward, we would need to acquire a model loader capable of loading the given model, retry the
 		// load, and set up a new Migrator with the new model loader.
 		console.error(

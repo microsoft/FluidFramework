@@ -4,10 +4,10 @@
  */
 
 import {
-	JsonCompatible,
-	JsonCompatibleObject,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnlyObject,
+	type JsonCompatible,
+	type JsonCompatibleObject,
+	type JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnlyObject,
 	isReadonlyArray,
 } from "../../../util/index.js";
 

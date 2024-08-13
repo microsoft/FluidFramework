@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
+export type {
 	Changeset,
 	Remove,
 	Detach,
@@ -22,16 +22,20 @@ export {
 	HasMarkFields,
 	CellMark,
 	AttachAndDetach,
+	Rename,
 } from "./types.js";
 export { DetachIdOverrideType } from "./formatV1.js";
 export {
-	SequenceFieldChangeHandler,
+	type SequenceFieldChangeHandler,
 	sequenceFieldChangeHandler,
 } from "./sequenceFieldChangeHandler.js";
-export { SequenceChangeRebaser, sequenceFieldChangeRebaser } from "./sequenceFieldChangeRebaser.js";
+export {
+	type SequenceChangeRebaser,
+	sequenceFieldChangeRebaser,
+} from "./sequenceFieldChangeRebaser.js";
 export { sequenceFieldChangeCodecFactory } from "./sequenceFieldCodecs.js";
 export { sequenceFieldToDelta } from "./sequenceFieldToDelta.js";
-export { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor.js";
+export { type SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor.js";
 export { MarkListFactory } from "./markListFactory.js";
 export { rebase } from "./rebase.js";
 export { invert } from "./invert.js";
@@ -39,11 +43,14 @@ export { compose } from "./compose.js";
 export {
 	getInputLength,
 	isDetach,
-	newCrossFieldTable,
-	CrossFieldTable,
 	cloneMark,
 	extractMarkEffect,
 } from "./utils.js";
-export { isMoveMark, MoveMark, MoveEffectTable, MoveEffect } from "./moveEffectTable.js";
+export {
+	isMoveMark,
+	type MoveMark,
+	type MoveEffectTable,
+	type MoveEffect,
+} from "./moveEffectTable.js";
 
 export { relevantRemovedRoots } from "./relevantRemovedRoots.js";

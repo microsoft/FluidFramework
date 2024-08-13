@@ -11,7 +11,10 @@ import {
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { ConsensusQueueClass } from "./consensusQueue.js";
-import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "./interfaces.js";
+import {
+	IConsensusOrderedCollection,
+	IConsensusOrderedCollectionFactory,
+} from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -59,12 +62,14 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 
 /**
  * {@inheritDoc ConsensusQueueClass}
+ * @legacy
  * @alpha
  */
 export const ConsensusQueue = createSharedObjectKind(ConsensusQueueFactory);
 
 /**
  * {@inheritDoc ConsensusQueueClass}
+ * @legacy
  * @alpha
  */
 export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;

@@ -48,7 +48,6 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 export const clone = structuredClone;
 
 /**
- * @internal
  */
 export function fail(message: string): never {
 	throw new Error(message);
@@ -132,7 +131,11 @@ export function compareSets<T>({
  * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
  * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
  */
-export function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (key: K) => V): V {
+export function getOrCreate<K, V>(
+	map: MapGetSet<K, V>,
+	key: K,
+	defaultValue: (key: K) => V,
+): V {
 	let value = map.get(key);
 	if (value === undefined) {
 		value = defaultValue(key);
@@ -161,9 +164,29 @@ export function getOrAddEmptyToMap<K, V>(map: MapGetSet<K, V[]>, key: K): V[] {
  * @param map - the transformation function to run on each element of the iterable
  * @returns a new iterable of elements which have been transformed by the `map` function
  */
-export function* mapIterable<T, U>(iterable: Iterable<T>, map: (t: T) => U): IterableIterator<U> {
+export function* mapIterable<T, U>(
+	iterable: Iterable<T>,
+	map: (t: T) => U,
+): IterableIterator<U> {
 	for (const t of iterable) {
 		yield map(t);
+	}
+}
+
+/**
+ * Filter one iterable into another
+ * @param iterable - the iterable to filter
+ * @param filter - the predicate function to run on each element of the iterable
+ * @returns a new iterable including only the elements that passed the filter predicate
+ */
+export function* filterIterable<T>(
+	iterable: Iterable<T>,
+	filter: (t: T) => boolean,
+): IterableIterator<T> {
+	for (const t of iterable) {
+		if (filter(t)) {
+			yield t;
+		}
 	}
 }
 
@@ -182,11 +205,23 @@ export function find<T>(iterable: Iterable<T>, predicate: (t: T) => boolean): T 
 }
 
 /**
+ * Counts the number of elements in the given iterable.
+ * @param iterable - the iterable to enumerate
+ * @returns the number of elements that were iterated after exhausting the iterable
+ */
+export function count(iterable: Iterable<unknown>): number {
+	let n = 0;
+	for (const _ of iterable) {
+		n += 1;
+	}
+	return n;
+}
+
+/**
  * Use for Json compatible data.
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @internal
  */
 export type JsonCompatible =
 	| string
@@ -202,7 +237,6 @@ export type JsonCompatible =
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @internal
  */
 export type JsonCompatibleObject = { [P in string]?: JsonCompatible };
 
@@ -324,7 +358,11 @@ export function objectToMap<MapKey extends string | number | symbol, MapValue>(
  * (including but not limited to unintended access to __proto__ and other non-owned keys).
  * {@link objectToMap} helps these few cases get into using an actual map in as safe of a way as is practical.
  */
-export function transformObjectMap<MapKey extends string | number | symbol, MapValue, NewMapValue>(
+export function transformObjectMap<
+	MapKey extends string | number | symbol,
+	MapValue,
+	NewMapValue,
+>(
 	objectMap: Record<MapKey, MapValue>,
 	transformer: (value: MapValue, key: MapKey) => NewMapValue,
 ): Record<MapKey, MapValue> {
@@ -349,13 +387,15 @@ export function transformObjectMap<MapKey extends string | number | symbol, MapV
  */
 export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
 	const result = new Map<Value, Key>(mapIterable(input, ([key, value]) => [value, key]));
-	assert(result.size === input.size, 0x88a /* all values in a map must be unique to invert it */);
+	assert(
+		result.size === input.size,
+		0x88a /* all values in a map must be unique to invert it */,
+	);
 	return result;
 }
 
 /**
  * Returns the value from `set` if it contains exactly one item, otherwise `undefined`.
- * @internal
  */
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 	if (set === undefined) {
@@ -372,7 +412,6 @@ export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 /**
  * Type with a name describing what it is.
  * Typically used with values (like schema) that can be stored in a map, but in some representations have their name/key as a field.
- * @internal
  */
 export interface Named<TName> {
 	readonly name: TName;
@@ -380,7 +419,6 @@ export interface Named<TName> {
 
 /**
  * Order {@link Named} objects by their name.
- * @internal
  */
 export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
 	if (a.name < b.name) {
@@ -396,7 +434,6 @@ export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
  * Placeholder for `Symbol.dispose`.
  * @privateRemarks
  * TODO: replace this with `Symbol.dispose` when it is available or make it a valid polyfill.
- * @internal
  */
 export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");
 
@@ -408,7 +445,6 @@ export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder")
  * {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management| TypeScript's Disposable}.
  *
  * Once this is replaced with TypeScript's Disposable, core-utils/IDisposable can extend it, bringing the APIs into a reasonable alignment.
- * @internal
  */
 export interface IDisposable {
 	/**

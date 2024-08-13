@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 
 import {
-	ChangeFamily,
-	ChangeFamilyEditor,
-	ChangeRebaser,
-	DeltaRoot,
-	RevisionTag,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
+	type ChangeRebaser,
+	type DeltaRoot,
+	type RevisionTag,
 	emptyDelta,
 } from "../../../core/index.js";
-import { Commit, EditManager } from "../../../shared-tree-core/index.js";
-import { RecursiveReadonly, brand, makeArray } from "../../../util/index.js";
+import { type Commit, EditManager } from "../../../shared-tree-core/index.js";
+import { type RecursiveReadonly, brand, makeArray } from "../../../util/index.js";
 import {
 	TestChange,
-	TestChangeFamily,
+	type TestChangeFamily,
 	asDelta,
 	testChangeFamilyFactory,
 } from "../../testChange.js";

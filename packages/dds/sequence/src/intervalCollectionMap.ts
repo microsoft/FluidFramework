@@ -9,7 +9,10 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { ValueType, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 
-import { IntervalCollectionTypeLocalValue, makeSerializable } from "./IntervalCollectionValues.js";
+import {
+	IntervalCollectionTypeLocalValue,
+	makeSerializable,
+} from "./IntervalCollectionValues.js";
 import {
 	type IntervalCollection,
 	reservedIntervalIdKey,

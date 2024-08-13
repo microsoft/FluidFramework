@@ -5,7 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
+import {
+	MockDocumentDeltaConnection,
+	MockDocumentService,
+} from "@fluid-private/test-loader-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { ConnectionManager } from "@fluidframework/container-loader/internal/test/connectionManager";
 // eslint-disable-next-line import/no-internal-modules

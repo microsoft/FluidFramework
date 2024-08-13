@@ -17,7 +17,8 @@ const useStyles = makeStyles(
 			overflow: "hidden",
 			textOverflow: "ellipsis",
 			whiteSpace: "nowrap",
-			width: "1px" /* flexGrow overrides the width. Need this to not exceed the vailable space */,
+			width:
+				"1px" /* flexGrow overrides the width. Need this to not exceed the vailable space */,
 		},
 	},
 	{ name: "OverflowableCell" },

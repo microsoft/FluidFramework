@@ -214,7 +214,9 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 /**
  * @internal
  */
-export const getDataStoreFactory = createGetDataStoreFactoryFunction(getDataRuntimeApi(pkgVersion));
+export const getDataStoreFactory = createGetDataStoreFactoryFunction(
+	getDataRuntimeApi(pkgVersion),
+);
 
 /**
  * @internal
@@ -340,10 +342,10 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		versionForLoading === pkgVersion
 			? versionForCreating
 			: versionForCreating === pkgVersion
-			? versionForLoading
-			: semver.compare(versionForCreating, versionForLoading) < 0
-			? versionForCreating
-			: versionForLoading;
+				? versionForLoading
+				: semver.compare(versionForCreating, versionForLoading) < 0
+					? versionForCreating
+					: versionForLoading;
 
 	const createContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
 		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);

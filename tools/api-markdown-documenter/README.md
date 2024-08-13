@@ -11,10 +11,29 @@ It is similar to [API-Documenter][] and is heavily based upon it and uses it und
 **Note**: this library does not currently offer a Command Line Interface (CLI).
 One may be added in the future, but for now this library is intended to be consumed programmatically.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
+## Glossary
+
+The following terms are leveraged heavily in this package's APIs and documentation.
+
+-   **API Model**: Refers to a complete API suite, comprised of one or more packages.
+    This often corresponds to all of the packages in the mono-repo, or a series of packages that are published together.
+    It is generally represented via the [ApiModel][] type, from the [@microsoft/api-extractor-model](https://github.com/microsoft/rushstack/tree/main/libraries/api-extractor-model) library.
+    -   In some places, this library refers to an `API Model` in terms of a directory or directory path.
+        In these cases, it is referring to a directory that contains the set of `.api.json` files (generated per-package by `API-Extractor`).
+-   **API Item**: Refers to a single TypeScript item exported by one or more packages in the `API Model`.
+    It is generally represented via the [ApiItem][] type, from the [@microsoft/api-extractor-model](https://github.com/microsoft/rushstack/tree/main/libraries/api-extractor-model) library.
+    E.g., an exported interface `Foo` would be captured by API Extractor as a single API item (an [ApiInterface](https://api.rushstack.io/pages/api-extractor-model.apiinterface/)).
+    Alternatively, an exported enum `Foo` with flags `Bar` and `Baz` would be captured as 1 API item (an [ApiEnum](https://api.rushstack.io/pages/api-extractor-model.apiEnum/)) for `Foo`, with 2 child API items for the flags `Bar` and `Baz` ([ApiEnumMember](https://api.rushstack.io/pages/api-extractor-model.apienummember/)s).
+    -   This is the granularity by which documentation is generated, and the granularity at which most configuration options are presented.
+
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:installation=TRUE&devDependency=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+**NOTE: This package is a library intended for use within the [microsoft/FluidFramework](https://github.com/microsoft/FluidFramework) repository.**
+**It is not intended for public use.**
+**We make no stability guarantees regarding this library and its APIs.**
 
 ## Installation
 
@@ -23,6 +42,15 @@ To get started, install the package by running the following command:
 ```bash
 npm i @fluid-tools/api-markdown-documenter -D
 ```
+
+## Importing from this package
+
+This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
+For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+
+To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluid-tools/api-markdown-documenter` like normal.
+
+To access the `beta` APIs, import via `@fluid-tools/api-markdown-documenter/beta`.
 
 <!-- prettier-ignore-end -->
 
@@ -222,7 +250,7 @@ Use at your own risk.
 -   Handle multiple package entry-points
 -   Add separate HTML transformation path, for consumers that want to go straight to HTML
 
-<!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -245,33 +273,13 @@ This project may contain Microsoft trademarks or logos for Microsoft projects, p
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
-<!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
 ## Help
 
-Not finding what you're looking for in this README? Check out our [GitHub
-Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
 
-Still not finding what you're looking for? Please [file an
-issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
 
 Thank you!
-
-<!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Trademark
 
@@ -291,6 +299,7 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 [abstract syntax tree]: https://en.wikipedia.org/wiki/Abstract_syntax_tree
 [api-extractor]: https://api-extractor.com
 [api-documenter]: https://github.com/microsoft/rushstack/tree/main/apps/api-documenter
+[apiitem]: https://api.rushstack.io/pages/api-extractor-model.apiitem
 [apimodel]: https://api.rushstack.io/pages/api-extractor-model.apimodel
 [github flavored markdown]: https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/about-writing-and-formatting-on-github
 [tsdoc]: https://tsdoc.org/

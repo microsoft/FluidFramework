@@ -39,7 +39,10 @@ export interface DiceRollerControllerProps {
 /**
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
-export class DiceRollerController extends events_pkg.EventEmitter implements IDiceRollerController {
+export class DiceRollerController
+	extends events_pkg.EventEmitter
+	implements IDiceRollerController
+{
 	/**
 	 * Initialize a new model for its first use with this controller.
 	 * The model must be initialized before trying to use it in a DiceRollerController instance.

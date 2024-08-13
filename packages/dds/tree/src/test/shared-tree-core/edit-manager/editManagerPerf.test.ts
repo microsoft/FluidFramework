@@ -5,9 +5,9 @@
 
 import { strict as assert } from "assert";
 
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 
-import { TaggedChange } from "../../../core/index.js";
+import type { TaggedChange } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 import {
 	ConstrainedTestChangeRebaser,
@@ -329,12 +329,7 @@ export function testPerf() {
 					it(`For an existing peer branch with ${P} commits unaware of ${T}+1 trunk commits`, () => {
 						const rebaser = new NoOpChangeRebaser();
 						const manager = testChangeEditManagerFactory({ rebaser }).manager;
-						rebasePeerEditsOverTrunkEdits(
-							P,
-							T + 1,
-							manager,
-							() => TestChange.emptyChange,
-						);
+						rebasePeerEditsOverTrunkEdits(P, T + 1, manager, () => TestChange.emptyChange);
 						rebaser.rebasedCount = 0;
 						rebaser.invertedCount = 0;
 						rebaser.composedCount = 0;

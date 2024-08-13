@@ -19,7 +19,9 @@ Error.stackTraceLimit = Infinity;
 
 const testVariant = process.env.FLUID_TEST_VARIANT;
 const propsDict =
-	process.env.FLUID_LOGGER_PROPS != null ? JSON.parse(process.env.FLUID_LOGGER_PROPS) : undefined;
+	process.env.FLUID_LOGGER_PROPS != null
+		? JSON.parse(process.env.FLUID_LOGGER_PROPS)
+		: undefined;
 
 const _global: any = global;
 class TestLogger implements ITelemetryBufferedLogger {

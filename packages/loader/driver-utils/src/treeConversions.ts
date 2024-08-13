@@ -23,7 +23,7 @@ export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): IT
 		? [
 				...Object.entries(summaryTree.tree[".protocol"].tree),
 				...Object.entries(summaryTree.tree[".app"].tree),
-		  ]
+			]
 		: Object.entries(summaryTree.tree);
 
 	for (const [key, value] of allSummaryEntries) {

@@ -116,17 +116,13 @@ describe("SharedOT", () => {
 					trace?.push(
 						`doc${
 							docIndex + 1
-						}.insert(/* position: */ ${position}, /* text: */ ${JSON.stringify(
-							text,
-						)});`,
+						}.insert(/* position: */ ${position}, /* text: */ ${JSON.stringify(text)});`,
 					);
 					docs[docIndex].insert(position, text);
 				};
 
 				const del = (docIndex: number, start: number, end: number) => {
-					trace?.push(
-						`doc${docIndex + 1}.delete(/* start: */ ${start}, /* end: */ ${end});`,
-					);
+					trace?.push(`doc${docIndex + 1}.delete(/* start: */ ${start}, /* end: */ ${end});`);
 					docs[docIndex].delete(start, end);
 				};
 

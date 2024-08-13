@@ -5,15 +5,20 @@
 
 import { strict as assert } from "node:assert";
 
-import { TreeNodeSchemaIdentifier, ValueSchema } from "../../core/index.js";
-import { Any, FieldKinds, FlexFieldSchema, LeafNodeSchema } from "../../feature-libraries/index.js";
+import { type TreeNodeSchemaIdentifier, ValueSchema } from "../../core/index.js";
+import {
+	Any,
+	FieldKinds,
+	FlexFieldSchema,
+	LeafNodeSchema,
+} from "../../feature-libraries/index.js";
 import {
 	SchemaBuilderBase,
 	normalizeAllowedTypes,
 	normalizeField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/schemaBuilderBase.js";
-import { areSafelyAssignable, brand, requireTrue } from "../../util/index.js";
+import { type areSafelyAssignable, brand, type requireTrue } from "../../util/index.js";
 
 describe("SchemaBuilderBase", () => {
 	describe("typedTreeSchema", () => {

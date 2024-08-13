@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 
 import { loggerToMonitoringContext } from "./config.js";
-import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "./telemetryTypes.js";
+import type { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "./telemetryTypes.js";
 
 /**
  * An object that contains a callback used in conjunction with the {@link createSampledLogger} utility function to provide custom logic for sampling events.
@@ -103,4 +103,19 @@ export function createSampledLogger(
 	};
 
 	return sampledLogger;
+}
+
+/**
+ * Runs the specified function and returns an object with the time it took to run as well as any output from it.
+ * @remarks Useful in conjunction with {@link TelemetryEventBatcher}.
+ *
+ * @param codeToMeasure - The code to be executed and measured.
+ * @returns The total duration of the code execution and whatever the passed-in code block returns.
+ * @internal
+ */
+export function measure<T>(codeToMeasure: () => T): { duration: number; output: T } {
+	const start = performance.now();
+	const output = codeToMeasure();
+	const duration = performance.now() - start;
+	return { duration, output };
 }

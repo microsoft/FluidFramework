@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ObjectOptions, Static, Type } from "@sinclair/typebox";
+import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
-import { Brand, brandedStringType } from "../../util/index.js";
+import { type Brand, brandedStringType } from "../../util/index.js";
 
 export const version = 1 as const;
 

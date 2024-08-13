@@ -4,23 +4,27 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import {
-	type IContainer,
-	type IFluidModuleWithDetails,
-	type IHostLoader,
+import type {
+	IContainer,
+	IFluidModuleWithDetails,
+	IHostLoader,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
+import type {
+	ConfigTypes,
+	FluidObject,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { type IClient } from "@fluidframework/driver-definitions";
-import {
-	type IDocumentServiceFactory,
-	type IUrlResolver,
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
+	IDocumentServiceFactory,
+	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	type ContainerSchema,
-	type IFluidContainer,
-	type CompatibilityMode,
+import type {
+	ContainerSchema,
+	IFluidContainer,
+	CompatibilityMode,
 } from "@fluidframework/fluid-static";
 import {
 	type IRootDataObject,
@@ -37,30 +41,34 @@ import {
 } from "@fluidframework/tinylicious-driver/internal";
 
 import { createTinyliciousAudienceMember } from "./TinyliciousAudience.js";
-import { type TinyliciousClientProps, type TinyliciousContainerServices } from "./interfaces.js";
+import type { TinyliciousClientProps, TinyliciousContainerServices } from "./interfaces.js";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.
  *
  * @see {@link https://fluidframework.com/docs/testing/tinylicious/}
- * @internal
+ *
+ * @sealed
+ * @public
  */
 export class TinyliciousClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
 	private readonly urlResolver: IUrlResolver;
+	private readonly logger: ITelemetryBaseLogger | undefined;
 
 	/**
 	 * Creates a new client instance using configuration parameters.
-	 * @param props - Optional. Properties for initializing a new TinyliciousClient instance
+	 * @param properties - Optional. Properties for initializing a new TinyliciousClient instance
 	 */
-	public constructor(private readonly props?: TinyliciousClientProps) {
+	public constructor(properties?: TinyliciousClientProps) {
+		this.logger = properties?.logger;
 		const tokenProvider = new InsecureTinyliciousTokenProvider();
 		this.urlResolver = new InsecureTinyliciousUrlResolver(
-			this.props?.connection?.port,
-			this.props?.connection?.domain,
+			properties?.connection?.port,
+			properties?.connection?.domain,
 		);
 		this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
-			this.props?.connection?.tokenProvider ?? tokenProvider,
+			properties?.connection?.tokenProvider ?? tokenProvider,
 		);
 	}
 
@@ -93,7 +101,6 @@ export class TinyliciousClient {
 		 * See {@link FluidContainer.attach}
 		 */
 		const attach = async (): Promise<string> => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- AB#7608
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state.");
 			}
@@ -185,7 +192,7 @@ export class TinyliciousClient {
 			urlResolver: this.urlResolver,
 			documentServiceFactory: this.documentServiceFactory,
 			codeLoader,
-			logger: this.props?.logger,
+			logger: this.logger,
 			options: { client },
 			configProvider: wrapConfigProviderWithDefaults(/* original */ undefined, featureGates),
 		});

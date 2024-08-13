@@ -28,6 +28,11 @@ interface OdspUser {
 	oid: string;
 }
 
+/**
+ * Creates an audience member from an IClient instance.
+ *
+ * @param audienceMember - the client instance/
+ */
 export function createOdspAudienceMember(audienceMember: IClient): OdspMember {
 	const user = audienceMember.user as unknown as OdspUser;
 	assert(

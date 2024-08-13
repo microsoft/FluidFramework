@@ -62,7 +62,8 @@ export class MockContainerRuntimeFactoryForSummarizer extends MockContainerRunti
 	}
 }
 
-export interface IMockContainerRuntimeForSummarizerOptions extends IMockContainerRuntimeOptions {
+export interface IMockContainerRuntimeForSummarizerOptions
+	extends IMockContainerRuntimeOptions {
 	summaryConfiguration?: ISummaryConfiguration;
 }
 
@@ -273,7 +274,10 @@ class MockSummarizerClientElection
 	}
 }
 
-class MockConnectedState extends TypedEventEmitter<IConnectedEvents> implements IConnectedState {
+class MockConnectedState
+	extends TypedEventEmitter<IConnectedEvents>
+	implements IConnectedState
+{
 	public connected: boolean = false;
 
 	constructor(

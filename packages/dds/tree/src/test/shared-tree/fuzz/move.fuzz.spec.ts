@@ -5,18 +5,18 @@
 
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
-	DDSFuzzHarnessEvents,
-	DDSFuzzModel,
-	DDSFuzzSuiteOptions,
-	DDSFuzzTestState,
+	type DDSFuzzHarnessEvents,
+	type DDSFuzzModel,
+	type DDSFuzzSuiteOptions,
+	type DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
 import { SharedTreeTestFactory, validateFuzzTreeConsistency } from "../../utils.js";
 
 import {
-	EditGeneratorOpWeights,
-	FuzzTestState,
+	type EditGeneratorOpWeights,
+	type FuzzTestState,
 	makeOpGenerator,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
@@ -26,7 +26,7 @@ import {
 	failureDirectory,
 	populatedInitialState,
 } from "./fuzzUtils.js";
-import { Operation } from "./operationTypes.js";
+import type { Operation } from "./operationTypes.js";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
 describe("Fuzz - move", () => {

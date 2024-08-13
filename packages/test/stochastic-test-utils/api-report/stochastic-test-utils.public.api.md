@@ -6,8 +6,6 @@
 
 /// <reference types="mocha" />
 
-import { Random } from 'best-random';
-
 export { AsyncGenerator_2 as AsyncGenerator }
 
 export { Generator_2 as Generator }

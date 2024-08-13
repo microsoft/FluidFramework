@@ -4,27 +4,25 @@
  */
 
 import {
-	Context,
-	FlexFieldSchema,
-	FlexTreeContext,
-	FlexTreeSchema,
-	FlexTreeTypedField,
-	NodeKeyManager,
+	type Context,
+	type FlexFieldSchema,
+	type FlexTreeContext,
+	type FlexTreeSchema,
+	type FlexTreeTypedField,
+	type NodeKeyManager,
 	getTreeContext,
 } from "../feature-libraries/index.js";
-import { IDisposable, disposeSymbol } from "../util/index.js";
+import { tryDisposeTreeNode } from "../simple-tree/index.js";
+import { type IDisposable, disposeSymbol } from "../util/index.js";
 
-import { ITreeCheckout, ITreeCheckoutFork, TreeCheckout } from "./treeCheckout.js";
+import type { ITreeCheckout, ITreeCheckoutFork } from "./treeCheckout.js";
 
 /**
- * An editable view of a (version control style) branch of a shared tree.
+ * The portion of {@link FlexTreeView} that does not depend on the schema's type.
  * @privateRemarks
- * TODO:
- * 1. Once ISharedTreeView is renamed this can become ISharedTreeView.
- * 2. This object should be combined with or accessible from the TreeContext to allow easy access to thinks like branching.
- * @internal
+ * Since {@link FlexTreeView}'s schema is invariant, `FlexTreeView<FlexFieldSchema>` does not cover this use case.
  */
-export interface FlexTreeView<in out TRoot extends FlexFieldSchema> extends IDisposable {
+export interface FlexTreeViewGeneric extends IDisposable {
 	/**
 	 * Context for controlling the FlexTree nodes produced from {@link FlexTreeView.flexTree}.
 	 *
@@ -40,7 +38,16 @@ export interface FlexTreeView<in out TRoot extends FlexFieldSchema> extends IDis
 	 * This is a non-owning reference: disposing of this view does not impact the branch.
 	 */
 	readonly checkout: ITreeCheckout;
+}
 
+/**
+ * An editable view of a (version control style) branch of a shared tree.
+ * @privateRemarks
+ * TODO:
+ * If schema aware APIs are removed from flex tree, this can be combined with {@link FlexTreeViewGeneric}.
+ */
+export interface FlexTreeView<in out TRoot extends FlexFieldSchema>
+	extends FlexTreeViewGeneric {
 	/**
 	 * Get a typed view of the tree content using the flex-tree API.
 	 */
@@ -57,9 +64,9 @@ export interface FlexTreeView<in out TRoot extends FlexFieldSchema> extends IDis
  * Branch (like in a version control system) of SharedTree.
  *
  * {@link FlexTreeView} that has forked off of the main trunk/branch.
- * @internal
  */
-export interface ITreeViewFork<in out TRoot extends FlexFieldSchema> extends FlexTreeView<TRoot> {
+export interface ITreeViewFork<in out TRoot extends FlexFieldSchema>
+	extends FlexTreeView<TRoot> {
 	readonly checkout: ITreeCheckoutFork;
 }
 
@@ -68,7 +75,7 @@ export interface ITreeViewFork<in out TRoot extends FlexFieldSchema> extends Fle
  */
 export class CheckoutFlexTreeView<
 	in out TRoot extends FlexFieldSchema,
-	out TCheckout extends TreeCheckout = TreeCheckout,
+	out TCheckout extends ITreeCheckout = ITreeCheckout,
 > implements FlexTreeView<TRoot>
 {
 	public readonly context: Context;
@@ -85,11 +92,15 @@ export class CheckoutFlexTreeView<
 	}
 
 	public [disposeSymbol](): void {
+		for (const anchorNode of this.checkout.forest.anchors) {
+			tryDisposeTreeNode(anchorNode);
+		}
+
 		this.context[disposeSymbol]();
 		this.onDispose?.();
 	}
 
-	public fork(): CheckoutFlexTreeView<TRoot, TreeCheckout & ITreeCheckoutFork> {
+	public fork(): CheckoutFlexTreeView<TRoot, ITreeCheckout & ITreeCheckoutFork> {
 		const branch = this.checkout.fork();
 		return new CheckoutFlexTreeView(branch, this.schema, this.nodeKeyManager);
 	}
@@ -99,6 +110,4 @@ export class CheckoutFlexTreeView<
  * Maps the context of every {@link CheckoutFlexTreeView} to the view.
  * In practice, this allows the view or checkout to be obtained from a flex node by first getting the context from the flex node and then using this map.
  */
-// TODO: use something other than `any`
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const contextToTreeView = new WeakMap<Context, CheckoutFlexTreeView<any>>();
+export const contextToTreeView = new WeakMap<Context, FlexTreeViewGeneric>();

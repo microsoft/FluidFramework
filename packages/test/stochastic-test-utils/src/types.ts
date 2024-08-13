@@ -49,7 +49,10 @@ export type Reducer<TOp, TState> = (state: TState, operation: TOp) => TState | v
  *
  * @internal
  */
-export type AsyncReducer<TOp, TState> = (state: TState, operation: TOp) => Promise<TState | void>;
+export type AsyncReducer<TOp, TState> = (
+	state: TState,
+	operation: TOp,
+) => Promise<TState | void>;
 
 /**
  * @internal

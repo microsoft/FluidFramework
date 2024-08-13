@@ -11,6 +11,8 @@ import {
 	ReferenceType,
 	SlidingPreference,
 	reservedRangeLabelsKey,
+	Side,
+	type SequencePlace,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -22,14 +24,22 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { IIntervalCollection, Side, type SequencePlace } from "../intervalCollection.js";
+import { IIntervalCollection } from "../intervalCollection.js";
 import { IntervalIndex } from "../intervalIndex/index.js";
-import { ISerializableInterval, IntervalStickiness, SequenceInterval } from "../intervals/index.js";
-import { SharedStringFactory } from "../sequenceFactory.js";
+import {
+	ISerializableInterval,
+	IntervalStickiness,
+	SequenceInterval,
+} from "../intervals/index.js";
+import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
 import { ISharedString, SharedStringClass } from "../sharedString.js";
 
 import { assertInterval } from "./intervalIndexTestUtils.js";
-import { assertConsistent, assertSequenceIntervals, type Client } from "./intervalTestUtils.js";
+import {
+	assertConsistent,
+	assertSequenceIntervals,
+	type Client,
+} from "./intervalTestUtils.js";
 import { constructClients, loadClient } from "./multiClientTestUtils.js";
 
 class MockIntervalIndex<TInterval extends ISerializableInterval>
@@ -935,9 +945,9 @@ describe("SharedString interval collections", () => {
 			});
 
 			it("retains intervalTree coherency when falling back to end comparison", () => {
-				collection.add({ start: 1, end: 6 });
-				collection.add({ start: 2, end: 5 });
-				const initiallyLargest = collection.add({ start: 3, end: 4 });
+				collection.add({ start: 1, end: 6 }); // BCDEF
+				collection.add({ start: 2, end: 5 }); // CDE
+				const initiallyLargest = collection.add({ start: 3, end: 4 }); // D
 				sharedString.removeRange(1, 4);
 				// Interval slide doesn't happen until creation is acked, so interval sort order
 				// is still by start position, which do not compare equal despite all appearing to be 1
@@ -1129,11 +1139,7 @@ describe("SharedString interval collections", () => {
 				const labels = s.getIntervalCollectionLabels();
 				for (const label of labels) {
 					assert.equal(label, infoArray[i].label, `Bad label ${i}: ${label}`);
-					assert.equal(
-						label,
-						createInfo[i].label,
-						`Bad label ${i}: ${createInfo[i].label}`,
-					);
+					assert.equal(label, createInfo[i].label, `Bad label ${i}: ${createInfo[i].label}`);
 					assert.equal(
 						createInfo[i].local,
 						infoArray[i].local,
@@ -1665,10 +1671,7 @@ describe("SharedString interval collections", () => {
 			assert(intervalId);
 			sharedString.insertText(0, "X");
 			containerRuntimeFactory.processAllMessages();
-			assert.strictEqual(
-				interval1.start.getSegment()?.constructor.name,
-				"StartOfTreeSegment",
-			);
+			assert.strictEqual(interval1.start.getSegment()?.constructor.name, "StartOfTreeSegment");
 			assert.strictEqual(interval1.end.getSegment()?.constructor.name, "TextSegment");
 
 			assert.strictEqual(sharedString.getText(), "Xabc", "different text");
@@ -1692,10 +1695,7 @@ describe("SharedString interval collections", () => {
 			assert(intervalId);
 			sharedString.insertText(0, "X");
 			containerRuntimeFactory.processAllMessages();
-			assert.strictEqual(
-				interval1.start.getSegment()?.constructor.name,
-				"StartOfTreeSegment",
-			);
+			assert.strictEqual(interval1.start.getSegment()?.constructor.name, "StartOfTreeSegment");
 			assert.strictEqual(interval1.end.getSegment()?.constructor.name, "TextSegment");
 
 			assert.strictEqual(sharedString.getText(), "Xabc", "different text");
@@ -1830,10 +1830,7 @@ describe("SharedString interval collections", () => {
 
 			assert.strictEqual(interval1.start.slidingPreference, SlidingPreference.BACKWARD);
 			assert.strictEqual(interval1.end.slidingPreference, SlidingPreference.FORWARD);
-			assert.strictEqual(
-				interval1.start.getSegment()?.constructor.name,
-				"StartOfTreeSegment",
-			);
+			assert.strictEqual(interval1.start.getSegment()?.constructor.name, "StartOfTreeSegment");
 			assert.strictEqual(interval1.end.getSegment()?.constructor.name, "EndOfTreeSegment");
 
 			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 3 }], false);
@@ -2024,8 +2021,9 @@ describe("SharedString interval collections", () => {
 		it("slides backward reference to correct position when remove multiple segments is unacked", () => {
 			sharedString.insertText(0, "ABC");
 
-			// (AB]C
-			// (AYYYXXXB]C
+			// Interval starts after A (exclusive) and ends after B (inclusive)
+			// A(B]C
+			// A(YYYXXXB]C
 
 			containerRuntimeFactory.processAllMessages();
 
@@ -2039,7 +2037,7 @@ describe("SharedString interval collections", () => {
 
 			sharedString.insertText(1, "XXX");
 			sharedString.insertText(1, "YYY");
-			sharedString.removeText(1, 8);
+			sharedString.removeText(1, 8); // "AYYYXXXBC", remove "YYYXXXB", leaving "A(]C"
 
 			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
 
@@ -2097,6 +2095,71 @@ describe("SharedString interval collections", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+		});
+
+		describe("slides reflect optimistic edit application", () => {
+			const searchText = "ment look";
+			const replacementText = "Themes and styles";
+			const testCases: {
+				name: string;
+				runCopyPasteEdit: (sharedString: SharedString) => void;
+			}[] = [
+				{
+					name: "insert at end then remove",
+					runCopyPasteEdit: (editingSharedString) => {
+						const start = editingSharedString.getText().indexOf(searchText);
+						editingSharedString.insertText(start + searchText.length, replacementText);
+						editingSharedString.removeRange(start, start + searchText.length);
+					},
+				},
+				{
+					name: "remove then insert", // start and end are the same position after removal
+					runCopyPasteEdit: (editingSharedString) => {
+						const start = editingSharedString.getText().indexOf(searchText);
+						editingSharedString.removeRange(start, start + searchText.length);
+						editingSharedString.insertText(start, replacementText);
+					},
+				},
+				// There are a few other valid ways to generate edits with 'replace' semantics which we might want to consider adding here.
+			];
+
+			const getTextIntervalRefersTo = (
+				reader: SharedString,
+				interval: SequenceInterval,
+			): string => {
+				const startPos = reader.localReferencePositionToPosition(interval.start);
+				const endPos = reader.localReferencePositionToPosition(interval.end);
+				return reader.getText(
+					interval.startSide === Side.After ? startPos + 1 : startPos,
+					interval.endSide === Side.After ? endPos + 1 : endPos,
+				);
+			};
+
+			for (const testCase of testCases) {
+				it(`using copy-paste edits: ${testCase.name}`, () => {
+					sharedString.insertText(0, "To make your document look professionally produced");
+					const collection = sharedString.getIntervalCollection("test");
+					const interval1 = collection.add({
+						start: { pos: 12, side: Side.After },
+						end: { pos: 20, side: Side.After },
+					});
+					assert.equal(getTextIntervalRefersTo(sharedString, interval1), "document");
+
+					containerRuntimeFactory.processAllMessages();
+					assert.equal(getTextIntervalRefersTo(sharedString, interval1), "document");
+
+					testCase.runCopyPasteEdit(sharedString);
+
+					assert.equal(
+						sharedString.getText(),
+						"To make your docuThemes and styles professionally produced",
+					);
+
+					assert.equal(getTextIntervalRefersTo(sharedString, interval1), "docu");
+					containerRuntimeFactory.processAllMessages();
+					assert.equal(getTextIntervalRefersTo(sharedString, interval1), "docu");
+				});
+			}
 		});
 	});
 });
@@ -2321,12 +2384,7 @@ describe("the start and end positions of intervals are updated in response to ed
 				containerRuntimeFactory.processAllMessages();
 
 				clients.push(
-					await loadClient(
-						containerRuntimeFactory,
-						clients[0],
-						"fromSummary",
-						stringFactory,
-					),
+					await loadClient(containerRuntimeFactory, clients[0], "fromSummary", stringFactory),
 				);
 
 				assert.notEqual(

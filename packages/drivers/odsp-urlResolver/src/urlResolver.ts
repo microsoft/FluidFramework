@@ -47,7 +47,10 @@ export class OdspUrlResolver implements IUrlResolver {
 		return undefined;
 	}
 
-	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+	public async getAbsoluteUrl(
+		resolvedUrl: IResolvedUrl,
+		relativeUrl: string,
+	): Promise<string> {
 		throw new Error("Not implemented");
 	}
 }
@@ -104,7 +107,9 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
 	}
 }
 
-async function initializeFluidOfficeOrOneNote(urlSource: URL): Promise<IOdspUrlParts | undefined> {
+async function initializeFluidOfficeOrOneNote(
+	urlSource: URL,
+): Promise<IOdspUrlParts | undefined> {
 	const pathname = urlSource.pathname;
 	const siteDriveItemMatch = pathname.match(
 		/\/(p|preview|meetingnotes|notes)\/([^/]*)\/([^/]*)\/([^/]*)/,
@@ -113,7 +118,9 @@ async function initializeFluidOfficeOrOneNote(urlSource: URL): Promise<IOdspUrlP
 		return undefined;
 	}
 
-	const site = decodeURIComponent(siteDriveItemMatch[2]);
+	// TODO Why are we non null asserting here
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const site = decodeURIComponent(siteDriveItemMatch[2]!);
 
 	// Path value is base64 encoded so need to decode first
 	const decodedSite = fromBase64ToUtf8(site);
@@ -122,12 +129,18 @@ async function initializeFluidOfficeOrOneNote(urlSource: URL): Promise<IOdspUrlP
 	const storageType = decodedSite.split(":")[0];
 	const expectedStorageType = "spo"; // Only support spo for now
 	if (storageType !== expectedStorageType) {
-		throw new Error(`Unexpected storage type ${storageType}, expected: ${expectedStorageType}`);
+		throw new Error(
+			`Unexpected storage type ${storageType}, expected: ${expectedStorageType}`,
+		);
 	}
 
 	// Since we have the drive and item, only take the host ignore the rest
 	const siteUrl = decodedSite.slice(Math.max(0, storageType.length + 1));
-	const driveId = decodeURIComponent(siteDriveItemMatch[3]);
-	const itemId = decodeURIComponent(siteDriveItemMatch[4]);
+	// TODO Why are we non null asserting here
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const driveId = decodeURIComponent(siteDriveItemMatch[3]!);
+	// TODO Why are we non null asserting here
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const itemId = decodeURIComponent(siteDriveItemMatch[4]!);
 	return { siteUrl, driveId, itemId };
 }

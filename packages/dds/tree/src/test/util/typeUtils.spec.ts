@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { requireAssignableTo } from "../../util/index.js";
-import {
+import type { requireAssignableTo } from "../../util/index.js";
+import type {
 	AllowOptional,
 	AllowOptionalNotFlattened,
 	OptionalFields,

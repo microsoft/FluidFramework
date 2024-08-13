@@ -7,7 +7,7 @@ import type { ITelemetryBaseProperties, Tagged } from "@fluidframework/core-inte
 import type { ILoggingError } from "@fluidframework/core-interfaces/internal";
 import { v4 as uuid } from "uuid";
 
-import { IFluidErrorBase, hasErrorInstanceId, isFluidError } from "./fluidErrorBase.js";
+import { type IFluidErrorBase, hasErrorInstanceId, isFluidError } from "./fluidErrorBase.js";
 import { convertToBasePropertyType } from "./logger.js";
 import type {
 	ITelemetryLoggerExt,
@@ -157,7 +157,12 @@ export function normalizeError(
 
 	const errorTelemetryProps = LoggingError.typeCheck(error)
 		? error.getTelemetryProperties()
-		: { untrustedOrigin: 1 }; // This will let us filter errors that did not originate from our own codebase
+		: {
+				untrustedOrigin: 1, // This will let us filter errors that did not originate from our own codebase
+				// FUTURE: Once 2.0 becomes LTS, switch to this more explicit property name
+				// Consider using a string to distinguish cases like "dependency" v. "callback"
+				// errorRunningExternalCode: 1,
+			};
 
 	fluidError.addTelemetryProperties({
 		...errorTelemetryProps,
@@ -221,7 +226,10 @@ export function wrapError<T extends LoggingError>(
 	innerError: unknown,
 	newErrorFn: (message: string) => T,
 ): T {
-	const { message, stack } = extractLogSafeErrorProperties(innerError, false /* sanitizeStack */);
+	const { message, stack } = extractLogSafeErrorProperties(
+		innerError,
+		false /* sanitizeStack */,
+	);
 
 	const newError = newErrorFn(message);
 
@@ -231,7 +239,12 @@ export function wrapError<T extends LoggingError>(
 
 	// Mark external errors with untrustedOrigin flag
 	if (isExternalError(innerError)) {
-		newError.addTelemetryProperties({ untrustedOrigin: 1 });
+		newError.addTelemetryProperties({
+			untrustedOrigin: 1,
+			// FUTURE: Once 2.0 becomes LTS, switch to this more explicit property name
+			// Consider using a string to distinguish cases like "dependency" v. "callback"
+			// errorRunningExternalCode: 1,
+		});
 	}
 
 	// Reuse errorInstanceId
@@ -243,7 +256,7 @@ export function wrapError<T extends LoggingError>(
 	}
 
 	// Lastly, copy over all other telemetry properties. Note these will not overwrite existing properties
-	// This will include the untrustedOrigin property if the inner error itself was created from an external error
+	// This will include the untrustedOrigin/errorRunningExternalCode info if the inner error itself was created from an external error
 	if (isILoggingError(innerError)) {
 		newError.addTelemetryProperties(innerError.getTelemetryProperties());
 	}
@@ -308,11 +321,14 @@ export function overwriteStack(error: IFluidErrorBase | LoggingError, stack: str
  */
 export function isExternalError(error: unknown): boolean {
 	// LoggingErrors are an internal FF error type. However, an external error can be converted
-	// into a LoggingError if it is normalized. In this case we must use the untrustedOrigin flag to
-	// determine whether the original error was infact external.
+	// into a LoggingError if it is normalized. In this case we must use the untrustedOrigin/errorRunningExternalCode flag to
+	// determine whether the original error was in fact external.
 	if (LoggingError.typeCheck(error)) {
 		if ((error as NormalizedLoggingError).errorType === NORMALIZED_ERROR_TYPE) {
-			return error.getTelemetryProperties().untrustedOrigin === 1;
+			const props = error.getTelemetryProperties();
+			// NOTE: errorRunningExternalCode is not currently used - once this "read" code reaches LTS,
+			// we can switch to writing this more explicit property
+			return props.untrustedOrigin === 1 || !!props.errorRunningExternalCode;
 		}
 		return false;
 	}
@@ -331,6 +347,8 @@ export function isTaggedTelemetryPropertyValue(
 	return typeof (x as Partial<Tagged<unknown>>)?.tag === "string";
 }
 
+// TODO: Use `unknown` instead (API breaking change)
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Borrowed from
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#examples}
@@ -340,8 +358,6 @@ export function isTaggedTelemetryPropertyValue(
  *
  * @internal
  */
-// TODO: Use `unknown` instead (API breaking change)
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export const getCircularReplacer = (): ((key: string, value: unknown) => any) => {
 	const seen = new WeakSet();
 	return (key: string, value: unknown): any => {
@@ -370,10 +386,10 @@ export class LoggingError
 	implements ILoggingError, Omit<IFluidErrorBase, "errorType">
 {
 	private _errorInstanceId = uuid();
-	get errorInstanceId(): string {
+	public get errorInstanceId(): string {
 		return this._errorInstanceId;
 	}
-	overwriteErrorInstanceId(id: string): void {
+	public overwriteErrorInstanceId(id: string): void {
 		this._errorInstanceId = id;
 	}
 
@@ -383,7 +399,7 @@ export class LoggingError
 	 * @param props - telemetry props to include on the error for when it's logged
 	 * @param omitPropsFromLogging - properties by name to omit from telemetry props
 	 */
-	constructor(
+	public constructor(
 		message: string,
 		props?: ITelemetryBaseProperties,
 		private readonly omitPropsFromLogging: Set<string> = new Set(),
@@ -464,9 +480,9 @@ export const NORMALIZED_ERROR_TYPE = "genericError";
 class NormalizedLoggingError extends LoggingError {
 	// errorType "genericError" is used as a default value throughout the code.
 	// Note that this matches ContainerErrorTypes/DriverErrorTypes' genericError
-	errorType = NORMALIZED_ERROR_TYPE;
+	public readonly errorType = NORMALIZED_ERROR_TYPE;
 
-	constructor(errorProps: Pick<IFluidErrorBase, "message" | "stack">) {
+	public constructor(errorProps: Pick<IFluidErrorBase, "message" | "stack">) {
 		super(errorProps.message);
 
 		if (errorProps.stack !== undefined) {

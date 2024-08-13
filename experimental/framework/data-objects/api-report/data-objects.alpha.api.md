@@ -4,14 +4,21 @@
 
 ```ts
 
-import { IErrorEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import type { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
-import { IInboundSignalMessage } from '@fluidframework/runtime-definitions/internal';
-import { Jsonable } from '@fluidframework/datastore-definitions/internal';
-import type { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions/internal';
-import type { SharedObjectKind } from '@fluidframework/shared-object-base';
+// @alpha
+export interface ISignaler extends IEventProvider<IErrorEvent> {
+    offSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler;
+    onSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler;
+    submitSignal<T>(signalName: string, payload?: Jsonable<T>): any;
+}
 
-// (No @packageDocumentation comment for this package)
+// @alpha
+export const Signaler: {
+    readonly factory: IFluidDataStoreFactory & {
+        readonly registryEntry: NamedFluidDataStoreRegistryEntry;
+    };
+} & SharedObjectKind<ISignaler>;
+
+// @alpha
+export type SignalListener<T> = (clientId: string, local: boolean, payload: Jsonable<T>) => void;
 
 ```

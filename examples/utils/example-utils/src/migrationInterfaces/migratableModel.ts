@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-
 import type { IMigrationTool } from "./migrationTool.js";
 
 /**
@@ -39,13 +37,6 @@ export interface IImportExportModel<ImportType, ExportType> {
 	exportData: () => Promise<ExportType>;
 }
 
-/**
- * @internal
- */
-export interface IMigratableModelEvents extends IEvent {
-	(event: "connected", listener: () => void);
-}
-
 // TODO: Is there a better way to express the unknown format here?  I think I'd prefer to put the burden of calling
 // supportsDataFormat() on the callers of importData() (and allow implementers of IMigratableModel to assume
 // importData() is called with valid data).
@@ -54,17 +45,11 @@ export interface IMigratableModelEvents extends IEvent {
  */
 export interface IMigratableModel
 	extends IVersionedModel,
-		IImportExportModel<unknown, unknown>,
-		IEventProvider<IMigratableModelEvents> {
+		IImportExportModel<unknown, unknown> {
 	/**
 	 * The tool that will be used to facilitate the migration.
 	 */
 	readonly migrationTool: IMigrationTool;
-
-	/**
-	 * Returns if the runtime is currently connected.
-	 */
-	connected(): boolean;
 
 	/**
 	 * Close the model, rendering it inoperable and closing connections.

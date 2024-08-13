@@ -69,8 +69,8 @@ export function TelemetryConsentModal(props: ModalProps): React.ReactElement {
 				<div className={styles.optOut}>
 					<h2>Opt in to usage telemetry</h2>
 					<p>
-						We collect usage telemetry to improve the developer experience. <br /> You
-						can opt out of this telemetry collection at any time in the Settings screen.
+						We collect usage telemetry to improve the developer experience. <br /> You can opt
+						out of this telemetry collection at any time in the Settings screen.
 					</p>
 					<Checkbox
 						label={

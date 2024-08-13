@@ -4,33 +4,36 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISharedObject } from "@fluidframework/shared-object-base/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { ICodecOptions, noopValidator } from "../codec/index.js";
+import { type ICodecOptions, noopValidator } from "../codec/index.js";
 import {
-	JsonableTree,
+	type JsonableTree,
 	RevisionTagCodec,
-	TreeStoredSchema,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
 } from "../core/index.js";
-import { HasListeners, IEmitter, Listenable, createEmitter } from "../events/index.js";
+import {
+	type HasListeners,
+	type IEmitter,
+	type Listenable,
+	createEmitter,
+} from "../events/index.js";
 import {
 	DetachedFieldIndexSummarizer,
-	FlexFieldSchema,
 	ForestSummarizer,
 	SchemaSummarizer,
 	TreeCompressionStrategy,
-	ViewSchema,
 	buildChunkedForest,
 	buildForest,
 	createNodeKeyManager,
@@ -42,19 +45,22 @@ import {
 } from "../feature-libraries/index.js";
 import {
 	DefaultResubmitMachine,
-	ExplicitCoreCodecVersions,
+	type ExplicitCoreCodecVersions,
 	SharedTreeCore,
 } from "../shared-tree-core/index.js";
-import { ITree, ImplicitFieldSchema, TreeConfiguration, TreeView } from "../simple-tree/index.js";
+import type {
+	ITree,
+	ImplicitFieldSchema,
+	TreeViewConfiguration,
+} from "../simple-tree/index.js";
 
-import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
-import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
-import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import { CheckoutEvents, TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
-import { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import { type CheckoutEvents, type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
+import { breakingClass, throwIfBroken } from "../util/index.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -72,20 +78,17 @@ export interface SharedTreeContentSnapshot {
 	 */
 	readonly schema: TreeStoredSchema;
 	/**
-	 * All {@link TreeStatus#InDocument} content.
+	 * All {@link TreeStatus.InDocument} content.
 	 */
 	readonly tree: JsonableTree[];
 	/**
-	 * All {@link TreeStatus#Removed} content.
+	 * All {@link TreeStatus.Removed} content.
 	 */
 	readonly removed: [string | number | undefined, number, JsonableTree][];
 }
 
 /**
- * Collaboratively editable tree distributed data-structure,
- * powered by {@link @fluidframework/shared-object-base#ISharedObject}.
- *
- * See [the README](../../README.md) for details.
+ * {@link ITree} extended with some non-public APIs.
  * @internal
  */
 export interface ISharedTree extends ISharedObject, ITree {
@@ -97,17 +100,6 @@ export interface ISharedTree extends ISharedObject, ITree {
 	 * This does not include everything that is included in a tree summary, since information about how to merge future edits is omitted.
 	 */
 	contentSnapshot(): SharedTreeContentSnapshot;
-
-	/**
-	 * Like {@link ITree.schematize}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
-	 *
-	 * Returned view is disposed when the stored schema becomes incompatible with the view schema.
-	 * Undefined is returned if the stored data could not be made compatible with the view schema.
-	 */
-	schematizeFlexTree<TRoot extends FlexFieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-		onDispose: () => void,
-	): FlexTreeView<TRoot> | undefined;
 }
 
 /**
@@ -128,8 +120,22 @@ interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
 }
 
 const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersions>([
-	[1, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1, fieldBatch: 1 }],
-	[2, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 2, message: 2, fieldBatch: 1 }],
+	[
+		1,
+		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1, fieldBatch: 1 },
+	],
+	[
+		2,
+		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 2, message: 2, fieldBatch: 1 },
+	],
+	[
+		3,
+		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 3, message: 3, fieldBatch: 1 },
+	],
+	[
+		4,
+		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 4, message: 4, fieldBatch: 1 },
+	],
 ]);
 
 function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
@@ -143,6 +149,7 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
  *
  * TODO: detail compatibility requirements.
  */
+@breakingClass
 export class SharedTree
 	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
 	implements ISharedTree
@@ -172,7 +179,9 @@ export class SharedTree
 		const forest =
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
-				: buildForest();
+				: options.forest === ForestType.Reference
+					? buildForest()
+					: buildForest(undefined, true);
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
 		const removedRoots = makeDetachedFieldIndex(
 			"repair",
@@ -191,6 +200,7 @@ export class SharedTree
 				policy: defaultSchemaPolicy,
 			},
 			encodeType: options.treeEncodeType,
+			originatorId: runtime.idCompressor.localSessionId,
 			idCompressor: runtime.idCompressor,
 		};
 		const forestSummarizer = new ForestSummarizer(
@@ -263,10 +273,12 @@ export class SharedTree
 				events: this._events,
 				removedRoots,
 				chunkCompressionStrategy: options.treeEncodeType,
+				logger: this.logger,
 			},
 		);
 	}
 
+	@throwIfBroken
 	public contentSnapshot(): SharedTreeContentSnapshot {
 		const cursor = this.checkout.forest.allocateCursor("contentSnapshot");
 		try {
@@ -281,40 +293,20 @@ export class SharedTree
 		}
 	}
 
-	public schematizeFlexTree<TRoot extends FlexFieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-		onDispose: () => void,
-	): CheckoutFlexTreeView<TRoot> | undefined {
-		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, config.schema);
-		if (!ensureSchema(viewSchema, config.allowedSchemaModifications, this.checkout, config)) {
-			return undefined;
-		}
-
-		return requireSchema(
-			this.checkout,
-			viewSchema,
-			onDispose,
-			createNodeKeyManager(this.runtime.idCompressor),
-		);
-	}
-
-	public schematize<TRoot extends ImplicitFieldSchema>(
-		config: TreeConfiguration<TRoot>,
-	): TreeView<TRoot> {
-		const view = new SchematizingSimpleTreeView(
+	public viewWith<TRoot extends ImplicitFieldSchema>(
+		config: TreeViewConfiguration<TRoot>,
+	): SchematizingSimpleTreeView<TRoot> {
+		return new SchematizingSimpleTreeView(
 			this.checkout,
 			config,
 			createNodeKeyManager(this.runtime.idCompressor),
+			this.breaker,
 		);
-		// As a subjective API design choice, we initialize the tree here if it is not already initialized.
-		if (view.error?.canInitialize === true) {
-			view.upgradeSchema();
-		}
-		return view;
 	}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
+		this.checkout.setTipRevisionForLoadedData(this.trunkHeadRevision);
 		this._events.emit("afterBatch");
 	}
 }
@@ -338,6 +330,11 @@ export const SharedTreeFormatVersion = {
 	 * Requires \@fluidframework/tree \>= 2.0.0.
 	 */
 	v2: 2,
+
+	/**
+	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 */
+	v3: 3,
 } as const;
 
 /**
@@ -398,13 +395,17 @@ export enum ForestType {
 	 * The "ChunkedForest" forest type.
 	 */
 	Optimized = 1,
+	/**
+	 * The "ObjectForest" forest type with expensive asserts for debugging.
+	 */
+	Expensive = 2,
 }
 
 export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
-	formatVersion: SharedTreeFormatVersion.v2,
+	formatVersion: SharedTreeFormatVersion.v3,
 };
 
 /**

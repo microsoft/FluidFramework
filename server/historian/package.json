@@ -15,7 +15,7 @@
 		"build:compile": "pnpm run -r --stream build:compile",
 		"build:genver": "pnpm run -r --no-sort --stream --no-bail build:genver",
 		"ci:eslint": "pnpm run -r --no-sort --stream --no-bail eslint",
-		"clean": "rimraf --glob \"dist\" \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"format": "npm run prettier:fix",
 		"preinstall": "node scripts/only-pnpm.cjs",
 		"lint": "npm run prettier && npm run ci:eslint",

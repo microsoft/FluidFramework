@@ -4,13 +4,13 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { TSchema } from "@sinclair/typebox";
+import type { TSchema } from "@sinclair/typebox";
 
-import { JsonCompatibleReadOnly } from "../../util/index.js";
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import {
 	type ICodecFamily,
-	ICodecOptions,
-	IJsonCodec,
+	type ICodecOptions,
+	type IJsonCodec,
 	withSchemaValidation,
 	type FormatVersion,
 } from "../codec.js";

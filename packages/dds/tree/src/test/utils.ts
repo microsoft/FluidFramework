@@ -4,20 +4,25 @@
  */
 
 import { strict as assert } from "node:assert";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	createMockLoggerExt,
+	type IMockLoggerExt,
+	type ITelemetryLoggerExt,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
-import { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { ISummarizer } from "@fluidframework/container-runtime/internal";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import {
+import type { ISummarizer } from "@fluidframework/container-runtime/internal";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
@@ -26,11 +31,11 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
-	ChannelFactoryRegistry,
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
-	SummaryInfo,
+	type ChannelFactoryRegistry,
+	type ITestContainerConfig,
+	type ITestFluidObject,
+	type ITestObjectProvider,
+	type SummaryInfo,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	TestObjectProvider,
@@ -38,35 +43,35 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
-import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
+import { type ICodecFamily, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
 	AllowedUpdateType,
-	AnnouncedVisitor,
-	ChangeFamily,
-	ChangeFamilyEditor,
+	type AnnouncedVisitor,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
 	CommitKind,
-	CommitMetadata,
-	DeltaDetachedNodeBuild,
-	DeltaDetachedNodeDestruction,
-	DeltaFieldChanges,
-	DeltaFieldMap,
-	DeltaMark,
-	DeltaRoot,
-	DeltaVisitor,
-	DetachedFieldIndex,
-	FieldUpPath,
-	IEditableForest,
-	IForestSubscription,
-	JsonableTree,
-	Revertible,
-	RevisionInfo,
-	RevisionMetadataSource,
-	RevisionTag,
+	type CommitMetadata,
+	type DeltaDetachedNodeBuild,
+	type DeltaDetachedNodeDestruction,
+	type DeltaFieldChanges,
+	type DeltaFieldMap,
+	type DeltaMark,
+	type DeltaRoot,
+	type DeltaVisitor,
+	type DetachedFieldIndex,
+	type FieldUpPath,
+	type IEditableForest,
+	type IForestSubscription,
+	type JsonableTree,
+	type Revertible,
+	type RevisionInfo,
+	type RevisionMetadataSource,
+	type RevisionTag,
 	RevisionTagCodec,
-	TaggedChange,
-	TreeStoredSchema,
+	type TaggedChange,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
-	UpPath,
+	type UpPath,
 	announceDelta,
 	applyDelta,
 	clonePath,
@@ -81,6 +86,10 @@ import {
 	type AnchorNode,
 	type AnchorSetRootEvents,
 	type TreeStoredSchemaSubscription,
+	type SchemaAndPolicy,
+	type ITreeCursorSynchronous,
+	CursorLocationType,
+	type MapTree,
 } from "../core/index.js";
 import {
 	cursorToJsonObject,
@@ -89,14 +98,13 @@ import {
 	leaf,
 	singleJsonCursor,
 } from "../domains/index.js";
-import { HasListeners, IEmitter, Listenable } from "../events/index.js";
+import type { HasListeners, IEmitter, Listenable } from "../events/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
-	ContextuallyTypedNodeData,
 	FieldKinds,
-	FlexFieldSchema,
-	FlexTreeTypedField,
-	NodeKeyManager,
+	type FlexFieldSchema,
+	type FlexTreeTypedField,
+	type NodeKeyManager,
 	SchemaBuilderBase,
 	ViewSchema,
 	buildForest,
@@ -108,22 +116,23 @@ import {
 	mapRootChanges,
 	mapTreeFromCursor,
 	MockNodeKeyManager,
-	normalizeNewFieldContent,
+	type FlexTreeSchema,
+	cursorForMapTreeField,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
 import {
-	CheckoutEvents,
+	type CheckoutEvents,
 	CheckoutFlexTreeView,
-	ISharedTree,
-	ITreeCheckout,
-	InitializeAndSchematizeConfiguration,
-	RevertibleFactory,
+	type ISharedTree,
+	type ITreeCheckout,
+	type InitializeAndSchematizeConfiguration,
+	type RevertibleFactory,
 	SharedTree,
-	SharedTreeContentSnapshot,
+	type SharedTreeContentSnapshot,
 	SharedTreeFactory,
-	TreeCheckout,
-	TreeContent,
+	type TreeCheckout,
+	type TreeContent,
 	createTreeCheckout,
 	type ISharedTreeEditor,
 	type ITransaction,
@@ -131,12 +140,30 @@ import {
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ensureSchema } from "../shared-tree/schematizeTree.js";
+import {
+	SchematizingSimpleTreeView,
+	requireSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../shared-tree/schematizingTreeView.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schematizingTreeView.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
-import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-tree/index.js";
-import { JsonCompatible, Mutable, nestedMapFromFlatList } from "../util/index.js";
+import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
+import {
+	type ImplicitFieldSchema,
+	type InsertableContent,
+	TreeViewConfiguration,
+	SchemaFactory,
+	toFlexSchema,
+	type InsertableTreeFieldFromImplicitField,
+	mapTreeFromNodeData,
+} from "../simple-tree/index.js";
+import {
+	type JsonCompatible,
+	type Mutable,
+	nestedMapFromFlatList,
+	forEachInNestedMap,
+	tryGetFromNestedMap,
+	isReadonlyArray,
+} from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
 
@@ -230,9 +257,7 @@ export class TestTreeProvider {
 				{
 					summaryOptions: {
 						summaryConfigOverrides:
-							summarizeType === SummarizeType.disabled
-								? { state: "disabled" }
-								: undefined,
+							summarizeType === SummarizeType.disabled ? { state: "disabled" } : undefined,
 					},
 					enableRuntimeIdCompressor: "on",
 				},
@@ -347,6 +372,7 @@ export class TestTreeProviderLite {
 	private static readonly treeId = "TestSharedTree";
 	private readonly runtimeFactory = new MockContainerRuntimeFactoryForReconnection();
 	public readonly trees: readonly SharedTreeWithConnectionStateSetter[];
+	public readonly logger: IMockLoggerExt = createMockLoggerExt();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -376,6 +402,7 @@ export class TestTreeProviderLite {
 				clientId: `test-client-${i}`,
 				id: "test",
 				idCompressor: createIdCompressor(sessionId),
+				logger: this.logger,
 			});
 			const tree = this.factory.create(
 				runtime,
@@ -564,9 +591,7 @@ export function validateFuzzTreeConsistency(
 }
 
 function contentToJsonableTree(content: TreeContent): JsonableTree[] {
-	return jsonableTreeFromFieldCursor(
-		normalizeNewFieldContent(content, content.schema.rootFieldSchema, content.initialTree),
-	);
+	return jsonableTreeFromFieldCursor(normalizeNewFieldContent(content.initialTree));
 }
 
 export function validateTreeContent(tree: ITreeCheckout, content: TreeContent): void {
@@ -617,8 +642,7 @@ export function validateSnapshotConsistency(
 		`Inconsistent document tree json representation: ${idDifferentiator}`,
 	);
 
-	// Note: removed trees are not currently garbage collected, which allows us to expect that all clients should share the same
-	// exact set of them. In the future, we will need to relax this expectation and only enforce that whenever two
+	// Removed trees are garbage collected so we only enforce that whenever two
 	// clients both have data for the same removed tree (as identified by the first two tuple entries), then they
 	// should be consistent about the content being stored (the third tuple entry).
 	const mapA = nestedMapFromFlatList(
@@ -635,11 +659,16 @@ export function validateSnapshotConsistency(
 			prepareTreeForCompare([children])[0],
 		]),
 	);
-	assert.deepEqual(
-		mapA,
-		mapB,
-		`Inconsistent removed trees json representation: ${idDifferentiator}`,
-	);
+	forEachInNestedMap(mapA, (content, major, minor) => {
+		const mapBContent = tryGetFromNestedMap(mapB, major, minor);
+		if (mapBContent !== undefined) {
+			assert.deepEqual(
+				content,
+				mapBContent,
+				`Inconsistent removed trees json representation: ${idDifferentiator}`,
+			);
+		}
+	});
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);
 }
 
@@ -677,12 +706,32 @@ export function checkoutWithContent(
 			HasListeners<CheckoutEvents>;
 	},
 ): TreeCheckout {
+	const { checkout } = createCheckoutWithContent(content, args);
+	return checkout;
+}
+
+export function createCheckoutWithContent(
+	content: TreeContent,
+	args?: {
+		events?: Listenable<CheckoutEvents> &
+			IEmitter<CheckoutEvents> &
+			HasListeners<CheckoutEvents>;
+	},
+): { checkout: TreeCheckout; logger: IMockLoggerExt } {
 	const forest = forestWithContent(content);
-	return createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
-		...args,
-		forest,
-		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
-	});
+	const logger = createMockLoggerExt();
+	const checkout = createTreeCheckout(
+		testIdCompressor,
+		mintRevisionTag,
+		testRevisionTagCodec,
+		{
+			...args,
+			forest,
+			schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
+			logger,
+		},
+	);
+	return { checkout, logger };
 }
 
 export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
@@ -704,11 +753,7 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 
 export function forestWithContent(content: TreeContent): IEditableForest {
 	const forest = buildForest();
-	const fieldCursor = normalizeNewFieldContent(
-		{ schema: content.schema },
-		content.schema.rootFieldSchema,
-		content.initialTree,
-	);
+	const fieldCursor = normalizeNewFieldContent(content.initialTree);
 	// TODO:AB6712 Make the delta format accept a single cursor in Field mode.
 	const nodeCursors = mapCursorField(fieldCursor, (c) =>
 		cursorForMapTreeNode(mapTreeFromCursor(c)),
@@ -717,26 +762,42 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	return forest;
 }
 
-export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
-	content: TreeContent<TRoot>,
+export function flexTreeFromForest<TRoot extends FlexFieldSchema>(
+	schema: FlexTreeSchema<TRoot>,
+	forest: IEditableForest,
 	args?: {
-		forest?: IEditableForest;
 		nodeKeyManager?: NodeKeyManager;
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
 ): FlexTreeTypedField<TRoot> {
-	const forest = args?.forest ?? forestWithContent(content);
 	const branch = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
 		...args,
 		forest,
-		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
+		schema: new TreeStoredSchemaRepository(intoStoredSchema(schema)),
 	});
 	const manager = args?.nodeKeyManager ?? new MockNodeKeyManager();
-	const view = new CheckoutFlexTreeView(branch, content.schema, manager);
+	const view = new CheckoutFlexTreeView(branch, schema, manager);
 	return view.flexTree;
 }
+
+const sf = new SchemaFactory("com.fluidframework.json");
+
+export const NumberArray = sf.array("array", sf.number);
+export const StringArray = sf.array("array", sf.string);
+
+const jsonPrimitiveSchema = [sf.null, sf.boolean, sf.number, sf.string] as const;
+export const JsonObject = sf.mapRecursive("object", [
+	() => JsonObject,
+	() => JsonArray,
+	...jsonPrimitiveSchema,
+]);
+export const JsonArray = sf.arrayRecursive("array", [
+	JsonObject,
+	() => JsonArray,
+	...jsonPrimitiveSchema,
+]);
 
 export const jsonSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence, {
 	scope: "JsonSequenceRoot",
@@ -807,18 +868,14 @@ export function jsonTreeFromForest(forest: IForestSubscription): JsonCompatible[
  * @param index - The index in the root field at which to insert.
  * @param value - The value of the inserted nodes.
  */
-export function insert(
-	tree: ITreeCheckout,
-	index: number,
-	...values: ContextuallyTypedNodeData[]
-): void {
+export function insert(tree: ITreeCheckout, index: number, ...values: string[]): void {
 	const fieldEditor = tree.editor.sequenceField({ field: rootFieldKey, parent: undefined });
-	const content = normalizeNewFieldContent(
-		{ schema: jsonSequenceRootSchema },
-		jsonSequenceRootSchema.rootFieldSchema,
-		values,
+	fieldEditor.insert(
+		index,
+		cursorForMapTreeField(
+			values.map((value): MapTree => ({ fields: new Map(), type: leaf.string.name, value })),
+		),
 	);
-	fieldEditor.insert(index, content);
 }
 
 export function remove(tree: ITreeCheckout, index: number, count: number): void {
@@ -841,7 +898,10 @@ export function expectJsonTree(
 	}
 }
 
-export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath | undefined): void {
+export function expectEqualPaths(
+	path: UpPath | undefined,
+	expectedPath: UpPath | undefined,
+): void {
 	if (!compareUpPaths(path, expectedPath)) {
 		// This is slower than above compare, so only do it in the error case.
 		// Make a nice error message:
@@ -1022,12 +1082,14 @@ export function applyTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	revision?: RevisionTag,
 	build?: readonly DeltaDetachedNodeBuild[],
 	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
 	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	applyDelta(
 		rootDelta,
+		revision,
 		deltaProcessor,
 		detachedFieldIndex ??
 			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),
@@ -1038,12 +1100,14 @@ export function announceTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	revision?: RevisionTag,
 	build?: readonly DeltaDetachedNodeBuild[],
 	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
 	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	announceDelta(
 		rootDelta,
+		revision,
 		deltaProcessor,
 		detachedFieldIndex ??
 			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),
@@ -1124,7 +1188,7 @@ export function mintRevisionTag(): RevisionTag {
 export const testRevisionTagCodec = new RevisionTagCodec(testIdCompressor);
 
 /**
- * Like {@link ITree.schematize}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
+ * Like {@link ITree.viewWith}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
  */
 export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
 	tree: SharedTree,
@@ -1185,22 +1249,67 @@ export function treeTestFactory(
 }
 
 /**
- * Given the TreeConfiguration, returns a view.
+ * Given the TreeViewConfiguration, returns an uninitialized view.
  *
  * This works a much like the actual package public API as possible, while avoiding the actual SharedTree object.
  * This should allow realistic (app like testing) of all the simple-tree APIs.
+ *
+ * Typically, users will want to initialize the returned view with some content (thereby setting its schema) using `TreeView.initialize`.
  */
 export function getView<TSchema extends ImplicitFieldSchema>(
-	config: TreeConfiguration<TSchema>,
+	config: TreeViewConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
+	logger?: ITelemetryLoggerExt,
 ): SchematizingSimpleTreeView<TSchema> {
-	const flexConfig = toFlexConfig(config, nodeKeyManager ?? new MockNodeKeyManager());
-	const checkout = checkoutWithContent(flexConfig);
+	const checkout = createTreeCheckout(
+		testIdCompressor,
+		mintRevisionTag,
+		testRevisionTagCodec,
+		{
+			forest: buildForest(),
+			schema: new TreeStoredSchemaRepository(),
+			logger,
+		},
+	);
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
 		nodeKeyManager ?? new MockNodeKeyManager(),
 	);
+}
+
+/**
+ * Views the supplied checkout with the given schema.
+ */
+export function viewCheckout<TSchema extends ImplicitFieldSchema>(
+	checkout: ITreeCheckout,
+	config: TreeViewConfiguration<TSchema>,
+): SchematizingSimpleTreeView<TSchema> {
+	return new SchematizingSimpleTreeView<TSchema>(checkout, config, new MockNodeKeyManager());
+}
+
+/**
+ * Forks a simple tree view.
+ */
+export function forkView<T extends ImplicitFieldSchema>(
+	viewToFork: SchematizingSimpleTreeView<T>,
+): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
+export function forkView<TIn extends ImplicitFieldSchema, TOut extends ImplicitFieldSchema>(
+	viewToFork: SchematizingSimpleTreeView<TIn>,
+	schema?: TOut,
+): SchematizingSimpleTreeView<TOut> & { checkout: ITreeCheckoutFork };
+export function forkView<T extends ImplicitFieldSchema>(
+	viewToFork: SchematizingSimpleTreeView<T>,
+	schema?: T,
+): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork } {
+	return new SchematizingSimpleTreeView<T>(
+		viewToFork.checkout.fork(),
+		new TreeViewConfiguration({
+			enableSchemaValidation: viewToFork.config.enableSchemaValidation,
+			schema: schema ?? viewToFork.config.schema,
+		}),
+		new MockNodeKeyManager(),
+	) as SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
 }
 
 /**
@@ -1268,4 +1377,47 @@ export function validateUsageError(expectedErrorMsg: string | RegExp): (error: E
 		}
 		return true;
 	};
+}
+
+/**
+ * Returns a cursor (in nodes mode) for the root node.
+ *
+ * @privateRemarks
+ * Ideally this would work on any node, not just the root,
+ * and the schema would come from the unhydrated node.
+ * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
+ */
+export function cursorFromInsertableTreeField(
+	schema: ImplicitFieldSchema,
+	tree: InsertableTreeFieldFromImplicitField,
+	nodeKeyManager: NodeKeyManager,
+): ITreeCursorSynchronous | undefined {
+	const data = tree as InsertableContent | undefined;
+
+	const flexSchema = toFlexSchema(schema);
+	const storedSchema: SchemaAndPolicy = {
+		policy: defaultSchemaPolicy,
+		schema: intoStoredSchema(flexSchema),
+	};
+
+	const mappedContent = mapTreeFromNodeData(data, schema, nodeKeyManager, storedSchema);
+	return mappedContent === undefined ? undefined : cursorForMapTreeNode(mappedContent);
+}
+
+function normalizeNewFieldContent(
+	content: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined,
+): ITreeCursorSynchronous {
+	if (content === undefined) {
+		return cursorForMapTreeField([]);
+	}
+
+	if (isReadonlyArray(content)) {
+		return cursorForMapTreeField(content.map((c) => mapTreeFromCursor(c)));
+	}
+
+	if (content.mode === CursorLocationType.Fields) {
+		return content;
+	}
+
+	return cursorForMapTreeField([mapTreeFromCursor(content)]);
 }

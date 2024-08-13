@@ -80,14 +80,14 @@ function createCompatSuite(
 											r11s: { r11sEndpointName },
 											odsp: { tenantIndex, odspEndpointName },
 										},
-								  })
+									})
 								: await getVersionedTestObjectProviderFromApis(apis, {
 										type: driver,
 										config: {
 											r11s: { r11sEndpointName },
 											odsp: { tenantIndex, odspEndpointName },
 										},
-								  });
+									});
 					} catch (error) {
 						const logger = createChildLogger({
 							logger: getTestLogger?.(),
@@ -112,9 +112,7 @@ function createCompatSuite(
 						provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
 					}
 					if (options?.persistedCache !== undefined && provider.driver.type === "odsp") {
-						(provider.driver as OdspTestDriver).setPersistedCache(
-							options.persistedCache,
-						);
+						(provider.driver as OdspTestDriver).setPersistedCache(options.persistedCache);
 					}
 					return provider;
 				}, apis);

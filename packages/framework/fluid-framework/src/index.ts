@@ -5,7 +5,7 @@
 
 /**
  * Bundles a collection of Fluid Framework client libraries for easy use when paired with a corresponding service client
- * package (e.g. `@fluidframework/azure-client`, `@fluidframework/tinylicious-client`, or `@fluid-experimental/osdp-client (BETA)`).
+ * package (e.g. `@fluidframework/azure-client`, `@fluidframework/tinylicious-client`, or `@fluidframework/odsp-client (BETA)`).
  *
  * @packageDocumentation
  */
@@ -55,6 +55,8 @@ export type {
 	FluidObject, // Linked in doc comment
 	FluidObjectProviderKeys, // Used by FluidObject
 } from "@fluidframework/core-interfaces";
+
+export type { isFluidHandle } from "@fluidframework/runtime-utils";
 
 // Let the tree package manage its own API surface, we will simply reflect it here.
 // Note: this only surfaces the `@public` API items from the tree package. If the `@beta` and `@alpha` items are

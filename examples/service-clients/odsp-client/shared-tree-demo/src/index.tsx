@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidContainer, ITree } from "fluid-framework";
+import type { IFluidContainer } from "fluid-framework";
 import React from "react";
 import ReactDOM from "react-dom";
 
@@ -23,7 +23,7 @@ async function start(): Promise<void> {
 	// a new container.
 	let itemId: string = location.hash.slice(1);
 	const createNew = itemId.length === 0;
-	let container: IFluidContainer;
+	let container: IFluidContainer<typeof containerSchema>;
 
 	if (createNew) {
 		({ container } = await createFluidData(containerSchema));
@@ -31,8 +31,14 @@ async function start(): Promise<void> {
 		({ container } = await loadFluidData(itemId, containerSchema));
 	}
 
-	// Initialize the SharedTree Data Structure
-	const appData = (container.initialObjects.appData as ITree).schematize(treeConfiguration);
+	const tree = container.initialObjects.appData;
+	const appData = tree.viewWith(treeConfiguration);
+	if (createNew) {
+		appData.initialize({
+			letters: [],
+			word: [],
+		});
+	}
 
 	const cellSize = { x: 32, y: 32 };
 	const canvasSize = { x: 10, y: 10 }; // characters across and down
@@ -41,12 +47,7 @@ async function start(): Promise<void> {
 	// the app renders instantly on create new flow. The app will be
 	// interactive immediately.
 	ReactDOM.render(
-		<ReactApp
-			data={appData}
-			container={container}
-			canvasSize={canvasSize}
-			cellSize={cellSize}
-		/>,
+		<ReactApp data={appData} canvasSize={canvasSize} cellSize={cellSize} />,
 		app,
 	);
 
@@ -78,12 +79,7 @@ async function start(): Promise<void> {
 
 		// Update the application state or components without forcing a full page reload
 		ReactDOM.render(
-			<ReactApp
-				data={appData}
-				container={container}
-				canvasSize={canvasSize}
-				cellSize={cellSize}
-			/>,
+			<ReactApp data={appData} canvasSize={canvasSize} cellSize={cellSize} />,
 			app,
 		);
 

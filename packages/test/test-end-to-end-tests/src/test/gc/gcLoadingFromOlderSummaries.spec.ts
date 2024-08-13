@@ -26,7 +26,10 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import { defaultGCConfig } from "./gcTestConfigs.js";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
+import {
+	getGCStateFromSummary,
+	reconnectSummarizerToBeElected,
+} from "./gcTestSummaryUtils.js";
 
 /**
  * Validates that when a summarizer loads from an older summary and gets an ack for a newer summary, it disposes
@@ -39,8 +42,6 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 	let dataStoreA: ITestDataObject;
 
 	const configProvider = createTestConfigProvider();
-	configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
-	configProvider.set("Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState", false);
 	const testConfig: ITestContainerConfig = {
 		...defaultGCConfig,
 		loaderProps: { configProvider },
@@ -65,23 +66,15 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 		return nodeIsReferencedMap;
 	}
 
-	/**
-	 * Reconnects the summarizer so that it is elected as the current summarizer. This is needed for two reasons:
-	 * 1. In ODSP, when a summary is submitted, the previous one may be deleted based on heuristics. Since these tests
-	 * need to load a container from an older summary, we need to load a summarizer with the old summary before a new
-	 * one is generated. This poses problem with summarizer election because of the second reason below.
-	 * 2. In these tests, summarization is disabled on the main container. However, when the first summarizer container
-	 * is closed, the main container is still chosen as the summarizer due to a bug. If we reconnect a new summarizer
-	 * after this happens, it will be chosen as the summarizer client and can do on-demand summaries.
-	 */
-	async function reconnectSummarizerToBeElected(container: IContainer) {
-		container.disconnect();
-		container.connect();
-		await waitForContainerConnection(container);
-	}
-
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
+
+		configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
+		configProvider.set(
+			"Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState",
+			false,
+		);
+
 		mainContainer = await provider.makeTestContainer(testConfig);
 		const defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		containerRuntime = defaultDataStore._context.containerRuntime as IContainerRuntime;
@@ -97,6 +90,10 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 
 		await provider.ensureSynchronized();
 		await waitForContainerConnection(mainContainer);
+	});
+
+	afterEach(() => {
+		configProvider.clear();
 	});
 
 	itExpects(

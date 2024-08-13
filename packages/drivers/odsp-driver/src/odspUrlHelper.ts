@@ -95,9 +95,8 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 		// 3: optional captured drive ID
 		// 4: Item ID
 		// 5: Drive ID portion of Item ID
-		joinSessionMatch = /(.*)\/v2\.1\/drive(s\/([\dA-Za-z]+))?\/items\/(([\dA-Za-z]+)!\d+)/.exec(
-			pathname,
-		);
+		joinSessionMatch =
+			/(.*)\/v2\.1\/drive(s\/([\dA-Za-z]+))?\/items\/(([\dA-Za-z]+)!\d+)/.exec(pathname);
 
 		if (joinSessionMatch === null) {
 			// Try again but with the OData format ( `/drives('ABC123')/items('ABC123!456')` )
@@ -111,8 +110,10 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 			}
 		}
 
-		const driveId = joinSessionMatch[3] || joinSessionMatch[5];
-		const itemId = joinSessionMatch[4];
+		// TODO Why are we non null asserting here?
+		const driveId = joinSessionMatch[3] ?? joinSessionMatch[5]!;
+		// TODO Why are we non null asserting here?
+		const itemId = joinSessionMatch[4]!;
 
 		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
 	} else {
@@ -121,8 +122,10 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 		if (joinSessionMatch === null) {
 			return undefined;
 		}
-		const driveId = joinSessionMatch[2];
-		const itemId = joinSessionMatch[3];
+		// TODO Why are we non null asserting here?
+		const driveId = joinSessionMatch[2]!;
+		// TODO Why are we non null asserting here?
+		const itemId = joinSessionMatch[3]!;
 
 		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
 	}

@@ -106,8 +106,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			...props,
 			logger: provider.logger,
 			urlResolver: props?.urlResolver ?? provider.urlResolver,
-			documentServiceFactory:
-				props?.documentServiceFactory ?? provider.documentServiceFactory,
+			documentServiceFactory: props?.documentServiceFactory ?? provider.documentServiceFactory,
 			codeLoader:
 				props?.codeLoader ??
 				new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),

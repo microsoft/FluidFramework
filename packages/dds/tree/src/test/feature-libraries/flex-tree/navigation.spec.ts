@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { FieldUpPath, UpPath } from "../../../core/index.js";
+import type { FieldUpPath, UpPath } from "../../../core/index.js";
 import {
 	Skip,
 	visitBipartiteIterableTreeWithState,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/flex-tree/navigation.js";
-import { FlexTreeField, FlexTreeNode } from "../../../feature-libraries/index.js";
+import type { FlexTreeField, FlexTreeNode } from "../../../feature-libraries/index.js";
 
 /**
  * Simpler version of visitIterableTree, but uses more memory.

@@ -5,7 +5,7 @@
 
 import { strict as assert, fail } from "assert";
 
-import { JsonableTree } from "../../../../core/index.js";
+import type { JsonableTree } from "../../../../core/index.js";
 import {
 	Counter,
 	// eslint-disable-next-line import/no-internal-modules
@@ -16,7 +16,7 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
 	EncoderCache,
-	FieldEncoder,
+	type FieldEncoder,
 	asFieldEncoder,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";

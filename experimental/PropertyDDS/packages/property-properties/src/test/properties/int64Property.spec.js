@@ -285,9 +285,7 @@ describe("Test Int64Property", function () {
 				nodeTestProperty.serialize({ dirtyOnly: false }),
 			);
 			initialChangesetNode.setIsNormalized(true);
-			var initialChangesetMap = new ChangeSet(
-				mapTestProperty.serialize({ dirtyOnly: false }),
-			);
+			var initialChangesetMap = new ChangeSet(mapTestProperty.serialize({ dirtyOnly: false }));
 			initialChangesetMap.setIsNormalized(true);
 
 			innerTestChangeSetSquashing(
@@ -524,12 +522,7 @@ describe("Test Int64Property", function () {
 				getIntPropertyFromNode,
 				in_options,
 			);
-			testRebasingInner(
-				createNodePropertyForRebase,
-				getIntPropertyFromNode,
-				in_options,
-				true,
-			);
+			testRebasingInner(createNodePropertyForRebase, getIntPropertyFromNode, in_options, true);
 			testRebasingInner(createMapPropertyForRebase, getIntPropertyFromMap, in_options, true);
 		};
 

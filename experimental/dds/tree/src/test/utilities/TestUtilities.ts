@@ -432,7 +432,10 @@ export function createStableEdits(
 		ChangeInternal.build([node], 0 as DetachedSequenceId),
 		ChangeInternal.insert(
 			0 as DetachedSequenceId,
-			StablePlace.atEndOf({ label: testTraitLabel, parent: idContext.convertToNodeId(initialTree.identifier) })
+			StablePlace.atEndOf({
+				label: testTraitLabel,
+				parent: idContext.convertToNodeId(initialTree.identifier),
+			})
 		),
 	]);
 

@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, oob } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
-import { FieldKey, TreeNodeSchemaIdentifier, Value } from "../../../core/index.js";
+import type { FieldKey, TreeNodeSchemaIdentifier, Value } from "../../../core/index.js";
 import { assertValidIndex } from "../../../util/index.js";
 import { BasicChunk } from "../basicChunk.js";
-import { TreeChunk } from "../chunk.js";
+import type { TreeChunk } from "../chunk.js";
 import { emptyChunk } from "../emptyChunk.js";
 import { SequenceChunk } from "../sequenceChunk.js";
 
 import {
-	ChunkDecoder,
-	StreamCursor,
+	type ChunkDecoder,
+	type StreamCursor,
 	getChecked,
 	readStream,
 	readStreamBoolean,
@@ -29,24 +29,38 @@ import {
 	readStreamIdentifier,
 } from "./chunkDecodingGeneric.js";
 import {
-	EncodedAnyShape,
-	EncodedChunkShape,
-	EncodedFieldBatch,
-	EncodedInlineArray,
-	EncodedNestedArray,
-	EncodedTreeShape,
-	EncodedValueShape,
+	type EncodedAnyShape,
+	type EncodedChunkShape,
+	type EncodedFieldBatch,
+	type EncodedInlineArray,
+	type EncodedNestedArray,
+	type EncodedTreeShape,
+	type EncodedValueShape,
 	SpecialField,
 } from "./format.js";
-import { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
+import type {
+	IIdCompressor,
+	OpSpaceCompressedId,
+	SessionId,
+} from "@fluidframework/id-compressor";
 
+export interface IdDecodingContext {
+	idCompressor: IIdCompressor;
+	/**
+	 * The creator of any local Ids to be decoded.
+	 */
+	originatorId: SessionId;
+}
 /**
  * Decode `chunk` into a TreeChunk.
  */
-export function decode(chunk: EncodedFieldBatch, idCompressor: IIdCompressor): TreeChunk[] {
+export function decode(
+	chunk: EncodedFieldBatch,
+	idDecodingContext: { idCompressor: IIdCompressor; originatorId: SessionId },
+): TreeChunk[] {
 	return genericDecode(
 		decoderLibrary,
-		new DecoderContext(chunk.identifiers, chunk.shapes, idCompressor),
+		new DecoderContext(chunk.identifiers, chunk.shapes, idDecodingContext),
 		chunk,
 		anyDecoder,
 	);
@@ -77,7 +91,7 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 export function readValue(
 	stream: StreamCursor,
 	shape: EncodedValueShape,
-	idCompressor: IIdCompressor,
+	idDecodingContext: IdDecodingContext,
 ): Value {
 	if (shape === undefined) {
 		return readStreamBoolean(stream) ? readStreamValue(stream) : undefined;
@@ -94,10 +108,16 @@ export function readValue(
 			const streamValue = readStream(stream);
 			assert(
 				typeof streamValue === "number" || typeof streamValue === "string",
-				"identifier must be string or number.",
+				0x997 /* identifier must be string or number. */,
 			);
+			const idCompressor = idDecodingContext.idCompressor;
 			return typeof streamValue === "number"
-				? idCompressor.decompress(streamValue as SessionSpaceCompressedId)
+				? idCompressor.decompress(
+						idCompressor.normalizeToSessionSpace(
+							streamValue as OpSpaceCompressedId,
+							idDecodingContext.originatorId,
+						),
+					)
 				: streamValue;
 		} else {
 			// EncodedCounter case:
@@ -149,7 +169,7 @@ export function aggregateChunks(input: TreeChunk[]): TreeChunk {
 		case 0:
 			return emptyChunk;
 		case 1:
-			return chunks[0];
+			return chunks[0] ?? oob();
 		default:
 			return new SequenceChunk(chunks);
 	}
@@ -161,7 +181,7 @@ export function aggregateChunks(input: TreeChunk[]): TreeChunk {
 export class NestedArrayDecoder implements ChunkDecoder {
 	public constructor(private readonly shape: EncodedNestedArray) {}
 	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
-		const decoder = decoders[this.shape];
+		const decoder = decoders[this.shape] ?? oob();
 
 		// TODO: uniform chunk fast path
 		const chunks: TreeChunk[] = [];
@@ -195,7 +215,7 @@ export class InlineArrayDecoder implements ChunkDecoder {
 	public constructor(private readonly shape: EncodedInlineArray) {}
 	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		const length = this.shape.length;
-		const decoder = decoders[this.shape.shape];
+		const decoder = decoders[this.shape.shape] ?? oob();
 		const chunks: TreeChunk[] = [];
 		for (let index = 0; index < length; index++) {
 			chunks.push(decoder.decode(decoders, stream));
@@ -232,7 +252,10 @@ function fieldDecoder(
 	shape: number,
 ): BasicFieldDecoder {
 	assertValidIndex(shape, cache.shapes);
-	return (decoders, stream) => [key, decoders[shape].decode(decoders, stream)];
+	return (decoders, stream) => {
+		const decoder = decoders[shape] ?? oob();
+		return [key, decoder.decode(decoders, stream)];
+	};
 }
 
 /**
@@ -259,7 +282,7 @@ export class TreeDecoder implements ChunkDecoder {
 			this.type ?? readStreamIdentifier(stream, this.cache);
 		// TODO: Consider typechecking against stored schema in here somewhere.
 
-		const value = readValue(stream, this.shape.value, this.cache.idCompressor);
+		const value = readValue(stream, this.shape.value, this.cache.idDecodingContext);
 		const fields: Map<FieldKey, TreeChunk[]> = new Map();
 
 		// Helper to add fields, but with unneeded array chunks removed.
@@ -279,7 +302,7 @@ export class TreeDecoder implements ChunkDecoder {
 		}
 
 		if (this.shape.extraFields !== undefined) {
-			const decoder = decoders[this.shape.extraFields];
+			const decoder = decoders[this.shape.extraFields] ?? oob();
 			const inner = readStreamStream(stream);
 			while (inner.offset !== inner.data.length) {
 				const key: FieldKey = readStreamIdentifier(inner, this.cache);

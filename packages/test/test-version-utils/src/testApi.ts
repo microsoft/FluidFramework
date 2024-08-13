@@ -237,7 +237,10 @@ async function loadContainerRuntime(
 	}
 }
 
-async function loadDataRuntime(baseVersion: string, requested?: number | string): Promise<void> {
+async function loadDataRuntime(
+	baseVersion: string,
+	requested?: number | string,
+): Promise<void> {
 	const requestedStr = getRequestedVersion(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;

@@ -6,7 +6,7 @@
 // @ts-ignore
 import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
 import { ErrorCallback, eachOfSeries, eachSeries, series, timesSeries, whilst } from "async";
-import { copy as cloneDeep } from "fastest-json-copy";
+import cloneDeep from "lodash/cloneDeep.js";
 import each from "lodash/each.js";
 import extend from "lodash/extend.js";
 import find from "lodash/find.js";
@@ -181,8 +181,7 @@ export namespace Utils {
 											in_escape && isString(in_segment)
 												? PathHelper.quotePathSegmentIfNeeded(in_segment)
 												: in_segment;
-										let nextSegmentToPushInParentStack =
-											in_context.getLastSegment();
+										let nextSegmentToPushInParentStack = in_context.getLastSegment();
 										// Note: we don't quote the path string here, since the paths
 										// in a ChangeSet are already quoted, if necessary
 										in_context._lastSegmentString =
@@ -191,8 +190,7 @@ export namespace Utils {
 											currentTypeIdContext === "set"
 												? `[${escapedSegment}]`
 												: pathSeparator + escapedSegment;
-										in_context._fullPath =
-											currentPath + in_context.getLastSegmentString();
+										in_context._fullPath = currentPath + in_context.getLastSegmentString();
 
 										// Store the typeid and nested ChangeSet
 										in_context._typeid = in_nestedTypeid;
@@ -202,31 +200,24 @@ export namespace Utils {
 										in_context._arrayLocalIndex = in_arrayLocalIndex;
 										in_context._arrayOperationOffset = in_arrayOperationOffset;
 										in_context._arrayIteratorOffset = in_arrayIteratorOffset;
-										if (
-											in_arrayIteratorOffset !== undefined &&
-											isNumber(in_segment)
-										) {
+										if (in_arrayIteratorOffset !== undefined && isNumber(in_segment)) {
 											if (in_context._operationType === "remove") {
 												nextSegmentToPushInParentStack =
 													(in_context.getLastSegment() as number) +
 													in_arrayIteratorOffset -
 													in_arrayLocalIndex;
 												in_context._fullPostPath = `${currentPostPath}[${
-													in_segment +
-													in_arrayIteratorOffset -
-													in_arrayLocalIndex
+													in_segment + in_arrayIteratorOffset - in_arrayLocalIndex
 												}]`;
 											} else {
 												nextSegmentToPushInParentStack =
-													(in_context.getLastSegment() as number) +
-													in_arrayIteratorOffset;
+													(in_context.getLastSegment() as number) + in_arrayIteratorOffset;
 												in_context._fullPostPath = `${currentPostPath}[${
 													in_segment + in_arrayIteratorOffset
 												}]`;
 											}
 										} else {
-											nextSegmentToPushInParentStack =
-												in_context._lastSegment;
+											nextSegmentToPushInParentStack = in_context._lastSegment;
 											in_context._fullPostPath =
 												currentPostPath + in_context._lastSegmentString;
 										}
@@ -234,12 +225,8 @@ export namespace Utils {
 										// Continue traversal
 										in_context._stackDepth++;
 										in_context._typeStack.push(in_context.getTypeid());
-										in_context._parentStack.push(
-											nextSegmentToPushInParentStack,
-										);
-										in_context._containerStack.push(
-											in_context._propertyContainerType,
-										);
+										in_context._parentStack.push(nextSegmentToPushInParentStack);
+										in_context._containerStack.push(in_context._propertyContainerType);
 										in_context._userStack.push({});
 										_traverseChangeSetRecursivelyAsync(
 											in_preCallback,
@@ -282,9 +269,7 @@ export namespace Utils {
 								let oldOperationType = in_context._operationType;
 								if (splitTypeId.context === "array") {
 									// Use the ArrayChangeSetIterator to process the changes in the ChangeSet in the correct order
-									const arrayIterator = new ArrayChangeSetIterator(
-										nestedChangeSet,
-									);
+									const arrayIterator = new ArrayChangeSetIterator(nestedChangeSet);
 									let insertCounter = 0;
 									let removeCounter = 0;
 									let modifyCounter = 0;
@@ -298,17 +283,13 @@ export namespace Utils {
 											switch (arrayIterator.opDescription.type) {
 												case ArrayIteratorOperationTypes.INSERT:
 													in_context._operationType = "insert";
-													operation =
-														arrayIterator.opDescription.operation;
+													operation = arrayIterator.opDescription.operation;
 													eachOfSeries(
 														operation[1] as any,
 														function (item: any, i: number, n5) {
 															// The typeid is stored inline for arrays
 															const typeid = item.typeid;
-															ConsoleUtils.assert(
-																typeid,
-																MSG.NON_PRIMITIVE_ARRAY_NO_TYPEID,
-															);
+															ConsoleUtils.assert(typeid, MSG.NON_PRIMITIVE_ARRAY_NO_TYPEID);
 															processChange(
 																operation[0] + i,
 																item,
@@ -332,8 +313,7 @@ export namespace Utils {
 													break;
 												case ArrayIteratorOperationTypes.REMOVE:
 													in_context._operationType = "remove";
-													operation =
-														arrayIterator.opDescription.operation;
+													operation = arrayIterator.opDescription.operation;
 													timesSeries(
 														operation[1],
 														function (i: number, n5) {
@@ -362,8 +342,7 @@ export namespace Utils {
 
 													break;
 												case ArrayIteratorOperationTypes.MODIFY:
-													operation =
-														arrayIterator.opDescription.operation;
+													operation = arrayIterator.opDescription.operation;
 													in_context._operationType = "modify";
 
 													timesSeries(
@@ -371,10 +350,7 @@ export namespace Utils {
 														function (i: number, n5) {
 															// The typeid is stored inline for arrays
 															const typeid = operation[1][i].typeid;
-															ConsoleUtils.assert(
-																typeid,
-																MSG.NON_PRIMITIVE_ARRAY_NO_TYPEID,
-															);
+															ConsoleUtils.assert(typeid, MSG.NON_PRIMITIVE_ARRAY_NO_TYPEID);
 															processChange(
 																operation[0] + i,
 																operation[1][i],
@@ -399,10 +375,7 @@ export namespace Utils {
 												default:
 													arrayIterator.next();
 													n4(
-														new Error(
-															MSG.UNKNOWN_OPERATOR +
-																arrayIterator.opDescription.type,
-														),
+														new Error(MSG.UNKNOWN_OPERATOR + arrayIterator.opDescription.type),
 													);
 											}
 										},
@@ -440,31 +413,24 @@ export namespace Utils {
 																);
 															},
 															function (err) {
-																in_context._operationType =
-																	oldOperationType;
+																in_context._operationType = oldOperationType;
 																n4(err);
 															},
 														);
 													} else {
 														// for removals in reversible changesets we have an object containing the types
-														const typeids = Object.keys(
-															nestedChangeSet.remove,
-														);
+														const typeids = Object.keys(nestedChangeSet.remove);
 														timesSeries(
 															typeids.length,
 															function (i, n5) {
 																const typeid = typeids[i];
-																paths = Object.keys(
-																	nestedChangeSet.remove[typeid],
-																);
+																paths = Object.keys(nestedChangeSet.remove[typeid]);
 																timesSeries(
 																	paths.length,
 																	function (j, n6) {
 																		processChange(
 																			paths[j],
-																			nestedChangeSet.remove[
-																				typeid
-																			][paths[j]],
+																			nestedChangeSet.remove[typeid][paths[j]],
 																			typeid,
 																			true,
 																			propertyContainerType,
@@ -479,8 +445,7 @@ export namespace Utils {
 																);
 															},
 															function (err) {
-																in_context._operationType =
-																	oldOperationType;
+																in_context._operationType = oldOperationType;
 																n4(err);
 															},
 														);
@@ -495,26 +460,20 @@ export namespace Utils {
 													oldOperationType = in_context._operationType;
 													in_context._operationType = "insert";
 													// Maps and NodeProperties group the insertions by type
-													const typeids = Object.keys(
-														nestedChangeSet.insert,
-													);
+													const typeids = Object.keys(nestedChangeSet.insert);
 
 													timesSeries(
 														typeids.length,
 														function (i, n5) {
 															const typeid = typeids[i];
-															const paths = Object.keys(
-																nestedChangeSet.insert[typeid],
-															);
+															const paths = Object.keys(nestedChangeSet.insert[typeid]);
 
 															timesSeries(
 																paths.length,
 																function (j, n6) {
 																	processChange(
 																		paths[j],
-																		nestedChangeSet.insert[
-																			typeid
-																		][paths[j]],
+																		nestedChangeSet.insert[typeid][paths[j]],
 																		typeid,
 																		true,
 																		propertyContainerType,
@@ -529,8 +488,7 @@ export namespace Utils {
 															);
 														},
 														function (err) {
-															in_context._operationType =
-																oldOperationType;
+															in_context._operationType = oldOperationType;
 															n4(err);
 														},
 													);
@@ -541,25 +499,19 @@ export namespace Utils {
 											function (n4) {
 												if (nestedChangeSet.modify) {
 													// Maps and NodeProperties group modifications by type
-													const typeids = Object.keys(
-														nestedChangeSet.modify,
-													);
+													const typeids = Object.keys(nestedChangeSet.modify);
 													timesSeries(
 														typeids.length,
 														function (i, n5) {
 															const typeid = typeids[i];
-															const paths = Object.keys(
-																nestedChangeSet.modify[typeid],
-															);
+															const paths = Object.keys(nestedChangeSet.modify[typeid]);
 
 															timesSeries(
 																paths.length,
 																function (j, n6) {
 																	processChange(
 																		paths[j],
-																		nestedChangeSet.modify[
-																			typeid
-																		][paths[j]],
+																		nestedChangeSet.modify[typeid][paths[j]],
 																		typeid,
 																		true,
 																		propertyContainerType,
@@ -590,18 +542,14 @@ export namespace Utils {
 														function (i, n5) {
 															const typeid = typeids[i];
 															if (!isReservedKeyword(typeid)) {
-																const paths = Object.keys(
-																	nestedChangeSet[typeid],
-																);
+																const paths = Object.keys(nestedChangeSet[typeid]);
 
 																timesSeries(
 																	paths.length,
 																	function (j, n6) {
 																		processChange(
 																			paths[j],
-																			nestedChangeSet[typeid][
-																				paths[j]
-																			],
+																			nestedChangeSet[typeid][paths[j]],
 																			typeid,
 																			false,
 																			"template",
@@ -683,16 +631,14 @@ export namespace Utils {
 					in_objectToPopulate.remove = in_objectToPopulate.remove || {};
 					in_objectToPopulate.remove[in_context.getTypeid()] =
 						in_objectToPopulate.remove[in_context.getTypeid()] || {};
-					in_objectToPopulate.remove[in_context.getTypeid()][
-						in_context.getLastSegment()
-					] = cloneDeep(in_context.getNestedChangeSet());
+					in_objectToPopulate.remove[in_context.getTypeid()][in_context.getLastSegment()] =
+						cloneDeep(in_context.getNestedChangeSet());
 				}
 			} else {
 				in_objectToPopulate[in_context.getOperationType()] =
 					in_objectToPopulate[in_context.getOperationType()] || {};
 				in_objectToPopulate[in_context.getOperationType()][in_context.getTypeid()] =
-					in_objectToPopulate[in_context.getOperationType()][in_context.getTypeid()] ||
-					{};
+					in_objectToPopulate[in_context.getOperationType()][in_context.getTypeid()] || {};
 
 				if (TypeIdHelper.isPrimitiveType(in_context.getTypeid()) || in_isLeaf) {
 					in_objectToPopulate[in_context.getOperationType()][in_context.getTypeid()][
@@ -708,8 +654,9 @@ export namespace Utils {
 			in_objectToPopulate[in_context.getTypeid()] =
 				in_objectToPopulate[in_context.getTypeid()] || {};
 			if (TypeIdHelper.isPrimitiveType(in_context.getTypeid()) || in_isLeaf) {
-				in_objectToPopulate[in_context.getTypeid()][in_context.getLastSegment()] =
-					cloneDeep(in_context.getNestedChangeSet());
+				in_objectToPopulate[in_context.getTypeid()][in_context.getLastSegment()] = cloneDeep(
+					in_context.getNestedChangeSet(),
+				);
 			} else {
 				in_objectToPopulate[in_context.getTypeid()][in_context.getLastSegment()] =
 					nestedChangeSet;
@@ -818,9 +765,7 @@ export namespace Utils {
 			if (in_arrayIteratorOffset !== undefined) {
 				if (in_context._operationType === "remove") {
 					nextSegmentToPushInParentStack =
-						(in_context._lastSegment as number) +
-						in_arrayIteratorOffset -
-						in_arrayLocalIndex;
+						(in_context._lastSegment as number) + in_arrayIteratorOffset - in_arrayLocalIndex;
 					in_context._fullPostPath = `${currentPostPath}[${
 						(in_segment as number) + in_arrayIteratorOffset - in_arrayLocalIndex
 					}]`;
@@ -1252,8 +1197,8 @@ export namespace Utils {
 					throw new Error(`TEMPORARY - INTERNAL: Was expected to replace a nested ChangeSet
                  under "${this.getLastSegment()}" by "${JSON.stringify(in_newNestedChangeset)}",
                  but could not find "${this.getTypeid()}" in "${JSON.stringify(
-						this.getParentNestedChangeSet(),
-					)}"`);
+										this.getParentNestedChangeSet(),
+									)}"`);
 				}
 			} else if (
 				this.getPropertyContainerType() === "NodeProperty" ||
@@ -1958,8 +1903,8 @@ export namespace Utils {
 		const _toCallbackParam = (pathLevels) => {
 			return legacyPaths
 				? // If a user provided objects as paths, they would expect objects in their callbacks as well.
-				  // So, we transform the parameter to an object, which is not very performant but is backwards compatible.
-				  _convertMapToLevel(pathLevels)
+					// So, we transform the parameter to an object, which is not very performant but is backwards compatible.
+					_convertMapToLevel(pathLevels)
 				: pathLevels;
 		};
 
@@ -2179,16 +2124,14 @@ export namespace Utils {
 					tokenizedPath.forEach((segment, index) => {
 						if (index === 0) {
 							parentPath += PathHelper.quotePathSegmentIfNeeded(segment);
-							changeSetToPopulate =
-								pathToChangeSet[parentPath] || changeSetToPopulate;
+							changeSetToPopulate = pathToChangeSet[parentPath] || changeSetToPopulate;
 						} else if (index < tokenizedPath.length - 1) {
 							parentPath +=
 								context.getContainerStack()[index] !== "set" &&
 								context.getContainerStack()[index] !== "map"
 									? `.${PathHelper.quotePathSegmentIfNeeded(segment)}`
 									: `[${PathHelper.quotePathSegmentIfNeeded(segment)}]`;
-							changeSetToPopulate =
-								pathToChangeSet[parentPath] || changeSetToPopulate;
+							changeSetToPopulate = pathToChangeSet[parentPath] || changeSetToPopulate;
 						} else {
 							parentPath +=
 								context.getContainerStack()[index] !== "set" &&
@@ -2225,10 +2168,7 @@ export namespace Utils {
 						}
 					});
 
-					if (
-						fullPath !== context.getFullPath() &&
-						pathToChangeSet[context.getFullPath()]
-					) {
+					if (fullPath !== context.getFullPath() && pathToChangeSet[context.getFullPath()]) {
 						// Here we are in the case where we have a changeset that
 						// contains a property with path a.b.c.d as the key.
 						// In that case, getChangesToTokenizedPaths will be called
@@ -2453,9 +2393,7 @@ export namespace Utils {
 					const operationType = in_context.getOperationType();
 					const typeId = in_context.getTypeid();
 					const lastSegment = in_context.getLastSegment();
-					delete in_context.getParentNestedChangeSet()[operationType][typeId][
-						lastSegment
-					];
+					delete in_context.getParentNestedChangeSet()[operationType][typeId][lastSegment];
 					in_context._traversalStopped = true;
 				}
 			},

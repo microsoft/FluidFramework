@@ -124,7 +124,10 @@ const endOfTextReference = createDetachedLocalReferencePosition(undefined);
 const endOfTextSegment = endOfTextReference.getSegment() as SharedStringSegment;
 
 export interface IFlowDocumentEvents extends IEvent {
-	(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString) => void);
+	(
+		event: "sequenceDelta",
+		listener: (event: SequenceDeltaEvent, target: SharedString) => void,
+	);
 	(
 		event: "maintenance",
 		listener: (event: SequenceMaintenanceEvent, target: SharedString) => void,
@@ -273,9 +276,7 @@ export class FlowDocument extends DataObject {
 
 						if (!(endPos < end)) {
 							// If not, add the end tag removal to the group op.
-							debug(
-								`  also remove end tag '</${endTag.properties.tag}>' at ${endPos}.`,
-							);
+							debug(`  also remove end tag '</${endTag.properties.tag}>' at ${endPos}.`);
 							ops.push(createRemoveRangeOp(endPos, endPos + 1));
 						}
 						break;
@@ -292,9 +293,7 @@ export class FlowDocument extends DataObject {
 						if (!(_start <= startPos)) {
 							// If not, remove any positions up to, but excluding the current segment
 							// and adjust the pending removal range to just after this marker.
-							debug(
-								`  exclude end tag '</${segment.properties.tag}>' at ${position}.`,
-							);
+							debug(`  exclude end tag '</${segment.properties.tag}>' at ${position}.`);
 
 							// If the preserved end tag is at the beginning of the removal range, no remove op
 							// is necessary.  Just skip over it.
@@ -383,9 +382,7 @@ export class FlowDocument extends DataObject {
 	public addCssClass(start: number, end: number, ...classNames: string[]) {
 		if (classNames.length > 0) {
 			const newClasses = classNames.join(" ");
-			this.updateCssClassList(start, end, (classList) =>
-				TokenList.set(classList, newClasses),
-			);
+			this.updateCssClassList(start, end, (classList) => TokenList.set(classList, newClasses));
 		}
 	}
 

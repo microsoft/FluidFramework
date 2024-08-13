@@ -3,20 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	Anchor,
-	AnchorNode,
+	type Anchor,
+	type AnchorNode,
 	CursorLocationType,
 	EmptyKey,
-	FieldKey,
-	ITreeSubscriptionCursor,
-	TreeNavigationResult,
-	TreeNodeSchemaIdentifier,
-	TreeValue,
-	Value,
-	forEachField,
+	type FieldKey,
+	type ITreeSubscriptionCursor,
+	type TreeNavigationResult,
+	type TreeNodeSchemaIdentifier,
+	type TreeValue,
+	type Value,
 	inCursorField,
 	mapCursorFields,
 	rootFieldKey,
@@ -25,37 +24,35 @@ import { brand, capitalize, disposeSymbol, fail, getOrCreate } from "../../util/
 import { FieldKinds } from "../default-schema/index.js";
 import {
 	Any,
-	FlexAllowedTypes,
-	FlexFieldNodeSchema,
+	type FlexAllowedTypes,
+	type FlexFieldNodeSchema,
 	FlexFieldSchema,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	LeafNodeSchema,
+	type FlexMapNodeSchema,
+	type FlexObjectNodeSchema,
+	type FlexTreeNodeSchema,
+	type LeafNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
 } from "../typed-schema/index.js";
 
-import { Context } from "./context.js";
+import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
-	FlexTreeField,
-	FlexTreeFieldNode,
-	FlexTreeLeafNode,
-	FlexTreeMapNode,
-	FlexTreeNode,
-	FlexTreeObjectNodeTyped,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
-	FlexTreeTypedField,
-	FlexTreeTypedNode,
-	FlexTreeUnboxField,
-	FlexibleFieldContent,
-	FlexibleNodeContent,
-	PropertyNameFromFieldKey,
-	TreeStatus,
+	type FlexTreeField,
+	type FlexTreeFieldNode,
+	type FlexTreeLeafNode,
+	type FlexTreeMapNode,
+	type FlexTreeNode,
+	type FlexTreeObjectNodeTyped,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
+	type FlexTreeTypedField,
+	type FlexTreeTypedNode,
+	type FlexTreeUnboxField,
+	type FlexibleNodeContent,
+	type PropertyNameFromFieldKey,
 	flexTreeMarker,
 	flexTreeSlot,
 	reservedObjectNodeFieldPropertyNamePrefixes,
@@ -66,13 +63,10 @@ import {
 	anchorSymbol,
 	cursorSymbol,
 	forgetAnchorSymbol,
-	isFreedSymbol,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
-import { FlexTreeNodeEvents, onNodeChanged, onTreeChanged } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
-import { treeStatusFromAnchorCache } from "./utilities.js";
 
 /**
  * @param cursor - This does not take ownership of this cursor: Node will fork it as needed.
@@ -256,49 +250,6 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 
 		return { parent: proxifiedField, index };
 	}
-
-	public override treeStatus(): TreeStatus {
-		if (this[isFreedSymbol]()) {
-			return TreeStatus.Deleted;
-		}
-		return treeStatusFromAnchorCache(this.anchorNode);
-	}
-
-	public on<K extends keyof FlexTreeNodeEvents>(
-		eventName: K,
-		listener: FlexTreeNodeEvents[K],
-	): () => void {
-		switch (eventName) {
-			case "changing": {
-				const unsubscribeFromChildrenChange = this.anchorNode.on(
-					"childrenChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode),
-				);
-				return unsubscribeFromChildrenChange;
-			}
-			case "subtreeChanging": {
-				const unsubscribeFromSubtreeChange = this.anchorNode.on(
-					"subtreeChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode),
-				);
-				return unsubscribeFromSubtreeChange;
-			}
-			case "nodeChanged": {
-				return onNodeChanged(
-					this.anchorNode,
-					listener as FlexTreeNodeEvents["nodeChanged"],
-				);
-			}
-			case "treeChanged": {
-				return onTreeChanged(
-					this.anchorNode,
-					listener as FlexTreeNodeEvents["treeChanged"],
-				);
-			}
-			default:
-				unreachableCase(eventName);
-		}
-	}
 }
 
 export class LazyMap<TSchema extends FlexMapNodeSchema>
@@ -313,12 +264,6 @@ export class LazyMap<TSchema extends FlexMapNodeSchema>
 		anchor: Anchor,
 	) {
 		super(context, schema, cursor, anchorNode, anchor);
-	}
-
-	public get size(): number {
-		let fieldCount = 0;
-		forEachField(this[cursorSymbol], () => (fieldCount += 1));
-		return fieldCount;
 	}
 
 	public keys(): IterableIterator<FieldKey> {
@@ -365,40 +310,8 @@ export class LazyMap<TSchema extends FlexMapNodeSchema>
 		}
 	}
 
-	public has(key: string): boolean {
-		return this.tryGetField(brand(key)) !== undefined;
-	}
-
-	public get(key: string): FlexTreeUnboxField<TSchema["info"]> {
-		return inCursorField(this[cursorSymbol], brand(key), (cursor) =>
-			unboxedField(this.context, this.schema.info, cursor),
-		) as FlexTreeUnboxField<TSchema["info"]>;
-	}
-
 	public override getBoxed(key: string): FlexTreeTypedField<TSchema["info"]> {
 		return super.getBoxed(brand(key)) as FlexTreeTypedField<TSchema["info"]>;
-	}
-
-	public set(key: string, content: FlexibleFieldContent<TSchema["info"]> | undefined): void {
-		const field = this.getBoxed(key);
-		const fieldSchema = this.schema.info;
-
-		if (fieldSchema.kind === FieldKinds.optional) {
-			const optionalField = field as FlexTreeOptionalField<FlexAllowedTypes>;
-			optionalField.content = content;
-		} else {
-			assert(fieldSchema.kind === FieldKinds.sequence, 0x807 /* Unexpected map field kind */);
-
-			// TODO: implement setting of sequence fields once we have defined clear merged semantics for doing so.
-			// For now, we will throw an error, since the public API does not currently expose a way to do this anyways.
-			throw new Error("Setting of sequence values in maps is not yet supported.");
-		}
-	}
-
-	public delete(key: FieldKey): void {
-		// Since all keys implicitly exist under a Map node, and we represent "no value" with `undefined`,
-		// "deleting" a key/value pair is the same as setting the value to `undefined`.
-		this.set(key, undefined);
 	}
 
 	public override boxedIterator(): IterableIterator<FlexTreeTypedField<TSchema["info"]>> {
@@ -440,12 +353,6 @@ export class LazyFieldNode<TSchema extends FlexFieldNodeSchema>
 			unboxedField(this.context, this.schema.info, cursor),
 		) as FlexTreeUnboxField<TSchema["info"]>;
 	}
-
-	public get boxedContent(): FlexTreeTypedField<TSchema["info"]> {
-		return inCursorField(this[cursorSymbol], EmptyKey, (cursor) =>
-			makeField(this.context, this.schema.info, cursor),
-		) as FlexTreeTypedField<TSchema["info"]>;
-	}
 }
 
 /**
@@ -455,7 +362,9 @@ export const reservedObjectNodeFieldPropertyNameSet: ReadonlySet<string> = new S
 	reservedObjectNodeFieldPropertyNames,
 );
 
-export function propertyNameFromFieldKey<T extends string>(key: T): PropertyNameFromFieldKey<T> {
+export function propertyNameFromFieldKey<T extends string>(
+	key: T,
+): PropertyNameFromFieldKey<T> {
 	if (reservedObjectNodeFieldPropertyNameSet.has(key)) {
 		return `field${capitalize(key)}` as PropertyNameFromFieldKey<T>;
 	}
@@ -516,33 +425,30 @@ function buildStructClass<TSchema extends FlexObjectNodeSchema>(
 
 	for (const [key, fieldSchema] of schema.objectNodeFields) {
 		const escapedKey = propertyNameFromFieldKey(key);
-		let setter: ((newContent: FlexibleNodeContent<FlexAllowedTypes>) => void) | undefined;
+		let setter: ((newContent: FlexibleNodeContent) => void) | undefined;
 		switch (fieldSchema.kind) {
 			case FieldKinds.optional: {
 				setter = function (
 					this: CustomStruct,
-					newContent: FlexibleNodeContent<FlexAllowedTypes> | undefined,
+					newContent: FlexibleNodeContent | undefined,
 				): void {
 					const field = getBoxedField(
 						this,
 						key,
 						fieldSchema,
 					) as FlexTreeOptionalField<FlexAllowedTypes>;
-					field.content = newContent;
+					field.editor.set(newContent, field.length === 0);
 				};
 				break;
 			}
 			case FieldKinds.required: {
-				setter = function (
-					this: CustomStruct,
-					newContent: FlexibleNodeContent<FlexAllowedTypes>,
-				): void {
+				setter = function (this: CustomStruct, newContent: FlexibleNodeContent): void {
 					const field = getBoxedField(
 						this,
 						key,
 						fieldSchema,
 					) as FlexTreeRequiredField<FlexAllowedTypes>;
-					field.content = newContent;
+					field.editor.set(newContent);
 				};
 				break;
 			}

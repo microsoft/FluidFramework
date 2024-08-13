@@ -47,7 +47,7 @@ export const proxyHandler = {
 						target.getProperty().get(key, {
 							referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS,
 						})!,
-				  )
+					)
 				: Utilities.proxifyInternal(target.getProperty(), key, caretFound);
 		}
 		return Reflect.get(target, key);
@@ -129,7 +129,10 @@ export const proxyHandler = {
 		target: ProxyType<ContainerProperty>,
 		key: string | typeof proxySymbol,
 	) {
-		if (Reflect.has(target.getProperty().getEntriesReadOnly(), key) && forceType<string>(key)) {
+		if (
+			Reflect.has(target.getProperty().getEntriesReadOnly(), key) &&
+			forceType<string>(key)
+		) {
 			return {
 				configurable: true,
 				enumerable: true,

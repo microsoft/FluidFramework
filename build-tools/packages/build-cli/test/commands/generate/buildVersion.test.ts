@@ -26,7 +26,7 @@ const test_tags = [
 	"client_v2.0.0-rc.3.0.0",
 	"client_v2.0.0-rc.4.0.0",
 	"client_v2.1.0",
-	"build-tools_v0.5.2002",
+	"build-tools_v0.5.2001",
 	"build-tools_v0.4.2001",
 	"client_v2.0.0-rc.6.0.0",
 	"build-tools_v0.4.1000",
@@ -390,8 +390,8 @@ describe("generate:buildVersion", () => {
 			"client_v2.0.0-internal.1.4.2",
 		])
 		.it("lts test case from 2022-10-13", (ctx) => {
-			stdoutLineEquals(ctx.stdout, 1, "version=1.3.0-100339");
-			stdoutLineEquals(ctx.stdout, 4, "isLatest=false");
+			stdoutLineEquals(ctx.stdout, 0, "version=1.3.0-100339");
+			stdoutLineEquals(ctx.stdout, 3, "isLatest=false");
 		});
 
 	test
@@ -470,10 +470,10 @@ describe("generate:buildVersion", () => {
 			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
 		})
 		.stdout()
-		.command(["generate:buildVersion", "--fileVersion", "2.0.0", "--tags", ...test_tags])
-		.it("2.0 version, release", (ctx) => {
-			stdoutLineEquals(ctx.stdout, 0, "version=2.0.0");
-			stdoutLineEquals(ctx.stdout, 3, "isLatest=false");
+		.command(["generate:buildVersion", "--fileVersion", "3.0.0", "--tags", ...test_tags])
+		.it("major version, release", (ctx) => {
+			stdoutLineEquals(ctx.stdout, 0, "version=3.0.0");
+			stdoutLineEquals(ctx.stdout, 3, "isLatest=true");
 		});
 
 	test
@@ -485,9 +485,9 @@ describe("generate:buildVersion", () => {
 			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
 		})
 		.stdout()
-		.command(["generate:buildVersion", "--fileVersion", "2.0.0", "--tags", ...test_tags])
-		.it("2.0 version, prerelease", (ctx) => {
-			stdoutLineEquals(ctx.stdout, 0, "version=2.0.0-212045");
+		.command(["generate:buildVersion", "--fileVersion", "3.0.0", "--tags", ...test_tags])
+		.it("major version, prerelease", (ctx) => {
+			stdoutLineEquals(ctx.stdout, 0, "version=3.0.0-212045");
 			stdoutLineEquals(ctx.stdout, 3, "isLatest=false");
 		});
 
@@ -500,8 +500,8 @@ describe("generate:buildVersion", () => {
 			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
 		})
 		.stdout()
-		.command(["generate:buildVersion", "--fileVersion", "2.0.0", "--tags", ...test_tags])
-		.it("2.0 version, test", (ctx) => {
+		.command(["generate:buildVersion", "--fileVersion", "3.0.0", "--tags", ...test_tags])
+		.it("major version, test", (ctx) => {
 			stdoutLineEquals(ctx.stdout, 2, "version=0.0.0-212045-test");
 			stdoutLineEquals(ctx.stdout, 5, "isLatest=false");
 		});

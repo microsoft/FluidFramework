@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { oob } from "@fluidframework/core-utils/internal";
+
 /**
  * A map keyed on integers allowing reading and writing contiguous ranges of integer keys.
  *
@@ -18,8 +20,6 @@ export interface RangeEntry<T> {
 
 /**
  * The result of a query about a range of keys.
- *
- * @internal
  */
 export interface RangeQueryResult<T> {
 	/**
@@ -84,7 +84,12 @@ export function getFirstEntryFromRangeMap<T>(
 /**
  * Sets the keys from `start` to `start + length - 1` to `value`.
  */
-export function setInRangeMap<T>(map: RangeMap<T>, start: number, length: number, value: T): void {
+export function setInRangeMap<T>(
+	map: RangeMap<T>,
+	start: number,
+	length: number,
+	value: T,
+): void {
 	const end = start + length - 1;
 	const newEntry: RangeEntry<T> = { start, length, value };
 
@@ -107,9 +112,9 @@ export function setInRangeMap<T>(map: RangeMap<T>, start: number, length: number
 	}
 
 	const iFirst = iBefore + 1;
-	const firstEntry = map[iFirst];
+	const firstEntry = map[iFirst] ?? oob();
 	const iLast = iAfter - 1;
-	const lastEntry = map[iLast];
+	const lastEntry = map[iLast] ?? oob();
 	const lengthBeforeFirst = start - firstEntry.start;
 	const lastEntryKey = lastEntry.start + lastEntry.length - 1;
 	const lengthAfterLast = lastEntryKey - end;
@@ -198,7 +203,7 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 
 	// Update or remove the overlapping entries
 	for (let i = iFirst; i <= iLast; ++i) {
-		const entry = map[i];
+		const entry = map[i] ?? oob();
 		const entryLastKey = entry.start + entry.length - 1;
 		let isDirty = false;
 

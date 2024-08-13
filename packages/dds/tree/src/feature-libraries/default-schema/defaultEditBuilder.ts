@@ -3,39 +3,45 @@
  * Licensed under the MIT License.
  */
 
+import { oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { ICodecFamily } from "../../codec/index.js";
+import type { ICodecFamily } from "../../codec/index.js";
 import {
-	ChangeEncodingContext,
-	ChangeFamily,
-	ChangeFamilyEditor,
-	ChangeRebaser,
-	ChangesetLocalId,
+	type ChangeEncodingContext,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
+	type ChangeRebaser,
+	type ChangesetLocalId,
 	CursorLocationType,
-	DeltaDetachedNodeId,
-	DeltaRoot,
-	FieldUpPath,
-	ITreeCursorSynchronous,
-	TaggedChange,
-	UpPath,
+	type DeltaDetachedNodeId,
+	type DeltaRoot,
+	type FieldUpPath,
+	type ITreeCursorSynchronous,
+	type TaggedChange,
+	type UpPath,
 	compareFieldUpPaths,
 	topDownPath,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 import {
-	EditDescription,
-	FieldChangeset,
-	FieldEditDescription,
+	type EditDescription,
+	type FieldChangeset,
+	type FieldEditDescription,
 	ModularChangeFamily,
-	ModularChangeset,
+	type ModularChangeset,
 	ModularEditBuilder,
 	intoDelta as intoModularDelta,
 	relevantRemovedRoots as relevantModularRemovedRoots,
 } from "../modular-schema/index.js";
-import { OptionalChangeset } from "../optional-field/index.js";
+import type { OptionalChangeset } from "../optional-field/index.js";
 
-import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds.js";
+import {
+	fieldKinds,
+	optional,
+	sequence,
+	required as valueFieldKind,
+} from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -44,7 +50,9 @@ export type DefaultChangeset = ModularChangeset;
  *
  * @sealed
  */
-export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, DefaultChangeset> {
+export class DefaultChangeFamily
+	implements ChangeFamily<DefaultEditBuilder, DefaultChangeset>
+{
 	private readonly modularFamily: ModularChangeFamily;
 
 	public constructor(codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>) {
@@ -105,8 +113,6 @@ export function relevantRemovedRoots(change: ModularChangeset): Iterable<DeltaDe
  * At some point it will likely be worth supporting at least some of these, possibly using a mechanism that could support all of them if desired.
  * If/when such a mechanism becomes available, an evaluation should be done to determine if any existing editing operations should be changed to leverage it
  * (Possibly by adding opt ins at the view schema layer).
- *
- * @internal
  */
 export interface IDefaultEditBuilder {
 	/**
@@ -115,7 +121,7 @@ export interface IDefaultEditBuilder {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	valueField(field: FieldUpPath): ValueFieldEditBuilder;
+	valueField(field: FieldUpPath): ValueFieldEditBuilder<ITreeCursorSynchronous>;
 
 	/**
 	 * @param field - the optional field which is being edited under the parent node
@@ -123,7 +129,7 @@ export interface IDefaultEditBuilder {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	optionalField(field: FieldUpPath): OptionalFieldEditBuilder;
+	optionalField(field: FieldUpPath): OptionalFieldEditBuilder<ITreeCursorSynchronous>;
 
 	/**
 	 * @param field - the sequence field which is being edited under the parent node
@@ -132,7 +138,7 @@ export interface IDefaultEditBuilder {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	sequenceField(field: FieldUpPath): SequenceFieldEditBuilder;
+	sequenceField(field: FieldUpPath): SequenceFieldEditBuilder<ITreeCursorSynchronous>;
 
 	/**
 	 * Moves a subsequence from one sequence field to another sequence field.
@@ -163,7 +169,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		changeReceiver: (change: DefaultChangeset) => void,
 	) {
-		this.modularBuilder = new ModularEditBuilder(family, changeReceiver);
+		this.modularBuilder = new ModularEditBuilder(family, fieldKinds, changeReceiver);
 	}
 
 	public enterTransaction(): void {
@@ -177,7 +183,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		this.modularBuilder.addNodeExistsConstraint(path);
 	}
 
-	public valueField(field: FieldUpPath): ValueFieldEditBuilder {
+	public valueField(field: FieldUpPath): ValueFieldEditBuilder<ITreeCursorSynchronous> {
 		return {
 			set: (newContent: ITreeCursorSynchronous): void => {
 				const fillId = this.modularBuilder.generateId();
@@ -201,7 +207,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		};
 	}
 
-	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder {
+	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder<ITreeCursorSynchronous> {
 		return {
 			set: (newContent: ITreeCursorSynchronous | undefined, wasEmpty: boolean): void => {
 				const detachId = this.modularBuilder.generateId();
@@ -242,6 +248,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		destinationField: FieldUpPath,
 		destIndex: number,
 	): void {
+		if (count === 0) {
+			return;
+		} else if (count < 0 || !Number.isSafeInteger(count)) {
+			throw new UsageError(`Expected non-negative integer count, got ${count}.`);
+		}
 		const detachId = this.modularBuilder.generateId(count);
 		const attachId = this.modularBuilder.generateId(count);
 		if (compareFieldUpPaths(sourceField, destinationField)) {
@@ -274,14 +285,15 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						// in the composition performed by `submitChanges`.
 						attachAncestorIndex -= count;
 						let parent: UpPath | undefined = attachPath[sharedDepth - 1];
+						const parentField = attachPath[sharedDepth] ?? oob();
 						parent = {
 							parent,
 							parentIndex: attachAncestorIndex,
-							parentField: attachPath[sharedDepth].parentField,
+							parentField: parentField.parentField,
 						};
 						for (let i = sharedDepth + 1; i < attachPath.length; i += 1) {
 							parent = {
-								...attachPath[i],
+								...(attachPath[i] ?? oob()),
 								parent,
 							};
 						}
@@ -317,7 +329,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		}
 	}
 
-	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder {
+	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder<ITreeCursorSynchronous> {
 		return {
 			insert: (index: number, content: ITreeCursorSynchronous): void => {
 				const length =
@@ -352,6 +364,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
+				if (count === 0) {
+					return;
+				} else if (count < 0 || !Number.isSafeInteger(count)) {
+					throw new UsageError(`Expected non-negative integer count, got ${count}.`);
+				}
 				const detachId = this.modularBuilder.generateId(count);
 				const attachId = this.modularBuilder.generateId(count);
 				const change = sequence.changeHandler.editor.move(
@@ -368,40 +385,37 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 }
 
 /**
- * @internal
  */
-export interface ValueFieldEditBuilder {
+export interface ValueFieldEditBuilder<TContent> {
 	/**
 	 * Issues a change which replaces the current newContent of the field with `newContent`.
 	 * @param newContent - the new content for the field.
 	 * The cursor can be in either Field or Node mode and must represent exactly one node.
 	 */
-	set(newContent: ITreeCursorSynchronous): void;
+	set(newContent: TContent): void;
 }
 
 /**
- * @internal
  */
-export interface OptionalFieldEditBuilder {
+export interface OptionalFieldEditBuilder<TContent> {
 	/**
 	 * Issues a change which replaces the current newContent of the field with `newContent`
 	 * @param newContent - the new content for the field.
 	 * If provided, the cursor can be in either Field or Node mode and must represent exactly one node.
 	 * @param wasEmpty - whether the field is empty when creating this change
 	 */
-	set(newContent: ITreeCursorSynchronous | undefined, wasEmpty: boolean): void;
+	set(newContent: TContent | undefined, wasEmpty: boolean): void;
 }
 
 /**
- * @internal
  */
-export interface SequenceFieldEditBuilder {
+export interface SequenceFieldEditBuilder<TContent> {
 	/**
 	 * Issues a change which inserts the `newContent` at the given `index`.
 	 * @param index - the index at which to insert the `newContent`.
 	 * @param newContent - the new content to be inserted in the field. Cursor can be in either Field or Node mode.
 	 */
-	insert(index: number, newContent: ITreeCursorSynchronous): void;
+	insert(index: number, newContent: TContent): void;
 
 	/**
 	 * Issues a change which removes `count` elements starting at the given `index`.
@@ -426,8 +440,8 @@ function getSharedPrefixLength(pathA: readonly UpPath[], pathB: readonly UpPath[
 	const minDepth = Math.min(pathA.length, pathB.length);
 	let sharedDepth = 0;
 	while (sharedDepth < minDepth) {
-		const detachStep = pathA[sharedDepth];
-		const attachStep = pathB[sharedDepth];
+		const detachStep = pathA[sharedDepth] ?? oob();
+		const attachStep = pathB[sharedDepth] ?? oob();
 		if (detachStep !== attachStep) {
 			if (
 				detachStep.parentField !== attachStep.parentField ||

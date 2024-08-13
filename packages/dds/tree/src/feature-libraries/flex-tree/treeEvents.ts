@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AnchorNode, PathVisitor, UpPath } from "../../core/index.js";
-import { Off } from "../../events/index.js";
+import type { PathVisitor, UpPath } from "../../core/index.js";
 
 /**
  * This file provides an API for working with trees which is type safe even when schema is not known.
@@ -29,8 +28,6 @@ import { Off } from "../../events/index.js";
  * - Add more events.
  * - Have some events (or a way to defer events) until the tree can be read.
  * - Consider removing this and just using AnchorEvents and simple-tree's events (and extending them as needed).
- *
- * @internal
  */
 export interface FlexTreeNodeEvents {
 	/**
@@ -59,40 +56,4 @@ export interface FlexTreeNodeEvents {
 	 * This has the same contract as {@link TreeChangeEvents.treeChanged}
 	 */
 	treeChanged(): void;
-}
-
-/**
- * Subscribe to changes to the node for the given {@link AnchorNode}.
- * @remarks This fulfills the contract of {@link TreeChangeEvents.nodeChanged}.
- * @privateRemarks The logic in this function ensures that the listener is only fired once per change per node.
- */
-export function onNodeChanged(
-	anchorNode: AnchorNode,
-	listener: FlexTreeNodeEvents["nodeChanged"],
-): Off {
-	// Debounce "childrenChanged" (which fires separately for each field that changed in the node)
-	// by waiting for "subtreeChanged" (which only fires once regardless of how many fields changed).
-	let unsubscribeFromTreeChanged: (() => void) | undefined;
-	// Every time that "childrenChanged" fires...
-	return anchorNode.on("childrenChanged", () => {
-		// ...subscribe to "subtreeChanged", but only if we haven't subscribed already already since the last time it fired
-		if (unsubscribeFromTreeChanged === undefined) {
-			unsubscribeFromTreeChanged = anchorNode.on("subtreeChanged", () => {
-				listener();
-				unsubscribeFromTreeChanged?.();
-				unsubscribeFromTreeChanged = undefined;
-			});
-		}
-	});
-}
-
-/**
- * Subscribe to changes to the tree rooted at the given {@link AnchorNode}.
- * @remarks This fulfills the contract of {@link TreeChangeEvents.treeChanged}.
- */
-export function onTreeChanged(
-	anchorNode: AnchorNode,
-	listener: FlexTreeNodeEvents["treeChanged"],
-): Off {
-	return anchorNode.on("subtreeChanged", listener);
 }

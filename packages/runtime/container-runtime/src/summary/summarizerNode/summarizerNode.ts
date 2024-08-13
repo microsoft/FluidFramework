@@ -165,6 +165,11 @@ export class SummarizerNode implements IRootSummarizerNode {
 		trackState: boolean = true,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
+		// If trackState is false, call summarize internal directly and don't track any state.
+		if (!trackState) {
+			return this.summarizeInternalFn(fullTree, trackState, telemetryContext);
+		}
+
 		// Try to reuse the tree if unchanged
 		if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
 			const latestSummary = this._latestSummary;
@@ -197,17 +202,16 @@ export class SummarizerNode implements IRootSummarizerNode {
 				this._latestSummary !== undefined
 					? {
 							summarySequenceNumber: this.wipReferenceSequenceNumber,
-							latestSummarySequenceNumber:
-								this._latestSummary.referenceSequenceNumber,
+							latestSummarySequenceNumber: this._latestSummary.referenceSequenceNumber,
 							// TODO: remove summaryPath
 							summaryPath: this._latestSummary.fullPath.path,
-					  }
+						}
 					: undefined;
 		}
 
 		const result = await this.summarizeInternalFn(
 			fullTree,
-			true,
+			trackState,
 			telemetryContext,
 			incrementalSummaryContext,
 		);
@@ -323,7 +327,10 @@ export class SummarizerNode implements IRootSummarizerNode {
 		parentPath: EscapedPath | undefined,
 		parentSkipRecursion: boolean,
 	) {
-		assert(this.wipReferenceSequenceNumber !== undefined, 0x1a4 /* "Not tracking a summary" */);
+		assert(
+			this.wipReferenceSequenceNumber !== undefined,
+			0x1a4 /* "Not tracking a summary" */,
+		);
 		let localPathsToUse = this.wipLocalPaths;
 
 		if (parentSkipRecursion) {

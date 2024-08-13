@@ -93,11 +93,7 @@ export function createR11sNetworkError(
 			error = new NonRetryableError(errorMessage, errorType, props);
 			break;
 		case 429:
-			error = createGenericNetworkError(
-				errorMessage,
-				{ canRetry: true, retryAfterMs },
-				props,
-			);
+			error = createGenericNetworkError(errorMessage, { canRetry: true, retryAfterMs }, props);
 			break;
 		case 500:
 		case 502:

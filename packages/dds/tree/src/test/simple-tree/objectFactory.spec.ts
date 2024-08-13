@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import {
-	InsertableTreeFieldFromImplicitField,
+	type InsertableTreeFieldFromImplicitField,
 	type NodeFromSchema,
 	SchemaFactory,
 	treeNodeApi as Tree,
@@ -57,9 +57,6 @@ describe("SharedTreeObject factories", () => {
 				["a", 0],
 				["b", 1],
 			]),
-			// TODO: Omit optional field once correctly supported.
-			// https://dev.azure.com/fluidframework/internal/_workitems/edit/6569
-			optional: undefined,
 			grand: {
 				child: {
 					list: [new ChildA({ content: 42 }), new ChildB({ content: 42 })],

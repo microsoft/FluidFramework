@@ -248,8 +248,12 @@ export class ProseMirrorTransactionBuilder {
 
 		let currentGroup: IThingGroup | undefined;
 		const groups = new Array<IThingGroup>();
-		const annotations: { from: number; to: number; segment: ISegment; propertyDeltas?: any }[] =
-			[];
+		const annotations: {
+			from: number;
+			to: number;
+			segment: ISegment;
+			propertyDeltas?: any;
+		}[] = [];
 		let position = 0;
 
 		for (const thing of this.things) {
@@ -357,11 +361,7 @@ export class ProseMirrorTransactionBuilder {
 						this.schema.marks[prop].create(value),
 					);
 				} else {
-					this.transaction.removeMark(
-						annotation.from,
-						annotation.to,
-						this.schema.marks[prop],
-					);
+					this.transaction.removeMark(annotation.from, annotation.to, this.schema.marks[prop]);
 				}
 			}
 		}

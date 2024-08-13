@@ -62,18 +62,20 @@ export type GenericProxify<TProperty> = {
 export type ProxyType<TProperty> = TProperty extends ContainerProperty
 	? BaseProxifiedProperty<ContainerProperty> & { [key: string]: any }
 	: TProperty extends ValueProperty
-	? number | boolean | string | Record<string, unknown>
-	: TProperty extends ValueArrayProperty
-	? ProxifiedPropertyValueArray & (number[] | boolean[] | string[] | Record<string, unknown>[])
-	: TProperty extends ValueMapProperty
-	? BaseProxifiedProperty & Map<string, number | boolean | string | Record<string, unknown>>
-	: TProperty extends MapProperty
-	? ProxifiedMapProperty
-	: TProperty extends ArrayProperty
-	? ProxifiedArrayProperty
-	: TProperty extends SetProperty
-	? ProxifiedSetProperty
-	: GenericProxify<TProperty>;
+		? number | boolean | string | Record<string, unknown>
+		: TProperty extends ValueArrayProperty
+			? ProxifiedPropertyValueArray &
+					(number[] | boolean[] | string[] | Record<string, unknown>[])
+			: TProperty extends ValueMapProperty
+				? BaseProxifiedProperty &
+						Map<string, number | boolean | string | Record<string, unknown>>
+				: TProperty extends MapProperty
+					? ProxifiedMapProperty
+					: TProperty extends ArrayProperty
+						? ProxifiedArrayProperty
+						: TProperty extends SetProperty
+							? ProxifiedSetProperty
+							: GenericProxify<TProperty>;
 
 /**
  * @internal
@@ -91,7 +93,11 @@ export type PrimitiveTypes = ValueProperty;
 /**
  * @internal
  */
-export type PropertyTypes = BaseProperty | ContainerProperty | PrimitiveTypes | CollectionTypes;
+export type PropertyTypes =
+	| BaseProperty
+	| ContainerProperty
+	| PrimitiveTypes
+	| CollectionTypes;
 export type NonPrimitiveTypes = ContainerProperty | CollectionTypes;
 
 /**

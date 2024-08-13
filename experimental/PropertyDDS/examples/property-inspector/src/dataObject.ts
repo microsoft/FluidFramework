@@ -71,9 +71,7 @@ export class PropertyTree extends DataObject implements IPropertyTree {
 		} else {
 			if (this._tree === undefined) {
 				this.root.set(propertyKey, SharedPropertyTree.create(this.runtime).handle);
-				this._tree = await this.root
-					.get<IFluidHandle<SharedPropertyTree>>(propertyKey)
-					?.get();
+				this._tree = await this.root.get<IFluidHandle<SharedPropertyTree>>(propertyKey)?.get();
 			}
 		}
 

@@ -26,6 +26,7 @@ describe("uncompressedEncode", () => {
 				const input = cursorForJsonableTreeField([jsonable]);
 				const context = {
 					encodeType: TreeCompressionStrategy.Uncompressed,
+					originatorId: testIdCompressor.localSessionId,
 					idCompressor: testIdCompressor,
 				};
 				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, 1);

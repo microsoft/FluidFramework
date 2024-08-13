@@ -81,7 +81,7 @@ describe("Ordered Client Collection", () => {
 	}
 
 	afterEach(() => {
-		mockLogger.events = [];
+		mockLogger.clear();
 		testQuorum.reset();
 		currentSequenceNumber = 0;
 	});
@@ -316,9 +316,7 @@ describe("Ordered Client Collection", () => {
 					{ electedClientId: "x", electedParentId: "x", electionSequenceNumber: 4321 },
 				);
 				assertElectionState(4, 3, undefined, 4321);
-				mockLogger.matchEvents([
-					{ eventName: "InitialElectedClientNotFound", clientId: "x" },
-				]);
+				mockLogger.matchEvents([{ eventName: "InitialElectedClientNotFound", clientId: "x" }]);
 				assertOrderedEligibleClientIds("a", "b", "c");
 			});
 		});

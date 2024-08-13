@@ -21,7 +21,10 @@ import { Loader as ContainerLoader } from "@fluidframework/container-loader/inte
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
+import {
+	LocalDocumentServiceFactory,
+	LocalResolver,
+} from "@fluidframework/local-driver/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -290,7 +293,9 @@ describe("PropertyTree", () => {
 		);
 	});
 
-	const factory2 = new TestFluidObjectFactory([[propertyDdsId, SharedPropertyTree.getFactory()]]);
+	const factory2 = new TestFluidObjectFactory([
+		[propertyDdsId, SharedPropertyTree.getFactory()],
+	]);
 	describe("SharedPropertyTree", () => {
 		executePerPropertyTreeType(
 			codeDetails,
@@ -407,18 +412,18 @@ function executePerPropertyTreeType(
 					PropertyFactory.create("String", undefined, "Magic"),
 				);
 
-				expect(
-					(sharedPropertyTree1.root.get("test") as StringProperty).getValue(),
-				).to.equal("Magic");
+				expect((sharedPropertyTree1.root.get("test") as StringProperty).getValue()).to.equal(
+					"Magic",
+				);
 				expect(sharedPropertyTree2.root.get("test")).to.equal(undefined);
 
 				sharedPropertyTree1.commit();
 
 				await opProcessingController.ensureSynchronized();
 
-				expect(
-					(sharedPropertyTree2.root.get("test") as StringProperty).getValue(),
-				).to.equal("Magic");
+				expect((sharedPropertyTree2.root.get("test") as StringProperty).getValue()).to.equal(
+					"Magic",
+				);
 			});
 
 			it("Can commit with metadata", async () => {
@@ -429,9 +434,9 @@ function executePerPropertyTreeType(
 					PropertyFactory.create("String", undefined, "Magic"),
 				);
 
-				expect(
-					(sharedPropertyTree1.root.get("test") as StringProperty).getValue(),
-				).to.equal("Magic");
+				expect((sharedPropertyTree1.root.get("test") as StringProperty).getValue()).to.equal(
+					"Magic",
+				);
 				expect(sharedPropertyTree2.root.get("test")).to.equal(undefined);
 
 				sharedPropertyTree1.commit({ someKey: "some data" });
@@ -441,9 +446,9 @@ function executePerPropertyTreeType(
 
 				await opProcessingController.ensureSynchronized();
 
-				expect(
-					(sharedPropertyTree2.root.get("test") as StringProperty).getValue(),
-				).to.equal("Magic");
+				expect((sharedPropertyTree2.root.get("test") as StringProperty).getValue()).to.equal(
+					"Magic",
+				);
 				expect(sharedPropertyTree2.activeCommit.metadata).to.deep.equal({
 					someKey: "some data",
 				});
@@ -501,9 +506,7 @@ function executePerPropertyTreeType(
 				await opProcessingController.ensureSynchronized();
 				expect(sharedPropertyTree2.remoteChanges.length).to.equal(1);
 				expect(
-					isEmpty(
-						last((sharedPropertyTree2 as SharedPropertyTree).remoteChanges)?.changeSet,
-					),
+					isEmpty(last((sharedPropertyTree2 as SharedPropertyTree).remoteChanges)?.changeSet),
 				).to.equal(true);
 			});
 
@@ -514,9 +517,9 @@ function executePerPropertyTreeType(
 					PropertyFactory.create("String", undefined, "Magic"),
 				);
 
-				expect(
-					(sharedPropertyTree1.root.get("test") as StringProperty).getValue(),
-				).to.equal("Magic");
+				expect((sharedPropertyTree1.root.get("test") as StringProperty).getValue()).to.equal(
+					"Magic",
+				);
 				expect(sharedPropertyTree2.root.get("test")).to.be.equal(undefined);
 
 				sharedPropertyTree1.commit();
@@ -529,9 +532,9 @@ function executePerPropertyTreeType(
 
 				await opProcessingController.ensureSynchronized();
 
-				expect(
-					(sharedPropertyTree2.root.get("test") as StringProperty).getValue(),
-				).to.equal("Magic");
+				expect((sharedPropertyTree2.root.get("test") as StringProperty).getValue()).to.equal(
+					"Magic",
+				);
 			});
 
 			it("Can emit local modification event", () => {

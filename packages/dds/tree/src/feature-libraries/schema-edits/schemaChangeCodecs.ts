@@ -7,15 +7,15 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	type ICodecFamily,
-	ICodecOptions,
-	IJsonCodec,
+	type ICodecOptions,
+	type IJsonCodec,
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../../codec/index.js";
 import { makeSchemaCodec } from "../schema-index/index.js";
 
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";
-import { SchemaChange } from "./schemaChangeTypes.js";
+import type { SchemaChange } from "./schemaChangeTypes.js";
 
 export function makeSchemaChangeCodecs(options: ICodecOptions): ICodecFamily<SchemaChange> {
 	return makeCodecFamily([[1, makeSchemaChangeCodec(options)]]);

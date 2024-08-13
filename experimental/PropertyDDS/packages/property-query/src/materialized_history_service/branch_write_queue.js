@@ -77,9 +77,7 @@ class BranchWriteQueue {
 				logger.trace(`Deleting pending commit promise for commit ${commitGuid}`);
 				delete this._pendingCommitPromises[branchGuid][commitGuid];
 				if (Object.keys(this._pendingCommitPromises[branchGuid]).length === 0) {
-					logger.trace(
-						`Deleting pending commit promise collection for branch ${branchGuid}`,
-					);
+					logger.trace(`Deleting pending commit promise collection for branch ${branchGuid}`);
 					delete this._pendingCommitPromises[branchGuid];
 				}
 			}
@@ -156,8 +154,7 @@ class BranchWriteQueue {
 					do {
 						// Let's fetch a page of results
 						let fetchedResults = await this._fetchSome(branchGuid, commitGuid, minGuid);
-						commitFound =
-							fetchedResults.find((fr) => fr.guid === commitGuid) !== undefined;
+						commitFound = fetchedResults.find((fr) => fr.guid === commitGuid) !== undefined;
 						fetchedResults.forEach((fr) => {
 							lastWritePromise = this.queueCommitGracefully(fr);
 							lastWritePromise.catch((ex2) => {
@@ -801,8 +798,7 @@ class BranchWriteQueue {
 						let branchResolved = !this._pendingBranchPromises[bg];
 						let wqResolved = !this._writeQueue[bg] || this._writeQueue[bg].idle();
 						let vtqResolved =
-							!this._validateTopologyQueue[bg] ||
-							this._validateTopologyQueue[bg].idle();
+							!this._validateTopologyQueue[bg] || this._validateTopologyQueue[bg].idle();
 
 						const resolveIfDone = () => {
 							if (wqResolved && vtqResolved && branchResolved) {

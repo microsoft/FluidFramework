@@ -139,7 +139,10 @@ export async function performFuzzActionsAsync<
  *
  * @internal
  */
-export async function saveOpsToFile(filepath: string, operations: { type: string | number }[]) {
+export async function saveOpsToFile(
+	filepath: string,
+	operations: { type: string | number }[],
+) {
 	await fs.mkdir(path.dirname(filepath), { recursive: true });
 	await fs.writeFile(filepath, JSON.stringify(operations, undefined, 4));
 }
@@ -230,7 +233,8 @@ export function performFuzzActions<
 		typeof reducerOrMap === "function"
 			? reducerOrMap
 			: combineReducers<TOperation, TState>(reducerOrMap);
-	const applyOperation: (operation: TOperation) => TState = (op) => reducer(state, op) ?? state;
+	const applyOperation: (operation: TOperation) => TState = (op) =>
+		reducer(state, op) ?? state;
 
 	try {
 		for (let operation = generator(state); operation !== done; operation = generator(state)) {

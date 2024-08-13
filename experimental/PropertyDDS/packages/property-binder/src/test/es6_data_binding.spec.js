@@ -81,21 +81,9 @@ describe("ES6 DataBinding", function () {
 				this.registerOnProperty("onProperty", ["insert"], propertyInsertCallback);
 				this.registerOnProperty("onProperty", ["modify"], propertyModifyCallback);
 				this.registerOnProperty("onProperty", ["remove"], propertyRemoveCallback);
-				this.registerOnPath(
-					"customArrayTest",
-					["collectionInsert"],
-					collectionInsertCallback,
-				);
-				this.registerOnPath(
-					"customArrayTest",
-					["collectionModify"],
-					collectionModifyCallback,
-				);
-				this.registerOnPath(
-					"customArrayTest",
-					["collectionRemove"],
-					collectionRemoveCallback,
-				);
+				this.registerOnPath("customArrayTest", ["collectionInsert"], collectionInsertCallback);
+				this.registerOnPath("customArrayTest", ["collectionModify"], collectionModifyCallback);
+				this.registerOnPath("customArrayTest", ["collectionRemove"], collectionRemoveCallback);
 				this.registerOnProperty("singleRef", ["referenceInsert"], referenceInsertCallback);
 				this.registerOnProperty("singleRef", ["referenceModify"], referenceModifyCallback);
 				this.registerOnProperty("singleRef.name", ["modify"], referencedModifyCallback);

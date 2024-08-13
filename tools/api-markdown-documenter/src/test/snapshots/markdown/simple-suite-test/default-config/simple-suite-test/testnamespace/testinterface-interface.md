@@ -1,4 +1,4 @@
-# TestInterface (ALPHA)
+# TestInterface
 
 [Packages](./) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestNamespace](./simple-suite-test/testnamespace-namespace) &gt; [TestInterface](./simple-suite-test/testnamespace/testinterface-interface)
 
@@ -18,17 +18,17 @@ interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum>
 
 | Property | Alerts | Type | Description |
 | --- | --- | --- | --- |
-| [testInterfaceProperty](./simple-suite-test/testnamespace/testinterface-interface#testinterfaceproperty-propertysignature) | `ALPHA` | boolean | Test interface property |
+| [testInterfaceProperty](./simple-suite-test/testnamespace/testinterface-interface#testinterfaceproperty-propertysignature) | `Alpha` | boolean | Test interface property |
 
 ## Methods
 
 | Method | Alerts | Return Type | Description |
 | --- | --- | --- | --- |
-| [testInterfaceMethod()](./simple-suite-test/testnamespace/testinterface-interface#testinterfacemethod-methodsignature) | `ALPHA` | void | Test interface method |
+| [testInterfaceMethod()](./simple-suite-test/testnamespace/testinterface-interface#testinterfacemethod-methodsignature) | `Alpha` | void | Test interface method |
 
 ## Property Details
 
-### testInterfaceProperty (ALPHA) {#testinterfaceproperty-propertysignature}
+### testInterfaceProperty {#testinterfaceproperty-propertysignature}
 
 Test interface property
 
@@ -44,7 +44,7 @@ testInterfaceProperty: boolean;
 
 ## Method Details
 
-### testInterfaceMethod (ALPHA) {#testinterfacemethod-methodsignature}
+### testInterfaceMethod {#testinterfacemethod-methodsignature}
 
 Test interface method
 

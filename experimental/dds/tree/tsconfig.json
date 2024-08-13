@@ -10,7 +10,7 @@
 		"module": "Node16",
 		"moduleResolution": "Node16",
 		"rootDir": "./src",
-		"types": ["mocha"]
+		"types": ["mocha"],
 	},
-	"include": ["src/**/*"]
+	"include": ["src/**/*"],
 }

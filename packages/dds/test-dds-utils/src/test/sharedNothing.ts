@@ -114,11 +114,12 @@ const noopGenerator = async () => ({ type: "noop" }) as const;
 
 export const isNoopOp = (op: BaseOperation): op is Operation => op.type === "noop";
 
-export const baseModel: DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState> = {
-	workloadName: "test",
-	factory: new SharedNothingFactory(),
-	generatorFactory: () => noopGenerator,
-	reducer: async (state, op) => {},
-	validateConsistency: () => {},
-	minimizationTransforms: [],
-};
+export const baseModel: DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState> =
+	{
+		workloadName: "test",
+		factory: new SharedNothingFactory(),
+		generatorFactory: () => noopGenerator,
+		reducer: async (state, op) => {},
+		validateConsistency: () => {},
+		minimizationTransforms: [],
+	};

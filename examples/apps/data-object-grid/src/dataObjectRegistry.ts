@@ -3,12 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { Clicker, ClickerInstantiationFactory, ClickerReactView } from "@fluid-example/clicker";
-import { CodeMirrorComponent, CodeMirrorReactView, SmdeFactory } from "@fluid-example/codemirror";
-import { CollaborativeText, CollaborativeTextView } from "@fluid-example/collaborative-textarea";
+import {
+	Clicker,
+	ClickerInstantiationFactory,
+	ClickerReactView,
+} from "@fluid-example/clicker";
+import {
+	CodeMirrorComponent,
+	CodeMirrorReactView,
+	SmdeFactory,
+} from "@fluid-example/codemirror";
+import {
+	CollaborativeText,
+	CollaborativeTextView,
+} from "@fluid-example/collaborative-textarea";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
-import { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "@fluid-example/prosemirror";
+import {
+	ProseMirror,
+	ProseMirrorFactory,
+	ProseMirrorReactView,
+} from "@fluid-example/prosemirror";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import {

@@ -3,27 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
+import { type TelemetryEventBatcher, measure } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	BranchRebaseResult,
-	ChangeFamily,
-	ChangeFamilyEditor,
+	type BranchRebaseResult,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
 	CommitKind,
-	CommitMetadata,
-	GraphCommit,
-	RevisionTag,
-	TaggedChange,
+	type CommitMetadata,
+	type GraphCommit,
+	type RevisionTag,
+	type TaggedChange,
 	findAncestor,
 	makeAnonChange,
 	mintCommit,
 	rebaseBranch,
 	tagChange,
 	tagRollbackInverse,
+	type RebaseStatsWithDuration,
 } from "../core/index.js";
-import { EventEmitter, Listenable } from "../events/index.js";
+import { EventEmitter, type Listenable } from "../events/index.js";
 
 import { TransactionStack } from "./transactionStack.js";
+import { fail } from "../util/index.js";
 
 /**
  * Describes a change to a `SharedTreeBranch`. Various operations can mutate the head of the branch;
@@ -78,6 +81,14 @@ export function getChangeReplaceType(
 	// └─ B' (branch Y)                                └─ (branch Y)
 	//
 	// B' is removed and replaced by B because both have the same revision.
+	assert(
+		change.removedCommits[0] !== undefined,
+		0x9e4 /* This wont run due to the length check above */,
+	);
+	assert(
+		change.newCommits[0] !== undefined,
+		0x9e5 /* This wont run because a replace operation always has new commits */,
+	);
 	if (
 		change.removedCommits.length === 1 &&
 		change.removedCommits[0].revision === change.newCommits[0].revision
@@ -120,6 +131,34 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	 * Fired after this branch is disposed
 	 */
 	dispose(): void;
+
+	/**
+	 * Fired after a new transaction is started.
+	 * @param isOuterTransaction - true iff the transaction being started is the outermost transaction
+	 * as opposed to a nested transaction.
+	 */
+	transactionStarted(isOuterTransaction: boolean): void;
+
+	/**
+	 * Fired after the current transaction is aborted.
+	 * @param isOuterTransaction - true iff the transaction being aborted is the outermost transaction
+	 * as opposed to a nested transaction.
+	 */
+	transactionAborted(isOuterTransaction: boolean): void;
+
+	/**
+	 * Fired after the current transaction is completely rolled back.
+	 * @param isOuterTransaction - true iff the transaction being aborted is the outermost transaction
+	 * as opposed to a nested transaction.
+	 */
+	transactionRolledBack(isOuterTransaction: boolean): void;
+
+	/**
+	 * Fired after the current transaction is committed.
+	 * @param isOuterTransaction - true iff the transaction being committed is the outermost transaction
+	 * as opposed to a nested transaction.
+	 */
+	transactionCommitted(isOuterTransaction: boolean): void;
 }
 
 /**
@@ -142,9 +181,10 @@ export interface BranchTrimmingEvents {
 /**
  * A branch of changes that can be applied to a SharedTree.
  */
-export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> extends EventEmitter<
-	SharedTreeBranchEvents<TEditor, TChange>
-> {
+export class SharedTreeBranch<
+	TEditor extends ChangeFamilyEditor,
+	TChange,
+> extends EventEmitter<SharedTreeBranchEvents<TEditor, TChange>> {
 	public readonly editor: TEditor;
 	private readonly transactions = new TransactionStack();
 	/**
@@ -184,6 +224,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly branchTrimmer?: Listenable<BranchTrimmingEvents>,
+		private readonly telemetryEventBatcher?: TelemetryEventBatcher<
+			keyof RebaseStatsWithDuration
+		>,
 	) {
 		super();
 		this.editor = this.changeFamily.buildEditor((change) =>
@@ -217,6 +260,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
+		// TODO: This should not be necessary when receiving changes from other clients.
 		const changeWithRevision = this.changeFamily.rebaser.changeRevision(change, revision);
 
 		const newHead = mintCommit(this.head, {
@@ -267,6 +311,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			onForkUnSubscribe();
 		});
 		this.editor.enterTransaction();
+		this.emit("transactionStarted", this.transactions.size === 1);
 	}
 
 	/**
@@ -283,6 +328,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
 
+		this.emit("transactionCommitted", this.transactions.size === 0);
 		if (commits.length === 0) {
 			return undefined;
 		}
@@ -329,20 +375,24 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
 
+		this.emit("transactionAborted", this.transactions.size === 0);
 		if (commits.length === 0) {
+			this.emit("transactionRolledBack", this.transactions.size === 0);
 			return [undefined, []];
 		}
 
 		const inverses: TaggedChange<TChange>[] = [];
 		for (let i = commits.length - 1; i >= 0; i--) {
 			const revision = this.mintRevisionTag();
+			const commit =
+				commits[i] ?? fail("This wont run because we are iterating through commits");
 			const inverse = this.changeFamily.rebaser.changeRevision(
-				this.changeFamily.rebaser.invert(commits[i], false),
+				this.changeFamily.rebaser.invert(commit, false),
 				revision,
-				commits[i].revision,
+				commit.revision,
 			);
 
-			inverses.push(tagRollbackInverse(inverse, revision, commits[i].revision));
+			inverses.push(tagRollbackInverse(inverse, revision, commit.revision));
 		}
 		const change =
 			inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined;
@@ -356,6 +406,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.emit("beforeChange", changeEvent);
 		this.head = startCommit;
 		this.emit("afterChange", changeEvent);
+		this.emit("transactionRolledBack", this.transactions.size === 0);
 		return [change, commits];
 	}
 
@@ -370,8 +421,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const { startRevision: startRevisionOriginal } = this.transactions.pop();
 		let startRevision = startRevisionOriginal;
 		while (this.initialTransactionRevToRebasedRev.has(startRevision)) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			startRevision = this.initialTransactionRevToRebasedRev.get(startRevision)!;
+			startRevision = this.initialTransactionRevToRebasedRev.get(startRevision) ?? oob();
 		}
 
 		if (!this.isTransacting()) {
@@ -379,7 +429,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		const commits: GraphCommit<TChange>[] = [];
-		const startCommit = findAncestor([this.head, commits], (c) => c.revision === startRevision);
+		const startCommit = findAncestor(
+			[this.head, commits],
+			(c) => c.revision === startRevision,
+		);
 		assert(
 			startCommit !== undefined,
 			0x593 /* Expected branch to be ahead of transaction start revision */,
@@ -431,8 +484,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const newCommits = targetCommits.concat(sourceCommits);
 		if (this.isTransacting()) {
-			const src = targetCommits[0].parent?.revision;
-			const dst = targetCommits[targetCommits.length - 1].revision;
+			const firstCommit = targetCommits[0] ?? oob();
+			const lastCommit = targetCommits[targetCommits.length - 1] ?? oob();
+			const src = firstCommit.parent?.revision;
+			const dst = lastCommit.revision;
 			if (src !== undefined && dst !== undefined) {
 				this.initialTransactionRevToRebasedRev.set(src, dst);
 			}
@@ -505,18 +560,23 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			return undefined;
 		}
 
-		const rebaseResult = rebaseBranch(
-			this.mintRevisionTag,
-			this.changeFamily.rebaser,
-			head,
-			upTo,
-			onto.getHead(),
+		const { duration, output } = measure(() =>
+			rebaseBranch(
+				this.mintRevisionTag,
+				this.changeFamily.rebaser,
+				head,
+				upTo,
+				onto.getHead(),
+			),
 		);
-		if (this.head === rebaseResult.newSourceHead) {
+
+		this.telemetryEventBatcher?.accumulateAndLog({ duration, ...output.telemetryProperties });
+
+		if (this.head === output.newSourceHead) {
 			return undefined;
 		}
 
-		return rebaseResult;
+		return output;
 	}
 
 	/**

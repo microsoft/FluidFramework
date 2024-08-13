@@ -10,6 +10,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate changeset`](#flub-generate-changeset)
 * [`flub generate entrypoints`](#flub-generate-entrypoints)
 * [`flub generate packlist`](#flub-generate-packlist)
+* [`flub generate releaseNotes`](#flub-generate-releasenotes)
 * [`flub generate typetests`](#flub-generate-typetests)
 * [`flub generate upcoming`](#flub-generate-upcoming)
 
@@ -20,9 +21,9 @@ Tags asserts by replacing their message with a unique numerical value.
 ```
 USAGE
   $ flub generate assertTags [-v | --quiet] [--disableConfig] [--concurrency <value>] [--branch <value> [--changed |  | 
-    |  | [--all | --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all |
-    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all] | ]] [--private] [--scope <value> |
-    --skipScope <value>]
+    |  | [--all | --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
+    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... |
+    --skipScope <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -264,9 +265,9 @@ Outputs a list of files that will be included in a package based on its 'files' 
 ```
 USAGE
   $ flub generate packlist [-v | --quiet] [--out <value>] [--concurrency <value>] [--branch <value> [--changed |  |  | 
-    | [--all | --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all |
-    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all] | ]] [--private] [--scope <value> |
-    --skipScope <value>]
+    | [--all | --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
+    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... |
+    --skipScope <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -312,6 +313,43 @@ DESCRIPTION
 
 _See code: [src/commands/generate/packlist.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/packlist.ts)_
 
+## `flub generate releaseNotes`
+
+Generates release notes from individual changeset files.
+
+```
+USAGE
+  $ flub generate releaseNotes -g client|server|azure|build-tools|gitrest|historian -t major|minor --out <value> [--json]
+    [-v | --quiet] [--includeUnknown]
+
+FLAGS
+  -g, --releaseGroup=<option>  (required) Name of a release group.
+                               <options: client|server|azure|build-tools|gitrest|historian>
+  -t, --releaseType=<option>   (required) The type of release for which the release notes are being generated.
+                               <options: major|minor>
+      --includeUnknown         Pass this flag to include changesets in unknown sections in the generated release notes.
+                               By default, these are excluded.
+      --out=<value>            (required) [default: RELEASE_NOTES.md] Output the results to this file.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+EXAMPLES
+  Generate release notes for a minor release of the client release group.
+
+    $ flub generate releaseNotes -g client -t minor
+
+  You can output a different file using the --out flag.
+
+    $ flub generate releaseNotes -g client -t minor --out RELEASE_NOTES/2.1.0.md
+```
+
+_See code: [src/commands/generate/releaseNotes.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/releaseNotes.ts)_
+
 ## `flub generate typetests`
 
 Generates type tests for a package or group of packages.
@@ -320,8 +358,9 @@ Generates type tests for a package or group of packages.
 USAGE
   $ flub generate typetests [-v | --quiet] [--level public|alpha|beta|internal|legacy] [--outDir <value>] [--outFile
     <value>] [--publicFallback] [--concurrency <value>] [--branch <value> [--changed |  |  |  | [--all | --dir <value> |
-    --packages | -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] | ]] [--private] [--scope <value> | --skipScope <value>]
+    --packages | -g client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... | --skipScope
+    <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.

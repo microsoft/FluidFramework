@@ -36,7 +36,11 @@ export async function assertConsistent(clients: Client[]): Promise<void> {
 }
 
 export async function assertEquivalentSharedStrings(a: SharedString, b: SharedString) {
-	assert.equal(a.getText(), b.getText(), `Non-equal text between strings ${a.id} and ${b.id}.`);
+	assert.equal(
+		a.getText(),
+		b.getText(),
+		`Non-equal text between strings ${a.id} and ${b.id}.`,
+	);
 	assert.equal(a.getLength(), b.getLength());
 	await assertPropertiesEqual(a, b);
 	const firstLabels = Array.from(a.getIntervalCollectionLabels()).sort();

@@ -7,16 +7,16 @@ import { strict as assert } from "assert";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { EmptyKey, FieldKey } from "../../../core/index.js";
+import { EmptyKey, type FieldKey } from "../../../core/index.js";
 import {
 	SchemaBuilder,
 	jsonArray,
 	jsonObject,
-	jsonRoot,
+	type jsonRoot,
 	jsonSchema,
 	leaf,
 } from "../../../domains/index.js";
-import {
+import type {
 	FlexTreeField,
 	FlexTreeMapNode,
 	FlexTreeNode,
@@ -34,17 +34,17 @@ import {
 import {
 	Any,
 	FieldKinds,
-	FlexAllowedTypes,
-	FlexFieldNodeSchema,
+	type FlexAllowedTypes,
+	type FlexFieldNodeSchema,
 	FlexFieldSchema,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	LeafNodeSchema,
+	type FlexMapNodeSchema,
+	type FlexObjectNodeSchema,
+	type FlexTreeNodeSchema,
+	type LeafNodeSchema,
 } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ConstantFlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/flexList.js";
-import {
+import type { ConstantFlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/flexList.js";
+import type {
 	areSafelyAssignable,
 	isAssignableTo,
 	requireAssignableTo,
@@ -53,23 +53,6 @@ import {
 } from "../../../util/index.js";
 
 describe("flexTreeTypes", () => {
-	/**
-	 * Example showing narrowing and exhaustive matches.
-	 */
-	function exhaustiveMatchSimple(root: FlexTreeField): void {
-		const schema = SchemaBuilder.required([() => leaf.number, leaf.string]);
-		assert(root.is(schema));
-		const tree = root.boxedContent;
-		if (tree.is(leaf.number)) {
-			const n: number = tree.value;
-		} else if (tree.is(leaf.string)) {
-			const s: string = tree.value;
-		} else {
-			// Proves at compile time exhaustive match checking works, and tree is typed `never`.
-			unreachableCase(tree);
-		}
-	}
-
 	/**
 	 * Example showing the node kinds used in the json domain (everything except structs),
 	 * including narrowing and exhaustive matches.
@@ -95,7 +78,7 @@ describe("flexTreeTypes", () => {
 				const a: FlexTreeSequenceField<typeof jsonRoot> = tree.content;
 				jsonExample(a);
 			} else if (tree.is(jsonObject)) {
-				const x = tree.get(EmptyKey);
+				const x = tree.getBoxed(EmptyKey);
 			} else if (tree.is(leaf.null)) {
 				const x: null = tree.value;
 			} else {
@@ -140,7 +123,6 @@ describe("flexTreeTypes", () => {
 	 */
 	function boxingExample(mixed: Mixed): void {
 		const leafNode: number = mixed.leaf;
-		const leafBoxed: FlexTreeTypedNode<typeof leaf.number> = mixed.boxedLeaf.boxedContent;
 
 		// Current policy is to box polymorphic values so they can be checked for type with `is`.
 		// Note that this still unboxes the value field.
@@ -154,27 +136,10 @@ describe("flexTreeTypes", () => {
 		> = mixed.boxedPolymorphic;
 
 		const optionalLeaf: number | undefined = mixed.optionalLeaf;
-		const boxedOptionalLeaf: FlexTreeTypedNode<typeof leaf.number> | undefined =
-			mixed.boxedOptionalLeaf.boxedContent;
 		const sequence: FlexTreeSequenceField<readonly [typeof leaf.number]> = mixed.sequence;
 
 		const child: number | undefined = sequence.at(0);
 		const childBoxed: FlexTreeTypedNode<typeof leaf.number> | undefined = sequence.boxedAt(0);
-	}
-
-	function recursiveStructExample(struct: Recursive): void {
-		const child: Recursive | undefined = struct.foo;
-		const data = struct.x + (struct.foo?.foo?.foo?.x ?? 0);
-		assert(child);
-
-		child.foo?.foo?.foo?.foo?.setX(5);
-		child.foo?.boxedFoo.content?.foo?.foo?.setFoo({ x: 5, foo: { x: 5, foo: undefined } });
-
-		struct.boxedFoo.content = undefined;
-
-		// Shorthand for the above.
-		struct.setFoo(undefined);
-		struct.foo = undefined;
 	}
 
 	function iteratorsExample(mixed: Mixed): void {
@@ -310,10 +275,7 @@ describe("flexTreeTypes", () => {
 		// Recursive Lazy
 		{
 			type _1 = requireTrue<
-				areSafelyAssignable<
-					FlexTreeTypedNodeUnion<[() => typeof recursiveStruct]>,
-					Recursive
-				>
+				areSafelyAssignable<FlexTreeTypedNodeUnion<[() => typeof recursiveStruct]>, Recursive>
 			>;
 		}
 		// Type-Erased
@@ -322,10 +284,7 @@ describe("flexTreeTypes", () => {
 				areSafelyAssignable<FlexTreeTypedNodeUnion<[FlexTreeNodeSchema]>, FlexTreeNode>
 			>;
 			type _2 = requireTrue<
-				areSafelyAssignable<
-					FlexTreeTypedNodeUnion<[FlexObjectNodeSchema]>,
-					FlexTreeObjectNode
-				>
+				areSafelyAssignable<FlexTreeTypedNodeUnion<[FlexObjectNodeSchema]>, FlexTreeObjectNode>
 			>;
 			type _3 = requireTrue<
 				areSafelyAssignable<
@@ -389,10 +348,7 @@ describe("flexTreeTypes", () => {
 		// Recursive Lazy
 		{
 			type _1 = requireTrue<
-				areSafelyAssignable<
-					FlexTreeUnboxNodeUnion<[() => typeof recursiveStruct]>,
-					Recursive
-				>
+				areSafelyAssignable<FlexTreeUnboxNodeUnion<[() => typeof recursiveStruct]>, Recursive>
 			>;
 		}
 		// Type-Erased
@@ -404,10 +360,7 @@ describe("flexTreeTypes", () => {
 				>
 			>;
 			type _2 = requireTrue<
-				areSafelyAssignable<
-					FlexTreeUnboxNodeUnion<[FlexObjectNodeSchema]>,
-					FlexTreeObjectNode
-				>
+				areSafelyAssignable<FlexTreeUnboxNodeUnion<[FlexObjectNodeSchema]>, FlexTreeObjectNode>
 			>;
 			type _3 = requireTrue<
 				areSafelyAssignable<
@@ -423,10 +376,7 @@ describe("flexTreeTypes", () => {
 				>
 			>;
 			type _6 = requireTrue<
-				areSafelyAssignable<
-					FlexTreeUnboxNodeUnion<FlexAllowedTypes>,
-					FlexTreeUnknownUnboxed
-				>
+				areSafelyAssignable<FlexTreeUnboxNodeUnion<FlexAllowedTypes>, FlexTreeUnknownUnboxed>
 			>;
 		}
 

@@ -39,6 +39,7 @@ export function serializeHandles(
  * @param context - The handle context for the container
  * @param bind - Bind any other handles we find in the object against this given handle.
  * @returns The fully-plain object
+ * @legacy
  * @alpha
  */
 export function makeHandlesSerializable(
@@ -58,6 +59,7 @@ export function makeHandlesSerializable(
  * @param serializer - The serializer that knows how to convert serializable-form handles into handle objects
  * @param context - The handle context for the container
  * @returns The mostly-plain object with handle objects within
+ * @legacy
  * @alpha
  */
 export function parseHandles(value: any, serializer: IFluidSerializer) {
@@ -86,7 +88,11 @@ export function createSingleBlobSummary(
  *
  * @internal
  */
-export function bindHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): void {
+export function bindHandles(
+	value: any,
+	serializer: IFluidSerializer,
+	bind: IFluidHandle,
+): void {
 	// N.B. AB#7316 this could be made more efficient by writing an ad hoc
 	// implementation that doesn't clone at all. Today the distinction between
 	// this function and `encode` is purely semantic -- encoding both serializes

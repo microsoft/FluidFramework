@@ -6,10 +6,14 @@
 import { strict as assert } from "assert";
 
 import { describeStress } from "@fluid-private/stochastic-test-utils";
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 
-import { ChangeFamily, ChangeFamilyEditor, RevisionTag } from "../../../core/index.js";
-import { Commit, EditManager, SharedTreeBranch } from "../../../shared-tree-core/index.js";
+import type { ChangeFamily, ChangeFamilyEditor, RevisionTag } from "../../../core/index.js";
+import type {
+	Commit,
+	EditManager,
+	SharedTreeBranch,
+} from "../../../shared-tree-core/index.js";
 import { brand, makeArray } from "../../../util/index.js";
 import { NoOpChangeRebaser, TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
@@ -69,14 +73,11 @@ export function testCorrectness() {
 				{ seq: 3, type: "Pull", ref: 0, from: peer1 },
 			]);
 
-			runUnitTestScenario(
-				"Can handle non-concurrent peer changes partially sequenced later",
-				[
-					{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-					{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-					{ seq: 3, type: "Pull", ref: 1, from: peer1 },
-				],
-			);
+			runUnitTestScenario("Can handle non-concurrent peer changes partially sequenced later", [
+				{ seq: 1, type: "Pull", ref: 0, from: peer1 },
+				{ seq: 2, type: "Pull", ref: 0, from: peer1 },
+				{ seq: 3, type: "Pull", ref: 1, from: peer1 },
+			]);
 
 			runUnitTestScenario("Can rebase a single peer change over multiple peer changes", [
 				{ seq: 1, type: "Pull", ref: 0, from: peer1 },
@@ -276,11 +277,7 @@ export function testCorrectness() {
 					expectedTrimmedRevisions.add(commit1.revision);
 					manager.addSequencedChange(commit1, brand(1), brand(0));
 					manager.advanceMinimumSequenceNumber(brand(2));
-					manager.addSequencedChange(
-						applyLocalCommit(manager, [1], 2),
-						brand(3),
-						brand(2),
-					);
+					manager.addSequencedChange(applyLocalCommit(manager, [1], 2), brand(3), brand(2));
 					checkChangeList(manager, [2]);
 
 					assert.deepEqual(trimmedCommits, expectedTrimmedRevisions);

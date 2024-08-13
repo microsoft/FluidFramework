@@ -12,7 +12,6 @@ import {
 	ApiReturnTypeMixin,
 	type Excerpt,
 	type Parameter,
-	ReleaseTag,
 	type TypeParameter,
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
@@ -35,9 +34,7 @@ import {
 	type ApiModifier,
 	getDefaultValueBlock,
 	getModifiers,
-	getReleaseTag,
 	injectSeparator,
-	isDeprecated,
 } from "../../utilities/index.js";
 import { getLinkForApiItem } from "../ApiItemTransformUtilities.js";
 import { transformTsdocSection } from "../TsdocNodeTransforms.js";
@@ -191,19 +188,6 @@ export function createSummaryTable(
 }
 
 /**
- * Scans the list of `ApiItem`s to determine if any of the items contain the relevant tags to require an "Alert" column.
- * I.e. If they are marked as `@deprecated`, `@alpha`, or `@beta`.
- */
-function doItemsContainAlerts(apiItems: readonly ApiItem[]): boolean {
-	const hasDeprecated = apiItems.some((element) => isDeprecated(element));
-	const hasAlphaOrBeta = apiItems.some((element) => {
-		const releaseTag = getReleaseTag(element);
-		return releaseTag === ReleaseTag.Alpha || releaseTag === ReleaseTag.Beta;
-	});
-	return hasDeprecated || hasAlphaOrBeta;
-}
-
-/**
  * Default summary table generation. Displays each item's name, modifiers, and description (summary) comment.
  *
  * @param apiItems - The items to be displayed. All of these items must be of the kind specified via `itemKind`.
@@ -221,8 +205,9 @@ export function createDefaultSummaryTable(
 		return undefined;
 	}
 
-	// Only display "Alerts" column if there are any deprecated or alpha/beta items in the list.
-	const hasAlerts = doItemsContainAlerts(apiItems);
+	// Only display "Alerts" column if there are any alerts to display.
+	const alerts = apiItems.map((apiItem) => config.getAlertsForItem(apiItem));
+	const hasAlerts = alerts.some((itemAlerts) => itemAlerts.length > 0);
 
 	// Only display "Modifiers" column if there are any modifiers to display.
 	const hasModifiers = apiItems.some(
@@ -242,15 +227,15 @@ export function createDefaultSummaryTable(
 	const headerRow = new TableHeaderRowNode(headerRowCells);
 
 	const bodyRows: TableBodyRowNode[] = [];
-	for (const apiItem of apiItems) {
-		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiItem, config)];
+	for (let i = 0; i < apiItems.length; i++) {
+		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiItems[i], config)];
 		if (hasAlerts) {
-			bodyRowCells.push(createAlertsCell(apiItem));
+			bodyRowCells.push(createAlertsCell(alerts[i]));
 		}
 		if (hasModifiers) {
-			bodyRowCells.push(createModifiersCell(apiItem, options?.modifiersToOmit));
+			bodyRowCells.push(createModifiersCell(apiItems[i], options?.modifiersToOmit));
 		}
-		bodyRowCells.push(createApiSummaryCell(apiItem, config));
+		bodyRowCells.push(createApiSummaryCell(apiItems[i], config));
 
 		bodyRows.push(new TableBodyRowNode(bodyRowCells));
 	}
@@ -398,8 +383,9 @@ export function createFunctionLikeSummaryTable(
 		return undefined;
 	}
 
-	// Only display "Alerts" column if there are any deprecated or alpha/beta items in the list.
-	const hasAlerts = doItemsContainAlerts(apiItems);
+	// Only display "Alerts" column if there are any alerts to display.
+	const alerts = apiItems.map((apiItem) => config.getAlertsForItem(apiItem));
+	const hasAlerts = alerts.some((itemAlerts) => itemAlerts.length > 0);
 
 	// Only display "Modifiers" column if there are any modifiers to display.
 	const hasModifiers = apiItems.some(
@@ -423,18 +409,18 @@ export function createFunctionLikeSummaryTable(
 	const headerRow = new TableHeaderRowNode(headerRowCells);
 
 	const bodyRows: TableBodyRowNode[] = [];
-	for (const apiItem of apiItems) {
-		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiItem, config)];
+	for (let i = 0; i < apiItems.length; i++) {
+		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiItems[i], config)];
 		if (hasAlerts) {
-			bodyRowCells.push(createAlertsCell(apiItem));
+			bodyRowCells.push(createAlertsCell(alerts[i]));
 		}
 		if (hasModifiers) {
-			bodyRowCells.push(createModifiersCell(apiItem, options?.modifiersToOmit));
+			bodyRowCells.push(createModifiersCell(apiItems[i], options?.modifiersToOmit));
 		}
 		if (hasReturnTypes) {
-			bodyRowCells.push(createReturnTypeCell(apiItem, config));
+			bodyRowCells.push(createReturnTypeCell(apiItems[i], config));
 		}
-		bodyRowCells.push(createApiSummaryCell(apiItem, config));
+		bodyRowCells.push(createApiSummaryCell(apiItems[i], config));
 
 		bodyRows.push(new TableBodyRowNode(bodyRowCells));
 	}
@@ -459,8 +445,9 @@ export function createPropertiesTable(
 		return undefined;
 	}
 
-	// Only display "Alerts" column if there are any deprecated or alpha/beta items in the list.
-	const hasAlerts = doItemsContainAlerts(apiProperties);
+	// Only display "Alerts" column if there are any alerts to display.
+	const alerts = apiProperties.map((apiItem) => config.getAlertsForItem(apiItem));
+	const hasAlerts = alerts.some((itemAlerts) => itemAlerts.length > 0);
 
 	// Only display "Modifiers" column if there are any modifiers to display.
 	const hasModifiers = apiProperties.some(
@@ -487,19 +474,19 @@ export function createPropertiesTable(
 	const headerRow = new TableHeaderRowNode(headerRowCells);
 
 	const bodyRows: TableBodyRowNode[] = [];
-	for (const apiProperty of apiProperties) {
-		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiProperty, config)];
+	for (let i = 0; i < apiProperties.length; i++) {
+		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiProperties[i], config)];
 		if (hasAlerts) {
-			bodyRowCells.push(createAlertsCell(apiProperty));
+			bodyRowCells.push(createAlertsCell(alerts[i]));
 		}
 		if (hasModifiers) {
-			bodyRowCells.push(createModifiersCell(apiProperty, options?.modifiersToOmit));
+			bodyRowCells.push(createModifiersCell(apiProperties[i], options?.modifiersToOmit));
 		}
 		if (hasDefaultValues) {
-			bodyRowCells.push(createDefaultValueCell(apiProperty, config));
+			bodyRowCells.push(createDefaultValueCell(apiProperties[i], config));
 		}
-		bodyRowCells.push(createTypeExcerptCell(apiProperty.propertyTypeExcerpt, config));
-		bodyRowCells.push(createApiSummaryCell(apiProperty, config));
+		bodyRowCells.push(createTypeExcerptCell(apiProperties[i].propertyTypeExcerpt, config));
+		bodyRowCells.push(createApiSummaryCell(apiProperties[i], config));
 
 		bodyRows.push(new TableBodyRowNode(bodyRowCells));
 	}
@@ -524,8 +511,9 @@ export function createVariablesTable(
 		return undefined;
 	}
 
-	// Only display "Alerts" column if there are any deprecated or alpha/beta items in the list.
-	const hasAlerts = doItemsContainAlerts(apiVariables);
+	// Only display "Alerts" column if there are any alerts to display.
+	const alerts = apiVariables.map((apiItem) => config.getAlertsForItem(apiItem));
+	const hasAlerts = alerts.some((itemAlerts) => itemAlerts.length > 0);
 
 	// Only display "Modifiers" column if there are any modifiers to display.
 	const hasModifiers = apiVariables.some(
@@ -546,16 +534,16 @@ export function createVariablesTable(
 	const headerRow = new TableHeaderRowNode(headerRowCells);
 
 	const bodyRows: TableBodyRowNode[] = [];
-	for (const apiVariable of apiVariables) {
-		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiVariable, config)];
+	for (let i = 0; i < apiVariables.length; i++) {
+		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiVariables[i], config)];
 		if (hasAlerts) {
-			bodyRowCells.push(createAlertsCell(apiVariable));
+			bodyRowCells.push(createAlertsCell(alerts[i]));
 		}
 		if (hasModifiers) {
-			bodyRowCells.push(createModifiersCell(apiVariable, options?.modifiersToOmit));
+			bodyRowCells.push(createModifiersCell(apiVariables[i], options?.modifiersToOmit));
 		}
-		bodyRowCells.push(createTypeExcerptCell(apiVariable.variableTypeExcerpt, config));
-		bodyRowCells.push(createApiSummaryCell(apiVariable, config));
+		bodyRowCells.push(createTypeExcerptCell(apiVariables[i].variableTypeExcerpt, config));
+		bodyRowCells.push(createApiSummaryCell(apiVariables[i], config));
 
 		bodyRows.push(new TableBodyRowNode(bodyRowCells));
 	}
@@ -579,8 +567,9 @@ export function createPackagesTable(
 		return undefined;
 	}
 
-	// Only display "Alerts" column if there are any deprecated or alpha/beta items in the list.
-	const hasAlerts = doItemsContainAlerts(apiPackages);
+	// Only display "Alerts" column if there are any alerts to display.
+	const alerts = apiPackages.map((apiItem) => config.getAlertsForItem(apiItem));
+	const hasAlerts = alerts.some((itemAlerts) => itemAlerts.length > 0);
 
 	const headerRowCells: TableHeaderCellNode[] = [
 		TableHeaderCellNode.createFromPlainText("Package"),
@@ -592,12 +581,12 @@ export function createPackagesTable(
 	const headerRow = new TableHeaderRowNode(headerRowCells);
 
 	const bodyRows: TableBodyRowNode[] = [];
-	for (const apiPackage of apiPackages) {
-		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiPackage, config)];
+	for (let i = 0; i < apiPackages.length; i++) {
+		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiPackages[i], config)];
 		if (hasAlerts) {
-			bodyRowCells.push(createAlertsCell(apiPackage));
+			bodyRowCells.push(createAlertsCell(alerts[i]));
 		}
-		bodyRowCells.push(createApiSummaryCell(apiPackage, config));
+		bodyRowCells.push(createApiSummaryCell(apiPackages[i], config));
 
 		bodyRows.push(new TableBodyRowNode(bodyRowCells));
 	}
@@ -717,34 +706,19 @@ export function createDefaultValueCell(
 }
 
 /**
- * Creates a table cell noting alerts related to the item. Namely:
+ * Creates a table cell containing the provided alerts, displayed as comma-separated codespan nodes.
  *
- * - If the item is deprecated (if it is annotated with an `@deprecated` comment).
- *
- * - If the item is an alpha or beta release (if it is annotated with `@alpha` or `@beta`).
- *
- * Will use an empty table cell otherwise.
- *
- * @param apiItem - The API item for which the deprecation notice will be displayed if appropriate.
+ * @param apiItem - The alert values to display.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createAlertsCell(apiItem: ApiItem): TableBodyCellNode {
-	const alerts: DocumentationNode[] = [];
-
-	const releaseTag = getReleaseTag(apiItem);
-	if (releaseTag === ReleaseTag.Alpha) {
-		alerts.push(CodeSpanNode.createFromPlainText("ALPHA"));
-	} else if (releaseTag === ReleaseTag.Beta) {
-		alerts.push(CodeSpanNode.createFromPlainText("BETA"));
-	}
-
-	if (isDeprecated(apiItem)) {
-		alerts.push(CodeSpanNode.createFromPlainText("DEPRECATED"));
-	}
+export function createAlertsCell(alerts: string[]): TableBodyCellNode {
+	const alertNodes: DocumentationNode[] = alerts.map((alert) =>
+		CodeSpanNode.createFromPlainText(alert),
+	);
 
 	return alerts.length === 0
 		? TableBodyCellNode.Empty
-		: new TableBodyCellNode(injectSeparator(alerts, new PlainTextNode(", ")));
+		: new TableBodyCellNode(injectSeparator(alertNodes, new PlainTextNode(", ")));
 }
 
 /**

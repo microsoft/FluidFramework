@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { type IEvent, type IEventProvider } from "@fluidframework/core-interfaces";
+import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 
-import { type IDevtoolsMessage, type ISourcedDevtoolsMessage } from "./Messages.js";
+import type { IDevtoolsMessage, ISourcedDevtoolsMessage } from "./Messages.js";
 
 /**
  * Events emitted by {@link IMessageRelay}.

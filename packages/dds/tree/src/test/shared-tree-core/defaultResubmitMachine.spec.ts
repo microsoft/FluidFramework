@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { GraphCommit, RevisionTag, TaggedChange } from "../../core/index.js";
+import type { GraphCommit, RevisionTag, TaggedChange } from "../../core/index.js";
 import { testIdCompressor } from "../utils.js";
 import {
-	ChangeEnricherMutableCheckout,
+	type ChangeEnricherMutableCheckout,
 	DefaultResubmitMachine,
 } from "../../shared-tree-core/index.js";
 import { disposeSymbol } from "../../util/index.js";
@@ -19,7 +19,9 @@ export interface MockEnrichableChange {
 	readonly rebased?: true;
 }
 
-export class MockChangeEnricher implements ChangeEnricherMutableCheckout<MockEnrichableChange> {
+export class MockChangeEnricher
+	implements ChangeEnricherMutableCheckout<MockEnrichableChange>
+{
 	public isDisposed = false;
 	public isReadonly;
 	public contextOverride?: RevisionTag;

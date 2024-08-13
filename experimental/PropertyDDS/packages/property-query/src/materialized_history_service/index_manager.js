@@ -31,7 +31,9 @@ const INDEX_SCHEMA = Joi.object({
 				name: Joi.string()
 					.regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/)
 					.required(),
-				typeId: Joi.string().required().valid(Object.keys(IndexKeyEncoder.Type)),
+				typeId: Joi.string()
+					.required()
+					.valid(...Object.keys(IndexKeyEncoder.Type)),
 			}),
 		)
 		.min(1)
@@ -431,8 +433,7 @@ class IndexManager {
 							result[indexName][matchedParent.operation] =
 								result[indexName][matchedParent.operation] || {};
 							result[indexName][matchedParent.operation][matchedParent.path] =
-								result[indexName][matchedParent.operation][matchedParent.path] ||
-								{};
+								result[indexName][matchedParent.operation][matchedParent.path] || {};
 							if (field) {
 								const indexedProperty =
 									result[indexName][matchedParent.operation][matchedParent.path];
@@ -500,9 +501,7 @@ class IndexManager {
 							value =
 								value.substring(0, offset) +
 								iterator.opDescription.operation[1] +
-								value.substring(
-									offset + iterator.opDescription.operation[1].length,
-								);
+								value.substring(offset + iterator.opDescription.operation[1].length);
 							break;
 						case ArrayChangeSetIterator.types.REMOVE:
 							offset = iterator.currentOffset + iterator.lastOperationIndex;
@@ -551,20 +550,11 @@ class IndexManager {
 								);
 								if (isModify) {
 									// Modifies may affect only some of the indices via filterByIncludeProperty
-									if (
-										result[indexName] &&
-										result[indexName]["modify"][matchedParent.path]
-									) {
-										result[indexName]["modify"][matchedParent.path][
-											field.name
-										] =
-											result[indexName]["modify"][matchedParent.path][
-												field.name
-											] || {};
+									if (result[indexName] && result[indexName]["modify"][matchedParent.path]) {
+										result[indexName]["modify"][matchedParent.path][field.name] =
+											result[indexName]["modify"][matchedParent.path][field.name] || {};
 										const fieldValueContainer =
-											result[indexName]["modify"][matchedParent.path][
-												field.name
-											];
+											result[indexName]["modify"][matchedParent.path][field.name];
 										if (fieldValueContainer.ot) {
 											fieldValueContainer.newValue = performStringOT(
 												fieldValueContainer.ot,
@@ -579,8 +569,7 @@ class IndexManager {
 									result[indexName]["remove"] = result[indexName]["remove"] || {};
 									result[indexName]["remove"][matchedParent.path] =
 										result[indexName]["remove"][matchedParent.path] || {};
-									result[indexName]["remove"][matchedParent.path][field.name] =
-										value;
+									result[indexName]["remove"][matchedParent.path][field.name] = value;
 								}
 							}
 						}
@@ -868,9 +857,7 @@ class IndexManager {
 			for (const path of Object.keys(indexUpdates.modify)) {
 				keys = [];
 				for (const field of indexDef.fields) {
-					keys.push(
-						IndexUtils.normalizeValue(indexUpdates.modify[path][field.name].newValue),
-					);
+					keys.push(IndexUtils.normalizeValue(indexUpdates.modify[path][field.name].newValue));
 				}
 				keys.push(path);
 				const keysFoundCount = applyInsertInMV(keys);
@@ -879,9 +866,7 @@ class IndexManager {
 			for (const path of Object.keys(indexUpdates.modify)) {
 				keys = [];
 				for (const field of indexDef.fields) {
-					keys.push(
-						IndexUtils.normalizeValue(indexUpdates.modify[path][field.name].oldValue),
-					);
+					keys.push(IndexUtils.normalizeValue(indexUpdates.modify[path][field.name].oldValue));
 				}
 				keys.push(path);
 				const keysFoundCount = IndexUtils.applyRemoveInMV(indexMV, keys);
@@ -958,9 +943,7 @@ class IndexManager {
 		paths.sort();
 		let ranges;
 		if (valueRanges) {
-			ranges = valueRanges.map((valueRange) =>
-				IndexUtils.encodeRange(valueRange, keyEncoder),
-			);
+			ranges = valueRanges.map((valueRange) => IndexUtils.encodeRange(valueRange, keyEncoder));
 		}
 
 		const { nodes } = await this._btreeManager.traverseBTree([rootNode], {
@@ -1007,15 +990,11 @@ class IndexManager {
 
 				let filteredChangeSet;
 				if (valuesPaths.length !== 0) {
-					filteredChangeSet = Utils.getFilteredChangeSetByPaths(
-						changeSet,
-						filterPathsTree,
-					);
+					filteredChangeSet = Utils.getFilteredChangeSetByPaths(changeSet, filterPathsTree);
 				}
 
 				if (ranges && ranges.length > 0) {
-					let changeSetsToMerge =
-						filteredChangeSet !== undefined ? [filteredChangeSet] : [];
+					let changeSetsToMerge = filteredChangeSet !== undefined ? [filteredChangeSet] : [];
 					for (let j = 0; j < ranges.length; j++) {
 						let chunks = chunkChangeSet(changeSet, undefined, ranges[j], {
 							pathBuilder: IndexUtils.indexChunkPathBuilder.bind(null),

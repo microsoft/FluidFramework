@@ -24,7 +24,10 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
+import {
+	LocalDocumentServiceFactory,
+	LocalResolver,
+} from "@fluidframework/local-driver/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -80,7 +83,9 @@ describe("PropertyDDS", () => {
 		package: "localServerTestPackage",
 		config: {},
 	};
-	const factory = new TestFluidObjectFactory([[propertyDdsId, SharedPropertyTree.getFactory()]]);
+	const factory = new TestFluidObjectFactory([
+		[propertyDdsId, SharedPropertyTree.getFactory()],
+	]);
 
 	let deltaConnectionServer: ILocalDeltaConnectionServer;
 	let urlResolver: LocalResolver;
@@ -143,8 +148,7 @@ describe("PropertyDDS", () => {
 				const operationCumSums = [] as number[];
 				for (const operation of operations) {
 					operationCumSums.push(
-						(operationCumSums[operationCumSums.length - 1] ?? 0) +
-							operation.probability,
+						(operationCumSums[operationCumSums.length - 1] ?? 0) + operation.probability,
 					);
 				}
 
@@ -721,9 +725,7 @@ describe("PropertyDDS", () => {
 								};
 							},
 							op: async (parameters) => {
-								await opProcessingController.processOutgoing(
-									parameters.container(),
-								);
+								await opProcessingController.processOutgoing(parameters.container());
 							},
 							probability: 1,
 						},
@@ -736,9 +738,7 @@ describe("PropertyDDS", () => {
 								};
 							},
 							op: async (parameters) => {
-								await opProcessingController.processIncoming(
-									parameters.container(),
-								);
+								await opProcessingController.processIncoming(parameters.container());
 							},
 							probability: 1,
 						},
@@ -1103,9 +1103,8 @@ describe("PropertyDDS", () => {
 
 				// This collaborator should still have pending changes after rebase the incoming commits
 				expect(
-					Object.keys(
-						sharedPropertyTree2.root.getPendingChanges().getSerializedChangeSet(),
-					).length,
+					Object.keys(sharedPropertyTree2.root.getPendingChanges().getSerializedChangeSet())
+						.length,
 				).to.not.equal(0);
 
 				// Committing the new pending change

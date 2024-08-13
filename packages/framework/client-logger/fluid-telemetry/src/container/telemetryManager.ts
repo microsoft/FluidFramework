@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { type ICriticalContainerError } from "@fluidframework/container-definitions";
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
 
-import { type ITelemetryConsumer } from "../common/index.js";
+import type { ITelemetryConsumer } from "../common/index.js";
 
 import {
 	type IFluidContainerSystemEventName,
 	IFluidContainerSystemEventNames,
 } from "./containerSystemEvents.js";
-import { type IContainerTelemetry } from "./containerTelemetry.js";
+import type { IContainerTelemetry } from "./containerTelemetry.js";
 import type { ContainerEventTelemetryProducer } from "./telemetryProducer.js";
 
 /**

@@ -6,10 +6,10 @@
 import { strict as assert } from "assert";
 
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-import { ICodecOptions } from "../../codec/index.js";
+import type { ICodecOptions } from "../../codec/index.js";
 import {
-	DeltaDetachedNodeId,
-	TreeStoredSchema,
+	type DeltaDetachedNodeId,
+	type TreeStoredSchema,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
 	rootFieldKey,
@@ -20,8 +20,8 @@ import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKi
 import {
 	DefaultEditBuilder,
 	ModularChangeFamily,
-	ModularChangeset,
-	TreeChunk,
+	type ModularChangeset,
+	type TreeChunk,
 	cursorForJsonableTreeNode,
 	fieldKinds,
 	type SchemaChange,
@@ -31,7 +31,7 @@ import {
 	updateRefreshers,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeFamily.js";
-import {
+import type {
 	SharedTreeChange,
 	SharedTreeInnerChange,
 	// eslint-disable-next-line import/no-internal-modules
@@ -47,7 +47,9 @@ const fieldBatchCodec = {
 };
 
 const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
-const defaultEditor = new DefaultEditBuilder(modularFamily, (change) => dataChanges.push(change));
+const defaultEditor = new DefaultEditBuilder(modularFamily, (change) =>
+	dataChanges.push(change),
+);
 
 const nodeX = { type: leaf.string.name, value: "X" };
 const nodeY = { type: leaf.string.name, value: "Y" };
@@ -226,20 +228,14 @@ describe("SharedTreeChangeFamily", () => {
 
 		for (const isRollback of [true, false]) {
 			it(`when inverting (isRollback = ${isRollback})`, () => {
-				assert.deepEqual(
-					sharedTreeFamily.invert(makeAnonChange(stDataChange1), isRollback),
-					{
-						changes: [
-							{
-								type: "data",
-								innerChange: modularFamily.invert(
-									makeAnonChange(dataChange1),
-									isRollback,
-								),
-							},
-						],
-					},
-				);
+				assert.deepEqual(sharedTreeFamily.invert(makeAnonChange(stDataChange1), isRollback), {
+					changes: [
+						{
+							type: "data",
+							innerChange: modularFamily.invert(makeAnonChange(dataChange1), isRollback),
+						},
+					],
+				});
 			});
 		}
 	});

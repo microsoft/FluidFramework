@@ -6,7 +6,10 @@
 import { SummaryObject } from "@fluidframework/driver-definitions";
 import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils/internal";
 
 export interface IRefreshSummaryResult {
 	/** Tells whether this summary is tracked by this client. */
@@ -70,7 +73,9 @@ export class EscapedPath {
 	public static createAndConcat(pathParts: string[]): EscapedPath {
 		let ret = EscapedPath.create(pathParts[0] ?? "");
 		for (let i = 1; i < pathParts.length; i++) {
-			ret = ret.concat(EscapedPath.create(pathParts[i]));
+			// Non null asserting here since we are iterating over pathParts
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			ret = ret.concat(EscapedPath.create(pathParts[i]!));
 		}
 		return ret;
 	}
@@ -173,7 +178,9 @@ export interface ISubtreeInfo<T extends ISnapshotTree | SummaryObject> {
  * would be located if exists.
  * @param baseSummary - summary to check
  */
-export function parseSummaryForSubtrees(baseSummary: ISnapshotTree): ISubtreeInfo<ISnapshotTree> {
+export function parseSummaryForSubtrees(
+	baseSummary: ISnapshotTree,
+): ISubtreeInfo<ISnapshotTree> {
 	// New versions of snapshots have child nodes isolated in .channels subtree
 	const channelsSubtree = baseSummary.trees[channelsTreeName];
 	if (channelsSubtree !== undefined) {

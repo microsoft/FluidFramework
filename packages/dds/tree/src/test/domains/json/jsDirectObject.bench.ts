@@ -8,10 +8,10 @@ import { strict as assert } from "assert";
 import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 
 import { averageValues, sumDirect } from "./benchmarks.js";
-import { Canada, generateCanada } from "./canada.js";
+import { type Canada, generateCanada } from "./canada.js";
 import { clone } from "./jsObjectUtil.js";
-import { Twitter, generateTwitterJsonByByteSize } from "./twitter.js";
-import { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
+import { type Twitter, generateTwitterJsonByByteSize } from "./twitter.js";
+import type { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 
 /**
  * Performance test suite that measures a variety of access patterns using the direct JS objects to compare its performance when using ITreeCursor.
@@ -73,7 +73,10 @@ function extractCoordinatesFromCanadaDirect(
 	}
 }
 
-function extractAvgValsFromTwitterDirect(directObj: Twitter, calculate: (x: number) => void): void {
+function extractAvgValsFromTwitterDirect(
+	directObj: Twitter,
+	calculate: (x: number) => void,
+): void {
 	for (const status of directObj.statuses) {
 		calculate(status.retweet_count + status.favorite_count);
 	}
@@ -85,11 +88,18 @@ const canada = generateCanada(
 );
 
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
-const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
+const twitter = generateTwitterJsonByByteSize(
+	isInPerformanceTestingMode ? 2500000 : 466906,
+	true,
+);
 
 describe("Direct Object", () => {
 	jsObjectBench([
-		{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanadaDirect },
+		{
+			name: "canada",
+			getJson: () => canada,
+			dataConsumer: extractCoordinatesFromCanadaDirect,
+		},
 	]);
 	jsObjectBench([
 		{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitterDirect },

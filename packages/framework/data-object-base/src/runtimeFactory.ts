@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { type IContainerContext } from "@fluidframework/container-definitions/internal";
+import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { type FluidObject } from "@fluidframework/core-interfaces";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	type RuntimeRequestHandler,
 	// eslint-disable-next-line import/no-deprecated
 	buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler/internal";
-import {
-	type IFluidDataStoreFactory,
-	type NamedFluidDataStoreRegistryEntries,
+import type {
+	IFluidDataStoreFactory,
+	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 

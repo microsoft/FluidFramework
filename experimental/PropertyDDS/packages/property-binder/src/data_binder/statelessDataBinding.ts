@@ -114,7 +114,10 @@ export class StatelessDataBinding extends DataBinding {
 	 * @param in_property - the property we just created
 	 * @param in_modificationContext - The modifications
 	 */
-	_internalOnPostCreate(in_property: BaseProperty, in_modificationContext: ModificationContext) {
+	_internalOnPostCreate(
+		in_property: BaseProperty,
+		in_modificationContext: ModificationContext,
+	) {
 		this._preCall(in_property);
 		this.onPostCreate(in_modificationContext);
 		this._postCall(in_property);
@@ -130,7 +133,10 @@ export class StatelessDataBinding extends DataBinding {
 	 * @param in_property - the property we just created
 	 * @param in_modificationContext - The modifications
 	 */
-	_internalOnPreModify(in_property: BaseProperty, in_modificationContext: ModificationContext) {
+	_internalOnPreModify(
+		in_property: BaseProperty,
+		in_modificationContext: ModificationContext,
+	) {
 		this._preCall(in_property);
 		this.onPreModify(in_modificationContext);
 		this._postCall(in_property);

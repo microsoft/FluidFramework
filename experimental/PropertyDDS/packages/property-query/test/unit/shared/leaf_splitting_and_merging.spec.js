@@ -180,8 +180,7 @@ describe("Node", function () {
 						for (let i = 0; i < leafs.length; i++) {
 							if (i > 1) {
 								expect(leafs[i].startPath).not.to.be.undefined;
-								expect(i === 1 || leafs[i - 1].startPath < leafs[i].startPath).to.be
-									.true;
+								expect(i === 1 || leafs[i - 1].startPath < leafs[i].startPath).to.be.true;
 							}
 
 							let leafSize = JSON.stringify(leafs[i].changeSet).length;
@@ -211,9 +210,7 @@ describe("Node", function () {
 						);
 						if (in_options.useReversibleChangeSets) {
 							let changesChangeSet = new ChangeSet(changes);
-							changesChangeSet._toReversibleChangeSet(
-								lastChangeSet.getSerializedChangeSet(),
-							);
+							changesChangeSet._toReversibleChangeSet(lastChangeSet.getSerializedChangeSet());
 						}
 						lastChangeSet.applyChangeSet(changes);
 
@@ -269,7 +266,7 @@ describe("Node", function () {
 								? service.getCommitCS({
 										guid: commitInfo.guid,
 										branchGuid: branchGuid,
-								  })
+									})
 								: undefined,
 						]);
 					})
@@ -354,9 +351,7 @@ describe("Node", function () {
 			let random = new DeterministicRandomGenerator(randomGuids[i]);
 			let startCommitIdx = random.irandom() % (commitInformation.length - 1);
 			let endCommitIdx =
-				startCommitIdx +
-				(random.irandom() % (commitInformation.length - startCommitIdx)) +
-				1;
+				startCommitIdx + (random.irandom() % (commitInformation.length - startCommitIdx)) + 1;
 
 			let expectSquashedCS = new ChangeSet();
 			_.forEach(commitInformation.slice(startCommitIdx + 1, endCommitIdx), (commit) =>
@@ -418,9 +413,7 @@ describe("Node", function () {
 					(root, { leafs }) => {
 						for (let leafNumber of leafsToDelete.concat(leafsToModify)) {
 							// Delete all properties in the specified leaf (which are not shared with the next leaf)
-							let leafsInChunk1 = Object.keys(
-								leafs[leafNumber].changeSet.insert.String,
-							);
+							let leafsInChunk1 = Object.keys(leafs[leafNumber].changeSet.insert.String);
 							let leafsInChunk2 = leafs[leafNumber + 1]
 								? Object.keys(leafs[leafNumber + 1].changeSet.insert.String)
 								: [];
@@ -702,14 +695,12 @@ describe("Node", function () {
 						root.insert("testProperty", PropertyFactory.create("NodeProperty"));
 
 						// Add two strings to force the creation of two leaf nodes
-						root.get("testProperty").insert(
-							"stringA",
-							PropertyFactory.create("String", undefined, dataString),
-						);
-						root.get("testProperty").insert(
-							"stringB",
-							PropertyFactory.create("String", undefined, dataString),
-						);
+						root
+							.get("testProperty")
+							.insert("stringA", PropertyFactory.create("String", undefined, dataString));
+						root
+							.get("testProperty")
+							.insert("stringB", PropertyFactory.create("String", undefined, dataString));
 					},
 					(root, { leafs, tree }) => {
 						expect(leafs.length).to.equal(2);
@@ -745,18 +736,15 @@ describe("Node", function () {
 						root.insert("testProperty", PropertyFactory.create("NodeProperty"));
 
 						// Add two strings to force the creation of three leaf nodes
-						root.get("testProperty").insert(
-							"stringA",
-							PropertyFactory.create("String", undefined, dataString),
-						);
-						root.get("testProperty").insert(
-							"stringB",
-							PropertyFactory.create("String", undefined, dataString),
-						);
-						root.get("testProperty").insert(
-							"stringC",
-							PropertyFactory.create("String", undefined, dataString),
-						);
+						root
+							.get("testProperty")
+							.insert("stringA", PropertyFactory.create("String", undefined, dataString));
+						root
+							.get("testProperty")
+							.insert("stringB", PropertyFactory.create("String", undefined, dataString));
+						root
+							.get("testProperty")
+							.insert("stringC", PropertyFactory.create("String", undefined, dataString));
 					},
 					(root, { leafs, tree }) => {
 						expect(leafs.length).to.equal(3);
@@ -811,10 +799,9 @@ describe("Node", function () {
 						root.remove("aaa");
 
 						// Add a string, which will be within the first leaf
-						root.get("testProperty").insert(
-							"string1",
-							PropertyFactory.create("String", undefined, dataString),
-						);
+						root
+							.get("testProperty")
+							.insert("string1", PropertyFactory.create("String", undefined, dataString));
 					},
 					async (root, { leafs, commitInformation, service }) => {
 						expect(leafs.length).to.equal(2);
@@ -929,8 +916,7 @@ describe("Node", function () {
 							expectedKeys = expectedKeys.map((x) => {
 								let tokenizedPath = PathHelper.tokenizePathString(x);
 								if (tokenizedPath.length > 1) {
-									expectedSubKeys[tokenizedPath[0]] =
-										expectedSubKeys[tokenizedPath[0]] || [];
+									expectedSubKeys[tokenizedPath[0]] = expectedSubKeys[tokenizedPath[0]] || [];
 									expectedSubKeys[tokenizedPath[0]].push(tokenizedPath[1]);
 								}
 								return tokenizedPath[0];
@@ -990,26 +976,19 @@ describe("Node", function () {
 						root.insert("Prop1", PropertyFactory.create("NodeProperty"));
 						root.insert("Prop2", PropertyFactory.create("NodeProperty"));
 						root.insert("Prop3", PropertyFactory.create("NodeProperty"));
-						root.get("Prop2").insert(
-							"data",
-							PropertyFactory.create("String", undefined, "abcde"),
-						);
-						root.get("Prop2").insert(
-							"selfRef",
-							PropertyFactory.create("Reference", undefined, "/Prop2"),
-						);
-						root.get("Prop2").insert(
-							"selfSubRef",
-							PropertyFactory.create("Reference", undefined, "data"),
-						);
-						root.get("Prop3").insert(
-							"Ref",
-							PropertyFactory.create("Reference", undefined, "../Prop2"),
-						);
-						root.insert(
-							"Ref",
-							PropertyFactory.create("Reference", undefined, "/Prop3"),
-						);
+						root
+							.get("Prop2")
+							.insert("data", PropertyFactory.create("String", undefined, "abcde"));
+						root
+							.get("Prop2")
+							.insert("selfRef", PropertyFactory.create("Reference", undefined, "/Prop2"));
+						root
+							.get("Prop2")
+							.insert("selfSubRef", PropertyFactory.create("Reference", undefined, "data"));
+						root
+							.get("Prop3")
+							.insert("Ref", PropertyFactory.create("Reference", undefined, "../Prop2"));
+						root.insert("Ref", PropertyFactory.create("Reference", undefined, "/Prop3"));
 					},
 					(root, { service, commitInformation }) => {
 						return service
@@ -1017,8 +996,7 @@ describe("Node", function () {
 								guid: commitInformation[commitInformation.length - 1].guid,
 								paths: ["Ref"],
 								followReferences: true,
-								branchGuid:
-									commitInformation[commitInformation.length - 1].branchGuid,
+								branchGuid: commitInformation[commitInformation.length - 1].branchGuid,
 							})
 							.then((materializedView) => {
 								let Properties = materializedView.changeSet.insert;
@@ -1105,13 +1083,7 @@ describe("Node", function () {
 							}
 
 							let propertiesToInsert = random.irandom() % 500;
-							insertSuccessiveProperties(
-								root,
-								propertiesToInsert,
-								rangeStart,
-								rangeEnd,
-								true,
-							);
+							insertSuccessiveProperties(root, propertiesToInsert, rangeStart, rangeEnd, true);
 
 							sortedKeys = root.getIds();
 							sortedKeys.sort();

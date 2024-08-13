@@ -33,11 +33,10 @@ export class DocumentServiceFactoryCompressionAdapter extends DocumentServiceFac
 	): Promise<IDocumentService> {
 		if (createNewSummary !== undefined) {
 			const configForInitial = this._config;
-			const newAppSumary =
-				DocumentStorageServiceSummaryBlobCompressionAdapter.compressSummary(
-					createNewSummary.tree[".app"] as ISummaryTree,
-					configForInitial,
-				);
+			const newAppSumary = DocumentStorageServiceSummaryBlobCompressionAdapter.compressSummary(
+				createNewSummary.tree[".app"] as ISummaryTree,
+				configForInitial,
+			);
 			createNewSummary.tree[".app"] = newAppSumary;
 		}
 		const service = await this.serviceFactory.createContainer(

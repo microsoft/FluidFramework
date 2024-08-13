@@ -6,8 +6,8 @@
 import { strict as assert } from "assert";
 
 import {
-	FieldKey,
-	UpPath,
+	type FieldKey,
+	type UpPath,
 	clonePath,
 	compareFieldUpPaths,
 	compareUpPaths,

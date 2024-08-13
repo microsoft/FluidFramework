@@ -12,34 +12,16 @@ import type * as old from "@fluidframework/server-services-ordering-rdkafka-prev
 import type * as current from "../../index.js";
 
 
-type ValueOf<T> = T[keyof T];
-type OnlySymbols<T> = T extends symbol ? T : never;
-type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
-/**
- * Omit (replace with never) a key if it is a custom symbol,
- * not just symbol or a well known symbol from the global Symbol.
- */
-type SkipUniqueSymbols<Key> = symbol extends Key
-	? Key // Key is symbol or a generalization of symbol, so leave it as is.
-	: Key extends symbol
-		? Key extends WellKnownSymbols
-			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
-			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
-		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
-/**
- * Remove details of T which are incompatible with type testing while keeping as much as is practical.
- *
- * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
- */
+// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
 type TypeOnly<T> = T extends number
 	? number
-	: T extends boolean | bigint | string
-		? T
-		: T extends symbol
-			? SkipUniqueSymbols<T>
-			: {
-					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
-				};
+	: T extends string
+	? string
+	: T extends boolean | bigint | symbol
+	? T
+	: {
+			[P in keyof T]: TypeOnly<T[P]>;
+	  };
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -88,6 +70,54 @@ declare function use_old_InterfaceDeclaration_IKafkaProducerOptions(
     use: TypeOnly<old.IKafkaProducerOptions>): void;
 use_old_InterfaceDeclaration_IKafkaProducerOptions(
     get_current_InterfaceDeclaration_IKafkaProducerOptions());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOauthBearerConfig": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IOauthBearerConfig():
+    TypeOnly<old.IOauthBearerConfig>;
+declare function use_current_InterfaceDeclaration_IOauthBearerConfig(
+    use: TypeOnly<current.IOauthBearerConfig>): void;
+use_current_InterfaceDeclaration_IOauthBearerConfig(
+    get_old_InterfaceDeclaration_IOauthBearerConfig());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOauthBearerConfig": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IOauthBearerConfig():
+    TypeOnly<current.IOauthBearerConfig>;
+declare function use_old_InterfaceDeclaration_IOauthBearerConfig(
+    use: TypeOnly<old.IOauthBearerConfig>): void;
+use_old_InterfaceDeclaration_IOauthBearerConfig(
+    get_current_InterfaceDeclaration_IOauthBearerConfig());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOauthBearerResponse": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IOauthBearerResponse():
+    TypeOnly<old.IOauthBearerResponse>;
+declare function use_current_InterfaceDeclaration_IOauthBearerResponse(
+    use: TypeOnly<current.IOauthBearerResponse>): void;
+use_current_InterfaceDeclaration_IOauthBearerResponse(
+    get_old_InterfaceDeclaration_IOauthBearerResponse());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOauthBearerResponse": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IOauthBearerResponse():
+    TypeOnly<current.IOauthBearerResponse>;
+declare function use_old_InterfaceDeclaration_IOauthBearerResponse(
+    use: TypeOnly<old.IOauthBearerResponse>): void;
+use_old_InterfaceDeclaration_IOauthBearerResponse(
+    get_current_InterfaceDeclaration_IOauthBearerResponse());
 
 /*
 * Validate forward compat by using old type in place of current type

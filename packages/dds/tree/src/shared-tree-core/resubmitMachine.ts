@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { GraphCommit } from "../core/index.js";
+import type { GraphCommit } from "../core/index.js";
 
 /**
  * Encapsulates a state machine that can be used by a {@link SharedTreeCore} manage resubmit phases,

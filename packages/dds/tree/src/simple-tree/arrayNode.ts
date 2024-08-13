@@ -3,41 +3,45 @@
  * Licensed under the MIT License.
  */
 
-import { EmptyKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core/index.js";
+import { EmptyKey, type ExclusiveMapTree } from "../core/index.js";
 import {
-	FlexAllowedTypes,
-	FlexFieldNodeSchema,
-	FlexTreeNode,
-	FlexTreeSequenceField,
-	MapTreeNode,
-	cursorForMapTreeField,
+	type FlexAllowedTypes,
+	type FlexFieldNodeSchema,
+	type FlexTreeNode,
+	type FlexTreeSequenceField,
+	type MapTreeNode,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 	isMapTreeNode,
+	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 import {
-	InsertableContent,
-	getOrCreateNodeProxy,
-	markContentType,
+	type InsertableContent,
+	getOrCreateNodeFromFlexTreeNode,
 	prepareContentForHydration,
 } from "./proxies.js";
-import { getFlexNode } from "./proxyBinding.js";
+import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
-	NodeKind,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
-	TreeNodeSchemaClass,
-	WithType,
-	TreeNodeSchema,
-	type,
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
+import {
+	type WithType,
+	typeNameSymbol,
+	NodeKind,
+	type TreeNode,
+	type InternalTreeNode,
+	type TreeNodeSchemaClass,
+	type TreeNodeSchema,
+} from "./core/index.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
-import { TreeNode, TreeNodeValid } from "./types.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { getKernel } from "./core/index.js";
+import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 
 /**
  * A generic array type, used to defined types like {@link (TreeArrayNode:interface)}.
@@ -45,7 +49,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  * @privateRemarks
  * Inlining this into TreeArrayNode causes recursive array use to stop compiling.
  *
- * @public
+ * @sealed @public
  */
 export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	extends ReadonlyArray<T>,
@@ -134,10 +138,12 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 
 	/**
 	 * Moves the specified item to the desired location in the array.
-	 * @param index - The index to move the item to.
+	 * @param index - The index to move the item to in the range [0, `array.length`].
+	 * This is based on the state of the array before moving the source item.
 	 * @param sourceIndex - The index of the item to move.
 	 * @param source - The source array to move the item out of.
-	 * @throws Throws if any of the input indices are not in the range [0, `array.length`).
+	 * @throws Throws if any of the source index is not in the range [0, `array.length`),
+	 * or if the index is not in the range [0, `array.length`].
 	 */
 	moveToIndex(index: number, sourceIndex: number, source: TMoveFrom): void;
 
@@ -146,6 +152,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @throws Throws if either of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToStart(sourceStart: number, sourceEnd: number): void;
 
@@ -156,6 +163,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * @param source - The source array to move items out of.
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination array,
 	 * if either of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToStart(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
 
@@ -164,6 +172,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @throws Throws if either of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
 
@@ -174,6 +183,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * @param source - The source array to move items out of.
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination array,
 	 * if either of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
 
@@ -184,6 +194,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @throws Throws if any of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
 
@@ -194,7 +205,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @param source - The source array to move items out of.
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination array,
-	 * if any of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToIndex(
 		index: number,
@@ -202,6 +213,11 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 		sourceEnd: number,
 		source: TMoveFrom,
 	): void;
+
+	/**
+	 * Returns a custom IterableIterator which throws usage errors if concurrent editing and iteration occurs.
+	 */
+	values(): IterableIterator<T>;
 }
 
 /**
@@ -209,10 +225,11 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
  *
  * @typeParam TAllowedTypes - Schema for types which are allowed as members of this array.
  *
- * @public
+ * @sealed @public
  */
-export interface TreeArrayNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes>
-	extends TreeArrayNodeBase<
+export interface TreeArrayNode<
+	TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+> extends TreeArrayNodeBase<
 		TreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
 		InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
 		TreeArrayNode
@@ -234,7 +251,7 @@ export const TreeArrayNode = {
 	 * ```
 	 */
 	spread: <T>(content: Iterable<T>) => create(content),
-};
+} as const;
 
 /**
  * Package internal construction API.
@@ -245,7 +262,7 @@ let create: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
 /**
  * Used to insert iterable content into a {@link (TreeArrayNode:interface)}.
  * Use {@link (TreeArrayNode:variable).spread} to create an instance of this type.
- * @public
+ * @sealed @public
  */
 export class IterableTreeArrayContent<T> implements Iterable<T> {
 	static {
@@ -269,7 +286,7 @@ function getSequenceField<
 	TTypes extends FlexAllowedTypes,
 	TSimpleType extends ImplicitAllowedTypes,
 >(arrayNode: TreeArrayNode<TSimpleType>): FlexTreeSequenceField<TTypes> {
-	return getFlexNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField<TTypes>;
+	return getOrCreateInnerNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField<TTypes>;
 }
 
 // For compatibility, we are initially implement 'readonly T[]' by applying the Array.prototype methods
@@ -301,7 +318,6 @@ const arrayPrototypeKeys = [
 	"some",
 	"toLocaleString",
 	"toString",
-	"values",
 
 	// "copyWithin",
 	// "fill",
@@ -372,34 +388,109 @@ declare abstract class NodeWithArrayFeatures<Input, T>
 {
 	concat(...items: ConcatArray<T>[]): T[];
 	concat(...items: (T | ConcatArray<T>)[]): T[];
-	join(separator?: string | undefined): string;
-	slice(start?: number | undefined, end?: number | undefined): T[];
-	indexOf(searchElement: T, fromIndex?: number | undefined): number;
-	lastIndexOf(searchElement: T, fromIndex?: number | undefined): number;
-	every<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: any): this is readonly S[];
-	every(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
-	some(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
-	forEach(callbackfn: (value: T, index: number, array: readonly T[]) => void, thisArg?: any): void;
-	map<U>(callbackfn: (value: T, index: number, array: readonly T[]) => U, thisArg?: any): U[];
-	filter<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: any): S[];
-	filter(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): T[];
-	reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T): T;
-	reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T, initialValue: T): T;
-	reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
-	reduceRight(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T): T;
-	reduceRight(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T, initialValue: T): T;
-	reduceRight<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
-	find<S extends T>(predicate: (value: T, index: number, obj: readonly T[]) => value is S, thisArg?: any): S | undefined;
-	find(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): T | undefined;
-	findIndex(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): number;
 	entries(): IterableIterator<[number, T]>;
-	keys(): IterableIterator<number>;
-	values(): IterableIterator<T>;
-	includes(searchElement: T, fromIndex?: number | undefined): boolean;
-	flatMap<U, This = undefined>(callback: (this: This, value: T, index: number, array: T[]) => U | readonly U[], thisArg?: This | undefined): U[];
+	every<S extends T>(
+		predicate: (value: T, index: number, array: readonly T[]) => value is S,
+		thisArg?: any,
+	): this is readonly S[];
+	every(
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
+		thisArg?: any,
+	): boolean;
+	filter<S extends T>(
+		predicate: (value: T, index: number, array: readonly T[]) => value is S,
+		thisArg?: any,
+	): S[];
+	filter(
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
+		thisArg?: any,
+	): T[];
+	find<S extends T>(
+		predicate: (value: T, index: number, obj: readonly T[]) => value is S,
+		thisArg?: any,
+	): S | undefined;
+	find(
+		predicate: (value: T, index: number, obj: readonly T[]) => unknown,
+		thisArg?: any,
+	): T | undefined;
+	findIndex(
+		predicate: (value: T, index: number, obj: readonly T[]) => unknown,
+		thisArg?: any,
+	): number;
 	flat<A, D extends number = 1>(this: A, depth?: D | undefined): FlatArray<A, D>[];
-	toString(): string;
+	flatMap<U, This = undefined>(
+		callback: (this: This, value: T, index: number, array: T[]) => U | readonly U[],
+		thisArg?: This | undefined,
+	): U[];
+	forEach(
+		callbackfn: (value: T, index: number, array: readonly T[]) => void,
+		thisArg?: any,
+	): void;
+	includes(searchElement: T, fromIndex?: number | undefined): boolean;
+	indexOf(searchElement: T, fromIndex?: number | undefined): number;
+	join(separator?: string | undefined): string;
+	keys(): IterableIterator<number>;
+	lastIndexOf(searchElement: T, fromIndex?: number | undefined): number;
+	map<U>(callbackfn: (value: T, index: number, array: readonly T[]) => U, thisArg?: any): U[];
+	reduce(
+		callbackfn: (
+			previousValue: T,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => T,
+	): T;
+	reduce(
+		callbackfn: (
+			previousValue: T,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => T,
+		initialValue: T,
+	): T;
+	reduce<U>(
+		callbackfn: (
+			previousValue: U,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => U,
+		initialValue: U,
+	): U;
+	reduceRight(
+		callbackfn: (
+			previousValue: T,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => T,
+	): T;
+	reduceRight(
+		callbackfn: (
+			previousValue: T,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => T,
+		initialValue: T,
+	): T;
+	reduceRight<U>(
+		callbackfn: (
+			previousValue: U,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => U,
+		initialValue: U,
+	): U;
+	slice(start?: number | undefined, end?: number | undefined): T[];
+	some(
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
+		thisArg?: any,
+	): boolean;
 	toLocaleString(): string;
+	toString(): string;
 }
 /* eslint-enable @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-explicit-any */
 
@@ -464,16 +555,10 @@ function createArrayNodeProxy(
 				return Reflect.get(dispatchTarget, key, receiver) as unknown;
 			}
 
-			const value = field.boxedAt(maybeIndex);
-
-			if (value === undefined) {
-				return undefined;
-			}
-
-			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
-			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
-			//       inner field.
-			return getOrCreateNodeProxy(value);
+			const maybeContent = field.at(maybeIndex);
+			return isFlexTreeNode(maybeContent)
+				? getOrCreateNodeFromFlexTreeNode(maybeContent)
+				: maybeContent;
 		},
 		set: (target, key, newValue, receiver) => {
 			if (key === "length") {
@@ -500,7 +585,7 @@ function createArrayNodeProxy(
 					"Cannot set indexed properties on array nodes. Use array node mutation APIs to alter the array.",
 				);
 			}
-			return allowAdditionalProperties ? Reflect.set(target, key, newValue) : false;
+			return allowAdditionalProperties ? Reflect.set(target, key, newValue, receiver) : false;
 		},
 		has: (target, key) => {
 			const field = getSequenceField(proxy);
@@ -535,7 +620,7 @@ function createArrayNodeProxy(
 					// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 					//       as simple as calling '.at' since this skips the node and returns the FieldNode's
 					//       inner field.
-					value: val === undefined ? val : getOrCreateNodeProxy(val),
+					value: val === undefined ? val : getOrCreateNodeFromFlexTreeNode(val),
 					writable: true, // For MVP, disallow setting indexed properties.
 					enumerable: true,
 					configurable: true,
@@ -582,8 +667,23 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 	protected abstract get simpleSchema(): T;
 
-	#cursorFromFieldData(value: Insertable<T>): ITreeCursorSynchronous {
-		if (isMapTreeNode(getFlexNode(this))) {
+	/**
+	 * Generation number which is incremented any time we have an edit on the node.
+	 * Used during iteration to make sure there has been no edits that were concurrently made.
+	 */
+	#generationNumber: number = 0;
+
+	public constructor(
+		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
+	) {
+		super(input);
+		getKernel(this).on("nodeChanged", () => {
+			this.#generationNumber += 1;
+		});
+	}
+
+	#mapTreesFromFieldData(value: Insertable<T>): ExclusiveMapTree[] {
+		if (isMapTreeNode(getOrCreateInnerNode(this))) {
 			throw new UsageError(`An array cannot be mutated before being inserted into the tree`);
 		}
 
@@ -604,13 +704,16 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 				mapTreeFromNodeData(
 					c,
 					simpleFieldSchema.allowedTypes,
-					sequenceField.context.nodeKeyManager,
+					sequenceField.context?.nodeKeyManager,
 					getSchemaAndPolicy(sequenceField),
 				),
 			);
 
-		prepareContentForHydration(mapTrees, sequenceField.context.checkout.forest);
-		return cursorForMapTreeField(mapTrees);
+		if (sequenceField.context !== undefined) {
+			prepareContentForHydration(mapTrees, sequenceField.context.checkout.forest);
+		}
+
+		return mapTrees;
 	}
 
 	public toJSON(): unknown {
@@ -648,23 +751,27 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			return val;
 		}
 
-		return getOrCreateNodeProxy(val) as TreeNodeFromImplicitAllowedTypes<T>;
+		return getOrCreateNodeFromFlexTreeNode(val) as TreeNodeFromImplicitAllowedTypes<T>;
 	}
 	public insertAt(index: number, ...value: Insertable<T>): void {
-		getSequenceField(this).insertAt(index, this.#cursorFromFieldData(value));
+		const field = getSequenceField(this);
+		validateIndex(index, field, "insertAt", true);
+		const content = this.#mapTreesFromFieldData(value);
+		field.editor.insert(index, content);
 	}
 	public insertAtStart(...value: Insertable<T>): void {
-		getSequenceField(this).insertAtStart(this.#cursorFromFieldData(value));
+		this.insertAt(0, ...value);
 	}
 	public insertAtEnd(...value: Insertable<T>): void {
-		getSequenceField(this).insertAtEnd(this.#cursorFromFieldData(value));
+		this.insertAt(this.length, ...value);
 	}
 	public removeAt(index: number): void {
-		getSequenceField(this).removeAt(index);
+		const field = getSequenceField(this);
+		validateIndex(index, field, "removeAt");
+		field.editor.remove(index, 1);
 	}
 	public removeRange(start?: number, end?: number): void {
 		const field = getSequenceField(this);
-		const fieldEditor = field.sequenceEditor();
 		const { length } = field;
 		const removeStart = start ?? 0;
 		const removeEnd = Math.min(length, end ?? length);
@@ -674,62 +781,104 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			// This catches both the case where start is > array.length and when start is > end.
 			throw new UsageError('Too large of "start" value passed to TreeArrayNode.removeRange.');
 		}
-		fieldEditor.remove(removeStart, removeEnd - removeStart);
+		field.editor.remove(removeStart, removeEnd - removeStart);
 	}
 	public moveToStart(sourceIndex: number, source?: TreeArrayNode): void {
-		if (source !== undefined) {
-			getSequenceField(this).moveToStart(sourceIndex, getSequenceField(source));
-		} else {
-			getSequenceField(this).moveToStart(sourceIndex);
-		}
+		const sourceArray = source ?? this;
+		const sourceField = getSequenceField(sourceArray);
+		validateIndex(sourceIndex, sourceField, "moveToStart");
+		this.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToEnd(sourceIndex: number, source?: TreeArrayNode): void {
-		if (source !== undefined) {
-			getSequenceField(this).moveToEnd(sourceIndex, getSequenceField(source));
-		} else {
-			getSequenceField(this).moveToEnd(sourceIndex);
-		}
+		const sourceArray = source ?? this;
+		const sourceField = getSequenceField(sourceArray);
+		validateIndex(sourceIndex, sourceField, "moveToEnd");
+		this.moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
 	}
-	public moveToIndex(index: number, sourceIndex: number, source?: TreeArrayNode): void {
-		if (source !== undefined) {
-			getSequenceField(this).moveToIndex(index, sourceIndex, getSequenceField(source));
-		} else {
-			getSequenceField(this).moveToIndex(index, sourceIndex);
-		}
+	public moveToIndex(
+		destinationIndex: number,
+		sourceIndex: number,
+		source?: TreeArrayNode,
+	): void {
+		const sourceArray = source ?? this;
+		const sourceField = getSequenceField(sourceArray);
+		const destinationField = getSequenceField(this);
+		validateIndex(destinationIndex, destinationField, "moveToIndex", true);
+		validateIndex(sourceIndex, sourceField, "moveToIndex");
+		this.moveRangeToIndex(destinationIndex, sourceIndex, sourceIndex + 1, source);
 	}
-	public moveRangeToStart(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
-		if (source !== undefined) {
-			getSequenceField(this).moveRangeToStart(
-				sourceStart,
-				sourceEnd,
-				getSequenceField(source),
-			);
-		} else {
-			getSequenceField(this).moveRangeToStart(sourceStart, sourceEnd);
-		}
-	}
-	public moveRangeToEnd(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
-		if (source !== undefined) {
-			getSequenceField(this).moveRangeToEnd(sourceStart, sourceEnd, getSequenceField(source));
-		} else {
-			getSequenceField(this).moveRangeToEnd(sourceStart, sourceEnd);
-		}
-	}
-	public moveRangeToIndex(
-		index: number,
+	public moveRangeToStart(
 		sourceStart: number,
 		sourceEnd: number,
 		source?: TreeArrayNode,
 	): void {
-		if (source !== undefined) {
-			getSequenceField(this).moveRangeToIndex(
-				index,
-				sourceStart,
-				sourceEnd,
-				getSequenceField(source),
-			);
-		} else {
-			getSequenceField(this).moveRangeToIndex(index, sourceStart, sourceEnd);
+		validateIndexRange(
+			sourceStart,
+			sourceEnd,
+			source ?? getSequenceField(this),
+			"moveRangeToStart",
+		);
+		this.moveRangeToIndex(0, sourceStart, sourceEnd, source);
+	}
+	public moveRangeToEnd(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
+		validateIndexRange(
+			sourceStart,
+			sourceEnd,
+			source ?? getSequenceField(this),
+			"moveRangeToEnd",
+		);
+		this.moveRangeToIndex(this.length, sourceStart, sourceEnd, source);
+	}
+	public moveRangeToIndex(
+		destinationIndex: number,
+		sourceStart: number,
+		sourceEnd: number,
+		source?: TreeArrayNode,
+	): void {
+		const destinationField = getSequenceField(this);
+		if (destinationField.context === undefined) {
+			throw new UsageError(`An array cannot be mutated before being inserted into the tree`);
+		}
+
+		validateIndex(destinationIndex, destinationField, "moveRangeToIndex", true);
+		validateIndexRange(sourceStart, sourceEnd, source ?? destinationField, "moveRangeToIndex");
+		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
+		// TODO: determine support for move across different sequence types
+		if (destinationField.schema.types !== undefined && sourceField !== destinationField) {
+			for (let i = sourceStart; i < sourceEnd; i++) {
+				const sourceNode = sourceField.boxedAt(i) ?? fail("impossible out of bounds index");
+				if (!destinationField.schema.types.has(sourceNode.schema.name)) {
+					throw new UsageError("Type in source sequence is not allowed in destination.");
+				}
+			}
+		}
+		const movedCount = sourceEnd - sourceStart;
+		const sourceFieldPath = sourceField.getFieldPath();
+
+		const destinationFieldPath = destinationField.getFieldPath();
+		destinationField.context.checkout.editor.move(
+			sourceFieldPath,
+			sourceStart,
+			movedCount,
+			destinationFieldPath,
+			destinationIndex,
+		);
+	}
+
+	public values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
+		return this.generateValues(this.#generationNumber);
+	}
+	private *generateValues(
+		initialLastUpdatedStamp: number,
+	): Generator<TreeNodeFromImplicitAllowedTypes<T>> {
+		if (initialLastUpdatedStamp !== this.#generationNumber) {
+			throw new UsageError(`Concurrent editing and iteration is not allowed.`);
+		}
+		for (let i = 0; i < this.length; i++) {
+			yield this.at(i) ?? fail("Index is out of bounds");
+			if (initialLastUpdatedStamp !== this.#generationNumber) {
+				throw new UsageError(`Concurrent editing and iteration is not allowed.`);
+			}
 		}
 	}
 }
@@ -788,17 +937,11 @@ export function arraySchema<
 		): MapTreeNode {
 			return getOrCreateMapTreeNode(
 				flexSchema,
-				mapTreeFromNodeData(
-					copyContent(
-						flexSchema.name,
-						input as Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-					) as object,
-					this as unknown as ImplicitAllowedTypes,
-				),
+				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
 			);
 		}
 
-		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
+		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexFieldNodeSchema;
@@ -834,7 +977,7 @@ export function arraySchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 
-		public get [type](): TName {
+		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
 
@@ -844,12 +987,6 @@ export function arraySchema<
 	}
 
 	return schema;
-}
-
-function copyContent<T>(typeName: TreeNodeSchemaIdentifier, content: Iterable<T>): T[] {
-	const copy = Array.from(content);
-	markContentType(typeName, copy);
-	return copy;
 }
 
 function validateSafeInteger(index: number): void {
@@ -862,5 +999,42 @@ function validatePositiveIndex(index: number): void {
 	validateSafeInteger(index);
 	if (index < 0) {
 		throw new UsageError(`Expected non-negative index, got ${index}.`);
+	}
+}
+
+function validateIndex(
+	index: number,
+	array: { readonly length: number },
+	methodName: string,
+	allowOnePastEnd: boolean = false,
+): void {
+	validatePositiveIndex(index);
+	if (allowOnePastEnd) {
+		if (index > array.length) {
+			throw new UsageError(
+				`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
+			);
+		}
+	} else {
+		if (index >= array.length) {
+			throw new UsageError(
+				`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
+			);
+		}
+	}
+}
+
+function validateIndexRange(
+	startIndex: number,
+	endIndex: number,
+	array: { readonly length: number },
+	methodName: string,
+): void {
+	validateIndex(startIndex, array, methodName, true);
+	validateIndex(endIndex, array, methodName, true);
+	if (startIndex > endIndex || array.length < endIndex) {
+		throw new UsageError(
+			`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
+		);
 	}
 }

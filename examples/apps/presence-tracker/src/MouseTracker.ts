@@ -106,7 +106,10 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		return statuses;
 	}
 
-	public getMousePresenceForUser(userId: string, clientId: string): IMousePosition | undefined {
+	public getMousePresenceForUser(
+		userId: string,
+		clientId: string,
+	): IMousePosition | undefined {
 		return this.posMap.get(userId)?.get(clientId);
 	}
 }

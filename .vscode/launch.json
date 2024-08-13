@@ -30,6 +30,15 @@
 			"type": "node",
 		},
 		{
+			"name": "npm test version-tools",
+			"cwd": "${workspaceFolder}/build-tools/packages/version-tools",
+			"request": "launch",
+			"runtimeArgs": ["run-script", "test"],
+			"runtimeExecutable": "npm",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+		},
+		{
 			"name": "fluid-build",
 			"program": "${workspaceFolder}/build-tools/packages/build-tools/bin/fluid-build",
 			"cwd": "${workspaceFolder}/packages/common/container-definitions",
@@ -73,6 +82,15 @@
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
 			"args": ["generate", "bundleStats", "-v"],
+		},
+		{
+			"name": "flub generate releaseNotes",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["generate", "releaseNotes", "-g", "client", "-t", "minor", "-v"],
 		},
 		{
 			"name": "flub generate packlist",
@@ -347,9 +365,10 @@
 			"request": "launch",
 			"name": "Debug Current Mocha Test (auto build)",
 			"env": {
-				// "fluid__test__driver": "odsp", //values: local, tinylicious, routerlicious, odsp,
-				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
+				// "fluid__test__driver": "odsp", //values: local, t9s, r11s, odsp,
 				// "fluid__test__odspEndpointName": "odsp-df", //values: odsp, odsp-df
+				// "fluid__test__r11sEndpointName": "docker", //values: frs, docker
+				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
 				// "FLUID_TEST_VERBOSE": "1",
 			},
 			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
@@ -396,9 +415,10 @@
 			"request": "launch",
 			"name": "Debug Current Mocha Test (ESM-lib;no build)",
 			"env": {
-				// "fluid__test__driver": "odsp", //values: local, tinylicious, routerlicious, odsp,
+				// "fluid__test__driver": "odsp", //values: local, t9s, r11s, odsp,
+				// "fluid__test__odspEndpointName": "odsp-df", //values: odsp, odsp-df
+				// "fluid__test__r11sEndpointName": "docker", //values: frs, docker
 				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
-				// "fluid__test__odspEndpointName": "odsp", //values: odsp, odsp-df
 				// "FLUID_TEST_VERBOSE": "1",
 			},
 			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
@@ -437,9 +457,10 @@
 			"request": "launch",
 			"name": "Debug Current Mocha Test (CommonJS-dist;no build)",
 			"env": {
-				// "fluid__test__driver": "odsp", //values: local, tinylicious, routerlicious, odsp,
+				// "fluid__test__driver": "odsp", //values: local, t9s, r11s, odsp,
+				// "fluid__test__odspEndpointName": "odsp-df", //values: odsp, odsp-df
+				// "fluid__test__r11sEndpointName": "docker", //values: frs, docker
 				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
-				// "fluid__test__odspEndpointName": "odsp", //values: odsp, odsp-df
 				// "FLUID_TEST_VERBOSE": "1",
 			},
 			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",

@@ -6,12 +6,12 @@
 import { strict as assert } from "assert";
 
 import {
-	Adapters,
+	type Adapters,
 	Compatibility,
-	TreeFieldStoredSchema,
-	TreeNodeSchemaIdentifier,
-	TreeNodeStoredSchema,
-	TreeStoredSchema,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	storedEmptyFieldSchema,
 } from "../../../core/index.js";
@@ -19,8 +19,8 @@ import { SchemaBuilder, leaf } from "../../../domains/index.js";
 import {
 	FieldKinds,
 	FlexFieldSchema,
-	FlexTreeSchema,
-	FullSchemaPolicy,
+	type FlexTreeSchema,
+	type FullSchemaPolicy,
 	ViewSchema,
 	defaultSchemaPolicy,
 } from "../../../feature-libraries/index.js";

@@ -5,11 +5,15 @@
 
 import { strict as assert } from "assert";
 
-import { TreeStatus } from "../../../dist/index.js";
 import { Tree } from "../../shared-tree/index.js";
 import { rootFieldKey } from "../../core/index.js";
-import { SchemaFactory, FieldProps, TreeNode } from "../../simple-tree/index.js";
 import {
+	getOrCreateInnerNode,
+	SchemaFactory,
+	type FieldProps,
+	type TreeNode,
+} from "../../simple-tree/index.js";
+import type {
 	ConstantFieldProvider,
 	ContextualFieldProvider,
 	FieldProvider,
@@ -17,6 +21,7 @@ import {
 } from "../../simple-tree/schemaTypes.js";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { hydrate } from "./utils.js";
+import { isMapTreeNode, TreeStatus } from "../../feature-libraries/index.js";
 
 describe("Unhydrated nodes", () => {
 	const schemaFactory = new SchemaFactory("undefined");
@@ -29,6 +34,26 @@ describe("Unhydrated nodes", () => {
 		map: TestMap,
 		array: TestArray,
 	}) {}
+
+	it("can be hydrated", () => {
+		const leaf = new TestLeaf({ value: "value" });
+		const map = new TestMap([]);
+		const array = new TestArray([leaf]);
+		const object = new TestObject({ map, array });
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(leaf)), true);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(map)), true);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(array)), true);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(object)), true);
+		const hydratedObject = hydrate(TestObject, object);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(leaf)), false);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(map)), false);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(array)), false);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(object)), false);
+		assert.equal(hydratedObject, object);
+		assert.equal(hydratedObject.array, array);
+		assert.equal(hydratedObject.map, map);
+		assert.equal(hydratedObject.array.at(0), leaf);
+	});
 
 	it("read data", () => {
 		const mapKey = "key";
@@ -111,7 +136,7 @@ describe("Unhydrated nodes", () => {
 		assert.equal(Tree.schema(object), TestObject);
 	});
 
-	it("disallow mutation", () => {
+	it("disallow mutation of sequences", () => {
 		function validateUnhydratedMutationError(error: Error): boolean {
 			return validateAssertionError(
 				error,
@@ -120,16 +145,10 @@ describe("Unhydrated nodes", () => {
 		}
 
 		const leaf = new TestLeaf({ value: "value" });
-		assert.throws(() => (leaf.value = "new value"), validateUnhydratedMutationError);
-		const map = new TestMap([]);
-		assert.throws(() => map.set("key", leaf), validateUnhydratedMutationError);
-		assert.throws(() => map.delete("key"), validateUnhydratedMutationError);
 		const array = new TestArray([]);
 		assert.throws(() => array.insertAtStart(leaf), validateUnhydratedMutationError);
 		assert.throws(() => array.insertAtEnd(leaf), validateUnhydratedMutationError);
 		assert.throws(() => array.insertAt(0, leaf), validateUnhydratedMutationError);
-		const object = new TestObject({ map, array });
-		assert.throws(() => (object.array = array), validateUnhydratedMutationError);
 	});
 
 	it("have the correct tree status", () => {
@@ -155,7 +174,6 @@ describe("Unhydrated nodes", () => {
 			};
 		}
 		// Create three unhydrated nodes to test (`leafObject`, `array`, and `map`).
-		const root = hydrate(TestObject, new TestObject({ array: [], map: new Map() }));
 		const leafObject = new TestLeaf({ value: "value" });
 		const array = new TestArray([leafObject]);
 		const map = new TestMap([]);
@@ -164,8 +182,8 @@ describe("Unhydrated nodes", () => {
 		const assertMap = registerEvents(map);
 		const assertArray = registerEvents(array);
 		// Hydrate the nodes
-		root.array = array;
-		root.map = map;
+		hydrate(TestArray, array);
+		hydrate(TestMap, map);
 		// Change each node to trigger the events
 		leafObject.value = "new value";
 		map.set("new key", new TestLeaf({ value: "new leaf" }));
@@ -198,7 +216,6 @@ describe("Unhydrated nodes", () => {
 			};
 		}
 		// Create three unhydrated nodes to test (`leafObject`, `array`, and `map`).
-		const root = hydrate(TestObject, new TestObject({ array: [], map: new Map() }));
 		const leafObject = new TestLeaf({ value: "value" });
 		const array = new TestArray([leafObject]);
 		const map = new TestMap([]);
@@ -208,8 +225,8 @@ describe("Unhydrated nodes", () => {
 		const { deregister: deregisterMap, assert: assertMap } = registerEvents(map);
 		const { deregister: deregisterArray, assert: assertArray } = registerEvents(array);
 		// Hydrate the nodes
-		root.array = array;
-		root.map = map;
+		hydrate(TestArray, array);
+		hydrate(TestMap, map);
 		// Deregister the events
 		deregisterLeafObject();
 		deregisterMap();

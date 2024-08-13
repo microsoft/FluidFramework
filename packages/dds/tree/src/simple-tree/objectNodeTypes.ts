@@ -1,0 +1,59 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import type { RestrictiveReadonlyRecord } from "../util/index.js";
+import type {
+	TreeObjectNode,
+	InsertableObjectFromSchemaRecord,
+	SimpleKeyMap,
+} from "./objectNode.js";
+import type { ImplicitFieldSchema, FieldSchema } from "./schemaTypes.js";
+import { NodeKind, type TreeNodeSchemaClass, type TreeNodeSchema } from "./core/index.js";
+
+/**
+ * A schema for {@link TreeObjectNode}s.
+ * @privateRemarks
+ * This is a candidate for being promoted to the public package API.
+ */
+export interface ObjectNodeSchema<
+	TName extends string = string,
+	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema> = RestrictiveReadonlyRecord<
+		string,
+		ImplicitFieldSchema
+	>,
+	ImplicitlyConstructable extends boolean = boolean,
+> extends TreeNodeSchemaClass<
+		TName,
+		NodeKind.Object,
+		TreeObjectNode<T, TName>,
+		object & InsertableObjectFromSchemaRecord<T>,
+		ImplicitlyConstructable,
+		T
+	> {
+	readonly fields: ReadonlyMap<string, FieldSchema>;
+}
+
+/**
+ * Extra data provided on all {@link ObjectNodeSchema} that is not included in the (soon possibly public) ObjectNodeSchema type.
+ */
+export interface ObjectNodeSchemaInternalData {
+	/**
+	 * {@inheritdoc SimpleKeyMap}
+	 */
+	readonly flexKeyMap: SimpleKeyMap;
+}
+
+export const ObjectNodeSchema = {
+	// instanceof-based narrowing support for Javascript and TypeScript 5.3 or newer.
+	[Symbol.hasInstance](value: TreeNodeSchema): value is ObjectNodeSchema {
+		return isObjectNodeSchema(value);
+	},
+} as const;
+
+export function isObjectNodeSchema(
+	schema: TreeNodeSchema,
+): schema is ObjectNodeSchema & ObjectNodeSchemaInternalData {
+	return schema.kind === NodeKind.Object;
+}

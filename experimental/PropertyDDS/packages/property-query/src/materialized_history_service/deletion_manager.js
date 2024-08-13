@@ -265,17 +265,11 @@ class DeletionManager {
 			if (commitNode) {
 				// If branchGuid is undefined we still want to delete. Otherwise the node will never be deleted
 				if (commitNode.branchGuid && commitNode.branchGuid !== branchGuid) {
-					logger.trace(
-						`[${branchGuid}] ${cni} does not belong to ${branchGuid}, skipping`,
-					);
+					logger.trace(`[${branchGuid}] ${cni} does not belong to ${branchGuid}, skipping`);
 					return;
 				}
 
-				await this._traverseBTree(
-					branchGuid,
-					commitNode.rootNodeRef,
-					nodesMarkedForDeletion,
-				);
+				await this._traverseBTree(branchGuid, commitNode.rootNodeRef, nodesMarkedForDeletion);
 				parentCommitGuid = commitNode.parentGuid;
 			}
 		});
@@ -308,9 +302,7 @@ class DeletionManager {
 			// If branchGuid is undefined we still want to delete. Otherwise the node will never be deleted
 			if (!node.branchGuid || node.branchGuid === branchGuid) {
 				for (const delta of node.deltas) {
-					nodeChangeSet = await this._storage.getNodeChangeset(
-						baseNodeRef + ":" + delta.id,
-					);
+					nodeChangeSet = await this._storage.getNodeChangeset(baseNodeRef + ":" + delta.id);
 					if (nodeChangeSet) {
 						let childrenNodes = nodeChangeSet["array<String>"].children.insert[0][1];
 						let subTraversals = childrenNodes.map(async (cn) => {
@@ -318,16 +310,9 @@ class DeletionManager {
 							let trimmedCn = indexOfHash > -1 ? cn.substring(0, indexOfHash) : cn;
 							if (cn.substring(0, 2) === "l:") {
 								nodesMarkedForDeletion.add(getBaseNodeRef(trimmedCn));
-								await this._traverseHierarchicalHistory(
-									trimmedCn,
-									nodesMarkedForDeletion,
-								);
+								await this._traverseHierarchicalHistory(trimmedCn, nodesMarkedForDeletion);
 							} else {
-								await this._traverseBTree(
-									branchGuid,
-									trimmedCn,
-									nodesMarkedForDeletion,
-								);
+								await this._traverseBTree(branchGuid, trimmedCn, nodesMarkedForDeletion);
 							}
 						});
 						await Promise.all(subTraversals);
