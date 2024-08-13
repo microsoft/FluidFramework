@@ -2056,7 +2056,7 @@ describe("Editing", () => {
 
 			// Increased timeout because the default in CI is 2s but this test fixture naturally takes longer and was
 			// timing out frequently
-			outerFixture.only("All Scenarios", () => {
+			outerFixture("All Scenarios", () => {
 				for (const scenario of scenarios) {
 					if (testRemoveRevive) {
 						runScenario(scenario, false);
