@@ -102,7 +102,7 @@ describe("MapTreeNodes", () => {
 	it("can get their type", () => {
 		assert.equal(map.type, "Test.Map");
 		assert.equal(fieldNode.type, "Test.FieldNode");
-		assert.equal(object.mapTree.type, "Test.Object");
+		assert.equal(object.type, "Test.Object");
 	});
 
 	it("can get their value", () => {
