@@ -7,9 +7,10 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
 	test: {
-		reporters: ["junit", "default"],
+		reporters: ["junit", "default", "json"],
 		outputFile: {
 			junit: "nyc/junit-report.xml",
+			json: "nyc/junit-report.json",
 		},
 		coverage: {
 			provider: "v8",

@@ -47,7 +47,7 @@
 		"syncpack:versions:fix": "syncpack fix-mismatches --config syncpack.config.cjs",
 		"test": "concurrently npm:test:vitest npm:test:mocha",
 		"test:bail": "npm run test:mocha:bail",
-		"test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
+		"test:copyresults": "copyfiles --verbose --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
 		"test:coverage": "npm run test:vitest:coverage",
 		"test:mocha": "pnpm run -r --no-sort --stream --no-bail test:mocha --color",
 		"test:mocha:bail": "pnpm run -r --no-sort --stream test:mocha",
