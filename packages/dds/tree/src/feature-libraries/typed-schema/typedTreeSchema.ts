@@ -38,14 +38,12 @@ import type { LazyItem } from "./flexList.js";
 import { type ObjectToMap, objectToMapTyped } from "./typeUtils.js";
 
 /**
- * @internal
  */
 export interface FlexObjectNodeFields {
 	readonly [key: string]: FlexFieldSchema;
 }
 
 /**
- * @internal
  */
 export type NormalizeObjectNodeFields<T extends FlexObjectNodeFields> = {
 	readonly [Property in keyof T]: NormalizeField<T[Property]>;
@@ -69,13 +67,12 @@ export type Unenforced<_DesiredExtendsConstraint> = unknown;
  * T must extend TreeSchemaSpecification.
  * This can not be enforced using TypeScript since doing so breaks recursive type support.
  * See note on SchemaBuilder.fieldRecursive.
- * @internal
  */
 export abstract class TreeNodeSchemaBase<
 	const out Name extends string = string,
 	const out Specification = unknown,
 > {
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck!: MakeNominal;
 	protected constructor(
 		public readonly builder: Named<string>,
 		public readonly name: TreeNodeSchemaIdentifier<Name>,
@@ -86,7 +83,6 @@ export abstract class TreeNodeSchemaBase<
 }
 
 /**
- * @internal
  */
 export class FlexMapNodeSchema<
 	const out Name extends string = string,
@@ -119,7 +115,6 @@ export class FlexMapNodeSchema<
 }
 
 /**
- * @internal
  */
 export class LeafNodeSchema<
 	const out Name extends string = string,
@@ -149,7 +144,6 @@ export class LeafNodeSchema<
 }
 
 /**
- * @internal
  */
 export class FlexObjectNodeSchema<
 	const out Name extends string = string,
@@ -211,7 +205,6 @@ export class FlexObjectNodeSchema<
 
 /**
  * TODO: remove or replace (or subclass) this with more specific types, like "List".
- * @internal
  */
 export class FlexFieldNodeSchema<
 	Name extends string = string,
@@ -243,7 +236,6 @@ export class FlexFieldNodeSchema<
 }
 
 /**
- * @internal
  * @privateRemarks
  * This could be an exhaustive union, or just the common base type.
  * Using just the base type prevents exhaustive matching, which has both pros and cons.
@@ -254,7 +246,6 @@ export type FlexTreeNodeSchema = TreeNodeSchemaBase;
 
 /**
  * Convert FieldSchemaSpecification | undefined into TreeFieldSchema.
- * @internal
  */
 export type NormalizeField<T extends FlexFieldSchema | undefined> = T extends FlexFieldSchema
 	? T
@@ -285,19 +276,16 @@ function normalizeField<T extends FlexFieldSchema | undefined>(t: T): NormalizeF
 
 /**
  * Allow any node (as long as it meets the schema for its own type).
- * @internal
  */
 export const Any = "Any" as const;
 /**
  * Allow any node (as long as it meets the schema for its own type).
- * @internal
  */
 export type Any = typeof Any;
 
 /**
  * Tree type, but can be wrapped in a function to allow referring to types before they are declared.
  * This makes recursive and co-recursive types possible.
- * @internal
  */
 export type LazyTreeNodeSchema = FlexTreeNodeSchema | (() => FlexTreeNodeSchema);
 
@@ -305,13 +293,11 @@ export type LazyTreeNodeSchema = FlexTreeNodeSchema | (() => FlexTreeNodeSchema)
  * Types for use in fields.
  *
  * "Any" is boxed in an array to allow use as variadic parameter.
- * @internal
  */
 export type FlexAllowedTypes = readonly [Any] | readonly LazyItem<FlexTreeNodeSchema>[];
 
 /**
  * Checks if an {@link FlexAllowedTypes} is {@link (Any:type)}.
- * @internal
  */
 export function allowedTypesIsAny(t: FlexAllowedTypes): t is readonly [Any] {
 	return t.length === 1 && t[0] === Any;
@@ -320,7 +306,6 @@ export function allowedTypesIsAny(t: FlexAllowedTypes): t is readonly [Any] {
 /**
  * Subset of TreeFieldSchema thats legal in maps.
  * This requires empty to be a valid value for the map.
- * @internal
  */
 export type FlexMapFieldSchema = FlexFieldSchema<
 	typeof FieldKinds.optional | typeof FieldKinds.sequence
@@ -339,7 +324,6 @@ export type FlexMapFieldSchema = FlexFieldSchema<
  * @typeParam TTypes - The types allowed by the field.
  *
  * @sealed
- * @internal
  */
 export class FlexFieldSchema<
 	out TKind extends FlexFieldKind = FlexFieldKind,
@@ -375,7 +359,7 @@ export class FlexFieldSchema<
 		return new FlexFieldSchema(kind, allowedTypes);
 	}
 
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck!: MakeNominal;
 
 	/**
 	 * This is computed lazily since types can be recursive, which makes evaluating this have to happen after all the schema are defined.
@@ -492,13 +476,11 @@ export class FlexFieldSchema<
  * @remarks
  * See {@link TreeTypeSet} for a stored-schema compatible version using the {@link TreeNodeSchemaIdentifier}.
  * See {@link FlexAllowedTypes} for a compile time optimized version.
- * @internal
  */
 export type AllowedTypeSet = Any | ReadonlySet<FlexTreeNodeSchema>;
 
 /**
  * Convert {@link FlexAllowedTypes} to {@link TreeTypeSet}.
- * @internal
  */
 export function allowedTypesSchemaSet(t: FlexAllowedTypes): AllowedTypeSet {
 	if (allowedTypesIsAny(t)) {
@@ -515,7 +497,6 @@ export function allowedTypesSchemaSet(t: FlexAllowedTypes): AllowedTypeSet {
 
 /**
  * Convert {@link FlexAllowedTypes} to {@link TreeTypeSet}.
- * @internal
  */
 export function allowedTypesToTypeSet(t: FlexAllowedTypes): TreeTypeSet {
 	const list = allowedTypesSchemaSet(t);
@@ -536,8 +517,6 @@ export function allowedTypesToTypeSet(t: FlexAllowedTypes): TreeTypeSet {
  * @remarks
  * The type of the rootFieldSchema is used to implement SchemaAware APIs.
  * Cases that do not require being compile time schema aware can omit the explicit type for it.
- *
- * @internal
  */
 export interface FlexTreeSchema<out T extends FlexFieldSchema = FlexFieldSchema>
 	extends SchemaCollection {
@@ -580,7 +559,6 @@ export function intoStoredSchemaCollection(
 
 /**
  * Schema data that can be be used to view a document.
- * @internal
  *
  * @privateRemarks
  * It is convenient that this can be used as a StoredSchemaCollection with no conversion.
@@ -597,7 +575,6 @@ export interface SchemaCollection {
 
 /**
  * Checks if a {@link FlexTreeNodeSchema} is a {@link FlexMapNodeSchema}.
- * @internal
  */
 export function schemaIsMap(schema: FlexTreeNodeSchema): schema is FlexMapNodeSchema {
 	return schema instanceof FlexMapNodeSchema;
@@ -605,7 +582,6 @@ export function schemaIsMap(schema: FlexTreeNodeSchema): schema is FlexMapNodeSc
 
 /**
  * Checks if a {@link FlexTreeNodeSchema} is a {@link LeafNodeSchema}.
- * @internal
  */
 export function schemaIsLeaf(schema: FlexTreeNodeSchema): schema is LeafNodeSchema {
 	return schema instanceof LeafNodeSchema;
@@ -613,7 +589,6 @@ export function schemaIsLeaf(schema: FlexTreeNodeSchema): schema is LeafNodeSche
 
 /**
  * Checks if a {@link FlexTreeNodeSchema} is a {@link FlexFieldNodeSchema}.
- * @internal
  */
 export function schemaIsFieldNode(schema: FlexTreeNodeSchema): schema is FlexFieldNodeSchema {
 	return schema instanceof FlexFieldNodeSchema;
@@ -621,7 +596,6 @@ export function schemaIsFieldNode(schema: FlexTreeNodeSchema): schema is FlexFie
 
 /**
  * Checks if a {@link FlexTreeNodeSchema} is a {@link FlexObjectNodeSchema}.
- * @internal
  */
 export function schemaIsObjectNode(
 	schema: FlexTreeNodeSchema,

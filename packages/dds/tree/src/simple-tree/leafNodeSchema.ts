@@ -13,9 +13,12 @@ import {
 	isFlexTreeNode,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
-
-import { setFlexSchemaFromClassSchema } from "./schemaCaching.js";
-import { NodeKind, type TreeNodeSchema, type TreeNodeSchemaNonClass } from "./schemaTypes.js";
+import {
+	setFlexSchemaFromClassSchema,
+	NodeKind,
+	type TreeNodeSchema,
+	type TreeNodeSchemaNonClass,
+} from "./core/index.js";
 
 type UnbrandedName<T extends FlexLeafNodeSchema> = T["name"] extends TreeNodeSchemaIdentifier<
 	infer Name extends string

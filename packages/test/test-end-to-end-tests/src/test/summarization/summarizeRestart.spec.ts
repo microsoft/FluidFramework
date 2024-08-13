@@ -43,8 +43,13 @@ describeCompat(
 			return provider.makeTestContainer(testContainerConfig);
 		};
 
-		beforeEach("setup", async () => {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
+			// Run these tests only for Local and ODSP drivers. Ideally we only need to run tests with local server since we are only testing the summarizer's logic independednt of the service,
+			// but keeping ODSP in the mix to also test code with single commit summaries. (ODSP has single commit summaries enabled by default)
+			if (!["local", "odsp"].includes(provider.driver.type)) {
+				this.skip();
+			}
 			configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 0);
 		});
 
@@ -98,14 +103,11 @@ describeCompat(
 			],
 			async () => {
 				const container = await createContainer();
-				const { container: summarizingContainer, summarizer } = await createSummarizer(
-					provider,
-					container,
-					summarizerContainerConfig,
-				);
+				const { container: summarizingContainer1, summarizer: summarizer1 } =
+					await createSummarizer(provider, container, summarizerContainerConfig);
 
 				// summary1
-				const { summaryVersion: summaryVersion1 } = await summarizeNow(summarizer);
+				const { summaryVersion: summaryVersion1 } = await summarizeNow(summarizer1);
 
 				// Create a second summarizer. Note that this is done before posting a summary because the server may
 				// delete this summary when a new one is posted.
@@ -119,9 +121,9 @@ describeCompat(
 					);
 
 				// summary2
-				await summarizeNow(summarizer);
-				summarizer.close();
-				summarizingContainer.close();
+				await summarizeNow(summarizer1);
+				summarizer1.close();
+				summarizingContainer1.close();
 
 				// Reconnect the second summarizer's container so that it is elected as the summarizer client.
 				await reconnectSummarizerToBeElected(summarizingContainer2);
@@ -131,8 +133,11 @@ describeCompat(
 				// tell the summarizer to process acks.
 				await summarizer2.run("test");
 
-				assert(summarizingContainer2.closed, "Unknown acks should close the summarizer");
-				assert(summarizingContainer.closed, "summarizer1 should be closed");
+				assert(
+					summarizingContainer2.closed,
+					"Untracked summary's acks should close the summarizer",
+				);
+				assert(summarizingContainer1.closed, "summarizer1 should be closed");
 				assert(!container.closed, "Original container should not be closed");
 			},
 		);

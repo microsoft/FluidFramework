@@ -163,7 +163,6 @@ export class ViewSchema<out TSchema extends FlexFieldSchema = FlexFieldSchema> {
 
 /**
  * Record where a schema came from for error reporting purposes.
- * @internal
  */
 export interface Sourced {
 	readonly builder: Named<string>;

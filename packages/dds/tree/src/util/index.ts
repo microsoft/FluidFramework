@@ -89,6 +89,7 @@ export {
 	transformObjectMap,
 	compareStrings,
 	find,
+	count,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
 

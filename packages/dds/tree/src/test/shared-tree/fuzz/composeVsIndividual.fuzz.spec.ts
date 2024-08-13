@@ -43,7 +43,7 @@ import {
 import type { Operation } from "./operationTypes.js";
 import { brand } from "../../../util/index.js";
 import { intoStoredSchema } from "../../../feature-libraries/index.js";
-import type { TreeNodeSchemaIdentifier } from "../../../index.js";
+import type { TreeNodeSchemaIdentifier } from "../../../core/index.js";
 
 /**
  * This interface is meant to be used for tests that require you to store a branch of a tree

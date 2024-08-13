@@ -8,6 +8,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	AllowedUpdateType,
 	Compatibility,
+	CursorLocationType,
 	type ITreeCursorSynchronous,
 	type TreeStoredSchema,
 	rootFieldKey,
@@ -17,14 +18,14 @@ import {
 	FieldKinds,
 	type FlexFieldSchema,
 	type FlexTreeSchema,
-	type InsertableFlexField,
 	type ViewSchema,
 	allowsRepoSuperset,
+	cursorForMapTreeField,
 	defaultSchemaPolicy,
 	intoStoredSchema,
-	normalizeNewFieldContent,
+	mapTreeFromCursor,
 } from "../feature-libraries/index.js";
-import { fail } from "../util/index.js";
+import { fail, isReadonlyArray } from "../util/index.js";
 
 import type { ITreeCheckout } from "./treeCheckout.js";
 
@@ -155,6 +156,24 @@ export function canInitialize(checkout: ITreeCheckout): boolean {
 	return checkout.forest.isEmpty && schemaDataIsEmpty(checkout.storedSchema);
 }
 
+function normalizeNewFieldContent(
+	content: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined,
+): ITreeCursorSynchronous {
+	if (content === undefined) {
+		return cursorForMapTreeField([]);
+	}
+
+	if (isReadonlyArray(content)) {
+		return cursorForMapTreeField(content.map((c) => mapTreeFromCursor(c)));
+	}
+
+	if (content.mode === CursorLocationType.Fields) {
+		return content;
+	}
+
+	return cursorForMapTreeField([mapTreeFromCursor(content)]);
+}
+
 /**
  * Initialize a checkout with a schema and tree content.
  * This function should only be called when the tree is uninitialized (no schema or content).
@@ -168,11 +187,8 @@ export function initialize(checkout: ITreeCheckout, treeContent: TreeContent): v
 	try {
 		initializeContent(checkout, treeContent.schema, () => {
 			const field = { field: rootFieldKey, parent: undefined };
-			const content = normalizeNewFieldContent(
-				{ schema: treeContent.schema },
-				treeContent.schema.rootFieldSchema,
-				treeContent.initialTree,
-			);
+			const content = normalizeNewFieldContent(treeContent.initialTree);
+
 			switch (checkout.storedSchema.rootFieldSchema.kind) {
 				case FieldKinds.optional.identifier: {
 					const fieldEditor = checkout.editor.optionalField(field);
@@ -253,8 +269,6 @@ export function ensureSchema(
 
 /**
  * View Schema for a `SharedTree`.
- *
- * @internal
  */
 export interface SchemaConfiguration<TRoot extends FlexFieldSchema = FlexFieldSchema> {
 	/**
@@ -265,8 +279,6 @@ export interface SchemaConfiguration<TRoot extends FlexFieldSchema = FlexFieldSc
 
 /**
  * Content that can populate a `SharedTree`.
- *
- * @internal
  */
 export interface TreeContent<TRoot extends FlexFieldSchema = FlexFieldSchema>
 	extends SchemaConfiguration<TRoot> {
@@ -274,16 +286,11 @@ export interface TreeContent<TRoot extends FlexFieldSchema = FlexFieldSchema>
 	 * Default tree content to initialize the tree with iff the tree is uninitialized
 	 * (meaning it does not even have any schema set at all).
 	 */
-	readonly initialTree:
-		| InsertableFlexField<TRoot>
-		| readonly ITreeCursorSynchronous[]
-		| ITreeCursorSynchronous;
+	readonly initialTree: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined;
 }
 
 /**
  * Options used to schematize a `SharedTree`.
- *
- * @internal
  */
 export interface SchematizeConfiguration<TRoot extends FlexFieldSchema = FlexFieldSchema>
 	extends SchemaConfiguration<TRoot> {
@@ -295,8 +302,6 @@ export interface SchematizeConfiguration<TRoot extends FlexFieldSchema = FlexFie
 
 /**
  * Options used to initialize (if needed) and schematize a `SharedTree`.
- *
- * @internal
  */
 export interface InitializeAndSchematizeConfiguration<
 	TRoot extends FlexFieldSchema = FlexFieldSchema,
@@ -307,7 +312,6 @@ export interface InitializeAndSchematizeConfiguration<
  * Options used to initialize (if needed) and schematize a `SharedTree`.
  * @remarks
  * Using this builder improves type safety and error quality over just constructing the configuration as a object.
- * @internal
  */
 export function buildTreeConfiguration<T extends FlexFieldSchema>(
 	config: InitializeAndSchematizeConfiguration<T>,

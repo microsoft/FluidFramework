@@ -162,7 +162,7 @@ import {
 	ContainerRuntimeGCMessage,
 	type ContainerRuntimeIdAllocationMessage,
 	type InboundSequencedContainerRuntimeMessage,
-	type InboundSequencedContainerRuntimeMessageOrSystemMessage,
+	type InboundSequencedNonContainerRuntimeMessage,
 	type LocalContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
@@ -180,6 +180,7 @@ import {
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
+	type InboundBatch,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -522,6 +523,9 @@ export const TombstoneResponseHeaderKey = "isTombstoned";
  * Inactive error responses will have this header set to true
  * @legacy
  * @alpha
+ *
+ * @deprecated this header is deprecated and will be removed in the future. The functionality corresponding
+ * to this was experimental and is no longer supported.
  */
 export const InactiveResponseHeaderKey = "isInactive";
 
@@ -533,7 +537,6 @@ export interface RuntimeHeaderData {
 	wait?: boolean;
 	viaHandle?: boolean;
 	allowTombstone?: boolean;
-	allowInactive?: boolean;
 }
 
 /** Default values for Runtime Headers */
@@ -541,7 +544,6 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 	wait: true,
 	viaHandle: false,
 	allowTombstone: false,
-	allowInactive: false,
 };
 
 /**
@@ -629,6 +631,7 @@ export const defaultPendingOpsRetryDelayMs = 1000;
 const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
+ * Checks whether a message.type is one of the values in ContainerMessageType
  * @deprecated please use version in driver-utils
  * @internal
  */
@@ -688,9 +691,7 @@ export const makeLegacySendBatchFn =
 /** Helper type for type constraints passed through several functions.
  * local - Did this client send the op?
  * savedOp - Is this op being replayed after being serialized (having been sequenced previously)
- * batchStartCsn - The clientSequenceNumber given on submit to the start of this batch
- * message - The unpacked message. Likely a TypedContainerRuntimeMessage, but could also be a system op
- * modernRuntimeMessage - Does this appear like a current TypedContainerRuntimeMessage?
+ * localOpMetadata - Metadata maintained locally for a local op.
  */
 type MessageWithContext = {
 	local: boolean;
@@ -699,14 +700,13 @@ type MessageWithContext = {
 } & (
 	| {
 			message: InboundSequencedContainerRuntimeMessage;
-			modernRuntimeMessage: true;
+			isRuntimeMessage: true;
 	  }
 	| {
-			message: InboundSequencedContainerRuntimeMessageOrSystemMessage;
-			modernRuntimeMessage: false;
+			message: InboundSequencedNonContainerRuntimeMessage;
+			isRuntimeMessage: false;
 	  }
 );
-
 const summarizerRequestUrl = "_summarizer";
 
 /**
@@ -760,6 +760,23 @@ function lastMessageFromMetadata(metadata: IContainerRuntimeMetadata | undefined
 		? metadata?.lastMessage
 		: metadata?.message;
 }
+
+/**
+ * There is some ancient back-compat code that we'd like to instrument
+ * to understand if/when it is hit.
+ * We only want to log this once, to avoid spamming telemetry if we are wrong and these cases are hit commonly.
+ */
+let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) => {
+	// We only want to log this once per ContainerRuntime instance, to avoid spamming telemetry.
+	getSingleUseLegacyLogCallback = () => () => {};
+
+	return (codePath: string) => {
+		logger.sendTelemetryEvent({
+			eventName: "LegacyMessageFormat",
+			details: { codePath, type },
+		});
+	};
+};
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
@@ -1331,14 +1348,22 @@ export class ContainerRuntime
 	 */
 	private nextSummaryNumber: number;
 
-	/** If false, loading or using a Tombstoned object should merely log, not fail */
+	/**
+	 * If false, loading or using a Tombstoned object should merely log, not fail.
+	 * @deprecated NOT SUPPORTED - hardcoded to return false since it's deprecated.
+	 */
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get gcTombstoneEnforcementAllowed(): boolean {
-		return this.garbageCollector.tombstoneEnforcementAllowed;
+		return false;
 	}
 
-	/** If true, throw an error when a tombstone data store is used. */
+	/**
+	 * If true, throw an error when a tombstone data store is used.
+	 * @deprecated NOT SUPPORTED - hardcoded to return false since it's deprecated.
+	 */
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get gcThrowOnTombstoneUsage(): boolean {
-		return this.garbageCollector.throwOnTombstoneUsage;
+		return false;
 	}
 
 	/**
@@ -2618,84 +2643,92 @@ export class ContainerRuntime
 		await this.pendingStateManager.applyStashedOpsAt(message.sequenceNumber);
 	}
 
-	public process(messageArg: ISequencedDocumentMessage, local: boolean) {
+	/**
+	 * Processes the op.
+	 * @param messageCopy - Sequenced message for a distributed document.
+	 * @param local - true if the message was originally generated by the client receiving it.
+	 */
+	public process({ ...messageCopy }: ISequencedDocumentMessage, local: boolean) {
+		// spread operator above ensure we make a shallow copy of message, as the processing flow will modify it.
+		// There might be multiple container instances receiving the same message.
+
 		this.verifyNotClosed();
 
 		// Whether or not the message appears to be a runtime message from an up-to-date client.
 		// It may be a legacy runtime message (ie already unpacked and ContainerMessageType)
 		// or something different, like a system message.
-		const modernRuntimeMessage = messageArg.type === MessageType.Operation;
+		const hasModernRuntimeMessageEnvelope = messageCopy.type === MessageType.Operation;
+		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
+		const logLegacyCase = getSingleUseLegacyLogCallback(this.logger, messageCopy.type);
 
-		const savedOp = (messageArg.metadata as ISavedOpMetadata)?.savedOp;
-
-		// There is some ancient back-compat code that we'd like to instrument
-		// to understand if/when it is hit.
-		const logLegacyCase = (codePath: string) =>
-			this.logger.sendTelemetryEvent({
-				eventName: "LegacyMessageFormat",
-				details: { codePath, type: messageArg.type },
-			});
-
-		// Do shallow copy of message, as the processing flow will modify it.
-		// There might be multiple container instances receiving the same message.
-		// We do not need to make a deep copy. Each layer will just replace message.contents itself,
-		// but will not modify the contents object (likely it will replace it on the message).
-		const messageCopy = { ...messageArg };
 		// We expect runtime messages to have JSON contents - deserialize it in place.
-		ensureContentsDeserialized(messageCopy, modernRuntimeMessage, logLegacyCase);
-		if (modernRuntimeMessage) {
-			const processResult = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
-			if (processResult === undefined) {
+		ensureContentsDeserialized(messageCopy, hasModernRuntimeMessageEnvelope, logLegacyCase);
+		if (hasModernRuntimeMessageEnvelope) {
+			// If the message has the modern message envelope, then process it here.
+			// Here we unpack the message (decompress, unchunk, and/or ungroup) into a batch of messages with ContainerMessageType
+			const inboundBatch = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
+			if (inboundBatch === undefined) {
 				// This means the incoming message is an incomplete part of a message or batch
 				// and we need to process more messages before the rest of the system can understand it.
 				return;
 			}
-			const batchStartCsn = processResult.batchStartCsn;
-			const batch = processResult.messages;
-			const sequenceNumber = processResult.sequenceNumber;
-			const messages: {
-				message: InboundSequencedContainerRuntimeMessage;
-				localOpMetadata: unknown;
-			}[] = local
-				? this.pendingStateManager.processPendingLocalBatch(
-						batch,
-						batchStartCsn,
-						sequenceNumber,
-					)
-				: batch.map((message) => ({ message, localOpMetadata: undefined }));
-			if (messages.length === 0) {
-				this.ensureNoDataModelChanges(() =>
-					this.processEmptyBatch(sequenceNumber, local, batchStartCsn),
-				);
-				return;
-			}
-			messages.forEach(({ message, localOpMetadata }) => {
-				const msg: MessageWithContext = {
-					message,
-					local,
-					modernRuntimeMessage,
-					savedOp,
-					localOpMetadata,
-				};
-				this.ensureNoDataModelChanges(() => this.processCore(msg));
-			});
-		} else {
-			const msg: MessageWithContext = {
-				message: messageCopy as InboundSequencedContainerRuntimeMessageOrSystemMessage,
+
+			// Reach out to PendingStateManager to zip localOpMetadata into the message list if it's a local batch
+			const messagesWithPendingState = this.pendingStateManager.processInboundBatch(
+				inboundBatch,
 				local,
-				modernRuntimeMessage,
-				savedOp,
-			};
-			this.ensureNoDataModelChanges(() => this.processCore(msg));
+			);
+			if (messagesWithPendingState.length > 0) {
+				messagesWithPendingState.forEach(({ message, localOpMetadata }) => {
+					const msg: MessageWithContext = {
+						message,
+						local,
+						isRuntimeMessage: true,
+						savedOp,
+						localOpMetadata,
+					};
+					this.ensureNoDataModelChanges(() => this.processRuntimeMessage(msg));
+				});
+			} else {
+				this.ensureNoDataModelChanges(() => this.processEmptyBatch(inboundBatch, local));
+			}
+		} else {
+			// Check if message.type is one of values in ContainerMessageType
+			// eslint-disable-next-line import/no-deprecated
+			if (isRuntimeMessage(messageCopy)) {
+				// Legacy op received
+				this.ensureNoDataModelChanges(() =>
+					this.processRuntimeMessage({
+						message: messageCopy as InboundSequencedContainerRuntimeMessage,
+						local,
+						isRuntimeMessage: true,
+						savedOp,
+					}),
+				);
+			} else {
+				// A non container runtime message (like other system ops - join, ack, leave, nack etc.)
+				this.ensureNoDataModelChanges(() =>
+					this.observeNonRuntimeMessage({
+						message: messageCopy as InboundSequencedNonContainerRuntimeMessage,
+						local,
+						isRuntimeMessage: false,
+						savedOp,
+					}),
+				);
+			}
 		}
 	}
 
 	private _processedClientSequenceNumber: number | undefined;
 
 	/**
-	 * Direct the message to the correct subsystem for processing, and implement other side effects
+	 * Processes messages that are intended for the runtime layer to process.
+	 * It redirects the message to the correct subsystem for processing, and implement other side effects
+	 * @param messageWithContext - message to process with additional context and isRuntimeMessage prop as true
 	 */
-	private processCore(messageWithContext: MessageWithContext) {
+	private processRuntimeMessage(
+		messageWithContext: MessageWithContext & { isRuntimeMessage: true },
+	) {
 		const { message, local, localOpMetadata } = messageWithContext;
 
 		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
@@ -2730,7 +2763,7 @@ export class ContainerRuntime
 
 			this.validateAndProcessRuntimeMessage(messageWithContext, localOpMetadata);
 
-			this.emit("op", message, messageWithContext.modernRuntimeMessage);
+			this.emit("op", message, messageWithContext.isRuntimeMessage);
 
 			this.scheduleManager.afterOpProcessing(undefined, message);
 
@@ -2751,12 +2784,9 @@ export class ContainerRuntime
 	 * This is a separate function because the processCore function expects at least one message to process.
 	 * It is expected to happen only when the outbox produces an empty batch due to a resubmit flow.
 	 */
-	private processEmptyBatch(
-		sequenceNumber: number | undefined,
-		local: boolean,
-		batchStartCsn: number,
-	) {
-		assert(sequenceNumber !== undefined, "sequenceNumber must be defined");
+	private processEmptyBatch(emptyBatch: InboundBatch, local: boolean) {
+		const { emptyBatchSequenceNumber: sequenceNumber, batchStartCsn } = emptyBatch;
+		assert(sequenceNumber !== undefined, 0x9fa /* emptyBatchSequenceNumber must be defined */);
 		this.emit("batchBegin", { sequenceNumber });
 		this._processedClientSequenceNumber = batchStartCsn;
 		if (!this.hasPendingMessages()) {
@@ -2769,32 +2799,80 @@ export class ContainerRuntime
 	}
 
 	/**
+	 * Observes messages that are not intended for the runtime layer, updating/notifying Runtime systems as needed.
+	 * @param messageWithContext - non-runtime messages to process with additional context and isRuntimeMessage prop as false
+	 */
+	private observeNonRuntimeMessage(
+		messageWithContext: MessageWithContext & { isRuntimeMessage: false },
+	) {
+		const { message, local } = messageWithContext;
+
+		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
+		// Sequence numbers are not guaranteed to follow any sort of order. Re-entrancy is one of those situations
+		if (
+			this.deltaManager.minimumSequenceNumber <
+			messageWithContext.message.minimumSequenceNumber
+		) {
+			messageWithContext.message.minimumSequenceNumber =
+				this.deltaManager.minimumSequenceNumber;
+		}
+
+		// Surround the actual processing of the operation with messages to the schedule manager indicating
+		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
+		// messages once a batch has been fully processed.
+		this.scheduleManager.beforeOpProcessing(message);
+
+		this._processedClientSequenceNumber = message.clientSequenceNumber;
+
+		try {
+			// If there are no more pending messages after processing a local message,
+			// the document is no longer dirty.
+			if (!this.hasPendingMessages()) {
+				this.updateDocumentDirtyState(false);
+			}
+
+			this.emit("op", message, messageWithContext.isRuntimeMessage);
+
+			this.scheduleManager.afterOpProcessing(undefined, message);
+
+			if (local) {
+				// If we have processed a local op, this means that the container is
+				// making progress and we can reset the counter for how many times
+				// we have consecutively replayed the pending states
+				this.resetReconnectCount();
+			}
+		} catch (e) {
+			this.scheduleManager.afterOpProcessing(e, message);
+			throw e;
+		}
+	}
+
+	/**
 	 * Assuming the given message is also a TypedContainerRuntimeMessage,
 	 * checks its type and dispatches the message to the appropriate handler in the runtime.
 	 * Throws a DataProcessingError if the message looks like but doesn't conform to a known TypedContainerRuntimeMessage type.
 	 */
 	private validateAndProcessRuntimeMessage(
-		messageWithContext: MessageWithContext,
+		messageWithContext: MessageWithContext & { isRuntimeMessage: true },
 		localOpMetadata: unknown,
 	): void {
-		// TODO: destructure message and modernRuntimeMessage once using typescript 5.2.2+
-		const { local } = messageWithContext;
-		switch (messageWithContext.message.type) {
+		const { local, message, savedOp } = messageWithContext;
+		switch (message.type) {
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.FluidDataStoreOp:
-				this.channelCollection.process(messageWithContext.message, local, localOpMetadata);
+				this.channelCollection.process(message, local, localOpMetadata);
 				break;
 			case ContainerMessageType.BlobAttach:
-				this.blobManager.processBlobAttachOp(messageWithContext.message, local);
+				this.blobManager.processBlobAttachOp(message, local);
 				break;
 			case ContainerMessageType.IdAllocation:
 				// Don't re-finalize the range if we're processing a "savedOp" in
 				// stashed ops flow. The compressor is stashed with these ops already processed.
 				// That said, in idCompressorMode === "delayed", we might not serialize ID compressor, and
 				// thus we need to process all the ops.
-				if (!(this.skipSavedCompressorOps && messageWithContext.savedOp === true)) {
-					const range = messageWithContext.message.contents;
+				if (!(this.skipSavedCompressorOps && savedOp === true)) {
+					const range = message.contents;
 					// Some other client turned on the id compressor. If we have not turned it on,
 					// put it in a pending queue and delay finalization.
 					if (this._idCompressor === undefined) {
@@ -2813,11 +2891,7 @@ export class ContainerRuntime
 				}
 				break;
 			case ContainerMessageType.GC:
-				this.garbageCollector.processMessage(
-					messageWithContext.message,
-					messageWithContext.message.timestamp,
-					local,
-				);
+				this.garbageCollector.processMessage(message, message.timestamp, local);
 				break;
 			case ContainerMessageType.ChunkedOp:
 				// From observability POV, we should not exppse the rest of the system (including "op" events on object) to these messages.
@@ -2827,23 +2901,14 @@ export class ContainerRuntime
 				break;
 			case ContainerMessageType.DocumentSchemaChange:
 				this.documentsSchemaController.processDocumentSchemaOp(
-					messageWithContext.message.contents,
-					messageWithContext.local,
-					messageWithContext.message.sequenceNumber,
+					message.contents,
+					local,
+					message.sequenceNumber,
 				);
 				break;
 			default: {
-				// If we didn't necessarily expect a runtime message type, then no worries - just return
-				// e.g. this case applies to system ops, or legacy ops that would have fallen into the above cases anyway.
-				if (!messageWithContext.modernRuntimeMessage) {
-					return;
-				}
-
-				const compatBehavior = messageWithContext.message.compatDetails?.behavior;
-				if (
-					!compatBehaviorAllowsMessageType(messageWithContext.message.type, compatBehavior)
-				) {
-					const { message } = messageWithContext;
+				const compatBehavior = message.compatDetails?.behavior;
+				if (!compatBehaviorAllowsMessageType(message.type, compatBehavior)) {
 					const error = DataProcessingError.create(
 						// Former assert 0x3ce
 						"Runtime message of unknown type",
@@ -4025,8 +4090,6 @@ export class ContainerRuntime
 			0x93f /* metadata */,
 		);
 
-		const serializedContent = JSON.stringify(containerRuntimeMessage);
-
 		// Note that the real (non-proxy) delta manager is used here to get the readonly info. This is because
 		// container runtime's ability to submit ops depend on the actual readonly state of the delta manager.
 		if (this.innerDeltaManager.readOnlyInfo.readonly) {
@@ -4041,12 +4104,6 @@ export class ContainerRuntime
 			type !== ContainerMessageType.IdAllocation,
 			0x9a5 /* IdAllocation should be submitted directly to outbox. */,
 		);
-		const message: BatchMessage = {
-			contents: serializedContent,
-			metadata,
-			localOpMetadata,
-			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-		};
 
 		try {
 			this.submitIdAllocationOpIfNeeded(false);
@@ -4054,19 +4111,19 @@ export class ContainerRuntime
 			// Allow document schema controller to send a message if it needs to propose change in document schema.
 			// If it needs to send a message, it will call provided callback with payload of such message and rely
 			// on this callback to do actual sending.
-			const contents = this.documentsSchemaController.maybeSendSchemaMessage();
-			if (contents) {
+			const schemaChangeMessage = this.documentsSchemaController.maybeSendSchemaMessage();
+			if (schemaChangeMessage) {
 				this.logger.sendTelemetryEvent({
 					eventName: "SchemaChangeProposal",
-					refSeq: contents.refSeq,
-					version: contents.version,
-					newRuntimeSchema: JSON.stringify(contents.runtime),
+					refSeq: schemaChangeMessage.refSeq,
+					version: schemaChangeMessage.version,
+					newRuntimeSchema: JSON.stringify(schemaChangeMessage.runtime),
 					sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
 					oldRuntimeSchema: JSON.stringify(this.metadata?.documentSchema?.runtime),
 				});
 				const msg: ContainerRuntimeDocumentSchemaMessage = {
 					type: ContainerMessageType.DocumentSchemaChange,
-					contents,
+					contents: schemaChangeMessage,
 				};
 				this.outbox.submit({
 					contents: JSON.stringify(msg),
@@ -4074,6 +4131,12 @@ export class ContainerRuntime
 				});
 			}
 
+			const message: BatchMessage = {
+				contents: JSON.stringify(containerRuntimeMessage) /* serialized content */,
+				metadata,
+				localOpMetadata,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+			};
 			if (type === ContainerMessageType.BlobAttach) {
 				// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
 				this.outbox.submitBlobAttach(message);

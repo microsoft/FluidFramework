@@ -6,7 +6,8 @@
 import { Test } from "mocha";
 
 import type { BenchmarkDescription, MochaExclusiveOptions, Titled } from "../Configuration";
-import type { BenchmarkData } from "../ResultTypes";
+import type { BenchmarkData, CustomData } from "../ResultTypes";
+import { prettyNumber } from "../RunnerUtilities";
 import { timer } from "../timer";
 
 /**
@@ -37,14 +38,13 @@ export interface CustomBenchmarkOptions
 export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 	const itFunction = options.only === true ? it.only : it;
 	const test = itFunction(`${options.title} @CustomBenchmark`, async () => {
-		const customData: Record<string, number> = {};
-		const customDataFormatters: Record<string, (value: unknown) => string> = {};
+		const customData: CustomData = {};
 		const reporter: IMeasurementReporter = {
 			addMeasurement: (key: string, value: number) => {
 				if (key in customData) {
 					throw new Error(`Measurement key '${key}' was already used.`);
 				}
-				customData[key] = value;
+				customData[key] = { rawValue: value, formattedValue: prettyNumber(value) };
 			},
 		};
 
@@ -55,7 +55,6 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 		const results: BenchmarkData = {
 			elapsedSeconds,
 			customData,
-			customDataFormatters,
 		};
 
 		test.emit("benchmark end", results);
@@ -65,6 +64,9 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 
 /**
  * Allows the benchmark code to report custom measurements.
+ *
+ * @see {@link benchmarkCustom}
+ * @see {@link CustomBenchmarkOptions.run}
  *
  * @public
  */
