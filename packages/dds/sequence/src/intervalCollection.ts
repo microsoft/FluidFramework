@@ -304,7 +304,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 						"Adding an interval that belongs to another interval collection is not permitted",
 					);
 				}
-				interval.addProperties(props);
+				interval.properties = addProperties(interval.properties, props);
 			}
 			interval.properties[reservedIntervalIdKey] ??= uuid();
 			this.add(interval);
@@ -1118,7 +1118,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					this.options.mergeTreeReferencesCanSlideToEndpoint,
 				);
 				if (properties) {
-					interval.addProperties(properties);
+					interval.properties = addProperties(interval.properties, properties);
 				}
 				this.localCollection.add(interval);
 			}

@@ -39,18 +39,14 @@ export class PaddingSegment extends BaseSegment {
 	}
 	public static fromJSONObject(spec: any) {
 		if (spec && typeof spec === "object" && "pad" in spec) {
-			const segment = new PaddingSegment(spec.pad);
-			if (spec.props) {
-				segment.addProperties(spec.props);
-			}
-			return segment;
+			return new PaddingSegment(spec.pad, spec.props);
 		}
 		return undefined;
 	}
 	public readonly type = PaddingSegment.typeString;
 
-	constructor(size: number) {
-		super();
+	constructor(size: number, props?: PropertySet) {
+		super(props);
 		this.cachedLength = size;
 	}
 
@@ -111,11 +107,7 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
 	}
 	public static fromJSONObject(spec: any) {
 		if (spec && typeof spec === "object" && "items" in spec) {
-			const segment = new RunSegment(spec.items);
-			if (spec.props) {
-				segment.addProperties(spec.props);
-			}
-			return segment;
+			return new RunSegment(spec.items, spec.props);
 		}
 		return undefined;
 	}
@@ -123,8 +115,11 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
 
 	private tags: any[];
 
-	constructor(public items: SparseMatrixItem[]) {
-		super(items);
+	constructor(
+		public items: SparseMatrixItem[],
+		props?: PropertySet,
+	) {
+		super(items, props);
 		this.tags = new Array(items.length).fill(undefined);
 	}
 
@@ -261,10 +256,7 @@ export class SparseMatrixClass extends SharedSegmentSequence<MatrixSegment> {
 	public setItems(row: number, col: number, values: SparseMatrixItem[], props?: PropertySet) {
 		const start = rowColToPosition(row, col);
 		const end = start + values.length;
-		const segment = new RunSegment(values);
-		if (props) {
-			segment.addProperties(props);
-		}
+		const segment = new RunSegment(values, props);
 
 		this.replaceRange(start, end, segment);
 	}
