@@ -38,7 +38,7 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 			migrationTool.events.off("migrating", migrationStateChangedHandler);
 			migrationTool.events.off("migrated", migrationStateChangedHandler);
 		};
-	}, [model]);
+	}, [migrationTool]);
 
 	return (
 		<div>
@@ -85,7 +85,7 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 			migrationTool.events.off("migrating", migrationStateChangedHandler);
 			migrationTool.events.off("migrated", migrationStateChangedHandler);
 		};
-	}, [model]);
+	}, [migrationTool]);
 
 	const proposedVersionStatus =
 		migrationTool.proposedVersion === undefined
