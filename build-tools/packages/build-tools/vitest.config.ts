@@ -10,7 +10,7 @@ export default defineConfig({
 		reporters: ["junit", "default", "json"],
 		outputFile: {
 			junit: "nyc/junit-report.xml",
-			json: "nyc/junit-report.json",
+			json: "nyc/vitest.json",
 		},
 		coverage: {
 			provider: "v8",
