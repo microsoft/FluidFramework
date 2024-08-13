@@ -128,7 +128,8 @@ export function mapTreeFromNodeData(
 	// TODO:
 	// Since some defaults may still be missing, this can give false positives when context is undefined but schemaValidationPolicy is provided.
 	if (schemaValidationPolicy?.policy.validateSchema === true) {
-		inSchemaOrThrow(schemaValidationPolicy, mapTree);
+		const maybeError = isNodeInSchema(mapTree, schemaValidationPolicy);
+		inSchemaOrThrow(maybeError);
 	}
 
 	return mapTree;
@@ -191,16 +192,9 @@ function nodeDataToMapTree(
 }
 
 /**
- * Throws a UsageError if mapTree is out of schema.
- * @remarks
- * This requires mapTree to have all required default values,
- * like identifiers for identifier fields.
+ * Throws a UsageError if maybeError indicates a tree is out of schema.
  */
-export function inSchemaOrThrow(
-	schemaValidationPolicy: SchemaAndPolicy,
-	mapTree: MapTree,
-): void {
-	const maybeError = isNodeInSchema(mapTree, schemaValidationPolicy);
+export function inSchemaOrThrow(maybeError: SchemaValidationErrors): void {
 	if (maybeError !== SchemaValidationErrors.NoError) {
 		throw new UsageError("Tree does not conform to schema.");
 	}
