@@ -4,6 +4,11 @@
  */
 
 export {
+	CreateModelCallback,
+	instantiateMigratableRuntime,
+	MigratableModelContainerRuntimeFactory,
+} from "./instantiateMigratableRuntime.js";
+export {
 	IAttachedMigratableModel,
 	IDetachedModel,
 	IDetachedMigratableModel,
@@ -12,7 +17,6 @@ export {
 } from "./interfaces.js";
 export { MigratableModelLoader } from "./migratableModelLoader.js";
 export {
-	MigratableModelContainerRuntimeFactory,
 	ModelContainerRuntimeFactory,
 	IModelContainerRuntimeEntryPoint,
 } from "./modelContainerRuntimeFactory.js";

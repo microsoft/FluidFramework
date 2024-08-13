@@ -16,6 +16,76 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 
+import {
+	getDataStoreEntryPoint,
+	type IMigrationTool,
+	MigrationToolFactory,
+} from "../index.js";
+
+/**
+ * @internal
+ */
+export type CreateModelCallback<ModelType> = (
+	runtime: IContainerRuntime,
+	container: IContainer,
+) => Promise<ModelType>;
+
+/**
+ * @internal
+ */
+export interface IMigratableModelContainerRuntimeEntryPoint<T> {
+	getModelAndMigrationTool(
+		container: IContainer,
+	): Promise<{ model: T; migrationTool: IMigrationTool }>;
+}
+
+const migrationToolId = "migration-tool";
+
+const migrationToolRegistryKey = "migration-tool";
+const migrationToolFactory = new MigrationToolFactory();
+
+/**
+ * @internal
+ */
+export const instantiateMigratableRuntime = async <ModelType>(
+	context: IContainerContext,
+	existing: boolean,
+	registryEntries: NamedFluidDataStoreRegistryEntries,
+	createModel: CreateModelCallback<ModelType>,
+	runtimeOptions?: IContainerRuntimeOptions,
+): Promise<IContainerRuntime & IRuntime> => {
+	const combinedRegistryEntries: NamedFluidDataStoreRegistryEntries = [
+		...registryEntries,
+		[migrationToolRegistryKey, Promise.resolve(migrationToolFactory)],
+	];
+	const runtime = await ContainerRuntime.loadRuntime({
+		context,
+		registryEntries: combinedRegistryEntries, // combinedRegistryEntries
+		provideEntryPoint: async (
+			containerRuntime: IContainerRuntime,
+		): Promise<IMigratableModelContainerRuntimeEntryPoint<ModelType>> => ({
+			getModelAndMigrationTool: async (container: IContainer) => ({
+				// TODO: Think about the timing and order of the awaits
+				model: await createModel(containerRuntime, container),
+				migrationTool: await getDataStoreEntryPoint(containerRuntime, migrationToolId),
+			}),
+		}),
+		runtimeOptions,
+		existing,
+	});
+
+	if (!existing) {
+		const migrationTool = await runtime.createDataStore(migrationToolRegistryKey);
+		await migrationTool.trySetAlias(migrationToolId);
+	}
+	// Force the MigrationTool to instantiate in all cases.  The Quorum it uses must be loaded and running in
+	// order to respond with accept ops, and without this call the MigrationTool won't be instantiated on the
+	// summarizer client.
+	await getDataStoreEntryPoint(runtime, migrationToolId);
+
+	return runtime;
+};
+
 /**
  * @internal
  */
@@ -28,7 +98,9 @@ export interface IModelContainerRuntimeEntryPoint<T> {
  * It also requires a createModel method to returns the expected model type.
  * @internal
  */
-export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntimeFactory {
+export abstract class MigratableModelContainerRuntimeFactory<ModelType>
+	implements IRuntimeFactory
+{
 	public get IRuntimeFactory() {
 		return this;
 	}
@@ -46,18 +118,13 @@ export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntim
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<IRuntime> {
-		const runtime = await ContainerRuntime.loadRuntime({
+		const runtime = await instantiateMigratableRuntime(
 			context,
-			registryEntries: this.registryEntries,
-			provideEntryPoint: async (
-				containerRuntime: IContainerRuntime,
-			): Promise<IModelContainerRuntimeEntryPoint<ModelType>> => ({
-				getModel: async (container: IContainer) =>
-					this.createModel(containerRuntime, container),
-			}),
-			runtimeOptions: this.runtimeOptions,
 			existing,
-		});
+			this.registryEntries,
+			this.createModel.bind(this),
+			this.runtimeOptions,
+		);
 
 		if (!existing) {
 			await this.containerInitializingFirstTime(runtime);

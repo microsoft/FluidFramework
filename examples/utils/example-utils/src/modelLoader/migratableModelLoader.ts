@@ -15,12 +15,12 @@ import {
 } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 
+import { type IMigratableModelContainerRuntimeEntryPoint } from "./instantiateMigratableRuntime.js";
 import type {
 	IAttachedMigratableModel,
 	IDetachedMigratableModel,
 	IMigratableModelLoader,
 } from "./interfaces.js";
-import { type IMigratableModelContainerRuntimeEntryPoint } from "./modelContainerRuntimeFactory.js";
 
 /**
  * @internal

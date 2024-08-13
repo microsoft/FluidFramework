@@ -4,54 +4,81 @@
  */
 
 import {
-	MigratableModelContainerRuntimeFactory,
 	getDataStoreEntryPoint,
+	instantiateMigratableRuntime,
 } from "@fluid-example/example-utils";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type {
+	IContainer,
+	IContainerContext,
+	IRuntime,
+	IRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 
-import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
+import type { IInventoryList } from "../modelInterfaces.js";
 
 import { InventoryListAppModel } from "./appModel.js";
 import { InventoryListInstantiationFactory } from "./inventoryList.js";
 
 const inventoryListId = "default-inventory-list";
 
-export class InventoryListContainerRuntimeFactory extends MigratableModelContainerRuntimeFactory<IInventoryListAppModel> {
+/**
+ * @internal
+ */
+export class InventoryListContainerRuntimeFactory implements IRuntimeFactory {
+	public get IRuntimeFactory() {
+		return this;
+	}
+
+	private readonly registryEntries = new Map([
+		InventoryListInstantiationFactory.registryEntry,
+	]);
+	private readonly runtimeOptions: IContainerRuntimeOptions | undefined;
 	/**
 	 * Constructor for the factory. Supports a test mode which spawns the summarizer instantly.
 	 * @param testMode - True to enable instant summarizer spawning.
 	 */
 	public constructor(testMode: boolean) {
-		super(
-			new Map([InventoryListInstantiationFactory.registryEntry]), // registryEntries
-			testMode
-				? {
-						summaryOptions: {
-							initialSummarizerDelayMs: 0,
-						},
-					}
-				: undefined,
-		);
+		this.runtimeOptions = testMode
+			? {
+					summaryOptions: {
+						initialSummarizerDelayMs: 0,
+					},
+				}
+			: undefined;
 	}
 
-	/**
-	 * {@inheritDoc MigratableModelContainerRuntimeFactory.containerInitializingFirstTime}
-	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+	public async instantiateRuntime(
+		context: IContainerContext,
+		existing: boolean,
+	): Promise<IRuntime> {
+		const runtime = await instantiateMigratableRuntime(
+			context,
+			existing,
+			this.registryEntries,
+			this.createModel,
+			this.runtimeOptions,
+		);
+
+		if (!existing) {
+			await this.containerInitializingFirstTime(runtime);
+		}
+
+		return runtime;
+	}
+
+	private readonly containerInitializingFirstTime = async (runtime: IContainerRuntime) => {
 		const inventoryList = await runtime.createDataStore(
 			InventoryListInstantiationFactory.type,
 		);
 		await inventoryList.trySetAlias(inventoryListId);
-	}
+	};
 
-	/**
-	 * {@inheritDoc MigratableModelContainerRuntimeFactory.createModel}
-	 */
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+	private readonly createModel = async (runtime: IContainerRuntime, container: IContainer) => {
 		return new InventoryListAppModel(
 			await getDataStoreEntryPoint<IInventoryList>(runtime, inventoryListId),
 			container,
 		);
-	}
+	};
 }
