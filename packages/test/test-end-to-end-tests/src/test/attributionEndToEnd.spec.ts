@@ -134,8 +134,7 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 	 * Tracked by AB#4997, if no error event is detected within one sprint, we will remove
 	 * the skipping or take actions accordingly if it is.
 	 */
-	for (let i = 0; i < 5; i++) {
-		itSkipsFailureOnSpecificDrivers(
+	itSkipsFailureOnSpecificDrivers(
 			"Can attribute content from multiple collaborators",
 			["tinylicious", "t9s"],
 			async () => {
@@ -176,7 +175,6 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 				});
 			},
 		);
-	}
 
 	it.skip("attributes content created in a detached state", async () => {
 		const attributor = createRuntimeAttributor();
