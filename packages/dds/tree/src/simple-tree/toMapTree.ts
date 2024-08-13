@@ -328,7 +328,7 @@ function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): Exclus
 		arrayChildToMapTree(child, allowedChildTypes),
 	);
 
-	// Array nodes are have a single `EmptyKey` field:
+	// Array nodes have a single `EmptyKey` field:
 	const fieldsEntries = mappedData.length === 0 ? [] : ([[EmptyKey, mappedData]] as const);
 
 	return {
