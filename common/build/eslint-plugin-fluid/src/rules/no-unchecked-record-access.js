@@ -72,7 +72,6 @@ module.exports = {
 				if (isIndexSignatureType(node)) {
 					let current = node;
 
-					// Recurse up the AST to see if there is a truthy check
 					while (current) {
 						if (isTruthyCheck(current)) {
 							return; // Valid check found, exit the function
@@ -80,13 +79,23 @@ module.exports = {
 						current = current.parent;
 					}
 
-					// Check if the accessed property is being used to access another property
-					if (
-						node.parent &&
-						node.parent.type === "MemberExpression" &&
-						node.parent.object === node
-					) {
-						// If no truthy check found and property is used in another access, report the error
+					const parentNode = node.parent;
+
+					if (parentNode.type === "VariableDeclarator" && parentNode.id.typeAnnotation) {
+						const expectedType = parentNode.id.typeAnnotation.typeAnnotation;
+						if (
+							expectedType.type !== "TSUnionType" ||
+							!expectedType.types.some((type) => type.type === "TSUndefinedKeyword")
+						) {
+							context.report({
+								node,
+								message:
+									"Unchecked property access on index signature type. The variable expects a non-optional type.",
+							});
+						}
+					}
+
+					if (parentNode.type === "MemberExpression" && parentNode.object === node) {
 						context.report({
 							node,
 							message: "Unchecked property access on index signature type.",
