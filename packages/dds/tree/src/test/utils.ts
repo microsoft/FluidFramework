@@ -118,6 +118,7 @@ import {
 	MockNodeKeyManager,
 	type FlexTreeSchema,
 	cursorForMapTreeField,
+	type IDefaultEditBuilder,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
@@ -1420,4 +1421,17 @@ function normalizeNewFieldContent(
 	}
 
 	return cursorForMapTreeField([mapTreeFromCursor(content)]);
+}
+
+/**
+ * Convenience helper for performing a "move" edit where the source and destination field are the same.
+ */
+export function moveWithin(
+	editor: IDefaultEditBuilder,
+	field: FieldUpPath,
+	sourceIndex: number,
+	count: number,
+	destIndex: number,
+) {
+	editor.move(field, sourceIndex, count, field, destIndex);
 }
