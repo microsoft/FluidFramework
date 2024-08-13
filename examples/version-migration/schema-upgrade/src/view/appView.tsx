@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigratableModel, IMigrationTool } from "@fluid-example/example-utils";
+import type { IMigrationTool } from "@fluid-example/example-utils";
 import React, { useEffect, useState } from "react";
 
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
@@ -11,9 +11,9 @@ import type { IInventoryListAppModel } from "../modelInterfaces.js";
 import { InventoryListView } from "./inventoryView.js";
 
 export interface IInventoryListAppViewProps {
-	// TODO: All we really want here is a "readonly" indicator - maybe don't need the full IMigratableModel interface.
-	// Would maybe be better to grab that info from the Migrator rather than the MigrationTool anyway.
-	model: IInventoryListAppModel & IMigratableModel;
+	model: IInventoryListAppModel;
+	// TODO: All we really want here is a "readonly" indicator - maybe don't need the full IMigrationTool interface.
+	// Would maybe be better to grab that info from the Migrator rather than the MigrationTool anyway?
 	migrationTool: IMigrationTool;
 }
 
