@@ -5,11 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import type {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
+import {
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { LogLevel } from "@fluidframework/core-interfaces";
 
 import { ChildLogger, createChildLogger, createMultiSinkLogger } from "../logger.js";
 import { MockLogger } from "../mockLogger.js";
