@@ -45,8 +45,11 @@ export interface IMigratableModel
 	extends IVersionedModel,
 		IImportExportModel<unknown, unknown> {
 	/**
-	 * Close the model, rendering it inoperable and closing connections.
-	 * TODO: Decide whether the closing is an integral part of the migration, or if the caller should do the closing.
+	 * Dispose the model, rendering it inoperable and closing connections.
+	 *
+	 * @privateRemarks
+	 * This is required on the interface because the Migrator will make its own instance of the model for export,
+	 * and needs to clean that model up after the export is done.
 	 */
-	close(): void;
+	dispose(): void;
 }

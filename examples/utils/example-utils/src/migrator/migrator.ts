@@ -179,7 +179,7 @@ export class Migrator implements IMigrator {
 					acceptedMigration.migrationSequenceNumber,
 				);
 				const exportedData = await exportModel.exportData();
-				exportModel.close();
+				exportModel.dispose();
 
 				// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
 				// exported data into a format that the new model can import?  If we can determine it early, then

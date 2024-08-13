@@ -60,7 +60,7 @@ export class InventoryListAppModel implements IInventoryListAppModel, IMigratabl
 		return `version:two\n${inventoryItemStrings.join("\n")}`;
 	};
 
-	public close() {
-		this.container.close();
+	public dispose() {
+		this.container.dispose();
 	}
 }

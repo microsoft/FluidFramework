@@ -6,7 +6,6 @@
 export {
 	CreateModelCallback,
 	instantiateMigratableRuntime,
-	MigratableModelContainerRuntimeFactory,
 } from "./instantiateMigratableRuntime.js";
 export {
 	IAttachedMigratableModel,

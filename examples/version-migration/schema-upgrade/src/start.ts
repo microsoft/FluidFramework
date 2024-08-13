@@ -115,7 +115,7 @@ async function start(): Promise<void> {
 		inventoryListDataTransformationCallback,
 	);
 	migrator.events.on("migrated", () => {
-		model.close();
+		model.dispose();
 		model = migrator.currentModel;
 		migrationTool = migrator.currentMigrationTool;
 		render(model, migrationTool);
