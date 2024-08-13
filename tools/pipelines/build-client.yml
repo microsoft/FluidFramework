@@ -61,7 +61,7 @@ trigger:
   paths:
     include:
     # Trigger on any edits to files in the root
-    - "*"
+    - "*.*"
     - azure
     - common/build/build-common
     - examples
@@ -93,7 +93,7 @@ pr:
   paths:
     include:
     # Trigger on any edits to files in the root
-    - "*"
+    - "*.*"
     - azure
     - common/build/build-common
     - examples
