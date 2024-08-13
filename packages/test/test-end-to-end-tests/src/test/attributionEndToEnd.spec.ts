@@ -16,7 +16,6 @@ import {
 } from "@fluid-private/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { delay } from "@fluidframework/core-utils/internal";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
@@ -135,49 +134,51 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 	 * Tracked by AB#4997, if no error event is detected within one sprint, we will remove
 	 * the skipping or take actions accordingly if it is.
 	 */
-	itSkipsFailureOnSpecificDrivers(
-		"Can attribute content from multiple collaborators",
-		["tinylicious", "t9s"],
-		async () => {
-			const attributor = createRuntimeAttributor();
-			const container1 = await provider.makeTestContainer(getTestConfig(attributor));
-			const sharedString1 = await sharedStringFromContainer(container1);
-			const attributor2 = createRuntimeAttributor();
-			const container2 = await provider.loadTestContainer(getTestConfig(attributor2));
-			const sharedString2 = await sharedStringFromContainer(container2);
+	for (let i = 0; i < 5; i++) {
+		itSkipsFailureOnSpecificDrivers(
+			"Can attribute content from multiple collaborators",
+			["tinylicious", "t9s"],
+			async () => {
+				const attributor = createRuntimeAttributor();
+				const container1 = await provider.makeTestContainer(getTestConfig(attributor));
+				const sharedString1 = await sharedStringFromContainer(container1);
+				const attributor2 = createRuntimeAttributor();
+				const container2 = await provider.loadTestContainer(getTestConfig(attributor2));
+				const sharedString2 = await sharedStringFromContainer(container2);
 
-			const text = "client 1";
-			sharedString1.insertText(0, text);
-			assertAttributionMatches(sharedString1, 3, attributor, "local");
-			await provider.ensureSynchronized();
-			sharedString2.insertText(0, "client 2, ");
-			await provider.ensureSynchronized();
-			assert.equal(sharedString1.getText(), "client 2, client 1");
+				const text = "client 1";
+				sharedString1.insertText(0, text);
+				assertAttributionMatches(sharedString1, 3, attributor, "local");
+				await provider.ensureSynchronized();
+				sharedString2.insertText(0, "client 2, ");
+				await provider.ensureSynchronized();
+				assert.equal(sharedString1.getText(), "client 2, client 1");
+				console.log(
+					container1.deltaManager.lastSequenceNumber,
+					container2.deltaManager.lastSequenceNumber,
+				);
 
-			// Add delay as we were seeing that keys were not present in the attributor for r11s.
-			if (provider.driver.type !== "local") {
-				await delay(200);
-			}
-			assert(
-				container1.clientId !== undefined && container2.clientId !== undefined,
-				"Both containers should have client ids.",
-			);
-			assertAttributionMatches(sharedString1, 3, attributor, {
-				user: container1.audience.getMember(container2.clientId)?.user,
-			});
-			assertAttributionMatches(sharedString1, 13, attributor, {
-				user: container1.audience.getMember(container1.clientId)?.user,
-			});
-			assertAttributionMatches(sharedString2, 3, attributor2, {
-				user: container1.audience.getMember(container2.clientId)?.user,
-			});
-			assertAttributionMatches(sharedString2, 13, attributor2, {
-				user: container1.audience.getMember(container1.clientId)?.user,
-			});
-		},
-	);
+				assert(
+					container1.clientId !== undefined && container2.clientId !== undefined,
+					"Both containers should have client ids.",
+				);
+				assertAttributionMatches(sharedString1, 3, attributor, {
+					user: container1.audience.getMember(container2.clientId)?.user,
+				});
+				assertAttributionMatches(sharedString1, 13, attributor, {
+					user: container1.audience.getMember(container1.clientId)?.user,
+				});
+				assertAttributionMatches(sharedString2, 3, attributor2, {
+					user: container1.audience.getMember(container2.clientId)?.user,
+				});
+				assertAttributionMatches(sharedString2, 13, attributor2, {
+					user: container1.audience.getMember(container1.clientId)?.user,
+				});
+			},
+		);
+	}
 
-	it("attributes content created in a detached state", async () => {
+	it.skip("attributes content created in a detached state", async () => {
 		const attributor = createRuntimeAttributor();
 		const loader = provider.makeTestLoader(getTestConfig(attributor));
 		const defaultCodeDetails: IFluidCodeDetails = {

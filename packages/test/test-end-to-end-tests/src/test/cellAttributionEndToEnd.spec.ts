@@ -17,7 +17,6 @@ import {
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { delay } from "@fluidframework/core-utils/internal";
 import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import {
 	ChannelFactoryRegistry,
@@ -144,10 +143,6 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 			sharedCell2.set(2);
 			await provider.ensureSynchronized();
 
-			// Add delay as we were seeing that keys were not present in the attributor for r11s.
-			if (provider.driver.type !== "local") {
-				await delay(200);
-			}
 			assertAttributionMatches(sharedCell1, attributor, {
 				user: container1.audience.getMember(container2.clientId)?.user,
 			});
