@@ -54,8 +54,8 @@ export interface FieldEdit {
 	change: SequenceFieldEdit | RequiredFieldEdit | OptionalFieldEdit;
 }
 
-interface GUIDNodeValue {
-	guid: number;
+export interface GUIDNodeValue {
+	guid: string;
 }
 
 export interface NodeObjectValue {

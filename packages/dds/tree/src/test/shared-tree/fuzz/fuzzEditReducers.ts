@@ -37,6 +37,7 @@ import {
 	FuzzHandleNode,
 	type SequenceChildren,
 	nodeSchemaFromTreeSchema,
+	type GUIDNode,
 } from "./fuzzUtils.js";
 
 import {
@@ -55,6 +56,7 @@ import {
 	type GeneratedFuzzNode,
 	GeneratedFuzzValueType,
 	type NodeObjectValue,
+	type GUIDNodeValue,
 } from "./operationTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeNode } from "../../../simple-tree/types.js";
@@ -446,6 +448,13 @@ function generateFuzzLeafNode(node: GeneratedFuzzNode, nodeSchema: typeof FuzzNo
 				}),
 				sequenceChildren: [],
 			}) as FuzzNode;
+		}
+		case GeneratedFuzzValueType.GUIDNode: {
+			const guid = (node.value as GUIDNodeValue).guid;
+			const nodeObjectSchema = nodeSchemaForNodeType(nodeSchema, guid);
+			return new nodeObjectSchema({
+				value: guid,
+			}) as GUIDNode;
 		}
 		default:
 			return new FuzzStringNode({ stringValue: node.value as string });

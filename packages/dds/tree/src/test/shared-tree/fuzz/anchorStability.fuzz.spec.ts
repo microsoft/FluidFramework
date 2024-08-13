@@ -64,6 +64,8 @@ describe("Fuzz - anchor stability", () => {
 	const opsPerRun = 20;
 	const runsPerBatch = 50;
 	describe("Anchors are unaffected by aborted transaction", () => {
+		// TODO: Currently manually disposing the view when applying the schema op is causing a double dispose issue.
+		// Once this issue has been resolved, re-enable schema ops.
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			set: 2,
 			clear: 1,
@@ -130,6 +132,8 @@ describe("Fuzz - anchor stability", () => {
 		});
 	});
 	describe("Anchors are stable", () => {
+		// TODO: Currently manually disposing the view when applying the schema op is causing a double dispose issue.
+		// Once this issue has been resolved, re-enable schema ops.
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			set: 2,
 			clear: 1,

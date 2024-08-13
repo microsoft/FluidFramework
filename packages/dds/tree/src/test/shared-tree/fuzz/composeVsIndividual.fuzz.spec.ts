@@ -142,8 +142,6 @@ describe("Fuzz - composed vs individual changes", () => {
 	const runsPerBatch = 50;
 
 	// "start" and "commit" opWeights set to 0 in case there are changes to the default weights.
-	// AB#7593: schema weight is currently set to 0, as most tests are failing with various branch related asserts,
-	// assert 0x675, "Expected branch to be tracked"
 	const composeVsIndividualWeights: Partial<EditGeneratorOpWeights> = {
 		set: 2,
 		clear: 1,

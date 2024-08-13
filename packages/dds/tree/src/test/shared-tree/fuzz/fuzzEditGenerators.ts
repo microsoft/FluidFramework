@@ -340,7 +340,7 @@ export const makeTreeEditGenerator = (
 				};
 			default:
 				// This would be the for the case when the node type was one of our custom node with GUID as the identifier
-				return { type: GeneratedFuzzValueType.GUIDNode, value: nodeTypeToGenerate };
+				return { type: GeneratedFuzzValueType.GUIDNode, value: { guid: nodeTypeToGenerate } };
 		}
 	};
 
