@@ -10,22 +10,17 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 
 import {
 	SchemaFactory,
-	type TreeNode,
 	TreeViewConfiguration,
 	type TreeNodeSchema,
 	type TreeView,
 } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 import { getView, validateUsageError } from "../utils.js";
-import {
-	MockNodeKeyManager,
-	treeSchemaFromStoredSchema,
-} from "../../feature-libraries/index.js";
+import { MockNodeKeyManager } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { checkUnion } from "../../simple-tree/tree.js";
 // eslint-disable-next-line import/no-internal-modules
-import { isObjectNodeSchema } from "../../simple-tree/objectNodeTypes.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -417,23 +412,6 @@ describe("simple-tree tree", () => {
 		assert.equal(view.root, "x");
 	});
 
-	it("optional Root - test", () => {
-		class node extends schema.object("field", { value: schema.string }) {}
-		const config = new TreeViewConfiguration({
-			schema: schema.object("test", {
-				field: schema.optional(node),
-			}),
-		});
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view = tree.viewWith(config);
-		view.initialize({});
-		view.root.field = new node({ value: "s" });
-		Tree.parent(new node({ value: "s" }));
-	});
-
 	it("Nested list", () => {
 		const nestedList = schema.array(schema.array(schema.string));
 		const config = new TreeViewConfiguration({ schema: nestedList });
@@ -477,24 +455,19 @@ describe("simple-tree tree", () => {
 
 describe("object allocation tests", () => {
 	it("accessing leaf on object node does not allocate flex nodes", () => {
-		class TreeWithLeaves extends schema.object("TreeWithLeaves", {
-			leaf: schema.object("leafNode", { leafValue: schema.number }),
-		}) {}
+		class TreeWithLeaves extends schema.object("TreeWithLeaves", { leaf: schema.number }) {}
 		const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
 		const view = tree.viewWith(config);
-		const storedSchema = tree.storedSchema;
-		const flexSchema = treeSchemaFromStoredSchema(storedSchema);
-		view.initialize({ leaf: { leafValue: 1 } });
+		view.initialize({ leaf: 1 });
 		const context = view.getView().context;
 		// Note: access the root before trying to access just the leaf, to not count any object allocations that result from
 		// accessing the root as part of the allocations from the leaf access. Also, store it to avoid additional computation
 		// from any intermediate getters when accessing the leaf.
 		const root = view.root;
-		const parent = Tree.parent(root.leaf);
 		const countBefore = context.withAnchors.size;
 		const _accessLeaf = root.leaf;
 		const countAfter = context.withAnchors.size;
