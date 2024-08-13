@@ -27,7 +27,8 @@ import { testSpecializedFieldCursor } from "../../cursorTestSuite.js";
 import { sum } from "../../domains/json/benchmarks.js";
 
 import { emptyShape, polygonTree, testData, xField, yField } from "./uniformChunkTestData.js";
-import { jsonObjectSchemaIdentifier } from "../../utils.js";
+import { JsonObject } from "../../utils.js";
+import { brand } from "../../../util/index.js";
 
 // Validate a few aspects of shapes that are easier to verify here than via checking the cursor.
 function validateShape(shape: ChunkShape): void {
@@ -69,7 +70,7 @@ describe("uniformChunk", () => {
 		builders: {
 			withKeys: (keys) => {
 				const withKeysShape = new TreeShape(
-					jsonObjectSchemaIdentifier,
+					brand(JsonObject.identifier),
 					false,
 					keys.map((key) => [key, emptyShape, 1] as const),
 				);

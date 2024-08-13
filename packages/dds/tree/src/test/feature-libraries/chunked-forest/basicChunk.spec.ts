@@ -43,7 +43,7 @@ import {
 
 import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities.js";
 import { emptyShape, testData } from "./uniformChunkTestData.js";
-import { jsonObjectSchemaIdentifier } from "../../utils.js";
+import { JsonObject } from "../../utils.js";
 
 describe("basic chunk", () => {
 	it("calling chunkTree on existing chunk adds a reference", () => {
@@ -94,11 +94,11 @@ describe("basic chunk", () => {
 			name: data.name,
 			dataFactory: () =>
 				new BasicChunk(
-					jsonObjectSchemaIdentifier,
+					brand(JsonObject.identifier),
 					new Map([[EmptyKey, [data.dataFactory()]]]),
 				),
 			reference: [
-				{ type: jsonObjectSchemaIdentifier, fields: { [EmptyKey]: data.reference } },
+				{ type: brand(JsonObject.identifier), fields: { [EmptyKey]: data.reference } },
 			],
 			path: data.path,
 		});
@@ -109,7 +109,7 @@ describe("basic chunk", () => {
 		builders: {
 			withKeys: (keys) => {
 				const withKeysShape = new BasicChunk(
-					jsonObjectSchemaIdentifier,
+					brand(JsonObject.identifier),
 					new Map(
 						keys.map((key) => [key, [uniformChunk(emptyShape.withTopLevelLength(1), [])]]),
 					),
