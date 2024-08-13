@@ -46,9 +46,12 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 	static readonly description = "Generates type tests for a package or group of packages.";
 
 	static readonly flags = {
-		level: Flags.custom<ApiLevel>({
+		entrypoint: Flags.custom<ApiLevel>({
+			// Temporary alias for back-compat
+			aliases: ["level"],
+			deprecateAliases: true,
 			description:
-				"What API level to generate tests for. If this flag is provided it will override the typeValidation.apiLevel setting in the package's package.json.",
+				'What entrypoint to generate tests for. Use "public" for the default entrypoint. If this flag is provided it will override the typeValidation.entrypoint setting in the package\'s package.json.',
 			options: knownApiLevels,
 		})(),
 		outDir: Flags.directory({
@@ -61,7 +64,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		}),
 		publicFallback: Flags.boolean({
 			description:
-				"Use the public entrypoint as a fallback if the API at the requested level is not found.",
+				"Use the public entrypoint as a fallback if the requested entrypoint is not found.",
 			default: false,
 		}),
 		...PackageCommand.flags,
@@ -70,15 +73,15 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 	protected defaultSelection = "dir" as PackageSelectionDefault;
 
 	protected async processPackage(pkg: Package): Promise<void> {
-		const { level: levelFlag, outDir, outFile } = this.flags;
-		const level: ApiLevel =
-			levelFlag ??
-			pkg.packageJson.typeValidation?.apiLevel ??
-			defaultTypeValidationConfig.apiLevel;
+		const { entrypoint: entrypointFlag, outDir, outFile } = this.flags;
+		const entrypoint: ApiLevel =
+			entrypointFlag ??
+			pkg.packageJson.typeValidation?.entrypoint ??
+			defaultTypeValidationConfig.entrypoint;
 		const fallbackLevel = this.flags.publicFallback ? ApiLevel.public : undefined;
 
 		this.verbose(
-			`${pkg.nameColored}: Generating type tests for "${level}" ApiLevel with "${fallbackLevel}" as a fallback.`,
+			`${pkg.nameColored}: Generating type tests for "${entrypoint}" entrypoint with "${fallbackLevel}" as a fallback.`,
 		);
 
 		// Do not check that file exists before opening:
@@ -114,15 +117,15 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// statements into the type test file, we need to use the previous version name.
 		previousPackageJson.name = previousPackageName;
 
-		const { typesPath: currentTypesPathRelative, levelUsed: currentPackageLevel } =
-			getTypesPathWithFallback(currentPackageJson, level, this.logger, fallbackLevel);
+		const { typesPath: currentTypesPathRelative, entrypointUsed: currentPackageEntrypoint } =
+			getTypesPathWithFallback(currentPackageJson, entrypoint, this.logger, fallbackLevel);
 		const currentTypesPath = path.resolve(path.join(pkg.directory, currentTypesPathRelative));
 		this.verbose(
-			`${pkg.nameColored}: Found ${currentPackageLevel} type definitions for ${currentPackageJson.name}: ${currentTypesPath}`,
+			`${pkg.nameColored}: Found ${currentPackageEntrypoint} type definitions for ${currentPackageJson.name}: ${currentTypesPath}`,
 		);
 
-		const { typesPath: previousTypesPathRelative, levelUsed: previousPackageLevel } =
-			getTypesPathWithFallback(previousPackageJson, level, this.logger, fallbackLevel);
+		const { typesPath: previousTypesPathRelative, entrypointUsed: previousPackageLevel } =
+			getTypesPathWithFallback(previousPackageJson, entrypoint, this.logger, fallbackLevel);
 		const previousTypesPath = path.resolve(
 			path.join(previousBasePath, previousTypesPathRelative),
 		);
@@ -216,28 +219,28 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  */
 function getTypesPathWithFallback(
 	packageJson: PackageJson,
-	level: ApiLevel,
+	entrypoint: ApiLevel,
 	log: Logger,
-	fallbackLevel?: ApiLevel,
-): { typesPath: string; levelUsed: ApiLevel } {
-	let chosenLevel: ApiLevel = level;
+	fallbackEntrypoint?: ApiLevel,
+): { typesPath: string; entrypointUsed: ApiLevel } {
+	let chosenEntrypoint: ApiLevel = entrypoint;
 	// First try the requested paths, but fall back to public otherwise if configured.
-	let typesPath: string | undefined = getTypesPathFromPackage(packageJson, level, log);
+	let typesPath: string | undefined = getTypesPathFromPackage(packageJson, entrypoint, log);
 
 	if (typesPath === undefined) {
 		// Try the public types if configured to do so. If public types are found adjust the level accordingly.
 		typesPath =
-			fallbackLevel === undefined
+			fallbackEntrypoint === undefined
 				? undefined
-				: getTypesPathFromPackage(packageJson, fallbackLevel, log);
-		chosenLevel = fallbackLevel ?? level;
+				: getTypesPathFromPackage(packageJson, fallbackEntrypoint, log);
+		chosenEntrypoint = fallbackEntrypoint ?? entrypoint;
 		if (typesPath === undefined) {
 			throw new Error(
-				`${packageJson.name}: No type definitions found for "${chosenLevel}" API level.`,
+				`${packageJson.name}: No type definitions found for "${chosenEntrypoint}" API level.`,
 			);
 		}
 	}
-	return { typesPath: typesPath, levelUsed: chosenLevel };
+	return { typesPath: typesPath, entrypointUsed: chosenEntrypoint };
 }
 
 /**

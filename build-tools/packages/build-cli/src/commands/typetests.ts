@@ -115,7 +115,8 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 							? true
 							: defaultTypeValidationConfig.disabled,
 					broken: json.typeValidation?.broken ?? defaultTypeValidationConfig.broken,
-					apiLevel: json.typeValidation?.apiLevel ?? defaultTypeValidationConfig.apiLevel,
+					entrypoint:
+						json.typeValidation?.entrypoint ?? defaultTypeValidationConfig.entrypoint,
 				};
 			}
 		});
