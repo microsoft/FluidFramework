@@ -152,10 +152,6 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 			sharedString2.insertText(0, "client 2, ");
 			await provider.ensureSynchronized();
 			assert.equal(sharedString1.getText(), "client 2, client 1");
-			console.log(
-				container1.deltaManager.lastSequenceNumber,
-				container2.deltaManager.lastSequenceNumber,
-			);
 
 			assert(
 				container1.clientId !== undefined && container2.clientId !== undefined,
@@ -173,7 +169,8 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 			assertAttributionMatches(sharedString2, 13, attributor2, {
 				user: container1.audience.getMember(container1.clientId)?.user,
 			});
-		});
+		}
+	);
 
 	it("attributes content created in a detached state", async () => {
 		const attributor = createRuntimeAttributor();
