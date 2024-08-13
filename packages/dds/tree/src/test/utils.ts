@@ -118,6 +118,7 @@ import {
 	MockNodeKeyManager,
 	type FlexTreeSchema,
 	cursorForMapTreeField,
+	type IDefaultEditBuilder,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
@@ -787,14 +788,20 @@ const sf = new SchemaFactory("com.fluidframework.json");
 export const NumberArray = sf.array("array", sf.number);
 export const StringArray = sf.array("array", sf.string);
 
+export const IdentifierSchema = sf.object("identifier-object", {
+	identifier: sf.identifier,
+});
+
 const jsonPrimitiveSchema = [sf.null, sf.boolean, sf.number, sf.string] as const;
 export const JsonObject = sf.mapRecursive("object", [
 	() => JsonObject,
 	() => JsonArray,
 	...jsonPrimitiveSchema,
 ]);
+
 export const JsonArray = sf.arrayRecursive("array", [
 	JsonObject,
+	IdentifierSchema,
 	() => JsonArray,
 	...jsonPrimitiveSchema,
 ]);
@@ -1420,4 +1427,17 @@ function normalizeNewFieldContent(
 	}
 
 	return cursorForMapTreeField([mapTreeFromCursor(content)]);
+}
+
+/**
+ * Convenience helper for performing a "move" edit where the source and destination field are the same.
+ */
+export function moveWithin(
+	editor: IDefaultEditBuilder,
+	field: FieldUpPath,
+	sourceIndex: number,
+	count: number,
+	destIndex: number,
+) {
+	editor.move(field, sourceIndex, count, field, destIndex);
 }
