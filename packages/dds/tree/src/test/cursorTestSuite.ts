@@ -37,7 +37,7 @@ import {
 } from "./utils.js";
 import { SchemaFactory } from "../simple-tree/index.js";
 
-const sf = new SchemaFactory("cursor test suite");
+const sf = new SchemaFactory("Cursor Test Suite");
 
 export const EmptyObject = sf.object("empty object", {});
 const EmptyObject2 = sf.object("empty object 2", {});
