@@ -417,13 +417,19 @@ class EagerMapTreeField<T extends FlexAllowedTypes> implements MapTreeField {
 
 	public context: undefined;
 
-	// All edits to the field (i.e. mutations of the field's MapTrees) should be directed through this function.
-	// This function ensures that the parent MapTree has no empty fields (which is an invariant of `MapTree`) after the mutation.
-	protected edit(mutation: (mapTrees: ExclusiveMapTree[]) => void): void {
-		const mapTrees = this.parent.mapTree.fields.get(this.key) ?? [];
-		mutation(mapTrees);
-		if (mapTrees.length > 0) {
-			this.parent.mapTree.fields.set(this.key, mapTrees);
+	/**
+	 * Mutate this field.
+	 * @param edit - A function which receives the current `MapTree`s that comprise the contents of the field so that it may be mutated.
+	 * The function may mutate the array in place or return a new array.
+	 * If a new array is returned then it will be used as the new contents of the field, otherwise the original array will be continue to be used.
+	 * @remarks All edits to the field (i.e. mutations of the field's MapTrees) should be directed through this function.
+	 * This function ensures that the parent MapTree has no empty fields (which is an invariant of `MapTree`) after the mutation.
+	 */
+	protected edit(edit: (mapTrees: ExclusiveMapTree[]) => void | ExclusiveMapTree[]): void {
+		const oldMapTrees = this.parent.mapTree.fields.get(this.key) ?? [];
+		const newMapTrees = edit(oldMapTrees) ?? oldMapTrees;
+		if (newMapTrees.length > 0) {
+			this.parent.mapTree.fields.set(this.key, newMapTrees);
 		} else {
 			this.parent.mapTree.fields.delete(this.key);
 		}
@@ -434,7 +440,7 @@ class EagerMapTreeOptionalField<T extends FlexAllowedTypes>
 	extends EagerMapTreeField<T>
 	implements FlexTreeOptionalField<T>
 {
-	public editor = {
+	public readonly editor = {
 		set: (newContent: ExclusiveMapTree | undefined) => {
 			// If the new content is a MapTreeNode, it needs to have its parent pointer updated
 			if (newContent !== undefined) {
@@ -482,9 +488,37 @@ class EagerMapTreeSequenceField<T extends FlexAllowedTypes>
 	extends EagerMapTreeField<T>
 	implements FlexTreeSequenceField<T>
 {
-	public get editor(): SequenceFieldEditBuilder<ExclusiveMapTree[]> {
-		throw unsupportedUsageError("Editing an array");
-	}
+	public readonly editor: SequenceFieldEditBuilder<ExclusiveMapTree[]> = {
+		insert: (index, newContent) => {
+			for (let i = 0; i < newContent.length; i++) {
+				const c = newContent[i];
+				assert(c !== undefined, "Unexpected sparse array content");
+				nodeCache.get(c)?.adoptBy(this, index + i);
+			}
+			this.edit((mapTrees) => {
+				if (newContent.length < 1000) {
+					// For "smallish arrays" (`1000` is not empirically derived), the `splice` function is appropriate...
+					mapTrees.splice(index, 0, ...newContent);
+				} else {
+					// ...but we avoid using `splice` + spread for very large input arrays since there is a limit on how many elements can be spread (too many will overflow the stack).
+					return mapTrees.slice(0, index).concat(newContent, mapTrees.slice(index));
+				}
+			});
+		},
+		remove: (index, count) => {
+			for (let i = index; i < index + count; i++) {
+				const c = this.mapTrees[i];
+				assert(c !== undefined, "Unexpected sparse array");
+				nodeCache.get(c)?.adoptBy(undefined);
+			}
+			this.edit((mapTrees) => {
+				mapTrees.splice(index, count);
+			});
+		},
+		move: (sourceIndex, count, destIndex) => {
+			throw unsupportedUsageError("Moving nodes in an array");
+		},
+	};
 
 	public at(index: number): FlexTreeUnboxNodeUnion<T> | undefined {
 		const i = indexForAt(index, this.length);
