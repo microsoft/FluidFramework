@@ -111,15 +111,31 @@ export {
 	type FieldSchemaUnsafe,
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
+	type FixRecursiveArraySchema,
 	// experimental @internal APIs:
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
+	type EmptyObject,
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
 	test_RecursiveObjectPojoMode,
+	type JsonTreeSchema,
+	type JsonSchemaId,
+	type JsonNodeSchema,
+	type JsonNodeSchemaBase,
+	type JsonLeafNodeSchema,
+	type JsonMapNodeSchema,
+	type JsonArrayNodeSchema,
+	type JsonObjectNodeSchema,
+	type JsonFieldSchema,
+	type JsonSchemaRef,
+	type JsonRefPath,
+	type JsonSchemaType,
+	type JsonLeafSchemaType,
+	getJsonSchema,
 } from "./simple-tree/index.js";
 export { SharedTree, configuredSharedTree } from "./treeFactory.js";
 
@@ -133,8 +149,6 @@ export {
 	type RestrictiveReadonlyRecord,
 	type MakeNominal,
 } from "./util/index.js";
-
-export { type EmptyObject } from "./feature-libraries/index.js";
 
 import * as InternalTypes from "./internalTypes.js";
 export {

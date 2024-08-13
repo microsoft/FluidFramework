@@ -1960,8 +1960,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.50.0
+        version: 0.50.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -3529,7 +3529,7 @@ importers:
         version: link:../../../packages/dds/sequence
       debug:
         specifier: ^4.3.4
-        version: 4.3.5(supports-color@8.1.1)
+        version: 4.3.5
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.15.2
@@ -3771,7 +3771,7 @@ importers:
         version: 2.1.0
       debug:
         specifier: ^4.3.4
-        version: 4.3.5(supports-color@8.1.1)
+        version: 4.3.5
       react:
         specifier: ^17.0.1
         version: 17.0.2
@@ -4399,8 +4399,8 @@ importers:
         specifier: ~2.3.0
         version: 2.3.0(webpack@5.89.0)
       '@fluid-tools/version-tools':
-        specifier: ^0.42.0
-        version: 0.42.0
+        specifier: 0.43.0-285387
+        version: 0.43.0-285387
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -4408,8 +4408,8 @@ importers:
         specifier: link:../../../build-tools/packages/build-tools
         version: link:../../../build-tools/packages/build-tools
       '@fluidframework/bundle-size-tools':
-        specifier: ^0.42.0
-        version: 0.42.0(webpack-cli@4.10.0)
+        specifier: 0.43.0-285387
+        version: 0.43.0-285387(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -7007,8 +7007,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.50.0
+        version: 0.50.0
       '@fluid-tools/build-cli':
         specifier: link:../../../build-tools/packages/build-cli
         version: link:../../../build-tools/packages/build-cli
@@ -7446,8 +7446,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/test-drivers
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.50.0
+        version: 0.50.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -8036,8 +8036,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: ^0.47.0
-        version: 0.47.0
+        specifier: ^0.50.0
+        version: 0.50.0
       '@fluid-tools/build-cli':
         specifier: link:../../../build-tools/packages/build-cli
         version: link:../../../build-tools/packages/build-cli
@@ -8524,8 +8524,8 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.50.0
+        version: 0.50.0
       '@fluid-tools/build-cli':
         specifier: link:../../../build-tools/packages/build-cli
         version: link:../../../build-tools/packages/build-cli
@@ -8660,8 +8660,8 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.50.0
+        version: 0.50.0
       '@fluid-tools/build-cli':
         specifier: link:../../../build-tools/packages/build-cli
         version: link:../../../build-tools/packages/build-cli
@@ -8796,8 +8796,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.50.0
+        version: 0.50.0
       '@fluid-tools/build-cli':
         specifier: link:../../../build-tools/packages/build-cli
         version: link:../../../build-tools/packages/build-cli
@@ -9253,8 +9253,8 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.50.0
+        version: 0.50.0
       '@fluid-tools/build-cli':
         specifier: link:../../../build-tools/packages/build-cli
         version: link:../../../build-tools/packages/build-cli
@@ -9873,8 +9873,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-drivers
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.50.0
+        version: 0.50.0
       '@fluid-tools/build-cli':
         specifier: link:../../../build-tools/packages/build-cli
         version: link:../../../build-tools/packages/build-cli
@@ -12290,7 +12290,7 @@ importers:
         version: 1.2.0
       debug:
         specifier: ^4.3.4
-        version: 4.3.5(supports-color@8.1.1)
+        version: 4.3.5
       double-ended-queue:
         specifier: ^2.1.0-0
         version: 2.1.0-0
@@ -12620,8 +12620,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.50.0
+        version: 0.50.0
       '@fluid-tools/build-cli':
         specifier: link:../../../build-tools/packages/build-cli
         version: link:../../../build-tools/packages/build-cli
@@ -12969,8 +12969,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/stochastic-test-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.50.0
+        version: 0.50.0
       '@fluid-tools/build-cli':
         specifier: link:../../../build-tools/packages/build-cli
         version: link:../../../build-tools/packages/build-cli
@@ -14426,8 +14426,8 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.50.0
+        version: 0.50.0
       '@fluid-tools/build-cli':
         specifier: link:../../../build-tools/packages/build-cli
         version: link:../../../build-tools/packages/build-cli
@@ -14482,58 +14482,6 @@ importers:
       random-js:
         specifier: ^2.1.0
         version: 2.1.0
-      rimraf:
-        specifier: ^4.4.0
-        version: 4.4.1
-      typescript:
-        specifier: ~5.4.5
-        version: 5.4.5
-
-  packages/test/test-app-insights-logger:
-    dependencies:
-      '@fluid-internal/test-driver-definitions':
-        specifier: workspace:~
-        version: link:../test-driver-definitions
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../common/core-interfaces
-      applicationinsights:
-        specifier: ^2.1.9
-        version: 2.9.1
-    devDependencies:
-      '@arethetypeswrong/cli':
-        specifier: ^0.15.2
-        version: 0.15.2
-      '@biomejs/biome':
-        specifier: ~1.8.3
-        version: 1.8.3
-      '@fluid-tools/build-cli':
-        specifier: link:../../../build-tools/packages/build-cli
-        version: link:../../../build-tools/packages/build-cli
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: link:../../../build-tools/packages/build-tools
-        version: link:../../../build-tools/packages/build-tools
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^5.3.0
-        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
-      '@microsoft/api-extractor':
-        specifier: ^7.45.1
-        version: 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)(@types/node@18.19.1)
-      concurrently:
-        specifier: ^8.2.1
-        version: 8.2.2
-      copyfiles:
-        specifier: ^2.4.1
-        version: 2.4.1
-      eslint:
-        specifier: ~8.55.0
-        version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -14732,8 +14680,8 @@ importers:
         specifier: workspace:~
         version: link:../test-version-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.48.0
-        version: 0.48.0
+        specifier: ^0.50.0
+        version: 0.50.0
       '@fluidframework/agent-scheduler':
         specifier: workspace:~
         version: link:../../framework/agent-scheduler
@@ -15168,7 +15116,7 @@ importers:
         version: 1.0.3
       debug:
         specifier: ^4.3.4
-        version: 4.3.5(supports-color@8.1.1)
+        version: 4.3.5
       mocha:
         specifier: ^10.2.0
         version: 10.2.0
@@ -15270,8 +15218,8 @@ importers:
         specifier: workspace:~
         version: link:../test-drivers
       '@fluid-tools/version-tools':
-        specifier: ^0.42.0
-        version: 0.42.0
+        specifier: 0.43.0-285387
+        version: 0.43.0-285387
       '@fluidframework/agent-scheduler':
         specifier: workspace:~
         version: link:../../framework/agent-scheduler
@@ -16764,7 +16712,7 @@ importers:
         version: link:../../common/driver-definitions
       debug:
         specifier: ^4.3.4
-        version: 4.3.5(supports-color@8.1.1)
+        version: 4.3.5
       uuid:
         specifier: ^9.0.0
         version: 9.0.1
@@ -16870,7 +16818,7 @@ importers:
         version: 0.3.2
       debug:
         specifier: ^4.3.4
-        version: 4.3.5(supports-color@8.1.1)
+        version: 4.3.5
       jwt-decode:
         specifier: ^4.0.0
         version: 4.0.0
@@ -17191,20 +17139,6 @@ packages:
       jsonwebtoken: 9.0.2
       uuid: 8.3.2
 
-  /@azure/opentelemetry-instrumentation-azure-sdk@1.0.0-beta.5:
-    resolution: {integrity: sha512-fsUarKQDvjhmBO4nIfaZkfNSApm1hZBzcvpNbSrXdcUBxu7lRvKsV5DnwszX7cnhLyVOW9yl1uigtRQ1yDANjA==}
-    engines: {node: '>=14.0.0'}
-    dependencies:
-      '@azure/core-tracing': 1.0.1
-      '@azure/logger': 1.0.4
-      '@opentelemetry/api': 1.7.0
-      '@opentelemetry/core': 1.18.1(@opentelemetry/api@1.7.0)
-      '@opentelemetry/instrumentation': 0.41.2(@opentelemetry/api@1.7.0)
-      tslib: 2.6.2
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
-
   /@babel/code-frame@7.24.2:
     resolution: {integrity: sha512-y5+tLQyV8pg3fsiln67BVLD1P13Eg4lh5RW9mF0zUuvLrv9uIQ4MCL+CRT+FTsBlBjcIan6PGsLcBN0m3ClUyQ==}
     engines: {node: '>=6.9.0'}
@@ -17230,7 +17164,7 @@ packages:
       '@babel/traverse': 7.24.1
       '@babel/types': 7.24.0
       convert-source-map: 1.9.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       gensync: 1.0.0-beta.2
       json5: 2.2.3
       lodash: 4.17.21
@@ -17256,7 +17190,7 @@ packages:
       '@babel/traverse': 7.24.1
       '@babel/types': 7.24.0
       convert-source-map: 2.0.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       gensync: 1.0.0-beta.2
       json5: 2.2.3
       semver: 6.3.1
@@ -17353,7 +17287,7 @@ packages:
       '@babel/helper-module-imports': 7.24.3
       '@babel/helper-plugin-utils': 7.24.0
       '@babel/traverse': 7.24.1
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       lodash.debounce: 4.0.8
       resolve: 1.22.8
       semver: 6.3.1
@@ -17369,7 +17303,7 @@ packages:
       '@babel/core': 7.24.4
       '@babel/helper-compilation-targets': 7.23.6
       '@babel/helper-plugin-utils': 7.24.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       lodash.debounce: 4.0.8
       resolve: 1.22.8
     transitivePeerDependencies:
@@ -18778,7 +18712,7 @@ packages:
       '@babel/helper-split-export-declaration': 7.22.6
       '@babel/parser': 7.24.4
       '@babel/types': 7.24.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       globals: 11.12.0
     transitivePeerDependencies:
       - supports-color
@@ -19426,7 +19360,7 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dependencies:
       ajv: 6.12.6
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       espree: 9.6.1
       globals: 13.23.0
       ignore: 5.3.0
@@ -21038,22 +20972,8 @@ packages:
       '@fluidframework/driver-definitions': 2.1.0
     dev: true
 
-  /@fluid-tools/benchmark@0.47.0:
-    resolution: {integrity: sha512-lQ2ijhUJ68aOHqH1UxOBmAsSWfx2dIuI4vAlQ4e/ueh0a8KUZ8D8AUpJPu1k1pwuTlOuvb629BY9Q4HC6H/KBQ==}
-    dependencies:
-      chai: 4.3.10
-      chalk: 4.1.2
-      easy-table: 1.2.0
-      mocha: 10.2.0
-      mocha-json-output-reporter: 2.1.0(mocha@10.2.0)(moment@2.29.4)
-      mocha-multi-reporters: 1.5.1(mocha@10.2.0)
-      moment: 2.29.4
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
-  /@fluid-tools/benchmark@0.48.0:
-    resolution: {integrity: sha512-4eCnt4rQg+08zWGmAq1kjO0uWwDjU3aCW8Uz8ufLxASOZJ5T35RKX7REcuxNOzFVanfh4CKVV/E6a7grPDO3Lw==}
+  /@fluid-tools/benchmark@0.50.0:
+    resolution: {integrity: sha512-UGvRHYYGp0aRI90oDA8CFT2d8SdJMZMrDqQAJ9Qbw6VSGR3L9ii9xc43NWU33+qGrt3p1NpAzBppX1sVT55rag==}
     dependencies:
       chai: 4.3.10
       chalk: 4.1.2
@@ -21093,8 +21013,8 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@fluid-tools/version-tools@0.42.0:
-    resolution: {integrity: sha512-32FDWyyoruS46bO7wKZT/ClF7deNEfeWLFTMHhf8Xf4uNVURdand48bCRiT4a16Kfe3UyZ+bAV1O5qSIo+QFtg==}
+  /@fluid-tools/version-tools@0.43.0-285387:
+    resolution: {integrity: sha512-+8bWXNm7VudPVYWRM371SJBZH5MiqdOnf0NwT0N5dIsMP2pZ7Weg2mgg6j9EFr8khTVwZYNiUx8T03/oH8V9+Q==}
     engines: {node: '>=18.17.1'}
     hasBin: true
     dependencies:
@@ -21104,7 +21024,7 @@ packages:
       '@oclif/plugin-help': 6.2.7
       '@oclif/plugin-not-found': 3.2.14
       chalk: 2.4.2
-      semver: 7.6.0
+      semver: 7.6.3
       table: 6.8.1
     transitivePeerDependencies:
       - supports-color
@@ -21263,8 +21183,8 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/bundle-size-tools@0.42.0(webpack-cli@4.10.0):
-    resolution: {integrity: sha512-hrn+pPJ0ABgDWiB4mHEw29hAlq82CAhB1Kx9KYAtLRZ1azC6syoXHPimUTtfYCLFSHuTQ/tZzC9r0BNdcMz8PA==}
+  /@fluidframework/bundle-size-tools@0.43.0-285387(webpack-cli@4.10.0):
+    resolution: {integrity: sha512-T5PKITB2P10NNHMFRcsD8U5JNbgiMJHu8XMZkpo2IzkUhGWrqQSoz541dl+HyzetzJ8tjFYoILNrXm/g4BGfvw==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -21389,7 +21309,7 @@ packages:
       '@fluidframework/telemetry-utils': 2.1.0
       '@types/events_pkg': /@types/events@3.0.3
       '@ungap/structured-clone': 1.2.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       double-ended-queue: 2.1.0-0
       events_pkg: /events@3.3.0
       uuid: 9.0.1
@@ -22548,7 +22468,7 @@ packages:
       '@fluidframework/server-services-core': 5.0.0
       '@fluidframework/server-services-telemetry': 5.0.0
       '@fluidframework/server-test-utils': 5.0.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       events_pkg: /events@3.3.0
       jsrsasign: 11.1.0
       uuid: 9.0.1
@@ -22573,7 +22493,7 @@ packages:
       '@types/node': 18.19.1
       '@types/ws': 6.0.4
       assert: 2.1.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       lodash: 4.17.21
@@ -22594,7 +22514,7 @@ packages:
       '@fluidframework/protocol-definitions': 0.1028.2000
       axios: 0.28.1(debug@4.3.5)
       crc-32: 1.2.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       json-stringify-safe: 5.0.1
       jsrsasign: 11.1.0
       jwt-decode: 3.1.2
@@ -22614,7 +22534,7 @@ packages:
       '@fluidframework/protocol-definitions': 3.2.0
       axios: 1.6.2(debug@4.3.5)
       crc-32: 1.2.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       json-stringify-safe: 5.0.1
       jsrsasign: 11.1.0
       jwt-decode: 4.0.0
@@ -22633,7 +22553,7 @@ packages:
       '@fluidframework/server-services-telemetry': 5.0.0
       '@types/nconf': 0.10.6
       '@types/node': 18.19.1
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       events: 3.3.0
       nconf: 0.12.1
     transitivePeerDependencies:
@@ -22653,7 +22573,7 @@ packages:
       '@socket.io/redis-adapter': 8.3.0(socket.io-adapter@2.5.5)
       '@socket.io/sticky': 1.0.4
       body-parser: 1.20.2
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       events: 3.3.0
       fast-redact: 3.3.0
       ioredis: 5.3.2
@@ -22687,7 +22607,7 @@ packages:
       '@fluidframework/server-services-client': 5.0.0
       '@fluidframework/server-services-core': 5.0.0
       '@fluidframework/server-services-telemetry': 5.0.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       express: 4.19.2
       ioredis: 5.3.2
       json-stringify-safe: 5.0.1
@@ -22715,7 +22635,7 @@ packages:
       '@fluidframework/server-services-telemetry': 5.0.0
       '@types/ioredis-mock': 8.2.5
       assert: 2.1.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       events: 3.3.0
       ioredis: 5.3.2
       ioredis-mock: 8.9.0(@types/ioredis-mock@8.2.5)(ioredis@5.3.2)
@@ -22833,7 +22753,7 @@ packages:
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       events: 3.3.0
       uuid: 8.3.2
     transitivePeerDependencies:
@@ -22847,7 +22767,7 @@ packages:
       '@fluidframework/core-interfaces': 2.1.0
       '@fluidframework/core-utils': 2.1.0
       '@fluidframework/driver-definitions': 2.1.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
@@ -22906,7 +22826,7 @@ packages:
       '@fluidframework/runtime-utils': 2.1.0(debug@4.3.5)
       '@fluidframework/telemetry-utils': 2.1.0
       best-random: 1.0.3
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       mocha: 10.2.0
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -22964,7 +22884,7 @@ packages:
       '@fluidframework/driver-utils': 2.1.0(debug@4.3.5)
       '@fluidframework/odsp-doclib-utils': 2.1.0(debug@4.3.5)
       async-mutex: 0.3.2
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       jwt-decode: 4.0.0
       proper-lockfile: 4.1.2
     transitivePeerDependencies:
@@ -23023,7 +22943,7 @@ packages:
         optional: true
     dependencies:
       async-mutex: 0.4.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       globrex: 0.1.2
       tsconfck: 2.1.2(typescript@5.4.5)
       vite: 4.5.3(@types/node@18.19.1)
@@ -23113,7 +23033,7 @@ packages:
     engines: {node: '>=10.10.0'}
     dependencies:
       '@humanwhocodes/object-schema': 2.0.1
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       minimatch: 3.1.2
     transitivePeerDependencies:
       - supports-color
@@ -23606,7 +23526,7 @@ packages:
   /@kwsites/file-exists@1.1.1:
     resolution: {integrity: sha512-m9/5YGR18lIwxSFDwfE3oA7bWuq9kdau6ugN4H2rJeyhFQZcG9AgSHkQtSD15a8WvTgfz9aikZMrKPHvbpqFiw==}
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -23953,10 +23873,6 @@ packages:
     resolution: {integrity: sha512-PoHEgsnmcqruLNHZ/amACqdJ6YYQpED0KSRe6J7gIJTtpZC1FfFU9b1fmDKDKtFoUSrPzEh1qzO3kmRZP0betg==}
     dev: false
 
-  /@microsoft/applicationinsights-web-snippet@1.0.1:
-    resolution: {integrity: sha512-2IHAOaLauc8qaAitvWS+U931T+ze+7MNWrDHY47IENP5y2UA0vqJDu67kWZDdpCN1fFC77sfgfB+HV7SrKshnQ==}
-    dev: false
-
   /@microsoft/applicationinsights-web@2.8.16(tslib@1.14.1):
     resolution: {integrity: sha512-nis6L1unAgRaA0zE/03N/blDNXlpdk4vboHYaG9dTmx/VJTtNar8YCnuWoDfK8elYJhy8h/SYsm2Xm6MXvHVpw==}
     peerDependencies:
@@ -24111,7 +24027,7 @@ packages:
       ansis: 3.3.2
       clean-stack: 3.0.1
       cli-spinners: 2.9.2
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.6(supports-color@8.1.1)
       ejs: 3.1.10
       get-package-type: 0.1.0
       globby: 11.1.0
@@ -24131,7 +24047,7 @@ packages:
     dependencies:
       '@oclif/core': 4.0.17
       ansis: 3.3.2
-      debug: 4.3.6
+      debug: 4.3.6(supports-color@8.1.1)
       ejs: 3.1.10
     transitivePeerDependencies:
       - supports-color
@@ -24370,72 +24286,13 @@ packages:
       uuid: 3.4.0
     dev: true
 
-  /@opentelemetry/api@1.7.0:
-    resolution: {integrity: sha512-AdY5wvN0P2vXBi3b29hxZgSFvdhdxPB9+f0B6s//P9Q8nibRWeA3cHm8UmLpio9ABigkVHJ5NMPk+Mz8VCCyrw==}
-    engines: {node: '>=8.0.0'}
-    dev: false
-
-  /@opentelemetry/core@1.18.1(@opentelemetry/api@1.7.0):
-    resolution: {integrity: sha512-kvnUqezHMhsQvdsnhnqTNfAJs3ox/isB0SVrM1dhVFw7SsB7TstuVa6fgWnN2GdPyilIFLUvvbTZoVRmx6eiRg==}
-    engines: {node: '>=14'}
-    peerDependencies:
-      '@opentelemetry/api': '>=1.0.0 <1.8.0'
-    dependencies:
-      '@opentelemetry/api': 1.7.0
-      '@opentelemetry/semantic-conventions': 1.18.1
-    dev: false
-
-  /@opentelemetry/instrumentation@0.41.2(@opentelemetry/api@1.7.0):
-    resolution: {integrity: sha512-rxU72E0pKNH6ae2w5+xgVYZLzc5mlxAbGzF4shxMVK8YC2QQsfN38B2GPbj0jvrKWWNUElfclQ+YTykkNg/grw==}
-    engines: {node: '>=14'}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-    dependencies:
-      '@opentelemetry/api': 1.7.0
-      '@types/shimmer': 1.0.5
-      import-in-the-middle: 1.4.2
-      require-in-the-middle: 7.2.0
-      semver: 7.6.0
-      shimmer: 1.2.1
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
-
-  /@opentelemetry/resources@1.18.1(@opentelemetry/api@1.7.0):
-    resolution: {integrity: sha512-JjbcQLYMttXcIabflLRuaw5oof5gToYV9fuXbcsoOeQ0BlbwUn6DAZi++PNsSz2jjPeASfDls10iaO/8BRIPRA==}
-    engines: {node: '>=14'}
-    peerDependencies:
-      '@opentelemetry/api': '>=1.0.0 <1.8.0'
-    dependencies:
-      '@opentelemetry/api': 1.7.0
-      '@opentelemetry/core': 1.18.1(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.18.1
-    dev: false
-
-  /@opentelemetry/sdk-trace-base@1.18.1(@opentelemetry/api@1.7.0):
-    resolution: {integrity: sha512-tRHfDxN5dO+nop78EWJpzZwHsN1ewrZRVVwo03VJa3JQZxToRDH29/+MB24+yoa+IArerdr7INFJiX/iN4gjqg==}
-    engines: {node: '>=14'}
-    peerDependencies:
-      '@opentelemetry/api': '>=1.0.0 <1.8.0'
-    dependencies:
-      '@opentelemetry/api': 1.7.0
-      '@opentelemetry/core': 1.18.1(@opentelemetry/api@1.7.0)
-      '@opentelemetry/resources': 1.18.1(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.18.1
-    dev: false
-
-  /@opentelemetry/semantic-conventions@1.18.1:
-    resolution: {integrity: sha512-+NLGHr6VZwcgE/2lw8zDIufOCGnzsA5CbQIMleXZTrgkBd0TanCX+MiDYJ1TOS4KL/Tqk0nFRxawnaYr6pkZkA==}
-    engines: {node: '>=14'}
-    dev: false
-
   /@pm2/agent@2.0.3:
     resolution: {integrity: sha512-xkqqCoTf5VsciMqN0vb9jthW7olVAi4KRFNddCc7ZkeJZ3i8QwZANr4NSH2H5DvseRFHq7MiPspRY/EWAFWWTg==}
     dependencies:
       async: 3.2.5
       chalk: 3.0.0
       dayjs: 1.8.36
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.6(supports-color@8.1.1)
       eventemitter2: 5.0.1
       fast-json-patch: 3.1.1
       fclone: 1.0.11
@@ -24458,7 +24315,7 @@ packages:
       '@opencensus/core': 0.0.9
       '@opencensus/propagation-b3': 0.0.8
       async: 2.6.4
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.6(supports-color@8.1.1)
       eventemitter2: 6.4.4
       require-in-the-middle: 5.2.0
       semver: 7.5.4
@@ -24474,9 +24331,9 @@ packages:
     engines: {node: '>=4.0'}
     dependencies:
       async: 2.6.4
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.6(supports-color@8.1.1)
       eventemitter2: 6.4.4
-      extrareqp2: 1.0.0(debug@4.3.5)
+      extrareqp2: 1.0.0(debug@4.3.6)
       ws: 7.5.9
     transitivePeerDependencies:
       - bufferutil
@@ -24487,7 +24344,7 @@ packages:
   /@pm2/pm2-version-check@1.0.4:
     resolution: {integrity: sha512-SXsM27SGH3yTWKc2fKR4SYNxsmnvuBQ9dd6QHtEWmiZ/VqaOYPAIlS8+vMcn27YLtAEBGvNRSh3TPNvtjZgfqA==}
     dependencies:
-      debug: 4.3.6
+      debug: 4.3.6(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -24940,7 +24797,7 @@ packages:
     peerDependencies:
       socket.io-adapter: ^2.5.4
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       notepack.io: 3.0.1
       socket.io-adapter: 2.5.5
       uid2: 1.0.0
@@ -26073,7 +25930,7 @@ packages:
       typescript: '>= 3.x'
       webpack: '>= 4 || ^5.82.0'
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       endent: 2.1.0
       find-cache-dir: 3.3.2
       flat-cache: 3.2.0
@@ -26402,7 +26259,7 @@ packages:
     resolution: {integrity: sha512-jUa5bTNmxjEgfCXW4xfn7eSJqzUXyNKiIDWLKtI4MUKRNhT3adEaa/NuQl0Mii3Hu3HraZR7hYhRHLh+eeM43w==}
     dependencies:
       '@textlint/ast-node-types': 13.4.1
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       mdast-util-gfm-autolink-literal: 0.1.3
       remark-footnotes: 3.0.0
       remark-frontmatter: 3.0.0
@@ -27122,10 +26979,6 @@ packages:
       '@types/node': 18.19.1
     dev: true
 
-  /@types/shimmer@1.0.5:
-    resolution: {integrity: sha512-9Hp0ObzwwO57DpLFF0InUjUm/II8GmKAvzbefxQTihCb7KI6yc9yzf0nLc4mVdby5N4DRCgQM2wCup9KTieeww==}
-    dev: false
-
   /@types/simplemde@1.11.11:
     resolution: {integrity: sha512-H3ml0YJtx9XMs2pGHwQy/UHzkg9W3Ke3QikQ/jHhEZj1dfmPbWqIvaNyNrt3dtiVlztWhMgK02+Rmoem+Jot/Q==}
     dev: true
@@ -27301,7 +27154,7 @@ packages:
       '@typescript-eslint/type-utils': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
       '@typescript-eslint/utils': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
       '@typescript-eslint/visitor-keys': 6.7.5
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       eslint: 8.55.0
       graphemer: 1.4.0
       ignore: 5.3.0
@@ -27340,7 +27193,7 @@ packages:
       '@typescript-eslint/types': 6.7.5
       '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.4.5)
       '@typescript-eslint/visitor-keys': 6.7.5
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.6(supports-color@8.1.1)
       eslint: 8.55.0
       typescript: 5.4.5
     transitivePeerDependencies:
@@ -27391,7 +27244,7 @@ packages:
     dependencies:
       '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.4.5)
       '@typescript-eslint/utils': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       eslint: 8.55.0
       ts-api-utils: 1.0.3(typescript@5.4.5)
       typescript: 5.4.5
@@ -27430,7 +27283,7 @@ packages:
     dependencies:
       '@typescript-eslint/types': 5.59.11
       '@typescript-eslint/visitor-keys': 5.59.11
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.6.0
@@ -27451,7 +27304,7 @@ packages:
     dependencies:
       '@typescript-eslint/types': 5.62.0
       '@typescript-eslint/visitor-keys': 5.62.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.6.0
@@ -27472,7 +27325,7 @@ packages:
     dependencies:
       '@typescript-eslint/types': 6.13.0
       '@typescript-eslint/visitor-keys': 6.13.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.6.0
@@ -27493,7 +27346,7 @@ packages:
     dependencies:
       '@typescript-eslint/types': 6.7.5
       '@typescript-eslint/visitor-keys': 6.7.5
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.6.0
@@ -28132,7 +27985,7 @@ packages:
     resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
     engines: {node: '>= 6.0.0'}
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
     transitivePeerDependencies:
       - supports-color
 
@@ -28140,7 +27993,7 @@ packages:
     resolution: {integrity: sha512-o/zjMZRhJxny7OyEF+Op8X+efiELC7k7yOjMzgfzVqOzXqkBkWI79YoTdOtsuWd5BWhAGAuOY/Xa6xpiaWXiNg==}
     engines: {node: '>= 14'}
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -28408,32 +28261,6 @@ packages:
   /app-root-dir@1.0.2:
     resolution: {integrity: sha512-jlpIfsOoNoafl92Sz//64uQHGSyMrD2vYG5d8o2a4qGvyNCvXur7bzIsWtAC/6flI2RYAp3kv8rsfBtaLm7w0g==}
     dev: true
-
-  /applicationinsights@2.9.1:
-    resolution: {integrity: sha512-hrpe/OvHFZlq+SQERD1fxaYICyunxzEBh9SolJebzYnIXkyA9zxIR87dZAh+F3+weltbqdIP8W038cvtpMNhQg==}
-    engines: {node: '>=8.0.0'}
-    peerDependencies:
-      applicationinsights-native-metrics: '*'
-    peerDependenciesMeta:
-      applicationinsights-native-metrics:
-        optional: true
-    dependencies:
-      '@azure/core-auth': 1.5.0
-      '@azure/core-rest-pipeline': 1.10.1
-      '@azure/core-util': 1.2.0
-      '@azure/opentelemetry-instrumentation-azure-sdk': 1.0.0-beta.5
-      '@microsoft/applicationinsights-web-snippet': 1.0.1
-      '@opentelemetry/api': 1.7.0
-      '@opentelemetry/core': 1.18.1(@opentelemetry/api@1.7.0)
-      '@opentelemetry/sdk-trace-base': 1.18.1(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.18.1
-      cls-hooked: 4.2.2
-      continuation-local-storage: 3.2.1
-      diagnostic-channel: 1.1.1
-      diagnostic-channel-publishers: 1.0.7(diagnostic-channel@1.1.1)
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
 
   /aproba@1.2.0:
     resolution: {integrity: sha512-Y9J6ZjXtoYh8RnXVCMOU/ttDmk1aBjunq9vO0ta5x85WDQiQfUF9sIPBITdbiiIVcBo03Hi3jMxigBtsddlXRw==}
@@ -28717,19 +28544,13 @@ packages:
     dev: true
     optional: true
 
-  /async-hook-jl@1.7.6:
-    resolution: {integrity: sha512-gFaHkFfSxTjvoxDMYqDuGHlcRyUuamF8s+ZTtJdDzqjws4mCt7v0vuV79/E2Wr2/riMQgtG4/yUtXWs1gZ7JMg==}
-    engines: {node: ^4.7 || >=6.9 || >=7.3}
-    dependencies:
-      stack-chain: 1.3.7
-    dev: false
-
   /async-listener@0.6.10:
     resolution: {integrity: sha512-gpuo6xOyF4D5DE5WvyqZdPA3NGhiT6Qf07l7DCB0wwDEsLvDIbCr6j9S5aj5Ch96dLace5tXVzWBZkxU/c5ohw==}
     engines: {node: <=0.11.8 || >0.11.10}
     dependencies:
       semver: 5.7.2
       shimmer: 1.2.1
+    dev: true
 
   /async-lock@1.4.0:
     resolution: {integrity: sha512-coglx5yIWuetakm3/1dsX9hxCNox22h7+V80RQOu2XUUMidtArxKoZoOtHUPuR84SycKTXzgGzAUR5hJxujyJQ==}
@@ -29947,6 +29768,7 @@ packages:
 
   /cjs-module-lexer@1.2.3:
     resolution: {integrity: sha512-0TNiGstbQmCFwt4akjjBg5pLRTSyj/PkWQ1ZoO2zntmg9yLqSRxwEa4iCfQLGjqhiqBfOJa7W/E8wfGrTDmlZQ==}
+    dev: true
 
   /class-utils@0.3.6:
     resolution: {integrity: sha512-qOhPa/Fj7s6TY8H8esGu5QNpMMQxz79h+urzrNYN6mn+9BnxlDGf5QZ+XeCDsxSjPqsSR56XOZOJmpeurnLMeg==}
@@ -30111,15 +29933,6 @@ packages:
     resolution: {integrity: sha512-3Pe/CF1Nn94hyhIYpjtiLhdCoEoz0DqQ+988E9gmeEdQZlojxnOb74wctFyuwWQHzqyf9X7C7MG8juUpqBJT8w==}
     engines: {node: '>=0.8'}
     dev: true
-
-  /cls-hooked@4.2.2:
-    resolution: {integrity: sha512-J4Xj5f5wq/4jAvcdgoGsL3G103BtWpZrMo8NEinRltN+xpTZdI+M38pyQqhuFU/P792xkMFvnKSf+Lm81U1bxw==}
-    engines: {node: ^4.7 || >=6.9 || >=7.3 || >=8.2.1}
-    dependencies:
-      async-hook-jl: 1.7.6
-      emitter-listener: 1.1.2
-      semver: 5.7.2
-    dev: false
 
   /clsx@1.2.1:
     resolution: {integrity: sha512-EcR6r5a8bj6pu3ycsa/E/cKVGuTgZJZdsyUYHOksG/UHIiKfjxzRxYJpyVBwYaQeOvghal9fcc4PidlgzugAQg==}
@@ -30404,6 +30217,7 @@ packages:
     dependencies:
       async-listener: 0.6.10
       emitter-listener: 1.1.2
+    dev: true
 
   /convert-source-map@1.9.0:
     resolution: {integrity: sha512-ASFBup0Mz1uyiIjANan1jzLQami9z1PoYSZCiiYW2FczPbenXc45FZdBZLzOT+r6+iciuEModtmCti+hjaAk0A==}
@@ -31048,7 +30862,7 @@ packages:
       chalk: 2.4.2
       commander: 2.20.3
       core-js: 3.33.3
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.6(supports-color@8.1.1)
       fast-json-patch: 3.1.1
       get-stdin: 6.0.0
       http-proxy-agent: 5.0.0
@@ -31172,7 +30986,7 @@ packages:
       ms: 2.1.2
       supports-color: 8.1.1
 
-  /debug@4.3.5(supports-color@8.1.1):
+  /debug@4.3.5:
     resolution: {integrity: sha512-pt0bNEmneDIvdL1Xsd9oDQ/wrQRkXDT4AUWlNZNPKvW5x/jyO9VFXkJUP07vQ2upmw5PlaITaPKc31jK13V+jg==}
     engines: {node: '>=6.0'}
     peerDependencies:
@@ -31182,9 +30996,8 @@ packages:
         optional: true
     dependencies:
       ms: 2.1.2
-      supports-color: 8.1.1
 
-  /debug@4.3.6:
+  /debug@4.3.6(supports-color@8.1.1):
     resolution: {integrity: sha512-O/09Bd4Z1fBrU4VzkhFqVgpPzaGbw6Sm9FEkBT1A/YBXQFGuuSxa1dN2nxgxS34JmKXqYx8CZAwEVoJFImUXIg==}
     engines: {node: '>=6.0'}
     peerDependencies:
@@ -31194,6 +31007,7 @@ packages:
         optional: true
     dependencies:
       ms: 2.1.2
+      supports-color: 8.1.1
 
   /decamelize-keys@1.1.1:
     resolution: {integrity: sha512-WiPxgEirIV0/eIOMcnFBA3/IJZAZqKnwAwWyvvdi4lsr1WCN22nhdf/3db3DoZcUjTV2SqfzIwNyp6y2xs3nmg==}
@@ -31499,27 +31313,13 @@ packages:
     hasBin: true
     dependencies:
       address: 1.2.2
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
     transitivePeerDependencies:
       - supports-color
 
   /devtools-protocol@0.0.1249869:
     resolution: {integrity: sha512-Ctp4hInA0BEavlUoRy9mhGq0i+JSo/AwVyX2EFgZmV1kYB+Zq+EMBAn52QWu6FbRr10hRb6pBl420upbp4++vg==}
     dev: true
-
-  /diagnostic-channel-publishers@1.0.7(diagnostic-channel@1.1.1):
-    resolution: {integrity: sha512-SEECbY5AiVt6DfLkhkaHNeshg1CogdLLANA8xlG/TKvS+XUgvIKl7VspJGYiEdL5OUyzMVnr7o0AwB7f+/Mjtg==}
-    peerDependencies:
-      diagnostic-channel: '*'
-    dependencies:
-      diagnostic-channel: 1.1.1
-    dev: false
-
-  /diagnostic-channel@1.1.1:
-    resolution: {integrity: sha512-r2HV5qFkUICyoaKlBEpLKHjxMXATUf/l+h8UZPGBHGLy4DDiY2sOLcIctax4eRnTw5wH2jTMExLntGPJ8eOJxw==}
-    dependencies:
-      semver: 7.6.0
-    dev: false
 
   /didyoumean@1.2.2:
     resolution: {integrity: sha512-gxtyfqMg7GKyhQmb056K7M3xszy/myH8w+B4RT+QXBQsvAOdc3XymqDDPHx1BgPgsdAA5SIifona89YtRATDzw==}
@@ -31840,6 +31640,7 @@ packages:
     resolution: {integrity: sha512-Bt1sBAGFHY9DKY+4/2cV6izcKJUf5T7/gkdmkxzX/qv9CcGH8xSwVRW5mtX03SWJtRTWSOpzCuWN9rBFYZepZQ==}
     dependencies:
       shimmer: 1.2.1
+    dev: true
 
   /emittery@0.13.1:
     resolution: {integrity: sha512-DeWwawk6r5yR9jFgnDKYt4sLS0LmHJJi3ZOnb5/JdbYwj3nW+FxQnHIjhBKz8YLC7oRNPVM9NQ47I3CVx34eqQ==}
@@ -31897,7 +31698,7 @@ packages:
     resolution: {integrity: sha512-9Z0qLB0NIisTRt1DZ/8U2k12RJn8yls/nXMZLn+/N8hANT3TcYjKFKcwbw5zFQiN4NTde3TSY9zb79e1ij6j9Q==}
     dependencies:
       '@socket.io/component-emitter': 3.1.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       engine.io-parser: 5.2.1
       ws: 8.11.0
       xmlhttprequest-ssl: 2.0.0
@@ -31921,7 +31722,7 @@ packages:
       base64id: 2.0.0
       cookie: 0.4.2
       cors: 2.8.5
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       engine.io-parser: 5.2.1
       ws: 8.11.0
     transitivePeerDependencies:
@@ -32265,7 +32066,7 @@ packages:
       eslint: '*'
       eslint-plugin-import: '*'
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       enhanced-resolve: 5.15.0
       eslint: 8.55.0
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5)(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
@@ -32399,7 +32200,7 @@ packages:
       '@es-joy/jsdoccomment': 0.40.1
       are-docs-informative: 0.0.2
       comment-parser: 1.4.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       escape-string-regexp: 4.0.0
       eslint: 8.55.0
       esquery: 1.5.0
@@ -32558,7 +32359,7 @@ packages:
       ajv: 6.12.6
       chalk: 2.4.2
       cross-spawn: 6.0.5
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       doctrine: 3.0.0
       eslint-scope: 5.1.1
       eslint-utils: 1.4.3
@@ -32611,7 +32412,7 @@ packages:
       ajv: 6.12.6
       chalk: 4.1.2
       cross-spawn: 7.0.3
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       doctrine: 3.0.0
       escape-string-regexp: 4.0.0
       eslint-scope: 7.2.2
@@ -32950,7 +32751,7 @@ packages:
     engines: {node: '>= 10.17.0'}
     hasBin: true
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       get-stream: 5.2.0
       yauzl: 2.10.0
     optionalDependencies:
@@ -32959,10 +32760,10 @@ packages:
       - supports-color
     dev: true
 
-  /extrareqp2@1.0.0(debug@4.3.5):
+  /extrareqp2@1.0.0(debug@4.3.6):
     resolution: {integrity: sha512-Gum0g1QYb6wpPJCVypWP3bbIuaibcFiJcpuPM10YSXp/tzqi84x9PJageob+eN4xVRIOto4wjSGNLyMD54D2xA==}
     dependencies:
-      follow-redirects: 1.15.6(debug@4.3.5)
+      follow-redirects: 1.15.6(debug@4.3.6)
     transitivePeerDependencies:
       - debug
     dev: true
@@ -33288,7 +33089,7 @@ packages:
     dependencies:
       chalk: 4.1.2
       commander: 5.1.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -33402,7 +33203,19 @@ packages:
       debug:
         optional: true
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
+
+  /follow-redirects@1.15.6(debug@4.3.6):
+    resolution: {integrity: sha512-wWN62YITEaOpSK584EZXJafH1AGpO8RVgElfkuXbTOrPX4fIfOyEpW/CsiNd8JdYrAoOvafRTOEnvsO++qCqFA==}
+    engines: {node: '>=4.0'}
+    peerDependencies:
+      debug: '*'
+    peerDependenciesMeta:
+      debug:
+        optional: true
+    dependencies:
+      debug: 4.3.6(supports-color@8.1.1)
+    dev: true
 
   /for-each@0.3.3:
     resolution: {integrity: sha512-jqYfLp7mo9vIyQf8ykW2v7A+2N4QjeCeI5+Dz9XraiO1ign81wjiH7Fb9vSOWvQfNtmSa4H2RoQTrrXivdUZmw==}
@@ -33813,7 +33626,7 @@ packages:
     dependencies:
       basic-ftp: 5.0.4
       data-uri-to-buffer: 6.0.1
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       fs-extra: 8.1.0
     transitivePeerDependencies:
       - supports-color
@@ -33867,7 +33680,7 @@ packages:
     resolution: {integrity: sha512-FcTLP7Rc0H1vWXD+J/aj5JS1uiCEBblcYXlcacRAT73N26OMYFFzrBXYmDozmWlV2K7zwK5PrH16/nuRNhqSlQ==}
     engines: {node: '>= 10.x'}
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       tslib: 2.6.2
     transitivePeerDependencies:
       - supports-color
@@ -34605,7 +34418,7 @@ packages:
     dependencies:
       '@tootallnate/once': 1.1.2
       agent-base: 6.0.2
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -34616,7 +34429,7 @@ packages:
     dependencies:
       '@tootallnate/once': 2.0.0
       agent-base: 6.0.2
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
     transitivePeerDependencies:
       - supports-color
 
@@ -34625,7 +34438,7 @@ packages:
     engines: {node: '>= 14'}
     dependencies:
       agent-base: 7.1.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -34741,7 +34554,7 @@ packages:
     engines: {node: '>= 6'}
     dependencies:
       agent-base: 6.0.2
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
     transitivePeerDependencies:
       - supports-color
 
@@ -34750,7 +34563,7 @@ packages:
     engines: {node: '>= 14'}
     dependencies:
       agent-base: 7.1.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -34856,15 +34669,6 @@ packages:
     dependencies:
       parent-module: 1.0.1
       resolve-from: 4.0.0
-
-  /import-in-the-middle@1.4.2:
-    resolution: {integrity: sha512-9WOz1Yh/cvO/p69sxRmhyQwrIGGSp7EIdcb+fFNVi7CzQGQB8U1/1XrKVSbEd/GNOAeM0peJtmi7+qphe7NvAw==}
-    dependencies:
-      acorn: 8.11.2
-      acorn-import-assertions: 1.9.0(acorn@8.11.2)
-      cjs-module-lexer: 1.2.3
-      module-details-from-path: 1.0.3
-    dev: false
 
   /import-lazy@4.0.0:
     resolution: {integrity: sha512-rKtvo6a868b5Hu3heneU+L4yEQ4jYKLtjpnPeUdK7h0yzXGmyBTypknlkCvHFBqfX9YlorEiMM6Dnq/5atfHkw==}
@@ -34999,7 +34803,7 @@ packages:
     dependencies:
       '@ioredis/commands': 1.2.0
       cluster-key-slot: 1.1.2
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       denque: 2.1.0
       lodash.defaults: 4.2.0
       lodash.isarguments: 3.1.0
@@ -35594,7 +35398,7 @@ packages:
     resolution: {integrity: sha512-n3s8EwkdFIJCG3BPKBYvskgXGoy88ARzvegkitk60NxRdwltLOTaH7CUiMRXvwYorl0Q712iEjcWB+fK/MrWVw==}
     engines: {node: '>=10'}
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       istanbul-lib-coverage: 3.2.2
       source-map: 0.6.1
     transitivePeerDependencies:
@@ -37736,7 +37540,7 @@ packages:
   /micromark@2.11.4:
     resolution: {integrity: sha512-+WoovN/ppKolQOFIAajxi7Lu9kInbPxFuTBVEavFcL8eAfVstoc5MocPmqBeAdBOJV00uaVjegzH4+MA0DN/uA==}
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       parse-entities: 2.0.0
     transitivePeerDependencies:
       - supports-color
@@ -38065,7 +37869,7 @@ packages:
     peerDependencies:
       mocha: '>=3.1.2'
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       lodash: 4.17.21
       mocha: 10.2.0
     transitivePeerDependencies:
@@ -38100,6 +37904,7 @@ packages:
 
   /module-details-from-path@1.0.3:
     resolution: {integrity: sha512-ySViT69/76t8VhE1xXHK6Ch4NcDd26gx0MzKXLO+F7NOtnqH68d9zF94nT8ZWSxXh8ELOERsnJO/sWt1xZYw5A==}
+    dev: true
 
   /module-error@1.0.2:
     resolution: {integrity: sha512-0yuvsqSCv8LbaOKhnsQ/T5JhyFlCYLPXK3U2sgV10zoKQwzs/MyfuQUOZQ1V/6OCOJsK/TRgNVrPuPDqtdMFtA==}
@@ -38362,7 +38167,7 @@ packages:
     resolution: {integrity: sha512-W8NVHjO/LCTNA64yxAPHV/K47LpGYcVzgKd3Q0n6owhwvD0Dgoterc25R4rnZbckJEb6Loxz1f5QMuJpJnbSyQ==}
     engines: {node: '>= 10.13'}
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       json-stringify-safe: 5.0.1
       propagate: 2.0.1
     transitivePeerDependencies:
@@ -38917,7 +38722,7 @@ packages:
     dependencies:
       '@tootallnate/quickjs-emscripten': 0.23.0
       agent-base: 7.1.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       get-uri: 6.0.2
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.4
@@ -39369,7 +39174,7 @@ packages:
     resolution: {integrity: sha512-FbLvW60w+vEyvMjP/xom2UPhUN/2bVpdtLfKJeYM3gwzYhoTEEChCOICfFzxkxuoEleOlnpjie+n1nue91bDQw==}
     engines: {node: '>=5'}
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.6(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -39380,7 +39185,7 @@ packages:
     dependencies:
       amp: 0.3.1
       amp-message: 0.1.2
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.6(supports-color@8.1.1)
       escape-string-regexp: 4.0.0
     transitivePeerDependencies:
       - supports-color
@@ -39405,7 +39210,7 @@ packages:
     requiresBuild: true
     dependencies:
       async: 3.2.5
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.6(supports-color@8.1.1)
       pidusage: 2.0.21
       systeminformation: 5.21.24
       tx2: 1.0.5
@@ -39431,7 +39236,7 @@ packages:
       commander: 2.15.1
       croner: 4.1.97
       dayjs: 1.11.10
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       enquirer: 2.3.6
       eventemitter2: 5.0.1
       fclone: 1.0.11
@@ -40048,7 +39853,7 @@ packages:
     engines: {node: '>= 14'}
     dependencies:
       agent-base: 7.1.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.6(supports-color@8.1.1)
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.4
       lru-cache: 7.18.3
@@ -40064,7 +39869,7 @@ packages:
     engines: {node: '>= 14'}
     dependencies:
       agent-base: 7.1.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.4
       lru-cache: 7.18.3
@@ -41179,23 +40984,12 @@ packages:
     resolution: {integrity: sha512-efCx3b+0Z69/LGJmm9Yvi4cqEdxnoGnxYxGxBghkkTTFeXRtTCmmhO0AnAfHz59k957uTSuy8WaHqOs8wbYUWg==}
     engines: {node: '>=6'}
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.6(supports-color@8.1.1)
       module-details-from-path: 1.0.3
       resolve: 1.22.8
     transitivePeerDependencies:
       - supports-color
     dev: true
-
-  /require-in-the-middle@7.2.0:
-    resolution: {integrity: sha512-3TLx5TGyAY6AOqLBoXmHkNql0HIf2RGbuMgCDT2WO/uGVAPJs6h7Kl+bN6TIZGd9bWhWPwnDnTHGtW8Iu77sdw==}
-    engines: {node: '>=8.6.0'}
-    dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
-      module-details-from-path: 1.0.3
-      resolve: 1.22.8
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
 
   /require-main-filename@2.0.0:
     resolution: {integrity: sha512-NKN5kMDylKuldxYLSUfrbo5Tuzh4hd+2E8NPPX02mZtn1VuREQToYe/ZdlJy+J3uCpfaiGF05e7B8W0iXbQHmg==}
@@ -41659,7 +41453,6 @@ packages:
     resolution: {integrity: sha512-oVekP1cKtI+CTDvHWYFUcMtsK/00wmAEfyqKfNdARm8u1wNVhSgaX7A8d4UuIlUI5e84iEwOhs7ZPYRmzU9U6A==}
     engines: {node: '>=10'}
     hasBin: true
-    dev: true
 
   /send@0.18.0:
     resolution: {integrity: sha512-qqWzuOjSFOuqPjFe4NOsMLafToQQwBSOEpS+FwEt3A2V3vKubTquT3vmLTQpFgMXp8AlFWFuP1qKaJZOtPpVXg==}
@@ -41833,6 +41626,7 @@ packages:
 
   /shimmer@1.2.1:
     resolution: {integrity: sha512-sQTKC1Re/rM6XyFM6fIAGHRPVGvyXfgzIDvzoq608vM+jeyVD0Tu1E6Np0Kc2zAIFWIj963V2800iF/9LPieQw==}
+    dev: true
 
   /side-channel@1.0.4:
     resolution: {integrity: sha512-q5XPytqFEIKHkGdiMIrY10mvLRvnQh42/+GoBlFW3b2LXLE2xxJpZFdm94we0BaoV3RwJyGqg5wS7epxTv0Zvw==}
@@ -41870,7 +41664,7 @@ packages:
     dependencies:
       '@kwsites/file-exists': 1.1.1
       '@kwsites/promise-deferred': 1.1.1
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -42040,7 +41834,7 @@ packages:
   /socket.io-adapter@2.5.5:
     resolution: {integrity: sha512-eLDQas5dzPgOWCk9GuuJC2lBqItuhKI4uxGgo9aIV7MYbk2h9Q6uULEh8WBzThoI7l+qU9Ast9fVUmkqPP9wYg==}
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       ws: 8.17.1
     transitivePeerDependencies:
       - bufferutil
@@ -42052,7 +41846,7 @@ packages:
     engines: {node: '>=10.0.0'}
     dependencies:
       '@socket.io/component-emitter': 3.1.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       engine.io-client: 6.5.3
       socket.io-parser: 4.2.4
     transitivePeerDependencies:
@@ -42065,7 +41859,7 @@ packages:
     engines: {node: '>=10.0.0'}
     dependencies:
       '@socket.io/component-emitter': 3.1.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
     transitivePeerDependencies:
       - supports-color
 
@@ -42076,7 +41870,7 @@ packages:
       accepts: 1.3.8
       base64id: 2.0.0
       cors: 2.8.5
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       engine.io: 6.5.4
       socket.io-adapter: 2.5.2
       socket.io-parser: 4.2.4
@@ -42097,7 +41891,7 @@ packages:
     engines: {node: '>= 14'}
     dependencies:
       agent-base: 7.1.0
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       socks: 2.8.3
     transitivePeerDependencies:
       - supports-color
@@ -42225,7 +42019,7 @@ packages:
   /spdy-transport@3.0.0:
     resolution: {integrity: sha512-hsLVFE5SjA6TCisWeJXFKniGGOpBgMLmerfO2aCyCU5s7nJ/rpAepqmFifv/GCbSbueEeAJJnmSQ2rKC/g8Fcw==}
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       detect-node: 2.1.0
       hpack.js: 2.1.6
       obuf: 1.1.2
@@ -42238,7 +42032,7 @@ packages:
     resolution: {integrity: sha512-r46gZQZQV+Kl9oItvl1JZZqJKGr+oEkB08A6BzkiR7593/7IbtuncXHd2YoYeTsG4157ZssMu9KYvUHLcjcDoA==}
     engines: {node: '>=6.0.0'}
     dependencies:
-      debug: 4.3.5(supports-color@8.1.1)
+      debug: 4.3.5
       handle-thing: 2.0.1
       http-deceiver: 1.2.7
       select-hose: 2.0.0
@@ -42318,10 +42112,6 @@ packages:
     resolution: {integrity: sha512-ji9qxRnOVfcuLDySj9qzhGSEFVobyt1kIOSkj1qZzYLzq7Tos/oUUWvotUPQLlrsidqsK6tBH89Bc9kL5zHA6w==}
     deprecated: 'Modern JS already guarantees Array#sort() is a stable sort, so this library is deprecated. See the compatibility table on MDN: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#browser_compatibility'
     dev: true
-
-  /stack-chain@1.3.7:
-    resolution: {integrity: sha512-D8cWtWVdIe/jBA7v5p5Hwl5yOSOrmZPWDPe2KxQ5UAGD+nxbxU0lKXA4h85Ta6+qgdKVL3vUxsbIZjc1kBG7ug==}
-    dev: false
 
   /stack-trace@0.0.10:
     resolution: {integrity: sha512-KGzahc7puUKkzyMt+IqAep+TVNbKP+k2Lmwhub39m1AsTSkaDutx56aDCo+HLDzf/D26BIHTJWNiTG1KAJiQCg==}

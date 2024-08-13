@@ -97,6 +97,7 @@ export {
 	type DeltaDetachedNodeRename,
 	type DeltaFieldChanges,
 	type ExclusiveMapTree,
+	deepCopyMapTree,
 } from "./tree/index.js";
 
 export {

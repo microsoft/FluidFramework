@@ -7,11 +7,7 @@ import { strict as assert } from "assert";
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 
-import {
-	EmptyKey,
-	type ITreeCursorSynchronous,
-	type TreeNodeSchemaIdentifier,
-} from "../../../core/index.js";
+import { EmptyKey, type ITreeCursorSynchronous } from "../../../core/index.js";
 import { cursorToJsonObject, singleJsonCursor } from "../../../domains/index.js";
 import {
 	type ChunkShape,
@@ -26,11 +22,13 @@ import {
 	jsonableTreeFromCursor,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
-import { mapSchema, testSpecializedFieldCursor } from "../../cursorTestSuite.js";
+import { testSpecializedFieldCursor } from "../../cursorTestSuite.js";
 // eslint-disable-next-line import/no-internal-modules
 import { sum } from "../../domains/json/benchmarks.js";
 
 import { emptyShape, polygonTree, testData, xField, yField } from "./uniformChunkTestData.js";
+import { JsonObject } from "../../utils.js";
+import { brand } from "../../../util/index.js";
 
 // Validate a few aspects of shapes that are easier to verify here than via checking the cursor.
 function validateShape(shape: ChunkShape): void {
@@ -71,9 +69,8 @@ describe("uniformChunk", () => {
 		cursorName: "uniformChunk",
 		builders: {
 			withKeys: (keys) => {
-				const schema: TreeNodeSchemaIdentifier = mapSchema.name;
 				const withKeysShape = new TreeShape(
-					schema,
+					brand(JsonObject.identifier),
 					false,
 					keys.map((key) => [key, emptyShape, 1] as const),
 				);

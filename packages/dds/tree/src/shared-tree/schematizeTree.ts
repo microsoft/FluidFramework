@@ -8,6 +8,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	AllowedUpdateType,
 	Compatibility,
+	CursorLocationType,
 	type ITreeCursorSynchronous,
 	type TreeStoredSchema,
 	rootFieldKey,
@@ -17,14 +18,14 @@ import {
 	FieldKinds,
 	type FlexFieldSchema,
 	type FlexTreeSchema,
-	type InsertableFlexField,
 	type ViewSchema,
 	allowsRepoSuperset,
+	cursorForMapTreeField,
 	defaultSchemaPolicy,
 	intoStoredSchema,
-	normalizeNewFieldContent,
+	mapTreeFromCursor,
 } from "../feature-libraries/index.js";
-import { fail } from "../util/index.js";
+import { fail, isReadonlyArray } from "../util/index.js";
 
 import type { ITreeCheckout } from "./treeCheckout.js";
 
@@ -155,6 +156,24 @@ export function canInitialize(checkout: ITreeCheckout): boolean {
 	return checkout.forest.isEmpty && schemaDataIsEmpty(checkout.storedSchema);
 }
 
+function normalizeNewFieldContent(
+	content: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined,
+): ITreeCursorSynchronous {
+	if (content === undefined) {
+		return cursorForMapTreeField([]);
+	}
+
+	if (isReadonlyArray(content)) {
+		return cursorForMapTreeField(content.map((c) => mapTreeFromCursor(c)));
+	}
+
+	if (content.mode === CursorLocationType.Fields) {
+		return content;
+	}
+
+	return cursorForMapTreeField([mapTreeFromCursor(content)]);
+}
+
 /**
  * Initialize a checkout with a schema and tree content.
  * This function should only be called when the tree is uninitialized (no schema or content).
@@ -168,11 +187,8 @@ export function initialize(checkout: ITreeCheckout, treeContent: TreeContent): v
 	try {
 		initializeContent(checkout, treeContent.schema, () => {
 			const field = { field: rootFieldKey, parent: undefined };
-			const content = normalizeNewFieldContent(
-				{ schema: treeContent.schema },
-				treeContent.schema.rootFieldSchema,
-				treeContent.initialTree,
-			);
+			const content = normalizeNewFieldContent(treeContent.initialTree);
+
 			switch (checkout.storedSchema.rootFieldSchema.kind) {
 				case FieldKinds.optional.identifier: {
 					const fieldEditor = checkout.editor.optionalField(field);
@@ -270,10 +286,7 @@ export interface TreeContent<TRoot extends FlexFieldSchema = FlexFieldSchema>
 	 * Default tree content to initialize the tree with iff the tree is uninitialized
 	 * (meaning it does not even have any schema set at all).
 	 */
-	readonly initialTree:
-		| InsertableFlexField<TRoot>
-		| readonly ITreeCursorSynchronous[]
-		| ITreeCursorSynchronous;
+	readonly initialTree: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined;
 }
 
 /**

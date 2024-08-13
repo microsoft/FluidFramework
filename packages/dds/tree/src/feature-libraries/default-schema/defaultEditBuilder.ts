@@ -121,7 +121,7 @@ export interface IDefaultEditBuilder {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	valueField(field: FieldUpPath): ValueFieldEditBuilder;
+	valueField(field: FieldUpPath): ValueFieldEditBuilder<ITreeCursorSynchronous>;
 
 	/**
 	 * @param field - the optional field which is being edited under the parent node
@@ -129,7 +129,7 @@ export interface IDefaultEditBuilder {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	optionalField(field: FieldUpPath): OptionalFieldEditBuilder;
+	optionalField(field: FieldUpPath): OptionalFieldEditBuilder<ITreeCursorSynchronous>;
 
 	/**
 	 * @param field - the sequence field which is being edited under the parent node
@@ -138,7 +138,7 @@ export interface IDefaultEditBuilder {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	sequenceField(field: FieldUpPath): SequenceFieldEditBuilder;
+	sequenceField(field: FieldUpPath): SequenceFieldEditBuilder<ITreeCursorSynchronous>;
 
 	/**
 	 * Moves a subsequence from one sequence field to another sequence field.
@@ -183,7 +183,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		this.modularBuilder.addNodeExistsConstraint(path);
 	}
 
-	public valueField(field: FieldUpPath): ValueFieldEditBuilder {
+	public valueField(field: FieldUpPath): ValueFieldEditBuilder<ITreeCursorSynchronous> {
 		return {
 			set: (newContent: ITreeCursorSynchronous): void => {
 				const fillId = this.modularBuilder.generateId();
@@ -207,7 +207,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		};
 	}
 
-	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder {
+	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder<ITreeCursorSynchronous> {
 		return {
 			set: (newContent: ITreeCursorSynchronous | undefined, wasEmpty: boolean): void => {
 				const detachId = this.modularBuilder.generateId();
@@ -329,7 +329,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		}
 	}
 
-	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder {
+	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder<ITreeCursorSynchronous> {
 		return {
 			insert: (index: number, content: ITreeCursorSynchronous): void => {
 				const length =
@@ -363,59 +363,42 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				);
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
-			move: (sourceIndex: number, count: number, destIndex: number): void => {
-				if (count === 0) {
-					return;
-				} else if (count < 0 || !Number.isSafeInteger(count)) {
-					throw new UsageError(`Expected non-negative integer count, got ${count}.`);
-				}
-				const detachId = this.modularBuilder.generateId(count);
-				const attachId = this.modularBuilder.generateId(count);
-				const change = sequence.changeHandler.editor.move(
-					sourceIndex,
-					count,
-					destIndex,
-					detachId,
-					attachId,
-				);
-				this.modularBuilder.submitChange(field, sequence.identifier, brand(change));
-			},
 		};
 	}
 }
 
 /**
  */
-export interface ValueFieldEditBuilder {
+export interface ValueFieldEditBuilder<TContent> {
 	/**
 	 * Issues a change which replaces the current newContent of the field with `newContent`.
 	 * @param newContent - the new content for the field.
 	 * The cursor can be in either Field or Node mode and must represent exactly one node.
 	 */
-	set(newContent: ITreeCursorSynchronous): void;
+	set(newContent: TContent): void;
 }
 
 /**
  */
-export interface OptionalFieldEditBuilder {
+export interface OptionalFieldEditBuilder<TContent> {
 	/**
 	 * Issues a change which replaces the current newContent of the field with `newContent`
 	 * @param newContent - the new content for the field.
 	 * If provided, the cursor can be in either Field or Node mode and must represent exactly one node.
 	 * @param wasEmpty - whether the field is empty when creating this change
 	 */
-	set(newContent: ITreeCursorSynchronous | undefined, wasEmpty: boolean): void;
+	set(newContent: TContent | undefined, wasEmpty: boolean): void;
 }
 
 /**
  */
-export interface SequenceFieldEditBuilder {
+export interface SequenceFieldEditBuilder<TContent> {
 	/**
 	 * Issues a change which inserts the `newContent` at the given `index`.
 	 * @param index - the index at which to insert the `newContent`.
 	 * @param newContent - the new content to be inserted in the field. Cursor can be in either Field or Node mode.
 	 */
-	insert(index: number, newContent: ITreeCursorSynchronous): void;
+	insert(index: number, newContent: TContent): void;
 
 	/**
 	 * Issues a change which removes `count` elements starting at the given `index`.
@@ -423,14 +406,6 @@ export interface SequenceFieldEditBuilder {
 	 * @param count - The number of elements to remove.
 	 */
 	remove(index: number, count: number): void;
-
-	/**
-	 * Issues a change which moves `count` elements starting at `sourceIndex` to `destIndex`.
-	 * @param sourceIndex - the index of the first moved element.
-	 * @param count - the number of elements to move.
-	 * @param destIndex - the index the elements are moved to, interpreted before detaching the moved elements.
-	 */
-	move(sourceIndex: number, count: number, destIndex: number): void;
 }
 
 /**
