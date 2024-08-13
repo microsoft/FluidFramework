@@ -18,8 +18,8 @@ import {
 	IConfigProviderBase,
 	IErrorBase,
 	IResponse,
-	ISignalEnvelope,
-} from "@fluidframework/core-interfaces/internal";
+} from "@fluidframework/core-interfaces";
+import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
@@ -2512,6 +2512,16 @@ describe("Runtime", () => {
 			let containerRuntime: ContainerRuntime;
 			let logger: MockLogger;
 			let droppedSignals: ISignalEnvelope[];
+
+			// Restore native timer function for signal tests as they rely on Date.now() timestamps
+			before(() => {
+				clock.restore();
+			});
+
+			after(() => {
+				clock = useFakeTimers();
+			});
+
 			beforeEach(async () => {
 				logger = new MockLogger();
 				droppedSignals = [];
@@ -2525,16 +2535,15 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				clock.restore();
 			});
 
-			function sendSignals(numberOfSignals: number = 1) {
+			function sendSignals(numberOfSignals: number) {
 				for (let i = 0; i < numberOfSignals; i++) {
-					containerRuntime.submitSignal("TestSignalType", "TestSignalContent");
+					containerRuntime.submitSignal("TestSignalType", `TestSignalContent ${i}`);
 				}
 			}
 
-			function processSignals(signals: ISignalEnvelope[], numberOfSignals: number = 1) {
+			function processSignals(signals: ISignalEnvelope[], numberOfSignals: number) {
 				const signalsToProcess = signals.splice(0, numberOfSignals);
 				for (const signal of signalsToProcess) {
 					containerRuntime.processSignal(
@@ -2547,12 +2556,12 @@ describe("Runtime", () => {
 				}
 			}
 
-			function dropSignals(numberOfSignals: number = 1) {
+			function dropSignals(numberOfSignals: number) {
 				const signalsToDrop = submittedSignals.splice(0, numberOfSignals);
 				droppedSignals.push(...signalsToDrop);
 			}
 
-			it("emits signal latency telemetry after 100 signals", async () => {
+			it("emits signal latency telemetry after 100 signals", () => {
 				sendSignals(101);
 				processSignals(submittedSignals, 101);
 				logger.assertMatch(
@@ -2565,56 +2574,77 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("emits SignalLost error event when signal is dropped", async () => {
-				// Send 3 signals
-				sendSignals(3);
+			it("emits SignalLost error event when signal is dropped", () => {
+				// Send 4 signals
+				sendSignals(4);
 
 				// Process the first signal
-				processSignals(submittedSignals);
+				processSignals(submittedSignals, 1);
 
-				// Drop the second signal
-				dropSignals();
+				// Drop the second and third signal
+				dropSignals(2);
 
-				// Process the third signal
-				processSignals(submittedSignals);
+				// Process the fourth signal
+				processSignals(submittedSignals, 1);
 
 				logger.assertMatch(
 					[
 						{
 							eventName: "ContainerRuntime:SignalLost",
+							signalsLost: 2,
 						},
 					],
 					"SignalLost telemetry should be logged when signal is dropped",
 				);
 			});
 
-			it("emits SignalOutOfOrder error event when missing signal is received non-sequentially", async () => {
+			it("emits SignalOutOfOrder error event when missing signal is received non-sequentially", () => {
 				// Send 3 signals
 				sendSignals(3);
 
 				// Process the first signal
-				processSignals(submittedSignals);
+				processSignals(submittedSignals, 1);
 
 				// Temporarily lose the second signal
-				dropSignals();
+				dropSignals(1);
 
 				// Process the third signal
-				processSignals(submittedSignals);
+				processSignals(submittedSignals, 1);
+
+				// Check for SignalLost telemetry
+				logger.assertMatch([
+					{
+						eventName: "ContainerRuntime:SignalLost",
+						signalsLost: 1,
+					},
+				]);
+
+				// Out of order telemetry should not be logged on lost signal
+				logger.assertMatchNone(
+					[
+						{
+							eventName: "ContainerRuntime:SignalOutOfOrder",
+						},
+					],
+					"SignalOutOfOrder telemetry should not be logged on lost signal",
+				);
 
 				// Process the "lost" second signal out of order
-				processSignals(droppedSignals);
+				processSignals(droppedSignals, 1);
 
+				// Check for SignalOutOfOrder telemetry
 				logger.assertMatch(
 					[
 						{
 							eventName: "ContainerRuntime:SignalOutOfOrder",
+							signalsLost: 0,
 						},
 					],
 					"SignalOutOfOrder telemetry should be logged when missing signal is received non-sequentially",
 				);
 			});
 
-			it("does not emit error events when signals are processed in order", async () => {
+			it("does not emit error events when signals are processed in order", () => {
 				// Send 100 signals and process them in order
 				sendSignals(100);
 				processSignals(submittedSignals, 100);
@@ -2629,6 +2659,82 @@ describe("Runtime", () => {
 						},
 					],
 					"SignalLost and SignalOutOfOrder telemetry should not be logged when signals are processed in order",
+				);
+			});
+
+			it("increments signalLost field after successive dropped signals", () => {
+				// Send 5 signals
+				sendSignals(5);
+
+				// Process the first signal
+				processSignals(submittedSignals, 1);
+
+				// Drop the second signal
+				dropSignals(1);
+
+				// Process the third signal
+				processSignals(submittedSignals, 1);
+
+				// Missing second signal should be detected
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLost",
+							signalsLost: 1,
+						},
+					],
+					"SignalLost telemetry should be logged when signal is dropped",
+				);
+
+				// Drop the fourth signal
+				dropSignals(1);
+
+				// Process the fifth signal
+				processSignals(submittedSignals, 1);
+
+				// Missing fourth signal should be detected
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLost",
+							signalsLost: 2,
+						},
+					],
+					"SignalLost telemetry should be logged when signal is dropped",
+				);
+			});
+
+			it("ignores in-flight signals on disconnect", () => {
+				// Send 5 signals
+				sendSignals(4);
+
+				// Process one signal and drop two
+				processSignals(submittedSignals, 1);
+
+				// Disconnect + Reconnect
+				changeConnectionState(containerRuntime, false, mockClientId);
+				changeConnectionState(containerRuntime, true, mockClientId);
+
+				// Temporarily lose two old signals
+				dropSignals(2);
+
+				// Receive one old signal sent before disconnect
+				processSignals(submittedSignals, 1);
+
+				// Receive old out of order signals
+				processSignals(droppedSignals, 2);
+
+				// No error events should be logged for signals sent before disconnect
+				logger.assertMatchNone(
+					[
+						{
+							eventName: "ContainerRuntime:SignalOutOfOrder",
+						},
+						{
+							eventName: "ContainerRuntime:SignalLost",
+						},
+					],
+					"SignalOutOfOrder/SignalLost telemetry should not be logged on reconnect",
 				);
 			});
 		});

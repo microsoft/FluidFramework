@@ -2995,7 +2995,10 @@ export class ContainerRuntime
 						trackingSequenceNumber: this._signalTracking.trackingSignalSequenceNumber,
 						clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
 					});
-				} else {
+				} else if (
+					envelope.clientSignalSequenceNumber ===
+					this._signalTracking.trackingSignalSequenceNumber
+				) {
 					// Update the tracking signal sequence number to the next expected signal in the sequence.
 					this._signalTracking.trackingSignalSequenceNumber++;
 				}
