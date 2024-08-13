@@ -87,19 +87,46 @@ describe("Unhydrated nodes", () => {
 	});
 
 	it("get their parent", () => {
-		const mapLeaf = new TestLeaf({ value: "mapValue" });
+		// For each node type, this test checks that the parent of each newly created nodes is correct.
+		// It also creates children and checks that the parent of each is updated when the child is inserted under a node, and again when it is removed.
+
+		// Map
+		const mapLeaf = new TestLeaf({ value: "value" });
 		assert.equal(Tree.parent(mapLeaf), undefined);
-		const map = new TestMap([["key", mapLeaf]]);
-		assert.equal(Tree.parent(map), undefined);
+		const map = new TestMap({ key: mapLeaf });
 		assert.equal(Tree.parent(mapLeaf), map);
-		const arrayLeaf = new TestLeaf({ value: "arrayValue" });
+		map.delete("key");
+		assert.equal(Tree.parent(mapLeaf), undefined);
+		const newMapLeaf = new TestLeaf({ value: "value" });
+		assert.equal(Tree.parent(newMapLeaf), undefined);
+		map.set("key", newMapLeaf);
+		assert.equal(Tree.parent(newMapLeaf), map);
+		// Array
+		const arrayLeaf = new TestLeaf({ value: "value" });
+		assert.equal(Tree.parent(arrayLeaf), undefined);
 		const array = new TestArray([arrayLeaf]);
-		assert.equal(Tree.parent(array), undefined);
 		assert.equal(Tree.parent(arrayLeaf), array);
-		const object = new TestObject({ map, array });
+		array.removeRange();
+		assert.equal(Tree.parent(arrayLeaf), undefined);
+		const newArrayLeaf = new TestLeaf({ value: "value" });
+		assert.equal(Tree.parent(newArrayLeaf), undefined);
+		array.insertAtEnd(newArrayLeaf);
+		assert.equal(Tree.parent(newArrayLeaf), array);
+		// Object
+		const object = new TestObject({ array, map });
 		assert.equal(Tree.parent(object), undefined);
 		assert.equal(Tree.parent(map), object);
 		assert.equal(Tree.parent(array), object);
+		const newMap = new TestMap({});
+		const newArray = new TestArray([]);
+		assert.equal(Tree.parent(newMap), undefined);
+		assert.equal(Tree.parent(newArray), undefined);
+		object.map = newMap;
+		object.array = newArray;
+		assert.equal(Tree.parent(newMap), object);
+		assert.equal(Tree.parent(newArray), object);
+		assert.equal(Tree.parent(map), undefined);
+		assert.equal(Tree.parent(array), undefined);
 	});
 
 	it("get their key", () => {
@@ -134,21 +161,6 @@ describe("Unhydrated nodes", () => {
 		const object = new TestObject({ map, array });
 		assert.equal(Tree.is(object, TestObject), true);
 		assert.equal(Tree.schema(object), TestObject);
-	});
-
-	it("disallow mutation of sequences", () => {
-		function validateUnhydratedMutationError(error: Error): boolean {
-			return validateAssertionError(
-				error,
-				/cannot be mutated before being inserted into the tree/,
-			);
-		}
-
-		const leaf = new TestLeaf({ value: "value" });
-		const array = new TestArray([]);
-		assert.throws(() => array.insertAtStart(leaf), validateUnhydratedMutationError);
-		assert.throws(() => array.insertAtEnd(leaf), validateUnhydratedMutationError);
-		assert.throws(() => array.insertAt(0, leaf), validateUnhydratedMutationError);
 	});
 
 	it("have the correct tree status", () => {
