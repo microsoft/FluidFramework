@@ -169,7 +169,7 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 			assertAttributionMatches(sharedString2, 13, attributor2, {
 				user: container1.audience.getMember(container1.clientId)?.user,
 			});
-		}
+		},
 	);
 
 	it("attributes content created in a detached state", async () => {
