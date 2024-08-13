@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { Tree } from "../../shared-tree/index.js";
 import { rootFieldKey } from "../../core/index.js";
 import {
-	getFlexNode,
+	getOrCreateInnerNode,
 	SchemaFactory,
 	type FieldProps,
 	type TreeNode,
@@ -40,15 +40,15 @@ describe("Unhydrated nodes", () => {
 		const map = new TestMap([]);
 		const array = new TestArray([leaf]);
 		const object = new TestObject({ map, array });
-		assert.equal(isMapTreeNode(getFlexNode(leaf)), true);
-		assert.equal(isMapTreeNode(getFlexNode(map)), true);
-		assert.equal(isMapTreeNode(getFlexNode(array)), true);
-		assert.equal(isMapTreeNode(getFlexNode(object)), true);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(leaf)), true);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(map)), true);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(array)), true);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(object)), true);
 		const hydratedObject = hydrate(TestObject, object);
-		assert.equal(isMapTreeNode(getFlexNode(leaf)), false);
-		assert.equal(isMapTreeNode(getFlexNode(map)), false);
-		assert.equal(isMapTreeNode(getFlexNode(array)), false);
-		assert.equal(isMapTreeNode(getFlexNode(object)), false);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(leaf)), false);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(map)), false);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(array)), false);
+		assert.equal(isMapTreeNode(getOrCreateInnerNode(object)), false);
 		assert.equal(hydratedObject, object);
 		assert.equal(hydratedObject.array, array);
 		assert.equal(hydratedObject.map, map);
@@ -136,7 +136,7 @@ describe("Unhydrated nodes", () => {
 		assert.equal(Tree.schema(object), TestObject);
 	});
 
-	it("disallow mutation", () => {
+	it("disallow mutation of sequences", () => {
 		function validateUnhydratedMutationError(error: Error): boolean {
 			return validateAssertionError(
 				error,
@@ -145,16 +145,10 @@ describe("Unhydrated nodes", () => {
 		}
 
 		const leaf = new TestLeaf({ value: "value" });
-		assert.throws(() => (leaf.value = "new value"), validateUnhydratedMutationError);
-		const map = new TestMap([]);
-		assert.throws(() => map.set("key", leaf), validateUnhydratedMutationError);
-		assert.throws(() => map.delete("key"), validateUnhydratedMutationError);
 		const array = new TestArray([]);
 		assert.throws(() => array.insertAtStart(leaf), validateUnhydratedMutationError);
 		assert.throws(() => array.insertAtEnd(leaf), validateUnhydratedMutationError);
 		assert.throws(() => array.insertAt(0, leaf), validateUnhydratedMutationError);
-		const object = new TestObject({ map, array });
-		assert.throws(() => (object.array = array), validateUnhydratedMutationError);
 	});
 
 	it("have the correct tree status", () => {

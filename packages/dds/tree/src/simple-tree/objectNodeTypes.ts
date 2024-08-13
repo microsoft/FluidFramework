@@ -9,13 +9,8 @@ import type {
 	InsertableObjectFromSchemaRecord,
 	SimpleKeyMap,
 } from "./objectNode.js";
-import {
-	type ImplicitFieldSchema,
-	type TreeNodeSchemaClass,
-	NodeKind,
-	type FieldSchema,
-	type TreeNodeSchema,
-} from "./schemaTypes.js";
+import type { ImplicitFieldSchema, FieldSchema } from "./schemaTypes.js";
+import { NodeKind, type TreeNodeSchemaClass, type TreeNodeSchema } from "./core/index.js";
 
 /**
  * A schema for {@link TreeObjectNode}s.

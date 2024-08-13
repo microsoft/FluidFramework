@@ -70,6 +70,9 @@ export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends
     readonly kind: Kind;
 }
 
+// @alpha
+export type FixRecursiveArraySchema<T> = T extends TreeNodeSchema ? undefined : undefined;
+
 // @public
 type FlattenKeys<T> = [{
     [Property in keyof T]: T[Property];
@@ -80,6 +83,9 @@ type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
 type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
+
+// @alpha
+export function getJsonSchema(schema: ImplicitAllowedTypes): JsonTreeSchema;
 
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
@@ -190,6 +196,68 @@ export interface ITreeConfigurationOptions {
 // @public
 export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeConfigurationOptions {
     readonly schema: TSchema;
+}
+
+// @alpha @sealed
+export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<NodeKind.Array, "array"> {
+    readonly items: {
+        anyOf: JsonSchemaRef[];
+    };
+}
+
+// @alpha @sealed
+export interface JsonFieldSchema {
+    readonly anyOf: JsonSchemaRef[];
+}
+
+// @alpha @sealed
+export interface JsonLeafNodeSchema extends JsonNodeSchemaBase<NodeKind.Leaf, JsonLeafSchemaType> {
+    readonly type: JsonLeafSchemaType;
+}
+
+// @alpha
+export type JsonLeafSchemaType = "string" | "number" | "boolean" | "null";
+
+// @alpha @sealed
+export interface JsonMapNodeSchema extends JsonNodeSchemaBase<NodeKind.Map, "object"> {
+    readonly patternProperties: {
+        "^.*$": JsonFieldSchema;
+    };
+}
+
+// @alpha
+export type JsonNodeSchema = JsonLeafNodeSchema | JsonMapNodeSchema | JsonArrayNodeSchema | JsonObjectNodeSchema;
+
+// @alpha @sealed
+export interface JsonNodeSchemaBase<TNodeKind extends NodeKind, TJsonSchemaType extends JsonSchemaType> {
+    readonly _treeNodeSchemaKind: TNodeKind;
+    readonly type: TJsonSchemaType;
+}
+
+// @alpha @sealed
+export interface JsonObjectNodeSchema extends JsonNodeSchemaBase<NodeKind.Object, "object"> {
+    readonly additionalProperties?: boolean;
+    readonly properties: Record<string, JsonFieldSchema>;
+    readonly required?: string[];
+}
+
+// @alpha
+export type JsonRefPath = `#/$defs/${JsonSchemaId}`;
+
+// @alpha
+export type JsonSchemaId = string;
+
+// @alpha @sealed
+export interface JsonSchemaRef {
+    $ref: JsonRefPath;
+}
+
+// @alpha
+export type JsonSchemaType = "object" | "array" | JsonLeafSchemaType;
+
+// @alpha @sealed
+export interface JsonTreeSchema extends JsonFieldSchema {
+    readonly $defs: Record<JsonSchemaId, JsonNodeSchema>;
 }
 
 // @public
@@ -437,7 +505,7 @@ export abstract class TreeNode implements WithType {
     static [Symbol.hasInstance](value: unknown): value is TreeNode;
     static [Symbol.hasInstance]<TSchema extends abstract new (...args: any[]) => TreeNode>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
     abstract get [typeNameSymbol](): string;
-    protected constructor();
+    protected constructor(token: unknown);
 }
 
 // @public @sealed
@@ -446,7 +514,7 @@ export interface TreeNodeApi {
     key(node: TreeNode): string | number;
     on<K extends keyof TreeChangeEvents>(node: TreeNode, eventName: K, listener: TreeChangeEvents[K]): () => void;
     parent(node: TreeNode): TreeNode | undefined;
-    schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
+    schema(node: TreeNode | TreeLeafValue): TreeNodeSchema;
     shortId(node: TreeNode): number | string | undefined;
     status(node: TreeNode): TreeStatus;
 }

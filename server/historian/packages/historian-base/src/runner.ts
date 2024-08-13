@@ -37,6 +37,7 @@ export class HistorianRunner implements IRunner {
 		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly denyList?: IDenyList,
+		private readonly ephemeralDocumentTTLSec?: number,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -54,6 +55,7 @@ export class HistorianRunner implements IRunner {
 			this.asyncLocalStorage,
 			this.revokedTokenChecker,
 			this.denyList,
+			this.ephemeralDocumentTTLSec,
 		);
 		historian.set("port", this.port);
 

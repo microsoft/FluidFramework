@@ -9,8 +9,15 @@ import {
 	FieldKinds,
 	FlexFieldSchema,
 	SchemaBuilderBase,
+	type FlexAllowedTypes,
+	type FlexTreeOptionalField,
 } from "../../../feature-libraries/index.js";
-import { EmptyKey, type FieldKey, type MapTree } from "../../../core/index.js";
+import {
+	deepCopyMapTree,
+	EmptyKey,
+	type ExclusiveMapTree,
+	type FieldKey,
+} from "../../../core/index.js";
 import { leaf as leafDomain } from "../../../domains/index.js";
 import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -30,37 +37,37 @@ describe("MapTreeNodes", () => {
 		"FieldNode",
 		FlexFieldSchema.create(FieldKinds.sequence, [leafDomain.string]),
 	);
+	const objectMapKey = "map" as FieldKey;
+	const objectFieldNodeKey = "fieldNode" as FieldKey;
 	const objectSchema = schemaBuilder.object("Object", {
-		map: mapSchema,
-		field: fieldNodeSchema,
+		[objectMapKey]: mapSchema,
+		[objectFieldNodeKey]: fieldNodeSchema,
 	});
 	// #endregion
 
 	// #region The `MapTree`s used to construct the `MapTreeNode`s
 	const childValue = "childValue";
-	const mapChildMapTree: MapTree = {
+	const mapChildMapTree: ExclusiveMapTree = {
 		type: leafDomain.string.name,
 		value: childValue,
 		fields: new Map(),
 	};
 	const mapKey = "key" as FieldKey;
-	const mapMapTree: MapTree = {
-		type: brand("map"),
+	const mapMapTree: ExclusiveMapTree = {
+		type: mapSchema.name,
 		fields: new Map([[mapKey, [mapChildMapTree]]]),
 	};
-	const fieldNodeChildMapTree: MapTree = {
+	const fieldNodeChildMapTree: ExclusiveMapTree = {
 		type: leafDomain.string.name,
 		value: childValue,
 		fields: new Map(),
 	};
-	const fieldNodeMapTree: MapTree = {
-		type: brand("array"),
+	const fieldNodeMapTree: ExclusiveMapTree = {
+		type: fieldNodeSchema.name,
 		fields: new Map([[EmptyKey, [fieldNodeChildMapTree]]]),
 	};
-	const objectMapKey = "map" as FieldKey;
-	const objectFieldNodeKey = "fieldNode" as FieldKey;
-	const objectMapTree: MapTree = {
-		type: brand("object"),
+	const objectMapTree: ExclusiveMapTree = {
+		type: objectSchema.name,
 		fields: new Map([
 			[objectMapKey, [mapMapTree]],
 			[objectFieldNodeKey, [fieldNodeMapTree]],
@@ -108,7 +115,6 @@ describe("MapTreeNodes", () => {
 		assert.equal(map.getBoxed(mapKey).length, 1);
 		assert.equal(map.tryGetField(brand("unknown key")), undefined);
 		assert.equal(map.getBoxed("unknown key").length, 0);
-		assert.equal(map.get(mapKey), childValue);
 		assert.equal([...map.boxedIterator()].length, 1);
 		assert.equal([...map.boxedIterator()][0].boxedAt(0)?.value, childValue);
 		assert.deepEqual([...map.keys()], [mapKey]);
@@ -156,7 +162,7 @@ describe("MapTreeNodes", () => {
 			}),
 		);
 
-		const duplicateChild: MapTree = {
+		const duplicateChild: ExclusiveMapTree = {
 			type: leafDomain.string.name,
 			value: childValue,
 			fields: new Map(),
@@ -193,9 +199,9 @@ describe("MapTreeNodes", () => {
 
 	describe("cannot", () => {
 		it("get their context", () => {
-			assert.throws(() => map.context);
-			assert.throws(() => fieldNode.context);
-			assert.throws(() => object.context);
+			assert.equal(map.context, undefined);
+			assert.equal(fieldNode.context, undefined);
+			assert.equal(object.context, undefined);
 		});
 
 		it("get their anchor node", () => {
@@ -204,9 +210,48 @@ describe("MapTreeNodes", () => {
 			assert.throws(() => object.anchorNode);
 		});
 
-		it("be mutated", () => {
-			assert.throws(() => map.delete(mapKey));
-			assert.throws(() => fieldNode.content.sequenceEditor());
+		it("mutate arrays", () => {
+			assert.throws(() => fieldNode.content.editor);
+		});
+	});
+
+	describe("can mutate", () => {
+		it("required fields", () => {
+			const mutableObjectMapTree = deepCopyMapTree(objectMapTree);
+			const mutableObjectMapTreeMap = mutableObjectMapTree.fields.get(objectMapKey)?.[0];
+			assert(mutableObjectMapTreeMap !== undefined);
+			const mutableObject = getOrCreateNode(objectSchema, mutableObjectMapTree);
+			const field = mutableObject.getBoxed(
+				objectMapKey,
+			) as FlexTreeOptionalField<FlexAllowedTypes>;
+			const oldMap = field.boxedAt(0);
+			assert(oldMap !== undefined);
+			assert.equal(oldMap.parentField.parent.parent, mutableObject);
+			const newMap = getOrCreateNode(mapSchema, deepCopyMapTree(mapMapTree));
+			assert.notEqual(newMap, oldMap);
+			assert.equal(newMap.parentField.parent.parent, undefined);
+			// Replace the old map with a new map
+			field.editor.set(newMap.mapTree, false);
+			assert.equal(oldMap.parentField.parent.parent, undefined);
+			assert.equal(newMap.parentField.parent.parent, mutableObject);
+			assert.equal(field.boxedAt(0), newMap);
+			// Replace the new map with the old map again
+			field.editor.set(mutableObjectMapTreeMap, false);
+			assert.equal(oldMap.parentField.parent.parent, mutableObject);
+			assert.equal(newMap.parentField.parent.parent, undefined);
+			assert.equal(field.boxedAt(0), oldMap);
+		});
+
+		it("optional fields", () => {
+			const mutableMap = getOrCreateNode(mapSchema, deepCopyMapTree(mapMapTree));
+			const field = mutableMap.getBoxed(mapKey);
+			const oldValue = field.boxedAt(0);
+			const newValue = `new ${childValue}`;
+			field.editor.set({ ...mapChildMapTree, value: newValue }, false);
+			assert.equal(field.boxedAt(0)?.value, newValue);
+			assert.notEqual(newValue, oldValue);
+			field.editor.set(undefined, false);
+			assert.equal(field.boxedAt(0)?.value, undefined);
 		});
 	});
 });

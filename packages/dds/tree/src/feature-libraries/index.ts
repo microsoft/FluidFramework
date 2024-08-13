@@ -41,26 +41,6 @@ export {
 	comparePipeline,
 	compileSyntaxTree,
 } from "./editableTreeBinder.js";
-export {
-	typeNameSymbol,
-	valueSymbol,
-	type ContextuallyTypedNodeDataObject,
-	type ContextuallyTypedNodeData,
-	type MarkedArrayLike,
-	isContextuallyTypedNodeDataObject,
-	getFieldKind,
-	type ArrayLikeMut,
-	cursorFromContextualData,
-	cursorsFromContextualData,
-	type ContextuallyTypedFieldData,
-	cursorForTypedData,
-	cursorForTypedTreeData,
-	cursorsForTypedFieldData,
-	normalizeNewFieldContent,
-	type NewFieldContent,
-	getPossibleTypes,
-	getAllowedTypes,
-} from "./contextuallyTyped.js";
 
 export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.js";
 
@@ -71,6 +51,7 @@ export {
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
 	mapTreeFromCursor,
+	mapTreeFieldFromCursor,
 } from "./mapTreeCursor.js";
 export { MemoizedIdRangeAllocator, type IdRange } from "./memoizedIdRangeAllocator.js";
 export { buildForest } from "./object-forest/index.js";
@@ -291,18 +272,6 @@ export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";
 export { TreeCompressionStrategy } from "./treeCompressionUtils.js";
 
 export { valueSchemaAllows } from "./valueUtilities.js";
-
-export type {
-	InsertableFlexNode,
-	InsertableFlexField,
-	AllowedTypesToFlexInsertableTree,
-	ApplyMultiplicity,
-	// Internal
-	CollectOptions,
-	TypedFields,
-	UnbrandedName,
-	EmptyObject,
-} from "./schema-aware/index.js";
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer.js";
 

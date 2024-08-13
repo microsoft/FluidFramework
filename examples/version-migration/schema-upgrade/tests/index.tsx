@@ -96,7 +96,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		id,
 		inventoryListDataTransformationCallback,
 	);
-	migrator.on("migrated", () => {
+	migrator.events.on("migrated", () => {
 		model.close();
 		render(migrator.currentModel);
 		updateTabForId(migrator.currentModelId);

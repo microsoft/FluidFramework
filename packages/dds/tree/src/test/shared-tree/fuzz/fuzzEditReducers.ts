@@ -21,9 +21,9 @@ import {
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 	intoStoredSchema,
-	type FlexAllowedTypes,
-	type FlexibleNodeContent,
 	type Any,
+	mapTreeFromCursor,
+	mapTreeFieldFromCursor,
 } from "../../../feature-libraries/index.js";
 import type { SharedTreeFactory } from "../../../shared-tree/index.js";
 import { brand, fail } from "../../../util/index.js";
@@ -162,24 +162,28 @@ function applySequenceFieldEdit(
 ): void {
 	switch (change.type) {
 		case "insert": {
-			field.sequenceEditor().insert(change.index, cursorForJsonableTreeField(change.content));
+			field.editor.insert(
+				change.index,
+				mapTreeFieldFromCursor(cursorForJsonableTreeField(change.content)),
+			);
 			break;
 		}
 		case "remove": {
-			field
-				.sequenceEditor()
-				.remove(change.range.first, change.range.last + 1 - change.range.first);
+			field.editor.remove(change.range.first, change.range.last + 1 - change.range.first);
 			break;
 		}
 		case "intraFieldMove": {
-			field
-				.sequenceEditor()
-				.move(change.range.first, change.range.last + 1 - change.range.first, change.dstIndex);
+			field.editor.move(
+				change.range.first,
+				change.range.last + 1 - change.range.first,
+				change.dstIndex,
+			);
 			break;
 		}
 		case "crossFieldMove": {
 			const dstField = navigateToField(tree, change.dstField);
 			assert(dstField.is(tree.currentSchema.objectNodeFieldsObject.sequenceChildren));
+			assert(dstField.context !== undefined, "Expected LazyField");
 			dstField.context.checkout.editor.move(
 				field.getFieldPath(),
 				change.range.first,
@@ -201,9 +205,7 @@ function applyRequiredFieldEdit(
 ): void {
 	switch (change.type) {
 		case "set": {
-			field.content = cursorForJsonableTreeNode(
-				change.value,
-			) as FlexibleNodeContent<FlexAllowedTypes>;
+			field.editor.set(mapTreeFromCursor(cursorForJsonableTreeNode(change.value)));
 			break;
 		}
 		default:
@@ -218,11 +220,14 @@ function applyOptionalFieldEdit(
 ): void {
 	switch (change.type) {
 		case "set": {
-			field.content = cursorForJsonableTreeNode(change.value);
+			field.editor.set(
+				mapTreeFromCursor(cursorForJsonableTreeNode(change.value)),
+				field.length === 0,
+			);
 			break;
 		}
 		case "clear": {
-			field.content = undefined;
+			field.editor.set(undefined, field.length === 0);
 			break;
 		}
 		default:
