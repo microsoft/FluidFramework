@@ -48,6 +48,10 @@ if (indexedRecordOfStrings.a) {
 	indexedRecordOfStrings.a.length; // ok: Within a truthy check, 'a' is guaranteed to be defined
 }
 
+if ("a" in indexedRecordOfStrings) {
+	indexedRecordOfStrings.a.length; // ok: Accessing length of property inside an 'in' check, 'a' is guaranteed to be defined
+}
+
 for (const [key, value] of Object.entries(indexedRecordOfStrings)) {
 	value.length; // ok: Object.entries provides only present values
 	indexedRecordOfStrings[key]; // ok: Accessing property while looping though records which acts like a `has` property check
@@ -60,10 +64,6 @@ const aImplicitType = indexedRecordOfStrings.a; // ok: Assigning index property 
 aImplicitType.length; // defect: Accessing length of inferred type, 'a' might be undefined
 aImplicitType?.length; // ok: Using optional chaining to access length safely handles 'undefined'
 aImplicitType!.length; // ok: The author says they understand the question raised by check and acknowledge that they have other information expecting that it is actually defined or that they are okay with an exception being raise here if "a" is not present and defined
-
-if ("a" in indexedRecordOfStrings) {
-	indexedRecordOfStrings.a.length; // ok: Accessing length of property inside an 'in' check, 'a' is guaranteed to be defined
-}
 
 interface NonNullableProps {
 	definitelyString: string;

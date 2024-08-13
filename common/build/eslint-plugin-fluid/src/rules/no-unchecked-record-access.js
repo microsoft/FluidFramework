@@ -22,19 +22,45 @@ module.exports = {
 			function isTruthyCheck(node) {
 				if (!node.parent) return false;
 
-				return (
-					node.optional === true || // optional chaining
-					node.parent.type === "TSNonNullExpression" || // non-null assertion
-					(node.parent.type === "IfStatement" && node.parent.test === node) || // simple if check
-					(node.parent.type === "BinaryExpression" &&
-						node.parent.operator === "in" &&
-						node.parent.left === node) || // in operator
-					(node.parent.type === "ForOfStatement" &&
-						node.parent.right &&
-						node.parent.right.callee &&
-						node.parent.right.callee.property &&
-						node.parent.right.callee.property.name === "entries") // for...of Object.entries()
-				);
+				if (node.optional === true || node.parent.type === "TSNonNullExpression") {
+					return true;
+				}
+
+				if (node.parent.type === "IfStatement" && node.parent.test === node) {
+					return true;
+				}
+
+				if (
+					node.parent.type === "BinaryExpression" &&
+					node.parent.operator === "in" &&
+					node.parent.left === node
+				) {
+					return true;
+				}
+
+				if (
+					node.parent.type === "ForOfStatement" &&
+					node.parent.right &&
+					node.parent.right.callee &&
+					node.parent.right.callee.property &&
+					node.parent.right.callee.property.name === "entries"
+				) {
+					return true;
+				}
+
+				// Check if the current node is inside a block scope that has a preceding truthy check
+				if (node.parent.type === "BlockStatement") {
+					const blockParent = node.parent.parent;
+					if (
+						blockParent &&
+						(blockParent.type === "IfStatement" ||
+							blockParent.type === "ForOfStatement")
+					) {
+						return isTruthyCheck(blockParent.test || blockParent.right);
+					}
+				}
+
+				return false;
 			}
 
 			function checkPropertyAccess(node) {
@@ -50,7 +76,11 @@ module.exports = {
 					}
 
 					// Check if the accessed property is being used to access another property
-					if (node.parent && node.parent.type === "MemberExpression" && node.parent.object === node) {
+					if (
+						node.parent &&
+						node.parent.type === "MemberExpression" &&
+						node.parent.object === node
+					) {
 						// If no truthy check found and property is used in another access, report the error
 						context.report({
 							node,
