@@ -515,9 +515,6 @@ class EagerMapTreeSequenceField<T extends FlexAllowedTypes>
 				mapTrees.splice(index, count);
 			});
 		},
-		move: (sourceIndex, count, destIndex) => {
-			throw unsupportedUsageError("Moving nodes in an array");
-		},
 	};
 
 	public at(index: number): FlexTreeUnboxNodeUnion<T> | undefined {

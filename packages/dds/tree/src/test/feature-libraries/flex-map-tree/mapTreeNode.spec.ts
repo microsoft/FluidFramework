@@ -209,10 +209,6 @@ describe("MapTreeNodes", () => {
 			assert.throws(() => fieldNode.anchorNode);
 			assert.throws(() => object.anchorNode);
 		});
-
-		it("move elements in arrays", () => {
-			assert.throws(() => fieldNode.content.editor.move(0, 1, 0));
-		});
 	});
 
 	describe("can mutate", () => {
