@@ -257,10 +257,7 @@ export class SparseMatrixClass extends SharedSegmentSequence<MatrixSegment> {
 	public setItems(row: number, col: number, values: SparseMatrixItem[], props?: PropertySet) {
 		const start = rowColToPosition(row, col);
 		const end = start + values.length;
-		const segment = new RunSegment(values);
-		if (props) {
-			segment.properties = addProperties(segment.properties, props);
-		}
+		const segment = new RunSegment(values, props);
 
 		this.replaceRange(start, end, segment);
 	}
