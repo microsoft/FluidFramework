@@ -2511,9 +2511,10 @@ describe("Runtime", () => {
 		describe("Signals", () => {
 			let containerRuntime: ContainerRuntime;
 			let logger: MockLogger;
-			const droppedSignals: ISignalEnvelope[] = [];
+			let droppedSignals: ISignalEnvelope[];
 			beforeEach(async () => {
 				logger = new MockLogger();
+				droppedSignals = [];
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({}, logger) as IContainerContext,
 					registryEntries: [],
