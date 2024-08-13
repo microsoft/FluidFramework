@@ -20,7 +20,6 @@ import { MockNodeKeyManager } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { checkUnion } from "../../simple-tree/tree.js";
-// eslint-disable-next-line import/no-internal-modules
 
 const schema = new SchemaFactory("com.example");
 
