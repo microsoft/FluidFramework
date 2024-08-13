@@ -55,6 +55,7 @@ export {
 	IModelLoader,
 	instantiateMigratableRuntime,
 	MigratableModelLoader,
+	MigratableSessionStorageModelLoader,
 	ModelContainerRuntimeFactory,
 	ModelLoader,
 	SessionStorageModelLoader,
