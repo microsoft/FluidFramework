@@ -7,10 +7,8 @@ import {
 	type FlexMapNodeSchema,
 	type FlexTreeNode,
 	type MapTreeNode,
-	cursorForMapTreeNode,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
-	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import {
 	type FactoryContent,
@@ -20,10 +18,12 @@ import {
 } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
 import { getSimpleNodeSchema } from "./core/index.js";
-import type {
-	ImplicitAllowedTypes,
-	InsertableTreeNodeFromImplicitAllowedTypes,
-	TreeNodeFromImplicitAllowedTypes,
+import {
+	createFieldSchema,
+	FieldKind,
+	type ImplicitAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
 	NodeKind,
@@ -35,8 +35,7 @@ import {
 } from "./core/index.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import { getFlexSchema } from "./toFlexSchema.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { RestrictiveReadonlyRecord } from "../util/index.js";
+import { brand, count, type RestrictiveReadonlyRecord } from "../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 
 /**
@@ -138,12 +137,8 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		return this.entries();
 	}
 	public delete(key: string): void {
-		const node = getOrCreateInnerNode(this);
-		if (isMapTreeNode(node)) {
-			throw new UsageError(`A map cannot be mutated before being inserted into the tree`);
-		}
-
-		node.delete(key);
+		const field = getOrCreateInnerNode(this).getBoxed(key);
+		field.editor.set(undefined, field.length === 0);
 	}
 	public *entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
 		const node = getOrCreateInnerNode(this);
@@ -160,8 +155,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		return getTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 	}
 	public has(key: string): boolean {
-		const node = getOrCreateInnerNode(this);
-		return node.has(key);
+		return getOrCreateInnerNode(this).tryGetField(brand(key)) !== undefined;
 	}
 	public keys(): IterableIterator<string> {
 		const node = getOrCreateInnerNode(this);
@@ -169,32 +163,24 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	}
 	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): TreeMapNode {
 		const node = getOrCreateInnerNode(this);
-		if (isMapTreeNode(node)) {
-			throw new UsageError(`A map cannot be mutated before being inserted into the tree`);
-		}
-
 		const classSchema = getSimpleNodeSchema(node.schema);
 		const mapTree = mapTreeFromNodeData(
 			value as InsertableContent | undefined,
-			classSchema.info as ImplicitAllowedTypes,
+			createFieldSchema(FieldKind.Optional, classSchema.info as ImplicitAllowedTypes),
 			node.context?.nodeKeyManager,
 			getSchemaAndPolicy(node),
 		);
 
-		if (mapTree === undefined) {
-			node.delete(key);
-			return this;
-		}
-
+		const field = node.getBoxed(key);
 		if (node.context !== undefined) {
 			prepareContentForHydration(mapTree, node.context.checkout.forest);
 		}
 
-		node.set(key, cursorForMapTreeNode(mapTree));
+		field.editor.set(mapTree, field.length === 0);
 		return this;
 	}
 	public get size(): number {
-		return getOrCreateInnerNode(this).size;
+		return count(getOrCreateInnerNode(this).keys());
 	}
 	public *values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
 		for (const [, value] of this.entries()) {

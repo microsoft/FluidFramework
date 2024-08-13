@@ -11,6 +11,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	deepCopyMapTree,
 	EmptyKey,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -42,7 +43,6 @@ import {
 } from "../../simple-tree/schemaTypes.js";
 import {
 	addDefaultsToMapTree,
-	cursorFromNodeData,
 	getPossibleTypes,
 	mapTreeFromNodeData,
 	// eslint-disable-next-line import/no-internal-modules
@@ -53,7 +53,7 @@ import {
 	MockNodeKeyManager,
 	type NodeKeyManager,
 } from "../../feature-libraries/index.js";
-import { validateUsageError } from "../utils.js";
+import { cursorFromInsertableTreeField, validateUsageError } from "../utils.js";
 
 /**
  * Helper for building {@link TreeFieldStoredSchema}.
@@ -1420,28 +1420,16 @@ describe("toMapTree", () => {
 			new Map(),
 		);
 
-		describe("cursorFromNodeData", () => {
+		describe("cursorFromInsertableTreeField", () => {
 			it("Success", () => {
-				const nodeData = "Hello world";
-				cursorFromNodeData(
-					nodeData,
-					[schemaFactory.string],
-					nodeKeyManager,
-					schemaValidationPolicyForSuccess,
-				);
+				cursorFromInsertableTreeField(schemaFactory.string, "Hello world", nodeKeyManager);
 			});
 
 			it("Failure", () => {
-				const content = "Hello world";
 				assert.throws(
 					() =>
-						cursorFromNodeData(
-							content,
-							[schemaFactory.string],
-							nodeKeyManager,
-							schemaValidationPolicyForFailure,
-						),
-					outOfSchemaExpectedError,
+						cursorFromInsertableTreeField(schemaFactory.number, "Hello world", nodeKeyManager),
+					validateUsageError(/incompatible/),
 				);
 			});
 		});
@@ -1495,5 +1483,40 @@ describe("toMapTree", () => {
 				);
 			});
 		});
+	});
+});
+
+describe("deepCopyMapTree", () => {
+	/** Used by `generateMapTree` to give unique types and values to each MapTree */
+	let mapTreeGeneration = 0;
+	function generateMapTree(depth: number): ExclusiveMapTree {
+		const generation = mapTreeGeneration++;
+		return {
+			type: brand(String(generation)),
+			value: generation,
+			fields: new Map(
+				depth === 0
+					? []
+					: [
+							[brand("a"), [generateMapTree(depth - 1), generateMapTree(depth - 1)]],
+							[brand("b"), [generateMapTree(depth - 1), generateMapTree(depth - 1)]],
+						],
+			),
+		};
+	}
+
+	it("empty tree", () => {
+		const mapTree = generateMapTree(0);
+		assert.deepEqual(deepCopyMapTree(mapTree), mapTree);
+	});
+
+	it("shallow tree", () => {
+		const mapTree = generateMapTree(1);
+		assert.deepEqual(deepCopyMapTree(mapTree), mapTree);
+	});
+
+	it("deep tree", () => {
+		const mapTree = generateMapTree(2);
+		assert.deepEqual(deepCopyMapTree(mapTree), mapTree);
 	});
 });

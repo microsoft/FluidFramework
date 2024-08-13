@@ -30,3 +30,33 @@ export interface MapTree extends NodeData {
 export interface ExclusiveMapTree extends NodeData, MapTree {
 	fields: Map<FieldKey, ExclusiveMapTree[]>;
 }
+
+/**
+ * Returns a deep copy of the given {@link MapTree}.
+ * @privateRemarks This is implemented iteratively (rather than recursively, which is much simpler)
+ * to avoid the possibility of a stack overflow for very deep trees.
+ */
+export function deepCopyMapTree(mapTree: MapTree): ExclusiveMapTree {
+	type Next = [fields: ExclusiveMapTree["fields"], sourceFields: MapTree["fields"]];
+	const rootFields: ExclusiveMapTree["fields"] = new Map();
+	const nexts: Next[] = [[rootFields, mapTree.fields]];
+	for (let next = nexts.pop(); next !== undefined; next = nexts.pop()) {
+		const [fields, sourceFields] = next;
+		for (const [key, field] of sourceFields) {
+			if (field.length > 0) {
+				const newField: ExclusiveMapTree[] = [];
+				for (const child of field) {
+					const childClone: ExclusiveMapTree = { ...child, fields: new Map() };
+					newField.push(childClone);
+					nexts.push([childClone.fields, child.fields]);
+				}
+				fields.set(key, newField);
+			}
+		}
+	}
+
+	return {
+		...mapTree,
+		fields: rootFields,
+	};
+}

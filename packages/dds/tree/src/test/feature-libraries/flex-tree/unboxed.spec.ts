@@ -180,28 +180,6 @@ describe("unboxedTree", () => {
 		assert.equal(unboxedTree(context, leafDomain.string, cursor), "Hello world");
 	});
 
-	it("Map", () => {
-		const builder = new SchemaBuilder({ scope: "test" });
-		const mapSchema = builder.map("map", builder.optional(leafDomain.string));
-		const rootSchema = SchemaBuilder.optional(mapSchema);
-		const schema = builder.intoSchema(rootSchema);
-
-		const { context, cursor } = initializeTreeWithContent({
-			schema,
-			initialTree: typedJsonCursor({
-				[typedJsonCursor.type]: mapSchema,
-				foo: "Hello",
-				bar: "world",
-			}),
-		});
-		cursor.enterNode(0); // Root node field has 1 node; move into it
-
-		const unboxed = unboxedTree(context, mapSchema, cursor);
-		assert.equal(unboxed.size, 2);
-		assert.equal(unboxed.get("foo"), "Hello");
-		assert.equal(unboxed.get("bar"), "world");
-	});
-
 	it("ObjectNode", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
 		const objectSchema = builder.objectRecursive("object", {
