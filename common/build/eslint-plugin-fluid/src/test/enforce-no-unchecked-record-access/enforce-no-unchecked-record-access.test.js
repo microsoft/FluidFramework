@@ -30,7 +30,7 @@ describe("ESLint Rule Tests", function () {
 	it.only("Should report an error for unchecked record access", async function () {
 		const result = await lintFile("fileWithOnlyRecordAccess.ts");
 		console.log(result);
-		assert.strictEqual(result.errorCount, 7, "Should have 7 errors");
+		assert.strictEqual(result.errorCount, 6, "Should have 6 errors");
 		assert.strictEqual(
 			result.messages[0].message,
 			"'nestedObj.nested.a' is possibly 'undefined'",
@@ -53,7 +53,7 @@ describe("ESLint Rule Tests", function () {
 		);
 		assert.strictEqual(
 			result.messages[6].message,
-			"Type 'string | undefined' is not assignable to type 'string'. \nType 'undefined' is not assignable to type 'string'.",
+			"Unchecked property access on index signature type. The variable expects a non-optional type.",
 		);
 		assert.strictEqual(result.messages[7].message, "'aImplicitType' is possibly 'undefined'");
 	});
