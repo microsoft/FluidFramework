@@ -156,17 +156,6 @@ export abstract class BaseCommand<T extends typeof Command>
 		return this._context;
 	}
 
-	// private _config: FlubConfig | undefined;
-
-	// protected async getFlubConfig(configFile?: string): Promise<FlubConfig> {
-	// 	if (this._config === undefined) {
-	// 		const context = await this.getContext();
-	// 		this._config = getFlubConfig(configFile ?? context.repo.resolvedRoot);
-	// 	}
-
-	// 	return this._config;
-	// }
-
 	/**
 	 * Outputs a horizontal rule.
 	 */
