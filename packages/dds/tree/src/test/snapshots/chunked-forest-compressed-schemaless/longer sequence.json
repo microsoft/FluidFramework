@@ -1,7 +1,7 @@
 {
   "version": 1,
   "identifiers": [
-    "cursor test suite.empty object 3"
+    "Cursor Test Suite.Empty object 3"
   ],
   "shapes": [
     {
@@ -34,7 +34,7 @@
           false,
           [],
           0,
-          "cursor test suite.empty object 2",
+          "Cursor Test Suite.Empty object 2",
           false,
           [],
           0,

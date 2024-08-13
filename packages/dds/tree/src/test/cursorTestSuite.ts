@@ -37,11 +37,11 @@ import {
 } from "./utils.js";
 import { SchemaFactory } from "../simple-tree/index.js";
 
-const sf = new SchemaFactory("cursor test suite");
+const sf = new SchemaFactory("Cursor Test Suite");
 
-export const EmptyObject = sf.object("empty object", {});
-const EmptyObject2 = sf.object("empty object 2", {});
-const EmptyObject3 = sf.object("empty object 3", {});
+export const EmptyObject = sf.object("Empty object", {});
+const EmptyObject2 = sf.object("Empty object 2", {});
+const EmptyObject3 = sf.object("Empty object 3", {});
 
 const emptyObjectIdentifier: TreeNodeSchemaIdentifier = brand(EmptyObject.identifier);
 const emptyObjectIdentifier2: TreeNodeSchemaIdentifier = brand(EmptyObject2.identifier);
