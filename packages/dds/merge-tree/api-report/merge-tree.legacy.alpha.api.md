@@ -18,6 +18,7 @@ export interface AttributionPolicy {
 
 // @alpha (undocumented)
 export abstract class BaseSegment implements ISegment {
+    constructor(properties?: PropertySet);
     // (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // @deprecated
@@ -540,7 +541,7 @@ export interface MapLike<T> {
 
 // @alpha
 export class Marker extends BaseSegment implements ReferencePosition, ISegment {
-    constructor(refType: ReferenceType);
+    constructor(refType: ReferenceType, props?: PropertySet);
     // (undocumented)
     append(): void;
     // (undocumented)
@@ -769,7 +770,7 @@ export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingP
 
 // @alpha (undocumented)
 export class TextSegment extends BaseSegment {
-    constructor(text: string);
+    constructor(text: string, props?: PropertySet);
     // (undocumented)
     append(segment: ISegment): void;
     // (undocumented)
