@@ -168,6 +168,23 @@ export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 	const parentNode = fieldEdit.parentNodePath
 		? navigateToNode(tree, fieldEdit.parentNodePath) ?? tree.root
 		: tree.root;
+
+	if (!Tree.is(parentNode, tree.currentSchema)) {
+		assert(fieldEdit.change.type === "optional");
+		switch (fieldEdit.change.edit.type) {
+			case "set": {
+				tree.root = generateFuzzLeafNode(fieldEdit.change.edit.value, tree.currentSchema);
+				break;
+			}
+			case "clear": {
+				tree.root = undefined;
+				break;
+			}
+			default:
+				fail("Invalid edit.");
+		}
+		return;
+	}
 	assert(Tree.is(parentNode, tree.currentSchema));
 
 	switch (fieldEdit.change.type) {
@@ -193,7 +210,7 @@ function applySequenceFieldEdit(
 	switch (change.type) {
 		case "insert": {
 			const insertValues = change.content.map((value) =>
-				generateFuzzLeafNode(value, parentNode),
+				generateFuzzLeafNode(value, tree.currentSchema),
 			);
 			for (let index = change.index; index < insertValues.length; index++) {
 				parentNode.sequenceChildren.insertAt(index, insertValues[index - change.index]);
@@ -235,7 +252,7 @@ function applySequenceFieldEdit(
 function applyRequiredFieldEdit(tree: FuzzView, parentNode: FuzzNode, change: SetField): void {
 	switch (change.type) {
 		case "set": {
-			parentNode.requiredChild = generateFuzzLeafNode(change.value, parentNode);
+			parentNode.requiredChild = generateFuzzLeafNode(change.value, tree.currentSchema);
 			break;
 		}
 		default:
@@ -250,7 +267,7 @@ function applyOptionalFieldEdit(
 ): void {
 	switch (change.type) {
 		case "set": {
-			parentNode.optionalChild = generateFuzzLeafNode(change.value, parentNode);
+			parentNode.optionalChild = generateFuzzLeafNode(change.value, tree.currentSchema);
 			break;
 		}
 		case "clear": {
@@ -431,7 +448,19 @@ function getNodeSchemaForNodeType(node: TreeNode, nodeType: string) {
 	const simpleSchema = simpleNodeSchema as unknown as new (dummy: unknown) => TreeNode;
 	return simpleSchema;
 }
-function generateFuzzLeafNode(node: GeneratedFuzzNode, tree: TreeNode) {
+
+function nodeSchemaForNodeType(nodeSchema: typeof FuzzNode, nodeType: string) {
+	assert(isObjectNodeSchema(nodeSchema));
+	const nodeSchemaField = nodeSchema.fields.get("requiredChild");
+	assert(nodeSchemaField !== undefined);
+	const allowedTypes = nodeSchemaField.allowedTypeSet;
+	const simpleNodeSchema = Array.from(allowedTypes).find(
+		(treeNodeSchema) => treeNodeSchema.identifier === nodeType,
+	);
+	const simpleSchema = simpleNodeSchema as unknown as new (dummy: unknown) => TreeNode;
+	return simpleSchema;
+}
+function generateFuzzLeafNode(node: GeneratedFuzzNode, nodeSchema: typeof FuzzNode) {
 	switch (node.type) {
 		case GeneratedFuzzValueType.String:
 			return new FuzzStringNode({ stringValue: node.value as string });
@@ -440,7 +469,7 @@ function generateFuzzLeafNode(node: GeneratedFuzzNode, tree: TreeNode) {
 		case GeneratedFuzzValueType.Handle:
 			return new FuzzHandleNode({ value: node.value as IFluidHandle });
 		case GeneratedFuzzValueType.NodeObject: {
-			const nodeObjectSchema = getNodeSchemaForNodeType(tree, "treeFuzz.node");
+			const nodeObjectSchema = nodeSchemaForNodeType(nodeSchema, "treeFuzz.node");
 			return new nodeObjectSchema({
 				requiredChild: new FuzzNumberNode({
 					value: (node.value as NodeObjectValue).requiredChild,

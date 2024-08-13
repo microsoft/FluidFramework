@@ -16,7 +16,12 @@ import { SharedTreeTestFactory, validateFuzzTreeConsistency } from "../../utils.
 
 import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
-import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils.js";
+import {
+	createOnCreate,
+	deterministicIdCompressorFactory,
+	failureDirectory,
+	onCreate,
+} from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
@@ -68,7 +73,7 @@ describe("Fuzz - Top-Level", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "SharedTree",
-			factory: new SharedTreeTestFactory(onCreate),
+			factory: new SharedTreeTestFactory(createOnCreate(undefined)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,

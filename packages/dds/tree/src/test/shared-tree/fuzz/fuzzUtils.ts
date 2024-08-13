@@ -148,7 +148,7 @@ export const onCreate = (tree: SharedTree) => {
 };
 
 export function createOnCreate(
-	initialState: NodeBuilderData<typeof FuzzNode>,
+	initialState: NodeBuilderData<typeof FuzzNode> | undefined,
 ): (tree: SharedTree) => void {
 	return (tree: SharedTree) => {
 		const view = tree.viewWith(new TreeViewConfiguration({ schema: initialFuzzSchema }));

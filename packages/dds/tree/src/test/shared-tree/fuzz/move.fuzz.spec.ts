@@ -21,12 +21,7 @@ import {
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
-import {
-	deterministicIdCompressorFactory,
-	failureDirectory,
-	onCreate,
-	populatedInitialState,
-} from "./fuzzUtils.js";
+import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
@@ -62,7 +57,7 @@ describe("Fuzz - move", () => {
 
 	const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 	emitter.on("testStart", (state: FuzzTestState) => {
-		viewFromState(state, state.clients[0], populatedInitialState);
+		viewFromState(state, state.clients[0]);
 	});
 
 	const options: Partial<DDSFuzzSuiteOptions> = {

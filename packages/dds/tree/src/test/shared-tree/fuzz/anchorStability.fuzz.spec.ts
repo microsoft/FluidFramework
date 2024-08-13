@@ -15,7 +15,7 @@ import {
 } from "@fluid-private/test-dds-utils";
 
 import type { Anchor, UpPath, Value } from "../../../core/index.js";
-import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
+import { SharedTreeTestFactory, createTestUndoRedoStacks } from "../../utils.js";
 
 import {
 	type EditGeneratorOpWeights,
@@ -31,7 +31,6 @@ import {
 	failureDirectory,
 	validateAnchors,
 	type FuzzNode,
-	populatedInitialState,
 	onCreate,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
@@ -167,7 +166,7 @@ describe("Fuzz - anchor stability", () => {
 				for (const client of initialState.clients) {
 					// This is a kludge to force the invocation of schematize for each client.
 					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-					viewFromState(initialState, client, populatedInitialState).checkout;
+					viewFromState(initialState, client).checkout;
 					// synchronization here (instead of once after this loop) prevents the second client from having to rebase an initialize,
 					// which invalidates its view due to schema change.
 					initialState.containerRuntimeFactory.processAllMessages();

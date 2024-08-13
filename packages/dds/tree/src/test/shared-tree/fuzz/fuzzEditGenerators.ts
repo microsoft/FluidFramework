@@ -41,7 +41,6 @@ import {
 	createTreeViewSchema,
 	type FuzzNodeSchema,
 	type fuzzFieldSchema,
-	populatedInitialState,
 	nodeSchemaFromTreeSchema,
 } from "./fuzzUtils.js";
 import {
@@ -74,9 +73,6 @@ import { TreeViewConfiguration } from "../../../simple-tree/tree.js";
 import type { TreeNode } from "../../../simple-tree/types.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SchemaFactory } from "../../../simple-tree/schemaFactory.js";
-import type { NodeBuilderData } from "../../../internalTypes.js";
-// eslint-disable-next-line import/no-internal-modules
-import { tryGetSchema } from "../../../simple-tree/treeNodeApi.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getOrCreateInnerNode } from "../../../simple-tree/proxyBinding.js";
 
@@ -129,7 +125,6 @@ export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 export function viewFromState(
 	state: FuzzTestState,
 	client: Client<SharedTreeFactory> = state.client,
-	initialTree: NodeBuilderData<typeof FuzzNode> = populatedInitialState,
 ): FuzzView {
 	state.clientStates ??= new Map();
 	const view =
@@ -154,7 +149,6 @@ export function viewFromState(
 			const nodeSchema = nodeSchemaFromTreeSchema(treeSchema);
 
 			fuzzView.currentSchema = nodeSchema ?? assert.fail("nodeSchema should not be undefined");
-			assert(Tree.is(fuzzView.root, fuzzView.currentSchema));
 			return fuzzView;
 		}) as unknown as FuzzView);
 	return view;
@@ -504,7 +498,7 @@ export const makeTreeEditGenerator = (
 		} while (change === "no-valid-selections" && attemptsRemaining > 0); // TODO: make check here to make sure it's not unhydrated node
 		const check = typeof fieldInfo.parentFuzzNode;
 		assert(change !== "no-valid-selections", "No valid field edit found");
-		assert(tryGetSchema(fieldInfo.parentFuzzNode) !== undefined);
+		// assert(tryGetSchema(fieldInfo.parentFuzzNode) !== undefined);
 		const downPath = maybeDownPathFromNode(fieldInfo.parentFuzzNode);
 		const jsonableTree = jsonableTreeFromForest(state.client.channel.checkout.forest);
 		return {
@@ -703,9 +697,10 @@ export function fieldDownPathFromParentNode(
 	};
 }
 
+// A parentFuzzNode of undefined means that the root of the tree is undefined.
 interface OptionalFuzzField {
 	type: "optional";
-	parentFuzzNode: FuzzNode;
+	parentFuzzNode: TreeNode;
 }
 
 interface SequenceFuzzField {
@@ -791,6 +786,10 @@ function trySelectTreeField(
 ): FuzzField | "no-valid-fields" {
 	const editable = tree.root;
 	const nodeSchema = tree.currentSchema;
+
+	if (!Tree.is(editable, nodeSchema)) {
+		return { type: "optional", parentFuzzNode: editable as TreeNode } as const;
+	}
 	assert(Tree.is(editable, nodeSchema));
 	const options =
 		weights.optional === 0
@@ -838,7 +837,9 @@ function selectTreeField(
 ): FuzzField {
 	const result = trySelectTreeField(tree, random, weights, filter);
 	assert(result !== "no-valid-fields", "No valid fields found");
-	assert(Tree.contains(tree.root as TreeNode, result.parentFuzzNode));
+	if (tree.root !== undefined && result.parentFuzzNode !== undefined) {
+		assert(Tree.contains(tree.root as TreeNode, result.parentFuzzNode));
+	}
 	return result;
 }
 

@@ -40,7 +40,6 @@ import {
 	deterministicIdCompressorFactory,
 	failureDirectory,
 	onCreate,
-	populatedInitialState,
 	validateAnchors,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
@@ -215,7 +214,7 @@ describe("Fuzz - revert", () => {
 });
 
 function init(state: UndoRedoFuzzTestState) {
-	const tree = viewFromState(state, state.clients[0], populatedInitialState).checkout;
+	const tree = viewFromState(state, state.clients[0]).checkout;
 	state.initialTreeState = toJsonableTree(tree);
 	state.containerRuntimeFactory.processAllMessages();
 	const undoStack: Revertible[] = [];
