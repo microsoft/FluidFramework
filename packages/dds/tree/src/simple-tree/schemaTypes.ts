@@ -433,6 +433,8 @@ export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema
 
 /**
  * Value that may be stored as a leaf node.
+ * @remarks
+ * Some limitation apply, see the documentation for {@link SchemaFactory.number} and {@link SchemaFactory.string} for those restrictions.
  * @public
  */
 // eslint-disable-next-line @rushstack/no-new-null
