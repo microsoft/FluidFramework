@@ -7,8 +7,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable unicorn/consistent-function-scoping */
 /* eslint-disable unicorn/no-null */
 
 import { strict as assert } from "node:assert";
@@ -20,8 +18,8 @@ import type {
 import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 
+import type { IFluidErrorAnnotations } from "../errorLogging.js";
 import {
-	type IFluidErrorAnnotations,
 	LoggingError,
 	extractLogSafeErrorProperties,
 	isExternalError,
@@ -30,7 +28,8 @@ import {
 	wrapError,
 	wrapErrorAndLog,
 } from "../errorLogging.js";
-import { type IFluidErrorBase, isFluidError } from "../fluidErrorBase.js";
+import type { IFluidErrorBase } from "../fluidErrorBase.js";
+import { isFluidError } from "../fluidErrorBase.js";
 import { TaggedLoggerAdapter, TelemetryDataTag, TelemetryLogger } from "../logger.js";
 import { MockLogger } from "../mockLogger.js";
 import type { ITelemetryPropertiesExt } from "../telemetryTypes.js";

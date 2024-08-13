@@ -7,7 +7,8 @@ import type { ITelemetryBaseProperties, Tagged } from "@fluidframework/core-inte
 import type { ILoggingError } from "@fluidframework/core-interfaces/internal";
 import { v4 as uuid } from "uuid";
 
-import { type IFluidErrorBase, hasErrorInstanceId, isFluidError } from "./fluidErrorBase.js";
+import type { IFluidErrorBase } from "./fluidErrorBase.js";
+import { hasErrorInstanceId, isFluidError } from "./fluidErrorBase.js";
 import { convertToBasePropertyType } from "./logger.js";
 import type {
 	ITelemetryLoggerExt,
@@ -328,7 +329,7 @@ export function isExternalError(error: unknown): boolean {
 			const props = error.getTelemetryProperties();
 			// NOTE: errorRunningExternalCode is not currently used - once this "read" code reaches LTS,
 			// we can switch to writing this more explicit property
-			return props.untrustedOrigin === 1 || !!props.errorRunningExternalCode;
+			return props.untrustedOrigin === 1 || Boolean(props.errorRunningExternalCode);
 		}
 		return false;
 	}

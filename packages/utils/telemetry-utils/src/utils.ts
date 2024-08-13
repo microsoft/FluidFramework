@@ -68,32 +68,48 @@ export function createSampledLogger(
 			// 1. If isSamplingDisabled is true, then this means events should be unsampled. Therefore we send the event without any checks.
 			// 2. If isSamplingDisabled is false, then event should be sampled using the event sampler, if the sampler is not defined just send all events, other use the eventSampler.sample() method.
 			// 3. If skipLoggingWhenSamplingIsDisabled is true, then no event is sent.
-			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
-				if (isSamplingDisabled && skipLoggingWhenSamplingIsDisabled) {
+			if (
+				isSamplingDisabled ||
+				eventSampler === undefined ||
+				(eventSampler.sample() ?? false)
+			) {
+				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
 				logger.send(event);
 			}
 		},
 		sendTelemetryEvent: (event: ITelemetryGenericEventExt): void => {
-			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
-				if (isSamplingDisabled && skipLoggingWhenSamplingIsDisabled) {
+			if (
+				isSamplingDisabled ||
+				eventSampler === undefined ||
+				(eventSampler.sample() ?? false)
+			) {
+				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
 				logger.sendTelemetryEvent(event);
 			}
 		},
 		sendErrorEvent: (event: ITelemetryGenericEventExt): void => {
-			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
-				if (isSamplingDisabled && skipLoggingWhenSamplingIsDisabled) {
+			if (
+				isSamplingDisabled ||
+				eventSampler === undefined ||
+				(eventSampler.sample() ?? false)
+			) {
+				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
 				logger.sendErrorEvent(event);
 			}
 		},
 		sendPerformanceEvent: (event: ITelemetryGenericEventExt): void => {
-			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
-				if (isSamplingDisabled && skipLoggingWhenSamplingIsDisabled) {
+			if (
+				isSamplingDisabled ||
+				eventSampler === undefined ||
+				(eventSampler.sample() ?? false)
+			) {
+				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
 				logger.sendPerformanceEvent(event);
