@@ -5,7 +5,7 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
-import { Multiplicity, rootFieldKey } from "../core/index.js";
+import { Multiplicity, rootFieldKey } from "../../core/index.js";
 import {
 	type LazyItem,
 	type TreeStatus,
@@ -13,33 +13,37 @@ import {
 	isTreeValue,
 	FlexObjectNodeSchema,
 	isMapTreeNode,
-} from "../feature-libraries/index.js";
-import { fail, extractFromOpaque, isReadonlyArray } from "../util/index.js";
+} from "../../feature-libraries/index.js";
+import { fail, extractFromOpaque, isReadonlyArray } from "../../util/index.js";
 
-import { getOrCreateNodeFromFlexTreeNode } from "./proxies.js";
-import { getOrCreateInnerNode } from "./proxyBinding.js";
-import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
+import { getOrCreateNodeFromFlexTreeNode } from "../proxies.js";
+import { getOrCreateInnerNode } from "../proxyBinding.js";
 import {
-	NodeKind,
 	type TreeLeafValue,
-	type TreeNodeSchema,
 	type ImplicitFieldSchema,
 	FieldSchema,
 	type ImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
-} from "./schemaTypes.js";
-import type { TreeNode, TreeChangeEvents } from "./types.js";
+} from "../schemaTypes.js";
 import {
 	booleanSchema,
 	handleSchema,
 	nullSchema,
 	numberSchema,
 	stringSchema,
-} from "./leafNodeSchema.js";
+} from "../leafNodeSchema.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { Off } from "../events/index.js";
-import { getKernel, isTreeNode } from "./treeNodeKernel.js";
+import type { Off } from "../../events/index.js";
+import {
+	getKernel,
+	isTreeNode,
+	type TreeNodeSchema,
+	NodeKind,
+	type TreeNode,
+	type TreeChangeEvents,
+	tryGetTreeNodeSchema,
+} from "../core/index.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -57,9 +61,7 @@ export interface TreeNodeApi {
 	/**
 	 * The schema information for this node.
 	 */
-	schema<T extends TreeNode | TreeLeafValue>(
-		node: T,
-	): TreeNodeSchema<string, NodeKind, unknown, T>;
+	schema(node: TreeNode | TreeLeafValue): TreeNodeSchema;
 
 	/**
 	 * Narrow the type of the given value if it satisfies the given schema.
@@ -187,12 +189,12 @@ export const treeNodeApi: TreeNodeApi = {
 			}
 			return false;
 		} else {
+			// Linter is incorrect about this bering unnecessary: it does not compile without the type assertion.
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 			return (schema as TreeNodeSchema) === actualSchema;
 		}
 	},
-	schema<T extends TreeNode | TreeLeafValue>(
-		node: T,
-	): TreeNodeSchema<string, NodeKind, unknown, T> {
+	schema(node: TreeNode | TreeLeafValue): TreeNodeSchema {
 		return tryGetSchema(node) ?? fail("Not a tree node");
 	},
 	shortId(node: TreeNode): number | string | undefined {
@@ -214,7 +216,7 @@ export const treeNodeApi: TreeNodeApi = {
 					}
 					return identifier.value as string;
 				}
-				assert(identifier !== undefined, 0x927 /* The identifier must exist */);
+				assert(identifier?.context !== undefined, "Expected LazyIdentifierField");
 				const identifierValue = identifier.value as string;
 
 				const localNodeKey =
@@ -233,27 +235,24 @@ export const treeNodeApi: TreeNodeApi = {
  * Returns a schema for a value if the value is a {@link TreeNode} or a {@link TreeLeafValue}.
  * Returns undefined for other values.
  */
-export function tryGetSchema<T>(
-	value: T,
-): undefined | TreeNodeSchema<string, NodeKind, unknown, T> {
-	type TOut = TreeNodeSchema<string, NodeKind, unknown, T>;
+export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
 	switch (typeof value) {
 		case "string":
-			return stringSchema as TOut;
+			return stringSchema;
 		case "number":
-			return numberSchema as TOut;
+			return numberSchema;
 		case "boolean":
-			return booleanSchema as TOut;
+			return booleanSchema;
 		case "object": {
 			if (isTreeNode(value)) {
 				// This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.
-				return tryGetSimpleNodeSchema(getOrCreateInnerNode(value).schema) as TOut;
+				return tryGetTreeNodeSchema(value);
 			}
 			if (value === null) {
-				return nullSchema as TOut;
+				return nullSchema;
 			}
 			if (isFluidHandle(value)) {
-				return handleSchema as TOut;
+				return handleSchema;
 			}
 		}
 		default:
@@ -273,7 +272,7 @@ function getStoredKey(node: TreeNode): string | number {
 		return parentField.index;
 	}
 
-	// The parent of `node` is an object, a map, or undefined (and therefore `node` is a root/detached node).
+	// The parent of `node` is an object, a map, or undefined. If undefined, then `node` is a root/detached node.
 	return parentField.parent.key;
 }
 

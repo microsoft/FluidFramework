@@ -51,7 +51,7 @@ import {
 import {
 	MockTreeCheckout,
 	checkoutWithContent,
-	cursorFromUnhydratedRoot,
+	cursorFromInsertableTreeField,
 	flexTreeViewWithContent,
 	numberSequenceRootSchema,
 	testIdCompressor,
@@ -89,7 +89,7 @@ class HasIdentifier extends schemaFactory.object("parent", {
 }) {}
 
 function getIdentifierEncodingContext(id: string) {
-	const initialTree = cursorFromUnhydratedRoot(
+	const initialTree = cursorFromInsertableTreeField(
 		HasIdentifier,
 		new HasIdentifier({ identifier: id }),
 		new MockNodeKeyManager(),

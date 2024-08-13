@@ -22,14 +22,13 @@ import {
 	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
-import type { WithType } from "./schemaTypes.js";
+import type { WithType, TreeNode } from "./core/index.js";
 import type { TreeArrayNode } from "./arrayNode.js";
-import type { TreeNode } from "./types.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../feature-libraries/flex-tree/lazyNode.js";
 import type { TreeMapNode } from "./mapNode.js";
-import { getKernel } from "./treeNodeKernel.js";
+import { getKernel } from "./core/index.js";
 
 // This file contains various maps and helpers for supporting associating simple TreeNodes with their InnerNodes, and swapping those InnerNodes as part of hydration.
 // See ./ProxyBinding.md for a high-level overview of the process.

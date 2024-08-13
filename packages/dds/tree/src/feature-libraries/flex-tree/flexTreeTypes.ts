@@ -5,14 +5,19 @@
 
 import {
 	type AnchorNode,
+	type ExclusiveMapTree,
 	type FieldKey,
 	type FieldUpPath,
-	type ITreeCursorSynchronous,
 	type TreeValue,
 	anchorSlot,
 } from "../../core/index.js";
 import type { Assume, FlattenKeys } from "../../util/index.js";
-import type { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
+import type {
+	FieldKinds,
+	SequenceFieldEditBuilder,
+	ValueFieldEditBuilder,
+	OptionalFieldEditBuilder,
+} from "../default-schema/index.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 import type {
 	Any,
@@ -86,8 +91,9 @@ export interface FlexTreeEntity<out TSchema = unknown> {
 
 	/**
 	 * A common context of a "forest" of FlexTrees.
+	 * @remarks This is `undefined` for unhydrated nodes or fields that have not yet been inserted into the tree.
 	 */
-	readonly context: FlexTreeContext;
+	readonly context?: FlexTreeContext;
 
 	/**
 	 * Iterate through all nodes/fields in this field/node.
@@ -263,29 +269,6 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema>
 	readonly schema: TSchema;
 
 	/**
-	 * The number of elements in the map.
-	 *
-	 * @remarks
-	 * All fields under a map implicitly exist, but `size` will count only the fields which contain one or more nodes.
-	 */
-	readonly size: number;
-
-	/**
-	 * Checks whether a value exists for the given key.
-	 * @param key - Which map entry to look up.
-	 *
-	 * @remarks
-	 * All fields under a map implicitly exist, but `has` will only return true if there are one or more nodes present in the given field.
-	 */
-	has(key: string): boolean;
-
-	/**
-	 * Get the value associated with `key`.
-	 * @param key - which map entry to look up.
-	 */
-	get(key: string): FlexTreeUnboxField<TSchema["info"]>;
-
-	/**
 	 * Get the field for `key`.
 	 * @param key - which map entry to look up.
 	 *
@@ -344,30 +327,6 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema>
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
 	): void;
-
-	/**
-	 * Adds or updates an entry in the map with a specified `key` and a `value`.
-	 *
-	 * @param key - The key of the element to add to the map.
-	 * @param value - The value of the element to add to the map.
-	 */
-	set(key: string, value: FlexibleFieldContent | undefined): void;
-
-	/**
-	 * Removes the specified element from this map by its `key`.
-	 *
-	 * @remarks
-	 * Note: unlike JavaScript's Map API, this method does not return a flag indicating whether or not the value was
-	 * deleted.
-	 *
-	 * @privateRemarks
-	 * Regarding the choice to not return a boolean: Since this data structure is distributed in nature, it isn't
-	 * possible to tell whether or not the item was deleted as a result of this method call. Returning a "best guess"
-	 * is more likely to create issues / promote bad usage patterns than offer useful information.
-	 *
-	 * @param key - The key of the element to remove from the map.
-	 */
-	delete(key: string): void;
 
 	/**
 	 * Iterate through all fields in the map.
@@ -532,7 +491,7 @@ export type FlexTreeObjectNodeFieldsInner<TFields extends FlexObjectNodeFields> 
 		// Setter method (when the field is of a kind that has a logical set operation).
 		readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
 			? `set${Capitalize<key & string>}`
-			: never]: (content: FlexibleFieldContent) => void;
+			: never]: (content: FlexibleNodeContent) => void;
 	}
 >;
 
@@ -609,26 +568,20 @@ export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKind
 
 /**
  * Strongly typed tree literals for inserting as the content of a field.
- *
- * If a cursor is provided, it must be in Fields mode.
  */
-export type FlexibleFieldContent = ITreeCursorSynchronous;
+export type FlexibleFieldContent = ExclusiveMapTree[];
 
 /**
  * Strongly typed tree literals for inserting as a node.
- *
- * If a cursor is provided, it must be in Nodes mode.
  */
-export type FlexibleNodeContent = ITreeCursorSynchronous;
+export type FlexibleNodeContent = ExclusiveMapTree;
 
 /**
  * Strongly typed tree literals for inserting a subsequence of nodes.
  *
  * Used to insert a batch of 0 or more nodes into some location in a {@link FlexTreeSequenceField}.
- *
- * If a cursor is provided, it must be in Fields mode.
  */
-export type FlexibleNodeSubSequence = ITreeCursorSynchronous;
+export type FlexibleNodeSubSequence = ExclusiveMapTree[];
 
 /**
  * Type to ensures two types overlap in at least one way.
@@ -691,7 +644,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	/**
 	 * Get an editor for this sequence.
 	 */
-	sequenceEditor(): SequenceFieldEditBuilder;
+	editor: SequenceFieldEditBuilder<FlexibleFieldContent>;
 
 	boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>>;
 
@@ -712,7 +665,8 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 export interface FlexTreeRequiredField<in out TTypes extends FlexAllowedTypes>
 	extends FlexTreeField {
 	get content(): FlexTreeUnboxNodeUnion<TTypes>;
-	set content(content: FlexibleNodeContent);
+
+	editor: ValueFieldEditBuilder<FlexibleNodeContent>;
 }
 
 /**
@@ -731,7 +685,8 @@ export interface FlexTreeRequiredField<in out TTypes extends FlexAllowedTypes>
 export interface FlexTreeOptionalField<in out TTypes extends FlexAllowedTypes>
 	extends FlexTreeField {
 	get content(): FlexTreeUnboxNodeUnion<TTypes> | undefined;
-	set content(newContent: FlexibleNodeContent | undefined);
+
+	editor: OptionalFieldEditBuilder<FlexibleNodeContent>;
 }
 
 // #endregion
