@@ -21,11 +21,14 @@ import {
 	prepareContentForHydration,
 } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
-import {
-	type ImplicitAllowedTypes,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type TreeNodeFromImplicitAllowedTypes,
-	normalizeFieldSchema,
+// This import seems to trigger a false positive `Type import "TreeNodeFromImplicitAllowedTypes" is used by decorator metadata` lint error.
+// Other ways to import (ex: import the module with the items as type imports) give different more real errors, and auto fix to this format,
+// so there does not seem to be a clean workaround to make the linter happy.
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+import type {
+	ImplicitAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
+	TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
 	type WithType,
@@ -688,9 +691,6 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		}
 
 		const sequenceField = getSequenceField(this);
-		// TODO: this is not valid since this is a value field schema, not a sequence one (which does not exist in the simple tree layer),
-		// but it works since cursorFromFieldData special cases arrays.
-		const simpleFieldSchema = normalizeFieldSchema(this.simpleSchema);
 		const content = value as readonly (
 			| InsertableContent
 			| IterableTreeArrayContent<InsertableContent>
@@ -703,7 +703,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			.map((c) =>
 				mapTreeFromNodeData(
 					c,
-					simpleFieldSchema.allowedTypes,
+					this.simpleSchema,
 					sequenceField.context?.nodeKeyManager,
 					getSchemaAndPolicy(sequenceField),
 				),

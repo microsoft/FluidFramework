@@ -60,20 +60,16 @@ trigger:
     - release/*
   paths:
     include:
-    - .prettierignore
-    - biome.json
-    - biome.jsonc
-    - packages
+    # Trigger on any edits to files in the root
+    - "*"
     - azure
+    - common/build/build-common
     - examples
     - experimental
-    - common/build/build-common
-    - lerna.json
-    - package.json
-    - pnpm-lock.yaml
-    - pnpm-workspace.yaml
+    - packages
+    - scripts
     # markdown-magic is part of the client release group
-    - tools/markdown-magic/*
+    - tools/markdown-magic
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -86,7 +82,6 @@ trigger:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
-    - scripts/*
 
 pr:
   branches:
@@ -97,19 +92,16 @@ pr:
     - release/*
   paths:
     include:
-    - .prettierignore
-    - packages
+    # Trigger on any edits to files in the root
+    - "*"
     - azure
+    - common/build/build-common
     - examples
     - experimental
-    - common/build/build-common
-    - lerna.json
-    - package.json
-    - pnpm-lock.yaml
-    - pnpm-workspace.yaml
-    - fluidBuild.config.cjs
+    - packages
+    - scripts
     # markdown-magic is part of the client release group
-    - tools/markdown-magic/*
+    - tools/markdown-magic
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-policy-check.yml
@@ -119,7 +111,6 @@ pr:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
-    - scripts/*
 
 variables:
   - template: /tools/pipelines/templates/include-vars.yml@self

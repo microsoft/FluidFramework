@@ -197,14 +197,11 @@ function createProxyHandler(
 				return allowAdditionalProperties ? Reflect.set(target, viewKey, value, proxy) : false;
 			}
 
-			const flexNode = getOrCreateInnerNode(proxy);
-			if (isMapTreeNode(flexNode)) {
-				throw new UsageError(
-					`An object cannot be mutated before being inserted into the tree`,
-				);
-			}
-
-			setField(flexNode.getBoxed(fieldInfo.storedKey), fieldInfo.schema, value);
+			setField(
+				getOrCreateInnerNode(proxy).getBoxed(fieldInfo.storedKey),
+				fieldInfo.schema,
+				value,
+			);
 			return true;
 		},
 		deleteProperty(target, viewKey): boolean {

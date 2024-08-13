@@ -9,8 +9,15 @@ import {
 	FieldKinds,
 	FlexFieldSchema,
 	SchemaBuilderBase,
+	type FlexAllowedTypes,
+	type FlexTreeOptionalField,
 } from "../../../feature-libraries/index.js";
-import { EmptyKey, type ExclusiveMapTree, type FieldKey } from "../../../core/index.js";
+import {
+	deepCopyMapTree,
+	EmptyKey,
+	type ExclusiveMapTree,
+	type FieldKey,
+} from "../../../core/index.js";
 import { leaf as leafDomain } from "../../../domains/index.js";
 import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -30,9 +37,11 @@ describe("MapTreeNodes", () => {
 		"FieldNode",
 		FlexFieldSchema.create(FieldKinds.sequence, [leafDomain.string]),
 	);
+	const objectMapKey = "map" as FieldKey;
+	const objectFieldNodeKey = "fieldNode" as FieldKey;
 	const objectSchema = schemaBuilder.object("Object", {
-		map: mapSchema,
-		field: fieldNodeSchema,
+		[objectMapKey]: mapSchema,
+		[objectFieldNodeKey]: fieldNodeSchema,
 	});
 	// #endregion
 
@@ -45,7 +54,7 @@ describe("MapTreeNodes", () => {
 	};
 	const mapKey = "key" as FieldKey;
 	const mapMapTree: ExclusiveMapTree = {
-		type: brand("map"),
+		type: mapSchema.name,
 		fields: new Map([[mapKey, [mapChildMapTree]]]),
 	};
 	const fieldNodeChildMapTree: ExclusiveMapTree = {
@@ -54,13 +63,11 @@ describe("MapTreeNodes", () => {
 		fields: new Map(),
 	};
 	const fieldNodeMapTree: ExclusiveMapTree = {
-		type: brand("array"),
+		type: fieldNodeSchema.name,
 		fields: new Map([[EmptyKey, [fieldNodeChildMapTree]]]),
 	};
-	const objectMapKey = "map" as FieldKey;
-	const objectFieldNodeKey = "fieldNode" as FieldKey;
 	const objectMapTree: ExclusiveMapTree = {
-		type: brand("object"),
+		type: objectSchema.name,
 		fields: new Map([
 			[objectMapKey, [mapMapTree]],
 			[objectFieldNodeKey, [fieldNodeMapTree]],
@@ -203,9 +210,48 @@ describe("MapTreeNodes", () => {
 			assert.throws(() => object.anchorNode);
 		});
 
-		it("be mutated", () => {
-			assert.throws(() => map.getBoxed(mapKey).editor);
+		it("mutate arrays", () => {
 			assert.throws(() => fieldNode.content.editor);
+		});
+	});
+
+	describe("can mutate", () => {
+		it("required fields", () => {
+			const mutableObjectMapTree = deepCopyMapTree(objectMapTree);
+			const mutableObjectMapTreeMap = mutableObjectMapTree.fields.get(objectMapKey)?.[0];
+			assert(mutableObjectMapTreeMap !== undefined);
+			const mutableObject = getOrCreateNode(objectSchema, mutableObjectMapTree);
+			const field = mutableObject.getBoxed(
+				objectMapKey,
+			) as FlexTreeOptionalField<FlexAllowedTypes>;
+			const oldMap = field.boxedAt(0);
+			assert(oldMap !== undefined);
+			assert.equal(oldMap.parentField.parent.parent, mutableObject);
+			const newMap = getOrCreateNode(mapSchema, deepCopyMapTree(mapMapTree));
+			assert.notEqual(newMap, oldMap);
+			assert.equal(newMap.parentField.parent.parent, undefined);
+			// Replace the old map with a new map
+			field.editor.set(newMap.mapTree, false);
+			assert.equal(oldMap.parentField.parent.parent, undefined);
+			assert.equal(newMap.parentField.parent.parent, mutableObject);
+			assert.equal(field.boxedAt(0), newMap);
+			// Replace the new map with the old map again
+			field.editor.set(mutableObjectMapTreeMap, false);
+			assert.equal(oldMap.parentField.parent.parent, mutableObject);
+			assert.equal(newMap.parentField.parent.parent, undefined);
+			assert.equal(field.boxedAt(0), oldMap);
+		});
+
+		it("optional fields", () => {
+			const mutableMap = getOrCreateNode(mapSchema, deepCopyMapTree(mapMapTree));
+			const field = mutableMap.getBoxed(mapKey);
+			const oldValue = field.boxedAt(0);
+			const newValue = `new ${childValue}`;
+			field.editor.set({ ...mapChildMapTree, value: newValue }, false);
+			assert.equal(field.boxedAt(0)?.value, newValue);
+			assert.notEqual(newValue, oldValue);
+			field.editor.set(undefined, false);
+			assert.equal(field.boxedAt(0)?.value, undefined);
 		});
 	});
 });
