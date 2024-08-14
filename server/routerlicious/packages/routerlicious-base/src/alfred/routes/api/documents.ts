@@ -23,7 +23,7 @@ import {
 	getParam,
 	validateTokenScopeClaims,
 	getBooleanFromConfig,
-	getCorrelationIdWithHttpFallback,
+	getTelemetryContextPropertiesWithHttpInfo,
 } from "@fluidframework/server-services-utils";
 import {
 	getBooleanParam,
@@ -349,7 +349,10 @@ export function create(
 				);
 			}
 			if (tokenRevocationManager) {
-				const correlationId = getCorrelationIdWithHttpFallback(request, response);
+				const correlationId = getTelemetryContextPropertiesWithHttpInfo(
+					request,
+					response,
+				).correlationId;
 				const options: IRevokeTokenOptions = {
 					correlationId,
 				};

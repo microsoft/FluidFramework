@@ -11,6 +11,10 @@ export const CorrelationIdHeaderName = "x-correlation-id";
  * @internal
  */
 export const DriverVersionHeaderName = "x-driver-version";
+/**
+ * @internal
+ */
+export const TelemetryContextHeaderName = "x-telemetry-context";
 
 /**
  * This ID is an alias to the latest summary known by the service.

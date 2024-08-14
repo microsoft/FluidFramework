@@ -9,7 +9,6 @@ import * as bodyParser from "body-parser";
 import express from "express";
 import {
 	alternativeMorganLoggerMiddleware,
-	bindCorrelationId,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 	ITenantKeyGenerator,
@@ -50,8 +49,6 @@ export function create(
 	}
 	app.use(bodyParser.json());
 	app.use(bodyParser.urlencoded({ extended: false }));
-
-	app.use(bindCorrelationId());
 
 	app.use(
 		"/api",
