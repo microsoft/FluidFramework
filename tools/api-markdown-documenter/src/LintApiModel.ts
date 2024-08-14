@@ -10,23 +10,25 @@ import {
 	type ApiModel,
 } from "@microsoft/api-extractor-model";
 import type { DocInheritDocTag } from "@microsoft/tsdoc";
-import { defaultLoadModelOptions, loadModel, type LoadModelOptions } from "./LoadModel.js";
-import { noopLogger } from "./Logging.js";
+import { defaultConsoleLogger } from "./Logging.js";
 import { resolveSymbolicReference } from "./utilities/index.js";
+import type { ConfigurationBase } from "./ConfigurationBase.js";
 
 /**
- * {@link lintApiModel} options.
+ * {@link lintApiModel} configuration.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface LintApiModelOptions extends LoadModelOptions {
-	// TODO: add linter-specific options here as needed.
+export interface LintApiModelConfiguration extends ConfigurationBase {
+	/**
+	 * The API model to lint.
+	 */
+	apiModel: ApiModel;
 }
 
 /**
- * {@link LintApiModelOptions} defaults.
+ * {@link LintApiModelConfiguration} defaults.
  */
-const defaultLintApiModelOptions: Required<Omit<LintApiModelOptions, "modelDirectoryPath">> = {
-	...defaultLoadModelOptions,
+const defaultLintApiModelOptions: Required<Omit<LintApiModelConfiguration, "apiModel">> = {
+	logger: defaultConsoleLogger,
 };
 
 // TODO: common TsdocError base (associatedItem, packageName)
@@ -86,26 +88,15 @@ export interface LinterErrors {
  *
  * @returns The set of errors encountered during linting, if any were found.
  * Otherwise, `undefined`.
- *
- * @throws
- * If the specified {@link LoadModelOptions.modelDirectoryPath} doesn't exist, or if no `.api.json` files are found directly under it.
  */
 export async function lintApiModel(
-	options: LintApiModelOptions,
+	options: LintApiModelConfiguration,
 ): Promise<LinterErrors | undefined> {
-	const optionsWithDefaults: Required<LintApiModelOptions> = {
+	const optionsWithDefaults: Required<LintApiModelConfiguration> = {
 		...defaultLintApiModelOptions,
 		...options,
 	};
-	const { modelDirectoryPath, logger } = optionsWithDefaults;
-
-	logger.verbose("Loading API model...");
-
-	// Load the model
-	// Use a no-op logger to prevent logging during the load process
-	const apiModel = await loadModel({ modelDirectoryPath, logger: noopLogger });
-
-	logger.verbose("API model loaded.");
+	const { apiModel, logger } = optionsWithDefaults;
 
 	logger.verbose("Linting API model...");
 
@@ -131,7 +122,7 @@ export async function lintApiModel(
 function lintApiItem(
 	apiItem: ApiItem,
 	apiModel: ApiModel,
-	options: Required<LintApiModelOptions>,
+	options: Required<LintApiModelConfiguration>,
 	errors: MutableLinterErrors,
 ): void {
 	// If the item is documented, lint its documentation contents.

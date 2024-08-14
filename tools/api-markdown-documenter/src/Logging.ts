@@ -71,17 +71,6 @@ export const verboseConsoleLogger: Logger = {
 };
 
 /**
- * No-op logger - configured to do nothing.
- */
-export const noopLogger: Logger = {
-	info: noop,
-	warning: noop,
-	error: noop,
-	success: noop,
-	verbose: noop,
-};
-
-/**
  * Logs a warning message to the console in yellow, prefixed with "WARNING: ".
  */
 function logWarningToConsole(message: string | Error, ...parameters: unknown[]): void {
