@@ -13,20 +13,20 @@ We use a combination of automated tools and manual checks to validate accessibil
 To run the accessibility tests locally, follow these steps:
 
 ##### Install Dependencies:
-Install and build the code by running the following from the root of the repo.
+Install and build the code by running the following the instructions [here](../../README.md).
 
-```bash
-pnpm install
-pnpm run build
-```
+
 
 ##### Run Tests:
+
 Navigate to the relevant package directory and run all the unit and accessibility tests using:
 
 ```bash
 pnpm run test
 ```
+
 ### Reading Accessibility Tests
+
 Accessibility tests are structured similarly to regular unit tests, with an added focus on verifying that components meet accessibility standards. Here's an overview of how these tests are organized:
 
 Test cases are written using describe and it blocks, where we render the component, run the accessibility check, and assert that there are no violations.
@@ -39,6 +39,7 @@ describe("ComponentName Accessibility Check", () => {
     });
 });
 ```
+
 Keyboard Navigation: Specific tests check if users can navigate through the components using keyboard interactions like tab and arrow keys.
 
 ```typescript
@@ -51,16 +52,21 @@ it("Can tab/arrow navigate through the ComponentName", async () => {
     expect(someElement).toHaveFocus();
 });
 ```
+
 ### Using Accessibility Insights for Web
-Since our extension is also available in line in the Devtools example app, we can manually verify the accessibility of components using the Accessibility Insights for Web browser extension. This tool provides a comprehensive set of tests to identify and fix accessibility issues.
+
+Since our extension is also available in line in the Devtools example app, we can manually verify the accessibility of components using the Accessibility Insights for Web browser extension.
+This tool provides a comprehensive set of tests to identify and fix accessibility issues.
 
 - Install the Extension: Download and install the Accessibility Insights for Web add-on from the Edge Web Store.
 
 - Run FastPass:
-Use the FastPass feature to quickly identify common accessibility issues in your components. FastPass scans for issues like color contrast, missing ARIA labels, and more.
+Use the FastPass feature to quickly identify common accessibility issues in your components.
+FastPass scans for issues like color contrast, missing ARIA labels, and more.
 
 - Detailed Assessment:
-For a more thorough check, run the Assessment tool in Accessibility Insights for Web. This tool provides step-by-step guidance to test all aspects of accessibility.
+For a more thorough check, run the Assessment tool in Accessibility Insights for Web.
+This tool provides step-by-step guidance to test all aspects of accessibility.
 
 - Fix Issues:
 Based on the results from Accessibility Insights for Web, make the necessary changes to your components to ensure they are fully accessible.
