@@ -48,7 +48,7 @@ describe("feeds", async () => {
 	const branch = await gitRepo.getCurrentBranchName();
 
 	const context = new Context(gitRepo, "microsoft/FluidFramework", branch);
-	const config = context.rootFluidBuildConfig?.policy?.packageNames!;
+	const config = context.flubConfig.policy?.packageNames!;
 	const packages = FeedsForPackages(context.packages, config);
 
 	it("dev and build feed are mutually exclusive", () => {
