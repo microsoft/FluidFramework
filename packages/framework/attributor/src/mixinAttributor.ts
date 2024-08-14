@@ -43,11 +43,8 @@ export async function getRuntimeAttributor(
 /**
  * Mixes in logic to load and store runtime-based attribution functionality.
  *
- * The `scope` passed to `load` should implement `IProvideRuntimeAttributor`.
- *
- * Existing documents without stored attributors will not start storing attribution information: if an
- * IRuntimeAttributor is passed via scope to load a document that never previously had attribution information,
- * that attributor's `has` method will always return `false`.
+ * Existing documents without stored attributor will not start storing attribution information. We only create the attributor
+ * if its tracking is enabled and we are creating a new document.
  * @param Base - base class, inherits from FluidAttributorRuntime
  * @internal
  */
@@ -107,15 +104,10 @@ export const mixinAttributor = (
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} as any)) as ContainerRuntimeWithAttributor;
 
-			let runtimeAttributor: RuntimeAttributorDataStoreChannel | undefined;
+			let runtimeAttributor: IRuntimeAttributor | undefined;
 			if (shouldTrackAttribution) {
 				if (existing) {
-					const entryPoint = await runtime.getAliasedDataStoreEntryPoint(
-						attributorDataStoreAlias,
-					);
-					runtimeAttributor = (await entryPoint?.get()) as
-						| RuntimeAttributorDataStoreChannel
-						| undefined;
+					runtimeAttributor = await getRuntimeAttributor(runtime);
 				} else {
 					const datastore = await runtime.createDataStore(RuntimeAttributorFactory.type);
 					const result = await datastore.trySetAlias(attributorDataStoreAlias);
@@ -124,15 +116,8 @@ export const mixinAttributor = (
 						(await datastore.entryPoint.get()) as RuntimeAttributorDataStoreChannel;
 					assert(runtimeAttributor !== undefined, "Attributor should be defined");
 				}
-				runtime._runtimeAttributor = runtimeAttributor?.IRuntimeAttributor;
 			}
 
 			return runtime;
-		}
-
-		private _runtimeAttributor: IRuntimeAttributor | undefined;
-
-		public get IRuntimeAttributor(): IRuntimeAttributor | undefined {
-			return this._runtimeAttributor;
 		}
 	} as unknown as typeof ContainerRuntime;

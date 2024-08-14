@@ -7,8 +7,6 @@ import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
-	IFluidDataStoreRegistry,
-	FluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
@@ -17,25 +15,15 @@ import { RuntimeAttributorDataStoreChannel } from "./runtimeAttributorDataStoreC
 /**
  * Factory for the runtime attributor data store channel.
  */
-export class RuntimeAttributorFactory
-	implements IFluidDataStoreFactory, IFluidDataStoreRegistry
-{
+export class RuntimeAttributorFactory implements IFluidDataStoreFactory {
 	public static readonly type = "@fluid-experimental/attributor";
 
 	public get type(): string {
 		return RuntimeAttributorFactory.type;
 	}
 
-	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
-		return this;
-	}
-
 	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
 		return this;
-	}
-
-	public async get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> {
-		return undefined;
 	}
 
 	public async instantiateDataStore(
