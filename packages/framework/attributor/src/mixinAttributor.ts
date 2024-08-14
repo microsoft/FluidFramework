@@ -21,7 +21,6 @@ import {
 	enableOnNewFileKey,
 	type IRuntimeAttributor,
 } from "./attributorContracts.js";
-import type { RuntimeAttributorDataStoreChannel } from "./runtimeAttributorDataStoreChannel.js";
 import { RuntimeAttributorFactory } from "./runtimeAttributorDataStoreFactory.js";
 
 /**
@@ -34,9 +33,7 @@ export async function getRuntimeAttributor(
 	runtime: IContainerRuntime,
 ): Promise<IRuntimeAttributor | undefined> {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint(attributorDataStoreAlias);
-	const runtimeAttributor = (await entryPoint?.get()) as
-		| RuntimeAttributorDataStoreChannel
-		| undefined;
+	const runtimeAttributor = (await entryPoint?.get()) as IRuntimeAttributor | undefined;
 	return runtimeAttributor;
 }
 
@@ -112,8 +109,7 @@ export const mixinAttributor = (
 					const datastore = await runtime.createDataStore(RuntimeAttributorFactory.type);
 					const result = await datastore.trySetAlias(attributorDataStoreAlias);
 					assert(result === "Success", "Failed to set alias for attributor data store");
-					runtimeAttributor =
-						(await datastore.entryPoint.get()) as RuntimeAttributorDataStoreChannel;
+					runtimeAttributor = (await datastore.entryPoint.get()) as IRuntimeAttributor;
 					assert(runtimeAttributor !== undefined, "Attributor should be defined");
 				}
 			}
