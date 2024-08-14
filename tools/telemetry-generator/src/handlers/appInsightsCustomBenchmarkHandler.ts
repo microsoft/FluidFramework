@@ -28,7 +28,7 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 						branchName: process.env.BRANCH_NAME,
 						category: "performance",
 						eventName: "Benchmark",
-						benchmarkType: "CustomData",
+						benchmarkType: "CustomBenchmark",
 						suiteName: fileData.suiteName,
 						benchmarkName: testData.benchmarkName,
 						driverEndpointName: process.env.FLUID_ENDPOINTNAME ?? "",
