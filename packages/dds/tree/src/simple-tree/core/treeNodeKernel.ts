@@ -4,16 +4,17 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { createEmitter, type Listenable, type Off } from "../events/index.js";
+import { createEmitter, type Listenable, type Off } from "../../events/index.js";
 import type { TreeChangeEvents, TreeNode, Unhydrated } from "./types.js";
-import type { AnchorNode } from "../core/index.js";
+import type { AnchorNode } from "../../core/index.js";
 import {
 	flexTreeSlot,
 	isFreedSymbol,
 	LazyEntity,
 	TreeStatus,
 	treeStatusFromAnchorCache,
-} from "../feature-libraries/index.js";
+} from "../../feature-libraries/index.js";
+import type { TreeNodeSchema } from "./treeNodeSchema.js";
 
 const treeNodeToKernel = new WeakMap<TreeNode, TreeNodeKernel>();
 
@@ -42,6 +43,18 @@ export function isTreeNode(candidate: unknown): candidate is TreeNode | Unhydrat
 }
 
 /**
+ * Returns a schema for a value if the value is a {@link TreeNode}.
+ *
+ * Returns undefined for other values.
+ * @remarks
+ * Does not give schema for a {@link TreeLeafValue}.
+ */
+export function tryGetTreeNodeSchema(value: unknown): undefined | TreeNodeSchema {
+	const kernel = treeNodeToKernel.get(value as TreeNode);
+	return kernel?.schema;
+}
+
+/**
  * Contains state and an internal API for managing {@link TreeNode}s.
  * @remarks All {@link TreeNode}s have an associated kernel object.
  * The kernel has the same lifetime as the node and spans both its unhydrated and hydrated states.
@@ -59,7 +72,10 @@ export class TreeNodeKernel implements Listenable<TreeChangeEvents> {
 	 * @remarks
 	 * Exactly one kernel per TreeNode should be created.
 	 */
-	public constructor(public readonly node: TreeNode) {
+	public constructor(
+		public readonly node: TreeNode,
+		public readonly schema: TreeNodeSchema,
+	) {
 		assert(!treeNodeToKernel.has(node), "only one kernel per node can be made");
 		treeNodeToKernel.set(node, this);
 	}

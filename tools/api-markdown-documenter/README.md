@@ -11,6 +11,21 @@ It is similar to [API-Documenter][] and is heavily based upon it and uses it und
 **Note**: this library does not currently offer a Command Line Interface (CLI).
 One may be added in the future, but for now this library is intended to be consumed programmatically.
 
+## Glossary
+
+The following terms are leveraged heavily in this package's APIs and documentation.
+
+-   **API Model**: Refers to a complete API suite, comprised of one or more packages.
+    This often corresponds to all of the packages in the mono-repo, or a series of packages that are published together.
+    It is generally represented via the [ApiModel][] type, from the [@microsoft/api-extractor-model](https://github.com/microsoft/rushstack/tree/main/libraries/api-extractor-model) library.
+    -   In some places, this library refers to an `API Model` in terms of a directory or directory path.
+        In these cases, it is referring to a directory that contains the set of `.api.json` files (generated per-package by `API-Extractor`).
+-   **API Item**: Refers to a single TypeScript item exported by one or more packages in the `API Model`.
+    It is generally represented via the [ApiItem][] type, from the [@microsoft/api-extractor-model](https://github.com/microsoft/rushstack/tree/main/libraries/api-extractor-model) library.
+    E.g., an exported interface `Foo` would be captured by API Extractor as a single API item (an [ApiInterface](https://api.rushstack.io/pages/api-extractor-model.apiinterface/)).
+    Alternatively, an exported enum `Foo` with flags `Bar` and `Baz` would be captured as 1 API item (an [ApiEnum](https://api.rushstack.io/pages/api-extractor-model.apiEnum/)) for `Foo`, with 2 child API items for the flags `Bar` and `Baz` ([ApiEnumMember](https://api.rushstack.io/pages/api-extractor-model.apienummember/)s).
+    -   This is the granularity by which documentation is generated, and the granularity at which most configuration options are presented.
+
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:installation=TRUE&devDependency=TRUE) -->
 
 <!-- prettier-ignore-start -->
@@ -284,6 +299,7 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 [abstract syntax tree]: https://en.wikipedia.org/wiki/Abstract_syntax_tree
 [api-extractor]: https://api-extractor.com
 [api-documenter]: https://github.com/microsoft/rushstack/tree/main/apps/api-documenter
+[apiitem]: https://api.rushstack.io/pages/api-extractor-model.apiitem
 [apimodel]: https://api.rushstack.io/pages/api-extractor-model.apimodel
 [github flavored markdown]: https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/about-writing-and-formatting-on-github
 [tsdoc]: https://tsdoc.org/

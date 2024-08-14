@@ -7,9 +7,11 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
+	type ExclusiveMapTree,
 	type FieldAnchor,
 	type FieldKey,
 	type FieldUpPath,
+	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
 	type TreeNavigationResult,
 	inCursorNode,
@@ -37,7 +39,6 @@ import {
 	type FlexTreeTypedField,
 	type FlexTreeTypedNodeUnion,
 	type FlexTreeUnboxNodeUnion,
-	type FlexibleNodeContent,
 	TreeStatus,
 	flexTreeMarker,
 	flexTreeSlot,
@@ -54,6 +55,7 @@ import { type LazyTreeNode, makeTree } from "./lazyNode.js";
 import { unboxedUnion } from "./unboxed.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { cursorForMapTreeField, cursorForMapTreeNode } from "../mapTreeCursor.js";
 
 /**
  * Reuse fields.
@@ -296,10 +298,18 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 		return this.map((x) => x);
 	}
 
-	public sequenceEditor(): SequenceFieldEditBuilder {
+	public editor: SequenceFieldEditBuilder<ExclusiveMapTree[]> = {
+		insert: (index, newContent) => {
+			this.sequenceEditor().insert(index, cursorForMapTreeField(newContent));
+		},
+		remove: (index, count) => {
+			this.sequenceEditor().remove(index, count);
+		},
+	};
+
+	private sequenceEditor(): SequenceFieldEditBuilder<ITreeCursorSynchronous> {
 		const fieldPath = this.getFieldPathForEditing();
-		const fieldEditor = this.context.checkout.editor.sequenceField(fieldPath);
-		return fieldEditor;
+		return this.context.checkout.editor.sequenceField(fieldPath);
 	}
 }
 
@@ -316,12 +326,14 @@ export class ReadonlyLazyValueField<TTypes extends FlexAllowedTypes>
 		super(context, schema, cursor, fieldAnchor);
 	}
 
+	public editor: ValueFieldEditBuilder<ExclusiveMapTree> = {
+		set: (newContent) => {
+			assert(false, "Unexpected set of readonly field");
+		},
+	};
+
 	public get content(): FlexTreeUnboxNodeUnion<TTypes> {
 		return this.atIndex(0);
-	}
-
-	public set content(newContent: FlexibleNodeContent) {
-		fail("cannot set content in readonly field");
 	}
 }
 
@@ -338,7 +350,13 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 		super(context, schema, cursor, fieldAnchor);
 	}
 
-	private valueFieldEditor(): ValueFieldEditBuilder {
+	public override editor: ValueFieldEditBuilder<ExclusiveMapTree> = {
+		set: (newContent) => {
+			this.valueFieldEditor().set(cursorForMapTreeNode(newContent));
+		},
+	};
+
+	private valueFieldEditor(): ValueFieldEditBuilder<ITreeCursorSynchronous> {
 		const fieldPath = this.getFieldPathForEditing();
 		const fieldEditor = this.context.checkout.editor.valueField(fieldPath);
 		return fieldEditor;
@@ -346,12 +364,6 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 
 	public override get content(): FlexTreeUnboxNodeUnion<TTypes> {
 		return this.atIndex(0);
-	}
-
-	public override set content(newContent: FlexibleNodeContent) {
-		assert(newContent !== undefined, "Cannot set a required field to undefined");
-		assert(newContent.mode === CursorLocationType.Nodes, "should be in nodes mode");
-		this.valueFieldEditor().set(newContent);
 	}
 }
 
@@ -382,7 +394,16 @@ export class LazyOptionalField<TTypes extends FlexAllowedTypes>
 		super(context, schema, cursor, fieldAnchor);
 	}
 
-	private optionalEditor(): OptionalFieldEditBuilder {
+	public editor: OptionalFieldEditBuilder<ExclusiveMapTree> = {
+		set: (newContent, wasEmpty) => {
+			this.optionalEditor().set(
+				newContent !== undefined ? cursorForMapTreeNode(newContent) : newContent,
+				wasEmpty,
+			);
+		},
+	};
+
+	private optionalEditor(): OptionalFieldEditBuilder<ITreeCursorSynchronous> {
 		const fieldPath = this.getFieldPathForEditing();
 		const fieldEditor = this.context.checkout.editor.optionalField(fieldPath);
 		return fieldEditor;
@@ -390,10 +411,6 @@ export class LazyOptionalField<TTypes extends FlexAllowedTypes>
 
 	public get content(): FlexTreeUnboxNodeUnion<TTypes> | undefined {
 		return this.length === 0 ? undefined : this.atIndex(0);
-	}
-
-	public set content(newContent: FlexibleNodeContent | undefined) {
-		this.optionalEditor().set(newContent, this.length === 0);
 	}
 }
 

@@ -22,6 +22,7 @@ import {
 	IRevokedTokenChecker,
 	IDocumentManager,
 	IDocumentStaticProperties,
+	IThrottler,
 } from "@fluidframework/server-services-core";
 import {
 	ICache,
@@ -33,6 +34,20 @@ import {
 import { containsPathTraversal, parseToken } from "../utils";
 
 export { handleResponse } from "@fluidframework/server-services-shared";
+
+export type CommonRouteParams = [
+	config: nconf.Provider,
+	tenantService: ITenantService,
+	storageNameRetriever: IStorageNameRetriever,
+	restTenantThrottlers: Map<string, IThrottler>,
+	restClusterThrottlers: Map<string, IThrottler>,
+	documentManager: IDocumentManager,
+	cache?: ICache,
+	asyncLocalStorage?: AsyncLocalStorage<string>,
+	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
+	ephemeralDocumentTTLSec?: number,
+];
 
 export class createGitServiceArgs {
 	config: nconf.Provider;
@@ -47,7 +62,179 @@ export class createGitServiceArgs {
 	storageName?: string;
 	allowDisabledTenant?: boolean = false;
 	isEphemeralContainer?: boolean = false;
+	ephemeralDocumentTTLSec?: number = 60 * 60 * 24; // 24 hours
 	denyList?: IDenyList;
+}
+
+function getEphemeralContainerCacheKey(documentId: string): string {
+	return `isEphemeralContainer:${documentId}`;
+}
+
+async function updateIsEphemeralCache(
+	documentId: string,
+	tenantId: string,
+	isEphemeral: boolean,
+	cache: ICache,
+): Promise<void> {
+	const isEphemeralKey: string = getEphemeralContainerCacheKey(documentId);
+	Lumberjack.info(
+		`Setting cache for ${isEphemeralKey} to ${isEphemeral}.`,
+		getLumberBaseProperties(documentId, tenantId),
+	);
+	await runWithRetry(
+		async () => cache?.set(isEphemeralKey, isEphemeral) /* api */,
+		"utils.createGitService.set" /* callName */,
+		3 /* maxRetries */,
+		1000 /* retryAfterMs */,
+		getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
+	).catch((error) => {
+		Lumberjack.error(
+			"Error setting isEphemeral flag in cache.",
+			{ ...getLumberBaseProperties(documentId, tenantId), isEphemeralKey },
+			error,
+		);
+	});
+}
+
+async function getDocumentCachedEphemeralProperties(
+	cache: ICache,
+	documentId: string,
+	tenantId: string,
+): Promise<boolean | undefined> {
+	const isEphemeralKey: string = getEphemeralContainerCacheKey(documentId);
+	try {
+		const cachedIsEphemeral: boolean | undefined = await runWithRetry<boolean | undefined>(
+			async () => cache?.get(isEphemeralKey) /* api */,
+			"utils.createGitService.get" /* callName */,
+			3 /* maxRetries */,
+			1000 /* retryAfterMs */,
+			getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
+		);
+		if (typeof cachedIsEphemeral === "boolean") {
+			return cachedIsEphemeral;
+		}
+	} catch (error) {
+		Lumberjack.error(
+			"Error getting isEphemeral flag from cache.",
+			{ ...getLumberBaseProperties(documentId, tenantId), isEphemeralKey },
+			error,
+		);
+	}
+	return undefined;
+}
+
+/**
+ * Whether a document is an Ephemeral Container and when it was created.
+ * If the document does not exist or an error is encountered when accessing the document,
+ * the document is considered _not_ ephemeral, with an undefined create time.
+ *
+ * If the document exists and the isEphemeralContainer flag is not set, the document is considered _not_ ephemeral.
+ */
+async function getDocumentStaticEphemeralProperties(
+	documentManager: IDocumentManager,
+	tenantId: string,
+	documentId: string,
+): Promise<{ isEphemeralContainer: boolean; createTime: number | undefined }> {
+	try {
+		const staticProps: IDocumentStaticProperties | undefined =
+			await runWithRetry<IDocumentStaticProperties>(
+				async () => documentManager.readStaticProperties(tenantId, documentId) /* api */,
+				"utils.createGitService.readStaticProperties" /* callName */,
+				3 /* maxRetries */,
+				1000 /* retryAfterMs */,
+				getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
+			);
+		if (!staticProps) {
+			Lumberjack.error(
+				`Static data not found when checking isEphemeral flag.`,
+				getLumberBaseProperties(documentId, tenantId),
+			);
+			return { isEphemeralContainer: false, createTime: undefined };
+		}
+		return {
+			isEphemeralContainer: staticProps.isEphemeralContainer ?? false,
+			createTime: staticProps.createTime,
+		};
+	} catch (error) {
+		Lumberjack.error(
+			`Failed to retrieve static data from document when checking isEphemeral flag.`,
+			getLumberBaseProperties(documentId, tenantId),
+			error,
+		);
+		return { isEphemeralContainer: false, createTime: undefined };
+	}
+}
+
+/**
+ * Checks the cache for the isEphemeral flag for the given document. If the flag is not in the cache, it fetches the
+ * static data from the document and caches the flag.
+ *
+ * Returns false if the flag is not found in the static data will cause Ephemeral Container access
+ * to fail, which is better than returning true and causing durable container access to fail.
+ * Ephemeral containers do not have as strong of an SLA as durable containers, so this is the safer choice.
+ *
+ * @returns - Returns a boolean indicating whether the container is ephemeral or not.
+ * @throws - Throws an error if falling back to static data indicates an ephemeral document is older than the provided
+ * max ephemeral document TTL.
+ */
+async function checkAndCacheIsEphemeral({
+	documentId,
+	tenantId,
+	documentManager,
+	ephemeralDocumentTTLSec,
+	isEphemeralContainerOverride,
+	cache,
+}: {
+	documentId: string;
+	tenantId: string;
+	documentManager: IDocumentManager;
+	ephemeralDocumentTTLSec: number;
+	isEphemeralContainerOverride?: boolean;
+	cache?: ICache;
+}): Promise<boolean> {
+	if (typeof isEphemeralContainerOverride === "boolean") {
+		// If an isEphemeralContainerOverride flag was passed in, cache it and return it.
+		// This typically happens on the first request to the document.
+		await updateIsEphemeralCache(documentId, tenantId, isEphemeralContainerOverride, cache);
+		return isEphemeralContainerOverride;
+	}
+	// When no override is provided, check the cache first.
+	const cachedIsEphemeral: boolean | undefined = await getDocumentCachedEphemeralProperties(
+		cache,
+		documentId,
+		tenantId,
+	);
+	if (cachedIsEphemeral !== undefined) {
+		return cachedIsEphemeral;
+	}
+
+	// Finally, if isEphemeral was not in the cache, fetch the value from database.
+	const { isEphemeralContainer: staticPropsIsEphemeral, createTime } =
+		await getDocumentStaticEphemeralProperties(documentManager, tenantId, documentId);
+
+	if (staticPropsIsEphemeral === true && createTime !== undefined) {
+		// Explicitly check for ephemeral document expiration.
+		const currentTime = Date.now();
+		const documentExpirationTime = createTime + ephemeralDocumentTTLSec * 1000;
+		if (currentTime > documentExpirationTime) {
+			// If the document is ephemeral and older than the max ephemeral document TTL, throw an error indicating that it can't be accessed.
+			const documentExpiredByMs = currentTime - documentExpirationTime;
+			const error = new NetworkError(404, "Ephemeral Container Expired");
+			Lumberjack.warning(
+				"Document is older than the max ephemeral document TTL.",
+				{
+					...getLumberBaseProperties(documentId, tenantId),
+					documentCreateTime: createTime,
+					documentExpirationTime,
+					documentExpiredByMs,
+				},
+				error,
+			);
+			throw error;
+		}
+	}
+	await updateIsEphemeralCache(documentId, tenantId, staticPropsIsEphemeral, cache);
+	return staticPropsIsEphemeral;
 }
 
 export async function createGitService(createArgs: createGitServiceArgs): Promise<RestGitService> {
@@ -64,6 +251,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		storageName,
 		allowDisabledTenant,
 		isEphemeralContainer,
+		ephemeralDocumentTTLSec,
 		denyList,
 	} = createArgs;
 	const token = parseToken(tenantId, authorization);
@@ -84,64 +272,16 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	const maxCacheableSummarySize: number =
 		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
 
-	let isEphemeral: boolean = false;
-	if (!ignoreEphemeralFlag) {
-		const isEphemeralKey: string = `isEphemeralContainer:${documentId}`;
-		if (typeof isEphemeralContainer === "boolean") {
-			// If an isEphemeral flag was passed in, cache it
-			Lumberjack.info(
-				`Setting cache for ${isEphemeralKey} to ${isEphemeralContainer}.`,
-				getLumberBaseProperties(documentId, tenantId),
-			);
-			isEphemeral = isEphemeralContainer;
-			await runWithRetry(
-				async () => cache?.set(isEphemeralKey, isEphemeral) /* api */,
-				"utils.createGitService.set" /* callName */,
-				3 /* maxRetries */,
-				1000 /* retryAfterMs */,
-				getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
-			).catch((error) => {
-				Lumberjack.error(
-					`Error setting ${isEphemeralKey} in redis`,
-					getLumberBaseProperties(documentId, tenantId),
-					error,
-				);
-			});
-		} else {
-			await runWithRetry<boolean>(
-				async () => cache?.get(isEphemeralKey) /* api */,
-				"utils.createGitService.get" /* callName */,
-				3 /* maxRetries */,
-				1000 /* retryAfterMs */,
-				getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
-			)
-				.then((value) => {
-					isEphemeral = value;
-				})
-				.catch((error) => {
-					Lumberjack.error(
-						`Error getting ${isEphemeralKey} from redis`,
-						getLumberBaseProperties(documentId, tenantId),
-						error,
-					);
-				});
-			if (typeof isEphemeral !== "boolean") {
-				// If isEphemeral was not in the cache, fetch the value from database
-				try {
-					const staticProps: IDocumentStaticProperties =
-						await documentManager.readStaticProperties(tenantId, documentId);
-					isEphemeral = staticProps?.isEphemeralContainer ?? false;
-					await cache?.set(isEphemeralKey, isEphemeral); // Cache the value from the static data
-				} catch (e) {
-					Lumberjack.verbose(
-						`Failed to retrieve static data from document when checking isEphemeral flag.`,
-						getLumberBaseProperties(documentId, tenantId),
-					);
-					isEphemeral = false;
-				}
-			}
-		}
-	}
+	const isEphemeral: boolean = ignoreEphemeralFlag
+		? false
+		: await checkAndCacheIsEphemeral({
+				documentId,
+				tenantId,
+				documentManager,
+				ephemeralDocumentTTLSec,
+				isEphemeralContainerOverride: isEphemeralContainer,
+				cache,
+		  });
 	if (isEphemeral) {
 		Lumberjack.info(`Document is ephemeral.`, getLumberBaseProperties(documentId, tenantId));
 	}
