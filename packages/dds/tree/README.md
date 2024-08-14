@@ -129,6 +129,36 @@ This package can be developed using any of the [regular workflows for working on
     both of these are provided by the mocha testing extension thats recommended by the workspace.
     Note that this does not build the tests, so always be sure to build first.
 
+## Frequently asked questions
+
+### Why can't I assign insertable content to a field?
+
+``` typescript
+import { SchemaFactory } from "@fluidframework/tree";
+
+const factory = new SchemaFactory("com.fluidframework.faq");
+class Empty extends factory.object("Empty", {}) {}
+class Test extends factory.object("Test", { data: Empty }) {}
+function set(node: Test) {
+	node.data = {}; // Why does this not compile?
+}
+```
+
+This is due to [a limitation of the TypeScript language](https://github.com/microsoft/TypeScript/issues/43826) which makes it impossible for tree to allow that to type-check while keeping the strong typing on the getters for reading data.
+
+To workaround this, create an unhydrated node:
+
+``` typescript
+node.data = new Empty({}); // The unhydrated node's type matches the type returned by the getter, and thus is compatible with the setter
+```
+
+Insertable content can still be used in other places, like when nested in other insertable content, in ArrayNode editing methods, and when initializing views.
+
+``` typescript
+// The empty node can be implicitly constructed from `{}` here, since this context allows insertable content, not just nodes.
+const node = new Test({ data: {} });
+```
+
 ## Architecture
 
 This section covers the internal structure of the Tree DDS.
