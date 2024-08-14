@@ -17,7 +17,7 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 
 			try {
 				console.log(
-					`emitting metric ${customDataName} with value ${testData.customData[customDataKey]}`,
+					`emitting metric '${customDataName}' with value '${testData.customData[customDataKey]}'`,
 				);
 				telemetryClient.trackMetric({
 					name: customDataName,
