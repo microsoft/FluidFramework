@@ -27,7 +27,7 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 						buildId: process.env.BUILD_ID,
 						branchName: process.env.BRANCH_NAME,
 						category: "performance",
-						eventName: "CustomBenchmark",
+						eventName: "Benchmark",
 						benchmarkType: "CustomData",
 						suiteName: fileData.suiteName,
 						benchmarkName: testData.benchmarkName,
