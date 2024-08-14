@@ -10,16 +10,51 @@
 import assert from "node:assert/strict";
 import path from "node:path";
 import {
+	BiomeConfig,
 	getBiomeFormattedFiles,
 	getSettingValuesFromBiomeConfig,
 	loadBiomeConfig,
 } from "../common/biomeConfig";
-import type { Configuration as BiomeConfig } from "../common/biomeConfigTypes";
+import type { Configuration as BiomeConfigOnDisk } from "../common/biomeConfigTypes";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { GitRepo } from "../common/gitRepo";
 import { testDataPath } from "./init";
 
-describe("BiomeConfig", async () => {
+describe("Biome config loading", async () => {
+	describe("BiomeConfig class", async () => {
+		let gitRepo: GitRepo;
+		let config: BiomeConfig;
+		before(async () => {
+			const testDir = path.resolve(testDataPath, "biome/pkg-b");
+			const repoRoot = await getResolvedFluidRoot(true);
+			gitRepo = new GitRepo(repoRoot);
+			config = await BiomeConfig.create(testDir, gitRepo);
+		});
+
+		it("loads", async () => {
+			assert(config !== undefined);
+		});
+
+		it("has correct formatted files list", async () => {
+			console.debug(config);
+			const expected = [
+				path.resolve(
+					testDataPath,
+					"biome/pkg-b/include-formatter-added-1/subdirectory/sourceFile2.ts",
+				),
+				path.resolve(testDataPath, "biome/pkg-b/include-formatter-added-1/sourceFile.ts"),
+			];
+			const { formattedFiles } = config;
+			for (const actual of formattedFiles) {
+				assert(expected.includes(actual));
+			}
+			assert(
+				formattedFiles.length === 2,
+				`expected 5 elements in the list, got ${formattedFiles.length}`,
+			);
+		});
+	});
+
 	describe("loadConfig", async () => {
 		it("throws on missing config", async () => {
 			const testFile = path.resolve(testDataPath, "biome/missing.jsonc");
@@ -54,7 +89,7 @@ describe("BiomeConfig", async () => {
 		});
 
 		describe("extends from a single config", async () => {
-			let testConfig: BiomeConfig;
+			let testConfig: BiomeConfigOnDisk;
 			before(async () => {
 				const testFile = path.resolve(testDataPath, "biome/pkg-a/biome.jsonc");
 				testConfig = await loadBiomeConfig(testFile);
@@ -111,7 +146,7 @@ describe("BiomeConfig", async () => {
 
 	describe("getSettingValuesFromBiomeConfig", async () => {
 		describe("extends from a single config", async () => {
-			let testConfig: BiomeConfig;
+			let testConfig: BiomeConfigOnDisk;
 			before(async () => {
 				const testFile = path.resolve(testDataPath, "biome/pkg-a/biome.jsonc");
 				testConfig = await loadBiomeConfig(testFile);

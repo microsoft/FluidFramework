@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import globby from "globby";
 import ignore from "ignore";
 import * as JSON5 from "json5";
 import { merge } from "ts-deepmerge";
-import type { Configuration as BiomeConfig } from "./biomeConfigTypes";
+import type { Configuration as BiomeConfigOnDisk } from "./biomeConfigTypes";
 import type { GitRepo } from "./gitRepo";
 
 // switch to regular import once building ESM
@@ -19,9 +20,9 @@ const findUp = import("find-up");
  * Loads a Biome configuration file _without_ following any 'extends' values. You probably want to use
  * {@link loadBiomeConfig} instead of this function.
  */
-async function loadRawBiomeConfig(configPath: string): Promise<BiomeConfig> {
+async function loadRawBiomeConfig(configPath: string): Promise<BiomeConfigOnDisk> {
 	const contents = await readFile(configPath, "utf8");
-	const config: BiomeConfig = JSON5.parse(contents);
+	const config: BiomeConfigOnDisk = JSON5.parse(contents);
 	return config;
 }
 
@@ -58,7 +59,7 @@ export async function getAllBiomeConfigPaths(configPath: string): Promise<string
  * Biome's behavior, this function should be considered incorrect.
  *
  */
-export async function loadBiomeConfig(configPath: string): Promise<BiomeConfig> {
+export async function loadBiomeConfig(configPath: string): Promise<BiomeConfigOnDisk> {
 	const allConfigPaths = await getAllBiomeConfigPaths(configPath);
 	const allConfigs = await Promise.all(
 		allConfigPaths.map((pathToConfig) => loadRawBiomeConfig(pathToConfig)),
@@ -83,35 +84,13 @@ export type BiomeConfigSection = "formatter" | "linter";
  * and 'linter' sections in the config.
  */
 export async function getSettingValuesFromBiomeConfig(
-	config: BiomeConfig,
+	config: BiomeConfigOnDisk,
 	section: BiomeConfigSection,
 	kind: BiomeIncludeIgnore,
 ): Promise<Set<string>> {
-	if (section === "formatter" && kind === "ignore") {
-		const filesIgnore = config.files?.ignore ?? [];
-		const formatterIgnores = config.formatter?.ignore ?? [];
-		return new Set([...filesIgnore, ...formatterIgnores]);
-	}
-
-	if (section === "formatter" && kind === "include") {
-		const filesInclude = config.files?.include ?? [];
-		const formatterIncludes = config.formatter?.include ?? [];
-		return new Set([...filesInclude, ...formatterIncludes]);
-	}
-
-	if (section === "linter" && kind === "ignore") {
-		const filesIgnore = config.files?.ignore ?? [];
-		const linterIgnores = config.linter?.ignore ?? [];
-		return new Set([...filesIgnore, ...linterIgnores]);
-	}
-
-	if (section === "linter" && kind === "include") {
-		const filesInclude = config.files?.include ?? [];
-		const linterIncludes = config.linter?.include ?? [];
-		return new Set([...filesInclude, ...linterIncludes]);
-	}
-
-	return new Set<string>();
+	const generalFiles = config.files?.[kind] ?? [];
+	const sectionFiles = config?.[section]?.[kind] ?? [];
+	return new Set([...generalFiles, ...sectionFiles]);
 }
 
 /**
@@ -200,4 +179,40 @@ export async function getBiomeFormattedFiles(
 	// Convert directory-relative paths to absolute
 	const repoRoot = gitRepo.resolvedRoot;
 	return filtered.map((filePath) => path.resolve(repoRoot, directory, filePath));
+}
+
+export class BiomeConfig {
+	private _allConfigs: string[] | undefined;
+	public get allConfigs(): string[] {
+		return this._allConfigs ?? [];
+	}
+
+	public get closestConfig(): string {
+		assert(
+			this.allConfigs.length > 0,
+			"BiomeConfigLoader.allConfigs must be initialized before getting the closesConfig.",
+		);
+		// We previously asserted that there is at least one element in the array
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this.allConfigs.at(-1)!;
+	}
+
+	private _formattedFiles: string[] = [];
+	public get formattedFiles(): string[] {
+		return this._formattedFiles;
+	}
+
+	private constructor(public readonly directory: string) {}
+
+	public static async create(directory: string, gitRepo: GitRepo): Promise<BiomeConfig> {
+		const loader = new BiomeConfig(directory);
+		const initialConfig = await getClosestBiomeConfigPath(directory);
+		if (initialConfig === undefined) {
+			throw new Error(`No Biome config found in ${directory}`);
+		}
+
+		loader._allConfigs = await getAllBiomeConfigPaths(initialConfig);
+		loader._formattedFiles.push(...(await getBiomeFormattedFiles(initialConfig, gitRepo)));
+		return loader;
+	}
 }

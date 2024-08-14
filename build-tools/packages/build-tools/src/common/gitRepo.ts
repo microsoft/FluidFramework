@@ -219,16 +219,21 @@ export class GitRepo {
 	/**
 	 * Returns an array containing all the files in the the provided path.
 	 * Returned paths are rooted at the root of the repo.
+	 * A given path will only be included once in the array; that is, there will be no duplicates.
 	 */
 	public async getFiles(directory: string): Promise<string[]> {
 		const results = await this.exec(
-			`ls-files -co --exclude-standard --full-name -- ${directory}`,
+			`ls-files -cod --exclude-standard --full-name -- ${directory}`,
 			`get files`,
 		);
-		return results
-			.split("\n")
-			.map((line) => line.trim())
-			.filter((file) => statSync(path.resolve(this.resolvedRoot, file)).isFile());
+		return [
+			...new Set(
+				results
+					.split("\n")
+					.map((line) => line.trim())
+					.filter((file) => statSync(path.resolve(this.resolvedRoot, file)).isFile()),
+			),
+		];
 	}
 
 	/**
