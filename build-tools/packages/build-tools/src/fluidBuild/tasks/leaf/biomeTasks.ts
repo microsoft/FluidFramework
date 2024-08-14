@@ -24,7 +24,7 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	// to task constructors.
 	private readonly repoRoot = getResolvedFluidRoot(true);
 	private readonly gitRepo = this.repoRoot.then((repoRoot) => new GitRepo(repoRoot));
-	private readonly loader = this.gitRepo.then((gitRepo) =>
+	private readonly biomeConfig = this.gitRepo.then((gitRepo) =>
 		BiomeConfig.create(this.node.pkg.directory, gitRepo),
 	);
 
@@ -40,10 +40,9 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	 * apply to the directory. Files ignored by git are excluded.
 	 */
 	protected async getInputFiles(): Promise<string[]> {
-		// const gitRepo = await this.gitRepo;
-		const loader = await this.loader;
+		const biomeConfig = await this.biomeConfig;
 		// Absolute paths to files that would be formatted by biome.
-		const { formattedFiles, allConfigs } = loader;
+		const { formattedFiles, allConfigs } = biomeConfig;
 		return [...new Set([...allConfigs, ...formattedFiles])];
 	}
 

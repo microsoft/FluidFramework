@@ -181,6 +181,11 @@ export async function getBiomeFormattedFiles(
 	return filtered.map((filePath) => path.resolve(repoRoot, directory, filePath));
 }
 
+/**
+ * A class used to simplify access to a BiomeConfig. Given a directory and a GitRepo instance, the class calculates and
+ * caches the configs and formatted files. Using this class can be more convenient than using the free functions,
+ * especially when you need access to all the configs and formatted files.
+ */
 export class BiomeConfig {
 	private _allConfigs: string[] | undefined;
 	public get allConfigs(): string[] {
@@ -204,15 +209,18 @@ export class BiomeConfig {
 
 	private constructor(public readonly directory: string) {}
 
+	/**
+	 * Create a BiomeConfig instance rooted in the provided directory.
+	 */
 	public static async create(directory: string, gitRepo: GitRepo): Promise<BiomeConfig> {
-		const loader = new BiomeConfig(directory);
+		const config = new BiomeConfig(directory);
 		const initialConfig = await getClosestBiomeConfigPath(directory);
 		if (initialConfig === undefined) {
 			throw new Error(`No Biome config found in ${directory}`);
 		}
 
-		loader._allConfigs = await getAllBiomeConfigPaths(initialConfig);
-		loader._formattedFiles.push(...(await getBiomeFormattedFiles(initialConfig, gitRepo)));
-		return loader;
+		config._allConfigs = await getAllBiomeConfigPaths(initialConfig);
+		config._formattedFiles.push(...(await getBiomeFormattedFiles(initialConfig, gitRepo)));
+		return config;
 	}
 }
