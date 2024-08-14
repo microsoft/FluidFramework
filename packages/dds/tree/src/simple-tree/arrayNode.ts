@@ -12,7 +12,6 @@ import {
 	type MapTreeNode,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
-	isMapTreeNode,
 	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 import {
@@ -686,10 +685,6 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	}
 
 	#mapTreesFromFieldData(value: Insertable<T>): ExclusiveMapTree[] {
-		if (isMapTreeNode(getOrCreateInnerNode(this))) {
-			throw new UsageError(`An array cannot be mutated before being inserted into the tree`);
-		}
-
 		const sequenceField = getSequenceField(this);
 		const content = value as readonly (
 			| InsertableContent
@@ -837,12 +832,19 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	): void {
 		const destinationField = getSequenceField(this);
 		if (destinationField.context === undefined) {
-			throw new UsageError(`An array cannot be mutated before being inserted into the tree`);
+			throw new UsageError(
+				`Cannot move elements into an array before the array is inserted into the tree`,
+			);
 		}
 
 		validateIndex(destinationIndex, destinationField, "moveRangeToIndex", true);
 		validateIndexRange(sourceStart, sourceEnd, source ?? destinationField, "moveRangeToIndex");
 		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
+		if (sourceField.context === undefined) {
+			throw new UsageError(
+				`Cannot move elements from an array before the array is inserted into the tree`,
+			);
+		}
 		// TODO: determine support for move across different sequence types
 		if (destinationField.schema.types !== undefined && sourceField !== destinationField) {
 			for (let i = sourceStart; i < sourceEnd; i++) {

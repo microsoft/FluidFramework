@@ -192,10 +192,7 @@ function nodeDataToMapTree(
 }
 
 /**
- * Throws a UsageError if mapTree is out of schema.
- * @remarks
- * This requires mapTree to have all required default values,
- * like identifiers for identifier fields.
+ * Throws a UsageError if maybeError indicates a tree is out of schema.
  */
 export function inSchemaOrThrow(maybeError: SchemaValidationErrors): void {
 	if (maybeError !== SchemaValidationErrors.NoError) {
