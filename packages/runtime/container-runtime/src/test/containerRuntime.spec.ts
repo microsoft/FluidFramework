@@ -2708,7 +2708,7 @@ describe("Runtime", () => {
 				// Send 5 signals
 				sendSignals(4);
 
-				// Process one signal and drop two
+				// Process one signal
 				processSignals(submittedSignals, 1);
 
 				// Disconnect + Reconnect
