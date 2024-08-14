@@ -13,9 +13,9 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import { brand, makeArray } from "../../../util/index.js";
-import { type TestField, emptySchema } from "../../cursorTestSuite.js";
+import { type TestField, EmptyObject } from "../../cursorTestSuite.js";
 
-export const emptyShape = new TreeShape(emptySchema.name, false, []);
+export const emptyShape = new TreeShape(brand(EmptyObject.identifier), false, []);
 
 export const xField: FieldKey = brand("x");
 export const yField: FieldKey = brand("y");
