@@ -251,7 +251,7 @@ describe("RemoteMessageProcessor", () => {
 			processor.process(message, () => {}),
 		);
 
-		const x = [
+		const expectedResults = [
 			// A
 			undefined,
 			undefined,
@@ -336,7 +336,81 @@ describe("RemoteMessageProcessor", () => {
 			},
 		];
 
-		assert.deepStrictEqual(processResults, x, "unexpected output from process");
+		assert.deepStrictEqual(processResults, expectedResults, "unexpected output from process");
+	});
+
+	describe("Throws on invalid batches", () => {
+		it("Unexpected batch start marker mid-batch", () => {
+			let csn = 1;
+			const batchManager = new BatchManager({
+				canRebase: false,
+				hardLimit: Number.MAX_VALUE,
+			});
+			batchManager.push({ contents: "A1", referenceSequenceNumber: 1 }, false /* reentrant */);
+			batchManager.push({ contents: "A2", referenceSequenceNumber: 1 }, false /* reentrant */);
+			batchManager.push({ contents: "A3", referenceSequenceNumber: 1 }, false /* reentrant */);
+			const batchA = batchManager.popBatch();
+			batchA.messages[2].metadata = undefined; // Wipe out the ending metadata so the next batch's start shows up mid-batch
+			batchManager.push({ contents: "B1", referenceSequenceNumber: 1 }, false /* reentrant */);
+			batchManager.push({ contents: "B2", referenceSequenceNumber: 1 }, false /* reentrant */);
+			const batchB = batchManager.popBatch();
+
+			const processor = getMessageProcessor();
+
+			// Add clientId and CSN as would happen on final stage of submit
+			const inboundMessages: ISequencedDocumentMessage[] = [
+				...batchA.messages,
+				...batchB.messages,
+			].map((message) => ({
+				...(message as ISequencedDocumentMessage),
+				clientId: "CLIENT_ID",
+				clientSequenceNumber: csn++,
+			}));
+
+			assert.throws(
+				() => {
+					inboundMessages.map((message) => processor.process(message, () => {}));
+				},
+				(e: any) => {
+					return e.message === "0x9d6";
+				},
+				"unexpected batch end marker should trigger assert",
+			);
+		});
+
+		it("Unexpected batch end marker when no batch has started", () => {
+			let csn = 1;
+			const batchManager = new BatchManager({
+				canRebase: false,
+				hardLimit: Number.MAX_VALUE,
+			});
+			batchManager.push({ contents: "A1", referenceSequenceNumber: 1 }, false /* reentrant */);
+			batchManager.push({ contents: "A2", referenceSequenceNumber: 1 }, false /* reentrant */);
+			batchManager.push({ contents: "A3", referenceSequenceNumber: 1 }, false /* reentrant */);
+			const batchA = batchManager.popBatch();
+			batchA.messages[0].metadata = undefined; // Wipe out the starting metadata
+
+			const processor = getMessageProcessor();
+
+			// Add clientId and CSN as would happen on final stage of submit
+			const inboundMessages: ISequencedDocumentMessage[] = [...batchA.messages].map(
+				(message) => ({
+					...(message as ISequencedDocumentMessage),
+					clientId: "CLIENT_ID",
+					clientSequenceNumber: csn++,
+				}),
+			);
+
+			assert.throws(
+				() => {
+					inboundMessages.map((message) => processor.process(message, () => {}));
+				},
+				(e: any) => {
+					return e.message === "0x9d5";
+				},
+				"unexpected batch start marker should trigger assert",
+			);
+		});
 	});
 
 	it("Processes legacy string-content message", () => {

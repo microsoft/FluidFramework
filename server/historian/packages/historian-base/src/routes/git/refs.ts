@@ -32,10 +32,12 @@ export function create(
 	tenantService: ITenantService,
 	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
+	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
 	cache?: ICache,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
+	ephemeralDocumentTTLSec?: number,
 ): Router {
 	const router: Router = Router();
 
@@ -57,6 +59,7 @@ export function create(
 			documentManager,
 			cache,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.getRefs();
 	}
@@ -71,6 +74,7 @@ export function create(
 			documentManager,
 			cache,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.getRef(ref);
 	}
@@ -89,6 +93,7 @@ export function create(
 			documentManager,
 			cache,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.createRef(params);
 	}
@@ -108,6 +113,7 @@ export function create(
 			documentManager,
 			cache,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.updateRef(ref, params);
 	}
@@ -122,6 +128,7 @@ export function create(
 			documentManager,
 			cache,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.deleteRef(ref);
 	}

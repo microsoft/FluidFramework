@@ -1,6 +1,8 @@
 {
   "version": 1,
-  "identifiers": [],
+  "identifiers": [
+    "com.fluidframework.json.object"
+  ],
   "shapes": [
     {
       "c": {
@@ -17,7 +19,7 @@
   "data": [
     [
       0,
-      "Cursor Test Suite.Map",
+      0,
       false,
       [
         "X",
@@ -28,7 +30,7 @@
           false,
           [],
           0,
-          "Cursor Test Suite.object",
+          0,
           false,
           [
             "child",

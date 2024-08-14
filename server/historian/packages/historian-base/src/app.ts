@@ -36,6 +36,7 @@ export function create(
 	cache?: ICache,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
+	ephemeralDocumentTTLSec?: number,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -105,6 +106,7 @@ export function create(
 		cache,
 		revokedTokenChecker,
 		denyList,
+		ephemeralDocumentTTLSec,
 	);
 	app.use(apiRoutes.git.blobs);
 	app.use(apiRoutes.git.refs);

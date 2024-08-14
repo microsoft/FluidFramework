@@ -38,6 +38,7 @@ export function create(
 	cache?: ICache,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
+	ephemeralDocumentTTLSec?: number,
 ): Router {
 	const router: Router = Router();
 	const ignoreIsEphemeralFlag: boolean = config.get("ignoreEphemeralFlag") ?? true;
@@ -101,6 +102,7 @@ export function create(
 			documentManager,
 			cache,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.getSummary(sha, useCache);
 	}
@@ -126,6 +128,7 @@ export function create(
 			storageName,
 			isEphemeralContainer,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.createSummary(params, initial);
 	}
@@ -145,6 +148,7 @@ export function create(
 			cache,
 			allowDisabledTenant: true,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		const deletionPs = [service.deleteSummary(softDelete)];
 		if (!softDelete) {

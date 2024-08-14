@@ -48,7 +48,7 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 } from "../../index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getFlexNode } from "../../simple-tree/proxyBinding.js";
+import { getOrCreateInnerNode } from "../../simple-tree/proxyBinding.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import { toFlexSchema } from "../../simple-tree/index.js";
@@ -71,7 +71,7 @@ describe("sharedTreeView", () => {
 			);
 			view.initialize({ x: 24 });
 			const root = view.root;
-			const anchorNode = getFlexNode(root).anchorNode;
+			const anchorNode = getOrCreateInnerNode(root).anchorNode;
 			const log: string[] = [];
 			const unsubscribe = anchorNode.on("childrenChanging", () => log.push("change"));
 			const unsubscribeSubtree = anchorNode.on("subtreeChanging", () => {
@@ -111,7 +111,7 @@ describe("sharedTreeView", () => {
 			);
 			view.initialize({ x: 24 });
 			const root = view.root;
-			const anchorNode = getFlexNode(root).anchorNode;
+			const anchorNode = getOrCreateInnerNode(root).anchorNode;
 			const log: string[] = [];
 			const unsubscribe = anchorNode.on("childrenChanging", (upPath) =>
 				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}`),
@@ -324,7 +324,10 @@ describe("sharedTreeView", () => {
 		itView("update anchors after applying a change", (view) => {
 			view.root.insertAtStart("A");
 			let cursor = view.checkout.forest.allocateCursor();
-			view.checkout.forest.moveCursorToPath(getFlexNode(view.root).anchorNode, cursor);
+			view.checkout.forest.moveCursorToPath(
+				getOrCreateInnerNode(view.root).anchorNode,
+				cursor,
+			);
 			cursor.enterField(EmptyKey);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
@@ -339,7 +342,10 @@ describe("sharedTreeView", () => {
 		itView("update anchors after merging into a parent", (parent) => {
 			parent.root.insertAtStart("A");
 			let cursor = parent.checkout.forest.allocateCursor();
-			parent.checkout.forest.moveCursorToPath(getFlexNode(parent.root).anchorNode, cursor);
+			parent.checkout.forest.moveCursorToPath(
+				getOrCreateInnerNode(parent.root).anchorNode,
+				cursor,
+			);
 			cursor.enterField(EmptyKey);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
@@ -356,7 +362,10 @@ describe("sharedTreeView", () => {
 		itView("update anchors after merging a branch into a divergent parent", (parent) => {
 			parent.root.insertAtStart("A");
 			let cursor = parent.checkout.forest.allocateCursor();
-			parent.checkout.forest.moveCursorToPath(getFlexNode(parent.root).anchorNode, cursor);
+			parent.checkout.forest.moveCursorToPath(
+				getOrCreateInnerNode(parent.root).anchorNode,
+				cursor,
+			);
 			cursor.enterField(EmptyKey);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
@@ -375,7 +384,10 @@ describe("sharedTreeView", () => {
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 			view.root.insertAtStart("A");
 			let cursor = view.checkout.forest.allocateCursor();
-			view.checkout.forest.moveCursorToPath(getFlexNode(view.root).anchorNode, cursor);
+			view.checkout.forest.moveCursorToPath(
+				getOrCreateInnerNode(view.root).anchorNode,
+				cursor,
+			);
 			cursor.enterField(EmptyKey);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
@@ -620,7 +632,10 @@ describe("sharedTreeView", () => {
 		itView("update anchors correctly", (view) => {
 			view.root.insertAtStart("A");
 			let cursor = view.checkout.forest.allocateCursor();
-			view.checkout.forest.moveCursorToPath(getFlexNode(view.root).anchorNode, cursor);
+			view.checkout.forest.moveCursorToPath(
+				getOrCreateInnerNode(view.root).anchorNode,
+				cursor,
+			);
 			cursor.enterField(EmptyKey);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();

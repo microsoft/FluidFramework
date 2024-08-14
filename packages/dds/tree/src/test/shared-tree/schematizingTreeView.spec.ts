@@ -29,7 +29,7 @@ import { toFlexSchema } from "../../simple-tree/toFlexSchema.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
-	cursorFromUnhydratedRoot,
+	cursorFromInsertableTreeField,
 	insert,
 	validateUsageError,
 } from "../utils.js";
@@ -49,7 +49,7 @@ function checkoutWithInitialTree(
 	unhydratedInitialTree: InsertableTreeFieldFromImplicitField,
 	nodeKeyManager = new MockNodeKeyManager(),
 ): TreeCheckout {
-	const initialTree = cursorFromUnhydratedRoot(
+	const initialTree = cursorFromInsertableTreeField(
 		viewConfig.schema,
 		unhydratedInitialTree,
 		nodeKeyManager,

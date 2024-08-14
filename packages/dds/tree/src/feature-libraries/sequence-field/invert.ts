@@ -91,7 +91,7 @@ function invertMark(
 		}
 		case "Rename": {
 			const inputId = getInputCellId(mark);
-			assert(inputId !== undefined, "Rename mark must have cell ID");
+			assert(inputId !== undefined, 0x9f5 /* Rename mark must have cell ID */);
 			const inverse: Mutable<CellMark<Rename>> = {
 				type: "Rename",
 				count: mark.count,
@@ -259,7 +259,7 @@ function invertMark(
 					continue;
 				}
 				assert(isDetach(attachInverse), 0x810 /* Inverse of an attach should be a detach */);
-				assert(detachInverseCurr.cellId !== undefined, "Expected empty cell");
+				assert(detachInverseCurr.cellId !== undefined, 0x9f6 /* Expected empty cell */);
 				const inverted = normalizeCellRename(
 					detachInverseCurr.cellId,
 					attachInverse.count,

@@ -75,6 +75,9 @@ export function create(
 	const sessionStickinessDurationMs: number | undefined = config.get(
 		"alfred:sessionStickinessDurationMs",
 	);
+	const ephemeralDocumentTTLSec: number | undefined = config.get(
+		"storage:ephemeralDocumentTTLSec",
+	);
 
 	const ignoreEphemeralFlag: boolean = config.get("alfred:ignoreEphemeralFlag") ?? true;
 	// Whether to enforce server-generated document ids in create doc flow
@@ -294,6 +297,7 @@ export function create(
 				sessionStickinessDurationMs,
 				messageBrokerId,
 				clusterDrainingChecker,
+				ephemeralDocumentTTLSec,
 			);
 			handleResponse(session, response, false);
 		},

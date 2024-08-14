@@ -78,8 +78,13 @@ export interface DetachedFieldCache {
  * Utility function to get a {@link SchemaAndPolicy} object from a {@link FlexTreeNode} or {@link FlexTreeField}.
  * @param nodeOrField - {@link FlexTreeNode} or {@link FlexTreeField} to get the schema and policy from.
  * @returns A {@link SchemaAndPolicy} object with the stored schema and policy from the node or field provided.
+ * If the schema information is not available on the given node or field (e.g. because it is an unhydrated node), returns `undefined`.
  */
-export function getSchemaAndPolicy(nodeOrField: FlexTreeEntity): SchemaAndPolicy {
+export function getSchemaAndPolicy(nodeOrField: FlexTreeEntity): SchemaAndPolicy | undefined {
+	if (nodeOrField.context === undefined) {
+		return undefined;
+	}
+
 	return {
 		schema: nodeOrField.context.checkout.storedSchema,
 		policy: nodeOrField.context.schema.policy,

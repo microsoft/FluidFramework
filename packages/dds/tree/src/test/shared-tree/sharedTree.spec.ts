@@ -145,7 +145,7 @@ describe("SharedTree", () => {
 			const content = {
 				schema: stringSequenceRootSchema,
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
-				initialTree: [typedJsonCursor("x")],
+				initialTree: [singleJsonCursor("x")],
 			} satisfies InitializeAndSchematizeConfiguration;
 			const tree1 = schematizeFlexTree(provider.trees[0], content);
 			schematizeFlexTree(provider.trees[1], content);
@@ -339,7 +339,7 @@ describe("SharedTree", () => {
 			const snapshot = sharedTree.contentSnapshot();
 			assert.deepEqual(snapshot.tree, [
 				{
-					type: `array`,
+					type: `com.fluidframework.json.array`,
 					fields: {
 						[EmptyKey]: [{ type: "com.fluidframework.leaf.string", value: "x" }],
 					},
@@ -393,10 +393,7 @@ describe("SharedTree", () => {
 		const loadingTree = await provider.createTree();
 		validateTreeContent(loadingTree.checkout, {
 			schema: toFlexSchema(JsonArray),
-			initialTree: typedJsonCursor({
-				[typedJsonCursor.type]: JsonArray.identifier,
-				[EmptyKey]: [value],
-			}),
+			initialTree: singleJsonCursor([value]),
 		});
 	});
 
@@ -649,10 +646,7 @@ describe("SharedTree", () => {
 		await provider.ensureSynchronized();
 		validateTreeContent(loadingTree.checkout, {
 			schema: toFlexSchema(StringArray),
-			initialTree: typedJsonCursor({
-				[typedJsonCursor.type]: StringArray.identifier,
-				[EmptyKey]: ["b", "c"],
-			}),
+			initialTree: singleJsonCursor(["b", "c"]),
 		});
 	});
 
@@ -675,10 +669,7 @@ describe("SharedTree", () => {
 
 		validateTreeContent(summarizingTree.checkout, {
 			schema: toFlexSchema(StringArray),
-			initialTree: typedJsonCursor({
-				[typedJsonCursor.type]: StringArray.identifier,
-				[EmptyKey]: ["b", "c"],
-			}),
+			initialTree: singleJsonCursor(["b", "c"]),
 		});
 
 		await provider.ensureSynchronized();
@@ -692,20 +683,14 @@ describe("SharedTree", () => {
 
 		validateTreeContent(summarizingTree.checkout, {
 			schema: toFlexSchema(StringArray),
-			initialTree: typedJsonCursor({
-				[typedJsonCursor.type]: StringArray.identifier,
-				[EmptyKey]: ["a", "b", "c"],
-			}),
+			initialTree: singleJsonCursor(["a", "b", "c"]),
 		});
 
 		await provider.ensureSynchronized();
 
 		validateTreeContent(loadingTree.checkout, {
 			schema: toFlexSchema(StringArray),
-			initialTree: typedJsonCursor({
-				[typedJsonCursor.type]: StringArray.identifier,
-				[EmptyKey]: ["a", "b", "c"],
-			}),
+			initialTree: singleJsonCursor(["a", "b", "c"]),
 		});
 		unsubscribe();
 	});
@@ -1044,10 +1029,7 @@ describe("SharedTree", () => {
 
 			const initialState = {
 				schema: toFlexSchema(StringArray),
-				initialTree: typedJsonCursor({
-					[typedJsonCursor.type]: StringArray.identifier,
-					[EmptyKey]: ["A", "B", "C", "D"],
-				}),
+				initialTree: singleJsonCursor(["A", "B", "C", "D"]),
 			};
 
 			// Validate insertion
@@ -2023,7 +2005,7 @@ describe("SharedTree", () => {
 			const changesSummary = JSON.parse(editManagerSummaryBlob.content as string);
 			const encodedTreeData = changesSummary.trunk[0].change[1].data.builds.trees;
 			const expectedUncompressedTreeData = [
-				"array",
+				"com.fluidframework.json.array",
 				false,
 				[
 					EmptyKey,

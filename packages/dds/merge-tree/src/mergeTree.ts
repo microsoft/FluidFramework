@@ -85,6 +85,7 @@ import {
 	refHasTileLabel,
 	refTypeIncludesFlag,
 } from "./referencePositions.js";
+// eslint-disable-next-line import/no-deprecated
 import { PropertiesRollback } from "./segmentPropertiesManager.js";
 import { endpointPosAndSide, type SequencePlace } from "./sequencePlace.js";
 import { zamboniSegments } from "./zamboni.js";
@@ -1879,6 +1880,7 @@ export class MergeTree {
 		clientId: number,
 		seq: number,
 		opArgs: IMergeTreeDeltaOpArgs,
+		// eslint-disable-next-line import/no-deprecated
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	): void {
 		this.ensureIntervalBoundary(start, refSeq, clientId);
@@ -1959,7 +1961,7 @@ export class MergeTree {
 				endSide !== undefined &&
 				startPos !== "end" &&
 				endPos !== "start",
-			"start and end cannot be undefined because they were not passed in as undefined",
+			0x9e2 /* start and end cannot be undefined because they were not passed in as undefined */,
 		);
 
 		this.ensureIntervalBoundary(startPos, refSeq, clientId);
@@ -2301,6 +2303,7 @@ export class MergeTree {
 						this.collabWindow.clientId,
 						UniversalSequenceNumber,
 						{ op: annotateOp },
+						// eslint-disable-next-line import/no-deprecated
 						PropertiesRollback.Rollback,
 					);
 					i++;
@@ -2724,7 +2727,7 @@ export class MergeTree {
 				: endPos;
 		assert(
 			startPos !== "end" && endPos !== "start",
-			"start cannot be 'end' and end cannot be 'start'",
+			0x9e3 /* start cannot be 'end' and end cannot be 'start' */,
 		);
 		depthFirstNodeWalk(
 			this.root,

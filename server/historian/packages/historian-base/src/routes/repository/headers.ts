@@ -28,10 +28,12 @@ export function create(
 	tenantService: ITenantService,
 	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
+	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
 	cache?: ICache,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
+	ephemeralDocumentTTLSec?: number,
 ): Router {
 	const router: Router = Router();
 
@@ -58,6 +60,7 @@ export function create(
 			documentManager,
 			cache,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.getHeader(sha, useCache);
 	}
@@ -77,6 +80,7 @@ export function create(
 			documentManager,
 			cache,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.getFullTree(sha, useCache);
 	}

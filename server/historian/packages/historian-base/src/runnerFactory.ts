@@ -28,6 +28,7 @@ export class HistorianResources implements core.IResources {
 		public readonly cache?: historianServices.RedisCache,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public readonly denyList?: historianServices.IDenyList,
+		public readonly ephemeralDocumentTTLSec?: number,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		this.webServerFactory = new services.BasicWebServerFactory(httpServerConfig);
@@ -65,6 +66,9 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		// 	maxRedirections: redisConfig.maxRedirections ?? 16,
 		// };
 
+		const ephemeralDocumentTTLSec: number | undefined = config.get(
+			"restGitService:ephemeralDocumentTTLSec",
+		);
 		const disableGitCache = config.get("restGitService:disableGitCache") as boolean | undefined;
 		const gitCache = disableGitCache
 			? undefined
@@ -215,6 +219,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			gitCache,
 			revokedTokenChecker,
 			denyList,
+			ephemeralDocumentTTLSec,
 		);
 	}
 }
@@ -233,6 +238,7 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.cache,
 			resources.revokedTokenChecker,
 			resources.denyList,
+			resources.ephemeralDocumentTTLSec,
 		);
 	}
 }

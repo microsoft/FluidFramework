@@ -48,6 +48,7 @@ import {
 	type FlexTreeField,
 	type FlexTreeNode,
 	type FlexTreeNodeSchema,
+	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import type { TreeContent, ITreeCheckout } from "../../../shared-tree/index.js";
 import { brand, capitalize } from "../../../util/index.js";
@@ -366,26 +367,6 @@ describe("LazyNode", () => {
 			assert.equal(node.tryGetField(brand("baz")), undefined);
 		});
 
-		it("set", () => {
-			const view = flexTreeViewWithContent({
-				schema,
-				initialTree: typedJsonCursor({ [typedJsonCursor.type]: mapNodeSchema }),
-			});
-			const mapNode = view.flexTree.content;
-			assert(mapNode.is(mapNodeSchema));
-
-			mapNode.set("baz", singleJsonCursor("First edit"));
-			mapNode.set("foo", singleJsonCursor("Second edit"));
-			assert.equal(mapNode.get("baz"), "First edit");
-			assert.equal(mapNode.get("foo"), "Second edit");
-
-			mapNode.set("foo", singleJsonCursor("X"));
-			assert.equal(mapNode.get("foo"), "X");
-			mapNode.set("foo", undefined);
-			assert.equal(mapNode.get("foo"), undefined);
-			assert.equal(mapNode.has("foo"), false);
-		});
-
 		it("getBoxed empty", () => {
 			const view = flexTreeViewWithContent({
 				schema,
@@ -397,18 +378,6 @@ describe("LazyNode", () => {
 			const empty = mapNode.getBoxed("foo");
 			assert.equal(empty.parent, mapNode);
 			assert.equal(empty.key, "foo");
-		});
-
-		it("delete", () => {
-			assert.equal(editCallCount, 0);
-
-			// Even though there is no value currently associated with "baz", we still need to
-			// emit a delete op, so this should generate an edit.
-			node.delete(brand("baz"));
-			assert.equal(editCallCount, 1);
-
-			node.delete(brand("foo"));
-			assert.equal(editCallCount, 2);
 		});
 	});
 
@@ -472,10 +441,10 @@ describe("LazyNode", () => {
 		it("Value assignment generates edits", () => {
 			assert.equal(editCallCount, 0);
 
-			node.foo = "First edit";
+			node.setFoo(mapTreeFromCursor(singleJsonCursor("First edit")));
 			assert.equal(editCallCount, 1);
 
-			node.setFoo(singleJsonCursor("Second edit"));
+			node.setFoo(mapTreeFromCursor(singleJsonCursor("Second edit")));
 			assert.equal(editCallCount, 2);
 		});
 	});

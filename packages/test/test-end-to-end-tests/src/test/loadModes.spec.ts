@@ -25,6 +25,7 @@ import {
 	createDocumentId,
 	createLoader,
 	createSummarizerFromFactory,
+	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
 const counterKey = "count";
@@ -143,7 +144,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 		containerUrl: IResolvedUrl | undefined,
 		defaultFactory: IFluidDataStoreFactory,
 		headers?: IRequestHeader,
-		sequenceNumber?: number,
+		loadToSequenceNumber?: number,
 	): Promise<IContainer> {
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
@@ -162,7 +163,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 				url: await provider.driver.createContainerUrl(documentId, containerUrl),
 				headers,
 			},
-			sequenceNumber,
+			loadToSequenceNumber,
 		);
 	}
 
@@ -378,23 +379,20 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 					dataObject1.increment();
 				}
 				await loaderContainerTracker.ensureSynchronized(container1);
-				const result = summarizer.summarizeOnDemand({ reason: "test" });
-				const submitResult = await result.receivedSummaryAckOrNack;
-				assert.ok(submitResult);
+				const result = await summarizeNow(summarizer);
 
-				// Try to pause at sequence number 1 (before snapshot)
-				const sequenceNumber = 1;
 				const headers: IRequestHeader = {
-					[LoaderHeader.loadMode]: {
-						opsBeforeReturn: "sequenceNumber",
-					},
+					// Force the container to load from the latest created summary instead of using the cached version. Latest snapshot is in cache is updated async so could cause test flakiness.
+					[LoaderHeader.version]: result.summaryVersion,
 				};
+				// Try to pause at sequence number 1 (before snapshot)
+				const loadUptoSeqNumber = 1;
 				await assert.rejects(
 					loadContainer(
 						container1.resolvedUrl,
 						testDataObjectFactory,
 						headers,
-						sequenceNumber,
+						loadUptoSeqNumber,
 					),
 					{
 						message:

@@ -4,10 +4,18 @@
  */
 
 export { GitRepo } from "./common/gitRepo";
-export {
-	type ITypeValidationConfig,
-	FluidRepo,
-	type BrokenCompatTypes,
+export { FluidRepo } from "./common/fluidRepo";
+export type {
+	ITypeValidationConfig,
+	IFluidBuildConfig,
+	PackageNamePolicyConfig,
+	PolicyConfig,
+	BrokenCompatTypes,
+	PreviousVersionStyle,
+	ReleaseNotesSectionName,
+	ReleaseNotesConfig,
+	ReleaseNotesSection,
+	ScriptRequirement,
 } from "./common/fluidRepo";
 export { getResolvedFluidRoot, loadFluidBuildConfig } from "./common/fluidUtils";
 export type { Logger } from "./common/logging";
@@ -19,13 +27,6 @@ export {
 	updatePackageJsonFileAsync,
 } from "./common/npmPackage";
 export { Timer } from "./common/timer";
-export type {
-	IFluidBuildConfig,
-	PackageNamePolicyConfig,
-	PolicyConfig,
-	PreviousVersionStyle,
-	ScriptRequirement,
-} from "./common/fluidRepo";
 
 // For repo policy check
 export {
