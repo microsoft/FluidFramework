@@ -39,7 +39,7 @@ parameters:
     - "@fluidframework/merge-tree"
     - "@fluidframework/container-runtime"
 
-- name: customBenchmarkTestPackages
+- name: customBenchmarkPackages
   type: object
   default:
     - "@fluidframework/tree"
@@ -346,7 +346,7 @@ stages:
           testWorkspace: $(testWorkspace)
 
       # Run tests for each package that has them
-      - ${{ each testPackage in parameters.customBenchmarkTestPackages }}:
+      - ${{ each testPackage in parameters.customBenchmarkPackages }}:
 
         # Download and install package with performance tests
         - template: templates/include-test-perf-benchmarks-install-package.yml
