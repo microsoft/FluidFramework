@@ -72,7 +72,7 @@ import {
 	type RecentlyAddedContainerRuntimeMessageDetails,
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
-import type { BatchMessage } from "../opLifecycle/index.js";
+import type { BatchMessage, InboundBatch } from "../opLifecycle/index.js";
 import {
 	IPendingLocalState,
 	IPendingMessage,
@@ -252,6 +252,9 @@ describe("Runtime", () => {
 			});
 
 			it("Process empty batch", async () => {
+				let batchBegin = 0;
+				let batchEnd = 0;
+				let callsToEnsure = 0;
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({
 						"Fluid.Container.enableOfflineLoad": true,
@@ -263,8 +266,8 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				let callsToEnsure = 0;
-				(containerRuntime as any).ensureNoDataModelChanges = () => {
+				(containerRuntime as any).ensureNoDataModelChanges = (callback) => {
+					callback();
 					callsToEnsure++;
 				};
 				changeConnectionState(containerRuntime, false, mockClientId);
@@ -273,6 +276,9 @@ describe("Runtime", () => {
 				submitDataStoreOp(containerRuntime, "1", "test", { emptyBatch: true });
 				(containerRuntime as any).flush();
 				changeConnectionState(containerRuntime, true, mockClientId);
+
+				containerRuntime.on("batchBegin", () => batchBegin++);
+				containerRuntime.on("batchEnd", () => batchEnd++);
 				containerRuntime.process(
 					{
 						clientId: mockClientId,
@@ -287,6 +293,9 @@ describe("Runtime", () => {
 					true,
 				);
 				assert.strictEqual(callsToEnsure, 1);
+				assert.strictEqual(batchBegin, 1);
+				assert.strictEqual(batchEnd, 1);
+				assert.strictEqual(containerRuntime.isDirty, false);
 			});
 
 			[true, undefined].forEach((enableOfflineLoad) =>
@@ -781,8 +790,8 @@ describe("Runtime", () => {
 					processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
 						return { localAck: false, localOpMetadata: undefined };
 					},
-					processPendingLocalBatch: (_messages: ISequencedDocumentMessage[]) => {
-						return _messages.map((message) => ({
+					processInboundBatch: (batch: InboundBatch, _local: boolean) => {
+						return batch.messages.map((message) => ({
 							message,
 							localOpMetadata: undefined,
 						}));
@@ -2469,6 +2478,28 @@ describe("Runtime", () => {
 				assert(opsProcessed === 2, "only 2 ops should be processed with seq number 3 and 4");
 				assert(opsStart === 3, "first op processed should have seq number 3");
 			});
+		});
+
+		it("Only log legacy codepath once", async () => {
+			const mockLogger = new MockLogger();
+			const containerRuntime = await ContainerRuntime.loadRuntime({
+				context: getMockContext({}, mockLogger) as IContainerContext,
+				registryEntries: [],
+				existing: false,
+				provideEntryPoint: mockProvideEntryPoint,
+			});
+			const json = JSON.stringify({ hello: "world" });
+			const messageBase = { contents: json, clientId: "CLIENT_ID" };
+			containerRuntime.process(
+				{ ...messageBase, sequenceNumber: 1 } as unknown as ISequencedDocumentMessage,
+				false /* local */,
+			);
+			mockLogger.assertMatch([{ eventName: "LegacyMessageFormat" }]);
+			containerRuntime.process(
+				{ ...messageBase, sequenceNumber: 2 } as unknown as ISequencedDocumentMessage,
+				false /* local */,
+			);
+			assert.equal(mockLogger.events.length, 0, "Expected no more events logged");
 		});
 	});
 });

@@ -48,7 +48,6 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 export const clone = structuredClone;
 
 /**
- * @internal
  */
 export function fail(message: string): never {
 	throw new Error(message);
@@ -206,11 +205,23 @@ export function find<T>(iterable: Iterable<T>, predicate: (t: T) => boolean): T 
 }
 
 /**
+ * Counts the number of elements in the given iterable.
+ * @param iterable - the iterable to enumerate
+ * @returns the number of elements that were iterated after exhausting the iterable
+ */
+export function count(iterable: Iterable<unknown>): number {
+	let n = 0;
+	for (const _ of iterable) {
+		n += 1;
+	}
+	return n;
+}
+
+/**
  * Use for Json compatible data.
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @internal
  */
 export type JsonCompatible =
 	| string
@@ -226,7 +237,6 @@ export type JsonCompatible =
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @internal
  */
 export type JsonCompatibleObject = { [P in string]?: JsonCompatible };
 
@@ -386,7 +396,6 @@ export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
 
 /**
  * Returns the value from `set` if it contains exactly one item, otherwise `undefined`.
- * @internal
  */
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 	if (set === undefined) {
@@ -403,7 +412,6 @@ export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 /**
  * Type with a name describing what it is.
  * Typically used with values (like schema) that can be stored in a map, but in some representations have their name/key as a field.
- * @internal
  */
 export interface Named<TName> {
 	readonly name: TName;
@@ -411,7 +419,6 @@ export interface Named<TName> {
 
 /**
  * Order {@link Named} objects by their name.
- * @internal
  */
 export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
 	if (a.name < b.name) {
@@ -427,7 +434,6 @@ export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
  * Placeholder for `Symbol.dispose`.
  * @privateRemarks
  * TODO: replace this with `Symbol.dispose` when it is available or make it a valid polyfill.
- * @internal
  */
 export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");
 
@@ -439,7 +445,6 @@ export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder")
  * {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management| TypeScript's Disposable}.
  *
  * Once this is replaced with TypeScript's Disposable, core-utils/IDisposable can extend it, bringing the APIs into a reasonable alignment.
- * @internal
  */
 export interface IDisposable {
 	/**

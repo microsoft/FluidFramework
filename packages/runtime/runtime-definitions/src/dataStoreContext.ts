@@ -431,7 +431,13 @@ export interface IFluidParentContext
 	 */
 	readonly scope: FluidObject;
 
+	/**
+	 * @deprecated this functionality has been removed.
+	 */
 	readonly gcThrowOnTombstoneUsage: boolean;
+	/**
+	 * @deprecated this functionality has been removed.
+	 */
 	readonly gcTombstoneEnforcementAllowed: boolean;
 
 	/**

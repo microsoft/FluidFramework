@@ -183,11 +183,11 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
 
 // @alpha (undocumented)
 export interface ISerializableInterval extends IInterval {
-    // (undocumented)
+    // @deprecated (undocumented)
     addProperties(props: PropertySet, collaborating?: boolean, seq?: number): PropertySet | undefined;
     getIntervalId(): string | undefined;
     properties: PropertySet;
-    // (undocumented)
+    // @deprecated (undocumented)
     propertyManager: PropertiesManager;
     // (undocumented)
     serialize(): ISerializedInterval;

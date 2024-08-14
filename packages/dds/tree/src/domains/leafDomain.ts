@@ -24,7 +24,6 @@ const library = builder.intoLibrary();
 
 /**
  * Built-in {@link LeafNodeSchema}.
- * @internal
  */
 export const leaf = {
 	/**

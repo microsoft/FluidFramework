@@ -18,9 +18,10 @@ export interface AttributionPolicy {
 
 // @alpha (undocumented)
 export abstract class BaseSegment implements ISegment {
+    constructor(properties?: PropertySet);
     // (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
-    // (undocumented)
+    // @deprecated
     addProperties(newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
     // (undocumented)
     protected addSerializedProps(jseg: IJSONSegment): void;
@@ -64,7 +65,7 @@ export abstract class BaseSegment implements ISegment {
     ordinal: string;
     // (undocumented)
     properties?: PropertySet;
-    // (undocumented)
+    // @deprecated
     propertyManager?: PropertiesManager;
     // (undocumented)
     removedClientIds?: number[];
@@ -377,6 +378,7 @@ export interface IMergeTreeOptions {
     // (undocumented)
     catchUpBlobName?: string;
     mergeTreeEnableObliterate?: boolean;
+    mergeTreeEnableObliterateReconnect?: boolean;
     mergeTreeReferencesCanSlideToEndpoint?: boolean;
     // (undocumented)
     mergeTreeSnapshotChunkSize?: number;
@@ -444,6 +446,7 @@ export interface IRemovalInfo {
 // @alpha
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
+    // @deprecated
     addProperties(newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
     // (undocumented)
     append(segment: ISegment): void;
@@ -460,6 +463,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
     localRemovedSeq?: number;
     localSeq?: number;
     properties?: PropertySet;
+    // @deprecated
     propertyManager?: PropertiesManager;
     // (undocumented)
     readonly segmentGroups: SegmentGroupCollection;
@@ -521,6 +525,8 @@ export class LocalReferenceCollection {
 // @alpha @sealed (undocumented)
 export interface LocalReferencePosition extends ReferencePosition {
     // (undocumented)
+    addProperties(newProps: PropertySet): void;
+    // (undocumented)
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>>;
     readonly canSlideToEndpoint?: boolean;
     // (undocumented)
@@ -535,7 +541,7 @@ export interface MapLike<T> {
 
 // @alpha
 export class Marker extends BaseSegment implements ReferencePosition, ISegment {
-    constructor(refType: ReferenceType);
+    constructor(refType: ReferenceType, props?: PropertySet);
     // (undocumented)
     append(): void;
     // (undocumented)
@@ -634,7 +640,7 @@ export interface MergeTreeRevertibleDriver {
     removeRange(start: number, end: number): void;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export class PropertiesManager {
     // (undocumented)
     ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg): void;
@@ -647,7 +653,7 @@ export class PropertiesManager {
     hasPendingProperty(key: string): boolean;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export enum PropertiesRollback {
     None = 0,
     Rollback = 1
@@ -658,7 +664,7 @@ export type PropertySet = MapLike<any>;
 
 // @alpha
 export interface ReferencePosition {
-    // (undocumented)
+    // @deprecated (undocumented)
     addProperties(newProps: PropertySet): void;
     getOffset(): number;
     getSegment(): ISegment | undefined;
@@ -764,7 +770,7 @@ export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingP
 
 // @alpha (undocumented)
 export class TextSegment extends BaseSegment {
-    constructor(text: string);
+    constructor(text: string, props?: PropertySet);
     // (undocumented)
     append(segment: ISegment): void;
     // (undocumented)

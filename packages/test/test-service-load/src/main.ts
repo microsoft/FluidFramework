@@ -6,6 +6,7 @@
 import { DriverEndpoint, TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import commander from "commander";
 
+import { createLogger } from "./FileLogger.js";
 import { getProfile } from "./getProfile.js";
 import { getTestUsers } from "./getTestUsers.js";
 import { stressTest } from "./stressTest.js";
@@ -91,10 +92,6 @@ const main = async () => {
 		process.env.DEBUG = log;
 	}
 
-	const profile = getProfile(profileName);
-
-	const testUsers = credFilePath !== undefined ? getTestUsers(credFilePath) : undefined;
-
 	const testDriver = await createTestDriver(
 		driver,
 		endpoint,
@@ -103,19 +100,51 @@ const main = async () => {
 		supportsBrowserAuth,
 	);
 
-	await stressTest(testDriver, profile, {
-		testId,
-		debug,
-		verbose,
-		seed,
-		enableMetrics,
-		createTestId,
-		testUsers,
-		profileName,
+	const startTime = Date.now();
+	const outputDir = `${__dirname}/output/${startTime}`;
+	const { logger, flush } = await createLogger(outputDir, "orchestrator", {
+		driverType: testDriver.type,
+		driverEndpointName: testDriver.endpointName,
+		profile: profileName,
+		runId: undefined,
 	});
+
+	let result = -1;
+	try {
+		const profile = getProfile(profileName);
+
+		const testUsers = credFilePath !== undefined ? getTestUsers(credFilePath) : undefined;
+
+		await stressTest(testDriver, profile, {
+			testId,
+			debug,
+			verbose,
+			seed,
+			enableMetrics,
+			createTestId,
+			testUsers,
+			profileName,
+			logger,
+			outputDir,
+		});
+		result = 0;
+	} finally {
+		// There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
+		// TODO: Track down the dangling promise and fix it.
+		await new Promise((resolve) => {
+			setTimeout(resolve, 1000);
+		});
+		// Flush the logs
+		await flush();
+
+		process.exit(result);
+	}
 };
 
 main().catch((error) => {
+	// Most of the time we'll exit the process through the process.exit() in main.
+	// However, if we error outside of that try/catch block we'll catch it here.
+	console.error("Error occurred during setup");
 	console.error(error);
 	process.exit(-1);
 });
