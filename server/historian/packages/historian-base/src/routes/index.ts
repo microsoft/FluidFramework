@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import {
 	IStorageNameRetriever,
 	IThrottler,
@@ -50,7 +49,6 @@ export function create(
 	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
 	cache?: ICache,
-	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
@@ -63,7 +61,6 @@ export function create(
 		restClusterThrottlers,
 		documentManager,
 		cache,
-		asyncLocalStorage,
 		revokedTokenChecker,
 		denyList,
 		ephemeralDocumentTTLSec,

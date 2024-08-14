@@ -567,7 +567,7 @@ export function tryGetMapTreeNode(mapTree: MapTree): MapTreeNode | undefined {
 }
 
 /**
- * Create a {@link MapTreeNode} that wraps the given {@link MapTree}, or get the node that already exists for that {@link MapTree} if there is one.
+ * Create a {@link EagerMapTreeNode} that wraps the given {@link MapTree}, or get the node that already exists for that {@link MapTree} if there is one.
  * @param nodeSchema - the {@link FlexTreeNodeSchema | schema} that the node conforms to
  * @param mapTree - the {@link MapTree} containing the data for this node.
  * @remarks It must conform to the `nodeSchema`.
@@ -575,42 +575,8 @@ export function tryGetMapTreeNode(mapTree: MapTree): MapTreeNode | undefined {
 export function getOrCreateMapTreeNode(
 	nodeSchema: FlexTreeNodeSchema,
 	mapTree: ExclusiveMapTree,
-): MapTreeNode {
-	return getOrCreateNode(nodeSchema, mapTree);
-}
-
-/**
- * Create a {@link EagerMapTreeNode} that wraps the given {@link MapTree}, or get the node that already exists for that {@link MapTree} if there is one.
- * @param nodeSchema - the {@link FlexTreeNodeSchema | schema} that the node conforms to
- * @param mapTree - the {@link MapTree} containing the data for this node.
- * @remarks It must conform to the `nodeSchema`.
- * This function is exported for the purposes of unit testing.
- */
-export function getOrCreateNode<TSchema extends LeafNodeSchema>(
-	nodeSchema: TSchema,
-	mapTree: ExclusiveMapTree,
-): EagerMapTreeLeafNode<TSchema>;
-export function getOrCreateNode<TSchema extends FlexMapNodeSchema>(
-	nodeSchema: TSchema,
-	mapTree: ExclusiveMapTree,
-): EagerMapTreeMapNode<TSchema>;
-export function getOrCreateNode<TSchema extends FlexFieldNodeSchema>(
-	nodeSchema: TSchema,
-	mapTree: ExclusiveMapTree,
-): EagerMapTreeFieldNode<TSchema>;
-export function getOrCreateNode<TSchema extends FlexTreeNodeSchema>(
-	nodeSchema: TSchema,
-	mapTree: ExclusiveMapTree,
-): EagerMapTreeNode<TSchema>;
-export function getOrCreateNode<TSchema extends FlexTreeNodeSchema>(
-	nodeSchema: TSchema,
-	mapTree: ExclusiveMapTree,
-): EagerMapTreeNode<TSchema> {
-	const cached = tryGetMapTreeNode(mapTree);
-	if (cached !== undefined) {
-		return cached as EagerMapTreeNode<TSchema>;
-	}
-	return createNode(nodeSchema, mapTree, undefined);
+): EagerMapTreeNode<FlexTreeNodeSchema> {
+	return nodeCache.get(mapTree) ?? createNode(nodeSchema, mapTree, undefined);
 }
 
 /** Helper for creating a `MapTreeNode` given the parent field (e.g. when "walking down") */
@@ -637,26 +603,6 @@ function getOrCreateChild(
 }
 
 /** Always constructs a new node, therefore may not be called twice for the same `MapTree`. */
-function createNode<TSchema extends LeafNodeSchema>(
-	nodeSchema: TSchema,
-	mapTree: ExclusiveMapTree,
-	parentField: LocationInField | undefined,
-): EagerMapTreeLeafNode<TSchema>;
-function createNode<TSchema extends FlexMapNodeSchema>(
-	nodeSchema: TSchema,
-	mapTree: ExclusiveMapTree,
-	parentField: LocationInField | undefined,
-): EagerMapTreeMapNode<TSchema>;
-function createNode<TSchema extends FlexFieldNodeSchema>(
-	nodeSchema: TSchema,
-	mapTree: ExclusiveMapTree,
-	parentField: LocationInField | undefined,
-): EagerMapTreeFieldNode<TSchema>;
-function createNode<TSchema extends FlexTreeNodeSchema>(
-	nodeSchema: TSchema,
-	mapTree: ExclusiveMapTree,
-	parentField: LocationInField | undefined,
-): EagerMapTreeNode<TSchema>;
 function createNode<TSchema extends FlexTreeNodeSchema>(
 	nodeSchema: TSchema,
 	mapTree: ExclusiveMapTree,

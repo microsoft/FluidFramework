@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import { Deferred } from "@fluidframework/common-utils";
 import {
 	IThrottler,
@@ -34,7 +33,6 @@ export class HistorianRunner implements IRunner {
 		public readonly restClusterThrottlers: Map<string, IThrottler>,
 		private readonly documentManager: IDocumentManager,
 		private readonly cache?: ICache,
-		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly denyList?: IDenyList,
 		private readonly ephemeralDocumentTTLSec?: number,
@@ -52,7 +50,6 @@ export class HistorianRunner implements IRunner {
 			this.restClusterThrottlers,
 			this.documentManager,
 			this.cache,
-			this.asyncLocalStorage,
 			this.revokedTokenChecker,
 			this.denyList,
 			this.ephemeralDocumentTTLSec,
