@@ -5,6 +5,7 @@
 
 /**
  * Replace this
+ * @alpha
  */
 export function replaceThis(): boolean {
 	return true;

@@ -8,4 +8,7 @@ module.exports = {
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
+	rules: {
+		"unicorn/no-null": "off",
+	},
 };
