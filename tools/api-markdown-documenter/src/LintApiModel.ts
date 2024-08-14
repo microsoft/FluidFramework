@@ -2,66 +2,97 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import { fail } from "node:assert";
 import {
 	ApiDocumentedItem,
 	type ApiItem,
 	ApiItemContainerMixin,
 	type ApiModel,
 } from "@microsoft/api-extractor-model";
-import {
-	DocBlock,
-	type DocInheritDocTag,
-	DocInlineTag,
-	type DocLinkTag,
-	type DocNode,
-	DocNodeContainer,
-	DocNodeKind,
-} from "@microsoft/tsdoc";
-
+import type { DocInheritDocTag } from "@microsoft/tsdoc";
 import { defaultLoadModelOptions, loadModel, type LoadModelOptions } from "./LoadModel.js";
-import { noopLogger, type Logger } from "./Logging.js";
-import { DocumentWriter } from "./renderers/index.js";
-import { getScopedMemberNameForDiagnostics, resolveSymbolicReference } from "./utilities/index.js";
-import assert from "node:assert";
-
-// TODOs:
-// - See how reasonable it is to implement `@link` checking via generic transform infra.
-// - Improve error messages for invalid link targets.
-// - Restructure validation walk to be more general (e.g. it should error for malformed `@inheritDoc` tags).
-
-/**
- * Linter check options.
- *
- * @public
- */
-export interface LinterOptions {
-	/**
-	 * Whether or not to evaluate `{@link}` and `{@inheritDoc}` links as a part of the linting process.
-	 * @defaultValue `true`
-	 */
-	checkLinks?: boolean;
-}
+import { noopLogger } from "./Logging.js";
+import { resolveSymbolicReference } from "./utilities/index.js";
 
 /**
  * {@link lintApiModel} options.
  */
-export interface LintApiModelOptions extends LoadModelOptions, LinterOptions {}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface LintApiModelOptions extends LoadModelOptions {
+	// TODO: add linter-specific options here as needed.
+}
 
 /**
  * {@link LintApiModelOptions} defaults.
  */
 const defaultLintApiModelOptions: Required<Omit<LintApiModelOptions, "modelDirectoryPath">> = {
 	...defaultLoadModelOptions,
-	checkLinks: true,
 };
+
+// TODO: common TsdocError base (associatedItem, packageName)
+
+/**
+ * An error resulting from a reference tag (e.g., `link` or `inheritDoc` tags) with an invalid target.
+ */
+export interface ReferenceError {
+	/**
+	 * The tag name with the invalid reference.
+	 */
+	readonly tagName: string;
+
+	/**
+	 * Name of the item that included a reference to an invalid target.
+	 */
+	readonly sourceItem: string;
+
+	/**
+	 * The name of the package that the {@link ReferenceError.sourceItem} belongs to.
+	 */
+	readonly packageName: string;
+
+	/**
+	 * The string provided as the reference in a reference tag.
+	 */
+	readonly referenceTarget: string;
+
+	/**
+	 * Link alias text, if any.
+	 */
+	readonly linkText: string | undefined;
+}
+
+/**
+ * Mutable {@link LinterErrors}.
+ * @remarks Used while walking the API model to accumulate errors, and converted to {@link LinterErrors} to return to the caller.
+ */
+interface MutableLinterErrors {
+	readonly referenceErrors: Set<ReferenceError>;
+}
+
+/**
+ * Errors found during linting.
+ */
+export interface LinterErrors {
+	/**
+	 * Errors related to reference tags (e.g., `link` or `inheritDoc` tags) with invalid targets.
+	 */
+	readonly referenceErrors: ReadonlySet<ReferenceError>;
+
+	// TODO: add other error kinds as needed.
+}
 
 /**
  * Validates the given API model.
  *
- * @throws If the specified {@link LoadModelOptions.modelDirectoryPath} doesn't exist, or if no `.api.json` files are found directly under it.
+ * @returns The set of errors encountered during linting, if any were found.
+ * Otherwise, `undefined`.
+ *
+ * @throws
+ * If the specified {@link LoadModelOptions.modelDirectoryPath} doesn't exist, or if no `.api.json` files are found directly under it.
  */
-export async function lintApiModel(options: LintApiModelOptions): Promise<void> {
+export async function lintApiModel(
+	options: LintApiModelOptions,
+): Promise<LinterErrors | undefined> {
 	const optionsWithDefaults: Required<LintApiModelOptions> = {
 		...defaultLintApiModelOptions,
 		...options,
@@ -76,243 +107,85 @@ export async function lintApiModel(options: LintApiModelOptions): Promise<void> 
 
 	logger.verbose("API model loaded.");
 
-	logger.info("Linting API model...");
+	logger.verbose("Linting API model...");
 
-	// Run "lint" checks on the model. Collect errors and throw an aggregate error if any are found.
-	let linkErrors: string[] = [];
-	if (optionsWithDefaults.checkLinks) {
-		linkErrors = checkLinks(apiModel, apiModel, logger);
-	}
+	const errors: MutableLinterErrors = {
+		referenceErrors: new Set<ReferenceError>(),
+	};
+	lintApiItem(apiModel, apiModel, optionsWithDefaults, errors);
+	const anyErrors = errors.referenceErrors.size > 0;
 
-	const anyErrors: boolean = linkErrors.length > 0;
-	if (anyErrors) {
-		const writer = DocumentWriter.create();
-		writer.writeLine("API model linting failed with the following errors:");
-		writer.increaseIndent();
-		if (linkErrors.length > 0) {
-			writer.writeLine("Link errors:");
-			writer.increaseIndent("  - ");
-			for (const linkError of linkErrors) {
-				writer.writeLine(linkError.trim());
+	logger.verbose("API model linting completed.");
+	logger.verbose(`Linting result: ${anyErrors ? "failure" : "success"}.`);
+
+	return anyErrors
+		? {
+				referenceErrors: errors.referenceErrors,
+		  }
+		: undefined;
+}
+
+/**
+ * Recursively validates the given API item and all its descendants within the API model.
+ */
+function lintApiItem(
+	apiItem: ApiItem,
+	apiModel: ApiModel,
+	options: Required<LintApiModelOptions>,
+	errors: MutableLinterErrors,
+): void {
+	// If the item is documented, lint its documentation contents.
+	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+		const comment = apiItem.tsdocComment;
+
+		// Lint `@inheritDoc` tag, if present
+		// Note: API-Extractor resolves `@inheritDoc` during model generation, so such tags are never expected to appear in the `tsdocComment` tree (unless malformed).
+		// Therefore, we need to handle them specially here.
+		if (comment.inheritDocTag !== undefined) {
+			// eslint-disable-next-line unicorn/prevent-abbreviations
+			const inheritDocReferenceError = checkInheritDocTag(
+				comment.inheritDocTag,
+				apiItem,
+				apiModel,
+			);
+			if (inheritDocReferenceError !== undefined) {
+				errors.referenceErrors.add(inheritDocReferenceError);
 			}
 		}
 
-		throw new Error(writer.getText().trim());
-	} else {
-		logger.success("API model linting passed.");
-	}
-}
-
-function checkLinks(apiItem: ApiItem, apiModel: ApiModel, logger: Logger): string[] {
-	const errors: string[] = [];
-
-	if (apiItem instanceof ApiDocumentedItem) {
-		// Check `@inheritDoc` tag
-		// eslint-disable-next-line unicorn/prevent-abbreviations
-		const inheritDocError = checkInheritDocTag(apiItem, apiModel);
-		if (inheritDocError !== undefined) {
-			errors.push(inheritDocError);
-		}
-
-		// Check link tags
-		errors.push(...checkLinkTags(apiItem, apiModel, logger));
+		// TODO: Check other TSDoc contents
 	}
 
-	// Recurse members
+	// If the item has children, recursively validate them.
 	if (ApiItemContainerMixin.isBaseClassOf(apiItem)) {
 		for (const member of apiItem.members) {
-			errors.push(...checkLinks(member, apiModel, logger));
-		}
-	}
-
-	return errors;
-}
-
-function checkLinkTags(
-	apiItem: ApiDocumentedItem,
-	apiModel: ApiModel,
-	logger: Logger,
-): readonly string[] {
-	const tsdocComment = apiItem.tsdocComment;
-	if (tsdocComment === undefined) {
-		return [];
-	}
-
-	const errors: string[] = [];
-
-	const summaryErrors = checkLinkTagsUnderTsdocNode(
-		tsdocComment.summarySection,
-		apiItem,
-		apiModel,
-		logger,
-	);
-	errors.push(...summaryErrors);
-
-	if (tsdocComment.deprecatedBlock !== undefined) {
-		const deprecatedBlockErrors = checkLinkTagsUnderTsdocNode(
-			tsdocComment.deprecatedBlock,
-			apiItem,
-			apiModel,
-			logger,
-		);
-		errors.push(...deprecatedBlockErrors);
-	}
-
-	if (tsdocComment.remarksBlock !== undefined) {
-		const remarksBlockErrors = checkLinkTagsUnderTsdocNode(
-			tsdocComment.remarksBlock,
-			apiItem,
-			apiModel,
-			logger,
-		);
-		errors.push(...remarksBlockErrors);
-	}
-
-	if (tsdocComment.privateRemarks !== undefined) {
-		const privateRemarksBlockErrors = checkLinkTagsUnderTsdocNode(
-			tsdocComment.privateRemarks,
-			apiItem,
-			apiModel,
-			logger,
-		);
-		errors.push(...privateRemarksBlockErrors);
-	}
-
-	const parametersErrors = checkLinkTagsUnderTsdocNodes(
-		tsdocComment.params.blocks,
-		apiItem,
-		apiModel,
-		logger,
-	);
-	errors.push(...parametersErrors);
-
-	const typeParametersErrors = checkLinkTagsUnderTsdocNodes(
-		tsdocComment.typeParams.blocks,
-		apiItem,
-		apiModel,
-		logger,
-	);
-	errors.push(...typeParametersErrors);
-
-	const customBlocksErrors = checkLinkTagsUnderTsdocNodes(
-		tsdocComment.customBlocks,
-		apiItem,
-		apiModel,
-		logger,
-	);
-	errors.push(...customBlocksErrors);
-
-	return errors;
-}
-
-function checkLinkTagsUnderTsdocNode(
-	node: DocNode,
-	apiItem: ApiItem,
-	apiModel: ApiModel,
-	logger: Logger,
-): readonly string[] {
-	switch (node.kind) {
-		// Nodes under which links cannot occur
-		case DocNodeKind.CodeSpan:
-		case DocNodeKind.BlockTag:
-		case DocNodeKind.EscapedText:
-		case DocNodeKind.FencedCode:
-		case DocNodeKind.HtmlStartTag:
-		case DocNodeKind.HtmlEndTag:
-		case DocNodeKind.InheritDocTag:
-		case DocNodeKind.PlainText:
-		case DocNodeKind.SoftBreak: {
-			return [];
-		}
-		case DocNodeKind.Block:
-		case DocNodeKind.ParamBlock: {
-			assert(node instanceof DocBlock, 'Expected a "DocBlock" node.');
-			return checkLinkTagsUnderTsdocNode(node.content, apiItem, apiModel, logger);
-		}
-		// Nodes with children
-		case DocNodeKind.Paragraph:
-		case DocNodeKind.Section: {
-			assert(node instanceof DocNodeContainer, 'Expected a "DocNodeContainer" node.');
-			return checkLinkTagsUnderTsdocNodes(node.nodes, apiItem, apiModel, logger);
-		}
-		case DocNodeKind.InlineTag: {
-			assert(node instanceof DocInlineTag, 'Expected a "DocInlineTag" node.');
-
-			// If the tag is a "@link" tag, then the parser was unable to parse it correctly.
-			// This is indicative of a syntax error in the tag, and therefore should be reported.
-			if (node.tagName in ["@link", "@inheritDoc"]) {
-				return [
-					`Malformed "${
-						node.tagName
-					}" tag encountered on "${getScopedMemberNameForDiagnostics(apiItem)}": "${
-						node.tagContent
-					}".
-For correct syntax, see <https://tsdoc.org/pages/tags/link/>.`,
-				];
-			}
-			return [];
-		}
-		case DocNodeKind.LinkTag: {
-			const result = checkLinkTag(node as DocLinkTag, apiItem, apiModel);
-			return result === undefined ? [] : [result];
-		}
-		default: {
-			logger.error(`Unsupported DocNode kind: "${node.kind}".`, node);
-			throw new Error(`Unsupported DocNode kind: "${node.kind}".`);
-			// return [];
+			lintApiItem(member, apiModel, options, errors);
 		}
 	}
 }
 
-function checkLinkTagsUnderTsdocNodes(
-	nodes: readonly DocNode[],
-	apiItem: ApiItem,
-	apiModel: ApiModel,
-	logger: Logger,
-): readonly string[] {
-	const errors: string[] = [];
-	for (const node of nodes) {
-		errors.push(...checkLinkTagsUnderTsdocNode(node, apiItem, apiModel, logger));
-	}
-	return errors;
-}
-
-function checkLinkTag(node: DocLinkTag, apiItem: ApiItem, apiModel: ApiModel): string | undefined {
-	// If the link tag was parsed correctly (which we know it was in this case, because we have a `DocLinkTag`), then we don't have to worry about syntax validation.
-
-	// If the link points to some external URL, no-op.
-	// In the future, we could potentially leverage some sort of URL validator here,
-	// but for now our primary concern is validating symbolic links.
-	if (node.urlDestination !== undefined) {
-		return undefined;
-	}
-
-	assert(
-		node.codeDestination !== undefined,
-		"Expected a `codeDestination` or `urlDestination` to be defined, but neither was.",
-	);
-
-	// If the link is a symbolic reference, validate it.
-	try {
-		resolveSymbolicReference(apiItem, node.codeDestination, apiModel);
-	} catch (error: unknown) {
-		assert(error instanceof Error, "Expected an error.");
-		return error.message;
-	}
-
-	return undefined;
-}
-
+/**
+ * Checks the provided API item's `{@inheritDoc}` tag, ensuring that the target reference is valid within the API model.
+ */
 // eslint-disable-next-line unicorn/prevent-abbreviations
-function checkInheritDocTag(apiItem: ApiDocumentedItem, apiModel: ApiModel): string | undefined {
+function checkInheritDocTag(
 	// eslint-disable-next-line unicorn/prevent-abbreviations
-	const inheritDocTag: DocInheritDocTag | undefined = apiItem.tsdocComment?.inheritDocTag;
-
+	inheritDocTag: DocInheritDocTag,
+	associatedItem: ApiDocumentedItem,
+	apiModel: ApiModel,
+): ReferenceError | undefined {
 	if (inheritDocTag?.declarationReference !== undefined) {
 		try {
-			resolveSymbolicReference(apiItem, inheritDocTag.declarationReference, apiModel);
-		} catch (error: unknown) {
-			return (error as Error).message;
+			resolveSymbolicReference(associatedItem, inheritDocTag.declarationReference, apiModel);
+		} catch {
+			return {
+				tagName: "@inheritDoc",
+				sourceItem: associatedItem.getScopedNameWithinPackage(),
+				packageName:
+					associatedItem.getAssociatedPackage()?.name ?? fail("Package name not found"),
+				referenceTarget: inheritDocTag.declarationReference.emitAsTsdoc(),
+				linkText: undefined,
+			};
 		}
 
 		return undefined;

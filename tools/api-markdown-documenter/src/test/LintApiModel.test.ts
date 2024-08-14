@@ -8,28 +8,47 @@ import { fileURLToPath } from "node:url";
 
 import { expect } from "chai";
 
-import { lintApiModel } from "../LintApiModel.js";
+import { lintApiModel, type ReferenceError, type LinterErrors } from "../LintApiModel.js";
 
 const dirname = Path.dirname(fileURLToPath(import.meta.url));
 const testModelsDirectoryPath = Path.resolve(dirname, "..", "..", "src", "test", "test-data");
 
 describe("lintApiModel", () => {
+	// TODO: add case with no errors
+
 	it("API Model with invalid links yields the expected errors", async () => {
 		const modelDirectoryPath = Path.resolve(testModelsDirectoryPath, "simple-suite-test");
-		const expectedError = `API model linting failed with the following errors:
-  Link errors:
-    - Unable to resolve reference "InvalidItem" from "simple-suite-test": The member reference "InvalidItem" was not found
-    - Unable to resolve reference "InvalidItem" from "simple-suite-test": The member reference "InvalidItem" was not found
-    - Unable to resolve reference "BadInheritDocTarget" from "simple-suite-test#TestInterface.propertyWithBadInheritDocTarget": The member reference "BadInheritDocTarget" was not found`;
 
-		try {
-			await lintApiModel({ modelDirectoryPath });
-		} catch (error: unknown) {
-			expect(error).to.be.an.instanceOf(Error);
-			expect((error as Error).message).to.equal(expectedError);
-			return;
-		}
-		expect.fail("Expected an error to be thrown, but none was.");
+		const expected: LinterErrors = {
+			referenceErrors: new Set<ReferenceError>([
+				{
+					tagName: "@link",
+					sourceItem: "", // link appears in package documentation
+					packageName: "simple-suite-test",
+					referenceTarget: "InvalidItem",
+					linkText: undefined,
+				},
+				{
+					tagName: "@link",
+					sourceItem: "", // link appears in package documentation
+					packageName: "simple-suite-test",
+					referenceTarget: "InvalidItem",
+					linkText:
+						"even though I link to an invalid item, I would still like this text to be rendered",
+				},
+				{
+					tagName: "@inheritDoc",
+					sourceItem: "TestInterface.propertyWithBadInheritDocTarget",
+					packageName: "simple-suite-test",
+					referenceTarget: "BadInheritDocTarget",
+					linkText: undefined,
+				},
+			]),
+		};
+
+		const result = await lintApiModel({ modelDirectoryPath });
+
+		expect(result).to.deep.equal(expected);
 	});
 
 	it("Invalid model directory throws", async () => {
