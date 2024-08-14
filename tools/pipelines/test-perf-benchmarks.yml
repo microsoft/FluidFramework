@@ -39,7 +39,7 @@ parameters:
     - "@fluidframework/merge-tree"
     - "@fluidframework/container-runtime"
 
-- name: customDataTestPackages
+- name: customBenchmarkTestPackages
   type: object
   default:
     - "@fluidframework/tree"
