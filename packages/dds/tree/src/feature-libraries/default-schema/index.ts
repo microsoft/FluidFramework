@@ -26,6 +26,6 @@ export {
 	relevantRemovedRoots,
 } from "./defaultEditBuilder.js";
 
-export { SchemaValidationErrors, isNodeInSchema } from "./schemaChecker.js";
+export { SchemaValidationErrors, isNodeInSchema, isFieldInSchema } from "./schemaChecker.js";
 
 export { defaultSchemaPolicy } from "./defaultSchema.js";

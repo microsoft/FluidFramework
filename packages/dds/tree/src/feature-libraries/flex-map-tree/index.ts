@@ -6,7 +6,6 @@
 export {
 	type MapTreeNode,
 	isMapTreeNode,
-	getOrCreateNode,
 	getOrCreateMapTreeNode,
 	tryGetMapTreeNode,
 } from "./mapTreeNode.js";
