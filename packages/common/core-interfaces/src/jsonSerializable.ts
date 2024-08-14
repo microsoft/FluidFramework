@@ -8,7 +8,8 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 /**
  * Options for {@link JsonSerializable}.
  *
- * @beta
+ * @legacy
+ * @alpha
  */
 export interface JsonSerializableOptions {
 	/**
@@ -116,7 +117,8 @@ export interface JsonSerializableOptions {
  * proper use, that will never be an issue as any filtering of types will happen
  * before T recursion.
  *
- * @beta
+ * @legacy
+ * @alpha
  */
 export type JsonSerializable<
 	T,
