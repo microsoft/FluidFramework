@@ -567,17 +567,17 @@ export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKind
 // #region Field Kinds
 
 /**
- * Strongly typed tree literals for inserting as the content of a field.
+ * Typed tree for inserting as the content of a field.
  */
 export type FlexibleFieldContent = ExclusiveMapTree[];
 
 /**
- * Strongly typed tree literals for inserting as a node.
+ * Tree for inserting as a node.
  */
 export type FlexibleNodeContent = ExclusiveMapTree;
 
 /**
- * Strongly typed tree literals for inserting a subsequence of nodes.
+ * Tree for inserting a subsequence of nodes.
  *
  * Used to insert a batch of 0 or more nodes into some location in a {@link FlexTreeSequenceField}.
  */
@@ -644,7 +644,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	/**
 	 * Get an editor for this sequence.
 	 */
-	editor: SequenceFieldEditBuilder<FlexibleFieldContent>;
+	readonly editor: SequenceFieldEditBuilder<FlexibleFieldContent>;
 
 	boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>>;
 
@@ -666,7 +666,7 @@ export interface FlexTreeRequiredField<in out TTypes extends FlexAllowedTypes>
 	extends FlexTreeField {
 	get content(): FlexTreeUnboxNodeUnion<TTypes>;
 
-	editor: ValueFieldEditBuilder<FlexibleNodeContent>;
+	readonly editor: ValueFieldEditBuilder<FlexibleNodeContent>;
 }
 
 /**
@@ -686,7 +686,7 @@ export interface FlexTreeOptionalField<in out TTypes extends FlexAllowedTypes>
 	extends FlexTreeField {
 	get content(): FlexTreeUnboxNodeUnion<TTypes> | undefined;
 
-	editor: OptionalFieldEditBuilder<FlexibleNodeContent>;
+	readonly editor: OptionalFieldEditBuilder<FlexibleNodeContent>;
 }
 
 // #endregion

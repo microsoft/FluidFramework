@@ -12,6 +12,7 @@ import {
 	expectJsonTree,
 	insert,
 	makeTreeFromJson,
+	moveWithin,
 	remove,
 } from "../utils.js";
 
@@ -106,8 +107,7 @@ const testCases: {
 	{
 		name: "the move of a node",
 		edit: (actedOn) => {
-			const field = actedOn.editor.sequenceField(rootField);
-			field.move(0, 2, 4);
+			moveWithin(actedOn.editor, rootField, 0, 2, 4);
 		},
 		initialState: ["A", "B", "C", "D"],
 		editedState: ["C", "D", "A", "B"],
@@ -116,11 +116,16 @@ const testCases: {
 		name: "a move that has been rebased",
 		edit: (actedOn, other) => {
 			insert(other, 1, "x");
-			const field = actedOn.editor.sequenceField({
-				parent: undefined,
-				field: rootFieldKey,
-			});
-			field.move(1, 1, 4);
+			moveWithin(
+				actedOn.editor,
+				{
+					parent: undefined,
+					field: rootFieldKey,
+				},
+				1,
+				1,
+				4,
+			);
 		},
 		initialState: ["A", "B", "C", "D"],
 		editedState: ["A", "x", "C", "D", "B"],

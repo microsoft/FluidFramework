@@ -35,6 +35,7 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { wrapObjectAndOverride } from "../mocking.js";
+import { TestSnapshotCache } from "../testSnapshotCache.js";
 
 import {
 	MockDetachedBlobStorage,
@@ -270,8 +271,10 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 	]);
 
 	let provider: ITestObjectProvider;
+	let testSnapshotCache: TestSnapshotCache;
 	beforeEach("getTestObjectProvider", async function () {
-		provider = getTestObjectProvider();
+		testSnapshotCache = new TestSnapshotCache();
+		provider = getTestObjectProvider({ persistedCache: testSnapshotCache });
 		// Currently FRS does not support blob API.
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
@@ -338,6 +341,8 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 			});
 		});
 
+		// Make sure the next container loads from the network so as to get latest snapshot.
+		testSnapshotCache.clearCache();
 		const container2 = await provider.loadTestContainer(testContainerConfig);
 		const snapshot2 = (container2 as any).runtime.blobManager.summarize();
 		assert.strictEqual(snapshot2.stats.treeNodeCount, 1);
