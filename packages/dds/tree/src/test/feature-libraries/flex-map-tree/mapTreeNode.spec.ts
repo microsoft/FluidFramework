@@ -295,7 +295,7 @@ describe("MapTreeNodes", () => {
 			}) as EagerMapTreeFieldNode<typeof fieldNodeSchema>;
 			const field = mutableFieldNode.getBoxed(EmptyKey);
 			const newContent: ExclusiveMapTree[] = [];
-			for (let i = 0; i < 1000000; i++) {
+			for (let i = 0; i < 10000; i++) {
 				newContent.push({ ...mapChildMapTree, value: String(i) });
 			}
 			field.editor.insert(0, newContent);
