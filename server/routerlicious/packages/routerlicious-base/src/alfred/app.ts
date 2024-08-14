@@ -26,7 +26,6 @@ import { Provider } from "nconf";
 import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
 import {
 	alternativeMorganLoggerMiddleware,
-	bindCorrelationId,
 	bindTelemetryContext,
 	bindTimeoutContext,
 	jsonMorganLoggerMiddleware,
@@ -159,8 +158,6 @@ export function create(
 	app.use(cookieParser());
 	app.use(json({ limit: requestSize }));
 	app.use(urlencoded({ limit: requestSize, extended: false }));
-
-	app.use(bindCorrelationId());
 
 	// Bind routes
 	const routes = alfredRoutes.create(
