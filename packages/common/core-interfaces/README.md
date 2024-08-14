@@ -32,6 +32,8 @@ For more information on the related support guarantees, see [API Support Levels]
 
 To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/core-interfaces` like normal.
 
+To access the `beta` APIs, import via `@fluidframework/core-interfaces/beta`.
+
 To access the `legacy` APIs, import via `@fluidframework/core-interfaces/legacy`.
 
 ## API Documentation
