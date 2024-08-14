@@ -5,18 +5,27 @@
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	aboveRootPlaceholder,
 	EmptyKey,
+	forEachField,
+	inCursorField,
 	keyAsDetachedField,
+	mapCursorField,
 	type FieldKey,
+	type ITreeCursor,
 	type ITreeCursorSynchronous,
 	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
 import { brand, fail } from "../../util/index.js";
-import type { TreeLeafValue, ImplicitFieldSchema } from "../schemaTypes.js";
-import { getSimpleNodeSchema } from "../core/index.js";
+import type {
+	TreeLeafValue,
+	ImplicitFieldSchema,
+	ImplicitAllowedTypes,
+} from "../schemaTypes.js";
+import { getSimpleNodeSchema, NodeKind, type TreeNodeSchema } from "../core/index.js";
 import {
 	isTreeValue,
 	stackTreeFieldCursor,
@@ -32,12 +41,15 @@ import {
 } from "../leafNodeSchema.js";
 import { toFlexSchema } from "../toFlexSchema.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
+import { walkFieldSchema } from "./tree.js";
 
 /**
  * Verbose encoding of a {@link TreeNode} or {@link TreeValue}.
  * @remarks
  * This is verbose meaning that every {@link TreeNode} is a {@link VerboseTreeNode}.
  * Any IFluidHandle values have been replaced by `THandle`.
+ * @privateRemarks
+ * This can store all possible simple trees, but it can not store all possible trees representable by our internal representations like FlexTree and JsonableTree.
  */
 export type VerboseTree<THandle = IFluidHandle> =
 	| VerboseTreeNode<THandle>
@@ -118,9 +130,30 @@ export interface SchemalessParseOptions<TCustom> {
 	 */
 	valueConverter(data: VerboseTree<TCustom>): TreeLeafValue | VerboseTreeNode<TCustom>;
 	/**
-	 * Converts to stored keys.
+	 * Converts stored keys into whatever key the tree is using in its encoding.
 	 */
-	keyConverter?(type: string, inputKey: string): string;
+	keyConverter?: {
+		parse(type: string, inputKey: string): FieldKey;
+		encode(type: string, key: FieldKey): string;
+	};
+}
+
+/**
+ * Options for how to interpret a `VerboseTree<TCustom>` without relying on schema.
+ */
+export interface EncodeOptions<TCustom> {
+	/**
+	 * Fixup custom input formats.
+	 * @remarks
+	 * Main usage is translate IFluidHandles into some JSON compatible handle format.
+	 */
+	valueConverter(data: IFluidHandle): TCustom;
+	/**
+	 * If true, interpret the input keys of object nodes as stored keys.
+	 * If false, interpret them as property keys.
+	 * @defaultValue false.
+	 */
+	readonly useStoredKeys?: boolean;
 }
 
 /**
@@ -143,16 +176,42 @@ export function applySchemaToParserOptions<TCustom>(
 		valueConverter: config.valueConverter,
 		keyConverter: config.useStoredKeys
 			? undefined
-			: (type, inputKey) => {
-					const flexNodeSchema =
-						flexSchema.nodeSchema.get(brand(type)) ?? fail("missing schema");
-					const simpleNodeSchema = getSimpleNodeSchema(flexNodeSchema);
-					if (isObjectNodeSchema(simpleNodeSchema)) {
-						const info =
-							simpleNodeSchema.flexKeyMap.get(inputKey) ?? fail("missing field info");
-						return info.storedKey;
-					}
-					return inputKey;
+			: {
+					encode: (type, key: FieldKey): string => {
+						// translate stored key into property key.
+						const flexNodeSchema =
+							flexSchema.nodeSchema.get(brand(type)) ?? fail("missing schema");
+						const simpleNodeSchema = getSimpleNodeSchema(flexNodeSchema);
+						if (isObjectNodeSchema(simpleNodeSchema)) {
+							const propertyKey = simpleNodeSchema.storedKeyToPropertyKey.get(key);
+							if (propertyKey !== undefined) {
+								return propertyKey;
+							}
+							// Looking up an out of schema key.
+							// This must point to a non-existent field.
+							// It's possible that the key, if we returned it unmodified, could point to some data
+							// (for example if looking up a key which is a stored key already when using property keys).
+							// Thus return an arbitrary key that was selected randomly, so should not exist on non-adversarial data:
+							const arbitrary = "arbitrary unused key: fe71614a-bf3e-43b3-b7b0-4cef39538e90";
+							assert(
+								!simpleNodeSchema.storedKeyToPropertyKey.has(brand(arbitrary)),
+								"arbitrarily selected unused key was actually used",
+							);
+							return arbitrary;
+						}
+						return key;
+					},
+					parse: (type, inputKey): FieldKey => {
+						const flexNodeSchema =
+							flexSchema.nodeSchema.get(brand(type)) ?? fail("missing schema");
+						const simpleNodeSchema = getSimpleNodeSchema(flexNodeSchema);
+						if (isObjectNodeSchema(simpleNodeSchema)) {
+							const info =
+								simpleNodeSchema.flexKeyMap.get(inputKey) ?? fail("missing field info");
+							return info.storedKey;
+						}
+						return brand(inputKey);
+					},
 				},
 	};
 }
@@ -225,12 +284,13 @@ function verboseTreeAdapter<TCustom>(
 					if (Array.isArray(node.fields)) {
 						return node.fields.length === 0 ? [] : [EmptyKey];
 					}
+
 					const inputKeys = Object.keys(node.fields);
-					if (options.keyConverter === undefined) {
+					const converter = options.keyConverter;
+					if (converter === undefined) {
 						return inputKeys as FieldKey[];
 					}
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					return inputKeys.map((k) => brand(options.keyConverter!(node.type, k)));
+					return inputKeys.map((k) => converter.parse(node.type, k));
 				}
 				default:
 					return [];
@@ -259,12 +319,91 @@ function verboseTreeAdapter<TCustom>(
 				return key === EmptyKey ? node.fields : [];
 			}
 
-			if (Object.prototype.hasOwnProperty.call(node, key)) {
-				const field = node.fields[key];
+			const convertedKey =
+				options.keyConverter === undefined ? key : options.keyConverter.encode(node.type, key);
+
+			if (Object.prototype.hasOwnProperty.call(node.fields, convertedKey)) {
+				const field = node.fields[convertedKey];
 				return field === undefined ? [] : [field];
 			}
 
 			return [];
 		},
 	};
+}
+
+/**
+ * Used to read a node cursor as a VerboseTree.
+ */
+export function verboseFromCursor<TCustom>(
+	reader: ITreeCursor,
+	rootSchema: ImplicitAllowedTypes,
+	options: EncodeOptions<TCustom>,
+): VerboseTree<TCustom> {
+	const config: Required<EncodeOptions<TCustom>> = {
+		useStoredKeys: false,
+		...options,
+	};
+
+	const schemaMap = new Map<string, TreeNodeSchema>();
+	walkFieldSchema(rootSchema, {
+		node(schema) {
+			schemaMap.set(schema.identifier, schema);
+		},
+	});
+
+	return verboseFromCursorInner(reader, config, schemaMap);
+}
+
+function verboseFromCursorInner<TCustom>(
+	reader: ITreeCursor,
+	options: Required<EncodeOptions<TCustom>>,
+	schema: ReadonlyMap<string, TreeNodeSchema>,
+): VerboseTree<TCustom> {
+	const type = reader.type;
+	const nodeSchema = schema.get(type) ?? fail("missing schema for type in cursor");
+
+	switch (type) {
+		case numberSchema.identifier:
+		case booleanSchema.identifier:
+		case nullSchema.identifier:
+		case stringSchema.identifier:
+			assert(reader.value !== undefined, "out of schema: missing value");
+			assert(!isFluidHandle(reader.value), "out of schema: unexpected FluidHandle");
+			return reader.value;
+		case handleSchema.identifier:
+			assert(reader.value !== undefined, "out of schema: missing value");
+			assert(isFluidHandle(reader.value), "out of schema: unexpected FluidHandle");
+			return options.valueConverter(reader.value);
+		default: {
+			assert(reader.value === undefined, "out of schema: unexpected value");
+			if (nodeSchema.kind === NodeKind.Array) {
+				const fields = inCursorField(reader, EmptyKey, () =>
+					mapCursorField(reader, () => verboseFromCursorInner(reader, options, schema)),
+				);
+				return { type, fields };
+			} else {
+				const fields: Record<string, VerboseTree<TCustom>> = {};
+				forEachField(reader, () => {
+					const children = mapCursorField(reader, () =>
+						verboseFromCursorInner(reader, options, schema),
+					);
+					if (children.length === 1) {
+						const storedKey = reader.getFieldKey();
+						const key =
+							isObjectNodeSchema(nodeSchema) && !options.useStoredKeys
+								? nodeSchema.storedKeyToPropertyKey.get(storedKey) ??
+									fail("missing property key")
+								: storedKey;
+						// Length is checked above.
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						fields[key] = children[0]!;
+					} else {
+						assert(children.length === 0, "invalid children number");
+					}
+				});
+				return { type, fields };
+			}
+		}
+	}
 }
