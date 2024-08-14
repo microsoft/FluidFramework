@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	getAllBiomeConfigPaths,
-	getBiomeFormattedFiles,
-	getClosestBiomeConfigPath,
-} from "../../../common/biomeConfig";
+import { BiomeConfig } from "../../../common/biomeConfig";
 import { getResolvedFluidRoot } from "../../../common/fluidUtils";
 import { GitRepo } from "../../../common/gitRepo";
 import { LeafWithFileStatDoneFileTask } from "./leafTask";
@@ -28,6 +24,9 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	// to task constructors.
 	private readonly repoRoot = getResolvedFluidRoot(true);
 	private readonly gitRepo = this.repoRoot.then((repoRoot) => new GitRepo(repoRoot));
+	private readonly loader = this.gitRepo.then((gitRepo) =>
+		BiomeConfig.create(this.node.pkg.directory, gitRepo),
+	);
 
 	/**
 	 * Use hashes instead of modified times in donefile.
@@ -41,18 +40,11 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	 * apply to the directory. Files ignored by git are excluded.
 	 */
 	protected async getInputFiles(): Promise<string[]> {
-		const gitRepo = await this.gitRepo;
+		// const gitRepo = await this.gitRepo;
+		const loader = await this.loader;
 		// Absolute paths to files that would be formatted by biome.
-		const files = await getBiomeFormattedFiles(this.node.pkg.directory, gitRepo);
-		const configPath = await getClosestBiomeConfigPath(this.node.pkg.directory);
-
-		if (configPath === undefined) {
-			// No configs to include, so just return all formatted files
-			return [...new Set(files)];
-		}
-
-		const allConfigPaths = await getAllBiomeConfigPaths(configPath);
-		return [...new Set([...allConfigPaths, ...files])];
+		const { formattedFiles, allConfigs } = loader;
+		return [...new Set([...allConfigs, ...formattedFiles])];
 	}
 
 	protected async getOutputFiles(): Promise<string[]> {

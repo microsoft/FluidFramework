@@ -30,7 +30,7 @@
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check --write .",
-		"generate:biomeConfigTypes": "json2ts --input node_modules/@biomejs/biome/configuration_schema.json --output src/common/biomeConfigTypes.d.ts",
+		"json-schema-to-typescript:biomeConfigTypes": "json2ts --input node_modules/@biomejs/biome/configuration_schema.json --output src/common/biomeConfigTypes.d.ts",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"list-repo-files": "cd ../../.. && git ls-files -co --exclude-standard",

@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+// There are no cases in this file where the values being checked should be undefined, so `!.` is more correct with
+// respect to intent than `?.`.
+
 import assert from "node:assert/strict";
 import path from "node:path";
 import {
@@ -31,7 +35,7 @@ describe("BiomeConfig", async () => {
 			const testFile = path.resolve(testDataPath, "biome/base.jsonc");
 			const actual = await loadBiomeConfig(testFile);
 			assert.notEqual(actual, undefined);
-			assert.equal(actual.files?.ignoreUnknown, true);
+			assert.equal(actual.files!.ignoreUnknown, true);
 		});
 
 		it("loads config with multiple extends", async () => {
@@ -39,14 +43,14 @@ describe("BiomeConfig", async () => {
 			const actual = await loadBiomeConfig(testFile);
 
 			assert(actual !== undefined);
-			assert(actual.files?.ignoreUnknown === false);
 
-			assert(actual.files?.include?.includes("pkg-a-include/**"));
-			assert(actual.files?.ignore?.includes("pkg-a-ignore/**"));
-			assert(actual.formatter?.include?.includes("include-formatter-added-1/**"));
-			assert(actual.formatter?.ignore?.includes("ignore-formatter-added-1/**"));
-			assert(actual.linter?.include?.includes("include-linter-added-1/**"));
-			assert(actual.linter?.ignore?.includes("ignore-linter-added-1/**"));
+			assert(actual.files!.ignoreUnknown === false);
+			assert(actual.files!.include!.includes("pkg-a-include/**"));
+			assert(actual.files!.ignore!.includes("pkg-a-ignore/**"));
+			assert(actual.formatter!.include!.includes("include-formatter-added-1/**"));
+			assert(actual.formatter!.ignore!.includes("ignore-formatter-added-1/**"));
+			assert(actual.linter!.include!.includes("include-linter-added-1/**"));
+			assert(actual.linter!.ignore!.includes("ignore-linter-added-1/**"));
 		});
 
 		describe("extends from a single config", async () => {
@@ -58,49 +62,49 @@ describe("BiomeConfig", async () => {
 
 			it("top-level property is inherited", async () => {
 				assert(testConfig !== undefined);
-				assert(testConfig.files?.ignoreUnknown === true);
+				assert(testConfig.files!.ignoreUnknown === true);
 			});
 
 			it("files.include has correct value", async () => {
-				assert(testConfig.files?.include?.includes("pkg-a-include/**"));
-				assert(testConfig.files?.include?.length === 1);
+				assert(testConfig.files!.include!.includes("pkg-a-include/**"));
+				assert(testConfig.files!.include!.length === 1);
 			});
 
 			it("files.ignore has correct value", async () => {
-				assert(testConfig.files?.ignore?.includes("pkg-a-ignore/**"));
-				assert(testConfig.files?.ignore?.length === 1);
+				assert(testConfig.files!.ignore!.includes("pkg-a-ignore/**"));
+				assert(testConfig.files!.ignore!.length === 1);
 			});
 
 			it("formatter.include has correct value", async () => {
 				const testFile = path.resolve(testDataPath, "biome/pkg-a/biome.jsonc");
 				const actual = await loadBiomeConfig(testFile);
 
-				assert(actual.formatter?.include?.includes("include-formatter/**"));
-				assert(actual.formatter?.include?.length === 1);
+				assert(actual.formatter!.include!.includes("include-formatter/**"));
+				assert(actual.formatter!.include!.length === 1);
 			});
 
 			it("formatter.ignore has correct value", async () => {
 				const testFile = path.resolve(testDataPath, "biome/pkg-a/biome.jsonc");
 				const actual = await loadBiomeConfig(testFile);
 
-				assert(actual.formatter?.ignore?.includes("ignore-formatter/**"));
-				assert(actual.formatter?.ignore?.length === 1);
+				assert(actual.formatter!.ignore!.includes("ignore-formatter/**"));
+				assert(actual.formatter!.ignore!.length === 1);
 			});
 
 			it("linter.include has correct value", async () => {
 				const testFile = path.resolve(testDataPath, "biome/pkg-a/biome.jsonc");
 				const actual = await loadBiomeConfig(testFile);
 
-				assert(actual.linter?.include?.includes("include-linter/**"));
-				assert(actual.linter?.include?.length === 1);
+				assert(actual.linter!.include!.includes("include-linter/**"));
+				assert(actual.linter!.include!.length === 1);
 			});
 
 			it("linter.ignore has correct value", async () => {
 				const testFile = path.resolve(testDataPath, "biome/pkg-a/biome.jsonc");
 				const actual = await loadBiomeConfig(testFile);
 
-				assert(actual.linter?.ignore?.includes("ignore-linter/**"));
-				assert(actual.linter?.ignore?.length === 1);
+				assert(actual.linter!.ignore!.includes("ignore-linter/**"));
+				assert(actual.linter!.ignore!.length === 1);
 			});
 		});
 	});
