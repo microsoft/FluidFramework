@@ -34,7 +34,7 @@ export interface ObjectNodeSchema<
 		T
 	> {
 	/**
-	 * From view keys fo the associated schema.
+	 * From property keys to the associated schema.
 	 */
 	readonly fields: ReadonlyMap<string, FieldSchema>;
 }

@@ -56,6 +56,12 @@ export const wideRootSchema = wideBuilder.object("WideRoot", {
 });
 
 const sf = new SchemaFactory("scalable");
+
+/**
+ * Linked list used for performance testing deep trees.
+ * @remarks
+ * Simple-tree version of {@link deepSchema}.
+ */
 export class LinkedList extends sf.objectRecursive("linkedList", {
 	foo: [() => LinkedList, sf.number],
 }) {}
@@ -63,10 +69,21 @@ export class LinkedList extends sf.objectRecursive("linkedList", {
 	type _check = ValidateRecursiveSchema<typeof LinkedList>;
 }
 
+/**
+ * Array node used for testing the performance scalability of large arrays.
+ * @remarks
+ * Simple-tree version of {@link wideSchema}.
+ */
 export class WideRoot extends sf.array("WideRoot", sf.number) {}
 
+/**
+ * @deprecated Use {@link WideRoot}.
+ */
 export const wideSchema = wideBuilder.intoSchema(wideRootSchema);
 
+/**
+ * @deprecated Use {@link LinkedList}.
+ */
 export const deepSchema = deepBuilder.intoSchema([linkedListSchema, leaf.number]);
 
 export interface JSDeepTree {
@@ -114,7 +131,7 @@ export function makeWideContentWithEndValue(
 /**
  *
  * @param numberOfNodes - number of nodes of the tree
- * @param endLeafValue - the value of the end leaf of the tree
+ * @param endLeafValue - the value of the end leaf of the tree. If not provided its index is used.
  * @returns a tree with specified number of nodes, with the end leaf node set to the endLeafValue
  */
 export function makeJsWideTreeWithEndValue(
@@ -238,7 +255,7 @@ export function readWideFlexTree(tree: FlexTreeView<typeof wideSchema.rootFieldS
 	let sum = 0;
 	let nodesCount = 0;
 	const root = tree.flexTree;
-	const field = root.content[""];
+	const field = root.content[EmptyKey];
 	assert(field.length !== 0);
 	for (const currentNode of field) {
 		sum += currentNode;

@@ -83,7 +83,9 @@ export interface VerboseTreeNode<THandle = IFluidHandle> {
 	/**
 	 * The meaning of this node.
 	 * Provides contexts/semantics for this node and its content.
+	 * @remarks
 	 * Typically used to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
+	 * When used with this package's schema system, it will be the {@link TreeNodeSchemaCore.identifier}.
 	 */
 	type: string;
 
@@ -108,7 +110,11 @@ export interface ParseOptions<TCustom> {
 	/**
 	 * Fixup custom input formats.
 	 * @remarks
-	 * Main usage is translate some JSON compatible handle format into actual IFluidHandles.
+	 * Main usage is to handle IFluidHandles.
+	 * When targeting JSON compatibility,
+	 * this may be by throwing an error or including a placeholder.
+	 * Since IFluidHandles are special references to FLuid data which is garbage collected when not referenced by the container for long enough,
+	 * any scheme for encoding handles for storage outside the container (or in formats the container does not understand) is unreliable.
 	 */
 	valueConverter(data: VerboseTree<TCustom>): TreeLeafValue | VerboseTreeNode<TCustom>;
 	/**
@@ -126,7 +132,7 @@ export interface SchemalessParseOptions<TCustom> {
 	/**
 	 * Fixup custom input formats.
 	 * @remarks
-	 * Main usage is translate some JSON compatible handle format into actual IFluidHandles.
+	 * See note on {@link ParseOptions.valueConverter}.
 	 */
 	valueConverter(data: VerboseTree<TCustom>): TreeLeafValue | VerboseTreeNode<TCustom>;
 	/**
@@ -145,7 +151,7 @@ export interface EncodeOptions<TCustom> {
 	/**
 	 * Fixup custom input formats.
 	 * @remarks
-	 * Main usage is translate IFluidHandles into some JSON compatible handle format.
+	 * See note on {@link ParseOptions.valueConverter}.
 	 */
 	valueConverter(data: IFluidHandle): TCustom;
 	/**
