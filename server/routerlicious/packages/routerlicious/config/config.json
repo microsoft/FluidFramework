@@ -67,6 +67,7 @@
 	},
 	"storage": {
 		"enableWholeSummaryUpload": false,
+		"ephemeralDocumentTTLSec": 86400,
 		"storageUrl": "http://gitrest:3000"
 	},
 	"checkpoints": {

@@ -122,6 +122,20 @@ export {
 	test_RecursiveObject,
 	test_RecursiveObject_base,
 	test_RecursiveObjectPojoMode,
+	type JsonTreeSchema,
+	type JsonSchemaId,
+	type JsonNodeSchema,
+	type JsonNodeSchemaBase,
+	type JsonLeafNodeSchema,
+	type JsonMapNodeSchema,
+	type JsonArrayNodeSchema,
+	type JsonObjectNodeSchema,
+	type JsonFieldSchema,
+	type JsonSchemaRef,
+	type JsonRefPath,
+	type JsonSchemaType,
+	type JsonLeafSchemaType,
+	getJsonSchema,
 } from "./simple-tree/index.js";
 export { SharedTree, configuredSharedTree } from "./treeFactory.js";
 

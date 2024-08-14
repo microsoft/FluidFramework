@@ -9,23 +9,23 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { type UpPath, rootFieldKey } from "../../core/index.js";
+import { type UpPath, rootFieldKey } from "../../../core/index.js";
 import {
 	cursorForJsonableTreeNode,
 	MockNodeKeyManager,
 	TreeStatus,
-} from "../../feature-libraries/index.js";
+} from "../../../feature-libraries/index.js";
 import {
 	type NodeFromSchema,
 	SchemaFactory,
 	treeNodeApi as Tree,
 	type TreeChangeEvents,
 	TreeViewConfiguration,
-} from "../../simple-tree/index.js";
-import { getView } from "../utils.js";
-import { hydrate } from "./utils.js";
-import { brand } from "../../util/index.js";
-import { leaf } from "../../domains/index.js";
+} from "../../../simple-tree/index.js";
+import { getView } from "../../utils.js";
+import { hydrate } from "../utils.js";
+import { brand } from "../../../util/index.js";
+import { leaf } from "../../../domains/index.js";
 
 import {
 	booleanSchema,
@@ -34,9 +34,9 @@ import {
 	numberSchema,
 	stringSchema,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/leafNodeSchema.js";
+} from "../../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
-import { tryGetSchema } from "../../simple-tree/treeNodeApi.js";
+import { tryGetSchema } from "../../../simple-tree/api/treeNodeApi.js";
 
 const schema = new SchemaFactory("com.example");
 

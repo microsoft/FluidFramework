@@ -11,13 +11,17 @@ import type { IFluidHandle as _dummyImport } from "@fluidframework/core-interfac
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
-import type { TreeValue } from "../core/index.js";
-import { type NodeKeyManager, type Unenforced, isLazy } from "../feature-libraries/index.js";
+import type { TreeValue } from "../../core/index.js";
+import {
+	type NodeKeyManager,
+	type Unenforced,
+	isLazy,
+} from "../../feature-libraries/index.js";
 import {
 	type RestrictiveReadonlyRecord,
 	getOrCreate,
 	isReadonlyArray,
-} from "../util/index.js";
+} from "../../util/index.js";
 
 import {
 	booleanSchema,
@@ -26,29 +30,32 @@ import {
 	nullSchema,
 	numberSchema,
 	stringSchema,
-} from "./leafNodeSchema.js";
+} from "../leafNodeSchema.js";
 import {
 	FieldKind,
 	type FieldSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type NodeKind,
-	type TreeNodeSchema,
-	type TreeNodeSchemaClass,
-	type WithType,
 	type FieldProps,
 	createFieldSchema,
 	type DefaultProvider,
 	getDefaultProvider,
-} from "./schemaTypes.js";
-import { type TreeArrayNode, arraySchema } from "./arrayNode.js";
+} from "../schemaTypes.js";
+import { inPrototypeChain } from "../core/index.js";
+import type {
+	NodeKind,
+	WithType,
+	TreeNodeSchema,
+	TreeNodeSchemaClass,
+} from "../core/index.js";
+import { type TreeArrayNode, arraySchema } from "../arrayNode.js";
 import {
 	type InsertableObjectFromSchemaRecord,
 	type TreeObjectNode,
 	objectSchema,
-} from "./objectNode.js";
-import { type MapNodeInsertableData, type TreeMapNode, mapSchema } from "./mapNode.js";
+} from "../objectNode.js";
+import { type MapNodeInsertableData, type TreeMapNode, mapSchema } from "../mapNode.js";
 import type {
 	FieldSchemaUnsafe,
 	// Adding these unused imports makes the generated d.ts file produced by TypeScript stop breaking API-Extractor's rollup generation.
@@ -64,9 +71,9 @@ import type {
 	TreeArrayNodeUnsafe,
 	TreeMapNodeUnsafe,
 	TreeObjectNodeUnsafe,
-} from "./typesUnsafe.js";
+} from "../typesUnsafe.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
-import { inPrototypeChain, TreeNodeValid } from "./types.js";
+import { TreeNodeValid } from "../treeNodeValid.js";
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */
