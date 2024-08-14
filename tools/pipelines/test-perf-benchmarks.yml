@@ -39,6 +39,7 @@ parameters:
     - "@fluidframework/merge-tree"
     - "@fluidframework/container-runtime"
 
+# List of packages running custom benchmark tests.
 - name: customBenchmarkTestPackages
   type: object
   default:
