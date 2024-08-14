@@ -26,8 +26,7 @@ import {
 import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
 
 import { anchorProxy, tryGetCachedTreeNode } from "./proxyBinding.js";
-import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
-import type { TreeNode, Unhydrated } from "./types.js";
+import { tryGetSimpleNodeSchema, type TreeNode, type Unhydrated } from "./core/index.js";
 
 /**
  * Retrieve the associated {@link TreeNode} for the given field's content.

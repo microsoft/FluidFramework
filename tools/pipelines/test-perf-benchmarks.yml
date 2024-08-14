@@ -142,6 +142,7 @@ stages:
             targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
         - task: Npm@1
           displayName: Install dependencies - ${{ testPackage }}
+          retryCountOnTaskFailure: 1
           inputs:
             command: 'install'
             workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}

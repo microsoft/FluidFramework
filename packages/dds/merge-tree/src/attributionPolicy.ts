@@ -136,25 +136,22 @@ function createPropertyTrackingMergeTreeCallbacks(
 ): AttributionCallbacks {
 	const toTrack = propNames.map((entry) => ({ propName: entry, channelName: entry }));
 	const attributeAnnotateOnSegments = (
+		isLocal: boolean,
 		deltaSegments: IMergeTreeSegmentDelta[],
-		{ op, sequencedMessage }: IMergeTreeDeltaOpArgs,
+		{ op }: IMergeTreeDeltaOpArgs,
 		key: AttributionKey,
 	): void => {
-		for (const { segment } of deltaSegments) {
+		for (const { segment, propertyDeltas } of deltaSegments) {
 			for (const { propName, channelName } of toTrack) {
 				const shouldAttributeInsert =
 					op.type === MergeTreeDeltaType.INSERT &&
 					segment.properties?.[propName] !== undefined;
 
-				const isLocal = sequencedMessage === undefined;
 				const shouldAttributeAnnotate =
 					op.type === MergeTreeDeltaType.ANNOTATE &&
 					// Only attribute annotations which change the tracked property
 					op.props[propName] !== undefined &&
-					// Local changes to the tracked property always take effect
-					(isLocal ||
-						// Acked changes only take effect if there isn't a pending local change
-						(!isLocal && !segment.propertyManager?.hasPendingProperty(propName)));
+					(isLocal || (propertyDeltas !== undefined && propName in propertyDeltas));
 
 				if (shouldAttributeInsert || shouldAttributeAnnotate) {
 					segment.attribution?.update(
@@ -170,6 +167,7 @@ function createPropertyTrackingMergeTreeCallbacks(
 			const { op, sequencedMessage } = opArgs;
 			if (op.type === MergeTreeDeltaType.ANNOTATE || op.type === MergeTreeDeltaType.INSERT) {
 				attributeAnnotateOnSegments(
+					sequencedMessage === undefined,
 					deltaSegments,
 					opArgs,
 					getAttributionKey(client, sequencedMessage),
@@ -179,6 +177,7 @@ function createPropertyTrackingMergeTreeCallbacks(
 		maintenance: ({ deltaSegments, operation }, opArgs, client): void => {
 			if (operation === MergeTreeMaintenanceType.ACKNOWLEDGED && opArgs !== undefined) {
 				attributeAnnotateOnSegments(
+					true,
 					deltaSegments,
 					opArgs,
 					getAttributionKey(client, opArgs.sequencedMessage),

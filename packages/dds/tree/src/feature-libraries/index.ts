@@ -51,6 +51,7 @@ export {
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
 	mapTreeFromCursor,
+	mapTreeFieldFromCursor,
 } from "./mapTreeCursor.js";
 export { MemoizedIdRangeAllocator, type IdRange } from "./memoizedIdRangeAllocator.js";
 export { buildForest } from "./object-forest/index.js";
@@ -211,6 +212,7 @@ export {
 	relevantRemovedRoots,
 	SchemaValidationErrors,
 	isNodeInSchema,
+	isFieldInSchema,
 } from "./default-schema/index.js";
 
 export {

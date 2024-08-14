@@ -8,13 +8,13 @@ import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
-import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../../simple-tree/index.js";
 // TODO: test other things from "treeNodeKernel" file.
 // eslint-disable-next-line import/no-internal-modules
-import { isTreeNode } from "../../simple-tree/treeNodeKernel.js";
+import { isTreeNode } from "../../../simple-tree/core/treeNodeKernel.js";
 
-import { hydrate } from "./utils.js";
-import { TreeFactory } from "../../treeFactory.js";
+import { hydrate } from "../utils.js";
+import { TreeFactory } from "../../../treeFactory.js";
 
 describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");
