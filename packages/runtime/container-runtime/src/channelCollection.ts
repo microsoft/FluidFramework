@@ -208,7 +208,7 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
  * @param parentContext - the {@link IFluidParentContext} to wrap
  * @returns A wrapped {@link IFluidParentContext}
  */
-export function wrapContextForInnerChannel(
+function wrapContextForInnerChannel(
 	id: string,
 	parentContext: IFluidParentContext,
 ): IFluidParentContext {
