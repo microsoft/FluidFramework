@@ -212,6 +212,7 @@ export {
 	relevantRemovedRoots,
 	SchemaValidationErrors,
 	isNodeInSchema,
+	isFieldInSchema,
 } from "./default-schema/index.js";
 
 export {
