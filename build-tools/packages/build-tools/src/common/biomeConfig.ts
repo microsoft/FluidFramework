@@ -133,8 +133,14 @@ export async function getClosestBiomeConfigPath(
 }
 
 /**
- * Return an array of absolute paths to files that Biome would format under the provided path. Paths ignored by git are
- * always excluded.
+ * Return an array of absolute paths to files that Biome would format under the provided path. Note that .gitignored
+ * paths are always excluded, regardless of the "vcs" setting in the Biome configuration.
+ *
+ * @param directoryOrConfigFile - A path to a directory or a Biome config file. If a directory is provided, then the
+ * closest Biome configuration will be loaded and used. If a path to a file is provided, it is assumed to be a Biome
+ * config file and will be loaded as such. The directory containing the config file will be used as the working
+ * directory when applying the Biome include/ignore settings.
+ * @param gitRepo - A GitRepo instance that is used to enumerate files.
  */
 export async function getBiomeFormattedFiles(
 	directoryOrConfigFile: string,

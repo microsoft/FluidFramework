@@ -9,7 +9,6 @@ import {
 	getClosestBiomeConfigPath,
 } from "../../../common/biomeConfig";
 import { getResolvedFluidRoot } from "../../../common/fluidUtils";
-// import type { Configuration as BiomeConfig } from "../../../common/biomeConfig";
 import { GitRepo } from "../../../common/gitRepo";
 import { LeafWithFileStatDoneFileTask } from "./leafTask";
 
@@ -20,7 +19,8 @@ import { LeafWithFileStatDoneFileTask } from "./leafTask";
  * The task will consider the 'extends' value and load nested Biome configs. The configs will be merged, but array-type
  * settings like 'includes' and 'ignores' are not merged - the top-most config wins for such keys.
  *
- * In addition, .gitignored paths will be excluded. Internally the task uses git itself to enumerate files.
+ * Note that .gitignored paths are always excluded, regardless of the "vcs" setting in the Biome configuration.
+ * Internally the task uses git itself to enumerate files, and files that aren't enumerated are not considered.
  */
 export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	// performance note: having individual tasks each acquire repo root and GitRepo
