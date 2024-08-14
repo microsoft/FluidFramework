@@ -135,7 +135,6 @@ export class DiffManager {
 
 						// ALTERNATE STRATEGY: Use object id's to determine whether the object exists and if not, it should be added
 						// This might not make sense for new object additions.
-
 					}
 					// We need a reference to the parent array to remove the element.
 					else if (diff.path.length > 1) {
