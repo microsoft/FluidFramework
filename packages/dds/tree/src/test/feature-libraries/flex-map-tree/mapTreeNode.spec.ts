@@ -267,10 +267,10 @@ describe("MapTreeNodes", () => {
 		});
 
 		it("arrays", () => {
-			const mutableFieldNode = getOrCreateNode(
+			const mutableFieldNode = getOrCreateMapTreeNode(
 				fieldNodeSchema,
 				deepCopyMapTree(fieldNodeMapTree),
-			);
+			) as EagerMapTreeFieldNode<typeof fieldNodeSchema>;
 			const field = mutableFieldNode.getBoxed(EmptyKey);
 			const values = () => Array.from(field.boxedIterator(), (n) => n.value);
 			assert.deepEqual(values(), [childValue]);
@@ -289,10 +289,10 @@ describe("MapTreeNodes", () => {
 
 		it("arrays with a large sequence of new content", () => {
 			// This exercises a special code path for inserting large arrays, since large arrays are treated differently to avoid overflow with `splice` + spread.
-			const mutableFieldNode = getOrCreateNode(fieldNodeSchema, {
+			const mutableFieldNode = getOrCreateMapTreeNode(fieldNodeSchema, {
 				...fieldNodeMapTree,
 				fields: new Map(),
-			});
+			}) as EagerMapTreeFieldNode<typeof fieldNodeSchema>;
 			const field = mutableFieldNode.getBoxed(EmptyKey);
 			const newContent: ExclusiveMapTree[] = [];
 			for (let i = 0; i < 1000000; i++) {
