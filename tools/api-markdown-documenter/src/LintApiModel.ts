@@ -165,21 +165,22 @@ function checkInheritDocTag(
 	associatedItem: ApiDocumentedItem,
 	apiModel: ApiModel,
 ): ReferenceError | undefined {
-	if (inheritDocTag?.declarationReference !== undefined) {
-		try {
-			resolveSymbolicReference(associatedItem, inheritDocTag.declarationReference, apiModel);
-		} catch {
-			return {
-				tagName: "@inheritDoc",
-				sourceItem: associatedItem.getScopedNameWithinPackage(),
-				packageName:
-					associatedItem.getAssociatedPackage()?.name ?? fail("Package name not found"),
-				referenceTarget: inheritDocTag.declarationReference.emitAsTsdoc(),
-				linkText: undefined,
-			};
-		}
-
+	if (inheritDocTag?.declarationReference === undefined) {
 		return undefined;
 	}
+
+	try {
+		resolveSymbolicReference(associatedItem, inheritDocTag.declarationReference, apiModel);
+	} catch {
+		return {
+			tagName: "@inheritDoc",
+			sourceItem: associatedItem.getScopedNameWithinPackage(),
+			packageName:
+				associatedItem.getAssociatedPackage()?.name ?? fail("Package name not found"),
+			referenceTarget: inheritDocTag.declarationReference.emitAsTsdoc(),
+			linkText: undefined,
+		};
+	}
+
 	return undefined;
 }
