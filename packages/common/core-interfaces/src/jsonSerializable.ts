@@ -52,6 +52,10 @@ export interface JsonSerializableOptions {
  * @typeParam Options - Options for the filter. See {@link JsonSerializableOptions}.
  *
  * @remarks
+ * Before adding use of this utility type, consider using a utility like
+ * {@link https://github.com/sinclairzx81/typebox#readme | TypeBox} that allows
+ * for runtime validation.
+ *
  * Note that this does NOT prevent use of values with non-JSON compatible data,
  * it only prevents using values with types that include non-JSON compatible data.
  * This means that one can, for example, pass in a value typed with JSON compatible
@@ -60,9 +64,9 @@ export interface JsonSerializableOptions {
  *
  * Important: `T extends JsonSerializable<T>` is incorrect (does not even compile).
  *
- * The optional `Options.Replaced` parameter may be used to permit additional leaf types
+ * The optional `Options.Allow*` parameters may be used to permit additional leaf types
  * to support situations where a `replacer` is used to handle special values (e.g.,
- * `JsonSerializable<{ x: IFluidHandle }, { Replaced: IFluidHandle }>`).
+ * `JsonSerializable<{ x: IFluidHandle }, { AllowExtensionOf: IFluidHandle }>`).
  *
  * Note that `JsonSerializable<T>` does not protect against the following pitfalls
  * when serializing with JSON.stringify():

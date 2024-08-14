@@ -42,6 +42,10 @@ export interface JsonDeserializedOptions {
  * @typeParam Options - Options for the filter. See {@link JsonDeserializedOptions}.
  *
  * @remarks
+ * Before adding use of this utility type, consider using a utility like
+ * {@link https://github.com/sinclairzx81/typebox#readme | TypeBox} that allows
+ * for runtime validation.
+ *
  * This filter can be used to derive the expected type of a JSON deserialized
  * value whether or not the type of value serialized meets serialization
  * constraints (see {@link JsonSerializable} including serialization pitfalls).
@@ -94,7 +98,7 @@ export interface JsonDeserializedOptions {
  * parameters may be used to permit additional leaf types handled by custom
  * serialization/deserialization logic.
  *
- * @example Typical usage
+ * @example Example usage
  *
  * ```typescript
  * function foo<T>(): JsonDeserialized<T> { ... }
