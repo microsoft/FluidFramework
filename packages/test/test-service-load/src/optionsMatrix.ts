@@ -10,8 +10,7 @@ import {
 	generatePairwiseOptions,
 	numberCases,
 } from "@fluid-private/test-pairwise-generator";
-// eslint-disable-next-line import/no-deprecated
-import { ILoaderOptions } from "@fluidframework/container-loader/internal";
+import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	IContainerRuntimeOptions,
@@ -23,14 +22,12 @@ import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import type { OptionOverride, TestConfiguration } from "./testConfigFile.js";
 
-// eslint-disable-next-line import/no-deprecated
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
-	cache: [undefined],
-	client: [undefined],
-	provideScopeLoader: [undefined],
+	cache: [undefined], // deprecated
+	client: [undefined], // deprecated
+	provideScopeLoader: [undefined], // Not interesting for this test
 	maxClientLeaveWaitTime: [undefined],
-	summarizeProtocolTree: [undefined],
-	enableOfflineLoad: booleanCases,
+	enableOfflineLoad: booleanCases, // deprecated (TODO: Consider removing this from the test matrix)
 };
 
 export function applyOverrides<T extends Record<string, any>>(
@@ -59,11 +56,8 @@ export function applyOverrides<T extends Record<string, any>>(
 
 export const generateLoaderOptions = (
 	seed: number,
-	// eslint-disable-next-line import/no-deprecated
 	overrides: Partial<OptionsMatrix<ILoaderOptions>> | undefined,
-	// eslint-disable-next-line import/no-deprecated
 ): ILoaderOptions[] => {
-	// eslint-disable-next-line import/no-deprecated
 	return generatePairwiseOptions<ILoaderOptions>(
 		applyOverrides(loaderOptionsMatrix, overrides),
 		seed,
