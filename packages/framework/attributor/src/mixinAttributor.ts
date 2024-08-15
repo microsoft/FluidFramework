@@ -19,6 +19,7 @@ import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils/inter
 import {
 	attributorDataStoreAlias,
 	enableOnNewFileKey,
+	type IProvideRuntimeAttributor,
 	type IRuntimeAttributor,
 } from "./attributorContracts.js";
 import { RuntimeAttributorFactory } from "./runtimeAttributorDataStoreFactory.js";
@@ -33,8 +34,10 @@ export async function getRuntimeAttributor(
 	runtime: IContainerRuntime,
 ): Promise<IRuntimeAttributor | undefined> {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint(attributorDataStoreAlias);
-	const runtimeAttributor = (await entryPoint?.get()) as IRuntimeAttributor | undefined;
-	return runtimeAttributor;
+	const runtimeAttributor = (await entryPoint?.get()) as
+		| FluidObject<IProvideRuntimeAttributor>
+		| undefined;
+	return runtimeAttributor?.IRuntimeAttributor;
 }
 
 /**
@@ -75,7 +78,7 @@ export const mixinAttributor = (
 
 			const mc = loggerToMonitoringContext(context.taggedLogger);
 			const factory = new RuntimeAttributorFactory();
-			const registryEntriesCopy = [
+			const registryEntriesCopy: NamedFluidDataStoreRegistryEntries = [
 				...registryEntries,
 				[RuntimeAttributorFactory.type, Promise.resolve(factory)],
 			];
@@ -92,8 +95,6 @@ export const mixinAttributor = (
 				registryEntries: registryEntriesCopy,
 				requestHandler,
 				provideEntryPoint,
-				// ! This prop is needed for back-compat. Can be removed in 2.0.0-internal.8.0.0
-				initializeEntryPoint: provideEntryPoint,
 				runtimeOptions,
 				containerScope,
 				existing,
