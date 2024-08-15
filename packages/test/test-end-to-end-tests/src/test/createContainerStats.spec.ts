@@ -103,7 +103,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		mockLogger.assertMatch(
 			[
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
+					eventName: "fluid:telemetry:IContainerRuntime:ContainerLoadStats",
 					summaryNumber,
 					containerLoadDataStoreCount,
 					referencedDataStoreCount,
@@ -131,7 +131,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		summaryCollection = new SummaryCollection(mainContainer.deltaManager, createChildLogger());
 
 		const loadStatEvents = mockLogger.events.filter(
-			(event) => event.eventName === "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
+			(event) => event.eventName === "fluid:telemetry:IContainerRuntime:ContainerLoadStats",
 		);
 		assert(
 			loadStatEvents.length === 1,

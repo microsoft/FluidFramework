@@ -50,7 +50,7 @@ describeCompat(
 			if (!["local", "odsp"].includes(provider.driver.type)) {
 				this.skip();
 			}
-			configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 0);
+			configProvider.set("Fluid.IContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 0);
 		});
 
 		afterEach(() => {

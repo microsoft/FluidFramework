@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import type { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
@@ -166,7 +166,7 @@ describeCompat(
 			 */
 			it(`Pending batches with reentry - ${test.name}`, async function () {
 				await setupContainers();
-				const containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+				const containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
 
 				test.initial();
 				containerRuntime.orderSequentially(() => {

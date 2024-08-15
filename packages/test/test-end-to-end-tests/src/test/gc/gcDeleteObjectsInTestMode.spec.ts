@@ -11,7 +11,7 @@ import {
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";

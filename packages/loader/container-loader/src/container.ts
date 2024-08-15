@@ -977,7 +977,7 @@ export class Container
 		});
 
 		// We expose our storage publicly, so it's possible others may call uploadSummaryWithContext() with a
-		// non-combined summary tree (in particular, ContainerRuntime.submitSummary).  We'll intercept those calls
+		// non-combined summary tree (in particular, IContainerRuntime.submitSummary).  We'll intercept those calls
 		// using this callback and fix them up.
 		const addProtocolSummaryIfMissing = (
 			summaryTree: ISummaryTree,
@@ -2069,7 +2069,7 @@ export class Container
 			// 2. This also makes it hard to reason about recovery (like reconnection) in case we might have lost JoinSignal. Reconnecting
 			//    in loading phase is useless (get back to same state), but at the same time not doing it may result in broken connection
 			//    without recovery (after we loaded).
-			// 3. We expose non-consistent view. ContainerRuntime may start loading in non-connected state, but end in connected, with
+			// 3. We expose non-consistent view. IContainerRuntime may start loading in non-connected state, but end in connected, with
 			//    no events telling about it (until we loaded). Most of the code relies on a fact that state changes when events fire.
 			// This will not delay any processes (as observed by the user). I.e. once container moves to loaded phase,
 			// we immediately would transition across all phases, if we have proper signals / ops ready.
@@ -2489,16 +2489,16 @@ export class Container
 
 	/**
 	 * Set the connected state of the ContainerContext
-	 * This controls the "connected" state of the ContainerRuntime as well
+	 * This controls the "connected" state of the IContainerRuntime as well
 	 * @param connected - Is the container currently connected?
 	 * @param readonly - Is the container in readonly mode?
 	 */
 	private setContextConnectedState(connected: boolean, readonly: boolean): void {
 		if (this._runtime?.disposed === false && this.loaded) {
 			/**
-			 * We want to lie to the ContainerRuntime when we are in readonly mode to prevent issues with pending
+			 * We want to lie to the IContainerRuntime when we are in readonly mode to prevent issues with pending
 			 * ops getting through to the DeltaManager.
-			 * The ContainerRuntime's "connected" state simply means it is ok to send ops
+			 * The IContainerRuntime's "connected" state simply means it is ok to send ops
 			 * See https://dev.azure.com/fluidframework/internal/_workitems/edit/1246
 			 */
 			this.runtime.setConnectionState(connected && !readonly, this.clientId);

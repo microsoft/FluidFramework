@@ -32,7 +32,7 @@ const { EventEmitter } = events_pkg;
 
 describe("Container Runtime", () => {
 	/**
-	 * The following tests test the async processing model of ContainerRuntime -
+	 * The following tests test the async processing model of IContainerRuntime -
 	 * Batch messages are processed in a single turn no matter how long it takes to process them.
 	 * Non-batch messages are processed in multiple turns if they take longer than DeltaScheduler's processingTime.
 	 */

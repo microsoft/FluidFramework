@@ -4,7 +4,7 @@
  */
 
 import type { AttachState } from "@fluidframework/container-definitions";
-import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type { IDeltaManager, IRuntime } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
 	IEventProvider,
@@ -12,7 +12,10 @@ import type {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type {
+	IFluidHandleContext,
+	IProvideFluidHandleContext,
+} from "@fluidframework/core-interfaces/internal";
 import type { IClientDetails } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentStorageService,
@@ -60,7 +63,9 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
  */
 export interface IContainerRuntime
 	extends IProvideFluidDataStoreRegistry,
-		IContainerRuntimeBaseWithCombinedEvents {
+		IContainerRuntimeBaseWithCombinedEvents,
+		IRuntime,
+		IProvideFluidHandleContext {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
@@ -95,4 +100,11 @@ export interface IContainerRuntime
 	 * @param relativeUrl - A relative request within the container
 	 */
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+
+	/**
+	 *
+	 */
+	resolveHandle(request: IRequest): Promise<IResponse>;
+
+	ensureNoDataModelChanges<T>(callback: () => T): T;
 }

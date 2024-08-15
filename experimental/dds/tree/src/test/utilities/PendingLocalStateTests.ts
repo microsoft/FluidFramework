@@ -53,7 +53,7 @@ export function runPendingLocalStateTests(
 			const events = testObjectProvider.tracker.reportAndClearTrackedEvents();
 			expect(events.unexpectedErrors.length).to.equal(1);
 			expect(events.unexpectedErrors[0].eventName).to.equal(
-				'fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch'
+				'fluid:telemetry:IContainerRuntime:Outbox:ReferenceSequenceNumberMismatch'
 			);
 		});
 		// TODO:#5357: Re-enable stashed ops tests

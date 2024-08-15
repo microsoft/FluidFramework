@@ -62,7 +62,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 		).map((factory) => [factory.type, factory]) as NamedFluidDataStoreRegistryEntries;
 	}
 
-	public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
+	public async instantiateFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const dataStore = await runtime.createDataStore(this.defaultStoreFactory.type);
 		await dataStore.trySetAlias(defaultStoreId);
 	}
@@ -70,8 +70,8 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 	public async preInitialize(
 		context: IContainerContext,
 		existing: boolean,
-	): Promise<ContainerRuntime> {
-		const runtime: ContainerRuntime = await loadContainerRuntime({
+	): Promise<IContainerRuntime> {
+		const runtime: IContainerRuntime = await loadContainerRuntime({
 			context,
 			registryEntries: this.registry,
 			existing,

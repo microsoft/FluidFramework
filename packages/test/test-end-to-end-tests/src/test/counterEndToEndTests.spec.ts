@@ -10,7 +10,7 @@ import {
 	ContainerErrorTypes,
 	IContainer,
 } from "@fluidframework/container-definitions/internal";
-import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
 import {
@@ -190,7 +190,7 @@ describeCompat(
 		let dataObject: ITestFluidObject;
 		let dataStore: ITestFluidObject;
 		let sharedCounter: SharedCounter;
-		let containerRuntime: ContainerRuntime;
+		let containerRuntime: IContainerRuntime;
 
 		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -202,7 +202,7 @@ describeCompat(
 				...testContainerConfig,
 				loaderProps: {
 					configProvider: configProvider({
-						"Fluid.ContainerRuntime.EnableRollback": true,
+						"Fluid.IContainerRuntime.EnableRollback": true,
 					}),
 				},
 			};
@@ -210,7 +210,7 @@ describeCompat(
 			dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 			dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 			sharedCounter = await dataStore.getSharedObject<SharedCounter>(counterId);
-			containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
 		});
 
 		itExpects(

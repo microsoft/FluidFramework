@@ -60,7 +60,7 @@ export interface LocalAttributionKey {
 }
 
 /**
- * Can be indexed into the ContainerRuntime in order to retrieve {@link AttributionInfo}.
+ * Can be indexed into the IContainerRuntime in order to retrieve {@link AttributionInfo}.
  * @legacy
  * @alpha
  */

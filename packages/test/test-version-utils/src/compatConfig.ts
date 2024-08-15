@@ -126,7 +126,7 @@ function genConfig(compatVersion: number | string): CompatConfig[] {
 		},
 		{
 			name: `compat ${compatVersionStr} - old container runtime`,
-			kind: CompatKind.ContainerRuntime,
+			kind: CompatKind.IContainerRuntime,
 			compatVersion,
 			containerRuntime: compatVersion,
 		},

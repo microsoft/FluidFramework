@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/aqueduct/internal";
 import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
 import {
-	ContainerRuntime,
+	IContainerRuntime,
 	IContainerRuntimeOptions,
 	UnknownContainerRuntimeMessage,
 } from "@fluidframework/container-runtime/internal";
@@ -135,7 +135,7 @@ class LoadTestDataStoreModel {
 		// If we did not create the data store above, load it by getting its url.
 		if (gcDataStore === undefined) {
 			const gcDataStoreId = root.get(gcDataStoreIdKey);
-			const response = await (containerRuntime as ContainerRuntime).resolveHandle({
+			const response = await (containerRuntime as IContainerRuntime).resolveHandle({
 				url: `/${gcDataStoreId}`,
 			});
 			if (response.status !== 200 || response.mimeType !== "fluid/object") {

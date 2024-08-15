@@ -5,7 +5,7 @@
 ```ts
 
 // @alpha
-export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, IContainerRuntimeBaseWithCombinedEvents {
+export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, IContainerRuntimeBaseWithCombinedEvents, IRuntime, IProvideFluidHandleContext {
     readonly attachState: AttachState;
     // (undocumented)
     readonly clientDetails: IClientDetails;
@@ -16,12 +16,16 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
+    ensureNoDataModelChanges<T>(callback: () => T): T;
+    // (undocumented)
     readonly flushMode: FlushMode;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
     readonly isDirty: boolean;
     // (undocumented)
     readonly options: Record<string | number, any>;
+    // (undocumented)
+    resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
     readonly scope: FluidObject;
     // (undocumented)

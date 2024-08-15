@@ -321,7 +321,7 @@ export async function setUpLocalServerTestSharedTree(
 
 	const featureGates = options.featureGates ?? {};
 	featureGates['Fluid.Container.enableOfflineLoad'] = true;
-	featureGates['Fluid.ContainerRuntime.DisablePartialFlush'] = true;
+	featureGates['Fluid.IContainerRuntime.DisablePartialFlush'] = true;
 
 	const treeId = id ?? 'test';
 	let factory: SharedTreeFactory;

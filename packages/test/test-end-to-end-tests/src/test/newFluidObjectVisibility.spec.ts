@@ -11,7 +11,7 @@ import {
 	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { responseToException } from "@fluidframework/runtime-utils/internal";
@@ -23,7 +23,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 async function resolveHandleWithoutWait(
-	containerRuntime: ContainerRuntime,
+	containerRuntime: IContainerRuntime,
 	id: string,
 ): Promise<ITestDataObject> {
 	try {
@@ -45,7 +45,7 @@ async function resolveHandleWithoutWait(
  * Creates a non-root data object and validates that it is not visible from the root of the container.
  */
 async function createNonRootDataObject(
-	containerRuntime: ContainerRuntime,
+	containerRuntime: IContainerRuntime,
 ): Promise<ITestDataObject> {
 	const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
 	const dataObject = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
@@ -62,7 +62,7 @@ async function createNonRootDataObject(
  * Creates a root data object and validates that it is visible from the root of the container.
  */
 async function createRootDataObject(
-	containerRuntime: ContainerRuntime,
+	containerRuntime: IContainerRuntime,
 	rootDataStoreId: string,
 ): Promise<ITestDataObject> {
 	const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
@@ -82,7 +82,7 @@ async function getAndValidateDataObject(
 	const dataObjectHandle = fromDataObject._root.get<IFluidHandle<ITestDataObject>>(key);
 	assert(dataObjectHandle !== undefined, `Data object handle for key ${key} not found`);
 	const dataObject = await dataObjectHandle.get();
-	const runtime = dataObject._context.containerRuntime as ContainerRuntime;
+	const runtime = dataObject._context.containerRuntime as IContainerRuntime;
 	await assert.doesNotReject(
 		resolveHandleWithoutWait(runtime, dataObject._context.id),
 		`Data object for key ${key} must be visible`,
@@ -97,7 +97,7 @@ async function getAndValidateDataObject(
  * This function can be removed once we no longer support ^2.0.0-internal.7.0.0.
  */
 async function getAliasedDataStoreBackCompat(
-	containerRuntime: ContainerRuntime,
+	containerRuntime: IContainerRuntime,
 	id: string,
 ): Promise<IFluidHandle<FluidObject> | undefined> {
 	if (containerRuntime.getAliasedDataStoreEntryPoint !== undefined) {
@@ -126,7 +126,7 @@ describeCompat(
 		const { SharedMap } = dds;
 		let provider: ITestObjectProvider;
 		let container1: IContainer;
-		let containerRuntime1: ContainerRuntime;
+		let containerRuntime1: IContainerRuntime;
 		let dataObject1: ITestDataObject;
 
 		/**
@@ -149,7 +149,7 @@ describeCompat(
 				}
 
 				dataObject1 = await getContainerEntryPointBackCompat<ITestDataObject>(container1);
-				containerRuntime1 = dataObject1._context.containerRuntime as ContainerRuntime;
+				containerRuntime1 = dataObject1._context.containerRuntime as IContainerRuntime;
 			});
 
 			/**
@@ -267,7 +267,7 @@ describeCompat(
 				const container2 = await provider.loadTestContainer();
 				await provider.ensureSynchronized();
 				const entryPoint = await getContainerEntryPointBackCompat<ITestDataObject>(container2);
-				const containerRuntime2 = entryPoint._context.containerRuntime as ContainerRuntime;
+				const containerRuntime2 = entryPoint._context.containerRuntime as IContainerRuntime;
 				const dsEntryPoint = await getAliasedDataStoreBackCompat(
 					containerRuntime2,
 					"rootDataStore",
@@ -378,7 +378,7 @@ describeCompat(
 				await provider.ensureSynchronized();
 				const entryPoint2 =
 					await getContainerEntryPointBackCompat<ITestDataObject>(container2);
-				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as IContainerRuntime;
 				const dsEntryPoint = await getAliasedDataStoreBackCompat(
 					containerRuntime2,
 					"rootDataStore",

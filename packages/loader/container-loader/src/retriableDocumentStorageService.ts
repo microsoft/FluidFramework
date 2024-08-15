@@ -110,7 +110,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		// 1. If client lost connectivity, then retry loop will result in uploading stale summary
 		//    by stale summarizer after connectivity comes back. It will cause failures for this client and for
 		//    real (new) summarizer. This problem in particular should be solved in future by supplying abort handle
-		//    on all APIs and caller (ContainerRuntime.submitSummary) aborting call on loss of connectivity
+		//    on all APIs and caller (IContainerRuntime.submitSummary) aborting call on loss of connectivity
 		// 2. Similar, if we get 429 with retryAfter = 10 minutes, it's likely not the right call to retry summary
 		//    upload in 10 minutes - it's better to keep processing ops and retry later. Though caller needs to take
 		//    retryAfter into account!

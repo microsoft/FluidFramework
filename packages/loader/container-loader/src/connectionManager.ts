@@ -492,7 +492,7 @@ export class ConnectionManager implements IConnectionManager {
 			if (this.readonly === true) {
 				// If we switch to readonly while connected, we should disconnect first
 				// See comment in the "readonly" event handler to deltaManager set up by
-				// the ContainerRuntime constructor
+				// the IContainerRuntime constructor
 
 				if (this.shouldJoinWrite()) {
 					// If we have pending changes, then we will never send them - it smells like

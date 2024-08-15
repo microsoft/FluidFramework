@@ -53,11 +53,11 @@ export interface BaseContainerRuntimeFactoryProps {
 	// eslint-disable-next-line import/no-deprecated
 	requestHandlers?: RuntimeRequestHandler[];
 	/**
-	 * The runtime options passed to the ContainerRuntime when instantiating it
+	 * The runtime options passed to the IContainerRuntime when instantiating it
 	 */
 	runtimeOptions?: IContainerRuntimeOptions;
 	/**
-	 * Function that will initialize the entryPoint of the ContainerRuntime instances
+	 * Function that will initialize the entryPoint of the IContainerRuntime instances
 	 * created with this factory
 	 */
 	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;

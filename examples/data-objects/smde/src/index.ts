@@ -24,7 +24,7 @@ const defaultComponentId = "default";
 const smde = new SmdeFactory();
 
 class SmdeContainerFactory extends RuntimeFactoryHelper {
-	public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
+	public async instantiateFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const dataStore = await runtime.createDataStore(smde.type);
 		await dataStore.trySetAlias(defaultComponentId);
 	}
@@ -32,12 +32,12 @@ class SmdeContainerFactory extends RuntimeFactoryHelper {
 	public async preInitialize(
 		context: IContainerContext,
 		existing: boolean,
-	): Promise<ContainerRuntime> {
+	): Promise<IContainerRuntime> {
 		const registryEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 			[smde.type, Promise.resolve(smde)],
 		]);
 
-		const runtime: ContainerRuntime = await loadContainerRuntime({
+		const runtime: IContainerRuntime = await loadContainerRuntime({
 			context,
 			registryEntries,
 			existing,

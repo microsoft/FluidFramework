@@ -10,7 +10,7 @@ import {
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
-	ContainerRuntime,
+	IContainerRuntime,
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
@@ -35,7 +35,7 @@ export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntim
 
 	/**
 	 * @param registryEntries - The data store registry for containers produced
-	 * @param runtimeOptions - The runtime options passed to the ContainerRuntime when instantiating it
+	 * @param runtimeOptions - The runtime options passed to the IContainerRuntime when instantiating it
 	 */
 	constructor(
 		private readonly registryEntries: NamedFluidDataStoreRegistryEntries,

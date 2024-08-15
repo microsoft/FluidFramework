@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	IDocumentMessage,
@@ -154,7 +154,7 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 
 	const expectedErrors = [
 		{
-			eventName: "fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch",
+			eventName: "fluid:telemetry:IContainerRuntime:Outbox:ReferenceSequenceNumberMismatch",
 			error: "Submission of an out of order message",
 		},
 		// A container will not close when an out of order message was detected.
@@ -179,7 +179,7 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 		"Reference sequence number mismatch when doing op reentry - early flush disabled - submits one batch",
 		expectedErrors,
 		async () => {
-			await processOutOfOrderOp({ "Fluid.ContainerRuntime.DisablePartialFlush": true });
+			await processOutOfOrderOp({ "Fluid.IContainerRuntime.DisablePartialFlush": true });
 			assert.strictEqual(capturedBatches.length, 1);
 		},
 	);
@@ -239,7 +239,7 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 		Promise.resolve()
 			.then(() => {
 				(localContainer.deltaManager as any).lastProcessedSequenceNumber += 1;
-				(dataObject1.context.containerRuntime as ContainerRuntime).process(op, false);
+				(dataObject1.context.containerRuntime as IContainerRuntime).process(op, false);
 				dataObject1map.set("key2", "value2");
 			})
 			.catch(() => {});

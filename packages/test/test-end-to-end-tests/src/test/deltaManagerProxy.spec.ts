@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 const configProvider = createTestConfigProvider();
-// configProvider.set("Fluid.ContainerRuntime.DeltaManagerOpsProxy", false);
+// configProvider.set("Fluid.IContainerRuntime.DeltaManagerOpsProxy", false);
 describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 	configProvider.set("Fluid.Sequence.intervalStickinessEnabled", true);
