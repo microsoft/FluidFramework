@@ -55,7 +55,7 @@ export class RuntimeAttributorDataStoreChannel
 			logger: dataStoreContext.baseLogger,
 			namespace: "Attributor",
 		});
-		this._attachState = dataStoreContext.attachState;
+		this.attachState = dataStoreContext.attachState;
 		if (existing) {
 			this.visibilityState =
 				dataStoreContext.attachState === AttachState.Detached
@@ -94,7 +94,7 @@ export class RuntimeAttributorDataStoreChannel
 
 	private readonly runtimeAttributor: RuntimeAttributor;
 	public isEnabled = true;
-	public _attachState: AttachState;
+	public attachState: AttachState;
 	public visibilityState: VisibilityState;
 	private readonly deferredAttached = new Deferred<void>();
 	private readonly mc: MonitoringContext;
@@ -237,7 +237,7 @@ export class RuntimeAttributorDataStoreChannel
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
 		switch (attachState) {
 			case AttachState.Attaching: {
-				this._attachState = AttachState.Attaching;
+				this.attachState = AttachState.Attaching;
 
 				assert(
 					this.visibilityState === VisibilityState.LocallyVisible,
@@ -257,7 +257,7 @@ export class RuntimeAttributorDataStoreChannel
 					this.visibilityState === VisibilityState.GloballyVisible,
 					"Data store should be globally visible when its attached.",
 				);
-				this._attachState = AttachState.Attached;
+				this.attachState = AttachState.Attached;
 				this.emit("attached");
 				break;
 			}
