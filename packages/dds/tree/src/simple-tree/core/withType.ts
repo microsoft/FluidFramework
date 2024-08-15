@@ -31,7 +31,7 @@ export const typeNameSymbol: unique symbol = Symbol("TreeNode Type");
  * This symbol should not manually be added to objects as doing so allows the object to be invalidly used where nodes are expected.
  * Instead construct a real node of the desired type using its constructor.
  * @privateRemarks
- * This prevents non-nodes from being accidentally used as nodes, as well as allows the type checker to distinguish different node types.
+ * This prevents non-nodes from being accidentally used as nodes and allows the type-checker to distinguish different node types.
  * @system @public
  */
 export const typeSchemaSymbol: unique symbol = Symbol("TreeNode Schema");
