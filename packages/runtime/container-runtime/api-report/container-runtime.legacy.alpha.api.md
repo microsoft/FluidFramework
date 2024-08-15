@@ -711,8 +711,8 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
     readonly uploadDuration: number;
 }
 
-// @public (undocumented)
-export function loadContainerRuntime(params: any): Promise<IContainerRuntime & IRuntime>;
+// @alpha (undocumented)
+export function loadContainerRuntime(params: any): Promise<IContainerRuntime>;
 
 // @alpha @deprecated (undocumented)
 export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;

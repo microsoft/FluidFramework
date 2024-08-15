@@ -778,7 +778,12 @@ let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) 
 	};
 };
 
-export async function loadContainerRuntime(params): Promise<IContainerRuntime & IRuntime> {
+/**
+ *
+ * @legacy
+ * @alpha
+ */
+export async function loadContainerRuntime(params): Promise<IContainerRuntime> {
 	return loadContainerRuntime(params);
 }
 
