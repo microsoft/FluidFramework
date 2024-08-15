@@ -69,7 +69,7 @@ export class RuntimeAttributor implements IRuntimeAttributor {
 	};
 
 	private opAttributor: IAttributor | undefined;
-	public isEnabled = false;
+	public isEnabled = true;
 
 	public async initialize(
 		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
