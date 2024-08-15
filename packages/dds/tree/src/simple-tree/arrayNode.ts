@@ -31,12 +31,14 @@ import type {
 } from "./schemaTypes.js";
 import {
 	type WithType,
+	// eslint-disable-next-line import/no-deprecated
 	typeNameSymbol,
 	NodeKind,
 	type TreeNode,
 	type InternalTreeNode,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchema,
+	typeSchemaSymbol,
 } from "./core/index.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import { fail } from "../util/index.js";
@@ -890,6 +892,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
  *
  * @param name - Unique identifier for this schema including the factory's scope.
  */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function arraySchema<
 	TName extends string,
 	const T extends ImplicitAllowedTypes,
@@ -899,14 +902,15 @@ export function arraySchema<
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	customizable: boolean,
-): TreeNodeSchemaClass<
-	TName,
-	NodeKind.Array,
-	TreeArrayNode<T> & WithType<TName>,
-	Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-	ImplicitlyConstructable,
-	T
-> {
+) {
+	type Output = TreeNodeSchemaClass<
+		TName,
+		NodeKind.Array,
+		TreeArrayNode<T> & WithType<TName, NodeKind.Array>,
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+		ImplicitlyConstructable,
+		T
+	>;
 	let flexSchema: FlexFieldNodeSchema;
 
 	// This class returns a proxy from its constructor to handle numeric indexing.
@@ -979,8 +983,12 @@ export function arraySchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 
+		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
 			return identifier;
+		}
+		public get [typeSchemaSymbol](): Output {
+			return schema.constructorCached?.constructor as unknown as Output;
 		}
 
 		protected get simpleSchema(): T {
@@ -988,7 +996,8 @@ export function arraySchema<
 		}
 	}
 
-	return schema;
+	const output: Output = schema;
+	return output;
 }
 
 function validateSafeInteger(index: number): void {
