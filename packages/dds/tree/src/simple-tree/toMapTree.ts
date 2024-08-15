@@ -5,6 +5,7 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import {
 	EmptyKey,
@@ -35,6 +36,7 @@ import {
 	type ImplicitFieldSchema,
 	normalizeFieldSchema,
 	FieldKind,
+	type TreeLeafValue,
 } from "./schemaTypes.js";
 import { NodeKind, tryGetSimpleNodeSchema, type TreeNodeSchema } from "./core/index.js";
 import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
@@ -119,34 +121,31 @@ export function mapTreeFromNodeData(
 		return undefined;
 	}
 
-	const mapTree = nodeDataToMapTree(
-		data,
-		normalizedFieldSchema.allowedTypeSet,
-		schemaValidationPolicy,
-	);
+	const mapTree = nodeDataToMapTree(data, normalizedFieldSchema.allowedTypeSet);
+	// Add what defaults can be provided. If no `context` is providing, some defaults may still be missing.
 	addDefaultsToMapTree(mapTree, normalizedFieldSchema.allowedTypes, context);
+
+	// TODO:
+	// Since some defaults may still be missing, this can give false positives when context is undefined but schemaValidationPolicy is provided.
+	if (schemaValidationPolicy?.policy.validateSchema === true) {
+		const maybeError = isNodeInSchema(mapTree, schemaValidationPolicy);
+		inSchemaOrThrow(maybeError);
+	}
+
 	return mapTree;
 }
 
+/**
+ * Copy content from `data` into a MapTree.
+ * Does NOT generate and default values for fields.
+ * Often throws UsageErrors for invalid data, but may miss some cases.
+ * @remarks
+ * Output is likely out of schema even for valid input due to missing defaults.
+ */
 function nodeDataToMapTree(
 	data: InsertableContent,
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
-	schemaValidationPolicy: SchemaAndPolicy | undefined,
-): ExclusiveMapTree;
-function nodeDataToMapTree(
-	data: InsertableContent | undefined,
-	allowedTypes: ReadonlySet<TreeNodeSchema>,
-	schemaValidationPolicy: SchemaAndPolicy | undefined,
-): ExclusiveMapTree | undefined;
-function nodeDataToMapTree(
-	data: InsertableContent | undefined,
-	allowedTypes: ReadonlySet<TreeNodeSchema>,
-	schemaValidationPolicy: SchemaAndPolicy | undefined,
-): ExclusiveMapTree | undefined {
-	if (data === undefined) {
-		return undefined;
-	}
-
+): ExclusiveMapTree {
 	// A special cache path for processing unhydrated nodes.
 	// They already have the mapTree, so there is no need to recompute it.
 	const flexNode = tryGetInnerNode(data);
@@ -189,24 +188,13 @@ function nodeDataToMapTree(
 			fail(`Unrecognized schema kind: ${schema.kind}.`);
 	}
 
-	if (schemaValidationPolicy?.policy.validateSchema === true) {
-		inSchemaOrThrow(schemaValidationPolicy, result);
-	}
-
 	return result;
 }
 
 /**
- * Throws a UsageError if mapTree is out of schema.
- * @remarks
- * This requires mapTree to have all required default values,
- * like identifiers for identifier fields.
+ * Throws a UsageError if maybeError indicates a tree is out of schema.
  */
-export function inSchemaOrThrow(
-	schemaValidationPolicy: SchemaAndPolicy,
-	mapTree: MapTree,
-): void {
-	const maybeError = isNodeInSchema(mapTree, schemaValidationPolicy);
+export function inSchemaOrThrow(maybeError: SchemaValidationErrors): void {
 	if (maybeError !== SchemaValidationErrors.NoError) {
 		throw new UsageError("Tree does not conform to schema.");
 	}
@@ -248,13 +236,13 @@ function leafToMapTree(
 }
 
 /**
- * Checks an incoming value to ensure it is compatible with our serialization format.
+ * Checks an incoming {@link TreeLeafValue} to ensure it is compatible with its requirements.
  * For unsupported values with a schema-compatible replacement, return the replacement value.
  * For unsupported values without a schema-compatible replacement, throw.
  * For supported values, return the input.
  */
 function mapValueWithFallbacks(
-	value: TreeValue,
+	value: TreeLeafValue,
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 ): TreeValue {
 	switch (typeof value) {
@@ -276,8 +264,19 @@ function mapValueWithFallbacks(
 				return value;
 			}
 		}
-		default:
+		case "string":
+		// TODO:
+		// This should detect invalid strings. Something like @stdlib/regexp-utf16-unpaired-surrogate could be used to do this.
+		// See SchemaFactory.string for details.
+		case "boolean":
 			return value;
+		case "object": {
+			if (value === null || isFluidHandle(value)) {
+				return value;
+			}
+		}
+		default:
+			throw new TypeError(`Received unsupported leaf value: ${value}.`);
 	}
 }
 
@@ -285,36 +284,22 @@ function mapValueWithFallbacks(
  * Transforms data under an Array schema.
  * @param data - The tree data to be transformed.
  * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
- * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
- * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
- * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
  */
-function arrayToMapTreeFields(
-	data: Iterable<InsertableContent>,
+function arrayChildToMapTree(
+	child: InsertableContent,
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
-	schemaValidationPolicy: SchemaAndPolicy | undefined,
-): ExclusiveMapTree[] {
-	const mappedData: ExclusiveMapTree[] = [];
-	for (const child of data) {
-		// We do not support undefined sequence entries.
-		// If we encounter an undefined entry, use null instead if supported by the schema, otherwise throw.
-		let childWithFallback = child;
-		if (child === undefined) {
-			if (allowedTypes.has(nullSchema)) {
-				childWithFallback = null;
-			} else {
-				throw new TypeError(`Received unsupported array entry value: ${child}.`);
-			}
+): ExclusiveMapTree {
+	// We do not support undefined sequence entries.
+	// If we encounter an undefined entry, use null instead if supported by the schema, otherwise throw.
+	let childWithFallback = child;
+	if (child === undefined) {
+		if (allowedTypes.has(nullSchema)) {
+			childWithFallback = null;
+		} else {
+			throw new TypeError(`Received unsupported array entry value: ${child}.`);
 		}
-		const mappedChild = nodeDataToMapTree(
-			childWithFallback,
-			allowedTypes,
-			schemaValidationPolicy,
-		);
-		mappedData.push(mappedChild);
 	}
-
-	return mappedData;
+	return nodeDataToMapTree(childWithFallback, allowedTypes);
 }
 
 /**
@@ -333,16 +318,16 @@ function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): Exclus
 
 	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
-	const mappedData = arrayToMapTreeFields(data, allowedChildTypes, undefined);
+	const mappedData = Array.from(data, (child) =>
+		arrayChildToMapTree(child, allowedChildTypes),
+	);
 
-	// Array node children are represented as a single field entry denoted with `EmptyKey`
-	const fieldsEntries: [FieldKey, ExclusiveMapTree[]][] =
-		mappedData.length === 0 ? [] : [[EmptyKey, mappedData]];
-	const fields = new Map<FieldKey, ExclusiveMapTree[]>(fieldsEntries);
+	// Array nodes have a single `EmptyKey` field:
+	const fieldsEntries = mappedData.length === 0 ? [] : ([[EmptyKey, mappedData]] as const);
 
 	return {
 		type: brand(schema.identifier),
-		fields,
+		fields: new Map(fieldsEntries),
 	};
 }
 
@@ -380,7 +365,7 @@ function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): Exclusiv
 
 		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
 		if (value !== undefined) {
-			const mappedField = nodeDataToMapTree(value, allowedChildTypes, undefined);
+			const mappedField = nodeDataToMapTree(value, allowedChildTypes);
 			transformedFields.set(brand(key), [mappedField]);
 		}
 	}
@@ -404,10 +389,11 @@ function objectToMapTree(data: InsertableContent, schema: TreeNodeSchema): Exclu
 
 	const fields = new Map<FieldKey, ExclusiveMapTree[]>();
 
-	// Loop through field keys without data, and assign value from its default provider.
+	// Loop through field keys without data.
+	// This does NOT apply defaults.
 	for (const [key, fieldInfo] of schema.flexKeyMap) {
-		const value = (data as Record<string, InsertableContent>)[key as string];
-		if (value !== undefined && Object.hasOwnProperty.call(data, key)) {
+		if (Object.hasOwnProperty.call(data, key)) {
+			const value = (data as Record<string, InsertableContent>)[key as string];
 			setFieldValue(fields, value, fieldInfo.schema, fieldInfo.storedKey);
 		}
 	}
@@ -425,11 +411,7 @@ function setFieldValue(
 	flexKey: FieldKey,
 ): void {
 	if (fieldValue !== undefined) {
-		const mappedChildTree = nodeDataToMapTree(
-			fieldValue,
-			fieldSchema.allowedTypeSet,
-			undefined,
-		);
+		const mappedChildTree = nodeDataToMapTree(fieldValue, fieldSchema.allowedTypeSet);
 
 		assert(!fields.has(flexKey), 0x956 /* Keys must not be duplicated */);
 		fields.set(flexKey, [mappedChildTree]);
@@ -452,31 +434,17 @@ function getType(
 		possibleTypes.length !== 0,
 		0x84e /* data is incompatible with all types allowed by the schema */,
 	);
-	checkInput(
-		possibleTypes.length === 1,
-		() =>
+	if (possibleTypes.length !== 1) {
+		throw new UsageError(
 			`The provided data is compatible with more than one type allowed by the schema.
 The set of possible types is ${JSON.stringify([
 				...possibleTypes.map((schema) => schema.identifier),
 			])}.
 Explicitly construct an unhydrated node of the desired type to disambiguate.
 For class-based schema, this can be done by replacing an expression like "{foo: 1}" with "new MySchema({foo: 1})".`,
-	);
-	return possibleTypes[0] ?? oob();
-}
-
-/**
- * An invalid tree has been provided, presumably by the user of this package.
- * Throw and an error that properly preserves the message (unlike asserts which will get hard to read short codes intended for package internal logic errors).
- */
-function invalidInput(message: string): never {
-	throw new UsageError(message);
-}
-
-function checkInput(condition: boolean, message: string | (() => string)): asserts condition {
-	if (!condition) {
-		invalidInput(typeof message === "string" ? message : message());
+		);
 	}
+	return possibleTypes[0] ?? oob();
 }
 
 /**

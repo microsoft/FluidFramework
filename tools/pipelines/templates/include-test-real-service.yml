@@ -72,6 +72,11 @@ parameters:
   type: stepList
   default: []
 
+# If true, the versions of our packages installed for compat testing will be cached.
+- name: cacheCompatVersionsInstalls
+  type: boolean
+  default: false
+
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
     - job:
@@ -322,6 +327,15 @@ jobs:
             workingDir: ${{ parameters.testWorkspace }}
             customCommand: 'install'
             customRegistry: 'useNpmrc'
+
+      - ${{ if eq(parameters.cacheCompatVersionsInstalls, true) }}:
+        - task: Cache@2
+          displayName: Cache compat versions install location
+          timeoutInMinutes: 3
+          continueOnError: true
+          inputs:
+            key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}"'
+            path: ${{ parameters.testWorkspace }}/node_modules/@fluid-private/test-version-utils/node_modules/.legacy/
 
       # run the test
       - task: Npm@1
