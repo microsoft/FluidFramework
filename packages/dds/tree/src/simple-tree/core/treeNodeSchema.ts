@@ -122,10 +122,10 @@ export interface TreeNodeSchemaCore<
 	out Info = unknown,
 > {
 	/**
-	 * Unique (withing a document's schema) identifier used to associate nodes with their schema.
+	 * Unique (within a document's schema) identifier used to associate nodes with their schema.
 	 * @remarks
 	 * This is used when encoding nodes, and when decoding nodes to re-associate them with the schema.
-	 * Since this decoding may happen in a different version of the application (or even a different application all together),
+	 * Since this decoding may happen in a different version of the application (or even a different application altogether),
 	 * this identifier should generally correspond to some specific semantics for the data (how to interpret the node with this identifier).
 	 * Any time the semantics change such that data would be misinterpreted if the old semantics were applied
 	 * (for example the units of a value are changed),

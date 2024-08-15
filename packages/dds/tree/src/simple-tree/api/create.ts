@@ -38,7 +38,7 @@ import {
 } from "./verboseTree.js";
 
 /**
- * Construct tree content compatible with a field defined by the provided `schema`.
+ * Construct tree content that is compatible with the field defined by the provided `schema`.
  * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
  * @param data - The data used to construct the field content.
  * @remarks
@@ -62,7 +62,7 @@ export function createFromInsertable<TSchema extends ImplicitFieldSchema>(
 }
 
 /**
- * Construct tree content compatible with a field defined by the provided `schema`.
+ * Construct tree content that is compatible with the field defined by the provided `schema`.
  * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
  * @param data - The data used to construct the field content.
  * @remarks
