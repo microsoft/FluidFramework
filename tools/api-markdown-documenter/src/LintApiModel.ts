@@ -91,6 +91,8 @@ export interface LinterErrors {
 	 * Errors related to reference tags (e.g., `link` or `inheritDoc` tags) with invalid targets.
 	 */
 	readonly referenceErrors: ReadonlySet<ReferenceError>;
+
+	// TODO: add other error kinds as needed.
 }
 
 /**
