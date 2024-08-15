@@ -93,6 +93,9 @@ export const bindTelemetryContext = (): RequestHandler => {
 		// Generate entry correlation-id if not provided in request.
 		if (!telemetryContextProperties.correlationId) {
 			telemetryContextProperties.correlationId = uuid();
+			telemetryContextProperties.correlationIdSource = "server";
+		} else {
+			telemetryContextProperties.correlationIdSource = "client";
 		}
 		// Assign response headers for client telemetry purposes.
 		res.setHeader(CorrelationIdHeaderName, telemetryContextProperties.correlationId);
