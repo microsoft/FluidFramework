@@ -5,12 +5,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState, IDeltaManager } from "@fluidframework/container-definitions/internal";
-import {
-	FluidObject,
-	IFluidHandle,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces";
+import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred, unreachableCase } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
@@ -119,14 +114,6 @@ export class RuntimeAttributorDataStoreChannel
 			baseSnapshotForAttributorTree,
 			readBlob,
 		);
-	}
-
-	public attachGraph(): void {
-		throw new Error("attachGraph should not be called on the attributor");
-	}
-
-	public bind(handle: IFluidHandle): void {
-		throw new Error("bind should not be called on the attributor");
 	}
 
 	/**
@@ -242,10 +229,6 @@ export class RuntimeAttributorDataStoreChannel
 	public async request(request: IRequest): Promise<IResponse> {
 		// Should not request anything from the attributor as the attributor does not have any channels further.
 		throw new Error("Should not request anything from the attributor");
-	}
-
-	public async waitAttached(): Promise<void> {
-		return this.deferredAttached.promise;
 	}
 
 	/**
