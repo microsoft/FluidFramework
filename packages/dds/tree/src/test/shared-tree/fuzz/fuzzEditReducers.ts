@@ -58,18 +58,17 @@ import {
 	type NodeObjectValue,
 	type GUIDNodeValue,
 } from "./operationTypes.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { TreeNode } from "../../../simple-tree/types.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SchemaFactory } from "../../../simple-tree/schemaFactory.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { TreeNodeSchema } from "../../../simple-tree/schemaTypes.js";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeViewConfiguration } from "../../../simple-tree/tree.js";
+
 // eslint-disable-next-line import/no-internal-modules
 import { getOrCreateInnerNode } from "../../../simple-tree/proxyBinding.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
+import {
+	SchemaFactory,
+	TreeViewConfiguration,
+	type TreeNode,
+	type TreeNodeSchema,
+} from "../../../simple-tree/index.js";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
 	treeEdit: (state, { edit }) => {
@@ -135,7 +134,7 @@ export function generateLeafNodeSchemas(nodeTypes: string[]): TreeNodeSchema[] {
 			const fuzzNodeTypePrefix = "treeFuzz.";
 			if (!nodeType.startsWith(fuzzNodeTypePrefix)) {
 				class GuidNode extends builder.object(nodeType.slice(fuzzNodeTypePrefix.length), {
-					value: builder.required(builder.number),
+					value: builder.required(builder.string),
 				}) {}
 				leafNodeSchemas.push(GuidNode);
 			}

@@ -66,14 +66,14 @@ import {
 } from "./operationTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeViewConfiguration } from "../../../simple-tree/tree.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { TreeNode } from "../../../simple-tree/types.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SchemaFactory } from "../../../simple-tree/schemaFactory.js";
+
 // eslint-disable-next-line import/no-internal-modules
 import { getOrCreateInnerNode } from "../../../simple-tree/proxyBinding.js";
+import {
+	SchemaFactory,
+	TreeViewConfiguration,
+	type TreeNode,
+} from "../../../simple-tree/index.js";
 
 export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 	/**

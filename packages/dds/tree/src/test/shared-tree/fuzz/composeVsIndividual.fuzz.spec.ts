@@ -47,14 +47,12 @@ import {
 	deterministicIdCompressorFactory,
 	isRevertibleSharedTreeView,
 	nodeSchemaFromTreeSchema,
-	type FuzzNode,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeViewConfiguration } from "../../../simple-tree/tree.js";
 import type { TreeStoredSchemaRepository } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { ITreeCheckoutFork } from "../../../shared-tree/treeCheckout.js";
+import { TreeViewConfiguration } from "../../../simple-tree/index.js";
 
 /**
  * This interface is meant to be used for tests that require you to store a branch of a tree
@@ -118,12 +116,14 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<
 			new TreeViewConfiguration({ schema: newSchema }),
 		) as FuzzTransactionView;
 		newBranchView.upgradeSchema();
-		const newNodeSchema = Array.from(newSchema.allowedTypeSet).find(
-			(treeNodeSchema) => treeNodeSchema.identifier === "treeFuzz.node",
-		) as typeof FuzzNode | undefined;
+
+		const newNodeSchema = nodeSchemaFromTreeSchema(newSchema);
 		newBranchView.currentSchema =
 			newNodeSchema ?? assert.fail("nodeSchema should not be undefined");
 		state.branch = newBranchView;
+		const transactionViews = new Map();
+		transactionViews.set(state.clients[0].channel, state.branch);
+		state.transactionViews = transactionViews;
 	},
 	constraint: async (state, operation) => {
 		applyConstraint(state, operation);

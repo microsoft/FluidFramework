@@ -27,19 +27,16 @@ import {
 import type { ITreeCheckout, SharedTree } from "../../../shared-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { expectEqualPaths } from "../../utils.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SchemaFactory } from "../../../simple-tree/schemaFactory.js";
 import type {
 	NodeBuilderData,
-	TreeNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/schemaTypes.js";
-import type {
-	ValidateRecursiveSchema,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../simple-tree/schemaFactoryRecursive.js";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeViewConfiguration } from "../../../simple-tree/tree.js";
+import {
+	SchemaFactory,
+	TreeViewConfiguration,
+	type TreeNodeSchema,
+	type ValidateRecursiveSchema,
+} from "../../../simple-tree/index.js";
 
 const builder = new SchemaFactory("treeFuzz");
 export class GUIDNode extends builder.object("GuidNode", {
