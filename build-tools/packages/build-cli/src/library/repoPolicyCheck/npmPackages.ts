@@ -365,9 +365,17 @@ function ensurePrivatePackagesComputed(): Set<string> {
 		.trim();
 	const p = child_process.spawn("git", [
 		"ls-files",
-		"-co",
+		// Includes cached (staged) files.
+		"--cached",
+		// Includes other (untracked) files that are not ignored.
+		"--others",
+		// Removes duplicate entries from the output.
+		"--deduplicate",
+		// Excludes files that are ignored by standard ignore rules.
 		"--exclude-standard",
+		// Shows the full path of the files relative to the repository root.
 		"--full-name",
+		// Returns only files that match this glob - so only package.json files.
 		"**/package.json",
 	]);
 	const lineReader = readline.createInterface({

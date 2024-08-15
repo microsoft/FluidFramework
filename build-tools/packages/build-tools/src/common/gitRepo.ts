@@ -217,14 +217,30 @@ export class GitRepo {
 	}
 
 	/**
-	 * Returns an array containing all the files in the the provided path.
-	 * Returned paths are rooted at the root of the repo.
+	 * Returns an array containing repo repo-relative paths to all the files in the provided directory.
+	 * A given path will only be included once in the array; that is, there will be no duplicate paths.
+	 *
+	 * Note that this does return paths to deleted files, if they were previously part of the git index. That is, if you
+	 * delete a committed file, its path will still be returned
+	 *
+	 * @param directory - A directory to filter the results by. Only files under this directory will be returned. To
+	 * return all files in the repo use the value `"."`.
 	 */
 	public async getFiles(directory: string): Promise<string[]> {
-		const results = await this.exec(
-			`ls-files -co --exclude-standard --full-name -- ${directory}`,
-			`get files`,
-		);
+		/**
+		 * What these git ls-files flags do:
+		 *
+		 * ```
+		 * --cached: Includes cached (staged) files.
+		 * --others: Includes other (untracked) files that are not ignored.
+		 * --deleted: Includes deleted files - that is, files that have been removed from the working directory but have not yet been removed from the index.
+		 * --exclude-standard: Excludes files that are ignored by standard ignore rules.
+		 * --deduplicate: Removes duplicate entries from the output.
+		 * --full-name: Shows the full path of the files relative to the repository root.
+		 * ```
+		 */
+		const command = `ls-files --cached --others --deleted --deduplicate --exclude-standard --full-name -- ${directory}`;
+		const results = await this.exec(command, `get files`);
 		return results
 			.split("\n")
 			.map((line) => line.trim())
