@@ -320,7 +320,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 		});
 	});
 
-	describe.only("Aliasing with summary", () => {
+	describe("Aliasing with summary", () => {
 		const alias = "alias";
 		it(
 			"Assign multiple data stores to the same alias, first write wins, " +
