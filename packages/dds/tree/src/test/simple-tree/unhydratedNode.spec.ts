@@ -112,6 +112,9 @@ describe("Unhydrated nodes", () => {
 		assert.equal(Tree.parent(newArrayLeaf), undefined);
 		array.insertAtEnd(newArrayLeaf);
 		assert.equal(Tree.parent(newArrayLeaf), array);
+		const array2 = new TestArray([]);
+		array2.moveToEnd(0, array);
+		assert.equal(Tree.parent(newArrayLeaf), array2);
 		// Object
 		const object = new TestObject({ array, map });
 		assert.equal(Tree.parent(object), undefined);

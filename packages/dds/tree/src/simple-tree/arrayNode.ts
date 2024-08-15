@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { oob } from "@fluidframework/core-utils/internal";
 import { EmptyKey, type ExclusiveMapTree } from "../core/index.js";
 import {
 	type FlexAllowedTypes,
@@ -13,6 +14,7 @@ import {
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 	isFlexTreeNode,
+	isMapTreeSequenceField,
 } from "../feature-libraries/index.js";
 import {
 	type InsertableContent,
@@ -831,40 +833,55 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		source?: TreeArrayNode,
 	): void {
 		const destinationField = getSequenceField(this);
-		if (destinationField.context === undefined) {
-			throw new UsageError(
-				`Cannot move elements into an array before the array is inserted into the tree`,
-			);
-		}
+		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
 
 		validateIndex(destinationIndex, destinationField, "moveRangeToIndex", true);
 		validateIndexRange(sourceStart, sourceEnd, source ?? destinationField, "moveRangeToIndex");
-		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
-		if (sourceField.context === undefined) {
-			throw new UsageError(
-				`Cannot move elements from an array before the array is inserted into the tree`,
-			);
-		}
+
 		// TODO: determine support for move across different sequence types
 		if (destinationField.schema.types !== undefined && sourceField !== destinationField) {
 			for (let i = sourceStart; i < sourceEnd; i++) {
-				const sourceNode = sourceField.boxedAt(i) ?? fail("impossible out of bounds index");
+				const sourceNode = sourceField.boxedAt(i) ?? oob();
 				if (!destinationField.schema.types.has(sourceNode.schema.name)) {
 					throw new UsageError("Type in source sequence is not allowed in destination.");
 				}
 			}
 		}
-		const movedCount = sourceEnd - sourceStart;
-		const sourceFieldPath = sourceField.getFieldPath();
 
-		const destinationFieldPath = destinationField.getFieldPath();
-		destinationField.context.checkout.editor.move(
-			sourceFieldPath,
-			sourceStart,
-			movedCount,
-			destinationFieldPath,
-			destinationIndex,
-		);
+		const movedCount = sourceEnd - sourceStart;
+		if (destinationField.context === undefined) {
+			if (!isMapTreeSequenceField(sourceField)) {
+				throw new UsageError(
+					"Cannot move elements from an inserted array to an array that has not yet been inserted",
+				);
+			}
+
+			if (sourceField !== destinationField || destinationIndex < sourceStart) {
+				destinationField.editor.insert(
+					destinationIndex,
+					sourceField.editor.remove(sourceStart, movedCount),
+				);
+			} else if (destinationIndex > sourceStart + movedCount) {
+				destinationField.editor.insert(
+					destinationIndex - movedCount,
+					sourceField.editor.remove(sourceStart, movedCount),
+				);
+			}
+		} else {
+			if (sourceField.context === undefined) {
+				throw new UsageError(
+					"Cannot move elements from an array that has not yet been inserted to an inserted array",
+				);
+			}
+
+			destinationField.context.checkout.editor.move(
+				sourceField.getFieldPath(),
+				sourceStart,
+				movedCount,
+				destinationField.getFieldPath(),
+				destinationIndex,
+			);
+		}
 	}
 
 	public values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
