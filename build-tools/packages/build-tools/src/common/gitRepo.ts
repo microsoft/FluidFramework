@@ -6,7 +6,7 @@
 import path from "node:path";
 import { parseISO } from "date-fns";
 import registerDebug from "debug";
-import { statSync } from "fs-extra";
+import { existsSync } from "node:fs";
 import { exec, execNoError } from "./utils";
 
 const traceGitRepo = registerDebug("fluid-build:gitRepo");
@@ -238,23 +238,17 @@ export class GitRepo {
 		 */
 		const command = `ls-files --cached --others --exclude-standard --deduplicate --full-name -- ${directory}`;
 		const results = await this.exec(command, `get files`);
-		return results
-			.split("\n")
-			.map((line) => line.trim())
-			.filter((file) => {
-				const filePath = path.resolve(this.resolvedRoot, file);
-				try {
-					const stat = statSync(filePath);
-					return stat.isFile();
-				} catch (error: unknown) {
-					// Deleted files that are _unstaged_ will still be in the ls-files results, so handle the exception and return
-					// false to exclude the file.
-					traceGitRepo(
-						`Error calling fs.stat on ${filePath}: "${(error as Error).message}" Stack: ${(error as Error).message}`,
-					);
-					return false;
-				}
-			});
+		return (
+			results
+				.split("\n")
+				.map((line) => line.trim())
+				// Deleted files that are _unstaged_ will still be in the ls-files results, so filter out missing files.
+				.filter((file) => {
+					// Use absolute path to ensure consistent behavior regardless of working directory.
+					const absPath = path.resolve(this.resolvedRoot, file);
+					return existsSync(absPath);
+				})
+		);
 	}
 
 	/**

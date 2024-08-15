@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { statSync } from "node:fs";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { Package } from "@fluidframework/build-tools";
 import readPkgUp from "read-pkg-up";
@@ -233,19 +233,11 @@ export class Repository {
 		const files = results
 			.split("\n")
 			.map((line) => line.trim())
+			// Deleted files that are _unstaged_ will still be in the ls-files results, so filter out missing files.
 			.filter((file) => {
+				// Use absolute path to ensure consistent behavior regardless of working directory.
 				const absPath = path.resolve(this.baseDir, file);
-				try {
-					const stat = statSync(absPath);
-					return stat.isFile();
-				} catch (error: unknown) {
-					// Deleted files that are _unstaged_ will still be in the ls-files results, so handle the exception and
-					// return false to exclude the file.
-					this.log?.verbose(
-						`Error calling fs.stat on ${absPath}: "${(error as Error).message}" Stack: ${(error as Error).message}`,
-					);
-					return false;
-				}
+				return existsSync(absPath);
 			});
 		// Files are already repo root-relative
 		return files;
