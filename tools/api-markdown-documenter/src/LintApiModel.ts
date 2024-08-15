@@ -27,7 +27,7 @@ export interface LintApiModelConfiguration extends ConfigurationBase {
 /**
  * {@link LintApiModelConfiguration} defaults.
  */
-const defaultLintApiModelOptions: Required<Omit<LintApiModelConfiguration, "apiModel">> = {
+const defaultLintApiModelConfiguration: Required<Omit<LintApiModelConfiguration, "apiModel">> = {
 	logger: defaultConsoleLogger,
 };
 
@@ -90,11 +90,11 @@ export interface LinterErrors {
  * Otherwise, `undefined`.
  */
 export async function lintApiModel(
-	options: LintApiModelConfiguration,
+	configuration: LintApiModelConfiguration,
 ): Promise<LinterErrors | undefined> {
 	const optionsWithDefaults: Required<LintApiModelConfiguration> = {
-		...defaultLintApiModelOptions,
-		...options,
+		...defaultLintApiModelConfiguration,
+		...configuration,
 	};
 	const { apiModel, logger } = optionsWithDefaults;
 
