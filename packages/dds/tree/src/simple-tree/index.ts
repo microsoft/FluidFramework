@@ -41,6 +41,8 @@ export {
 	test_RecursiveObjectPojoMode,
 	treeNodeApi,
 	type TreeNodeApi,
+	cursorFromInsertable,
+	createFromInsertable,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,

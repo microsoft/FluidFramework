@@ -31,7 +31,7 @@ import {
 	type ChangeFamilyEditor,
 	EmptyKey,
 } from "../../core/index.js";
-import { leaf, singleJsonCursor, typedJsonCursor } from "../../domains/index.js";
+import { leaf, singleJsonCursor } from "../../domains/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	ChunkedForest,
@@ -73,6 +73,7 @@ import {
 } from "../../shared-tree/schematizingTreeView.js";
 import type { EditManager } from "../../shared-tree-core/index.js";
 import {
+	cursorFromInsertable,
 	SchemaFactory,
 	toFlexSchema,
 	type TreeFieldFromImplicitField,
@@ -1183,12 +1184,7 @@ describe("SharedTree", () => {
 					// Validate insertion
 					validateTreeContent(tree2.checkout, {
 						schema: toFlexSchema(schema),
-						initialTree: typedJsonCursor({
-							[typedJsonCursor.type]: schema.identifier,
-							[EmptyKey]: [
-								{ [typedJsonCursor.type]: innerSchema.identifier, [EmptyKey]: "a" },
-							],
-						}),
+						initialTree: cursorFromInsertable(schema, [["a"]]),
 					});
 
 					// edit subtree

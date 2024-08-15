@@ -121,6 +121,16 @@ export interface TreeNodeSchemaCore<
 	out ImplicitlyConstructable extends boolean,
 	out Info = unknown,
 > {
+	/**
+	 * Unique (within a document's schema) identifier used to associate nodes with their schema.
+	 * @remarks
+	 * This is used when encoding nodes, and when decoding nodes to re-associate them with the schema.
+	 * Since this decoding may happen in a different version of the application (or even a different application altogether),
+	 * this identifier should generally correspond to some specific semantics for the data (how to interpret the node with this identifier).
+	 * Any time the semantics change such that data would be misinterpreted if the old semantics were applied
+	 * (for example the units of a value are changed),
+	 * it is best practice to pick a new identifier.
+	 */
 	readonly identifier: Name;
 	readonly kind: Kind;
 
