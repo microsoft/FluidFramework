@@ -1,21 +1,24 @@
-import * as z from "zod";
+import type * as z from "zod";
 
-import {diffState, type Difference, type ObjectPath } from "./diff.js";
+import {diffState, type Difference, type DifferenceCreate, type DifferenceRemove, type ObjectPath } from "./diff.js";
 
 
 /**
  * Manages the differences between two objects.
  */
 export class DiffManager {
+	private readonly objectSchema?: z.Schema
 
 	// We could allow object paths that allow for property removal here.
-	public constructor(private readonly objectSchema?: z.Schema) {	}
+	public constructor(params?: {objectSchema?: z.Schema}) {
+		this.objectSchema = params?.objectSchema;
+	}
 
 	/**
 	 * produces a diff between two objects and handles the differences.
 	 */
 	public compareAndApplyDiffs(obj: Record<string, unknown> | unknown[], newObj: Record<string, unknown> | unknown[]): void {
-		const difference = diffState(obj, newObj);
+		const differences = diffState(obj, newObj);
 
 		// By validating that the incoming object matches the schema, we can confirm that any property
 		// deletions/updates/additions are valid.
@@ -26,11 +29,11 @@ export class DiffManager {
 			}
 		}
 
-		this.handleDiff(difference, obj);
+		this.handleDifferences(differences, obj);
 	}
 
 
-	public handleDiff(diff: Difference[], objectToUpdate: Record<string, unknown> | unknown[]): void {
+	public handleDifferences(diff: Difference[], objectToUpdate: Record<string, unknown> | unknown[]): void {
 		if (diff === undefined) {
 			console.log("no changes");
 			return;
@@ -99,12 +102,7 @@ export class DiffManager {
 					}
 				}
 			}
-
 		}
-
-
-
-
 
 	}
 
@@ -116,64 +114,11 @@ export class DiffManager {
 			case "CREATE": {
 				// Add the new property to the object
 				// Can introduce strategies here e.g. use node id's or use indexes for an array
-
-				// Properties cannot be added to an object, however they can be added to an array.
-
 				if (this.isDiffOnArray(diff)) {
-					// The object itself is an array.
-					if (diff.path.length === 1) {
-						const targetArray = objectToUpdate as unknown[];
-
-						// ADD ARRAY ELEMENT. Should we respect the index or just push to the end?
-						// Lets not respect the index for now.
-						if (targetArray === undefined) {
-							console.warn("Object to update no longer exists");
-						} else {
-							targetArray.push(diff.value);
-						}
-
-
-						// ALTERNATE STRATEGY: Use object id's to determine whether the object exists and if not, it should be added
-						// This might not make sense for new object additions.
-					}
-					// We need a reference to the parent array to remove the element.
-					else if (diff.path.length > 1) {
-						// Traverse to the parent array (which is simply the second to last path element)
-						const targetArray = traversePath<unknown[]>(objectToUpdate, diff.path.slice(0, - 1));
-
-						// ADD ARRAY ELEMENT. Should we respect the index or just push to the end?
-						// Lets not respect the index for now.
-						if (targetArray === undefined) {
-							console.warn("Object to update no longer exists");
-						} else {
-							targetArray.push(diff.value);
-						}
-
-						// ALTERNATE STRATEGY: Use object id's to determine whether the object should be added
-						// This might not make sense for new object additions.
-
-					}
+					this.addToArray(diff, objectToUpdate);
 				} else {
-					if (diff.path.length === 1) {
-						// The object itself is the object to update.
-						const targetObject = objectToUpdate as Record<string, unknown>;
-						// ADD PROPERTY TO OBJECT.
-						if (targetObject === undefined) {
-							console.warn("Object to update no longer exists");
-						} else {
-							targetObject[diff.path[0] as string] = diff.value;
-						}
-					} else {
-						const targetObject = traversePath<Record<string, unknown>>(objectToUpdate, diff.path.slice(0, - 1));
-						// ADD PROPERTY TO OBJECT.
-						if (targetObject === undefined) {
-							console.warn("Object to update no longer exists");
-						} else {
-							targetObject[diff.path[diff.path.length - 1] as string] = diff.value;
-						}
-					}
+					this.addToObject(diff, objectToUpdate);
 				}
-
 				break;
 			}
 			case "CHANGE": {
@@ -200,79 +145,11 @@ export class DiffManager {
 				break;
 			}
 			case "REMOVE": {
-				// Remove the property from the object
-
 				if (this.isDiffOnArray(diff)) {
-					// The object itself is an array.
-					if (diff.path.length === 1) {
-						const targetArray = objectToUpdate as unknown[];
-
-						// REMOVE ARRAY ELEMENT.
-						if (targetArray === undefined) {
-							console.warn("Object to update no longer exists");
-						} else {
-							const valueIndex = targetArray.indexOf(diff.oldValue);
-							if (valueIndex === -1) {
-								console.warn("Value to remove does not exist in array");
-							} else {
-								targetArray.splice(valueIndex, 1);
-							}
-						}
-
-						// ALTERNATE REMOVAL STRATEGY: Use object's id to find the right index and remove it only if it exists.
-					}
-					// We need a reference to the parent array to remove the element.
-					else if (diff.path.length > 1) {
-						// Traverse to the parent array (which is simply the second to last path element)
-						const targetArray = traversePath<unknown[]>(objectToUpdate, diff.path.slice(0, - 1));
-
-						// REMOVE ARRAY ELEMENT.
-						if (targetArray === undefined) {
-							console.warn("Object to update no longer exists");
-						} else {
-							const valueIndex = targetArray.indexOf(diff.oldValue);
-							if (valueIndex === -1) {
-								console.warn("Value to remove does not exist in array");
-							} else {
-								targetArray.splice(valueIndex, 1);
-							}
-						}
-
-						// ALTERNATE REMOVAL STRATEGY: Use object's id to find the right index and remove it only if it exists.
-					}
+					this.removeFromArray(diff, objectToUpdate);
 				} else {
-					if (diff.path.length === 1) {
-						// The object itself is the object to update.
-						const targetObject = objectToUpdate as Record<string, unknown>;
-						// DELETE PROPERTY TO OBJECT.
-						if (targetObject === undefined) {
-							console.warn("Object to update no longer exists");
-						} else {
-
-							if (targetObject[diff.path[0] as string] === undefined) {
-								console.warn("Property to remove does not exist");
-							} else {
-								// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-								delete targetObject[diff.path[0] as string];
-							}
-						}
-					} else {
-						const targetObject = traversePath<Record<string, unknown>>(objectToUpdate, diff.path.slice(0, - 1));
-						// DELETE PROPERTY TO OBJECT.
-						if (targetObject === undefined) {
-							console.warn("Object to update no longer exists");
-						} else {
-							if (targetObject[diff.path[diff.path.length - 1] as string] === undefined) {
-								console.warn("Property to remove does not exist");
-							} else {
-								// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-								delete targetObject[diff.path[0] as string];
-							}
-						}
-					}
+					this.removeFromObject(diff, objectToUpdate);
 				}
-
-
 				break;
 			}
 			// No default
@@ -284,11 +161,134 @@ export class DiffManager {
 		return typeof diff.path[diff.path.length - 1] === 'number';
 	}
 
+	public addToObject(diff: DifferenceCreate, objectToUpdate: Record<string, unknown> | unknown[]): void {
+		if (diff.path.length === 1) {
+			// The object itself is the object to update.
+			const targetObject = objectToUpdate as Record<string, unknown>;
+			// ADD PROPERTY TO OBJECT.
+			if (targetObject === undefined) {
+				console.warn("Object to update no longer exists");
+			} else {
+				targetObject[diff.path[0] as string] = diff.value;
+			}
+		} else {
+			const targetObject = traversePath<Record<string, unknown>>(objectToUpdate, diff.path.slice(0, - 1));
+			// ADD PROPERTY TO OBJECT.
+			if (targetObject === undefined) {
+				console.warn("Object to update no longer exists");
+			} else {
+				targetObject[diff.path[diff.path.length - 1] as string] = diff.value;
+			}
+		}
+	}
+
+	public removeFromObject(diff: DifferenceRemove, objectToUpdate: Record<string, unknown> | unknown[]): void {
+		if (diff.path.length === 1) {
+			// The object itself is the object to update.
+			const targetObject = objectToUpdate as Record<string, unknown>;
+			// DELETE PROPERTY TO OBJECT.
+			if (targetObject === undefined) {
+				console.warn("Object to update no longer exists");
+			} else {
+
+				if (targetObject[diff.path[0] as string] === undefined) {
+					console.warn("Property to remove does not exist");
+				} else {
+					// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+					delete targetObject[diff.path[0] as string];
+				}
+			}
+		} else {
+			const targetObject = traversePath<Record<string, unknown>>(objectToUpdate, diff.path.slice(0, - 1));
+			// DELETE PROPERTY TO OBJECT.
+			if (targetObject === undefined) {
+				console.warn("Object to update no longer exists");
+			} else {
+				if (targetObject[diff.path[diff.path.length - 1] as string] === undefined) {
+					console.warn("Property to remove does not exist");
+				} else {
+					// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+					delete targetObject[diff.path[diff.path.length - 1] as string];
+				}
+			}
+		}
+	}
+
+	public addToArray(diff: DifferenceCreate, objectToUpdate: Record<string, unknown> | unknown[]): void {
+		// The object itself is an array.
+		if (diff.path.length === 1) {
+			const targetArray = objectToUpdate as unknown[];
+
+			// ADD ARRAY ELEMENT. Should we respect the index or just push to the end?
+			// Lets not respect the index for now.
+			if (targetArray === undefined) {
+				console.warn("Object to update no longer exists");
+			} else {
+				targetArray.push(diff.value);
+			}
 
 
+			// ALTERNATE STRATEGY: Use object id's to determine whether the object exists and if not, it should be added
+			// This might not make sense for new object additions.
+		}
+		// We need a reference to the parent array to remove the element.
+		else if (diff.path.length > 1) {
+			// Traverse to the parent array (which is simply the second to last path element)
+			const targetArray = traversePath<unknown[]>(objectToUpdate, diff.path.slice(0, - 1));
 
+			// ADD ARRAY ELEMENT. Should we respect the index or just push to the end?
+			// Lets not respect the index for now.
+			if (targetArray === undefined) {
+				console.warn("Object to update no longer exists");
+			} else {
+				targetArray.push(diff.value);
+			}
 
+			// ALTERNATE STRATEGY: Use object id's to determine whether the object should be added
+			// This might not make sense for new object additions.
 
+		}
+	}
+
+	public removeFromArray(diff: DifferenceRemove, objectToUpdate: Record<string, unknown> | unknown[]): void {
+		// The object itself is an array.
+		if (diff.path.length === 1) {
+			const targetArray = objectToUpdate as unknown[];
+
+			// REMOVE ARRAY ELEMENT.
+			if (targetArray === undefined) {
+				console.warn("Object to update no longer exists");
+			} else {
+				const valueIndex = targetArray.indexOf(diff.oldValue);
+				if (valueIndex === -1) {
+					console.warn("Value to remove does not exist in array");
+				} else {
+					targetArray.splice(valueIndex, 1);
+				}
+			}
+
+			// ALTERNATE REMOVAL STRATEGY: Use object's id to find the right index and remove it only if it exists.
+		}
+		// We need a reference to the parent array to remove the element.
+		else if (diff.path.length > 1) {
+			// Traverse to the parent array (which is simply the second to last path element)
+			const targetArray = traversePath<unknown[]>(objectToUpdate, diff.path.slice(0, - 1));
+
+			// REMOVE ARRAY ELEMENT.
+			if (targetArray === undefined) {
+				console.warn("Object to update no longer exists");
+			} else {
+				const valueIndex = targetArray.indexOf(diff.oldValue);
+				if (valueIndex === -1) {
+					console.warn("Value to remove does not exist in array");
+				} else {
+					targetArray.splice(valueIndex, 1);
+				}
+			}
+
+			// ALTERNATE REMOVAL STRATEGY: Use object's id to find the right index and remove it only if it exists.
+		}
+	}
 }
 
 

@@ -1,6 +1,99 @@
 import { strict as assert } from "node:assert";
 
-import { traversePath } from "../diffManager.js";
+import { DiffManager, traversePath } from "../diffManager.js";
+
+
+
+describe("DiffManager - CREATE - compareAndApplyDiffs", () => {
+
+	it("Simple object attribute create", () => {
+		const originalObject: Record<string, unknown> = {};
+		const newObject: Record<string, unknown> = {test: true};
+
+		const diffManager = new DiffManager();
+		diffManager.compareAndApplyDiffs(originalObject, newObject);
+		assert(originalObject.test === true);
+	});
+
+	it("Simple object attribute create within array", () => {
+		const originalObject: Record<string, unknown>[] = [{}];
+		const newObject: Record<string, unknown>[] = [{test: true}];
+
+		const diffManager = new DiffManager();
+		diffManager.compareAndApplyDiffs(originalObject, newObject);
+		assert(originalObject[0]?.test === true);
+	});
+
+	it("Nested object attribute create within outer array", () => {
+			const originalObject: Record<string, unknown>[] = [{}];
+			const newObject: Record<string, unknown>[] = [{test: {value: true}}];
+
+			const diffManager = new DiffManager();
+
+			diffManager.compareAndApplyDiffs(originalObject, newObject);
+			assert((originalObject[0]?.test as Record<string, unknown>)?.value === true);
+	});
+});
+
+describe("DiffManager - CHANGE - compareAndApplyDiffs", () => {
+
+	it("Simple object attribute change", () => {
+		const originalObject = {test: true};
+		const newObject = {test: false};
+
+		const diffManager = new DiffManager();
+		diffManager.compareAndApplyDiffs(originalObject, newObject);
+		assert(originalObject.test === false);
+	});
+
+	it("Simple object attribute change within array", () => {
+		const originalObject = [{test: true}];
+		const newObject = [{test: false}];
+
+		const diffManager = new DiffManager();
+		diffManager.compareAndApplyDiffs(originalObject, newObject);
+		assert(originalObject[0]?.test === false);
+	});
+
+	it("Nested object attribute change within outer array", () => {
+		const originalObject = [{
+			test: {
+				value: true
+			}
+		}];
+		const newObject = [{
+			test: {
+				value: false
+			}
+		}];
+
+		const diffManager = new DiffManager();
+		diffManager.compareAndApplyDiffs(originalObject, newObject);
+		assert(originalObject[0]?.test.value === false);
+	});
+
+
+	it("Nested object attribute change within inner array", () => {
+		const originalObject = {
+			test: {
+				value: [{}, {innerValue: true}]
+			}
+		};
+		const newObject = {
+			test: {
+				value: [{}, {innerValue: false}]
+			}
+		};
+
+		const diffManager = new DiffManager();
+		diffManager.compareAndApplyDiffs(originalObject, newObject);
+		assert(originalObject.test.value[1]?.innerValue === false);
+	});
+});
+
+describe("DiffManager - CREATE - compareAndApplyDiffs", () => {
+
+});
 
 describe("DiffManager - traversePath", () => {
 
