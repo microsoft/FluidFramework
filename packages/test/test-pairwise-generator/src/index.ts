@@ -77,6 +77,8 @@ function applyPairToPartial<T extends Record<string, any>>(
 }
 
 /**
+ * For the given options matrix, attempts to generate a minimal set of configurations that
+ * still includes every pairwise combination at least once.
  * @internal
  */
 export function generatePairwiseOptions<T extends Record<string, any>>(
