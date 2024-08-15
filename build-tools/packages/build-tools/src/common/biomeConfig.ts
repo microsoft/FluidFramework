@@ -88,8 +88,9 @@ export async function getSettingValuesFromBiomeConfig(
 	section: BiomeConfigSection,
 	kind: BiomeIncludeIgnore,
 ): Promise<Set<string>> {
-	// The default for include is to include everything, so we return "**", whereas for ignore, the default is to ignore
-	// nothing
+	// TODO: Remove this commented code once test cases have been added with file extension filtering -- this code is
+	// helpful because it forces everything to be included regardless of other filters - so it can be used to verify the
+	// new file extension filtering tests.
 	// const generalFiles = config.files?.[kind] ?? (kind === "include" ? ["**"] : []);
 	// const sectionFiles = config?.[section]?.[kind] ?? (kind === "include" ? ["**"] : []);
 	const generalFiles = config.files?.[kind] ?? [];
