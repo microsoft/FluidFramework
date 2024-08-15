@@ -378,7 +378,7 @@ export class PendingStateManager implements IDisposable {
 
 		return batch.messages.map((message) => ({
 			message,
-			localOpMetadata: this.processNextPendingMessage(message.sequenceNumber),
+			localOpMetadata: this.processNextPendingMessage(message.sequenceNumber, message),
 		}));
 	}
 
@@ -461,6 +461,7 @@ export class PendingStateManager implements IDisposable {
 		// Empty batches became empty on Resubmit, and submit them and track them in case
 		// a different fork of this container also submitted the same batch (and it may not be empty for that fork).
 		const firstMessage = batch.messages.length > 0 ? batch.messages[0] : undefined;
+		const expectedPendingBatchLength = batch.messages.length === 0 ? 1 : batch.messages.length;
 
 		// We expect the incoming batch to be of the same length, starting at the same clientSequenceNumber,
 		// as the batch we originally submitted.
@@ -469,7 +470,7 @@ export class PendingStateManager implements IDisposable {
 		if (
 			pendingMessage.batchInfo.batchStartCsn !== batch.batchStartCsn ||
 			(pendingMessage.batchInfo.length >= 0 && // -1 length is back compat and isn't suitable for this check
-				pendingMessage.batchInfo.length !== batch.messages.length)
+				pendingMessage.batchInfo.length !== expectedPendingBatchLength)
 		) {
 			this.logger?.sendErrorEvent({
 				eventName: "BatchInfoMismatch",
