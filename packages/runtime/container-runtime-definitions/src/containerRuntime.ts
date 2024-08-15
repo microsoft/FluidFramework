@@ -101,9 +101,6 @@ export interface IContainerRuntime
 	 */
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
-	/**
-	 *
-	 */
 	resolveHandle(request: IRequest): Promise<IResponse>;
 
 	ensureNoDataModelChanges<T>(callback: () => T): T;

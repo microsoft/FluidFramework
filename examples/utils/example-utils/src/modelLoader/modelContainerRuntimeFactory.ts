@@ -10,7 +10,7 @@ import {
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
-	IContainerRuntime,
+	loadContainerRuntime,
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";

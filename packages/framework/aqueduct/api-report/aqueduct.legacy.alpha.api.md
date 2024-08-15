@@ -15,7 +15,7 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
     // (undocumented)
     instantiateFromExisting(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
-    preInitialize(context: IContainerContext, existing: boolean): Promise<IContainerRuntime & IRuntime>;
+    preInitialize(context: IContainerContext, existing: boolean): Promise<IContainerRuntime>;
 }
 
 // @alpha

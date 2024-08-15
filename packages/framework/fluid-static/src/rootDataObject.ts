@@ -9,7 +9,6 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
-import type { IContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	FluidObject,
@@ -222,7 +221,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			const parser = RequestParser.create(request);
 			if (parser.pathParts.length === 0) {
 				// This cast is safe as loadContainerRuntime is called in the base class
-				return (runtime as IContainerRuntime).resolveHandle({
+				return runtime.resolveHandle({
 					url: `/${rootDataStoreId}${parser.query}`,
 					headers: request.headers,
 				});

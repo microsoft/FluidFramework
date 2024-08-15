@@ -9,9 +9,10 @@ import fs from "fs";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ILoaderOptions, Loader } from "@fluidframework/container-loader/internal";
 import {
-	IContainerRuntime,
+	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	FluidObject,
@@ -216,7 +217,8 @@ export async function loadContainer(
 export async function uploadSummary(container: IContainer) {
 	const entryPoint: FluidObject<ReplayToolContainerEntryPoint> =
 		await container.getEntryPoint();
-	const runtime = entryPoint?.ReplayToolContainerEntryPoint?.containerRuntime;
+	const runtime = entryPoint?.ReplayToolContainerEntryPoint
+		?.containerRuntime as ContainerRuntime;
 	assert(runtime !== undefined, 0x5a7 /* IContainerRuntime entryPoint was not initialized */);
 	const summaryResult = await runtime.summarize({
 		fullTree: true,
