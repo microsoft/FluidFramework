@@ -9,7 +9,16 @@ import {
 	ApiItemContainerMixin,
 	type ApiModel,
 } from "@microsoft/api-extractor-model";
-import { DocBlock, type DocComment, type DocInheritDocTag, DocInlineTag, type DocLinkTag, type DocNode, DocNodeContainer, DocNodeKind } from "@microsoft/tsdoc";
+import {
+	DocBlock,
+	type DocComment,
+	type DocInheritDocTag,
+	DocInlineTag,
+	type DocLinkTag,
+	type DocNode,
+	DocNodeContainer,
+	DocNodeKind,
+} from "@microsoft/tsdoc";
 import { defaultConsoleLogger } from "./Logging.js";
 import { resolveSymbolicReference } from "./utilities/index.js";
 import type { ConfigurationBase } from "./ConfigurationBase.js";
