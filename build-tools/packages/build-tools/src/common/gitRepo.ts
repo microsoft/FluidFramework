@@ -222,18 +222,12 @@ export class GitRepo {
 	 * A given path will only be included once in the array; that is, there will be no duplicates.
 	 */
 	public async getFiles(directory: string): Promise<string[]> {
-		const results = await this.exec(
-			`ls-files -cod --exclude-standard --full-name -- ${directory}`,
-			`get files`,
-		);
-		return [
-			...new Set(
-				results
-					.split("\n")
-					.map((line) => line.trim())
-					.filter((file) => statSync(path.resolve(this.resolvedRoot, file)).isFile()),
-			),
-		];
+		const command = `ls-files -cod --deduplicate --exclude-standard --full-name -- ${directory}`;
+		const results = await this.exec(command, `get files`);
+		return results
+			.split("\n")
+			.map((line) => line.trim())
+			.filter((file) => statSync(path.resolve(this.resolvedRoot, file)).isFile());
 	}
 
 	/**

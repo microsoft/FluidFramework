@@ -6,9 +6,9 @@
 import assert from "node:assert/strict";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import globby from "globby";
 import ignore from "ignore";
 import * as JSON5 from "json5";
+import multimatch from "multimatch";
 import { merge } from "ts-deepmerge";
 import type { Configuration as BiomeConfigOnDisk } from "./biomeConfigTypes";
 import type { GitRepo } from "./gitRepo";
@@ -88,6 +88,10 @@ export async function getSettingValuesFromBiomeConfig(
 	section: BiomeConfigSection,
 	kind: BiomeIncludeIgnore,
 ): Promise<Set<string>> {
+	// The default for include is to include everything, so we return "**", whereas for ignore, the default is to ignore
+	// nothing
+	// const generalFiles = config.files?.[kind] ?? (kind === "include" ? ["**"] : []);
+	// const sectionFiles = config?.[section]?.[kind] ?? (kind === "include" ? ["**"] : []);
 	const generalFiles = config.files?.[kind] ?? [];
 	const sectionFiles = config?.[section]?.[kind] ?? [];
 	return new Set([...generalFiles, ...sectionFiles]);
@@ -126,25 +130,22 @@ export async function getBiomeFormattedFiles(
 	gitRepo: GitRepo,
 ): Promise<string[]> {
 	let configFile: string | undefined;
-	let directory: string;
+	/**
+	 * The repo-relative path to the directory being used as the Biome working directory.
+	 */
+	const directory: string = path.relative(
+		gitRepo.resolvedRoot,
+		path.dirname(directoryOrConfigFile),
+	);
 
 	if ((await stat(directoryOrConfigFile)).isFile()) {
 		configFile = directoryOrConfigFile;
-		directory = path.dirname(directoryOrConfigFile);
 	} else {
 		configFile = await getClosestBiomeConfigPath(directoryOrConfigFile);
-		directory = directoryOrConfigFile;
 	}
 
-	/**
-	 * All files that could possibly be formatted before ignore entries are applied. Paths are relative to the root of
-	 * the repo.
-	 */
-	const allPossibleFiles = new Set(await gitRepo.getFiles(directory));
-
 	if (configFile === undefined) {
-		// No config, so all files are formatted
-		return [...allPossibleFiles];
+		throw new Error("Cannot find a Biome config file.");
 	}
 
 	const config = await loadBiomeConfig(configFile);
@@ -158,27 +159,36 @@ export async function getBiomeFormattedFiles(
 	// "At the moment, Biome uses a glob library that treats all globs as having a **/ prefix.
 	// This means that src/**/*.js and **/src/**/*.js are treated as identical. They match both src/file.js and
 	// test/src/file.js. This is something we plan to fix in Biome v2.0.0."
+	//
+	// In addition, in order to get globby to honor _all_ the .gitignore files, we prefix the pattern with the directory,
+	// effectively making the include globs repo-relative. Then we can set the globby working directory to the repo root
+	// and it will obey all the gitignore settings from the root down.
 	const prefixedIncludes = [...includeEntries].map((glob) => `**/${glob}`);
 	const prefixedIgnores = [...ignoreEntries].map((glob) => `**/${glob}`);
 
 	/**
-	 * An array of cwd-relative paths to files included via the 'include' settings in the Biome config.
+	 * All files that could possibly be formatted before Biome include and ignore entries are applied. Paths are relative
+	 * to the root of the repo.
 	 */
-	const includedPaths = await globby(prefixedIncludes, {
-		// We need to interpret the globs from the provided directory; the paths returned will be relative to this path
-		cwd: directory,
+	const gitLsFiles = new Set(await gitRepo.getFiles(directory));
 
-		// Don't return directories, only files; Biome includes are only applied to files.
-		// See note at https://biomejs.dev/guides/how-biome-works/#include-and-ignore-explained
-		onlyFiles: true,
-	});
+	/**
+	 * An array of repo-relative paths to files included via the 'include' settings in the Biome config.
+	 */
+	const includedPaths =
+		prefixedIncludes.length > 0
+			? // If there are includes, then we filter the possible files using the include globs
+				multimatch([...gitLsFiles], prefixedIncludes)
+			: // No Biome includes were provided, so we include everything git enumerated
+				[...gitLsFiles];
 
-	const ignoreObject = ignore().add([...prefixedIgnores]);
-	const filtered = ignoreObject.filter([...includedPaths]);
+	const ignoreObject = ignore().add(prefixedIgnores);
+	// Note that ignoreObject.filter expects the paths to be relative to the repo root.
+	const filtered = ignoreObject.filter(includedPaths);
 
 	// Convert directory-relative paths to absolute
 	const repoRoot = gitRepo.resolvedRoot;
-	return filtered.map((filePath) => path.resolve(repoRoot, directory, filePath));
+	return filtered.map((filePath) => path.resolve(repoRoot, filePath));
 }
 
 /**
@@ -195,8 +205,9 @@ export class BiomeConfig {
 	public get closestConfig(): string {
 		assert(
 			this.allConfigs.length > 0,
-			"BiomeConfigLoader.allConfigs must be initialized before getting the closesConfig.",
+			"BiomeConfigLoader.allConfigs must be initialized before getting the closestConfig.",
 		);
+		// The closest config is the last one in the list of configs, because they're sorted in the order they're applied.
 		// We previously asserted that there is at least one element in the array
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return this.allConfigs.at(-1)!;
@@ -220,7 +231,8 @@ export class BiomeConfig {
 		}
 
 		config._allConfigs = await getAllBiomeConfigPaths(initialConfig);
-		config._formattedFiles.push(...(await getBiomeFormattedFiles(initialConfig, gitRepo)));
+		const files = await getBiomeFormattedFiles(initialConfig, gitRepo);
+		config._formattedFiles.push(...files);
 		return config;
 	}
 }

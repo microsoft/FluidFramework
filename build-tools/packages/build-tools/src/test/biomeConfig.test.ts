@@ -36,7 +36,6 @@ describe("Biome config loading", async () => {
 		});
 
 		it("has correct formatted files list", async () => {
-			console.debug(config);
 			const expected = [
 				path.resolve(
 					testDataPath,
@@ -50,7 +49,7 @@ describe("Biome config loading", async () => {
 			}
 			assert(
 				formattedFiles.length === 2,
-				`expected 5 elements in the list, got ${formattedFiles.length}`,
+				`expected 2 elements in the list, got ${formattedFiles.length}`,
 			);
 		});
 	});
