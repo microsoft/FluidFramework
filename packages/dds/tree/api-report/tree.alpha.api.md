@@ -514,7 +514,7 @@ export interface TreeNodeApi {
     key(node: TreeNode): string | number;
     on<K extends keyof TreeChangeEvents>(node: TreeNode, eventName: K, listener: TreeChangeEvents[K]): () => void;
     parent(node: TreeNode): TreeNode | undefined;
-    schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
+    schema(node: TreeNode | TreeLeafValue): TreeNodeSchema;
     shortId(node: TreeNode): number | string | undefined;
     status(node: TreeNode): TreeStatus;
 }
@@ -536,7 +536,6 @@ export interface TreeNodeSchemaClass<out Name extends string = string, out Kind 
 
 // @public @sealed
 export interface TreeNodeSchemaCore<out Name extends string, out Kind extends NodeKind, out ImplicitlyConstructable extends boolean, out Info = unknown> {
-    // (undocumented)
     readonly identifier: Name;
     readonly implicitlyConstructable: ImplicitlyConstructable;
     readonly info: Info;

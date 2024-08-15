@@ -14,7 +14,6 @@ import {
 	isTreeNode,
 	isTreeNodeSchemaClass,
 	mapTreeFromNodeData,
-	normalizeFieldSchema,
 	type ImplicitFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
 	type NodeKind,
@@ -113,11 +112,12 @@ export function hydrate<TSchema extends ImplicitFieldSchema>(
 	assert(field.context !== undefined, "Expected LazyField");
 	const mapTree = mapTreeFromNodeData(
 		initialTree as InsertableContent,
-		normalizeFieldSchema(schema).allowedTypes,
+		schema,
 		field.context.nodeKeyManager,
 		getSchemaAndPolicy(field),
 	);
 	prepareContentForHydration(mapTree, field.context.checkout.forest);
+	if (mapTree === undefined) return undefined as TreeFieldFromImplicitField<TSchema>;
 	const cursor = cursorForMapTreeNode(mapTree);
 	initializeForest(forest, [cursor], testRevisionTagCodec, testIdCompressor, true);
 	return getTreeNodeForField(field) as TreeFieldFromImplicitField<TSchema>;

@@ -43,6 +43,26 @@ The corresponding test modules can be found under `src/test`.
 To run only the unit tests, first ensure you have followed the [build](#build) steps above.
 Next, run `npm run test:jest` from a terminal within this directory.
 
+### Accessibility Best Practices
+
+When developing components for this library, it's important to have accessibility in mind.
+Here are some guidelines and best practices to ensure your components are accessible to all users:
+
+1. Keyboard Navigation:
+    - Ensure all interactive elements are reachable via keyboard navigation.
+    Use the `tabIndex` attribute to control the tab order of elements.
+    For example, setting `tabIndex="0"` will include an element in the natural tab order, while `tabIndex="-1"` will remove it from the tab order but still allow it to receive focus programmatically.
+    - Ensure that components such as dropdowns, buttons, and links can be operated using the keyboard.
+    Implement keyboard event handling (`onKeyDown`, `onKeyPress`) for actions like opening a dropdown with the "Enter" key or navigating between items with the arrow keys.
+2. ARIA Attributes:
+    - Use [ARIA](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA) (Accessible Rich Internet Applications) attributes to provide additional information about UI components to screen readers.
+    For example, use `aria-label`, `aria-labelledby`, or `aria-describedby` to provide accessible names or descriptions.
+    - For components like dropdowns or modal dialogs, consider using roles such as `role="menu"` and `role="dialog"` to convey the purpose of the elements to assistive technologies.
+3. Color Contrast:
+    - Ensure that the color contrast ratio between text and background is sufficient.
+    Aim for a contrast ratio of at least 4.5:1.
+    You can use online tools to verify color contrast compliance with [WCAG](https://www.w3.org/WAI/standards-guidelines/act/rules/09o5cg/proposed/) (Web Content Accessibility Guidelines).
+
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->

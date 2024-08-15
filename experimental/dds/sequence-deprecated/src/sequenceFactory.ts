@@ -49,11 +49,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 	public static segmentFromSpec(segSpec: IJSONSegment): SubSequence<object> {
 		const runSegment = segSpec as IJSONRunSegment<object>;
 		if (runSegment.items) {
-			const seg = new SubSequence<object>(runSegment.items);
-			if (runSegment.props) {
-				seg.addProperties(runSegment.props);
-			}
-			return seg;
+			return new SubSequence<object>(runSegment.items, runSegment.props);
 		}
 
 		throw new Error(`Unrecognized IJSONObject`);
@@ -132,11 +128,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
 	public static segmentFromSpec(segSpec: IJSONSegment): SubSequence<number> {
 		const runSegment = segSpec as IJSONRunSegment<number>;
 		if (runSegment.items) {
-			const seg = new SubSequence<number>(runSegment.items);
-			if (runSegment.props) {
-				seg.addProperties(runSegment.props);
-			}
-			return seg;
+			return new SubSequence<number>(runSegment.items, runSegment.props);
 		}
 
 		throw new Error(`Unrecognized IJSONObject`);

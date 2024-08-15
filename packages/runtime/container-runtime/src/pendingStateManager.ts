@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
@@ -15,7 +14,11 @@ import {
 import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
 
-import { type InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
+import {
+	type InboundContainerRuntimeMessage,
+	type InboundSequencedContainerRuntimeMessage,
+	type LocalContainerRuntimeMessage,
+} from "./messageTypes.js";
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "./metadata.js";
 import { BatchId, BatchMessage, generateBatchId, InboundBatch } from "./opLifecycle/index.js";
 
@@ -74,7 +77,6 @@ export type PendingMessageResubmitData = Pick<
 export interface IRuntimeStateHandler {
 	connected(): boolean;
 	clientId(): string | undefined;
-	close(error?: ICriticalContainerError): void;
 	applyStashedOp(content: string): Promise<unknown>;
 	reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId): void;
 	isActiveConnection: () => boolean;
@@ -86,24 +88,34 @@ function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean 
 	return content.type === "groupedBatch" && content.contents?.length === 0;
 }
 
-/** Union of keys of T */
-type KeysOfUnion<T extends object> = T extends T ? keyof T : never;
-/** *Partial* type all possible combinations of properties and values of union T.
- * This loosens typing allowing access to all possible properties without
- * narrowing.
- */
-type AnyComboFromUnion<T extends object> = { [P in KeysOfUnion<T>]?: T[P] };
-
-function buildPendingMessageContent(
-	// AnyComboFromUnion is needed need to gain access to compatDetails that
-	// is only defined for some cases.
-	message: AnyComboFromUnion<InboundSequencedContainerRuntimeMessage>,
-): string {
+function buildPendingMessageContent(message: InboundSequencedContainerRuntimeMessage): string {
 	// IMPORTANT: Order matters here, this must match the order of the properties used
 	// when submitting the message.
-	const { type, contents, compatDetails } = message;
+	const { type, contents, compatDetails }: InboundContainerRuntimeMessage = message;
 	// Any properties that are not defined, won't be emitted by stringify.
 	return JSON.stringify({ type, contents, compatDetails });
+}
+
+function typesOfKeys<T extends object>(obj: T): Record<keyof T, string> {
+	return Object.keys(obj).reduce((acc, key) => {
+		acc[key] = typeof obj[key];
+		return acc;
+	}, {}) as Record<keyof T, string>;
+}
+
+function scrubAndStringify(
+	message: InboundContainerRuntimeMessage | LocalContainerRuntimeMessage,
+): string {
+	// Scrub the whole object in case there are unexpected keys
+	const scrubbed: Record<string, unknown> = typesOfKeys(message);
+
+	// For these known/expected keys, we can either drill in (for contents)
+	// or just use the value as-is (since it's not personal info)
+	scrubbed.contents = message.contents && typesOfKeys(message.contents);
+	scrubbed.compatDetails = message.compatDetails;
+	scrubbed.type = message.type;
+
+	return JSON.stringify(scrubbed);
 }
 
 function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
@@ -374,6 +386,7 @@ export class PendingStateManager implements IDisposable {
 	 * Processes the pending local copy of message that's been ack'd by the server.
 	 * @param sequenceNumber - The sequenceNumber from the server corresponding to the next pending message.
 	 * @param message - [optional] The entire incoming message, for comparing contents with the pending message for extra validation.
+	 * @throws DataProcessingError if the pending message content doesn't match the incoming message content.
 	 * @returns - The localOpMetadata of the next pending message, to be sent to whoever submitted the original message.
 	 */
 	private processNextPendingMessage(
@@ -400,17 +413,34 @@ export class PendingStateManager implements IDisposable {
 			// especially now that we're comparing batch info at batch start.
 			// We do see some rare cases of this in production, we will see whether batchInfo matches or not in those cases.
 			if (pendingMessage.content !== messageContent) {
-				this.stateHandler.close(
-					DataProcessingError.create(
-						"pending local message content mismatch",
-						"unexpectedAckReceived",
-						message,
-						{
-							expectedMessageType: JSON.parse(pendingMessage.content).type,
-						},
-					),
+				const pendingContentObj = JSON.parse(
+					pendingMessage.content,
+				) as LocalContainerRuntimeMessage;
+				const incomingContentObj = JSON.parse(
+					messageContent,
+				) as InboundContainerRuntimeMessage;
+
+				const contentsMatch =
+					pendingContentObj.contents === incomingContentObj.contents ||
+					(pendingContentObj.contents !== undefined &&
+						incomingContentObj.contents !== undefined &&
+						JSON.stringify(pendingContentObj.contents) ===
+							JSON.stringify(incomingContentObj.contents));
+
+				this.logger.sendErrorEvent({
+					eventName: "unexpectedAckReceived",
+					details: {
+						pendingContentScrubbed: scrubAndStringify(pendingContentObj),
+						incomingContentScrubbed: scrubAndStringify(incomingContentObj),
+						contentsMatch,
+					},
+				});
+
+				throw DataProcessingError.create(
+					"pending local message content mismatch",
+					"unexpectedAckReceived",
+					message,
 				);
-				return;
 			}
 		}
 
