@@ -26,7 +26,7 @@ import {
 	Loader,
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,

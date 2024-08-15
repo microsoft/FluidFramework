@@ -18,7 +18,7 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import { Loader as ContainerLoader } from "@fluidframework/container-loader/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {

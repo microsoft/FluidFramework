@@ -4,7 +4,7 @@
  */
 
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import {
@@ -71,7 +71,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<ContainerRuntime> {
-		const runtime: ContainerRuntime = await ContainerRuntime.loadRuntime({
+		const runtime: ContainerRuntime = await loadContainerRuntime({
 			context,
 			registryEntries: this.registry,
 			existing,

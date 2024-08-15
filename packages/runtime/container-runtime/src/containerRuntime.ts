@@ -778,6 +778,10 @@ let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) 
 	};
 };
 
+export async function loadContainerRuntime(params): Promise<IContainerRuntime & IRuntime> {
+	return loadContainerRuntime(params);
+}
+
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.

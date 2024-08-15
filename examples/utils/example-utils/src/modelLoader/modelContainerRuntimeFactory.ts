@@ -46,7 +46,7 @@ export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntim
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<IRuntime> {
-		const runtime = await ContainerRuntime.loadRuntime({
+		const runtime = await loadContainerRuntime({
 			context,
 			registryEntries: this.registryEntries,
 			provideEntryPoint: async (

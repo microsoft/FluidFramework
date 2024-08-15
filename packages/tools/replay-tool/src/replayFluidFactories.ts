@@ -49,7 +49,7 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<ContainerRuntime> {
-		return ContainerRuntime.loadRuntime({
+		return loadContainerRuntime({
 			context,
 			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
 				// For the replay tool, the entryPoint exposes the containerRuntime itself so the helpers for the tool

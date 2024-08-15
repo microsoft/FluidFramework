@@ -148,7 +148,7 @@ export const createTestContainerRuntimeFactory = (
 			const getDefaultObject = async (request: IRequest, runtime: IContainerRuntime) => {
 				const parser = RequestParser.create(request);
 				if (parser.pathParts.length === 0) {
-					// This cast is safe as ContainerRuntime.loadRuntime is called below
+					// This cast is safe as loadContainerRuntime is called below
 					return (runtime as ContainerRuntime).resolveHandle({
 						url: `/default${parser.query}`,
 						headers: request.headers,

@@ -10,6 +10,7 @@ export {
 	ISummaryConfigurationDisableSummarizer,
 	ISummaryConfigurationDisableHeuristics,
 	IContainerRuntimeOptions,
+	loadContainerRuntime,
 	isRuntimeMessage,
 	agentSchedulerId,
 	ContainerRuntime,

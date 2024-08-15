@@ -10,7 +10,7 @@ import {
 	ContainerErrorTypes,
 	IContainer,
 } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
 import {

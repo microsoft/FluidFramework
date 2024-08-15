@@ -221,7 +221,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		): Promise<IResponse | undefined> => {
 			const parser = RequestParser.create(request);
 			if (parser.pathParts.length === 0) {
-				// This cast is safe as ContainerRuntime.loadRuntime is called in the base class
+				// This cast is safe as loadContainerRuntime is called in the base class
 				return (runtime as ContainerRuntime).resolveHandle({
 					url: `/${rootDataStoreId}${parser.query}`,
 					headers: request.headers,
