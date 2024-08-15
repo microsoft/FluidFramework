@@ -183,15 +183,16 @@ export async function getBiomeFormattedFiles(
 	// Note that ignoreObject.filter expects the paths to be relative to the repo root.
 	const filtered = ignoreObject.filter(includedPaths);
 
-	// Convert repo-root-relative paths to absolute paths
+	// Convert repo root-relative paths to absolute paths
 	const repoRoot = gitRepo.resolvedRoot;
 	return filtered.map((filePath) => path.resolve(repoRoot, filePath));
 }
 
 /**
- * A class used to simplify access to a BiomeConfig. Given a directory and a GitRepo instance, the class calculates and
- * caches the configs and formatted files. Using this class can be more convenient than using the free functions,
- * especially when you need access to all the configs and formatted files.
+ * A class used to simplify access to a Biome config when you want to just load a config and get the file list and
+ * config details. Given a directory and a GitRepo instance, the class calculates and caches the configs and formatted
+ * files. Using this class can be more convenient than using the free functions, especially when you need access to all
+ * the configs and formatted files.
  */
 export class BiomeConfig {
 	private _allConfigs: string[] | undefined;
