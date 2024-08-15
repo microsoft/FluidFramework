@@ -11,11 +11,11 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     // (undocumented)
-    instantiateFirstTime(runtime: ContainerRuntime): Promise<void>;
+    instantiateFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
-    instantiateFromExisting(runtime: ContainerRuntime): Promise<void>;
+    instantiateFromExisting(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
-    preInitialize(context: IContainerContext, existing: boolean): Promise<ContainerRuntime>;
+    preInitialize(context: IContainerContext, existing: boolean): Promise<IContainerRuntime & IRuntime>;
 }
 
 // @alpha

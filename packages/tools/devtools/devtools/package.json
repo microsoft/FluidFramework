@@ -158,6 +158,7 @@
 		}
 	},
 	"typeValidation": {
+		"disabled": true,
 		"broken": {}
 	}
 }

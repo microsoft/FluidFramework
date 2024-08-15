@@ -4,6 +4,9 @@
 
 ```ts
 
+// @public (undocumented)
+export function loadContainerRuntime(params: any): Promise<IContainerRuntime & IRuntime>;
+
 // (No @packageDocumentation comment for this package)
 
 ```

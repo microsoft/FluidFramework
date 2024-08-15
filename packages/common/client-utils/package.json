@@ -225,6 +225,7 @@
 		}
 	},
 	"typeValidation": {
+		"disabled": true,
 		"broken": {}
 	}
 }

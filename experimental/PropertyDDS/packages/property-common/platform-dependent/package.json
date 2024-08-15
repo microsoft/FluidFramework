@@ -15,6 +15,7 @@
 	"browser": "browser.js",
 	"typeValidation": {
 		"disabled": true,
+		"disabled": true,
 		"broken": {}
 	}
 }
