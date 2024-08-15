@@ -6,6 +6,7 @@
 import * as Path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { ApiModel } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
 import { lintApiModel, type LinterErrors, type MalformedTagError } from "../LintApiModel.js";
@@ -15,7 +16,19 @@ const dirname = Path.dirname(fileURLToPath(import.meta.url));
 const testModelsDirectoryPath = Path.resolve(dirname, "..", "..", "src", "test", "test-data");
 
 describe("lintApiModel", () => {
-	// TODO: add case with no errors
+	it("Empty API Model yields no errors", async () => {
+		const apiModel = new ApiModel();
+		const result = await lintApiModel({ apiModel });
+
+		expect(result).to.be.undefined;
+	});
+
+	it("Empty API Model yields no errors", async () => {
+		const apiModel = new ApiModel();
+		const result = await lintApiModel({ apiModel });
+
+		expect(result).to.be.undefined;
+	});
 
 	it("API Model with invalid links yields the expected errors", async () => {
 		const modelDirectoryPath = Path.resolve(testModelsDirectoryPath, "simple-suite-test");
