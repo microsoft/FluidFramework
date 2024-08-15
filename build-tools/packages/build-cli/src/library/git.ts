@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { statSync } from "node:fs";
 import path from "node:path";
 import { Package } from "@fluidframework/build-tools";
 import readPkgUp from "read-pkg-up";
@@ -33,6 +34,7 @@ const defaultGitOptions: Partial<SimpleGitOptions> = {
  */
 export class Repository {
 	private readonly git: SimpleGit;
+	private readonly baseDir: string;
 
 	/**
 	 * A git client for the repository that can be used to call git directly.
@@ -51,6 +53,7 @@ export class Repository {
 		};
 		log?.verbose("gitOptions:");
 		log?.verbose(JSON.stringify(options));
+		this.baseDir = options.baseDir;
 		this.git = simpleGit(options);
 	}
 
@@ -206,5 +209,45 @@ export class Repository {
 		}
 
 		return mergeResult.result === "success";
+	}
+
+	/**
+	 * Returns an array containing repo repo-relative paths to all the files in the provided directory.
+	 * A given path will only be included once in the array; that is, there will be no duplicate paths.
+	 * Note that this function excludes files that are deleted locally whether the deletion is staged or not.
+	 */
+	public async getFiles(): Promise<string[]> {
+		const results = await this.gitClient.raw(
+			"ls-files",
+			// Includes cached (staged) files.
+			"--cached",
+			// Includes other (untracked) files that are not ignored.
+			"--others",
+			// Excludes files that are ignored by standard ignore rules.
+			"--exclude-standard",
+			// Removes duplicate entries from the output.
+			"--deduplicate",
+			// Shows the full path of the files relative to the repository root.
+			"--full-name",
+		);
+		const files = results
+			.split("\n")
+			.map((line) => line.trim())
+			.filter((file) => {
+				const absPath = path.resolve(this.baseDir, file);
+				try {
+					const stat = statSync(absPath);
+					return stat.isFile();
+				} catch (error: unknown) {
+					// Deleted files that are _unstaged_ will still be in the ls-files results, so handle the exception and
+					// return false to exclude the file.
+					this.log?.verbose(
+						`Error calling fs.stat on ${absPath}: "${(error as Error).message}" Stack: ${(error as Error).message}`,
+					);
+					return false;
+				}
+			});
+		// Files are already repo root-relative
+		return files;
 	}
 }

@@ -219,9 +219,7 @@ export class GitRepo {
 	/**
 	 * Returns an array containing repo repo-relative paths to all the files in the provided directory.
 	 * A given path will only be included once in the array; that is, there will be no duplicate paths.
-	 *
-	 * Note that this does return paths to deleted files, if they were previously part of the git index. That is, if you
-	 * delete a committed file, its path will still be returned
+	 * Note that this function excludes files that are deleted locally whether the deletion is staged or not.
 	 *
 	 * @param directory - A directory to filter the results by. Only files under this directory will be returned. To
 	 * return all files in the repo use the value `"."`.
@@ -233,18 +231,30 @@ export class GitRepo {
 		 * ```
 		 * --cached: Includes cached (staged) files.
 		 * --others: Includes other (untracked) files that are not ignored.
-		 * --deleted: Includes deleted files - that is, files that have been removed from the working directory but have not yet been removed from the index.
 		 * --exclude-standard: Excludes files that are ignored by standard ignore rules.
 		 * --deduplicate: Removes duplicate entries from the output.
 		 * --full-name: Shows the full path of the files relative to the repository root.
 		 * ```
 		 */
-		const command = `ls-files --cached --others --deleted --deduplicate --exclude-standard --full-name -- ${directory}`;
+		const command = `ls-files --cached --others --exclude-standard --deduplicate --full-name -- ${directory}`;
 		const results = await this.exec(command, `get files`);
 		return results
 			.split("\n")
 			.map((line) => line.trim())
-			.filter((file) => statSync(path.resolve(this.resolvedRoot, file)).isFile());
+			.filter((file) => {
+				const filePath = path.resolve(this.resolvedRoot, file);
+				try {
+					const stat = statSync(filePath);
+					return stat.isFile();
+				} catch (error: unknown) {
+					// Deleted files that are _unstaged_ will still be in the ls-files results, so handle the exception and return
+					// false to exclude the file.
+					traceGitRepo(
+						`Error calling fs.stat on ${filePath}: "${(error as Error).message}" Stack: ${(error as Error).message}`,
+					);
+					return false;
+				}
+			});
 	}
 
 	/**
