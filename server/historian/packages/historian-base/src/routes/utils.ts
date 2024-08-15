@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import { RequestHandler } from "express";
 import { decode } from "jsonwebtoken";
 import * as nconf from "nconf";
@@ -43,7 +42,6 @@ export type CommonRouteParams = [
 	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
 	cache?: ICache,
-	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
@@ -57,7 +55,6 @@ export class createGitServiceArgs {
 	storageNameRetriever: IStorageNameRetriever;
 	documentManager: IDocumentManager;
 	cache?: ICache;
-	asyncLocalStorage?: AsyncLocalStorage<string>;
 	initialUpload?: boolean = false;
 	storageName?: string;
 	allowDisabledTenant?: boolean = false;
@@ -246,7 +243,6 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		storageNameRetriever,
 		documentManager,
 		cache,
-		asyncLocalStorage,
 		initialUpload,
 		storageName,
 		allowDisabledTenant,
@@ -296,7 +292,6 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		tenantId,
 		documentId,
 		cache,
-		asyncLocalStorage,
 		calculatedStorageName,
 		storageUrl,
 		isEphemeral,
