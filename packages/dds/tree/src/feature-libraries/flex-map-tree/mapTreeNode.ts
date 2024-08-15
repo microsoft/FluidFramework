@@ -366,10 +366,9 @@ class EagerMapTreeField<T extends FlexAllowedTypes> implements MapTreeField {
 		for (const [i, mapTree] of this.mapTrees.entries()) {
 			const mapTreeNodeChild = nodeCache.get(mapTree);
 			if (mapTreeNodeChild !== undefined) {
-				assert(
-					mapTreeNodeChild.parentField === unparentedLocation,
-					0x991 /* Node is already parented under a different field */,
-				);
+				if (mapTreeNodeChild.parentField !== unparentedLocation) {
+					throw new UsageError("A node may not be in more than one place in the tree");
+				}
 				mapTreeNodeChild.adoptBy(this, i);
 			}
 		}
