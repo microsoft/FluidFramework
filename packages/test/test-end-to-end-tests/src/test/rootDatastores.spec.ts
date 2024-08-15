@@ -47,6 +47,8 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 		container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 
+		await provider.ensureSynchronized();
+
 		container2 = await provider.loadTestContainer(testContainerConfig);
 		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 	});
