@@ -18,7 +18,7 @@ const findUp = import("find-up");
 
 /**
  * Loads a Biome configuration file _without_ following any 'extends' values. You probably want to use
- * {@link loadBiomeConfig} instead of this function.
+ * {@link loadBiomeConfigs} instead of this function.
  */
 async function loadRawBiomeConfig(configPath: string): Promise<BiomeConfigOnDisk> {
 	const contents = await readFile(configPath, "utf8");
@@ -61,6 +61,10 @@ export async function getAllBiomeConfigPaths(configPath: string): Promise<string
  */
 export async function loadBiomeConfig(configPath: string): Promise<BiomeConfigOnDisk> {
 	const allConfigPaths = await getAllBiomeConfigPaths(configPath);
+	return loadBiomeConfigs(allConfigPaths);
+}
+
+export async function loadBiomeConfigs(allConfigPaths: string[]): Promise<BiomeConfigOnDisk> {
 	const allConfigs = await Promise.all(
 		allConfigPaths.map((pathToConfig) => loadRawBiomeConfig(pathToConfig)),
 	);
@@ -116,6 +120,30 @@ export async function getClosestBiomeConfigPath(
 		});
 }
 
+export async function getBiomeFormattedFilesFromDirectory(
+	directoryOrConfigFile: string,
+	gitRepo: GitRepo,
+): Promise<string[]> {
+	let configFile: string | undefined;
+	/**
+	 * The repo root-relative path to the directory being used as the Biome working directory.
+	 */
+	const directory: string = path.relative(
+		gitRepo.resolvedRoot,
+		path.dirname(directoryOrConfigFile),
+	);
+	if ((await stat(directoryOrConfigFile)).isFile()) {
+		configFile = directoryOrConfigFile;
+	} else {
+		configFile = await getClosestBiomeConfigPath(directoryOrConfigFile);
+	}
+	if (configFile === undefined) {
+		throw new Error("Cannot find a Biome config file.");
+	}
+	const config = await loadBiomeConfig(configFile);
+	return getBiomeFormattedFiles(config, directory, gitRepo);
+}
+
 /**
  * Return an array of absolute paths to files that Biome would format under the provided path. Note that .gitignored
  * paths are always excluded, regardless of the "vcs" setting in the Biome configuration.
@@ -127,29 +155,10 @@ export async function getClosestBiomeConfigPath(
  * @param gitRepo - A GitRepo instance that is used to enumerate files.
  */
 export async function getBiomeFormattedFiles(
-	directoryOrConfigFile: string,
+	config: BiomeConfigOnDisk,
+	directory: string,
 	gitRepo: GitRepo,
 ): Promise<string[]> {
-	let configFile: string | undefined;
-	/**
-	 * The repo-relative path to the directory being used as the Biome working directory.
-	 */
-	const directory: string = path.relative(
-		gitRepo.resolvedRoot,
-		path.dirname(directoryOrConfigFile),
-	);
-
-	if ((await stat(directoryOrConfigFile)).isFile()) {
-		configFile = directoryOrConfigFile;
-	} else {
-		configFile = await getClosestBiomeConfigPath(directoryOrConfigFile);
-	}
-
-	if (configFile === undefined) {
-		throw new Error("Cannot find a Biome config file.");
-	}
-
-	const config = await loadBiomeConfig(configFile);
 	const [includeEntries, ignoreEntries] = await Promise.all([
 		getSettingValuesFromBiomeConfig(config, "formatter", "include"),
 		getSettingValuesFromBiomeConfig(config, "formatter", "ignore"),
@@ -229,7 +238,8 @@ export class BiomeConfig {
 		}
 
 		config._allConfigs = await getAllBiomeConfigPaths(initialConfig);
-		const files = await getBiomeFormattedFiles(initialConfig, gitRepo);
+		const mergedConfig = await loadBiomeConfigs(config.allConfigs);
+		const files = await getBiomeFormattedFiles(mergedConfig, directory, gitRepo);
 		config._formattedFiles.push(...files);
 		return config;
 	}

@@ -11,7 +11,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import {
 	BiomeConfig,
-	getBiomeFormattedFiles,
+	getBiomeFormattedFilesFromDirectory,
 	getSettingValuesFromBiomeConfig,
 	loadBiomeConfig,
 } from "../common/biomeConfig";
@@ -193,7 +193,7 @@ describe("Biome config loading", async () => {
 		});
 	});
 
-	describe("getBiomeFormattedFiles", async () => {
+	describe("getBiomeFormattedFilesFromDirectory", async () => {
 		describe("extends from a single config", async () => {
 			let testPath: string;
 			let gitRepo: GitRepo;
@@ -213,7 +213,7 @@ describe("Biome config loading", async () => {
 					path.resolve(testDataPath, "biome/pkg-a/pkg-a-include/include-linter/linter.ts"),
 					path.resolve(testDataPath, "biome/pkg-a/include-formatter/formatter.ts"),
 				];
-				const formattedFiles = await getBiomeFormattedFiles(testPath, gitRepo);
+				const formattedFiles = await getBiomeFormattedFilesFromDirectory(testPath, gitRepo);
 				for (const actual of formattedFiles) {
 					assert(expected.includes(actual));
 				}
@@ -241,7 +241,7 @@ describe("Biome config loading", async () => {
 					path.resolve(testDataPath, "biome/pkg-a/pkg-a-include/pkg-a-ignore/ignoredFile.ts"),
 					path.resolve(testDataPath, "biome/pkg-a/include-formatter/formatter.ts"),
 				];
-				const formattedFiles = await getBiomeFormattedFiles(testPath, gitRepo);
+				const formattedFiles = await getBiomeFormattedFilesFromDirectory(testPath, gitRepo);
 				for (const actual of formattedFiles) {
 					assert(expected.includes(actual));
 				}
