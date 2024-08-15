@@ -211,13 +211,14 @@ function checkTagsUnderTsdocNode(
 		case DocNodeKind.SoftBreak: {
 			break;
 		}
+		// Nodes with children ("content")
 		case DocNodeKind.Block:
 		case DocNodeKind.ParamBlock: {
 			assert(node instanceof DocBlock, 'Expected a "DocBlock" node.');
 			checkTagsUnderTsdocNode(node.content, associatedItem, apiModel, errors);
 			break;
 		}
-		// Nodes with children
+		// Nodes with children ("nodes")
 		case DocNodeKind.Paragraph:
 		case DocNodeKind.Section: {
 			assert(node instanceof DocNodeContainer, 'Expected a "DocNodeContainer" node.');
