@@ -9,33 +9,26 @@ import {
 	ApiItemContainerMixin,
 	type ApiModel,
 } from "@microsoft/api-extractor-model";
-import {
-	DocBlock,
-	type DocComment,
-	type DocInheritDocTag,
-	DocInlineTag,
-	type DocLinkTag,
-	type DocNode,
-	DocNodeContainer,
-	DocNodeKind,
-} from "@microsoft/tsdoc";
-import { defaultLoadModelOptions, loadModel, type LoadModelOptions } from "./LoadModel.js";
-import { noopLogger } from "./Logging.js";
+import { DocBlock, type DocComment, type DocInheritDocTag, DocInlineTag, type DocLinkTag, type DocNode, DocNodeContainer, DocNodeKind } from "@microsoft/tsdoc";
+import { defaultConsoleLogger } from "./Logging.js";
 import { resolveSymbolicReference } from "./utilities/index.js";
+import type { ConfigurationBase } from "./ConfigurationBase.js";
 
 /**
- * {@link lintApiModel} options.
+ * {@link lintApiModel} configuration.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface LintApiModelOptions extends LoadModelOptions {
-	// TODO: add linter-specific options here as needed.
+export interface LintApiModelConfiguration extends ConfigurationBase {
+	/**
+	 * The API model to lint.
+	 */
+	apiModel: ApiModel;
 }
 
 /**
- * {@link LintApiModelOptions} defaults.
+ * {@link LintApiModelConfiguration} defaults.
  */
-const defaultLintApiModelOptions: Required<Omit<LintApiModelOptions, "modelDirectoryPath">> = {
-	...defaultLoadModelOptions,
+const defaultLintApiModelConfiguration: Required<Omit<LintApiModelConfiguration, "apiModel">> = {
+	logger: defaultConsoleLogger,
 };
 
 // TODO: common TsdocError base (associatedItem, packageName)
@@ -90,11 +83,15 @@ export interface MalformedTagError {
 	readonly associatedItem: string;
 
 	/**
-	 * The name of the package that the {@link MalformedTagError.associatedItem} belongs to.
+	 * The name of the package that the {@link ReferenceError.sourceItem} belongs to.
 	 */
 	readonly packageName: string;
 }
 
+/**
+ * Mutable {@link LinterErrors}.
+ * @remarks Used while walking the API model to accumulate errors, and converted to {@link LinterErrors} to return to the caller.
+ */
 interface MutableLinterErrors {
 	readonly malformedTagErrors: Set<MalformedTagError>;
 	readonly referenceErrors: Set<ReferenceError>;
@@ -104,7 +101,14 @@ interface MutableLinterErrors {
  * Errors found during linting.
  */
 export interface LinterErrors {
+	/**
+	 * Errors resulting from malformed TSDoc tags.
+	 */
 	readonly malformedTagErrors: ReadonlySet<MalformedTagError>;
+
+	/**
+	 * Errors related to reference tags (e.g., `link` or `inheritDoc` tags) with invalid targets.
+	 */
 	readonly referenceErrors: ReadonlySet<ReferenceError>;
 }
 
@@ -113,26 +117,15 @@ export interface LinterErrors {
  *
  * @returns The set of errors encountered during linting, if any were found.
  * Otherwise, `undefined`.
- *
- * @throws
- * If the specified {@link LoadModelOptions.modelDirectoryPath} doesn't exist, or if no `.api.json` files are found directly under it.
  */
 export async function lintApiModel(
-	options: LintApiModelOptions,
+	configuration: LintApiModelConfiguration,
 ): Promise<LinterErrors | undefined> {
-	const optionsWithDefaults: Required<LintApiModelOptions> = {
-		...defaultLintApiModelOptions,
-		...options,
+	const optionsWithDefaults: Required<LintApiModelConfiguration> = {
+		...defaultLintApiModelConfiguration,
+		...configuration,
 	};
-	const { modelDirectoryPath, logger } = optionsWithDefaults;
-
-	logger.verbose("Loading API model...");
-
-	// Load the model
-	// Use a no-op logger to prevent logging during the load process
-	const apiModel = await loadModel({ modelDirectoryPath, logger: noopLogger });
-
-	logger.verbose("API model loaded.");
+	const { apiModel, logger } = optionsWithDefaults;
 
 	logger.verbose("Linting API model...");
 
@@ -160,7 +153,7 @@ export async function lintApiModel(
 function lintApiItem(
 	apiItem: ApiItem,
 	apiModel: ApiModel,
-	options: Required<LintApiModelOptions>,
+	options: Required<LintApiModelConfiguration>,
 	errors: MutableLinterErrors,
 ): void {
 	// If the item is documented, lint its documentation contents.
@@ -344,21 +337,22 @@ function checkInheritDocTag(
 	associatedItem: ApiDocumentedItem,
 	apiModel: ApiModel,
 ): ReferenceError | undefined {
-	if (inheritDocTag?.declarationReference !== undefined) {
-		try {
-			resolveSymbolicReference(associatedItem, inheritDocTag.declarationReference, apiModel);
-		} catch {
-			return {
-				tagName: "@inheritDoc",
-				sourceItem: associatedItem.getScopedNameWithinPackage(),
-				packageName:
-					associatedItem.getAssociatedPackage()?.name ?? fail("Package name not found"),
-				referenceTarget: inheritDocTag.declarationReference.emitAsTsdoc(),
-				linkText: undefined,
-			};
-		}
-
+	if (inheritDocTag?.declarationReference === undefined) {
 		return undefined;
 	}
+
+	try {
+		resolveSymbolicReference(associatedItem, inheritDocTag.declarationReference, apiModel);
+	} catch {
+		return {
+			tagName: "@inheritDoc",
+			sourceItem: associatedItem.getScopedNameWithinPackage(),
+			packageName:
+				associatedItem.getAssociatedPackage()?.name ?? fail("Package name not found"),
+			referenceTarget: inheritDocTag.declarationReference.emitAsTsdoc(),
+			linkText: undefined,
+		};
+	}
+
 	return undefined;
 }
