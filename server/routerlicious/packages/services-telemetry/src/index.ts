@@ -37,6 +37,7 @@ export {
 export {
 	ITelemetryContextProperties,
 	ITelemetryContext,
+	isTelemetryContextProperties,
 	getGlobalTelemetryContext,
 	setGlobalTelemetryContext,
 } from "./telemetryContext";
