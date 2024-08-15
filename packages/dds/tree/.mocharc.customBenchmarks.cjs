@@ -29,5 +29,5 @@ module.exports = {
 	"recursive": true,
 	"reporter": "@fluid-tools/benchmark/dist/MochaReporter.js",
 	"reporterOptions": ["reportDir=.customBenchmarksOutput/"],
-	"spec": ["lib/test/**/*.*js", "--perfMode"],
+	"spec": ["lib/test/**/*.*js"],
 };
