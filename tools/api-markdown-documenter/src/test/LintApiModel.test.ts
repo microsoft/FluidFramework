@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 import { ApiModel } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
-import { lintApiModel, type LinterErrors, type MalformedTagError } from "../LintApiModel.js";
+import { lintApiModel, type LinterErrors } from "../LintApiModel.js";
 import { loadModel } from "../LoadModel.js";
 
 const dirname = Path.dirname(fileURLToPath(import.meta.url));
@@ -36,7 +36,6 @@ describe("lintApiModel", () => {
 		const apiModel = await loadModel({ modelDirectoryPath });
 
 		const expected: LinterErrors = {
-			malformedTagErrors: new Set<MalformedTagError>(),
 			referenceErrors: new Set([
 				{
 					tagName: "@link",

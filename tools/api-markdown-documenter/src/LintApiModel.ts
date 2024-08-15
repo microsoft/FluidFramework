@@ -74,36 +74,10 @@ export interface ReferenceError {
 }
 
 /**
- * An error resulting from a malformed TSDoc tag.
- */
-export interface MalformedTagError {
-	/**
-	 * The tag name that was malformed.
-	 */
-	readonly tagName: string;
-
-	/**
-	 * Inner contents of the inline reference tag, if any.
-	 */
-	readonly tagContent: string | undefined;
-
-	/**
-	 * The name of the API item with which the documentation containing the malformed tag is associated.
-	 */
-	readonly associatedItem: string;
-
-	/**
-	 * The name of the package that the {@link ReferenceError.sourceItem} belongs to.
-	 */
-	readonly packageName: string;
-}
-
-/**
  * Mutable {@link LinterErrors}.
  * @remarks Used while walking the API model to accumulate errors, and converted to {@link LinterErrors} to return to the caller.
  */
 interface MutableLinterErrors {
-	readonly malformedTagErrors: Set<MalformedTagError>;
 	readonly referenceErrors: Set<ReferenceError>;
 }
 
@@ -111,10 +85,7 @@ interface MutableLinterErrors {
  * Errors found during linting.
  */
 export interface LinterErrors {
-	/**
-	 * Errors resulting from malformed TSDoc tags.
-	 */
-	readonly malformedTagErrors: ReadonlySet<MalformedTagError>;
+	// TODO: malformed tag errors
 
 	/**
 	 * Errors related to reference tags (e.g., `link` or `inheritDoc` tags) with invalid targets.
@@ -140,18 +111,16 @@ export async function lintApiModel(
 	logger.verbose("Linting API model...");
 
 	const errors: MutableLinterErrors = {
-		malformedTagErrors: new Set<MalformedTagError>(),
 		referenceErrors: new Set<ReferenceError>(),
 	};
 	lintApiItem(apiModel, apiModel, optionsWithDefaults, errors);
-	const anyErrors = errors.malformedTagErrors.size > 0 || errors.referenceErrors.size > 0;
+	const anyErrors = errors.referenceErrors.size > 0;
 
 	logger.verbose("API model linting completed.");
 	logger.verbose(`Linting result: ${anyErrors ? "failure" : "success"}.`);
 
 	return anyErrors
 		? {
-				malformedTagErrors: errors.malformedTagErrors,
 				referenceErrors: errors.referenceErrors,
 		  }
 		: undefined;
@@ -257,19 +226,7 @@ function checkTagsUnderTsdocNode(
 		}
 		case DocNodeKind.InlineTag: {
 			assert(node instanceof DocInlineTag, 'Expected a "DocInlineTag" node.');
-
-			// If the tag is a "@link" tag, then the parser was unable to parse it correctly.
-			// This is indicative of a syntax error in the tag, and therefore should be reported.
-			if (node.tagName in ["@link", "@inheritDoc"]) {
-				errors.malformedTagErrors.add({
-					tagName: node.tagName,
-					tagContent: node.tagContent,
-					associatedItem: associatedItem.getScopedNameWithinPackage(),
-					packageName:
-						associatedItem.getAssociatedPackage()?.name ??
-						fail("Package name not found"),
-				});
-			}
+			// TODO: malformed tag errors
 			break;
 		}
 		case DocNodeKind.LinkTag: {
