@@ -183,7 +183,7 @@ export async function getBiomeFormattedFiles(
 	// Note that ignoreObject.filter expects the paths to be relative to the repo root.
 	const filtered = ignoreObject.filter(includedPaths);
 
-	// Convert directory-relative paths to absolute
+	// Convert repo-root-relative paths to absolute paths
 	const repoRoot = gitRepo.resolvedRoot;
 	return filtered.map((filePath) => path.resolve(repoRoot, filePath));
 }
