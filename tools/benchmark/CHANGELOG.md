@@ -8,7 +8,14 @@
 
 ## 0.49.0
 
+<<<<<<< HEAD
 Adds a feature to run benchmarks that log custom measurements. To use it, define tests using the `benchmarkCustom()` function. The `run` argument passed to the function is itself a function that will get passed a reporter object with an `addMeasurement()` method, that the test code can use to define custom data to report as the benchmark output. These custom-measurement benchmarks get the string `@CustomBenchmark` appended to their title, so they can be run selectively using `mocha`'s `fgrep` flag (e.g., @Benchmark, @CustomBenchmark, @MemoryUsage)
+=======
+Adds a feature to run benchmarks that log custom measurements.
+To use it, define tests using the `benchmarkCustom()` function.
+The `run` argument passed to the function is itself a function that will get passed a reporter object with an `addMeasurement()` method, that the test code can use to define custom data to report as the benchmark output.
+These custom-measurement benchmarks get the string `@CustomBenchmark` appended to their title, so they can be run selectively using `mocha`'s `fgrep` flag.
+>>>>>>> 04c6039841df5f890fb8824812284f49ce5945fd
 
 ### ⚠ BREAKING CHANGES
 
