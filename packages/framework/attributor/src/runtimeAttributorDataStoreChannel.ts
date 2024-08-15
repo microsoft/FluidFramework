@@ -32,10 +32,6 @@ import {
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	type IProvideRuntimeAttributor,
-	type IRuntimeAttributor,
-} from "./attributorContracts.js";
 import { RuntimeAttributor } from "./runtimeAttributor.js";
 
 /**
@@ -43,7 +39,7 @@ import { RuntimeAttributor } from "./runtimeAttributor.js";
  */
 export class RuntimeAttributorDataStoreChannel
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
-	implements IFluidDataStoreChannel, IProvideRuntimeAttributor
+	implements IFluidDataStoreChannel
 {
 	public constructor(
 		public readonly dataStoreContext: IFluidDataStoreContext,
@@ -77,10 +73,6 @@ export class RuntimeAttributorDataStoreChannel
 
 	public get IFluidDataStoreChannel(): IFluidDataStoreChannel {
 		return this;
-	}
-
-	public get IRuntimeAttributor(): IRuntimeAttributor {
-		return this.runtimeAttributor;
 	}
 
 	private _disposed = false;

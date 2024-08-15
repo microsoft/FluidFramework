@@ -14,7 +14,11 @@ import {
 	describeCompat,
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
@@ -26,6 +30,8 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	createSummarizer,
+	summarizeNow,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
@@ -112,7 +118,11 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 		return dataObject.getSharedObject<SharedString>(stringId);
 	};
 
-	const getTestConfig = (enable: boolean = false): ITestContainerConfig => ({
+	const getTestConfig = (
+		enable: boolean = false,
+		summaryVersion?: string,
+		disableSummaries: boolean = true,
+	): ITestContainerConfig => ({
 		...testContainerConfig,
 		enableAttribution: enable,
 		loaderProps: {
@@ -126,8 +136,18 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 					track: enable,
 					policyFactory: createInsertOnlyAttributionPolicy,
 				},
+				[LoaderHeader.version]: summaryVersion,
 			} as any,
 		},
+		runtimeOptions: disableSummaries
+			? {
+					summaryOptions: {
+						summaryConfigOverrides: {
+							state: "disabled",
+						},
+					},
+				}
+			: undefined,
 	});
 
 	const getAttributorFromContainer = async (container: IContainer) => {
@@ -135,6 +155,13 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 		const containerRuntime = dataStore.context.containerRuntime as ContainerRuntime;
 		const attributor = await getRuntimeAttributor(containerRuntime);
 		assert(attributor !== undefined, "Attributor should be defined");
+		return attributor;
+	};
+
+	const getAttributorFromContainerWithNoAssert = async (container: IContainer) => {
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const containerRuntime = dataStore.context.containerRuntime as ContainerRuntime;
+		const attributor = await getRuntimeAttributor(containerRuntime);
 		return attributor;
 	};
 
@@ -222,5 +249,75 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 			user: container1.audience.getMember(container2.clientId)?.user,
 		});
 		assertAttributionMatches(sharedString2, 13, attributor2, "detached");
+	});
+
+	it("repopulates attribution association data using the summary tree", async () => {
+		const container1 = await provider.makeTestContainer(getTestConfig(true));
+		const sharedString1 = await sharedStringFromContainer(container1);
+		const attributor1 = await getAttributorFromContainer(container1);
+
+		const text = "client 1";
+		sharedString1.insertText(0, text);
+		// await container1.attach(provider.driver.createCreateNewRequest("doc id"));
+		await provider.ensureSynchronized();
+		sharedString1.insertText(0, "client 2, ");
+		await provider.ensureSynchronized();
+
+		const summarizer = await createSummarizer(
+			provider,
+			container1,
+			getTestConfig(true, undefined, false),
+		);
+		await provider.ensureSynchronized();
+		const summaryResult = await summarizeNow(summarizer.summarizer);
+
+		const container2 = await provider.loadTestContainer(
+			getTestConfig(true, summaryResult.summaryVersion),
+		);
+		const sharedString2 = await sharedStringFromContainer(container2);
+		const attributor2 = await getAttributorFromContainer(container2);
+
+		assert(
+			container1.clientId !== undefined && container2.clientId !== undefined,
+			"Both containers should have client ids.",
+		);
+		assertAttributionMatches(sharedString1, 3, attributor1, {
+			user: container1.audience.getMember(container1.clientId)?.user,
+		});
+		assertAttributionMatches(sharedString1, 13, attributor1, {
+			user: container1.audience.getMember(container1.clientId)?.user,
+		});
+		assertAttributionMatches(sharedString2, 3, attributor2, {
+			user: container1.audience.getMember(container1.clientId)?.user,
+		});
+		assertAttributionMatches(sharedString2, 13, attributor2, {
+			user: container1.audience.getMember(container1.clientId)?.user,
+		});
+	});
+
+	it("New documents should not have attributor if enableOnNewFileKey is false", async () => {
+		const container1 = await provider.makeTestContainer(getTestConfig(false));
+		const attributor1 = await getAttributorFromContainerWithNoAssert(container1);
+		assert(attributor1 === undefined, "Attributor should be undefined");
+	});
+
+	it("New documents should not have attributor if enableOnNewFileKey is undefined", async () => {
+		const container1 = await provider.makeTestContainer(getTestConfig(undefined));
+		const attributor1 = await getAttributorFromContainerWithNoAssert(container1);
+		assert(attributor1 === undefined, "Attributor should be undefined");
+	});
+
+	it("Existing documents should not have attributor if enableOnNewFileKey is true", async () => {
+		await provider.makeTestContainer(getTestConfig(false));
+		const container2 = await provider.loadTestContainer(getTestConfig(true));
+		const attributor2 = await getAttributorFromContainerWithNoAssert(container2);
+		assert(attributor2 === undefined, "Attributor should be undefined");
+	});
+
+	it("Existing documents should not have attributor if enableOnNewFileKey is false", async () => {
+		await provider.makeTestContainer(getTestConfig(false));
+		const container2 = await provider.loadTestContainer(getTestConfig(false));
+		const attributor2 = await getAttributorFromContainerWithNoAssert(container2);
+		assert(attributor2 === undefined, "Attributor should be undefined");
 	});
 });
