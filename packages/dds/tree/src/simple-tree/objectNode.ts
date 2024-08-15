@@ -321,9 +321,18 @@ export function objectSchema<
 
 	class CustomObjectNode extends CustomObjectNodeBase<T> {
 		public static readonly fields: ReadonlyMap<string, FieldSchema> = new Map(
-			[...flexKeyMap].map(([key, value]) => [key as string, value.schema]),
+			Array.from(flexKeyMap, ([key, value]) => [key as string, value.schema]),
 		);
 		public static readonly flexKeyMap: SimpleKeyMap = flexKeyMap;
+		public static readonly storedKeyToPropertyKey: ReadonlyMap<FieldKey, string> = new Map<
+			FieldKey,
+			string
+		>(
+			Array.from(flexKeyMap, ([key, value]): [FieldKey, string] => [
+				value.storedKey,
+				key as string,
+			]),
+		);
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
