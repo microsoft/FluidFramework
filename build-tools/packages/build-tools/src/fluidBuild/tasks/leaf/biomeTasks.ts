@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BiomeConfig } from "../../../common/biomeConfig";
+import { BiomeConfigReader } from "../../../common/biomeConfig";
 import { getResolvedFluidRoot } from "../../../common/fluidUtils";
 import { GitRepo } from "../../../common/gitRepo";
 import { LeafWithFileStatDoneFileTask } from "./leafTask";
@@ -25,7 +25,7 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	private readonly repoRoot = getResolvedFluidRoot(true);
 	private readonly gitRepo = this.repoRoot.then((repoRoot) => new GitRepo(repoRoot));
 	private readonly biomeConfig = this.gitRepo.then((gitRepo) =>
-		BiomeConfig.create(this.node.pkg.directory, gitRepo),
+		BiomeConfigReader.create(this.node.pkg.directory, gitRepo),
 	);
 
 	/**

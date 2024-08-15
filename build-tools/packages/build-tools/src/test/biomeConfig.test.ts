@@ -10,10 +10,11 @@
 import assert from "node:assert/strict";
 import path from "node:path";
 import {
-	BiomeConfig,
+	BiomeConfigReader,
 	getBiomeFormattedFilesFromDirectory,
 	getSettingValuesFromBiomeConfig,
 	loadBiomeConfig,
+	type BiomeConfigResolved,
 } from "../common/biomeConfig";
 import type { Configuration as BiomeConfigOnDisk } from "../common/biomeConfigTypes";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
@@ -21,14 +22,16 @@ import { GitRepo } from "../common/gitRepo";
 import { testDataPath } from "./init";
 
 describe("Biome config loading", async () => {
-	describe("BiomeConfig class", async () => {
+	describe("BiomeConfigReader class", async () => {
+		// These variables need to be initialized once for all the tests in this describe block. Defining them outside
+		// of the before block causes the tests to be skipped.
 		let gitRepo: GitRepo;
-		let config: BiomeConfig;
+		let config: BiomeConfigReader;
 		before(async () => {
 			const testDir = path.resolve(testDataPath, "biome/pkg-b");
 			const repoRoot = await getResolvedFluidRoot(true);
 			gitRepo = new GitRepo(repoRoot);
-			config = await BiomeConfig.create(testDir, gitRepo);
+			config = await BiomeConfigReader.create(testDir, gitRepo);
 		});
 
 		it("loads", async () => {
@@ -145,7 +148,9 @@ describe("Biome config loading", async () => {
 
 	describe("getSettingValuesFromBiomeConfig", async () => {
 		describe("extends from a single config", async () => {
-			let testConfig: BiomeConfigOnDisk;
+			// These variables need to be initialized once for all the tests in this describe block. Defining them outside
+			// of the before block causes the tests to be skipped.
+			let testConfig: BiomeConfigResolved;
 			before(async () => {
 				const testFile = path.resolve(testDataPath, "biome/pkg-a/biome.jsonc");
 				testConfig = await loadBiomeConfig(testFile);

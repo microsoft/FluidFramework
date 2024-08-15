@@ -10,19 +10,25 @@ import ignore from "ignore";
 import * as JSON5 from "json5";
 import multimatch from "multimatch";
 import { merge } from "ts-deepmerge";
-import type { Configuration as BiomeConfigOnDisk } from "./biomeConfigTypes";
+import type { Configuration as BiomeConfigRaw } from "./biomeConfigTypes";
 import type { GitRepo } from "./gitRepo";
 
 // switch to regular import once building ESM
 const findUp = import("find-up");
 
 /**
+ * Convenience type to represent a Biome config that has been loaded while following and merging the
+ * "extends" values. This helps differentiate between the single loaded configs and the fully resolved config.
+ */
+export type BiomeConfigResolved = BiomeConfigRaw;
+
+/**
  * Loads a Biome configuration file _without_ following any 'extends' values. You probably want to use
  * {@link loadBiomeConfigs} instead of this function.
  */
-async function loadRawBiomeConfig(configPath: string): Promise<BiomeConfigOnDisk> {
+async function loadRawBiomeConfig(configPath: string): Promise<BiomeConfigRaw> {
 	const contents = await readFile(configPath, "utf8");
-	const config: BiomeConfigOnDisk = JSON5.parse(contents);
+	const config: BiomeConfigRaw = JSON5.parse(contents);
 	return config;
 }
 
@@ -57,14 +63,18 @@ export async function getAllBiomeConfigPaths(configPath: string): Promise<string
  * The intent is to merge the configs in the same way that Biome itself does, but the implementation is based on the
  * Biome documentation, so there may be subtle differences unaccounted for. Where this implementation diverges from
  * Biome's behavior, this function should be considered incorrect.
- *
  */
-export async function loadBiomeConfig(configPath: string): Promise<BiomeConfigOnDisk> {
+export async function loadBiomeConfig(configPath: string): Promise<BiomeConfigResolved> {
 	const allConfigPaths = await getAllBiomeConfigPaths(configPath);
 	return loadBiomeConfigs(allConfigPaths);
 }
 
-export async function loadBiomeConfigs(allConfigPaths: string[]): Promise<BiomeConfigOnDisk> {
+/**
+ * Loads a set of Biome configs, such as that returned by {@link getAllBiomeConfigPaths}. The configs are loaded
+ * recursively and the results are merged. Array-type values are not merged, in accordance with how Biome applies
+ * configs.
+ */
+async function loadBiomeConfigs(allConfigPaths: string[]): Promise<BiomeConfigResolved> {
 	const allConfigs = await Promise.all(
 		allConfigPaths.map((pathToConfig) => loadRawBiomeConfig(pathToConfig)),
 	);
@@ -88,7 +98,7 @@ export type BiomeConfigSection = "formatter" | "linter";
  * and 'linter' sections in the config.
  */
 export async function getSettingValuesFromBiomeConfig(
-	config: BiomeConfigOnDisk,
+	config: BiomeConfigRaw,
 	section: BiomeConfigSection,
 	kind: BiomeIncludeIgnore,
 ): Promise<Set<string>> {
@@ -120,6 +130,16 @@ export async function getClosestBiomeConfigPath(
 		});
 }
 
+/**
+ * Return an array of absolute paths to files that Biome would format under the provided path. Note that .gitignored
+ * paths are always excluded, regardless of the "vcs" setting in the Biome configuration.
+ *
+ * @param directoryOrConfigFile - A path to a directory or a Biome config file. If a directory is provided, then the
+ * closest Biome configuration will be loaded and used. If a path to a file is provided, it is assumed to be a Biome
+ * config file and will be loaded as such. The directory containing the config file will be used as the working
+ * directory when applying the Biome include/ignore settings.
+ * @param gitRepo - A GitRepo instance that is used to enumerate files.
+ */
 export async function getBiomeFormattedFilesFromDirectory(
 	directoryOrConfigFile: string,
 	gitRepo: GitRepo,
@@ -148,14 +168,12 @@ export async function getBiomeFormattedFilesFromDirectory(
  * Return an array of absolute paths to files that Biome would format under the provided path. Note that .gitignored
  * paths are always excluded, regardless of the "vcs" setting in the Biome configuration.
  *
- * @param directoryOrConfigFile - A path to a directory or a Biome config file. If a directory is provided, then the
- * closest Biome configuration will be loaded and used. If a path to a file is provided, it is assumed to be a Biome
- * config file and will be loaded as such. The directory containing the config file will be used as the working
- * directory when applying the Biome include/ignore settings.
+ * @param config - A resolved/merged Biome config.
+ * @param directory - The directory containing files to be formatted.
  * @param gitRepo - A GitRepo instance that is used to enumerate files.
  */
 export async function getBiomeFormattedFiles(
-	config: BiomeConfigOnDisk,
+	config: BiomeConfigResolved,
 	directory: string,
 	gitRepo: GitRepo,
 ): Promise<string[]> {
@@ -203,7 +221,7 @@ export async function getBiomeFormattedFiles(
  * files. Using this class can be more convenient than using the free functions, especially when you need access to all
  * the configs and formatted files.
  */
-export class BiomeConfig {
+export class BiomeConfigReader {
 	private _allConfigs: string[] | undefined;
 	public get allConfigs(): string[] {
 		return this._allConfigs ?? [];
@@ -230,8 +248,8 @@ export class BiomeConfig {
 	/**
 	 * Create a BiomeConfig instance rooted in the provided directory.
 	 */
-	public static async create(directory: string, gitRepo: GitRepo): Promise<BiomeConfig> {
-		const config = new BiomeConfig(directory);
+	public static async create(directory: string, gitRepo: GitRepo): Promise<BiomeConfigReader> {
+		const config = new BiomeConfigReader(directory);
 		const initialConfig = await getClosestBiomeConfigPath(directory);
 		if (initialConfig === undefined) {
 			throw new Error(`No Biome config found in ${directory}`);
