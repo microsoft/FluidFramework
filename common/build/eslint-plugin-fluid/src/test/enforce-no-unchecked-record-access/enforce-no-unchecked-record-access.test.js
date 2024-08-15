@@ -27,36 +27,45 @@ describe("ESLint Rule Tests", function () {
 		return results[0];
 	}
 
-	it.only("Should report an error for unchecked record access", async function () {
+	it("Should report an error for unchecked record access", async function () {
 		const result = await lintFile("fileWithOnlyRecordAccess.ts");
-		assert.strictEqual(result.errorCount, 7, "Should have 7 errors");
+		console.log(result);
+		assert.strictEqual(result.errorCount, 9, "Should have 9 errors");
 		assert.strictEqual(
 			result.messages[0].message,
-			"'nestedObj.nested.a' is possibly 'undefined'",
+			"'nullableIndexedRecord.a' is possibly 'undefined'",
 		);
 		assert.strictEqual(
 			result.messages[1].message,
-			"'indexedRecordOfStrings.a' is possibly 'undefined'",
+			"'nestedObj.nested.a' is possibly 'undefined'",
 		);
 		assert.strictEqual(
 			result.messages[2].message,
-			"'indexedRecordOfStrings[\"a\"]' is possibly 'undefined'",
+			"'indexedRecordOfStrings.a' is possibly 'undefined'",
 		);
 		assert.strictEqual(
 			result.messages[3].message,
-			"'indexedRecordOfStrings[a]' is possibly 'undefined'",
+			"'indexedRecordOfStrings[\"a\"]' is possibly 'undefined'",
 		);
 		assert.strictEqual(
 			result.messages[4].message,
-			"'indexedRecordOfStrings[b]' is possibly 'undefined'",
+			"'indexedRecordOfStrings[a]' is possibly 'undefined'",
 		);
 		assert.strictEqual(
 			result.messages[5].message,
-			"'indexedRecordOfStrings.a' is possibly 'undefined'. The variable expects a non-optional type",
+			"'indexedRecordOfStrings[b]' is possibly 'undefined'",
 		);
 		assert.strictEqual(
 			result.messages[6].message,
+			"'indexedRecordOfStrings.a' is possibly 'undefined'",
+		);
+		assert.strictEqual(
+			result.messages[7].message,
 			"Implicit typing for 'indexedRecordOfStrings.a' from an index signature type is not allowed. Please provide an explicit type annotation or enable noUncheckedIndexedAccess",
+		);
+		assert.strictEqual(
+			result.messages[8].message,
+			"'indexedRecordOfStrings.a' is possibly 'undefined'",
 		);
 	});
 

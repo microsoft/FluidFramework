@@ -14,6 +14,12 @@ interface NestedIndexProps {
 }
 type StaticType = { a: string; b: string };
 type IndexSignatureType = { [key: string]: string };
+type NullableIndexSignatureType = { [key: string]: string | undefined | null };
+const nullableIndexedRecord: NullableIndexSignatureType = { a: "hello", b: undefined, c: null };
+nullableIndexedRecord.a; // ok: Accessing index property 'a' without requiring a particular result
+nullableIndexedRecord.a.length; // defect: Accessing length of index property 'a', but 'a' might be undefined or null
+nullableIndexedRecord.b?.length; // ok: Using optional chaining to access length safely handles 'undefined'
+nullableIndexedRecord.c?.length; // ok: Using optional chaining to access length safely handles 'null'
 
 const nestedObj: NestedIndexProps = { nested: { a: "hello" } };
 nestedObj.nested.a; // ok: Accessing nested index property 'a' without requiring a particular result
@@ -21,7 +27,9 @@ nestedObj.nested.a.length; // defect: Accessing length of a nested possibly unde
 
 const a = "a";
 const b = "b";
-const c = "c";
+/*
+ * The following lint rule should not apply to static types, since they are guaranteed to have the properties they define.
+ */
 const someObjWithStaticType: StaticType = { a: "hello", b: "goodbye" };
 someObjWithStaticType.a; // ok: Accessing string property 'a'
 someObjWithStaticType.a.length; // ok: Accessing length of string property 'a'
@@ -52,8 +60,16 @@ if ("a" in indexedRecordOfStrings) {
 	indexedRecordOfStrings.a.length; // ok: Accessing length of property inside an 'in' check, 'a' is guaranteed to be defined
 }
 
+function recordAFn(record: IndexSignatureType): string {
+	return record.a; // defect: Returning index property 'a' directly, but 'a' might not be present
+}
+
 for (const [key, value] of Object.entries(indexedRecordOfStrings)) {
 	value.length; // ok: Object.entries provides only present values
+	indexedRecordOfStrings[key]; // ok: Accessing property while looping though records which acts like a `has` property check
+	indexedRecordOfStrings[key].length; // ok: Accessing property while looping though records which acts like a `has` property check
+}
+for (const key of Object.keys(indexedRecordOfStrings)) {
 	indexedRecordOfStrings[key]; // ok: Accessing property while looping though records which acts like a `has` property check
 	indexedRecordOfStrings[key].length; // ok: Accessing property while looping though records which acts like a `has` property check
 }
@@ -64,6 +80,9 @@ const aImplicitType = indexedRecordOfStrings.a; // defect: Assigning index prope
 aImplicitType.length; // ok: This should be caught by tsc, not by this custom lint rule
 aImplicitType?.length; // ok: This should be caught by tsc, not by this custom lint rule
 aImplicitType!.length; // ok: This should be caught by tsc, not by this custom lint rule
+
+let aLetExpectingString: string = indexedRecordOfStrings.a; // defect: Assigning index property 'a' to a strict string variable, but 'a' might not be present
+let aLetExpectingStringOrUndefined: string | undefined = indexedRecordOfStrings.a; // ok: Assigning index property 'a' to string or undefined variable, 'a' might not be present
 
 interface NonNullableProps {
 	definitelyString: string;
@@ -76,3 +95,5 @@ nonNullObj.maybeString.length; // ok: This should be caught by tsc, not by this 
 
 let possiblyUndefined: string | undefined;
 possiblyUndefined = nonNullObj.maybeString; // ok: Assigning optional property to variable of type 'string | undefined'
+// @ts-expect-error: This access might cause an error, but it's expected
+const value = indexedRecordOfStrings.a.length;
