@@ -16,7 +16,7 @@ import type { NodeKind, TreeNodeSchemaClass } from "./treeNodeSchema.js";
  * Instead construct a real node of the desired type using its constructor.
  * @privateRemarks
  * This prevents non-nodes from being accidentally used as nodes, as well as allows the type checker to distinguish different node types.
- * @deprecated External code should use `Tree.schema(theNode)` for runtime data access, and for typechecking and internally {@link typeSchemaSymbol} provides a superset of this functionality.
+ * @deprecated External code should use `Tree.schema(theNode)` for schema related runtime data access. For type narrowing, use `WithType` instead of the symbols directly.
  * @system @public
  */
 export const typeNameSymbol: unique symbol = Symbol("TreeNode Type");
@@ -28,8 +28,10 @@ export const typeNameSymbol: unique symbol = Symbol("TreeNode Type");
  * This symbol mainly exists on nodes to allow TypeScript to provide more accurate type checking.
  * `Tree.is` and `Tree.schema` provide a superset of this information in more friendly ways.
  *
- * This symbol should not manually be added to objects as doing so allows the object to be invalidly used where nodes are expected.
+ * This symbol should not manually be added to objects as doing so allows the object to be invalidly used where specific nodes are expected.
  * Instead construct a real node of the desired type using its constructor.
+ *
+ * This symbol should not be used directly for type narrowing. Instead use {@link WithType}.
  * @privateRemarks
  * This prevents non-nodes from being accidentally used as nodes and allows the type-checker to distinguish different node types.
  * @system @public
@@ -38,22 +40,47 @@ export const typeSchemaSymbol: unique symbol = Symbol("TreeNode Schema");
 
 /**
  * Adds a type symbol to a type for stronger typing.
+ *
+ * @typeParam TName - Same as {@link TreeNodeSchema}'s "Name" parameter.
+ * @typeParam TKind - Same as {@link TreeNodeSchema}'s "Kind" parameter.
  * @remarks
- * An implementation detail of {@link TreeNode}'s strong typing setup: not intended for direct use outside of this package.
+ * Powers {@link TreeNode}'s strong typing setup.
+ * @example Narrow types for overloading based on NodeKind
+ * ```typescript
+ * function getKeys(node: TreeNode & WithType<string, NodeKind.Array>): number[];
+ * function getKeys(node: TreeNode & WithType<string, NodeKind.Map | NodeKind.Object>): string[];
+ * function getKeys(node: TreeNode): string[] | number[];
+ * function getKeys(node: TreeNode): string[] | number[] {
+ * 	const schema = Tree.schema(node);
+ * 	if (schema.kind === NodeKind.Array) {
+ * 		const arrayNode = node as TreeArrayNode;
+ * 		const keys: number[] = [];
+ * 		for (let index = 0; index < arrayNode.length; index++) {
+ * 			keys.push(index);
+ * 		}
+ * 		return keys;
+ * 	}
+ * 	if (schema.kind === NodeKind.Map) {
+ * 		return [...(node as TreeMapNode).keys()];
+ * 	}
+ *
+ * 	return Object.keys(node);
+ * }
+ * ```
  * @sealed @public
  */
 export interface WithType<
-	out Name extends string = string,
-	out Kind extends NodeKind = NodeKind,
+	out TName extends string = string,
+	out TKind extends NodeKind = NodeKind,
 > {
 	/**
 	 * Type symbol, marking a type in a way to increase type safety via strong type checking.
 	 * @deprecated Use {@link typeSchemaSymbol} instead.
 	 */
-	get [typeNameSymbol](): Name;
+	get [typeNameSymbol](): TName;
 
 	/**
 	 * Type symbol, marking a type in a way to increase type safety via strong type checking.
 	 */
-	get [typeSchemaSymbol](): TreeNodeSchemaClass<Name, Kind>;
+	get [typeSchemaSymbol](): TreeNodeSchemaClass<TName, TKind>;
 }

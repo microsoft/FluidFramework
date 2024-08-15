@@ -1317,10 +1317,10 @@ export type ValidateRecursiveSchema<T extends TreeNodeSchemaClass<string, NodeKi
 }[T["kind"]]>> = true;
 
 // @public @sealed
-export interface WithType<out Name extends string = string, out Kind extends NodeKind = NodeKind> {
+export interface WithType<out TName extends string = string, out TKind extends NodeKind = NodeKind> {
     // @deprecated
-    get [typeNameSymbol](): Name;
-    get [typeSchemaSymbol](): TreeNodeSchemaClass<Name, Kind>;
+    get [typeNameSymbol](): TName;
+    get [typeSchemaSymbol](): TreeNodeSchemaClass<TName, TKind>;
 }
 
 ```
