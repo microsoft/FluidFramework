@@ -63,7 +63,7 @@ export function convertSummaryTreeToWholeSummaryTree(parentHandle: string | unde
 // @internal
 export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(flatSummary: IWholeFlatSummary, treePrefixToRemove?: string): INormalizedWholeSummary;
 
-// @internal (undocumented)
+// @internal
 export const CorrelationIdHeaderName = "x-correlation-id";
 
 // @internal
@@ -78,7 +78,7 @@ export const defaultHash = "00000000";
 // @internal
 export const DocDeleteScopeType = "doc:delete";
 
-// @internal (undocumented)
+// @internal
 export const DriverVersionHeaderName = "x-driver-version";
 
 // @internal (undocumented)
@@ -647,7 +647,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
     writeSummaryTree(summaryTree: ISummaryTree_2, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number, initial?: boolean): Promise<string>;
 }
 
-// @internal (undocumented)
+// @internal
 export const TelemetryContextHeaderName = "x-telemetry-context";
 
 // @internal
