@@ -24,20 +24,13 @@ import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import type { OptionOverride, TestConfiguration } from "./testConfigFile.js";
 
 // eslint-disable-next-line import/no-deprecated
-interface ILoaderOptionsExperimental extends ILoaderOptions {
-	enableOfflineSnapshotRefresh?: boolean;
-	snapshotRefreshTimeoutMs?: number;
-}
-
-const loaderOptionsMatrix: OptionsMatrix<ILoaderOptionsExperimental> = {
-	cache: booleanCases,
+const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
+	cache: [undefined],
 	client: [undefined],
-	provideScopeLoader: booleanCases,
-	maxClientLeaveWaitTime: numberCases,
+	provideScopeLoader: [undefined],
+	maxClientLeaveWaitTime: [undefined],
 	summarizeProtocolTree: [undefined],
 	enableOfflineLoad: booleanCases,
-	enableOfflineSnapshotRefresh: booleanCases,
-	snapshotRefreshTimeoutMs: [undefined, 60 * 5 * 1000 /* 5min */],
 };
 
 export function applyOverrides<T extends Record<string, any>>(
@@ -66,9 +59,12 @@ export function applyOverrides<T extends Record<string, any>>(
 
 export const generateLoaderOptions = (
 	seed: number,
-	overrides: Partial<OptionsMatrix<ILoaderOptionsExperimental>> | undefined,
-): ILoaderOptionsExperimental[] => {
-	return generatePairwiseOptions<ILoaderOptionsExperimental>(
+	// eslint-disable-next-line import/no-deprecated
+	overrides: Partial<OptionsMatrix<ILoaderOptions>> | undefined,
+	// eslint-disable-next-line import/no-deprecated
+): ILoaderOptions[] => {
+	// eslint-disable-next-line import/no-deprecated
+	return generatePairwiseOptions<ILoaderOptions>(
 		applyOverrides(loaderOptionsMatrix, overrides),
 		seed,
 	);
