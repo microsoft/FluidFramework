@@ -2704,7 +2704,7 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("ignores in-flight signals on disconnect", () => {
+			it("ignores in-flight signals on disconnect/reconnect", () => {
 				// Send 5 signals
 				sendSignals(4);
 
