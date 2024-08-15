@@ -160,10 +160,6 @@ export async function getBiomeFormattedFiles(
 	// "At the moment, Biome uses a glob library that treats all globs as having a **/ prefix.
 	// This means that src/**/*.js and **/src/**/*.js are treated as identical. They match both src/file.js and
 	// test/src/file.js. This is something we plan to fix in Biome v2.0.0."
-	//
-	// In addition, in order to get globby to honor _all_ the .gitignore files, we prefix the pattern with the directory,
-	// effectively making the include globs repo-relative. Then we can set the globby working directory to the repo root
-	// and it will obey all the gitignore settings from the root down.
 	const prefixedIncludes = [...includeEntries].map((glob) => `**/${glob}`);
 	const prefixedIgnores = [...ignoreEntries].map((glob) => `**/${glob}`);
 
