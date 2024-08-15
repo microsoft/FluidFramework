@@ -1573,7 +1573,6 @@ export class ContainerRuntime
 			{
 				applyStashedOp: this.applyStashedOp.bind(this),
 				clientId: () => this.clientId,
-				close: this.closeFn,
 				connected: () => this.connected,
 				reSubmitBatch: this.reSubmitBatch.bind(this),
 				isActiveConnection: () => this.innerDeltaManager.active,
