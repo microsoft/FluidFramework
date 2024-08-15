@@ -1183,11 +1183,6 @@ export class FluidDataStoreRuntime
 			return;
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-		const originalStackTraceLimit = (Error as any).stackTraceLimit;
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-		(Error as any).stackTraceLimit = 30;
-
 		// Log a telemetry if there are local changes in the summarizer. This will give us data on how often
 		// this is happening and which data stores do this. The eventual goal is to disallow local changes
 		// in the summarizer and the data will help us plan this.
@@ -1199,12 +1194,8 @@ export class FluidDataStoreRuntime
 				fluidDataStoreId: this.id,
 				fluidDataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
 			}),
-			stack: generateStack(),
+			stack: generateStack(30),
 		});
-
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-		(Error as any).stackTraceLimit = originalStackTraceLimit;
-
 		this.localChangesTelemetryCount--;
 	}
 
