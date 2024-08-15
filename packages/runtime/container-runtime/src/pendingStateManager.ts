@@ -410,8 +410,6 @@ export class PendingStateManager implements IDisposable {
 			const messageContent = buildPendingMessageContent(message);
 
 			// Stringified content should match
-			// especially now that we're comparing batch info at batch start.
-			// We do see some rare cases of this in production, we will see whether batchInfo matches or not in those cases.
 			if (pendingMessage.content !== messageContent) {
 				const pendingContentObj = JSON.parse(
 					pendingMessage.content,
@@ -448,8 +446,7 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	/**
-	 * Validate that the incoming batch matches the batch info for the next pending message.
-	 *
+	 * Check if the incoming batch matches the batch info for the next pending message.
 	 */
 	private onLocalBatchBegin(batch: InboundBatch) {
 		// Get the next message from the pending queue. Verify a message exists.
@@ -466,37 +463,26 @@ export class PendingStateManager implements IDisposable {
 		const firstMessage = batch.messages.length > 0 ? batch.messages[0] : undefined;
 
 		// We expect the incoming batch to be of the same length, starting at the same clientSequenceNumber,
-		// as the batch we originally submitted.  If not, bail - we can't continue processing.
+		// as the batch we originally submitted.
+		// We have another later check to compare the message contents, which we'd expect to fail if this check does,
+		// so we don't throw here, merely log.  In a later release this check may replace that one.
 		if (
 			pendingMessage.batchInfo.batchStartCsn !== batch.batchStartCsn ||
 			(pendingMessage.batchInfo.length >= 0 && // -1 length is back compat and isn't suitable for this check
 				pendingMessage.batchInfo.length !== batch.messages.length)
 		) {
-			const error = DataProcessingError.create(
-				"pending local message batch info mismatch",
-				"PendingBatchInfoMismatch",
-				firstMessage,
-			);
-
-			this.logger?.sendErrorEvent(
-				{
-					eventName: "BatchInfoMismatch",
-					details: {
-						pendingBatchCsn: pendingMessage.batchInfo.batchStartCsn,
-						batchStartCsn: batch.batchStartCsn,
-						pendingBatchLength: pendingMessage.batchInfo.length,
-						batchLength: batch.messages.length,
-						pendingMessageBatchMetadata: asBatchMetadata(pendingMessage.opMetadata)?.batch,
-						messageBatchMetadata: asBatchMetadata(firstMessage?.metadata)?.batch,
-					},
-					messageDetails: firstMessage && extractSafePropertiesFromMessage(firstMessage),
+			this.logger?.sendErrorEvent({
+				eventName: "BatchInfoMismatch",
+				details: {
+					pendingBatchCsn: pendingMessage.batchInfo.batchStartCsn,
+					batchStartCsn: batch.batchStartCsn,
+					pendingBatchLength: pendingMessage.batchInfo.length,
+					batchLength: batch.messages.length,
+					pendingMessageBatchMetadata: asBatchMetadata(pendingMessage.opMetadata)?.batch,
+					messageBatchMetadata: asBatchMetadata(firstMessage?.metadata)?.batch,
 				},
-				error,
-			);
-
-			//* TODO: Decide control flow.  Throw only?  Return bool and early return from caller?
-			this.stateHandler.close(error);
-			throw error;
+				messageDetails: firstMessage && extractSafePropertiesFromMessage(firstMessage),
+			});
 		}
 	}
 
