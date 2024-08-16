@@ -30,8 +30,10 @@ import {
 	type TreeNodeSchemaClass,
 	type TreeNodeSchema,
 	type WithType,
+	// eslint-disable-next-line import/no-deprecated
 	typeNameSymbol,
 	type TreeNode,
+	typeSchemaSymbol,
 } from "./core/index.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import { getFlexSchema } from "./toFlexSchema.js";
@@ -253,14 +255,18 @@ export function mapSchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 
+		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
 			return identifier;
+		}
+		public get [typeSchemaSymbol](): typeof schemaErased {
+			return schema.constructorCached?.constructor as unknown as typeof schemaErased;
 		}
 	}
 	const schemaErased: TreeNodeSchemaClass<
 		TName,
 		NodeKind.Map,
-		TreeMapNode<T> & WithType<TName>,
+		TreeMapNode<T> & WithType<TName, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
 		T
