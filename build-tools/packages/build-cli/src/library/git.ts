@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { existsSync } from "node:fs";
+import { stat } from "node:fs/promises";
 import path from "node:path";
 import { Package } from "@fluidframework/build-tools";
 import readPkgUp from "read-pkg-up";
@@ -215,8 +215,11 @@ export class Repository {
 	 * Returns an array containing repo repo-relative paths to all the files in the provided directory.
 	 * A given path will only be included once in the array; that is, there will be no duplicate paths.
 	 * Note that this function excludes files that are deleted locally whether the deletion is staged or not.
+	 *
+	 * @param directory - A directory to filter the results by. Only files under this directory will be returned. To
+	 * return all files in the repo use the value `"."`.
 	 */
-	public async getFiles(): Promise<string[]> {
+	public async getFiles(directory: string): Promise<string[]> {
 		const results = await this.gitClient.raw(
 			"ls-files",
 			// Includes cached (staged) files.
@@ -229,16 +232,25 @@ export class Repository {
 			"--deduplicate",
 			// Shows the full path of the files relative to the repository root.
 			"--full-name",
+			"--",
+			directory,
 		);
-		const files = results
-			.split("\n")
-			.map((line) => line.trim())
-			// Deleted files that are _unstaged_ will still be in the ls-files results, so filter out missing files.
-			.filter((file) => {
+		const allFiles = results.split("\n").map((line) => line.trim());
+
+		/**
+		 * An array containing a boolean value for each file path indicating whether it exists. Deleted files that are
+		 * _unstaged_ will still be in the ls-files results, so this array is used to filter out missing files.
+		 */
+		const existences = await Promise.all(
+			allFiles.map(async (file) => {
 				// Use absolute path to ensure consistent behavior regardless of working directory.
 				const absPath = path.resolve(this.baseDir, file);
-				return existsSync(absPath);
-			});
+				return stat(absPath)
+					.then(() => true)
+					.catch(() => false);
+			}),
+		);
+		const files = allFiles.filter((_file, index) => existences[index]);
 		// Files are already repo root-relative
 		return files;
 	}

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { stat } from "node:fs/promises";
 import path from "node:path";
 import { parseISO } from "date-fns";
 import registerDebug from "debug";
-import { existsSync } from "node:fs";
 import { exec, execNoError } from "./utils";
 
 const traceGitRepo = registerDebug("fluid-build:gitRepo");
@@ -238,17 +238,24 @@ export class GitRepo {
 		 */
 		const command = `ls-files --cached --others --exclude-standard --deduplicate --full-name -- ${directory}`;
 		const results = await this.exec(command, `get files`);
-		return (
-			results
-				.split("\n")
-				.map((line) => line.trim())
-				// Deleted files that are _unstaged_ will still be in the ls-files results, so filter out missing files.
-				.filter((file) => {
-					// Use absolute path to ensure consistent behavior regardless of working directory.
-					const absPath = path.resolve(this.resolvedRoot, file);
-					return existsSync(absPath);
-				})
+		const allFiles = results.split("\n").map((line) => line.trim());
+
+		/**
+		 * An array containing a boolean value for each file path indicating whether it exists. Deleted files that are
+		 * _unstaged_ will still be in the ls-files results, so this array is used to filter out missing files.
+		 */
+		const existences = await Promise.all(
+			allFiles.map(async (file) => {
+				// Use absolute path to ensure consistent behavior regardless of working directory.
+				const absPath = path.resolve(this.resolvedRoot, file);
+				return stat(absPath)
+					.then(() => true)
+					.catch(() => false);
+			}),
 		);
+		const files = allFiles.filter((_file, index) => existences[index]);
+		// Files are already repo root-relative
+		return files;
 	}
 
 	/**

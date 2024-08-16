@@ -10,7 +10,6 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import { EOL as newline } from "node:os";
 import path from "node:path";
-import * as readline from "node:readline";
 import { writeJson } from "fs-extra/esm";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
@@ -24,6 +23,7 @@ import {
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
 } from "@fluidframework/build-tools";
+import { Repository } from "../git.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
 import { Handler, readFile, writeFile } from "./common.js";
 
@@ -354,47 +354,25 @@ function getReadmeInfo(dir: string): IReadmeInfo {
 }
 
 let computedPrivatePackages: Set<string> | undefined;
-function ensurePrivatePackagesComputed(): Set<string> {
-	if (computedPrivatePackages) {
+async function ensurePrivatePackagesComputed(): Promise<Set<string>> {
+	if (computedPrivatePackages !== undefined) {
 		return computedPrivatePackages;
 	}
 
-	const newPrivatePackages = new Set<string>();
+	computedPrivatePackages = new Set();
 	const pathToGitRoot = child_process
 		.execSync("git rev-parse --show-cdup", { encoding: "utf8" })
 		.trim();
-	const p = child_process.spawn("git", [
-		"ls-files",
-		// Includes cached (staged) files.
-		"--cached",
-		// Includes other (untracked) files that are not ignored.
-		"--others",
-		// Excludes files that are ignored by standard ignore rules.
-		"--exclude-standard",
-		// Removes duplicate entries from the output.
-		"--deduplicate",
-		// Shows the full path of the files relative to the repository root.
-		"--full-name",
-		// Returns only files that match this glob - so only package.json files.
-		"**/package.json",
-	]);
-	const lineReader = readline.createInterface({
-		input: p.stdout,
-		terminal: false,
-	});
+	const repo = new Repository({ baseDir: pathToGitRoot });
+	const packageJsons = await repo.getFiles("**/package.json");
 
-	lineReader.on("line", (line) => {
-		const filePath = path.join(pathToGitRoot, line).trim().replace(/\\/g, "/");
-		if (fs.existsSync(filePath)) {
-			const packageJson = JSON.parse(readFile(filePath)) as PackageJson;
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-			if (packageJson.private) {
-				newPrivatePackages.add(packageJson.name);
-			}
+	for (const filePath of packageJsons) {
+		const packageJson = JSON.parse(readFile(filePath)) as PackageJson;
+		if (packageJson.private ?? false) {
+			computedPrivatePackages.add(packageJson.name);
 		}
-	});
+	}
 
-	computedPrivatePackages = newPrivatePackages;
 	return computedPrivatePackages;
 }
 
@@ -922,7 +900,7 @@ export const handlers: Handler[] = [
 				return `Error parsing JSON file: ${file}`;
 			}
 
-			const privatePackages = ensurePrivatePackagesComputed();
+			const privatePackages = await ensurePrivatePackagesComputed();
 			const errors: string[] = [];
 
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions

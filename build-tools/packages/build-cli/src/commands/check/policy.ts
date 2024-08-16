@@ -197,7 +197,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			}
 		} else {
 			const repo = new Repository({ baseDir: gitRoot });
-			const gitFiles = await repo.getFiles();
+			const gitFiles = await repo.getFiles(".");
 			filePathsToCheck.push(...gitFiles);
 		}
 
