@@ -109,9 +109,12 @@ export const mixinAttributor = (
 				} else {
 					const datastore = await runtime.createDataStore(RuntimeAttributorFactory.type);
 					const result = await datastore.trySetAlias(attributorDataStoreAlias);
-					assert(result === "Success", "Failed to set alias for attributor data store");
+					assert(
+						result === "Success",
+						0xa1b /* Failed to set alias for attributor data store */,
+					);
 					runtimeAttributor = (await datastore.entryPoint.get()) as IRuntimeAttributor;
-					assert(runtimeAttributor !== undefined, "Attributor should be defined");
+					assert(runtimeAttributor !== undefined, 0xa1c /* Attributor should be defined */);
 				}
 			}
 

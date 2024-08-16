@@ -19,7 +19,6 @@ import { brand, fail, getOrCreate, mapIterable } from "../../util/index.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
-	type FlexTreeFieldNode,
 	type FlexTreeLeafNode,
 	type FlexTreeMapNode,
 	type FlexTreeNode,
@@ -36,13 +35,11 @@ import {
 } from "../flex-tree/index.js";
 import {
 	type FlexAllowedTypes,
-	type FlexFieldNodeSchema,
 	FlexFieldSchema,
 	type FlexMapNodeSchema,
 	type FlexTreeNodeSchema,
 	type LeafNodeSchema,
 	isLazy,
-	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
@@ -161,12 +158,12 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 				this.location === unparentedLocation,
 				0x98c /* Node may not be adopted if it already has a parent */,
 			);
-			assert(index !== undefined, "Expected index");
+			assert(index !== undefined, 0xa08 /* Expected index */);
 			this.location = { parent, index };
 		} else {
 			assert(
 				this.location !== unparentedLocation,
-				"Node may not be un-adopted if it does not have a parent",
+				0xa09 /* Node may not be un-adopted if it does not have a parent */,
 			);
 			this.location = unparentedLocation;
 		}
@@ -236,26 +233,6 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 				child.walkTree();
 			}
 		}
-	}
-}
-
-/**
- * The implementation of a field node created by {@link getOrCreateNode}.
- */
-export class EagerMapTreeFieldNode<TSchema extends FlexFieldNodeSchema>
-	extends EagerMapTreeNode<TSchema>
-	implements FlexTreeFieldNode<TSchema>
-{
-	public get content(): FlexTreeUnboxField<TSchema["info"]> {
-		const field = this.tryGetField(EmptyKey);
-		if (field === undefined) {
-			return undefined as FlexTreeUnboxField<TSchema["info"]>;
-		}
-		return unboxedField(field, EmptyKey, this.mapTree, this);
-	}
-
-	public override getBoxed(key: string): FlexTreeTypedField<TSchema["info"]> {
-		return super.getBoxed(key) as FlexTreeTypedField<TSchema["info"]>;
 	}
 }
 
@@ -520,7 +497,7 @@ class EagerMapTreeSequenceField<T extends FlexAllowedTypes>
 		insert: (index, newContent): void => {
 			for (let i = 0; i < newContent.length; i++) {
 				const c = newContent[i];
-				assert(c !== undefined, "Unexpected sparse array content");
+				assert(c !== undefined, 0xa0a /* Unexpected sparse array content */);
 				nodeCache.get(c)?.adoptBy(this, index + i);
 			}
 			this.edit((mapTrees) => {
@@ -536,7 +513,7 @@ class EagerMapTreeSequenceField<T extends FlexAllowedTypes>
 		remove: (index, count): ExclusiveMapTree[] => {
 			for (let i = index; i < index + count; i++) {
 				const c = this.mapTrees[i];
-				assert(c !== undefined, "Unexpected sparse array");
+				assert(c !== undefined, 0xa0b /* Unexpected sparse array */);
 				nodeCache.get(c)?.adoptBy(undefined);
 			}
 			let removed: ExclusiveMapTree[] | undefined;
@@ -643,9 +620,6 @@ function createNode<TSchema extends FlexTreeNodeSchema>(
 	}
 	if (schemaIsMap(nodeSchema)) {
 		return new EagerMapTreeMapNode(nodeSchema, mapTree, parentField);
-	}
-	if (schemaIsFieldNode(nodeSchema)) {
-		return new EagerMapTreeFieldNode(nodeSchema, mapTree, parentField);
 	}
 	if (schemaIsObjectNode(nodeSchema)) {
 		return new EagerMapTreeNode(nodeSchema, mapTree, parentField);
