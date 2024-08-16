@@ -17,18 +17,21 @@ function getKeys(node: TreeNode & WithType<string, NodeKind.Map | NodeKind.Objec
 function getKeys(node: TreeNode): string[] | number[];
 function getKeys(node: TreeNode): string[] | number[] {
 	const schema = Tree.schema(node);
-	if (schema.kind === NodeKind.Array) {
-		const arrayNode = node as TreeArrayNode;
-		const keys: number[] = [];
-		for (let index = 0; index < arrayNode.length; index++) {
-			keys.push(index);
+	switch (schema.kind) {
+		case NodeKind.Array: {
+			const arrayNode = node as TreeArrayNode;
+			const keys: number[] = [];
+			for (let index = 0; index < arrayNode.length; index++) {
+				keys.push(index);
+			}
+			return keys;
 		}
-		return keys;
+		case NodeKind.Map:
+			return [...(node as TreeMapNode).keys()];
+		case NodeKind.Object:
+			return Object.keys(node);
+		default:
+			throw new Error("Unsupported Kind");
 	}
-	if (schema.kind === NodeKind.Map) {
-		return [...(node as TreeMapNode).keys()];
-	}
-
-	return Object.keys(node);
 }
 ```
