@@ -9,7 +9,6 @@ import {
 	type Anchor,
 	type AnchorNode,
 	CursorLocationType,
-	EmptyKey,
 	type FieldKey,
 	type ITreeSubscriptionCursor,
 	type TreeNavigationResult,
@@ -25,13 +24,11 @@ import { FieldKinds } from "../default-schema/index.js";
 import {
 	Any,
 	type FlexAllowedTypes,
-	type FlexFieldNodeSchema,
 	FlexFieldSchema,
 	type FlexMapNodeSchema,
 	type FlexObjectNodeSchema,
 	type FlexTreeNodeSchema,
 	type LeafNodeSchema,
-	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
@@ -41,7 +38,6 @@ import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
-	type FlexTreeFieldNode,
 	type FlexTreeLeafNode,
 	type FlexTreeMapNode,
 	type FlexTreeNode,
@@ -105,9 +101,6 @@ function buildSubclass(
 	}
 	if (schemaIsLeaf(schema)) {
 		return new LazyLeaf(context, schema, cursor, anchorNode, anchor);
-	}
-	if (schemaIsFieldNode(schema)) {
-		return new LazyFieldNode(context, schema, cursor, anchorNode, anchor);
 	}
 	if (schemaIsObjectNode(schema)) {
 		return buildLazyObjectNode(context, schema, cursor, anchorNode, anchor);
@@ -341,17 +334,6 @@ export class LazyLeaf<TSchema extends LeafNodeSchema>
 
 	public override get value(): TreeValue<TSchema["info"]> {
 		return super.value as TreeValue<TSchema["info"]>;
-	}
-}
-
-export class LazyFieldNode<TSchema extends FlexFieldNodeSchema>
-	extends LazyTreeNode<TSchema>
-	implements FlexTreeFieldNode<TSchema>
-{
-	public get content(): FlexTreeUnboxField<TSchema["info"]> {
-		return inCursorField(this[cursorSymbol], EmptyKey, (cursor) =>
-			unboxedField(this.context, this.schema.info, cursor),
-		) as FlexTreeUnboxField<TSchema["info"]>;
 	}
 }
 

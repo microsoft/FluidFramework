@@ -5,9 +5,10 @@
 
 import {
 	IMigratableModel,
+	IMigrationTool,
 	IVersionedModel,
+	MigratableSessionStorageModelLoader,
 	Migrator,
-	SessionStorageModelLoader,
 } from "@fluid-example/example-utils";
 
 import React from "react";
@@ -45,11 +46,12 @@ window["migrators"] = [];
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
 	const searchParams = new URLSearchParams(location.search);
 	const testMode = searchParams.get("testMode") !== null;
-	const modelLoader = new SessionStorageModelLoader<IInventoryListAppModel & IMigratableModel>(
-		new DemoCodeLoader(testMode),
-	);
+	const modelLoader = new MigratableSessionStorageModelLoader<
+		IInventoryListAppModel & IMigratableModel
+	>(new DemoCodeLoader(testMode));
 	let id: string;
 	let model: IMigratableModel;
+	let migrationTool: IMigrationTool;
 
 	if (location.hash.length === 0) {
 		// Normally our code loader is expected to match up with the version passed here.
@@ -57,30 +59,36 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		// the version doesn't actually matter.
 		const createResponse = await modelLoader.createDetached("one");
 		model = createResponse.model;
-
+		migrationTool = createResponse.migrationTool;
 		// Should be the same as the uuid we generated above.
 		id = await createResponse.attach();
 	} else {
 		id = location.hash.substring(1);
-		model = await modelLoader.loadExisting(id);
+		const loadResponse = await modelLoader.loadExisting(id);
+		model = loadResponse.model;
+		migrationTool = loadResponse.migrationTool;
 	}
 
 	const appDiv = document.createElement("div");
 	const debugDiv = document.createElement("div");
 
-	const render = (model: IVersionedModel) => {
+	const render = (model: IVersionedModel, migrationTool: IMigrationTool) => {
 		ReactDOM.unmountComponentAtNode(appDiv);
 		// This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
 		// versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
 		// view code loader to pull in the view dynamically based on the version we discover.
 		if (isIInventoryListAppModel(model)) {
-			ReactDOM.render(React.createElement(InventoryListAppView, { model }), appDiv);
+			ReactDOM.render(
+				React.createElement(InventoryListAppView, { model, migrationTool }),
+				appDiv,
+			);
 
 			// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 			ReactDOM.unmountComponentAtNode(debugDiv);
 			ReactDOM.render(
 				React.createElement(DebugView, {
 					model,
+					migrationTool,
 					getUrlForContainerId,
 				}),
 				debugDiv,
@@ -93,12 +101,13 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	const migrator = new Migrator(
 		modelLoader,
 		model,
+		migrationTool,
 		id,
 		inventoryListDataTransformationCallback,
 	);
 	migrator.events.on("migrated", () => {
-		model.close();
-		render(migrator.currentModel);
+		model.dispose();
+		render(migrator.currentModel, migrationTool);
 		updateTabForId(migrator.currentModelId);
 		model = migrator.currentModel;
 	});
@@ -109,7 +118,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	// update the browser URL and the window title with the actual container ID
 	updateTabForId(id);
 	// Render it
-	render(model);
+	render(model, migrationTool);
 
 	element.append(appDiv, debugDiv);
 
