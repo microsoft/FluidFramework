@@ -3018,6 +3018,10 @@ export class ContainerRuntime
 						this._signalTracking.roundTripSignalSequenceNumber
 				) {
 					this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
+				} else {
+					this._signalTracking.signalsLost = 0;
+					this._signalTracking.trackingSignalSequenceNumber =
+						envelope.clientSignalSequenceNumber + 1;
 				}
 				this._signalTracking.roundTripSignalSequenceNumber = undefined;
 			}

@@ -2759,6 +2759,36 @@ describe("Runtime", () => {
 					"SignalLost telemetry should log relative lost signal count and SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals",
 				);
 			});
+
+			it("accurately reports amount of lost signals in 100-signal batch when a roundtrip tracked signal is droppped", () => {
+				// Send 50 signals and drop 10
+				sendSignals(50);
+				dropSignals(10);
+				processSubmittedSignals(40);
+
+				// Send 60 signals and drop 10 (including roundtrip tracked signal)
+				sendSignals(60);
+				processSubmittedSignals(40);
+				// Drop roundtrip tracked signal
+				dropSignals(10);
+				processSubmittedSignals(10);
+
+				// Send 100 signals and drop 1
+				sendSignals(100);
+				dropSignals(1);
+				processSubmittedSignals(99);
+
+				// Check SignalLatency only logs the amount of lost signals in latest 100 signal batch
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsLost: 1,
+						},
+					],
+					"SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals",
+				);
+			});
 		});
 	});
 });
