@@ -285,7 +285,7 @@ describe("LazyField", () => {
 
 	it("Disposes when context then parent is disposed", () => {
 		const factory = new SchemaFactory("LazyField");
-		const Holder = factory.object("holder", { f: factory.number });
+		class Holder extends factory.object("holder", { f: factory.number }) {}
 		const schema = toFlexSchema(Holder);
 		const forest = forestWithContent({
 			schema,
