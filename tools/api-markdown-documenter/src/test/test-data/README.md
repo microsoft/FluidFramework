@@ -5,4 +5,4 @@ End-to-end tests will point to individual model directories for documentation ge
 These suites were generated via the following sample repository: https://github.com/Josmithr/api-extractor-playground
 
 Given the complexity of the `.api.json` files API-Extractor generates, it is likely easier to update the test scenarios by using the above repo.
-That said, direct modifications can be made *carefully* to those files if needed.
+That said, direct modifications can be made _carefully_ to those files if needed.

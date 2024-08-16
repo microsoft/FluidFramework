@@ -4,4 +4,4 @@
 
 | Package | Description |
 | --- | --- |
-| [simple-suite-test](./simple-suite-test) | <b>Test package</b> |
+| [test-suite-a](./test-suite-a) | <b>Test package</b> |

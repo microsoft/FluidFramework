@@ -33,14 +33,14 @@ describe("lintApiModel", () => {
 				{
 					tagName: "@link",
 					sourceItem: "", // link appears in package documentation
-					packageName: "simple-suite-test",
+					packageName: "test-suite-a",
 					referenceTarget: "InvalidItem",
 					linkText: undefined,
 				},
 				{
 					tagName: "@link",
 					sourceItem: "", // link appears in package documentation
-					packageName: "simple-suite-test",
+					packageName: "test-suite-a",
 					referenceTarget: "InvalidItem",
 					linkText:
 						"even though I link to an invalid item, I would still like this text to be rendered",
@@ -48,7 +48,7 @@ describe("lintApiModel", () => {
 				{
 					tagName: "@inheritDoc",
 					sourceItem: "TestInterface.propertyWithBadInheritDocTarget",
-					packageName: "simple-suite-test",
+					packageName: "test-suite-a",
 					referenceTarget: "BadInheritDocTarget",
 					linkText: undefined,
 				},
