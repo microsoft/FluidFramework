@@ -2513,15 +2513,6 @@ describe("Runtime", () => {
 			let logger: MockLogger;
 			let droppedSignals: ISignalEnvelope[];
 
-			// Restore native timer function for signal tests as they rely on Date.now() timestamps
-			before(() => {
-				clock.restore();
-			});
-
-			after(() => {
-				clock = useFakeTimers();
-			});
-
 			beforeEach(async () => {
 				logger = new MockLogger();
 				droppedSignals = [];
@@ -2616,7 +2607,7 @@ describe("Runtime", () => {
 				// Temporarily lose the second signal
 				dropSignals(1);
 
-				// Process the first signal
+				// Process the third signal
 				processSubmittedSignals(1);
 
 				// Check for SignalLost telemetry
@@ -2669,17 +2660,14 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("logs multiple batches of lost signals", () => {
-				// Send 6 signals
-				sendSignals(6);
+			it("logs relative lost signal count in SignalLost telemetry", () => {
+				// Send 5 signals
+				sendSignals(5);
 
-				// Process the first signal
-				processSubmittedSignals(1);
-
-				// Drop the second signal
+				// Drop the first signal
 				dropSignals(1);
 
-				// Process the third signal
+				// Process the second signal
 				processSubmittedSignals(1);
 
 				// Missing signal should be detected
@@ -2693,10 +2681,10 @@ describe("Runtime", () => {
 					"SignalLost telemetry should be logged when signal is dropped",
 				);
 
-				// Drop the fourth and fifth signal
+				// Drop the third and fourth signal
 				dropSignals(2);
 
-				// Process the sixth signal
+				// Process the fifth signal
 				processSubmittedSignals(1);
 
 				// Missing signals should be detected
@@ -2715,9 +2703,6 @@ describe("Runtime", () => {
 				// Send 5 signals
 				sendSignals(4);
 
-				// Process one signal
-				processSubmittedSignals(1);
-
 				// Disconnect + Reconnect
 				changeConnectionState(containerRuntime, false, mockClientId);
 				changeConnectionState(containerRuntime, true, mockClientId);
@@ -2725,8 +2710,8 @@ describe("Runtime", () => {
 				// Temporarily lose two old signals
 				dropSignals(2);
 
-				// Receive one old signal sent before disconnect
-				processSubmittedSignals(1);
+				// Receive old signals sent before disconnect
+				processSubmittedSignals(2);
 
 				// Receive old out of order signals
 				processDroppedSignals(2);
@@ -2742,6 +2727,63 @@ describe("Runtime", () => {
 						},
 					],
 					"SignalOutOfOrder/SignalLost telemetry should not be logged on reconnect",
+				);
+			});
+
+			it("counts both relative and abosolute lost signal counts", () => {
+				// Send 50 signals
+				sendSignals(60);
+
+				// Process 10 signals
+				processSubmittedSignals(10);
+
+				// Drop a signal
+				dropSignals(1);
+
+				// Process 39 signals
+				processSubmittedSignals(39);
+
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLost",
+							signalsLost: 1,
+						},
+					],
+					"SignalLost telemetry should log relative lost signal count when a signal is dropped",
+				);
+
+				// Drop 5 signals
+				dropSignals(5);
+
+				// Send 45 more signals
+				sendSignals(45);
+
+				// Process 30 signals
+				processSubmittedSignals(30);
+
+				// Drop 4 more signals
+				dropSignals(4);
+
+				// Process remaining signals
+				processSubmittedSignals(16);
+
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLost",
+							signalsLost: 5,
+						},
+						{
+							eventName: "ContainerRuntime:SignalLost",
+							signalsLost: 4,
+						},
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsLost: 10,
+						},
+					],
+					"SignalLost telemetry should log relative lost signal count and SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals",
 				);
 			});
 		});

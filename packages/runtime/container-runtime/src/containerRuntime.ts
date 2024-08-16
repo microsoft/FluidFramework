@@ -1291,6 +1291,7 @@ export class ContainerRuntime
 		signalsLost: 0,
 		signalSequenceNumber: 0,
 		signalTimestamp: 0,
+		roundTripSignalSequenceNumber: undefined,
 		trackingSignalSequenceNumber: undefined,
 		minimumTrackingSignalSequenceNumber: undefined,
 	};
@@ -2599,6 +2600,7 @@ export class ContainerRuntime
 
 		if (!connected) {
 			this._signalTracking.signalTimestamp = 0;
+			this._signalTracking.roundTripSignalSequenceNumber = undefined;
 			this._signalTracking.trackingSignalSequenceNumber = undefined;
 			this._signalTracking.minimumTrackingSignalSequenceNumber = undefined;
 		} else {
@@ -3003,19 +3005,21 @@ export class ContainerRuntime
 					// Update the tracking signal sequence number to the next expected signal.
 					this._signalTracking.trackingSignalSequenceNumber++;
 				}
-			} else if (
-				this._signalTracking.minimumTrackingSignalSequenceNumber !== undefined &&
-				envelope.clientSignalSequenceNumber >=
-					this._signalTracking.minimumTrackingSignalSequenceNumber
-			) {
-				// Set up signal tracking to expect the next signal in the sequence.
-				this._signalTracking.trackingSignalSequenceNumber =
-					envelope.clientSignalSequenceNumber + 1;
 			}
 
-			// only log roundtrip time of signals with timestamps on first connection
-			if (this._signalTracking.signalTimestamp !== 0 && this.consecutiveReconnects === 0) {
-				this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
+			if (
+				this._signalTracking.roundTripSignalSequenceNumber !== undefined &&
+				this._signalTracking.roundTripSignalSequenceNumber <=
+					envelope.clientSignalSequenceNumber
+			) {
+				if (
+					this.consecutiveReconnects === 0 &&
+					envelope.clientSignalSequenceNumber ===
+						this._signalTracking.roundTripSignalSequenceNumber
+				) {
+					this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
+				}
+				this._signalTracking.roundTripSignalSequenceNumber = undefined;
 			}
 		}
 
@@ -3266,8 +3270,14 @@ export class ContainerRuntime
 	): ISignalEnvelope {
 		const newSequenceNumber = ++this._signalTracking.signalSequenceNumber;
 
-		// Set the minimum tracking signal sequence number to the first signal sent by the connected client.
-		this._signalTracking.minimumTrackingSignalSequenceNumber ??= newSequenceNumber;
+		// Initialize tracking to expect the first signal sent by the connected client.
+		if (
+			this._signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
+			this._signalTracking.trackingSignalSequenceNumber === undefined
+		) {
+			this._signalTracking.minimumTrackingSignalSequenceNumber = newSequenceNumber;
+			this._signalTracking.trackingSignalSequenceNumber = newSequenceNumber;
+		}
 
 		const newEnvelope: ISignalEnvelope = {
 			address,
@@ -3275,8 +3285,13 @@ export class ContainerRuntime
 			contents: { type, content },
 		};
 
-		if (newSequenceNumber % this.defaultTelemetrySignalSampleCount === 1) {
+		// We should not track the round trip of a new signal in the case we are already tracking one.
+		if (
+			newSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
+			this._signalTracking.roundTripSignalSequenceNumber === undefined
+		) {
 			this._signalTracking.signalTimestamp = Date.now();
+			this._signalTracking.roundTripSignalSequenceNumber = newSequenceNumber;
 		}
 
 		return newEnvelope;

@@ -455,6 +455,11 @@ export interface IPerfSignalReport {
 	signalTimestamp: number;
 
 	/**
+	 * Signal we will trace for roundtrip latency.
+	 */
+	roundTripSignalSequenceNumber: number | undefined;
+
+	/**
 	 * Next expected signal sequence number to be received.
 	 */
 	trackingSignalSequenceNumber: number | undefined;
