@@ -23,6 +23,14 @@ describe("lintApiModel", () => {
 		expect(result).to.be.undefined;
 	});
 
+	it("API Model with no linter issues yields no errors", async () => {
+		const modelDirectoryPath = Path.resolve(testModelsDirectoryPath, "minimal");
+		const apiModel = await loadModel({ modelDirectoryPath });
+		const result = await lintApiModel({ apiModel });
+
+		expect(result).to.be.undefined;
+	});
+
 	it("API Model with invalid links yields the expected errors", async () => {
 		const modelDirectoryPath = Path.resolve(testModelsDirectoryPath, "simple-suite-test");
 
