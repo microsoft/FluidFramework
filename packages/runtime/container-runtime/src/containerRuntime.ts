@@ -2938,13 +2938,18 @@ export class ContainerRuntime
 	 * Emits the Signal event and update the perf signal data.
 	 * @param clientSignalSequenceNumber - is the client signal sequence number to be uploaded.
 	 */
-	private sendSignalTelemetryEvent(clientSignalSequenceNumber: number) {
+	private sendSignalTelemetryEvent(
+		clientSignalSequenceNumber: number,
+		previousClientSignalSequenceNumber: number,
+	) {
 		const duration = Date.now() - this._signalTracking.signalTimestamp;
 		this.mc.logger.sendPerformanceEvent({
 			eventName: "SignalLatency",
 			duration,
+			signalsSent: clientSignalSequenceNumber - previousClientSignalSequenceNumber,
 			signalsLost: this._signalTracking.signalsLost,
 		});
+		this._signalTracking.minimumTrackingSignalSequenceNumber = clientSignalSequenceNumber;
 		this._signalTracking.signalsLost = 0;
 		this._signalTracking.signalTimestamp = 0;
 	}
@@ -3005,25 +3010,28 @@ export class ContainerRuntime
 					// Update the tracking signal sequence number to the next expected signal.
 					this._signalTracking.trackingSignalSequenceNumber++;
 				}
-			}
 
-			if (
-				this._signalTracking.roundTripSignalSequenceNumber !== undefined &&
-				this._signalTracking.roundTripSignalSequenceNumber <=
-					envelope.clientSignalSequenceNumber
-			) {
 				if (
-					this.consecutiveReconnects === 0 &&
-					envelope.clientSignalSequenceNumber ===
-						this._signalTracking.roundTripSignalSequenceNumber
+					this._signalTracking.roundTripSignalSequenceNumber !== undefined &&
+					this._signalTracking.roundTripSignalSequenceNumber <=
+						envelope.clientSignalSequenceNumber
 				) {
-					this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
-				} else {
-					this._signalTracking.signalsLost = 0;
-					this._signalTracking.trackingSignalSequenceNumber =
-						envelope.clientSignalSequenceNumber + 1;
+					if (
+						this.consecutiveReconnects === 0 &&
+						envelope.clientSignalSequenceNumber ===
+							this._signalTracking.roundTripSignalSequenceNumber
+					) {
+						this.sendSignalTelemetryEvent(
+							envelope.clientSignalSequenceNumber,
+							this._signalTracking.minimumTrackingSignalSequenceNumber,
+						);
+					} else {
+						this._signalTracking.signalsLost = 0;
+						this._signalTracking.trackingSignalSequenceNumber =
+							envelope.clientSignalSequenceNumber + 1;
+					}
+					this._signalTracking.roundTripSignalSequenceNumber = undefined;
 				}
-				this._signalTracking.roundTripSignalSequenceNumber = undefined;
 			}
 		}
 

@@ -2760,7 +2760,7 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("accurately reports amount of lost signals in 100-signal batch when a roundtrip tracked signal is droppped", () => {
+			it("accurately reports amount of sent and lost signals when roundtrip tracked signal is droppped", () => {
 				// Send 50 signals and drop 10
 				sendSignals(50);
 				dropSignals(10);
@@ -2784,9 +2784,30 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLatency",
 							signalsLost: 1,
+							signalsSent: 100,
 						},
 					],
 					"SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals",
+				);
+			});
+
+			it("accurately reports amount of sent and lost signals when rapid fire more than 100+ signals", () => {
+				sendSignals(1);
+				processSubmittedSignals(1);
+
+				sendSignals(101);
+				dropSignals(10);
+				processSubmittedSignals(91);
+
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsLost: 10,
+							signalsSent: 100,
+						},
+					],
+					"SignalLatency telemetry should log correct amount of sent and lost signals",
 				);
 			});
 		});

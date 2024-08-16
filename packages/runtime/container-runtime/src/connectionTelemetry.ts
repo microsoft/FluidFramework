@@ -444,6 +444,7 @@ export interface IPerfSignalReport {
 	 * allow collection of data around the roundtrip of signal messages.
 	 */
 	signalSequenceNumber: number;
+
 	/**
 	 * Number of signals that were expected but not received.
 	 */
