@@ -5,7 +5,7 @@
 
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import {
-	loadContainerRuntime,
+	ContainerRuntime,
 	FluidDataStoreRegistry,
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
@@ -119,7 +119,7 @@ export class BaseContainerRuntimeFactory
 			scope.IFluidDependencySynthesizer = dc;
 		}
 
-		return loadContainerRuntime({
+		return ContainerRuntime.loadRuntime({
 			context,
 			existing,
 			runtimeOptions: this.runtimeOptions,

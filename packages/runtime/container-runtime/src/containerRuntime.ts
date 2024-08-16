@@ -779,11 +779,26 @@ let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) 
 };
 
 /**
- *
+ * Load the stores from a snapshot and returns the runtime.
+ * @param params - An object housing the runtime properties:
+ * - context - Context of the container.
+ * - registryEntries - Mapping from data store types to their corresponding factories.
+ * - existing - Pass 'true' if loading from an existing snapshot.
+ * - runtimeOptions - Additional options to be passed to the runtime
+ * - containerScope - runtime services provided with context
+ * - provideEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
+ * This object should provide all the functionality that the Container is expected to provide to the loader layer.
  * @legacy
  * @alpha
  */
-export async function loadContainerRuntime(params): Promise<IContainerRuntime> {
+export async function loadContainerRuntime(params: {
+	context: IContainerContext;
+	registryEntries: NamedFluidDataStoreRegistryEntries;
+	existing: boolean;
+	runtimeOptions?: IContainerRuntimeOptions;
+	containerScope?: FluidObject;
+	provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+}): Promise<IContainerRuntime> {
 	return loadContainerRuntime(params);
 }
 

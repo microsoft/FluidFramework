@@ -712,7 +712,14 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
 }
 
 // @alpha (undocumented)
-export function loadContainerRuntime(params: any): Promise<IContainerRuntime>;
+export function loadContainerRuntime(params: {
+    context: IContainerContext;
+    registryEntries: NamedFluidDataStoreRegistryEntries;
+    existing: boolean;
+    runtimeOptions?: IContainerRuntimeOptions;
+    containerScope?: FluidObject;
+    provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+}): Promise<IContainerRuntime>;
 
 // @alpha @deprecated (undocumented)
 export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
