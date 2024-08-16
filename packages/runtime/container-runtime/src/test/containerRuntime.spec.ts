@@ -2574,16 +2574,12 @@ describe("Runtime", () => {
 			});
 
 			it("emits SignalLost error event when signal is dropped", () => {
-				// Send 4 signals
 				sendSignals(4);
 
-				// Process the first signal
 				processSubmittedSignals(1);
 
-				// Drop the second and third signal
 				dropSignals(2);
 
-				// Process the fourth signal
 				processSubmittedSignals(1);
 
 				logger.assertMatch(
@@ -2598,19 +2594,14 @@ describe("Runtime", () => {
 			});
 
 			it("emits SignalOutOfOrder error event when missing signal is received non-sequentially", () => {
-				// Send 3 signals
 				sendSignals(3);
 
-				// Process the first signal
 				processSubmittedSignals(1);
 
-				// Temporarily lose the second signal
 				dropSignals(1);
 
-				// Process the third signal
 				processSubmittedSignals(1);
 
-				// Check for SignalLost telemetry
 				logger.assertMatch([
 					{
 						eventName: "ContainerRuntime:SignalLost",
@@ -2618,7 +2609,6 @@ describe("Runtime", () => {
 					},
 				]);
 
-				// Out of order telemetry should not be logged on lost signal
 				logger.assertMatchNone(
 					[
 						{
@@ -2628,10 +2618,8 @@ describe("Runtime", () => {
 					"SignalOutOfOrder telemetry should not be logged on lost signal",
 				);
 
-				// Process the "lost" second signal out of order
 				processDroppedSignals(1);
 
-				// Check for SignalOutOfOrder telemetry
 				logger.assertMatch(
 					[
 						{
@@ -2643,7 +2631,6 @@ describe("Runtime", () => {
 			});
 
 			it("does not emit error events when signals are processed in order", () => {
-				// Send 100 signals and process them in order
 				sendSignals(100);
 				processSubmittedSignals(100);
 
@@ -2661,13 +2648,10 @@ describe("Runtime", () => {
 			});
 
 			it("logs relative lost signal count in SignalLost telemetry", () => {
-				// Send 5 signals
 				sendSignals(5);
 
-				// Drop the first signal
 				dropSignals(1);
 
-				// Process the second signal
 				processSubmittedSignals(1);
 
 				// Missing signal should be detected
@@ -2681,13 +2665,11 @@ describe("Runtime", () => {
 					"SignalLost telemetry should be logged when signal is dropped",
 				);
 
-				// Drop the third and fourth signal
 				dropSignals(2);
 
-				// Process the fifth signal
 				processSubmittedSignals(1);
 
-				// Missing signals should be detected
+				// Missing 3rd and 4th signals should be detected
 				logger.assertMatch(
 					[
 						{
@@ -2700,7 +2682,6 @@ describe("Runtime", () => {
 			});
 
 			it("ignores in-flight signals on disconnect/reconnect", () => {
-				// Send 5 signals
 				sendSignals(4);
 
 				// Disconnect + Reconnect
@@ -2731,16 +2712,12 @@ describe("Runtime", () => {
 			});
 
 			it("counts both relative and abosolute lost signal counts", () => {
-				// Send 50 signals
 				sendSignals(60);
 
-				// Process 10 signals
 				processSubmittedSignals(10);
 
-				// Drop a signal
 				dropSignals(1);
 
-				// Process 39 signals
 				processSubmittedSignals(39);
 
 				logger.assertMatch(
@@ -2753,16 +2730,12 @@ describe("Runtime", () => {
 					"SignalLost telemetry should log relative lost signal count when a signal is dropped",
 				);
 
-				// Drop 5 signals
 				dropSignals(5);
 
-				// Send 45 more signals
 				sendSignals(45);
 
-				// Process 30 signals
 				processSubmittedSignals(30);
 
-				// Drop 4 more signals
 				dropSignals(4);
 
 				// Process remaining signals
