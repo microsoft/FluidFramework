@@ -502,7 +502,7 @@ export class PendingStateManager implements IDisposable {
 			"No pending message found as we start processing this remote batch",
 		);
 
-		// If this batch became empty on resubmit, batch.messages will be empty
+		// If this batch became empty on resubmit, batch.messages will be empty (so firstMessage undefined)
 		// and the next pending message should be an empty batch marker.
 		// More Info: We must submit empty batches and track them in case a different fork
 		// of this container also submitted the same batch (and it may not be empty for that fork).
@@ -586,8 +586,8 @@ export class PendingStateManager implements IDisposable {
 			// The next message starts a batch (possibly single-message), and we'll need its batchId.
 			const batchId = getEffectiveBatchId(pendingMessage);
 
-			// Resubmit no messages, with the batchId. Will result in another empty batch marker.
 			if (asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true) {
+				// Resubmit no messages, with the batchId. Will result in another empty batch marker.
 				this.stateHandler.reSubmitBatch([], batchId);
 				continue;
 			}
