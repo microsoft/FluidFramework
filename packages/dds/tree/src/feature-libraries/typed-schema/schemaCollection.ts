@@ -16,7 +16,6 @@ import { FieldKinds, defaultSchemaPolicy } from "../default-schema/index.js";
 
 import { normalizeFlexListEager } from "./flexList.js";
 import {
-	FlexFieldNodeSchema,
 	type FlexFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
@@ -180,10 +179,6 @@ export function validateSchemaCollection(
 			}
 		} else if (tree instanceof LeafNodeSchema) {
 			// No validation for now.
-		} else if (tree instanceof FlexFieldNodeSchema) {
-			const description = (): string =>
-				`Field node field of "${identifier}" schema from library "${tree.builder.name}"`;
-			validateField(lintConfiguration, collection, tree.info, description, errors);
 		} else if (tree instanceof FlexObjectNodeSchema) {
 			for (const [key, field] of tree.objectNodeFields) {
 				const description = (): string =>
