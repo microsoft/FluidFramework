@@ -328,7 +328,7 @@ export class ReadonlyLazyValueField<TTypes extends FlexAllowedTypes>
 
 	public editor: ValueFieldEditBuilder<ExclusiveMapTree> = {
 		set: (newContent) => {
-			assert(false, "Unexpected set of readonly field");
+			assert(false, 0xa0c /* Unexpected set of readonly field */);
 		},
 	};
 

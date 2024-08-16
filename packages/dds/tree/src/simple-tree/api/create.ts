@@ -93,7 +93,7 @@ export function cursorFromInsertable<TSchema extends ImplicitFieldSchema>(
 	if (mapTree === undefined) {
 		assert(
 			flexSchema.rootFieldSchema.kind === FieldKinds.optional,
-			"missing non-optional field",
+			0xa10 /* missing non-optional field */,
 		);
 		return undefined as TSchema extends FieldSchema<FieldKind.Optional> ? undefined : never;
 	}
@@ -166,7 +166,7 @@ export function createFromCursor<TSchema extends ImplicitFieldSchema>(
 	if (mapTrees.length === 0) {
 		return undefined as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 	}
-	assert(mapTrees.length === 1, "unexpected field length");
+	assert(mapTrees.length === 1, 0xa11 /* unexpected field length */);
 	// Length asserted above, so this is safe. This assert is done instead of checking for undefined after indexing to ensure a length greater than 1 also errors.
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const mapTree = mapTrees[0]!;
