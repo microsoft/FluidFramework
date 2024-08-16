@@ -2943,7 +2943,7 @@ export class ContainerRuntime
 			duration,
 			signalsLost: this._signalTracking.signalsLost,
 		});
-
+		this._signalTracking.signalsLost = 0;
 		this._signalTracking.signalTimestamp = 0;
 	}
 
@@ -2965,6 +2965,8 @@ export class ContainerRuntime
 					envelope.clientSignalSequenceNumber >
 					this._signalTracking.trackingSignalSequenceNumber
 				) {
+					// Incoming signal sequence number is greater than the expected signal sequence number.
+					// So we calculate the number of signals lost and log the event.
 					const signalsLost =
 						envelope.clientSignalSequenceNumber -
 						this._signalTracking.trackingSignalSequenceNumber;
@@ -2985,6 +2987,7 @@ export class ContainerRuntime
 					envelope.clientSignalSequenceNumber >=
 						this._signalTracking.minimumTrackingSignalSequenceNumber
 				) {
+					// Log incoming signal that was previously marked as lost as having been received out of order.
 					this._signalTracking.signalsLost--;
 					this.mc.logger.sendErrorEvent({
 						eventName: "SignalOutOfOrder",
@@ -2996,11 +2999,16 @@ export class ContainerRuntime
 					envelope.clientSignalSequenceNumber ===
 					this._signalTracking.trackingSignalSequenceNumber
 				) {
-					// Update the tracking signal sequence number to the next expected signal in the sequence.
+					// Incoming signal is the next expected signal in the sequence.
+					// Update the tracking signal sequence number to the next expected signal.
 					this._signalTracking.trackingSignalSequenceNumber++;
 				}
-			} else if (this._signalTracking.minimumTrackingSignalSequenceNumber !== undefined) {
-				// Initialize the perf signal data to track next signal if undefined.
+			} else if (
+				this._signalTracking.minimumTrackingSignalSequenceNumber !== undefined &&
+				envelope.clientSignalSequenceNumber >=
+					this._signalTracking.minimumTrackingSignalSequenceNumber
+			) {
+				// Set up signal tracking to expect the next signal in the sequence.
 				this._signalTracking.trackingSignalSequenceNumber =
 					envelope.clientSignalSequenceNumber + 1;
 			}
@@ -3258,6 +3266,7 @@ export class ContainerRuntime
 	): ISignalEnvelope {
 		const newSequenceNumber = ++this._signalTracking.signalSequenceNumber;
 
+		// Set the minimum tracking signal sequence number to the first signal sent by the connected client.
 		this._signalTracking.minimumTrackingSignalSequenceNumber ??= newSequenceNumber;
 
 		const newEnvelope: ISignalEnvelope = {
