@@ -11,10 +11,10 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import {
 	BiomeConfigReader,
+	type BiomeConfigResolved,
 	getBiomeFormattedFilesFromDirectory,
 	getSettingValuesFromBiomeConfig,
 	loadBiomeConfig,
-	type BiomeConfigResolved,
 } from "../common/biomeConfig";
 import type { Configuration as BiomeConfigOnDisk } from "../common/biomeConfigTypes";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
