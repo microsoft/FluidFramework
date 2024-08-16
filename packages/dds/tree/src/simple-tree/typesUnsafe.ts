@@ -58,7 +58,7 @@ export type ObjectFromSchemaRecordUnsafe<
 export type TreeObjectNodeUnsafe<
 	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
 	TypeName extends string = string,
-> = TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<TypeName>;
+> = TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<TypeName, NodeKind.Object>;
 
 /**
  * {@link Unenforced} version of {@link TreeFieldFromImplicitField}.
