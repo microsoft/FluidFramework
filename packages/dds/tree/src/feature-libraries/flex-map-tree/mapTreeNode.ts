@@ -19,7 +19,6 @@ import { brand, fail, getOrCreate, mapIterable } from "../../util/index.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
-	type FlexTreeFieldNode,
 	type FlexTreeLeafNode,
 	type FlexTreeMapNode,
 	type FlexTreeNode,
@@ -36,13 +35,11 @@ import {
 } from "../flex-tree/index.js";
 import {
 	type FlexAllowedTypes,
-	type FlexFieldNodeSchema,
 	FlexFieldSchema,
 	type FlexMapNodeSchema,
 	type FlexTreeNodeSchema,
 	type LeafNodeSchema,
 	isLazy,
-	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
@@ -236,26 +233,6 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 				child.walkTree();
 			}
 		}
-	}
-}
-
-/**
- * The implementation of a field node created by {@link getOrCreateNode}.
- */
-export class EagerMapTreeFieldNode<TSchema extends FlexFieldNodeSchema>
-	extends EagerMapTreeNode<TSchema>
-	implements FlexTreeFieldNode<TSchema>
-{
-	public get content(): FlexTreeUnboxField<TSchema["info"]> {
-		const field = this.tryGetField(EmptyKey);
-		if (field === undefined) {
-			return undefined as FlexTreeUnboxField<TSchema["info"]>;
-		}
-		return unboxedField(field, EmptyKey, this.mapTree, this);
-	}
-
-	public override getBoxed(key: string): FlexTreeTypedField<TSchema["info"]> {
-		return super.getBoxed(key) as FlexTreeTypedField<TSchema["info"]>;
 	}
 }
 
@@ -643,9 +620,6 @@ function createNode<TSchema extends FlexTreeNodeSchema>(
 	}
 	if (schemaIsMap(nodeSchema)) {
 		return new EagerMapTreeMapNode(nodeSchema, mapTree, parentField);
-	}
-	if (schemaIsFieldNode(nodeSchema)) {
-		return new EagerMapTreeFieldNode(nodeSchema, mapTree, parentField);
 	}
 	if (schemaIsObjectNode(nodeSchema)) {
 		return new EagerMapTreeNode(nodeSchema, mapTree, parentField);
