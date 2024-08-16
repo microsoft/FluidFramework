@@ -1,8 +1,11 @@
 ---
 "@fluidframework/tree": minor
 ---
+---
+section: tree
+---
 
-Add `@alpha` API `FixRecursiveArraySchema` as a workaround around an issue with recursive ArrayNode schema.
+Add `@alpha` API `FixRecursiveArraySchema` as a workaround around an issue with recursive ArrayNode schema
 
 Importing a recursive ArrayNode schema via a d.ts file can produce an error like
 `error TS2310: Type 'RecursiveArray' recursively references itself as a base type.`
