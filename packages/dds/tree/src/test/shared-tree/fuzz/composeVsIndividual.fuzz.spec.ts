@@ -39,11 +39,9 @@ import {
 	applyFieldEdit,
 	applySynchronizationOp,
 	applyUndoRedoEdit,
-	generateLeafNodeSchemas,
 } from "./fuzzEditReducers.js";
 import {
 	createOnCreate,
-	createTreeViewSchema,
 	deterministicIdCompressorFactory,
 	isRevertibleSharedTreeView,
 	nodeSchemaFromTreeSchema,
@@ -95,35 +93,7 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<
 		return state;
 	},
 	schemaChange: async (state, operation) => {
-		const branch = state.branch;
-		assert(branch !== undefined);
-		const nodeSchema = branch.currentSchema;
-
-		const nodeTypes: string[] = [];
-		for (const leafNodeSchema of nodeSchema.info.optionalChild.allowedTypeSet) {
-			if (typeof leafNodeSchema !== "string") {
-				nodeTypes.push(leafNodeSchema.identifier);
-			}
-		}
-		nodeTypes.push(operation.contents.type);
-		const leafNodeSchemas = generateLeafNodeSchemas(nodeTypes);
-		const newSchema = createTreeViewSchema(leafNodeSchemas);
-		const newFork = branch.checkout.fork();
-		branch.dispose();
-
-		const newBranchView = viewCheckout(
-			newFork,
-			new TreeViewConfiguration({ schema: newSchema }),
-		) as FuzzTransactionView;
-		newBranchView.upgradeSchema();
-
-		const newNodeSchema = nodeSchemaFromTreeSchema(newSchema);
-		newBranchView.currentSchema =
-			newNodeSchema ?? assert.fail("nodeSchema should not be undefined");
-		state.branch = newBranchView;
-		const transactionViews = new Map();
-		transactionViews.set(state.clients[0].channel, state.branch);
-		state.transactionViews = transactionViews;
+		return state;
 	},
 	constraint: async (state, operation) => {
 		applyConstraint(state, operation);
