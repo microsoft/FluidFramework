@@ -92,6 +92,7 @@ export {
 	type SchemaCompatibilityStatus,
 	type FieldProps,
 	type InternalTreeNode,
+	type WithType,
 	// Types not really intended for public use, but used in links.
 	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
 	// Error: src/simple-tree/objectNode.ts:72:1 - (ae-unresolved-link) The @link reference could not be resolved: The package "@fluidframework/tree" does not have an export "TreeNodeApi"
@@ -101,7 +102,6 @@ export {
 	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
 	// error TS2742: The inferred type of 'Inventory' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
 	type AllowedTypes,
-	type WithType,
 	type TreeObjectNodeUnsafe,
 	type InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
 	type TreeArrayNodeUnsafe,
@@ -109,6 +109,8 @@ export {
 	type InsertableObjectFromSchemaRecordUnsafe,
 	type InsertableTreeFieldFromImplicitFieldUnsafe,
 	type FieldSchemaUnsafe,
+	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
+	type typeSchemaSymbol,
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
@@ -122,6 +124,7 @@ export {
 	test_RecursiveObject,
 	test_RecursiveObject_base,
 	test_RecursiveObjectPojoMode,
+	// Back to normal types
 	type JsonTreeSchema,
 	type JsonSchemaId,
 	type JsonNodeSchema,
