@@ -52,7 +52,7 @@ describe("Biome config loading", async () => {
 			}
 			assert(
 				formattedFiles.length === 2,
-				`expected 2 elements in the list, got ${formattedFiles.length}`,
+				`expected 2 elements in the array, got ${formattedFiles.length}`,
 			);
 		});
 	});
@@ -91,6 +91,8 @@ describe("Biome config loading", async () => {
 		});
 
 		describe("extends from a single config", async () => {
+			// These variables need to be initialized once for all the tests in this describe block. Defining them outside
+			// of the before block causes the tests to be skipped.
 			let testConfig: BiomeConfigOnDisk;
 			before(async () => {
 				const testFile = path.resolve(testDataPath, "biome/pkg-a/biome.jsonc");
@@ -104,12 +106,18 @@ describe("Biome config loading", async () => {
 
 			it("files.include has correct value", async () => {
 				assert(testConfig.files!.include!.includes("pkg-a-include/**"));
-				assert(testConfig.files!.include!.length === 1);
+				assert(
+					testConfig.files!.include!.length === 1,
+					`expected 1 elements in the array, got ${testConfig.files!.include!.length}`,
+				);
 			});
 
 			it("files.ignore has correct value", async () => {
 				assert(testConfig.files!.ignore!.includes("pkg-a-ignore/**"));
-				assert(testConfig.files!.ignore!.length === 1);
+				assert(
+					testConfig.files!.ignore!.length === 1,
+					`expected 1 elements in the array, got ${testConfig.files!.ignore!.length}`,
+				);
 			});
 
 			it("formatter.include has correct value", async () => {
@@ -117,7 +125,10 @@ describe("Biome config loading", async () => {
 				const actual = await loadBiomeConfig(testFile);
 
 				assert(actual.formatter!.include!.includes("include-formatter/**"));
-				assert(actual.formatter!.include!.length === 1);
+				assert(
+					actual.formatter!.include!.length === 1,
+					`expected 1 elements in the array, got ${actual.formatter!.include!.length}`,
+				);
 			});
 
 			it("formatter.ignore has correct value", async () => {
@@ -125,7 +136,10 @@ describe("Biome config loading", async () => {
 				const actual = await loadBiomeConfig(testFile);
 
 				assert(actual.formatter!.ignore!.includes("ignore-formatter/**"));
-				assert(actual.formatter!.ignore!.length === 1);
+				assert(
+					actual.formatter!.ignore!.length === 1,
+					`expected 1 elements in the array, got ${actual.formatter!.ignore!.length}`,
+				);
 			});
 
 			it("linter.include has correct value", async () => {
@@ -133,7 +147,10 @@ describe("Biome config loading", async () => {
 				const actual = await loadBiomeConfig(testFile);
 
 				assert(actual.linter!.include!.includes("include-linter/**"));
-				assert(actual.linter!.include!.length === 1);
+				assert(
+					actual.linter!.include!.length === 1,
+					`expected 1 elements in the array, got ${actual.linter!.include!.length}`,
+				);
 			});
 
 			it("linter.ignore has correct value", async () => {
@@ -141,7 +158,10 @@ describe("Biome config loading", async () => {
 				const actual = await loadBiomeConfig(testFile);
 
 				assert(actual.linter!.ignore!.includes("ignore-linter/**"));
-				assert(actual.linter!.ignore!.length === 1);
+				assert(
+					actual.linter!.ignore!.length === 1,
+					`expected 1 elements in the array, got ${actual.linter!.ignore!.length}`,
+				);
 			});
 		});
 	});
@@ -164,7 +184,7 @@ describe("Biome config loading", async () => {
 				);
 				assert(ignores.has("pkg-a-ignore/**"));
 				assert(ignores.has("ignore-formatter/**"));
-				assert(ignores.size === 2);
+				assert(ignores.size === 2, `expected 2 items in the set, got ${ignores.size}`);
 			});
 
 			it("linter ignore settings are merged with root", async () => {
@@ -200,6 +220,8 @@ describe("Biome config loading", async () => {
 
 	describe("getBiomeFormattedFilesFromDirectory", async () => {
 		describe("extends from a single config", async () => {
+			// These variables need to be initialized once for all the tests in this describe block. Defining them outside
+			// of the before block causes the tests to be skipped.
 			let testPath: string;
 			let gitRepo: GitRepo;
 			before(async () => {
@@ -222,11 +244,16 @@ describe("Biome config loading", async () => {
 				for (const actual of formattedFiles) {
 					assert(expected.includes(actual));
 				}
-				assert(formattedFiles.length === 4);
+				assert(
+					formattedFiles.length === 4,
+					`expected 4 elements in the array, got ${formattedFiles.length}`,
+				);
 			});
 		});
 
 		describe("extends from multiple configs", async () => {
+			// These variables need to be initialized once for all the tests in this describe block. Defining them outside
+			// of the before block causes the tests to be skipped.
 			let testPath: string;
 			let gitRepo: GitRepo;
 			before(async () => {
@@ -250,7 +277,10 @@ describe("Biome config loading", async () => {
 				for (const actual of formattedFiles) {
 					assert(expected.includes(actual));
 				}
-				assert(formattedFiles.length === 5);
+				assert(
+					formattedFiles.length === 5,
+					`expected 5 elements in the array, got ${formattedFiles.length}`,
+				);
 			});
 		});
 	});
