@@ -51,8 +51,13 @@ import { type FlexImplicitAllowedTypes, normalizeAllowedTypes } from "../schemaB
 import type { FlexFieldKind } from "../modular-schema/index.js";
 import { FieldKinds, type SequenceFieldEditBuilder } from "../default-schema/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { createEmitter, type Listenable } from "../../events/index.js";
 
 // #region Nodes
+
+export interface MapTreeNodeEvents {
+	changed(): void;
+}
 
 /**
  * A readonly {@link FlexTreeNode} which wraps a {@link MapTree}.
@@ -61,6 +66,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  */
 export interface MapTreeNode extends FlexTreeNode {
 	readonly mapTree: MapTree;
+	readonly events: Listenable<MapTreeNodeEvents>;
 }
 
 /**
@@ -114,6 +120,7 @@ interface LocationInField {
  */
 export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements MapTreeNode {
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Node as const;
+	public readonly events = createEmitter<MapTreeNodeEvents>();
 
 	/**
 	 * Create a new MapTreeNode.
@@ -461,6 +468,8 @@ class EagerMapTreeField<T extends FlexAllowedTypes> implements MapTreeField {
 		} else {
 			this.parent.mapTree.fields.delete(this.key);
 		}
+
+		this.parent.events.emit("changed");
 	}
 }
 

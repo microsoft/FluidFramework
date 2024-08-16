@@ -159,7 +159,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		);
 
 		const result = schema.prepareInstance(this, node);
-		new TreeNodeKernel(result, schema);
+		new TreeNodeKernel(node, result, schema);
 		setInnerNode(result, node);
 		return result;
 	}

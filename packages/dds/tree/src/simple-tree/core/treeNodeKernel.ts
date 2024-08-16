@@ -10,11 +10,15 @@ import type { AnchorNode } from "../../core/index.js";
 import {
 	flexTreeSlot,
 	isFreedSymbol,
+	isMapTreeNode,
 	LazyEntity,
 	TreeStatus,
 	treeStatusFromAnchorCache,
+	type FlexTreeNode,
+	type MapTreeNode,
 } from "../../feature-libraries/index.js";
 import type { TreeNodeSchema } from "./treeNodeSchema.js";
+import { tryGetCachedTreeNode, type InnerNode } from "../proxyBinding.js";
 
 const treeNodeToKernel = new WeakMap<TreeNode, TreeNodeKernel>();
 
@@ -61,10 +65,12 @@ export function tryGetTreeNodeSchema(value: unknown): undefined | TreeNodeSchema
  * When hydration occurs, the kernel is notified via the {@link TreeNodeKernel.hydrate | hydrate} method.
  */
 export class TreeNodeKernel implements Listenable<TreeChangeEvents> {
-	#hydrated?: {
-		anchorNode: AnchorNode;
-		offAnchorNode: Off;
-	};
+	#hydrated:
+		| Off
+		| {
+				anchorNode: AnchorNode;
+				offAnchorNode: Off;
+		  };
 	#events = createEmitter<TreeChangeEvents>();
 
 	/**
@@ -73,14 +79,34 @@ export class TreeNodeKernel implements Listenable<TreeChangeEvents> {
 	 * Exactly one kernel per TreeNode should be created.
 	 */
 	public constructor(
+		innerNode: FlexTreeNode | MapTreeNode,
 		public readonly node: TreeNode,
 		public readonly schema: TreeNodeSchema,
 	) {
 		assert(!treeNodeToKernel.has(node), "only one kernel per node can be made");
 		treeNodeToKernel.set(node, this);
+
+		this.#hydrated = isMapTreeNode(innerNode)
+			? innerNode.events.on("changed", () => {
+					this.#events.emit("nodeChanged");
+
+					let n: InnerNode | undefined = innerNode;
+					while (n !== undefined) {
+						const treeNode = tryGetCachedTreeNode(n);
+						if (treeNode !== undefined) {
+							const kernel = getKernel(treeNode);
+							kernel.#events.emit("treeChanged");
+						}
+						n = n.parentField.parent.parent;
+					}
+				})
+			: () => {};
 	}
 
 	public hydrate(anchorNode: AnchorNode): void {
+		assert(typeof this.#hydrated === "function", "Can't hydrate a node twice");
+		this.#hydrated();
+
 		const offChildrenChanged = anchorNode.on("childrenChangedAfterBatch", () => {
 			this.#events.emit("nodeChanged");
 		});
@@ -101,17 +127,12 @@ export class TreeNodeKernel implements Listenable<TreeChangeEvents> {
 		};
 	}
 
-	public dehydrate(): void {
-		this.#hydrated?.offAnchorNode?.();
-		this.#hydrated = undefined;
-	}
-
 	public isHydrated(): boolean {
-		return this.#hydrated !== undefined;
+		return typeof this.#hydrated === "object";
 	}
 
 	public getStatus(): TreeStatus {
-		if (this.#hydrated?.anchorNode === undefined) {
+		if (typeof this.#hydrated === "function") {
 			return TreeStatus.New;
 		}
 
@@ -135,7 +156,11 @@ export class TreeNodeKernel implements Listenable<TreeChangeEvents> {
 	}
 
 	public dispose(): void {
-		this.dehydrate();
-		// TODO: go to the context and remove myself from withAnchors
+		if (typeof this.#hydrated === "function") {
+			this.#hydrated();
+		} else {
+			this.#hydrated.offAnchorNode?.();
+			// TODO: go to the context and remove myself from withAnchors
+		}
 	}
 }
