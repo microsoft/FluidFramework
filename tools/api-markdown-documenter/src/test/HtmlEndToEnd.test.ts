@@ -43,6 +43,10 @@ const testDataDirectoryPath = Path.resolve(dirname, "..", "..", "src", "test", "
 
 const apiModels: ApiModelTestOptions[] = [
 	{
+		modelName: "minimal",
+		directoryPath: Path.resolve(testDataDirectoryPath, "minimal"),
+	},
+	{
 		modelName: "simple-suite-test",
 		directoryPath: Path.resolve(testDataDirectoryPath, "simple-suite-test"),
 	},
