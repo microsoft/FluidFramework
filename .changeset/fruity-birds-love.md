@@ -5,9 +5,9 @@
 ---
 "section": "tree"
 ---
-Enable compile time type narrowing based on a TreeNode's NodeKind.
+Compile-time type narrowing based on a TreeNode's NodeKind
 
-TreeNode's schema aware APIs implement WithType, which now has a NodeKind parameter that can be used to narrow TreeNodes based on NodeKind.
+`TreeNode`'s schema aware APIs implement `WithType`, which now has a `NodeKind` parameter that can be used to narrow `TreeNode`s based on `NodeKind`.
 
 Example:
 
