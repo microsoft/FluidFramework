@@ -1,6 +1,6 @@
 # @fluid-example/migration-tools
 
-This package contains utilities used by Fluid examples. These interfaces can be extended by Fluid objects in the examples, but are not intended for use in production scenarios.
+This package contains tools for migrating data from one version to another, used by Fluid examples. They are not currently intended for use in production scenarios.
 
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
 
