@@ -5,6 +5,7 @@
 
 export {
 	typeNameSymbol,
+	typeSchemaSymbol,
 	type WithType,
 	type TreeNodeSchema,
 	NodeKind,
