@@ -4581,6 +4581,136 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
 
+  examples/utils/migration-tools:
+    dependencies:
+      '@fluid-experimental/pact-map':
+        specifier: workspace:~
+        version: link:../../../packages/dds/pact-map
+      '@fluid-internal/client-utils':
+        specifier: workspace:~
+        version: link:../../../packages/common/client-utils
+      '@fluidframework/aqueduct':
+        specifier: workspace:~
+        version: link:../../../packages/framework/aqueduct
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../../packages/loader/container-loader
+      '@fluidframework/container-runtime':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/container-runtime
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-utils
+      '@fluidframework/datastore':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/datastore
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/common/driver-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../../packages/loader/driver-utils
+      '@fluidframework/local-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/local-driver
+      '@fluidframework/merge-tree':
+        specifier: workspace:~
+        version: link:../../../packages/dds/merge-tree
+      '@fluidframework/register-collection':
+        specifier: workspace:~
+        version: link:../../../packages/dds/register-collection
+      '@fluidframework/request-handler':
+        specifier: workspace:~
+        version: link:../../../packages/framework/request-handler
+      '@fluidframework/routerlicious-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/routerlicious-driver
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/runtime-utils
+      '@fluidframework/sequence':
+        specifier: workspace:~
+        version: link:../../../packages/dds/sequence
+      '@fluidframework/server-local-server':
+        specifier: ^5.0.0
+        version: 5.0.0
+      '@fluidframework/task-manager':
+        specifier: workspace:~
+        version: link:../../../packages/dds/task-manager
+      '@fluidframework/tinylicious-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/tinylicious-driver
+      react:
+        specifier: ^17.0.1
+        version: 17.0.2
+      react-dom:
+        specifier: ^17.0.1
+        version: 17.0.2(react@17.0.2)
+      uuid:
+        specifier: ^9.0.0
+        version: 9.0.1
+    devDependencies:
+      '@arethetypeswrong/cli':
+        specifier: ^0.15.2
+        version: 0.15.2
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
+      '@fluid-tools/build-cli':
+        specifier: ^0.43.0
+        version: 0.43.0(webpack-cli@4.10.0)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.43.0
+        version: 0.43.0
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
+      '@microsoft/api-extractor':
+        specifier: ^7.45.1
+        version: 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)(@types/node@18.19.1)
+      '@types/react':
+        specifier: ^17.0.44
+        version: 17.0.71
+      '@types/react-dom':
+        specifier: ^17.0.18
+        version: 17.0.25
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.7
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      prettier:
+        specifier: ~3.0.3
+        version: 3.0.3
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
   examples/utils/webpack-fluid-loader:
     dependencies:
       '@fluid-example/example-utils':
@@ -16973,7 +17103,7 @@ packages:
       commander: 10.0.1
       marked: 9.1.6
       marked-terminal: 6.1.0(marked@9.1.6)
-      semver: 7.6.0
+      semver: 7.6.3
     dev: true
 
   /@arethetypeswrong/core@0.15.1:
@@ -17194,7 +17324,7 @@ packages:
       '@babel/traverse': 7.24.1
       '@babel/types': 7.24.0
       convert-source-map: 2.0.0
-      debug: 4.3.5
+      debug: 4.3.6(supports-color@8.1.1)
       gensync: 1.0.0-beta.2
       json5: 2.2.3
       semver: 6.3.1
@@ -18854,7 +18984,7 @@ packages:
       outdent: 0.5.0
       prettier: 2.8.8
       resolve-from: 5.0.0
-      semver: 7.6.0
+      semver: 7.6.3
 
   /@changesets/assemble-release-plan@5.2.4:
     resolution: {integrity: sha512-xJkWX+1/CUaOUWTguXEbCDTyWJFECEhmdtbkjhn5GVBGxdP/JwaHBIU9sW3FR6gD07UwZ7ovpiPclQZs+j+mvg==}
@@ -18864,7 +18994,7 @@ packages:
       '@changesets/get-dependents-graph': 1.3.6
       '@changesets/types': 5.2.1
       '@manypkg/get-packages': 1.1.3
-      semver: 7.6.0
+      semver: 7.6.3
 
   /@changesets/changelog-git@0.1.14:
     resolution: {integrity: sha512-+vRfnKtXVWsDDxGctOfzJsPhaCdXRYoe+KyWYoq5X/GqoISREiat0l3L8B0a453B2B4dfHGcZaGyowHbp9BSaA==}
@@ -18932,7 +19062,7 @@ packages:
       '@manypkg/get-packages': 1.1.3
       chalk: 2.4.2
       fs-extra: 7.0.1
-      semver: 7.6.0
+      semver: 7.6.3
 
   /@changesets/get-release-plan@3.0.17:
     resolution: {integrity: sha512-6IwKTubNEgoOZwDontYc2x2cWXfr6IKxP3IhKeK+WjyD6y3M4Gl/jdQvBw+m/5zWILSOCAaGLu2ZF6Q+WiPniw==}
@@ -22732,9 +22862,9 @@ packages:
       '@fluidframework/gitresources': 5.0.0
       '@fluidframework/protocol-base': 5.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      axios: 1.6.2(debug@4.3.5)
+      axios: 1.6.2(debug@4.3.6)
       crc-32: 1.2.0
-      debug: 4.3.5
+      debug: 4.3.6(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
       jsrsasign: 11.1.0
       jwt-decode: 4.0.0
@@ -34619,6 +34749,7 @@ packages:
 
   /glob@7.1.6:
     resolution: {integrity: sha512-LwaxwyZ72Lk7vZINtNNrywX0ZuLyStrdDtabefZKAY5ZGJhVtgdznluResxNmPitE0SAO+O26sWTHeKSI2wMBA==}
+    deprecated: Glob versions prior to v9 are no longer supported
     dependencies:
       fs.realpath: 1.0.0
       inflight: 1.0.6
@@ -35761,6 +35892,7 @@ packages:
 
   /inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
+    deprecated: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
     dependencies:
       once: 1.4.0
       wrappy: 1.0.2
@@ -43964,7 +44096,7 @@ packages:
     dependencies:
       '@kwsites/file-exists': 1.1.1
       '@kwsites/promise-deferred': 1.1.1
-      debug: 4.3.5
+      debug: 4.3.6(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -44402,7 +44534,7 @@ packages:
     resolution: {integrity: sha512-r46gZQZQV+Kl9oItvl1JZZqJKGr+oEkB08A6BzkiR7593/7IbtuncXHd2YoYeTsG4157ZssMu9KYvUHLcjcDoA==}
     engines: {node: '>=6.0.0'}
     dependencies:
-      debug: 4.3.5
+      debug: 4.3.6(supports-color@8.1.1)
       handle-thing: 2.0.1
       http-deceiver: 1.2.7
       select-hose: 2.0.0
