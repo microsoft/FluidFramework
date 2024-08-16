@@ -29,44 +29,67 @@ describe("ESLint Rule Tests", function () {
 
 	it("Should report an error for unchecked record access", async function () {
 		const result = await lintFile("fileWithOnlyRecordAccess.ts");
-		console.log(result);
-		assert.strictEqual(result.errorCount, 9, "Should have 9 errors");
+		assert.strictEqual(result.errorCount, 10, "Should have 10 errors");
+
 		assert.strictEqual(
 			result.messages[0].message,
 			"'nullableIndexedRecord.a' is possibly 'undefined'",
 		);
+		assert.strictEqual(result.messages[0].line, 20);
+
 		assert.strictEqual(
 			result.messages[1].message,
 			"'nestedObj.nested.a' is possibly 'undefined'",
 		);
+		assert.strictEqual(result.messages[1].line, 26);
+
 		assert.strictEqual(
 			result.messages[2].message,
 			"'indexedRecordOfStrings.a' is possibly 'undefined'",
 		);
+		assert.strictEqual(result.messages[2].line, 45);
+
 		assert.strictEqual(
 			result.messages[3].message,
 			"'indexedRecordOfStrings[\"a\"]' is possibly 'undefined'",
 		);
+		assert.strictEqual(result.messages[3].line, 47);
+
 		assert.strictEqual(
 			result.messages[4].message,
 			"'indexedRecordOfStrings[a]' is possibly 'undefined'",
 		);
+		assert.strictEqual(result.messages[4].line, 48);
+
 		assert.strictEqual(
 			result.messages[5].message,
 			"'indexedRecordOfStrings[b]' is possibly 'undefined'",
 		);
+		assert.strictEqual(result.messages[5].line, 49);
+
 		assert.strictEqual(
 			result.messages[6].message,
-			"'indexedRecordOfStrings.a' is possibly 'undefined'",
+			"Returning 'record.a' directly from an index signature type is not allowed. It may be 'undefined'",
 		);
+		assert.strictEqual(result.messages[6].line, 64);
+
 		assert.strictEqual(
 			result.messages[7].message,
-			"Implicit typing for 'indexedRecordOfStrings.a' from an index signature type is not allowed. Please provide an explicit type annotation or enable noUncheckedIndexedAccess",
-		);
-		assert.strictEqual(
-			result.messages[8].message,
 			"'indexedRecordOfStrings.a' is possibly 'undefined'",
 		);
+		assert.strictEqual(result.messages[7].line, 81);
+
+		assert.strictEqual(
+			result.messages[8].message,
+			"Implicit typing for 'indexedRecordOfStrings.a' from an index signature type is not allowed. Please provide an explicit type annotation or enable noUncheckedIndexedAccess",
+		);
+		assert.strictEqual(result.messages[8].line, 83);
+
+		assert.strictEqual(
+			result.messages[9].message,
+			"'indexedRecordOfStrings.a' is possibly 'undefined'",
+		);
+		assert.strictEqual(result.messages[9].line, 88);
 	});
 
 	it("Should not report an error for valid array access", async function () {

@@ -60,8 +60,12 @@ if ("a" in indexedRecordOfStrings) {
 	indexedRecordOfStrings.a.length; // ok: Accessing length of property inside an 'in' check, 'a' is guaranteed to be defined
 }
 
-function recordAFn(record: IndexSignatureType): string {
+function recordAFnExpectsString(record: IndexSignatureType): string {
 	return record.a; // defect: Returning index property 'a' directly, but 'a' might not be present
+}
+
+function recordAFnExpectsStringOrUndefined(record: IndexSignatureType): string | undefined {
+	return record.a; // ok: Returning index property 'a' to string or undefined variable, 'a' might not be present
 }
 
 for (const [key, value] of Object.entries(indexedRecordOfStrings)) {
@@ -95,5 +99,3 @@ nonNullObj.maybeString.length; // ok: This should be caught by tsc, not by this 
 
 let possiblyUndefined: string | undefined;
 possiblyUndefined = nonNullObj.maybeString; // ok: Assigning optional property to variable of type 'string | undefined'
-// @ts-expect-error: This access might cause an error, but it's expected
-const value = indexedRecordOfStrings.a.length;
