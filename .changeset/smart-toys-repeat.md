@@ -2,9 +2,6 @@
 "fluid-framework": minor
 "@fluidframework/runtime-utils": minor
 ---
----
-section: feature
----
 
 New `isFluidHandle` type guard to check if an object is an `IFluidHandle`
 

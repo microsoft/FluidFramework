@@ -4,9 +4,6 @@
 "@fluidframework/sequence": minor
 "@fluid-experimental/sequence-deprecated": minor
 ---
----
-"section": "deprecation"
----
 The PropertyManager class and related functions and properties are deprecated
 
 The `PropertyManager` class, along with the `propertyManager` properties and `addProperties` functions on segments and intervals, are not intended for external use.

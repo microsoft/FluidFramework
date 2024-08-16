@@ -1,9 +1,6 @@
 ---
 "@fluidframework/container-runtime": minor
 ---
----
-section: deprecation
----
 
 InactiveResponseHeaderKey header is deprecated
 

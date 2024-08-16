@@ -1,9 +1,6 @@
 ---
 "@fluid-experimental/property-shared-tree-interop": minor
 ---
----
-section: other
----
 
 Remove PropertyDDS/SharedTree Schema Converter
 

@@ -2,9 +2,6 @@
 "fluid-framework": minor
 "@fluidframework/tree": minor
 ---
----
-section: tree
----
 
 New SharedTree configuration option: `ITreeConfigurationOptions.preventAmbiguity`
 

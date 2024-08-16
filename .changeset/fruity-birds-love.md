@@ -2,9 +2,6 @@
 "fluid-framework": minor
 "@fluidframework/tree": minor
 ---
----
-"section": "tree"
----
 Compile-time type narrowing based on a TreeNode's NodeKind
 
 `TreeNode`'s schema-aware APIs implement `WithType`, which now has a `NodeKind` parameter that can be used to narrow `TreeNode`s based on `NodeKind`.

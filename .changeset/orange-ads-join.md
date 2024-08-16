@@ -2,9 +2,6 @@
 "@fluidframework/container-runtime": minor
 "@fluidframework/runtime-definitions": minor
 ---
----
-section: deprecation
----
 
 gcThrowOnTombstoneUsage and gcTombstoneEnforcementAllowed are deprecated
 

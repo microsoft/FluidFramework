@@ -2,9 +2,6 @@
 "fluid-framework": minor
 "@fluidframework/tree": minor
 ---
----
-section: fix
----
 
 Recursive SharedTree schemas using MapNodes no longer produce invalid d.ts files
 

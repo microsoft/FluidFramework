@@ -1,9 +1,7 @@
 ---
 "@fluidframework/merge-tree": minor
 ---
----
-"section": "deprecation"
----
+
 Deprecate segmentGroups and ack on ISegment
 
 The `SegmentGroupCollection` class, along with the `segmentGroups` property and `ack` function on segments, are not intended for external use.

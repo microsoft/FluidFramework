@@ -1,9 +1,6 @@
 ---
 "@fluidframework/container-loader": minor
 ---
----
-section: deprecation
----
 
 container-loader: summarizeProtocolTree and its corresponding duplicate ILoaderOptions definition is deprecated
 

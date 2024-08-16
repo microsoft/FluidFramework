@@ -1,9 +1,6 @@
 ---
 "@fluidframework/tree": minor
 ---
----
-section: tree
----
 
 Support generation of JSON Schema from Shared Tree view schema (alpha)
 

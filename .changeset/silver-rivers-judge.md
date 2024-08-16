@@ -2,9 +2,6 @@
 "fluid-framework": minor
 "@fluidframework/tree": minor
 ---
----
-section: tree
----
 
 Enforce use of TreeViewConfiguration's constructor
 
