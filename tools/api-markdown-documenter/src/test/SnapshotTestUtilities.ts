@@ -239,9 +239,7 @@ export async function compareDocumentationSuiteSnapshot(
 			sourcePath: temporaryDirectoryPath,
 			destinationPath: snapshotDirectoryPath,
 		});
-	}
 
-	// If this fails, then the docs build has generated new content.
-	// View the diff in git and determine if the changes are appropriate or not.
-	expect(result.same).to.be.true;
+		expect.fail(`Snapshot test encountered ${result.differencesFiles} file diffs.`);
+	}
 }
