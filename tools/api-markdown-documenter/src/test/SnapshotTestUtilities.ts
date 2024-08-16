@@ -28,16 +28,18 @@ export interface EndToEndTestConfig<TRenderConfig> {
 	readonly suiteName: string;
 
 	/**
-	 * Path to the directory where the test output will be written for comparison against checked-in snapshots.
+	 * Path to the directory where all suite test output will be written for comparison against checked-in snapshots.
 	 *
-	 * Individual tests' output will be written to `<temporaryOutputDirectoryPath>/<testName>`.
+	 * @remarks
+	 * Individual tests' output will be written to `<temporaryOutputDirectoryPath>/<{@link ApiModelTestOptions.modelName}>/<{@link ApiItemTransformationTestOptions.configName}>/<{@link RenderTestOptions.configName}>`.
 	 */
 	readonly temporaryOutputDirectoryPath: string;
 
 	/**
 	 * Path to the directory containing the checked-in snapshots for comparison in this suite.
 	 *
-	 * Individual tests' output will be compared to `<snapshotsDirectoryPath>/<testName>`.
+	 * @remarks
+	 * Individual tests' output will be written to `<temporaryOutputDirectoryPath>/<{@link ApiModelTestOptions.modelName}>/<{@link ApiItemTransformationTestOptions.configName}>/<{@link RenderTestOptions.configName}>`.
 	 */
 	readonly snapshotsDirectoryPath: string;
 
@@ -100,7 +102,7 @@ export interface ApiItemTransformationTestOptions {
 /**
  * Render options for a test.
  */
-export interface RenderTestOptions<TRenderConfiguration> {
+export interface RenderTestOptions<TRenderConfig> {
 	/**
 	 * Name of the rendering scenario being tested.
 	 */
@@ -109,17 +111,17 @@ export interface RenderTestOptions<TRenderConfiguration> {
 	/**
 	 * Render configuration.
 	 */
-	readonly renderConfig: TRenderConfiguration;
+	readonly renderConfig: TRenderConfig;
 }
 
 /**
  * Runs an end-to-end snapshot test for the provided API Model configurations.
  */
-export function endToEndTestSuite<TRenderConfiguration>(
-	suiteConfiguration: EndToEndTestConfig<TRenderConfiguration>,
+export function endToEndTestSuite<TRenderConfig>(
+	suiteConfig: EndToEndTestConfig<TRenderConfig>,
 ): Suite {
-	return describe(suiteConfiguration.suiteName, () => {
-		for (const apiModelTestConfig of suiteConfiguration.apiModels) {
+	return describe(suiteConfig.suiteName, () => {
+		for (const apiModelTestConfig of suiteConfig.apiModels) {
 			const { modelName, directoryPath: modelDirectoryPath } = apiModelTestConfig;
 			describe(modelName, () => {
 				let apiModel: ApiModel;
@@ -127,15 +129,15 @@ export function endToEndTestSuite<TRenderConfiguration>(
 					apiModel = await loadModel({ modelDirectoryPath });
 				});
 
-				for (const transformTestConfig of suiteConfiguration.transformConfigs) {
+				for (const apiItemTransformTestConfig of suiteConfig.transformConfigs) {
 					const {
 						configName: transformConfigName,
 						transformConfig: partialTransformConfig,
-					} = transformTestConfig;
+					} = apiItemTransformTestConfig;
 					describe(transformConfigName, () => {
-						let transformConfiguration: ApiItemTransformationConfiguration;
+						let apiItemTransformConfig: ApiItemTransformationConfiguration;
 						before(async () => {
-							transformConfiguration = {
+							apiItemTransformConfig = {
 								...partialTransformConfig,
 								apiModel,
 							};
@@ -144,7 +146,7 @@ export function endToEndTestSuite<TRenderConfiguration>(
 						// Run a sanity check to ensure that the suite did not generate multiple documents with the same
 						// output file path. This either indicates a bug in the system, or an bad configuration.
 						it("Ensure no duplicate file paths", () => {
-							const documents = transformApiModel(transformConfiguration);
+							const documents = transformApiModel(apiItemTransformConfig);
 
 							const pathMap = new Map<string, DocumentNode>();
 							for (const document of documents) {
@@ -158,22 +160,20 @@ export function endToEndTestSuite<TRenderConfiguration>(
 							}
 						});
 
-						for (const renderTestConfig of suiteConfiguration.renderConfigs) {
-							const {
-								configName: renderConfigName,
-								renderConfig: renderConfiguration,
-							} = renderTestConfig;
-							const testOutputPath = Path.join(
+						for (const renderTestConfig of suiteConfig.renderConfigs) {
+							const { configName: renderConfigName, renderConfig } = renderTestConfig;
+
+							const testOutputPath = createTestOutputPath(
 								modelName,
 								transformConfigName,
 								renderConfigName,
 							);
 							const temporaryDirectoryPath = Path.resolve(
-								suiteConfiguration.temporaryOutputDirectoryPath,
+								suiteConfig.temporaryOutputDirectoryPath,
 								testOutputPath,
 							);
 							const snapshotDirectoryPath = Path.resolve(
-								suiteConfiguration.snapshotsDirectoryPath,
+								suiteConfig.snapshotsDirectoryPath,
 								testOutputPath,
 							);
 
@@ -186,13 +186,13 @@ export function endToEndTestSuite<TRenderConfiguration>(
 									// Clear any existing test_temp data
 									await FileSystem.ensureEmptyFolderAsync(temporaryDirectoryPath);
 
-									const documents = transformApiModel(transformConfiguration);
+									const documents = transformApiModel(apiItemTransformConfig);
 
 									await Promise.all(
 										documents.map(async (document) =>
-											suiteConfiguration.render(
+											suiteConfig.render(
 												document,
-												renderConfiguration,
+												renderConfig,
 												temporaryDirectoryPath,
 											),
 										),
@@ -210,6 +210,14 @@ export function endToEndTestSuite<TRenderConfiguration>(
 			});
 		}
 	});
+}
+
+function createTestOutputPath(
+	modelName: string,
+	apiItemTransformationConfigName: string,
+	renderConfigName: string,
+): string {
+	return Path.join(modelName, apiItemTransformationConfigName, renderConfigName);
 }
 
 /**
