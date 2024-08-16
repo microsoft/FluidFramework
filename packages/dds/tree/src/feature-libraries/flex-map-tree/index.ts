@@ -5,7 +5,9 @@
 
 export {
 	type MapTreeNode,
+	type MapTreeSequenceField,
 	isMapTreeNode,
+	isMapTreeSequenceField,
 	getOrCreateMapTreeNode,
 	tryGetMapTreeNode,
 } from "./mapTreeNode.js";
