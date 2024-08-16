@@ -136,7 +136,7 @@ describe("Table", () => {
 			let summaryBytes: number;
 
 			benchmarkCustom({
-				only: true,
+				only: false,
 				type: BenchmarkType.Measurement,
 				title: `Row-major JSON (Typical Database Baseline)`,
 				run: async (reporter) => {
@@ -148,7 +148,7 @@ describe("Table", () => {
 			});
 
 			benchmarkCustom({
-				only: true,
+				only: false,
 				type: BenchmarkType.Measurement,
 				title: `Column-major JSON (Compact REST Baseline)`,
 				run: async (reporter) => {
@@ -160,7 +160,7 @@ describe("Table", () => {
 			});
 
 			benchmarkCustom({
-				only: true,
+				only: false,
 				type: BenchmarkType.Measurement,
 				title: `SharedMatrix`,
 				run: async (reporter) => {
@@ -187,7 +187,7 @@ describe("Table", () => {
 			});
 
 			benchmarkCustom({
-				only: true,
+				only: false,
 				type: BenchmarkType.Measurement,
 				title: `SharedTree`,
 				run: async (reporter) => {
