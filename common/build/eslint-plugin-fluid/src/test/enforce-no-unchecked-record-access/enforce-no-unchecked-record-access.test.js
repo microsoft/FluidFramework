@@ -22,7 +22,7 @@ describe("ESLint Rule Tests", function () {
 			},
 			rulePaths: [path.join(__dirname, "../../rules")],
 		});
-		const fileToLint = path.join(__dirname, "../mockFiles/no-unchecked-record-access", file);
+		const fileToLint = path.join(__dirname, "../example/no-unchecked-record-access", file);
 		const results = await eslint.lintFiles([fileToLint]);
 		return results[0];
 	}

@@ -33,7 +33,7 @@ describe("ESLint Rule Tests", function () {
 			},
 		});
 		const filesToLint = ["fileWithImports.ts", "mockModule.ts"].map((file) =>
-			path.join(__dirname, "../mockFiles/no-restricted-tags-imports", file),
+			path.join(__dirname, "../example/no-restricted-tags-imports", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
@@ -68,7 +68,7 @@ describe("ESLint Rule Tests", function () {
 			},
 		});
 		const filesToLint = ["fileWithExceptionImports.ts", "exceptionFile.ts"].map((file) =>
-			path.join(__dirname, "../mockFiles/no-restricted-tags-imports", file),
+			path.join(__dirname, "../example/no-restricted-tags-imports", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
@@ -96,7 +96,7 @@ describe("ESLint Rule Tests", function () {
 			},
 		});
 		const filesToLint = ["fileWithImports.ts", "mockModule.ts"].map((file) =>
-			path.join(__dirname, "../mockFiles/no-restricted-tags-imports", file),
+			path.join(__dirname, "../example/no-restricted-tags-imports", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
