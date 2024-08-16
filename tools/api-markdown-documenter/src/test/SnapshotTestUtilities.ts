@@ -3,11 +3,214 @@
  * Licensed under the MIT License.
  */
 
-import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
+import Path from "node:path";
+
+import type { ApiModel } from "@microsoft/api-extractor-model";
+import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { compare } from "dir-compare";
 
-import { type FileSystemConfiguration } from "../FileSystemConfiguration.js";
+import {
+	transformApiModel,
+	type ApiItemTransformationConfiguration,
+} from "../api-item-transforms/index.js";
+import type { Suite } from "mocha";
+import { loadModel } from "../LoadModel.js";
+import type { DocumentNode } from "../documentation-domain/index.js";
+
+/**
+ * End-to-end snapshot test configuration.
+ */
+export interface EndToEndTestConfig<TRenderConfig> {
+	/**
+	 * Name of the outer test suite.
+	 */
+	readonly suiteName: string;
+
+	/**
+	 * Path to the directory where the test output will be written for comparison against checked-in snapshots.
+	 *
+	 * Individual tests' output will be written to `<temporaryOutputDirectoryPath>/<testName>`.
+	 */
+	readonly temporaryOutputDirectoryPath: string;
+
+	/**
+	 * Path to the directory containing the checked-in snapshots for comparison in this suite.
+	 *
+	 * Individual tests' output will be compared to `<snapshotsDirectoryPath>/<testName>`.
+	 */
+	readonly snapshotsDirectoryPath: string;
+
+	/**
+	 * The end-to-end test scenario to run against the API model.
+	 * Writes the output to the specified directory for snapshot comparison.
+	 */
+	render(
+		document: DocumentNode,
+		renderConfig: TRenderConfig,
+		outputDirectoryPath: string,
+	): Promise<void>;
+
+	/**
+	 * The models to test.
+	 */
+	readonly apiModels: readonly ApiModelTestOptions[];
+
+	/**
+	 * The transformation configurations to test.
+	 */
+	readonly transformConfigs: readonly ApiItemTransformationTestOptions[];
+
+	/**
+	 * The render configurations to test.
+	 */
+	readonly renderConfigs: readonly RenderTestOptions<TRenderConfig>[];
+}
+
+/**
+ * API Model test options for a test.
+ */
+export interface ApiModelTestOptions {
+	/**
+	 * Name of the API Model being tested.
+	 */
+	readonly modelName: string;
+
+	/**
+	 * Path to the directory containing the API Model.
+	 */
+	readonly directoryPath: string;
+}
+
+/**
+ * API Item transformation options for a test.
+ */
+export interface ApiItemTransformationTestOptions {
+	/**
+	 * Name of the API Item transformation variant being tested.
+	 */
+	readonly configName: string;
+
+	/**
+	 * The transformation configuration to use.
+	 */
+	readonly transformConfig: Omit<ApiItemTransformationConfiguration, "apiModel">;
+}
+
+/**
+ * Render options for a test.
+ */
+export interface RenderTestOptions<TRenderConfiguration> {
+	/**
+	 * Name of the rendering scenario being tested.
+	 */
+	readonly configName: string;
+
+	/**
+	 * Render configuration.
+	 */
+	readonly renderConfig: TRenderConfiguration;
+}
+
+/**
+ * Runs an end-to-end snapshot test for the provided API Model configurations.
+ */
+export function endToEndTestSuite<TRenderConfiguration>(
+	suiteConfiguration: EndToEndTestConfig<TRenderConfiguration>,
+): Suite {
+	return describe(suiteConfiguration.suiteName, () => {
+		for (const apiModelTestConfig of suiteConfiguration.apiModels) {
+			const { modelName, directoryPath: modelDirectoryPath } = apiModelTestConfig;
+			describe(modelName, () => {
+				let apiModel: ApiModel;
+				before(async () => {
+					apiModel = await loadModel({ modelDirectoryPath });
+				});
+
+				for (const transformTestConfig of suiteConfiguration.transformConfigs) {
+					const {
+						configName: transformConfigName,
+						transformConfig: partialTransformConfig,
+					} = transformTestConfig;
+					describe(transformConfigName, () => {
+						let transformConfiguration: ApiItemTransformationConfiguration;
+						before(async () => {
+							transformConfiguration = {
+								...partialTransformConfig,
+								apiModel,
+							};
+						});
+
+						// Run a sanity check to ensure that the suite did not generate multiple documents with the same
+						// output file path. This either indicates a bug in the system, or an bad configuration.
+						it("Ensure no duplicate file paths", () => {
+							const documents = transformApiModel(transformConfiguration);
+
+							const pathMap = new Map<string, DocumentNode>();
+							for (const document of documents) {
+								if (pathMap.has(document.documentPath)) {
+									expect.fail(
+										`Rendering generated multiple documents to be rendered to the same file path.`,
+									);
+								} else {
+									pathMap.set(document.documentPath, document);
+								}
+							}
+						});
+
+						for (const renderTestConfig of suiteConfiguration.renderConfigs) {
+							const {
+								configName: renderConfigName,
+								renderConfig: renderConfiguration,
+							} = renderTestConfig;
+							const testOutputPath = Path.join(
+								modelName,
+								transformConfigName,
+								renderConfigName,
+							);
+							const temporaryDirectoryPath = Path.resolve(
+								suiteConfiguration.temporaryOutputDirectoryPath,
+								testOutputPath,
+							);
+							const snapshotDirectoryPath = Path.resolve(
+								suiteConfiguration.snapshotsDirectoryPath,
+								testOutputPath,
+							);
+
+							describe(renderConfigName, () => {
+								it("Snapshot test", async () => {
+									// Ensure the output temp and snapshots directories exists (will create an empty ones if they don't).
+									await FileSystem.ensureFolderAsync(temporaryDirectoryPath);
+									await FileSystem.ensureFolderAsync(snapshotDirectoryPath);
+
+									// Clear any existing test_temp data
+									await FileSystem.ensureEmptyFolderAsync(temporaryDirectoryPath);
+
+									const documents = transformApiModel(transformConfiguration);
+
+									await Promise.all(
+										documents.map(async (document) =>
+											suiteConfiguration.render(
+												document,
+												renderConfiguration,
+												temporaryDirectoryPath,
+											),
+										),
+									);
+
+									await compareDocumentationSuiteSnapshot(
+										snapshotDirectoryPath,
+										temporaryDirectoryPath,
+									);
+								});
+							});
+						}
+					});
+				}
+			});
+		}
+	});
+}
 
 /**
  * Compares "expected" to "actual" documentation test suite output.
@@ -18,39 +221,22 @@ import { type FileSystemConfiguration } from "../FileSystemConfiguration.js";
  * @param snapshotDirectoryPath - Resolved path to the directory containing the checked-in assets for the test.
  * Represents the "expected" test output.
  *
- * @param outputDirectoryPath - Resolved path to the directory containing the freshly generated test output.
+ * @param temporaryDirectoryPath - Resolved path to the directory containing the freshly generated test output.
  * Represents the "actual" test output.
- *
- * @param render - Function to render the documentation output to `tempDirectoryPath`.
  */
 export async function compareDocumentationSuiteSnapshot(
 	snapshotDirectoryPath: string,
-	outputDirectoryPath: string,
-	render: (fsConfig: FileSystemConfiguration) => Promise<void>,
+	temporaryDirectoryPath: string,
 ): Promise<void> {
-	// Ensure the output temp and snapshots directories exists (will create an empty ones if they don't).
-	await FileSystem.ensureFolderAsync(outputDirectoryPath);
-	await FileSystem.ensureFolderAsync(snapshotDirectoryPath);
-
-	// Clear any existing test_temp data
-	await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
-
-	// Run transformation and rendering logic
-	const fileSystemConfig = {
-		outputDirectoryPath,
-		newlineKind: NewlineKind.Lf,
-	};
-	await render(fileSystemConfig);
-
 	// Verify against expected contents
-	const result = await compare(outputDirectoryPath, snapshotDirectoryPath, {
+	const result = await compare(temporaryDirectoryPath, snapshotDirectoryPath, {
 		compareContent: true,
 	});
 
 	if (!result.same) {
 		await FileSystem.ensureEmptyFolderAsync(snapshotDirectoryPath);
 		await FileSystem.copyFilesAsync({
-			sourcePath: outputDirectoryPath,
+			sourcePath: temporaryDirectoryPath,
 			destinationPath: snapshotDirectoryPath,
 		});
 	}
