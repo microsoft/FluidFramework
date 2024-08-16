@@ -799,7 +799,7 @@ export async function loadContainerRuntime(params: {
 	containerScope?: FluidObject;
 	provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 }): Promise<IContainerRuntime & IRuntime> {
-	return loadContainerRuntime(params);
+	return ContainerRuntime.loadRuntime(params);
 }
 
 /**
