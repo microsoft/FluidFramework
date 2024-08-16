@@ -1,66 +1,348 @@
-# TestClass
-
-Test class
-
-## Signature {#testclass-signature}
-
-```typescript
-export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass
-```
-
-**Extends:** [TestAbstractClass](docs/simple-suite-test/testabstractclass-class)
-
-### Type Parameters
-
-| Parameter | Description |
-| --- | --- |
-| TTypeParameterA | A type parameter |
-| TTypeParameterB | Another type parameter |
-
-## Remarks {#testclass-remarks}
-
-Here are some remarks about the class
-
-## Constructors
-
-| Constructor | Description |
-| --- | --- |
-| [(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)](docs/simple-suite-test/testclass-_constructor_-constructor) | Test class constructor |
-
-## Static Properties
-
-| Property | Type | Description |
-| --- | --- | --- |
-| [testClassStaticProperty](docs/simple-suite-test/testclass-testclassstaticproperty-property) | (foo: number) =&gt; string | Test static class property |
-
-## Static Methods
-
-| Method | Return Type | Description |
-| --- | --- | --- |
-| [testClassStaticMethod(foo)](docs/simple-suite-test/testclass-testclassstaticmethod-method) | string | Test class static method |
-
-## Events
-
-| Property | Modifiers | Type | Description |
-| --- | --- | --- | --- |
-| [testClassEventProperty](docs/simple-suite-test/testclass-testclasseventproperty-property) | `readonly` | () =&gt; void | Test class event property |
-
-## Properties
-
-| Property | Modifiers | Type | Description |
-| --- | --- | --- | --- |
-| [abstractPropertyGetter](docs/simple-suite-test/testclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/simple-suite-test/testmappedtype-typealias) | A test abstract getter property. |
-| [testClassGetterProperty](docs/simple-suite-test/testclass-testclassgetterproperty-property) | `virtual` | number | Test class property with both a getter and a setter. |
-| [testClassProperty](docs/simple-suite-test/testclass-testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
-
-## Methods
-
-| Method | Modifiers | Return Type | Description |
-| --- | --- | --- | --- |
-| [publicAbstractMethod()](docs/simple-suite-test/testclass-publicabstractmethod-method) |  | void | A test public abstract method. |
-| [testClassMethod(input)](docs/simple-suite-test/testclass-testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
-| [virtualMethod()](docs/simple-suite-test/testclass-virtualmethod-method) |  | number | Overrides [virtualMethod()](docs/simple-suite-test/testabstractclass-virtualmethod-method). |
-
-## See Also {#testclass-see-also}
-
-[TestAbstractClass](docs/simple-suite-test/testabstractclass-class)
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <section>
+      <h1>
+        TestClass
+      </h1>
+      <section>
+        <p>
+          Test class
+        </p>
+      </section>
+      <section>
+        <h2 id="testclass-signature">
+          Signature
+        </h2>
+        <code>
+          export declare class TestClass&lt;TTypeParameterA, TTypeParameterB&gt; extends TestAbstractClass
+        </code>
+        <p>
+          <p>
+            <span><span><b>Extends:</b> </span><span><a href='docs/simple-suite-test/testabstractclass-class'>TestAbstractClass</a></span></span>
+          </p>
+          <p>
+            <section>
+              <h3>
+                Type Parameters
+              </h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>
+                      Parameter
+                    </th>
+                    <th>
+                      Description
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      TTypeParameterA
+                    </td>
+                    <td>
+                      A type parameter
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      TTypeParameterB
+                    </td>
+                    <td>
+                      Another type parameter
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+          </p>
+        </p>
+      </section>
+      <section>
+        <h2 id="testclass-remarks">
+          Remarks
+        </h2>
+        <p>
+          Here are some remarks about the class
+        </p>
+      </section>
+      <section>
+        <h2>
+          Constructors
+        </h2>
+        <table>
+          <thead>
+            <tr>
+              <th>
+                Constructor
+              </th>
+              <th>
+                Description
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <a href='docs/simple-suite-test/testclass-_constructor_-constructor'>(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)</a>
+              </td>
+              <td>
+                Test class constructor
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h2>
+          Static Properties
+        </h2>
+        <table>
+          <thead>
+            <tr>
+              <th>
+                Property
+              </th>
+              <th>
+                Type
+              </th>
+              <th>
+                Description
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <a href='docs/simple-suite-test/testclass-testclassstaticproperty-property'>testClassStaticProperty</a>
+              </td>
+              <td>
+                <span>(foo: number) =&gt; string</span>
+              </td>
+              <td>
+                Test static class property
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h2>
+          Static Methods
+        </h2>
+        <table>
+          <thead>
+            <tr>
+              <th>
+                Method
+              </th>
+              <th>
+                Return Type
+              </th>
+              <th>
+                Description
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <a href='docs/simple-suite-test/testclass-testclassstaticmethod-method'>testClassStaticMethod(foo)</a>
+              </td>
+              <td>
+                <span>string</span>
+              </td>
+              <td>
+                Test class static method
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h2>
+          Events
+        </h2>
+        <table>
+          <thead>
+            <tr>
+              <th>
+                Property
+              </th>
+              <th>
+                Modifiers
+              </th>
+              <th>
+                Type
+              </th>
+              <th>
+                Description
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <a href='docs/simple-suite-test/testclass-testclasseventproperty-property'>testClassEventProperty</a>
+              </td>
+              <td>
+                <code>readonly</code>
+              </td>
+              <td>
+                <span>() =&gt; void</span>
+              </td>
+              <td>
+                Test class event property
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h2>
+          Properties
+        </h2>
+        <table>
+          <thead>
+            <tr>
+              <th>
+                Property
+              </th>
+              <th>
+                Modifiers
+              </th>
+              <th>
+                Type
+              </th>
+              <th>
+                Description
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <a href='docs/simple-suite-test/testclass-abstractpropertygetter-property'>abstractPropertyGetter</a>
+              </td>
+              <td>
+                <code>readonly</code>
+              </td>
+              <td>
+                <span><a href='docs/simple-suite-test/testmappedtype-typealias'>TestMappedType</a></span>
+              </td>
+              <td>
+                A test abstract getter property.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href='docs/simple-suite-test/testclass-testclassgetterproperty-property'>testClassGetterProperty</a>
+              </td>
+              <td>
+                <code>virtual</code>
+              </td>
+              <td>
+                <span>number</span>
+              </td>
+              <td>
+                Test class property with both a getter and a setter.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href='docs/simple-suite-test/testclass-testclassproperty-property'>testClassProperty</a>
+              </td>
+              <td>
+                <code>readonly</code>
+              </td>
+              <td>
+                <span>TTypeParameterB</span>
+              </td>
+              <td>
+                Test class property
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h2>
+          Methods
+        </h2>
+        <table>
+          <thead>
+            <tr>
+              <th>
+                Method
+              </th>
+              <th>
+                Modifiers
+              </th>
+              <th>
+                Return Type
+              </th>
+              <th>
+                Description
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <a href='docs/simple-suite-test/testclass-publicabstractmethod-method'>publicAbstractMethod()</a>
+              </td>
+              <td>
+              </td>
+              <td>
+                <span>void</span>
+              </td>
+              <td>
+                A test public abstract method.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href='docs/simple-suite-test/testclass-testclassmethod-method'>testClassMethod(input)</a>
+              </td>
+              <td>
+                <code>sealed</code>
+              </td>
+              <td>
+                <span>TTypeParameterA</span>
+              </td>
+              <td>
+                Test class method
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href='docs/simple-suite-test/testclass-virtualmethod-method'>virtualMethod()</a>
+              </td>
+              <td>
+              </td>
+              <td>
+                <span>number</span>
+              </td>
+              <td>
+                Overrides <a href='docs/simple-suite-test/testabstractclass-virtualmethod-method'>virtualMethod()</a>.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h2 id="testclass-see-also">
+          See Also
+        </h2>
+        <p>
+          <a href='docs/simple-suite-test/testabstractclass-class'>TestAbstractClass</a>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>
