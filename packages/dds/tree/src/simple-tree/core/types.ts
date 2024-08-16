@@ -7,8 +7,9 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { ErasedType } from "@fluidframework/core-interfaces";
 
-import { NodeKind } from "./treeNodeSchema.js";
-import { type WithType, typeNameSymbol } from "./withType.js";
+import { NodeKind, type TreeNodeSchemaClass } from "./treeNodeSchema.js";
+// eslint-disable-next-line import/no-deprecated
+import { type WithType, typeNameSymbol, type typeSchemaSymbol } from "./withType.js";
 import { tryGetTreeNodeSchema } from "./treeNodeKernel.js";
 import { isFlexTreeNode, type FlexTreeNode } from "../../feature-libraries/index.js";
 
@@ -154,8 +155,17 @@ export abstract class TreeNode implements WithType {
 	 * Adds a type symbol for stronger typing.
 	 * @privateRemarks
 	 * Subclasses provide more specific strings for this to get strong typing of otherwise type compatible nodes.
+	 * @deprecated Use {@link typeSchemaSymbol} instead.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public abstract get [typeNameSymbol](): string;
+
+	/**
+	 * Adds a type symbol for stronger typing.
+	 * @privateRemarks
+	 * Subclasses provide more specific strings for this to get strong typing of otherwise type compatible nodes.
+	 */
+	public abstract get [typeSchemaSymbol](): TreeNodeSchemaClass;
 
 	/**
 	 * Provides `instanceof` support for testing if a value is a `TreeNode`.
