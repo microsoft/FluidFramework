@@ -9,7 +9,6 @@ import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
-	GenericError,
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
@@ -503,17 +502,17 @@ export class PendingStateManager implements IDisposable {
 			"No pending message found as we start processing this remote batch",
 		);
 
-		// Note: This could be undefined if this batch became empty on resubmit.
-		// In this case the next pending message is an empty batch marker.
-		// Empty batches became empty on Resubmit, and submit them and track them in case
-		// a different fork of this container also submitted the same batch (and it may not be empty for that fork).
+		// If this batch became empty on resubmit, batch.messages will be empty
+		// and the next pending message should be an empty batch marker.
+		// More Info: We must submit empty batches and track them in case a different fork
+		// of this container also submitted the same batch (and it may not be empty for that fork).
 		const firstMessage = batch.messages[0];
 		const expectedPendingBatchLength =
 			pendingMessage.batchInfo.length === -1
-				? -1 // Ignore the actual incoming length; -1 length is for back compat and isn't suitable for this check
+				? -1 // Ignore the actual incoming length; -1 length is for back compat so force this to match
 				: batch.messages.length === 0
-					? 1 // Expect a singleton array with the empty batch marker
-					: batch.messages.length;
+					? 1 // For an empty batch, expect a singleton array with the empty batch marker
+					: batch.messages.length; // Otherwise, the lengths should actually match
 
 		// Note: We don't need to use getEffectiveBatchId here, just check the explicit stamped batchID
 		// That logic is needed only when comparing across potential container forks.
@@ -535,10 +534,10 @@ export class PendingStateManager implements IDisposable {
 				details: {
 					pendingBatchCsn: pendingMessage.batchInfo.batchStartCsn,
 					batchStartCsn: batch.batchStartCsn,
-					pendingBatchId,
-					inboundBatchId,
 					pendingBatchLength: pendingMessage.batchInfo.length,
 					batchLength: batch.messages.length,
+					pendingBatchId,
+					inboundBatchId,
 					pendingMessageBatchMetadata: asBatchMetadata(pendingMessage.opMetadata)?.batch,
 					messageBatchMetadata: asBatchMetadata(firstMessage?.metadata)?.batch,
 				},
