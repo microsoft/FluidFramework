@@ -1,6 +1,6 @@
 ## simple-suite-test
 
-<b>Test package</b>
+<b>Test package</b> <p>Contains a suite of test cases for validation API documentation generation.</p>
 
 ### Remarks {#simple-suite-test-remarks}
 
@@ -70,6 +70,9 @@ const foo = bar;
 
 | Function | Alerts | Return Type | Description |
 | --- | --- | --- | --- |
+| [functionWithOverloads(value)](docs/simple-suite-test/functionwithoverloads-function) |  | string | Takes a number and returns a string. |
+| [functionWithOverloads(value)](docs/simple-suite-test/functionwithoverloads_1-function) |  | boolean | Takes a string and returns a boolean. |
+| [functionWithOverloads(value)](docs/simple-suite-test/functionwithoverloads_2-function) |  | number | Takes a boolean and returns a number. |
 | [testFunctionReturningInlineType()](docs/simple-suite-test/testfunctionreturninginlinetype-function) |  | {     foo: number;     bar: [TestEnum](docs/simple-suite-test/testenum-enum); } | Test function that returns an inline type |
 | [testFunctionReturningIntersectionType()](docs/simple-suite-test/testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](docs/simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
 | [testFunctionReturningUnionType()](docs/simple-suite-test/testfunctionreturninguniontype-function) |  | string \| [TestInterface](docs/simple-suite-test/testinterface-interface) | Test function that returns an inline type |

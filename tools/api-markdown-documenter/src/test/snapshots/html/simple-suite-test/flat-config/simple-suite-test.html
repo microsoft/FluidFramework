@@ -11,7 +11,7 @@
     </section>
     <section>
       <p>
-        <b>Test package</b>
+        <b>Test package</b> <p>Contains a suite of test cases for validation API documentation generation.</p>
       </p>
     </section>
     <section>
@@ -248,6 +248,45 @@
           </tr>
         </thead>
         <tbody>
+          <tr>
+            <td>
+              <a href='docs/simple-suite-test#functionwithoverloads-function'>functionWithOverloads(value)</a>
+            </td>
+            <td>
+            </td>
+            <td>
+              <span>string</span>
+            </td>
+            <td>
+              Takes a number and returns a string.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a href='docs/simple-suite-test#functionwithoverloads_1-function'>functionWithOverloads(value)</a>
+            </td>
+            <td>
+            </td>
+            <td>
+              <span>boolean</span>
+            </td>
+            <td>
+              Takes a string and returns a boolean.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a href='docs/simple-suite-test#functionwithoverloads_2-function'>functionWithOverloads(value)</a>
+            </td>
+            <td>
+            </td>
+            <td>
+              <span>number</span>
+            </td>
+            <td>
+              Takes a boolean and returns a number.
+            </td>
+          </tr>
           <tr>
             <td>
               <a href='docs/simple-suite-test#testfunctionreturninginlinetype-function'>testFunctionReturningInlineType()</a>
@@ -2714,6 +2753,192 @@
         Function Details
       </h1>
       <section>
+        <h2 id="functionwithoverloads-function">
+          functionWithOverloads
+        </h2>
+        <section>
+          <p>
+            Takes a number and returns a string.
+          </p>
+        </section>
+        <section>
+          <h3 id="functionwithoverloads-signature">
+            Signature
+          </h3>
+          <code>
+            export declare function functionWithOverloads(value: number): string;
+          </code>
+        </section>
+        <section>
+          <h3 id="functionwithoverloads-parameters">
+            Parameters
+          </h3>
+          <table>
+            <thead>
+              <tr>
+                <th>
+                  Parameter
+                </th>
+                <th>
+                  Type
+                </th>
+                <th>
+                  Description
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  value
+                </td>
+                <td>
+                  <span>number</span>
+                </td>
+                <td>
+                  A number.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section>
+          <h3 id="functionwithoverloads-returns">
+            Returns
+          </h3>
+          <p>
+            A string.
+          </p>
+          <p>
+            <span><b>Return type:</b> </span><span>string</span>
+          </p>
+        </section>
+      </section>
+      <section>
+        <h2 id="functionwithoverloads_1-function">
+          functionWithOverloads
+        </h2>
+        <section>
+          <p>
+            Takes a string and returns a boolean.
+          </p>
+        </section>
+        <section>
+          <h3 id="functionwithoverloads_1-signature">
+            Signature
+          </h3>
+          <code>
+            export declare function functionWithOverloads(value: string): boolean;
+          </code>
+        </section>
+        <section>
+          <h3 id="functionwithoverloads_1-parameters">
+            Parameters
+          </h3>
+          <table>
+            <thead>
+              <tr>
+                <th>
+                  Parameter
+                </th>
+                <th>
+                  Type
+                </th>
+                <th>
+                  Description
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  value
+                </td>
+                <td>
+                  <span>string</span>
+                </td>
+                <td>
+                  A string.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section>
+          <h3 id="functionwithoverloads_1-returns">
+            Returns
+          </h3>
+          <p>
+            A boolean.
+          </p>
+          <p>
+            <span><b>Return type:</b> </span><span>boolean</span>
+          </p>
+        </section>
+      </section>
+      <section>
+        <h2 id="functionwithoverloads_2-function">
+          functionWithOverloads
+        </h2>
+        <section>
+          <p>
+            Takes a boolean and returns a number.
+          </p>
+        </section>
+        <section>
+          <h3 id="functionwithoverloads_2-signature">
+            Signature
+          </h3>
+          <code>
+            export declare function functionWithOverloads(value: boolean): number;
+          </code>
+        </section>
+        <section>
+          <h3 id="functionwithoverloads_2-parameters">
+            Parameters
+          </h3>
+          <table>
+            <thead>
+              <tr>
+                <th>
+                  Parameter
+                </th>
+                <th>
+                  Type
+                </th>
+                <th>
+                  Description
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  value
+                </td>
+                <td>
+                  <span>boolean</span>
+                </td>
+                <td>
+                  A boolean.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section>
+          <h3 id="functionwithoverloads_2-returns">
+            Returns
+          </h3>
+          <p>
+            A number.
+          </p>
+          <p>
+            <span><b>Return type:</b> </span><span>number</span>
+          </p>
+        </section>
+      </section>
+      <section>
         <h2 id="testfunctionreturninginlinetype-function">
           testFunctionReturningInlineType
         </h2>
@@ -2763,7 +2988,7 @@
             <br>
             <span>
             <p>
-              <i>This is a test deprecation notice. Here is a</i> <a href='docs/simple-suite-test#testfunctionreturninguniontype-function'><i>link</i></a> <i>to something else!</i>
+              <i>This is a test deprecation notice. Here is a</i> <a href='docs/simple-suite-test#testfunctionreturninguniontype-function'><i>link</i></a> <i>to something else! And here is a malformed link to nothing:</i> <span><i>{@link }</i></span><i>.</i>
             </p>
             </span>
           </p>

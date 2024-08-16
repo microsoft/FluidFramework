@@ -4,7 +4,7 @@ Test function that returns an inline type
 
 **WARNING: This API is deprecated and will be removed in a future release.**
 
-_This is a test deprecation notice. Here is a_ [_link_](docs/simple-suite-test/testfunctionreturninguniontype-function)<!-- --> _to something else!_
+_This is a test deprecation notice. Here is a_ [_link_](docs/simple-suite-test/testfunctionreturninguniontype-function)<!-- --> _to something else! And here is a malformed link to nothing:_ _{@link }_<!-- -->_._
 
 ### Signature {#testfunctionreturningintersectiontype-signature}
 

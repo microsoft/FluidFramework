@@ -2,7 +2,7 @@
 
 [Packages](./) &gt; [simple-suite-test](./simple-suite-test)
 
-<b>Test package</b>
+<b>Test package</b> <p>Contains a suite of test cases for validation API documentation generation.</p>
 
 ## Remarks {#simple-suite-test-remarks}
 
@@ -72,6 +72,9 @@ const foo = bar;
 
 | Function | Alerts | Return Type | Description |
 | --- | --- | --- | --- |
+| [functionWithOverloads(value)](./simple-suite-test#functionwithoverloads-function) |  | string | Takes a number and returns a string. |
+| [functionWithOverloads(value)](./simple-suite-test#functionwithoverloads_1-function) |  | boolean | Takes a string and returns a boolean. |
+| [functionWithOverloads(value)](./simple-suite-test#functionwithoverloads_2-function) |  | number | Takes a boolean and returns a number. |
 | [testFunction(testParameter, testOptionalParameter)](./simple-suite-test#testfunction-function) | `Alpha` | TTypeParameter | Test function |
 | [testFunctionReturningInlineType()](./simple-suite-test#testfunctionreturninginlinetype-function) |  | {     foo: number;     bar: [TestEnum](./simple-suite-test#testenum-enum); } | Test function that returns an inline type |
 | [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
@@ -209,6 +212,72 @@ Here are some remarks about the type alias
 
 ## Function Details
 
+### functionWithOverloads {#functionwithoverloads-function}
+
+Takes a number and returns a string.
+
+#### Signature {#functionwithoverloads-signature}
+
+```typescript
+export declare function functionWithOverloads(value: number): string;
+```
+
+#### Parameters {#functionwithoverloads-parameters}
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| value | number | A number. |
+
+#### Returns {#functionwithoverloads-returns}
+
+A string.
+
+**Return type:** string
+
+### functionWithOverloads {#functionwithoverloads_1-function}
+
+Takes a string and returns a boolean.
+
+#### Signature {#functionwithoverloads_1-signature}
+
+```typescript
+export declare function functionWithOverloads(value: string): boolean;
+```
+
+#### Parameters {#functionwithoverloads_1-parameters}
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| value | string | A string. |
+
+#### Returns {#functionwithoverloads_1-returns}
+
+A boolean.
+
+**Return type:** boolean
+
+### functionWithOverloads {#functionwithoverloads_2-function}
+
+Takes a boolean and returns a number.
+
+#### Signature {#functionwithoverloads_2-signature}
+
+```typescript
+export declare function functionWithOverloads(value: boolean): number;
+```
+
+#### Parameters {#functionwithoverloads_2-parameters}
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| value | boolean | A boolean. |
+
+#### Returns {#functionwithoverloads_2-returns}
+
+A number.
+
+**Return type:** number
+
 ### testFunction {#testfunction-function}
 
 Test function
@@ -273,7 +342,7 @@ Test function that returns an inline type
 
 **WARNING: This API is deprecated and will be removed in a future release.**
 
-_This is a test deprecation notice. Here is a_ [_link_](./simple-suite-test#testfunctionreturninguniontype-function)<!-- --> _to something else!_
+_This is a test deprecation notice. Here is a_ [_link_](./simple-suite-test#testfunctionreturninguniontype-function)<!-- --> _to something else! And here is a malformed link to nothing:_ _{@link }_<!-- -->_._
 
 #### Signature {#testfunctionreturningintersectiontype-signature}
 
