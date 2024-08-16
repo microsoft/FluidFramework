@@ -23,7 +23,7 @@ const dirname = Path.dirname(fileURLToPath(import.meta.url));
 /**
  * Temp directory under which all tests that generate files will output their contents.
  */
-const testTemporaryDirectoryPath = Path.resolve(dirname, "test_temp", "html");
+const testTemporaryDirectoryPath = Path.resolve(dirname, "test_temp", "markdown");
 
 /**
  * Snapshot directory to which generated test data will be copied.
@@ -36,7 +36,7 @@ const snapshotsDirectoryPath = Path.resolve(
 	"src",
 	"test",
 	"snapshots",
-	"html",
+	"markdown",
 );
 
 // Relative to lib/test
@@ -127,7 +127,7 @@ async function renderDocumentToFile(
 ): Promise<void> {
 	const renderedDocument = renderDocumentAsMarkdown(document, renderConfig);
 
-	const filePath = Path.join(outputDirectoryPath, `${document.documentPath}.html`);
+	const filePath = Path.join(outputDirectoryPath, `${document.documentPath}.md`);
 	await FileSystem.writeFileAsync(filePath, renderedDocument, {
 		convertLineEndings: NewlineKind.Lf,
 		ensureFolderExists: true,
