@@ -5,7 +5,7 @@
 ```ts
 
 // @alpha
-export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, IContainerRuntimeBaseWithCombinedEvents, IRuntime {
+export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, IContainerRuntimeBaseWithCombinedEvents {
     readonly attachState: AttachState;
     // (undocumented)
     readonly clientDetails: IClientDetails;
@@ -40,7 +40,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 }
 
 // @alpha @deprecated (undocumented)
-export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime, IProvideFluidHandleContext {
+export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
     // (undocumented)

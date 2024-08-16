@@ -4,7 +4,7 @@
  */
 
 import type { AttachState } from "@fluidframework/container-definitions";
-import type { IDeltaManager, IRuntime } from "@fluidframework/container-definitions/internal";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
 	IEventProvider,
@@ -12,10 +12,7 @@ import type {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import type {
-	IFluidHandleContext,
-	IProvideFluidHandleContext,
-} from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IClientDetails } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentStorageService,
@@ -34,9 +31,7 @@ import type {
  * @legacy
  * @alpha
  */
-export interface IContainerRuntimeWithResolveHandle_Deprecated
-	extends IContainerRuntime,
-		IProvideFluidHandleContext {
+export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
 	readonly IFluidHandleContext: IFluidHandleContext;
 	resolveHandle(request: IRequest): Promise<IResponse>;
 }
@@ -65,8 +60,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
  */
 export interface IContainerRuntime
 	extends IProvideFluidDataStoreRegistry,
-		IContainerRuntimeBaseWithCombinedEvents,
-		IRuntime {
+		IContainerRuntimeBaseWithCombinedEvents {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;

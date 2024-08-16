@@ -8,7 +8,7 @@ import {
 	MountableView,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
-import { IContainerContext } from "@fluidframework/container-definitions/internal";
+import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/internal";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
@@ -32,12 +32,12 @@ class SmdeContainerFactory extends RuntimeFactoryHelper {
 	public async preInitialize(
 		context: IContainerContext,
 		existing: boolean,
-	): Promise<IContainerRuntime> {
+	): Promise<IContainerRuntime & IRuntime> {
 		const registryEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 			[smde.type, Promise.resolve(smde)],
 		]);
 
-		const runtime: IContainerRuntime = await loadContainerRuntime({
+		const runtime = await loadContainerRuntime({
 			context,
 			registryEntries,
 			existing,

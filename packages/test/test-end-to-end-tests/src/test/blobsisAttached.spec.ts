@@ -8,7 +8,11 @@ import assert from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IHostLoader,
+	IRuntime,
+} from "@fluidframework/container-definitions/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { type IPendingRuntimeState } from "@fluidframework/container-runtime/internal/test/containerRuntime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
@@ -49,8 +53,8 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 		let loader: IHostLoader;
 		let container: IContainer;
 
-		const runtimeOf = (dataObject: ITestFluidObject): IContainerRuntime =>
-			dataObject.context.containerRuntime as IContainerRuntime;
+		const runtimeOf = (dataObject: ITestFluidObject): IContainerRuntime & IRuntime =>
+			dataObject.context.containerRuntime as IContainerRuntime & IRuntime;
 
 		beforeEach("createContainer", async () => {
 			provider = getTestObjectProvider();

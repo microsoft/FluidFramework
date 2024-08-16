@@ -719,7 +719,7 @@ export function loadContainerRuntime(params: {
     runtimeOptions?: IContainerRuntimeOptions;
     containerScope?: FluidObject;
     provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-}): Promise<IContainerRuntime>;
+}): Promise<IContainerRuntime & IRuntime>;
 
 // @alpha @deprecated (undocumented)
 export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
