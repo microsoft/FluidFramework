@@ -35,8 +35,8 @@ export interface IPendingMessage {
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
 	sequenceNumber?: number;
-	/** Info needed to compute the batchId on reconnect */
-	batchIdContext: {
+	/** Info about the batch this pending message belongs to, for validation and for computing the batchId on reconnect */
+	batchInfo: {
 		/** The Batch's original clientId, from when it was first flushed to be submitted */
 		clientId: string;
 		/**
@@ -44,13 +44,15 @@ export interface IPendingMessage {
 		 *	@remarks A negative value means it was not yet submitted when queued here (e.g. disconnected right before flush fired)
 		 */
 		batchStartCsn: number;
+		/** length of the batch (how many runtime messages here) */
+		length: number;
 	};
 }
 
 type Patch<T, U> = U & Omit<T, keyof U>;
 
-/** First version of the type (pre-dates batchIdContext) */
-type IPendingMessageV0 = Patch<IPendingMessage, { batchIdContext?: undefined }>;
+/** First version of the type (pre-dates batchInfo) */
+type IPendingMessageV0 = Patch<IPendingMessage, { batchInfo?: undefined }>;
 
 /**
  * Union of all supported schemas for when applying stashed ops
@@ -133,10 +135,7 @@ function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
 function getEffectiveBatchId(pendingMessage: IPendingMessage): string {
 	return (
 		asBatchMetadata(pendingMessage.opMetadata)?.batchId ??
-		generateBatchId(
-			pendingMessage.batchIdContext.clientId,
-			pendingMessage.batchIdContext.batchStartCsn,
-		)
+		generateBatchId(pendingMessage.batchInfo.clientId, pendingMessage.batchInfo.batchStartCsn)
 	);
 }
 
@@ -273,8 +272,8 @@ export class PendingStateManager implements IDisposable {
 				content,
 				localOpMetadata,
 				opMetadata,
-				// Note: We only need this on the first message.
-				batchIdContext: { clientId, batchStartCsn },
+				// Note: We only will read this off the first message, but put it on all for simplicity
+				batchInfo: { clientId, batchStartCsn, length: batch.length },
 			};
 			this.pendingMessages.push(pendingMessage);
 		}
@@ -304,7 +303,7 @@ export class PendingStateManager implements IDisposable {
 			try {
 				if (isEmptyBatchPendingMessage(nextMessage)) {
 					nextMessage.localOpMetadata = { emptyBatch: true }; // equivalent to applyStashedOp for empty batch
-					patchBatchIdContext(nextMessage); // Back compat
+					patchbatchInfo(nextMessage); // Back compat
 					this.pendingMessages.push(nextMessage);
 					continue;
 				}
@@ -317,7 +316,7 @@ export class PendingStateManager implements IDisposable {
 				} else {
 					nextMessage.localOpMetadata = localOpMetadata;
 					// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
-					patchBatchIdContext(nextMessage); // Back compat
+					patchbatchInfo(nextMessage); // Back compat
 					this.pendingMessages.push(nextMessage);
 				}
 			} catch (error) {
@@ -372,11 +371,11 @@ export class PendingStateManager implements IDisposable {
 			const localOpMetadata = this.processNextPendingMessage(batch.emptyBatchSequenceNumber);
 			assert(
 				asEmptyBatchLocalOpMetadata(localOpMetadata)?.emptyBatch === true,
-				"Expected empty batch marker",
+				0xa20 /* Expected empty batch marker */,
 			);
+			return [];
 		}
 
-		// Note this will correctly return empty array for an empty batch
 		return batch.messages.map((message) => ({
 			message,
 			localOpMetadata: this.processNextPendingMessage(message.sequenceNumber, message),
@@ -447,14 +446,14 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	/**
-	 * Do some bookkeeping for the new batch
+	 * Check if the incoming batch matches the batch info for the next pending message.
 	 */
 	private onLocalBatchBegin(batch: InboundBatch) {
 		// Get the next message from the pending queue. Verify a message exists.
 		const pendingMessage = this.pendingMessages.peekFront();
 		assert(
 			pendingMessage !== undefined,
-			"No pending message found as we start processing this remote batch",
+			0xa21 /* No pending message found as we start processing this remote batch */,
 		);
 
 		// Note: This could be undefined if this batch became empty on resubmit.
@@ -462,17 +461,26 @@ export class PendingStateManager implements IDisposable {
 		// Empty batches became empty on Resubmit, and submit them and track them in case
 		// a different fork of this container also submitted the same batch (and it may not be empty for that fork).
 		const firstMessage = batch.messages.length > 0 ? batch.messages[0] : undefined;
+		const expectedPendingBatchLength = batch.messages.length === 0 ? 1 : batch.messages.length;
 
-		if (pendingMessage.batchIdContext.batchStartCsn !== batch.batchStartCsn) {
+		// We expect the incoming batch to be of the same length, starting at the same clientSequenceNumber,
+		// as the batch we originally submitted.
+		// We have another later check to compare the message contents, which we'd expect to fail if this check does,
+		// so we don't throw here, merely log.  In a later release this check may replace that one.
+		if (
+			pendingMessage.batchInfo.batchStartCsn !== batch.batchStartCsn ||
+			(pendingMessage.batchInfo.length >= 0 && // -1 length is back compat and isn't suitable for this check
+				pendingMessage.batchInfo.length !== expectedPendingBatchLength)
+		) {
 			this.logger?.sendErrorEvent({
-				eventName: "BatchIdOrCsnMismatch",
+				eventName: "BatchInfoMismatch",
 				details: {
-					pendingBatchCsn: pendingMessage.batchIdContext.batchStartCsn,
+					pendingBatchCsn: pendingMessage.batchInfo.batchStartCsn,
 					batchStartCsn: batch.batchStartCsn,
-					inboundBatchIdComputed: batch.batchId === undefined,
-					messageBatchMetadata: firstMessage && (firstMessage.metadata as any)?.batch,
-					pendingMessageBatchMetadata: (pendingMessage.opMetadata as any)?.batch,
-					emptyBatch: firstMessage === undefined,
+					pendingBatchLength: pendingMessage.batchInfo.length,
+					batchLength: batch.messages.length,
+					pendingMessageBatchMetadata: asBatchMetadata(pendingMessage.opMetadata)?.batch,
+					messageBatchMetadata: asBatchMetadata(firstMessage?.metadata)?.batch,
 				},
 				messageDetails: firstMessage && extractSafePropertiesFromMessage(firstMessage),
 			});
@@ -594,13 +602,13 @@ export class PendingStateManager implements IDisposable {
 	}
 }
 
-/** For back-compat if trying to apply stashed ops that pre-date batchIdContext */
-function patchBatchIdContext(
+/** For back-compat if trying to apply stashed ops that pre-date batchInfo */
+function patchbatchInfo(
 	message: IPendingMessageFromStash,
 ): asserts message is IPendingMessage {
-	const batchIdContext: IPendingMessageFromStash["batchIdContext"] = message.batchIdContext;
-	if (batchIdContext === undefined) {
+	const batchInfo: IPendingMessageFromStash["batchInfo"] = message.batchInfo;
+	if (batchInfo === undefined) {
 		// Using uuid guarantees uniqueness, retaining existing behavior
-		message.batchIdContext = { clientId: uuid(), batchStartCsn: -1 };
+		message.batchInfo = { clientId: uuid(), batchStartCsn: -1, length: -1 };
 	}
 }

@@ -22,7 +22,6 @@ import type { FlexFieldKind } from "../modular-schema/index.js";
 import type {
 	Any,
 	FlexAllowedTypes,
-	FlexFieldNodeSchema,
 	FlexFieldSchema,
 	FlexList,
 	FlexListToUnion,
@@ -340,50 +339,6 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema>
 	[Symbol.iterator](): IterableIterator<
 		[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]
 	>;
-}
-
-/**
- * A {@link FlexTreeNode} that wraps a single {@link FlexTreeField} (which is placed under the {@link EmptyKey}).
- *
- * @remarks
- * A FieldNode is mostly identical to a struct node with a single field using the {@link EmptyKey}, but provides access to it via a field named "content".
- *
- * There are several use-cases where it makes sense to use a field node.
- * Here are a few:
- * - When it's necessary to differentiate between an empty sequence, and no sequence.
- * One case where this is needed is encoding Json.
- * - When polymorphism over {@link FlexFieldSchema} (and not just a union of {@link FlexAllowedTypes}) is required.
- * For example when encoding a schema for a type like
- * `Foo[] | Bar[]`, `Foo | Foo[]` or `Optional<Foo> | Optional<Bar>` (Where `Optional` is the Optional field kind, not TypeScript's `Optional`).
- * Since this schema system only allows `|` of {@link FlexTreeNodeSchema} (and only when declaring a {@link FlexFieldSchema}), see {@link SchemaBuilderBase.field},
- * these aggregate types are most simply expressed by creating fieldNodes for the terms like `Foo[]`, and `Optional<Foo>`.
- * Note that these are distinct from types like `(Foo | Bar)[]` and `Optional<Foo | Bar>` which can be expressed as single fields without extra nodes.
- * - When a distinct merge identity is desired for a field.
- * For example, if the application wants to be able to have an optional node or a sequence which it can pass around, edit and observe changes to,
- * in some cases (like when the content is moved to a different parent) this can be more flexible if a field node is introduced
- * to create a separate logical entity (node) which wraps the field.
- * This can even be useful with value fields to wrap terminal nodes if a stable merge
- * - When a field (such as a {@link FlexTreeSequenceField}) is desired in a location where {@link FlexTreeNode}s are required
- * (like the member of a union or the child of another {@link FlexTreeField}).
- * This can is typically just a different perspective on one of the above cases.
- * For example:
- * `Sequence<Foo> | Sequence<Bar>` or `OptionalField<Sequence<Foo>>` can't be expressed as simple fields
- * (unlike `Sequence<Foo | Bar>` or `OptionalField<Foo>` which can be done as simple fields).
- * Instead {@link FlexTreeFieldNode}s can be use to achieve something similar, more like:
- * `FieldNode<Sequence<Foo>> | FieldNode<Sequence<Bar>>` or `OptionalField<FieldNode<Sequence<Foo>>>`.
- *
- * @privateRemarks
- * FieldNodes do not unbox to their content, so in schema aware APIs which do unboxing, the FieldNode will NOT be skipped over.
- * This is a change from the old behavior to simplify unboxing and prevent cases where arbitrary deep chains of field nodes could unbox omitting information about the tree depth.
- */
-export interface FlexTreeFieldNode<in out TSchema extends FlexFieldNodeSchema>
-	extends FlexTreeNode {
-	readonly schema: TSchema;
-
-	/**
-	 * The content this field node wraps.
-	 */
-	readonly content: FlexTreeUnboxField<TSchema["info"]>;
 }
 
 /**
@@ -731,11 +686,9 @@ export type FlexTreeTypedNode<TSchema extends FlexTreeNodeSchema> =
 		? FlexTreeLeafNode<TSchema>
 		: TSchema extends FlexMapNodeSchema
 			? FlexTreeMapNode<TSchema>
-			: TSchema extends FlexFieldNodeSchema
-				? FlexTreeFieldNode<TSchema>
-				: TSchema extends FlexObjectNodeSchema
-					? FlexTreeObjectNodeTyped<TSchema>
-					: FlexTreeNode;
+			: TSchema extends FlexObjectNodeSchema
+				? FlexTreeObjectNodeTyped<TSchema>
+				: FlexTreeNode;
 
 // #endregion
 
@@ -810,11 +763,9 @@ export type FlexTreeUnboxNode<TSchema extends FlexTreeNodeSchema> =
 		? TreeValue<TSchema["info"]>
 		: TSchema extends FlexMapNodeSchema
 			? FlexTreeMapNode<TSchema>
-			: TSchema extends FlexFieldNodeSchema
-				? FlexTreeFieldNode<TSchema>
-				: TSchema extends FlexObjectNodeSchema
-					? FlexTreeObjectNodeTyped<TSchema>
-					: FlexTreeUnknownUnboxed;
+			: TSchema extends FlexObjectNodeSchema
+				? FlexTreeObjectNodeTyped<TSchema>
+				: FlexTreeUnknownUnboxed;
 
 /**
  * Unboxed tree type for unknown schema cases.

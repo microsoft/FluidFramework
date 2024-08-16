@@ -17,7 +17,6 @@ import type { FlexFieldKind } from "./modular-schema/index.js";
 import {
 	Any,
 	type FlexAllowedTypes,
-	FlexFieldNodeSchema,
 	FlexFieldSchema,
 	type FlexList,
 	type FlexMapFieldSchema,
@@ -262,46 +261,6 @@ export class SchemaBuilderBase<
 		t: T,
 	): FlexMapNodeSchema<`${TScope}.${Name}`, T> {
 		return this.map(name, t as FlexMapFieldSchema) as FlexMapNodeSchema<
-			`${TScope}.${Name}`,
-			T
-		>;
-	}
-
-	/**
-	 * Define (and add to this library) a {@link FlexFieldNodeSchema}.
-	 *
-	 * The name must be unique among all TreeNodeSchema in the the document schema.
-	 *
-	 * @privateRemarks
-	 * TODO: Write and link document outlining field vs node data model and the separation of concerns related to that.
-	 * TODO: Maybe find a better name for this.
-	 */
-	public fieldNode<Name extends TName, const T extends FlexImplicitFieldSchema>(
-		name: Name,
-		fieldSchema: T,
-	): FlexFieldNodeSchema<`${TScope}.${Name}`, NormalizeField<T, TDefaultKind>> {
-		const schema = FlexFieldNodeSchema.create(
-			this,
-			this.scoped(name),
-			this.normalizeField(fieldSchema),
-		);
-		this.addNodeSchema(schema);
-		return schema;
-	}
-
-	/**
-	 * Same as `fieldNode` but with less type safety and works for recursive objects.
-	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
-	 *
-	 * See {@link Unenforced} for details.
-	 *
-	 * TODO: Make this work with ImplicitFieldSchema.
-	 */
-	public fieldNodeRecursive<
-		Name extends TName,
-		const T extends Unenforced<FlexImplicitFieldSchema>,
-	>(name: Name, t: T): FlexFieldNodeSchema<`${TScope}.${Name}`, T> {
-		return this.fieldNode(name, t as FlexImplicitFieldSchema) as FlexFieldNodeSchema<
 			`${TScope}.${Name}`,
 			T
 		>;

@@ -30,7 +30,6 @@ import {
 	reservedObjectNodeFieldPropertyNamePrefixes,
 } from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
 import {
-	LazyFieldNode,
 	LazyLeaf,
 	LazyMap,
 	LazyTreeNode,
@@ -177,27 +176,10 @@ describe("LazyNode", () => {
 				scope: "testShared",
 			});
 
-			const fieldNodeOptionalAnySchema = schemaBuilder.fieldNode(
-				"optionalAny",
-				SchemaBuilder.optional(Any),
-			);
-			const fieldNodeOptionalStringSchema = schemaBuilder.fieldNode(
-				"optionalString",
-				SchemaBuilder.optional(leafDomain.string),
-			);
-			const fieldNodeRequiredAnySchema = schemaBuilder.fieldNode("requiredAny", Any);
-			const fieldNodeRequiredStringSchema = schemaBuilder.fieldNode(
-				"valueString",
-				leafDomain.string,
-			);
 			const structNodeSchema = schemaBuilder.object("object", {});
 			const mapNodeAnySchema = schemaBuilder.map("mapAny", SchemaBuilder.optional(Any));
-			const mapNodeStringSchema = schemaBuilder.map(
-				"mapString",
-				SchemaBuilder.optional(leafDomain.string),
-			);
 
-			const schema = schemaBuilder.intoSchema(fieldNodeOptionalAnySchema);
+			const schema = schemaBuilder.intoSchema(mapNodeAnySchema);
 
 			// #endregion
 
@@ -209,22 +191,9 @@ describe("LazyNode", () => {
 
 			const { anchor, anchorNode } = createAnchors(context, cursor);
 
-			const node = new TestLazyTree(
-				context,
-				fieldNodeOptionalAnySchema,
-				cursor,
-				anchorNode,
-				anchor,
-			);
+			const node = new TestLazyTree(context, mapNodeAnySchema, cursor, anchorNode, anchor);
 
-			assert(node.is(fieldNodeOptionalAnySchema));
-
-			assert(!node.is(fieldNodeOptionalStringSchema));
-			assert(!node.is(fieldNodeRequiredAnySchema));
-			assert(!node.is(fieldNodeRequiredStringSchema));
-			assert(!node.is(mapNodeAnySchema));
-			assert(!node.is(mapNodeStringSchema));
-			assert(!node.is(leafDomain.string));
+			assert(node.is(mapNodeAnySchema));
 			assert(!node.is(structNodeSchema));
 		});
 
@@ -233,8 +202,8 @@ describe("LazyNode", () => {
 				scope: "test",
 				libraries: [leafDomain.library],
 			});
-			const fieldNodeSchema = schemaBuilder.fieldNode(
-				"field",
+			const fieldNodeSchema = schemaBuilder.map(
+				"map",
 				SchemaBuilder.optional(leafDomain.string),
 			);
 			const schema = schemaBuilder.intoSchema(fieldNodeSchema);
@@ -254,40 +223,6 @@ describe("LazyNode", () => {
 			const { index, parent } = node.parentField;
 			assert.equal(index, 0);
 			assert.equal(parent.key, rootFieldKey);
-		});
-	});
-
-	describe("LazyFieldNode", () => {
-		const schemaBuilder = new SchemaBuilder({
-			scope: "test",
-			libraries: [leafDomain.library],
-		});
-		const fieldNodeSchema = schemaBuilder.fieldNode(
-			"field",
-			SchemaBuilder.optional(leafDomain.string),
-		);
-		const schema = schemaBuilder.intoSchema(fieldNodeSchema);
-
-		const { context, cursor } = initializeTreeWithContent({
-			schema,
-			initialTree: typedJsonCursor({
-				[typedJsonCursor.type]: fieldNodeSchema,
-				[EmptyKey]: "Hello world",
-			}),
-		});
-		cursor.enterNode(0);
-		const { anchor, anchorNode } = createAnchors(context, cursor);
-
-		const node = new LazyFieldNode(context, fieldNodeSchema, cursor, anchorNode, anchor);
-
-		it("value", () => {
-			assert.equal(node.value, undefined); // FieldNode_s do not have a value
-		});
-
-		it("tryGetField", () => {
-			const field = node.tryGetField(EmptyKey);
-			assert(field !== undefined);
-			assert(field.is(SchemaBuilder.optional(leafDomain.string)));
 		});
 	});
 
