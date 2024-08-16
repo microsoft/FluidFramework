@@ -2965,13 +2965,13 @@ export class ContainerRuntime
 					envelope.clientSignalSequenceNumber >
 					this._signalTracking.trackingSignalSequenceNumber
 				) {
-					this._signalTracking.signalsLost +=
+					const signalsLost =
 						envelope.clientSignalSequenceNumber -
 						this._signalTracking.trackingSignalSequenceNumber;
 					this.mc.logger.sendErrorEvent({
 						eventName: "SignalLost",
 						type: envelope.contents.type,
-						signalsLost: this._signalTracking.signalsLost,
+						signalsLost,
 						trackingSequenceNumber: this._signalTracking.trackingSignalSequenceNumber,
 						clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
 					});
@@ -2984,13 +2984,9 @@ export class ContainerRuntime
 					envelope.clientSignalSequenceNumber >=
 						this._signalTracking.minimumTrackingSignalSequenceNumber
 				) {
-					// If the signal is received out of order, we need to adjust the signalsLost count and log the event.
-					this._signalTracking.signalsLost--;
-
 					this.mc.logger.sendErrorEvent({
 						eventName: "SignalOutOfOrder",
 						type: envelope.contents.type,
-						signalsLost: this._signalTracking.signalsLost,
 						trackingSequenceNumber: this._signalTracking.trackingSignalSequenceNumber,
 						clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
 					});

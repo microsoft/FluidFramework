@@ -2537,14 +2537,14 @@ describe("Runtime", () => {
 				});
 			});
 
-			function sendSignals(numberOfSignals: number) {
-				for (let i = 0; i < numberOfSignals; i++) {
+			function sendSignals(count: number) {
+				for (let i = 0; i < count; i++) {
 					containerRuntime.submitSignal("TestSignalType", `TestSignalContent ${i}`);
 				}
 			}
 
-			function processSignals(signals: ISignalEnvelope[], numberOfSignals: number) {
-				const signalsToProcess = signals.splice(0, numberOfSignals);
+			function processSignals(signals: ISignalEnvelope[], count: number) {
+				const signalsToProcess = signals.splice(0, count);
 				for (const signal of signalsToProcess) {
 					containerRuntime.processSignal(
 						{
@@ -2556,14 +2556,22 @@ describe("Runtime", () => {
 				}
 			}
 
-			function dropSignals(numberOfSignals: number) {
-				const signalsToDrop = submittedSignals.splice(0, numberOfSignals);
+			function processSubmittedSignals(count: number) {
+				processSignals(submittedSignals, count);
+			}
+
+			function processDroppedSignals(count: number) {
+				processSignals(droppedSignals, count);
+			}
+
+			function dropSignals(count: number) {
+				const signalsToDrop = submittedSignals.splice(0, count);
 				droppedSignals.push(...signalsToDrop);
 			}
 
 			it("emits signal latency telemetry after 100 signals", () => {
 				sendSignals(101);
-				processSignals(submittedSignals, 101);
+				processSubmittedSignals(101);
 				logger.assertMatch(
 					[
 						{
@@ -2579,13 +2587,13 @@ describe("Runtime", () => {
 				sendSignals(4);
 
 				// Process the first signal
-				processSignals(submittedSignals, 1);
+				processSubmittedSignals(1);
 
 				// Drop the second and third signal
 				dropSignals(2);
 
 				// Process the fourth signal
-				processSignals(submittedSignals, 1);
+				processSubmittedSignals(1);
 
 				logger.assertMatch(
 					[
@@ -2603,13 +2611,13 @@ describe("Runtime", () => {
 				sendSignals(3);
 
 				// Process the first signal
-				processSignals(submittedSignals, 1);
+				processSubmittedSignals(1);
 
 				// Temporarily lose the second signal
 				dropSignals(1);
 
-				// Process the third signal
-				processSignals(submittedSignals, 1);
+				// Process the first signal
+				processSubmittedSignals(1);
 
 				// Check for SignalLost telemetry
 				logger.assertMatch([
@@ -2630,14 +2638,13 @@ describe("Runtime", () => {
 				);
 
 				// Process the "lost" second signal out of order
-				processSignals(droppedSignals, 1);
+				processDroppedSignals(1);
 
 				// Check for SignalOutOfOrder telemetry
 				logger.assertMatch(
 					[
 						{
 							eventName: "ContainerRuntime:SignalOutOfOrder",
-							signalsLost: 0,
 						},
 					],
 					"SignalOutOfOrder telemetry should be logged when missing signal is received non-sequentially",
@@ -2647,7 +2654,7 @@ describe("Runtime", () => {
 			it("does not emit error events when signals are processed in order", () => {
 				// Send 100 signals and process them in order
 				sendSignals(100);
-				processSignals(submittedSignals, 100);
+				processSubmittedSignals(100);
 
 				logger.assertMatchNone(
 					[
@@ -2662,20 +2669,20 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("increments signalLost field after successive dropped signals", () => {
-				// Send 5 signals
-				sendSignals(5);
+			it("logs multiple batches of lost signals", () => {
+				// Send 6 signals
+				sendSignals(6);
 
 				// Process the first signal
-				processSignals(submittedSignals, 1);
+				processSubmittedSignals(1);
 
 				// Drop the second signal
 				dropSignals(1);
 
 				// Process the third signal
-				processSignals(submittedSignals, 1);
+				processSubmittedSignals(1);
 
-				// Missing second signal should be detected
+				// Missing signal should be detected
 				logger.assertMatch(
 					[
 						{
@@ -2686,13 +2693,13 @@ describe("Runtime", () => {
 					"SignalLost telemetry should be logged when signal is dropped",
 				);
 
-				// Drop the fourth signal
-				dropSignals(1);
+				// Drop the fourth and fifth signal
+				dropSignals(2);
 
-				// Process the fifth signal
-				processSignals(submittedSignals, 1);
+				// Process the sixth signal
+				processSubmittedSignals(1);
 
-				// Missing fourth signal should be detected
+				// Missing signals should be detected
 				logger.assertMatch(
 					[
 						{
@@ -2709,7 +2716,7 @@ describe("Runtime", () => {
 				sendSignals(4);
 
 				// Process one signal
-				processSignals(submittedSignals, 1);
+				processSubmittedSignals(1);
 
 				// Disconnect + Reconnect
 				changeConnectionState(containerRuntime, false, mockClientId);
@@ -2719,10 +2726,10 @@ describe("Runtime", () => {
 				dropSignals(2);
 
 				// Receive one old signal sent before disconnect
-				processSignals(submittedSignals, 1);
+				processSubmittedSignals(1);
 
 				// Receive old out of order signals
-				processSignals(droppedSignals, 2);
+				processDroppedSignals(2);
 
 				// No error events should be logged for signals sent before disconnect
 				logger.assertMatchNone(
