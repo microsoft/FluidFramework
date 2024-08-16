@@ -20,6 +20,9 @@ import type { DocumentNode } from "../documentation-domain/index.js";
 
 /**
  * End-to-end snapshot test configuration.
+ *
+ * @remarks Generates a test suite representing the combinatoric expansion of the
+ * provided API Models, API Item transformation configs, and render configs.
  */
 export interface EndToEndTestConfig<TRenderConfig> {
 	/**
