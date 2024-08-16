@@ -159,6 +159,7 @@ export function endToEndTestSuite<TRenderConfig>(
 							}
 						});
 
+						// Perform actual output snapshot comparison test against checked-in test collateral.
 						it("Snapshot test", async () => {
 							// Ensure the output temp and snapshots directories exists (will create an empty ones if they don't).
 							await FileSystem.ensureFolderAsync(temporaryDirectoryPath);
