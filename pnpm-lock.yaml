@@ -1958,8 +1958,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: ^0.50.0
-        version: 0.50.0
+        specifier: file:../../../tools/benchmark
+        version: file:tools/benchmark
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -47933,4 +47933,19 @@ packages:
 
   /zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
+    dev: true
+
+  file:tools/benchmark:
+    resolution: {directory: tools/benchmark, type: directory}
+    name: '@fluid-tools/benchmark'
+    dependencies:
+      chai: 4.3.10
+      chalk: 4.1.2
+      easy-table: 1.2.0
+      mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0(mocha@10.2.0)(moment@2.29.4)
+      mocha-multi-reporters: 1.5.1(mocha@10.2.0)
+      moment: 2.29.4
+    transitivePeerDependencies:
+      - supports-color
     dev: true
