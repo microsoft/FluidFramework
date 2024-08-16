@@ -17,6 +17,11 @@ import type {
 } from "../migrationInterfaces/index.js";
 import type { IDetachedModel, IMigratableModelLoader } from "../modelLoader/index.js";
 
+/**
+ * As the Migrator migrates, it updates its reference to the current version of the model.
+ * This interface describes the characteristics of the model that it's tracking in a single object,
+ * which will be swapped out atomically as the migration happens.
+ */
 interface MigratableParts {
 	model: IMigratableModel;
 	migrationTool: IMigrationTool;
@@ -24,6 +29,8 @@ interface MigratableParts {
 }
 
 /**
+ * The Migrator maintains a reference to the current model, and interacts with it (and its MigrationTool)
+ * to detect, observe, trigger, and execute migration as appropriate.
  * @internal
  */
 export class Migrator implements IMigrator {

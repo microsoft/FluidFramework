@@ -22,6 +22,8 @@ import {
 } from "../index.js";
 
 /**
+ * The CreateModelCallback should use the passed runtime and container to construct the model that the
+ * host app will interact with.
  * @internal
  */
 export type CreateModelCallback<ModelType> = (
@@ -30,6 +32,9 @@ export type CreateModelCallback<ModelType> = (
 ) => Promise<ModelType>;
 
 /**
+ * @privateRemarks
+ * The MigratableModelLoader expects to work with container runtimes whose entry point conforms to
+ * this interface.
  * @internal
  */
 export interface IMigratableModelContainerRuntimeEntryPoint<T> {
@@ -44,6 +49,12 @@ const migrationToolRegistryKey = "migration-tool";
 const migrationToolFactory = new MigrationToolFactory();
 
 /**
+ * This helper should be used as a stand-in for ContainerRuntime.loadRuntime when using Migrator and MigratableModelLoader.
+ *
+ * @privateRemarks
+ * In addition to what ContainerRuntime.loadRuntime does, this adds in and correctly initializes the migration tools that
+ * Migrator expects to interact with, and exposes an entrypoint that MigratableModelLoader expects to find.
+ * TODO: Consider switching to a property bag for parameters.
  * @internal
  */
 export const instantiateMigratableRuntime = async <ModelType>(
