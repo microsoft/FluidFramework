@@ -35,7 +35,6 @@ import {
 	Any,
 	FieldKinds,
 	type FlexAllowedTypes,
-	type FlexFieldNodeSchema,
 	FlexFieldSchema,
 	type FlexMapNodeSchema,
 	type FlexObjectNodeSchema,
@@ -91,7 +90,6 @@ describe("flexTreeTypes", () => {
 	const builder = new SchemaBuilder({ scope: "test", libraries: [jsonSchema] });
 	const emptyStruct = builder.object("empty", {});
 	const basicStruct = builder.object("basicObject", { foo: builder.optional(Any) });
-	const basicFieldNode = builder.fieldNode("field", builder.optional(Any));
 	// TODO: once schema kinds are separated, test struct with EmptyKey.
 
 	const mixedStruct = builder.object("mixedStruct", {
@@ -162,8 +160,6 @@ describe("flexTreeTypes", () => {
 
 	{
 		type _1 = requireAssignableTo<typeof leaf.boolean, LeafNodeSchema>;
-		type _2a = requireAssignableTo<typeof basicFieldNode, FlexFieldNodeSchema>;
-		type _2 = requireAssignableTo<typeof jsonArray, FlexFieldNodeSchema>;
 		type _3 = requireAssignableTo<typeof jsonObject, FlexMapNodeSchema>;
 		type _4 = requireAssignableTo<typeof emptyStruct, FlexObjectNodeSchema>;
 		type _5 = requireAssignableTo<typeof basicStruct, FlexObjectNodeSchema>;
@@ -171,14 +167,12 @@ describe("flexTreeTypes", () => {
 
 	{
 		type _1 = requireTrue<isAssignableTo<typeof leaf.boolean, LeafNodeSchema>>;
-		type _2 = requireFalse<isAssignableTo<typeof leaf.boolean, FlexFieldNodeSchema>>;
 		type _3 = requireFalse<isAssignableTo<typeof leaf.boolean, FlexMapNodeSchema>>;
 		type _4 = requireFalse<isAssignableTo<typeof leaf.boolean, FlexObjectNodeSchema>>;
 	}
 
 	{
 		type _1 = requireFalse<isAssignableTo<typeof jsonArray, LeafNodeSchema>>;
-		type _2 = requireTrue<isAssignableTo<typeof jsonArray, FlexFieldNodeSchema>>;
 		type _3 = requireFalse<isAssignableTo<typeof jsonArray, FlexMapNodeSchema>>;
 		// TODO: Fix
 		// type _4 = requireFalse<isAssignableTo<typeof jsonArray, ObjectNodeSchema>>
@@ -186,14 +180,12 @@ describe("flexTreeTypes", () => {
 
 	{
 		type _1 = requireFalse<isAssignableTo<typeof jsonObject, LeafNodeSchema>>;
-		type _2 = requireFalse<isAssignableTo<typeof jsonObject, FlexFieldNodeSchema>>;
 		type _3 = requireTrue<isAssignableTo<typeof jsonObject, FlexMapNodeSchema>>;
 		type _4 = requireFalse<isAssignableTo<typeof jsonObject, FlexObjectNodeSchema>>;
 	}
 
 	{
 		type _1 = requireFalse<isAssignableTo<typeof basicStruct, LeafNodeSchema>>;
-		type _2 = requireFalse<isAssignableTo<typeof basicStruct, FlexFieldNodeSchema>>;
 		type _3 = requireFalse<isAssignableTo<typeof basicStruct, FlexMapNodeSchema>>;
 		type _4 = requireTrue<isAssignableTo<typeof basicStruct, FlexObjectNodeSchema>>;
 	}
@@ -223,10 +215,9 @@ describe("flexTreeTypes", () => {
 
 	// Two different simple node types to compare and test with.
 	type BasicStruct = FlexTreeTypedNode<typeof basicStruct>;
-	type BasicFieldNode = FlexTreeTypedNode<typeof basicFieldNode>;
+	type EmptyStruct = FlexTreeTypedNode<typeof emptyStruct>;
 	{
-		type _1 = requireFalse<isAssignableTo<BasicStruct, BasicFieldNode>>;
-		type _2 = requireFalse<isAssignableTo<BasicFieldNode, BasicStruct>>;
+		type _2 = requireFalse<isAssignableTo<EmptyStruct, BasicStruct>>;
 	}
 
 	// Basic unit test for TreeNode.is type narrowing.
@@ -234,8 +225,8 @@ describe("flexTreeTypes", () => {
 		if (node.is(basicStruct)) {
 			type _1 = requireAssignableTo<typeof node, BasicStruct>;
 		}
-		if (node.is(basicFieldNode)) {
-			type _1 = requireAssignableTo<typeof node, BasicFieldNode>;
+		if (node.is(emptyStruct)) {
+			type _1 = requireAssignableTo<typeof node, EmptyStruct>;
 		}
 	}
 
@@ -261,8 +252,8 @@ describe("flexTreeTypes", () => {
 		{
 			type _1 = requireTrue<
 				areSafelyAssignable<
-					FlexTreeTypedNodeUnion<[typeof basicStruct, typeof basicFieldNode]>,
-					BasicStruct | BasicFieldNode
+					FlexTreeTypedNodeUnion<[typeof basicStruct, typeof emptyStruct]>,
+					BasicStruct | EmptyStruct
 				>
 			>;
 		}
@@ -326,18 +317,10 @@ describe("flexTreeTypes", () => {
 		{
 			type _1 = requireTrue<
 				areSafelyAssignable<
-					FlexTreeUnboxNodeUnion<[typeof basicStruct, typeof basicFieldNode]>,
-					BasicStruct | BasicFieldNode
+					FlexTreeUnboxNodeUnion<[typeof basicStruct, typeof emptyStruct]>,
+					BasicStruct | EmptyStruct
 				>
 			>;
-		}
-		// Unboxed FieldNode
-		{
-			type UnboxedFieldNode = FlexTreeUnboxNodeUnion<[typeof basicFieldNode]>;
-			type _1 = requireTrue<
-				areSafelyAssignable<FlexTreeTypedNode<typeof basicFieldNode>, UnboxedFieldNode>
-			>;
-			type _2 = requireAssignableTo<UnboxedFieldNode, FlexTreeNode>;
 		}
 		// Recursive
 		{
