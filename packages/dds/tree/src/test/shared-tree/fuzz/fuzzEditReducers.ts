@@ -129,11 +129,36 @@ export function generateLeafNodeSchemas(nodeTypes: string[]): TreeNodeSchema[] {
 		if (
 			nodeType !== "treeFuzz.node" &&
 			nodeType !== "treeFuzz.FuzzStringNode" &&
+			nodeType !== "treeFuzz.FuzzNumberNode" &&
+			nodeType !== "treeFuzz.FuzzHandleNode"
+		) {
+			const fuzzNodeTypePrefix = "treeFuzz.";
+			const nodeIdentifier = nodeType.startsWith(fuzzNodeTypePrefix)
+				? nodeType.slice(fuzzNodeTypePrefix.length)
+				: nodeType;
+			if (nodeType.startsWith(fuzzNodeTypePrefix)) {
+				class GuidNode extends builder.object(nodeIdentifier, {
+					value: builder.required(builder.string),
+				}) {}
+				leafNodeSchemas.push(GuidNode);
+			}
+		}
+	}
+	return leafNodeSchemas;
+}
+
+export function generateLeafNodeSchemas2(nodeTypes: string[]): TreeNodeSchema[] {
+	const builder = new SchemaFactory("treeFuzz");
+	const leafNodeSchemas = [];
+	for (const nodeType of nodeTypes) {
+		if (
+			nodeType !== "treeFuzz.node" &&
+			nodeType !== "treeFuzz.FuzzStringNode" &&
 			nodeType !== "treeFuzz.FuzzNumberNode"
 		) {
 			const fuzzNodeTypePrefix = "treeFuzz.";
 			if (!nodeType.startsWith(fuzzNodeTypePrefix)) {
-				class GuidNode extends builder.object(nodeType.slice(fuzzNodeTypePrefix.length), {
+				class GuidNode extends builder.object(nodeType, {
 					value: builder.required(builder.string),
 				}) {}
 				leafNodeSchemas.push(GuidNode);

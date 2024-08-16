@@ -39,7 +39,7 @@ import {
 } from "../../../simple-tree/index.js";
 
 const builder = new SchemaFactory("treeFuzz");
-export class GUIDNode extends builder.object("GuidNode", {
+export class GUIDNode extends builder.object("GuidNode" as string, {
 	value: builder.optional(builder.string),
 }) {}
 
