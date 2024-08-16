@@ -2968,6 +2968,7 @@ export class ContainerRuntime
 					const signalsLost =
 						envelope.clientSignalSequenceNumber -
 						this._signalTracking.trackingSignalSequenceNumber;
+					this._signalTracking.signalsLost += signalsLost;
 					this.mc.logger.sendErrorEvent({
 						eventName: "SignalLost",
 						type: envelope.contents.type,
@@ -2984,6 +2985,7 @@ export class ContainerRuntime
 					envelope.clientSignalSequenceNumber >=
 						this._signalTracking.minimumTrackingSignalSequenceNumber
 				) {
+					this._signalTracking.signalsLost--;
 					this.mc.logger.sendErrorEvent({
 						eventName: "SignalOutOfOrder",
 						type: envelope.contents.type,
