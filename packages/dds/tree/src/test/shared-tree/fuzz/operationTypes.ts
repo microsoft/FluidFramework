@@ -60,7 +60,7 @@ export interface GUIDNodeValue {
 
 export interface NodeObjectValue {
 	requiredChild: number;
-	sequenceChildren: number[];
+	arrayChildren: number[];
 }
 
 export type GeneratedFuzzValue =

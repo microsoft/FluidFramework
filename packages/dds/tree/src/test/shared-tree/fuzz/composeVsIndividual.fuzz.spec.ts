@@ -112,6 +112,7 @@ describe("Fuzz - composed vs individual changes", () => {
 	const runsPerBatch = 50;
 
 	// "start" and "commit" opWeights set to 0 in case there are changes to the default weights.
+	// schema ops are set to 0, as creating a new fork/view during schemaOps would not allow us to continue with the transaction.
 	const composeVsIndividualWeights: Partial<EditGeneratorOpWeights> = {
 		set: 2,
 		clear: 1,

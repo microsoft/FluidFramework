@@ -45,10 +45,10 @@ interface AnchorFuzzTestState extends FuzzTestState {
 }
 
 const initialTreeState: NodeBuilderData<typeof FuzzNode> = {
-	sequenceChildren: [{ stringValue: "1" }, { stringValue: "2" }, { stringValue: "3" }],
+	arrayChildren: [{ stringValue: "1" }, { stringValue: "2" }, { stringValue: "3" }],
 	requiredChild: {
 		requiredChild: { stringValue: "0" },
-		sequenceChildren: [{ stringValue: "4" }, { stringValue: "5" }, { stringValue: "6" }],
+		arrayChildren: [{ stringValue: "4" }, { stringValue: "5" }, { stringValue: "6" }],
 	},
 	optionalChild: undefined,
 } as unknown as NodeBuilderData<typeof FuzzNode>;
@@ -64,8 +64,7 @@ describe("Fuzz - anchor stability", () => {
 	const opsPerRun = 20;
 	const runsPerBatch = 50;
 	describe("Anchors are unaffected by aborted transaction", () => {
-		// TODO: Currently manually disposing the view when applying the schema op is causing a double dispose issue.
-		// Once this issue has been resolved, re-enable schema ops.
+		// AB#11436: Currently manually disposing the view when applying the schema op is causing a double dispose issue. Once this issue has been resolved, re-enable schema ops.
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			set: 2,
 			clear: 1,

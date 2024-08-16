@@ -35,7 +35,7 @@ import {
 	FuzzStringNode,
 	FuzzNumberNode,
 	FuzzHandleNode,
-	type SequenceChildren,
+	type ArrayChildren,
 	nodeSchemaFromTreeSchema,
 	type GUIDNode,
 } from "./fuzzUtils.js";
@@ -136,12 +136,10 @@ export function generateLeafNodeSchemas(nodeTypes: string[]): TreeNodeSchema[] {
 			const nodeIdentifier = nodeType.startsWith(fuzzNodeTypePrefix)
 				? nodeType.slice(fuzzNodeTypePrefix.length)
 				: nodeType;
-			if (nodeType.startsWith(fuzzNodeTypePrefix)) {
-				class GuidNode extends builder.object(nodeIdentifier, {
-					value: builder.required(builder.string),
-				}) {}
-				leafNodeSchemas.push(GuidNode);
-			}
+			class GuidNode extends builder.object(nodeIdentifier, {
+				value: builder.required(builder.string),
+			}) {}
+			leafNodeSchemas.push(GuidNode);
 		}
 	}
 	return leafNodeSchemas;
@@ -181,8 +179,15 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
 
 	const newView = state.client.channel.viewWith(
 		new TreeViewConfiguration({ schema: newSchema }),
-	);
+	) as FuzzTransactionView;
 	newView.upgradeSchema();
+
+	newView.currentSchema =
+		nodeSchemaFromTreeSchema(newSchema) ?? fail("nodeSchema should not be undefined.");
+
+	const transactionViews = state.transactionViews ?? new Map();
+	transactionViews.set(state.client.channel, newView);
+	state.transactionViews = transactionViews;
 }
 
 /**
@@ -238,17 +243,16 @@ function applySequenceFieldEdit(
 				generateFuzzLeafNode(value, tree.currentSchema),
 			);
 			for (let index = change.index; index < insertValues.length; index++) {
-				parentNode.sequenceChildren.insertAt(index, insertValues[index - change.index]);
+				parentNode.arrayChildren.insertAt(index, insertValues[index - change.index]);
 			}
-			Tree.parent(parentNode.sequenceChildren);
 			break;
 		}
 		case "remove": {
-			parentNode.sequenceChildren.removeRange(change.range.first, change.range.last + 1);
+			parentNode.arrayChildren.removeRange(change.range.first, change.range.last + 1);
 			break;
 		}
 		case "intraFieldMove": {
-			parentNode.sequenceChildren.moveRangeToIndex(
+			parentNode.arrayChildren.moveRangeToIndex(
 				change.dstIndex,
 				change.range.first,
 				change.range.last + 1,
@@ -260,11 +264,11 @@ function applySequenceFieldEdit(
 				? navigateToNode(tree, change.dstField)
 				: tree.root;
 			assert(Tree.is(dstParentNode, tree.currentSchema));
-			dstParentNode.sequenceChildren.moveRangeToIndex(
+			dstParentNode.arrayChildren.moveRangeToIndex(
 				change.dstIndex,
 				change.range.first,
 				change.range.last + 1,
-				parentNode.sequenceChildren,
+				parentNode.arrayChildren,
 			);
 
 			break;
@@ -400,14 +404,14 @@ function navigateToNode(tree: FuzzView, path: DownPath): TreeNode {
 				break;
 			case "":
 				assert(pathStep.index !== undefined);
-				currentNode = (currentNode as SequenceChildren).at(pathStep.index) as TreeNode;
+				currentNode = (currentNode as ArrayChildren).at(pathStep.index) as TreeNode;
 				break;
-			case "sequenceChildren": {
-				const sequenceChildren =
-					(currentNode as FuzzNode).sequenceChildren ??
+			case "arrayChildren": {
+				const arrayChildren =
+					(currentNode as FuzzNode).arrayChildren ??
 					fail(`Unexpected field type: ${pathStep.field}`);
 
-				currentNode = sequenceChildren;
+				currentNode = arrayChildren;
 				break;
 			}
 
@@ -432,18 +436,6 @@ function navigateToNode(tree: FuzzView, path: DownPath): TreeNode {
 
 	return currentNode;
 }
-function getNodeSchemaForNodeType(node: TreeNode, nodeType: string) {
-	const nodeSchema = Tree.schema(node);
-	assert(isObjectNodeSchema(nodeSchema));
-	const nodeSchemaField = nodeSchema.fields.get("requiredChild");
-	assert(nodeSchemaField !== undefined);
-	const allowedTypes = nodeSchemaField.allowedTypeSet;
-	const simpleNodeSchema = Array.from(allowedTypes).find(
-		(treeNodeSchema) => treeNodeSchema.identifier === nodeType,
-	);
-	const simpleSchema = simpleNodeSchema as unknown as new (dummy: unknown) => TreeNode;
-	return simpleSchema;
-}
 
 function nodeSchemaForNodeType(nodeSchema: typeof FuzzNode, nodeType: string) {
 	assert(isObjectNodeSchema(nodeSchema));
@@ -456,6 +448,7 @@ function nodeSchemaForNodeType(nodeSchema: typeof FuzzNode, nodeType: string) {
 	const simpleSchema = simpleNodeSchema as unknown as new (dummy: unknown) => TreeNode;
 	return simpleSchema;
 }
+
 function generateFuzzLeafNode(node: GeneratedFuzzNode, nodeSchema: typeof FuzzNode) {
 	switch (node.type) {
 		case GeneratedFuzzValueType.String:
@@ -470,7 +463,7 @@ function generateFuzzLeafNode(node: GeneratedFuzzNode, nodeSchema: typeof FuzzNo
 				requiredChild: new FuzzNumberNode({
 					value: (node.value as NodeObjectValue).requiredChild,
 				}),
-				sequenceChildren: [],
+				arrayChildren: [],
 			}) as FuzzNode;
 		}
 		case GeneratedFuzzValueType.GUIDNode: {

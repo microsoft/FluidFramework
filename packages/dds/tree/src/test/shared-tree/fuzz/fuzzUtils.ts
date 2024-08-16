@@ -68,12 +68,14 @@ const initialAllowedTypes = [
 	() => FuzzNode,
 ] as const;
 
-export class SequenceChildren extends builder.arrayRecursive(
-	"sequenceChildren",
+export class ArrayChildren extends builder.arrayRecursive(
+	"arrayChildren",
 	initialAllowedTypes,
 ) {}
 
-type _checkSequenceChildren = ValidateRecursiveSchema<typeof SequenceChildren>;
+{
+	type _checkArrayChildren = ValidateRecursiveSchema<typeof ArrayChildren>;
+}
 
 /**
  * We use a more flexible set of allowed types to help during compile time, but during a fuzz test's runtime,
@@ -88,7 +90,7 @@ type _checkSequenceChildren = ValidateRecursiveSchema<typeof SequenceChildren>;
 export class FuzzNode extends builder.objectRecursive("node", {
 	optionalChild: builder.optionalRecursive(initialAllowedTypes),
 	requiredChild: builder.requiredRecursive(initialAllowedTypes),
-	sequenceChildren: SequenceChildren,
+	arrayChildren: ArrayChildren,
 }) {}
 type _checkFuzzNode = ValidateRecursiveSchema<typeof FuzzNode>;
 
@@ -97,11 +99,17 @@ export type FuzzNodeSchema = typeof FuzzNode;
 export const initialFuzzSchema = createTreeViewSchema([]);
 export const fuzzFieldSchema = FuzzNode.info.optionalChild;
 
-export function createFuzzNodeSchema(
+/**
+ *
+ * @param nodeTypes - The additional node types outside of the {@link initialAllowedTypes} that the fuzzNode is allowed to contain
+ * @param schemaFactory - The schemaFactory used to build the {@link FuzzNodeSchema}. The scope prefix must be "treeFuzz".
+ * @returns the {@link FuzzNodeSchema} with the {@link initialAllowedTypes}, as well as the additional nodeTypes passed in.
+ */
+function createFuzzNodeSchema(
 	nodeTypes: TreeNodeSchema[],
 	schemaFactory: SchemaFactory<"treeFuzz">,
 ): FuzzNodeSchema {
-	class SequenceChildren2 extends schemaFactory.arrayRecursive("sequenceChildren", [
+	class ArrayChildren2 extends schemaFactory.arrayRecursive("arrayChildren", [
 		() => Node,
 		FuzzStringNode,
 		FuzzNumberNode,
@@ -117,13 +125,20 @@ export function createFuzzNodeSchema(
 			FuzzHandleNode,
 			...nodeTypes,
 		]),
-		sequenceChildren: SequenceChildren2,
+		arrayChildren: ArrayChildren2,
 	}) {}
 
-	type _check = ValidateRecursiveSchema<typeof Node>;
+	{
+		type _check = ValidateRecursiveSchema<typeof Node>;
+	}
 	return Node as unknown as FuzzNodeSchema;
 }
 
+/**
+ * This function is used to create a new schema which is a superset of the previous tree's schema.
+ * @param allowedTypes - additional allowedTypes outside of the {@link initialAllowedTypes} for the {@link FuzzNode}
+ * @returns the tree's schema used for the fuzzView.
+ */
 export function createTreeViewSchema(allowedTypes: TreeNodeSchema[]): typeof fuzzFieldSchema {
 	const schemaFactory = new SchemaFactory("treeFuzz");
 	const node = createFuzzNodeSchema(allowedTypes, schemaFactory).info.optionalChild;
@@ -230,19 +245,19 @@ export const deterministicIdCompressorFactory: (
 };
 
 export const populatedInitialState: NodeBuilderData<typeof FuzzNode> = {
-	sequenceChildren: [
+	arrayChildren: [
 		{
-			sequenceChildren: [{ stringValue: "AA" }, { stringValue: "AB" }, { stringValue: "AC" }],
+			arrayChildren: [{ stringValue: "AA" }, { stringValue: "AB" }, { stringValue: "AC" }],
 			requiredChild: { stringValue: "A" },
 			optionalChild: undefined,
 		},
 		{
-			sequenceChildren: [{ stringValue: "BA" }, { stringValue: "BB" }, { stringValue: "BC" }],
+			arrayChildren: [{ stringValue: "BA" }, { stringValue: "BB" }, { stringValue: "BC" }],
 			requiredChild: { stringValue: "B" },
 			optionalChild: undefined,
 		},
 		{
-			sequenceChildren: [{ stringValue: "CA" }, { stringValue: "CB" }, { stringValue: "CC" }],
+			arrayChildren: [{ stringValue: "CA" }, { stringValue: "CB" }, { stringValue: "CC" }],
 			requiredChild: { stringValue: "C" },
 			optionalChild: undefined,
 		},

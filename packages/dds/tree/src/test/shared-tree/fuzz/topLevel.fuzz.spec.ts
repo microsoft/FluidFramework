@@ -47,8 +47,7 @@ describe("Fuzz - Top-Level", () => {
 	const runsPerBatch = 50;
 	const opsPerRun = 20;
 	// TODO: Enable other types of ops.
-	// TODO: Currently manually disposing the view when applying the schema op is causing a double dispose issue.
-	// Once this issue has been resolved, re-enable schema ops.
+	// AB#11436: Currently manually disposing the view when applying the schema op is causing a double dispose issue. Once this issue has been resolved, re-enable schema ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 		set: 3,
 		clear: 1,
@@ -99,6 +98,7 @@ describe("Fuzz - Top-Level", () => {
 			},
 			reconnectProbability: 0.1,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
+			skipMinimization: true,
 		};
 		createDDSFuzzSuite(model, options);
 	});

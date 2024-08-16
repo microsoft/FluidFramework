@@ -179,7 +179,7 @@ export function simpleSchemaFromStoredSchema(storedSchema: TreeStoredSchemaRepos
 		"treeFuzz.FuzzStringNode",
 		"treeFuzz.node",
 		"treeFuzz.FuzzHandleNode",
-		"treeFuzz.sequenceChildren",
+		"treeFuzz.arrayChildren",
 	]);
 	const fuzzNodeSchemas = [];
 	for (const nodeSchema of nodeSchemas) {
@@ -335,7 +335,7 @@ export const makeTreeEditGenerator = (
 							Number.MIN_SAFE_INTEGER,
 							Number.MAX_SAFE_INTEGER,
 						),
-						sequenceChildren: [],
+						arrayChildren: [],
 					},
 				};
 			default:
@@ -356,7 +356,7 @@ export const makeTreeEditGenerator = (
 		[
 			(state): Insert => ({
 				type: "insert",
-				index: state.random.integer(0, state.fieldInfo.parentFuzzNode.sequenceChildren.length),
+				index: state.random.integer(0, state.fieldInfo.parentFuzzNode.arrayChildren.length),
 				content: makeArray(state.random.integer(1, 3), () => generatedValue(state)),
 			}),
 			weights.insert,
@@ -369,27 +369,27 @@ export const makeTreeEditGenerator = (
 
 					// By avoiding large deletions we're more likely to generate more interesting outcomes.
 					// It'd be reasonable to move this to config.
-					range: chooseRangeWithMaxLength(random, field.sequenceChildren.length, 3),
+					range: chooseRangeWithMaxLength(random, field.arrayChildren.length, 3),
 				};
 			},
 			weights.remove,
-			({ fieldInfo }) => fieldInfo.parentFuzzNode.sequenceChildren.length > 0,
+			({ fieldInfo }) => fieldInfo.parentFuzzNode.arrayChildren.length > 0,
 		],
 		[
 			({ fieldInfo, random }): IntraFieldMove => {
 				const field = fieldInfo.parentFuzzNode;
 				return {
 					type: "intraFieldMove",
-					range: chooseRange(random, field.sequenceChildren.length),
-					dstIndex: random.integer(0, field.sequenceChildren.length),
+					range: chooseRange(random, field.arrayChildren.length),
+					dstIndex: random.integer(0, field.arrayChildren.length),
 				};
 			},
 			weights.intraFieldMove,
-			({ fieldInfo }) => fieldInfo.parentFuzzNode.sequenceChildren.length > 0,
+			({ fieldInfo }) => fieldInfo.parentFuzzNode.arrayChildren.length > 0,
 		],
 		[
 			(state): CrossFieldMove => {
-				const srcField = state.fieldInfo.parentFuzzNode.sequenceChildren;
+				const srcField = state.fieldInfo.parentFuzzNode.arrayChildren;
 				const dstFieldInfo = selectTreeField(
 					viewFromState(state),
 					state.random,
@@ -403,11 +403,11 @@ export const makeTreeEditGenerator = (
 					type: "crossFieldMove",
 					range: chooseRange(state.random, srcField.length),
 					dstField: maybeDownPathFromNode(dstField),
-					dstIndex: state.random.integer(0, dstField.sequenceChildren.length),
+					dstIndex: state.random.integer(0, dstField.arrayChildren.length),
 				};
 			},
 			weights.crossFieldMove,
-			({ fieldInfo }) => fieldInfo.parentFuzzNode.sequenceChildren.length > 0,
+			({ fieldInfo }) => fieldInfo.parentFuzzNode.arrayChildren.length > 0,
 		],
 	]);
 
@@ -746,7 +746,7 @@ function selectField(
 		if (Tree.is(node.requiredChild, nodeSchema)) {
 			childNodes.push(node.requiredChild);
 		}
-		node.sequenceChildren.map((child) => {
+		node.arrayChildren.map((child) => {
 			if (Tree.is(child, nodeSchema)) {
 				childNodes.push(child);
 			}
