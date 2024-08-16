@@ -26,34 +26,63 @@ describe("Biome config loading", async () => {
 		// These variables need to be initialized once for all the tests in this describe block. Defining them outside
 		// of the before block causes the tests to be skipped.
 		let gitRepo: GitRepo;
-		let config: BiomeConfigReader;
+		let testDir: string;
 		before(async () => {
-			const testDir = path.resolve(testDataPath, "biome/pkg-b");
+			testDir = path.resolve(testDataPath, "biome/pkg-b");
 			const repoRoot = await getResolvedFluidRoot(true);
 			gitRepo = new GitRepo(repoRoot);
-			config = await BiomeConfigReader.create(testDir, gitRepo);
 		});
 
 		it("loads", async () => {
+			const config = await BiomeConfigReader.create(testDir, gitRepo);
 			assert(config !== undefined);
 		});
 
 		it("has correct formatted files list", async () => {
+			const config = await BiomeConfigReader.create(testDir, gitRepo);
 			const expected = [
 				path.resolve(
 					testDataPath,
 					"biome/pkg-b/include-formatter-added-1/subdirectory/sourceFile2.ts",
 				),
+				path.resolve(
+					testDataPath,
+					"biome/pkg-b/include-formatter-added-1/subdirectory/markdownFile2.md",
+				),
 				path.resolve(testDataPath, "biome/pkg-b/include-formatter-added-1/sourceFile.ts"),
+				path.resolve(testDataPath, "biome/pkg-b/include-formatter-added-1/markdownFile1.md"),
 			];
 			const { formattedFiles } = config;
+			console.debug(formattedFiles);
+			assert(
+				formattedFiles.length === 4,
+				`expected 4 elements in the array, got ${formattedFiles.length}`,
+			);
 			for (const actual of formattedFiles) {
 				assert(expected.includes(actual));
 			}
+		});
+
+		it("returns only files matching files.includes", async () => {
+			const config = await BiomeConfigReader.create(
+				path.resolve(testDataPath, "biome/pkg-b/include-md-only.jsonc"),
+				gitRepo,
+			);
+			const expected = [
+				path.resolve(
+					testDataPath,
+					"biome/pkg-b/include-formatter-added-1/subdirectory/markdownFile2.md",
+				),
+				path.resolve(testDataPath, "biome/pkg-b/include-formatter-added-1/markdownFile1.md"),
+			];
+			const { formattedFiles } = config;
 			assert(
 				formattedFiles.length === 2,
 				`expected 2 elements in the array, got ${formattedFiles.length}`,
 			);
+			for (const actual of formattedFiles) {
+				assert(expected.includes(actual));
+			}
 		});
 	});
 

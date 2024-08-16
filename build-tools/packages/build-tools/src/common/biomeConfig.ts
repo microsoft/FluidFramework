@@ -144,18 +144,17 @@ export async function getBiomeFormattedFilesFromDirectory(
 	directoryOrConfigFile: string,
 	gitRepo: GitRepo,
 ): Promise<string[]> {
-	let configFile: string | undefined;
 	/**
 	 * The repo root-relative path to the directory being used as the Biome working directory.
 	 */
-	const directory: string = path.relative(
-		gitRepo.resolvedRoot,
-		path.dirname(directoryOrConfigFile),
-	);
+	let directory: string;
+	let configFile: string | undefined;
 	if ((await stat(directoryOrConfigFile)).isFile()) {
 		configFile = directoryOrConfigFile;
+		directory = path.relative(gitRepo.resolvedRoot, path.dirname(directoryOrConfigFile));
 	} else {
 		configFile = await getClosestBiomeConfigPath(directoryOrConfigFile);
+		directory = path.relative(gitRepo.resolvedRoot, directoryOrConfigFile);
 	}
 	if (configFile === undefined) {
 		throw new Error("Cannot find a Biome config file.");
@@ -238,24 +237,47 @@ export class BiomeConfigReader {
 		return this.allConfigs.at(-1)!;
 	}
 
+	private _mergedConfig: BiomeConfigResolved = {};
+	public get mergedConfig(): BiomeConfigResolved {
+		return this._mergedConfig;
+	}
+
 	private _formattedFiles: string[] = [];
 	public get formattedFiles(): string[] {
 		return this._formattedFiles;
 	}
 
-	private constructor(public readonly directory: string) {}
+	public readonly directory: string;
+
+	private constructor(configFile: string) {
+		this.directory = path.dirname(configFile);
+	}
 
 	/**
 	 * Create a BiomeConfig instance rooted in the provided directory.
 	 */
-	public static async create(directory: string, gitRepo: GitRepo): Promise<BiomeConfigReader> {
-		const config = new BiomeConfigReader(directory);
-		const initialConfig = await getClosestBiomeConfigPath(directory);
-		if (initialConfig === undefined) {
-			throw new Error(`No Biome config found in ${directory}`);
+	public static async create(
+		directoryOrConfigFile: string,
+		gitRepo: GitRepo,
+	): Promise<BiomeConfigReader> {
+		/**
+		 * The repo root-relative path to the directory being used as the Biome working directory.
+		 */
+		let directory: string;
+		let configFile: string | undefined;
+		if ((await stat(directoryOrConfigFile)).isFile()) {
+			configFile = directoryOrConfigFile;
+			directory = path.relative(gitRepo.resolvedRoot, path.dirname(directoryOrConfigFile));
+		} else {
+			configFile = await getClosestBiomeConfigPath(directoryOrConfigFile);
+			directory = path.relative(gitRepo.resolvedRoot, directoryOrConfigFile);
+		}
+		if (configFile === undefined) {
+			throw new Error("Cannot find a Biome config file.");
 		}
 
-		config._allConfigs = await getAllBiomeConfigPaths(initialConfig);
+		const config = new BiomeConfigReader(configFile);
+		config._allConfigs = await getAllBiomeConfigPaths(configFile);
 		const mergedConfig = await loadBiomeConfigs(config.allConfigs);
 		const files = await getBiomeFormattedFiles(mergedConfig, directory, gitRepo);
 		config._formattedFiles.push(...files);
