@@ -6,7 +6,7 @@
 section: tree
 ---
 
-Add `ITreeConfigurationOptions.preventAmbiguity`
+New SharedTree configuration option: `ITreeConfigurationOptions.preventAmbiguity`
 
 The new `ITreeConfigurationOptions.preventAmbiguity` flag can be set to true to enable checking of some additional rules when constructing the `TreeViewConfiguration`.
 

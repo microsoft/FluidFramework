@@ -31,6 +31,7 @@ Here are some remarks about the interface
 | Property | Modifiers | Default Value | Type | Description |
 | --- | --- | --- | --- | --- |
 | [getterProperty](./simple-suite-test/testinterface-interface#getterproperty-property) | `readonly` |  | boolean | A test getter-only interface property. |
+| [propertyWithBadInheritDocTarget](./simple-suite-test/testinterface-interface#propertywithbadinheritdoctarget-propertysignature) |  |  | boolean |  |
 | [setterProperty](./simple-suite-test/testinterface-interface#setterproperty-property) |  |  | boolean | A test property with a getter and a setter. |
 | [testInterfaceProperty](./simple-suite-test/testinterface-interface#testinterfaceproperty-propertysignature) |  |  | number | Test interface property |
 | [testOptionalInterfaceProperty](./simple-suite-test/testinterface-interface#testoptionalinterfaceproperty-propertysignature) | `optional` | 0 | number | Test optional property |
@@ -92,6 +93,16 @@ A test getter-only interface property.
 
 ```typescript
 get getterProperty(): boolean;
+```
+
+**Type:** boolean
+
+### propertyWithBadInheritDocTarget {#propertywithbadinheritdoctarget-propertysignature}
+
+#### Signature {#propertywithbadinheritdoctarget-signature}
+
+```typescript
+propertyWithBadInheritDocTarget: boolean;
 ```
 
 **Type:** boolean

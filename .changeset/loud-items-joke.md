@@ -5,7 +5,8 @@
 ---
 "section": "tree"
 ---
-`Tree.schema` now returns `TreeNodeSchema`.
+
+`Tree.schema` now returns `TreeNodeSchema`
 
 The typing of `Tree.schema` has changed from:
 

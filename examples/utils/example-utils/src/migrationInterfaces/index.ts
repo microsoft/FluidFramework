@@ -14,7 +14,11 @@ export {
 	IMigrationToolEvents,
 	MigrationState,
 } from "./migrationTool.js";
-export { DataTransformationCallback, IMigrator, IMigratorEvents } from "./migrator.js";
+export {
+	DataTransformationCallback,
+	IMigrator,
+	IMigratorEvents,
+} from "./migrator.js";
 export {
 	ISameContainerMigratableModel,
 	ISameContainerMigratableModelEvents,

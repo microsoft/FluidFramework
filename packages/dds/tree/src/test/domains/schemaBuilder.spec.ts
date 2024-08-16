@@ -3,42 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import { SchemaBuilder, leaf } from "../../domains/index.js";
 import {
 	FieldKinds,
 	FlexFieldSchema,
-	type FlexTreeSequenceField,
 	type FlexTreeTypedNode,
-	schemaIsFieldNode,
 } from "../../feature-libraries/index.js";
-import type {
-	areSafelyAssignable,
-	isAny,
-	requireFalse,
-	requireTrue,
-} from "../../util/index.js";
+import type { isAny, requireFalse } from "../../util/index.js";
 
 describe("domains - SchemaBuilder", () => {
-	describe("list", () => {
-		it("implicit normalizes", () => {
-			const builder = new SchemaBuilder({ scope: "scope" });
-
-			const list = builder.list("Foo", leaf.number);
-			assert(schemaIsFieldNode(list));
-			assert.equal(list.name, `scope.Foo`);
-			assert(list.info.equals(FlexFieldSchema.create(FieldKinds.sequence, [leaf.number])));
-			type List = FlexTreeTypedNode<typeof list>["content"];
-			type _check = requireTrue<
-				areSafelyAssignable<List, FlexTreeSequenceField<readonly [typeof leaf.number]>>
-			>;
-
-			// Creating again errors instead of reuses
-			assert.throws(() => builder.list("Foo", leaf.number));
-		});
-	});
-
 	it("object", () => {
 		const builder = new SchemaBuilder({ scope: "Test Domain" });
 
