@@ -60,8 +60,8 @@ const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detached
  * Test {@link LazyField} implementation.
  */
 class TestLazyField<
+	TKind extends FlexFieldKind,
 	TTypes extends FlexAllowedTypes,
-	TKind extends FlexFieldKind = typeof FieldKinds.optional,
 > extends LazyField<TKind, TTypes> {}
 
 describe("LazyField", () => {
@@ -261,7 +261,7 @@ describe("LazyField", () => {
 
 	it("Disposes when parent is disposed", () => {
 		const factory = new SchemaFactory("LazyField");
-		const Holder = factory.object("holder", { f: factory.number });
+		class Holder extends factory.object("holder", { f: factory.number }) {}
 		const schema = toFlexSchema(Holder);
 		const forest = forestWithContent({
 			schema,
