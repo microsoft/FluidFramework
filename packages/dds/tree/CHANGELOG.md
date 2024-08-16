@@ -1,5 +1,302 @@
 # @fluidframework/tree
 
+## 2.2.0
+
+### Minor Changes
+
+-   Compile-time type narrowing based on a TreeNode's NodeKind ([#22222](https://github.com/microsoft/FluidFramework/pull/22222)) [4d3bc876ae](https://github.com/microsoft/FluidFramework/commit/4d3bc876ae32fa3f2568299e29246f6970e48ee0)
+
+    `TreeNode`'s schema-aware APIs implement `WithType`, which now has a `NodeKind` parameter that can be used to narrow `TreeNode`s based on `NodeKind`.
+
+    Example:
+
+    ```typescript
+    function getKeys(node: TreeNode & WithType<string, NodeKind.Array>): number[];
+    function getKeys(node: TreeNode & WithType<string, NodeKind.Map | NodeKind.Object>): string[];
+    function getKeys(node: TreeNode): string[] | number[];
+    function getKeys(node: TreeNode): string[] | number[] {
+    	const schema = Tree.schema(node);
+    	switch (schema.kind) {
+    		case NodeKind.Array: {
+    			const arrayNode = node as TreeArrayNode;
+    			const keys: number[] = [];
+    			for (let index = 0; index < arrayNode.length; index++) {
+    				keys.push(index);
+    			}
+    			return keys;
+    		}
+    		case NodeKind.Map:
+    			return [...(node as TreeMapNode).keys()];
+    		case NodeKind.Object:
+    			return Object.keys(node);
+    		default:
+    			throw new Error("Unsupported Kind");
+    	}
+    }
+    ```
+
+-   ✨ New! `Record`-typed objects can now be used to construct MapNodes ([#22042](https://github.com/microsoft/FluidFramework/pull/22042)) [25deff344b](https://github.com/microsoft/FluidFramework/commit/25deff344b447380486c1efb64ed69177c32ddc5)
+
+    You can now construct MapNodes from `Record` typed objects, similar to how maps are expressed in JSON.
+
+    Before this change, an `Iterable<string, Child>` was required, but now an object like `{key1: Child1, key2: Child2}` is allowed.
+
+    Full example using this new API:
+
+    ```typescript
+    class Schema extends schemaFactory.map("ExampleMap", schemaFactory.number) {}
+    const fromRecord = new Schema({ x: 5 });
+    ```
+
+    This new feature makes it possible for schemas to construct a tree entirely from JSON-compatible objects using their constructors,
+    as long as they do not require unhydrated nodes to differentiate ambiguous unions,
+    or IFluidHandles (which themselves are not JSON compatible).
+
+    Due to limitations of TypeScript and recursive types,
+    recursive maps do not advertise support for this feature in their typing,
+    but it works at runtime.
+
+-   New SharedTree configuration option: `ITreeConfigurationOptions.preventAmbiguity` ([#22048](https://github.com/microsoft/FluidFramework/pull/22048)) [966906a034](https://github.com/microsoft/FluidFramework/commit/966906a03490daa5a914030b37342abb8267c12d)
+
+    The new `ITreeConfigurationOptions.preventAmbiguity` flag can be set to true to enable checking of some additional rules when constructing the `TreeViewConfiguration`.
+
+    This example shows an ambiguous schema:
+
+    ```typescript
+    const schemaFactory = new SchemaFactory("com.example");
+    class Feet extends schemaFactory.object("Feet", { length: schemaFactory.number }) {}
+    class Meters extends schemaFactory.object("Meters", { length: schemaFactory.number }) {}
+    const config = new TreeViewConfiguration({
+    	// This combination of schema can lead to ambiguous cases, and will error since preventAmbiguity is true.
+    	schema: [Feet, Meters],
+    	preventAmbiguity: true,
+    });
+    const view = tree.viewWith(config);
+    // This is invalid since it is ambiguous which type of node is being constructed.
+    // The error thrown above when constructing the TreeViewConfiguration is because of this ambiguous case:
+    view.initialize({ length: 5 });
+    ```
+
+    See the documentation on `ITreeConfigurationOptions.preventAmbiguity` for a more complete example and more details.
+
+-   `Tree.schema` now returns `TreeNodeSchema` ([#22185](https://github.com/microsoft/FluidFramework/pull/22185)) [bfe8310a94](https://github.com/microsoft/FluidFramework/commit/bfe8310a9406a8658c2fac8827c7114844c32234)
+
+    The typing of `Tree.schema` has changed from:
+
+    ```typescript
+    schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
+    ```
+
+    to:
+
+    ```typescript
+    schema(node: TreeNode | TreeLeafValue): TreeNodeSchema;
+    ```
+
+    The runtime behavior is unaffected: any code which worked and still compiles is fine and does not need changes.
+
+    `Tree.schema` was changed to mitigate two different issues:
+
+    1. It tried to give a more specific type based on the type of the passed in value.
+       When the type of the input is not known precisely (for example it is a union of node types like `Foo | Bar`, or `TreeNode` or even `TreeNode | TreeLeafValue`), this was fine since schema are covariant over their node type.
+       However when the input was more specific that the schema type, for example the type is simply `0`, this would result in unsound typing, since the create function could actually return values that did not conform with that schema (for example `schema.create(1)` for the number schema typed with `0` would return `1` with type `0`).
+    2. The node type was provided to the incorrect type parameter of TreeNodeSchema.
+       The `TNode` parameter is the third one, not the fourth.
+       The fourth is `TBuild` which sets the input accepted to its create function or constructor.
+       Thus this code accidentally left `TNode` unset (which is good due to the above issue), but invalidly set `TBuild`.
+       `TBuild` is contravariant, so it has the opposite issue that setting `TNode` would have: if your input is simply typed as something general like `TreeNode`, then the returned schema would claim to be able to construct an instance given any `TreeNode`.
+       This is incorrect, and this typing has been removed.
+
+    Fortunately it should be rare for code to be impacted by this issue.
+    Any code which manually specified a generic type parameter to `Tree.schema()` will break, as well as code which assigned its result to an overly specifically typed variable.
+    Code which used `typeof` on the returned schema could also break, though there are few use-cases for this so such code is not expected to exist.
+    Currently it's very difficult to invoke the create function or constructor associated with a `TreeNodeSchema` as doing so already requires narrowing to `TreeNodeSchemaClass` or `TreeNodeSchemaNonClass`.
+    It is possible some such code exists which will need to have an explicit cast added because it happened to work with the more specific (but incorrect) constructor input type.
+
+-   Recursive SharedTree schemas using MapNodes no longer produce invalid d.ts files ([#22106](https://github.com/microsoft/FluidFramework/pull/22106)) [554fc5a94e](https://github.com/microsoft/FluidFramework/commit/554fc5a94e57e2d109ea9008b7c64517c58a6b73)
+
+    Consider a recursive SharedTree schema like the following, which follows all our recommended best practices:
+
+    ```typescript
+    export class RecursiveMap extends schema.mapRecursive("RM", [() => RecursiveMap]) {}
+    {
+    	type _check = ValidateRecursiveSchema<typeof RecursiveMap>;
+    }
+    ```
+
+    This schema would work when used from within its compilation unit, but would generate d.ts that fails to compile when exporting it:
+
+    ```typescript
+    declare const RecursiveMap_base: import("@fluidframework/tree").TreeNodeSchemaClass<
+    	"com.example.RM",
+    	import("@fluidframework/tree").NodeKind.Map,
+    	import("@fluidframework/tree").TreeMapNodeUnsafe<readonly [() => typeof RecursiveMap]> &
+    		import("@fluidframework/tree").WithType<"com.example.RM">,
+    	{
+    		[Symbol.iterator](): Iterator<[string, RecursiveMap], any, undefined>;
+    	},
+    	false,
+    	readonly [() => typeof RecursiveMap]
+    >;
+    export declare class RecursiveMap extends RecursiveMap_base {}
+    ```
+
+    This results in the compile error in TypeScript 5.4.5:
+
+    > error TS2310: Type 'RecursiveMap' recursively references itself as a base type.
+
+    With this change, that error is fixed by modifying the `TreeMapNodeUnsafe` type it references to inline the definition of `ReadonlyMap` instead of using the one from the TypeScript standard library.
+
+-   ✨ New! When unambiguous, ArrayNodes can now be constructed from Maps and MapNodes from arrays ([#22036](https://github.com/microsoft/FluidFramework/pull/22036)) [25e74f9f3b](https://github.com/microsoft/FluidFramework/commit/25e74f9f3bed6e6ff041c088813c4cc1ea276b9c)
+
+    Since the types for ArrayNodes and MapNodes indicate they can be constructed from iterables,
+    it should work, even if those iterables are themselves arrays or maps.
+    To avoid this being a breaking change, a priority system was introduced.
+    ArrayNodes will only be implicitly constructable from JavaScript Map objects in contexts where no MapNodes are allowed.
+    Similarly MapNodes will only be implicitly constructable from JavaScript Array objects in contexts where no ArrayNodes are allowed.
+
+    In practice, the main case in which this is likely to matter is when implicitly constructing a map node. If you provide an array of key value pairs, this now works instead of erroring, as long as no ArrayNode is valid at that location in the tree.
+
+    ```typescript
+    class MyMapNode extends schemaFactory.map("x", schemaFactory.number) {}
+    class Root extends schemaFactory.object("root", { data: MyMapNode }) {}
+    // This now works (before it compiled, but error at runtime):
+    const fromArray = new Root({ data: [["x", 5]] });
+    ```
+
+    Prior versions used to have to do:
+
+    ```typescript
+    new Root({ data: new MyMapNode([["x", 5]]) });
+    ```
+
+    or:
+
+    ```typescript
+    new Root({ data: new Map([["x", 5]]) });
+    ```
+
+    Both of these options still work: strictly more cases are allowed with this change.
+
+-   Implicit TreeNode construction improvements ([#21995](https://github.com/microsoft/FluidFramework/pull/21995)) [977f96c1a0](https://github.com/microsoft/FluidFramework/commit/977f96c1a0dd1d5eb0dbcd087d07cb7510d533ea)
+
+    ArrayNodes and MapNodes could always be explicitly constructed (using `new`) from iterables.
+    The types also allowed using of iterables to implicitly construct array nodes and map nodes,
+    but this did not work at runtime.
+    This has been fixed for all cases except implicitly constructing an ArrayNode form an `Iterable` that is actually a `Map`,
+    and implicitly constructing a MapNode from an `Iterable` that is actually an `Array`.
+    These cases may be fixed in the future, but require additional work to ensure unions of array nodes and map nodes work correctly.
+
+    Additionally MapNodes can now be constructed from `Iterator<readonly [string, content]>` where previously the inner arrays had to be mutable.
+
+-   Support generation of JSON Schema from Shared Tree view schema (alpha) ([#21984](https://github.com/microsoft/FluidFramework/pull/21984)) [9097bf8a44](https://github.com/microsoft/FluidFramework/commit/9097bf8a44310d0dcf1a4d2efc3a6f75997c58b3)
+
+    > [!WARNING]
+    > This API is [alpha quality](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels) and may change at any time.
+
+    Adds alpha-quality support for canonical [JSON Schema](https://json-schema.org/docs) representation of Shared Tree schema and adds a `getJsonSchema` function for getting that representation for a given `TreeNodeSchema`.
+    This JSON Schema representation can be used to describe schema requirements to external systems, and can be used with validation tools like [ajv](https://ajv.js.org/) to validate data before inserting it into a `SharedTree`.
+
+    #### Example
+
+    Given a `SharedTree` schema like the following:
+
+    ```typescript
+    class MyObject extends schemaFactory.object("MyObject", {
+    	foo: schemaFactory.number,
+    	bar: schemaFactory.optional(schemaFactory.string),
+    });
+    ```
+
+    JSON Schema like the following would be produced:
+
+    ```json
+    {
+    	"$defs": {
+    		"com.fluidframework.leaf.string": {
+    			"type": "string"
+    		},
+    		"com.fluidframework.leaf.number": {
+    			"type": "number"
+    		},
+    		"com.myapp.MyObject": {
+    			"type": "object",
+    			"properties": {
+    				"foo": { "$ref": "com.fluidframework.leaf.number" },
+    				"bar": { "$ref": "com.fluidframework.leaf.string" }
+    			},
+    			"required": ["foo"]
+    		}
+    	},
+    	"anyOf": [{ "$ref": "#/$defs/com.myapp.MyObject" }]
+    }
+    ```
+
+-   Enforce use of TreeViewConfiguration's constructor ([#22055](https://github.com/microsoft/FluidFramework/pull/22055)) [e8955579f6](https://github.com/microsoft/FluidFramework/commit/e8955579f6d52a6c7e300642088c60d6ed12d7db)
+
+    `TreeViewConfiguration` is `@sealed`, meaning creating custom implementations of it such as assigning object literals to a `TreeViewConfiguration` or sub-classing it are not supported.
+    This reserved the ability for the Fluid Framework to add members to this class over time, informing users that they must use it in such a way where such changes are non-breaking.
+    However, there was no compiler-based enforcement of this expectation.
+    It was only indicated via documentation and an implicit assumption that when an API takes in a typed defined as a class, that an instance of that class must be used rather than an arbitrary object of a similar shape.
+
+    With this change, the TypeScript compiler will now inform users when they invalidly provide an object literal as a `TreeViewConfiguration`.
+
+    More specifically this causes code like this to produce a compile error:
+
+    ```typescript
+    // Don't do this!
+    const view = tree.viewWith({ schema: TestNode, enableSchemaValidation: false });
+    ```
+
+    The above was never intended to work, and is not a supported use of the `viewWith` since it requires a `TreeViewConfiguration` which is sealed.
+    Any code using the above pattern will break in Fluid Framework 2.2 and above. Such code will need to be updated to the pattern shown below.
+    Any code broken by this change is technically unsupported and only worked due to a gap in the type checking. This is not considered a breaking change.
+    The correct way to get a `TreeViewConfiguration` is by using its constructor:
+
+    ```typescript
+    // This pattern correctly initializes default values and validates input.
+    const view = tree.viewWith(new TreeViewConfiguration({ schema: TestNode }));
+    ```
+
+    Skipping the constructor causes the following problems:
+
+    1. `TreeViewConfiguration` does validation in its constructor, so skipping it also skips the validation which leads to much less friendly error messages for invalid schema.
+    2. Skipping the constructor also discards any default values for options like `enableSchemaValidation`.
+       This means that code written in that style would break if more options were added. Since such changes are planned,
+       it is not practical to support this pattern.
+
+-   Add a function `isRepoSuperset` to determine if changes to a document schema are backward-compatible ([#22045](https://github.com/microsoft/FluidFramework/pull/22045)) [f6fdc95bb3](https://github.com/microsoft/FluidFramework/commit/f6fdc95bb36a892710bc315aae85fd2c75aec975)
+
+    Note: These changes are not customer-facing and make progress toward future plans in Tree's schema evolution space.
+
+-   Add `@alpha` API `FixRecursiveArraySchema` as a workaround around an issue with recursive ArrayNode schema ([#22122](https://github.com/microsoft/FluidFramework/pull/22122)) [9ceacf9b54](https://github.com/microsoft/FluidFramework/commit/9ceacf9b5468ac8280a1dc48ada9d8b46b499f14)
+
+    Importing a recursive ArrayNode schema via a d.ts file can produce an error like
+    `error TS2310: Type 'RecursiveArray' recursively references itself as a base type.`
+    if using a tsconfig with `"skipLibCheck": false`.
+
+    This error occurs due to the TypeScript compiler splitting the class definition into two separate declarations in the d.ts file (one for the base, and one for the actual class).
+    For unknown reasons, splitting the class declaration in this way breaks the recursive type handling, leading to the mentioned error.
+
+    Since recursive type handling in TypeScript is order dependent, putting just the right kind of usages of the type before the declarations can cause it to not hit this error.
+    For the case of ArrayNodes, this can be done via usage that looks like this:
+
+    ```typescript
+    /**
+     * Workaround to avoid
+     * `error TS2310: Type 'RecursiveArray' recursively references itself as a base type.` in the d.ts file.
+     */
+    export declare const _RecursiveArrayWorkaround: FixRecursiveArraySchema<typeof RecursiveArray>;
+    export class RecursiveArray extends schema.arrayRecursive("RA", [() => RecursiveArray]) {}
+    {
+    	type _check = ValidateRecursiveSchema<typeof RecursiveArray>;
+    }
+    ```
+
+-   Fix document-corrupting bug when rebasing over move compositions ([#21993](https://github.com/microsoft/FluidFramework/pull/21993)) [f3af9d1cd3](https://github.com/microsoft/FluidFramework/commit/f3af9d1cd3f7ee1ea3660ae934ddca8473fbdb9b)
+
+    Before this fix, if multiple users concurrently performed moves (possibly by reverting prior moves), there was a chance that the document would become corrupted.
+
 ## 2.1.0
 
 ### Minor Changes

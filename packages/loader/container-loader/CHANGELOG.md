@@ -1,5 +1,15 @@
 # @fluidframework/container-loader
 
+## 2.2.0
+
+### Minor Changes
+
+-   container-loader: summarizeProtocolTree and its corresponding duplicate ILoaderOptions definition is deprecated ([#21999](https://github.com/microsoft/FluidFramework/pull/21999)) [11ccda1597](https://github.com/microsoft/FluidFramework/commit/11ccda15970a10de00facfebfc060bece4a459ba)
+
+    The `summarizeProtocolTree` property in ILoaderOptions was added to test single-commit summaries during the initial
+    implementation phase. The flag is no longer required and should no longer be used, and is now marked deprecated. If a
+    driver needs to enable or disable single-commit summaries, it can do so via `IDocumentServicePolicies`.
+
 ## 2.1.0
 
 Dependency updates only.
