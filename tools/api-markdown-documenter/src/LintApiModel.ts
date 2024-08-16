@@ -284,7 +284,6 @@ function checkLinkTag(
 	try {
 		resolveSymbolicReference(apiItem, linkTag.codeDestination, apiModel);
 	} catch (error: unknown) {
-		assert(error instanceof Error, "Expected an error.");
 		return {
 			tagName: "@link",
 			sourceItem: apiItem.getScopedNameWithinPackage(),
