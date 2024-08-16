@@ -283,7 +283,7 @@ function checkLinkTag(
 	// If the link is a symbolic reference, validate it.
 	try {
 		resolveSymbolicReference(apiItem, linkTag.codeDestination, apiModel);
-	} catch (error: unknown) {
+	} catch {
 		return {
 			tagName: "@link",
 			sourceItem: apiItem.getScopedNameWithinPackage(),
