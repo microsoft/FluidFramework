@@ -110,7 +110,7 @@ export {
 	type InsertableTreeFieldFromImplicitFieldUnsafe,
 	type FieldSchemaUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
-	getJsonSchema,
+	type typeSchemaSymbol,
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
@@ -138,7 +138,7 @@ export {
 	type JsonRefPath,
 	type JsonSchemaType,
 	type JsonLeafSchemaType,
-	type typeSchemaSymbol,
+	getJsonSchema,
 } from "./simple-tree/index.js";
 export { SharedTree, configuredSharedTree } from "./treeFactory.js";
 
