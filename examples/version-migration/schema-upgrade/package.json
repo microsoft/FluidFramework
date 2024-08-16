@@ -38,6 +38,7 @@
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
+		"@fluid-example/migration-tools": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/cell": "workspace:~",

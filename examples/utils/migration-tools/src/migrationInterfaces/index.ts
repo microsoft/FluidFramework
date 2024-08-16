@@ -19,16 +19,3 @@ export {
 	IMigrator,
 	IMigratorEvents,
 } from "./migrator.js";
-export {
-	ISameContainerMigratableModel,
-	ISameContainerMigratableModelEvents,
-} from "./sameContainerMigratableModel.js";
-export {
-	ISameContainerMigrationTool,
-	ISameContainerMigrationToolEvents,
-	SameContainerMigrationState,
-} from "./sameContainerMigrationTool.js";
-export {
-	ISameContainerMigrator,
-	ISameContainerMigratorEvents,
-} from "./sameContainerMigrator.js";

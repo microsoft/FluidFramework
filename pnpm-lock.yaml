@@ -5187,6 +5187,9 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
+      '@fluid-example/migration-tools':
+        specifier: workspace:~
+        version: link:../../utils/migration-tools
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils

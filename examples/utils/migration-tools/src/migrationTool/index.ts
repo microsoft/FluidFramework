@@ -4,7 +4,3 @@
  */
 
 export { MigrationToolFactory } from "./migrationTool.js";
-export {
-	SameContainerMigrationTool,
-	SameContainerMigrationToolInstantiationFactory,
-} from "./sameContainerMigrationTool.js";

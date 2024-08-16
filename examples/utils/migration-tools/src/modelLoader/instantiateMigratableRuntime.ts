@@ -13,13 +13,25 @@ import {
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 
-import {
-	getDataStoreEntryPoint,
-	type IMigrationTool,
-	MigrationToolFactory,
-} from "../index.js";
+import { type IMigrationTool, MigrationToolFactory } from "../index.js";
+
+async function getDataStoreEntryPoint<T>(
+	containerRuntime: IContainerRuntime,
+	alias: string,
+): Promise<T> {
+	const entryPointHandle = (await containerRuntime.getAliasedDataStoreEntryPoint(alias)) as
+		| IFluidHandle<T>
+		| undefined;
+
+	if (entryPointHandle === undefined) {
+		throw new Error(`Default dataStore [${alias}] must exist`);
+	}
+
+	return entryPointHandle.get();
+}
 
 /**
  * The CreateModelCallback should use the passed runtime and container to construct the model that the
