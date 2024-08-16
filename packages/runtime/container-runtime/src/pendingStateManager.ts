@@ -127,29 +127,29 @@ function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
 }
 
 /**
- * Get the effective batch ID for a pending message.
- * If the batch ID is already present in the message's op metadata, return it.
+ * Get the effective batch ID for the input argument.
+ * Supports either an IPendingMessage or an InboundBatch.
+ * If the batch ID is explicitly present, return it.
  * Otherwise, generate a new batch ID using the client ID and batch start CSN.
- * @param pendingMessage - The pending message
- * @returns The effective batch ID
  */
-function getEffectiveBatchId(pendingMessage: IPendingMessage): string {
-	return (
-		asBatchMetadata(pendingMessage.opMetadata)?.batchId ??
-		generateBatchId(pendingMessage.batchInfo.clientId, pendingMessage.batchInfo.batchStartCsn)
-	);
-}
+function getEffectiveBatchId(
+	pendingMessageOrInboundBatch: IPendingMessage | InboundBatch,
+): string {
+	if ("localOpMetadata" in pendingMessageOrInboundBatch) {
+		const pendingMessage: IPendingMessage = pendingMessageOrInboundBatch;
+		return (
+			asBatchMetadata(pendingMessage.opMetadata)?.batchId ??
+			generateBatchId(
+				pendingMessage.batchInfo.clientId,
+				pendingMessage.batchInfo.batchStartCsn,
+			)
+		);
+	}
 
-//* Reconcile/combine these or something
-/**
- * Get the effective batch ID for an incoming batch message.
- * If the batch ID is already present in the message's op metadata, return it.
- * Otherwise, generate a new batch ID using the client ID and batch start CSN.
- * @param pendingMessage - The pending message
- * @returns The effective batch ID
- */
-function getEffectiveBatchId2(batch: InboundBatch): string {
-	return batch.batchId ?? generateBatchId(batch.clientId, batch.batchStartCsn);
+	const inboundBatch: InboundBatch = pendingMessageOrInboundBatch;
+	return (
+		inboundBatch.batchId ?? generateBatchId(inboundBatch.clientId, inboundBatch.batchStartCsn)
+	);
 }
 
 /**
@@ -338,14 +338,23 @@ export class PendingStateManager implements IDisposable {
 		}
 	}
 
-	private checkForMatchingBatchId(batch: InboundBatch): boolean {
+	/**
+	 * Compares the batch ID of the incoming batch with the pending batch ID for this client.
+	 * They should not match, as that would indicate a forked container.
+	 * @param remoteBatch - An incoming batch *NOT* submitted by this client
+	 * @returns whether the batch IDs match
+	 */
+	private remoteBatchMatchesPendingBatch(remoteBatch: InboundBatch): boolean {
+		// We may have no pending changes - if so, no match, no problem.
 		const pendingMessage = this.pendingMessages.peekFront();
 		if (!pendingMessage) {
 			return false;
 		}
 
+		// We must compare the effective batch IDs, since one of these ops
+		// may have been the original, not resubmitted, so wouldn't have its batch ID stamped yet.
 		const pendingBatchId = getEffectiveBatchId(pendingMessage);
-		const inboundBatchId = getEffectiveBatchId2(batch);
+		const inboundBatchId = getEffectiveBatchId(remoteBatch);
 
 		return pendingBatchId === inboundBatchId;
 	}
@@ -357,9 +366,9 @@ export class PendingStateManager implements IDisposable {
 	 * @param local - true if we submitted this batch and expect corresponding pending messages
 	 * @returns The inbound batch's messages with localOpMetadata "zipped" in.
 	 *
-	 * @remarks Closes the container in either of these cases:
-	 * - The batch ID or batchStartCsn don't match for local batches
-	 * - The batch ID *does* match but it's not a local batch (indicates Container forking).
+	 * @throws a DataProcessingError in either of these cases:
+	 * - The pending message content doesn't match the incoming message content for any message in the batch
+	 * - The batch IDs *do match* but it's not a local batch (indicates Container forking).
 	 */
 	public processInboundBatch(
 		batch: InboundBatch,
@@ -374,9 +383,11 @@ export class PendingStateManager implements IDisposable {
 
 		// An inbound remote batch should not match the pending batch ID for this client.
 		// That would indicate the container forked (two instances trying to submit the same local state)
-		if (this.checkForMatchingBatchId(batch)) {
-			const forkedContainerError = new GenericError(
+		if (this.remoteBatchMatchesPendingBatch(batch)) {
+			const forkedContainerError = DataProcessingError.create(
 				"Forked Container Error! Matching batchIds but mismatched clientId",
+				"PendingStateManager.processInboundBatch",
+				batch.messages[0], // Note: if it's an empty batch, we won't get message metadata added to the error/log here
 			);
 			throw forkedContainerError;
 		}
@@ -389,6 +400,7 @@ export class PendingStateManager implements IDisposable {
 	 * Processes the incoming batch from the server that was submitted by this client.
 	 * It verifies that messages are received in the right order and that the batch information is correct.
 	 * @param batch - The inbound batch (originating from this client) to correlate with the pending local state
+	 * @throws DataProcessingError if the pending message content doesn't match the incoming message content for any message in the batch.
 	 * @returns The inbound batch's messages with localOpMetadata "zipped" in.
 	 */
 	private processPendingLocalBatch(batch: InboundBatch): {
@@ -495,23 +507,28 @@ export class PendingStateManager implements IDisposable {
 		// In this case the next pending message is an empty batch marker.
 		// Empty batches became empty on Resubmit, and submit them and track them in case
 		// a different fork of this container also submitted the same batch (and it may not be empty for that fork).
-		const firstMessage = batch.messages.length > 0 ? batch.messages[0] : undefined;
-		const expectedPendingBatchLength = batch.messages.length === 0 ? 1 : batch.messages.length;
+		const firstMessage = batch.messages[0];
+		const expectedPendingBatchLength =
+			pendingMessage.batchInfo.length === -1
+				? -1 // Ignore the actual incoming length; -1 length is for back compat and isn't suitable for this check
+				: batch.messages.length === 0
+					? 1 // Expect a singleton array with the empty batch marker
+					: batch.messages.length;
 
-		//* For a pending local batch, we don't need the "effective" calculation.
-		//* Just compare the actual batchIds, they should match since we sent this message.
-		const pendingBatchId = getEffectiveBatchId(pendingMessage);
-		const inboundBatchId = getEffectiveBatchId2(batch);
+		// Note: We don't need to use getEffectiveBatchId here, just check the explicit stamped batchID
+		// That logic is needed only when comparing across potential container forks.
+		// Furthermore, we also are comparing the batch IDs constituent data - clientId (it's local) and batchStartCsn.
+		const pendingBatchId = asBatchMetadata(pendingMessage.opMetadata)?.batchId;
+		const inboundBatchId = batch.batchId;
 
 		// We expect the incoming batch to be of the same length, starting at the same clientSequenceNumber,
-		// as the batch we originally submitted.
+		// as the batch we originally submitted. The batchIds should match as well, if set (or neither shoudl be set)
 		// We have another later check to compare the message contents, which we'd expect to fail if this check does,
-		// so we don't throw here, merely log.  In a later release this check may replace that one.
+		// so we don't throw here, merely log.  In a later release this check may replace that one since it's cheaper.
 		if (
-			pendingBatchId !== inboundBatchId ||
 			pendingMessage.batchInfo.batchStartCsn !== batch.batchStartCsn ||
-			(pendingMessage.batchInfo.length >= 0 && // -1 length is back compat and isn't suitable for this check
-				pendingMessage.batchInfo.length !== expectedPendingBatchLength)
+			pendingMessage.batchInfo.length !== expectedPendingBatchLength ||
+			pendingBatchId !== inboundBatchId
 		) {
 			this.logger?.sendErrorEvent({
 				eventName: "BatchInfoMismatch",
