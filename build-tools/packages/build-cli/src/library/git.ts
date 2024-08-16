@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { stat } from "node:fs/promises";
 import path from "node:path";
 import { Package } from "@fluidframework/build-tools";
 import readPkgUp from "read-pkg-up";
@@ -212,6 +211,14 @@ export class Repository {
 	}
 
 	/**
+	 * Returns an array containing repo root-relative paths to files that are deleted in the working tree.
+	 */
+	public async getDeletedFiles(): Promise<string[]> {
+		const results = await this.gitClient.status();
+		return results.deleted;
+	}
+
+	/**
 	 * Returns an array containing repo repo-relative paths to all the files in the provided directory.
 	 * A given path will only be included once in the array; that is, there will be no duplicate paths.
 	 * Note that this function excludes files that are deleted locally whether the deletion is staged or not.
@@ -235,23 +242,15 @@ export class Repository {
 			"--",
 			directory,
 		);
-		const allFiles = results.split("\n").map((line) => line.trim());
 
-		/**
-		 * An array containing a boolean value for each file path indicating whether it exists. Deleted files that are
-		 * _unstaged_ will still be in the ls-files results, so this array is used to filter out missing files.
-		 */
-		const existences = await Promise.all(
-			allFiles.map(async (file) => {
-				// Use absolute path to ensure consistent behavior regardless of working directory.
-				const absPath = path.resolve(this.baseDir, file);
-				return stat(absPath)
-					.then(() => true)
-					.catch(() => false);
-			}),
-		);
-		const files = allFiles.filter((_file, index) => existences[index]);
+		// This includes paths to deleted, unstaged files.
+		const allFiles = new Set(results.split("\n").map((line) => line.trim()));
+		const status = await this.gitClient.status();
+		for (const deletedFile of status.deleted) {
+			allFiles.delete(deletedFile);
+		}
+
 		// Files are already repo root-relative
-		return files;
+		return [...allFiles];
 	}
 }
