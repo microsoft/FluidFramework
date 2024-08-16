@@ -158,12 +158,12 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 				this.location === unparentedLocation,
 				0x98c /* Node may not be adopted if it already has a parent */,
 			);
-			assert(index !== undefined, "Expected index");
+			assert(index !== undefined, 0xa08 /* Expected index */);
 			this.location = { parent, index };
 		} else {
 			assert(
 				this.location !== unparentedLocation,
-				"Node may not be un-adopted if it does not have a parent",
+				0xa09 /* Node may not be un-adopted if it does not have a parent */,
 			);
 			this.location = unparentedLocation;
 		}
@@ -497,7 +497,7 @@ class EagerMapTreeSequenceField<T extends FlexAllowedTypes>
 		insert: (index, newContent): void => {
 			for (let i = 0; i < newContent.length; i++) {
 				const c = newContent[i];
-				assert(c !== undefined, "Unexpected sparse array content");
+				assert(c !== undefined, 0xa0a /* Unexpected sparse array content */);
 				nodeCache.get(c)?.adoptBy(this, index + i);
 			}
 			this.edit((mapTrees) => {
@@ -513,7 +513,7 @@ class EagerMapTreeSequenceField<T extends FlexAllowedTypes>
 		remove: (index, count): ExclusiveMapTree[] => {
 			for (let i = index; i < index + count; i++) {
 				const c = this.mapTrees[i];
-				assert(c !== undefined, "Unexpected sparse array");
+				assert(c !== undefined, 0xa0b /* Unexpected sparse array */);
 				nodeCache.get(c)?.adoptBy(undefined);
 			}
 			let removed: ExclusiveMapTree[] | undefined;
