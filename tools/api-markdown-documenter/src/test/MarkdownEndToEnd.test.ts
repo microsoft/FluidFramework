@@ -12,9 +12,8 @@ import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 import { type MarkdownRenderConfiguration, renderDocumentAsMarkdown } from "../renderers/index.js";
 import {
 	endToEndTestSuite,
-	type ApiItemTransformationTestOptions,
 	type ApiModelTestOptions,
-	type RenderTestOptions,
+	type EndToEndTestConfig,
 } from "./SnapshotTestUtilities.js";
 import type { DocumentNode } from "../documentation-domain/index.js";
 
@@ -50,22 +49,23 @@ const apiModels: ApiModelTestOptions[] = [
 	// TODO: add other models
 ];
 
-const transformConfigs: ApiItemTransformationTestOptions[] = [
+const testConfigs: EndToEndTestConfig<MarkdownRenderConfiguration>[] = [
 	/**
 	 * A sample "flat" configuration, which renders every item kind under a package to the package parent document.
 	 */
 	{
-		configName: "default-transform-config",
+		testName: "default-config",
 		transformConfig: {
 			uriRoot: ".",
 		},
+		renderConfig: {},
 	},
 
 	/**
 	 * A sample "flat" configuration, which renders every item kind under a package to the package parent document.
 	 */
 	{
-		configName: "flat-transform-config",
+		testName: "flat-config",
 		transformConfig: {
 			uriRoot: "docs",
 			includeBreadcrumb: true,
@@ -74,13 +74,14 @@ const transformConfigs: ApiItemTransformationTestOptions[] = [
 			hierarchyBoundaries: [], // No additional hierarchy beyond the package level
 			minimumReleaseLevel: ReleaseTag.Beta, // Only include `@public` and `beta` items in the docs suite
 		},
+		renderConfig: {},
 	},
 
 	/**
 	 * A sample "sparse" configuration, which renders every item kind to its own document.
 	 */
 	{
-		configName: "sparse-transform-config",
+		testName: "sparse-config",
 		transformConfig: {
 			uriRoot: "docs",
 			includeBreadcrumb: false,
@@ -107,16 +108,9 @@ const transformConfigs: ApiItemTransformationTestOptions[] = [
 			hierarchyBoundaries: [], // No additional hierarchy beyond the package level
 			minimumReleaseLevel: ReleaseTag.Public, // Only include `@public` items in the docs suite
 		},
-	},
-];
-
-const renderConfigs: RenderTestOptions<MarkdownRenderConfiguration>[] = [
-	/**
-	 * Default
-	 */
-	{
-		configName: "default-html-render-config",
-		renderConfig: {},
+		renderConfig: {
+			startingHeadingLevel: 2,
+		},
 	},
 ];
 
@@ -140,6 +134,5 @@ endToEndTestSuite<MarkdownRenderConfiguration>({
 	snapshotsDirectoryPath,
 	render: renderDocumentToFile,
 	apiModels,
-	transformConfigs,
-	renderConfigs,
+	testConfigs,
 });

@@ -21,10 +21,9 @@ import type { DocumentNode } from "../documentation-domain/index.js";
 /**
  * End-to-end snapshot test configuration.
  *
- * @remarks Generates a test suite representing the combinatoric expansion of the
- * provided API Models, API Item transformation configs, and render configs.
+ * @remarks Generates a test suite with a test for each combination of API Model and test configuration.
  */
-export interface EndToEndTestConfig<TRenderConfig> {
+export interface EndToEndSuiteConfig<TRenderConfig> {
 	/**
 	 * Name of the outer test suite.
 	 */
@@ -62,14 +61,9 @@ export interface EndToEndTestConfig<TRenderConfig> {
 	readonly apiModels: readonly ApiModelTestOptions[];
 
 	/**
-	 * The transformation configurations to test.
+	 * Test configurations to run against each API Model.
 	 */
-	readonly transformConfigs: readonly ApiItemTransformationTestOptions[];
-
-	/**
-	 * The render configurations to test.
-	 */
-	readonly renderConfigs: readonly RenderTestOptions<TRenderConfig>[];
+	readonly testConfigs: readonly EndToEndTestConfig<TRenderConfig>[];
 }
 
 /**
@@ -90,26 +84,16 @@ export interface ApiModelTestOptions {
 /**
  * API Item transformation options for a test.
  */
-export interface ApiItemTransformationTestOptions {
+export interface EndToEndTestConfig<TRenderConfig> {
 	/**
-	 * Name of the API Item transformation variant being tested.
+	 * Test name
 	 */
-	readonly configName: string;
+	readonly testName: string;
 
 	/**
 	 * The transformation configuration to use.
 	 */
 	readonly transformConfig: Omit<ApiItemTransformationConfiguration, "apiModel">;
-}
-
-/**
- * Render options for a test.
- */
-export interface RenderTestOptions<TRenderConfig> {
-	/**
-	 * Name of the rendering scenario being tested.
-	 */
-	readonly configName: string;
 
 	/**
 	 * Render configuration.
@@ -121,7 +105,7 @@ export interface RenderTestOptions<TRenderConfig> {
  * Runs an end-to-end snapshot test for the provided API Model configurations.
  */
 export function endToEndTestSuite<TRenderConfig>(
-	suiteConfig: EndToEndTestConfig<TRenderConfig>,
+	suiteConfig: EndToEndSuiteConfig<TRenderConfig>,
 ): Suite {
 	return describe(suiteConfig.suiteName, () => {
 		for (const apiModelTestConfig of suiteConfig.apiModels) {
@@ -132,12 +116,24 @@ export function endToEndTestSuite<TRenderConfig>(
 					apiModel = await loadModel({ modelDirectoryPath });
 				});
 
-				for (const apiItemTransformTestConfig of suiteConfig.transformConfigs) {
+				for (const testConfig of suiteConfig.testConfigs) {
 					const {
-						configName: transformConfigName,
+						testName,
 						transformConfig: partialTransformConfig,
-					} = apiItemTransformTestConfig;
-					describe(transformConfigName, () => {
+						renderConfig,
+					} = testConfig;
+
+					const testOutputPath = Path.join(modelName, testName);
+					const temporaryDirectoryPath = Path.resolve(
+						suiteConfig.temporaryOutputDirectoryPath,
+						testOutputPath,
+					);
+					const snapshotDirectoryPath = Path.resolve(
+						suiteConfig.snapshotsDirectoryPath,
+						testOutputPath,
+					);
+
+					describe(testName, () => {
 						let apiItemTransformConfig: ApiItemTransformationConfiguration;
 						before(async () => {
 							apiItemTransformConfig = {
@@ -163,64 +159,36 @@ export function endToEndTestSuite<TRenderConfig>(
 							}
 						});
 
-						for (const renderTestConfig of suiteConfig.renderConfigs) {
-							const { configName: renderConfigName, renderConfig } = renderTestConfig;
+						it("Snapshot test", async () => {
+							// Ensure the output temp and snapshots directories exists (will create an empty ones if they don't).
+							await FileSystem.ensureFolderAsync(temporaryDirectoryPath);
+							await FileSystem.ensureFolderAsync(snapshotDirectoryPath);
 
-							const testOutputPath = createTestOutputPath(
-								modelName,
-								transformConfigName,
-								renderConfigName,
-							);
-							const temporaryDirectoryPath = Path.resolve(
-								suiteConfig.temporaryOutputDirectoryPath,
-								testOutputPath,
-							);
-							const snapshotDirectoryPath = Path.resolve(
-								suiteConfig.snapshotsDirectoryPath,
-								testOutputPath,
-							);
+							// Clear any existing test_temp data
+							await FileSystem.ensureEmptyFolderAsync(temporaryDirectoryPath);
 
-							describe(renderConfigName, () => {
-								it("Snapshot test", async () => {
-									// Ensure the output temp and snapshots directories exists (will create an empty ones if they don't).
-									await FileSystem.ensureFolderAsync(temporaryDirectoryPath);
-									await FileSystem.ensureFolderAsync(snapshotDirectoryPath);
+							const documents = transformApiModel(apiItemTransformConfig);
 
-									// Clear any existing test_temp data
-									await FileSystem.ensureEmptyFolderAsync(temporaryDirectoryPath);
-
-									const documents = transformApiModel(apiItemTransformConfig);
-
-									await Promise.all(
-										documents.map(async (document) =>
-											suiteConfig.render(
-												document,
-												renderConfig,
-												temporaryDirectoryPath,
-											),
-										),
-									);
-
-									await compareDocumentationSuiteSnapshot(
-										snapshotDirectoryPath,
+							await Promise.all(
+								documents.map(async (document) =>
+									suiteConfig.render(
+										document,
+										renderConfig,
 										temporaryDirectoryPath,
-									);
-								});
-							});
-						}
+									),
+								),
+							);
+
+							await compareDocumentationSuiteSnapshot(
+								snapshotDirectoryPath,
+								temporaryDirectoryPath,
+							);
+						});
 					});
 				}
 			});
 		}
 	});
-}
-
-function createTestOutputPath(
-	modelName: string,
-	apiItemTransformationConfigName: string,
-	renderConfigName: string,
-): string {
-	return Path.join(modelName, apiItemTransformationConfigName, renderConfigName);
 }
 
 /**
