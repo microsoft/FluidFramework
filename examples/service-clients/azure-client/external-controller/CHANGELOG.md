@@ -1,9 +1,5 @@
 # @fluid-example/app-integration-external-controller
 
-## 2.2.0
-
-Dependency updates only.
-
 ## 2.1.0
 
 Dependency updates only.
