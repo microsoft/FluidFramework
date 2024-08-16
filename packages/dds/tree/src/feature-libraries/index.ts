@@ -212,6 +212,7 @@ export {
 	relevantRemovedRoots,
 	SchemaValidationErrors,
 	isNodeInSchema,
+	isFieldInSchema,
 } from "./default-schema/index.js";
 
 export {
@@ -285,7 +286,9 @@ export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
 
 export {
 	type MapTreeNode,
+	type MapTreeSequenceField,
 	isMapTreeNode,
+	isMapTreeSequenceField,
 	getOrCreateMapTreeNode,
 	tryGetMapTreeNode,
 } from "./flex-map-tree/index.js";

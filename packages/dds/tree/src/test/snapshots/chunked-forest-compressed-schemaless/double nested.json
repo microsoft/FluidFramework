@@ -1,7 +1,7 @@
 {
   "version": 1,
   "identifiers": [
-    "Cursor Test Suite.Map"
+    "com.fluidframework.json.object"
   ],
   "shapes": [
     {

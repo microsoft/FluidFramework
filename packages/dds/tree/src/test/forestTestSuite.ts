@@ -1133,6 +1133,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			});
 			it("when moving the last node in the field", () => {
 				const schemaFactory = new SchemaFactory("moving");
+				// TODO: this test does not seem to be in schema. Its moving from a required field to another required field.
 				const NodeSchema = schemaFactory.object("root", {
 					x: schemaFactory.number,
 					y: schemaFactory.number,
@@ -1187,7 +1188,9 @@ export function testForest(config: ForestTestConfiguration): void {
 	testGeneralPurposeTreeCursor(
 		"forest cursor",
 		(data): ITreeCursor => {
-			const forest = factory(new TreeStoredSchemaRepository(intoStoredSchema(testTreeSchema)));
+			const forest = factory(
+				new TreeStoredSchemaRepository(intoStoredSchema(toFlexSchema(testTreeSchema))),
+			);
 			initializeForest(
 				forest,
 				[cursorForJsonableTreeNode(data)],
