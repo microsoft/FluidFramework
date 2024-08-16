@@ -86,7 +86,7 @@ export class InventoryListAppModel
 	}
 
 	public readonly DEBUG_summarizeOnDemand = () => {
-		(this.runtime as any) /* IContainerRuntime */
+		(this.runtime as any) /* ContainerRuntime */
 			.summarizeOnDemand({ reason: "I said so" });
 	};
 }

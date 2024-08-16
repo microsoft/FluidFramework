@@ -154,7 +154,7 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 
 	const expectedErrors = [
 		{
-			eventName: "fluid:telemetry:IContainerRuntime:Outbox:ReferenceSequenceNumberMismatch",
+			eventName: "fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch",
 			error: "Submission of an out of order message",
 		},
 		// A container will not close when an out of order message was detected.
@@ -179,7 +179,7 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 		"Reference sequence number mismatch when doing op reentry - early flush disabled - submits one batch",
 		expectedErrors,
 		async () => {
-			await processOutOfOrderOp({ "Fluid.IContainerRuntime.DisablePartialFlush": true });
+			await processOutOfOrderOp({ "Fluid.ContainerRuntime.DisablePartialFlush": true });
 			assert.strictEqual(capturedBatches.length, 1);
 		},
 	);

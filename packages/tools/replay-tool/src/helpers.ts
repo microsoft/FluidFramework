@@ -12,7 +12,6 @@ import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	FluidObject,
@@ -40,7 +39,7 @@ import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject.js";
 import { mixinDataStoreWithAnyChannel } from "./unknownChannel.js";
 
 export interface ReplayToolContainerEntryPoint {
-	readonly containerRuntime: IContainerRuntime;
+	readonly containerRuntime: ContainerRuntime;
 	readonly ReplayToolContainerEntryPoint: ReplayToolContainerEntryPoint;
 }
 
@@ -217,9 +216,8 @@ export async function loadContainer(
 export async function uploadSummary(container: IContainer) {
 	const entryPoint: FluidObject<ReplayToolContainerEntryPoint> =
 		await container.getEntryPoint();
-	const runtime = entryPoint?.ReplayToolContainerEntryPoint
-		?.containerRuntime as ContainerRuntime;
-	assert(runtime !== undefined, 0x5a7 /* IContainerRuntime entryPoint was not initialized */);
+	const runtime = entryPoint?.ReplayToolContainerEntryPoint?.containerRuntime;
+	assert(runtime !== undefined, 0x5a7 /* ContainerRuntime entryPoint was not initialized */);
 	const summaryResult = await runtime.summarize({
 		fullTree: true,
 		fullGC: true,

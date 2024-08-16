@@ -404,7 +404,7 @@ describeCompat("SharedMap orderSequentially", "NoCompat", (getTestObjectProvider
 			...testContainerConfig,
 			loaderProps: {
 				configProvider: configProvider({
-					"Fluid.IContainerRuntime.EnableRollback": true,
+					"Fluid.ContainerRuntime.EnableRollback": true,
 				}),
 			},
 		};

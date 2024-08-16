@@ -50,7 +50,7 @@ describe("DDS Handle Encoding", () => {
 	});
 
 	/**
-	 * This uses the same logic that the IContainerRuntime does when processing incoming messages
+	 * This uses the same logic that the ContainerRuntime does when processing incoming messages
 	 * to detect handles in the op's object graph, for notifying GC of new references between objects.
 	 *
 	 * @returns The list of handles found in the given contents object

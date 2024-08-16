@@ -170,7 +170,7 @@ export const globalConfigurations: Record<string, ConfigTypes> = {
 	"Fluid.SharedObject.DdsCallbacksTelemetrySampling": 10000,
 	"Fluid.SharedObject.OpProcessingTelemetrySampling": 10000,
 	"Fluid.Driver.ReadBlobTelemetrySampling": 100,
-	"Fluid.IContainerRuntime.OrderedClientElection.EnablePerformanceEvents": true,
+	"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents": true,
 };
 
 /**

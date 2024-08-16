@@ -9,7 +9,11 @@ import {
 	DefaultSummaryConfiguration,
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import {
+	IContainerRuntime,
+	// eslint-disable-next-line import/no-deprecated
+	IContainerRuntimeWithResolveHandle_Deprecated,
+} from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -149,7 +153,8 @@ export const createTestContainerRuntimeFactory = (
 				const parser = RequestParser.create(request);
 				if (parser.pathParts.length === 0) {
 					// This cast is safe as loadContainerRuntime is called below
-					return (runtime as ContainerRuntime).resolveHandle({
+					// eslint-disable-next-line import/no-deprecated
+					return (runtime as IContainerRuntimeWithResolveHandle_Deprecated).resolveHandle({
 						url: `/default${parser.query}`,
 						headers: request.headers,
 					});

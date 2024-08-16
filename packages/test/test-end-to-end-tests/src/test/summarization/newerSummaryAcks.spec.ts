@@ -72,7 +72,7 @@ describeCompat(
 
 		beforeEach("getTestObjectProvider", async () => {
 			provider = getTestObjectProvider({ syncSummarizer: true });
-			configProvider.set("Fluid.IContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 0);
+			configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 0);
 		});
 
 		afterEach(() => {

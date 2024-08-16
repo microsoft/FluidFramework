@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type {
-	IContainerRuntimeOptions,
-	ContainerRuntime,
-} from "@fluidframework/container-runtime/internal";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+	IContainerRuntime,
+	// eslint-disable-next-line import/no-deprecated
+	IContainerRuntimeWithResolveHandle_Deprecated,
+} from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-deprecated
 import type { RuntimeRequestHandler } from "@fluidframework/request-handler/internal";
@@ -87,7 +88,8 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 			const parser = RequestParser.create(request);
 			if (parser.pathParts.length === 0) {
 				// This cast is safe as loadContainerRuntime is called in the base class
-				return (runtime as ContainerRuntime).resolveHandle({
+				// eslint-disable-next-line import/no-deprecated
+				return (runtime as IContainerRuntimeWithResolveHandle_Deprecated).resolveHandle({
 					url: `/${defaultDataStoreId}${parser.query}`,
 					headers: request.headers,
 				});

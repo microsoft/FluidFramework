@@ -33,7 +33,7 @@ export abstract class ModelContainerRuntimeFactoryWithAttribution<ModelType>
 
 	/**
 	 * @param registryEntries - The data store registry for containers produced
-	 * @param runtimeOptions - The runtime options passed to the IContainerRuntime when instantiating it
+	 * @param runtimeOptions - The runtime options passed to the ContainerRuntime when instantiating it
 	 */
 	constructor(
 		private readonly registryEntries: NamedFluidDataStoreRegistryEntries,

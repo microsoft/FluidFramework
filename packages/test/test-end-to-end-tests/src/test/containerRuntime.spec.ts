@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 describeCompat(
-	"IContainerRuntime Document Schema",
+	"ContainerRuntime Document Schema",
 	"FullCompat",
 	(getTestObjectProvider, apis) => {
 		let provider: ITestObjectProvider;
