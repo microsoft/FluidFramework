@@ -11,7 +11,10 @@ import {
 	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import {
+	IContainerRuntime,
+	IContainerRuntimeWithResolveHandle_Deprecated,
+} from "@fluidframework/container-runtime-definitions/internal";
 import { type FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { responseToException } from "@fluidframework/runtime-utils/internal";
@@ -23,7 +26,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 async function resolveHandleWithoutWait(
-	containerRuntime: IContainerRuntime,
+	containerRuntime: IContainerRuntimeWithResolveHandle_Deprecated,
 	id: string,
 ): Promise<ITestDataObject> {
 	try {
@@ -45,7 +48,7 @@ async function resolveHandleWithoutWait(
  * Creates a non-root data object and validates that it is not visible from the root of the container.
  */
 async function createNonRootDataObject(
-	containerRuntime: IContainerRuntime,
+	containerRuntime: IContainerRuntimeWithResolveHandle_Deprecated,
 ): Promise<ITestDataObject> {
 	const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
 	const dataObject = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
@@ -62,7 +65,7 @@ async function createNonRootDataObject(
  * Creates a root data object and validates that it is visible from the root of the container.
  */
 async function createRootDataObject(
-	containerRuntime: IContainerRuntime,
+	containerRuntime: IContainerRuntimeWithResolveHandle_Deprecated,
 	rootDataStoreId: string,
 ): Promise<ITestDataObject> {
 	const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
@@ -82,7 +85,8 @@ async function getAndValidateDataObject(
 	const dataObjectHandle = fromDataObject._root.get<IFluidHandle<ITestDataObject>>(key);
 	assert(dataObjectHandle !== undefined, `Data object handle for key ${key} not found`);
 	const dataObject = await dataObjectHandle.get();
-	const runtime = dataObject._context.containerRuntime as IContainerRuntime;
+	const runtime = dataObject._context
+		.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
 	await assert.doesNotReject(
 		resolveHandleWithoutWait(runtime, dataObject._context.id),
 		`Data object for key ${key} must be visible`,
@@ -126,7 +130,7 @@ describeCompat(
 		const { SharedMap } = dds;
 		let provider: ITestObjectProvider;
 		let container1: IContainer;
-		let containerRuntime1: IContainerRuntime;
+		let containerRuntime1: IContainerRuntimeWithResolveHandle_Deprecated;
 		let dataObject1: ITestDataObject;
 
 		/**
@@ -149,7 +153,8 @@ describeCompat(
 				}
 
 				dataObject1 = await getContainerEntryPointBackCompat<ITestDataObject>(container1);
-				containerRuntime1 = dataObject1._context.containerRuntime as IContainerRuntime;
+				containerRuntime1 = dataObject1._context
+					.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
 			});
 
 			/**

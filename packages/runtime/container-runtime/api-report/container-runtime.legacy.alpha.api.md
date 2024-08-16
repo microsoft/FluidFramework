@@ -711,7 +711,7 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
     readonly uploadDuration: number;
 }
 
-// @alpha (undocumented)
+// @alpha
 export function loadContainerRuntime(params: {
     context: IContainerContext;
     registryEntries: NamedFluidDataStoreRegistryEntries;

@@ -10,14 +10,8 @@ import {
 } from "@fluidframework/aqueduct/internal";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import type {
-	FluidObject,
-	IFluidLoadable,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces";
+import type { FluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IDirectory } from "@fluidframework/map/internal";
-import { RequestParser } from "@fluidframework/runtime-utils/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
@@ -213,24 +207,8 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			}
 			return entryPoint.get();
 		};
-		const getDefaultObject = async (
-			request: IRequest,
-			runtime: IContainerRuntime,
-			// eslint-disable-next-line unicorn/consistent-function-scoping
-		): Promise<IResponse | undefined> => {
-			const parser = RequestParser.create(request);
-			if (parser.pathParts.length === 0) {
-				// This cast is safe as loadContainerRuntime is called in the base class
-				return runtime.resolveHandle({
-					url: `/${rootDataStoreId}${parser.query}`,
-					headers: request.headers,
-				});
-			}
-			return undefined; // continue search
-		};
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
-			requestHandlers: [getDefaultObject],
 			runtimeOptions: compatibilityModeRuntimeOptions[compatibilityMode],
 			provideEntryPoint,
 		});

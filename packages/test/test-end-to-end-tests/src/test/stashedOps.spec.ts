@@ -24,7 +24,7 @@ import {
 	DefaultSummaryConfiguration,
 	type RecentlyAddedContainerRuntimeMessageDetails,
 } from "@fluidframework/container-runtime/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -1103,7 +1103,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// get new datastore from first container
 		const entryPoint = (await container1.getEntryPoint()) as ITestFluidObject;
-		const containerRuntime = entryPoint.context.containerRuntime as IContainerRuntime;
+		const containerRuntime = entryPoint.context
+			.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
 
 		// TODO: Remove usage of "resolveHandle" AB#6340
 		const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
@@ -1166,7 +1167,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// get new DDS from first container
 		await provider.ensureSynchronized();
 		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
-		const containerRuntime = dataStore1.context.containerRuntime as IContainerRuntime;
+		const containerRuntime = dataStore1.context
+			.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
 
 		// TODO: Remove usage of "resolveHandle" AB#6340
 		const response = await containerRuntime.resolveHandle({ url: `/default/${newMapId}` });
@@ -1750,7 +1752,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const container2 = await loadOffline(testContainerConfig, provider, { url }, pendingOps);
 		{
 			const entryPoint = (await container2.container.getEntryPoint()) as ITestFluidObject;
-			const containerRuntime = entryPoint.context.containerRuntime as IContainerRuntime;
+			const containerRuntime = entryPoint.context
+				.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
 			// TODO: Remove usage of "resolveHandle" AB#6340
 			const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
 			const map2 = response.value as ISharedMap;
@@ -1764,7 +1767,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// get new datastore from first container
 		{
 			const entryPoint = (await container1.getEntryPoint()) as ITestFluidObject;
-			const containerRuntime = entryPoint.context.containerRuntime as IContainerRuntime;
+			const containerRuntime = entryPoint.context
+				.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
 			// TODO: Remove usage of "resolveHandle" AB#6340
 			const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
 			const map3 = response.value as ISharedMap;

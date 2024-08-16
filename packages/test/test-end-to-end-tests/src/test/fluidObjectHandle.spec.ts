@@ -10,7 +10,7 @@ import {
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
@@ -55,7 +55,8 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 
 		// Verify that the local client's IContainerRuntime has the correct absolute path.
 		const containerRuntime1 = (
-			firstContainerObject1._context.containerRuntime as IContainerRuntime
+			firstContainerObject1._context
+				.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated
 		).IFluidHandleContext;
 		assert.equal(
 			containerRuntime1.absolutePath,
@@ -65,7 +66,8 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 
 		// Verify that the remote client's IContainerRuntime has the correct absolute path.
 		const containerRuntime2 = (
-			secondContainerObject1._context.containerRuntime as IContainerRuntime
+			secondContainerObject1._context
+				.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated
 		).IFluidHandleContext;
 		assert.equal(
 			containerRuntime2.absolutePath,
