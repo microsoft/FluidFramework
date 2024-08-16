@@ -102,9 +102,17 @@ export interface EndToEndTestConfig<TRenderConfig> {
 }
 
 /**
- * Runs an end-to-end snapshot test for the provided API Model configurations.
+ * Generates a test suite that performs end-to-end tests for each test
+ * configuration x API Model combination.
+ *
+ * @remarks
+ * The generated test suite will include the following checks:
+ *
+ * - Basic smoke-test validation of the API Item transformation step, ensuring unique document paths.
+ *
+ * - Snapshot test comparing the final rendered output against checked-in snapshots.
  */
-export function endToEndTestSuite<TRenderConfig>(
+export function endToEndTests<TRenderConfig>(
 	suiteConfig: EndToEndSuiteConfig<TRenderConfig>,
 ): Suite {
 	return describe(suiteConfig.suiteName, () => {
@@ -204,7 +212,7 @@ export function endToEndTestSuite<TRenderConfig>(
  * @param temporaryDirectoryPath - Resolved path to the directory containing the freshly generated test output.
  * Represents the "actual" test output.
  */
-export async function compareDocumentationSuiteSnapshot(
+async function compareDocumentationSuiteSnapshot(
 	snapshotDirectoryPath: string,
 	temporaryDirectoryPath: string,
 ): Promise<void> {

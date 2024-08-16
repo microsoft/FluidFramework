@@ -11,10 +11,10 @@ import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
 import { type HtmlRenderConfiguration, renderDocumentAsHtml } from "../renderers/index.js";
 import {
-	endToEndTestSuite,
+	endToEndTests,
 	type ApiModelTestOptions,
 	type EndToEndTestConfig,
-} from "./SnapshotTestUtilities.js";
+} from "./EndToEndTests.js";
 import type { DocumentNode } from "../documentation-domain/index.js";
 
 const dirname = Path.dirname(fileURLToPath(import.meta.url));
@@ -128,7 +128,7 @@ async function renderDocumentToFile(
 	});
 }
 
-endToEndTestSuite<HtmlRenderConfiguration>({
+endToEndTests<HtmlRenderConfiguration>({
 	suiteName: "Markdown End-to-End Tests",
 	temporaryOutputDirectoryPath: testTemporaryDirectoryPath,
 	snapshotsDirectoryPath,
