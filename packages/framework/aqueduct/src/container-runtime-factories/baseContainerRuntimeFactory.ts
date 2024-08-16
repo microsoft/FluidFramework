@@ -50,11 +50,11 @@ export interface BaseContainerRuntimeFactoryProps {
 	// eslint-disable-next-line import/no-deprecated
 	requestHandlers?: RuntimeRequestHandler[];
 	/**
-	 * The runtime options passed to the IContainerRuntime when instantiating it
+	 * The runtime options passed to the ContainerRuntime when instantiating it
 	 */
 	runtimeOptions?: IContainerRuntimeOptions;
 	/**
-	 * Function that will initialize the entryPoint of the IContainerRuntime instances
+	 * Function that will initialize the entryPoint of the ContainerRuntime instances
 	 * created with this factory
 	 */
 	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
@@ -97,19 +97,19 @@ export class BaseContainerRuntimeFactory
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
 	}
 
-	public async instantiateFirstTime(runtime: IContainerRuntime): Promise<void> {
+	public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
 		await this.containerInitializingFirstTime(runtime);
 		await this.containerHasInitialized(runtime);
 	}
 
-	public async instantiateFromExisting(runtime: IContainerRuntime): Promise<void> {
+	public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void> {
 		await this.containerHasInitialized(runtime);
 	}
 
 	public async preInitialize(
 		context: IContainerContext,
 		existing: boolean,
-	): Promise<IContainerRuntime> {
+	): Promise<ContainerRuntime> {
 		const scope: Partial<IProvideFluidDependencySynthesizer> = context.scope;
 		if (this.dependencyContainer) {
 			const dc = new DependencyContainer<FluidObject>(
