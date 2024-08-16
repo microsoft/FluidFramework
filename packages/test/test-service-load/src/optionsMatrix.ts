@@ -120,10 +120,14 @@ export function generateConfigurations(
 	seed: number,
 	overrides: OptionsMatrix<Record<string, ConfigTypes>> | undefined,
 ): Record<string, ConfigTypes>[] {
-	if (overrides === undefined) {
-		return [{}];
-	}
-	return generatePairwiseOptions<Record<string, ConfigTypes>>(overrides, seed);
+	const configurationsMatrix: OptionsMatrix<Record<string, ConfigTypes>> = {
+		"Fluid.Container.enableOfflineSnapshotRefresh": booleanCases,
+		"Fluid.Container.snapshotRefreshTimeoutMs": [undefined, 60 * 5 * 1000 /* 5min */],
+	};
+	return generatePairwiseOptions<Record<string, ConfigTypes>>(
+		applyOverrides(configurationsMatrix, overrides),
+		seed,
+	);
 }
 
 /**
