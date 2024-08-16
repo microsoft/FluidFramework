@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	getDataStoreEntryPoint,
-	instantiateMigratableRuntime,
-} from "@fluid-example/example-utils";
+import { getDataStoreEntryPoint } from "@fluid-example/example-utils";
+import { instantiateMigratableRuntime } from "@fluid-example/migration-tools";
 import type {
 	IContainer,
 	IContainerContext,

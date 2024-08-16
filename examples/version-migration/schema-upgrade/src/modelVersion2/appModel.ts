@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigratableModel } from "@fluid-example/example-utils";
+import type { IMigratableModel } from "@fluid-example/migration-tools";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 

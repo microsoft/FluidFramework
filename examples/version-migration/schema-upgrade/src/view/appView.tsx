@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigrationTool } from "@fluid-example/example-utils";
+import type { IMigrationTool } from "@fluid-example/migration-tools";
 import React, { useEffect, useState } from "react";
 
 import type { IInventoryListAppModel } from "../modelInterfaces.js";

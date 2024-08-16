@@ -7,7 +7,7 @@ import type {
 	IMigratableModel,
 	IMigrationTool,
 	MigrationState,
-} from "@fluid-example/example-utils";
+} from "@fluid-example/migration-tools";
 import React, { useEffect, useState } from "react";
 
 import type { IInventoryListAppModel } from "../modelInterfaces.js";

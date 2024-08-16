@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { DataTransformationCallback } from "@fluid-example/example-utils";
+import type { DataTransformationCallback } from "@fluid-example/migration-tools";
 
 /**
  * Read the version of the string data, to understand how to parse it.  This is shared between versions.

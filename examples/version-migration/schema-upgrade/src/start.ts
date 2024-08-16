@@ -7,8 +7,8 @@ import type {
 	IMigratableModel,
 	IMigrationTool,
 	IVersionedModel,
-} from "@fluid-example/example-utils";
-import { MigratableModelLoader, Migrator } from "@fluid-example/example-utils";
+} from "@fluid-example/migration-tools";
+import { MigratableModelLoader, Migrator } from "@fluid-example/migration-tools";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
 	InsecureTinyliciousTokenProvider,
