@@ -53,7 +53,6 @@ describe("Biome config loading", async () => {
 				path.resolve(testDataPath, "biome/pkg-b/include-formatter-added-1/markdownFile1.md"),
 			];
 			const { formattedFiles } = config;
-			console.debug(formattedFiles);
 			assert(
 				formattedFiles.length === 4,
 				`expected 4 elements in the array, got ${formattedFiles.length}`,
