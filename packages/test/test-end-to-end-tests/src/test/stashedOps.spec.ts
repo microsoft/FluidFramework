@@ -2048,12 +2048,16 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		itExpects(
 			`WRONGLY duplicates ops when hydrating twice and submitting in parallel (via Counter DDS)`,
 			[
-				//* TODO: Figure out which containers these are and explain or constrain them more to be more meaningful
+				// Container 1
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
+					category: "generic",
 				},
+				// Container 3
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
+					category: "error",
+					errorType: "dataProcessingError",
 				},
 			],
 			async function () {
@@ -2100,7 +2104,12 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 					ideal: incrementValue,
 					currentButWrong: 2 * incrementValue,
 				});
-				//* TODO: Justify this.  Did container3 close...? Maybe this test isn't doing the parallel thing I thought it was.
+				//* TODO: This could be either 2 or 3. One wins, one loses.
+				//* The op is double-applied, but the 2nd one will close when it sees the other's ack first.
+				assert(
+					container3.closed,
+					"Container 3 should have closed due to ForkedContainerError",
+				);
 				assert.strictEqual(counter3.value, incrementValue);
 			},
 		);
