@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import assert from "assert";
 import express from "express";
 import * as sinon from "sinon";
@@ -116,7 +115,6 @@ describe("routes", () => {
 				const clusterThrottlers = new Map<string, TestThrottler>();
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
@@ -129,7 +127,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					documentManager,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -225,7 +222,6 @@ describe("routes", () => {
 				const clusterThrottlers = new Map<string, TestThrottler>();
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
@@ -238,7 +234,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					documentManager,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -348,7 +343,6 @@ describe("routes", () => {
 				const clusterThrottlers = new Map<string, TestThrottler>();
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
@@ -361,7 +355,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					documentManager,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -460,7 +453,6 @@ describe("routes", () => {
 				const clusterThrottlers = new Map<string, TestThrottler>();
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
@@ -473,7 +465,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					documentManager,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -535,7 +526,6 @@ describe("routes", () => {
 				const clusterThrottlers = new Map<string, TestThrottler>();
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
@@ -548,7 +538,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					documentManager,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -602,7 +591,6 @@ describe("routes", () => {
 				const clusterThrottlers = new Map<string, TestThrottler>();
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
@@ -615,7 +603,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					documentManager,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -668,7 +655,6 @@ describe("routes", () => {
 				const clusterThrottlers = new Map<string, TestThrottler>();
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
 
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
@@ -681,7 +667,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					documentManager,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -762,8 +747,6 @@ describe("routes", () => {
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
 
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
-
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
 
@@ -775,7 +758,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					documentManager,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -860,8 +842,6 @@ describe("routes", () => {
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
 
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
-
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
 
@@ -873,7 +853,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					documentManager,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -972,8 +951,6 @@ describe("routes", () => {
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
 
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
-
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
 
@@ -985,7 +962,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					documentManager,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -1065,8 +1041,6 @@ describe("routes", () => {
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
 
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
-
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
 
@@ -1078,7 +1052,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					documentManager,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -1132,8 +1105,6 @@ describe("routes", () => {
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
 
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
-
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
 
@@ -1145,7 +1116,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					documentManager,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -1191,8 +1161,6 @@ describe("routes", () => {
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
 
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
-
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
 
@@ -1204,7 +1172,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					documentManager,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});
@@ -1253,8 +1220,6 @@ describe("routes", () => {
 				clusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, clusterThrottler1);
 				clusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, clusterThrottler2);
 
-				const asyncLocalStorage = new AsyncLocalStorage<string>();
-
 				const documentManager = new TestDocumentManager();
 				sinon.stub(documentManager, "readStaticProperties").returns(undefined);
 
@@ -1266,7 +1231,6 @@ describe("routes", () => {
 					clusterThrottlers,
 					documentManager,
 					defaultCache,
-					asyncLocalStorage,
 				);
 				superTest = request(app);
 			});

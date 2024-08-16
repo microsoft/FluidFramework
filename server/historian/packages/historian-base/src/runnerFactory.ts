@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
@@ -27,7 +26,6 @@ export class HistorianResources implements core.IResources {
 		public readonly restClusterThrottlers: Map<string, core.IThrottler>,
 		public readonly documentManager: core.IDocumentManager,
 		public readonly cache?: historianServices.RedisCache,
-		public readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public readonly denyList?: historianServices.IDenyList,
 		public readonly ephemeralDocumentTTLSec?: number,
@@ -82,12 +80,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		// Create services
 		const riddlerEndpoint = config.get("riddler");
 		const alfredEndpoint = config.get("alfred");
-		const asyncLocalStorage = config.get("asyncLocalStorageInstance")?.[0];
-		const riddler = new historianServices.RiddlerService(
-			riddlerEndpoint,
-			tenantCache,
-			asyncLocalStorage,
-		);
+		const riddler = new historianServices.RiddlerService(riddlerEndpoint, tenantCache);
 
 		// Redis connection for throttling.
 		const redisConfigForThrottling = config.get("redisForThrottling");
@@ -224,7 +217,6 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			restClusterThrottlers,
 			documentManager,
 			gitCache,
-			asyncLocalStorage,
 			revokedTokenChecker,
 			denyList,
 			ephemeralDocumentTTLSec,
@@ -244,7 +236,6 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.restClusterThrottlers,
 			resources.documentManager,
 			resources.cache,
-			resources.asyncLocalStorage,
 			resources.revokedTokenChecker,
 			resources.denyList,
 			resources.ephemeralDocumentTTLSec,
