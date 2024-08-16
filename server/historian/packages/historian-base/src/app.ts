@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import {
 	IStorageNameRetriever,
 	IThrottler,
@@ -18,7 +17,6 @@ import * as nconf from "nconf";
 import { DriverVersionHeaderName } from "@fluidframework/server-services-client";
 import {
 	alternativeMorganLoggerMiddleware,
-	bindCorrelationId,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
@@ -36,7 +34,6 @@ export function create(
 	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
 	cache?: ICache,
-	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
@@ -98,7 +95,6 @@ export function create(
 
 	app.use(compression());
 	app.use(cors());
-	app.use(bindCorrelationId(asyncLocalStorage));
 
 	const apiRoutes = routes.create(
 		config,
@@ -108,7 +104,6 @@ export function create(
 		restClusterThrottlers,
 		documentManager,
 		cache,
-		asyncLocalStorage,
 		revokedTokenChecker,
 		denyList,
 		ephemeralDocumentTTLSec,

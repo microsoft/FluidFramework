@@ -19,6 +19,7 @@ import {
 	type BatchMessage,
 	ensureContentsDeserialized,
 	type IBatch,
+	type InboundBatch,
 	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
@@ -159,10 +160,13 @@ describe("RemoteMessageProcessor", () => {
 			outboundMessages.push(...batch.messages);
 
 			const messageProcessor = getMessageProcessor();
-			const actual: ISequencedDocumentMessage[] = [];
+			let actualBatch: InboundBatch | undefined;
 			let seqNum = 1;
-			let actualBatchStartCsn: number | undefined;
 			for (const message of outboundMessages) {
+				assert(
+					actualBatch === undefined,
+					"actualBatch only should be set when we're done looping",
+				);
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				const inboundMessage = {
 					type: MessageType.Operation,
@@ -175,23 +179,8 @@ describe("RemoteMessageProcessor", () => {
 				} as ISequencedDocumentMessage;
 
 				ensureContentsDeserialized(inboundMessage, true, () => {});
-				const processResult = messageProcessor.process(inboundMessage, () => {});
-
-				// It'll be undefined for the first n-1 chunks if chunking is enabled
-				if (processResult === undefined) {
-					continue;
-				}
-
-				actual.push(...processResult.messages);
-
-				if (actualBatchStartCsn === undefined) {
-					actualBatchStartCsn = processResult.batchStartCsn;
-				} else {
-					assert(
-						actualBatchStartCsn === processResult.batchStartCsn,
-						"batchStartCsn shouldn't change while processing a single batch",
-					);
-				}
+				// actualBatch will remain undefined every time except the last time through the loop
+				actualBatch = messageProcessor.process(inboundMessage, () => {});
 			}
 
 			const expected = option.grouping
@@ -210,8 +199,12 @@ describe("RemoteMessageProcessor", () => {
 						getProcessedMessage("e", startSeqNum, startSeqNum, false),
 					];
 
-			assert.deepStrictEqual(actual, expected, "unexpected output");
-			assert.equal(actualBatchStartCsn, leadingChunkCount + 1, "unexpected batchStartCsn");
+			assert.deepStrictEqual(actualBatch?.messages, expected, "unexpected output");
+			assert.equal(
+				actualBatch?.batchStartCsn,
+				leadingChunkCount + 1,
+				"unexpected batchStartCsn",
+			);
 		});
 	});
 
