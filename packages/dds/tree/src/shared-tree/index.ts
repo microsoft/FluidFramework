@@ -33,8 +33,6 @@ export {
 	buildTreeConfiguration,
 } from "./schematizeTree.js";
 
-export { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-
 export {
 	type FlexTreeView,
 	CheckoutFlexTreeView,

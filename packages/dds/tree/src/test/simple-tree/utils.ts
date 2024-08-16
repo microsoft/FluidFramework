@@ -29,10 +29,9 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { toFlexSchema } from "../../simple-tree/toFlexSchema.js";
 import { flexTreeFromForest, testIdCompressor, testRevisionTagCodec } from "../utils.js";
-import {
-	type ITreeCheckoutFork,
-	SchematizingSimpleTreeView,
-} from "../../shared-tree/index.js";
+import type { ITreeCheckoutFork } from "../../shared-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 
 /**
  * Initializes a node with the given schema and content.
