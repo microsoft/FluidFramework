@@ -12,7 +12,7 @@ import { TelemetryClient } from "applicationinsights";
 module.exports = function handler(fileData, telemetryClient: TelemetryClient): void {
 	console.log(`Found ${fileData.benchmarks.length} total benchmark tests to emit`);
 	for (const testData of fileData.benchmarks) {
-		for (const customDataKey of testData.customData) {
+		for (const customDataKey of Object.keys(testData.customData)) {
 			const customDataName = `${fileData.suiteName}_${testData.benchmarkName}_${customDataKey}`;
 
 			try {
