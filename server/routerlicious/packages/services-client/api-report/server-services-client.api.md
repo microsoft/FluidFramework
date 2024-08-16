@@ -25,7 +25,7 @@ import { SummaryObject } from '@fluidframework/protocol-definitions';
 
 // @internal (undocumented)
 export class BasicRestWrapper extends RestWrapper {
-    constructor(baseurl?: string, defaultQueryString?: Record<string, string | number | boolean>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: RawAxiosRequestHeaders, axios?: AxiosInstance, refreshDefaultQueryString?: () => Record<string, string | number | boolean>, refreshDefaultHeaders?: () => RawAxiosRequestHeaders, getCorrelationId?: () => string | undefined);
+    constructor(baseurl?: string, defaultQueryString?: Record<string, string | number | boolean>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: RawAxiosRequestHeaders, axios?: AxiosInstance, refreshDefaultQueryString?: () => Record<string, string | number | boolean>, refreshDefaultHeaders?: () => RawAxiosRequestHeaders, getCorrelationId?: () => string | undefined, getTelemetryContextProperties?: () => Record<string, string | number | boolean> | undefined);
     // (undocumented)
     protected request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry?: boolean): Promise<T>;
 }
@@ -63,7 +63,7 @@ export function convertSummaryTreeToWholeSummaryTree(parentHandle: string | unde
 // @internal
 export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(flatSummary: IWholeFlatSummary, treePrefixToRemove?: string): INormalizedWholeSummary;
 
-// @internal (undocumented)
+// @internal
 export const CorrelationIdHeaderName = "x-correlation-id";
 
 // @internal
@@ -78,7 +78,7 @@ export const defaultHash = "00000000";
 // @internal
 export const DocDeleteScopeType = "doc:delete";
 
-// @internal (undocumented)
+// @internal
 export const DriverVersionHeaderName = "x-driver-version";
 
 // @internal (undocumented)
@@ -646,6 +646,9 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
     // (undocumented)
     writeSummaryTree(summaryTree: ISummaryTree_2, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number, initial?: boolean): Promise<string>;
 }
+
+// @internal
+export const TelemetryContextHeaderName = "x-telemetry-context";
 
 // @internal
 export function throwFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): never;

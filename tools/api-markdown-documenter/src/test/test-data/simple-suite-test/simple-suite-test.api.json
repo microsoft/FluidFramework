@@ -1383,6 +1383,33 @@
 							"isAbstract": false
 						},
 						{
+							"kind": "PropertySignature",
+							"canonicalReference": "simple-suite-test!TestInterface#propertyWithBadInheritDocTarget:member",
+							"docComment": "/**\n * {@inheritDoc BadInheritDocTarget}\n */\n",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "propertyWithBadInheritDocTarget: "
+								},
+								{
+									"kind": "Content",
+									"text": "boolean"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "propertyWithBadInheritDocTarget",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							}
+						},
+						{
 							"kind": "Property",
 							"canonicalReference": "simple-suite-test!TestInterface#setterProperty:member",
 							"docComment": "/**\n * A test property with a getter and a setter.\n */\n",

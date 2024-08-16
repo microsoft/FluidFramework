@@ -19,7 +19,7 @@ export interface AttributionPolicy {
 // @alpha (undocumented)
 export abstract class BaseSegment implements ISegment {
     constructor(properties?: PropertySet);
-    // (undocumented)
+    // @deprecated (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // @deprecated
     addProperties(newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
@@ -71,7 +71,7 @@ export abstract class BaseSegment implements ISegment {
     removedClientIds?: number[];
     // (undocumented)
     removedSeq?: number;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly segmentGroups: SegmentGroupCollection;
     // (undocumented)
     seq: number;
@@ -445,6 +445,7 @@ export interface IRemovalInfo {
 
 // @alpha
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
+    // @deprecated (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // @deprecated
     addProperties(newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
@@ -465,7 +466,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
     properties?: PropertySet;
     // @deprecated
     propertyManager?: PropertiesManager;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly segmentGroups: SegmentGroupCollection;
     seq?: number;
     // (undocumented)
@@ -712,7 +713,7 @@ export interface SegmentGroup {
     segments: ISegment[];
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export class SegmentGroupCollection {
     constructor(segment: ISegment);
     // (undocumented)

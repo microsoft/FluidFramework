@@ -567,17 +567,17 @@ export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKind
 // #region Field Kinds
 
 /**
- * Strongly typed tree literals for inserting as the content of a field.
+ * Typed tree for inserting as the content of a field.
  */
 export type FlexibleFieldContent = ExclusiveMapTree[];
 
 /**
- * Strongly typed tree literals for inserting as a node.
+ * Tree for inserting as a node.
  */
 export type FlexibleNodeContent = ExclusiveMapTree;
 
 /**
- * Strongly typed tree literals for inserting a subsequence of nodes.
+ * Tree for inserting a subsequence of nodes.
  *
  * Used to insert a batch of 0 or more nodes into some location in a {@link FlexTreeSequenceField}.
  */
