@@ -106,7 +106,6 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"disabled": true,
 		"broken": {}
 	}
 }

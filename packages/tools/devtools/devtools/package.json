@@ -158,7 +158,6 @@
 		}
 	},
 	"typeValidation": {
-		"disabled": true,
 		"broken": {}
 	}
 }

@@ -191,7 +191,6 @@
 		}
 	},
 	"typeValidation": {
-		"disabled": true,
 		"broken": {}
 	}
 }

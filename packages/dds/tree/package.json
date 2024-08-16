@@ -195,7 +195,6 @@
 		}
 	},
 	"typeValidation": {
-		"disabled": true,
 		"broken": {
 			"Interface_FieldSchemaUnsafe": {
 				"forwardCompat": false

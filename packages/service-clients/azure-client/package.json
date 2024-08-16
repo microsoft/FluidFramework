@@ -136,7 +136,6 @@
 		"uuid": "^9.0.0"
 	},
 	"typeValidation": {
-		"disabled": true,
 		"broken": {}
 	}
 }
