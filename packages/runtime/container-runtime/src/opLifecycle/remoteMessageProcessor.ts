@@ -129,7 +129,7 @@ export class RemoteMessageProcessor {
 		}
 
 		if (isGroupedBatch(message)) {
-			// We should be awaiting a new batch (batchStartCsn undefined)
+			// We should be awaiting a new batch (batchInProgress undefined)
 			assert(
 				this.batchInProgress === undefined,
 				0x9d3 /* Grouped batch interrupting another batch */,
