@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IMigrator } from "@fluid-example/example-utils";
-import { globals } from "../jest.config.cjs";
+import { IMigrator } from "@fluid-example/migration-tools";
 import { IContainer } from "@fluidframework/container-definitions/internal";
+import { globals } from "../jest.config.cjs";
 
 describe("separate-container migration", () => {
 	beforeAll(async () => {
