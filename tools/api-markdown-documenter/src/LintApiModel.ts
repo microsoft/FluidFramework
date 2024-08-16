@@ -130,6 +130,8 @@ export async function lintApiModel(
 
 /**
  * Recursively validates the given API item and all its descendants within the API model.
+ *
+ * @remarks Populates `errors` with any errors encountered during validation.
  */
 function lintApiItem(
 	apiItem: ApiItem,
@@ -168,6 +170,11 @@ function lintApiItem(
 	}
 }
 
+/**
+ * Validates a TSDoc comment associated with an API item.
+ *
+ * @remarks Populates `errors` with any errors encountered during validation.
+ */
 function lintComment(
 	comment: DocComment,
 	associatedItem: ApiDocumentedItem,
@@ -195,6 +202,12 @@ function lintComment(
 	checkTagsUnderTsdocNodes(comment.customBlocks, associatedItem, apiModel, errors);
 }
 
+/**
+ * Validates the provided TSDoc node and its children.
+ *
+ * @remarks Populates `errors` with any errors encountered during validation.
+ * Co-recursive with {@link checkTagsUnderTsdocNodes}.
+ */
 function checkTagsUnderTsdocNode(
 	node: DocNode,
 	associatedItem: ApiDocumentedItem,
@@ -240,6 +253,7 @@ function checkTagsUnderTsdocNode(
 			break;
 		}
 		case DocNodeKind.InheritDocTag: {
+			// See notes in `lintApiItem` for why we handle `@inheritDoc` tags are not expected or handled here.
 			fail(
 				"Encountered an @inheritDoc tag while walking a TSDoc tree. API-Extractor resolves such tags at a higher level, so this is unexpected.",
 			);
@@ -250,6 +264,12 @@ function checkTagsUnderTsdocNode(
 	}
 }
 
+/**
+ * Validates the provided TSDoc nodes and their children.
+ *
+ * @remarks Populates `errors` with any errors encountered during validation.
+ * Co-recursive with {@link checkTagsUnderTsdocNode}.
+ */
 function checkTagsUnderTsdocNodes(
 	nodes: readonly DocNode[],
 	associatedItem: ApiDocumentedItem,
@@ -261,6 +281,12 @@ function checkTagsUnderTsdocNodes(
 	}
 }
 
+/**
+ * Validates the provided link tag, ensuring that the target reference is valid within the API model.
+ *
+ * @returns An error, if the link tag's target reference is invalid.
+ * Otherwise, `undefined`.
+ */
 function checkLinkTag(
 	linkTag: DocLinkTag,
 	apiItem: ApiItem,
