@@ -243,7 +243,8 @@ export class Repository {
 			directory,
 		);
 
-		// This includes paths to deleted, unstaged files.
+		// This includes paths to deleted, unstaged files, so we get the list of deleted files from git status and remove
+		// those from the full list.
 		const allFiles = new Set(results.split("\n").map((line) => line.trim()));
 		const status = await this.gitClient.status();
 		for (const deletedFile of status.deleted) {

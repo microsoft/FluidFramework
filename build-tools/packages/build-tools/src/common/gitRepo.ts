@@ -251,7 +251,8 @@ export class GitRepo {
 			this.getDeletedFiles(),
 		]);
 
-		// This includes paths to deleted, unstaged files.
+		// This includes paths to deleted, unstaged files, so we get the list of deleted files from git status and remove
+		// those from the full list.
 		const allFiles = new Set(fileResults.split("\n").map((line) => line.trim()));
 
 		for (const deletedFile of deletedFiles) {
