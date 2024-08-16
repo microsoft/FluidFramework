@@ -211,14 +211,6 @@ export class Repository {
 	}
 
 	/**
-	 * Returns an array containing repo root-relative paths to files that are deleted in the working tree.
-	 */
-	public async getDeletedFiles(): Promise<string[]> {
-		const results = await this.gitClient.status();
-		return results.deleted;
-	}
-
-	/**
 	 * Returns an array containing repo repo-relative paths to all the files in the provided directory.
 	 * A given path will only be included once in the array; that is, there will be no duplicate paths.
 	 * Note that this function excludes files that are deleted locally whether the deletion is staged or not.
