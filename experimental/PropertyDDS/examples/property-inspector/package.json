@@ -81,7 +81,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.41.0",
+		"@fluidframework/build-tools": "0.43.0-285387",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/uuid": "^9.0.2",

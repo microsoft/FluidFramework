@@ -22,48 +22,75 @@ import {
 	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
-import type { WithType } from "./schemaTypes.js";
+import type { WithType, TreeNode } from "./core/index.js";
 import type { TreeArrayNode } from "./arrayNode.js";
-import type { TreeNode } from "./types.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../feature-libraries/flex-tree/lazyNode.js";
 import type { TreeMapNode } from "./mapNode.js";
-import { TreeNodeKernel } from "./treeNodeKernel.js";
+import { getKernel } from "./core/index.js";
 
-// This file contains various maps and helpers for supporting proxy binding (a.k.a. proxy hydration).
+// This file contains various maps and helpers for supporting associating simple TreeNodes with their InnerNodes, and swapping those InnerNodes as part of hydration.
 // See ./ProxyBinding.md for a high-level overview of the process.
 
 /**
- * An anchor slot which associates an anchor with its corresponding node proxy, if there is one.
+ * An anchor slot which associates an anchor with its corresponding TreeNode, if there is one.
+ * @remarks
+ * For this to work, we have to require that there is at most a single view using a given AnchorSet.
+ * FlexTree already has this assumption, and we also assume there is a single simple-tree per FlexTree, so this is valid.
  */
 const proxySlot = anchorSlot<TreeNode>();
 
-// The following records are maintained as WeakMaps, rather than a private symbol (e.g. like `targetSymbol`) on the node proxy itself.
+// The following records are maintained as WeakMaps, rather than a private symbol (e.g. like `targetSymbol`) on the TreeNode.
 // The map behaves essentially the same, except that performing a lookup in the map will not perform a property read/get on the key object (as is the case with a symbol).
 // Since `SharedTreeNodes` are proxies with non-trivial `get` traps, this choice is meant to prevent the confusion of the lookup passing through multiple objects
 // via the trap, or the trap not properly handling the special symbol, etc.
 
-/** A reverse mapping of {@link proxySlot} that is updated at the same time. */
+/**
+ * A reverse mapping of {@link proxySlot} that is updated at the same time.
+ *
+ * @remarks
+ * Nodes in this map are hydrated (and thus "marinated" or "cooked").
+ * Nodes not in this map are known to be {@link Unhydrated}.
+ * Thus this map can be used to check if a node is hydrated.
+ *
+ * Any node not in this map must be in {@link proxyToMapTreeNode} since it contains all unhydrated nodes.
+ * It also contains "marinated" nodes which are in both.
+ */
 const proxyToAnchorNode = new WeakMap<TreeNode, AnchorNode>();
 
-// Map unhydrated nodes to and from their underlying flex tree implementation.
-// These maps are populated after a user calls `const proxy = new Foo({})` but before `proxy` is inserted into the tree and queried.
+/**
+ * Map {@link Unhydrated} nodes and "marinated" nodes to and from their underlying MapTreeNode.
+ * These maps are populated by the TreeNode's constructor when called by a user before the node is inserted into the tree and queried.
+ */
 const proxyToMapTreeNode = new WeakMap<TreeNode, MapTreeNode>();
+
+/**
+ * {@inheritdoc proxyToMapTreeNode}
+ */
 const mapTreeNodeToProxy = new WeakMap<MapTreeNode, TreeNode>();
-/** Used by `anchorProxy` as an optimization to ensure that only one anchor is remembered at a time for a given anchor node */
+
+/**
+ * Used by {@link anchorProxy} as an optimization to ensure that only one anchor is remembered at a time for a given anchor node
+ */
 const anchorForgetters = new WeakMap<TreeNode, () => void>();
 
 /**
  * Creates an anchor node and associates it with the given proxy.
- * @privateRemarks Use `forgetters` to cleanup the anchor allocated by this function once the anchor is no longer needed.
+ * @privateRemarks
+ * Use `forgetters` to cleanup the anchor allocated by this function once the anchor is no longer needed.
  * In practice, this happens when either the anchor node is destroyed, or another anchor to the same node is created by a new flex node.
+ *
+ * The FlexTreeNode holds a reference to the same anchor, and has a lifetime at least as long as the simple-tree,
+ * so this would be unnecessary except for the case of "marinated" nodes, which have an anchor,
+ * but might not have a FlexTreeNode.
+ * Handling this case is an optimization assuming that this extra anchor reference is cheaper than eagerly creating FlexTreeNodes.
  */
 export function anchorProxy(anchors: AnchorSet, path: UpPath, proxy: TreeNode): AnchorNode {
 	assert(!anchorForgetters.has(proxy), 0x91c /* Proxy anchor should not be set twice */);
 	const anchor = anchors.track(path);
 	const anchorNode = anchors.locate(anchor) ?? fail("Expected anchor node to be present");
-	bindProxyToAnchorNode(proxy, anchorNode);
+	bindHydratedNodeToAnchor(proxy, anchorNode);
 	const forget = (): void => {
 		if (anchors.locate(anchor)) {
 			anchors.forget(anchor);
@@ -77,21 +104,26 @@ export function anchorProxy(anchors: AnchorSet, path: UpPath, proxy: TreeNode): 
 }
 
 /**
- * Retrieves the flex node associated with the given target via {@link setFlexNode}.
- * @remarks Fails if the flex node has not been set.
+ * Retrieves the flex node associated with the given target via {@link setInnerNode}.
+ * @remarks
+ * For {@link Unhydrated} nodes, this returns the MapTreeNode.
+ *
+ * For hydrated nodes it returns a FlexTreeNode backed by the forest.
+ * Note that for "marinated" nodes, this FlexTreeNode exists and returns it: it does not return the MapTreeNode which is the current InnerNode.
  */
-export function getFlexNode(
-	proxy: TypedNode<FlexObjectNodeSchema>,
+export function getOrCreateInnerNode(
+	treeNode: TypedNode<FlexObjectNodeSchema>,
 	allowFreed?: true,
-): FlexTreeObjectNode;
-export function getFlexNode(proxy: TreeArrayNode, allowFreed?: true): FlexTreeNode;
-export function getFlexNode(
-	proxy: TreeMapNode,
+): InnerNode & FlexTreeObjectNode;
+export function getOrCreateInnerNode(treeNode: TreeArrayNode, allowFreed?: true): InnerNode;
+export function getOrCreateInnerNode(
+	treeNode: TreeMapNode,
 	allowFreed?: true,
-): FlexTreeMapNode<FlexMapNodeSchema<string, FlexFieldSchema<typeof FieldKinds.optional>>>;
-export function getFlexNode(proxy: TreeNode, allowFreed?: true): FlexTreeNode;
-export function getFlexNode(proxy: TreeNode, allowFreed = false): FlexTreeNode {
-	const anchorNode = proxyToAnchorNode.get(proxy);
+): InnerNode &
+	FlexTreeMapNode<FlexMapNodeSchema<string, FlexFieldSchema<typeof FieldKinds.optional>>>;
+export function getOrCreateInnerNode(treeNode: TreeNode, allowFreed?: true): InnerNode;
+export function getOrCreateInnerNode(treeNode: TreeNode, allowFreed = false): InnerNode {
+	const anchorNode = proxyToAnchorNode.get(treeNode);
 	if (anchorNode !== undefined) {
 		// The proxy is bound to an anchor node, but it may or may not have an actual flex node yet
 		const flexNode = anchorNode.slots.get(flexTreeSlot);
@@ -104,89 +136,125 @@ export function getFlexNode(proxy: TreeNode, allowFreed = false): FlexTreeNode {
 		const newFlexNode = makeTree(context, cursor);
 		cursor.free();
 		// Calling this is a performance improvement, however, do this only after demand to avoid momentarily having no anchors to anchorNode
-		anchorForgetters?.get(proxy)?.();
+		anchorForgetters?.get(treeNode)?.();
 		if (!allowFreed) {
 			assertFlexTreeEntityNotFreed(newFlexNode);
 		}
 		return newFlexNode;
 	}
 
-	return proxyToMapTreeNode.get(proxy) ?? fail("Expected raw tree node for proxy");
+	// Unhydrated case
+	return proxyToMapTreeNode.get(treeNode) ?? fail("Expected raw tree node for proxy");
 }
 
 /**
- * Retrieves the flex node associated with the given target via {@link setFlexNode}, if any.
+ * For "cooked" nodes this is a FlexTreeNode thats a projection of forest content.
+ * For {@link Unhydrated} nodes this is a MapTreeNode.
+ * For "marinated" nodes, some code (ex: getOrCreateInnerNode) returns the FlexTreeNode thats a projection of forest content, and some code (ex: tryGetInnerNode) returns undefined.
+ *
+ * @remarks
+ * Currently MapTreeNode extends FlexTreeNode, and most code which can work with either just uses FlexTreeNode.
+ * TODO: Code should be migrating toward using this type to distinguish to two use-cases.
+ *
+ * TODO: The inconsistent handling of "marinated" cases should be cleaned up.
+ * Maybe getOrCreateInnerNode should cook marinated nodes so they have a proper InnerNode?
  */
-export function tryGetFlexNode(target: unknown): FlexTreeNode | undefined {
+export type InnerNode = FlexTreeNode | MapTreeNode;
+
+/**
+ * Retrieves the InnerNode associated with the given target via {@link setInnerNode}, if any.
+ * @remarks
+ * If `target` is a unhydrated node, returns its MapTreeNode.
+ * If `target` is a cooked node (or marinated but a FlexTreeNode exists) returns the FlexTreeNode.
+ * If the target is not a node, or a marinated node with no FlexTreeNode for its anchor, returns undefined.
+ */
+export function tryGetInnerNode(target: unknown): InnerNode | undefined {
 	// Calling 'WeakMap.get()' with primitives (numbers, strings, etc.) will return undefined.
 	// This is in contrast to 'WeakMap.set()', which will throw a TypeError if given a non-object key.
-	return (
-		proxyToAnchorNode.get(target as TreeNode)?.slots.get(flexTreeSlot) ??
-		proxyToMapTreeNode.get(target as TreeNode)
-	);
+	const anchorNode = proxyToAnchorNode.get(target as TreeNode);
+	// Hydrated node case
+	if (anchorNode !== undefined) {
+		const flex = anchorNode.slots.get(flexTreeSlot);
+		if (flex !== undefined) {
+			// Cooked, or possible Marinated but something else cased the flex tree node to exist.
+			return flex;
+		}
+		// Marinated case
+		assert(
+			proxyToMapTreeNode.get(target as TreeNode) === undefined,
+			"marinated nodes should not have MapTreeNodes",
+		);
+		return undefined;
+	}
+	// Unhydrated node or not a node case:
+	return proxyToMapTreeNode.get(target as TreeNode);
 }
 
 /**
- * Retrieves the proxy associated with the given flex node via {@link setFlexNode}, if any.
+ * Retrieves the proxy associated with the given flex node via {@link setInnerNode}, if any.
  */
-export function tryGetProxy(flexNode: FlexTreeNode): TreeNode | undefined {
+export function tryGetCachedTreeNode(flexNode: InnerNode): TreeNode | undefined {
 	if (isMapTreeNode(flexNode)) {
+		// Unhydrated case
 		return mapTreeNodeToProxy.get(flexNode);
 	}
+	// Hydrated case
 	return flexNode.anchorNode.slots.get(proxySlot);
 }
 
 /**
- * Associate the given proxy and the given flex node.
- * @returns The proxy
+ * Associate the given TreeNode and the given flex node.
+ * @returns The node.
  * @remarks
- * This creates a 1:1 mapping between the proxy and tree node.
- * Either can be retrieved from the other via {@link getFlexNode}/{@link tryGetFlexNode} or {@link tryGetProxy}.
+ * This creates a 1:1 mapping between the tree node and InnerNode.
+ * Either can be retrieved from the other via {@link getOrCreateInnerNode}/{@link tryGetInnerNode} or {@link tryGetCachedTreeNode}.
  * If the given proxy is already mapped to an flex node, the existing mapping will be overwritten.
  * If the given flex node is already mapped to a different proxy, this function will fail.
  */
-export function setFlexNode<TProxy extends TreeNode>(
-	proxy: TProxy,
-	flexNode: FlexTreeNode,
-): TProxy {
-	const existingFlexNode = proxyToAnchorNode.get(proxy)?.slots.get(flexTreeSlot);
+export function setInnerNode<TNode extends TreeNode>(
+	node: TNode,
+	innerNode: InnerNode,
+): TNode {
+	const existingFlexNode = proxyToAnchorNode.get(node)?.slots.get(flexTreeSlot);
 	assert(
 		existingFlexNode === undefined,
 		0x91d /* Cannot associate a flex node with multiple targets */,
 	);
-	if (isMapTreeNode(flexNode)) {
-		proxyToMapTreeNode.set(proxy, flexNode);
-		mapTreeNodeToProxy.set(flexNode, proxy);
+	if (isMapTreeNode(innerNode)) {
+		// Unhydrated case
+		proxyToMapTreeNode.set(node, innerNode);
+		mapTreeNodeToProxy.set(innerNode, node);
 	} else {
+		// Hydrated case
 		assert(
-			tryGetProxy(flexNode) === undefined,
+			tryGetCachedTreeNode(innerNode) === undefined,
 			0x7f5 /* Cannot associate an flex node with multiple targets */,
 		);
-		bindProxyToAnchorNode(proxy, flexNode.anchorNode);
+		bindHydratedNodeToAnchor(node, innerNode.anchorNode);
 	}
-	return proxy;
+	return node;
 }
 
 /**
- * Bi-directionally associates the given proxy to the given anchor node.
- * @remarks Cleans up mappings to raw flex nodes - it is assumed that they are no longer needed once the proxy has an anchor node.
+ * Bi-directionally associates the given hydrated TreeNode to the given anchor node.
+ * @remarks Cleans up mappings to {@link MapTreeNode} - it is assumed that they are no longer needed once the proxy has an anchor node.
  */
-function bindProxyToAnchorNode(proxy: TreeNode, anchorNode: AnchorNode): void {
+function bindHydratedNodeToAnchor(node: TreeNode, anchorNode: AnchorNode): void {
 	// If the proxy currently has a raw node, forget it
-	const mapTreeNode = proxyToMapTreeNode.get(proxy);
+	const mapTreeNode = proxyToMapTreeNode.get(node);
 	if (mapTreeNode !== undefined) {
-		proxyToMapTreeNode.delete(proxy);
+		proxyToMapTreeNode.delete(node);
 		mapTreeNodeToProxy.delete(mapTreeNode);
 	}
 	// Once a proxy has been associated with an anchor node, it should never change to another anchor node
 	assert(
-		!proxyToAnchorNode.has(proxy),
+		!proxyToAnchorNode.has(node),
 		0x91e /* Proxy has already been bound to a different anchor node */,
 	);
-	proxyToAnchorNode.set(proxy, anchorNode);
+	proxyToAnchorNode.set(node, anchorNode);
 	// However, it's fine for an anchor node to rotate through different proxies when the content at that place in the tree is replaced.
-	anchorNode.slots.set(proxySlot, proxy);
-	getKernel(proxy).hydrate(anchorNode);
+	anchorNode.slots.set(proxySlot, node);
+	getKernel(node).hydrate(anchorNode);
 }
 
 /**
@@ -194,23 +262,10 @@ function bindProxyToAnchorNode(proxy: TreeNode, anchorNode: AnchorNode): void {
  */
 type TypedNode<TSchema extends FlexTreeNodeSchema> = TreeNode & WithType<TSchema["name"]>;
 
-export function createKernel(node: TreeNode): void {
-	treeNodeToKernel.set(node, new TreeNodeKernel(node));
-}
-
-export function getKernel(node: TreeNode): TreeNodeKernel {
-	const kernel = treeNodeToKernel.get(node);
-	assert(kernel !== undefined, 0x9b1 /* Expected tree node to have kernel */);
-	return kernel;
-}
-
 export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
 	const treeNode = anchorNode.slots.get(proxySlot);
 	if (treeNode !== undefined) {
-		const kernel = treeNodeToKernel.get(treeNode);
-		assert(kernel !== undefined, 0x9b2 /* Expected tree node to have kernel */);
+		const kernel = getKernel(treeNode);
 		kernel.dispose();
 	}
 }
-
-const treeNodeToKernel = new WeakMap<TreeNode, TreeNodeKernel>();

@@ -72,7 +72,7 @@ import {
 	type RecentlyAddedContainerRuntimeMessageDetails,
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
-import type { BatchMessage } from "../opLifecycle/index.js";
+import type { BatchMessage, InboundBatch } from "../opLifecycle/index.js";
 import {
 	IPendingLocalState,
 	IPendingMessage,
@@ -790,8 +790,8 @@ describe("Runtime", () => {
 					processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
 						return { localAck: false, localOpMetadata: undefined };
 					},
-					processPendingLocalBatch: (_messages: ISequencedDocumentMessage[]) => {
-						return _messages.map((message) => ({
+					processInboundBatch: (batch: InboundBatch, _local: boolean) => {
+						return batch.messages.map((message) => ({
 							message,
 							localOpMetadata: undefined,
 						}));
@@ -1739,7 +1739,7 @@ describe("Runtime", () => {
 						sequenceNumber: 0,
 						contents: {
 							type: ContainerMessageType.Rejoin,
-							contents: "something",
+							contents: undefined,
 						},
 					} as any as ISequencedDocumentMessage,
 					true /* local */,
@@ -1928,7 +1928,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
@@ -1970,7 +1970,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
@@ -2039,7 +2039,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
@@ -2478,6 +2478,28 @@ describe("Runtime", () => {
 				assert(opsProcessed === 2, "only 2 ops should be processed with seq number 3 and 4");
 				assert(opsStart === 3, "first op processed should have seq number 3");
 			});
+		});
+
+		it("Only log legacy codepath once", async () => {
+			const mockLogger = new MockLogger();
+			const containerRuntime = await ContainerRuntime.loadRuntime({
+				context: getMockContext({}, mockLogger) as IContainerContext,
+				registryEntries: [],
+				existing: false,
+				provideEntryPoint: mockProvideEntryPoint,
+			});
+			const json = JSON.stringify({ hello: "world" });
+			const messageBase = { contents: json, clientId: "CLIENT_ID" };
+			containerRuntime.process(
+				{ ...messageBase, sequenceNumber: 1 } as unknown as ISequencedDocumentMessage,
+				false /* local */,
+			);
+			mockLogger.assertMatch([{ eventName: "LegacyMessageFormat" }]);
+			containerRuntime.process(
+				{ ...messageBase, sequenceNumber: 2 } as unknown as ISequencedDocumentMessage,
+				false /* local */,
+			);
+			assert.equal(mockLogger.events.length, 0, "Expected no more events logged");
 		});
 	});
 });

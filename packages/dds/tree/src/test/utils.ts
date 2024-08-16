@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
+	type ITelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -85,8 +86,9 @@ import {
 	type AnchorNode,
 	type AnchorSetRootEvents,
 	type TreeStoredSchemaSubscription,
-	type SchemaAndPolicy,
 	type ITreeCursorSynchronous,
+	CursorLocationType,
+	type MapTree,
 } from "../core/index.js";
 import {
 	cursorToJsonObject,
@@ -98,7 +100,6 @@ import {
 import type { HasListeners, IEmitter, Listenable } from "../events/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
-	type ContextuallyTypedNodeData,
 	FieldKinds,
 	type FlexFieldSchema,
 	type FlexTreeTypedField,
@@ -114,8 +115,9 @@ import {
 	mapRootChanges,
 	mapTreeFromCursor,
 	MockNodeKeyManager,
-	normalizeNewFieldContent,
 	type FlexTreeSchema,
+	cursorForMapTreeField,
+	type IDefaultEditBuilder,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
@@ -147,12 +149,9 @@ import {
 import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import {
 	type ImplicitFieldSchema,
-	type InsertableContent,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type TreeViewConfiguration,
-	normalizeFieldSchema,
+	TreeViewConfiguration,
 	SchemaFactory,
-	toFlexSchema,
+	type InsertableTreeFieldFromImplicitField,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -160,11 +159,11 @@ import {
 	nestedMapFromFlatList,
 	forEachInNestedMap,
 	tryGetFromNestedMap,
+	isReadonlyArray,
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { cursorFromNodeData } from "../simple-tree/toMapTree.js";
+import { cursorFromInsertable } from "../simple-tree/index.js";
 
 // Testing utilities
 
@@ -590,9 +589,7 @@ export function validateFuzzTreeConsistency(
 }
 
 function contentToJsonableTree(content: TreeContent): JsonableTree[] {
-	return jsonableTreeFromFieldCursor(
-		normalizeNewFieldContent(content, content.schema.rootFieldSchema, content.initialTree),
-	);
+	return jsonableTreeFromFieldCursor(normalizeNewFieldContent(content.initialTree));
 }
 
 export function validateTreeContent(tree: ITreeCheckout, content: TreeContent): void {
@@ -754,11 +751,7 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 
 export function forestWithContent(content: TreeContent): IEditableForest {
 	const forest = buildForest();
-	const fieldCursor = normalizeNewFieldContent(
-		{ schema: content.schema },
-		content.schema.rootFieldSchema,
-		content.initialTree,
-	);
+	const fieldCursor = normalizeNewFieldContent(content.initialTree);
 	// TODO:AB6712 Make the delta format accept a single cursor in Field mode.
 	const nodeCursors = mapCursorField(fieldCursor, (c) =>
 		cursorForMapTreeNode(mapTreeFromCursor(c)),
@@ -787,10 +780,14 @@ export function flexTreeFromForest<TRoot extends FlexFieldSchema>(
 	return view.flexTree;
 }
 
-const sf = new SchemaFactory(undefined);
+const sf = new SchemaFactory("com.fluidframework.json");
 
 export const NumberArray = sf.array("array", sf.number);
 export const StringArray = sf.array("array", sf.string);
+
+export const IdentifierSchema = sf.object("identifier-object", {
+	identifier: sf.identifier,
+});
 
 const jsonPrimitiveSchema = [sf.null, sf.boolean, sf.number, sf.string] as const;
 export const JsonObject = sf.mapRecursive("object", [
@@ -798,8 +795,10 @@ export const JsonObject = sf.mapRecursive("object", [
 	() => JsonArray,
 	...jsonPrimitiveSchema,
 ]);
+
 export const JsonArray = sf.arrayRecursive("array", [
 	JsonObject,
+	IdentifierSchema,
 	() => JsonArray,
 	...jsonPrimitiveSchema,
 ]);
@@ -873,18 +872,14 @@ export function jsonTreeFromForest(forest: IForestSubscription): JsonCompatible[
  * @param index - The index in the root field at which to insert.
  * @param value - The value of the inserted nodes.
  */
-export function insert(
-	tree: ITreeCheckout,
-	index: number,
-	...values: ContextuallyTypedNodeData[]
-): void {
+export function insert(tree: ITreeCheckout, index: number, ...values: string[]): void {
 	const fieldEditor = tree.editor.sequenceField({ field: rootFieldKey, parent: undefined });
-	const content = normalizeNewFieldContent(
-		{ schema: jsonSequenceRootSchema },
-		jsonSequenceRootSchema.rootFieldSchema,
-		values,
+	fieldEditor.insert(
+		index,
+		cursorForMapTreeField(
+			values.map((value): MapTree => ({ fields: new Map(), type: leaf.string.name, value })),
+		),
 	);
-	fieldEditor.insert(index, content);
 }
 
 export function remove(tree: ITreeCheckout, index: number, count: number): void {
@@ -1268,6 +1263,7 @@ export function treeTestFactory(
 export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
+	logger?: ITelemetryLoggerExt,
 ): SchematizingSimpleTreeView<TSchema> {
 	const checkout = createTreeCheckout(
 		testIdCompressor,
@@ -1276,6 +1272,7 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 		{
 			forest: buildForest(),
 			schema: new TreeStoredSchemaRepository(),
+			logger,
 		},
 	);
 	return new SchematizingSimpleTreeView<TSchema>(
@@ -1283,6 +1280,40 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 		config,
 		nodeKeyManager ?? new MockNodeKeyManager(),
 	);
+}
+
+/**
+ * Views the supplied checkout with the given schema.
+ */
+export function viewCheckout<TSchema extends ImplicitFieldSchema>(
+	checkout: ITreeCheckout,
+	config: TreeViewConfiguration<TSchema>,
+): SchematizingSimpleTreeView<TSchema> {
+	return new SchematizingSimpleTreeView<TSchema>(checkout, config, new MockNodeKeyManager());
+}
+
+/**
+ * Forks a simple tree view.
+ */
+export function forkView<T extends ImplicitFieldSchema>(
+	viewToFork: SchematizingSimpleTreeView<T>,
+): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
+export function forkView<TIn extends ImplicitFieldSchema, TOut extends ImplicitFieldSchema>(
+	viewToFork: SchematizingSimpleTreeView<TIn>,
+	schema?: TOut,
+): SchematizingSimpleTreeView<TOut> & { checkout: ITreeCheckoutFork };
+export function forkView<T extends ImplicitFieldSchema>(
+	viewToFork: SchematizingSimpleTreeView<T>,
+	schema?: T,
+): SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork } {
+	return new SchematizingSimpleTreeView<T>(
+		viewToFork.checkout.fork(),
+		new TreeViewConfiguration({
+			enableSchemaValidation: viewToFork.config.enableSchemaValidation,
+			schema: schema ?? viewToFork.config.schema,
+		}),
+		new MockNodeKeyManager(),
+	) as SchematizingSimpleTreeView<T> & { checkout: ITreeCheckoutFork };
 }
 
 /**
@@ -1360,26 +1391,41 @@ export function validateUsageError(expectedErrorMsg: string | RegExp): (error: E
  * and the schema would come from the unhydrated node.
  * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
  */
-export function cursorFromUnhydratedRoot(
+export function cursorFromInsertableTreeField(
 	schema: ImplicitFieldSchema,
-	tree: InsertableTreeNodeFromImplicitAllowedTypes,
+	tree: InsertableTreeFieldFromImplicitField,
 	nodeKeyManager: NodeKeyManager,
+): ITreeCursorSynchronous | undefined {
+	return cursorFromInsertable(schema, tree, nodeKeyManager);
+}
+
+function normalizeNewFieldContent(
+	content: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined,
 ): ITreeCursorSynchronous {
-	const data = tree as InsertableContent;
-	const normalizedFieldSchema = normalizeFieldSchema(schema);
+	if (content === undefined) {
+		return cursorForMapTreeField([]);
+	}
 
-	const flexSchema = toFlexSchema(normalizedFieldSchema);
-	const storedSchema: SchemaAndPolicy = {
-		policy: defaultSchemaPolicy,
-		schema: intoStoredSchema(flexSchema),
-	};
+	if (isReadonlyArray(content)) {
+		return cursorForMapTreeField(content.map((c) => mapTreeFromCursor(c)));
+	}
 
-	return (
-		cursorFromNodeData(
-			data,
-			normalizedFieldSchema.allowedTypes,
-			nodeKeyManager,
-			storedSchema,
-		) ?? assert.fail("failed to decode tree")
-	);
+	if (content.mode === CursorLocationType.Fields) {
+		return content;
+	}
+
+	return cursorForMapTreeField([mapTreeFromCursor(content)]);
+}
+
+/**
+ * Convenience helper for performing a "move" edit where the source and destination field are the same.
+ */
+export function moveWithin(
+	editor: IDefaultEditBuilder,
+	field: FieldUpPath,
+	sourceIndex: number,
+	count: number,
+	destIndex: number,
+) {
+	editor.move(field, sourceIndex, count, field, destIndex);
 }
