@@ -31,7 +31,6 @@ export {
 	MigratableSessionStorageModelLoader,
 	ModelContainerRuntimeFactory,
 	ModelLoader,
-	SessionStorageModelLoader,
 	StaticCodeLoader,
 	TinyliciousModelLoader,
 } from "./modelLoader/index.js";
