@@ -21,8 +21,8 @@ import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { GitRepo } from "../common/gitRepo";
 import { testDataPath } from "./init";
 
-describe("Biome config loading", async () => {
-	describe("BiomeConfigReader class", async () => {
+describe("Biome config loading", () => {
+	describe("BiomeConfigReader class", () => {
 		// These variables need to be initialized once for all the tests in this describe block. Defining them outside
 		// of the before block causes the tests to be skipped.
 		const testDir = path.resolve(testDataPath, "biome/pkg-b");
@@ -84,7 +84,7 @@ describe("Biome config loading", async () => {
 		});
 	});
 
-	describe("loadConfig", async () => {
+	describe("loadConfig", () => {
 		it("throws on missing config", async () => {
 			const testFile = path.resolve(testDataPath, "biome/missing.jsonc");
 			assert.rejects(async () => await loadBiomeConfig(testFile), Error);
@@ -117,7 +117,7 @@ describe("Biome config loading", async () => {
 			assert(actual.linter!.ignore!.includes("ignore-linter-added-1/**"));
 		});
 
-		describe("extends from a single config", async () => {
+		describe("extends from a single config", () => {
 			// These variables need to be initialized once for all the tests in this describe block. Defining them outside
 			// of the before block causes the tests to be skipped.
 			let testConfig: BiomeConfigOnDisk;
@@ -193,8 +193,8 @@ describe("Biome config loading", async () => {
 		});
 	});
 
-	describe("getSettingValuesFromBiomeConfig", async () => {
-		describe("extends from a single config", async () => {
+	describe("getSettingValuesFromBiomeConfig", () => {
+		describe("extends from a single config", () => {
 			// These variables need to be initialized once for all the tests in this describe block. Defining them outside
 			// of the before block causes the tests to be skipped.
 			const testFile = path.resolve(testDataPath, "biome/pkg-a/biome.jsonc");
@@ -245,8 +245,8 @@ describe("Biome config loading", async () => {
 		});
 	});
 
-	describe("getBiomeFormattedFilesFromDirectory", async () => {
-		describe("extends from a single config", async () => {
+	describe("getBiomeFormattedFilesFromDirectory", () => {
+		describe("extends from a single config", () => {
 			// These variables need to be initialized once for all the tests in this describe block. Defining them outside
 			// of the before block causes the tests to be skipped.
 			const testPath = path.resolve(testDataPath, "biome/pkg-a/");
@@ -277,7 +277,7 @@ describe("Biome config loading", async () => {
 			});
 		});
 
-		describe("extends from multiple configs", async () => {
+		describe("extends from multiple configs", () => {
 			// These variables need to be initialized once for all the tests in this describe block. Defining them outside
 			// of the before block causes the tests to be skipped.
 			const testPath = path.resolve(testDataPath, "biome/pkg-a/extended.jsonc");
