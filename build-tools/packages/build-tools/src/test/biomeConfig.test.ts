@@ -25,10 +25,9 @@ describe("Biome config loading", async () => {
 	describe("BiomeConfigReader class", async () => {
 		// These variables need to be initialized once for all the tests in this describe block. Defining them outside
 		// of the before block causes the tests to be skipped.
+		const testDir = path.resolve(testDataPath, "biome/pkg-b");
 		let gitRepo: GitRepo;
-		let testDir: string;
 		before(async () => {
-			testDir = path.resolve(testDataPath, "biome/pkg-b");
 			const repoRoot = await getResolvedFluidRoot(true);
 			gitRepo = new GitRepo(repoRoot);
 		});
@@ -198,9 +197,9 @@ describe("Biome config loading", async () => {
 		describe("extends from a single config", async () => {
 			// These variables need to be initialized once for all the tests in this describe block. Defining them outside
 			// of the before block causes the tests to be skipped.
+			const testFile = path.resolve(testDataPath, "biome/pkg-a/biome.jsonc");
 			let testConfig: BiomeConfigResolved;
 			before(async () => {
-				const testFile = path.resolve(testDataPath, "biome/pkg-a/biome.jsonc");
 				testConfig = await loadBiomeConfig(testFile);
 			});
 
@@ -250,12 +249,11 @@ describe("Biome config loading", async () => {
 		describe("extends from a single config", async () => {
 			// These variables need to be initialized once for all the tests in this describe block. Defining them outside
 			// of the before block causes the tests to be skipped.
-			let testPath: string;
+			const testPath = path.resolve(testDataPath, "biome/pkg-a/");
 			let gitRepo: GitRepo;
 			before(async () => {
 				const repoRoot = await getResolvedFluidRoot(true);
 				gitRepo = new GitRepo(repoRoot);
-				testPath = path.resolve(testDataPath, "biome/pkg-a/");
 			});
 
 			it("returns correct file set", async () => {
@@ -282,12 +280,11 @@ describe("Biome config loading", async () => {
 		describe("extends from multiple configs", async () => {
 			// These variables need to be initialized once for all the tests in this describe block. Defining them outside
 			// of the before block causes the tests to be skipped.
-			let testPath: string;
+			const testPath = path.resolve(testDataPath, "biome/pkg-a/extended.jsonc");
 			let gitRepo: GitRepo;
 			before(async () => {
 				const repoRoot = await getResolvedFluidRoot(true);
 				gitRepo = new GitRepo(repoRoot);
-				testPath = path.resolve(testDataPath, "biome/pkg-a/extended.jsonc");
 			});
 
 			it("returns correct file set", async () => {
