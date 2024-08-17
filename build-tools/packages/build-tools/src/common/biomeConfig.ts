@@ -63,6 +63,8 @@ export async function getAllBiomeConfigPaths(configPath: string): Promise<string
  * The intent is to merge the configs in the same way that Biome itself does, but the implementation is based on the
  * Biome documentation, so there may be subtle differences unaccounted for. Where this implementation diverges from
  * Biome's behavior, this function should be considered incorrect.
+ *
+ * Relevant Biome documentation: {@link https://biomejs.dev/guides/configure-biome/#share-a-configuration-file}
  */
 export async function loadBiomeConfig(configPath: string): Promise<BiomeConfigResolved> {
 	const allConfigPaths = await getAllBiomeConfigPaths(configPath);
