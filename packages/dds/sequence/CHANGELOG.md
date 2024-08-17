@@ -1,5 +1,18 @@
 # @fluidframework/sequence
 
+## 2.2.0
+
+### Minor Changes
+
+-   The PropertyManager class and related functions and properties are deprecated ([#22183](https://github.com/microsoft/FluidFramework/pull/22183)) [cbba69554f](https://github.com/microsoft/FluidFramework/commit/cbba69554fc5026f562f44683a902474fabd6e81)
+
+    The `PropertyManager` class, along with the `propertyManager` properties and `addProperties` functions on segments and intervals, are not intended for external use.
+    These elements will be removed in a future release for the following reasons:
+
+    -   There are no scenarios where they need to be used directly.
+    -   Using them directly will cause eventual consistency problems.
+    -   Upcoming features will require modifications to these mechanisms.
+
 ## 2.1.0
 
 Dependency updates only.
