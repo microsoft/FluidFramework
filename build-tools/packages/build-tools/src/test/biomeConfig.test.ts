@@ -132,7 +132,7 @@ describe("Biome config loading", async () => {
 				assert(testConfig.files!.ignoreUnknown === true);
 			});
 
-			it("files.include has correct value", async () => {
+			it("files.include is overridden by loaded config", async () => {
 				assert(testConfig.files!.include!.includes("pkg-a-include/**"));
 				assert(
 					testConfig.files!.include!.length === 1,
@@ -140,7 +140,7 @@ describe("Biome config loading", async () => {
 				);
 			});
 
-			it("files.ignore has correct value", async () => {
+			it("files.ignore is overridden by loaded config", async () => {
 				assert(testConfig.files!.ignore!.includes("pkg-a-ignore/**"));
 				assert(
 					testConfig.files!.ignore!.length === 1,
@@ -148,7 +148,7 @@ describe("Biome config loading", async () => {
 				);
 			});
 
-			it("formatter.include has correct value", async () => {
+			it("formatter.include is overridden by loaded config", async () => {
 				const testFile = path.resolve(testDataPath, "biome/pkg-a/biome.jsonc");
 				const actual = await loadBiomeConfig(testFile);
 
@@ -159,7 +159,7 @@ describe("Biome config loading", async () => {
 				);
 			});
 
-			it("formatter.ignore has correct value", async () => {
+			it("formatter.ignore is overridden by loaded config", async () => {
 				const testFile = path.resolve(testDataPath, "biome/pkg-a/biome.jsonc");
 				const actual = await loadBiomeConfig(testFile);
 
@@ -170,7 +170,7 @@ describe("Biome config loading", async () => {
 				);
 			});
 
-			it("linter.include has correct value", async () => {
+			it("linter.include is overridden by loaded config", async () => {
 				const testFile = path.resolve(testDataPath, "biome/pkg-a/biome.jsonc");
 				const actual = await loadBiomeConfig(testFile);
 
@@ -181,7 +181,7 @@ describe("Biome config loading", async () => {
 				);
 			});
 
-			it("linter.ignore has correct value", async () => {
+			it("linter.ignore is overridden by loaded config", async () => {
 				const testFile = path.resolve(testDataPath, "biome/pkg-a/biome.jsonc");
 				const actual = await loadBiomeConfig(testFile);
 
