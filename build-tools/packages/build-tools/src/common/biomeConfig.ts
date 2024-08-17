@@ -217,11 +217,6 @@ export async function getBiomeFormattedFiles(
  * the configs and formatted files.
  */
 export class BiomeConfigReader {
-	private _allConfigs: string[] | undefined;
-	public get allConfigs(): string[] {
-		return this._allConfigs ?? [];
-	}
-
 	public get closestConfig(): string {
 		assert(
 			this.allConfigs.length > 0,
@@ -233,22 +228,16 @@ export class BiomeConfigReader {
 		return this.allConfigs.at(-1)!;
 	}
 
-	private _mergedConfig: BiomeConfigResolved = {};
-	public get mergedConfig(): BiomeConfigResolved {
-		return this._mergedConfig;
-	}
-
-	private _formattedFiles: string[] = [];
-	public get formattedFiles(): string[] {
-		return this._formattedFiles;
-	}
-
 	public readonly directory: string;
 
-	private constructor(configFile: string) {
+	private constructor(
+		configFile: string,
+		public readonly allConfigs: string[],
+		public readonly mergedConfig: BiomeConfigResolved,
+		public readonly formattedFiles: string[],
+	) {
 		this.directory = path.dirname(configFile);
 	}
-
 	/**
 	 * Create a BiomeConfig instance rooted in the provided directory.
 	 */
@@ -269,11 +258,9 @@ export class BiomeConfigReader {
 			directory = path.relative(gitRepo.resolvedRoot, directoryOrConfigFile);
 		}
 
-		const config = new BiomeConfigReader(configFile);
-		config._allConfigs = await getAllBiomeConfigPaths(configFile);
-		const mergedConfig = await loadBiomeConfigs(config.allConfigs);
+		const allConfigs = await getAllBiomeConfigPaths(configFile);
+		const mergedConfig = await loadBiomeConfigs(allConfigs);
 		const files = await getBiomeFormattedFiles(mergedConfig, directory, gitRepo);
-		config._formattedFiles.push(...files);
-		return config;
+		return new BiomeConfigReader(configFile, allConfigs, mergedConfig, files);
 	}
 }
