@@ -47,7 +47,6 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	}
 
 	protected async getOutputFiles(): Promise<string[]> {
-		// Input and output files are the same.
-		return this.getInputFiles();
+		return (await this.biomeConfig).formattedFiles;
 	}
 }
