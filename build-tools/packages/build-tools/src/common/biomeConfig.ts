@@ -104,11 +104,6 @@ export function getSettingValuesFromBiomeConfig(
 	section: BiomeConfigSection,
 	kind: BiomeIncludeIgnore,
 ): Set<string> {
-	// TODO: Remove this commented code once test cases have been added with file extension filtering -- this code is
-	// helpful because it forces everything to be included regardless of other filters - so it can be used to verify the
-	// new file extension filtering tests.
-	// const generalFiles = config.files?.[kind] ?? (kind === "include" ? ["**"] : []);
-	// const sectionFiles = config?.[section]?.[kind] ?? (kind === "include" ? ["**"] : []);
 	const generalFiles = config.files?.[kind] ?? [];
 	const sectionFiles = config?.[section]?.[kind] ?? [];
 	return new Set([...generalFiles, ...sectionFiles]);
