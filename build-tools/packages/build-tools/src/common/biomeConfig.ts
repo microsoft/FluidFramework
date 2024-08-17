@@ -10,6 +10,7 @@ import ignore from "ignore";
 import * as JSON5 from "json5";
 import multimatch from "multimatch";
 import { merge } from "ts-deepmerge";
+import type { Opaque } from "type-fest";
 import type { Configuration as BiomeConfigRaw } from "./biomeConfigTypes";
 import type { GitRepo } from "./gitRepo";
 
@@ -20,7 +21,7 @@ const findUp = import("find-up");
  * Convenience type to represent a Biome config that has been loaded while following and merging the
  * "extends" values. This helps differentiate between the single loaded configs and the fully resolved config.
  */
-export type BiomeConfigResolved = BiomeConfigRaw;
+export type BiomeConfigResolved = Opaque<BiomeConfigRaw, "BiomeConfigResolved">;
 
 /**
  * Loads a Biome configuration file _without_ following any 'extends' values. You probably want to use
@@ -89,7 +90,7 @@ async function loadBiomeConfigs(allConfigPaths: string[]): Promise<BiomeConfigRe
 		...allConfigs,
 	);
 
-	return mergedConfig;
+	return mergedConfig as BiomeConfigResolved;
 }
 
 export type BiomeIncludeIgnore = "include" | "ignore";
