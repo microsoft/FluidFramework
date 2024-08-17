@@ -20,31 +20,30 @@ import {
 	isTreeValue,
 	type TreeIndexNodes,
 	hasElement,
+	type TreeIndex,
 } from "../feature-libraries/index.js";
-import { getOrCreateNodeProxy } from "./proxies.js";
-import { tryGetProxy } from "./proxyBinding.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { TreeNode } from "./types.js";
 import { brand } from "../util/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { NodeFromSchema } from "./schemaTypes.js";
-import { getSimpleNodeSchema } from "./schemaCaching.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
 import { Tree } from "../shared-tree/index.js";
+import type { TreeNode, TreeNodeSchema } from "./index.js";
+import { getSimpleNodeSchema } from "./core/index.js";
 
 type SimpleTreeIndex<
 	TKey extends TreeValue,
-	TSchema extends ObjectNodeSchema
+	TSchema extends TreeNodeSchema
 > =
-	| AnchorTreeIndex<TKey, NodeFromSchema<ObjectNodeSchema>>
-	| AnchorTreeIndex<TKey, NodeFromSchema<TSchema>>;
+	| TreeIndex<TKey, TreeNode>
+	| TreeIndex<TKey, NodeFromSchema<TSchema>>;
 
 // use Tree.is for downcasting
 export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
 	context: FlexTreeContext,
 	indexer: (schema: ObjectNodeSchema) => KeyFinder<TKey> | undefined,
 	getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue,
-): AnchorTreeIndex<TKey, TreeNode>;
+): SimpleTreeIndex<TKey, TreeNodeSchema>;
 export function createSimpleTreeIndex<
 	TKey extends TreeValue,
 	TValue,
@@ -54,7 +53,7 @@ export function createSimpleTreeIndex<
 	indexer: (schema: TSchema) => KeyFinder<TKey> | undefined,
 	getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue,
 	indexableSchema: readonly TSchema[],
-): AnchorTreeIndex<TKey, NodeFromSchema<TSchema>>;
+): SimpleTreeIndex<TKey, TSchema>;
 export function createSimpleTreeIndex<
 	TKey extends TreeValue,
 	TValue,

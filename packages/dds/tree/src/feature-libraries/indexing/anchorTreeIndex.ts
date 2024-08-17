@@ -37,7 +37,11 @@ export type KeyFinder<TKey extends TreeValue> = (tree: ITreeSubscriptionCursor) 
 
 /**
  * An index from some arbitrary keys to anchor nodes. Keys can be anything that is a {@link TreeValue}.
- * A key can map to multiple nodes.
+ * A key can map to multiple nodes but each collection of nodes only results in a single value.
+ * 
+ * @remarks
+ * Detached nodes are stored in the index but filtered out when any public facing apis are called. This means that
+ * calling {@link keys} will not include any keys that are stored in the index but only map to detached nodes.
  */
 export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 	implements TreeIndex<TKey, TValue>
@@ -67,6 +71,9 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 		indexer: (schemaId: TreeNodeSchemaIdentifier) => KeyFinder<TKey> | undefined,
 		private readonly getValue: (anchorNodes: TreeIndexNodes<AnchorNode>) => TValue | undefined,
 	) {
+		/**
+		 * Given a cursor in field mode, recursively indexes all nodes under the field.
+		 */
 		const indexField = (fieldCursor: ITreeSubscriptionCursor): void => {
 			forEachNode(fieldCursor, (nodeCursor) => {
 				const keyFinder = getOrCreate(
@@ -76,6 +83,7 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 					// does not need to be called if this schema is encountered in the future
 					(schema) => indexer(schema) ?? null,
 				);
+
 				if (keyFinder !== null) {
 					const key = keyFinder(fieldCursor);
 					const anchor = fieldCursor.buildAnchor();
@@ -139,45 +147,61 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 	}
 
 	/**
-	 * @returns the value associated with a particular key if it has been indexed
+	 * Returns the value associated with the given key if it has been indexed
 	 */
 	public get(key: TKey): TValue | undefined {
-		return this.filterNodes(this.nodes.get(key));
+		return this.getFilteredValue(this.nodes.get(key));
 	}
 
+	/**
+	 * Returns true iff the key exists in the index
+	 */
 	public has(key: TKey): boolean {
 		return this.get(key) !== undefined;
 	}
 
+	/**
+	 * Returns the number of values that are indexed
+	 */
 	public get size(): number {
 		let s = 0;
 		for (const nodes of this.nodes.values()) {
-			if (this.filterNodes(nodes) !== undefined) {
+			if (this.getFilteredValue(nodes) !== undefined) {
 				s += 1;
 			}
 		}
 		return s;
 	}
 
+	/**
+	 * Returns all keys in the index
+	 */
 	public *keys(): IterableIterator<TKey> {
 		for (const [key, nodes] of this.nodes.entries()) {
-			if (this.filterNodes(nodes) !== undefined) {
+			if (this.getFilteredValue(nodes) !== undefined) {
 				yield key;
 			}
 		}
 	}
 
+	/**
+	 * Returns an iterable of values in the index
+	 */
 	public *values(): IterableIterator<TValue> {
 		for (const nodes of this.nodes.values()) {
-			const filtered = this.filterNodes(nodes);
+			const filtered = this.getFilteredValue(nodes);
 			if (filtered !== undefined) {
 				yield filtered;
 			}
 		}
 	}
+
+	/**
+	 * Returns an iterable of key, value pairs for every entry in the index
+	 */
 	public *entries(): IterableIterator<[TKey, TValue]> {
 		for (const [key, nodes] of this.nodes.entries()) {
-			const filtered = this.filterNodes(nodes);
+			const filtered = this.getFilteredValue(nodes);
 			if (filtered !== undefined) {
 				yield [key, filtered];
 			}
@@ -188,18 +212,24 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 		return this.entries();
 	}
 
+	/**
+	 * Applies the provided callback to each entry in the index.
+	 */
 	public forEach(
 		callbackfn: (value: TValue, key: TKey, map: AnchorTreeIndex<TKey, TValue>) => void,
-		thisArg?: any,
+		thisArg?: unknown,
 	): void {
 		for (const [key, nodes] of this.nodes.entries()) {
-			const filtered = this.filterNodes(nodes);
+			const filtered = this.getFilteredValue(nodes);
 			if (filtered !== undefined) {
 				callbackfn.call(thisArg, filtered, key, this);
 			}
 		}
 	}
 
+	/**
+	 * Disposes this index and all the anchors it holds onto.
+	 */
 	public [disposeSymbol](): void {
 		for (const anchor of this.anchors.values()) {
 			this.forest.forgetAnchor(anchor);
@@ -212,15 +242,26 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 		});
 	}
 
-	private filterNodes(
+	/**
+	 * Filters out any anchor nodes that are detached and returns the value for the remaining nodes.
+	 */
+	private getFilteredValue(
 		anchorNodes: TreeIndexNodes<AnchorNode> | undefined,
 	): TValue | undefined {
-		if (anchorNodes !== undefined) {
-			return this.getValue(anchorNodes);
+		const attachedNodes = filterNodes(anchorNodes, (anchorNode) => {
+			// TODO: implement this part
+			return true;
+		});
+
+		if (attachedNodes !== undefined) {
+			return this.getValue(attachedNodes as unknown as TreeIndexNodes<AnchorNode>);
 		}
 	}
 }
 
+/**
+ * Filters the given anchor nodes based on the given filter function.
+ */
 function filterNodes(
 	anchorNodes: readonly AnchorNode[] | undefined,
 	filter: (node: AnchorNode) => boolean,
@@ -235,6 +276,9 @@ function filterNodes(
 	return undefined;
 }
 
+/**
+ * Checks that an array is of the type {@link TreeIndexNodes} and has at least one element.
+ */
 export function hasElement<T>(array: readonly T[]): array is TreeIndexNodes<T> {
 	return array.length >= 1;
 }
