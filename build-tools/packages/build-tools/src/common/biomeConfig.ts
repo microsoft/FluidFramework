@@ -112,11 +112,13 @@ export function getSettingValuesFromBiomeConfig(
 /**
  * Returns the absolute path to the closest Biome config file found from the current working directory up to the root
  * of the repo.
+ *
+ * @throws If a Biome config file cannot be found.
  */
 export async function getClosestBiomeConfigPath(
 	cwd: string,
 	stopAt?: string,
-): Promise<string | undefined> {
+): Promise<string> {
 	return (await findUp)
 		.findUp(["biome.json", "biome.jsonc"], { cwd, stopAt })
 		.then((config) => {
@@ -145,16 +147,13 @@ export async function getBiomeFormattedFilesFromDirectory(
 	 * The repo root-relative path to the directory being used as the Biome working directory.
 	 */
 	let directory: string;
-	let configFile: string | undefined;
+	let configFile: string;
 	if ((await stat(directoryOrConfigFile)).isFile()) {
 		configFile = directoryOrConfigFile;
 		directory = path.relative(gitRepo.resolvedRoot, path.dirname(directoryOrConfigFile));
 	} else {
 		configFile = await getClosestBiomeConfigPath(directoryOrConfigFile);
 		directory = path.relative(gitRepo.resolvedRoot, directoryOrConfigFile);
-	}
-	if (configFile === undefined) {
-		throw new Error("Cannot find a Biome config file.");
 	}
 	const config = await loadBiomeConfig(configFile);
 	return getBiomeFormattedFiles(config, directory, gitRepo);
@@ -261,16 +260,13 @@ export class BiomeConfigReader {
 		 * The repo root-relative path to the directory being used as the Biome working directory.
 		 */
 		let directory: string;
-		let configFile: string | undefined;
+		let configFile: string;
 		if ((await stat(directoryOrConfigFile)).isFile()) {
 			configFile = directoryOrConfigFile;
 			directory = path.relative(gitRepo.resolvedRoot, path.dirname(directoryOrConfigFile));
 		} else {
 			configFile = await getClosestBiomeConfigPath(directoryOrConfigFile);
 			directory = path.relative(gitRepo.resolvedRoot, directoryOrConfigFile);
-		}
-		if (configFile === undefined) {
-			throw new Error("Cannot find a Biome config file.");
 		}
 
 		const config = new BiomeConfigReader(configFile);
