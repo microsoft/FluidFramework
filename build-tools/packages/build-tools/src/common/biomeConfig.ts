@@ -99,11 +99,11 @@ export type BiomeConfigSection = "formatter" | "linter";
  * Given a Biome config object, returns the combined settings for 'ignore' and 'include' across the 'files', 'formatter'
  * and 'linter' sections in the config.
  */
-export async function getSettingValuesFromBiomeConfig(
+export function getSettingValuesFromBiomeConfig(
 	config: BiomeConfigRaw,
 	section: BiomeConfigSection,
 	kind: BiomeIncludeIgnore,
-): Promise<Set<string>> {
+): Set<string> {
 	// TODO: Remove this commented code once test cases have been added with file extension filtering -- this code is
 	// helpful because it forces everything to be included regardless of other filters - so it can be used to verify the
 	// new file extension filtering tests.
