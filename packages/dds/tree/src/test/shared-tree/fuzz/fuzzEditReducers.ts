@@ -65,6 +65,7 @@ import { getOrCreateInnerNode } from "../../../simple-tree/proxyBinding.js";
 import { isObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
 import {
 	SchemaFactory,
+	TreeArrayNode,
 	TreeViewConfiguration,
 	type TreeNode,
 	type TreeNodeSchema,
@@ -203,7 +204,7 @@ export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 		assert(fieldEdit.change.type === "optional");
 		switch (fieldEdit.change.edit.type) {
 			case "set": {
-				tree.root = generateFuzzLeafNode(fieldEdit.change.edit.value, tree.currentSchema);
+				tree.root = generateFuzzNode(fieldEdit.change.edit.value, tree.currentSchema);
 				break;
 			}
 			case "clear": {
@@ -240,11 +241,9 @@ function applySequenceFieldEdit(
 	switch (change.type) {
 		case "insert": {
 			const insertValues = change.content.map((value) =>
-				generateFuzzLeafNode(value, tree.currentSchema),
+				generateFuzzNode(value, tree.currentSchema),
 			);
-			for (let index = change.index; index < insertValues.length; index++) {
-				parentNode.arrayChildren.insertAt(index, insertValues[index - change.index]);
-			}
+			parentNode.arrayChildren.insertAt(change.index, TreeArrayNode.spread(insertValues));
 			break;
 		}
 		case "remove": {
@@ -260,8 +259,8 @@ function applySequenceFieldEdit(
 			break;
 		}
 		case "crossFieldMove": {
-			const dstParentNode = change.dstField
-				? navigateToNode(tree, change.dstField)
+			const dstParentNode = change.dstParent
+				? navigateToNode(tree, change.dstParent)
 				: tree.root;
 			assert(Tree.is(dstParentNode, tree.currentSchema));
 			dstParentNode.arrayChildren.moveRangeToIndex(
@@ -281,7 +280,7 @@ function applySequenceFieldEdit(
 function applyRequiredFieldEdit(tree: FuzzView, parentNode: FuzzNode, change: SetField): void {
 	switch (change.type) {
 		case "set": {
-			parentNode.requiredChild = generateFuzzLeafNode(change.value, tree.currentSchema);
+			parentNode.requiredChild = generateFuzzNode(change.value, tree.currentSchema);
 			break;
 		}
 		default:
@@ -296,7 +295,7 @@ function applyOptionalFieldEdit(
 ): void {
 	switch (change.type) {
 		case "set": {
-			parentNode.optionalChild = generateFuzzLeafNode(change.value, tree.currentSchema);
+			parentNode.optionalChild = generateFuzzNode(change.value, tree.currentSchema);
 			break;
 		}
 		case "clear": {
@@ -449,7 +448,7 @@ function nodeSchemaForNodeType(nodeSchema: typeof FuzzNode, nodeType: string) {
 	return simpleSchema;
 }
 
-function generateFuzzLeafNode(node: GeneratedFuzzNode, nodeSchema: typeof FuzzNode) {
+function generateFuzzNode(node: GeneratedFuzzNode, nodeSchema: typeof FuzzNode) {
 	switch (node.type) {
 		case GeneratedFuzzValueType.String:
 			return new FuzzStringNode({ stringValue: node.value as string });

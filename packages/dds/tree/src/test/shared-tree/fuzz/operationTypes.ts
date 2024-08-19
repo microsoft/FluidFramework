@@ -146,7 +146,7 @@ export interface CrossFieldMove extends Move {
 	 * The field to move the content to.
 	 * May be the same as the source field.
 	 */
-	dstField: DownPath | undefined;
+	dstParent: DownPath | undefined;
 }
 
 export interface SchemaOp {

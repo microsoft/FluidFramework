@@ -402,7 +402,7 @@ export const makeTreeEditGenerator = (
 				return {
 					type: "crossFieldMove",
 					range: chooseRange(state.random, srcField.length),
-					dstField: maybeDownPathFromNode(dstField),
+					dstParent: maybeDownPathFromNode(dstField),
 					dstIndex: state.random.integer(0, dstField.arrayChildren.length),
 				};
 			},
