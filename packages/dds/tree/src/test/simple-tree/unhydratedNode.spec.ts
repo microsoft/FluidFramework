@@ -177,6 +177,43 @@ describe("Unhydrated nodes", () => {
 		assert.equal(Tree.status(object), TreeStatus.New);
 	});
 
+	it("emit events when edited before hydration", () => {
+		const leaf = new TestLeaf({ value: "value" });
+		const map = new TestMap([]);
+		const array = new TestArray([leaf]);
+		const object = new TestObject({ map, array });
+
+		const log: string[] = [];
+		Tree.on(leaf, "nodeChanged", () => log.push("leaf nodeChanged"));
+		Tree.on(leaf, "treeChanged", () => log.push("leaf treeChanged"));
+		Tree.on(map, "nodeChanged", () => log.push("map nodeChanged"));
+		Tree.on(map, "treeChanged", () => log.push("map treeChanged"));
+		Tree.on(array, "nodeChanged", () => log.push("array nodeChanged"));
+		Tree.on(array, "treeChanged", () => log.push("array treeChanged"));
+		Tree.on(object, "nodeChanged", () => log.push("object nodeChanged"));
+		Tree.on(object, "treeChanged", () => log.push("object treeChanged"));
+
+		leaf.value = "value 2";
+		map.set("key", { value: "value 3" });
+		array.removeRange();
+		object.map = new TestMap({});
+
+		assert.deepEqual(log, [
+			"leaf nodeChanged",
+			"leaf treeChanged",
+			"array treeChanged",
+			"object treeChanged",
+			"map nodeChanged",
+			"map treeChanged",
+			"object treeChanged",
+			"array nodeChanged",
+			"array treeChanged",
+			"object treeChanged",
+			"object nodeChanged",
+			"object treeChanged",
+		]);
+	});
+
 	it("preserve events after hydration", () => {
 		function registerEvents(node: TreeNode): () => void {
 			let deepEvent = false;
