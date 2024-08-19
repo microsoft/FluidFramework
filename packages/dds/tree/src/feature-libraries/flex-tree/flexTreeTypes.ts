@@ -11,7 +11,7 @@ import {
 	type TreeValue,
 	anchorSlot,
 } from "../../core/index.js";
-import type { Assume, FlattenKeys } from "../../util/index.js";
+import type { Assume } from "../../util/index.js";
 import type {
 	FieldKinds,
 	SequenceFieldEditBuilder,
@@ -26,7 +26,6 @@ import type {
 	FlexList,
 	FlexListToUnion,
 	FlexMapNodeSchema,
-	FlexObjectNodeFields,
 	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
 	LazyItem,
@@ -321,7 +320,6 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema>
  *
  * @remarks
  * ObjectNodes require complex typing, and have been split into two parts for implementation purposes.
- * See {@link FlexTreeObjectNodeTyped} for the schema aware extensions to this that provide access to the fields.
  *
  * These "Objects" resemble "Structs" from a wide variety of programming languages
  * (Including Algol 68, C, Go, Rust, C# etc.).
@@ -352,115 +350,6 @@ export interface FlexTreeLeafNode<in out TSchema extends LeafNodeSchema> extends
 	 */
 	readonly value: TreeValue<TSchema["info"]>;
 }
-
-/**
- * An {@link FlexTreeObjectNode} with schema aware accessors for its fields.
- *
- * @privateRemarks
- *
- * The corresponding implementation logic for this lives in `LazyTree.ts` under `buildStructClass`.
- * If you change the signature here, you will need to update that logic to match.
- */
-export type FlexTreeObjectNodeTyped<TSchema extends FlexObjectNodeSchema> =
-	FlexObjectNodeSchema extends TSchema
-		? FlexTreeObjectNode
-		: FlexTreeObjectNode & FlexTreeObjectNodeFields<TSchema["info"]>;
-
-/**
- * Properties to access an object node's fields. See {@link FlexTreeObjectNodeTyped}.
- *
- * @privateRemarks
- * TODO: Support custom field keys.
- */
-export type FlexTreeObjectNodeFields<TFields extends FlexObjectNodeFields> =
-	FlexTreeObjectNodeFieldsInner<
-		FlattenKeys<
-			{
-				// When the key does not need to be escaped, map it from the input TFields in a way that doesn't break navigate to declaration
-				[key in keyof TFields as key extends PropertyNameFromFieldKey<key & string>
-					? key
-					: never]: TFields[key];
-			} & {
-				[key in keyof TFields as key extends PropertyNameFromFieldKey<key & string>
-					? never
-					: PropertyNameFromFieldKey<key & string>]: TFields[key];
-			}
-		>
-	>;
-
-/**
- * Properties to access an object node's fields. See {@link FlexTreeObjectNodeTyped}.
- *
- * @privateRemarks
- * TODO: Do we keep assignment operator + "setFoo" methods, or just use methods?
- * Inconsistency in the API experience could confusing for consumers.
- */
-export type FlexTreeObjectNodeFieldsInner<TFields extends FlexObjectNodeFields> = FlattenKeys<{
-	// Add getter.
-	readonly [key in keyof TFields]: FlexTreeUnboxField<TFields[key]>;
-}>;
-
-/**
- * Reserved object node field property names to avoid collisions with the rest of the object node API.
- */
-export const reservedObjectNodeFieldPropertyNames = [
-	"anchorNode",
-	"constructor",
-	"context",
-	"is",
-	"parentField",
-	"schema",
-	"tryGetField",
-	"type",
-	"value",
-	"boxedIterator",
-	"iterator",
-	"getBoxed",
-] as const;
-
-/**
- * Reserved object node field property names prefixes.
- * These are reserved to avoid collisions with properties derived from field other field names.
- *
- * Field names starting with these must be followed by a lowercase letter, or be escaped.
- */
-export const reservedObjectNodeFieldPropertyNamePrefixes = [
-	"set",
-	"boxed",
-	"field",
-	"Field",
-] as const;
-
-/**
- * {@link reservedObjectNodeFieldPropertyNamePrefixes} as a type union.
- */
-export type ReservedObjectNodeFieldPropertyNames =
-	(typeof reservedObjectNodeFieldPropertyNames)[number];
-
-/**
- * {@link reservedObjectNodeFieldPropertyNamePrefixes} as a type union.
- */
-export type ReservedObjectNodeFieldPropertyNamePrefixes =
-	(typeof reservedObjectNodeFieldPropertyNamePrefixes)[number];
-
-/**
- * Convert an object node's field key into an escaped string usable as a property name.
- *
- * @privateRemarks
- * TODO:
- * Collisions are still possible.
- * For example fields named "foo" and "Foo" would both produce a setter "setFoo".
- * Consider naming schemes to avoid this, ensure that there is a good workaround for these cases.
- * Another approach would be to support custom field names (separate from keys),
- * and do the escaping (if needed) when creating the flex tree schema (both when manually creating them and when doing so automatically):
- * this would enable better intellisense for escaped fields, as well as allow the feature of custom field property names.
- */
-export type PropertyNameFromFieldKey<T extends string> =
-	T extends ReservedObjectNodeFieldPropertyNames
-		? `field${Capitalize<T>}`
-		: T extends `${ReservedObjectNodeFieldPropertyNamePrefixes}${Capitalize<string>}`
-			? `field${Capitalize<T>}`
-			: T;
 
 /**
  * Field kinds that allow value assignment.
@@ -631,7 +520,7 @@ export type FlexTreeTypedNode<TSchema extends FlexTreeNodeSchema> =
 		: TSchema extends FlexMapNodeSchema
 			? FlexTreeMapNode<TSchema>
 			: TSchema extends FlexObjectNodeSchema
-				? FlexTreeObjectNodeTyped<TSchema>
+				? FlexTreeObjectNode
 				: FlexTreeNode;
 
 // #endregion
@@ -708,7 +597,7 @@ export type FlexTreeUnboxNode<TSchema extends FlexTreeNodeSchema> =
 		: TSchema extends FlexMapNodeSchema
 			? FlexTreeMapNode<TSchema>
 			: TSchema extends FlexObjectNodeSchema
-				? FlexTreeObjectNodeTyped<TSchema>
+				? FlexTreeObjectNode
 				: FlexTreeUnknownUnboxed;
 
 /**

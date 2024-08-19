@@ -18,7 +18,6 @@ import {
 	leaf,
 	leaf as leafDomain,
 	singleJsonCursor,
-	typedJsonCursor,
 } from "../../../domains/index.js";
 import type { Context } from "../../../feature-libraries/flex-tree/context.js";
 import {
@@ -28,10 +27,8 @@ import {
 } from "../../../feature-libraries/flex-tree/unboxed.js";
 import {
 	Any,
-	FieldKinds,
 	type FlexAllowedTypes,
 	type FlexFieldKind,
-	FlexFieldSchema,
 } from "../../../feature-libraries/index.js";
 import type { TreeContent } from "../../../shared-tree/index.js";
 
@@ -101,38 +98,6 @@ describe("unboxedField", () => {
 		});
 	});
 
-	it("Required field (object)", () => {
-		const builder = new SchemaBuilder({ scope: "test" });
-		const objectSchema = builder.objectRecursive("object", {
-			name: SchemaBuilder.required(leafDomain.string),
-			child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => objectSchema]),
-		});
-		const fieldSchema = SchemaBuilder.optional(objectSchema);
-		const schema = builder.intoSchema(fieldSchema);
-
-		const initialTree = typedJsonCursor({
-			[typedJsonCursor.type]: objectSchema,
-			name: "Foo",
-			child: {
-				[typedJsonCursor.type]: objectSchema,
-				name: "Bar",
-			},
-		});
-
-		const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
-
-		const unboxed = unboxedField(context, fieldSchema, cursor);
-		assert(unboxed !== undefined);
-		assert.equal(unboxed.schema, objectSchema);
-		assert.equal(unboxed.name, "Foo");
-
-		const unboxedChild = unboxed.child;
-		assert(unboxedChild !== undefined);
-		assert.equal(unboxedChild.schema, objectSchema);
-		assert.equal(unboxedChild.name, "Bar");
-		assert.equal(unboxedChild.child, undefined);
-	});
-
 	it("Sequence field", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
 		const fieldSchema = SchemaBuilder.sequence(leafDomain.string);
@@ -178,35 +143,6 @@ describe("unboxedTree", () => {
 		cursor.enterNode(0); // Root node field has 1 node; move into it
 
 		assert.equal(unboxedTree(context, leafDomain.string, cursor), "Hello world");
-	});
-
-	it("ObjectNode", () => {
-		const builder = new SchemaBuilder({ scope: "test" });
-		const objectSchema = builder.objectRecursive("object", {
-			name: SchemaBuilder.required(leafDomain.string),
-			child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => objectSchema]),
-		});
-		const rootSchema = builder.optional(objectSchema);
-		const schema = builder.intoSchema(rootSchema);
-
-		const initialTree = typedJsonCursor({
-			[typedJsonCursor.type]: objectSchema,
-			name: "Foo",
-			child: {
-				[typedJsonCursor.type]: objectSchema,
-				name: "Bar",
-			},
-		});
-
-		const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
-		cursor.enterNode(0); // Root node field has 1 node; move into it
-
-		const unboxed = unboxedTree(context, objectSchema, cursor);
-
-		assert.equal(unboxed.name, "Foo");
-		assert(unboxed.child !== undefined);
-		assert.equal(unboxed.child.name, "Bar");
-		assert.equal(unboxed.child.child, undefined);
 	});
 });
 
