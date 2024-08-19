@@ -1,5 +1,5 @@
 {
-	"name": "@fluid-example/app-integration-schema-upgrade",
+	"name": "@fluid-example/version-migration-separate-container",
 	"version": "2.3.0",
 	"private": true,
 	"description": "Using external data to initialize the container state and serialize out afterwards.",
@@ -7,7 +7,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "examples/version-migration/schema-upgrade"
+		"directory": "examples/version-migration/separate-container"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
