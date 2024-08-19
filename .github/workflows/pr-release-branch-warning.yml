@@ -14,7 +14,7 @@ on:
 
 permissions:
   # Needed to read the message template from the repo
-  # contents: read
+  contents: read
 
   # Needed to write the comments to the PRs themselves
   pull-requests: write
