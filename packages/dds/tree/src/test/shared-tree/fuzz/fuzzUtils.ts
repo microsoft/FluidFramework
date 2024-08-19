@@ -29,7 +29,7 @@ import {
 	Any,
 	FieldKinds,
 	FlexFieldSchema,
-	type FlexTreeObjectNodeTyped,
+	type FlexTreeObjectNode,
 	type LeafNodeSchema,
 	type SchemaLibrary,
 	intoStoredSchema,
@@ -58,7 +58,7 @@ export const fuzzNode = builder.object("node", {
 
 export type FuzzNodeSchema = typeof fuzzNode;
 
-export type FuzzNode = FlexTreeObjectNodeTyped<FuzzNodeSchema>;
+export type FuzzNode = FlexTreeObjectNode;
 
 export const initialFuzzSchema = createTreeViewSchema([], leaf.library);
 

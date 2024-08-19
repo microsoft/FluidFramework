@@ -705,21 +705,13 @@ function selectField(
 
 	const recurse = (state: { random: IRandom }): FuzzField | "no-valid-selections" => {
 		const childNodes: FuzzNode[] = [];
-		// Checking "=== true" causes tsc to fail to typecheck, as it is no longer able to narrow according
-		// to the .is typeguard.
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-		if (node.optionalChild?.is(nodeSchema)) {
-			childNodes.push(node.optionalChild);
-		}
-
-		if (node.requiredChild?.is(nodeSchema)) {
-			childNodes.push(node.requiredChild);
-		}
-		node.sequenceChildren.map((child) => {
-			if (child.is(nodeSchema)) {
-				childNodes.push(child);
+		for (const field of node.boxedIterator()) {
+			for (const child of field.boxedIterator()) {
+				if (child.is(nodeSchema)) {
+					childNodes.push(child);
+				}
 			}
-		});
+		}
 		state.random.shuffle(childNodes);
 		for (const child of childNodes) {
 			const childResult = selectField(child, random, weights, filter, nodeSchema);
