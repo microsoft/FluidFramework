@@ -19,14 +19,12 @@ import {
 	mapCursorFields,
 	rootFieldKey,
 } from "../../core/index.js";
-import { brand, capitalize, disposeSymbol, fail, getOrCreate } from "../../util/index.js";
+import { brand, disposeSymbol, fail } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 import {
 	Any,
-	type FlexAllowedTypes,
 	FlexFieldSchema,
 	type FlexMapNodeSchema,
-	type FlexObjectNodeSchema,
 	type FlexTreeNodeSchema,
 	type LeafNodeSchema,
 	schemaIsLeaf,
@@ -41,18 +39,11 @@ import {
 	type FlexTreeLeafNode,
 	type FlexTreeMapNode,
 	type FlexTreeNode,
-	type FlexTreeObjectNodeTyped,
-	type FlexTreeOptionalField,
-	type FlexTreeRequiredField,
 	type FlexTreeTypedField,
 	type FlexTreeTypedNode,
 	type FlexTreeUnboxField,
-	type FlexibleNodeContent,
-	type PropertyNameFromFieldKey,
 	flexTreeMarker,
 	flexTreeSlot,
-	reservedObjectNodeFieldPropertyNamePrefixes,
-	reservedObjectNodeFieldPropertyNames,
 } from "./flexTreeTypes.js";
 import {
 	LazyEntity,
@@ -103,7 +94,7 @@ function buildSubclass(
 		return new LazyLeaf(context, schema, cursor, anchorNode, anchor);
 	}
 	if (schemaIsObjectNode(schema)) {
-		return buildLazyObjectNode(context, schema, cursor, anchorNode, anchor);
+		return new LazyTreeNode(context, schema, cursor, anchorNode, anchor);
 	}
 	// TODO: there should be a common fallback that works for cases without a specialized implementation.
 	fail("unrecognized node kind");
@@ -112,7 +103,7 @@ function buildSubclass(
 /**
  * Lazy implementation of {@link FlexTreeNode}.
  */
-export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchema>
+export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchema>
 	extends LazyEntity<TSchema, Anchor>
 	implements FlexTreeNode
 {
@@ -307,10 +298,6 @@ export class LazyMap<TSchema extends FlexMapNodeSchema>
 		return super.getBoxed(brand(key)) as FlexTreeTypedField<TSchema["info"]>;
 	}
 
-	public override boxedIterator(): IterableIterator<FlexTreeTypedField<TSchema["info"]>> {
-		return super.boxedIterator() as IterableIterator<FlexTreeTypedField<TSchema["info"]>>;
-	}
-
 	public [Symbol.iterator](): IterableIterator<
 		[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]
 	> {
@@ -337,54 +324,6 @@ export class LazyLeaf<TSchema extends LeafNodeSchema>
 	}
 }
 
-/**
- * {@link reservedObjectNodeFieldPropertyNames} but as a set.
- */
-export const reservedObjectNodeFieldPropertyNameSet: ReadonlySet<string> = new Set(
-	reservedObjectNodeFieldPropertyNames,
-);
-
-export function propertyNameFromFieldKey<T extends string>(
-	key: T,
-): PropertyNameFromFieldKey<T> {
-	if (reservedObjectNodeFieldPropertyNameSet.has(key)) {
-		return `field${capitalize(key)}` as PropertyNameFromFieldKey<T>;
-	}
-	for (const prefix of reservedObjectNodeFieldPropertyNamePrefixes) {
-		if (key.startsWith(prefix)) {
-			const afterPrefix = key.slice(prefix.length);
-			if (afterPrefix === capitalize(afterPrefix)) {
-				return `field${capitalize(key)}` as PropertyNameFromFieldKey<T>;
-			}
-		}
-	}
-	return key as PropertyNameFromFieldKey<T>;
-}
-
-export function buildLazyObjectNode<TSchema extends FlexObjectNodeSchema>(
-	context: Context,
-	schema: TSchema,
-	cursor: ITreeSubscriptionCursor,
-	anchorNode: AnchorNode,
-	anchor: Anchor,
-): LazyTreeNode<TSchema> & FlexTreeObjectNodeTyped<TSchema> {
-	const objectNodeClass = getOrCreate(cachedStructClasses, schema, () =>
-		buildStructClass(schema),
-	);
-	return new objectNodeClass(context, cursor, anchorNode, anchor) as LazyTreeNode<TSchema> &
-		FlexTreeObjectNodeTyped<TSchema>;
-}
-
-const cachedStructClasses = new WeakMap<
-	FlexObjectNodeSchema,
-	new (
-		context: Context,
-		cursor: ITreeSubscriptionCursor,
-		anchorNode: AnchorNode,
-		anchor: Anchor,
-	) => LazyTreeNode<FlexObjectNodeSchema>
->();
-
 function getBoxedField(
 	objectNode: LazyTreeNode,
 	key: FieldKey,
@@ -393,94 +332,4 @@ function getBoxedField(
 	return inCursorField(objectNode[cursorSymbol], key, (cursor) => {
 		return makeField(objectNode.context, fieldSchema, cursor);
 	});
-}
-
-function buildStructClass<TSchema extends FlexObjectNodeSchema>(
-	schema: TSchema,
-): new (
-	context: Context,
-	cursor: ITreeSubscriptionCursor,
-	anchorNode: AnchorNode,
-	anchor: Anchor,
-) => LazyTreeNode<TSchema> {
-	const propertyDescriptorMap: PropertyDescriptorMap = {};
-
-	for (const [key, fieldSchema] of schema.objectNodeFields) {
-		const escapedKey = propertyNameFromFieldKey(key);
-		let setter: ((newContent: FlexibleNodeContent) => void) | undefined;
-		switch (fieldSchema.kind) {
-			case FieldKinds.optional: {
-				setter = function (
-					this: CustomStruct,
-					newContent: FlexibleNodeContent | undefined,
-				): void {
-					const field = getBoxedField(
-						this,
-						key,
-						fieldSchema,
-					) as FlexTreeOptionalField<FlexAllowedTypes>;
-					field.editor.set(newContent, field.length === 0);
-				};
-				break;
-			}
-			case FieldKinds.required: {
-				setter = function (this: CustomStruct, newContent: FlexibleNodeContent): void {
-					const field = getBoxedField(
-						this,
-						key,
-						fieldSchema,
-					) as FlexTreeRequiredField<FlexAllowedTypes>;
-					field.editor.set(newContent);
-				};
-				break;
-			}
-			default:
-				setter = undefined;
-				break;
-		}
-
-		// Create getter and setter (when appropriate) for property
-		propertyDescriptorMap[escapedKey] = {
-			enumerable: true,
-			get(this: CustomStruct): unknown {
-				return inCursorField(this[cursorSymbol], key, (cursor) =>
-					unboxedField(this.context, fieldSchema, cursor),
-				);
-			},
-			set: setter,
-		};
-
-		// Create set method for property (when appropriate)
-		if (setter !== undefined) {
-			propertyDescriptorMap[`set${capitalize(escapedKey)}`] = {
-				enumerable: false,
-				get(this: CustomStruct) {
-					return setter;
-				},
-			};
-		}
-
-		propertyDescriptorMap[`boxed${capitalize(escapedKey)}`] = {
-			enumerable: false,
-			get(this: CustomStruct) {
-				return getBoxedField(this, key, fieldSchema);
-			},
-		};
-	}
-
-	// This must implement `StructTyped<TSchema>`, but TypeScript can't constrain it to do so.
-	class CustomStruct extends LazyTreeNode<TSchema> {
-		public constructor(
-			context: Context,
-			cursor: ITreeSubscriptionCursor,
-			anchorNode: AnchorNode,
-			anchor: Anchor,
-		) {
-			super(context, schema, cursor, anchorNode, anchor);
-		}
-	}
-
-	Object.defineProperties(CustomStruct.prototype, propertyDescriptorMap);
-
-	return CustomStruct;
 }
