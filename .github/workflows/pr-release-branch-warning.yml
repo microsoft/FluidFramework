@@ -12,6 +12,10 @@ on:
       - release/server/**
 
 permissions:
+  # Needed to read the message template from the repo
+  contents: read
+
+  # Needed to write the comments to the PRs themselves
   pull-requests: write
 
 jobs:
@@ -24,4 +28,3 @@ jobs:
         with:
           path: ${{ github.workspace }}/.github/workflows/data/release-branch-warning.md
           only_create: true
-          ignore_empty: true
