@@ -247,8 +247,8 @@ importers:
         specifier: ^22.0.0
         version: 22.0.0
       type-fest:
-        specifier: ^2.19.0
-        version: 2.19.0
+        specifier: ^4.25.0
+        version: 4.25.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.8.3
@@ -434,8 +434,8 @@ importers:
         specifier: ^22.0.0
         version: 22.0.0
       type-fest:
-        specifier: ^2.19.0
-        version: 2.19.0
+        specifier: ^4.25.0
+        version: 4.25.0
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -10778,6 +10778,11 @@ packages:
   /type-fest@2.19.0:
     resolution: {integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==}
     engines: {node: '>=12.20'}
+
+  /type-fest@4.25.0:
+    resolution: {integrity: sha512-bRkIGlXsnGBRBQRAY56UXBm//9qH4bmJfFvq83gSz41N282df+fjy8ofcEgc1sM8geNt5cl6mC2g9Fht1cs8Aw==}
+    engines: {node: '>=16'}
+    dev: false
 
   /type@1.2.0:
     resolution: {integrity: sha512-+5nt5AAniqsCnu2cEQQdpzCAh33kVx8n0VoFidKpB1dVVLAN/F+bgVOqOJqOnEnrhp222clB5p3vUlD+1QAnfg==}

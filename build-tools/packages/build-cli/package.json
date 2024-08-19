@@ -130,7 +130,7 @@
 		"strip-ansi": "^6.0.1",
 		"table": "^6.8.1",
 		"ts-morph": "^22.0.0",
-		"type-fest": "^2.19.0"
+		"type-fest": "^4.25.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",
