@@ -23,7 +23,6 @@ import type {
 	UpPath,
 } from "../../../core/index.js";
 import {
-	type Any,
 	type DownPath,
 	toDownPath,
 	treeSchemaFromStoredSchema,
