@@ -24,3 +24,4 @@ jobs:
         with:
           path: ${{ github.workspace }}/.github/workflows/data/release-branch-warning.md
           only_create: true
+          ignore_empty: true
