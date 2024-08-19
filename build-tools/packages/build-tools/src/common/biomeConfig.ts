@@ -10,6 +10,8 @@ import ignore from "ignore";
 import * as JSON5 from "json5";
 import multimatch from "multimatch";
 import { merge } from "ts-deepmerge";
+// Note: in more recent versions of type-fest, this type has been replaced with "Tagged"
+// We are not using an older version because more recent versions are ESM-only.
 import type { Opaque } from "type-fest";
 import type { Configuration as BiomeConfigRaw } from "./biomeConfigTypes";
 import type { GitRepo } from "./gitRepo";
@@ -101,7 +103,7 @@ export type BiomeConfigSection = "formatter" | "linter";
  * and 'linter' sections in the config.
  */
 export function getSettingValuesFromBiomeConfig(
-	config: BiomeConfigRaw,
+	config: BiomeConfigResolved,
 	section: BiomeConfigSection,
 	kind: BiomeIncludeIgnore,
 ): Set<string> {
