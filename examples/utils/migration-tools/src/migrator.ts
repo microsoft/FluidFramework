@@ -14,11 +14,8 @@ import type {
 	IMigrator,
 	IMigratorEvents,
 	MigrationState,
-} from "../migrationInterfaces/index.js";
-import type {
-	IDetachedMigratableModel,
-	IMigratableModelLoader,
-} from "../modelLoader/index.js";
+} from "./interfaces/index.js";
+import type { IDetachedMigratableModel, IMigratableModelLoader } from "./modelLoader/index.js";
 
 /**
  * As the Migrator migrates, it updates its reference to the current version of the model.

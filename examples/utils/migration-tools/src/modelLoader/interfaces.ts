@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigrationTool } from "../migrationInterfaces/index.js";
+import type { IMigrationTool } from "../interfaces/index.js";
 
 // TODO: Consider just extending IAttachedMigratableModel
 /**

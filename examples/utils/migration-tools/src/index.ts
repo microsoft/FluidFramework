@@ -14,9 +14,9 @@ export type {
 	IMigratorEvents,
 	IVersionedModel,
 	MigrationState,
-} from "./migrationInterfaces/index.js";
-export { MigrationToolFactory } from "./migrationTool/index.js";
-export { Migrator } from "./migrator/index.js";
+} from "./interfaces/index.js";
+export { MigrationToolFactory } from "./migrationTool.js";
+export { Migrator } from "./migrator.js";
 export {
 	CreateModelCallback,
 	IAttachedMigratableModel,
