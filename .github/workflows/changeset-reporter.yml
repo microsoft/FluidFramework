@@ -44,6 +44,7 @@ jobs:
 
       - name: Required and present
         if: fromJson(steps.changeset.outputs.CHANGESET).required == true && fromJson(steps.changeset.outputs.CHANGESET).changesetFound == true
+        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.0
         uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # ratchet:marocchino/sticky-pull-request-comment@v2.9.0
         with:
           header: changeset
@@ -54,6 +55,7 @@ jobs:
 
       - name: Changeset not required
         if: fromJson(steps.changeset.outputs.CHANGESET).required == false && fromJson(steps.changeset.outputs.CHANGESET).changesetFound == true
+        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.0
         uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # ratchet:marocchino/sticky-pull-request-comment@v2.9.0
         with:
           header: changeset
