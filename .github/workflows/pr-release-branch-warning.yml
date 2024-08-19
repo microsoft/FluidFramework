@@ -1,6 +1,6 @@
 name: Release branch warning
 on:
-  pull_request:
+  pull_request_target:
     types:
       - opened
       - synchronize
@@ -11,11 +11,9 @@ on:
     branches:
       - release/client/**
       - release/server/**
+      - test/release/**
 
 permissions:
-  # Needed to read the message template from the repo
-  contents: read
-
   # Needed to write the comments to the PRs themselves
   pull-requests: write
 
