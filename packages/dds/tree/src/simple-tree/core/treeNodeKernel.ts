@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { createEmitter, type Listenable, type Off } from "../../events/index.js";
-import type { TreeChangeEvents, TreeNode, Unhydrated } from "./types.js";
+import type { Off } from "../../events/index.js";
+import type { TreeNode, Unhydrated } from "./types.js";
 import type { AnchorNode } from "../../core/index.js";
 import {
 	flexTreeSlot,
@@ -14,10 +14,7 @@ import {
 	TreeStatus,
 	treeStatusFromAnchorCache,
 } from "../../feature-libraries/index.js";
-import { getSimpleNodeSchema } from "./schemaCaching.js";
-import { fail } from "../../util/index.js";
-import { isObjectNodeSchema } from "../objectNodeTypes.js"; // TODO: layer violation: simple-tree/core should not depend on specific node-kinds. Node kind specific logic should live in the files implementing those node kinds, or in simple-tree/api.
-import { NodeKind, type TreeNodeSchema } from "./treeNodeSchema.js";
+import type { TreeNodeSchema } from "./treeNodeSchema.js";
 
 const treeNodeToKernel = new WeakMap<TreeNode, TreeNodeKernel>();
 
@@ -63,12 +60,17 @@ export function tryGetTreeNodeSchema(value: unknown): undefined | TreeNodeSchema
  * The kernel has the same lifetime as the node and spans both its unhydrated and hydrated states.
  * When hydration occurs, the kernel is notified via the {@link TreeNodeKernel.hydrate | hydrate} method.
  */
-export class TreeNodeKernel implements Listenable<TreeChangeEvents> {
-	#hydrated?: {
+export class TreeNodeKernel {
+	/**
+	 * Generation number which is incremented any time we have an edit on the node.
+	 * Used during iteration to make sure there has been no edits that were concurrently made.
+	 */
+	public generationNumber: number = 0;
+
+	public hydrated?: {
 		anchorNode: AnchorNode;
-		offAnchorNode: Off;
+		offAnchorNode: Set<Off>;
 	};
-	#events = createEmitter<TreeChangeEvents>();
 
 	/**
 	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
@@ -84,72 +86,36 @@ export class TreeNodeKernel implements Listenable<TreeChangeEvents> {
 	}
 
 	public hydrate(anchorNode: AnchorNode): void {
-		// TODO: this logic being in hydrate is problematic for two reasons:
-		// 1: It depends on node kinds, which are not supposed to be used in the folder.
-		// 2. It won't work for nodes which are unhydrated, which are getting editing support and should have these events.
-		// This logic should probably move to TreeNode API where the events are actually exposed to users.
-		const offChildrenChanged = anchorNode.on(
-			"childrenChangedAfterBatch",
-			({ changedFields }) => {
-				const flexNode = anchorNode.slots.get(flexTreeSlot);
-				assert(flexNode !== undefined, "Flex node does not exist");
-				const nodeSchema = getSimpleNodeSchema(flexNode.schema);
-				let changedProperties: ReadonlySet<string>;
-				if (isObjectNodeSchema(nodeSchema)) {
-					changedProperties = new Set(
-						Array.from(
-							changedFields,
-							(field) =>
-								nodeSchema.storedKeyToPropertyKey.get(field) ??
-								fail(`Could not find stored key '${field}' in schema.`),
-						),
-					);
-				} else if (nodeSchema.kind === NodeKind.Array) {
-					// For array nodes, for now we don't have a good story of what we should expose as changed properties (indices?
-					// even if that means including all indices if something is added/removed at the beginning of the array?), so
-					// for now we just provide an empty set. In particular, we don't want to say "the key <empty string> changed"
-					// which is what would happen if we just used the changedFields as the changedProperties because of the way
-					// array nodes work.
-					changedProperties = new Set();
-				} else {
-					changedProperties = changedFields;
-				}
-				this.#events.emit("nodeChanged", { changedProperties });
-			},
-		);
-
-		const offSubtreeChanged = anchorNode.on("subtreeChangedAfterBatch", () => {
-			this.#events.emit("treeChanged");
-		});
-
-		const offAfterDestroy = anchorNode.on("afterDestroy", () => this.dispose());
-
-		this.#hydrated = {
+		this.hydrated = {
 			anchorNode,
-			offAnchorNode: () => {
-				offChildrenChanged();
-				offSubtreeChanged();
-				offAfterDestroy();
-			},
+			offAnchorNode: new Set([
+				anchorNode.on("afterDestroy", () => this.dispose()),
+				// TODO: this should be triggered on change even for unhydrated nodes.
+				anchorNode.on("childrenChanging", () => {
+					this.generationNumber += 1;
+				}),
+			]),
 		};
 	}
 
 	public dehydrate(): void {
-		this.#hydrated?.offAnchorNode?.();
-		this.#hydrated = undefined;
+		for (const off of this.hydrated?.offAnchorNode ?? []) {
+			off();
+		}
+		this.hydrated = undefined;
 	}
 
 	public isHydrated(): boolean {
-		return this.#hydrated !== undefined;
+		return this.hydrated !== undefined;
 	}
 
 	public getStatus(): TreeStatus {
-		if (this.#hydrated?.anchorNode === undefined) {
+		if (this.hydrated?.anchorNode === undefined) {
 			return TreeStatus.New;
 		}
 
 		// TODO: Replace this check with the proper check against the cursor state when the cursor becomes part of the kernel
-		const flex = this.#hydrated.anchorNode.slots.get(flexTreeSlot);
+		const flex = this.hydrated.anchorNode.slots.get(flexTreeSlot);
 		if (flex !== undefined) {
 			assert(flex instanceof LazyEntity, 0x9b4 /* Unexpected flex node implementation */);
 			if (flex[isFreedSymbol]()) {
@@ -157,14 +123,7 @@ export class TreeNodeKernel implements Listenable<TreeChangeEvents> {
 			}
 		}
 
-		return treeStatusFromAnchorCache(this.#hydrated.anchorNode);
-	}
-
-	public on<K extends keyof TreeChangeEvents>(
-		eventName: K,
-		listener: TreeChangeEvents[K],
-	): Off {
-		return this.#events.on(eventName, listener);
+		return treeStatusFromAnchorCache(this.hydrated.anchorNode);
 	}
 
 	public dispose(): void {

@@ -670,19 +670,10 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 	protected abstract get simpleSchema(): T;
 
-	/**
-	 * Generation number which is incremented any time we have an edit on the node.
-	 * Used during iteration to make sure there has been no edits that were concurrently made.
-	 */
-	#generationNumber: number = 0;
-
 	public constructor(
 		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
 	) {
 		super(input);
-		getKernel(this).on("nodeChanged", () => {
-			this.#generationNumber += 1;
-		});
 	}
 
 	#mapTreesFromFieldData(value: Insertable<T>): ExclusiveMapTree[] {
@@ -884,17 +875,17 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	}
 
 	public values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
-		return this.generateValues(this.#generationNumber);
+		return this.generateValues(getKernel(this).generationNumber);
 	}
 	private *generateValues(
 		initialLastUpdatedStamp: number,
 	): Generator<TreeNodeFromImplicitAllowedTypes<T>> {
-		if (initialLastUpdatedStamp !== this.#generationNumber) {
+		if (initialLastUpdatedStamp !== getKernel(this).generationNumber) {
 			throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 		}
 		for (let i = 0; i < this.length; i++) {
 			yield this.at(i) ?? fail("Index is out of bounds");
-			if (initialLastUpdatedStamp !== this.#generationNumber) {
+			if (initialLastUpdatedStamp !== getKernel(this).generationNumber) {
 				throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 			}
 		}

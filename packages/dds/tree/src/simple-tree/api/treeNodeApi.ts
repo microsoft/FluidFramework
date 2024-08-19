@@ -44,6 +44,7 @@ import {
 	type TreeChangeEvents,
 	tryGetTreeNodeSchema,
 } from "../core/index.js";
+import { isObjectNodeSchema } from "../objectNodeTypes.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -167,7 +168,45 @@ export const treeNodeApi: TreeNodeApi = {
 		eventName: K,
 		listener: TreeChangeEvents[K],
 	): Off {
-		return getKernel(node).on(eventName, listener);
+		const kernel = getKernel(node);
+		if (kernel.hydrated === undefined) {
+			throw new UsageError(
+				"Subscribing to events for a node which is Unhydrated is unsupported",
+			);
+		}
+		const anchorNode = kernel.hydrated.anchorNode;
+
+		switch (eventName) {
+			case "nodeChanged": {
+				const nodeSchema = kernel.schema;
+				if (isObjectNodeSchema(nodeSchema)) {
+					return anchorNode.on("childrenChangedAfterBatch", ({ changedFields }) => {
+						const changedProperties = new Set(
+							Array.from(
+								changedFields,
+								(field) =>
+									nodeSchema.storedKeyToPropertyKey.get(field) ??
+									fail(`Could not find stored key '${field}' in schema.`),
+							),
+						);
+						listener({ changedFields: changedProperties });
+					});
+				} else if (nodeSchema.kind === NodeKind.Array) {
+					return anchorNode.on("childrenChangedAfterBatch", () => {
+						listener({});
+					});
+				} else {
+					return anchorNode.on("childrenChangedAfterBatch", ({ changedFields }) => {
+						listener({ changedFields });
+					});
+				}
+			}
+			case "treeChanged": {
+				anchorNode.on("subtreeChangedAfterBatch", listener);
+			}
+			default:
+				throw new UsageError(`No event named ${JSON.stringify(eventName)}.`);
+		}
 	},
 	status(node: TreeNode): TreeStatus {
 		return getKernel(node).getStatus();
@@ -245,7 +284,7 @@ export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
 			return booleanSchema;
 		case "object": {
 			if (isTreeNode(value)) {
-				// This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.
+				// TODO: This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.
 				return tryGetTreeNodeSchema(value);
 			}
 			if (value === null) {
