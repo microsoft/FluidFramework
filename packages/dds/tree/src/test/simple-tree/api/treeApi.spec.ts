@@ -838,22 +838,20 @@ describe("treeNodeApi", () => {
 			view.initialize([1, 2]);
 			const root = view.root;
 
-			const eventLog: ReadonlySet<string>[] = [];
-			Tree.on(root, "nodeChanged", ({ changedProperties }) =>
-				eventLog.push(changedProperties),
-			);
+			const eventLog: (ReadonlySet<string> | undefined)[] = [];
+			Tree.on(root, "nodeChanged", (data) => eventLog.push(data.changedProperties));
 
 			const { forkView, forkCheckout } = getViewForForkedBranch(view);
 
 			// The implementation details of the kinds of changes that can happen inside the tree are not exposed at this layer.
 			// But since we know them, try to cover all of them.
 			forkView.root.insertAtEnd(3); // Append to array
-			forkView.root.removeAt(0); // Remove from arrray
+			forkView.root.removeAt(0); // Remove from array
 			forkView.root.moveRangeToEnd(0, 1); // Move within array
 
 			view.checkout.merge(forkCheckout);
 
-			assert.deepEqual(eventLog, [new Set()]);
+			assert.deepEqual(eventLog, [undefined]);
 		});
 
 		it(`'nodeChanged' uses view keys, not stored keys, for the list of changed properties`, () => {

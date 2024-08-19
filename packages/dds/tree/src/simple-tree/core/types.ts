@@ -34,7 +34,7 @@ export interface NodeChangedData {
 	 * @remarks
 	 * This only includes changes to the node itself (which would trigger {@link TreeChangeEvents.nodeChanged}).
 	 */
-	readonly changedProperties: ReadonlySet<string>;
+	readonly changedProperties?: ReadonlySet<string>;
 }
 
 /**
@@ -94,9 +94,9 @@ export interface TreeChangeEvents<TNode = TreeNode> {
 	nodeChanged(
 		data: NodeChangedData &
 			// For object and Map nodes, make properties specific to them required instead of optional:
-			TNode extends WithType<string, NodeKind.Map | NodeKind.Object>
-			? Required<Pick<NodeChangedData, "changedProperties">>
-			: unknown,
+			(TNode extends WithType<string, NodeKind.Map | NodeKind.Object>
+				? Required<Pick<NodeChangedData, "changedProperties">>
+				: unknown),
 	): void;
 
 	/**

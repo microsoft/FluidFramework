@@ -175,7 +175,6 @@ export const treeNodeApi: TreeNodeApi = {
 			);
 		}
 		const anchorNode = kernel.hydrated.anchorNode;
-
 		switch (eventName) {
 			case "nodeChanged": {
 				const nodeSchema = kernel.schema;
@@ -189,20 +188,20 @@ export const treeNodeApi: TreeNodeApi = {
 									fail(`Could not find stored key '${field}' in schema.`),
 							),
 						);
-						listener({ changedFields: changedProperties });
+						listener({ changedProperties });
 					});
 				} else if (nodeSchema.kind === NodeKind.Array) {
 					return anchorNode.on("childrenChangedAfterBatch", () => {
-						listener({});
+						listener({ changedProperties: undefined });
 					});
 				} else {
 					return anchorNode.on("childrenChangedAfterBatch", ({ changedFields }) => {
-						listener({ changedFields });
+						listener({ changedProperties: changedFields });
 					});
 				}
 			}
 			case "treeChanged": {
-				anchorNode.on("subtreeChangedAfterBatch", listener);
+				return anchorNode.on("subtreeChangedAfterBatch", () => listener({}));
 			}
 			default:
 				throw new UsageError(`No event named ${JSON.stringify(eventName)}.`);
