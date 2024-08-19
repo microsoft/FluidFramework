@@ -10,10 +10,8 @@ export {
 } from "./instantiateMigratableRuntime.js";
 export {
 	IAttachedMigratableModel,
-	IDetachedModel,
 	IDetachedMigratableModel,
 	IMigratableModelLoader,
 } from "./interfaces.js";
 export { MigratableModelLoader } from "./migratableModelLoader.js";
 export { MigratableSessionStorageModelLoader } from "./migratableSessionStorageModelLoader.js";
-export { StaticCodeLoader } from "./staticCodeLoader.js";

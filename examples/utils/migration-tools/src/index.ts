@@ -21,11 +21,9 @@ export {
 	CreateModelCallback,
 	IAttachedMigratableModel,
 	IDetachedMigratableModel,
-	IDetachedModel,
 	IMigratableModelContainerRuntimeEntryPoint,
 	IMigratableModelLoader,
 	instantiateMigratableRuntime,
 	MigratableModelLoader,
 	MigratableSessionStorageModelLoader,
-	StaticCodeLoader,
 } from "./modelLoader/index.js";

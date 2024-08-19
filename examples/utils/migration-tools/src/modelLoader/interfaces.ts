@@ -78,20 +78,3 @@ export interface IMigratableModelLoader<ModelType> {
 		sequenceNumber: number,
 	): Promise<IAttachedMigratableModel<ModelType>>;
 }
-
-/**
- * Object returned from calling IModelLoader.createDetached().
- * @internal
- */
-export interface IDetachedModel<ModelType> {
-	/**
-	 * The newly created, detached model object.
-	 */
-	model: ModelType;
-	/**
-	 * A function that will attach the model object to the service when called.
-	 * @returns a Promise that will resolve after attach completes with the container ID of the newly attached
-	 * container.
-	 */
-	attach: () => Promise<string>;
-}

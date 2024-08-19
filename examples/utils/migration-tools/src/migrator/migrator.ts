@@ -15,7 +15,10 @@ import type {
 	IMigratorEvents,
 	MigrationState,
 } from "../migrationInterfaces/index.js";
-import type { IDetachedModel, IMigratableModelLoader } from "../modelLoader/index.js";
+import type {
+	IDetachedMigratableModel,
+	IMigratableModelLoader,
+} from "../modelLoader/index.js";
 
 /**
  * As the Migrator migrates, it updates its reference to the current version of the model.
@@ -75,7 +78,7 @@ export class Migrator implements IMigrator {
 	/**
 	 * Detached model that is ready to attach. This is stored for retry scenarios.
 	 */
-	private _preparedDetachedModel: IDetachedModel<IMigratableModel> | undefined;
+	private _preparedDetachedModel: IDetachedMigratableModel<IMigratableModel> | undefined;
 
 	/**
 	 * After attaching the prepared model, but before we have written its ID into the current model, we'll store the ID
