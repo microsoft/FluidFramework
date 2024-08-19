@@ -24,10 +24,11 @@ import {
 	type Any,
 	mapTreeFromCursor,
 	mapTreeFieldFromCursor,
+	FieldKinds,
 } from "../../../feature-libraries/index.js";
 import type { SharedTreeFactory } from "../../../shared-tree/index.js";
 import { brand, fail } from "../../../util/index.js";
-import { validateFuzzTreeConsistency } from "../../utils.js";
+import { moveWithin, validateFuzzTreeConsistency } from "../../utils.js";
 
 import {
 	type FuzzTestState,
@@ -173,7 +174,9 @@ function applySequenceFieldEdit(
 			break;
 		}
 		case "intraFieldMove": {
-			field.editor.move(
+			moveWithin(
+				tree.checkout.editor,
+				field.getFieldPath(),
 				change.range.first,
 				change.range.last + 1 - change.range.first,
 				change.dstIndex,
@@ -323,16 +326,11 @@ function navigateToField(tree: FuzzView, path: FieldDownPath): FlexTreeField {
 	} else {
 		const parent = navigateToNode(tree, path.parent);
 		assert(parent.is(nodeSchema), "Defined down-path should point to a valid parent");
-		switch (path.key) {
-			case "sequenceChildren":
-				return parent.boxedSequenceChildren;
-			case "optionalChild":
-				return parent.boxedOptionalChild;
-			case "requiredChild":
-				return parent.boxedRequiredChild;
-			default:
-				fail("Unknown field key");
-		}
+		assert(
+			nodeSchema.getFieldSchema(path.key).kind !== FieldKinds.forbidden,
+			"Unknown field key",
+		);
+		return parent.getBoxed(path.key);
 	}
 }
 

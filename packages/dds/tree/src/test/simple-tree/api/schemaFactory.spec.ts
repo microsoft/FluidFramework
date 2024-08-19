@@ -17,13 +17,18 @@ import { TreeStatus } from "../../../feature-libraries/index.js";
 import {
 	treeNodeApi as Tree,
 	TreeViewConfiguration,
+	type TreeArrayNode,
+	type TreeMapNode,
 	type TreeView,
 } from "../../../simple-tree/index.js";
 import {
 	type TreeNodeSchema,
+	type WithType,
 	isTreeNode,
+	NodeKind,
 	// Import directly to get the non-type import to allow testing of the package only instanceof
 	TreeNode,
+	typeSchemaSymbol,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/index.js";
 import {
@@ -955,4 +960,76 @@ describe("schemaFactory", () => {
 			);
 		});
 	});
+
+	it("kind based narrowing", () => {
+		const factory = new SchemaFactory("");
+
+		class Obj extends factory.object("O", {}) {}
+		class Arr extends factory.array("A", []) {}
+		class MapNode extends factory.map("M", []) {}
+
+		const obj = hydrate(Obj, {});
+		const arr = hydrate(Arr, []);
+		const mapNode = hydrate(MapNode, {});
+
+		function f(node: TreeNode & WithType<string, NodeKind.Object>): "object";
+		function f(node: TreeNode & WithType<string, NodeKind.Array>): "array";
+		function f(node: TreeNode & WithType<string, NodeKind.Map>): "map";
+		function f(node: TreeNode): "any";
+
+		function f(node: TreeNode): string {
+			return "nope";
+		}
+
+		// Compile time check that NodeKind based overload resolution works as expected.
+		const s1: "object" = f(obj);
+		const s2: "array" = f(arr);
+		const s3: "map" = f(mapNode);
+		const s4: "any" = f(obj as TreeNode);
+
+		// Check runtime data:
+		assert.equal(obj[typeSchemaSymbol], Obj);
+		assert.equal(arr[typeSchemaSymbol], Arr);
+		assert.equal(mapNode[typeSchemaSymbol], MapNode);
+	});
+
+	it("kind based narrowing example", () => {
+		const factory = new SchemaFactory("");
+
+		class Obj extends factory.object("O", { a: factory.number }) {}
+		class Arr extends factory.array("A", [factory.number]) {}
+		class MapNode extends factory.map("M", [factory.number]) {}
+
+		const obj = hydrate(Obj, { a: 5 });
+		const arr = hydrate(Arr, [5]);
+		const mapNode = hydrate(MapNode, { x: 5 });
+
+		assert.deepEqual(getKeys(obj), ["a"]);
+		assert.deepEqual(getKeys(arr), [0]);
+		assert.deepEqual(getKeys(mapNode), ["x"]);
+	});
 });
+
+// kind based narrowing example
+function getKeys(node: TreeNode & WithType<string, NodeKind.Array>): number[];
+function getKeys(node: TreeNode & WithType<string, NodeKind.Map | NodeKind.Object>): string[];
+function getKeys(node: TreeNode): string[] | number[];
+function getKeys(node: TreeNode): string[] | number[] {
+	const schema = Tree.schema(node);
+	switch (schema.kind) {
+		case NodeKind.Array: {
+			const arrayNode = node as TreeArrayNode;
+			const keys: number[] = [];
+			for (let index = 0; index < arrayNode.length; index++) {
+				keys.push(index);
+			}
+			return keys;
+		}
+		case NodeKind.Map:
+			return [...(node as TreeMapNode).keys()];
+		case NodeKind.Object:
+			return Object.keys(node);
+		default:
+			throw new Error("Unsupported Kind");
+	}
+}

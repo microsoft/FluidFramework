@@ -87,19 +87,49 @@ describe("Unhydrated nodes", () => {
 	});
 
 	it("get their parent", () => {
-		const mapLeaf = new TestLeaf({ value: "mapValue" });
+		// For each node type, this test checks that the parent of each newly created nodes is correct.
+		// It also creates children and checks that the parent of each is updated when the child is inserted under a node, and again when it is removed.
+
+		// Map
+		const mapLeaf = new TestLeaf({ value: "value" });
 		assert.equal(Tree.parent(mapLeaf), undefined);
-		const map = new TestMap([["key", mapLeaf]]);
-		assert.equal(Tree.parent(map), undefined);
+		const map = new TestMap({ key: mapLeaf });
 		assert.equal(Tree.parent(mapLeaf), map);
-		const arrayLeaf = new TestLeaf({ value: "arrayValue" });
+		map.delete("key");
+		assert.equal(Tree.parent(mapLeaf), undefined);
+		const newMapLeaf = new TestLeaf({ value: "value" });
+		assert.equal(Tree.parent(newMapLeaf), undefined);
+		map.set("key", newMapLeaf);
+		assert.equal(Tree.parent(newMapLeaf), map);
+		// Array
+		const arrayLeaf = new TestLeaf({ value: "value" });
+		assert.equal(Tree.parent(arrayLeaf), undefined);
 		const array = new TestArray([arrayLeaf]);
-		assert.equal(Tree.parent(array), undefined);
 		assert.equal(Tree.parent(arrayLeaf), array);
-		const object = new TestObject({ map, array });
+		array.removeRange();
+		assert.equal(Tree.parent(arrayLeaf), undefined);
+		const newArrayLeaf = new TestLeaf({ value: "value" });
+		assert.equal(Tree.parent(newArrayLeaf), undefined);
+		array.insertAtEnd(newArrayLeaf);
+		assert.equal(Tree.parent(newArrayLeaf), array);
+		const array2 = new TestArray([]);
+		array2.moveToEnd(0, array);
+		assert.equal(Tree.parent(newArrayLeaf), array2);
+		// Object
+		const object = new TestObject({ array, map });
 		assert.equal(Tree.parent(object), undefined);
 		assert.equal(Tree.parent(map), object);
 		assert.equal(Tree.parent(array), object);
+		const newMap = new TestMap({});
+		const newArray = new TestArray([]);
+		assert.equal(Tree.parent(newMap), undefined);
+		assert.equal(Tree.parent(newArray), undefined);
+		object.map = newMap;
+		object.array = newArray;
+		assert.equal(Tree.parent(newMap), object);
+		assert.equal(Tree.parent(newArray), object);
+		assert.equal(Tree.parent(map), undefined);
+		assert.equal(Tree.parent(array), undefined);
 	});
 
 	it("get their key", () => {
@@ -134,21 +164,6 @@ describe("Unhydrated nodes", () => {
 		const object = new TestObject({ map, array });
 		assert.equal(Tree.is(object, TestObject), true);
 		assert.equal(Tree.schema(object), TestObject);
-	});
-
-	it("disallow mutation of sequences", () => {
-		function validateUnhydratedMutationError(error: Error): boolean {
-			return validateAssertionError(
-				error,
-				/cannot be mutated before being inserted into the tree/,
-			);
-		}
-
-		const leaf = new TestLeaf({ value: "value" });
-		const array = new TestArray([]);
-		assert.throws(() => array.insertAtStart(leaf), validateUnhydratedMutationError);
-		assert.throws(() => array.insertAtEnd(leaf), validateUnhydratedMutationError);
-		assert.throws(() => array.insertAt(0, leaf), validateUnhydratedMutationError);
 	});
 
 	it("have the correct tree status", () => {
@@ -308,6 +323,38 @@ describe("Unhydrated nodes", () => {
 		const id = "my identifier";
 		const object = new TestObjectWithId({ id, autoId: undefined });
 		assert.deepEqual(Object.entries(object), [["id", id]]);
+	});
+
+	it("cannot be used twice in the same tree", () => {
+		const leaf = new TestLeaf({ value: "3" });
+		assert.throws(
+			() => new TestArray([leaf, leaf]),
+			(e: Error) =>
+				validateAssertionError(e, /A node may not be in more than one place in the tree/),
+		);
+	});
+
+	it("cannot be partially hydrated", () => {
+		const view = hydrate(
+			TestObject,
+			new TestObject({ array: new TestArray([]), map: new TestMap({}) }),
+		);
+
+		const leaf = new TestLeaf({ value: "3" });
+		const array = new TestArray([leaf]);
+		assert.equal(array[0], leaf);
+
+		// Attempt to insert `leaf`, which is underneath `array`. Both are unhydrated.
+		// If `leaf` were to succeed, then it would become hydrated, but `array` would remain unhydrated.
+		// This would be confusing, as the user's reference to `leaf` is now a different object than `array[0]`, whereas prior to the insert they were the same.
+		assert.throws(
+			() => view.map.set("key", leaf),
+			(e: Error) =>
+				validateAssertionError(
+					e,
+					/Attempted to insert a node which is already under a parent/,
+				),
+		);
 	});
 });
 

@@ -7,7 +7,6 @@ import { assert, Lazy } from "@fluidframework/core-utils/internal";
 
 import {
 	type Adapters,
-	EmptyKey,
 	type FieldKey,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -200,38 +199,6 @@ export class FlexObjectNodeSchema<
 
 	public override getFieldSchema(field: FieldKey): FlexFieldSchema {
 		return this.objectNodeFields.get(field) ?? FlexFieldSchema.empty;
-	}
-}
-
-/**
- * TODO: remove or replace (or subclass) this with more specific types, like "List".
- */
-export class FlexFieldNodeSchema<
-	Name extends string = string,
-	Specification extends Unenforced<FlexFieldSchema> = FlexFieldSchema,
-> extends TreeNodeSchemaBase<Name, Specification> {
-	protected _typeCheck2?: MakeNominal;
-	public static create<const Name extends string, const Specification extends FlexFieldSchema>(
-		builder: Named<string>,
-		name: TreeNodeSchemaIdentifier<Name>,
-		specification: Specification,
-	): FlexFieldNodeSchema<Name, Specification> {
-		return new FlexFieldNodeSchema(builder, name, specification);
-	}
-
-	private constructor(
-		builder: Named<string>,
-		name: TreeNodeSchemaIdentifier<Name>,
-		info: Specification,
-	) {
-		const objectNodeFields = new Map([[EmptyKey, (info as FlexFieldSchema).stored]]);
-		super(builder, name, info, new ObjectNodeStoredSchema(objectNodeFields));
-	}
-
-	public override getFieldSchema(field?: FieldKey): FlexFieldSchema {
-		return (field ?? EmptyKey) === EmptyKey
-			? (this.info as FlexFieldSchema)
-			: FlexFieldSchema.empty;
 	}
 }
 
@@ -585,13 +552,6 @@ export function schemaIsMap(schema: FlexTreeNodeSchema): schema is FlexMapNodeSc
  */
 export function schemaIsLeaf(schema: FlexTreeNodeSchema): schema is LeafNodeSchema {
 	return schema instanceof LeafNodeSchema;
-}
-
-/**
- * Checks if a {@link FlexTreeNodeSchema} is a {@link FlexFieldNodeSchema}.
- */
-export function schemaIsFieldNode(schema: FlexTreeNodeSchema): schema is FlexFieldNodeSchema {
-	return schema instanceof FlexFieldNodeSchema;
 }
 
 /**

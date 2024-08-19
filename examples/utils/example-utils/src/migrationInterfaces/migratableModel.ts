@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigrationTool } from "./migrationTool.js";
-
 /**
+ * A model with a detectable version.
+ *
+ * @remarks
+ * It's appropriate to use this version to deduce the more specific type of model.
  * @internal
  */
 export interface IVersionedModel {
@@ -16,6 +18,7 @@ export interface IVersionedModel {
 }
 
 /**
+ * A model that can import data of ImportType when in detached state, and can also export its data to ExportType.
  * @internal
  */
 export interface IImportExportModel<ImportType, ExportType> {
@@ -41,19 +44,29 @@ export interface IImportExportModel<ImportType, ExportType> {
 // supportsDataFormat() on the callers of importData() (and allow implementers of IMigratableModel to assume
 // importData() is called with valid data).
 /**
+ * A model which supports migration via the MigrationTool and Migrator.
+ *
+ * @privateRemarks
+ * A migratable model must have an observable version, which is used to determine if migration is required and to
+ * identify the source and destination container codes.
+ *
+ * It must also support import/export, as this is the mechanism that MigrationTool and Migrator use to perform the
+ * migration.
+ *
+ * Lastly, it should provide dispose capabilities for two purposes: (1) The Migrator will spawn a temporary model
+ * to export the data, which should be cleaned up after export and (2) After migration is complete, the old model
+ * is likely no longer needed and should be cleaned up.
  * @internal
  */
 export interface IMigratableModel
 	extends IVersionedModel,
 		IImportExportModel<unknown, unknown> {
 	/**
-	 * The tool that will be used to facilitate the migration.
+	 * Dispose the model, rendering it inoperable and closing connections.
+	 *
+	 * @privateRemarks
+	 * This is required on the interface because the Migrator will make its own instance of the model for export,
+	 * and needs to clean that model up after the export is done.
 	 */
-	readonly migrationTool: IMigrationTool;
-
-	/**
-	 * Close the model, rendering it inoperable and closing connections.
-	 * TODO: Decide whether the closing is an integral part of the migration, or if the caller should do the closing.
-	 */
-	close(): void;
+	dispose(): void;
 }
