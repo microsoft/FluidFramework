@@ -56,12 +56,6 @@ export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue 
 			>;
 			return tryToUnboxLeaves(typedField);
 		}
-		// TODO: Remove if/when 'FieldNode' is removed.
-		case FieldKinds.sequence: {
-			// 'getProxyForNode' handles FieldNodes by unconditionally creating a array node proxy, making
-			// this case unreachable as long as users follow the 'array recipe'.
-			fail("'sequence' field is unexpected.");
-		}
 		case FieldKinds.identifier: {
 			// Identifier fields are just value fields that hold strings
 			return (field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.required>>)

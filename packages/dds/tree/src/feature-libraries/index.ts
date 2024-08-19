@@ -125,11 +125,9 @@ export {
 	type LazyTreeNodeSchema,
 	ViewSchema,
 	type SchemaLintConfiguration,
-	FlexFieldNodeSchema,
 	LeafNodeSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
-	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
@@ -217,7 +215,6 @@ export {
 
 export {
 	type AssignableFieldKinds,
-	type FlexTreeFieldNode,
 	type FlexibleFieldContent,
 	type FlexibleNodeContent,
 	type FlexTreeLeafNode,

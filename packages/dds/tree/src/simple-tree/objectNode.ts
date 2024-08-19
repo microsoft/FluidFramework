@@ -273,7 +273,7 @@ export function setField(
 
 	switch (field.schema.kind) {
 		case FieldKinds.required: {
-			assert(mapTree !== undefined, "Cannot set a required field to undefined");
+			assert(mapTree !== undefined, 0xa04 /* Cannot set a required field to undefined */);
 			const typedField = field as FlexTreeRequiredField<FlexAllowedTypes>;
 			typedField.editor.set(mapTree);
 			break;

@@ -7,12 +7,11 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { TreeNodeSchemaIdentifier } from "../core/index.js";
+import { EmptyKey, type TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
 	FieldKinds,
 	type FlexAllowedTypes,
 	type FlexFieldKind,
-	FlexFieldNodeSchema,
 	FlexFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
@@ -183,7 +182,11 @@ export function convertNodeSchema(
 					convertAllowedTypes(schemaMap, fieldInfo),
 				);
 				const cached = cachedFlexSchemaFromClassSchema(schema);
-				out = cached ?? FlexFieldNodeSchema.create(builder, brand(schema.identifier), field);
+				out =
+					cached ??
+					FlexObjectNodeSchema.create(builder, brand(schema.identifier), {
+						[EmptyKey]: field,
+					});
 				break;
 			}
 			case NodeKind.Object: {
