@@ -15,8 +15,12 @@ import {
 	createTinyliciousCreateNewRequest,
 } from "@fluidframework/tinylicious-driver/internal";
 
-import { IDetachedModel, IModelLoader } from "./interfaces.js";
-import { ModelLoader } from "./modelLoader.js";
+import type {
+	IAttachedMigratableModel,
+	IDetachedMigratableModel,
+	IMigratableModelLoader,
+} from "./interfaces.js";
+import { MigratableModelLoader } from "./migratableModelLoader.js";
 
 class TinyliciousService {
 	public readonly documentServiceFactory: IDocumentServiceFactory;
@@ -32,12 +36,14 @@ class TinyliciousService {
 /**
  * @internal
  */
-export class TinyliciousModelLoader<ModelType> implements IModelLoader<ModelType> {
+export class MigratableTinyliciousModelLoader<ModelType>
+	implements IMigratableModelLoader<ModelType>
+{
 	private readonly tinyliciousService = new TinyliciousService();
-	private readonly modelLoader: ModelLoader<ModelType>;
+	private readonly modelLoader: MigratableModelLoader<ModelType>;
 
 	public constructor(codeLoader: ICodeDetailsLoader) {
-		this.modelLoader = new ModelLoader<ModelType>({
+		this.modelLoader = new MigratableModelLoader<ModelType>({
 			urlResolver: this.tinyliciousService.urlResolver,
 			documentServiceFactory: this.tinyliciousService.documentServiceFactory,
 			codeLoader,
@@ -49,13 +55,16 @@ export class TinyliciousModelLoader<ModelType> implements IModelLoader<ModelType
 		return this.modelLoader.supportsVersion(version);
 	}
 
-	public async createDetached(version: string): Promise<IDetachedModel<ModelType>> {
+	public async createDetached(version: string): Promise<IDetachedMigratableModel<ModelType>> {
 		return this.modelLoader.createDetached(version);
 	}
-	public async loadExisting(id: string): Promise<ModelType> {
+	public async loadExisting(id: string): Promise<IAttachedMigratableModel<ModelType>> {
 		return this.modelLoader.loadExisting(id);
 	}
-	public async loadExistingPaused(id: string, sequenceNumber: number): Promise<ModelType> {
+	public async loadExistingPaused(
+		id: string,
+		sequenceNumber: number,
+	): Promise<IAttachedMigratableModel<ModelType>> {
 		return this.modelLoader.loadExistingPaused(id, sequenceNumber);
 	}
 }

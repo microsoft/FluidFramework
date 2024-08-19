@@ -24,13 +24,8 @@ export {
 	IDetachedModel,
 	IMigratableModelContainerRuntimeEntryPoint,
 	IMigratableModelLoader,
-	IModelContainerRuntimeEntryPoint,
-	IModelLoader,
 	instantiateMigratableRuntime,
 	MigratableModelLoader,
 	MigratableSessionStorageModelLoader,
-	ModelContainerRuntimeFactory,
-	ModelLoader,
 	StaticCodeLoader,
-	TinyliciousModelLoader,
 } from "./modelLoader/index.js";

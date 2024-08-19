@@ -13,14 +13,7 @@ export {
 	IDetachedModel,
 	IDetachedMigratableModel,
 	IMigratableModelLoader,
-	IModelLoader,
 } from "./interfaces.js";
 export { MigratableModelLoader } from "./migratableModelLoader.js";
 export { MigratableSessionStorageModelLoader } from "./migratableSessionStorageModelLoader.js";
-export {
-	ModelContainerRuntimeFactory,
-	IModelContainerRuntimeEntryPoint,
-} from "./modelContainerRuntimeFactory.js";
-export { ModelLoader } from "./modelLoader.js";
 export { StaticCodeLoader } from "./staticCodeLoader.js";
-export { TinyliciousModelLoader } from "./tinyliciousModelLoader.js";
