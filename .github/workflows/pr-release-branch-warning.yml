@@ -3,7 +3,6 @@ on:
   pull_request_target:
     types:
       - opened
-      - synchronize
 
       # This is triggered when the base branch changes; handles the case where you open a PR against main then change the
       # base branch to a release branch.
@@ -38,5 +37,4 @@ jobs:
         with:
           header: release-warning
           path: ${{ github.workspace }}/.github/workflows/data/release-branch-warning.md
-          # message: ${{ steps.templateFile.outputs.content }}
           only_create: true
