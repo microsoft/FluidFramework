@@ -4,7 +4,10 @@
  */
 
 import { getDataStoreEntryPoint } from "@fluid-example/example-utils";
-import { instantiateMigratableRuntime } from "@fluid-example/migration-tools";
+import {
+	type IMigratableModel,
+	instantiateMigratableRuntime,
+} from "@fluid-example/migration-tools";
 import type {
 	IContainer,
 	IContainerContext,
@@ -14,7 +17,7 @@ import type {
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 
-import type { IInventoryList } from "../modelInterfaces.js";
+import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
 
 import { InventoryListAppModel } from "./appModel.js";
 import { InventoryListInstantiationFactory } from "./inventoryList.js";
@@ -25,7 +28,7 @@ const inventoryListId = "default-inventory-list";
  * @internal
  */
 export class InventoryListContainerRuntimeFactory implements IRuntimeFactory {
-	public get IRuntimeFactory() {
+	public get IRuntimeFactory(): IRuntimeFactory {
 		return this;
 	}
 
@@ -66,14 +69,19 @@ export class InventoryListContainerRuntimeFactory implements IRuntimeFactory {
 		return runtime;
 	}
 
-	private readonly containerInitializingFirstTime = async (runtime: IContainerRuntime) => {
+	private readonly containerInitializingFirstTime = async (
+		runtime: IContainerRuntime,
+	): Promise<void> => {
 		const inventoryList = await runtime.createDataStore(
 			InventoryListInstantiationFactory.type,
 		);
 		await inventoryList.trySetAlias(inventoryListId);
 	};
 
-	private readonly createModel = async (runtime: IContainerRuntime, container: IContainer) => {
+	private readonly createModel = async (
+		runtime: IContainerRuntime,
+		container: IContainer,
+	): Promise<IInventoryListAppModel & IMigratableModel> => {
 		return new InventoryListAppModel(
 			await getDataStoreEntryPoint<IInventoryList>(runtime, inventoryListId),
 			container,

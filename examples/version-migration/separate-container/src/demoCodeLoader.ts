@@ -45,12 +45,15 @@ export class DemoCodeLoader implements ICodeDetailsLoader {
 		};
 
 		switch (version) {
-			case "one":
+			case "one": {
 				return v1ModuleWithDetails;
-			case "two":
+			}
+			case "two": {
 				return v2ModuleWithDetails;
-			default:
+			}
+			default: {
 				throw new Error("Unknown version");
+			}
 		}
 	}
 }

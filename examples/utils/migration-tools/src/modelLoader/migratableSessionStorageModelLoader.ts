@@ -5,6 +5,7 @@
 
 import { ICodeDetailsLoader } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
@@ -27,7 +28,7 @@ import { MigratableModelLoader } from "./migratableModelLoader.js";
 const urlResolver = new LocalResolver();
 
 const deltaConnectionServerMap = new Map<string, ILocalDeltaConnectionServer>();
-const getDocumentServiceFactory = (documentId: string) => {
+const getDocumentServiceFactory = (documentId: string): IDocumentServiceFactory => {
 	let deltaConnection = deltaConnectionServerMap.get(documentId);
 	if (deltaConnection === undefined) {
 		deltaConnection = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());

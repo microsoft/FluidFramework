@@ -5,7 +5,11 @@
 
 import { IPactMap, PactMap } from "@fluid-experimental/pact-map";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IEventProvider } from "@fluidframework/core-interfaces";
+import type {
+	FluidObject,
+	IEventProvider,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type {
@@ -24,6 +28,7 @@ import type {
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 
 import type {
+	IAcceptedMigrationDetails,
 	IMigrationTool,
 	IMigrationToolEvents,
 	MigrationState,
@@ -40,7 +45,7 @@ const newContainerIdKey = "newContainerId";
 class MigrationTool implements IMigrationTool {
 	private _disposed = false;
 
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
 
@@ -49,11 +54,11 @@ class MigrationTool implements IMigrationTool {
 		return this._events;
 	}
 
-	public get connected() {
+	public get connected(): boolean {
 		return this.runtime.connected;
 	}
 
-	public get handle() {
+	public get handle(): IFluidHandle<FluidObject> {
 		// MigrationToolFactory already provides an entryPoint initialization function to the data store runtime,
 		// so this object should always have access to a non-null entryPoint.
 		assert(this.runtime.entryPoint !== undefined, "EntryPoint was undefined");
@@ -65,6 +70,7 @@ class MigrationTool implements IMigrationTool {
 			return "migrated";
 		} else if (this.acceptedMigration !== undefined) {
 			return "migrating";
+			// eslint-disable-next-line unicorn/no-negated-condition
 		} else if (this.proposedVersion !== undefined) {
 			return "stopping";
 		} else {
@@ -72,7 +78,7 @@ class MigrationTool implements IMigrationTool {
 		}
 	}
 
-	public get newContainerId() {
+	public get newContainerId(): string | undefined {
 		return this.consensusRegisterCollection.read(newContainerIdKey);
 	}
 
@@ -118,7 +124,7 @@ class MigrationTool implements IMigrationTool {
 		}
 	}
 
-	public async finalizeMigration(id: string) {
+	public async finalizeMigration(id: string): Promise<void> {
 		// Only permit a single container to be set as a migration destination.
 		if (this.consensusRegisterCollection.read(newContainerIdKey) !== undefined) {
 			throw new Error("New container was already established");
@@ -130,11 +136,11 @@ class MigrationTool implements IMigrationTool {
 		await this.consensusRegisterCollection.write(newContainerIdKey, id);
 	}
 
-	public get proposedVersion() {
+	public get proposedVersion(): string | undefined {
 		return this.pactMap.getPending(newVersionKey) ?? this.pactMap.get(newVersionKey);
 	}
 
-	public get acceptedMigration() {
+	public get acceptedMigration(): IAcceptedMigrationDetails | undefined {
 		const migrationDetails = this.pactMap.getWithDetails(newVersionKey);
 		if (migrationDetails === undefined) {
 			return undefined;
@@ -150,7 +156,7 @@ class MigrationTool implements IMigrationTool {
 		};
 	}
 
-	public readonly proposeVersion = (newVersion: string) => {
+	public readonly proposeVersion = (newVersion: string): void => {
 		// Don't permit changes to the version after a new one has already been accepted.
 		// TODO: Consider whether we should throw on trying to set when a pending proposal exists -- currently
 		// the PactMap will silently drop these on the floor.
@@ -203,7 +209,7 @@ export class MigrationToolFactory implements IFluidDataStoreFactory {
 		throw new Error("Do not use the type on the data store factory");
 	}
 
-	public get IFluidDataStoreFactory() {
+	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
 		return this;
 	}
 

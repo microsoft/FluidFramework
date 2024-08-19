@@ -15,15 +15,15 @@ import {
 	InsecureTinyliciousUrlResolver,
 	createTinyliciousCreateNewRequest,
 } from "@fluidframework/tinylicious-driver/internal";
-import React from "react";
-import ReactDOM from "react-dom";
+import { createElement } from "react";
+import { render, unmountComponentAtNode } from "react-dom";
 
 import { inventoryListDataTransformationCallback } from "./dataTransform.js";
 import { DemoCodeLoader } from "./demoCodeLoader.js";
 import type { IInventoryListAppModel } from "./modelInterfaces.js";
 import { DebugView, InventoryListAppView } from "./view/index.js";
 
-const updateTabForId = (id: string) => {
+const updateTabForId = (id: string): void => {
 	// Update the URL with the actual ID
 	location.hash = id;
 
@@ -37,25 +37,22 @@ const isIInventoryListAppModel = (
 	return model.version === "one" || model.version === "two";
 };
 
-const getUrlForContainerId = (containerId: string) => `/#${containerId}`;
+const getUrlForContainerId = (containerId: string): string => `/#${containerId}`;
 
-const render = (model: IVersionedModel, migrationTool: IMigrationTool) => {
-	const appDiv = document.getElementById("app") as HTMLDivElement;
-	ReactDOM.unmountComponentAtNode(appDiv);
+const renderModel = (model: IVersionedModel, migrationTool: IMigrationTool): void => {
+	const appDiv = document.querySelector("#app") as HTMLDivElement;
+	unmountComponentAtNode(appDiv);
 	// This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
 	// versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
 	// view code loader to pull in the view dynamically based on the version we discover.
 	if (isIInventoryListAppModel(model)) {
-		ReactDOM.render(
-			React.createElement(InventoryListAppView, { model, migrationTool }),
-			appDiv,
-		);
+		render(createElement(InventoryListAppView, { model, migrationTool }), appDiv);
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
-		const debugDiv = document.getElementById("debug") as HTMLDivElement;
-		ReactDOM.unmountComponentAtNode(debugDiv);
-		ReactDOM.render(
-			React.createElement(DebugView, {
+		const debugDiv = document.querySelector("#debug") as HTMLDivElement;
+		unmountComponentAtNode(debugDiv);
+		render(
+			createElement(DebugView, {
 				model,
 				migrationTool,
 				getUrlForContainerId,
@@ -95,7 +92,7 @@ async function start(): Promise<void> {
 		migrationTool = createResponse.migrationTool;
 		id = await createResponse.attach();
 	} else {
-		id = location.hash.substring(1);
+		id = location.hash.slice(1);
 		const loadResponse = await modelLoader.loadExisting(id);
 		model = loadResponse.model;
 		migrationTool = loadResponse.migrationTool;
@@ -118,7 +115,7 @@ async function start(): Promise<void> {
 		model.dispose();
 		model = migrator.currentModel;
 		migrationTool = migrator.currentMigrationTool;
-		render(model, migrationTool);
+		renderModel(model, migrationTool);
 		updateTabForId(migrator.currentModelId);
 	});
 	// If the ModelLoader doesn't know how to load the model required for migration, it emits "migrationNotSupported".
@@ -147,8 +144,8 @@ async function start(): Promise<void> {
 	// }
 	// In this demo however, we trigger the proposal through the debug buttons.
 
-	render(model, migrationTool);
+	renderModel(model, migrationTool);
 	updateTabForId(id);
 }
 
-start().catch((error) => console.error(error));
+await start();

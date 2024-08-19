@@ -33,7 +33,7 @@ export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = (
 	);
 
 	useEffect(() => {
-		const migrationStateChangedHandler = () => {
+		const migrationStateChangedHandler = (): void => {
 			setDisableInput(migrationTool.migrationState !== "collaborating");
 		};
 		migrationTool.events.on("stopping", migrationStateChangedHandler);
@@ -45,7 +45,7 @@ export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = (
 			migrationTool.events.off("migrating", migrationStateChangedHandler);
 			migrationTool.events.off("migrated", migrationStateChangedHandler);
 		};
-	}, [model]);
+	}, [migrationTool]);
 
 	return <InventoryListView inventoryList={model.inventoryList} disabled={disableInput} />;
 };

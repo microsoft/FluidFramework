@@ -65,7 +65,9 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 	 * Other strategies to obtain the wrapping model could also work fine here - for example a standalone model code
 	 * loader that separately fetches model code and wraps the container from the outside.
 	 */
-	private async getModelAndMigrationToolFromContainer(container: IContainer) {
+	private async getModelAndMigrationToolFromContainer(
+		container: IContainer,
+	): Promise<IAttachedMigratableModel<ModelType>> {
 		const entryPoint =
 			(await container.getEntryPoint()) as IMigratableModelContainerRuntimeEntryPoint<ModelType>;
 		// If the user tries to use this model loader with an incompatible container runtime, we want to give them
@@ -96,7 +98,7 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 		// The attach callback lets us defer the attach so the caller can do whatever initialization pre-attach,
 		// without leaking out the loader, service, etc.  We also return the container ID here so we don't have
 		// to stamp it on something that would rather not know it (e.g. the model).
-		const attach = async () => {
+		const attach = async (): Promise<string> => {
 			await container.attach(this.generateCreateNewRequest());
 			if (container.resolvedUrl === undefined) {
 				throw new Error("Resolved Url not available on attached container");

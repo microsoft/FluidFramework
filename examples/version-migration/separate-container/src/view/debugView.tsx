@@ -26,7 +26,7 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 	);
 
 	useEffect(() => {
-		const migrationStateChangedHandler = () => {
+		const migrationStateChangedHandler = (): void => {
 			setDisableControls(migrationTool.migrationState !== "collaborating");
 		};
 		migrationTool.events.on("stopping", migrationStateChangedHandler);
@@ -73,7 +73,7 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 	);
 
 	useEffect(() => {
-		const migrationStateChangedHandler = () => {
+		const migrationStateChangedHandler = (): void => {
 			setMigrationState(migrationTool.migrationState);
 		};
 		migrationTool.events.on("stopping", migrationStateChangedHandler);
@@ -97,12 +97,12 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 			? "No accepted version for migration yet"
 			: `Accepted version to migrate to: ${migrationTool.acceptedMigration.newVersion} @ sequenceNumber: ${migrationTool.acceptedMigration.migrationSequenceNumber}`;
 
-	const migratedContainerStatus = (() => {
+	const migratedContainerStatus = ((): JSX.Element => {
 		if (migrationTool.newContainerId === undefined) {
-			return "No migrated container yet";
+			return <>No migrated container yet</>;
 		}
 
-		const navToNewContainer = () => {
+		const navToNewContainer = (): void => {
 			if (migrationTool.newContainerId !== undefined && getUrlForContainerId !== undefined) {
 				location.href = getUrlForContainerId(migrationTool.newContainerId);
 				location.reload();
@@ -152,7 +152,7 @@ interface IControlsViewProps {
 const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
 	const { proposeVersion, addItem, disabled } = props;
 
-	const addSampleItems = () => {
+	const addSampleItems = (): void => {
 		addItem("Alpha", 1);
 		addItem("Beta", 2);
 		addItem("Gamma", 3);
@@ -165,7 +165,7 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
 				Propose version:
 				<br />
 				<button
-					onClick={() => {
+					onClick={(): void => {
 						proposeVersion("one");
 					}}
 					disabled={disabled}
@@ -173,7 +173,7 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
 					&quot;one&quot;
 				</button>
 				<button
-					onClick={() => {
+					onClick={(): void => {
 						proposeVersion("two");
 					}}
 					disabled={disabled}

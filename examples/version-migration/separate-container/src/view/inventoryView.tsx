@@ -20,7 +20,7 @@ export const InventoryItemView: React.FC<IInventoryItemViewProps> = (
 	const { inventoryItem, deleteItem, disabled } = props;
 	const quantityRef = useRef<HTMLInputElement>(null);
 	useEffect(() => {
-		const updateFromRemoteQuantity = () => {
+		const updateFromRemoteQuantity = (): void => {
 			if (quantityRef.current !== null) {
 				quantityRef.current.value = inventoryItem.quantity.toString();
 			}
@@ -32,8 +32,8 @@ export const InventoryItemView: React.FC<IInventoryItemViewProps> = (
 		};
 	}, [inventoryItem]);
 
-	const inputHandler = (e) => {
-		const newValue = parseInt(e.target.value, 10);
+	const inputHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
+		const newValue = Number.parseInt(e.target.value, 10);
 		inventoryItem.quantity = newValue;
 	};
 
@@ -73,7 +73,7 @@ const AddItemView: React.FC<IAddItemViewProps> = (props: IAddItemViewProps) => {
 	const nameRef = useRef<HTMLInputElement>(null);
 	const quantityRef = useRef<HTMLInputElement>(null);
 
-	const onAddItemButtonClick = () => {
+	const onAddItemButtonClick = (): void => {
 		if (nameRef.current === null || quantityRef.current === null) {
 			throw new Error("Couldn't get the new item info");
 		}
@@ -81,7 +81,7 @@ const AddItemView: React.FC<IAddItemViewProps> = (props: IAddItemViewProps) => {
 		// Extract the values from the inputs and add the new item
 		const name = nameRef.current.value;
 		const quantityString = quantityRef.current.value;
-		const quantity = quantityString !== "" ? parseInt(quantityString, 10) : 0;
+		const quantity = quantityString === "" ? 0 : Number.parseInt(quantityString, 10);
 		addItem(name, quantity);
 
 		// Clear the input form
@@ -124,7 +124,7 @@ export const InventoryListView: React.FC<IInventoryListViewProps> = (
 		inventoryList.getItems(),
 	);
 	useEffect(() => {
-		const updateItems = () => {
+		const updateItems = (): void => {
 			setInventoryItems(inventoryList.getItems());
 		};
 		inventoryList.on("itemAdded", updateItems);
@@ -137,7 +137,7 @@ export const InventoryListView: React.FC<IInventoryListViewProps> = (
 	}, [inventoryList]);
 
 	const inventoryItemViews = inventoryItems.map((inventoryItem) => {
-		const deleteItem = () => inventoryList.deleteItem(inventoryItem.id);
+		const deleteItem = (): void => inventoryList.deleteItem(inventoryItem.id);
 		return (
 			<InventoryItemView
 				key={inventoryItem.id}

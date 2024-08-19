@@ -104,7 +104,7 @@ export class Migrator implements IMigrator {
 	 * in the process of migrating or already migrated (and thus we need to load again).  It is not safe to assume
 	 * that a freshly-loaded migrated container is in collaborating state.
 	 */
-	private readonly takeAppropriateActionForCurrentMigratable = () => {
+	private readonly takeAppropriateActionForCurrentMigratable = (): void => {
 		const migrationState = this.currentMigrationTool.migrationState;
 		if (migrationState === "migrating") {
 			this.ensureMigrating();
@@ -118,7 +118,7 @@ export class Migrator implements IMigrator {
 		}
 	};
 
-	private readonly ensureMigrating = () => {
+	private readonly ensureMigrating = (): void => {
 		// ensureMigrating() is called when we reach the "migrating" state. This should likely only happen once, but
 		// can happen multiple times if we disconnect during the migration process.
 
@@ -146,13 +146,13 @@ export class Migrator implements IMigrator {
 			throw new Error("Expect an accepted migration before migration starts");
 		}
 
-		const doTheMigration = async () => {
+		const doTheMigration = async (): Promise<void> => {
 			// doTheMigration() is called at the start of migration and should only resolve in two cases. First, is if
 			// either the local or another client successfully completes the migration. Second, is if we disconnect
 			// during the migration process. In both cases we should re-enter the state machine and take the
 			// appropriate action (see then() block below).
 
-			const prepareTheMigration = async () => {
+			const prepareTheMigration = async (): Promise<void> => {
 				// It's possible that our modelLoader is older and doesn't understand the new acceptedMigration.
 				// Currently this fails the migration gracefully and emits an event so the app developer can know
 				// they're stuck. Ideally the app developer would find a way to acquire a new ModelLoader and move
@@ -196,6 +196,7 @@ export class Migrator implements IMigrator {
 				if (migratedModel.supportsDataFormat(exportedData)) {
 					// If the migrated model already supports the data format, go ahead with the migration.
 					transformedData = exportedData;
+					// eslint-disable-next-line unicorn/no-negated-condition
 				} else if (this.dataTransformationCallback !== undefined) {
 					// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
 					// a format that we can import.
@@ -223,7 +224,7 @@ export class Migrator implements IMigrator {
 				this._preparedDetachedModel = detachedModel;
 			};
 
-			const completeTheMigration = async () => {
+			const completeTheMigration = async (): Promise<void> => {
 				assert(
 					this._preparedDetachedModel !== undefined,
 					"this._preparedDetachedModel should be defined",
@@ -233,7 +234,7 @@ export class Migrator implements IMigrator {
 				let isAssigned: boolean;
 				try {
 					isAssigned = await this.currentMigrationTool.volunteerForMigration();
-				} catch (error) {
+				} catch {
 					// volunteerForMigration() will throw an error on disconnection. In this case, we should exit and
 					// re-enter the state machine which will wait until we reconnect.
 					// Note: while we wait to reconnect it is possible that another client will have already completed
@@ -297,7 +298,7 @@ export class Migrator implements IMigrator {
 			.catch(console.error);
 	};
 
-	private readonly ensureLoading = () => {
+	private readonly ensureLoading = (): void => {
 		// We assume ensureLoading() is called a single time after we reach the "migrated" state.
 
 		if (this._migratedLoadP !== undefined) {
@@ -319,7 +320,7 @@ export class Migrator implements IMigrator {
 			throw new Error("Migration ended without a new container being created");
 		}
 
-		const doTheLoad = async () => {
+		const doTheLoad = async (): Promise<void> => {
 			// doTheLoad() should only be called once. It will resolve once we complete loading.
 
 			const migrationSupported = await this.modelLoader.supportsVersion(
