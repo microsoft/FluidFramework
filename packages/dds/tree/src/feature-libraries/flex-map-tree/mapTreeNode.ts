@@ -274,20 +274,6 @@ export class EagerMapTreeMapNode<TSchema extends FlexMapNodeSchema>
 		]);
 	}
 
-	public forEach(
-		callbackFn: (
-			value: FlexTreeUnboxField<TSchema["info"], "notEmpty">,
-			key: FieldKey,
-			map: FlexTreeMapNode<TSchema>,
-		) => void,
-		thisArg?: unknown,
-	): void {
-		const fn = thisArg !== undefined ? callbackFn.bind(thisArg) : callbackFn;
-		for (const [key, value] of this.entries()) {
-			fn(value, key, this);
-		}
-	}
-
 	public override getBoxed(key: string): FlexTreeTypedField<TSchema["info"]> {
 		return super.getBoxed(key) as FlexTreeTypedField<TSchema["info"]>;
 	}
@@ -296,10 +282,6 @@ export class EagerMapTreeMapNode<TSchema extends FlexMapNodeSchema>
 		[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]
 	> {
 		return this.entries();
-	}
-
-	public override boxedIterator(): IterableIterator<FlexTreeTypedField<TSchema["info"]>> {
-		return super.boxedIterator() as IterableIterator<FlexTreeTypedField<TSchema["info"]>>;
 	}
 }
 
@@ -533,9 +515,6 @@ class EagerMapTreeSequenceField<T extends FlexAllowedTypes>
 	}
 	public map<U>(callbackfn: (value: FlexTreeUnboxNodeUnion<T>, index: number) => U): U[] {
 		return Array.from(this, callbackfn);
-	}
-	public mapBoxed<U>(callbackfn: (value: FlexTreeTypedNodeUnion<T>, index: number) => U): U[] {
-		return Array.from(this.boxedIterator(), callbackfn);
 	}
 
 	public *[Symbol.iterator](): IterableIterator<FlexTreeUnboxNodeUnion<T>> {

@@ -23,7 +23,6 @@ import { brand, capitalize, disposeSymbol, fail, getOrCreate } from "../../util/
 import { FieldKinds } from "../default-schema/index.js";
 import {
 	Any,
-	type FlexAllowedTypes,
 	FlexFieldSchema,
 	type FlexMapNodeSchema,
 	type FlexObjectNodeSchema,
@@ -42,12 +41,9 @@ import {
 	type FlexTreeMapNode,
 	type FlexTreeNode,
 	type FlexTreeObjectNodeTyped,
-	type FlexTreeOptionalField,
-	type FlexTreeRequiredField,
 	type FlexTreeTypedField,
 	type FlexTreeTypedNode,
 	type FlexTreeUnboxField,
-	type FlexibleNodeContent,
 	type PropertyNameFromFieldKey,
 	flexTreeMarker,
 	flexTreeSlot,
@@ -307,10 +303,6 @@ export class LazyMap<TSchema extends FlexMapNodeSchema>
 		return super.getBoxed(brand(key)) as FlexTreeTypedField<TSchema["info"]>;
 	}
 
-	public override boxedIterator(): IterableIterator<FlexTreeTypedField<TSchema["info"]>> {
-		return super.boxedIterator() as IterableIterator<FlexTreeTypedField<TSchema["info"]>>;
-	}
-
 	public [Symbol.iterator](): IterableIterator<
 		[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]
 	> {
@@ -407,63 +399,14 @@ function buildStructClass<TSchema extends FlexObjectNodeSchema>(
 
 	for (const [key, fieldSchema] of schema.objectNodeFields) {
 		const escapedKey = propertyNameFromFieldKey(key);
-		let setter: ((newContent: FlexibleNodeContent) => void) | undefined;
-		switch (fieldSchema.kind) {
-			case FieldKinds.optional: {
-				setter = function (
-					this: CustomStruct,
-					newContent: FlexibleNodeContent | undefined,
-				): void {
-					const field = getBoxedField(
-						this,
-						key,
-						fieldSchema,
-					) as FlexTreeOptionalField<FlexAllowedTypes>;
-					field.editor.set(newContent, field.length === 0);
-				};
-				break;
-			}
-			case FieldKinds.required: {
-				setter = function (this: CustomStruct, newContent: FlexibleNodeContent): void {
-					const field = getBoxedField(
-						this,
-						key,
-						fieldSchema,
-					) as FlexTreeRequiredField<FlexAllowedTypes>;
-					field.editor.set(newContent);
-				};
-				break;
-			}
-			default:
-				setter = undefined;
-				break;
-		}
 
-		// Create getter and setter (when appropriate) for property
+		// Create getter for property
 		propertyDescriptorMap[escapedKey] = {
 			enumerable: true,
 			get(this: CustomStruct): unknown {
 				return inCursorField(this[cursorSymbol], key, (cursor) =>
 					unboxedField(this.context, fieldSchema, cursor),
 				);
-			},
-			set: setter,
-		};
-
-		// Create set method for property (when appropriate)
-		if (setter !== undefined) {
-			propertyDescriptorMap[`set${capitalize(escapedKey)}`] = {
-				enumerable: false,
-				get(this: CustomStruct) {
-					return setter;
-				},
-			};
-		}
-
-		propertyDescriptorMap[`boxed${capitalize(escapedKey)}`] = {
-			enumerable: false,
-			get(this: CustomStruct) {
-				return getBoxedField(this, key, fieldSchema);
 			},
 		};
 	}

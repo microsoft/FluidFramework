@@ -21,9 +21,7 @@ import type {
 	FlexTreeMapNode,
 	FlexTreeNode,
 	FlexTreeObjectNode,
-	FlexTreeRequiredField,
 	FlexTreeSequenceField,
-	FlexTreeTypedField,
 	FlexTreeTypedNode,
 	FlexTreeTypedNodeUnion,
 	FlexTreeUnboxNodeUnion,
@@ -128,11 +126,6 @@ describe("flexTreeTypes", () => {
 			| FlexTreeTypedNode<typeof leaf.number>
 			| FlexTreeTypedNode<typeof leaf.string> = mixed.polymorphic;
 
-		// Fully boxed, including the value field.
-		const boxedPolymorphic: FlexTreeRequiredField<
-			readonly [typeof leaf.number, typeof leaf.string]
-		> = mixed.boxedPolymorphic;
-
 		const optionalLeaf: number | undefined = mixed.optionalLeaf;
 		const sequence: FlexTreeSequenceField<readonly [typeof leaf.number]> = mixed.sequence;
 
@@ -153,9 +146,7 @@ describe("flexTreeTypes", () => {
 		>;
 		const mapNode = undefined as unknown as FlexTreeMapNode<typeof mapSchema>;
 		const unboxedMapIteration: [FieldKey, number][] = [...mapNode];
-		const boxedMapIteration: FlexTreeTypedField<typeof optionalNumberField>[] = [
-			...mapNode.boxedIterator(),
-		];
+		const boxedMapIteration: FlexTreeField[] = [...mapNode.boxedIterator()];
 	}
 
 	{

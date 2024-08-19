@@ -339,12 +339,6 @@ describe("LazyOptionalField", () => {
 				[42],
 			);
 		});
-
-		it("mapBoxed", () => {
-			const mapResult = field.mapBoxed((value) => value);
-			assert.equal(mapResult.length, 1);
-			assert.equal(mapResult[0].value, 42);
-		});
 	});
 
 	describe("Field without value", () => {
@@ -370,13 +364,6 @@ describe("LazyOptionalField", () => {
 		it("map", () => {
 			assert.deepEqual(
 				field.map((value) => value),
-				[],
-			);
-		});
-
-		it("mapBoxed", () => {
-			assert.deepEqual(
-				field.mapBoxed((value) => value),
 				[],
 			);
 		});
@@ -441,12 +428,6 @@ describe("LazyValueField", () => {
 			field.map((value) => value),
 			[initialTree],
 		);
-	});
-
-	it("mapBoxed", () => {
-		const mapResult = field.mapBoxed((value) => value);
-		assert.equal(mapResult.length, 1);
-		assert.equal(mapResult[0].value, initialTree);
 	});
 
 	it("content", () => {
@@ -525,16 +506,6 @@ describe("LazySequence", () => {
 		const sequence = testSequence([1, 2]);
 		const mapResult = sequence.map((value) => value * 2);
 		assert.deepEqual(mapResult, [2, 4]);
-	});
-
-	it("mapBoxed", () => {
-		const sequence = testSequence([37, 42]);
-		const mapResult = sequence.mapBoxed((value) => value);
-		assert.equal(mapResult.length, 2);
-		assert.equal(mapResult[0].schema, leafDomain.number);
-		assert.equal(mapResult[0].value, 37);
-		assert.equal(mapResult[1].schema, leafDomain.number);
-		assert.equal(mapResult[1].value, 42);
 	});
 
 	it("asArray", () => {

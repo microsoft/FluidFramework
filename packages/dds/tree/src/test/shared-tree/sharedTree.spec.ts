@@ -249,7 +249,7 @@ describe("SharedTree", () => {
 				"the tree",
 			);
 			const view = assertSchema(tree, schemaEmpty);
-			assert.deepEqual([...view.flexTree.boxedIterator()], []);
+			assert.equal(view.flexTree.length, 0);
 		});
 
 		it("differing schema errors and schema change callback", () => {

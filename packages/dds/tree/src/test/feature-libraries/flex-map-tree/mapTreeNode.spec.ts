@@ -132,10 +132,9 @@ describe("MapTreeNodes", () => {
 		assert.deepEqual([...map.values()], [childValue]);
 		assert.deepEqual([...map.entries()], [[mapKey, childValue]]);
 		assert.deepEqual([...map], [[mapKey, childValue]]);
-		map.forEach((value, key, self) => {
+		[...map.entries()].forEach(([key, value]) => {
 			assert.equal(value, childValue);
 			assert.equal(key, mapKey);
-			assert.equal(self, map);
 		});
 	});
 

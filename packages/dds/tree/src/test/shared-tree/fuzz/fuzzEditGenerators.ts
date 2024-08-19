@@ -24,9 +24,13 @@ import {
 	type UpPath,
 } from "../../../core/index.js";
 import {
+	type Any,
 	type DownPath,
 	type FlexTreeField,
 	type FlexTreeNode,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
+	type FlexTreeSequenceField,
 	toDownPath,
 	treeSchemaFromStoredSchema,
 } from "../../../feature-libraries/index.js";
@@ -178,7 +182,7 @@ export interface FieldSelectionWeights {
 	 */
 	required: number;
 	/**
-	 * Select the current Fuzz node's "sequenceChild" field
+	 * Select the current Fuzz node's "sequenceChildren" field
 	 */
 	sequence: number;
 	/**
@@ -660,17 +664,17 @@ function fieldDownPathFromField(field: FlexTreeField): FieldDownPath {
 
 interface OptionalFuzzField {
 	type: "optional";
-	content: FuzzNode["boxedOptionalChild"];
+	content: FlexTreeOptionalField<readonly [Any]>;
 }
 
 interface SequenceFuzzField {
 	type: "sequence";
-	content: FuzzNode["boxedSequenceChildren"];
+	content: FlexTreeSequenceField<readonly [Any]>;
 }
 
 interface RequiredFuzzField {
 	type: "required";
-	content: FuzzNode["boxedRequiredChild"];
+	content: FlexTreeRequiredField<readonly [Any]>;
 }
 
 type FuzzField = OptionalFuzzField | SequenceFuzzField | RequiredFuzzField;
@@ -684,13 +688,19 @@ function selectField(
 	filter: FieldFilter = () => true,
 	nodeSchema: FuzzNodeSchema,
 ): FuzzField | "no-valid-selections" {
-	const optional: FuzzField = { type: "optional", content: node.boxedOptionalChild } as const;
+	const optional: FuzzField = {
+		type: "optional",
+		content: node.getBoxed(brand("optionalChild")) as FlexTreeOptionalField<readonly [Any]>,
+	} as const;
 
-	const value: FuzzField = { type: "required", content: node.boxedRequiredChild } as const;
+	const value: FuzzField = {
+		type: "required",
+		content: node.getBoxed(brand("requiredChild")) as FlexTreeRequiredField<readonly [Any]>,
+	} as const;
 
 	const sequence: FuzzField = {
 		type: "sequence",
-		content: node.boxedSequenceChildren,
+		content: node.getBoxed(brand("sequenceChildren")) as FlexTreeSequenceField<readonly [Any]>,
 	} as const;
 
 	const recurse = (state: { random: IRandom }): FuzzField | "no-valid-selections" => {
