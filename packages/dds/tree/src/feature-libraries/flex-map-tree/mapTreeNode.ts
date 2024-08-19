@@ -12,15 +12,12 @@ import {
 	type FieldUpPath,
 	type MapTree,
 	type TreeNodeSchemaIdentifier,
-	type TreeValue,
 	type Value,
 } from "../../core/index.js";
 import { brand, fail, getOrCreate, mapIterable } from "../../util/index.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
-	type FlexTreeLeafNode,
-	type FlexTreeMapNode,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
@@ -28,7 +25,6 @@ import {
 	type FlexTreeTypedField,
 	type FlexTreeTypedNode,
 	type FlexTreeTypedNodeUnion,
-	type FlexTreeUnboxField,
 	type FlexTreeUnboxNodeUnion,
 	flexTreeMarker,
 	indexForAt,
@@ -36,13 +32,9 @@ import {
 import {
 	type FlexAllowedTypes,
 	FlexFieldSchema,
-	type FlexMapNodeSchema,
 	type FlexTreeNodeSchema,
-	type LeafNodeSchema,
 	isLazy,
 	schemaIsLeaf,
-	schemaIsMap,
-	schemaIsObjectNode,
 } from "../typed-schema/index.js";
 import { type FlexImplicitAllowedTypes, normalizeAllowedTypes } from "../schemaBuilderBase.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
@@ -202,6 +194,11 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 		);
 	}
 
+	public keys(): IterableIterator<FieldKey> {
+		// TODO: how this should handle missing defaults (and empty keys if they end up being allowed) needs to be determined.
+		return this.mapTree.fields.keys();
+	}
+
 	public get value(): Value {
 		return this.mapTree.value;
 	}
@@ -233,64 +230,6 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 				child.walkTree();
 			}
 		}
-	}
-}
-
-/**
- * The implementation of a map node created by {@link getOrCreateNode}.
- */
-export class EagerMapTreeMapNode<TSchema extends FlexMapNodeSchema>
-	extends EagerMapTreeNode<TSchema>
-	implements FlexTreeMapNode<TSchema>
-{
-	public keys(): IterableIterator<FieldKey> {
-		return this.mapTree.fields.keys();
-	}
-
-	public values(): IterableIterator<FlexTreeUnboxField<TSchema["info"], "notEmpty">> {
-		return mapIterable(
-			this.mapTree.fields.keys(),
-			(key) =>
-				unboxedField(
-					this.tryGetField(key) ?? fail("Unexpected empty map field"),
-					key,
-					this.mapTree,
-					this,
-				) as FlexTreeUnboxField<TSchema["info"], "notEmpty">,
-		);
-	}
-
-	public entries(): IterableIterator<
-		[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]
-	> {
-		return mapIterable(this.mapTree.fields.keys(), (key) => [
-			key,
-			unboxedField(
-				this.tryGetField(key) ?? fail("Unexpected empty map field"),
-				key,
-				this.mapTree,
-				this,
-			) as FlexTreeUnboxField<TSchema["info"], "notEmpty">,
-		]);
-	}
-
-	public override getBoxed(key: string): FlexTreeTypedField<TSchema["info"]> {
-		return super.getBoxed(key) as FlexTreeTypedField<TSchema["info"]>;
-	}
-
-	public [Symbol.iterator](): IterableIterator<
-		[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]
-	> {
-		return this.entries();
-	}
-}
-
-class EagerMapTreeLeafNode<TSchema extends LeafNodeSchema>
-	extends EagerMapTreeNode<TSchema>
-	implements FlexTreeLeafNode<TSchema>
-{
-	public override get value(): TreeValue<TSchema["info"]> {
-		return super.value as TreeValue<TSchema["info"]>;
 	}
 }
 
@@ -594,16 +533,7 @@ function createNode<TSchema extends FlexTreeNodeSchema>(
 	mapTree: ExclusiveMapTree,
 	parentField: LocationInField | undefined,
 ): EagerMapTreeNode<TSchema> {
-	if (schemaIsLeaf(nodeSchema)) {
-		return new EagerMapTreeLeafNode(nodeSchema, mapTree, parentField);
-	}
-	if (schemaIsMap(nodeSchema)) {
-		return new EagerMapTreeMapNode(nodeSchema, mapTree, parentField);
-	}
-	if (schemaIsObjectNode(nodeSchema)) {
-		return new EagerMapTreeNode(nodeSchema, mapTree, parentField);
-	}
-	assert(false, 0x994 /* Unrecognized node kind */);
+	return new EagerMapTreeNode(nodeSchema, mapTree, parentField);
 }
 
 /** Creates a field with the given attributes, or returns a cached field if there is one */
@@ -654,37 +584,6 @@ function unboxedUnion<TTypes extends FlexAllowedTypes>(
 		schema.allowedTypes,
 		parent,
 	) as FlexTreeUnboxNodeUnion<TTypes>;
-}
-
-/** Unboxes non-polymorphic required and optional fields holding leaf nodes to their values, if applicable */
-function unboxedField<TFieldSchema extends FlexFieldSchema>(
-	field: EagerMapTreeField<FlexAllowedTypes>,
-	key: FieldKey,
-	mapTree: ExclusiveMapTree,
-	parentNode: EagerMapTreeNode<FlexTreeNodeSchema>,
-): FlexTreeUnboxField<TFieldSchema> {
-	const fieldSchema = field.schema;
-	const mapTrees =
-		mapTree.fields.get(key) ?? fail("Key does not exist in unhydrated map tree");
-
-	if (fieldSchema.kind === FieldKinds.required) {
-		return unboxedUnion(fieldSchema, mapTrees[0] ?? oob(), {
-			parent: field,
-			index: 0,
-		}) as FlexTreeUnboxField<TFieldSchema>;
-	}
-	if (fieldSchema.kind === FieldKinds.optional) {
-		return (
-			mapTrees.length > 0
-				? unboxedUnion(fieldSchema, mapTrees[0] ?? oob(), {
-						parent: field,
-						index: 0,
-					})
-				: undefined
-		) as FlexTreeUnboxField<TFieldSchema>;
-	}
-
-	return getOrCreateField(parentNode, key, fieldSchema) as FlexTreeUnboxField<TFieldSchema>;
 }
 
 // #endregion Caching and unboxing utilities

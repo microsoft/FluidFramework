@@ -189,6 +189,16 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	 * a separate Anchor (and thus ref count) must be allocated to keep it alive.
 	 */
 	readonly anchorNode: AnchorNode;
+
+	/**
+	 * Returns an iterable of keys for non-empty fields.
+	 *
+	 * @remarks
+	 * All fields under a map implicitly exist, but `keys` will yield only the keys of fields which contain one or more nodes.
+	 *
+	 * No guarantees are made regarding the order of the keys returned.
+	 */
+	keys(): IterableIterator<FieldKey>;
 }
 
 /**
@@ -265,52 +275,6 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
 export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema>
 	extends FlexTreeNode {
 	readonly schema: TSchema;
-
-	/**
-	 * Get the field for `key`.
-	 * @param key - which map entry to look up.
-	 *
-	 * @remarks
-	 * All fields under a map implicitly exist, so `get` can be called with any key and will always return a field.
-	 * Even if the field is empty, it will still be returned, and can be edited to insert content into the map.
-	 */
-	getBoxed(key: string): FlexTreeTypedField<TSchema["info"]>;
-
-	/**
-	 * Returns an iterable of keys in the map.
-	 *
-	 * @remarks
-	 * All fields under a map implicitly exist, but `keys` will yield only the keys of fields which contain one or more nodes.
-	 *
-	 * No guarantees are made regarding the order of the keys returned.
-	 */
-	keys(): IterableIterator<FieldKey>;
-
-	/**
-	 * Returns an iterable of values in the map.
-	 *
-	 * @remarks
-	 * All fields under a map implicitly exist, but `values` will yield only the fields containing one or more nodes.
-	 *
-	 * No guarantees are made regarding the order of the values returned.
-	 */
-	values(): IterableIterator<FlexTreeUnboxField<TSchema["info"], "notEmpty">>;
-
-	/**
-	 * Returns an iterable of key, value pairs for every entry in the map.
-	 *
-	 * @remarks
-	 * All fields under a map implicitly exist, but `entries` will yield only the entries whose fields contain one or more nodes.
-	 *
-	 * This iteration provided by `entries()` is equivalent to that provided by direct iteration of the {@link FlexTreeMapNode} (a.k.a. `[Symbol.Iterator]()`).
-	 *
-	 * No guarantees are made regarding the order of the entries returned.
-	 */
-	entries(): IterableIterator<[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]>;
-
-	[Symbol.iterator](): IterableIterator<
-		[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]
-	>;
 }
 
 /**
@@ -376,15 +340,6 @@ export type FlexibleNodeContent = ExclusiveMapTree;
  * Used to insert a batch of 0 or more nodes into some location in a {@link FlexTreeSequenceField}.
  */
 export type FlexibleNodeSubSequence = ExclusiveMapTree[];
-
-/**
- * Type to ensures two types overlap in at least one way.
- * It evaluates to the input type if this is true, and never otherwise.
- * Examples:
- * CheckTypesOverlap\<number | boolean, number | object\> = number | boolean
- * CheckTypesOverlap\<number | boolean, string | object\> = never
- */
-export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? never : T][0];
 
 /**
  * {@link FlexTreeField} that stores a sequence of children.
