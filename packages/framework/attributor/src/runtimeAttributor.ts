@@ -102,7 +102,7 @@ export class RuntimeAttributor implements IRuntimeAttributor {
 	public summarizeOpAttributor(): ISummaryTreeWithStats {
 		assert(
 			this.opAttributor !== undefined,
-			"RuntimeAttributor should be initialized before summarization",
+			0xa1d /* RuntimeAttributor should be initialized before summarization */,
 		);
 		const builder = new SummaryTreeBuilder();
 		builder.addBlob(opBlobName, this.encoder.encode(this.opAttributor));

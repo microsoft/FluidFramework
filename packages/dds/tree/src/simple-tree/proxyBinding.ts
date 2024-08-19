@@ -182,7 +182,7 @@ export function tryGetInnerNode(target: unknown): InnerNode | undefined {
 		// Marinated case
 		assert(
 			proxyToMapTreeNode.get(target as TreeNode) === undefined,
-			"marinated nodes should not have MapTreeNodes",
+			0xa05 /* marinated nodes should not have MapTreeNodes */,
 		);
 		return undefined;
 	}
