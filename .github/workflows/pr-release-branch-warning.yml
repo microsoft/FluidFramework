@@ -23,10 +23,18 @@ jobs:
   warning:
     runs-on: ubuntu-latest
     steps:
+      # Read the release notes file that we just generated into an output variable.
+      - name: Read warning template file
+        id: templateFile
+        uses: juliangruber/read-file-action@b549046febe0fe86f8cb4f93c24e284433f9ab58 # ratchet:juliangruber/read-file-action@v1
+        with:
+          path: ${{ github.workspace }}/.github/workflows/data/release-branch-warning.mdv
+
       - name: Post warning in comment
         # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.0
         uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # ratchet:marocchino/sticky-pull-request-comment@v2.9.0
         with:
           header: release-warning
-          path: ${{ github.workspace }}/.github/workflows/data/release-branch-warning.md
+          # path: ${{ github.workspace }}/.github/workflows/data/release-branch-warning.md
+          message: ${{ steps.templateFile.outputs.content }}
           only_create: true
