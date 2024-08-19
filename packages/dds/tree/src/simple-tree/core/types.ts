@@ -25,6 +25,19 @@ import { isFlexTreeNode, type FlexTreeNode } from "../../feature-libraries/index
 export type Unhydrated<T> = T;
 
 /**
+ * Data included for {@link TreeChangeEvents.nodeChanged}.
+ * @public
+ */
+export interface NodeChangedData {
+	/**
+	 * When the node changed is an object or Map node, this lists all the properties which changed.
+	 * @remarks
+	 * This only includes changes to the node itself (which would trigger {@link TreeChangeEvents.nodeChanged}).
+	 */
+	readonly changedProperties: ReadonlySet<string>;
+}
+
+/**
  * A collection of events that can be emitted by a {@link TreeNode}.
  *
  * @privateRemarks
@@ -45,17 +58,15 @@ export type Unhydrated<T> = T;
  *
  * @sealed @public
  */
-export interface TreeChangeEvents {
+export interface TreeChangeEvents<TNode = TreeNode> {
 	/**
-	 * Emitted by a node after a batch of changes has been applied to the tree, if a change affected the node, where a
-	 * change is:
+	 * Emitted by a node after a batch of changes has been applied to the tree, if any of the changes affected the node.
 	 *
-	 * - For an object node, when the value of one of its properties changes (i.e., the property's value is set
-	 * to something else, including `undefined`).
+	 * - Object nodes define a change as the value of one of its properties changing (i.e., the property's value is set, including when set to undefined).
 	 *
-	 * - For an array node, when an element is added, removed, or moved.
+	 * - Array node define a change as when an element is added, removed, moved or replaced.
 	 *
-	 * - For a map node, when an entry is added, updated, or removed.
+	 * - Map nodes define a change as when an entry is added, updated, or removed.
 	 *
 	 * @remarks
 	 * This event is not emitted when:
@@ -70,17 +81,23 @@ export interface TreeChangeEvents {
 	 * For remote edits, this event is not guaranteed to occur in the same order or quantity that it did in
 	 * the client that made the original edit.
 	 *
-	 * When it is emitted, the tree is guaranteed to be in-schema.
+	 * When the event is emitted, the tree is guaranteed to be in-schema.
 	 *
 	 * @privateRemarks
 	 * This event occurs whenever the apparent contents of the node instance change, regardless of what caused the change.
 	 * For example, it will fire when the local client reassigns a child, when part of a remote edit is applied to the
 	 * node, or when the node has to be updated due to resolution of a merge conflict
 	 * (for example a previously applied local change might be undone, then reapplied differently or not at all).
+	 *
+	 * TODO: defined and document event ordering (ex: bottom up, with nodeChanged before treeCHange on each level).
 	 */
-	nodeChanged({
-		changedProperties,
-	}: { readonly changedProperties: ReadonlySet<string> }): void;
+	nodeChanged(
+		data: NodeChangedData &
+			// For object and Map nodes, make properties specific to them required instead of optional:
+			TNode extends WithType<string, NodeKind.Map | NodeKind.Object>
+			? Required<Pick<NodeChangedData, "changedProperties">>
+			: unknown,
+	): void;
 
 	/**
 	 * Emitted by a node after a batch of changes has been applied to the tree, when something changed anywhere in the
@@ -100,6 +117,8 @@ export interface TreeChangeEvents {
 	 */
 	treeChanged(): void;
 }
+
+export type IsListener2<TListener> = TListener extends (...args: any[]) => void ? true : false;
 
 /**
  * A non-{@link NodeKind.Leaf|leaf} SharedTree node. Includes objects, arrays, and maps.

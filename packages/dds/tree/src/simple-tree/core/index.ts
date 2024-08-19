@@ -17,6 +17,7 @@ export {
 	inPrototypeChain,
 	type InternalTreeNode,
 	privateToken,
+	type NodeChangedData,
 } from "./types.js";
 export {
 	type TreeNodeSchema,
