@@ -7,23 +7,18 @@ import { strict as assert } from "assert";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { EmptyKey, type FieldKey } from "../../../core/index.js";
+import { EmptyKey } from "../../../core/index.js";
 import {
 	SchemaBuilder,
 	jsonArray,
 	jsonObject,
-	type jsonRoot,
 	jsonSchema,
 	leaf,
 } from "../../../domains/index.js";
 import type {
 	FlexTreeField,
-	FlexTreeMapNode,
 	FlexTreeNode,
 	FlexTreeObjectNode,
-	FlexTreeRequiredField,
-	FlexTreeSequenceField,
-	FlexTreeTypedField,
 	FlexTreeTypedNode,
 	FlexTreeTypedNodeUnion,
 	FlexTreeUnboxNodeUnion,
@@ -43,12 +38,13 @@ import {
 } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { ConstantFlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/flexList.js";
-import type {
-	areSafelyAssignable,
-	isAssignableTo,
-	requireAssignableTo,
-	requireFalse,
-	requireTrue,
+import {
+	brand,
+	type areSafelyAssignable,
+	type isAssignableTo,
+	type requireAssignableTo,
+	type requireFalse,
+	type requireTrue,
 } from "../../../util/index.js";
 
 describe("flexTreeTypes", () => {
@@ -74,8 +70,7 @@ describe("flexTreeTypes", () => {
 			} else if (tree.is(leaf.string)) {
 				const s: string = tree.value;
 			} else if (tree.is(jsonArray)) {
-				const a: FlexTreeSequenceField<typeof jsonRoot> = tree.content;
-				jsonExample(a);
+				const a: FlexTreeField = tree.getBoxed(brand("content"));
 			} else if (tree.is(jsonObject)) {
 				const x = tree.getBoxed(EmptyKey);
 			} else if (tree.is(leaf.null)) {
@@ -115,48 +110,6 @@ describe("flexTreeTypes", () => {
 		x: SchemaBuilder.required(leaf.number),
 	});
 	type Recursive = FlexTreeTypedNode<typeof recursiveStruct>;
-
-	/**
-	 * All combinations of boxed and unboxed access.
-	 */
-	function boxingExample(mixed: Mixed): void {
-		const leafNode: number = mixed.leaf;
-
-		// Current policy is to box polymorphic values so they can be checked for type with `is`.
-		// Note that this still unboxes the value field.
-		const polymorphic:
-			| FlexTreeTypedNode<typeof leaf.number>
-			| FlexTreeTypedNode<typeof leaf.string> = mixed.polymorphic;
-
-		// Fully boxed, including the value field.
-		const boxedPolymorphic: FlexTreeRequiredField<
-			readonly [typeof leaf.number, typeof leaf.string]
-		> = mixed.boxedPolymorphic;
-
-		const optionalLeaf: number | undefined = mixed.optionalLeaf;
-		const sequence: FlexTreeSequenceField<readonly [typeof leaf.number]> = mixed.sequence;
-
-		const child: number | undefined = sequence.at(0);
-		const childBoxed: FlexTreeTypedNode<typeof leaf.number> | undefined = sequence.boxedAt(0);
-	}
-
-	function iteratorsExample(mixed: Mixed): void {
-		const unboxedListIteration: number[] = [...mixed.sequence];
-		const boxedListIteration: FlexTreeTypedNode<typeof leaf.number>[] = [
-			...mixed.sequence.boxedIterator(),
-		];
-
-		const optionalNumberField = SchemaBuilder.optional(leaf.number);
-		const mapSchema = undefined as unknown as FlexMapNodeSchema<
-			"MapIteration",
-			typeof optionalNumberField
-		>;
-		const mapNode = undefined as unknown as FlexTreeMapNode<typeof mapSchema>;
-		const unboxedMapIteration: [FieldKey, number][] = [...mapNode];
-		const boxedMapIteration: FlexTreeTypedField<typeof optionalNumberField>[] = [
-			...mapNode.boxedIterator(),
-		];
-	}
 
 	{
 		type _1 = requireAssignableTo<typeof leaf.boolean, LeafNodeSchema>;
@@ -216,9 +169,6 @@ describe("flexTreeTypes", () => {
 	// Two different simple node types to compare and test with.
 	type BasicStruct = FlexTreeTypedNode<typeof basicStruct>;
 	type EmptyStruct = FlexTreeTypedNode<typeof emptyStruct>;
-	{
-		type _2 = requireFalse<isAssignableTo<EmptyStruct, BasicStruct>>;
-	}
 
 	// Basic unit test for TreeNode.is type narrowing.
 	function nodeIs(node: FlexTreeNode): void {

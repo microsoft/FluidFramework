@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-schema-upgrade",
-	"version": "2.2.0",
+	"version": "2.3.0",
 	"private": true,
 	"description": "Using external data to initialize the container state and serialize out afterwards.",
 	"homepage": "https://fluidframework.com",
@@ -43,7 +43,7 @@
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
-		"@fluidframework/container-runtime": "workspace:^",
+		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
