@@ -735,16 +735,16 @@ async function findDepUpdates(
 	// Get the new version for each package based on the update type
 	for (const pkgName of dependencies) {
 		let latest: string;
-		let next: string;
+		let dev: string;
 
 		try {
 			// eslint-disable-next-line no-await-in-loop
-			[latest, next] = await Promise.all([
+			[latest, dev] = await Promise.all([
 				latestVersion(pkgName, {
 					version: "latest",
 				}),
 				latestVersion(pkgName, {
-					version: "next",
+					version: "dev",
 				}),
 			]);
 		} catch (error: unknown) {
