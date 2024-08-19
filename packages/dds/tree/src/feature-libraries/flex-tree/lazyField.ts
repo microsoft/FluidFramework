@@ -123,8 +123,7 @@ export function makeField(
 }
 
 /**
- * A Proxy target, which together with a `fieldProxyHandler` implements a basic access to
- * the nodes of {@link EditableField} by means of the cursors.
+ * Base type for fields implementing {@link FlexTreeField} using cursors.
  */
 export abstract class LazyField<
 		out TKind extends FlexFieldKind,
@@ -328,7 +327,7 @@ export class ReadonlyLazyValueField<TTypes extends FlexAllowedTypes>
 
 	public editor: ValueFieldEditBuilder<ExclusiveMapTree> = {
 		set: (newContent) => {
-			assert(false, "Unexpected set of readonly field");
+			assert(false, 0xa0c /* Unexpected set of readonly field */);
 		},
 	};
 

@@ -21,6 +21,7 @@ import {
 	NodeKind,
 	type TreeNodeSchema,
 	typeNameSymbol,
+	typeSchemaSymbol,
 	// Used to test that TreeNode is a type only export.
 	TreeNode as TreeNodePublic,
 } from "../../../simple-tree/index.js";
@@ -61,6 +62,9 @@ describe("simple-tree types", () => {
 		it("subclassing", () => {
 			class Subclass extends TreeNode {
 				public override get [typeNameSymbol](): string {
+					throw new Error("Method not implemented.");
+				}
+				public override get [typeSchemaSymbol](): never {
 					throw new Error("Method not implemented.");
 				}
 				public constructor() {
@@ -164,6 +168,9 @@ describe("simple-tree types", () => {
 				public override get [typeNameSymbol](): string {
 					throw new Error("Method not implemented.");
 				}
+				public override get [typeSchemaSymbol](): never {
+					throw new Error("Method not implemented.");
+				}
 				public constructor(input: number | InternalTreeNode) {
 					super(input);
 					log.push("done");
@@ -201,6 +208,9 @@ describe("simple-tree types", () => {
 				public override get [typeNameSymbol](): string {
 					throw new Error("Method not implemented.");
 				}
+				public override get [typeSchemaSymbol](): never {
+					throw new Error("Method not implemented.");
+				}
 			}
 
 			assert.throws(
@@ -231,6 +241,9 @@ describe("simple-tree types", () => {
 				}
 
 				public override get [typeNameSymbol](): string {
+					throw new Error("Method not implemented.");
+				}
+				public override get [typeSchemaSymbol](): never {
 					throw new Error("Method not implemented.");
 				}
 				public constructor() {
@@ -278,6 +291,9 @@ describe("simple-tree types", () => {
 				}
 
 				public override get [typeNameSymbol](): string {
+					throw new Error("Method not implemented.");
+				}
+				public override get [typeSchemaSymbol](): never {
 					throw new Error("Method not implemented.");
 				}
 				public constructor() {
