@@ -23,6 +23,7 @@ import type {
 	UpPath,
 } from "../../../core/index.js";
 import {
+	type Any,
 	type DownPath,
 	toDownPath,
 	treeSchemaFromStoredSchema,
@@ -219,7 +220,7 @@ export interface FieldSelectionWeights {
 	 */
 	required: number;
 	/**
-	 * Select the current Fuzz node's "sequenceChild" field
+	 * Select the current Fuzz node's "sequenceChildren" field
 	 */
 	sequence: number;
 	/**

@@ -127,7 +127,7 @@ describe("separate-container migration", () => {
 			await page.evaluate(() => {
 				// This is reaching a bit, but we just need to watch it for test purposes.
 				const leftQuorum = (
-					window["migrators"][0]._currentModel.container as IContainer
+					window["migrators"][0]._currentMigratable.model.container as IContainer
 				).getQuorum();
 				const alreadyHasSummarizer =
 					[...leftQuorum.getMembers().values()].find(
