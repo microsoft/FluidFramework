@@ -47,7 +47,6 @@ import {
 	type FlexTreeField,
 	type FlexTreeNode,
 	type FlexTreeNodeSchema,
-	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import type { TreeContent, ITreeCheckout } from "../../../shared-tree/index.js";
 import { brand, capitalize } from "../../../util/index.js";
@@ -357,12 +356,6 @@ describe("LazyNode", () => {
 		const { anchor, anchorNode } = createAnchors(context, cursor);
 
 		const node = buildLazyObjectNode(context, structNodeSchema, cursor, anchorNode, anchor);
-
-		it("boxing", () => {
-			assert.equal(node.foo, node.boxedFoo.content);
-			assert(node.bar === node.boxedBar);
-		});
-
 		it("value", () => {
 			assert.equal(node.value, undefined); // object nodes do not have a value
 		});
@@ -371,16 +364,6 @@ describe("LazyNode", () => {
 			assert.notEqual(node.tryGetField(brand("foo")), undefined);
 			assert.equal(node.tryGetField(brand("bar")), undefined); // TODO: this is presumably wrong - empty array shouldn't yield undefined
 			assert.equal(node.tryGetField(brand("baz")), undefined);
-		});
-
-		it("Value assignment generates edits", () => {
-			assert.equal(editCallCount, 0);
-
-			node.setFoo(mapTreeFromCursor(singleJsonCursor("First edit")));
-			assert.equal(editCallCount, 1);
-
-			node.setFoo(mapTreeFromCursor(singleJsonCursor("Second edit")));
-			assert.equal(editCallCount, 2);
 		});
 	});
 
@@ -413,37 +396,14 @@ describe("LazyNode", () => {
 
 		const node = buildLazyObjectNode(context, objectNodeSchema, cursor, anchorNode, anchor);
 
-		it("Binds setter properties for values, but not other field kinds", () => {
-			assert(
-				Object.getOwnPropertyDescriptor(Reflect.getPrototypeOf(node), "optional")?.set !==
-					undefined,
-			);
-			assert(
-				Object.getOwnPropertyDescriptor(Reflect.getPrototypeOf(node), "required")?.set !==
-					undefined,
-			);
-			assert(
-				Object.getOwnPropertyDescriptor(Reflect.getPrototypeOf(node), "sequence")?.set ===
-					undefined,
-			);
-		});
-
-		it('Binds "set" methods for values, but not other field kinds', () => {
-			const record = node as unknown as Record<string | number | symbol, unknown>;
-			assert(record.setOptional !== undefined);
-			assert(record.setRequired !== undefined);
-			assert(record.setSequence === undefined);
-		});
-
 		it("escaped fields handled correctly", () => {
 			assert(
-				Object.getOwnPropertyDescriptor(Reflect.getPrototypeOf(node), "fieldValue")?.set !==
+				Object.getOwnPropertyDescriptor(Reflect.getPrototypeOf(node), "fieldValue")?.get !==
 					undefined,
 			);
 			const s: string | undefined = node.fieldValue;
 			assert.equal(s, "x");
 			assert.equal(node.value, undefined); // Not the field, but the node's value.
-			assert.equal(node.boxedFieldValue?.content, "x");
 		});
 	});
 

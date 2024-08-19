@@ -309,33 +309,6 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema>
 	 */
 	entries(): IterableIterator<[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]>;
 
-	/**
-	 * Executes a provided function once per each key/value pair in the map.
-	 * @param callbackFn - The function to run for each map entry
-	 * @param thisArg - If present, `callbackFn` will be bound to `thisArg`
-	 *
-	 * @privateRemarks
-	 * TODO: This should run over fields in insertion order if we want to match the javascript foreach spec.
-	 */
-	forEach(
-		callbackFn: (
-			value: FlexTreeUnboxField<TSchema["info"], "notEmpty">,
-			key: FieldKey,
-			map: FlexTreeMapNode<TSchema>,
-		) => void,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		thisArg?: any,
-	): void;
-
-	/**
-	 * Iterate through all fields in the map.
-	 *
-	 * @remarks
-	 * No mutations to the current view of the shared tree are permitted during iteration.
-	 * To iterate over the unboxed values of the map, use `Symbol.Iterator()`.
-	 */
-	boxedIterator(): IterableIterator<FlexTreeTypedField<TSchema["info"]>>;
-
 	[Symbol.iterator](): IterableIterator<
 		[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]
 	>;
@@ -422,33 +395,10 @@ export type FlexTreeObjectNodeFields<TFields extends FlexObjectNodeFields> =
  * TODO: Do we keep assignment operator + "setFoo" methods, or just use methods?
  * Inconsistency in the API experience could confusing for consumers.
  */
-export type FlexTreeObjectNodeFieldsInner<TFields extends FlexObjectNodeFields> = FlattenKeys<
-	{
-		// boxed fields (TODO: maybe remove these when same as non-boxed version?)
-		readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: FlexTreeTypedField<
-			TFields[key]
-		>;
-	} & {
-		// Add getter only (make property readonly) when the field is **not** of a kind that has a logical set operation.
-		// If we could map to getters and setters separately, we would preferably do that, but we can't.
-		// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
-		readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-			? never
-			: key]: FlexTreeUnboxField<TFields[key]>;
-	} & {
-		// Add setter (make property writable) when the field is of a kind that has a logical set operation.
-		// If we could map to getters and setters separately, we would preferably do that, but we can't.
-		// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
-		-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-			? key
-			: never]: FlexTreeUnboxField<TFields[key]>;
-	} & {
-		// Setter method (when the field is of a kind that has a logical set operation).
-		readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-			? `set${Capitalize<key & string>}`
-			: never]: (content: FlexibleNodeContent) => void;
-	}
->;
+export type FlexTreeObjectNodeFieldsInner<TFields extends FlexObjectNodeFields> = FlattenKeys<{
+	// Add getter.
+	readonly [key in keyof TFields]: FlexTreeUnboxField<TFields[key]>;
+}>;
 
 /**
  * Reserved object node field property names to avoid collisions with the rest of the object node API.
@@ -587,12 +537,6 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * @param callbackfn - A function that accepts the child and its index.
 	 */
 	map<U>(callbackfn: (value: FlexTreeUnboxNodeUnion<TTypes>, index: number) => U): U[];
-
-	/**
-	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.
-	 * @param callbackfn - A function that accepts the child and its index.
-	 */
-	mapBoxed<U>(callbackfn: (value: FlexTreeTypedNodeUnion<TTypes>, index: number) => U): U[];
 
 	readonly length: number;
 
