@@ -371,7 +371,7 @@ export class PendingStateManager implements IDisposable {
 			const localOpMetadata = this.processNextPendingMessage(batch.emptyBatchSequenceNumber);
 			assert(
 				asEmptyBatchLocalOpMetadata(localOpMetadata)?.emptyBatch === true,
-				"Expected empty batch marker",
+				0xa20 /* Expected empty batch marker */,
 			);
 			return [];
 		}
@@ -453,7 +453,7 @@ export class PendingStateManager implements IDisposable {
 		const pendingMessage = this.pendingMessages.peekFront();
 		assert(
 			pendingMessage !== undefined,
-			"No pending message found as we start processing this remote batch",
+			0xa21 /* No pending message found as we start processing this remote batch */,
 		);
 
 		// Note: This could be undefined if this batch became empty on resubmit.

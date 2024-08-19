@@ -76,7 +76,7 @@ export class TreeNodeKernel implements Listenable<TreeChangeEvents> {
 		public readonly node: TreeNode,
 		public readonly schema: TreeNodeSchema,
 	) {
-		assert(!treeNodeToKernel.has(node), "only one kernel per node can be made");
+		assert(!treeNodeToKernel.has(node), 0xa1a /* only one kernel per node can be made */);
 		treeNodeToKernel.set(node, this);
 	}
 

@@ -233,7 +233,7 @@ export class RuntimeAttributorDataStoreChannel
 
 				assert(
 					this.visibilityState === VisibilityState.LocallyVisible,
-					"Data store should be locally visible before it can become globally visible.",
+					0xa1e /* Data store should be locally visible before it can become globally visible. */,
 				);
 
 				// Mark the data store globally visible and make its child channels visible as well.
@@ -247,7 +247,7 @@ export class RuntimeAttributorDataStoreChannel
 			case AttachState.Attached: {
 				assert(
 					this.visibilityState === VisibilityState.GloballyVisible,
-					"Data store should be globally visible when its attached.",
+					0xa1f /* Data store should be globally visible when its attached. */,
 				);
 				this.attachState = AttachState.Attached;
 				this.emit("attached");
