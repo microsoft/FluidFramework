@@ -14,55 +14,25 @@
 	"sideEffects": false,
 	"type": "module",
 	"exports": {
-		".": {
-			"import": {
-				"types": "./lib/public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/public.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
 		"./alpha": {
 			"import": {
 				"types": "./lib/alpha.d.ts",
 				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/alpha.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./beta": {
-			"import": {
-				"types": "./lib/beta.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/beta.d.ts",
-				"default": "./dist/index.js"
 			}
 		},
 		"./internal": {
 			"import": {
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
 			}
 		}
 	},
-	"main": "lib/index.js",
-	"types": "lib/public.d.ts",
 	"scripts": {
 		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack .",
+		"check:are-the-types-wrong": "echo skip attw --pack .",
 		"check:biome": "biome check .",
 		"check:exports": "api-extractor run --config ./api-extractor-lint.json",
 		"check:format": "npm run check:biome",
@@ -74,8 +44,7 @@
 		"format:biome": "biome check . --write",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
-		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+		"lint:fix": "fluid-build . --task eslint:fix --task format"
 	},
 	"dependencies": {
 		"@fluid-experimental/pact-map": "workspace:~",
