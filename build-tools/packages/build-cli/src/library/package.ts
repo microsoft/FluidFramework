@@ -754,10 +754,10 @@ async function findDepUpdates(
 
 		// If we're allowing pre-release, use the next tagged version. Warn if it is lower than the latest.
 		if (prerelease) {
-			dependencyVersionMap[pkgName] = next;
-			if (semver.gt(latest, next)) {
+			dependencyVersionMap[pkgName] = dev;
+			if (semver.gt(latest, dev)) {
 				log?.warning(
-					`The latest dist-tag is version ${latest}, which is greater than the next dist-tag version, ${next}. Is this expected?`,
+					`The 'latest' dist-tag is version ${latest}, which is greater than the 'dev' dist-tag version, ${dev}. Is this expected?`,
 				);
 			}
 		} else {
