@@ -14,4 +14,4 @@ See the documentation for `FieldProps` for more details about the distinction be
 
 For map nodes, every key that was added, removed, or updated by a change to the tree is included in the list of properties.
 
-For array nodes, the list of properties will always be empty.
+For array nodes, the set of properties will always be undefined: there is currently not an API to get details about changes to an array.
