@@ -4637,12 +4637,6 @@ importers:
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
-      react:
-        specifier: ^17.0.1
-        version: 17.0.2
-      react-dom:
-        specifier: ^17.0.1
-        version: 17.0.2(react@17.0.2)
       uuid:
         specifier: ^9.0.0
         version: 9.0.1
@@ -4668,12 +4662,6 @@ importers:
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)(@types/node@18.19.1)
-      '@types/react':
-        specifier: ^17.0.44
-        version: 17.0.71
-      '@types/react-dom':
-        specifier: ^17.0.18
-        version: 17.0.25
       '@types/uuid':
         specifier: ^9.0.2
         version: 9.0.7
