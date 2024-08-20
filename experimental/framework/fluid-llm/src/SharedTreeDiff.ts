@@ -24,7 +24,8 @@ export interface DifferenceChange {
 export interface DifferenceMove {
 	type: "MOVE";
 	path: ObjectPath;
-	oldIndex: number;
+	newIndex: number;
+	value: unknown;
 }
 
 export type Difference = DifferenceCreate | DifferenceRemove | DifferenceChange | DifferenceMove;
@@ -85,7 +86,8 @@ export function SharedTreeDiff(
 					diffs.push({
 						type: "MOVE",
 						path: [path],
-						oldIndex: oldObjArrayItemIdsToIndex.get(objectId) as number,
+						newIndex: newObjArrayItemIdsToIndex.get(objectId) as number,
+						value: objValue
 					});
 					continue;
 				}
@@ -126,20 +128,87 @@ export function SharedTreeDiff(
 			!richTypes[Object.getPrototypeOf(objValue)?.constructor?.name] &&
 			(!(options.cyclesFix) || !_stack.includes(objValue as Record<string, unknown>))
 		) {
-			const nestedDiffs = SharedTreeDiff(
-				objValue as Record<string, unknown> | unknown[],
-				newObjValue as Record<string, unknown> | unknown[],
-				options,
-				options.cyclesFix === true ? [..._stack, objValue as Record<string, unknown> | unknown[]] : [],
-			);
-			// eslint-disable-next-line prefer-spread
-			diffs.push.apply(
-				diffs,
-				nestedDiffs.map((difference) => {
-					difference.path.unshift(path);
-					return difference;
-				}),
-			);
+
+			if (options.useObjectIds === undefined) {
+				const nestedDiffs = SharedTreeDiff(
+					objValue as Record<string, unknown> | unknown[],
+					newObjValue as Record<string, unknown> | unknown[],
+					options,
+					options.cyclesFix === true ? [..._stack, objValue as Record<string, unknown> | unknown[]] : [],
+				);
+				// eslint-disable-next-line prefer-spread
+				diffs.push.apply(
+					diffs,
+					nestedDiffs.map((difference) => {
+						difference.path.unshift(path);
+						return difference;
+					}),
+				);
+			}
+			else {
+				const oldObjectId = (objValue as Record<string, unknown>)[options.useObjectIds.idAttributeName] as string | number | undefined;
+				const newObjectId = (newObjValue as Record<string, unknown>)[options.useObjectIds.idAttributeName] as string | number | undefined;
+
+				if (oldObjectId !== undefined && newObjectId !== undefined) {
+					// if the object id's are the same, we can continue a comparison between the two objects.
+					if (oldObjectId === newObjectId) {
+						const nestedDiffs = SharedTreeDiff(
+							objValue as Record<string, unknown> | unknown[],
+							newObjValue as Record<string, unknown> | unknown[],
+							options,
+							options.cyclesFix === true ? [..._stack, objValue as Record<string, unknown> | unknown[]] : [],
+						);
+						// eslint-disable-next-line prefer-spread
+						diffs.push.apply(
+							diffs,
+							nestedDiffs.map((difference) => {
+								difference.path.unshift(path);
+								return difference;
+							}),
+						);
+					}
+					// The object id's are different, their attributes cannot be compared.
+					// We need to find the new index of the object, if it exists in the new array and do a diff comparison.
+					else {
+						const oldObjectNewIndex = newObjArrayItemIdsToIndex.get(oldObjectId);
+						// The object no longer exists in the new array, therefore it was removed.
+						if (oldObjectNewIndex === undefined) {
+							diffs.push({
+								type: "REMOVE",
+								path: [path],
+								oldValue: objValue,
+							});
+						}
+						// This object still exists in a new location within the new array therefore it was moved.
+						else {
+							diffs.push({
+								type: "MOVE",
+								path: [path],
+								newIndex: oldObjectNewIndex,
+								value: objValue
+							});
+
+							// TODO: An object could have been moved AND changed. We need to check for this.
+						}
+					}
+				} else {
+					const nestedDiffs = SharedTreeDiff(
+						objValue as Record<string, unknown> | unknown[],
+						newObjValue as Record<string, unknown> | unknown[],
+						options,
+						options.cyclesFix === true ? [..._stack, objValue as Record<string, unknown> | unknown[]] : [],
+					);
+					// eslint-disable-next-line prefer-spread
+					diffs.push.apply(
+						diffs,
+						nestedDiffs.map((difference) => {
+							difference.path.unshift(path);
+							return difference;
+						}),
+					);
+				}
+
+			}
 		}
 		// 2b. If the given old object key exists in the new object, and the value of said key in both objects is NOT another nested object, we need to check if the values are the same.
 		else if (
@@ -177,7 +246,7 @@ export function SharedTreeDiff(
 				diffs.push({
 					type: "CREATE",
 				   path: [path],
-				   value: newObj[key],
+				   value: newObjValue,
 			   });
 			}
 			// If we're dealing with an object in an array, we can use the object's id to check if this new index actually
@@ -190,7 +259,8 @@ export function SharedTreeDiff(
 					diffs.push({
 						type: "MOVE",
 						path: [path],
-						oldIndex: oldObjArrayItemIdsToIndex.get(objectId) as number,
+						newIndex: newObjArrayItemIdsToIndex.get(objectId) as number,
+						value: newObjValue
 					});
 					continue;
 				}
@@ -200,7 +270,7 @@ export function SharedTreeDiff(
 					diffs.push({
 						type: "CREATE",
 					   path: [path],
-					   value: newObj[key],
+					   value: newObjValue,
 				   });
 				}
 			}
@@ -210,8 +280,26 @@ export function SharedTreeDiff(
 				diffs.push({
 					type: "CREATE",
 				   path: [path],
-				   value: newObj[key],
+				   value: newObjValue,
 			   });
+			}
+		}
+
+		else if (options.useObjectIds !== undefined) {
+			// If we're dealing with an object in an array, we can use the object's id to check if this EXISTING index
+			// houses a new object based on a newly encountered id.
+			if (isObjArray === true && isNewObjArray === true && typeof newObjValue === 'object' && newObjValue !== null) {
+				const objectId = newObjValue[options.useObjectIds.idAttributeName] as string | number | undefined;
+				// If this object has an id and it does not exist in the old array, then it was created.
+				if (objectId !== undefined && oldObjArrayItemIdsToIndex.has(objectId) === false) {
+					diffs.push({
+						type: "CREATE",
+						path: [path],
+						value: newObjValue,
+				   });
+				}
+			} else {
+				continue;
 			}
 		}
 	}
@@ -225,7 +313,9 @@ function createObjectArrayItemIdsToIndexMap(obj: unknown[], idAttributeName: str
 		const objArrayItem = obj[i];
 		if (typeof objArrayItem === "object" && objArrayItem !== null) {
 			const id = (objArrayItem as Record<string, unknown>)[idAttributeName] as string | number;
-			if (id !== undefined) {
+			if (objArrayItemIdsToIndex.has(id)) {
+				throw new TypeError(`Duplicate object id found: ${id}`);
+			} else if (id !== undefined) {
 				objArrayItemIdsToIndex.set(id, i);
 			}
 		}

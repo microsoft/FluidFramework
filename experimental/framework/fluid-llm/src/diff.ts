@@ -114,7 +114,7 @@ export function diff(
 	for (const key of Object.keys(newObj)) {
 		if (!(key in obj)) {
 			diffs.push({
-				type: "CREATE",
+ 				type: "CREATE",
 				path: [isNewObjArray ? +key : key],
 				value: newObj[key],
 			});
