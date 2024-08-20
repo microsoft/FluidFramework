@@ -49,7 +49,9 @@ For packages that are part of the `@fluidframework` scope and the `fluid-framewo
         import { SharedMap } from "fluid-framework/legacy"
         ```
 
--   **System APIs** - These APIs are reserved for internal system use and are not meant to be used directly. These may change at any time without notice. In cases that a type must be referenced, the contents should never be inspected.
+-   **System APIs** - These APIs are reserved for internal system use and are not meant to be used directly.
+    These may change at any time without notice.
+    For cases in which such a type must be referenced, the contents should never be inspected.
 
 There are no API stability guarantees for packages in the `@fluid-experimental` and `@fluid-internal` scopes.
 `@fluid-experimental` APIs are for developers to try experimental features and provide feedback. It's possible that these APIs can get completely scrapped or drastically changed in a minor release based on developer feedback.
