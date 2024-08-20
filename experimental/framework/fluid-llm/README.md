@@ -9,14 +9,16 @@ allowing LLM's to propose updates to application state directly.
 
 ## The classic LLM developer experience & it's problems
 
-The classic LLm dev exeperience involves providing LLM's with some information about your app using a unique, single purpose prompt. Then, having the LLM respond with a unique response data format; whether that be JSON, text or something else.
+The classic LLm dev exeperience involves crafting a prompt for an an LLM with some information about your ap, then having the LLM response in a parseable format.
 
 From here the developer needs to:
-1. Translate that response format into something that matches their application state and handle merging said
+1. Translate & interpet the LLM response format so it can be applied to their application state
 2. Deal with potentially invalid responses
-3. Deal with merging potentially stale state into their apps.
+3. Deal with merging LLM responses that use potentially stale state into their apps.
     - This in particular comes into play with more dynamic application state, for example some kind of a list that users can add & remove from. You'll need to make sure the LLM isn't trying to delete something that doesn't exist or overwrite something that no longer makes sense.
-4. Try to preview LLM changes to the user before accepting them.
+4. Try to preview LLM changes to the user before accepting them. This requires maintaining a pre change branch, merged branched and post change branch
+
+Scenario: say you want an llm to make offline changes
 
 ### How this library fixes things
 

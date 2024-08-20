@@ -61,7 +61,7 @@ export function diff(
 			typeof newObjKey === "object" &&
 			Array.isArray(objKey) === Array.isArray(newObjKey);
 		if (
-					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			objKey &&
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			newObjKey &&

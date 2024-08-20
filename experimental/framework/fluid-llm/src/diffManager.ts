@@ -18,8 +18,6 @@ export class DiffManager {
 	 * produces a diff between two objects and handles the differences.
 	 */
 	public compareAndApplyDiffs(obj: Record<string, unknown> | unknown[], newObj: Record<string, unknown> | unknown[]): void {
-		const differences = diffState(obj, newObj);
-
 		// By validating that the incoming object matches the schema, we can confirm that any property
 		// deletions/updates/additions are valid.
 		if (this.objectSchema !== undefined) {
@@ -28,6 +26,8 @@ export class DiffManager {
 				throw new TypeError("Invalid data");
 			}
 		}
+
+		const differences = diffState(obj, newObj);
 
 		this.handleDifferences(differences, obj);
 	}

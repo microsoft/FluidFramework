@@ -24,7 +24,7 @@ describe("DiffManager - CREATE - compareAndApplyDiffs", () => {
 		assert(originalObject[0]?.test === true);
 	});
 
-	it("Nested object attribute create within outer array", () => {
+	it("add new object attribute to existing object within array", () => {
 			const originalObject: Record<string, unknown>[] = [{}];
 			const newObject: Record<string, unknown>[] = [{test: {value: true}}];
 
@@ -33,6 +33,21 @@ describe("DiffManager - CREATE - compareAndApplyDiffs", () => {
 			diffManager.compareAndApplyDiffs(originalObject, newObject);
 			assert((originalObject[0]?.test as Record<string, unknown>)?.value === true);
 	});
+
+	it("Add multiple new objects to array", () => {
+		const originalObject: Record<string, unknown>[] = [{}];
+
+		const newObject: Record<string, unknown>[] = [{test: true}, {test: true}, {test: true}];
+
+		const diffManager = new DiffManager();
+
+		diffManager.compareAndApplyDiffs(originalObject, newObject);
+		assert(originalObject.length === 3);
+		assert(originalObject[0]?.test === true);
+		assert(originalObject[1]?.test === true);
+		assert(originalObject[2]?.test === true);
+	});
+
 });
 
 describe("DiffManager - CHANGE - compareAndApplyDiffs", () => {
