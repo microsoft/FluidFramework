@@ -524,22 +524,6 @@ declare type current_as_old_for_Interface_IProvideFluidDataStoreRegistry = requi
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedInterface_ISignalEnvelope": {"forwardCompat": false}
- */
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedInterface_ISignalEnvelope": {"backCompat": false}
- */
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_ISummarizeInternalResult": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_ISummarizeInternalResult = requireAssignableTo<TypeOnly<old.ISummarizeInternalResult>, TypeOnly<current.ISummarizeInternalResult>>
