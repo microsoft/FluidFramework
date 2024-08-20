@@ -49,6 +49,8 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 
 	// To help narrow down test flakiness, the beforeEach is broken into tiny phases.  These phase names will
 	// show up in error logs to help identify where timeouts are occurring.
+	// Note that their execution order matters.  Mocha runs them in the order they are defined:
+	// https://mochajs.org/#hooks
 
 	// Create a container representing the first client
 	beforeEach("Create container", async () => {
