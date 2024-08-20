@@ -39,6 +39,7 @@ import {
 	forkView,
 	getView,
 	numberSequenceRootSchema,
+	validateUsageError,
 	viewCheckout,
 } from "../utils.js";
 import { disposeSymbol, fail } from "../../util/index.js";
@@ -509,6 +510,54 @@ describe("sharedTreeView", () => {
 			tree1.checkout.merge(baseView.checkout);
 			provider.processMessages();
 			assert.equal(opsReceived, 2);
+		});
+
+		it("cannot create a second view from an uninitialized simple tree view's checkout", () => {
+			const sf = new SchemaFactory("no squash commits schema");
+			const provider = new TestTreeProviderLite(1);
+			const view1 = provider.trees[0].viewWith(
+				new TreeViewConfiguration({
+					schema: sf.array(sf.string),
+					enableSchemaValidation,
+				}),
+			);
+
+			// Create a second view from the same checkout before initializing it. A CheckoutFlexTreeView won't be
+			// created yet which has its own validation.
+			assert.throws(
+				() =>
+					provider.trees[0].viewWith(
+						new TreeViewConfiguration({
+							schema: sf.array(sf.string),
+							enableSchemaValidation,
+						}),
+					),
+				validateUsageError("Cannot create a second tree view from the same checkout"),
+			);
+		});
+
+		it("cannot create a second view from an initialized simple tree view's checkout", () => {
+			const sf = new SchemaFactory("no squash commits schema");
+			const provider = new TestTreeProviderLite(1);
+			const view1 = provider.trees[0].viewWith(
+				new TreeViewConfiguration({
+					schema: sf.array(sf.string),
+					enableSchemaValidation,
+				}),
+			);
+
+			view1.initialize(["A"]);
+
+			assert.throws(
+				() =>
+					provider.trees[0].viewWith(
+						new TreeViewConfiguration({
+							schema: sf.array(sf.string),
+							enableSchemaValidation,
+						}),
+					),
+				validateUsageError("Cannot create a second tree view from the same checkout"),
+			);
 		});
 	});
 
