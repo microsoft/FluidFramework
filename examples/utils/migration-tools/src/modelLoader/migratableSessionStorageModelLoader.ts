@@ -39,7 +39,7 @@ const getDocumentServiceFactory = (documentId: string): IDocumentServiceFactory 
 };
 
 /**
- * @internal
+ * @alpha
  */
 export class MigratableSessionStorageModelLoader<ModelType>
 	implements IMigratableModelLoader<ModelType>

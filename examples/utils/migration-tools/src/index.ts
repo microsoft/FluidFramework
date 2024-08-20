@@ -26,4 +26,5 @@ export {
 	instantiateMigratableRuntime,
 	MigratableModelLoader,
 	MigratableSessionStorageModelLoader,
+	MigratableTinyliciousModelLoader,
 } from "./modelLoader/index.js";

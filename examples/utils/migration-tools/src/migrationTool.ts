@@ -202,7 +202,7 @@ const migrationToolSharedObjectRegistry = new Map<string, IChannelFactory>([
 ]);
 
 /**
- * @internal
+ * @alpha
  */
 export class MigrationToolFactory implements IFluidDataStoreFactory {
 	public get type(): string {

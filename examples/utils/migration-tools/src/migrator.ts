@@ -31,7 +31,7 @@ interface MigratableParts {
 /**
  * The Migrator maintains a reference to the current model, and interacts with it (and its MigrationTool)
  * to detect, observe, trigger, and execute migration as appropriate.
- * @internal
+ * @alpha
  */
 export class Migrator implements IMigrator {
 	private _currentMigratable: MigratableParts;

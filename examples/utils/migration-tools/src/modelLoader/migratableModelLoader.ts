@@ -23,7 +23,7 @@ import type {
 } from "./interfaces.js";
 
 /**
- * @internal
+ * @alpha
  */
 export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<ModelType> {
 	private readonly loader: IHostLoader;

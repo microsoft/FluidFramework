@@ -34,7 +34,7 @@ class TinyliciousService {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export class MigratableTinyliciousModelLoader<ModelType>
 	implements IMigratableModelLoader<ModelType>

@@ -8,7 +8,7 @@ import type { IMigrationTool } from "../interfaces/index.js";
 // TODO: Consider just extending IAttachedMigratableModel
 /**
  * Object returned from calling IModelLoader.createDetached().
- * @internal
+ * @alpha
  */
 export interface IDetachedMigratableModel<ModelType> {
 	/**
@@ -29,7 +29,7 @@ export interface IDetachedMigratableModel<ModelType> {
 
 /**
  * Object returned from calling IModelLoader.createDetached().
- * @internal
+ * @alpha
  */
 export interface IAttachedMigratableModel<ModelType> {
 	/**
@@ -43,7 +43,7 @@ export interface IAttachedMigratableModel<ModelType> {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IMigratableModelLoader<ModelType> {
 	/**

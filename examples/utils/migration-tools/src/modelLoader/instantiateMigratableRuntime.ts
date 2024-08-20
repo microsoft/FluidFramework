@@ -16,7 +16,8 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 
-import { type IMigrationTool, MigrationToolFactory } from "../index.js";
+import type { IMigrationTool } from "../interfaces/index.js";
+import { MigrationToolFactory } from "../migrationTool.js";
 
 async function getDataStoreEntryPoint<T>(
 	containerRuntime: IContainerRuntime,
@@ -36,7 +37,7 @@ async function getDataStoreEntryPoint<T>(
 /**
  * The CreateModelCallback should use the passed runtime and container to construct the model that the
  * host app will interact with.
- * @internal
+ * @alpha
  */
 export type CreateModelCallback<ModelType> = (
 	runtime: IContainerRuntime,
@@ -47,7 +48,7 @@ export type CreateModelCallback<ModelType> = (
  * @privateRemarks
  * The MigratableModelLoader expects to work with container runtimes whose entry point conforms to
  * this interface.
- * @internal
+ * @alpha
  */
 export interface IMigratableModelContainerRuntimeEntryPoint<T> {
 	getModelAndMigrationTool(
@@ -67,7 +68,7 @@ const migrationToolFactory = new MigrationToolFactory();
  * In addition to what ContainerRuntime.loadRuntime does, this adds in and correctly initializes the migration tools that
  * Migrator expects to interact with, and exposes an entrypoint that MigratableModelLoader expects to find.
  * TODO: Consider switching to a property bag for parameters.
- * @internal
+ * @alpha
  */
 export const instantiateMigratableRuntime = async <ModelType>(
 	context: IContainerContext,
