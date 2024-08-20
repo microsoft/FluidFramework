@@ -601,7 +601,7 @@
             "error",
             {
                 "allow": [
-                    "@fluidframework/*/internal",
+                    "@fluid*/*/internal",
                     "@fluid-experimental/**",
                     "*/index.js"
                 ]
