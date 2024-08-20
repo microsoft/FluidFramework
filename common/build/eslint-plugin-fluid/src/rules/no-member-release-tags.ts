@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const { TSDocParser } = require("@microsoft/tsdoc");
+import { TSDocParser } from "@microsoft/tsdoc";
 
 /**
  *

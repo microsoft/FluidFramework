@@ -3,6 +3,7 @@
 		"rootDir": "example",
 		"target": "ESNext",
 		"composite": true,
+		"outDir": "dist"
 	},
-	"include": ["example/**/*"],
+	"include": ["./example/**/*"],
 }

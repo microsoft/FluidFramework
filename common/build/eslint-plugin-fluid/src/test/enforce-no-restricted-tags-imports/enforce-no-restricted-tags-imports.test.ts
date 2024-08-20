@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-const assert = require("assert");
-const path = require("path");
-const { ESLint } = require("eslint");
+import assert from "assert";
+import path from "path";
+import { ESLint } from "eslint";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe("ESLint Rule Tests", function () {
 	function createESLintInstance(config) {

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-const path = require("path");
-const { Project } = require("ts-morph");
+import path from"path";
+import { Project } from"ts-morph";
 
 /**
  * Validates if a tag is correctly formatted.
