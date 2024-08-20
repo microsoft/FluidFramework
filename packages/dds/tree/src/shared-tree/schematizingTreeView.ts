@@ -89,6 +89,10 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		public readonly nodeKeyManager: NodeKeyManager,
 		public readonly breaker: Breakable = new Breakable("SchematizingSimpleTreeView"),
 	) {
+		if (checkout.forest.anchors.slots.has(ContextSlot)) {
+			throw new UsageError("Cannot create a second view from the same branch");
+		}
+
 		const policy = {
 			...defaultSchemaPolicy,
 			validateSchema: config.enableSchemaValidation,

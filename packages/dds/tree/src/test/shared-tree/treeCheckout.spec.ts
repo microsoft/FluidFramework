@@ -29,6 +29,7 @@ import {
 	Tree,
 	TreeCheckout,
 	type ITreeCheckout,
+	type ITreeCheckoutFork,
 	type RevertibleFactory,
 } from "../../shared-tree/index.js";
 import {
@@ -800,52 +801,109 @@ describe("sharedTreeView", () => {
 	});
 
 	describe("branches with schema edits can be rebased", () => {
-		it.skip("over non-schema changes", () => {
+		it("over non-schema changes", () => {
+			const provider = new TestTreeProviderLite(1);
+
+			// Create the main view with old schema.
 			const sf1 = new SchemaFactory("schema1");
 			const oldSchema = sf1.array(sf1.string);
-
-			const provider = new TestTreeProviderLite(1);
 			const oldSchemaConfig = { schema: oldSchema, enableSchemaValidation };
 			const view1 = provider.trees[0].viewWith(new TreeViewConfiguration(oldSchemaConfig));
 			view1.initialize(["A", "B", "C"]);
 
-			const branch = forkView(view1);
+			// Fork the main branch with new schema.
+			const sf2 = new SchemaFactory("schema1");
+			const newSchema = [sf2.array(sf2.string), sf2.array([sf2.string, sf2.number])];
+			const view2 = forkView(view1, newSchema);
 
 			// Remove "A" on the parent branch
 			view1.root.removeAt(0);
 
-			// Remove "B" on the child branch
-			branch.root.removeAt(1);
+			// Upgrade the schema on the child branch.
+			view2.upgradeSchema();
 
-			const sf2 = new SchemaFactory("schema1");
-			const newSchema = [sf2.array(sf2.string), sf2.array([sf2.string, sf2.number])];
-			const branchWithNewSchema = viewCheckout(
-				branch.checkout,
-				new TreeViewConfiguration({ schema: newSchema, enableSchemaValidation }),
-			);
-			branchWithNewSchema.upgradeSchema();
 			// Remove "C" on the child branch
-			branchWithNewSchema.root.removeAt(1);
+			view2.root.removeAt(2);
 
 			expectSchemaEqual(
 				intoStoredSchema(toFlexSchema(newSchema)),
-				branchWithNewSchema.checkout.storedSchema,
+				view2.checkout.storedSchema,
 			);
-			assert.deepEqual(branchWithNewSchema.root, ["A"]);
+			assert.deepEqual(view2.root, ["A", "B"]);
 
-			branch.checkout.rebaseOnto(view1.checkout);
+			// Rebase the child branch onto the parent branch.
+			view2.checkout.rebaseOnto(view1.checkout);
 
 			// The schema change and any changes after that should be dropped,
 			// but the changes before the schema change should be preserved
 			expectSchemaEqual(
 				intoStoredSchema(toFlexSchema(oldSchema)),
-				branch.checkout.storedSchema,
+				view1.checkout.storedSchema,
 			);
-			const branchWithOldSchema = viewCheckout(
-				branch.checkout,
-				new TreeViewConfiguration(oldSchemaConfig),
+			assert.deepEqual(view1.root, ["B", "C"]);
+		});
+
+		it("over schema changes", () => {
+			const provider = new TestTreeProviderLite(1);
+
+			// Create the main branch with old schema.
+			const sf1 = new SchemaFactory("schema1");
+			const oldSchema = sf1.array(sf1.string);
+			const view1 = provider.trees[0].viewWith(
+				new TreeViewConfiguration({ schema: oldSchema, enableSchemaValidation }),
 			);
-			assert.deepEqual(branchWithOldSchema.root, ["C"]);
+			view1.initialize(["A", "B", "C"]);
+
+			// Remove "A" on the parent branch and dispose the view.
+			view1.root.removeAt(0);
+
+			// Get the checkout of the parent branch and fork it before disposing it. The branch is disposed
+			// so that a new view can be created from it with a new schema.
+			const checkout1 = view1.checkout;
+			const checkout2 = view1.checkout.fork();
+			view1.dispose();
+
+			// Create a new schema - schema2.
+			const sf2 = new SchemaFactory("schema1");
+			const schema2 = [sf2.array(sf2.string), sf2.array([sf2.string, sf2.number])];
+
+			// Create a new view with the main branch's checkout and schema2.
+			const view2 = viewCheckout(checkout1, new TreeViewConfiguration({ schema: schema2, enableSchemaValidation }));
+			// Upgrade the schema on the new view and remove "B".
+			view2.upgradeSchema();
+			view2.root.removeAt(1);
+
+			// Create another schema - schema3.
+			const sf3 = new SchemaFactory("schema1");
+			const schema3 = [sf3.array(sf3.string), sf3.array([sf3.string, sf3.boolean])];
+
+			// Create a new view with the forked checkout and schema3.
+			const view3 = viewCheckout(checkout2, new TreeViewConfiguration({ schema: schema3, enableSchemaValidation }));
+			// Upgrade the schema on the new view and remove "C".
+			view3.upgradeSchema();
+			view3.root.removeAt(0);
+
+			expectSchemaEqual(
+				intoStoredSchema(toFlexSchema(schema2)),
+				view2.checkout.storedSchema,
+			);
+			expectSchemaEqual(
+				intoStoredSchema(toFlexSchema(schema3)),
+				view3.checkout.storedSchema,
+			);
+
+			// Rebase view3 onto view2.
+			(view3.checkout as ITreeCheckoutFork).rebaseOnto(view2.checkout);
+
+			// All changes on view3 should be dropped but the schema change and edit in view2 should be preserved.
+			expectSchemaEqual(
+				intoStoredSchema(toFlexSchema(schema2)),
+				view2.checkout.storedSchema,
+			);
+			assert.deepEqual(
+				view2.root,
+				["B"],
+			);
 		});
 
 		it.skip("over schema changes", () => {
@@ -858,44 +916,44 @@ describe("sharedTreeView", () => {
 			);
 			view1.initialize(["A", "B", "C"]);
 
-			const branch = forkView(view1);
+			// Create a new schema
+			const sf2 = new SchemaFactory("schema1");
+			const newSchema = [sf2.array(sf2.string), sf2.array([sf2.string, sf2.number])];
+
+			// Create a new branch with the new schema
+			const branchView = forkView(view1, newSchema);
 
 			// Remove "A" and change the schema on the parent branch
 			view1.root.removeAt(0);
-			const sf2 = new SchemaFactory("schema1");
-			const newSchema = [sf2.array(sf2.string), sf2.array([sf2.string, sf2.number])];
-			provider.trees[0]
-				.viewWith(new TreeViewConfiguration({ schema: newSchema, enableSchemaValidation }))
-				.upgradeSchema();
+			view1.checkout.updateSchema(intoStoredSchema(toFlexSchema(newSchema)));
+			view1.upgradeSchema();
+			// provider.trees[0]
+			// 	.viewWith(new TreeViewConfiguration({ schema: newSchema, enableSchemaValidation }))
+			// 	.upgradeSchema();
 
 			// Remove "B" on the child branch
-			branch.root.removeAt(1);
-			const branchWithNewSchema = viewCheckout(
-				branch.checkout,
-				new TreeViewConfiguration({
-					schema: newSchema,
-					enableSchemaValidation,
-				}),
-			);
-			branchWithNewSchema.upgradeSchema();
+			branchView.root.removeAt(1);
+
+			// Upgrade the schema on the child branch.
+			branchView.upgradeSchema();
 			// Remove "C" on the child branch
-			branchWithNewSchema.root.removeAt(1);
+			branchView.root.removeAt(1);
 			expectSchemaEqual(
 				intoStoredSchema(toFlexSchema(newSchema)),
-				branchWithNewSchema.checkout.storedSchema,
+				branchView.checkout.storedSchema,
 			);
-			assert.deepEqual(branchWithNewSchema.root, ["A"]);
+			assert.deepEqual(branchView.root, ["A"]);
 
-			branch.checkout.rebaseOnto(view1.checkout);
+			branchView.checkout.rebaseOnto(view1.checkout);
 
 			// All changes on the branch should be dropped
 			expectSchemaEqual(
 				intoStoredSchema(toFlexSchema(newSchema)),
-				branch.checkout.storedSchema,
+				branchView.checkout.storedSchema,
 			);
 			assert.deepEqual(
 				viewCheckout(
-					branch.checkout,
+					branchView.checkout,
 					new TreeViewConfiguration({ schema: newSchema, enableSchemaValidation }),
 				).root,
 				["B", "C"],
