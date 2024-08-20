@@ -30,7 +30,7 @@ import type {
 	RangeUpPath,
 	UpPath,
 } from "./pathTree.js";
-import { EmptyKey, type Value } from "./types.js";
+import { EmptyKey } from "./types.js";
 import type { DeltaVisitor } from "./visitDelta.js";
 import type { PathVisitor } from "./visitPath.js";
 import type { AnnouncedVisitor } from "./visitorUtils.js";
@@ -180,11 +180,6 @@ export interface AnchorEvents {
 	 * fire when something _may_ have changed or _may_ be about to change.
 	 */
 	subtreeChangedAfterBatch(anchor: AnchorNode): void;
-
-	/**
-	 * Value on this node is changing.
-	 */
-	valueChanging(anchor: AnchorNode, value: Value): void;
 }
 
 /**

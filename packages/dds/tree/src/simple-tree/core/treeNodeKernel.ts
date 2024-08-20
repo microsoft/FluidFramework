@@ -4,9 +4,15 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { Off } from "../../events/index.js";
+import {
+	createEmitter,
+	type HasListeners,
+	type IEmitter,
+	type Listenable,
+	type Off,
+} from "../../events/index.js";
 import type { TreeNode, Unhydrated } from "./types.js";
-import type { AnchorNode } from "../../core/index.js";
+import type { AnchorEvents, AnchorNode } from "../../core/index.js";
 import {
 	flexTreeSlot,
 	isFreedSymbol,
@@ -60,17 +66,48 @@ export function tryGetTreeNodeSchema(value: unknown): undefined | TreeNodeSchema
  * The kernel has the same lifetime as the node and spans both its unhydrated and hydrated states.
  * When hydration occurs, the kernel is notified via the {@link TreeNodeKernel.hydrate | hydrate} method.
  */
-export class TreeNodeKernel {
+export class TreeNodeKernel implements Listenable<KernelEvents> {
+	private disposed = false;
+
 	/**
 	 * Generation number which is incremented any time we have an edit on the node.
 	 * Used during iteration to make sure there has been no edits that were concurrently made.
 	 */
 	public generationNumber: number = 0;
 
-	public hydrated?: {
+	#hydrated?: {
 		anchorNode: AnchorNode;
 		offAnchorNode: Set<Off>;
 	};
+
+	/**
+	 * Events registered before hydration.
+	 * @remarks
+	 *
+	 */
+	#preHydrationEvents?: Listenable<KernelEvents> &
+		IEmitter<KernelEvents> &
+		HasListeners<KernelEvents>;
+
+	/**
+	 * Get the listener.
+	 * @remarks
+	 * If before hydration, allocates and uses `#preHydrationEvents`, otherwise the anchorNode.
+	 * This design avoids allocating `#preHydrationEvents` if unneeded.
+	 *
+	 * This design also avoids extra forwarding overhead for events from anchorNode and also
+	 * avoids registering for events that the are unneeded.
+	 * This means optimizations like skipping processing data in subtrees where no subtreeChanged events are subscribed to would be able to work,
+	 * since this code does not unconditionally subscribe to those events (like a design simply forwarding all events would).
+	 */
+	get #events(): Listenable<KernelEvents> {
+		if (this.#hydrated === undefined) {
+			this.#preHydrationEvents ??= createEmitter<KernelEvents>();
+			return this.#preHydrationEvents;
+		} else {
+			return this.#hydrated.anchorNode;
+		}
+	}
 
 	/**
 	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
@@ -85,8 +122,15 @@ export class TreeNodeKernel {
 		treeNodeToKernel.set(node, this);
 	}
 
+	/**
+	 * Transition from {@link Unhydrated} to hydrated.
+	 * @remarks
+	 * Happens at most once for any given node.
+	 */
 	public hydrate(anchorNode: AnchorNode): void {
-		this.hydrated = {
+		assert(!this.disposed, "cannot use a disposed node");
+
+		this.#hydrated = {
 			anchorNode,
 			offAnchorNode: new Set([
 				anchorNode.on("afterDestroy", () => this.dispose()),
@@ -96,26 +140,38 @@ export class TreeNodeKernel {
 				}),
 			]),
 		};
-	}
 
-	public dehydrate(): void {
-		for (const off of this.hydrated?.offAnchorNode ?? []) {
-			off();
+		// If needed, register forwarding emitters for events from before hydration
+		if (this.#preHydrationEvents !== undefined) {
+			for (const eventName of kernelEvents) {
+				if (this.#preHydrationEvents.hasListeners(eventName)) {
+					this.#hydrated.offAnchorNode.add(
+						// Argument is forwarded between matching events, so the type should be correct.
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						anchorNode.on(eventName, (arg: any) =>
+							this.#preHydrationEvents?.emit(eventName, arg),
+						),
+					);
+				}
+			}
 		}
-		this.hydrated = undefined;
 	}
 
 	public isHydrated(): boolean {
-		return this.hydrated !== undefined;
+		assert(!this.disposed, "cannot use a disposed node");
+		return this.#hydrated !== undefined;
 	}
 
 	public getStatus(): TreeStatus {
-		if (this.hydrated?.anchorNode === undefined) {
+		if (this.disposed) {
+			return TreeStatus.Deleted;
+		}
+		if (this.#hydrated?.anchorNode === undefined) {
 			return TreeStatus.New;
 		}
 
 		// TODO: Replace this check with the proper check against the cursor state when the cursor becomes part of the kernel
-		const flex = this.hydrated.anchorNode.slots.get(flexTreeSlot);
+		const flex = this.#hydrated.anchorNode.slots.get(flexTreeSlot);
 		if (flex !== undefined) {
 			assert(flex instanceof LazyEntity, 0x9b4 /* Unexpected flex node implementation */);
 			if (flex[isFreedSymbol]()) {
@@ -123,11 +179,22 @@ export class TreeNodeKernel {
 			}
 		}
 
-		return treeStatusFromAnchorCache(this.hydrated.anchorNode);
+		return treeStatusFromAnchorCache(this.#hydrated.anchorNode);
+	}
+
+	public on<K extends keyof KernelEvents>(eventName: K, listener: KernelEvents[K]): Off {
+		return this.#events.on(eventName, listener);
 	}
 
 	public dispose(): void {
-		this.dehydrate();
+		this.disposed = true;
+		for (const off of this.#hydrated?.offAnchorNode ?? []) {
+			off();
+		}
 		// TODO: go to the context and remove myself from withAnchors
 	}
 }
+
+const kernelEvents = ["childrenChangedAfterBatch", "subtreeChangedAfterBatch"] as const;
+
+type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;

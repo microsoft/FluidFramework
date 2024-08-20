@@ -169,17 +169,11 @@ export const treeNodeApi: TreeNodeApi = {
 		listener: TreeChangeEvents[K],
 	): Off {
 		const kernel = getKernel(node);
-		if (kernel.hydrated === undefined) {
-			throw new UsageError(
-				"Subscribing to events for a node which is Unhydrated is unsupported",
-			);
-		}
-		const anchorNode = kernel.hydrated.anchorNode;
 		switch (eventName) {
 			case "nodeChanged": {
 				const nodeSchema = kernel.schema;
 				if (isObjectNodeSchema(nodeSchema)) {
-					return anchorNode.on("childrenChangedAfterBatch", ({ changedFields }) => {
+					return kernel.on("childrenChangedAfterBatch", ({ changedFields }) => {
 						const changedProperties = new Set(
 							Array.from(
 								changedFields,
@@ -191,17 +185,17 @@ export const treeNodeApi: TreeNodeApi = {
 						listener({ changedProperties });
 					});
 				} else if (nodeSchema.kind === NodeKind.Array) {
-					return anchorNode.on("childrenChangedAfterBatch", () => {
+					return kernel.on("childrenChangedAfterBatch", () => {
 						listener({ changedProperties: undefined });
 					});
 				} else {
-					return anchorNode.on("childrenChangedAfterBatch", ({ changedFields }) => {
+					return kernel.on("childrenChangedAfterBatch", ({ changedFields }) => {
 						listener({ changedProperties: changedFields });
 					});
 				}
 			}
 			case "treeChanged": {
-				return anchorNode.on("subtreeChangedAfterBatch", () => listener({}));
+				return kernel.on("subtreeChangedAfterBatch", () => listener({}));
 			}
 			default:
 				throw new UsageError(`No event named ${JSON.stringify(eventName)}.`);

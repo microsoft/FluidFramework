@@ -227,7 +227,9 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 	): void {
 		const listeners = this.listeners.get(eventName);
 		if (listeners !== undefined) {
-			const argArray: unknown[] = args; // TODO: Current TS (4.5.5) cannot spread `args` into `listener()`, but future versions (e.g. 4.8.4) can.
+			// Current TS (5.4.5) cannot spread `args` into `listener()`, but assigning to an array first makes it work.
+			const argArray: unknown[] = args;
+
 			// This explicitly copies listeners so that new listeners added during this call to emit will not receive this event.
 			for (const [off, listener] of [...listeners]) {
 				// If listener has been unsubscribed while invoking other listeners, skip it.
