@@ -112,6 +112,7 @@ export type Off = () => void;
 
 /**
  * Interface for an event emitter that can emit typed events to subscribed listeners.
+ * @sealed @alpha
  */
 export interface IEmitter<TListeners extends Listeners<TListeners>> {
 	/**
@@ -145,6 +146,7 @@ export interface IEmitter<TListeners extends Listeners<TListeners>> {
  *
  * A class can delegate handling {@link Listenable} to the returned value while using it to emit the events.
  * See also `EventEmitter` which be used as a base class to implement {@link Listenable} via extension.
+ * @alpha
  */
 export function createEmitter<TListeners extends object>(
 	noListeners?: NoListenersCallback<TListeners>,
@@ -155,12 +157,15 @@ export function createEmitter<TListeners extends object>(
 /**
  * Called when the last listener for `eventName` is removed.
  * Useful for determining when to clean up resources related to detecting when the event might occurs.
+ * @alpha
  */
 export type NoListenersCallback<TListeners extends object> = (
 	eventName: keyof Listeners<TListeners>,
 ) => void;
 
 /**
+ * Allows querying if an object has listeners.
+ * @sealed @alpha
  */
 export interface HasListeners<TListeners extends Listeners<TListeners>> {
 	/**
@@ -197,7 +202,7 @@ export interface HasListeners<TListeners extends Listeners<TListeners>> {
  *
  * ```typescript
  * class MyClass implements ISubscribable<MyEvents> {
- *   private readonly events = EventEmitter.create<MyEvents>();
+ *   private readonly events = createEmitter<MyEvents>();
  *
  *   private load() {
  *     this.events.emit("loaded");
@@ -208,6 +213,7 @@ export interface HasListeners<TListeners extends Listeners<TListeners>> {
  *   }
  * }
  * ```
+ * @alpha
  */
 export class EventEmitter<TListeners extends Listeners<TListeners>>
 	implements Listenable<TListeners>, HasListeners<TListeners>
