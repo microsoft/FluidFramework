@@ -255,8 +255,9 @@ export function readWideFlexTree(tree: FlexTreeView<typeof wideSchema.rootFieldS
 	let sum = 0;
 	let nodesCount = 0;
 	const root = tree.flexTree;
-	const field = root.content[EmptyKey];
+	const field = root.content.getBoxed(EmptyKey);
 	assert(field.length !== 0);
+	assert(field.is(wideRootSchema.info[EmptyKey]));
 	for (const currentNode of field) {
 		sum += currentNode;
 		nodesCount += 1;
@@ -271,7 +272,9 @@ export function readDeepFlexTree(tree: FlexTreeView<typeof deepSchema.rootFieldS
 	let depth = 0;
 	let currentNode = tree.flexTree.content;
 	while (currentNode.is(linkedListSchema)) {
-		currentNode = currentNode.foo;
+		const read = currentNode.getBoxed(brand("foo"));
+		assert(read.is(linkedListSchema.info.foo));
+		currentNode = read.content;
 		depth++;
 	}
 	assert(currentNode.is(leaf.number));
