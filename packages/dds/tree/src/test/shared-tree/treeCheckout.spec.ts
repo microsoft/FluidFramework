@@ -708,6 +708,32 @@ describe("sharedTreeView", () => {
 			);
 			assert.throws(() => fork.checkout[disposeSymbol]());
 		});
+
+		it("views should not be double-disposed on schema upgrade", () => {
+			const provider = new TestTreeProviderLite(1);
+
+			// Create and initialize a view.
+			const sf1 = new SchemaFactory("schema1");
+			const schema1 = sf1.array([sf1.string]);
+			const view1 = provider.trees[0].viewWith(
+				new TreeViewConfiguration({ schema: schema1, enableSchemaValidation }),
+			);
+			view1.initialize(["A", "B"]);
+
+			// Dispose the view.
+			view1.dispose();
+
+			// Create another view with a new schema using the same checkout as the main view.
+			const sf2 = new SchemaFactory("schema1");
+			const schema2 = [sf1.array([sf1.string]), sf2.array([sf2.string, sf2.number])];
+			const view2 = viewCheckout(
+				view1.checkout,
+				new TreeViewConfiguration({ schema: schema2, enableSchemaValidation }),
+			);
+
+			// Upgrading the view should succeed and not dispose the view again.
+			assert.doesNotThrow(() => view2.upgradeSchema(), "Upgrading schema should not throw");
+		});
 	});
 
 	it("schema edits do not cause clients to purge detached trees or revertibles", () => {
