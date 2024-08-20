@@ -16,6 +16,36 @@
 	"exports": {
 		".": {
 			"import": {
+				"types": "./lib/public.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/alpha.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/alpha.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./lib/beta.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/beta.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
 			},
@@ -28,6 +58,7 @@
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
