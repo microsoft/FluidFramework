@@ -11,7 +11,7 @@ import {
 	type TreeValue,
 	anchorSlot,
 } from "../../core/index.js";
-import type { Assume, FlattenKeys } from "../../util/index.js";
+import type { Assume } from "../../util/index.js";
 import type {
 	FieldKinds,
 	SequenceFieldEditBuilder,
@@ -26,7 +26,6 @@ import type {
 	FlexList,
 	FlexListToUnion,
 	FlexMapNodeSchema,
-	FlexObjectNodeFields,
 	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
 	LazyItem,
@@ -190,6 +189,16 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	 * a separate Anchor (and thus ref count) must be allocated to keep it alive.
 	 */
 	readonly anchorNode: AnchorNode;
+
+	/**
+	 * Returns an iterable of keys for non-empty fields.
+	 *
+	 * @remarks
+	 * All fields under a map implicitly exist, but `keys` will yield only the keys of fields which contain one or more nodes.
+	 *
+	 * No guarantees are made regarding the order of the keys returned.
+	 */
+	keys(): IterableIterator<FieldKey>;
 }
 
 /**
@@ -266,79 +275,6 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
 export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema>
 	extends FlexTreeNode {
 	readonly schema: TSchema;
-
-	/**
-	 * Get the field for `key`.
-	 * @param key - which map entry to look up.
-	 *
-	 * @remarks
-	 * All fields under a map implicitly exist, so `get` can be called with any key and will always return a field.
-	 * Even if the field is empty, it will still be returned, and can be edited to insert content into the map.
-	 */
-	getBoxed(key: string): FlexTreeTypedField<TSchema["info"]>;
-
-	/**
-	 * Returns an iterable of keys in the map.
-	 *
-	 * @remarks
-	 * All fields under a map implicitly exist, but `keys` will yield only the keys of fields which contain one or more nodes.
-	 *
-	 * No guarantees are made regarding the order of the keys returned.
-	 */
-	keys(): IterableIterator<FieldKey>;
-
-	/**
-	 * Returns an iterable of values in the map.
-	 *
-	 * @remarks
-	 * All fields under a map implicitly exist, but `values` will yield only the fields containing one or more nodes.
-	 *
-	 * No guarantees are made regarding the order of the values returned.
-	 */
-	values(): IterableIterator<FlexTreeUnboxField<TSchema["info"], "notEmpty">>;
-
-	/**
-	 * Returns an iterable of key, value pairs for every entry in the map.
-	 *
-	 * @remarks
-	 * All fields under a map implicitly exist, but `entries` will yield only the entries whose fields contain one or more nodes.
-	 *
-	 * This iteration provided by `entries()` is equivalent to that provided by direct iteration of the {@link FlexTreeMapNode} (a.k.a. `[Symbol.Iterator]()`).
-	 *
-	 * No guarantees are made regarding the order of the entries returned.
-	 */
-	entries(): IterableIterator<[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]>;
-
-	/**
-	 * Executes a provided function once per each key/value pair in the map.
-	 * @param callbackFn - The function to run for each map entry
-	 * @param thisArg - If present, `callbackFn` will be bound to `thisArg`
-	 *
-	 * @privateRemarks
-	 * TODO: This should run over fields in insertion order if we want to match the javascript foreach spec.
-	 */
-	forEach(
-		callbackFn: (
-			value: FlexTreeUnboxField<TSchema["info"], "notEmpty">,
-			key: FieldKey,
-			map: FlexTreeMapNode<TSchema>,
-		) => void,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		thisArg?: any,
-	): void;
-
-	/**
-	 * Iterate through all fields in the map.
-	 *
-	 * @remarks
-	 * No mutations to the current view of the shared tree are permitted during iteration.
-	 * To iterate over the unboxed values of the map, use `Symbol.Iterator()`.
-	 */
-	boxedIterator(): IterableIterator<FlexTreeTypedField<TSchema["info"]>>;
-
-	[Symbol.iterator](): IterableIterator<
-		[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]
-	>;
 }
 
 /**
@@ -348,7 +284,6 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema>
  *
  * @remarks
  * ObjectNodes require complex typing, and have been split into two parts for implementation purposes.
- * See {@link FlexTreeObjectNodeTyped} for the schema aware extensions to this that provide access to the fields.
  *
  * These "Objects" resemble "Structs" from a wide variety of programming languages
  * (Including Algol 68, C, Go, Rust, C# etc.).
@@ -381,138 +316,6 @@ export interface FlexTreeLeafNode<in out TSchema extends LeafNodeSchema> extends
 }
 
 /**
- * An {@link FlexTreeObjectNode} with schema aware accessors for its fields.
- *
- * @privateRemarks
- *
- * The corresponding implementation logic for this lives in `LazyTree.ts` under `buildStructClass`.
- * If you change the signature here, you will need to update that logic to match.
- */
-export type FlexTreeObjectNodeTyped<TSchema extends FlexObjectNodeSchema> =
-	FlexObjectNodeSchema extends TSchema
-		? FlexTreeObjectNode
-		: FlexTreeObjectNode & FlexTreeObjectNodeFields<TSchema["info"]>;
-
-/**
- * Properties to access an object node's fields. See {@link FlexTreeObjectNodeTyped}.
- *
- * @privateRemarks
- * TODO: Support custom field keys.
- */
-export type FlexTreeObjectNodeFields<TFields extends FlexObjectNodeFields> =
-	FlexTreeObjectNodeFieldsInner<
-		FlattenKeys<
-			{
-				// When the key does not need to be escaped, map it from the input TFields in a way that doesn't break navigate to declaration
-				[key in keyof TFields as key extends PropertyNameFromFieldKey<key & string>
-					? key
-					: never]: TFields[key];
-			} & {
-				[key in keyof TFields as key extends PropertyNameFromFieldKey<key & string>
-					? never
-					: PropertyNameFromFieldKey<key & string>]: TFields[key];
-			}
-		>
-	>;
-
-/**
- * Properties to access an object node's fields. See {@link FlexTreeObjectNodeTyped}.
- *
- * @privateRemarks
- * TODO: Do we keep assignment operator + "setFoo" methods, or just use methods?
- * Inconsistency in the API experience could confusing for consumers.
- */
-export type FlexTreeObjectNodeFieldsInner<TFields extends FlexObjectNodeFields> = FlattenKeys<
-	{
-		// boxed fields (TODO: maybe remove these when same as non-boxed version?)
-		readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: FlexTreeTypedField<
-			TFields[key]
-		>;
-	} & {
-		// Add getter only (make property readonly) when the field is **not** of a kind that has a logical set operation.
-		// If we could map to getters and setters separately, we would preferably do that, but we can't.
-		// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
-		readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-			? never
-			: key]: FlexTreeUnboxField<TFields[key]>;
-	} & {
-		// Add setter (make property writable) when the field is of a kind that has a logical set operation.
-		// If we could map to getters and setters separately, we would preferably do that, but we can't.
-		// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
-		-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-			? key
-			: never]: FlexTreeUnboxField<TFields[key]>;
-	} & {
-		// Setter method (when the field is of a kind that has a logical set operation).
-		readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-			? `set${Capitalize<key & string>}`
-			: never]: (content: FlexibleNodeContent) => void;
-	}
->;
-
-/**
- * Reserved object node field property names to avoid collisions with the rest of the object node API.
- */
-export const reservedObjectNodeFieldPropertyNames = [
-	"anchorNode",
-	"constructor",
-	"context",
-	"is",
-	"parentField",
-	"schema",
-	"tryGetField",
-	"type",
-	"value",
-	"boxedIterator",
-	"iterator",
-	"getBoxed",
-] as const;
-
-/**
- * Reserved object node field property names prefixes.
- * These are reserved to avoid collisions with properties derived from field other field names.
- *
- * Field names starting with these must be followed by a lowercase letter, or be escaped.
- */
-export const reservedObjectNodeFieldPropertyNamePrefixes = [
-	"set",
-	"boxed",
-	"field",
-	"Field",
-] as const;
-
-/**
- * {@link reservedObjectNodeFieldPropertyNamePrefixes} as a type union.
- */
-export type ReservedObjectNodeFieldPropertyNames =
-	(typeof reservedObjectNodeFieldPropertyNames)[number];
-
-/**
- * {@link reservedObjectNodeFieldPropertyNamePrefixes} as a type union.
- */
-export type ReservedObjectNodeFieldPropertyNamePrefixes =
-	(typeof reservedObjectNodeFieldPropertyNamePrefixes)[number];
-
-/**
- * Convert an object node's field key into an escaped string usable as a property name.
- *
- * @privateRemarks
- * TODO:
- * Collisions are still possible.
- * For example fields named "foo" and "Foo" would both produce a setter "setFoo".
- * Consider naming schemes to avoid this, ensure that there is a good workaround for these cases.
- * Another approach would be to support custom field names (separate from keys),
- * and do the escaping (if needed) when creating the flex tree schema (both when manually creating them and when doing so automatically):
- * this would enable better intellisense for escaped fields, as well as allow the feature of custom field property names.
- */
-export type PropertyNameFromFieldKey<T extends string> =
-	T extends ReservedObjectNodeFieldPropertyNames
-		? `field${Capitalize<T>}`
-		: T extends `${ReservedObjectNodeFieldPropertyNamePrefixes}${Capitalize<string>}`
-			? `field${Capitalize<T>}`
-			: T;
-
-/**
  * Field kinds that allow value assignment.
  */
 export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKinds.required;
@@ -537,15 +340,6 @@ export type FlexibleNodeContent = ExclusiveMapTree;
  * Used to insert a batch of 0 or more nodes into some location in a {@link FlexTreeSequenceField}.
  */
 export type FlexibleNodeSubSequence = ExclusiveMapTree[];
-
-/**
- * Type to ensures two types overlap in at least one way.
- * It evaluates to the input type if this is true, and never otherwise.
- * Examples:
- * CheckTypesOverlap\<number | boolean, number | object\> = number | boolean
- * CheckTypesOverlap\<number | boolean, string | object\> = never
- */
-export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? never : T][0];
 
 /**
  * {@link FlexTreeField} that stores a sequence of children.
@@ -587,12 +381,6 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * @param callbackfn - A function that accepts the child and its index.
 	 */
 	map<U>(callbackfn: (value: FlexTreeUnboxNodeUnion<TTypes>, index: number) => U): U[];
-
-	/**
-	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.
-	 * @param callbackfn - A function that accepts the child and its index.
-	 */
-	mapBoxed<U>(callbackfn: (value: FlexTreeTypedNodeUnion<TTypes>, index: number) => U): U[];
 
 	readonly length: number;
 
@@ -687,7 +475,7 @@ export type FlexTreeTypedNode<TSchema extends FlexTreeNodeSchema> =
 		: TSchema extends FlexMapNodeSchema
 			? FlexTreeMapNode<TSchema>
 			: TSchema extends FlexObjectNodeSchema
-				? FlexTreeObjectNodeTyped<TSchema>
+				? FlexTreeObjectNode
 				: FlexTreeNode;
 
 // #endregion
@@ -764,7 +552,7 @@ export type FlexTreeUnboxNode<TSchema extends FlexTreeNodeSchema> =
 		: TSchema extends FlexMapNodeSchema
 			? FlexTreeMapNode<TSchema>
 			: TSchema extends FlexObjectNodeSchema
-				? FlexTreeObjectNodeTyped<TSchema>
+				? FlexTreeObjectNode
 				: FlexTreeUnknownUnboxed;
 
 /**

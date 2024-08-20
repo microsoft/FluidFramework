@@ -15,24 +15,15 @@ export {
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
-	type FlexTreeObjectNode,
-	type FlexTreeObjectNodeTyped,
 	type AssignableFieldKinds,
 	type FlexTreeTypedNode,
 	type FlexTreeTypedNodeUnion,
-	type CheckTypesOverlap,
 	TreeStatus,
 	type FlexTreeUnknownUnboxed,
 	type FlexTreeUnboxField,
 	flexTreeMarker,
 	FlexTreeEntityKind,
 	isFlexTreeNode,
-	type PropertyNameFromFieldKey,
-	type ReservedObjectNodeFieldPropertyNames,
-	type ReservedObjectNodeFieldPropertyNamePrefixes,
-	reservedObjectNodeFieldPropertyNames,
-	reservedObjectNodeFieldPropertyNamePrefixes,
-	type FlexTreeObjectNodeFieldsInner,
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
 
@@ -48,16 +39,7 @@ export { getTreeContext, type FlexTreeContext, Context, ContextSlot } from "./co
 
 export { type FlexTreeNodeEvents } from "./treeEvents.js";
 
-// Below here are things that are used by the above, but not part of the desired API surface.
-export type {
-	FlexTreeTypedFieldInner,
-	FlexTreeUnboxFieldInner,
-	FlexTreeObjectNodeFields,
-	FlexTreeUnboxNode,
-	FlexTreeUnboxNodeUnion,
-	IsArrayOfOne,
-	FlexibleNodeSubSequence,
-} from "./flexTreeTypes.js";
+export type { FlexTreeUnboxNodeUnion } from "./flexTreeTypes.js";
 
 export {
 	assertFlexTreeEntityNotFreed,

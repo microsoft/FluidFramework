@@ -225,12 +225,6 @@ export abstract class LazyField<
 		return Array.from(this, callbackfn);
 	}
 
-	public mapBoxed<U>(
-		callbackfn: (value: FlexTreeTypedNodeUnion<TTypes>, index: number) => U,
-	): U[] {
-		return Array.from(this.boxedIterator(), callbackfn);
-	}
-
 	public boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>> {
 		return iterateCursorField(
 			this[cursorSymbol],
