@@ -7,8 +7,10 @@ import type {
 	IMigratableModel,
 	IMigrationTool,
 	IVersionedModel,
-} from "@fluid-example/migration-tools";
-import { MigratableModelLoader, Migrator } from "@fluid-example/migration-tools";
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluid-example/migration-tools/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { MigratableModelLoader, Migrator } from "@fluid-example/migration-tools/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
 	InsecureTinyliciousTokenProvider,

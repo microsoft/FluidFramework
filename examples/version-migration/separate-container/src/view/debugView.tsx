@@ -7,7 +7,8 @@ import type {
 	IMigratableModel,
 	IMigrationTool,
 	MigrationState,
-} from "@fluid-example/migration-tools";
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluid-example/migration-tools/internal";
 import React, { useEffect, useState } from "react";
 
 import type { IInventoryListAppModel } from "../modelInterfaces.js";

@@ -9,7 +9,7 @@ import {
 	IVersionedModel,
 	MigratableSessionStorageModelLoader,
 	Migrator,
-} from "@fluid-example/migration-tools";
+} from "@fluid-example/migration-tools/internal";
 
 import React from "react";
 import ReactDOM from "react-dom";

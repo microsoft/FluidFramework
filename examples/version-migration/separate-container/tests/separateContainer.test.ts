@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IMigrator } from "@fluid-example/migration-tools";
+import { IMigrator } from "@fluid-example/migration-tools/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { globals } from "../jest.config.cjs";
 

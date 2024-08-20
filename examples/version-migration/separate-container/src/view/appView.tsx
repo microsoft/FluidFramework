@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigrationTool } from "@fluid-example/migration-tools";
+// eslint-disable-next-line import/no-internal-modules
+import type { IMigrationTool } from "@fluid-example/migration-tools/internal";
 import React, { useEffect, useState } from "react";
 
 import type { IInventoryListAppModel } from "../modelInterfaces.js";

@@ -56,7 +56,7 @@
 		}
 	},
 	"main": "lib/index.js",
-	"types": "lib/index.d.ts",
+	"types": "lib/public.d.ts",
 	"scripts": {
 		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",

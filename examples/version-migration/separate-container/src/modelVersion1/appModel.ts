@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigratableModel } from "@fluid-example/migration-tools";
+// eslint-disable-next-line import/no-internal-modules
+import type { IMigratableModel } from "@fluid-example/migration-tools/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 

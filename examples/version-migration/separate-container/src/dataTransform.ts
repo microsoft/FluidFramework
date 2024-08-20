@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { DataTransformationCallback } from "@fluid-example/migration-tools";
+// eslint-disable-next-line import/no-internal-modules
+import type { DataTransformationCallback } from "@fluid-example/migration-tools/internal";
 
 export interface IParsedInventoryItemData {
 	name: string;
