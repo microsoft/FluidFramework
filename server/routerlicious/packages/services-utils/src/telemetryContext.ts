@@ -60,7 +60,6 @@ function getTelemetryContextPropertiesFromRequest(
 		req.get(TelemetryContextHeaderName) !== undefined
 			? "client"
 			: "server";
-	console.log("[DHRUV DEBUG] correlationIdSource: ", correlationIdSource);
 	return {
 		[BaseTelemetryProperties.correlationId]:
 			telemetryContextProperties?.correlationId ?? correlationIdHeader,
@@ -103,14 +102,9 @@ export const bindTelemetryContext = (): RequestHandler => {
 		// Bind incoming telemetry properties to async context.
 		const telemetryContextProperties = getTelemetryContextPropertiesWithHttpInfo(req, res);
 		// Generate entry correlation-id if not provided in request.
-		console.log("[DHRUV DEBUG] correlationId check");
 		if (!telemetryContextProperties.correlationId) {
 			telemetryContextProperties.correlationId = uuid();
 		}
-		console.log(
-			"[DHRUV DEBUG] correlationIdSource: ",
-			telemetryContextProperties.correlationIdSource,
-		);
 		// Assign response headers for client telemetry purposes.
 		res.setHeader(CorrelationIdHeaderName, telemetryContextProperties.correlationId);
 		telemetryContext.bindProperties(telemetryContextProperties, () => next());
