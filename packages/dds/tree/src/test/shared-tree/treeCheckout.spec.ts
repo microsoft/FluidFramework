@@ -868,7 +868,10 @@ describe("sharedTreeView", () => {
 			const schema2 = [sf2.array(sf2.string), sf2.array([sf2.string, sf2.number])];
 
 			// Create a new view with the main branch's checkout and schema2.
-			const view2 = viewCheckout(checkout1, new TreeViewConfiguration({ schema: schema2, enableSchemaValidation }));
+			const view2 = viewCheckout(
+				checkout1,
+				new TreeViewConfiguration({ schema: schema2, enableSchemaValidation }),
+			);
 			// Upgrade the schema on the new view and remove "B".
 			view2.upgradeSchema();
 			view2.root.removeAt(1);
@@ -878,32 +881,23 @@ describe("sharedTreeView", () => {
 			const schema3 = [sf3.array(sf3.string), sf3.array([sf3.string, sf3.boolean])];
 
 			// Create a new branch view with the forked checkout and schema3.
-			const view3 = viewCheckout(checkout2, new TreeViewConfiguration({ schema: schema3, enableSchemaValidation }));
+			const view3 = viewCheckout(
+				checkout2,
+				new TreeViewConfiguration({ schema: schema3, enableSchemaValidation }),
+			);
 			// Upgrade the schema on the new view and remove "C".
 			view3.upgradeSchema();
 			view3.root.removeAt(0);
 
-			expectSchemaEqual(
-				intoStoredSchema(toFlexSchema(schema2)),
-				view2.checkout.storedSchema,
-			);
-			expectSchemaEqual(
-				intoStoredSchema(toFlexSchema(schema3)),
-				view3.checkout.storedSchema,
-			);
+			expectSchemaEqual(intoStoredSchema(toFlexSchema(schema2)), view2.checkout.storedSchema);
+			expectSchemaEqual(intoStoredSchema(toFlexSchema(schema3)), view3.checkout.storedSchema);
 
 			// Rebase view3 onto view2.
 			(view3.checkout as ITreeCheckoutFork).rebaseOnto(view2.checkout);
 
 			// All changes on view3 should be dropped but the schema change and edit in view2 should be preserved.
-			expectSchemaEqual(
-				intoStoredSchema(toFlexSchema(schema2)),
-				view2.checkout.storedSchema,
-			);
-			assert.deepEqual(
-				view2.root,
-				["B"],
-			);
+			expectSchemaEqual(intoStoredSchema(toFlexSchema(schema2)), view2.checkout.storedSchema);
+			assert.deepEqual(view2.root, ["B"]);
 		});
 	});
 
