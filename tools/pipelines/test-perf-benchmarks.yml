@@ -639,6 +639,7 @@ stages:
     dependsOn:
       - perf_unit_tests_runtime
       - perf_unit_tests_memory
+      - perf_unit_tests_customBenchmark
       - perf_e2e_tests_local
       - perf_e2e_tests_odsp
       - perf_e2e_tests_frs
