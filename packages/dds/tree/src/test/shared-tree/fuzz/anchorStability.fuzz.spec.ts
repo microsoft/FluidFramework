@@ -45,10 +45,10 @@ interface AnchorFuzzTestState extends FuzzTestState {
 }
 
 const initialTreeState: NodeBuilderData<typeof FuzzNode> = {
-	arrayChildren: [{ stringValue: "1" }, { stringValue: "2" }, { stringValue: "3" }],
+	arrayChildren: ["1", "2", "3"],
 	requiredChild: {
-		requiredChild: { stringValue: "0" },
-		arrayChildren: [{ stringValue: "4" }, { stringValue: "5" }, { stringValue: "6" }],
+		requiredChild: "0",
+		arrayChildren: ["4", "5", "6"],
 	},
 	optionalChild: undefined,
 } as unknown as NodeBuilderData<typeof FuzzNode>;

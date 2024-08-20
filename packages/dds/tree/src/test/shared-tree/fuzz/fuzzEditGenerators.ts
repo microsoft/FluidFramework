@@ -58,7 +58,6 @@ import {
 	type UndoRedo,
 	type FieldEdit,
 	type CrossFieldMove,
-	type FieldDownPath,
 	type Constraint,
 	type GeneratedFuzzNode,
 	GeneratedFuzzValueType,
@@ -310,19 +309,19 @@ export const makeTreeEditGenerator = (
 		const nodeTypeToGenerate = state.random.pick(allowableNodeTypes);
 
 		switch (nodeTypeToGenerate) {
-			case "treeFuzz.FuzzStringNode":
+			case "com.fluidframework.leaf.string":
 				return {
 					type: GeneratedFuzzValueType.String,
 					value: state.random
 						.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)
 						.toString(),
 				};
-			case "treeFuzz.FuzzNumberNode":
+			case "com.fluidframework.leaf.number":
 				return {
 					type: GeneratedFuzzValueType.Number,
 					value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
 				};
-			case "treeFuzz.FuzzHandleNode":
+			case "com.fluidframework.leaf.handle":
 				return {
 					type: GeneratedFuzzValueType.Handle,
 					value: state.random.handle(),
@@ -398,12 +397,12 @@ export const makeTreeEditGenerator = (
 						field.type === "sequence" && !Tree.contains(srcField, field.parentFuzzNode),
 				);
 				assert(dstFieldInfo.type === "sequence");
-				const dstField = dstFieldInfo.parentFuzzNode;
+				const dstParent = dstFieldInfo.parentFuzzNode;
 				return {
 					type: "crossFieldMove",
 					range: chooseRange(state.random, srcField.length),
-					dstParent: maybeDownPathFromNode(dstField),
-					dstIndex: state.random.integer(0, dstField.arrayChildren.length),
+					dstParent: maybeDownPathFromNode(dstParent, viewFromState(state).currentSchema),
+					dstIndex: state.random.integer(0, dstParent.arrayChildren.length),
 				};
 			},
 			weights.crossFieldMove,
@@ -500,7 +499,10 @@ export const makeTreeEditGenerator = (
 			type: "treeEdit",
 			edit: {
 				type: "fieldEdit",
-				parentNodePath: maybeDownPathFromNode(fieldInfo.parentFuzzNode),
+				parentNodePath: maybeDownPathFromNode(
+					fieldInfo.parentFuzzNode,
+					viewFromState(state).currentSchema,
+				),
 				change,
 			},
 		};
@@ -581,7 +583,10 @@ export const makeConstraintEditGenerator = (
 					type: "constraint",
 					content: {
 						type: "nodeConstraint",
-						nodePath: maybeDownPathFromNode(selectedField.parentFuzzNode),
+						nodePath: maybeDownPathFromNode(
+							selectedField.parentFuzzNode,
+							viewFromState(state).currentSchema,
+						),
 					},
 				};
 			},
@@ -678,18 +683,11 @@ function downPathFromNode(node: TreeNode): DownPath {
 	return toDownPath(upPathFromNode(node));
 }
 
-export function maybeDownPathFromNode(node: TreeNode | undefined): DownPath | undefined {
-	return node === undefined ? undefined : downPathFromNode(node);
-}
-
-export function fieldDownPathFromParentNode(
-	parentNode: TreeNode,
-	key: FieldKey,
-): FieldDownPath {
-	return {
-		parent: maybeDownPathFromNode(parentNode),
-		key,
-	};
+export function maybeDownPathFromNode(
+	node: TreeNode | undefined,
+	nodeSchema: FuzzNodeSchema,
+): DownPath | undefined {
+	return Tree.is(node, nodeSchema) ? downPathFromNode(node) : undefined;
 }
 
 // Using TreeNode instead of FuzzNode to handle the case where the root node is not a FuzzNode (like a leafNode or undefined)

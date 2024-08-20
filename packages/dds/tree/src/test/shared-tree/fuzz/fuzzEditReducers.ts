@@ -32,9 +32,6 @@ import {
 	createTreeViewSchema,
 	type FuzzNode,
 	isRevertibleSharedTreeView,
-	FuzzStringNode,
-	FuzzNumberNode,
-	FuzzHandleNode,
 	type ArrayChildren,
 	nodeSchemaFromTreeSchema,
 	type GUIDNode,
@@ -418,14 +415,14 @@ function navigateToNode(tree: FuzzView, path: DownPath): TreeNode {
 				const optionalChild =
 					(currentNode as FuzzNode).optionalChild ??
 					fail(`Unexpected field type: ${pathStep.field}`);
-				currentNode = optionalChild;
+				currentNode = optionalChild as FuzzNode;
 				break;
 			}
 			case "requiredChild": {
 				const requiredChild =
 					(currentNode as FuzzNode).requiredChild ??
 					fail(`Unexpected field type: ${pathStep.field}`);
-				currentNode = requiredChild;
+				currentNode = requiredChild as FuzzNode;
 				break;
 			}
 			default:
@@ -451,17 +448,15 @@ function nodeSchemaForNodeType(nodeSchema: typeof FuzzNode, nodeType: string) {
 function generateFuzzNode(node: GeneratedFuzzNode, nodeSchema: typeof FuzzNode) {
 	switch (node.type) {
 		case GeneratedFuzzValueType.String:
-			return new FuzzStringNode({ stringValue: node.value as string });
+			return node.value as string;
 		case GeneratedFuzzValueType.Number:
-			return new FuzzNumberNode({ value: node.value as number });
+			return node.value as number;
 		case GeneratedFuzzValueType.Handle:
-			return new FuzzHandleNode({ value: node.value as IFluidHandle });
+			return node.value as IFluidHandle;
 		case GeneratedFuzzValueType.NodeObject: {
 			const nodeObjectSchema = nodeSchemaForNodeType(nodeSchema, "treeFuzz.node");
 			return new nodeObjectSchema({
-				requiredChild: new FuzzNumberNode({
-					value: (node.value as NodeObjectValue).requiredChild,
-				}),
+				requiredChild: (node.value as NodeObjectValue).requiredChild,
 				arrayChildren: [],
 			}) as FuzzNode;
 		}
@@ -473,6 +468,6 @@ function generateFuzzNode(node: GeneratedFuzzNode, nodeSchema: typeof FuzzNode) 
 			}) as GUIDNode;
 		}
 		default:
-			return new FuzzStringNode({ stringValue: node.value as string });
+			unreachableCase(node.type, "invalid GeneratedFuzzNode");
 	}
 }

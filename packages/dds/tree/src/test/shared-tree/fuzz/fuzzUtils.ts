@@ -37,33 +37,19 @@ import {
 	type TreeNodeSchema,
 	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 const builder = new SchemaFactory("treeFuzz");
 export class GUIDNode extends builder.object("GuidNode" as string, {
 	value: builder.optional(builder.string),
 }) {}
 
-export class FuzzStringNode extends builder.object("FuzzStringNode", {
-	stringValue: builder.required(builder.string),
-}) {}
-export class FuzzNumberNode extends builder.object("FuzzNumberNode", {
-	value: builder.required(builder.number),
-}) {}
-export class FuzzHandleNode extends builder.object("FuzzHandleNode", {
-	value: builder.required(builder.handle),
-}) {}
-
-export type InitialAllowedFuzzTypes =
-	| FuzzStringNode
-	| FuzzNumberNode
-	| FuzzHandleNode
-	| GUIDNode
-	| FuzzNode;
+export type InitialAllowedFuzzTypes = number | string | IFluidHandle | GUIDNode | FuzzNode;
 
 const initialAllowedTypes = [
-	FuzzStringNode,
-	FuzzNumberNode,
-	FuzzHandleNode,
+	builder.string,
+	builder.number,
+	builder.handle,
 	GUIDNode,
 	() => FuzzNode,
 ] as const;
@@ -111,18 +97,24 @@ function createFuzzNodeSchema(
 ): FuzzNodeSchema {
 	class ArrayChildren2 extends schemaFactory.arrayRecursive("arrayChildren", [
 		() => Node,
-		FuzzStringNode,
-		FuzzNumberNode,
-		FuzzHandleNode,
+		schemaFactory.string,
+		schemaFactory.number,
+		schemaFactory.handle,
 		...nodeTypes,
 	]) {}
 	class Node extends schemaFactory.objectRecursive("node", {
-		requiredChild: [() => Node, FuzzStringNode, FuzzNumberNode, FuzzHandleNode, ...nodeTypes],
+		requiredChild: [
+			() => Node,
+			schemaFactory.string,
+			schemaFactory.number,
+			schemaFactory.handle,
+			...nodeTypes,
+		],
 		optionalChild: schemaFactory.optionalRecursive([
 			() => Node,
-			FuzzStringNode,
-			FuzzNumberNode,
-			FuzzHandleNode,
+			schemaFactory.string,
+			schemaFactory.number,
+			schemaFactory.handle,
 			...nodeTypes,
 		]),
 		arrayChildren: ArrayChildren2,
@@ -247,21 +239,21 @@ export const deterministicIdCompressorFactory: (
 export const populatedInitialState: NodeBuilderData<typeof FuzzNode> = {
 	arrayChildren: [
 		{
-			arrayChildren: [{ stringValue: "AA" }, { stringValue: "AB" }, { stringValue: "AC" }],
-			requiredChild: { stringValue: "A" },
+			arrayChildren: ["AA", "AB", "AC"],
+			requiredChild: "A",
 			optionalChild: undefined,
 		},
 		{
-			arrayChildren: [{ stringValue: "BA" }, { stringValue: "BB" }, { stringValue: "BC" }],
-			requiredChild: { stringValue: "B" },
+			arrayChildren: ["BA", "BB", "BC"],
+			requiredChild: "B",
 			optionalChild: undefined,
 		},
 		{
-			arrayChildren: [{ stringValue: "CA" }, { stringValue: "CB" }, { stringValue: "CC" }],
-			requiredChild: { stringValue: "C" },
+			arrayChildren: ["CA", "CB", "CC"],
+			requiredChild: "C",
 			optionalChild: undefined,
 		},
 	],
-	requiredChild: { stringValue: "R" },
+	requiredChild: "R",
 	optionalChild: undefined,
 } as unknown as NodeBuilderData<typeof FuzzNode>;
