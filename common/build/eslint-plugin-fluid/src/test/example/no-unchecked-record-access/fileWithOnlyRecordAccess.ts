@@ -14,12 +14,16 @@ interface NestedIndexProps {
 }
 type StaticType = { a: string; b: string };
 type IndexSignatureType = { [key: string]: string };
-type NullableIndexSignatureType = { [key: string]: string | undefined | null };
-const nullableIndexedRecord: NullableIndexSignatureType = { a: "hello", b: undefined, c: null };
+type NullableIndexSignatureType = { [key: string]: string | null };
+type UndefinableIndexSignatureType = { [key: string]: string | undefined };
+const nullableIndexedRecord: NullableIndexSignatureType = { a: "hello", b: null };
 nullableIndexedRecord.a; // ok: Accessing index property 'a' without requiring a particular result
 nullableIndexedRecord.a.length; // defect: Accessing length of index property 'a', but 'a' might be undefined or null
 nullableIndexedRecord.b?.length; // ok: Using optional chaining to access length safely handles 'undefined'
-nullableIndexedRecord.c?.length; // ok: Using optional chaining to access length safely handles 'null'
+const undefinableIndexedRecord: UndefinableIndexSignatureType = { a: "hello", b: undefined };
+undefinableIndexedRecord.a; // ok: Accessing index property 'a' without requiring a particular result
+undefinableIndexedRecord.a.length; // defect: Accessing length of index property 'a', but 'a' might be undefined or null
+undefinableIndexedRecord.b?.length; // ok: Using optional chaining to access length safely handles 'undefined'
 
 const nestedObj: NestedIndexProps = { nested: { a: "hello" } };
 nestedObj.nested.a; // ok: Accessing nested index property 'a' without requiring a particular result
@@ -28,7 +32,7 @@ nestedObj.nested.a.length; // defect: Accessing length of a nested possibly unde
 const a = "a";
 const b = "b";
 /*
- * The following lint rule should not apply to static types, since they are guaranteed to have the properties they define.
+ * no-unchecked-record-access should not apply to static types, since they are guaranteed to have the properties they define.
  */
 const someObjWithStaticType: StaticType = { a: "hello", b: "goodbye" };
 someObjWithStaticType.a; // ok: Accessing string property 'a'
@@ -64,6 +68,18 @@ function recordAFnExpectsString(record: IndexSignatureType): string {
 	return record.a; // defect: Returning index property 'a' directly, but 'a' might not be present
 }
 
+function AFnExpectsString(a: string): string {
+	return a;
+}
+
+function AFnExpectsStringOrUndefined(a: string | undefined): string | undefined {
+	return a;
+}
+
+AFnExpectsString(indexedRecordOfStrings.a); // defect: Passing index property 'a' to a function that expects a string should fail
+
+AFnExpectsStringOrUndefined(indexedRecordOfStrings.a); // ok: Passing index property 'a' to a function that accepts undefined is fine
+
 function recordAFnExpectsStringOrUndefined(record: IndexSignatureType): string | undefined {
 	return record.a; // ok: Returning index property 'a' to string or undefined variable, 'a' might not be present
 }
@@ -87,6 +103,8 @@ aImplicitType!.length; // ok: This should be caught by tsc, not by this custom l
 
 let aLetExpectingString: string = indexedRecordOfStrings.a; // defect: Assigning index property 'a' to a strict string variable, but 'a' might not be present
 let aLetExpectingStringOrUndefined: string | undefined = indexedRecordOfStrings.a; // ok: Assigning index property 'a' to string or undefined variable, 'a' might not be present
+let aLetExpectingStringAfterVariableDeclaration: string;
+aLetExpectingStringAfterVariableDeclaration = indexedRecordOfStrings.a; // defect
 
 interface NonNullableProps {
 	definitelyString: string;
