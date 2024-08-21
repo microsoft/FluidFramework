@@ -513,7 +513,7 @@ describe("sharedTreeView", () => {
 		});
 
 		it("cannot create a second view from an uninitialized simple tree view's checkout", () => {
-			const sf = new SchemaFactory("no squash commits schema");
+			const sf = new SchemaFactory("schema1");
 			const provider = new TestTreeProviderLite(1);
 			const view1 = provider.trees[0].viewWith(
 				new TreeViewConfiguration({
@@ -537,7 +537,7 @@ describe("sharedTreeView", () => {
 		});
 
 		it("cannot create a second view from an initialized simple tree view's checkout", () => {
-			const sf = new SchemaFactory("no squash commits schema");
+			const sf = new SchemaFactory("schema1");
 			const provider = new TestTreeProviderLite(1);
 			const view1 = provider.trees[0].viewWith(
 				new TreeViewConfiguration({
