@@ -532,8 +532,68 @@ for (const testOpts of testMatrix) {
 			assert.strictEqual(result, "value", "Value not found in copied container");
 		});
 
+		it("op grouping disabled as expected for 1.x clients", async () => {
+			const { container: container1 } = await clientCurrent1.createContainer(
+				schemaCurrent,
+				"1",
+			);
+			const containerId = await container1.attach();
+
+			if (container1.connectionState !== ConnectionState.Connected) {
+				await timeoutPromise((resolve) => container1.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				});
+			}
+
+			const containerProcessSpy = sandbox.spy(
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+				(container1 as any).container,
+				"processRemoteMessage",
+			);
+
+			// Explicitly force ops sent to be in the same batch
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+			(container1 as any).container._runtime.orderSequentially(() => {
+				const map1 = container1.initialObjects.map1;
+				map1.set("1", 1);
+				map1.set("2", 2);
+				map1.set("3", 3);
+			});
+
+			const { container: containerLegacy } = await clientLegacy.getContainer(
+				containerId,
+				schemaLegacy,
+			);
+			if (containerLegacy.connectionState !== ConnectionState.Connected) {
+				await timeoutPromise((resolve) => containerLegacy.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "containerLegacy connect() timeout",
+				});
+			}
+
+			const legacyMap = containerLegacy.initialObjects.map1 as SharedMapLegacy;
+
+			// Verify ops are processed by legacy AzureClient
+			assert.strictEqual(legacyMap.get("1"), 1);
+			assert.strictEqual(legacyMap.get("2"), 2);
+			assert.strictEqual(legacyMap.get("3"), 3);
+
+			// Inspect the incoming ops
+			for (const call of containerProcessSpy.getCalls()) {
+				const message = call.firstArg as ISequencedDocumentMessage;
+				if (
+					message.type === MessageType.Operation &&
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+					(message.contents as any).type === "groupedBatch"
+				) {
+					assert.fail("unexpected groupedBatch found");
+				}
+			}
+		});
+
 		for (const compatibilityMode of ["1", "2"] as const) {
-			it(`op grouping works as expected (compatibilityMode: ${compatibilityMode})`, async function () {
+			it(`op grouping works as expected (compatibilityMode: ${compatibilityMode})`, async () => {
 				const { container: container1 } = await clientCurrent1.createContainer(
 					schemaCurrent,
 					compatibilityMode,
