@@ -13,7 +13,12 @@ import {
 	rootFieldKey,
 } from "../core/index.js";
 import { jsonSchema, leaf } from "../domains/index.js";
-import { FieldKinds, FlexFieldSchema, SchemaBuilderBase } from "../feature-libraries/index.js";
+import {
+	FieldKinds,
+	FlexFieldSchema,
+	SchemaBuilderBase,
+	type FlexTreeNode,
+} from "../feature-libraries/index.js";
 import type { FlexTreeView, TreeContent } from "../shared-tree/index.js";
 import { brand } from "../util/index.js";
 import {
@@ -255,11 +260,12 @@ export function readWideFlexTree(tree: FlexTreeView<typeof wideSchema.rootFieldS
 	let sum = 0;
 	let nodesCount = 0;
 	const root = tree.flexTree;
-	const field = root.content.getBoxed(EmptyKey);
+	const field = (root.content as FlexTreeNode).getBoxed(EmptyKey);
 	assert(field.length !== 0);
-	assert(field.is(wideRootSchema.info[EmptyKey]));
-	for (const currentNode of field) {
-		sum += currentNode;
+	assert(field.isExactly(wideRootSchema.info[EmptyKey]));
+	for (const currentNode of field.boxedIterator()) {
+		assert(currentNode.is(leaf.number));
+		sum += currentNode.value;
 		nodesCount += 1;
 	}
 	return { nodesCount, sum };
@@ -270,11 +276,11 @@ export function readDeepFlexTree(tree: FlexTreeView<typeof deepSchema.rootFieldS
 	value: number;
 } {
 	let depth = 0;
-	let currentNode = tree.flexTree.content;
+	let currentNode = tree.flexTree.content as FlexTreeNode;
 	while (currentNode.is(linkedListSchema)) {
 		const read = currentNode.getBoxed(brand("foo"));
-		assert(read.is(linkedListSchema.info.foo));
-		currentNode = read.content;
+		assert(read.is(FieldKinds.required));
+		currentNode = read.content as FlexTreeNode;
 		depth++;
 	}
 	assert(currentNode.is(leaf.number));

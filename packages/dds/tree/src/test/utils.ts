@@ -769,7 +769,7 @@ export function flexTreeFromForest<TRoot extends FlexFieldSchema>(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
-): FlexTreeTypedField<TRoot> {
+): FlexTreeTypedField<TRoot["kind"]> {
 	const branch = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
 		...args,
 		forest,
