@@ -560,6 +560,7 @@ describe("SharedTree", () => {
 				view.root.insertAtStart("A");
 				await provider.ensureSynchronized();
 				await validateSchemaStringType(provider, provider.trees[0].id, SummaryType.Handle);
+				view.dispose();
 				const view2 = tree.viewWith(
 					new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation }),
 				);
@@ -1818,6 +1819,8 @@ describe("SharedTree", () => {
 			tree1.setConnected(false);
 
 			view1.root.insertAtEnd("43");
+			view1.dispose();
+
 			const view1Json = tree1.viewWith(
 				new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation }),
 			);
