@@ -10,7 +10,10 @@ import {
 	itExpects,
 	versionToComparisonNumber,
 } from "@fluid-private/test-version-utils";
-import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	LoaderHeader,
+	IDeltaManagerInternal,
+} from "@fluidframework/container-definitions/internal";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
@@ -439,7 +442,7 @@ describeCompat(
 				await provider.ensureSynchronized();
 				// Pause the summarizer2 so we can generate a summary in the future
 				// Note: The summarizing containers don't get added to the loader container tracker, so we manually pause here
-				await container2.deltaManager.inbound.pause();
+				await (container2.deltaManager as IDeltaManagerInternal).inbound.pause();
 
 				// Send an op
 				dataObjectA._root.set("C", "C");

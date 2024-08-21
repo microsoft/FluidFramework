@@ -6,7 +6,10 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IDeltaManagerInternal,
+} from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
@@ -87,9 +90,12 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 		await waitForContainerConnection(localContainer);
 		await waitForContainerConnection(remoteContainer);
 
-		localContainer.deltaManager.outbound.on("op", (batch: IDocumentMessage[]) => {
-			capturedBatches.push(batch);
-		});
+		(localContainer.deltaManager as IDeltaManagerInternal).outbound.on(
+			"op",
+			(batch: IDocumentMessage[]) => {
+				capturedBatches.push(batch);
+			},
+		);
 		await provider.ensureSynchronized();
 	};
 

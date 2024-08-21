@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
 	IConnectionDetails,
-	IDeltaManager,
+	IDeltaManagerInternal,
 	IDeltaManagerEvents,
 	IDeltaQueue,
 	IDeltaSender,
@@ -33,7 +33,7 @@ import { summarizerClientType } from "./summary/index.js";
  */
 export abstract class BaseDeltaManagerProxy
 	extends TypedEventEmitter<IDeltaManagerEvents>
-	implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>
+	implements IDeltaManagerInternal
 {
 	public get IDeltaSender(): IDeltaSender {
 		return this;
@@ -99,12 +99,7 @@ export abstract class BaseDeltaManagerProxy
 		return this.deltaManager.readOnlyInfo;
 	}
 
-	constructor(
-		protected readonly deltaManager: IDeltaManager<
-			ISequencedDocumentMessage,
-			IDocumentMessage
-		>,
-	) {
+	constructor(protected readonly deltaManager: IDeltaManagerInternal) {
 		super();
 
 		// We are expecting this class to have many listeners, so we suppress noisy "MaxListenersExceededWarning" logging.
@@ -194,12 +189,7 @@ export class DeltaManagerSummarizerProxy extends BaseDeltaManagerProxy {
 
 	private readonly isSummarizerClient: boolean;
 
-	constructor(
-		protected readonly deltaManager: IDeltaManager<
-			ISequencedDocumentMessage,
-			IDocumentMessage
-		>,
-	) {
+	constructor(protected readonly deltaManager: IDeltaManagerInternal) {
 		super(deltaManager);
 		this.isSummarizerClient = this.deltaManager.clientDetails.type === summarizerClientType;
 	}
@@ -243,10 +233,7 @@ export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 	};
 
 	constructor(
-		protected readonly deltaManager: IDeltaManager<
-			ISequencedDocumentMessage,
-			IDocumentMessage
-		>,
+		protected readonly deltaManager: IDeltaManagerInternal,
 		private readonly pendingStateManager: Pick<
 			PendingStateManager,
 			"minimumPendingMessageSequenceNumber"

@@ -18,6 +18,7 @@ export { isFluidBrowserPackage } from "./browserPackage.js";
 export type {
 	IConnectionDetails,
 	IDeltaManager,
+	IDeltaManagerInternal,
 	IDeltaManagerEvents,
 	IDeltaQueue,
 	IDeltaQueueEvents,

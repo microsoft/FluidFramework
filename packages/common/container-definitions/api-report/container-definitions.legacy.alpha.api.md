@@ -201,8 +201,6 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
     readonly hasCheckpointSequenceNumber: boolean;
-    // @deprecated
-    readonly inbound: IDeltaQueue<T>;
     readonly inboundSignal: IDeltaQueue<ISignalMessage>;
     readonly initialSequenceNumber: number;
     readonly lastKnownSeqNumber: number;
@@ -210,8 +208,6 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     readonly lastSequenceNumber: number;
     readonly maxMessageSize: number;
     readonly minimumSequenceNumber: number;
-    // @deprecated
-    readonly outbound: IDeltaQueue<U[]>;
     // (undocumented)
     readonly readOnlyInfo: ReadOnlyInfo;
     readonly serviceConfiguration: IClientConfiguration | undefined;
@@ -233,6 +229,12 @@ export interface IDeltaManagerEvents extends IEvent {
         reason: string;
         error?: IErrorBase_2;
     }) => void): any;
+}
+
+// @alpha @sealed
+export interface IDeltaManagerInternal<T = ISequencedDocumentMessage, U = IDocumentMessage> extends IDeltaManager<T, U> {
+    readonly inbound: IDeltaQueue<T>;
+    readonly outbound: IDeltaQueue<U[]>;
 }
 
 // @alpha @sealed

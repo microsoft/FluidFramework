@@ -7,6 +7,7 @@ import {
 	ILoader,
 	LoaderHeader,
 	type IContainer,
+	IDeltaManagerInternal,
 } from "@fluidframework/container-definitions/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
@@ -59,7 +60,7 @@ export async function loadContainerPaused(
 	// Force readonly mode - this will ensure we don't receive an error for the lack of join op
 	container.forceReadonly?.(true);
 
-	const dm = container.deltaManager;
+	const dm = container.deltaManager as IDeltaManagerInternal;
 	const lastProcessedSequenceNumber = dm.initialSequenceNumber;
 
 	const pauseContainer = (): void => {

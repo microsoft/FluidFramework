@@ -4,7 +4,7 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { IDeltaManagerInternal } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -124,7 +124,7 @@ class OpPerfTelemetry {
 		/**
 		 * DeltaManager instance to monitor.
 		 */
-		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		private readonly deltaManager: IDeltaManagerInternal,
 		/**
 		 * Emitter of events for the container runtime.
 		 */
@@ -470,7 +470,7 @@ export interface IPerfSignalReport {
  */
 export function ReportOpPerfTelemetry(
 	clientId: string | undefined,
-	deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+	deltaManager: IDeltaManagerInternal,
 	containerRuntimeEvents: IEventProvider<IContainerRuntimeEvents>,
 	logger: ITelemetryLoggerExt,
 ): void {

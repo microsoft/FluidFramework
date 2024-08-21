@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type {
+	IDeltaManager,
+	IDeltaManagerInternal,
+} from "@fluidframework/container-definitions/internal";
 import type { IDeltaManagerErased } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IDocumentMessage,
@@ -18,8 +21,8 @@ import type {
  */
 export function toDeltaManagerInternal(
 	deltaManager: IDeltaManagerErased,
-): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-	return deltaManager as unknown as IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+): IDeltaManagerInternal {
+	return deltaManager as unknown as IDeltaManagerInternal;
 }
 
 /**

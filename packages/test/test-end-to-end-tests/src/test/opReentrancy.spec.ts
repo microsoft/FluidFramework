@@ -6,7 +6,10 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IDeltaManagerInternal,
+} from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree/internal";
@@ -274,8 +277,8 @@ describeCompat(
 				runtimeOptions: {},
 			});
 
-			await container1.deltaManager.inbound.pause();
-			await container1.deltaManager.outbound.pause();
+			await (container1.deltaManager as IDeltaManagerInternal).inbound.pause();
+			await (container1.deltaManager as IDeltaManagerInternal).outbound.pause();
 
 			sharedMap1.on("valueChanged", (changed) => {
 				if (changed.key !== "key2") {
@@ -285,8 +288,8 @@ describeCompat(
 
 			sharedMap1.set("key1", "1");
 
-			container1.deltaManager.inbound.resume();
-			container1.deltaManager.outbound.resume();
+			(container1.deltaManager as IDeltaManagerInternal).inbound.resume();
+			(container1.deltaManager as IDeltaManagerInternal).outbound.resume();
 
 			await provider.ensureSynchronized();
 
@@ -356,8 +359,8 @@ describeCompat(
 
 					await setupContainers(testConfig.options, testConfig.featureGates);
 
-					await container1.deltaManager.inbound.pause();
-					await container1.deltaManager.outbound.pause();
+					await (container1.deltaManager as IDeltaManagerInternal).inbound.pause();
+					await (container1.deltaManager as IDeltaManagerInternal).outbound.pause();
 
 					sharedMap1.on("valueChanged", (changed) => {
 						if (changed.key !== "key2") {
@@ -372,8 +375,8 @@ describeCompat(
 
 					sharedMap1.set("key1", "1");
 
-					container1.deltaManager.inbound.resume();
-					container1.deltaManager.outbound.resume();
+					(container1.deltaManager as IDeltaManagerInternal).inbound.resume();
+					(container1.deltaManager as IDeltaManagerInternal).outbound.resume();
 					await provider.ensureSynchronized();
 
 					// The offending container is not closed

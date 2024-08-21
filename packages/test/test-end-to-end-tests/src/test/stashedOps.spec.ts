@@ -14,6 +14,7 @@ import {
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import {
 	IContainer,
+	IDeltaManagerInternal,
 	IHostLoader,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
@@ -1881,7 +1882,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		)) as IContainerExperimental;
 
 		// pause outgoing ops so we can detect dropped stashed changes
-		await container.deltaManager.outbound.pause();
+		await (container.deltaManager as IDeltaManagerInternal).outbound.pause();
 		let pendingState: string | undefined;
 		let pendingStateP;
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
@@ -2057,17 +2058,17 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// Rehydrate twice and block incoming for both, submitting the stashed ops in parallel
 			const container2 = await loader.resolve({ url }, pendingLocalState);
-			await container2.deltaManager.inbound.pause();
-			await container2.deltaManager.outbound.pause(); // To protect against container2 submitting the op before container3 pauses inbound.
+			await (container2.deltaManager as IDeltaManagerInternal).inbound.pause();
+			await (container2.deltaManager as IDeltaManagerInternal).outbound.pause(); // To protect against container2 submitting the op before container3 pauses inbound.
 			const container3 = await loader.resolve({ url }, pendingLocalState);
-			await container3.deltaManager.inbound.pause();
-			container2.deltaManager.outbound.resume(); // Now that container3 is paused, container2 can submit the op.
+			await (container3.deltaManager as IDeltaManagerInternal).inbound.pause();
+			(container2.deltaManager as IDeltaManagerInternal).outbound.resume(); // Now that container3 is paused, container2 can submit the op.
 
 			container2.deltaManager.flush();
 			container3.deltaManager.flush();
 			await delay(0); // Yield to allow the ops to be submitted before resuming
-			container2.deltaManager.inbound.resume();
-			container3.deltaManager.inbound.resume();
+			(container2.deltaManager as IDeltaManagerInternal).inbound.resume();
+			(container3.deltaManager as IDeltaManagerInternal).inbound.resume();
 
 			// At this point, both rehydrated containers should have submitted the same Counter op.
 			// Each receiving client (or the service) would have to recognize and ignore the duplicate on receipt,

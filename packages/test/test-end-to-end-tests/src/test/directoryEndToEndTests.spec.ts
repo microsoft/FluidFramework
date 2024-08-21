@@ -6,7 +6,10 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IDeltaManagerInternal,
+} from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
@@ -1304,18 +1307,18 @@ describeCompat(
 		}
 
 		async function pauseAllContainers() {
-			await container1.deltaManager.inbound.pause();
-			await container2.deltaManager.inbound.pause();
-			await container3.deltaManager.inbound.pause();
+			await (container1.deltaManager as IDeltaManagerInternal).inbound.pause();
+			await (container2.deltaManager as IDeltaManagerInternal).inbound.pause();
+			await (container3.deltaManager as IDeltaManagerInternal).inbound.pause();
 
-			await container1.deltaManager.outbound.pause();
-			await container2.deltaManager.outbound.pause();
-			await container3.deltaManager.outbound.pause();
+			await (container1.deltaManager as IDeltaManagerInternal).outbound.pause();
+			await (container2.deltaManager as IDeltaManagerInternal).outbound.pause();
+			await (container3.deltaManager as IDeltaManagerInternal).outbound.pause();
 		}
 
 		function resumeContainer(c: IContainer) {
-			c.deltaManager.inbound.resume();
-			c.deltaManager.outbound.resume();
+			(c.deltaManager as IDeltaManagerInternal).inbound.resume();
+			(c.deltaManager as IDeltaManagerInternal).outbound.resume();
 		}
 
 		/**
