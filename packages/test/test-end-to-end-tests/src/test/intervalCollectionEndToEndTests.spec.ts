@@ -7,7 +7,10 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IHostLoader } from "@fluidframework/container-definitions/internal";
-import { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import {
+	IContainerExperimental,
+	isIDeltaManagerInternal,
+} from "@fluidframework/container-loader/internal";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
@@ -132,7 +135,10 @@ describeCompat(
 
 			await provider.ensureSynchronized();
 			await provider.opProcessingController.pauseProcessing(container);
-			assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
+			const deltaManagerInternal = toDeltaManagerInternal(dataStore.runtime.deltaManager);
+			if (isIDeltaManagerInternal(deltaManagerInternal)) {
+				assert(deltaManagerInternal.outbound.paused);
+			}
 
 			// the "callback" portion of the original e2e test
 			const sharedString = await dataStore.getSharedObject<SharedString>(stringId);

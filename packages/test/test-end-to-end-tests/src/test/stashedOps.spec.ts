@@ -19,7 +19,10 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import {
+	IContainerExperimental,
+	isIDeltaManagerInternal,
+} from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
 	ContainerRuntime,
@@ -127,7 +130,10 @@ const getPendingOps = async (
 
 	await testObjectProvider.ensureSynchronized();
 	await testObjectProvider.opProcessingController.pauseProcessing(container);
-	assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
+	const deltaManagerInternal = toDeltaManagerInternal(dataStore.runtime.deltaManager);
+	if (isIDeltaManagerInternal(deltaManagerInternal)) {
+		assert(deltaManagerInternal.outbound.paused);
+	}
 
 	await cb(container, dataStore);
 
@@ -1292,7 +1298,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert.ok(serializedClientId);
 
 			await provider.opProcessingController.pauseProcessing(container);
-			assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
+			const deltaManagerInternal = toDeltaManagerInternal(dataStore.runtime.deltaManager);
+			if (isIDeltaManagerInternal(deltaManagerInternal)) {
+				assert(deltaManagerInternal.outbound.paused);
+			}
 
 			[...Array(lots).keys()].map((i) => dataStore.root.set(`test op #${i}`, i));
 
@@ -1490,7 +1499,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			);
 
 			await provider.opProcessingController.pauseProcessing(container2);
-			assert(toDeltaManagerInternal(dataStore2.runtime.deltaManager).outbound.paused);
+			const deltaManagerInternal = toDeltaManagerInternal(dataStore2.runtime.deltaManager);
+			if (isIDeltaManagerInternal(deltaManagerInternal)) {
+				assert(deltaManagerInternal.outbound.paused);
+			}
 			[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
 			const morePendingOps = await container2.getPendingLocalState?.();

@@ -232,12 +232,6 @@ export interface IDeltaManagerEvents extends IEvent {
 }
 
 // @alpha @sealed
-export interface IDeltaManagerInternal<T = ISequencedDocumentMessage, U = IDocumentMessage> extends IDeltaManager<T, U> {
-    readonly inbound: IDeltaQueue<T>;
-    readonly outbound: IDeltaQueue<U[]>;
-}
-
-// @alpha @sealed
 export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable {
     idle: boolean;
     length: number;

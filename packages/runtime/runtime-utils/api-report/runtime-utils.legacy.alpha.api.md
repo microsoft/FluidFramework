@@ -83,7 +83,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 }
 
 // @alpha
-export function toDeltaManagerInternal(deltaManager: IDeltaManagerErased): IDeltaManagerInternal;
+export function toDeltaManagerInternal(deltaManager: IDeltaManagerErased): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
 // @alpha
 export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidHandleErased<T>;

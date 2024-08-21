@@ -229,9 +229,7 @@ export interface IDeltaManager<T, U>
 
 /**
  * DeltaManager which is used internally by the Fluid layers and not exposed to the end users.
- * @sealed
- * @legacy
- * @alpha
+ * @internal
  */
 export interface IDeltaManagerInternal<T = ISequencedDocumentMessage, U = IDocumentMessage>
 	extends IDeltaManager<T, U> {
