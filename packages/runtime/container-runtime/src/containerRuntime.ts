@@ -92,6 +92,7 @@ import {
 	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	isIDeltaManagerInternal,
 	GCDataBuilder,
 	RequestParser,
 	TelemetryContext,
@@ -1469,7 +1470,8 @@ export class ContainerRuntime
 			compressionAlgorithm: CompressionAlgorithms.lz4,
 		};
 
-		this.innerDeltaManager = deltaManager as IDeltaManagerInternal;
+		assert(isIDeltaManagerInternal(deltaManager), "Invalid delta manager");
+		this.innerDeltaManager = deltaManager;
 
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
 		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
@@ -1585,7 +1587,7 @@ export class ContainerRuntime
 			this.logger,
 		);
 
-		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+		let outerDeltaManager: IDeltaManagerInternal;
 		const useDeltaManagerOpsProxy =
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") !== false;
 		// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.
@@ -1604,7 +1606,7 @@ export class ContainerRuntime
 			outerDeltaManager = pendingOpsDeltaManagerProxy;
 		}
 
-		this._deltaManager = outerDeltaManager as IDeltaManagerInternal;
+		this._deltaManager = outerDeltaManager;
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
