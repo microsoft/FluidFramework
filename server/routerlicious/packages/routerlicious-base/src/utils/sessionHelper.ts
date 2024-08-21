@@ -290,7 +290,10 @@ export async function getSession(
 		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
 	}
 
-	const lumberjackProperties = {...baseLumberjackProperties, isEphemeralContainer: document.isEphemeralContainer};
+	const lumberjackProperties = {
+		...baseLumberjackProperties,
+		isEphemeralContainer: document.isEphemeralContainer,
+	};
 	if (document.isEphemeralContainer && ephemeralDocumentTTLSec !== undefined) {
 		// Check if the document is ephemeral and has expired.
 		const currentTime = Date.now();
