@@ -37,22 +37,28 @@ interface Options {
 	}
 }
 
-const richTypes = { Date: true, RegExp: true, String: true, Number: true };
+const richTypes = { Date: true, RegExp: true, String: true, Number: true }
 
-const DEFAULT_OPTIONS: Options = { cyclesFix: true };
+/**
+ * By default, Object Diff supports cyclical references, but if you are sure that the object has no cycles like parsed JSON
+ * you can disable cycles by setting the cyclesFix option to false
+ */
+ const DEFAULT_OPTIONS: Options = { cyclesFix: true };
 
 /**
  * Compares two objects and returns an array of differences between them.
  */
-export function SharedTreeDiff(
+export function objectDiff(
 	obj: Record<string, unknown> | unknown[],
 	newObj: Record<string, unknown> | unknown[],
 	options: Options = DEFAULT_OPTIONS,
 	_stack: (Record<string, unknown> | unknown[])[] = [],
 ): Difference[] {
+
 	const diffs: Difference[] = [];
 	const isObjArray = Array.isArray(obj);
 	const isNewObjArray = Array.isArray(newObj);
+
 
 	// If useObjectIds is set, we'll create a map of object ids to their index in the array.
 	const oldObjArrayItemIdsToIndex = (isObjArray === false || options.useObjectIds === undefined)
@@ -130,7 +136,7 @@ export function SharedTreeDiff(
 		) {
 
 			if (options.useObjectIds === undefined) {
-				const nestedDiffs = SharedTreeDiff(
+				const nestedDiffs = objectDiff(
 					objValue as Record<string, unknown> | unknown[],
 					newObjValue as Record<string, unknown> | unknown[],
 					options,
@@ -152,7 +158,7 @@ export function SharedTreeDiff(
 				if (oldObjectId !== undefined && newObjectId !== undefined) {
 					// if the object id's are the same, we can continue a comparison between the two objects.
 					if (oldObjectId === newObjectId) {
-						const nestedDiffs = SharedTreeDiff(
+						const nestedDiffs = objectDiff(
 							objValue as Record<string, unknown> | unknown[],
 							newObjValue as Record<string, unknown> | unknown[],
 							options,
@@ -188,11 +194,25 @@ export function SharedTreeDiff(
 								value: objValue
 							});
 
-							// TODO: An object could have been moved AND changed. We need to check for this.
+							// An object could have been moved AND changed. We need to check for this.
+							const nestedDiffs = objectDiff(
+								obj[path] as Record<string, unknown> | unknown[],
+								newObj[oldObjectNewIndex] as Record<string, unknown> | unknown[],
+								options,
+								options.cyclesFix === true ? [..._stack, objValue as Record<string, unknown> | unknown[]] : [],
+							);
+							// eslint-disable-next-line prefer-spread
+							diffs.push.apply(
+								diffs,
+								nestedDiffs.map((difference) => {
+									difference.path.unshift(path);
+									return difference;
+								}),
+							);
 						}
 					}
 				} else {
-					const nestedDiffs = SharedTreeDiff(
+					const nestedDiffs = objectDiff(
 						objValue as Record<string, unknown> | unknown[],
 						newObjValue as Record<string, unknown> | unknown[],
 						options,
