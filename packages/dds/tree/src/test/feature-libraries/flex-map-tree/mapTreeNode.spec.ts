@@ -9,7 +9,6 @@ import {
 	FieldKinds,
 	FlexFieldSchema,
 	SchemaBuilderBase,
-	type FlexAllowedTypes,
 	type FlexTreeOptionalField,
 } from "../../../feature-libraries/index.js";
 import {
@@ -23,7 +22,6 @@ import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getOrCreateMapTreeNode } from "../../../feature-libraries/flex-map-tree/index.js";
 import type {
-	EagerMapTreeMapNode,
 	EagerMapTreeNode,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/flex-map-tree/mapTreeNode.js";
@@ -80,7 +78,7 @@ describe("MapTreeNodes", () => {
 	// #endregion
 
 	// The `MapTreeNode`s used in this test suite:
-	const map = getOrCreateMapTreeNode(mapSchema, mapMapTree) as EagerMapTreeMapNode<
+	const map = getOrCreateMapTreeNode(mapSchema, mapMapTree) as EagerMapTreeNode<
 		typeof mapSchema
 	>;
 	const arrayNode = getOrCreateMapTreeNode(
@@ -129,14 +127,6 @@ describe("MapTreeNodes", () => {
 		assert.equal([...map.boxedIterator()].length, 1);
 		assert.equal([...map.boxedIterator()][0].boxedAt(0)?.value, childValue);
 		assert.deepEqual([...map.keys()], [mapKey]);
-		assert.deepEqual([...map.values()], [childValue]);
-		assert.deepEqual([...map.entries()], [[mapKey, childValue]]);
-		assert.deepEqual([...map], [[mapKey, childValue]]);
-		map.forEach((value, key, self) => {
-			assert.equal(value, childValue);
-			assert.equal(key, mapKey);
-			assert.equal(self, map);
-		});
 	});
 
 	it("can get the children of field nodes", () => {
@@ -146,7 +136,8 @@ describe("MapTreeNodes", () => {
 
 		assert.equal(arrayNode.getBoxed(EmptyKey).length, 1);
 		const field = arrayNode.getBoxed(EmptyKey);
-		assert(field.is(arrayNodeSchema.info[EmptyKey]));
+		assert(field.isExactly(arrayNodeSchema.info[EmptyKey]));
+		assert(field.is(arrayNodeSchema.info[EmptyKey].kind));
 		assert.equal(arrayNode.tryGetField(brand("unknown key")), undefined);
 		assert.equal(arrayNode.getBoxed("unknown key").length, 0);
 		assert.equal(field.at(-1), childValue);
@@ -230,9 +221,7 @@ describe("MapTreeNodes", () => {
 			const mutableObjectMapTreeMap = mutableObjectMapTree.fields.get(objectMapKey)?.[0];
 			assert(mutableObjectMapTreeMap !== undefined);
 			const mutableObject = getOrCreateMapTreeNode(objectSchema, mutableObjectMapTree);
-			const field = mutableObject.getBoxed(
-				objectMapKey,
-			) as FlexTreeOptionalField<FlexAllowedTypes>;
+			const field = mutableObject.getBoxed(objectMapKey) as FlexTreeOptionalField;
 			const oldMap = field.boxedAt(0);
 			assert(oldMap !== undefined);
 			assert.equal(oldMap.parentField.parent.parent, mutableObject);
@@ -255,8 +244,8 @@ describe("MapTreeNodes", () => {
 			const mutableMap = getOrCreateMapTreeNode(
 				mapSchema,
 				deepCopyMapTree(mapMapTree),
-			) as EagerMapTreeMapNode<typeof mapSchema>;
-			const field = mutableMap.getBoxed(mapKey);
+			) as EagerMapTreeNode<typeof mapSchema>;
+			const field = mutableMap.getBoxed(mapKey) as FlexTreeOptionalField;
 			const oldValue = field.boxedAt(0);
 			const newValue = `new ${childValue}`;
 			field.editor.set({ ...mapChildMapTree, value: newValue }, false);
@@ -272,7 +261,7 @@ describe("MapTreeNodes", () => {
 				deepCopyMapTree(fieldNodeMapTree),
 			) as EagerMapTreeNode<typeof arrayNodeSchema>;
 			const field = mutableFieldNode.getBoxed(EmptyKey);
-			assert(field.is(arrayNodeSchema.info[EmptyKey]));
+			assert(field.is(arrayNodeSchema.info[EmptyKey].kind));
 			const values = () => Array.from(field.boxedIterator(), (n) => n.value);
 			assert.deepEqual(values(), [childValue]);
 			field.editor.insert(1, [
@@ -295,7 +284,7 @@ describe("MapTreeNodes", () => {
 				fields: new Map(),
 			}) as EagerMapTreeNode<typeof arrayNodeSchema>;
 			const field = mutableFieldNode.getBoxed(EmptyKey);
-			assert(field.is(arrayNodeSchema.info[EmptyKey]));
+			assert(field.is(arrayNodeSchema.info[EmptyKey].kind));
 			const newContent: ExclusiveMapTree[] = [];
 			for (let i = 0; i < 10000; i++) {
 				newContent.push({ ...mapChildMapTree, value: String(i) });
