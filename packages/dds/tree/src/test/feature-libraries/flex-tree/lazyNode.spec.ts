@@ -18,25 +18,27 @@ import {
 	TreeNavigationResult,
 	rootFieldKey,
 } from "../../../core/index.js";
-import {
-	SchemaBuilder,
-	leaf as leafDomain,
-	singleJsonCursor,
-	typedJsonCursor,
-} from "../../../domains/index.js";
+import { leaf as leafDomain, singleJsonCursor } from "../../../domains/index.js";
 import type { Context } from "../../../feature-libraries/flex-tree/context.js";
 import { LazyTreeNode } from "../../../feature-libraries/flex-tree/lazyNode.js";
-import {
-	Any,
-	type FlexAllowedTypes,
-	type FlexFieldKind,
-	type FlexTreeField,
-	type FlexTreeNode,
-	type FlexTreeNodeSchema,
+import type {
+	FlexAllowedTypes,
+	FlexFieldKind,
+	FlexTreeField,
+	FlexTreeNode,
+	FlexTreeNodeSchema,
 } from "../../../feature-libraries/index.js";
 import type { TreeContent } from "../../../shared-tree/index.js";
 
 import { contextWithContentReadonly } from "./utils.js";
+import {
+	cursorFromInsertable,
+	SchemaFactory,
+	toFlexSchema,
+} from "../../../simple-tree/index.js";
+import { getFlexSchema } from "../../../simple-tree/toFlexSchema.js";
+import { JsonArray, JsonObject } from "../../utils.js";
+import { stringSchema } from "../../../simple-tree/leafNodeSchema.js";
 
 const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
 
@@ -94,100 +96,88 @@ function createAnchors(
 describe("LazyNode", () => {
 	describe("LazyNode", () => {
 		it("is", () => {
-			// #region Create schemas
-
-			const schemaBuilder = new SchemaBuilder({
-				scope: "testShared",
-			});
-
-			const structNodeSchema = schemaBuilder.object("object", {});
-			const mapNodeAnySchema = schemaBuilder.map("mapAny", SchemaBuilder.optional(Any));
-
-			const schema = schemaBuilder.intoSchema(mapNodeAnySchema);
-
-			// #endregion
-
 			const { context, cursor } = initializeTreeWithContent({
-				schema,
+				schema: toFlexSchema(JsonObject),
 				initialTree: singleJsonCursor({}),
 			});
 			cursor.enterNode(0);
 
 			const { anchor, anchorNode } = createAnchors(context, cursor);
 
-			const node = new TestLazyTree(context, mapNodeAnySchema, cursor, anchorNode, anchor);
+			const node = new TestLazyTree(
+				context,
+				getFlexSchema(JsonObject),
+				cursor,
+				anchorNode,
+				anchor,
+			);
 
-			assert(node.is(mapNodeAnySchema));
-			assert(!node.is(structNodeSchema));
+			assert(node.is(getFlexSchema(JsonObject)));
+			assert(!node.is(getFlexSchema(JsonArray)));
 		});
 
 		it("parent", () => {
-			const schemaBuilder = new SchemaBuilder({
-				scope: "test",
-				libraries: [leafDomain.library],
-			});
-			const fieldNodeSchema = schemaBuilder.map(
-				"map",
-				SchemaBuilder.optional(leafDomain.string),
-			);
-			const schema = schemaBuilder.intoSchema(fieldNodeSchema);
+			const schemaBuilder = new SchemaFactory("test");
+			const ParentNode = schemaBuilder.map("map", schemaBuilder.string);
 
 			const { context, cursor } = initializeTreeWithContent({
-				schema,
-				initialTree: typedJsonCursor({
-					[typedJsonCursor.type]: fieldNodeSchema,
-					[EmptyKey]: "Hello world",
-				}),
+				schema: toFlexSchema(ParentNode),
+				initialTree: cursorFromInsertable(ParentNode, { [EmptyKey]: "test" }),
 			});
 			cursor.enterNode(0);
 
 			const { anchor, anchorNode } = createAnchors(context, cursor);
 
-			const node = new TestLazyTree(context, fieldNodeSchema, cursor, anchorNode, anchor);
+			const node = new TestLazyTree(
+				context,
+				getFlexSchema(ParentNode),
+				cursor,
+				anchorNode,
+				anchor,
+			);
 			const { index, parent } = node.parentField;
 			assert.equal(index, 0);
 			assert.equal(parent.key, rootFieldKey);
 		});
 
 		it("keys", () => {
-			const schemaBuilder = new SchemaBuilder({
-				scope: "testShared",
-			});
-			const mapNodeAnySchema = schemaBuilder.map("mapAny", SchemaBuilder.optional(Any));
-
-			const schema = schemaBuilder.intoSchema(mapNodeAnySchema);
-
 			{
 				const { context, cursor } = initializeTreeWithContent({
-					schema,
+					schema: toFlexSchema(JsonObject),
 					initialTree: singleJsonCursor({}),
 				});
 				cursor.enterNode(0);
 				const { anchor, anchorNode } = createAnchors(context, cursor);
-				const node = new TestLazyTree(context, mapNodeAnySchema, cursor, anchorNode, anchor);
+				const node = new TestLazyTree(
+					context,
+					getFlexSchema(JsonObject),
+					cursor,
+					anchorNode,
+					anchor,
+				);
 				assert.deepEqual([...node.keys()], []);
 			}
 			{
 				const { context, cursor } = initializeTreeWithContent({
-					schema,
+					schema: toFlexSchema(JsonObject),
 					initialTree: singleJsonCursor({ x: 5 }),
 				});
 				cursor.enterNode(0);
 				const { anchor, anchorNode } = createAnchors(context, cursor);
-				const node = new TestLazyTree(context, mapNodeAnySchema, cursor, anchorNode, anchor);
+				const node = new TestLazyTree(
+					context,
+					getFlexSchema(JsonObject),
+					cursor,
+					anchorNode,
+					anchor,
+				);
 				assert.deepEqual([...node.keys()], ["x"]);
 			}
 		});
 
 		it("leaf", () => {
-			const schemaBuilder = new SchemaBuilder({
-				scope: "test",
-				libraries: [leafDomain.library],
-			});
-			const schema = schemaBuilder.intoSchema(leafDomain.string);
-
 			const { context, cursor } = initializeTreeWithContent({
-				schema,
+				schema: toFlexSchema(stringSchema),
 				initialTree: singleJsonCursor("Hello world"),
 			});
 			cursor.enterNode(0);
