@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const { SyntaxKind } = require("typescript");
 
 module.exports = {
@@ -56,13 +57,8 @@ module.exports = {
 					});
 				} else {
 					const expectedType = parentNode.id.typeAnnotation.typeAnnotation;
-					const isStrictType =
-						expectedType.type === "TSUnionType"
-							? !expectedType.types.some((type) => type.type === "TSUndefinedKeyword")
-							: true;
-
-					if (isStrictType) {
-						// This error occurs when an index signature type (which might be undefined) is assigned to a variable with a strict type (not including undefined)
+					if (isStrictlyTypedVariable(expectedType)) {
+						// This error occurs when an index signature type is assigned to a strict variable
 						context.report({
 							node,
 							message: `'${fullName}' is possibly 'undefined'`,
@@ -326,6 +322,6 @@ function isStrictlyTypedVariable(typeAnnotation) {
 		);
 	}
 
-	// Consider any non-union type as strictly typed
-	return true;
+	// Consider any non-union type as strictly typed, except for 'any' and 'unknown'
+	return typeAnnotation.type !== "TSAnyKeyword" && typeAnnotation.type !== "TSUnknownKeyword";
 }
