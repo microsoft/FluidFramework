@@ -67,9 +67,9 @@ export interface TreeChangeEvents<TNode = TreeNode> {
 	/**
 	 * Emitted by a node after a batch of changes has been applied to the tree, if any of the changes affected the node.
 	 *
-	 * - Object nodes define a change as the value of one of its properties changing (i.e., the property's value is set, including when set to undefined).
+	 * - Object nodes define a change as being when the value of one of its properties changes (i.e., the property's value is set, including when set to `undefined`).
 	 *
-	 * - Array node define a change as when an element is added, removed, moved or replaced.
+	 * - Array nodes define a change as when an element is added, removed, moved or replaced.
 	 *
 	 * - Map nodes define a change as when an entry is added, updated, or removed.
 	 *
@@ -94,7 +94,7 @@ export interface TreeChangeEvents<TNode = TreeNode> {
 	 * node, or when the node has to be updated due to resolution of a merge conflict
 	 * (for example a previously applied local change might be undone, then reapplied differently or not at all).
 	 *
-	 * TODO: defined and document event ordering (ex: bottom up, with nodeChanged before treeCHange on each level).
+	 * TODO: define and document event ordering (ex: bottom up, with nodeChanged before treeCHange on each level).
 	 */
 	nodeChanged(
 		data: NodeChangedData &

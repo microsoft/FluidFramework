@@ -96,7 +96,7 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 	 * This design avoids allocating `#preHydrationEvents` if unneeded.
 	 *
 	 * This design also avoids extra forwarding overhead for events from anchorNode and also
-	 * avoids registering for events that the are unneeded.
+	 * avoids registering for events that are unneeded.
 	 * This means optimizations like skipping processing data in subtrees where no subtreeChanged events are subscribed to would be able to work,
 	 * since this code does not unconditionally subscribe to those events (like a design simply forwarding all events would).
 	 */
@@ -128,7 +128,7 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 	 * Happens at most once for any given node.
 	 */
 	public hydrate(anchorNode: AnchorNode): void {
-		assert(!this.disposed, "cannot use a disposed node");
+		assert(!this.disposed, "cannot hydrate a disposed node");
 
 		this.#hydrated = {
 			anchorNode,
