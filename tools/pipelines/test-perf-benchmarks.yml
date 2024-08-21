@@ -258,17 +258,27 @@ stages:
               tar --extract --verbose --file $TAR_PATH ./src/test
 
         # Install package dependencies (this gets devDependencies installed so we can then run the package's tests)
-        # and run tests.
-        - task: Bash@3
-          displayName: Run memory performance tests - ${{ testPackage }}
+        # Note: the required .npmrc file is created by the include-test-perf-benchmarks.yml template above.
+        - task: CopyFiles@2
+          displayName: Copy .npmrc to test package folder - ${{ testPackage }}
           inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            script: |
-              echo "Run memory performance test for ${{ testPackage }}"
-              cp ${{ variables.testWorkspace }}/.npmrc . ;
-              npm i ;
-              npm run test:memory-profiling:report;
+            sourceFolder: ${{ variables.testWorkspace }}
+            contents: '.npmrc'
+            targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+        - task: Npm@1
+          displayName: Install dependencies - ${{ testPackage }}
+          retryCountOnTaskFailure: 1
+          inputs:
+            command: 'install'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+
+        # Run tests
+        - task: Npm@1
+          displayName: Run memory usage tests - ${{ testPackage }}
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            customCommand: 'run test:memory-profiling:report'
 
         # Consolidate output files
         - task: CopyFiles@2
@@ -362,14 +372,18 @@ stages:
             testPackageName: $(testPackage)
             installPath: $(testWorkspace)
 
-        - task: Bash@3
-          displayName: Prepare test package to run tests ${{ endpointObject.endpointName }}
+        - task: CopyFiles@2
+          displayName: Copy .npmrc to test package folder
           inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
-            script: |
-              cp ${{ variables.testWorkspace }}/.npmrc . ;
-              npm i ;
+            sourceFolder: ${{ variables.testWorkspace }}
+            contents: '.npmrc'
+            targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
+        - task: Npm@1
+          displayName: Install dependencies - ${{ endpointObject.endpointName }}
+          retryCountOnTaskFailure: 1
+          inputs:
+            command: 'install'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
 
         # We run both types of tests in the same bash step so we can make sure to run the second set even if the first
         # one fails.
