@@ -15,8 +15,6 @@ import type {
 	FlexTreeObjectNode,
 	FlexTreeTypedNode,
 	FlexTreeTypedNodeUnion,
-	FlexTreeUnboxNodeUnion,
-	FlexTreeUnknownUnboxed,
 	IsArrayOfOne,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
@@ -203,60 +201,6 @@ describe("flexTreeTypes", () => {
 			>;
 		}
 	}
-
-	// UnboxNodeUnion
-	{
-		// Any
-		{
-			type _1 = requireTrue<areSafelyAssignable<FlexTreeUnboxNodeUnion<[Any]>, FlexTreeNode>>;
-		}
-
-		// Union
-		{
-			type _1 = requireTrue<
-				areSafelyAssignable<
-					FlexTreeUnboxNodeUnion<[typeof basicStruct, typeof emptyStruct]>,
-					BasicStruct | EmptyStruct
-				>
-			>;
-		}
-
-		// Type-Erased
-		{
-			type _1 = requireTrue<
-				areSafelyAssignable<
-					FlexTreeUnboxNodeUnion<[FlexTreeNodeSchema]>,
-					FlexTreeUnknownUnboxed
-				>
-			>;
-
-			type _3 = requireTrue<
-				areSafelyAssignable<
-					FlexTreeUnboxNodeUnion<[FlexTreeNodeSchema, FlexTreeNodeSchema]>,
-					FlexTreeNode
-				>
-			>;
-			type _4 = requireTrue<areSafelyAssignable<FlexTreeUnboxNodeUnion<[Any]>, FlexTreeNode>>;
-			type _5 = requireTrue<
-				areSafelyAssignable<
-					FlexTreeUnboxNodeUnion<FlexTreeNodeSchema[]>,
-					FlexTreeUnknownUnboxed
-				>
-			>;
-			type _6 = requireTrue<
-				areSafelyAssignable<FlexTreeUnboxNodeUnion<FlexAllowedTypes>, FlexTreeUnknownUnboxed>
-			>;
-		}
-
-		// Generic
-		// eslint-disable-next-line no-inner-declarations
-		function genericTest<T extends FlexAllowedTypes>(t: T) {
-			type Unboxed = FlexTreeUnboxNodeUnion<T>;
-			// @ts-expect-error union can unbox to undefined or a sequence
-			type _1 = requireAssignableTo<Unboxed, FlexTreeNode>;
-		}
-	}
-
 	// IsArrayOfOne
 	{
 		type _1 = requireFalse<IsArrayOfOne<[FlexTreeNodeSchema, FlexTreeNodeSchema]>>;

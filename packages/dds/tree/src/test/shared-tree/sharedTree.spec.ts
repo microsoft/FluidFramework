@@ -152,7 +152,10 @@ describe("SharedTree", () => {
 			schematizeFlexTree(provider.trees[1], content);
 			provider.processMessages();
 
-			assert.deepEqual([...tree1.flexTree], ["x"]);
+			assert.deepEqual(
+				Array.from(tree1.flexTree.boxedIterator(), (f) => f.value),
+				["x"],
+			);
 		});
 
 		it("initialize tree", () => {

@@ -5,7 +5,6 @@
 
 import {
 	type FieldKinds,
-	type FlexAllowedTypes,
 	type FlexFieldSchema,
 	type FlexMapNodeSchema,
 	type FlexTreeMapNode,
@@ -153,9 +152,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	}
 
 	private editor(key: string): OptionalFieldEditBuilder<ExclusiveMapTree> {
-		const field = this.innerNode.getBoxed(
-			brand(key),
-		) as FlexTreeOptionalField<FlexAllowedTypes>;
+		const field = this.innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
 		return field.editor;
 	}
 
