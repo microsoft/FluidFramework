@@ -1135,10 +1135,12 @@ describe('generateStack Tests', () => {
     return b(stackTraceLimit);
   }
   it('Show stack trace with a given stackTraceLimit', () => {
+		const originalLimit = Error.stackTraceLimit;
     const stack = c(1)?.split('\n');
 		assert(stack !== undefined);
 		assert(stack.length === 2);
 		assert(stack[0].includes("<<generated stack>>"));
-		assert(stack[1].includes("at generateErrorWithStack"))
+		assert(stack[1].includes("at generateErrorWithStack"));
+		assert(originalLimit === Error.stackTraceLimit);
   });
 });
