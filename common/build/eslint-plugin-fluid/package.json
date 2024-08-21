@@ -8,18 +8,17 @@
 		"url": "https://github.com/microsoft/FluidFramework.git",
 		"directory": "common/build/eslint-plugin-fluid"
 	},
-	"type": "module",
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"main": "index.js",
 	"scripts": {
-		"build": "tsc && npm run build:readme",
+		"build": "npm run build:readme",
 		"build:readme": "markdown-magic --files \"**/*.md\"",
 		"clean": "rimraf --glob nyc",
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"test": "mocha \"dist/test/**/*.test.*js\""
+		"test": "mocha \"src/test/**/*.test.*js\""
 	},
 	"dependencies": {
 		"@microsoft/tsdoc": "^0.14.2",
@@ -29,8 +28,6 @@
 	"devDependencies": {
 		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
-		"@types/jest": "^29.5.12",
-		"@types/node": "^22.4.1",
 		"eslint": "^8.57.0",
 		"mocha": "^10.4.0",
 		"mocha-json-output-reporter": "^2.1.0",

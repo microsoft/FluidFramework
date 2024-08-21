@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import path from "path";
-import { ESLint } from "eslint";
-import { fileURLToPath } from "node:url";
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const assert = require("assert");
+const path = require("path");
+const { ESLint } = require("eslint");
 
 describe("Do not allow release tags on members", function () {
 	function createESLintInstance() {

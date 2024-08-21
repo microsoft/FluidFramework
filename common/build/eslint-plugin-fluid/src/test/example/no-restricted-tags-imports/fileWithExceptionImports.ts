@@ -4,4 +4,4 @@
  */
 
 // Despite the local linter error, this file is intended for testing purpose only hence allowing .ts extension for the import.
-import { exceptionInternalFunction, alphaFunction2 } from "./exceptionFile.js";
+import { exceptionInternalFunction, alphaFunction2 } from "./exceptionFile.ts";

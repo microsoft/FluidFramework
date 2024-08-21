@@ -4,4 +4,4 @@
  */
 
 // Despite the local linter error, this file is intended for testing purpose only hence allowing .ts extension for the import.
-import { publicFunction, internalFunction, alphaFunction } from "./mockModule.js";
+import { publicFunction, internalFunction, alphaFunction } from "./mockModule.ts";
