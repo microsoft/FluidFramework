@@ -50,10 +50,12 @@
 # Fluid Devtools source
 /packages/tools/devtools/**/src                @microsoft/fluid-cr-devtools
 
-# Non-internal API changes
-/{common,experimental,packages,server}/**/api-report/*.public.api.md   @microsoft/fluid-cr-api
-/{common,experimental,packages,server}/**/api-report/*.beta.api.md     @microsoft/fluid-cr-api
-/{common,experimental,packages,server}/**/api-report/*.alpha.api.md    @microsoft/fluid-cr-api
+# API report changes
+/**/api-report/*.api.md                        @microsoft/fluid-cr-api
+/build/**/api-report/*.api.md                  @microsoft/fluid-cr-infra
+/**/api-report/*.internal.api.md               # Do not require API review of internal API report changes
+/tool/**/api-report/*.api.md                   # Do not require API review for tools packages
+/common/build/**/api-report/*.api.md           # Do not require API review for build tooling packages
 
 # Changesets and release notes
 /**/.changeset/*.md                            @microsoft/fluid-cr-docs
