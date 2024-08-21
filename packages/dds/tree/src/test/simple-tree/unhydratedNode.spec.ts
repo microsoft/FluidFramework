@@ -19,6 +19,7 @@ import type {
 	FieldProvider,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { hydrate } from "./utils.js";
 import { isMapTreeNode, TreeStatus } from "../../feature-libraries/index.js";
@@ -330,7 +331,8 @@ describe("Unhydrated nodes", () => {
 		assert.throws(
 			() => new TestArray([leaf, leaf]),
 			(e: Error) =>
-				validateAssertionError(e, /A node may not be in more than one place in the tree/),
+				e instanceof UsageError &&
+				e.message.includes("A node may not be in more than one place in the tree"),
 		);
 	});
 
@@ -350,10 +352,8 @@ describe("Unhydrated nodes", () => {
 		assert.throws(
 			() => view.map.set("key", leaf),
 			(e: Error) =>
-				validateAssertionError(
-					e,
-					/Attempted to insert a node which is already under a parent/,
-				),
+				e instanceof UsageError &&
+				e.message.includes("Attempted to insert a node which is already under a parent"),
 		);
 	});
 });
