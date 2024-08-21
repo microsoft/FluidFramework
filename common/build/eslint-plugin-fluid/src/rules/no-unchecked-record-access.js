@@ -53,7 +53,7 @@ module.exports = {
 					// This error occurs when an index signature type is assigned to a variable without an explicit type annotation
 					context.report({
 						node,
-						message: `Implicit typing for '${fullName}' from an index signature type is not allowed. Please provide an explicit type annotation or enable noUncheckedIndexedAccess`,
+						message: `Implicit typing derived from '${fullName}' is not allowed. '${node.object.name}' is an index signature type and '${node.property.name}' may not be defined. Please provide an explicit type annotation or enable noUncheckedIndexedAccess`,
 					});
 				} else {
 					const expectedType = parentNode.id.typeAnnotation.typeAnnotation;
@@ -71,7 +71,7 @@ module.exports = {
 					// This error occurs when an index signature type is assigned to a strictly typed variable after its declaration
 					context.report({
 						node,
-						message: `Assigning '${fullName}' from an index signature type to a strictly typed variable is not allowed. It may be 'undefined'`,
+						message: `Assigning '${fullName}' from an index signature type to a strictly typed variable without 'undefined' is not allowed. '${fullName}' may be 'undefined'`,
 					});
 				}
 			} else if (parentNode.type === "MemberExpression" && parentNode.object === node) {
@@ -88,7 +88,7 @@ module.exports = {
 						// This error occurs when returning an index signature type from a function that doesn't allow undefined in its return type
 						context.report({
 							node,
-							message: `Returning '${fullName}' directly from an index signature type is not allowed. It may be 'undefined'`,
+							message: `Returning '${fullName}' directly from an index signature type is not allowed. '${fullName}' may be 'undefined'`,
 						});
 					}
 				}
@@ -109,7 +109,7 @@ module.exports = {
 								// This error occurs when passing an index signature type to a function parameter that doesn't allow undefined
 								context.report({
 									node,
-									message: `Passing '${fullName}' from an index signature type to a strictly typed parameter is not allowed. It may be 'undefined'`,
+									message: `Passing '${fullName}' from an index signature type to a strictly typed parameter is not allowed. '${fullName}' may be 'undefined'`,
 								});
 							}
 						}

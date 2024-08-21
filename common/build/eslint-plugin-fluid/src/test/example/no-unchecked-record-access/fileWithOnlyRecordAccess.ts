@@ -129,7 +129,11 @@ nonNullObj.maybeString.length; // ok: This should be caught by tsc, not by this 
 let possiblyUndefined: string | undefined;
 possiblyUndefined = nonNullObj.maybeString; // ok: Assigning optional property to variable of type 'string | undefined'
 
-/* Static Types */
+/*
+* Static Types
+* no-unchecked-record-access should not apply to static types, since they are guaranteed to have the properties they define.
+*/
+
 const someObjWithStaticType: StaticType = { a: "hello", b: "goodbye" };
 someObjWithStaticType.a; // ok: Accessing string property 'a'
 someObjWithStaticType.a.length; // ok: Accessing length of string property 'a'

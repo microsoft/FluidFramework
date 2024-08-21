@@ -69,19 +69,19 @@ describe("ESLint Rule Tests", function () {
 
 		assert.strictEqual(
 			result.messages[6].message,
-			"Returning 'record.a' directly from an index signature type is not allowed. It may be 'undefined'",
+			"Returning 'record.a' directly from an index signature type is not allowed. 'record.a' may be 'undefined'",
 		);
 		assert.strictEqual(result.messages[6].line, 67);
 
 		assert.strictEqual(
 			result.messages[7].message,
-			"Returning 'record.a' directly from an index signature type is not allowed. It may be 'undefined'",
+			"Returning 'record.a' directly from an index signature type is not allowed. 'record.a' may be 'undefined'",
 		);
 		assert.strictEqual(result.messages[7].line, 75);
 
 		assert.strictEqual(
 			result.messages[8].message,
-			"Passing 'indexedRecordOfStrings.a' from an index signature type to a strictly typed parameter is not allowed. It may be 'undefined'",
+			"Passing 'indexedRecordOfStrings.a' from an index signature type to a strictly typed parameter is not allowed. 'indexedRecordOfStrings.a' may be 'undefined'",
 		);
 		assert.strictEqual(result.messages[8].line, 91);
 
@@ -93,7 +93,7 @@ describe("ESLint Rule Tests", function () {
 
 		assert.strictEqual(
 			result.messages[10].message,
-			"Implicit typing for 'indexedRecordOfStrings.a' from an index signature type is not allowed. Please provide an explicit type annotation or enable noUncheckedIndexedAccess",
+			"Implicit typing derived from 'indexedRecordOfStrings.a' is not allowed. 'indexedRecordOfStrings' is an index signature type and 'a' may not be defined. Please provide an explicit type annotation or enable noUncheckedIndexedAccess",
 		);
 		assert.strictEqual(result.messages[10].line, 112);
 
@@ -105,7 +105,7 @@ describe("ESLint Rule Tests", function () {
 
 		assert.strictEqual(
 			result.messages[12].message,
-			"Assigning 'indexedRecordOfStrings.a' from an index signature type to a strictly typed variable is not allowed. It may be 'undefined'",
+			"Assigning 'indexedRecordOfStrings.a' from an index signature type to a strictly typed variable without 'undefined' is not allowed. 'indexedRecordOfStrings.a' may be 'undefined'",
 		);
 		assert.strictEqual(result.messages[12].line, 120);
 
@@ -113,7 +113,7 @@ describe("ESLint Rule Tests", function () {
 			result.messages[13].message,
 			"'nestedObj.nested.a' is possibly 'undefined'",
 		);
-		assert.strictEqual(result.messages[13].line, 151);
+		assert.strictEqual(result.messages[13].line, 155);
 	});
 
 	it("Should not report an error for valid array access", async function () {
