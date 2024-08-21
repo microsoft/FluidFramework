@@ -8,7 +8,6 @@ import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	type ITreeCursor,
 	type ITreeCursorSynchronous,
 	type JsonableTree,
 	Multiplicity,
@@ -60,16 +59,6 @@ function testTree(
 	return testField(name, schemaData, fieldSchema, [data]);
 }
 
-function testTreeFromCursor(
-	name: string,
-	schemaData: SchemaLibrary,
-	rootNode: FlexTreeNodeSchema,
-	data: ITreeCursor,
-): TestTree {
-	const fieldSchema = FlexFieldSchema.create(FieldKinds.required, [rootNode]);
-	return testField(name, schemaData, fieldSchema, [jsonableTreeFromCursor(data)]);
-}
-
 function testFieldFromCursor(
 	name: string,
 	schemaData: SchemaLibrary,
@@ -115,42 +104,6 @@ function test(name: string, schemaData: FlexTreeSchema, data: JsonableTree[]): T
 	};
 }
 
-function testIdentifierField(name: string, schemaLibrary: SchemaLibrary): TestTree {
-	const schema = new SchemaBuilderBase(FieldKinds.required, {
-		scope: name,
-		lint: { rejectForbidden: false, rejectEmpty: false },
-		libraries: [schemaLibrary],
-	}).intoSchema(FlexFieldSchema.create(FieldKinds.identifier, [leaf.string]));
-	return {
-		name,
-		schemaData: schema,
-		treeFactory: (idCompressor?: IIdCompressor) => {
-			assert(idCompressor !== undefined, "idCompressor must be provided");
-			const id = idCompressor.decompress(idCompressor.generateCompressedId());
-			return [{ type: leaf.string.name, value: id }];
-		},
-		policy: defaultSchemaPolicy,
-	};
-}
-
-function testTreeWithIdentifier(name: string, schemaLibrary: SchemaLibrary): TestTree {
-	const schema = new SchemaBuilderBase(FieldKinds.required, {
-		scope: name,
-		lint: { rejectForbidden: false, rejectEmpty: false },
-		libraries: [schemaLibrary],
-	}).intoSchema(hasIdentifierField);
-	return {
-		name,
-		schemaData: schema,
-		treeFactory: (idCompressor?: IIdCompressor) => {
-			assert(idCompressor !== undefined, "idCompressor must be provided");
-			const id = idCompressor.decompress(idCompressor.generateCompressedId());
-			return [jsonableTreeFromCursor(cursorFromInsertable(HasIdentifierField, { field: id }))];
-		},
-		policy: defaultSchemaPolicy,
-	};
-}
-
 function cursorsToFieldContent(
 	cursors: readonly ITreeCursorSynchronous[],
 	schema: FlexFieldSchema,
@@ -182,36 +135,21 @@ const builder = new SchemaBuilderBase(FieldKinds.required, {
 const factory = new SchemaFactory("test");
 export const minimal = builder.object("minimal", {});
 export class Minimal extends factory.object("minimal", {}) {}
-export const hasMinimalValueField = builder.object("hasMinimalValueField", {
-	field: minimal,
-});
 export class HasMinimalValueField extends factory.object("hasMinimalValueField", {
 	field: Minimal,
 }) {}
-export const hasNumericValueField = builder.object("hasNumericValueField", {
-	field: leaf.number,
-});
 export class HasNumericValueField extends factory.object("hasNumericValueField", {
 	field: factory.number,
 }) {}
-export const hasPolymorphicValueField = builder.object("hasPolymorphicValueField", {
-	field: [leaf.number, minimal],
-});
 export class HasPolymorphicValueField extends factory.object("hasPolymorphicValueField", {
 	field: [factory.number, Minimal],
 }) {}
 export const hasAnyValueField = builder.object("hasAnyValueField", {
 	field: Any,
 });
-export const hasOptionalField = builder.object("hasOptionalField", {
-	field: FlexFieldSchema.create(FieldKinds.optional, [leaf.number]),
-});
 export class HasOptionalField extends factory.object("hasOptionalField", {
 	field: factory.optional(factory.number),
 }) {}
-export const hasIdentifierField = builder.object("hasIdentifierField", {
-	field: FlexFieldSchema.create(FieldKinds.identifier, [leaf.string]),
-});
 export class HasIdentifierField extends factory.object("hasIdentifierField", {
 	field: factory.identifier,
 }) {}
@@ -226,20 +164,12 @@ export const anyFields = builder.object("anyFields", {
 	sequence: FlexFieldSchema.create(FieldKinds.sequence, [Any]),
 });
 
-export const numericMap = builder.map(
-	"numericMap",
-	FlexFieldSchema.create(FieldKinds.optional, [leaf.number]),
-);
 export class NumericMap extends factory.map("numericMap", factory.number) {}
 
 export const anyMap = builder.map(
 	"anyMap",
 	FlexFieldSchema.create(FieldKinds.sequence, [Any]),
 );
-
-export const recursiveType = builder.objectRecursive("recursiveType", {
-	field: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveType]),
-});
 
 export class RecursiveType extends factory.objectRecursive("recursiveType", {
 	field: factory.optionalRecursive([() => RecursiveType]),
@@ -263,8 +193,26 @@ export const testTrees: readonly TestTree[] = [
 		FlexFieldSchema.create(FieldKinds.sequence, [leaf.number]),
 		fieldJsonCursor([1, 2, 3]),
 	),
-	testTreeWithIdentifier("node-with-identifier-field", library),
-	testIdentifierField("identifier-field", library),
+	{
+		name: "node-with-identifier-field",
+		schemaData: toFlexSchema(HasIdentifierField),
+		treeFactory: (idCompressor?: IIdCompressor) => {
+			assert(idCompressor !== undefined, "idCompressor must be provided");
+			const id = idCompressor.decompress(idCompressor.generateCompressedId());
+			return [jsonableTreeFromCursor(cursorFromInsertable(HasIdentifierField, { field: id }))];
+		},
+		policy: defaultSchemaPolicy,
+	},
+	{
+		name: "identifier-field",
+		schemaData: toFlexSchema(factory.identifier),
+		treeFactory: (idCompressor?: IIdCompressor) => {
+			assert(idCompressor !== undefined, "idCompressor must be provided");
+			const id = idCompressor.decompress(idCompressor.generateCompressedId());
+			return [{ type: leaf.string.name, value: id }];
+		},
+		policy: defaultSchemaPolicy,
+	},
 	testSimpleTree("true boolean", factory.boolean, true),
 	testSimpleTree("false boolean", factory.boolean, false),
 	testSimpleTree("hasMinimalValueField", HasMinimalValueField, { field: {} }),
