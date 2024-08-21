@@ -63,7 +63,7 @@ export interface NodeChangedData {
  *
  * @sealed @public
  */
-export interface TreeChangeEvents<TNode = TreeNode> {
+export interface TreeChangeEvents<TNode extends TreeNode = TreeNode> {
 	/**
 	 * Emitted by a node after a batch of changes has been applied to the tree, if any of the changes affected the node.
 	 *
@@ -94,7 +94,7 @@ export interface TreeChangeEvents<TNode = TreeNode> {
 	 * node, or when the node has to be updated due to resolution of a merge conflict
 	 * (for example a previously applied local change might be undone, then reapplied differently or not at all).
 	 *
-	 * TODO: define and document event ordering (ex: bottom up, with nodeChanged before treeCHange on each level).
+	 * TODO: define and document event ordering (ex: bottom up, with nodeChanged before treeChange on each level).
 	 */
 	nodeChanged(
 		data: NodeChangedData &
@@ -122,8 +122,6 @@ export interface TreeChangeEvents<TNode = TreeNode> {
 	 */
 	treeChanged(): void;
 }
-
-export type IsListener2<TListener> = TListener extends (...args: any[]) => void ? true : false;
 
 /**
  * A non-{@link NodeKind.Leaf|leaf} SharedTree node. Includes objects, arrays, and maps.

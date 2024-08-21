@@ -72,6 +72,12 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 	/**
 	 * Generation number which is incremented any time we have an edit on the node.
 	 * Used during iteration to make sure there has been no edits that were concurrently made.
+	 * @remarks
+	 * This is updated monotonically by this class when edits are applied.
+	 * TODO: update this when applying edits to unhydrated trees.
+	 *
+	 * If TypeScript supported making this immutable from outside the class without making it readonly from inside, that would be used here,
+	 * but they only way to do that is add a separate public accessor and make it private, which was deemed not worth the boilerplate, runtime overhead and bundle size.
 	 */
 	public generationNumber: number = 0;
 
@@ -83,7 +89,7 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 	/**
 	 * Events registered before hydration.
 	 * @remarks
-	 *
+	 * As an optimization these are allocated lazily as they are usually unused.
 	 */
 	#preHydrationEvents?: Listenable<KernelEvents> &
 		IEmitter<KernelEvents> &
