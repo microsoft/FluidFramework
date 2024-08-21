@@ -26,13 +26,17 @@ export type Unhydrated<T> = T;
 
 /**
  * Data included for {@link TreeChangeEvents.nodeChanged}.
- * @public
+ * @sealed @public
  */
 export interface NodeChangedData {
 	/**
 	 * When the node changed is an object or Map node, this lists all the properties which changed.
 	 * @remarks
 	 * This only includes changes to the node itself (which would trigger {@link TreeChangeEvents.nodeChanged}).
+	 *
+	 * Set to `undefined` when the {@link NodeKind} does not support this feature (currently just ArrayNodes).
+	 *
+	 * When defined, the set should never be empty, since `nodeChanged` will only be triggered when there is a change, and for the supported node types, the only things that can change are properties.
 	 */
 	readonly changedProperties?: ReadonlySet<string>;
 }
