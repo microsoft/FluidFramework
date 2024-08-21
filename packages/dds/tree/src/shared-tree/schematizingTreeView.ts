@@ -323,6 +323,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	public dispose(): void {
 		this.disposed = true;
 		this.disposeView();
+		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
 	}
 
