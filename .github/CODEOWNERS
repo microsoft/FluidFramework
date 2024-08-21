@@ -51,10 +51,10 @@
 /packages/tools/devtools/**/src                @microsoft/fluid-cr-devtools
 
 # API report changes
+# TODO: if we ever add `.internal` API reports, we will want to omit them here
 /**/api-report/*.api.md                        @microsoft/fluid-cr-api
-/build/**/api-report/*.api.md                  @microsoft/fluid-cr-infra
-/**/api-report/*.internal.api.md               # Do not require API review of internal API report changes
-/tool/**/api-report/*.api.md                   # Do not require API review for tools packages
+/build-tools/**/api-report/*.api.md            @microsoft/fluid-cr-infra
+/tools/**/api-report/*.api.md                  # Do not require API review for tools packages
 /common/build/**/api-report/*.api.md           # Do not require API review for build tooling packages
 
 # Changesets and release notes
