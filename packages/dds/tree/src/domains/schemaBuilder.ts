@@ -6,7 +6,6 @@
 import {
 	FieldKinds,
 	type FlexFieldKind,
-	FlexFieldNodeSchema,
 	type FlexFieldSchema,
 	type FlexImplicitAllowedTypes,
 	type FlexImplicitFieldSchema,
@@ -62,27 +61,6 @@ export class SchemaBuilder<
 			name,
 			t as unknown as RestrictiveReadonlyRecord<string, FlexImplicitFieldSchema>,
 		) as unknown as FlexObjectNodeSchema<`${TScope}.${Name}`, T>;
-	}
-
-	/**
-	 * Define (and add to this library) a {@link FlexFieldNodeSchema} for a {@link Sequence}.
-	 *
-	 * The name must be unique among all TreeNodeSchema in the the document schema.
-	 */
-	public list<Name extends TName, const T extends FlexImplicitAllowedTypes>(
-		name: Name,
-		allowedTypes: T,
-	): FlexFieldNodeSchema<
-		`${TScope}.${Name}`,
-		FlexFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>
-	> {
-		const schema = FlexFieldNodeSchema.create(
-			this,
-			this.scoped(name as TName & Name),
-			this.sequence(allowedTypes),
-		);
-		this.addNodeSchema(schema);
-		return schema;
 	}
 
 	/**

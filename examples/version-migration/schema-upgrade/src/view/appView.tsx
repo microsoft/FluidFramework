@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigratableModel } from "@fluid-example/example-utils";
+import type { IMigrationTool } from "@fluid-example/example-utils";
 import React, { useEffect, useState } from "react";
 
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
@@ -11,9 +11,10 @@ import type { IInventoryListAppModel } from "../modelInterfaces.js";
 import { InventoryListView } from "./inventoryView.js";
 
 export interface IInventoryListAppViewProps {
-	// TODO: All we really want here is a "readonly" indicator - maybe don't need the full IMigratableModel interface.
-	// Would maybe be better to grab that info from the Migrator rather than the MigrationTool anyway.
-	model: IInventoryListAppModel & IMigratableModel;
+	model: IInventoryListAppModel;
+	// TODO: All we really want here is a "readonly" indicator - maybe don't need the full IMigrationTool interface.
+	// Would maybe be better to grab that info from the Migrator rather than the MigrationTool anyway?
+	migrationTool: IMigrationTool;
 }
 
 /**
@@ -25,24 +26,24 @@ export interface IInventoryListAppViewProps {
 export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = (
 	props: IInventoryListAppViewProps,
 ) => {
-	const { model } = props;
+	const { model, migrationTool } = props;
 
 	const [disableInput, setDisableInput] = useState<boolean>(
-		model.migrationTool.migrationState !== "collaborating",
+		migrationTool.migrationState !== "collaborating",
 	);
 
 	useEffect(() => {
 		const migrationStateChangedHandler = () => {
-			setDisableInput(model.migrationTool.migrationState !== "collaborating");
+			setDisableInput(migrationTool.migrationState !== "collaborating");
 		};
-		model.migrationTool.events.on("stopping", migrationStateChangedHandler);
-		model.migrationTool.events.on("migrating", migrationStateChangedHandler);
-		model.migrationTool.events.on("migrated", migrationStateChangedHandler);
+		migrationTool.events.on("stopping", migrationStateChangedHandler);
+		migrationTool.events.on("migrating", migrationStateChangedHandler);
+		migrationTool.events.on("migrated", migrationStateChangedHandler);
 		migrationStateChangedHandler();
 		return () => {
-			model.migrationTool.events.off("stopping", migrationStateChangedHandler);
-			model.migrationTool.events.off("migrating", migrationStateChangedHandler);
-			model.migrationTool.events.off("migrated", migrationStateChangedHandler);
+			migrationTool.events.off("stopping", migrationStateChangedHandler);
+			migrationTool.events.off("migrating", migrationStateChangedHandler);
+			migrationTool.events.off("migrated", migrationStateChangedHandler);
 		};
 	}, [model]);
 

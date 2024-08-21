@@ -9,7 +9,7 @@ export {
 	getKernel,
 	tryGetTreeNodeSchema,
 } from "./treeNodeKernel.js";
-export { type WithType, typeNameSymbol } from "./withType.js";
+export { type WithType, typeNameSymbol, typeSchemaSymbol } from "./withType.js";
 export {
 	type TreeChangeEvents,
 	TreeNode,

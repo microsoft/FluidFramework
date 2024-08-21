@@ -6,8 +6,8 @@
 import type { BatchId } from "./opLifecycle/index.js";
 
 /** Syntactic sugar for casting */
-export function asBatchMetadata(metadata: unknown): IBatchMetadata | undefined {
-	return metadata as IBatchMetadata | undefined;
+export function asBatchMetadata(metadata: unknown): Partial<IBatchMetadata> | undefined {
+	return metadata as Partial<IBatchMetadata> | undefined;
 }
 
 /** Syntactic sugar for casting */

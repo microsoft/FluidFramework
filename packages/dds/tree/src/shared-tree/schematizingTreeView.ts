@@ -252,12 +252,20 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 				}
 			};
 
-			this.view = requireSchema(
+			const view = requireSchema(
 				this.checkout,
 				this.viewSchema,
 				onViewDispose,
 				this.nodeKeyManager,
 			);
+			this.view = view;
+
+			const unregister = this.checkout.storedSchema.on("afterSchemaChange", () => {
+				unregister();
+				this.unregisterCallbacks.delete(unregister);
+				view[disposeSymbol]();
+			});
+			this.unregisterCallbacks.add(unregister);
 		} else {
 			this.view = undefined;
 
@@ -359,11 +367,5 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 		onDispose,
 	);
 	assert(slots.has(ContextSlot), 0x90d /* Context should be tracked in slot */);
-
-	const unregister = checkout.storedSchema.on("afterSchemaChange", () => {
-		unregister();
-		view[disposeSymbol]();
-	});
-
 	return view;
 }

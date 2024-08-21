@@ -31,6 +31,7 @@ import {
 	expectJsonTree,
 	insert,
 	makeTreeFromJson,
+	moveWithin,
 	remove,
 	validateUsageError,
 } from "../utils.js";
@@ -100,10 +101,10 @@ describe("Editing", () => {
 				{ parent: rootNode, field: brand("") },
 				0,
 			);
-			tree1.editor.sequenceField(rootField).move(1, 1, 0);
+			moveWithin(tree1.editor, rootField, 1, 1, 0);
 			tree1.transaction.commit();
 
-			tree2.editor.sequenceField({ parent: rootNode2, field: brand("") }).move(0, 1, 0);
+			moveWithin(tree2.editor, { parent: rootNode2, field: brand("") }, 0, 1, 0);
 
 			tree2.rebaseOnto(tree1);
 			tree1.merge(tree2);
@@ -336,8 +337,9 @@ describe("Editing", () => {
 			remove(tree1, 0, 1);
 			const removal = undoStack.pop();
 
-			const listEditor = tree2.editor.sequenceField({ parent: fooList, field: brand("") });
-			listEditor.move(2, 1, 1);
+			const fooListPath: FieldUpPath = { parent: fooList, field: brand("") };
+			const listEditor = tree2.editor.sequenceField(fooListPath);
+			moveWithin(tree2.editor, fooListPath, 2, 1, 1);
 			listEditor.insert(3, cursorForJsonableTreeNode({ type: leaf.string.name, value: "D" }));
 			listEditor.remove(0, 1);
 			expectJsonTree(tree2, [{ foo: ["C", "B", "D"] }]);
@@ -466,7 +468,7 @@ describe("Editing", () => {
 		it("intra-field move", () => {
 			const tree1 = makeTreeFromJson(["A", "B"]);
 
-			tree1.editor.sequenceField(rootField).move(0, 1, 2);
+			moveWithin(tree1.editor, rootField, 0, 1, 2);
 
 			expectJsonTree(tree1, ["B", "A"]);
 		});
@@ -512,7 +514,7 @@ describe("Editing", () => {
 
 			insert(tree1, 2, "C");
 
-			tree2.editor.sequenceField(rootField).move(0, 1, 2);
+			moveWithin(tree2.editor, rootField, 0, 1, 2);
 
 			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
@@ -695,11 +697,9 @@ describe("Editing", () => {
 				parentField: brand("foo"),
 				parentIndex: 0,
 			};
-			const fooField = tree1.editor.sequenceField({ parent: listNode, field: brand("") });
-			fooField.move(0, 1, 2);
+			moveWithin(tree1.editor, { parent: listNode, field: brand("") }, 0, 1, 2);
 
-			const rootSequence = tree1.editor.sequenceField(rootField);
-			rootSequence.move(0, 1, 2);
+			moveWithin(tree1.editor, rootField, 0, 1, 2);
 
 			tree1.transaction.commit();
 
@@ -718,7 +718,7 @@ describe("Editing", () => {
 
 			const { undoStack } = createTestUndoRedoStacks(tree2.events);
 
-			tree2.editor.sequenceField(rootField).move(1, 1, 0);
+			moveWithin(tree2.editor, rootField, 1, 1, 0);
 			tree2.editor.sequenceField(rootField).remove(0, 1);
 
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -746,9 +746,8 @@ describe("Editing", () => {
 
 			tree2.transaction.start();
 
-			const sequence = tree2.editor.sequenceField(rootField);
-			sequence.move(1, 1, 0);
-			sequence.move(2, 1, 4);
+			moveWithin(tree2.editor, rootField, 1, 1, 0);
+			moveWithin(tree2.editor, rootField, 2, 1, 4);
 			tree2.transaction.commit();
 			tree.merge(tree2);
 			expectJsonTree([tree, tree2], ["B", "A", "D", "C"]);
@@ -760,9 +759,8 @@ describe("Editing", () => {
 
 			tree2.transaction.start();
 
-			const sequence = tree2.editor.sequenceField(rootField);
-			sequence.move(0, 1, 2);
-			sequence.move(3, 1, 2);
+			moveWithin(tree2.editor, rootField, 0, 1, 2);
+			moveWithin(tree2.editor, rootField, 3, 1, 2);
 			tree2.transaction.commit();
 			tree.merge(tree2);
 			expectJsonTree([tree, tree2], ["B", "A", "D", "C"]);
@@ -1844,11 +1842,11 @@ describe("Editing", () => {
 
 			treeD.editor.move(root0Array, 0, 1, root1Array, 0);
 			tree.merge(treeD, false);
-			treeA.editor.sequenceField(root2Array).move(0, 1, 0);
+			moveWithin(treeA.editor, root2Array, 0, 1, 0);
 			tree.merge(treeA, false);
-			treeC.editor.sequenceField(root0Array).move(0, 1, 1);
+			moveWithin(treeC.editor, root0Array, 0, 1, 1);
 			tree.merge(treeC, false);
-			treeC.editor.sequenceField(rootField).move(1, 1, 1);
+			moveWithin(treeC.editor, rootField, 1, 1, 1);
 			tree.merge(treeC, false);
 
 			treeC.rebaseOnto(treeD);
@@ -2065,7 +2063,7 @@ describe("Editing", () => {
 						runScenario(scenario, true);
 					}
 				}
-			}).timeout(10000);
+			}).timeout(15000);
 		});
 
 		describe("revert semantics", () => {
@@ -3201,7 +3199,7 @@ describe("Editing", () => {
 		tree.editor
 			.optionalField({ parent: rootNode, field: brand("foo") })
 			.set(singleJsonCursor("A"), true);
-		tree.editor.sequenceField(rootField).move(0, 1, 0);
+		moveWithin(tree.editor, rootField, 0, 1, 0);
 		tree.editor.sequenceField(rootField).insert(0, singleJsonCursor({}));
 		tree.editor
 			.optionalField({ parent: rootNode, field: brand("bar") })

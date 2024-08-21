@@ -31,7 +31,7 @@ import {
 	type ChangeFamilyEditor,
 	EmptyKey,
 } from "../../core/index.js";
-import { leaf, singleJsonCursor, typedJsonCursor } from "../../domains/index.js";
+import { leaf, singleJsonCursor } from "../../domains/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	ChunkedForest,
@@ -73,13 +73,14 @@ import {
 } from "../../shared-tree/schematizingTreeView.js";
 import type { EditManager } from "../../shared-tree-core/index.js";
 import {
+	cursorFromInsertable,
 	SchemaFactory,
 	toFlexSchema,
 	type TreeFieldFromImplicitField,
 	type TreeView,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
-import { fail } from "../../util/index.js";
+import { disposeSymbol, fail } from "../../util/index.js";
 import {
 	type ConnectionSetter,
 	type ITestTreeProvider,
@@ -145,13 +146,16 @@ describe("SharedTree", () => {
 			const content = {
 				schema: stringSequenceRootSchema,
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
-				initialTree: [typedJsonCursor("x")],
+				initialTree: [singleJsonCursor("x")],
 			} satisfies InitializeAndSchematizeConfiguration;
 			const tree1 = schematizeFlexTree(provider.trees[0], content);
 			schematizeFlexTree(provider.trees[1], content);
 			provider.processMessages();
 
-			assert.deepEqual([...tree1.flexTree], ["x"]);
+			assert.deepEqual(
+				Array.from(tree1.flexTree.boxedIterator(), (f) => f.value),
+				["x"],
+			);
 		});
 
 		it("initialize tree", () => {
@@ -224,7 +228,17 @@ describe("SharedTree", () => {
 			onDispose: () => void = () => assert.fail(),
 		): FlexTreeView<TRoot> {
 			const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
-			return requireSchema(tree.checkout, viewSchema, onDispose, new MockNodeKeyManager());
+			const view = requireSchema(
+				tree.checkout,
+				viewSchema,
+				onDispose,
+				new MockNodeKeyManager(),
+			);
+			const unregister = tree.checkout.storedSchema.on("afterSchemaChange", () => {
+				unregister();
+				view[disposeSymbol]();
+			});
+			return view;
 		}
 
 		const factory = new SharedTreeFactory({
@@ -248,7 +262,7 @@ describe("SharedTree", () => {
 				"the tree",
 			);
 			const view = assertSchema(tree, schemaEmpty);
-			assert.deepEqual([...view.flexTree.boxedIterator()], []);
+			assert.equal(view.flexTree.length, 0);
 		});
 
 		it("differing schema errors and schema change callback", () => {
@@ -393,10 +407,7 @@ describe("SharedTree", () => {
 		const loadingTree = await provider.createTree();
 		validateTreeContent(loadingTree.checkout, {
 			schema: toFlexSchema(JsonArray),
-			initialTree: typedJsonCursor({
-				[typedJsonCursor.type]: JsonArray.identifier,
-				[EmptyKey]: [value],
-			}),
+			initialTree: singleJsonCursor([value]),
 		});
 	});
 
@@ -649,10 +660,7 @@ describe("SharedTree", () => {
 		await provider.ensureSynchronized();
 		validateTreeContent(loadingTree.checkout, {
 			schema: toFlexSchema(StringArray),
-			initialTree: typedJsonCursor({
-				[typedJsonCursor.type]: StringArray.identifier,
-				[EmptyKey]: ["b", "c"],
-			}),
+			initialTree: singleJsonCursor(["b", "c"]),
 		});
 	});
 
@@ -675,10 +683,7 @@ describe("SharedTree", () => {
 
 		validateTreeContent(summarizingTree.checkout, {
 			schema: toFlexSchema(StringArray),
-			initialTree: typedJsonCursor({
-				[typedJsonCursor.type]: StringArray.identifier,
-				[EmptyKey]: ["b", "c"],
-			}),
+			initialTree: singleJsonCursor(["b", "c"]),
 		});
 
 		await provider.ensureSynchronized();
@@ -692,20 +697,14 @@ describe("SharedTree", () => {
 
 		validateTreeContent(summarizingTree.checkout, {
 			schema: toFlexSchema(StringArray),
-			initialTree: typedJsonCursor({
-				[typedJsonCursor.type]: StringArray.identifier,
-				[EmptyKey]: ["a", "b", "c"],
-			}),
+			initialTree: singleJsonCursor(["a", "b", "c"]),
 		});
 
 		await provider.ensureSynchronized();
 
 		validateTreeContent(loadingTree.checkout, {
 			schema: toFlexSchema(StringArray),
-			initialTree: typedJsonCursor({
-				[typedJsonCursor.type]: StringArray.identifier,
-				[EmptyKey]: ["a", "b", "c"],
-			}),
+			initialTree: singleJsonCursor(["a", "b", "c"]),
 		});
 		unsubscribe();
 	});
@@ -1044,10 +1043,7 @@ describe("SharedTree", () => {
 
 			const initialState = {
 				schema: toFlexSchema(StringArray),
-				initialTree: typedJsonCursor({
-					[typedJsonCursor.type]: StringArray.identifier,
-					[EmptyKey]: ["A", "B", "C", "D"],
-				}),
+				initialTree: singleJsonCursor(["A", "B", "C", "D"]),
 			};
 
 			// Validate insertion
@@ -1201,12 +1197,7 @@ describe("SharedTree", () => {
 					// Validate insertion
 					validateTreeContent(tree2.checkout, {
 						schema: toFlexSchema(schema),
-						initialTree: typedJsonCursor({
-							[typedJsonCursor.type]: schema.identifier,
-							[EmptyKey]: [
-								{ [typedJsonCursor.type]: innerSchema.identifier, [EmptyKey]: "a" },
-							],
-						}),
+						initialTree: cursorFromInsertable(schema, [["a"]]),
 					});
 
 					// edit subtree

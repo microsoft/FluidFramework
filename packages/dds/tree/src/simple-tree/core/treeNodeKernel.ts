@@ -14,7 +14,7 @@ import {
 	TreeStatus,
 	treeStatusFromAnchorCache,
 } from "../../feature-libraries/index.js";
-import type { NodeKind, TreeNodeSchema } from "./treeNodeSchema.js";
+import type { TreeNodeSchema } from "./treeNodeSchema.js";
 
 const treeNodeToKernel = new WeakMap<TreeNode, TreeNodeKernel>();
 
@@ -49,11 +49,9 @@ export function isTreeNode(candidate: unknown): candidate is TreeNode | Unhydrat
  * @remarks
  * Does not give schema for a {@link TreeLeafValue}.
  */
-export function tryGetTreeNodeSchema<T>(
-	value: T,
-): undefined | TreeNodeSchema<string, NodeKind, unknown, T> {
+export function tryGetTreeNodeSchema(value: unknown): undefined | TreeNodeSchema {
 	const kernel = treeNodeToKernel.get(value as TreeNode);
-	return kernel?.schema as undefined | TreeNodeSchema<string, NodeKind, unknown, T>;
+	return kernel?.schema;
 }
 
 /**
@@ -78,7 +76,7 @@ export class TreeNodeKernel implements Listenable<TreeChangeEvents> {
 		public readonly node: TreeNode,
 		public readonly schema: TreeNodeSchema,
 	) {
-		assert(!treeNodeToKernel.has(node), "only one kernel per node can be made");
+		assert(!treeNodeToKernel.has(node), 0xa1a /* only one kernel per node can be made */);
 		treeNodeToKernel.set(node, this);
 	}
 

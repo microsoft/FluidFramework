@@ -51,7 +51,7 @@ export interface FlexTreeView<in out TRoot extends FlexFieldSchema>
 	/**
 	 * Get a typed view of the tree content using the flex-tree API.
 	 */
-	readonly flexTree: FlexTreeTypedField<TRoot>;
+	readonly flexTree: FlexTreeTypedField<TRoot["kind"]>;
 
 	/**
 	 * Spawn a new view which is based off of the current state of this view.
@@ -79,7 +79,7 @@ export class CheckoutFlexTreeView<
 > implements FlexTreeView<TRoot>
 {
 	public readonly context: Context;
-	public readonly flexTree: FlexTreeTypedField<TRoot>;
+	public readonly flexTree: FlexTreeTypedField<TRoot["kind"]>;
 	public constructor(
 		public readonly checkout: TCheckout,
 		public readonly schema: FlexTreeSchema<TRoot>,
@@ -88,7 +88,7 @@ export class CheckoutFlexTreeView<
 	) {
 		this.context = getTreeContext(schema, this.checkout, nodeKeyManager);
 		contextToTreeView.set(this.context, this);
-		this.flexTree = this.context.root as FlexTreeTypedField<TRoot>;
+		this.flexTree = this.context.root as FlexTreeTypedField<TRoot["kind"]>;
 	}
 
 	public [disposeSymbol](): void {

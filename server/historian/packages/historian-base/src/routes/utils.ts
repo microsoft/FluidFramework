@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import { RequestHandler } from "express";
 import { decode } from "jsonwebtoken";
 import * as nconf from "nconf";
@@ -43,7 +42,6 @@ export type CommonRouteParams = [
 	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
 	cache?: ICache,
-	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
@@ -57,7 +55,6 @@ export class createGitServiceArgs {
 	storageNameRetriever: IStorageNameRetriever;
 	documentManager: IDocumentManager;
 	cache?: ICache;
-	asyncLocalStorage?: AsyncLocalStorage<string>;
 	initialUpload?: boolean = false;
 	storageName?: string;
 	allowDisabledTenant?: boolean = false;
@@ -219,7 +216,8 @@ async function checkAndCacheIsEphemeral({
 		if (currentTime > documentExpirationTime) {
 			// If the document is ephemeral and older than the max ephemeral document TTL, throw an error indicating that it can't be accessed.
 			const documentExpiredByMs = currentTime - documentExpirationTime;
-			const error = new NetworkError(404, "Ephemeral Container Expired");
+			// TODO: switch back to "Ephemeral Container Expired" once clients update to use errorType, not error message. AB#12867
+			const error = new NetworkError(404, "Document is deleted and cannot be accessed.");
 			Lumberjack.warning(
 				"Document is older than the max ephemeral document TTL.",
 				{
@@ -246,7 +244,6 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		storageNameRetriever,
 		documentManager,
 		cache,
-		asyncLocalStorage,
 		initialUpload,
 		storageName,
 		allowDisabledTenant,
@@ -296,7 +293,6 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		tenantId,
 		documentId,
 		cache,
-		asyncLocalStorage,
 		calculatedStorageName,
 		storageUrl,
 		isEphemeral,

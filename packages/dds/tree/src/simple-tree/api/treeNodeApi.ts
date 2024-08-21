@@ -216,7 +216,7 @@ export const treeNodeApi: TreeNodeApi = {
 					}
 					return identifier.value as string;
 				}
-				assert(identifier?.context !== undefined, "Expected LazyIdentifierField");
+				assert(identifier?.context !== undefined, 0xa12 /* Expected LazyIdentifierField */);
 				const identifierValue = identifier.value as string;
 
 				const localNodeKey =
@@ -235,27 +235,24 @@ export const treeNodeApi: TreeNodeApi = {
  * Returns a schema for a value if the value is a {@link TreeNode} or a {@link TreeLeafValue}.
  * Returns undefined for other values.
  */
-export function tryGetSchema<T>(
-	value: T,
-): undefined | TreeNodeSchema<string, NodeKind, unknown, T> {
-	type TOut = TreeNodeSchema<string, NodeKind, unknown, T>;
+export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
 	switch (typeof value) {
 		case "string":
-			return stringSchema as TOut;
+			return stringSchema;
 		case "number":
-			return numberSchema as TOut;
+			return numberSchema;
 		case "boolean":
-			return booleanSchema as TOut;
+			return booleanSchema;
 		case "object": {
 			if (isTreeNode(value)) {
 				// This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.
-				return tryGetTreeNodeSchema(value) as TOut;
+				return tryGetTreeNodeSchema(value);
 			}
 			if (value === null) {
-				return nullSchema as TOut;
+				return nullSchema;
 			}
 			if (isFluidHandle(value)) {
-				return handleSchema as TOut;
+				return handleSchema;
 			}
 		}
 		default:
