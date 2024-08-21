@@ -13,8 +13,8 @@
 	"main": "index.js",
 	"scripts": {
 		"build": "npm run build:readme && npm run build:test:examples",
-		"build:test:examples": "tsc --project ./src/test/tsconfig.json",
 		"build:readme": "markdown-magic --files \"**/*.md\"",
+		"build:test:examples": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf --glob nyc",
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
