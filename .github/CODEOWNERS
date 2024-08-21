@@ -55,7 +55,6 @@
 /**/api-report/*.api.md                        @microsoft/fluid-cr-api
 /build-tools/**/api-report/*.api.md            @microsoft/fluid-cr-infra
 /tools/**/api-report/*.api.md                  # Do not require API review for tools packages
-/common/build/**/api-report/*.api.md           # Do not require API review for build tooling packages
 
 # Changesets and release notes
 /**/.changeset/*.md                            @microsoft/fluid-cr-docs
