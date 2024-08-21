@@ -12,7 +12,8 @@
 	"author": "Microsoft and contributors",
 	"main": "index.js",
 	"scripts": {
-		"build": "npm run build:readme",
+		"build": "npm run build:readme && npm run build:test:examples",
+		"build:test:examples": "tsc --project ./src/test/tsconfig.json",
 		"build:readme": "markdown-magic --files \"**/*.md\"",
 		"clean": "rimraf --glob nyc",
 		"format": "npm run prettier:fix",

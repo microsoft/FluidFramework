@@ -34,12 +34,12 @@ const undefinableIndexedRecord: UndefinableIndexSignatureType = { a: "hello", b:
 /* Nullable index signature */
 nullableIndexedRecord.a; // ok: Accessing index property 'a' without requiring a particular result
 nullableIndexedRecord.a.length; // defect: Accessing length of index property 'a', but 'a' might be undefined or null
-nullableIndexedRecord.b?.length; // ok: Using optional chaining to access length safely handles 'undefined'
+nullableIndexedRecord.a?.length; // ok: Using optional chaining to access length safely handles 'undefined'
 
 /* Undefinable index signature */
 undefinableIndexedRecord.a; // ok: Accessing index property 'a' without requiring a particular result
 undefinableIndexedRecord.a.length; // defect: Accessing length of index property 'a', but 'a' might be undefined
-undefinableIndexedRecord.b?.length; // ok: Using optional chaining to access length safely handles 'undefined'
+undefinableIndexedRecord.a?.length; // ok: Using optional chaining to access length safely handles 'undefined'
 
 /* Index signature type */
 indexedRecordOfStrings.a; // ok: Accessing index property 'a' without requiring a particular result
@@ -73,6 +73,10 @@ function recordAFnExpectsStringOrUndefined(record: IndexSignatureType): string |
 
 function readRecordA<T>(record: Record<string, T>): T {
 	return record.a; // defect: Returning 'record.a' directly from an index signature type is not allowed. It may be 'undefined'
+}
+
+function readOptionalRecordA<T>(record: Record<string, T>): T | undefined {
+	return record.a; // ok: Returning index property 'a' to string or undefined variable, 'a' might not be present
 }
 
 function AFnExpectsString(a: string): string {

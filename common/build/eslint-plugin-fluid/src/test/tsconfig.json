@@ -3,6 +3,10 @@
 		"rootDir": "example",
 		"target": "ESNext",
 		"composite": true,
+		"moduleResolution": "nodenext",
+		"module": "nodenext",
+		"allowImportingTsExtensions": true,
+		"noEmit": true
 	},
 	"include": ["example/**/*"],
 }
