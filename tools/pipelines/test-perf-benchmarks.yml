@@ -458,9 +458,6 @@ stages:
         - name: memoryUsageTestOutputFolder
           value: ${{ variables.testWorkspace }}/node_modules/@fluid-private/test-end-to-end-tests/.memoryTestsOutput
           readonly: true
-        - name: customBenchmarkTestOutputFolder
-          value: ${{ variables.testWorkspace }}/node_modules/@fluid-private/test-end-to-end-tests/.customBenchmarksOutput
-          readonly: true
         - name: testPackage
           value: '@fluid-private/test-end-to-end-tests'
           readonly: true
@@ -578,19 +575,6 @@ stages:
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
 
         - task: Bash@3
-          displayName: Write measurements to Aria/Kusto - custom benchmark ${{ endpointObject.endpointName }}
-          condition: succeededOrFailed()
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(absolutePathToTelemetryGenerator)
-            script: |
-              echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
-              ls -la ${{ variables.customBenchmarkTestOutputFolder }};
-              node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/customBenchmarkHandler.js --dir ${{ variables.customBenchmarkTestOutputFolder }};
-          env:
-            FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
-
-        - task: Bash@3
           displayName: Send Execution Time Perf Benchmark Measurements to Azure App Insights
           condition: eq('${{ endpointObject.endpointName }}', 'local')
           inputs:
@@ -620,21 +604,6 @@ stages:
             BRANCH_NAME: $(Build.SourceBranchName)
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
 
-        - task: Bash@3
-          displayName: Send Custom Benchmark Perf Benchmark Measurements to Azure App Insights
-          condition: eq('${{ endpointObject.endpointName }}', 'local')
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(absolutePathToTelemetryGenerator)
-            script: |
-              echo "Writing custom benchmark test performance benchmark output to Azure App Insights..."
-              ls -laR ${{ variables.customBenchmarkTestOutputFolder }};
-              node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsCustomBenchmarkHandler.js --dir '${{ variables.customBenchmarkTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
-          env:
-            BUILD_ID: $(Build.BuildId)
-            BRANCH_NAME: $(Build.SourceBranchName)
-            FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
-
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - E2E perf tests output - execution time {{ $stage }}
           condition: succeededOrFailed()
@@ -650,13 +619,6 @@ stages:
             targetPath: '${{ variables.memoryUsageTestOutputFolder }}'
             artifactName: 'perf-test-outputs-e2e_memory-usage-${{ endpointObject.endpointName }}'
 
-        - task: PublishPipelineArtifact@1
-          displayName: Publish Artifact - E2E perf tests output - custom benchmark {{ $stage }}
-          condition: succeededOrFailed()
-          inputs:
-            targetPath: '${{ variables.customBenchmarkTestOutputFolder }}'
-            artifactName: 'perf-test-outputs-e2e_custom-benchmark-${{ endpointObject.endpointName }}'
-
         - task: Bash@3
           displayName: Remove Output Folders from local server run ${{ endpointObject.endpointName }}
           inputs:
@@ -669,10 +631,6 @@ stages:
               ls -laR ${{ variables.memoryUsageTestOutputFolder }};
               echo "Cleanup  ${{ variables.memoryUsageTestOutputFolder }}"
               rm -rf ${{ variables.memoryUsageTestOutputFolder }};
-              ls -laR ${{ variables.customBenchmarkTestOutputFolder }};
-              echo "Cleanup  ${{ variables.customBenchmarkTestOutputFolder }}"
-              rm -rf ${{ variables.customBenchmarkTestOutputFolder }};
-
 
   # Capture telemetry about pipeline stages
   - stage: upload_run_telemetry
