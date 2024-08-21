@@ -29,7 +29,7 @@ const undefinableIndexedRecord: UndefinableIndexSignatureType = { a: "hello", b:
 
 /*
  * Accessing Properties
-*/
+ */
 
 /* Nullable index signature */
 nullableIndexedRecord.a; // ok: Accessing index property 'a' without requiring a particular result
@@ -101,7 +101,7 @@ for (const key of Object.keys(indexedRecordOfStrings)) {
 
 /*
  * Variable Assignments
-*/
+ */
 
 const aExpectingString: string = indexedRecordOfStrings.a; // defect: Assigning index property 'a' to a strict string variable, but 'a' might not be present
 const aExpectingStringOrUndefined: string | undefined = indexedRecordOfStrings.a; // ok: Assigning index property 'a' to string or undefined variable, 'a' might not be present
