@@ -2114,8 +2114,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			},
 		);
 
-		//* TODO: Fix this test (timing issue described below)
-		itExpects.skip(
+		itExpects(
 			`Closes (ForkedContainerError) when hydrating twice and submitting in serial (via Counter DDS)`,
 			[
 				//* TODO: Figure out which containers these are and explain or constrain them more to be more meaningful
@@ -2147,12 +2146,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				assert.strictEqual(counter1.value, incrementValue);
 				assert.strictEqual(counter2.value, incrementValue);
 
-				//* TODO: Timing issue here - test passes if you put breakpoints in PSM code.
-				//* Maybe it's about the pendingLocalState or container2's behavior above, before container3 loads?
-				//* Or maybe it's during container3 load.
-				//* This doesn't help:
-				//* await provider.ensureSynchronized();
-
 				// Rehydrate the second time - when we are catching up, we'll recognize the incoming op (from container2),
 				// and since it's coming from a different clientID we'll realize the container is forked and we'll close
 				let loadError: Error | undefined;
@@ -2165,12 +2158,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				});
 				await provider.ensureSynchronized();
 
-				//* This doesn't help either:
-				//* await delay(1000);
-
-				assert(
-					loadError?.message ===
-						"Forked Container Error! Matching batchIds but mismatched clientId",
+				assert.equal(
+					loadError?.message,
+					"Forked Container Error! Matching batchIds but mismatched clientId",
 					"Container should have closed due to ForkedContainerError",
 				);
 

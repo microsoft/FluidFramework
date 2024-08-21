@@ -521,7 +521,7 @@ export class PendingStateManager implements IDisposable {
 		const inboundBatchId = batch.batchId;
 
 		// We expect the incoming batch to be of the same length, starting at the same clientSequenceNumber,
-		// as the batch we originally submitted. The batchIds should match as well, if set (or neither shoudl be set)
+		// as the batch we originally submitted. The batchIds should match as well, if set (or neither should be set)
 		// We have another later check to compare the message contents, which we'd expect to fail if this check does,
 		// so we don't throw here, merely log.  In a later release this check may replace that one since it's cheaper.
 		if (
