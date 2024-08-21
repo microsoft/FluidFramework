@@ -80,7 +80,7 @@ import {
 	type TreeView,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
-import { fail } from "../../util/index.js";
+import { disposeSymbol, fail } from "../../util/index.js";
 import {
 	type ConnectionSetter,
 	type ITestTreeProvider,
@@ -225,7 +225,17 @@ describe("SharedTree", () => {
 			onDispose: () => void = () => assert.fail(),
 		): FlexTreeView<TRoot> {
 			const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
-			return requireSchema(tree.checkout, viewSchema, onDispose, new MockNodeKeyManager());
+			const view = requireSchema(
+				tree.checkout,
+				viewSchema,
+				onDispose,
+				new MockNodeKeyManager(),
+			);
+			const unregister = tree.checkout.storedSchema.on("afterSchemaChange", () => {
+				unregister();
+				view[disposeSymbol]();
+			});
+			return view;
 		}
 
 		const factory = new SharedTreeFactory({
