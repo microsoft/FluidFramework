@@ -584,8 +584,7 @@ for (const testOpts of testMatrix) {
 				const message = call.firstArg as ISequencedDocumentMessage;
 				if (
 					message.type === MessageType.Operation &&
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-					(message.contents as any).type === "groupedBatch"
+					(message.contents as { type: string }).type === "groupedBatch"
 				) {
 					assert.fail("unexpected groupedBatch found");
 				}
@@ -640,8 +639,7 @@ for (const testOpts of testMatrix) {
 					const message = call.firstArg as ISequencedDocumentMessage;
 					if (
 						message.type === MessageType.Operation &&
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-						(message.contents as any).type === "groupedBatch"
+						(message.contents as { type: string }).type === "groupedBatch"
 					) {
 						groupedBatchCount++;
 					}
