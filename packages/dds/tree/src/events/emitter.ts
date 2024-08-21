@@ -3,112 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent } from "@fluidframework/core-interfaces";
 import { getOrCreate } from "../util/index.js";
-
-/**
- * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
- * @privateRemarks
- * First an always true extends clause is used (T extends T) to distribute T into to a union of types contravariant over each member of the T union.
- * Then the constraint on the type parameter in this new context is inferred, giving the intersection.
- */
-export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (
-	k: infer U,
-) => unknown
-	? U
-	: never;
-
-/**
- * `true` iff the given type is an acceptable shape for a {@link Listeners | event} listener
- * @public
- */
-export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
-
-/**
- * Used to specify the kinds of events emitted by a {@link Listenable}.
- *
- * @remarks
- * Any object type is a valid {@link Listeners}, but only the {@link IsListener | event-like} properties of that
- * type will be included.
- *
- * @example
- * ```typescript
- * interface MyEvents {
- *   load: (user: string, data: IUserData) => void;
- *   error: (errorCode: number) => void;
- * }
- * ```
- *
- * @public
- */
-export type Listeners<T extends object> = {
-	[P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
-};
-
-/**
- * Converts a {@link Listeners} type (i.e. the event registry for a {@link Listenable}) into a type consumable
- * by an IEventProvider from `@fluidframework/core-interfaces`.
- * @param E - the `Events` type to transform
- * @param Target - an optional `IEvent` type that will be merged into the result along with the transformed `E`
- *
- * @example
- *
- * ```typescript
- * interface MyEvents {
- *   load: (user: string, data: IUserData) => void;
- *   error: (errorCode: number) => void;
- * }
- *
- * class MySharedObject extends SharedObject<TransformEvents<MyEvents, ISharedObjectEvents>> {
- *    // ...
- * }
- * ```
- */
-export type TransformListeners<
-	TListeners extends Listeners<TListeners>,
-	TTarget extends IEvent = IEvent,
-> = {
-	[P in keyof Listeners<TListeners>]: (event: P, listener: TListeners[P]) => void;
-} extends Record<string | number | symbol, infer Z>
-	? UnionToIntersection<Z> & TTarget
-	: never;
-
-/**
- * An object which allows the registration of listeners so that subscribers can be notified when an event happens.
- * @param TListeners - All the {@link Listeners | events} that this subscribable supports
- *
- * @privateRemarks
- * `EventEmitter` can be used as a base class to implement this via extension.
- * ```ts
- * type MyEventEmitter = IEventEmitter<{
- *   load: (user: string, data: IUserData) => void;
- *   error: (errorCode: number) => void;
- * }>
- * ```
- * {@link createEmitter} can help implement this interface via delegation.
- *
- * @sealed @public
- */
-export interface Listenable<TListeners extends object> {
-	/**
-	 * Register an event listener.
-	 * @param eventName - the name of the event
-	 * @param listener - the handler to run when the event is fired by the emitter
-	 * @returns a {@link Off | function} which will deregister the listener when called.
-	 * This deregistration function is idempotent and therefore may be safely called more than once with no effect.
-	 * @remarks Do not register the exact same `listener` object for the same event more than once.
-	 * Doing so will result in undefined behavior, and is not guaranteed to behave the same in future versions of this library.
-	 */
-	on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
-}
-
-/**
- * A function that, when called, will deregister an event listener subscription that was previously registered.
- * @remarks
- * It is returned by the {@link Listenable.on | event registration function} when event registration occurs.
- * @public
- */
-export type Off = () => void;
+import type { Listenable, Listeners, Off } from "./listeners.js";
 
 /**
  * Interface for an event emitter that can emit typed events to subscribed listeners.
@@ -142,22 +38,8 @@ export interface IEmitter<TListeners extends Listeners<TListeners>> {
 }
 
 /**
- * Create a {@link Listenable} that can be instructed to emit events via the {@link IEmitter} interface.
- *
- * A class can delegate handling {@link Listenable} to the returned value while using it to emit the events.
- * See also `EventEmitter` which be used as a base class to implement {@link Listenable} via extension.
- * @alpha
- */
-export function createEmitter<TListeners extends object>(
-	noListeners?: NoListenersCallback<TListeners>,
-): Listenable<TListeners> & IEmitter<TListeners> & HasListeners<TListeners> {
-	return new ComposableEventEmitter<TListeners>(noListeners);
-}
-
-/**
  * Called when the last listener for `eventName` is removed.
  * Useful for determining when to clean up resources related to detecting when the event might occurs.
- * @alpha
  */
 export type NoListenersCallback<TListeners extends object> = (
 	eventName: keyof Listeners<TListeners>,
@@ -165,7 +47,7 @@ export type NoListenersCallback<TListeners extends object> = (
 
 /**
  * Allows querying if an object has listeners.
- * @sealed @alpha
+ * @sealed
  */
 export interface HasListeners<TListeners extends Listeners<TListeners>> {
 	/**
@@ -188,32 +70,34 @@ export interface HasListeners<TListeners extends Listeners<TListeners>> {
  *
  * ```typescript
  * interface MyEvents {
- *   "loaded": () => void;
+ * 	loaded: () => void;
+ * 	computed: () => number;
  * }
  *
- * class MyClass extends EventEmitter<MyEvents> {
- *   private load() {
- *     this.emit("loaded");
- *   }
+ * class MyInheritanceClass extends EventEmitter<MyEvents> {
+ * 	private load() {
+ * 		this.emit("loaded");
+ * 		const results: number[] = this.emitAndCollect("computed");
+ * 	}
  * }
  * ```
  *
  * @example Composing over this class
  *
  * ```typescript
- * class MyClass implements ISubscribable<MyEvents> {
- *   private readonly events = createEmitter<MyEvents>();
+ * class MyCompositionClass implements Listenable<MyEvents> {
+ * 	private readonly events = createEmitter<MyEvents>();
  *
- *   private load() {
- *     this.events.emit("loaded");
- *   }
+ * 	private load() {
+ * 		this.events.emit("loaded");
+ * 		const results: number[] = this.events.emitAndCollect("computed");
+ * 	}
  *
- *   public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): Off {
- *     return this.events.on(eventName, listener);
- *   }
+ * 	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
+ * 		return this.events.on(eventName, listener);
+ * 	}
  * }
  * ```
- * @alpha
  */
 export class EventEmitter<TListeners extends Listeners<TListeners>>
 	implements Listenable<TListeners>, HasListeners<TListeners>
@@ -233,7 +117,9 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 	): void {
 		const listeners = this.listeners.get(eventName);
 		if (listeners !== undefined) {
-			const argArray: unknown[] = args; // TODO: Current TS (4.5.5) cannot spread `args` into `listener()`, but future versions (e.g. 4.8.4) can.
+			// Current tsc (5.4.5) cannot spread `args` into `listener()`.
+			const argArray: unknown[] = args;
+
 			// This explicitly copies listeners so that new listeners added during this call to emit will not receive this event.
 			for (const [off, listener] of [...listeners]) {
 				// If listener has been unsubscribed while invoking other listeners, skip it.
@@ -296,7 +182,7 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 /**
  * This class exposes the constructor and the `emit` method of `EventEmitter`, elevating them from protected to public
  */
-export class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
+class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
 	extends EventEmitter<TListeners>
 	implements IEmitter<TListeners>
 {
@@ -317,4 +203,45 @@ export class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
 	): ReturnType<TListeners[K]>[] {
 		return super.emitAndCollect(eventName, ...args);
 	}
+}
+
+/**
+ * Create a {@link Listenable} that can be instructed to emit events via the {@link IEmitter} interface.
+ *
+ * A class can delegate handling {@link Listenable} to the returned value while using it to emit the events.
+ * See also `EventEmitter` which be used as a base class to implement {@link Listenable} via extension.
+ */
+export function createEmitter<TListeners extends object>(
+	noListeners?: NoListenersCallback<TListeners>,
+): Listenable<TListeners> & IEmitter<TListeners> & HasListeners<TListeners> {
+	return new ComposableEventEmitter<TListeners>(noListeners);
+}
+
+/**
+ * Create a {@link Listenable} that can be instructed to emit events via the {@link IEmitter} interface.
+ * @remarks
+ * A class can delegate handling {@link Listenable} to the returned value while using it to emit the events.
+ * @example Forwarding events to the emitter
+ * ```typescript
+ * interface MyEvents {
+ * 	loaded(): void;
+ * }
+ *
+ * class MyClass implements Listenable<MyEvents> {
+ * 	private readonly events = createEmitterMinimal<MyEvents>();
+ *
+ * 	private load(): void {
+ * 		this.events.emit("loaded");
+ * 	}
+ *
+ * 	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): Off {
+ * 		return this.events.on(eventName, listener);
+ * 	}
+ * }
+ * ```
+ * @alpha
+ */
+export function createEmitterMinimal<TListeners extends object>(): Listenable<TListeners> &
+	IEmitter<TListeners> {
+	return createEmitter();
 }

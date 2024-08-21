@@ -38,11 +38,8 @@ export {
 	type Off,
 	// Alpha APIs for using event library to implement events externally.
 	// If stabilizing these APIs, they should probably move out of the tree package first.
-	createEmitter,
-	EventEmitter,
+	createEmitterMinimal,
 	type IEmitter,
-	type HasListeners,
-	type NoListenersCallback,
 } from "./events/index.js";
 
 export {

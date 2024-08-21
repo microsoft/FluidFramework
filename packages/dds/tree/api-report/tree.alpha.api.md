@@ -28,24 +28,10 @@ export interface CommitMetadata {
 }
 
 // @alpha
-export function createEmitter<TListeners extends object>(noListeners?: NoListenersCallback<TListeners>): Listenable<TListeners> & IEmitter<TListeners> & HasListeners<TListeners>;
+export function createEmitterMinimal<TListeners extends object>(): Listenable<TListeners> & IEmitter<TListeners>;
 
 // @public @sealed
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
-}
-
-// @alpha
-export class EventEmitter<TListeners extends Listeners<TListeners>> implements Listenable<TListeners>, HasListeners<TListeners> {
-    protected constructor(noListeners?: NoListenersCallback<TListeners> | undefined);
-    // (undocumented)
-    protected emit<K extends keyof TListeners>(eventName: K, ...args: Parameters<TListeners[K]>): void;
-    // (undocumented)
-    protected emitAndCollect<K extends keyof TListeners>(eventName: K, ...args: Parameters<TListeners[K]>): ReturnType<TListeners[K]>[];
-    // (undocumented)
-    hasListeners(eventName?: keyof TListeners): boolean;
-    // (undocumented)
-    protected readonly listeners: Map<keyof TListeners, Map<Off, (...args: any[]) => TListeners[keyof TListeners]>>;
-    on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 }
 
 // @public
@@ -103,11 +89,6 @@ type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 // @alpha
 export function getJsonSchema(schema: ImplicitAllowedTypes): JsonTreeSchema;
-
-// @alpha @sealed
-export interface HasListeners<TListeners extends Listeners<TListeners>> {
-    hasListeners(eventName?: keyof Listeners<TListeners>): boolean;
-}
 
 // @alpha @sealed
 export interface IEmitter<TListeners extends Listeners<TListeners>> {
@@ -335,9 +316,6 @@ export enum NodeKind {
     Map = 0,
     Object = 2
 }
-
-// @alpha
-export type NoListenersCallback<TListeners extends object> = (eventName: keyof Listeners<TListeners>) => void;
 
 // @public
 type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
