@@ -47,4 +47,5 @@ export {
 	type NormalizeLazyItem,
 	type FlexListToUnion,
 	type ExtractItemType,
+	normalizeFlexListEager,
 } from "./flexList.js";

@@ -133,7 +133,7 @@ const builder = new SchemaBuilderBase(FieldKinds.required, {
 	libraries: [leaf.library],
 });
 const factory = new SchemaFactory("test");
-export const minimal = builder.object("minimal", {});
+const minimal = builder.object("minimal", {});
 export class Minimal extends factory.object("minimal", {}) {}
 export class HasMinimalValueField extends factory.object("hasMinimalValueField", {
 	field: Minimal,

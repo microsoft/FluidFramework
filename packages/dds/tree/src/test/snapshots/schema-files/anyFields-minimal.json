@@ -63,77 +63,8 @@
         }
       }
     },
-    "test.hasIdentifierField": {
-      "object": {
-        "field": {
-          "kind": "Identifier",
-          "types": [
-            "com.fluidframework.leaf.string"
-          ]
-        }
-      }
-    },
-    "test.hasMinimalValueField": {
-      "object": {
-        "field": {
-          "kind": "Value",
-          "types": [
-            "test.minimal"
-          ]
-        }
-      }
-    },
-    "test.hasNumericValueField": {
-      "object": {
-        "field": {
-          "kind": "Value",
-          "types": [
-            "com.fluidframework.leaf.number"
-          ]
-        }
-      }
-    },
-    "test.hasOptionalField": {
-      "object": {
-        "field": {
-          "kind": "Optional",
-          "types": [
-            "com.fluidframework.leaf.number"
-          ]
-        }
-      }
-    },
-    "test.hasPolymorphicValueField": {
-      "object": {
-        "field": {
-          "kind": "Value",
-          "types": [
-            "com.fluidframework.leaf.number",
-            "test.minimal"
-          ]
-        }
-      }
-    },
     "test.minimal": {
       "object": {}
-    },
-    "test.numericMap": {
-      "map": {
-        "kind": "Optional",
-        "types": [
-          "com.fluidframework.leaf.number"
-        ]
-      }
-    },
-    "test.recursiveType": {
-      "object": {
-        "field": {
-          "kind": "Optional",
-          "types": [
-            "test.recursiveType"
-          ]
-        }
-      }
     }
   },
   "root": {
