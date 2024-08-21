@@ -20,7 +20,6 @@ export {
 	type FlexTreeTypedNodeUnion,
 	TreeStatus,
 	type FlexTreeUnknownUnboxed,
-	type FlexTreeUnboxField,
 	flexTreeMarker,
 	FlexTreeEntityKind,
 	isFlexTreeNode,
@@ -38,8 +37,6 @@ export {
 export { getTreeContext, type FlexTreeContext, Context, ContextSlot } from "./context.js";
 
 export { type FlexTreeNodeEvents } from "./treeEvents.js";
-
-export type { FlexTreeUnboxNodeUnion } from "./flexTreeTypes.js";
 
 export {
 	assertFlexTreeEntityNotFreed,

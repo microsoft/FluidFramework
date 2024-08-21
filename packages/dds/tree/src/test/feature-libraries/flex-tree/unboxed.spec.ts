@@ -25,6 +25,7 @@ import {
 	Any,
 	type FlexAllowedTypes,
 	type FlexFieldKind,
+	type FlexTreeNode,
 } from "../../../feature-libraries/index.js";
 import type { TreeContent } from "../../../shared-tree/index.js";
 
@@ -93,7 +94,7 @@ describe("unboxedUnion", () => {
 		cursor.enterNode(0); // Root node field has 1 node; move into it
 
 		// Type is not known based on schema, so node will not be unboxed.
-		const unboxed = unboxedUnion(context, fieldSchema, cursor);
+		const unboxed = unboxedUnion(context, fieldSchema, cursor) as FlexTreeNode;
 		assert.equal(unboxed.schema, leaf.number);
 		assert.equal(unboxed.value, 42);
 	});
@@ -124,7 +125,7 @@ describe("unboxedUnion", () => {
 		cursor.enterNode(0); // Root node field has 1 node; move into it
 
 		// Type is not known based on schema, so node will not be unboxed.
-		const unboxed = unboxedUnion(context, fieldSchema, cursor);
+		const unboxed = unboxedUnion(context, fieldSchema, cursor) as FlexTreeNode;
 		assert.equal(unboxed.schema, leaf.string);
 		assert.equal(unboxed.value, "Hello world");
 	});

@@ -20,7 +20,6 @@ import type {
 } from "../default-schema/index.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 import type {
-	Any,
 	FlexAllowedTypes,
 	FlexFieldSchema,
 	FlexList,
@@ -28,7 +27,6 @@ import type {
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
-	LazyItem,
 	LeafNodeSchema,
 } from "../typed-schema/index.js";
 
@@ -242,7 +240,12 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
 	/**
 	 * Type guard for narrowing / down-casting to a specific schema.
 	 */
-	is<TSchema extends FlexFieldSchema>(schema: TSchema): this is FlexTreeTypedField<TSchema>;
+	is<TKind extends FlexFieldKind>(kind: TKind): this is FlexTreeTypedField<TKind>;
+
+	/**
+	 * Type guard for narrowing / down-casting to a specific schema.
+	 */
+	isExactly<TSchema extends FlexFieldSchema>(schema: TSchema): boolean;
 
 	boxedIterator(): IterableIterator<FlexTreeNode>;
 
@@ -257,6 +260,11 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
 	 * Semantics match {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at | Array.at}.
 	 */
 	boxedAt(index: number): FlexTreeNode | undefined;
+
+	/**
+	 * Gets the FieldUpPath of a field.
+	 */
+	getFieldPath(): FieldUpPath;
 }
 
 // #region Node Kinds
@@ -357,8 +365,7 @@ export type FlexibleNodeSubSequence = ExclusiveMapTree[];
  * Add anchor API that can actually hold onto locations in a sequence.
  * Currently only nodes can be held onto with anchors, and this does not replicate the behavior implemented for editing.
  */
-export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
-	extends FlexTreeField {
+export interface FlexTreeSequenceField extends FlexTreeField {
 	/**
 	 * Gets a node of this field by its index with unboxing.
 	 * @param index - Zero-based index of the item to retrieve. Negative values are interpreted from the end of the sequence.
@@ -369,34 +376,25 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * @remarks
 	 * Semantics match {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at | Array.at}.
 	 */
-	at(index: number): FlexTreeUnboxNodeUnion<TTypes> | undefined;
+	at(index: number): FlexTreeUnknownUnboxed | undefined;
 
 	/**
 	 * {@inheritdoc FlexTreeField.boxedAt}
 	 */
-	boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> | undefined;
+	boxedAt(index: number): FlexTreeNode | undefined;
 
 	/**
 	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.
 	 * @param callbackfn - A function that accepts the child and its index.
 	 */
-	map<U>(callbackfn: (value: FlexTreeUnboxNodeUnion<TTypes>, index: number) => U): U[];
-
-	readonly length: number;
+	map<U>(callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U): U[];
 
 	/**
 	 * Get an editor for this sequence.
 	 */
 	readonly editor: SequenceFieldEditBuilder<FlexibleFieldContent>;
 
-	boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>>;
-
-	/**
-	 * Gets the FieldUpPath of a field.
-	 */
-	getFieldPath(): FieldUpPath;
-
-	[Symbol.iterator](): IterableIterator<FlexTreeUnboxNodeUnion<TTypes>>;
+	boxedIterator(): IterableIterator<FlexTreeNode>;
 }
 
 /**
@@ -405,9 +403,8 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
  * @remarks
  * Unboxes its content, so in schema aware APIs which do unboxing, the RequiredField itself will be skipped over and its content will be returned directly.
  */
-export interface FlexTreeRequiredField<in out TTypes extends FlexAllowedTypes>
-	extends FlexTreeField {
-	get content(): FlexTreeUnboxNodeUnion<TTypes>;
+export interface FlexTreeRequiredField extends FlexTreeField {
+	get content(): FlexTreeUnknownUnboxed;
 
 	readonly editor: ValueFieldEditBuilder<FlexibleNodeContent>;
 }
@@ -425,9 +422,8 @@ export interface FlexTreeRequiredField<in out TTypes extends FlexAllowedTypes>
  * Better centralize the documentation about what kinds of merge semantics are available for field kinds.
  * Maybe link editor?
  */
-export interface FlexTreeOptionalField<in out TTypes extends FlexAllowedTypes>
-	extends FlexTreeField {
-	get content(): FlexTreeUnboxNodeUnion<TTypes> | undefined;
+export interface FlexTreeOptionalField extends FlexTreeField {
+	get content(): FlexTreeUnknownUnboxed | undefined;
 
 	readonly editor: OptionalFieldEditBuilder<FlexibleNodeContent>;
 }
@@ -439,24 +435,14 @@ export interface FlexTreeOptionalField<in out TTypes extends FlexAllowedTypes>
 /**
  * Schema aware specialization of {@link FlexTreeField}.
  */
-export type FlexTreeTypedField<TSchema extends FlexFieldSchema> = FlexTreeTypedFieldInner<
-	TSchema["kind"],
-	TSchema["allowedTypes"]
->;
-
-/**
- * Helper for implementing {@link FlexTreeTypedField}.
- */
-export type FlexTreeTypedFieldInner<
-	Kind extends FlexFieldKind,
-	Types extends FlexAllowedTypes,
-> = Kind extends typeof FieldKinds.sequence
-	? FlexTreeSequenceField<Types>
-	: Kind extends typeof FieldKinds.required
-		? FlexTreeRequiredField<Types>
-		: Kind extends typeof FieldKinds.optional
-			? FlexTreeOptionalField<Types>
-			: FlexTreeField;
+export type FlexTreeTypedField<Kind extends FlexFieldKind> =
+	Kind extends typeof FieldKinds.sequence
+		? FlexTreeSequenceField
+		: Kind extends typeof FieldKinds.required
+			? FlexTreeRequiredField
+			: Kind extends typeof FieldKinds.optional
+				? FlexTreeOptionalField
+				: FlexTreeField;
 
 /**
  * Schema aware specialization of {@link FlexTreeNode} for a given {@link FlexAllowedTypes}.
@@ -481,53 +467,6 @@ export type FlexTreeTypedNode<TSchema extends FlexTreeNodeSchema> =
 // #endregion
 
 // #region Unbox
-
-/**
- * Schema aware unboxed field.
- * @remarks
- * Unboxes fields to their content if appropriate for the kind.
- * Recursively unboxes that content (then its content etc.) as well if the node union does unboxing.
- */
-export type FlexTreeUnboxField<
-	TSchema extends FlexFieldSchema,
-	// If "notEmpty", then optional fields will unbox to their content (not their content | undefined)
-	Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty",
-> = FlexTreeUnboxFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
-
-/**
- * Helper for implementing FlexTreeUnboxField.
- */
-export type FlexTreeUnboxFieldInner<
-	Kind extends FlexFieldKind,
-	TTypes extends FlexAllowedTypes,
-	Emptiness extends "maybeEmpty" | "notEmpty",
-> = Kind extends typeof FieldKinds.sequence
-	? FlexTreeSequenceField<TTypes>
-	: Kind extends typeof FieldKinds.required
-		? FlexTreeUnboxNodeUnion<TTypes>
-		: Kind extends typeof FieldKinds.optional
-			? FlexTreeUnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)
-			: // TODO: forbidden
-				unknown;
-
-/**
- * Schema aware unboxed union of tree types.
- * @remarks
- * Unboxes when not polymorphic.
- * Recursively unboxes that content as well if the node kind does unboxing.
- */
-export type FlexTreeUnboxNodeUnion<TTypes extends FlexAllowedTypes> = TTypes extends readonly [
-	LazyItem<infer InnerType>,
-]
-	? InnerType extends FlexTreeNodeSchema
-		? FlexTreeUnboxNode<InnerType>
-		: InnerType extends Any
-			? FlexTreeNode
-			: // This case should not occur. If the result ever ends up unknown, look at places like this to debug.
-				unknown
-	: boolean extends IsArrayOfOne<TTypes>
-		? FlexTreeUnknownUnboxed // Unknown if this will unbox. This should mainly happen when TTypes is AllowedTypes.
-		: FlexTreeTypedNodeUnion<TTypes>; // Known to not be a single type, so known not to unbox.
 
 /**
  * `true` if T is known to be an array of one item.
