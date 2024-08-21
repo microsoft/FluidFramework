@@ -16,7 +16,7 @@ One may be added in the future, but for now this library is intended to be consu
 The following terms are leveraged heavily in this package's APIs and documentation.
 
 -   **API Model**: Refers to a complete API suite, comprised of one or more packages.
-    This often corresponds to all of the packages in the mono-repo, or a series of packages that are published together.
+    This often corresponds to all of the packages in the mono-repo, or a series of packages whose API docs are published together.
     It is generally represented via the [ApiModel][] type, from the [@microsoft/api-extractor-model](https://github.com/microsoft/rushstack/tree/main/libraries/api-extractor-model) library.
     -   In some places, this library refers to an `API Model` in terms of a directory or directory path.
         In these cases, it is referring to a directory that contains the set of `.api.json` files (generated per-package by `API-Extractor`).
@@ -203,28 +203,40 @@ If you would like to add rendering support for a custom `Documentation Domain` n
 
 If you would like to change any or all of this library's default rendering policies, you may simply override the default policies for the desired `type`s.
 
-## ToHtml Transformation
-
-This library now includes preview APIs for transforming `Documentation Domain` trees to HTML syntax trees using [hast](https://github.com/syntax-tree/hast).
-The main entry-point for this functionality is `documentToHtml`.
-
 ## HtmlRenderer
 
 This library now includes preview APIs for HTML rendering.
 
 Like the [MarkdownRenderer](#markdownrenderer), we offer a `HtmlRenderer.renderApiModel` function that operates in much the same way, but outputs `HTML`-formatted documents instead of Markdown.
 
-These APIs are still in preview, and may change without notice.
+## Preview APIs
+
+The following APIs are still in preview, and may change without notice.
 Use at your own risk.
+
+## ToHtml Transformation
+
+This library now includes preview APIs for transforming `Documentation Domain` trees to HTML syntax trees using [hast](https://github.com/syntax-tree/hast).
+
+To use, import the `documentToHtml` function from `@fluid-tools/api-markdown-documenter/beta`.
+
+### lintApiModel
+
+This library includes a preview API for "linting" an API Model.
+
+To use, import the `lintApiModel` function from `@fluid-tools/api-markdown-documenter/beta`.
+
+This function returns a set of TSDoc-related "errors" discovered while walking the API Model.
+
+The primary goal of this tool is to detect issues that `API-Extractor` cannot validate on a per-package basis when generating API reports.
+
+For now, this is limited to validating `@link` and `@inheritDoc` tags to ensure that symbolic references are valid within the API Model.
+Other validation may be added in the future as needed.
 
 ## Upcoming Work
 
 -   Add extensibility options for `DocNode` transformations
     -   If a consumer has a custom tsdoc config associated with their API-Extractor setup, this will be needed.
-
-### Known Bugs
-
--   Types that extend or implement types with generic parameters result in signatures rendered with missing closing `>`s.
 
 ### Documentation Improvements
 
@@ -247,8 +259,8 @@ Use at your own risk.
 
 -   Support placing documents _within_ their own hierarchy (support for the "index" model used by systems like DocFX)
 -   Pre-canned policies (flat, index, adjacency)
--   Handle multiple package entry-points
--   Add separate HTML transformation path, for consumers that want to go straight to HTML
+-   Add `documentToHtml` API that generates `mdast` output.
+    -   Update rendering APIs to leverage the `mdast` and `hast` domain outputs.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
