@@ -75,6 +75,7 @@ for (const key of Object.keys(indexedRecordOfStrings)) {
 
 const aExpectingString: string = indexedRecordOfStrings.a; // defect: Assigning index property 'a' to a strict string variable, but 'a' might not be present
 const aExpectingStringOrUndefined: string | undefined = indexedRecordOfStrings.a; // ok: Assigning index property 'a' to string or undefined variable, 'a' might not be present
+const aExpectingStringOrNullOrUndefined: string | null | undefined = indexedRecordOfStrings.a; // ok: Assigning index property 'a' to string or null or undefined variable, 'a' might not be present
 const aImplicitType = indexedRecordOfStrings.a; // defect: Assigning index property with inferred type
 aImplicitType.length; // ok: This should be caught by the instantiation in the variable declaration
 aImplicitType?.length; // ok: This should be caught by the instantiation in the variable declaration

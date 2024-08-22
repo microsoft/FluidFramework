@@ -88,19 +88,19 @@ describe("ESLint Rule Tests", function () {
 			result.messages[7].message,
 			"Implicit typing derived from 'indexedRecordOfStrings.a' is not allowed. 'indexedRecordOfStrings' is an index signature type and 'a' may not be defined. Please provide an explicit type annotation or enable noUncheckedIndexedAccess",
 		);
-		assert.strictEqual(result.messages[7].line, 78);
+		assert.strictEqual(result.messages[7].line, 79);
 
 		assert.strictEqual(
 			result.messages[8].message,
 			"'indexedRecordOfStrings.a' is possibly 'undefined'",
 		);
-		assert.strictEqual(result.messages[8].line, 83);
+		assert.strictEqual(result.messages[8].line, 84);
 
 		assert.strictEqual(
 			result.messages[9].message,
 			"Assigning 'indexedRecordOfStrings.a' from an index signature type to a strictly typed variable without 'undefined' is not allowed. 'indexedRecordOfStrings.a' may be 'undefined'",
 		);
-		assert.strictEqual(result.messages[9].line, 86);
+		assert.strictEqual(result.messages[9].line, 87);
 	});
 
 	it("Should report an error for unchecked nested record access", async function () {
