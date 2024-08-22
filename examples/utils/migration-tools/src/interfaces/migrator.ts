@@ -5,16 +5,14 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 
-import type {
-	ISameContainerMigratableModel,
-	SameContainerMigrationState,
-} from "../migrationInterfaces/index.js";
+import type { IMigratableModel } from "./migratableModel.js";
+import type { MigrationState } from "./migrationTool.js";
 
 /**
  * The DataTransformationCallback gives an opportunity to modify the exported data before attempting an import
  * to the new model.  The modelVersion is also provided to inform the appropriate transformation to perform.
  * It is async to permit network calls or lazy-loading the transform logic within the function.
- * @internal
+ * @alpha
  */
 export type DataTransformationCallback = (
 	exportedData: unknown,
@@ -22,22 +20,24 @@ export type DataTransformationCallback = (
 ) => Promise<unknown>;
 
 /**
- * @internal
+ * @alpha
  */
-export interface ISameContainerMigratorEvents extends IEvent {
+export interface IMigratorEvents extends IEvent {
 	(event: "migrated" | "migrating", listener: () => void);
 	(event: "migrationNotSupported", listener: (version: string) => void);
 }
 
 /**
- * @internal
+ * @alpha
  */
-export interface ISameContainerMigrator extends IEventProvider<ISameContainerMigratorEvents> {
+export interface IMigrator {
+	readonly events: IEventProvider<IMigratorEvents>;
+
 	/**
 	 * The currently monitored migratable model.  As the Migrator completes a migration, it will swap in the new
 	 * migrated model and emit a "migrated" event.
 	 */
-	readonly currentModel: ISameContainerMigratableModel;
+	readonly currentModel: IMigratableModel;
 
 	/**
 	 * The container id of the current model.
@@ -48,5 +48,5 @@ export interface ISameContainerMigrator extends IEventProvider<ISameContainerMig
 	 * The migration state of the current model.  Note that since we swap out for the new model as soon as migration
 	 * completes, we'll only ever see this as collaborating or migrating, never migrated.
 	 */
-	readonly migrationState: SameContainerMigrationState;
+	readonly migrationState: MigrationState;
 }

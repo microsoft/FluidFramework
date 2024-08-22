@@ -1,13 +1,13 @@
 {
-	"name": "@fluid-example/version-migration-same-container",
+	"name": "@fluid-example/version-migration-separate-container",
 	"version": "2.3.0",
 	"private": true,
-	"description": "Migrate data between two formats by exporting and reimporting in the same container",
+	"description": "Migrate data between two formats by exporting and reimporting in a new container",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "examples/version-migration/same-container"
+		"directory": "examples/version-migration/separate-container"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -38,11 +38,13 @@
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
+		"@fluid-example/migration-tools": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",

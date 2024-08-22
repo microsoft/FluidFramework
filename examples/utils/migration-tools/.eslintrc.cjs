@@ -3,4 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { SameContainerMigrator } from "./sameContainerMigrator.js";
+module.exports = {
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
+	rules: {},
+};
