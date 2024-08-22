@@ -19,7 +19,7 @@ module.exports = function handler(fileData, logger): void {
 			benchmarkType: "CustomBenchmark",
 			suiteName: fileData.suiteName,
 			benchmarkName: testData.benchmarkName,
-			customData: testData.customData,
+			customData: JSON.stringify(testData.customData),
 		});
 	}
 };
