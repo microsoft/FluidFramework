@@ -21,10 +21,6 @@ import { leaf as leafDomain } from "../../../domains/index.js";
 import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getOrCreateMapTreeNode } from "../../../feature-libraries/flex-map-tree/index.js";
-import type {
-	EagerMapTreeNode,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/flex-map-tree/mapTreeNode.js";
 
 describe("MapTreeNodes", () => {
 	// #region The schema used in this test suite
@@ -78,16 +74,9 @@ describe("MapTreeNodes", () => {
 	// #endregion
 
 	// The `MapTreeNode`s used in this test suite:
-	const map = getOrCreateMapTreeNode(mapSchema, mapMapTree) as EagerMapTreeNode<
-		typeof mapSchema
-	>;
-	const arrayNode = getOrCreateMapTreeNode(
-		arrayNodeSchema,
-		fieldNodeMapTree,
-	) as EagerMapTreeNode<typeof arrayNodeSchema>;
-	const object = getOrCreateMapTreeNode(objectSchema, objectMapTree) as EagerMapTreeNode<
-		typeof objectSchema
-	>;
+	const map = getOrCreateMapTreeNode(mapSchema, mapMapTree);
+	const arrayNode = getOrCreateMapTreeNode(arrayNodeSchema, fieldNodeMapTree);
+	const object = getOrCreateMapTreeNode(objectSchema, objectMapTree);
 
 	it("are cached", () => {
 		assert.equal(getOrCreateMapTreeNode(mapSchema, mapMapTree), map);
@@ -241,10 +230,7 @@ describe("MapTreeNodes", () => {
 		});
 
 		it("optional fields", () => {
-			const mutableMap = getOrCreateMapTreeNode(
-				mapSchema,
-				deepCopyMapTree(mapMapTree),
-			) as EagerMapTreeNode<typeof mapSchema>;
+			const mutableMap = getOrCreateMapTreeNode(mapSchema, deepCopyMapTree(mapMapTree));
 			const field = mutableMap.getBoxed(mapKey) as FlexTreeOptionalField;
 			const oldValue = field.boxedAt(0);
 			const newValue = `new ${childValue}`;
@@ -259,7 +245,7 @@ describe("MapTreeNodes", () => {
 			const mutableFieldNode = getOrCreateMapTreeNode(
 				arrayNodeSchema,
 				deepCopyMapTree(fieldNodeMapTree),
-			) as EagerMapTreeNode<typeof arrayNodeSchema>;
+			);
 			const field = mutableFieldNode.getBoxed(EmptyKey);
 			assert(field.is(arrayNodeSchema.info[EmptyKey].kind));
 			const values = () => Array.from(field.boxedIterator(), (n) => n.value);
@@ -282,7 +268,7 @@ describe("MapTreeNodes", () => {
 			const mutableFieldNode = getOrCreateMapTreeNode(arrayNodeSchema, {
 				...fieldNodeMapTree,
 				fields: new Map(),
-			}) as EagerMapTreeNode<typeof arrayNodeSchema>;
+			});
 			const field = mutableFieldNode.getBoxed(EmptyKey);
 			assert(field.is(arrayNodeSchema.info[EmptyKey].kind));
 			const newContent: ExclusiveMapTree[] = [];

@@ -11,7 +11,6 @@ import {
 	type TreeValue,
 	anchorSlot,
 } from "../../core/index.js";
-import type { Assume } from "../../util/index.js";
 import type {
 	FieldKinds,
 	SequenceFieldEditBuilder,
@@ -20,10 +19,7 @@ import type {
 } from "../default-schema/index.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 import type {
-	FlexAllowedTypes,
 	FlexFieldSchema,
-	FlexList,
-	FlexListToUnion,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
@@ -174,7 +170,7 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	/**
 	 * Type guard for narrowing / down-casting to a specific schema.
 	 */
-	is<TSchema extends FlexTreeNodeSchema>(schema: TSchema): this is FlexTreeTypedNode<TSchema>;
+	is(schema: FlexTreeNodeSchema): boolean;
 
 	boxedIterator(): IterableIterator<FlexTreeField>;
 
@@ -245,7 +241,7 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
 	/**
 	 * Type guard for narrowing / down-casting to a specific schema.
 	 */
-	isExactly<TSchema extends FlexFieldSchema>(schema: TSchema): boolean;
+	isExactly(schema: FlexFieldSchema): boolean;
 
 	boxedIterator(): IterableIterator<FlexTreeNode>;
 
@@ -323,11 +319,6 @@ export interface FlexTreeLeafNode<in out TSchema extends LeafNodeSchema> extends
 	readonly value: TreeValue<TSchema["info"]>;
 }
 
-/**
- * Field kinds that allow value assignment.
- */
-export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKinds.required;
-
 // #endregion
 
 // #region Field Kinds
@@ -341,13 +332,6 @@ export type FlexibleFieldContent = ExclusiveMapTree[];
  * Tree for inserting as a node.
  */
 export type FlexibleNodeContent = ExclusiveMapTree;
-
-/**
- * Tree for inserting a subsequence of nodes.
- *
- * Used to insert a batch of 0 or more nodes into some location in a {@link FlexTreeSequenceField}.
- */
-export type FlexibleNodeSubSequence = ExclusiveMapTree[];
 
 /**
  * {@link FlexTreeField} that stores a sequence of children.
@@ -444,59 +428,9 @@ export type FlexTreeTypedField<Kind extends FlexFieldKind> =
 				? FlexTreeOptionalField
 				: FlexTreeField;
 
-/**
- * Schema aware specialization of {@link FlexTreeNode} for a given {@link FlexAllowedTypes}.
- */
-export type FlexTreeTypedNodeUnion<T extends FlexAllowedTypes> =
-	T extends FlexList<FlexTreeNodeSchema>
-		? FlexTreeTypedNode<Assume<FlexListToUnion<T>, FlexTreeNodeSchema>>
-		: FlexTreeNode;
-
-/**
- * Schema aware specialization of {@link FlexTreeNode} for a given {@link FlexTreeNodeSchema}.
- */
-export type FlexTreeTypedNode<TSchema extends FlexTreeNodeSchema> =
-	TSchema extends LeafNodeSchema
-		? FlexTreeLeafNode<TSchema>
-		: TSchema extends FlexMapNodeSchema
-			? FlexTreeMapNode<TSchema>
-			: TSchema extends FlexObjectNodeSchema
-				? FlexTreeObjectNode
-				: FlexTreeNode;
-
 // #endregion
-
-// #region Unbox
-
-/**
- * `true` if T is known to be an array of one item.
- * `false` if T is known not to be an array of one item.
- * `boolean` if it is unknown if T is an array of one item or not.
- */
-export type IsArrayOfOne<T extends readonly unknown[]> = T["length"] extends 1
-	? true
-	: 1 extends T["length"]
-		? boolean
-		: false;
-
-/**
- * Schema aware unboxed tree type.
- * @remarks
- * Unboxes if the node kind does unboxing.
- * Recursively unboxes that content as well if it does unboxing.
- */
-export type FlexTreeUnboxNode<TSchema extends FlexTreeNodeSchema> =
-	TSchema extends LeafNodeSchema
-		? TreeValue<TSchema["info"]>
-		: TSchema extends FlexMapNodeSchema
-			? FlexTreeMapNode<TSchema>
-			: TSchema extends FlexObjectNodeSchema
-				? FlexTreeObjectNode
-				: FlexTreeUnknownUnboxed;
 
 /**
  * Unboxed tree type for unknown schema cases.
  */
 export type FlexTreeUnknownUnboxed = TreeValue | FlexTreeNode;
-
-// #endregion
