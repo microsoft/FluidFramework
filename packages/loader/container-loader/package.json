@@ -148,27 +148,27 @@
 	},
 	"c8": {
 		"all": true,
+		"branches": 100,
 		"cache-dir": "nyc/.cache",
+		"check-coverage": true,
 		"exclude": [
 			"src/test/**/*.*ts",
 			"dist/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
+		"functions": 100,
 		"include": [
 			"src/**/*.*ts",
 			"dist/**/*.*js"
 		],
+		"lines": 100,
 		"report-dir": "nyc/report",
 		"reporter": [
 			"cobertura",
 			"html",
 			"text"
 		],
-		"check-coverage": true,
-		"branches": 80,
-		"functions": 80,
-		"lines": 80,
-		"statements": 80,
+		"statements": 100,
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
