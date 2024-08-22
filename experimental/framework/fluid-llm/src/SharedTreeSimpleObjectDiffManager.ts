@@ -1,15 +1,15 @@
+import { type TreeArrayNode } from "@fluidframework/tree";
 import type * as z from "zod";
 
-import {diffState, type Difference, type DifferenceCreate, type DifferenceRemove, type ObjectPath } from "./diff.js";
+import { objectDiff, type Difference, type DifferenceCreate, type DifferenceRemove, type ObjectPath } from "./objectDiff.js";
 
 
 /**
- * Manages the differences between two objects.
+ * Manages the differences between a SharedTree object node and a javascript object and then applies them.
  */
-export class DiffManager {
+export class SharedTreeSimpleObjectDiffManager {
 	private readonly objectSchema?: z.Schema
 
-	// We could allow object paths that allow for property removal here.
 	public constructor(params?: {objectSchema?: z.Schema}) {
 		this.objectSchema = params?.objectSchema;
 	}
@@ -17,7 +17,7 @@ export class DiffManager {
 	/**
 	 * produces a diff between two objects and handles the differences.
 	 */
-	public compareAndApplyDiffs(obj: Record<string, unknown> | unknown[], newObj: Record<string, unknown> | unknown[]): void {
+	public compareAndApplyDiffs(obj: Record<string, unknown> | TreeArrayNode, newObj: Record<string, unknown> | unknown[]): void {
 		// By validating that the incoming object matches the schema, we can confirm that any property
 		// deletions/updates/additions are valid.
 		if (this.objectSchema !== undefined) {
@@ -27,13 +27,13 @@ export class DiffManager {
 			}
 		}
 
-		const differences = diffState(obj, newObj);
+		const differences = objectDiff(obj as Record<string, unknown>  | unknown[], newObj);
 
 		this.handleDifferences(differences, obj);
 	}
 
 
-	public handleDifferences(diff: Difference[], objectToUpdate: Record<string, unknown> | unknown[]): void {
+	public handleDifferences(diff: Difference[], objectToUpdate: Record<string, unknown> | TreeArrayNode): void {
 		if (diff === undefined) {
 			console.log("no changes");
 			return;
@@ -62,6 +62,7 @@ export class DiffManager {
 			// Edge case: If we process an array diff we need to adjust the
 			// array indexes for the given array for the rest of the diffs
 			if (currentDiff.type === 'REMOVE' && this.isDiffOnArray(currentDiff)) {
+
 				for (let j = i + 1; j < diff.length; j++) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const nextDiff = diff[j]!;
@@ -80,6 +81,7 @@ export class DiffManager {
 						}
 					}
 				}
+
 			}
 
 			if (currentDiff.type === 'CREATE' && this.isDiffOnArray(currentDiff)) {
@@ -109,13 +111,13 @@ export class DiffManager {
 	/**
 	 * Applies a diff to an object.
 	 */
-	public applyDiff(diff: Difference, objectToUpdate: Record<string, unknown> | unknown[]): void {
+	public applyDiff(diff: Difference, objectToUpdate: Record<string, unknown> | TreeArrayNode): void {
 		switch (diff.type) {
 			case "CREATE": {
 				// Add the new property to the object
 				// Can introduce strategies here e.g. use node id's or use indexes for an array
 				if (this.isDiffOnArray(diff)) {
-					this.addToArray(diff, objectToUpdate);
+					this.addToArray(diff, objectToUpdate as TreeArrayNode);
 				} else {
 					this.addToObject(diff, objectToUpdate);
 				}
@@ -146,7 +148,7 @@ export class DiffManager {
 			}
 			case "REMOVE": {
 				if (this.isDiffOnArray(diff)) {
-					this.removeFromArray(diff, objectToUpdate);
+					this.removeFromArray(diff, objectToUpdate as TreeArrayNode);
 				} else {
 					this.removeFromObject(diff, objectToUpdate);
 				}
@@ -161,7 +163,7 @@ export class DiffManager {
 		return typeof diff.path[diff.path.length - 1] === 'number';
 	}
 
-	public addToObject(diff: DifferenceCreate, objectToUpdate: Record<string, unknown> | unknown[]): void {
+	public addToObject(diff: DifferenceCreate, objectToUpdate: Record<string, unknown> | TreeArrayNode): void {
 		if (diff.path.length === 1) {
 			// The object itself is the object to update.
 			const targetObject = objectToUpdate as Record<string, unknown>;
@@ -182,7 +184,7 @@ export class DiffManager {
 		}
 	}
 
-	public removeFromObject(diff: DifferenceRemove, objectToUpdate: Record<string, unknown> | unknown[]): void {
+	public removeFromObject(diff: DifferenceRemove, objectToUpdate: Record<string, unknown> | TreeArrayNode): void {
 		if (diff.path.length === 1) {
 			// The object itself is the object to update.
 			const targetObject = objectToUpdate as Record<string, unknown>;
@@ -214,47 +216,38 @@ export class DiffManager {
 		}
 	}
 
-	public addToArray(diff: DifferenceCreate, objectToUpdate: Record<string, unknown> | unknown[]): void {
+	public addToArray(diff: DifferenceCreate, objectToUpdate: TreeArrayNode): void {
 		// The object itself is an array.
 		if (diff.path.length === 1) {
-			const targetArray = objectToUpdate as unknown[];
+			const targetArray = objectToUpdate;
 
 			// ADD ARRAY ELEMENT. Should we respect the index or just push to the end?
 			// Lets not respect the index for now.
 			if (targetArray === undefined) {
 				console.warn("Object to update no longer exists");
 			} else {
-				targetArray.push(diff.value);
+				targetArray.insertAtEnd(diff.value);
 			}
-
-
-			// ALTERNATE STRATEGY: Use object id's to determine whether the object exists and if not, it should be added
-			// This might not make sense for new object additions.
 		}
 		// We need a reference to the parent array to remove the element.
 		else if (diff.path.length > 1) {
 			// Traverse to the parent array (which is simply the second to last path element)
-			const targetArray = traversePath<unknown[]>(objectToUpdate, diff.path.slice(0, - 1));
+			const targetArray = traversePath<TreeArrayNode>(objectToUpdate, diff.path.slice(0, - 1));
 
 			// ADD ARRAY ELEMENT. Should we respect the index or just push to the end?
 			// Lets not respect the index for now.
 			if (targetArray === undefined) {
 				console.warn("Object to update no longer exists");
 			} else {
-				targetArray.push(diff.value);
+				targetArray.insertAtEnd(diff.value);
 			}
-
-			// ALTERNATE STRATEGY: Use object id's to determine whether the object should be added
-			// This might not make sense for new object additions.
-
 		}
 	}
 
-	public removeFromArray(diff: DifferenceRemove, objectToUpdate: Record<string, unknown> | unknown[]): void {
+	public removeFromArray(diff: DifferenceRemove, objectToUpdate: TreeArrayNode): void {
 		// The object itself is an array.
 		if (diff.path.length === 1) {
-			const targetArray = objectToUpdate as unknown[];
-
+			const targetArray = objectToUpdate;
 			// REMOVE ARRAY ELEMENT.
 			if (targetArray === undefined) {
 				console.warn("Object to update no longer exists");
@@ -263,16 +256,14 @@ export class DiffManager {
 				if (valueIndex === -1) {
 					console.warn("Value to remove does not exist in array");
 				} else {
-					targetArray.splice(valueIndex, 1);
+					targetArray.removeAt(valueIndex);
 				}
 			}
-
-			// ALTERNATE REMOVAL STRATEGY: Use object's id to find the right index and remove it only if it exists.
 		}
 		// We need a reference to the parent array to remove the element.
 		else if (diff.path.length > 1) {
 			// Traverse to the parent array (which is simply the second to last path element)
-			const targetArray = traversePath<unknown[]>(objectToUpdate, diff.path.slice(0, - 1));
+			const targetArray = traversePath<TreeArrayNode>(objectToUpdate, diff.path.slice(0, - 1));
 
 			// REMOVE ARRAY ELEMENT.
 			if (targetArray === undefined) {
@@ -282,11 +273,9 @@ export class DiffManager {
 				if (valueIndex === -1) {
 					console.warn("Value to remove does not exist in array");
 				} else {
-					targetArray.splice(valueIndex, 1);
+					targetArray.removeAt(valueIndex);
 				}
 			}
-
-			// ALTERNATE REMOVAL STRATEGY: Use object's id to find the right index and remove it only if it exists.
 		}
 	}
 }
@@ -295,7 +284,7 @@ export class DiffManager {
 /**
  * Traverses the provided {@link ObjectPath} on the provided JSON object and returns the value at the end of the path.
  */
-export function traversePath<T = unknown>(jsonObject: Record<string, unknown> | unknown[], path: ObjectPath): T | undefined {
+export function traversePath<T = unknown>(jsonObject: Record<string, unknown> | unknown[] | TreeArrayNode, path: ObjectPath): T | undefined {
     let current: unknown = jsonObject;
 
     for (const key of path) {

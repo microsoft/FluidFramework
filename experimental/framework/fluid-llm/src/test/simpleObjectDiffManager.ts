@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 
-import { DiffManager, traversePath } from "../diffManager.js";
+import { SimpleObjectDiffManager, traversePath } from "../SimpleObjectDiffManager.js";
 
 
 
@@ -10,7 +10,7 @@ describe("DiffManager - CREATE - compareAndApplyDiffs", () => {
 		const originalObject: Record<string, unknown> = {};
 		const newObject: Record<string, unknown> = {test: true};
 
-		const diffManager = new DiffManager();
+		const diffManager = new SimpleObjectDiffManager();
 		diffManager.compareAndApplyDiffs(originalObject, newObject);
 		assert(originalObject.test === true);
 	});
@@ -19,7 +19,8 @@ describe("DiffManager - CREATE - compareAndApplyDiffs", () => {
 		const originalObject: Record<string, unknown>[] = [{}];
 		const newObject: Record<string, unknown>[] = [{test: true}];
 
-		const diffManager = new DiffManager();
+		const diffManager = new SimpleObjectDiffManager();
+
 		diffManager.compareAndApplyDiffs(originalObject, newObject);
 		assert(originalObject[0]?.test === true);
 	});
@@ -28,7 +29,7 @@ describe("DiffManager - CREATE - compareAndApplyDiffs", () => {
 			const originalObject: Record<string, unknown>[] = [{}];
 			const newObject: Record<string, unknown>[] = [{test: {value: true}}];
 
-			const diffManager = new DiffManager();
+			const diffManager = new SimpleObjectDiffManager();
 
 			diffManager.compareAndApplyDiffs(originalObject, newObject);
 			assert((originalObject[0]?.test as Record<string, unknown>)?.value === true);
@@ -39,7 +40,7 @@ describe("DiffManager - CREATE - compareAndApplyDiffs", () => {
 
 		const newObject: Record<string, unknown>[] = [{test: true}, {test: true}, {test: true}];
 
-		const diffManager = new DiffManager();
+		const diffManager = new SimpleObjectDiffManager();
 
 		diffManager.compareAndApplyDiffs(originalObject, newObject);
 		assert(originalObject.length === 3);
@@ -56,7 +57,7 @@ describe("DiffManager - CHANGE - compareAndApplyDiffs", () => {
 		const originalObject = {test: true};
 		const newObject = {test: false};
 
-		const diffManager = new DiffManager();
+		const diffManager = new SimpleObjectDiffManager();
 		diffManager.compareAndApplyDiffs(originalObject, newObject);
 		assert(originalObject.test === false);
 	});
@@ -65,7 +66,7 @@ describe("DiffManager - CHANGE - compareAndApplyDiffs", () => {
 		const originalObject = [{test: true}];
 		const newObject = [{test: false}];
 
-		const diffManager = new DiffManager();
+		const diffManager = new SimpleObjectDiffManager();
 		diffManager.compareAndApplyDiffs(originalObject, newObject);
 		assert(originalObject[0]?.test === false);
 	});
@@ -82,7 +83,7 @@ describe("DiffManager - CHANGE - compareAndApplyDiffs", () => {
 			}
 		}];
 
-		const diffManager = new DiffManager();
+		const diffManager = new SimpleObjectDiffManager();
 		diffManager.compareAndApplyDiffs(originalObject, newObject);
 		assert(originalObject[0]?.test.value === false);
 	});
@@ -100,7 +101,7 @@ describe("DiffManager - CHANGE - compareAndApplyDiffs", () => {
 			}
 		};
 
-		const diffManager = new DiffManager();
+		const diffManager = new SimpleObjectDiffManager();
 		diffManager.compareAndApplyDiffs(originalObject, newObject);
 		assert(originalObject.test.value[1]?.innerValue === false);
 	});

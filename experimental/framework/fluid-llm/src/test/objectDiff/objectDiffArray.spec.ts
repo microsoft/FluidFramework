@@ -4,7 +4,6 @@ import { objectDiff, type Difference } from "../../objectDiff.js";
 
 describe("objectDiff - arrays", () => {
 	it("top level array & array diff", () => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 		assert.deepStrictEqual(objectDiff(["test", "testing"], ["test"]), [
 			{
 				type: "REMOVE",
@@ -16,7 +15,6 @@ describe("objectDiff - arrays", () => {
 
 	it("nested array", () => {
 		assert.deepStrictEqual(
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 			objectDiff(["test", ["test"]], ["test", ["test", "test2"]]),
 			[
 				{
@@ -30,7 +28,6 @@ describe("objectDiff - arrays", () => {
 
 	it("object in array in object", () => {
 		assert.deepStrictEqual(
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 			objectDiff(
 				{ test: ["test", { test: true }] },
 				{ test: ["test", { test: false }] },
@@ -48,7 +45,6 @@ describe("objectDiff - arrays", () => {
 
 	it("array to object", () => {
 		assert.deepStrictEqual(
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 			objectDiff({ data: [] }, { data: { val: "test" } }), [
 			{ type: "CHANGE", path: ["data"], value: { val: "test" }, oldValue: [] },
 		]);
@@ -61,8 +57,8 @@ describe("objectDiff - arrays", () => {
 describe("objectDiff - arrays with object ID's", () => {
 	it("object with id is moved from a new deleted array index", () => {
 		const diffs: Difference[] = objectDiff(
-			{ test: ["test", { id: '1', test: true }] },
-			{ test: [{ id: '1', test: true }] },
+			{ state: ["test", { id: '1', test: true }] },
+			{ state: [{ id: '1', test: true }] },
 			{
 				cyclesFix: true,
 				useObjectIds: {
@@ -75,13 +71,13 @@ describe("objectDiff - arrays with object ID's", () => {
 			[
 				{
 					type: "CHANGE",
-					path: ["test", 0,],
+					path: ["state", 0,],
 					value: { id: '1', test: true },
 					oldValue: 'test',
 				},
 				{
 					type: "MOVE",
-					path: ["test", 1],
+					path: ["state", 1],
 					newIndex: 0,
 					value: { id: '1', test: true }
 				}
@@ -91,8 +87,8 @@ describe("objectDiff - arrays with object ID's", () => {
 
 	it("objects with id swap array indexes", () => {
 		const diffs: Difference[] = objectDiff(
-			{ test: [{ id: '1', test: true }, { id: '2', test: true }] },
-			{ test: [{ id: '2', test: true }, { id: '1', test: true }] },
+			{ state: [{ id: '1', test: true }, { id: '2', test: true }] },
+			{ state: [{ id: '2', test: true }, { id: '1', test: true }] },
 			{
 				cyclesFix: true,
 				useObjectIds: {
@@ -105,13 +101,13 @@ describe("objectDiff - arrays with object ID's", () => {
 			[
 				{
 					type: "MOVE",
-					path: ["test", 0],
+					path: ["state", 0],
 					value: { id: '1', test: true },
 					newIndex: 1,
 				},
 				{
 					type: "MOVE",
-					path: ["test", 1],
+					path: ["state", 1],
 					value: { id: '2', test: true },
 					newIndex: 0,
 				}
@@ -119,10 +115,10 @@ describe("objectDiff - arrays with object ID's", () => {
 		);
 	});
 
-	it("Preexisting objects with id is swapped to an array indexes with a new object", () => {
+	it("Preexisting objects with id is swapped to an array index with a new object", () => {
 		const diffs: Difference[] = objectDiff(
-			{ test: [{ id: '1', test: true }, { id: '2', test: true }] },
-			{ test: [{ id: '3', test: true }, { id: '1', test: true }] },
+			{ state: [{ id: '1', test: true }, { id: '2', test: true }] },
+			{ state: [{ id: '3', test: true }, { id: '1', test: true }] },
 			{
 				cyclesFix: true,
 				useObjectIds: {
@@ -135,18 +131,59 @@ describe("objectDiff - arrays with object ID's", () => {
 			[
 				{
 					type: "MOVE",
-					path: ["test", 0],
+					path: ["state", 0],
 					value: { id: '1', test: true },
 					newIndex: 1,
 				},
 				{
 					type: "REMOVE",
-					path: ["test", 1],
+					path: ["state", 1],
 					oldValue: { id: '2', test: true },
 				},
 				{
 					type: "CREATE",
-					path: ["test", 0],
+					path: ["state", 0],
+					value: { id: '3', test: true },
+				}
+			]
+		);
+	});
+
+
+	it("Preexisting objects with id is changed and swapped to an array index with a new object", () => {
+		const diffs: Difference[] = objectDiff(
+			{ state: [{ id: '1', test: true }, { id: '2', test: true }] },
+			{ state: [{ id: '3', test: true }, { id: '1', test: false }] },
+			{
+				cyclesFix: true,
+				useObjectIds: {
+					idAttributeName: 'id'
+				}
+			}
+		);
+
+		assert.deepStrictEqual(diffs,
+			[
+				{
+					type: "MOVE",
+					path: ["state", 0],
+					value: { id: '1', test: true },
+					newIndex: 1,
+				},
+				{
+					type: "CHANGE",
+					path: ["state", 0, "test"],
+					oldValue: true,
+					value: false
+				},
+				{
+					type: "REMOVE",
+					path: ["state", 1],
+					oldValue: { id: '2', test: true },
+				},
+				{
+					type: "CREATE",
+					path: ["state", 0],
 					value: { id: '3', test: true },
 				}
 			]
@@ -164,8 +201,6 @@ describe("objectDiff - arrays with object ID's", () => {
 				}
 			}
 		);
-
-		debugger;
 
 		assert.deepStrictEqual(diffs,
 			[
