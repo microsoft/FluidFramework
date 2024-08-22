@@ -158,7 +158,6 @@ extends:
     # packages twice.
     - webpack
     - ci:test:mocha
-    - ci:test:jest
     - test:copyresults
     testResultDirs:
     - nyc/examples
