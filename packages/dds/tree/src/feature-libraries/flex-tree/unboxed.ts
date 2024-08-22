@@ -4,43 +4,37 @@
  */
 
 import type { ITreeSubscriptionCursor } from "../../core/index.js";
-import type { FlexFieldKind } from "../modular-schema/index.js";
 import {
-	type FlexAllowedTypes,
 	type FlexFieldSchema,
 	type FlexTreeNodeSchema,
 	schemaIsLeaf,
 } from "../typed-schema/index.js";
 
 import type { Context } from "./context.js";
-import type {
-	FlexTreeNode,
-	FlexTreeUnboxNode,
-	FlexTreeUnknownUnboxed,
-} from "./flexTreeTypes.js";
+import type { FlexTreeUnknownUnboxed } from "./flexTreeTypes.js";
 import { makeTree } from "./lazyNode.js";
 
 /**
  * See {@link FlexTreeUnboxNode} for documentation on what unwrapping this performs.
  */
-export function unboxedTree<TSchema extends FlexTreeNodeSchema>(
+export function unboxedTree(
 	context: Context,
-	schema: TSchema,
+	schema: FlexTreeNodeSchema,
 	cursor: ITreeSubscriptionCursor,
-): FlexTreeUnboxNode<TSchema> {
+): FlexTreeUnknownUnboxed {
 	if (schemaIsLeaf(schema)) {
-		return cursor.value as FlexTreeUnboxNode<TSchema>;
+		return cursor.value as FlexTreeUnknownUnboxed;
 	}
 
-	return makeTree(context, cursor) as FlexTreeNode as FlexTreeUnboxNode<TSchema>;
+	return makeTree(context, cursor);
 }
 
 /**
  * See {@link FlexTreeUnboxNodeUnion} for documentation on what unwrapping this performs.
  */
-export function unboxedUnion<TTypes extends FlexAllowedTypes>(
+export function unboxedUnion(
 	context: Context,
-	schema: FlexFieldSchema<FlexFieldKind, TTypes>,
+	schema: FlexFieldSchema,
 	cursor: ITreeSubscriptionCursor,
 ): FlexTreeUnknownUnboxed {
 	const type = schema.monomorphicChildType;
