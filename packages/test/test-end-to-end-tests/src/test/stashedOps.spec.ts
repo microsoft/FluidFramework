@@ -2004,56 +2004,64 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
 
-	describe("Prototype tests for Offline Phase 3 - serializing without closing", () => {
-		//* OTHER TEST CASES TO CONSIDER (future):
-		// - (?) Forked container where resubmit results in different number of chunks - so CSN is different, but it shouldn't matter because batchId would be set already
-		// - Properly write the first one to do resubmit, rather than faking the clientId
-		// - Invert the first one where it's the rehydrated container that reconnects and submits the local state, all the while the original client is offline then comes online and closes.
-		// - Include the currently-tracked batchIds (from BatchTracker) in the summary and load them from the snapshot (NYI)
-		// - Batch becomes empty in one fork
-
-		it(`Closes (ForkedContainerError) when ops are submitted with different clientId from pendingLocalState (via Counter DDS)`, async function () {
-			const incrementValue = 3;
-			const pendingLocalState = await getPendingOps(
-				testContainerConfig,
-				provider,
-				true, // Do send ops from first container instance before closing
-				async (c, d) => {
-					const counter = await d.getSharedObject<SharedCounter>(counterId);
-					counter.increment(incrementValue);
-				},
-			);
-
-			// The real scenario where the clientId would differ from the original container and pendingLocalState is this:
-			// 1. container1 - getPendingLocalState (local ops have clientId A), reconnect, submitOp on new clientId B
-			// 2. container2 - load with pendingLocalState (apply stashed ops to have clientId A), ops come in with clientId B, which is different.
-			//
-			// For simplicity (as opposed to coding up reconnect like that), just tweak the clientId in pendingLocalState.
-			const obj = JSON.parse(pendingLocalState);
-			obj.clientId = "00000000-0e85-4ea1-983d-3cb72f280701"; // Bogus GUID to simulate reconnect after getPendingLocalState
-			const pendingLocalStateAdjusted = JSON.stringify(obj);
-
-			// When we load the container using the adjusted pendingLocalState, the clientId mismatch should cause a ForkedContainerError
-			// when processing the ops submitted by container1 before closing, because we recognize them as the same content using batchId.
-			await assert.rejects(
-				async () => loader.resolve({ url }, pendingLocalStateAdjusted),
-				{ message: "Forked Container Error! Matching batchIds but mismatched clientId" },
-				"Container should have closed due to ForkedContainerError",
-			);
-
-			// Since we closed the container before wrongdoing, the counter is correct - no duplicate ops.
-			assert.strictEqual(counter1.value, incrementValue);
-		});
-
+	describe("Serializing without closing and/or multiple rehydration (aka Offline Phase 3)", () => {
 		itExpects(
-			`WRONGLY duplicates ops when hydrating twice and submitting in parallel (via Counter DDS)`,
+			`Closes (ForkedContainerError) when ops are submitted with different clientId from pendingLocalState (via Counter DDS)`,
 			[
-				// Container 1
+				// Temp Container from getPendingOps
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					category: "generic",
 				},
-				// Container 3
+				// Second container, attempted to load from pendingLocalState
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					errorType: "dataProcessingError",
+				},
+			],
+			async function () {
+				const incrementValue = 3;
+				const pendingLocalState = await getPendingOps(
+					testContainerConfig,
+					provider,
+					true, // Do send ops from first container instance before closing
+					async (c, d) => {
+						const counter = await d.getSharedObject<SharedCounter>(counterId);
+						counter.increment(incrementValue);
+					},
+				);
+
+				// The real scenario where the clientId would differ from the original container and pendingLocalState is this:
+				// 1. container1 - getPendingLocalState (local ops have clientId A), reconnect, submitOp on new clientId B
+				// 2. container2 - load with pendingLocalState (apply stashed ops to have clientId A), ops come in with clientId B, which is different.
+				//
+				// For simplicity (as opposed to coding up reconnect like that), just tweak the clientId in pendingLocalState.
+				const obj = JSON.parse(pendingLocalState);
+				obj.clientId = "00000000-0e85-4ea1-983d-3cb72f280701"; // Bogus GUID to simulate reconnect after getPendingLocalState
+				const pendingLocalStateAdjusted = JSON.stringify(obj);
+
+				// When we load the container using the adjusted pendingLocalState, the clientId mismatch should cause a ForkedContainerError
+				// when processing the ops submitted by container1 before closing, because we recognize them as the same content using batchId.
+				await assert.rejects(
+					async () => loader.resolve({ url }, pendingLocalStateAdjusted),
+					{ message: "Forked Container Error! Matching batchIds but mismatched clientId" },
+					"Container should have closed due to ForkedContainerError",
+				);
+
+				// Since we closed the container before wrongdoing, the counter is correct - no duplicate ops.
+				assert.strictEqual(counter1.value, incrementValue);
+			},
+		);
+
+		itExpects(
+			`WRONGLY duplicates ops when hydrating twice and submitting in parallel (via Counter DDS)`,
+			[
+				// Temp Container from getPendingOps
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					category: "generic",
+				},
+				// Loser of the race between Containers 2 and 3
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					category: "error",
@@ -2096,33 +2104,50 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 				const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
+				// There's a race condition here; allow either Container2 or Container3 to win
+				// The winner will see its own ack first, and then accept the duplicate op from the loser.
+				// The loser will see the winner's ack first and close with Forked Container Error.
+				let winner: { container: IContainer; counter: SharedCounter };
+				let loser: { container: IContainer; counter: SharedCounter };
+				if (container2.closed) {
+					loser = { container: container2, counter: counter2 };
+					winner = { container: container3, counter: counter3 };
+				} else {
+					loser = { container: container3, counter: counter3 };
+					winner = { container: container2, counter: counter2 };
+				}
+
+				assert.strictEqual(winner.container.closed, false, "winner should not close");
+				assert.strictEqual(loser.container.closed, true, "loser should be closed");
+				// The winner will have accepted the duplicate ops, so the counter should be double the increment value.
+				// The loser will have closed, so its counter should be the correct value.
+				assertCurrentAndIdealExpectations(winner.counter.value, {
+					ideal: incrementValue,
+					currentButWrong: 2 * incrementValue,
+				});
+				assert.strictEqual(loser.counter.value, incrementValue);
+
+				// The original container will also have accepted the duplicate ops.
 				assertCurrentAndIdealExpectations(counter1.value, {
 					ideal: incrementValue,
 					currentButWrong: 2 * incrementValue,
 				});
-				assertCurrentAndIdealExpectations(counter2.value, {
-					ideal: incrementValue,
-					currentButWrong: 2 * incrementValue,
-				});
-				//* TODO: This could be either 2 or 3. One wins, one loses.
-				//* The op is double-applied, but the 2nd one will close when it sees the other's ack first.
-				assert(
-					container3.closed,
-					"Container 3 should have closed due to ForkedContainerError",
-				);
-				assert.strictEqual(counter3.value, incrementValue);
 			},
 		);
 
 		itExpects(
 			`Closes (ForkedContainerError) when hydrating twice and submitting in serial (via Counter DDS)`,
 			[
-				//* TODO: Figure out which containers these are and explain or constrain them more to be more meaningful
+				// Temp Container from getPendingOps
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
+					category: "generic",
 				},
+				// Loser of the race between Containers 2 and 3
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
+					category: "error",
+					errorType: "dataProcessingError",
 				},
 			],
 			async function () {
@@ -2148,15 +2173,17 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 				// Rehydrate the second time - when we are catching up, we'll recognize the incoming op (from container2),
 				// and since it's coming from a different clientID we'll realize the container is forked and we'll close
+				// Note there is a race condition for when the closure happens so we check a few ways the error could propagate.
 				let loadError: Error | undefined;
 				const container3 = await loader.resolve({ url }, pendingLocalState).catch((e) => {
+					// We'll be here if we close during load (and container3 will be undefined)
 					loadError = e;
 					return undefined;
 				});
 				container3?.on("closed", (e) => {
+					// We'll be here if we close after loading finishes
 					loadError = e as Error;
 				});
-				await provider.ensureSynchronized();
 
 				assert.equal(
 					loadError?.message,
@@ -2164,6 +2191,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 					"Container should have closed due to ForkedContainerError",
 				);
 
+				await provider.ensureSynchronized();
 				assert.strictEqual(counter1.value, incrementValue);
 				assert.strictEqual(counter2.value, incrementValue);
 			},
