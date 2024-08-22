@@ -346,7 +346,7 @@ export class PendingStateManager implements IDisposable {
 	private remoteBatchMatchesPendingBatch(remoteBatch: InboundBatch): boolean {
 		// We may have no pending changes - if so, no match, no problem.
 		const pendingMessage = this.pendingMessages.peekFront();
-		if (!pendingMessage) {
+		if (pendingMessage === undefined) {
 			return false;
 		}
 

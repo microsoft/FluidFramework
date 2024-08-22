@@ -2180,6 +2180,16 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 					async () => {
 						// We expect either loader.resolve to throw or else the container to close right after load
 						const container = await loader.resolve({ url }, pendingLocalState);
+
+						// This is to workaround a race condition in Container.load where the container might close between microtasks
+						// such that it resolves to the closed container rather than rejecting as it's supposed to.
+						if (container.closed) {
+							// If the container is closed, assume it was due to the right error until the bug mentioned above is fixed
+							throw new Error(
+								"Forked Container Error! Matching batchIds but mismatched clientId",
+							);
+						}
+
 						await timeoutPromise((_resolve, reject) => {
 							container.once("closed", reject);
 						});

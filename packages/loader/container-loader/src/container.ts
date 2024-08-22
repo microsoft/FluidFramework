@@ -405,13 +405,7 @@ export class Container
 
 					container
 						.load(version, mode, resolvedUrl, pendingLocalState)
-						// eslint-disable-next-line @typescript-eslint/no-misused-promises
-						.finally(async () => {
-							// Ensure microtask queue is flushed before continuing
-							// e.g. Processing incoming delta queue is kicked off and not awaited,
-							// so if an error is thrown while processing initial messages, we want to ensure
-							// the container closes before removing the listener (so we'll properly reject not resolve)
-							await new Promise((_resolve) => setTimeout(_resolve, 0));
+						.finally(() => {
 							container.removeListener("closed", onClosed);
 						})
 						.then(
