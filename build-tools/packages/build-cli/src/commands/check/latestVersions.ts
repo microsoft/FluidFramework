@@ -74,7 +74,9 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 			}
 		}
 
-		// Check if the input version is in the list of latest versions
-		return latestVersions.some((item) => item.version === versionInput);
+		const shouldDeploy = latestVersions.some((item) => item.version === versionInput);
+
+		// eslint-disable-next-line n/no-process-exit, unicorn/no-process-exit
+		process.exit(shouldDeploy ? 0 : 1);
 	}
 }
