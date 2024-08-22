@@ -401,6 +401,14 @@ extends:
                           summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
                           failIfCoverageEmpty: true
                         condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                      - task: BuildQualityChecks@6
+                        displayName: Check Code Coverage
+                        inputs:
+                          checkCoverage: true
+                          coverageFailOption: 'fixed'
+                          coverageType: 'lines'
+                          coverageThreshold: '100'
+
 
                   # Process test result, include publishing and logging
                   - template: /tools/pipelines/templates/include-process-test-results.yml@self
