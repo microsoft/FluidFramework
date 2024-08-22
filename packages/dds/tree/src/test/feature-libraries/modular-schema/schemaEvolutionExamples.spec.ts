@@ -8,6 +8,7 @@ import { strict as assert } from "assert";
 import {
 	type Adapters,
 	Compatibility,
+	EmptyKey,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
@@ -84,7 +85,9 @@ describe("Schema Evolution Examples", () => {
 		name: "Schema Evolution Examples: default content types",
 	});
 
-	const codePoint = contentTypesBuilder.fieldNode("Primitive.CodePoint", leaf.number);
+	const codePoint = contentTypesBuilder.object("Primitive.CodePoint", {
+		[EmptyKey]: leaf.number,
+	});
 
 	// String made of unicode code points, allowing for sequence editing of a string.
 	const text = contentTypesBuilder.object("Text", {
