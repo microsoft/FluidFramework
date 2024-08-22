@@ -13,6 +13,7 @@ import {
 	keyAsDetachedField,
 	mapCursorField,
 	mapCursorFields,
+	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
 import {
 	type CursorAdapter,
@@ -30,7 +31,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 		node !== null && typeof node === "object"
 			? undefined // arrays and objects have no defined value
 			: node, // null, boolean, numbers, and strings are their own values
-	type: (node: JsonCompatible) => {
+	type: (node: JsonCompatible): TreeNodeSchemaIdentifier => {
 		const type = typeof node;
 
 		switch (type) {
@@ -44,6 +45,8 @@ const adapter: CursorAdapter<JsonCompatible> = {
 				if (node === null) {
 					return leaf.null.name;
 				} else if (isReadonlyArray(node)) {
+					// Linter seems wrong here.
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 					return jsonArray.name;
 				} else {
 					return jsonObject.name;

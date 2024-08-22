@@ -214,9 +214,6 @@ export {
 } from "./default-schema/index.js";
 
 export {
-	type AssignableFieldKinds,
-	type FlexibleFieldContent,
-	type FlexibleNodeContent,
 	type FlexTreeLeafNode,
 	type FlexTreeMapNode,
 	type FlexTreeOptionalField,
@@ -225,8 +222,6 @@ export {
 	Skip,
 	type FlexTreeContext,
 	type FlexTreeTypedField,
-	type FlexTreeTypedNode,
-	type FlexTreeTypedNodeUnion,
 	type FlexTreeEntity,
 	type FlexTreeField,
 	type FlexTreeNode,

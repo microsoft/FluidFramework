@@ -34,10 +34,7 @@ export class SchemaBuilderInternal<
 	 * TODO: Maybe ban undefined from allowed values here.
 	 * TODO: Decide and document how unwrapping works for non-primitive terminals.
 	 */
-	public leaf<Name extends string, const T extends ValueSchema>(
-		name: Name,
-		t: T,
-	): LeafNodeSchema<`${TScope}.${Name}`, T> {
+	public leaf(name: string, t: ValueSchema): LeafNodeSchema {
 		const schema = LeafNodeSchema.create(this, this.scoped(name), t);
 		this.addNodeSchema(schema);
 		return schema;
