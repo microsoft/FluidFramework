@@ -229,7 +229,21 @@ const assertIntervals = (
 	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
-/** Returns a new promise that will resolve once we process a summary op followed by a summary ack */
+/**
+ * Waits for a summary op and ack to be seen by the specified container.
+ *
+ * @remarks
+ * IMPORTANT: timing of when this function is called and/or awaited is important to write tests that aren't flaky.
+ * If you're going to `await` something else between the time when you make a change in a container that will result
+ * in a summary and the time you want to wait for the summary, you should call this function, without `await`ing it,
+ * *before* `await`ing anything else, and then `await` the returned promise when you actually need to wait for the
+ * summary.
+ * Otherwise it could happen that the summary is produced before this function is called, thus the listeners set up
+ * by it aren't in place yet, they will miss the summary op, and the returned promise will never resolve.
+ *
+ * @param container - A container, just for the purpose of setting up listeners for summary ops and acks.
+ * @returns A promise that resolves when a summary op and ack is received.
+ */
 const waitForSummary = async (container: IContainer) =>
 	new Promise<void>((resolve, reject) => {
 		let summarized = false;
@@ -1634,12 +1648,13 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
 			container.connect();
 			const handle = await handleP;
+			const waitForSummaryPromise = waitForSummary(container1);
 			map.set("blob handle", handle);
 			assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
 
 			// wait for summary with redirect table
 			await provider.ensureSynchronized();
-			await waitForSummary(container1);
+			await waitForSummaryPromise;
 
 			// should be able to load entirely offline
 			const stashBlob = await getPendingOps(testContainerConfig, provider, true);

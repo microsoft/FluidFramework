@@ -4,11 +4,12 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { initializeForest } from "../../core/index.js";
+import { initializeForest, TreeStoredSchemaRepository } from "../../core/index.js";
 import {
 	buildForest,
 	cursorForMapTreeNode,
 	getSchemaAndPolicy,
+	MockNodeKeyManager,
 } from "../../feature-libraries/index.js";
 import {
 	isTreeNode,
@@ -27,8 +28,9 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/proxies.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toFlexSchema } from "../../simple-tree/toFlexSchema.js";
-import { flexTreeFromForest, testIdCompressor, testRevisionTagCodec } from "../utils.js";
+import { toFlexSchema, toStoredSchema } from "../../simple-tree/toFlexSchema.js";
+import { mintRevisionTag, testIdCompressor, testRevisionTagCodec } from "../utils.js";
+import { CheckoutFlexTreeView, createTreeCheckout } from "../../shared-tree/index.js";
 
 /**
  * Initializes a node with the given schema and content.
@@ -108,7 +110,14 @@ export function hydrate<TSchema extends ImplicitFieldSchema>(
 	initialTree: InsertableTreeFieldFromImplicitField<TSchema>,
 ): TreeFieldFromImplicitField<TSchema> {
 	const forest = buildForest();
-	const field = flexTreeFromForest(toFlexSchema(schema), forest);
+
+	const branch = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
+		forest,
+		schema: new TreeStoredSchemaRepository(toStoredSchema(schema)),
+	});
+	const manager = new MockNodeKeyManager();
+	const field = new CheckoutFlexTreeView(branch, toFlexSchema(schema), manager).flexTree;
+
 	assert(field.context !== undefined, "Expected LazyField");
 	const mapTree = mapTreeFromNodeData(
 		initialTree as InsertableContent,

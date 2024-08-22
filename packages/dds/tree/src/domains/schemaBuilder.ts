@@ -6,17 +6,11 @@
 import {
 	FieldKinds,
 	type FlexFieldKind,
-	FlexFieldNodeSchema,
 	type FlexFieldSchema,
 	type FlexImplicitAllowedTypes,
-	type FlexImplicitFieldSchema,
-	type FlexObjectNodeSchema,
-	type NormalizeAllowedTypes,
 	SchemaBuilderBase,
 	type SchemaBuilderOptions,
-	type Unenforced,
 } from "../feature-libraries/index.js";
-import type { RestrictiveReadonlyRecord } from "../util/index.js";
 
 import { leaf } from "./leafDomain.js";
 
@@ -42,47 +36,12 @@ import { leaf } from "./leafDomain.js";
  * @sealed
  * @deprecated Users of this class should either use {@link SchemaBuilderBase} and explicitly work with {@link FlexFieldSchema}, or use SchemaFactory and work at its higher level of abstraction.
  */
-export class SchemaBuilder<
-	TScope extends string = string,
-	TName extends string | number = string,
-> extends SchemaBuilderBase<TScope, typeof FieldKinds.required, TName> {
-	public constructor(options: SchemaBuilderOptions<TScope>) {
+export class SchemaBuilder extends SchemaBuilderBase<string, typeof FieldKinds.required> {
+	public constructor(options: SchemaBuilderOptions) {
 		super(FieldKinds.required, {
 			...options,
 			libraries: [...(options.libraries ?? []), leaf.library],
 		});
-	}
-
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	public override objectRecursive<
-		const Name extends TName,
-		const T extends Unenforced<RestrictiveReadonlyRecord<string, FlexImplicitFieldSchema>>,
-	>(name: Name, t: T) {
-		return this.object(
-			name,
-			t as unknown as RestrictiveReadonlyRecord<string, FlexImplicitFieldSchema>,
-		) as unknown as FlexObjectNodeSchema<`${TScope}.${Name}`, T>;
-	}
-
-	/**
-	 * Define (and add to this library) a {@link FlexFieldNodeSchema} for a {@link Sequence}.
-	 *
-	 * The name must be unique among all TreeNodeSchema in the the document schema.
-	 */
-	public list<Name extends TName, const T extends FlexImplicitAllowedTypes>(
-		name: Name,
-		allowedTypes: T,
-	): FlexFieldNodeSchema<
-		`${TScope}.${Name}`,
-		FlexFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>
-	> {
-		const schema = FlexFieldNodeSchema.create(
-			this,
-			this.scoped(name as TName & Name),
-			this.sequence(allowedTypes),
-		);
-		this.addNodeSchema(schema);
-		return schema;
 	}
 
 	/**
@@ -168,8 +127,6 @@ export class SchemaBuilder<
  * Returns a wrapper around SchemaBuilder.field for a specific FieldKind.
  */
 function fieldHelper<Kind extends FlexFieldKind>(kind: Kind) {
-	return <const T extends FlexImplicitAllowedTypes>(
-		allowedTypes: T,
-	): FlexFieldSchema<Kind, NormalizeAllowedTypes<T>> =>
+	return (allowedTypes: FlexImplicitAllowedTypes): FlexFieldSchema<Kind> =>
 		SchemaBuilder.field(kind, allowedTypes);
 }

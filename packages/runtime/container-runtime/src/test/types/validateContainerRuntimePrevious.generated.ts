@@ -20,14 +20,6 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedVariable_AllowInactiveRequestHeaderKey": {"backCompat": false}
- */
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Variable_AllowTombstoneRequestHeaderKey": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_AllowTombstoneRequestHeaderKey = requireAssignableTo<TypeOnly<typeof current.AllowTombstoneRequestHeaderKey>, TypeOnly<typeof old.AllowTombstoneRequestHeaderKey>>
