@@ -17,6 +17,7 @@ import {
 	FieldKinds,
 	FlexFieldSchema,
 	SchemaBuilderBase,
+	type FlexObjectNodeSchema,
 	type FlexTreeNode,
 } from "../feature-libraries/index.js";
 import type { FlexTreeView, TreeContent } from "../shared-tree/index.js";
@@ -43,7 +44,7 @@ const deepBuilder = new SchemaBuilderBase(FieldKinds.required, {
 });
 
 // Test data in "deep" mode: a linked list with a number at the end.
-const linkedListSchema = deepBuilder.objectRecursive("linkedList", {
+const linkedListSchema: FlexObjectNodeSchema = deepBuilder.object("linkedList", {
 	foo: FlexFieldSchema.createUnsafe(FieldKinds.required, [
 		() => linkedListSchema,
 		leaf.number,

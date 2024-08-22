@@ -316,7 +316,7 @@ export interface FlexTreeLeafNode<in out TSchema extends LeafNodeSchema> extends
 	/**
 	 * Value stored on this node.
 	 */
-	readonly value: TreeValue<TSchema["info"]>;
+	readonly value: TreeValue;
 }
 
 // #endregion

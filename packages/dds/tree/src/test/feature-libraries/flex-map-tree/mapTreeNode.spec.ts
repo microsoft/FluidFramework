@@ -129,6 +129,7 @@ describe("MapTreeNodes", () => {
 		assert(field.is(arrayNodeSchema.info[EmptyKey].kind));
 		assert.equal(arrayNode.tryGetField(brand("unknown key")), undefined);
 		assert.equal(arrayNode.getBoxed("unknown key").length, 0);
+		assert(field.is(FieldKinds.sequence));
 		assert.equal(field.at(-1), childValue);
 		assert.equal(field.at(0), childValue);
 		assert.equal(field.at(1), undefined);
@@ -247,7 +248,7 @@ describe("MapTreeNodes", () => {
 				deepCopyMapTree(fieldNodeMapTree),
 			);
 			const field = mutableFieldNode.getBoxed(EmptyKey);
-			assert(field.is(arrayNodeSchema.info[EmptyKey].kind));
+			assert(field.is(FieldKinds.sequence));
 			const values = () => Array.from(field.boxedIterator(), (n) => n.value);
 			assert.deepEqual(values(), [childValue]);
 			field.editor.insert(1, [
@@ -270,7 +271,7 @@ describe("MapTreeNodes", () => {
 				fields: new Map(),
 			});
 			const field = mutableFieldNode.getBoxed(EmptyKey);
-			assert(field.is(arrayNodeSchema.info[EmptyKey].kind));
+			assert(field.is(FieldKinds.sequence));
 			const newContent: ExclusiveMapTree[] = [];
 			for (let i = 0; i < 10000; i++) {
 				newContent.push({ ...mapChildMapTree, value: String(i) });

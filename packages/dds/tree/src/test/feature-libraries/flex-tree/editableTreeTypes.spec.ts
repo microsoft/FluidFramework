@@ -60,16 +60,4 @@ describe("flexTreeTypes", () => {
 		type _3 = requireFalse<isAssignableTo<typeof basicStruct, FlexMapNodeSchema>>;
 		type _4 = requireTrue<isAssignableTo<typeof basicStruct, FlexObjectNodeSchema>>;
 	}
-
-	function nominalTyping(): void {
-		const builder2 = new SchemaBuilder({ scope: "test" });
-		const emptyStruct1 = builder2.object("empty1", {});
-		const emptyStruct2 = builder2.object("empty2", {});
-
-		// Schema for types which only different in name are distinguished
-		{
-			type _1 = requireFalse<isAssignableTo<typeof emptyStruct1, typeof emptyStruct2>>;
-			type _2 = requireFalse<isAssignableTo<typeof emptyStruct2, typeof emptyStruct1>>;
-		}
-	}
 });
