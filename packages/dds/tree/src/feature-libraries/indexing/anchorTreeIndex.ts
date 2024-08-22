@@ -30,7 +30,7 @@ export type IndexableTreeStatus =
 /**
  * A function that returns some key given a cursor to a node where the key is what the node
  * is indexed on.
- * 
+ *
  * TODO: document cursor ownership
  */
 export type KeyFinder<TKey extends TreeValue> = (tree: ITreeSubscriptionCursor) => TKey;
@@ -38,7 +38,7 @@ export type KeyFinder<TKey extends TreeValue> = (tree: ITreeSubscriptionCursor) 
 /**
  * An index from some arbitrary keys to anchor nodes. Keys can be anything that is a {@link TreeValue}.
  * A key can map to multiple nodes but each collection of nodes only results in a single value.
- * 
+ *
  * @remarks
  * Detached nodes are stored in the index but filtered out when any public facing apis are called. This means that
  * calling {@link keys} will not include any keys that are stored in the index but only map to detached nodes.

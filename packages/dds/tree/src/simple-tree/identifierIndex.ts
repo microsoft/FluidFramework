@@ -23,22 +23,33 @@ import {
 	type TreeIndex,
 } from "../feature-libraries/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { brand } from "../util/index.js";
+import { brand, fail } from "../util/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { NodeFromSchema } from "./schemaTypes.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
 import { Tree } from "../shared-tree/index.js";
 import type { TreeNode, TreeNodeSchema } from "./index.js";
 import { getSimpleNodeSchema } from "./core/index.js";
+import { getOrCreateNodeFromFlexTreeNode } from "./proxies.js";
+import { tryGetCachedHydratedTreeNode } from "./proxyBinding.js";
 
-type SimpleTreeIndex<
-	TKey extends TreeValue,
-	TSchema extends TreeNodeSchema
-> =
+/**
+ * A {@link TreeIndex} that returns tree nodes given their associated keys.
+ */
+type SimpleTreeIndex<TKey extends TreeValue, TSchema extends TreeNodeSchema> =
 	| TreeIndex<TKey, TreeNode>
 	| TreeIndex<TKey, NodeFromSchema<TSchema>>;
 
-// use Tree.is for downcasting
+/**
+ * Creates a {@link SimpleTreeIndex} with a specified indexer.
+ *
+ * NOTE: use Tree.is for downcasting
+ *
+ * @param context -
+ * @param indexer -
+ * @param getValue -
+ * @param indexableSchema -
+ */
 export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
 	context: FlexTreeContext,
 	indexer: (schema: ObjectNodeSchema) => KeyFinder<TKey> | undefined,
@@ -84,7 +95,10 @@ export function createSimpleTreeIndex<
 					if (isObjectNodeSchema(schemus)) {
 						return indexer(schemus);
 					}
-				} // else: the node is out of schema. TODO: do we error, or allow that?
+				} else {
+					// else: the node is out of schema. TODO: do we error, or allow that?
+					fail("node is out of schema");
+				}
 			}
 		},
 		(anchorNodes) => {
@@ -106,12 +120,19 @@ export function createSimpleTreeIndex<
 	return index as SimpleTreeIndex<TKey, TSchema>;
 }
 
-type IdentifierIndex = SimpleTreeIndex<string>;
+/**
+ * An index that returns tree nodes given their associated identifiers.
+ */
+type IdentifierIndex = SimpleTreeIndex<string, TreeNodeSchema>;
 
+/**
+ * Creates an {@link IdentifierIndex} for a given {@link FlexTreeContext}.
+ */
 export function createIdentifierIndex(context: FlexTreeContext): IdentifierIndex {
 	assert(context instanceof Context, "Unexpected context implementation");
 
 	// For each node schema, find which field key the identifier field is under.
+	// This can be done easily because identifiers are their own field kinds.
 	const identifierFields = new Map<string, FieldKey>();
 	for (const [schemaId, schemus] of context.schema.nodeSchema.entries()) {
 		if (schemus instanceof FlexObjectNodeSchema) {
@@ -153,18 +174,24 @@ export function createIdentifierIndex(context: FlexTreeContext): IdentifierIndex
 	);
 }
 
+/**
+ * Gets a simple tree from an anchor node
+ */
 function getOrCreateSimpleTree(
 	context: Context,
 	anchorNode: AnchorNode,
 ): TreeNode | TreeValue {
 	return (
-		tryGetProxy(anchorNode) ??
-		getOrCreateNodeProxy(
+		tryGetCachedHydratedTreeNode(anchorNode) ??
+		getOrCreateNodeFromFlexTreeNode(
 			anchorNode.slots.get(flexTreeSlot) ?? makeFlexNode(context, anchorNode),
 		)
 	);
 }
 
+/**
+ * Make a flex tree node from an anchor node
+ */
 function makeFlexNode(context: Context, anchorNode: AnchorNode): FlexTreeNode {
 	const cursor = context.checkout.forest.allocateCursor();
 	context.checkout.forest.moveCursorToPath(anchorNode, cursor);

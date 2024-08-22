@@ -9,7 +9,6 @@ import { flexTreeViewWithContent } from "../../utils.js";
 import {
 	FieldKinds,
 	type FlexTreeNode,
-	type InsertableFlexNode,
 	SchemaBuilderBase,
 	AnchorTreeIndex,
 } from "../../../feature-libraries/index.js";

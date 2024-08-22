@@ -203,6 +203,13 @@ export function tryGetCachedTreeNode(flexNode: InnerNode): TreeNode | undefined 
 }
 
 /**
+ * Retrieves the proxy associated with the given anchor node via {@link setInnerNode}, if any.
+ */
+export function tryGetCachedHydratedTreeNode(anchorNode: AnchorNode): TreeNode | undefined {
+	return anchorNode.slots.get(proxySlot);
+}
+
+/**
  * Associate the given TreeNode and the given flex node.
  * @returns The node.
  * @remarks
