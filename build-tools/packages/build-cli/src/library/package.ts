@@ -752,7 +752,7 @@ async function findDepUpdates(
 			continue;
 		}
 
-		// If we're allowing pre-release, use the next tagged version. Warn if it is lower than the latest.
+		// If we're allowing pre-release, use the version that has the 'dev' dist-tag in npm. Warn if it is lower than the 'latest'.
 		if (prerelease) {
 			dependencyVersionMap[pkgName] = dev;
 			if (semver.gt(latest, dev)) {
