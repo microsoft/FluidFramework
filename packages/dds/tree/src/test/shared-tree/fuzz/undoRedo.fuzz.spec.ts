@@ -37,6 +37,7 @@ import {
 import { checkTreesAreSynchronized, fuzzReducer } from "./fuzzEditReducers.js";
 import {
 	createAnchors,
+	createOnCreate,
 	deterministicIdCompressorFactory,
 	failureDirectory,
 	populatedInitialState,
@@ -76,7 +77,7 @@ describe("Fuzz - revert", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "revert sequenced commits last-to-first",
-			factory: new SharedTreeTestFactory(() => {}),
+			factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,
@@ -167,7 +168,7 @@ describe("Fuzz - revert", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "revert unsequenced commits first-to-last",
-			factory: new SharedTreeTestFactory(() => {}),
+			factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,
@@ -214,7 +215,7 @@ describe("Fuzz - revert", () => {
 });
 
 function init(state: UndoRedoFuzzTestState) {
-	const tree = viewFromState(state, state.clients[0], populatedInitialState).checkout;
+	const tree = viewFromState(state, state.clients[0]).checkout;
 	state.initialTreeState = toJsonableTree(tree);
 	state.containerRuntimeFactory.processAllMessages();
 	const undoStack: Revertible[] = [];

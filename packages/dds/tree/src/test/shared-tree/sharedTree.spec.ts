@@ -80,7 +80,7 @@ import {
 	type TreeView,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
-import { fail } from "../../util/index.js";
+import { disposeSymbol, fail } from "../../util/index.js";
 import {
 	type ConnectionSetter,
 	type ITestTreeProvider,
@@ -152,7 +152,10 @@ describe("SharedTree", () => {
 			schematizeFlexTree(provider.trees[1], content);
 			provider.processMessages();
 
-			assert.deepEqual([...tree1.flexTree], ["x"]);
+			assert.deepEqual(
+				Array.from(tree1.flexTree.boxedIterator(), (f) => f.value),
+				["x"],
+			);
 		});
 
 		it("initialize tree", () => {
@@ -225,7 +228,17 @@ describe("SharedTree", () => {
 			onDispose: () => void = () => assert.fail(),
 		): FlexTreeView<TRoot> {
 			const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
-			return requireSchema(tree.checkout, viewSchema, onDispose, new MockNodeKeyManager());
+			const view = requireSchema(
+				tree.checkout,
+				viewSchema,
+				onDispose,
+				new MockNodeKeyManager(),
+			);
+			const unregister = tree.checkout.storedSchema.on("afterSchemaChange", () => {
+				unregister();
+				view[disposeSymbol]();
+			});
+			return view;
 		}
 
 		const factory = new SharedTreeFactory({
@@ -249,7 +262,7 @@ describe("SharedTree", () => {
 				"the tree",
 			);
 			const view = assertSchema(tree, schemaEmpty);
-			assert.deepEqual([...view.flexTree.boxedIterator()], []);
+			assert.equal(view.flexTree.length, 0);
 		});
 
 		it("differing schema errors and schema change callback", () => {
@@ -547,6 +560,7 @@ describe("SharedTree", () => {
 				view.root.insertAtStart("A");
 				await provider.ensureSynchronized();
 				await validateSchemaStringType(provider, provider.trees[0].id, SummaryType.Handle);
+				view.dispose();
 				const view2 = tree.viewWith(
 					new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation }),
 				);
@@ -1805,6 +1819,8 @@ describe("SharedTree", () => {
 			tree1.setConnected(false);
 
 			view1.root.insertAtEnd("43");
+			view1.dispose();
+
 			const view1Json = tree1.viewWith(
 				new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation }),
 			);

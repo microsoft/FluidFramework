@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import path from "node:path";
 import { parseISO } from "date-fns";
 import registerDebug from "debug";
-import { statSync } from "fs-extra";
 import { exec, execNoError } from "./utils";
 
 const traceGitRepo = registerDebug("fluid-build:gitRepo");
@@ -217,18 +215,58 @@ export class GitRepo {
 	}
 
 	/**
-	 * Returns an array containing all the files in the the provided path.
-	 * Returned paths are rooted at the root of the repo.
+	 * Returns an array containing repo root-relative paths to files that are deleted in the working tree.
 	 */
-	public async getFiles(directory: string): Promise<string[]> {
-		const results = await this.exec(
-			`ls-files -co --exclude-standard --full-name -- ${directory}`,
-			`get files`,
-		);
+	public async getDeletedFiles(): Promise<string[]> {
+		const results = await this.exec(`status --porcelain`, `get deleted files`);
 		return results
 			.split("\n")
-			.map((line) => line.trim())
-			.filter((file) => statSync(path.resolve(this.resolvedRoot, file)).isFile());
+			.filter((t) => t.startsWith(" D "))
+			.map((t) => t.substring(3));
+	}
+
+	/**
+	 * Returns an array containing repo repo-relative paths to all the files in the provided directory.
+	 * A given path will only be included once in the array; that is, there will be no duplicate paths.
+	 * Note that this function excludes files that are deleted locally whether the deletion is staged or not.
+	 *
+	 * @param directory - A directory to filter the results by. Only files under this directory will be returned. To
+	 * return all files in the repo use the value `"."`.
+	 */
+	public async getFiles(directory: string): Promise<string[]> {
+		/**
+		 * What these git ls-files flags do:
+		 *
+		 * ```
+		 * --cached: Includes cached (staged) files.
+		 * --others: Includes other (untracked) files that are not ignored.
+		 * --exclude-standard: Excludes files that are ignored by standard ignore rules.
+		 * --deduplicate: Removes duplicate entries from the output.
+		 * --full-name: Shows the full path of the files relative to the repository root.
+		 * ```
+		 */
+		const command = `ls-files --cached --others --exclude-standard --deduplicate --full-name -- ${directory}`;
+		const [fileResults, deletedFiles] = await Promise.all([
+			this.exec(command, `get files`),
+			this.getDeletedFiles(),
+		]);
+
+		// This includes paths to deleted, unstaged files, so we get the list of deleted files from git status and remove
+		// those from the full list.
+		const allFiles = new Set(
+			fileResults
+				.split("\n")
+				.map((line) => line.trim())
+				// filter out empty lines
+				.filter((line) => line !== ""),
+		);
+
+		for (const deletedFile of deletedFiles) {
+			allFiles.delete(deletedFile);
+		}
+
+		// Files are already repo root-relative
+		return [...allFiles];
 	}
 
 	/**

@@ -1,5 +1,13 @@
 # @fluid-experimental/property-shared-tree-interop
 
+## 2.2.0
+
+### Minor Changes
+
+-   Remove PropertyDDS/SharedTree Schema Converter ([#22111](https://github.com/microsoft/FluidFramework/pull/22111)) [54e4b5e5ec](https://github.com/microsoft/FluidFramework/commit/54e4b5e5ec125b59ebc1c05c93bf55db9cf2921a)
+
+    This schema converter had several known issues and has been removed. Read the [schema converter section](https://github.com/microsoft/FluidFramework/blob/main/experimental/PropertyDDS/packages/property-shared-tree-interop/README.md#schema-converter-runtime) of the package readme for more details.
+
 ## 2.1.0
 
 Dependency updates only.

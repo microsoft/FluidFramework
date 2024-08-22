@@ -201,7 +201,7 @@ export function applySchemaToParserOptions<TCustom>(
 							const arbitrary = "arbitrary unused key: fe71614a-bf3e-43b3-b7b0-4cef39538e90";
 							assert(
 								!simpleNodeSchema.storedKeyToPropertyKey.has(brand(arbitrary)),
-								"arbitrarily selected unused key was actually used",
+								0xa13 /* arbitrarily selected unused key was actually used */,
 							);
 							return arbitrary;
 						}
@@ -374,15 +374,15 @@ function verboseFromCursorInner<TCustom>(
 		case booleanSchema.identifier:
 		case nullSchema.identifier:
 		case stringSchema.identifier:
-			assert(reader.value !== undefined, "out of schema: missing value");
-			assert(!isFluidHandle(reader.value), "out of schema: unexpected FluidHandle");
+			assert(reader.value !== undefined, 0xa14 /* out of schema: missing value */);
+			assert(!isFluidHandle(reader.value), 0xa15 /* out of schema: unexpected FluidHandle */);
 			return reader.value;
 		case handleSchema.identifier:
-			assert(reader.value !== undefined, "out of schema: missing value");
-			assert(isFluidHandle(reader.value), "out of schema: unexpected FluidHandle");
+			assert(reader.value !== undefined, 0xa16 /* out of schema: missing value */);
+			assert(isFluidHandle(reader.value), 0xa17 /* out of schema: unexpected FluidHandle */);
 			return options.valueConverter(reader.value);
 		default: {
-			assert(reader.value === undefined, "out of schema: unexpected value");
+			assert(reader.value === undefined, 0xa18 /* out of schema: unexpected value */);
 			if (nodeSchema.kind === NodeKind.Array) {
 				const fields = inCursorField(reader, EmptyKey, () =>
 					mapCursorField(reader, () => verboseFromCursorInner(reader, options, schema)),
@@ -405,7 +405,7 @@ function verboseFromCursorInner<TCustom>(
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						fields[key] = children[0]!;
 					} else {
-						assert(children.length === 0, "invalid children number");
+						assert(children.length === 0, 0xa19 /* invalid children number */);
 					}
 				});
 				return { type, fields };

@@ -8,7 +8,7 @@
 // which API-Extractor leaves as is when generating the rollup, leaving them pointing at the wrong directory.
 // API-Extractor issue: https://github.com/microsoft/rushstack/issues/4507
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
-import { ValueSchema } from "../../core/index.js";
+import { EmptyKey, ValueSchema } from "../../core/index.js";
 import {
 	FieldKinds,
 	type FlexAllowedTypes,
@@ -40,9 +40,8 @@ export const jsonObject = builder.mapRecursive(
 	FlexFieldSchema.createUnsafe(FieldKinds.optional, jsonRoot),
 );
 
-export const jsonArray = builder.fieldNodeRecursive(
-	"array",
-	FlexFieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
-);
+export const jsonArray = builder.objectRecursive("array", {
+	[EmptyKey]: FlexFieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
+});
 
 export const jsonSchema = builder.intoLibrary();
