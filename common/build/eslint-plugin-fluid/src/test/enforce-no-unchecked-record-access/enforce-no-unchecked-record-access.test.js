@@ -27,93 +27,123 @@ describe("ESLint Rule Tests", function () {
 		return results[0];
 	}
 
-	it("Should report an error for unchecked record access", async function () {
-		const result = await lintFile("fileWithOnlyRecordAccess.ts");
-		assert.strictEqual(result.errorCount, 14, "Should have 14 errors");
+	it("Should report an error for unchecked record access for indexed record of strings in functions", async function () {
+		const result = await lintFile("functions.ts");
+		assert.strictEqual(result.errorCount, 1, "Should have 1 error");
+		assert.strictEqual(
+			result.messages[0].message,
+			"Returning 'record.a' directly from an index signature type is not allowed. 'record.a' may be 'undefined'",
+		);
+		assert.strictEqual(result.messages[0].line, 11);
+	});
+
+	it("Should report an error for unchecked record access for indexed record of strings", async function () {
+		const result = await lintFile("indexedRecordOfStrings.ts");
+
+		assert.strictEqual(result.errorCount, 10, "Should have 10 errors");
 
 		assert.strictEqual(
 			result.messages[0].message,
-			"'nullableIndexedRecord.a' is possibly 'undefined'",
+			"'indexedRecordOfStrings.a' is possibly 'undefined'",
 		);
-		assert.strictEqual(result.messages[0].line, 37);
+		assert.strictEqual(result.messages[0].line, 21);
 
 		assert.strictEqual(
 			result.messages[1].message,
-			"'undefinableIndexedRecord.a' is possibly 'undefined'",
+			"'indexedRecordOfStrings[\"a\"]' is possibly 'undefined'",
 		);
-		assert.strictEqual(result.messages[1].line, 43);
+		assert.strictEqual(result.messages[1].line, 23);
 
 		assert.strictEqual(
 			result.messages[2].message,
-			"'indexedRecordOfStrings.a' is possibly 'undefined'",
+			"'indexedRecordOfStrings[a]' is possibly 'undefined'",
 		);
-		assert.strictEqual(result.messages[2].line, 48);
+		assert.strictEqual(result.messages[2].line, 24);
 
 		assert.strictEqual(
 			result.messages[3].message,
-			`'indexedRecordOfStrings["a"]' is possibly 'undefined'`,
+			"'indexedRecordOfStrings[b]' is possibly 'undefined'",
 		);
-		assert.strictEqual(result.messages[3].line, 50);
+		assert.strictEqual(result.messages[3].line, 25);
 
 		assert.strictEqual(
 			result.messages[4].message,
-			"'indexedRecordOfStrings[a]' is possibly 'undefined'",
+			"Returning 'record.a' directly from an index signature type is not allowed. 'record.a' may be 'undefined'",
 		);
-		assert.strictEqual(result.messages[4].line, 51);
+		assert.strictEqual(result.messages[4].line, 42);
 
 		assert.strictEqual(
 			result.messages[5].message,
-			"'indexedRecordOfStrings[b]' is possibly 'undefined'",
+			"Passing 'indexedRecordOfStrings.a' from an index signature type to a strictly typed parameter is not allowed. 'indexedRecordOfStrings.a' may be 'undefined'",
 		);
-		assert.strictEqual(result.messages[5].line, 52);
+		assert.strictEqual(result.messages[5].line, 57);
 
 		assert.strictEqual(
 			result.messages[6].message,
-			"Returning 'record.a' directly from an index signature type is not allowed. 'record.a' may be 'undefined'",
+			"'indexedRecordOfStrings.a' is possibly 'undefined'",
 		);
-		assert.strictEqual(result.messages[6].line, 69);
+		assert.strictEqual(result.messages[6].line, 76);
 
 		assert.strictEqual(
 			result.messages[7].message,
-			"Returning 'record.a' directly from an index signature type is not allowed. 'record.a' may be 'undefined'",
+			"Implicit typing derived from 'indexedRecordOfStrings.a' is not allowed. 'indexedRecordOfStrings' is an index signature type and 'a' may not be defined. Please provide an explicit type annotation or enable noUncheckedIndexedAccess",
 		);
-		assert.strictEqual(result.messages[7].line, 77);
+		assert.strictEqual(result.messages[7].line, 78);
 
 		assert.strictEqual(
 			result.messages[8].message,
-			"Passing 'indexedRecordOfStrings.a' from an index signature type to a strictly typed parameter is not allowed. 'indexedRecordOfStrings.a' may be 'undefined'",
+			"'indexedRecordOfStrings.a' is possibly 'undefined'",
 		);
-		assert.strictEqual(result.messages[8].line, 93);
+		assert.strictEqual(result.messages[8].line, 83);
 
 		assert.strictEqual(
 			result.messages[9].message,
-			"'indexedRecordOfStrings.a' is possibly 'undefined'",
-		);
-		assert.strictEqual(result.messages[9].line, 112);
-
-		assert.strictEqual(
-			result.messages[10].message,
-			"Implicit typing derived from 'indexedRecordOfStrings.a' is not allowed. 'indexedRecordOfStrings' is an index signature type and 'a' may not be defined. Please provide an explicit type annotation or enable noUncheckedIndexedAccess",
-		);
-		assert.strictEqual(result.messages[10].line, 114);
-
-		assert.strictEqual(
-			result.messages[11].message,
-			"'indexedRecordOfStrings.a' is possibly 'undefined'",
-		);
-		assert.strictEqual(result.messages[11].line, 119);
-
-		assert.strictEqual(
-			result.messages[12].message,
 			"Assigning 'indexedRecordOfStrings.a' from an index signature type to a strictly typed variable without 'undefined' is not allowed. 'indexedRecordOfStrings.a' may be 'undefined'",
 		);
-		assert.strictEqual(result.messages[12].line, 122);
+		assert.strictEqual(result.messages[9].line, 86);
+	});
 
+	it("Should report an error for unchecked nested record access", async function () {
+		const result = await lintFile("nestedIndexSignatures.ts");
+		assert.strictEqual(result.errorCount, 1, "Should have 1 error");
 		assert.strictEqual(
-			result.messages[13].message,
+			result.messages[0].message,
 			"'nestedObj.nested.a' is possibly 'undefined'",
 		);
-		assert.strictEqual(result.messages[13].line, 158);
+		assert.strictEqual(result.messages[0].line, 18);
+	});
+
+	it("Should report an error for unchecked record access in nullableIndexedRecord", async function () {
+		const result = await lintFile("nullableIndexedRecord.ts");
+		assert.strictEqual(result.errorCount, 2, "Should have 2 errors");
+
+		assert.strictEqual(
+			result.messages[0].message,
+			"Returning 'record.a' directly from an index signature type is not allowed. 'record.a' may be 'undefined'",
+		);
+		assert.strictEqual(result.messages[0].line, 21);
+
+		assert.strictEqual(
+			result.messages[1].message,
+			"Implicit typing derived from 'nullableIndexedRecord.a' is not allowed. 'nullableIndexedRecord' is an index signature type and 'a' may not be defined. Please provide an explicit type annotation or enable noUncheckedIndexedAccess",
+		);
+		assert.strictEqual(result.messages[1].line, 32);
+	});
+
+	it("Should report an error for unchecked record access in undefinableIndexedRecord", async function () {
+		const result = await lintFile("undefinableIndexedRecord.ts");
+		assert.strictEqual(result.errorCount, 1, "Should have 1 error");
+
+		assert.strictEqual(
+			result.messages[0].message,
+			"Implicit typing derived from 'undefinableIndexedRecord.a' is not allowed. 'undefinableIndexedRecord' is an index signature type and 'a' may not be defined. Please provide an explicit type annotation or enable noUncheckedIndexedAccess",
+		);
+		assert.strictEqual(result.messages[0].line, 28);
+	});
+
+	it("Should report an error for unchecked record access of static types", async function () {
+		const result = await lintFile("staticTypes.ts");
+		assert.strictEqual(result.errorCount, 0, "Should have no error");
 	});
 
 	it("Should not report an error for valid array access", async function () {
