@@ -434,6 +434,10 @@ export async function getDocumentAttributes(
 	return attributes;
 }
 
+/**
+ * Testing
+ * @internal
+ */
 export async function codeCoverageTesting(
 	storage: Pick<IDocumentStorageService, "readBlob">,
 	tree: ISnapshotTree | undefined,
