@@ -1,6 +1,6 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
-import { SchemaFactory, type TreeMapNode, type TreeArrayNode, NodeKind } from "@fluidframework/tree";
+import { type TreeMapNode, type TreeArrayNode, NodeKind } from "@fluidframework/tree";
 
 export type ObjectPath = (string | number)[];
 
@@ -47,8 +47,6 @@ const richTypes = { Date: true, RegExp: true, String: true, Number: true }
  * you can disable cycles by setting the cyclesFix option to false
  */
  const DEFAULT_OPTIONS: Options = { cyclesFix: true };
-
- const schemaFactory = new SchemaFactory("TreeNodeTest");
 
 /**
  * Compares two objects and returns an array of differences between them.

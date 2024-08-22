@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 
-import { SimpleObjectDiffManager, traversePath } from "../SimpleObjectDiffManager.js";
+import { SimpleObjectDiffManager, traversePath } from "../../object-diff/index.js";
 
 
 

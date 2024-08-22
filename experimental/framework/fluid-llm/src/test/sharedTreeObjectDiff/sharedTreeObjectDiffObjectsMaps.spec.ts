@@ -2,12 +2,12 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactory } from "@fluidframework/tree";
 
-import { sharedTreeObjectDiff } from "../../sharedTreeObjectDiff.js";
+import { sharedTreeObjectDiff } from "../../shared-tree-object-diff/index.js";
 
 
 const schemaFactory = new SchemaFactory("TreeNodeTest");
 
-describe("sharedTreeObjectDiff - basics", () => {
+describe("sharedTreeObjectDiff - Objects & Maps", () => {
 
 	class SimpleObjectTreeNode extends schemaFactory.object("SimpleTreeNode", {
 		test: schemaFactory.boolean,

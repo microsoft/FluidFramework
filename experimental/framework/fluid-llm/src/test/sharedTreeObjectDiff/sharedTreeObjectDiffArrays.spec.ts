@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactory} from "@fluidframework/tree";
 
-import { sharedTreeObjectDiff } from "../../sharedTreeObjectDiff.js";
+import { sharedTreeObjectDiff } from "../../shared-tree-object-diff/index.js";
 
 
 const schemaFactory = new SchemaFactory("TreeNodeTest");

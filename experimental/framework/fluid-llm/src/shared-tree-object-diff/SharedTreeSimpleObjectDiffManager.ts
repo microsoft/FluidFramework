@@ -1,13 +1,13 @@
 import { type TreeArrayNode } from "@fluidframework/tree";
 import type * as z from "zod";
 
-import { objectDiff, type Difference, type DifferenceCreate, type DifferenceRemove, type ObjectPath } from "./objectDiff.js";
+import { sharedTreeObjectDiff, type Difference, type DifferenceCreate, type DifferenceRemove, type ObjectPath } from "./sharedTreeObjectDiff.js";
 
 
 /**
  * Manages the differences between a SharedTree object node and a javascript object and then applies them.
  */
-export class SharedTreeObjectIdDiffManager {
+export class SharedTreeSimpleObjectDiffManager {
 	private readonly objectSchema?: z.Schema
 
 	public constructor(params?: {objectSchema?: z.Schema}) {
@@ -27,36 +27,35 @@ export class SharedTreeObjectIdDiffManager {
 			}
 		}
 
-		const differences = objectDiff(obj as Record<string, unknown>  | unknown[], newObj);
+		const differences = sharedTreeObjectDiff(obj as Record<string, unknown>  | unknown[], newObj);
 
 		this.handleDifferences(differences, obj);
 	}
 
 
-	public handleDifferences(diffs: Difference[], objectToUpdate: Record<string, unknown> | TreeArrayNode): void {
-		if (diffs === undefined) {
+	public handleDifferences(diff: Difference[], objectToUpdate: Record<string, unknown> | TreeArrayNode): void {
+		if (diff === undefined) {
 			console.log("no changes");
 			return;
 		}
 
+		/**
+		 * Edge case: If the diff is a change to an object in an array, we'll have to consider how to handle it. Does it have an id?
+		 * If it has the id, we find and use that to delete the node rather than using the index. However, if not, do
+		 * we just go off of the index? Lets discuss w/ team. If not, we need to enfore objects having an id field.
+		 */
 
-		// 1. We apply all change diffs before handling more complex diff types.
-		const changeDiffs = diffs.filter((d) => d.type === 'CHANGE');
-		for (const changeDiff of changeDiffs) {
-			this.applyDiff(changeDiff, objectToUpdate);
-		}
+		/**
+		 * Edge case: What if the diff is a removal of a property on an object? SharedTree seemingly doesn't support this so what do we do?
+		 */
 
-		// 2. Now, we must handle MOVE diff's.
-		// We'll need to see what happened to not only the node being moved but the one that is being displaced.
-		// E.g. if we move node X to index 2, then what happened to node Y at index 2?
-		// We'd need to find not the coorsponding diff for node Y and apply it.
-		// Finally, we'd need to see what happens to index that node X was at.
-		// If node Y was deleted and the new node at index 1 is an entirely new one, we'll have to handle the scenario.
+		// Simple diff's that change a variable can be applied directly thanks to the shared tree json object proxy.
 
+		// Should this merge class even mention ST if we're using object proxies?
 
-		for (let i = 0; i < diffs.length; i++) {
+		for (let i = 0; i < diff.length; i++) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const currentDiff: Difference = diffs[i]!;
+			const currentDiff: Difference = diff[i]!;
 
 			this.applyDiff(currentDiff, objectToUpdate);
 
@@ -64,9 +63,9 @@ export class SharedTreeObjectIdDiffManager {
 			// array indexes for the given array for the rest of the diffs
 			if (currentDiff.type === 'REMOVE' && this.isDiffOnArray(currentDiff)) {
 
-				for (let j = i + 1; j < diffs.length; j++) {
+				for (let j = i + 1; j < diff.length; j++) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const nextDiff = diffs[j]!;
+					const nextDiff = diff[j]!;
 
 					// If these are operations on the same array
 					if (this.isDiffOnArray(nextDiff) && nextDiff.path.length === currentDiff.path.length) {
@@ -86,9 +85,9 @@ export class SharedTreeObjectIdDiffManager {
 			}
 
 			if (currentDiff.type === 'CREATE' && this.isDiffOnArray(currentDiff)) {
-				for (let j = i + 1; j < diffs.length; j++) {
+				for (let j = i + 1; j < diff.length; j++) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const nextDiff = diffs[j]!;
+					const nextDiff = diff[j]!;
 
 					// If these are operations on the same array
 					if (this.isDiffOnArray(nextDiff) && nextDiff.path.length === currentDiff.path.length) {

@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 
-import { objectDiff, type Difference } from "../../objectDiff.js";
+import { objectDiff, type Difference } from "../../object-diff/index.js";
 
 describe("objectDiff - basics", () => {
 	it("new raw value", () => {
