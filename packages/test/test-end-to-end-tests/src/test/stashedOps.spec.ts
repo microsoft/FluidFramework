@@ -1634,12 +1634,13 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
 			container.connect();
 			const handle = await handleP;
+			const waitForSummaryPromise = waitForSummary(container1);
 			map.set("blob handle", handle);
 			assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
 
 			// wait for summary with redirect table
 			await provider.ensureSynchronized();
-			await waitForSummary(container1);
+			await waitForSummaryPromise;
 
 			// should be able to load entirely offline
 			const stashBlob = await getPendingOps(testContainerConfig, provider, true);
