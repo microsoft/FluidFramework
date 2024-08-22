@@ -1,12 +1,12 @@
 {
 	"compilerOptions": {
 		"rootDir": "example",
+		"outDir": "dist",
 		"target": "ESNext",
-		"composite": true,
-		"moduleResolution": "nodenext",
-		"module": "nodenext",
+		"module": "NodeNext",
+		"strict": true,
 		"allowImportingTsExtensions": true,
 		"noEmit": true
 	},
-	"include": ["example/**/*"],
+	"include": ["./example/**/*"],
 }

@@ -33,11 +33,13 @@ const undefinableIndexedRecord: UndefinableIndexSignatureType = { a: "hello", b:
 
 /* Nullable index signature */
 nullableIndexedRecord.a; // ok: Accessing index property 'a' without requiring a particular result
+// @ts-expect-error - This should be handled by tsc, not by this custom lint rule
 nullableIndexedRecord.a.length; // defect: Accessing length of index property 'a', but 'a' might be undefined or null
 nullableIndexedRecord.a?.length; // ok: Using optional chaining to access length safely handles 'undefined'
 
 /* Undefinable index signature */
 undefinableIndexedRecord.a; // ok: Accessing index property 'a' without requiring a particular result
+// @ts-expect-error - This should be handled by tsc, not by this custom lint rule
 undefinableIndexedRecord.a.length; // defect: Accessing length of index property 'a', but 'a' might be undefined
 undefinableIndexedRecord.a?.length; // ok: Using optional chaining to access length safely handles 'undefined'
 
@@ -124,6 +126,7 @@ aLetExpectingStringOrUndefinedAfterVariableDeclaration = indexedRecordOfStrings.
 /* Non-Nullable Properties */
 const nonNullObj: NonNullableProps = { definitelyString: "hello" };
 nonNullObj.definitelyString.length; // ok: Accessing length of non-nullable property
+// @ts-expect-error - This should be handled by tsc, not by this custom lint rule
 nonNullObj.maybeString.length; // ok: This should be caught by tsc, not by this custom lint rule
 
 let possiblyUndefined: string | undefined;

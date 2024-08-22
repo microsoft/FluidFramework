@@ -40,7 +40,7 @@ class MockClass {
 
 	validNoComment(): void {}
 
-	signature: string;
+	signature: string = "signature";
 
 	private _value = 1;
 
@@ -69,5 +69,5 @@ class MockClassTwo {
 	invalidInternalTwo(): void {}
 
 	// Valid property signature.
-	validSignature: void;
+	validSignature: null = null;
 }
