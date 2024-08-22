@@ -226,7 +226,7 @@ describe("SharedTree", () => {
 			tree: SharedTree,
 			schema: FlexTreeSchema<TRoot>,
 			onDispose: () => void = () => assert.fail(),
-		): FlexTreeView<TRoot> {
+		): FlexTreeView {
 			const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
 			const view = requireSchema(
 				tree.checkout,
