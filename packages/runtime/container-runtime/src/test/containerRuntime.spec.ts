@@ -2760,22 +2760,64 @@ describe("Runtime", () => {
 				);
 			});
 
+			it("accurately reports amount of sent and lost signals with multiple SignalLatency events", () => {
+				// Send 50 signals and drop 10
+				sendSignals(50);
+				dropSignals(10);
+				processSubmittedSignals(40);
+
+				// Send 60 signals and drop 10
+				sendSignals(60);
+				processSubmittedSignals(40);
+				dropSignals(10);
+
+				// Here we should detect that 100 signals have been sent and 20 signals were lost
+				processSubmittedSignals(10);
+
+				// Send 100 signals and drop 1
+				sendSignals(100);
+				dropSignals(1);
+
+				// Here we should detect that 100 more signals have been sent and 1 signal was lost
+				processSubmittedSignals(99);
+
+				// Check SignalLatency logs amount of sent and lost signals
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsLost: 20,
+							signalsSent: 100,
+						},
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsLost: 1,
+							signalsSent: 100,
+						},
+					],
+					"SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals",
+				);
+			});
+
 			it("accurately reports amount of sent and lost signals when roundtrip tracked signal is droppped", () => {
 				// Send 50 signals and drop 10
 				sendSignals(50);
 				dropSignals(10);
 				processSubmittedSignals(40);
 
-				// Send 60 signals and drop 10 (including roundtrip tracked signal)
+				// Send 60 signals and drop 15 (including roundtrip tracked signal)
 				sendSignals(60);
 				processSubmittedSignals(40);
-				// Drop roundtrip tracked signal
-				dropSignals(15);
+				dropSignals(15); // Drop roundtrip tracked signal
+
+				// Since roundtrip signal is lost, we don't expect to see SignalLatency telemetry for the first 100 signals
 				processSubmittedSignals(5);
 
 				// Send 100 signals and drop 1
 				sendSignals(100);
 				dropSignals(1);
+
+				// Here we should detect that 200 signals have been sent and 26 signals were lost
 				processSubmittedSignals(99);
 
 				// Check SignalLatency logs amount of sent and lost signals
