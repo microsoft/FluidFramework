@@ -31,12 +31,12 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 		const p = this.internalStorageService.getSnapshotTree(version);
 		if (this.prefetchEnabled) {
 			// We don't care if the prefetch succeeds
-			void p.then((tree: ISnapshotTree | null | undefined) => {
+			p.then((tree: ISnapshotTree | null | undefined) => {
 				if (tree === null || tree === undefined) {
 					return;
 				}
 				this.prefetchTree(tree);
-			});
+			}).catch(() => {});
 		}
 		return p;
 	}
@@ -76,7 +76,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 
 		for (const blob of secondary) {
 			// We don't care if the prefetch succeeds
-			void this.cachedRead(blob);
+			this.cachedRead(blob).catch(() => {});
 		}
 	}
 
@@ -86,7 +86,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 			if (blobKey.startsWith(".") || blobKey === "header" || blobKey.startsWith("quorum")) {
 				if (blob !== null && blob !== undefined) {
 					// We don't care if the prefetch succeeds
-					void this.cachedRead(blob);
+					this.cachedRead(blob).catch(() => {});
 				}
 			} else if (!blobKey.startsWith("deltas")) {
 				if (blob !== null && blob !== undefined) {
