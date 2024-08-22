@@ -389,6 +389,15 @@ declare type current_as_old_for_Variable_isPromiseLike = requireAssignableTo<Typ
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Function_oob": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_oob = requireAssignableTo<TypeOnly<typeof current.oob>, TypeOnly<typeof old.oob>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Function_setLongTimeout": {"backCompat": false}
  */
 declare type current_as_old_for_Function_setLongTimeout = requireAssignableTo<TypeOnly<typeof current.setLongTimeout>, TypeOnly<typeof old.setLongTimeout>>

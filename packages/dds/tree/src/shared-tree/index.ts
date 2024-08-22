@@ -34,10 +34,8 @@ export {
 } from "./schematizeTree.js";
 
 export {
-	type FlexTreeView,
 	CheckoutFlexTreeView,
-	type ITreeViewFork,
-	type FlexTreeViewGeneric,
+	type FlexTreeView,
 } from "./treeView.js";
 
 export type { ISharedTreeEditor, ISchemaEditor } from "./sharedTreeEditBuilder.js";

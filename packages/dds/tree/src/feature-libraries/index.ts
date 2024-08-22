@@ -214,25 +214,18 @@ export {
 } from "./default-schema/index.js";
 
 export {
-	type AssignableFieldKinds,
-	type FlexibleFieldContent,
-	type FlexibleNodeContent,
 	type FlexTreeLeafNode,
 	type FlexTreeMapNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
 	Skip,
-	type FlexTreeObjectNode,
 	type FlexTreeContext,
 	type FlexTreeTypedField,
-	type FlexTreeTypedNode,
-	type FlexTreeTypedNodeUnion,
 	type FlexTreeEntity,
 	type FlexTreeField,
 	type FlexTreeNode,
 	getTreeContext,
-	type CheckTypesOverlap,
 	TreeStatus,
 	Context,
 	type FlexTreeNodeEvents,
@@ -240,7 +233,6 @@ export {
 	isFlexTreeNode,
 	ContextSlot,
 	// Internal
-	type FlexTreeUnboxField,
 	flexTreeMarker,
 	FlexTreeEntityKind,
 	assertFlexTreeEntityNotFreed,

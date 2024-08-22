@@ -258,7 +258,6 @@
 			},
 			"checks": {
 				"dependsOn": [
-					"^checks",
 					"check:format",
 					"generate:packageList",
 					"policy-check",
@@ -271,7 +270,6 @@
 			},
 			"checks:fix": {
 				"dependsOn": [
-					"^checks:fix",
 					"format",
 					"generate:packageList",
 					"policy-check:fix",
