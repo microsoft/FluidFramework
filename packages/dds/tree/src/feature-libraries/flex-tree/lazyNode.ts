@@ -20,7 +20,7 @@ import {
 } from "../../core/index.js";
 import { disposeSymbol, fail } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
-import { Any, FlexFieldSchema, type FlexTreeNodeSchema } from "../typed-schema/index.js";
+import { FlexFieldSchema, type FlexTreeNodeSchema } from "../typed-schema/index.js";
 
 import type { Context } from "./context.js";
 import {
@@ -192,7 +192,9 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 				// Additionally this approach makes it possible for a user to take a FlexTree node, get its parent, check its schema, down cast based on that, then edit that detached field (ex: removing the node in it).
 				// This MIGHT work properly with existing merge resolution logic (it must keep client in sync and be unable to violate schema), but this either needs robust testing or to be explicitly banned (error before s3ending the op).
 				// Issues like replacing a node in the a removed sequenced then undoing the remove could easily violate schema if not everything works exactly right!
-				fieldSchema = FlexFieldSchema.create(FieldKinds.sequence, [Any]);
+				fieldSchema = FlexFieldSchema.create(FieldKinds.sequence, [
+					...this.context.schema.nodeSchema.values(),
+				]);
 			}
 		} else {
 			cursor.exitField();

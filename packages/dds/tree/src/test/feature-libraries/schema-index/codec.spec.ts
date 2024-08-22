@@ -58,7 +58,7 @@ describe("SchemaIndex", () => {
 			{
 				version: 1 as const,
 				nodes: {},
-				root: { kind: "x" as FieldKindIdentifier },
+				root: { kind: "x" as FieldKindIdentifier, types: [] },
 			} satisfies Format,
 		];
 		for (const data of cases) {

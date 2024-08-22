@@ -45,8 +45,6 @@ const adapter: CursorAdapter<JsonCompatible> = {
 				if (node === null) {
 					return leaf.null.name;
 				} else if (isReadonlyArray(node)) {
-					// Linter seems wrong here.
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 					return jsonArray.name;
 				} else {
 					return jsonObject.name;
