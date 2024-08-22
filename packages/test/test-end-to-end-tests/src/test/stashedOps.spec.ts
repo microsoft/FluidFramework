@@ -60,6 +60,7 @@ import {
 	ITestObjectProvider,
 	createAndAttachContainer,
 	createDocumentId,
+	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
@@ -2016,6 +2017,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				// Second container, attempted to load from pendingLocalState
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
+					category: "generic", // We downgrade this log if the container was still loading (which is the case for this test)
 					errorType: "dataProcessingError",
 				},
 			],
@@ -2143,7 +2145,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					category: "generic",
 				},
-				// Loser of the race between Containers 2 and 3
+				// Container 3
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					category: "error",
@@ -2164,33 +2166,29 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 				// Rehydrate the first time - counter increment will be resubmitted on container2's new clientId
 				const container2 = await loader.resolve({ url }, pendingLocalState);
-				await provider.ensureSynchronized();
 				const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 				const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 
+				await provider.ensureSynchronized();
 				assert.strictEqual(counter1.value, incrementValue);
 				assert.strictEqual(counter2.value, incrementValue);
 
 				// Rehydrate the second time - when we are catching up, we'll recognize the incoming op (from container2),
 				// and since it's coming from a different clientID we'll realize the container is forked and we'll close
-				// Note there is a race condition for when the closure happens so we check a few ways the error could propagate.
-				let loadError: Error | undefined;
-				const container3 = await loader.resolve({ url }, pendingLocalState).catch((e) => {
-					// We'll be here if we close during load (and container3 will be undefined)
-					loadError = e;
-					return undefined;
-				});
-				container3?.on("closed", (e) => {
-					// We'll be here if we close after loading finishes
-					loadError = e as Error;
-				});
-
-				assert.equal(
-					loadError?.message,
-					"Forked Container Error! Matching batchIds but mismatched clientId",
+				// NOTE: there is a race condition for when the closure happens so we check a few ways the error could propagate.
+				await assert.rejects(
+					async () => {
+						// We expect either loader.resolve to throw or else the container to close right after load
+						const container = await loader.resolve({ url }, pendingLocalState);
+						await timeoutPromise((_resolve, reject) => {
+							container.once("closed", reject);
+						});
+					},
+					{ message: "Forked Container Error! Matching batchIds but mismatched clientId" },
 					"Container should have closed due to ForkedContainerError",
 				);
 
+				// Confirm that rehydrating the second time didn't change the counter value
 				await provider.ensureSynchronized();
 				assert.strictEqual(counter1.value, incrementValue);
 				assert.strictEqual(counter2.value, incrementValue);
