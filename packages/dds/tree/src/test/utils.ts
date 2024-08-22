@@ -102,7 +102,6 @@ import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	FieldKinds,
 	type FlexFieldSchema,
-	type FlexTreeTypedField,
 	type NodeKeyManager,
 	SchemaBuilderBase,
 	ViewSchema,
@@ -115,7 +114,6 @@ import {
 	mapRootChanges,
 	mapTreeFromCursor,
 	MockNodeKeyManager,
-	type FlexTreeSchema,
 	cursorForMapTreeField,
 	type IDefaultEditBuilder,
 } from "../feature-libraries/index.js";
@@ -758,26 +756,6 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	);
 	initializeForest(forest, nodeCursors, testRevisionTagCodec, testIdCompressor);
 	return forest;
-}
-
-export function flexTreeFromForest<TRoot extends FlexFieldSchema>(
-	schema: FlexTreeSchema<TRoot>,
-	forest: IEditableForest,
-	args?: {
-		nodeKeyManager?: NodeKeyManager;
-		events?: Listenable<CheckoutEvents> &
-			IEmitter<CheckoutEvents> &
-			HasListeners<CheckoutEvents>;
-	},
-): FlexTreeTypedField<TRoot["kind"]> {
-	const branch = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
-		...args,
-		forest,
-		schema: new TreeStoredSchemaRepository(intoStoredSchema(schema)),
-	});
-	const manager = args?.nodeKeyManager ?? new MockNodeKeyManager();
-	const view = new CheckoutFlexTreeView(branch, schema, manager);
-	return view.flexTree;
 }
 
 const sf = new SchemaFactory("com.fluidframework.json");
