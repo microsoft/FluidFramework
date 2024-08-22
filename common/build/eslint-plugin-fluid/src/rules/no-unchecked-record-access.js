@@ -3,6 +3,14 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Rule to enforce safe property access on index signature types.
+ *
+ * Reports errors when accessing properties that might not be defined or when a
+ * variable is being assigned an index signature type without a defined type.
+ * Enable `noUncheckedIndexedAccess` to disable this rule.
+ */
+
 const { SyntaxKind } = require("typescript");
 
 module.exports = {
