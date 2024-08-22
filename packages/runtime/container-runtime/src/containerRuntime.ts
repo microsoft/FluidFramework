@@ -3026,7 +3026,6 @@ export class ContainerRuntime
 							this._signalTracking.minimumTrackingSignalSequenceNumber,
 						);
 					} else {
-						this._signalTracking.signalsLost = 0;
 						this._signalTracking.trackingSignalSequenceNumber =
 							envelope.clientSignalSequenceNumber + 1;
 					}

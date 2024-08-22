@@ -2770,21 +2770,21 @@ describe("Runtime", () => {
 				sendSignals(60);
 				processSubmittedSignals(40);
 				// Drop roundtrip tracked signal
-				dropSignals(10);
-				processSubmittedSignals(10);
+				dropSignals(15);
+				processSubmittedSignals(5);
 
 				// Send 100 signals and drop 1
 				sendSignals(100);
 				dropSignals(1);
 				processSubmittedSignals(99);
 
-				// Check SignalLatency only logs the amount of lost signals in latest 100 signal batch
+				// Check SignalLatency logs amount of sent and lost signals
 				logger.assertMatch(
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsLost: 1,
-							signalsSent: 100,
+							signalsLost: 26,
+							signalsSent: 200,
 						},
 					],
 					"SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals",
