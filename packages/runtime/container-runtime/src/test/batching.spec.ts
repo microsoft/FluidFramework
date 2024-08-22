@@ -160,6 +160,7 @@ describe("Runtime batching", () => {
 		const cr = patchContainerRuntime(containerRuntime);
 		const messageCount = 5;
 		const batch = getBatch(messageCount);
+		// Remove the batch begin metadata.
 		batch[0].metadata = undefined;
 
 		assert.throws(
@@ -173,6 +174,7 @@ describe("Runtime batching", () => {
 		const cr = patchContainerRuntime(containerRuntime);
 		const messageCount = 5;
 		const batch = getBatch(messageCount);
+		// Change the clientId of the second message to a different client.
 		batch[1].clientId = "otherClientId";
 
 		assert.throws(
@@ -190,6 +192,7 @@ describe("Runtime batching", () => {
 		const cr = patchContainerRuntime(containerRuntime);
 		const messageCount = 5;
 		const batch = getBatch(messageCount);
+		// Change the type of the second message to a non-runtime op.
 		batch[1].type = MessageType.NoOp;
 
 		assert.throws(
@@ -207,6 +210,8 @@ describe("Runtime batching", () => {
 		const cr = patchContainerRuntime(containerRuntime);
 		const messageCount = 5;
 		const batch = getBatch(messageCount);
+
+		// Change the type of the second message to an unknown runtime op.
 		const unknownMessage = batch[1];
 		const unknownMessageType = "unknown";
 		(unknownMessage.contents as any).type = unknownMessageType;
