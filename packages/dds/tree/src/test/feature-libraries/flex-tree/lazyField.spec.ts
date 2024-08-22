@@ -31,7 +31,6 @@ import {
 import {
 	Any,
 	FieldKinds,
-	type FlexAllowedTypes,
 	FlexFieldSchema,
 	cursorForJsonableTreeNode,
 	mapTreeFromCursor,
@@ -59,10 +58,7 @@ const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detached
 /**
  * Test {@link LazyField} implementation.
  */
-class TestLazyField<
-	TKind extends FlexFieldKind,
-	TTypes extends FlexAllowedTypes,
-> extends LazyField<TKind, TTypes> {}
+class TestLazyField<TKind extends FlexFieldKind> extends LazyField<TKind> {}
 
 describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
@@ -125,21 +121,27 @@ describe("LazyField", () => {
 			detachedFieldAnchor,
 		);
 
-		assert(anyOptionalField.is(FlexFieldSchema.create(FieldKinds.optional, [Any])));
+		assert(anyOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.optional, [Any])));
 
-		assert(!anyOptionalField.is(FlexFieldSchema.create(FieldKinds.optional, [])));
+		assert(!anyOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.optional, [])));
 		assert(
-			!anyOptionalField.is(FlexFieldSchema.create(FieldKinds.optional, [leafDomain.boolean])),
+			!anyOptionalField.isExactly(
+				FlexFieldSchema.create(FieldKinds.optional, [leafDomain.boolean]),
+			),
 		);
-		assert(!anyOptionalField.is(FlexFieldSchema.create(FieldKinds.required, [])));
-		assert(!anyOptionalField.is(FlexFieldSchema.create(FieldKinds.required, [Any])));
+		assert(!anyOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.required, [])));
+		assert(!anyOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.required, [Any])));
 		assert(
-			!anyOptionalField.is(FlexFieldSchema.create(FieldKinds.required, [leafDomain.boolean])),
+			!anyOptionalField.isExactly(
+				FlexFieldSchema.create(FieldKinds.required, [leafDomain.boolean]),
+			),
 		);
-		assert(!anyOptionalField.is(FlexFieldSchema.create(FieldKinds.sequence, [])));
-		assert(!anyOptionalField.is(FlexFieldSchema.create(FieldKinds.sequence, [Any])));
+		assert(!anyOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.sequence, [])));
+		assert(!anyOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.sequence, [Any])));
 		assert(
-			!anyOptionalField.is(FlexFieldSchema.create(FieldKinds.sequence, [leafDomain.boolean])),
+			!anyOptionalField.isExactly(
+				FlexFieldSchema.create(FieldKinds.sequence, [leafDomain.boolean]),
+			),
 		);
 
 		// #endregion
@@ -154,42 +156,48 @@ describe("LazyField", () => {
 		);
 
 		assert(
-			booleanOptionalField.is(
+			booleanOptionalField.isExactly(
 				FlexFieldSchema.create(FieldKinds.optional, [leafDomain.boolean]),
 			),
 		);
 
-		assert(!booleanOptionalField.is(FlexFieldSchema.create(FieldKinds.optional, [Any])));
 		assert(
-			!booleanOptionalField.is(
+			!booleanOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.optional, [Any])),
+		);
+		assert(
+			!booleanOptionalField.isExactly(
 				FlexFieldSchema.create(FieldKinds.optional, [leafDomain.number]),
 			),
 		);
-		assert(!booleanOptionalField.is(FlexFieldSchema.create(FieldKinds.required, [])));
-		assert(!booleanOptionalField.is(FlexFieldSchema.create(FieldKinds.required, [Any])));
+		assert(!booleanOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.required, [])));
 		assert(
-			!booleanOptionalField.is(
+			!booleanOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.required, [Any])),
+		);
+		assert(
+			!booleanOptionalField.isExactly(
 				FlexFieldSchema.create(FieldKinds.required, [leafDomain.boolean]),
 			),
 		);
 		assert(
-			!booleanOptionalField.is(
+			!booleanOptionalField.isExactly(
 				FlexFieldSchema.create(FieldKinds.required, [leafDomain.number]),
 			),
 		);
-		assert(!booleanOptionalField.is(FlexFieldSchema.create(FieldKinds.sequence, [])));
-		assert(!booleanOptionalField.is(FlexFieldSchema.create(FieldKinds.sequence, [Any])));
+		assert(!booleanOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.sequence, [])));
 		assert(
-			!booleanOptionalField.is(
+			!booleanOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.sequence, [Any])),
+		);
+		assert(
+			!booleanOptionalField.isExactly(
 				FlexFieldSchema.create(FieldKinds.sequence, [leafDomain.boolean]),
 			),
 		);
 		assert(
-			!booleanOptionalField.is(
+			!booleanOptionalField.isExactly(
 				FlexFieldSchema.create(FieldKinds.sequence, [leafDomain.number]),
 			),
 		);
-		assert(!booleanOptionalField.is(FlexFieldSchema.create(FieldKinds.optional, [])));
+		assert(!booleanOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.optional, [])));
 
 		// #endregion
 	});
@@ -339,12 +347,6 @@ describe("LazyOptionalField", () => {
 				[42],
 			);
 		});
-
-		it("mapBoxed", () => {
-			const mapResult = field.mapBoxed((value) => value);
-			assert.equal(mapResult.length, 1);
-			assert.equal(mapResult[0].value, 42);
-		});
 	});
 
 	describe("Field without value", () => {
@@ -370,13 +372,6 @@ describe("LazyOptionalField", () => {
 		it("map", () => {
 			assert.deepEqual(
 				field.map((value) => value),
-				[],
-			);
-		});
-
-		it("mapBoxed", () => {
-			assert.deepEqual(
-				field.mapBoxed((value) => value),
 				[],
 			);
 		});
@@ -441,12 +436,6 @@ describe("LazyValueField", () => {
 			field.map((value) => value),
 			[initialTree],
 		);
-	});
-
-	it("mapBoxed", () => {
-		const mapResult = field.mapBoxed((value) => value);
-		assert.equal(mapResult.length, 1);
-		assert.equal(mapResult[0].value, initialTree);
 	});
 
 	it("content", () => {
@@ -523,18 +512,8 @@ describe("LazySequence", () => {
 
 	it("map", () => {
 		const sequence = testSequence([1, 2]);
-		const mapResult = sequence.map((value) => value * 2);
+		const mapResult = sequence.map((value) => (value as number) * 2);
 		assert.deepEqual(mapResult, [2, 4]);
-	});
-
-	it("mapBoxed", () => {
-		const sequence = testSequence([37, 42]);
-		const mapResult = sequence.mapBoxed((value) => value);
-		assert.equal(mapResult.length, 2);
-		assert.equal(mapResult[0].schema, leafDomain.number);
-		assert.equal(mapResult[0].value, 37);
-		assert.equal(mapResult[1].schema, leafDomain.number);
-		assert.equal(mapResult[1].value, 42);
 	});
 
 	it("asArray", () => {

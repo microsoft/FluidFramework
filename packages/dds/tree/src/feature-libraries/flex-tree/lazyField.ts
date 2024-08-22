@@ -37,8 +37,7 @@ import {
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
 	type FlexTreeTypedField,
-	type FlexTreeTypedNodeUnion,
-	type FlexTreeUnboxNodeUnion,
+	type FlexTreeUnknownUnboxed,
 	TreeStatus,
 	flexTreeMarker,
 	flexTreeSlot,
@@ -125,11 +124,8 @@ export function makeField(
 /**
  * Base type for fields implementing {@link FlexTreeField} using cursors.
  */
-export abstract class LazyField<
-		out TKind extends FlexFieldKind,
-		TTypes extends FlexAllowedTypes,
-	>
-	extends LazyEntity<FlexFieldSchema<TKind, TTypes>, FieldAnchor>
+export abstract class LazyField<out TKind extends FlexFieldKind>
+	extends LazyEntity<FlexFieldSchema<TKind>, FieldAnchor>
 	implements FlexTreeField
 {
 	public get [flexTreeMarker](): FlexTreeEntityKind.Field {
@@ -145,7 +141,7 @@ export abstract class LazyField<
 
 	public constructor(
 		context: Context,
-		schema: FlexFieldSchema<TKind, TTypes>,
+		schema: FlexFieldSchema<TKind>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -164,9 +160,16 @@ export abstract class LazyField<
 		}
 	}
 
-	public is<TSchema extends FlexFieldSchema>(
-		schema: TSchema,
-	): this is FlexTreeTypedField<TSchema> {
+	public is<TKind2 extends FlexFieldKind>(kind: TKind2): this is FlexTreeTypedField<TKind2> {
+		assert(
+			this.context.schema.policy.fieldKinds.get(kind.identifier) === kind,
+			"Narrowing must be done to a kind that exists in this context",
+		);
+
+		return this.schema.kind === (kind as unknown);
+	}
+
+	public isExactly<TSchema extends FlexFieldSchema>(schema: TSchema): boolean {
 		assert(
 			this.context.schema.policy.fieldKinds.get(schema.kind.identifier) === schema.kind,
 			0x77c /* Narrowing must be done to a kind that exists in this context */,
@@ -203,13 +206,13 @@ export abstract class LazyField<
 		return this[cursorSymbol].getFieldLength();
 	}
 
-	public atIndex(index: number): FlexTreeUnboxNodeUnion<TTypes> {
+	public atIndex(index: number): FlexTreeUnknownUnboxed {
 		return inCursorNode(this[cursorSymbol], index, (cursor) =>
 			unboxedUnion(this.context, this.schema, cursor),
 		);
 	}
 
-	public boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> | undefined {
+	public boxedAt(index: number): FlexTreeNode | undefined {
 		const finalIndex = indexForAt(index, this.length);
 
 		if (finalIndex === undefined) {
@@ -218,27 +221,18 @@ export abstract class LazyField<
 
 		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
 			makeTree(this.context, cursor),
-		) as unknown as FlexTreeTypedNodeUnion<TTypes>;
-	}
-
-	public map<U>(callbackfn: (value: FlexTreeUnboxNodeUnion<TTypes>, index: number) => U): U[] {
-		return Array.from(this, callbackfn);
-	}
-
-	public mapBoxed<U>(
-		callbackfn: (value: FlexTreeTypedNodeUnion<TTypes>, index: number) => U,
-	): U[] {
-		return Array.from(this.boxedIterator(), callbackfn);
-	}
-
-	public boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>> {
-		return iterateCursorField(
-			this[cursorSymbol],
-			(cursor) => makeTree(this.context, cursor) as unknown as FlexTreeTypedNodeUnion<TTypes>,
 		);
 	}
 
-	public [Symbol.iterator](): IterableIterator<FlexTreeUnboxNodeUnion<TTypes>> {
+	public map<U>(callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U): U[] {
+		return Array.from(this, callbackfn);
+	}
+
+	public boxedIterator(): IterableIterator<FlexTreeNode> {
+		return iterateCursorField(this[cursorSymbol], (cursor) => makeTree(this.context, cursor));
+	}
+
+	public [Symbol.iterator](): IterableIterator<FlexTreeUnknownUnboxed> {
 		return iterateCursorField(this[cursorSymbol], (cursor) =>
 			unboxedUnion(this.context, this.schema, cursor),
 		);
@@ -269,20 +263,20 @@ export abstract class LazyField<
 	}
 }
 
-export class LazySequence<TTypes extends FlexAllowedTypes>
-	extends LazyField<typeof FieldKinds.sequence, TTypes>
-	implements FlexTreeSequenceField<TTypes>
+export class LazySequence
+	extends LazyField<typeof FieldKinds.sequence>
+	implements FlexTreeSequenceField
 {
 	public constructor(
 		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.sequence, TTypes>,
+		schema: FlexFieldSchema<typeof FieldKinds.sequence>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
 		super(context, schema, cursor, fieldAnchor);
 	}
 
-	public at(index: number): FlexTreeUnboxNodeUnion<TTypes> | undefined {
+	public at(index: number): FlexTreeUnknownUnboxed | undefined {
 		const finalIndex = indexForAt(index, this.length);
 
 		if (finalIndex === undefined) {
@@ -293,7 +287,7 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 			unboxedUnion(this.context, this.schema, cursor),
 		);
 	}
-	public get asArray(): readonly FlexTreeUnboxNodeUnion<TTypes>[] {
+	public get asArray(): readonly FlexTreeUnknownUnboxed[] {
 		return this.map((x) => x);
 	}
 
@@ -312,13 +306,13 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 	}
 }
 
-export class ReadonlyLazyValueField<TTypes extends FlexAllowedTypes>
-	extends LazyField<typeof FieldKinds.required, TTypes>
-	implements FlexTreeRequiredField<TTypes>
+export class ReadonlyLazyValueField
+	extends LazyField<typeof FieldKinds.required>
+	implements FlexTreeRequiredField
 {
 	public constructor(
 		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.required, TTypes>,
+		schema: FlexFieldSchema<typeof FieldKinds.required>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -331,18 +325,15 @@ export class ReadonlyLazyValueField<TTypes extends FlexAllowedTypes>
 		},
 	};
 
-	public get content(): FlexTreeUnboxNodeUnion<TTypes> {
+	public get content(): FlexTreeUnknownUnboxed {
 		return this.atIndex(0);
 	}
 }
 
-export class LazyValueField<TTypes extends FlexAllowedTypes>
-	extends ReadonlyLazyValueField<TTypes>
-	implements FlexTreeRequiredField<TTypes>
-{
+export class LazyValueField extends ReadonlyLazyValueField implements FlexTreeRequiredField {
 	public constructor(
 		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.required, TTypes>,
+		schema: FlexFieldSchema<typeof FieldKinds.required>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -361,18 +352,18 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 		return fieldEditor;
 	}
 
-	public override get content(): FlexTreeUnboxNodeUnion<TTypes> {
+	public override get content(): FlexTreeUnknownUnboxed {
 		return this.atIndex(0);
 	}
 }
 
-export class LazyIdentifierField<TTypes extends FlexAllowedTypes>
-	extends ReadonlyLazyValueField<TTypes>
-	implements FlexTreeRequiredField<TTypes>
+export class LazyIdentifierField
+	extends ReadonlyLazyValueField
+	implements FlexTreeRequiredField
 {
 	public constructor(
 		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.required, TTypes>,
+		schema: FlexFieldSchema<typeof FieldKinds.required>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -381,8 +372,8 @@ export class LazyIdentifierField<TTypes extends FlexAllowedTypes>
 }
 
 export class LazyOptionalField<TTypes extends FlexAllowedTypes>
-	extends LazyField<typeof FieldKinds.optional, TTypes>
-	implements FlexTreeOptionalField<TTypes>
+	extends LazyField<typeof FieldKinds.optional>
+	implements FlexTreeOptionalField
 {
 	public constructor(
 		context: Context,
@@ -408,15 +399,12 @@ export class LazyOptionalField<TTypes extends FlexAllowedTypes>
 		return fieldEditor;
 	}
 
-	public get content(): FlexTreeUnboxNodeUnion<TTypes> | undefined {
+	public get content(): FlexTreeUnknownUnboxed | undefined {
 		return this.length === 0 ? undefined : this.atIndex(0);
 	}
 }
 
-export class LazyForbiddenField<TTypes extends FlexAllowedTypes> extends LazyField<
-	typeof FieldKinds.forbidden,
-	TTypes
-> {}
+export class LazyForbiddenField extends LazyField<typeof FieldKinds.forbidden> {}
 
 type Builder = new <TTypes extends FlexAllowedTypes>(
 	context: Context,
@@ -427,7 +415,7 @@ type Builder = new <TTypes extends FlexAllowedTypes>(
 	schema: FlexFieldSchema<any, TTypes>,
 	cursor: ITreeSubscriptionCursor,
 	fieldAnchor: FieldAnchor,
-) => LazyField<FlexFieldKind, TTypes>;
+) => LazyField<FlexFieldKind>;
 
 const builderList: [FlexFieldKind, Builder][] = [
 	[FieldKinds.forbidden, LazyForbiddenField],

@@ -26,7 +26,8 @@ jobs:
         run: echo "pr=$(cat pr)" >> $GITHUB_OUTPUT
         working-directory: ./results
       - name: Post report in comment
-        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
+        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.0
+        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # ratchet:marocchino/sticky-pull-request-comment@v2.9.0
         with:
           header: linkreport
           recreate: true
