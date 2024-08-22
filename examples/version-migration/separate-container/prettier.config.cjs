@@ -3,4 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { SameContainerMigrator } from "./sameContainerMigrator.js";
+module.exports = {
+	...require("@fluidframework/build-common/prettier.config.cjs"),
+};
