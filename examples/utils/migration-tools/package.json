@@ -14,16 +14,24 @@
 	"sideEffects": false,
 	"type": "module",
 	"exports": {
-		"./alpha": {
+		".": {
 			"import": {
-				"types": "./lib/alpha.d.ts",
+				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/public.d.ts",
+				"default": "./dist/index.js"
 			}
 		},
 		"./internal": {
 			"import": {
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
 			}
 		}
 	},
@@ -44,7 +52,8 @@
 		"format:biome": "biome check . --write",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
-		"lint:fix": "fluid-build . --task eslint:fix --task format"
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
 		"@fluid-experimental/pact-map": "workspace:~",
