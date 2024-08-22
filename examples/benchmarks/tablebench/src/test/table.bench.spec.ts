@@ -187,11 +187,10 @@ describe("Table", () => {
 			});
 
 			benchmarkCustom({
-				only: true,
+				only: false,
 				type: BenchmarkType.Measurement,
 				title: `SharedTree`,
 				run: async (reporter) => {
-					throw new Error("SharedTree is not yet implemented");
 					const { channel, processAllMessages } = create(SharedTree.getFactory());
 					tree = channel;
 

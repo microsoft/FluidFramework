@@ -53,9 +53,8 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 		try {
 			await options.run(reporter);
 		} catch (error) {
-			console.error("Benchmark error:", error); // Additional logging for debugging
-			test.emit("benchmark error", error);
-			throw error; // Re-throwing error to ensure it's not swallowed if not handled by an event listener
+			test.emit("fail", error);
+			throw error;
 		}
 
 		const elapsedSeconds = timer.toSeconds(startTime, timer.now());

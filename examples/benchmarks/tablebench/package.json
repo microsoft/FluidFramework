@@ -42,7 +42,7 @@
 		"start:webpack": "webpack serve --config webpack.config.cjs --env mode=tinylicious",
 		"test": "npm run test:mocha",
 		"test:benchmark:report": "mocha --exit --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
-		"test:customBenchmarks": "mocha --config ./.mocharc.customBenchmarks.cjs",
+		"test:customBenchmarks": "cross-env FLUID_TEST_VERBOSE=1 mocha --config ./.mocharc.customBenchmarks.cjs",
 		"test:mocha": "npm run test:mocha:esm",
 		"test:mocha:esm": "mocha --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
@@ -62,7 +62,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/benchmark": "file:../../../tools/benchmark",
+		"@fluid-tools/benchmark": "^0.50.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.43.0",
 		"@fluidframework/eslint-config-fluid": "^5.3.0",
