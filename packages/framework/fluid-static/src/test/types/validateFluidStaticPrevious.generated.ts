@@ -110,6 +110,24 @@ declare type current_as_old_for_Interface_IFluidContainerEvents = requireAssigna
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_IFluidContainerInternal": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IFluidContainerInternal = requireAssignableTo<TypeOnly<old.IFluidContainerInternal>, TypeOnly<current.IFluidContainerInternal>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IFluidContainerInternal": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IFluidContainerInternal = requireAssignableTo<TypeOnly<current.IFluidContainerInternal>, TypeOnly<old.IFluidContainerInternal>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_IMember": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IMember = requireAssignableTo<TypeOnly<old.IMember>, TypeOnly<current.IMember>>
@@ -293,3 +311,12 @@ declare type current_as_old_for_Function_createFluidContainer = requireAssignabl
  * "Function_createServiceAudience": {"backCompat": false}
  */
 declare type current_as_old_for_Function_createServiceAudience = requireAssignableTo<TypeOnly<typeof current.createServiceAudience>, TypeOnly<typeof old.createServiceAudience>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_isInternalFluidContainer": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_isInternalFluidContainer = requireAssignableTo<TypeOnly<typeof current.isInternalFluidContainer>, TypeOnly<typeof old.isInternalFluidContainer>>

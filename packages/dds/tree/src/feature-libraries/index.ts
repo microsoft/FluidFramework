@@ -223,7 +223,6 @@ export {
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
 	Skip,
-	type FlexTreeObjectNode,
 	type FlexTreeContext,
 	type FlexTreeTypedField,
 	type FlexTreeTypedNode,
@@ -232,7 +231,6 @@ export {
 	type FlexTreeField,
 	type FlexTreeNode,
 	getTreeContext,
-	type CheckTypesOverlap,
 	TreeStatus,
 	Context,
 	type FlexTreeNodeEvents,
@@ -240,7 +238,6 @@ export {
 	isFlexTreeNode,
 	ContextSlot,
 	// Internal
-	type FlexTreeUnboxField,
 	flexTreeMarker,
 	FlexTreeEntityKind,
 	assertFlexTreeEntityNotFreed,

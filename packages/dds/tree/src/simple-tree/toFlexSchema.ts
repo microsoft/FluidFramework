@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey, type TreeNodeSchemaIdentifier } from "../core/index.js";
+import {
+	EmptyKey,
+	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
+} from "../core/index.js";
 import {
 	FieldKinds,
 	type FlexAllowedTypes,
@@ -19,9 +22,12 @@ import {
 	type FlexTreeSchema,
 	TreeNodeSchemaBase,
 	defaultSchemaPolicy,
+	intoStoredSchemaCollection,
 	schemaIsLeaf,
 } from "../feature-libraries/index.js";
-import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
+// TODO: once flex schema is gone, this code can move into simple-tree
+// eslint-disable-next-line import/no-internal-modules
+import { normalizeFlexListEager } from "../feature-libraries/typed-schema/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 import {
 	cachedFlexSchemaFromClassSchema,
@@ -76,6 +82,17 @@ export function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
 		policy: defaultSchemaPolicy,
 	};
 	return typed;
+}
+
+/**
+ * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
+ */
+export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
+	const flex = toFlexSchema(root);
+	return {
+		rootFieldSchema: flex.rootFieldSchema.stored,
+		...intoStoredSchemaCollection(flex),
+	};
 }
 
 /**
