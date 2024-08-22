@@ -383,12 +383,11 @@ export class PendingStateManager implements IDisposable {
 		// An inbound remote batch should not match the pending batch ID for this client.
 		// That would indicate the container forked (two instances trying to submit the same local state)
 		if (this.remoteBatchMatchesPendingBatch(batch)) {
-			const forkedContainerError = DataProcessingError.create(
+			throw DataProcessingError.create(
 				"Forked Container Error! Matching batchIds but mismatched clientId",
 				"PendingStateManager.processInboundBatch",
 				batch.messages[0], // Note: if it's an empty batch, we won't get message metadata added to the error/log here
 			);
-			throw forkedContainerError;
 		}
 
 		// No localOpMetadata for remote messages
