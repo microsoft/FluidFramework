@@ -238,7 +238,6 @@ export {
 	isFlexTreeNode,
 	ContextSlot,
 	// Internal
-	type FlexTreeUnboxField,
 	flexTreeMarker,
 	FlexTreeEntityKind,
 	assertFlexTreeEntityNotFreed,

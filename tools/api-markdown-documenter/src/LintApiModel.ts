@@ -26,6 +26,8 @@ import type { ConfigurationBase } from "./ConfigurationBase.js";
 
 /**
  * {@link lintApiModel} configuration.
+ *
+ * @beta
  */
 export interface LintApiModelConfiguration extends ConfigurationBase {
 	/**
@@ -45,8 +47,10 @@ const defaultLintApiModelConfiguration: Required<Omit<LintApiModelConfiguration,
 
 /**
  * An error resulting from a reference tag (e.g., `link` or `inheritDoc` tags) with an invalid target.
+ *
+ * @beta
  */
-export interface ReferenceError {
+export interface LinterReferenceError {
 	/**
 	 * The tag name with the invalid reference.
 	 */
@@ -58,7 +62,7 @@ export interface ReferenceError {
 	readonly sourceItem: string;
 
 	/**
-	 * The name of the package that the {@link ReferenceError.sourceItem} belongs to.
+	 * The name of the package that the {@link LinterReferenceError.sourceItem} belongs to.
 	 */
 	readonly packageName: string;
 
@@ -78,11 +82,13 @@ export interface ReferenceError {
  * @remarks Used while walking the API model to accumulate errors, and converted to {@link LinterErrors} to return to the caller.
  */
 interface MutableLinterErrors {
-	readonly referenceErrors: Set<ReferenceError>;
+	readonly referenceErrors: Set<LinterReferenceError>;
 }
 
 /**
  * Errors found during linting.
+ *
+ * @beta
  */
 export interface LinterErrors {
 	// TODO: malformed tag errors
@@ -90,7 +96,7 @@ export interface LinterErrors {
 	/**
 	 * Errors related to reference tags (e.g., `link` or `inheritDoc` tags) with invalid targets.
 	 */
-	readonly referenceErrors: ReadonlySet<ReferenceError>;
+	readonly referenceErrors: ReadonlySet<LinterReferenceError>;
 
 	// TODO: add other error kinds as needed.
 }
@@ -100,6 +106,8 @@ export interface LinterErrors {
  *
  * @returns The set of errors encountered during linting, if any were found.
  * Otherwise, `undefined`.
+ *
+ * @beta
  */
 export async function lintApiModel(
 	configuration: LintApiModelConfiguration,
@@ -113,7 +121,7 @@ export async function lintApiModel(
 	logger.verbose("Linting API model...");
 
 	const errors: MutableLinterErrors = {
-		referenceErrors: new Set<ReferenceError>(),
+		referenceErrors: new Set<LinterReferenceError>(),
 	};
 	lintApiItem(apiModel, apiModel, optionsWithDefaults, errors);
 	const anyErrors = errors.referenceErrors.size > 0;
@@ -291,7 +299,7 @@ function checkLinkTag(
 	linkTag: DocLinkTag,
 	apiItem: ApiItem,
 	apiModel: ApiModel,
-): ReferenceError | undefined {
+): LinterReferenceError | undefined {
 	// If the link tag was parsed correctly (which we know it was in this case, because we have a `DocLinkTag`), then we don't have to worry about syntax validation.
 
 	// If the link points to some external URL, no-op.
@@ -331,7 +339,7 @@ function checkInheritDocTag(
 	inheritDocTag: DocInheritDocTag,
 	associatedItem: ApiDocumentedItem,
 	apiModel: ApiModel,
-): ReferenceError | undefined {
+): LinterReferenceError | undefined {
 	if (inheritDocTag?.declarationReference === undefined) {
 		return undefined;
 	}

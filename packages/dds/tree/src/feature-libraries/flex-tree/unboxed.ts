@@ -16,7 +16,7 @@ import type { Context } from "./context.js";
 import type {
 	FlexTreeNode,
 	FlexTreeUnboxNode,
-	FlexTreeUnboxNodeUnion,
+	FlexTreeUnknownUnboxed,
 } from "./flexTreeTypes.js";
 import { makeTree } from "./lazyNode.js";
 
@@ -42,10 +42,10 @@ export function unboxedUnion<TTypes extends FlexAllowedTypes>(
 	context: Context,
 	schema: FlexFieldSchema<FlexFieldKind, TTypes>,
 	cursor: ITreeSubscriptionCursor,
-): FlexTreeUnboxNodeUnion<TTypes> {
+): FlexTreeUnknownUnboxed {
 	const type = schema.monomorphicChildType;
 	if (type !== undefined) {
-		return unboxedTree(context, type, cursor) as FlexTreeUnboxNodeUnion<TTypes>;
+		return unboxedTree(context, type, cursor);
 	}
-	return makeTree(context, cursor) as FlexTreeUnboxNodeUnion<TTypes>;
+	return makeTree(context, cursor);
 }

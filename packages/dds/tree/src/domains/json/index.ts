@@ -6,8 +6,6 @@
 export {
 	singleJsonCursor,
 	cursorToJsonObject,
-	typedJsonCursor,
-	type TypedJsonCompatible,
-	type TypedJsonCompatibleObject,
+	fieldJsonCursor,
 } from "./jsonCursor.js";
 export { jsonSchema, jsonObject, jsonArray, jsonRoot } from "./jsonDomainSchema.js";
