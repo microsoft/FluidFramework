@@ -114,7 +114,7 @@ export class DocumentService
 		}
 
 		const getStorageManager = async (disableCache?: boolean): Promise<GitManager> => {
-			const refreshed = await this.maybeRefreshDiscovery();
+			const refreshed = await this.refreshSessionInfoIfNeeded();
 			if (!this.storageManager || !this.noCacheStorageManager || refreshed) {
 				if (refreshed) {
 					const rateLimiter = new RateLimiter(
@@ -165,7 +165,7 @@ export class DocumentService
 		assert(!!this.documentStorageService, 0x0b1 /* "Storage service not initialized" */);
 
 		const getRestWrapper = async (): Promise<RestWrapper> => {
-			const refreshed = await this.maybeRefreshDiscovery();
+			const refreshed = await this.refreshSessionInfoIfNeeded();
 
 			if (refreshed) {
 				const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
@@ -203,7 +203,7 @@ export class DocumentService
 	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
 		const connect = async (refreshToken?: boolean) => {
 			let ordererToken = await this.ordererRestWrapper.getToken();
-			await this.maybeRefreshDiscovery();
+			await this.refreshSessionInfoIfNeeded();
 
 			if (refreshToken) {
 				ordererToken = await PerformanceEvent.timedExecAsync(
@@ -289,10 +289,10 @@ export class DocumentService
 	}
 
 	/**
-	 * Re-discover session URLs if necessary.
+	 * Refresh session info URLs if necessary.
 	 * @returns boolean - true if session info was refreshed
 	 */
-	private async maybeRefreshDiscovery(): Promise<boolean> {
+	private async refreshSessionInfoIfNeeded(): Promise<boolean> {
 		const response = await this.getSessionInfo();
 		if (!response.refreshed) {
 			return false;

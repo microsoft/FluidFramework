@@ -42,14 +42,14 @@ export class SessionInfoManager {
 	 * Key: URL for given session (see "getDiscoverSessionUrl")
 	 * Value: session info stored as an IResolvedUrl
 	 */
-	private readonly sessionFluidUrls: Map<string, IResolvedUrl> = new Map();
+	private readonly sessionInfoMap: Map<string, IResolvedUrl> = new Map();
 
 	/**
 	 * Stored dates of when a session was last discovered/refreshed
 	 * Key: URL for given session (see "getDiscoverSessionUrl")
 	 * Value: date last discovered
 	 */
-	private readonly sessionLastDiscovered: Map<string, number> = new Map();
+	private readonly sessionLastDiscoveredMap: Map<string, number> = new Map();
 
 	constructor(private readonly enableDiscovery: boolean) {}
 
@@ -63,17 +63,17 @@ export class SessionInfoManager {
 
 		const url = getDiscoverSessionUrl(params);
 		assert(
-			this.sessionFluidUrls.has(url) === this.sessionLastDiscovered.has(url),
+			this.sessionInfoMap.has(url) === this.sessionLastDiscoveredMap.has(url),
 			"Session map state mismatch",
 		);
 
 		if (session !== undefined) {
-			this.sessionFluidUrls.set(url, getDiscoveredFluidResolvedUrl(resolvedUrl, session));
-			this.sessionLastDiscovered.set(url, Date.now());
-		} else if (!this.sessionFluidUrls.has(url)) {
-			this.sessionFluidUrls.set(url, resolvedUrl);
+			this.sessionInfoMap.set(url, getDiscoveredFluidResolvedUrl(resolvedUrl, session));
+			this.sessionLastDiscoveredMap.set(url, Date.now());
+		} else if (!this.sessionInfoMap.has(url)) {
+			this.sessionInfoMap.set(url, resolvedUrl);
 			// Force a refresh
-			this.sessionLastDiscovered.set(url, 0);
+			this.sessionLastDiscoveredMap.set(url, 0);
 		}
 
 		return (await this.getSessionInfo(params)).resolvedUrl;
@@ -87,27 +87,28 @@ export class SessionInfoManager {
 	): Promise<IGetSessionInfoResponse> {
 		const url = getDiscoverSessionUrl(params);
 		assert(
-			this.sessionFluidUrls.has(url) && this.sessionLastDiscovered.has(url),
+			this.sessionInfoMap.has(url) && this.sessionLastDiscoveredMap.has(url),
 			"Unexpected discover session URL",
 		);
 
 		let refreshed = false;
 		const shouldRediscover =
-			Date.now() - this.sessionLastDiscovered.get(url)! > RediscoverAfterTimeSinceDiscoveryMs;
+			Date.now() - this.sessionLastDiscoveredMap.get(url)! >
+			RediscoverAfterTimeSinceDiscoveryMs;
 		if (this.enableDiscovery && shouldRediscover) {
-			await this.updateSessionInfo(params).catch(() => {
+			await this.fetchAndUpdateSessionInfo(params).catch(() => {
 				// Undo discovery time set on failure, so that next check refreshes.
-				this.sessionLastDiscovered.set(url, 0);
+				this.sessionLastDiscoveredMap.set(url, 0);
 			});
 			refreshed = true;
 		}
 		return {
 			refreshed,
-			resolvedUrl: this.sessionFluidUrls.get(url)!,
+			resolvedUrl: this.sessionInfoMap.get(url)!,
 		};
 	}
 
-	private async updateSessionInfo(params: IGetSessionInfoParams): Promise<void> {
+	private async fetchAndUpdateSessionInfo(params: IGetSessionInfoParams): Promise<void> {
 		const { documentId, ordererRestWrapper, logger, resolvedUrl } = params;
 
 		const url = getDiscoverSessionUrl(params);
@@ -127,11 +128,11 @@ export class SessionInfoManager {
 				return response.content;
 			},
 		);
-		this.sessionFluidUrls.set(
+		this.sessionInfoMap.set(
 			url,
 			getDiscoveredFluidResolvedUrl(resolvedUrl, discoveredSession),
 		);
-		this.sessionLastDiscovered.set(url, Date.now());
+		this.sessionLastDiscoveredMap.set(url, Date.now());
 	}
 }
 
