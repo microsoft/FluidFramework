@@ -431,13 +431,14 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 				logger,
 			);
 			const rootDataObject = (await mainContainer.getEntryPoint()) as RootTestDataObject;
+			const waitForSummaryOpPromise = waitForSummaryOp(mainContainer);
 			const dataObject = await dataStoreFactory1.createInstance(
 				rootDataObject.containerRuntime,
 			);
 			rootDataObject._root.set("store", dataObject.handle);
 			await waitForContainerConnection(mainContainer);
 
-			const summarySucceeded = await timeoutAwait(waitForSummaryOp(mainContainer), {
+			const summarySucceeded = await timeoutAwait(waitForSummaryOpPromise, {
 				errorMsg: "Timeout on waiting for summary op",
 			});
 			assert(summarySucceeded === true, "Summary should have been successful");
