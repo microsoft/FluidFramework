@@ -34,7 +34,7 @@ describe("typedTreeSchema", () => {
 	const emptyObjectSchema = builder.object("empty", {});
 	const basicObjectSchema = builder.object("basicObject", { foo: Any });
 
-	const recursiveObject = builder.objectRecursive("recursiveObject", {
+	const recursiveObject: FlexObjectNodeSchema = builder.object("recursiveObject", {
 		foo: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveObject]),
 	});
 

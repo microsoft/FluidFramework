@@ -21,7 +21,6 @@ import {
 	identifierFieldKindIdentifier,
 } from "../../core/index.js";
 import {
-	type Assume,
 	type MakeNominal,
 	type Named,
 	compareSets,
@@ -115,12 +114,9 @@ export class FlexMapNodeSchema<
 
 /**
  */
-export class LeafNodeSchema<
-	const out Name extends string = string,
-	const out Specification extends Unenforced<ValueSchema> = ValueSchema,
-> extends TreeNodeSchemaBase<Name, Specification> {
+export class LeafNodeSchema extends TreeNodeSchemaBase<string, ValueSchema> {
 	public get leafValue(): ValueSchema {
-		return this.info as ValueSchema;
+		return this.info;
 	}
 
 	protected _typeCheck2?: MakeNominal;
@@ -128,7 +124,7 @@ export class LeafNodeSchema<
 		builder: Named<string>,
 		name: TreeNodeSchemaIdentifier<Name>,
 		specification: Specification,
-	): LeafNodeSchema<Name, Specification> {
+	): LeafNodeSchema {
 		return new LeafNodeSchema(
 			builder,
 			name,
@@ -144,25 +140,19 @@ export class LeafNodeSchema<
 
 /**
  */
-export class FlexObjectNodeSchema<
-	const out Name extends string = string,
-	const out Specification extends Unenforced<FlexObjectNodeFields> = FlexObjectNodeFields,
-> extends TreeNodeSchemaBase<Name, Specification> {
+export class FlexObjectNodeSchema extends TreeNodeSchemaBase<string, FlexObjectNodeFields> {
 	protected _typeCheck2?: MakeNominal;
 	public readonly identifierFieldKeys: readonly FieldKey[] = [];
 
-	public static create<
-		const Name extends string,
-		const Specification extends FlexObjectNodeFields,
-	>(
+	public static create(
 		builder: Named<string>,
-		name: TreeNodeSchemaIdentifier<Name>,
-		specification: Specification,
-	): FlexObjectNodeSchema<Name, Specification> {
-		const objectNodeFieldsObject: NormalizeObjectNodeFields<Specification> =
-			normalizeStructFields<Specification>(specification);
+		name: TreeNodeSchemaIdentifier,
+		specification: FlexObjectNodeFields,
+	): FlexObjectNodeSchema {
+		const objectNodeFieldsObject: NormalizeObjectNodeFields<FlexObjectNodeFields> =
+			normalizeStructFields<FlexObjectNodeFields>(specification);
 		const objectNodeFields: ObjectToMap<
-			NormalizeObjectNodeFields<Specification>,
+			NormalizeObjectNodeFields<FlexObjectNodeFields>,
 			FieldKey,
 			FlexFieldSchema
 		> = objectToMapTyped(objectNodeFieldsObject);
@@ -177,11 +167,9 @@ export class FlexObjectNodeSchema<
 
 	private constructor(
 		builder: Named<string>,
-		name: TreeNodeSchemaIdentifier<Name>,
-		info: Specification,
-		public readonly objectNodeFieldsObject: NormalizeObjectNodeFields<
-			Assume<Specification, FlexObjectNodeFields>
-		>,
+		name: TreeNodeSchemaIdentifier,
+		info: FlexObjectNodeFields,
+		public readonly objectNodeFieldsObject: NormalizeObjectNodeFields<FlexObjectNodeFields>,
 		// Allows reading fields through the normal map.
 		// Stricter typing caused Specification to no longer be covariant, so has been removed.
 		public readonly objectNodeFields: ReadonlyMap<FieldKey, FlexFieldSchema>,
