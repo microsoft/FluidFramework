@@ -15,7 +15,7 @@ const undefinableIndexedRecord: UndefinableIndexSignatureType = { a: "hello", b:
 function recordAFnExpectsStringOrUndefined(
 	record: UndefinableIndexSignatureType,
 ): string | undefined {
-	return record.a; // defect: Returning index property 'a' as string or undefined variable should be caught, 'a' might be undefined
+	return record.a; // ok: Returning index property 'a' as string or undefined variable should be not be caught, 'a' might be undefined
 }
 
 function AFnExpectsStringOrUndefined(a: string | undefined): string | undefined {
