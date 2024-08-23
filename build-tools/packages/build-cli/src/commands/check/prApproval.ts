@@ -51,12 +51,12 @@ export default class CheckPrApprovalCommand extends BaseCommand<
 		}),
 		team: Flags.string({
 			description:
-				"The team whose membership should be checked. The team must be in the same GitHub organization as the repo. Only the team name should be provided - the org is inferred from the repo details.",
+				"The team whose membership should be checked. If at least one of the members of the team has approved the PR, it is considered approved. The team must be in the same GitHub organization as the repo. Only the team name should be provided - the org is inferred from the repo details.",
 			exactlyOne: ["team", "approvers"],
 		}),
 		approvers: Flags.string({
 			description:
-				"GitHub users who should be considered approvers. Cannot be used with the --team flag. You can provide multiple names as a space-delimited list, e.g. '--approvers user1 user2'",
+				"GitHub users who should be considered approvers. If at least one of these users has approved the PR, it is considered approved. Cannot be used with the --team flag. You can provide multiple names as a space-delimited list, e.g. '--approvers user1 user2'",
 			multiple: true,
 			exactlyOne: ["team", "approvers"],
 		}),

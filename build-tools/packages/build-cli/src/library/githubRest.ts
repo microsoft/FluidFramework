@@ -21,6 +21,10 @@ export interface GitHubProps {
 
 	/**
 	 * A GitHub access token.
+	 *
+	 * @remarks
+	 * This token should be treated as any other secure/secret value. Do not log it, do not include it in source code,
+	 * and do not copy/paste it into insecure inputs.
 	 */
 	token: string;
 }

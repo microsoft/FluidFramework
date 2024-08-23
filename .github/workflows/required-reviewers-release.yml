@@ -12,6 +12,13 @@ on:
       - release/server/**
       - test/release/**
 
+  # This workflow needs to run on review changes because it evaluates the review state.
+  pull_request_review:
+    types:
+      - submitted
+      - edited
+      - dismissed
+
 permissions:
   # Needed to write the comments to the PRs themselves
   pull-requests: write
@@ -61,7 +68,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # This command will fail with an error if the PR is not approved, which
-          # will cause
+          # will in turn cause the CI job to fail.
           flub check prApproval \
             --pr ${{ github.event.pull_request.number }} \
             --repo ${{ github.repository }} \
