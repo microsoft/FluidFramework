@@ -534,6 +534,7 @@ export class PendingStateManager implements IDisposable {
 					pendingBatchCsn: pendingMessage.batchInfo.batchStartCsn,
 					batchStartCsn: batch.batchStartCsn,
 					pendingBatchLength: pendingMessage.batchInfo.length,
+					expectedPendingBatchLength,
 					batchLength: batch.messages.length,
 					pendingBatchId,
 					inboundBatchId,

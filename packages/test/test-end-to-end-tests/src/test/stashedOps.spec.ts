@@ -77,9 +77,13 @@ function assertCurrentAndIdealExpectations(
 	assert.equal(
 		actual,
 		expected.currentButWrong,
-		`Current (wrong) behavior is not as expected. ${message}`,
+		`Current (wrong) behavior is not as expected. ${message ?? ""}`,
 	);
-	assert.notEqual(actual, expected.ideal, `Ideal behavior is unexpectedly met. ${message}`);
+	assert.notEqual(
+		actual,
+		expected.ideal,
+		`Ideal behavior is unexpectedly met. ${message ?? ""}`,
+	);
 }
 
 const mapId = "map";
@@ -2071,6 +2075,14 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				},
 			],
 			async function () {
+				// The code below attempts to force both containers to submit the same op in parallel,
+				// but it is not correct.  It works out in Local Server but not real servers,
+				// so skip for now.
+				// This will be fixed when we also implement the logic to recognize and ignore duplicate ops.
+				if (provider.driver.type !== "local") {
+					this.skip();
+				}
+
 				const incrementValue = 3;
 				const pendingLocalState = await getPendingOps(
 					testContainerConfig,
