@@ -401,11 +401,11 @@ extends:
                           summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
                           failIfCoverageEmpty: true
                         condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                      - task: BuildQualityChecks@9
+                      - task: BuildQualityChecks@8
                         displayName: Check Code Coverage
                         inputs:
                           checkCoverage: true
-                          coverageFailOption: 'build'
+                          coverageFailOption: 'fixed'
                           coverageType: 'lines'
                           coverageThreshold: '55.5'
                           useDiffCoverage: true
