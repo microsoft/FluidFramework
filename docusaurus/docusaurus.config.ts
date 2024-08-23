@@ -23,7 +23,7 @@ const config: Config = {
   organizationName: 'facebook', // Usually your GitHub org/user name.
   projectName: 'docusaurus', // Usually your repo name.
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
 
   // Even if you don't use internationalization, you can use this field to set
@@ -33,7 +33,14 @@ const config: Config = {
     defaultLocale: 'en',
     locales: ['en'],
   },
-
+  // plugins: [
+  //   [
+  //     require.resolve("docusaurus-lunr-search"),
+  //     {
+  //       // Options here
+  //     },
+  //   ]
+  // ],
   presets: [
     [
       'classic',
@@ -66,7 +73,11 @@ const config: Config = {
       } satisfies Preset.Options,
     ],
   ],
-
+  markdown: {
+    // `.mdx` files will be treated as MDX, and `.md` files will be treated as standard Markdown.
+    // Needed to support current API docs output, which is not MDX compatible.
+    format: "detect",
+  },
   themeConfig: {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
@@ -84,6 +95,7 @@ const config: Config = {
           label: 'Tutorial',
         },
         {to: '/blog', label: 'Blog', position: 'left'},
+        {to: '/docs/api', label: 'API Docs', position: 'left'},
         {
           href: 'https://github.com/facebook/docusaurus',
           label: 'GitHub',

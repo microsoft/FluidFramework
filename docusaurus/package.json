@@ -11,14 +11,22 @@
   "license": "MIT",
   "author": "Microsoft and contributors",
   "scripts": {
-    "build": "docusaurus build",
-    "clear": "docusaurus clear",
+    "api-markdown-documenter": "node ./infra/generate-api-documentation.mjs",
+    "build": "npm run build:api-documentation && npm run build:docusaurus",
+    "build:api-documentation": "npm run download-doc-models && npm run api-markdown-documenter",
+    "build:docusaurus": "docusaurus build",
+    "clean": "concurrently \"npm:clean:*\"",
+    "clean:api-documentation": "rimraf --glob docs/api",
+    "clean:doc-models": "rimraf --glob .doc-models",
+    "clean:docusaurus": "docusaurus clear",
     "deploy": "docusaurus deploy",
     "docusaurus": "docusaurus",
+    "download-doc-models": "node ./infra/download-doc-models.mjs",
+    "rebuild": "npm run clean && npm run build",
     "serve": "docusaurus serve",
     "start": "docusaurus start",
     "swizzle": "docusaurus swizzle",
-    "typecheck": "tsc",
+    "tsc": "tsc",
     "write-heading-ids": "docusaurus write-heading-ids",
     "write-translations": "docusaurus write-translations"
   },
@@ -47,7 +55,14 @@
     "@docusaurus/module-type-aliases": "^3.5.2",
     "@docusaurus/tsconfig": "^3.5.2",
     "@docusaurus/types": "^3.5.2",
-    "typescript": "~5.4.5"
+    "@fluid-tools/api-markdown-documenter": "^0.16.0",
+    "@rushstack/node-core-library": "^5.7.0",
+    "chalk": "^5.3.0",
+    "concurrently": "^8.2.2",
+    "download": "8.0.0",
+    "fs-extra": "^11.2.0",
+    "rimraf": "^6.0.1",
+    "typescript": "~5.5.2"
   },
   "engines": {
     "node": ">=18.0"

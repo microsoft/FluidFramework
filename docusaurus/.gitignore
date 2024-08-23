@@ -7,6 +7,10 @@
 # Generated files
 .docusaurus
 .cache-loader
+.doc-models
+
+# Generated API documentation contents
+docs/api
 
 # Misc
 .DS_Store
