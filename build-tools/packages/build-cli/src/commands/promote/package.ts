@@ -103,11 +103,8 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 			const responseData = await response.json();
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
 			return responseData.success;
-		} catch (error: unknown) {
-			if (error instanceof Error) {
-				this.error("Failed to promote package due to network error:", error.message);
+		} catch {
 				return false;
-			}
 		}
 	};
 }
