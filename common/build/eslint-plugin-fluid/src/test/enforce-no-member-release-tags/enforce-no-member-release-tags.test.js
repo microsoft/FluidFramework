@@ -15,7 +15,7 @@ describe("Do not allow release tags on members", function () {
 			},
 			parser: "@typescript-eslint/parser",
 			parserOptions: {
-				project: path.join(__dirname, "../tsconfig.json"),
+				project: path.join(__dirname, "../example/tsconfig.json"),
 			},
 		};
 

@@ -29,7 +29,7 @@ describe("ESLint Rule Tests", function () {
 			},
 			parser: "@typescript-eslint/parser",
 			parserOptions: {
-				project: path.join(__dirname, "../tsconfig.json"),
+				project: path.join(__dirname, "../example/tsconfig.json"),
 			},
 		});
 		const filesToLint = ["fileWithImports.ts", "mockModule.ts"].map((file) =>
@@ -64,7 +64,7 @@ describe("ESLint Rule Tests", function () {
 			},
 			parser: "@typescript-eslint/parser",
 			parserOptions: {
-				project: path.join(__dirname, "../tsconfig.json"),
+				project: path.join(__dirname, "../example/tsconfig.json"),
 			},
 		});
 		const filesToLint = ["fileWithExceptionImports.ts", "exceptionFile.ts"].map((file) =>
@@ -92,7 +92,7 @@ describe("ESLint Rule Tests", function () {
 			},
 			parser: "@typescript-eslint/parser",
 			parserOptions: {
-				project: path.join(__dirname, "../tsconfig.json"),
+				project: path.join(__dirname, "../example/tsconfig.json"),
 			},
 		});
 		const filesToLint = ["fileWithImports.ts", "mockModule.ts"].map((file) =>

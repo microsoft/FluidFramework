@@ -17,7 +17,7 @@ describe("ESLint Rule Tests", function () {
 				},
 				parser: "@typescript-eslint/parser",
 				parserOptions: {
-					project: path.join(__dirname, "../tsconfig.json"),
+					project: path.join(__dirname, "../example/tsconfig.json"),
 				},
 			},
 			rulePaths: [path.join(__dirname, "../../rules")],
@@ -145,7 +145,7 @@ describe("ESLint Rule Tests", function () {
 			result.messages[4].message,
 			"Assigning 'nullableIndexedRecord.a' from an index signature type to a strictly typed variable without 'undefined' is not allowed. 'nullableIndexedRecord.a' may be 'undefined'",
 		);
-		assert.strictEqual(result.messages[4].line, 53);
+		assert.strictEqual(result.messages[4].line, 55);
 	});
 
 	it("Should not report errors for correct usage of undefinableIndexedRecord", async function () {
