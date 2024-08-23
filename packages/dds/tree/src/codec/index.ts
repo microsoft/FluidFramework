@@ -30,4 +30,5 @@ export {
 	makeVersionedCodec,
 	makeVersionedValidatedCodec,
 	makeVersionDispatchingCodec,
+	makeStrictVersionCodec,
 } from "./versioned/index.js";

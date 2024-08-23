@@ -92,3 +92,28 @@ export function makeVersionDispatchingCodec<TDecoded, TContext>(
 		},
 	});
 }
+
+/**
+ * Creates a codec which only supports decoding data that matches the provided options.writeVersion, and
+ * throws if it encounters data with a different version.
+ * Each member of the codec family must write an explicit version number into the data it encodes.
+ */
+export function makeStrictVersionCodec<TDecoded, TContext>(
+	family: ICodecFamily<TDecoded, TContext>,
+	options: ICodecOptions & { writeVersion: number },
+): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
+	const codecToUse = family.resolve(options.writeVersion).json;
+	return {
+		encode(data, context): Versioned {
+			return codecToUse.encode(data, context) as Versioned;
+		},
+		decode(data: Versioned, context) {
+			if (data.version !== options.writeVersion) {
+				throw new Error(
+					`Cannot decode data with version '${data.version}'. Supported version is '${options.writeVersion}'.`,
+				);
+			}
+			return codecToUse.decode(data, context);
+		},
+	};
+}

@@ -8,9 +8,16 @@ import { strict as assert } from "node:assert";
 import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
-import { timeoutPromise } from "@fluidframework/test-utils/internal";
+import { timeoutPromise, timeoutAwait } from "@fluidframework/test-utils/internal";
 import { TreeViewConfiguration, SchemaFactory, type TreeView } from "@fluidframework/tree";
-import { SharedTree, Tree, TreeStatus, type Revertible } from "@fluidframework/tree/internal";
+import { SharedTreeWithConfiguration } from "@fluidframework/tree/internal";
+import {
+	SharedTree,
+	Tree,
+	TreeStatus,
+	type Revertible,
+	SharedTreeFormatVersion,
+} from "@fluidframework/tree/internal";
 import type { AxiosResponse } from "axios";
 
 import {
@@ -53,6 +60,87 @@ const treeConfiguration = new TreeViewConfiguration(
 
 const testMatrix = getTestMatrix();
 for (const testOpts of testMatrix) {
+	describe(`SharedTree with custom configuration (${testOpts.variant})`, () => {
+		const connectTimeoutMs = 10_000;
+		let client: AzureClient;
+		beforeEach("createAzureClient", () => {
+			client = createAzureClient();
+		});
+
+		async function waitForConnection(container: IFluidContainer): Promise<void> {
+			if (container.connectionState !== ConnectionState.Connected) {
+				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				});
+			}
+		}
+
+		it("can create/load a container with a custom SharedTree and do basic ops", async () => {
+			const schema = {
+				initialObjects: {
+					tree1: SharedTreeWithConfiguration({}),
+				},
+			} satisfies ContainerSchema;
+
+			const { container } = await timeoutAwait(client.createContainer(schema, "2"));
+			const treeData: TreeView<typeof StringArray> =
+				container.initialObjects.tree1.viewWith(treeConfiguration);
+			treeData.initialize(new StringArray([]));
+			treeData.root.insertNew("test string 1");
+			assert.strictEqual(treeData.root.length, 1);
+			assert.strictEqual(treeData.root.at(0), "test string 1");
+
+			const containerId = await timeoutAwait(container.attach());
+			await waitForConnection(container);
+
+			const { container: loadedContainer } = await timeoutAwait(
+				client.getContainer(containerId, schema, "2"),
+			);
+			const loadedTreeData = loadedContainer.initialObjects.tree1.viewWith(treeConfiguration);
+			assert.strictEqual(loadedTreeData.root.length, 1);
+			assert.strictEqual(loadedTreeData.root.at(0), "test string 1");
+		});
+
+		it("throws when trying to load a container whose summary has a different persisted format", async () => {
+			const createSchema = {
+				initialObjects: {
+					tree1: SharedTreeWithConfiguration({}),
+				},
+			} satisfies ContainerSchema;
+
+			const loadSchema = {
+				initialObjects: {
+					tree1: SharedTreeWithConfiguration({
+						persistedFormatVersion: SharedTreeFormatVersion.v2,
+					}),
+				},
+			} satisfies ContainerSchema;
+
+			const { container } = await timeoutAwait(client.createContainer(createSchema, "2"));
+			const treeData: TreeView<typeof StringArray> =
+				container.initialObjects.tree1.viewWith(treeConfiguration);
+			treeData.initialize(new StringArray([]));
+			treeData.root.insertNew("test string 1");
+			assert.strictEqual(treeData.root.length, 1);
+			assert.strictEqual(treeData.root.at(0), "test string 1");
+
+			const containerId = await timeoutAwait(container.attach());
+			await waitForConnection(container);
+
+			// Loading container using a different persisted format version should throw an error
+			await assert.rejects(
+				async () => {
+					await client.getContainer(containerId, loadSchema, "2");
+				},
+				(error: Error) =>
+					error.message.includes(
+						"Cannot decode data with version '3'. Supported version is '2'.",
+					),
+			);
+		});
+	});
+
 	describe(`SharedTree with AzureClient (${testOpts.variant})`, () => {
 		const connectTimeoutMs = 10_000;
 		const isEphemeral: boolean = testOpts.options.isEphemeral;

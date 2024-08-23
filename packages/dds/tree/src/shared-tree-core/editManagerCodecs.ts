@@ -12,7 +12,7 @@ import {
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../codec/index.js";
-import { makeVersionDispatchingCodec } from "../codec/index.js";
+import { makeStrictVersionCodec } from "../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	EncodedRevisionTag,
@@ -55,7 +55,7 @@ export function makeEditManagerCodec<TChangeset>(
 	EditManagerEncodingContext
 > {
 	const family = makeEditManagerCodecs(changeCodecs, revisionTagCodec, options);
-	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
+	return makeStrictVersionCodec(family, { ...options, writeVersion });
 }
 
 export function makeEditManagerCodecs<TChangeset>(
