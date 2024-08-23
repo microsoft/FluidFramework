@@ -189,6 +189,11 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	 * a separate Anchor (and thus ref count) must be allocated to keep it alive.
 	 */
 	readonly anchorNode: AnchorNode;
+
+	/**
+	 * {@inheritdoc FlexTreeEntity.context}
+	 */
+	readonly context: FlexTreeContext;
 }
 
 /**

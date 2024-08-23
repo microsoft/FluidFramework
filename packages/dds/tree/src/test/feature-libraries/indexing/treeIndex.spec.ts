@@ -3,18 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert, fail } from "assert";
 
-import { flexTreeViewWithContent } from "../../utils.js";
-import {
-	FieldKinds,
-	type FlexTreeNode,
-	SchemaBuilderBase,
-	AnchorTreeIndex,
-} from "../../../feature-libraries/index.js";
-import { leaf } from "../../../domains/index.js";
+import { getView } from "../../utils.js";
+import { type FlexTreeNode, AnchorTreeIndex } from "../../../feature-libraries/index.js";
 import type { AnchorNode, FieldKey, ITreeSubscriptionCursor } from "../../../core/index.js";
 import { brand, disposeSymbol, getOrCreate } from "../../../util/index.js";
+import {
+	SchemaFactory,
+	TreeViewConfiguration,
+	type TreeNode,
+} from "../../../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
+// eslint-disable-next-line import/no-internal-modules
+import { tryGetInnerNode } from "../../../simple-tree/proxyBinding.js";
 
 function readStringField(cursor: ITreeSubscriptionCursor, fieldKey: FieldKey): string {
 	cursor.enterField(fieldKey);
@@ -36,39 +39,38 @@ describe("TreeIndexes", () => {
 	/** The identifier of the child node */
 	const childId = "childId";
 
-	const schemaFactory = new SchemaBuilderBase(FieldKinds.required, {
-		scope: "",
-		libraries: [leaf.library],
-	});
-	const indexableChild = schemaFactory.object("IndexableChild", { [childKey]: leaf.string });
-	const indexableParent = schemaFactory.object("IndexableParent", {
-		[parentKey]: leaf.string,
-		child: SchemaBuilderBase.field(FieldKinds.optional, indexableChild),
-	});
-	const schema = schemaFactory.intoSchema(indexableParent);
+	const sf = new SchemaFactory("tree-indexes");
+	class IndexableChild extends sf.object("IndexableChild", {
+		[childKey]: sf.string,
+	}) {}
 
-	function createParent(child?: InsertableFlexNode<typeof indexableChild>) {
-		const rootField = flexTreeViewWithContent({
-			schema,
-			initialTree: { [parentKey]: parentId, child },
-		});
-		return rootField.content;
+	class IndexableParent extends sf.object("IndexableParent", {
+		[parentKey]: sf.string,
+		child: sf.optional(IndexableChild),
+	}) {}
+
+	function createView(child?: IndexableChild) {
+		const config = new TreeViewConfiguration({ schema: IndexableParent });
+		const view = getView(config);
+		view.initialize({ [parentKey]: parentId, child });
+
+		return { view, parent: view.root };
 	}
 
-	function createIndex(root: FlexTreeNode) {
+	function createIndex(root: SchematizingSimpleTreeView<typeof IndexableParent>) {
 		const anchorIds = new Map<AnchorNode, number>();
 		let indexedAnchorNodeCount = 0;
 
 		const index = new AnchorTreeIndex(
-			root.context.forest,
+			root.checkout.forest,
 			// Return a separate indexing function for each kind of node (parent and child).
 			// These functions are very similar and could be collapsed into a single function,
 			// but having them be separate better demonstrates the indexer function pattern.
 			(schemaId) => {
-				if (schemaId === indexableParent.name) {
+				if (schemaId === IndexableParent.identifier) {
 					return (cursor) => readStringField(cursor, parentKey);
 				}
-				if (schemaId === indexableChild.name) {
+				if (schemaId === IndexableChild.identifier) {
 					return (cursor) => readStringField(cursor, childKey);
 				}
 			},
@@ -81,7 +83,7 @@ describe("TreeIndexes", () => {
 
 		return {
 			index,
-			assertContents(...expected: [key: string, ...values: readonly FlexTreeNode[]][]): void {
+			assertContents(...expected: [key: string, ...values: readonly TreeNode[]][]): void {
 				function assertSameElements(
 					actual: Iterable<unknown>,
 					expectedSet: Iterable<unknown>,
@@ -90,12 +92,13 @@ describe("TreeIndexes", () => {
 				}
 
 				const expectedEntries = expected.map(
-					([key, ...flexNodes]) =>
+					([key, ...nodes]) => 
 						[
 							key,
-							flexNodes.map((f) =>
-								getOrCreate(anchorIds, f.anchorNode, () => indexedAnchorNodeCount++),
-							),
+							nodes.map((f) => {
+								const flexNode: FlexTreeNode = tryGetInnerNode(f) ?? fail("nodes in index should be cooked");
+								return getOrCreate(anchorIds, flexNode.anchorNode, () => indexedAnchorNodeCount++);
+							}),
 						] as const,
 				);
 
@@ -134,34 +137,34 @@ describe("TreeIndexes", () => {
 	}
 
 	it("can look up nodes in an initial tree", () => {
-		const parent = createParent({ [childKey]: childId });
-		const { assertContents } = createIndex(parent);
+		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
+		const { assertContents } = createIndex(view);
 		const child = parent.child;
 		assert(child !== undefined);
 		assertContents([parentId, parent], [childId, child]);
 	});
 
 	it("can look up nodes that are detached when the index is created", () => {
-		const parent = createParent({ [childKey]: childId });
+		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
 		const child = parent.child;
 		assert(child !== undefined);
 		parent.child = undefined;
-		const { assertContents } = createIndex(parent);
+		const { assertContents } = createIndex(view);
 		assertContents([parentId, parent], [childId, child]);
 	});
 
 	it("can look up an inserted node", () => {
-		const parent = createParent(); // Create a parent with no child
-		const { assertContents } = createIndex(parent);
-		parent.boxedChild.content = { [childKey]: childId };
+		const { view, parent } = createView(); // Create a parent with no child
+		const { assertContents } = createIndex(view);
+		parent.child = new IndexableChild({ [childKey]: childId });
 		const child = parent.child;
 		assert(child !== undefined);
 		assertContents([parentId, parent], [childId, child]);
 	});
 
 	it("can look up a removed node", () => {
-		const parent = createParent({ [childKey]: childId });
-		const { assertContents } = createIndex(parent);
+		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
+		const { assertContents } = createIndex(view);
 		const child = parent.child;
 		assert(child !== undefined);
 		parent.child = undefined;
@@ -170,16 +173,16 @@ describe("TreeIndexes", () => {
 
 	it("can look up multiple nodes with the same key", () => {
 		// Give the child the same ID as the parent (`parentId` rather than `childId`)
-		const parent = createParent({ [childKey]: parentId });
-		const { assertContents } = createIndex(parent);
+		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
+		const { assertContents } = createIndex(view);
 		const child = parent.child;
 		assert(child !== undefined);
 		assertContents([parentId, parent, child]);
 	});
 
 	it("can be disposed only once", () => {
-		const parent = createParent({ [childKey]: childId });
-		const { index } = createIndex(parent);
+		const { view } = createView(new IndexableChild({ [childKey]: childId }));
+		const { index } = createIndex(view);
 		index[disposeSymbol]();
 		assert.throws(() => index[disposeSymbol]());
 	});

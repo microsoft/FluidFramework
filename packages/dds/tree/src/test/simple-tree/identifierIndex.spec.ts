@@ -5,15 +5,23 @@
 
 import { strict as assert } from "assert";
 import type { FieldKey } from "../../core/index.js";
-import { brand } from "../../util/index.js";
+import { brand, fail } from "../../util/index.js";
 import {
 	type InsertableTypedNode,
 	SchemaFactory,
+	type TreeNode,
 	createIdentifierIndex,
-	getFlexNode,
 } from "../../simple-tree/index.js";
 import { hydrate } from "./utils.js";
+// eslint-disable-next-line import/no-internal-modules
 import { createSimpleTreeIndex } from "../../simple-tree/identifierIndex.js";
+import type { FlexTreeNode } from "../../feature-libraries/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { tryGetInnerNode } from "../../simple-tree/proxyBinding.js";
+
+function getFlexNode(node: TreeNode) {
+	return tryGetInnerNode(parent) ?? fail("nodes in index should be cooked");
+}
 
 describe("Simple-Tree Indexes", () => {
 	/** The field key under which the parentId node puts its identifier */
@@ -45,14 +53,13 @@ describe("Simple-Tree Indexes", () => {
 			[parentKey]: parentId,
 			child: { [childKey]: childId },
 		});
-		const { context } = getFlexNode(parent);
+		const { context }: FlexTreeNode = tryGetInnerNode(parent) ?? fail("nodes in index should be cooked");
 		const index = createSimpleTreeIndex(
-			context.schema,
-			context.forest,
+			context,
 			(s) => {
 				return undefined;
 			},
-			(a) => 3,
+			() => 3,
 			[IndexableParent, IndexableChild],
 		);
 	});
@@ -74,27 +81,27 @@ describe("Simple-Tree Indexes", () => {
 		assert.equal(index.size, 2);
 	});
 
-	it("Fails on lookup if two nodes have the same key", () => {});
+	it("fail on lookup if two nodes have the same key", () => {});
 
-	it("Does not reify tree of nodes being scanned");
+	it("do not reify tree of nodes being scanned");
 
-	// it("no filtering", () => {
-	// 	const parent = createParent();
-	// 	const index = new SimpleTreeIndex(getFlexNode(parent).context, (schemaId) => {
-	// 		if (schemaId === IndexableParent.identifier || schemaId === IndexableChild.identifier) {
-	// 			return (node) => {
-	// 				node.enterField(schemaId === IndexableParent.identifier ? parentKey : childKey);
-	// 				node.enterNode(0);
-	// 				const value = node.value;
-	// 				node.exitNode();
-	// 				node.exitField();
-	// 				assert(typeof value === "string");
-	// 				return value;
-	// 			};
-	// 		}
-	// 	});
-	// 	assert.equal(index.size, 2);
-	// 	assert.equal(index.get(parentKey)?.size, 1);
-	// 	assert.equal(index.get(childKey)?.size, 1);
-	// });
+	it("filters out removed nodes", () => {
+		const parent = createParent();
+		const index = new SimpleTreeIndex(getFlexNode(parent).context, (schemaId) => {
+			if (schemaId === IndexableParent.identifier || schemaId === IndexableChild.identifier) {
+				return (node) => {
+					node.enterField(schemaId === IndexableParent.identifier ? parentKey : childKey);
+					node.enterNode(0);
+					const value = node.value;
+					node.exitNode();
+					node.exitField();
+					assert(typeof value === "string");
+					return value;
+				};
+			}
+		});
+		assert.equal(index.size, 2);
+		assert.equal(index.get(parentKey)?.size, 1);
+		assert.equal(index.get(childKey)?.size, 1);
+	});
 });

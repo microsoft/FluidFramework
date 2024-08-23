@@ -12,7 +12,6 @@ import {
 	AnchorTreeIndex,
 	flexTreeSlot,
 	type FlexTreeNode,
-	TreeStatus,
 	FlexObjectNodeSchema,
 	FieldKinds,
 	type FlexTreeContext,
@@ -27,7 +26,6 @@ import { brand, fail } from "../util/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { NodeFromSchema } from "./schemaTypes.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
-import { Tree } from "../shared-tree/index.js";
 import type { TreeNode, TreeNodeSchema } from "./index.js";
 import { getSimpleNodeSchema } from "./core/index.js";
 import { getOrCreateNodeFromFlexTreeNode } from "./proxies.js";
@@ -165,10 +163,6 @@ export function createIdentifierIndex(context: FlexTreeContext): IdentifierIndex
 				throw new UsageError(
 					"Cannot retrieve node from index: there are multiple nodes with the same identifier",
 				);
-			}
-			const [node] = nodes;
-			if (Tree.status(node) !== TreeStatus.InDocument) {
-				return undefined;
 			}
 		},
 	);
