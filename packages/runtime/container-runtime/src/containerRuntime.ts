@@ -767,14 +767,14 @@ function lastMessageFromMetadata(metadata: IContainerRuntimeMetadata | undefined
  * We only want to log this once, to avoid spamming telemetry if we are wrong and these cases are hit commonly.
  */
 let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) => {
-	// We only want to log this once per ContainerRuntime instance, to avoid spamming telemetry.
-	getSingleUseLegacyLogCallback = () => () => {};
-
 	return (codePath: string) => {
 		logger.sendTelemetryEvent({
 			eventName: "LegacyMessageFormat",
 			details: { codePath, type },
 		});
+
+		// Now that we've logged, prevent future logging (globally).
+		getSingleUseLegacyLogCallback = () => () => {};
 	};
 };
 
