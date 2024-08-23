@@ -405,9 +405,10 @@ extends:
                         displayName: Check Code Coverage
                         inputs:
                           checkCoverage: true
-                          coverageFailOption: 'fixed'
+                          coverageFailOption: 'delta'
                           coverageType: 'lines'
                           coverageThreshold: '100'
+                          useDiffCoverage: true
 
 
                   # Process test result, include publishing and logging
