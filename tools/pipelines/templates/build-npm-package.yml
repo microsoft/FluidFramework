@@ -400,8 +400,9 @@ extends:
                         inputs:
                           summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
                           failIfCoverageEmpty: true
+                          additionalCodeCoverageFiles: ${{ parameters.buildDirectory }}/nyc/report/cobertura-additional-coverage.xml
                         condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                      - task: BuildQualityChecks@9.2.1
+                      - task: BuildQualityChecks@9
                         displayName: Check Code Coverage
                         inputs:
                           checkCoverage: true
