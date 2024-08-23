@@ -8,6 +8,11 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import {
+	DataCorruptionError,
+	DataProcessingError,
+	extractSafePropertiesFromMessage,
+} from "@fluidframework/telemetry-utils/internal";
 
 import {
 	ContainerMessageType,
@@ -16,6 +21,7 @@ import {
 	type InboundSequencedRecentlyAddedContainerRuntimeMessage,
 } from "../messageTypes.js";
 import { asBatchMetadata } from "../metadata.js";
+import { pkgVersion } from "../packageVersion.js";
 
 import { OpDecompressor } from "./opDecompressor.js";
 import { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
@@ -68,6 +74,7 @@ export class RemoteMessageProcessor {
 		private readonly opSplitter: OpSplitter,
 		private readonly opDecompressor: OpDecompressor,
 		private readonly opGroupingManager: OpGroupingManager,
+		private readonly getClientId: () => string | undefined,
 	) {}
 
 	public get partialMessages(): ReadonlyMap<string, string[]> {
@@ -160,8 +167,63 @@ export class RemoteMessageProcessor {
 		}
 
 		const completedBatch = this.batchInProgress;
+		assert(completedBatch !== undefined, "There should be at least one message in the batch");
+
+		// Validate that the batch received is correct.
+		this.validateBatchCorrectness(completedBatch);
+
 		this.batchInProgress = undefined;
 		return completedBatch;
+	}
+
+	/**
+	 * Validates that the inbound batch is correct. This includes:
+	 * - Ensuring that the batch has contiguous sequence numbers.
+	 * - Ensuring that all messages in the batch have the same clientId.
+	 */
+	private validateBatchCorrectness(batch: InboundBatch) {
+		// For a batch with single message, there is nothing to validate.
+		if (batch.messages.length === 1) {
+			return;
+		}
+
+		let previousMessage: InboundSequencedContainerRuntimeMessage | undefined;
+		for (const message of batch.messages) {
+			// Validate that the sequence numbers are contiguous. If there are non-runtime messages in the batch,
+			// the remote message processor isn't called and so it will appear like the batch is missing messages
+			// and this case will be hit.
+			if (
+				previousMessage !== undefined &&
+				message.sequenceNumber !== previousMessage.sequenceNumber + 1
+			) {
+				throw DataProcessingError.create(
+					"Received out-of-order messages in batch",
+					"validateBatchCorrectness",
+					message,
+					{
+						runtimeVersion: pkgVersion,
+						batchClientId: batch.clientId,
+						localBatch: batch.clientId === this.getClientId(),
+						localMessage: message.clientId === this.getClientId(),
+						previousMessageSequenceNumber: previousMessage.sequenceNumber,
+						...extractSafePropertiesFromMessage(message),
+					},
+				);
+			}
+
+			// Validate that all messages in the batch have the same clientId. Message from different clients
+			// cannot be part of the same batch.
+			if (message.clientId !== batch.clientId) {
+				throw new DataCorruptionError("OpBatchIncomplete", {
+					runtimeVersion: pkgVersion,
+					batchClientId: batch.clientId,
+					localBatch: batch.clientId === this.getClientId(),
+					localMessage: message.clientId === this.getClientId(),
+					...extractSafePropertiesFromMessage(message),
+				});
+			}
+			previousMessage = message;
+		}
 	}
 
 	/**

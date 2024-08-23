@@ -17,9 +17,6 @@ import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/
 import { DeltaManager } from "@fluidframework/container-loader/internal/test/deltaManager";
 // eslint-disable-next-line import/no-internal-modules
 import { DeltaScheduler } from "@fluidframework/container-runtime/internal/test/deltaScheduler";
-// ADO:1981
-// eslint-disable-next-line import/no-internal-modules
-import { ScheduleManager } from "@fluidframework/container-runtime/internal/test/scheduleManager";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
 	ISequencedDocumentSystemMessage,
@@ -38,7 +35,6 @@ describe("Container Runtime", () => {
 	 */
 	describe("Async op processing", () => {
 		let deltaManager: DeltaManager<ConnectionManager>;
-		let scheduleManager: ScheduleManager;
 		let deltaConnection: MockDocumentDeltaConnection;
 		let seq: number;
 		const docId = "docId";
@@ -81,14 +77,11 @@ describe("Container Runtime", () => {
 
 		// Function to process an inbound op. It adds delay to simulate time taken in processing an op.
 		function processOp(message: ISequencedDocumentMessage): void {
-			scheduleManager.beforeOpProcessing(message);
-
 			// Add delay such that each op takes greater than the DeltaScheduler's processing time to process.
 			const processingDelay = DeltaScheduler.processingTime + 10;
 			const startTime = Date.now();
 			while (Date.now() - startTime < processingDelay) {}
 
-			scheduleManager.afterOpProcessing(undefined, message);
 			deltaManager.emit("op", message);
 		}
 
@@ -117,12 +110,6 @@ describe("Container Runtime", () => {
 			);
 
 			const emitter = new EventEmitter();
-			scheduleManager = new ScheduleManager(
-				deltaManager,
-				emitter,
-				() => "test-client", // clientId,
-				createChildLogger({ namespace: "fluid:testScheduleManager" }),
-			);
 
 			emitter.on("batchBegin", () => {
 				// When we receive a "batchBegin" event, we should not have any outstanding

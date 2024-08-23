@@ -170,7 +170,7 @@ describe("Runtime batching", () => {
 
 		assert.throws(
 			() => processBatch(batch, containerRuntime),
-			(e: Error) => validateAssertionError(e, "batch presence was validated above"),
+			(e: Error) => validateAssertionError(e, "Unexpected batch end marker"),
 			"Batch end without batch start should fail",
 		);
 	});
@@ -182,7 +182,7 @@ describe("Runtime batching", () => {
 
 		assert.throws(
 			() => processBatch(batch, containerRuntime),
-			(e: Error) => validateAssertionError(e, "there can't be active batch"),
+			(e: Error) => validateAssertionError(e, "Unexpected batch start marker"),
 			"Batch with multiple batch starts should fail",
 		);
 	});
@@ -214,7 +214,7 @@ describe("Runtime batching", () => {
 			() => processBatch(batch, containerRuntime),
 			(e: any) => {
 				assert(e.errorType === FluidErrorTypes.dataProcessingError);
-				assert(e.message === "Received a system message during batch processing");
+				assert(e.message === "Received out-of-order messages in batch");
 				return true;
 			},
 			"Batch with non-runtime op along with runtime ops should fail",

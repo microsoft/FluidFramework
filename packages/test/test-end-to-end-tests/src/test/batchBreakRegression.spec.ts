@@ -355,7 +355,7 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 			[
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					error: "Received a system message during batch processing",
+					error: "Received out-of-order messages in batch",
 				},
 			],
 			async function () {

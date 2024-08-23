@@ -41,6 +41,7 @@ describe("RemoteMessageProcessor", () => {
 				},
 				logger,
 			),
+			() => undefined,
 		);
 	}
 
@@ -209,7 +210,7 @@ describe("RemoteMessageProcessor", () => {
 	});
 
 	it("Processes multiple batches", () => {
-		let csn = 1;
+		let seqNum = 1;
 		const batchManager = new BatchManager({
 			canRebase: false,
 			hardLimit: Number.MAX_VALUE,
@@ -237,7 +238,8 @@ describe("RemoteMessageProcessor", () => {
 		].map((message) => ({
 			...(message as ISequencedDocumentMessage),
 			clientId: "CLIENT_ID",
-			clientSequenceNumber: csn++,
+			sequenceNumber: seqNum,
+			clientSequenceNumber: seqNum++,
 		}));
 
 		const processResults = inboundMessages.map((message) =>
@@ -254,6 +256,7 @@ describe("RemoteMessageProcessor", () => {
 						"contents": "A1",
 						"referenceSequenceNumber": 1,
 						"clientSequenceNumber": 1,
+						"sequenceNumber": 1,
 						"metadata": { "batch": true },
 						"clientId": "CLIENT_ID",
 					},
@@ -261,12 +264,14 @@ describe("RemoteMessageProcessor", () => {
 						"contents": "A2",
 						"referenceSequenceNumber": 1,
 						"clientSequenceNumber": 2,
+						"sequenceNumber": 2,
 						"clientId": "CLIENT_ID",
 					},
 					{
 						"contents": "A3",
 						"referenceSequenceNumber": 1,
 						"clientSequenceNumber": 3,
+						"sequenceNumber": 3,
 						"metadata": { "batch": false },
 						"clientId": "CLIENT_ID",
 					},
@@ -282,6 +287,7 @@ describe("RemoteMessageProcessor", () => {
 						"contents": "B1",
 						"referenceSequenceNumber": 1,
 						"clientSequenceNumber": 4,
+						"sequenceNumber": 4,
 						"clientId": "CLIENT_ID",
 					},
 				],
@@ -297,6 +303,7 @@ describe("RemoteMessageProcessor", () => {
 						"contents": "C1",
 						"referenceSequenceNumber": 1,
 						"clientSequenceNumber": 5,
+						"sequenceNumber": 5,
 						"metadata": { "batch": true, "batchId": "C" },
 						"clientId": "CLIENT_ID",
 					},
@@ -304,6 +311,7 @@ describe("RemoteMessageProcessor", () => {
 						"contents": "C2",
 						"referenceSequenceNumber": 1,
 						"clientSequenceNumber": 6,
+						"sequenceNumber": 6,
 						"metadata": { "batch": false },
 						"clientId": "CLIENT_ID",
 					},
@@ -319,6 +327,7 @@ describe("RemoteMessageProcessor", () => {
 						"contents": "D1",
 						"referenceSequenceNumber": 1,
 						"clientSequenceNumber": 7,
+						"sequenceNumber": 7,
 						"metadata": { "batchId": "D" },
 						"clientId": "CLIENT_ID",
 					},
@@ -334,7 +343,7 @@ describe("RemoteMessageProcessor", () => {
 
 	describe("Throws on invalid batches", () => {
 		it("Unexpected batch start marker mid-batch", () => {
-			let csn = 1;
+			let seqNum = 1;
 			const batchManager = new BatchManager({
 				canRebase: false,
 				hardLimit: Number.MAX_VALUE,
@@ -357,7 +366,8 @@ describe("RemoteMessageProcessor", () => {
 			].map((message) => ({
 				...(message as ISequencedDocumentMessage),
 				clientId: "CLIENT_ID",
-				clientSequenceNumber: csn++,
+				sequenceNumber: seqNum,
+				clientSequenceNumber: seqNum++,
 			}));
 
 			assert.throws(
@@ -372,7 +382,7 @@ describe("RemoteMessageProcessor", () => {
 		});
 
 		it("Unexpected batch end marker when no batch has started", () => {
-			let csn = 1;
+			let seqNum = 1;
 			const batchManager = new BatchManager({
 				canRebase: false,
 				hardLimit: Number.MAX_VALUE,
@@ -390,7 +400,8 @@ describe("RemoteMessageProcessor", () => {
 				(message) => ({
 					...(message as ISequencedDocumentMessage),
 					clientId: "CLIENT_ID",
-					clientSequenceNumber: csn++,
+					sequenceNumber: seqNum,
+					clientSequenceNumber: seqNum++,
 				}),
 			);
 

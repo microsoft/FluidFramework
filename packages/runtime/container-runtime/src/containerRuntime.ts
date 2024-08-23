@@ -148,6 +148,7 @@ import {
 	DeltaManagerPendingOpsProxy,
 	DeltaManagerSummarizerProxy,
 } from "./deltaManagerProxies.js";
+import { DeltaScheduler } from "./deltaScheduler.js";
 import {
 	GCNodeType,
 	GarbageCollector,
@@ -188,7 +189,6 @@ import {
 	IPendingLocalState,
 	PendingStateManager,
 } from "./pendingStateManager.js";
-import { ScheduleManager } from "./scheduleManager.js";
 import {
 	DocumentsSchemaController,
 	EnqueueSummarizeResult,
@@ -1300,7 +1300,7 @@ export class ContainerRuntime
 	 * It is created only by summarizing container (i.e. one with clientType === "summarizer")
 	 */
 	private readonly _summarizer?: Summarizer;
-	private readonly scheduleManager: ScheduleManager;
+	private readonly deltaScheduler: DeltaScheduler;
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
 	private readonly outbox: Outbox;
@@ -1566,6 +1566,7 @@ export class ContainerRuntime
 			opSplitter,
 			new OpDecompressor(this.mc.logger),
 			opGroupingManager,
+			() => this.clientId,
 		);
 
 		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
@@ -1764,12 +1765,7 @@ export class ContainerRuntime
 			closeContainer: (error?: ICriticalContainerError) => this.closeFn(error),
 		});
 
-		this.scheduleManager = new ScheduleManager(
-			this.innerDeltaManager,
-			this,
-			() => this.clientId,
-			createChildLogger({ logger: this.logger, namespace: "ScheduleManager" }),
-		);
+		this.deltaScheduler = new DeltaScheduler(this.innerDeltaManager, this.logger);
 
 		const disablePartialFlush = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.DisablePartialFlush",
@@ -2680,44 +2676,78 @@ export class ContainerRuntime
 				local,
 			);
 			if (messagesWithPendingState.length > 0) {
-				messagesWithPendingState.forEach(({ message, localOpMetadata }) => {
-					const msg: MessageWithContext = {
-						message,
-						local,
-						isRuntimeMessage: true,
-						savedOp,
-						localOpMetadata,
-					};
-					this.ensureNoDataModelChanges(() => this.processRuntimeMessage(msg));
-				});
+				this.batchBegin(messagesWithPendingState[0]?.message);
+
+				let error: any;
+				try {
+					messagesWithPendingState.forEach(({ message, localOpMetadata }) => {
+						const msg: MessageWithContext = {
+							message,
+							local,
+							isRuntimeMessage: true,
+							savedOp,
+							localOpMetadata,
+						};
+						this.ensureNoDataModelChanges(() => this.processRuntimeMessage(msg));
+					});
+				} catch (e) {
+					error = e;
+					throw e;
+				} finally {
+					this.batchEnd(
+						error,
+						messagesWithPendingState[messagesWithPendingState.length - 1]?.message,
+					);
+				}
 			} else {
 				this.ensureNoDataModelChanges(() => this.processEmptyBatch(inboundBatch, local));
 			}
 		} else {
-			// Check if message.type is one of values in ContainerMessageType
-			// eslint-disable-next-line import/no-deprecated
-			if (isRuntimeMessage(messageCopy)) {
-				// Legacy op received
-				this.ensureNoDataModelChanges(() =>
-					this.processRuntimeMessage({
-						message: messageCopy as InboundSequencedContainerRuntimeMessage,
-						local,
-						isRuntimeMessage: true,
-						savedOp,
-					}),
-				);
-			} else {
-				// A non container runtime message (like other system ops - join, ack, leave, nack etc.)
-				this.ensureNoDataModelChanges(() =>
-					this.observeNonRuntimeMessage({
-						message: messageCopy as InboundSequencedNonContainerRuntimeMessage,
-						local,
-						isRuntimeMessage: false,
-						savedOp,
-					}),
-				);
+			this.batchBegin(messageCopy);
+			let error: any;
+			try {
+				// Check if message.type is one of values in ContainerMessageType
+				// eslint-disable-next-line import/no-deprecated
+				if (isRuntimeMessage(messageCopy)) {
+					// Legacy op received
+					this.ensureNoDataModelChanges(() =>
+						this.processRuntimeMessage({
+							message: messageCopy as InboundSequencedContainerRuntimeMessage,
+							local,
+							isRuntimeMessage: true,
+							savedOp,
+						}),
+					);
+				} else {
+					// A non container runtime message (like other system ops - join, ack, leave, nack etc.)
+					this.ensureNoDataModelChanges(() =>
+						this.observeNonRuntimeMessage({
+							message: messageCopy as InboundSequencedNonContainerRuntimeMessage,
+							local,
+							isRuntimeMessage: false,
+							savedOp,
+						}),
+					);
+				}
+			} catch (e) {
+				error = e;
+				throw e;
+			} finally {
+				this.batchEnd(error, messageCopy);
 			}
 		}
+	}
+
+	private batchBegin(message?: ISequencedDocumentMessage) {
+		assert(message !== undefined, "Batch must have a message");
+		this.deltaScheduler.batchBegin(message);
+		this.emit("batchBegin", message);
+	}
+
+	private batchEnd(error: any, message?: ISequencedDocumentMessage) {
+		assert(message !== undefined, "Batch must have a message");
+		this.deltaScheduler.batchEnd(message);
+		this.emit("batchEnd", error, message);
 	}
 
 	private _processedClientSequenceNumber: number | undefined;
@@ -2742,41 +2772,29 @@ export class ContainerRuntime
 				this.deltaManager.minimumSequenceNumber;
 		}
 
-		// Surround the actual processing of the operation with messages to the schedule manager indicating
-		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
-		// messages once a batch has been fully processed.
-		this.scheduleManager.beforeOpProcessing(message);
-
 		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
-		try {
-			// RemoteMessageProcessor would have already reconstituted Chunked Ops into the original op type
-			assert(
-				message.type !== ContainerMessageType.ChunkedOp,
-				0x93b /* we should never get here with chunked ops */,
-			);
+		// RemoteMessageProcessor would have already reconstituted Chunked Ops into the original op type
+		assert(
+			message.type !== ContainerMessageType.ChunkedOp,
+			0x93b /* we should never get here with chunked ops */,
+		);
 
-			// If there are no more pending messages after processing a local message,
-			// the document is no longer dirty.
-			if (!this.hasPendingMessages()) {
-				this.updateDocumentDirtyState(false);
-			}
+		// If there are no more pending messages after processing a local message,
+		// the document is no longer dirty.
+		if (!this.hasPendingMessages()) {
+			this.updateDocumentDirtyState(false);
+		}
 
-			this.validateAndProcessRuntimeMessage(messageWithContext, localOpMetadata);
+		this.validateAndProcessRuntimeMessage(messageWithContext, localOpMetadata);
 
-			this.emit("op", message, messageWithContext.isRuntimeMessage);
+		this.emit("op", message, messageWithContext.isRuntimeMessage);
 
-			this.scheduleManager.afterOpProcessing(undefined, message);
-
-			if (local) {
-				// If we have processed a local op, this means that the container is
-				// making progress and we can reset the counter for how many times
-				// we have consecutively replayed the pending states
-				this.resetReconnectCount();
-			}
-		} catch (e) {
-			this.scheduleManager.afterOpProcessing(e, message);
-			throw e;
+		if (local) {
+			// If we have processed a local op, this means that the container is
+			// making progress and we can reset the counter for how many times
+			// we have consecutively replayed the pending states
+			this.resetReconnectCount();
 		}
 	}
 
@@ -2818,33 +2836,21 @@ export class ContainerRuntime
 				this.deltaManager.minimumSequenceNumber;
 		}
 
-		// Surround the actual processing of the operation with messages to the schedule manager indicating
-		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
-		// messages once a batch has been fully processed.
-		this.scheduleManager.beforeOpProcessing(message);
-
 		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
-		try {
-			// If there are no more pending messages after processing a local message,
-			// the document is no longer dirty.
-			if (!this.hasPendingMessages()) {
-				this.updateDocumentDirtyState(false);
-			}
+		// If there are no more pending messages after processing a local message,
+		// the document is no longer dirty.
+		if (!this.hasPendingMessages()) {
+			this.updateDocumentDirtyState(false);
+		}
 
-			this.emit("op", message, messageWithContext.isRuntimeMessage);
+		this.emit("op", message, messageWithContext.isRuntimeMessage);
 
-			this.scheduleManager.afterOpProcessing(undefined, message);
-
-			if (local) {
-				// If we have processed a local op, this means that the container is
-				// making progress and we can reset the counter for how many times
-				// we have consecutively replayed the pending states
-				this.resetReconnectCount();
-			}
-		} catch (e) {
-			this.scheduleManager.afterOpProcessing(e, message);
-			throw e;
+		if (local) {
+			// If we have processed a local op, this means that the container is
+			// making progress and we can reset the counter for how many times
+			// we have consecutively replayed the pending states
+			this.resetReconnectCount();
 		}
 	}
 
