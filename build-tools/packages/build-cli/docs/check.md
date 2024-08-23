@@ -158,11 +158,13 @@ Check if a PR has been approved by a list of users or members of a team.
 ```
 USAGE
   $ flub check prApproval --repo <value> --pr <value> --token <value> [--json] [-v | --quiet] [--team <value>]
-    [--approvers <value>...]
+    [--approvers <value>...] [--ghActions]
 
 FLAGS
   --approvers=<value>...  GitHub users who should be considered approvers. Cannot be used with the --team flag. You can
                           provide multiple names as a space-delimited list, e.g. '--approvers user1 user2'
+  --ghActions             Set to true to output logs in a GitHub Actions-compatible format. This value will be set to
+                          true automatically when running in GitHub Actions.
   --pr=<value>            (required) The PR number to check.
   --repo=<value>          (required) The name of the GitHub repository to check. This should be in the form
                           'owner/repo-name'. For example, 'microsoft/FluidFramework'
