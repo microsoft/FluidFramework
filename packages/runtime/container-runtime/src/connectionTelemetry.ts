@@ -461,6 +461,11 @@ export interface IPerfSignalReport {
 	roundTripSignalSequenceNumber: number | undefined;
 
 	/**
+	 * Last signal traced for roundtrip latency.
+	 */
+	previousRoundTripSignalSequenceNumber: number | undefined;
+
+	/**
 	 * Next expected signal sequence number to be received.
 	 * Inclusive upper bound of signal monitoring window.
 	 */

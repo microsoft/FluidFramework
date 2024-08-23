@@ -1293,6 +1293,7 @@ export class ContainerRuntime
 		signalTimestamp: 0,
 		roundTripSignalSequenceNumber: undefined,
 		trackingSignalSequenceNumber: undefined,
+		previousRoundTripSignalSequenceNumber: undefined,
 		minimumTrackingSignalSequenceNumber: undefined,
 	};
 
@@ -2603,6 +2604,7 @@ export class ContainerRuntime
 			this._signalTracking.roundTripSignalSequenceNumber = undefined;
 			this._signalTracking.trackingSignalSequenceNumber = undefined;
 			this._signalTracking.minimumTrackingSignalSequenceNumber = undefined;
+			this._signalTracking.previousRoundTripSignalSequenceNumber = undefined;
 		} else {
 			assert(
 				this.attachState === AttachState.Attached,
@@ -2939,18 +2941,23 @@ export class ContainerRuntime
 	 * @param clientSignalSequenceNumber - is the client signal sequence number to be uploaded.
 	 * @param previousClientSignalSequenceNumber - the previously uploaded client sequence number.
 	 */
-	private sendSignalTelemetryEvent(
-		clientSignalSequenceNumber: number,
-		previousClientSignalSequenceNumber: number,
-	) {
+	private sendSignalTelemetryEvent(clientSignalSequenceNumber: number) {
 		const duration = Date.now() - this._signalTracking.signalTimestamp;
+		const signalsSent =
+			this._signalTracking.previousRoundTripSignalSequenceNumber !== undefined
+				? clientSignalSequenceNumber -
+					this._signalTracking.previousRoundTripSignalSequenceNumber +
+					1
+				: -1;
+
 		this.mc.logger.sendPerformanceEvent({
 			eventName: "SignalLatency",
 			duration,
-			signalsSent: clientSignalSequenceNumber - previousClientSignalSequenceNumber + 1,
+			signalsSent,
 			signalsLost: this._signalTracking.signalsLost,
 		});
-		this._signalTracking.minimumTrackingSignalSequenceNumber = clientSignalSequenceNumber + 1;
+		this._signalTracking.previousRoundTripSignalSequenceNumber =
+			clientSignalSequenceNumber + 1;
 		this._signalTracking.signalsLost = 0;
 		this._signalTracking.signalTimestamp = 0;
 	}
@@ -2995,8 +3002,14 @@ export class ContainerRuntime
 					envelope.clientSignalSequenceNumber >=
 						this._signalTracking.minimumTrackingSignalSequenceNumber
 				) {
-					// Log incoming signal that was previously marked as lost as having been received out of order.
-					this._signalTracking.signalsLost--;
+					if (
+						this._signalTracking.previousRoundTripSignalSequenceNumber !== undefined &&
+						envelope.clientSignalSequenceNumber >
+							this._signalTracking.previousRoundTripSignalSequenceNumber
+					) {
+						// Log incoming signal that was previously marked as lost as having been received out of order.
+						this._signalTracking.signalsLost--;
+					}
 					this.mc.logger.sendErrorEvent({
 						eventName: "SignalOutOfOrder",
 						type: envelope.contents.type,
@@ -3022,10 +3035,7 @@ export class ContainerRuntime
 						envelope.clientSignalSequenceNumber ===
 							this._signalTracking.roundTripSignalSequenceNumber
 					) {
-						this.sendSignalTelemetryEvent(
-							envelope.clientSignalSequenceNumber,
-							this._signalTracking.minimumTrackingSignalSequenceNumber,
-						);
+						this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
 					} else {
 						this._signalTracking.trackingSignalSequenceNumber =
 							envelope.clientSignalSequenceNumber + 1;
@@ -3289,6 +3299,7 @@ export class ContainerRuntime
 		) {
 			this._signalTracking.minimumTrackingSignalSequenceNumber = newSequenceNumber;
 			this._signalTracking.trackingSignalSequenceNumber = newSequenceNumber;
+			this._signalTracking.previousRoundTripSignalSequenceNumber = newSequenceNumber;
 		}
 
 		const newEnvelope: ISignalEnvelope = {

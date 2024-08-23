@@ -2870,6 +2870,43 @@ describe("Runtime", () => {
 					"SignalLatency telemetry should log correct amount of sent and lost signals",
 				);
 			});
+
+			it("should log out of order signal in between signal latency events", () => {
+				// Send 1st signal and process it to prime the system
+				sendSignals(1);
+				processSubmittedSignals(1);
+				// Send 150 signals and temporarily lose 1
+				sendSignals(150); //            150 outstanding including 1 tracked signal (#101); max #151
+				processSubmittedSignals(95); //  55 outstanding including 1 tracked signal (#101)
+				dropSignals(1); //               54 outstanding including 1 tracked signal (#101)
+				processSubmittedSignals(14); //  40 outstanding; none tracked
+				processDroppedSignals(1); //     40 outstanding; none tracked *out of order signal*
+				processSubmittedSignals(40); //   0 outstanding; none tracked
+
+				// Send 60 signals including tracked signal
+				sendSignals(60); //              60 outstanding including 1 tracked signal (#201); max #211
+				processSubmittedSignals(60); //    0 outstanding; none tracked
+
+				// Check SignalLatency logs amount of sent and lost signals
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 100,
+							signalsLost: 1,
+						},
+						{
+							eventName: "ContainerRuntime:SignalOutOfOrder",
+						},
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 100,
+							signalsLost: 0,
+						},
+					],
+					"SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals and SignalOutOfOrder event",
+				);
+			});
 		});
 	});
 });
