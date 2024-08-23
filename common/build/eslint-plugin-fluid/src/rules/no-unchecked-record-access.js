@@ -124,19 +124,18 @@ module.exports = {
 					return;
 				}
 				const paramIndex = parentNode.arguments.indexOf(node);
-				if (paramIndex !== -1 && paramIndex < functionDeclaration.params.length) {
-					const paramType = getFunctionParameterType(
-						functionDeclaration.params[paramIndex],
-					);
-					if (!paramType || !isStrictlyTypedParameter(paramType)) {
-						return;
-					}
-					// This error occurs when passing an index signature type to a function parameter that doesn't allow undefined
-					return context.report({
-						node,
-						message: `Passing '${fullName}' from an index signature type to a strictly typed parameter is not allowed. '${fullName}' may be 'undefined'`,
-					});
+				if (paramIndex === -1 || paramIndex >= functionDeclaration.params.length) {
+					return;
 				}
+				const paramType = getFunctionParameterType(functionDeclaration.params[paramIndex]);
+				if (!paramType || !isStrictlyTypedParameter(paramType)) {
+					return;
+				}
+				// This error occurs when passing an index signature type to a function parameter that doesn't allow undefined
+				return context.report({
+					node,
+					message: `Passing '${fullName}' from an index signature type to a strictly typed parameter is not allowed. '${fullName}' may be 'undefined'`,
+				});
 			}
 		}
 
@@ -271,33 +270,30 @@ function isTypeAllowedToBeUndefined(tsNode, typeChecker) {
 	const type = typeChecker.getTypeAtLocation(tsNode);
 	const symbol = type.getSymbol();
 
-	if (symbol && symbol.valueDeclaration) {
-		const signatureDeclaration = symbol.valueDeclaration;
-		// Check for Promise<T | undefined>
-		if (
-			signatureDeclaration.type &&
-			signatureDeclaration.type.kind === SyntaxKind.TypeReference
-		) {
-			const typeNode = signatureDeclaration.type;
-			if (typeNode.typeName.text === "Promise") {
-				return (
-					typeNode.typeArguments &&
-					typeNode.typeArguments.some(
-						(arg) =>
-							arg.kind === SyntaxKind.UnionType &&
-							arg.types.some((t) => t.kind === SyntaxKind.UndefinedKeyword),
-					)
-				);
-			}
-		}
-		// Check for direct union with undefined
-		return (
-			signatureDeclaration.type &&
-			signatureDeclaration.type.kind === SyntaxKind.UnionType &&
-			signatureDeclaration.type.types.some((t) => t.kind === SyntaxKind.UndefinedKeyword)
-		);
+	if (!symbol || !symbol.valueDeclaration) {
+		return false;
 	}
-	return false;
+	const signatureDeclaration = symbol.valueDeclaration;
+	// Check for Promise<T | undefined>
+	if (signatureDeclaration.type && signatureDeclaration.type.kind === SyntaxKind.TypeReference) {
+		const typeNode = signatureDeclaration.type;
+		if (typeNode.typeName.text === "Promise") {
+			return (
+				typeNode.typeArguments &&
+				typeNode.typeArguments.some(
+					(arg) =>
+						arg.kind === SyntaxKind.UnionType &&
+						arg.types.some((t) => t.kind === SyntaxKind.UndefinedKeyword),
+				)
+			);
+		}
+	}
+	// Check for direct union with undefined
+	return (
+		signatureDeclaration.type &&
+		signatureDeclaration.type.kind === SyntaxKind.UnionType &&
+		signatureDeclaration.type.types.some((t) => t.kind === SyntaxKind.UndefinedKeyword)
+	);
 }
 
 // Helper function to find a function declaration in the current scope
