@@ -4,11 +4,6 @@
  */
 
 import { SchemaBuilder, leaf } from "../../domains/index.js";
-import {
-	FieldKinds,
-	FlexFieldSchema,
-	type FlexTreeTypedNode,
-} from "../../feature-libraries/index.js";
 import type { isAny, requireFalse } from "../../util/index.js";
 
 describe("domains - SchemaBuilder", () => {
@@ -20,25 +15,5 @@ describe("domains - SchemaBuilder", () => {
 		});
 
 		type _0 = requireFalse<isAny<typeof testObject>>;
-
-		function typeTests(x: FlexTreeTypedNode<typeof testObject>) {
-			const y: number = x.number;
-		}
-	});
-
-	it("objectRecursive", () => {
-		const builder = new SchemaBuilder({ scope: "Test Recursive Domain" });
-
-		const recursiveObject = builder.objectRecursive("object", {
-			recursive: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveObject]),
-			number: SchemaBuilder.required(leaf.number),
-		});
-
-		type _0 = requireFalse<isAny<typeof recursiveObject>>;
-
-		function typeTests2(x: FlexTreeTypedNode<typeof recursiveObject>) {
-			const y: number = x.number;
-			const z: number | undefined = x.recursive?.recursive?.number;
-		}
 	});
 });

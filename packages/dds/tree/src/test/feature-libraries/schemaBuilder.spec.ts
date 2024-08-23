@@ -18,26 +18,9 @@ import {
 	normalizeField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/schemaBuilderBase.js";
-import { type areSafelyAssignable, brand, type requireTrue } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 
 describe("SchemaBuilderBase", () => {
-	describe("typedTreeSchema", () => {
-		it("recursive", () => {
-			const builder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
-
-			const recursiveStruct = builder.objectRecursive("recursiveStruct", {
-				foo: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
-			});
-
-			type _1 = requireTrue<
-				areSafelyAssignable<
-					typeof recursiveStruct,
-					ReturnType<(typeof recursiveStruct.objectNodeFieldsObject.foo.allowedTypes)[0]>
-				>
-			>;
-		});
-	});
-
 	describe("intoSchema", () => {
 		it("Simple", () => {
 			const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
