@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from "chai";
+import { assert } from "chai";
 
-import { benchmarkCustom } from "..";
+import { benchmarkCustom, type BenchmarkError, type BenchmarkResult } from "..";
 import { BenchmarkType } from "../Configuration";
 
 describe("`benchmarkCustom` function", () => {
@@ -18,17 +18,29 @@ describe("`benchmarkCustom` function", () => {
 			type: BenchmarkType.OwnCorrectness,
 		});
 	});
+});
 
-	it.only("check BenchmarkCustom can handle an error", async () => {
-		const errorMessage = "INTENTIONAL error to test error handling";
+describe.only("BenchmarkCustom error handling", () => {
+	const expectedErrorMessage = "INTENTIONAL error to test error handling";
+	let benchmarkEndPayloadIsCorrect: boolean = false;
 
-		const result = benchmarkCustom({
-			title: `test`,
-			type: BenchmarkType.Measurement,
-			run: async () => {
-				throw new Error(errorMessage);
-			},
-		});
-		expect(result.err?.message).to.equal(errorMessage);
+	const testObject = benchmarkCustom({
+		title: `test`,
+		type: BenchmarkType.Measurement,
+		run: async () => {
+			throw new Error(expectedErrorMessage);
+		},
+	});
+
+	testObject.on("benchmark end", (error: BenchmarkResult) => {
+		const maybeError = error as BenchmarkError;
+		if (maybeError.error === expectedErrorMessage) {
+			benchmarkEndPayloadIsCorrect = true;
+		}
+	});
+
+	afterEach(() => {
+		assert.equal(benchmarkEndPayloadIsCorrect, true);
+		benchmarkEndPayloadIsCorrect = false;
 	});
 });

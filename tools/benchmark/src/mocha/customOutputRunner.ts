@@ -53,7 +53,7 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 		try {
 			await options.run(reporter);
 		} catch (error) {
-			test.emit("fail", error);
+			test.emit("benchmark end", error);
 			throw error;
 		}
 
