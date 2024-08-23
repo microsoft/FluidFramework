@@ -17,7 +17,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  warning:
+  approval:
+    name: Approved by required reviewers
     runs-on: ubuntu-latest
     steps:
       # release notes: https://github.com/actions/checkout/releases/tag/v4.1.7
