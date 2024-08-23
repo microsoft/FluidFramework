@@ -2672,7 +2672,9 @@ export class ContainerRuntime
 				return;
 			}
 
-			// Reach out to PendingStateManager to zip localOpMetadata into the message list if it's a local batch
+			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
+			// or to check to ensure the *remote* messages don't match the batchId of a pending local batch.
+			// This latter case would indicate that the container has forked - two copies are trying to persist the same local changes.
 			const messagesWithPendingState = this.pendingStateManager.processInboundBatch(
 				inboundBatch,
 				local,
