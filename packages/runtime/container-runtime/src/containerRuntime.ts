@@ -683,6 +683,12 @@ export const makeLegacySendBatchFn =
 			);
 		}
 
+		//* Valid?
+		assert(
+			clientSequenceNumber >= 0,
+			"This implies an empty batch, which shouldn't come to this codepath",
+		);
+
 		deltaManager.flush();
 
 		return clientSequenceNumber;
@@ -2672,6 +2678,9 @@ export class ContainerRuntime
 				return;
 			}
 
+			//* MOVE THE DUPLICATE BATCH DETECTION HERE
+			//* Or maybe after the PSM call...?
+
 			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
 			// or to check to ensure the *remote* messages don't match the batchId of a pending local batch.
 			// This latter case would indicate that the container has forked - two copies are trying to persist the same local changes.
@@ -2745,7 +2754,14 @@ export class ContainerRuntime
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
 		// messages once a batch has been fully processed.
-		this.scheduleManager.beforeOpProcessing(message);
+		if (!this.scheduleManager.beforeOpProcessing(message)) {
+			//* HACKY: This is awkward. Find a better place/way to detect sequenced duplicates that should be ignored.
+			this.mc.logger.sendTelemetryEvent({ eventName: "duplicateMessageIgnored" });
+
+			//* UPDATE: Just throw a DataCorruptionError for now
+			this.scheduleManager.afterOpProcessing(undefined, message);
+			return;
+		}
 
 		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
@@ -4228,6 +4244,9 @@ export class ContainerRuntime
 		}
 	}
 
+	//* batchId is always set here because when resubmitting, this is when we need
+	//* to stamp the batch with the computed batchId so it can be correlated back
+	//* to the original clientId/csn from when it was first submitted.
 	private reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId) {
 		this.orderSequentially(() => {
 			for (const message of batch) {

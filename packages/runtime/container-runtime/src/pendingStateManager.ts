@@ -444,6 +444,12 @@ export class PendingStateManager implements IDisposable {
 			0x169 /* "No pending message found for this remote message" */,
 		);
 
+		//* QUESTION (M1): Is this check legit? (would need to be moved)
+		// assert(
+		// 	pendingMessage.referenceSequenceNumber === message.referenceSequenceNumber,
+		// 	"Local message should have matching refSeq",
+		// );
+
 		pendingMessage.sequenceNumber = sequenceNumber;
 		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
 
