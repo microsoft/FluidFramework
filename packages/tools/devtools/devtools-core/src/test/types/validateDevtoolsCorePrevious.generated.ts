@@ -103,6 +103,7 @@ declare type old_as_current_for_Interface_ContainerDevtoolsProps = requireAssign
  * typeValidation.broken:
  * "Interface_ContainerDevtoolsProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ContainerDevtoolsProps = requireAssignableTo<TypeOnly<current.ContainerDevtoolsProps>, TypeOnly<old.ContainerDevtoolsProps>>
 
 /*
@@ -274,6 +275,7 @@ declare type old_as_current_for_Interface_FluidDevtoolsProps = requireAssignable
  * typeValidation.broken:
  * "Interface_FluidDevtoolsProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_FluidDevtoolsProps = requireAssignableTo<TypeOnly<current.FluidDevtoolsProps>, TypeOnly<old.FluidDevtoolsProps>>
 
 /*

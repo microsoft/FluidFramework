@@ -8,7 +8,10 @@ import { strict as assert } from "assert";
 import * as crypto from "crypto";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IDeltaManagerInternal,
+} from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
@@ -446,10 +449,13 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				});
 				totalPayloadSizeInBytes = 0;
 				totalOps = 0;
-				localContainer.deltaManager.outbound.on("push", (messages) => {
-					totalPayloadSizeInBytes += JSON.stringify(messages).length;
-					totalOps += messages.length;
-				});
+				(localContainer.deltaManager as IDeltaManagerInternal).outbound.on(
+					"push",
+					(messages) => {
+						totalPayloadSizeInBytes += JSON.stringify(messages).length;
+						totalOps += messages.length;
+					},
+				);
 			};
 
 			const compressionRatio = 0.1;
@@ -619,13 +625,13 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 							container.disconnect();
 							container.once("connected", () => {
 								resolve();
-								container.deltaManager.outbound.off("op", handler);
+								(container.deltaManager as IDeltaManagerInternal).outbound.off("op", handler);
 							});
 							container.connect();
 						}
 					};
 
-					container.deltaManager.outbound.on("op", handler);
+					(container.deltaManager as IDeltaManagerInternal).outbound.on("op", handler);
 				});
 			};
 

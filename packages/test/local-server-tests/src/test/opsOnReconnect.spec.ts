@@ -8,6 +8,7 @@ import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import {
 	IContainer,
+	IDeltaManagerInternal,
 	IFluidCodeDetails,
 	IHostLoader,
 } from "@fluidframework/container-definitions/internal";
@@ -654,7 +655,10 @@ describe("Ops on Reconnect", () => {
 			// At this point, the delta manager should have the messages
 			// in its buffer but not in its outbound queue,
 			// as ops have not been flushed yet
-			assert.strictEqual(container1.deltaManager.outbound.length, 0);
+			assert.strictEqual(
+				(container1.deltaManager as IDeltaManagerInternal).outbound.length,
+				0,
+			);
 			assert.deepStrictEqual(receivedValues, [], "Values have been sent unexpectedly");
 
 			// Wait for the Container to get reconnected.

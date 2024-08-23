@@ -40,6 +40,7 @@ declare type old_as_current_for_Class_ChannelCollection = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Class_ChannelCollection": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_ChannelCollection = requireAssignableTo<TypeOnly<current.ChannelCollection>, TypeOnly<old.ChannelCollection>>
 
 /*
@@ -49,6 +50,7 @@ declare type current_as_old_for_Class_ChannelCollection = requireAssignableTo<Ty
  * typeValidation.broken:
  * "ClassStatics_ChannelCollection": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_ChannelCollection = requireAssignableTo<TypeOnly<typeof current.ChannelCollection>, TypeOnly<typeof old.ChannelCollection>>
 
 /*
@@ -148,6 +150,7 @@ declare type old_as_current_for_Class_ContainerRuntime = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Class_ContainerRuntime": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_ContainerRuntime = requireAssignableTo<TypeOnly<current.ContainerRuntime>, TypeOnly<old.ContainerRuntime>>
 
 /*
@@ -157,6 +160,7 @@ declare type current_as_old_for_Class_ContainerRuntime = requireAssignableTo<Typ
  * typeValidation.broken:
  * "ClassStatics_ContainerRuntime": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_ContainerRuntime = requireAssignableTo<TypeOnly<typeof current.ContainerRuntime>, TypeOnly<typeof old.ContainerRuntime>>
 
 /*
@@ -283,6 +287,7 @@ declare type old_as_current_for_Class_FluidDataStoreContext = requireAssignableT
  * typeValidation.broken:
  * "Class_FluidDataStoreContext": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_FluidDataStoreContext = requireAssignableTo<TypeOnly<current.FluidDataStoreContext>, TypeOnly<old.FluidDataStoreContext>>
 
 /*
@@ -292,6 +297,7 @@ declare type current_as_old_for_Class_FluidDataStoreContext = requireAssignableT
  * typeValidation.broken:
  * "ClassStatics_FluidDataStoreContext": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_FluidDataStoreContext = requireAssignableTo<TypeOnly<typeof current.FluidDataStoreContext>, TypeOnly<typeof old.FluidDataStoreContext>>
 
 /*
@@ -832,6 +838,7 @@ declare type old_as_current_for_Interface_IFluidDataStoreContextInternal = requi
  * typeValidation.broken:
  * "Interface_IFluidDataStoreContextInternal": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IFluidDataStoreContextInternal = requireAssignableTo<TypeOnly<current.IFluidDataStoreContextInternal>, TypeOnly<old.IFluidDataStoreContextInternal>>
 
 /*
@@ -850,6 +857,7 @@ declare type old_as_current_for_Interface_IFluidDataStoreContextProps = requireA
  * typeValidation.broken:
  * "Interface_IFluidDataStoreContextProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IFluidDataStoreContextProps = requireAssignableTo<TypeOnly<current.IFluidDataStoreContextProps>, TypeOnly<old.IFluidDataStoreContextProps>>
 
 /*
@@ -976,6 +984,7 @@ declare type old_as_current_for_Interface_ILocalDetachedFluidDataStoreContextPro
  * typeValidation.broken:
  * "Interface_ILocalDetachedFluidDataStoreContextProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ILocalDetachedFluidDataStoreContextProps = requireAssignableTo<TypeOnly<current.ILocalDetachedFluidDataStoreContextProps>, TypeOnly<old.ILocalDetachedFluidDataStoreContextProps>>
 
 /*
@@ -994,6 +1003,7 @@ declare type old_as_current_for_Interface_ILocalFluidDataStoreContextProps = req
  * typeValidation.broken:
  * "Interface_ILocalFluidDataStoreContextProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ILocalFluidDataStoreContextProps = requireAssignableTo<TypeOnly<current.ILocalFluidDataStoreContextProps>, TypeOnly<old.ILocalFluidDataStoreContextProps>>
 
 /*
@@ -1282,6 +1292,7 @@ declare type old_as_current_for_Interface_ISummarizerRuntime = requireAssignable
  * typeValidation.broken:
  * "Interface_ISummarizerRuntime": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ISummarizerRuntime = requireAssignableTo<TypeOnly<current.ISummarizerRuntime>, TypeOnly<old.ISummarizerRuntime>>
 
 /*
@@ -1615,6 +1626,7 @@ declare type old_as_current_for_Class_LocalFluidDataStoreContext = requireAssign
  * typeValidation.broken:
  * "Class_LocalFluidDataStoreContext": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_LocalFluidDataStoreContext = requireAssignableTo<TypeOnly<current.LocalFluidDataStoreContext>, TypeOnly<old.LocalFluidDataStoreContext>>
 
 /*
@@ -1624,6 +1636,7 @@ declare type current_as_old_for_Class_LocalFluidDataStoreContext = requireAssign
  * typeValidation.broken:
  * "ClassStatics_LocalFluidDataStoreContext": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_LocalFluidDataStoreContext = requireAssignableTo<TypeOnly<typeof current.LocalFluidDataStoreContext>, TypeOnly<typeof old.LocalFluidDataStoreContext>>
 
 /*
@@ -1642,6 +1655,7 @@ declare type old_as_current_for_Class_LocalFluidDataStoreContextBase = requireAs
  * typeValidation.broken:
  * "Class_LocalFluidDataStoreContextBase": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_LocalFluidDataStoreContextBase = requireAssignableTo<TypeOnly<current.LocalFluidDataStoreContextBase>, TypeOnly<old.LocalFluidDataStoreContextBase>>
 
 /*
@@ -1651,6 +1665,7 @@ declare type current_as_old_for_Class_LocalFluidDataStoreContextBase = requireAs
  * typeValidation.broken:
  * "ClassStatics_LocalFluidDataStoreContextBase": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_LocalFluidDataStoreContextBase = requireAssignableTo<TypeOnly<typeof current.LocalFluidDataStoreContextBase>, TypeOnly<typeof old.LocalFluidDataStoreContextBase>>
 
 /*
