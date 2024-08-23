@@ -405,7 +405,7 @@ extends:
                         displayName: Check Code Coverage
                         inputs:
                           checkCoverage: true
-                          coverageFailOption: 'fixed'
+                          coverageFailOption: 'build'
                           coverageType: 'lines'
                           coverageThreshold: '55.5'
                           useDiffCoverage: true
