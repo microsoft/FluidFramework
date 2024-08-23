@@ -51,7 +51,7 @@ import {
 import {
 	MockTreeCheckout,
 	checkoutWithContent,
-	cursorFromUnhydratedRoot,
+	cursorFromInsertableTreeField,
 	flexTreeViewWithContent,
 	numberSequenceRootSchema,
 	testIdCompressor,
@@ -89,7 +89,7 @@ class HasIdentifier extends schemaFactory.object("parent", {
 }) {}
 
 function getIdentifierEncodingContext(id: string) {
-	const initialTree = cursorFromUnhydratedRoot(
+	const initialTree = cursorFromInsertableTreeField(
 		HasIdentifier,
 		new HasIdentifier({ identifier: id }),
 		new MockNodeKeyManager(),
@@ -152,7 +152,7 @@ describe("End to end chunked encoding", () => {
 		);
 
 		const root = flexTree.root;
-		assert(root.is(numberSequenceRootSchema.rootFieldSchema));
+		assert(root.isExactly(numberSequenceRootSchema.rootFieldSchema));
 		checkout.editor.sequenceField(root.getFieldPath()).insert(0, chunk.cursor());
 
 		// Check that inserted change contains chunk which is reference equal to the original chunk.

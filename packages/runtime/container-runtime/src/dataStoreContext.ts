@@ -978,7 +978,7 @@ export abstract class FluidDataStoreContext
 			eventName,
 			type,
 			isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
-			stack: generateStack(),
+			stack: generateStack(30),
 		});
 		this.localChangesTelemetryCount--;
 	}

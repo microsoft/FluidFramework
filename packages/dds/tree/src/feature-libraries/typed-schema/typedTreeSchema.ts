@@ -7,7 +7,6 @@ import { assert, Lazy } from "@fluidframework/core-utils/internal";
 
 import {
 	type Adapters,
-	EmptyKey,
 	type FieldKey,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -22,7 +21,6 @@ import {
 	identifierFieldKindIdentifier,
 } from "../../core/index.js";
 import {
-	type Assume,
 	type MakeNominal,
 	type Named,
 	compareSets,
@@ -116,12 +114,9 @@ export class FlexMapNodeSchema<
 
 /**
  */
-export class LeafNodeSchema<
-	const out Name extends string = string,
-	const out Specification extends Unenforced<ValueSchema> = ValueSchema,
-> extends TreeNodeSchemaBase<Name, Specification> {
+export class LeafNodeSchema extends TreeNodeSchemaBase<string, ValueSchema> {
 	public get leafValue(): ValueSchema {
-		return this.info as ValueSchema;
+		return this.info;
 	}
 
 	protected _typeCheck2?: MakeNominal;
@@ -129,7 +124,7 @@ export class LeafNodeSchema<
 		builder: Named<string>,
 		name: TreeNodeSchemaIdentifier<Name>,
 		specification: Specification,
-	): LeafNodeSchema<Name, Specification> {
+	): LeafNodeSchema {
 		return new LeafNodeSchema(
 			builder,
 			name,
@@ -145,25 +140,19 @@ export class LeafNodeSchema<
 
 /**
  */
-export class FlexObjectNodeSchema<
-	const out Name extends string = string,
-	const out Specification extends Unenforced<FlexObjectNodeFields> = FlexObjectNodeFields,
-> extends TreeNodeSchemaBase<Name, Specification> {
+export class FlexObjectNodeSchema extends TreeNodeSchemaBase<string, FlexObjectNodeFields> {
 	protected _typeCheck2?: MakeNominal;
 	public readonly identifierFieldKeys: readonly FieldKey[] = [];
 
-	public static create<
-		const Name extends string,
-		const Specification extends FlexObjectNodeFields,
-	>(
+	public static create(
 		builder: Named<string>,
-		name: TreeNodeSchemaIdentifier<Name>,
-		specification: Specification,
-	): FlexObjectNodeSchema<Name, Specification> {
-		const objectNodeFieldsObject: NormalizeObjectNodeFields<Specification> =
-			normalizeStructFields<Specification>(specification);
+		name: TreeNodeSchemaIdentifier,
+		specification: FlexObjectNodeFields,
+	): FlexObjectNodeSchema {
+		const objectNodeFieldsObject: NormalizeObjectNodeFields<FlexObjectNodeFields> =
+			normalizeStructFields<FlexObjectNodeFields>(specification);
 		const objectNodeFields: ObjectToMap<
-			NormalizeObjectNodeFields<Specification>,
+			NormalizeObjectNodeFields<FlexObjectNodeFields>,
 			FieldKey,
 			FlexFieldSchema
 		> = objectToMapTyped(objectNodeFieldsObject);
@@ -178,11 +167,9 @@ export class FlexObjectNodeSchema<
 
 	private constructor(
 		builder: Named<string>,
-		name: TreeNodeSchemaIdentifier<Name>,
-		info: Specification,
-		public readonly objectNodeFieldsObject: NormalizeObjectNodeFields<
-			Assume<Specification, FlexObjectNodeFields>
-		>,
+		name: TreeNodeSchemaIdentifier,
+		info: FlexObjectNodeFields,
+		public readonly objectNodeFieldsObject: NormalizeObjectNodeFields<FlexObjectNodeFields>,
 		// Allows reading fields through the normal map.
 		// Stricter typing caused Specification to no longer be covariant, so has been removed.
 		public readonly objectNodeFields: ReadonlyMap<FieldKey, FlexFieldSchema>,
@@ -200,38 +187,6 @@ export class FlexObjectNodeSchema<
 
 	public override getFieldSchema(field: FieldKey): FlexFieldSchema {
 		return this.objectNodeFields.get(field) ?? FlexFieldSchema.empty;
-	}
-}
-
-/**
- * TODO: remove or replace (or subclass) this with more specific types, like "List".
- */
-export class FlexFieldNodeSchema<
-	Name extends string = string,
-	Specification extends Unenforced<FlexFieldSchema> = FlexFieldSchema,
-> extends TreeNodeSchemaBase<Name, Specification> {
-	protected _typeCheck2?: MakeNominal;
-	public static create<const Name extends string, const Specification extends FlexFieldSchema>(
-		builder: Named<string>,
-		name: TreeNodeSchemaIdentifier<Name>,
-		specification: Specification,
-	): FlexFieldNodeSchema<Name, Specification> {
-		return new FlexFieldNodeSchema(builder, name, specification);
-	}
-
-	private constructor(
-		builder: Named<string>,
-		name: TreeNodeSchemaIdentifier<Name>,
-		info: Specification,
-	) {
-		const objectNodeFields = new Map([[EmptyKey, (info as FlexFieldSchema).stored]]);
-		super(builder, name, info, new ObjectNodeStoredSchema(objectNodeFields));
-	}
-
-	public override getFieldSchema(field?: FieldKey): FlexFieldSchema {
-		return (field ?? EmptyKey) === EmptyKey
-			? (this.info as FlexFieldSchema)
-			: FlexFieldSchema.empty;
 	}
 }
 
@@ -585,13 +540,6 @@ export function schemaIsMap(schema: FlexTreeNodeSchema): schema is FlexMapNodeSc
  */
 export function schemaIsLeaf(schema: FlexTreeNodeSchema): schema is LeafNodeSchema {
 	return schema instanceof LeafNodeSchema;
-}
-
-/**
- * Checks if a {@link FlexTreeNodeSchema} is a {@link FlexFieldNodeSchema}.
- */
-export function schemaIsFieldNode(schema: FlexTreeNodeSchema): schema is FlexFieldNodeSchema {
-	return schema instanceof FlexFieldNodeSchema;
 }
 
 /**

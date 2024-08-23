@@ -5,6 +5,14 @@
 -   Added the following new utility function to `ApiItemUtilities`:
     1. `ancestryHasModifierTag`: Checks if the provided API item or ancestor items are tagged with the specified [modifier tag](https://tsdoc.org/pages/spec/tag_kinds/#modifier-tags).
 
+### Beta
+
+-   Adds prototype functionality for "linting" an API Model (i.e., the set of packages whose docs are published as a single "suite").
+    Can be invoked by importing `lintApiModel` from `@fluid-tools/api-markdown-documenter/beta`.
+    Returns a set of TSDoc-related "errors" discovered while walking the API Model.
+    -   The primary goal of this tool is to detect issues that `API-Extractor` cannot validate on a per-package basis when generating API reports.
+        For now, this is limited to validating `@link` and `@inheritDoc` tags to ensure that symbolic references are valid within the API Model.
+
 ### ⚠ BREAKING CHANGES
 
 -   Updated `loadModel` to take a configuration object, rather than individual parameters.

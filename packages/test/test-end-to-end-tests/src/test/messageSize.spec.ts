@@ -254,26 +254,6 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		},
 	);
 
-	// See ADO:8608
-	itExpects.skip(
-		"Large ops fail when compression enabled and compressed content is over max op size",
-		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
-		async function () {
-			const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
-			await setupContainers({
-				...testContainerConfig,
-				runtimeOptions: {
-					chunkSizeInBytes: Number.POSITIVE_INFINITY,
-				},
-			});
-
-			const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
-			const messageCount = 3; // Will result in a 15 MB payload
-			setMapKeys(localMap, messageCount, largeString);
-			await provider.ensureSynchronized();
-		},
-	);
-
 	const chunkingBatchesTimeoutMs = 200000;
 
 	[false, true].forEach((enableGroupedBatching) => {
@@ -383,7 +363,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				}));
 
 			itExpects(
-				"Large ops fail when compression chunking is disabled",
+				"Large ops fail when chunking is disabled and compressed content is over max op size",
 				[
 					{
 						eventName: "fluid:telemetry:Container:ContainerClose",
@@ -397,7 +377,28 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 						runtimeOptions: {
 							...containerConfig.runtimeOptions,
 							maxBatchSizeInBytes: 51 * bytesPerKB, // 51 KB
-							chunkSizeInBytes: Infinity,
+							chunkSizeInBytes: Number.POSITIVE_INFINITY,
+						},
+					});
+
+					const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
+					const messageCount = 3; // Will result in a 150 KB payload
+					setMapKeys(localMap, messageCount, largeString);
+					await provider.ensureSynchronized();
+				},
+			);
+
+			itExpects(
+				"Large ops fail when compression enabled and compressed content is over max op size",
+				[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
+				async function () {
+					const maxMessageSizeInBytes = 50 * bytesPerKB; // 50 KB
+					await setupContainers({
+						...testContainerConfig,
+						runtimeOptions: {
+							...containerConfig.runtimeOptions,
+							maxBatchSizeInBytes: 51 * bytesPerKB, // 51 KB
+							chunkSizeInBytes: Number.POSITIVE_INFINITY,
 						},
 					});
 

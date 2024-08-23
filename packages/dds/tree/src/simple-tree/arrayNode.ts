@@ -3,18 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { CursorLocationType, EmptyKey, type ITreeCursorSynchronous } from "../core/index.js";
+import { oob } from "@fluidframework/core-utils/internal";
+import { EmptyKey, type ExclusiveMapTree } from "../core/index.js";
 import {
-	type FlexAllowedTypes,
-	type FlexFieldNodeSchema,
+	type FlexTreeNodeSchema,
 	type FlexTreeNode,
 	type FlexTreeSequenceField,
 	type MapTreeNode,
-	cursorForMapTreeField,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
-	isMapTreeNode,
 	isFlexTreeNode,
+	isMapTreeSequenceField,
 } from "../feature-libraries/index.js";
 import {
 	type InsertableContent,
@@ -22,29 +21,32 @@ import {
 	prepareContentForHydration,
 } from "./proxies.js";
 import { getOrCreateInnerNode } from "./proxyBinding.js";
-import {
-	NodeKind,
-	type ImplicitAllowedTypes,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type TreeNodeFromImplicitAllowedTypes,
-	type TreeNodeSchemaClass,
-	type WithType,
-	type TreeNodeSchema,
-	typeNameSymbol,
-	normalizeFieldSchema,
+// This import seems to trigger a false positive `Type import "TreeNodeFromImplicitAllowedTypes" is used by decorator metadata` lint error.
+// Other ways to import (ex: import the module with the items as type imports) give different more real errors, and auto fix to this format,
+// so there does not seem to be a clean workaround to make the linter happy.
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+import type {
+	ImplicitAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
+	TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
-import { mapTreeFromNodeData } from "./toMapTree.js";
 import {
+	type WithType,
+	// eslint-disable-next-line import/no-deprecated
+	typeNameSymbol,
+	NodeKind,
 	type TreeNode,
-	TreeNodeValid,
 	type InternalTreeNode,
-	type MostDerivedData,
-} from "./types.js";
+	type TreeNodeSchemaClass,
+	type TreeNodeSchema,
+	typeSchemaSymbol,
+} from "./core/index.js";
+import { mapTreeFromNodeData } from "./toMapTree.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { assert } from "@fluidframework/core-utils/internal";
-import { getKernel } from "./treeNodeKernel.js";
+import { getKernel } from "./core/index.js";
+import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 
 /**
  * A generic array type, used to defined types like {@link (TreeArrayNode:interface)}.
@@ -285,11 +287,10 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
 /**
  * Given a array node proxy, returns its underlying LazySequence field.
  */
-function getSequenceField<
-	TTypes extends FlexAllowedTypes,
-	TSimpleType extends ImplicitAllowedTypes,
->(arrayNode: TreeArrayNode<TSimpleType>): FlexTreeSequenceField<TTypes> {
-	return getOrCreateInnerNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField<TTypes>;
+function getSequenceField<TSimpleType extends ImplicitAllowedTypes>(
+	arrayNode: TreeArrayNode<TSimpleType>,
+): FlexTreeSequenceField {
+	return getOrCreateInnerNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField;
 }
 
 // For compatibility, we are initially implement 'readonly T[]' by applying the Array.prototype methods
@@ -616,15 +617,12 @@ function createArrayNodeProxy(
 			const field = getSequenceField(proxy);
 			const maybeIndex = asIndex(key, field.length);
 			if (maybeIndex !== undefined) {
-				const val = field.boxedAt(maybeIndex);
+				const val = field.at(maybeIndex);
 				// To satisfy 'deepEquals' level scrutiny, the property descriptor for indexed properties must
 				// be a simple value property (as opposed to using getter) and declared writable/enumerable/configurable.
 				return {
-					// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
-					//       as simple as calling '.at' since this skips the node and returns the FieldNode's
-					//       inner field.
-					value: val === undefined ? val : getOrCreateNodeFromFlexTreeNode(val),
-					writable: true, // For MVP, disallow setting indexed properties.
+					value: isFlexTreeNode(val) ? getOrCreateNodeFromFlexTreeNode(val) : val,
+					writable: true, // For MVP, setting indexed properties is reported as allowed here (for deep equals compatibility noted above), but not actually supported.
 					enumerable: true,
 					configurable: true,
 				};
@@ -685,15 +683,8 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		});
 	}
 
-	#cursorFromFieldData(value: Insertable<T>): ITreeCursorSynchronous {
-		if (isMapTreeNode(getOrCreateInnerNode(this))) {
-			throw new UsageError(`An array cannot be mutated before being inserted into the tree`);
-		}
-
+	#mapTreesFromFieldData(value: Insertable<T>): ExclusiveMapTree[] {
 		const sequenceField = getSequenceField(this);
-		// TODO: this is not valid since this is a value field schema, not a sequence one (which does not exist in the simple tree layer),
-		// but it works since cursorFromFieldData special cases arrays.
-		const simpleFieldSchema = normalizeFieldSchema(this.simpleSchema);
 		const content = value as readonly (
 			| InsertableContent
 			| IterableTreeArrayContent<InsertableContent>
@@ -706,7 +697,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			.map((c) =>
 				mapTreeFromNodeData(
 					c,
-					simpleFieldSchema.allowedTypes,
+					this.simpleSchema,
 					sequenceField.context?.nodeKeyManager,
 					getSchemaAndPolicy(sequenceField),
 				),
@@ -716,7 +707,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			prepareContentForHydration(mapTrees, sequenceField.context.checkout.forest);
 		}
 
-		return cursorForMapTreeField(mapTrees);
+		return mapTrees;
 	}
 
 	public toJSON(): unknown {
@@ -759,9 +750,8 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	public insertAt(index: number, ...value: Insertable<T>): void {
 		const field = getSequenceField(this);
 		validateIndex(index, field, "insertAt", true);
-		const content = prepareFieldCursorForInsert(this.#cursorFromFieldData(value));
-		const fieldEditor = field.sequenceEditor();
-		fieldEditor.insert(index, content);
+		const content = this.#mapTreesFromFieldData(value);
+		field.editor.insert(index, content);
 	}
 	public insertAtStart(...value: Insertable<T>): void {
 		this.insertAt(0, ...value);
@@ -772,11 +762,10 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	public removeAt(index: number): void {
 		const field = getSequenceField(this);
 		validateIndex(index, field, "removeAt");
-		field.sequenceEditor().remove(index, 1);
+		field.editor.remove(index, 1);
 	}
 	public removeRange(start?: number, end?: number): void {
 		const field = getSequenceField(this);
-		const fieldEditor = field.sequenceEditor();
 		const { length } = field;
 		const removeStart = start ?? 0;
 		const removeEnd = Math.min(length, end ?? length);
@@ -786,7 +775,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			// This catches both the case where start is > array.length and when start is > end.
 			throw new UsageError('Too large of "start" value passed to TreeArrayNode.removeRange.');
 		}
-		fieldEditor.remove(removeStart, removeEnd - removeStart);
+		field.editor.remove(removeStart, removeEnd - removeStart);
 	}
 	public moveToStart(sourceIndex: number, source?: TreeArrayNode): void {
 		const sourceArray = source ?? this;
@@ -841,33 +830,55 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		source?: TreeArrayNode,
 	): void {
 		const destinationField = getSequenceField(this);
-		if (destinationField.context === undefined) {
-			throw new UsageError(`An array cannot be mutated before being inserted into the tree`);
-		}
+		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
 
 		validateIndex(destinationIndex, destinationField, "moveRangeToIndex", true);
 		validateIndexRange(sourceStart, sourceEnd, source ?? destinationField, "moveRangeToIndex");
-		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
+
 		// TODO: determine support for move across different sequence types
 		if (destinationField.schema.types !== undefined && sourceField !== destinationField) {
 			for (let i = sourceStart; i < sourceEnd; i++) {
-				const sourceNode = sourceField.boxedAt(i) ?? fail("impossible out of bounds index");
+				const sourceNode = sourceField.boxedAt(i) ?? oob();
 				if (!destinationField.schema.types.has(sourceNode.schema.name)) {
 					throw new UsageError("Type in source sequence is not allowed in destination.");
 				}
 			}
 		}
-		const movedCount = sourceEnd - sourceStart;
-		const sourceFieldPath = sourceField.getFieldPath();
 
-		const destinationFieldPath = destinationField.getFieldPath();
-		destinationField.context.checkout.editor.move(
-			sourceFieldPath,
-			sourceStart,
-			movedCount,
-			destinationFieldPath,
-			destinationIndex,
-		);
+		const movedCount = sourceEnd - sourceStart;
+		if (destinationField.context === undefined) {
+			if (!isMapTreeSequenceField(sourceField)) {
+				throw new UsageError(
+					"Cannot move elements from an inserted array to an array that has not yet been inserted",
+				);
+			}
+
+			if (sourceField !== destinationField || destinationIndex < sourceStart) {
+				destinationField.editor.insert(
+					destinationIndex,
+					sourceField.editor.remove(sourceStart, movedCount),
+				);
+			} else if (destinationIndex > sourceStart + movedCount) {
+				destinationField.editor.insert(
+					destinationIndex - movedCount,
+					sourceField.editor.remove(sourceStart, movedCount),
+				);
+			}
+		} else {
+			if (sourceField.context === undefined) {
+				throw new UsageError(
+					"Cannot move elements from an array that has not yet been inserted to an inserted array",
+				);
+			}
+
+			destinationField.context.checkout.editor.move(
+				sourceField.getFieldPath(),
+				sourceStart,
+				movedCount,
+				destinationField.getFieldPath(),
+				destinationIndex,
+			);
+		}
 	}
 
 	public values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
@@ -893,6 +904,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
  *
  * @param name - Unique identifier for this schema including the factory's scope.
  */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function arraySchema<
 	TName extends string,
 	const T extends ImplicitAllowedTypes,
@@ -902,15 +914,16 @@ export function arraySchema<
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	customizable: boolean,
-): TreeNodeSchemaClass<
-	TName,
-	NodeKind.Array,
-	TreeArrayNode<T> & WithType<TName>,
-	Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-	ImplicitlyConstructable,
-	T
-> {
-	let flexSchema: FlexFieldNodeSchema;
+) {
+	type Output = TreeNodeSchemaClass<
+		TName,
+		NodeKind.Array,
+		TreeArrayNode<T> & WithType<TName, NodeKind.Array>,
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+		ImplicitlyConstructable,
+		T
+	>;
+	let flexSchema: FlexTreeNodeSchema;
 
 	// This class returns a proxy from its constructor to handle numeric indexing.
 	// Alternatively it could extend a normal class which gets tons of numeric properties added.
@@ -949,7 +962,7 @@ export function arraySchema<
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
-			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexFieldNodeSchema;
+			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema);
 
 			// First run, do extra validation.
 			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
@@ -982,8 +995,12 @@ export function arraySchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 
+		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
 			return identifier;
+		}
+		public get [typeSchemaSymbol](): Output {
+			return schema.constructorCached?.constructor as unknown as Output;
 		}
 
 		protected get simpleSchema(): T {
@@ -991,7 +1008,8 @@ export function arraySchema<
 		}
 	}
 
-	return schema;
+	const output: Output = schema;
+	return output;
 }
 
 function validateSafeInteger(index: number): void {
@@ -1042,14 +1060,4 @@ function validateIndexRange(
 			`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
 		);
 	}
-}
-
-/**
- * Prepare a fields cursor (holding a sequence of nodes) for inserting.
- */
-function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous {
-	// TODO: optionally validate content against schema.
-
-	assert(cursor.mode === CursorLocationType.Fields, 0x9a8 /* should be in fields mode */);
-	return cursor;
 }

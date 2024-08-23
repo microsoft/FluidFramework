@@ -26,7 +26,9 @@ import {
 	refGetTileLabels,
 	refTypeIncludesFlag,
 } from "./referencePositions.js";
+// eslint-disable-next-line import/no-deprecated
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
+// eslint-disable-next-line import/no-deprecated
 import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
 import { Side } from "./sequencePlace.js";
 
@@ -182,6 +184,10 @@ export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | u
  */
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
 	readonly type: string;
+	/**
+	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
+	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly segmentGroups: SegmentGroupCollection;
 	readonly trackingCollection: TrackingGroupCollection;
 	/**
@@ -218,7 +224,10 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 
 	/**
 	 * Manages pending local state for properties on this segment.
+	 *
+	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	propertyManager?: PropertiesManager;
 	/**
 	 * Local seq at which this segment was inserted.
@@ -266,6 +275,8 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	/**
 	 * Add properties to this segment via annotation.
 	 *
+	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
+	 *
 	 * @remarks This function should not be called directly. Properties should
 	 * be added through the `annotateRange` functions.
 	 */
@@ -273,6 +284,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 		newProps: PropertySet,
 		seq?: number,
 		collaborating?: boolean,
+		// eslint-disable-next-line import/no-deprecated
 		rollback?: PropertiesRollback,
 	): PropertySet;
 	clone(): ISegment;
@@ -283,6 +295,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	toJSONObject(): any;
 	/**
+	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
 	 * Acks the current segment against the segment group, op, and merge tree.
 	 *
 	 * @param segmentGroup - Pending segment group associated with this op.
@@ -508,12 +521,22 @@ export abstract class BaseSegment implements ISegment {
 	public ordinal: string = "";
 	public cachedLength: number = 0;
 
+	/**
+	 * {@inheritdoc ISegment.segmentGroups}
+	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
+	 */
+	// eslint-disable-next-line import/no-deprecated
 	public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
 	public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(
 		this,
 	);
 	/***/
 	public attribution?: IAttributionCollection<AttributionKey>;
+	/**
+	 * {@inheritdoc ISegment.propertyManager}
+	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
+	 */
+	// eslint-disable-next-line import/no-deprecated
 	public propertyManager?: PropertiesManager;
 	public properties?: PropertySet;
 	public localRefs?: LocalReferenceCollection;
@@ -522,12 +545,24 @@ export abstract class BaseSegment implements ISegment {
 	public localRemovedSeq?: number;
 	public localMovedSeq?: number;
 
+	public constructor(properties?: PropertySet) {
+		if (properties !== undefined) {
+			this.properties = clone(properties);
+		}
+	}
+
+	/**
+	 * {@inheritdoc ISegment.addProperties}
+	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
+	 */
 	public addProperties(
 		newProps: PropertySet,
 		seq?: number,
 		collaborating?: boolean,
+		// eslint-disable-next-line import/no-deprecated
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	): PropertySet {
+		// eslint-disable-next-line import/no-deprecated
 		this.propertyManager ??= new PropertiesManager();
 		// A property set must be able to hold properties of any type, so the any is needed.
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -578,6 +613,10 @@ export abstract class BaseSegment implements ISegment {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public abstract toJSONObject(): any;
 
+	/**
+	 * {@inheritdoc ISegment.ack}
+	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
+	 */
 	public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
 		const currentSegmentGroup = this.segmentGroups.dequeue();
 		assert(
@@ -685,13 +724,18 @@ export abstract class BaseSegment implements ISegment {
 	}
 
 	private copyPropertiesTo(other: ISegment): void {
-		if (this.propertyManager && this.properties) {
-			other.propertyManager = new PropertiesManager();
-			other.properties = this.propertyManager.copyTo(
-				this.properties,
-				other.properties,
-				other.propertyManager,
-			);
+		if (this.properties !== undefined) {
+			if (this.propertyManager) {
+				// eslint-disable-next-line import/no-deprecated
+				other.propertyManager = new PropertiesManager();
+				other.properties = this.propertyManager.copyTo(
+					this.properties,
+					other.properties,
+					other.propertyManager,
+				);
+			} else {
+				other.properties = clone(this.properties);
+			}
 		}
 	}
 
@@ -764,15 +808,14 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 	public readonly type = Marker.type;
 
 	public static make(refType: ReferenceType, props?: PropertySet): Marker {
-		const marker = new Marker(refType);
-		if (props) {
-			marker.addProperties(props);
-		}
-		return marker;
+		return new Marker(refType, props);
 	}
 
-	constructor(public refType: ReferenceType) {
-		super();
+	constructor(
+		public refType: ReferenceType,
+		props?: PropertySet,
+	) {
+		super(props);
 		this.cachedLength = 1;
 	}
 

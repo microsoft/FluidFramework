@@ -18,20 +18,14 @@ import {
 	leaf,
 	leaf as leafDomain,
 	singleJsonCursor,
-	typedJsonCursor,
 } from "../../../domains/index.js";
 import type { Context } from "../../../feature-libraries/flex-tree/context.js";
-import {
-	unboxedField,
-	unboxedTree,
-	unboxedUnion,
-} from "../../../feature-libraries/flex-tree/unboxed.js";
+import { unboxedTree, unboxedUnion } from "../../../feature-libraries/flex-tree/unboxed.js";
 import {
 	Any,
-	FieldKinds,
 	type FlexAllowedTypes,
 	type FlexFieldKind,
-	FlexFieldSchema,
+	type FlexTreeNode,
 } from "../../../feature-libraries/index.js";
 import type { TreeContent } from "../../../shared-tree/index.js";
 
@@ -72,100 +66,6 @@ function initializeTreeWithContent<Kind extends FlexFieldKind, Types extends Fle
 	};
 }
 
-describe("unboxedField", () => {
-	describe("Optional field", () => {
-		it("No value", () => {
-			const builder = new SchemaBuilder({ scope: "test" });
-			const fieldSchema = SchemaBuilder.optional(leafDomain.number);
-			const schema = builder.intoSchema(fieldSchema);
-
-			const { context, cursor } = initializeTreeWithContent({
-				schema,
-				initialTree: undefined,
-			});
-
-			assert.equal(unboxedField(context, fieldSchema, cursor), undefined);
-		});
-
-		it("With value (leaf)", () => {
-			const builder = new SchemaBuilder({ scope: "test" });
-			const fieldSchema = SchemaBuilder.optional(leafDomain.number);
-			const schema = builder.intoSchema(fieldSchema);
-
-			const { context, cursor } = initializeTreeWithContent({
-				schema,
-				initialTree: singleJsonCursor(42),
-			});
-
-			assert.equal(unboxedField(context, fieldSchema, cursor), 42);
-		});
-	});
-
-	it("Required field (object)", () => {
-		const builder = new SchemaBuilder({ scope: "test" });
-		const objectSchema = builder.objectRecursive("object", {
-			name: SchemaBuilder.required(leafDomain.string),
-			child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => objectSchema]),
-		});
-		const fieldSchema = SchemaBuilder.optional(objectSchema);
-		const schema = builder.intoSchema(fieldSchema);
-
-		const initialTree = typedJsonCursor({
-			[typedJsonCursor.type]: objectSchema,
-			name: "Foo",
-			child: {
-				[typedJsonCursor.type]: objectSchema,
-				name: "Bar",
-			},
-		});
-
-		const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
-
-		const unboxed = unboxedField(context, fieldSchema, cursor);
-		assert(unboxed !== undefined);
-		assert.equal(unboxed.schema, objectSchema);
-		assert.equal(unboxed.name, "Foo");
-
-		const unboxedChild = unboxed.child;
-		assert(unboxedChild !== undefined);
-		assert.equal(unboxedChild.schema, objectSchema);
-		assert.equal(unboxedChild.name, "Bar");
-		assert.equal(unboxedChild.child, undefined);
-	});
-
-	it("Sequence field", () => {
-		const builder = new SchemaBuilder({ scope: "test" });
-		const fieldSchema = SchemaBuilder.sequence(leafDomain.string);
-		const schema = builder.intoSchema(fieldSchema);
-
-		const { context, cursor } = initializeTreeWithContent({
-			schema,
-			initialTree: ["Hello", "world"].map((c) => singleJsonCursor(c)),
-		});
-
-		const unboxed = unboxedField(context, fieldSchema, cursor);
-
-		assert.deepEqual([...unboxed], ["Hello", "world"]);
-	});
-
-	it("Schema: Any", () => {
-		const builder = new SchemaBuilder({ scope: "test" });
-		const fieldSchema = SchemaBuilder.optional(Any);
-		const schema = builder.intoSchema(fieldSchema);
-
-		const { context, cursor } = initializeTreeWithContent({
-			schema,
-			initialTree: singleJsonCursor(42),
-		});
-
-		// Type is not known based on schema, so node will not be unboxed.
-		const unboxed = unboxedField(context, fieldSchema, cursor);
-		assert(unboxed !== undefined);
-		assert.equal(unboxed.schema, leaf.number);
-		assert.equal(unboxed.value, 42);
-	});
-});
-
 describe("unboxedTree", () => {
 	it("Leaf", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
@@ -178,57 +78,6 @@ describe("unboxedTree", () => {
 		cursor.enterNode(0); // Root node field has 1 node; move into it
 
 		assert.equal(unboxedTree(context, leafDomain.string, cursor), "Hello world");
-	});
-
-	it("Map", () => {
-		const builder = new SchemaBuilder({ scope: "test" });
-		const mapSchema = builder.map("map", builder.optional(leafDomain.string));
-		const rootSchema = SchemaBuilder.optional(mapSchema);
-		const schema = builder.intoSchema(rootSchema);
-
-		const { context, cursor } = initializeTreeWithContent({
-			schema,
-			initialTree: typedJsonCursor({
-				[typedJsonCursor.type]: mapSchema,
-				foo: "Hello",
-				bar: "world",
-			}),
-		});
-		cursor.enterNode(0); // Root node field has 1 node; move into it
-
-		const unboxed = unboxedTree(context, mapSchema, cursor);
-		assert.equal(unboxed.size, 2);
-		assert.equal(unboxed.get("foo"), "Hello");
-		assert.equal(unboxed.get("bar"), "world");
-	});
-
-	it("ObjectNode", () => {
-		const builder = new SchemaBuilder({ scope: "test" });
-		const objectSchema = builder.objectRecursive("object", {
-			name: SchemaBuilder.required(leafDomain.string),
-			child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => objectSchema]),
-		});
-		const rootSchema = builder.optional(objectSchema);
-		const schema = builder.intoSchema(rootSchema);
-
-		const initialTree = typedJsonCursor({
-			[typedJsonCursor.type]: objectSchema,
-			name: "Foo",
-			child: {
-				[typedJsonCursor.type]: objectSchema,
-				name: "Bar",
-			},
-		});
-
-		const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
-		cursor.enterNode(0); // Root node field has 1 node; move into it
-
-		const unboxed = unboxedTree(context, objectSchema, cursor);
-
-		assert.equal(unboxed.name, "Foo");
-		assert(unboxed.child !== undefined);
-		assert.equal(unboxed.child.name, "Bar");
-		assert.equal(unboxed.child.child, undefined);
 	});
 });
 
@@ -245,7 +94,7 @@ describe("unboxedUnion", () => {
 		cursor.enterNode(0); // Root node field has 1 node; move into it
 
 		// Type is not known based on schema, so node will not be unboxed.
-		const unboxed = unboxedUnion(context, fieldSchema, cursor);
+		const unboxed = unboxedUnion(context, fieldSchema, cursor) as FlexTreeNode;
 		assert.equal(unboxed.schema, leaf.number);
 		assert.equal(unboxed.value, 42);
 	});
@@ -276,7 +125,7 @@ describe("unboxedUnion", () => {
 		cursor.enterNode(0); // Root node field has 1 node; move into it
 
 		// Type is not known based on schema, so node will not be unboxed.
-		const unboxed = unboxedUnion(context, fieldSchema, cursor);
+		const unboxed = unboxedUnion(context, fieldSchema, cursor) as FlexTreeNode;
 		assert.equal(unboxed.schema, leaf.string);
 		assert.equal(unboxed.value, "Hello world");
 	});
