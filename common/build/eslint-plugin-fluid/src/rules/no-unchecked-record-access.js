@@ -193,7 +193,7 @@ function isDefined(node) {
 		return true;
 	}
 
-	// Truthy check in if statement
+	// Presence check in if statement
 	if (node.parent.type === "IfStatement" && node.parent.test === node) {
 		return true;
 	}

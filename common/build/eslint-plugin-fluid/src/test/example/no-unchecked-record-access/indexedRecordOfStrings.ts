@@ -30,7 +30,7 @@ indexedRecordOfStrings["a"]!.length; // ok: The author says they understand the 
 
 /* Conditional Checks */
 if (indexedRecordOfStrings.a) {
-	indexedRecordOfStrings.a.length; // ok: Within a truthy check, 'a' is guaranteed to be defined
+	indexedRecordOfStrings.a.length; // ok: Within a presence check, 'a' is guaranteed to be defined
 }
 
 if ("a" in indexedRecordOfStrings) {
@@ -61,12 +61,12 @@ AFnExpectsStringOrUndefined(indexedRecordOfStrings.a); // ok: Passing index prop
 for (const [key, value] of Object.entries(indexedRecordOfStrings)) {
 	value.length; // ok: Object.entries provides only present values
 	indexedRecordOfStrings[key]; // ok: Accessing property while looping though records which acts like a `has` property check
-	indexedRecordOfStrings[key].length; // ok: When noUncheckedIndexedAccess is enabled, TSC will treat indexedRecordOfStrings[key] as an error, but no-unchecked-record-access does not because accessing properties while looping though records acts like a truthy check
+	indexedRecordOfStrings[key].length; // ok: When noUncheckedIndexedAccess is enabled, TSC will treat indexedRecordOfStrings[key] as an error, but no-unchecked-record-access does not because accessing properties while looping though records acts like a presence check
 }
 
 for (const key of Object.keys(indexedRecordOfStrings)) {
 	indexedRecordOfStrings[key]; // ok: Accessing property while looping though records which acts like a `has` property check
-	indexedRecordOfStrings[key].length; // ok: When noUncheckedIndexedAccess is enabled, TSC will treat indexedRecordOfStrings[key] as an error, but no-unchecked-record-access does not because accessing properties while looping though records acts like a truthy check
+	indexedRecordOfStrings[key].length; // ok: When noUncheckedIndexedAccess is enabled, TSC will treat indexedRecordOfStrings[key] as an error, but no-unchecked-record-access does not because accessing properties while looping though records acts like a presence check
 }
 
 /*

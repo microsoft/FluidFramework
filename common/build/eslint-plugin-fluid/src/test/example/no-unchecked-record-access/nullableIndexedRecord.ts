@@ -13,7 +13,7 @@ const nullableIndexedRecord: NullableIndexSignatureType = { a: "hello", b: null 
 
 /* Conditional Checks */
 if (nullableIndexedRecord.a) {
-	nullableIndexedRecord.a.length; // ok: Within a truthy check, 'a' is guaranteed to be defined
+	nullableIndexedRecord.a.length; // ok: Within a presence check, 'a' is guaranteed to be defined
 }
 
 /* Function Calls */
