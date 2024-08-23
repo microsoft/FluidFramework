@@ -19,6 +19,7 @@ import {
 	MockQuorumClients,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
+import { createSandbox } from "sinon";
 
 import type { ChannelCollection } from "../channelCollection.js";
 import { ContainerRuntime } from "../containerRuntime.js";
@@ -50,6 +51,19 @@ describe("Runtime batching", () => {
 
 	let containerRuntime: ContainerRuntime;
 	let mockDeltaManager: MockDeltaManager;
+	let sandbox: sinon.SinonSandbox;
+
+	/** Overwrites channelCollection property to make process a no-op */
+	function patchContainerRuntime(cr: ContainerRuntime) {
+		const patched = cr as unknown as Omit<ContainerRuntime, "channelCollection"> & {
+			channelCollection: Partial<ChannelCollection>;
+		};
+		sandbox.stub(patched.channelCollection, "process").callsFake(() => {});
+	}
+
+	before(() => {
+		sandbox = createSandbox();
+	});
 
 	beforeEach(async () => {
 		mockDeltaManager = new MockDeltaManager();
@@ -60,23 +74,12 @@ describe("Runtime batching", () => {
 			runtimeOptions: {},
 			provideEntryPoint: mockProvideEntryPoint,
 		});
+		patchContainerRuntime(containerRuntime);
 	});
 
-	/** Overwrites channelCollection property to make process a no-op */
-	function patchContainerRuntime(cr: ContainerRuntime): ContainerRuntime {
-		const patched = cr as unknown as Omit<ContainerRuntime, "channelCollection"> & {
-			channelCollection: Partial<ChannelCollection>;
-		};
-
-		patched.channelCollection = {
-			process: (
-				message: ISequencedDocumentMessage,
-				local: boolean,
-				localMessageMetadata: unknown,
-			) => {},
-		} satisfies Partial<ChannelCollection>;
-		return patched as unknown as ContainerRuntime;
-	}
+	after(() => {
+		sandbox.restore();
+	});
 
 	/**
 	 * Returns a batch of messages with the first and last message marked as batch start and end respectively.
@@ -88,7 +91,7 @@ describe("Runtime batching", () => {
 				type: MessageType.Operation,
 				clientId: mockClientId,
 				sequenceNumber: i,
-				minimumSequenceNumber: 1,
+				minimumSequenceNumber: 0,
 				contents: {
 					type: ContainerMessageType.FluidDataStoreOp,
 					contents: {
@@ -131,54 +134,62 @@ describe("Runtime batching", () => {
 	}
 
 	it("successfully processes messages that are not part of batch", async () => {
-		const cr = patchContainerRuntime(containerRuntime);
 		const messageCount = 5;
 		const batch = getBatch(messageCount);
 
-		// Remove the batch metadata essentially making the messages not part of a batch.s
+		// Remove the batch metadata essentially making the messages not part of a batch.
 		batch[0].metadata = undefined;
 		batch[messageCount - 1].metadata = undefined;
 
 		assert.doesNotThrow(
-			() => processBatch(batch, cr),
+			() => processBatch(batch, containerRuntime),
 			"Non batch messages should be processed successfully",
 		);
 	});
 
 	it("successfully processes a batch containing ops from a single client", async () => {
-		const cr = patchContainerRuntime(containerRuntime);
 		const messageCount = 5;
 		const batch = getBatch(messageCount);
 
 		assert.doesNotThrow(
-			() => processBatch(batch, cr),
+			() => processBatch(batch, containerRuntime),
 			"Batch from a single client should be processed successfully",
 		);
 	});
 
 	it("fails processing a batch with batch end but no batch start", async () => {
-		const cr = patchContainerRuntime(containerRuntime);
 		const messageCount = 5;
 		const batch = getBatch(messageCount);
 		// Remove the batch begin metadata.
 		batch[0].metadata = undefined;
 
 		assert.throws(
-			() => processBatch(batch, cr),
+			() => processBatch(batch, containerRuntime),
 			(e: Error) => validateAssertionError(e, "batch presence was validated above"),
 			"Batch end without batch start should fail",
 		);
 	});
 
+	it("fails processing a batch with multiple batch starts", async () => {
+		const messageCount = 5;
+		const batch = getBatch(messageCount);
+		batch[2].metadata = { batch: true };
+
+		assert.throws(
+			() => processBatch(batch, containerRuntime),
+			(e: Error) => validateAssertionError(e, "there can't be active batch"),
+			"Batch with multiple batch starts should fail",
+		);
+	});
+
 	it("fails processing a batch containing ops from multiple clients", async () => {
-		const cr = patchContainerRuntime(containerRuntime);
 		const messageCount = 5;
 		const batch = getBatch(messageCount);
 		// Change the clientId of the second message to a different client.
 		batch[1].clientId = "otherClientId";
 
 		assert.throws(
-			() => processBatch(batch, cr),
+			() => processBatch(batch, containerRuntime),
 			(e: any) => {
 				assert(e.errorType === FluidErrorTypes.dataCorruptionError);
 				assert(e.message === "OpBatchIncomplete");
@@ -189,14 +200,13 @@ describe("Runtime batching", () => {
 	});
 
 	it("fails processing a batch containing a non-runtime op along with runtime ops", async () => {
-		const cr = patchContainerRuntime(containerRuntime);
 		const messageCount = 5;
 		const batch = getBatch(messageCount);
 		// Change the type of the second message to a non-runtime op.
 		batch[1].type = MessageType.NoOp;
 
 		assert.throws(
-			() => processBatch(batch, cr),
+			() => processBatch(batch, containerRuntime),
 			(e: any) => {
 				assert(e.errorType === FluidErrorTypes.dataProcessingError);
 				assert(e.message === "Received a system message during batch processing");
@@ -207,7 +217,6 @@ describe("Runtime batching", () => {
 	});
 
 	it("fails processing a batch containing an unknown runtime op along with known ops", async () => {
-		const cr = patchContainerRuntime(containerRuntime);
 		const messageCount = 5;
 		const batch = getBatch(messageCount);
 
@@ -217,7 +226,7 @@ describe("Runtime batching", () => {
 		(unknownMessage.contents as any).type = unknownMessageType;
 
 		assert.throws(
-			() => processBatch(batch, cr),
+			() => processBatch(batch, containerRuntime),
 			(e: any) => {
 				assert(e.errorType === FluidErrorTypes.dataProcessingError);
 				assert(e.message === "Runtime message of unknown type");
