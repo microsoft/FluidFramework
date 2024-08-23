@@ -27,7 +27,6 @@ import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
 	type FlexTreeNode,
-	type FlexTreeTypedNode,
 	flexTreeMarker,
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
@@ -116,9 +115,7 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 		this.type = schema.name;
 	}
 
-	public is<TSchemaInner extends FlexTreeNodeSchema>(
-		schema: TSchemaInner,
-	): this is FlexTreeTypedNode<TSchemaInner> {
+	public is(schema: FlexTreeNodeSchema): boolean {
 		assert(
 			this.context.schema.nodeSchema.get(schema.name) === schema,
 			0x785 /* Narrowing must be done to a schema that exists in this context */,

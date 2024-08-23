@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/build-tools",
-	"version": "0.44.0",
+	"version": "0.45.0",
 	"description": "Fluid Build tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -51,7 +51,6 @@
 		"fs-extra": "^11.2.0",
 		"glob": "^7.2.3",
 		"ignore": "^5.2.4",
-		"json-schema-to-typescript": "^15.0.0",
 		"json5": "^2.2.3",
 		"lodash": "^4.17.21",
 		"lodash.isequal": "^4.5.0",
@@ -83,6 +82,7 @@
 		"@types/shelljs": "^0.8.12",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.57.0",
+		"json-schema-to-typescript": "^15.0.0",
 		"mocha": "^10.2.0"
 	},
 	"engines": {

@@ -27,7 +27,6 @@ import {
 	LinkedList,
 	WideRoot,
 	deepPath,
-	type deepSchema,
 	localFieldKey,
 	makeDeepContent,
 	makeJsDeepTree,
@@ -39,7 +38,6 @@ import {
 	readWideCursorTree,
 	readWideFlexTree,
 	readWideTreeAsJSObject,
-	type wideSchema,
 } from "../scalableTestTrees.js";
 import {
 	TestTreeProviderLite,
@@ -153,7 +151,7 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("Cursors", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: FlexTreeView<typeof deepSchema.rootFieldSchema>;
+			let tree: FlexTreeView;
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree with cursor: reads with ${numberOfNodes} nodes`,
@@ -168,7 +166,7 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: FlexTreeView<typeof wideSchema.rootFieldSchema>;
+			let tree: FlexTreeView;
 			let expected = 0;
 			benchmark({
 				type: benchmarkType,
@@ -193,7 +191,7 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("FlexTree bench", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: FlexTreeView<typeof deepSchema.rootFieldSchema>;
+			let tree: FlexTreeView;
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
@@ -208,7 +206,7 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: FlexTreeView<typeof wideSchema.rootFieldSchema>;
+			let tree: FlexTreeView;
 			let expected: number = 0;
 			benchmark({
 				type: benchmarkType,
