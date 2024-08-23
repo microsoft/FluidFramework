@@ -6,9 +6,9 @@
 /**
  * Rule to enforce safe property access on index signature types.
  *
- * Reports errors when accessing properties that might not be defined or when a
- * variable is being assigned an index signature type without a defined type.
- * Enable `noUncheckedIndexedAccess` to disable this rule.
+ * Reports issues when [non-array] index properties are accessed without handling
+ * the possibility that they are absent.
+ * Enabling `noUncheckedIndexedAccess` will disable these checks.
  */
 
 const { SyntaxKind } = require("typescript");
