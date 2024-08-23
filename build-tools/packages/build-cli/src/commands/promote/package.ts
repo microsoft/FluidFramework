@@ -94,19 +94,21 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 			if (!response.ok) {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const errorData = await response.json();
-				this.error(
-					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-member-access
-					`Failed to promote package. Status: ${response.status}, Message: ${errorData.message || "Unknown error"}`,
-				);
+				// this.error(
+				// 	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-member-access
+				// 	`Failed to promote package. Status: ${response.status}, Message: ${errorData.message || "Unknown error"}`,
+				// );
 			}
 
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const responseData = await response.json();
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
 			return responseData.success;
-		} catch (error) {
-			this.error("Failed to promote package due to network error:", error);
+		} catch(error: unknown) {
+			if(error instanceof Error) {
+			this.error("Failed to promote package due to network error:", error.message);
 			return false;
+			}
 		}
 	};
 }
