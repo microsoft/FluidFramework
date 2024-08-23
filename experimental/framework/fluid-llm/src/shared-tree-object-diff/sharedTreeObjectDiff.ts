@@ -1,6 +1,8 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
-import { type TreeMapNode, type TreeArrayNode, NodeKind } from "@fluidframework/tree";
+import { type TreeArrayNode, NodeKind } from "@fluidframework/tree";
+
+import { isTreeMapNode } from "./utils.js";
 
 export type ObjectPath = (string | number)[];
 
@@ -329,17 +331,6 @@ export function sharedTreeObjectDiff(
 		}
 	}
 	return diffs;
-}
-
-function isTreeMapNode(obj: unknown): obj is TreeMapNode {
-	if (typeof obj === 'object' && obj !== null) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const maybeNodeKind: unknown = Object.getPrototypeOf(obj)?.constructor?.kind;
-		if (maybeNodeKind === NodeKind.Map) {
-			return true;
-		}
-	}
-	return false;
 }
 
 function isArrayOrTreeArrayNode(obj: unknown): obj is unknown[] | TreeArrayNode {

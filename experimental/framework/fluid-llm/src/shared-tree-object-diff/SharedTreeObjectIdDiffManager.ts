@@ -1,8 +1,8 @@
-import { type TreeArrayNode } from "@fluidframework/tree";
+import { type TreeArrayNode, type TreeMapNode } from "@fluidframework/tree";
 import type * as z from "zod";
 
 import { sharedTreeObjectDiff, type Difference, type DifferenceCreate, type DifferenceRemove, type ObjectPath } from "./sharedTreeObjectDiff.js";
-
+import { isTreeMapNode, isTreeArrayNode, sharedTreeTraverse } from "./utils.js";
 
 /**
  * Manages the differences between a SharedTree object node and a javascript object and then applies them.
@@ -43,7 +43,8 @@ export class SharedTreeObjectIdDiffManager {
 		// 1. We apply all change diffs before handling more complex diff types.
 		const changeDiffs = diffs.filter((d) => d.type === 'CHANGE');
 		for (const changeDiff of changeDiffs) {
-			this.applyDiff(changeDiff, objectToUpdate);
+			// Todo: make different appliers for each diff type?
+			this.applyDiffV2(changeDiff, objectToUpdate);
 		}
 
 		// 2. Now, we must handle MOVE diff's.
@@ -107,6 +108,123 @@ export class SharedTreeObjectIdDiffManager {
 			}
 		}
 
+	}
+
+
+	public applyDiffV2(diff: Difference, objectToUpdate: Record<string, unknown> | TreeArrayNode): void {
+		let targetObject: unknown = objectToUpdate;
+
+		if (diff.path.length > 1) {
+			targetObject = sharedTreeTraverse(objectToUpdate, diff.path.slice(0, - 1));
+		}
+
+		if (isTreeMapNode(targetObject)) {
+			switch (diff.type) {
+				case "CHANGE":
+				case "CREATE":{
+					targetObject.set(diff.path[diff.path.length - 1] as string, diff.value);
+					break;
+				}
+				case "REMOVE":{
+					targetObject.delete(diff.path[diff.path.length - 1] as string);
+					break;
+				}
+				default: {
+					throw new TypeError("Unsupported diff type for Map Tree Node");
+				}
+			}
+		} else if (isTreeArrayNode(targetObject)) {
+			const targetIndex = diff.path[diff.path.length - 1] as number;
+			switch (diff.type) {
+				case "CHANGE":
+				case "CREATE": {
+					if (targetIndex <= targetObject.length - 1) {
+						targetObject.insertAt(targetIndex, diff.value);
+					} else {
+						// If a diff requested creating a new object at a non existent index, we'll just push it to the end.
+						targetObject.insertAtEnd(diff.value)
+					}
+					break;
+				}
+				case "REMOVE":{
+					// Todo: Should we double check if the value at the index is the same as the value in the diff?
+					if (targetIndex <= targetObject.length - 1) {
+						targetObject.removeAt(targetIndex);
+					} else {
+						console.warn("Value to remove does not exist in array");
+					}
+					break;
+				}
+				default: {
+					throw new TypeError("Unsupported diff type for Array Tree Node");
+				}
+			}
+		} else if (typeof targetObject === 'object' && targetObject !== null) {
+			switch (diff.type) {
+				case "CHANGE":
+				case "CREATE": {
+					targetObject[diff.path[0] as string] = diff.value;
+					break;
+				}
+				case "REMOVE": {
+					// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+					delete targetObject[diff.path[diff.path.length - 1] as string];
+					break;
+				}
+				default: {
+					throw new TypeError("Unsupported diff type for Object Tree Node");
+				}
+		}
+	}
+
+	}
+
+
+	public applyMapNodeDiff(diff: Difference, objectToUpdate: TreeMapNode): void {
+		switch (diff.type) {
+			case "CREATE": {
+				// // Add the new property to the object
+				// // Can introduce strategies here e.g. use node id's or use indexes for an array
+				// if (this.isDiffOnArray(diff)) {
+				// 	this.addToArray(diff, objectToUpdate as TreeArrayNode);
+				// } else {
+				// 	this.addToObject(diff, objectToUpdate);
+				// }
+				break;
+			}
+			case "CHANGE": {
+				// Change the value of the property
+				// A change is always going to be a change to a property on an object.
+				// if (diff.path.length === 1) {
+				// 	// The object itself is the object to update.
+				// 	const targetObject = objectToUpdate as Record<string, unknown>;
+				// 	// CHANGE PROPERTY TO OBJECT.
+				// 	if (targetObject === undefined) {
+				// 		console.warn("Object to update no longer exists");
+				// 	} else {
+				// 		targetObject[diff.path[0] as string] = diff.value;
+				// 	}
+				// } else {
+				// 	const targetObject = traversePath<Record<string, unknown>>(objectToUpdate, diff.path.slice(0, - 1));
+				// 	// CHANGE PROPERTY TO OBJECT.
+				// 	if (targetObject === undefined) {
+				// 		console.warn("Object to update no longer exists");
+				// 	} else {
+				// 		targetObject[diff.path[diff.path.length - 1] as string] = diff.value;
+				// 	}
+				// }
+				break;
+			}
+			case "REMOVE": {
+				if (diff.path.length === 1) {
+					objectToUpdate.delete(diff.path[0] as string);
+				} else {
+					// const targetObject = traversePath<Record<string, unknown>>(objectToUpdate, diff.path.slice(0, - 1));
+				}
+				break;
+			}
+			// No default
+		}
 	}
 
 	/**

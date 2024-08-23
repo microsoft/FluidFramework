@@ -15,7 +15,7 @@ describe("sharedTreeObjectDiff - Objects & Maps", () => {
 	class SimpleMapTreeNode extends schemaFactory.map("SimpleMapTreeNode", [schemaFactory.boolean]) {};
 
 	it("new raw value", () => {
-		const treeNode = new SimpleObjectTreeNode({ test: true });
+		const treeNode = new SimpleMapTreeNode({ test: true });
 		assert.deepStrictEqual(sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, { test: true, test2: true }), [
 			{
 				type: "CREATE",

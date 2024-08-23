@@ -8,10 +8,10 @@ import { sharedTreeObjectDiff, type Difference, type DifferenceCreate, type Diff
  * Manages the differences between a SharedTree object node and a javascript object and then applies them.
  */
 export class SharedTreeSimpleObjectDiffManager {
-	private readonly objectSchema?: z.Schema
+	private readonly zodSchema?: z.Schema
 
-	public constructor(params?: {objectSchema?: z.Schema}) {
-		this.objectSchema = params?.objectSchema;
+	public constructor(params?: {zodSchema?: z.Schema}) {
+		this.zodSchema = params?.zodSchema;
 	}
 
 	/**
@@ -20,8 +20,8 @@ export class SharedTreeSimpleObjectDiffManager {
 	public compareAndApplyDiffs(obj: Record<string, unknown> | TreeArrayNode, newObj: Record<string, unknown> | unknown[]): void {
 		// By validating that the incoming object matches the schema, we can confirm that any property
 		// deletions/updates/additions are valid.
-		if (this.objectSchema !== undefined) {
-			const res = this.objectSchema.safeParse(newObj);
+		if (this.zodSchema !== undefined) {
+			const res = this.zodSchema.safeParse(newObj);
 			if (res.success === false) {
 				throw new TypeError("Invalid data");
 			}
