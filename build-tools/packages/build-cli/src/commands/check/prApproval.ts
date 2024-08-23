@@ -6,9 +6,14 @@
 import { Flags } from "@oclif/core";
 
 import { githubTokenFlag } from "../../flags.js";
-// We are slowly moving away from barrel files and these APIs are only used here.
-// eslint-disable-next-line import/no-internal-modules
-import { type GitHubProps, isPrApprovedByTeam } from "../../library/githubRest.js";
+
+import {
+	type GitHubProps,
+	isPrApprovedByTeam,
+	isPrApprovedByUsers,
+	// We are slowly moving away from barrel files and these APIs are only used here.
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../library/githubRest.js";
 import { BaseCommand } from "../../library/index.js";
 
 /**
@@ -47,7 +52,13 @@ export default class CheckPrApprovalCommand extends BaseCommand<
 		team: Flags.string({
 			description:
 				"The team whose membership should be checked. The team must be in the same GitHub organization as the repo. Only the team name should be provided - the org is inferred from the repo details.",
-			required: true,
+			exactlyOne: ["team", "approvers"],
+		}),
+		approvers: Flags.string({
+			description:
+				"GitHub users who should be considered approvers. Cannot be used with the --team flag. You can provide multiple names as a space-delimited list, e.g. '--approvers user1 user2'",
+			multiple: true,
+			exactlyOne: ["team", "approvers"],
 		}),
 		token: githubTokenFlag({
 			required: true,
@@ -57,14 +68,20 @@ export default class CheckPrApprovalCommand extends BaseCommand<
 
 	public async run(): Promise<boolean> {
 		const { repo, owner } = this.flags.repo;
-		const { token, pr, team: teamName } = this.flags;
+		const { token, pr, team: teamName, approvers } = this.flags;
 		const props: GitHubProps = {
 			owner,
 			repo,
 			token,
 		};
 
-		const isApproved = await isPrApprovedByTeam(props, pr, teamName);
+		const isApproved =
+			approvers === undefined
+				? teamName === undefined
+					? false
+					: await isPrApprovedByTeam(props, pr, teamName)
+				: await isPrApprovedByUsers(props, pr, new Set(approvers));
+
 		if (this.flags.json === true) {
 			return isApproved;
 		}

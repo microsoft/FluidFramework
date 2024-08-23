@@ -50,7 +50,7 @@ export async function getPrApprovers(
 				review.user !== null,
 		)
 		.map((review) => review.user?.login)
-		.filter((user) => user !== undefined);
+		.filter((user): user is string => user !== undefined);
 
 	return approvers;
 }
@@ -79,12 +79,30 @@ export async function isPrApprovedByTeam(
 	});
 
 	// Extract team member logins
-	const teamMemberLogins = new Set<string>(teamMembers.map((member) => member.login));
+	const teamMemberLogins = new Set(teamMembers.map((member) => member.login));
 
-	// Get the approvers of the PR
-	const approvers = await getPrApprovers(github, prNumber);
+	return isPrApprovedByUsers(github, prNumber, teamMemberLogins);
+}
 
-	// Check if any review is approved by a team member
-	const approvedByTeam = approvers.some((approver) => teamMemberLogins.has(approver));
-	return approvedByTeam;
+/**
+ * Check if a GitHub PR is approved by someone in a list of users.
+ *
+ * @param github - Details about the GitHub repo and auth to use.
+ * @param prNumber - Pull request number.
+ * @param approvers - GitHub users who should be considered approvers.
+ *
+ * @returns `true` if at least one of the approvers has approved the PR; `false` otherwise.
+ */
+export async function isPrApprovedByUsers(
+	github: GitHubProps,
+	prNumber: number,
+	approvers: Set<string>,
+): Promise<boolean> {
+	// Get the users who approved the PR
+	const reviewers = await getPrApprovers(github, prNumber);
+
+	// Check if any review is approved by an approver. If at least one of the reviewers is an approver, it's considered
+	// approved.
+	const approved = reviewers.some((user) => approvers.has(user));
+	return approved;
 }
