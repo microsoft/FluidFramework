@@ -461,12 +461,13 @@ export interface IPerfSignalReport {
 	roundTripSignalSequenceNumber: number | undefined;
 
 	/**
-	 * Next expected signal sequence number to be received. Upper bound of signal monitoring window.
+	 * Next expected signal sequence number to be received.
+	 * Inclusive upper bound of signal monitoring window.
 	 */
 	trackingSignalSequenceNumber: number | undefined;
 
 	/**
-	 * Lower bound of signal monitoring window.
+	 * Inclusive lower bound of signal monitoring window.
 	 */
 	minimumTrackingSignalSequenceNumber: number | undefined;
 }

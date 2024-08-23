@@ -2572,6 +2572,12 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 1,
+							signalsLost: 0,
+						},
+
+						{
+							eventName: "ContainerRuntime:SignalLatency",
 							signalsSent: 100,
 							signalsLost: 0,
 						},
@@ -2798,7 +2804,7 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 100,
+							signalsSent: 101,
 							signalsLost: 20,
 						},
 						{
@@ -2837,7 +2843,7 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 200,
+							signalsSent: 201,
 							signalsLost: 26,
 						},
 					],

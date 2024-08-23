@@ -2947,10 +2947,10 @@ export class ContainerRuntime
 		this.mc.logger.sendPerformanceEvent({
 			eventName: "SignalLatency",
 			duration,
-			signalsSent: clientSignalSequenceNumber - previousClientSignalSequenceNumber,
+			signalsSent: clientSignalSequenceNumber - previousClientSignalSequenceNumber + 1,
 			signalsLost: this._signalTracking.signalsLost,
 		});
-		this._signalTracking.minimumTrackingSignalSequenceNumber = clientSignalSequenceNumber;
+		this._signalTracking.minimumTrackingSignalSequenceNumber = clientSignalSequenceNumber + 1;
 		this._signalTracking.signalsLost = 0;
 		this._signalTracking.signalTimestamp = 0;
 	}
