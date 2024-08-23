@@ -2937,6 +2937,7 @@ export class ContainerRuntime
 	/**
 	 * Emits the Signal event and update the perf signal data.
 	 * @param clientSignalSequenceNumber - is the client signal sequence number to be uploaded.
+	 * @param previousClientSignalSequenceNumber - the previously uploaded client sequence number.
 	 */
 	private sendSignalTelemetryEvent(
 		clientSignalSequenceNumber: number,

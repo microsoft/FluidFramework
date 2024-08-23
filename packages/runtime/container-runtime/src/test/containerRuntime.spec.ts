@@ -2526,6 +2526,7 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
+				logger.clear();
 			});
 
 			function sendSignals(count: number) {
@@ -2561,12 +2562,18 @@ describe("Runtime", () => {
 			}
 
 			it("emits signal latency telemetry after 100 signals", () => {
-				sendSignals(101);
-				processSubmittedSignals(101);
+				// Send 1st signal and process it to prime the system
+				sendSignals(1);
+				processSubmittedSignals(1);
+
+				sendSignals(100);
+				processSubmittedSignals(100);
 				logger.assertMatch(
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 100,
+							signalsLost: 0,
 						},
 					],
 					"Signal latency telemetry should be logged after 100 signals",
@@ -2602,12 +2609,17 @@ describe("Runtime", () => {
 
 				processSubmittedSignals(1);
 
-				logger.assertMatch([
-					{
-						eventName: "ContainerRuntime:SignalLost",
-						signalsLost: 1,
-					},
-				]);
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLost",
+							signalsLost: 1,
+						},
+					],
+					"SignalLost telemetry should be logged when signal is dropped",
+					undefined,
+					false,
+				);
 
 				logger.assertMatchNone(
 					[
@@ -2786,20 +2798,20 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsLost: 20,
 							signalsSent: 100,
+							signalsLost: 20,
 						},
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsLost: 1,
 							signalsSent: 100,
+							signalsLost: 1,
 						},
 					],
 					"SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals",
 				);
 			});
 
-			it("accurately reports amount of sent and lost signals when roundtrip tracked signal is droppped", () => {
+			it("accurately reports amount of sent and lost signals when roundtrip tracked signal is dropped", () => {
 				// Send 50 signals and drop 10
 				sendSignals(50);
 				dropSignals(10);
@@ -2825,8 +2837,8 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsLost: 26,
 							signalsSent: 200,
+							signalsLost: 26,
 						},
 					],
 					"SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals",
@@ -2845,8 +2857,8 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsLost: 10,
 							signalsSent: 100,
+							signalsLost: 10,
 						},
 					],
 					"SignalLatency telemetry should log correct amount of sent and lost signals",
