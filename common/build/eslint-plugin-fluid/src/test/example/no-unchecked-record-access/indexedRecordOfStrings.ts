@@ -61,12 +61,12 @@ AFnExpectsStringOrUndefined(indexedRecordOfStrings.a); // ok: Passing index prop
 for (const [key, value] of Object.entries(indexedRecordOfStrings)) {
 	value.length; // ok: Object.entries provides only present values
 	indexedRecordOfStrings[key]; // ok: Accessing property while looping though records which acts like a `has` property check
-	indexedRecordOfStrings[key].length; // ok: Accessing property while looping though records which acts like a `has` property check
+	indexedRecordOfStrings[key].length; // ok: When noUncheckedIndexedAccess is enabled, TSC will treat indexedRecordOfStrings[key] as an error, but no-unchecked-record-access does not because accessing properties while looping though records acts like a truthy check
 }
 
 for (const key of Object.keys(indexedRecordOfStrings)) {
 	indexedRecordOfStrings[key]; // ok: Accessing property while looping though records which acts like a `has` property check
-	indexedRecordOfStrings[key].length; // ok: Accessing property while looping though records which acts like a `has` property check
+	indexedRecordOfStrings[key].length; // ok: When noUncheckedIndexedAccess is enabled, TSC will treat indexedRecordOfStrings[key] as an error, but no-unchecked-record-access does not because accessing properties while looping though records acts like a truthy check
 }
 
 /*
@@ -76,7 +76,7 @@ for (const key of Object.keys(indexedRecordOfStrings)) {
 const aExpectingString: string = indexedRecordOfStrings.a; // defect: Assigning index property 'a' to a strict string variable, but 'a' might not be present
 const aExpectingStringOrUndefined: string | undefined = indexedRecordOfStrings.a; // ok: Assigning index property 'a' to string or undefined variable, 'a' might not be present
 const aImplicitType = indexedRecordOfStrings.a; // defect: Assigning index property with inferred type
-aImplicitType.length; // ok: aImplicitType is the continuation of the inferred type case and should be caught by in the variable initialization
+aImplicitType.length; // ok: When noUncheckedIndexedAccess is enabled, TSC will treat aImplicitType as an error, but no-unchecked-record-access does not because aImplicitType is the continuation of the inferred type case and should be caught in the variable initialization
 let aLetExpectingString: string = indexedRecordOfStrings.a; // defect: Assigning index property 'a' to a strict string variable, but 'a' might not be present
 let aLetExpectingStringOrUndefined: string | undefined = indexedRecordOfStrings.a; // ok: Assigning index property 'a' to string or undefined variable, 'a' might not be present
 let aLetExpectingStringAfterVariableDeclaration: string;
