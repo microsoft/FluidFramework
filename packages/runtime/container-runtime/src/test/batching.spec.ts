@@ -52,13 +52,14 @@ describe("Runtime batching", () => {
 	let containerRuntime: ContainerRuntime;
 	let mockDeltaManager: MockDeltaManager;
 	let sandbox: sinon.SinonSandbox;
+	let containerRuntimeStub: sinon.SinonStub;
 
 	/** Overwrites channelCollection property to make process a no-op */
 	function patchContainerRuntime(cr: ContainerRuntime) {
 		const patched = cr as unknown as Omit<ContainerRuntime, "channelCollection"> & {
 			channelCollection: Partial<ChannelCollection>;
 		};
-		sandbox.stub(patched.channelCollection, "process").callsFake(() => {});
+		return sandbox.stub(patched.channelCollection, "process").callsFake(() => {});
 	}
 
 	before(() => {
@@ -74,7 +75,11 @@ describe("Runtime batching", () => {
 			runtimeOptions: {},
 			provideEntryPoint: mockProvideEntryPoint,
 		});
-		patchContainerRuntime(containerRuntime);
+		containerRuntimeStub = patchContainerRuntime(containerRuntime);
+	});
+
+	afterEach(() => {
+		containerRuntimeStub.restore();
 	});
 
 	after(() => {
