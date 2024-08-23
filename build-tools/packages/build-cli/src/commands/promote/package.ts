@@ -28,8 +28,7 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 			required: true,
 		}),
 		release: Flags.string({
-			description:
-				"release",
+			description: "release",
 			exists: true,
 			required: true,
 		}),
@@ -46,7 +45,7 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 		this.log(`Feed Name: ${feedKind}`);
 		this.log(`version: ${version}`);
 		this.log(`release: ${release}`);
-		return
+		return;
 
 		if (feedKind !== "build") {
 			this.log("Skipping promotion: not a release build or not the build feed");
@@ -104,10 +103,10 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 			const responseData = await response.json();
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
 			return responseData.success;
-		} catch(error: unknown) {
-			if(error instanceof Error) {
-			this.error("Failed to promote package due to network error:", error.message);
-			return false;
+		} catch (error: unknown) {
+			if (error instanceof Error) {
+				this.error("Failed to promote package due to network error:", error.message);
+				return false;
 			}
 		}
 	};
