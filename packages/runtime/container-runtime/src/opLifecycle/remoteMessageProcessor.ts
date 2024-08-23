@@ -167,63 +167,8 @@ export class RemoteMessageProcessor {
 		}
 
 		const completedBatch = this.batchInProgress;
-		assert(completedBatch !== undefined, "There should be at least one message in the batch");
-
-		// Validate that the batch received is correct.
-		this.validateBatchCorrectness(completedBatch);
-
 		this.batchInProgress = undefined;
 		return completedBatch;
-	}
-
-	/**
-	 * Validates that the inbound batch is correct. This includes:
-	 * - Ensuring that the batch has contiguous sequence numbers.
-	 * - Ensuring that all messages in the batch have the same clientId.
-	 */
-	private validateBatchCorrectness(batch: InboundBatch) {
-		// For a batch with single message, there is nothing to validate.
-		if (batch.messages.length === 1) {
-			return;
-		}
-
-		let previousMessage: InboundSequencedContainerRuntimeMessage | undefined;
-		for (const message of batch.messages) {
-			// Validate that the sequence numbers are contiguous. If there are non-runtime messages in the batch,
-			// the remote message processor isn't called and so it will appear like the batch is missing messages
-			// and this case will be hit.
-			if (
-				previousMessage !== undefined &&
-				message.sequenceNumber !== previousMessage.sequenceNumber + 1
-			) {
-				throw DataProcessingError.create(
-					"Received out-of-order messages in batch",
-					"validateBatchCorrectness",
-					message,
-					{
-						runtimeVersion: pkgVersion,
-						batchClientId: batch.clientId,
-						localBatch: batch.clientId === this.getClientId(),
-						localMessage: message.clientId === this.getClientId(),
-						previousMessageSequenceNumber: previousMessage.sequenceNumber,
-						...extractSafePropertiesFromMessage(message),
-					},
-				);
-			}
-
-			// Validate that all messages in the batch have the same clientId. Message from different clients
-			// cannot be part of the same batch.
-			if (message.clientId !== batch.clientId) {
-				throw new DataCorruptionError("OpBatchIncomplete", {
-					runtimeVersion: pkgVersion,
-					batchClientId: batch.clientId,
-					localBatch: batch.clientId === this.getClientId(),
-					localMessage: message.clientId === this.getClientId(),
-					...extractSafePropertiesFromMessage(message),
-				});
-			}
-			previousMessage = message;
-		}
 	}
 
 	/**
@@ -261,6 +206,42 @@ export class RemoteMessageProcessor {
 			return { batchEnded: true };
 		}
 		assert(batchMetadataFlag !== true, 0x9d6 /* Unexpected batch start marker */);
+
+		// Validate that the sequence numbers are contiguous. If there are non-runtime messages in the batch,
+		// the remote message processor isn't called and so it will appear like the batch is missing messages
+		// and this case will be hit.
+		const previousMessage =
+			this.batchInProgress.messages[this.batchInProgress.messages.length - 1];
+		if (
+			previousMessage !== undefined &&
+			message.sequenceNumber !== previousMessage.sequenceNumber + 1
+		) {
+			throw DataProcessingError.create(
+				"Received out-of-order messages in batch",
+				"validateBatchCorrectness",
+				message,
+				{
+					runtimeVersion: pkgVersion,
+					batchClientId: this.batchInProgress.clientId,
+					localBatch: this.batchInProgress.clientId === this.getClientId(),
+					localMessage: message.clientId === this.getClientId(),
+					previousMessageSequenceNumber: previousMessage.sequenceNumber,
+					...extractSafePropertiesFromMessage(message),
+				},
+			);
+		}
+
+		// Validate that all messages in the batch have the same clientId. Message from different clients
+		// cannot be part of the same batch.
+		if (message.clientId !== this.batchInProgress.clientId) {
+			throw new DataCorruptionError("Received messages from multiple clients in a batch", {
+				runtimeVersion: pkgVersion,
+				batchClientId: this.batchInProgress.clientId,
+				localBatch: this.batchInProgress.clientId === this.getClientId(),
+				localMessage: message.clientId === this.getClientId(),
+				...extractSafePropertiesFromMessage(message),
+			});
+		}
 
 		this.batchInProgress.messages.push(message);
 

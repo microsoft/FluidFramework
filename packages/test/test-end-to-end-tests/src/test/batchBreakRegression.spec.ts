@@ -191,7 +191,12 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 	describe("client sends invalid batches ", () => {
 		itExpects.skip(
 			"Batch end without start",
-			[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "OpBatchIncomplete" }],
+			[
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					error: "Received messages from multiple clients in a batch",
+				},
+			],
 			async function () {
 				const provider = getTestObjectProvider({ resetAfterEach: true });
 
@@ -228,7 +233,7 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 					assert.fail("expected error");
 				} catch (e) {
 					assert(isILoggingError(e), `${e}`);
-					assert.equal(e.message, "OpBatchIncomplete", e);
+					assert.equal(e.message, "Received messages from multiple clients in a batch", e);
 				}
 			},
 		);
@@ -269,7 +274,7 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 				assert.fail("expected error");
 			} catch (e) {
 				assert(isILoggingError(e), `${e}`);
-				assert.equal(e.message, "OpBatchIncomplete", e);
+				assert.equal(e.message, "Received messages from multiple clients in a batch", e);
 			}
 		});
 

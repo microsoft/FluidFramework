@@ -197,7 +197,7 @@ describe("Runtime batching", () => {
 			() => processBatch(batch, containerRuntime),
 			(e: any) => {
 				assert(e.errorType === FluidErrorTypes.dataCorruptionError);
-				assert(e.message === "OpBatchIncomplete");
+				assert(e.message === "Received messages from multiple clients in a batch");
 				return true;
 			},
 			"Batch with ops from multiple clients should fail",
