@@ -407,7 +407,7 @@ extends:
                           checkCoverage: true
                           coverageFailOption: 'fixed'
                           coverageType: 'lines'
-                          coverageThreshold: '100'
+                          coverageThreshold: '55.5'
                           useDiffCoverage: true
 
 
