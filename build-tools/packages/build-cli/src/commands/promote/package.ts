@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { readFile } from "node:fs/promises";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../library/index.js";
@@ -104,7 +109,7 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
 			return responseData.success;
 		} catch {
-				return false;
+			return false;
 		}
 	};
 }
