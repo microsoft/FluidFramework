@@ -5,7 +5,7 @@
 
 import { Flags } from "@oclif/core";
 
-import { githubTokenFlag } from "../../flags.js";
+import { githubActionsFlag, githubTokenFlag } from "../../flags.js";
 
 import {
 	type GitHubProps,
@@ -63,6 +63,7 @@ export default class CheckPrApprovalCommand extends BaseCommand<
 		token: githubTokenFlag({
 			required: true,
 		}),
+		ghActions: githubActionsFlag,
 		...BaseCommand.flags,
 	} as const;
 
@@ -78,16 +79,26 @@ export default class CheckPrApprovalCommand extends BaseCommand<
 		const isApproved =
 			approvers === undefined
 				? teamName === undefined
-					? false
+					? // this case shouldn't happen since oclif should guarantee one of
+						// approvers or teamName is provided
+						false
 					: await isPrApprovedByTeam(props, pr, teamName)
 				: await isPrApprovedByUsers(props, pr, new Set(approvers));
 
+		// When outputting JSON, just return the raw value. Otherwise throw an error if the PR is not approved.
 		if (this.flags.json === true) {
 			return isApproved;
 		}
 
 		if (!isApproved) {
-			this.error(`PR ${pr} is not approved by any member of ${teamName}.`, { exit: 1 });
+			const message = `PR ${pr} is not approved by any member of ${teamName}.`;
+			if (this.flags.ghActions) {
+				this.log(`::error ::${message}`);
+			}
+			this.error(
+				`${message} Check the review details at https://github.com/${owner}/${repo}/pull/${pr}`,
+				{ exit: 1 },
+			);
 		}
 
 		return isApproved;

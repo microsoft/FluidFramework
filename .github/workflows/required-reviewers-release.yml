@@ -20,34 +20,48 @@ jobs:
   warning:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # ratchet:actions/checkout@v4
+      # release notes: https://github.com/actions/checkout/releases/tag/v4.1.7
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # ratchet:actions/checkout@v4
         with:
           persist-credentials: false
           submodules: false
 
-      - name: Check if PR is approved by a hardcoded list of approvers
+      # install and configure node, pnpm and the changeset tools
+      # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.0.0
+      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
+
+      # release notes: https://github.com/actions/setup-node/releases/tag/v4.0.3
+      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # ratchet:actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install Fluid build tools
+        continue-on-error: true
+        run: |
+          cd build-tools
+          pnpm install --frozen-lockfile
+          pnpm run build:compile
+          # We want flub available to call, so we run npm link in the build-cli package, which creates shims that are avilable on the PATH
+          # Use npm link instead of pnpm link because it handles bins better
+          cd packages/build-cli
+          npm link
+
+      - name: Check build-tools installation
+        run: |
+          # Info for debugging
+          which flub
+          flub --help
+          flub commands
+
+      - name: Check PR approval
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          PR_NUMBER=$(echo ${{ github.event.pull_request.number }})
-          REPO=${{ github.repository }}
-          HARDCODED_APPROVERS=("approver1" "approver2" "approver3") # Replace with actual GitHub usernames
-
-          # Get the list of reviews for the PR
-          REVIEWS=$(gh pr view ${{ github.event.pull_request.number }} reviews --json --jq '.reviews[] | select(.state == "APPROVED") | .user.login')
-
-          # Check if any review is approved by a hardcoded approver
-          APPROVED_BY_HARDCODED_APPROVER=false
-          for REVIEWER in $REVIEWS; do
-            if [[ " ${HARDCODED_APPROVERS[@]} " =~ " ${REVIEWER} " ]]; then
-              APPROVED_BY_HARDCODED_APPROVER=true
-              break
-            fi
-          done
-
-          if [ "$APPROVED_BY_HARDCODED_APPROVER" = false ]; then
-            echo "The PR has not been approved by a hardcoded approver."
-            exit 1
-          else
-            echo "The PR has been approved by a hardcoded approver."
-          fi
+          # This command will fail with an error if the PR is not approved, which
+          # will cause
+          flub check prApproval \
+            --pr ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --team FluidFramework-ReleaseApprovers
