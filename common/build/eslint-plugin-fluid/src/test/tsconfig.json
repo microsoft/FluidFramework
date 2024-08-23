@@ -5,6 +5,7 @@
 		"module": "NodeNext",
 		"strict": true,
 		"allowImportingTsExtensions": true,
+		// "noUncheckedIndexedAccess": true,
 		"noEmit": true,
 	},
 	"include": ["./example/**/*"],

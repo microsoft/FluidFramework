@@ -44,7 +44,7 @@ module.exports = {
 				return;
 			}
 
-			// If the property has been checked (e.g., with optional chaining), skip it. Please see isDefined() for exhaustive list.
+			// Skip if the property has been checked (e.g., with optional chaining), skip it. Please see isDefined() for exhaustive list.
 			if (propertyHasBeenChecked(node)) {
 				return;
 			}
@@ -56,72 +56,86 @@ module.exports = {
 			 * Cases when this lint rule should report an error
 			 */
 
-			if (parentNode.type === "VariableDeclarator") {
-				if (!parentNode.id.typeAnnotation) {
-					// This error occurs when an index signature type is assigned to a variable without an explicit type annotation
-					context.report({
-						node,
-						message: `Implicit typing derived from '${fullName}' is not allowed. '${node.object.name}' is an index signature type and '${node.property.name}' may not be defined. Please provide an explicit type annotation or enable noUncheckedIndexedAccess`,
-					});
-				} else {
-					const expectedType = parentNode.id.typeAnnotation.typeAnnotation;
-					if (isStrictlyTypedVariable(expectedType)) {
-						// This error occurs when an index signature type is assigned to a strict variable
-						context.report({
-							node,
-							message: `'${fullName}' is possibly 'undefined'`,
-						});
-					}
-				}
-			} else if (parentNode.type === "AssignmentExpression" && parentNode.right === node) {
+			if (
+				parentNode.type === "VariableDeclarator" &&
+				!parentNode.id.typeAnnotation &&
+				!isUndefinableIndexSignatureType(parserServices, node)
+			) {
+				// This error occurs when an index signature type that isnt explicity typed to undefined is assigned to an implicit variable
+				return context.report({
+					node,
+					message: `Implicit typing derived from '${fullName}' is not allowed. '${node.object.name}' is an index signature type and '${node.property.name}' may be undefined. Please provide an explicit type annotation including undefined or enable noUncheckedIndexedAccess`,
+				});
+			}
+
+			if (
+				parentNode.type === "VariableDeclarator" &&
+				parentNode.id.typeAnnotation &&
+				isStrictlyTypedVariable(parentNode.id.typeAnnotation.typeAnnotation)
+			) {
+				// This error occurs when an index signature type is assigned to a strict variable
+				return context.report({
+					node,
+					message: `'${fullName}' is possibly 'undefined'`,
+				});
+			}
+			if (parentNode.type === "AssignmentExpression" && parentNode.right === node) {
 				const variableType = getVariableType(parentNode.left, context.getScope());
 				if (isStrictlyTypedVariable(variableType)) {
 					// This error occurs when an index signature type is assigned to a strictly typed variable after its declaration
-					context.report({
+					return context.report({
 						node,
 						message: `Assigning '${fullName}' from an index signature type to a strictly typed variable without 'undefined' is not allowed. '${fullName}' may be 'undefined'`,
 					});
 				}
-			} else if (parentNode.type === "MemberExpression" && parentNode.object === node) {
+			}
+			if (parentNode.type === "MemberExpression" && parentNode.object === node) {
 				// This error occurs when trying to access a property on an index signature type, which might be undefined
-				context.report({
+				return context.report({
 					node,
 					message: `'${fullName}' is possibly 'undefined'`,
 				});
-			} else if (parentNode.type === "ReturnStatement") {
+			}
+			if (parentNode.type === "ReturnStatement") {
 				const functionNode = findParentFunction(node);
-				if (functionNode) {
-					const tsNode = parserServices.esTreeNodeToTSNodeMap.get(functionNode);
-					if (!isTypeAllowedToBeUndefined(tsNode, typeChecker)) {
-						// This error occurs when returning an index signature type from a function that doesn't allow undefined in its return type
-						context.report({
-							node,
-							message: `Returning '${fullName}' directly from an index signature type is not allowed. '${fullName}' may be 'undefined'`,
-						});
-					}
+				if (!functionNode) {
+					return;
 				}
-			} else if (parentNode.type === "CallExpression") {
+				const tsNode = parserServices.esTreeNodeToTSNodeMap.get(functionNode);
+				if (isTypeAllowedToBeUndefined(tsNode, typeChecker)) {
+					return;
+				}
+				// This error occurs when returning an index signature type from a function that doesn't allow undefined in its return type
+				return context.report({
+					node,
+					message: `Returning '${fullName}' directly from an index signature type is not allowed. '${fullName}' may be 'undefined'`,
+				});
+			}
+			if (parentNode.type === "CallExpression") {
 				const callee = parentNode.callee;
-				if (callee.type === "Identifier") {
-					const functionDeclaration = findFunctionDeclaration(
-						callee.name,
-						context.getScope(),
+				if (callee.type !== "Identifier") {
+					return;
+				}
+				const functionDeclaration = findFunctionDeclaration(
+					callee.name,
+					context.getScope(),
+				);
+				if (!functionDeclaration || !functionDeclaration.params) {
+					return;
+				}
+				const paramIndex = parentNode.arguments.indexOf(node);
+				if (paramIndex !== -1 && paramIndex < functionDeclaration.params.length) {
+					const paramType = getFunctionParameterType(
+						functionDeclaration.params[paramIndex],
 					);
-					if (functionDeclaration && functionDeclaration.params) {
-						const paramIndex = parentNode.arguments.indexOf(node);
-						if (paramIndex !== -1 && paramIndex < functionDeclaration.params.length) {
-							const paramType = getFunctionParameterType(
-								functionDeclaration.params[paramIndex],
-							);
-							if (paramType && isStrictlyTypedParameter(paramType)) {
-								// This error occurs when passing an index signature type to a function parameter that doesn't allow undefined
-								context.report({
-									node,
-									message: `Passing '${fullName}' from an index signature type to a strictly typed parameter is not allowed. '${fullName}' may be 'undefined'`,
-								});
-							}
-						}
+					if (!paramType || !isStrictlyTypedParameter(paramType)) {
+						return;
 					}
+					// This error occurs when passing an index signature type to a function parameter that doesn't allow undefined
+					return context.report({
+						node,
+						message: `Passing '${fullName}' from an index signature type to a strictly typed parameter is not allowed. '${fullName}' may be 'undefined'`,
+					});
 				}
 			}
 		}
@@ -138,6 +152,19 @@ function isIndexSignatureType(parserServices, node) {
 	const typeChecker = parserServices.program.getTypeChecker();
 	const type = typeChecker.getTypeAtLocation(tsNode);
 	return type.getStringIndexType() !== undefined;
+}
+
+// Helper function to check if an index signature type includes undefined
+function isUndefinableIndexSignatureType(parserServices, node) {
+	const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node.object);
+	const typeChecker = parserServices.program.getTypeChecker();
+	const type = typeChecker.getTypeAtLocation(tsNode);
+	const indexType = type.getStringIndexType();
+	return (
+		indexType &&
+		indexType.isUnion() &&
+		indexType.types.some((t) => t.flags & SyntaxKind.UndefinedKeyword)
+	);
 }
 
 // Helper function to traverse up the code until the scope ends and checks if the property access has been checked for undefined
@@ -290,16 +317,14 @@ function getFunctionParameterType(param) {
 	return param.typeAnnotation.typeAnnotation;
 }
 
-// Helper function to check if a parameter is strictly typed (doesn't allow undefined or null)
+// Helper function to check if a parameter is strictly typed (doesn't allow undefined)
 function isStrictlyTypedParameter(typeAnnotation) {
 	if (!typeAnnotation) {
 		return false;
 	}
 
 	if (typeAnnotation.type === "TSUnionType") {
-		return !typeAnnotation.types.some(
-			(t) => t.type === "TSUndefinedKeyword" || t.type === "TSNullKeyword",
-		);
+		return !typeAnnotation.types.some((t) => t.type === "TSUndefinedKeyword");
 	}
 
 	// Consider any non-union type as strictly typed
@@ -320,14 +345,12 @@ function getVariableType(node, scope) {
 	return null;
 }
 
-// Helper function to check if a variable is strictly typed (doesn't allow undefined or null)
+// Helper function to check if a variable is strictly typed (doesn't allow undefined)
 function isStrictlyTypedVariable(typeAnnotation) {
 	if (!typeAnnotation) return false;
 
 	if (typeAnnotation.type === "TSUnionType") {
-		return !typeAnnotation.types.some(
-			(t) => t.type === "TSUndefinedKeyword" || t.type === "TSNullKeyword",
-		);
+		return !typeAnnotation.types.some((t) => t.type === "TSUndefinedKeyword");
 	}
 
 	// Consider any non-union type as strictly typed, except for 'any' and 'unknown'

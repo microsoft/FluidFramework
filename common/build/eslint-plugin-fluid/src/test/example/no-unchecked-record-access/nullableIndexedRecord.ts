@@ -18,23 +18,34 @@ if (nullableIndexedRecord.a) {
 
 /* Function Calls */
 function recordAFnExpectsStringOrNull(record: NullableIndexSignatureType): string | null {
-	return record.a; // ok: Returning index property 'a' to string or null variable, 'a' might not be present
+	return record.a; // defect: Returning index property 'a' as string or null variable should be caught, 'a' might be undefined
 }
 
-AFnExpectsStringOrNull(nullableIndexedRecord.a); // ok: Passing index property 'a' to a function that accepts null is fine
+function recordAFnExpectsStringOrUndefinedOrNull(
+	record: NullableIndexSignatureType,
+): string | undefined | null {
+	return record.a; // ok: Returning index property 'a' to string or undefined or null variable, 'a' might be undefined
+}
+
+function AFnExpectsStringOrNull(a: string | null): string | null {
+	return a;
+}
+function AFnExpectsStringOrUndefinedOrNull(
+	a: string | undefined | null,
+): string | undefined | null {
+	return a;
+}
+
+AFnExpectsStringOrNull(nullableIndexedRecord.a); // defect: Passing index property 'a' to a function without having type undefined
+AFnExpectsStringOrUndefinedOrNull(nullableIndexedRecord.a); // ok: Passing index property 'a' to a function that accepts undefined is fine
 
 /*
  * Variable Assignments
  */
 
-const aExpectingStringOrNull: string | null = nullableIndexedRecord.a; // ok: Assigning index property 'a' to string or null variable, 'a' might not be present
-const aExpectingStringOrNullOrUndefined: string | null | undefined = nullableIndexedRecord.a; // ok: Assigning index property 'a' to string or null or undefined variable, 'a' might not be present
-const aImplicitType = nullableIndexedRecord.a; // defect: Assigning index property with inferred type
+const aExpectingStringOrNull: string | null = nullableIndexedRecord.a; // defect: Assigning index property 'a' to string or null variable, 'a' might not be present, type should include an undefined type
+const aImplicitType = nullableIndexedRecord.a; // defect: Index property without an explicit undefined can not be assigned to an inferred type
 
-let aLetExpectingStringOrUndefined: string | null = nullableIndexedRecord.a; // ok: Assigning index property 'a' to string or null variable, 'a' might not be present
+let aLetExpectingStringOrUndefined: string | null = nullableIndexedRecord.a; // defect: Assigning index property 'a' to string or null variable, 'a' might not be present, either the index signature type should include an undefined type or the variable declaration should be changed to string | null | undefined
 let aLetExpectingStringOrUndefinedAfterVariableDeclaration: string | null;
-aLetExpectingStringOrUndefinedAfterVariableDeclaration = nullableIndexedRecord.a; // ok: Assigning index property 'a' to string or null variable, 'a' might not be present
-
-function AFnExpectsStringOrNull(a: string | null): string | null {
-	return a;
-}
+aLetExpectingStringOrUndefinedAfterVariableDeclaration = nullableIndexedRecord.a; // ok: Assigning index property 'a' to string or null variable, 'a' might not be present, either the index signature type should include an undefined type or the variable declaration should be changed to string | null | undefined

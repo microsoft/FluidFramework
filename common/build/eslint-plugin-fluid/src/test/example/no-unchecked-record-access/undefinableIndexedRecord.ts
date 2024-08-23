@@ -24,9 +24,9 @@ AFnExpectsStringOrUndefined(undefinableIndexedRecord.a); // ok: Passing index pr
  */
 
 const aExpectingStringOrUndefined: string | undefined = undefinableIndexedRecord.a; // ok: Assigning index property 'a' to string or undefined variable, 'a' might not be present
-const aExpectingStringOrNullOrUndefined: string | null | undefined = undefinableIndexedRecord.a; // ok: Assigning index property 'a' to string or null or undefined variable, 'a' might not be present
-const aImplicitType = undefinableIndexedRecord.a; // defect: Assigning index property with inferred type
-
 let aLetExpectingStringOrUndefined: string | undefined = undefinableIndexedRecord.a; // ok: Assigning index property 'a' to string or undefined variable, 'a' might not be present
+
 let aLetExpectingStringOrUndefinedAfterVariableDeclaration: string | undefined;
 aLetExpectingStringOrUndefinedAfterVariableDeclaration = undefinableIndexedRecord.a; // ok: Assigning index property 'a' to string or undefined variable, 'a' might not be present
+
+const aImplicitType = undefinableIndexedRecord.a; // ok: Index property with union type undefined is allowed to be assigned to inferred type

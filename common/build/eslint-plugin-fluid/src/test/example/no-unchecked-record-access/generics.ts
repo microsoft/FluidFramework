@@ -4,7 +4,7 @@
  */
 
 /*
- * Functions
+ * Generics
  */
 
 function readRecordA<T>(record: Record<string, T>): T {
