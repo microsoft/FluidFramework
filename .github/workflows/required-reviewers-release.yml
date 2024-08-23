@@ -1,0 +1,53 @@
+name: Required release approval
+on:
+  pull_request_target:
+    types:
+      - opened
+
+      # This is triggered when the base branch changes; handles the case where you open a PR against one branch
+      # then change the base branch to a release branch.
+      - edited
+    branches:
+      - release/client/**
+      - release/server/**
+      - test/release/**
+
+permissions:
+  # Needed to write the comments to the PRs themselves
+  pull-requests: write
+
+jobs:
+  warning:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # ratchet:actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: false
+
+      - name: Check if PR is approved by a hardcoded list of approvers
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=$(echo ${{ github.event.pull_request.number }})
+          REPO=${{ github.repository }}
+          HARDCODED_APPROVERS=("approver1" "approver2" "approver3") # Replace with actual GitHub usernames
+
+          # Get the list of reviews for the PR
+          REVIEWS=$(gh pr view ${{ github.event.pull_request.number }} reviews --json --jq '.reviews[] | select(.state == "APPROVED") | .user.login')
+
+          # Check if any review is approved by a hardcoded approver
+          APPROVED_BY_HARDCODED_APPROVER=false
+          for REVIEWER in $REVIEWS; do
+            if [[ " ${HARDCODED_APPROVERS[@]} " =~ " ${REVIEWER} " ]]; then
+              APPROVED_BY_HARDCODED_APPROVER=true
+              break
+            fi
+          done
+
+          if [ "$APPROVED_BY_HARDCODED_APPROVER" = false ]; then
+            echo "The PR has not been approved by a hardcoded approver."
+            exit 1
+          else
+            echo "The PR has been approved by a hardcoded approver."
+          fi

@@ -366,3 +366,12 @@ export interface filterFlags {
 	readonly scope: string[] | undefined;
 	readonly skipScope: string[] | undefined;
 }
+
+/**
+ * A reusable flag for GitHub tokens.
+ */
+export const githubTokenFlag = Flags.custom({
+	description:
+		"GitHub access token. This parameter should be passed using the GITHUB_TOKEN environment variable for security purposes.",
+	env: "GITHUB_TOKEN",
+});
