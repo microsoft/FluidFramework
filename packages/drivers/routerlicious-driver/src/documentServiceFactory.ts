@@ -39,7 +39,7 @@ import {
 	toInstrumentedR11sStorageTokenFetcher,
 } from "./restWrapper.js";
 import { isRouterliciousResolvedUrl } from "./routerliciousResolvedUrl.js";
-import { SessionInfoManager, type IGetSessionInfoResponse } from "./sessionInfoManager.js";
+import { SessionInfoManager } from "./sessionInfoManager.js";
 import { ITokenProvider } from "./tokens.js";
 import { replaceDocumentIdInPath } from "./urlUtils.js";
 
@@ -349,15 +349,14 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			this.blobCache,
 			this.wholeSnapshotTreeCache,
 			this.shreddedSummaryTreeCache,
-			async (): Promise<IGetSessionInfoResponse> => {
-				return this.sessionInfoManager.getSessionInfo({
+			async () =>
+				this.sessionInfoManager.getSessionInfo({
 					resolvedUrl,
 					documentId,
 					tenantId,
 					ordererRestWrapper,
 					logger: logger2,
-				});
-			},
+				}),
 			storageRestWrapper,
 			storageTokenFetcher,
 			ordererTokenFetcher,
