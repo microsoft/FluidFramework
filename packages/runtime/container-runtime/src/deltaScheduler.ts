@@ -30,7 +30,7 @@ export class DeltaScheduler {
 	public static readonly processingTime = 50;
 
 	// The increase in time for processing ops after each turn.
-	private readonly processingTimeIncrement = 10;
+	public static processingTimeIncrement = 10;
 
 	private processingStartTime: number | undefined;
 	private currentAllowedProcessingTimeForTurn: number = DeltaScheduler.processingTime;
@@ -102,7 +102,7 @@ export class DeltaScheduler {
 				// Increase the total processing time. Keep doing this after each turn until all the ops have
 				// been processed. This way we keep the responsiveness at the beginning while also making sure
 				// that all the ops process fairly quickly.
-				this.currentAllowedProcessingTimeForTurn += this.processingTimeIncrement;
+				this.currentAllowedProcessingTimeForTurn += DeltaScheduler.processingTimeIncrement;
 
 				// If we are logging the telemetry this time, update the telemetry log object.
 				if (this.schedulingLog) {
