@@ -30,6 +30,7 @@ function recordAFnExpectsStringOrUndefinedOrNull(
 function AFnExpectsStringOrNull(a: string | null): string | null {
 	return a;
 }
+
 function AFnExpectsStringOrUndefinedOrNull(
 	a: string | undefined | null,
 ): string | undefined | null {
@@ -44,8 +45,9 @@ AFnExpectsStringOrUndefinedOrNull(nullableIndexedRecord.a); // ok: Passing index
  */
 
 const aExpectingStringOrNull: string | null = nullableIndexedRecord.a; // defect: Assigning index property 'a' to string or null variable, 'a' might not be present, type should include an undefined type
+let aLetExpectingStringOrUndefined: string | null = nullableIndexedRecord.a; // defect: Assigning index property 'a' to string or null variable, 'a' might not be present, either the index signature type should include an undefined type or the variable declaration should be changed to string | null | undefined
+
 const aImplicitType = nullableIndexedRecord.a; // defect: Index property without an explicit undefined can not be assigned to an inferred type
 
-let aLetExpectingStringOrUndefined: string | null = nullableIndexedRecord.a; // defect: Assigning index property 'a' to string or null variable, 'a' might not be present, either the index signature type should include an undefined type or the variable declaration should be changed to string | null | undefined
 let aLetExpectingStringOrUndefinedAfterVariableDeclaration: string | null;
 aLetExpectingStringOrUndefinedAfterVariableDeclaration = nullableIndexedRecord.a; // ok: Assigning index property 'a' to string or null variable, 'a' might not be present, either the index signature type should include an undefined type or the variable declaration should be changed to string | null | undefined

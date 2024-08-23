@@ -79,6 +79,7 @@ module.exports = {
 					message: `'${fullName}' is possibly 'undefined'`,
 				});
 			}
+
 			if (parentNode.type === "AssignmentExpression" && parentNode.right === node) {
 				const variableType = getVariableType(parentNode.left, context.getScope());
 				if (isStrictlyTypedVariable(variableType)) {
@@ -89,6 +90,7 @@ module.exports = {
 					});
 				}
 			}
+
 			if (parentNode.type === "MemberExpression" && parentNode.object === node) {
 				// This error occurs when trying to access a property on an index signature type, which might be undefined
 				return context.report({
@@ -96,6 +98,7 @@ module.exports = {
 					message: `'${fullName}' is possibly 'undefined'`,
 				});
 			}
+
 			if (parentNode.type === "ReturnStatement") {
 				const functionNode = findParentFunction(node);
 				if (!functionNode) {
@@ -111,6 +114,7 @@ module.exports = {
 					message: `Returning '${fullName}' directly from an index signature type is not allowed. '${fullName}' may be 'undefined'`,
 				});
 			}
+
 			if (parentNode.type === "CallExpression") {
 				const callee = parentNode.callee;
 				if (callee.type !== "Identifier") {

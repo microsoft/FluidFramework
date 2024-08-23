@@ -127,25 +127,25 @@ describe("ESLint Rule Tests", function () {
 			result.messages[1].message,
 			"Passing 'nullableIndexedRecord.a' from an index signature type to a strictly typed parameter is not allowed. 'nullableIndexedRecord.a' may be 'undefined'",
 		);
-		assert.strictEqual(result.messages[1].line, 39);
+		assert.strictEqual(result.messages[1].line, 40);
 
 		assert.strictEqual(
 			result.messages[2].message,
 			"'nullableIndexedRecord.a' is possibly 'undefined'",
 		);
-		assert.strictEqual(result.messages[2].line, 46);
+		assert.strictEqual(result.messages[2].line, 47);
 
 		assert.strictEqual(
 			result.messages[3].message,
 			"'nullableIndexedRecord.a' is possibly 'undefined'",
 		);
-		assert.strictEqual(result.messages[3].line, 49);
+		assert.strictEqual(result.messages[3].line, 48);
 
 		assert.strictEqual(
 			result.messages[4].message,
 			"Assigning 'nullableIndexedRecord.a' from an index signature type to a strictly typed variable without 'undefined' is not allowed. 'nullableIndexedRecord.a' may be 'undefined'",
 		);
-		assert.strictEqual(result.messages[4].line, 51);
+		assert.strictEqual(result.messages[4].line, 53);
 	});
 
 	it("Should not report errors for correct usage of undefinableIndexedRecord", async function () {
