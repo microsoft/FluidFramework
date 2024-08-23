@@ -22,14 +22,13 @@ describe("`benchmarkCustom` function", () => {
 	it.only("check BenchmarkCustom can handle an error", async () => {
 		const errorMessage = "INTENTIONAL error to test error handling";
 
-		const error = benchmarkCustom({
+		const result = benchmarkCustom({
 			title: `test`,
 			type: BenchmarkType.Measurement,
 			run: async () => {
 				throw new Error(errorMessage);
 			},
 		});
-
-		expect(error.err?.message).to.equal(errorMessage);
+		expect(result.err?.message).to.equal(errorMessage);
 	});
 });
