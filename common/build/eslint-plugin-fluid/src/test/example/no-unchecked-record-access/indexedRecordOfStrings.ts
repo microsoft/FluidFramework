@@ -75,11 +75,15 @@ for (const key of Object.keys(indexedRecordOfStrings)) {
 
 const aExpectingString: string = indexedRecordOfStrings.a; // defect: Assigning index property 'a' to a strict string variable, but 'a' might not be present
 const aExpectingStringOrUndefined: string | undefined = indexedRecordOfStrings.a; // ok: Assigning index property 'a' to string or undefined variable, 'a' might not be present
-const aImplicitType = indexedRecordOfStrings.a; // defect: Assigning index property with inferred type
-aImplicitType.length; // ok: When noUncheckedIndexedAccess is enabled, TSC will treat aImplicitType as an error, but no-unchecked-record-access does not because aImplicitType is the continuation of the inferred type case and should be caught in the variable initialization
 let aLetExpectingString: string = indexedRecordOfStrings.a; // defect: Assigning index property 'a' to a strict string variable, but 'a' might not be present
 let aLetExpectingStringOrUndefined: string | undefined = indexedRecordOfStrings.a; // ok: Assigning index property 'a' to string or undefined variable, 'a' might not be present
 let aLetExpectingStringAfterVariableDeclaration: string;
 aLetExpectingStringAfterVariableDeclaration = indexedRecordOfStrings.a; // defect: Assigning index property 'a' to a strict string variable, but 'a' might not be present
 let aLetExpectingStringOrUndefinedAfterVariableDeclaration: string | undefined;
 aLetExpectingStringOrUndefinedAfterVariableDeclaration = indexedRecordOfStrings.a; // ok: Assigning index property 'a' to string or undefined variable, 'a' might not be present
+
+/*
+ * When noUncheckedIndexedAccess is enabled, TSC will treat property access on aImplicitType as an error, but no-unchecked-record-access causes an error if an index signature is not typed to allow undefined.
+ */
+const aImplicitType = indexedRecordOfStrings.a; // defect: Assigning index property with inferred type without an explicit undefined type is not allowed
+aImplicitType.length; // ok: aImplicitType is the continuation of the inferred type case and should be caught in the variable initialization
