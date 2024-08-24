@@ -9,6 +9,7 @@
 
 import assert from "node:assert/strict";
 import path from "node:path";
+import { beforeAll, describe, it } from "vitest";
 import {
 	BiomeConfigReader,
 	type BiomeConfigResolved,
@@ -27,7 +28,7 @@ describe("Biome config loading", () => {
 		// of the before block causes the tests to be skipped.
 		const testDir = path.resolve(testDataPath, "biome/pkg-b");
 		let gitRepo: GitRepo;
-		before(async () => {
+		beforeAll(async () => {
 			const repoRoot = await getResolvedFluidRoot(true);
 			gitRepo = new GitRepo(repoRoot);
 		});
@@ -121,7 +122,7 @@ describe("Biome config loading", () => {
 			// These variables need to be initialized once for all the tests in this describe block. Defining them outside
 			// of the before block causes the tests to be skipped.
 			let testConfig: BiomeConfigOnDisk;
-			before(async () => {
+			beforeAll(async () => {
 				const testFile = path.resolve(testDataPath, "biome/pkg-a/biome.jsonc");
 				testConfig = await loadBiomeConfig(testFile);
 			});
@@ -199,7 +200,7 @@ describe("Biome config loading", () => {
 			// of the before block causes the tests to be skipped.
 			const testFile = path.resolve(testDataPath, "biome/pkg-a/biome.jsonc");
 			let testConfig: BiomeConfigResolved;
-			before(async () => {
+			beforeAll(async () => {
 				testConfig = await loadBiomeConfig(testFile);
 			});
 
@@ -251,7 +252,7 @@ describe("Biome config loading", () => {
 			// of the before block causes the tests to be skipped.
 			const testPath = path.resolve(testDataPath, "biome/pkg-a/");
 			let gitRepo: GitRepo;
-			before(async () => {
+			beforeAll(async () => {
 				const repoRoot = await getResolvedFluidRoot(true);
 				gitRepo = new GitRepo(repoRoot);
 			});
@@ -282,7 +283,7 @@ describe("Biome config loading", () => {
 			// of the before block causes the tests to be skipped.
 			const testPath = path.resolve(testDataPath, "biome/pkg-a/extended.jsonc");
 			let gitRepo: GitRepo;
-			before(async () => {
+			beforeAll(async () => {
 				const repoRoot = await getResolvedFluidRoot(true);
 				gitRepo = new GitRepo(repoRoot);
 			});
