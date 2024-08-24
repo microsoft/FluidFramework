@@ -389,17 +389,27 @@ stages:
               tar --extract --verbose --file $TAR_PATH ./src/test
 
         # Install package dependencies (this gets devDependencies installed so we can then run the package's tests)
-        # and run tests.
-        - task: Bash@3
+        # Note: the required .npmrc file is created by the include-test-perf-benchmarks.yml template above.
+        - task: CopyFiles@2
+          displayName: Copy .npmrc to test package folder - ${{ testPackage }}
+          inputs:
+            sourceFolder: ${{ variables.testWorkspace }}
+            contents: '.npmrc'
+            targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+
+        - task: Npm@1
+          displayName: Install dependencies - ${{ testPackage }}
+          retryCountOnTaskFailure: 1
+          inputs:
+            command: 'install'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+
+        - task: Npm@1
           displayName: Run custom data performance tests - ${{ testPackage }}
           inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            script: |
-              echo "Run customBenchmark performance test for ${{ testPackage }}"
-              cp ${{ variables.testWorkspace }}/.npmrc . ;
-              npm i ;
-              npm run test:customBenchmarks;
+            command: 'custom'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            customCommand: 'run test:customBenchmarks'
 
         # Consolidate output files
         - task: CopyFiles@2
