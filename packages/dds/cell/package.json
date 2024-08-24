@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/cell",
-	"version": "2.2.0",
+	"version": "2.3.0",
 	"description": "Distributed data structure for a single value",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -110,10 +110,10 @@
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
-		"@fluid-tools/build-cli": "0.43.0-285387",
+		"@fluid-tools/build-cli": "^0.44.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.43.0-285387",
-		"@fluidframework/cell-previous": "npm:@fluidframework/cell@2.1.0",
+		"@fluidframework/build-tools": "^0.44.0",
+		"@fluidframework/cell-previous": "npm:@fluidframework/cell@2.2.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.3.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",

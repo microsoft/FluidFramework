@@ -21,14 +21,11 @@ import {
 	NodeKind,
 	type TreeNodeSchema,
 	typeNameSymbol,
+	typeSchemaSymbol,
 	// Used to test that TreeNode is a type only export.
 	TreeNode as TreeNodePublic,
 } from "../../../simple-tree/index.js";
-import type {
-	FlexTreeNode,
-	FlexTreeNodeSchema,
-	MapTreeNode,
-} from "../../../feature-libraries/index.js";
+import type { FlexTreeNode, MapTreeNode } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { numberSchema } from "../../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -61,6 +58,9 @@ describe("simple-tree types", () => {
 		it("subclassing", () => {
 			class Subclass extends TreeNode {
 				public override get [typeNameSymbol](): string {
+					throw new Error("Method not implemented.");
+				}
+				public override get [typeSchemaSymbol](): never {
 					throw new Error("Method not implemented.");
 				}
 				public constructor() {
@@ -111,7 +111,7 @@ describe("simple-tree types", () => {
 	});
 
 	describe("TreeNodeValid", () => {
-		class MockFlexNode extends EagerMapTreeNode<FlexTreeNodeSchema> {
+		class MockFlexNode extends EagerMapTreeNode {
 			public constructor(public readonly simpleSchema: TreeNodeSchema) {
 				super(
 					getFlexSchema(simpleSchema),
@@ -164,6 +164,9 @@ describe("simple-tree types", () => {
 				public override get [typeNameSymbol](): string {
 					throw new Error("Method not implemented.");
 				}
+				public override get [typeSchemaSymbol](): never {
+					throw new Error("Method not implemented.");
+				}
 				public constructor(input: number | InternalTreeNode) {
 					super(input);
 					log.push("done");
@@ -201,6 +204,9 @@ describe("simple-tree types", () => {
 				public override get [typeNameSymbol](): string {
 					throw new Error("Method not implemented.");
 				}
+				public override get [typeSchemaSymbol](): never {
+					throw new Error("Method not implemented.");
+				}
 			}
 
 			assert.throws(
@@ -231,6 +237,9 @@ describe("simple-tree types", () => {
 				}
 
 				public override get [typeNameSymbol](): string {
+					throw new Error("Method not implemented.");
+				}
+				public override get [typeSchemaSymbol](): never {
 					throw new Error("Method not implemented.");
 				}
 				public constructor() {
@@ -278,6 +287,9 @@ describe("simple-tree types", () => {
 				}
 
 				public override get [typeNameSymbol](): string {
+					throw new Error("Method not implemented.");
+				}
+				public override get [typeSchemaSymbol](): never {
 					throw new Error("Method not implemented.");
 				}
 				public constructor() {

@@ -1739,7 +1739,7 @@ describe("Runtime", () => {
 						sequenceNumber: 0,
 						contents: {
 							type: ContainerMessageType.Rejoin,
-							contents: "something",
+							contents: undefined,
 						},
 					} as any as ISequencedDocumentMessage,
 					true /* local */,
@@ -1928,7 +1928,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
@@ -1970,7 +1970,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
@@ -2039,7 +2039,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
@@ -2488,15 +2488,32 @@ describe("Runtime", () => {
 				existing: false,
 				provideEntryPoint: mockProvideEntryPoint,
 			});
+			mockLogger.clear();
+
 			const json = JSON.stringify({ hello: "world" });
 			const messageBase = { contents: json, clientId: "CLIENT_ID" };
+
+			// This message won't trigger the legacy op log
 			containerRuntime.process(
-				{ ...messageBase, sequenceNumber: 1 } as unknown as ISequencedDocumentMessage,
+				{
+					...messageBase,
+					contents: {},
+					sequenceNumber: 1,
+				} as unknown as ISequencedDocumentMessage,
+				false /* local */,
+			);
+			assert.equal(mockLogger.events.length, 0, "Expected no event logged");
+
+			// This message should trigger the legacy op log
+			containerRuntime.process(
+				{ ...messageBase, sequenceNumber: 2 } as unknown as ISequencedDocumentMessage,
 				false /* local */,
 			);
 			mockLogger.assertMatch([{ eventName: "LegacyMessageFormat" }]);
+
+			// This message would trigger the legacy op log, except we already logged once
 			containerRuntime.process(
-				{ ...messageBase, sequenceNumber: 2 } as unknown as ISequencedDocumentMessage,
+				{ ...messageBase, sequenceNumber: 3 } as unknown as ISequencedDocumentMessage,
 				false /* local */,
 			);
 			assert.equal(mockLogger.events.length, 0, "Expected no more events logged");

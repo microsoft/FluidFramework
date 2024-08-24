@@ -4,9 +4,14 @@
  */
 
 import {
+	type FieldKinds,
+	type FlexFieldSchema,
 	type FlexMapNodeSchema,
+	type FlexTreeMapNode,
 	type FlexTreeNode,
+	type FlexTreeOptionalField,
 	type MapTreeNode,
+	type OptionalFieldEditBuilder,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
@@ -16,7 +21,7 @@ import {
 	getTreeNodeForField,
 	prepareContentForHydration,
 } from "./proxies.js";
-import { getOrCreateInnerNode } from "./proxyBinding.js";
+import { getOrCreateInnerNode, type InnerNode } from "./proxyBinding.js";
 import { getSimpleNodeSchema } from "./core/index.js";
 import {
 	createFieldSchema,
@@ -30,13 +35,16 @@ import {
 	type TreeNodeSchemaClass,
 	type TreeNodeSchema,
 	type WithType,
+	// eslint-disable-next-line import/no-deprecated
 	typeNameSymbol,
 	type TreeNode,
+	typeSchemaSymbol,
 } from "./core/index.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { brand, count, type RestrictiveReadonlyRecord } from "../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
+import type { ExclusiveMapTree } from "../core/index.js";
 
 /**
  * A map of string keys to tree objects.
@@ -136,12 +144,24 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	public [Symbol.iterator](): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
 		return this.entries();
 	}
+
+	private get innerNode(): InnerNode &
+		FlexTreeMapNode<FlexMapNodeSchema<string, FlexFieldSchema<typeof FieldKinds.optional>>> {
+		return getOrCreateInnerNode(this) as InnerNode &
+			FlexTreeMapNode<FlexMapNodeSchema<string, FlexFieldSchema<typeof FieldKinds.optional>>>;
+	}
+
+	private editor(key: string): OptionalFieldEditBuilder<ExclusiveMapTree> {
+		const field = this.innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
+		return field.editor;
+	}
+
 	public delete(key: string): void {
-		const field = getOrCreateInnerNode(this).getBoxed(key);
-		field.editor.set(undefined, field.length === 0);
+		const field = this.innerNode.getBoxed(brand(key));
+		this.editor(key).set(undefined, field.length === 0);
 	}
 	public *entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
-		const node = getOrCreateInnerNode(this);
+		const node = this.innerNode;
 		for (const key of node.keys()) {
 			yield [
 				key,
@@ -150,19 +170,19 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		}
 	}
 	public get(key: string): TreeNodeFromImplicitAllowedTypes<T> {
-		const node = getOrCreateInnerNode(this);
-		const field = node.getBoxed(key);
+		const node = this.innerNode;
+		const field = node.getBoxed(brand(key));
 		return getTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 	}
 	public has(key: string): boolean {
-		return getOrCreateInnerNode(this).tryGetField(brand(key)) !== undefined;
+		return this.innerNode.tryGetField(brand(key)) !== undefined;
 	}
 	public keys(): IterableIterator<string> {
-		const node = getOrCreateInnerNode(this);
+		const node = this.innerNode;
 		return node.keys();
 	}
 	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): TreeMapNode {
-		const node = getOrCreateInnerNode(this);
+		const node = this.innerNode;
 		const classSchema = getSimpleNodeSchema(node.schema);
 		const mapTree = mapTreeFromNodeData(
 			value as InsertableContent | undefined,
@@ -171,16 +191,16 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 			getSchemaAndPolicy(node),
 		);
 
-		const field = node.getBoxed(key);
+		const field = node.getBoxed(brand(key));
 		if (node.context !== undefined) {
 			prepareContentForHydration(mapTree, node.context.checkout.forest);
 		}
 
-		field.editor.set(mapTree, field.length === 0);
+		this.editor(key).set(mapTree, field.length === 0);
 		return this;
 	}
 	public get size(): number {
-		return count(getOrCreateInnerNode(this).keys());
+		return count(this.innerNode.keys());
 	}
 	public *values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
 		for (const [, value] of this.entries()) {
@@ -253,14 +273,18 @@ export function mapSchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 
+		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
 			return identifier;
+		}
+		public get [typeSchemaSymbol](): typeof schemaErased {
+			return schema.constructorCached?.constructor as unknown as typeof schemaErased;
 		}
 	}
 	const schemaErased: TreeNodeSchemaClass<
 		TName,
 		NodeKind.Map,
-		TreeMapNode<T> & WithType<TName>,
+		TreeMapNode<T> & WithType<TName, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
 		T

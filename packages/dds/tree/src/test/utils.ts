@@ -86,7 +86,6 @@ import {
 	type AnchorNode,
 	type AnchorSetRootEvents,
 	type TreeStoredSchemaSubscription,
-	type SchemaAndPolicy,
 	type ITreeCursorSynchronous,
 	CursorLocationType,
 	type MapTree,
@@ -103,7 +102,6 @@ import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	FieldKinds,
 	type FlexFieldSchema,
-	type FlexTreeTypedField,
 	type NodeKeyManager,
 	SchemaBuilderBase,
 	ViewSchema,
@@ -116,8 +114,8 @@ import {
 	mapRootChanges,
 	mapTreeFromCursor,
 	MockNodeKeyManager,
-	type FlexTreeSchema,
 	cursorForMapTreeField,
+	type IDefaultEditBuilder,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
@@ -149,12 +147,9 @@ import {
 import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import {
 	type ImplicitFieldSchema,
-	type InsertableContent,
 	TreeViewConfiguration,
 	SchemaFactory,
-	toFlexSchema,
 	type InsertableTreeFieldFromImplicitField,
-	mapTreeFromNodeData,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -166,6 +161,7 @@ import {
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
+import { cursorFromInsertable } from "../simple-tree/index.js";
 
 // Testing utilities
 
@@ -762,30 +758,14 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	return forest;
 }
 
-export function flexTreeFromForest<TRoot extends FlexFieldSchema>(
-	schema: FlexTreeSchema<TRoot>,
-	forest: IEditableForest,
-	args?: {
-		nodeKeyManager?: NodeKeyManager;
-		events?: Listenable<CheckoutEvents> &
-			IEmitter<CheckoutEvents> &
-			HasListeners<CheckoutEvents>;
-	},
-): FlexTreeTypedField<TRoot> {
-	const branch = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
-		...args,
-		forest,
-		schema: new TreeStoredSchemaRepository(intoStoredSchema(schema)),
-	});
-	const manager = args?.nodeKeyManager ?? new MockNodeKeyManager();
-	const view = new CheckoutFlexTreeView(branch, schema, manager);
-	return view.flexTree;
-}
-
 const sf = new SchemaFactory("com.fluidframework.json");
 
 export const NumberArray = sf.array("array", sf.number);
 export const StringArray = sf.array("array", sf.string);
+
+export const IdentifierSchema = sf.object("identifier-object", {
+	identifier: sf.identifier,
+});
 
 const jsonPrimitiveSchema = [sf.null, sf.boolean, sf.number, sf.string] as const;
 export const JsonObject = sf.mapRecursive("object", [
@@ -793,8 +773,10 @@ export const JsonObject = sf.mapRecursive("object", [
 	() => JsonArray,
 	...jsonPrimitiveSchema,
 ]);
+
 export const JsonArray = sf.arrayRecursive("array", [
 	JsonObject,
+	IdentifierSchema,
 	() => JsonArray,
 	...jsonPrimitiveSchema,
 ]);
@@ -1392,16 +1374,7 @@ export function cursorFromInsertableTreeField(
 	tree: InsertableTreeFieldFromImplicitField,
 	nodeKeyManager: NodeKeyManager,
 ): ITreeCursorSynchronous | undefined {
-	const data = tree as InsertableContent | undefined;
-
-	const flexSchema = toFlexSchema(schema);
-	const storedSchema: SchemaAndPolicy = {
-		policy: defaultSchemaPolicy,
-		schema: intoStoredSchema(flexSchema),
-	};
-
-	const mappedContent = mapTreeFromNodeData(data, schema, nodeKeyManager, storedSchema);
-	return mappedContent === undefined ? undefined : cursorForMapTreeNode(mappedContent);
+	return cursorFromInsertable(schema, tree, nodeKeyManager);
 }
 
 function normalizeNewFieldContent(
@@ -1420,4 +1393,17 @@ function normalizeNewFieldContent(
 	}
 
 	return cursorForMapTreeField([mapTreeFromCursor(content)]);
+}
+
+/**
+ * Convenience helper for performing a "move" edit where the source and destination field are the same.
+ */
+export function moveWithin(
+	editor: IDefaultEditBuilder,
+	field: FieldUpPath,
+	sourceIndex: number,
+	count: number,
+	destIndex: number,
+) {
+	editor.move(field, sourceIndex, count, field, destIndex);
 }

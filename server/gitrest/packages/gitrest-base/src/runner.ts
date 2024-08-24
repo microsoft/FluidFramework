@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import { Deferred } from "@fluidframework/common-utils";
 import { IRunner, IWebServer, IWebServerFactory } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -21,7 +20,6 @@ export class GitrestRunner implements IRunner {
 		private readonly port: string | number,
 		private readonly fileSystemManagerFactories: IFileSystemManagerFactories,
 		private readonly repositoryManagerFactory: IRepositoryManagerFactory,
-		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 	) {}
 
 	public async start(): Promise<void> {
@@ -31,7 +29,6 @@ export class GitrestRunner implements IRunner {
 			this.config,
 			this.fileSystemManagerFactories,
 			this.repositoryManagerFactory,
-			this.asyncLocalStorage,
 		);
 		gitrest.set("port", this.port);
 
