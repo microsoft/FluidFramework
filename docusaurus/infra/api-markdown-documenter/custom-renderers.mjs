@@ -17,9 +17,7 @@ function renderAdmonition(admonitionKind, title, children, writer, context) {
 	// Note: skipped lines around and between contents help ensure compatibility with formatters like Prettier.
 	writer.ensureSkippedLine();
 
-	writer.writeLine(
-		`:::${admonitionKind}${title === undefined ? "" : `[${title}]`}`,
-	);
+	writer.writeLine(`:::${admonitionKind}${title === undefined ? "" : `[${title}]`}`);
 	writer.ensureSkippedLine();
 
 	MarkdownRenderer.renderNodes(children, writer, context);
@@ -42,7 +40,8 @@ export function renderAdmonitionNode(admonitionNode, writer, context) {
 		admonitionNode.title,
 		admonitionNode.children,
 		writer,
-		context);
+		context,
+	);
 }
 
 /**
@@ -53,12 +52,7 @@ export function renderAdmonitionNode(admonitionNode, writer, context) {
  * @param {MarkdownRenderContext} context - See {@link @fluid-tools/api-markdown-documenter#MarkdownRenderContext}.
  */
 export function renderBlockQuoteNode(blockQuoteNode, writer, context) {
-	renderAdmonition(
-		"note",
-		undefined,
-		blockQuoteNode.children,
-		writer,
-		context);
+	renderAdmonition("note", undefined, blockQuoteNode.children, writer, context);
 }
 
 /**
