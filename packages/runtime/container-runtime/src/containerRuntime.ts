@@ -125,7 +125,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { BindBatchTracker } from "./batchTracker.js";
+import { BindBatchTracker, DuplicateBatchDetector } from "./batchTracker.js";
 import {
 	BlobManager,
 	IPendingBlobs,
@@ -1309,6 +1309,7 @@ export class ContainerRuntime
 	private readonly scheduleManager: ScheduleManager;
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
+	private readonly duplicateBatchDetector: DuplicateBatchDetector;
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
 
@@ -1587,6 +1588,8 @@ export class ContainerRuntime
 			pendingRuntimeState?.pending,
 			this.logger,
 		);
+
+		this.duplicateBatchDetector = new DuplicateBatchDetector();
 
 		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 		const useDeltaManagerOpsProxy =
@@ -2678,8 +2681,7 @@ export class ContainerRuntime
 				return;
 			}
 
-			//* MOVE THE DUPLICATE BATCH DETECTION HERE
-			//* Or maybe after the PSM call...?
+			this.duplicateBatchDetector.check(inboundBatch);
 
 			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
 			// or to check to ensure the *remote* messages don't match the batchId of a pending local batch.
@@ -2703,6 +2705,10 @@ export class ContainerRuntime
 				this.ensureNoDataModelChanges(() => this.processEmptyBatch(inboundBatch, local));
 			}
 		} else {
+			// Note: We don't do anything with Batching or PendingStateManager in this branch
+			// All batched and/or local runtime ops would have the modern runtime message envelope
+			// and thus will land in the branch above.
+
 			// Check if message.type is one of values in ContainerMessageType
 			// eslint-disable-next-line import/no-deprecated
 			if (isRuntimeMessage(messageCopy)) {
