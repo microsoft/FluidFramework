@@ -125,13 +125,14 @@ function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
 	};
 }
 
+//* MOVE
 /**
  * Get the effective batch ID for the input argument.
  * Supports either an IPendingMessage or an InboundBatch.
  * If the batch ID is explicitly present, return it.
  * Otherwise, generate a new batch ID using the client ID and batch start CSN.
  */
-function getEffectiveBatchId(
+export function getEffectiveBatchId(
 	pendingMessageOrInboundBatch: IPendingMessage | InboundBatch,
 ): string {
 	if ("localOpMetadata" in pendingMessageOrInboundBatch) {

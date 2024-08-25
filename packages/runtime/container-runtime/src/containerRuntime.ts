@@ -2681,7 +2681,7 @@ export class ContainerRuntime
 				return;
 			}
 
-			this.duplicateBatchDetector.check(inboundBatch);
+			this.duplicateBatchDetector.processInboundBatch(inboundBatch);
 
 			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
 			// or to check to ensure the *remote* messages don't match the batchId of a pending local batch.

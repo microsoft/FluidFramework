@@ -10,11 +10,11 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
-	LoggingError,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
-import { asBatchMetadata } from "./metadata.js";
+
 import type { InboundBatch } from "./opLifecycle/remoteMessageProcessor.js";
+import { getEffectiveBatchId } from "./pendingStateManager.js";
 
 //* TODO: Remove this and just use function return value to signal this
 export const DUPLICATE_BATCH_MSG = "Duplicate batch";
@@ -104,50 +104,34 @@ export class DuplicateBatchDetector {
 	//* Oops - doesn't need to be a set, it'll be 1-1
 	private readonly batchIdsBySeqNum = new Map<number, Set<string>>();
 
-	public check(inboundBatch: InboundBatch) {
+	public processInboundBatch(inboundBatch: InboundBatch) {
+		//* TODO: Improve/simplify this to account for empty batches.
+		//* Maybe put the empty grouped batch on here instead of just the sequence number?
+		const { sequenceNumber, minimumSequenceNumber } = inboundBatch.messages[0] ?? {
+			sequenceNumber: inboundBatch.emptyBatchSequenceNumber ?? -1, //* FIX - don't need the ??
+			//* TODO: Include this in empty batches
+			minimumSequenceNumber: -1,
+		};
 
-		const message: { sequenceNumber: number, minimumSequenceNumber: number } = inboundBatch.messages[0] ??
-			{
-				sequenceNumber: inboundBatch.emptyBatchSequenceNumber ?? -1, //* FIX - don't need the ??
-				//* TODO: Include this in empty batches
-				minimumSequenceNumber: -1,
-			};
+		this.clearOldBatchIds(minimumSequenceNumber);
+
+		//* Revisit and/or try to test
+		//* This would be SUPER rare/weird to have original (not resubmitted, no batchId) batch
+		//* arrive in parallel with a resubmitted batch, but maybe it's possible
+		//* If it's NOT possible, we can skip all this if there's no explicit batchId
+		const batchId = getEffectiveBatchId(inboundBatch);
 
 		// Check this batch against the tracked batchIds to see if it's a duplicate
-		// ScheduleManager will catch this error and tell the ContainerRuntime not to process the message
-		if (this.checkForAlreadySequencedBatchId(message)) {
-			//* TODO: Don't use exception handling for control flow!!
-			throw new LoggingError(DUPLICATE_BATCH_MSG);
-		}
-
-		const metadata = asBatchMetadata(message.metadata);
-		if (metadata?.batch === true || metadata?.batchId !== undefined) {
-			const batchId = metadata.batchId ?? "BACK-COMPAT-BATCH-ID"; //* Necessary for tests to pass?
-			(message.metadata as any).batchId = batchId; //* back compat hack for prototype
-			this.addBatchId(batchId, message.sequenceNumber);
-		} // else: single message (no batch semantics)
-	}
-
-	public checkForAlreadySequencedBatchId(message: ISequencedDocumentMessage): boolean {
-		//* TODO: Move this side effect to its own function called elsewhere
-		this.clearOldBatchIds(message.minimumSequenceNumber);
-
-		const metadata = asBatchMetadata(message.metadata);
-		if (
-			metadata?.batchId !== undefined &&
-			metadata?.batchId !== "-" &&
-			this.batchIdsAll.has(metadata.batchId)
-		) {
+		if (this.batchIdsAll.has(batchId)) {
+			//* Or return the info for logging?  Or log here?
 			return true;
 		}
-		return false;
+
+		//* Add it after checking to avoid finding itself
+		this.addBatchId(batchId, sequenceNumber);
 	}
 
 	private addBatchId(batchId: string, sequenceNumber: number) {
-		if (batchId === "-") {
-			return;
-		}
-
 		let batchIds = this.batchIdsBySeqNum.get(sequenceNumber);
 		if (batchIds === undefined) {
 			batchIds = new Set<string>();
