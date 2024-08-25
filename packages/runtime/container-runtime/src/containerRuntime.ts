@@ -2681,7 +2681,10 @@ export class ContainerRuntime
 				return;
 			}
 
-			this.duplicateBatchDetector.processInboundBatch(inboundBatch);
+			//* Fill out this error and probably log too
+			if (this.duplicateBatchDetector.processInboundBatch(inboundBatch)) {
+				throw new DataCorruptionError("Duplicate batch", {});
+			}
 
 			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
 			// or to check to ensure the *remote* messages don't match the batchId of a pending local batch.

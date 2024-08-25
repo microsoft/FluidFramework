@@ -13,7 +13,7 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-import type { InboundBatch } from "./opLifecycle/remoteMessageProcessor.js";
+import type { InboundBatch } from "./opLifecycle/index.js";
 import { getEffectiveBatchId } from "./pendingStateManager.js";
 
 //* TODO: Remove this and just use function return value to signal this
@@ -101,8 +101,7 @@ export const BindBatchTracker = (
 export class DuplicateBatchDetector {
 	private readonly batchIdsAll = new Set<string>();
 
-	//* Oops - doesn't need to be a set, it'll be 1-1
-	private readonly batchIdsBySeqNum = new Map<number, Set<string>>();
+	private readonly batchIdBySeqNum = new Map<number, string>();
 
 	public processInboundBatch(inboundBatch: InboundBatch) {
 		//* TODO: Improve/simplify this to account for empty batches.
@@ -132,12 +131,11 @@ export class DuplicateBatchDetector {
 	}
 
 	private addBatchId(batchId: string, sequenceNumber: number) {
-		let batchIds = this.batchIdsBySeqNum.get(sequenceNumber);
-		if (batchIds === undefined) {
-			batchIds = new Set<string>();
-			this.batchIdsBySeqNum.set(sequenceNumber, batchIds);
-		}
-		batchIds.add(batchId);
+		assert(
+			!this.batchIdBySeqNum.has(sequenceNumber),
+			"Shouldn't add a batchId that's already tracked",
+		);
+		this.batchIdBySeqNum.set(sequenceNumber, batchId);
 		this.batchIdsAll.add(batchId);
 	}
 
@@ -146,12 +144,15 @@ export class DuplicateBatchDetector {
 	 * since the batch start has been processed by all clients, and local batches are deduped and the forked client would close.
 	 */
 	private clearOldBatchIds(msn: number) {
-		const sequenceNumbers = Array.from(this.batchIdsBySeqNum.keys());
+		//* Switch to iterating over Object.entries to avoid the undefined check
+		const sequenceNumbers = Array.from(this.batchIdBySeqNum.keys());
 		for (const sequenceNumber of sequenceNumbers) {
 			if (sequenceNumber < msn) {
-				const batchIds = this.batchIdsBySeqNum.get(sequenceNumber);
-				this.batchIdsBySeqNum.delete(sequenceNumber);
-				batchIds?.forEach((batchId) => this.batchIdsAll.delete(batchId));
+				const batchId = this.batchIdBySeqNum.get(sequenceNumber);
+				if (batchId !== undefined) {
+					this.batchIdBySeqNum.delete(sequenceNumber);
+					this.batchIdsAll.delete(batchId);
+				}
 			}
 		}
 	}

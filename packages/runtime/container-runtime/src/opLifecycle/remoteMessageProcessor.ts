@@ -150,7 +150,7 @@ export class RemoteMessageProcessor {
 		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked
 		unpackRuntimeMessage(message, logLegacyCase);
 
-	const { batchEnded } = this.addMessageToBatch(
+		const { batchEnded } = this.addMessageToBatch(
 			message as InboundSequencedContainerRuntimeMessage & { clientId: string },
 		);
 
