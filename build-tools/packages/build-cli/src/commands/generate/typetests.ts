@@ -108,7 +108,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		const { typesPath: previousTypesPathRelative, levelUsed: previousPackageLevel } =
 			getTypesPathWithFallback(previousPackageJson, level, this.logger, fallbackLevel);
 		const previousTypesPath = path.resolve(
-			path.join(pkg.directory, previousTypesPathRelative),
+			path.join(previousBasePath, previousTypesPathRelative),
 		);
 		this.verbose(
 			`Found ${previousPackageLevel} type definitions for ${currentPackageJson.name}: ${previousTypesPath}`,
@@ -154,8 +154,6 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
 		];
 
 		const testCases = generateCompatibilityTestCases(
-			// previousData,
-			// currentTypeMap,
 			typeMap,
 			currentPackageJson,
 			fileHeader,
@@ -514,7 +512,13 @@ export function generateCompatibilityTestCases(
 	testString: string[],
 ): string[] {
 	const broken: BrokenCompatTypes = packageObject.typeValidation?.broken ?? {};
-	for (const [testCaseName, typeData] of typeMap) {
+
+	// Convert Map entries to an array and sort by key. This is not strictly needed since Maps are iterated in insertion
+	// order, so the type tests should generate in the same order each time. However, explicitly sorting by the test case
+	// name is clearer.
+	const sortedEntries = [...typeMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+	for (const [testCaseName, typeData] of sortedEntries) {
 		const [oldType, currentType]: TestCaseTypeData[] = [
 			{
 				prefix: "old",
