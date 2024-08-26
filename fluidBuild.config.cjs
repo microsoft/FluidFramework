@@ -78,7 +78,7 @@ module.exports = {
 		// These dependencies for typetests:gen can be removed once build-tools is upgraded to 0.45+.
 		// After that version, typetests are generated from the previous version of the package only, so they have no
 		// dependent tasks.
-		"typetests:gen": ["^tsc", "build:genver"],
+		"typetests:gen": ["^tsc"],
 		"ts2esm": [],
 		"tsc": tscDependsOn,
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
