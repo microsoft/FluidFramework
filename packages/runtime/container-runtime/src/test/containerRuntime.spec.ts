@@ -2564,10 +2564,13 @@ describe("Runtime", () => {
 			it("emits signal latency telemetry after 100 signals", () => {
 				// Send 1st signal and process it to prime the system
 				sendSignals(1);
+
 				processSubmittedSignals(1);
 
 				sendSignals(100);
+
 				processSubmittedSignals(100);
+
 				logger.assertMatch(
 					[
 						{
@@ -2650,6 +2653,7 @@ describe("Runtime", () => {
 
 			it("does not emit error events when signals are processed in order", () => {
 				sendSignals(100);
+
 				processSubmittedSignals(100);
 
 				logger.assertMatchNone(
@@ -2704,6 +2708,7 @@ describe("Runtime", () => {
 
 				// Disconnect + Reconnect
 				changeConnectionState(containerRuntime, false, mockClientId);
+
 				changeConnectionState(containerRuntime, true, mockClientId);
 
 				// Temporarily lose two old signals
@@ -2781,12 +2786,16 @@ describe("Runtime", () => {
 			it("accurately reports amount of sent and lost signals with multiple SignalLatency events", () => {
 				// Send 50 signals and drop 10
 				sendSignals(50);
+
 				dropSignals(10);
+
 				processSubmittedSignals(40);
 
 				// Send 60 signals and drop 10
 				sendSignals(60);
+
 				processSubmittedSignals(40);
+
 				dropSignals(10);
 
 				// Here we should detect that 100 signals have been sent and 20 signals were lost
@@ -2794,6 +2803,7 @@ describe("Runtime", () => {
 
 				// Send 100 signals and drop 1
 				sendSignals(100);
+
 				dropSignals(1);
 
 				// Here we should detect that 100 more signals have been sent and 1 signal was lost
@@ -2820,12 +2830,16 @@ describe("Runtime", () => {
 			it("accurately reports amount of sent and lost signals when roundtrip tracked signal is dropped", () => {
 				// Send 50 signals and drop 10
 				sendSignals(50);
+
 				dropSignals(10);
+
 				processSubmittedSignals(40);
 
 				// Send 60 signals and drop 15 (including roundtrip tracked signal)
 				sendSignals(60);
+
 				processSubmittedSignals(40);
+
 				dropSignals(15); // Drop roundtrip tracked signal
 
 				// Since roundtrip signal is lost, we don't expect to see SignalLatency telemetry for the first 100 signals
@@ -2833,6 +2847,7 @@ describe("Runtime", () => {
 
 				// Send 100 signals and drop 1
 				sendSignals(100);
+
 				dropSignals(1);
 
 				// Here we should detect that 200 signals have been sent and 26 signals were lost
@@ -2853,10 +2868,13 @@ describe("Runtime", () => {
 
 			it("accurately reports amount of sent and lost signals when rapid fire more than 100+ signals", () => {
 				sendSignals(1);
+
 				processSubmittedSignals(1);
 
 				sendSignals(101);
+
 				dropSignals(10);
+
 				processSubmittedSignals(91);
 
 				logger.assertMatch(
@@ -2874,18 +2892,26 @@ describe("Runtime", () => {
 			it("should log out of order signal in between signal latency events", () => {
 				// Send 1st signal and process it to prime the system
 				sendSignals(1);
+
 				processSubmittedSignals(1);
+
 				// Send 150 signals and temporarily lose 1
-				sendSignals(150); //            150 outstanding including 1 tracked signal (#101); max #151
-				processSubmittedSignals(95); //  55 outstanding including 1 tracked signal (#101)
-				dropSignals(1); //               54 outstanding including 1 tracked signal (#101)
-				processSubmittedSignals(14); //  40 outstanding; none tracked
-				processDroppedSignals(1); //     40 outstanding; none tracked *out of order signal*
-				processSubmittedSignals(40); //   0 outstanding; none tracked
+				sendSignals(150); // 150 outstanding including 1 tracked signal (#101); max #151
+
+				processSubmittedSignals(95); // 55 outstanding including 1 tracked signal (#101)
+
+				dropSignals(1); // 54 outstanding including 1 tracked signal (#101)
+
+				processSubmittedSignals(14); // 40 outstanding; none tracked
+
+				processDroppedSignals(1); // 40 outstanding; none tracked *out of order signal*
+
+				processSubmittedSignals(40); // 0 outstanding; none tracked
 
 				// Send 60 signals including tracked signal
-				sendSignals(60); //              60 outstanding including 1 tracked signal (#201); max #211
-				processSubmittedSignals(60); //    0 outstanding; none tracked
+				sendSignals(60); // 60 outstanding including 1 tracked signal (#201); max #211
+
+				processSubmittedSignals(60); // 0 outstanding; none tracked
 
 				// Check SignalLatency logs amount of sent and lost signals
 				logger.assertMatch(

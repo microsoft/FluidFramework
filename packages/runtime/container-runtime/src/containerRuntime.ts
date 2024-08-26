@@ -2939,7 +2939,6 @@ export class ContainerRuntime
 	/**
 	 * Emits the Signal event and update the perf signal data.
 	 * @param clientSignalSequenceNumber - is the client signal sequence number to be uploaded.
-	 * @param previousClientSignalSequenceNumber - the previously uploaded client sequence number.
 	 */
 	private sendSignalTelemetryEvent(clientSignalSequenceNumber: number) {
 		const duration = Date.now() - this._signalTracking.signalTimestamp;
@@ -2977,30 +2976,29 @@ export class ContainerRuntime
 				this._signalTracking.minimumTrackingSignalSequenceNumber !== undefined
 			) {
 				if (
-					envelope.clientSignalSequenceNumber >
+					envelope.clientSignalSequenceNumber >=
 					this._signalTracking.trackingSignalSequenceNumber
 				) {
-					// Incoming signal sequence number is greater than the expected signal sequence number.
-					// So we calculate the number of signals lost and log the event.
+					// Calculate the number of signals lost and log the event.
 					const signalsLost =
 						envelope.clientSignalSequenceNumber -
 						this._signalTracking.trackingSignalSequenceNumber;
-					this._signalTracking.signalsLost += signalsLost;
-					this.mc.logger.sendErrorEvent({
-						eventName: "SignalLost",
-						type: envelope.contents.type,
-						signalsLost,
-						trackingSequenceNumber: this._signalTracking.trackingSignalSequenceNumber,
-						clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
-					});
+					if (signalsLost > 0) {
+						this._signalTracking.signalsLost += signalsLost;
+						this.mc.logger.sendErrorEvent({
+							eventName: "SignalLost",
+							type: envelope.contents.type,
+							signalsLost,
+							trackingSequenceNumber: this._signalTracking.trackingSignalSequenceNumber,
+							clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
+						});
+					}
 					// Update the tracking signal sequence number to the next expected signal in the sequence.
 					this._signalTracking.trackingSignalSequenceNumber =
 						envelope.clientSignalSequenceNumber + 1;
 				} else if (
-					envelope.clientSignalSequenceNumber <
-						this._signalTracking.trackingSignalSequenceNumber &&
 					envelope.clientSignalSequenceNumber >=
-						this._signalTracking.minimumTrackingSignalSequenceNumber
+					this._signalTracking.minimumTrackingSignalSequenceNumber
 				) {
 					if (
 						this._signalTracking.previousRoundTripSignalSequenceNumber !== undefined &&
@@ -3016,29 +3014,20 @@ export class ContainerRuntime
 						trackingSequenceNumber: this._signalTracking.trackingSignalSequenceNumber,
 						clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
 					});
-				} else if (
-					envelope.clientSignalSequenceNumber ===
-					this._signalTracking.trackingSignalSequenceNumber
-				) {
-					// Incoming signal is the next expected signal in the sequence.
-					// Update the tracking signal sequence number to the next expected signal.
-					this._signalTracking.trackingSignalSequenceNumber++;
 				}
-
 				if (
 					this._signalTracking.roundTripSignalSequenceNumber !== undefined &&
-					this._signalTracking.roundTripSignalSequenceNumber <=
-						envelope.clientSignalSequenceNumber
+					envelope.clientSignalSequenceNumber >=
+						this._signalTracking.roundTripSignalSequenceNumber
 				) {
 					if (
 						this.consecutiveReconnects === 0 &&
 						envelope.clientSignalSequenceNumber ===
 							this._signalTracking.roundTripSignalSequenceNumber
 					) {
+						// Send signal telemetry event if round trip tracked signal is received.
+						// only logging for the first connection.
 						this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
-					} else {
-						this._signalTracking.trackingSignalSequenceNumber =
-							envelope.clientSignalSequenceNumber + 1;
 					}
 					this._signalTracking.roundTripSignalSequenceNumber = undefined;
 				}
