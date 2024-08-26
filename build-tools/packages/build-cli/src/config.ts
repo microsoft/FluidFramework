@@ -24,7 +24,7 @@ export interface FlubConfig {
 	 * @remarks
 	 *
 	 * For backwards-compatibility with the fluidBuild config file - that is, supporting both the flub config and the
-	 * fluidBuild config in the same config file, this value must match the version value of the
+	 * fluidBuild config in the same config file - this value must match the version value of the
 	 * fluidBuildConfig. Once they diverge, the flub config must be separate from the fluidBuild config.
 	 *
 	 * In other words, version 1 is the only version of the configs where they can be stored in the same file.

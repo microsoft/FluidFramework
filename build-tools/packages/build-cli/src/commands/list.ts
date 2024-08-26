@@ -110,7 +110,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 				const config = context.flubConfig?.policy?.packageNames;
 				if (config === undefined) {
 					// exits the process
-					this.error(`No fluid-build package name policy config found.`);
+					this.error(`No package name policy config found.`);
 				}
 
 				if (feed === undefined) {
