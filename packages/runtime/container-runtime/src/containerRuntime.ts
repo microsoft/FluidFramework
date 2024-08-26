@@ -817,9 +817,9 @@ export interface LoadContainerRuntimeParams {
 	requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 }
 /**
- * This is meant to be used by a {@link @fluidframework/container-definitions/internal#IRuntimeFactory} to instantiate a container runtime.
+ * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
  * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
- * @returns A runtime which provides all the functionality necessary to bind with the loader layer via the {@link @fluidframework/container-definitions/internal#IRuntime} interface and provide a runtime environment via the {@link @fluidframework/container-runtime-definitions/internal#IContainerRuntime} interface.
+ * @returns A runtime which provides all the functionality necessary to bind with the loader layer via the {@link @fluidframework/container-definitions#IRuntime} interface and provide a runtime environment via the {@link @fluidframework/container-runtime-definitions#IContainerRuntime} interface.
  * @legacy
  * @alpha
  */
