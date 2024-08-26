@@ -6,17 +6,11 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { Adapters, TreeNodeSchemaIdentifier } from "../core/index.js";
-import {
-	type Assume,
-	brand,
-	type RestrictiveReadonlyRecord,
-	transformObjectMap,
-} from "../util/index.js";
+import { brand, type RestrictiveReadonlyRecord, transformObjectMap } from "../util/index.js";
 
 import { defaultSchemaPolicy } from "./default-schema/index.js";
 import type { FlexFieldKind } from "./modular-schema/index.js";
 import {
-	Any,
 	type FlexAllowedTypes,
 	FlexFieldSchema,
 	type FlexMapFieldSchema,
@@ -261,32 +255,17 @@ export interface SchemaLibrary extends SchemaCollection {
 /**
  * Generalized version of AllowedTypes allowing for more concise expressions in some cases.
  */
-export type FlexImplicitAllowedTypes = FlexAllowedTypes | FlexTreeNodeSchema | Any;
+export type FlexImplicitAllowedTypes = FlexAllowedTypes | FlexTreeNodeSchema;
 
 /**
  * Normalizes an {@link FlexImplicitAllowedTypes} into  {@link FlexAllowedTypes}.
  */
-export type NormalizeAllowedTypes<TSchema extends FlexImplicitAllowedTypes> =
-	TSchema extends FlexTreeNodeSchema
-		? readonly [TSchema]
-		: TSchema extends Any
-			? readonly [Any]
-			: TSchema;
-
-/**
- * Normalizes an {@link FlexImplicitAllowedTypes} into  {@link FlexAllowedTypes}.
- */
-export function normalizeAllowedTypes<TSchema extends FlexImplicitAllowedTypes>(
-	schema: TSchema,
-): NormalizeAllowedTypes<TSchema> {
-	if (schema === Any) {
-		return [Any] as unknown as NormalizeAllowedTypes<TSchema>;
-	}
+export function normalizeAllowedTypes(schema: FlexImplicitAllowedTypes): FlexAllowedTypes {
 	if (schema instanceof TreeNodeSchemaBase) {
-		return [schema] as unknown as NormalizeAllowedTypes<TSchema>;
+		return [schema];
 	}
 	assert(Array.isArray(schema), 0x7c6 /* invalid ImplicitAllowedTypes */);
-	return schema as unknown as NormalizeAllowedTypes<TSchema>;
+	return schema as FlexAllowedTypes;
 }
 
 /**
@@ -295,12 +274,7 @@ export function normalizeAllowedTypes<TSchema extends FlexImplicitAllowedTypes>(
 export type NormalizeField<
 	TSchema extends FlexImplicitFieldSchema,
 	TDefault extends FlexFieldKind,
-> = TSchema extends FlexFieldSchema
-	? TSchema
-	: FlexFieldSchema<
-			TDefault,
-			NormalizeAllowedTypes<Assume<TSchema, FlexImplicitAllowedTypes>>
-		>;
+> = TSchema extends FlexFieldSchema ? TSchema : FlexFieldSchema<TDefault>;
 
 /**
  * Normalizes an {@link FlexImplicitFieldSchema} into a {@link FlexFieldSchema}.
@@ -313,7 +287,7 @@ export function normalizeField<
 		return schema as NormalizeField<TSchema, TDefault>;
 	}
 	const allowedTypes = normalizeAllowedTypes(schema);
-	return FlexFieldSchema.create(defaultKind, allowedTypes) as unknown as NormalizeField<
+	return FlexFieldSchema.create(defaultKind, allowedTypes) as NormalizeField<
 		TSchema,
 		TDefault
 	>;

@@ -312,8 +312,7 @@ function trackFieldDiscrepancies(
 			return [[...a], []];
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return [[], [...b!]];
+		return [[], [...b]];
 	};
 
 	const allowedTypesDiscrepancies = findSetDiscrepancies(view.types, stored.types);

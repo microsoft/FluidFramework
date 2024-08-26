@@ -42,11 +42,11 @@ export const jsonRoot: FlexAllowedTypes = [
 
 export const jsonObject = builder.map(
 	"object",
-	FlexFieldSchema.createUnsafe(FieldKinds.optional, jsonRoot),
+	FlexFieldSchema.create(FieldKinds.optional, jsonRoot),
 );
 
 export const jsonArray = builder.object("array", {
-	[EmptyKey]: FlexFieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
+	[EmptyKey]: FlexFieldSchema.create(FieldKinds.sequence, jsonRoot),
 });
 
 export const jsonSchema = builder.intoLibrary();
