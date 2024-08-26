@@ -13,7 +13,12 @@ import { ExecAsyncResult } from "./utils";
 /**
  * Top-most configuration for repo build settings.
  */
-export interface IRepoBuildConfig {
+export interface IFluidBuildConfig {
+	/**
+	 * The version of the config.
+	 */
+	version: 1;
+
 	/**
 	 * Build tasks and dependencies definitions
 	 */

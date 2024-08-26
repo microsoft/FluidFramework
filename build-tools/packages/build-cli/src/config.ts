@@ -15,12 +15,24 @@ import { Context } from "./library/index.js";
 import type { ReleaseGroup } from "./releaseGroups.js";
 
 /**
- * Fluid repo build configuration that is expected in the fluidRepo config file or package.json.
+ * Flub configuration that is expected in the flub config file or package.json.
  */
 export interface FlubConfig {
 	/**
-	 * Policy configuration for the `check:policy` command. This can only be configured in the repo-wide Fluid build
-	 * config (the repo-root package.json).
+	 * The version of the config.
+	 *
+	 * @remarks
+	 *
+	 * For backwards-compatibility with the fluidBuild config file - that is, supporting both the flub config and the
+	 * fluidBuild config in the same config file, this value must match the version value of the
+	 * fluidBuildConfig. Once they diverge, the flub config must be separate from the fluidBuild config.
+	 *
+	 * In other words, version 1 is the only version of the configs where they can be stored in the same file.
+	 */
+	version: 1;
+
+	/**
+	 * Ponfiguration for the `check:policy` command.
 	 */
 	policy?: PolicyConfig;
 
@@ -30,7 +42,7 @@ export interface FlubConfig {
 	assertTagging?: AssertTaggingConfig;
 
 	/**
-	 * Configuration for flub bump.
+	 * Configuration for `flub bump`.
 	 */
 	bump?: BumpConfig;
 
@@ -324,10 +336,26 @@ export function getFlubConfig(configPath: string, noCache = false): FlubConfig {
 		configExplorer.clearCaches();
 	}
 
-	const config = statSync(configPath).isFile()
+	// const configResult = configExplorer.search(rootDir);
+
+	const configResult = statSync(configPath).isFile()
 		? configExplorer.load(configPath)
 		: configExplorer.search(configPath);
-	return config?.config as FlubConfig;
+
+	const config = configResult?.config as FlubConfig | undefined;
+
+	if (config === undefined) {
+		throw new Error("No flub configuration found.");
+	}
+
+	// Only version 1 of the config is supported. If any other value is provided, throw an error.
+	if (config?.version !== 1) {
+		throw new Error(
+			`Configuration version is not supported: ${config?.version}. Config version must be 1.`,
+		);
+	}
+
+	return config;
 }
 
 /**

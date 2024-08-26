@@ -455,7 +455,7 @@ function patchTaskDeps(
 			let tasks: Exclude<Exclude<PackageJson["fluidBuild"], undefined>["tasks"], undefined>;
 			if (json.fluidBuild === undefined) {
 				tasks = {};
-				json.fluidBuild = { tasks };
+				json.fluidBuild = { tasks, version: 1 };
 			} else if (json.fluidBuild.tasks === undefined) {
 				tasks = {};
 				json.fluidBuild.tasks = tasks;

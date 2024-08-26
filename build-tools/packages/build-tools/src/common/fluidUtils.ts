@@ -151,6 +151,18 @@ export function getFluidBuildConfig(rootDir: string, noCache = false): IFluidBui
 		configExplorer.clearCaches();
 	}
 
-	const config = configExplorer.search(rootDir);
-	return config?.config;
+	const configResult = configExplorer.search(rootDir);
+	const config = configResult?.config as IFluidBuildConfig | undefined;
+
+	if (config === undefined) {
+		throw new Error("No fluidBuild configuration found.");
+	}
+
+	// Only version 1 of the config is supported. If any other value is provided, throw an error.
+	if (config?.version !== 1) {
+		throw new Error(
+			`Configuration version is not supported: ${config?.version}. Config version must be 1.`,
+		);
+	}
+	return config;
 }
