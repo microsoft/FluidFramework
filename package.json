@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.2.0",
+	"version": "2.3.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -156,10 +156,10 @@
 		"@biomejs/biome": "~1.8.3",
 		"@changesets/cli": "^2.26.1",
 		"@fluid-private/changelog-generator-wrapper": "workspace:~",
-		"@fluid-tools/build-cli": "0.43.0-285387",
+		"@fluid-tools/build-cli": "^0.44.0",
 		"@fluid-tools/markdown-magic": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.43.0-285387",
+		"@fluidframework/build-tools": "^0.44.0",
 		"@fluidframework/eslint-config-fluid": "^5.3.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
@@ -258,7 +258,6 @@
 			},
 			"checks": {
 				"dependsOn": [
-					"^checks",
 					"check:format",
 					"generate:packageList",
 					"policy-check",
@@ -271,7 +270,6 @@
 			},
 			"checks:fix": {
 				"dependsOn": [
-					"^checks:fix",
 					"format",
 					"generate:packageList",
 					"policy-check:fix",

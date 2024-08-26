@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/id-compressor",
-	"version": "2.2.0",
+	"version": "2.3.0",
 	"description": "ID compressor",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -141,11 +141,11 @@
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.50.0",
-		"@fluid-tools/build-cli": "0.43.0-285387",
+		"@fluid-tools/build-cli": "^0.44.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.43.0-285387",
+		"@fluidframework/build-tools": "^0.44.0",
 		"@fluidframework/eslint-config-fluid": "^5.3.0",
-		"@fluidframework/id-compressor-previous": "npm:@fluidframework/id-compressor@2.1.0",
+		"@fluidframework/id-compressor-previous": "npm:@fluidframework/id-compressor@2.2.0",
 		"@microsoft/api-extractor": "^7.45.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",

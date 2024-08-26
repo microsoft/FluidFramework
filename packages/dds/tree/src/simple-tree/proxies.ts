@@ -17,12 +17,12 @@ import {
 
 import {
 	FieldKinds,
-	type FlexFieldSchema,
 	type FlexTreeField,
 	type FlexTreeNode,
-	type FlexTreeTypedField,
 	tryGetMapTreeNode,
 	isFlexTreeNode,
+	type FlexTreeRequiredField,
+	type FlexTreeOptionalField,
 } from "../feature-libraries/index.js";
 import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
 
@@ -34,9 +34,7 @@ import { tryGetSimpleNodeSchema, type TreeNode, type Unhydrated } from "./core/i
  */
 export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
 	function tryToUnboxLeaves(
-		flexField: FlexTreeTypedField<
-			FlexFieldSchema<typeof FieldKinds.required | typeof FieldKinds.optional>
-		>,
+		flexField: FlexTreeOptionalField | FlexTreeRequiredField,
 	): TreeNode | TreeValue | undefined {
 		const maybeContent = flexField.content;
 		return isFlexTreeNode(maybeContent)
@@ -45,27 +43,16 @@ export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue 
 	}
 	switch (field.schema.kind) {
 		case FieldKinds.required: {
-			const typedField = field as FlexTreeTypedField<
-				FlexFieldSchema<typeof FieldKinds.required>
-			>;
+			const typedField = field as FlexTreeRequiredField;
 			return tryToUnboxLeaves(typedField);
 		}
 		case FieldKinds.optional: {
-			const typedField = field as FlexTreeTypedField<
-				FlexFieldSchema<typeof FieldKinds.optional>
-			>;
+			const typedField = field as FlexTreeOptionalField;
 			return tryToUnboxLeaves(typedField);
-		}
-		// TODO: Remove if/when 'FieldNode' is removed.
-		case FieldKinds.sequence: {
-			// 'getProxyForNode' handles FieldNodes by unconditionally creating a array node proxy, making
-			// this case unreachable as long as users follow the 'array recipe'.
-			fail("'sequence' field is unexpected.");
 		}
 		case FieldKinds.identifier: {
 			// Identifier fields are just value fields that hold strings
-			return (field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.required>>)
-				.content as string;
+			return (field as FlexTreeRequiredField).content as string;
 		}
 
 		default:
