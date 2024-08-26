@@ -151,7 +151,7 @@ describe("ESLint Rule Tests", function () {
 			result.messages[5].message,
 			"Assigning 'nullableIndexedRecord.a' from an index signature type to a strictly typed variable without 'undefined' is not allowed. 'nullableIndexedRecord.a' may be 'undefined'",
 		);
-		assert.strictEqual(result.messages[5].line, 55);
+		assert.strictEqual(result.messages[5].line, 56);
 	});
 
 	it("Should not report errors for correct usage of undefinableIndexedRecord", async function () {
