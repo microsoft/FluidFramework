@@ -11,13 +11,22 @@ import { Package, Packages } from "./npmPackage";
 import { ExecAsyncResult } from "./utils";
 
 /**
+ * The version of the fluidBuild configuration currently used.
+ *
+ * @remarks
+ *
+ * This is not exported outside of the build-tools package; it is only used internally.
+ */
+export const FLUIDBUILD_CONFIG_VERSION = 1;
+
+/**
  * Top-most configuration for repo build settings.
  */
 export interface IFluidBuildConfig {
 	/**
 	 * The version of the config.
 	 */
-	version: 1;
+	version: typeof FLUIDBUILD_CONFIG_VERSION;
 
 	/**
 	 * Build tasks and dependencies definitions

@@ -12,7 +12,7 @@ import registerDebug from "debug";
 import { readJson } from "fs-extra";
 
 import { commonOptions } from "./commonOptions";
-import { IFluidBuildConfig } from "./fluidRepo";
+import { FLUIDBUILD_CONFIG_VERSION, IFluidBuildConfig } from "./fluidRepo";
 import { realpathAsync } from "./utils";
 
 // switch to regular import once building ESM
@@ -159,9 +159,9 @@ export function getFluidBuildConfig(rootDir: string, noCache = false): IFluidBui
 	}
 
 	// Only version 1 of the config is supported. If any other value is provided, throw an error.
-	if (config?.version !== 1) {
+	if (config?.version !== FLUIDBUILD_CONFIG_VERSION) {
 		throw new Error(
-			`Configuration version is not supported: ${config?.version}. Config version must be 1.`,
+			`Configuration version is not supported: ${config?.version}. Config version must be ${FLUIDBUILD_CONFIG_VERSION}.`,
 		);
 	}
 	return config;
