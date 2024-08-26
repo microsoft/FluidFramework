@@ -51,5 +51,7 @@ let aLetExpectingStringOrNullOrUndefined: string | null | undefined = nullableIn
 
 const aImplicitType = nullableIndexedRecord.a; // defect: Index property without an explicit undefined can not be assigned to an inferred type
 
-let aLetExpectingStringOrUndefinedAfterVariableDeclaration: string | null;
-aLetExpectingStringOrUndefinedAfterVariableDeclaration = nullableIndexedRecord.a; // ok: Assigning index property 'a' to string or null variable, 'a' might not be present, either the index signature type should include an undefined type or the variable declaration should be changed to string | null | undefined
+let aLetExpectingStringOrNullAfterVariableDeclaration: string | null;
+aLetExpectingStringOrNullAfterVariableDeclaration = nullableIndexedRecord.a; // defect: Assigning index property 'a' to string or null variable should report an error, 'a' might not be present, either the index signature type should include an undefined type or the variable declaration should be changed to string | null | undefined
+let aLetExpectingStringOrNullOrUndefinedAfterVariableDeclaration: string | null | undefined;
+aLetExpectingStringOrNullOrUndefinedAfterVariableDeclaration = nullableIndexedRecord.a; // ok: Assigning index property 'a' to string or null or undefined variable, 'a' might not be present

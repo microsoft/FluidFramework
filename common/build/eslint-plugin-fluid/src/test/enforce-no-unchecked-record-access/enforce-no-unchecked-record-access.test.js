@@ -115,7 +115,7 @@ describe("ESLint Rule Tests", function () {
 
 	it("Should report errors for unchecked record access in nullableIndexedRecord", async function () {
 		const result = await lintFile("nullableIndexedRecord.ts");
-		assert.strictEqual(result.errorCount, 5, "Should have 5 errors");
+		assert.strictEqual(result.errorCount, 6, "Should have 6 errors");
 
 		assert.strictEqual(
 			result.messages[0].message,
@@ -143,9 +143,15 @@ describe("ESLint Rule Tests", function () {
 
 		assert.strictEqual(
 			result.messages[4].message,
+			"Implicit typing derived from 'nullableIndexedRecord.a' is not allowed. 'nullableIndexedRecord' is an index signature type and 'a' may be undefined. Please provide an explicit type annotation including undefined or enable noUncheckedIndexedAccess",
+		);
+		assert.strictEqual(result.messages[4].line, 52);
+
+		assert.strictEqual(
+			result.messages[5].message,
 			"Assigning 'nullableIndexedRecord.a' from an index signature type to a strictly typed variable without 'undefined' is not allowed. 'nullableIndexedRecord.a' may be 'undefined'",
 		);
-		assert.strictEqual(result.messages[4].line, 55);
+		assert.strictEqual(result.messages[5].line, 55);
 	});
 
 	it("Should not report errors for correct usage of undefinableIndexedRecord", async function () {

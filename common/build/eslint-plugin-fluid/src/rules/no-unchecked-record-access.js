@@ -11,7 +11,7 @@
  * Enabling `noUncheckedIndexedAccess` will disable these checks.
  */
 
-const { SyntaxKind } = require("typescript");
+const { SyntaxKind, TypeFlags } = require("typescript");
 
 module.exports = {
 	meta: {
@@ -53,19 +53,38 @@ module.exports = {
 			const parentNode = node.parent;
 
 			/*
-			 * Cases when this lint rule should report an error
+			 * Cases when this lint rule should report a defect
 			 */
 
-			if (
-				parentNode.type === "VariableDeclarator" &&
-				!parentNode.id.typeAnnotation &&
-				!isUndefinableIndexSignatureType(parserServices, node)
-			) {
-				// This error occurs when an index signature type that isnt explicity typed to undefined is assigned to an implicit variable
-				return context.report({
-					node,
-					message: `Implicit typing derived from '${fullName}' is not allowed. '${node.object.name}' is an index signature type and '${node.property.name}' may be undefined. Please provide an explicit type annotation including undefined or enable noUncheckedIndexedAccess`,
-				});
+			if (parentNode.type === "VariableDeclarator" && parentNode.init === node) {
+				const declarationNode = parentNode.parent;
+				const isUndefinable = isUndefinableIndexSignatureType(parserServices, node);
+
+				if (
+					declarationNode.type === "VariableDeclaration" &&
+					!parentNode.id.typeAnnotation &&
+					!isUndefinable
+				) {
+					// This defect occurs when a non-undefinable index signature type is implicitly typed
+					return context.report({
+						node,
+						message: `Implicit typing derived from '${fullName}' is not allowed. '${node.object.name}' is an index signature type and '${node.property.name}' may be undefined. Please provide an explicit type annotation including undefined or enable noUncheckedIndexedAccess`,
+					});
+				}
+			} else if (parentNode.type === "AssignmentExpression" && parentNode.right === node) {
+				const isUndefinable = isUndefinableIndexSignatureType(parserServices, node);
+
+				const leftNode = parentNode.left;
+				const leftNodeType = getNodeType(leftNode, parserServices);
+				const isLeftNodeUndefinable = isTypeUndefinable(leftNodeType);
+
+				if (!isUndefinable && !isLeftNodeUndefinable) {
+					// This defect occurs when a non-undefinable index signature type is assigned to a strict variable
+					return context.report({
+						node,
+						message: `Assigning '${fullName}' from an index signature type to a strictly typed variable without 'undefined' is not allowed. '${fullName}' may be 'undefined'`,
+					});
+				}
 			}
 
 			if (
@@ -73,7 +92,7 @@ module.exports = {
 				parentNode.id.typeAnnotation &&
 				isStrictlyTypedVariable(parentNode.id.typeAnnotation.typeAnnotation)
 			) {
-				// This error occurs when an index signature type is assigned to a strict variable
+				// This defect occurs when an index signature type is assigned to a strict variable
 				return context.report({
 					node,
 					message: `'${fullName}' is possibly 'undefined'`,
@@ -83,7 +102,7 @@ module.exports = {
 			if (parentNode.type === "AssignmentExpression" && parentNode.right === node) {
 				const variableType = getVariableType(parentNode.left, context.getScope());
 				if (isStrictlyTypedVariable(variableType)) {
-					// This error occurs when an index signature type is assigned to a strictly typed variable after its declaration
+					// This defect occurs when an index signature type is assigned to a strictly typed variable after its declaration
 					return context.report({
 						node,
 						message: `Assigning '${fullName}' from an index signature type to a strictly typed variable without 'undefined' is not allowed. '${fullName}' may be 'undefined'`,
@@ -92,7 +111,7 @@ module.exports = {
 			}
 
 			if (parentNode.type === "MemberExpression" && parentNode.object === node) {
-				// This error occurs when trying to access a property on an index signature type, which might be undefined
+				// This defect occurs when trying to access a property on an index signature type, which might be undefined
 				return context.report({
 					node,
 					message: `'${fullName}' is possibly 'undefined'`,
@@ -108,7 +127,7 @@ module.exports = {
 				if (isTypeAllowedToBeUndefined(tsNode, typeChecker)) {
 					return;
 				}
-				// This error occurs when returning an index signature type from a function that doesn't allow undefined in its return type
+				// This defect occurs when returning an index signature type from a function that doesn't allow undefined in its return type
 				return context.report({
 					node,
 					message: `Returning '${fullName}' directly from an index signature type is not allowed. '${fullName}' may be 'undefined'`,
@@ -135,7 +154,7 @@ module.exports = {
 				if (!paramType || !isStrictlyTypedParameter(paramType)) {
 					return;
 				}
-				// This error occurs when passing an index signature type to a function parameter that doesn't allow undefined
+				// This defect occurs when passing an index signature type to a function parameter that doesn't allow undefined
 				return context.report({
 					node,
 					message: `Passing '${fullName}' from an index signature type to a strictly typed parameter is not allowed. '${fullName}' may be 'undefined'`,
@@ -157,6 +176,14 @@ function isIndexSignatureType(parserServices, node) {
 	return type.getStringIndexType() !== undefined;
 }
 
+// Helper function to check if a type includes undefined
+function isTypeUndefinable(type) {
+	if (type.isUnion()) {
+		return type.types.some((t) => t.flags & TypeFlags.Undefined);
+	}
+	return false;
+}
+
 // Helper function to check if an index signature type includes undefined
 function isUndefinableIndexSignatureType(parserServices, node) {
 	const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node.object);
@@ -165,8 +192,8 @@ function isUndefinableIndexSignatureType(parserServices, node) {
 	const indexType = type.getStringIndexType();
 	return (
 		indexType &&
-		indexType.isUnion() &&
-		indexType.types.some((t) => t.flags & SyntaxKind.UndefinedKeyword)
+		(indexType.flags & TypeFlags.Undefined ||
+			(indexType.isUnion() && indexType.types.some((t) => t.flags & TypeFlags.Undefined)))
 	);
 }
 
@@ -180,6 +207,13 @@ function propertyHasBeenChecked(node) {
 		current = current.parent;
 	}
 	return false;
+}
+
+// Helper function to get the type of a node
+function getNodeType(node, parserServices) {
+	const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node);
+	const type = parserServices.program.getTypeChecker().getTypeAtLocation(tsNode);
+	return type;
 }
 
 // Helper function to determine if a node is defined. This has all the cases which define
