@@ -7,6 +7,11 @@ import { readFile } from "node:fs/promises";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../library/index.js";
 
+interface PromotePackageResponse {
+	success: boolean;
+	message?: string;
+}
+
 /**
  * Promotes a package to the Release view in Azure DevOps Artifacts.
  */
@@ -18,10 +23,6 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 		"Used to promote a package to the Release view if it's a release build and in the build feed.";
 
 	static readonly flags = {
-		feedKind: Flags.string({
-			description: "Name of the feed",
-			required: true,
-		}),
 		version: Flags.string({
 			description: "Version of the package",
 			required: true,
@@ -29,11 +30,6 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 		orderFile: Flags.file({
 			description:
 				"A file with package names that should be published. Such files can be created using `flub list`.",
-			exists: true,
-			required: true,
-		}),
-		release: Flags.string({
-			description: "release",
 			exists: true,
 			required: true,
 		}),
@@ -45,38 +41,23 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 	};
 
 	public async run(): Promise<void> {
-		const { feedKind, version, orderFile, token, release } = this.flags;
-
-		this.log(`Feed Name: ${feedKind}`);
-		this.log(`version: ${version}`);
-		this.log(`release: ${release}`);
-		return;
-
-		if (feedKind !== "build") {
-			this.log("Skipping promotion: not a release build or not the build feed");
-			return;
-		}
-
-		// const packageOrder = await readLines(orderFile).then((lines) =>
-		// 	// filter out empty lines
-		// 	lines.filter((line) => line !== undefined && line !== ""),
-		// );
-		const packageOrder = ["@fluidframework/tool-utils"];
+		const packageOrder = await readLines(this.flags.orderFile);
 		await Promise.all(
 			packageOrder.map(async (packageName) =>
-				this.promotePackage(packageName, version, token),
+				this.promotePackage(packageName, this.flags.version, this.flags.token),
 			),
 		);
 	}
 
-	private readonly getFeedPromotionUrl = (packageName: string, version: string): string =>
-		`https://pkgs.dev.azure.com/fluidframework/internal/_apis/packaging/feeds/build/npm/${packageName}/versions/${version}?api-version=7.1-preview.1`;
+	private getFeedPromotionUrl(packageName: string, version: string): string {
+		return `https://pkgs.dev.azure.com/fluidframework/internal/_apis/packaging/feeds/build/npm/${packageName}/versions/${version}?api-version=7.1-preview.1`;
+	}
 
-	private readonly promotePackage = async (
+	private async promotePackage(
 		packageName: string,
 		version: string,
 		token: string,
-	): Promise<boolean> => {
+	): Promise<boolean> {
 		const url = this.getFeedPromotionUrl(packageName, version);
 		try {
 			const response = await fetch(url, {
@@ -96,29 +77,25 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 			});
 
 			if (!response.ok) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				const errorData = await response.json();
-				// this.error(
-				// 	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-member-access
-				// 	`Failed to promote package. Status: ${response.status}, Message: ${errorData.message || "Unknown error"}`,
-				// );
+				const errorData = (await response.json()) as PromotePackageResponse;
+				this.error(
+					`Failed to promote package. Status: ${response.status}, Message: ${errorData.message ?? "Unknown error"}`,
+				);
 			}
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const responseData = await response.json();
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+			const responseData = (await response.json()) as PromotePackageResponse;
 			return responseData.success;
-		} catch {
-			return false;
+		} catch (error) {
+			this.error(`Error promoting package: ${(error as Error).message}`);
 		}
-	};
+	}
 }
 
 /**
- * Reads a file into an array of strings, one line per array element. Dupilcated from publish tarballs
+ * Reads a file into an array of strings, one line per array element.
  */
 async function readLines(filePath: string): Promise<string[]> {
 	const content = await readFile(filePath, "utf8");
 	const lines = content.split(/\r?\n/);
-	return lines;
+	return lines.filter((line) => line.trim() !== "");
 }
