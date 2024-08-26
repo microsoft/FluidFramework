@@ -444,10 +444,16 @@ export interface IPerfSignalReport {
 	 * allow collection of data around the roundtrip of signal messages.
 	 */
 	signalSequenceNumber: number;
+
 	/**
 	 * Number of signals that were expected but not received.
 	 */
 	signalsLost: number;
+
+	/**
+	 * Number of signals received out of order/non-sequentially.
+	 */
+	signalsOutOfOrder: number;
 
 	/**
 	 * Timestamp before submitting the signal we will trace.
@@ -455,9 +461,24 @@ export interface IPerfSignalReport {
 	signalTimestamp: number;
 
 	/**
-	 * Expected Signal Sequence to be received.
+	 * Signal we will trace for roundtrip latency.
+	 */
+	roundTripSignalSequenceNumber: number | undefined;
+
+	/**
+	 * The lower bound of the upcoming (now current) tracking group
+	 */
+	baseSignalTrackingGroupSequenceNumber: number | undefined;
+
+	/**
+	 * Next expected signal sequence number to be received.
 	 */
 	trackingSignalSequenceNumber: number | undefined;
+
+	/**
+	 * Inclusive lower bound of signal monitoring window.
+	 */
+	minimumTrackingSignalSequenceNumber: number | undefined;
 }
 
 /**

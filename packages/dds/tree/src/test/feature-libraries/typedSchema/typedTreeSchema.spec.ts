@@ -8,12 +8,10 @@ import { strict as assert } from "assert";
 import { jsonArray, jsonObject, jsonSchema, leaf } from "../../../domains/index.js";
 import { FieldKinds, SchemaBuilderBase } from "../../../feature-libraries/index.js";
 import {
-	Any,
 	FlexFieldSchema,
 	type FlexMapNodeSchema,
 	type FlexObjectNodeSchema,
 	type LeafNodeSchema,
-	allowedTypesIsAny,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
@@ -32,10 +30,10 @@ describe("typedTreeSchema", () => {
 		libraries: [jsonSchema],
 	});
 	const emptyObjectSchema = builder.object("empty", {});
-	const basicObjectSchema = builder.object("basicObject", { foo: Any });
+	const basicObjectSchema = builder.object("basicObject", { foo: leaf.number });
 
-	const recursiveObject = builder.objectRecursive("recursiveObject", {
-		foo: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveObject]),
+	const recursiveObject: FlexObjectNodeSchema = builder.object("recursiveObject", {
+		foo: FlexFieldSchema.create(FieldKinds.optional, [() => recursiveObject]),
 	});
 
 	it("schema is", () => {
@@ -65,16 +63,8 @@ describe("typedTreeSchema", () => {
 	});
 
 	describe("TreeFieldSchema", () => {
-		it("types - any", () => {
-			const schema = FlexFieldSchema.create(FieldKinds.optional, [Any]);
-			assert(allowedTypesIsAny(schema.allowedTypes));
-			assert.equal(schema.allowedTypeSet, Any);
-			assert.equal(schema.types, undefined);
-		});
-
 		it("types - single", () => {
 			const schema = FlexFieldSchema.create(FieldKinds.optional, [leaf.number]);
-			assert(!allowedTypesIsAny(schema.allowedTypes));
 			assert.deepEqual(schema.allowedTypes, [leaf.number]);
 			assert.deepEqual(schema.allowedTypeSet, new Set([leaf.number]));
 			assert.deepEqual(schema.types, new Set([leaf.number.name]));
@@ -82,7 +72,6 @@ describe("typedTreeSchema", () => {
 
 		it("types - lazy", () => {
 			const schema = FlexFieldSchema.create(FieldKinds.optional, [() => leaf.number]);
-			assert(!allowedTypesIsAny(schema.allowedTypes));
 			assert.deepEqual(schema.allowedTypeSet, new Set([leaf.number]));
 			assert.deepEqual(schema.types, new Set([leaf.number.name]));
 		});

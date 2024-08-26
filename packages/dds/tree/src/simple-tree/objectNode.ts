@@ -9,7 +9,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { FieldKey } from "../core/index.js";
 import {
 	FieldKinds,
-	type FlexAllowedTypes,
 	type FlexObjectNodeSchema,
 	type FlexTreeField,
 	type FlexTreeNode,
@@ -274,12 +273,12 @@ export function setField(
 	switch (field.schema.kind) {
 		case FieldKinds.required: {
 			assert(mapTree !== undefined, 0xa04 /* Cannot set a required field to undefined */);
-			const typedField = field as FlexTreeRequiredField<FlexAllowedTypes>;
+			const typedField = field as FlexTreeRequiredField;
 			typedField.editor.set(mapTree);
 			break;
 		}
 		case FieldKinds.optional: {
-			const typedField = field as FlexTreeOptionalField<FlexAllowedTypes>;
+			const typedField = field as FlexTreeOptionalField;
 			typedField.editor.set(mapTree, typedField.length === 0);
 			break;
 		}

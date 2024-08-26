@@ -13,6 +13,7 @@ import {
 	FieldKinds,
 	type FlexAllowedTypes,
 	FlexFieldSchema,
+	type FlexTreeNodeSchema,
 	SchemaBuilderInternal,
 } from "../../feature-libraries/index.js";
 import type { requireAssignableTo } from "../../util/index.js";
@@ -28,20 +29,24 @@ const jsonPrimitives = [...leaf.primitives, leaf.null] as const;
 /**
  * Types allowed as roots of Json content.
  */
-export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] as const;
+export const jsonRoot: FlexAllowedTypes = [
+	(): FlexTreeNodeSchema => jsonObject,
+	(): FlexTreeNodeSchema => jsonArray,
+	...jsonPrimitives,
+];
 
 {
 	// Recursive objects don't get this type checking automatically, so confirm it
 	type _check = requireAssignableTo<typeof jsonRoot, FlexAllowedTypes>;
 }
 
-export const jsonObject = builder.mapRecursive(
+export const jsonObject = builder.map(
 	"object",
-	FlexFieldSchema.createUnsafe(FieldKinds.optional, jsonRoot),
+	FlexFieldSchema.create(FieldKinds.optional, jsonRoot),
 );
 
-export const jsonArray = builder.objectRecursive("array", {
-	[EmptyKey]: FlexFieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
+export const jsonArray = builder.object("array", {
+	[EmptyKey]: FlexFieldSchema.create(FieldKinds.sequence, jsonRoot),
 });
 
 export const jsonSchema = builder.intoLibrary();
