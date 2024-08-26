@@ -49,10 +49,14 @@ let aLetExpectingStringOrNull: string | null = nullableIndexedRecord.a; // defec
 const aExpectingStringOrNullOrUndefined: string | null | undefined = nullableIndexedRecord.a; // ok: Assigning index property 'a' to string or null or undefined variable is fine, 'a' might not be present
 let aLetExpectingStringOrNullOrUndefined: string | null | undefined = nullableIndexedRecord.a; // ok: Assigning index property 'a' to string or null or undefined variable is fine, 'a' might not be present
 
-const aImplicitType = nullableIndexedRecord.a; // defect: Index property without an explicit undefined can not be assigned to an inferred type
-AFnExpectsStringOrNull(aImplicitType); // ok: AFnExpectsStringOrNull(aImplicitType) is the continuation of the inferred type case and should be caught in the variable initialization
-
 let aLetExpectingStringOrNullAfterVariableDeclaration: string | null;
 aLetExpectingStringOrNullAfterVariableDeclaration = nullableIndexedRecord.a; // defect: Assigning index property 'a' to string or null variable should report an error, 'a' might not be present, either the index signature type should include an undefined type or the variable declaration should be changed to string | null | undefined
 let aLetExpectingStringOrNullOrUndefinedAfterVariableDeclaration: string | null | undefined;
 aLetExpectingStringOrNullOrUndefinedAfterVariableDeclaration = nullableIndexedRecord.a; // ok: Assigning index property 'a' to string or null or undefined variable, 'a' might not be present
+
+/*
+ * When noUncheckedIndexedAccess is enabled, TSC will treat property access on aImplicitType as an error, but no-unchecked-record-access causes an error if an index signature is not typed to allow undefined.
+ */
+
+const aImplicitType = nullableIndexedRecord.a; // defect: Index property without an explicit undefined can not be assigned to an inferred type
+AFnExpectsStringOrNull(aImplicitType); // ok: AFnExpectsStringOrNull(aImplicitType) is the continuation of the inferred type case and should be caught in the variable initialization
