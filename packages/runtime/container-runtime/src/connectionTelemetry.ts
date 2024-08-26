@@ -451,6 +451,11 @@ export interface IPerfSignalReport {
 	signalsLost: number;
 
 	/**
+	 * Number of signals received out of order/non-sequentially.
+	 */
+	outOfOrderSignals: number;
+
+	/**
 	 * Timestamp before submitting the signal we will trace.
 	 */
 	signalTimestamp: number;

@@ -1289,6 +1289,7 @@ export class ContainerRuntime
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private readonly _signalTracking: IPerfSignalReport = {
 		signalsLost: 0,
+		outOfOrderSignals: 0,
 		signalSequenceNumber: 0,
 		signalTimestamp: 0,
 		roundTripSignalSequenceNumber: undefined,
@@ -2600,6 +2601,8 @@ export class ContainerRuntime
 		this._connected = connected;
 
 		if (!connected) {
+			this._signalTracking.signalsLost = 0;
+			this._signalTracking.outOfOrderSignals = 0;
 			this._signalTracking.signalTimestamp = 0;
 			this._signalTracking.roundTripSignalSequenceNumber = undefined;
 			this._signalTracking.trackingSignalSequenceNumber = undefined;
@@ -2954,10 +2957,12 @@ export class ContainerRuntime
 			duration,
 			signalsSent,
 			signalsLost: this._signalTracking.signalsLost,
+			outOfOrderSignals: this._signalTracking.outOfOrderSignals,
 		});
 		this._signalTracking.previousRoundTripSignalSequenceNumber =
 			clientSignalSequenceNumber + 1;
 		this._signalTracking.signalsLost = 0;
+		this._signalTracking.outOfOrderSignals = 0;
 		this._signalTracking.signalTimestamp = 0;
 	}
 
@@ -3000,14 +3005,7 @@ export class ContainerRuntime
 					envelope.clientSignalSequenceNumber >=
 					this._signalTracking.minimumTrackingSignalSequenceNumber
 				) {
-					if (
-						this._signalTracking.previousRoundTripSignalSequenceNumber !== undefined &&
-						envelope.clientSignalSequenceNumber >
-							this._signalTracking.previousRoundTripSignalSequenceNumber
-					) {
-						// Log incoming signal that was previously marked as lost as having been received out of order.
-						this._signalTracking.signalsLost--;
-					}
+					this._signalTracking.outOfOrderSignals++;
 					this.mc.logger.sendErrorEvent({
 						eventName: "SignalOutOfOrder",
 						type: envelope.contents.type,
