@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "chai";
+import { expect } from "chai";
 
-import { benchmarkCustom, type BenchmarkError, type BenchmarkResult } from "..";
+import { benchmarkCustom, type BenchmarkError } from "..";
 import { BenchmarkType } from "../Configuration";
 
 describe("`benchmarkCustom` function", () => {
@@ -20,9 +20,8 @@ describe("`benchmarkCustom` function", () => {
 	});
 });
 
-describe.only("BenchmarkCustom error handling", () => {
+describe("BenchmarkCustom error handling", () => {
 	const expectedErrorMessage = "INTENTIONAL error to test error handling";
-	let benchmarkEndPayloadIsCorrect: boolean = false;
 
 	const testObject = benchmarkCustom({
 		title: `test`,
@@ -32,15 +31,7 @@ describe.only("BenchmarkCustom error handling", () => {
 		},
 	});
 
-	testObject.on("benchmark end", (error: BenchmarkResult) => {
-		const maybeError = error as BenchmarkError;
-		if (maybeError.error === expectedErrorMessage) {
-			benchmarkEndPayloadIsCorrect = true;
-		}
-	});
-
-	afterEach(() => {
-		assert.equal(benchmarkEndPayloadIsCorrect, true);
-		benchmarkEndPayloadIsCorrect = false;
+	testObject.on("benchmark end", (benchmarkError: BenchmarkError) => {
+		expect(benchmarkError.error).to.equal(expectedErrorMessage);
 	});
 });

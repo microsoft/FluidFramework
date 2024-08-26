@@ -6,7 +6,7 @@
 import { Test } from "mocha";
 
 import type { BenchmarkDescription, MochaExclusiveOptions, Titled } from "../Configuration";
-import type { BenchmarkData, CustomData } from "../ResultTypes";
+import type { BenchmarkData, BenchmarkError, CustomData } from "../ResultTypes";
 import { prettyNumber } from "../RunnerUtilities";
 import { timer } from "../timer";
 
@@ -53,8 +53,11 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 		try {
 			await options.run(reporter);
 		} catch (error) {
-			test.emit("benchmark end", error);
-			throw error;
+			const toBenchmarkError: BenchmarkError = { error: (error as Error).message };
+
+			// Instead of throwing the error, we emit it as an event so the test can continue.
+			test.emit("benchmark end", toBenchmarkError);
+			return;
 		}
 
 		const elapsedSeconds = timer.toSeconds(startTime, timer.now());
