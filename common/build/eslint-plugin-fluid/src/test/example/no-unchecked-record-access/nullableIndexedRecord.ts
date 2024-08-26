@@ -57,6 +57,5 @@ aLetExpectingStringOrNullOrUndefinedAfterVariableDeclaration = nullableIndexedRe
 /*
  * When noUncheckedIndexedAccess is enabled, TSC will treat property access on aImplicitType as an error, but no-unchecked-record-access causes an error if an index signature is not typed to allow undefined.
  */
-
 const aImplicitType = nullableIndexedRecord.a; // defect: Index property without an explicit undefined can not be assigned to an inferred type
 AFnExpectsStringOrNull(aImplicitType); // ok: AFnExpectsStringOrNull(aImplicitType) is the continuation of the inferred type case and should be caught in the variable initialization
