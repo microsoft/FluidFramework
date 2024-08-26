@@ -6,7 +6,6 @@
 export {
 	type FlexTreeNodeSchema,
 	FlexFieldSchema,
-	Any,
 	allowedTypesToTypeSet,
 	type FlexAllowedTypes,
 	type LazyTreeNodeSchema,

@@ -38,31 +38,6 @@
         }
       }
     },
-    "test.anyFields": {
-      "object": {
-        "optional": {
-          "kind": "Optional"
-        },
-        "sequence": {
-          "kind": "Sequence"
-        },
-        "valueField": {
-          "kind": "Value"
-        }
-      }
-    },
-    "test.anyMap": {
-      "map": {
-        "kind": "Sequence"
-      }
-    },
-    "test.hasAnyValueField": {
-      "object": {
-        "field": {
-          "kind": "Value"
-        }
-      }
-    },
     "test.minimal": {
       "object": {}
     }
