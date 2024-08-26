@@ -6,7 +6,7 @@
 /**
  * Rule to enforce safe property access on index signature types.
  *
- * Reports issues when [non-array] index properties are accessed without handling
+ * Reports issues when non-array index properties are accessed without handling
  * the possibility that they are absent.
  * Enabling `noUncheckedIndexedAccess` will disable these checks.
  */
@@ -44,7 +44,7 @@ module.exports = {
 				return;
 			}
 
-			// Skip if the property has been checked (e.g., with optional chaining), skip it. Please see isDefined() for exhaustive list.
+			// Skip if the property has been checked (e.g., with optional chaining). Please see isDefined() for exhaustive list.
 			if (propertyHasBeenChecked(node)) {
 				return;
 			}
@@ -56,50 +56,49 @@ module.exports = {
 			 * Cases when this lint rule should report a defect
 			 */
 
-			if (parentNode.type === "VariableDeclarator" && parentNode.init === node) {
+			if (parentNode.type === "VariableDeclarator") {
 				const declarationNode = parentNode.parent;
 				const isUndefinable = isUndefinableIndexSignatureType(parserServices, node);
 
 				if (
+					parentNode.init === node &&
 					declarationNode.type === "VariableDeclaration" &&
 					!parentNode.id.typeAnnotation &&
 					!isUndefinable
 				) {
-					// This defect occurs when a non-undefinable index signature type is implicitly typed
+					// This defect occurs when a non-undefinable index signature type is assigned to a implicitly typed variable
 					return context.report({
 						node,
 						message: `Implicit typing derived from '${fullName}' is not allowed. '${node.object.name}' is an index signature type and '${node.property.name}' may be undefined. Please provide an explicit type annotation including undefined or enable noUncheckedIndexedAccess`,
 					});
 				}
-			} else if (parentNode.type === "AssignmentExpression" && parentNode.right === node) {
-				const isUndefinable = isUndefinableIndexSignatureType(parserServices, node);
 
+				if (
+					parentNode.id.typeAnnotation &&
+					isStrictlyTypedVariable(parentNode.id.typeAnnotation.typeAnnotation)
+				) {
+					// This defect occurs when an index signature type is assigned to a strict variable on variable declaration
+					return context.report({
+						node,
+						message: `'${fullName}' is possibly 'undefined'`,
+					});
+				}
+			}
+
+			if (parentNode.type === "AssignmentExpression" && parentNode.right === node) {
+				const isUndefinable = isUndefinableIndexSignatureType(parserServices, node);
 				const leftNode = parentNode.left;
 				const leftNodeType = getNodeType(leftNode, parserServices);
 				const isLeftNodeUndefinable = isTypeUndefinable(leftNodeType);
 
 				if (!isUndefinable && !isLeftNodeUndefinable) {
-					// This defect occurs when a non-undefinable index signature type is assigned to a strict variable
+					// This defect occurs when a non-undefinable index signature type is assigned to a strictly typed variable
 					return context.report({
 						node,
 						message: `Assigning '${fullName}' from an index signature type to a strictly typed variable without 'undefined' is not allowed. '${fullName}' may be 'undefined'`,
 					});
 				}
-			}
 
-			if (
-				parentNode.type === "VariableDeclarator" &&
-				parentNode.id.typeAnnotation &&
-				isStrictlyTypedVariable(parentNode.id.typeAnnotation.typeAnnotation)
-			) {
-				// This defect occurs when an index signature type is assigned to a strict variable
-				return context.report({
-					node,
-					message: `'${fullName}' is possibly 'undefined'`,
-				});
-			}
-
-			if (parentNode.type === "AssignmentExpression" && parentNode.right === node) {
 				const variableType = getVariableType(parentNode.left, context.getScope());
 				if (isStrictlyTypedVariable(variableType)) {
 					// This defect occurs when an index signature type is assigned to a strictly typed variable after its declaration
