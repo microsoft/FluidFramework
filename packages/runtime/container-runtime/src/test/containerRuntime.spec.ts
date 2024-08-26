@@ -2697,6 +2697,8 @@ describe("Runtime", () => {
 			});
 
 			it("ignores in-flight signals on disconnect/reconnect", () => {
+				// Define resubmit and setConnectionState on channel collection
+				// This is needed to submit test data store ops
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				(containerRuntime as any).channelCollection = {
 					setConnectionState: (_connected: boolean, _clientId?: string) => {},
@@ -2713,7 +2715,7 @@ describe("Runtime", () => {
 
 				sendSignals(4);
 
-				// Submit op and flush so message is queued in PendingStateManager
+				// Submit op so message is queued in PendingStateManager
 				// This is needed to increase reconnect count
 				submitDataStoreOp(containerRuntime, "1", "test");
 
