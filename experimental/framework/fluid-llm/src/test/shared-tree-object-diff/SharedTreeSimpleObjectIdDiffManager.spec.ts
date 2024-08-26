@@ -40,12 +40,10 @@ describe("SharedTreeObjectIdDiffManager", () => {
 		});
 
 		const diffManager = new SharedTreeObjectIdDiffManager({ objectSchema: zodSchema });
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
 		const diffs = diffManager.compare(
 			treeNode as unknown as Record<string, unknown>,
 			llmResponse,
 		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		diffManager.handleDifferences(diffs, treeNode as unknown as Record<string, unknown>);
 
 		const jsonifiedTreeNode = { state: treeNode.state.map((node) => ({ ...node })) };
@@ -111,7 +109,6 @@ describe("SharedTreeObjectIdDiffManager", () => {
 
 		const diffManager = new SharedTreeObjectIdDiffManager({ objectSchema: zodSchema });
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 		const diffs = diffManager.compare(
 			treeNode as unknown as Record<string, unknown>,
 			llmResponseObject,
