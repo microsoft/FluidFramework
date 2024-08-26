@@ -13,7 +13,13 @@ import {
 	rootFieldKey,
 } from "../core/index.js";
 import { jsonSchema, leaf } from "../domains/index.js";
-import { FieldKinds, FlexFieldSchema, SchemaBuilderBase } from "../feature-libraries/index.js";
+import {
+	FieldKinds,
+	FlexFieldSchema,
+	SchemaBuilderBase,
+	type FlexObjectNodeSchema,
+	type FlexTreeNode,
+} from "../feature-libraries/index.js";
 import type { FlexTreeView, TreeContent } from "../shared-tree/index.js";
 import { brand } from "../util/index.js";
 import {
@@ -38,11 +44,8 @@ const deepBuilder = new SchemaBuilderBase(FieldKinds.required, {
 });
 
 // Test data in "deep" mode: a linked list with a number at the end.
-const linkedListSchema = deepBuilder.objectRecursive("linkedList", {
-	foo: FlexFieldSchema.createUnsafe(FieldKinds.required, [
-		() => linkedListSchema,
-		leaf.number,
-	]),
+const linkedListSchema: FlexObjectNodeSchema = deepBuilder.object("linkedList", {
+	foo: FlexFieldSchema.create(FieldKinds.required, [() => linkedListSchema, leaf.number]),
 });
 
 const wideBuilder = new SchemaBuilderBase(FieldKinds.required, {
@@ -173,7 +176,7 @@ export function readWideTreeAsJSObject(nodes: JSWideTree): {
 	return { nodesCount: nodes.length, sum };
 }
 
-export function readWideCursorTree(tree: FlexTreeView<typeof wideSchema.rootFieldSchema>): {
+export function readWideCursorTree(tree: FlexTreeView): {
 	nodesCount: number;
 	sum: number;
 } {
@@ -191,7 +194,7 @@ export function readWideCursorTree(tree: FlexTreeView<typeof wideSchema.rootFiel
 	return { nodesCount, sum };
 }
 
-export function readDeepCursorTree(tree: FlexTreeView<typeof deepSchema.rootFieldSchema>): {
+export function readDeepCursorTree(tree: FlexTreeView): {
 	depth: number;
 	value: number;
 } {
@@ -248,32 +251,37 @@ export function wideLeafPath(index: number): UpPath {
 	return path;
 }
 
-export function readWideFlexTree(tree: FlexTreeView<typeof wideSchema.rootFieldSchema>): {
+export function readWideFlexTree(tree: FlexTreeView): {
 	nodesCount: number;
 	sum: number;
 } {
 	let sum = 0;
 	let nodesCount = 0;
 	const root = tree.flexTree;
-	const field = root.content[EmptyKey];
+	assert(root.is(FieldKinds.required));
+	const field = (root.content as FlexTreeNode).getBoxed(EmptyKey);
 	assert(field.length !== 0);
-	for (const currentNode of field) {
-		sum += currentNode;
+	assert(field.isExactly(wideRootSchema.info[EmptyKey]));
+	for (const currentNode of field.boxedIterator()) {
+		sum += currentNode.value as number;
 		nodesCount += 1;
 	}
 	return { nodesCount, sum };
 }
 
-export function readDeepFlexTree(tree: FlexTreeView<typeof deepSchema.rootFieldSchema>): {
+export function readDeepFlexTree(tree: FlexTreeView): {
 	depth: number;
 	value: number;
 } {
 	let depth = 0;
-	let currentNode = tree.flexTree.content;
+	assert(tree.flexTree.is(FieldKinds.required));
+	let currentNode = tree.flexTree.content as FlexTreeNode;
 	while (currentNode.is(linkedListSchema)) {
-		currentNode = currentNode.foo;
+		const read = currentNode.getBoxed(brand("foo"));
+		assert(read.is(FieldKinds.required));
+		currentNode = read.content as FlexTreeNode;
 		depth++;
 	}
 	assert(currentNode.is(leaf.number));
-	return { depth, value: currentNode.value };
+	return { depth, value: currentNode.value as number };
 }

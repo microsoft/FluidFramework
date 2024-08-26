@@ -11,11 +11,7 @@ import {
 	readPackageJsonAndIndent,
 	updatePackageJsonFile,
 } from "../common/npmPackage";
-
-/**
- * Path to the test data. It's rooted two directories up because the tests get executed from dist/.
- */
-const testDataPath = path.resolve(__dirname, "../../src/test/data");
+import { testDataPath } from "./init";
 
 /**
  * A transformer function that does nothing.

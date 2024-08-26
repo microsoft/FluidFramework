@@ -7,7 +7,6 @@ import { assert, Lazy } from "@fluidframework/core-utils/internal";
 
 import {
 	type Adapters,
-	EmptyKey,
 	type FieldKey,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -22,7 +21,6 @@ import {
 	identifierFieldKindIdentifier,
 } from "../../core/index.js";
 import {
-	type Assume,
 	type MakeNominal,
 	type Named,
 	compareSets,
@@ -116,12 +114,9 @@ export class FlexMapNodeSchema<
 
 /**
  */
-export class LeafNodeSchema<
-	const out Name extends string = string,
-	const out Specification extends Unenforced<ValueSchema> = ValueSchema,
-> extends TreeNodeSchemaBase<Name, Specification> {
+export class LeafNodeSchema extends TreeNodeSchemaBase<string, ValueSchema> {
 	public get leafValue(): ValueSchema {
-		return this.info as ValueSchema;
+		return this.info;
 	}
 
 	protected _typeCheck2?: MakeNominal;
@@ -129,7 +124,7 @@ export class LeafNodeSchema<
 		builder: Named<string>,
 		name: TreeNodeSchemaIdentifier<Name>,
 		specification: Specification,
-	): LeafNodeSchema<Name, Specification> {
+	): LeafNodeSchema {
 		return new LeafNodeSchema(
 			builder,
 			name,
@@ -145,25 +140,19 @@ export class LeafNodeSchema<
 
 /**
  */
-export class FlexObjectNodeSchema<
-	const out Name extends string = string,
-	const out Specification extends Unenforced<FlexObjectNodeFields> = FlexObjectNodeFields,
-> extends TreeNodeSchemaBase<Name, Specification> {
+export class FlexObjectNodeSchema extends TreeNodeSchemaBase<string, FlexObjectNodeFields> {
 	protected _typeCheck2?: MakeNominal;
 	public readonly identifierFieldKeys: readonly FieldKey[] = [];
 
-	public static create<
-		const Name extends string,
-		const Specification extends FlexObjectNodeFields,
-	>(
+	public static create(
 		builder: Named<string>,
-		name: TreeNodeSchemaIdentifier<Name>,
-		specification: Specification,
-	): FlexObjectNodeSchema<Name, Specification> {
-		const objectNodeFieldsObject: NormalizeObjectNodeFields<Specification> =
-			normalizeStructFields<Specification>(specification);
+		name: TreeNodeSchemaIdentifier,
+		specification: FlexObjectNodeFields,
+	): FlexObjectNodeSchema {
+		const objectNodeFieldsObject: NormalizeObjectNodeFields<FlexObjectNodeFields> =
+			normalizeStructFields<FlexObjectNodeFields>(specification);
 		const objectNodeFields: ObjectToMap<
-			NormalizeObjectNodeFields<Specification>,
+			NormalizeObjectNodeFields<FlexObjectNodeFields>,
 			FieldKey,
 			FlexFieldSchema
 		> = objectToMapTyped(objectNodeFieldsObject);
@@ -178,11 +167,9 @@ export class FlexObjectNodeSchema<
 
 	private constructor(
 		builder: Named<string>,
-		name: TreeNodeSchemaIdentifier<Name>,
-		info: Specification,
-		public readonly objectNodeFieldsObject: NormalizeObjectNodeFields<
-			Assume<Specification, FlexObjectNodeFields>
-		>,
+		name: TreeNodeSchemaIdentifier,
+		info: FlexObjectNodeFields,
+		public readonly objectNodeFieldsObject: NormalizeObjectNodeFields<FlexObjectNodeFields>,
 		// Allows reading fields through the normal map.
 		// Stricter typing caused Specification to no longer be covariant, so has been removed.
 		public readonly objectNodeFields: ReadonlyMap<FieldKey, FlexFieldSchema>,
@@ -204,38 +191,6 @@ export class FlexObjectNodeSchema<
 }
 
 /**
- * TODO: remove or replace (or subclass) this with more specific types, like "List".
- */
-export class FlexFieldNodeSchema<
-	Name extends string = string,
-	Specification extends Unenforced<FlexFieldSchema> = FlexFieldSchema,
-> extends TreeNodeSchemaBase<Name, Specification> {
-	protected _typeCheck2?: MakeNominal;
-	public static create<const Name extends string, const Specification extends FlexFieldSchema>(
-		builder: Named<string>,
-		name: TreeNodeSchemaIdentifier<Name>,
-		specification: Specification,
-	): FlexFieldNodeSchema<Name, Specification> {
-		return new FlexFieldNodeSchema(builder, name, specification);
-	}
-
-	private constructor(
-		builder: Named<string>,
-		name: TreeNodeSchemaIdentifier<Name>,
-		info: Specification,
-	) {
-		const objectNodeFields = new Map([[EmptyKey, (info as FlexFieldSchema).stored]]);
-		super(builder, name, info, new ObjectNodeStoredSchema(objectNodeFields));
-	}
-
-	public override getFieldSchema(field?: FieldKey): FlexFieldSchema {
-		return (field ?? EmptyKey) === EmptyKey
-			? (this.info as FlexFieldSchema)
-			: FlexFieldSchema.empty;
-	}
-}
-
-/**
  * @privateRemarks
  * This could be an exhaustive union, or just the common base type.
  * Using just the base type prevents exhaustive matching, which has both pros and cons.
@@ -249,7 +204,7 @@ export type FlexTreeNodeSchema = TreeNodeSchemaBase;
  */
 export type NormalizeField<T extends FlexFieldSchema | undefined> = T extends FlexFieldSchema
 	? T
-	: FlexFieldSchema<typeof FieldKinds.forbidden, []>;
+	: FlexFieldSchema<typeof FieldKinds.forbidden>;
 
 function normalizeStructFields<T extends FlexObjectNodeFields>(
 	fields: T,
@@ -275,15 +230,6 @@ function normalizeField<T extends FlexFieldSchema | undefined>(t: T): NormalizeF
 }
 
 /**
- * Allow any node (as long as it meets the schema for its own type).
- */
-export const Any = "Any" as const;
-/**
- * Allow any node (as long as it meets the schema for its own type).
- */
-export type Any = typeof Any;
-
-/**
  * Tree type, but can be wrapped in a function to allow referring to types before they are declared.
  * This makes recursive and co-recursive types possible.
  */
@@ -294,14 +240,7 @@ export type LazyTreeNodeSchema = FlexTreeNodeSchema | (() => FlexTreeNodeSchema)
  *
  * "Any" is boxed in an array to allow use as variadic parameter.
  */
-export type FlexAllowedTypes = readonly [Any] | readonly LazyItem<FlexTreeNodeSchema>[];
-
-/**
- * Checks if an {@link FlexAllowedTypes} is {@link (Any:type)}.
- */
-export function allowedTypesIsAny(t: FlexAllowedTypes): t is readonly [Any] {
-	return t.length === 1 && t[0] === Any;
-}
+export type FlexAllowedTypes = readonly LazyItem<FlexTreeNodeSchema>[];
 
 /**
  * Subset of TreeFieldSchema thats legal in maps.
@@ -325,10 +264,7 @@ export type FlexMapFieldSchema = FlexFieldSchema<
  *
  * @sealed
  */
-export class FlexFieldSchema<
-	out TKind extends FlexFieldKind = FlexFieldKind,
-	const out TTypes extends Unenforced<FlexAllowedTypes> = FlexAllowedTypes,
-> {
+export class FlexFieldSchema<out TKind extends FlexFieldKind = FlexFieldKind> {
 	/**
 	 * Schema for a field which must always be empty.
 	 */
@@ -339,23 +275,10 @@ export class FlexFieldSchema<
 	 * @privateRemarks
 	 * Alias for the constructor, but with extends clause for the `Types` parameter that {@link FlexFieldSchema} can not have (due to recursive type issues).
 	 */
-	public static create<TKind extends FlexFieldKind, const Types extends FlexAllowedTypes>(
+	public static create<TKind extends FlexFieldKind>(
 		kind: TKind,
-		allowedTypes: Types,
-	): FlexFieldSchema<TKind, Types> {
-		return new FlexFieldSchema(kind, allowedTypes);
-	}
-
-	/**
-	 * Constructs a TreeFieldSchema, but missing the extends clause which breaks most recursive types.
-	 * @remarks
-	 * `Types` here must extend `AllowedTypes`, but this cannot be enforced with an "extends" clause: see {@link Unenforced} for details.
-	 * Prefer {@link FlexFieldSchema.create} when possible.
-	 */
-	public static createUnsafe<
-		TKind extends FlexFieldKind,
-		const Types extends Unenforced<FlexAllowedTypes>,
-	>(kind: TKind, allowedTypes: Types): FlexFieldSchema<TKind, Types> {
+		allowedTypes: FlexAllowedTypes,
+	): FlexFieldSchema<TKind> {
 		return new FlexFieldSchema(kind, allowedTypes);
 	}
 
@@ -377,14 +300,12 @@ export class FlexFieldSchema<
 	 */
 	private constructor(
 		public readonly kind: TKind,
-		public readonly allowedTypes: TTypes,
+		public readonly allowedTypes: FlexAllowedTypes,
 	) {
 		// Since this class can't have the desired extends clause, do some extra runtime validation:
 		assert(Array.isArray(allowedTypes), 0x7bc /* Invalid allowedTypes */);
 		for (const allowedType of allowedTypes) {
-			if (allowedType === Any) {
-				assert(allowedTypes.length === 1, 0x7bd /* Invalid Any in allowedTypes */);
-			} else if (typeof allowedType !== "function") {
+			if (typeof allowedType !== "function") {
 				assert(
 					allowedType instanceof TreeNodeSchemaBase,
 					0x7be /* Invalid entry in allowedTypes */,
@@ -398,7 +319,7 @@ export class FlexFieldSchema<
 			return {
 				names: allowedTypesToTypeSet(input),
 				schema,
-				monomorphicChildType: schema !== Any ? oneFromSet(schema) : undefined,
+				monomorphicChildType: oneFromSet(schema),
 			};
 		});
 
@@ -477,15 +398,12 @@ export class FlexFieldSchema<
  * See {@link TreeTypeSet} for a stored-schema compatible version using the {@link TreeNodeSchemaIdentifier}.
  * See {@link FlexAllowedTypes} for a compile time optimized version.
  */
-export type AllowedTypeSet = Any | ReadonlySet<FlexTreeNodeSchema>;
+export type AllowedTypeSet = ReadonlySet<FlexTreeNodeSchema>;
 
 /**
  * Convert {@link FlexAllowedTypes} to {@link TreeTypeSet}.
  */
 export function allowedTypesSchemaSet(t: FlexAllowedTypes): AllowedTypeSet {
-	if (allowedTypesIsAny(t)) {
-		return Any;
-	}
 	const list: FlexTreeNodeSchema[] = t.map((value: LazyItem<FlexTreeNodeSchema>) => {
 		if (typeof value === "function") {
 			return value();
@@ -500,9 +418,6 @@ export function allowedTypesSchemaSet(t: FlexAllowedTypes): AllowedTypeSet {
  */
 export function allowedTypesToTypeSet(t: FlexAllowedTypes): TreeTypeSet {
 	const list = allowedTypesSchemaSet(t);
-	if (list === Any) {
-		return undefined;
-	}
 	const names = Array.from(list, (type) => {
 		assert(type instanceof TreeNodeSchemaBase, 0x7bf /* invalid allowed type */);
 		return type.name;
@@ -585,13 +500,6 @@ export function schemaIsMap(schema: FlexTreeNodeSchema): schema is FlexMapNodeSc
  */
 export function schemaIsLeaf(schema: FlexTreeNodeSchema): schema is LeafNodeSchema {
 	return schema instanceof LeafNodeSchema;
-}
-
-/**
- * Checks if a {@link FlexTreeNodeSchema} is a {@link FlexFieldNodeSchema}.
- */
-export function schemaIsFieldNode(schema: FlexTreeNodeSchema): schema is FlexFieldNodeSchema {
-	return schema instanceof FlexFieldNodeSchema;
 }
 
 /**

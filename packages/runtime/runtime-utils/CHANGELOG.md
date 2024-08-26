@@ -1,5 +1,17 @@
 # @fluidframework/runtime-utils
 
+## 2.2.0
+
+### Minor Changes
+
+-   New `isFluidHandle` type guard to check if an object is an `IFluidHandle` ([#22029](https://github.com/microsoft/FluidFramework/pull/22029)) [7827d1040a](https://github.com/microsoft/FluidFramework/commit/7827d1040a9ebc0bd11388dc31f15370ea9f68d3)
+
+    The `isFluidHandle` type guard function is now exported and can be used to detect which objects are `IFluidHandle`s.
+    Since `IFluidHandle` often needs special handling (for example when serializing since it's not JSON compatible),
+    having a dedicated detection function for it is useful.
+    Doing this detection was possible previously using the `tree` package's schema system via `Tree.is(value, new SchemaFactory("").handle)`,
+    but can now be done with just `isFluidHandle(value)`.
+
 ## 2.1.0
 
 Dependency updates only.

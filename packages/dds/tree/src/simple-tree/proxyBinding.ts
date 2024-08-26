@@ -8,26 +8,17 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { type AnchorNode, type AnchorSet, type UpPath, anchorSlot } from "../core/index.js";
 import {
 	ContextSlot,
-	type FlexTreeNodeSchema,
-	type FlexMapNodeSchema,
-	type FlexObjectNodeSchema,
-	type FlexTreeMapNode,
 	type FlexTreeNode,
-	type FlexTreeObjectNode,
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
-	type FieldKinds,
-	type FlexFieldSchema,
 	type MapTreeNode,
 	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
-import type { WithType, TreeNode } from "./core/index.js";
-import type { TreeArrayNode } from "./arrayNode.js";
+import type { TreeNode } from "./core/index.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../feature-libraries/flex-tree/lazyNode.js";
-import type { TreeMapNode } from "./mapNode.js";
 import { getKernel } from "./core/index.js";
 
 // This file contains various maps and helpers for supporting associating simple TreeNodes with their InnerNodes, and swapping those InnerNodes as part of hydration.
@@ -111,17 +102,6 @@ export function anchorProxy(anchors: AnchorSet, path: UpPath, proxy: TreeNode): 
  * For hydrated nodes it returns a FlexTreeNode backed by the forest.
  * Note that for "marinated" nodes, this FlexTreeNode exists and returns it: it does not return the MapTreeNode which is the current InnerNode.
  */
-export function getOrCreateInnerNode(
-	treeNode: TypedNode<FlexObjectNodeSchema>,
-	allowFreed?: true,
-): InnerNode & FlexTreeObjectNode;
-export function getOrCreateInnerNode(treeNode: TreeArrayNode, allowFreed?: true): InnerNode;
-export function getOrCreateInnerNode(
-	treeNode: TreeMapNode,
-	allowFreed?: true,
-): InnerNode &
-	FlexTreeMapNode<FlexMapNodeSchema<string, FlexFieldSchema<typeof FieldKinds.optional>>>;
-export function getOrCreateInnerNode(treeNode: TreeNode, allowFreed?: true): InnerNode;
 export function getOrCreateInnerNode(treeNode: TreeNode, allowFreed = false): InnerNode {
 	const anchorNode = proxyToAnchorNode.get(treeNode);
 	if (anchorNode !== undefined) {
@@ -182,7 +162,7 @@ export function tryGetInnerNode(target: unknown): InnerNode | undefined {
 		// Marinated case
 		assert(
 			proxyToMapTreeNode.get(target as TreeNode) === undefined,
-			"marinated nodes should not have MapTreeNodes",
+			0xa05 /* marinated nodes should not have MapTreeNodes */,
 		);
 		return undefined;
 	}
@@ -256,11 +236,6 @@ function bindHydratedNodeToAnchor(node: TreeNode, anchorNode: AnchorNode): void 
 	anchorNode.slots.set(proxySlot, node);
 	getKernel(node).hydrate(anchorNode);
 }
-
-/**
- * Given a node's schema, return the corresponding object in the proxy-based API.
- */
-type TypedNode<TSchema extends FlexTreeNodeSchema> = TreeNode & WithType<TSchema["name"]>;
 
 export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
 	const treeNode = anchorNode.slots.get(proxySlot);

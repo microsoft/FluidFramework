@@ -6,38 +6,17 @@
 import { strict as assert } from "node:assert";
 
 import { type TreeNodeSchemaIdentifier, ValueSchema } from "../../core/index.js";
-import {
-	Any,
-	FieldKinds,
-	FlexFieldSchema,
-	LeafNodeSchema,
-} from "../../feature-libraries/index.js";
+import { FieldKinds, FlexFieldSchema, LeafNodeSchema } from "../../feature-libraries/index.js";
 import {
 	SchemaBuilderBase,
 	normalizeAllowedTypes,
 	normalizeField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/schemaBuilderBase.js";
-import { type areSafelyAssignable, brand, type requireTrue } from "../../util/index.js";
+import { brand } from "../../util/index.js";
+import { leaf } from "../../domains/index.js";
 
 describe("SchemaBuilderBase", () => {
-	describe("typedTreeSchema", () => {
-		it("recursive", () => {
-			const builder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
-
-			const recursiveStruct = builder.objectRecursive("recursiveStruct", {
-				foo: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
-			});
-
-			type _1 = requireTrue<
-				areSafelyAssignable<
-					typeof recursiveStruct,
-					ReturnType<(typeof recursiveStruct.objectNodeFieldsObject.foo.allowedTypes)[0]>
-				>
-			>;
-		});
-	});
-
 	describe("intoSchema", () => {
 		it("Simple", () => {
 			const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
@@ -63,9 +42,9 @@ describe("SchemaBuilderBase", () => {
 	});
 
 	it("normalizeAllowedTypes", () => {
-		assert.deepEqual(normalizeAllowedTypes(Any), [Any]);
+		assert.deepEqual(normalizeAllowedTypes(leaf.number), [leaf.number]);
 		assert.deepEqual(normalizeAllowedTypes([]), []);
-		assert.deepEqual(normalizeAllowedTypes([Any]), [Any]);
+		assert.deepEqual(normalizeAllowedTypes([leaf.number]), [leaf.number]);
 		const treeSchema = LeafNodeSchema.create(
 			{ name: "test" },
 			brand<TreeNodeSchemaIdentifier>("foo"),
@@ -85,13 +64,13 @@ describe("SchemaBuilderBase", () => {
 
 	it("normalizeField", () => {
 		// Check types are normalized correctly
-		const directAny = FlexFieldSchema.create(FieldKinds.optional, [Any]);
-		assert(directAny.equals(normalizeField(Any, FieldKinds.optional)));
-		assert(directAny.equals(normalizeField([Any], FieldKinds.optional)));
+		const directNumber = FlexFieldSchema.create(FieldKinds.optional, [leaf.number]);
+		assert(directNumber.equals(normalizeField(leaf.number, FieldKinds.optional)));
+		assert(directNumber.equals(normalizeField([leaf.number], FieldKinds.optional)));
 		assert(
-			directAny.equals(
+			directNumber.equals(
 				normalizeField(
-					FlexFieldSchema.create(FieldKinds.optional, [Any]),
+					FlexFieldSchema.create(FieldKinds.optional, [leaf.number]),
 					FieldKinds.optional,
 				),
 			),
