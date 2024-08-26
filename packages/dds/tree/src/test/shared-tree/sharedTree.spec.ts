@@ -38,7 +38,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
-	Any,
 	FieldKinds,
 	FlexFieldSchema,
 	type FlexTreeSchema,
@@ -138,7 +137,7 @@ describe("SharedTree", () => {
 			name: "Schematize Tree Tests Generalized",
 		});
 
-		const schemaGeneralized = builderGeneralized.intoSchema(Any);
+		const schemaGeneralized = builderGeneralized.intoSchema([leaf.number, leaf.string]);
 		const storedSchemaGeneralized = intoStoredSchema(schemaGeneralized);
 
 		it("concurrent Schematize", () => {
@@ -274,7 +273,7 @@ describe("SharedTree", () => {
 				scope: "test",
 				libraries: [leaf.library],
 			});
-			const schemaGeneralized = builder.intoSchema(Any);
+			const schemaGeneralized = builder.intoSchema([leaf.number, leaf.string]);
 			assert.throws(() => assertSchema(tree, schemaGeneralized));
 
 			const log: string[] = [];
