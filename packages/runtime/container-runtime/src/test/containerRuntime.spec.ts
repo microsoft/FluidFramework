@@ -2523,6 +2523,7 @@ describe("Runtime", () => {
 					requestHandler: undefined,
 					runtimeOptions: {
 						enableGroupedBatching: false,
+						flushMode: FlushMode.TurnBased,
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -2696,7 +2697,25 @@ describe("Runtime", () => {
 			});
 
 			it("ignores in-flight signals on disconnect/reconnect", () => {
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				(containerRuntime as any).channelCollection = {
+					setConnectionState: (_connected: boolean, _clientId?: string) => {},
+					// Pass data store op right back to ContainerRuntime
+					reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
+						submitDataStoreOp(
+							containerRuntime,
+							envelope.address,
+							envelope.contents,
+							localOpMetadata,
+						);
+					},
+				} as ChannelCollection;
+
 				sendSignals(4);
+
+				// Submit op and flush so message is queued in PendingStateManager
+				// This is needed to increase reconnect count
+				submitDataStoreOp(containerRuntime, "1", "test");
 
 				// Disconnect + Reconnect
 				changeConnectionState(containerRuntime, false, mockClientId);
@@ -2722,6 +2741,22 @@ describe("Runtime", () => {
 						},
 					],
 					"SignalOutOfOrder/SignalLost telemetry should not be logged on reconnect",
+				);
+
+				sendSignals(100);
+				processSubmittedSignals(100);
+
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 97, // 101 (tracked latency signal) - 5 (earliest sent signal on reconnect) + 1 = 97
+							signalsLost: 0,
+							outOfOrderSignals: 0,
+							reconnectCount: 1,
+						},
+					],
+					"SignalLatency telemetry should be logged with correct reconnect count",
 				);
 			});
 

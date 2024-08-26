@@ -453,7 +453,7 @@ export interface IPerfSignalReport {
 	/**
 	 * Number of signals received out of order/non-sequentially.
 	 */
-	outOfOrderSignals: number;
+	signalsOutOfOrder: number;
 
 	/**
 	 * Timestamp before submitting the signal we will trace.
@@ -468,7 +468,7 @@ export interface IPerfSignalReport {
 	/**
 	 * The lower bound of the upcoming (now current) tracking group
 	 */
-	previousRoundTripSignalSequenceNumber: number | undefined;
+	baseSignalTrackingGroupSequenceNumber: number | undefined;
 
 	/**
 	 * Next expected signal sequence number to be received.
