@@ -57,14 +57,11 @@ module.exports = {
 			 */
 
 			if (parentNode.type === "VariableDeclarator") {
-				const declarationNode = parentNode.parent;
-				const isUndefinable = isUndefinableIndexSignatureType(parserServices, node);
-
 				if (
 					parentNode.init === node &&
-					declarationNode.type === "VariableDeclaration" &&
+					parentNode.parent.type === "VariableDeclaration" &&
 					!parentNode.id.typeAnnotation &&
-					!isUndefinable
+					!isUndefinableIndexSignatureType(parserServices, node)
 				) {
 					// This defect occurs when a non-undefinable index signature type is assigned to a implicitly typed variable
 					return context.report({
@@ -86,12 +83,10 @@ module.exports = {
 			}
 
 			if (parentNode.type === "AssignmentExpression" && parentNode.right === node) {
-				const isUndefinable = isUndefinableIndexSignatureType(parserServices, node);
-				const leftNode = parentNode.left;
-				const leftNodeType = getNodeType(leftNode, parserServices);
-				const isLeftNodeUndefinable = isTypeUndefinable(leftNodeType);
-
-				if (!isUndefinable && !isLeftNodeUndefinable) {
+				if (
+					!isUndefinableIndexSignatureType(parserServices, node) &&
+					!isTypeUndefinable(getNodeType(parentNode.left, parserServices))
+				) {
 					// This defect occurs when a non-undefinable index signature type is assigned to a strictly typed variable
 					return context.report({
 						node,
@@ -99,8 +94,7 @@ module.exports = {
 					});
 				}
 
-				const variableType = getVariableType(parentNode.left, context.getScope());
-				if (isStrictlyTypedVariable(variableType)) {
+				if (isStrictlyTypedVariable(getVariableType(parentNode.left, context.getScope()))) {
 					// This defect occurs when an index signature type is assigned to a strictly typed variable after its declaration
 					return context.report({
 						node,
@@ -134,12 +128,11 @@ module.exports = {
 			}
 
 			if (parentNode.type === "CallExpression") {
-				const callee = parentNode.callee;
-				if (callee.type !== "Identifier") {
+				if (parentNode.callee.type !== "Identifier") {
 					return;
 				}
 				const functionDeclaration = findFunctionDeclaration(
-					callee.name,
+					parentNode.callee.name,
 					context.getScope(),
 				);
 				if (!functionDeclaration || !functionDeclaration.params) {

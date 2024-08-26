@@ -55,3 +55,5 @@ let aLetExpectingStringOrNullAfterVariableDeclaration: string | null;
 aLetExpectingStringOrNullAfterVariableDeclaration = nullableIndexedRecord.a; // defect: Assigning index property 'a' to string or null variable should report an error, 'a' might not be present, either the index signature type should include an undefined type or the variable declaration should be changed to string | null | undefined
 let aLetExpectingStringOrNullOrUndefinedAfterVariableDeclaration: string | null | undefined;
 aLetExpectingStringOrNullOrUndefinedAfterVariableDeclaration = nullableIndexedRecord.a; // ok: Assigning index property 'a' to string or null or undefined variable, 'a' might not be present
+
+AFnExpectsStringOrNull(aImplicitType); // ok: Passing index property 'a' to a function without having type undefined should report an error but it doesnt, instead we have disallowed implicit type assignment from index signature type without an explicit undefined
