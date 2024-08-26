@@ -21,11 +21,10 @@ import {
 } from "../../../domains/index.js";
 import type { Context } from "../../../feature-libraries/flex-tree/context.js";
 import { unboxedTree, unboxedUnion } from "../../../feature-libraries/flex-tree/unboxed.js";
-import {
-	Any,
-	type FlexAllowedTypes,
-	type FlexFieldKind,
-	type FlexTreeNode,
+import type {
+	FlexAllowedTypes,
+	FlexFieldKind,
+	FlexTreeNode,
 } from "../../../feature-libraries/index.js";
 import type { TreeContent } from "../../../shared-tree/index.js";
 
@@ -82,23 +81,6 @@ describe("unboxedTree", () => {
 });
 
 describe("unboxedUnion", () => {
-	it("Any", () => {
-		const builder = new SchemaBuilder({ scope: "test" });
-		const fieldSchema = SchemaBuilder.optional(Any);
-		const schema = builder.intoSchema(fieldSchema);
-
-		const { context, cursor } = initializeTreeWithContent({
-			schema,
-			initialTree: singleJsonCursor(42),
-		});
-		cursor.enterNode(0); // Root node field has 1 node; move into it
-
-		// Type is not known based on schema, so node will not be unboxed.
-		const unboxed = unboxedUnion(context, fieldSchema, cursor) as FlexTreeNode;
-		assert.equal(unboxed.schema, leaf.number);
-		assert.equal(unboxed.value, 42);
-	});
-
 	it("Single type", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
 		const fieldSchema = SchemaBuilder.required(leafDomain.boolean);

@@ -17,7 +17,6 @@ import {
 } from "../../core/index.js";
 import { SchemaBuilder, leaf, singleJsonCursor } from "../../domains/index.js";
 import {
-	Any,
 	FieldKinds,
 	FlexFieldSchema,
 	type FlexTreeSchema,
@@ -59,11 +58,13 @@ const builderGeneralized = new SchemaBuilder({
 	name: "Schematize Tree Tests Generalized",
 });
 
-const schemaGeneralized = builderGeneralized.intoSchema(SchemaBuilder.optional(Any));
+const schemaGeneralized = builderGeneralized.intoSchema(
+	SchemaBuilder.optional([root, leaf.string]),
+);
 
 const builderValue = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests2" });
 
-const schemaValueRoot = builderValue.intoSchema(SchemaBuilder.required(Any));
+const schemaValueRoot = builderValue.intoSchema(SchemaBuilder.required([root, leaf.string]));
 
 // Schema for tree that must always be empty.
 const emptySchema = new SchemaBuilderBase(FieldKinds.required, {
