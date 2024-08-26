@@ -25,8 +25,10 @@ export const FLUIDBUILD_CONFIG_VERSION = 1;
 export interface IFluidBuildConfig {
 	/**
 	 * The version of the config.
+	 *
+	 * IMPORTANT: this will become required in a future release.
 	 */
-	version: typeof FLUIDBUILD_CONFIG_VERSION;
+	version?: typeof FLUIDBUILD_CONFIG_VERSION;
 
 	/**
 	 * Build tasks and dependencies definitions

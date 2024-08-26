@@ -14,6 +14,7 @@ import { readJson } from "fs-extra";
 import { commonOptions } from "./commonOptions";
 import { FLUIDBUILD_CONFIG_VERSION, IFluidBuildConfig } from "./fluidRepo";
 import { realpathAsync } from "./utils";
+import { defaultLogger } from "./logging";
 
 // switch to regular import once building ESM
 const findUp = import("find-up");
@@ -146,7 +147,11 @@ const configExplorer = cosmiconfigSync(configName, {
  * @param noCache - If true, the config cache will be cleared and the config will be reloaded.
  * @returns The fluidBuild section of the package.json, or undefined if not found
  */
-export function getFluidBuildConfig(rootDir: string, noCache = false): IFluidBuildConfig {
+export function getFluidBuildConfig(
+	rootDir: string,
+	noCache = false,
+	log = defaultLogger,
+): IFluidBuildConfig {
 	if (noCache === true) {
 		configExplorer.clearCaches();
 	}
@@ -156,6 +161,12 @@ export function getFluidBuildConfig(rootDir: string, noCache = false): IFluidBui
 
 	if (config === undefined) {
 		throw new Error("No fluidBuild configuration found.");
+	}
+
+	if (config.version === undefined) {
+		log.warning(
+			"fluidBuild config has no version field. This field will be required in a future release.",
+		);
 	}
 
 	// Only version 1 of the config is supported. If any other value is provided, throw an error.
