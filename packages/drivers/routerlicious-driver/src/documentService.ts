@@ -46,15 +46,8 @@ import {
 	TokenFetcher,
 } from "./restWrapper.js";
 import { RestWrapper } from "./restWrapperBase.js";
+import type { IGetSessionInfoResponse } from "./sessionInfoManager.js";
 import { ITokenProvider } from "./tokens.js";
-
-/**
- * Amount of time between discoveries within which we don't need to rediscover on re-connect.
- * Currently, R11s defines session length at 10 minutes. To avoid any weird unknown edge-cases though,
- * we set the limit to 5 minutes here.
- * In the future, we likely want to retrieve this information from service's "inactive session" definition.
- */
-const RediscoverAfterTimeSinceDiscoveryMs = 5 * 60000; // 5 minute
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -65,9 +58,6 @@ export class DocumentService
 	// eslint-disable-next-line import/namespace
 	implements IDocumentService
 {
-	private lastDiscoveredAt: number = Date.now();
-	private discoverP: Promise<void> | undefined;
-
 	private storageManager: GitManager | undefined;
 	private noCacheStorageManager: GitManager | undefined;
 
@@ -93,7 +83,7 @@ export class DocumentService
 		private readonly blobCache: ICache<ArrayBufferLike>,
 		private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSnapshot>,
 		private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion>,
-		private readonly discoverFluidResolvedUrl: () => Promise<IResolvedUrl>,
+		private readonly getSessionInfo: () => Promise<IGetSessionInfoResponse>,
 		private storageRestWrapper: RouterliciousStorageRestWrapper,
 		private readonly storageTokenFetcher: TokenFetcher,
 		private readonly ordererTokenFetcher: TokenFetcher,
@@ -124,16 +114,9 @@ export class DocumentService
 		}
 
 		const getStorageManager = async (disableCache?: boolean): Promise<GitManager> => {
-			const shouldUpdateDiscoveredSessionInfo = this.shouldUpdateDiscoveredSessionInfo();
-			if (shouldUpdateDiscoveredSessionInfo) {
-				await this.refreshDiscovery();
-			}
-			if (
-				!this.storageManager ||
-				!this.noCacheStorageManager ||
-				shouldUpdateDiscoveredSessionInfo
-			) {
-				if (shouldUpdateDiscoveredSessionInfo) {
+			const refreshed = await this.refreshSessionInfoIfNeeded();
+			if (!this.storageManager || !this.noCacheStorageManager || refreshed) {
+				if (refreshed) {
 					const rateLimiter = new RateLimiter(
 						this.driverPolicies.maxConcurrentStorageRequests,
 					);
@@ -182,10 +165,9 @@ export class DocumentService
 		assert(!!this.documentStorageService, 0x0b1 /* "Storage service not initialized" */);
 
 		const getRestWrapper = async (): Promise<RestWrapper> => {
-			const shouldUpdateDiscoveredSessionInfo = this.shouldUpdateDiscoveredSessionInfo();
+			const refreshed = await this.refreshSessionInfoIfNeeded();
 
-			if (shouldUpdateDiscoveredSessionInfo) {
-				await this.refreshDiscovery();
+			if (refreshed) {
 				const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
 				this.ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 					this.ordererTokenFetcher,
@@ -221,9 +203,7 @@ export class DocumentService
 	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
 		const connect = async (refreshToken?: boolean) => {
 			let ordererToken = await this.ordererRestWrapper.getToken();
-			if (this.shouldUpdateDiscoveredSessionInfo()) {
-				await this.refreshDiscovery();
-			}
+			await this.refreshSessionInfoIfNeeded();
 
 			if (refreshToken) {
 				ordererToken = await PerformanceEvent.timedExecAsync(
@@ -309,23 +289,15 @@ export class DocumentService
 	}
 
 	/**
-	 * Re-discover session URLs if necessary.
+	 * Refresh session info URLs if necessary.
+	 * @returns boolean - true if session info was refreshed
 	 */
-	private async refreshDiscovery(): Promise<void> {
-		if (!this.discoverP) {
-			this.discoverP = PerformanceEvent.timedExecAsync(
-				this.logger,
-				{
-					eventName: "RefreshDiscovery",
-				},
-				async () => this.refreshDiscoveryCore(),
-			);
+	private async refreshSessionInfoIfNeeded(): Promise<boolean> {
+		const response = await this.getSessionInfo();
+		if (!response.refreshed) {
+			return false;
 		}
-		return this.discoverP;
-	}
-
-	private async refreshDiscoveryCore(): Promise<void> {
-		const fluidResolvedUrl = await this.discoverFluidResolvedUrl();
+		const fluidResolvedUrl = response.resolvedUrl;
 		this._resolvedUrl = fluidResolvedUrl;
 		// TODO why are we non null asserting here?
 		this.storageUrl = fluidResolvedUrl.endpoints.storageUrl!;
@@ -334,31 +306,6 @@ export class DocumentService
 		// TODO why are we non null asserting here?
 		this.deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl!;
 		this.deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl ?? this.ordererUrl;
-	}
-
-	/**
-	 * Whether enough time has passed since last disconnect to warrant a new discovery call on reconnect.
-	 */
-	private shouldUpdateDiscoveredSessionInfo(): boolean {
-		if (!this.driverPolicies.enableDiscovery) {
-			return false;
-		}
-		const now = Date.now();
-		// When connection is disconnected, we cannot know if session has moved or document has been deleted
-		// without re-doing discovery on the next attempt to connect.
-		// Disconnect event is not so reliable in local testing. To ensure re-discovery when necessary,
-		// re-discover if enough time has passed since last discovery.
-		const pastLastDiscoveryTimeThreshold =
-			now - this.lastDiscoveredAt > RediscoverAfterTimeSinceDiscoveryMs;
-		if (pastLastDiscoveryTimeThreshold) {
-			// Reset discover promise and refresh discovery.
-			this.lastDiscoveredAt = Date.now();
-			this.discoverP = undefined;
-			this.refreshDiscovery().catch(() => {
-				// Undo discovery time set on failure, so that next check refreshes.
-				this.lastDiscoveredAt = 0;
-			});
-		}
-		return pastLastDiscoveryTimeThreshold;
+		return true;
 	}
 }
