@@ -2907,7 +2907,7 @@ describe("Runtime", () => {
 				processSubmittedSignals(1);
 
 				// Send 150 signals and temporarily lose 1
-				sendSignals(150); // 			 150 outstanding including 1 tracked signal (#101); max #151
+				sendSignals(150); // 		 150 outstanding including 1 tracked signal (#101); max #151
 				processSubmittedSignals(95); //  55 outstanding including 1 tracked signal (#101)
 				dropSignals(1); //               54 outstanding including 1 tracked signal (#101)
 				processSubmittedSignals(14); //  40 outstanding; none tracked
@@ -2915,8 +2915,8 @@ describe("Runtime", () => {
 				processSubmittedSignals(40); //   0 outstanding; none tracked
 
 				// Send 60 signals including tracked signal
-				sendSignals(60); // 			60 outstanding including 1 tracked signal (#201); max #211
-				processSubmittedSignals(60); // 0 outstanding; none tracked
+				sendSignals(60); // 		 60 outstanding including 1 tracked signal (#201); max #211
+				processSubmittedSignals(60); //   0 outstanding; none tracked
 
 				// Check SignalLatency logs amount of sent and lost signals
 				logger.assertMatch(
