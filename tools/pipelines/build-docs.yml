@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# build-doc pipeline
+# build-docs pipeline
 
 name: $(Build.BuildId)
 parameters:
@@ -253,9 +253,6 @@ extends:
             artifactName: fluidframework-docs
             targetPath: '$(Build.SourcesDirectory)/docs/public'
         steps:
-        - checkout: self
-          submodules: false
-          clean: true
         - task: AzureStaticWebApp@0
           displayName: 'Deploy website to ASWA'
           condition: eq(variables.shouldDeploy, true)
