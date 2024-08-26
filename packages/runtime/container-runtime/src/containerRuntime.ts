@@ -779,26 +779,53 @@ let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) 
 };
 
 /**
- * Load the stores from a snapshot and returns the runtime.
- * @param params - An object housing the runtime properties:
- * - context - Context of the container.
- * - registryEntries - Mapping from data store types to their corresponding factories.
- * - existing - Pass 'true' if loading from an existing snapshot.
- * - runtimeOptions - Additional options to be passed to the runtime
- * - containerScope - runtime services provided with context
- * - provideEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
- * This object should provide all the functionality that the Container is expected to provide to the loader layer.
+ * This object holds the parameters necessary for the {@link loadContainerRuntime} function.
  * @legacy
  * @alpha
  */
-export async function loadContainerRuntime(params: {
+export interface LoadContainerRuntimeParams {
+	/**
+	 * Context of the container.
+	 */
 	context: IContainerContext;
+	/**
+	 * Mapping from data store types to their corresponding factories
+	 */
 	registryEntries: NamedFluidDataStoreRegistryEntries;
+	/**
+	 * Pass 'true' if loading from an existing snapshot.
+	 */
 	existing: boolean;
+	/**
+	 * Additional options to be passed to the runtime
+	 */
 	runtimeOptions?: IContainerRuntimeOptions;
+	/**
+	 * runtime services provided with context
+	 */
 	containerScope?: FluidObject;
+	/**
+	 * Promise that resolves to an object which will act as entryPoint for the Container.
+	 */
 	provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-}): Promise<IContainerRuntime & IRuntime> {
+
+	/**
+	 * Request handler for the request() method of the container runtime.
+	 * Only relevant for back-compat while we remove the request() method and move fully to entryPoint as the main pattern.
+	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * */
+	requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+}
+/**
+ * This is meant to be used by a {@link @fluidframework/container-definitions/internal#IRuntimeFactory} to instantiate a container runtime.
+ * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
+ * @returns A runtime which provides all the functionality necessary to bind with the loader layer via the {@link @fluidframework/container-definitions/internal#IRuntime} interface and provide a runtime environment via the {@link @fluidframework/container-runtime-definitions/internal#IContainerRuntime} interface.
+ * @legacy
+ * @alpha
+ */
+export async function loadContainerRuntime(
+	params: LoadContainerRuntimeParams,
+): Promise<IContainerRuntime & IRuntime> {
 	return ContainerRuntime.loadRuntime(params);
 }
 

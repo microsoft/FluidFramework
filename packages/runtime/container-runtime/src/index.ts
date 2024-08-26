@@ -11,6 +11,7 @@ export {
 	ISummaryConfigurationDisableHeuristics,
 	IContainerRuntimeOptions,
 	loadContainerRuntime,
+	LoadContainerRuntimeParams,
 	isRuntimeMessage,
 	agentSchedulerId,
 	ContainerRuntime,
