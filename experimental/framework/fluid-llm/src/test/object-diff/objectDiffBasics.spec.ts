@@ -45,18 +45,14 @@ describe("objectDiff - basics", () => {
 	});
 
 	it("replace object with other value", () => {
-
-		assert.deepStrictEqual(
-			objectDiff({ object: { test: true } }, { object: "string" }),
-			[
-				{
-					type: "CHANGE",
-					path: ["object"],
-					value: "string",
-					oldValue: { test: true },
-				},
-			]
-		);
+		assert.deepStrictEqual(objectDiff({ object: { test: true } }, { object: "string" }), [
+			{
+				type: "CHANGE",
+				path: ["object"],
+				value: "string",
+				oldValue: { test: true },
+			},
+		]);
 	});
 
 	it("equal null protype objects", () => {

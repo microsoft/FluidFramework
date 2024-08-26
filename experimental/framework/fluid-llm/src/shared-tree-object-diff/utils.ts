@@ -2,12 +2,11 @@ import { type TreeMapNode, type TreeArrayNode, NodeKind } from "@fluidframework/
 
 import type { ObjectPath } from "./sharedTreeObjectDiff.js";
 
-
 /**
  * Checks if the given object is an {@link TreeMapNode}.
  */
 export function isTreeMapNode(obj: unknown): obj is TreeMapNode {
-	if (typeof obj === 'object' && obj !== null) {
+	if (typeof obj === "object" && obj !== null) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const maybeNodeKind: unknown = Object.getPrototypeOf(obj)?.constructor?.kind;
 		if (maybeNodeKind === NodeKind.Map) {
@@ -17,12 +16,11 @@ export function isTreeMapNode(obj: unknown): obj is TreeMapNode {
 	return false;
 }
 
-
 /**
  * Checks if the given object is an {@link TreeArrayNode}.
  */
 export function isTreeArrayNode(obj: unknown): obj is TreeArrayNode {
-	if (typeof obj === 'object' && obj !== null) {
+	if (typeof obj === "object" && obj !== null) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const maybeNodeKind: unknown = Object.getPrototypeOf(obj)?.constructor?.kind;
 		if (maybeNodeKind === NodeKind.Array) {
@@ -32,20 +30,22 @@ export function isTreeArrayNode(obj: unknown): obj is TreeArrayNode {
 	return false;
 }
 
-
 /**
  * Traverses the provided {@link ObjectPath} on the provided Shared Tree or JSON object and returns the value at the end of the path.
  */
-export function sharedTreeTraverse<T = unknown>(jsonObject: TreeMapNode | TreeArrayNode | Record<string, unknown> | unknown[], path: ObjectPath): T | undefined {
-    let current: unknown = jsonObject;
+export function sharedTreeTraverse<T = unknown>(
+	jsonObject: TreeMapNode | TreeArrayNode | Record<string, unknown> | unknown[],
+	path: ObjectPath,
+): T | undefined {
+	let current: unknown = jsonObject;
 
-    for (const key of path) {
-        if (current === undefined || current === null) {
-            return undefined;
-        }
+	for (const key of path) {
+		if (current === undefined || current === null) {
+			return undefined;
+		}
 
 		current = isTreeMapNode(current) ? current.get(key as string) : current[key];
-    }
+	}
 
-    return current as T;
+	return current as T;
 }

@@ -10,9 +10,8 @@ describe("objectDiff - cycles", () => {
 	});
 
 	it("Handles recursive references more than 1 level up", () => {
-		const obj1 = { a: { b: {} }  };
+		const obj1 = { a: { b: {} } };
 		obj1.a.b = obj1;
 		assert.deepStrictEqual(objectDiff(obj1, obj1), []);
 	});
-
 });

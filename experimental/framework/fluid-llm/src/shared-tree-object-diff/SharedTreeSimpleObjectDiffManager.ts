@@ -1,23 +1,31 @@
 import { type TreeArrayNode } from "@fluidframework/tree";
 import type * as z from "zod";
 
-import { sharedTreeObjectDiff, type Difference, type DifferenceCreate, type DifferenceRemove, type ObjectPath } from "./sharedTreeObjectDiff.js";
-
+import {
+	sharedTreeObjectDiff,
+	type Difference,
+	type DifferenceCreate,
+	type DifferenceRemove,
+	type ObjectPath,
+} from "./sharedTreeObjectDiff.js";
 
 /**
  * Manages the differences between a SharedTree object node and a javascript object and then applies them.
  */
 export class SharedTreeSimpleObjectDiffManager {
-	private readonly zodSchema?: z.Schema
+	private readonly zodSchema?: z.Schema;
 
-	public constructor(params?: {zodSchema?: z.Schema}) {
+	public constructor(params?: { zodSchema?: z.Schema }) {
 		this.zodSchema = params?.zodSchema;
 	}
 
 	/**
 	 * produces a diff between two objects and handles the differences.
 	 */
-	public compareAndApplyDiffs(obj: Record<string, unknown> | TreeArrayNode, newObj: Record<string, unknown> | unknown[]): void {
+	public compareAndApplyDiffs(
+		obj: Record<string, unknown> | TreeArrayNode,
+		newObj: Record<string, unknown> | unknown[],
+	): void {
 		// By validating that the incoming object matches the schema, we can confirm that any property
 		// deletions/updates/additions are valid.
 		if (this.zodSchema !== undefined) {
@@ -27,13 +35,18 @@ export class SharedTreeSimpleObjectDiffManager {
 			}
 		}
 
-		const differences = sharedTreeObjectDiff(obj as Record<string, unknown>  | unknown[], newObj);
+		const differences = sharedTreeObjectDiff(
+			obj as Record<string, unknown> | unknown[],
+			newObj,
+		);
 
 		this.handleDifferences(differences, obj);
 	}
 
-
-	public handleDifferences(diff: Difference[], objectToUpdate: Record<string, unknown> | TreeArrayNode): void {
+	public handleDifferences(
+		diff: Difference[],
+		objectToUpdate: Record<string, unknown> | TreeArrayNode,
+	): void {
 		if (diff === undefined) {
 			console.log("no changes");
 			return;
@@ -61,57 +74,67 @@ export class SharedTreeSimpleObjectDiffManager {
 
 			// Edge case: If we process an array diff we need to adjust the
 			// array indexes for the given array for the rest of the diffs
-			if (currentDiff.type === 'REMOVE' && this.isDiffOnArray(currentDiff)) {
-
+			if (currentDiff.type === "REMOVE" && this.isDiffOnArray(currentDiff)) {
 				for (let j = i + 1; j < diff.length; j++) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const nextDiff = diff[j]!;
 
 					// If these are operations on the same array
-					if (this.isDiffOnArray(nextDiff) && nextDiff.path.length === currentDiff.path.length) {
+					if (
+						this.isDiffOnArray(nextDiff) &&
+						nextDiff.path.length === currentDiff.path.length
+					) {
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						const nextDiffArrayIndex = nextDiff.path[nextDiff.path.length - 1]! as number;
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						const currentDiffArrayIndex = currentDiff.path[currentDiff.path.length - 1]! as number;
+						const currentDiffArrayIndex = currentDiff.path[
+							currentDiff.path.length - 1
+						]! as number;
 
 						// If the current diff deletes an element behind this next diff,
 						// we need to adjust the index referenced by the next diff backwards.
 						if (nextDiffArrayIndex > currentDiffArrayIndex) {
-							nextDiff.path[nextDiff.path.length - 1] = (nextDiffArrayIndex - 1);
+							nextDiff.path[nextDiff.path.length - 1] = nextDiffArrayIndex - 1;
 						}
 					}
 				}
-
 			}
 
-			if (currentDiff.type === 'CREATE' && this.isDiffOnArray(currentDiff)) {
+			if (currentDiff.type === "CREATE" && this.isDiffOnArray(currentDiff)) {
 				for (let j = i + 1; j < diff.length; j++) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const nextDiff = diff[j]!;
 
 					// If these are operations on the same array
-					if (this.isDiffOnArray(nextDiff) && nextDiff.path.length === currentDiff.path.length) {
+					if (
+						this.isDiffOnArray(nextDiff) &&
+						nextDiff.path.length === currentDiff.path.length
+					) {
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						const nextDiffArrayIndex = nextDiff.path[nextDiff.path.length - 1]! as number;
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						const currentDiffArrayIndex = currentDiff.path[currentDiff.path.length - 1]! as number;
+						const currentDiffArrayIndex = currentDiff.path[
+							currentDiff.path.length - 1
+						]! as number;
 
 						// If the current diff deletes an element behind this next diff,
 						// we need to adjust the index referenced by the next diff backwards.
 						if (nextDiffArrayIndex > currentDiffArrayIndex) {
-							nextDiff.path[nextDiff.path.length - 1] = (nextDiffArrayIndex + 1);
+							nextDiff.path[nextDiff.path.length - 1] = nextDiffArrayIndex + 1;
 						}
 					}
 				}
 			}
 		}
-
 	}
 
 	/**
 	 * Applies a diff to an object.
 	 */
-	public applyDiff(diff: Difference, objectToUpdate: Record<string, unknown> | TreeArrayNode): void {
+	public applyDiff(
+		diff: Difference,
+		objectToUpdate: Record<string, unknown> | TreeArrayNode,
+	): void {
 		switch (diff.type) {
 			case "CREATE": {
 				// Add the new property to the object
@@ -136,7 +159,10 @@ export class SharedTreeSimpleObjectDiffManager {
 						targetObject[diff.path[0] as string] = diff.value;
 					}
 				} else {
-					const targetObject = traversePath<Record<string, unknown>>(objectToUpdate, diff.path.slice(0, - 1));
+					const targetObject = traversePath<Record<string, unknown>>(
+						objectToUpdate,
+						diff.path.slice(0, -1),
+					);
 					// CHANGE PROPERTY TO OBJECT.
 					if (targetObject === undefined) {
 						console.warn("Object to update no longer exists");
@@ -158,12 +184,14 @@ export class SharedTreeSimpleObjectDiffManager {
 		}
 	}
 
-
 	public isDiffOnArray(diff: Difference): boolean {
-		return typeof diff.path[diff.path.length - 1] === 'number';
+		return typeof diff.path[diff.path.length - 1] === "number";
 	}
 
-	public addToObject(diff: DifferenceCreate, objectToUpdate: Record<string, unknown> | TreeArrayNode): void {
+	public addToObject(
+		diff: DifferenceCreate,
+		objectToUpdate: Record<string, unknown> | TreeArrayNode,
+	): void {
 		if (diff.path.length === 1) {
 			// The object itself is the object to update.
 			const targetObject = objectToUpdate as Record<string, unknown>;
@@ -174,7 +202,10 @@ export class SharedTreeSimpleObjectDiffManager {
 				targetObject[diff.path[0] as string] = diff.value;
 			}
 		} else {
-			const targetObject = traversePath<Record<string, unknown>>(objectToUpdate, diff.path.slice(0, - 1));
+			const targetObject = traversePath<Record<string, unknown>>(
+				objectToUpdate,
+				diff.path.slice(0, -1),
+			);
 			// ADD PROPERTY TO OBJECT.
 			if (targetObject === undefined) {
 				console.warn("Object to update no longer exists");
@@ -184,7 +215,10 @@ export class SharedTreeSimpleObjectDiffManager {
 		}
 	}
 
-	public removeFromObject(diff: DifferenceRemove, objectToUpdate: Record<string, unknown> | TreeArrayNode): void {
+	public removeFromObject(
+		diff: DifferenceRemove,
+		objectToUpdate: Record<string, unknown> | TreeArrayNode,
+	): void {
 		if (diff.path.length === 1) {
 			// The object itself is the object to update.
 			const targetObject = objectToUpdate as Record<string, unknown>;
@@ -192,7 +226,6 @@ export class SharedTreeSimpleObjectDiffManager {
 			if (targetObject === undefined) {
 				console.warn("Object to update no longer exists");
 			} else {
-
 				if (targetObject[diff.path[0] as string] === undefined) {
 					console.warn("Property to remove does not exist");
 				} else {
@@ -201,7 +234,10 @@ export class SharedTreeSimpleObjectDiffManager {
 				}
 			}
 		} else {
-			const targetObject = traversePath<Record<string, unknown>>(objectToUpdate, diff.path.slice(0, - 1));
+			const targetObject = traversePath<Record<string, unknown>>(
+				objectToUpdate,
+				diff.path.slice(0, -1),
+			);
 			// DELETE PROPERTY TO OBJECT.
 			if (targetObject === undefined) {
 				console.warn("Object to update no longer exists");
@@ -232,7 +268,7 @@ export class SharedTreeSimpleObjectDiffManager {
 		// We need a reference to the parent array to remove the element.
 		else if (diff.path.length > 1) {
 			// Traverse to the parent array (which is simply the second to last path element)
-			const targetArray = traversePath<TreeArrayNode>(objectToUpdate, diff.path.slice(0, - 1));
+			const targetArray = traversePath<TreeArrayNode>(objectToUpdate, diff.path.slice(0, -1));
 
 			// ADD ARRAY ELEMENT. Should we respect the index or just push to the end?
 			// Lets not respect the index for now.
@@ -263,7 +299,7 @@ export class SharedTreeSimpleObjectDiffManager {
 		// We need a reference to the parent array to remove the element.
 		else if (diff.path.length > 1) {
 			// Traverse to the parent array (which is simply the second to last path element)
-			const targetArray = traversePath<TreeArrayNode>(objectToUpdate, diff.path.slice(0, - 1));
+			const targetArray = traversePath<TreeArrayNode>(objectToUpdate, diff.path.slice(0, -1));
 
 			// REMOVE ARRAY ELEMENT.
 			if (targetArray === undefined) {
@@ -280,19 +316,21 @@ export class SharedTreeSimpleObjectDiffManager {
 	}
 }
 
-
 /**
  * Traverses the provided {@link ObjectPath} on the provided JSON object and returns the value at the end of the path.
  */
-export function traversePath<T = unknown>(jsonObject: Record<string, unknown> | unknown[] | TreeArrayNode, path: ObjectPath): T | undefined {
-    let current: unknown = jsonObject;
+export function traversePath<T = unknown>(
+	jsonObject: Record<string, unknown> | unknown[] | TreeArrayNode,
+	path: ObjectPath,
+): T | undefined {
+	let current: unknown = jsonObject;
 
-    for (const key of path) {
-        if (current === undefined || current === null) {
-            return undefined;
-        }
-        current = current[key];
-    }
+	for (const key of path) {
+		if (current === undefined || current === null) {
+			return undefined;
+		}
+		current = current[key];
+	}
 
-    return current as T;
+	return current as T;
 }

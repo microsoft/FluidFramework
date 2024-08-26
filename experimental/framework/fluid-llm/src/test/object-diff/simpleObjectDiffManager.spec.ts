@@ -2,13 +2,10 @@ import { strict as assert } from "node:assert";
 
 import { SimpleObjectDiffManager, traversePath } from "../../object-diff/index.js";
 
-
-
 describe("DiffManager - CREATE - compareAndApplyDiffs", () => {
-
 	it("Simple object attribute create", () => {
 		const originalObject: Record<string, unknown> = {};
-		const newObject: Record<string, unknown> = {test: true};
+		const newObject: Record<string, unknown> = { test: true };
 
 		const diffManager = new SimpleObjectDiffManager();
 		diffManager.compareAndApplyDiffs(originalObject, newObject);
@@ -17,7 +14,7 @@ describe("DiffManager - CREATE - compareAndApplyDiffs", () => {
 
 	it("Simple object attribute create within array", () => {
 		const originalObject: Record<string, unknown>[] = [{}];
-		const newObject: Record<string, unknown>[] = [{test: true}];
+		const newObject: Record<string, unknown>[] = [{ test: true }];
 
 		const diffManager = new SimpleObjectDiffManager();
 
@@ -26,19 +23,23 @@ describe("DiffManager - CREATE - compareAndApplyDiffs", () => {
 	});
 
 	it("add new object attribute to existing object within array", () => {
-			const originalObject: Record<string, unknown>[] = [{}];
-			const newObject: Record<string, unknown>[] = [{test: {value: true}}];
+		const originalObject: Record<string, unknown>[] = [{}];
+		const newObject: Record<string, unknown>[] = [{ test: { value: true } }];
 
-			const diffManager = new SimpleObjectDiffManager();
+		const diffManager = new SimpleObjectDiffManager();
 
-			diffManager.compareAndApplyDiffs(originalObject, newObject);
-			assert((originalObject[0]?.test as Record<string, unknown>)?.value === true);
+		diffManager.compareAndApplyDiffs(originalObject, newObject);
+		assert((originalObject[0]?.test as Record<string, unknown>)?.value === true);
 	});
 
 	it("Add multiple new objects to array", () => {
 		const originalObject: Record<string, unknown>[] = [{}];
 
-		const newObject: Record<string, unknown>[] = [{test: true}, {test: true}, {test: true}];
+		const newObject: Record<string, unknown>[] = [
+			{ test: true },
+			{ test: true },
+			{ test: true },
+		];
 
 		const diffManager = new SimpleObjectDiffManager();
 
@@ -48,14 +49,12 @@ describe("DiffManager - CREATE - compareAndApplyDiffs", () => {
 		assert(originalObject[1]?.test === true);
 		assert(originalObject[2]?.test === true);
 	});
-
 });
 
 describe("DiffManager - CHANGE - compareAndApplyDiffs", () => {
-
 	it("Simple object attribute change", () => {
-		const originalObject = {test: true};
-		const newObject = {test: false};
+		const originalObject = { test: true };
+		const newObject = { test: false };
 
 		const diffManager = new SimpleObjectDiffManager();
 		diffManager.compareAndApplyDiffs(originalObject, newObject);
@@ -63,8 +62,8 @@ describe("DiffManager - CHANGE - compareAndApplyDiffs", () => {
 	});
 
 	it("Simple object attribute change within array", () => {
-		const originalObject = [{test: true}];
-		const newObject = [{test: false}];
+		const originalObject = [{ test: true }];
+		const newObject = [{ test: false }];
 
 		const diffManager = new SimpleObjectDiffManager();
 		diffManager.compareAndApplyDiffs(originalObject, newObject);
@@ -72,33 +71,36 @@ describe("DiffManager - CHANGE - compareAndApplyDiffs", () => {
 	});
 
 	it("Nested object attribute change within outer array", () => {
-		const originalObject = [{
-			test: {
-				value: true
-			}
-		}];
-		const newObject = [{
-			test: {
-				value: false
-			}
-		}];
+		const originalObject = [
+			{
+				test: {
+					value: true,
+				},
+			},
+		];
+		const newObject = [
+			{
+				test: {
+					value: false,
+				},
+			},
+		];
 
 		const diffManager = new SimpleObjectDiffManager();
 		diffManager.compareAndApplyDiffs(originalObject, newObject);
 		assert(originalObject[0]?.test.value === false);
 	});
 
-
 	it("Nested object attribute change within inner array", () => {
 		const originalObject = {
 			test: {
-				value: [{}, {innerValue: true}]
-			}
+				value: [{}, { innerValue: true }],
+			},
 		};
 		const newObject = {
 			test: {
-				value: [{}, {innerValue: false}]
-			}
+				value: [{}, { innerValue: false }],
+			},
 		};
 
 		const diffManager = new SimpleObjectDiffManager();
@@ -107,16 +109,13 @@ describe("DiffManager - CHANGE - compareAndApplyDiffs", () => {
 	});
 });
 
-describe("DiffManager - CREATE - compareAndApplyDiffs", () => {
-
-});
+describe("DiffManager - CREATE - compareAndApplyDiffs", () => {});
 
 describe("DiffManager - traversePath", () => {
-
 	it("Simple attribute target", () => {
-		const targetObject = {test: true}
+		const targetObject = { test: true };
 		const jsonObject = {
-			object: targetObject
+			object: targetObject,
 		};
 
 		const path = ["object"];
@@ -142,12 +141,12 @@ describe("DiffManager - traversePath", () => {
 			object: {
 				test: [
 					{
-						valueOne: 1
+						valueOne: 1,
 					},
 					{
-						valueTwo: targetObject
-					}
-				]
+						valueTwo: targetObject,
+					},
+				],
 			},
 		};
 
@@ -163,21 +162,21 @@ describe("DiffManager - traversePath", () => {
 				object: {
 					test: [
 						{
-						valueOne: 1
+							valueOne: 1,
 						},
-					]
+					],
+				},
 			},
-		},
-		{
-			object: {
-				test: [
-					{
-						valueTwo: targetObject
-					}
-				]
+			{
+				object: {
+					test: [
+						{
+							valueTwo: targetObject,
+						},
+					],
+				},
 			},
-		}
-	];
+		];
 
 		const path = [1, "object", "test", 0, "valueTwo"];
 		const actual: unknown = traversePath(jsonObject, path);
@@ -189,30 +188,28 @@ describe("DiffManager - traversePath", () => {
 			object: {
 				test: [
 					{
-						valueTwo:  {
-							hello: "world"
-						}
-					}
-				]
+						valueTwo: {
+							hello: "world",
+						},
+					},
+				],
 			},
-		}
+		};
 		const jsonObject = [
 			{
 				object: {
 					test: [
 						{
-							valueOne: 1
+							valueOne: 1,
 						},
-					]
+					],
 				},
 			},
-			targetObject
+			targetObject,
 		];
 
 		const path = [1];
 		const actual: unknown = traversePath(jsonObject, path);
 		assert.strictEqual(actual, targetObject);
 	});
-
-
 });

@@ -3,7 +3,6 @@ import { strict as assert } from "node:assert";
 import { objectDiff } from "../../object-diff/index.js";
 
 describe("objectDiff - NaN", () => {
-
 	it("new NaN value in object", () => {
 		assert.deepStrictEqual(objectDiff({}, { testNaN: Number.NaN }), [
 			{
