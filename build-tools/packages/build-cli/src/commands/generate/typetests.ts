@@ -153,11 +153,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
 `,
 		];
 
-		const testCases = generateCompatibilityTestCases(
-			typeMap,
-			currentPackageJson,
-			fileHeader,
-		);
+		const testCases = generateCompatibilityTestCases(typeMap, currentPackageJson, fileHeader);
 
 		mkdirSync(outDir, { recursive: true });
 
