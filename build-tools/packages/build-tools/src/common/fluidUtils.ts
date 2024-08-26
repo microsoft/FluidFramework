@@ -13,8 +13,8 @@ import { readJson } from "fs-extra";
 
 import { commonOptions } from "./commonOptions";
 import { FLUIDBUILD_CONFIG_VERSION, IFluidBuildConfig } from "./fluidRepo";
-import { realpathAsync } from "./utils";
 import { defaultLogger } from "./logging";
+import { realpathAsync } from "./utils";
 
 // switch to regular import once building ESM
 const findUp = import("find-up");

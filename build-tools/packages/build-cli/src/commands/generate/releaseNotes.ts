@@ -14,7 +14,7 @@ import remarkGithub, { defaultBuildUrl } from "remark-github";
 import admonitions from "remark-github-beta-blockquote-admonitions";
 import remarkToc from "remark-toc";
 
-import { type ReleaseNotesSection, getFlubConfig } from "../../config.js";
+import { type ReleaseNotesSection } from "../../config.js";
 import { releaseGroupFlag } from "../../flags.js";
 import {
 	BaseCommand,
@@ -88,7 +88,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			this.error(`Unknown release group: ${flags.releaseGroup}`, { exit: 2 });
 		}
 
-		const { releaseNotes: releaseNotesConfig } = getFlubConfig(context.gitRepo.resolvedRoot);
+		const { releaseNotes: releaseNotesConfig } = context.flubConfig;
 		if (releaseNotesConfig === undefined) {
 			this.error(
 				`No release notes config found. Make sure the 'releaseNotes' section of the build config exists.`,

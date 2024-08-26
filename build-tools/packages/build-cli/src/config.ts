@@ -21,6 +21,8 @@ export interface FlubConfig {
 	/**
 	 * The version of the config.
 	 *
+	 * IMPORTANT: this will become required in a future release.
+	 *
 	 * @remarks
 	 *
 	 * For backwards-compatibility with the fluidBuild config file - that is, supporting both the flub config and the
@@ -29,7 +31,7 @@ export interface FlubConfig {
 	 *
 	 * In other words, version 1 is the only version of the configs where they can be stored in the same file.
 	 */
-	version: 1;
+	version?: 1;
 
 	/**
 	 * Ponfiguration for the `check:policy` command.
@@ -349,7 +351,7 @@ export function getFlubConfig(configPath: string, noCache = false): FlubConfig {
 	}
 
 	// Only version 1 of the config is supported. If any other value is provided, throw an error.
-	if (config?.version !== 1) {
+	if ((config.version ?? 1) !== 1) {
 		throw new Error(
 			`Configuration version is not supported: ${config?.version}. Config version must be 1.`,
 		);
