@@ -26,18 +26,20 @@ import { ITelemetryLoggerExt, formatTick } from "@fluidframework/telemetry-utils
  */
 export class DeltaScheduler {
 	private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-	// The time for processing ops in a single turn.
+	/** The time for processing ops in a single turn */
 	public static readonly processingTime = 50;
 
-	// The increase in time for processing ops after each turn.
-	public static processingTimeIncrement = 10;
+	/** The increase in time for processing ops after each turn */
+	public static readonly processingTimeIncrement = 10;
 
 	private processingStartTime: number | undefined;
 	private currentAllowedProcessingTimeForTurn: number = DeltaScheduler.processingTime;
 
-	// This keeps track of the number of times inbound queue has been scheduled. After a particular
-	// count, we log telemetry for the number of ops processed, the time and number of turns it took
-	// to process the ops.
+	/**
+	 * This keeps track of the number of times inbound queue has been scheduled. After a particular
+	 * count, we log telemetry for the number of ops processed, the time and number of turns it took
+	 * to process the ops.
+	 */
 	private schedulingCount: number = 0;
 
 	private schedulingLog:

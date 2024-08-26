@@ -1765,7 +1765,10 @@ export class ContainerRuntime
 			closeContainer: (error?: ICriticalContainerError) => this.closeFn(error),
 		});
 
-		this.deltaScheduler = new DeltaScheduler(this.innerDeltaManager, this.logger);
+		this.deltaScheduler = new DeltaScheduler(
+			this.innerDeltaManager,
+			createChildLogger({ logger: this.logger, namespace: "DeltaScheduler" }),
+		);
 
 		const disablePartialFlush = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.DisablePartialFlush",
@@ -2678,7 +2681,7 @@ export class ContainerRuntime
 			if (messagesWithPendingState.length > 0) {
 				this.batchBegin(messagesWithPendingState[0]?.message);
 
-				let error: any;
+				let error: unknown;
 				try {
 					messagesWithPendingState.forEach(({ message, localOpMetadata }) => {
 						const msg: MessageWithContext = {
@@ -2704,7 +2707,7 @@ export class ContainerRuntime
 			}
 		} else {
 			this.batchBegin(messageCopy);
-			let error: any;
+			let error: unknown;
 			try {
 				// Check if message.type is one of values in ContainerMessageType
 				// eslint-disable-next-line import/no-deprecated
