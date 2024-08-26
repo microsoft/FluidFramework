@@ -53,7 +53,8 @@ describe("Simple-Tree Indexes", () => {
 			[parentKey]: parentId,
 			child: { [childKey]: childId },
 		});
-		const { context }: FlexTreeNode = tryGetInnerNode(parent) ?? fail("nodes in index should be cooked");
+		const { context }: FlexTreeNode =
+			tryGetInnerNode(parent) ?? fail("nodes in index should be cooked");
 		const index = createSimpleTreeIndex(
 			context,
 			(s) => {

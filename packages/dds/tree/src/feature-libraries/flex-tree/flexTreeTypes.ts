@@ -195,9 +195,9 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	keys(): IterableIterator<FieldKey>;
 
 	/**
-	* {@inheritdoc FlexTreeEntity.context}
-	*/
-   readonly context: FlexTreeContext;
+	 * {@inheritdoc FlexTreeEntity.context}
+	 */
+	readonly context: FlexTreeContext;
 }
 
 /**

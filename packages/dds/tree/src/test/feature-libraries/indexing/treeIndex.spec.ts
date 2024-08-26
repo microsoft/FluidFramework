@@ -92,12 +92,17 @@ describe("TreeIndexes", () => {
 				}
 
 				const expectedEntries = expected.map(
-					([key, ...nodes]) => 
+					([key, ...nodes]) =>
 						[
 							key,
 							nodes.map((f) => {
-								const flexNode: FlexTreeNode = tryGetInnerNode(f) ?? fail("nodes in index should be cooked");
-								return getOrCreate(anchorIds, flexNode.anchorNode, () => indexedAnchorNodeCount++);
+								const flexNode: FlexTreeNode =
+									tryGetInnerNode(f) ?? fail("nodes in index should be cooked");
+								return getOrCreate(
+									anchorIds,
+									flexNode.anchorNode,
+									() => indexedAnchorNodeCount++,
+								);
 							}),
 						] as const,
 				);

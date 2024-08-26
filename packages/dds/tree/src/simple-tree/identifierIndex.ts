@@ -63,10 +63,7 @@ export function createSimpleTreeIndex<
 	getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue,
 	indexableSchema: readonly TSchema[],
 ): SimpleTreeIndex<TKey, TSchema>;
-export function createSimpleTreeIndex<
-	TKey extends TreeValue,
-	TValue,
->(
+export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
 	context: FlexTreeContext,
 	indexer: (schema: TreeNodeSchema) => KeyFinder<TKey> | undefined,
 	getValue:
@@ -91,7 +88,7 @@ export function createSimpleTreeIndex<
 				if (flexSchema !== undefined) {
 					const schemus = getSimpleNodeSchema(flexSchema);
 					// if (isObjectNodeSchema(schemus)) {
-						return indexer(schemus);
+					return indexer(schemus);
 					// }
 				} else {
 					// else: the node is out of schema. TODO: do we error, or allow that?
