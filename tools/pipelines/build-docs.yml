@@ -82,7 +82,7 @@ extends:
   parameters:
     pool:
       name: Small
-      os: windows
+      os: linux
     customBuildTags:
     - ES365AIMigrationTooling
     stages:
