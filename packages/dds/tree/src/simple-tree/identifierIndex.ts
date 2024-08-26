@@ -50,13 +50,13 @@ type SimpleTreeIndex<TKey extends TreeValue, TSchema extends TreeNodeSchema> =
  */
 export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
 	context: FlexTreeContext,
-	indexer: (schema: ObjectNodeSchema) => KeyFinder<TKey> | undefined,
+	indexer: (schema: TreeNodeSchema) => KeyFinder<TKey> | undefined,
 	getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue,
 ): SimpleTreeIndex<TKey, TreeNodeSchema>;
 export function createSimpleTreeIndex<
 	TKey extends TreeValue,
 	TValue,
-	TSchema extends ObjectNodeSchema,
+	TSchema extends TreeNodeSchema,
 >(
 	context: FlexTreeContext,
 	indexer: (schema: TSchema) => KeyFinder<TKey> | undefined,
@@ -66,21 +66,21 @@ export function createSimpleTreeIndex<
 export function createSimpleTreeIndex<
 	TKey extends TreeValue,
 	TValue,
-	TSchema extends ObjectNodeSchema,
 >(
 	context: FlexTreeContext,
-	indexer: (schema: ObjectNodeSchema) => KeyFinder<TKey> | undefined,
+	indexer: (schema: TreeNodeSchema) => KeyFinder<TKey> | undefined,
 	getValue:
 		| ((nodes: TreeIndexNodes<NodeFromSchema<ObjectNodeSchema>>) => TValue)
-		| ((nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue),
-	indexableSchema?: readonly TSchema[],
+		| ((nodes: TreeIndexNodes<NodeFromSchema<TreeNodeSchema>>) => TValue),
+	indexableSchema?: readonly TreeNodeSchema[],
 	// todo fix this
-): SimpleTreeIndex<TKey, TSchema> {
+): SimpleTreeIndex<TKey, TreeNodeSchema> {
 	assert(context instanceof Context, "Unexpected context implementation");
 	const index = new AnchorTreeIndex<TKey, TValue>(
 		context.checkout.forest,
 		(schemaIdentifier) => {
 			if (indexableSchema !== undefined) {
+				// todo: fix this lookup
 				for (const schemus of indexableSchema) {
 					if (schemus.identifier === schemaIdentifier) {
 						return indexer(schemus);
@@ -90,9 +90,9 @@ export function createSimpleTreeIndex<
 				const flexSchema = context.schema.nodeSchema.get(schemaIdentifier);
 				if (flexSchema !== undefined) {
 					const schemus = getSimpleNodeSchema(flexSchema);
-					if (isObjectNodeSchema(schemus)) {
+					// if (isObjectNodeSchema(schemus)) {
 						return indexer(schemus);
-					}
+					// }
 				} else {
 					// else: the node is out of schema. TODO: do we error, or allow that?
 					fail("node is out of schema");
@@ -100,11 +100,11 @@ export function createSimpleTreeIndex<
 			}
 		},
 		(anchorNodes) => {
-			const simpleTreeNodes: NodeFromSchema<TSchema>[] = [];
+			const simpleTreeNodes: TreeNode[] = [];
 			for (const a of anchorNodes) {
 				const simpleTree = getOrCreateSimpleTree(context, a);
 				if (!isTreeValue(simpleTree)) {
-					simpleTreeNodes.push(simpleTree as NodeFromSchema<TSchema>);
+					simpleTreeNodes.push(simpleTree);
 				}
 			}
 

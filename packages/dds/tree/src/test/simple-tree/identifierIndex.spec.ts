@@ -25,11 +25,11 @@ function getFlexNode(node: TreeNode) {
 
 describe("Simple-Tree Indexes", () => {
 	/** The field key under which the parentId node puts its identifier */
-	const parentKey: FieldKey = brand("parentKey");
+	const parentKey = "parentKey";
 	/** The identifier of the parent node */
 	const parentId = "parentId";
 	/** The field key under which the childId node puts its identifier */
-	const childKey: FieldKey = brand("childKey");
+	const childKey = "childKey";
 	/** The identifier of the child node */
 	const childId = "childId";
 
