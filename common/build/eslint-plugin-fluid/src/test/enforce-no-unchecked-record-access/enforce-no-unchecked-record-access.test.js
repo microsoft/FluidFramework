@@ -151,7 +151,7 @@ describe("ESLint Rule Tests", function () {
 			result.messages[5].message,
 			"Implicit typing derived from 'nullableIndexedRecord.a' is not allowed. 'nullableIndexedRecord' is an index signature type and 'a' may be undefined. Please provide an explicit type annotation including undefined or enable noUncheckedIndexedAccess",
 		);
-		assert.strictEqual(result.messages[5].line, 61);
+		assert.strictEqual(result.messages[5].line, 60);
 	});
 
 	it("Should not report errors for correct usage of undefinableIndexedRecord", async function () {
