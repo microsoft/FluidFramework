@@ -80,10 +80,6 @@ resources:
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
   parameters:
-    pool:
-      name: 1ESPT-Pool-Name-Placeholder
-      image: pool-image-placeholder
-      os: windows
     customBuildTags:
     - ES365AIMigrationTooling
     stages:
