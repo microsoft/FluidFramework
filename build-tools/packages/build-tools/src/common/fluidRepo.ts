@@ -23,13 +23,13 @@ export interface IRepoBuildConfig {
 	 * A mapping of package or release group names to metadata about the package or release group. This can only be
 	 * configured in the repo-wide Fluid build config (the repo-root package.json).
 	 */
-	repoPackages?: IRepoBuildDirs;
+	repoPackages?: IFluidBuildDirs;
 }
 
 /**
  * Configures a package or release group
  */
-export interface IRepoBuildDir {
+export interface IFluidBuildDir {
 	/**
 	 * The path to the package. For release groups this should be the path to the root of the release group.
 	 */
@@ -41,10 +41,10 @@ export interface IRepoBuildDir {
 	ignoredDirs?: string[];
 }
 
-export type IRepoBuildDirEntry = string | IRepoBuildDir | (string | IRepoBuildDir)[];
+export type IFluidBuildDirEntry = string | IFluidBuildDir | (string | IFluidBuildDir)[];
 
-export interface IRepoBuildDirs {
-	[name: string]: IRepoBuildDirEntry;
+export interface IFluidBuildDirs {
+	[name: string]: IFluidBuildDirEntry;
 }
 
 export class FluidRepo {
@@ -58,12 +58,12 @@ export class FluidRepo {
 
 	public constructor(
 		public readonly resolvedRoot: string,
-		repoBuildDirs?: IRepoBuildDirs,
+		fluidBuildDirs?: IFluidBuildDirs,
 	) {
 		// Expand to full IFluidRepoPackage and full path
-		const normalizeEntry = (item: IRepoBuildDirEntry): IRepoBuildDir | IRepoBuildDir[] => {
+		const normalizeEntry = (item: IFluidBuildDirEntry): IFluidBuildDir | IFluidBuildDir[] => {
 			if (Array.isArray(item)) {
-				return item.map((entry) => normalizeEntry(entry) as IRepoBuildDir);
+				return item.map((entry) => normalizeEntry(entry) as IFluidBuildDir);
 			}
 			if (typeof item === "string") {
 				return {
@@ -77,13 +77,13 @@ export class FluidRepo {
 				ignoredDirs: item.ignoredDirs?.map((dir) => path.join(directory, dir)),
 			};
 		};
-		const loadOneEntry = (item: IRepoBuildDir, group: string) => {
+		const loadOneEntry = (item: IFluidBuildDir, group: string) => {
 			return Packages.loadDir(item.directory, group, item.ignoredDirs);
 		};
 
 		const loadedPackages: Package[] = [];
-		for (const group in repoBuildDirs) {
-			const item = normalizeEntry(repoBuildDirs[group]);
+		for (const group in fluidBuildDirs) {
+			const item = normalizeEntry(fluidBuildDirs[group]);
 			if (Array.isArray(item)) {
 				for (const i of item) {
 					loadedPackages.push(...loadOneEntry(i, group));

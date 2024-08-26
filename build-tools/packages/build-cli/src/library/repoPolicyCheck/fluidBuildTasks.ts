@@ -12,7 +12,7 @@ import {
 	PackageJson,
 	TscUtils,
 	getEsLintConfigFilePath,
-	getRepoBuildConfig,
+	getFluidBuildConfig,
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
 	updatePackageJsonFile,
@@ -51,8 +51,8 @@ function getFluidPackageMap(root: string): Map<string, Package> {
 	const rootDir = path.resolve(root);
 	let record = repoCache.get(rootDir);
 	if (record === undefined) {
-		const repoBuildConfig = getRepoBuildConfig(rootDir);
-		const repo = new FluidRepo(rootDir, repoBuildConfig.repoPackages);
+		const fluidBuildConfig = getFluidBuildConfig(rootDir);
+		const repo = new FluidRepo(rootDir, fluidBuildConfig.repoPackages);
 		const packageMap = repo.createPackageMap();
 		record = { repo, packageMap };
 		repoCache.set(rootDir, record);
@@ -336,7 +336,7 @@ function hasTaskDependency(
 	taskName: string,
 	searchDeps: readonly string[],
 ): boolean {
-	const rootConfig = getRepoBuildConfig(root);
+	const rootConfig = getFluidBuildConfig(root);
 	const globalTaskDefinitions = normalizeGlobalTaskDefinitions(rootConfig?.tasks);
 	const taskDefinitions = getTaskDefinitions(json, globalTaskDefinitions, false);
 	// Searched deps that are package specific (e.g. <packageName>#<taskName>)

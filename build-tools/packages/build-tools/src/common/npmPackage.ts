@@ -14,7 +14,7 @@ import sortPackageJson from "sort-package-json";
 import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
 import { options } from "../fluidBuild/options";
-import { type IRepoBuildConfig } from "./fluidRepo";
+import { type IFluidBuildConfig } from "./fluidRepo";
 import { defaultLogger } from "./logging";
 import { MonoRepo, PackageManager } from "./monoRepo";
 import { type ITypeValidationConfig } from "./typeValidatorConfig";
@@ -50,7 +50,7 @@ export type FluidPackageJson = {
 	/**
 	 * fluid-build config. Some properties only apply when set in the root or release group root package.json.
 	 */
-	fluidBuild?: IRepoBuildConfig;
+	fluidBuild?: IFluidBuildConfig;
 
 	/**
 	 * pnpm config

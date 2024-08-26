@@ -8,7 +8,7 @@ import { getPackagesSync } from "@manypkg/get-packages";
 import { readFileSync, readJsonSync } from "fs-extra";
 import YAML from "yaml";
 
-import { IRepoBuildDir } from "./fluidRepo";
+import { IFluidBuildDir } from "./fluidRepo";
 import { Logger, defaultLogger } from "./logging";
 import { Package } from "./npmPackage";
 import { execWithErrorAsync, existsSync, rimrafWithErrorAsync } from "./utils";
@@ -59,7 +59,7 @@ export class MonoRepo {
 		return this.kind as "build-tools" | "client" | "server" | "gitrest" | "historian";
 	}
 
-	static load(group: string, repoPackage: IRepoBuildDir) {
+	static load(group: string, repoPackage: IFluidBuildDir) {
 		const { directory, ignoredDirs } = repoPackage;
 		let packageManager: PackageManager;
 		let packageDirs: string[];

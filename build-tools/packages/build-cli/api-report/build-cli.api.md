@@ -32,6 +32,7 @@ export interface FlubConfig {
     bump?: BumpConfig;
     policy?: PolicyConfig;
     releaseNotes?: ReleaseNotesConfig;
+    version: 1;
 }
 
 // @public

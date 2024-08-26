@@ -6,8 +6,8 @@
 import * as path from "path";
 import chalk from "chalk";
 import registerDebug from "debug";
-import { FluidRepo, IRepoBuildDirs } from "../common/fluidRepo";
-import { getRepoBuildConfig } from "../common/fluidUtils";
+import { FluidRepo, IFluidBuildDirs } from "../common/fluidRepo";
+import { getFluidBuildConfig } from "../common/fluidUtils";
 import { defaultLogger } from "../common/logging";
 import { MonoRepo } from "../common/monoRepo";
 import { Package, Packages } from "../common/npmPackage";
@@ -35,14 +35,14 @@ export interface IPackageMatchedOptions {
 export class FluidRepoBuild extends FluidRepo {
 	public static create(resolvedRoot: string) {
 		// Default to just resolveRoot if no config is found
-		const packageManifest = getRepoBuildConfig(resolvedRoot) ?? {
+		const packageManifest = getFluidBuildConfig(resolvedRoot) ?? {
 			repoPackages: {
 				root: "",
 			},
 		};
 		return new FluidRepoBuild(resolvedRoot, packageManifest.repoPackages);
 	}
-	private constructor(resolvedRoot: string, repoPackages?: IRepoBuildDirs) {
+	private constructor(resolvedRoot: string, repoPackages?: IFluidBuildDirs) {
 		super(resolvedRoot, repoPackages);
 	}
 
@@ -141,7 +141,7 @@ export class FluidRepoBuild extends FluidRepo {
 			this.createPackageMap(),
 			this.getReleaseGroupPackages(),
 			buildTargetNames,
-			getRepoBuildConfig(this.resolvedRoot)?.tasks,
+			getFluidBuildConfig(this.resolvedRoot)?.tasks,
 			(pkg: Package) => {
 				return (dep: Package) => {
 					return options.fullSymlink || MonoRepo.isSame(pkg.monoRepo, dep.monoRepo);

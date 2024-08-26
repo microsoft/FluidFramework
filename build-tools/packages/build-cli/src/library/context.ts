@@ -9,9 +9,9 @@ import { ReleaseVersion } from "@fluid-tools/version-tools";
 import {
 	FluidRepo,
 	GitRepo,
-	IRepoBuildConfig,
+	type IFluidBuildConfig,
 	Package,
-	getRepoBuildConfig,
+	getFluidBuildConfig,
 } from "@fluidframework/build-tools";
 import * as semver from "semver";
 import { type FlubConfig, getFlubConfig } from "../config.js";
@@ -91,7 +91,7 @@ export function isMonoRepoKind(str: string | undefined): str is MonoRepoKind {
 export class Context {
 	public readonly repo: FluidRepo;
 	public readonly fullPackageMap: Map<string, Package>;
-	public readonly repoBuildConfig: IRepoBuildConfig;
+	public readonly fluidBuildConfig: IFluidBuildConfig;
 	public readonly flubConfig: FlubConfig;
 	private readonly newBranches: string[] = [];
 
@@ -101,9 +101,9 @@ export class Context {
 		public readonly originalBranchName: string,
 	) {
 		// Load the packages
-		this.repoBuildConfig = getRepoBuildConfig(this.gitRepo.resolvedRoot);
+		this.fluidBuildConfig = getFluidBuildConfig(this.gitRepo.resolvedRoot);
 		this.flubConfig = getFlubConfig(this.gitRepo.resolvedRoot);
-		this.repo = new FluidRepo(this.gitRepo.resolvedRoot, this.repoBuildConfig.repoPackages);
+		this.repo = new FluidRepo(this.gitRepo.resolvedRoot, this.fluidBuildConfig.repoPackages);
 		this.fullPackageMap = this.repo.createPackageMap();
 	}
 

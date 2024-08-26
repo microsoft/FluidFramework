@@ -4,8 +4,8 @@
  */
 
 export { GitRepo } from "./common/gitRepo";
-export { FluidRepo, type IRepoBuildConfig } from "./common/fluidRepo";
-export { getResolvedFluidRoot, getRepoBuildConfig } from "./common/fluidUtils";
+export { FluidRepo, type IFluidBuildConfig } from "./common/fluidRepo";
+export { getResolvedFluidRoot, getFluidBuildConfig } from "./common/fluidUtils";
 export type { Logger } from "./common/logging";
 export { MonoRepo } from "./common/monoRepo";
 export {
