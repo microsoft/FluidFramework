@@ -70,12 +70,10 @@ steps:
       --retry $maximumRetryIfNetworkError \
       --verbose
 
-      if [[ "$(release)" == "release" ]]; then
+      if [[ "$(release)" == "release" && ${{ parameters.feedKind }} == "internal-build" ]]; then
         flub promote package \
         --version "$(SetVersion.version)" \
         --orderFile $orderFile \
-        --release "$(release)" \
-        --feedKind ${{ parameters.feedKind }} \
         --verbose
       fi
 
