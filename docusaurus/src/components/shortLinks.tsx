@@ -53,13 +53,19 @@ export interface GlossaryLinkProps {
 	 * The glossary term to link to.
 	 */
 	term: string;
+
+	/**
+	 * Contents to display within the link.
+	 * @defaultValue {@link GlossaryLinkProps.term}
+	 */
+	children?: React.ReactNode;
 }
 
 /**
  * A convenient mechanism for linking to a defined glossary term.
  * @remarks Assumes that a heading exists for the specified term in `docs/glossary.md`.
  */
-export function GlossaryLink({ term }: GlossaryLinkProps): JSX.Element {
+export function GlossaryLink({ term, children }: GlossaryLinkProps): JSX.Element {
 	const termHeading = term.toLowerCase().replace(/\s+/g, "-");
-	return <a href={`/docs/glossary#${termHeading}`}>{term}</a>;
+	return <a href={`/docs/glossary#${termHeading}`}>{children ?? term}</a>;
 }
