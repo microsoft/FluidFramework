@@ -56,5 +56,6 @@ export interface GlossaryLinkProps {
  * @remarks Assumes that a heading exists for the specified term in `docs/glossary.md`.
  */
 export function GlossaryLink({ term }: GlossaryLinkProps): JSX.Element {
-	return <a href={`/docs/glossary#${term}`}>{term}</a>;
+	const termHeading = term.toLowerCase().replace(/\s+/g, "-");
+	return <a href={`/docs/glossary#${termHeading}`}>{term}</a>;
 }
