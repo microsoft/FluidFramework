@@ -2678,79 +2678,74 @@ export class ContainerRuntime
 				inboundBatch,
 				local,
 			);
-			if (messagesWithPendingState.length > 0) {
-				this.batchBegin(messagesWithPendingState[0]?.message);
 
-				let error: unknown;
-				try {
-					messagesWithPendingState.forEach(({ message, localOpMetadata }) => {
-						const msg: MessageWithContext = {
-							message,
-							local,
-							isRuntimeMessage: true,
-							savedOp,
-							localOpMetadata,
-						};
-						this.ensureNoDataModelChanges(() => this.processRuntimeMessage(msg));
-					});
-				} catch (e) {
-					error = e;
-					throw e;
-				} finally {
-					this.batchEnd(
-						error,
-						messagesWithPendingState[messagesWithPendingState.length - 1]?.message,
-					);
-				}
+			if (messagesWithPendingState.length > 0) {
+				this.processBatch(
+					messagesWithPendingState,
+					local,
+					savedOp,
+					true /* modernRuntimeMessage */,
+				);
 			} else {
 				this.ensureNoDataModelChanges(() => this.processEmptyBatch(inboundBatch, local));
 			}
 		} else {
-			this.batchBegin(messageCopy);
-			let error: unknown;
-			try {
-				// Check if message.type is one of values in ContainerMessageType
-				// eslint-disable-next-line import/no-deprecated
-				if (isRuntimeMessage(messageCopy)) {
-					// Legacy op received
+			const batch = [{ message: messageCopy, localOpMetadata: undefined }];
+			this.processBatch(batch, local, savedOp, undefined /* modernRuntimeMessage */);
+		}
+	}
+
+	/**
+	 * Processes a batch of messages. It emits "batchBegin" and "batchEnd" events and calls deltaScheduler.
+	 */
+	private processBatch(
+		batch: {
+			message: ISequencedDocumentMessage;
+			localOpMetadata?: unknown;
+		}[],
+		local: boolean,
+		savedOp: boolean | undefined,
+		modernRuntimeMessage: true | undefined,
+	) {
+		const firstMessage = batch[0]?.message;
+		assert(firstMessage !== undefined, "Batch must have at least one message");
+		this.deltaScheduler.batchBegin(firstMessage);
+		this.emit("batchBegin", firstMessage);
+
+		let error: unknown;
+		try {
+			batch.forEach(({ message, localOpMetadata }) => {
+				const runtimeMessage = modernRuntimeMessage ?? isRuntimeMessage(message);
+				if (runtimeMessage) {
 					this.ensureNoDataModelChanges(() =>
 						this.processRuntimeMessage({
-							message: messageCopy as InboundSequencedContainerRuntimeMessage,
+							message: message as InboundSequencedContainerRuntimeMessage,
 							local,
 							isRuntimeMessage: true,
 							savedOp,
+							localOpMetadata,
 						}),
 					);
 				} else {
-					// A non container runtime message (like other system ops - join, ack, leave, nack etc.)
 					this.ensureNoDataModelChanges(() =>
 						this.observeNonRuntimeMessage({
-							message: messageCopy as InboundSequencedNonContainerRuntimeMessage,
+							message: message as InboundSequencedNonContainerRuntimeMessage,
 							local,
 							isRuntimeMessage: false,
 							savedOp,
 						}),
 					);
 				}
-			} catch (e) {
-				error = e;
-				throw e;
-			} finally {
-				this.batchEnd(error, messageCopy);
-			}
+			});
+		} catch (e) {
+			error = e;
+			throw error;
+		} finally {
+			const lastMessage = batch[batch.length - 1]?.message;
+			assert(lastMessage !== undefined, "Batch must have at least one message");
+			this.deltaScheduler.batchEnd(lastMessage);
+			this.emit("batchEnd", error, lastMessage);
 		}
-	}
-
-	private batchBegin(message?: ISequencedDocumentMessage) {
-		assert(message !== undefined, "Batch must have a message");
-		this.deltaScheduler.batchBegin(message);
-		this.emit("batchBegin", message);
-	}
-
-	private batchEnd(error: any, message?: ISequencedDocumentMessage) {
-		assert(message !== undefined, "Batch must have a message");
-		this.deltaScheduler.batchEnd(message);
-		this.emit("batchEnd", error, message);
 	}
 
 	private _processedClientSequenceNumber: number | undefined;
