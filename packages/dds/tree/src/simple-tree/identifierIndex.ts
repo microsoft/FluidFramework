@@ -25,7 +25,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { brand, fail } from "../util/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { NodeFromSchema } from "./schemaTypes.js";
-import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNodeTypes.js";
 import type { TreeNode, TreeNodeSchema } from "./index.js";
 import { getSimpleNodeSchema } from "./core/index.js";
 import { getOrCreateNodeFromFlexTreeNode } from "./proxies.js";
@@ -67,7 +66,7 @@ export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
 	context: FlexTreeContext,
 	indexer: (schema: TreeNodeSchema) => KeyFinder<TKey> | undefined,
 	getValue:
-		| ((nodes: TreeIndexNodes<NodeFromSchema<ObjectNodeSchema>>) => TValue)
+		| ((nodes: TreeIndexNodes<TreeNode>) => TValue)
 		| ((nodes: TreeIndexNodes<NodeFromSchema<TreeNodeSchema>>) => TValue),
 	indexableSchema?: readonly TreeNodeSchema[],
 	// todo fix this
@@ -112,7 +111,7 @@ export function createSimpleTreeIndex<TKey extends TreeValue, TValue>(
 	);
 	// all the type checking guarantees that we put nodes of the correct type in the index
 	// but it's not captured in the type system
-	return index as SimpleTreeIndex<TKey, TSchema>;
+	return index as SimpleTreeIndex<TKey, TreeNodeSchema>;
 }
 
 /**

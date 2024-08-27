@@ -29,7 +29,7 @@ function readStringField(cursor: ITreeSubscriptionCursor, fieldKey: FieldKey): s
 	return value;
 }
 
-describe("TreeIndexes", () => {
+describe.only("TreeIndexes", () => {
 	/** The field key under which the parentId node puts its identifier */
 	const parentKey: FieldKey = brand("parentKey");
 	/** The identifier of the parent node */
