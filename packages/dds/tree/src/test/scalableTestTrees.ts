@@ -27,6 +27,10 @@ import {
 	SchemaFactory,
 	type ValidateRecursiveSchema,
 } from "../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { TreeStoredContent } from "../shared-tree/schematizeTree.js";
+// eslint-disable-next-line import/no-internal-modules
+import { toStoredSchema } from "../simple-tree/toFlexSchema.js";
 
 /**
  * Test trees which can be parametrically scaled to any size.
@@ -45,10 +49,7 @@ const deepBuilder = new SchemaBuilderBase(FieldKinds.required, {
 
 // Test data in "deep" mode: a linked list with a number at the end.
 const linkedListSchema: FlexObjectNodeSchema = deepBuilder.object("linkedList", {
-	foo: FlexFieldSchema.createUnsafe(FieldKinds.required, [
-		() => linkedListSchema,
-		leaf.number,
-	]),
+	foo: FlexFieldSchema.create(FieldKinds.required, [() => linkedListSchema, leaf.number]),
 });
 
 const wideBuilder = new SchemaBuilderBase(FieldKinds.required, {
@@ -102,17 +103,28 @@ export function makeJsDeepTree(depth: number, leafValue: number): JSDeepTree | n
 	return depth === 0 ? leafValue : { foo: makeJsDeepTree(depth - 1, leafValue) };
 }
 
-export function makeDeepContent(
+export function makeDeepContent(depth: number, leafValue: number = 1): TreeContent {
+	// Implicit type conversion is needed here to make this compile.
+	const initialTree = makeJsDeepTree(depth, leafValue);
+	return {
+		// Types do not allow implicitly constructing recursive types, so cast is required.
+		// TODO: Find a better alternative.
+		initialTree: cursorFromInsertable(LinkedList, initialTree as LinkedList),
+		schema: deepSchema,
+	};
+}
+
+export function makeDeepStoredContent(
 	depth: number,
 	leafValue: number = 1,
-): TreeContent<typeof deepSchema.rootFieldSchema> {
+): TreeStoredContent {
 	// Implicit type conversion is needed here to make this compile.
 	const initialTree = makeJsDeepTree(depth, leafValue);
 	return {
 		// Types do now allow implicitly constructing recursive types, so cast is required.
 		// TODO: Find a better alternative.
 		initialTree: cursorFromInsertable(LinkedList, initialTree as LinkedList),
-		schema: deepSchema,
+		schema: toStoredSchema(LinkedList),
 	};
 }
 
@@ -125,12 +137,29 @@ export function makeDeepContent(
 export function makeWideContentWithEndValue(
 	numberOfNodes: number,
 	endLeafValue?: number,
-): TreeContent<typeof wideSchema.rootFieldSchema> {
+): TreeContent {
 	// Implicit type conversion is needed here to make this compile.
 	const initialTree = makeJsWideTreeWithEndValue(numberOfNodes, endLeafValue);
 	return {
 		initialTree: cursorFromInsertable(WideRoot, initialTree),
 		schema: wideSchema,
+	};
+}
+
+/**
+ * @param numberOfNodes - number of nodes of the tree
+ * @param endLeafValue - the value of the end leaf of the tree. If not provided its index is used.
+ * @returns a tree with specified number of nodes, with the end leaf node set to the endLeafValue
+ */
+export function makeWideStoredContentWithEndValue(
+	numberOfNodes: number,
+	endLeafValue?: number,
+): TreeStoredContent {
+	// Implicit type conversion is needed here to make this compile.
+	const initialTree = makeJsWideTreeWithEndValue(numberOfNodes, endLeafValue);
+	return {
+		initialTree: cursorFromInsertable(WideRoot, initialTree),
+		schema: toStoredSchema(WideRoot),
 	};
 }
 

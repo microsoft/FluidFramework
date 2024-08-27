@@ -4,15 +4,11 @@
  */
 
 import * as path from "path";
-import {
-	DEFAULT_INTERDEPENDENCY_RANGE,
-	InterdependencyRange,
-} from "@fluid-tools/version-tools";
 import { getPackagesSync } from "@manypkg/get-packages";
 import { readFileSync, readJsonSync } from "fs-extra";
 import YAML from "yaml";
 
-import { IFluidBuildConfig, IFluidRepoPackage } from "./fluidRepo";
+import { IFluidBuildDir } from "./fluidRepo";
 import { Logger, defaultLogger } from "./logging";
 import { Package } from "./npmPackage";
 import { execWithErrorAsync, existsSync, rimrafWithErrorAsync } from "./utils";
@@ -63,8 +59,8 @@ export class MonoRepo {
 		return this.kind as "build-tools" | "client" | "server" | "gitrest" | "historian";
 	}
 
-	static load(group: string, repoPackage: IFluidRepoPackage) {
-		const { directory, ignoredDirs, defaultInterdependencyRange } = repoPackage;
+	static load(group: string, repoPackage: IFluidBuildDir) {
+		const { directory, ignoredDirs } = repoPackage;
 		let packageManager: PackageManager;
 		let packageDirs: string[];
 
@@ -93,24 +89,11 @@ export class MonoRepo {
 				return undefined;
 			}
 			packageDirs = packages.filter((pkg) => pkg.relativeDir !== ".").map((pkg) => pkg.dir);
-
-			if (defaultInterdependencyRange === undefined) {
-				traceInit(
-					`No defaultinterdependencyRange specified for ${group} release group. Defaulting to "${DEFAULT_INTERDEPENDENCY_RANGE}".`,
-				);
-			}
 		} catch {
 			return undefined;
 		}
 
-		return new MonoRepo(
-			group,
-			directory,
-			defaultInterdependencyRange ?? DEFAULT_INTERDEPENDENCY_RANGE,
-			packageManager,
-			packageDirs,
-			ignoredDirs,
-		);
+		return new MonoRepo(group, directory, packageManager, packageDirs, ignoredDirs);
 	}
 
 	/**
@@ -124,7 +107,6 @@ export class MonoRepo {
 	constructor(
 		public readonly kind: string,
 		public readonly repoPath: string,
-		public readonly interdependencyRange: InterdependencyRange,
 		private readonly packageManager: PackageManager,
 		packageDirs: string[],
 		ignoredDirs?: string[],
@@ -199,10 +181,6 @@ export class MonoRepo {
 			: this.packageManager === "yarn"
 				? "npm run install-strict"
 				: "npm i --no-package-lock --no-shrinkwrap";
-	}
-
-	public get fluidBuildConfig(): IFluidBuildConfig | undefined {
-		return this.pkg.packageJson.fluidBuild;
 	}
 
 	public getNodeModulePath() {

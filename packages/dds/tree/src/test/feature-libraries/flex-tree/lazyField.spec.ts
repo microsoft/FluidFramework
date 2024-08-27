@@ -29,7 +29,6 @@ import {
 	LazyValueField,
 } from "../../../feature-libraries/flex-tree/lazyField.js";
 import {
-	Any,
 	FieldKinds,
 	FlexFieldSchema,
 	cursorForJsonableTreeNode,
@@ -37,7 +36,7 @@ import {
 	type FlexFieldKind,
 } from "../../../feature-libraries/index.js";
 import { brand, disposeSymbol } from "../../../util/index.js";
-import { flexTreeViewWithContent, forestWithContent } from "../../utils.js";
+import { flexTreeViewWithContent, forestWithContent, JsonObject } from "../../utils.js";
 
 import {
 	getReadonlyContext,
@@ -62,22 +61,23 @@ class TestLazyField<TKind extends FlexFieldKind> extends LazyField<TKind> {}
 
 describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
-		const builder = new SchemaBuilder({ scope: "lazyTree" });
-		builder.object("empty", {});
-		const schema = builder.intoSchema(FlexFieldSchema.create(FieldKinds.optional, [Any]));
-		const forest = forestWithContent({ schema, initialTree: singleJsonCursor({}) });
+		const schema = toFlexSchema(JsonObject);
+		const forest = forestWithContent({
+			schema,
+			initialTree: singleJsonCursor({}),
+		});
 		const context = getReadonlyContext(forest, schema);
 		const cursor = initializeCursor(context, detachedFieldAnchor);
 
 		const optionalField = new LazyOptionalField(
 			context,
-			FlexFieldSchema.create(FieldKinds.optional, [Any]),
+			FlexFieldSchema.create(FieldKinds.optional, [getFlexSchema(JsonObject)]),
 			cursor,
 			detachedFieldAnchor,
 		);
 		const valueField = new LazyValueField(
 			context,
-			FlexFieldSchema.create(FieldKinds.required, [Any]),
+			FlexFieldSchema.create(FieldKinds.required, [getFlexSchema(JsonObject)]),
 			cursor,
 			detachedFieldAnchor,
 		);
@@ -112,40 +112,6 @@ describe("LazyField", () => {
 
 		// #endregion
 
-		// #region OptionalField<Any>
-
-		const anyOptionalField = new TestLazyField(
-			context,
-			FlexFieldSchema.create(FieldKinds.optional, [Any]),
-			cursor,
-			detachedFieldAnchor,
-		);
-
-		assert(anyOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.optional, [Any])));
-
-		assert(!anyOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.optional, [])));
-		assert(
-			!anyOptionalField.isExactly(
-				FlexFieldSchema.create(FieldKinds.optional, [leafDomain.boolean]),
-			),
-		);
-		assert(!anyOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.required, [])));
-		assert(!anyOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.required, [Any])));
-		assert(
-			!anyOptionalField.isExactly(
-				FlexFieldSchema.create(FieldKinds.required, [leafDomain.boolean]),
-			),
-		);
-		assert(!anyOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.sequence, [])));
-		assert(!anyOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.sequence, [Any])));
-		assert(
-			!anyOptionalField.isExactly(
-				FlexFieldSchema.create(FieldKinds.sequence, [leafDomain.boolean]),
-			),
-		);
-
-		// #endregion
-
 		// #region OptionalField<Primitive>
 
 		const booleanOptionalField = new LazyOptionalField(
@@ -161,44 +127,18 @@ describe("LazyField", () => {
 			),
 		);
 
-		assert(
-			!booleanOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.optional, [Any])),
-		);
+		// Different types
 		assert(
 			!booleanOptionalField.isExactly(
-				FlexFieldSchema.create(FieldKinds.optional, [leafDomain.number]),
+				FlexFieldSchema.create(FieldKinds.optional, [leafDomain.null]),
 			),
 		);
-		assert(!booleanOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.required, [])));
-		assert(
-			!booleanOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.required, [Any])),
-		);
+		// Different kinds
 		assert(
 			!booleanOptionalField.isExactly(
 				FlexFieldSchema.create(FieldKinds.required, [leafDomain.boolean]),
 			),
 		);
-		assert(
-			!booleanOptionalField.isExactly(
-				FlexFieldSchema.create(FieldKinds.required, [leafDomain.number]),
-			),
-		);
-		assert(!booleanOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.sequence, [])));
-		assert(
-			!booleanOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.sequence, [Any])),
-		);
-		assert(
-			!booleanOptionalField.isExactly(
-				FlexFieldSchema.create(FieldKinds.sequence, [leafDomain.boolean]),
-			),
-		);
-		assert(
-			!booleanOptionalField.isExactly(
-				FlexFieldSchema.create(FieldKinds.sequence, [leafDomain.number]),
-			),
-		);
-		assert(!booleanOptionalField.isExactly(FlexFieldSchema.create(FieldKinds.optional, [])));
-
 		// #endregion
 	});
 
@@ -382,6 +322,7 @@ describe("LazyOptionalField", () => {
 			schema,
 			initialTree: singleJsonCursor(5),
 		});
+		assert(view.flexTree.is(FieldKinds.optional));
 		assert.equal(view.flexTree.content, 5);
 		view.flexTree.editor.set(
 			mapTreeFromCursor(singleJsonCursor(6)),
@@ -443,6 +384,7 @@ describe("LazyValueField", () => {
 			schema,
 			initialTree: singleJsonCursor("X"),
 		});
+		assert(view.flexTree.is(FieldKinds.required));
 		assert.equal(view.flexTree.content, "X");
 		view.flexTree.editor.set(mapTreeFromCursor(singleJsonCursor("Y")));
 		assert.equal(view.flexTree.content, "Y");

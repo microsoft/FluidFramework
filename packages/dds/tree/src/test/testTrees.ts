@@ -14,7 +14,6 @@ import {
 } from "../core/index.js";
 import { leaf } from "../domains/index.js";
 import {
-	Any,
 	FieldKinds,
 	FlexFieldSchema,
 	type FlexTreeNodeSchema,
@@ -144,9 +143,6 @@ export class HasNumericValueField extends factory.object("hasNumericValueField",
 export class HasPolymorphicValueField extends factory.object("hasPolymorphicValueField", {
 	field: [factory.number, Minimal],
 }) {}
-export const hasAnyValueField = builder.object("hasAnyValueField", {
-	field: Any,
-});
 export class HasOptionalField extends factory.object("hasOptionalField", {
 	field: factory.optional(factory.number),
 }) {}
@@ -158,18 +154,8 @@ export const allTheFields = builder.object("allTheFields", {
 	valueField: leaf.number,
 	sequence: FlexFieldSchema.create(FieldKinds.sequence, [leaf.number]),
 });
-export const anyFields = builder.object("anyFields", {
-	optional: FlexFieldSchema.create(FieldKinds.optional, [Any]),
-	valueField: Any,
-	sequence: FlexFieldSchema.create(FieldKinds.sequence, [Any]),
-});
 
 export class NumericMap extends factory.map("numericMap", factory.number) {}
-
-export const anyMap = builder.map(
-	"anyMap",
-	FlexFieldSchema.create(FieldKinds.sequence, [Any]),
-);
 
 export class RecursiveType extends factory.objectRecursive("recursiveType", {
 	field: factory.optionalRecursive([() => RecursiveType]),
@@ -231,37 +217,8 @@ export const testTrees: readonly TestTree[] = [
 			sequence: [{ type: leaf.number.name, value: 5 }],
 		},
 	}),
-	testTree("anyFields-minimal", library, anyFields, {
-		type: anyFields.name,
-		fields: { valueField: [{ type: leaf.number.name, value: 5 }] },
-	}),
-	testTree("anyFields-full", library, anyFields, {
-		type: anyFields.name,
-		fields: {
-			valueField: [{ type: leaf.number.name, value: 5 }],
-			optional: [{ type: leaf.number.name, value: 5 }],
-			sequence: [{ type: leaf.number.name, value: 5 }, { type: minimal.name }],
-		},
-	}),
-
 	testSimpleTree("numericMap-empty", NumericMap, {}),
-	testTree("anyMap-empty", library, anyMap, {
-		type: anyMap.name,
-	}),
-
 	testSimpleTree("numericMap-full", NumericMap, { a: 5, b: 6 }),
-
-	testTree("anyMap-full", library, anyMap, {
-		type: anyMap.name,
-		fields: {
-			a: [
-				{ type: leaf.number.name, value: 1 },
-				{ type: leaf.number.name, value: 2 },
-			],
-			b: [{ type: leaf.number.name, value: 3 }],
-		},
-	}),
-
 	testSimpleTree("recursiveType-empty", RecursiveType, new RecursiveType({})),
 	testSimpleTree(
 		"recursiveType-recursive",

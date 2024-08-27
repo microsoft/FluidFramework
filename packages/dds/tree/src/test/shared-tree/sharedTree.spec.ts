@@ -38,7 +38,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
-	Any,
 	FieldKinds,
 	FlexFieldSchema,
 	type FlexTreeSchema,
@@ -138,7 +137,7 @@ describe("SharedTree", () => {
 			name: "Schematize Tree Tests Generalized",
 		});
 
-		const schemaGeneralized = builderGeneralized.intoSchema(Any);
+		const schemaGeneralized = builderGeneralized.intoSchema([leaf.number, leaf.string]);
 		const storedSchemaGeneralized = intoStoredSchema(schemaGeneralized);
 
 		it("concurrent Schematize", () => {
@@ -167,7 +166,8 @@ describe("SharedTree", () => {
 				initialTree: singleJsonCursor(10),
 				schema,
 			});
-			assert.equal(view.flexTree.content, 10);
+			assert.equal(view.flexTree.length, 1);
+			assert.equal(view.flexTree.boxedAt(0)?.value, 10);
 		});
 
 		it("noop upgrade", () => {
@@ -181,7 +181,7 @@ describe("SharedTree", () => {
 				schema,
 			});
 			// And does not add initial tree:
-			assert.equal(schematized.flexTree.content, undefined);
+			assert.equal(schematized.flexTree.length, 0);
 		});
 
 		it("incompatible upgrade errors", () => {
@@ -205,7 +205,7 @@ describe("SharedTree", () => {
 				schema: schemaGeneralized,
 			});
 			// Initial tree should not be applied
-			assert.equal(schematized.flexTree.content, undefined);
+			assert.equal(schematized.flexTree.length, 0);
 		});
 
 		it("unhydrated tree input", () => {
@@ -227,12 +227,13 @@ describe("SharedTree", () => {
 			schema: FlexTreeSchema<TRoot>,
 			onDispose: () => void = () => assert.fail(),
 		): FlexTreeView {
-			const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
+			const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, intoStoredSchema(schema));
 			const view = requireSchema(
 				tree.checkout,
 				viewSchema,
 				onDispose,
 				new MockNodeKeyManager(),
+				schema,
 			);
 			const unregister = tree.checkout.storedSchema.on("afterSchemaChange", () => {
 				unregister();
@@ -274,7 +275,7 @@ describe("SharedTree", () => {
 				scope: "test",
 				libraries: [leaf.library],
 			});
-			const schemaGeneralized = builder.intoSchema(Any);
+			const schemaGeneralized = builder.intoSchema([leaf.number, leaf.string]);
 			assert.throws(() => assertSchema(tree, schemaGeneralized));
 
 			const log: string[] = [];

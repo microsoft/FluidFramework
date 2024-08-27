@@ -28,7 +28,6 @@ import {
 	indexForAt,
 } from "../flex-tree/index.js";
 import {
-	type FlexAllowedTypes,
 	FlexFieldSchema,
 	type FlexTreeNodeSchema,
 	isLazy,
@@ -512,7 +511,6 @@ function getOrCreateChild(
 		allowedTypes
 			.map((t) => (isLazy(t) ? t() : t))
 			.find((t): t is FlexTreeNodeSchema => {
-				assert(t !== "Any", 0x993 /* 'Any' type is not supported */);
 				return t.name === mapTree.type;
 			}) ?? fail("Unsupported node schema");
 
@@ -558,8 +556,8 @@ function getOrCreateField(
 }
 
 /** Unboxes non-polymorphic leaf nodes to their values, if applicable */
-function unboxedUnion<TTypes extends FlexAllowedTypes>(
-	schema: FlexFieldSchema<FlexFieldKind, TTypes>,
+function unboxedUnion(
+	schema: FlexFieldSchema,
 	mapTree: ExclusiveMapTree,
 	parent: LocationInField,
 ): FlexTreeUnknownUnboxed {
