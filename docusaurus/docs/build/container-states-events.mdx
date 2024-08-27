@@ -4,6 +4,8 @@ sidebar_position: 3
 author: rick-kirkham
 ---
 
+import { ApiLink } from "@site/src/components/shortLinks"
+
 This article provides a detailed description of the lifecycle states of the containers and container events. It assumes that you are familiar with [Containers](../images).
 
 :::note
@@ -48,7 +50,7 @@ There are four types of states that a container can be in. Every container is in
 Publication status refers to whether or not the container has been *initially* saved to the Fluid service, and whether it is still persisted there.
 Think of it as a mainly *service-relative* state because it is primarily about the container's state in the Fluid service and secondarily about its state on the creating client. The following diagram shows the possible publication states and the events that cause a state transition. Details are below the diagram.
 
-<!-- TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. -->
+{/* TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. */}
 ![A state diagram of the four possible publication states](./images/PublicationStates.svg)
 
 #### Unpublished
@@ -96,7 +98,7 @@ But the new container has a different ID from the deleted one and subsequent cli
 
 #### Handling publication status
 
-Your code can test for the publication status with the [container.AttachState]({{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}#attachstate-propertysignature) property which has an [AttachState]({{< apiref "container-definitions" "AttachState" "enum" "v2" >}}) value.
+Your code can test for the publication status with the <ApiLink packageName="fluid-static" apiName="IFluidContainer" apiType="interface" headingId="attachstate-propertysignature">container.AttachState</ApiLink> property which has an <ApiLink packageName="container-definitions" apiName="AttachState" apiType="enum">AttachState</ApiLink> value.
 This can be useful if your application will publish the container in some code paths on the creating client, but not others.
 For example, on the creating computer, you don't want to call `container.attach` if it has already been called. In simple cases, you can know at coding time if that has happened, but when the creating client in complex code flows and calls of `container.attach` appear in more than one branch, you may need to test for this possibility. The following is a simple example.
 
@@ -133,7 +135,7 @@ if ((container.attachState === AttachState.Detached)
 
 Synchronization status refers to whether the container's data on the client is saved to the Fluid service. It is a *client-relative state*: the container may have a different synchronization state on different clients. The following diagram shows the possible Synchronization states and the events that cause a state transition. Details are below the diagram.
 
-<!-- TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. -->
+{/* TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. */}
 ![A state diagram of the two possible Synchronization states](./images/SynchronizationStates.svg)
 
 :::note
@@ -202,7 +204,7 @@ See [Disposed](#disposed) for more about disposing the container object.
 
 Connection status refers to whether the container is connected to the Fluid service. It is a *client-relative state*: the container may have a different connection state on different clients. The following diagram shows the possible Connection states and the events that cause a state transition. Details are below the diagram.
 
-<!-- TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. -->
+{/* TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. */}
 ![A state diagram of the four possible Connection states](./images/ConnectionStates.svg)
 
 #### Disconnected
@@ -254,7 +256,8 @@ The container transitions to this state automatically when it is fully caught up
 
 There are scenarios in which you need to control the connection status of the container. To assist, the `container` object has the following APIs:
 
--   A [container.connectionState]({{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}#connectionstate-propertysignature) property of type `ConnectionState`. There are four possible values for the property:
+
+-   A <ApiLink packageName="fluid-static" apiName="IFluidContainer" apiType="interface" headingId="connectionstate-propertysignature">container.connectionState</ApiLink> property of type `ConnectionState`. There are four possible values for the property:
 
     -   `Disconnected`
     -   `EstablishingConnection`: Your code should treat this state the same as it treats the disconnected state. See [Examples](#examples).
@@ -296,7 +299,7 @@ user.on("active", () => {
 
 Local Readiness is a *client-relative state*: the container may have a different Local Readiness state on different clients. The following diagram shows the possible Local Readiness states and the events that cause a state transition. Details are below the diagram.
 
-<!-- TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. -->
+{/* TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. */}
 ![A state diagram of the two possible Local Readiness states](./images/LocalReadinessStates.svg)
 
 #### Ready
@@ -334,7 +337,7 @@ function disposeWhenSafe {
 After it is disposed, some properties of the `container` object can be read, but the data objects in the container can no longer be changed either locally of from data relayed by the Fluid service.
 But it would be possible for your code to create a new local container object for the same container by calling `client.getContainer` passing the same container ID. This new object would be in the **ready** state.
 
-<!--
+{/*
      HOW TO MODIFY THE DIAGRAMS IN THIS ARTICLE
 
      These instructions help you produce diagrams that are the right size at a good resolution.
@@ -343,4 +346,4 @@ But it would be possible for your code to create a new local container object fo
      2. Open the Visio file and change it as needed.
      3. "Save as" the Visio file but select SVG as the file type.
      4. Ensure that the destination folder is the ./images subfolder and complete the "Save As" process.
--->
+*/}
