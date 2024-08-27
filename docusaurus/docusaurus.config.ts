@@ -114,24 +114,48 @@ const config: Config = {
 							label: "Follow @fluidframework",
 							href: "https://twitter.com/fluidframework",
 						},
-					],
-					// position: "left",
-				},
-				{
-					title: "More",
-					items: [
-						{
-							label: "Blog",
-							to: "/blog",
-						},
 						{
 							label: "GitHub",
 							href: githubUrl,
 						},
 					],
 				},
+				{
+					// title: "More",
+					items: [
+						{
+							label: "Blog",
+							to: "/blog",
+						},
+					],
+				},
+				{
+					items: [
+						{
+							label: "Privacy",
+							href: "https://privacy.microsoft.com/privacystatement"
+						},
+						{
+							label: "Consumer Health Privacy",
+							href: "https://go.microsoft.com/fwlink/?linkid=2259814"
+						},
+						{
+							label: "Terms of Use",
+							href: "https://www.microsoft.com/legal/terms-of-use"
+						},
+						{
+							label: "License",
+							href: "https://github.com/microsoft/FluidFramework/blob/main/LICENSE"
+						},
+					]
+				}
 			],
-			copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+			logo: {
+				src: "https://fluidframework-docs-cdn.azureedge.net/static/images/microsoft-logo.png",
+				href: "https://www.microsoft.com/",
+				width: 130,
+			},
+			copyright: `Copyright © ${new Date().getFullYear()} Microsoft`,
 		},
 		prism: {
 			theme: prismThemes.github,
