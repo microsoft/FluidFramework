@@ -18,11 +18,11 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import type { FieldKey, Value } from "../../core/index.js";
+import type { Value } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import { TreeCompressionStrategy } from "../../feature-libraries/index.js";
 import { Tree, type ISharedTree, type SharedTree } from "../../shared-tree/index.js";
-import { type JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util/index.js";
+import { type JsonCompatibleReadOnly, getOrAddEmptyToMap } from "../../util/index.js";
 import { treeTestFactory } from "../utils.js";
 import {
 	SchemaFactory,
@@ -42,14 +42,12 @@ import {
 // 4. "large" node just get a long repeated string value, not a complex tree, so tree encoding is not really covered here.
 // TODO: fix above issues.
 
-const builder = new SchemaFactory("opSize");
+const schemaFactory = new SchemaFactory("opSize");
 
-class Child extends builder.object("Test:Opsize-Bench-Child", {
-	data: builder.string,
+class Child extends schemaFactory.object("Test:Opsize-Bench-Child", {
+	data: schemaFactory.string,
 }) {}
-class Parent extends builder.array("Test:Opsize-Bench-Root", Child) {}
-
-const childrenFieldKey: FieldKey = brand("children");
+class Parent extends schemaFactory.array("Test:Opsize-Bench-Root", Child) {}
 
 /**
  * Create a default attached tree for op submission
@@ -528,7 +526,7 @@ describe("Op Size", () => {
 		];
 
 		withTransactionsOrNot((run) => {
-			const benchmarkInsertRemoveEditNodesWithInvidiualTxs = (
+			const benchmarkInsertRemoveEditNodesWithIndividualTxs = (
 				percentile: number,
 				distribution: OpKindDistribution,
 			) => {
@@ -586,7 +584,7 @@ describe("Op Size", () => {
 				describe(suiteDescription, () => {
 					for (const { percentile } of sizes) {
 						it(`Percentile: ${percentile}`, () => {
-							benchmarkInsertRemoveEditNodesWithInvidiualTxs(percentile, distribution);
+							benchmarkInsertRemoveEditNodesWithIndividualTxs(percentile, distribution);
 						});
 					}
 				});
