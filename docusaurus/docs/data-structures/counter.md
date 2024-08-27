@@ -154,11 +154,12 @@ Since `updateCounterValueLabel` is listening for all `incremented` events, the v
 
 ## API documentation
 
-For a comprehensive view of the `counter` package's API documentation, see [the SharedCounter API docs]({{< ref "docs/api/v1/counter.md" >}}).
+For a comprehensive view of the `counter` package's API documentation, see [the SharedCounter API docs](../api/counter).
 
 <!-- Links -->
-[increment]: {{< apiref "counter" "ISharedCounter" "interface" "v1" >}}#increment-methodsignature
-[incremented]: {{< apiref "counter" "ISharedCounterEvents" "interface" "v1" >}}#_call_-callsignature
-[Optimistic DDS]: {{< relref "dds.md#optimistic-data-structures" >}}
-[SharedMap]: {{< relref "map.md" >}}
-[SharedMap creation]: {{< relref "map.md#creation" >}}
+<!-- TODO: use ApiLink -->
+[increment]: ../api/counter/isharedcounter-interface#increment-methodsignature
+[incremented]: ../api/counter/isharedcounter-interface#_call_-callsignature
+[Optimistic DDS]: ../build/dds#optimistic-data-structures
+[SharedMap]: ./map
+[SharedMap creation]: ./map#creation
