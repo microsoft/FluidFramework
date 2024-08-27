@@ -34,11 +34,17 @@ import {
 	knownApiLevels,
 	unscopedPackageNameString,
 } from "../../library/index.js";
+// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+// eslint-disable-next-line import/no-internal-modules
 import { type TestCaseTypeData, buildTestCase } from "../../typeValidator/testGeneration.js";
+// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+// eslint-disable-next-line import/no-internal-modules
 import type { TypeData } from "../../typeValidator/typeData.js";
 import type {
 	BrokenCompatTypes,
 	PackageWithTypeTestSettings,
+	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../typeValidator/typeValidatorConfig.js";
 
 export default class GenerateTypetestsCommand extends PackageCommand<
