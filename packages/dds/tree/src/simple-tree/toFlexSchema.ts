@@ -9,6 +9,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	EmptyKey,
 	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 } from "../core/index.js";
 import {
@@ -103,6 +104,15 @@ export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 export function getFlexSchema(root: TreeNodeSchema): FlexTreeNodeSchema {
 	const treeSchema = toFlexSchema(root);
 	return treeSchema.rootFieldSchema.monomorphicChildType ?? fail("root should be monomorphic");
+}
+
+/**
+ * Return a stored schema for the provided class schema.
+ *
+ * This also has the side effect of populating the cached view schema on the class based schema.
+ */
+export function getStoredSchema(root: TreeNodeSchema): TreeNodeStoredSchema {
+	return getFlexSchema(root).stored;
 }
 
 /**
