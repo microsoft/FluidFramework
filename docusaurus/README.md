@@ -120,6 +120,29 @@ import { PackageLink } from "@site/src/components/shortLinks" // Best practice: 
 <PackageLink packageName="azure-client">@fluidframework/azure-client</PackageLink>
 ```
 
+### MDX
+
+MDX syntax (supported by Docusaurus) is powerful.
+But there is a subset of standard Markdown syntax that is not supported.
+For example, any HTML-like syntax will *always* be treated as JSX syntax, so standard embedded HTML patterns don't work.
+Most of the time, this isn't an issue, since substituting JSX syntax is generally fine.
+With some exceptions.
+
+#### Comments
+
+A common pattern for adding inline comments in `.md` files looks like:
+
+```md
+<!-- I am a comment -->
+```
+
+The replacement syntax to use in `.mdx` files would be:
+```mdx
+{/* I am a comment */}
+```
+
+(just like you would do in a JSX context!)
+
 ## TODOs
 
 - Link check doesn't handle custom heading anchors - maybe there is a plugin for this?
