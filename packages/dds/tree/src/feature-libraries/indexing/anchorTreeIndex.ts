@@ -17,10 +17,9 @@ import {
 	forEachNode,
 } from "../../core/index.js";
 import type { TreeIndex, TreeIndexNodes } from "./types.js";
-import { TreeStatus } from "../flex-tree/index.js";
-import { Tree } from "../../index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { tryGetCachedHydratedTreeNode } from "../../simple-tree/proxyBinding.js";
+import type { TreeStatus } from "../flex-tree/index.js";
+// import { tryGetCachedHydratedTreeNode } from "../../simple-tree/index.js";
+// import { Tree } from "../../index.js";
 
 /**
  * Specifies whether an indexable tree is currently in the document,
@@ -252,12 +251,12 @@ export class AnchorTreeIndex<TKey extends TreeValue, TValue>
 		anchorNodes: TreeIndexNodes<AnchorNode> | undefined,
 	): TValue | undefined {
 		const attachedNodes = filterNodes(anchorNodes, (anchorNode) => {
-			const node =
-				tryGetCachedHydratedTreeNode(anchorNode) ??
-				fail("nodes in index should not be cooked");
-			if (Tree.status(node) !== TreeStatus.InDocument) {
-				return false;
-			}
+			// const node =
+			// 	tryGetCachedHydratedTreeNode(anchorNode) ??
+			// 	fail("nodes in index should not be cooked");
+			// if (Tree.status(node) !== TreeStatus.InDocument) {
+			// 	return false;
+			// }
 			return true;
 		});
 
