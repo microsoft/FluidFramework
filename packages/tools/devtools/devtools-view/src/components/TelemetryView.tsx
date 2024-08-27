@@ -252,7 +252,7 @@ function ListLengthSelection(props: ListLengthSelectionProps): React.ReactElemen
 
 	return (
 		<div>
-			Max Events &nbsp;
+			Max events to display &nbsp;
 			<Dropdown
 				aria-label="Max Events to Display"
 				placeholder="Select an option"
