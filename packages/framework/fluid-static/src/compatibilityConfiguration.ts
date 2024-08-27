@@ -14,6 +14,7 @@ import type { CompatibilityMode } from "./types.js";
 /**
  * The CompatibilityMode selected determines the set of runtime options to use. In "1" mode we support
  * full interop with true 1.x clients, while in "2" mode we only support interop with 2.x clients.
+ * "2.2" requires all clients to be 2.2 or later.
  */
 export const compatibilityModeRuntimeOptions: Record<
 	CompatibilityMode,
@@ -47,5 +48,18 @@ export const compatibilityModeRuntimeOptions: Record<
 		// Explicitly disable running Sweep in compat mode "2". Although sweep is supported in 2.x, it is disabled by default.
 		// This setting explicitly disables it to be extra safe.
 		gcOptions: { enableGCSweep: undefined },
+	},
+	"2.2": {
+		// Explicit schema control explicitly makes the container incompatible with 1.x clients, to force their
+		// ejection from collaboration and prevent container corruption.  It is off by default and must be explicitly enabled.
+		explicitSchemaControl: true,
+		// The runtime ID compressor is a prerequisite to use SharedTree but is off by default and must be explicitly enabled.
+		// It introduces a new type of op which is not compatible with 1.x clients.
+		enableRuntimeIdCompressor: "on",
+		// Explicitly disable running Sweep in compat mode "2". Although sweep is supported in 2.x, it is disabled by default.
+		// This setting explicitly disables it to be extra safe.
+		gcOptions: { enableGCSweep: undefined },
+		// Path based address routing is off by default and must be explicitly enabled.
+		enablePathBasedAddressing: true,
 	},
 };
