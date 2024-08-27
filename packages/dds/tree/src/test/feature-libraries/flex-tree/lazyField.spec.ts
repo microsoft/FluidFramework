@@ -396,7 +396,6 @@ describe("LazySequence", () => {
 		policy: defaultSchemaPolicy,
 		adapters: {},
 	};
-	// const schema = builder.intoSchema(rootSchema);
 
 	/**
 	 * Creates a tree with a sequence of numbers at the root, and returns the sequence
