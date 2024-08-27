@@ -3,6 +3,8 @@ title: Frequently Asked Questions
 sidebar_position: 7
 ---
 
+import Browsers from '@site/src/pages/browsers.mdx';
+
 The following are short, sometimes superficial, answers to some of the most commonly asked questions about the Fluid
 Framework.
 
@@ -23,7 +25,7 @@ DDS is short for *distributed data structure*. DDSes are the foundation of the F
 that the Fluid runtime is able to keep them in sync across clients while each client operates on the DDSes in largely
 the same way they would operate on local data. The data source for a Fluid solution can represent numerous DDSes.
 
-There are many types of DDSes including a [SharedMap]({{< relref "data-structures/map.md" >}}) that is a distributed version of a JavaScript Map, and a [SharedString]({{< relref "data-structures/string.md" >}}) that is designed to enable real-time editing of text data by multiple clients simultaneously.
+There are many types of DDSes including a [SharedMap][] that is a distributed version of a JavaScript Map, and a [SharedString][] that is designed to enable real-time editing of text data by multiple clients simultaneously.
 Developers can use the DDSes included with the Fluid Framework or develop new ones.
 
 Any practical limits on the types of data and size of a DDS will be specific to the implementation of that DDS. DDSes
@@ -99,7 +101,7 @@ while a SignalR solution designed to distribute state would require additional s
 ### Does Fluid use operational transforms?
 
 Fluid does not use Operational Transforms (OTs), but we learned a tremendous amount from the literature on OT.
-While OT uses operations that can be applied out of order by transforming operations to account for recent changes, Fluid relies on a [Total Order Broadcast]({{< relref "tob.md" >}}) to guarantee that all operations are applied in a specific order.
+While OT uses operations that can be applied out of order by transforming operations to account for recent changes, Fluid relies on a [Total Order Broadcast](./concepts/tob) to guarantee that all operations are applied in a specific order.
 
 ### Does Fluid use CRDT?
 
@@ -113,7 +115,7 @@ conflicts. This allows us to have non-commutative operations because there is an
 
 This is the scenario that Fluid was first designed to support.
 Consequently, the Fluid Framework is an ideal foundation for rich text editors that support simultaneous editing by multiple clients.
-The [SharedString]({{< relref "string.md" >}}) DDS is tailor-made for this scenario.
+The [SharedString][] DDS is tailor-made for this scenario.
 
 ### Turn-based games?
 
@@ -240,7 +242,7 @@ This also applies to Blazor, Xamarin, MAUI, and other mobile frameworks.
 
 ### What browsers are supported?
 
-{{% include file="_includes/browsers.md" %}}
+<Browsers components={props.components} />
 
 ## Summarization
 
@@ -261,3 +263,7 @@ Summary and snapshot both represent the contents for a container in a tree forma
 -   Hence, the trees for summary and snapshot have different formats to support these requirements:
     -   Summary is represented by an ISummaryTree interface defined [here](https://github.com/microsoft/FluidFramework/blob/7411ef603dea57f5573b81fee78050e2e6a8a16d/common/lib/protocol-definitions/src/summary.ts#L157).
     -   Snapshot is represented by an ISnapshotTree interface defined [here](https://github.com/microsoft/FluidFramework/blob/7411ef603dea57f5573b81fee78050e2e6a8a16d/common/lib/protocol-definitions/src/storage.ts#L133).
+
+{/* Links */}
+[SharedMap]: ./data-structures/string.md
+[SharedString]: ./data-structures/string.md
