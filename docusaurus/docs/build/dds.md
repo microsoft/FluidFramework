@@ -14,7 +14,7 @@ DDSes are low-level data structures, while Data Objects are composed of DDSes an
 used to organize DDSes into semantically meaningful groupings for your scenario, as well as
 providing an API surface to your app's data. However, many Fluid applications will use only DDSes.
 
-There are a number of shared objects built into the Fluid Framework. See [Distributed data structures]({{< relref "/docs/data-structures/overview.md" >}}) for more information.
+There are a number of shared objects built into the Fluid Framework. See [Distributed data structures](/docs/data-structures/overview) for more information.
 
 DDSes automatically ensure that each client has access to the same state. They're called *distributed data structures*
 because they are similar to data structures used commonly when programming, like strings, maps/dictionaries, and
@@ -44,7 +44,7 @@ that the merge behavior should match what users intend or expect as they are edi
 In Fluid, the merge behavior is defined by the DDS. The simplest merge strategy, employed by key-value distributed data
 structures like SharedMap, is *last writer wins* (LWW). With this merge strategy, when multiple clients write different
 values to the same key, the value that was written last will overwrite the others. Refer to the
-[documentation for each DDS]({{< relref "/docs/data-structures/overview.md" >}}) for more details about the merge
+[documentation for each DDS](/docs/data-structures/overview) for more details about the merge
 strategy it uses.
 
 ## Performance characteristics
@@ -116,7 +116,7 @@ see [Fluid handles]({{< relref "handles.md" >}}).
 
 :::note
 
-If you are considering storing a DDS within another DDS in order to give your app's data a hierarchical structure, consider using a [SharedTree]({{< relref "/docs/data-structures/tree.md" >}}) DDS instead.
+If you are considering storing a DDS within another DDS in order to give your app's data a hierarchical structure, consider using a [SharedTree](/docs/data-structures/tree) DDS instead.
 
 {{</callout >}}
 

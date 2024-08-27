@@ -4,7 +4,6 @@ aliases:
   - "/build/releases/"
 ---
 
-
 ## Fluid Release Versions
 
 Fluid Releases will be done through three channels
