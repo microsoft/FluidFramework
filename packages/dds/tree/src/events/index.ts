@@ -5,7 +5,6 @@
 
 export {
 	createEmitter,
-	createEmitterMinimal,
 	EventEmitter,
 	type IEmitter,
 	type NoListenersCallback,

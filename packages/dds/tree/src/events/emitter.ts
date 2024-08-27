@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { getOrCreate } from "../util/index.js";
+import { setInNestedMap } from "../util/index.js";
 import type { Listenable, Listeners, Off } from "./listeners.js";
 
 /**
  * Interface for an event emitter that can emit typed events to subscribed listeners.
- * @sealed @alpha
  */
 export interface IEmitter<TListeners extends Listeners<TListeners>> {
 	/**
@@ -167,7 +166,7 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 			}
 		};
 
-		getOrCreate(this.listeners, eventName, () => new Map()).set(off, listener);
+		setInNestedMap(this.listeners, eventName, off, listener);
 		return off;
 	}
 
@@ -209,18 +208,7 @@ class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
  * Create a {@link Listenable} that can be instructed to emit events via the {@link IEmitter} interface.
  *
  * A class can delegate handling {@link Listenable} to the returned value while using it to emit the events.
- * See also `EventEmitter` which be used as a base class to implement {@link Listenable} via extension.
- */
-export function createEmitter<TListeners extends object>(
-	noListeners?: NoListenersCallback<TListeners>,
-): Listenable<TListeners> & IEmitter<TListeners> & HasListeners<TListeners> {
-	return new ComposableEventEmitter<TListeners>(noListeners);
-}
-
-/**
- * Create a {@link Listenable} that can be instructed to emit events via the {@link IEmitter} interface.
- * @remarks
- * A class can delegate handling {@link Listenable} to the returned value while using it to emit the events.
+ * See also {@link EventEmitter} which be used as a base class to implement {@link Listenable} via extension.
  * @example Forwarding events to the emitter
  * ```typescript
  * interface MyEvents {
@@ -239,9 +227,9 @@ export function createEmitter<TListeners extends object>(
  * 	}
  * }
  * ```
- * @alpha
  */
-export function createEmitterMinimal<TListeners extends object>(): Listenable<TListeners> &
-	IEmitter<TListeners> {
-	return createEmitter();
+export function createEmitter<TListeners extends object>(
+	noListeners?: NoListenersCallback<TListeners>,
+): Listenable<TListeners> & IEmitter<TListeners> & HasListeners<TListeners> {
+	return new ComposableEventEmitter<TListeners>(noListeners);
 }

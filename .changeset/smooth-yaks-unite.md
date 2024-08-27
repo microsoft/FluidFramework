@@ -4,9 +4,10 @@
 ---
 "section": "tree"
 ---
-Publish API for creating events as alpha.
+Refactor code for emitting events to make it easier to copy paste into other projects.
 
-Export `createEmitterMinimal` and related types as `@alpha`.
-See `createEmitterMinimal`'s documentation for example usage.
-These APIs allow users to implement events in the same style `SharedTree` does.
-In the future they may be published as a standalone event library is there is sufficient demand.
+Factored event emitting utilities into their own file, `events/emitter.ts`.
+Applications wishing to use SharedTree's eventing library for custom events can copy this file (and its referenced utility function) as a starting point for defining and emitting their own custom events.
+See `createEmitter`'s documentation for example usage.
+
+Currently there are no published or officially supported versions of these utilities, but they are relatively simple, and can be copied and customized as needed.
