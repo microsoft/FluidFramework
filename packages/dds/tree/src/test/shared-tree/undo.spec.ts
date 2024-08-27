@@ -7,14 +7,8 @@ import { type UpPath, rootFieldKey } from "../../core/index.js";
 import { singleJsonCursor } from "../../domains/index.js";
 import type { ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
-import {
-	createTestUndoRedoStacks,
-	expectJsonTree,
-	insert,
-	makeTreeFromJson,
-	moveWithin,
-	remove,
-} from "../utils.js";
+import { createTestUndoRedoStacks, expectJsonTree, moveWithin } from "../utils.js";
+import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
 
 const rootPath: UpPath = {
 	parent: undefined,
@@ -158,7 +152,7 @@ describe("Undo and redo", () => {
 		const count = undoCount ?? 1;
 		const itFn = skip ? it.skip : it;
 		itFn(`${name} (act on fork undo on fork)`, () => {
-			const view = makeTreeFromJson(initialState);
+			const view = makeTreeFromJsonSequence(initialState);
 			const fork = view.fork();
 
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
@@ -185,7 +179,7 @@ describe("Undo and redo", () => {
 
 		// TODO: unskip once forking revertibles is supported
 		it.skip(`${name} (act on view undo on fork)`, () => {
-			const view = makeTreeFromJson(initialState);
+			const view = makeTreeFromJsonSequence(initialState);
 			const fork = view.fork();
 
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
@@ -211,7 +205,7 @@ describe("Undo and redo", () => {
 		});
 
 		itFn(`${name} (act on view undo on view)`, () => {
-			const view = makeTreeFromJson(initialState);
+			const view = makeTreeFromJsonSequence(initialState);
 			const fork = view.fork();
 
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
@@ -238,7 +232,7 @@ describe("Undo and redo", () => {
 
 		// TODO: unskip once forking revertibles is supported
 		it.skip(`${name} (act on fork undo on view)`, () => {
-			const view = makeTreeFromJson(initialState);
+			const view = makeTreeFromJsonSequence(initialState);
 			const fork = view.fork();
 
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
@@ -264,7 +258,7 @@ describe("Undo and redo", () => {
 		});
 
 		it(`${name} multiple times`, () => {
-			const tree = makeTreeFromJson(initialState);
+			const tree = makeTreeFromJsonSequence(initialState);
 			const fork = tree.fork();
 
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
@@ -293,7 +287,7 @@ describe("Undo and redo", () => {
 	}
 
 	it("can undo before and after rebasing a branch", () => {
-		const tree1 = makeTreeFromJson([0, 0, 0]);
+		const tree1 = makeTreeFromJsonSequence([0, 0, 0]);
 		const tree2 = tree1.fork();
 
 		const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2.events);
@@ -311,7 +305,7 @@ describe("Undo and redo", () => {
 
 	// TODO: unskip once forking revertibles is supported
 	it.skip("can undo after forking a branch", () => {
-		const tree1 = makeTreeFromJson(["A", "B", "C"]);
+		const tree1 = makeTreeFromJsonSequence(["A", "B", "C"]);
 
 		const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
 			tree1.events,
@@ -334,7 +328,7 @@ describe("Undo and redo", () => {
 
 	// TODO: unskip once forking revertibles is supported
 	it.skip("can redo after forking a branch", () => {
-		const tree1 = makeTreeFromJson(["B"]);
+		const tree1 = makeTreeFromJsonSequence(["B"]);
 
 		const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
 			tree1.events,
@@ -358,7 +352,7 @@ describe("Undo and redo", () => {
 	});
 
 	it("can undo/redo a transaction", () => {
-		const tree = makeTreeFromJson(["A", "B"]);
+		const tree = makeTreeFromJsonSequence(["A", "B"]);
 
 		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 		tree.transaction.start();

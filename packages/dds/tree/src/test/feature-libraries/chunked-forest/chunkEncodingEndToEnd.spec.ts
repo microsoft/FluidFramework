@@ -53,6 +53,7 @@ import {
 	checkoutWithContent,
 	cursorFromInsertableTreeField,
 	flexTreeViewWithContent,
+	forestWithContent,
 	numberSequenceRootSchema,
 	testIdCompressor,
 } from "../../utils.js";
@@ -206,13 +207,13 @@ describe("End to end chunked encoding", () => {
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
 		assert(!chunk.isShared());
 
-		const flexTree = flexTreeViewWithContent({
+		const forest = forestWithContent({
 			schema: numberSequenceRootSchema,
 			initialTree: chunk.cursor(),
 		});
 
 		const forestSummarizer = new ForestSummarizer(
-			flexTree.context.checkout.forest as IEditableForest,
+			forest,
 			revisionTagCodec,
 			fieldBatchCodec,
 			context,

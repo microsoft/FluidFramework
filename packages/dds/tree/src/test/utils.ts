@@ -45,7 +45,6 @@ import {
 
 import { type ICodecFamily, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
-	AllowedUpdateType,
 	type AnnouncedVisitor,
 	type ChangeFamily,
 	type ChangeFamilyEditor,
@@ -81,14 +80,12 @@ import {
 	mapCursorField,
 	moveToDetachedField,
 	revisionMetadataSourceFromInfo,
-	rootFieldKey,
 	type Anchor,
 	type AnchorNode,
 	type AnchorSetRootEvents,
 	type TreeStoredSchemaSubscription,
 	type ITreeCursorSynchronous,
 	CursorLocationType,
-	type MapTree,
 } from "../core/index.js";
 import {
 	cursorToJsonObject,
@@ -150,6 +147,7 @@ import {
 	TreeViewConfiguration,
 	SchemaFactory,
 	type InsertableTreeFieldFromImplicitField,
+	toStoredSchema,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -780,40 +778,19 @@ export const jsonSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence,
 	libraries: [jsonSchema],
 }).intoSchema(jsonRoot);
 
-export const stringSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence, {
-	libraries: [leaf.library],
-	scope: "StringSequenceRoot",
-}).intoSchema(leaf.string);
-
 export const numberSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence, {
 	libraries: [leaf.library],
 	scope: "NumberSequenceRoot",
 }).intoSchema(leaf.number);
 
-export const emptyJsonSequenceConfig = {
-	schema: jsonSequenceRootSchema,
-	allowedSchemaModifications: AllowedUpdateType.Initialize,
-	initialTree: [],
-} satisfies InitializeAndSchematizeConfiguration;
-
-export const emptyStringSequenceConfig = {
-	schema: stringSequenceRootSchema,
-	allowedSchemaModifications: AllowedUpdateType.Initialize,
-	initialTree: [],
-} satisfies InitializeAndSchematizeConfiguration;
-
 /**
- * If the root is an array, this creates a sequence field at the root instead of a JSON array node.
- *
- * If the root is not an array, a single item root sequence is used.
+ * Crates a tree using the Json domain with a required root field.
  */
-export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ITreeCheckout {
-	const cursors = (Array.isArray(json) ? json : [json]).map(singleJsonCursor);
-	const tree = checkoutWithContent({
-		schema: intoStoredSchema(jsonSequenceRootSchema),
-		initialTree: cursors,
+export function makeTreeFromJson(json: JsonCompatible): ITreeCheckout {
+	return checkoutWithContent({
+		schema: toStoredSchema(JsonUnion),
+		initialTree: singleJsonCursor(json),
 	});
-	return tree;
 }
 
 export function toJsonableTree(tree: ITreeCheckout): JsonableTree[] {
@@ -833,30 +810,6 @@ export function jsonTreeFromForest(forest: IForestSubscription): JsonCompatible[
 	const copy = mapCursorField(readCursor, cursorToJsonObject);
 	readCursor.free();
 	return copy;
-}
-
-/**
- * Helper function to insert node at a given index.
- *
- * TODO: delete once the JSON editing API is ready for use.
- *
- * @param tree - The tree on which to perform the insert.
- * @param index - The index in the root field at which to insert.
- * @param value - The value of the inserted nodes.
- */
-export function insert(tree: ITreeCheckout, index: number, ...values: string[]): void {
-	const fieldEditor = tree.editor.sequenceField({ field: rootFieldKey, parent: undefined });
-	fieldEditor.insert(
-		index,
-		cursorForMapTreeField(
-			values.map((value): MapTree => ({ fields: new Map(), type: leaf.string.name, value })),
-		),
-	);
-}
-
-export function remove(tree: ITreeCheckout, index: number, count: number): void {
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-	field.remove(index, count);
 }
 
 export function expectJsonTree(
