@@ -2,6 +2,8 @@
 
 ## [5.4.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.4.0)
 
+### New no-unchecked-record-access rule
+
 Enabled new no-unchecked-record-access rule to enforce safe property access on index signature types.
 
 ### Disabled rules
