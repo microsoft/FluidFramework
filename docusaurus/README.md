@@ -143,6 +143,10 @@ The replacement syntax to use in `.mdx` files would be:
 
 (just like you would do in a JSX context!)
 
+#### Other best practices
+
+- Don't include file extensions in links. E.g., prefer `[foo](./foo)` over `[foo](./foo.md)`.
+
 ## TODOs
 
 - Figure out solution to markdown-magic in mdx (html comment syntax not supported)
