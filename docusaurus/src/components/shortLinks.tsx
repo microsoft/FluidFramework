@@ -9,6 +9,10 @@
  * {@link PackageLink} input props.
  */
 export interface PackageLinkProps {
+	/**
+	 * Contents to display within the link.
+	 * @defaultValue {@link PackageLinkProps.packageName}
+	 */
 	children?: React.ReactNode;
 	packageName: string;
 	headingId?: string;
@@ -19,13 +23,17 @@ export interface PackageLinkProps {
  */
 export function PackageLink({ headingId, packageName, children }: PackageLinkProps): JSX.Element {
 	const headingPostfix = headingId ? `#${headingId}` : "";
-	return <a href={`/docs/api/${packageName}${headingPostfix}`}>{children}</a>;
+	return <a href={`/docs/api/${packageName}${headingPostfix}`}>{children ?? packageName}</a>;
 }
 
 /**
  * {@link ApiLink} input props.
  */
 export interface ApiLinkProps {
+	/**
+	 * Contents to display within the link.
+	 * @defaultValue {@link ApiLinkProps.apiName}
+	 */
 	children?: React.ReactNode;
 	packageName: string;
 	apiName: string;
@@ -41,7 +49,7 @@ export function ApiLink({ apiName, apiType, packageName, headingId, children }: 
 	const headingPostfix = headingId ? `#${headingId}` : "";
 	// TODO: how to deal with namespaces?
 	const path = `/docs/api/${packageName}/${apiName}-${apiType}${headingPostfix}`;
-	return <a href={path}>{children}</a>;
+	return <a href={path}>{children ?? apiName}</a>;
 }
 
 
@@ -50,15 +58,15 @@ export function ApiLink({ apiName, apiType, packageName, headingId, children }: 
  */
 export interface GlossaryLinkProps {
 	/**
-	 * The glossary term to link to.
-	 */
-	term: string;
-
-	/**
 	 * Contents to display within the link.
 	 * @defaultValue {@link GlossaryLinkProps.term}
 	 */
 	children?: React.ReactNode;
+
+	/**
+	 * The glossary term to link to.
+	 */
+	term: string;
 }
 
 /**
