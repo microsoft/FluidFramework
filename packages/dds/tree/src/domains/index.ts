@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { SchemaBuilder } from "./schemaBuilder.js";
 export {
 	cursorToJsonObject,
 	jsonArray,
