@@ -39,6 +39,8 @@ describe("BenchmarkCustom error handling", () => {
 	afterEach(function () {
 		if (benchmarkEndPayloadIsCorrect) {
 			this.skip();
+		} else {
+			throw new Error("The benchmark end payload was not correct.");
 		}
 	});
 });
