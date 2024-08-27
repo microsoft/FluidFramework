@@ -31,7 +31,7 @@ export interface ITypeValidationConfig {
 }
 
 /**
- * A type repreesnting package.json files with the Fluid-specific `typeValidation` settings.
+ * A type representing package.json files with the Fluid-specific `typeValidation` settings.
  *
  * @remarks
  *
