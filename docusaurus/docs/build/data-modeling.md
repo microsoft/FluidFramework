@@ -74,7 +74,7 @@ const newCell = await container.create(SharedCell); // Create a new SharedCell
 const newMap = await container.create(SharedMap); // Create a new SharedMap
 ```
 
-{{% callout tip %}}
+:::tip
 Another way to think about `initialObjects` and dynamic objects is as follows:
 
 With `initialObjects`, you're telling Fluid both the type of the object *and* the key you'll use to later retrieve the
@@ -85,7 +85,7 @@ On the other hand, with dynamic objects, you're telling Fluid what object types 
 sense, you're defining the "key" to access that data again later, just as you did with `initialObjects`, but you define
 it dynamically at runtime.
 
-{{% /callout %}}
+:::
 
 ### Using handles to store and retrieve shared objects
 

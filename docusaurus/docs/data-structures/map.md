@@ -10,7 +10,7 @@ It provides the same API as the built-in [Map](https://developer.mozilla.org/en-
 
 For example, in a traditional `Map`, setting a key would only set it on the local object. In a `SharedMap`, the moment one client sets that key, that update is automatically sent to all of the other connected clients who will update their local state with the new remote change. From a development standpoint, this allows you to develop against the `SharedMap` DDS as you would with a traditional `Map`, while ensuring that the data being updated is synced between all clients with all of the logic for managing and merging the changes abstracted away.
 
-{{% callout tip "Differences between Map and SharedMap" %}}
+:::tip[Differences between Map and SharedMap]
 
 -   SharedMaps *must* use string keys.
 -   You must only store the following as values in a `SharedMap`:
@@ -18,7 +18,7 @@ For example, in a traditional `Map`, setting a key would only set it on the loca
     If you store class instances, for example, then data synchronization will not work as expected.
     -   [Handles]({{< relref "handles.md" >}}) to other Fluid DDSes
 -   When storing objects as values in a SharedMap, changes to the object will be synchronized whole-for-whole. This means that individual changes to the properties of an object are not merged during synchronization. If you need this behavior you should store individual properties in the SharedMap instead of full objects. See [Picking the right data structure]({{< relref "dds.md#picking-the-right-data-structure" >}}) for more information.
-{{% /callout %}}
+:::
 
 For additional background on DDSes and a general overview of their design, see [Introducing distributed data structures]({{< relref "dds.md" >}}).
 

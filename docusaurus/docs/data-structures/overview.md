@@ -7,12 +7,12 @@ The Fluid Framework provides developers with distributed data structures (DDSes)
 connected client has access to the same state. The APIs provided by DDSes are designed to be familiar to programmers
 who've used common data structures before.
 
-{{% callout note %}}
+:::note
 
 This article assumes that you are familiar with
 [Introducing distributed data structures]({{< relref "dds.md" >}}).
 
-{{% /callout %}}
+:::
 
 A distributed data structure behaves like a local data structure. Your code can add data, remove data, update existing data,
 etc.
@@ -20,12 +20,12 @@ However, a DDS is not a local object.
 A DDS can also be changed by other clients that expose the same parent container of the DDS.
 Because users can simultaneously change the same DDS, you need to consider which DDS to use for modeling your data.
 
-{{% callout note "Meaning of 'simultaneously'" %}}
+:::note[Meaning of "simultaneously"]
 
 Two or more clients are said to make a change *simultaneously* if they each make a change before they have received the
 others' changes from the server.
 
-{{% /callout %}}
+:::
 
 Choosing the correct data structure for your scenario can improve the performance and code structure of your application.
 

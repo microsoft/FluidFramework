@@ -264,11 +264,11 @@ event object.
 <img src="https://fluidframework.blob.core.windows.net/static/assets/consoleLogger_telemetry_in_action.png" alt="The
   ConsoleLogger sends telemetry events to the browser console for display.">
 
-{{% callout warning %}}
+:::warning
 
 The purpose of `ConsoleLogger` is to demonstrate how the `ITelemetryBaseLogger` interface should be implemented. In typical usage, developers should instead use the `DebugLogger`, which is provided by default by the Fluid Framework. See [Using DebugLogger](#using-debuglogger) below instead of implementing something similar to `ConsoleLogger`.
 
-{{% /callout %}}
+:::
 
 ### Using `DebugLogger`
 

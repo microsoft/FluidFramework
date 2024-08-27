@@ -31,11 +31,11 @@ export interface IMember {
 
 An `IMember` represents a single user identity.  `IMember` holds a list of `IConnection` objects, which represent that audience member's active connections to the container.  Typically a user will only have one connection, but scenarios such as loading the container in multiple web contexts or on multiple computers will also result in as many connections. An audience member will always have at least one connection. Each user and each connection will both have a unique identifier.
 
-{{% callout tip %}}
+:::tip
 
 Connections can be short-lived and are not reused. A client that disconnects from the container and immediately reconnects will receive an entirely new connection. The audience will reflect through its [member leaving and member joining events](#events).
 
-{{% /callout %}}
+:::
 
 ### Service-specific audience data
 
@@ -48,9 +48,11 @@ export interface TinyliciousMember extends IMember {
 }
 ```
 
-{{% callout tip %}}
+:::tip
+
 Because audience data is service-specific, code that interacts with audience may be less portable to other services.
-{{% /callout %}}
+
+:::
 
 ### APIs
 
@@ -58,21 +60,21 @@ Because audience data is service-specific, code that interacts with audience may
 
 The `getMembers` method returns a map of the audience's current members. The map keys are user IDs (i.e. the `IMember.userId` property), and values are the `IMember` objects for the corresponding user IDs. Your code can further query the individual `IMember` objects for their client connections.
 
-{{% callout tip "Tips" %}}
+:::tip
 
 The map returned by `getMembers` represents a snapshot in time and will not update internally as members enter and leave the audience. Instead of holding onto the return value, your code should subscribe to `ServiceAudience`'s events for member changes.
 
-{{% /callout %}}
+:::
 
 #### getMyself
 
 The `getMyself` method returns the `IMember` object from the audience corresponding to the current user calling the method. It does so by matching the container's current client connection ID with one from the audience.
 
-{{% callout tip %}}
+:::tip
 
 Connection transitions can result in short timing windows where `getMyself` returns `undefined`. This is because the current client connection will not have been added to the audience yet, so a matching connection ID cannot be found. Similarly, offline scenarios may produce the same behavior.
 
-{{% /callout %}}
+:::
 
 ### Events
 

@@ -8,9 +8,11 @@ sidebar_position: 9
 
 FluidFramework is designed to facilitate real-time collaboration in modern web applications by distributing data throughout its clients with the help of its many distributed data structures (DDSes). However, TaskManager uniquely distributes tasks rather than a dataset. Furthermore, TaskManager is designed to distribute tasks that should be exclusively executed by a single client to avoid errors and mitigate redundancy.
 
-{{% callout note "What exactly is a \"task\"?" %}}
-A task is simply code that should only be executed by **one** client at a time. This could be as small as a single line of code, or an entire system . However, we reccomend large processes to frequently synchronize their progress in the case of an unexpected disconnection so another client can resume the process with minimal data loss.
-{{% /callout %}}
+:::note[What exactly is a "task"?]
+
+A task is simply code that should only be executed by **one** client at a time. This could be as small as a single line of code, or an entire system . However, we recommend large processes to frequently synchronize their progress in the case of an unexpected disconnection so another client can resume the process with minimal data loss.
+
+:::
 
 ### Task Queue
 

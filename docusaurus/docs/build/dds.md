@@ -25,11 +25,11 @@ data structure, and provides `get` and `set` methods to store and retrieve data 
 When using a DDS, you can largely treat it as a local object. Your code can add data to it, remove data, update it, etc.
 However, a DDS is not *just* a local object. A DDS can also be changed by other users that are editing.
 
-{{% callout tip %}}
+:::tip
 
 Most distributed data structures are prefixed with "Shared" by convention. *SharedMap*, *SharedTree*, etc. This prefix indicates that the object is shared between multiple clients.
 
-{{% /callout %}}
+:::
 
 When a DDS is changed by any client, it raises an [event](#events) locally. Your code can listen to these events so that
 the app knows when data is changed and can react appropriately. For example, your app may need to recalculate a derived value when
@@ -52,11 +52,11 @@ strategy it uses.
 Fluid DDSes exhibit different performance characteristics based on how they interact with the Fluid service. The DDSes
 generally fall into two broad categories: *optimistic* and *consensus-based*.
 
-{{% callout note "See also" %}}
+:::note[See also]
 
 *   [Fluid Framework architecture]({{< relref "architecture.md" >}})
 
-{{% /callout %}}
+:::
 
 ### Optimistic data structures
 
