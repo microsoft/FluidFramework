@@ -508,7 +508,7 @@ export function loadTypesSourceFile(typesPath: string): SourceFile {
  */
 export function generateCompatibilityTestCases(
 	typeMap: Map<string, TypeData>,
-	packageObject: PackageJson,
+	packageObject: PackageWithTypeTestSettings,
 	testString: string[],
 ): string[] {
 	const broken: BrokenCompatTypes = packageObject.typeValidation?.broken ?? {};
