@@ -56,8 +56,29 @@ Do make sure that both the open and closing `:::` lines are surrounded by blank 
 
 We use `relref` shortcode links throughout our documentation.
 These are not supported by Docusaurus.
-Unfortunately, migrating these must be done manually (for now), since Docusaurus doesn't (yet) support the ability to link to other files by some stable identifier (see https://github.com/facebook/docusaurus/discussions/7380).
-We may be able to create supporting infrastructure for something like this on our own, but for now we have to write manual links.
+
+These can be replaced using standard Markdown link syntax.
+
+#### `packageref` links
+
+Similar to the above, this shortcode syntax is not supported.
+However, a reusable React component was added to `src/components/shortLink.tsx` that can be leveraged instead for the same purpose.
+
+E.g.,
+
+```markdown
+[@fluidframework/azure-client]({{< packageref "azure-client" >}})
+```
+
+Can be replaced with (`.mdx` only):
+
+```mdx
+import { PackageLink } from "@site/src/components/shortLinks" // Best practice: put this at the top of the file
+
+...
+
+<PackageLink packageName="azure-client">@fluidframework/azure-client</PackageLink>
+```
 
 ## TODOs
 
@@ -66,3 +87,4 @@ We may be able to create supporting infrastructure for something like this on ou
 - Add markdown-lint
 - Add eslint for components
 - Inject Docusaurus front-matter in generated API docs
+- Verify high contrast support
