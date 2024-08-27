@@ -48,9 +48,49 @@ If you are using GitHub pages for hosting, this command is a convenient way to b
 
 Hugo's Callout syntax is not supported by Docusaurus, but it can be easily mapped to [Docusaurus Admonitions](https://docusaurus.io/docs/markdown-features/admonitions).
 
-First, regex find and replace `\{\{< callout (.*?) >\}\}` with `:::$1`.
-Then, handle the closing tags via simple find and replace of `{{< /callout >}}` with `:::`.
-Do make sure that both the open and closing `:::` lines are surrounded by blank lines to ensure `prettier` compat.
+E.g.,
+
+```md
+{{< callout note >}}
+...
+{{< /callout >}}
+```
+
+or
+
+```md
+{{% callout note %}}
+...
+{{% /callout %}}
+```
+
+Can be replaced with (`.mdx` only):
+
+```mdx
+:::note
+
+...
+
+:::
+```
+
+Callouts with "titles" can be migrated as follows:
+
+```md
+{{% callout tip "Title text" %}}
+...
+{{% /callout %}}
+```
+
+becomes
+
+```mdx
+:::tip[Title text]
+
+...
+
+:::
+```
 
 #### `relref` links
 
@@ -66,7 +106,7 @@ However, a reusable React component was added to `src/components/shortLink.tsx` 
 
 E.g.,
 
-```markdown
+```md
 [@fluidframework/azure-client]({{< packageref "azure-client" >}})
 ```
 
