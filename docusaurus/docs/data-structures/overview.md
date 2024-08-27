@@ -10,7 +10,7 @@ who've used common data structures before.
 :::note
 
 This article assumes that you are familiar with
-[Introducing distributed data structures]({{< relref "dds.md" >}}).
+[Introducing distributed data structures](/docs/build/dds).
 
 :::
 
@@ -45,7 +45,7 @@ These DDSes are used for storing key-value data. They are optimistic and use a l
 the value of a pair can be a complex object, the value of any given pair can only be changed whole-for-whole.
 
 -   [SharedMap][] -- a basic key-value data structure.
--   Map nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
+-   Map nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles](/docs/concepts/handles).
 
 ### Key Value Scenarios
 
@@ -78,7 +78,7 @@ Key-value data structures are the most common choice for many scenarios.
 
 FluidFramework 2.0 preview provides a DDS can be used for hierarchical data structures. It is optimistic and uses a last-writer-wins merge policy.
 
--   [SharedTree][] -- a tree of data with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
+-   [SharedTree][] -- a tree of data with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles](/docs/concepts/handles).
 
 ## Strings
 
@@ -94,7 +94,7 @@ The SharedString DDS is used for unstructured text data that can be collaborativ
 
 -   [SharedCounter][] -- a counter. (Deprecated in Fluid Framework 2.0.)
     -   `SharedCounter` is useful to keep track of increments/decrements of integer values.
-    While a key-value data structure appears like a good fit, two clients simultaneously setting the same key can [cause issues]({{< relref "counter.md/#why-a-specialized-dds" >}}).
+    While a key-value data structure appears like a good fit, two clients simultaneously setting the same key can [cause issues](./counter#why-a-specialized-dds).
     By contrast, clients can increase or decrease the `SharedCounter` value by a specified amount, but they can't set it to a specified value.
     It is optimistic.
 

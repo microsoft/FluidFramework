@@ -62,4 +62,4 @@ that the state of the dice changes in both clients.
 
 ## Next step
 
-Walk through the code of this dice roller app with [Tutorial: DiceRoller application]({{< relref "tutorial.md" >}})
+Walk through the code of this dice roller app with [Tutorial: DiceRoller application](./tutorial.md)

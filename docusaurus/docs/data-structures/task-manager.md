@@ -16,11 +16,11 @@ A task is simply code that should only be executed by **one** client at a time. 
 
 ### Task Queue
 
-TaskManager's main role is to maintain a queue of clients for each unique task. The client at the top of the queue is assigned the task, and is given permission to exclusively execute the task. All other clients will remain in queue until they leave, disconnect (unexpectedly), or the task is completed by the assigned client. It's important to note that TaskManager maintains the consensus state of the task queue. This means that locally submitted operations will not affect the queue until the operation is accepted by all other clients. To learn more about conensus based data structures, click [here]({{< relref "./overview.md#consensus-data-structures" >}}).
+TaskManager's main role is to maintain a queue of clients for each unique task. The client at the top of the queue is assigned the task, and is given permission to exclusively execute the task. All other clients will remain in queue until they leave, disconnect (unexpectedly), or the task is completed by the assigned client. It's important to note that TaskManager maintains the consensus state of the task queue. This means that locally submitted operations will not affect the queue until the operation is accepted by all other clients. To learn more about consensus based data structures, click [here](../build/overview#consensus-data-structures).
 
 ### Consensus Based DDS
 
-An important note about TaskManager is that it is a consensus based DDS. This essentially means that operations are not accepted until every client acknowledge and accepts the operation. This differs from an "optimistic" DDS (i.e. [SharedMap]({{< relref "./map.md" >}})) which immediately accept ops and then relays them to other clients. For more information regarding different types of DDSes, click [here]({{< relref "./overview.md" >}}).
+An important note about TaskManager is that it is a consensus based DDS. This essentially means that operations are not accepted until every client acknowledge and accepts the operation. This differs from an "optimistic" DDS (i.e. [SharedMap](./map)) which immediately accept ops and then relays them to other clients. For more information regarding different types of DDSes, click [here](../build/overview).
 
 ## Usage
 

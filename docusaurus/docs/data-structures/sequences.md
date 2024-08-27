@@ -514,6 +514,6 @@ side value and inclusive/exclusive behavior.
 
 See the [SharedString examples][].
 
-[SharedMap]: {{< relref "map.md" >}}
-[SharedString]: {{< relref "string.md" >}}
-[SharedString examples]: {{< relref "string.md#examples" >}}
+[SharedMap]: ./map
+[SharedString]: ./string
+[SharedString examples]: ./string#examples
