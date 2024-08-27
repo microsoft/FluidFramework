@@ -38,6 +38,7 @@ export interface ApiLinkProps {
 	packageName: string;
 	apiName: string;
 	// TODO: import directly from `api-extractor-model`
+	// TODO: do we have enough context to determine this automatically when unambiguous?
 	apiType: "class" | "enum" | "function" | "interface" | "namespace" | "type" | "variable";
 	headingId?: string;
 }
