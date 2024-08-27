@@ -23,7 +23,7 @@ try {
 		"..",
 		"docs",
 		"api",
-		// version,
+		// version, // TODO: how to do versioning
 	);
 
 	// Note: the leading slash in the URI root is important.

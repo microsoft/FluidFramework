@@ -16,7 +16,7 @@
 		"build:api-documentation": "npm run download-doc-models && npm run api-markdown-documenter",
 		"build:docusaurus": "docusaurus build",
 		"clean": "concurrently \"npm:clean:*\"",
-		"clean:api-documentation": "rimraf --glob docs/api",
+		"clean:api-documentation": "rimraf --glob docs/docs/api",
 		"clean:doc-models": "rimraf --glob .doc-models",
 		"clean:docusaurus": "docusaurus clear",
 		"deploy": "docusaurus deploy",
@@ -53,6 +53,7 @@
 	},
 	"devDependencies": {
 		"@docusaurus/module-type-aliases": "^3.5.2",
+		"@docusaurus/theme-mermaid": "^3.5.2",
 		"@docusaurus/tsconfig": "^3.5.2",
 		"@docusaurus/types": "^3.5.2",
 		"@fluid-tools/api-markdown-documenter": "^0.16.0",

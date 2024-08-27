@@ -7,21 +7,18 @@ import { themes as prismThemes } from "prism-react-renderer";
 import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
 
+const githubUrl = "https://github.com/microsoft/FluidFramework";
+
 const config: Config = {
-	title: "My Site",
-	tagline: "Dinosaurs are cool",
+	title: "Fluid Framework Documentation",
+	// tagline: "TODO",
 	favicon: "img/favicon.ico",
 
 	// Set the production url of your site here
-	url: "https://your-docusaurus-site.example.com",
+	url: "https://fluidframework.com/",
 	// Set the /<baseUrl>/ pathname under which your site is served
 	// For GitHub pages deployment, it is often '/<projectName>/'
 	baseUrl: "/",
-
-	// GitHub pages deployment config.
-	// If you aren't using GitHub pages, you don't need these.
-	organizationName: "facebook", // Usually your GitHub org/user name.
-	projectName: "docusaurus", // Usually your repo name.
 
 	onBrokenLinks: "warn",
 	onBrokenMarkdownLinks: "warn",
@@ -33,6 +30,7 @@ const config: Config = {
 		defaultLocale: "en",
 		locales: ["en"],
 	},
+	// TODO
 	// plugins: [
 	//   [
 	//     require.resolve("docusaurus-lunr-search"),
@@ -47,10 +45,10 @@ const config: Config = {
 			{
 				docs: {
 					sidebarPath: "./sidebars.ts",
-					// Please change this to your repo.
-					// Remove this to remove the "edit this page" links.
-					editUrl:
-						"https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/",
+					// // Please change this to your repo.
+					// // Remove this to remove the "edit this page" links.
+					// editUrl:
+					// 	"https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/",
 				},
 				blog: {
 					showReadingTime: true,
@@ -58,10 +56,10 @@ const config: Config = {
 						type: ["rss", "atom"],
 						xslt: true,
 					},
-					// Please change this to your repo.
-					// Remove this to remove the "edit this page" links.
-					editUrl:
-						"https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/",
+					// // Please change this to your repo.
+					// // Remove this to remove the "edit this page" links.
+					// editUrl:
+					// 	"https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/",
 					// Useful options to enforce blogging best practices
 					onInlineTags: "warn",
 					onInlineAuthors: "warn",
@@ -77,27 +75,30 @@ const config: Config = {
 		// `.mdx` files will be treated as MDX, and `.md` files will be treated as standard Markdown.
 		// Needed to support current API docs output, which is not MDX compatible.
 		format: "detect",
+		mermaid: true,
 	},
 	themeConfig: {
-		// Replace with your project's social card
-		image: "img/docusaurus-social-card.jpg",
+		// // Replace with your project's social card
+		// image: "TODO",
+
+		// Top nav-bar
 		navbar: {
-			title: "My Site",
+			title: "Fluid Framework",
 			logo: {
-				alt: "My Site Logo",
-				src: "img/logo.svg",
+				alt: "Fluid Framework Logo",
+				src: "img/logo.png",
 			},
 			items: [
 				{
 					type: "docSidebar",
-					sidebarId: "tutorialSidebar",
+					sidebarId: "docsSidebar",
 					position: "left",
-					label: "Tutorial",
+					label: "Docs",
 				},
 				{ to: "/blog", label: "Blog", position: "left" },
-				{ to: "/docs/api", label: "API Docs", position: "left" },
+				{ to: "/new-site-features", label: "New Website Features!", position: "left" },
 				{
-					href: "https://github.com/facebook/docusaurus",
+					href: githubUrl,
 					label: "GitHub",
 					position: "right",
 				},
@@ -107,30 +108,14 @@ const config: Config = {
 			style: "dark",
 			links: [
 				{
-					title: "Docs",
-					items: [
-						{
-							label: "Tutorial",
-							to: "/docs/intro",
-						},
-					],
-				},
-				{
 					title: "Community",
 					items: [
 						{
-							label: "Stack Overflow",
-							href: "https://stackoverflow.com/questions/tagged/docusaurus",
-						},
-						{
-							label: "Discord",
-							href: "https://discordapp.com/invite/docusaurus",
-						},
-						{
-							label: "Twitter",
-							href: "https://twitter.com/docusaurus",
+							label: "Follow @fluidframework",
+							href: "https://twitter.com/fluidframework",
 						},
 					],
+					// position: "left",
 				},
 				{
 					title: "More",
@@ -141,7 +126,7 @@ const config: Config = {
 						},
 						{
 							label: "GitHub",
-							href: "https://github.com/facebook/docusaurus",
+							href: githubUrl,
 						},
 					],
 				},
@@ -153,6 +138,7 @@ const config: Config = {
 			darkTheme: prismThemes.dracula,
 		},
 	} satisfies Preset.ThemeConfig,
+	themes: ['@docusaurus/theme-mermaid'],
 };
 
 export default config;
