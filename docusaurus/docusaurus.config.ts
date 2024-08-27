@@ -133,22 +133,22 @@ const config: Config = {
 					items: [
 						{
 							label: "Privacy",
-							href: "https://privacy.microsoft.com/privacystatement"
+							href: "https://privacy.microsoft.com/privacystatement",
 						},
 						{
 							label: "Consumer Health Privacy",
-							href: "https://go.microsoft.com/fwlink/?linkid=2259814"
+							href: "https://go.microsoft.com/fwlink/?linkid=2259814",
 						},
 						{
 							label: "Terms of Use",
-							href: "https://www.microsoft.com/legal/terms-of-use"
+							href: "https://www.microsoft.com/legal/terms-of-use",
 						},
 						{
 							label: "License",
-							href: "https://github.com/microsoft/FluidFramework/blob/main/LICENSE"
+							href: "https://github.com/microsoft/FluidFramework/blob/main/LICENSE",
 						},
-					]
-				}
+					],
+				},
 			],
 			logo: {
 				src: "https://fluidframework-docs-cdn.azureedge.net/static/images/microsoft-logo.png",
@@ -162,7 +162,7 @@ const config: Config = {
 			darkTheme: prismThemes.dracula,
 		},
 	} satisfies Preset.ThemeConfig,
-	themes: ['@docusaurus/theme-mermaid'],
+	themes: ["@docusaurus/theme-mermaid"],
 };
 
 export default config;
