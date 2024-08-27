@@ -7,7 +7,7 @@ editor: tylerbutler
 
 :::note
 
-This article assumes that you are familiar with the concept of *operation* in the Fluid Framework. See [How Fluid works]({{< relref "docs/_index.md#how-fluid-works" >}}).
+This article assumes that you are familiar with the concept of *operation* in the Fluid Framework. See [How Fluid works](../index#how-fluid-works).
 
 :::
 
@@ -19,12 +19,12 @@ There are three primary concepts to understand when building an application with
 
 ### Service
 
-Fluid clients require a centralized service that all connected clients use to send and receive operations. Fluid offers multiple service implementations that developers can use without any modifications. For each of them, there is a corresponding client library. You must use the client library that corresponds to the service you are connecting to. See [Available Fluid Services]({{< relref "service-options.md" >}}) for more information about Fluid service options.
+Fluid clients require a centralized service that all connected clients use to send and receive operations. Fluid offers multiple service implementations that developers can use without any modifications. For each of them, there is a corresponding client library. You must use the client library that corresponds to the service you are connecting to. See [Available Fluid Services](../deployment/service-options) for more information about Fluid service options.
 
 Each service-specific library adheres to a common API structure and has the primary goal of creating and retrieving container objects. The common structure enables you to switch from one service to another with minimal code changes. There are two services currently available:
 
 -   The [Tinylicious service](/docs/testing/tinylicious) runs on your development computer and is used for development and testing. It is used in Fluid examples throughout this documentation.
--   [Azure Fluid Relay]({{< relref "azure-frs.md" >}}) runs in Azure and enables high-scale production scenarios.
+-   [Azure Fluid Relay](../deployment/azure-frs) runs in Azure and enables high-scale production scenarios.
 
 See [Service-specific client libraries](#service-specific-client-libraries) for more details.
 
@@ -45,7 +45,7 @@ A Data Object contains one or more DDSes that are organized to enable a particul
 DDSes are low-level data structures, while Data Objects are composed of DDSes and other shared objects.
 Data Objects are used to organize DDSes into semantically meaningful groupings for your scenario, as well as providing an API surface to your app's data.
 
-For more information about these types and the differences between them, see [Data modeling]({{< relref "data-modeling.md" >}}) and [Introducing distributed data structures]({{< relref "dds.md" >}}).
+For more information about these types and the differences between them, see [Data modeling](./data-modeling) and [Introducing distributed data structures](./dds).
 
 ## Library structure
 
@@ -64,6 +64,6 @@ Fluid works with multiple service implementations. Each service has a correspond
 For specifics about each service-specific client implementation see their corresponding documentation.
 
 -   The client library for the [Tinylicious](/docs/testing/tinylicious) service is in the package [@fluidframework/tinylicious-client](https://www.npmjs.com/package/@fluidframework/tinylicious-client).
--   The client library for the [Azure Fluid Relay]({{< relref "azure-frs.md" >}}) is in the package [@fluidframework/azure-client](https://www.npmjs.com/package/@fluidframework/azure-client).
+-   The client library for the [Azure Fluid Relay](../deployment/azure-frs) is in the package [@fluidframework/azure-client](https://www.npmjs.com/package/@fluidframework/azure-client).
 
-For more information see [Packages]({{< relref "packages.md" >}}).
+For more information see [Packages](./packages).
