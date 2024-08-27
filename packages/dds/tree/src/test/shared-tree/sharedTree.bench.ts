@@ -29,9 +29,11 @@ import {
 	deepPath,
 	localFieldKey,
 	makeDeepContent,
+	makeDeepStoredContent,
 	makeJsDeepTree,
 	makeJsWideTreeWithEndValue,
 	makeWideContentWithEndValue,
+	makeWideStoredContentWithEndValue,
 	readDeepCursorTree,
 	readDeepFlexTree,
 	readDeepTreeAsJSObject,
@@ -237,7 +239,7 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const tree = checkoutWithContent(makeDeepContent(numberOfNodes));
+						const tree = checkoutWithContent(makeDeepStoredContent(numberOfNodes));
 						const path = deepPath(numberOfNodes);
 
 						// Measure
@@ -278,7 +280,7 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const tree = checkoutWithContent(makeWideContentWithEndValue(numberOfNodes));
+						const tree = checkoutWithContent(makeWideStoredContentWithEndValue(numberOfNodes));
 
 						const rootPath = {
 							parent: undefined,

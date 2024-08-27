@@ -28,6 +28,7 @@ export {
 export {
 	type SchematizeConfiguration,
 	type TreeContent,
+	type TreeStoredContent,
 	type InitializeAndSchematizeConfiguration,
 	type SchemaConfiguration,
 	buildTreeConfiguration,

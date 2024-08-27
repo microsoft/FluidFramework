@@ -4,20 +4,8 @@
  */
 
 export { GitRepo } from "./common/gitRepo";
-export { FluidRepo } from "./common/fluidRepo";
-export type {
-	ITypeValidationConfig,
-	IFluidBuildConfig,
-	PackageNamePolicyConfig,
-	PolicyConfig,
-	BrokenCompatTypes,
-	PreviousVersionStyle,
-	ReleaseNotesSectionName,
-	ReleaseNotesConfig,
-	ReleaseNotesSection,
-	ScriptRequirement,
-} from "./common/fluidRepo";
-export { getResolvedFluidRoot, loadFluidBuildConfig } from "./common/fluidUtils";
+export { FluidRepo, type IFluidBuildConfig } from "./common/fluidRepo";
+export { getResolvedFluidRoot, getFluidBuildConfig } from "./common/fluidUtils";
 export type { Logger } from "./common/logging";
 export { MonoRepo } from "./common/monoRepo";
 export {
@@ -36,6 +24,10 @@ export {
 export { getApiExtractorConfigFilePath, getEsLintConfigFilePath } from "./common/taskUtils";
 export * as TscUtils from "./common/tscUtils";
 
+export {
+	type BrokenCompatTypes,
+	type ITypeValidationConfig,
+} from "./common/typeValidatorConfig";
 export {
 	TypeOnly,
 	MinimalType,

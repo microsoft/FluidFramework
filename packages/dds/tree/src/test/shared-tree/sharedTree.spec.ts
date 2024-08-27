@@ -166,7 +166,8 @@ describe("SharedTree", () => {
 				initialTree: singleJsonCursor(10),
 				schema,
 			});
-			assert.equal(view.flexTree.content, 10);
+			assert.equal(view.flexTree.length, 1);
+			assert.equal(view.flexTree.boxedAt(0)?.value, 10);
 		});
 
 		it("noop upgrade", () => {
@@ -180,7 +181,7 @@ describe("SharedTree", () => {
 				schema,
 			});
 			// And does not add initial tree:
-			assert.equal(schematized.flexTree.content, undefined);
+			assert.equal(schematized.flexTree.length, 0);
 		});
 
 		it("incompatible upgrade errors", () => {
@@ -204,7 +205,7 @@ describe("SharedTree", () => {
 				schema: schemaGeneralized,
 			});
 			// Initial tree should not be applied
-			assert.equal(schematized.flexTree.content, undefined);
+			assert.equal(schematized.flexTree.length, 0);
 		});
 
 		it("unhydrated tree input", () => {
@@ -226,12 +227,13 @@ describe("SharedTree", () => {
 			schema: FlexTreeSchema<TRoot>,
 			onDispose: () => void = () => assert.fail(),
 		): FlexTreeView {
-			const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
+			const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, intoStoredSchema(schema));
 			const view = requireSchema(
 				tree.checkout,
 				viewSchema,
 				onDispose,
 				new MockNodeKeyManager(),
+				schema,
 			);
 			const unregister = tree.checkout.storedSchema.on("afterSchemaChange", () => {
 				unregister();

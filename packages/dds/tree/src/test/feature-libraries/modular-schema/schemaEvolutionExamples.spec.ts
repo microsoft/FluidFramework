@@ -20,10 +20,10 @@ import { SchemaBuilder, leaf } from "../../../domains/index.js";
 import {
 	FieldKinds,
 	FlexFieldSchema,
-	type FlexTreeSchema,
 	type FullSchemaPolicy,
 	ViewSchema,
 	defaultSchemaPolicy,
+	intoStoredSchema,
 } from "../../../feature-libraries/index.js";
 import {
 	allowsFieldSuperset,
@@ -133,11 +133,13 @@ describe("Schema Evolution Examples", () => {
 	it("basic usage", () => {
 		// Collect our view schema.
 		// This will represent our view schema for a simple canvas application.
-		const viewCollection: FlexTreeSchema = new SchemaBuilder({
-			scope: "test",
-			name: "basic usage",
-			libraries: [treeViewSchema],
-		}).intoSchema(root);
+		const viewCollection = intoStoredSchema(
+			new SchemaBuilder({
+				scope: "test",
+				name: "basic usage",
+				libraries: [treeViewSchema],
+			}).intoSchema(root),
+		);
 
 		// This is where legacy schema handling logic for schematize.
 		const adapters: Adapters = {};
@@ -184,11 +186,13 @@ describe("Schema Evolution Examples", () => {
 
 			// This example picks the first approach.
 			// Lets simulate the developers of the app making this change by modifying the view schema:
-			const viewCollection2 = new SchemaBuilder({
-				scope: "test",
-				name: "basic usage2",
-				libraries: [treeViewSchema],
-			}).intoSchema(tolerantRoot);
+			const viewCollection2 = intoStoredSchema(
+				new SchemaBuilder({
+					scope: "test",
+					name: "basic usage2",
+					libraries: [treeViewSchema],
+				}).intoSchema(tolerantRoot),
+			);
 			const view2 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection2);
 			// When we open this document, we should check it's compatibility with our application:
 			const compat = view2.checkCompatibility(stored);
@@ -267,8 +271,8 @@ describe("Schema Evolution Examples", () => {
 				items: FlexFieldSchema.create(FieldKinds.sequence, [positionedCanvasItem2]),
 			});
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
-			const viewCollection3: FlexTreeSchema = builderWithCounter.intoSchema(
-				FlexFieldSchema.create(FieldKinds.optional, [canvas2]),
+			const viewCollection3 = intoStoredSchema(
+				builderWithCounter.intoSchema(FlexFieldSchema.create(FieldKinds.optional, [canvas2])),
 			);
 			const view3 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection3);
 

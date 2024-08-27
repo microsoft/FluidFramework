@@ -137,7 +137,7 @@ import {
 	type ITreeCheckoutFork,
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ensureSchema } from "../shared-tree/schematizeTree.js";
+import { ensureSchema, type TreeStoredContent } from "../shared-tree/schematizeTree.js";
 import {
 	SchematizingSimpleTreeView,
 	requireSchema,
@@ -695,7 +695,7 @@ export function prepareTreeForCompare(tree: JsonableTree[]): object[] {
 }
 
 export function checkoutWithContent(
-	content: TreeContent,
+	content: TreeStoredContent,
 	args?: {
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
@@ -706,8 +706,8 @@ export function checkoutWithContent(
 	return checkout;
 }
 
-export function createCheckoutWithContent(
-	content: TreeContent,
+function createCheckoutWithContent(
+	content: TreeStoredContent,
 	args?: {
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
@@ -723,7 +723,7 @@ export function createCheckoutWithContent(
 		{
 			...args,
 			forest,
-			schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
+			schema: new TreeStoredSchemaRepository(content.schema),
 			logger,
 		},
 	);
@@ -738,8 +738,11 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 			HasListeners<CheckoutEvents>;
 		nodeKeyManager?: NodeKeyManager;
 	},
-): CheckoutFlexTreeView<TRoot> {
-	const view = checkoutWithContent(content, args);
+): CheckoutFlexTreeView {
+	const view = checkoutWithContent(
+		{ initialTree: content.initialTree, schema: intoStoredSchema(content.schema) },
+		args,
+	);
 	return new CheckoutFlexTreeView(
 		view,
 		content.schema,
@@ -747,7 +750,7 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 	);
 }
 
-export function forestWithContent(content: TreeContent): IEditableForest {
+export function forestWithContent(content: TreeStoredContent | TreeContent): IEditableForest {
 	const forest = buildForest();
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
 	// TODO:AB6712 Make the delta format accept a single cursor in Field mode.
@@ -768,18 +771,9 @@ export const IdentifierSchema = sf.object("identifier-object", {
 });
 
 const jsonPrimitiveSchema = [sf.null, sf.boolean, sf.number, sf.string] as const;
-export const JsonObject = sf.mapRecursive("object", [
-	() => JsonObject,
-	() => JsonArray,
-	...jsonPrimitiveSchema,
-]);
-
-export const JsonArray = sf.arrayRecursive("array", [
-	JsonObject,
-	IdentifierSchema,
-	() => JsonArray,
-	...jsonPrimitiveSchema,
-]);
+export const JsonUnion = [() => JsonObject, () => JsonArray, ...jsonPrimitiveSchema] as const;
+export const JsonObject = sf.mapRecursive("object", JsonUnion);
+export const JsonArray = sf.arrayRecursive("array", JsonUnion);
 
 export const jsonSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence, {
 	scope: "JsonSequenceRoot",
@@ -816,7 +810,7 @@ export const emptyStringSequenceConfig = {
 export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ITreeCheckout {
 	const cursors = (Array.isArray(json) ? json : [json]).map(singleJsonCursor);
 	const tree = checkoutWithContent({
-		schema: jsonSequenceRootSchema,
+		schema: intoStoredSchema(jsonSequenceRootSchema),
 		initialTree: cursors,
 	});
 	return tree;
@@ -1177,9 +1171,14 @@ export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
 	config: InitializeAndSchematizeConfiguration<TRoot>,
 	onDispose?: () => void,
 	nodeKeyManager?: NodeKeyManager,
-): CheckoutFlexTreeView<TRoot> {
-	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, config.schema);
-	if (!ensureSchema(viewSchema, config.allowedSchemaModifications, tree.checkout, config)) {
+): CheckoutFlexTreeView {
+	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, intoStoredSchema(config.schema));
+	if (
+		!ensureSchema(viewSchema, config.allowedSchemaModifications, tree.checkout, {
+			initialTree: config.initialTree,
+			schema: viewSchema.storedSchema,
+		})
+	) {
 		assert.fail("Schematize failed");
 	}
 
@@ -1188,6 +1187,7 @@ export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
 		viewSchema,
 		onDispose ?? (() => {}),
 		nodeKeyManager ?? new MockNodeKeyManager(),
+		config.schema,
 	);
 }
 

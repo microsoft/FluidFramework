@@ -45,8 +45,8 @@ import {
 } from "../../../feature-libraries/index.js";
 import {
 	ForestType,
+	type TreeStoredContent,
 	type ISharedTreeEditor,
-	type TreeContent,
 } from "../../../shared-tree/index.js";
 import {
 	MockTreeCheckout,
@@ -58,7 +58,7 @@ import {
 } from "../../utils.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
@@ -94,8 +94,8 @@ function getIdentifierEncodingContext(id: string) {
 		new HasIdentifier({ identifier: id }),
 		new MockNodeKeyManager(),
 	);
-	const flexSchema = toFlexSchema(HasIdentifier);
-	const flexConfig: TreeContent = {
+	const flexSchema = toStoredSchema(HasIdentifier);
+	const flexConfig: TreeStoredContent = {
 		schema: flexSchema,
 		initialTree,
 	};
@@ -106,7 +106,7 @@ function getIdentifierEncodingContext(id: string) {
 		idCompressor: testIdCompressor,
 		originatorId: testIdCompressor.localSessionId,
 		schema: {
-			schema: intoStoredSchema(flexSchema),
+			schema: flexSchema,
 			policy: defaultSchemaPolicy,
 		},
 	};
