@@ -31,12 +31,12 @@ const mockClassExpression = class {
 	invalidLineComment(): void {}
 
 	// @alpha
-	invalidLineSignature: string;
+	invalidLineSignature: string = "invalidLineSignature";
 
 	/**
 	 * @internal
 	 */
-	inValidSingature: string;
+	inValidSingature: string = "inValidSingature";
 
 	/**
 	 * Correctly implemented method with valid comment.
@@ -48,7 +48,7 @@ const mockClassExpression = class {
 
 	validNoComment(): void {}
 
-	validSignature: boolean;
+	validSignature: boolean = false;
 
 	/**
 	 * @public
