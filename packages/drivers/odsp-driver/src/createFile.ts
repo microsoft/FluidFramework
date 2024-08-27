@@ -238,29 +238,29 @@ export async function createNewEmptyFluidFile(
 }
 
 export async function renameEmptyFluidFile(
-	getStorageToken: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	odspParts: IOdspUrlParts,
 	requestedFileName: string,
 	logger: ITelemetryLoggerExt,
 	epochTracker: EpochTracker,
-	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<IRenameFileResponse> {
 	const initialUrl = `${getApiRoot(new URL(odspParts.siteUrl))}/drives/${
 		odspParts.driveId
 	}/items/${odspParts.itemId}?@name.conflictBehavior=rename`;
 
 	return getWithRetryForTokenRefresh(async (options) => {
-		const storageToken = await getStorageToken(options, "RenameFile");
+		const url = initialUrl;
+		const method = "PATCH";
+		const authHeader = await getAuthHeader(
+			{ ...options, request: { url, method } },
+			"CreateNewFile",
+		);
 
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			{ eventName: "renameFile" },
 			async (event) => {
-				const { url, headers } = getUrlAndHeadersWithAuth(
-					initialUrl,
-					storageToken,
-					forceAccessTokenViaAuthorizationHeader,
-				);
+				const headers = getHeadersWithAuth(authHeader);
 				headers["Content-Type"] = "application/json";
 
 				const fetchResponse = await runWithRetry(

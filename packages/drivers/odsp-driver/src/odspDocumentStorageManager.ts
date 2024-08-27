@@ -781,12 +781,11 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			);
 
 			await renameEmptyFluidFile(
-				this.getStorageToken,
+				this.getAuthHeader,
 				this.odspResolvedUrl,
 				this.odspResolvedUrl.pendingRename,
 				this.logger,
 				this.epochTracker,
-				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 			);
 			this.odspResolvedUrl.pendingRename = undefined;
 		}
