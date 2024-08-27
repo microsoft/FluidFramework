@@ -149,6 +149,7 @@ The replacement syntax to use in `.mdx` files would be:
 
 ## TODOs
 
+- Dice roller component
 - Figure out solution to markdown-magic in mdx (html comment syntax not supported)
 - Link check doesn't handle custom heading anchors - maybe there is a plugin for this?
 - Add prettier
