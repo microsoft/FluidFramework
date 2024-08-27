@@ -16,13 +16,7 @@ import {
 	initializeForest,
 	moveToDetachedField,
 } from "../../../core/index.js";
-import {
-	SchemaBuilder,
-	cursorToJsonObject,
-	jsonRoot,
-	jsonSchema,
-	singleJsonCursor,
-} from "../../../domains/index.js";
+import { cursorToJsonObject, singleJsonCursor } from "../../../domains/index.js";
 import {
 	basicChunkTree,
 	defaultChunkPolicy,
@@ -35,18 +29,19 @@ import {
 	cursorForJsonableTreeNode,
 	cursorForMapTreeNode,
 	defaultSchemaPolicy,
-	intoStoredSchema,
 	jsonableTreeFromCursor,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import { brand, type JsonCompatible } from "../../../util/index.js";
 
-import { testIdCompressor, testRevisionTagCodec } from "../../utils.js";
+import { JsonUnion, testIdCompressor, testRevisionTagCodec } from "../../utils.js";
 import { averageValues, sum, sumMap } from "./benchmarks.js";
 import { Canada, generateCanada } from "./canada.js";
 import { CitmCatalog, generateCitmJson } from "./citm.js";
 import { clone } from "./jsObjectUtil.js";
 import { generateTwitterJsonByByteSize } from "./twitter.js";
+// eslint-disable-next-line import/no-internal-modules
+import { toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
 
 // Shared tree keys that map to the type used by the Twitter type/dataset
 export const TwitterKey = {
@@ -66,11 +61,6 @@ function bench(
 		dataConsumer: (cursor: ITreeCursor, calculate: (a: number) => void) => void;
 	}[],
 ) {
-	const schemaCollection = new SchemaBuilder({
-		scope: "JsonCursor benchmark",
-		libraries: [jsonSchema],
-	}).intoSchema(SchemaBuilder.optional(jsonRoot));
-	const schema = new TreeStoredSchemaRepository(intoStoredSchema(schemaCollection));
 	for (const { name, getJson, dataConsumer } of data) {
 		describe(name, () => {
 			let json: JsonCompatible;
@@ -130,7 +120,12 @@ function bench(
 				[
 					"chunked-forest Cursor",
 					() => {
-						const forest = buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy));
+						const forest = buildChunkedForest(
+							makeTreeChunker(
+								new TreeStoredSchemaRepository(toStoredSchema(JsonUnion)),
+								defaultSchemaPolicy,
+							),
+						);
 						initializeForest(
 							forest,
 							[cursorForJsonableTreeNode(encodedTree)],
