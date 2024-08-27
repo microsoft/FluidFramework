@@ -13,6 +13,7 @@
  *
  * @privateRemarks
  * Perfer using `Jsonable<unknown>` over this type that is an implementation detail.
+ * @legacy
  * @alpha
  */
 export type JsonableTypeWith<T> =
@@ -34,6 +35,7 @@ export type JsonableTypeWith<T> =
  * This interface along with ArrayLike above avoids pure type recursion issues, but introduces a limitation on
  * the ability of {@link Jsonable} to detect array-like types that are not handled naively ({@link JSON.stringify}).
  * The TypeOnly filter is not useful for {@link JsonableTypeWith}; so, if type testing improves, this can be removed.
+ * @legacy
  * @alpha
  */
 export interface Internal_InterfaceOfJsonableTypesWith<T> {
@@ -78,6 +80,7 @@ export interface Internal_InterfaceOfJsonableTypesWith<T> {
  * ```typescript
  * function foo<T>(value: Jsonable<T>) { ... }
  * ```
+ * @legacy
  * @alpha
  */
 export type Jsonable<T, TReplaced = never> = /* test for 'any' */ boolean extends (

@@ -10,6 +10,7 @@ import type {
 
 /**
  * Events sent by {@link ISharedCounter}.
+ * @legacy
  * @alpha
  */
 export interface ISharedCounterEvents extends ISharedObjectEvents {
@@ -61,6 +62,7 @@ export interface ISharedCounterEvents extends ISharedObjectEvents {
  *     console.log(`The counter incremented by ${incrementAmount} and now has a value of ${newValue}`);
  * });
  * ```
+ * @legacy
  * @alpha
  */
 export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {

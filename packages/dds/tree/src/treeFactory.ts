@@ -56,6 +56,7 @@ export class TreeFactory implements IChannelFactory<ITree> {
 /**
  * SharedTree is a hierarchical data structure for collaboratively editing strongly typed JSON-like trees
  * of objects, arrays, and other data types.
+ * @legacy
  * @alpha
  */
 export const SharedTree = configuredSharedTree({});

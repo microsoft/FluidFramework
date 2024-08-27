@@ -31,6 +31,7 @@ import {
 
 /**
  * {@link BaseContainerRuntimeFactory} construction properties.
+ * @legacy
  * @alpha
  */
 export interface BaseContainerRuntimeFactoryProps {
@@ -63,6 +64,7 @@ export interface BaseContainerRuntimeFactoryProps {
  * BaseContainerRuntimeFactory produces container runtimes with the specified data store and service registries,
  * request handlers, runtimeOptions, and entryPoint initialization function.
  * It can be subclassed to implement a first-time initialization procedure for the containers it creates.
+ * @legacy
  * @alpha
  */
 export class BaseContainerRuntimeFactory

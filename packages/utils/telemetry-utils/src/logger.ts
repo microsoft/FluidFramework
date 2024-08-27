@@ -53,11 +53,13 @@ export enum TelemetryDataTag {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export type TelemetryEventPropertyTypes = ITelemetryPropertiesExt[string];
 
 /**
+ * @legacy
  * @alpha
  */
 export type ITelemetryLoggerPropertyBag = Record<
@@ -66,6 +68,7 @@ export type ITelemetryLoggerPropertyBag = Record<
 >;
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ITelemetryLoggerPropertyBags {
@@ -368,6 +371,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
  *
  * @param props - logger is the base logger the child will log to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
  *
+ * @legacy
  * @alpha
  */
 export function createChildLogger(props?: {
@@ -738,7 +742,11 @@ export class PerformanceEvent {
 			this.reportEvent("start");
 		}
 
-		if (typeof window === "object" && window?.performance?.mark) {
+		if (
+			typeof window === "object" &&
+			window?.performance?.mark !== undefined &&
+			window?.performance?.mark !== null
+		) {
 			this.startMark = `${event.eventName}-start`;
 			window.performance.mark(this.startMark);
 		}
@@ -767,7 +775,7 @@ export class PerformanceEvent {
 	}
 
 	private performanceEndMark(): void {
-		if (this.startMark && this.event) {
+		if (this.startMark !== undefined && this.event) {
 			const endMark = `${this.event.eventName}-end`;
 			window.performance.mark(endMark);
 			window.performance.measure(`${this.event.eventName}`, this.startMark, endMark);

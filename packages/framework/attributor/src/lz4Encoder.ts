@@ -12,6 +12,7 @@ import { type Encoder } from "./encoders.js";
 // TODO: document this
 // eslint-disable-next-line jsdoc/require-description
 /**
+ * @legacy
  * @alpha
  */
 export function makeLZ4Encoder<T>(): Encoder<Jsonable<T>, string> {

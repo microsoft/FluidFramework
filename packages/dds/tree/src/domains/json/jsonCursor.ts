@@ -10,11 +10,17 @@ import {
 	type FieldKey,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
+	keyAsDetachedField,
 	mapCursorField,
 	mapCursorFields,
+	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
-import { type CursorAdapter, stackTreeNodeCursor } from "../../feature-libraries/index.js";
-import type { JsonCompatible } from "../../util/index.js";
+import {
+	type CursorAdapter,
+	stackTreeFieldCursor,
+	stackTreeNodeCursor,
+} from "../../feature-libraries/index.js";
+import { isReadonlyArray, type JsonCompatible } from "../../util/index.js";
 import { leaf } from "../leafDomain.js";
 
 import { jsonArray, jsonObject } from "./jsonDomainSchema.js";
@@ -25,7 +31,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 		node !== null && typeof node === "object"
 			? undefined // arrays and objects have no defined value
 			: node, // null, boolean, numbers, and strings are their own values
-	type: (node: JsonCompatible) => {
+	type: (node: JsonCompatible): TreeNodeSchemaIdentifier => {
 		const type = typeof node;
 
 		switch (type) {
@@ -38,7 +44,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 			default:
 				if (node === null) {
 					return leaf.null.name;
-				} else if (Array.isArray(node)) {
+				} else if (isReadonlyArray(node)) {
 					return jsonArray.name;
 				} else {
 					return jsonObject.name;
@@ -50,7 +56,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 			case "object":
 				if (node === null) {
 					return [];
-				} else if (Array.isArray(node)) {
+				} else if (isReadonlyArray(node)) {
 					return node.length === 0 ? [] : [EmptyKey];
 				} else {
 					return Object.keys(node) as FieldKey[];
@@ -70,7 +76,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 			return [];
 		}
 
-		if (Array.isArray(node)) {
+		if (isReadonlyArray(node)) {
 			return key === EmptyKey ? node : [];
 		}
 
@@ -88,12 +94,23 @@ const adapter: CursorAdapter<JsonCompatible> = {
 };
 
 /**
- * Used to read a Jsonable tree for testing and benchmarking.
+ * Used to read generic json compatible data as a tree in the JSON domain.
+ * The returned tree will have a schema in the json domain as defined by {@link jsonRoot}.
  *
  * @returns an {@link ITreeCursorSynchronous} for a single {@link JsonCompatible}.
  */
 export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous {
 	return stackTreeNodeCursor(adapter, root);
+}
+
+/**
+ * Used to read generic json compatible data as a tree in the JSON domain.
+ * The returned tree will have a schema in the json domain as defined by {@link jsonRoot}.
+ *
+ * @returns an {@link ITreeCursorSynchronous} for a single {@link JsonCompatible}.
+ */
+export function fieldJsonCursor(root: JsonCompatible[]): ITreeCursorSynchronous {
+	return stackTreeFieldCursor(adapter, root, keyAsDetachedField(EmptyKey));
 }
 
 /**

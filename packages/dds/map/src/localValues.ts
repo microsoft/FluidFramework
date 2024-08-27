@@ -17,6 +17,7 @@ import type { ISerializableValue, ISerializedValue } from "./internalInterfaces.
 
 /**
  * A local value to be stored in a container type Distributed Data Store (DDS).
+ * @legacy
  * @alpha
  */
 export interface ILocalValue {
@@ -99,6 +100,7 @@ export class PlainLocalValue implements ILocalValue {
 /**
  * Enables a container type {@link https://fluidframework.com/docs/build/dds/ | DDS} to produce and store local
  * values with minimal awareness of how those objects are stored, serialized, and deserialized.
+ * @legacy
  * @alpha
  */
 export class LocalValueMaker {

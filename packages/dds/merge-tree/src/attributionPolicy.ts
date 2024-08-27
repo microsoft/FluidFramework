@@ -45,7 +45,7 @@ function createAttributionPolicyFromCallbacks({
 	let unsubscribe: undefined | (() => void);
 	return {
 		// eslint-disable-next-line import/no-deprecated
-		attach: (client: Client) => {
+		attach: (client: Client): void => {
 			assert(unsubscribe === undefined, 0x557 /* cannot attach to multiple clients at once */);
 
 			const deltaSubscribed: AttributionCallbacks["delta"] = (opArgs, deltaArgs) =>
@@ -56,16 +56,16 @@ function createAttributionPolicyFromCallbacks({
 			client.on("delta", deltaSubscribed);
 			client.on("maintenance", maintenanceSubscribed);
 
-			unsubscribe = () => {
+			unsubscribe = (): void => {
 				client.off("delta", deltaSubscribed);
 				client.off("maintenance", maintenanceSubscribed);
 			};
 		},
-		detach: () => {
+		detach: (): void => {
 			unsubscribe?.();
 			unsubscribe = undefined;
 		},
-		get isAttached() {
+		get isAttached(): boolean {
 			return unsubscribe !== undefined;
 		},
 		serializer: AttributionCollection,
@@ -136,25 +136,22 @@ function createPropertyTrackingMergeTreeCallbacks(
 ): AttributionCallbacks {
 	const toTrack = propNames.map((entry) => ({ propName: entry, channelName: entry }));
 	const attributeAnnotateOnSegments = (
+		isLocal: boolean,
 		deltaSegments: IMergeTreeSegmentDelta[],
-		{ op, sequencedMessage }: IMergeTreeDeltaOpArgs,
+		{ op }: IMergeTreeDeltaOpArgs,
 		key: AttributionKey,
 	): void => {
-		for (const { segment } of deltaSegments) {
+		for (const { segment, propertyDeltas } of deltaSegments) {
 			for (const { propName, channelName } of toTrack) {
 				const shouldAttributeInsert =
 					op.type === MergeTreeDeltaType.INSERT &&
 					segment.properties?.[propName] !== undefined;
 
-				const isLocal = sequencedMessage === undefined;
 				const shouldAttributeAnnotate =
 					op.type === MergeTreeDeltaType.ANNOTATE &&
 					// Only attribute annotations which change the tracked property
 					op.props[propName] !== undefined &&
-					// Local changes to the tracked property always take effect
-					(isLocal ||
-						// Acked changes only take effect if there isn't a pending local change
-						(!isLocal && !segment.propertyManager?.hasPendingProperty(propName)));
+					(isLocal || (propertyDeltas !== undefined && propName in propertyDeltas));
 
 				if (shouldAttributeInsert || shouldAttributeAnnotate) {
 					segment.attribution?.update(
@@ -166,19 +163,21 @@ function createPropertyTrackingMergeTreeCallbacks(
 		}
 	};
 	return {
-		delta: (opArgs, { deltaSegments }, client) => {
+		delta: (opArgs, { deltaSegments }, client): void => {
 			const { op, sequencedMessage } = opArgs;
 			if (op.type === MergeTreeDeltaType.ANNOTATE || op.type === MergeTreeDeltaType.INSERT) {
 				attributeAnnotateOnSegments(
+					sequencedMessage === undefined,
 					deltaSegments,
 					opArgs,
 					getAttributionKey(client, sequencedMessage),
 				);
 			}
 		},
-		maintenance: ({ deltaSegments, operation }, opArgs, client) => {
+		maintenance: ({ deltaSegments, operation }, opArgs, client): void => {
 			if (operation === MergeTreeMaintenanceType.ACKNOWLEDGED && opArgs !== undefined) {
 				attributeAnnotateOnSegments(
+					true,
 					deltaSegments,
 					opArgs,
 					getAttributionKey(client, opArgs.sequencedMessage),
@@ -190,13 +189,17 @@ function createPropertyTrackingMergeTreeCallbacks(
 
 function combineMergeTreeCallbacks(callbacks: AttributionCallbacks[]): AttributionCallbacks {
 	return {
-		delta: (...args) => callbacks.forEach(({ delta }) => delta(...args)),
-		maintenance: (...args) => callbacks.forEach(({ maintenance }) => maintenance(...args)),
+		delta: (...args): void => {
+			for (const { delta } of callbacks) delta(...args);
+		},
+		maintenance: (...args): void => {
+			for (const { maintenance } of callbacks) maintenance(...args);
+		},
 	};
 }
 
 /**
- * @returns An {@link AttributionPolicy} which tracks only insertion of content.
+ * Creates an {@link AttributionPolicy} which only tracks initial insertion of content.
  * @internal
  */
 export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
@@ -209,6 +212,7 @@ export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 }
 
 /**
+ * Creates an {@link AttributionPolicy} for tracking annotation of specific properties.
  * @param propNames - List of property names for which attribution should be tracked.
  * @returns A policy which only attributes annotation of the properties specified.
  * Keys for each property are stored under attribution channels of the same name--see example below.

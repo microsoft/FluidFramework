@@ -71,7 +71,8 @@ function runTasks(
 			break;
 		}
 
-		const taskQueueItem = taskQueue[index];
+		// Non null asserting here because we are iterating though taskQueue
+		const taskQueueItem = taskQueue[index]!;
 
 		if (filter && !filter(taskQueueItem)) {
 			newTaskQueue.push(taskQueueItem);

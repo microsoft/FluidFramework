@@ -232,3 +232,30 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 
 	return records;
 }
+
+/**
+ * Searches given source file for the package documentation (first
+ * `@packageDocumentation` tagged comment).
+ *
+ * @returns Found full text of the package documentation or empty string.
+ *
+ * @privateRemarks
+ * If we find trouble with practical extraction, consider replicating api-extractor's logic at:
+ * {@link https://github.com/microsoft/rushstack/blob/main/apps/api-extractor/src/aedoc/PackageDocComment.ts}
+ *
+ * Here a simplified approach is taken leveraging ts-morph's comment organization.
+ */
+export function getPackageDocumentationText(sourceFile: SourceFile): string {
+	const statements = sourceFile.getStatementsWithComments();
+	for (const statement of statements) {
+		const comments = statement.getLeadingCommentRanges();
+		for (const comment of comments) {
+			const jsDoc = comment.getText();
+			if (jsDoc.includes("@packageDocumentation")) {
+				return jsDoc;
+			}
+		}
+	}
+
+	return "";
+}

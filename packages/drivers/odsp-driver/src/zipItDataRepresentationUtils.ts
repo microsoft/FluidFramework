@@ -301,39 +301,46 @@ export class NodeCore {
 	}
 
 	public get(index: number): NodeTypes {
-		return this.children[index];
+		// TODO Why are we non null asserting here?
+		return this.children[index]!;
 	}
 
 	public getString(index: number): string {
-		const node = this.children[index];
+		// TODO Why are we non null asserting here?
+		const node = this.children[index]!;
 		return getStringInstance(node, "getString should return string");
 	}
 
 	public getMaybeString(index: number): string | undefined {
-		const node = this.children[index];
+		// TODO Why are we non null asserting here?
+		const node = this.children[index]!;
 		return getMaybeStringInstance(node);
 	}
 
 	public getBlob(index: number): BlobCore {
-		const node = this.children[index];
+		// TODO Why are we non null asserting here?
+		const node = this.children[index]!;
 		assertBlobCoreInstance(node, "getBlob should return a blob");
 		return node;
 	}
 
 	public getNode(index: number): NodeCore {
-		const node = this.children[index];
+		// TODO Why are we non null asserting here?
+		const node = this.children[index]!;
 		assertNodeCoreInstance(node, "getNode should return a node");
 		return node;
 	}
 
 	public getNumber(index: number): number {
-		const node = this.children[index];
+		// TODO Why are we non null asserting here?
+		const node = this.children[index]!;
 		assertNumberInstance(node, "getNumber should return a number");
 		return node;
 	}
 
 	public getBool(index: number): boolean {
-		const node = this.children[index];
+		// TODO Why are we non null asserting here?
+		const node = this.children[index]!;
 		assertBoolInstance(node, "getBool should return a boolean");
 		return node;
 	}
@@ -549,7 +556,8 @@ export class NodeCore {
 
 		for (const el of stringsToResolve) {
 			for (let it = el.startPos; it < el.endPos; it++) {
-				stringBuffer[length] = input[it];
+				// Non null asserting here because we are iterating over startPos
+				stringBuffer[length] = input[it]!;
 				length++;
 			}
 			stringBuffer[length] = 0;
@@ -561,7 +569,8 @@ export class NodeCore {
 		if (result.length === stringsToResolve.length + 1) {
 			// All is good, we expect all the cases to get here
 			for (let i = 0; i < stringsToResolve.length; i++) {
-				stringsToResolve[i].content = result[i];
+				// Non null asserting here because we are iterating over stringsToResolve
+				stringsToResolve[i]!.content = result[i];
 			}
 		} else {
 			// String content has \0 chars!

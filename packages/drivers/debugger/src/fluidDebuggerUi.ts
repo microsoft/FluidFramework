@@ -223,7 +223,8 @@ export class DebuggerUI {
 		const buttonVers = doc.getElementById("buttonVers") as HTMLDivElement;
 		buttonVers.onclick = () => {
 			const index = this.selector!.selectedIndex;
-			controller.onVersionSelection(this.versions[index]);
+			// TODO Why are we non null asserting here
+			controller.onVersionSelection(this.versions[index]!);
 		};
 
 		const fileSnapshot = doc.getElementById("file") as HTMLInputElement;
@@ -232,7 +233,8 @@ export class DebuggerUI {
 			() => {
 				const files = fileSnapshot.files;
 				if (files) {
-					controller.onSnapshotFileSelection(files[0]);
+					// TODO Why are we non null asserting here
+					controller.onSnapshotFileSelection(files[0]!);
 				}
 			},
 			false,
@@ -328,7 +330,8 @@ export class DebuggerUI {
 			this.text2!.textContent = "";
 			this.text3!.textContent = "";
 		} else {
-			const op = ops[0];
+			// Non null asserting here because of the length check above
+			const op = ops[0]!;
 			const seq = op.sequenceNumber;
 			const date = DebuggerUI.formatDate(op.timestamp);
 			this.text1!.textContent = `Next op seq#: ${seq}`;

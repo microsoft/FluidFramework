@@ -91,9 +91,17 @@ export class RelativeLoader implements ILoader {
 }
 
 /**
+ * @legacy
  * @alpha
+ * @deprecated Use {@link @fluidframework/container-definitions#ILoaderOptions} instead
  */
 export interface ILoaderOptions extends ILoaderOptions1 {
+	/**
+	 *
+	 * @deprecated No longer needed or used (initially introduced to test single-commit summaries).
+	 * Driver layer can enable single-commit summaries via document service policies if needed.
+	 * ADO #9098: To remove declaration and usage from code.
+	 */
 	summarizeProtocolTree?: boolean;
 }
 
@@ -102,6 +110,7 @@ export interface ILoaderOptions extends ILoaderOptions1 {
  * {@link @fluidframework/container-definitions#IFluidModuleWithDetails}
  * to have all the code loading modules in one package. #8193
  * Encapsulates a module entry point with corresponding code details.
+ * @legacy
  * @alpha
  */
 export interface IFluidModuleWithDetails {
@@ -122,6 +131,7 @@ export interface IFluidModuleWithDetails {
  * to have code loading modules in one package. #8193
  * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
  * a package name and package version range.
+ * @legacy
  * @alpha
  */
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
@@ -136,6 +146,7 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 
 /**
  * Services and properties necessary for creating a loader
+ * @legacy
  * @alpha
  */
 export interface ILoaderProps {
@@ -193,6 +204,7 @@ export interface ILoaderProps {
 
 /**
  * Services and properties used by and exposed by the loader
+ * @legacy
  * @alpha
  */
 export interface ILoaderServices {
@@ -247,6 +259,7 @@ export interface ILoaderServices {
 /**
  * Subset of IDocumentStorageService which only supports createBlob() and readBlob(). This is used to support
  * blobs in detached containers.
+ * @legacy
  * @alpha
  *
  * @deprecated - IDetachedBlobStorage will be removed in a future release without a replacement. Blobs created while detached will be stored in memory to align with attached container behavior. AB#8049
@@ -266,6 +279,7 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
 
 /**
  * Manages Fluid resource loading
+ * @legacy
  * @alpha
  */
 export class Loader implements IHostLoader {

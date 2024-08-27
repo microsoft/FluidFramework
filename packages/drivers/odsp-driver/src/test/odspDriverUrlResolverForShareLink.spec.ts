@@ -218,6 +218,39 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		return assert.strictEqual(actualShareLink, undefined, "Sharing link should be undefined");
 	});
 
+	it("Should resolve url with special characters", async () => {
+		const testUrl = new URL("https://microsoft.sharepoint-df.com/test");
+		const dataStorePathWithSpecialChars = "data/Store Path";
+		storeLocatorInOdspUrl(testUrl, {
+			driveId,
+			itemId,
+			siteUrl,
+			dataStorePath: dataStorePathWithSpecialChars,
+		});
+		const runTest = async (resolver: OdspDriverUrlResolverForShareLink): Promise<void> => {
+			const resolvedUrl = await resolver.resolve({ url: testUrl.href });
+			assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
+			assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
+			assert.strictEqual(resolvedUrl.itemId, itemId, "Item id should be equal");
+			assert.strictEqual(
+				resolvedUrl.dataStorePath,
+				dataStorePathWithSpecialChars,
+				"dataStorePath should be equal",
+			);
+			assert.strictEqual(
+				resolvedUrl.hashedDocumentId,
+				await getHashedDocumentId(driveId, itemId),
+				"Doc id should be equal",
+			);
+			assert(
+				resolvedUrl.endpoints.snapshotStorageUrl !== undefined,
+				"Snapshot url should not be empty",
+			);
+		};
+		await runTest(urlResolverWithShareLinkFetcher);
+		await runTest(urlResolverWithoutShareLinkFetcher);
+	});
+
 	it("getAbsoluteUrl - Should generate sharelink if none was generated on resolve", async () => {
 		const absoluteUrl = await mockGetFileLink(Promise.resolve(sharelink), async () => {
 			return urlResolverWithShareLinkFetcher.getAbsoluteUrl(mockResolvedUrl, dataStorePath);

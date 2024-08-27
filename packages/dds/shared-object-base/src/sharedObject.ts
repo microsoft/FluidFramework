@@ -7,13 +7,15 @@ import { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseProperties, type ErasedType } from "@fluidframework/core-interfaces";
-import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import {
+	type IFluidHandleInternal,
+	type IFluidLoadable,
+} from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelServices,
 	IChannelStorageService,
-} from "@fluidframework/datastore-definitions/internal";
-import {
+	type IChannel,
 	IChannelAttributes,
 	type IChannelFactory,
 	IFluidDataStoreRuntime,
@@ -43,6 +45,7 @@ import {
 	createChildLogger,
 	loggerToMonitoringContext,
 	tagCodeArtifacts,
+	type ICustomData,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -53,7 +56,17 @@ import { ISharedObject, ISharedObjectEvents } from "./types.js";
 import { makeHandlesSerializable, parseHandles } from "./utils.js";
 
 /**
+ * Custom telemetry properties used in {@link SharedObjectCore} to instantiate {@link TelemetryEventBatcher} class.
+ * This interface is used to define the properties that will be passed to the {@link TelemetryEventBatcher.measure} function
+ * which is called in the {@link SharedObjectCore.process} method.
+ */
+interface ProcessTelemetryProperties {
+	sequenceDifference: number;
+}
+
+/**
  * Base class from which all shared objects derive.
+ * @legacy
  * @alpha
  */
 export abstract class SharedObjectCore<
@@ -66,8 +79,11 @@ export abstract class SharedObjectCore<
 		return this;
 	}
 
-	private readonly opProcessingHelper: SampledTelemetryHelper;
-	private readonly callbacksHelper: SampledTelemetryHelper;
+	private readonly opProcessingHelper: SampledTelemetryHelper<
+		void,
+		ProcessTelemetryProperties
+	>;
+	private readonly callbacksHelper: SampledTelemetryHelper<boolean>;
 
 	/**
 	 * The handle referring to this SharedObject
@@ -137,7 +153,9 @@ export abstract class SharedObjectCore<
 		});
 		this.mc = loggerToMonitoringContext(this.logger);
 
-		[this.opProcessingHelper, this.callbacksHelper] = this.setUpSampledTelemetryHelpers();
+		const { opProcessingHelper, callbacksHelper } = this.setUpSampledTelemetryHelpers();
+		this.opProcessingHelper = opProcessingHelper;
+		this.callbacksHelper = callbacksHelper;
 	}
 
 	/**
@@ -153,12 +171,15 @@ export abstract class SharedObjectCore<
 	 * @returns The telemetry sampling helpers, so the constructor can be the one to assign them
 	 * to variables to avoid complaints from TypeScript.
 	 */
-	private setUpSampledTelemetryHelpers(): SampledTelemetryHelper[] {
+	private setUpSampledTelemetryHelpers(): {
+		opProcessingHelper: SampledTelemetryHelper<void, ProcessTelemetryProperties>;
+		callbacksHelper: SampledTelemetryHelper<boolean>;
+	} {
 		assert(
 			this.mc !== undefined && this.logger !== undefined,
 			0x349 /* this.mc and/or this.logger has not been set */,
 		);
-		const opProcessingHelper = new SampledTelemetryHelper(
+		const opProcessingHelper = new SampledTelemetryHelper<void, ProcessTelemetryProperties>(
 			{
 				eventName: "ddsOpProcessing",
 				category: "performance",
@@ -171,7 +192,7 @@ export abstract class SharedObjectCore<
 				["remote", { localOp: false }],
 			]),
 		);
-		const callbacksHelper = new SampledTelemetryHelper(
+		const callbacksHelper = new SampledTelemetryHelper<boolean>(
 			{
 				eventName: "ddsEventCallbacks",
 				category: "performance",
@@ -186,7 +207,7 @@ export abstract class SharedObjectCore<
 			this.opProcessingHelper.dispose();
 		});
 
-		return [opProcessingHelper, callbacksHelper];
+		return { opProcessingHelper, callbacksHelper };
 	}
 
 	/**
@@ -536,8 +557,14 @@ export abstract class SharedObjectCore<
 		this.emitInternal("pre-op", message, local, this);
 
 		this.opProcessingHelper.measure(
-			() => {
+			(): ICustomData<ProcessTelemetryProperties> => {
 				this.processCore(message, local, localOpMetadata);
+				const telemetryProperties: ProcessTelemetryProperties = {
+					sequenceDifference: message.sequenceNumber - message.referenceSequenceNumber,
+				};
+				return {
+					customData: telemetryProperties,
+				};
 			},
 			local ? "local" : "remote",
 		);
@@ -612,6 +639,7 @@ export abstract class SharedObjectCore<
 /**
  * SharedObject with simplified, synchronous summarization and GC.
  * DDS implementations with async and incremental summarization should extend SharedObjectCore directly instead.
+ * @legacy
  * @alpha
  */
 export abstract class SharedObject<
@@ -791,6 +819,7 @@ export abstract class SharedObject<
  * This does not extend {@link SharedObjectKind} since doing so would prevent implementing this interface in type safe code.
  * Any implementation of this can safely be used as a {@link SharedObjectKind} with an explicit type conversion,
  * but doing so is typically not needed as {@link createSharedObjectKind} is used to produce values that are both types simultaneously.
+ * @legacy
  * @alpha
  */
 export interface ISharedObjectKind<TSharedObject> {
@@ -841,9 +870,14 @@ export interface ISharedObjectKind<TSharedObject> {
  * @sealed
  * @public
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface SharedObjectKind<out TSharedObject = unknown>
-	extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {}
+	extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
+	/**
+	 * Check whether an {@link @fluidframework/core-interfaces#IFluidLoadable} is an instance of this shared object kind.
+	 * @remarks This should be used in place of `instanceof` checks for shared objects, as their actual classes are not exported in Fluid's public API.
+	 */
+	is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
+}
 
 /**
  * Utility for creating ISharedObjectKind instances.
@@ -857,7 +891,8 @@ export interface SharedObjectKind<out TSharedObject = unknown>
 export function createSharedObjectKind<TSharedObject>(
 	factory: (new () => IChannelFactory<TSharedObject>) & { readonly Type: string },
 ): ISharedObjectKind<TSharedObject> & SharedObjectKind<TSharedObject> {
-	const result: ISharedObjectKind<TSharedObject> = {
+	const result: ISharedObjectKind<TSharedObject> &
+		Omit<SharedObjectKind<TSharedObject>, "brand"> = {
 		getFactory(): IChannelFactory<TSharedObject> {
 			return new factory();
 		},
@@ -865,7 +900,16 @@ export function createSharedObjectKind<TSharedObject>(
 		create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject {
 			return runtime.createChannel(id, factory.Type) as TSharedObject;
 		},
+
+		is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject {
+			return isChannel(value) && value.attributes.type === factory.Type;
+		},
 	};
 
 	return result as typeof result & SharedObjectKind<TSharedObject>;
+}
+
+function isChannel(loadable: IFluidLoadable): loadable is IChannel {
+	// This assumes no other IFluidLoadable has an `attributes` field, and thus may not be fully robust.
+	return (loadable as IChannel).attributes !== undefined;
 }

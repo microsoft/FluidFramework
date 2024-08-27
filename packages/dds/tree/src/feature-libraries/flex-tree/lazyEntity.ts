@@ -16,7 +16,6 @@ import type { Context } from "./context.js";
 import {
 	type FlexTreeEntity,
 	type FlexTreeEntityKind,
-	type TreeStatus,
 	flexTreeMarker,
 } from "./flexTreeTypes.js";
 
@@ -65,8 +64,6 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 	public abstract boxedIterator(): IterableIterator<FlexTreeEntity>;
 	public abstract get [flexTreeMarker](): FlexTreeEntityKind;
 
-	public abstract treeStatus(): TreeStatus;
-
 	public [disposeSymbol](): void {
 		this.#lazyCursor.free();
 		this.context.withCursors.delete(this);
@@ -112,12 +109,3 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 	 */
 	protected abstract [forgetAnchorSymbol](): void;
 }
-
-/**
- * Prevent Entities from inheriting members from Object.prototype including:
- * '__defineGetter__', '__defineSetter__', '__lookupGetter__', '__lookupSetter__', '__proto__',
- * 'hasOwnProperty', 'isPrototypeOf', 'valueOf', 'propertyIsEnumerable', 'toLocaleString' and 'toString'.
- *
- * This opens up more options for field names on struct nodes.
- */
-Object.setPrototypeOf(LazyEntity.prototype, null);

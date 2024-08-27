@@ -17,7 +17,6 @@ import { fail } from "../util/index.js";
 
 import { defaultSchemaPolicy } from "./default-schema/index.js";
 import {
-	Any,
 	type FlexAllowedTypes,
 	FlexFieldSchema,
 	type FlexMapFieldSchema,
@@ -35,7 +34,6 @@ import {
  * If the input schema came from a view schema, it will not return the same view schema, and will not be compatible:
  * the returned TreeSchema is simply one which schematize will not object to.
  * Assumes the schema uses the default field kinds.
- * @internal
  */
 export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSchema {
 	const map: Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema> = new Map();
@@ -94,9 +92,9 @@ export function fieldSchemaFromStoredSchema(
 	map: ReadonlyMap<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>,
 ): FlexFieldSchema {
 	const kind = defaultSchemaPolicy.fieldKinds.get(schema.kind) ?? fail("missing field kind");
-	const types: FlexAllowedTypes =
-		schema.types === undefined
-			? [Any]
-			: Array.from(schema.types, (v) => () => map.get(v) ?? fail("missing schema"));
+	const types: FlexAllowedTypes = Array.from(
+		schema.types,
+		(v) => () => map.get(v) ?? fail("missing schema"),
+	);
 	return FlexFieldSchema.create(kind, types);
 }

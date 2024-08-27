@@ -19,6 +19,7 @@ export {
 	IFileEntry,
 	IPersistedCache,
 	snapshotKey,
+	snapshotWithLoadingGroupIdKey,
 } from "./odspCache.js";
 export {
 	IOdspResolvedUrl,
@@ -37,6 +38,7 @@ export {
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 	TokenFetchOptions,
+	authHeaderFromTokenResponse,
 	tokenFromResponse,
 	TokenResponse,
 } from "./tokenFetch.js";

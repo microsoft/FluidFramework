@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
-import { BlobManager } from "../../blobManager.js";
+import { blobManagerBasePath } from "../../blobManager/index.js";
 import {
 	GCNodeType,
 	GCTelemetryTracker,
@@ -60,7 +60,7 @@ describe("GC Telemetry Tracker", () => {
 		// Path with two parts such as "/id1/id2" - sub data stores.
 		// Everything else - other.
 		const getNodeType = (nodePath: string) => {
-			if (nodePath.split("/")[1] === BlobManager.basePath) {
+			if (nodePath.split("/")[1] === blobManagerBasePath) {
 				return GCNodeType.Blob;
 			}
 			if (nodePath.split("/").length === 2) {
@@ -72,20 +72,16 @@ describe("GC Telemetry Tracker", () => {
 			return GCNodeType.Other;
 		};
 		const configs: IGarbageCollectorConfigs = {
-			gcEnabled: true,
+			gcAllowed: true,
+			sweepAllowed: false,
 			sweepEnabled: false,
-			shouldRunSweep: "NO",
-			tombstoneAutorecoveryEnabled: false,
 			runFullGC: false,
 			testMode: false,
-			tombstoneMode: false,
 			inactiveTimeoutMs,
 			sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 			tombstoneTimeoutMs: enableSweep ? tombstoneTimeoutMs : undefined,
 			sweepGracePeriodMs,
 			throwOnTombstoneLoad: false,
-			throwOnTombstoneUsage: false,
-			throwOnInactiveLoad: false,
 			persistedGcFeatureMatrix: undefined,
 			gcVersionInBaseSnapshot: stableGCVersion,
 			gcVersionInEffect: stableGCVersion,

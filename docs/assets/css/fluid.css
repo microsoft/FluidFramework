@@ -237,9 +237,13 @@ where bootstrap caption color is too light for white background */
 }
 
 /* fixing https://github.com/microsoft/FluidFramework/issues/3601
- Long words such as function names would not break in api docs causing layout overflow
+ * Long words such as function names would not break in api docs causing layout overflow.
+ * The original use-case was targeting the API member names specifically, which are generally in the
+ * first column of the API docs tables.
 */
 
-.table td:nth-child(2) {
-	word-break: break-word;
+@media only screen and (max-width: 600px) {
+	.table td:nth-child(1) {
+		word-break: break-word;
+	}
 }

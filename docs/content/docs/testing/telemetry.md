@@ -33,7 +33,7 @@ The `Loader` constructor is called by both `createContainer()` and `getContainer
 interface as its constructor argument. `ILoaderProps` interface has an optional logger parameter that will take the
 `ITelemetryBaseLogger` defined by the user.
 
-[ILoaderProps.logger](https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/src/loader.ts#L313)
+[ILoaderProps.logger]({{< apiref "container-loader" "ILoaderProps" "interface" "v2" >}}#logger-propertysignature)
 is used by `Loader` to pipe to container's telemetry system.
 
 ### Properties and methods

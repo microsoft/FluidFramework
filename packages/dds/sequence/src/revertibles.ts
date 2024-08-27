@@ -21,15 +21,17 @@ import {
 	isMergeTreeDeltaRevertible,
 	refTypeIncludesFlag,
 	revertMergeTreeDeltaRevertibles,
+	InteriorSequencePlace,
+	Side,
 } from "@fluidframework/merge-tree/internal";
 
-import { InteriorSequencePlace, Side } from "./intervalCollection.js";
 import { IntervalOpType, SequenceInterval } from "./intervals/index.js";
 import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent.js";
 import { ISharedString, SharedStringSegment } from "./sharedString.js";
 
 /**
  * Data for undoing edits on SharedStrings and Intervals.
+ * @legacy
  * @alpha
  */
 export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertible;
@@ -38,6 +40,7 @@ const idMap = new Map<string, string>();
 
 /**
  * Data for undoing edits affecting Intervals.
+ * @legacy
  * @alpha
  */
 export type IntervalRevertible =
@@ -94,6 +97,7 @@ function getUpdatedId(intervalId: string): string {
 
 /**
  * Create revertibles for adding an interval
+ * @legacy
  * @alpha
  */
 export function appendAddIntervalToRevertibles(
@@ -110,6 +114,7 @@ export function appendAddIntervalToRevertibles(
 
 /**
  * Create revertibles for deleting an interval
+ * @legacy
  * @alpha
  */
 export function appendDeleteIntervalToRevertibles(
@@ -162,6 +167,7 @@ export function appendDeleteIntervalToRevertibles(
 
 /**
  * Create revertibles for moving endpoints of an interval
+ * @legacy
  * @alpha
  */
 export function appendChangeIntervalToRevertibles(
@@ -212,6 +218,7 @@ export function appendChangeIntervalToRevertibles(
 
 /**
  * Create revertibles for changing properties of an interval
+ * @legacy
  * @alpha
  */
 export function appendIntervalPropertyChangedToRevertibles(
@@ -272,6 +279,7 @@ function addIfRevertibleRef(
 /**
  * Create revertibles for SharedStringDeltas, handling indirectly modified intervals
  * (e.g. reverting remove of a range that contains an interval will move the interval back)
+ * @legacy
  * @alpha
  */
 export function appendSharedStringDeltaToRevertibles(
@@ -316,7 +324,9 @@ export function appendSharedStringDeltaToRevertibles(
 				event: IntervalOpType.POSITION_REMOVE,
 				intervals: [],
 				revertibleRefs,
-				mergeTreeRevertible: removeRevertibles[0],
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				mergeTreeRevertible: removeRevertibles[0]!,
 			};
 
 			// add an interval for each startInterval, accounting for any corresponding endIntervals
@@ -327,7 +337,9 @@ export function appendSharedStringDeltaToRevertibles(
 				});
 				let endOffset: number | undefined;
 				if (endIntervalIndex !== -1) {
-					endOffset = endIntervals[endIntervalIndex].offset;
+					// TODO Non null asserting, why is this not null?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					endOffset = endIntervals[endIntervalIndex]!.offset;
 					endIntervals.splice(endIntervalIndex, 1);
 				}
 
@@ -368,6 +380,7 @@ export function appendSharedStringDeltaToRevertibles(
 
 /**
  * Clean up resources held by revertibles that are no longer needed.
+ * @legacy
  * @alpha
  */
 export function discardSharedStringRevertibles(
@@ -576,7 +589,9 @@ interface RangeInfo {
 // eslint-disable-next-line import/no-deprecated
 class SortedRangeSet extends SortedSet<RangeInfo, string> {
 	protected getKey(item: RangeInfo): string {
-		return item.ranges[0].segment.ordinal;
+		// TODO Non null asserting, why is this not null?
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return item.ranges[0]!.segment.ordinal;
 	}
 }
 
@@ -662,6 +677,7 @@ function revertLocalSequenceRemove(
 
 /**
  * Invoke revertibles to reverse prior edits
+ * @legacy
  * @alpha
  */
 export function revertSharedStringRevertibles(

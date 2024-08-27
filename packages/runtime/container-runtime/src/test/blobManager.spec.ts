@@ -35,7 +35,13 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager.js";
+import {
+	BlobManager,
+	IBlobManagerLoadInfo,
+	IBlobManagerRuntime,
+	blobManagerBasePath,
+	redirectTableBlobName,
+} from "../blobManager/index.js";
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP
 abstract class BaseMockBlobStorage
@@ -284,7 +290,7 @@ export const validateSummary = (runtime: MockRuntime) => {
 		if (attachment.type === SummaryType.Attachment) {
 			ids.push(attachment.id);
 		} else {
-			assert.strictEqual(key, (BlobManager as any).redirectTableBlobName);
+			assert.strictEqual(key, redirectTableBlobName);
 			assert(attachment.type === SummaryType.Blob);
 			assert(typeof attachment.content === "string");
 			redirectTable = new Map(JSON.parse(attachment.content));
@@ -870,7 +876,7 @@ describe("BlobManager", () => {
 			const getBlobIdFromGCNodeId = (gcNodeId: string) => {
 				const pathParts = gcNodeId.split("/");
 				assert(
-					pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
+					pathParts.length === 3 && pathParts[1] === blobManagerBasePath,
 					"Invalid blob node path",
 				);
 				return pathParts[2];
@@ -878,7 +884,7 @@ describe("BlobManager", () => {
 
 			// For a given blob's id, returns the GC node id.
 			const getGCNodeIdFromBlobId = (blobId: string) => {
-				return `/${BlobManager.basePath}/${blobId}`;
+				return `/${blobManagerBasePath}/${blobId}`;
 			};
 
 			const blobContents = IsoBuffer.from(content, "utf8");

@@ -6,7 +6,7 @@
 import { TreeCompressionStrategy } from "../../feature-libraries/index.js";
 import { SharedTreeFormatVersion, type SharedTreeOptions } from "../../shared-tree/index.js";
 import { useSnapshotDirectory } from "./snapshotTools.js";
-import { generateTestTrees } from "./testTreeScenarios.js";
+import { generateTestTrees } from "./snapshotTestScenarios.js";
 import { takeSummarySnapshot } from "./utils.js";
 
 describe("snapshot tests", () => {

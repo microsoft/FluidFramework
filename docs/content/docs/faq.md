@@ -139,7 +139,7 @@ The Fluid service is general-purpose and, as a rule, Fluid solutions will work w
 Fluid solutions can use a local server or a "test quality" server for development and trust that their solution
 will work against whatever production server their solution is pointed at.
 
-The Fluid Framework includes a reference implementation of the Fluid service called [Routerlicious](https://github.com/microsoft/FluidFramework/tree/main/server#readme) that you can use for
+The Fluid Framework includes a reference implementation of the Fluid service called [Routerlicious](https://github.com/microsoft/FluidFramework/tree/main/server) that you can use for
 development or as the basis for a production quality server.
 
 ### Where is the shared data stored?

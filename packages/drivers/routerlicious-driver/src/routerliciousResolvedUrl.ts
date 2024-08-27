@@ -12,6 +12,7 @@ import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
  * {@link isRouterliciousResolvedUrl} can be used to detect whether an {@link @fluidframework/driver-definitions#IResolvedUrl}
  * is an IRouterliciousResolvedUrl.
  *
+ * @legacy
  * @alpha
  */
 export interface IRouterliciousResolvedUrl extends IResolvedUrl {

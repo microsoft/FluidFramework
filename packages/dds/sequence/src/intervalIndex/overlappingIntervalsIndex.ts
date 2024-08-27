@@ -5,9 +5,12 @@
 
 /* eslint-disable import/no-deprecated */
 
-import { Client } from "@fluidframework/merge-tree/internal";
+import {
+	Client,
+	SequencePlace,
+	endpointPosAndSide,
+} from "@fluidframework/merge-tree/internal";
 
-import { SequencePlace, endpointPosAndSide } from "../intervalCollection.js";
 import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import {
 	IIntervalHelpers,
@@ -21,6 +24,7 @@ import { ISharedString } from "../sharedString.js";
 import { IntervalIndex } from "./intervalIndex.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
@@ -179,6 +183,7 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export function createOverlappingIntervalsIndex(

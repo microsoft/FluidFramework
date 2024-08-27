@@ -46,6 +46,7 @@ const defaultCodeDetails: IFluidCodeDetails = {
 };
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IOpProcessingController {

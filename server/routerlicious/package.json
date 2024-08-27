@@ -103,20 +103,21 @@
 	},
 	"pnpm": {
 		"commentsOverrides": [
-			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix"
+			"@types/node is overridden to v18 to ensure all packages are building using the v18 types."
 		],
 		"overrides": {
-			"@types/node": "^18.17.1",
+			"@types/node@<18": "^18.19.39",
 			"qs": "^6.11.0",
-			"socket.io-parser": "^4.2.4",
-			"sharp": "^0.33.2"
+			"socket.io-parser": "^4.2.4"
 		},
 		"peerDependencyComments": [
-			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime."
+			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime.",
+			"oclif includes some AWS-related features, but we don't use them, so we ignore @aws-sdk peer dependencies."
 		],
 		"peerDependencyRules": {
 			"ignoreMissing": [
-				"@types/node"
+				"@types/node",
+				"@aws-sdk/*"
 			]
 		},
 		"patchedDependencies": {

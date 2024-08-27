@@ -39,10 +39,10 @@ export const isSerializedHandle = (value: any): value is ISerializedHandle =>
 const enableBackwardsCompatibility = true;
 
 /**
- * Check if a value is an IFluidHandle.
+ * Check if a value is an {@link @fluidframework/core-interfaces#IFluidHandle}.
  * @remarks
  * Objects which have a field named `IFluidHandle` can in some cases produce a false positive.
- * @internal
+ * @public
  */
 export function isFluidHandle(value: unknown): value is IFluidHandle {
 	// `in` gives a type error on non-objects and null, so filter them out
@@ -66,6 +66,7 @@ export function isFluidHandle(value: unknown): value is IFluidHandle {
 
 /**
  * Downcast an IFluidHandle to an IFluidHandleInternal.
+ * @legacy
  * @alpha
  */
 export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T> {
@@ -83,6 +84,7 @@ export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleI
 
 /**
  * Type erase IFluidHandleInternal for use with {@link @fluidframework/core-interfaces#fluidHandleSymbol}.
+ * @legacy
  * @alpha
  */
 export function toFluidHandleErased<T>(
@@ -93,6 +95,7 @@ export function toFluidHandleErased<T>(
 
 /**
  * Base class which can be uses to assist implementing IFluidHandleInternal.
+ * @legacy
  * @alpha
  */
 export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {

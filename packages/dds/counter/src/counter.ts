@@ -45,6 +45,7 @@ const snapshotFileName = "header";
 
 /**
  * {@inheritDoc ISharedCounter}
+ * @legacy
  * @alpha
  */
 export class SharedCounter

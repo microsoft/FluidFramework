@@ -239,7 +239,7 @@ describe("OpSplitter", () => {
 		// Empty batch
 		assert.throws(() =>
 			opSplitter.splitFirstBatchMessage({
-				content: [compressedMessage],
+				messages: [compressedMessage],
 				contentSizeInBytes: 0,
 				referenceSequenceNumber: 0,
 			}),
@@ -248,7 +248,7 @@ describe("OpSplitter", () => {
 		// Empty batch
 		assert.throws(() =>
 			opSplitter.splitFirstBatchMessage({
-				content: [],
+				messages: [],
 				contentSizeInBytes: 1,
 				referenceSequenceNumber: 0,
 			}),
@@ -257,7 +257,7 @@ describe("OpSplitter", () => {
 		// Batch is too small to be chunked
 		assert.throws(() =>
 			opSplitter.splitFirstBatchMessage({
-				content: [compressedMessage],
+				messages: [compressedMessage],
 				contentSizeInBytes: 1,
 				referenceSequenceNumber: 0,
 			}),
@@ -266,7 +266,7 @@ describe("OpSplitter", () => {
 		// Batch is not compressed
 		assert.throws(() =>
 			opSplitter.splitFirstBatchMessage({
-				content: [regularMessage],
+				messages: [regularMessage],
 				contentSizeInBytes: 3,
 				referenceSequenceNumber: 0,
 			}),
@@ -281,7 +281,7 @@ describe("OpSplitter", () => {
 				maxBatchSizeInBytes,
 				mockLogger,
 			).splitFirstBatchMessage({
-				content: [compressedMessage],
+				messages: [compressedMessage],
 				contentSizeInBytes: 3,
 				referenceSequenceNumber: 0,
 			}),
@@ -291,7 +291,7 @@ describe("OpSplitter", () => {
 		assert.throws(() =>
 			new OpSplitter([], undefined, 0, maxBatchSizeInBytes, mockLogger).splitFirstBatchMessage(
 				{
-					content: [compressedMessage],
+					messages: [compressedMessage],
 					contentSizeInBytes: 3,
 					referenceSequenceNumber: 0,
 				},
@@ -301,7 +301,7 @@ describe("OpSplitter", () => {
 		// Misconfigured op splitter
 		assert.throws(() =>
 			new OpSplitter([], mockSubmitBatchFn, 2, 1, mockLogger).splitFirstBatchMessage({
-				content: [compressedMessage],
+				messages: [compressedMessage],
 				contentSizeInBytes: 3,
 				referenceSequenceNumber: 0,
 			}),
@@ -316,7 +316,7 @@ describe("OpSplitter", () => {
 				maxBatchSizeInBytes,
 				mockLogger,
 			).splitFirstBatchMessage({
-				content: [compressedMessage],
+				messages: [compressedMessage],
 				contentSizeInBytes: 3,
 				referenceSequenceNumber: 0,
 			}),
@@ -340,7 +340,7 @@ describe("OpSplitter", () => {
 				const emptyMessage = generateChunkableOp(0);
 
 				const result = opSplitter.splitFirstBatchMessage({
-					content: [largeMessage, emptyMessage, emptyMessage, emptyMessage],
+					messages: [largeMessage, emptyMessage, emptyMessage, emptyMessage],
 					contentSizeInBytes: largeMessage.contents?.length ?? 0,
 					referenceSequenceNumber: 0,
 				});
@@ -352,12 +352,13 @@ describe("OpSplitter", () => {
 					assert.equal(batch.referenceSequenceNumber, 0);
 				}
 
-				assert.equal(result.content.length, 4);
-				const lastChunk = JSON.parse(result.content[0].contents!).contents as IChunkedOp;
+				assert.equal(result.messages.length, 4);
+				const lastChunk = JSON.parse(result.messages[0].contents!).contents as IChunkedOp;
 				assert.equal(lastChunk.chunkId, lastChunk.totalChunks);
-				assert.deepStrictEqual(result.content.slice(1), new Array(3).fill(emptyMessage));
+				assert.deepStrictEqual(result.messages.slice(1), new Array(3).fill(emptyMessage));
 				assert.equal(
-					!extraOp || JSON.parse(result.content[0].contents!).contents?.contents?.length === 0,
+					!extraOp ||
+						JSON.parse(result.messages[0].contents!).contents?.contents?.length === 0,
 					true,
 				);
 				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
@@ -375,7 +376,7 @@ describe("OpSplitter", () => {
 					mockLogger.matchEvents([
 						{
 							eventName: "OpSplitter:CompressedChunkedBatch",
-							length: result.content.length,
+							length: result.messages.length,
 							chunks: 100 / 20 + 1 + (extraOp ? 1 : 0),
 							chunkSizeInBytes: 20,
 						},
@@ -397,7 +398,7 @@ describe("OpSplitter", () => {
 				const largeMessage = generateChunkableOp(100);
 
 				const result = opSplitter.splitFirstBatchMessage({
-					content: [largeMessage],
+					messages: [largeMessage],
 					contentSizeInBytes: largeMessage.contents?.length ?? 0,
 					referenceSequenceNumber: 0,
 				});
@@ -409,12 +410,13 @@ describe("OpSplitter", () => {
 					assert.equal(batch.referenceSequenceNumber, 0);
 				}
 
-				assert.equal(result.content.length, 1);
+				assert.equal(result.messages.length, 1);
 				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
-				const lastChunk = JSON.parse(result.content[0].contents!).contents as IChunkedOp;
+				const lastChunk = JSON.parse(result.messages[0].contents!).contents as IChunkedOp;
 				assert.equal(lastChunk.chunkId, lastChunk.totalChunks);
 				assert.equal(
-					!extraOp || JSON.parse(result.content[0].contents!).contents?.contents?.length === 0,
+					!extraOp ||
+						JSON.parse(result.messages[0].contents!).contents?.contents?.length === 0,
 					true,
 				);
 				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
@@ -432,7 +434,7 @@ describe("OpSplitter", () => {
 					mockLogger.matchEvents([
 						{
 							eventName: "OpSplitter:CompressedChunkedBatch",
-							length: result.content.length,
+							length: result.messages.length,
 							chunks: 100 / 20 + 1 + (extraOp ? 1 : 0),
 							chunkSizeInBytes: 20,
 						},

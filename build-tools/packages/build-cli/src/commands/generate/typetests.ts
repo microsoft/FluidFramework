@@ -13,7 +13,6 @@ import {
 	type TestCaseTypeData,
 	type TypeData,
 	buildTestCase,
-	getFullTypeName,
 	getTypeTestPreviousPackageDetails,
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
@@ -106,37 +105,15 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// statements into the type test file, we need to use the previous version name.
 		previousPackageJson.name = previousPackageName;
 
-		const { typesPath: currentTypesPathRelative, levelUsed: currentPackageLevel } =
-			getTypesPathWithFallback(currentPackageJson, level, this.logger, fallbackLevel);
-		const currentTypesPath = path.resolve(path.join(pkg.directory, currentTypesPathRelative));
-		this.verbose(
-			`Found ${currentPackageLevel} type definitions for ${currentPackageJson.name}: ${currentTypesPath}`,
-		);
-
 		const { typesPath: previousTypesPathRelative, levelUsed: previousPackageLevel } =
 			getTypesPathWithFallback(previousPackageJson, level, this.logger, fallbackLevel);
 		const previousTypesPath = path.resolve(
 			path.join(previousBasePath, previousTypesPathRelative),
 		);
 		this.verbose(
-			`Found ${previousPackageLevel} type definitions for ${previousPackageJson.name}: ${previousTypesPath}`,
+			`Found ${previousPackageLevel} type definitions for ${currentPackageJson.name}: ${previousTypesPath}`,
 		);
 
-		// For the current version, we load the package-local tsconfig and return index.ts as the source file. This ensures
-		// we don't need to build before running type test generation. It's tempting to load the .d.ts files and use the
-		// same code path as is used below for the previous version (loadTypesSourceFile()), but that approach requires that
-		// the local project be built.
-		//
-		// One drawback to this approach is that it will always enumerate the full (internal) API for the current version.
-		// There's no way to scope it to just alpha, beta, etc. for example. If that capability is eventually needed we can
-		// revisit this.
-		const currentFile = new Project({
-			skipFileDependencyResolution: true,
-			tsConfigFilePath: path.join(pkg.directory, "tsconfig.json"),
-		}).getSourceFileOrThrow("index.ts");
-		this.verbose(
-			`Loaded source file for current version (${pkg.version}): ${currentFile.getFilePath()}`,
-		);
 		const previousFile = loadTypesSourceFile(previousTypesPath);
 		this.verbose(
 			`Loaded source file for previous version (${
@@ -144,12 +121,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 			}): ${previousFile.getFilePath()}`,
 		);
 
-		const currentTypeMap = typeDataFromFile(currentFile, this.logger);
-		const previousData = [...typeDataFromFile(previousFile, this.logger).values()];
-
-		// Sort previous data lexicographically. To use locale-specific sort change the sort function to
-		// (a, b) => a.name.localeCompare(b.name)
-		previousData.sort((a, b) => (a.name > b.name ? 1 : a.name < b.name ? -1 : 0));
+		const typeMap = typeDataFromFile(previousFile, this.logger);
 
 		// Sort import statements to respect linting rules.
 		const buildToolsPackageName = "@fluidframework/build-tools";
@@ -181,12 +153,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
 `,
 		];
 
-		const testCases = generateCompatibilityTestCases(
-			previousData,
-			currentTypeMap,
-			currentPackageJson,
-			fileHeader,
-		);
+		const testCases = generateCompatibilityTestCases(typeMap, currentPackageJson, fileHeader);
 
 		mkdirSync(outDir, { recursive: true });
 
@@ -357,7 +324,7 @@ export function typeDataFromFile(
 				log,
 				addStringScope(namespacePrefix, exportedName),
 			)) {
-				const fullName = getFullTypeName(typeDefinition);
+				const fullName = typeDefinition.testCaseName;
 				if (typeData.has(fullName)) {
 					// This system does not properly handle overloads: instead it only keeps the last signature.
 					log.warning(
@@ -445,14 +412,46 @@ function getNodeTypeData(node: Node, log: Logger, exportedName: string): TypeDat
 			? node.getFirstAncestorByKindOrThrow(SyntaxKind.VariableStatement).getJsDocs()
 			: node.getJsDocs();
 
-		const typeData: TypeData[] = [
-			{
-				name: exportedName,
-				kind: node.getKindName(),
-				node,
-				tags: getTags(docs),
-			},
-		];
+		const typeData: TypeData[] = [];
+
+		const dataCommon = {
+			name: exportedName,
+			node,
+			tags: getTags(docs),
+		};
+
+		const escapedTypeName = exportedName.replace(/\./g, "_");
+		const trimmedKind = node.getKindName().replace(/Declaration/g, "");
+
+		if (
+			// Covers instance type of the class (including generics of it)
+			Node.isClassDeclaration(node) ||
+			Node.isEnumDeclaration(node) ||
+			Node.isInterfaceDeclaration(node) ||
+			Node.isTypeAliasDeclaration(node)
+		) {
+			typeData.push({
+				...dataCommon,
+				useTypeof: false,
+				testCaseName: `${trimmedKind}_${escapedTypeName}`,
+			});
+		}
+
+		if (
+			// Covers statics of the class (non-generic)
+			Node.isClassDeclaration(node) ||
+			Node.isVariableDeclaration(node) ||
+			Node.isFunctionDeclaration(node)
+		) {
+			typeData.push({
+				...dataCommon,
+				useTypeof: true,
+				testCaseName: `${
+					Node.isClassDeclaration(node) ? "ClassStatics" : trimmedKind
+				}_${escapedTypeName}`,
+			});
+		}
+
 		return typeData;
 	}
 
@@ -493,57 +492,57 @@ export function loadTypesSourceFile(typesPath: string): SourceFile {
 }
 
 /**
- * Generates compatibility test cases between the previous type definitions and the current type map.
- * This function constructs test cases to validate forward and backward compatibility of types.
- * @param previousData - array of type data from the previous file
- * @param currentTypeMap - map containing current type data
+ * Generates compatibility test cases using the provided type data to validate forward and backward compatibility of
+ * types. The type data is assumed to be from an _older_ version of the types. This function will construct test cases
+ * that import the types from both the old/previous version of a package and the current version and use them in place
+ * of one another. Failed test cases indicate type incompatibility between versions.
+ *
+ * @param typeMap - map containing type data to use to generate type tests
  * @param packageObject - package.json object containing type validation settings
  * @param testString - array to store generated test strings
  * @returns - string array representing generated compatibility test cases
  */
 export function generateCompatibilityTestCases(
-	previousData: TypeData[],
-	currentTypeMap: Map<string, TypeData>,
+	typeMap: Map<string, TypeData>,
 	packageObject: PackageJson,
 	testString: string[],
 ): string[] {
 	const broken: BrokenCompatTypes = packageObject.typeValidation?.broken ?? {};
-	for (const oldTypeData of previousData) {
-		const oldType: TestCaseTypeData = {
-			prefix: "old",
-			...oldTypeData,
-			removed: false,
-		};
-		const currentTypeData = currentTypeMap.get(getFullTypeName(oldTypeData));
-		// if the current package is missing a type, we will use the old type data.
-		// this can represent a breaking change which can be disable in the package.json.
-		// this can also happen for type changes, like type to interface, which can remain
-		// compatible.
-		const currentType: TestCaseTypeData =
-			currentTypeData === undefined
-				? {
-						prefix: "current",
-						...oldTypeData,
-						kind: `Removed${oldTypeData.kind}`,
-						removed: true,
-					}
-				: {
-						prefix: "current",
-						...currentTypeData,
-						removed: false,
-					};
 
-		// look for settings not under version, then fall back to version for back compat
-		const brokenData = broken?.[getFullTypeName(currentType)];
+	// Convert Map entries to an array and sort by key. This is not strictly needed since Maps are iterated in insertion
+	// order, so the type tests should generate in the same order each time. However, explicitly sorting by the test case
+	// name is clearer.
+	const sortedEntries = [...typeMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+	for (const [testCaseName, typeData] of sortedEntries) {
+		const [oldType, currentType]: TestCaseTypeData[] = [
+			{
+				prefix: "old",
+				...typeData,
+				removed: false,
+			},
+			{
+				prefix: "current",
+				...typeData,
+				removed: false,
+			},
+		];
+		const brokenData = broken?.[testCaseName];
 
 		const typePreprocessor = selectTypePreprocessor(currentType);
 		if (typePreprocessor !== undefined) {
-			if (oldTypeData.tags.has("sealed")) {
+			if (typeData.tags.has("sealed")) {
 				// If the type was `@sealed` then only the code declaring it is allowed to create implementations.
 				// This means that the case of having the new (current) version of the type,
 				// but trying to implement it based on the old version should not occur and is not a supported usage.
 				// This means that adding members to sealed types, as well as making their members have more specific types is allowed as a non-breaking change.
 				// This check implements skipping generation of type tests which would flag such changes to sealed types as errors.
+			} else if (typeData.useTypeof) {
+				// If the type was using typeof treat it like `@sealed`.
+				// This assumes adding members to existing variables (and class statics) is non-breaking.
+				// This is true in most cases, though there are some edge cases where this assumption is wrong
+				// (for example name collisions with inherited statics in subclasses, and explicit use of typeof in user code to define a type which it implements),
+				// but overall skipping this case seems preferable to the large amount of false positives keeping it produces.
 			} else {
 				testString.push(
 					`/*`,
@@ -551,7 +550,7 @@ export function generateCompatibilityTestCases(
 					` * If this test starts failing, it indicates a change that is not forward compatible.`,
 					` * To acknowledge the breaking change, add the following to package.json under`,
 					` * typeValidation.broken:`,
-					` * "${getFullTypeName(currentType)}": {"forwardCompat": false}`,
+					` * "${currentType.testCaseName}": {"forwardCompat": false}`,
 					" */",
 					...buildTestCase(
 						oldType,
@@ -568,7 +567,7 @@ export function generateCompatibilityTestCases(
 				` * If this test starts failing, it indicates a change that is not backward compatible.`,
 				` * To acknowledge the breaking change, add the following to package.json under`,
 				` * typeValidation.broken:`,
-				` * "${getFullTypeName(currentType)}": {"backCompat": false}`,
+				` * "${currentType.testCaseName}": {"backCompat": false}`,
 				" */",
 				...buildTestCase(
 					currentType,

@@ -48,9 +48,9 @@ export interface IFluidModuleWithDetails {
     module: IFluidModule;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ILoaderOptions extends ILoaderOptions_2 {
-    // (undocumented)
+    // @deprecated (undocumented)
     summarizeProtocolTree?: boolean;
 }
 

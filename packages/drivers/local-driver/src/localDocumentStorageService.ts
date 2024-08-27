@@ -74,7 +74,9 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 				return null;
 			}
 
-			requestVersion = versions[0];
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			requestVersion = versions[0]!;
 		}
 
 		const rawTree = await this.manager.getTree(requestVersion.treeId);
@@ -91,12 +93,16 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 				throw new Error("No versions for the document!");
 			}
 
-			versionId = versions[0].treeId;
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			versionId = versions[0]!.treeId;
 		}
 		const rawTree = await this.manager.getTree(versionId);
 		const snapshotTree = buildGitTreeHierarchy(rawTree, this.blobsShaCache, true);
 		const groupIds = new Set<string>(snapshotFetchOptions?.loadingGroupIds ?? []);
-		const attributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
+		// TODO Why are we non null asserting here
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const attributesBlobId = snapshotTree.trees[".protocol"]!.blobs.attributes!;
 		// Only populate contents for the blobs which are supposed to be returned.
 		const blobContents = new Map<string, ArrayBuffer>();
 		const attributesBlobData = await this.readBlob(attributesBlobId);
@@ -296,7 +302,9 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 			}
 			await createDocument(this.localDeltaConnectionServer, this.resolvedUrl, summary);
 			const version = await this.getVersions(this.id, 1);
-			return version[0].id;
+			// TODO Why are we non null asserting here
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			return version[0]!.id;
 		}
 		return this.summaryTreeUploadManager.writeSummaryTree(
 			summary,

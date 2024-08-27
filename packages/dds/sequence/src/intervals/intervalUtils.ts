@@ -9,15 +9,17 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 import {
 	// eslint-disable-next-line import/no-deprecated
 	Client,
+	// eslint-disable-next-line import/no-deprecated
 	PropertiesManager,
 	PropertySet,
 	SlidingPreference,
+	SequencePlace,
+	Side,
 } from "@fluidframework/merge-tree/internal";
-
-import { SequencePlace, Side } from "../intervalCollection.js";
 
 /**
  * Basic interval abstraction
+ * @legacy
  * @alpha
  */
 export interface IInterval {
@@ -84,6 +86,7 @@ export type IntervalDeltaOpType =
 
 /**
  * Values are used in revertibles.
+ * @legacy
  * @alpha
  */
 export const IntervalOpType = {
@@ -92,11 +95,13 @@ export const IntervalOpType = {
 	POSITION_REMOVE: "positionRemove",
 } as const;
 /**
+ * @legacy
  * @alpha
  */
 export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 
 /**
+ * @legacy
  * @alpha
  */
 export enum IntervalType {
@@ -120,6 +125,7 @@ export enum IntervalType {
 /**
  * Serialized object representation of an interval.
  * This representation is used for ops that create or change intervals.
+ * @legacy
  * @alpha
  */
 export interface ISerializedInterval {
@@ -148,16 +154,22 @@ export interface ISerializedInterval {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISerializableInterval extends IInterval {
 	/** Serializable bag of properties associated with the interval. */
 	properties: PropertySet;
-	/***/
+	/**
+	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
+	 */
+	// eslint-disable-next-line import/no-deprecated
 	propertyManager: PropertiesManager;
 	/***/
 	serialize(): ISerializedInterval;
-	/***/
+	/**
+	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
+	 */
 	addProperties(
 		props: PropertySet,
 		collaborating?: boolean,
@@ -229,9 +241,9 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	 * @param op - If this create came from a remote client, op that created it. Default is undefined (i.e. local)
 	 * @param fromSnapshot - If this create came from loading a snapshot. Default is false.
 	 * @param startSide - The side on which the start position lays. See
-	 * {@link SequencePlace} for additional context
+	 * {@link @fluidframework/merge-tree#SequencePlace} for additional context
 	 * @param endSide - The side on which the end position lays. See
-	 * {@link SequencePlace} for additional context
+	 * {@link @fluidframework/merge-tree#SequencePlace} for additional context
 	 */
 	create(
 		label: string,
@@ -253,6 +265,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
  * Note that interval stickiness is currently an experimental feature and must
  * be explicitly enabled with the `intervalStickinessEnabled` flag
  *
+ * @legacy
  * @alpha
  */
 export const IntervalStickiness = {
@@ -285,6 +298,7 @@ export const IntervalStickiness = {
  *
  * Note that interval stickiness is currently an experimental feature and must
  * be explicitly enabled with the `intervalStickinessEnabled` flag
+ * @legacy
  * @alpha
  */
 export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];

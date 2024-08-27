@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import child_process from "child_process";
-
+import { InteractiveBrowserCredential, useIdentityPlugin } from "@azure/identity";
+import { cachePersistencePlugin } from "@azure/identity-cache-persistence";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
 	IPublicClientConfig,
@@ -13,16 +13,16 @@ import {
 	getChildrenByDriveItem,
 	getDriveItemByServerRelativePath,
 	getDriveItemFromDriveAndItem,
-	getOdspRefreshTokenFn,
+	getAadTenant,
+	getOdspScope,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import {
-	IOdspTokenManagerCacheKey,
-	OdspTokenConfig,
-	OdspTokenManager,
-	odspTokensCache,
-} from "@fluidframework/tool-utils/internal";
 
-import { getForceTokenReauth } from "./fluidFetchArgs.js";
+import { loginHint } from "./fluidFetchArgs.js";
+
+// Note: the following page may be helpful for debugging auth issues:
+// https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/identity/identity/TROUBLESHOOTING.md
+// See e.g. the section on setting 'AZURE_LOG_LEVEL'.
+useIdentityPlugin(cachePersistencePlugin);
 
 export const fetchToolClientConfig: IPublicClientConfig = {
 	get clientId(): string {
@@ -41,40 +41,43 @@ export async function resolveWrapper<T>(
 	server: string,
 	clientConfig: IPublicClientConfig,
 	forceTokenReauth = false,
-	forToken = false,
 ): Promise<T> {
 	try {
-		const odspTokenManager = new OdspTokenManager(odspTokensCache);
-		const tokenConfig: OdspTokenConfig = {
-			type: "browserLogin",
-			navigator: fluidFetchWebNavigator,
-		};
-		const tokens = await odspTokenManager.getOdspTokens(
-			server,
-			clientConfig,
-			tokenConfig,
-			undefined /* forceRefresh */,
-			forceTokenReauth || getForceTokenReauth(),
-		);
-
-		const result = await callback({
-			accessToken: tokens.accessToken,
-			refreshTokenFn: getOdspRefreshTokenFn(server, clientConfig, tokens),
+		const credential = new InteractiveBrowserCredential({
+			clientId: fetchToolClientConfig.clientId,
+			tenantId: getAadTenant(server),
+			// NOTE: fetch-tool flows using multiple sets of user credentials haven't been well-tested.
+			// Some of the @azure/identity docs suggest we may need to manage authentication records and choose
+			// which one to use explicitly here if we have such scenarios.
+			// If we start doing this, it may be worth considering using disableAutomaticAuthentication here so we
+			// have better control over when interactive auth may be triggered.
+			// For now, fetch-tool doesn't work against personal accounts anyway so the only flow that might necessitate this
+			// would be grabbing documents using several identities (e.g. test accounts we use for stress testing).
+			// In that case, a simple workaround is to delete the cache that @azure/identity uses before running the tool.
+			// See docs on `tokenCachePersistenceOptions.name` for information on where this cache is stored.
+			loginHint,
+			tokenCachePersistenceOptions: {
+				enabled: true,
+				name: "fetch-tool",
+			},
 		});
-		// If this is used for getting a token, then refresh the cache with new token.
-		if (forToken) {
-			const key: IOdspTokenManagerCacheKey = { isPush: false, userOrServer: server };
-			await odspTokenManager.updateTokensCache(key, {
-				accessToken: result as any as string,
-				refreshToken: tokens.refreshToken,
-			});
-			return result;
-		}
-		return result;
+
+		const scope = getOdspScope(server);
+
+		const { token } = await credential.getToken(scope);
+
+		return await callback({
+			accessToken: token,
+			refreshTokenFn: async () => {
+				await credential.authenticate(scope);
+				const result = await credential.getToken(scope);
+				return result.token;
+			},
+		});
 	} catch (e: any) {
 		if (e.errorType === DriverErrorTypes.authorizationError && !forceTokenReauth) {
 			// Re-auth
-			return resolveWrapper<T>(callback, server, clientConfig, true, forToken);
+			return resolveWrapper<T>(callback, server, clientConfig, true);
 		}
 		throw e;
 	}
@@ -156,13 +159,3 @@ export async function getSingleSharePointFile(server: string, drive: string, ite
 		fetchToolClientConfig,
 	);
 }
-
-const fluidFetchWebNavigator = (url: string) => {
-	let message = "Please open browser and navigate to this URL:";
-	if (process.platform === "win32") {
-		child_process.exec(`start "fluid-fetch" /B "${url}"`);
-		message =
-			"Opening browser to get authorization code.  If that doesn't open, please go to this URL manually";
-	}
-	console.log(`${message}\n  ${url}`);
-};

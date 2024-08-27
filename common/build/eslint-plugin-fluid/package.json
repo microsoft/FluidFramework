@@ -1,19 +1,20 @@
 {
 	"name": "@fluid-internal/eslint-plugin-fluid",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Custom ESLint rules for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "common/build/eslint-pluig-fluid/"
+		"directory": "common/build/eslint-plugin-fluid"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"main": "index.js",
 	"scripts": {
-		"build": "npm run build:readme",
+		"build": "npm run build:readme && npm run build:test:examples",
 		"build:readme": "markdown-magic --files \"**/*.md\"",
+		"build:test:examples": "tsc --project ./src/test/example/tsconfig.json",
 		"clean": "rimraf --glob nyc",
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",

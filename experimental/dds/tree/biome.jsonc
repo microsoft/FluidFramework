@@ -7,7 +7,7 @@
 	"javascript": {
 		"formatter": {
 			"jsxQuoteStyle": "single",
-			"trailingComma": "es5",
+			"trailingCommas": "es5",
 			"quoteStyle": "single"
 		}
 	}

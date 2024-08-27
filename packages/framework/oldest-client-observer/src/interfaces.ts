@@ -9,6 +9,7 @@ import { IQuorumClients } from "@fluidframework/driver-definitions";
 
 /**
  * Events emitted by {@link IOldestClientObservable}.
+ * @legacy
  * @alpha
  */
 export interface IOldestClientObservableEvents extends IEvent {
@@ -21,6 +22,7 @@ export interface IOldestClientObservableEvents extends IEvent {
  * (both expose the relevant API surface and eventing).  However, really this info probably shouldn't live on either,
  * since neither is really the source of truth (they are just the only currently-available plumbing options).
  * It's information about the connection, so the real source of truth is lower (at the connection layer).
+ * @legacy
  * @alpha
  */
 export interface IOldestClientObservable
@@ -38,6 +40,7 @@ export interface IOldestClientObservable
 
 /**
  * Events emitted by {@link IOldestClientObservable}.
+ * @legacy
  * @alpha
  */
 export interface IOldestClientObserverEvents extends IEvent {
@@ -45,6 +48,7 @@ export interface IOldestClientObserverEvents extends IEvent {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IOldestClientObserver extends IEventProvider<IOldestClientObserverEvents> {

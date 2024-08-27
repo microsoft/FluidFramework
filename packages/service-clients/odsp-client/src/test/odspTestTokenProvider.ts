@@ -4,17 +4,16 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IPublicClientConfig,
 	TokenRequestCredentials,
-	getFetchTokenUrl,
-	unauthPostAsync,
 } from "@fluidframework/odsp-doclib-utils/internal";
+import { getFetchTokenUrl, unauthPostAsync } from "@fluidframework/odsp-doclib-utils/internal";
 
-import { TokenResponse } from "../interfaces.js";
-import { IOdspTokenProvider } from "../token.js";
+import type { TokenResponse } from "../interfaces.js";
+import type { IOdspTokenProvider } from "../token.js";
 
-import { OdspTestCredentials } from "./odspClient.spec.js";
+import type { OdspTestCredentials } from "./odspClient.spec.js";
 
 /**
  * This class implements the IOdspTokenProvider interface and provides methods for fetching push and storage tokens.
@@ -22,7 +21,7 @@ import { OdspTestCredentials } from "./odspClient.spec.js";
 export class OdspTestTokenProvider implements IOdspTokenProvider {
 	private readonly creds: OdspTestCredentials;
 
-	constructor(credentials: OdspTestCredentials) {
+	public constructor(credentials: OdspTestCredentials) {
 		this.creds = credentials;
 	}
 

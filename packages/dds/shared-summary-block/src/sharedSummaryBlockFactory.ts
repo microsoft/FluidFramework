@@ -79,12 +79,14 @@ export class SharedSummaryBlockFactory implements IChannelFactory<ISharedSummary
 
 /**
  * {@inheritDoc ISharedSummaryBlock}
+ * @legacy
  * @alpha
  */
 export const SharedSummaryBlock = createSharedObjectKind(SharedSummaryBlockFactory);
 
 /**
  * {@inheritDoc ISharedSummaryBlock}
+ * @legacy
  * @alpha
  */
 export type SharedSummaryBlock = ISharedSummaryBlock;

@@ -22,11 +22,13 @@ import { getArgsValidationError, getSnapshotFileContent, timeoutPromise } from "
 /* eslint-enable import/no-internal-modules */
 
 /**
+ * @legacy
  * @alpha
  */
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IExportFileResponseSuccess {
@@ -34,6 +36,7 @@ export interface IExportFileResponseSuccess {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IExportFileResponseFailure {

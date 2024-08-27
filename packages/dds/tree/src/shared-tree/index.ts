@@ -28,12 +28,16 @@ export {
 export {
 	type SchematizeConfiguration,
 	type TreeContent,
+	type TreeStoredContent,
 	type InitializeAndSchematizeConfiguration,
 	type SchemaConfiguration,
 	buildTreeConfiguration,
 } from "./schematizeTree.js";
 
-export { type FlexTreeView, CheckoutFlexTreeView, type ITreeViewFork } from "./treeView.js";
+export {
+	CheckoutFlexTreeView,
+	type FlexTreeView,
+} from "./treeView.js";
 
 export type { ISharedTreeEditor, ISchemaEditor } from "./sharedTreeEditBuilder.js";
 

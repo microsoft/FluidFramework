@@ -6,13 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { type ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
-// import { ConnectionState } from "@fluidframework/container-loader";
-// import { timeoutPromise } from "@fluidframework/test-utils";
 
-import { OdspConnectionConfig } from "../interfaces.js";
+import type { OdspConnectionConfig } from "../interfaces.js";
 import { OdspClient } from "../odspClient.js";
 
 import { OdspTestTokenProvider } from "./odspTestTokenProvider.js";
@@ -101,18 +99,17 @@ describe("OdspClient", () => {
 	it("GC is disabled by default", async () => {
 		const { container: container_defaultConfig } = await client.createContainer(schema);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const { shouldRunSweep, tombstoneAutorecoveryEnabled, throwOnTombstoneLoad } =
+		const { sweepEnabled, throwOnTombstoneLoad } =
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 			(container_defaultConfig as any).container._runtime.garbageCollector.configs;
 
 		const expectedConfigs = {
-			shouldRunSweep: "NO",
-			tombstoneAutorecoveryEnabled: false,
+			sweepEnabled: false,
 			throwOnTombstoneLoad: false,
 		};
 		assert.deepStrictEqual(
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			{ shouldRunSweep, tombstoneAutorecoveryEnabled, throwOnTombstoneLoad },
+			{ sweepEnabled, throwOnTombstoneLoad },
 			expectedConfigs,
 			"Expected GC to be disabled per compatibilityModeRuntimeOptions",
 		);

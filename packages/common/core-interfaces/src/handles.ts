@@ -7,11 +7,13 @@ import type { ErasedType } from "./erasedType.js";
 import type { IRequest, IResponse } from "./fluidRouter.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export const IFluidHandleContext: keyof IProvideFluidHandleContext = "IFluidHandleContext";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IProvideFluidHandleContext {
@@ -20,6 +22,7 @@ export interface IProvideFluidHandleContext {
 
 /**
  * Describes a routing context from which other `IFluidHandleContext`s are defined.
+ * @legacy
  * @alpha
  */
 export interface IFluidHandleContext extends IProvideFluidHandleContext {
@@ -57,6 +60,7 @@ export const IFluidHandle = "IFluidHandle";
 
 /**
  * @deprecated {@link IFluidHandleInternal} and {@link IFluidHandleInternal} should be identified should be identified using the {@link fluidHandleSymbol} symbol.
+ * @legacy
  * @alpha
  */
 export interface IProvideFluidHandle {
@@ -72,6 +76,7 @@ export interface IProvideFluidHandle {
 
 /**
  * Handle to a shared {@link FluidObject}.
+ * @legacy
  * @alpha
  */
 export interface IFluidHandleInternal<
