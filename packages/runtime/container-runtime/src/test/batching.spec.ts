@@ -591,10 +591,10 @@ describe("Runtime batching", () => {
 				sequenceNumber: 1,
 				minimumSequenceNumber: 0,
 				clientSequenceNumber: 1,
-				contents: JSON.stringify({
+				contents: {
 					type: "groupedBatch",
 					contents: [],
-				}),
+				},
 			} as unknown as ISequencedDocumentMessage;
 
 			assert.doesNotThrow(
