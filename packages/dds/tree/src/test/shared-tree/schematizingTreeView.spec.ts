@@ -25,7 +25,7 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toFlexSchema } from "../../simple-tree/toFlexSchema.js";
+import { toFlexSchema, toStoredSchema } from "../../simple-tree/toFlexSchema.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
@@ -33,7 +33,7 @@ import {
 	insert,
 	validateUsageError,
 } from "../utils.js";
-import type { TreeContent, TreeCheckout } from "../../shared-tree/index.js";
+import type { TreeCheckout, TreeStoredContent } from "../../shared-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });
@@ -54,8 +54,8 @@ function checkoutWithInitialTree(
 		unhydratedInitialTree,
 		nodeKeyManager,
 	);
-	const treeContent: TreeContent = {
-		schema: toFlexSchema(viewConfig.schema),
+	const treeContent: TreeStoredContent = {
+		schema: toStoredSchema(viewConfig.schema),
 		initialTree,
 	};
 	return checkoutWithContent(treeContent);
@@ -73,7 +73,7 @@ const emptySchema = new SchemaBuilderBase(FieldKinds.required, {
 describe("SchematizingSimpleTreeView", () => {
 	it("Initialize document", () => {
 		const emptyContent = {
-			schema: emptySchema,
+			schema: intoStoredSchema(emptySchema),
 			initialTree: undefined,
 		};
 		const checkout = checkoutWithContent(emptyContent);
@@ -90,7 +90,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("Initialize errors", () => {
 		const emptyContent = {
-			schema: emptySchema,
+			schema: intoStoredSchema(emptySchema),
 			initialTree: undefined,
 		};
 		const checkout = checkoutWithContent(emptyContent);
@@ -259,7 +259,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("supports revertibles", () => {
 		const emptyContent = {
-			schema: emptySchema,
+			schema: intoStoredSchema(emptySchema),
 			initialTree: undefined,
 		};
 		const checkout = checkoutWithContent(emptyContent);
