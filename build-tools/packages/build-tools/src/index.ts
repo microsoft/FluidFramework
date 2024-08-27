@@ -25,10 +25,6 @@ export { getApiExtractorConfigFilePath, getEsLintConfigFilePath } from "./common
 export * as TscUtils from "./common/tscUtils";
 
 export {
-	type BrokenCompatTypes,
-	type ITypeValidationConfig,
-} from "./common/typeValidatorConfig";
-export {
 	TypeOnly,
 	MinimalType,
 	FullType,

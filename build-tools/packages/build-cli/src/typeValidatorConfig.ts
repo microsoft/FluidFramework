@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { PackageJson } from "@fluidframework/build-tools";
+
 /**
  * Metadata about known-broken types.
  */
@@ -27,3 +29,16 @@ export interface ITypeValidationConfig {
 	 */
 	disabled?: boolean;
 }
+
+/**
+ * A type repreesnting package.json files with the Fluid-specific `typeValidation` settings.
+ *
+ * @remarks
+ *
+ * This type is needed because the config types (ITypeValidationConfig) live in build-cli, but the Package definitions
+ * are all in build-tools. Ultimately the Package class and supporting classes/types should move to a common package
+ * that is consumed by both fluid-build and build-cli.
+ */
+export type PackageWithTypeTestSettings = PackageJson & {
+	typeValidation: ITypeValidationConfig;
+};
