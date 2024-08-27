@@ -38,7 +38,6 @@ import {
 	expectSchemaEqual,
 	forkView,
 	getView,
-	numberSequenceRootSchema,
 	validateUsageError,
 	viewCheckout,
 } from "../utils.js";
@@ -53,7 +52,9 @@ import {
 import { getOrCreateInnerNode } from "../../simple-tree/proxyBinding.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
-import { toFlexSchema } from "../../simple-tree/index.js";
+import { toFlexSchema, toStoredSchema } from "../../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
 
 const rootField: FieldUpPath = {
 	parent: undefined,
@@ -753,9 +754,8 @@ describe("sharedTreeView", () => {
 			fork.checkout[disposeSymbol]();
 
 			assert.throws(() => fork.root.insertAtStart("A"));
-			assert.throws(() =>
-				fork.checkout.updateSchema(intoStoredSchema(numberSequenceRootSchema)),
-			);
+			const targetSchema = toStoredSchema(numberSchema);
+			assert.throws(() => fork.checkout.updateSchema(targetSchema));
 			assert.throws(() => fork.checkout[disposeSymbol]());
 		});
 

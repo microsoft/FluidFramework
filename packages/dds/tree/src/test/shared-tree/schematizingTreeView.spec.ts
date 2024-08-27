@@ -30,9 +30,9 @@ import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
 	cursorFromInsertableTreeField,
-	insert,
 	validateUsageError,
 } from "../utils.js";
+import { insert } from "../sequenceRootUtils.js";
 import type { TreeCheckout, TreeStoredContent } from "../../shared-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
@@ -274,5 +274,19 @@ describe("SchematizingSimpleTreeView", () => {
 		undoStack.pop()?.revert();
 		assert.equal(undoStack.length, 0);
 		assert.equal(redoStack.length, 1);
+	});
+
+	it("schemaChanged event", () => {
+		const content = {
+			schema: toStoredSchema([]),
+			initialTree: undefined,
+		};
+		const checkout = checkoutWithContent(content);
+		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+		const log: string[] = [];
+		view.events.on("schemaChanged", () => log.push("changed"));
+		assert.deepEqual(log, []);
+		view.upgradeSchema();
+		assert.deepEqual(log, ["changed"]);
 	});
 });
