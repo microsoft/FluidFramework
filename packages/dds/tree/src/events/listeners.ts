@@ -49,7 +49,7 @@ export type Listeners<T extends object> = {
 export interface Listenable<TListeners extends object> {
 	/**
 	 * Register an event listener.
-	 * @param eventName - the name of the event
+	 * @param eventName - The name of the event.
 	 * @param listener - the handler to run when the event is fired by the emitter
 	 * @returns a {@link Off | function} which will deregister the listener when called.
 	 * This deregistration function is idempotent and therefore may be safely called more than once with no effect.
