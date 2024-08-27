@@ -138,6 +138,9 @@ importers:
       change-case:
         specifier: ^3.1.0
         version: 3.1.0
+      cosmiconfig:
+        specifier: ^8.3.6
+        version: 8.3.6(typescript@5.4.5)
       danger:
         specifier: ^11.3.0
         version: 11.3.0
@@ -364,9 +367,6 @@ importers:
 
   packages/build-tools:
     dependencies:
-      '@fluid-tools/version-tools':
-        specifier: workspace:~
-        version: link:../version-tools
       '@manypkg/get-packages':
         specifier: ^2.2.0
         version: 2.2.0
@@ -377,8 +377,8 @@ importers:
         specifier: ^2.4.2
         version: 2.4.2
       cosmiconfig:
-        specifier: ^8.2.0
-        version: 8.2.0
+        specifier: ^8.3.6
+        version: 8.3.6(typescript@5.4.5)
       date-fns:
         specifier: ^2.30.0
         version: 2.30.0
@@ -925,8 +925,8 @@ packages:
       '@commitlint/types': 17.4.4
       '@types/node': 18.18.7
       chalk: 4.1.2
-      cosmiconfig: 8.2.0
-      cosmiconfig-typescript-loader: 4.2.0(@types/node@18.18.7)(cosmiconfig@8.2.0)(ts-node@10.9.1)(typescript@5.4.5)
+      cosmiconfig: 8.3.6(typescript@5.4.5)
+      cosmiconfig-typescript-loader: 4.2.0(@types/node@18.18.7)(cosmiconfig@8.3.6)(ts-node@10.9.1)(typescript@5.4.5)
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       lodash.uniq: 4.5.0
@@ -949,8 +949,8 @@ packages:
       '@commitlint/types': 18.1.0
       '@types/node': 18.18.7
       chalk: 4.1.2
-      cosmiconfig: 8.2.0
-      cosmiconfig-typescript-loader: 5.0.0(@types/node@18.18.7)(cosmiconfig@8.2.0)(typescript@5.4.5)
+      cosmiconfig: 8.3.6(typescript@5.4.5)
+      cosmiconfig-typescript-loader: 5.0.0(@types/node@18.18.7)(cosmiconfig@8.3.6)(typescript@5.4.5)
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       lodash.uniq: 4.5.0
@@ -1219,7 +1219,7 @@ packages:
       '@rushstack/node-core-library': 3.59.5(@types/node@18.18.6)
       async: 3.2.4
       chalk: 2.4.2
-      cosmiconfig: 8.2.0
+      cosmiconfig: 8.3.6(typescript@5.4.5)
       danger: 11.3.0
       date-fns: 2.30.0
       debug: 4.3.4(supports-color@8.1.1)
@@ -4354,7 +4354,7 @@ packages:
   /core-util-is@1.0.3:
     resolution: {integrity: sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==}
 
-  /cosmiconfig-typescript-loader@4.2.0(@types/node@18.18.7)(cosmiconfig@8.2.0)(ts-node@10.9.1)(typescript@5.4.5):
+  /cosmiconfig-typescript-loader@4.2.0(@types/node@18.18.7)(cosmiconfig@8.3.6)(ts-node@10.9.1)(typescript@5.4.5):
     resolution: {integrity: sha512-NkANeMnaHrlaSSlpKGyvn2R4rqUDeE/9E5YHx+b4nwo0R8dZyAqcih8/gxpCZvqWP9Vf6xuLpMSzSgdVEIM78g==}
     engines: {node: '>=12', npm: '>=6'}
     peerDependencies:
@@ -4367,12 +4367,12 @@ packages:
         optional: true
     dependencies:
       '@types/node': 18.18.7
-      cosmiconfig: 8.2.0
+      cosmiconfig: 8.3.6(typescript@5.4.5)
       ts-node: 10.9.1(@types/node@18.18.7)(typescript@5.4.5)
       typescript: 5.4.5
     dev: true
 
-  /cosmiconfig-typescript-loader@5.0.0(@types/node@18.18.7)(cosmiconfig@8.2.0)(typescript@5.4.5):
+  /cosmiconfig-typescript-loader@5.0.0(@types/node@18.18.7)(cosmiconfig@8.3.6)(typescript@5.4.5):
     resolution: {integrity: sha512-+8cK7jRAReYkMwMiG+bxhcNKiHJDM6bR9FD/nGBXOWdMLuYawjF5cGrtLilJ+LGd3ZjCXnJjR5DkfWPoIVlqJA==}
     engines: {node: '>=v16'}
     requiresBuild: true
@@ -4385,7 +4385,7 @@ packages:
         optional: true
     dependencies:
       '@types/node': 18.18.7
-      cosmiconfig: 8.2.0
+      cosmiconfig: 8.3.6(typescript@5.4.5)
       jiti: 1.20.0
       typescript: 5.4.5
     dev: true
@@ -4401,14 +4401,20 @@ packages:
       path-type: 4.0.0
     dev: true
 
-  /cosmiconfig@8.2.0:
-    resolution: {integrity: sha512-3rTMnFJA1tCOPwRxtgF4wd7Ab2qvDbL8jX+3smjIbS4HlZBagTlpERbdN7iAbWlrfxE3M8c27kTwTawQ7st+OQ==}
+  /cosmiconfig@8.3.6(typescript@5.4.5):
+    resolution: {integrity: sha512-kcZ6+W5QzcJ3P1Mt+83OUv/oHFqZHIx8DuxG6eZ5RGMERoLqp4BuGjhHLYGK+Kf5XVkQvqBSmAy/nGWN3qDgEA==}
     engines: {node: '>=14'}
+    peerDependencies:
+      typescript: '>=4.9.5'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
     dependencies:
       import-fresh: 3.3.0
       js-yaml: 4.1.0
       parse-json: 5.2.0
       path-type: 4.0.0
+      typescript: 5.4.5
 
   /create-require@1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
