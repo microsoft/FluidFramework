@@ -27,9 +27,6 @@ export interface CommitMetadata {
     readonly kind: CommitKind;
 }
 
-// @alpha
-export function createEmitterMinimal<TListeners extends object>(): Listenable<TListeners> & IEmitter<TListeners>;
-
 // @public @sealed
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
@@ -89,12 +86,6 @@ type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 // @alpha
 export function getJsonSchema(schema: ImplicitAllowedTypes): JsonTreeSchema;
-
-// @alpha @sealed
-export interface IEmitter<TListeners extends Listeners<TListeners>> {
-    emit<K extends keyof Listeners<TListeners>>(eventName: K, ...args: Parameters<TListeners[K]>): void;
-    emitAndCollect<K extends keyof Listeners<TListeners>>(eventName: K, ...args: Parameters<TListeners[K]>): ReturnType<TListeners[K]>[];
-}
 
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
