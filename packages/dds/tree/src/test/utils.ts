@@ -770,7 +770,7 @@ export const IdentifierSchema = sf.object("identifier-object", {
 	identifier: sf.identifier,
 });
 
-const jsonPrimitiveSchema = [sf.null, sf.boolean, sf.number, sf.string] as const;
+export const jsonPrimitiveSchema = [sf.null, sf.boolean, sf.number, sf.string] as const;
 export const JsonUnion = [() => JsonObject, () => JsonArray, ...jsonPrimitiveSchema] as const;
 export const JsonObject = sf.mapRecursive("object", JsonUnion);
 export const JsonArray = sf.arrayRecursive("array", JsonUnion);

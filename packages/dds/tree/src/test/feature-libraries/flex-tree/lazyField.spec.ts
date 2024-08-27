@@ -15,12 +15,7 @@ import {
 	type UpPath,
 	rootFieldKey,
 } from "../../../core/index.js";
-import {
-	SchemaBuilder,
-	leaf,
-	leaf as leafDomain,
-	singleJsonCursor,
-} from "../../../domains/index.js";
+import { leaf, leaf as leafDomain, singleJsonCursor } from "../../../domains/index.js";
 import { isFreedSymbol } from "../../../feature-libraries/flex-tree/lazyEntity.js";
 import {
 	LazyField,
@@ -32,8 +27,10 @@ import {
 	FieldKinds,
 	FlexFieldSchema,
 	cursorForJsonableTreeNode,
+	defaultSchemaPolicy,
 	mapTreeFromCursor,
 	type FlexFieldKind,
+	type FlexTreeSchema,
 } from "../../../feature-libraries/index.js";
 import { brand, disposeSymbol } from "../../../util/index.js";
 import { flexTreeViewWithContent, forestWithContent, JsonObject } from "../../utils.js";
@@ -97,11 +94,9 @@ describe("LazyField", () => {
 	it("is", () => {
 		// #region Tree and schema initialization
 
-		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
-		const rootSchema = FlexFieldSchema.create(FieldKinds.optional, [
-			builder.object("object", {}),
-		]);
-		const schema = builder.intoSchema(rootSchema);
+		const builder = new SchemaFactory("test");
+		const rootSchema = builder.optional([builder.object("object", {})]);
+		const schema = toFlexSchema(rootSchema);
 
 		// Note: this tree initialization is strictly to enable construction of the lazy field.
 		// The test cases below are strictly in terms of the schema of the created fields.
@@ -256,9 +251,9 @@ describe("LazyField", () => {
 });
 
 describe("LazyOptionalField", () => {
-	const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
-	const rootSchema = FlexFieldSchema.create(FieldKinds.optional, [leafDomain.number]);
-	const schema = builder.intoSchema(rootSchema);
+	const builder = new SchemaFactory("test");
+	const schema = toFlexSchema(builder.optional(builder.number));
+	const rootSchema = schema.rootFieldSchema as FlexFieldSchema<typeof FieldKinds.optional>;
 
 	describe("Field with value", () => {
 		const { context, cursor } = readonlyTreeWithContent({
@@ -345,10 +340,9 @@ describe("LazyOptionalField", () => {
 });
 
 describe("LazyValueField", () => {
-	const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
-	const rootSchema = FlexFieldSchema.create(FieldKinds.required, [leafDomain.string]);
-	const schema = builder.intoSchema(rootSchema);
-
+	const builder = new SchemaFactory("test");
+	const schema = toFlexSchema(builder.required(builder.string));
+	const rootSchema = schema.rootFieldSchema as FlexFieldSchema<typeof FieldKinds.required>;
 	const initialTree = "Hello world";
 
 	const { context, cursor } = readonlyTreeWithContent({
@@ -395,9 +389,13 @@ describe("LazyValueField", () => {
 });
 
 describe("LazySequence", () => {
-	const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 	const rootSchema = FlexFieldSchema.create(FieldKinds.sequence, [leafDomain.number]);
-	const schema = builder.intoSchema(rootSchema);
+	const schema: FlexTreeSchema = {
+		rootFieldSchema: rootSchema,
+		nodeSchema: new Map([[leafDomain.number.name, leafDomain.number]]),
+		policy: defaultSchemaPolicy,
+		adapters: {},
+	};
 
 	/**
 	 * Creates a tree with a sequence of numbers at the root, and returns the sequence

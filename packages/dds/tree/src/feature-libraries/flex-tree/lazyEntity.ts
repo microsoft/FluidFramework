@@ -109,12 +109,3 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 	 */
 	protected abstract [forgetAnchorSymbol](): void;
 }
-
-/**
- * Prevent Entities from inheriting members from Object.prototype including:
- * '__defineGetter__', '__defineSetter__', '__lookupGetter__', '__lookupSetter__', '__proto__',
- * 'hasOwnProperty', 'isPrototypeOf', 'valueOf', 'propertyIsEnumerable', 'toLocaleString' and 'toString'.
- *
- * This opens up more options for field names on struct nodes.
- */
-Object.setPrototypeOf(LazyEntity.prototype, null);
