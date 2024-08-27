@@ -76,11 +76,7 @@ export function createSampledLogger(
 			}
 		},
 		sendTelemetryEvent: (event: ITelemetryGenericEventExt): void => {
-			if (
-				isSamplingDisabled ||
-				eventSampler === undefined ||
-				(eventSampler.sample() ?? false)
-			) {
+			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
 				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
@@ -88,11 +84,7 @@ export function createSampledLogger(
 			}
 		},
 		sendErrorEvent: (event: ITelemetryGenericEventExt): void => {
-			if (
-				isSamplingDisabled ||
-				eventSampler === undefined ||
-				(eventSampler.sample() ?? false)
-			) {
+			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
 				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
@@ -100,11 +92,7 @@ export function createSampledLogger(
 			}
 		},
 		sendPerformanceEvent: (event: ITelemetryGenericEventExt): void => {
-			if (
-				isSamplingDisabled ||
-				eventSampler === undefined ||
-				(eventSampler.sample() ?? false)
-			) {
+			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
 				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
