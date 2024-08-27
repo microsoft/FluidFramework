@@ -34,12 +34,12 @@ import {
 	knownApiLevels,
 	unscopedPackageNameString,
 } from "../../library/index.js";
+import { type TestCaseTypeData, buildTestCase } from "../../typeValidator/testGeneration.js";
+import type { TypeData } from "../../typeValidator/typeData.js";
 import type {
 	BrokenCompatTypes,
 	PackageWithTypeTestSettings,
 } from "../../typeValidator/typeValidatorConfig.js";
-import type { TypeData } from "../../typeValidator/typeData.js";
-import { buildTestCase, type TestCaseTypeData } from "../../typeValidator/testGeneration.js";
 
 export default class GenerateTypetestsCommand extends PackageCommand<
 	typeof GenerateTypetestsCommand

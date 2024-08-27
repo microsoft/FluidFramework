@@ -1,7 +1,7 @@
 /*!
-* Copyright (c) Microsoft Corporation and contributors. All rights reserved.
-* Licensed under the MIT License.
-*/
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 // AB#13931: Remove these lint disables
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
