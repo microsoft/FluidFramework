@@ -322,6 +322,7 @@ describe("LazyOptionalField", () => {
 			schema,
 			initialTree: singleJsonCursor(5),
 		});
+		assert(view.flexTree.is(FieldKinds.optional));
 		assert.equal(view.flexTree.content, 5);
 		view.flexTree.editor.set(
 			mapTreeFromCursor(singleJsonCursor(6)),
@@ -383,6 +384,7 @@ describe("LazyValueField", () => {
 			schema,
 			initialTree: singleJsonCursor("X"),
 		});
+		assert(view.flexTree.is(FieldKinds.required));
 		assert.equal(view.flexTree.content, "X");
 		view.flexTree.editor.set(mapTreeFromCursor(singleJsonCursor("Y")));
 		assert.equal(view.flexTree.content, "Y");

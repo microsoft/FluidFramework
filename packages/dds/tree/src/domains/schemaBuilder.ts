@@ -71,56 +71,6 @@ export class SchemaBuilder extends SchemaBuilderBase<string, typeof FieldKinds.r
 	 * This method is also available as an instance method on {@link SchemaBuilder}.
 	 */
 	public static required = fieldHelper(FieldKinds.required);
-
-	/**
-	 * Define a schema for a {@link FieldKinds.required|required field}.
-	 * @remarks
-	 * Shorthand for passing `FieldKinds.required` to {@link FlexFieldSchema.create}.
-	 * Note that `FieldKinds.required` is the current default field kind, so APIs accepting {@link FlexImplicitFieldSchema}
-	 * can be passed the `allowedTypes` and will implicitly wrap it up in a {@link FieldKinds.required|required field}.
-	 *
-	 * Since this creates a {@link FlexFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
-	 * therefore this method is the same as the static version.
-	 */
-	public readonly required = SchemaBuilder.required;
-
-	/**
-	 * Define a schema for a {@link FieldKinds.sequence|sequence field}.
-	 * @remarks
-	 * Shorthand for passing `FieldKinds.sequence` to {@link FlexFieldSchema.create}.
-	 *
-	 * This method is also available as an instance method on {@link SchemaBuilder}
-	 */
-	public static sequence = fieldHelper(FieldKinds.sequence);
-
-	/**
-	 * Define a schema for a {@link FieldKinds.sequence|sequence field}.
-	 * @remarks
-	 * Shorthand for passing `FieldKinds.sequence` to {@link FlexFieldSchema.create}.
-	 *
-	 * Since this creates a {@link FlexFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
-	 * therefore this method is the same as the static version.
-	 */
-	public readonly sequence = SchemaBuilder.sequence;
-
-	/**
-	 * Define a schema for an {@link FieldKinds.identifier|identifier field}.
-	 * @remarks
-	 * Shorthand for passing `FieldKinds.identifier` to {@link TreeFieldSchema.create}.
-	 *
-	 * This method is also available as an instance method on {@link SchemaBuilder}
-	 */
-	public static identifier = fieldHelper(FieldKinds.identifier);
-
-	/**
-	 * Define a schema for a {@link FieldKinds.identifier|identifier field}.
-	 * @remarks
-	 * Shorthand for passing `FieldKinds.identifier` to {@link TreeFieldSchema.create}.
-	 *
-	 * Since this creates a {@link TreeFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
-	 * therefore this method is the same as the static version.
-	 */
-	public readonly identifier = SchemaBuilder.identifier;
 }
 
 /**
