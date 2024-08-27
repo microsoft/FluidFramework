@@ -11,7 +11,7 @@ import { cosmiconfigSync } from "cosmiconfig";
 import registerDebug from "debug";
 import { readJson } from "fs-extra";
 
-import { commonOptions } from "./commonOptions";
+import { commonOptions } from "../fluidBuild/common/commonOptions";
 import { FLUIDBUILD_CONFIG_VERSION, IFluidBuildConfig } from "./fluidRepo";
 import { defaultLogger } from "./logging";
 import { realpathAsync } from "./utils";

@@ -6,7 +6,7 @@
 import * as os from "os";
 import * as path from "path";
 
-import { commonOptionString, parseOption } from "../common/commonOptions";
+import { commonOptionString, parseOption } from "./common/commonOptions";
 import { defaultBuildTaskName, defaultCleanTaskName } from "../common/fluidTaskDefinitions";
 import { defaultLogger } from "../common/logging";
 import { existsSync } from "../common/utils";

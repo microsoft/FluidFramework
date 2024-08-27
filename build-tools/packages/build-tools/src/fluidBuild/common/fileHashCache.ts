@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { readFile as readFileAsync } from "node:fs/promises";
+
 import { sha256 } from "./hash";
-import { readFileAsync } from "./utils";
 
 type hashFn = (buffer: Buffer) => string;
 export class FileHashCache {

@@ -22,7 +22,7 @@ export {
 	getTaskDefinitions,
 } from "./common/fluidTaskDefinitions";
 export { getApiExtractorConfigFilePath, getEsLintConfigFilePath } from "./common/taskUtils";
-export * as TscUtils from "./common/tscUtils";
+export * as TscUtils from "./fluidBuild/common/tscUtils";
 
 export {
 	type BrokenCompatTypes,

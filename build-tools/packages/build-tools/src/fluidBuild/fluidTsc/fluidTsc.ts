@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { defaultLogger } from "../common/logging";
-import { tsCompile } from "../common/tsCompile";
+import { defaultLogger } from "../../common/logging";
+import { tsCompile } from "../../fluidBuild/common/tsCompile";
 
 const { log, errorLog: error } = defaultLogger;
 

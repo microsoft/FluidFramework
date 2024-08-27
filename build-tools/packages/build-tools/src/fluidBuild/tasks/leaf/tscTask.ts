@@ -11,7 +11,7 @@ import * as tsTypes from "typescript";
 
 import { readFileSync } from "fs-extra";
 import { getInstalledPackageVersion, getRecursiveFiles } from "../../../common/taskUtils";
-import { TscUtil, getTscUtils } from "../../../common/tscUtils";
+import { TscUtil, getTscUtils } from "../../common/tscUtils";
 import { existsSync, readFileAsync } from "../../../common/utils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 

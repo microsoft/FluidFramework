@@ -5,7 +5,7 @@
 
 import chalk from "chalk";
 
-import { commonOptions } from "../common/commonOptions";
+import { commonOptions } from "./common/commonOptions";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";

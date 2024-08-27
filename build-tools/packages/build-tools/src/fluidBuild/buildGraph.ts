@@ -9,7 +9,7 @@ import * as semver from "semver";
 
 import * as assert from "assert";
 import registerDebug from "debug";
-import { FileHashCache } from "../common/fileHashCache";
+import { FileHashCache } from "./common/fileHashCache";
 import {
 	TaskDefinition,
 	TaskDefinitions,
