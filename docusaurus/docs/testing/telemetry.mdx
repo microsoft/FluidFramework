@@ -5,6 +5,7 @@ aliases:
   - "/docs/start/telemetry"
 ---
 
+import { ApiLink } from "@site/src/components/shortLinks"
 
 Telemetry is an essential part of maintaining the health of modern applications. Fluid Framework provides a way to plug
 in your own logic to handle telemetry events sent by Fluid. This enables you to integrate the Fluid telemetry along with
@@ -33,7 +34,8 @@ The `Loader` constructor is called by both `createContainer()` and `getContainer
 interface as its constructor argument. `ILoaderProps` interface has an optional logger parameter that will take the
 `ITelemetryBaseLogger` defined by the user.
 
-[ILoaderProps.logger]({{< apiref "container-loader" "ILoaderProps" "interface" "v2" >}}#logger-propertysignature)
+
+<ApiLink packageName="container-loader" apiName="ILoaderProps" apiType="interface" headingId="logger-propertysignature">ILoaderProps.logger</ApiLink>
 is used by `Loader` to pipe to container's telemetry system.
 
 ### Properties and methods
@@ -261,8 +263,7 @@ async function start(): Promise<void> {
 Now, whenever a telemetry event is encountered, the custom `send()` method gets called and will print out the entire
 event object.
 
-<img src="https://fluidframework.blob.core.windows.net/static/assets/consoleLogger_telemetry_in_action.png" alt="The
-  ConsoleLogger sends telemetry events to the browser console for display.">
+<img src="https://fluidframework.blob.core.windows.net/static/assets/consoleLogger_telemetry_in_action.png" alt="The ConsoleLogger sends telemetry events to the browser console for display." />
 
 :::warning
 
