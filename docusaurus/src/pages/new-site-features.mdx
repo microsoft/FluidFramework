@@ -10,6 +10,14 @@ description: Showing off special features supported by the new website build. Th
 Supports MDX format! This lets me include <b>React Components</b>!
 TODO: add a Fluent UI styled component here.
 
+### Import contents from other documents
+
+I can import content from other documents! For example, here is the contents of the `browsers.mdx` file:
+
+import Browsers from "@site/src/pages/browsers.mdx"
+
+> <Browsers components={props.components} />
+
 ## Mermaid
 
 Built-in [Mermaid](https://mermaid.js.org/) diagram support!!
@@ -18,6 +26,7 @@ Built-in [Mermaid](https://mermaid.js.org/) diagram support!!
 graph TD;
     A-->B;
     A-->C;
+    B-->C;
     B-->D;
     C-->D;
 ```
