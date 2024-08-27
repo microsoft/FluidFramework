@@ -107,7 +107,7 @@ export function makeDeepContent(depth: number, leafValue: number = 1): TreeConte
 	// Implicit type conversion is needed here to make this compile.
 	const initialTree = makeJsDeepTree(depth, leafValue);
 	return {
-		// Types do now allow implicitly constructing recursive types, so cast is required.
+		// Types do not allow implicitly constructing recursive types, so cast is required.
 		// TODO: Find a better alternative.
 		initialTree: cursorFromInsertable(LinkedList, initialTree as LinkedList),
 		schema: deepSchema,
@@ -147,7 +147,6 @@ export function makeWideContentWithEndValue(
 }
 
 /**
- *
  * @param numberOfNodes - number of nodes of the tree
  * @param endLeafValue - the value of the end leaf of the tree. If not provided its index is used.
  * @returns a tree with specified number of nodes, with the end leaf node set to the endLeafValue
