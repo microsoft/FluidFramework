@@ -167,10 +167,11 @@ export function getFluidBuildConfig(
 		log.warning(
 			"fluidBuild config has no version field. This field will be required in a future release.",
 		);
+		config.version = FLUIDBUILD_CONFIG_VERSION;
 	}
 
 	// Only version 1 of the config is supported. If any other value is provided, throw an error.
-	if (config?.version !== FLUIDBUILD_CONFIG_VERSION) {
+	if (config.version !== FLUIDBUILD_CONFIG_VERSION) {
 		throw new Error(
 			`Configuration version is not supported: ${config?.version}. Config version must be ${FLUIDBUILD_CONFIG_VERSION}.`,
 		);
