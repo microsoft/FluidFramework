@@ -456,6 +456,11 @@ export interface IPerfSignalReport {
 	signalsOutOfOrder: number;
 
 	/**
+	 * Number of broadcast signals sent.
+	 */
+	broadcastSignalsSent: number;
+
+	/**
 	 * Timestamp before submitting the signal we will trace.
 	 */
 	signalTimestamp: number;
@@ -464,6 +469,11 @@ export interface IPerfSignalReport {
 	 * Signal we will trace for roundtrip latency.
 	 */
 	roundTripSignalSequenceNumber: number | undefined;
+
+	/**
+	 * Number of broadcast signals sent at the time of traced round trip signal submission.
+	 */
+	roundTripSignalBroadcastNumber: number;
 
 	/**
 	 * The lower bound of the upcoming (now current) tracking group

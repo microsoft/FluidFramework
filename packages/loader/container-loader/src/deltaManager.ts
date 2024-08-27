@@ -16,7 +16,10 @@ import {
 	type ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import {
+	IThrottlingWarning,
+	type ISignalEnvelope,
+} from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
@@ -490,9 +493,14 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			if (this.handler === undefined) {
 				throw new Error("Attempted to process an inbound signal without a handler attached");
 			}
+
+			const envelope = JSON.parse(message.content as string) as ISignalEnvelope;
+			const targetClientId = message.targetClientId ?? envelope.targetClientId ?? undefined;
+
 			this.handler.processSignal({
 				clientId: message.clientId,
-				content: JSON.parse(message.content as string),
+				content: envelope,
+				targetClientId,
 			});
 		});
 
