@@ -9,9 +9,6 @@ import {
 	type Logger,
 	type Package,
 	type PackageJson,
-	type TestCaseTypeData,
-	type TypeData,
-	buildTestCase,
 	getTypeTestPreviousPackageDetails,
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
@@ -40,7 +37,9 @@ import {
 import type {
 	BrokenCompatTypes,
 	PackageWithTypeTestSettings,
-} from "../../typeValidatorConfig.js";
+} from "../../typeValidator/typeValidatorConfig.js";
+import type { TypeData } from "../../typeValidator/typeData.js";
+import { buildTestCase, type TestCaseTypeData } from "../../typeValidator/testGeneration.js";
 
 export default class GenerateTypetestsCommand extends PackageCommand<
 	typeof GenerateTypetestsCommand

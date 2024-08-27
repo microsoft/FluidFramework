@@ -23,13 +23,13 @@ export {
 } from "./common/fluidTaskDefinitions";
 export { getApiExtractorConfigFilePath, getEsLintConfigFilePath } from "./common/taskUtils";
 export * as TscUtils from "./common/tscUtils";
+export { getTypeTestPreviousPackageDetails } from "./common/typeTests";
 
-export {
-	TypeOnly,
-	MinimalType,
-	FullType,
-	requireAssignableTo,
-} from "./typeValidator/compatibility";
-export { type TestCaseTypeData, buildTestCase } from "./typeValidator/testGeneration";
-export { type TypeData } from "./typeValidator/typeData";
-export { getTypeTestPreviousPackageDetails } from "./typeValidator/validatorUtils";
+// export {
+// 	TypeOnly,
+// 	MinimalType,
+// 	FullType,
+// 	requireAssignableTo,
+// } from "./typeValidator/compatibility";
+// export { type TestCaseTypeData, buildTestCase } from "./typeValidator/testGeneration";
+// export { type TypeData } from "./typeValidator/typeData";

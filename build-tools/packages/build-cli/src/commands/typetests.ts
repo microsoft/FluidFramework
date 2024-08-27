@@ -11,7 +11,7 @@ import type { PackageSelectionDefault } from "../flags.js";
 import type {
 	ITypeValidationConfig,
 	PackageWithTypeTestSettings,
-} from "../typeValidatorConfig.js";
+} from "../typeValidator/typeValidatorConfig.js";
 
 export default class PrepareTypeTestsCommand extends PackageCommand<
 	typeof PrepareTypeTestsCommand
