@@ -19,27 +19,18 @@ import {
 	isNeverTree,
 } from "../modular-schema/index.js";
 
-import {
-	type FlexFieldSchema,
-	type FlexTreeSchema,
-	intoStoredSchema,
-} from "./typedTreeSchema.js";
-
 /**
  * A collection of View information for schema, including policy.
  */
-export class ViewSchema<out TSchema extends FlexFieldSchema = FlexFieldSchema> {
+export class ViewSchema {
 	/**
-	 * Cached conversion of `schema` into a stored schema.
+	 * @param storedSchema - Cached conversion of view schema into a stored schema.
 	 */
-	public readonly storedSchema: TreeStoredSchema;
 	public constructor(
 		public readonly policy: FullSchemaPolicy,
 		public readonly adapters: Adapters,
-		public readonly schema: FlexTreeSchema<TSchema>,
-	) {
-		this.storedSchema = intoStoredSchema(schema);
-	}
+		public readonly storedSchema: TreeStoredSchema,
+	) {}
 
 	/**
 	 * Determines the compatibility of a stored document

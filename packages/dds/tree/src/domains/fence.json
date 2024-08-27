@@ -1,5 +1,0 @@
-{
-	"tags": ["domains"],
-	"exports": ["index"],
-	"imports": ["util", "core", "feature-libraries"]
-}

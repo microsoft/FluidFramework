@@ -237,8 +237,6 @@ export type LazyTreeNodeSchema = FlexTreeNodeSchema | (() => FlexTreeNodeSchema)
 
 /**
  * Types for use in fields.
- *
- * "Any" is boxed in an array to allow use as variadic parameter.
  */
 export type FlexAllowedTypes = readonly LazyItem<FlexTreeNodeSchema>[];
 

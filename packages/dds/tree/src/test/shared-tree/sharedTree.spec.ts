@@ -39,16 +39,11 @@ import {
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
 	FieldKinds,
-	FlexFieldSchema,
-	type FlexTreeSchema,
 	MockNodeKeyManager,
 	SchemaBuilderBase,
-	SchemaBuilderInternal,
 	TreeCompressionStrategy,
 	TreeStatus,
-	ViewSchema,
 	cursorForJsonableTreeNode,
-	defaultSchemaPolicy,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
 import {
@@ -56,7 +51,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
 import {
-	type FlexTreeView,
 	ForestType,
 	type ISharedTree,
 	type InitializeAndSchematizeConfiguration,
@@ -66,7 +60,6 @@ import {
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import {
-	requireSchema,
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
@@ -79,7 +72,7 @@ import {
 	type TreeView,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
-import { disposeSymbol, fail } from "../../util/index.js";
+import { fail } from "../../util/index.js";
 import {
 	type ConnectionSetter,
 	type ITestTreeProvider,
@@ -91,7 +84,6 @@ import {
 	createTestUndoRedoStacks,
 	expectSchemaEqual,
 	schematizeFlexTree,
-	stringSequenceRootSchema,
 	treeTestFactory,
 	validateTreeConsistency,
 	validateTreeContent,
@@ -104,6 +96,8 @@ import {
 import { configuredSharedTree } from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { TestAnchor } from "../testAnchor.js";
+// eslint-disable-next-line import/no-internal-modules
+import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
 
 const enableSchemaValidation = true;
 
@@ -143,7 +137,7 @@ describe("SharedTree", () => {
 		it("concurrent Schematize", () => {
 			const provider = new TestTreeProviderLite(2);
 			const content = {
-				schema: stringSequenceRootSchema,
+				schema: toFlexSchema(stringSchema),
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: [singleJsonCursor("x")],
 			} satisfies InitializeAndSchematizeConfiguration;
@@ -166,7 +160,8 @@ describe("SharedTree", () => {
 				initialTree: singleJsonCursor(10),
 				schema,
 			});
-			assert.equal(view.flexTree.content, 10);
+			assert.equal(view.flexTree.length, 1);
+			assert.equal(view.flexTree.boxedAt(0)?.value, 10);
 		});
 
 		it("noop upgrade", () => {
@@ -180,7 +175,7 @@ describe("SharedTree", () => {
 				schema,
 			});
 			// And does not add initial tree:
-			assert.equal(schematized.flexTree.content, undefined);
+			assert.equal(schematized.flexTree.length, 0);
 		});
 
 		it("incompatible upgrade errors", () => {
@@ -204,7 +199,7 @@ describe("SharedTree", () => {
 				schema: schemaGeneralized,
 			});
 			// Initial tree should not be applied
-			assert.equal(schematized.flexTree.content, undefined);
+			assert.equal(schematized.flexTree.length, 0);
 		});
 
 		it("unhydrated tree input", () => {
@@ -217,82 +212,6 @@ describe("SharedTree", () => {
 			view.initialize(unhydratedInitialTree);
 
 			assert(view.root === unhydratedInitialTree);
-		});
-	});
-
-	describe("requireSchema", () => {
-		function assertSchema<TRoot extends FlexFieldSchema>(
-			tree: SharedTree,
-			schema: FlexTreeSchema<TRoot>,
-			onDispose: () => void = () => assert.fail(),
-		): FlexTreeView {
-			const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
-			const view = requireSchema(
-				tree.checkout,
-				viewSchema,
-				onDispose,
-				new MockNodeKeyManager(),
-			);
-			const unregister = tree.checkout.storedSchema.on("afterSchemaChange", () => {
-				unregister();
-				view[disposeSymbol]();
-			});
-			return view;
-		}
-
-		const factory = new SharedTreeFactory({
-			jsonValidator: typeboxValidator,
-			forest: ForestType.Reference,
-		});
-		const schemaEmpty = new SchemaBuilderInternal({
-			scope: "com.fluidframework.test",
-			lint: { rejectEmpty: false, rejectForbidden: false },
-		}).intoSchema(FlexFieldSchema.empty);
-
-		function updateSchema(tree: SharedTree, schema: FlexTreeSchema): void {
-			tree.checkout.updateSchema(intoStoredSchema(schema));
-			// Workaround to trigger for schema update batching kludge in afterSchemaChanges
-			tree.checkout.events.emit("afterBatch");
-		}
-
-		it("empty", () => {
-			const tree = factory.create(
-				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-				"the tree",
-			);
-			const view = assertSchema(tree, schemaEmpty);
-			assert.equal(view.flexTree.length, 0);
-		});
-
-		it("differing schema errors and schema change callback", () => {
-			const tree = factory.create(
-				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-				"the tree",
-			);
-			const builder = new SchemaBuilderBase(FieldKinds.optional, {
-				scope: "test",
-				libraries: [leaf.library],
-			});
-			const schemaGeneralized = builder.intoSchema([leaf.number, leaf.string]);
-			assert.throws(() => assertSchema(tree, schemaGeneralized));
-
-			const log: string[] = [];
-			{
-				assertSchema(tree, schemaEmpty, () => log.push("empty"));
-			}
-			assert.deepEqual(log, []);
-			updateSchema(tree, schemaGeneralized);
-
-			assert.deepEqual(log, ["empty"]);
-
-			assertSchema(tree, schemaGeneralized, () =>
-				// TypeScript's type narrowing turned "log" into never[] here since it assumes methods never modify anything, so we have to cast it back to a string[]:
-				(log as string[]).push("general"),
-			);
-
-			assert.deepEqual(log, ["empty"]);
-			updateSchema(tree, schemaEmpty);
-			assert.deepEqual(log, ["empty", "general"]);
 		});
 	});
 
