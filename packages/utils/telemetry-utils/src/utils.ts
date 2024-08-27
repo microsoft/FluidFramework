@@ -17,7 +17,7 @@ export interface IEventSampler {
 	/**
 	 * @returns true if the event should be sampled or false if not
 	 */
-	sample: () => boolean | undefined;
+	sample: () => boolean;
 }
 
 /**
@@ -69,7 +69,7 @@ export function createSampledLogger(
 			// 2. If isSamplingDisabled is false, then event should be sampled using the event sampler, if the sampler is not defined just send all events, other use the eventSampler.sample() method.
 			// 3. If skipLoggingWhenSamplingIsDisabled is true, then no event is sent.
 			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
-				if (isSamplingDisabled && skipLoggingWhenSamplingIsDisabled) {
+				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
 				logger.send(event);
@@ -77,7 +77,7 @@ export function createSampledLogger(
 		},
 		sendTelemetryEvent: (event: ITelemetryGenericEventExt): void => {
 			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
-				if (isSamplingDisabled && skipLoggingWhenSamplingIsDisabled) {
+				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
 				logger.sendTelemetryEvent(event);
@@ -85,7 +85,7 @@ export function createSampledLogger(
 		},
 		sendErrorEvent: (event: ITelemetryGenericEventExt): void => {
 			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
-				if (isSamplingDisabled && skipLoggingWhenSamplingIsDisabled) {
+				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
 				logger.sendErrorEvent(event);
@@ -93,7 +93,7 @@ export function createSampledLogger(
 		},
 		sendPerformanceEvent: (event: ITelemetryGenericEventExt): void => {
 			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
-				if (isSamplingDisabled && skipLoggingWhenSamplingIsDisabled) {
+				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
 				logger.sendPerformanceEvent(event);
