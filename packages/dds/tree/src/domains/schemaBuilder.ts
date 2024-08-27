@@ -8,14 +8,9 @@ import {
 	type FlexFieldKind,
 	type FlexFieldSchema,
 	type FlexImplicitAllowedTypes,
-	type FlexImplicitFieldSchema,
-	type FlexObjectNodeSchema,
-	type NormalizeAllowedTypes,
 	SchemaBuilderBase,
 	type SchemaBuilderOptions,
-	type Unenforced,
 } from "../feature-libraries/index.js";
-import type { RestrictiveReadonlyRecord } from "../util/index.js";
 
 import { leaf } from "./leafDomain.js";
 
@@ -41,26 +36,12 @@ import { leaf } from "./leafDomain.js";
  * @sealed
  * @deprecated Users of this class should either use {@link SchemaBuilderBase} and explicitly work with {@link FlexFieldSchema}, or use SchemaFactory and work at its higher level of abstraction.
  */
-export class SchemaBuilder<
-	TScope extends string = string,
-	TName extends string | number = string,
-> extends SchemaBuilderBase<TScope, typeof FieldKinds.required, TName> {
-	public constructor(options: SchemaBuilderOptions<TScope>) {
+export class SchemaBuilder extends SchemaBuilderBase<string, typeof FieldKinds.required> {
+	public constructor(options: SchemaBuilderOptions) {
 		super(FieldKinds.required, {
 			...options,
 			libraries: [...(options.libraries ?? []), leaf.library],
 		});
-	}
-
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	public override objectRecursive<
-		const Name extends TName,
-		const T extends Unenforced<RestrictiveReadonlyRecord<string, FlexImplicitFieldSchema>>,
-	>(name: Name, t: T) {
-		return this.object(
-			name,
-			t as unknown as RestrictiveReadonlyRecord<string, FlexImplicitFieldSchema>,
-		) as unknown as FlexObjectNodeSchema<`${TScope}.${Name}`, T>;
 	}
 
 	/**
@@ -90,64 +71,12 @@ export class SchemaBuilder<
 	 * This method is also available as an instance method on {@link SchemaBuilder}.
 	 */
 	public static required = fieldHelper(FieldKinds.required);
-
-	/**
-	 * Define a schema for a {@link FieldKinds.required|required field}.
-	 * @remarks
-	 * Shorthand for passing `FieldKinds.required` to {@link FlexFieldSchema.create}.
-	 * Note that `FieldKinds.required` is the current default field kind, so APIs accepting {@link FlexImplicitFieldSchema}
-	 * can be passed the `allowedTypes` and will implicitly wrap it up in a {@link FieldKinds.required|required field}.
-	 *
-	 * Since this creates a {@link FlexFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
-	 * therefore this method is the same as the static version.
-	 */
-	public readonly required = SchemaBuilder.required;
-
-	/**
-	 * Define a schema for a {@link FieldKinds.sequence|sequence field}.
-	 * @remarks
-	 * Shorthand for passing `FieldKinds.sequence` to {@link FlexFieldSchema.create}.
-	 *
-	 * This method is also available as an instance method on {@link SchemaBuilder}
-	 */
-	public static sequence = fieldHelper(FieldKinds.sequence);
-
-	/**
-	 * Define a schema for a {@link FieldKinds.sequence|sequence field}.
-	 * @remarks
-	 * Shorthand for passing `FieldKinds.sequence` to {@link FlexFieldSchema.create}.
-	 *
-	 * Since this creates a {@link FlexFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
-	 * therefore this method is the same as the static version.
-	 */
-	public readonly sequence = SchemaBuilder.sequence;
-
-	/**
-	 * Define a schema for an {@link FieldKinds.identifier|identifier field}.
-	 * @remarks
-	 * Shorthand for passing `FieldKinds.identifier` to {@link TreeFieldSchema.create}.
-	 *
-	 * This method is also available as an instance method on {@link SchemaBuilder}
-	 */
-	public static identifier = fieldHelper(FieldKinds.identifier);
-
-	/**
-	 * Define a schema for a {@link FieldKinds.identifier|identifier field}.
-	 * @remarks
-	 * Shorthand for passing `FieldKinds.identifier` to {@link TreeFieldSchema.create}.
-	 *
-	 * Since this creates a {@link TreeFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
-	 * therefore this method is the same as the static version.
-	 */
-	public readonly identifier = SchemaBuilder.identifier;
 }
 
 /**
  * Returns a wrapper around SchemaBuilder.field for a specific FieldKind.
  */
 function fieldHelper<Kind extends FlexFieldKind>(kind: Kind) {
-	return <const T extends FlexImplicitAllowedTypes>(
-		allowedTypes: T,
-	): FlexFieldSchema<Kind, NormalizeAllowedTypes<T>> =>
+	return (allowedTypes: FlexImplicitAllowedTypes): FlexFieldSchema<Kind> =>
 		SchemaBuilder.field(kind, allowedTypes);
 }

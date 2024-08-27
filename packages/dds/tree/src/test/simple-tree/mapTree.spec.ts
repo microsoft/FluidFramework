@@ -64,7 +64,7 @@ function getFieldSchema(
 ): TreeFieldStoredSchema {
 	return {
 		kind: kind.identifier,
-		types: allowedTypes === undefined ? undefined : new Set(allowedTypes),
+		types: new Set(allowedTypes),
 	};
 }
 

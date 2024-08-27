@@ -516,6 +516,28 @@ export class LinkNode extends DocumentationParentNodeBase<SingleLineDocumentatio
     readonly type = DocumentationNodeType.Link;
 }
 
+// @beta
+export function lintApiModel(configuration: LintApiModelConfiguration): Promise<LinterErrors | undefined>;
+
+// @beta
+export interface LintApiModelConfiguration extends ConfigurationBase {
+    apiModel: ApiModel;
+}
+
+// @beta
+export interface LinterErrors {
+    readonly referenceErrors: ReadonlySet<LinterReferenceError>;
+}
+
+// @beta
+export interface LinterReferenceError {
+    readonly linkText: string | undefined;
+    readonly packageName: string;
+    readonly referenceTarget: string;
+    readonly sourceItem: string;
+    readonly tagName: string;
+}
+
 // @public
 export function loadModel(options: LoadModelOptions): Promise<ApiModel>;
 

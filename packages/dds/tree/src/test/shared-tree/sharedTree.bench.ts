@@ -27,19 +27,19 @@ import {
 	LinkedList,
 	WideRoot,
 	deepPath,
-	type deepSchema,
 	localFieldKey,
 	makeDeepContent,
+	makeDeepStoredContent,
 	makeJsDeepTree,
 	makeJsWideTreeWithEndValue,
 	makeWideContentWithEndValue,
+	makeWideStoredContentWithEndValue,
 	readDeepCursorTree,
 	readDeepFlexTree,
 	readDeepTreeAsJSObject,
 	readWideCursorTree,
 	readWideFlexTree,
 	readWideTreeAsJSObject,
-	type wideSchema,
 } from "../scalableTestTrees.js";
 import {
 	TestTreeProviderLite,
@@ -153,7 +153,7 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("Cursors", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: FlexTreeView<typeof deepSchema.rootFieldSchema>;
+			let tree: FlexTreeView;
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree with cursor: reads with ${numberOfNodes} nodes`,
@@ -168,7 +168,7 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: FlexTreeView<typeof wideSchema.rootFieldSchema>;
+			let tree: FlexTreeView;
 			let expected = 0;
 			benchmark({
 				type: benchmarkType,
@@ -193,7 +193,7 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("FlexTree bench", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: FlexTreeView<typeof deepSchema.rootFieldSchema>;
+			let tree: FlexTreeView;
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
@@ -208,7 +208,7 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: FlexTreeView<typeof wideSchema.rootFieldSchema>;
+			let tree: FlexTreeView;
 			let expected: number = 0;
 			benchmark({
 				type: benchmarkType,
@@ -239,7 +239,7 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const tree = checkoutWithContent(makeDeepContent(numberOfNodes));
+						const tree = checkoutWithContent(makeDeepStoredContent(numberOfNodes));
 						const path = deepPath(numberOfNodes);
 
 						// Measure
@@ -280,7 +280,7 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const tree = checkoutWithContent(makeWideContentWithEndValue(numberOfNodes));
+						const tree = checkoutWithContent(makeWideStoredContentWithEndValue(numberOfNodes));
 
 						const rootPath = {
 							parent: undefined,

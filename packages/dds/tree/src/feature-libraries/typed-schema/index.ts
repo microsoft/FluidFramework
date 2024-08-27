@@ -6,7 +6,6 @@
 export {
 	type FlexTreeNodeSchema,
 	FlexFieldSchema,
-	Any,
 	allowedTypesToTypeSet,
 	type FlexAllowedTypes,
 	type LazyTreeNodeSchema,
@@ -47,4 +46,5 @@ export {
 	type NormalizeLazyItem,
 	type FlexListToUnion,
 	type ExtractItemType,
+	normalizeFlexListEager,
 } from "./flexList.js";

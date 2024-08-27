@@ -262,9 +262,9 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		}
 
 		const sectionChoices: Choice[] =
-			context.rootFluidBuildConfig.releaseNotes?.sections === undefined
+			context.flubConfig.releaseNotes?.sections === undefined
 				? []
-				: Object.entries(context.rootFluidBuildConfig.releaseNotes.sections).map(
+				: Object.entries(context.flubConfig.releaseNotes.sections).map(
 						([name, { heading }]) => {
 							const choice: Choice = {
 								title: heading,
@@ -310,7 +310,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} as any,
 			// This question should only be asked if the releaseNotes config is available
-			context.rootFluidBuildConfig.releaseNotes === undefined
+			context.flubConfig.releaseNotes === undefined
 				? undefined
 				: {
 						name: "section",

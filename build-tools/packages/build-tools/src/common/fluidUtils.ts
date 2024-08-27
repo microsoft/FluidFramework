@@ -6,18 +6,19 @@
 import * as childProcess from "node:child_process";
 import { existsSync } from "node:fs";
 import * as path from "node:path";
-import { cosmiconfigSync } from "cosmiconfig";
-
 import { getPackages } from "@manypkg/get-packages";
+import { cosmiconfigSync } from "cosmiconfig";
+import registerDebug from "debug";
 import { readJson } from "fs-extra";
+
 import { commonOptions } from "./commonOptions";
-import { IFluidBuildConfig } from "./fluidRepo";
+import { FLUIDBUILD_CONFIG_VERSION, IFluidBuildConfig } from "./fluidRepo";
+import { defaultLogger } from "./logging";
 import { realpathAsync } from "./utils";
 
 // switch to regular import once building ESM
 const findUp = import("find-up");
 
-import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");
 
 async function isFluidRootPackage(dir: string) {
@@ -127,31 +128,17 @@ export async function getResolvedFluidRoot(buildRoot = false) {
 	return await realpathAsync(resolvedRoot);
 }
 
-/**
- * A cosmiconfig explorer to find the fluidBuild config. First looks for javascript config files and falls back to the
- * fluidBuild property in package.json. We create a single explorer here because cosmiconfig internally caches configs
- * for performance. The cache is per-explorer, so re-using the same explorer is a minor perf improvement.
- */
-const configExplorer = cosmiconfigSync("fluidBuild", {
-	searchPlaces: [`fluidBuild.config.cjs`, `fluidBuild.config.js`, "package.json"],
-	packageProp: "fluidBuild",
-});
+const configName = "fluidBuild";
 
 /**
- * Loads an IFluidBuildConfig from the fluidBuild property in a package.json file, or from fluidBuild.config.[c]js.
- * Throw if not found.
- *
- * @param rootDir - The path to the root package.json to load.
- * @param noCache - If true, the config cache will be cleared and the config will be reloaded.
- * @returns The fluidBuild section of the package.json.
+ * A cosmiconfig explorer to find the fluidBuild config. First looks for JavaScript config files and falls back to the
+ * `fluidBuild` property in package.json. We create a single explorer here because cosmiconfig internally caches configs
+ * for performance. The cache is per-explorer, so re-using the same explorer is a minor perf improvement.
  */
-export function loadFluidBuildConfig(rootDir: string, noCache = false): IFluidBuildConfig {
-	const config = getFluidBuildConfig(rootDir, noCache);
-	if (config === undefined) {
-		throw new Error(`Error loading config.`);
-	}
-	return config;
-}
+const configExplorer = cosmiconfigSync(configName, {
+	searchPlaces: [`${configName}.config.cjs`, `${configName}.config.js`, "package.json"],
+	packageProp: [configName],
+});
 
 /**
  * Get an IFluidBuildConfig from the fluidBuild property in a package.json file, or from fluidBuild.config.[c]js.
@@ -160,11 +147,34 @@ export function loadFluidBuildConfig(rootDir: string, noCache = false): IFluidBu
  * @param noCache - If true, the config cache will be cleared and the config will be reloaded.
  * @returns The fluidBuild section of the package.json, or undefined if not found
  */
-export function getFluidBuildConfig(rootDir: string, noCache = false): IFluidBuildConfig {
+export function getFluidBuildConfig(
+	rootDir: string,
+	noCache = false,
+	log = defaultLogger,
+): IFluidBuildConfig {
 	if (noCache === true) {
 		configExplorer.clearCaches();
 	}
 
-	const config = configExplorer.search(rootDir);
-	return config?.config;
+	const configResult = configExplorer.search(rootDir);
+	const config = configResult?.config as IFluidBuildConfig | undefined;
+
+	if (config === undefined) {
+		throw new Error("No fluidBuild configuration found.");
+	}
+
+	if (config.version === undefined) {
+		log.warning(
+			"fluidBuild config has no version field. This field will be required in a future release.",
+		);
+		config.version = FLUIDBUILD_CONFIG_VERSION;
+	}
+
+	// Only version 1 of the config is supported. If any other value is provided, throw an error.
+	if (config.version !== FLUIDBUILD_CONFIG_VERSION) {
+		throw new Error(
+			`Configuration version is not supported: ${config?.version}. Config version must be ${FLUIDBUILD_CONFIG_VERSION}.`,
+		);
+	}
+	return config;
 }

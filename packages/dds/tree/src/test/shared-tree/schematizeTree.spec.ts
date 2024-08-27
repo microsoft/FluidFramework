@@ -15,12 +15,10 @@ import {
 	TreeStoredSchemaRepository,
 	type AnchorSetRootEvents,
 } from "../../core/index.js";
-import { SchemaBuilder, leaf, singleJsonCursor } from "../../domains/index.js";
+import { singleJsonCursor } from "../../domains/index.js";
 import {
-	Any,
 	FieldKinds,
 	FlexFieldSchema,
-	type FlexTreeSchema,
 	SchemaBuilderBase,
 	ViewSchema,
 	allowsRepoSuperset,
@@ -35,7 +33,7 @@ import type {
 	ITransaction,
 } from "../../shared-tree/index.js";
 import {
-	type TreeContent,
+	type TreeStoredContent,
 	UpdateType,
 	canInitialize,
 	ensureSchema,
@@ -49,30 +47,27 @@ import {
 	validateViewConsistency,
 } from "../utils.js";
 import type { Listenable } from "../../events/index.js";
+import { SchemaFactory } from "../../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { toStoredSchema } from "../../simple-tree/toFlexSchema.js";
 
-const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
-const root = leaf.number;
-const schema = builder.intoSchema(SchemaBuilder.optional(root));
+const builder = new SchemaFactory("test");
+const root = builder.number;
+const schema = toStoredSchema(root);
 
-const builderGeneralized = new SchemaBuilder({
-	scope: "test",
-	name: "Schematize Tree Tests Generalized",
-});
-
-const schemaGeneralized = builderGeneralized.intoSchema(SchemaBuilder.optional(Any));
-
-const builderValue = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests2" });
-
-const schemaValueRoot = builderValue.intoSchema(SchemaBuilder.required(Any));
+const schemaGeneralized = toStoredSchema(builder.optional([root, builder.string]));
+const schemaValueRoot = toStoredSchema([root, builder.string]);
 
 // Schema for tree that must always be empty.
-const emptySchema = new SchemaBuilderBase(FieldKinds.required, {
-	scope: "Empty",
-	lint: {
-		rejectEmpty: false,
-		rejectForbidden: false,
-	},
-}).intoSchema(FlexFieldSchema.empty);
+const emptySchema = intoStoredSchema(
+	new SchemaBuilderBase(FieldKinds.required, {
+		scope: "Empty",
+		lint: {
+			rejectEmpty: false,
+			rejectForbidden: false,
+		},
+	}).intoSchema(FlexFieldSchema.empty),
+);
 
 function expectSchema(actual: TreeStoredSchema, expected: TreeStoredSchema): void {
 	// Check schema match
@@ -95,10 +90,7 @@ function makeSchemaRepository(repository: TreeStoredSchemaRepository): {
 
 describe("schematizeTree", () => {
 	describe("initializeContent", () => {
-		function testInitialize<TRoot extends FlexFieldSchema>(
-			name: string,
-			content: TreeContent<TRoot>,
-		): void {
+		function testInitialize(name: string, content: TreeStoredContent): void {
 			describe(`Initialize ${name}`, () => {
 				it("correct output", () => {
 					const storedSchema = new TreeStoredSchemaRepository();
@@ -107,7 +99,7 @@ describe("schematizeTree", () => {
 						count++;
 					});
 					assert.equal(count, 1);
-					expectSchema(storedSchema, intoStoredSchema(content.schema));
+					expectSchema(storedSchema, content.schema);
 				});
 
 				it("is compatible", () => {
@@ -148,7 +140,7 @@ describe("schematizeTree", () => {
 
 					assert.deepEqual(
 						log,
-						content.schema.rootFieldSchema.kind === FieldKinds.required
+						content.schema.rootFieldSchema.kind === FieldKinds.required.identifier
 							? ["schema", "content", "schema"]
 							: ["schema", "content"],
 					);
@@ -163,8 +155,8 @@ describe("schematizeTree", () => {
 		// TODO: Test schema validation of initial tree (once we have a utility for it)
 	});
 
-	function mockCheckout(InputSchema: FlexTreeSchema, isEmpty: boolean): ITreeCheckout {
-		const storedSchema = new TreeStoredSchemaRepository(intoStoredSchema(InputSchema));
+	function mockCheckout(InputSchema: TreeStoredSchema, isEmpty: boolean): ITreeCheckout {
+		const storedSchema = new TreeStoredSchemaRepository(InputSchema);
 		const checkout: ITreeCheckout = {
 			storedSchema,
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -197,13 +189,13 @@ describe("schematizeTree", () => {
 
 	describe("evaluateUpdate", () => {
 		describe("test cases", () => {
-			const testCases: [string, FlexTreeSchema, boolean][] = [
+			const testCases: [string, TreeStoredSchema, boolean][] = [
 				["empty", emptySchema, true],
 				["basic-optional-empty", schema, true],
 				["basic-optional", schema, false],
 				["basic-value", schemaValueRoot, false],
-				["complex-empty", jsonSequenceRootSchema, true],
-				["complex", jsonSequenceRootSchema, false],
+				["complex-empty", intoStoredSchema(jsonSequenceRootSchema), true],
+				["complex", intoStoredSchema(jsonSequenceRootSchema), false],
 			];
 			for (const [name, data, isEmpty] of testCases) {
 				it(name, () => {
@@ -273,7 +265,7 @@ describe("schematizeTree", () => {
 				initialTree: undefined,
 			};
 			const emptyCheckout = checkoutWithContent(emptyContent);
-			const content: TreeContent<typeof schemaGeneralized.rootFieldSchema> = {
+			const content: TreeStoredContent = {
 				schema: schemaGeneralized,
 				initialTree: singleJsonCursor(5),
 			};
@@ -355,7 +347,7 @@ describe("schematizeTree", () => {
 				initialTree: undefined,
 			};
 			const emptyCheckout = checkoutWithContent(emptyContent);
-			const content: TreeContent<typeof schemaValueRoot.rootFieldSchema> = {
+			const content: TreeStoredContent = {
 				schema: schemaValueRoot,
 				initialTree: singleJsonCursor(5),
 			};
@@ -417,7 +409,7 @@ describe("schematizeTree", () => {
 				},
 			};
 			const initialCheckout = checkoutWithContent(initialContent);
-			const content: TreeContent<typeof schemaGeneralized.rootFieldSchema> = {
+			const content: TreeStoredContent = {
 				schema: schemaGeneralized,
 				initialTree: singleJsonCursor("Should not be used"),
 			};
