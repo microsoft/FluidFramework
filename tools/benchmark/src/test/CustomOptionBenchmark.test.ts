@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from "chai";
-
 import { benchmarkCustom, type BenchmarkError } from "..";
 import { BenchmarkType } from "../Configuration";
 
@@ -22,6 +20,7 @@ describe("`benchmarkCustom` function", () => {
 
 describe("BenchmarkCustom error handling", () => {
 	const expectedErrorMessage = "INTENTIONAL error to test error handling";
+	let benchmarkEndPayloadIsCorrect: boolean = false;
 
 	const testObject = benchmarkCustom({
 		title: `test`,
@@ -32,6 +31,14 @@ describe("BenchmarkCustom error handling", () => {
 	});
 
 	testObject.on("benchmark end", (benchmarkError: BenchmarkError) => {
-		expect(benchmarkError.error).to.equal(expectedErrorMessage);
+		if (benchmarkError.error === expectedErrorMessage) {
+			benchmarkEndPayloadIsCorrect = true;
+		}
+	});
+
+	afterEach(function () {
+		if (benchmarkEndPayloadIsCorrect) {
+			this.skip();
+		}
 	});
 });

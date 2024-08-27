@@ -57,7 +57,7 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 
 			// Instead of throwing the error, we emit it as an event so the test can continue.
 			test.emit("benchmark end", toBenchmarkError);
-			return;
+			throw error;
 		}
 
 		const elapsedSeconds = timer.toSeconds(startTime, timer.now());
