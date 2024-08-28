@@ -29,7 +29,7 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 } from "../core/index.js";
-import { cursorToJsonObject, leaf, singleJsonCursor } from "../domains/index.js";
+import { leaf } from "../domains/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	cursorForJsonableTreeNode,
@@ -48,12 +48,12 @@ import {
 	applyTestDelta,
 	expectEqualFieldPaths,
 	expectEqualPaths,
-	JsonArray,
-	jsonSequenceRootSchema,
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "./utils.js";
 import { cursorFromInsertable, SchemaFactory, toFlexSchema } from "../simple-tree/index.js";
+import { jsonSequenceRootSchema } from "./sequenceRootUtils.js";
+import { cursorToJsonObject, JsonArray, singleJsonCursor } from "./json/index.js";
 
 /**
  * Configuration for the forest test suite.
@@ -569,7 +569,7 @@ export function testForest(config: ForestTestConfiguration): void {
 		});
 
 		it("editing a cloned forest does not modify the original", () => {
-			const schema = new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema));
+			const schema = new TreeStoredSchemaRepository(jsonSequenceRootSchema);
 			const forest = factory(schema);
 			const content: JsonableTree[] = [
 				{ type: leaf.number.name, value: 1 },
@@ -604,9 +604,7 @@ export function testForest(config: ForestTestConfiguration): void {
 		describe("can apply deltas with", () => {
 			if (!config.skipCursorErrorCheck) {
 				it("ensures cursors are cleared before applying changes", () => {
-					const forest = factory(
-						new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
-					);
+					const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
 					initializeForest(
 						forest,
 						[singleJsonCursor(1)],
@@ -622,9 +620,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				});
 
 				it("ensures cursors created in events during delta processing are cleared", () => {
-					const forest = factory(
-						new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
-					);
+					const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
 					initializeForest(
 						forest,
 						[singleJsonCursor(1)],
@@ -647,9 +643,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			}
 
 			it("beforeChange events", () => {
-				const forest = factory(
-					new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
-				);
+				const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
 				initializeForest(
 					forest,
 					[singleJsonCursor(1)],
@@ -669,9 +663,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			});
 
 			it("set fields as remove and insert", () => {
-				const forest = factory(
-					new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
-				);
+				const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
 				initializeForest(
 					forest,
 					[singleJsonCursor(nestedContent)],
@@ -712,9 +704,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			});
 
 			it("set fields as replace", () => {
-				const forest = factory(
-					new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
-				);
+				const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
 				initializeForest(
 					forest,
 					[singleJsonCursor(nestedContent)],
@@ -879,9 +869,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			});
 
 			it("move out and move in", () => {
-				const forest = factory(
-					new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
-				);
+				const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
 				initializeForest(
 					forest,
 					[singleJsonCursor(nestedContent)],
@@ -918,9 +906,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			});
 
 			it("insert and modify", () => {
-				const forest = factory(
-					new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
-				);
+				const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
 				const content: JsonCompatible[] = [1, 2];
 				initializeForest(
 					forest,
@@ -988,9 +974,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			});
 
 			it("modify and remove", () => {
-				const forest = factory(
-					new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
-				);
+				const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
 				initializeForest(
 					forest,
 					[singleJsonCursor(nestedContent)],
@@ -1018,9 +1002,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			});
 
 			it("modify and move out", () => {
-				const forest = factory(
-					new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
-				);
+				const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
 				initializeForest(
 					forest,
 					[singleJsonCursor(nestedContent)],
@@ -1084,9 +1066,7 @@ export function testForest(config: ForestTestConfiguration): void {
 
 		describe("Does not leave an empty field", () => {
 			it("when removing the last node in the field", () => {
-				const forest = factory(
-					new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
-				);
+				const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
 				const delta: DeltaFieldMap = new Map([
 					[
 						rootFieldKey,

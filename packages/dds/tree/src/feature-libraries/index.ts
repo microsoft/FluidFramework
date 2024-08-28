@@ -140,8 +140,6 @@ export {
 	type FlexListToUnion,
 	type ExtractItemType,
 	isLazy,
-	type NormalizeObjectNodeFields,
-	type NormalizeField as NormalizeFieldSchema,
 	type FlexObjectNodeFields,
 	intoStoredSchema,
 	intoStoredSchemaCollection,

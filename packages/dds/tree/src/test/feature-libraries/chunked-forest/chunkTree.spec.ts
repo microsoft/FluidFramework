@@ -11,7 +11,7 @@ import {
 	type Value,
 	mapCursorField,
 } from "../../../core/index.js";
-import { jsonObject, leaf } from "../../../domains/index.js";
+import { leaf } from "../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -49,6 +49,7 @@ import {
 } from "./fieldCursorTestUtilities.js";
 import { polygonTree, testData } from "./uniformChunkTestData.js";
 import { SchemaFactory, toStoredSchema } from "../../../simple-tree/index.js";
+import { fieldJsonCursor } from "../../json/index.js";
 
 const builder = new SchemaFactory("chunkTree");
 const empty = builder.object("empty", {});
@@ -114,11 +115,7 @@ describe("chunkTree", () => {
 		});
 
 		it("stops if type changes", () => {
-			const cursor = cursorForJsonableTreeField([
-				{ type: leaf.null.name },
-				{ type: leaf.null.name },
-				{ type: jsonObject.name },
-			]);
+			const cursor = fieldJsonCursor([null, null, {}]);
 			cursor.firstNode();
 			const nullShape = new TreeShape(leaf.null.name, false, []);
 			{

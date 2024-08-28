@@ -9,19 +9,20 @@ import {
 	type MapTree,
 	type TreeNodeSchemaIdentifier,
 } from "../core/index.js";
-import { leaf, singleJsonCursor } from "../domains/index.js";
+import { leaf } from "../domains/index.js";
 import { FieldKinds, cursorForMapTreeField } from "../feature-libraries/index.js";
 import type { ITreeCheckout } from "../shared-tree/index.js";
 import { toStoredSchema } from "../simple-tree/index.js";
 import { brand, type JsonCompatible } from "../util/index.js";
-import { checkoutWithContent, JsonUnion } from "./utils.js";
+import { checkoutWithContent } from "./utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { normalizeAllowedTypes } from "../simple-tree/schemaTypes.js";
+import { JsonUnion, singleJsonCursor } from "./json/index.js";
 
 // This file provides utilities for testing sequence fields using documents where the root is the sequence being tested.
 // This pattern is not expressible using the public simple-tree API, and is only for testing internal details.
 
-const rootJsonSequenceSchema: TreeStoredSchema = {
+export const jsonSequenceRootSchema: TreeStoredSchema = {
 	nodeSchema: toStoredSchema(JsonUnion).nodeSchema,
 	rootFieldSchema: {
 		kind: FieldKinds.sequence.identifier,
@@ -64,7 +65,7 @@ export function remove(tree: ITreeCheckout, index: number, count: number): void 
 export function makeTreeFromJsonSequence(json: JsonCompatible[]): ITreeCheckout {
 	const cursors = json.map(singleJsonCursor);
 	const tree = checkoutWithContent({
-		schema: rootJsonSequenceSchema,
+		schema: jsonSequenceRootSchema,
 		initialTree: cursors,
 	});
 	return tree;

@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 
 import { EmptyKey, type ITreeCursorSynchronous } from "../../../core/index.js";
-import { cursorToJsonObject, singleJsonCursor } from "../../../domains/index.js";
+import { cursorToJsonObject, singleJsonCursor, JsonObject } from "../../json/index.js";
 import {
 	type ChunkShape,
 	TreeShape,
@@ -27,7 +27,6 @@ import { testSpecializedFieldCursor } from "../../cursorTestSuite.js";
 import { sum } from "../../domains/json/benchmarks.js";
 
 import { emptyShape, polygonTree, testData, xField, yField } from "./uniformChunkTestData.js";
-import { JsonObject } from "../../utils.js";
 import { brand } from "../../../util/index.js";
 
 // Validate a few aspects of shapes that are easier to verify here than via checking the cursor.
