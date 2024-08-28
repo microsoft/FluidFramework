@@ -767,16 +767,67 @@ function lastMessageFromMetadata(metadata: IContainerRuntimeMetadata | undefined
  * We only want to log this once, to avoid spamming telemetry if we are wrong and these cases are hit commonly.
  */
 let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) => {
-	// We only want to log this once per ContainerRuntime instance, to avoid spamming telemetry.
-	getSingleUseLegacyLogCallback = () => () => {};
-
 	return (codePath: string) => {
 		logger.sendTelemetryEvent({
 			eventName: "LegacyMessageFormat",
 			details: { codePath, type },
 		});
+
+		// Now that we've logged, prevent future logging (globally).
+		getSingleUseLegacyLogCallback = () => () => {};
 	};
 };
+
+/**
+ * This object holds the parameters necessary for the {@link loadContainerRuntime} function.
+ * @legacy
+ * @alpha
+ */
+export interface LoadContainerRuntimeParams {
+	/**
+	 * Context of the container.
+	 */
+	context: IContainerContext;
+	/**
+	 * Mapping from data store types to their corresponding factories
+	 */
+	registryEntries: NamedFluidDataStoreRegistryEntries;
+	/**
+	 * Pass 'true' if loading from an existing snapshot.
+	 */
+	existing: boolean;
+	/**
+	 * Additional options to be passed to the runtime
+	 */
+	runtimeOptions?: IContainerRuntimeOptions;
+	/**
+	 * runtime services provided with context
+	 */
+	containerScope?: FluidObject;
+	/**
+	 * Promise that resolves to an object which will act as entryPoint for the Container.
+	 */
+	provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+
+	/**
+	 * Request handler for the request() method of the container runtime.
+	 * Only relevant for back-compat while we remove the request() method and move fully to entryPoint as the main pattern.
+	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * */
+	requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+}
+/**
+ * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
+ * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
+ * @returns A runtime which provides all the functionality necessary to bind with the loader layer via the {@link @fluidframework/container-definitions#IRuntime} interface and provide a runtime environment via the {@link @fluidframework/container-runtime-definitions#IContainerRuntime} interface.
+ * @legacy
+ * @alpha
+ */
+export async function loadContainerRuntime(
+	params: LoadContainerRuntimeParams,
+): Promise<IContainerRuntime & IRuntime> {
+	return ContainerRuntime.loadRuntime(params);
+}
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
@@ -1287,11 +1338,15 @@ export class ContainerRuntime
 	private readonly disableAttachReorder: boolean | undefined;
 	private readonly closeSummarizerDelayMs: number;
 	private readonly defaultTelemetrySignalSampleCount = 100;
-	private readonly _perfSignalData: IPerfSignalReport = {
+	private readonly _signalTracking: IPerfSignalReport = {
 		signalsLost: 0,
+		signalsOutOfOrder: 0,
 		signalSequenceNumber: 0,
 		signalTimestamp: 0,
+		roundTripSignalSequenceNumber: undefined,
 		trackingSignalSequenceNumber: undefined,
+		baseSignalTrackingGroupSequenceNumber: undefined,
+		minimumTrackingSignalSequenceNumber: undefined,
 	};
 
 	/**
@@ -2597,9 +2652,13 @@ export class ContainerRuntime
 		this._connected = connected;
 
 		if (!connected) {
-			this._perfSignalData.signalsLost = 0;
-			this._perfSignalData.signalTimestamp = 0;
-			this._perfSignalData.trackingSignalSequenceNumber = undefined;
+			this._signalTracking.signalsLost = 0;
+			this._signalTracking.signalsOutOfOrder = 0;
+			this._signalTracking.signalTimestamp = 0;
+			this._signalTracking.roundTripSignalSequenceNumber = undefined;
+			this._signalTracking.trackingSignalSequenceNumber = undefined;
+			this._signalTracking.minimumTrackingSignalSequenceNumber = undefined;
+			this._signalTracking.baseSignalTrackingGroupSequenceNumber = undefined;
 		} else {
 			assert(
 				this.attachState === AttachState.Attached,
@@ -2672,7 +2731,9 @@ export class ContainerRuntime
 				return;
 			}
 
-			// Reach out to PendingStateManager to zip localOpMetadata into the message list if it's a local batch
+			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
+			// or to check to ensure the *remote* messages don't match the batchId of a pending local batch.
+			// This latter case would indicate that the container has forked - two copies are trying to persist the same local changes.
 			const messagesWithPendingState = this.pendingStateManager.processInboundBatch(
 				inboundBatch,
 				local,
@@ -2936,15 +2997,27 @@ export class ContainerRuntime
 	 * @param clientSignalSequenceNumber - is the client signal sequence number to be uploaded.
 	 */
 	private sendSignalTelemetryEvent(clientSignalSequenceNumber: number) {
-		const duration = Date.now() - this._perfSignalData.signalTimestamp;
+		const duration = Date.now() - this._signalTracking.signalTimestamp;
+		const signalsSent =
+			this._signalTracking.baseSignalTrackingGroupSequenceNumber !== undefined
+				? clientSignalSequenceNumber -
+					this._signalTracking.baseSignalTrackingGroupSequenceNumber +
+					1
+				: -1;
+
 		this.mc.logger.sendPerformanceEvent({
 			eventName: "SignalLatency",
-			duration,
-			signalsLost: this._perfSignalData.signalsLost,
+			duration, // Roundtrip duration of the tracked signal in milliseconds.
+			signalsSent, // Signals sent since the last logged SignalLatency event.
+			signalsLost: this._signalTracking.signalsLost, // Signals lost since the last logged SignalLatency event.
+			outOfOrderSignals: this._signalTracking.signalsOutOfOrder, // Out of order signals since the last logged SignalLatency event.
+			reconnectCount: this.consecutiveReconnects, // Container reconnect count.
 		});
-
-		this._perfSignalData.signalsLost = 0;
-		this._perfSignalData.signalTimestamp = 0;
+		this._signalTracking.baseSignalTrackingGroupSequenceNumber =
+			clientSignalSequenceNumber + 1;
+		this._signalTracking.signalsLost = 0;
+		this._signalTracking.signalsOutOfOrder = 0;
+		this._signalTracking.signalTimestamp = 0;
 	}
 
 	public processSignal(message: ISignalMessage, local: boolean) {
@@ -2957,29 +3030,59 @@ export class ContainerRuntime
 
 		// Only collect signal telemetry for messages sent by the current client.
 		if (message.clientId === this.clientId && this.connected) {
-			// Check to see if the signal was lost.
 			if (
-				this._perfSignalData.trackingSignalSequenceNumber !== undefined &&
-				envelope.clientSignalSequenceNumber > this._perfSignalData.trackingSignalSequenceNumber
+				this._signalTracking.trackingSignalSequenceNumber !== undefined &&
+				this._signalTracking.minimumTrackingSignalSequenceNumber !== undefined
 			) {
-				this._perfSignalData.signalsLost++;
-				this._perfSignalData.trackingSignalSequenceNumber = undefined;
-				this.mc.logger.sendErrorEvent({
-					eventName: "SignalLost",
-					type: envelope.contents.type,
-					signalsLost: this._perfSignalData.signalsLost,
-					trackingSequenceNumber: this._perfSignalData.trackingSignalSequenceNumber,
-					clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
-				});
-			} else if (
-				envelope.clientSignalSequenceNumber ===
-				this._perfSignalData.trackingSignalSequenceNumber
-			) {
-				// only logging for the first connection and the trackingSignalSequenceNUmber.
-				if (this.consecutiveReconnects === 0) {
-					this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
+				if (
+					envelope.clientSignalSequenceNumber >=
+					this._signalTracking.trackingSignalSequenceNumber
+				) {
+					// Calculate the number of signals lost and log the event.
+					const signalsLost =
+						envelope.clientSignalSequenceNumber -
+						this._signalTracking.trackingSignalSequenceNumber;
+					if (signalsLost > 0) {
+						this._signalTracking.signalsLost += signalsLost;
+						this.mc.logger.sendErrorEvent({
+							eventName: "SignalLost",
+							signalsLost, // Number of lost signals detected.
+							trackingSequenceNumber: this._signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
+							clientSignalSequenceNumber: envelope.clientSignalSequenceNumber, // Actual signal sequence number received.
+						});
+					}
+					// Update the tracking signal sequence number to the next expected signal in the sequence.
+					this._signalTracking.trackingSignalSequenceNumber =
+						envelope.clientSignalSequenceNumber + 1;
+				} else if (
+					envelope.clientSignalSequenceNumber >=
+					this._signalTracking.minimumTrackingSignalSequenceNumber
+				) {
+					this._signalTracking.signalsOutOfOrder++;
+					this.mc.logger.sendTelemetryEvent({
+						eventName: "SignalOutOfOrder",
+						type: envelope.contents.type, // Type of signal that was received out of order.
+						trackingSequenceNumber: this._signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
+						clientSignalSequenceNumber: envelope.clientSignalSequenceNumber, // Sequence number of the out of order signal.
+					});
 				}
-				this._perfSignalData.trackingSignalSequenceNumber = undefined;
+				if (
+					this._signalTracking.roundTripSignalSequenceNumber !== undefined &&
+					envelope.clientSignalSequenceNumber >=
+						this._signalTracking.roundTripSignalSequenceNumber
+				) {
+					if (
+						envelope.clientSignalSequenceNumber ===
+						this._signalTracking.roundTripSignalSequenceNumber
+					) {
+						// Latency tracked signal has been received.
+						// We now log the roundtrip duration of the tracked signal.
+						// This telemetry event also logs metrics for signals sent, signals lost, and out of order signals received.
+						// These metrics are reset after logging the telemetry event.
+						this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
+					}
+					this._signalTracking.roundTripSignalSequenceNumber = undefined;
+				}
 			}
 		}
 
@@ -3228,20 +3331,31 @@ export class ContainerRuntime
 		type: string,
 		content: any,
 	): ISignalEnvelope {
-		const newSequenceNumber = ++this._perfSignalData.signalSequenceNumber;
+		const newSequenceNumber = ++this._signalTracking.signalSequenceNumber;
+
+		// Initialize tracking to expect the first signal sent by the connected client.
+		if (
+			this._signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
+			this._signalTracking.trackingSignalSequenceNumber === undefined
+		) {
+			this._signalTracking.minimumTrackingSignalSequenceNumber = newSequenceNumber;
+			this._signalTracking.trackingSignalSequenceNumber = newSequenceNumber;
+			this._signalTracking.baseSignalTrackingGroupSequenceNumber = newSequenceNumber;
+		}
+
 		const newEnvelope: ISignalEnvelope = {
 			address,
 			clientSignalSequenceNumber: newSequenceNumber,
 			contents: { type, content },
 		};
 
-		// We should not track any signals in case we already have a tracking number.
+		// We should not track the round trip of a new signal in the case we are already tracking one.
 		if (
 			newSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
-			this._perfSignalData.trackingSignalSequenceNumber === undefined
+			this._signalTracking.roundTripSignalSequenceNumber === undefined
 		) {
-			this._perfSignalData.signalTimestamp = Date.now();
-			this._perfSignalData.trackingSignalSequenceNumber = newSequenceNumber;
+			this._signalTracking.signalTimestamp = Date.now();
+			this._signalTracking.roundTripSignalSequenceNumber = newSequenceNumber;
 		}
 
 		return newEnvelope;
