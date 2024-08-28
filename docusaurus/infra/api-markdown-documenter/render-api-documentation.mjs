@@ -110,7 +110,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir) {
 		getFileNameForItem: (apiItem) => {
 			switch (apiItem.kind) {
 				case ApiItemKind.Model: {
-					return "index";
+					return "package-reference";
 				}
 				case ApiItemKind.Package: {
 					return ApiItemUtilities.getUnscopedPackageName(apiItem);
@@ -151,7 +151,9 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir) {
 					customRenderers,
 				});
 
-				fileContents = [generatedContentNotice, documentBody].join("\n\n").trim();
+				const frontMatter = createFrontMatter(document.apiItem);
+
+				fileContents = [frontMatter, generatedContentNotice, documentBody].join("\n\n").trim();
 			} catch (error) {
 				logErrorAndRethrow(
 					`Encountered error while rendering Markdown contents for "${document.apiItem.displayName}"`,
@@ -172,4 +174,19 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir) {
 			}
 		}),
 	);
+}
+
+// TODO: `description`
+function createFrontMatter(documentApiItem) {
+	const title = documentApiItem.kind === ApiItemKind.Model
+		? "Package Reference"
+		: documentApiItem.displayName.replace(/"/g, "").replace(/!/g, "");
+
+	const frontMatter = [
+		"---",
+		`title: "${title}"`,
+		"---",
+	];
+
+	return frontMatter.join("\n");
 }
