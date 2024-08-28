@@ -29,6 +29,7 @@ import { type JsonCompatible, brand, makeArray } from "../../util/index.js";
 import {
 	createTestUndoRedoStacks,
 	expectJsonTree,
+	expectNoRemovedRoots,
 	insert,
 	makeTreeFromJson,
 	moveWithin,
@@ -3177,6 +3178,7 @@ describe("Editing", () => {
 			branch.transaction.abort();
 
 			expectJsonTree(branch, [initialState]);
+			expectNoRemovedRoots(branch);
 		}
 
 		it("on the main branch", () => {
