@@ -7,13 +7,7 @@ import { strict as assert } from "assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	FieldKinds,
-	FlexFieldSchema,
-	intoStoredSchema,
-	MockNodeKeyManager,
-	SchemaBuilderBase,
-} from "../../feature-libraries/index.js";
+import { intoStoredSchema, MockNodeKeyManager } from "../../feature-libraries/index.js";
 import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
@@ -62,18 +56,12 @@ function checkoutWithInitialTree(
 }
 
 // Schema for tree that must always be empty.
-const emptySchema = new SchemaBuilderBase(FieldKinds.required, {
-	scope: "Empty",
-	lint: {
-		rejectEmpty: false,
-		rejectForbidden: false,
-	},
-}).intoSchema(FlexFieldSchema.empty);
+const emptySchema = toStoredSchema(schema.optional([]));
 
 describe("SchematizingSimpleTreeView", () => {
 	it("Initialize document", () => {
 		const emptyContent = {
-			schema: intoStoredSchema(emptySchema),
+			schema: emptySchema,
 			initialTree: undefined,
 		};
 		const checkout = checkoutWithContent(emptyContent);
@@ -90,7 +78,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("Initialize errors", () => {
 		const emptyContent = {
-			schema: intoStoredSchema(emptySchema),
+			schema: emptySchema,
 			initialTree: undefined,
 		};
 		const checkout = checkoutWithContent(emptyContent);
@@ -259,7 +247,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("supports revertibles", () => {
 		const emptyContent = {
-			schema: intoStoredSchema(emptySchema),
+			schema: emptySchema,
 			initialTree: undefined,
 		};
 		const checkout = checkoutWithContent(emptyContent);

@@ -19,7 +19,6 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import {
-	AllowedUpdateType,
 	CommitKind,
 	type Revertible,
 	type UpPath,
@@ -38,9 +37,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
-	FieldKinds,
 	MockNodeKeyManager,
-	SchemaBuilderBase,
 	TreeCompressionStrategy,
 	TreeStatus,
 	cursorForJsonableTreeNode,
@@ -53,7 +50,6 @@ import {
 import {
 	ForestType,
 	type ISharedTree,
-	type InitializeAndSchematizeConfiguration,
 	type SharedTree,
 	SharedTreeFactory,
 	Tree,
@@ -83,7 +79,6 @@ import {
 	TestTreeProviderLite,
 	createTestUndoRedoStacks,
 	expectSchemaEqual,
-	schematizeFlexTree,
 	treeTestFactory,
 	validateTreeConsistency,
 	validateTreeContent,
@@ -96,7 +91,7 @@ import { configuredSharedTree } from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { TestAnchor } from "../testAnchor.js";
 // eslint-disable-next-line import/no-internal-modules
-import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
+import { numberSchema, stringSchema } from "../../simple-tree/leafNodeSchema.js";
 import { JsonArray, singleJsonCursor } from "../json/index.js";
 
 const enableSchemaValidation = true;
@@ -116,90 +111,48 @@ class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
 }
 
 describe("SharedTree", () => {
-	describe("schematize", () => {
-		const builder = new SchemaBuilderBase(FieldKinds.optional, {
-			libraries: [leaf.library],
-			scope: "test",
-			name: "Schematize Tree Tests",
-		});
-		const schema = builder.intoSchema(leaf.number);
-		const storedSchema = intoStoredSchema(schema);
-
-		const builderGeneralized = new SchemaBuilderBase(FieldKinds.optional, {
-			libraries: [leaf.library],
-			scope: "test",
-			name: "Schematize Tree Tests Generalized",
-		});
-
-		const schemaGeneralized = builderGeneralized.intoSchema([leaf.number, leaf.string]);
-		const storedSchemaGeneralized = intoStoredSchema(schemaGeneralized);
-
-		it("concurrent Schematize", () => {
-			const provider = new TestTreeProviderLite(2);
-			const content = {
-				schema: toFlexSchema(stringSchema),
-				allowedSchemaModifications: AllowedUpdateType.Initialize,
-				initialTree: [singleJsonCursor("x")],
-			} satisfies InitializeAndSchematizeConfiguration;
-			const tree1 = schematizeFlexTree(provider.trees[0], content);
-			schematizeFlexTree(provider.trees[1], content);
-			provider.processMessages();
-
-			assert.deepEqual(
-				Array.from(tree1.flexTree.boxedIterator(), (f) => f.value),
-				["x"],
-			);
-		});
-
+	describe("viewWith", () => {
 		it("initialize tree", () => {
 			const tree = treeTestFactory();
 			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 
-			const view = schematizeFlexTree(tree, {
-				allowedSchemaModifications: AllowedUpdateType.Initialize,
-				initialTree: singleJsonCursor(10),
-				schema,
+			const config = new TreeViewConfiguration({
+				schema: numberSchema,
 			});
-			assert.equal(view.flexTree.length, 1);
-			assert.equal(view.flexTree.boxedAt(0)?.value, 10);
+			const view = tree.viewWith(config);
+			view.initialize(10);
+			assert.equal(view.root, 10);
+		});
+
+		it("concurrent initialize", () => {
+			const provider = new TestTreeProviderLite(2);
+			const config = new TreeViewConfiguration({
+				schema: stringSchema,
+			});
+			const view1 = provider.trees[0].viewWith(config);
+			const view2 = provider.trees[1].viewWith(config);
+			view1.initialize("x");
+			view2.initialize("x");
+
+			provider.processMessages();
+			assert.equal(view1.root, "x");
 		});
 
 		it("noop upgrade", () => {
 			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
-			tree.checkout.updateSchema(storedSchema);
 
-			// No op upgrade with AllowedUpdateType.None does not error
-			const schematized = schematizeFlexTree(tree, {
-				allowedSchemaModifications: AllowedUpdateType.None,
-				initialTree: singleJsonCursor(10),
-				schema,
+			const config = new TreeViewConfiguration({
+				schema: numberSchema,
 			});
-			// And does not add initial tree:
-			assert.equal(schematized.flexTree.length, 0);
-		});
+			const view1 = tree.viewWith(config);
+			view1.initialize(0);
+			// Noop upgrade
+			view1.upgradeSchema();
+			view1.dispose();
 
-		it("incompatible upgrade errors", () => {
-			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
-			tree.checkout.updateSchema(storedSchemaGeneralized);
-			assert.throws(() => {
-				schematizeFlexTree(tree, {
-					allowedSchemaModifications: AllowedUpdateType.Initialize,
-					initialTree: singleJsonCursor(5),
-					schema,
-				});
-			});
-		});
-
-		it("upgrade schema", () => {
-			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
-			tree.checkout.updateSchema(storedSchema);
-			const schematized = schematizeFlexTree(tree, {
-				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
-				initialTree: singleJsonCursor(5),
-				schema: schemaGeneralized,
-			});
-			// Initial tree should not be applied
-			assert.equal(schematized.flexTree.length, 0);
+			const view2 = tree.viewWith(config);
+			// Noop upgrade on separate view.
+			view2.upgradeSchema();
 		});
 
 		it("unhydrated tree input", () => {
