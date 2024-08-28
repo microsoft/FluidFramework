@@ -9,7 +9,9 @@
 .cache-loader
 .doc-models
 
-docs/api
+# Generated API docs.
+# Note: keep `mdx` files that are handwritten
+docs/api/**/*.md
 
 # Misc
 .DS_Store
