@@ -10,7 +10,8 @@
 .doc-models
 
 # Generated API documentation contents
-docs/api
+# Note: the `.md` pattern is intentional to ensure we DON'T ignore the handwritten `.mdx` files in that directory.
+docs/api/**/*.md
 
 # Misc
 .DS_Store
