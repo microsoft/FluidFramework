@@ -27,15 +27,9 @@ import {
 	prefixPath,
 } from "../feature-libraries/index.js";
 import { brand } from "../util/index.js";
-
-import {
-	expectEqualFieldPaths,
-	expectEqualPaths,
-	IdentifierSchema,
-	JsonArray,
-	JsonObject,
-} from "./utils.js";
+import { expectEqualFieldPaths, expectEqualPaths, IdentifierSchema } from "./utils.js";
 import { SchemaFactory } from "../simple-tree/index.js";
+import { JsonArray, JsonObject } from "./json/index.js";
 
 const sf = new SchemaFactory("Cursor Test Suite");
 

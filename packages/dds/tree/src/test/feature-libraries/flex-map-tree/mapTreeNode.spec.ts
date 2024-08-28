@@ -125,8 +125,6 @@ describe("MapTreeNodes", () => {
 
 		assert.equal(arrayNode.getBoxed(EmptyKey).length, 1);
 		const field = arrayNode.getBoxed(EmptyKey);
-		assert(field.isExactly(arrayNodeSchema.info[EmptyKey]));
-		assert(field.is(arrayNodeSchema.info[EmptyKey].kind));
 		assert.equal(arrayNode.tryGetField(brand("unknown key")), undefined);
 		assert.equal(arrayNode.getBoxed("unknown key").length, 0);
 		assert(field.is(FieldKinds.sequence));

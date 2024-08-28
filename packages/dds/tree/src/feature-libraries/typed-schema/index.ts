@@ -22,8 +22,6 @@ export {
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
-	type NormalizeObjectNodeFields,
-	type NormalizeField,
 	intoStoredSchema,
 	allowedTypesSchemaSet,
 	intoStoredSchemaCollection,

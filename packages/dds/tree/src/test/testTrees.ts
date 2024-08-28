@@ -39,7 +39,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { jsonableTreesFromFieldCursor } from "./feature-libraries/chunked-forest/fieldCursorTestUtilities.js";
 // eslint-disable-next-line import/no-internal-modules
-import { fieldJsonCursor } from "../domains/json/jsonCursor.js";
+import { fieldJsonCursor } from "./json/jsonCursor.js";
 
 interface TestTree {
 	readonly name: string;
