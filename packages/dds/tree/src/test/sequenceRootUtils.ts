@@ -9,10 +9,9 @@ import {
 	type MapTree,
 	type TreeNodeSchemaIdentifier,
 } from "../core/index.js";
-import { leaf } from "../domains/index.js";
 import { FieldKinds, cursorForMapTreeField } from "../feature-libraries/index.js";
 import type { ITreeCheckout } from "../shared-tree/index.js";
-import { toStoredSchema } from "../simple-tree/index.js";
+import { stringSchema, toStoredSchema } from "../simple-tree/index.js";
 import { brand, type JsonCompatible } from "../util/index.js";
 import { checkoutWithContent } from "./utils.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -46,7 +45,13 @@ export function insert(tree: ITreeCheckout, index: number, ...values: string[]):
 	fieldEditor.insert(
 		index,
 		cursorForMapTreeField(
-			values.map((value): MapTree => ({ fields: new Map(), type: leaf.string.name, value })),
+			values.map(
+				(value): MapTree => ({
+					fields: new Map(),
+					type: brand(stringSchema.identifier),
+					value,
+				}),
+			),
 		),
 	);
 }

@@ -16,7 +16,6 @@ import {
 	rootFieldKey,
 	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
-import { leaf } from "../../../domains/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import {
 	Chunker,
@@ -59,7 +58,7 @@ import {
 	forestWithContent,
 	testIdCompressor,
 } from "../../utils.js";
-import { SchemaFactory } from "../../../simple-tree/index.js";
+import { numberSchema, SchemaFactory } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
@@ -67,11 +66,10 @@ import { SummaryType } from "@fluidframework/driver-definitions";
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { EncodedFieldBatch } from "../../../feature-libraries/chunked-forest/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { brand } from "../../../util/brand.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { JsonObject } from "../../json/jsonDomainSchema.js";
+import { brand } from "../../../util/index.js";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -134,7 +132,7 @@ describe("End to end chunked encoding", () => {
 		);
 
 		const forest = buildChunkedForest(chunker);
-		const numberShape = new TreeShape(leaf.number.name, true, []);
+		const numberShape = new TreeShape(brand(numberSchema.identifier), true, []);
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
 		assert(!chunk.isShared());
 		const changeLog: ModularChangeset[] = [];
@@ -164,7 +162,7 @@ describe("End to end chunked encoding", () => {
 	// This test (and the one below) are testing for an optimization in the decoding logic to save a copy of the data array.
 	// This optimization is not implemented, so these tests fail, and are skipped.
 	it.skip(`summary values are correct, and shares reference with the original chunk when inserting content.`, () => {
-		const numberShape = new TreeShape(leaf.number.name, true, []);
+		const numberShape = new TreeShape(brand(numberSchema.identifier), true, []);
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
 		assert(!chunk.isShared());
 		const checkout = checkoutWithContent({
@@ -200,7 +198,7 @@ describe("End to end chunked encoding", () => {
 
 	// See note on above test.
 	it.skip(`summary values are correct, and shares reference with the original chunk when initializing with content.`, () => {
-		const numberShape = new TreeShape(leaf.number.name, true, []);
+		const numberShape = new TreeShape(brand(numberSchema.identifier), true, []);
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
 		assert(!chunk.isShared());
 

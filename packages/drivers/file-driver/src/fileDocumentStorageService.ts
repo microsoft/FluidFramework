@@ -173,7 +173,7 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 		// eslint-disable-next-line @rushstack/no-new-null
 		public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 			// If we already saved document, that means we are getting here because of snapshot generation.
-			// Not returning tree ensures that ContainerRuntime.snapshot() would regenerate subtrees for
+			// Not returning tree ensures that IContainerRuntime.snapshot() would regenerate subtrees for
 			// each unchanged data store.
 			// If we want to change that, we would need to capture docId on first call and return this.latestWriterTree
 			// when latest is requested.

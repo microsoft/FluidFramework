@@ -18,12 +18,9 @@ import {
 import { singleJsonCursor } from "../json/index.js";
 import {
 	FieldKinds,
-	FlexFieldSchema,
-	SchemaBuilderBase,
 	ViewSchema,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
-	intoStoredSchema,
 } from "../../feature-libraries/index.js";
 import type {
 	ITreeCheckout,
@@ -56,15 +53,7 @@ const schemaGeneralized = toStoredSchema(builder.optional([root, builder.string]
 const schemaValueRoot = toStoredSchema([root, builder.string]);
 
 // Schema for tree that must always be empty.
-const emptySchema = intoStoredSchema(
-	new SchemaBuilderBase(FieldKinds.required, {
-		scope: "Empty",
-		lint: {
-			rejectEmpty: false,
-			rejectForbidden: false,
-		},
-	}).intoSchema(FlexFieldSchema.empty),
-);
+const emptySchema = toStoredSchema(builder.optional([]));
 
 function expectSchema(actual: TreeStoredSchema, expected: TreeStoredSchema): void {
 	// Check schema match
