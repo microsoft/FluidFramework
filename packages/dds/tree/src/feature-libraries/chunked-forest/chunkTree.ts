@@ -28,6 +28,8 @@ import { BasicChunk } from "./basicChunk.js";
 import { type TreeChunk, tryGetChunk } from "./chunk.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
+import { isStableNodeKey } from "../node-key/index.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export interface Disposable {
 	/**
@@ -453,6 +455,7 @@ export function insertValues(
 	cursor: ITreeCursorSynchronous,
 	shape: TreeShape,
 	values: Value[],
+	idCompressor?: IIdCompressor
 ): void {
 	assert(shape.type === cursor.type, 0x582 /* shape and type must match */);
 
@@ -461,13 +464,18 @@ export function insertValues(
 
 	// Slow path: walk shape and cursor together, inserting values.
 	if (shape.hasValue) {
-		values.push(cursor.value);
+		if(typeof cursor.value === 'string' && idCompressor !== undefined && isStableNodeKey(cursor.value)){
+			values.push(idCompressor.tryRecompress(cursor.value) ?? cursor.value)
+		}
+		else{
+			values.push(cursor.value);
+		}
 	}
 	for (const [key, childShape, length] of shape.fieldsArray) {
 		cursor.enterField(key);
 		let count = 0;
 		for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
-			insertValues(cursor, childShape, values);
+			insertValues(cursor, childShape, values, idCompressor);
 			count++;
 		}
 		cursor.exitField();
@@ -490,6 +498,7 @@ export function uniformChunkFromCursor(
 	shape: TreeShape,
 	maxTopLevelLength: number,
 	skipLastNavigation: boolean,
+	idCompressor?: IIdCompressor
 ): UniformChunk {
 	// TODO:
 	// This could have a fast path for consuming already uniformly chunked data with matching shape.
@@ -497,7 +506,7 @@ export function uniformChunkFromCursor(
 	const values: TreeValue[] = [];
 	let topLevelLength = 1;
 	while (topLevelLength <= maxTopLevelLength) {
-		insertValues(cursor, shape, values);
+		insertValues(cursor, shape, values, idCompressor);
 		if (topLevelLength === maxTopLevelLength) {
 			if (!skipLastNavigation) {
 				cursor.nextNode();
@@ -510,5 +519,5 @@ export function uniformChunkFromCursor(
 		}
 		topLevelLength += 1;
 	}
-	return new UniformChunk(shape.withTopLevelLength(topLevelLength), values);
+	return new UniformChunk(shape.withTopLevelLength(topLevelLength), values, idCompressor);
 }

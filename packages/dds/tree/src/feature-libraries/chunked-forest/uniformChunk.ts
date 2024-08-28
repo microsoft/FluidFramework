@@ -19,7 +19,6 @@ import { ReferenceCountedBase, fail } from "../../util/index.js";
 import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
 
 import { type ChunkedCursor, type TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
-import { isStableNodeKey } from "../node-key/index.js";
 import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
@@ -39,7 +38,6 @@ export function uniformChunk(shape: ChunkShape, values: TreeValue[]): TreeChunk 
  * allowing deduplication of shape information and storing of content as a flat sequence of values.
  */
 export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
-	public values: TreeValue[];
 	public idCompressor: undefined | IIdCompressor;
 	/**
 	 * Create a tree chunk with ref count 1.
@@ -49,21 +47,11 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 	 */
 	public constructor(
 		public shape: ChunkShape,
-		values: TreeValue[],
+		public values: TreeValue[],
 		idCompressor?: IIdCompressor,
 	) {
 		super();
 		this.idCompressor = idCompressor;
-		this.values =
-			this.idCompressor !== undefined
-				? encodeUniformChunkValues(
-						values,
-						shape.treeShape,
-						shape.topLevelLength,
-						0,
-						this.idCompressor,
-					).encodedValues
-				: values;
 		assert(
 			shape.treeShape.valuesPerTopLevelNode * shape.topLevelLength === values.length,
 			0x4c3 /* invalid number of values for shape */,
@@ -83,49 +71,6 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 	}
 
 	protected onUnreferenced(): void {}
-}
-
-function encodeUniformChunkValues(
-	values: TreeValue[],
-	shape: TreeShape,
-	topLevelLength: number,
-	currentIndex: number = 0,
-	idCompressor?: IIdCompressor,
-): { encodedValues: TreeValue[]; endIndex: number } {
-	let index = currentIndex;
-	for (let nodeIndex = 0; nodeIndex < topLevelLength; nodeIndex++) {
-		for (const fieldKey of shape.fields.keys()) {
-			const offsetShape = shape.fields.get(fieldKey);
-			assert(offsetShape !== undefined, "offset shape should not be undefined");
-
-			if (offsetShape.shape.fieldsOffsetArray.length === 0) {
-				if (offsetShape.shape.maybeDecompressedStringAsNumber) {
-					const identifierValue = values[index];
-					assert(
-						identifierValue !== undefined && typeof identifierValue === "string",
-						"identifier value must be a string",
-					);
-
-					if (isStableNodeKey(identifierValue)) {
-						const localNodeKey = idCompressor?.tryRecompress(identifierValue);
-						if (localNodeKey !== undefined) {
-							values[index] = localNodeKey;
-						}
-					}
-				}
-				index++;
-			} else {
-				index = encodeUniformChunkValues(
-					values,
-					offsetShape.shape,
-					offsetShape.topLevelLength,
-					index,
-					idCompressor,
-				).endIndex;
-			}
-		}
-	}
-	return { encodedValues: values, endIndex: index };
 }
 
 /**

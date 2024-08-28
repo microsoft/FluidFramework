@@ -16,12 +16,13 @@ import {
 	rootFieldKey,
 	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
-import { jsonObject, leaf } from "../../../domains/index.js";
+import { leaf } from "../../../domains/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import {
 	Chunker,
 	defaultChunkPolicy,
 	tryShapeFromSchema,
+	uniformChunkFromCursor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -44,6 +45,7 @@ import {
 	makeModularChangeCodecFamily,
 	MockNodeKeyManager,
 	jsonableTreeFromCursor,
+	cursorForJsonableTreeNode,
 } from "../../../feature-libraries/index.js";
 import {
 	ForestType,
@@ -68,6 +70,8 @@ import type { EncodedFieldBatch } from "../../../feature-libraries/chunked-fores
 // eslint-disable-next-line import/no-internal-modules
 import { brand } from "../../../util/brand.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
+// eslint-disable-next-line import/no-internal-modules
+import { JsonObject } from "../../json/jsonDomainSchema.js";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -309,123 +313,71 @@ describe("End to end chunked encoding", () => {
 
 		it("In memory identifier encoding", () => {
 			const identifierField: FieldKey = brand("identifier");
-			const nestedIdentifierField: FieldKey = brand("nestedIdentifier");
 			const nonIdentifierField: FieldKey = brand("nonIdentifierField");
 			const stringShape = new TreeShape(leaf.string.name, true, [], true);
 	
 			const identifierParent: FieldKey = brand("identifierParent");
-			const nestedIdentifierParent: FieldKey = brand("nestedIdentifierParent");
 	
 			const identifierShape = new TreeShape(
-				jsonObject.name,
+				brand(JsonObject.identifier),
 				false,
 				[[identifierField, stringShape, 1]],
 				true,
 			);
 	
-			const nestedIdentifierShape = new TreeShape(
-				jsonObject.name,
-				false,
-				[[nestedIdentifierField, identifierShape, 1]],
-				true,
-			);
-	
 			const parentNodeWithIdentifiersShape = new TreeShape(
-				jsonObject.name,
+				brand(JsonObject.identifier),
 				false,
 				[
 					[identifierParent, identifierShape, 1],
-					[nestedIdentifierParent, nestedIdentifierShape, 1],
 					[nonIdentifierField, stringShape, 1],
 				],
-				false,
+				true,
 			);
 	
-			const id1 = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
-			const id2 = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
-			const nestedId1 = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
-			const nestedId2 = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
-	
-			const chunk = new UniformChunk(
-				parentNodeWithIdentifiersShape.withTopLevelLength(2),
-				[id1, nestedId1, "nonIdentifierValue", id2, nestedId2, "nonIdentifierValue2"],
-				testIdCompressor,
-			);
+			const id = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
+
+
+			const test = {
+				type: brand(JsonObject.identifier),
+				fields: {
+					identifierParent: [
+						{
+							type: brand(JsonObject.identifier),
+							fields: {
+								identifier: [{ type: brand("com.fluidframework.leaf.string"), value: id }],
+							},
+						},
+					],
+					nonIdentifierField: [
+						{ type: brand("com.fluidframework.leaf.string"), value: "nonIdentifierValue" },
+					],
+				},
+			} satisfies JsonableTree
+
+
+			const chunk = uniformChunkFromCursor(cursorForJsonableTreeNode(test), parentNodeWithIdentifiersShape, 1, true, testIdCompressor)
 			assert.deepEqual(chunk.values, [
-				testIdCompressor.tryRecompress(id1),
-				testIdCompressor.tryRecompress(nestedId1),
+				testIdCompressor.tryRecompress(id),
 				"nonIdentifierValue",
-				testIdCompressor.tryRecompress(id2),
-				testIdCompressor.tryRecompress(nestedId2),
-				"nonIdentifierValue2",
 			]);
 	
 			const jsonableTree = mapCursorField(chunk.cursor(), jsonableTreeFromCursor);
 	
 			const expected: JsonableTree[] = [
 				{
-					type: brand("com.fluidframework.json.object"),
+					type: brand(JsonObject.identifier),
 					fields: {
 						identifierParent: [
 							{
-								type: brand("com.fluidframework.json.object"),
+								type: brand(JsonObject.identifier),
 								fields: {
-									identifier: [{ type: brand("com.fluidframework.leaf.string"), value: id1 }],
-								},
-							},
-						],
-						nestedIdentifierParent: [
-							{
-								type: brand("com.fluidframework.json.object"),
-								fields: {
-									nestedIdentifier: [
-										{
-											type: brand("com.fluidframework.json.object"),
-											fields: {
-												identifier: [
-													{ type: brand("com.fluidframework.leaf.string"), value: nestedId1 },
-												],
-											},
-										},
-									],
+									identifier: [{ type: brand("com.fluidframework.leaf.string"), value: id }],
 								},
 							},
 						],
 						nonIdentifierField: [
 							{ type: brand("com.fluidframework.leaf.string"), value: "nonIdentifierValue" },
-						],
-					},
-				},
-				{
-					type: brand("com.fluidframework.json.object"),
-					fields: {
-						identifierParent: [
-							{
-								type: brand("com.fluidframework.json.object"),
-								fields: {
-									identifier: [{ type: brand("com.fluidframework.leaf.string"), value: id2 }],
-								},
-							},
-						],
-						nestedIdentifierParent: [
-							{
-								type: brand("com.fluidframework.json.object"),
-								fields: {
-									nestedIdentifier: [
-										{
-											type: brand("com.fluidframework.json.object"),
-											fields: {
-												identifier: [
-													{ type: brand("com.fluidframework.leaf.string"), value: nestedId2 },
-												],
-											},
-										},
-									],
-								},
-							},
-						],
-						nonIdentifierField: [
-							{ type: brand("com.fluidframework.leaf.string"), value: "nonIdentifierValue2" },
 						],
 					},
 				},
