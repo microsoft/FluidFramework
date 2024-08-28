@@ -12,7 +12,6 @@ import {
 	type JsonableTree,
 	Multiplicity,
 } from "../core/index.js";
-import { leaf } from "../domains/index.js";
 import {
 	FieldKinds,
 	FlexFieldSchema,
@@ -28,7 +27,9 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	cursorFromInsertable,
 	getFlexSchema,
+	numberSchema,
 	SchemaFactory,
+	stringSchema,
 	toFlexSchema,
 	type ImplicitFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
@@ -115,9 +116,9 @@ export const allTheFields = FlexObjectNodeSchema.create(
 	{ name: "test" },
 	brand("test.allTheFields"),
 	{
-		optional: FlexFieldSchema.create(FieldKinds.optional, [leaf.number]),
-		valueField: FlexFieldSchema.create(FieldKinds.required, [leaf.number]),
-		sequence: FlexFieldSchema.create(FieldKinds.sequence, [leaf.number]),
+		optional: FlexFieldSchema.create(FieldKinds.optional, [getFlexSchema(numberSchema)]),
+		valueField: FlexFieldSchema.create(FieldKinds.required, [getFlexSchema(numberSchema)]),
+		sequence: FlexFieldSchema.create(FieldKinds.sequence, [getFlexSchema(numberSchema)]),
 	},
 );
 
@@ -150,7 +151,9 @@ export const testTrees: readonly TestTree[] = [
 		"numericSequence",
 		{
 			...toFlexSchema(factory.number),
-			rootFieldSchema: FlexFieldSchema.create(FieldKinds.sequence, [leaf.number]),
+			rootFieldSchema: FlexFieldSchema.create(FieldKinds.sequence, [
+				getFlexSchema(numberSchema),
+			]),
 		},
 		jsonableTreesFromFieldCursor(fieldJsonCursor([1, 2, 3])),
 	),
@@ -170,7 +173,7 @@ export const testTrees: readonly TestTree[] = [
 		treeFactory: (idCompressor?: IIdCompressor) => {
 			assert(idCompressor !== undefined, "idCompressor must be provided");
 			const id = idCompressor.decompress(idCompressor.generateCompressedId());
-			return [{ type: leaf.string.name, value: id }];
+			return [{ type: brand(stringSchema.identifier), value: id }];
 		},
 		policy: defaultSchemaPolicy,
 	},
@@ -189,7 +192,7 @@ export const testTrees: readonly TestTree[] = [
 		[
 			{
 				type: allTheFields.name,
-				fields: { valueField: [{ type: leaf.number.name, value: 5 }] },
+				fields: { valueField: [{ type: brand(numberSchema.identifier), value: 5 }] },
 			},
 		],
 	),
@@ -203,9 +206,9 @@ export const testTrees: readonly TestTree[] = [
 			{
 				type: allTheFields.name,
 				fields: {
-					valueField: [{ type: leaf.number.name, value: 5 }],
-					optional: [{ type: leaf.number.name, value: 5 }],
-					sequence: [{ type: leaf.number.name, value: 5 }],
+					valueField: [{ type: brand(numberSchema.identifier), value: 5 }],
+					optional: [{ type: brand(numberSchema.identifier), value: 5 }],
+					sequence: [{ type: brand(numberSchema.identifier), value: 5 }],
 				},
 			},
 		],

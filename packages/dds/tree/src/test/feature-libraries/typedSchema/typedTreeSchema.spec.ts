@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 
-import { leaf } from "../../../domains/index.js";
 import { FieldKinds } from "../../../feature-libraries/index.js";
 import {
 	FlexFieldSchema,
@@ -15,7 +14,12 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/typed-schema/typedTreeSchema.js";
 
-import { SchemaFactory, getFlexSchema } from "../../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	booleanSchema,
+	getFlexSchema,
+	numberSchema,
+} from "../../../simple-tree/index.js";
 
 describe("typedTreeSchema", () => {
 	const builder = new SchemaFactory("test");
@@ -29,9 +33,9 @@ describe("typedTreeSchema", () => {
 	});
 
 	it("schema is", () => {
-		assert(schemaIsLeaf(leaf.boolean));
-		assert(!schemaIsObjectNode(leaf.boolean));
-		assert(!schemaIsMap(leaf.boolean));
+		assert(schemaIsLeaf(getFlexSchema(booleanSchema)));
+		assert(!schemaIsObjectNode(getFlexSchema(booleanSchema)));
+		assert(!schemaIsMap(getFlexSchema(booleanSchema)));
 
 		assert(!schemaIsLeaf(emptyObjectSchema));
 		assert(schemaIsObjectNode(emptyObjectSchema));
@@ -44,16 +48,20 @@ describe("typedTreeSchema", () => {
 
 	describe("TreeFieldSchema", () => {
 		it("types - single", () => {
-			const schema = FlexFieldSchema.create(FieldKinds.optional, [leaf.number]);
-			assert.deepEqual(schema.allowedTypes, [leaf.number]);
-			assert.deepEqual(schema.allowedTypeSet, new Set([leaf.number]));
-			assert.deepEqual(schema.types, new Set([leaf.number.name]));
+			const schema = FlexFieldSchema.create(FieldKinds.optional, [
+				getFlexSchema(numberSchema),
+			]);
+			assert.deepEqual(schema.allowedTypes, [getFlexSchema(numberSchema)]);
+			assert.deepEqual(schema.allowedTypeSet, new Set([getFlexSchema(numberSchema)]));
+			assert.deepEqual(schema.types, new Set([numberSchema.identifier]));
 		});
 
 		it("types - lazy", () => {
-			const schema = FlexFieldSchema.create(FieldKinds.optional, [() => leaf.number]);
-			assert.deepEqual(schema.allowedTypeSet, new Set([leaf.number]));
-			assert.deepEqual(schema.types, new Set([leaf.number.name]));
+			const schema = FlexFieldSchema.create(FieldKinds.optional, [
+				() => getFlexSchema(numberSchema),
+			]);
+			assert.deepEqual(schema.allowedTypeSet, new Set([getFlexSchema(numberSchema)]));
+			assert.deepEqual(schema.types, new Set([numberSchema.identifier]));
 		});
 	});
 });
