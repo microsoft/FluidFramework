@@ -2792,7 +2792,7 @@ export class ContainerRuntime
 		const { message, local, localOpMetadata } = messageWithContext;
 
 		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
-		// Sequence numbers are not guaranteed to follow any sort of order. Re-entrancy is one of those situations
+		// Minimum sequence numbers are not guaranteed to follow any sort of order. Re-entrancy is one of those situations
 		if (
 			this.deltaManager.minimumSequenceNumber <
 			messageWithContext.message.minimumSequenceNumber
