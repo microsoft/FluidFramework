@@ -1,6 +1,6 @@
 ---
-title: "Distributed Data Structures"
-sidebar_position: 5
+title: Types of distributed data structures
+sidebar_position: 1
 ---
 
 The Fluid Framework provides developers with distributed data structures (DDSes) that automatically ensure that each
@@ -22,7 +22,7 @@ Because users can simultaneously change the same DDS, you need to consider which
 
 :::note[Meaning of "simultaneously"]
 
-Two or more clients are said to make a change _simultaneously_ if they each make a change before they have received the
+Two or more clients are said to make a change *simultaneously* if they each make a change before they have received the
 others' changes from the server.
 
 :::
@@ -32,9 +32,9 @@ Choosing the correct data structure for your scenario can improve the performanc
 DDSes vary from each other by three characteristics:
 
 -   **Basic data structure:** For example, key-value pair, a sequence, or a queue.
--   **Client autonomy vs. Consensus:** An _optimistic_ DDS enables any client to unilaterally change a value and the new
-    value is relayed to all other clients, while a _consensus-based_ DDS will only allow a change if it is accepted by other clients via a
-    consensus process.
+-   **Client autonomy vs. Consensus:** An *optimistic* DDS enables any client to unilaterally change a value and the new
+  value is relayed to all other clients, while a *consensus-based* DDS will only allow a change if it is accepted by other clients via a
+  consensus process.
 -   **Merge policy:** The policy that determines how conflicting changes from clients are resolved.
 
 Below we've enumerated the data structures and described when they may be most useful.
@@ -58,9 +58,9 @@ Key-value data structures are the most common choice for many scenarios.
 ### Common issues and best practices for key-value DDSes
 
 -   Storing arrays, lists, or logs in a single key-value entry may lead to unexpected behavior because users can't
-    collaboratively modify parts of one entry. Try storing the data in an array node of a [SharedTree][].
+  collaboratively modify parts of one entry. Try storing the data in an array node of a [SharedTree][].
 -   Storing a lot of data in one key-value entry may cause performance or merge issues. Each update will update the entire
-    value rather than merging two updates. Try splitting the data across multiple keys.
+  value rather than merging two updates. Try splitting the data across multiple keys.
 
 ### Sequence scenarios
 
@@ -71,8 +71,8 @@ Key-value data structures are the most common choice for many scenarios.
 ### Common issues and best practices for sequence DDSes
 
 -   Store only immutable data as an item in a sequence. The only way to change the value of an item is to first remove it
-    from the sequence and then insert a new value at the position where the old value was. But because other clients can
-    insert and remove, there's no reliable way of getting the new value into the the desired position.
+  from the sequence and then insert a new value at the position where the old value was. But because other clients can
+  insert and remove, there's no reliable way of getting the new value into the the desired position.
 
 ## Hierarchical data
 
@@ -94,9 +94,9 @@ The SharedString DDS is used for unstructured text data that can be collaborativ
 
 -   [SharedCounter][] -- a counter. (Deprecated in Fluid Framework 2.0.)
     -   `SharedCounter` is useful to keep track of increments/decrements of integer values.
-        While a key-value data structure appears like a good fit, two clients simultaneously setting the same key can [cause issues](./counter#why-a-specialized-dds).
-        By contrast, clients can increase or decrease the `SharedCounter` value by a specified amount, but they can't set it to a specified value.
-        It is optimistic.
+    While a key-value data structure appears like a good fit, two clients simultaneously setting the same key can [cause issues](./counter#why-a-specialized-dds).
+    By contrast, clients can increase or decrease the `SharedCounter` value by a specified amount, but they can't set it to a specified value.
+    It is optimistic.
 
 ## Consensus data structures
 
