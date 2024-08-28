@@ -42,21 +42,21 @@ export class SharedTreeObjectIdDiffManager {
 	}
 
 	/**
-	 * produces a diff between two objects and handles the differences.
+	 * produces a diff between two objects and merges the differences.
 	 */
-	public compareAndHandleDiffs(
+	public merge(
 		obj: Record<string, unknown> | TreeArrayNode,
 		newObj: Record<string, unknown> | unknown[],
 	): void {
 		const differences = this.compare(obj, newObj);
-		this.handleDifferences(differences, obj);
+		this.mergeDiffs(differences, obj);
 	}
 
 	/**
 	 * Handles applying an array of differences to an object in the proper order and making any necessary adjustments as each diff
 	 * is applied.
 	 */
-	public handleDifferences(
+	public mergeDiffs(
 		diffs: Difference[],
 		objectToUpdate: Record<string, unknown> | TreeArrayNode,
 	): void {

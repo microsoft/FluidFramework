@@ -44,7 +44,7 @@ describe("SharedTreeObjectIdDiffManager", () => {
 			treeNode as unknown as Record<string, unknown>,
 			llmResponse,
 		);
-		diffManager.handleDifferences(diffs, treeNode as unknown as Record<string, unknown>);
+		diffManager.mergeDiffs(diffs, treeNode as unknown as Record<string, unknown>);
 
 		const jsonifiedTreeNode = { state: treeNode.state.map((node) => ({ ...node })) };
 		assert.deepStrictEqual(jsonifiedTreeNode, llmResponse);
@@ -79,7 +79,7 @@ describe("SharedTreeObjectIdDiffManager", () => {
 		};
 
 		const diffManager = new SharedTreeObjectIdDiffManager({ objectSchema: zodSchema });
-		diffManager.compareAndHandleDiffs(
+		diffManager.merge(
 			treeNode as unknown as Record<string, unknown>,
 			llmResponseObject,
 		);
@@ -113,7 +113,7 @@ describe("SharedTreeObjectIdDiffManager", () => {
 			treeNode as unknown as Record<string, unknown>,
 			llmResponseObject,
 		);
-		diffManager.compareAndHandleDiffs(
+		diffManager.merge(
 			treeNode as unknown as Record<string, unknown>,
 			llmResponseObject,
 		);
