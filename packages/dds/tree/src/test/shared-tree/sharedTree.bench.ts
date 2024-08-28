@@ -45,9 +45,9 @@ import {
 	TestTreeProviderLite,
 	checkoutWithContent,
 	flexTreeViewWithContent,
-	insert,
 	toJsonableTree,
 } from "../utils.js";
+import { insert } from "../sequenceRootUtils.js";
 import { cursorFromInsertable } from "../../simple-tree/index.js";
 
 // number of nodes in test for wide trees
