@@ -1,10 +1,13 @@
-/* eslint-disable no-lone-blocks */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+// We use namespaces as part of type test generation
 /* eslint-disable @typescript-eslint/no-namespace */
+
+// AB#13931: Remove these lint disables
+/* eslint-disable no-lone-blocks */
 
 /**
  * Compile time assert that A is assignable to (extends) B.
