@@ -16,7 +16,7 @@
 		"build:api-documentation": "npm run download-doc-models && npm run api-markdown-documenter",
 		"build:docusaurus": "docusaurus build",
 		"clean": "concurrently \"npm:clean:*\"",
-		"clean:api-documentation": "rimraf --glob docs/api",
+		"clean:api-documentation": "rimraf --glob \"docs/api/!(index.mdx)\"",
 		"clean:doc-models": "rimraf --glob .doc-models",
 		"clean:docusaurus": "docusaurus clear",
 		"deploy": "docusaurus deploy",
