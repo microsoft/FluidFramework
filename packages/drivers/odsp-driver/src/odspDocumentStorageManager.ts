@@ -43,7 +43,7 @@ import {
 	ISnapshotCachedEntry2,
 	IVersionedValueWithEpoch,
 } from "./contracts.js";
-import { renameEmptyFluidFile } from "./createFile.js";
+import { runWithModule } from "./createFile/index.js";
 import { EpochTracker } from "./epochTracker.js";
 import {
 	ISnapshotRequestAndResponseOptions,
@@ -770,7 +770,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			0x56e /* summary upload manager should have been initialized */,
 		);
 		const id = await this.odspSummaryUploadManager.writeSummaryTree(summary, context);
-		if (this.odspResolvedUrl.pendingRename !== undefined) {
+		const { pendingRename } = this.odspResolvedUrl;
+		if (pendingRename !== undefined) {
 			// This is a temporary file, so we need to rename it to remove the .tmp extension
 			// This should only happen for the initial summary upload for a new file
 			assert(
@@ -780,12 +781,14 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				"temporaryFileName should only be set for new file creation in the empty file create flow",
 			);
 
-			await renameEmptyFluidFile(
-				this.getAuthHeader,
-				this.odspResolvedUrl,
-				this.odspResolvedUrl.pendingRename,
-				this.logger,
-				this.epochTracker,
+			await runWithModule(this.logger, async (m) =>
+				m.renameEmptyFluidFile(
+					this.getAuthHeader,
+					this.odspResolvedUrl,
+					pendingRename,
+					this.logger,
+					this.epochTracker,
+				),
 			);
 			this.odspResolvedUrl.pendingRename = undefined;
 		}

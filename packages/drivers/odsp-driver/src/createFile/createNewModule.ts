@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { createNewFluidFile } from "./createFile.js";
+export { createNewFluidFile, renameEmptyFluidFile } from "./createFile.js";
 export { createNewContainerOnExistingFile } from "./createNewContainerOnExistingFile.js";
