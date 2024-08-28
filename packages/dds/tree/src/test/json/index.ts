@@ -4,13 +4,8 @@
  */
 
 export {
-	cursorToJsonObject,
-	jsonArray,
-	jsonObject,
-	jsonRoot,
-	jsonSchema,
 	singleJsonCursor,
+	cursorToJsonObject,
 	fieldJsonCursor,
-} from "./json/index.js";
-
-export { leaf } from "./leafDomain.js";
+} from "./jsonCursor.js";
+export { JsonUnion, JsonArray, JsonObject, jsonPrimitiveSchema } from "./jsonDomainSchema.js";

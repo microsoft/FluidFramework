@@ -167,11 +167,11 @@ export function validateSchemaCollection(
 			validateField(
 				lintConfiguration,
 				collection,
-				tree.info,
+				tree.info as FlexFieldSchema,
 				() => `Map fields of "${identifier}" schema from library "${tree.builder.name}"`,
 				errors,
 			);
-			if ((tree.info.kind.multiplicity as Multiplicity) === Multiplicity.Single) {
+			if ((tree.info as FlexFieldSchema).kind.multiplicity === Multiplicity.Single) {
 				errors.push(
 					`Map fields of "${identifier}" schema from library "${tree.builder.name}" has kind with multiplicity "Single". This is invalid since it requires all possible field keys to have a value under them.`,
 				);

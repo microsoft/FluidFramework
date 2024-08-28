@@ -292,7 +292,8 @@ function decodeValueSchema(inMemory: PersistedValueSchema): ValueSchema {
 export function encodeFieldSchema(schema: TreeFieldStoredSchema): FieldSchemaFormat {
 	return {
 		kind: schema.kind,
-		types: [...schema.types],
+		// Types are sorted by identifier to improve stability of persisted data to increase chance of schema blob reuse.
+		types: [...schema.types].sort(),
 	};
 }
 
