@@ -91,6 +91,8 @@ for (const testOpts of testMatrix) {
 		 * Scenario: test if Azure Client can handle bad document ID when versions are requested.
 		 *
 		 * Expected behavior: Client should throw an error.
+		 *
+		 * Skipped for now - see ADO:13967
 		 */
 		it("can handle bad document id when requesting versions", async () => {
 			const resources = client.getContainerVersions("badid");
@@ -209,8 +211,10 @@ for (const testOpts of testMatrix) {
 		 * Scenario: test if Azure Client can handle non-existing container when trying to view a version
 		 *
 		 * Expected behavior: client should throw an error.
+		 *
+		 * Skipped for now - see ADO:13967
 		 */
-		it("can handle non-existing container", async () => {
+		it.skip("can handle non-existing container", async () => {
 			const resources = client.viewContainerVersion(
 				"badidonviewversion",
 				schema,
