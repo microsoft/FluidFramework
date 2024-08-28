@@ -313,16 +313,16 @@ describe("End to end chunked encoding", () => {
 			const identifierField: FieldKey = brand("identifier");
 			const nonIdentifierField: FieldKey = brand("nonIdentifierField");
 			const stringShape = new TreeShape(brand(stringSchema.identifier), true, [], true);
-	
+
 			const identifierParent: FieldKey = brand("identifierParent");
-	
+
 			const identifierShape = new TreeShape(
 				brand(JsonObject.identifier),
 				false,
 				[[identifierField, stringShape, 1]],
 				true,
 			);
-	
+
 			const parentNodeWithIdentifiersShape = new TreeShape(
 				brand(JsonObject.identifier),
 				false,
@@ -332,9 +332,8 @@ describe("End to end chunked encoding", () => {
 				],
 				true,
 			);
-	
-			const id = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 
+			const id = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 
 			const test = {
 				type: brand(JsonObject.identifier),
@@ -351,17 +350,22 @@ describe("End to end chunked encoding", () => {
 						{ type: brand("com.fluidframework.leaf.string"), value: "nonIdentifierValue" },
 					],
 				},
-			} satisfies JsonableTree
+			} satisfies JsonableTree;
 
-
-			const chunk = uniformChunkFromCursor(cursorForJsonableTreeNode(test), parentNodeWithIdentifiersShape, 1, true, testIdCompressor)
+			const chunk = uniformChunkFromCursor(
+				cursorForJsonableTreeNode(test),
+				parentNodeWithIdentifiersShape,
+				1,
+				true,
+				testIdCompressor,
+			);
 			assert.deepEqual(chunk.values, [
 				testIdCompressor.tryRecompress(id),
 				"nonIdentifierValue",
 			]);
-	
+
 			const jsonableTree = mapCursorField(chunk.cursor(), jsonableTreeFromCursor);
-	
+
 			const expected: JsonableTree[] = [
 				{
 					type: brand(JsonObject.identifier),

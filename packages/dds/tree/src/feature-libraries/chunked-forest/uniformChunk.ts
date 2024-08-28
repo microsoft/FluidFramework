@@ -97,6 +97,14 @@ export class TreeShape {
 	// TODO: this is only needed at chunk roots. Optimize it base on that.
 	public readonly positions: readonly NodePositionInfo[];
 
+	/**
+	 *
+	 * @param type - {@link TreeNodeSchemaIdentifier} used to compare shapes.
+	 * @param hasValue - whether or not the TreeShape has a value.
+	 * @param fieldsArray - an array of {@link FieldShape} values, which contains a TreeShape for each FieldKey.
+	 * @param maybeDecompressedStringAsNumber - used to check whether or not the value could have been compressed by the idCompressor.
+	 * If set to true, an additional check can be made (example: getting the value of {@link Cursor}) to return the original uncompressed value.
+	 */
 	public constructor(
 		public readonly type: TreeNodeSchemaIdentifier,
 		public readonly hasValue: boolean,

@@ -450,12 +450,15 @@ export function chunkRange(
 
 	return output;
 }
-
+/**
+ * @param idCompressor - compressor used to encoded string values that are compressible by the idCompressor for in-memory representation.
+ * If the idCompressor is not provided, the values will be the original uncompressed values.
+ */
 export function insertValues(
 	cursor: ITreeCursorSynchronous,
 	shape: TreeShape,
 	values: Value[],
-	idCompressor?: IIdCompressor
+	idCompressor?: IIdCompressor,
 ): void {
 	assert(shape.type === cursor.type, 0x582 /* shape and type must match */);
 
@@ -464,10 +467,13 @@ export function insertValues(
 
 	// Slow path: walk shape and cursor together, inserting values.
 	if (shape.hasValue) {
-		if(typeof cursor.value === 'string' && idCompressor !== undefined && isStableNodeKey(cursor.value)){
-			values.push(idCompressor.tryRecompress(cursor.value) ?? cursor.value)
-		}
-		else{
+		if (
+			typeof cursor.value === "string" &&
+			idCompressor !== undefined &&
+			isStableNodeKey(cursor.value)
+		) {
+			values.push(idCompressor.tryRecompress(cursor.value) ?? cursor.value);
+		} else {
 			values.push(cursor.value);
 		}
 	}
@@ -492,13 +498,16 @@ export function insertValues(
  * If this stops early due to the type changing, `skipLastNavigation` is not involved:
  * `skipLastNavigation` only determines if the cursor will be left on the node after the last one (possibly exiting the field)
  * if the full length is used.
+ *
+ * @param idCompressor - compressor used to encoded string values that are compressible by the idCompressor for in-memory representation.
+ * If the idCompressor is not provided, the values will be the original uncompressed values.
  */
 export function uniformChunkFromCursor(
 	cursor: ITreeCursorSynchronous,
 	shape: TreeShape,
 	maxTopLevelLength: number,
 	skipLastNavigation: boolean,
-	idCompressor?: IIdCompressor
+	idCompressor?: IIdCompressor,
 ): UniformChunk {
 	// TODO:
 	// This could have a fast path for consuming already uniformly chunked data with matching shape.
