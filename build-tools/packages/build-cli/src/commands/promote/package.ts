@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { readFile } from "node:fs/promises";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../library/index.js";
+import { readLines } from "../../utils.js";
 
 interface PromotePackageResponse {
 	success: boolean;
@@ -90,13 +90,4 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 			this.error(`Error promoting package: ${(error as Error).message}`, { exit: 2 });
 		}
 	}
-}
-
-/**
- * Reads a file into an array of strings, one line per array element.
- */
-async function readLines(filePath: string): Promise<string[]> {
-	const content = await readFile(filePath, "utf8");
-	const lines = content.split(/\r?\n/);
-	return lines.filter((line) => line.trim() !== "");
 }

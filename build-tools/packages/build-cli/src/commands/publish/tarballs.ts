@@ -13,6 +13,7 @@ import { Gunzip } from "fflate";
 import globby from "globby";
 import latestVersion from "latest-version";
 import { BaseCommand, getTarballName } from "../../library/index.js";
+import { readLines } from "../../utils.js";
 
 interface TarballMetadata {
 	name: string;
@@ -227,12 +228,4 @@ async function publishTarball(
 	}
 
 	return "SuccessfullyPublished";
-}
-/**
- * Reads a file into an array of strings, one line per array element.
- */
-async function readLines(filePath: string): Promise<string[]> {
-	const content = await readFile(filePath, "utf8");
-	const lines = content.split(/\r?\n/);
-	return lines;
 }
