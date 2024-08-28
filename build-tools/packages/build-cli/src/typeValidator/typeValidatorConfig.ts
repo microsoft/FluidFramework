@@ -40,5 +40,5 @@ export interface ITypeValidationConfig {
  * that is consumed by both fluid-build and build-cli.
  */
 export type PackageWithTypeTestSettings = PackageJson & {
-	typeValidation: ITypeValidationConfig;
+	typeValidation?: ITypeValidationConfig;
 };
