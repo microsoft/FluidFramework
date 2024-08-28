@@ -14,9 +14,6 @@ importers:
       '@docusaurus/module-type-aliases':
         specifier: ^3.5.2
         version: 3.5.2(react-dom@18.3.1)(react@18.3.1)
-      '@docusaurus/plugin-client-redirects':
-        specifier: ^3.5.2
-        version: 3.5.2(@docusaurus/types@3.5.2)(@mdx-js/react@3.0.1)(react-dom@18.3.1)(react@18.3.1)(typescript@5.5.4)
       '@docusaurus/preset-classic':
         specifier: ^3.5.2
         version: 3.5.2(@algolia/client-search@5.1.1)(@mdx-js/react@3.0.1)(@types/react@18.3.4)(react-dom@18.3.1)(react@18.3.1)(search-insights@2.17.0)(typescript@5.5.4)
@@ -1874,45 +1871,6 @@ packages:
       - esbuild
       - supports-color
       - uglify-js
-      - webpack-cli
-    dev: false
-
-  /@docusaurus/plugin-client-redirects@3.5.2(@docusaurus/types@3.5.2)(@mdx-js/react@3.0.1)(react-dom@18.3.1)(react@18.3.1)(typescript@5.5.4):
-    resolution: {integrity: sha512-GMU0ZNoVG1DEsZlBbwLPdh0iwibrVZiRfmdppvX17SnByCVP74mb/Nne7Ss7ALgxQLtM4IHbXi8ij90VVjAJ+Q==}
-    engines: {node: '>=18.0'}
-    peerDependencies:
-      react: ^18.0.0
-      react-dom: ^18.0.0
-    dependencies:
-      '@docusaurus/core': 3.5.2(@docusaurus/types@3.5.2)(@mdx-js/react@3.0.1)(react-dom@18.3.1)(react@18.3.1)(typescript@5.5.4)
-      '@docusaurus/logger': 3.5.2
-      '@docusaurus/utils': 3.5.2(@docusaurus/types@3.5.2)(typescript@5.5.4)
-      '@docusaurus/utils-common': 3.5.2(@docusaurus/types@3.5.2)
-      '@docusaurus/utils-validation': 3.5.2(@docusaurus/types@3.5.2)(typescript@5.5.4)
-      eta: 2.2.0
-      fs-extra: 11.2.0
-      lodash: 4.17.21
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      tslib: 2.7.0
-    transitivePeerDependencies:
-      - '@docusaurus/types'
-      - '@mdx-js/react'
-      - '@parcel/css'
-      - '@rspack/core'
-      - '@swc/core'
-      - '@swc/css'
-      - bufferutil
-      - csso
-      - debug
-      - esbuild
-      - eslint
-      - lightningcss
-      - supports-color
-      - typescript
-      - uglify-js
-      - utf-8-validate
-      - vue-template-compiler
       - webpack-cli
     dev: false
 
