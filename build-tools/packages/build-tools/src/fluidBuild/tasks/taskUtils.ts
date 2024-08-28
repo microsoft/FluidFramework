@@ -4,10 +4,13 @@
  */
 
 import { existsSync } from "node:fs";
-import { readdir } from "node:fs/promises";
+import { readFile as readFileAsync, readdir } from "node:fs/promises";
+import { pathToFileURL } from "node:url";
 import * as path from "path";
-import type { PackageJson } from "./npmPackage";
-import { lookUpDirSync, readFileAsync } from "./utils";
+import * as glob from "glob";
+
+import type { PackageJson } from "../../common/npmPackage";
+import { lookUpDirAsync } from "../../common/utils";
 
 export function getEsLintConfigFilePath(dir: string) {
 	// TODO: we currently don't support .yaml and .yml, or config in package.json
@@ -23,7 +26,7 @@ export function getEsLintConfigFilePath(dir: string) {
 
 export async function getInstalledPackageVersion(packageName: string, cwd: string) {
 	const resolvedPath = require.resolve(packageName, { paths: [cwd] });
-	const packageJsonPath = await lookUpDirSync(resolvedPath, (currentDir) => {
+	const packageJsonPath = await lookUpDirAsync(resolvedPath, async (currentDir) => {
 		return existsSync(path.join(currentDir, "package.json"));
 	});
 	if (packageJsonPath === undefined) {
@@ -69,4 +72,28 @@ export function getApiExtractorConfigFilePath(commandLine: string): string {
 
 	// Default api-extractor config file name
 	return "api-extractor.json";
+}
+
+export function toPosixPath(s: string) {
+	return path.sep === "\\" ? s.replace(/\\/g, "/") : s;
+}
+
+export async function globFn(pattern: string, options: glob.IOptions = {}): Promise<string[]> {
+	return new Promise((resolve, reject) => {
+		glob.default(pattern, options, (err, matches) => {
+			if (err) {
+				reject(err);
+			}
+			resolve(matches);
+		});
+	});
+}
+
+export async function loadModule(modulePath: string, moduleType?: string) {
+	const ext = path.extname(modulePath);
+	const esm = ext === ".mjs" || (ext === ".js" && moduleType === "module");
+	if (esm) {
+		return await import(pathToFileURL(modulePath).toString());
+	}
+	return require(modulePath);
 }

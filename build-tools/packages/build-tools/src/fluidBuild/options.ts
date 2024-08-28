@@ -6,11 +6,11 @@
 import * as os from "os";
 import * as path from "path";
 
-import { commonOptionString, parseOption } from "./common/commonOptions";
-import { defaultBuildTaskName, defaultCleanTaskName } from "../common/fluidTaskDefinitions";
 import { defaultLogger } from "../common/logging";
 import { existsSync } from "../common/utils";
+import { commonOptionString, parseOption } from "./commonOptions";
 import { IPackageMatchedOptions } from "./fluidRepoBuild";
+import { defaultBuildTaskName, defaultCleanTaskName } from "./fluidTaskDefinitions";
 import { ISymlinkOptions } from "./symlinkUtils";
 
 const { log, warning, errorLog } = defaultLogger;

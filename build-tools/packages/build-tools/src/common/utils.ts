@@ -5,10 +5,8 @@
 
 import * as child_process from "child_process";
 import * as fs from "fs";
-import { pathToFileURL } from "node:url";
 import * as path from "path";
 import * as util from "util";
-import * as glob from "glob";
 import isEqual from "lodash.isequal";
 
 /**
@@ -33,35 +31,13 @@ export function getExecutableFromCommand(command: string) {
 	return toReturn;
 }
 
-export function toPosixPath(s: string) {
-	return path.sep === "\\" ? s.replace(/\\/g, "/") : s;
-}
-
-export async function globFn(pattern: string, options: glob.IOptions = {}): Promise<string[]> {
-	return new Promise((resolve, reject) => {
-		glob.default(pattern, options, (err, matches) => {
-			if (err) {
-				reject(err);
-			}
-			resolve(matches);
-		});
-	});
-}
-
-export function unquote(str: string) {
-	if (str.length >= 2 && str[0] === '"' && str[str.length - 1] === '"') {
-		return str.substr(1, str.length - 2);
-	}
-	return str;
-}
-
 export const statAsync = util.promisify(fs.stat);
 export const lstatAsync = util.promisify(fs.lstat);
 export const readFileAsync = util.promisify(fs.readFile);
 export const writeFileAsync = util.promisify(fs.writeFile);
 export const unlinkAsync = util.promisify(fs.unlink);
 export const existsSync = fs.existsSync;
-export const appendFileAsync = util.promisify(fs.appendFile);
+// export const appendFileAsync = util.promisify(fs.appendFile);
 export const realpathAsync = util.promisify(fs.realpath.native);
 export const symlinkAsync = util.promisify(fs.symlink);
 export const mkdirAsync = util.promisify(fs.mkdir);
@@ -150,6 +126,9 @@ function printExecError(
 	}
 }
 
+/**
+ * @deprecated No replacement.
+ */
 export function resolveNodeModule(basePath: string, lookupPath: string) {
 	let currentBasePath = basePath;
 	// eslint-disable-next-line no-constant-condition
@@ -251,13 +230,4 @@ export async function execNoError(cmd: string, dir: string, pipeStdIn?: string) 
 		return undefined;
 	}
 	return result.stdout;
-}
-
-export async function loadModule(modulePath: string, moduleType?: string) {
-	const ext = path.extname(modulePath);
-	const esm = ext === ".mjs" || (ext === ".js" && moduleType === "module");
-	if (esm) {
-		return await import(pathToFileURL(modulePath).toString());
-	}
-	return require(modulePath);
 }

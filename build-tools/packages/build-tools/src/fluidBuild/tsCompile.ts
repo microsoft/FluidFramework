@@ -5,7 +5,7 @@
 
 import path from "path";
 import type * as tsTypes from "typescript";
-import { defaultLogger } from "../../common/logging.js";
+import { defaultLogger } from "../common/logging.js";
 import { getTscUtils, normalizeSlashes } from "./tscUtils.js";
 
 interface TsCompileOptions {
