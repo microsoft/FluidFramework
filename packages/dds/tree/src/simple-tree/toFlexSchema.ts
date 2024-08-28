@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey, type TreeNodeSchemaIdentifier } from "../core/index.js";
+import {
+	EmptyKey,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
+} from "../core/index.js";
 import {
 	FieldKinds,
 	type FlexAllowedTypes,
@@ -19,9 +23,12 @@ import {
 	type FlexTreeSchema,
 	TreeNodeSchemaBase,
 	defaultSchemaPolicy,
+	intoStoredSchemaCollection,
 	schemaIsLeaf,
 } from "../feature-libraries/index.js";
-import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
+// TODO: once flex schema is gone, this code can move into simple-tree
+// eslint-disable-next-line import/no-internal-modules
+import { normalizeFlexListEager } from "../feature-libraries/typed-schema/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 import {
 	cachedFlexSchemaFromClassSchema,
@@ -79,6 +86,17 @@ export function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
 }
 
 /**
+ * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
+ */
+export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
+	const flex = toFlexSchema(root);
+	return {
+		rootFieldSchema: flex.rootFieldSchema.stored,
+		...intoStoredSchemaCollection(flex),
+	};
+}
+
+/**
  * Return a flex schema for the provided class schema.
  *
  * This also has the side effect of populating the cached view schema on the class based schema.
@@ -86,6 +104,15 @@ export function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
 export function getFlexSchema(root: TreeNodeSchema): FlexTreeNodeSchema {
 	const treeSchema = toFlexSchema(root);
 	return treeSchema.rootFieldSchema.monomorphicChildType ?? fail("root should be monomorphic");
+}
+
+/**
+ * Return a stored schema for the provided class schema.
+ *
+ * This also has the side effect of populating the cached view schema on the class based schema.
+ */
+export function getStoredSchema(root: TreeNodeSchema): TreeNodeStoredSchema {
+	return getFlexSchema(root).stored;
 }
 
 /**
@@ -172,7 +199,13 @@ export function convertNodeSchema(
 				);
 				// Lookup of cached schema is done here instead of before since walking the schema recursively to populate schemaMap is still required.
 				const cached = cachedFlexSchemaFromClassSchema(schema);
-				out = cached ?? FlexMapNodeSchema.create(builder, brand(schema.identifier), field);
+				out =
+					cached ??
+					FlexMapNodeSchema.create(
+						builder,
+						brand<TreeNodeSchemaIdentifier>(schema.identifier),
+						field,
+					);
 				break;
 			}
 			case NodeKind.Array: {

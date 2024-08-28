@@ -40,10 +40,9 @@ import {
 	testGeneralPurposeTreeCursor,
 	testSpecializedFieldCursor,
 } from "../../cursorTestSuite.js";
-
 import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities.js";
 import { emptyShape, testData } from "./uniformChunkTestData.js";
-import { JsonObject } from "../../utils.js";
+import { JsonObject } from "../../json/index.js";
 
 describe("basic chunk", () => {
 	it("calling chunkTree on existing chunk adds a reference", () => {

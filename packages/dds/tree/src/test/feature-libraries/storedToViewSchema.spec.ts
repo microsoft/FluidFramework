@@ -18,7 +18,6 @@ import {
 	storedEmptyFieldSchema,
 } from "../../core/index.js";
 import {
-	Any,
 	FieldKinds,
 	FlexFieldSchema,
 	FlexMapNodeSchema,
@@ -52,8 +51,7 @@ describe("storedToViewSchema", () => {
 			[schemaY.name, schemaY],
 		]);
 		const roundTrip = [
-			["any", FlexFieldSchema.create(FieldKinds.optional, [Any])],
-			["forbidden", FlexFieldSchema.create(FieldKinds.forbidden, [Any])],
+			["forbidden", FlexFieldSchema.create(FieldKinds.forbidden, [])],
 			["no types", FlexFieldSchema.create(FieldKinds.optional, [])],
 			["one type", FlexFieldSchema.create(FieldKinds.optional, [schemaX])],
 			["lazy", FlexFieldSchema.create(FieldKinds.optional, [() => schemaX])],

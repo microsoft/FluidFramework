@@ -9,8 +9,8 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import {
 	type ChangesetLocalId,
-	type IEditableForest,
 	RevisionTagCodec,
+	rootFieldKey,
 	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
 import { leaf } from "../../../domains/index.js";
@@ -37,33 +37,31 @@ import {
 	buildChunkedForest,
 	defaultSchemaPolicy,
 	fieldKindConfigurations,
-	getTreeContext,
-	intoStoredSchema,
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
 	MockNodeKeyManager,
 } from "../../../feature-libraries/index.js";
 import {
 	ForestType,
+	type TreeStoredContent,
 	type ISharedTreeEditor,
-	type TreeContent,
 } from "../../../shared-tree/index.js";
 import {
 	MockTreeCheckout,
 	checkoutWithContent,
 	cursorFromInsertableTreeField,
-	flexTreeViewWithContent,
-	numberSequenceRootSchema,
+	forestWithContent,
 	testIdCompressor,
 } from "../../utils.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { EncodedFieldBatch } from "../../../feature-libraries/chunked-forest/index.js";
+import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -80,7 +78,7 @@ const context = {
 	encodeType: options.summaryEncodeType,
 	idCompressor,
 	originatorId: idCompressor.localSessionId,
-	schema: { schema: intoStoredSchema(numberSequenceRootSchema), policy: defaultSchemaPolicy },
+	schema: { schema: jsonSequenceRootSchema, policy: defaultSchemaPolicy },
 };
 
 const schemaFactory = new SchemaFactory("com.example");
@@ -94,8 +92,8 @@ function getIdentifierEncodingContext(id: string) {
 		new HasIdentifier({ identifier: id }),
 		new MockNodeKeyManager(),
 	);
-	const flexSchema = toFlexSchema(HasIdentifier);
-	const flexConfig: TreeContent = {
+	const flexSchema = toStoredSchema(HasIdentifier);
+	const flexConfig: TreeStoredContent = {
 		schema: flexSchema,
 		initialTree,
 	};
@@ -106,7 +104,7 @@ function getIdentifierEncodingContext(id: string) {
 		idCompressor: testIdCompressor,
 		originatorId: testIdCompressor.localSessionId,
 		schema: {
-			schema: intoStoredSchema(flexSchema),
+			schema: flexSchema,
 			policy: defaultSchemaPolicy,
 		},
 	};
@@ -115,9 +113,7 @@ function getIdentifierEncodingContext(id: string) {
 
 describe("End to end chunked encoding", () => {
 	it(`insert ops shares reference with the original chunk.`, () => {
-		const treeSchema = new TreeStoredSchemaRepository(
-			intoStoredSchema(numberSequenceRootSchema),
-		);
+		const treeSchema = new TreeStoredSchemaRepository(jsonSequenceRootSchema);
 		const chunker = new Chunker(
 			treeSchema,
 			defaultSchemaPolicy,
@@ -144,17 +140,9 @@ describe("End to end chunked encoding", () => {
 		);
 		const dummyEditor = new DefaultEditBuilder(new DefaultChangeFamily(codec), changeReceiver);
 		const checkout = new MockTreeCheckout(forest, dummyEditor as unknown as ISharedTreeEditor);
-		const flexTree = getTreeContext(
-			numberSequenceRootSchema,
-			// Note: deliberately passing an editor that doesn't have the property for schema edition; test doesn't need it
-			checkout,
-			new MockNodeKeyManager(),
-		);
-
-		const root = flexTree.root;
-		assert(root.is(numberSequenceRootSchema.rootFieldSchema));
-		checkout.editor.sequenceField(root.getFieldPath()).insert(0, chunk.cursor());
-
+		checkout.editor
+			.sequenceField({ field: rootFieldKey, parent: undefined })
+			.insert(0, chunk.cursor());
 		// Check that inserted change contains chunk which is reference equal to the original chunk.
 		const insertedChange = changeLog[0];
 		assert(insertedChange.builds !== undefined);
@@ -169,17 +157,17 @@ describe("End to end chunked encoding", () => {
 		const numberShape = new TreeShape(leaf.number.name, true, []);
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
 		assert(!chunk.isShared());
-		const flexTree = flexTreeViewWithContent({
-			schema: numberSequenceRootSchema,
+		const checkout = checkoutWithContent({
+			schema: jsonSequenceRootSchema,
 			initialTree: [],
 		});
 
-		flexTree.checkout.editor
-			.sequenceField(flexTree.flexTree.getFieldPath())
+		checkout.editor
+			.sequenceField({ field: rootFieldKey, parent: undefined })
 			.insert(0, chunk.cursor());
 
 		const forestSummarizer = new ForestSummarizer(
-			flexTree.context.checkout.forest as IEditableForest,
+			checkout.forest,
 			revisionTagCodec,
 			fieldBatchCodec,
 			context,
@@ -206,13 +194,13 @@ describe("End to end chunked encoding", () => {
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
 		assert(!chunk.isShared());
 
-		const flexTree = flexTreeViewWithContent({
-			schema: numberSequenceRootSchema,
+		const forest = forestWithContent({
+			schema: jsonSequenceRootSchema,
 			initialTree: chunk.cursor(),
 		});
 
 		const forestSummarizer = new ForestSummarizer(
-			flexTree.context.checkout.forest as IEditableForest,
+			forest,
 			revisionTagCodec,
 			fieldBatchCodec,
 			context,
