@@ -11,7 +11,8 @@
 
 # Generated API docs.
 # Note: keep `mdx` files that are handwritten
-docs/api/**/*.md
+docs/api
+!docs/api/**/*.mdx
 
 # Misc
 .DS_Store
