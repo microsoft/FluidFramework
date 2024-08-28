@@ -58,7 +58,7 @@ import {
 	forestWithContent,
 	testIdCompressor,
 } from "../../utils.js";
-import { numberSchema, SchemaFactory } from "../../../simple-tree/index.js";
+import { numberSchema, SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
@@ -312,7 +312,7 @@ describe("End to end chunked encoding", () => {
 		it("In memory identifier encoding", () => {
 			const identifierField: FieldKey = brand("identifier");
 			const nonIdentifierField: FieldKey = brand("nonIdentifierField");
-			const stringShape = new TreeShape(leaf.string.name, true, [], true);
+			const stringShape = new TreeShape(brand(stringSchema.identifier), true, [], true);
 	
 			const identifierParent: FieldKey = brand("identifierParent");
 	
