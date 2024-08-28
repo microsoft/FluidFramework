@@ -12,25 +12,19 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 } from "../core/index.js";
-import { jsonSchema, leaf } from "../domains/index.js";
-import {
-	FieldKinds,
-	FlexFieldSchema,
-	SchemaBuilderBase,
-	type FlexObjectNodeSchema,
-	type FlexTreeNode,
-} from "../feature-libraries/index.js";
+import { FieldKinds, type FlexTreeNode } from "../feature-libraries/index.js";
 import type { FlexTreeView, TreeContent } from "../shared-tree/index.js";
 import { brand } from "../util/index.js";
 import {
 	cursorFromInsertable,
+	numberSchema,
 	SchemaFactory,
 	type ValidateRecursiveSchema,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeStoredContent } from "../shared-tree/schematizeTree.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../simple-tree/toFlexSchema.js";
+import { getFlexSchema, toFlexSchema, toStoredSchema } from "../simple-tree/toFlexSchema.js";
 
 /**
  * Test trees which can be parametrically scaled to any size.
@@ -40,27 +34,6 @@ import { toStoredSchema } from "../simple-tree/toFlexSchema.js";
  * Arbitrary key used when a field key is needed in this file.
  */
 export const localFieldKey: FieldKey = brand("foo");
-
-const deepBuilder = new SchemaBuilderBase(FieldKinds.required, {
-	scope: "scalable",
-	name: "sharedTree.bench: deep",
-	libraries: [jsonSchema],
-});
-
-// Test data in "deep" mode: a linked list with a number at the end.
-const linkedListSchema: FlexObjectNodeSchema = deepBuilder.object("linkedList", {
-	foo: FlexFieldSchema.create(FieldKinds.required, [() => linkedListSchema, leaf.number]),
-});
-
-const wideBuilder = new SchemaBuilderBase(FieldKinds.required, {
-	scope: "scalable",
-	name: "sharedTree.bench: wide",
-	libraries: [jsonSchema],
-});
-
-export const wideRootSchema = wideBuilder.object("WideRoot", {
-	[EmptyKey]: FlexFieldSchema.create(FieldKinds.sequence, [leaf.number]),
-});
 
 const sf = new SchemaFactory("scalable");
 
@@ -83,16 +56,6 @@ export class LinkedList extends sf.objectRecursive("linkedList", {
  */
 export class WideRoot extends sf.array("WideRoot", sf.number) {}
 
-/**
- * @deprecated Use {@link WideRoot}.
- */
-export const wideSchema = wideBuilder.intoSchema(wideRootSchema);
-
-/**
- * @deprecated Use {@link LinkedList}.
- */
-export const deepSchema = deepBuilder.intoSchema([linkedListSchema, leaf.number]);
-
 export interface JSDeepTree {
 	foo: JSDeepTree | number;
 }
@@ -110,7 +73,7 @@ export function makeDeepContent(depth: number, leafValue: number = 1): TreeConte
 		// Types do not allow implicitly constructing recursive types, so cast is required.
 		// TODO: Find a better alternative.
 		initialTree: cursorFromInsertable(LinkedList, initialTree as LinkedList),
-		schema: deepSchema,
+		schema: toFlexSchema(LinkedList),
 	};
 }
 
@@ -142,7 +105,7 @@ export function makeWideContentWithEndValue(
 	const initialTree = makeJsWideTreeWithEndValue(numberOfNodes, endLeafValue);
 	return {
 		initialTree: cursorFromInsertable(WideRoot, initialTree),
-		schema: wideSchema,
+		schema: toFlexSchema(WideRoot),
 	};
 }
 
@@ -293,7 +256,7 @@ export function readWideFlexTree(tree: FlexTreeView): {
 	assert(root.is(FieldKinds.required));
 	const field = (root.content as FlexTreeNode).getBoxed(EmptyKey);
 	assert(field.length !== 0);
-	assert(field.isExactly(wideRootSchema.info[EmptyKey]));
+	assert(field.is(FieldKinds.sequence));
 	for (const currentNode of field.boxedIterator()) {
 		sum += currentNode.value as number;
 		nodesCount += 1;
@@ -308,12 +271,12 @@ export function readDeepFlexTree(tree: FlexTreeView): {
 	let depth = 0;
 	assert(tree.flexTree.is(FieldKinds.required));
 	let currentNode = tree.flexTree.content as FlexTreeNode;
-	while (currentNode.is(linkedListSchema)) {
+	while (currentNode.is(getFlexSchema(LinkedList))) {
 		const read = currentNode.getBoxed(brand("foo"));
 		assert(read.is(FieldKinds.required));
 		currentNode = read.content as FlexTreeNode;
 		depth++;
 	}
-	assert(currentNode.is(leaf.number));
+	assert(currentNode.is(getFlexSchema(numberSchema)));
 	return { depth, value: currentNode.value as number };
 }

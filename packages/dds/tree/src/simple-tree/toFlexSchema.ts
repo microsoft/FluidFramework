@@ -199,7 +199,13 @@ export function convertNodeSchema(
 				);
 				// Lookup of cached schema is done here instead of before since walking the schema recursively to populate schemaMap is still required.
 				const cached = cachedFlexSchemaFromClassSchema(schema);
-				out = cached ?? FlexMapNodeSchema.create(builder, brand(schema.identifier), field);
+				out =
+					cached ??
+					FlexMapNodeSchema.create(
+						builder,
+						brand<TreeNodeSchemaIdentifier>(schema.identifier),
+						field,
+					);
 				break;
 			}
 			case NodeKind.Array: {
