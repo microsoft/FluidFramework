@@ -5,12 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import {
-	FieldKinds,
-	FlexFieldSchema,
-	SchemaBuilderBase,
-	type FlexTreeOptionalField,
-} from "../../../feature-libraries/index.js";
+import { FieldKinds, type FlexTreeOptionalField } from "../../../feature-libraries/index.js";
 import {
 	deepCopyMapTree,
 	EmptyKey,
@@ -21,26 +16,24 @@ import { leaf as leafDomain } from "../../../domains/index.js";
 import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getOrCreateMapTreeNode } from "../../../feature-libraries/flex-map-tree/index.js";
+import { getFlexSchema, SchemaFactory } from "../../../simple-tree/index.js";
 
 describe("MapTreeNodes", () => {
 	// #region The schema used in this test suite
-	const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, {
-		scope: "Test",
-		libraries: [leafDomain.library],
-	});
-	const mapSchema = schemaBuilder.map(
-		"Map",
-		FlexFieldSchema.create(FieldKinds.optional, [leafDomain.string]),
-	);
-	const arrayNodeSchema = schemaBuilder.object("ArrayNode", {
-		[EmptyKey]: FlexFieldSchema.create(FieldKinds.sequence, [leafDomain.string]),
-	});
 	const objectMapKey = "map" as FieldKey;
 	const objectFieldNodeKey = "fieldNode" as FieldKey;
-	const objectSchema = schemaBuilder.object("Object", {
-		[objectMapKey]: mapSchema,
-		[objectFieldNodeKey]: arrayNodeSchema,
+
+	const schemaBuilder = new SchemaFactory("Test");
+	const mapSchemaSimple = schemaBuilder.map("Map", schemaBuilder.string);
+	const arrayNodeSchemaSimple = schemaBuilder.array("ArrayNode", schemaBuilder.string);
+	const objectSchemaSimple = schemaBuilder.object("Object", {
+		[objectMapKey]: mapSchemaSimple,
+		[objectFieldNodeKey]: arrayNodeSchemaSimple,
 	});
+
+	const mapSchema = getFlexSchema(mapSchemaSimple);
+	const arrayNodeSchema = getFlexSchema(arrayNodeSchemaSimple);
+	const objectSchema = getFlexSchema(objectSchemaSimple);
 	// #endregion
 
 	// #region The `MapTree`s used to construct the `MapTreeNode`s
@@ -125,8 +118,6 @@ describe("MapTreeNodes", () => {
 
 		assert.equal(arrayNode.getBoxed(EmptyKey).length, 1);
 		const field = arrayNode.getBoxed(EmptyKey);
-		assert(field.isExactly(arrayNodeSchema.info[EmptyKey]));
-		assert(field.is(arrayNodeSchema.info[EmptyKey].kind));
 		assert.equal(arrayNode.tryGetField(brand("unknown key")), undefined);
 		assert.equal(arrayNode.getBoxed("unknown key").length, 0);
 		assert(field.is(FieldKinds.sequence));

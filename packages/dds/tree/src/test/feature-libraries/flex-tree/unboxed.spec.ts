@@ -13,7 +13,7 @@ import {
 	TreeNavigationResult,
 	rootFieldKey,
 } from "../../../core/index.js";
-import { leaf, leaf as leafDomain, singleJsonCursor } from "../../../domains/index.js";
+import { leaf, leaf as leafDomain } from "../../../domains/index.js";
 import type { Context } from "../../../feature-libraries/flex-tree/context.js";
 import { unboxedTree, unboxedUnion } from "../../../feature-libraries/flex-tree/unboxed.js";
 import type {
@@ -26,6 +26,7 @@ import type { TreeContent } from "../../../shared-tree/index.js";
 import { contextWithContentReadonly } from "./utils.js";
 import { SchemaFactory, toFlexSchema } from "../../../simple-tree/index.js";
 import { stringSchema } from "../../../simple-tree/leafNodeSchema.js";
+import { singleJsonCursor } from "../../json/index.js";
 
 const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
 

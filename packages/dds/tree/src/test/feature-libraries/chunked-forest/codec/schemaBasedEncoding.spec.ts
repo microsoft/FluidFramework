@@ -45,7 +45,7 @@ import {
 } from "../../../../feature-libraries/index.js";
 import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { ajvValidator } from "../../../codec/index.js";
-import { takeSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
 import {
 	HasOptionalField,
 	Minimal,
@@ -359,7 +359,7 @@ describe("schemaBasedEncoding", () => {
 						isFluidHandle(value) ? "Handle Placeholder" : value,
 					2,
 				);
-				takeSnapshot(dataStr, `.json`);
+				takeJsonSnapshot(JSON.parse(dataStr));
 			});
 		}
 	});

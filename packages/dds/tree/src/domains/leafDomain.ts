@@ -4,23 +4,34 @@
  */
 
 import { ValueSchema } from "../core/index.js";
-import { SchemaBuilderInternal } from "../feature-libraries/index.js";
+import { LeafNodeSchema } from "../feature-libraries/index.js";
 
 /**
- * Names in this domain follow https://en.wikipedia.org/wiki/Reverse_domain_name_notation
+ * Define a {@link TreeNodeSchema} for a node that wraps a value.
+ * Such nodes will be implicitly unwrapped to the value in some APIs.
+ *
+ * The name must be unique among all TreeNodeSchema in the the document schema.
+ *
+ * In addition to the normal properties of all nodes (having a schema for example),
+ * Leaf nodes only contain a value.
+ * Leaf nodes cannot have fields.
+ *
+ * TODO: Maybe ban undefined from allowed values here.
+ * TODO: Decide and document how unwrapping works for non-primitive terminals.
  */
-const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.leaf" });
+function makeLeaf(name: string, t: ValueSchema): LeafNodeSchema {
+	// Names in this domain follow https://en.wikipedia.org/wiki/Reverse_domain_name_notation
+	return new LeafNodeSchema({ name: "makeLeaf" }, `com.fluidframework.leaf.${name}`, t);
+}
 
-const number = builder.leaf("number", ValueSchema.Number);
-const boolean = builder.leaf("boolean", ValueSchema.Boolean);
-const string = builder.leaf("string", ValueSchema.String);
-const handle = builder.leaf("handle", ValueSchema.FluidHandle);
-const nullSchema = builder.leaf("null", ValueSchema.Null);
+const number = makeLeaf("number", ValueSchema.Number);
+const boolean = makeLeaf("boolean", ValueSchema.Boolean);
+const string = makeLeaf("string", ValueSchema.String);
+const handle = makeLeaf("handle", ValueSchema.FluidHandle);
+const nullSchema = makeLeaf("null", ValueSchema.Null);
 
 const primitives = [number, boolean, string] as const;
 const all = [handle, nullSchema, ...primitives] as const;
-
-const library = builder.intoLibrary();
 
 /**
  * Built-in {@link LeafNodeSchema}.
@@ -86,12 +97,4 @@ export const leaf = {
 	 * All {@link LeafNodeSchema} defined in this library..
 	 */
 	all,
-
-	/**
-	 * {@link SchemaLibrary} of the {@link LeafNodeSchema}.
-	 *
-	 * @privateRemarks
-	 * This is included by default in schema produced with {@link SchemaBuilder}.
-	 */
-	library,
 };

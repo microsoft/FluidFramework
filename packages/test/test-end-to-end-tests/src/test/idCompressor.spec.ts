@@ -20,10 +20,10 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import {
-	ContainerRuntime,
 	IContainerRuntimeOptions,
 	IdCompressorMode,
 } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
@@ -194,7 +194,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		},
 	);
 
-	let containerRuntime: ContainerRuntime;
+	let containerRuntime: IContainerRuntime;
 	let container1: IContainer;
 	let container2: IContainer;
 	let mainDataStore: TestDataObject;
@@ -212,7 +212,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		provider = getTestObjectProvider();
 		container1 = await createContainer();
 		mainDataStore = (await container1.getEntryPoint()) as TestDataObject;
-		containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
+		containerRuntime = mainDataStore._context.containerRuntime as IContainerRuntime;
 		sharedMapContainer1 = mainDataStore.map;
 		sharedCellContainer1 = mainDataStore.sharedCell;
 

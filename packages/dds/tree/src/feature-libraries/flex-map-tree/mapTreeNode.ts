@@ -14,7 +14,7 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type Value,
 } from "../../core/index.js";
-import { brand, fail, getOrCreate, mapIterable } from "../../util/index.js";
+import { brand, fail, getOrCreate, isReadonlyArray, mapIterable } from "../../util/index.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
@@ -28,12 +28,12 @@ import {
 	indexForAt,
 } from "../flex-tree/index.js";
 import {
+	type FlexAllowedTypes,
 	FlexFieldSchema,
 	type FlexTreeNodeSchema,
 	isLazy,
 	schemaIsLeaf,
 } from "../typed-schema/index.js";
-import { type FlexImplicitAllowedTypes, normalizeAllowedTypes } from "../schemaBuilderBase.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 import { FieldKinds, type SequenceFieldEditBuilder } from "../default-schema/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -498,7 +498,7 @@ export function getOrCreateMapTreeNode(
 /** Helper for creating a `MapTreeNode` given the parent field (e.g. when "walking down") */
 function getOrCreateChild(
 	mapTree: ExclusiveMapTree,
-	implicitAllowedTypes: FlexImplicitAllowedTypes,
+	allowedTypes: FlexAllowedTypes,
 	parent: LocationInField | undefined,
 ): EagerMapTreeNode {
 	const cached = nodeCache.get(mapTree);
@@ -506,7 +506,7 @@ function getOrCreateChild(
 		return cached;
 	}
 
-	const allowedTypes = normalizeAllowedTypes(implicitAllowedTypes);
+	assert(isReadonlyArray(allowedTypes), "invalid types");
 	const nodeSchema =
 		allowedTypes
 			.map((t) => (isLazy(t) ? t() : t))
@@ -566,7 +566,7 @@ function unboxedUnion(
 		if (schemaIsLeaf(type)) {
 			return mapTree.value as FlexTreeUnknownUnboxed;
 		}
-		return getOrCreateChild(mapTree, type, parent) as FlexTreeUnknownUnboxed;
+		return getOrCreateChild(mapTree, [type], parent) as FlexTreeUnknownUnboxed;
 	}
 
 	return getOrCreateChild(mapTree, schema.allowedTypes, parent) as FlexTreeUnknownUnboxed;
