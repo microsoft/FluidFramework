@@ -38,26 +38,6 @@ const config: Config = {
 		//       // Options here
 		//     },
 		//   ],
-		[
-			"@docusaurus/plugin-client-redirects",
-			{
-				redirects: [
-					// /docs/oldDoc -> /docs/newDoc
-					{
-						from: "/docs/build/overview",
-						to: "/docs/build",
-					},
-					{
-						from: "/docs/data-structures/overview",
-						to: "/docs/data-structures",
-					},
-					{
-						from: "/docs/deployment/service-options",
-						to: "/docs/deployment",
-					},
-				],
-			},
-		],
 	],
 	presets: [
 		[
