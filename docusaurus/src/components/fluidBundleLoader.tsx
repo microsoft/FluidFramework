@@ -21,9 +21,9 @@ export interface FluidBundleLoaderProps {
 export function FluidBundleLoader({
 	idPrefix,
 	bundleName,
-}: FluidBundleLoaderProps): JSX.Element{
+}: FluidBundleLoaderProps): JSX.Element {
 	React.useEffect(() => {
-		const script = document.createElement('script');
+		const script = document.createElement("script");
 
 		script.src = `https://fluidframework.blob.core.windows.net/static/js/${bundleName}`;
 		script.async = true;
@@ -31,9 +31,9 @@ export function FluidBundleLoader({
 		document.body.appendChild(script);
 
 		return () => {
-		  document.body.removeChild(script);
-		}
-	  }, [bundleName]);
+			document.body.removeChild(script);
+		};
+	}, [bundleName]);
 
 	const leftPanelId = `${idPrefix}-left`;
 	const rightPanelId = `${idPrefix}-right`;
@@ -55,7 +55,7 @@ interface PanelProps {
 	containerId: string;
 }
 
-function Panel({containerId, elementId}: PanelProps): JSX.Element {
+function Panel({ containerId, elementId }: PanelProps): JSX.Element {
 	return (
 		<div className="browser-window-wrapper" id={elementId}>
 			<div aria-hidden="true" className="browser-window">
@@ -68,7 +68,6 @@ function Panel({containerId, elementId}: PanelProps): JSX.Element {
 					<div className="browser-window-icon">x</div>
 				</div>
 			</div>
-
 		</div>
 	);
 }
