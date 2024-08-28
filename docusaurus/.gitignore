@@ -9,9 +9,7 @@
 .cache-loader
 .doc-models
 
-# Generated API documentation contents
-# Note: the `.md` pattern is intentional to ensure we DON'T ignore the handwritten `.mdx` files in that directory.
-docs/api/**/*.md
+docs/api
 
 # Misc
 .DS_Store
