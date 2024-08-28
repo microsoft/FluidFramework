@@ -149,6 +149,7 @@ The replacement syntax to use in `.mdx` files would be:
 
 ## TODOs
 
+- Inject Docusaurus front-matter in API docs build
 - Create API docs landing page
 - Fix API docs hierarchy (kludge)
 - Figure out solution to markdown-magic in mdx (html comment syntax not supported)
