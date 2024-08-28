@@ -276,9 +276,8 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
  * Additionally empty fields (those containing no nodes) are not distinguished from fields which do not exist.
  * This differs from JavaScript Maps which have a subtle distinction between storing undefined as a value in the map and deleting an entry from the map.
  */
-export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema>
-	extends FlexTreeNode {
-	readonly schema: TSchema;
+export interface FlexTreeMapNode extends FlexTreeNode {
+	readonly schema: FlexMapNodeSchema;
 }
 
 /**

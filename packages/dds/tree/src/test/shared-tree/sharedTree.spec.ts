@@ -31,7 +31,7 @@ import {
 	type ChangeFamilyEditor,
 	EmptyKey,
 } from "../../core/index.js";
-import { leaf, singleJsonCursor } from "../../domains/index.js";
+import { leaf } from "../../domains/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	ChunkedForest,
@@ -90,7 +90,6 @@ import {
 	validateViewConsistency,
 	validateUsageError,
 	StringArray,
-	JsonArray,
 	NumberArray,
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
@@ -98,6 +97,7 @@ import type { ISharedObjectKind } from "@fluidframework/shared-object-base/inter
 import { TestAnchor } from "../testAnchor.js";
 // eslint-disable-next-line import/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
+import { JsonArray, singleJsonCursor } from "../json/index.js";
 
 const enableSchemaValidation = true;
 

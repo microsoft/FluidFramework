@@ -18,7 +18,7 @@ import {
 	TreeNavigationResult,
 	rootFieldKey,
 } from "../../../core/index.js";
-import { leaf as leafDomain, singleJsonCursor } from "../../../domains/index.js";
+import { leaf as leafDomain } from "../../../domains/index.js";
 import type { Context } from "../../../feature-libraries/flex-tree/context.js";
 import { LazyTreeNode } from "../../../feature-libraries/flex-tree/lazyNode.js";
 import type {
@@ -37,7 +37,7 @@ import {
 	toFlexSchema,
 } from "../../../simple-tree/index.js";
 import { getFlexSchema } from "../../../simple-tree/toFlexSchema.js";
-import { JsonArray, JsonObject } from "../../utils.js";
+import { JsonArray, JsonObject, singleJsonCursor } from "../../json/index.js";
 import { stringSchema } from "../../../simple-tree/leafNodeSchema.js";
 
 const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };

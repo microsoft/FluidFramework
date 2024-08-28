@@ -15,7 +15,7 @@ import {
 	type UpPath,
 	rootFieldKey,
 } from "../../../core/index.js";
-import { leaf, leaf as leafDomain, singleJsonCursor } from "../../../domains/index.js";
+import { leaf, leaf as leafDomain } from "../../../domains/index.js";
 import { isFreedSymbol } from "../../../feature-libraries/flex-tree/lazyEntity.js";
 import {
 	LazyField,
@@ -33,7 +33,7 @@ import {
 	type FlexTreeSchema,
 } from "../../../feature-libraries/index.js";
 import { brand, disposeSymbol } from "../../../util/index.js";
-import { flexTreeViewWithContent, forestWithContent, JsonObject } from "../../utils.js";
+import { flexTreeViewWithContent, forestWithContent } from "../../utils.js";
 
 import {
 	getReadonlyContext,
@@ -47,6 +47,7 @@ import {
 	toFlexSchema,
 } from "../../../simple-tree/index.js";
 import { getFlexSchema } from "../../../simple-tree/toFlexSchema.js";
+import { JsonObject, singleJsonCursor } from "../../json/index.js";
 
 const detachedField: FieldKey = brand("detached");
 const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detachedField };

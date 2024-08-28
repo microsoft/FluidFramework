@@ -42,12 +42,6 @@ export interface FlexObjectNodeFields {
 }
 
 /**
- */
-export type NormalizeObjectNodeFields<T extends FlexObjectNodeFields> = {
-	readonly [Property in keyof T]: NormalizeField<T[Property]>;
-};
-
-/**
  * A placeholder to use in {@link https://www.typescriptlang.org/docs/handbook/2/generics.html#generic-constraints | extends constraints} when using the real type breaks compilation of some recursive types due to {@link https://github.com/microsoft/TypeScript/issues/55758 | a design limitation of TypeScript}.
  *
  * These extends constraints only serve as documentation:
@@ -66,14 +60,11 @@ export type Unenforced<_DesiredExtendsConstraint> = unknown;
  * This can not be enforced using TypeScript since doing so breaks recursive type support.
  * See note on SchemaBuilder.fieldRecursive.
  */
-export abstract class TreeNodeSchemaBase<
-	const out Name extends string = string,
-	const out Specification = unknown,
-> {
+export abstract class TreeNodeSchemaBase<const out Specification = unknown> {
 	protected _typeCheck!: MakeNominal;
 	protected constructor(
 		public readonly builder: Named<string>,
-		public readonly name: TreeNodeSchemaIdentifier<Name>,
+		public readonly name: TreeNodeSchemaIdentifier,
 		public readonly info: Specification,
 		public readonly stored: TreeNodeStoredSchema,
 	) {}
@@ -82,23 +73,17 @@ export abstract class TreeNodeSchemaBase<
 
 /**
  */
-export class FlexMapNodeSchema<
-	const out Name extends string = string,
-	const out Specification extends Unenforced<FlexMapFieldSchema> = FlexMapFieldSchema,
-> extends TreeNodeSchemaBase<Name, Specification> {
+export class FlexMapNodeSchema extends TreeNodeSchemaBase {
 	public get mapFields(): FlexMapFieldSchema {
 		return this.info as FlexMapFieldSchema;
 	}
 
 	protected _typeCheck2?: MakeNominal;
-	public static create<
-		const Name extends string,
-		const Specification extends FlexMapFieldSchema,
-	>(
+	public static create<const Name extends string>(
 		builder: Named<string>,
 		name: TreeNodeSchemaIdentifier<Name>,
-		specification: Specification,
-	): FlexMapNodeSchema<Name, Specification> {
+		specification: FlexMapFieldSchema,
+	): FlexMapNodeSchema {
 		return new FlexMapNodeSchema(
 			builder,
 			name,
@@ -114,7 +99,7 @@ export class FlexMapNodeSchema<
 
 /**
  */
-export class LeafNodeSchema extends TreeNodeSchemaBase<string, ValueSchema> {
+export class LeafNodeSchema extends TreeNodeSchemaBase<ValueSchema> {
 	public get leafValue(): ValueSchema {
 		return this.info;
 	}
@@ -140,7 +125,7 @@ export class LeafNodeSchema extends TreeNodeSchemaBase<string, ValueSchema> {
 
 /**
  */
-export class FlexObjectNodeSchema extends TreeNodeSchemaBase<string, FlexObjectNodeFields> {
+export class FlexObjectNodeSchema extends TreeNodeSchemaBase {
 	protected _typeCheck2?: MakeNominal;
 	public readonly identifierFieldKeys: readonly FieldKey[] = [];
 
@@ -149,13 +134,9 @@ export class FlexObjectNodeSchema extends TreeNodeSchemaBase<string, FlexObjectN
 		name: TreeNodeSchemaIdentifier,
 		specification: FlexObjectNodeFields,
 	): FlexObjectNodeSchema {
-		const objectNodeFieldsObject: NormalizeObjectNodeFields<FlexObjectNodeFields> =
-			normalizeStructFields<FlexObjectNodeFields>(specification);
-		const objectNodeFields: ObjectToMap<
-			NormalizeObjectNodeFields<FlexObjectNodeFields>,
-			FieldKey,
-			FlexFieldSchema
-		> = objectToMapTyped(objectNodeFieldsObject);
+		const objectNodeFieldsObject = normalizeStructFields(specification);
+		const objectNodeFields: ObjectToMap<FlexObjectNodeFields, FieldKey, FlexFieldSchema> =
+			objectToMapTyped(objectNodeFieldsObject);
 		return new FlexObjectNodeSchema(
 			builder,
 			name,
@@ -169,7 +150,7 @@ export class FlexObjectNodeSchema extends TreeNodeSchemaBase<string, FlexObjectN
 		builder: Named<string>,
 		name: TreeNodeSchemaIdentifier,
 		info: FlexObjectNodeFields,
-		public readonly objectNodeFieldsObject: NormalizeObjectNodeFields<FlexObjectNodeFields>,
+		public readonly objectNodeFieldsObject: FlexObjectNodeFields,
 		// Allows reading fields through the normal map.
 		// Stricter typing caused Specification to no longer be covariant, so has been removed.
 		public readonly objectNodeFields: ReadonlyMap<FieldKey, FlexFieldSchema>,
@@ -199,16 +180,9 @@ export class FlexObjectNodeSchema extends TreeNodeSchemaBase<string, FlexObjectN
  */
 export type FlexTreeNodeSchema = TreeNodeSchemaBase;
 
-/**
- * Convert FieldSchemaSpecification | undefined into TreeFieldSchema.
- */
-export type NormalizeField<T extends FlexFieldSchema | undefined> = T extends FlexFieldSchema
-	? T
-	: FlexFieldSchema<typeof FieldKinds.forbidden>;
-
 function normalizeStructFields<T extends FlexObjectNodeFields>(
 	fields: T,
-): NormalizeObjectNodeFields<T> {
+): FlexObjectNodeFields {
 	const out: Record<string, FlexFieldSchema> = {};
 	// eslint-disable-next-line no-restricted-syntax
 	for (const key in fields) {
@@ -217,16 +191,16 @@ function normalizeStructFields<T extends FlexObjectNodeFields>(
 			out[key] = normalizeField(element);
 		}
 	}
-	return out as NormalizeObjectNodeFields<T>;
+	return out;
 }
 
-function normalizeField<T extends FlexFieldSchema | undefined>(t: T): NormalizeField<T> {
+function normalizeField(t: FlexFieldSchema | undefined): FlexFieldSchema {
 	if (t === undefined) {
-		return FlexFieldSchema.empty as unknown as NormalizeField<T>;
+		return FlexFieldSchema.empty;
 	}
 
 	assert(t instanceof FlexFieldSchema, 0x6ae /* invalid TreeFieldSchema */);
-	return t as NormalizeField<T>;
+	return t;
 }
 
 /**
