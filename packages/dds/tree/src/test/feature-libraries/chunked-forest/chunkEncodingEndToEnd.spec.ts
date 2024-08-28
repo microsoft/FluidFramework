@@ -9,11 +9,14 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import {
 	type ChangesetLocalId,
+	type FieldKey,
 	type IEditableForest,
+	type JsonableTree,
+	mapCursorField,
 	RevisionTagCodec,
 	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
-import { leaf } from "../../../domains/index.js";
+import { jsonObject, leaf } from "../../../domains/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import {
 	Chunker,
@@ -42,6 +45,7 @@ import {
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
 	MockNodeKeyManager,
+	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import {
 	ForestType,
@@ -65,6 +69,8 @@ import { SummaryType } from "@fluidframework/driver-definitions";
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { EncodedFieldBatch } from "../../../feature-libraries/chunked-forest/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { brand } from "../../../util/brand.js";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -312,6 +318,132 @@ describe("End to end chunked encoding", () => {
 			const identifierValue = treeContent.fields.data[0][1];
 			// Check that the identifierValue is the original uncompressed id.
 			assert.equal(identifierValue, id);
+		});
+
+		it("In memory identifier encoding", () => {
+			const identifierField: FieldKey = brand("identifier");
+			const nestedIdentifierField: FieldKey = brand("nestedIdentifier");
+			const nonIdentifierField: FieldKey = brand("nonIdentifierField");
+			const stringShape = new TreeShape(leaf.string.name, true, [], true);
+	
+			const identifierParent: FieldKey = brand("identifierParent");
+			const nestedIdentifierParent: FieldKey = brand("nestedIdentifierParent");
+	
+			const identifierShape = new TreeShape(
+				jsonObject.name,
+				false,
+				[[identifierField, stringShape, 1]],
+				true,
+			);
+	
+			const nestedIdentifierShape = new TreeShape(
+				jsonObject.name,
+				false,
+				[[nestedIdentifierField, identifierShape, 1]],
+				true,
+			);
+	
+			const parentNodeWithIdentifiersShape = new TreeShape(
+				jsonObject.name,
+				false,
+				[
+					[identifierParent, identifierShape, 1],
+					[nestedIdentifierParent, nestedIdentifierShape, 1],
+					[nonIdentifierField, stringShape, 1],
+				],
+				false,
+			);
+	
+			const id1 = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
+			const id2 = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
+			const nestedId1 = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
+			const nestedId2 = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
+	
+			const chunk = new UniformChunk(
+				parentNodeWithIdentifiersShape.withTopLevelLength(2),
+				[id1, nestedId1, "nonIdentifierValue", id2, nestedId2, "nonIdentifierValue2"],
+				testIdCompressor,
+			);
+			assert.deepEqual(chunk.values, [
+				testIdCompressor.tryRecompress(id1),
+				testIdCompressor.tryRecompress(nestedId1),
+				"nonIdentifierValue",
+				testIdCompressor.tryRecompress(id2),
+				testIdCompressor.tryRecompress(nestedId2),
+				"nonIdentifierValue2",
+			]);
+	
+			const jsonableTree = mapCursorField(chunk.cursor(), jsonableTreeFromCursor);
+	
+			const expected: JsonableTree[] = [
+				{
+					type: brand("com.fluidframework.json.object"),
+					fields: {
+						identifierParent: [
+							{
+								type: brand("com.fluidframework.json.object"),
+								fields: {
+									identifier: [{ type: brand("com.fluidframework.leaf.string"), value: id1 }],
+								},
+							},
+						],
+						nestedIdentifierParent: [
+							{
+								type: brand("com.fluidframework.json.object"),
+								fields: {
+									nestedIdentifier: [
+										{
+											type: brand("com.fluidframework.json.object"),
+											fields: {
+												identifier: [
+													{ type: brand("com.fluidframework.leaf.string"), value: nestedId1 },
+												],
+											},
+										},
+									],
+								},
+							},
+						],
+						nonIdentifierField: [
+							{ type: brand("com.fluidframework.leaf.string"), value: "nonIdentifierValue" },
+						],
+					},
+				},
+				{
+					type: brand("com.fluidframework.json.object"),
+					fields: {
+						identifierParent: [
+							{
+								type: brand("com.fluidframework.json.object"),
+								fields: {
+									identifier: [{ type: brand("com.fluidframework.leaf.string"), value: id2 }],
+								},
+							},
+						],
+						nestedIdentifierParent: [
+							{
+								type: brand("com.fluidframework.json.object"),
+								fields: {
+									nestedIdentifier: [
+										{
+											type: brand("com.fluidframework.json.object"),
+											fields: {
+												identifier: [
+													{ type: brand("com.fluidframework.leaf.string"), value: nestedId2 },
+												],
+											},
+										},
+									],
+								},
+							},
+						],
+						nonIdentifierField: [
+							{ type: brand("com.fluidframework.leaf.string"), value: "nonIdentifierValue2" },
+						],
+					},
+				},
+			];
+			assert.deepEqual(expected, jsonableTree);
 		});
 	});
 });
