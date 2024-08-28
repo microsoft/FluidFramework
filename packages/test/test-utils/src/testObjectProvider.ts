@@ -1094,6 +1094,20 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	}
 }
 
+/** Summarize the event with just the primary properties, for succinct output in case of test failure */
+const primaryEventProps = ({
+	category,
+	eventName,
+	error,
+	errorType,
+}: ITelemetryBaseEvent) => ({
+	category,
+	eventName,
+	error,
+	errorType,
+	["..."]: "*** Additional properties not shown, see full log for details ***",
+});
+
 /**
  * @internal
  */
@@ -1108,7 +1122,7 @@ export function getUnexpectedLogErrorException(
 	if (results.unexpectedErrors.length > 0) {
 		return new Error(
 			`${prefix ?? ""}Unexpected Errors in Logs:\n${JSON.stringify(
-				results.unexpectedErrors,
+				results.unexpectedErrors.map(primaryEventProps),
 				undefined,
 				2,
 			)}`,
