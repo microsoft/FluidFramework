@@ -28,6 +28,7 @@ import {
 	oneFromSet,
 	type requireAssignableTo,
 	filterIterable,
+	brand,
 } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 import type { FlexFieldKind, FullSchemaPolicy } from "../modular-schema/index.js";
@@ -100,22 +101,9 @@ export class FlexMapNodeSchema extends TreeNodeSchemaBase {
 /**
  */
 export class LeafNodeSchema extends TreeNodeSchemaBase<ValueSchema> {
-	public get leafValue(): ValueSchema {
-		return this.info;
-	}
-
 	protected _typeCheck2?: MakeNominal;
-	public static create<const Name extends string, const Specification extends ValueSchema>(
-		builder: Named<string>,
-		name: TreeNodeSchemaIdentifier<Name>,
-		specification: Specification,
-	): LeafNodeSchema {
-		return new LeafNodeSchema(
-			builder,
-			name,
-			specification,
-			new LeafNodeStoredSchema(specification),
-		);
+	public constructor(builder: Named<string>, name: string, specification: ValueSchema) {
+		super(builder, brand(name), specification, new LeafNodeStoredSchema(specification));
 	}
 
 	public override getFieldSchema(field: FieldKey): FlexFieldSchema {

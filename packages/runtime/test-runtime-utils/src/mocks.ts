@@ -191,7 +191,7 @@ export interface IInternalMockRuntimeMessage {
 }
 
 /**
- * Mock implementation of ContainerRuntime for testing basic submitting and processing of messages.
+ * Mock implementation of IContainerRuntime for testing basic submitting and processing of messages.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeForReconnection.
  * @legacy

@@ -13,7 +13,6 @@ import {
 	TreeNavigationResult,
 	rootFieldKey,
 } from "../../../core/index.js";
-import { leaf, leaf as leafDomain } from "../../../domains/index.js";
 import type { Context } from "../../../feature-libraries/flex-tree/context.js";
 import { unboxedTree, unboxedUnion } from "../../../feature-libraries/flex-tree/unboxed.js";
 import type {
@@ -24,7 +23,7 @@ import type {
 import type { TreeContent } from "../../../shared-tree/index.js";
 
 import { contextWithContentReadonly } from "./utils.js";
-import { SchemaFactory, toFlexSchema } from "../../../simple-tree/index.js";
+import { getFlexSchema, SchemaFactory, toFlexSchema } from "../../../simple-tree/index.js";
 import { stringSchema } from "../../../simple-tree/leafNodeSchema.js";
 import { singleJsonCursor } from "../../json/index.js";
 
@@ -73,7 +72,7 @@ describe("unboxedTree", () => {
 		});
 		cursor.enterNode(0); // Root node field has 1 node; move into it
 
-		assert.equal(unboxedTree(context, leafDomain.string, cursor), "Hello world");
+		assert.equal(unboxedTree(context, getFlexSchema(stringSchema), cursor), "Hello world");
 	});
 });
 
@@ -105,7 +104,7 @@ describe("unboxedUnion", () => {
 
 		// Type is not known based on schema, so node will not be unboxed.
 		const unboxed = unboxedUnion(context, schema.rootFieldSchema, cursor) as FlexTreeNode;
-		assert.equal(unboxed.schema, leaf.string);
+		assert.equal(unboxed.schema, getFlexSchema(stringSchema));
 		assert.equal(unboxed.value, "Hello world");
 	});
 });

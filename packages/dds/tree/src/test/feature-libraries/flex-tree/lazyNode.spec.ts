@@ -18,7 +18,6 @@ import {
 	TreeNavigationResult,
 	rootFieldKey,
 } from "../../../core/index.js";
-import { leaf as leafDomain } from "../../../domains/index.js";
 import type { Context } from "../../../feature-libraries/flex-tree/context.js";
 import { LazyTreeNode } from "../../../feature-libraries/flex-tree/lazyNode.js";
 import type {
@@ -117,8 +116,8 @@ describe("LazyNode", () => {
 		});
 
 		it("parent", () => {
-			const schemaBuilder = new SchemaFactory("test");
-			const ParentNode = schemaBuilder.map("map", schemaBuilder.string);
+			const schemaFactory = new SchemaFactory("test");
+			const ParentNode = schemaFactory.map("map", schemaFactory.string);
 
 			const { context, cursor } = initializeTreeWithContent({
 				schema: toFlexSchema(ParentNode),
@@ -184,7 +183,13 @@ describe("LazyNode", () => {
 
 			const { anchor, anchorNode } = createAnchors(context, cursor);
 
-			const node = new LazyTreeNode(context, leafDomain.string, cursor, anchorNode, anchor);
+			const node = new LazyTreeNode(
+				context,
+				getFlexSchema(stringSchema),
+				cursor,
+				anchorNode,
+				anchor,
+			);
 
 			assert.equal(node.value, "Hello world");
 		});
