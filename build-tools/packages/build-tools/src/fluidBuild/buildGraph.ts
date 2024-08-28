@@ -70,7 +70,7 @@ class BuildContext {
 	) {}
 }
 
-export class BuildPackage<T extends Package = Package> {
+export class BuildPackage {
 	private readonly tasks = new Map<string, Task>();
 
 	// track a script task without the lifecycle (pre/post) tasks
@@ -85,7 +85,7 @@ export class BuildPackage<T extends Package = Package> {
 
 	constructor(
 		public readonly buildContext: BuildContext,
-		public readonly pkg: T,
+		public readonly pkg: Package,
 		globalTaskDefinitions: TaskDefinitions,
 	) {
 		this._taskDefinitions = getTaskDefinitions(
