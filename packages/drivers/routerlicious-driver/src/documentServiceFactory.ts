@@ -5,6 +5,7 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { getW3CData } from "@fluidframework/driver-base/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FiveDaysMs,
@@ -39,9 +40,8 @@ import {
 	toInstrumentedR11sStorageTokenFetcher,
 } from "./restWrapper.js";
 import { isRouterliciousResolvedUrl } from "./routerliciousResolvedUrl.js";
-import { SessionInfoManager } from "./sessionInfoManager.js";
 import { ITokenProvider } from "./tokens.js";
-import { replaceDocumentIdInPath } from "./urlUtils.js";
+import { getDiscoveredFluidResolvedUrl, replaceDocumentIdInPath } from "./urlUtils.js";
 
 const maximumSnapshotCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
 
@@ -66,7 +66,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 	private readonly blobCache: ICache<ArrayBufferLike>;
 	private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSnapshot> = new NullCache();
 	private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion> = new NullCache();
-	private readonly sessionInfoManager: SessionInfoManager;
 
 	constructor(
 		private readonly tokenProvider: ITokenProvider,
@@ -91,7 +90,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 				);
 			}
 		}
-		this.sessionInfoManager = new SessionInfoManager(this.driverPolicies.enableDiscovery);
 	}
 
 	/**
@@ -293,16 +291,35 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			ordererTokenP,
 		);
 
-		const fluidResolvedUrl: IResolvedUrl = await this.sessionInfoManager.initializeSessionInfo(
-			{
-				session,
-				resolvedUrl,
-				documentId,
-				tenantId,
-				ordererRestWrapper,
-				logger: logger2,
-			},
-		);
+		const discoverFluidResolvedUrl = async (): Promise<IResolvedUrl> => {
+			if (!this.driverPolicies.enableDiscovery) {
+				return resolvedUrl;
+			}
+
+			const discoveredSession = await PerformanceEvent.timedExecAsync(
+				logger2,
+				{
+					eventName: "DiscoverSession",
+					docId: documentId,
+				},
+				async (event) => {
+					// The service responds with the current document session associated with the container.
+					const response = await ordererRestWrapper.get<ISession>(
+						`${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}/session/${documentId}`,
+					);
+					event.end({
+						...response.propsToLog,
+						...getW3CData(response.requestUrl, "xmlhttprequest"),
+					});
+					return response.content;
+				},
+			);
+			return getDiscoveredFluidResolvedUrl(resolvedUrl, discoveredSession);
+		};
+		const fluidResolvedUrl: IResolvedUrl =
+			session !== undefined
+				? getDiscoveredFluidResolvedUrl(resolvedUrl, session)
+				: await discoverFluidResolvedUrl();
 
 		// TODO why are we non null asserting here?
 		const storageUrl = fluidResolvedUrl.endpoints.storageUrl!;
@@ -349,14 +366,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			this.blobCache,
 			this.wholeSnapshotTreeCache,
 			this.shreddedSummaryTreeCache,
-			async () =>
-				this.sessionInfoManager.getSessionInfo({
-					resolvedUrl,
-					documentId,
-					tenantId,
-					ordererRestWrapper,
-					logger: logger2,
-				}),
+			discoverFluidResolvedUrl,
 			storageRestWrapper,
 			storageTokenFetcher,
 			ordererTokenFetcher,
