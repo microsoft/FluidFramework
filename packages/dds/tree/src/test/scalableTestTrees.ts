@@ -12,12 +12,12 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 } from "../core/index.js";
-import { leaf } from "../domains/index.js";
 import { FieldKinds, type FlexTreeNode } from "../feature-libraries/index.js";
 import type { FlexTreeView, TreeContent } from "../shared-tree/index.js";
 import { brand } from "../util/index.js";
 import {
 	cursorFromInsertable,
+	numberSchema,
 	SchemaFactory,
 	type ValidateRecursiveSchema,
 } from "../simple-tree/index.js";
@@ -277,6 +277,6 @@ export function readDeepFlexTree(tree: FlexTreeView): {
 		currentNode = read.content as FlexTreeNode;
 		depth++;
 	}
-	assert(currentNode.is(leaf.number));
+	assert(currentNode.is(getFlexSchema(numberSchema)));
 	return { depth, value: currentNode.value as number };
 }

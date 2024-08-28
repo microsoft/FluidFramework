@@ -11,7 +11,6 @@ import {
 	type ITreeCursorSynchronous,
 	type JsonableTree,
 } from "../../../core/index.js";
-import { leaf } from "../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 import type {
@@ -43,6 +42,7 @@ import {
 import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities.js";
 import { emptyShape, testData } from "./uniformChunkTestData.js";
 import { JsonObject } from "../../json/index.js";
+import { numberSchema } from "../../../simple-tree/index.js";
 
 describe("basic chunk", () => {
 	it("calling chunkTree on existing chunk adds a reference", () => {
@@ -206,7 +206,7 @@ describe("basic chunk", () => {
 });
 
 function numericBasicChunk(value: number = 0): BasicChunk {
-	return new BasicChunk(leaf.number.name, new Map(), value);
+	return new BasicChunk(brand(numberSchema.identifier), new Map(), value);
 }
 
 /**
