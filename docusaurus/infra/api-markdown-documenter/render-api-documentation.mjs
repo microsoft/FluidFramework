@@ -153,7 +153,9 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir) {
 
 				const frontMatter = createFrontMatter(document.apiItem, config);
 
-				fileContents = [frontMatter, generatedContentNotice, documentBody].join("\n\n").trim();
+				fileContents = [frontMatter, generatedContentNotice, documentBody]
+					.join("\n\n")
+					.trim();
 			} catch (error) {
 				logErrorAndRethrow(
 					`Encountered error while rendering Markdown contents for "${document.apiItem.displayName}"`,
@@ -186,12 +188,7 @@ function createFrontMatter(documentApiItem, config) {
 		title = `${sidebarLabel} ${documentApiItem.kind}`;
 	}
 
-	const frontMatter = [
-		"---",
-		`title: "${title}"`,
-		`sidebar_label: "${sidebarLabel}"`,
-		"---",
-	];
+	const frontMatter = ["---", `title: "${title}"`, `sidebar_label: "${sidebarLabel}"`, "---"];
 
 	return frontMatter.join("\n");
 }

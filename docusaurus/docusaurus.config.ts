@@ -30,15 +30,35 @@ const config: Config = {
 		defaultLocale: "en",
 		locales: ["en"],
 	},
-	// TODO
-	// plugins: [
-	//   [
-	//     require.resolve("docusaurus-lunr-search"),
-	//     {
-	//       // Options here
-	//     },
-	//   ]
-	// ],
+	plugins: [
+		// TODO
+		// [
+		//     require.resolve("docusaurus-lunr-search"),
+		//     {
+		//       // Options here
+		//     },
+		//   ],
+		[
+			"@docusaurus/plugin-client-redirects",
+			{
+				redirects: [
+					// /docs/oldDoc -> /docs/newDoc
+					{
+						from: "/docs/build/overview",
+						to: "/docs/build",
+					},
+					{
+						from: "/docs/data-structures/overview",
+						to: "/docs/data-structures",
+					},
+					{
+						from: "/docs/deployment/service-options",
+						to: "/docs/deployment",
+					},
+				],
+			},
+		],
+	],
 	presets: [
 		[
 			"classic",

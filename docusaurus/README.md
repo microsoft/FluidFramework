@@ -119,7 +119,7 @@ E.g.,
 Can be replaced with (`.mdx` only):
 
 ```mdx
-import { PackageLink } from "@site/src/components/shortLinks" // Best practice: put this at the top of the file
+import { PackageLink } from "@site/src/components/shortLinks"; // Best practice: put this at the top of the file
 
 ...
 
@@ -130,7 +130,7 @@ import { PackageLink } from "@site/src/components/shortLinks" // Best practice: 
 
 MDX syntax (supported by Docusaurus) is powerful.
 But there is a subset of standard Markdown syntax that is not supported.
-For example, any HTML-like syntax will *always* be treated as JSX syntax, so standard embedded HTML patterns don't work.
+For example, any HTML-like syntax will _always_ be treated as JSX syntax, so standard embedded HTML patterns don't work.
 Most of the time, this isn't an issue, since substituting JSX syntax is generally fine.
 With some exceptions.
 
@@ -143,6 +143,7 @@ A common pattern for adding inline comments in `.md` files looks like:
 ```
 
 The replacement syntax to use in `.mdx` files would be:
+
 ```mdx
 {/* I am a comment */}
 ```
@@ -151,16 +152,16 @@ The replacement syntax to use in `.mdx` files would be:
 
 #### Other best practices
 
-- Don't include file extensions in links. E.g., prefer `[foo](./foo)` over `[foo](./foo.md)`.
+-   Don't include file extensions in links. E.g., prefer `[foo](./foo)` over `[foo](./foo.md)`.
 
 ## TODOs
 
-- Create API docs landing page
-- Fix API docs hierarchy (kludge)
-- Figure out solution to markdown-magic in mdx (html comment syntax not supported)
-- Link check doesn't handle custom heading anchors - maybe there is a plugin for this?
-- Add prettier
-- Add markdown-lint
-- Add eslint for components
-- Inject Docusaurus front-matter in generated API docs
-- Verify high contrast support
+-   Create API docs landing page
+-   Fix API docs hierarchy (kludge)
+-   Figure out solution to markdown-magic in mdx (html comment syntax not supported)
+-   Link check doesn't handle custom heading anchors - maybe there is a plugin for this?
+-   Add prettier
+-   Add markdown-lint
+-   Add eslint for components
+-   Inject Docusaurus front-matter in generated API docs
+-   Verify high contrast support

@@ -42,7 +42,7 @@
 	height: 20px;
 	width: 65%;
 	border-radius: 2px;
-	box-shadow: 0 30px 40px rgba(0, 0, 0, .1);
+	box-shadow: 0 30px 40px rgba(0, 0, 0, 0.1);
 	background-color: white;
 	border: 1px solid lightgray;
 	overflow: hidden;
