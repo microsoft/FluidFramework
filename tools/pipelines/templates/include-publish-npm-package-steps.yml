@@ -74,9 +74,12 @@ steps:
         flub promote package \
         --version "$(SetVersion.version)" \
         --orderFile $orderFile \
+        --token ":$ADO_API_TOKEN" \
         --verbose
       fi
 
       # Clean up; remove the npmrc
       rm ~/.npmrc
       exit 0
+  env:
+    ADO_API_TOKEN: $(System.AccessToken)

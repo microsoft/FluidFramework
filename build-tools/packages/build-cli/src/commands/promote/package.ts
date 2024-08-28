@@ -35,7 +35,7 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 		}),
 		token: Flags.string({
 			description: "Azure DevOps access token",
-			env: "SYSTEM_ACCESSTOKEN",
+			env: "ADO_API_TOKEN",
 			required: true,
 		}),
 	};
@@ -80,13 +80,14 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 				const errorData = (await response.json()) as PromotePackageResponse;
 				this.error(
 					`Failed to promote package. Status: ${response.status}, Message: ${errorData.message ?? "Unknown error"}`,
+					{ exit: 1 }
 				);
 			}
 
 			const responseData = (await response.json()) as PromotePackageResponse;
 			return responseData.success;
 		} catch (error) {
-			this.error(`Error promoting package: ${(error as Error).message}`);
+			this.error(`Error promoting package: ${(error as Error).message}`, { exit: 2 });
 		}
 	}
 }
