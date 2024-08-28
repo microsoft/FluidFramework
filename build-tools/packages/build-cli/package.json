@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.43.0",
+	"version": "0.45.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -94,6 +94,7 @@
 		"async": "^3.2.4",
 		"chalk": "^5.3.0",
 		"change-case": "^3.1.0",
+		"cosmiconfig": "^8.3.6",
 		"danger": "^11.3.0",
 		"date-fns": "^2.30.0",
 		"debug": "^4.3.4",

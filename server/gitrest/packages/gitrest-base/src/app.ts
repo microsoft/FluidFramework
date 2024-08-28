@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import { ICreateRepoParams } from "@fluidframework/gitresources";
 import { DriverVersionHeaderName } from "@fluidframework/server-services-client";
 import {
@@ -13,7 +12,6 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import {
 	alternativeMorganLoggerMiddleware,
-	bindCorrelationId,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
@@ -38,7 +36,6 @@ export function create(
 	store: nconf.Provider,
 	fileSystemManagerFactories: IFileSystemManagerFactories,
 	repositoryManagerFactory: IRepositoryManagerFactory,
-	asyncLocalStorage?: AsyncLocalStorage<string>,
 ) {
 	// Express app configuration
 	const app: Express = express();
@@ -82,8 +79,6 @@ export function create(
 	const requestSize = store.get("requestSizeLimit");
 	app.use(json({ limit: requestSize }));
 	app.use(urlencoded({ limit: requestSize, extended: false }));
-
-	app.use(bindCorrelationId(asyncLocalStorage));
 
 	app.use(cors());
 

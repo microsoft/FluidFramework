@@ -4,18 +4,118 @@
 
 ```ts
 
+import { InterdependencyRange } from '@fluid-tools/version-tools';
 import { run } from '@oclif/core';
+import { VersionBumpType } from '@fluid-tools/version-tools';
 
-// @internal
+// @public (undocumented)
+export interface AssertTaggingConfig {
+    // (undocumented)
+    assertionFunctions: {
+        [functionName: string]: number;
+    };
+    enabledPaths?: RegExp[];
+}
+
+// @public
+export interface BumpConfig {
+    defaultInterdependencyRange?: Record<ReleaseGroup, InterdependencyRange>;
+}
+
+// @public
+export interface FlubConfig {
+    assertTagging?: AssertTaggingConfig;
+    // @deprecated
+    branchReleaseTypes?: {
+        [name: string]: VersionBumpType | PreviousVersionStyle;
+    };
+    bump?: BumpConfig;
+    policy?: PolicyConfig;
+    releaseNotes?: ReleaseNotesConfig;
+    version?: 1;
+}
+
+// @public
 export const knownReleaseGroups: readonly ["build-tools", "client", "server", "gitrest", "historian"];
 
-// @internal
+// @public
+export interface PackageNamePolicyConfig {
+    allowedScopes?: string[];
+    mayPublish: {
+        npm?: string[];
+        internalFeed?: string[];
+    };
+    mustPublish: {
+        npm?: string[];
+        internalFeed?: string[];
+    };
+    unscopedPackages?: string[];
+}
+
+// @public
+export interface PackageRequirements {
+    requiredDevDependencies?: string[];
+    requiredScripts?: ScriptRequirement[];
+}
+
+// @public
+export interface PolicyConfig {
+    // (undocumented)
+    additionalLockfilePaths?: string[];
+    // (undocumented)
+    dependencies?: {
+        commandPackages: [string, string][];
+    };
+    exclusions?: string[];
+    // (undocumented)
+    fluidBuildTasks: {
+        tsc: {
+            ignoreTasks: string[];
+            ignoreDependencies: string[];
+            ignoreDevDependencies: string[];
+        };
+    };
+    handlerExclusions?: {
+        [rule: string]: (string | RegExp)[];
+    };
+    // (undocumented)
+    packageNames?: PackageNamePolicyConfig;
+    // (undocumented)
+    pnpmSinglePackageWorkspace?: string[];
+    publicPackageRequirements?: PackageRequirements;
+}
+
+// @public
+export type PreviousVersionStyle = "baseMajor" | "baseMinor" | "previousPatch" | "previousMinor" | "previousMajor" | "~baseMinor" | "^previousMajor" | "^previousMinor" | "~previousMajor" | "~previousMinor";
+
+// @public
 export type ReleaseGroup = (typeof knownReleaseGroups)[number];
+
+// @public
+export interface ReleaseNotesConfig {
+    // (undocumented)
+    sections: Record<ReleaseNotesSectionName, ReleaseNotesSection>;
+}
+
+// @public
+export interface ReleaseNotesSection {
+    heading: string;
+}
+
+// @public
+export type ReleaseNotesSectionName = string;
 
 // @internal
 export type ReleasePackage = string;
 
 export { run }
+
+// @public
+export interface ScriptRequirement {
+    body: string;
+    bodyMustMatch?: boolean;
+    name: string;
+}
 
 // (No @packageDocumentation comment for this package)
 
