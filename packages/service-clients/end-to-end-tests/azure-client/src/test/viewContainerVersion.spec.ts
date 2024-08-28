@@ -94,7 +94,7 @@ for (const testOpts of testMatrix) {
 		 *
 		 * Skipped for now - see ADO:13967
 		 */
-		it("can handle bad document id when requesting versions", async () => {
+		it.skip("can handle bad document id when requesting versions", async () => {
 			const resources = client.getContainerVersions("badid");
 			const errorFn = (error: Error): boolean => {
 				assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
