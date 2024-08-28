@@ -6,8 +6,10 @@ aliases:
   - "/docs/get-started/quick-start/"
   - "/start/quick-start/"
   - "/docs/start/"
-
 ---
+
+import { FluidBundleLoader} from "@site/src/components/fluidBundleLoader";
+import NodeVersions from "@site/src/pages/node-versions.mdx";
 
 In this Quick Start you will be getting a dice roller Fluid application up and running first on your computer's
 localhost.
@@ -18,15 +20,16 @@ The demo app uses Fluid Framework 2.X.
 
 :::
 
-{{< fluid_bundle_loader idPrefix="dice-roller"
-    bundleName="dice-roller.2021-09-24.js" >}}
+<FluidBundleLoader idPrefix="dice-roller" bundleName="dice-roller.2021-09-24.js"/>
 
 ## Set up your development environment
 
 To get started you need the following installed.
 
--   [Node.js](https://nodejs.org/en/download) -- {{< include file="_includes/node-versions.md" >}}
--   Code editor -- we recommend [Visual Studio Code](https://code.visualstudio.com/).
+-   [Node.js](https://nodejs.org/en/download)
+    - <NodeVersions />
+-   Code editor
+    - We recommend [Visual Studio Code](https://code.visualstudio.com/).
 -   [Git](https://git-scm.com/downloads)
 
 ## Getting started

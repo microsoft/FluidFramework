@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import React from "react";
+
 // TODO: how will versioning interact with these?
 
 /**
@@ -56,7 +58,7 @@ export function ApiLink({
 	packageName,
 	headingId,
 	children,
-}: ApiLinkProps): React.ReactElement {
+}: ApiLinkProps): JSX.Element {
 	const headingPostfix = headingId ? `#${headingId}` : "";
 	// TODO: how to deal with namespaces?
 	const path = `/docs/api/${packageName}/${apiName}-${apiType}${headingPostfix}`;
