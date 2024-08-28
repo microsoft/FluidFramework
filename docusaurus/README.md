@@ -40,7 +40,13 @@ $ GIT_USER=<Your GitHub username> yarn deploy
 
 If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
 
-## WIP Notes
+## Docusaurus
+
+### Notes
+
+Documents created under `/docs` will be included in auto sidebar generation / contribute to default hierarchy.
+Documents created under `src/pages` will not.
+See https://docusaurus.io/docs/creating-pages.
 
 ### Copying from Hugo
 
@@ -149,7 +155,6 @@ The replacement syntax to use in `.mdx` files would be:
 
 ## TODOs
 
-- Inject Docusaurus front-matter in API docs build
 - Create API docs landing page
 - Fix API docs hierarchy (kludge)
 - Figure out solution to markdown-magic in mdx (html comment syntax not supported)
