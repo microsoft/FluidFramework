@@ -58,7 +58,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir) {
 	// Delete existing documentation output
 	logProgress("Removing existing generated API docs...");
 	await fs.ensureDir(outputDir);
-	await fs.emptyDir(outputDir);
+	// await fs.emptyDir(outputDir); // TODO: is this okay?
 
 	// Process API reports
 	logProgress("Loading API model...");
@@ -84,7 +84,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir) {
 		newlineKind: "lf",
 		uriRoot: uriRootDir,
 		includeBreadcrumb: false, // Docusaurus includes this by default based on file hierarchy
-		includeTopLevelDocumentHeading: true,
+		includeTopLevelDocumentHeading: false, // We inject `title` front-matter metadata instead
 		createDefaultLayout: layoutContent,
 		getAlertsForItem: (apiItem) => {
 			const alerts = [];
@@ -147,11 +147,11 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir) {
 			let fileContents;
 			try {
 				const documentBody = MarkdownRenderer.renderDocument(document, {
-					startingHeadingLevel: 1,
+					startingHeadingLevel: 2,
 					customRenderers,
 				});
 
-				const frontMatter = createFrontMatter(document.apiItem);
+				const frontMatter = createFrontMatter(document.apiItem, config);
 
 				fileContents = [frontMatter, generatedContentNotice, documentBody].join("\n\n").trim();
 			} catch (error) {
@@ -176,15 +176,20 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir) {
 	);
 }
 
-// TODO: `description`
-function createFrontMatter(documentApiItem) {
-	const title = documentApiItem.kind === ApiItemKind.Model
-		? "Package Reference"
-		: documentApiItem.displayName.replace(/"/g, "").replace(/!/g, "");
+function createFrontMatter(documentApiItem, config) {
+	let title, sidebarLabel;
+	if (documentApiItem.kind === ApiItemKind.Model) {
+		sidebarLabel = "Package Reference";
+		title = sidebarLabel;
+	} else {
+		sidebarLabel = documentApiItem.displayName.replace(/"/g, "").replace(/!/g, "");
+		title = `${sidebarLabel} ${documentApiItem.kind}`;
+	}
 
 	const frontMatter = [
 		"---",
 		`title: "${title}"`,
+		`sidebar_label: "${sidebarLabel}"`,
 		"---",
 	];
 
