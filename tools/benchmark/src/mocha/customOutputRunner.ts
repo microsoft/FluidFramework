@@ -53,10 +53,11 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 		try {
 			await options.run(reporter);
 		} catch (error) {
-			const toBenchmarkError: BenchmarkError = { error: (error as Error).message };
+			const benchmarkError: BenchmarkError = { error: (error as Error).message };
 
-			// Instead of throwing the error, we emit it as an event so the test can continue.
-			test.emit("benchmark end", toBenchmarkError);
+			// When running benchmarks in perf mode, the event is necessary for the custom reporter to keep track of the benchmark result.
+			// When running them without perf mode, we need to re-throw the error for Mocha to do its normal thing when a test throws.
+			test.emit("benchmark end", benchmarkError);
 			throw error;
 		}
 
