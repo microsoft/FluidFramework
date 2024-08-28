@@ -30,7 +30,6 @@ import {
 	type ChangeFamilyEditor,
 	EmptyKey,
 } from "../../core/index.js";
-import { leaf } from "../../domains/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	ChunkedForest,
@@ -68,7 +67,7 @@ import {
 	type TreeView,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
-import { fail } from "../../util/index.js";
+import { brand, fail } from "../../util/index.js";
 import {
 	type ConnectionSetter,
 	type ITestTreeProvider,
@@ -91,7 +90,7 @@ import { configuredSharedTree } from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { TestAnchor } from "../testAnchor.js";
 // eslint-disable-next-line import/no-internal-modules
-import { numberSchema, stringSchema } from "../../simple-tree/leafNodeSchema.js";
+import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/leafNodeSchema.js";
 import { JsonArray, singleJsonCursor } from "../json/index.js";
 
 const enableSchemaValidation = true;
@@ -186,7 +185,10 @@ describe("SharedTree", () => {
 			field: rootFieldKey,
 		});
 		field.set(
-			cursorForJsonableTreeNode({ type: leaf.handle.name, value: provider.trees[0].handle }),
+			cursorForJsonableTreeNode({
+				type: brand(handleSchema.identifier),
+				value: provider.trees[0].handle,
+			}),
 			true,
 		);
 	});

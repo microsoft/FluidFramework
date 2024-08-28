@@ -12,21 +12,20 @@ import {
 	type ExclusiveMapTree,
 	type FieldKey,
 } from "../../../core/index.js";
-import { leaf as leafDomain } from "../../../domains/index.js";
 import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getOrCreateMapTreeNode } from "../../../feature-libraries/flex-map-tree/index.js";
-import { getFlexSchema, SchemaFactory } from "../../../simple-tree/index.js";
+import { getFlexSchema, SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
 
 describe("MapTreeNodes", () => {
 	// #region The schema used in this test suite
 	const objectMapKey = "map" as FieldKey;
 	const objectFieldNodeKey = "fieldNode" as FieldKey;
 
-	const schemaBuilder = new SchemaFactory("Test");
-	const mapSchemaSimple = schemaBuilder.map("Map", schemaBuilder.string);
-	const arrayNodeSchemaSimple = schemaBuilder.array("ArrayNode", schemaBuilder.string);
-	const objectSchemaSimple = schemaBuilder.object("Object", {
+	const schemaFactory = new SchemaFactory("Test");
+	const mapSchemaSimple = schemaFactory.map("Map", schemaFactory.string);
+	const arrayNodeSchemaSimple = schemaFactory.array("ArrayNode", schemaFactory.string);
+	const objectSchemaSimple = schemaFactory.object("Object", {
 		[objectMapKey]: mapSchemaSimple,
 		[objectFieldNodeKey]: arrayNodeSchemaSimple,
 	});
@@ -39,7 +38,7 @@ describe("MapTreeNodes", () => {
 	// #region The `MapTree`s used to construct the `MapTreeNode`s
 	const childValue = "childValue";
 	const mapChildMapTree: ExclusiveMapTree = {
-		type: leafDomain.string.name,
+		type: brand(stringSchema.identifier),
 		value: childValue,
 		fields: new Map(),
 	};
@@ -49,7 +48,7 @@ describe("MapTreeNodes", () => {
 		fields: new Map([[mapKey, [mapChildMapTree]]]),
 	};
 	const fieldNodeChildMapTree: ExclusiveMapTree = {
-		type: leafDomain.string.name,
+		type: brand(stringSchema.identifier),
 		value: childValue,
 		fields: new Map(),
 	};
@@ -95,8 +94,14 @@ describe("MapTreeNodes", () => {
 		assert.equal(map.schema, mapSchema);
 		assert.equal(arrayNode.schema, arrayNodeSchema);
 		assert.equal(object.schema, objectSchema);
-		assert.equal(map.tryGetField(mapKey)?.boxedAt(0)?.schema, leafDomain.string);
-		assert.equal(arrayNode.tryGetField(EmptyKey)?.boxedAt(0)?.schema, leafDomain.string);
+		assert.equal(
+			map.tryGetField(mapKey)?.boxedAt(0)?.schema,
+			getFlexSchema(schemaFactory.string),
+		);
+		assert.equal(
+			arrayNode.tryGetField(EmptyKey)?.boxedAt(0)?.schema,
+			getFlexSchema(schemaFactory.string),
+		);
 	});
 
 	it("can get the children of maps", () => {
@@ -148,7 +153,7 @@ describe("MapTreeNodes", () => {
 		);
 
 		const duplicateChild: ExclusiveMapTree = {
-			type: leafDomain.string.name,
+			type: brand(schemaFactory.string.identifier),
 			value: childValue,
 			fields: new Map(),
 		};

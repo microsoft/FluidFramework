@@ -31,7 +31,6 @@ import {
 	makeDetachedFieldIndex,
 	rootFieldKey,
 } from "../../core/index.js";
-import { leaf } from "../../domains/index.js";
 import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
@@ -41,6 +40,7 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../utils.js";
+import { stringSchema } from "../../simple-tree/index.js";
 
 const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");
@@ -450,7 +450,9 @@ describe("AnchorSet", () => {
 		const build = [
 			{
 				id: buildId,
-				trees: [cursorForJsonableTreeNode({ type: leaf.string.name, value: "x" })],
+				trees: [
+					cursorForJsonableTreeNode({ type: brand(stringSchema.identifier), value: "x" }),
+				],
 			},
 		];
 		announceTestDelta(
@@ -496,7 +498,9 @@ describe("AnchorSet", () => {
 		const build = [
 			{
 				id: buildId,
-				trees: [cursorForJsonableTreeNode({ type: leaf.string.name, value: "x" })],
+				trees: [
+					cursorForJsonableTreeNode({ type: brand(stringSchema.identifier), value: "x" }),
+				],
 			},
 		];
 		const insertAtFoo4 = makeFieldDelta(
