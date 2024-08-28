@@ -11,7 +11,7 @@
 
 # Generated API docs.
 # Note: keep `mdx` files that are handwritten
-docs/api
+docs/api/*
 !docs/api/**/*.mdx
 
 # Misc
