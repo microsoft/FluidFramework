@@ -2845,14 +2845,13 @@ export class ContainerRuntime
 	 * It is expected to happen only when the outbox produces an empty batch due to a resubmit flow.
 	 */
 	private processEmptyBatch(emptyBatch: InboundBatch, local: boolean) {
-		const { emptyBatchSequenceNumber: sequenceNumber, batchStartCsn } = emptyBatch;
-		assert(sequenceNumber !== undefined, 0x9fa /* emptyBatchSequenceNumber must be defined */);
-		this.emit("batchBegin", { sequenceNumber });
+		const { keyMessage, batchStartCsn } = emptyBatch;
+		this.emit("batchBegin", keyMessage);
 		this._processedClientSequenceNumber = batchStartCsn;
 		if (!this.hasPendingMessages()) {
 			this.updateDocumentDirtyState(false);
 		}
-		this.emit("batchEnd", undefined, { sequenceNumber });
+		this.emit("batchEnd", undefined /* error */, keyMessage);
 		if (local) {
 			this.resetReconnectCount();
 		}
