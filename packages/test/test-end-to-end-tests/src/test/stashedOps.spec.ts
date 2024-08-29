@@ -2006,12 +2006,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
 
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	describe.only("Serializing without closing and/or multiple rehydration (aka Offline Phase 3)", () => {
+	describe("Serializing without closing and/or multiple rehydration (aka Offline Phase 3)", () => {
 		itExpects(
 			`Closes (ForkedContainerError) when ops are submitted with different clientId from pendingLocalState (via Counter DDS)`,
 			[
@@ -2040,16 +2035,16 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				);
 
 				// The real scenario where the clientId would differ from the original container and pendingLocalState is this:
-				// 1. container1 - getPendingLocalState (local ops have clientId A), reconnect, submitOp on new clientId B
-				// 2. container2 - load with pendingLocalState (apply stashed ops to have clientId A), ops come in with clientId B, which is different.
+				// 1. first container - getPendingLocalState (local ops have clientId A), reconnect, submitOp on new clientId B
+				// 2. second container - load with pendingLocalState (apply stashed ops to have clientId A), ops come in with clientId B, which is different.
 				//
 				// For simplicity (as opposed to coding up reconnect like that), just tweak the clientId in pendingLocalState.
 				const obj = JSON.parse(pendingLocalState);
-				obj.clientId = "00000000-0e85-4ea1-983d-3cb72f280701"; // Bogus GUID to simulate reconnect after getPendingLocalState
+				obj.clientId = "2356461c-85d2-4002-b699-5e8a0defa60b"; // Different GUID to simulate reconnect after getPendingLocalState
 				const pendingLocalStateAdjusted = JSON.stringify(obj);
 
 				// When we load the container using the adjusted pendingLocalState, the clientId mismatch should cause a ForkedContainerError
-				// when processing the ops submitted by container1 before closing, because we recognize them as the same content using batchId.
+				// when processing the ops submitted by first container before closing, because we recognize them as the same content using batchId.
 				await assert.rejects(
 					async () => loader.resolve({ url }, pendingLocalStateAdjusted),
 					{ message: "Forked Container Error! Matching batchIds but mismatched clientId" },
@@ -2064,19 +2059,27 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		itExpects(
 			`WRONGLY duplicates ops when hydrating twice and submitting in parallel (via Counter DDS)`,
 			[
-				//* Figure out and document
-				// {
-				// 	eventName: "fluid:telemetry:Container:ContainerClose",
-				// 	category: "error",
-				// },
-				// {
-				// 	eventName: "fluid:telemetry:Container:ContainerClose",
-				// 	category: "error",
-				// },
-				// {
-				// 	eventName: "fluid:telemetry:Container:ContainerClose",
-				// 	category: "error",
-				// },
+				// All containers close:
+				// contianer1, container1's summarizer, container2, container3
+				// container2 or container3 (the loser of the race) will close with "Forked Container Error",
+				// All the rest will close with "Duplicate batch"
+				// Due to the race condition, we can't specify here which container will close with which error.
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					category: "error",
+				},
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					category: "error",
+				},
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					category: "error",
+				},
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					category: "error",
+				},
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
 					category: "error",
@@ -2104,18 +2107,27 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 					},
 				);
 
-				// This will double-check eventual consistency of the system as it observes the ops
-				const observerContainer = await loader.resolve({ url });
-				const dataStoreO = (await observerContainer.getEntryPoint()) as ITestFluidObject;
-				const counterO = await dataStoreO.getSharedObject<SharedCounter>(counterId);
+				async function rehydrateConnectAndPause(loggingId: string) {
+					// Rehydrate and immediately pause outbound to ensure we don't send the ops yet
+					// Container won't be connected yet, so no race here.
+					const container = await loader.resolve({ url }, pendingLocalState);
+					await container.deltaManager.outbound.pause();
 
-				// Rehydrate twice and block incoming for both, submitting the stashed ops in parallel
-				const container2 = await loader.resolve({ url }, pendingLocalState);
-				await container2.deltaManager.inbound.pause();
-				await container2.deltaManager.outbound.pause(); // To protect against container2 submitting the op before container3 pauses inbound.
-				const container3 = await loader.resolve({ url }, pendingLocalState);
-				await container3.deltaManager.inbound.pause();
-				container2.deltaManager.outbound.resume(); // Now that container3 is paused, container2 can submit the op.
+					// Wait for the container to connect, and then pause the inbound queue
+					// This order matters - we need to process our inbound join op to finish connecting!
+					await waitForContainerConnection(container, true /* failOnContainerClose */, {
+						reject: true,
+						errorMsg: `${loggingId} didn't connect in time`,
+					});
+					await container.deltaManager.inbound.pause();
+
+					// Now this container should submit the op when we resume the outbound queue
+					return container;
+				}
+
+				// Rehydrate twice, waiting for each to connect but blocking outgoing for both, to avoid submitting any ops yet
+				const container2 = await rehydrateConnectAndPause("container2");
+				const container3 = await rehydrateConnectAndPause("container3");
 
 				// Get these before any containers close
 				const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
@@ -2123,13 +2135,19 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 				const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
-				//* NOTE: These flushes are no-ops, I think because the runtime wasn't allowed to submit yet because not connected,
-				//* maybe because inbound queue was paused (so can't see join op).
-				// (Flush the outbound queue for both containers (each should submit the same op), then resume inbound for both.)
-				//* container2.deltaManager.flush();
-				//* container3.deltaManager.flush();
-
-				//* TODO: Not sure I am deterministically threading the two containers together to ensure they submit in parallel, but I'm trying...
+				// Here's the "in parallel" part - resume both outbound queues at the same time,
+				// and then resume both inbound queues once the outbound queues are idle.
+				const allSentP = Promise.all([
+					new Promise((resolve) => {
+						container2.deltaManager.outbound.on("idle", resolve);
+					}),
+					new Promise((resolve) => {
+						container3.deltaManager.outbound.on("idle", resolve);
+					}),
+				]);
+				container2.deltaManager.outbound.resume();
+				container3.deltaManager.outbound.resume();
+				await allSentP;
 				container2.deltaManager.inbound.resume();
 				container3.deltaManager.inbound.resume();
 
@@ -2140,9 +2158,12 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				// - All other clients (including the winner) will be tracking the batchId, and when it sees the duplicate from the loser, it will ignore it.
 				await provider.ensureSynchronized();
 
-				// Should not duplicate the op in these "observer" containers
-				assert.strictEqual(counter1.value, incrementValue); //* The container's closed but we can still spy on this
-				assert.strictEqual(counterO.value, incrementValue);
+				// Container1 is not used directly in this test, but is present and observing the session,
+				// so we can double-check eventual consistency - the container should have closed but the op should not have been duplicated
+				assert.strictEqual(container1.closed, true);
+				assert.strictEqual(counter1.value, incrementValue);
+
+				//* TODO: Switch winner/lose to be based on error type / message
 
 				// There's a race condition here; allow either Container2 or Container3 to win
 				let winner: { container: IContainer; counter: SharedCounter };
@@ -2154,8 +2175,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 					loser = { container: container3, counter: counter3 };
 					winner = { container: container2, counter: counter2 };
 				}
-
-				//* TODO: Also look for the "duplicateMessageIgnored" telemetry event
 
 				//* double-check
 				assert.strictEqual(winner.container.closed, true, "winner should be closed");
