@@ -186,7 +186,14 @@ function createFrontMatter(documentApiItem, config) {
 		title = `${sidebarLabel} ${documentApiItem.kind}`;
 	}
 
-	const frontMatter = ["---", `title: "${title}"`, `sidebar_label: "${sidebarLabel}"`, "---"];
+	const frontMatter = [
+		"---",
+		`title: "${title}"`,
+		`sidebar_label: "${sidebarLabel}"`,
+		// TODO: in theory we can leverage tags like this to inform search indexing
+		"tags:",
+		"  - API_DOCUMENTATION",
+		"---"];
 
 	return frontMatter.join("\n");
 }
