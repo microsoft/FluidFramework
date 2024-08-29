@@ -1,6 +1,6 @@
 import { type TreeMapNode, type TreeArrayNode, NodeKind } from "@fluidframework/tree";
 
-import type { ObjectPath } from "./sharedTreeObjectDiff.js";
+import type { ObjectPath } from "./sharedTreeDiff.js";
 
 /**
  * Checks if the given object is an {@link TreeMapNode}.

@@ -2,11 +2,11 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactory } from "@fluidframework/tree";
 
-import { sharedTreeObjectDiff } from "../../shared-tree-object-diff/index.js";
+import { sharedTreeDiff } from "../../shared-tree-diff/index.js";
 
 const schemaFactory = new SchemaFactory("TreeNodeTest");
 
-describe("sharedTreeObjectDiff - arrays", () => {
+describe("sharedTreeDiff - arrays", () => {
 	class StringArrayNode extends schemaFactory.array(
 		"StringTreeArrayNode",
 		schemaFactory.string,
@@ -14,7 +14,7 @@ describe("sharedTreeObjectDiff - arrays", () => {
 
 	it("top level array & array diff", () => {
 		const treeNode = new StringArrayNode(["test", "testing"]);
-		const diffs = sharedTreeObjectDiff(treeNode as unknown as unknown[], ["test"]);
+		const diffs = sharedTreeDiff(treeNode as unknown as unknown[], ["test"]);
 		assert.deepStrictEqual(diffs, [
 			{
 				type: "REMOVE",
@@ -31,7 +31,7 @@ describe("sharedTreeObjectDiff - arrays", () => {
 		]) {}
 		const treeNode = new NestedStringArrayNode(["test", ["test"]]);
 		assert.deepStrictEqual(
-			sharedTreeObjectDiff(treeNode as unknown as unknown[], ["test", ["test", "test2"]]),
+			sharedTreeDiff(treeNode as unknown as unknown[], ["test", ["test", "test2"]]),
 			[
 				{
 					type: "CREATE",
@@ -55,7 +55,7 @@ describe("sharedTreeObjectDiff - arrays", () => {
 		const treeNode = new ObjectTreeNode({
 			state: ["test", new SimpleObjectTreeNode({ test: true })],
 		});
-		const diffs = sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, {
 			state: ["test", { test: false }],
 		});
 
@@ -70,13 +70,13 @@ describe("sharedTreeObjectDiff - arrays", () => {
 	});
 
 	it("array to object", () => {
-		assert.deepStrictEqual(sharedTreeObjectDiff({ data: [] }, { data: { val: "test" } }), [
+		assert.deepStrictEqual(sharedTreeDiff({ data: [] }, { data: { val: "test" } }), [
 			{ type: "CHANGE", path: ["data"], value: { val: "test" }, oldValue: [] },
 		]);
 	});
 });
 
-describe("sharedTreeObjectDiff - arrays with object ID strategy", () => {
+describe("sharedTreeDiff - arrays with object ID strategy", () => {
 	class SimpleObjectTreeNode extends schemaFactory.object("SimpleTreeNode", {
 		id: schemaFactory.identifier,
 		test: schemaFactory.boolean,
@@ -90,7 +90,7 @@ describe("sharedTreeObjectDiff - arrays with object ID strategy", () => {
 
 	it("object with id is moved from a new deleted array index", () => {
 		const treeNode = new ObjectTreeNode({ state: ["test", { id: "1", test: true }] });
-		const diffs = sharedTreeObjectDiff(
+		const diffs = sharedTreeDiff(
 			treeNode as unknown as Record<string, unknown>,
 			{ state: [{ id: "1", test: true }] },
 			{
@@ -124,7 +124,7 @@ describe("sharedTreeObjectDiff - arrays with object ID strategy", () => {
 				{ id: "2", test: true },
 			],
 		});
-		const diffs = sharedTreeObjectDiff(
+		const diffs = sharedTreeDiff(
 			treeNode as unknown as Record<string, unknown>,
 			{
 				state: [
@@ -162,7 +162,7 @@ describe("sharedTreeObjectDiff - arrays with object ID strategy", () => {
 				{ id: "2", test: true },
 			],
 		});
-		const diffs = sharedTreeObjectDiff(
+		const diffs = sharedTreeDiff(
 			treeNode as unknown as Record<string, unknown>,
 			{
 				state: [
@@ -205,7 +205,7 @@ describe("sharedTreeObjectDiff - arrays with object ID strategy", () => {
 				{ id: "2", test: true },
 			],
 		});
-		const diffs = sharedTreeObjectDiff(
+		const diffs = sharedTreeDiff(
 			treeNode as unknown as Record<string, unknown>,
 			{
 				state: [
@@ -254,7 +254,7 @@ describe("sharedTreeObjectDiff - arrays with object ID strategy", () => {
 				{ id: "2", test: true },
 			],
 		});
-		const diffs = sharedTreeObjectDiff(
+		const diffs = sharedTreeDiff(
 			treeNode as unknown as Record<string, unknown>,
 			{
 				state: [

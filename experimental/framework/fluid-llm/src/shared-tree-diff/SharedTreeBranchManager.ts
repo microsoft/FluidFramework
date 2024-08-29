@@ -2,20 +2,20 @@ import { type TreeArrayNode } from "@fluidframework/tree";
 import type * as z from "zod";
 
 import {
-	sharedTreeObjectDiff,
+	sharedTreeDiff,
 	type Difference,
 	type DifferenceChange,
 	type DifferenceCreate,
 	type DifferenceMove,
 	type DifferenceRemove,
 	type ObjectPath,
-} from "./sharedTreeObjectDiff.js";
+} from "./sharedTreeDiff.js";
 import { isTreeMapNode, isTreeArrayNode, sharedTreeTraverse } from "./utils.js";
 
 /**
  * Manages the differences between a SharedTree object node and a javascript object and then applies them.
  */
-export class SharedTreeObjectIdDiffManager {
+export class SharedTreeBranchManager {
 	private readonly objectSchema?: z.Schema;
 
 	public constructor(params?: { objectSchema?: z.Schema }) {
@@ -35,7 +35,7 @@ export class SharedTreeObjectIdDiffManager {
 			}
 		}
 
-		return sharedTreeObjectDiff(obj as Record<string, unknown> | unknown[], newObj, {
+		return sharedTreeDiff(obj as Record<string, unknown> | unknown[], newObj, {
 			useObjectIds: { idAttributeName: "id" },
 			cyclesFix: true,
 		});
@@ -236,25 +236,6 @@ export class SharedTreeObjectIdDiffManager {
 	public isDiffOnArray(diff: Difference): boolean {
 		return typeof diff.path[diff.path.length - 1] === "number";
 	}
-}
-
-/**
- * Traverses the provided {@link ObjectPath} on the provided JSON object and returns the value at the end of the path.
- */
-export function traversePath<T = unknown>(
-	jsonObject: Record<string, unknown> | unknown[] | TreeArrayNode,
-	path: ObjectPath,
-): T | undefined {
-	let current: unknown = jsonObject;
-
-	for (const key of path) {
-		if (current === undefined || current === null) {
-			return undefined;
-		}
-		current = current[key];
-	}
-
-	return current as T;
 }
 
 /**

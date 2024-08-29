@@ -1,23 +1,38 @@
-/* eslint-disable jsdoc/require-jsdoc */
-
 import { type TreeArrayNode, NodeKind } from "@fluidframework/tree";
 
 import { isTreeMapNode } from "./utils.js";
 
+/**
+ * Represents a path through a tree of objects.
+ * number values represent array indices whereas string values represent object keys.
+ */
 export type ObjectPath = (string | number)[];
 
+/**
+ * Represents a create operation between two branches of a tree.
+ * Meaning that an attribute (a shared tree node) was identified as being created.
+ */
 export interface DifferenceCreate {
 	type: "CREATE";
 	path: ObjectPath;
 	value: unknown;
 }
 
+/**
+ * Represents a remove operation between two branches of a tree.
+ * Meaning that an attribute (a shared tree node) was identified as being deleted.
+ * When using object ids, removes are idenitified by an object with a given id no longer existing.
+ */
 export interface DifferenceRemove {
 	type: "REMOVE";
 	path: ObjectPath;
 	oldValue: unknown;
 }
 
+/**
+ * Represents a change operation between two branches of a tree.
+ * Meaning that an attribute (a shared tree node) was identified as being changed from one value to another.
+ */
 export interface DifferenceChange {
 	type: "CHANGE";
 	path: ObjectPath;
@@ -25,6 +40,10 @@ export interface DifferenceChange {
 	oldValue: unknown;
 }
 
+/**
+ * Represents a move operation between two branches of a tree.
+ * Meaning that an object (shared tree node) was identified as being moved from one index to another based on its unique id.
+ */
 export interface DifferenceMove {
 	type: "MOVE";
 	path: ObjectPath;
@@ -32,6 +51,9 @@ export interface DifferenceMove {
 	value: unknown;
 }
 
+/**
+ * Union for all possible difference types.
+ */
 export type Difference =
 	| DifferenceCreate
 	| DifferenceRemove
@@ -56,7 +78,7 @@ const DEFAULT_OPTIONS: Options = { cyclesFix: true };
 /**
  * Compares two objects and returns an array of differences between them.
  */
-export function sharedTreeObjectDiff(
+export function sharedTreeDiff(
 	obj: Record<string, unknown> | unknown[],
 	newObj: Record<string, unknown> | unknown[],
 	options: Options = DEFAULT_OPTIONS,
@@ -152,7 +174,7 @@ export function sharedTreeObjectDiff(
 			(!options.cyclesFix || !_stack.includes(objValue as Record<string, unknown>))
 		) {
 			if (options.useObjectIds === undefined) {
-				const nestedDiffs = sharedTreeObjectDiff(
+				const nestedDiffs = sharedTreeDiff(
 					objValue as Record<string, unknown> | unknown[],
 					newObjValue as Record<string, unknown> | unknown[],
 					options,
@@ -179,7 +201,7 @@ export function sharedTreeObjectDiff(
 				if (oldObjectId !== undefined && newObjectId !== undefined) {
 					// if the object id's are the same, we can continue a comparison between the two objects.
 					if (oldObjectId === newObjectId) {
-						const nestedDiffs = sharedTreeObjectDiff(
+						const nestedDiffs = sharedTreeDiff(
 							objValue as Record<string, unknown> | unknown[],
 							newObjValue as Record<string, unknown> | unknown[],
 							options,
@@ -218,7 +240,7 @@ export function sharedTreeObjectDiff(
 							});
 
 							// An object could have been moved AND changed. We need to check for this.
-							const nestedDiffs = sharedTreeObjectDiff(
+							const nestedDiffs = sharedTreeDiff(
 								obj[path] as Record<string, unknown> | unknown[],
 								newObj[oldObjectNewIndex] as Record<string, unknown> | unknown[],
 								options,
@@ -237,7 +259,7 @@ export function sharedTreeObjectDiff(
 						}
 					}
 				} else {
-					const nestedDiffs = sharedTreeObjectDiff(
+					const nestedDiffs = sharedTreeDiff(
 						objValue as Record<string, unknown> | unknown[],
 						newObjValue as Record<string, unknown> | unknown[],
 						options,
