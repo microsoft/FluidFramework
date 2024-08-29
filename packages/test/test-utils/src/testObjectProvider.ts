@@ -20,6 +20,8 @@ import {
 	IRequestHeader,
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
+	ITelemetryBaseProperties,
+	Tagged,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -33,6 +35,7 @@ import {
 	createChildLogger,
 	createMultiSinkLogger,
 	type ITelemetryLoggerPropertyBags,
+	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -1105,26 +1108,35 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	}
 }
 
+function tagUserData<T>(value: T): Tagged<T> {
+	return {
+		value,
+		tag: TelemetryDataTag.UserData,
+	};
+}
+
 /**
  * Get identifying information for a resolved URL.
  * @remarks BEWARE: this function is only appropriate for usage in tests, as it logs unhashed document IDs,
  * which is a privacy concern for production scenarios.
  */
-function getUrlTelemetryProps(resolvedUrl: IResolvedUrl | undefined) {
+function getUrlTelemetryProps(
+	resolvedUrl: IResolvedUrl | undefined,
+): ITelemetryBaseProperties {
 	if (!resolvedUrl) {
 		return {};
 	}
 
-	const props: Record<string, string> = {
-		url: resolvedUrl.url,
-		id: resolvedUrl.id,
+	const props: ITelemetryBaseProperties = {
+		url: tagUserData(resolvedUrl.url),
+		id: tagUserData(resolvedUrl.id),
 	};
 
 	if (isOdspResolvedUrl(resolvedUrl)) {
 		Object.assign(props, {
-			siteUrl: resolvedUrl.siteUrl,
-			driveId: resolvedUrl.driveId,
-			itemId: resolvedUrl.itemId,
+			siteUrl: tagUserData(resolvedUrl.siteUrl),
+			driveId: tagUserData(resolvedUrl.driveId),
+			itemId: tagUserData(resolvedUrl.itemId),
 		});
 	}
 

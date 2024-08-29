@@ -6,7 +6,10 @@
 import child_process from "child_process";
 
 import { ITestDriver } from "@fluid-internal/test-driver-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils/internal";
 import ps from "ps-node";
 
 import type { TestUsers } from "./getTestUsers.js";
@@ -58,7 +61,7 @@ export async function stressTest(
 
 	logger.sendTelemetryEvent({
 		eventName: "ResolveStressTestDocument",
-		url,
+		url: { value: url, tag: TelemetryDataTag.UserData },
 	});
 
 	const estRunningTimeMin = Math.floor(
