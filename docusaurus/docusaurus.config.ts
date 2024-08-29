@@ -79,6 +79,11 @@ const config: Config = {
 		// // Replace with your project's social card
 		// image: "TODO",
 
+		colorMode: {
+			// Default to user's browser preference
+			respectPrefersColorScheme: true,
+		},
+
 		// Top nav-bar
 		navbar: {
 			title: "Fluid Framework",
@@ -107,46 +112,28 @@ const config: Config = {
 			style: "dark",
 			links: [
 				{
-					title: "Community",
-					items: [
-						{
-							label: "Follow @fluidframework",
-							href: "https://twitter.com/fluidframework",
-						},
-						{
-							label: "GitHub",
-							href: githubUrl,
-						},
-					],
+					label: "Follow @fluidframework",
+					href: "https://twitter.com/fluidframework",
 				},
 				{
-					// title: "More",
-					items: [
-						{
-							label: "Blog",
-							to: "/blog",
-						},
-					],
+					label: "GitHub",
+					href: githubUrl,
 				},
 				{
-					items: [
-						{
-							label: "Privacy",
-							href: "https://privacy.microsoft.com/privacystatement",
-						},
-						{
-							label: "Consumer Health Privacy",
-							href: "https://go.microsoft.com/fwlink/?linkid=2259814",
-						},
-						{
-							label: "Terms of Use",
-							href: "https://www.microsoft.com/legal/terms-of-use",
-						},
-						{
-							label: "License",
-							href: "https://github.com/microsoft/FluidFramework/blob/main/LICENSE",
-						},
-					],
+					label: "Privacy",
+					href: "https://privacy.microsoft.com/privacystatement",
+				},
+				{
+					label: "Consumer Health Privacy",
+					href: "https://go.microsoft.com/fwlink/?linkid=2259814",
+				},
+				{
+					label: "Terms of Use",
+					href: "https://www.microsoft.com/legal/terms-of-use",
+				},
+				{
+					label: "License",
+					href: "https://github.com/microsoft/FluidFramework/blob/main/LICENSE",
 				},
 			],
 			logo: {
