@@ -213,7 +213,7 @@ export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 		 * is that when we are processing messages in the container runtime/delta manager, the delta manager's minimum
 		 * sequence number can be updated to continually increase. In the meantime, the pending state manager's op which
 		 * hasn't been sent can still have a lower sequence number than the DM's msn (think about a disconnected scenario). To successfully
-		 * rebase that pending op to have a reference sequence number greater than or equal to the DM's msn, we need to resubmit that op back to the
+		 * resubmit that pending op it has to be rebased first by the DDS.
 		 * DDS. The DDS still needs to keep the local data for that op that has a reference sequence number lower than the
 		 * DM's msn. To achieve this, the msn passed to the DDS needs to be the minimum of the DM's msn and the minimum pending sequence number, so
 		 * that it can keep the relevant local data to generate the right data for the new op during resubmission.
