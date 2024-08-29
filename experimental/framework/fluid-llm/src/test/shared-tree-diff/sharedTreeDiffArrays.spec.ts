@@ -6,7 +6,7 @@ import { sharedTreeDiff } from "../../shared-tree-diff/index.js";
 
 const schemaFactory = new SchemaFactory("TreeNodeTest");
 
-describe("sharedTreeDiff - arrays", () => {
+describe("sharedTreeDiff() - arrays", () => {
 	class StringArrayNode extends schemaFactory.array(
 		"StringTreeArrayNode",
 		schemaFactory.string,
@@ -76,7 +76,7 @@ describe("sharedTreeDiff - arrays", () => {
 	});
 });
 
-describe("sharedTreeDiff - arrays with object ID strategy", () => {
+describe("sharedTreeDiff() - arrays with object ID strategy", () => {
 	class SimpleObjectTreeNode extends schemaFactory.object("SimpleTreeNode", {
 		id: schemaFactory.identifier,
 		test: schemaFactory.boolean,

@@ -9,6 +9,6 @@ export {
 
 export {
 	SharedTreeBranchManager,
-} from "./SharedTreeBranchManager.js";
+} from "./sharedTreeBranchManager.js";
 
 export { sharedTreeTraverse, isTreeArrayNode, isTreeMapNode } from "./utils.js";

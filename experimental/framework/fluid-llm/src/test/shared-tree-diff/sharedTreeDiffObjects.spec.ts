@@ -27,7 +27,7 @@ class TestObjectTreeNode extends schemaFactory.object("TreeNode", {
 	}),
 }) {}
 
-describe("sharedTreeDiff - Object - Change Diffs", () => {
+describe("sharedTreeDiff() - Object - Change Diffs", () => {
 
 	const TEST_NODE_DATA = {
 		attribute1: true,
@@ -202,7 +202,7 @@ describe("sharedTreeDiff - Object - Change Diffs", () => {
 	});
 });
 
-describe("sharedTreeDiff - Object - Create Diffs", () => {
+describe("sharedTreeDiff() - Object - Create Diffs", () => {
 	it("new optional boolean primitive value", () => {
 		const treeNode = new TestOptionalObjectTreeNode({  });
 		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>,  {optionalBoolean: true});
@@ -274,7 +274,7 @@ describe("sharedTreeDiff - Object - Create Diffs", () => {
 	});
 });
 
-describe("sharedTreeDiff - Object - Remove Diffs", () => {
+describe("sharedTreeDiff() - Object - Remove Diffs", () => {
 
 	it("remove optional boolean primitive value", () => {
 		const treeNode = new TestOptionalObjectTreeNode({optionalBoolean: true  });

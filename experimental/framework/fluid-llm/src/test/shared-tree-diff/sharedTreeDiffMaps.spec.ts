@@ -16,7 +16,7 @@ class TestMapTreeNode extends schemaFactory.map("TestMapTreeNode", [
 	schemaFactory.array("SimpleArrayTreeNode", [schemaFactory.string])
 ]) {}
 
-describe("sharedTreeDiff - Maps - Change Diffs", () => {
+describe("sharedTreeDiff() - Maps - Change Diffs", () => {
 
 	const TEST_NODE_DATA = {
 		attribute1: true,
