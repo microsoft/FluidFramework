@@ -312,6 +312,8 @@ describe("End to end chunked encoding", () => {
 		it("In memory identifier encoding", () => {
 			const identifierField: FieldKey = brand("identifier");
 			const nonIdentifierField: FieldKey = brand("nonIdentifierField");
+			const unknownStableIdField: FieldKey = brand("unknownIdField")
+
 			const stringShape = new TreeShape(brand(stringSchema.identifier), true, [], true);
 
 			const identifierParent: FieldKey = brand("identifierParent");
@@ -320,7 +322,6 @@ describe("End to end chunked encoding", () => {
 				brand(JsonObject.identifier),
 				false,
 				[[identifierField, stringShape, 1]],
-				true,
 			);
 
 			const parentNodeWithIdentifiersShape = new TreeShape(
@@ -329,13 +330,17 @@ describe("End to end chunked encoding", () => {
 				[
 					[identifierParent, identifierShape, 1],
 					[nonIdentifierField, stringShape, 1],
+					[unknownStableIdField, stringShape, 1]
 				],
-				true,
 			);
 
 			const id = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 
-			const test = {
+			// Create a stable id from a different source.
+			const nodeKeyManager = new MockNodeKeyManager()
+			const unknownStableId = nodeKeyManager.generateStableNodeKey()
+
+			const initialTree = {
 				type: brand(JsonObject.identifier),
 				fields: {
 					identifierParent: [
@@ -349,11 +354,14 @@ describe("End to end chunked encoding", () => {
 					nonIdentifierField: [
 						{ type: brand("com.fluidframework.leaf.string"), value: "nonIdentifierValue" },
 					],
+					unknownIdField: [
+						{ type: brand("com.fluidframework.leaf.string"), value: unknownStableId },
+					],
 				},
 			} satisfies JsonableTree;
 
 			const chunk = uniformChunkFromCursor(
-				cursorForJsonableTreeNode(test),
+				cursorForJsonableTreeNode(initialTree),
 				parentNodeWithIdentifiersShape,
 				1,
 				true,
@@ -362,29 +370,11 @@ describe("End to end chunked encoding", () => {
 			assert.deepEqual(chunk.values, [
 				testIdCompressor.tryRecompress(id),
 				"nonIdentifierValue",
+				unknownStableId
 			]);
 
 			const jsonableTree = mapCursorField(chunk.cursor(), jsonableTreeFromCursor);
-
-			const expected: JsonableTree[] = [
-				{
-					type: brand(JsonObject.identifier),
-					fields: {
-						identifierParent: [
-							{
-								type: brand(JsonObject.identifier),
-								fields: {
-									identifier: [{ type: brand("com.fluidframework.leaf.string"), value: id }],
-								},
-							},
-						],
-						nonIdentifierField: [
-							{ type: brand("com.fluidframework.leaf.string"), value: "nonIdentifierValue" },
-						],
-					},
-				},
-			];
-			assert.deepEqual(expected, jsonableTree);
+			assert.deepEqual([initialTree], jsonableTree);
 		});
 	});
 });
