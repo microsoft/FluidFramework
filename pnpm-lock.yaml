@@ -273,7 +273,7 @@ importers:
         version: link:../../../../packages/test/test-utils
       axios:
         specifier: ^1.6.2
-        version: 1.6.2(debug@4.3.4)
+        version: 1.6.2(debug@4.3.5)
       commander:
         specifier: ^5.1.0
         version: 5.1.0
@@ -4134,7 +4134,7 @@ importers:
         version: 2.1.0
       axios:
         specifier: ^1.6.2
-        version: 1.6.2(debug@4.3.4)
+        version: 1.6.2(debug@4.3.5)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: /events@3.3.0
@@ -4742,7 +4742,7 @@ importers:
         version: link:../../../packages/utils/tool-utils
       axios:
         specifier: ^1.6.2
-        version: 1.6.2(debug@4.3.4)
+        version: 1.6.2(debug@4.3.5)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -6436,7 +6436,7 @@ importers:
         version: link:../../../../packages/dds/shared-object-base
       axios:
         specifier: ^1.6.2
-        version: 1.6.2(debug@4.3.4)
+        version: 1.6.2(debug@4.3.5)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -10927,7 +10927,7 @@ importers:
         version: 9.0.7
       axios:
         specifier: ^1.6.2
-        version: 1.6.2(debug@4.3.4)
+        version: 1.6.2(debug@4.3.5)
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -12521,7 +12521,7 @@ importers:
         version: link:../../utils/telemetry-utils
       axios:
         specifier: ^1.6.2
-        version: 1.6.2(debug@4.3.4)
+        version: 1.6.2(debug@4.3.5)
       lz4js:
         specifier: ^0.2.0
         version: 0.2.0
@@ -13627,7 +13627,7 @@ importers:
         version: link:../../../dds/tree
       axios:
         specifier: ^1.6.2
-        version: 1.6.2(debug@4.3.4)
+        version: 1.6.2(debug@4.3.5)
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -14706,7 +14706,7 @@ importers:
         version: 4.5.0
       axios:
         specifier: ^1.6.2
-        version: 1.6.2(debug@4.3.4)
+        version: 1.6.2(debug@4.3.5)
       semver:
         specifier: ^7.5.3
         version: 7.6.0
@@ -15209,6 +15209,9 @@ importers:
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../dds/map
+      '@fluidframework/odsp-driver':
+        specifier: workspace:~
+        version: link:../../drivers/odsp-driver
       '@fluidframework/request-handler':
         specifier: workspace:~
         version: link:../../framework/request-handler
@@ -18972,7 +18975,7 @@ packages:
       outdent: 0.5.0
       prettier: 2.8.8
       resolve-from: 5.0.0
-      semver: 7.6.0
+      semver: 7.6.3
 
   /@changesets/assemble-release-plan@5.2.4:
     resolution: {integrity: sha512-xJkWX+1/CUaOUWTguXEbCDTyWJFECEhmdtbkjhn5GVBGxdP/JwaHBIU9sW3FR6gD07UwZ7ovpiPclQZs+j+mvg==}
@@ -18982,7 +18985,7 @@ packages:
       '@changesets/get-dependents-graph': 1.3.6
       '@changesets/types': 5.2.1
       '@manypkg/get-packages': 1.1.3
-      semver: 7.6.0
+      semver: 7.6.3
 
   /@changesets/changelog-git@0.1.14:
     resolution: {integrity: sha512-+vRfnKtXVWsDDxGctOfzJsPhaCdXRYoe+KyWYoq5X/GqoISREiat0l3L8B0a453B2B4dfHGcZaGyowHbp9BSaA==}
@@ -19050,7 +19053,7 @@ packages:
       '@manypkg/get-packages': 1.1.3
       chalk: 2.4.2
       fs-extra: 7.0.1
-      semver: 7.6.0
+      semver: 7.6.3
 
   /@changesets/get-release-plan@3.0.17:
     resolution: {integrity: sha512-6IwKTubNEgoOZwDontYc2x2cWXfr6IKxP3IhKeK+WjyD6y3M4Gl/jdQvBw+m/5zWILSOCAaGLu2ZF6Q+WiPniw==}
@@ -21961,7 +21964,7 @@ packages:
       '@fluidframework/core-utils': 2.2.0
       '@fluidframework/driver-definitions': 2.2.0
       '@fluidframework/telemetry-utils': 2.2.0
-      axios: 1.6.2(debug@4.3.4)
+      axios: 1.6.2(debug@4.3.5)
       lz4js: 0.2.0
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -22694,34 +22697,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@fluidframework/server-lambdas@5.0.0:
-    resolution: {integrity: sha512-t0ouLtYi2y5DBYbp+WT4mIGXTSYK/1Yz+cb0prOtAUxYqsn+TAG/hr2DE8OyzHdL0RHZp/y2KX7X1jZhPxxGDg==}
-    dependencies:
-      '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 5.0.0
-      '@fluidframework/protocol-base': 5.0.0
-      '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas-driver': 5.0.0
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-core': 5.0.0
-      '@fluidframework/server-services-telemetry': 5.0.0
-      '@types/semver': 7.5.6
-      assert: 2.1.0
-      async: 3.2.5
-      axios: 1.6.2(debug@4.3.4)
-      buffer: 6.0.3
-      double-ended-queue: 2.1.0-0
-      events: 3.3.0
-      json-stringify-safe: 5.0.1
-      lodash: 4.17.21
-      nconf: 0.12.1
-      semver: 7.6.3
-      sha.js: 2.4.11
-      uuid: 9.0.1
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
   /@fluidframework/server-lambdas@5.0.0(debug@4.3.5):
     resolution: {integrity: sha512-t0ouLtYi2y5DBYbp+WT4mIGXTSYK/1Yz+cb0prOtAUxYqsn+TAG/hr2DE8OyzHdL0RHZp/y2KX7X1jZhPxxGDg==}
     dependencies:
@@ -22853,9 +22828,9 @@ packages:
       '@fluidframework/gitresources': 5.0.0
       '@fluidframework/protocol-base': 5.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      axios: 1.6.2(debug@4.3.5)
+      axios: 1.6.2(debug@4.3.6)
       crc-32: 1.2.0
-      debug: 4.3.5
+      debug: 4.3.6(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
       jsrsasign: 11.1.0
       jwt-decode: 4.0.0
@@ -24897,7 +24872,7 @@ packages:
     dependencies:
       '@previewjs/serializable-values': 7.0.3
       '@previewjs/type-analyzer': 8.0.2
-      axios: 1.6.2(debug@4.3.4)
+      axios: 1.6.2(debug@4.3.5)
     transitivePeerDependencies:
       - debug
     dev: true
@@ -24946,7 +24921,7 @@ packages:
       acorn: 8.11.2
       acorn-jsx: 5.3.2(acorn@8.11.2)
       assert-never: 1.2.1
-      axios: 1.6.2(debug@4.3.4)
+      axios: 1.6.2(debug@4.3.5)
       exclusive-promises: 1.0.3
       express: 4.19.2
       fs-extra: 11.1.1
@@ -29278,7 +29253,7 @@ packages:
   /axios@0.28.1:
     resolution: {integrity: sha512-iUcGA5a7p0mVb4Gm/sy+FSECNkPFT4y7wt6OM/CDpO/OnNCvSs3PoMG8ibrC9jRoGYU0gUK5pXVC4NPXq6lHRQ==}
     dependencies:
-      follow-redirects: 1.15.6(debug@4.3.4)
+      follow-redirects: 1.15.6(debug@4.3.5)
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -35615,24 +35590,6 @@ packages:
       - supports-color
     dev: true
 
-  /http-proxy-middleware@2.0.6(@types/express@4.17.21):
-    resolution: {integrity: sha512-ya/UeJ6HVBYxrgYotAZo1KvPWlgB48kUJLDePFeneHsVujFaW5WNj2NgWCAE//B1Dl02BIfYlpNgBy8Kf8Rjmw==}
-    engines: {node: '>=12.0.0'}
-    peerDependencies:
-      '@types/express': ^4.17.13
-    peerDependenciesMeta:
-      '@types/express':
-        optional: true
-    dependencies:
-      '@types/express': 4.17.21
-      '@types/http-proxy': 1.17.14
-      http-proxy: 1.18.1
-      is-glob: 4.0.3
-      is-plain-obj: 3.0.0
-      micromatch: 4.0.5
-    transitivePeerDependencies:
-      - debug
-
   /http-proxy-middleware@2.0.6(@types/express@4.17.21)(debug@4.3.5):
     resolution: {integrity: sha512-ya/UeJ6HVBYxrgYotAZo1KvPWlgB48kUJLDePFeneHsVujFaW5WNj2NgWCAE//B1Dl02BIfYlpNgBy8Kf8Rjmw==}
     engines: {node: '>=12.0.0'}
@@ -35650,17 +35607,6 @@ packages:
       micromatch: 4.0.5
     transitivePeerDependencies:
       - debug
-    dev: true
-
-  /http-proxy@1.18.1:
-    resolution: {integrity: sha512-7mz/721AbnJwIVbnaSv1Cz3Am0ZLT/UBwkC92VlxhXv/k/BBQfM2fXElQNC27BVGr0uwUpplYPQM9LnaBMR5NQ==}
-    engines: {node: '>=8.0.0'}
-    dependencies:
-      eventemitter3: 4.0.7
-      follow-redirects: 1.15.6(debug@4.3.4)
-      requires-port: 1.0.0
-    transitivePeerDependencies:
-      - debug
 
   /http-proxy@1.18.1(debug@4.3.5):
     resolution: {integrity: sha512-7mz/721AbnJwIVbnaSv1Cz3Am0ZLT/UBwkC92VlxhXv/k/BBQfM2fXElQNC27BVGr0uwUpplYPQM9LnaBMR5NQ==}
@@ -35671,7 +35617,6 @@ packages:
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
-    dev: true
 
   /http-response-object@3.0.2:
     resolution: {integrity: sha512-bqX0XTF6fnXSQcEJ2Iuyr75yVakyjIDCqroJQ/aHfSdlM743Cwqoi2nDYMzLGWUcuTWGWy8AAvOKXTfiv6q9RA==}
@@ -36853,7 +36798,7 @@ packages:
       prompts: 2.4.2
       spawnd: 9.0.2
       tree-kill: 1.2.2
-      wait-on: 7.2.0(debug@4.3.4)
+      wait-on: 7.2.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -45665,7 +45610,7 @@ packages:
       '@fluidframework/gitresources': 5.0.0
       '@fluidframework/protocol-base': 5.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas': 5.0.0
+      '@fluidframework/server-lambdas': 5.0.0(debug@4.3.5)
       '@fluidframework/server-local-server': 5.0.0
       '@fluidframework/server-memory-orderer': 5.0.0
       '@fluidframework/server-services-client': 5.0.0
@@ -45675,7 +45620,7 @@ packages:
       '@fluidframework/server-services-utils': 5.0.0
       '@fluidframework/server-test-utils': 5.0.0
       agentkeepalive: 4.5.0
-      axios: 1.6.2(debug@4.3.4)
+      axios: 1.6.2(debug@4.3.5)
       body-parser: 1.20.2
       charwise: 3.0.1
       compression: 1.7.4
@@ -47103,6 +47048,20 @@ packages:
       xml-name-validator: 4.0.0
     dev: true
 
+  /wait-on@7.2.0:
+    resolution: {integrity: sha512-wCQcHkRazgjG5XoAq9jbTMLpNIjoSlZslrJ2+N9MxDsGEv1HnFoVjOCexL0ESva7Y9cu350j+DWADdk54s4AFQ==}
+    engines: {node: '>=12.0.0'}
+    hasBin: true
+    dependencies:
+      axios: 1.6.2(debug@4.3.5)
+      joi: 17.12.2
+      lodash: 4.17.21
+      minimist: 1.2.8
+      rxjs: 7.8.1
+    transitivePeerDependencies:
+      - debug
+    dev: true
+
   /wait-on@7.2.0(debug@4.3.4):
     resolution: {integrity: sha512-wCQcHkRazgjG5XoAq9jbTMLpNIjoSlZslrJ2+N9MxDsGEv1HnFoVjOCexL0ESva7Y9cu350j+DWADdk54s4AFQ==}
     engines: {node: '>=12.0.0'}
@@ -47466,7 +47425,7 @@ packages:
       express: 4.19.2
       graceful-fs: 4.2.11
       html-entities: 2.4.0
-      http-proxy-middleware: 2.0.6(@types/express@4.17.21)
+      http-proxy-middleware: 2.0.6(@types/express@4.17.21)(debug@4.3.5)
       ipaddr.js: 2.1.0
       launch-editor: 2.6.1
       open: 8.4.2

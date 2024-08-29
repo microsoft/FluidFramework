@@ -27,6 +27,7 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
+import { isOdspResolvedUrl } from "@fluidframework/odsp-driver/internal";
 import {
 	type ITelemetryGenericEventExt,
 	createChildLogger,
@@ -550,7 +551,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 		this._documentCreated = true;
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
-		this._documentIdStrategy.update(container.resolvedUrl);
+		this.updateDocumentId(container.resolvedUrl);
 		return container;
 	}
 
@@ -581,7 +582,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 		}
 		await container.attach(this.driver.createCreateNewRequest(this.documentId));
 		this._documentCreated = true;
-		this._documentIdStrategy.update(container.resolvedUrl);
+		this.updateDocumentId(container.resolvedUrl);
 	}
 
 	/**
@@ -641,7 +642,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 		this._documentCreated = true;
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
-		this._documentIdStrategy.update(container.resolvedUrl);
+		this.updateDocumentId(container.resolvedUrl);
 		return container;
 	}
 
@@ -702,6 +703,11 @@ export class TestObjectProvider implements ITestObjectProvider {
 	 */
 	public updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
 		this._documentIdStrategy.update(resolvedUrl);
+		this.logger.send({
+			category: "generic",
+			eventName: "DocumentIdUpdated",
+			...getUrlTelemetryProps(resolvedUrl),
+		});
 	}
 
 	/**
@@ -917,7 +923,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		this._documentCreated = true;
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
-		this._documentIdStrategy.update(container.resolvedUrl);
+		this.updateDocumentId(container.resolvedUrl);
 		return container;
 	}
 
@@ -948,7 +954,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		}
 		await container.attach(this.driver.createCreateNewRequest(this.documentId));
 		this._documentCreated = true;
-		this._documentIdStrategy.update(container.resolvedUrl);
+		this.updateDocumentId(container.resolvedUrl);
 	}
 
 	/**
@@ -1015,7 +1021,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		this._documentCreated = true;
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
-		this._documentIdStrategy.update(container.resolvedUrl);
+		this.updateDocumentId(container.resolvedUrl);
 		return container;
 	}
 
@@ -1083,6 +1089,11 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	 */
 	public updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
 		this._documentIdStrategy.update(resolvedUrl);
+		this.logger.send({
+			category: "generic",
+			eventName: "DocumentIdUpdated",
+			...getUrlTelemetryProps(resolvedUrl),
+		});
 	}
 
 	/**
@@ -1092,6 +1103,32 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		this._loaderContainerTracker.reset();
 		this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
 	}
+}
+
+/**
+ * Get identifying information for a resolved URL.
+ * @remarks BEWARE: this function is only appropriate for usage in tests, as it logs unhashed document IDs,
+ * which is a privacy concern for production scenarios.
+ */
+function getUrlTelemetryProps(resolvedUrl: IResolvedUrl | undefined) {
+	if (!resolvedUrl) {
+		return {};
+	}
+
+	const props: Record<string, string> = {
+		url: resolvedUrl.url,
+		id: resolvedUrl.id,
+	};
+
+	if (isOdspResolvedUrl(resolvedUrl)) {
+		Object.assign(props, {
+			siteUrl: resolvedUrl.siteUrl,
+			driveId: resolvedUrl.driveId,
+			itemId: resolvedUrl.itemId,
+		});
+	}
+
+	return props;
 }
 
 /** Summarize the event with just the primary properties, for succinct output in case of test failure */

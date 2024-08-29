@@ -56,6 +56,11 @@ export async function stressTest(
 			// In case testId is provided, name of the file to be created is taken as the testId provided
 			initialize(testDriver, seed, profile, verbose, logger, testId));
 
+	logger.sendTelemetryEvent({
+		eventName: "ResolveStressTestDocument",
+		url,
+	});
+
 	const estRunningTimeMin = Math.floor(
 		(2 * profile.totalSendCount) / (profile.opRatePerMin * profile.numClients),
 	);

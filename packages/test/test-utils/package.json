@@ -128,6 +128,7 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/map": "workspace:~",
+		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
