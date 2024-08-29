@@ -62,9 +62,9 @@ export class SharedTreeBranchManager {
 	public mergeDiffs(
 		diffs: Difference[],
 		objectToUpdate: Record<string, unknown> | TreeArrayNode,
-	): Difference[] {
+	): Set<Difference> {
 		if (diffs === undefined) {
-			return [];
+			return new Set();
 		}
 
 		const changeDiffs: DifferenceChange[] = [];
