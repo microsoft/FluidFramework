@@ -193,7 +193,8 @@ function createFrontMatter(documentApiItem, config) {
 		// TODO: in theory we can leverage tags like this to inform search indexing
 		"tags:",
 		"  - API_DOCUMENTATION",
-		"---"];
+		"---",
+	];
 
 	return frontMatter.join("\n");
 }

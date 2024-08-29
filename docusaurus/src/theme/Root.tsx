@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 /**
  * Root component of Docusaurus's React tree.
@@ -6,6 +6,6 @@ import React from 'react';
  *
  * @see {@link https://docusaurus.io/docs/swizzling#wrapper-your-site-with-root}
  */
-export default function Root({children}) {
-	return <>{children}</>
+export default function Root({ children }) {
+	return <>{children}</>;
 }
