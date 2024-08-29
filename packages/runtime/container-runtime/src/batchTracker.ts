@@ -16,9 +16,6 @@ import {
 import type { InboundBatch } from "./opLifecycle/index.js";
 import { getEffectiveBatchId } from "./pendingStateManager.js";
 
-//* TODO: Remove this and just use function return value to signal this
-export const DUPLICATE_BATCH_MSG = "Duplicate batch";
-
 type BatchTrackerMessage = Pick<ISequencedDocumentMessage, "sequenceNumber">;
 
 export class BatchTracker {
