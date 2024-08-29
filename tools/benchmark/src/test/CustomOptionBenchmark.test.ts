@@ -18,7 +18,7 @@ describe("`benchmarkCustom` function", () => {
 	});
 });
 
-describe("BenchmarkCustom error handling", () => {
+describe.only("BenchmarkCustom error handling", () => {
 	const expectedErrorMessage = "INTENTIONAL error to test error handling";
 	let benchmarkEndPayloadIsCorrect: boolean = false;
 
@@ -31,12 +31,16 @@ describe("BenchmarkCustom error handling", () => {
 	});
 
 	testObject.on("benchmark end", (benchmarkError: BenchmarkError) => {
+		console.log(benchmarkError.error); // Check what is actually being passed here
 		if (benchmarkError.error === expectedErrorMessage) {
 			benchmarkEndPayloadIsCorrect = true;
 		}
 	});
 
-	afterEach(function () {
+	// For the purpose of this test, we want to:
+	// 1) Report an event (i.e, `benchmark end`) to the reporter
+	// 2) Skip the test if the `bechmarkCustom()` throws an error payload as expected.
+	afterEach(async function () {
 		if (benchmarkEndPayloadIsCorrect) {
 			this.skip();
 		} else {
