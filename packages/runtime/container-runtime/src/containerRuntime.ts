@@ -1265,6 +1265,7 @@ export class ContainerRuntime
 		ISequencedDocumentMessage,
 		IDocumentMessage
 	>;
+	private lastSeenMinimumSequenceNumber: number = -1;
 
 	// internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
 	private readonly mc: MonitoringContext;
@@ -2754,7 +2755,7 @@ export class ContainerRuntime
 			}
 		} else {
 			// Check if message.type is one of values in ContainerMessageType
-			// eslint-disable-next-line import/no-deprecated
+
 			if (isRuntimeMessage(messageCopy)) {
 				// Legacy op received
 				this.ensureNoDataModelChanges(() =>
@@ -2791,8 +2792,7 @@ export class ContainerRuntime
 	) {
 		const { message, local, localOpMetadata } = messageWithContext;
 
-		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
-		// Minimum sequence numbers are not guaranteed to follow any sort of order. Re-entrancy is one of those situations
+		// Set the minimum sequence number to the containerRuntime's understanding of minimum sequence number.
 		if (
 			this.deltaManager.minimumSequenceNumber <
 			messageWithContext.message.minimumSequenceNumber
@@ -2800,6 +2800,12 @@ export class ContainerRuntime
 			messageWithContext.message.minimumSequenceNumber =
 				this.deltaManager.minimumSequenceNumber;
 		}
+
+		assert(
+			message.minimumSequenceNumber >= this.lastSeenMinimumSequenceNumber,
+			"Minimum sequence number should always be non-decreasing",
+		);
+		this.lastSeenMinimumSequenceNumber = message.minimumSequenceNumber;
 
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
