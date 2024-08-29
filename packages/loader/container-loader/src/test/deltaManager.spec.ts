@@ -54,12 +54,13 @@ describe("Loader", () => {
 				dmLogger: ITelemetryLoggerExt = logger,
 				deltaStorageFactory?: () => IDocumentDeltaStorageService,
 			): Promise<void> {
-				const service = new MockDocumentService(deltaStorageFactory, () => {
+				const service = new MockDocumentService(deltaStorageFactory, (newClient?: IClient) => {
 					// Always create new connection, as reusing old closed connection
 					// Forces DM into infinite reconnection loop.
 					deltaConnection = new MockDocumentDeltaConnection("test", (messages) =>
 						emitter.emit(submitEvent, messages),
 					);
+					deltaConnection.mode = newClient?.mode ?? "write";
 					return deltaConnection;
 				});
 				const client: Partial<IClient> = {
@@ -547,6 +548,39 @@ describe("Loader", () => {
 						error: "DeltaManager is closed",
 					},
 				]);
+			});
+
+			it("Reconnects after receiving a leave op", async () => {
+				await startDeltaManager();
+
+				assert.strictEqual(
+					deltaManager.connectionManager.connectionMode,
+					"write",
+					"connection mode should be write",
+				);
+
+				const leaveMessage: ISequencedDocumentMessage = {
+					clientId: "null",
+					data: `"${deltaManager.connectionManager.clientId}"`,
+					minimumSequenceNumber: 0,
+					sequenceNumber: seq++,
+					type: MessageType.ClientLeave,
+					clientSequenceNumber: 1,
+					referenceSequenceNumber: 1,
+					contents: "",
+					timestamp: 1,
+				};
+
+				deltaConnection.emitOp(docId, [leaveMessage]);
+				await new Promise((resolve) => {
+					deltaManager.on("connect", resolve);
+				});
+
+				assert.strictEqual(
+					deltaManager.connectionManager.connectionMode,
+					"read",
+					"new connection should be in read mode",
+				);
 			});
 		});
 	});

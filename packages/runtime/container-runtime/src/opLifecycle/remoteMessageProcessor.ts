@@ -8,6 +8,11 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import {
+	DataCorruptionError,
+	DataProcessingError,
+	extractSafePropertiesFromMessage,
+} from "@fluidframework/telemetry-utils/internal";
 
 import {
 	ContainerMessageType,
@@ -16,6 +21,7 @@ import {
 	type InboundSequencedRecentlyAddedContainerRuntimeMessage,
 } from "../messageTypes.js";
 import { asBatchMetadata } from "../metadata.js";
+import { pkgVersion } from "../packageVersion.js";
 
 import { OpDecompressor } from "./opDecompressor.js";
 import { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
@@ -68,6 +74,7 @@ export class RemoteMessageProcessor {
 		private readonly opSplitter: OpSplitter,
 		private readonly opDecompressor: OpDecompressor,
 		private readonly opGroupingManager: OpGroupingManager,
+		private readonly getClientId: () => string | undefined,
 	) {}
 
 	public get partialMessages(): ReadonlyMap<string, string[]> {
@@ -199,6 +206,42 @@ export class RemoteMessageProcessor {
 			return { batchEnded: true };
 		}
 		assert(batchMetadataFlag !== true, 0x9d6 /* Unexpected batch start marker */);
+
+		// Validate that the sequence numbers are contiguous. If there are non-runtime messages in the batch,
+		// the remote message processor isn't called and so it will appear like the batch is missing messages
+		// and this case will be hit.
+		const previousMessage =
+			this.batchInProgress.messages[this.batchInProgress.messages.length - 1];
+		if (
+			previousMessage !== undefined &&
+			message.sequenceNumber !== previousMessage.sequenceNumber + 1
+		) {
+			throw DataProcessingError.create(
+				"Received out-of-order messages in batch",
+				"validateBatchCorrectness",
+				message,
+				{
+					runtimeVersion: pkgVersion,
+					batchClientId: this.batchInProgress.clientId,
+					localBatch: this.batchInProgress.clientId === this.getClientId(),
+					localMessage: message.clientId === this.getClientId(),
+					previousMessageSequenceNumber: previousMessage.sequenceNumber,
+					...extractSafePropertiesFromMessage(message),
+				},
+			);
+		}
+
+		// Validate that all messages in the batch have the same clientId. Message from different clients
+		// cannot be part of the same batch.
+		if (message.clientId !== this.batchInProgress.clientId) {
+			throw new DataCorruptionError("Received messages from multiple clients in a batch", {
+				runtimeVersion: pkgVersion,
+				batchClientId: this.batchInProgress.clientId,
+				localBatch: this.batchInProgress.clientId === this.getClientId(),
+				localMessage: message.clientId === this.getClientId(),
+				...extractSafePropertiesFromMessage(message),
+			});
+		}
 
 		this.batchInProgress.messages.push(message);
 

@@ -19,10 +19,11 @@ import {
 	MockQuorumClients,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
-import { createSandbox } from "sinon";
+import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import type { ChannelCollection } from "../channelCollection.js";
 import { ContainerRuntime } from "../containerRuntime.js";
+import { DeltaScheduler } from "../deltaScheduler.js";
 import { ContainerMessageType } from "../messageTypes.js";
 
 describe("Runtime batching", () => {
@@ -52,17 +53,21 @@ describe("Runtime batching", () => {
 	let containerRuntime: ContainerRuntime;
 	let mockDeltaManager: MockDeltaManager;
 	let sandbox: sinon.SinonSandbox;
-	let containerRuntimeStub: sinon.SinonStub;
+	let clock: SinonFakeTimers;
 
 	/** Overwrites channelCollection property to make process a no-op */
-	function patchContainerRuntime(cr: ContainerRuntime) {
+	function patchContainerRuntime(
+		cr: ContainerRuntime,
+		process: () => void = () => {},
+	): sinon.SinonStub {
 		const patched = cr as unknown as Omit<ContainerRuntime, "channelCollection"> & {
 			channelCollection: Partial<ChannelCollection>;
 		};
-		return sandbox.stub(patched.channelCollection, "process").callsFake(() => {});
+		return sandbox.stub(patched.channelCollection, "process").callsFake(process);
 	}
 
 	before(() => {
+		clock = useFakeTimers();
 		sandbox = createSandbox();
 	});
 
@@ -75,21 +80,21 @@ describe("Runtime batching", () => {
 			runtimeOptions: {},
 			provideEntryPoint: mockProvideEntryPoint,
 		});
-		containerRuntimeStub = patchContainerRuntime(containerRuntime);
 	});
 
 	afterEach(() => {
-		containerRuntimeStub.restore();
+		clock.reset();
 	});
 
 	after(() => {
 		sandbox.restore();
+		clock.restore();
 	});
 
 	/**
 	 * Returns a batch of messages with the first and last message marked as batch start and end respectively.
 	 */
-	function getBatch(count: number): ISequencedDocumentMessage[] {
+	function getMessages(count: number): ISequencedDocumentMessage[] {
 		const messages: ISequencedDocumentMessage[] = [];
 		for (let i = 0; i < count; i++) {
 			messages.push({
@@ -108,8 +113,11 @@ describe("Runtime batching", () => {
 				timestamp: Date.now(),
 			} as unknown as ISequencedDocumentMessage);
 		}
-		messages[0].metadata = { batch: true };
-		messages[messages.length - 1].metadata = { batch: false };
+
+		if (count > 1) {
+			messages[0].metadata = { batch: true };
+			messages[messages.length - 1].metadata = { batch: false };
+		}
 		return messages;
 	}
 
@@ -138,106 +146,463 @@ describe("Runtime batching", () => {
 		}
 	}
 
-	it("successfully processes messages that are not part of batch", async () => {
-		const messageCount = 5;
-		const batch = getBatch(messageCount);
+	describe("Batch validation", () => {
+		let containerRuntimeStub: sinon.SinonStub;
 
-		// Remove the batch metadata essentially making the messages not part of a batch.
-		batch[0].metadata = undefined;
-		batch[messageCount - 1].metadata = undefined;
+		beforeEach(async () => {
+			containerRuntimeStub = patchContainerRuntime(containerRuntime);
+		});
 
-		assert.doesNotThrow(
-			() => processBatch(batch, containerRuntime),
-			"Non batch messages should be processed successfully",
-		);
+		afterEach(() => {
+			containerRuntimeStub.restore();
+		});
+
+		it("successfully processes messages that are not part of batch", async () => {
+			const messageCount = 5;
+			const batch = getMessages(messageCount);
+
+			// Remove the batch metadata essentially making the messages not part of a batch.
+			batch[0].metadata = undefined;
+			batch[messageCount - 1].metadata = undefined;
+
+			assert.doesNotThrow(
+				() => processBatch(batch, containerRuntime),
+				"Non batch messages should be processed successfully",
+			);
+		});
+
+		it("successfully processes a batch containing ops from a single client", async () => {
+			const messageCount = 5;
+			const batch = getMessages(messageCount);
+
+			assert.doesNotThrow(
+				() => processBatch(batch, containerRuntime),
+				"Batch from a single client should be processed successfully",
+			);
+		});
+
+		it("fails processing a batch with batch end but no batch start", async () => {
+			const messageCount = 5;
+			const batch = getMessages(messageCount);
+			// Remove the batch begin metadata.
+			batch[0].metadata = undefined;
+
+			assert.throws(
+				() => processBatch(batch, containerRuntime),
+				(e: Error) => validateAssertionError(e, "Unexpected batch end marker"),
+				"Batch end without batch start should fail",
+			);
+		});
+
+		it("fails processing a batch with multiple batch starts", async () => {
+			const messageCount = 5;
+			const batch = getMessages(messageCount);
+			batch[2].metadata = { batch: true };
+
+			assert.throws(
+				() => processBatch(batch, containerRuntime),
+				(e: Error) => validateAssertionError(e, "Unexpected batch start marker"),
+				"Batch with multiple batch starts should fail",
+			);
+		});
+
+		it("fails processing a batch containing ops from multiple clients", async () => {
+			const messageCount = 5;
+			const batch = getMessages(messageCount);
+			// Change the clientId of the second message to a different client.
+			batch[1].clientId = "otherClientId";
+
+			assert.throws(
+				() => processBatch(batch, containerRuntime),
+				(e: any) => {
+					assert(e.errorType === FluidErrorTypes.dataCorruptionError);
+					assert(e.message === "Received messages from multiple clients in a batch");
+					return true;
+				},
+				"Batch with ops from multiple clients should fail",
+			);
+		});
+
+		it("fails processing a batch containing a non-runtime op along with runtime ops", async () => {
+			const messageCount = 5;
+			const batch = getMessages(messageCount);
+			// Change the type of the second message to a non-runtime op.
+			batch[1].type = MessageType.NoOp;
+
+			assert.throws(
+				() => processBatch(batch, containerRuntime),
+				(e: any) => {
+					assert(e.errorType === FluidErrorTypes.dataProcessingError);
+					assert(e.message === "Received out-of-order messages in batch");
+					return true;
+				},
+				"Batch with non-runtime op along with runtime ops should fail",
+			);
+		});
+
+		it("fails processing a batch containing an unknown runtime op along with known ops", async () => {
+			const messageCount = 5;
+			const batch = getMessages(messageCount);
+
+			// Change the type of the second message to an unknown runtime op.
+			const unknownMessage = batch[1];
+			const unknownMessageType = "unknown";
+			(unknownMessage.contents as any).type = unknownMessageType;
+
+			assert.throws(
+				() => processBatch(batch, containerRuntime),
+				(e: any) => {
+					assert(e.errorType === FluidErrorTypes.dataProcessingError);
+					assert(e.message === "Runtime message of unknown type");
+					return true;
+				},
+				"Batch with unknown runtime op along with known ops should fail",
+			);
+		});
 	});
 
-	it("successfully processes a batch containing ops from a single client", async () => {
-		const messageCount = 5;
-		const batch = getBatch(messageCount);
+	describe("Delta scheduler for batches", () => {
+		// Function to process an inbound op. It adds delay to simulate time taken in processing an op.
+		function processOp() {
+			// Add delay such that each op takes greater than the DeltaScheduler's processing time to process.
+			// The times increases every time a batch is processed so simulate by increasing the delay.
+			clock.tick(DeltaScheduler.processingTime + deltaSchedulerTimeBuffer);
+			deltaSchedulerTimeBuffer += DeltaScheduler.processingTimeIncrement;
+		}
 
-		assert.doesNotThrow(
-			() => processBatch(batch, containerRuntime),
-			"Batch from a single client should be processed successfully",
-		);
-	});
+		let containerRuntimeStub: sinon.SinonStub;
+		let pauseSpy: sinon.SinonSpy;
+		let resumeSpy: sinon.SinonSpy;
+		let batchBeginCount = 0;
+		let batchEndCount = 0;
+		// This starts with the delta scheduler's processing time and increases after each batch is processed.
+		let deltaSchedulerTimeBuffer = DeltaScheduler.processingTimeIncrement;
 
-	it("fails processing a batch with batch end but no batch start", async () => {
-		const messageCount = 5;
-		const batch = getBatch(messageCount);
-		// Remove the batch begin metadata.
-		batch[0].metadata = undefined;
+		beforeEach(async () => {
+			containerRuntimeStub = patchContainerRuntime(containerRuntime, processOp);
+			pauseSpy = sandbox.spy(containerRuntime.deltaManager.inbound, "pause");
+			resumeSpy = sandbox.spy(containerRuntime.deltaManager.inbound, "resume");
+			containerRuntime.on("batchBegin", () => {
+				batchBeginCount++;
+			});
+			containerRuntime.on("batchEnd", () => {
+				batchEndCount++;
+			});
+		});
 
-		assert.throws(
-			() => processBatch(batch, containerRuntime),
-			(e: Error) => validateAssertionError(e, "batch presence was validated above"),
-			"Batch end without batch start should fail",
-		);
-	});
+		afterEach(() => {
+			containerRuntimeStub.restore();
+			pauseSpy.restore();
+			resumeSpy.restore();
+			batchBeginCount = 0;
+			batchEndCount = 0;
+			deltaSchedulerTimeBuffer = DeltaScheduler.processingTimeIncrement;
+		});
 
-	it("fails processing a batch with multiple batch starts", async () => {
-		const messageCount = 5;
-		const batch = getBatch(messageCount);
-		batch[2].metadata = { batch: true };
+		it("batch messages that take longer than DeltaScheduler's processing time to process", async () => {
+			const messageCount = 5;
+			const batch = getMessages(messageCount);
 
-		assert.throws(
-			() => processBatch(batch, containerRuntime),
-			(e: Error) => validateAssertionError(e, "there can't be active batch"),
-			"Batch with multiple batch starts should fail",
-		);
-	});
+			assert.doesNotThrow(
+				() => processBatch(batch, containerRuntime),
+				"Batch should be processed successfully",
+			);
 
-	it("fails processing a batch containing ops from multiple clients", async () => {
-		const messageCount = 5;
-		const batch = getBatch(messageCount);
-		// Change the clientId of the second message to a different client.
-		batch[1].clientId = "otherClientId";
+			// The inbound queue should not have paused or resumed because the batch messages are
+			// processed together without yielding.
+			// Batch begin and end should emit once for the entire batch.
+			assert(pauseSpy.notCalled, "Inbound queue should not have paused");
+			assert(resumeSpy.notCalled, "Inbound queue should not have resumed");
+			assert.strictEqual(batchBeginCount, 1, "Batch begin should have been emitted once");
+			assert.strictEqual(batchEndCount, 1, "Batch end should have been emitted once");
+		});
 
-		assert.throws(
-			() => processBatch(batch, containerRuntime),
-			(e: any) => {
-				assert(e.errorType === FluidErrorTypes.dataCorruptionError);
-				assert(e.message === "OpBatchIncomplete");
-				return true;
+		it("non-batch messages that take longer than DeltaScheduler's processing time to process", async () => {
+			const messageCount = 5;
+			const batch = getMessages(messageCount);
+			batch[0].metadata = undefined;
+			batch[messageCount - 1].metadata = undefined;
+
+			assert.doesNotThrow(
+				() => processBatch(batch, containerRuntime),
+				"Batch should be processed successfully",
+			);
+
+			// The inbound queue should have paused and resumed 4 times. It doesn't pause for the final message
+			// because there is nothing else to process in the queue.
+			// Batch begin and end should emit for each message which are treated as batches with single message.
+			assert.strictEqual(pauseSpy.callCount, 4, "Inbound queue should have paused 4 times");
+			assert.strictEqual(resumeSpy.callCount, 4, "Inbound queue should have resumed 4 times");
+			assert.strictEqual(batchBeginCount, 5, "Batch begin should have been emitted 5 times");
+			assert.strictEqual(batchEndCount, 5, "Batch end should have been emitted 4 times");
+		});
+
+		it(
+			`non-batch message followed by batch messages that take longer than ` +
+				`DeltaScheduler's processing time to process`,
+			async () => {
+				const message1 = getMessages(1);
+				const batch1 = getMessages(5);
+				const batch = [...message1, ...batch1];
+
+				assert.doesNotThrow(
+					() => processBatch(batch, containerRuntime),
+					"Batch should be processed successfully",
+				);
+
+				// The inbound queue should have paused and resumed once after processing the non-batch message but
+				// not for the individual batch messages. After the batch is processed, there is nothing left to process.
+				// Batch begin and end should emit for the non-batch message and then for the batch.
+				assert(pauseSpy.calledOnce, "Inbound queue should have paused once");
+				assert(resumeSpy.calledOnce, "Inbound queue should have resumed once");
+				assert.strictEqual(batchBeginCount, 2, "Batch begin should have been emitted twice");
+				assert.strictEqual(batchEndCount, 2, "Batch end should have been emitted twice");
 			},
-			"Batch with ops from multiple clients should fail",
+		);
+
+		it(
+			`Batch messages followed by non-batch message that take longer than ` +
+				`DeltaScheduler's processing time to process`,
+			async () => {
+				const batch1 = getMessages(5);
+				const message1 = getMessages(1);
+				const batch = [...batch1, ...message1];
+
+				assert.doesNotThrow(
+					() => processBatch(batch, containerRuntime),
+					"Batch should be processed successfully",
+				);
+
+				// The inbound queue should have paused and resumed once after processing the entire batch but
+				// not for the individual batch messages. It should also not happen after processing the non-batch
+				// message because there is nothing left to process.
+				// Batch begin and end should emit for the non-batch message and then for the batch.
+				assert(pauseSpy.calledOnce, "Inbound queue should have paused once");
+				assert(resumeSpy.calledOnce, "Inbound queue should have resumed once");
+				assert.strictEqual(batchBeginCount, 2, "Batch begin should have been emitted twice");
+				assert.strictEqual(batchEndCount, 2, "Batch end should have been emitted twice");
+			},
 		);
 	});
 
-	it("fails processing a batch containing a non-runtime op along with runtime ops", async () => {
-		const messageCount = 5;
-		const batch = getBatch(messageCount);
-		// Change the type of the second message to a non-runtime op.
-		batch[1].type = MessageType.NoOp;
+	describe("Batch begin and end", () => {
+		let batchBeginCount = 0;
+		let batchEndCount = 0;
+		let containerRuntimeStub: sinon.SinonStub;
+		let schedulerBatchBeginStub: sinon.SinonStub;
+		let schedulerBatchEndStub: sinon.SinonStub;
 
-		assert.throws(
-			() => processBatch(batch, containerRuntime),
-			(e: any) => {
-				assert(e.errorType === FluidErrorTypes.dataProcessingError);
-				assert(e.message === "Received a system message during batch processing");
-				return true;
-			},
-			"Batch with non-runtime op along with runtime ops should fail",
-		);
-	});
+		type ContainerRuntimeWithScheduler = Omit<ContainerRuntime, "deltaScheduler"> & {
+			deltaScheduler: DeltaScheduler;
+		};
 
-	it("fails processing a batch containing an unknown runtime op along with known ops", async () => {
-		const messageCount = 5;
-		const batch = getBatch(messageCount);
+		beforeEach(async () => {
+			const containerRuntimeWithDeltaScheduler =
+				containerRuntime as unknown as ContainerRuntimeWithScheduler;
+			schedulerBatchBeginStub = sandbox.stub(
+				containerRuntimeWithDeltaScheduler.deltaScheduler,
+				"batchBegin",
+			);
+			schedulerBatchEndStub = sandbox.stub(
+				containerRuntimeWithDeltaScheduler.deltaScheduler,
+				"batchEnd",
+			);
+			containerRuntimeStub = patchContainerRuntime(containerRuntime);
+			containerRuntime.on("batchBegin", () => {
+				batchBeginCount++;
+			});
+			containerRuntime.on("batchEnd", () => {
+				batchEndCount++;
+			});
+		});
 
-		// Change the type of the second message to an unknown runtime op.
-		const unknownMessage = batch[1];
-		const unknownMessageType = "unknown";
-		(unknownMessage.contents as any).type = unknownMessageType;
+		afterEach(() => {
+			containerRuntimeStub.restore();
+			batchBeginCount = 0;
+			batchEndCount = 0;
+		});
 
-		assert.throws(
-			() => processBatch(batch, containerRuntime),
-			(e: any) => {
-				assert(e.errorType === FluidErrorTypes.dataProcessingError);
-				assert(e.message === "Runtime message of unknown type");
-				return true;
-			},
-			"Batch with unknown runtime op along with known ops should fail",
-		);
+		function setupOpProcessingFailure() {
+			containerRuntime.once("op", () => {
+				throw new Error("Failed processing op in test");
+			});
+		}
+
+		function validateBatchBeginAndEnd(schedulerCalled: boolean = true) {
+			assert.strictEqual(batchBeginCount, 1, "Batch begin should have been emitted once");
+			assert.strictEqual(batchEndCount, 1, "Batch end should have been emitted once");
+			if (!schedulerCalled) {
+				return;
+			}
+			assert(
+				schedulerBatchBeginStub.calledOnce,
+				"Delta scheduler batch begin should have been called once",
+			);
+			assert(
+				schedulerBatchEndStub.calledOnce,
+				"Delta scheduler batch end should have been called once",
+			);
+		}
+
+		it("handles batch begin and end for successfully processing modern runtime messages", async () => {
+			const modernRuntimeMessage = {
+				type: MessageType.Operation,
+				clientId: mockClientId,
+				sequenceNumber: 1,
+				minimumSequenceNumber: 0,
+				contents: {
+					type: ContainerMessageType.FluidDataStoreOp,
+					contents: {
+						address: "address",
+						contents: "dummy content",
+					},
+				},
+				clientSequenceNumber: 1,
+				timestamp: Date.now(),
+			} as unknown as ISequencedDocumentMessage;
+			assert.doesNotThrow(
+				() => containerRuntime.process(modernRuntimeMessage, false /* local */),
+				"Message processing should have succeeded",
+			);
+
+			validateBatchBeginAndEnd();
+		});
+
+		it("handles batch begin and end for failed processing of modern runtime messages", async () => {
+			setupOpProcessingFailure();
+			const modernRuntimeMessage = {
+				type: MessageType.Operation,
+				clientId: mockClientId,
+				sequenceNumber: 1,
+				minimumSequenceNumber: 0,
+				contents: {
+					type: ContainerMessageType.FluidDataStoreOp,
+					contents: {
+						address: "address",
+						contents: "dummy content",
+					},
+				},
+				clientSequenceNumber: 1,
+				timestamp: Date.now(),
+			} as unknown as ISequencedDocumentMessage;
+			assert.throws(
+				() => containerRuntime.process(modernRuntimeMessage, false /* local */),
+				(e: Error) => validateAssertionError(e, "Failed processing op in test"),
+				"Message processing should have failed",
+			);
+
+			validateBatchBeginAndEnd();
+		});
+
+		it("handles batch begin and end for successfully processing legacy runtime messages", async () => {
+			const legacyMessage = {
+				type: ContainerMessageType.FluidDataStoreOp,
+				clientId: mockClientId,
+				sequenceNumber: 1,
+				minimumSequenceNumber: 0,
+				contents: {
+					address: "address",
+					contents: "dummy content",
+				},
+				clientSequenceNumber: 1,
+				timestamp: Date.now(),
+			} as unknown as ISequencedDocumentMessage;
+
+			assert.doesNotThrow(
+				() => containerRuntime.process(legacyMessage, false /* local */),
+				"Non batch messages should be processed successfully",
+			);
+
+			validateBatchBeginAndEnd();
+		});
+
+		it("handles batch begin and end for failed processing of legacy runtime messages", async () => {
+			setupOpProcessingFailure();
+			const legacyMessage = {
+				type: ContainerMessageType.FluidDataStoreOp,
+				clientId: mockClientId,
+				sequenceNumber: 1,
+				minimumSequenceNumber: 0,
+				contents: {
+					address: "address",
+					contents: "dummy content",
+				},
+				clientSequenceNumber: 1,
+				timestamp: Date.now(),
+			} as unknown as ISequencedDocumentMessage;
+
+			assert.throws(
+				() => containerRuntime.process(legacyMessage, false /* local */),
+				(e: Error) => validateAssertionError(e, "Failed processing op in test"),
+				"Message processing should have failed",
+			);
+
+			validateBatchBeginAndEnd();
+		});
+
+		it("handles batch begin and end for successfully processing non runtime messages", async () => {
+			const nonRuntimeMessage = {
+				type: MessageType.Summarize,
+				clientId: mockClientId,
+				sequenceNumber: 1,
+				minimumSequenceNumber: 0,
+				contents: {
+					handle: "test-handle",
+				},
+				clientSequenceNumber: 1,
+				timestamp: Date.now(),
+			} as unknown as ISequencedDocumentMessage;
+
+			assert.doesNotThrow(
+				() => containerRuntime.process(nonRuntimeMessage, false /* local */),
+				"Non batch messages should be processed successfully",
+			);
+
+			validateBatchBeginAndEnd();
+		});
+
+		it("handles batch begin and end for failed processing of non runtime messages", async () => {
+			setupOpProcessingFailure();
+			const nonRuntimeMessage = {
+				type: MessageType.Summarize,
+				clientId: mockClientId,
+				sequenceNumber: 1,
+				minimumSequenceNumber: 0,
+				contents: {
+					handle: "test-handle",
+				},
+				clientSequenceNumber: 1,
+				timestamp: Date.now(),
+			} as unknown as ISequencedDocumentMessage;
+
+			assert.throws(
+				() => containerRuntime.process(nonRuntimeMessage, false /* local */),
+				(e: Error) => validateAssertionError(e, "Failed processing op in test"),
+				"Message processing should have failed",
+			);
+
+			validateBatchBeginAndEnd();
+		});
+
+		it("handles batch begin and end for successfully processing empty batch", async () => {
+			const emptyBatch = {
+				type: MessageType.Operation,
+				clientId: mockClientId,
+				sequenceNumber: 1,
+				minimumSequenceNumber: 0,
+				clientSequenceNumber: 1,
+				contents: {
+					type: "groupedBatch",
+					contents: [],
+				},
+			} as unknown as ISequencedDocumentMessage;
+
+			assert.doesNotThrow(
+				() => containerRuntime.process(emptyBatch, false /* local */),
+				"Non batch messages should be processed successfully",
+			);
+
+			validateBatchBeginAndEnd(false /* schedulerCalled */);
+		});
 	});
 });
