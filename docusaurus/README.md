@@ -156,11 +156,10 @@ The replacement syntax to use in `.mdx` files would be:
 
 ## TODOs
 
--   Fix API docs hierarchy (kludge)
 -   Figure out solution to markdown-magic in mdx (html comment syntax not supported)
 -   Link check doesn't handle custom heading anchors - maybe there is a plugin for this?
--   Add prettier
--   Add markdown-lint
+-   Add prettier (wait until after merge to reduce diff noise)
+-   Add markdown-lint (same as above)
 -   Add eslint for components
 -   Inject Docusaurus front-matter in generated API docs
 -   Verify high contrast support
