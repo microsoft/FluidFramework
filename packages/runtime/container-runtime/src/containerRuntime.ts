@@ -1265,7 +1265,6 @@ export class ContainerRuntime
 		ISequencedDocumentMessage,
 		IDocumentMessage
 	>;
-	private lastSeenMinimumSequenceNumber: number = -1;
 
 	// internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
 	private readonly mc: MonitoringContext;
@@ -2800,12 +2799,6 @@ export class ContainerRuntime
 			messageWithContext.message.minimumSequenceNumber =
 				this.deltaManager.minimumSequenceNumber;
 		}
-
-		assert(
-			message.minimumSequenceNumber >= this.lastSeenMinimumSequenceNumber,
-			"Minimum sequence number should always be non-decreasing",
-		);
-		this.lastSeenMinimumSequenceNumber = message.minimumSequenceNumber;
 
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
