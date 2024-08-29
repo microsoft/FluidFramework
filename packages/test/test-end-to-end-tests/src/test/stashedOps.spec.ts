@@ -2086,16 +2086,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				},
 			],
 			async function () {
-				//* TODO: Fix the parallel logic and remove this
-				//* Try connecting while Outbound Queues are paused,
-				//* then resuming them together once both are connected
-				// The code below attempts to force both containers to submit the same op in parallel,
-				// but it is not correct.  It works out in Local Server but not real servers,
-				// so skip for now.
-				if (provider.driver.type !== "local") {
-					this.skip();
-				}
-
 				const incrementValue = 3;
 				const pendingLocalState = await getPendingOps(
 					testContainerConfig,
@@ -2196,7 +2186,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				// Container 3
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					category: "generic", //* REVERT
+					category: "error",
 					errorType: "dataProcessingError",
 				},
 			],
@@ -2227,11 +2217,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				await assert.rejects(
 					async () => {
 						// We expect either loader.resolve to throw or else the container to close right after load
-						const container = await loader.resolve({ url }, pendingLocalState);
+						const container3 = await loader.resolve({ url }, pendingLocalState);
 
 						// This is to workaround a race condition in Container.load where the container might close between microtasks
 						// such that it resolves to the closed container rather than rejecting as it's supposed to.
-						if (container.closed) {
+						if (container3.closed) {
 							// If the container is closed, assume it was due to the right error until the bug mentioned above is fixed
 							throw new Error(
 								"Forked Container Error! Matching batchIds but mismatched clientId",
@@ -2239,7 +2229,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 						}
 
 						await timeoutPromise((_resolve, reject) => {
-							container.once("closed", reject);
+							container3.once("closed", reject);
 						});
 					},
 					{ message: "Forked Container Error! Matching batchIds but mismatched clientId" },
