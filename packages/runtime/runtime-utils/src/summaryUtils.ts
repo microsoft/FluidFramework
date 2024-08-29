@@ -167,11 +167,14 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	private readonly groupId?: string;
 
 	public get summary(): ISummaryTree {
-		return {
+		const summary: ISummaryTree = {
 			type: SummaryType.Tree,
 			tree: { ...this.summaryTree },
-			groupId: this.groupId,
 		};
+		if (this.groupId !== undefined) {
+			summary.groupId = this.groupId;
+		}
+		return summary;
 	}
 
 	public get stats(): Readonly<ISummaryStats> {
