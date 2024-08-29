@@ -35,7 +35,7 @@ const config: Config = {
 	plugins: [
 		// https://github.com/praveenn77/docusaurus-lunr-search
 		"docusaurus-lunr-search",
-		'docusaurus-plugin-sass',
+		"docusaurus-plugin-sass",
 	],
 	presets: [
 		[
@@ -108,41 +108,7 @@ const config: Config = {
 				},
 			],
 		},
-		footer: {
-			style: "dark",
-			links: [
-				{
-					label: "Follow @fluidframework",
-					href: "https://twitter.com/fluidframework",
-				},
-				{
-					label: "GitHub",
-					href: githubUrl,
-				},
-				{
-					label: "Privacy",
-					href: "https://privacy.microsoft.com/privacystatement",
-				},
-				{
-					label: "Consumer Health Privacy",
-					href: "https://go.microsoft.com/fwlink/?linkid=2259814",
-				},
-				{
-					label: "Terms of Use",
-					href: "https://www.microsoft.com/legal/terms-of-use",
-				},
-				{
-					label: "License",
-					href: "https://github.com/microsoft/FluidFramework/blob/main/LICENSE",
-				},
-			],
-			logo: {
-				src: "https://fluidframework-docs-cdn.azureedge.net/static/images/microsoft-logo.png",
-				href: "https://www.microsoft.com/",
-				width: 130,
-			},
-			copyright: `Copyright © ${new Date().getFullYear()} Microsoft`,
-		},
+		// Note: we have configured a custom footer component. See src/theme/Footer/index.tsx.
 		prism: {
 			theme: prismThemes.github,
 			darkTheme: prismThemes.dracula,

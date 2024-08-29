@@ -28,3 +28,26 @@
 	--ifm-color-primary-lightest: #3cd3ff;
 	--docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
+
+.footer {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
+
+.footer-social {
+	display: flex;
+	flex-direction: column;
+}
+
+.footer-copyright {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.footer-privacy {
+	display: flex;
+	flex-direction: column;
+}
