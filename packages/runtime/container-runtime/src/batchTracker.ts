@@ -119,15 +119,16 @@ export class DuplicateBatchDetector {
 
 		// Check this batch against the tracked batchIds to see if it's a duplicate
 		if (this.batchIdsAll.has(batchId)) {
+			assert(
+				this.batchIdBySeqNum.has(sequenceNumber),
+				"Shouldn't add a batchId that's already tracked",
+			);
+
 			//* Or return the info for logging?  Or log here?
 			return true;
 		}
 
 		//* Add it after checking to avoid finding itself
-		this.addBatchId(batchId, sequenceNumber);
-	}
-
-	private addBatchId(batchId: string, sequenceNumber: number) {
 		assert(
 			!this.batchIdBySeqNum.has(sequenceNumber),
 			"Shouldn't add a batchId that's already tracked",

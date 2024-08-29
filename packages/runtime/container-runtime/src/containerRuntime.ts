@@ -2681,9 +2681,26 @@ export class ContainerRuntime
 				return;
 			}
 
-			//* Fill out this error and probably log too
+			//* MAYBE: Move to RMP
 			if (this.duplicateBatchDetector.processInboundBatch(inboundBatch)) {
-				throw new DataCorruptionError("Duplicate batch", {});
+				const error = new DataCorruptionError(
+					"Duplicate batch - The same batch was sequenced twice",
+					{},
+				);
+
+				this.mc.logger.sendErrorEvent(
+					{
+						eventName: "DuplicateBatch",
+						details: {
+							batchId: inboundBatch.batchId,
+							clientId: inboundBatch.clientId,
+							batchStartCsn: inboundBatch.batchStartCsn,
+							size: inboundBatch.messages.length,
+						},
+					},
+					error,
+				);
+				throw error;
 			}
 
 			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
