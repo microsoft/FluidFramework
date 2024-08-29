@@ -273,3 +273,81 @@ describe("sharedTreeDiff - Object - Create Diffs", () => {
 		);
 	});
 });
+
+describe("sharedTreeDiff - Object - Remove Diffs", () => {
+
+	it("remove optional boolean primitive value", () => {
+		const treeNode = new TestOptionalObjectTreeNode({optionalBoolean: true  });
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>,  {});
+		assert.deepStrictEqual(diffs,
+			[
+				{
+					type: "REMOVE",
+					path: ["optionalBoolean"],
+					oldValue: true,
+				},
+			]
+		);
+	});
+
+	it("remove optional string primitive value", () => {
+		const treeNode = new TestOptionalObjectTreeNode({ optionalString: 'true' });
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>,  {});
+		assert.deepStrictEqual(diffs,
+			[
+				{
+					type: "REMOVE",
+					path: ["optionalString"],
+					oldValue: 'true',
+				},
+			]
+		);
+	});
+
+	it("remove optional number primitive value", () => {
+		const treeNode = new TestOptionalObjectTreeNode({ optionalNumber: 1 });
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>,  {});
+		assert.deepStrictEqual(diffs,
+			[
+				{
+					type: "REMOVE",
+					path: ["optionalNumber"],
+					oldValue: 1,
+				},
+			]
+		);
+	});
+
+	it("remove optional array value", () => {
+		class ArrayNode extends schemaFactory.array("ArrayTreeNode", [schemaFactory.string]) {}
+		class TestOptionalObjectTreeNode2 extends schemaFactory.object("OptionalTreeNode2", {
+			optionalArray: schemaFactory.optional(ArrayNode),
+		}) {}
+		const arrayNode = new ArrayNode([]);
+		const treeNode = new TestOptionalObjectTreeNode2({ optionalArray: arrayNode });
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>,  {});
+		assert.deepStrictEqual(diffs,
+			[
+				{
+					type: "REMOVE",
+					path: ["optionalArray"],
+					oldValue: arrayNode,
+				},
+			]
+		);
+	});
+
+	it("remove optional object value", () => {
+		const treeNode = new TestOptionalObjectTreeNode({ optionalObject: {requiredString: "test"} });
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>,  {});
+		assert.deepStrictEqual(diffs,
+			[
+				{
+					type: "REMOVE",
+					path: ["optionalObject"],
+					oldValue: {requiredString: "test"} ,
+				},
+			]
+		);
+	});
+});
