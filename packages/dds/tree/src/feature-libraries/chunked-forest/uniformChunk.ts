@@ -20,6 +20,7 @@ import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUti
 
 import { type ChunkedCursor, type TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
 import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id-compressor";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Create a tree chunk with ref count 1.
@@ -102,7 +103,9 @@ export class TreeShape {
 	 * @param type - {@link TreeNodeSchemaIdentifier} used to compare shapes.
 	 * @param hasValue - whether or not the TreeShape has a value.
 	 * @param fieldsArray - an array of {@link FieldShape} values, which contains a TreeShape for each FieldKey.
+	 * 
 	 * @param maybeDecompressedStringAsNumber - used to check whether or not the value could have been compressed by the idCompressor.
+	 * This flag can only be set on string leaf nodes, and will throw a usage error otherwise.
 	 * If set to true, an additional check can be made (example: getting the value of {@link Cursor}) to return the original uncompressed value.
 	 */
 	public constructor(
@@ -111,6 +114,12 @@ export class TreeShape {
 		public readonly fieldsArray: readonly FieldShape[],
 		public readonly maybeDecompressedStringAsNumber: boolean = false,
 	) {
+		if(maybeDecompressedStringAsNumber){
+			if(!(hasValue && type === "com.fluidframework.leaf.string")){
+				throw new UsageError("maybeDecompressedStringAsNumber flag can only be set to true for string leaf node.")
+				
+			}
+		}
 		const fields: Map<FieldKey, OffsetShape> = new Map();
 		let numberOfValues = hasValue ? 1 : 0;
 		const infos: NodePositionInfo[] = [
@@ -534,6 +543,8 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	public get value(): Value {
 		const idCompressor = this.chunk.idCompressor;
 		const info = this.nodeInfo(CursorLocationType.Nodes);
+		// If the maybeDecompressedStringAsNumber flag is set to true, we check if the value is a number.
+		// This flag can only ever be set on string leaf nodes, so if the value is a number, we can assume it is a compressible, known stable id.
 		if (info.shape.hasValue && info.shape.maybeDecompressedStringAsNumber) {
 			const value = this.chunk.values[info.valueOffset];
 			if (typeof value === "number" && idCompressor !== undefined) {
