@@ -39,7 +39,9 @@ export interface InboundBatch {
 	readonly batchStartCsn: number;
 	/**
 	 * The first message in the batch, or if the batch is empty, the empty grouped batch message
-	 * Used for accessing the sequence numbers for the (start of the) batch
+	 * Used for accessing the sequence numbers for the (start of the) batch.
+	 *
+	 * @remarks Do not use clientSequenceNumber here, use batchStartCsn instead.
 	 */
 	readonly keyMessage: ISequencedDocumentMessage;
 }
