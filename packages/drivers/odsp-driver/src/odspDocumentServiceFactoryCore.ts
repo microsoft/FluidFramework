@@ -32,7 +32,7 @@ import {
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { runWithModule } from "./createFile/index.js";
+import { useCreateNewModule } from "./createFile/index.js";
 import { ICacheAndTracker, createOdspCacheAndTracker } from "./epochTracker.js";
 import {
 	INonPersistentCache,
@@ -174,7 +174,7 @@ export class OdspDocumentServiceFactoryCore
 					resolvedUrlData,
 					this.getStorageToken,
 				);
-				const _odspResolvedUrl = await runWithModule(odspLogger, async (module) => {
+				const _odspResolvedUrl = await useCreateNewModule(odspLogger, async (module) => {
 					return isNewFileInfo(fileInfo)
 						? module.createNewFluidFile(
 								getAuthHeader,

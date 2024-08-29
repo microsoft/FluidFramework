@@ -43,7 +43,7 @@ import {
 	ISnapshotCachedEntry2,
 	IVersionedValueWithEpoch,
 } from "./contracts.js";
-import { runWithModule } from "./createFile/index.js";
+import { useCreateNewModule } from "./createFile/index.js";
 import { EpochTracker } from "./epochTracker.js";
 import {
 	ISnapshotRequestAndResponseOptions,
@@ -781,7 +781,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				"temporaryFileName should only be set for new file creation in the empty file create flow",
 			);
 
-			await runWithModule(this.logger, async (m) =>
+			await useCreateNewModule(this.logger, async (m) =>
 				m.renameEmptyFluidFile(
 					this.getAuthHeader,
 					this.odspResolvedUrl,

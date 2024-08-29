@@ -5,7 +5,7 @@
 
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-export async function runWithModule<T = void>(
+export async function useCreateNewModule<T = void>(
 	odspLogger: ITelemetryLoggerExt,
 	func: (
 		m: typeof import("./createNewModule.js") /* webpackChunkName: "createNewModule" */,
