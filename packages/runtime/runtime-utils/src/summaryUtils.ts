@@ -147,16 +147,30 @@ export function addSummarizeResultToSummary(
 }
 
 /**
+ * An object who's properties are used to initialize a {@link SummaryTreeBuilder}
+ * @legacy
+ * @alpha
+ */
+export interface SummaryTreeBuilderParams {
+	/**
+	 * This value will become the {@link @fluidframework/driver-definitions#ISummaryTree.groupId}
+	 * of the {@link @fluidframework/driver-definitions#ISummaryTree} built by the {@link SummaryTreeBuilder}.
+	 */
+	groupId?: string;
+}
+/**
  * @legacy
  * @alpha
  */
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	private attachmentCounter: number = 0;
+	private readonly groupId?: string;
 
 	public get summary(): ISummaryTree {
 		return {
 			type: SummaryType.Tree,
 			tree: { ...this.summaryTree },
+			groupId: this.groupId,
 		};
 	}
 
@@ -164,9 +178,10 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 		return { ...this.summaryStats };
 	}
 
-	constructor() {
+	constructor(params?: { groupId?: string }) {
 		this.summaryStats = mergeStats();
 		this.summaryStats.treeNodeCount++;
+		this.groupId = params?.groupId;
 	}
 
 	private readonly summaryTree: { [path: string]: SummaryObject } = {};
