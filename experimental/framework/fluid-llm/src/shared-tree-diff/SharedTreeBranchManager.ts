@@ -152,6 +152,9 @@ export class SharedTreeBranchManager {
 		return unappliedDiffs;
 	}
 
+	/**
+	 * Applies an individual diff to the objectToUpdate.
+	 */
 	public applyDiff(
 		diff: Difference,
 		objectToUpdate: Record<string, unknown> | TreeArrayNode,
@@ -200,7 +203,6 @@ export class SharedTreeBranchManager {
 					}
 				}
 				case "REMOVE": {
-					// Todo: Should we double check if the value at the index is the same as the value in the diff?
 					if (isTargetIndexValid) {
 						targetObject.removeAt(targetIndex);
 						return true;

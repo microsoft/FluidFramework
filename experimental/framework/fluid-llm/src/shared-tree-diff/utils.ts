@@ -9,9 +9,7 @@ export function isTreeMapNode(obj: unknown): obj is TreeMapNode {
 	if (typeof obj === "object" && obj !== null) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const maybeNodeKind: unknown = Object.getPrototypeOf(obj)?.constructor?.kind;
-		if (maybeNodeKind === NodeKind.Map) {
-			return true;
-		}
+		return maybeNodeKind === NodeKind.Map
 	}
 	return false;
 }
@@ -23,9 +21,7 @@ export function isTreeArrayNode(obj: unknown): obj is TreeArrayNode {
 	if (typeof obj === "object" && obj !== null) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const maybeNodeKind: unknown = Object.getPrototypeOf(obj)?.constructor?.kind;
-		if (maybeNodeKind === NodeKind.Array) {
-			return true;
-		}
+		return maybeNodeKind === NodeKind.Array;
 	}
 	return false;
 }
