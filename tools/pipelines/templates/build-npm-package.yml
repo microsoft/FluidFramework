@@ -407,7 +407,7 @@ extends:
                         condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
                         inputs:
                           checkCoverage: true
-                          coverageFailOption: 'build'
+                          coverageFailOption: 'fixed'
                           coverageType: 'lines'
                           coverageThreshold: '85'
                           useDiffCoverage: true
