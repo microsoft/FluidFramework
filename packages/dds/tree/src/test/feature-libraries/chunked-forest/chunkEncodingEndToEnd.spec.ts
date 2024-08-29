@@ -312,17 +312,15 @@ describe("End to end chunked encoding", () => {
 		it("In memory identifier encoding", () => {
 			const identifierField: FieldKey = brand("identifier");
 			const nonIdentifierField: FieldKey = brand("nonIdentifierField");
-			const unknownStableIdField: FieldKey = brand("unknownIdField")
+			const unknownStableIdField: FieldKey = brand("unknownIdField");
 
 			const stringShape = new TreeShape(brand(stringSchema.identifier), true, [], true);
 
 			const identifierParent: FieldKey = brand("identifierParent");
 
-			const identifierShape = new TreeShape(
-				brand(JsonObject.identifier),
-				false,
-				[[identifierField, stringShape, 1]],
-			);
+			const identifierShape = new TreeShape(brand(JsonObject.identifier), false, [
+				[identifierField, stringShape, 1],
+			]);
 
 			const parentNodeWithIdentifiersShape = new TreeShape(
 				brand(JsonObject.identifier),
@@ -330,15 +328,15 @@ describe("End to end chunked encoding", () => {
 				[
 					[identifierParent, identifierShape, 1],
 					[nonIdentifierField, stringShape, 1],
-					[unknownStableIdField, stringShape, 1]
+					[unknownStableIdField, stringShape, 1],
 				],
 			);
 
 			const id = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 
 			// Create a stable id from a different source.
-			const nodeKeyManager = new MockNodeKeyManager()
-			const unknownStableId = nodeKeyManager.generateStableNodeKey()
+			const nodeKeyManager = new MockNodeKeyManager();
+			const unknownStableId = nodeKeyManager.generateStableNodeKey();
 
 			const initialTree = {
 				type: brand(JsonObject.identifier),
@@ -370,7 +368,7 @@ describe("End to end chunked encoding", () => {
 			assert.deepEqual(chunk.values, [
 				testIdCompressor.tryRecompress(id),
 				"nonIdentifierValue",
-				unknownStableId
+				unknownStableId,
 			]);
 
 			const jsonableTree = mapCursorField(chunk.cursor(), jsonableTreeFromCursor);

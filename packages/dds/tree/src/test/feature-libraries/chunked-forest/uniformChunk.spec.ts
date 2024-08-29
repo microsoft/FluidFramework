@@ -65,14 +65,16 @@ describe("uniformChunk", () => {
 				validateShape(tree.dataFactory().shape);
 			});
 		}
-		it("shape with maybeCompressedStringAsNumber flag set to true fails if it is not a string leaf node.", ()=>{
-			const validShapeWithFlag = new TreeShape(brand(stringSchema.identifier), true, [], true)
+		it("shape with maybeCompressedStringAsNumber flag set to true fails if it is not a string leaf node.", () => {
+			const validShapeWithFlag = new TreeShape(brand(stringSchema.identifier), true, [], true);
 			// Test that a non string leaf node shape with maybeCompressedStringAsNumber set to true fails.
 			assert.throws(
-				() => (new TreeShape(brand(numberSchema.identifier), true, [], true)),
-				validateUsageError(/maybeDecompressedStringAsNumber flag can only be set to true for string leaf node./),
+				() => new TreeShape(brand(numberSchema.identifier), true, [], true),
+				validateUsageError(
+					/maybeDecompressedStringAsNumber flag can only be set to true for string leaf node./,
+				),
 			);
-		})
+		});
 	});
 
 	testSpecializedFieldCursor<TreeChunk, ITreeCursorSynchronous>({

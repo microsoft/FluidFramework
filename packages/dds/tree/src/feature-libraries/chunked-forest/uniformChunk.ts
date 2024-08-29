@@ -103,7 +103,7 @@ export class TreeShape {
 	 * @param type - {@link TreeNodeSchemaIdentifier} used to compare shapes.
 	 * @param hasValue - whether or not the TreeShape has a value.
 	 * @param fieldsArray - an array of {@link FieldShape} values, which contains a TreeShape for each FieldKey.
-	 * 
+	 *
 	 * @param maybeDecompressedStringAsNumber - used to check whether or not the value could have been compressed by the idCompressor.
 	 * This flag can only be set on string leaf nodes, and will throw a usage error otherwise.
 	 * If set to true, an additional check can be made (example: getting the value of {@link Cursor}) to return the original uncompressed value.
@@ -114,10 +114,11 @@ export class TreeShape {
 		public readonly fieldsArray: readonly FieldShape[],
 		public readonly maybeDecompressedStringAsNumber: boolean = false,
 	) {
-		if(maybeDecompressedStringAsNumber){
-			if(!(hasValue && type === "com.fluidframework.leaf.string")){
-				throw new UsageError("maybeDecompressedStringAsNumber flag can only be set to true for string leaf node.")
-				
+		if (maybeDecompressedStringAsNumber) {
+			if (!(hasValue && type === "com.fluidframework.leaf.string")) {
+				throw new UsageError(
+					"maybeDecompressedStringAsNumber flag can only be set to true for string leaf node.",
+				);
 			}
 		}
 		const fields: Map<FieldKey, OffsetShape> = new Map();
