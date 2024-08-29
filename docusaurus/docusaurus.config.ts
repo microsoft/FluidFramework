@@ -33,13 +33,9 @@ const config: Config = {
 		locales: ["en"],
 	},
 	plugins: [
-		[
-			// https://github.com/praveenn77/docusaurus-lunr-search
-			"docusaurus-lunr-search",
-			{
-				// TODO: options overrides as needed
-			},
-		],
+		// https://github.com/praveenn77/docusaurus-lunr-search
+		"docusaurus-lunr-search",
+		'docusaurus-plugin-sass',
 	],
 	presets: [
 		[
@@ -68,7 +64,7 @@ const config: Config = {
 					onUntruncatedBlogPosts: "warn",
 				},
 				theme: {
-					customCss: "./src/css/custom.css",
+					customCss: "./src/css/custom.scss",
 				},
 			} satisfies Preset.Options,
 		],
