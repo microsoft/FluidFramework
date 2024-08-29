@@ -120,12 +120,10 @@
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
-		"check-coverage": true,
 		"exclude": [
 			"**/*.d.*ts",
 			"**/src/test/**/*.*ts",
 			"**/dist/test/**/*.*js",
-			"**/lib/test/**/*.*js",
 			"experimental/examples/**",
 			"experimental/PropertyDDS/examples/**",
 			"**/*.bundle.js",
@@ -142,11 +140,9 @@
 		"include": [
 			"packages/**/src/**/*.*ts",
 			"packages/**/dist/**/*.*js",
-			"packages/**/lib/**/*.*js",
 			"experimental/**/src/**/*.*ts",
 			"experimental/**/dist/**/*.*js"
 		],
-		"lines": 80,
 		"merge-async": true,
 		"report-dir": "nyc/report",
 		"reporter": [

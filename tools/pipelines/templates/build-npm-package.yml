@@ -404,11 +404,12 @@ extends:
                         condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                       - task: BuildQualityChecks@9
                         displayName: Check Code Coverage
+                        condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
                         inputs:
                           checkCoverage: true
-                          coverageFailOption: 'fixed'
+                          coverageFailOption: 'build'
                           coverageType: 'lines'
-                          coverageThreshold: '55.5'
+                          coverageThreshold: '85'
                           useDiffCoverage: true
 
 
