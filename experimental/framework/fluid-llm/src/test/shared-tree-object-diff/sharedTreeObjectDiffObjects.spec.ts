@@ -7,30 +7,45 @@ import { sharedTreeObjectDiff } from "../../shared-tree-object-diff/index.js";
 const schemaFactory = new SchemaFactory("TreeNodeTest");
 
 
-describe("sharedTreeObjectDiff - Object - Change Diffs", () => {
-	class TestObjectTreeNode extends schemaFactory.object("SimpleTreeNode", {
-		attribute1: schemaFactory.boolean,
-		requiredBoolean: schemaFactory.boolean,
+class TestOptionalObjectTreeNode extends schemaFactory.object("OptionalTreeNode", {
+	optionalBoolean: schemaFactory.optional(schemaFactory.boolean),
+	optionalString: schemaFactory.optional(schemaFactory.string),
+	optionalNumber: schemaFactory.optional(schemaFactory.number),
+	optionalArray: schemaFactory.optional(schemaFactory.array("SimpleArrayTreeNode", [schemaFactory.string])),
+	optionalObject: schemaFactory.optional(schemaFactory.object("NestedObject", {
 		requiredString:  schemaFactory.string,
-		requiredNumber:  schemaFactory.number,
-	}) {}
+	})),
+}) {}
 
+class TestObjectTreeNode extends schemaFactory.object("TreeNode", {
+	attribute1: schemaFactory.boolean,
+	requiredBoolean: schemaFactory.boolean,
+	requiredString:  schemaFactory.string,
+	requiredNumber:  schemaFactory.number,
+	requiredObject: schemaFactory.object("NestedObject", {
+		requiredString:  schemaFactory.string,
+	}),
+}) {}
+
+describe("sharedTreeObjectDiff - Object - Change Diffs", () => {
+
+	const TEST_NODE_DATA = {
+		attribute1: true,
+		requiredBoolean: true,
+		requiredString: "test",
+		requiredNumber: 0,
+		requiredObject: {
+			requiredString: "test",
+		}
+	}
 
 	it("change required string primitive value", () => {
-		const treeNode = new TestObjectTreeNode({
-			attribute1: true,
-			requiredBoolean: true,
-			requiredString: "test",
-			requiredNumber: 0
-		});
-
+		const treeNode = new TestObjectTreeNode({...TEST_NODE_DATA});
 		assert.deepStrictEqual(
 			sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
-				attribute1: true,
-				requiredBoolean: false,
-				requiredString: "true",
-				requiredNumber: 0
-			}),
+			...treeNode,
+			requiredString: "true",
+		}),
 			[
 				{
 					type: "CHANGE",
@@ -43,19 +58,11 @@ describe("sharedTreeObjectDiff - Object - Change Diffs", () => {
 	});
 
 	it("change required boolean primitive value", () => {
-		const treeNode = new TestObjectTreeNode({
-			attribute1: true,
-			requiredBoolean: true,
-			requiredString: "test",
-			requiredNumber: 0
-		});
-
+		const treeNode = new TestObjectTreeNode({...TEST_NODE_DATA});
 		assert.deepStrictEqual(
 			sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
-				attribute1: true,
+				...treeNode,
 				requiredBoolean: false,
-				requiredString: "test",
-				requiredNumber: 0
 			}),
 			[
 				{
@@ -69,18 +76,10 @@ describe("sharedTreeObjectDiff - Object - Change Diffs", () => {
 	});
 
 	it("change required number primitive value", () => {
-		const treeNode = new TestObjectTreeNode({
-			attribute1: true,
-			requiredBoolean: true,
-			requiredString: "test",
-			requiredNumber: 0
-		});
-
+		const treeNode = new TestObjectTreeNode({...TEST_NODE_DATA});
 		assert.deepStrictEqual(
 			sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
-				attribute1: true,
-				requiredBoolean: true,
-				requiredString: "test",
+				...treeNode,
 				requiredNumber: 1
 			}),
 			[
@@ -94,103 +93,100 @@ describe("sharedTreeObjectDiff - Object - Change Diffs", () => {
 		);
 	});
 
-});
+	it("change required nested object primitive value", () => {
+		const treeNode = new TestObjectTreeNode({...TEST_NODE_DATA, requiredObject: {
+			requiredString: "test",
+		}});
 
-	// it("change required primitive value", () => {
-	// 	class TestObjectTreeNode extends schemaFactory.object("SimpleTreeNode", {
-	// 		attribute1: schemaFactory.boolean,
-	// 		requiredBoolean: schemaFactory.boolean,
-	// 		requiredString:  schemaFactory.string,
-	// 		requiredNumber:  schemaFactory.number,
-	// 	}) {}
-
-	// 	const treeNode = new TestObjectTreeNode({
-	// 		attribute1: true,
-	// 		requiredBoolean: true,
-	// 		requiredString: "test",
-	// 		requiredNumber: 0
-	// 	});
-
-
-	// 	assert.deepStrictEqual(
-	// 		sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
-	// 			attribute1: true,
-	// 			requiredBoolean: false,
-	// 			requiredString: "test",
-	// 			requiredNumber: 0
-	// 		}),
-	// 		[
-	// 			{
-	// 				type: "CHANGE",
-	// 				path: ["requiredBoolean"],
-	// 				oldValue: true,
-	// 				value: false,
-	// 			},
-	// 		]
-	// 	);
-
-	// 	assert.deepStrictEqual(
-	// 		sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
-	// 			attribute1: true,
-	// 			requiredBoolean: false,
-	// 			requiredString: "true",
-	// 			requiredNumber: 0
-	// 		}),
-	// 		[
-	// 			{
-	// 				type: "CHANGE",
-	// 				path: ["requiredString"],
-	// 				oldValue: 'test',
-	// 				value: 'true',
-	// 			},
-	// 		]
-	// 	);
-
-	// 	assert.deepStrictEqual(
-	// 		sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
-	// 			attribute1: true,
-	// 			requiredBoolean: true,
-	// 			requiredString: "test",
-	// 			requiredNumber: 1
-	// 		}),
-	// 		[
-	// 			{
-	// 				type: "CHANGE",
-	// 				path: ["requiredNumber"],
-	// 				oldValue: 0,
-	// 				value: 1,
-	// 			},
-	// 		]
-	// 	);
-	// });
-
-
-
-describe("sharedTreeObjectDiff - Objects", () => {
-	// class SimpleObjectTreeNode extends schemaFactory.object("SimpleTreeNode", {
-	// 	test: schemaFactory.boolean,
-	// }) {}
-	class SimpleMapTreeNode extends schemaFactory.map("SimpleMapTreeNode", [
-		schemaFactory.boolean,
-	]) {}
-
-
-
-	it("new optional primitve value", () => {
-		class TestObjectTreeNode extends schemaFactory.object("SimpleTreeNode", {
-			attribute1: schemaFactory.boolean,
-			optionalBoolean: schemaFactory.optional(schemaFactory.boolean),
-			optionalString: schemaFactory.optional(schemaFactory.string),
-			optionalNumber: schemaFactory.optional(schemaFactory.number),
-		}) {}
-
-		const treeNode = new TestObjectTreeNode({ attribute1: true });
+		const diffs = sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
+			...treeNode,
+			requiredObject: {
+				requiredString: "SomethingDifferent",
+			}
+		});
 
 		assert.deepStrictEqual(
+			diffs,
+			[
+				{
+					type: "CHANGE",
+					path: ["requiredObject", "requiredString"],
+					oldValue: "test",
+					value: "SomethingDifferent",
+				},
+			]
+		);
+	});
+
+	it("change optional boolean primitive to undefined", () => {
+		const treeNode = new TestOptionalObjectTreeNode({ optionalBoolean: true });
+		assert.deepStrictEqual(
+			sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, { optionalBoolean: undefined}),
+			[
+				{
+					type: "CHANGE",
+					path: ["optionalBoolean"],
+					oldValue: true,
+					value: undefined,
+				},
+			]
+		);
+	});
+
+	it("change optional string primitive to undefined", () => {
+		const treeNode = new TestOptionalObjectTreeNode({ optionalString: 'true' });
+		assert.deepStrictEqual(
+			sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {optionalString: undefined}),
+			[
+				{
+					type: "CHANGE",
+					path: ["optionalString"],
+					oldValue: 'true',
+					value: undefined,
+				},
+			]
+		);
+	});
+
+	it("change optional number primitive to undefined", () => {
+		const treeNode = new TestOptionalObjectTreeNode({ optionalNumber: 1 });
+		assert.deepStrictEqual(
+			sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {optionalNumber: undefined}),
+			[
+				{
+					type: "CHANGE",
+					path: ["optionalNumber"],
+					oldValue: 1,
+					value: undefined,
+				},
+			]
+		);
+	});
+
+	it("change optional nested object to undefined", () => {
+		const treeNode = new TestOptionalObjectTreeNode({ optionalObject: { requiredString: "test" } });
+		assert.deepStrictEqual(
 			sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
-				test: true,
-				optionalBoolean: true,
+				...treeNode,
+				optionalObject: undefined,
 			}),
+			[
+				{
+					type: "CHANGE",
+					path: ["optionalObject"],
+					oldValue: { requiredString: "test" },
+					value: undefined,
+				},
+			]
+		);
+	});
+});
+
+describe("sharedTreeObjectDiff - Object - Create Diffs", () => {
+	it("new optional boolean primitive value", () => {
+		const treeNode23 = new TestOptionalObjectTreeNode({  });
+		const diffs = sharedTreeObjectDiff(treeNode23 as unknown as Record<string, unknown>,  {optionalBoolean: true});
+		assert.deepStrictEqual(diffs,
 			[
 				{
 					type: "CREATE",
@@ -199,173 +195,47 @@ describe("sharedTreeObjectDiff - Objects", () => {
 				},
 			]
 		);
+	});
 
-		assert.deepStrictEqual(
-			sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
-				test: true,
-				optionalString: true,
-			}),
+	it("new optional string primitive value", () => {
+		const treeNode23 = new TestOptionalObjectTreeNode({  });
+		const diffs = sharedTreeObjectDiff(treeNode23 as unknown as Record<string, unknown>,  {optionalString: 'true'});
+		assert.deepStrictEqual(diffs,
 			[
 				{
 					type: "CREATE",
 					path: ["optionalString"],
-					value: true,
-				},
-			]
-		);
-
-		assert.deepStrictEqual(
-			sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
-				test: true,
-				optionalNumber: 0,
-			}),
-			[
-				{
-					type: "CREATE",
-					path: ["optionalNumber"],
-					value: 0,
+					value: 'true',
 				},
 			]
 		);
 	});
 
-	it("change required primitive value", () => {
-		class TestObjectTreeNode extends schemaFactory.object("SimpleTreeNode", {
-			attribute1: schemaFactory.boolean,
-			requiredBoolean: schemaFactory.boolean,
-			requiredString:  schemaFactory.string,
-			requiredNumber:  schemaFactory.number,
-		}) {}
-
-		const treeNode = new TestObjectTreeNode({
-			attribute1: true,
-			requiredBoolean: true,
-			requiredString: "test",
-			requiredNumber: 0
-		});
-
-
-		assert.deepStrictEqual(
-			sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
-				attribute1: true,
-				requiredBoolean: false,
-				requiredString: "test",
-				requiredNumber: 0
-			}),
+	it("new optional boolean primitive value", () => {
+		const treeNode23 = new TestOptionalObjectTreeNode({  });
+		const diffs = sharedTreeObjectDiff(treeNode23 as unknown as Record<string, unknown>,  {optionalNumber: 1});
+		assert.deepStrictEqual(diffs,
 			[
 				{
-					type: "CHANGE",
-					path: ["requiredBoolean"],
-					oldValue: true,
-					value: false,
-				},
-			]
-		);
-
-		assert.deepStrictEqual(
-			sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
-				attribute1: true,
-				requiredBoolean: false,
-				requiredString: "true",
-				requiredNumber: 0
-			}),
-			[
-				{
-					type: "CHANGE",
-					path: ["requiredString"],
-					oldValue: 'test',
-					value: 'true',
-				},
-			]
-		);
-
-		assert.deepStrictEqual(
-			sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
-				attribute1: true,
-				requiredBoolean: true,
-				requiredString: "test",
-				requiredNumber: 1
-			}),
-			[
-				{
-					type: "CHANGE",
-					path: ["requiredNumber"],
-					oldValue: 0,
+					type: "CREATE",
+					path: ["optionalNumber"],
 					value: 1,
 				},
 			]
 		);
 	});
 
-
-
-
-	// it("change raw value", () => {
-	// 	const treeNode = new SimpleObjectTreeNode({ test: true });
-	// 	assert.deepStrictEqual(
-	// 		sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, { test: false }),
-	// 		[
-	// 			{
-	// 				type: "CHANGE",
-	// 				path: ["test"],
-	// 				value: false,
-	// 				oldValue: true,
-	// 			},
-	// 		],
-	// 	);
-	// });
-
-	// it("remove raw value", () => {
-	// 	const treeMapNode = new SimpleMapTreeNode({ test: true, test2: true });
-	// 	const diffs = sharedTreeObjectDiff(treeMapNode as unknown as Record<string, unknown>, {
-	// 		test: true,
-	// 	});
-	// 	assert.deepStrictEqual(diffs, [
-	// 		{
-	// 			type: "REMOVE",
-	// 			path: ["test2"],
-	// 			oldValue: true,
-	// 		},
-	// 	]);
-	// });
-
-	// it("replace object with null", () => {
-	// 	class SimpleObjectTreeNode2 extends schemaFactory.map("SimpleMapTreeNode2", [
-	// 		SimpleObjectTreeNode,
-	// 		schemaFactory.null,
-	// 	]) {}
-	// 	const innerTreeNode = new SimpleObjectTreeNode({ test: true });
-	// 	const treeNode = new SimpleObjectTreeNode2({ object: innerTreeNode });
-	// 	const diffs = sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
-	// 		object: null,
-	// 	});
-	// 	assert.deepStrictEqual(diffs, [
-	// 		{
-	// 			type: "CHANGE",
-	// 			path: ["object"],
-	// 			value: null,
-	// 			oldValue: innerTreeNode,
-	// 		},
-	// 	]);
-	// });
-
-	// it("replace object with other value", () => {
-	// 	class SimpleObjectTreeNode2 extends schemaFactory.map("SimpleMapTreeNode2", [
-	// 		SimpleObjectTreeNode,
-	// 		schemaFactory.string,
-	// 	]) {}
-	// 	const innerTreeNode = new SimpleObjectTreeNode({ test: true });
-	// 	const treeNode = new SimpleObjectTreeNode2({ object: innerTreeNode });
-	// 	const diffs = sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
-	// 		object: "string",
-	// 	});
-	// 	assert.deepStrictEqual(diffs, [
-	// 		{
-	// 			type: "CHANGE",
-	// 			path: ["object"],
-	// 			value: "string",
-	// 			oldValue: innerTreeNode,
-	// 		},
-	// 	]);
-	// });
+	it("new optional array value", () => {
+		const treeNode23 = new TestOptionalObjectTreeNode({  });
+		const diffs = sharedTreeObjectDiff(treeNode23 as unknown as Record<string, unknown>,  {optionalArray: []});
+		assert.deepStrictEqual(diffs,
+			[
+				{
+					type: "CREATE",
+					path: ["optionalArray"],
+					value: [],
+				},
+			]
+		);
+	});
 });

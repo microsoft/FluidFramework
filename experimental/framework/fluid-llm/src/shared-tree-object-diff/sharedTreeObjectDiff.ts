@@ -289,7 +289,7 @@ export function sharedTreeObjectDiff(
 			: newObj[key];
 		const path = isNewObjArray ? +key : key;
 
-		const isKeyInOldObject = isTreeMapNode(obj) ? obj.has(key as string) : key in obj;
+		const isKeyInOldObject = isTreeMapNode(obj) ? obj.has(key as string) : Object.keys(obj).includes(key as string);
 		if (!isKeyInOldObject) {
 			if (options.useObjectIds === undefined) {
 				diffs.push({
