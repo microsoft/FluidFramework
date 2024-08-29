@@ -36,12 +36,12 @@ import { brand } from "../../util/index.js";
 
 describe("storedToViewSchema", () => {
 	describe("fieldSchemaFromStoredSchema", () => {
-		const schemaX = LeafNodeSchema.create(
+		const schemaX = new LeafNodeSchema(
 			{ name: "z" },
 			brand<TreeNodeSchemaIdentifier>("x"),
 			ValueSchema.Number,
 		);
-		const schemaY = LeafNodeSchema.create(
+		const schemaY = new LeafNodeSchema(
 			{ name: "z" },
 			brand<TreeNodeSchemaIdentifier>("y"),
 			ValueSchema.Number,
@@ -146,7 +146,7 @@ describe("storedToViewSchema", () => {
 				}
 
 				assert.equal(
-					(nodeSchema as Partial<LeafNodeSchema>).leafValue,
+					nodeSchema instanceof LeafNodeSchema ? nodeSchema.info : undefined,
 					(storedNodeSchema as Partial<LeafNodeStoredSchema>).leafValue,
 				);
 

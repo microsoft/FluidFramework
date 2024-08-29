@@ -20,8 +20,6 @@ import {
 	makeDetachedFieldIndex,
 	visitDelta,
 } from "../../core/index.js";
-import { leaf } from "../../domains/index.js";
-import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
 	mintRevisionTag,
@@ -30,6 +28,7 @@ import {
 	testRevisionTagCodec,
 } from "../utils.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+import { singleJsonCursor } from "../json/index.js";
 
 function visit(
 	delta: DeltaRoot,
@@ -105,8 +104,7 @@ function testTreeVisit(
 const rootKey: FieldKey = brand("root");
 const fooKey: FieldKey = brand("foo");
 const barKey: FieldKey = brand("bar");
-const nodeX = { type: leaf.string.name, value: "X" };
-const content = cursorForJsonableTreeNode(nodeX);
+const content = singleJsonCursor("X");
 const field0: FieldKey = brand("-0");
 const field1: FieldKey = brand("-1");
 const field2: FieldKey = brand("-2");

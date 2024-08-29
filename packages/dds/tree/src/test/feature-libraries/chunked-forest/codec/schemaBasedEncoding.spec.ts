@@ -9,7 +9,6 @@ import type {
 	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
 } from "../../../../core/index.js";
-import { leaf } from "../../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
@@ -45,7 +44,7 @@ import {
 } from "../../../../feature-libraries/index.js";
 import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { ajvValidator } from "../../../codec/index.js";
-import { takeSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
 import {
 	HasOptionalField,
 	Minimal,
@@ -61,16 +60,19 @@ import { assertIsSessionId, testIdCompressor } from "../../../utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SpecialField } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-// eslint-disable-next-line import/no-internal-modules
-import { getFlexSchema, toStoredSchema } from "../../../../simple-tree/toFlexSchema.js";
-// eslint-disable-next-line import/no-internal-modules
-import { numberSchema } from "../../../../simple-tree/leafNodeSchema.js";
+import {
+	getFlexSchema,
+	getStoredSchema,
+	toStoredSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../simple-tree/toFlexSchema.js";
+import { numberSchema, stringSchema } from "../../../../simple-tree/index.js";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
-const numericShape = new NodeShape(leaf.number.name, true, [], undefined);
+const numericShape = new NodeShape(brand(numberSchema.identifier), true, [], undefined);
 const identifierShape = new NodeShape(
-	leaf.string.name,
+	brand(stringSchema.identifier),
 	SpecialField.Identifier,
 	[],
 	undefined,
@@ -180,7 +182,9 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 			);
 			const log: string[] = [];
-			const identifierField = FlexFieldSchema.create(FieldKinds.identifier, [leaf.string]);
+			const identifierField = FlexFieldSchema.create(FieldKinds.identifier, [
+				getFlexSchema(stringSchema),
+			]);
 			const storedSchema = identifierField.stored;
 			const shape = fieldShaper(
 				{
@@ -191,13 +195,19 @@ describe("schemaBasedEncoding", () => {
 				},
 				storedSchema,
 				cache,
-				{ nodeSchema: new Map([[leaf.string.name, leaf.string.stored]]) },
+				{
+					nodeSchema: new Map([
+						[brand(stringSchema.identifier), getStoredSchema(stringSchema)],
+					]),
+				},
 			);
 			const compressedId = testIdCompressor.generateCompressedId();
 			const stableId = testIdCompressor.decompress(compressedId);
 			assert.deepEqual(shape.shape, identifierShape);
 			assert.deepEqual(
-				checkFieldEncode(shape, cache, [{ type: leaf.string.name, value: stableId }]),
+				checkFieldEncode(shape, cache, [
+					{ type: brand(stringSchema.identifier), value: stableId },
+				]),
 				[compressedId],
 			);
 		});
@@ -255,7 +265,7 @@ describe("schemaBasedEncoding", () => {
 			assert.deepEqual(bufferEmpty, [0]);
 			const bufferFull = checkNodeEncode(shape, cache, {
 				type: brand(HasOptionalField.identifier),
-				fields: { field: [{ type: leaf.number.name, value: 5 }] },
+				fields: { field: [{ type: brand(numberSchema.identifier), value: 5 }] },
 			});
 			assert.deepEqual(bufferFull, [[5]]);
 		});
@@ -294,7 +304,7 @@ describe("schemaBasedEncoding", () => {
 			assert.deepEqual(bufferEmpty, [[]]);
 			const bufferFull = checkNodeEncode(shape, cache, {
 				type: brand(NumericMap.identifier),
-				fields: { extra: [{ type: leaf.number.name, value: 5 }] },
+				fields: { extra: [{ type: brand(numberSchema.identifier), value: 5 }] },
 			});
 			assert.deepEqual(bufferFull, [[new IdentifierToken("extra"), [5]]]);
 		});
@@ -359,7 +369,7 @@ describe("schemaBasedEncoding", () => {
 						isFluidHandle(value) ? "Handle Placeholder" : value,
 					2,
 				);
-				takeSnapshot(dataStr, `.json`);
+				takeJsonSnapshot(JSON.parse(dataStr));
 			});
 		}
 	});
