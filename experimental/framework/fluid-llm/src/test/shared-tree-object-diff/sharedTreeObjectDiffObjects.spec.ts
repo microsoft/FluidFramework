@@ -180,6 +180,21 @@ describe("sharedTreeObjectDiff - Object - Change Diffs", () => {
 			]
 		);
 	});
+
+	it("change optional array to undefined", () => {
+		const treeNode = new TestOptionalObjectTreeNode({ optionalArray: [] });
+		assert.deepStrictEqual(
+			sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {optionalArray: undefined}),
+			[
+				{
+					type: "CHANGE",
+					path: ["optionalArray"],
+					oldValue: [],
+					value: undefined,
+				},
+			]
+		);
+	});
 });
 
 describe("sharedTreeObjectDiff - Object - Create Diffs", () => {

@@ -11,7 +11,7 @@ class TestMapTreeNode extends schemaFactory.map("TestMapTreeNode", [
 	schemaFactory.boolean,
 	schemaFactory.number,
 	schemaFactory.object("NestedObject", {
-		requiredString: schemaFactory.string,
+		stringKey: schemaFactory.string,
 	}),
 	schemaFactory.array("SimpleArrayTreeNode", [schemaFactory.string])
 ]) {}
@@ -20,11 +20,11 @@ describe("sharedTreeObjectDiff - Maps - Change Diffs", () => {
 
 	const TEST_NODE_DATA = {
 		attribute1: true,
-		requiredBoolean: true,
-		requiredString: "test",
-		requiredNumber: 0,
-		requiredObject: {
-			requiredString: "test",
+		booleanKey: true,
+		stringKey: "test",
+		numberKey: 0,
+		objectKey: {
+			stringKey: "test",
 		}
 	}
 
@@ -33,12 +33,12 @@ describe("sharedTreeObjectDiff - Maps - Change Diffs", () => {
 		assert.deepStrictEqual(
 			sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
 			...treeNode,
-			requiredString: "true",
+			stringKey: "true",
 		}),
 			[
 				{
 					type: "CHANGE",
-					path: ["requiredString"],
+					path: ["stringKey"],
 					oldValue: 'test',
 					value: 'true',
 				},
@@ -51,12 +51,12 @@ describe("sharedTreeObjectDiff - Maps - Change Diffs", () => {
 		assert.deepStrictEqual(
 			sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
 				...treeNode,
-				requiredBoolean: false,
+				booleanKey: false,
 			}),
 			[
 				{
 					type: "CHANGE",
-					path: ["requiredBoolean"],
+					path: ["booleanKey"],
 					oldValue: true,
 					value: false,
 				},
@@ -69,12 +69,12 @@ describe("sharedTreeObjectDiff - Maps - Change Diffs", () => {
 		assert.deepStrictEqual(
 			sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
 				...treeNode,
-				requiredNumber: 1
+				numberKey: 1
 			}),
 			[
 				{
 					type: "CHANGE",
-					path: ["requiredNumber"],
+					path: ["numberKey"],
 					oldValue: 0,
 					value: 1,
 				},
@@ -83,14 +83,14 @@ describe("sharedTreeObjectDiff - Maps - Change Diffs", () => {
 	});
 
 	it("change nested object primitive value", () => {
-		const treeNode = new TestMapTreeNode({...TEST_NODE_DATA, requiredObject: {
-			requiredString: "test",
+		const treeNode = new TestMapTreeNode({...TEST_NODE_DATA, objectKey: {
+			stringKey: "test",
 		}});
 
 		const diffs = sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {
 			...treeNode,
-			requiredObject: {
-				requiredString: "SomethingDifferent",
+			objectKey: {
+				stringKey: "SomethingDifferent",
 			}
 		});
 
@@ -99,9 +99,24 @@ describe("sharedTreeObjectDiff - Maps - Change Diffs", () => {
 			[
 				{
 					type: "CHANGE",
-					path: ["requiredObject", "requiredString"],
+					path: ["objectKey", "stringKey"],
 					oldValue: "test",
 					value: "SomethingDifferent",
+				},
+			]
+		);
+	});
+
+	it("change array to undefined", () => {
+		const treeNode = new TestMapTreeNode({ arrayKey: [] });
+		assert.deepStrictEqual(
+			sharedTreeObjectDiff(treeNode as unknown as Record<string, unknown>, {arrayKey: undefined}),
+			[
+				{
+					type: "CHANGE",
+					path: ["arrayKey"],
+					oldValue: [],
+					value: undefined,
 				},
 			]
 		);
