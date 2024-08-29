@@ -676,7 +676,7 @@ export class PartialSequenceLengths {
 				moveIsLocal ||
 				(!removalIsLocal && moveInfo.movedSeq > removalInfo.removedSeq));
 
-		if (removeHappenedFirst) {
+		if (!!removalInfo && removeHappenedFirst) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			seqOrLocalSeq = removalIsLocal ? removalInfo.localRemovedSeq! : removalInfo.removedSeq;
 			segmentLen = -segmentLen;
@@ -692,7 +692,7 @@ export class PartialSequenceLengths {
 			// in the first position of moveInfo.
 			// TODO Non null asserting, why is this not null?
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			clientId = moveInfo.movedClientIds[0]!;
+			clientId = moveInfo.concurrentMoves[0]!.clientId;
 
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			seqOrLocalSeq = moveIsLocal ? moveInfo.localMovedSeq! : moveInfo.movedSeq;
@@ -707,8 +707,10 @@ export class PartialSequenceLengths {
 				segmentLen = -segmentLen;
 			}
 
-			const hasOverlap = moveInfo.movedClientIds.length > 1;
-			moveClientOverlap = hasOverlap ? moveInfo.movedClientIds : undefined;
+			const hasOverlap = moveInfo.concurrentMoves.length > 1;
+			moveClientOverlap = hasOverlap
+				? moveInfo.concurrentMoves.map(({ clientId: moveClientId }) => moveClientId)
+				: undefined;
 		} else if (segment.wasMovedOnInsert) {
 			// if this segment was obliterated on insert, its length is only
 			// visible to the client that inserted it
@@ -730,8 +732,8 @@ export class PartialSequenceLengths {
 			// in the first position of removalInfo.
 			// TODO Non null asserting, why is this not null?
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const moveClientId = moveInfo.movedClientIds[0]!;
-			const hasOverlap = moveInfo.movedClientIds.length > 1;
+			const moveClientId = moveInfo.concurrentMoves[0]!.clientId;
+			const hasOverlap = moveInfo.concurrentMoves.length > 1;
 
 			PartialSequenceLengths.updatePartialsAfterInsertion(
 				segment,
@@ -742,7 +744,7 @@ export class PartialSequenceLengths {
 				moveInfo.movedSeq,
 				moveClientId,
 				undefined,
-				hasOverlap ? moveInfo.movedClientIds : undefined,
+				hasOverlap ? moveInfo.concurrentMoves.map(({ clientId: id }) => id) : undefined,
 			);
 		}
 
@@ -1499,7 +1501,7 @@ function mergeSortedListsBySeq<T extends PartialSequenceLength>(lists: T[][]): I
 
 			if (currentMin) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				this.nextSmallestIndex[currentMinIndex!]++;
+				this.nextSmallestIndex[currentMinIndex!]!++;
 				return { value: currentMin, done: false };
 			} else {
 				return { value: undefined, done: true };

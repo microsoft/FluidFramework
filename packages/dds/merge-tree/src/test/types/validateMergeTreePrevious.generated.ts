@@ -580,6 +580,7 @@ declare type current_as_old_for_InterfaceDeclaration_IMergeTreeTextHelper = requ
  * typeValidation.broken:
  * "InterfaceDeclaration_IMoveInfo": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_InterfaceDeclaration_IMoveInfo = requireAssignableTo<TypeOnly<old.IMoveInfo>, TypeOnly<current.IMoveInfo>>
 
 /*
@@ -589,6 +590,7 @@ declare type old_as_current_for_InterfaceDeclaration_IMoveInfo = requireAssignab
  * typeValidation.broken:
  * "InterfaceDeclaration_IMoveInfo": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_InterfaceDeclaration_IMoveInfo = requireAssignableTo<TypeOnly<current.IMoveInfo>, TypeOnly<old.IMoveInfo>>
 
 /*

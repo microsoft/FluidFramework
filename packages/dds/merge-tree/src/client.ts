@@ -87,9 +87,8 @@ type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage
 
 function removeMoveInfo(segment: Partial<IMoveInfo>): void {
 	delete segment.movedSeq;
-	delete segment.movedSeqs;
+	delete segment.concurrentMoves;
 	delete segment.localMovedSeq;
-	delete segment.movedClientIds;
 	delete segment.wasMovedOnInsert;
 }
 

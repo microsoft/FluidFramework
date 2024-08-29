@@ -39,6 +39,8 @@ export abstract class BaseSegment implements ISegment {
     // (undocumented)
     protected cloneInto(b: ISegment): void;
     // (undocumented)
+    concurrentMoves?: IConcurrentMoveInfo[];
+    // (undocumented)
     protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
     // (undocumented)
     hasProperty(key: string): boolean;
@@ -55,11 +57,7 @@ export abstract class BaseSegment implements ISegment {
     // (undocumented)
     localSeq?: number;
     // (undocumented)
-    movedClientIds?: number[];
-    // (undocumented)
     movedSeq?: number;
-    // (undocumented)
-    movedSeqs?: number[];
     // (undocumented)
     ordinal: string;
     // (undocumented)
@@ -247,6 +245,16 @@ export interface IClientEvents {
     (event: "maintenance", listener: (args: IMergeTreeMaintenanceCallbackArgs, deltaArgs: IMergeTreeDeltaOpArgs | undefined, target: IEventThisPlaceHolder) => void): void;
 }
 
+// @alpha
+export interface IConcurrentMoveInfo {
+    // (undocumented)
+    clientId: number;
+    // (undocumented)
+    refSeq: number;
+    // (undocumented)
+    seq: number;
+}
+
 // @alpha (undocumented)
 export interface IJSONMarkerSegment extends IJSONSegment {
     // (undocumented)
@@ -405,10 +413,10 @@ export interface IMergeTreeTextHelper {
 
 // @alpha
 export interface IMoveInfo {
+    // (undocumented)
+    concurrentMoves: IConcurrentMoveInfo[];
     localMovedSeq?: number;
-    movedClientIds: number[];
     movedSeq: number;
-    movedSeqs: number[];
     moveDst?: ReferencePosition;
     wasMovedOnInsert: boolean;
 }
