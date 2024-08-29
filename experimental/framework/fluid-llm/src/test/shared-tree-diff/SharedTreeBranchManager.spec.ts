@@ -78,8 +78,8 @@ describe("SharedTreeBranchManager", () => {
 			isEmployed: true,
 		};
 
-		const diffManager = new SharedTreeBranchManager({ objectSchema: zodSchema });
-		diffManager.merge(
+		const branchManager = new SharedTreeBranchManager({ objectSchema: zodSchema });
+		branchManager.merge(
 			treeNode as unknown as Record<string, unknown>,
 			llmResponseObject,
 		);
@@ -107,13 +107,8 @@ describe("SharedTreeBranchManager", () => {
 			relatedLinks: ["https://example.com"],
 		};
 
-		const diffManager = new SharedTreeBranchManager({ objectSchema: zodSchema });
-
-		const diffs = diffManager.compare(
-			treeNode as unknown as Record<string, unknown>,
-			llmResponseObject,
-		);
-		diffManager.merge(
+		const branchManager = new SharedTreeBranchManager({ objectSchema: zodSchema });
+		branchManager.merge(
 			treeNode as unknown as Record<string, unknown>,
 			llmResponseObject,
 		);
@@ -183,8 +178,8 @@ describe("SharedTreeBranchManager", () => {
 			]
 		 }
 
-		const diffManager = new SharedTreeBranchManager({objectSchema: zodSchema});
-		diffManager.merge(treeNode as unknown as Record<string, unknown>, llmResponseObject);
+		const branchManager = new SharedTreeBranchManager({objectSchema: zodSchema});
+		branchManager.merge(treeNode as unknown as Record<string, unknown>, llmResponseObject);
 		const jsonifiedTreeNode = {...treeNode, relatedLinks: treeNode.relatedLinks?.map((link) => link),  childItems: treeNode.childItems.map((item) => ({ ...item }))};
 		assert.deepStrictEqual(jsonifiedTreeNode, llmResponseObject);
 	});

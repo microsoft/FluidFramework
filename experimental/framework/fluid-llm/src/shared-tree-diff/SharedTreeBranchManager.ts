@@ -13,7 +13,8 @@ import {
 import { isTreeMapNode, isTreeArrayNode, sharedTreeTraverse } from "./utils.js";
 
 /**
- * Manages the differences between a SharedTree object node and a javascript object and then applies them.
+ * Manages determining the differences between two branches of a SharedTree represented as an actual tree node or a plain javascript object
+ * and applies said differences to the original SharedTree branch.
  */
 export class SharedTreeBranchManager {
 	private readonly objectSchema?: z.Schema;
@@ -55,14 +56,15 @@ export class SharedTreeBranchManager {
 	/**
 	 * Handles applying an array of differences to an object in the proper order and making any necessary adjustments as each diff
 	 * is applied.
+	 *
+	 * @returns an array of differences that were not applied due to some kind of conflict or error.
 	 */
 	public mergeDiffs(
 		diffs: Difference[],
 		objectToUpdate: Record<string, unknown> | TreeArrayNode,
-	): void {
+	): Difference[] {
 		if (diffs === undefined) {
-			console.log("no changes");
-			return;
+			return [];
 		}
 
 		const changeDiffs: DifferenceChange[] = [];
@@ -94,23 +96,23 @@ export class SharedTreeBranchManager {
 			}
 		}
 
-		const appliedDiffs = new Set<Difference>();
+		const unappliedDiffs = new Set<Difference>();
 
 		// 1. We apply all change diffs before handling more complex diff types.
 		for (const changeDiff of changeDiffs) {
 			const isDiffApplied = this.applyDiff(changeDiff, objectToUpdate);
 
 			if (isDiffApplied === false) {
+				unappliedDiffs.add(changeDiff);
 				continue;
 			}
-
-			appliedDiffs.add(changeDiff);
 		}
 
 		for (const moveDiff of moveDiffs) {
 			const isDiffApplied = this.applyDiff(moveDiff, objectToUpdate);
 
 			if (isDiffApplied === false) {
+				unappliedDiffs.add(moveDiff);
 				continue;
 			}
 
@@ -127,28 +129,27 @@ export class SharedTreeBranchManager {
 					}
 				}
 			}
-			appliedDiffs.add(moveDiff);
 		}
 
 		for (const removeDiff of removeDiffs) {
 			const isDiffApplied = this.applyDiff(removeDiff, objectToUpdate);
 
 			if (isDiffApplied === false) {
+				unappliedDiffs.add(removeDiff);
 				continue;
 			}
-
-			appliedDiffs.add(removeDiff);
 		}
 
 		for (const createDiff of createDiffs) {
 			const isDiffApplied = this.applyDiff(createDiff, objectToUpdate);
 
 			if (isDiffApplied === false) {
+				unappliedDiffs.add(createDiff);
 				continue;
 			}
-
-			appliedDiffs.add(createDiff);
 		}
+
+		return unappliedDiffs;
 	}
 
 	public applyDiff(
