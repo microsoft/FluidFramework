@@ -15,15 +15,12 @@ import {
 	TreeStoredSchemaRepository,
 	type AnchorSetRootEvents,
 } from "../../core/index.js";
-import { singleJsonCursor } from "../../domains/index.js";
+import { singleJsonCursor } from "../json/index.js";
 import {
 	FieldKinds,
-	FlexFieldSchema,
-	SchemaBuilderBase,
 	ViewSchema,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
-	intoStoredSchema,
 } from "../../feature-libraries/index.js";
 import type {
 	ITreeCheckout,
@@ -41,15 +38,12 @@ import {
 	initializeContent,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizeTree.js";
-import {
-	checkoutWithContent,
-	jsonSequenceRootSchema,
-	validateViewConsistency,
-} from "../utils.js";
+import { checkoutWithContent, validateViewConsistency } from "../utils.js";
 import type { Listenable } from "../../events/index.js";
 import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../../simple-tree/toFlexSchema.js";
+import { jsonSequenceRootSchema } from "../sequenceRootUtils.js";
 
 const builder = new SchemaFactory("test");
 const root = builder.number;
@@ -59,15 +53,7 @@ const schemaGeneralized = toStoredSchema(builder.optional([root, builder.string]
 const schemaValueRoot = toStoredSchema([root, builder.string]);
 
 // Schema for tree that must always be empty.
-const emptySchema = intoStoredSchema(
-	new SchemaBuilderBase(FieldKinds.required, {
-		scope: "Empty",
-		lint: {
-			rejectEmpty: false,
-			rejectForbidden: false,
-		},
-	}).intoSchema(FlexFieldSchema.empty),
-);
+const emptySchema = toStoredSchema(builder.optional([]));
 
 function expectSchema(actual: TreeStoredSchema, expected: TreeStoredSchema): void {
 	// Check schema match
@@ -194,8 +180,8 @@ describe("schematizeTree", () => {
 				["basic-optional-empty", schema, true],
 				["basic-optional", schema, false],
 				["basic-value", schemaValueRoot, false],
-				["complex-empty", intoStoredSchema(jsonSequenceRootSchema), true],
-				["complex", intoStoredSchema(jsonSequenceRootSchema), false],
+				["complex-empty", jsonSequenceRootSchema, true],
+				["complex", jsonSequenceRootSchema, false],
 			];
 			for (const [name, data, isEmpty] of testCases) {
 				it(name, () => {

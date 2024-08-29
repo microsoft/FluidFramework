@@ -1,45 +1,8 @@
 {
   "version": 1,
   "nodes": {
-    "com.fluidframework.leaf.boolean": {
-      "leaf": 2
-    },
-    "com.fluidframework.leaf.handle": {
-      "leaf": 3
-    },
-    "com.fluidframework.leaf.null": {
-      "leaf": 4
-    },
     "com.fluidframework.leaf.number": {
       "leaf": 0
-    },
-    "com.fluidframework.leaf.string": {
-      "leaf": 1
-    },
-    "test.allTheFields": {
-      "object": {
-        "optional": {
-          "kind": "Optional",
-          "types": [
-            "com.fluidframework.leaf.number"
-          ]
-        },
-        "sequence": {
-          "kind": "Sequence",
-          "types": [
-            "com.fluidframework.leaf.number"
-          ]
-        },
-        "valueField": {
-          "kind": "Value",
-          "types": [
-            "com.fluidframework.leaf.number"
-          ]
-        }
-      }
-    },
-    "test.minimal": {
-      "object": {}
     }
   },
   "root": {

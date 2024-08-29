@@ -41,7 +41,7 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSc
 		if (innerSchema instanceof LeafNodeStoredSchema) {
 			map.set(
 				identifier,
-				LeafNodeSchema.create({ name: "intoTypedSchema" }, identifier, innerSchema.leafValue),
+				new LeafNodeSchema({ name: "intoTypedSchema" }, identifier, innerSchema.leafValue),
 			);
 		} else if (innerSchema instanceof MapNodeStoredSchema) {
 			map.set(

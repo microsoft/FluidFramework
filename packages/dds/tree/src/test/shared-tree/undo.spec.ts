@@ -4,7 +4,7 @@
  */
 
 import { type UpPath, rootFieldKey } from "../../core/index.js";
-import { singleJsonCursor } from "../../domains/index.js";
+import { singleJsonCursor } from "../json/index.js";
 import type { ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
 import { createTestUndoRedoStacks, expectJsonTree, moveWithin } from "../utils.js";
