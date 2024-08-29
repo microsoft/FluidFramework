@@ -161,5 +161,4 @@ The replacement syntax to use in `.mdx` files would be:
 -   Add prettier (wait until after merge to reduce diff noise)
 -   Add markdown-lint (same as above)
 -   Add eslint for components
--   Inject Docusaurus front-matter in generated API docs
 -   Verify high contrast support
