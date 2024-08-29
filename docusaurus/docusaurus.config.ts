@@ -20,8 +20,10 @@ const config: Config = {
 	// For GitHub pages deployment, it is often '/<projectName>/'
 	baseUrl: "/",
 
+	onBrokenAnchors: "warn",
 	onBrokenLinks: "warn",
 	onBrokenMarkdownLinks: "warn",
+	onDuplicateRoutes: "throw",
 
 	// Even if you don't use internationalization, you can use this field to set
 	// useful metadata like html lang. For example, if your site is Chinese, you
@@ -31,13 +33,13 @@ const config: Config = {
 		locales: ["en"],
 	},
 	plugins: [
-		// TODO
-		// [
-		//     require.resolve("docusaurus-lunr-search"),
-		//     {
-		//       // Options here
-		//     },
-		//   ],
+		[
+			// https://github.com/praveenn77/docusaurus-lunr-search
+			"docusaurus-lunr-search",
+			{
+				// TODO: options overrides as needed
+			},
+		],
 	],
 	presets: [
 		[
