@@ -2754,7 +2754,7 @@ export class ContainerRuntime
 			}
 		} else {
 			// Check if message.type is one of values in ContainerMessageType
-			// eslint-disable-next-line import/no-deprecated
+
 			if (isRuntimeMessage(messageCopy)) {
 				// Legacy op received
 				this.ensureNoDataModelChanges(() =>
@@ -2791,8 +2791,7 @@ export class ContainerRuntime
 	) {
 		const { message, local, localOpMetadata } = messageWithContext;
 
-		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
-		// Sequence numbers are not guaranteed to follow any sort of order. Re-entrancy is one of those situations
+		// Set the minimum sequence number to the containerRuntime's understanding of minimum sequence number.
 		if (
 			this.deltaManager.minimumSequenceNumber <
 			messageWithContext.message.minimumSequenceNumber
