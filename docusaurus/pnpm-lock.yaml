@@ -17,6 +17,9 @@ importers:
       '@docusaurus/preset-classic':
         specifier: ^3.5.2
         version: 3.5.2(@algolia/client-search@5.1.1)(@mdx-js/react@3.0.1)(@types/react@18.3.4)(react-dom@18.3.1)(react@18.3.1)(search-insights@2.17.0)(typescript@5.5.4)
+      '@docusaurus/theme-common':
+        specifier: ^3.5.2
+        version: 3.5.2(@docusaurus/plugin-content-docs@3.5.2)(@docusaurus/types@3.5.2)(react-dom@18.3.1)(react@18.3.1)(typescript@5.5.4)
       '@docusaurus/theme-mermaid':
         specifier: ^3.5.2
         version: 3.5.2(@docusaurus/plugin-content-docs@3.5.2)(@mdx-js/react@3.0.1)(react-dom@18.3.1)(react@18.3.1)(typescript@5.5.4)
