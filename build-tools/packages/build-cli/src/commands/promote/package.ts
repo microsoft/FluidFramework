@@ -65,7 +65,7 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 				headers: {
 					"Content-Type": "application/json",
 					"Accept": "application/json",
-					"Authorization": `Basic ${Buffer.from(token).toString('base64')}`,
+					"Authorization": `Basic ${Buffer.from(token).toString("base64")}`,
 				},
 				body: JSON.stringify({
 					views: {
@@ -80,7 +80,7 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 				const errorData = (await response.json()) as PromotePackageResponse;
 				this.error(
 					`Failed to promote package. Status: ${response.status}, Message: ${errorData.message ?? "Unknown error"}`,
-					{ exit: 1 }
+					{ exit: 1 },
 				);
 			}
 
