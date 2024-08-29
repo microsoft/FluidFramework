@@ -37,6 +37,8 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `beta` APIs, import via `@fluidframework/tree/beta`.
 
+To access the `legacy` APIs, import via `@fluidframework/tree/legacy`.
+
 ## API Documentation
 
 API documentation for **@fluidframework/tree** is available at <https://fluidframework.com/docs/apis/tree>.
