@@ -11,16 +11,16 @@ Promotes a package to the Release view in Azure DevOps Artifacts.
 
 ```
 USAGE
-  $ flub promote package --feedKind <value> --version <value> --orderFile <value> --release <value> --token <value>
-    [-v | --quiet]
+  $ flub promote package --version <value> --orderFile <value> --token <value> --releaseFlag <value> --feedKind
+    <value> [-v | --quiet]
 
 FLAGS
-  --feedKind=<value>   (required) Name of the feed
-  --orderFile=<value>  (required) A file with package names that should be published. Such files can be created using
-                       `flub list`.
-  --release=<value>    (required) release
-  --token=<value>      (required) Azure DevOps access token
-  --version=<value>    (required) Version of the package
+  --feedKind=<value>     (required) ADO feed kind e.g. (internal-build or public)
+  --orderFile=<value>    (required) A file with package names that should be published. Such files can be created using
+                         `flub list`.
+  --releaseFlag=<value>  (required) Release flag e.g. (prerelease or release)
+  --token=<value>        (required) Azure DevOps access token
+  --version=<value>      (required) Version of the package
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
