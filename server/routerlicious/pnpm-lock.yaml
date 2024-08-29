@@ -79,8 +79,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/gitresources-previous':
         specifier: npm:@fluidframework/gitresources@5.0.0
         version: /@fluidframework/gitresources@5.0.0
@@ -125,8 +125,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-kafka-orderer-previous':
         specifier: npm:@fluidframework/server-kafka-orderer@5.0.0
         version: /@fluidframework/server-kafka-orderer@5.0.0
@@ -225,8 +225,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-lambdas-previous':
         specifier: npm:@fluidframework/server-lambdas@5.0.0
         version: /@fluidframework/server-lambdas@5.0.0(debug@4.3.4)
@@ -334,8 +334,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-lambdas-driver-previous':
         specifier: npm:@fluidframework/server-lambdas-driver@5.0.0
         version: /@fluidframework/server-lambdas-driver@5.0.0
@@ -425,8 +425,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-local-server-previous':
         specifier: npm:@fluidframework/server-local-server@5.0.0
         version: /@fluidframework/server-local-server@5.0.0
@@ -564,8 +564,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-memory-orderer-previous':
         specifier: npm:@fluidframework/server-memory-orderer@5.0.0
         version: /@fluidframework/server-memory-orderer@5.0.0
@@ -625,8 +625,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/protocol-base-previous':
         specifier: npm:@fluidframework/protocol-base@5.0.0
         version: /@fluidframework/protocol-base@5.0.0
@@ -737,8 +737,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-local-server':
         specifier: workspace:~
         version: link:../local-server
@@ -882,8 +882,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-local-server':
         specifier: workspace:~
         version: link:../local-server
@@ -1060,8 +1060,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-previous':
         specifier: npm:@fluidframework/server-services@5.0.0
         version: /@fluidframework/server-services@5.0.0
@@ -1172,8 +1172,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-client-previous':
         specifier: npm:@fluidframework/server-services-client@5.0.0
         version: /@fluidframework/server-services-client@5.0.0
@@ -1266,8 +1266,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-core-previous':
         specifier: npm:@fluidframework/server-services-core@5.0.0
         version: /@fluidframework/server-services-core@5.0.0
@@ -1324,8 +1324,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-ordering-kafkanode-previous':
         specifier: npm:@fluidframework/server-services-ordering-kafkanode@5.0.0
         version: /@fluidframework/server-services-ordering-kafkanode@5.0.0
@@ -1400,8 +1400,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-ordering-rdkafka-previous':
         specifier: npm:@fluidframework/server-services-ordering-rdkafka@5.0.0
         version: /@fluidframework/server-services-ordering-rdkafka@5.0.0
@@ -1461,8 +1461,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-ordering-zookeeper-previous':
         specifier: npm:@fluidframework/server-services-ordering-zookeeper@5.0.0
         version: /@fluidframework/server-services-ordering-zookeeper@5.0.0
@@ -1585,8 +1585,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-shared-previous':
         specifier: npm:@fluidframework/server-services-shared@5.0.0
         version: /@fluidframework/server-services-shared@5.0.0
@@ -1673,8 +1673,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-telemetry-previous':
         specifier: npm:@fluidframework/server-services-telemetry@5.0.0
         version: /@fluidframework/server-services-telemetry@5.0.0
@@ -1779,8 +1779,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-utils-previous':
         specifier: npm:@fluidframework/server-services-utils@5.0.0
         version: /@fluidframework/server-services-utils@5.0.0
@@ -1906,8 +1906,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-test-utils-previous':
         specifier: npm:@fluidframework/server-test-utils@5.0.0
         version: /@fluidframework/server-test-utils@5.0.0
@@ -2063,8 +2063,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.1.6)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.39)
@@ -3610,12 +3610,12 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
 
-  /@fluid-internal/eslint-plugin-fluid@0.1.1(eslint@8.55.0)(typescript@5.1.6):
-    resolution: {integrity: sha512-7CNeAjn81BPvq/BKc1nQo/6HUZXg4KUAglFuCX6HFCnpGPrDLdm7cdkrGyA1tExB1EGnCAPFzVNbSqSYcwJnag==}
+  /@fluid-internal/eslint-plugin-fluid@0.1.2(eslint@8.55.0)(typescript@5.1.6):
+    resolution: {integrity: sha512-E7LF4ukpCoyZcxpDUQz0edXsKllbh4m8NAdiug6sSI1KIIQFwtq5vvW3kQ0Op5xA9w10T6crfcvmuAzdP84UGg==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
-      '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
-      ts-morph: 20.0.0
+      '@typescript-eslint/parser': 6.21.0(eslint@8.55.0)(typescript@5.1.6)
+      ts-morph: 22.0.0
     transitivePeerDependencies:
       - eslint
       - supports-color
@@ -3906,10 +3906,10 @@ packages:
       '@fluidframework/core-interfaces': 2.0.5
     dev: true
 
-  /@fluidframework/eslint-config-fluid@5.2.0(eslint@8.55.0)(typescript@5.1.6):
-    resolution: {integrity: sha512-FGAt7QIm//36j+ZiiIAj1+LZ6NYP2UJLwE5NT70ztgjl90jaCEWZUgoGUgPUWB9CpTmVZYo1+dGWOSsMLHidJA==}
+  /@fluidframework/eslint-config-fluid@5.4.0(eslint@8.55.0)(typescript@5.1.6):
+    resolution: {integrity: sha512-V9lKsH1oFq3pX8UjSv8AyZ9BswPEcozGi3Ic/KuMdsYHj8Ibm3EgTtYSyNgVOAFivDW474qvXc5PDhKD8T/mfw==}
     dependencies:
-      '@fluid-internal/eslint-plugin-fluid': 0.1.1(eslint@8.55.0)(typescript@5.1.6)
+      '@fluid-internal/eslint-plugin-fluid': 0.1.2(eslint@8.55.0)(typescript@5.1.6)
       '@microsoft/tsdoc': 0.14.2
       '@rushstack/eslint-patch': 1.4.0
       '@rushstack/eslint-plugin': 0.13.1(eslint@8.55.0)(typescript@5.1.6)
@@ -6136,15 +6136,6 @@ packages:
     resolution: {integrity: sha512-C5Mc6rdnsaJDjO3UpGW/CQTHtCKaYlScZTly4JIu97Jxo/odCiH0ITnDXSJPTOrEKk/ycSZ0AOgTmkDtkOsvIA==}
     dev: true
 
-  /@ts-morph/common@0.21.0:
-    resolution: {integrity: sha512-ES110Mmne5Vi4ypUKrtVQfXFDtCsDXiUiGxF6ILVlE90dDD4fdpC1LSjydl/ml7xJWKSDZwUYD2zkOePMSrPBA==}
-    dependencies:
-      fast-glob: 3.3.2
-      minimatch: 7.4.6
-      mkdirp: 2.1.6
-      path-browserify: 1.0.1
-    dev: true
-
   /@ts-morph/common@0.23.0:
     resolution: {integrity: sha512-m7Lllj9n/S6sOkCkRftpM7L24uvmfXQFedlW/4hENcuJH1HHm9u5EgxZb9uVjQSCGrbBWBkOGgcTxNg36r6ywA==}
     dependencies:
@@ -6625,6 +6616,27 @@ packages:
       - typescript
     dev: true
 
+  /@typescript-eslint/parser@6.21.0(eslint@8.55.0)(typescript@5.1.6):
+    resolution: {integrity: sha512-tbsV1jPne5CkFQCgPBcDOt30ItF7aJoZL997JSF7MhGQqOeT3svWRYxiqlfA5RUdlHN6Fi+EI9bxqbdyAUZjYQ==}
+    engines: {node: ^16.0.0 || >=18.0.0}
+    peerDependencies:
+      eslint: ^7.0.0 || ^8.0.0
+      typescript: '*'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+    dependencies:
+      '@typescript-eslint/scope-manager': 6.21.0
+      '@typescript-eslint/types': 6.21.0
+      '@typescript-eslint/typescript-estree': 6.21.0(typescript@5.1.6)
+      '@typescript-eslint/visitor-keys': 6.21.0
+      debug: 4.3.4(supports-color@8.1.1)
+      eslint: 8.55.0
+      typescript: 5.1.6
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
   /@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6):
     resolution: {integrity: sha512-bIZVSGx2UME/lmhLcjdVc7ePBwn7CLqKarUBL4me1C5feOd663liTGjMBGVcGr+BhnSLeP4SgwdvNnnkbIdkCw==}
     engines: {node: ^16.0.0 || >=18.0.0}
@@ -6652,6 +6664,14 @@ packages:
     dependencies:
       '@typescript-eslint/types': 5.59.11
       '@typescript-eslint/visitor-keys': 5.59.11
+    dev: true
+
+  /@typescript-eslint/scope-manager@6.21.0:
+    resolution: {integrity: sha512-OwLUIWZJry80O99zvqXVEioyniJMa+d2GrqpUTqi5/v5D5rOrppJVBPa0yKCblcigC0/aYAzxxqQ1B+DS2RYsg==}
+    engines: {node: ^16.0.0 || >=18.0.0}
+    dependencies:
+      '@typescript-eslint/types': 6.21.0
+      '@typescript-eslint/visitor-keys': 6.21.0
     dev: true
 
   /@typescript-eslint/scope-manager@6.7.5:
@@ -6687,6 +6707,11 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
 
+  /@typescript-eslint/types@6.21.0:
+    resolution: {integrity: sha512-1kFmZ1rOm5epu9NZEZm1kckCDGj5UJEf7P1kliH4LKu/RkwpsfqqGmY2OOcUs18lSlQBKLDYBOGxRVtrMN5lpg==}
+    engines: {node: ^16.0.0 || >=18.0.0}
+    dev: true
+
   /@typescript-eslint/types@6.7.5:
     resolution: {integrity: sha512-WboQBlOXtdj1tDFPyIthpKrUb+kZf2VroLZhxKa/VlwLlLyqv/PwUNgL30BlTVZV1Wu4Asu2mMYPqarSO4L5ZQ==}
     engines: {node: ^16.0.0 || >=18.0.0}
@@ -6708,6 +6733,28 @@ packages:
       is-glob: 4.0.3
       semver: 7.6.0
       tsutils: 3.21.0(typescript@5.1.6)
+      typescript: 5.1.6
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /@typescript-eslint/typescript-estree@6.21.0(typescript@5.1.6):
+    resolution: {integrity: sha512-6npJTkZcO+y2/kr+z0hc4HwNfrrP4kNYh57ek7yCNlrBjWQ1Y0OS7jiZTkgumrvkX5HkEKXFZkkdFNkaW2wmUQ==}
+    engines: {node: ^16.0.0 || >=18.0.0}
+    peerDependencies:
+      typescript: '*'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+    dependencies:
+      '@typescript-eslint/types': 6.21.0
+      '@typescript-eslint/visitor-keys': 6.21.0
+      debug: 4.3.4(supports-color@8.1.1)
+      globby: 11.1.0
+      is-glob: 4.0.3
+      minimatch: 9.0.3
+      semver: 7.6.0
+      ts-api-utils: 1.0.3(typescript@5.1.6)
       typescript: 5.1.6
     transitivePeerDependencies:
       - supports-color
@@ -6778,6 +6825,14 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dependencies:
       '@typescript-eslint/types': 5.59.11
+      eslint-visitor-keys: 3.4.3
+    dev: true
+
+  /@typescript-eslint/visitor-keys@6.21.0:
+    resolution: {integrity: sha512-JJtkDduxLi9bivAB+cYOVMtbkqdPOhZ+ZI5LC47MIRrDV4Yn2o+ZnW10Nkmr28xRpSpdJ6Sm42Hjf2+REYXm0A==}
+    engines: {node: ^16.0.0 || >=18.0.0}
+    dependencies:
+      '@typescript-eslint/types': 6.21.0
       eslint-visitor-keys: 3.4.3
     dev: true
 
@@ -8117,10 +8172,6 @@ packages:
   /cluster-key-slot@1.1.2:
     resolution: {integrity: sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA==}
     engines: {node: '>=0.10.0'}
-
-  /code-block-writer@12.0.0:
-    resolution: {integrity: sha512-q4dMFMlXtKR3XNBHyMHt/3pwYNA69EDk00lloMOaaUMKPUXBw6lpXtbu3MMVG6/uOihGnRDOlkyqsONEUj60+w==}
-    dev: true
 
   /code-block-writer@13.0.1:
     resolution: {integrity: sha512-c5or4P6erEA69TxaxTNcHUNcIn+oyxSRTOWV+pSYF+z4epXqNvwvJ70XPGjPNgue83oAFAPBRQYwpAJ/Hpe/Sg==}
@@ -11969,6 +12020,13 @@ packages:
       brace-expansion: 2.0.1
     dev: true
 
+  /minimatch@9.0.3:
+    resolution: {integrity: sha512-RHiac9mvaRw0x3AYRgDC1CxAP7HTcNrrECeA8YYJeWnpo+2Q5CegtZjaotWTWxDG3UeGA1coE05iH1mPjT/2mg==}
+    engines: {node: '>=16 || 14 >=14.17'}
+    dependencies:
+      brace-expansion: 2.0.1
+    dev: true
+
   /minimatch@9.0.4:
     resolution: {integrity: sha512-KqWh+VchfxcMNRAJjj2tnsSJdNbHsVgnkBhTNrW7AjVo6OvLtxw8zfT9oLw1JSohlFzJ8jCoTgaoXvJ+kHt6fw==}
     engines: {node: '>=16 || 14 >=14.17'}
@@ -12085,12 +12143,6 @@ packages:
 
   /mkdirp@1.0.4:
     resolution: {integrity: sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==}
-    engines: {node: '>=10'}
-    hasBin: true
-    dev: true
-
-  /mkdirp@2.1.6:
-    resolution: {integrity: sha512-+hEnITedc8LAtIP9u3HJDFIdcLV2vXP33sqLLIzkv1Db1zO/1OxbvYf0Y1OC/S/Qo5dxHXepofhmxL02PsKe+A==}
     engines: {node: '>=10'}
     hasBin: true
     dev: true
@@ -15130,13 +15182,6 @@ packages:
       semver: 7.5.3
       typescript: 5.1.6
       webpack: 5.87.0(webpack-cli@4.10.0)
-    dev: true
-
-  /ts-morph@20.0.0:
-    resolution: {integrity: sha512-JVmEJy2Wow5n/84I3igthL9sudQ8qzjh/6i4tmYCm6IqYyKFlNbJZi7oBdjyqcWSWYRu3CtL0xbT6fS03ESZIg==}
-    dependencies:
-      '@ts-morph/common': 0.21.0
-      code-block-writer: 12.0.0
     dev: true
 
   /ts-morph@22.0.0:
