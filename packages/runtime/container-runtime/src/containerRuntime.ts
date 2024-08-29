@@ -107,6 +107,7 @@ import {
 	ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
+	extractSafePropertiesFromMessage,
 	GenericError,
 	IEventSampler,
 	LoggingError,
@@ -682,12 +683,6 @@ export const makeLegacySendBatchFn =
 				message.metadata,
 			);
 		}
-
-		//* Valid?
-		assert(
-			clientSequenceNumber >= 0,
-			"This implies an empty batch, which shouldn't come to this codepath",
-		);
 
 		deltaManager.flush();
 
@@ -2681,11 +2676,11 @@ export class ContainerRuntime
 				return;
 			}
 
-			//* MAYBE: Move to RMP
-			if (this.duplicateBatchDetector.processInboundBatch(inboundBatch)) {
+			const result = this.duplicateBatchDetector.processInboundBatch(inboundBatch);
+			if (result.duplicate) {
 				const error = new DataCorruptionError(
 					"Duplicate batch - The same batch was sequenced twice",
-					{},
+					{ batchId: inboundBatch.batchId },
 				);
 
 				this.mc.logger.sendErrorEvent(
@@ -2696,6 +2691,8 @@ export class ContainerRuntime
 							clientId: inboundBatch.clientId,
 							batchStartCsn: inboundBatch.batchStartCsn,
 							size: inboundBatch.messages.length,
+							duplicateBatchSequenceNumber: result.otherSequenceNumber,
+							...extractSafePropertiesFromMessage(inboundBatch.keyMessage),
 						},
 					},
 					error,
@@ -2710,6 +2707,7 @@ export class ContainerRuntime
 				inboundBatch,
 				local,
 			);
+
 			if (messagesWithPendingState.length > 0) {
 				messagesWithPendingState.forEach(({ message, localOpMetadata }) => {
 					const msg: MessageWithContext = {
@@ -4263,9 +4261,12 @@ export class ContainerRuntime
 		}
 	}
 
-	//* batchId is always set here because when resubmitting, this is when we need
-	//* to stamp the batch with the computed batchId so it can be correlated back
-	//* to the original clientId/csn from when it was first submitted.
+	/**
+	 * Resubmits each message in the batch, and then flushes the outbox.
+	 *
+	 * @remarks - If the "Offline Load" feature is enabled, the batchId is included in the resubmitted messages,
+	 * for correlation to detect container forking.
+	 */
 	private reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId) {
 		this.orderSequentially(() => {
 			for (const message of batch) {

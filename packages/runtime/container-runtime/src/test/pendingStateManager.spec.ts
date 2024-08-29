@@ -170,6 +170,7 @@ describe("Pending State Manager", () => {
 					emptyBatchSequenceNumber,
 					clientId,
 					batchId: resubmittedBatchId,
+					keyMessage: messages[0] as InboundSequencedContainerRuntimeMessage,
 				},
 				true /* local */,
 			);
@@ -561,6 +562,7 @@ describe("Pending State Manager", () => {
 						batchStartCsn: 1 /* batchStartCsn */,
 						batchId: undefined,
 						clientId: "clientId",
+						keyMessage: futureRuntimeMessage as any,
 					},
 					true /* local */,
 				);

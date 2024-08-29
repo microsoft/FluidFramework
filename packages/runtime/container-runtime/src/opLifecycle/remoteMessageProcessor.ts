@@ -39,6 +39,8 @@ export interface InboundBatch {
 	readonly batchStartCsn: number;
 	/** For an empty batch (with no messages), we need to remember the empty grouped batch's sequence number */
 	readonly emptyBatchSequenceNumber?: number;
+	//* TEMP: Once other PR merges, take that instead.
+	readonly keyMessage: ISequencedDocumentMessage;
 }
 
 function assertHasClientId(
@@ -144,6 +146,7 @@ export class RemoteMessageProcessor {
 				// If the batch is empty, we need to return the sequence number aside
 				emptyBatchSequenceNumber:
 					groupedMessages.length === 0 ? message.sequenceNumber : undefined,
+				keyMessage: groupedMessages[0] ?? message,
 			};
 		}
 
@@ -184,6 +187,7 @@ export class RemoteMessageProcessor {
 					batchId: asBatchMetadata(message.metadata)?.batchId,
 					clientId: message.clientId,
 					batchStartCsn: message.clientSequenceNumber,
+					keyMessage: message,
 				};
 
 				return { batchEnded: false };
@@ -195,6 +199,7 @@ export class RemoteMessageProcessor {
 				batchStartCsn: message.clientSequenceNumber,
 				clientId: message.clientId,
 				batchId: asBatchMetadata(message.metadata)?.batchId,
+				keyMessage: message,
 			};
 			return { batchEnded: true };
 		}

@@ -8,6 +8,7 @@ export {
 	BatchManager,
 	BatchSequenceNumbers,
 	estimateSocketSize,
+	getEffectiveBatchId,
 	generateBatchId,
 	IBatchManagerOptions,
 } from "./batchManager.js";

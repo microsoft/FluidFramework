@@ -2063,7 +2063,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				// contianer1, container1's summarizer, container2, container3
 				// container2 or container3 (the loser of the race) will close with "Forked Container Error",
 				// All the rest will close with "Duplicate batch"
-				// Due to the race condition, we can't specify here which container will close with which error.
+				// Due to the race condition, we can't specify the order of the different errors here.
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					category: "error",
@@ -2153,25 +2153,15 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				assert.strictEqual(container1.closed, true);
 				assert.strictEqual(counter1.value, incrementValue);
 
-				//* TODO: Switch winner/lose to be based on error type / message
-
-				// There's a race condition here; allow either Container2 or Container3 to win
-				let winner: { container: IContainer; counter: SharedCounter };
-				let loser: { container: IContainer; counter: SharedCounter };
-				if (container2.closed) {
-					loser = { container: container2, counter: counter2 };
-					winner = { container: container3, counter: counter3 };
-				} else {
-					loser = { container: container3, counter: counter3 };
-					winner = { container: container2, counter: counter2 };
-				}
-
-				//* double-check
-				assert.strictEqual(winner.container.closed, true, "winner should be closed");
-				assert.strictEqual(loser.container.closed, true, "loser should be closed");
-				// Both containers should have the correct value, from local state (and from not allowing duplication)
-				assert.strictEqual(winner.counter.value, incrementValue);
-				assert.strictEqual(loser.counter.value, incrementValue);
+				// Both containers will close with the correct value for the counter.
+				// The container whose op is sequenced first will close with "Duplicate batch" error
+				// when it sees the other container's batch come in.
+				// The other container (that loses the race to be sequenced) will close with "Forked Container Error"
+				// when it sees the winner's batch come in.
+				assert.strictEqual(container2.closed, true, "container2 should be closed");
+				assert.strictEqual(container3.closed, true, "container3 should be closed");
+				assert.strictEqual(counter2.value, incrementValue);
+				assert.strictEqual(counter3.value, incrementValue);
 			},
 		);
 

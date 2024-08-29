@@ -20,7 +20,12 @@ import {
 	type LocalContainerRuntimeMessage,
 } from "./messageTypes.js";
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "./metadata.js";
-import { BatchId, BatchMessage, generateBatchId, InboundBatch } from "./opLifecycle/index.js";
+import {
+	BatchId,
+	BatchMessage,
+	getEffectiveBatchId,
+	InboundBatch,
+} from "./opLifecycle/index.js";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
@@ -123,33 +128,6 @@ function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
 		...message,
 		localOpMetadata: undefined,
 	};
-}
-
-//* MOVE
-/**
- * Get the effective batch ID for the input argument.
- * Supports either an IPendingMessage or an InboundBatch.
- * If the batch ID is explicitly present, return it.
- * Otherwise, generate a new batch ID using the client ID and batch start CSN.
- */
-export function getEffectiveBatchId(
-	pendingMessageOrInboundBatch: IPendingMessage | InboundBatch,
-): string {
-	if ("localOpMetadata" in pendingMessageOrInboundBatch) {
-		const pendingMessage: IPendingMessage = pendingMessageOrInboundBatch;
-		return (
-			asBatchMetadata(pendingMessage.opMetadata)?.batchId ??
-			generateBatchId(
-				pendingMessage.batchInfo.clientId,
-				pendingMessage.batchInfo.batchStartCsn,
-			)
-		);
-	}
-
-	const inboundBatch: InboundBatch = pendingMessageOrInboundBatch;
-	return (
-		inboundBatch.batchId ?? generateBatchId(inboundBatch.clientId, inboundBatch.batchStartCsn)
-	);
 }
 
 /**
@@ -444,12 +422,6 @@ export class PendingStateManager implements IDisposable {
 			pendingMessage !== undefined,
 			0x169 /* "No pending message found for this remote message" */,
 		);
-
-		//* QUESTION (M1): Is this check legit? (would need to be moved)
-		// assert(
-		// 	pendingMessage.referenceSequenceNumber === message.referenceSequenceNumber,
-		// 	"Local message should have matching refSeq",
-		// );
 
 		pendingMessage.sequenceNumber = sequenceNumber;
 		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));

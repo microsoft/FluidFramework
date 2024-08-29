@@ -13,8 +13,7 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-import type { InboundBatch } from "./opLifecycle/index.js";
-import { getEffectiveBatchId } from "./pendingStateManager.js";
+import { getEffectiveBatchId, type InboundBatch } from "./opLifecycle/index.js";
 
 type BatchTrackerMessage = Pick<ISequencedDocumentMessage, "sequenceNumber">;
 
@@ -100,41 +99,41 @@ export class DuplicateBatchDetector {
 
 	private readonly batchIdBySeqNum = new Map<number, string>();
 
-	public processInboundBatch(inboundBatch: InboundBatch) {
-		//* TODO: Improve/simplify this to account for empty batches.
-		//* Maybe put the empty grouped batch on here instead of just the sequence number?
-		const { sequenceNumber, minimumSequenceNumber } = inboundBatch.messages[0] ?? {
-			sequenceNumber: inboundBatch.emptyBatchSequenceNumber ?? -1, //* FIX - don't need the ??
-			//* TODO: Include this in empty batches
-			minimumSequenceNumber: -1,
-		};
+	public processInboundBatch(
+		inboundBatch: InboundBatch,
+	): { duplicate: true; otherSequenceNumber: number } | { duplicate: false } {
+		const { sequenceNumber, minimumSequenceNumber } = inboundBatch.keyMessage;
 
 		this.clearOldBatchIds(minimumSequenceNumber);
 
-		//* Revisit and/or try to test
-		//* This would be SUPER rare/weird to have original (not resubmitted, no batchId) batch
-		//* arrive in parallel with a resubmitted batch, but maybe it's possible
-		//* If it's NOT possible, we can skip all this if there's no explicit batchId
+		// getEffectiveBatchId is only needed in the SUPER rare/surprising case where
+		// the original batch (not resubmitted, so no batchId) arrives in parallel with a resubmitted batch.
+		// In the presence of typical network conditions, this would not be possible
+		// (the original batch should roundtrip WAY before another container could rehydrate, connect, and resubmit)
 		const batchId = getEffectiveBatchId(inboundBatch);
 
 		// Check this batch against the tracked batchIds to see if it's a duplicate
 		if (this.batchIdsAll.has(batchId)) {
-			assert(
-				this.batchIdBySeqNum.has(sequenceNumber),
-				"Shouldn't add a batchId that's already tracked",
-			);
-
-			//* Or return the info for logging?  Or log here?
-			return true;
+			this.batchIdBySeqNum.forEach((trackedBatchId, trackedSequenceNumber) => {
+				if (trackedBatchId === batchId) {
+					return {
+						duplicate: true,
+						otherSequenceNumber: trackedSequenceNumber,
+					};
+				}
+			});
+			assert(false, "Should have found the batchId in batchIdBySeqNum map");
 		}
 
-		//* Add it after checking to avoid finding itself
+		// Now we know it's not a duplicate, so add it to the tracked batchIds and return.
 		assert(
 			!this.batchIdBySeqNum.has(sequenceNumber),
 			"Shouldn't add a batchId that's already tracked",
 		);
 		this.batchIdBySeqNum.set(sequenceNumber, batchId);
 		this.batchIdsAll.add(batchId);
+
+		return { duplicate: false };
 	}
 
 	/**
@@ -142,16 +141,11 @@ export class DuplicateBatchDetector {
 	 * since the batch start has been processed by all clients, and local batches are deduped and the forked client would close.
 	 */
 	private clearOldBatchIds(msn: number) {
-		//* Switch to iterating over Object.entries to avoid the undefined check
-		const sequenceNumbers = Array.from(this.batchIdBySeqNum.keys());
-		for (const sequenceNumber of sequenceNumbers) {
+		this.batchIdBySeqNum.forEach((batchId, sequenceNumber) => {
 			if (sequenceNumber < msn) {
-				const batchId = this.batchIdBySeqNum.get(sequenceNumber);
-				if (batchId !== undefined) {
-					this.batchIdBySeqNum.delete(sequenceNumber);
-					this.batchIdsAll.delete(batchId);
-				}
+				this.batchIdBySeqNum.delete(sequenceNumber);
+				this.batchIdsAll.delete(batchId);
 			}
-		}
+		});
 	}
 }

@@ -1090,9 +1090,7 @@ export class Container
 					{
 						eventName: "ContainerClose",
 						category:
-							this._lifecycleState !== "loading" && error !== undefined
-								? "error" //* REVERT
-								: "generic",
+							this._lifecycleState !== "loading" && error !== undefined ? "error" : "generic",
 					},
 					error,
 				);
