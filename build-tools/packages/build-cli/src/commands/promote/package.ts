@@ -4,8 +4,7 @@
  */
 
 import { Flags } from "@oclif/core";
-import { BaseCommand } from "../../library/index.js";
-import { readLines } from "../../utils.js";
+import { BaseCommand, readLines } from "../../library/index.js";
 
 interface PromotePackageResponse {
 	success: boolean;
@@ -38,13 +37,34 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 			env: "ADO_API_TOKEN",
 			required: true,
 		}),
+		releaseFlag: Flags.string({
+			description: "Release flag e.g. (prerelease or release)",
+			exists: true,
+			required: true,
+		}),
+		feedKind: Flags.string({
+			description: "ADO feed kind e.g. (internal-build or public)",
+			exists: true,
+			required: true,
+		}),
 	};
 
 	public async run(): Promise<void> {
-		const packageOrder = await readLines(this.flags.orderFile);
+		const { version, orderFile, token, releaseFlag, feedKind } = this.flags;
+		if (releaseFlag !== "release") {
+			return this.log(
+				`${releaseFlag} packages will not be promoted to Release view. Only release packages will be promoted to Release view.`,
+			);
+		}
+		if (feedKind !== "internal-build") {
+			return this.log(
+				`Packages from the ${feedKind} feed will not be promoted to Release view. Only internal-build feed packages will be promoted to Release view.`,
+			);
+		}
+		const packageOrder = await readLines(orderFile);
 		await Promise.all(
 			packageOrder.map(async (packageName) =>
-				this.promotePackage(packageName, this.flags.version, this.flags.token),
+				this.promotePackage(packageName, version, token),
 			),
 		);
 	}

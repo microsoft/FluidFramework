@@ -39,6 +39,8 @@ steps:
     customEndPoint: ${{ parameters.customEndPoint }}
 - task: Bash@3
   displayName: Publish Packages for ${{ parameters.artifactPath }}
+  env:
+    ADO_API_TOKEN: $(System.AccessToken)
   inputs:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
@@ -70,16 +72,14 @@ steps:
       --retry $maximumRetryIfNetworkError \
       --verbose
 
-      if [[ "$(release)" == "release" && ${{ parameters.feedKind }} == "internal-build" ]]; then
-        flub promote package \
-        --version "$(SetVersion.version)" \
-        --orderFile $orderFile \
-        --token ":$ADO_API_TOKEN" \
-        --verbose
-      fi
+      flub promote package \
+      --version "$(SetVersion.version)" \
+      --orderFile $orderFile \
+      --token ":$ADO_API_TOKEN" \
+      --release "$(release)" \
+      --feedKind ${{ parameters.feedKind }} \
+      --verbose
 
       # Clean up; remove the npmrc
       rm ~/.npmrc
       exit 0
-  env:
-    ADO_API_TOKEN: $(System.AccessToken)
