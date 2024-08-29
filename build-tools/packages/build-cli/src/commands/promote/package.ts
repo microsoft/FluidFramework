@@ -65,7 +65,7 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 				headers: {
 					"Content-Type": "application/json",
 					"Accept": "application/json",
-					"Authorization": `Basic ${Buffer.from(`:${token}`).toString("base64")}`,
+					"Authorization": `Basic ${Buffer.from(token).toString('base64')}`,
 				},
 				body: JSON.stringify({
 					views: {
@@ -84,10 +84,9 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 				);
 			}
 
-			const responseData = (await response.json()) as PromotePackageResponse;
-			return responseData.success;
-		} catch (error) {
-			this.error(`Error promoting package: ${(error as Error).message}`, { exit: 2 });
+			return true;
+		} catch {
+			this.error(`Error promoting package`, { exit: 2 });
 		}
 	}
 }
