@@ -2074,15 +2074,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				// All the rest will close with "Duplicate batch"
 				// Due to the race condition, we can't specify the order of the different errors here.
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:DuplicateBatch",
-				},
-				{
-					eventName: "fluid:telemetry:ContainerRuntime:DuplicateBatch",
-				},
-				{
-					eventName: "fluid:telemetry:ContainerRuntime:DuplicateBatch",
-				},
-				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					category: "error",
 				},

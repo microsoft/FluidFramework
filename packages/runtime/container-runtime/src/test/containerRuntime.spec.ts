@@ -348,6 +348,8 @@ describe("Runtime", () => {
 					assert.strictEqual(submittedOps.length, 2);
 					assert.strictEqual(submittedOps[0].contents.address, "1");
 					assert.strictEqual(submittedOps[1].contents.address, "2");
+
+					//* How to validate this? clientId will be a uuid
 					assert.strictEqual(
 						submittedOps[0].metadata?.batchId,
 						enableOfflineLoad ? "mockClientId_[-1]" : undefined,

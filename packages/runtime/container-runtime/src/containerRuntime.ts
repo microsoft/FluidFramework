@@ -2743,7 +2743,7 @@ export class ContainerRuntime
 					{ batchId: inboundBatch.batchId },
 				);
 
-				this.mc.logger.sendErrorEvent(
+				this.mc.logger.sendTelemetryEvent(
 					{
 						eventName: "DuplicateBatch",
 						details: {
