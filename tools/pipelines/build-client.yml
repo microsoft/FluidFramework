@@ -139,7 +139,7 @@ extends:
     interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
-    testCoverage: true
+    testCoverage: ${{ variables.testCoverage }}
     buildDirectory: .
     tagName: client
     isReleaseGroup: true
@@ -156,9 +156,13 @@ extends:
     # This check must be run after the build, since it relies on built files being present. Eventually it might be moved
     # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
     # packages twice.
+    - check:are-the-types-wrong
     - webpack
     - ci:test:mocha
+    - ci:test:jest
     - ci:test:realsvc:local
+    - ci:test:realsvc:tinylicious
+    - ci:test:stress:tinylicious
     - test:copyresults
     testResultDirs:
     - nyc/examples
