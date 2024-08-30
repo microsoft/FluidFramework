@@ -324,8 +324,8 @@ extends:
                   packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
               # This check is a workaround. We don't want to set versions for the build-bundle-size-artifacts and build-code-coverage-artifacts
-              # pipeline because these pipeline are special - it runs a client build but doesn't publish anything. Working around this properly is
-              # challenging and would create a much bigger change. Since these are the only pipeline that sets this variable to
+              # pipeline because it is special - it runs a client build but doesn't publish anything. Working around this properly is
+              # challenging and would create a much bigger change. Since this is the only pipeline that sets these variables to
               # true, we use that to determine whether to set versions.
               - ${{ if and(eq(parameters.taskPublishBundleSizeArtifacts, false), eq(parameters.taskPublishCodeCoverageArtifacts, false)) }}:
                   - template: /tools/pipelines/templates/include-set-package-version.yml@self
