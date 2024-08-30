@@ -66,6 +66,7 @@ export interface IReleaseGroup {
 }
 
 export function isIReleaseGroup(
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	toCheck: Exclude<any, string | number | ReleaseGroupName | PackageName>,
 ): toCheck is IReleaseGroup {
 	if (!("name" in toCheck)) {
@@ -113,6 +114,7 @@ export interface IPackage<J extends PackageJson = PackageJson> {
 	combinedDependencies: Generator<PackageDependency, void>;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- this is a type guard
 export function isIPackage(pkg: any): pkg is IPackage {
 	return "getScript" in pkg;
 }
