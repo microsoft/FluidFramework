@@ -6,9 +6,8 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { type TreeValue, ValueSchema } from "../core/index.js";
-import { leaf } from "../domains/index.js";
 import {
-	type LeafNodeSchema as FlexLeafNodeSchema,
+	LeafNodeSchema as FlexLeafNodeSchema,
 	type FlexTreeNode,
 	isFlexTreeNode,
 	valueSchemaAllows,
@@ -45,10 +44,8 @@ export class LeafNodeSchema<Name extends string, const T extends ValueSchema>
 		return data;
 	}
 
-	public constructor(name: Name, t: T, schema: FlexLeafNodeSchema) {
-		assert((name as string) === schema.name, "bad leaf config");
-		assert(t === schema.info, "bad leaf config");
-
+	public constructor(name: Name, t: T) {
+		const schema: FlexLeafNodeSchema = new FlexLeafNodeSchema({ name: "makeLeaf" }, name, t);
 		setFlexSchemaFromClassSchema(this, schema);
 		this.identifier = name;
 		this.info = t;
@@ -61,19 +58,19 @@ export class LeafNodeSchema<Name extends string, const T extends ValueSchema>
 function makeLeaf<Name extends string, const T extends ValueSchema>(
 	name: Name,
 	t: T,
-	schema: FlexLeafNodeSchema,
 ): TreeNodeSchema<
 	`com.fluidframework.leaf.${Name}`,
 	NodeKind.Leaf,
 	TreeValue<T>,
 	TreeValue<T>
 > {
-	return new LeafNodeSchema(`com.fluidframework.leaf.${name}`, t, schema);
+	// Names in this domain follow https://en.wikipedia.org/wiki/Reverse_domain_name_notation
+	return new LeafNodeSchema(`com.fluidframework.leaf.${name}`, t);
 }
 
 // Leaf schema shared between all SchemaFactory instances.
-export const stringSchema = makeLeaf("string", ValueSchema.String, leaf.string);
-export const numberSchema = makeLeaf("number", ValueSchema.Number, leaf.number);
-export const booleanSchema = makeLeaf("boolean", ValueSchema.Boolean, leaf.boolean);
-export const nullSchema = makeLeaf("null", ValueSchema.Null, leaf.null);
-export const handleSchema = makeLeaf("handle", ValueSchema.FluidHandle, leaf.handle);
+export const stringSchema = makeLeaf("string", ValueSchema.String);
+export const numberSchema = makeLeaf("number", ValueSchema.Number);
+export const booleanSchema = makeLeaf("boolean", ValueSchema.Boolean);
+export const nullSchema = makeLeaf("null", ValueSchema.Null);
+export const handleSchema = makeLeaf("handle", ValueSchema.FluidHandle);

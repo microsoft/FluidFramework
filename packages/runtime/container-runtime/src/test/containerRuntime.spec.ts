@@ -19,6 +19,7 @@ import {
 	IErrorBase,
 	IResponse,
 } from "@fluidframework/core-interfaces";
+import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
@@ -125,6 +126,7 @@ describe("Runtime", () => {
 	});
 
 	let submittedOps: any[] = [];
+	let submittedSignals: ISignalEnvelope[] = [];
 	let opFakeSequenceNumber = 1;
 	let clock: SinonFakeTimers;
 
@@ -135,6 +137,7 @@ describe("Runtime", () => {
 	beforeEach(() => {
 		submittedOps = [];
 		opFakeSequenceNumber = 1;
+		submittedSignals = [];
 	});
 
 	afterEach(() => {
@@ -172,6 +175,9 @@ describe("Runtime", () => {
 			submitFn: (_type: MessageType, contents: any, _batch: boolean, metadata?: unknown) => {
 				submittedOps.push({ ...contents, metadata }); // Note: this object shape is for testing only. Not representative of real ops.
 				return opFakeSequenceNumber++;
+			},
+			submitSignalFn: (content: unknown, targetClientId?: string) => {
+				submittedSignals.push(content as ISignalEnvelope); // Note: this object shape is for testing only. Not representative of real signals.
 			},
 			clientId: mockClientId,
 			connected: true,
@@ -978,6 +984,7 @@ describe("Runtime", () => {
 									address: "address",
 								},
 								clientSequenceNumber: 0,
+								minimumSequenceNumber: 0,
 							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 							true /* local */,
 						);
@@ -1013,6 +1020,7 @@ describe("Runtime", () => {
 								contents: {
 									address: "address",
 								},
+								minimumSequenceNumber: 0,
 							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 							false /* local */,
 						);
@@ -1029,6 +1037,7 @@ describe("Runtime", () => {
 									},
 									type: "chunkedOp",
 								},
+								minimumSequenceNumber: 0,
 							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 							true /* local */,
 						);
@@ -1196,16 +1205,13 @@ describe("Runtime", () => {
 
 				const packedOp: Omit<
 					ISequencedDocumentMessage,
-					| "term"
-					| "minimumSequenceNumber"
-					| "clientSequenceNumber"
-					| "referenceSequenceNumber"
-					| "timestamp"
+					"term" | "clientSequenceNumber" | "referenceSequenceNumber" | "timestamp"
 				> = {
 					contents: JSON.stringify(futureRuntimeMessage),
 					type: MessageType.Operation,
 					sequenceNumber: 123,
 					clientId: "someClientId",
+					minimumSequenceNumber: 0,
 				};
 				containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */);
 			});
@@ -1220,16 +1226,13 @@ describe("Runtime", () => {
 
 				const packedOp: Omit<
 					ISequencedDocumentMessage,
-					| "term"
-					| "minimumSequenceNumber"
-					| "clientSequenceNumber"
-					| "referenceSequenceNumber"
-					| "timestamp"
+					"term" | "clientSequenceNumber" | "referenceSequenceNumber" | "timestamp"
 				> = {
 					type: MessageType.Operation,
 					contents: JSON.stringify(futureRuntimeMessage),
 					sequenceNumber: 123,
 					clientId: "someClientId",
+					minimumSequenceNumber: 0,
 				};
 				assert.throws(
 					() =>
@@ -1247,16 +1250,13 @@ describe("Runtime", () => {
 
 				const packedOp: Omit<
 					ISequencedDocumentMessage,
-					| "term"
-					| "minimumSequenceNumber"
-					| "clientSequenceNumber"
-					| "referenceSequenceNumber"
-					| "timestamp"
+					"term" | "clientSequenceNumber" | "referenceSequenceNumber" | "timestamp"
 				> = {
 					contents: JSON.stringify(futureRuntimeMessage),
 					type: MessageType.Operation,
 					sequenceNumber: 123,
 					clientId: "someClientId",
+					minimumSequenceNumber: 0,
 				};
 				assert.throws(
 					() =>
@@ -1749,6 +1749,7 @@ describe("Runtime", () => {
 							type: ContainerMessageType.Rejoin,
 							contents: undefined,
 						},
+						minimumSequenceNumber: 0,
 					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 					true /* local */,
 				);
@@ -2496,18 +2497,471 @@ describe("Runtime", () => {
 				existing: false,
 				provideEntryPoint: mockProvideEntryPoint,
 			});
+			mockLogger.clear();
+
 			const json = JSON.stringify({ hello: "world" });
 			const messageBase = { contents: json, clientId: "CLIENT_ID" };
+
+			// This message won't trigger the legacy op log
 			containerRuntime.process(
-				{ ...messageBase, sequenceNumber: 1 } as unknown as ISequencedDocumentMessage,
+				{
+					...messageBase,
+					contents: {},
+					sequenceNumber: 1,
+				} as unknown as ISequencedDocumentMessage,
 				false /* local */,
 			);
-			mockLogger.assertMatch([{ eventName: "LegacyMessageFormat" }]);
+			assert.equal(mockLogger.events.length, 0, "Expected no event logged");
+
+			// This message should trigger the legacy op log
 			containerRuntime.process(
 				{ ...messageBase, sequenceNumber: 2 } as unknown as ISequencedDocumentMessage,
 				false /* local */,
 			);
+			mockLogger.assertMatch([{ eventName: "LegacyMessageFormat" }]);
+
+			// This message would trigger the legacy op log, except we already logged once
+			containerRuntime.process(
+				{ ...messageBase, sequenceNumber: 3 } as unknown as ISequencedDocumentMessage,
+				false /* local */,
+			);
 			assert.equal(mockLogger.events.length, 0, "Expected no more events logged");
+		});
+
+		describe("Signals", () => {
+			let containerRuntime: ContainerRuntime;
+			let logger: MockLogger;
+			let droppedSignals: ISignalEnvelope[];
+
+			beforeEach(async () => {
+				logger = new MockLogger();
+				droppedSignals = [];
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext({}, logger) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					requestHandler: undefined,
+					runtimeOptions: {
+						enableGroupedBatching: false,
+						flushMode: FlushMode.TurnBased,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				logger.clear();
+			});
+
+			function sendSignals(count: number) {
+				for (let i = 0; i < count; i++) {
+					containerRuntime.submitSignal("TestSignalType", `TestSignalContent ${i}`);
+				}
+			}
+
+			function processSignals(signals: ISignalEnvelope[], count: number) {
+				const signalsToProcess = signals.splice(0, count);
+				for (const signal of signalsToProcess) {
+					containerRuntime.processSignal(
+						{
+							clientId: containerRuntime.clientId as string,
+							content: signal,
+						},
+						true,
+					);
+				}
+			}
+
+			function processSubmittedSignals(count: number) {
+				processSignals(submittedSignals, count);
+			}
+
+			function processDroppedSignals(count: number) {
+				processSignals(droppedSignals, count);
+			}
+
+			function dropSignals(count: number) {
+				const signalsToDrop = submittedSignals.splice(0, count);
+				droppedSignals.push(...signalsToDrop);
+			}
+
+			it("emits signal latency telemetry after 100 signals", () => {
+				// Send 1st signal and process it to prime the system
+				sendSignals(1);
+				processSubmittedSignals(1);
+
+				// Send 100 more signals and process each of them in order
+				sendSignals(100);
+				processSubmittedSignals(100);
+
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 1,
+							signalsLost: 0,
+							outOfOrderSignals: 0,
+						},
+
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 100,
+							signalsLost: 0,
+							outOfOrderSignals: 0,
+						},
+					],
+					"Signal latency telemetry should be logged after 100 signals",
+				);
+			});
+
+			it("emits SignalLost error event when signal is dropped", () => {
+				sendSignals(4);
+				processSubmittedSignals(1);
+				dropSignals(2);
+				processSubmittedSignals(1);
+
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLost",
+							signalsLost: 2,
+						},
+					],
+					"SignalLost telemetry should be logged when signal is dropped",
+				);
+			});
+
+			it("emits SignalOutOfOrder error event when missing signal is received non-sequentially", () => {
+				sendSignals(3);
+				processSubmittedSignals(1);
+				dropSignals(1);
+				processSubmittedSignals(1);
+
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLost",
+							signalsLost: 1,
+						},
+					],
+					"SignalLost telemetry should be logged when signal is dropped",
+					undefined,
+					false,
+				);
+
+				logger.assertMatchNone(
+					[
+						{
+							eventName: "ContainerRuntime:SignalOutOfOrder",
+						},
+					],
+					"SignalOutOfOrder telemetry should not be logged on lost signal",
+				);
+
+				processDroppedSignals(1);
+
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalOutOfOrder",
+						},
+					],
+					"SignalOutOfOrder telemetry should be logged when missing signal is received non-sequentially",
+				);
+			});
+
+			it("does not emit error events when signals are processed in order", () => {
+				sendSignals(100);
+
+				processSubmittedSignals(100);
+
+				logger.assertMatchNone(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLost",
+						},
+						{
+							eventName: "ContainerRuntime:SignalOutOfOrder",
+						},
+					],
+					"SignalLost and SignalOutOfOrder telemetry should not be logged when signals are processed in order",
+				);
+			});
+
+			it("logs relative lost signal count in SignalLost telemetry", () => {
+				sendSignals(5);
+				dropSignals(1);
+				processSubmittedSignals(1);
+
+				// Missing signal should be detected
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLost",
+							signalsLost: 1,
+						},
+					],
+					"SignalLost telemetry should be logged when signal is dropped",
+				);
+
+				dropSignals(2);
+				processSubmittedSignals(1);
+
+				// Missing 3rd and 4th signals should be detected
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLost",
+							signalsLost: 2,
+						},
+					],
+					"SignalLost telemetry should be logged when signal is dropped",
+				);
+			});
+
+			it("ignores in-flight signals on disconnect/reconnect", () => {
+				// Define resubmit and setConnectionState on channel collection
+				// This is needed to submit test data store ops
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				(containerRuntime as any).channelCollection = {
+					setConnectionState: (_connected: boolean, _clientId?: string) => {},
+					// Pass data store op right back to ContainerRuntime
+					reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
+						submitDataStoreOp(
+							containerRuntime,
+							envelope.address,
+							envelope.contents,
+							localOpMetadata,
+						);
+					},
+				} as ChannelCollection;
+
+				sendSignals(4);
+
+				// Submit op so message is queued in PendingStateManager
+				// This is needed to increase reconnect count
+				submitDataStoreOp(containerRuntime, "1", "test");
+
+				// Disconnect + Reconnect
+				changeConnectionState(containerRuntime, false, mockClientId);
+				changeConnectionState(containerRuntime, true, mockClientId);
+
+				// Temporarily lose two old signals
+				dropSignals(2);
+
+				// Receive old signals sent before disconnect
+				processSubmittedSignals(2);
+
+				// Receive old out of order signals
+				processDroppedSignals(2);
+
+				// No error events should be logged for signals sent before disconnect
+				logger.assertMatchNone(
+					[
+						{
+							eventName: "ContainerRuntime:SignalOutOfOrder",
+						},
+						{
+							eventName: "ContainerRuntime:SignalLost",
+						},
+					],
+					"SignalOutOfOrder/SignalLost telemetry should not be logged on reconnect",
+				);
+
+				sendSignals(100);
+				processSubmittedSignals(100);
+
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 97, // 101 (tracked latency signal) - 5 (earliest sent signal on reconnect) + 1 = 97
+							signalsLost: 0,
+							outOfOrderSignals: 0,
+							reconnectCount: 1,
+						},
+					],
+					"SignalLatency telemetry should be logged with correct reconnect count",
+				);
+			});
+
+			it("counts both relative and abosolute lost signal counts", () => {
+				sendSignals(60);
+				processSubmittedSignals(10);
+				dropSignals(1);
+				processSubmittedSignals(39);
+
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLost",
+							signalsLost: 1,
+						},
+					],
+					"SignalLost telemetry should log relative lost signal count when a signal is dropped",
+				);
+
+				dropSignals(5);
+				sendSignals(45);
+				processSubmittedSignals(30);
+				dropSignals(4);
+
+				// Process remaining signals
+				processSubmittedSignals(16);
+
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLost",
+							signalsLost: 5,
+						},
+						{
+							eventName: "ContainerRuntime:SignalLost",
+							signalsLost: 4,
+						},
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 100,
+							signalsLost: 10,
+							outOfOrderSignals: 0,
+						},
+					],
+					"SignalLost telemetry should log relative lost signal count and SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals",
+				);
+			});
+
+			it("accurately reports amount of sent and lost signals with multiple SignalLatency events", () => {
+				// Send 50 signals and drop 10
+				sendSignals(50);
+				dropSignals(10);
+				processSubmittedSignals(40);
+
+				// Send 60 signals and drop 10
+				sendSignals(60);
+				processSubmittedSignals(40);
+				dropSignals(10);
+
+				// Here we should detect that 100 signals have been sent and 20 signals were lost
+				processSubmittedSignals(10);
+
+				// Send 100 signals and drop 1
+				sendSignals(100);
+				dropSignals(1);
+
+				// Here we should detect that 100 more signals have been sent and 1 signal was lost
+				processSubmittedSignals(99);
+
+				// Check SignalLatency logs amount of sent and lost signals
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 101,
+							signalsLost: 20,
+							outOfOrderSignals: 0,
+						},
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 100,
+							signalsLost: 1,
+							outOfOrderSignals: 0,
+						},
+					],
+					"SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals",
+				);
+			});
+
+			it("accurately reports amount of sent and lost signals when roundtrip tracked signal is dropped", () => {
+				// Send 50 signals and drop 10
+				sendSignals(50);
+				dropSignals(10);
+				processSubmittedSignals(40);
+
+				// Send 60 signals and drop 15 (including roundtrip tracked signal)
+				sendSignals(60);
+				processSubmittedSignals(40);
+				dropSignals(15); // Drop roundtrip tracked signal
+
+				// Since roundtrip signal is lost, we don't expect to see SignalLatency telemetry for the first 100 signals
+				processSubmittedSignals(5);
+
+				// Send 100 signals and drop 1
+				sendSignals(100);
+				dropSignals(1);
+
+				// Here we should detect that 200 signals have been sent and 26 signals were lost
+				processSubmittedSignals(99);
+
+				// Check SignalLatency logs amount of sent and lost signals
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 201,
+							signalsLost: 26,
+							outOfOrderSignals: 0,
+						},
+					],
+					"SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals",
+				);
+			});
+
+			it("accurately reports amount of sent and lost signals when rapid fire more than 100+ signals", () => {
+				sendSignals(1);
+				processSubmittedSignals(1);
+				sendSignals(101);
+				dropSignals(10);
+				processSubmittedSignals(91);
+
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 100,
+							signalsLost: 10,
+							outOfOrderSignals: 0,
+						},
+					],
+					"SignalLatency telemetry should log correct amount of sent and lost signals",
+				);
+			});
+
+			it("should log out of order signal in between signal latency events", () => {
+				// Send 1st signal and process it to prime the system
+				sendSignals(1);
+				processSubmittedSignals(1);
+
+				// Send 150 signals and temporarily lose 1
+				sendSignals(150); // 		 150 outstanding including 1 tracked signal (#101); max #151
+				processSubmittedSignals(95); //  55 outstanding including 1 tracked signal (#101)
+				dropSignals(1); //               54 outstanding including 1 tracked signal (#101)
+				processSubmittedSignals(14); //  40 outstanding; none tracked
+				processDroppedSignals(1); //     40 outstanding; none tracked *out of order signal*
+				processSubmittedSignals(40); //   0 outstanding; none tracked
+
+				// Send 60 signals including tracked signal
+				sendSignals(60); // 		 60 outstanding including 1 tracked signal (#201); max #211
+				processSubmittedSignals(60); //   0 outstanding; none tracked
+
+				// Check SignalLatency logs amount of sent and lost signals
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 100,
+							signalsLost: 1,
+							outOfOrderSignals: 0,
+						},
+						{
+							eventName: "ContainerRuntime:SignalOutOfOrder",
+						},
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 100,
+							signalsLost: 0,
+							outOfOrderSignals: 1,
+						},
+					],
+					"SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals and SignalOutOfOrder event",
+				);
+			});
 		});
 	});
 });

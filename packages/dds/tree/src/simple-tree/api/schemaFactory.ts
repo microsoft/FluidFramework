@@ -748,7 +748,7 @@ export function structuralName<const T extends string>(
 		names.sort();
 		// Ensure name can't have collisions by quoting and escaping any quotes in the names of types.
 		// Using JSON is a simple way to accomplish this.
-		// The outer `[]` around the result are also needed so that a single type name "Any" would not collide with the "any" case above.
+		// The outer `[]` around the result were needed so that a single type name "Any" would not collide with the "any" case which used to exist.
 		inner = JSON.stringify(names);
 	}
 	return `${collectionName}<${inner}>`;

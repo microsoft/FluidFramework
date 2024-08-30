@@ -30,16 +30,19 @@ export interface InboundBatch {
 	/** clientId that sent this batch. Used to compute Batch ID if needed */
 	readonly clientId: string;
 	/**
-	 * Client Sequence Number of the first message in the batch.
+	 * Client Sequence Number of the Grouped Batch message, or the first message in the ungrouped batch.
 	 * Used to compute Batch ID if needed
 	 *
 	 * @remarks For chunked batches, this is the CSN of the "representative" chunk (the final chunk).
 	 * For grouped batches, clientSequenceNumber on messages is overwritten, so we track this original value here.
 	 */
 	readonly batchStartCsn: number;
-	/** For an empty batch (with no messages), we need to remember the empty grouped batch's sequence number */
-	readonly emptyBatchSequenceNumber?: number;
-	//* TEMP: Once other PR merges, take that instead.
+	/**
+	 * The first message in the batch, or if the batch is empty, the empty grouped batch message
+	 * Used for accessing the sequence numbers for the (start of the) batch.
+	 *
+	 * @remarks Do not use clientSequenceNumber here, use batchStartCsn instead.
+	 */
 	readonly keyMessage: ISequencedDocumentMessage;
 }
 
@@ -143,10 +146,7 @@ export class RemoteMessageProcessor {
 				batchStartCsn: message.clientSequenceNumber,
 				clientId,
 				batchId,
-				// If the batch is empty, we need to return the sequence number aside
-				emptyBatchSequenceNumber:
-					groupedMessages.length === 0 ? message.sequenceNumber : undefined,
-				keyMessage: groupedMessages[0] ?? message,
+				keyMessage: groupedMessages[0] ?? message, // For an empty batch, this is the empty grouped batch message. Needed for sequence numbers for this batch
 			};
 		}
 
