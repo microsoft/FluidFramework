@@ -55,11 +55,6 @@ group and are released independently. **This concept no longer exists. There are
 release independently can either be part of a single-package workspace (and release group), or they can be part of
 another larger workspace, contained within a single-package release group.
 
-###
-
-> [!IMPORTANT]  
-> Crucial information necessary for users to succeed.
-
 ## Configuration
 
 Configuration for the repo layout is stored in a config file at the root of the repo. This can either be part of the
