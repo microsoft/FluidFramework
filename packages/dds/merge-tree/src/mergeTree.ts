@@ -1638,6 +1638,7 @@ export class MergeTree {
 					};
 
 					markSegmentMoved(newSegment, moveInfo);
+					this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
 
 					if (moveInfo.localMovedSeq !== undefined) {
 						const movedSegmentGroup = this.locallyMovedSegments.get(moveInfo.localMovedSeq);
