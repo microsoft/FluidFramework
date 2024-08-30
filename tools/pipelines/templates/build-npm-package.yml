@@ -328,7 +328,7 @@ extends:
               # the pipeline is special - it runs a client build but doesn't publish anything. Working around this properly is
               # challenging and would create a much bigger change. Since this is the only pipeline that sets this variable to
               # true, we use that to determine whether to set versions.
-              - ${{ if and(eq(parameters.taskPublishBundleSizeArtifacts, false), eq(parameters.taskPublishCodeCoverageArtifacts, false)) }}:
+              - ${{ if eq(parameters.taskPublishBundleSizeArtifacts, false) }}:
                   - template: /tools/pipelines/templates/include-set-package-version.yml@self
                     parameters:
                       buildDirectory: '${{ parameters.buildDirectory }}'
