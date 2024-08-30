@@ -406,6 +406,11 @@ extends:
                           summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
                           failIfCoverageEmpty: true
                         condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                      - task: CopyFiles@2
+                        displayName: Copy code coverage report to artifact staging directory
+                        inputs:
+                          sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
+                          targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
 
                   # Process test result, include publishing and logging
                   - template: /tools/pipelines/templates/include-process-test-results.yml@self
