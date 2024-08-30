@@ -251,6 +251,7 @@ export interface AttributionPolicy {
 	 * This must be done in an eventually consistent fashion.
 	 */
 
+	// eslint-disable-next-line import/no-deprecated
 	attach: (client: Client) => void;
 	/**
 	 * Disables tracking attribution information on segments.
@@ -1351,7 +1352,7 @@ export class MergeTree {
 		clientId: number,
 		seq: number,
 		opArgs: IMergeTreeDeltaOpArgs | undefined,
-	) {
+	): void {
 		const localSeq =
 			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
 
@@ -1540,7 +1541,7 @@ export class MergeTree {
 				let _localMovedSeq: number | undefined;
 				let _movedSeq: number | undefined;
 				let movedClientIds: number[] | undefined;
-				const findLeftMovedSegment = (seg: ISegment) => {
+				const findLeftMovedSegment = (seg: ISegment): boolean => {
 					const movedSeqs =
 						seg.concurrentMoves?.filter((moveObj) => moveObj.seq >= refSeq) ?? [];
 					const localMovedSeqs = seg.localMovedSeq ? [seg.localMovedSeq] : [];
@@ -1564,7 +1565,7 @@ export class MergeTree {
 					return moveUpperBound >= smallestSeqMoveOp;
 				};
 
-				const findRightMovedSegment = (seg: ISegment) => {
+				const findRightMovedSegment = (seg: ISegment): boolean => {
 					const movedSeqs =
 						seg.concurrentMoves?.filter(
 							({ seq: movedSeq }) =>

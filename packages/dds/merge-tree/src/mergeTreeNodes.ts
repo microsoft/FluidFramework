@@ -98,6 +98,7 @@ export function toRemovalInfo(
 
 /**
  * Tracks information about each concurrent move operation which affected a segment.
+ * @legacy
  * @alpha
  */
 export interface IConcurrentMoveInfo {

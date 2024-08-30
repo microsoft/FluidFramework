@@ -177,7 +177,7 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_IMoveInfo": {
+			"Interface_IMoveInfo": {
 				"forwardCompat": false,
 				"backCompat": false
 			}

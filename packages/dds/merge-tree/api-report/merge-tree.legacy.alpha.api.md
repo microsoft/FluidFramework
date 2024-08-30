@@ -167,7 +167,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start: number | undefined, end: number | undefined, accum: TClientData, splitRange?: boolean): void;
     // (undocumented)
-    walkSegments<undefined>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
+    walkSegments<T>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
 }
 
 // @alpha @deprecated (undocumented)
