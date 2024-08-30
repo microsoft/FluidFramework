@@ -1323,11 +1323,10 @@ export class MergeTree {
 		seq: number,
 		opArgs: IMergeTreeDeltaOpArgs | undefined,
 	) {
-		this.ensureIntervalBoundary(pos, refSeq, clientId);
-
 		const localSeq =
 			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
 
+		this.ensureIntervalBoundary(pos, refSeq, clientId);
 		this.blockInsert(pos, refSeq, clientId, seq, localSeq, segments);
 
 		// opArgs == undefined => loading snapshot or test code
@@ -1459,11 +1458,19 @@ export class MergeTree {
 					}
 				}
 
-				const splitNode = this.insertingWalk(this.root, insertPos, refSeq, clientId, seq, {
-					leaf: onLeaf,
-					candidateSegment: newSegment,
-					continuePredicate: continueFrom,
-				});
+				const splitNode = this.insertingWalk(
+					this.root,
+					insertPos,
+					refSeq,
+					clientId,
+					seq,
+					{
+						leaf: onLeaf,
+						candidateSegment: newSegment,
+						continuePredicate: continueFrom,
+					},
+					true,
+				);
 
 				if (newSegment.parent === undefined) {
 					// Indicates an attempt to insert past the end of the merge-tree's content.
@@ -1523,7 +1530,10 @@ export class MergeTree {
 
 				const findRightMovedSegment = (seg: ISegment) => {
 					const movedSeqs =
-						seg.concurrentMoves?.filter(({ seq: movedSeq }) => movedSeq >= refSeq) ?? [];
+						seg.concurrentMoves?.filter(
+							({ seq: movedSeq }) =>
+								movedSeq >= refSeq || movedSeq === UnassignedSequenceNumber,
+						) ?? [];
 					const localMovedSeqs = seg.localMovedSeq ? [seg.localMovedSeq] : [];
 
 					for (const movedSeqObj of movedSeqs) {
@@ -1601,10 +1611,6 @@ export class MergeTree {
 						);
 
 						this.addToPendingList(newSegment, movedSegmentGroup, localSeq);
-					}
-
-					if (newSegment.parent) {
-						this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
 					}
 				}
 			}
@@ -1952,7 +1958,9 @@ export class MergeTree {
 					// so put them at the head of the list
 					// The list isn't ordered, but we keep the first move at the head
 					// for partialLengths bookkeeping purposes
-					existingMoveInfo.concurrentMoves.unshift({ clientId, seq, refSeq });
+					if (seq !== UnassignedSequenceNumber) {
+						existingMoveInfo.concurrentMoves.unshift({ clientId, seq, refSeq });
+					}
 
 					existingMoveInfo.movedSeq = seq;
 					if (segment.localRefs?.empty === false) {
