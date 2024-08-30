@@ -100,6 +100,8 @@ const config: Config = {
 				},
 				{ to: "/docs/api", label: "API", position: "left" },
 				{ to: "/blog", label: "Blog", position: "left" },
+				{ to: "/community", label: "Community", position: "left" },
+				{ to: "/support", label: "Support", position: "left" },
 				{ to: "/new-site-features", label: "New Website Features!", position: "left" },
 				{
 					href: githubUrl,
