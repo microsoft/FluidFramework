@@ -43,10 +43,6 @@ const config: Config = {
 			{
 				docs: {
 					sidebarPath: "./sidebars.ts",
-					// // Please change this to your repo.
-					// // Remove this to remove the "edit this page" links.
-					// editUrl:
-					// 	"https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/",
 				},
 				blog: {
 					showReadingTime: true,
@@ -84,6 +80,13 @@ const config: Config = {
 			respectPrefersColorScheme: true,
 		},
 
+		// Temp announcement bar announcing Fluid v2.
+		announcementBar: {
+			id: "fluid-2-announcement",
+			content: "🎉 Fluid Framework 2 is now in General Availability! <a target=\"_blank\" href=\"https://aka.ms/fluid/release_blog\">Learn more</a>.",
+			isCloseable: true,
+		},
+
 		// Top nav-bar
 		navbar: {
 			title: "Fluid Framework",
@@ -102,12 +105,12 @@ const config: Config = {
 				{ to: "/blog", label: "Blog", position: "left" },
 				{ to: "/community", label: "Community", position: "left" },
 				{ to: "/support", label: "Support", position: "left" },
-				{ to: "/new-site-features", label: "New Website Features!", position: "left" },
-				{
-					href: githubUrl,
-					label: "GitHub",
-					position: "right",
-				},
+				{ to: "/new-site-features", label: "New Website Features", position: "left" },
+				// {
+				// 	href: githubUrl,
+				// 	label: "GitHub",
+				// 	position: "right",
+				// },
 			],
 		},
 		// Note: we have configured a custom footer component. See src/theme/Footer/index.tsx.
