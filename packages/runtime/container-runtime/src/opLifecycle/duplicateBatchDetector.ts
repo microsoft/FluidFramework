@@ -12,15 +12,25 @@ import { type InboundBatch } from "./remoteMessageProcessor.js";
  * This class tracks recent batchIds we've seen, and checks incoming batches for duplicates.
  */
 export class DuplicateBatchDetector {
+	/** All batchIds we've seen recently enough (based on MSN) that we need to watch for duplicates */
 	private readonly batchIdsAll = new Set<string>();
 
-	private readonly batchIdBySeqNum = new Map<number, string>();
+	/** We map from sequenceNumber to batchId to find which ones we can stop tracking as MSN advances */
+	private readonly batchIdsBySeqNum = new Map<number, string>();
 
+	/**
+	 * Records this batch's batchId, and checks if it's a duplicate of a batch we've already seen.
+	 * If it's a duplicate, also return the sequence number of the other batch for logging.
+	 *
+	 * @remarks - We also use the minimumSequenceNumber to clear out old batchIds that are no longer at risk for duplicates.
+	 */
 	public processInboundBatch(
 		inboundBatch: InboundBatch,
 	): { duplicate: true; otherSequenceNumber: number } | { duplicate: false } {
 		const { sequenceNumber, minimumSequenceNumber } = inboundBatch.keyMessage;
 
+		// Glance at this batch's MSN. Any batchIds we're tracking with a lower sequence number are now safe to forget.
+		// Why? Because any other client holding the same batch locally would have seen the earlier batch and closed before submitting its duplicate.
 		this.clearOldBatchIds(minimumSequenceNumber);
 
 		// getEffectiveBatchId is only needed in the SUPER rare/surprising case where
@@ -31,22 +41,23 @@ export class DuplicateBatchDetector {
 
 		// Check this batch against the tracked batchIds to see if it's a duplicate
 		if (this.batchIdsAll.has(batchId)) {
-			for (const [trackedSequenceNumber, trackedBatchId] of this.batchIdBySeqNum.entries()) {
-				if (trackedBatchId === batchId) {
+			for (const [otherSequenceNumber, otherBatchId] of this.batchIdsBySeqNum.entries()) {
+				if (otherBatchId === batchId) {
 					return {
 						duplicate: true,
-						otherSequenceNumber: trackedSequenceNumber,
+						otherSequenceNumber,
 					};
 				}
 			}
 			assert(false, "Should have found the batchId in batchIdBySeqNum map");
 		}
+
 		// Now we know it's not a duplicate, so add it to the tracked batchIds and return.
 		assert(
-			!this.batchIdBySeqNum.has(sequenceNumber),
-			"Shouldn't add a batchId that's already tracked",
+			!this.batchIdsBySeqNum.has(sequenceNumber),
+			"batchIdsAll and batchIdsBySeqNum should be in sync",
 		);
-		this.batchIdBySeqNum.set(sequenceNumber, batchId);
+		this.batchIdsBySeqNum.set(sequenceNumber, batchId);
 		this.batchIdsAll.add(batchId);
 
 		return { duplicate: false };
@@ -57,9 +68,9 @@ export class DuplicateBatchDetector {
 	 * since the batch start has been processed by all clients, and local batches are deduped and the forked client would close.
 	 */
 	private clearOldBatchIds(msn: number) {
-		this.batchIdBySeqNum.forEach((batchId, sequenceNumber) => {
+		this.batchIdsBySeqNum.forEach((batchId, sequenceNumber) => {
 			if (sequenceNumber < msn) {
-				this.batchIdBySeqNum.delete(sequenceNumber);
+				this.batchIdsBySeqNum.delete(sequenceNumber);
 				this.batchIdsAll.delete(batchId);
 			}
 		});
