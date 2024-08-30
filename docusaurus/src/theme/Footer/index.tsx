@@ -1,6 +1,8 @@
 import clsx from "clsx";
 import React from "react";
 
+import TwitterIcon from "@theme/Icon/Socials/Twitter"
+import GitHubIcon from "@theme/Icon/Socials/GitHub"
 import Link from "@docusaurus/Link";
 import FooterLogo from "./Logo";
 
@@ -13,7 +15,11 @@ function Footer(): JSX.Element {
 		>
 			<div className="footer-social">
 				<LinkItem targetUrl="https://twitter.com/fluidframework">
-					Follow @fluidframework
+					<TwitterIcon /> @fluidframework
+				</LinkItem>
+
+				<LinkItem targetUrl="https://github.com/microsoft/FluidFramework">
+					<GitHubIcon /> fluid-framework
 				</LinkItem>
 			</div>
 			<div className="footer-copyright">
