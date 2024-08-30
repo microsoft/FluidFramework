@@ -42,6 +42,7 @@ export class ReleaseGroup implements IReleaseGroup {
 	public readonly packages: IPackage[];
 
 	public get version(): string {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return this.packages[0]!.version;
 	}
 	public get rgPackages(): IPackage[] {
