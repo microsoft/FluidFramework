@@ -208,8 +208,7 @@ describe("RemoteMessageProcessor", () => {
 		});
 	});
 
-	//* SKIP - revert after merging keyMessage PR
-	it.skip("Processes multiple batches", () => {
+	it("Processes multiple batches", () => {
 		let csn = 1;
 		const batchManager = new BatchManager({
 			canRebase: false,
@@ -457,8 +456,7 @@ describe("RemoteMessageProcessor", () => {
 		assert.deepStrictEqual(result.type, message.type);
 	});
 
-	//* SKIP - revert after merging keyMessage PR
-	it.skip("Processing groupedBatch works as expected", () => {
+	it("Processing groupedBatch works as expected", () => {
 		const groupedBatch = {
 			type: MessageType.Operation,
 			sequenceNumber: 10,
@@ -534,8 +532,7 @@ describe("RemoteMessageProcessor", () => {
 		);
 	});
 
-	//* SKIP - revert after merging keyMessage PR
-	it.skip("Processing empty groupedBatch works as expected", () => {
+	it("Processing empty groupedBatch works as expected", () => {
 		const groupedBatch = {
 			type: MessageType.Operation,
 			sequenceNumber: 10,
