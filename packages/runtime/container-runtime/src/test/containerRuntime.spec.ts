@@ -349,15 +349,27 @@ describe("Runtime", () => {
 					assert.strictEqual(submittedOps[0].contents.address, "1");
 					assert.strictEqual(submittedOps[1].contents.address, "2");
 
-					//* How to validate this? clientId will be a uuid
-					assert.strictEqual(
-						submittedOps[0].metadata?.batchId,
-						enableOfflineLoad ? "mockClientId_[-1]" : undefined,
-					);
-					assert.strictEqual(
-						submittedOps[1].metadata?.batchId,
-						enableOfflineLoad ? "mockClientId_[-2]" : undefined,
-					);
+					function batchIdMatchesUnsentFormat(batchId?: string) {
+						return (
+							batchId !== undefined &&
+							batchId.length === "00000000-0000-0000-0000-000000000000_[-1]".length &&
+							batchId.endsWith("_[-1]")
+						);
+					}
+
+					if (enableOfflineLoad) {
+						assert(
+							batchIdMatchesUnsentFormat(submittedOps[0].metadata?.batchId),
+							"expected unsent batchId format (0)",
+						);
+						assert(
+							batchIdMatchesUnsentFormat(submittedOps[1].metadata?.batchId),
+							"expected unsent batchId format (0)",
+						);
+					} else {
+						assert(submittedOps[0].metadata?.batchId === undefined, "Expected no batchId (0)");
+						assert(submittedOps[1].metadata?.batchId === undefined, "Expected no batchId (1)");
+					}
 				}),
 			);
 		});
@@ -590,7 +602,6 @@ describe("Runtime", () => {
 
 						assert.strictEqual(submittedOpsMetadata.length, 6, "6 messages should be sent");
 
-						//* TODO: Add coverage for batchId in this codepath?  Maybe other tests do.
 						const expectedBatchMetadata = [
 							{ batch: true },
 							undefined,
