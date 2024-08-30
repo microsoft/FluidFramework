@@ -21,7 +21,7 @@ import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
-	Tagged,
+	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -36,6 +36,7 @@ import {
 	createMultiSinkLogger,
 	type ITelemetryLoggerPropertyBags,
 	TelemetryDataTag,
+	tagData,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -1108,13 +1109,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	}
 }
 
-function tagUserData<T>(value: T): Tagged<T> {
-	return {
-		value,
-		tag: TelemetryDataTag.UserData,
-	};
-}
-
 /**
  * Get identifying information for a resolved URL.
  * @remarks BEWARE: this function is only appropriate for usage in tests, as it logs unhashed document IDs,
@@ -1127,20 +1121,20 @@ function getUrlTelemetryProps(
 		return {};
 	}
 
-	const props: ITelemetryBaseProperties = {
-		url: tagUserData(resolvedUrl.url),
-		id: tagUserData(resolvedUrl.id),
+	const props: Record<string, TelemetryBaseEventPropertyType> = {
+		url: resolvedUrl.url,
+		id: resolvedUrl.id,
 	};
 
 	if (isOdspResolvedUrl(resolvedUrl)) {
 		Object.assign(props, {
-			siteUrl: tagUserData(resolvedUrl.siteUrl),
-			driveId: tagUserData(resolvedUrl.driveId),
-			itemId: tagUserData(resolvedUrl.itemId),
+			siteUrl: resolvedUrl.siteUrl,
+			driveId: resolvedUrl.driveId,
+			itemId: resolvedUrl.itemId,
 		});
 	}
 
-	return props;
+	return tagData(TelemetryDataTag.UserData, props);
 }
 
 /** Summarize the event with just the primary properties, for succinct output in case of test failure */
