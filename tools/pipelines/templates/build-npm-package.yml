@@ -51,6 +51,10 @@ parameters:
   type: boolean
   default: true
 
+- name: taskPublishCodeCoverageArtifacts
+  type: boolean
+  default: false
+
 - name: poolBuild
   type: object
   default: Small-1ES
@@ -323,7 +327,7 @@ extends:
               # the pipeline is special - it runs a client build but doesn't publish anything. Working around this properly is
               # challenging and would create a much bigger change. Since this is the only pipeline that sets this variable to
               # true, we use that to determine whether to set versions.
-              - ${{ if eq(parameters.taskPublishBundleSizeArtifacts, false) }}:
+              - ${{ if and(eq(parameters.taskPublishBundleSizeArtifacts, false), eq(parameters.taskPublishCodeCoverageArtifacts, false)) }}:
                   - template: /tools/pipelines/templates/include-set-package-version.yml@self
                     parameters:
                       buildDirectory: '${{ parameters.buildDirectory }}'
@@ -569,6 +573,15 @@ extends:
                       artifactName: bundleAnalysis
                       sbomEnabled: false
                       publishLocation: pipeline
+
+                - ${{ if eq(parameters.testCoverage, true) }}:
+                  - output: pipelineArtifact
+                    displayName: Publish Artifacts - code-coverage
+                    condition: and( succeeded(), eq(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishCodeCoverageArtifacts }}, true) )
+                    targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                    artifactName: codeCoverageAnalysis
+                    sbomEnabled: false
+                    publishLocation: pipeline
 
                 - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
                     - output: pipelineArtifact
