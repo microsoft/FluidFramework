@@ -150,9 +150,6 @@ export class PendingStateManager implements IDisposable {
 	 */
 	private savedOps: IPendingMessage[] = [];
 
-	/** Used to stand in for batchStartCsn for messages that weren't submitted (so no CSN) */
-	private negativeCounter: number = -1;
-
 	private readonly disposeOnce = new Lazy<void>(() => {
 		this.initialMessages.clear();
 		this.pendingMessages.clear();
@@ -240,15 +237,25 @@ export class PendingStateManager implements IDisposable {
 	 * or undefined if the batch was not yet sent (e.g. by the time we flushed we lost the connection)
 	 */
 	public onFlushBatch(batch: BatchMessage[], clientSequenceNumber: number | undefined) {
+		//* TODO: FIx up comments (and explain -1 meaning in doc comment somewhere)
+
+		const [clientId, batchStartCsn] =
+			clientSequenceNumber === undefined
+				? [uuid(), -1] // -1 will indicate not a real clientId/CSN pair
+				: [this.stateHandler.clientId(), clientSequenceNumber];
+
+		assert(
+			clientId !== undefined,
+			"clientId could only be undefined if we've never connected, but we have a CSN so we know that's not the case",
+		);
+
 		// If we're connected this is the client of the current connection,
 		// otherwise it's the clientId that just disconnected
 		// It's only undefined if we've NEVER connected. This is a tight corner case and we can
 		// simply make up a unique ID in this case.
-		const clientId = this.stateHandler.clientId() ?? uuid();
 
 		// If the batch was not yet sent, we need to assign a unique batchStartCsn
 		// Use a negative number to distinguish these from real CSNs
-		const batchStartCsn = clientSequenceNumber ?? this.negativeCounter--;
 
 		for (const message of batch) {
 			const {

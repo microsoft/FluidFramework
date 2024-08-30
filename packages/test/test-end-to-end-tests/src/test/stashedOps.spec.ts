@@ -1398,8 +1398,13 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			},
 		);
 
-		const container2 = await loadOffline(testContainerConfig, provider, { url }, pendingOps);
-		const dataStore2 = (await container2.container.getEntryPoint()) as ITestFluidObject;
+		const { container: container2 } = await loadOffline(
+			testContainerConfig,
+			provider,
+			{ url },
+			pendingOps,
+		);
+		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
 		// pending changes should be applied
@@ -1413,16 +1418,16 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// make more changes while offline
 		[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
-		// get stashed ops from this container without connecting
-		const morePendingOps = await container2.container.closeAndGetPendingLocalState?.();
+		// get stashed ops from this container without connecting.  Superset of pendingOps
+		const morePendingOps = await container2.closeAndGetPendingLocalState?.();
 
-		const container3 = await loadOffline(
+		const { container: container3, connect: connect3 } = await loadOffline(
 			testContainerConfig,
 			provider,
 			{ url },
 			morePendingOps,
 		);
-		const dataStore3 = (await container3.container.getEntryPoint()) as ITestFluidObject;
+		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 
 		// pending changes from both containers should be applied
@@ -1433,11 +1438,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				`map 3 ${map2.get(i.toString())} !== ${i}`,
 			),
 		);
-		// make more changes while offline
+		// make EVEN MORE changes while offline
 		[...Array(lots).keys()].map((i) => map3.set((i + lots * 2).toString(), i + lots * 2));
 
-		container3.connect();
-		await waitForContainerConnection(container3.container);
+		connect3();
+		await waitForContainerConnection(container3);
 		await provider.ensureSynchronized();
 		[...Array(lots * 3).keys()].map((i) =>
 			assert.strictEqual(
@@ -2012,7 +2017,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	describe("Serializing without closing and/or multiple rehydration (aka Offline Phase 3)", () => {
 		itExpects(
-			`Closes (ForkedContainerError) when ops are submitted with different clientId from pendingLocalState (via Counter DDS)`,
+			`Single-Threaded Fork: Closes (ForkedContainerError) when ops are submitted with different clientId from pendingLocalState (via Counter DDS)`,
 			[
 				// Temp Container from getPendingOps
 				{
@@ -2061,13 +2066,22 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 
 		itExpects(
-			`WRONGLY duplicates ops when hydrating twice and submitting in parallel (via Counter DDS)`,
+			`Parallel Forks: Closes (ForkedContainerError and DuplicateBatchError) when hydrating twice and submitting in parallel (via Counter DDS)`,
 			[
 				// All containers close:
 				// contianer1, container1's summarizer, container2, container3
 				// container2 or container3 (the loser of the race) will close with "Forked Container Error",
 				// All the rest will close with "Duplicate batch"
 				// Due to the race condition, we can't specify the order of the different errors here.
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:DuplicateBatch",
+				},
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:DuplicateBatch",
+				},
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:DuplicateBatch",
+				},
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					category: "error",
@@ -2086,7 +2100,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				},
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
-					category: "error",
 				},
 			],
 			async function () {
@@ -2154,7 +2167,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 				// Container1 is not used directly in this test, but is present and observing the session,
 				// so we can double-check eventual consistency - the container should have closed but the op should not have been duplicated
-				assert.strictEqual(container1.closed, true);
+				assert(container1.closed, "container1 should be closed due to duplicate batch");
 				assert.strictEqual(counter1.value, incrementValue);
 
 				// Both containers will close with the correct value for the counter.
@@ -2162,15 +2175,15 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				// when it sees the other container's batch come in.
 				// The other container (that loses the race to be sequenced) will close with "Forked Container Error"
 				// when it sees the winner's batch come in.
-				assert.strictEqual(container2.closed, true, "container2 should be closed");
-				assert.strictEqual(container3.closed, true, "container3 should be closed");
+				assert(container2.closed, "container2 should be closed");
+				assert(container3.closed, "container3 should be closed");
 				assert.strictEqual(counter2.value, incrementValue);
 				assert.strictEqual(counter3.value, incrementValue);
 			},
 		);
 
 		itExpects(
-			`Closes (ForkedContainerError) when hydrating twice and submitting in serial (via Counter DDS)`,
+			`Single-Threaded Forks: Closes (ForkedContainerError) when hydrating twice and submitting in serial (via Counter DDS)`,
 			[
 				// Temp Container from getPendingOps
 				{
