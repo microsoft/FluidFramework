@@ -319,9 +319,9 @@ extends:
                   buildDirectory: '${{ parameters.buildDirectory }}'
                   packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
-              # This check is a workaround. We don't want to set versions for the build-bundle-size-artifacts pipeline because
-              # the pipeline is special - it runs a client build but doesn't publish anything. Working around this properly is
-              # challenging and would create a much bigger change. Since this is the only pipeline that sets this variable to
+              # This check is a workaround. We don't want to set versions for the build-bundle-size-and-code-coverage-artifacts
+              # pipeline because it is special - it runs a client build but doesn't publish anything. Working around this properly is
+              # challenging and would create a much bigger change. Since this is the only pipeline that sets these variables to
               # true, we use that to determine whether to set versions.
               - ${{ if eq(parameters.taskPublishBundleSizeArtifacts, false) }}:
                   - template: /tools/pipelines/templates/include-set-package-version.yml@self
@@ -401,6 +401,11 @@ extends:
                           summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
                           failIfCoverageEmpty: true
                         condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                      - task: CopyFiles@2
+                        displayName: Copy code coverage report to artifact staging directory
+                        inputs:
+                          sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
+                          targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
 
                   # Process test result, include publishing and logging
                   - template: /tools/pipelines/templates/include-process-test-results.yml@self
@@ -569,6 +574,15 @@ extends:
                       artifactName: bundleAnalysis
                       sbomEnabled: false
                       publishLocation: pipeline
+
+                - ${{ if eq(parameters.testCoverage, true) }}:
+                  - output: pipelineArtifact
+                    displayName: Publish Artifacts - code-coverage
+                    condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest') )
+                    targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                    artifactName: codeCoverageAnalysis
+                    sbomEnabled: false
+                    publishLocation: pipeline
 
                 - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
                     - output: pipelineArtifact
