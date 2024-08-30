@@ -126,7 +126,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { BindBatchTracker, DuplicateBatchDetector } from "./batchTracker.js";
+import { BindBatchTracker } from "./batchTracker.js";
 import {
 	BlobManager,
 	IPendingBlobs,
@@ -172,6 +172,7 @@ import { IBatchMetadata, ISavedOpMetadata } from "./metadata.js";
 import {
 	BatchId,
 	BatchMessage,
+	DuplicateBatchDetector,
 	ensureContentsDeserialized,
 	IBatch,
 	IBatchCheckpoint,
