@@ -156,9 +156,10 @@ The replacement syntax to use in `.mdx` files would be:
 
 ## TODOs
 
+-   Prototype versioning
 -   Figure out solution to markdown-magic in mdx (html comment syntax not supported)
 -   Link check doesn't handle custom heading anchors - maybe there is a plugin for this?
 -   Add prettier (wait until after merge to reduce diff noise)
 -   Add markdown-lint (same as above)
 -   Add eslint for components
--   Verify high contrast support
+-   Verify specific browser

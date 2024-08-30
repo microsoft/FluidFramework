@@ -60,7 +60,10 @@ const config: Config = {
 					onUntruncatedBlogPosts: "warn",
 				},
 				theme: {
-					customCss: "./src/css/custom.scss",
+					customCss: [
+						"./src/css/custom.scss",
+						"./src/css/typography.scss",
+					],
 				},
 			} satisfies Preset.Options,
 		],
