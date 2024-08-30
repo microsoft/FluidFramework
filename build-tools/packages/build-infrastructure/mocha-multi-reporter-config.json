@@ -1,0 +1,9 @@
+{
+	"reporterEnabled": "xunit,mocha-json-output-reporter,spec",
+	"xunitReporterOptions": {
+		"output": "nyc/junit-report.xml"
+	},
+	"mochaJsonOutputReporterReporterOptions": {
+		"output": "nyc/junit-report.json"
+	}
+}
