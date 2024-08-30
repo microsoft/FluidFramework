@@ -12,7 +12,6 @@
 @fluid-private/test-end-to-end-tests
 @fluid-private/test-drivers
 @fluid-internal/test-driver-definitions
-@fluid-internal/test-app-insights-logger
 @fluid-private/stochastic-test-utils
 @fluid-internal/mocha-test-setup
 @fluidframework/tinylicious-client

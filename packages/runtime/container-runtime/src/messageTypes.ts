@@ -88,12 +88,18 @@ export interface IContainerRuntimeMessageCompatDetails {
  * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
  * This way stringified values can be compared.
  */
-interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents> {
+type TypedContainerRuntimeMessage<
+	TType extends ContainerMessageType,
+	TContents,
+	TUSedCompatDetails extends boolean = false,
+> = {
 	/** Type of the op, within the ContainerRuntime's domain */
 	type: TType;
 	/** Domain-specific contents, interpreted according to the type */
 	contents: TContents;
-}
+} & (TUSedCompatDetails extends true
+	? Partial<RecentlyAddedContainerRuntimeMessageDetails>
+	: { compatDetails?: undefined });
 
 /**
  * Additional details expected for any recently added message.
@@ -139,10 +145,9 @@ export type ContainerRuntimeIdAllocationMessage = TypedContainerRuntimeMessage<
 >;
 export type ContainerRuntimeGCMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.GC,
-	GarbageCollectionMessage
-> &
-	// While deprecating: GC messages may still contain compat details for now
-	Partial<RecentlyAddedContainerRuntimeMessageDetails>;
+	GarbageCollectionMessage,
+	true // TUsedCompatDetails
+>;
 export type ContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.DocumentSchemaChange,
 	IDocumentSchemaChangeMessage
@@ -223,14 +228,10 @@ export type InboundSequencedContainerRuntimeMessage = Omit<
  * There should never be a runtime value of "__not_a_...".
  * Currently additionally replaces `contents` type until protocol-definitions update is taken with `unknown` instead of `any`.
  */
-type InboundSequencedNonContainerRuntimeMessage = Omit<
+export type InboundSequencedNonContainerRuntimeMessage = Omit<
 	ISequencedDocumentMessage,
 	"type" | "contents"
 > & { type: "__not_a_container_runtime_message_type__"; contents: unknown };
-
-export type InboundSequencedContainerRuntimeMessageOrSystemMessage =
-	| InboundSequencedContainerRuntimeMessage
-	| InboundSequencedNonContainerRuntimeMessage;
 
 /** A [loose] InboundSequencedContainerRuntimeMessage that is recent and may contain compat details.
  * It exists solely to to provide access to those details.

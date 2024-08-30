@@ -22,7 +22,7 @@ There does not appear to be a local service implementation of the above mentione
 The commonly used boilerplate for setting up a ContainerSchema based application configures the dev-tools,
 but currently can't be included in this package due to dependency layering issues.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -51,6 +51,15 @@ npm i @fluid-experimental/tree-react-api
 ## API Documentation
 
 API documentation for **@fluid-experimental/tree-react-api** is available at <https://fluidframework.com/docs/apis/tree-react-api>.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
 

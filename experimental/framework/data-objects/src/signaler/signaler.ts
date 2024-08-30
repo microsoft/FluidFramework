@@ -24,7 +24,8 @@ import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 // throttling and batching
 
 /**
- * @internal
+ * Signature for listening to a signal event
+ * @alpha
  */
 export type SignalListener<T> = (
 	clientId: string,
@@ -36,7 +37,7 @@ export type SignalListener<T> = (
  * ISignaler defines an interface for working with signals that is similar to the more common
  * eventing patterns of EventEmitter.  In addition to sending and responding to signals, it
  * provides explicit methods around signal requests to other connected clients.
- * @internal
+ * @alpha
  */
 export interface ISignaler extends IEventProvider<IErrorEvent> {
 	/**
@@ -67,6 +68,8 @@ export interface ISignaler extends IEventProvider<IErrorEvent> {
  * Duck type of something that provides the expected signalling functionality:
  * A way to verify we can signal, a way to send a signal, and a way to listen for incoming signals
  * @internal
+ * @privateRemarks
+ * There is no use external to package and export can be removed once breaking changes are permitted.
  */
 export interface IRuntimeSignaler {
 	connected: boolean;
@@ -78,7 +81,7 @@ export interface IRuntimeSignaler {
  * Note: currently experimental and under development
  *
  * Helper class to assist common scenarios around working with signals.  InternalSignaler wraps a runtime
- * object with signaling functionality (e.g. ContainerRuntime or FluidDataStoreRuntime) and can
+ * object with signaling functionality (e.g. IContainerRuntime or FluidDataStoreRuntime) and can
  * then be used in place of the original signaler.  It uses a separate internal EventEmitter to
  * manage callbacks, and thus will reflect that behavior with regards to callback registration and
  * deregistration.
@@ -193,8 +196,8 @@ class SignalerClass
  * Implementation of ISignaler for declarative API.
  * @privateRemarks
  * `factory` part of the type is included here to satisfy the usage in `@fluid-example/presence-tracker`, which is accessing encapsulated API surfaces from this.
- * If this eventually gets promoted to `@public` and/or part of `fluid-framework`, that part of the type should be left as `@internal` or `@alpha`.
- * @internal
+ * If this eventually gets promoted to `@public` and/or part of `fluid-framework`, an alternate LegacySignaler (`@legacy`) should be created to continue exposing `factory`.
+ * @alpha
  */
 export const Signaler: {
 	readonly factory: IFluidDataStoreFactory & {

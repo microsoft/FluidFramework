@@ -6,6 +6,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
+import { PackageName } from "@rushstack/node-core-library";
 import chai, { assert, expect } from "chai";
 import assertArrays from "chai-arrays";
 import {
@@ -37,6 +38,12 @@ async function getBuildToolsPackages() {
 	return packages;
 }
 
+async function getClientPackages() {
+	const context = await getContext();
+	const packages = context.packagesInReleaseGroup("client");
+	return packages;
+}
+
 describe("filterPackages", async () => {
 	it("no filters", async () => {
 		const packages = await getBuildToolsPackages();
@@ -51,24 +58,23 @@ describe("filterPackages", async () => {
 			"@fluid-tools/build-cli",
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
-			"@fluid-private/readme-command",
 			"@fluid-tools/version-tools",
 		]);
 	});
 
 	it("private=true", async () => {
-		const packages = await getBuildToolsPackages();
+		const packages = await getClientPackages();
 		const filters: PackageFilterOptions = {
 			private: true,
 			scope: undefined,
 			skipScope: undefined,
 		};
 		const actual = await filterPackages(packages, filters);
-		// There's only one private build-tools package
-		expect(actual).to.be.ofSize(1);
-
-		const pkg = actual[0];
-		assert.equal(pkg.nameUnscoped, "readme-command");
+		const names = actual.map((p) => p.name);
+		expect(names).to.be.containingAllOf([
+			"@fluid-private/changelog-generator-wrapper",
+			"@fluid-tools/markdown-magic",
+		]);
 	});
 
 	it("private=false", async () => {
@@ -89,7 +95,7 @@ describe("filterPackages", async () => {
 	});
 
 	it("multiple scopes", async () => {
-		const packages = await getBuildToolsPackages();
+		const packages = await getClientPackages();
 		const filters: PackageFilterOptions = {
 			private: undefined,
 			scope: ["@fluidframework", "@fluid-private"],
@@ -97,10 +103,9 @@ describe("filterPackages", async () => {
 		};
 		const actual = await filterPackages(packages, filters);
 		const names = actual.map((p) => p.name);
-		expect(names).to.be.equalTo([
-			"@fluidframework/build-tools",
-			"@fluidframework/bundle-size-tools",
-			"@fluid-private/readme-command",
+		expect(names).to.be.containingAllOf([
+			"@fluidframework/map",
+			"@fluid-private/stochastic-test-utils",
 		]);
 	});
 
@@ -149,7 +154,6 @@ describe("selectAndFilterPackages", async () => {
 			"@fluid-tools/build-cli",
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
-			"@fluid-private/readme-command",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -205,7 +209,6 @@ describe("selectAndFilterPackages", async () => {
 			"@fluid-tools/build-cli",
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
-			"@fluid-private/readme-command",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -267,7 +270,7 @@ describe("selectAndFilterPackages", async () => {
 		const context = await getContext();
 		const selectionOptions: PackageSelectionCriteria = {
 			independentPackages: false,
-			releaseGroups: ["build-tools"],
+			releaseGroups: ["client"],
 			releaseGroupRoots: [],
 			directory: undefined,
 			changedSinceBranch: undefined,
@@ -281,7 +284,7 @@ describe("selectAndFilterPackages", async () => {
 		const { filtered } = await selectAndFilterPackages(context, selectionOptions, filters);
 		const names = filtered.map((p) => p.name);
 
-		expect(names).to.be.equalTo(["@fluid-private/readme-command"]);
+		expect(names).to.be.containingAllOf(["@fluid-private/changelog-generator-wrapper"]);
 	});
 
 	it("select release group, filter non-private", async () => {

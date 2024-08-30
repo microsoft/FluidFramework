@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import type { SharedDirectory, ISharedMap, IValueChanged } from "@fluidframework/map/internal";
@@ -60,7 +60,7 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 		| Serializable<unknown>
 		| InstanceType<typeof SequenceDeltaEvent>
 	)[];
-	let containerRuntime: ContainerRuntime;
+	let containerRuntime: IContainerRuntime;
 	let error: Error | undefined;
 
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -85,7 +85,7 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 		sharedCell = await dataObject.getSharedObject<ISharedCell>(cellId);
 		sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 
-		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+		containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
 		changedEventData = [];
 		sharedString.on("sequenceDelta", (event, _target) => {
 			changedEventData.push(event);

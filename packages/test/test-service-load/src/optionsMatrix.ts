@@ -10,6 +10,7 @@ import {
 	generatePairwiseOptions,
 	numberCases,
 } from "@fluid-private/test-pairwise-generator";
+// eslint-disable-next-line import/no-deprecated
 import { ILoaderOptions } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
@@ -20,8 +21,9 @@ import {
 import { ConfigTypes } from "@fluidframework/core-interfaces";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
-import { ILoadTestConfig, OptionOverride } from "./testConfigFile.js";
+import type { OptionOverride, TestConfiguration } from "./testConfigFile.js";
 
+// eslint-disable-next-line import/no-deprecated
 interface ILoaderOptionsExperimental extends ILoaderOptions {
 	enableOfflineSnapshotRefresh?: boolean;
 	snapshotRefreshTimeoutMs?: number;
@@ -142,7 +144,7 @@ export function generateConfigurations(
  * @returns an option override
  */
 export function getOptionOverride(
-	testConfig: ILoadTestConfig | undefined,
+	testConfig: TestConfiguration | undefined,
 	driverType: TestDriverTypes,
 	endpoint: string | undefined,
 ): OptionOverride | undefined {

@@ -7,7 +7,7 @@ The contents of this package are also reported as part of the [`fluid-framework`
 [SharedTree Philosophy](./docs/SharedTree%20Philosophy.md) covers the goals of the SharedTree project,
 and some of the implications of those goals for developers working on this package.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -20,14 +20,13 @@ library consumers should always prefer `^`.
 
 If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
 
-<!-- prettier-ignore-end -->
+## Installation
 
-<!-- AUTO-GENERATED-CONTENT:END -->
+To get started, install the package by running the following command:
 
-<!-- AUTO-GENERATED-CONTENT:START (README_IMPORT_INSTRUCTIONS:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+```bash
+npm i @fluidframework/tree
+```
 
 ## Importing from this package
 
@@ -38,6 +37,10 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `beta` APIs, import via `@fluidframework/tree/beta`.
 
+## API Documentation
+
+API documentation for **@fluidframework/tree** is available at <https://fluidframework.com/docs/apis/tree>.
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -47,8 +50,8 @@ To access the `beta` APIs, import via `@fluidframework/tree/beta`.
 Notable consideration that early adopters should be wary of:
 
 -   The persisted format is stable such that documents created with released versions 2.0.0 or greater of this package are fully supported long term.
--   SharedTree currently has unbounded memory growth:
-    -   Removed content is retained in memory and persisted in the document at rest ([fix](https://github.com/microsoft/FluidFramework/pull/21372)).
+-   In versions prior to 2.1.0, SharedTree had unbounded memory growth:
+    -   Removed content was retained in memory and persisted in the document at rest ([fix](https://github.com/microsoft/FluidFramework/pull/21372)). This was fixed in version 2.1.0.
 -   All range changes are atomized.
     This means that, when inserting/removing/moving multiple contiguous nodes the edit is split up into separate single node edits.
     This can impact the merge behavior of these edits, as well as the performance of large array edits.
@@ -125,6 +128,36 @@ This package can be developed using any of the [regular workflows for working on
 -   Run and debug tests using the "Testing" side panel in VS Code, or using the inline `Run | Debug` buttons which should show up above tests in the source:
     both of these are provided by the mocha testing extension thats recommended by the workspace.
     Note that this does not build the tests, so always be sure to build first.
+
+## Frequently asked questions
+
+### Why can't I assign insertable content to a field?
+
+``` typescript
+import { SchemaFactory } from "@fluidframework/tree";
+
+const factory = new SchemaFactory("com.fluidframework.faq");
+class Empty extends factory.object("Empty", {}) {}
+class Test extends factory.object("Test", { data: Empty }) {}
+function set(node: Test) {
+	node.data = {}; // Why does this not compile?
+}
+```
+
+This is due to [a limitation of the TypeScript language](https://github.com/microsoft/TypeScript/issues/43826) which makes it impossible for tree to allow that to type-check while keeping the strong typing on the getters for reading data.
+
+To workaround this, create an unhydrated node:
+
+``` typescript
+node.data = new Empty({}); // The unhydrated node's type matches the type returned by the getter, and thus is compatible with the setter
+```
+
+Insertable content can still be used in other places, like when nested in other insertable content, in ArrayNode editing methods, and when initializing views.
+
+``` typescript
+// The empty node can be implicitly constructed from `{}` here, since this context allows insertable content, not just nodes.
+const node = new Test({ data: {} });
+```
 
 ## Architecture
 
@@ -407,25 +440,21 @@ flowchart
     package-->runtime["Fluid runtime"]
 ```
 
-# Open Design Questions
+## Open Design Questions
 
 The design issues here all impact the architectural role of top-level modules in this package in a way that when fixed will likely require changes to the architectural details covered above.
 Smaller scoped issues which will not impact the overall architecture should be documented in more localized locations.
 
-## How should specialized sub-tree handling compose?
+### How should specialized sub-tree handling compose?
 
 Applications should have a domain model that can mix tree nodes with custom implementations as needed.
 Custom implementations should probably be able to be projections of flex trees, the forest content (via cursors), and updated via either regeneration from the input, or updated by a delta.
 This is important for performance/scalability and might be how we do virtualization (maybe subtrees that aren't downloaded are just one custom representation?).
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE&installation=FALSE&importInstructions=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## API Documentation
-
-API documentation for **@fluidframework/tree** is available at <https://fluidframework.com/docs/apis/tree>.
 
 ## Minimum Client Requirements
 

@@ -93,7 +93,7 @@ export function serializeAsMinSupportedVersion(
 	options: PropertySet | undefined,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
-) {
+): string {
 	let targetChuck: MergeTreeChunkLegacy;
 
 	if (chunk.version !== undefined) {
@@ -106,7 +106,7 @@ export function serializeAsMinSupportedVersion(
 	}
 
 	switch (chunk.version) {
-		case undefined:
+		case undefined: {
 			targetChuck = chunk as MergeTreeChunkLegacy;
 			targetChuck.headerMetadata = buildHeaderMetadataForLegacyChunk(
 				path,
@@ -114,8 +114,9 @@ export function serializeAsMinSupportedVersion(
 				options,
 			);
 			break;
+		}
 
-		case "1":
+		case "1": {
 			const chunkV1 = chunk as MergeTreeChunkV1;
 			const headerMetadata =
 				path === SnapshotLegacy.header ? chunkV1.headerMetadata : undefined;
@@ -132,9 +133,11 @@ export function serializeAsMinSupportedVersion(
 				headerMetadata,
 			};
 			break;
+		}
 
-		default:
+		default: {
 			throw new Error(`Unsupported chunk path: ${path} version: ${chunk.version}`);
+		}
 	}
 	return serializer.stringify(targetChuck, bind);
 }
@@ -146,7 +149,7 @@ export function serializeAsMaxSupportedVersion(
 	options: PropertySet | undefined,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
-) {
+): string {
 	const targetChuck = toLatestVersion(path, chunk, logger, options);
 	return serializer.stringify(targetChuck, bind);
 }
@@ -170,11 +173,13 @@ export function toLatestVersion(
 				attribution: chunkLegacy.attribution,
 			};
 		}
-		case "1":
+		case "1": {
 			return chunk as MergeTreeChunkV1;
+		}
 
-		default:
+		default: {
 			throw new Error(`Unsupported chunk path: ${path} version: ${chunk.version}`);
+		}
 	}
 }
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import type { Mutable } from "../../util/index.js";
 
@@ -204,11 +204,13 @@ export function rebaseBranch<TChange>(
 	if (targetCommitIndex === -1) {
 		// If the targetCommit is not in the target path, then it is either disjoint from `target` or it is behind/at
 		// the commit where source and target diverge (ancestor), in which case there is nothing more to rebase
-		// TODO: Ideally, this would be an "assertExpensive"
-		assert(
-			findCommonAncestor(targetCommit, targetHead) !== undefined,
-			0x676 /* target commit is not in target branch */,
-		);
+		// TODO: Ideally, this would be an "assertExpensive". It is commented out because it causes O(N²) behavior when
+		// processing N inbound commits from the same client whose ref seq# is not advancing (which is a common case).
+		// N can be large when the client is sending a burst of changes (potentially on reconnection).
+		// assert(
+		// 	findCommonAncestor(targetCommit, targetHead) !== undefined,
+		// 	0x676 /* target commit is not in target branch */,
+		// );
 		return {
 			newSourceHead: sourceHead,
 			sourceChange: undefined,
@@ -228,8 +230,7 @@ export function rebaseBranch<TChange>(
 	const sourceSet = new Set(sourcePath.map((r) => r.revision));
 	let newBaseIndex = targetCommitIndex;
 
-	for (let i = 0; i < targetPath.length; i += 1) {
-		const { revision } = targetPath[i];
+	for (const [i, { revision }] of targetPath.entries()) {
 		if (sourceSet.has(revision)) {
 			sourceSet.delete(revision);
 			newBaseIndex = Math.max(newBaseIndex, i);
@@ -239,7 +240,7 @@ export function rebaseBranch<TChange>(
 	}
 
 	/** The commit on the target branch that the new source branch branches off of (i.e. the new common ancestor) */
-	const newBase = targetPath[newBaseIndex];
+	const newBase = targetPath[newBaseIndex] ?? oob();
 	// Figure out how much of the trunk to start rebasing over.
 	const targetCommits = targetPath.slice(0, newBaseIndex + 1);
 	const deletedSourceCommits = [...sourcePath];
@@ -249,7 +250,9 @@ export function rebaseBranch<TChange>(
 	const targetRebasePath = [...targetCommits];
 	const minLength = Math.min(sourcePath.length, targetRebasePath.length);
 	for (let i = 0; i < minLength; i++) {
-		if (sourcePath[0].revision === targetRebasePath[0].revision) {
+		const firstSourcePath = sourcePath[0] ?? oob();
+		const firstTargetRebasePath = targetRebasePath[0] ?? oob();
+		if (firstSourcePath.revision === firstTargetRebasePath.revision) {
 			sourcePath.shift();
 			targetRebasePath.shift();
 		}
@@ -371,7 +374,6 @@ export function rebaseChange<TChange>(
 }
 
 /**
- * @internal
  */
 export function revisionMetadataSourceFromInfo(
 	revInfos: readonly RevisionInfo[],

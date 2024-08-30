@@ -1,5 +1,13 @@
 # @fluid-experimental/ot
 
+## 2.2.0
+
+Dependency updates only.
+
+## 2.1.0
+
+Dependency updates only.
+
 ## 2.0.0-rc.5.0.0
 
 ### Minor Changes

@@ -24,14 +24,15 @@ import {
 	minReferencePosition,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
+	SequencePlace,
+	Side,
+	endpointPosAndSide,
+	addProperties,
 } from "@fluidframework/merge-tree/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	SequencePlace,
-	Side,
 	computeStickinessFromSide,
-	endpointPosAndSide,
 	reservedIntervalIdKey,
 	sidesFromStickiness,
 } from "../intervalCollection.js";
@@ -144,7 +145,7 @@ export class SequenceInterval implements ISerializableInterval {
 		public readonly endSide: Side = Side.Before,
 	) {
 		if (props) {
-			this.addProperties(props);
+			this.properties = addProperties(this.properties, props);
 		}
 	}
 
@@ -199,7 +200,10 @@ export class SequenceInterval implements ISerializableInterval {
 		};
 
 		if (this.properties) {
-			serializedInterval.properties = { ...this.properties };
+			serializedInterval.properties = addProperties(
+				serializedInterval.properties,
+				this.properties,
+			);
 		}
 
 		return serializedInterval;

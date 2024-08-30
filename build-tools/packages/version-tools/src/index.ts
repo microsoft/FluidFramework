@@ -27,6 +27,7 @@ export {
 	changePreReleaseIdentifier,
 	getVersionRange,
 	fromInternalScheme,
+	isInternalTestVersion,
 	isInternalVersionRange,
 	isInternalVersionScheme,
 	toInternalScheme,

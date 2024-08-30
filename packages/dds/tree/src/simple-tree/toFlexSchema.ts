@@ -3,80 +3,51 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type {
-	ITreeCursorSynchronous,
-	TreeNodeSchemaIdentifier,
-	SchemaAndPolicy,
+import {
+	EmptyKey,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
 } from "../core/index.js";
 import {
 	FieldKinds,
 	type FlexAllowedTypes,
 	type FlexFieldKind,
-	FlexFieldNodeSchema,
 	FlexFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
 	type FlexTreeNodeSchema,
 	type FlexTreeSchema,
-	type NodeKeyManager,
 	TreeNodeSchemaBase,
 	defaultSchemaPolicy,
+	intoStoredSchemaCollection,
 	schemaIsLeaf,
 } from "../feature-libraries/index.js";
-import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
+// TODO: once flex schema is gone, this code can move into simple-tree
+// eslint-disable-next-line import/no-internal-modules
+import { normalizeFlexListEager } from "../feature-libraries/typed-schema/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
-
-import type { InsertableContent } from "./proxies.js";
 import {
 	cachedFlexSchemaFromClassSchema,
 	setFlexSchemaFromClassSchema,
 	tryGetSimpleNodeSchema,
-} from "./schemaCaching.js";
+	NodeKind,
+	type TreeNodeSchema,
+} from "./core/index.js";
 import {
 	FieldKind,
 	FieldSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
-	NodeKind,
-	type TreeNodeSchema,
-	normalizeFieldSchema,
 	getStoredKey,
 } from "./schemaTypes.js";
-import { cursorFromNodeData } from "./toMapTree.js";
-
-/**
- * Returns a cursor (in nodes mode) for the root node.
- *
- * @privateRemarks
- * Ideally this would work on any node, not just the root,
- * and the schema would come from the unhydrated node.
- * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
- */
-export function cursorFromUnhydratedRoot(
-	schema: ImplicitFieldSchema,
-	tree: InsertableTreeNodeFromImplicitAllowedTypes,
-	nodeKeyManager: NodeKeyManager,
-	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
-): ITreeCursorSynchronous {
-	const data = tree as InsertableContent;
-	const normalizedFieldSchema = normalizeFieldSchema(schema);
-	return (
-		cursorFromNodeData(
-			data,
-			normalizedFieldSchema.allowedTypes,
-			nodeKeyManager,
-			schemaValidationPolicy,
-		) ?? fail("failed to decode tree")
-	);
-}
 
 interface SchemaInfo {
-	toFlex: () => FlexTreeNodeSchema;
-	original: TreeNodeSchema;
+	readonly toFlex: () => FlexTreeNodeSchema;
+	readonly original: TreeNodeSchema;
 }
 
 type SchemaMap = Map<TreeNodeSchemaIdentifier, SchemaInfo>;
@@ -115,6 +86,17 @@ export function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
 }
 
 /**
+ * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
+ */
+export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
+	const flex = toFlexSchema(root);
+	return {
+		rootFieldSchema: flex.rootFieldSchema.stored,
+		...intoStoredSchemaCollection(flex),
+	};
+}
+
+/**
  * Return a flex schema for the provided class schema.
  *
  * This also has the side effect of populating the cached view schema on the class based schema.
@@ -122,6 +104,15 @@ export function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
 export function getFlexSchema(root: TreeNodeSchema): FlexTreeNodeSchema {
 	const treeSchema = toFlexSchema(root);
 	return treeSchema.rootFieldSchema.monomorphicChildType ?? fail("root should be monomorphic");
+}
+
+/**
+ * Return a stored schema for the provided class schema.
+ *
+ * This also has the side effect of populating the cached view schema on the class based schema.
+ */
+export function getStoredSchema(root: TreeNodeSchema): TreeNodeStoredSchema {
+	return getFlexSchema(root).stored;
 }
 
 /**
@@ -180,8 +171,8 @@ export function convertNodeSchema(
 	const fromMap = schemaMap.get(brand(schema.identifier));
 	if (fromMap !== undefined) {
 		if (fromMap.original !== schema) {
-			// Use JSON.stringify to quote and escape string.
-			throw new Error(
+			// Use JSON.stringify to quote and escape identifier string.
+			throw new UsageError(
 				`Multiple schema encountered with the identifier ${JSON.stringify(
 					schema.identifier,
 				)}. Remove or rename them to avoid the collision.`,
@@ -208,7 +199,13 @@ export function convertNodeSchema(
 				);
 				// Lookup of cached schema is done here instead of before since walking the schema recursively to populate schemaMap is still required.
 				const cached = cachedFlexSchemaFromClassSchema(schema);
-				out = cached ?? FlexMapNodeSchema.create(builder, brand(schema.identifier), field);
+				out =
+					cached ??
+					FlexMapNodeSchema.create(
+						builder,
+						brand<TreeNodeSchemaIdentifier>(schema.identifier),
+						field,
+					);
 				break;
 			}
 			case NodeKind.Array: {
@@ -218,7 +215,11 @@ export function convertNodeSchema(
 					convertAllowedTypes(schemaMap, fieldInfo),
 				);
 				const cached = cachedFlexSchemaFromClassSchema(schema);
-				out = cached ?? FlexFieldNodeSchema.create(builder, brand(schema.identifier), field);
+				out =
+					cached ??
+					FlexObjectNodeSchema.create(builder, brand(schema.identifier), {
+						[EmptyKey]: field,
+					});
 				break;
 			}
 			case NodeKind.Object: {

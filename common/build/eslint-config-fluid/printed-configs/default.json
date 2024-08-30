@@ -601,6 +601,11 @@
             "error",
             {
                 "allow": [
+                    "@fluid-example/*/internal",
+                    "@fluid-experimental/*/internal",
+                    "@fluid-internal/*/internal",
+                    "@fluid-private/*/internal",
+                    "@fluid-tools/*/internal",
                     "@fluidframework/*/internal",
                     "@fluid-experimental/**",
                     "*/index.js"

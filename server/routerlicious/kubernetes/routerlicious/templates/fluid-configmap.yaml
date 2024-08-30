@@ -81,6 +81,7 @@ data:
         },
         "storage": {
             "enableWholeSummaryUpload": {{ .Values.storage.enableWholeSummaryUpload }},
+            "ephemeralDocumentTTLSec": {{ .Values.storage.ephemeralDocumentTTLSec }},
             "storageUrl": "{{ .Values.storage.storageUrl }}"
         },
         "checkpoints": {
