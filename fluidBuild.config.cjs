@@ -10,17 +10,6 @@
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 
 /**
- * All fluid scopes EXCEPT for @fluid-example
- */
-const fluidScopes = [
-	"@fluidframework",
-	"@fluid-experimental",
-	"@fluid-internal",
-	"@fluid-private",
-	"@fluid-tools",
-];
-
-/**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
  *

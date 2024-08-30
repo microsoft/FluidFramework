@@ -174,12 +174,10 @@ const configName = "repoLayout";
 const configExplorer = cosmiconfigSync(configName, {
 	searchPlaces: [
 		`${configName}.config.cjs`,
-		`${configName}.config.mjs`,
 		`${configName}.config.js`,
 
 		// Load from the fluidBuild config files as a fallback.
 		"fluidBuild.config.cjs",
-		"fluidBuild.config.mjs",
 		"fluidBuild.config.js",
 
 		// Or the repoLayout property in package.json
