@@ -6,6 +6,8 @@ import GitHubIcon from "@theme/Icon/Socials/GitHub"
 import Link from "@docusaurus/Link";
 import FooterLogo from "./Logo";
 
+import "@site/src/css/footer.css";
+
 function Footer(): JSX.Element {
 	return (
 		<footer

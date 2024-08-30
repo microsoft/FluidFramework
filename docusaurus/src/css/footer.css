@@ -1,0 +1,23 @@
+
+.footer {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
+
+.footer-social {
+	display: flex;
+	flex-direction: column;
+}
+
+.footer-copyright {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.footer-privacy {
+	display: flex;
+	flex-direction: column;
+}
