@@ -86,19 +86,6 @@ const sidebars: SidebarsConfig = {
 			link: { type: "doc", id: "api/index" },
 		},
 	],
-
-	// But you can create a sidebar manually
-	/*
-  docsSidebar: [
-    'intro',
-    'hello',
-    {
-      type: 'category',
-      label: 'Tutorial',
-      items: ['tutorial-basics/create-a-document'],
-    },
-  ],
-   */
 };
 
 export default sidebars;
