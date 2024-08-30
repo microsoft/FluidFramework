@@ -51,6 +51,7 @@ parameters:
   type: boolean
   default: true
 
+# If this is true, the pipeline will publish artifacts with the code coverage results
 - name: taskPublishCodeCoverageArtifacts
   type: boolean
   default: false
