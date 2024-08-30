@@ -73,11 +73,11 @@ export function isIReleaseGroup(
 		return false;
 	}
 
-	if (typeof toCheck !== "object") {
-		return false;
+	if (typeof toCheck === "object") {
+		return "rgPackages" in toCheck;
 	}
 
-	return "rgPackages" in toCheck;
+	return false;
 }
 
 /**
@@ -116,5 +116,8 @@ export interface IPackage<J extends PackageJson = PackageJson> {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- this is a type guard
 export function isIPackage(pkg: any): pkg is IPackage {
-	return "getScript" in pkg;
+	if (typeof pkg === "object") {
+		return "getScript" in pkg;
+	}
+	return false;
 }

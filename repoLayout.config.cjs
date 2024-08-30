@@ -56,8 +56,8 @@ module.exports = {
 			"server": {
 				directory: "./server/routerlicious",
 				releaseGroups: {
-					"build-tools": {
-						include: [...fluidScopes, "@fluid-example"],
+					"server": {
+						include: [...fluidScopes, "@fluid-example", "tinylicious"],
 						rootPackageName: "server-release-group-root",
 						defaultInterdependencyRange: "workspace:~",
 						adoPipelineUrl:
@@ -68,9 +68,9 @@ module.exports = {
 			"gitrest": {
 				directory: "server/gitrest",
 				releaseGroups: {
-					"build-tools": {
+					"gitrest": {
 						include: [...fluidScopes, "@fluid-example"],
-						rootPackageName: "build-tools-release-group-root",
+						rootPackageName: "gitrest-release-group-root",
 						defaultInterdependencyRange: "workspace:~",
 						adoPipelineUrl:
 							"https://dev.azure.com/fluidframework/internal/_build?definitionId=26",
@@ -80,9 +80,9 @@ module.exports = {
 			"historian": {
 				directory: "server/historian",
 				releaseGroups: {
-					"build-tools": {
+					"historian": {
 						include: [...fluidScopes, "@fluid-example"],
-						rootPackageName: "build-tools-release-group-root",
+						rootPackageName: "historian-release-group-root",
 						defaultInterdependencyRange: "workspace:~",
 						adoPipelineUrl:
 							"https://dev.azure.com/fluidframework/internal/_build?definitionId=25",

@@ -17,13 +17,13 @@ describe("loadFluidRepo", () => {
 		const repo = loadFluidRepo();
 		assert.strictEqual(
 			repo.workspaces.size,
-			5,
+			14,
 			`Expected 5 workspaces, found ${repo.workspaces.size}`,
 		);
 
 		const client = repo.workspaces.get("client" as WorkspaceName);
 		expect(client).to.not.be.undefined;
-		expect(client?.packages.length).to.equal(158);
+		expect(client?.packages.length).to.equal(159);
 		expect(client?.releaseGroups.size).to.equal(2);
 		console.debug(client?.releaseGroups);
 	});
