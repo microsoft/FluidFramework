@@ -33,7 +33,6 @@ extends:
     taskPublishBundleSizeArtifacts: true
     taskBuildDocs: false
     testCoverage: true
-    taskPublishCodeCoverageArtifacts: true
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     buildDirectory: .
