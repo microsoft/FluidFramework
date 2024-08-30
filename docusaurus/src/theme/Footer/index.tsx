@@ -1,8 +1,8 @@
 import clsx from "clsx";
 import React from "react";
 
-import TwitterIcon from "@theme/Icon/Socials/Twitter"
-import GitHubIcon from "@theme/Icon/Socials/GitHub"
+import TwitterIcon from "@theme/Icon/Socials/Twitter";
+import GitHubIcon from "@theme/Icon/Socials/GitHub";
 import Link from "@docusaurus/Link";
 import FooterLogo from "./Logo";
 
