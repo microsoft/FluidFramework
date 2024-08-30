@@ -114,17 +114,16 @@ export class DuplicateBatchDetector {
 
 		// Check this batch against the tracked batchIds to see if it's a duplicate
 		if (this.batchIdsAll.has(batchId)) {
-			this.batchIdBySeqNum.forEach((trackedBatchId, trackedSequenceNumber) => {
+			for (const [trackedSequenceNumber, trackedBatchId] of this.batchIdBySeqNum.entries()) {
 				if (trackedBatchId === batchId) {
 					return {
 						duplicate: true,
 						otherSequenceNumber: trackedSequenceNumber,
 					};
 				}
-			});
+			}
 			assert(false, "Should have found the batchId in batchIdBySeqNum map");
 		}
-
 		// Now we know it's not a duplicate, so add it to the tracked batchIds and return.
 		assert(
 			!this.batchIdBySeqNum.has(sequenceNumber),
