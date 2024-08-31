@@ -1,0 +1,23 @@
+{
+	"extends": "../../../../../common/build/build-common/tsconfig.test.node16.json",
+	"compilerOptions": {
+		"rootDir": "./",
+		"outDir": "../../lib/test",
+		"types": ["mocha", "node"],
+		// Allows writing type checking expression without having to use the results.
+		"noUnusedLocals": false,
+		// Allow testing that declarations work properly
+		"declaration": true,
+		// Needed to ensure testExport's produce a valid d.ts
+		"skipLibCheck": false,
+		// Due to several of our own packages' exports failing to build with "exactOptionalPropertyTypes",
+		// disable it to prevent that from erroring when combined with "skipLibCheck".
+		"exactOptionalPropertyTypes": false,
+	},
+	"include": ["./**/*"],
+	"references": [
+		{
+			"path": "../..",
+		},
+	],
+}

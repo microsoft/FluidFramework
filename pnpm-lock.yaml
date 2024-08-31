@@ -7716,6 +7716,109 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
 
+  experimental/framework/fluid-llm:
+    dependencies:
+      '@fluidframework/aqueduct':
+        specifier: workspace:~
+        version: link:../../../packages/framework/aqueduct
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-interfaces
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/fluid-static':
+        specifier: workspace:~
+        version: link:../../../packages/framework/fluid-static
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/runtime-definitions
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../../../packages/dds/shared-object-base
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../../packages/dds/tree
+      react:
+        specifier: ^17.0.1
+        version: 17.0.2
+    devDependencies:
+      '@arethetypeswrong/cli':
+        specifier: ^0.15.2
+        version: 0.15.2
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../../packages/test/mocha-test-setup
+      '@fluid-tools/build-cli':
+        specifier: 0.43.0-285387
+        version: 0.43.0-285387(@types/node@18.19.1)(webpack-cli@4.10.0)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: 0.43.0-285387
+        version: 0.43.0-285387
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/tinylicious-client':
+        specifier: workspace:~
+        version: link:../../../packages/service-clients/tinylicious-client
+      '@microsoft/api-extractor':
+        specifier: ^7.45.1
+        version: 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)(@types/node@18.19.1)
+      '@types/mocha':
+        specifier: ^9.1.1
+        version: 9.1.1
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.1
+      '@types/react':
+        specifier: ^17.0.44
+        version: 17.0.71
+      c8:
+        specifier: ^8.0.1
+        version: 8.0.1
+      concurrently:
+        specifier: ^8.2.1
+        version: 8.2.2
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      eslint-config-prettier:
+        specifier: ~9.0.0
+        version: 9.0.0(eslint@8.55.0)
+      mocha:
+        specifier: ^10.2.0
+        version: 10.2.0
+      mocha-json-output-reporter:
+        specifier: ^2.0.1
+        version: 2.1.0(mocha@10.2.0)(moment@2.29.4)
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.2.0)
+      moment:
+        specifier: ^2.21.0
+        version: 2.29.4
+      prettier:
+        specifier: ~3.0.3
+        version: 3.0.3
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
   experimental/framework/last-edited:
     dependencies:
       '@fluidframework/aqueduct':
@@ -18972,7 +19075,7 @@ packages:
       outdent: 0.5.0
       prettier: 2.8.8
       resolve-from: 5.0.0
-      semver: 7.6.0
+      semver: 7.6.3
 
   /@changesets/assemble-release-plan@5.2.4:
     resolution: {integrity: sha512-xJkWX+1/CUaOUWTguXEbCDTyWJFECEhmdtbkjhn5GVBGxdP/JwaHBIU9sW3FR6gD07UwZ7ovpiPclQZs+j+mvg==}
@@ -18982,7 +19085,7 @@ packages:
       '@changesets/get-dependents-graph': 1.3.6
       '@changesets/types': 5.2.1
       '@manypkg/get-packages': 1.1.3
-      semver: 7.6.0
+      semver: 7.6.3
 
   /@changesets/changelog-git@0.1.14:
     resolution: {integrity: sha512-+vRfnKtXVWsDDxGctOfzJsPhaCdXRYoe+KyWYoq5X/GqoISREiat0l3L8B0a453B2B4dfHGcZaGyowHbp9BSaA==}
@@ -19050,7 +19153,7 @@ packages:
       '@manypkg/get-packages': 1.1.3
       chalk: 2.4.2
       fs-extra: 7.0.1
-      semver: 7.6.0
+      semver: 7.6.3
 
   /@changesets/get-release-plan@3.0.17:
     resolution: {integrity: sha512-6IwKTubNEgoOZwDontYc2x2cWXfr6IKxP3IhKeK+WjyD6y3M4Gl/jdQvBw+m/5zWILSOCAaGLu2ZF6Q+WiPniw==}
@@ -22772,6 +22875,34 @@ packages:
       lodash: 4.17.21
       nconf: 0.12.1
       semver: 7.6.3
+      sha.js: 2.4.11
+      uuid: 9.0.1
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
+  /@fluidframework/server-lambdas@5.0.0(debug@4.3.6):
+    resolution: {integrity: sha512-t0ouLtYi2y5DBYbp+WT4mIGXTSYK/1Yz+cb0prOtAUxYqsn+TAG/hr2DE8OyzHdL0RHZp/y2KX7X1jZhPxxGDg==}
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/protocol-base': 5.0.0
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-lambdas-driver': 5.0.0
+      '@fluidframework/server-services-client': 5.0.0
+      '@fluidframework/server-services-core': 5.0.0
+      '@fluidframework/server-services-telemetry': 5.0.0
+      '@types/semver': 7.5.6
+      assert: 2.1.0
+      async: 3.2.5
+      axios: 1.6.2(debug@4.3.6)
+      buffer: 6.0.3
+      double-ended-queue: 2.1.0-0
+      events: 3.3.0
+      json-stringify-safe: 5.0.1
+      lodash: 4.17.21
+      nconf: 0.12.1
+      semver: 7.6.0
       sha.js: 2.4.11
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -39757,7 +39888,7 @@ packages:
     peerDependencies:
       mocha: '>=3.1.2'
     dependencies:
-      debug: 4.3.5
+      debug: 4.3.6(supports-color@8.1.1)
       lodash: 4.17.21
       mocha: 10.2.0
     transitivePeerDependencies:
