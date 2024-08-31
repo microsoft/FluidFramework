@@ -9,13 +9,9 @@ import type {
 	InsertableObjectFromSchemaRecord,
 	SimpleKeyMap,
 } from "./objectNode.js";
-import {
-	type ImplicitFieldSchema,
-	type TreeNodeSchemaClass,
-	NodeKind,
-	type FieldSchema,
-	type TreeNodeSchema,
-} from "./schemaTypes.js";
+import type { ImplicitFieldSchema, FieldSchema } from "./schemaTypes.js";
+import { NodeKind, type TreeNodeSchemaClass, type TreeNodeSchema } from "./core/index.js";
+import type { FieldKey } from "../core/index.js";
 
 /**
  * A schema for {@link TreeObjectNode}s.
@@ -37,6 +33,9 @@ export interface ObjectNodeSchema<
 		ImplicitlyConstructable,
 		T
 	> {
+	/**
+	 * From property keys to the associated schema.
+	 */
 	readonly fields: ReadonlyMap<string, FieldSchema>;
 }
 
@@ -48,6 +47,11 @@ export interface ObjectNodeSchemaInternalData {
 	 * {@inheritdoc SimpleKeyMap}
 	 */
 	readonly flexKeyMap: SimpleKeyMap;
+
+	/**
+	 * Lookup the property keys from the stored keys.
+	 */
+	readonly storedKeyToPropertyKey: ReadonlyMap<FieldKey, string>;
 }
 
 export const ObjectNodeSchema = {

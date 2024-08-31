@@ -14,13 +14,16 @@ import type {
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	NodeFromSchema,
-	NodeKind,
 	TreeNodeFromImplicitAllowedTypes,
+} from "./schemaTypes.js";
+import type {
+	NodeKind,
 	TreeNodeSchema,
 	WithType,
-} from "./schemaTypes.js";
+	TreeNode,
+	Unhydrated,
+} from "./core/index.js";
 import type { TreeArrayNodeBase, TreeArrayNode } from "./arrayNode.js";
-import type { TreeNode, Unhydrated } from "./types.js";
 
 /*
  * TODO:
@@ -55,7 +58,7 @@ export type ObjectFromSchemaRecordUnsafe<
 export type TreeObjectNodeUnsafe<
 	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
 	TypeName extends string = string,
-> = TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<TypeName>;
+> = TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<TypeName, NodeKind.Object>;
 
 /**
  * {@link Unenforced} version of {@link TreeFieldFromImplicitField}.

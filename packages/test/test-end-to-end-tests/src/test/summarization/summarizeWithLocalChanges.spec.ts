@@ -43,6 +43,21 @@ import {
 
 const configProvider = createTestConfigProvider();
 
+/**
+ * Waits for a summary op to be seen by the specified container.
+ *
+ * @remarks
+ * IMPORTANT: timing of when this function is called and/or awaited is important to write tests that aren't flaky.
+ * If you're going to `await` something else between the time when you make a change in a container that will result
+ * in a summary and the time you want to wait for the summary, you should call this function, without `await`ing it,
+ * *before* `await`ing anything else, and then `await` the returned promise when you actually need to wait for the
+ * summary.
+ * Otherwise it could happen that the summary is produced before this function is called, thus the listeners set up
+ * by it aren't in place yet, they will miss the summary op, and the returned promise will never resolve.
+ *
+ * @param container - A container, just for the purpose of setting up listeners for summary ops.
+ * @returns A promise that resolves when a summary op is received.
+ */
 async function waitForSummaryOp(container: IContainer): Promise<boolean> {
 	return new Promise<boolean>((resolve) => {
 		container.deltaManager.on("op", (op: ISequencedDocumentMessage) => {
@@ -431,13 +446,14 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 				logger,
 			);
 			const rootDataObject = (await mainContainer.getEntryPoint()) as RootTestDataObject;
+			const waitForSummaryOpPromise = waitForSummaryOp(mainContainer);
 			const dataObject = await dataStoreFactory1.createInstance(
 				rootDataObject.containerRuntime,
 			);
 			rootDataObject._root.set("store", dataObject.handle);
 			await waitForContainerConnection(mainContainer);
 
-			const summarySucceeded = await timeoutAwait(waitForSummaryOp(mainContainer), {
+			const summarySucceeded = await timeoutAwait(waitForSummaryOpPromise, {
 				errorMsg: "Timeout on waiting for summary op",
 			});
 			assert(summarySucceeded === true, "Summary should have been successful");

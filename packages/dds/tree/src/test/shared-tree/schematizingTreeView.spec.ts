@@ -7,13 +7,7 @@ import { strict as assert } from "assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	FieldKinds,
-	FlexFieldSchema,
-	intoStoredSchema,
-	MockNodeKeyManager,
-	SchemaBuilderBase,
-} from "../../feature-libraries/index.js";
+import { intoStoredSchema, MockNodeKeyManager } from "../../feature-libraries/index.js";
 import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
@@ -25,15 +19,15 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toFlexSchema } from "../../simple-tree/toFlexSchema.js";
+import { toFlexSchema, toStoredSchema } from "../../simple-tree/toFlexSchema.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
-	cursorFromUnhydratedRoot,
-	insert,
+	cursorFromInsertableTreeField,
 	validateUsageError,
 } from "../utils.js";
-import type { TreeContent, TreeCheckout } from "../../shared-tree/index.js";
+import { insert } from "../sequenceRootUtils.js";
+import type { TreeCheckout, TreeStoredContent } from "../../shared-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });
@@ -49,26 +43,20 @@ function checkoutWithInitialTree(
 	unhydratedInitialTree: InsertableTreeFieldFromImplicitField,
 	nodeKeyManager = new MockNodeKeyManager(),
 ): TreeCheckout {
-	const initialTree = cursorFromUnhydratedRoot(
+	const initialTree = cursorFromInsertableTreeField(
 		viewConfig.schema,
 		unhydratedInitialTree,
 		nodeKeyManager,
 	);
-	const treeContent: TreeContent = {
-		schema: toFlexSchema(viewConfig.schema),
+	const treeContent: TreeStoredContent = {
+		schema: toStoredSchema(viewConfig.schema),
 		initialTree,
 	};
 	return checkoutWithContent(treeContent);
 }
 
 // Schema for tree that must always be empty.
-const emptySchema = new SchemaBuilderBase(FieldKinds.required, {
-	scope: "Empty",
-	lint: {
-		rejectEmpty: false,
-		rejectForbidden: false,
-	},
-}).intoSchema(FlexFieldSchema.empty);
+const emptySchema = toStoredSchema(schema.optional([]));
 
 describe("SchematizingSimpleTreeView", () => {
 	it("Initialize document", () => {
@@ -274,5 +262,19 @@ describe("SchematizingSimpleTreeView", () => {
 		undoStack.pop()?.revert();
 		assert.equal(undoStack.length, 0);
 		assert.equal(redoStack.length, 1);
+	});
+
+	it("schemaChanged event", () => {
+		const content = {
+			schema: toStoredSchema([]),
+			initialTree: undefined,
+		};
+		const checkout = checkoutWithContent(content);
+		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+		const log: string[] = [];
+		view.events.on("schemaChanged", () => log.push("changed"));
+		assert.deepEqual(log, []);
+		view.upgradeSchema();
+		assert.deepEqual(log, ["changed"]);
 	});
 });

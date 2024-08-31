@@ -54,7 +54,13 @@ export type { ConfigurationBase } from "./ConfigurationBase.js";
 export type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
 export type { Heading } from "./Heading.js";
 export type { Link, UrlTarget } from "./Link.js";
-export { loadModel } from "./LoadModel.js";
+export {
+	lintApiModel,
+	type LintApiModelConfiguration,
+	type LinterErrors,
+	type LinterReferenceError,
+} from "./LintApiModel.js";
+export { loadModel, type LoadModelOptions } from "./LoadModel.js";
 export {
 	defaultConsoleLogger,
 	type LoggingFunction,

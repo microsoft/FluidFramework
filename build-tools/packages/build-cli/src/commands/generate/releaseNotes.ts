@@ -5,7 +5,6 @@
 
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
-import { type ReleaseNotesSection, loadFluidBuildConfig } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { StringBuilder } from "@rushstack/node-core-library";
 import { format as prettier } from "prettier";
@@ -15,6 +14,7 @@ import remarkGithub, { defaultBuildUrl } from "remark-github";
 import admonitions from "remark-github-beta-blockquote-admonitions";
 import remarkToc from "remark-toc";
 
+import { type ReleaseNotesSection } from "../../config.js";
 import { releaseGroupFlag } from "../../flags.js";
 import {
 	BaseCommand,
@@ -88,9 +88,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			this.error(`Unknown release group: ${flags.releaseGroup}`, { exit: 2 });
 		}
 
-		const { releaseNotes: releaseNotesConfig } = loadFluidBuildConfig(
-			context.gitRepo.resolvedRoot,
-		);
+		const { releaseNotes: releaseNotesConfig } = context.flubConfig;
 		if (releaseNotesConfig === undefined) {
 			this.error(
 				`No release notes config found. Make sure the 'releaseNotes' section of the build config exists.`,

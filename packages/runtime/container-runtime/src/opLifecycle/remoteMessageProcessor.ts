@@ -30,15 +30,20 @@ export interface InboundBatch {
 	/** clientId that sent this batch. Used to compute Batch ID if needed */
 	readonly clientId: string;
 	/**
-	 * Client Sequence Number of the first message in the batch.
+	 * Client Sequence Number of the Grouped Batch message, or the first message in the ungrouped batch.
 	 * Used to compute Batch ID if needed
 	 *
 	 * @remarks For chunked batches, this is the CSN of the "representative" chunk (the final chunk).
 	 * For grouped batches, clientSequenceNumber on messages is overwritten, so we track this original value here.
 	 */
 	readonly batchStartCsn: number;
-	/** For an empty batch (with no messages), we need to remember the empty grouped batch's sequence number */
-	readonly emptyBatchSequenceNumber?: number;
+	/**
+	 * The first message in the batch, or if the batch is empty, the empty grouped batch message
+	 * Used for accessing the sequence numbers for the (start of the) batch.
+	 *
+	 * @remarks Do not use clientSequenceNumber here, use batchStartCsn instead.
+	 */
+	readonly keyMessage: ISequencedDocumentMessage;
 }
 
 function assertHasClientId(
@@ -129,7 +134,7 @@ export class RemoteMessageProcessor {
 		}
 
 		if (isGroupedBatch(message)) {
-			// We should be awaiting a new batch (batchStartCsn undefined)
+			// We should be awaiting a new batch (batchInProgress undefined)
 			assert(
 				this.batchInProgress === undefined,
 				0x9d3 /* Grouped batch interrupting another batch */,
@@ -141,9 +146,7 @@ export class RemoteMessageProcessor {
 				batchStartCsn: message.clientSequenceNumber,
 				clientId,
 				batchId,
-				// If the batch is empty, we need to return the sequence number aside
-				emptyBatchSequenceNumber:
-					groupedMessages.length === 0 ? message.sequenceNumber : undefined,
+				keyMessage: groupedMessages[0] ?? message, // For an empty batch, this is the empty grouped batch message. Needed for sequence numbers for this batch
 			};
 		}
 
@@ -184,6 +187,7 @@ export class RemoteMessageProcessor {
 					batchId: asBatchMetadata(message.metadata)?.batchId,
 					clientId: message.clientId,
 					batchStartCsn: message.clientSequenceNumber,
+					keyMessage: message,
 				};
 
 				return { batchEnded: false };
@@ -195,6 +199,7 @@ export class RemoteMessageProcessor {
 				batchStartCsn: message.clientSequenceNumber,
 				clientId: message.clientId,
 				batchId: asBatchMetadata(message.metadata)?.batchId,
+				keyMessage: message,
 			};
 			return { batchEnded: true };
 		}
@@ -217,9 +222,10 @@ export function ensureContentsDeserialized(
 	hasModernRuntimeMessageEnvelope: boolean,
 	logLegacyCase: (codePath: string) => void,
 ): void {
-	// back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
-	// System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
-	// Old ops may contain empty string (I assume noops).
+	// Currently the loader layer is parsing the contents of the message as JSON if it is a string,
+	// so we never expect to see this case.
+	// We intend to remove that logic from the Loader, at which point we will have it here.
+	// Only hasModernRuntimeMessageEnvelope true will be expected to have JSON contents.
 	let didParseJsonContents: boolean;
 	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
 		mutableMessage.contents = JSON.parse(mutableMessage.contents);

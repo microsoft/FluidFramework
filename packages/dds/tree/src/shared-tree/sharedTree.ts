@@ -78,11 +78,11 @@ export interface SharedTreeContentSnapshot {
 	 */
 	readonly schema: TreeStoredSchema;
 	/**
-	 * All {@link TreeStatus#InDocument} content.
+	 * All {@link TreeStatus.InDocument} content.
 	 */
 	readonly tree: JsonableTree[];
 	/**
-	 * All {@link TreeStatus#Removed} content.
+	 * All {@link TreeStatus.Removed} content.
 	 */
 	readonly removed: [string | number | undefined, number, JsonableTree][];
 }

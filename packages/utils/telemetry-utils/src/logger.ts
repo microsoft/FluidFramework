@@ -742,7 +742,11 @@ export class PerformanceEvent {
 			this.reportEvent("start");
 		}
 
-		if (typeof window === "object" && window?.performance?.mark) {
+		if (
+			typeof window === "object" &&
+			window?.performance?.mark !== undefined &&
+			window?.performance?.mark !== null
+		) {
 			this.startMark = `${event.eventName}-start`;
 			window.performance.mark(this.startMark);
 		}
@@ -771,7 +775,7 @@ export class PerformanceEvent {
 	}
 
 	private performanceEndMark(): void {
-		if (this.startMark && this.event) {
+		if (this.startMark !== undefined && this.event) {
 			const endMark = `${this.event.eventName}-end`;
 			window.performance.mark(endMark);
 			window.performance.measure(`${this.event.eventName}`, this.startMark, endMark);

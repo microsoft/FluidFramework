@@ -121,7 +121,6 @@ declare type current_as_old_for_ClassStatics_FieldSchema = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_FieldSchemaUnsafe": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_FieldSchemaUnsafe = requireAssignableTo<TypeOnly<old.FieldSchemaUnsafe<any,any>>, TypeOnly<current.FieldSchemaUnsafe<any,any>>>
 
 /*
@@ -167,7 +166,6 @@ declare type current_as_old_for_Interface_ITreeConfigurationOptions = requireAss
  * typeValidation.broken:
  * "Interface_ITreeViewConfiguration": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ITreeViewConfiguration = requireAssignableTo<TypeOnly<old.ITreeViewConfiguration>, TypeOnly<current.ITreeViewConfiguration>>
 
 /*
@@ -204,7 +202,6 @@ declare type current_as_old_for_TypeAlias_ImplicitAllowedTypes = requireAssignab
  * typeValidation.broken:
  * "TypeAlias_ImplicitFieldSchema": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_ImplicitFieldSchema = requireAssignableTo<TypeOnly<old.ImplicitFieldSchema>, TypeOnly<current.ImplicitFieldSchema>>
 
 /*
@@ -640,6 +637,15 @@ declare type old_as_current_for_TypeAlias_InternalTypes_ObjectFromSchemaRecordUn
 declare type current_as_old_for_TypeAlias_InternalTypes_ObjectFromSchemaRecordUnsafe = requireAssignableTo<TypeOnly<current.InternalTypes.ObjectFromSchemaRecordUnsafe<any>>, TypeOnly<old.InternalTypes.ObjectFromSchemaRecordUnsafe<any>>>
 
 /*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_InternalTypes_ReadonlyMapInlined": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_InternalTypes_ReadonlyMapInlined = requireAssignableTo<TypeOnly<current.InternalTypes.ReadonlyMapInlined<any,any>>, TypeOnly<old.InternalTypes.ReadonlyMapInlined<any,any>>>
+
+/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -872,6 +878,24 @@ declare type current_as_old_for_TypeAlias_Listeners = requireAssignableTo<TypeOn
  * "Interface_MakeNominal": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_MakeNominal = requireAssignableTo<TypeOnly<current.MakeNominal>, TypeOnly<old.MakeNominal>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_MapNodeInsertableData": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_MapNodeInsertableData = requireAssignableTo<TypeOnly<old.MapNodeInsertableData<any>>, TypeOnly<current.MapNodeInsertableData<any>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_MapNodeInsertableData": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_MapNodeInsertableData = requireAssignableTo<TypeOnly<current.MapNodeInsertableData<any>>, TypeOnly<old.MapNodeInsertableData<any>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1385,3 +1409,12 @@ declare type current_as_old_for_Interface_WithType = requireAssignableTo<TypeOnl
  * "Variable_rollback": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_rollback = requireAssignableTo<TypeOnly<typeof current.rollback>, TypeOnly<typeof old.rollback>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_typeSchemaSymbol": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_typeSchemaSymbol = requireAssignableTo<TypeOnly<typeof current.typeSchemaSymbol>, TypeOnly<typeof old.typeSchemaSymbol>>
