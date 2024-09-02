@@ -10,4 +10,13 @@ parameters:
   type: string
 - name: branchName
   type: string
-steps: []
+steps:
+- task: DownloadPipelineArtifact@2
+  inputs:
+    buildType: specific
+    project: internal
+    pipeline: ${{ parameters.pipelineName }}
+    buildVersionToDownload: latestFromBranch
+    branchName: ${{ parameters.branchName }}
+    artifact: _api-extractor-temp
+    allowPartiallySucceededBuilds: true
