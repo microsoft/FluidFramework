@@ -16,7 +16,7 @@ export const Signaler: {
     readonly factory: IFluidDataStoreFactory & {
         readonly registryEntry: NamedFluidDataStoreRegistryEntry;
     };
-} & SharedObjectKind<ISignaler>;
+} & SharedObjectKind<ISignaler & IFluidLoadable>;
 
 // @alpha
 export type SignalListener<T> = (clientId: string, local: boolean, payload: Jsonable<T>) => void;

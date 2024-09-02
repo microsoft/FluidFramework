@@ -870,7 +870,7 @@ export interface ISharedObjectKind<TSharedObject> {
  * @sealed
  * @public
  */
-export interface SharedObjectKind<out TSharedObject = unknown>
+export interface SharedObjectKind<out TSharedObject extends IFluidLoadable = IFluidLoadable>
 	extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
 	/**
 	 * Check whether an {@link @fluidframework/core-interfaces#IFluidLoadable} is an instance of this shared object kind.
@@ -888,7 +888,7 @@ export interface SharedObjectKind<out TSharedObject = unknown>
  * See {@link @fluidframework/fluid-static#ContainerSchema} for how this is used in the declarative API.
  * @internal
  */
-export function createSharedObjectKind<TSharedObject>(
+export function createSharedObjectKind<TSharedObject extends IFluidLoadable>(
 	factory: (new () => IChannelFactory<TSharedObject>) & { readonly Type: string },
 ): ISharedObjectKind<TSharedObject> & SharedObjectKind<TSharedObject> {
 	const result: ISharedObjectKind<TSharedObject> &
@@ -898,7 +898,7 @@ export function createSharedObjectKind<TSharedObject>(
 		},
 
 		create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject {
-			return runtime.createChannel(id, factory.Type) as TSharedObject;
+			return runtime.createChannel(id, factory.Type) as unknown as TSharedObject;
 		},
 
 		is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject {

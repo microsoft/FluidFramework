@@ -137,7 +137,7 @@ async function dereferenceToTestFluidObject(handle: IFluidHandle): Promise<ITest
 /**
  * IFluidHandle.get() with additional runtime validation that it returns SharedObject of the expected kind.
  */
-async function dereferenceToSharedObject<TSharedObject>(
+async function dereferenceToSharedObject<TSharedObject extends IFluidLoadable>(
 	handle: IFluidHandle,
 	sharedObjectKind: ISharedObjectKind<TSharedObject> & SharedObjectKind<TSharedObject>,
 ): Promise<TSharedObject> {

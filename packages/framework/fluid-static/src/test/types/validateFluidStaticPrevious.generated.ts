@@ -220,6 +220,7 @@ declare type current_as_old_for_Interface_IServiceAudienceEvents = requireAssign
  * typeValidation.broken:
  * "TypeAlias_InitialObjects": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_InitialObjects = requireAssignableTo<TypeOnly<old.InitialObjects<any>>, TypeOnly<current.InitialObjects<any>>>
 
 /*

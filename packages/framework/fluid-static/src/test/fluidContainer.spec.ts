@@ -42,8 +42,8 @@ export type requireAssignableTo<_A extends B, B> = true;
 	// SharedObjectKind case
 	{
 		type _a = InitialObjects<ContainerSchemaWith<SharedObjectKind>>["item"];
-		type _b = requireAssignableTo<_a, unknown>;
-		type _c = requireAssignableTo<unknown, _a>;
+		type _b = requireAssignableTo<_a, IFluidLoadable>;
+		type _c = requireAssignableTo<IFluidLoadable, _a>;
 	}
 
 	// SharedObject case

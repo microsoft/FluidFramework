@@ -90,7 +90,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 }
 
 // @public @sealed
-export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
+export interface SharedObjectKind<out TSharedObject extends IFluidLoadable = IFluidLoadable> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
     is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
 }
 

@@ -9,7 +9,11 @@ import {
 	DataObjectFactory,
 	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
-import { IErrorEvent, type IEventProvider } from "@fluidframework/core-interfaces";
+import type {
+	IErrorEvent,
+	IEventProvider,
+	IFluidLoadable,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { Jsonable } from "@fluidframework/datastore-definitions/internal";
 import type {
@@ -203,4 +207,4 @@ export const Signaler: {
 	readonly factory: IFluidDataStoreFactory & {
 		readonly registryEntry: NamedFluidDataStoreRegistryEntry;
 	};
-} & SharedObjectKind<ISignaler> = createDataObjectKind(SignalerClass);
+} & SharedObjectKind<ISignaler & IFluidLoadable> = createDataObjectKind(SignalerClass);

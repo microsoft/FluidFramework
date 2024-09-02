@@ -46,7 +46,7 @@ class SharedFooFactory implements IChannelFactory<IFoo> {
 	}
 }
 
-const SharedFoo = createSharedObjectKind<IFoo>(SharedFooFactory);
+const SharedFoo = createSharedObjectKind<IFoo & IFluidLoadable>(SharedFooFactory);
 
 describe("createSharedObjectKind's return type", () => {
 	it("delegates to runtime.createChannel on creation", () => {

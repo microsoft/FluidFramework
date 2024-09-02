@@ -22,6 +22,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Interface_ContainerDevtoolsProps": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ContainerDevtoolsProps = requireAssignableTo<TypeOnly<old.ContainerDevtoolsProps>, TypeOnly<current.ContainerDevtoolsProps>>
 
 /*
@@ -58,6 +59,7 @@ declare type current_as_old_for_TypeAlias_ContainerKey = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Interface_DevtoolsProps": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_DevtoolsProps = requireAssignableTo<TypeOnly<old.DevtoolsProps>, TypeOnly<current.DevtoolsProps>>
 
 /*

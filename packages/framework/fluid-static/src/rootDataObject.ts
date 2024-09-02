@@ -79,9 +79,7 @@ class RootDataObject
 		const initialObjectsP: Promise<void>[] = [];
 		for (const [id, objectClass] of Object.entries(props.initialObjects)) {
 			const createObject = async (): Promise<void> => {
-				const obj = await this.create<IFluidLoadable>(
-					objectClass as SharedObjectKind<IFluidLoadable>,
-				);
+				const obj = await this.create(objectClass);
 				this.initialObjectsDir.set(id, obj.handle);
 			};
 			initialObjectsP.push(createObject());
@@ -111,9 +109,6 @@ class RootDataObject
 		await Promise.all(loadInitialObjectsP);
 	}
 
-	/**
-	 * {@inheritDoc IRootDataObject.initialObjects}
-	 */
 	public get initialObjects(): LoadableObjectRecord {
 		if (Object.keys(this._initialObjects).length === 0) {
 			throw new Error("Initial Objects were not correctly initialized");
@@ -121,10 +116,7 @@ class RootDataObject
 		return this._initialObjects;
 	}
 
-	/**
-	 * {@inheritDoc IRootDataObject.create}
-	 */
-	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
+	public async create<T extends IFluidLoadable>(objectClass: SharedObjectKind<T>): Promise<T> {
 		const internal = objectClass as unknown as LoadableObjectClass<T & IFluidLoadable>;
 		if (isDataObjectClass(internal)) {
 			return this.createDataObject(internal);

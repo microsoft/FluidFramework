@@ -131,7 +131,7 @@ export interface IRootDataObject extends IProvideRootDataObject {
 	 *
 	 * @typeParam T - The class of the `DataObject` or `SharedObject`.
 	 */
-	create<T>(objectClass: SharedObjectKind<T>): Promise<T>;
+	create<T extends IFluidLoadable>(objectClass: SharedObjectKind<T>): Promise<T>;
 }
 
 /**

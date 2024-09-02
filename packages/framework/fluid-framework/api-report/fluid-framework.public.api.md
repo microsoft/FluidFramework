@@ -705,7 +705,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
 // @public @sealed
-export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
+export interface SharedObjectKind<out TSharedObject extends IFluidLoadable = IFluidLoadable> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
     is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
 }
 
