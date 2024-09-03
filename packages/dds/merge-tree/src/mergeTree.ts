@@ -617,7 +617,8 @@ export class MergeTree {
 					childIndex++, nodeIndex++ // Advance to next child & node
 				) {
 					// Insert the next node into the current block
-					this.addNode(block, nodes[nodeIndex]);
+					// TODO Non null asserting, why is this not null?
+					this.addNode(block, nodes[nodeIndex]!);
 				}
 
 				// Calculate this block's info.  Previously this was inlined into the above loop as a micro-optimization,
@@ -627,7 +628,8 @@ export class MergeTree {
 			}
 
 			return blocks.length === 1 // If there is only one block at this layer...
-				? blocks[0] // ...then we're done.  Return the root.
+				? // Non null asserting here because of the length check above
+					blocks[0]! // ...then we're done.  Return the root.
 				: buildMergeBlock(blocks); // ...otherwise recursively build the next layer above blocks.
 		};
 		if (segments.length > 0) {
@@ -686,7 +688,8 @@ export class MergeTree {
 		while (parent) {
 			const children = parent.children;
 			for (let childIndex = 0; childIndex < parent.childCount; childIndex++) {
-				const child = children[childIndex];
+				// TODO Non null asserting, why is this not null?
+				const child = children[childIndex]!;
 				if ((!!prevParent && child === prevParent) || child === node) {
 					break;
 				}
@@ -1726,7 +1729,8 @@ export class MergeTree {
 		let newNode: IMergeNode | undefined;
 		let fromSplit: MergeBlock | undefined;
 		for (childIndex = 0; childIndex < block.childCount; childIndex++) {
-			child = children[childIndex];
+			// TODO Non null asserting, why is this not null?
+			child = children[childIndex]!;
 			// ensure we walk down the far edge of the tree, even if all sub-tree is eligible for zamboni
 			const isLastNonLeafBlock =
 				isLastChildBlock && !child.isLeaf() && childIndex === block.childCount - 1;
@@ -1797,8 +1801,10 @@ export class MergeTree {
 		}
 		if (newNode) {
 			for (let i = block.childCount; i > childIndex; i--) {
-				block.children[i] = block.children[i - 1];
-				block.children[i].index = i;
+				// TODO Non null asserting, why is this not null?
+				block.children[i] = block.children[i - 1]!;
+				// TODO Non null asserting, why is this not null?
+				block.children[i]!.index = i;
 			}
 			block.assignChild(newNode, childIndex, false);
 			block.childCount++;
@@ -1835,7 +1841,8 @@ export class MergeTree {
 		// Update ordinals to reflect lowered child count
 		this.nodeUpdateOrdinals(node);
 		for (let i = 0; i < halfCount; i++) {
-			newNode.assignChild(node.children[halfCount + i], i, false);
+			// TODO Non null asserting, why is this not null?
+			newNode.assignChild(node.children[halfCount + i]!, i, false);
 			node.children[halfCount + i] = undefined!;
 		}
 		this.nodeUpdateLengthNewStructure(node);
@@ -1845,7 +1852,8 @@ export class MergeTree {
 
 	public nodeUpdateOrdinals(block: MergeBlock): void {
 		for (let i = 0; i < block.childCount; i++) {
-			const child = block.children[i];
+			// TODO Non null asserting, why is this not null?
+			const child = block.children[i]!;
 			block.setOrdinal(child, i);
 			if (!child.isLeaf()) {
 				this.nodeUpdateOrdinals(child);
@@ -2284,7 +2292,8 @@ export class MergeTree {
 						{ op: removeOp },
 					);
 				} /* op.type === MergeTreeDeltaType.ANNOTATE */ else {
-					const props = pendingSegmentGroup.previousProps![i];
+					// TODO Non null asserting, why is this not null?
+					const props = pendingSegmentGroup.previousProps![i]!;
 					const annotateOp = createAnnotateRangeOp(start, start + segment.cachedLength, props);
 					this.annotateRange(
 						start,
@@ -2457,8 +2466,9 @@ export class MergeTree {
 		}
 
 		for (let i = 0; i < newOrder.length; i++) {
-			const seg = newOrder[i];
-			const { parent, index, ordinal } = currentOrder[i];
+			// TODO Non null asserting, why is this not null?
+			const seg = newOrder[i]!;
+			const { parent, index, ordinal } = currentOrder[i]!;
 			parent?.assignChild(seg, index, false);
 			seg.ordinal = ordinal;
 		}
@@ -2551,7 +2561,8 @@ export class MergeTree {
 		const leftmostTiles = createMap<Marker>();
 
 		for (let i = 0; i < block.childCount; i++) {
-			const node = block.children[i];
+			// TODO Non null asserting, why is this not null?
+			const node = block.children[i]!;
 			const nodeLength = nodeTotalLength(this, node);
 			if (nodeLength !== undefined) {
 				len ??= 0;

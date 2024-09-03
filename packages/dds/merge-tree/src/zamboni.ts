@@ -57,7 +57,8 @@ export function zamboniSegments(
 				block.childCount = newChildCount;
 				block.children = childrenCopy;
 				for (let j = 0; j < newChildCount; j++) {
-					block.assignChild(childrenCopy[j], j, false);
+					// Non null asserting here since its looping though childrenCopy.length so j at childrenCopy will always exist
+					block.assignChild(childrenCopy[j]!, j, false);
 				}
 
 				if (underflow(block) && block.parent) {
@@ -106,7 +107,8 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 			}
 			const packedBlock = mergeTree.makeBlock(nodeCount);
 			for (let packedNodeIndex = 0; packedNodeIndex < nodeCount; packedNodeIndex++) {
-				const nodeToPack = holdNodes[childrenPackedCount++];
+				// TODO Non null asserting, why is this not null?
+				const nodeToPack = holdNodes[childrenPackedCount++]!;
 				packedBlock.assignChild(nodeToPack, packedNodeIndex, false);
 			}
 			packedBlock.parent = parent;
@@ -115,7 +117,8 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 		}
 		parent.children = packedBlocks;
 		for (let j = 0; j < childCount; j++) {
-			parent.assignChild(packedBlocks[j], j, false);
+			// TODO Non null asserting, why is this not null?
+			parent.assignChild(packedBlocks[j]!, j, false);
 		}
 		parent.childCount = childCount;
 	} else {
@@ -135,7 +138,8 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 	// when possible.
 	let prevSegment: ISegment | undefined;
 	for (let k = 0; k < node.childCount; k++) {
-		const childNode = node.children[k];
+		// TODO Non null asserting, why is this not null?
+		const childNode = node.children[k]!;
 		if (!childNode.isLeaf() || !childNode.segmentGroups.empty) {
 			holdNodes.push(childNode);
 			prevSegment = undefined;
