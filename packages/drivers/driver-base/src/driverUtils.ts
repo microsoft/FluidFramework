@@ -146,9 +146,7 @@ export function validateMessages(
 				details: JSON.stringify({
 					validLength: messages.length,
 					lastValidOpSeqNumber:
-						messages.length > 0
-							? messages[messages.length - 1].sequenceNumber
-							: undefined,
+						messages.length > 0 ? messages[messages.length - 1].sequenceNumber : undefined,
 					strict,
 				}),
 			});
