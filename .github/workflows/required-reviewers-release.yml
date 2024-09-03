@@ -77,7 +77,7 @@ jobs:
 
   check_approval:
     name: Approved by required reviewers
-    needs: check_branch
+    needs: [check_branch, not_release_branch]
     if: needs.check_branch.outputs.is_release_branch == true
     runs-on: ubuntu-latest
     steps:
