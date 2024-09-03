@@ -215,7 +215,7 @@ describe("SharedTreeBranchManager", () => {
 			{ id: "1", test: true },
 		];
 
-		const branchManager = new SharedTreeBranchManager();
+		const branchManager = new SharedTreeBranchManager({ nodeIdAttributeName: "id" });
 		branchManager.merge(treeNode as unknown as Record<string, unknown>, llmResponse);
 
 		const jsonifiedTreeNode = treeNode.map((node) => ({ ...node }));
