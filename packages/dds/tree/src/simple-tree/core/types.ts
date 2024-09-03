@@ -28,7 +28,7 @@ export type Unhydrated<T> = T;
  * A collection of events that can be emitted by a {@link TreeNode}.
  *
  * @remarks
- * Currently events can be subscribed to for {@link Unhydrated} nodes, however no events will be triggered for the nodes until after they are hydrated.
+ * Currently, events can be subscribed to for {@link Unhydrated} nodes, however no events will be triggered for the nodes until after they are hydrated.
  * This is considered a known issue, and should be fixed in future versions.
  * Do not rely on the fact that editing unhydrated nodes does not trigger their events.
  *
@@ -59,8 +59,6 @@ export interface TreeChangeEvents {
 	 * - Array nodes define a change as when an element is added, removed, moved or replaced.
 	 *
 	 * - Map nodes define a change as when an entry is added, updated, or removed.
-	 *
-	 * @param unstable - Unspecified data which may get defined/specified in future versions of this API.
 	 *
 	 * @remarks
 	 * This event is not emitted when:

@@ -878,12 +878,13 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	private *generateValues(
 		initialLastUpdatedStamp: number,
 	): Generator<TreeNodeFromImplicitAllowedTypes<T>> {
-		if (initialLastUpdatedStamp !== getKernel(this).generationNumber) {
+		const kernel = getKernel(this);
+		if (initialLastUpdatedStamp !== kernel.generationNumber) {
 			throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 		}
 		for (let i = 0; i < this.length; i++) {
 			yield this.at(i) ?? fail("Index is out of bounds");
-			if (initialLastUpdatedStamp !== getKernel(this).generationNumber) {
+			if (initialLastUpdatedStamp !== kernel.generationNumber) {
 				throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 			}
 		}

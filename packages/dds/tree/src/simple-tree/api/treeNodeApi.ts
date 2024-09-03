@@ -160,8 +160,8 @@ export const treeNodeApi: TreeNodeApi = {
 		// the stored key from the flex-domain, and get property key its simple-domain counterpart was created with.
 		const storedKey = getStoredKey(node);
 		const parentSchema = treeNodeApi.schema(parent);
-		const viewKey = getViewKeyFromStoredKey(parentSchema, storedKey);
-		return viewKey;
+		const propertyKey = getPropertyKeyFromStoredKey(parentSchema, storedKey);
+		return propertyKey;
 	},
 	on<K extends keyof TreeChangeEvents>(
 		node: TreeNode,
@@ -311,7 +311,7 @@ function getStoredKey(node: TreeNode): string | number {
 /**
  * Given a node schema, gets the property key corresponding with the provided {@link FieldProps.key | stored key}.
  */
-function getViewKeyFromStoredKey(
+function getPropertyKeyFromStoredKey(
 	schema: TreeNodeSchema,
 	storedKey: string | number,
 ): string | number {
