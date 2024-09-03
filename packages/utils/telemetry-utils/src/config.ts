@@ -201,6 +201,7 @@ export class CachedConfigProvider implements IConfigProvider {
 		const knownProviders = new Set<IConfigProviderBase>();
 		const candidateProviders = [...orderedBaseProviders];
 		while (candidateProviders.length > 0) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const baseProvider = candidateProviders.shift()!;
 			if (
 				baseProvider !== undefined &&

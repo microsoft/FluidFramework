@@ -6,7 +6,6 @@
 import { oob } from "@fluidframework/core-utils/internal";
 import { EmptyKey, type ExclusiveMapTree } from "../core/index.js";
 import {
-	type FlexAllowedTypes,
 	type FlexTreeNodeSchema,
 	type FlexTreeNode,
 	type FlexTreeSequenceField,
@@ -288,11 +287,10 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
 /**
  * Given a array node proxy, returns its underlying LazySequence field.
  */
-function getSequenceField<
-	TTypes extends FlexAllowedTypes,
-	TSimpleType extends ImplicitAllowedTypes,
->(arrayNode: TreeArrayNode<TSimpleType>): FlexTreeSequenceField<TTypes> {
-	return getOrCreateInnerNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField<TTypes>;
+function getSequenceField<TSimpleType extends ImplicitAllowedTypes>(
+	arrayNode: TreeArrayNode<TSimpleType>,
+): FlexTreeSequenceField {
+	return getOrCreateInnerNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField;
 }
 
 // For compatibility, we are initially implement 'readonly T[]' by applying the Array.prototype methods

@@ -25,7 +25,6 @@ import {
 import { getView } from "../../utils.js";
 import { getViewForForkedBranch, hydrate } from "../utils.js";
 import { brand } from "../../../util/index.js";
-import { leaf } from "../../../domains/index.js";
 
 import {
 	booleanSchema,
@@ -719,10 +718,10 @@ describe("treeNodeApi", () => {
 			const branch = checkout.fork();
 			branch.editor
 				.valueField({ parent: rootNode, field: brand("prop1") })
-				.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: 2 }));
+				.set(cursorForJsonableTreeNode({ type: brand(numberSchema.identifier), value: 2 }));
 			branch.editor
 				.valueField({ parent: rootNode, field: brand("prop2") })
-				.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: 2 }));
+				.set(cursorForJsonableTreeNode({ type: brand(numberSchema.identifier), value: 2 }));
 
 			checkout.merge(branch);
 

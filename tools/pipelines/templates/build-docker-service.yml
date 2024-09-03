@@ -400,10 +400,10 @@ extends:
                 targetType: 'inline'
                 workingDirectory: ${{ parameters.buildDirectory }}
                 script: |
-                  flub list --no-private $RELEASE_GROUP --tarball --feed public > $STAGING_PATH/pack/packagePublishOrder-public.txt
-                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-build > $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
-                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-dev > $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
-                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-test > $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
+                  flub list --no-private $RELEASE_GROUP --tarball --feed public --outFile $STAGING_PATH/pack/packagePublishOrder-public.txt
+                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-build --outFile $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
+                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-dev --outFile $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
+                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-test --outFile $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
 
           # At this point we want to publish the artifact with npm-packed packages, but as part of 1ES migration that's
           # now part of templateContext.outputs below.

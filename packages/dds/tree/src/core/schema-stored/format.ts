@@ -52,7 +52,7 @@ export const TreeNodeSchemaIdentifierSchema = brandedStringType<TreeNodeSchemaId
 
 const FieldSchemaFormatBase = Type.Object({
 	kind: FieldKindIdentifierSchema,
-	types: Type.Optional(Type.Array(TreeNodeSchemaIdentifierSchema)),
+	types: Type.Array(TreeNodeSchemaIdentifierSchema),
 });
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };

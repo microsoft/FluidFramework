@@ -39,6 +39,12 @@ parameters:
     - "@fluidframework/merge-tree"
     - "@fluidframework/container-runtime"
 
+# List of packages running custom benchmark tests.
+- name: customBenchmarkTestPackages
+  type: object
+  default:
+    - "@fluidframework/tree"
+
 # Performance e2e tests
 - name: endpoints
   type: object
@@ -258,17 +264,27 @@ stages:
               tar --extract --verbose --file $TAR_PATH ./src/test
 
         # Install package dependencies (this gets devDependencies installed so we can then run the package's tests)
-        # and run tests.
-        - task: Bash@3
-          displayName: Run memory performance tests - ${{ testPackage }}
+        # Note: the required .npmrc file is created by the include-test-perf-benchmarks.yml template above.
+        - task: CopyFiles@2
+          displayName: Copy .npmrc to test package folder - ${{ testPackage }}
           inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            script: |
-              echo "Run memory performance test for ${{ testPackage }}"
-              cp ${{ variables.testWorkspace }}/.npmrc . ;
-              npm i ;
-              npm run test:memory-profiling:report;
+            sourceFolder: ${{ variables.testWorkspace }}
+            contents: '.npmrc'
+            targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+        - task: Npm@1
+          displayName: Install dependencies - ${{ testPackage }}
+          retryCountOnTaskFailure: 1
+          inputs:
+            command: 'install'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+
+        # Run tests
+        - task: Npm@1
+          displayName: Run memory usage tests - ${{ testPackage }}
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            customCommand: 'run test:memory-profiling:report'
 
         # Consolidate output files
         - task: CopyFiles@2
@@ -318,6 +334,133 @@ stages:
           artifactName: 'perf-test-outputs_memory-usage'
         condition: succeededOrFailed()
 
+  # Performance unit tests - customBenchmark
+  - stage: perf_unit_tests_customBenchmark
+    displayName: Perf unit tests - customBenchmark
+    dependsOn: []
+    variables:
+      - name: consolidatedTestsOutputFolder
+        value: ${{ variables.testWorkspace }}/customBenchmarksOutput
+        readonly: true
+    jobs:
+    - job: perf_unit_tests_customBenchmark
+      displayName: Perf unit tests - customBenchmark
+      pool: ${{ parameters.poolBuild }}
+      steps:
+      - template: templates/include-test-perf-benchmarks.yml
+        parameters:
+          # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
+          artifactBuildId: $(artifactBuildId)
+          artifactPipeline: $(artifactPipeline)
+          devFeedUrl: $(ado-feeds-dev)
+          officeFeedUrl: $(ado-feeds-office)
+          testFilesPath: $(testFilesPath)
+          testWorkspace: $(testWorkspace)
+
+      # Run tests for each package that has them
+      - ${{ each testPackage in parameters.customBenchmarkTestPackages }}:
+
+        # Download and install package with performance tests
+        - template: templates/include-test-perf-benchmarks-install-package.yml
+          parameters:
+            artifactBuildId: $(artifactBuildId)
+            artifactPipeline: $(artifactPipeline)
+            testPackageName: ${{ testPackage }}
+            installPath: $(testWorkspace)
+
+        # The "npm pack"-ed package that we install doesn't have the test files.
+        # Unpack them "on top" of the package, where it was installed, so we can run its tests.
+        - task: Bash@3
+          displayName: Unpack test files - ${{ testPackage }}
+          inputs:
+            targetType: 'inline'
+            script: |
+              TAR_FILENAME=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
+              TAR_PATH=$(testFilesPath)/$TAR_FILENAME.test-files.tar
+              cd ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+              echo "Unpacking test files for ${{ testPackage }} from file '$TAR_PATH' in '$(pwd)'"
+              # Note: we could skip the last argument and have it unpack everything at once, but if we later change
+              # the structure/contents of the tests tar file, the extraction could overwrite things we didn't intend to,
+              # so keeping the paths to extract explicit.
+              # Also, extracting is finicky with the exact format of the last argument, it needs to match how the
+              # tarfile was created (e.g. './lib/test' works here but 'lib/test' does not).
+              tar --extract --verbose --file $TAR_PATH ./lib/test
+              tar --extract --verbose --file $TAR_PATH ./dist/test
+              tar --extract --verbose --file $TAR_PATH ./src/test
+
+        # Install package dependencies (this gets devDependencies installed so we can then run the package's tests)
+        # Note: the required .npmrc file is created by the include-test-perf-benchmarks.yml template above.
+        - task: CopyFiles@2
+          displayName: Copy .npmrc to test package folder - ${{ testPackage }}
+          inputs:
+            sourceFolder: ${{ variables.testWorkspace }}
+            contents: '.npmrc'
+            targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+
+        - task: Npm@1
+          displayName: Install dependencies - ${{ testPackage }}
+          retryCountOnTaskFailure: 1
+          inputs:
+            command: 'install'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+
+        - task: Npm@1
+          displayName: Run custom data performance tests - ${{ testPackage }}
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            customCommand: 'run test:customBenchmarks'
+
+        # Consolidate output files
+        - task: CopyFiles@2
+          displayName: Consolidate output files - ${{ testPackage }}
+          inputs:
+            sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.customBenchmarksOutput
+            contents: '**'
+            targetFolder: ${{ variables.consolidatedTestsOutputFolder }}/${{ testPackage }}
+
+        # Cleanup package
+        - task: Bash@3
+          displayName: Cleanup package - ${{ testPackage }}
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ variables.testWorkspace }}/node_modules/
+            script: |
+              echo "Cleanup package ${{ testPackage }} from ${{ variables.testWorkspace }}/node_modules/"
+              rm -rf ${{ testPackage }};
+
+      - task: Bash@3
+        displayName: Write measurements to Aria/Kusto
+        inputs:
+          targetType: 'inline'
+          workingDirectory: $(absolutePathToTelemetryGenerator)
+          script: |
+            echo "Write the following benchmark output to Aria/Kusto";
+            ls -laR ${{ variables.consolidatedTestsOutputFolder }};
+            node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/customBenchmarkHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
+
+      - task: Bash@3
+        displayName: Send Custom Data Performance Benchmark Measurments to Azure App Insights
+        inputs:
+          targetType: 'inline'
+          workingDirectory: $(absolutePathToTelemetryGenerator)
+          script: |
+            echo "Writing performance benchmark output to Azure App Insights..."
+            ls -laR ${{ variables.consolidatedTestsOutputFolder }};
+            node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsCustomBenchmarkHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
+        env:
+          BUILD_ID: $(Build.BuildId)
+          BRANCH_NAME: $(Build.SourceBranchName)
+
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Artifact - Perf tests output - custom data usage
+        inputs:
+          targetPath: '${{ variables.consolidatedTestsOutputFolder }}'
+          artifactName: 'perf-test-outputs_custom-data'
+        condition: succeededOrFailed()
+
+
+
   - ${{ each endpointObject in parameters.endpoints }}:
 
     - stage: perf_e2e_tests_${{ endpointObject.endpointName }}
@@ -362,14 +505,18 @@ stages:
             testPackageName: $(testPackage)
             installPath: $(testWorkspace)
 
-        - task: Bash@3
-          displayName: Prepare test package to run tests ${{ endpointObject.endpointName }}
+        - task: CopyFiles@2
+          displayName: Copy .npmrc to test package folder
           inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
-            script: |
-              cp ${{ variables.testWorkspace }}/.npmrc . ;
-              npm i ;
+            sourceFolder: ${{ variables.testWorkspace }}
+            contents: '.npmrc'
+            targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
+        - task: Npm@1
+          displayName: Install dependencies - ${{ endpointObject.endpointName }}
+          retryCountOnTaskFailure: 1
+          inputs:
+            command: 'install'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
 
         # We run both types of tests in the same bash step so we can make sure to run the second set even if the first
         # one fails.
@@ -516,6 +663,7 @@ stages:
     dependsOn:
       - perf_unit_tests_runtime
       - perf_unit_tests_memory
+      - perf_unit_tests_customBenchmark
       - perf_e2e_tests_local
       - perf_e2e_tests_odsp
       - perf_e2e_tests_frs
