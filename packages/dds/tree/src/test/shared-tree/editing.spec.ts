@@ -29,6 +29,7 @@ import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
 	expectJsonTree,
+	expectNoRemovedRoots,
 	makeTreeFromJson,
 	moveWithin,
 	validateUsageError,
@@ -3256,6 +3257,7 @@ describe("Editing", () => {
 			branch.transaction.abort();
 
 			expectJsonTree(branch, [initialState]);
+			expectNoRemovedRoots(branch);
 		}
 
 		it("on the main branch", () => {
