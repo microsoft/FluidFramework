@@ -43,9 +43,9 @@ jobs:
     if: needs.check_branch.outputs.is_release_branch != 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Not special approval requirements
+      - name: No special approval requirements
         run: |
-          echo ":white_check_mark: No approval required!" >> $GITHUB_STEP_SUMMARY
+          echo ":white_check_mark: No special approval required!" >> $GITHUB_STEP_SUMMARY
 
   check_approval:
     name: Approved by required reviewers
