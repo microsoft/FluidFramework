@@ -79,7 +79,7 @@ export const packageSelectorFlag = Flags.custom({
 });
 
 /**
- * A re-usable CLI flag to parse semver version strings.
+ * A re-usable CLI flag to parse semver version strings. Values are verified to be valid semvers during flag parsing.
  */
 export const semverFlag = Flags.custom<semver.SemVer, { loose?: boolean }>({
 	description:
