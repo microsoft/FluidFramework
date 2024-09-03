@@ -869,7 +869,7 @@ type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<string
 // @public
 type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
 
-// @public
+// @public @sealed
 export interface NodeChangedData {
     readonly changedProperties?: ReadonlySet<string>;
 }
@@ -1176,7 +1176,7 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
 }
 
 // @public @sealed
-export interface TreeChangeEvents<TNode = TreeNode> {
+export interface TreeChangeEvents<TNode extends TreeNode = TreeNode> {
     nodeChanged(data: NodeChangedData & (TNode extends WithType<string, NodeKind.Map | NodeKind.Object> ? Required<Pick<NodeChangedData, "changedProperties">> : unknown)): void;
     treeChanged(): void;
 }
