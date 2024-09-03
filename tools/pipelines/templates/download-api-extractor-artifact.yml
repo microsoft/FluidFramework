@@ -13,8 +13,7 @@ parameters:
 steps:
 - task: 1ES.DownloadPipelineArtifact@1
   inputs:
+    artifactName: _api-extractor-temp
+    pipeline: ${{ parameters.pipelineName }}
     buildType: specific
-    buildVersionToDownload: latestFromBranch
-    branchName: ${{ parameters.branchName }}
-    artifact: _api-extractor-temp
-    allowPartiallySucceededBuilds: true
+    buildVersionToDownload: latest
