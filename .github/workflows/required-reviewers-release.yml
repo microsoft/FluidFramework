@@ -18,7 +18,7 @@ jobs:
       is_release_branch: |
         ${{ steps.is-release-branch.outputs.is_release_branch || steps.not-release-branch.outputs.is_release_branch }}
     steps:
-      - name: Check if target branch is a release branch
+      - name: Target is a release branch
         id: is-release-branch
         if: |
           startsWith(github.event.pull_request.base.ref, 'release/client/') ||
@@ -27,7 +27,7 @@ jobs:
         run: |
           echo "is_release_branch=true" >> $GITHUB_OUTPUT
           echo ":ship: Release branch detected" >> $GITHUB_STEP_SUMMARY
-      - name: Target branch is a release branch
+      - name: Target is not a release branch
         id: not-release-branch
         if: |
           !(startsWith(github.event.pull_request.base.ref, 'release/client/') ||
