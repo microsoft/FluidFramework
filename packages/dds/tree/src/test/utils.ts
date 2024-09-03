@@ -804,6 +804,10 @@ export function expectJsonTree(
 	}
 }
 
+export function expectNoRemovedRoots(tree: ITreeCheckout): void {
+	assert(tree.getRemovedRoots().length === 0);
+}
+
 export function expectEqualPaths(
 	path: UpPath | undefined,
 	expectedPath: UpPath | undefined,
