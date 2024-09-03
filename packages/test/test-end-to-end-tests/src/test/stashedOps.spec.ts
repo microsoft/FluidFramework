@@ -2133,32 +2133,21 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 				const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
-				// We will have to wait for all containers to close before we can assert the final state
-				assert(
-					!container1.closed && !container2.closed && !container3.closed,
-					"containers should not be closed yet",
-				);
-				const allClosedP = Promise.all([
-					timeoutPromise<unknown>((resolve) => {
-						container1.once("closed", resolve);
-					}),
-					timeoutPromise<unknown>((resolve) => {
-						container2.once("closed", resolve);
-					}),
-					timeoutPromise<unknown>((resolve) => {
-						container3.once("closed", resolve);
-					}),
-				]);
-
 				// Here's the "in parallel" part - resume both outbound queues at the same time,
-				// and then resume both inbound queues once the outbound queues are idle.
+				// and then resume both inbound queues once the outbound queues are idle (done sending).
 				const allSentP = Promise.all([
-					timeoutPromise<unknown>((resolve) => {
-						container2.deltaManager.outbound.once("idle", resolve);
-					}),
-					timeoutPromise<unknown>((resolve) => {
-						container3.deltaManager.outbound.once("idle", resolve);
-					}),
+					timeoutPromise<unknown>(
+						(resolve) => {
+							container2.deltaManager.outbound.once("idle", resolve);
+						},
+						{ errorMsg: "container2 outbound queue never reached idle state" },
+					),
+					timeoutPromise<unknown>(
+						(resolve) => {
+							container3.deltaManager.outbound.once("idle", resolve);
+						},
+						{ errorMsg: "container3 outbound queue never reached idle state" },
+					),
 				]);
 				container2.deltaManager.outbound.resume();
 				container3.deltaManager.outbound.resume();
@@ -2167,15 +2156,24 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				container3.deltaManager.inbound.resume();
 
 				// At this point, both rehydrated containers should have submitted the same Counter op.
-				// This is fatal and all containers will close:
-				// - One will "win the race" and get their op sequenced first.
-				// - The other will close with Forked Container Error when it sees that ack - with matching batchId but from a different client
-				// - The winner (and container1, an observer) will close with Duplicate Batch error when they see the duplicate from the loser.
-				await provider.ensureSynchronized(); // Allows summary to complete (not that it matters, but we cover the failure log in itExpects)
-				await allClosedP;
+				// ContainerRuntime will use PSM and BatchTracker and it will play out like this:
+				// - One will win the race and get their op sequenced first.
+				// - Then the other will close with Forked Container Error when it sees that ack - with matching batchId but from a different client
+				// - All other clients (including the winner) will be tracking the batchId, and when it sees the duplicate from the loser, it will ignore it.
+				await provider.ensureSynchronized();
 
-				// All may have closed, but at least we didn't apply the same op twice
+				// Container1 is not used directly in this test, but is present and observing the session,
+				// so we can double-check eventual consistency - the container should have closed and the op should not have been duplicated
+				assert(container1.closed, "container1 should be closed");
 				assert.strictEqual(counter1.value, incrementValue);
+
+				// Both containers will close with the correct value for the counter.
+				// The container whose op is sequenced first will close with "Duplicate batch" error
+				// when it sees the other container's batch come in.
+				// The other container (that loses the race to be sequenced) will close with "Forked Container Error"
+				// when it sees the winner's batch come in.
+				assert(container2.closed, "container2 should be closed");
+				assert(container3.closed, "container3 should be closed");
 				assert.strictEqual(counter2.value, incrementValue);
 				assert.strictEqual(counter3.value, incrementValue);
 			},
