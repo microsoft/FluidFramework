@@ -331,6 +331,7 @@ export class DetachedFieldIndex {
 		this.isFullyLoaded = false;
 		const rootMap = new Map<ForestRootId, Delta.DetachedNodeId>();
 		forEachInNestedMap(detachedFieldIndex.data, ({ root }, major, minor) => {
+			setInNestedMap(this.detachedNodeToField, major, minor, { root });
 			rootMap.set(root, { major, minor });
 		});
 
