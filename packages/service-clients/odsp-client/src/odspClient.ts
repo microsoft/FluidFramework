@@ -9,11 +9,11 @@ import type {
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import {
-	type FluidObject,
-	type IConfigProviderBase,
-	type IRequest,
-	type ITelemetryBaseLogger,
+import type {
+	FluidObject,
+	IConfigProviderBase,
+	IRequest,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
@@ -48,7 +48,7 @@ import type {
 	OdspContainerServices,
 } from "./interfaces.js";
 import { createOdspAudienceMember } from "./odspAudience.js";
-import { type IOdspTokenProvider } from "./token.js";
+import type { IOdspTokenProvider } from "./token.js";
 
 async function getStorageToken(
 	options: OdspResourceTokenFetchOptions,

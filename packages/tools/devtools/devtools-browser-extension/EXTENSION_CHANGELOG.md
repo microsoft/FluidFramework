@@ -2,6 +2,9 @@
 
 # Unpublished
 
+# 0.1.2
+- Fixes for bugs revealed in accessibility review
+
 # 0.1.1
 - Accessibility and bug fixes for various components
 - Visual and styling improvements
