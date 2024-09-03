@@ -254,6 +254,7 @@ export interface DeltaVisitor {
 	 * Must be called once the visitor finished traversing the delta for a couple of reasons:
 	 *
 	 * 1. Some visitors, such as those from forests, are put into a special mode while they have a visitor, forbidding some actions (like making more visitors).
+	 *
 	 * 2. Some visitors, such as those from an anchorSet, defer some events for batching purposes until the visitor is freed.
 	 */
 	free(): void;
