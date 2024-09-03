@@ -7,14 +7,14 @@ on:
       - dismissed
 
 permissions:
-  # Needed to write the comments to the PRs themselves
-  pull-requests: write
+  pull-requests: read
 
 jobs:
   check_branch:
     name: Check target branch
     runs-on: ubuntu-latest
     outputs:
+      # This output will be set to true if the target branch is a release branch; false otherwise.
       is_release_branch: |
         ${{ steps.is-release-branch.outputs.is_release_branch || steps.not-release-branch.outputs.is_release_branch }}
     steps:
@@ -40,10 +40,14 @@ jobs:
   not_release_branch:
     name: Check approval requirements
     needs: check_branch
-    if: needs.check_branch.outputs.is_release_branch != 'true'
     runs-on: ubuntu-latest
     steps:
+      - name: Approval is required
+        if: needs.check_branch.outputs.is_release_branch == 'true'
+        run: |
+          echo ":vertical_traffic_light: Approval is required" >> $GITHUB_STEP_SUMMARY
       - name: No special approval requirements
+        if: needs.check_branch.outputs.is_release_branch != 'true'
         run: |
           echo ":white_check_mark: No special approval required!" >> $GITHUB_STEP_SUMMARY
 
@@ -58,6 +62,10 @@ jobs:
         with:
           persist-credentials: false
           submodules: false
+          # The pull_request_review event's default ref is the source branch - the one from the PR author. We don't want
+          # to build build-tools from that branch, though, because doing so would be a security risk. So instead, we
+          # check out the repo at the base ref.
+          ref: ${{ github.event.pull_request.base.ref }}
 
       # install and configure node, pnpm and the changeset tools
       # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.0.0
