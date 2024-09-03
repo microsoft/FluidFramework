@@ -11,11 +11,9 @@ parameters:
 - name: branchName
   type: string
 steps:
-- task: DownloadPipelineArtifact@2
+- task: 1ES.DownloadPipelineArtifact@1
   inputs:
     buildType: specific
-    project: internal
-    pipeline: ${{ parameters.pipelineName }}
     buildVersionToDownload: latestFromBranch
     branchName: ${{ parameters.branchName }}
     artifact: _api-extractor-temp
