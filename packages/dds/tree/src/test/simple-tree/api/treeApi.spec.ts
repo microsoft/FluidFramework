@@ -854,7 +854,7 @@ describe("treeNodeApi", () => {
 			assert.deepEqual(eventLog, [undefined]);
 		});
 
-		it(`'nodeChanged' uses view keys, not stored keys, for the list of changed properties`, () => {
+		it(`'nodeChanged' uses property keys, not stored keys, for the list of changed properties`, () => {
 			const sb = new SchemaFactory("test");
 			class TestNode extends sb.object("root", {
 				prop1: sb.optional(sb.number, { key: "stored-prop1" }),

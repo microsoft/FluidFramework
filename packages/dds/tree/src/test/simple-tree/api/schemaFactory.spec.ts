@@ -324,7 +324,7 @@ describe("schemaFactory", () => {
 			);
 		});
 
-		it("Stored key collides with view key", () => {
+		it("Stored key collides with property key", () => {
 			const schema = new SchemaFactory("com.example");
 			assert.throws(
 				() =>
@@ -342,7 +342,7 @@ describe("schemaFactory", () => {
 
 		// This is a somewhat neurotic test case, and likely not something we would expect a user to do.
 		// But just in case, we should ensure it is handled correctly.
-		it("Stored key / view key swap", () => {
+		it("Stored key / property key swap", () => {
 			const schema = new SchemaFactory("com.example");
 			assert.doesNotThrow(() =>
 				schema.object("Object", {
@@ -352,7 +352,7 @@ describe("schemaFactory", () => {
 			);
 		});
 
-		it("Explicit stored key === view key", () => {
+		it("Explicit stored key === property key", () => {
 			const schema = new SchemaFactory("com.example");
 			assert.doesNotThrow(() =>
 				schema.object("Object", {
