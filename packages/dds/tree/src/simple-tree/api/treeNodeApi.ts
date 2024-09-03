@@ -167,7 +167,19 @@ export const treeNodeApi: TreeNodeApi = {
 		eventName: K,
 		listener: TreeChangeEvents[K],
 	): Off {
-		return getKernel(node).on(eventName, listener);
+		const kernel = getKernel(node);
+		switch (eventName) {
+			case "nodeChanged": {
+				return kernel.on("childrenChangedAfterBatch", () => {
+					listener();
+				});
+			}
+			case "treeChanged": {
+				return kernel.on("subtreeChangedAfterBatch", () => listener());
+			}
+			default:
+				throw new UsageError(`No event named ${JSON.stringify(eventName)}.`);
+		}
 	},
 	status(node: TreeNode): TreeStatus {
 		return getKernel(node).getStatus();
