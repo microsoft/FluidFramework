@@ -62,18 +62,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Approval is required
-        if: needs.check_branch.outputs.is_release_branch == 'true'
+        if: needs.check_branch.outputs.is_release_branch == true
         run: |
           echo ":vertical_traffic_light: Approval is required" >> $GITHUB_STEP_SUMMARY
       - name: No special approval requirements
-        if: needs.check_branch.outputs.is_release_branch != 'true'
+        if: needs.check_branch.outputs.is_release_branch != true
         run: |
           echo ":white_check_mark: No special approval required!" >> $GITHUB_STEP_SUMMARY
 
   check_approval:
     name: Approved by required reviewers
     needs: check_branch
-    if: needs.check_branch.outputs.is_release_branch == 'true'
+    if: needs.check_branch.outputs.is_release_branch == true
     runs-on: ubuntu-latest
     steps:
       # release notes: https://github.com/actions/checkout/releases/tag/v4.1.7
