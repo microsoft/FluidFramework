@@ -713,9 +713,17 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			pathVisitors: new Map<PathNode, Set<PathVisitor>>(),
 			parentField: undefined as FieldKey | undefined,
 			parent: undefined as UpPath | undefined,
+
+			/**
+			 * Events collected during the visit which get sent as a batch during "free".
+			 */
 			bufferedEvents: [] as {
 				node: PathNode;
 				event: keyof AnchorEvents;
+				/**
+				 * The key for the impacted field, if the event is associated with a key.
+				 * Some events, such as afterDestroy, do not involve a key, and thus leave this undefined.
+				 */
 				changedField?: FieldKey;
 			}[],
 
