@@ -27,7 +27,7 @@ import {
 	normalizeError,
 	wrapError,
 	wrapErrorAndLog,
-	generateStack
+	generateStack,
 } from "../errorLogging.js";
 import { type IFluidErrorBase, isFluidError } from "../fluidErrorBase.js";
 import { TaggedLoggerAdapter, TelemetryDataTag, TelemetryLogger } from "../logger.js";
@@ -1120,25 +1120,25 @@ describe("Error Discovery", () => {
 	});
 });
 
-describe('generateStack Tests', () => {
-  function a(stackTraceLimit?: number): string | undefined {
-    return generateStack(stackTraceLimit);
-  }
+describe("generateStack Tests", () => {
+	function a(stackTraceLimit?: number): string | undefined {
+		return generateStack(stackTraceLimit);
+	}
 
-  function b(stackTraceLimit?: number): string | undefined {
-    return a(stackTraceLimit);
-  }
+	function b(stackTraceLimit?: number): string | undefined {
+		return a(stackTraceLimit);
+	}
 
-  function c(stackTraceLimit?: number): string | undefined {
-    return b(stackTraceLimit);
-  }
-  it('Show stack trace with a given stackTraceLimit', () => {
+	function c(stackTraceLimit?: number): string | undefined {
+		return b(stackTraceLimit);
+	}
+	it("Show stack trace with a given stackTraceLimit", () => {
 		const originalLimit = Error.stackTraceLimit;
-    const stack = c(1)?.split('\n');
+		const stack = c(1)?.split("\n");
 		assert(stack !== undefined);
 		assert(stack.length === 2);
 		assert(stack[0].includes("<<generated stack>>"));
 		assert(stack[1].includes("at generateErrorWithStack"));
 		assert(originalLimit === Error.stackTraceLimit);
-  });
+	});
 });
