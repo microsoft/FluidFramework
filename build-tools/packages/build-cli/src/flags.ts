@@ -79,6 +79,21 @@ export const packageSelectorFlag = Flags.custom({
 });
 
 /**
+ * A re-usable CLI flag to parse semver version strings.
+ */
+export const semverFlag = Flags.custom<semver.SemVer, { loose?: boolean }>({
+	description:
+		"A semantic versioning (semver) version string. Values are verified to be valid semvers during flag parsing.",
+	parse: async (input, _, opts) => {
+		const parsed = semver.parse(input, opts.loose);
+		if (parsed === null) {
+			throw new Error(`Invalid semver: ${input}`);
+		}
+		return parsed;
+	},
+});
+
+/**
  * A re-usable CLI flag to parse semver ranges.
  */
 export const semverRangeFlag = Flags.custom<string | undefined>({

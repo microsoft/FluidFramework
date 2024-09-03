@@ -7,7 +7,7 @@ import { updatePackageJsonFile } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import execa from "execa";
 
-import { releaseGroupFlag } from "../../flags.js";
+import { releaseGroupFlag, semverFlag } from "../../flags.js";
 import { BaseCommand } from "../../library/index.js";
 
 /**
@@ -37,7 +37,7 @@ export default class UpdateDependencyInLockfileCommand extends BaseCommand<
 			description: "Name of the dependency (npm package) to update.",
 			required: true,
 		}),
-		version: Flags.string({
+		version: semverFlag({
 			description: "Semver range specifier to use when updating the dependency.",
 			required: true,
 			// Future improvement: use 'parse:' to validate that this is a valid semver range.
@@ -55,7 +55,7 @@ export default class UpdateDependencyInLockfileCommand extends BaseCommand<
 
 		// Add override to package.json
 		this.info(
-			`Adding pnpm override for ${this.flags.dependencyName}: ${this.flags.version} to package.json`,
+			`Adding pnpm override for ${this.flags.dependencyName}: ${this.flags.version.version} to package.json`,
 		);
 		updatePackageJsonFile(releaseGroup.directory, (json) => {
 			if (json.pnpm === undefined) {
@@ -73,7 +73,7 @@ export default class UpdateDependencyInLockfileCommand extends BaseCommand<
 					{ exit: 1 },
 				);
 			}
-			json.pnpm.overrides[this.flags.dependencyName] = this.flags.version;
+			json.pnpm.overrides[this.flags.dependencyName] = this.flags.version.version;
 		});
 
 		// Update lockfile
