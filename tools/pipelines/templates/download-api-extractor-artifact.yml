@@ -17,4 +17,4 @@ steps:
     artifactName: _api-extractor-temp
     buildType: specific
     buildVersionToDownload: latest
-    definition: ${{ parameters.branchName }}
+    definition: ${{ parameters.pipelineName }}
