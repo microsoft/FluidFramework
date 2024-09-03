@@ -6,11 +6,7 @@
 import { PropertyProxy } from "@fluid-experimental/property-proxy";
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import {
-	MockWorkspace,
-	getPopulateFunctionWithSerializedBranchData,
-	populateWorkspace,
-} from "../test/common.js";
+import { MockWorkspace, populateWorkspace } from "../test/common.js";
 import { InspectorDecorator } from "./InspectorDecorator.js";
 import { InspectorTable } from "./InspectorTable.js";
 import { InspectorTableDecorator } from "./InspectorTableDecorator.js";
@@ -67,26 +63,6 @@ class Loading extends React.Component<
 	}
 }
 
-class SerializedRepoFetcher extends React.Component<{
-	repoUrl: string;
-	children: (props) => React.ReactElement;
-}> {
-	public state = {
-		data: null,
-	};
-
-	public async componentDidMount() {
-		const branchResponse = await fetch(this.props.repoUrl);
-		const serializedBranch = await branchResponse.json();
-
-		this.setState({ data: serializedBranch });
-	}
-
-	public render() {
-		return this.props.children(this.state.data);
-	}
-}
-
 storiesOf("InspectorTable", module)
 	.addDecorator(InspectorDecorator)
 	.addDecorator(InspectorTableDecorator)
@@ -98,18 +74,4 @@ storiesOf("InspectorTable", module)
 	.add("Read Only", () => <Loading populateFunction={populateWorkspace} readOnly={true} />)
 	.add("Loading", () => (
 		<Loading populateFunction={populateWorkspace} checkoutInProgress={true} />
-	))
-	.add("Deserialized Repo", () => {
-		return (
-			<SerializedRepoFetcher
-				repoUrl="http://appfw-c-uw1-appfw-datainspector-testdata.s3-website-us-west-2.amazonaws.com/revit_small.json"
-				// repoUrl='http://appfw-c-uw1-appfw-datainspector-testdata.s3-website-us-west-2.amazonaws.com/revit_medium.json'
-			>
-				{(data) =>
-					data && (
-						<Loading populateFunction={getPopulateFunctionWithSerializedBranchData(data)} />
-					)
-				}
-			</SerializedRepoFetcher>
-		);
-	});
+	));
