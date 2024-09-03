@@ -3,7 +3,7 @@
 ---
 "section": "other"
 ---
-Remove some PropertyDDS experimental packages.
+Remove some experimental PropertyDDS-related packages
 
 The following packages will no longer be published:
 
@@ -12,4 +12,4 @@ The following packages will no longer be published:
 - @fluid-experimental/property-proxy
 - @fluid-experimental/property-inspector-table
 
-PropertyDDS itself and its dependencies have been kept.
+PropertyDDS itself and its dependencies will continue to be published.
