@@ -17,17 +17,32 @@ import fs from "fs-extra";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// TODO: automate the generation of these URLs and output directories
+const artifactUrlBase = "https://fluidframework.blob.core.windows.net/api-extractor-json/latest";
+const artifacts = {
+	"1": `${artifactUrlBase}-v1.tar.gz`,
+	"2": `${artifactUrlBase}.tar.gz`
+};
+
+const docModelsDirectory = path.resolve(dirname, "..", ".doc-models");
+
+const outputDirectories = {
+	"1": path.resolve(docModelsDirectory, "v1"),
+	"2": path.resolve(docModelsDirectory, "v2"),
+}
+
 try {
-	const url = `https://fluidframework.blob.core.windows.net/api-extractor-json/latest.tar.gz`;
+	await Promise.all(["1", "2"].map(async (version) => {
+		const url = artifacts[version];
+		const destination = outputDirectories[version];
 
-	const destination = path.resolve(dirname, "..", ".doc-models", "v2");
+		// Delete any existing contents in the directory before downloading artifact
+		await fs.ensureDir(destination);
+		await fs.emptyDir(destination);
 
-	// Delete any existing contents in the directory before downloading artifact
-	await fs.ensureDir(destination);
-	await fs.emptyDir(destination);
-
-	// Download the artifacts
-	await download(url, destination, { extract: true });
+		// Download the artifacts
+		await download(url, destination, { extract: true });
+	}));
 } catch (error) {
 	console.error(
 		chalk.red("Could not download API doc model artifacts due to one or more errors:"),
