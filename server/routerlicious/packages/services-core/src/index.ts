@@ -123,8 +123,9 @@ export { ISecretManager } from "./secretManager";
 export {
 	ICollaborationSession,
 	ICollaborationSessionClient,
+	ICollaborationSessionManager,
 	ICollaborationSessionTracker,
-} from "./sessionTracker";
+} from "./collabSession";
 export { IStorageNameAllocator } from "./storageNameAllocator";
 export { IStorageNameRetriever } from "./storageNameRetriever";
 export {

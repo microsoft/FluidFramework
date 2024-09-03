@@ -4,4 +4,4 @@
 
 Added Collaboration Session Tracking Interfaces
 
-Added `ICollaborationSessionClient`, `ICollaborationSession`, and `ICollaborationSessionTracker` interfaces to define dependency injection types for new collaboration session tracking functionality in the Nexus lambda.
+Added `ICollaborationSessionClient`, `ICollaborationSession`, `ICollaborationSessionManager`, and `ICollaborationSessionTracker` interfaces to define dependency injection types for new collaboration session tracking functionality in the Nexus lambda.
