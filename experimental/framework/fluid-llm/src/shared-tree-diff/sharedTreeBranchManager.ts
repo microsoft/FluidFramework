@@ -18,9 +18,11 @@ import { isTreeMapNode, isTreeArrayNode, sharedTreeTraverse } from "./utils.js";
  */
 export class SharedTreeBranchManager {
 	private readonly objectSchema?: z.Schema;
+	private readonly nodeIdAttributeName?: string;
 
-	public constructor(params?: { objectSchema?: z.Schema }) {
+	public constructor(params?: { objectSchema?: z.Schema; nodeIdAttributeName?: string }) {
 		this.objectSchema = params?.objectSchema;
+		this.nodeIdAttributeName = params?.nodeIdAttributeName;
 	}
 
 	public compare(
@@ -37,7 +39,10 @@ export class SharedTreeBranchManager {
 		}
 
 		return sharedTreeDiff(obj as Record<string, unknown> | unknown[], newObj, {
-			useObjectIds: { idAttributeName: "id" },
+			useObjectIds:
+				this.nodeIdAttributeName === undefined
+					? undefined
+					: { idAttributeName: this.nodeIdAttributeName },
 			cyclesFix: true,
 		});
 	}
