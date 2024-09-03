@@ -1625,7 +1625,7 @@ export class MergeTree {
 					const concurrentMoves: IConcurrentMoveInfo[] = [];
 					for (let i = 0; i < movedClientIds.length; i++) {
 						concurrentMoves[i] = {
-							clientId,
+							clientId: movedClientIds[i]!,
 							seq: _movedSeq ?? -1,
 							refSeq,
 						};
