@@ -25,7 +25,7 @@ jobs:
           startsWith(github.event.pull_request.base.ref, 'release/server/') ||
           startsWith(github.event.pull_request.base.ref, 'test/release/')
         run: |
-          echo "::set-output name=is_release_branch::true"
+          echo "is_release_branch=true" >> $GITHUB_OUTPUT
           echo ":ship: Release branch detected" >> $GITHUB_STEP_SUMMARY
       - name: Target branch is a release branch
         id: not-release-branch
@@ -34,7 +34,7 @@ jobs:
           startsWith(github.event.pull_request.base.ref, 'release/server/') ||
           startsWith(github.event.pull_request.base.ref, 'test/release/'))
         run: |
-          echo "::set-output name=is_release_branch::false"
+          echo "is_release_branch=false" >> $GITHUB_OUTPUT
           echo ":no_entry_sign: No release branch detected" >> $GITHUB_STEP_SUMMARY
 
   not_release_branch:
