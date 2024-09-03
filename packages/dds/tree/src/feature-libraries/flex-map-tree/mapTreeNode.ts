@@ -14,7 +14,7 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type Value,
 } from "../../core/index.js";
-import { brand, fail, getOrCreate, mapIterable } from "../../util/index.js";
+import { brand, fail, getOrCreate, isReadonlyArray, mapIterable } from "../../util/index.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
@@ -32,9 +32,7 @@ import {
 	FlexFieldSchema,
 	type FlexTreeNodeSchema,
 	isLazy,
-	schemaIsLeaf,
 } from "../typed-schema/index.js";
-import { type FlexImplicitAllowedTypes, normalizeAllowedTypes } from "../schemaBuilderBase.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 import { FieldKinds, type SequenceFieldEditBuilder } from "../default-schema/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -395,7 +393,7 @@ class EagerMapTreeOptionalField extends EagerMapTreeField implements FlexTreeOpt
 	public get content(): FlexTreeUnknownUnboxed | undefined {
 		const value = this.mapTrees[0];
 		if (value !== undefined) {
-			return unboxedUnion(this.schema, value, {
+			return unboxed(this.schema, value, {
 				parent: this,
 				index: 0,
 			});
@@ -451,7 +449,7 @@ class EagerMapTreeSequenceField extends EagerMapTreeField implements FlexTreeSeq
 		if (i === undefined) {
 			return undefined;
 		}
-		return unboxedUnion(this.schema, this.mapTrees[i] ?? oob(), { parent: this, index: i });
+		return unboxed(this.schema, this.mapTrees[i] ?? oob(), { parent: this, index: i });
 	}
 	public map<U>(callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U): U[] {
 		return Array.from(this, callbackfn);
@@ -459,7 +457,7 @@ class EagerMapTreeSequenceField extends EagerMapTreeField implements FlexTreeSeq
 
 	public *[Symbol.iterator](): IterableIterator<FlexTreeUnknownUnboxed> {
 		for (const [i, mapTree] of this.mapTrees.entries()) {
-			yield unboxedUnion(this.schema, mapTree, { parent: this, index: i });
+			yield unboxed(this.schema, mapTree, { parent: this, index: i });
 		}
 	}
 }
@@ -499,7 +497,7 @@ export function getOrCreateMapTreeNode(
 /** Helper for creating a `MapTreeNode` given the parent field (e.g. when "walking down") */
 function getOrCreateChild(
 	mapTree: ExclusiveMapTree,
-	implicitAllowedTypes: FlexImplicitAllowedTypes,
+	allowedTypes: FlexAllowedTypes,
 	parent: LocationInField | undefined,
 ): EagerMapTreeNode {
 	const cached = nodeCache.get(mapTree);
@@ -507,12 +505,11 @@ function getOrCreateChild(
 		return cached;
 	}
 
-	const allowedTypes = normalizeAllowedTypes(implicitAllowedTypes);
+	assert(isReadonlyArray(allowedTypes), "invalid types");
 	const nodeSchema =
 		allowedTypes
 			.map((t) => (isLazy(t) ? t() : t))
 			.find((t): t is FlexTreeNodeSchema => {
-				assert(t !== "Any", 0x993 /* 'Any' type is not supported */);
 				return t.name === mapTree.type;
 			}) ?? fail("Unsupported node schema");
 
@@ -557,21 +554,18 @@ function getOrCreateField(
 	return new EagerMapTreeField(schema, key, parent);
 }
 
-/** Unboxes non-polymorphic leaf nodes to their values, if applicable */
-function unboxedUnion<TTypes extends FlexAllowedTypes>(
-	schema: FlexFieldSchema<FlexFieldKind, TTypes>,
+/** Unboxes leaf nodes to their values */
+function unboxed(
+	schema: FlexFieldSchema,
 	mapTree: ExclusiveMapTree,
 	parent: LocationInField,
 ): FlexTreeUnknownUnboxed {
-	const type = schema.monomorphicChildType;
-	if (type !== undefined) {
-		if (schemaIsLeaf(type)) {
-			return mapTree.value as FlexTreeUnknownUnboxed;
-		}
-		return getOrCreateChild(mapTree, type, parent) as FlexTreeUnknownUnboxed;
+	const value = mapTree.value;
+	if (value !== undefined) {
+		return value;
 	}
 
-	return getOrCreateChild(mapTree, schema.allowedTypes, parent) as FlexTreeUnknownUnboxed;
+	return getOrCreateChild(mapTree, schema.allowedTypes, parent);
 }
 
 // #endregion Caching and unboxing utilities

@@ -386,7 +386,7 @@ export class PendingStateManager implements IDisposable {
 			throw DataProcessingError.create(
 				"Forked Container Error! Matching batchIds but mismatched clientId",
 				"PendingStateManager.processInboundBatch",
-				batch.messages[0], // Note: if it's an empty batch, we won't get message metadata added to the error/log here
+				batch.keyMessage,
 			);
 		}
 
@@ -409,11 +409,7 @@ export class PendingStateManager implements IDisposable {
 
 		// Empty batch
 		if (batch.messages.length === 0) {
-			assert(
-				batch.emptyBatchSequenceNumber !== undefined,
-				0x9fb /* Expected sequence number for empty batch */,
-			);
-			const localOpMetadata = this.processNextPendingMessage(batch.emptyBatchSequenceNumber);
+			const localOpMetadata = this.processNextPendingMessage(batch.keyMessage.sequenceNumber);
 			assert(
 				asEmptyBatchLocalOpMetadata(localOpMetadata)?.emptyBatch === true,
 				0xa20 /* Expected empty batch marker */,

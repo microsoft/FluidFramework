@@ -6,7 +6,7 @@
 import * as path from "path";
 import chalk from "chalk";
 import registerDebug from "debug";
-import { FluidRepo, IFluidBuildConfig } from "../common/fluidRepo";
+import { FluidRepo, IFluidBuildDirs } from "../common/fluidRepo";
 import { getFluidBuildConfig } from "../common/fluidUtils";
 import { defaultLogger } from "../common/logging";
 import { MonoRepo } from "../common/monoRepo";
@@ -40,10 +40,10 @@ export class FluidRepoBuild extends FluidRepo {
 				root: "",
 			},
 		};
-		return new FluidRepoBuild(resolvedRoot, packageManifest);
+		return new FluidRepoBuild(resolvedRoot, packageManifest.repoPackages);
 	}
-	private constructor(resolvedRoot: string, packageManifest: IFluidBuildConfig) {
-		super(resolvedRoot, packageManifest);
+	private constructor(resolvedRoot: string, repoPackages?: IFluidBuildDirs) {
+		super(resolvedRoot, repoPackages);
 	}
 
 	public async clean() {
