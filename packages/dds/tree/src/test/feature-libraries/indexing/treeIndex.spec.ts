@@ -54,7 +54,7 @@ describe.only("TreeIndexes", () => {
 		const view = getView(config);
 		view.initialize({ [parentKey]: parentId, child });
 
-		return { view, parent: view.root };
+		return { view, root: view.root };
 	}
 
 	function createIndex(root: SchematizingSimpleTreeView<typeof IndexableParent>) {
@@ -142,24 +142,15 @@ describe.only("TreeIndexes", () => {
 	}
 
 	it("can look up nodes in an initial tree", () => {
-		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
+		const { view, root: parent } = createView(new IndexableChild({ [childKey]: childId }));
 		const { assertContents } = createIndex(view);
 		const child = parent.child;
 		assert(child !== undefined);
-		assertContents([parentId, parent], [childId, child]);
-	});
-
-	it("can look up nodes that are detached when the index is created", () => {
-		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
-		const child = parent.child;
-		assert(child !== undefined);
-		parent.child = undefined;
-		const { assertContents } = createIndex(view);
 		assertContents([parentId, parent], [childId, child]);
 	});
 
 	it("can look up an inserted node", () => {
-		const { view, parent } = createView(); // Create a parent with no child
+		const { view, root: parent } = createView(); // Create a parent with no child
 		const { assertContents } = createIndex(view);
 		parent.child = new IndexableChild({ [childKey]: childId });
 		const child = parent.child;
@@ -167,8 +158,18 @@ describe.only("TreeIndexes", () => {
 		assertContents([parentId, parent], [childId, child]);
 	});
 
+	// todo: detached/removed nodes should be filtered out of the index
+	it("can look up nodes that are detached when the index is created", () => {
+		const { view, root: parent } = createView(new IndexableChild({ [childKey]: childId }));
+		const child = parent.child;
+		assert(child !== undefined);
+		parent.child = undefined;
+		const { assertContents } = createIndex(view);
+		assertContents([parentId, parent], [childId, child]);
+	});
+
 	it("can look up a removed node", () => {
-		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
+		const { view, root: parent } = createView(new IndexableChild({ [childKey]: childId }));
 		const { assertContents } = createIndex(view);
 		const child = parent.child;
 		assert(child !== undefined);
@@ -178,7 +179,7 @@ describe.only("TreeIndexes", () => {
 
 	it("can look up multiple nodes with the same key", () => {
 		// Give the child the same ID as the parent (`parentId` rather than `childId`)
-		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
+		const { view, root: parent } = createView(new IndexableChild({ [childKey]: parentId }));
 		const { assertContents } = createIndex(view);
 		const child = parent.child;
 		assert(child !== undefined);
