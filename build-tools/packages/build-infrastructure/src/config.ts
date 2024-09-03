@@ -31,12 +31,7 @@ export interface IFluidRepoLayout {
 	 */
 	version: typeof FLUIDREPO_CONFIG_VERSION;
 
-	// /**
-	//  * A mapping of package or release group names to metadata about the package or release group. This can only be
-	//  * configured in the repo-wide Fluid build config (the repo-root package.json).
-	//  *
-	//  * @deprecated Use the repoLayout setting instead.
-	//  */
+	// TODO: Can we infer enough from the old config to use it as is?
 	// repoPackages?: {
 	// 	[name: string]: IFluidBuildDirs;
 	// };
@@ -48,25 +43,11 @@ export interface IFluidRepoLayout {
 			 */
 			[name: string]: WorkspaceDefinition;
 		};
-
-		/**
-		 * An array of paths containing individual packages that are not part of a workspace.
-		 */
-		// packages?: string[];
 	};
 }
 
 export interface WorkspaceDefinition {
 	directory: string;
-	/**
-	 * The interdependencyRange controls the type of semver range to use between packages in the same release
-	 * group. This setting controls the default range that will be used when updating the version of a release
-	 * group. The default can be overridden using the `--interdependencyRange` flag in the `flub bump` command.
-	 */
-	// defaultInterdependencyRange?: InterdependencyRange;
-	// independentPackages?: {
-	// 	[name: string]: string;
-	// };
 	releaseGroups: {
 		[name: string]: ReleaseGroupDefinition;
 	};
@@ -167,7 +148,7 @@ export function findReleaseGroupForPackage(
 const configName = "repoLayout";
 
 /**
- * A cosmiconfig explorer to find the fluidBuild config. First looks for JavaScript config files and falls back to the
+ * A cosmiconfig explorer to find the repoLayout config. First looks for JavaScript config files and falls back to the
  * `fluidBuild` property in package.json. We create a single explorer here because cosmiconfig internally caches configs
  * for performance. The cache is per-explorer, so re-using the same explorer is a minor perf improvement.
  */

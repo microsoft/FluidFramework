@@ -36,8 +36,6 @@ export interface IFluidRepo {
 
 	releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
 
-	// readonly packageManager: PackageManager;
-	// packages: IPackage[];
 	packages: Map<PackageName, IPackage>;
 }
 
@@ -91,7 +89,6 @@ export interface PackageDependency {
 
 export type PackageName = Opaque<string, "PackageName">;
 
-// export interface IPackage<TAddProps extends AdditionalPackageProps = undefined> {
 export interface IPackage<J extends PackageJson = PackageJson> {
 	readonly name: PackageName;
 	readonly nameColored: string;

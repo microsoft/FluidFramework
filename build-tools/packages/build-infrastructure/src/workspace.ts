@@ -32,9 +32,6 @@ export class Workspace implements IWorkspace {
 
 	private constructor(
 		name: string,
-		// public readonly directory: string,
-		// public readonly releaseGroups: Map<ReleaseGroupName, IReleaseGroup>,
-		// releaseGroupDefinition: Record<string, string>
 		definition: WorkspaceDefinition,
 	) {
 		this.name = name as WorkspaceName;
@@ -70,10 +67,6 @@ export class Workspace implements IWorkspace {
 			default:
 				throw new Error(`Unknown package manager ${tool.type}`);
 		}
-		// if (packages.length === 1 && packages[0]?.dir === directory) {
-		// 	// this is a independent package
-		// 	return undefined;
-		// }
 
 		// filter out the root package
 		const filtered = foundPackages.filter((pkg) => pkg.relativeDir !== ".");
@@ -128,10 +121,6 @@ export class Workspace implements IWorkspace {
 			throw new Error(message);
 		}
 	}
-
-	// private loadPackages() {
-
-	// }
 
 	public static load(name: string, definition: WorkspaceDefinition): IWorkspace {
 		const workspace = new Workspace(name, definition);

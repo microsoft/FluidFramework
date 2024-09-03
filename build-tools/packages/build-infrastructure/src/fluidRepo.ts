@@ -65,15 +65,6 @@ export class FluidRepo implements IFluidRepo {
 		return this._releaseGroups;
 	}
 
-	// public get packages(): IPackage[] {
-	// 	const pkgs: IPackage[] = [];
-	// 	for (const ws of this.workspaces.values()) {
-	// 		pkgs.push(ws.rootPackage, ...ws.packages);
-	// 	}
-
-	// 	return pkgs;
-	// }
-
 	public get packages(): Map<PackageName, IPackage> {
 		const pkgs: Map<PackageName, IPackage> = new Map();
 		for (const ws of this.workspaces.values()) {

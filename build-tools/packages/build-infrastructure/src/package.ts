@@ -8,10 +8,8 @@ import * as chalk from "chalk";
 import { existsSync, readJsonSync } from "fs-extra";
 
 import {
-	// type ReleaseGroupDefinition,
 	type WorkspaceDefinition,
 	findReleaseGroupForPackage,
-	// matchesReleaseGroupDefinition,
 } from "./config.js";
 import { readPackageJsonAndIndent, writePackageJson } from "./packageJsonUtils.js";
 import type {
@@ -58,8 +56,6 @@ export abstract class PackageBase<
 		return Package.chalkColor[this.packageId % Package.chalkColor.length]!;
 	}
 
-	// public releaseGroup: ReleaseGroupName;
-
 	/**
 	 * Create a new package from a package.json file. **Prefer the .load method to calling the contructor directly.**
 	 *
@@ -72,7 +68,6 @@ export abstract class PackageBase<
 	public constructor(
 		public readonly packageJsonFilePath: string,
 		public readonly packageManager: PackageManager,
-		// public readonly workspace?: IWorkspace,
 		public readonly isWorkspaceRoot: boolean,
 		public readonly releaseGroup: ReleaseGroupName,
 		public isReleaseGroupRoot: boolean,
@@ -199,39 +194,6 @@ export class Package<
 	TAddProps extends AdditionalPackageProps = undefined,
 	J extends PackageJson = PackageJson,
 > extends PackageBase<TAddProps, J> {
-	/**
-	 * Load a package from a package.json file. Prefer this to calling the contructor directly.
-	 *
-	 * @param packageJsonFileName - The path to a package.json file.
-	 * @param group - A group that this package is a part of.
-	 * @param monoRepo - Set this if the package is part of a release group (monorepo).
-	 * @param additionalProperties - An object with additional properties that should be added to the class. This is
-	 * useful to augment the package class with additional properties.
-	 */
-	// public static load<
-	// 	T extends typeof Package,
-	// 	TAddProps extends AdditionalPackageProps = undefined,
-	// >(
-	// 	this: T,
-	// 	packageJsonFilePath: string,
-	// 	packageManager: PackageManager,
-	// 	// workspace?: IWorkspace,
-	// 	isWorkspaceRoot: boolean,
-	// 	// releaseGroupName: ReleaseGroupName,
-	// 	isReleaseGroupRoot: boolean,
-	// 	additionalProperties?: TAddProps,
-	// ) {
-	// 	return new this(
-	// 		packageJsonFilePath,
-	// 		packageManager,
-	// 		// workspace,
-	// 		isWorkspaceRoot,
-	// 		// releaseGroupName,
-	// 		isReleaseGroupRoot,
-	// 		additionalProperties,
-	// 	) as InstanceType<T> & TAddProps;
-	// }
-
 	public static loadFromWorkspaceDefinition<
 		T extends typeof Package,
 		TAddProps extends AdditionalPackageProps = undefined,
@@ -278,31 +240,10 @@ export class Package<
 	}
 }
 
-// export function loadPackage(
-// 	packageJsonFilePath: string,
-// 	packageManager: PackageManager,
-// 	isWorkspaceRoot: boolean = false,
-// 	// releaseGroupName: ReleaseGroupName,
-// 	isReleaseGroupRoot: boolean = false,
-// ): IPackage {
-// 	const pkg = Package.load(
-// 		packageJsonFilePath,
-// 		packageManager,
-// 		isWorkspaceRoot,
-// 		// releaseGroupName,
-// 		isReleaseGroupRoot,
-// 		undefined,
-// 	);
-// 	return pkg;
-// }
-
 export function loadPackageFromWorkspaceDefinition(
 	packageJsonFilePath: string,
 	packageManager: PackageManager,
-	// workspace?: IWorkspace,
 	isWorkspaceRoot: boolean,
-	// releaseGroupName: ReleaseGroupName,
-	// isReleaseGroupRoot: boolean,
 	workspaceDefinition: WorkspaceDefinition,
 ) {
 	return Package.loadFromWorkspaceDefinition(

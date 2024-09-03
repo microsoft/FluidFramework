@@ -27,6 +27,4 @@ export type {
 export { isIPackage, isIReleaseGroup } from "./types.js";
 export {
 	PackageBase,
-	// loadPackage
-	// loadPackageFromWorkspaceDefinition,
 } from "./package.js";
