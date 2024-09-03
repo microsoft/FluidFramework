@@ -30,7 +30,7 @@ import type {
 	RangeUpPath,
 	UpPath,
 } from "./pathTree.js";
-import { EmptyKey, type Value } from "./types.js";
+import { EmptyKey } from "./types.js";
 import type { DeltaVisitor } from "./visitDelta.js";
 import type { PathVisitor } from "./visitPath.js";
 import type { AnnouncedVisitor } from "./visitorUtils.js";
@@ -127,7 +127,10 @@ export interface AnchorEvents {
 	 *
 	 * Compare to {@link AnchorEvents.childrenChanged} which is emitted in the middle of the batch/delta-visit.
 	 */
-	childrenChangedAfterBatch(anchor: AnchorNode): void;
+	childrenChangedAfterBatch(arg: {
+		anchor: AnchorNode;
+		changedFields: ReadonlySet<FieldKey>;
+	}): void;
 
 	/**
 	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if something in the subtree
@@ -177,11 +180,6 @@ export interface AnchorEvents {
 	 * fire when something _may_ have changed or _may_ be about to change.
 	 */
 	subtreeChangedAfterBatch(anchor: AnchorNode): void;
-
-	/**
-	 * Value on this node is changing.
-	 */
-	valueChanging(anchor: AnchorNode, value: Value): void;
 }
 
 /**
@@ -715,7 +713,11 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			pathVisitors: new Map<PathNode, Set<PathVisitor>>(),
 			parentField: undefined as FieldKey | undefined,
 			parent: undefined as UpPath | undefined,
-			bufferedEvents: [] as { node: PathNode; event: keyof AnchorEvents }[],
+			bufferedEvents: [] as {
+				node: PathNode;
+				event: keyof AnchorEvents;
+				changedField?: FieldKey;
+			}[],
 
 			// 'currentDepth' and 'depthThresholdForSubtreeChanged' serve to keep track of when do we need to emit
 			// subtreeChangedAfterBatch events.
@@ -757,7 +759,14 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 						continue;
 					}
 					emittedEvents?.push(event);
-					node.events.emit(event, node);
+					if (event === "childrenChangedAfterBatch") {
+						const fieldKeys = this.bufferedEvents
+							.filter((e) => e.node === node && e.event === event)
+							.map((e) => e.changedField as FieldKey);
+						node.events.emit(event, { anchor: node, changedFields: new Set(fieldKeys) });
+					} else {
+						node.events.emit(event, node);
+					}
 				}
 			},
 			notifyChildrenChanging(): void {
@@ -769,10 +778,12 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			notifyChildrenChanged(): void {
 				this.maybeWithNode(
 					(p) => {
+						assert(this.parentField !== undefined, "Must be in a field");
 						p.events.emit("childrenChanged", p);
 						this.bufferedEvents.push({
 							node: p,
 							event: "childrenChangedAfterBatch",
+							changedField: this.parentField,
 						});
 					},
 					() => {},
