@@ -1541,9 +1541,13 @@ export class MergeTree {
 				let _localMovedSeq: number | undefined;
 				let _movedSeq: number | undefined;
 				let movedClientIds: number[] | undefined;
+
 				const findLeftMovedSegment = (seg: ISegment): boolean => {
 					const movedSeqs =
-						seg.concurrentMoves?.filter((moveObj) => moveObj.seq >= refSeq) ?? [];
+						seg.concurrentMoves?.filter(
+							({ seq: movedSeq }) =>
+								movedSeq >= refSeq || movedSeq === UnassignedSequenceNumber,
+						) ?? [];
 					const localMovedSeqs = seg.localMovedSeq ? [seg.localMovedSeq] : [];
 					for (const movedSeqObj of movedSeqs) {
 						leftAckedSegments[movedSeqObj.seq] = seg;
@@ -1630,6 +1634,7 @@ export class MergeTree {
 							refSeq,
 						};
 					}
+					// const movedSeqs = concurrentMoves.map(({ seq: seqNum }) => seqNum);
 					const moveInfo = {
 						movedSeq: _movedSeq ?? UnassignedSequenceNumber,
 						concurrentMoves,
