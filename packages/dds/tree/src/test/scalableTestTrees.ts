@@ -12,19 +12,18 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 } from "../core/index.js";
-import { FieldKinds, type FlexTreeNode } from "../feature-libraries/index.js";
+import { FieldKinds, isFlexTreeNode, type FlexTreeNode } from "../feature-libraries/index.js";
 import type { FlexTreeView, TreeContent } from "../shared-tree/index.js";
 import { brand } from "../util/index.js";
 import {
 	cursorFromInsertable,
-	numberSchema,
 	SchemaFactory,
 	type ValidateRecursiveSchema,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeStoredContent } from "../shared-tree/schematizeTree.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getFlexSchema, toFlexSchema, toStoredSchema } from "../simple-tree/toFlexSchema.js";
+import { toFlexSchema, toStoredSchema } from "../simple-tree/toFlexSchema.js";
 
 /**
  * Test trees which can be parametrically scaled to any size.
@@ -270,13 +269,12 @@ export function readDeepFlexTree(tree: FlexTreeView): {
 } {
 	let depth = 0;
 	assert(tree.flexTree.is(FieldKinds.required));
-	let currentNode = tree.flexTree.content as FlexTreeNode;
-	while (currentNode.is(getFlexSchema(LinkedList))) {
+	let currentNode = tree.flexTree.content as FlexTreeNode | number;
+	while (isFlexTreeNode(currentNode)) {
 		const read = currentNode.getBoxed(brand("foo"));
 		assert(read.is(FieldKinds.required));
 		currentNode = read.content as FlexTreeNode;
 		depth++;
 	}
-	assert(currentNode.is(getFlexSchema(numberSchema)));
-	return { depth, value: currentNode.value as number };
+	return { depth, value: currentNode };
 }
