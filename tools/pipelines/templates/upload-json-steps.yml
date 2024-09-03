@@ -63,13 +63,6 @@ steps:
     flattenFolders: true
     CleanTargetFolder: true
 
-- task: 1ES.PublishPipelineArtifact@1
-  displayName: 'Publish api-extractor JSON'
-  inputs:
-    targetPath: '$(Build.SourcesDirectory)/_api-extractor-temp'
-    artifactName: 'api-extractor-combined'
-    publishLocation: 'pipeline'
-
 - task: ArchiveFiles@2
   inputs:
     rootFolderOrFile: '$(Build.SourcesDirectory)/_api-extractor-temp'

@@ -13,6 +13,7 @@ parameters:
 steps:
 - task: 1ES.DownloadPipelineArtifact@1
   inputs:
+    project: internal
     artifactName: _api-extractor-temp
     buildType: specific
     buildVersionToDownload: latest
