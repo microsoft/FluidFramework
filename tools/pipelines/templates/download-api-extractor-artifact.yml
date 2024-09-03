@@ -14,6 +14,5 @@ steps:
 - task: 1ES.DownloadPipelineArtifact@1
   inputs:
     artifactName: _api-extractor-temp
-    pipeline: ${{ parameters.pipelineName }}
     buildType: specific
     buildVersionToDownload: latest
