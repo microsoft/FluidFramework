@@ -64,7 +64,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Debug output
-        if: needs.check_branch.outputs.is_release_branch == true
         run: |
           echo "needs.check_branch.outputs.is_release_branch: ${{ needs.check_branch.outputs.is_release_branch }}" >> $GITHUB_STEP_SUMMARY
       - name: Approval is required
