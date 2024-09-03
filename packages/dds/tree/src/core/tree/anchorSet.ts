@@ -790,7 +790,10 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			notifyChildrenChanged(): void {
 				this.maybeWithNode(
 					(p) => {
-						assert(this.parentField !== undefined, "Must be in a field");
+						assert(
+							this.parentField !== undefined,
+							"Must be in a field to modify its contents",
+						);
 						p.events.emit("childrenChanged", p);
 						this.bufferedEvents.push({
 							node: p,
