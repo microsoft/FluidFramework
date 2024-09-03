@@ -5,6 +5,7 @@
 
 export {
 	typeNameSymbol,
+	typeSchemaSymbol,
 	type WithType,
 	type TreeNodeSchema,
 	NodeKind,
@@ -41,6 +42,8 @@ export {
 	test_RecursiveObjectPojoMode,
 	treeNodeApi,
 	type TreeNodeApi,
+	cursorFromInsertable,
+	createFromInsertable,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -119,3 +122,11 @@ export {
 } from "./jsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
+export { toStoredSchema, getStoredSchema, getFlexSchema } from "./toFlexSchema.js";
+export {
+	numberSchema,
+	stringSchema,
+	booleanSchema,
+	handleSchema,
+	nullSchema,
+} from "./leafNodeSchema.js";

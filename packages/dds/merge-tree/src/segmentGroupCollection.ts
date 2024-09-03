@@ -8,8 +8,11 @@ import { DoublyLinkedList, walkList } from "./collections/index.js";
 import { ISegment, SegmentGroup } from "./mergeTreeNodes.js";
 
 /**
+ * @deprecated - This class should not be used externally and will be removed in a subsequent release.
  * @legacy
  * @alpha
+ *
+ * @privateRemarks After the deprecation period this class should be remove from this package's exports, and only be used internally
  */
 export class SegmentGroupCollection {
 	// eslint-disable-next-line import/no-deprecated

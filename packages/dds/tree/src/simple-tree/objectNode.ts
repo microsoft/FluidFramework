@@ -9,7 +9,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { FieldKey } from "../core/index.js";
 import {
 	FieldKinds,
-	type FlexAllowedTypes,
 	type FlexObjectNodeSchema,
 	type FlexTreeField,
 	type FlexTreeNode,
@@ -41,7 +40,9 @@ import {
 	type TreeNodeSchema,
 	NodeKind,
 	type WithType,
+	// eslint-disable-next-line import/no-deprecated
 	typeNameSymbol,
+	typeSchemaSymbol,
 	type InternalTreeNode,
 	type TreeNode,
 } from "./core/index.js";
@@ -75,7 +76,7 @@ export type ObjectFromSchemaRecord<
 export type TreeObjectNode<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	TypeName extends string = string,
-> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName>;
+> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object>;
 
 /**
  * Type utility for determining whether or not an implicit field schema has a default value.
@@ -271,13 +272,13 @@ export function setField(
 
 	switch (field.schema.kind) {
 		case FieldKinds.required: {
-			assert(mapTree !== undefined, "Cannot set a required field to undefined");
-			const typedField = field as FlexTreeRequiredField<FlexAllowedTypes>;
+			assert(mapTree !== undefined, 0xa04 /* Cannot set a required field to undefined */);
+			const typedField = field as FlexTreeRequiredField;
 			typedField.editor.set(mapTree);
 			break;
 		}
 		case FieldKinds.optional: {
-			const typedField = field as FlexTreeOptionalField<FlexAllowedTypes>;
+			const typedField = field as FlexTreeOptionalField;
 			typedField.editor.set(mapTree, typedField.length === 0);
 			break;
 		}
@@ -321,9 +322,18 @@ export function objectSchema<
 
 	class CustomObjectNode extends CustomObjectNodeBase<T> {
 		public static readonly fields: ReadonlyMap<string, FieldSchema> = new Map(
-			[...flexKeyMap].map(([key, value]) => [key as string, value.schema]),
+			Array.from(flexKeyMap, ([key, value]) => [key as string, value.schema]),
 		);
 		public static readonly flexKeyMap: SimpleKeyMap = flexKeyMap;
+		public static readonly storedKeyToPropertyKey: ReadonlyMap<FieldKey, string> = new Map<
+			FieldKey,
+			string
+		>(
+			Array.from(flexKeyMap, ([key, value]): [FieldKey, string] => [
+				value.storedKey,
+				key as string,
+			]),
+		);
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
@@ -405,15 +415,19 @@ export function objectSchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 
+		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
+		public get [typeSchemaSymbol](): Output {
+			return CustomObjectNode.constructorCached?.constructor as unknown as Output;
+		}
 	}
-
-	return CustomObjectNode as typeof CustomObjectNode &
+	type Output = typeof CustomObjectNode &
 		(new (
 			input: InsertableObjectFromSchemaRecord<T> | InternalTreeNode,
 		) => TreeObjectNode<T, TName>);
+	return CustomObjectNode as Output;
 }
 
 const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();

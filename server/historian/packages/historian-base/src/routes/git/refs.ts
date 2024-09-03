@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import * as git from "@fluidframework/gitresources";
 import {
 	ICreateRefParamsExternal,
@@ -36,7 +35,6 @@ export function create(
 	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
 	cache?: ICache,
-	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
@@ -60,7 +58,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
 			ephemeralDocumentTTLSec,
 		});
@@ -76,7 +73,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
 			ephemeralDocumentTTLSec,
 		});
@@ -96,7 +92,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
 			ephemeralDocumentTTLSec,
 		});
@@ -117,7 +112,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
 			ephemeralDocumentTTLSec,
 		});
@@ -133,7 +127,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
 			ephemeralDocumentTTLSec,
 		});

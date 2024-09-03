@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/build-tools",
-	"version": "0.43.0",
+	"version": "0.45.0",
 	"description": "Fluid Build tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -30,6 +30,7 @@
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check --write .",
+		"json-schema-to-typescript:biomeConfigTypes": "json2ts --input node_modules/@biomejs/biome/configuration_schema.json --output src/common/biomeConfigTypes.d.ts",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"list-repo-files": "cd ../../.. && git ls-files -co --exclude-standard",
@@ -38,11 +39,10 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"@fluid-tools/version-tools": "workspace:~",
 		"@manypkg/get-packages": "^2.2.0",
 		"async": "^3.2.4",
 		"chalk": "^2.4.2",
-		"cosmiconfig": "^8.2.0",
+		"cosmiconfig": "^8.3.6",
 		"date-fns": "^2.30.0",
 		"debug": "^4.3.4",
 		"detect-indent": "^6.1.0",
@@ -53,10 +53,12 @@
 		"json5": "^2.2.3",
 		"lodash": "^4.17.21",
 		"lodash.isequal": "^4.5.0",
+		"multimatch": "^5.0.0",
 		"picomatch": "^2.3.1",
 		"rimraf": "^4.4.1",
 		"semver": "^7.5.4",
 		"sort-package-json": "1.57.0",
+		"ts-deepmerge": "^7.0.0",
 		"ts-morph": "^22.0.0",
 		"type-fest": "^2.19.0",
 		"typescript": "~5.4.5",
@@ -79,6 +81,7 @@
 		"@types/shelljs": "^0.8.12",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.57.0",
+		"json-schema-to-typescript": "^15.0.0",
 		"mocha": "^10.2.0"
 	},
 	"engines": {

@@ -22,6 +22,7 @@ import type {
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { hydrate } from "./utils.js";
 import { isMapTreeNode, TreeStatus } from "../../feature-libraries/index.js";
+import { validateUsageError } from "../utils.js";
 
 describe("Unhydrated nodes", () => {
 	const schemaFactory = new SchemaFactory("undefined");
@@ -112,6 +113,9 @@ describe("Unhydrated nodes", () => {
 		assert.equal(Tree.parent(newArrayLeaf), undefined);
 		array.insertAtEnd(newArrayLeaf);
 		assert.equal(Tree.parent(newArrayLeaf), array);
+		const array2 = new TestArray([]);
+		array2.moveToEnd(0, array);
+		assert.equal(Tree.parent(newArrayLeaf), array2);
 		// Object
 		const object = new TestObject({ array, map });
 		assert.equal(Tree.parent(object), undefined);
@@ -320,6 +324,35 @@ describe("Unhydrated nodes", () => {
 		const id = "my identifier";
 		const object = new TestObjectWithId({ id, autoId: undefined });
 		assert.deepEqual(Object.entries(object), [["id", id]]);
+	});
+
+	it("cannot be used twice in the same tree", () => {
+		const leaf = new TestLeaf({ value: "3" });
+		assert.throws(
+			() => new TestArray([leaf, leaf]),
+			validateUsageError("A node may not be in more than one place in the tree"),
+		);
+	});
+
+	it("cannot be partially hydrated", () => {
+		const view = hydrate(
+			TestObject,
+			new TestObject({ array: new TestArray([]), map: new TestMap({}) }),
+		);
+
+		const leaf = new TestLeaf({ value: "3" });
+		const array = new TestArray([leaf]);
+		assert.equal(array[0], leaf);
+
+		// Attempt to insert `leaf`, which is underneath `array`. Both are unhydrated.
+		// If `leaf` were to succeed, then it would become hydrated, but `array` would remain unhydrated.
+		// This would be confusing, as the user's reference to `leaf` is now a different object than `array[0]`, whereas prior to the insert they were the same.
+		assert.throws(
+			() => view.map.set("key", leaf),
+			validateUsageError(
+				"Attempted to insert a node which is already under a parent. If this is desired, remove the node from its parent before inserting it elsewhere.",
+			),
+		);
 	});
 });
 
