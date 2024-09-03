@@ -65,12 +65,11 @@ export interface ICollaborationSession {
 	tenantId: string;
 	/**
 	 * Time when the first client joined the session.
-	 * A.K.A. the session start time.
+	 * Use this value to determine how long the session has been/was active.
 	 */
 	firstClientJoinTime: number;
 	/**
 	 * Time when the last client left the session.
-	 * A.K.A. the session end time.
 	 * Undefined if the session is still active and the last client has not left
 	 * or a new client re-joined the session before it expired.
 	 *
