@@ -37,6 +37,7 @@ module.exports = {
 		},
 		"build": {
 			dependsOn: [
+				"check:format",
 				"compile",
 				"lint",
 				"build:api-reports",
@@ -55,14 +56,7 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: [
-				"check:format",
-				"eslint",
-				"good-fences",
-				"depcruise",
-				"check:exports",
-				"check:release-tags",
-			],
+			dependsOn: ["eslint", "good-fences", "depcruise", "check:exports", "check:release-tags"],
 			script: false,
 		},
 		"checks": {
