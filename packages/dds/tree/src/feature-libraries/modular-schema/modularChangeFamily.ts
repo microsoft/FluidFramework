@@ -827,6 +827,10 @@ export class ModularChangeFamily
 		over: TaggedChange<ModularChangeset>,
 		revisionMetadata: RevisionMetadataSource,
 	): ModularChangeset {
+		if ((over.change.constraintViolationCount ?? 0) > 0) {
+			return taggedChange.change;
+		}
+
 		const change = taggedChange.change;
 		const maxId = Math.max(change.maxId ?? -1, over.change.maxId ?? -1);
 		const idState: IdAllocationState = { maxId };
