@@ -99,10 +99,10 @@ export interface TreeNodeApi {
 	 * @returns A callback function which will deregister the event.
 	 * This callback should be called only once.
 	 */
-	on<K extends keyof TreeChangeEvents<TNode>, TNode extends TreeNode>(
-		node: TNode,
+	on<K extends keyof TreeChangeEvents>(
+		node: TreeNode,
 		eventName: K,
-		listener: TreeChangeEvents<TNode>[K],
+		listener: TreeChangeEvents[K],
 	): () => void;
 
 	/**

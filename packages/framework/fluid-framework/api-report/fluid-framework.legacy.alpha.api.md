@@ -869,11 +869,6 @@ type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<string
 // @public
 type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
 
-// @public @sealed
-export interface NodeChangedData {
-    readonly changedProperties?: ReadonlySet<string>;
-}
-
 // @public
 export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
 
@@ -1176,8 +1171,8 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
 }
 
 // @public @sealed
-export interface TreeChangeEvents<TNode extends TreeNode = TreeNode> {
-    nodeChanged(data: NodeChangedData & (TNode extends WithType<string, NodeKind.Map | NodeKind.Object> ? Required<Pick<NodeChangedData, "changedProperties">> : unknown)): void;
+export interface TreeChangeEvents {
+    nodeChanged(unstable?: unknown): void;
     treeChanged(): void;
 }
 
@@ -1220,7 +1215,7 @@ export abstract class TreeNode implements WithType {
 export interface TreeNodeApi {
     is<TSchema extends ImplicitAllowedTypes>(value: unknown, schema: TSchema): value is TreeNodeFromImplicitAllowedTypes<TSchema>;
     key(node: TreeNode): string | number;
-    on<K extends keyof TreeChangeEvents<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: TreeChangeEvents<TNode>[K]): () => void;
+    on<K extends keyof TreeChangeEvents>(node: TreeNode, eventName: K, listener: TreeChangeEvents[K]): () => void;
     parent(node: TreeNode): TreeNode | undefined;
     schema(node: TreeNode | TreeLeafValue): TreeNodeSchema;
     shortId(node: TreeNode): number | string | undefined;

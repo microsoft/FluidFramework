@@ -125,6 +125,9 @@ export {
 	test_RecursiveObject,
 	test_RecursiveObject_base,
 	test_RecursiveObjectPojoMode,
+	// Beta APIs
+	TreeBeta,
+	type TreeChangeEventsBeta,
 	// Back to normal types
 	type JsonTreeSchema,
 	type JsonSchemaId,

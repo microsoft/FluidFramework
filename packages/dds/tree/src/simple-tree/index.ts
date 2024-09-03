@@ -19,7 +19,6 @@ export {
 	type Unhydrated,
 	type InternalTreeNode,
 	isTreeNode,
-	type NodeChangedData,
 } from "./core/index.js";
 export {
 	type ITree,
@@ -45,6 +44,9 @@ export {
 	type TreeNodeApi,
 	cursorFromInsertable,
 	createFromInsertable,
+	type NodeChangedData,
+	TreeBeta,
+	type TreeChangeEventsBeta,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,

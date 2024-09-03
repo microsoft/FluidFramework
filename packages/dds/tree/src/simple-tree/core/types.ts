@@ -25,23 +25,6 @@ import { isFlexTreeNode, type FlexTreeNode } from "../../feature-libraries/index
 export type Unhydrated<T> = T;
 
 /**
- * Data included for {@link TreeChangeEvents.nodeChanged}.
- * @sealed @public
- */
-export interface NodeChangedData {
-	/**
-	 * When the node changed is an object or Map node, this lists all the properties which changed.
-	 * @remarks
-	 * This only includes changes to the node itself (which would trigger {@link TreeChangeEvents.nodeChanged}).
-	 *
-	 * Set to `undefined` when the {@link NodeKind} does not support this feature (currently just ArrayNodes).
-	 *
-	 * When defined, the set should never be empty, since `nodeChanged` will only be triggered when there is a change, and for the supported node types, the only things that can change are properties.
-	 */
-	readonly changedProperties?: ReadonlySet<string>;
-}
-
-/**
  * A collection of events that can be emitted by a {@link TreeNode}.
  *
  * @remarks
@@ -67,7 +50,7 @@ export interface NodeChangedData {
  *
  * @sealed @public
  */
-export interface TreeChangeEvents<TNode extends TreeNode = TreeNode> {
+export interface TreeChangeEvents {
 	/**
 	 * Emitted by a node after a batch of changes has been applied to the tree, if any of the changes affected the node.
 	 *
@@ -76,6 +59,8 @@ export interface TreeChangeEvents<TNode extends TreeNode = TreeNode> {
 	 * - Array nodes define a change as when an element is added, removed, moved or replaced.
 	 *
 	 * - Map nodes define a change as when an entry is added, updated, or removed.
+	 *
+	 * @param unstable - Unspecified data which may get defined/specified in future versions of this API.
 	 *
 	 * @remarks
 	 * This event is not emitted when:
@@ -100,13 +85,7 @@ export interface TreeChangeEvents<TNode extends TreeNode = TreeNode> {
 	 *
 	 * TODO: define and document event ordering (ex: bottom up, with nodeChanged before treeChange on each level).
 	 */
-	nodeChanged(
-		data: NodeChangedData &
-			// For object and Map nodes, make properties specific to them required instead of optional:
-			(TNode extends WithType<string, NodeKind.Map | NodeKind.Object>
-				? Required<Pick<NodeChangedData, "changedProperties">>
-				: unknown),
-	): void;
+	nodeChanged(unstable?: unknown): void;
 
 	/**
 	 * Emitted by a node after a batch of changes has been applied to the tree, when something changed anywhere in the

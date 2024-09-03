@@ -19,6 +19,7 @@ import {
 	type NodeFromSchema,
 	SchemaFactory,
 	treeNodeApi as Tree,
+	TreeBeta,
 	type TreeChangeEvents,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
@@ -781,7 +782,7 @@ describe("treeNodeApi", () => {
 			const root = view.root;
 
 			const eventLog: ReadonlySet<string>[] = [];
-			Tree.on(root, "nodeChanged", ({ changedProperties }) =>
+			TreeBeta.on(root, "nodeChanged", ({ changedProperties }) =>
 				eventLog.push(changedProperties),
 			);
 
@@ -812,7 +813,7 @@ describe("treeNodeApi", () => {
 			const root = view.root;
 
 			const eventLog: ReadonlySet<string>[] = [];
-			Tree.on(root, "nodeChanged", ({ changedProperties }) =>
+			TreeBeta.on(root, "nodeChanged", ({ changedProperties }) =>
 				eventLog.push(changedProperties),
 			);
 
@@ -838,7 +839,7 @@ describe("treeNodeApi", () => {
 			const root = view.root;
 
 			const eventLog: (ReadonlySet<string> | undefined)[] = [];
-			Tree.on(root, "nodeChanged", (data) => eventLog.push(data.changedProperties));
+			TreeBeta.on(root, "nodeChanged", (data) => eventLog.push(data.changedProperties));
 
 			const { forkView, forkCheckout } = getViewForForkedBranch(view);
 
@@ -864,7 +865,7 @@ describe("treeNodeApi", () => {
 			const root = view.root;
 
 			const eventLog: ReadonlySet<string>[] = [];
-			Tree.on(root, "nodeChanged", ({ changedProperties }) =>
+			TreeBeta.on(root, "nodeChanged", ({ changedProperties }) =>
 				eventLog.push(changedProperties),
 			);
 
