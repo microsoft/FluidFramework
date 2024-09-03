@@ -713,9 +713,17 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			pathVisitors: new Map<PathNode, Set<PathVisitor>>(),
 			parentField: undefined as FieldKey | undefined,
 			parent: undefined as UpPath | undefined,
+
+			/**
+			 * Events collected during the visit which get sent as a batch during "free".
+			 */
 			bufferedEvents: [] as {
 				node: PathNode;
 				event: keyof AnchorEvents;
+				/**
+				 * The key for the impacted field, if the event is associated with a key.
+				 * Some events, such as afterDestroy, do not involve a key, and thus leave this undefined.
+				 */
 				changedField?: FieldKey;
 			}[],
 
@@ -760,9 +768,13 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					}
 					emittedEvents?.push(event);
 					if (event === "childrenChangedAfterBatch") {
-						const fieldKeys = this.bufferedEvents
+						const fieldKeys: FieldKey[] = this.bufferedEvents
 							.filter((e) => e.node === node && e.event === event)
-							.map((e) => e.changedField as FieldKey);
+							.map(
+								(e) =>
+									e.changedField ??
+									fail("childrenChangedAfterBatch events should have a changedField"),
+							);
 						node.events.emit(event, { anchor: node, changedFields: new Set(fieldKeys) });
 					} else {
 						node.events.emit(event, node);
@@ -778,7 +790,10 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			notifyChildrenChanged(): void {
 				this.maybeWithNode(
 					(p) => {
-						assert(this.parentField !== undefined, "Must be in a field");
+						assert(
+							this.parentField !== undefined,
+							"Must be in a field to modify its contents",
+						);
 						p.events.emit("childrenChanged", p);
 						this.bufferedEvents.push({
 							node: p,
