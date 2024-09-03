@@ -2770,6 +2770,7 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLatency",
 							signalsSent: 97, // 101 (tracked latency signal) - 5 (earliest sent signal on reconnect) + 1 = 97
+							broadcastSignals: 97,
 							signalsLost: 0,
 							outOfOrderSignals: 0,
 							reconnectCount: 1,
@@ -2816,6 +2817,7 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLatency",
 							signalsSent: 100,
+							broadcastSignals: 100,
 							signalsLost: 10,
 							outOfOrderSignals: 0,
 						},
@@ -2851,12 +2853,14 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLatency",
 							signalsSent: 101,
+							broadcastSignals: 101,
 							signalsLost: 20,
 							outOfOrderSignals: 0,
 						},
 						{
 							eventName: "ContainerRuntime:SignalLatency",
 							signalsSent: 100,
+							broadcastSignals: 100,
 							signalsLost: 1,
 							outOfOrderSignals: 0,
 						},
@@ -2892,6 +2896,7 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLatency",
 							signalsSent: 201,
+							broadcastSignals: 201,
 							signalsLost: 26,
 							outOfOrderSignals: 0,
 						},
@@ -2912,6 +2917,7 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLatency",
 							signalsSent: 100,
+							broadcastSignals: 100,
 							signalsLost: 10,
 							outOfOrderSignals: 0,
 						},
@@ -2943,6 +2949,7 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLatency",
 							signalsSent: 100,
+							broadcastSignals: 100,
 							signalsLost: 1,
 							outOfOrderSignals: 0,
 						},
@@ -2952,6 +2959,7 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLatency",
 							signalsSent: 100,
+							broadcastSignals: 100,
 							signalsLost: 0,
 							outOfOrderSignals: 1,
 						},
