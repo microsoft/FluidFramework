@@ -760,9 +760,13 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					}
 					emittedEvents?.push(event);
 					if (event === "childrenChangedAfterBatch") {
-						const fieldKeys = this.bufferedEvents
+						const fieldKeys: FieldKey[] = this.bufferedEvents
 							.filter((e) => e.node === node && e.event === event)
-							.map((e) => e.changedField as FieldKey);
+							.map(
+								(e) =>
+									e.changedField ??
+									fail("childrenChangedAfterBatch events should have a changedField"),
+							);
 						node.events.emit(event, { anchor: node, changedFields: new Set(fieldKeys) });
 					} else {
 						node.events.emit(event, node);
