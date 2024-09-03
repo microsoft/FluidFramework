@@ -50,7 +50,7 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 	};
 
 	public async run(): Promise<void> {
-		const { version, orderFile, token, releaseFlag, feedKind } = this.flags;
+		const { orderFile, releaseFlag, feedKind } = this.flags;
 		if (releaseFlag !== "release") {
 			return this.log(
 				`${releaseFlag} packages will not be promoted to Release view. Only release packages will be promoted to Release view.`,
@@ -63,9 +63,7 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 		}
 		const packageOrder = await readLines(orderFile);
 		await Promise.all(
-			packageOrder.map(async (packageName) =>
-				this.promotePackage(packageName, version, token),
-			),
+			packageOrder.map(async (packageName) => this.promotePackage(packageName)),
 		);
 	}
 
@@ -73,19 +71,15 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 		return `https://pkgs.dev.azure.com/fluidframework/internal/_apis/packaging/feeds/build/npm/${packageName}/versions/${version}?api-version=7.1-preview.1`;
 	}
 
-	private async promotePackage(
-		packageName: string,
-		version: string,
-		token: string,
-	): Promise<boolean> {
-		const url = this.getFeedPromotionUrl(packageName, version);
+	private async promotePackage(packageName: string): Promise<boolean> {
+		const url = this.getFeedPromotionUrl(packageName, this.flags.version);
 		try {
 			const response = await fetch(url, {
 				method: "PATCH",
 				headers: {
 					"Content-Type": "application/json",
 					"Accept": "application/json",
-					"Authorization": `Basic ${Buffer.from(token).toString("base64")}`,
+					"Authorization": `Basic ${Buffer.from(this.flags.token).toString("base64")}`,
 				},
 				body: JSON.stringify({
 					views: {
