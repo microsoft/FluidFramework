@@ -779,6 +779,57 @@ let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) 
 };
 
 /**
+ * This object holds the parameters necessary for the {@link loadContainerRuntime} function.
+ * @legacy
+ * @alpha
+ */
+export interface LoadContainerRuntimeParams {
+	/**
+	 * Context of the container.
+	 */
+	context: IContainerContext;
+	/**
+	 * Mapping from data store types to their corresponding factories
+	 */
+	registryEntries: NamedFluidDataStoreRegistryEntries;
+	/**
+	 * Pass 'true' if loading from an existing snapshot.
+	 */
+	existing: boolean;
+	/**
+	 * Additional options to be passed to the runtime
+	 */
+	runtimeOptions?: IContainerRuntimeOptions;
+	/**
+	 * runtime services provided with context
+	 */
+	containerScope?: FluidObject;
+	/**
+	 * Promise that resolves to an object which will act as entryPoint for the Container.
+	 */
+	provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+
+	/**
+	 * Request handler for the request() method of the container runtime.
+	 * Only relevant for back-compat while we remove the request() method and move fully to entryPoint as the main pattern.
+	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * */
+	requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+}
+/**
+ * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
+ * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
+ * @returns A runtime which provides all the functionality necessary to bind with the loader layer via the {@link @fluidframework/container-definitions#IRuntime} interface and provide a runtime environment via the {@link @fluidframework/container-runtime-definitions#IContainerRuntime} interface.
+ * @legacy
+ * @alpha
+ */
+export async function loadContainerRuntime(
+	params: LoadContainerRuntimeParams,
+): Promise<IContainerRuntime & IRuntime> {
+	return ContainerRuntime.loadRuntime(params);
+}
+
+/**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
  * @legacy
@@ -2699,11 +2750,11 @@ export class ContainerRuntime
 					this.ensureNoDataModelChanges(() => this.processRuntimeMessage(msg));
 				});
 			} else {
-				this.ensureNoDataModelChanges(() => this.processEmptyBatch(inboundBatch, local));
+				this.ensureNoDataModelChanges(() => this.processEmptyBatch(inboundBatch));
 			}
 		} else {
 			// Check if message.type is one of values in ContainerMessageType
-			// eslint-disable-next-line import/no-deprecated
+
 			if (isRuntimeMessage(messageCopy)) {
 				// Legacy op received
 				this.ensureNoDataModelChanges(() =>
@@ -2726,6 +2777,13 @@ export class ContainerRuntime
 				);
 			}
 		}
+
+		if (local) {
+			// If we have processed a local op, this means that the container is
+			// making progress and we can reset the counter for how many times
+			// we have consecutively replayed the pending states
+			this.resetReconnectCount();
+		}
 	}
 
 	private _processedClientSequenceNumber: number | undefined;
@@ -2738,10 +2796,9 @@ export class ContainerRuntime
 	private processRuntimeMessage(
 		messageWithContext: MessageWithContext & { isRuntimeMessage: true },
 	) {
-		const { message, local, localOpMetadata } = messageWithContext;
+		const { message, localOpMetadata } = messageWithContext;
 
-		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
-		// Sequence numbers are not guaranteed to follow any sort of order. Re-entrancy is one of those situations
+		// Set the minimum sequence number to the containerRuntime's understanding of minimum sequence number.
 		if (
 			this.deltaManager.minimumSequenceNumber <
 			messageWithContext.message.minimumSequenceNumber
@@ -2775,13 +2832,6 @@ export class ContainerRuntime
 			this.emit("op", message, messageWithContext.isRuntimeMessage);
 
 			this.scheduleManager.afterOpProcessing(undefined, message);
-
-			if (local) {
-				// If we have processed a local op, this means that the container is
-				// making progress and we can reset the counter for how many times
-				// we have consecutively replayed the pending states
-				this.resetReconnectCount();
-			}
 		} catch (e) {
 			this.scheduleManager.afterOpProcessing(e, message);
 			throw e;
@@ -2789,22 +2839,27 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Process an empty batch, which will execute expected actions while processing even if there are no messages.
-	 * This is a separate function because the processCore function expects at least one message to process.
-	 * It is expected to happen only when the outbox produces an empty batch due to a resubmit flow.
+	 * Process an empty batch, which will execute expected actions while processing even if there are no inner runtime messages.
+	 *
+	 * @remarks - Empty batches are produced by the outbox on resubmit when the resubmit flow resulted in no runtime messages.
+	 * This can happen if changes from a remote client "cancel out" the pending changes being resubmited by this client.
+	 * We submit an empty batch if "offline load" (aka rehydrating from stashed state) is enabled,
+	 * to ensure we account for this batch when comparing batchIds, checking for a forked container.
+	 * Otherwise, we would not realize this container has forked in the case where it did fork, and a batch became empty but wasn't submitted as such.
 	 */
-	private processEmptyBatch(emptyBatch: InboundBatch, local: boolean) {
-		const { emptyBatchSequenceNumber: sequenceNumber, batchStartCsn } = emptyBatch;
-		assert(sequenceNumber !== undefined, 0x9fa /* emptyBatchSequenceNumber must be defined */);
-		this.emit("batchBegin", { sequenceNumber });
+	private processEmptyBatch(emptyBatch: InboundBatch) {
+		const { keyMessage, batchStartCsn } = emptyBatch;
+		this.scheduleManager.beforeOpProcessing(keyMessage);
+
 		this._processedClientSequenceNumber = batchStartCsn;
 		if (!this.hasPendingMessages()) {
 			this.updateDocumentDirtyState(false);
 		}
-		this.emit("batchEnd", undefined, { sequenceNumber });
-		if (local) {
-			this.resetReconnectCount();
-		}
+
+		// We emit this event but say isRuntimeMessage is false, because there are no actual runtime messages here being processed.
+		// But someone listening to this event expecting to be notified whenever a message arrives would want to know about this.
+		this.emit("op", keyMessage, false /* isRuntimeMessage */);
+		this.scheduleManager.afterOpProcessing(undefined /* error */, keyMessage);
 	}
 
 	/**
@@ -2814,7 +2869,7 @@ export class ContainerRuntime
 	private observeNonRuntimeMessage(
 		messageWithContext: MessageWithContext & { isRuntimeMessage: false },
 	) {
-		const { message, local } = messageWithContext;
+		const { message } = messageWithContext;
 
 		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
 		// Sequence numbers are not guaranteed to follow any sort of order. Re-entrancy is one of those situations
@@ -2843,13 +2898,6 @@ export class ContainerRuntime
 			this.emit("op", message, messageWithContext.isRuntimeMessage);
 
 			this.scheduleManager.afterOpProcessing(undefined, message);
-
-			if (local) {
-				// If we have processed a local op, this means that the container is
-				// making progress and we can reset the counter for how many times
-				// we have consecutively replayed the pending states
-				this.resetReconnectCount();
-			}
 		} catch (e) {
 			this.scheduleManager.afterOpProcessing(e, message);
 			throw e;

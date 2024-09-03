@@ -96,15 +96,17 @@ export class SessionInfoManager {
 			Date.now() - this.sessionLastDiscoveredMap.get(url)! >
 			RediscoverAfterTimeSinceDiscoveryMs;
 		if (this.enableDiscovery && shouldRediscover) {
-			await this.fetchAndUpdateSessionInfo(params).catch(() => {
+			await this.fetchAndUpdateSessionInfo(params).catch((error) => {
 				// Undo discovery time set on failure, so that next check refreshes.
 				this.sessionLastDiscoveredMap.set(url, 0);
+				throw error;
 			});
 			refreshed = true;
 		}
 		return {
 			refreshed,
-			resolvedUrl: this.sessionInfoMap.get(url)!,
+			// ! Shallow copy is important as some mechanisms may rely on object comparison
+			resolvedUrl: { ...this.sessionInfoMap.get(url)! },
 		};
 	}
 

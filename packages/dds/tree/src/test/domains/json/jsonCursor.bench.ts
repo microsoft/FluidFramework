@@ -16,7 +16,6 @@ import {
 	initializeForest,
 	moveToDetachedField,
 } from "../../../core/index.js";
-import { cursorToJsonObject, singleJsonCursor } from "../../../domains/index.js";
 import {
 	basicChunkTree,
 	defaultChunkPolicy,
@@ -34,7 +33,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { brand, type JsonCompatible } from "../../../util/index.js";
 
-import { JsonUnion, testIdCompressor, testRevisionTagCodec } from "../../utils.js";
+import { testIdCompressor, testRevisionTagCodec } from "../../utils.js";
 import { averageValues, sum, sumMap } from "./benchmarks.js";
 import { Canada, generateCanada } from "./canada.js";
 import { CitmCatalog, generateCitmJson } from "./citm.js";
@@ -42,6 +41,7 @@ import { clone } from "./jsObjectUtil.js";
 import { generateTwitterJsonByByteSize } from "./twitter.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
+import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
 
 // Shared tree keys that map to the type used by the Twitter type/dataset
 export const TwitterKey = {

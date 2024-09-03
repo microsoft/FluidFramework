@@ -20,11 +20,17 @@ import {
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
 } from "../../feature-libraries/index.js";
-import { isReadonlyArray, type JsonCompatible } from "../../util/index.js";
-import { leaf } from "../leafDomain.js";
+import { brand, isReadonlyArray, type JsonCompatible } from "../../util/index.js";
 
-import { jsonArray, jsonObject } from "./jsonDomainSchema.js";
+import { JsonArray, JsonObject } from "./jsonDomainSchema.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import {
+	booleanSchema,
+	nullSchema,
+	numberSchema,
+	stringSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/leafNodeSchema.js";
 
 const adapter: CursorAdapter<JsonCompatible> = {
 	value: (node: JsonCompatible) =>
@@ -36,18 +42,18 @@ const adapter: CursorAdapter<JsonCompatible> = {
 
 		switch (type) {
 			case "number":
-				return leaf.number.name;
+				return brand(numberSchema.identifier);
 			case "string":
-				return leaf.string.name;
+				return brand(stringSchema.identifier);
 			case "boolean":
-				return leaf.boolean.name;
+				return brand(booleanSchema.identifier);
 			default:
 				if (node === null) {
-					return leaf.null.name;
+					return brand(nullSchema.identifier);
 				} else if (isReadonlyArray(node)) {
-					return jsonArray.name;
+					return brand(JsonArray.identifier);
 				} else {
-					return jsonObject.name;
+					return brand(JsonObject.identifier);
 				}
 		}
 	},
@@ -121,19 +127,19 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 	const type = reader.type;
 
 	switch (type) {
-		case leaf.number.name:
-		case leaf.boolean.name:
-		case leaf.string.name:
+		case numberSchema.identifier:
+		case booleanSchema.identifier:
+		case stringSchema.identifier:
 			assert(reader.value !== undefined, 0x84f /* out of schema: missing value */);
 			assert(!isFluidHandle(reader.value), 0x850 /* out of schema: unexpected FluidHandle */);
 			return reader.value;
-		case jsonArray.name: {
+		case JsonArray.identifier: {
 			reader.enterField(EmptyKey);
 			const result = mapCursorField(reader, cursorToJsonObject);
 			reader.exitField();
 			return result;
 		}
-		case jsonObject.name: {
+		case JsonObject.identifier: {
 			const result: JsonCompatible = {};
 			mapCursorFields(reader, (cursor) => {
 				const key = cursor.getFieldKey();
@@ -150,7 +156,7 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 			return result;
 		}
 		default: {
-			assert(type === leaf.null.name, 0x422 /* unexpected type */);
+			assert(type === nullSchema.identifier, 0x422 /* unexpected type */);
 			return null;
 		}
 	}
