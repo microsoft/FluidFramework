@@ -13,7 +13,7 @@ import {
 } from "@fluid-tools/benchmark";
 
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
-import { singleJsonCursor } from "../../domains/index.js";
+import { singleJsonCursor } from "../json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
 import {
@@ -45,9 +45,9 @@ import {
 	TestTreeProviderLite,
 	checkoutWithContent,
 	flexTreeViewWithContent,
-	insert,
 	toJsonableTree,
 } from "../utils.js";
+import { insert } from "../sequenceRootUtils.js";
 import { cursorFromInsertable } from "../../simple-tree/index.js";
 
 // number of nodes in test for wide trees
