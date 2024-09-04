@@ -28,6 +28,9 @@ import { sum } from "../../domains/json/benchmarks.js";
 
 import { emptyShape, polygonTree, testData, xField, yField } from "./uniformChunkTestData.js";
 import { brand } from "../../../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { numberSchema, stringSchema } from "../../../simple-tree/leafNodeSchema.js";
+import { validateUsageError } from "../../utils.js";
 
 // Validate a few aspects of shapes that are easier to verify here than via checking the cursor.
 function validateShape(shape: ChunkShape): void {
@@ -62,6 +65,16 @@ describe("uniformChunk", () => {
 				validateShape(tree.dataFactory().shape);
 			});
 		}
+		it("shape with maybeCompressedStringAsNumber flag set to true fails if it is not a string leaf node.", () => {
+			const validShapeWithFlag = new TreeShape(brand(stringSchema.identifier), true, [], true);
+			// Test that a non string leaf node shape with maybeCompressedStringAsNumber set to true fails.
+			assert.throws(
+				() => new TreeShape(brand(numberSchema.identifier), true, [], true),
+				validateUsageError(
+					/maybeDecompressedStringAsNumber flag can only be set to true for string leaf node./,
+				),
+			);
+		});
 	});
 
 	testSpecializedFieldCursor<TreeChunk, ITreeCursorSynchronous>({

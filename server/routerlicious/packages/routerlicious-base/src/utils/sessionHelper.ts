@@ -283,12 +283,17 @@ export async function getSession(
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	ephemeralDocumentTTLSec?: number,
 ): Promise<ISession> {
-	const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
+	const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
 	const document: IDocument = await documentRepository.readOne({ tenantId, documentId });
 	if (!document || document.scheduledDeletionTime !== undefined) {
 		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
 	}
+
+	const lumberjackProperties = {
+		...baseLumberjackProperties,
+		isEphemeralContainer: document.isEphemeralContainer,
+	};
 	if (document.isEphemeralContainer && ephemeralDocumentTTLSec !== undefined) {
 		// Check if the document is ephemeral and has expired.
 		const currentTime = Date.now();
@@ -301,7 +306,7 @@ export async function getSession(
 			Lumberjack.warning(
 				"Document is older than the max ephemeral document TTL.",
 				{
-					...getLumberBaseProperties(documentId, tenantId),
+					...lumberjackProperties,
 					documentCreateTime: document.createTime,
 					documentExpirationTime,
 					documentExpiredByMs,

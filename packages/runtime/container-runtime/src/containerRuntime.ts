@@ -107,6 +107,7 @@ import {
 	ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
+	extractSafePropertiesFromMessage,
 	GenericError,
 	IEventSampler,
 	LoggingError,
@@ -171,6 +172,7 @@ import { IBatchMetadata, ISavedOpMetadata } from "./metadata.js";
 import {
 	BatchId,
 	BatchMessage,
+	DuplicateBatchDetector,
 	ensureContentsDeserialized,
 	IBatch,
 	IBatchCheckpoint,
@@ -1358,6 +1360,7 @@ export class ContainerRuntime
 	private readonly scheduleManager: ScheduleManager;
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
+	private readonly duplicateBatchDetector: DuplicateBatchDetector;
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
 
@@ -1636,6 +1639,8 @@ export class ContainerRuntime
 			pendingRuntimeState?.pending,
 			this.logger,
 		);
+
+		this.duplicateBatchDetector = new DuplicateBatchDetector();
 
 		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 		const useDeltaManagerOpsProxy =
@@ -2731,6 +2736,30 @@ export class ContainerRuntime
 				return;
 			}
 
+			const result = this.duplicateBatchDetector.processInboundBatch(inboundBatch);
+			if (result.duplicate) {
+				const error = new DataCorruptionError(
+					"Duplicate batch - The same batch was sequenced twice",
+					{ batchId: inboundBatch.batchId },
+				);
+
+				this.mc.logger.sendTelemetryEvent(
+					{
+						eventName: "DuplicateBatch",
+						details: {
+							batchId: inboundBatch.batchId,
+							clientId: inboundBatch.clientId,
+							batchStartCsn: inboundBatch.batchStartCsn,
+							size: inboundBatch.messages.length,
+							duplicateBatchSequenceNumber: result.otherSequenceNumber,
+							...extractSafePropertiesFromMessage(inboundBatch.keyMessage),
+						},
+					},
+					error,
+				);
+				throw error;
+			}
+
 			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
 			// or to check to ensure the *remote* messages don't match the batchId of a pending local batch.
 			// This latter case would indicate that the container has forked - two copies are trying to persist the same local changes.
@@ -2738,6 +2767,7 @@ export class ContainerRuntime
 				inboundBatch,
 				local,
 			);
+
 			if (messagesWithPendingState.length > 0) {
 				messagesWithPendingState.forEach(({ message, localOpMetadata }) => {
 					const msg: MessageWithContext = {
@@ -2753,6 +2783,10 @@ export class ContainerRuntime
 				this.ensureNoDataModelChanges(() => this.processEmptyBatch(inboundBatch));
 			}
 		} else {
+			// Note: We don't do anything with Batching or PendingStateManager in this branch
+			// All batched and/or local runtime ops would have the modern runtime message envelope
+			// and thus will land in the branch above.
+
 			// Check if message.type is one of values in ContainerMessageType
 
 			if (isRuntimeMessage(messageCopy)) {
@@ -4337,6 +4371,12 @@ export class ContainerRuntime
 		}
 	}
 
+	/**
+	 * Resubmits each message in the batch, and then flushes the outbox.
+	 *
+	 * @remarks - If the "Offline Load" feature is enabled, the batchId is included in the resubmitted messages,
+	 * for correlation to detect container forking.
+	 */
 	private reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId) {
 		this.orderSequentially(() => {
 			for (const message of batch) {
