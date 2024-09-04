@@ -31,13 +31,6 @@ permissions:
   statuses: write
 
 jobs:
-  # on-failure:
-  #   name: Check upstream workflow status
-  #   if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure'
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - run: echo "The triggering workflow failed"
-
   metadata:
     name: Get PR metadata
     runs-on: ubuntu-latest
@@ -87,6 +80,15 @@ jobs:
         id: workflow_dispatch_is_release_branch
         if: github.event_name == 'workflow_dispatch'
         run: echo "is_release_branch=true" >> $GITHUB_OUTPUT
+
+      - name: "workflow_dispatch: Load commit_sha"
+        id: workflow_dispatch_load_commit_sha
+        if: github.event_name == 'workflow_dispatch'
+        # Gets the head commit of the PR using the gh CLI and jq
+        run: |
+          gh pr view ${{ steps.workflow_dispatch_load_pr.outputs.pr_num }} --json headRefOid --jq .headRefOid >
+          commit.txt
+          echo "commit_sha=$(cat commit.txt)" >> $GITHUB_OUTPUT
 
   check_approval:
     name: Check PR approval
