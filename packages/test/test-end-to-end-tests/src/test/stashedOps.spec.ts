@@ -6,11 +6,7 @@
 import { strict as assert } from "assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import {
-	describeCompat,
-	itExpects,
-	itSkipsFailureOnSpecificDrivers,
-} from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import {
 	IContainer,
@@ -54,12 +50,14 @@ import type {
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ChannelFactoryRegistry,
+	createSummarizer,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
 	createAndAttachContainer,
 	createDocumentId,
+	summarizeNow,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -217,34 +215,25 @@ const assertIntervals = (
 };
 
 /**
- * Waits for a summary op and ack to be seen by the specified container.
+ * Waits for a summary op and ack to be seen.
  *
- * @remarks
- * IMPORTANT: timing of when this function is called and/or awaited is important to write tests that aren't flaky.
- * If you're going to `await` something else between the time when you make a change in a container that will result
- * in a summary and the time you want to wait for the summary, you should call this function, without `await`ing it,
- * *before* `await`ing anything else, and then `await` the returned promise when you actually need to wait for the
- * summary.
- * Otherwise it could happen that the summary is produced before this function is called, thus the listeners set up
- * by it aren't in place yet, they will miss the summary op, and the returned promise will never resolve.
+ * Manually summarizes the container
  *
- * @param container - A container, just for the purpose of setting up listeners for summary ops and acks.
+ * @param container - A container, just for the purpose of creating a summarizing container.
  * @returns A promise that resolves when a summary op and ack is received.
  */
-const waitForSummary = async (container: IContainer) =>
-	new Promise<void>((resolve, reject) => {
-		let summarized = false;
-		container.on("op", (op) => {
-			if (op.type === "summarize") {
-				summarized = true;
-			} else if (summarized && op.type === "summaryAck") {
-				resolve();
-			} else if (op.type === "summaryNack") {
-				reject(new Error("summaryNack"));
-			}
-		});
-	});
-
+const waitForSummary = async (
+	provider: ITestObjectProvider,
+	container: IContainer,
+	testContainerConfig: ITestContainerConfig,
+) => {
+	const testConfig = {
+		...testContainerConfig,
+		runtimeOptions: { ...testContainerConfig.runtimeOptions, summaryOptions: undefined },
+	};
+	const { summarizer } = await createSummarizer(provider, container, testConfig);
+	await summarizeNow(summarizer);
+};
 // Introduced in 0.37
 // REVIEW: enable compat testing
 describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
@@ -271,13 +260,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			},
 			summaryOptions: {
 				summaryConfigOverrides: {
-					...DefaultSummaryConfiguration,
-					...{
-						maxTime: 5000 * 12,
-						maxAckWaitTime: 120000,
-						maxOps: 1,
-						initialSummarizerDelayMs: 20,
-					},
+					state: "disabled",
 				},
 			},
 			enableRuntimeIdCompressor: "on",
@@ -1628,33 +1611,26 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 	});
 
-	itSkipsFailureOnSpecificDrivers(
-		"load offline with blob redirect table",
-		// We've seen this fail a few times against local server with a timeout
-		// TODO: AB#5482
-		["local"],
-		async function () {
-			// upload blob offline so an entry is added to redirect table
-			const container = await loadOffline(testContainerConfig, provider, { url });
-			const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
-			const map = await dataStore.getSharedObject<ISharedMap>(mapId);
+	it("load offline with blob redirect table", async function () {
+		// upload blob offline so an entry is added to redirect table
+		const container = await loadOffline(testContainerConfig, provider, { url });
+		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
-			const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
-			container.connect();
-			const handle = await handleP;
-			const waitForSummaryPromise = waitForSummary(container1);
-			map.set("blob handle", handle);
-			assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
+		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+		container.connect();
+		const handle = await handleP;
+		map.set("blob handle", handle);
+		assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
 
-			// wait for summary with redirect table
-			await provider.ensureSynchronized();
-			await waitForSummaryPromise;
+		// wait for summary with redirect table
+		await provider.ensureSynchronized();
+		await waitForSummary(provider, container1, testContainerConfig);
 
-			// should be able to load entirely offline
-			const stashBlob = await getPendingOps(testContainerConfig, provider, true);
-			await loadOffline(testContainerConfig, provider, { url }, stashBlob);
-		},
-	);
+		// should be able to load entirely offline
+		const stashBlob = await getPendingOps(testContainerConfig, provider, true);
+		await loadOffline(testContainerConfig, provider, { url }, stashBlob);
+	});
 
 	it("load offline from stashed ops with pending blob", async function () {
 		const container = await loadOffline(testContainerConfig, provider, { url });
@@ -1842,7 +1818,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	// TODO: https://github.com/microsoft/FluidFramework/issues/10729
 	it("works with summary while offline", async function () {
 		map1.set("test op 1", "test op 1");
-		await waitForSummary(container1);
+		await waitForSummary(provider, container1, testContainerConfig);
 
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
@@ -1855,7 +1831,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 
 		map1.set("test op 2", "test op 2");
-		await waitForSummary(container1);
+		await waitForSummary(provider, container1, testContainerConfig);
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
