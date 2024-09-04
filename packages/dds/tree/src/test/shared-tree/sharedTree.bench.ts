@@ -13,7 +13,7 @@ import {
 } from "@fluid-tools/benchmark";
 
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
-import { singleJsonCursor } from "../../domains/index.js";
+import { singleJsonCursor } from "../json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
 import {
@@ -29,9 +29,11 @@ import {
 	deepPath,
 	localFieldKey,
 	makeDeepContent,
+	makeDeepStoredContent,
 	makeJsDeepTree,
 	makeJsWideTreeWithEndValue,
 	makeWideContentWithEndValue,
+	makeWideStoredContentWithEndValue,
 	readDeepCursorTree,
 	readDeepFlexTree,
 	readDeepTreeAsJSObject,
@@ -43,9 +45,9 @@ import {
 	TestTreeProviderLite,
 	checkoutWithContent,
 	flexTreeViewWithContent,
-	insert,
 	toJsonableTree,
 } from "../utils.js";
+import { insert } from "../sequenceRootUtils.js";
 import { cursorFromInsertable } from "../../simple-tree/index.js";
 
 // number of nodes in test for wide trees
@@ -237,7 +239,7 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const tree = checkoutWithContent(makeDeepContent(numberOfNodes));
+						const tree = checkoutWithContent(makeDeepStoredContent(numberOfNodes));
 						const path = deepPath(numberOfNodes);
 
 						// Measure
@@ -278,7 +280,7 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const tree = checkoutWithContent(makeWideContentWithEndValue(numberOfNodes));
+						const tree = checkoutWithContent(makeWideStoredContentWithEndValue(numberOfNodes));
 
 						const rootPath = {
 							parent: undefined,

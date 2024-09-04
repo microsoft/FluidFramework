@@ -18,6 +18,10 @@ import {
 	type ValueSchema,
 } from "../../core/index.js";
 
+// TODO:
+// The comparisons in this file seem redundant with those in comparison.ts.
+// Rather than both existing, one of which just returns boolean and the other which returns additional details, a simple comparison which returns everything needed should be used.
+
 /**
  * @remarks
  *
@@ -298,21 +302,9 @@ function trackFieldDiscrepancies(
 		a: TreeTypeSet,
 		b: TreeTypeSet,
 	): [TreeNodeSchemaIdentifier[], TreeNodeSchemaIdentifier[]] => {
-		if (a === undefined && b === undefined) {
-			return [[], []];
-		}
-
-		if (a !== undefined && b !== undefined) {
-			const aDiff = [...a].filter((value) => !b.has(value));
-			const bDiff = [...b].filter((value) => !a.has(value));
-			return [aDiff, bDiff];
-		}
-
-		if (a !== undefined) {
-			return [[...a], []];
-		}
-
-		return [[], [...b]];
+		const aDiff = [...a].filter((value) => !b.has(value));
+		const bDiff = [...b].filter((value) => !a.has(value));
+		return [aDiff, bDiff];
 	};
 
 	const allowedTypesDiscrepancies = findSetDiscrepancies(view.types, stored.types);

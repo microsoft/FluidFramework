@@ -14,9 +14,10 @@ import sortPackageJson from "sort-package-json";
 import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
 import { options } from "../fluidBuild/options";
-import { type IFluidBuildConfig, type ITypeValidationConfig } from "./fluidRepo";
+import { type IFluidBuildConfig } from "./fluidRepo";
 import { defaultLogger } from "./logging";
 import { MonoRepo, PackageManager } from "./monoRepo";
+import { type ITypeValidationConfig } from "./typeValidatorConfig";
 import {
 	ExecAsyncResult,
 	execWithErrorAsync,
