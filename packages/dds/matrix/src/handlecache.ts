@@ -40,7 +40,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
 	 * @throws A 'RangeError' if the provided 'position' is out-of-bounds with regards to the
 	 * PermutationVector's length.
 	 */
-	public getHandle(position: number) {
+	public getHandle(position: number): Handle {
 		const index = this.getIndex(position);
 
 		// Perf: To encourage inlining, handling of the 'cacheMiss(..)' case has been extracted
@@ -83,13 +83,13 @@ export class HandleCache implements IVectorConsumer<Handle> {
 			const { segment, offset } = vector.getContainingSegment(pos);
 			const asPerm = segment as PermutationSegment;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			handles.push(asPerm.start + offset!);
+			handles.push(asPerm.start + offset);
 		}
 
 		return handles;
 	}
 
-	private cacheMiss(position: number) {
+	private cacheMiss(position: number): Handle {
 		// Coercing 'position' to an Uint32 allows us to handle a negative 'position' value
 		// with the same logic that handles 'position' >= length.
 		const _position = position >>> 0;
