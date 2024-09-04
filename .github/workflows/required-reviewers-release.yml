@@ -63,9 +63,6 @@ jobs:
     needs: check_branch
     runs-on: ubuntu-latest
     steps:
-      - name: Debug output
-        run: |
-          echo "needs.check_branch.outputs.is_release_branch: ${{ needs.check_branch.outputs.is_release_branch }}" >> $GITHUB_STEP_SUMMARY
       - name: Approval is required
         if: needs.check_branch.outputs.is_release_branch == 'true'
         run: |
@@ -80,7 +77,6 @@ jobs:
     needs: [check_branch, not_release_branch]
     if: needs.check_branch.outputs.is_release_branch == 'true'
     runs-on: ubuntu-latest
-
     steps:
       # release notes: https://github.com/actions/checkout/releases/tag/v4.1.7
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # ratchet:actions/checkout@v4
