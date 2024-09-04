@@ -112,6 +112,7 @@ export function configureWebSocketServices(
 	revokedTokenChecker?: core.IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: core.IClusterDrainingChecker,
+	collaborationSessionTracker?: core.ICollaborationSessionTracker,
 ): void {
 	const lambdaDependencies: INexusLambdaDependencies = {
 		ordererManager,
