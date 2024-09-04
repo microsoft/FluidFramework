@@ -30,19 +30,19 @@ permissions:
   pull-requests: read
 
 jobs:
-  on-failure:
-    name: Check upstream workflow status
-    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure'
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "The triggering workflow failed"
+  # on-failure:
+  #   name: Check upstream workflow status
+  #   if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - run: echo "The triggering workflow failed"
 
   metadata:
     name: Get PR metadata
     runs-on: ubuntu-latest
     outputs:
       pr_num: ${{ steps.workflow_run_load_pr.outputs.pr_num || steps.workflow_dispatch_load_pr.outputs.pr_num }}
-      is_release_branch: ${{ steps.workflow_run_load_pr.outputs.is_release_branch || steps.workflow_dispatch_load_pr.outputs.is_release_branch }}
+      is_release_branch: ${{ steps.workflow_run_is_release_branch.outputs.is_release_branch || steps.workflow_dispatch_is_release_branch.outputs.is_release_branch }}
     steps:
 
       ### These steps run on workflow_run event only ###
