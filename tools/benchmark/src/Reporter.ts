@@ -120,21 +120,20 @@ export class BenchmarkReporter {
 		} else {
 			table.cell("status", `${pad(4)}${chalk.green("✔")}`);
 		}
-		table.cell("name", chalk.italic(testName));
-		table.cell("total time (s)", prettyNumber((result as BenchmarkData).elapsedSeconds, 2));
 
-		// Additional if-statement to display columns in more readble order.
+		table.cell("name", chalk.italic(testName));
+
+		// Additional if-statement to display columns in more readble order & avoid reporter from crashing if customData is empty.
 		if (isResultError(result)) {
 			table.cell("error", result.error);
-		}
+		} else {
+			table.cell("total time (s)", prettyNumber((result as BenchmarkData).elapsedSeconds, 2));
 
-		// Using this utility to print the data means missing fields don't crash and extra fields are reported.
-		// This is useful if this reporter is given unexpected data (such as from a memory test).
-		// It can also be used as a way to add extensible data formatting in the future.
-		const customData = (result as BenchmarkData).customData;
-		for (const [key, val] of Object.entries(customData)) {
-			const displayValue = val.formattedValue;
-			table.cell(key, displayValue, Table.padLeft);
+			const customData = (result as BenchmarkData).customData;
+			for (const [key, val] of Object.entries(customData)) {
+				const displayValue = val.formattedValue;
+				table.cell(key, displayValue, Table.padLeft);
+			}
 		}
 
 		table.newRow();
