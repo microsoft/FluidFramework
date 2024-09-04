@@ -44,6 +44,7 @@ jobs:
     outputs:
       pr_num: ${{ steps.workflow_run_load_pr.outputs.pr_num || steps.workflow_dispatch_load_pr.outputs.pr_num }}
       is_release_branch: ${{ steps.workflow_run_is_release_branch.outputs.is_release_branch || steps.workflow_dispatch_is_release_branch.outputs.is_release_branch }}
+      commit_sha: ${{ steps.workflow_run_load_commit_sha.outputs.commit_sha }}
     steps:
 
       ### These steps run on workflow_run event only ###
@@ -70,6 +71,12 @@ jobs:
         working-directory: ./artifacts
         run: echo "is_release_branch=$(cat is_release_branch)" >> $GITHUB_OUTPUT
 
+      - name: "workflow_run: Load commit_sha"
+        id: workflow_run_load_commit_sha
+        if: github.event_name == 'workflow_run'
+        working-directory: ./artifacts
+        run: echo "commit_sha=$(cat commit_sha)" >> $GITHUB_OUTPUT
+
       ### These steps run on workflow_dispatch event only ###
       - name: "workflow_dispatch: Load PR number"
         id: workflow_dispatch_load_pr
@@ -87,6 +94,15 @@ jobs:
     needs: metadata
     runs-on: ubuntu-latest
     steps:
+      - name: Set commit status as pending
+        # release notes: https://github.com/myrotvorets/set-commit-status-action/releases/tag/v2.0.1
+        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2.0.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          sha: ${{ needs.metadata.outputs.commit_sha }}
+          status: pending
+          context: Check PR approval
+
       # release notes: https://github.com/actions/checkout/releases/tag/v4.1.7
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # ratchet:actions/checkout@v4
         with:
@@ -146,6 +162,7 @@ jobs:
         uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2.0.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          sha: ${{ needs.metadata.outputs.commit_sha }}
           status: success
           context: Check PR approval
 

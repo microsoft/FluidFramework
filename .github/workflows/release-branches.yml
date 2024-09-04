@@ -74,6 +74,9 @@ jobs:
       - name: Save is_release_branch
         run: echo ${{ needs.check_branch.outputs.is_release_branch }} > ./artifacts/is_release_branch
 
+      - name: Save commit SHA
+        run: echo ${{ github.event.pull_request.head.ref }} > ./artifacts/commit_sha
+
       - name: Upload artifact
         # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.0
         uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # ratchet:actions/upload-artifact@v4.4.0
