@@ -28,7 +28,7 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 		}),
 		orderFile: Flags.file({
 			description:
-				"A file with package names that should be published. Such files can be created using `flub list`.",
+				"A file with package names that should be promoted. Such files can be created using `flub list`.",
 			exists: true,
 			required: true,
 		}),
