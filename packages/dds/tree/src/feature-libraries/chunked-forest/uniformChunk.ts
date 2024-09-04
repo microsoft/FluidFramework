@@ -114,12 +114,13 @@ export class TreeShape {
 		public readonly fieldsArray: readonly FieldShape[],
 		public readonly maybeDecompressedStringAsNumber: boolean = false,
 	) {
-		if (maybeDecompressedStringAsNumber) {
-			if (!(hasValue && type === "com.fluidframework.leaf.string")) {
-				throw new UsageError(
-					"maybeDecompressedStringAsNumber flag can only be set to true for string leaf node.",
-				);
-			}
+		if (
+			maybeDecompressedStringAsNumber &&
+			!(hasValue && type === "com.fluidframework.leaf.string")
+		) {
+			throw new UsageError(
+				"maybeDecompressedStringAsNumber flag can only be set to true for string leaf node.",
+			);
 		}
 		const fields: Map<FieldKey, OffsetShape> = new Map();
 		let numberOfValues = hasValue ? 1 : 0;
