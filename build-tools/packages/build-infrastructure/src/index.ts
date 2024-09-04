@@ -25,6 +25,4 @@ export type {
 	PackageManager,
 } from "./types.js";
 export { isIPackage, isIReleaseGroup } from "./types.js";
-export {
-	PackageBase,
-} from "./package.js";
+export { PackageBase } from "./package.js";

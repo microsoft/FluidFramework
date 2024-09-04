@@ -195,6 +195,7 @@ export type ReleaseGroupName = Opaque<string, IReleaseGroup>;
 export interface WorkspaceDefinition {
     // (undocumented)
     directory: string;
+    // (undocumented)
     releaseGroups: {
         [name: string]: ReleaseGroupDefinition;
     };

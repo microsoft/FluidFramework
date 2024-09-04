@@ -30,10 +30,7 @@ export class Workspace implements IWorkspace {
 	 */
 	public readonly directory: string;
 
-	private constructor(
-		name: string,
-		definition: WorkspaceDefinition,
-	) {
+	private constructor(name: string, definition: WorkspaceDefinition) {
 		this.name = name as WorkspaceName;
 		const repoRoot = findGitRoot();
 		this.directory = path.resolve(repoRoot, definition.directory);

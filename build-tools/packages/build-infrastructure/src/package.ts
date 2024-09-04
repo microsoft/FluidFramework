@@ -7,10 +7,7 @@ import path from "node:path";
 import * as chalk from "chalk";
 import { existsSync, readJsonSync } from "fs-extra";
 
-import {
-	type WorkspaceDefinition,
-	findReleaseGroupForPackage,
-} from "./config.js";
+import { type WorkspaceDefinition, findReleaseGroupForPackage } from "./config.js";
 import { readPackageJsonAndIndent, writePackageJson } from "./packageJsonUtils.js";
 import type {
 	AdditionalPackageProps,
