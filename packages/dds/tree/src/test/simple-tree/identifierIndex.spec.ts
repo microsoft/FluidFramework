@@ -84,8 +84,7 @@ describe.only("Simple-Tree Indexes", () => {
 	});
 
 	it("fail on lookup if two nodes have the same key", () => {
-		const { view, root: parent } = createView(new IndexableChild({ [childKey]: parentId }));
-		const { assertContents } = createIndex(view);
+		const { parent, index } = init({ [childKey]: parentId });
 		const child = parent.child;
 		assert(child !== undefined);
 		assertContents([parentId, parent, child]);
