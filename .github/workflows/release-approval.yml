@@ -47,7 +47,6 @@ jobs:
         uses: dawidd6/action-download-artifact@bf251b5aa9c2f7eeb574a96ee720e24f801b7c11 # ratchet:dawidd6/action-download-artifact@v6
         with:
           workflow: release-branches.yml
-          # workflow_conclusion: completed
           run_id: ${{ github.event.workflow_run.id }}
           name: release-branch-pr-metadata
           path: ./artifacts
@@ -86,8 +85,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         # Gets the head commit of the PR using the gh CLI and jq
         run: |
-          gh pr view ${{ steps.workflow_dispatch_load_pr.outputs.pr_num }} --json headRefOid --jq .headRefOid >
-          commit.txt
+          gh pr view ${{ steps.workflow_dispatch_load_pr.outputs.pr_num }} --json headRefOid --jq .headRefOid > commit.txt
           echo "commit_sha=$(cat commit.txt)" >> $GITHUB_OUTPUT
 
   check_approval:
