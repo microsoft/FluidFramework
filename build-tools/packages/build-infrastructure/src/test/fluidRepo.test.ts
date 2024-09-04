@@ -7,10 +7,8 @@ import { strict as assert } from "node:assert";
 import { expect } from "chai";
 import { describe, it } from "mocha";
 
-// import { type PackageJson } from "../interfaces.js";
 import { loadFluidRepo } from "../fluidRepo.js";
 import type { WorkspaceName } from "../types.js";
-// import { testDataPath } from "./init.js";
 
 describe("loadFluidRepo", () => {
 	it("loads correctly", () => {
