@@ -99,11 +99,11 @@ export class DetachedFieldIndex {
 		return clone;
 	}
 
-	public *entries(): Generator<
-		{ root: ForestRootId; latestRelevantRevision?: RevisionTag } & {
-			id: Delta.DetachedNodeId;
-		}
-	> {
+	public *entries(): Generator<{
+		root: ForestRootId;
+		latestRelevantRevision?: RevisionTag;
+		id: Delta.DetachedNodeId;
+	}> {
 		for (const [major, innerMap] of this.detachedNodeToField) {
 			if (major !== undefined) {
 				for (const [minor, { root, latestRelevantRevision }] of innerMap) {
@@ -331,6 +331,7 @@ export class DetachedFieldIndex {
 		this.isFullyLoaded = false;
 		const rootMap = new Map<ForestRootId, Delta.DetachedNodeId>();
 		forEachInNestedMap(detachedFieldIndex.data, ({ root }, major, minor) => {
+			setInNestedMap(this.detachedNodeToField, major, minor, { root });
 			rootMap.set(root, { major, minor });
 		});
 

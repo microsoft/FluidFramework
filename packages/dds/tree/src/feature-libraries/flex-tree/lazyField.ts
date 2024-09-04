@@ -26,7 +26,7 @@ import {
 	type ValueFieldEditBuilder,
 } from "../default-schema/index.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
-import type { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
+import type { FlexFieldSchema } from "../typed-schema/index.js";
 
 import type { Context } from "./context.js";
 import {
@@ -51,7 +51,7 @@ import {
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
 import { type LazyTreeNode, makeTree } from "./lazyNode.js";
-import { unboxedUnion } from "./unboxed.js";
+import { unboxedFlexNode } from "./unboxed.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { cursorForMapTreeField, cursorForMapTreeNode } from "../mapTreeCursor.js";
@@ -208,7 +208,7 @@ export abstract class LazyField<out TKind extends FlexFieldKind>
 
 	public atIndex(index: number): FlexTreeUnknownUnboxed {
 		return inCursorNode(this[cursorSymbol], index, (cursor) =>
-			unboxedUnion(this.context, this.schema, cursor),
+			unboxedFlexNode(this.context, cursor),
 		);
 	}
 
@@ -234,7 +234,7 @@ export abstract class LazyField<out TKind extends FlexFieldKind>
 
 	public [Symbol.iterator](): IterableIterator<FlexTreeUnknownUnboxed> {
 		return iterateCursorField(this[cursorSymbol], (cursor) =>
-			unboxedUnion(this.context, this.schema, cursor),
+			unboxedFlexNode(this.context, cursor),
 		);
 	}
 
@@ -284,7 +284,7 @@ export class LazySequence
 		}
 
 		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
-			unboxedUnion(this.context, this.schema, cursor),
+			unboxedFlexNode(this.context, cursor),
 		);
 	}
 	public get asArray(): readonly FlexTreeUnknownUnboxed[] {
@@ -371,13 +371,13 @@ export class LazyIdentifierField
 	}
 }
 
-export class LazyOptionalField<TTypes extends FlexAllowedTypes>
+export class LazyOptionalField
 	extends LazyField<typeof FieldKinds.optional>
 	implements FlexTreeOptionalField
 {
 	public constructor(
 		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.optional, TTypes>,
+		schema: FlexFieldSchema<typeof FieldKinds.optional>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -406,13 +406,13 @@ export class LazyOptionalField<TTypes extends FlexAllowedTypes>
 
 export class LazyForbiddenField extends LazyField<typeof FieldKinds.forbidden> {}
 
-type Builder = new <TTypes extends FlexAllowedTypes>(
+type Builder = new (
 	context: Context,
 	// Correct use of these builders requires the builder of the matching type to be used.
 	// Since this has to be done at runtime anyway, trying to use safer typing than `any` here (such as `never`, which is only slightly safer)
 	// does not seem worth it (ends up requiring type casts that are just as unsafe).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	schema: FlexFieldSchema<any, TTypes>,
+	schema: FlexFieldSchema<any>,
 	cursor: ITreeSubscriptionCursor,
 	fieldAnchor: FieldAnchor,
 ) => LazyField<FlexFieldKind>;

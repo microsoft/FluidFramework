@@ -17,7 +17,6 @@ import { fail } from "../util/index.js";
 
 import { defaultSchemaPolicy } from "./default-schema/index.js";
 import {
-	Any,
 	type FlexAllowedTypes,
 	FlexFieldSchema,
 	type FlexMapFieldSchema,
@@ -42,7 +41,7 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSc
 		if (innerSchema instanceof LeafNodeStoredSchema) {
 			map.set(
 				identifier,
-				LeafNodeSchema.create({ name: "intoTypedSchema" }, identifier, innerSchema.leafValue),
+				new LeafNodeSchema({ name: "intoTypedSchema" }, identifier, innerSchema.leafValue),
 			);
 		} else if (innerSchema instanceof MapNodeStoredSchema) {
 			map.set(
@@ -93,9 +92,9 @@ export function fieldSchemaFromStoredSchema(
 	map: ReadonlyMap<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>,
 ): FlexFieldSchema {
 	const kind = defaultSchemaPolicy.fieldKinds.get(schema.kind) ?? fail("missing field kind");
-	const types: FlexAllowedTypes =
-		schema.types === undefined
-			? [Any]
-			: Array.from(schema.types, (v) => () => map.get(v) ?? fail("missing schema"));
+	const types: FlexAllowedTypes = Array.from(
+		schema.types,
+		(v) => () => map.get(v) ?? fail("missing schema"),
+	);
 	return FlexFieldSchema.create(kind, types);
 }
