@@ -152,4 +152,10 @@ export interface ICollaborationSessionTracker {
 		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
 		knownConnectedClients?: ISignalClient[],
 	): void;
+	/**
+	 * Remove all currently tracked sessions that are no longer active and should have expired based on the session timeout.
+	 * This should be called periodically to ensure that sessions are not kept active indefinitely due to the service with the original
+	 * timer shutting down or other errors related to session clean up.
+	 */
+	pruneInactiveSessions(): void;
 }

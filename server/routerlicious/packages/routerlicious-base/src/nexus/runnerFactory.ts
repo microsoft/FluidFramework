@@ -161,6 +161,40 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			redisParams2,
 		);
 
+		/**
+		 * Whether to enable collaboration session tracking.
+		 */
+		const enableCollaborationSessionTracking: boolean | undefined = config.get(
+			"nexus:enableCollaborationSessionTracking",
+		);
+		/**
+		 * Whether to enable pruning of collaboration session tracking information on an interval.
+		 */
+		const enableCollaborationSessionPruning: boolean | undefined = config.get(
+			"nexus:enableCollaborationSessionPruning",
+		);
+		const sessionManager =
+			enableCollaborationSessionTracking === true
+				? new services.RedisCollaborationSessionManager(
+						redisClientConnectionManager,
+						redisParams2,
+				  )
+				: undefined;
+		const sessionTracker =
+			enableCollaborationSessionTracking === true
+				? new services.CollaborationSessionTracker(
+						clientManager,
+						sessionManager,
+						// Same as Deli close on inactivity, which signals session end.
+						core.DefaultServiceConfiguration.documentLambda.partitionActivityTimeout,
+				  )
+				: undefined;
+		if (enableCollaborationSessionPruning === true && sessionTracker !== undefined) {
+			setInterval(() => {
+				sessionTracker.pruneInactiveSessions();
+			}, core.DefaultServiceConfiguration.documentLambda.partitionActivityCheckInterval);
+		}
+
 		const redisClientConnectionManagerForJwtCache =
 			customizations?.redisClientConnectionManagerForJwtCache
 				? customizations.redisClientConnectionManagerForJwtCache
