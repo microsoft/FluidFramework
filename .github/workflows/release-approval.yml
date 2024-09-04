@@ -1,0 +1,137 @@
+# release-approval.yml
+#
+# This workflow checks that a PR has been reviewed by a member of FluidFramework-ReleaseApprovers.
+#
+# This workflow is normally triggered by the completion of the release-branches workflow. However, it can also be run
+# manually using the GitHub UI and providing a PR number.
+
+name: release-approval
+
+on:
+  workflow_run:
+    # Workflow is typically triggered by the completion of the release-branches workflow.
+    workflows: [release-branches]
+    # Only workflow runs from these branches will trigger this workflow.
+    branches:
+      - release/client/**
+      - release/server/**
+      - test/release/**
+
+  # The workflow can be triggered manually in the GitHub UI.
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "PR number on which to run approval checks"
+        required: true
+
+permissions:
+  actions: read
+  pull-requests: read
+
+jobs:
+  on-failure:
+    name: Check upstream workflow status
+    if: github.event_name == "workflow_run" && github.event.workflow_run.conclusion == "failure"
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "The triggering workflow failed"
+
+  metadata:
+    name: Get PR metadata
+    runs-on: ubuntu-latest
+    outputs:
+      pr_num: ${{ steps.workflow_run_load_pr.outputs.pr_num || steps.workflow_dispatch_load_pr.outputs.pr_num }}
+      is_release_branch: ${{ steps.workflow_run_load_pr.outputs.is_release_branch || steps.workflow_dispatch_load_pr.outputs.is_release_branch }}
+    steps:
+
+      ### These steps run on workflow_run event only ###
+      - name: Download metadata
+        if: github.event_name == "workflow_run"
+        # release notes: https://github.com/dawidd6/action-download-artifact/releases/tag/v6
+        uses: dawidd6/action-download-artifact@bd10f381a96414ce2b13a11bfa89902ba7cea07f # ratchet:dawidd6/action-download-artifact@v6
+        with:
+          workflow: release-branches.yml
+          # workflow_conclusion: completed
+          run_id: ${{ github.event.workflow_run.id }}
+          name: release-branch-pr-metadata
+          path: ./results
+
+      - name: "workflow_run: Load PR number"
+        id: workflow_run_load_pr
+        if: github.event_name == "workflow_run"
+        working-directory: ./results
+        run: echo "pr_num=$(cat pr)" >> $GITHUB_OUTPUT
+
+      - name: "workflow_run: Load is_release_branch"
+        id: workflow_run_is_release_branch
+        if: github.event_name == "workflow_run"
+        working-directory: ./results
+        run: echo "is_release_branch=$(cat is_release_branch)" >> $GITHUB_OUTPUT
+
+      ### These steps run on workflow_dispatch event only ###
+      - name: "workflow_dispatch: Load PR number"
+        id: workflow_dispatch_load_pr
+        if: github.event_name == "workflow_dispatch"
+        run: echo "pr_num=${{ github.event.inputs.pr }}" >> $GITHUB_OUTPUT
+
+      - name: "workflow_dispatch: Load is_release_branch"
+        id: workflow_dispatch_is_release_branch
+        if: github.event_name == "workflow_dispatch"
+        run: echo "is_release_branch=true" >> $GITHUB_OUTPUT
+
+  check_approval:
+    name: Check PR approval
+    if: needs.metadata.outputs.is_release_branch == 'true'
+    needs: metadata
+    runs-on: ubuntu-latest
+    steps:
+      # release notes: https://github.com/actions/checkout/releases/tag/v4.1.7
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # ratchet:actions/checkout@v4
+        with:
+          # The default ref when triggered by the workflow_run event is the default branch -- main
+          # This means the build-tools from the main branch will always be used.
+          persist-credentials: false
+          submodules: false
+
+      # install and configure node, pnpm and the changeset tools
+      # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.0.0
+      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
+
+      # release notes: https://github.com/actions/setup-node/releases/tag/v4.0.3
+      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # ratchet:actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install Fluid build tools
+        continue-on-error: true
+        run: |
+          cd build-tools
+          pnpm install --frozen-lockfile
+          pnpm run build:compile
+          # We want flub available to call, so we run npm link in the build-cli package, which creates shims that are avilable on the PATH
+          # Use npm link instead of pnpm link because it handles bins better
+          cd packages/build-cli
+          npm link
+
+      - name: Check build-tools installation
+        run: |
+          # Info for debugging
+          which flub
+          flub --help
+          flub commands
+
+      - name: Check PR approval
+        env:
+          # The standard token doesn't have org:read permissions, and that scope can't be added using permissions in
+          # the workflow.
+          # GITHUB_TOKEN: ${{ secrets.ORGANIZATION_READ_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # This command will fail with an error if the PR is not approved, which
+          # will in turn cause the CI job to fail.
+          flub check prApproval \
+            --pr ${{ needs.metadata.outputs.pr_num }} \
+            --repo ${{ github.repository }} \
+            --team FluidFramework-ReleaseApprovers
