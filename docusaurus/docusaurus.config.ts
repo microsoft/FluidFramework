@@ -124,12 +124,6 @@ const config: Config = {
 					position: "left",
 					label: "Docs",
 				},
-				{
-					type: 'docsVersion',
-					to: "/docs/api",
-					label: "API",
-					position: "left"
-				},
 				{ to: "/blog", label: "Blog", position: "left" },
 				{ to: "/community", label: "Community", position: "left" },
 				{ to: "/support", label: "Support", position: "left" },
