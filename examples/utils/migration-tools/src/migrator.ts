@@ -181,7 +181,7 @@ export class Migrator implements IMigrator {
 				// 2. Have the paused loading logic know how to load a different older snapshot version (though old versions may get deleted).
 				// 3. Have a acceptance rollback or acceptance update path, to either retry or update the acceptance sequence number to be reachable
 				// 4. Use a non-paused load, and accept that some late-arriving data might get included.
-				const { model: exportModel } = await this.modelLoader.loadExistingPaused(
+				const { model: exportModel } = await this.modelLoader.loadExistingToSequenceNumber(
 					this.currentModelId,
 					acceptedMigration.migrationSequenceNumber,
 				);
