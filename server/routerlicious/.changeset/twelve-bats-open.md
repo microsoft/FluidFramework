@@ -1,5 +1,5 @@
 ---
-"@fluidframework/server-services": major
+"@fluidframework/server-services": minor
 ---
 
 Added Collaboration Session Tracking implementations
