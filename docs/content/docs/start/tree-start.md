@@ -9,11 +9,15 @@ aliases:
 
 ---
 
-`SharedTree` is a [distributed data structure](../data-structures/overview.md) that looks and feels like simple JavaScript objects with a type safe wrapper. This guide will walk you through the basics of creating, configuring, and interacting with a `SharedTree` in your application. 
+`SharedTree` is a [distributed data structure](../data-structures/overview.md) that looks and feels like simple JavaScript objects with a type safe wrapper.
+This guide will walk you through the basics of creating, configuring, and interacting with a `SharedTree` in your application. 
 
 ## Creating a Tree
 
-A `SharedTree` can be created by defining a `ContainerSchema` with an initial object of type `SharedTree` and using this schema to create and load your container. This example creates a container using an Azure specific client. See more info on creating and loading containers [here](../build/containers.md#creating-a-container).
+A `SharedTree` can be created by defining a `ContainerSchema` with an initial object of type `SharedTree` and using this schema to create and load your container.
+This example creates a container using an Azure specific client.
+
+See more info on creating and loading containers [here](../build/containers.md#creating-a-container).
 
 ```
 import { AzureClient } from "@fluidframework/azure-client";
@@ -31,7 +35,8 @@ const containerSchema: ContainerSchema = {
 const { container } = await client.createContainer(containerSchema, "2");
 ```
 
-After creating a `SharedTree`, you need to create a `TreeView` from it to read and edit the data on the tree. This is done by calling `viewWith` on the `SharedTree` with your tree configuration.
+After creating a `SharedTree`, you need to create a `TreeView` from it to read and edit the data on the tree.
+This is done by calling `viewWith` on the `SharedTree` with your tree configuration.
 
 A `TreeView` is an editable view of a (version control style) branch of a `SharedTree` which conforms to a user defined schema that is provided to the tree configuration.
 
@@ -47,7 +52,9 @@ const appData = container.initialObjects.appData.viewWith(
 
 ## Defining a Schema
 
-A schema outlines the structure and types of data that your tree will manage. Having a schema provides useful guarantees about the shape your data will take. It is also used to generate TypeScript types which means the structure of your data is analogous to JS data types for easy use in external libraries or systems.
+A schema outlines the structure and types of data that your tree will manage.
+Having a schema provides useful guarantees about the shape your data will take.
+It is also used to generate TypeScript types which means the structure of your data is analogous to JS data types for easy use in external libraries or systems.
 
 To define a schema, first create a `SchemaFactory` with a unique string to use as the namespace.
 
@@ -55,9 +62,11 @@ To define a schema, first create a `SchemaFactory` with a unique string to use a
 const schemaFactory = new SchemaFactory("some-schema-id-prob-a-uuid")
 ```
 
-There are three methods for specifying internal nodes; `object()`, `array()`, and `map()`, and five primitive data types for specifying leaf nodes; `boolean`, `string`, `number`, `null`, and `handle`. See [schema definition](../data-structures/tree#schema-definition) for more info on the provided types.
+There are three methods for specifying internal nodes; `object()`, `array()`, and `map()`, and five primitive data types for specifying leaf nodes; `boolean`, `string`, `number`, `null`, and `handle`.
+See [schema definition](../data-structures/tree#schema-definition) for more info on the provided types.
 
-You can create a TypeScript datatype by extending the notional type object. This is called the customizable mode. As an example, let's write a schema for a todo list:
+You can define a schema in customizable mode by extending the notional type object which also creates a TypeScript data type.
+As an example, let's write a schema for a todo list:
 
 ```
 class TodoList extends schemaFactory.object("TodoList", {
@@ -73,13 +82,17 @@ class TodoItem extends schemaFactory.object("TodoItem", {
 });
 ```
 
-This creates a `TodoList` class that is an object schema with two fields, `title` and `items`. `title` is a leaf node of type `string` while `items` stores `TodoItems` which is an array of `TodoItem`. `TodoItem` is an object with two primitive values, `description` and `isCompleted`.
+This creates a `TodoList` class that is an object schema with two fields, `title` and `items`. `title` is a leaf node of type `string` while `items` stores `TodoItems` which is an array of `TodoItem`.
+`TodoItem` is an object with two primitive values, `description` and `isCompleted`.
 
-Schemas can also be defined using plain old JavaScript object (POJO) mode. Generally, you should prefer customizable mode. See [the API docs](../api/v2/tree/schemafactory-class#schemafactory-remarks) for more info on the differences between the two modes.
+Schemas can also be defined using plain old JavaScript object (POJO) mode.
+Generally, you should prefer customizable mode.
+See [the API docs](../api/v2/tree/schemafactory-class#schemafactory-remarks) for more info on the differences between the two modes.
 
 ## Reading Data From Your Tree
 
-Data can be read from the tree using the `root` property of the `TreeView` that you obtained through the `viewWith` method. Since the root of our tree is an object schema, its data can be accessed like a regular JavaScript object.
+Data can be read from the tree using the `root` property of the `TreeView` that you obtained through the `viewWith` method.
+Since the root of our tree is an object schema, its data can be accessed like a regular JavaScript object.
 
 If `TodoList` is the root schema of your tree, you can access the todo list data like this:
 
@@ -98,7 +111,8 @@ You can also iterate through the actual items, here's an example of how to use t
 </li>
 ```
 
-When using the data in your tree, it's important to listen to the change events provided by the tree so that you can make any necessary updates to your application. This is how you can use React hooks to listen to the `nodeChanged` event:
+When using the data in your tree, it's important to listen to the change events provided by the tree so that you can make any necessary updates to your application.
+This is how you can use React hooks to listen to the `nodeChanged` event:
 
 ```
 const [itemCount, setCount] = useState(appData.root.items.length);
@@ -111,11 +125,13 @@ useEffect(() => {
 }, []);
 ```
 
-`nodeChanged` fires whenever one or more properties of the specified node change while `treeChanged` also fires whenever any node in its subtree changes. See [the API] docs for more details.
+`nodeChanged` fires whenever one or more properties of the specified node change while `treeChanged` also fires whenever any node in its subtree changes.
+See [the API](../api/v2/tree/treechangeevents-interface) docs for more details.
 
 ## Editing Tree Data
 
-There are built-in editing methods for each of the provided schema types. For example, if your data is in an array, you can add an item like this:
+There are built-in editing methods for each of the provided schema types.
+For example, if your data is in an array, you can add an item like this:
 
 ```
 appData.root.items.insertAt(3);
@@ -127,7 +143,8 @@ The schema types can also be edited using the assignment operator like this:
 appData.root.title = "chores";
 ```
 
-Editing methods can also be defined on schema classes defined in customizable mode. This allows you to write methods that are more suited to your app's specific needs.
+Editing methods can also be defined on schema classes defined in customizable mode.
+This allows you to write methods that are more suited to your app's specific needs.
 
 ```
 class TodoList extends schemaFactory.object("TodoList", {
@@ -140,11 +157,13 @@ class TodoList extends schemaFactory.object("TodoList", {
 }
 ```
 \
-See [schema types](schema%20types) for more details on the built-in editing methods. You can also read more about how these editing operations work in collaborative settings [here](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/main/merge-semantics.md).
+See [schema definition](../data-structures/tree#schema-definition) for more details on the built-in editing methods.
+You can also read more about how these editing operations work in collaborative settings [here](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/main/merge-semantics.md).
 
 ### Grouping Edits into Transactions
 
-Edits can be grouped into transaction using the `Tree.runTransaction()`	API. Using a transaction guarantees that (if applied) all of the changes will be applied together synchronously.
+Edits can be grouped into transaction using the `Tree.runTransaction()`	API.
+Using a transaction guarantees that (if applied) all of the changes will be applied together synchronously.
 
 ```
 Tree.runTransaction(myNode, (node) => {
@@ -163,7 +182,10 @@ See more information on transactions [here](../data-structures/tree#transactions
 
 Calling `revert` on a `Revertible` will revert its associated commit on the associated view.
 
-A revertible can be obtained by listening to the `commitApplied` event and calling the `getRevertible` callback provided. Here is a simple example of how to manage undo and redo stacks using the provided APIs:
+A revertible can be obtained by listening to the `commitApplied` event and calling the `getRevertible` callback provided.
+The `kind` property on `CommitMetadata` tells you if a commit is the result of a normal edit, an undo, or a redo.
+This aids in managing separate undo and redo stacks.
+Here is a simple example of how to do so using the provided APIs:
 
 ```
 const undoStack = [];
