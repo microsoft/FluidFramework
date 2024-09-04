@@ -228,7 +228,7 @@ importers:
         specifier: ^0.3.2
         version: 0.3.2
       axios:
-        specifier: ^1.6.2
+        specifier: ^1.7.7
         version: 1.7.7(debug@4.3.4)
       body-parser:
         specifier: ^1.17.2
