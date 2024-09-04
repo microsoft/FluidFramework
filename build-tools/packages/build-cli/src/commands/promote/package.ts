@@ -33,7 +33,7 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 			required: true,
 		}),
 		token: Flags.string({
-			description: "Azure DevOps access token",
+			description: "Azure DevOps access token. This parameter should be passed using the ADO_API_TOKEN environment variable for security purposes.",
 			env: "ADO_API_TOKEN",
 			required: true,
 		}),
