@@ -70,16 +70,46 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 			);
 		}
 		const packageOrder = await readLines(orderFile);
-		await Promise.all(
-			packageOrder.map(async (packageName) => this.promotePackage(packageName)),
-		);
+
+		try {
+			const results = await Promise.all(
+				packageOrder.map(async (packageName) => this.promotePackage(packageName)),
+			);
+
+			const successfulPackages = results.filter((result) => result.success);
+			const failedPackages = results.filter((result) => !result.success);
+
+			this.log("Package promotion summary:");
+			this.log(`Total packages: ${results.length}`);
+			this.log(`Successful: ${successfulPackages.length}`);
+			this.log(`Failed: ${failedPackages.length}`);
+
+			if (successfulPackages.length > 0) {
+				this.log("\nSuccessfully promoted packages:");
+				for (const pkg of successfulPackages) this.log(`- ${pkg.packageName}`);
+			}
+
+			if (failedPackages.length > 0) {
+				this.log("\nFailed to promote the following packages:");
+				for (const pkg of failedPackages) this.log(`- ${pkg.packageName}: ${pkg.error}`);
+				this.error("Some packages failed to promote.", { exit: 1 });
+			} else {
+				this.log("\nAll packages promoted successfully.");
+			}
+		} catch (error) {
+			this.error(`An unexpected error occurred during package promotion: ${error}`, {
+				exit: 2,
+			});
+		}
 	}
 
 	private getFeedPromotionUrl(packageName: string, version: string): string {
 		return `https://pkgs.dev.azure.com/fluidframework/internal/_apis/packaging/feeds/build/npm/${packageName}/versions/${version}?api-version=7.1-preview.1`;
 	}
 
-	private async promotePackage(packageName: string): Promise<boolean> {
+	private async promotePackage(
+		packageName: string,
+	): Promise<{ packageName: string; success: boolean; error?: string }> {
 		const url = this.getFeedPromotionUrl(packageName, this.flags.version.version);
 		try {
 			const response = await fetch(url, {
@@ -99,16 +129,21 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 			});
 
 			if (!response.ok) {
-				const errorData = (await response.json()) as PackagePromotionErrorResponse;
-				this.error(
-					`Failed to promote package. Status: '${response.status}', Message: '${errorData.message}'`,
-					{ exit: 1 },
-				);
+				const errorData = (await response.json()) as PackagePromotionErrorResponse | undefined;
+				return {
+					packageName,
+					success: false,
+					error: `Status: ${response.status}, Message: ${errorData?.message ?? "Unknown error"}`,
+				};
 			}
 
-			return true;
-		} catch {
-			this.error(`Error promoting package`, { exit: 2 });
+			return { packageName, success: true };
+		} catch (error) {
+			return {
+				packageName,
+				success: false,
+				error: `Unexpected error: ${error}`,
+			};
 		}
 	}
 }
