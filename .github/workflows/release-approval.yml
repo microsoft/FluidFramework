@@ -13,10 +13,10 @@ on:
     workflows: [release-branches]
     types: [completed]
     # Only workflow runs from these branches will trigger this workflow.
-    # branches:
-    #   - release/client/**
-    #   - release/server/**
-    #   - test/release/**
+    branches:
+      - release/client/**
+      - release/server/**
+      - test/release/**
 
   # The workflow can be triggered manually in the GitHub UI.
   workflow_dispatch:
