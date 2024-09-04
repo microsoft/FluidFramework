@@ -42,9 +42,9 @@ jobs:
     outputs:
       pr_num: ${{ steps.workflow_run_load_pr.outputs.pr_num || steps.workflow_dispatch_load_pr.outputs.pr_num }}
       is_release_branch: ${{ steps.workflow_run_is_release_branch.outputs.is_release_branch || steps.workflow_dispatch_is_release_branch.outputs.is_release_branch }}
-      commit_sha: ${{ steps.workflow_run_load_commit_sha.outputs.commit_sha }}
-    steps:
+      commit_sha: ${{ steps.workflow_run_load_commit_sha.outputs.commit_sha || steps.workflow_dispatch_load_commit_sha.outputs.result }}
 
+    steps:
       ### These steps run on workflow_run event only ###
       - name: Download metadata
         if: github.event_name == 'workflow_run'
@@ -88,12 +88,19 @@ jobs:
       - name: "workflow_dispatch: Load commit_sha"
         id: workflow_dispatch_load_commit_sha
         if: github.event_name == 'workflow_dispatch'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # Gets the head commit of the PR using the gh CLI and jq
-        run: |
-          gh pr view ${{ steps.workflow_dispatch_load_pr.outputs.pr_num }} --json headRefOid --jq .headRefOid > commit.txt
-          echo "commit_sha=$(cat commit.txt)" >> $GITHUB_OUTPUT
+        # release notes: https://github.com/actions/github-script/releases/tag/v7.0.1
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # ratchet:actions/github-script@v7.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          result-encoding: string
+          script: |
+            # Gets the head commit of the PR
+            const { data: pr } = await github.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: ${{ steps.workflow_dispatch_load_pr.outputs.pr_num }},
+            });
+            return pr.head.sha;
 
   check_approval:
     name: Check PR approval
