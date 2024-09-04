@@ -101,7 +101,7 @@ export class AttributorSerializer implements IAttributorSerializer {
 		const entries: [number, AttributionInfo][] = Array.from({ length: seqs.length });
 		for (const [i, key] of seqs.entries()) {
 			const timestamp = timestamps[i];
-			const ref = attributionRefs[i]!;
+			const ref = attributionRefs[i];
 			const user = JSON.parse(interner.getString(ref)) as IUser;
 			entries[i] = [key, { user, timestamp }];
 		}
