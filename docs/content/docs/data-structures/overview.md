@@ -91,6 +91,7 @@ As SharedTree becomes more feature-rich, we plan to start reducing support for o
 This process takes the form of a deprecation journey for some of our existing DDSes, but rest assured, we will provide enough runway and support to migrate away from deprecated DDSes.
 
 DDS deprecation will follow these steps:
+
 -   **Provide alternative** - The recommended DDS will offer the same or better functionality than the deprecated DDS.
 -   **Migration path to the recommended DDS** - Before we deprecate a DDS, we will provide the ability for developers to migrate their data from their existing data model to the new data model. This will allow you to convert existing Fluid data to your new data model.
 -   **Deprecation of DDSes** - Deprecated DDSes will be marked deprecated in our APIs.
