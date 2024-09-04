@@ -67,9 +67,8 @@ module.exports = class {
 					// The mocha test failed after reporting benchmark data.
 					// This may indicate the benchmark did not measure what was intended, so mark as aborted.
 					const error =
-						(benchmark as BenchmarkError).error === undefined
-							? `Test ${test.title} in ${suite} completed with status '${test.state}' after reporting data.`
-							: (benchmark as BenchmarkError).error;
+						(benchmark as BenchmarkError).error ??
+						`Test ${test.title} in ${suite} completed with status '${test.state}' after reporting data.`;
 					console.error(chalk.red(error));
 					benchmark = { error };
 				}
