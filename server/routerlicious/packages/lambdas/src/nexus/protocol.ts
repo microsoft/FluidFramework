@@ -37,17 +37,15 @@ function isValidClientDetails(details: unknown): details is IClientDetails {
 	return (
 		typeof details === "object" &&
 		details !== null &&
-		"capabilities" in details &&
-		typeof details.capabilities === "object" &&
-		details.capabilities !== null &&
-		"interactive" in details.capabilities &&
-		typeof details.capabilities.interactive === "boolean" &&
-		"type" in details &&
-		(typeof details.type === "string" || details.type === undefined) &&
-		"environment" in details &&
-		(typeof details.environment === "string" || details.environment === undefined) &&
-		"device" in details &&
-		(typeof details.device === "string" || details.device === undefined)
+		typeof (details as IClientDetails).capabilities === "object" &&
+		(details as IClientDetails).capabilities !== null &&
+		typeof (details as IClientDetails).capabilities.interactive === "boolean" &&
+		(typeof (details as IClientDetails).type === "string" ||
+			(details as IClientDetails).type === undefined) &&
+		(typeof (details as IClientDetails).environment === "string" ||
+			(details as IClientDetails).environment === undefined) &&
+		(typeof (details as IClientDetails).device === "string" ||
+			(details as IClientDetails).device === undefined)
 	);
 }
 
@@ -59,20 +57,15 @@ function isValidClient(client: unknown): client is IClient {
 	return (
 		typeof client === "object" &&
 		client !== null &&
-		"mode" in client &&
-		(client.mode === "write" || client.mode === "read") &&
-		"details" in client &&
-		isValidClientDetails(client.details) &&
-		"permission" in client &&
-		Array.isArray(client.permission) &&
-		client.permission.every((p) => typeof p === "string") &&
-		"user" in client &&
-		isValidUser(client.user) &&
-		"scopes" in client &&
-		Array.isArray(client.scopes) &&
-		client.scopes.every((s) => typeof s === "string") &&
-		"timestamp" in client &&
-		(typeof client.timestamp === "number" || client.timestamp === undefined)
+		((client as IClient).mode === "write" || (client as IClient).mode === "read") &&
+		isValidClientDetails((client as IClient).details) &&
+		Array.isArray((client as IClient).permission) &&
+		(client as IClient).permission.every((p) => typeof p === "string") &&
+		isValidUser((client as IClient).user) &&
+		Array.isArray((client as IClient).scopes) &&
+		(client as IClient).scopes.every((s) => typeof s === "string") &&
+		(typeof (client as IClient).timestamp === "number" ||
+			(client as IClient).timestamp === undefined)
 	);
 }
 
@@ -85,33 +78,26 @@ export function isValidConnectionMessage(message: unknown): message is IConnect 
 	return (
 		typeof message === "object" &&
 		message !== null &&
-		"tenantId" in message &&
-		typeof message.tenantId === "string" &&
-		"id" in message &&
-		typeof message.id === "string" &&
-		"token" in message &&
+		typeof (message as IConnect).tenantId === "string" &&
+		typeof (message as IConnect).id === "string" &&
 		// According to protocol definitions, this can be string or null, but is
 		// expected to eventually be string or undefined.
-		(typeof message.token === "string" ||
-			message.token === null ||
-			message.token === undefined) &&
-		"client" in message &&
-		isValidClient(message.client) &&
-		"versions" in message &&
-		Array.isArray(message.versions) &&
-		message.versions.every((v) => typeof v === "string") &&
-		"driverVersion" in message &&
-		(typeof message.driverVersion === "string" || message.driverVersion === undefined) &&
-		"mode" in message &&
-		(message.mode === "write" || message.mode === "read") &&
-		"nonce" in message &&
-		(typeof message.nonce === "string" || message.nonce === undefined) &&
-		"epoch" in message &&
-		(typeof message.epoch === "string" || message.epoch === undefined) &&
-		"supportedFeatures" in message &&
-		(typeof message.supportedFeatures === "object" ||
-			message.supportedFeatures === undefined) &&
-		"relayUserAgent" in message &&
-		(typeof message.relayUserAgent === "string" || message.relayUserAgent === undefined)
+		(typeof (message as IConnect).token === "string" ||
+			(message as IConnect).token === null ||
+			(message as IConnect).token === undefined) &&
+		isValidClient((message as IConnect).client) &&
+		Array.isArray((message as IConnect).versions) &&
+		(message as IConnect).versions.every((v) => typeof v === "string") &&
+		(typeof (message as IConnect).driverVersion === "string" ||
+			(message as IConnect).driverVersion === undefined) &&
+		((message as IConnect).mode === "write" || (message as IConnect).mode === "read") &&
+		(typeof (message as IConnect).nonce === "string" ||
+			(message as IConnect).nonce === undefined) &&
+		(typeof (message as IConnect).epoch === "string" ||
+			(message as IConnect).epoch === undefined) &&
+		(typeof (message as IConnect).supportedFeatures === "object" ||
+			(message as IConnect).supportedFeatures === undefined) &&
+		(typeof (message as IConnect).relayUserAgent === "string" ||
+			(message as IConnect).relayUserAgent === undefined)
 	);
 }
