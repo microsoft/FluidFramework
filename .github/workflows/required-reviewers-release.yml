@@ -15,6 +15,7 @@ on:
       # then change the base branch to a release branch.
       - edited
 
+      # This is triggered when the PR branch has new commits pushed to it.
       - synchronize
     branches:
       - release/client/**
