@@ -23,7 +23,7 @@ describe("loadFluidRepo", () => {
 
 		const client = repo.workspaces.get("client" as WorkspaceName);
 		expect(client).to.not.be.undefined;
-		expect(client?.packages.length).to.equal(159);
+		expect(client?.packages.length).to.equal(160);
 		expect(client?.releaseGroups.size).to.equal(2);
 		console.debug(client?.releaseGroups);
 	});
