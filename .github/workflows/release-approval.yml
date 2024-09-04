@@ -83,6 +83,8 @@ jobs:
       - name: "workflow_dispatch: Load commit_sha"
         id: workflow_dispatch_load_commit_sha
         if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # Gets the head commit of the PR using the gh CLI and jq
         run: |
           gh pr view ${{ steps.workflow_dispatch_load_pr.outputs.pr_num }} --json headRefOid --jq .headRefOid > commit.txt
