@@ -50,13 +50,6 @@ const config: Config = {
 							label: "v2",
 							// path: "v2"
 						},
-						next: {
-							label: "next",
-							path: "next",
-							// Prevent indexing of unreleased docs
-							noIndex: true,
-							banner: "unreleased",
-						},
 						"1": {
 							label: "v1",
 							path: "v1",

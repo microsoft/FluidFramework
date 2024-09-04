@@ -16,22 +16,20 @@ import { renderApiDocumentation } from "./api-markdown-documenter/index.mjs";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// "next" maps to the local repo API docs.
-const versions = ["1", "2", "next"];
+// TODO: support generating "next" API docs
+
+const versions = ["1", "2"];
 
 const downloadedDocModelsDirectoryPath = path.resolve(dirname, "..", ".doc-models");
-const repoDocModelDirectoryPath = path.resolve(dirname, "..", "..", "_api-extractor-temp", "doc-models");
 
 const docModelDirectoryPaths = {
 	"1": path.resolve(downloadedDocModelsDirectoryPath, "v1"),
 	"2": path.resolve(downloadedDocModelsDirectoryPath, "v2"),
-	"next": path.resolve(repoDocModelDirectoryPath),
 };
 
 const outputDirectories = {
 	"1": path.resolve(dirname, "..", "versioned_docs", "version-1", "api"),
 	"2": path.resolve(dirname, "..", "docs", "api"),
-	"next": path.resolve(dirname, "..", "versioned_docs", "version-next", "api"),
 };
 
 try {
