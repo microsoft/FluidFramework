@@ -97,11 +97,7 @@ export class BenchmarkReporter {
 	 * Appends a prettified version of the results of a benchmark instance provided to the provided
 	 * BenchmarkResults object.
 	 */
-	public recordTestResult(
-		suiteName: string,
-		testName: string,
-		result: Readonly<BenchmarkResult>,
-	): void {
+	public recordTestResult(suiteName: string, testName: string, result: BenchmarkResult): void {
 		let results = this.inProgressSuites.get(suiteName);
 		if (results === undefined) {
 			results = {
@@ -126,9 +122,9 @@ export class BenchmarkReporter {
 		if (isResultError(result)) {
 			table.cell("error", result.error);
 		} else {
-			table.cell("total time (s)", prettyNumber((result as BenchmarkData).elapsedSeconds, 2));
+			table.cell("total time (s)", prettyNumber(result.elapsedSeconds, 2));
 
-			const customData = (result as BenchmarkData).customData;
+			const customData = result.customData;
 			for (const [key, val] of Object.entries(customData)) {
 				const displayValue = val.formattedValue;
 				table.cell(key, displayValue, Table.padLeft);
