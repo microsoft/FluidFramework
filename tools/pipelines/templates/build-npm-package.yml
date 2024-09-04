@@ -578,7 +578,7 @@ extends:
                 - ${{ if eq(parameters.testCoverage, true) }}:
                   - output: pipelineArtifact
                     displayName: Publish Artifacts - code-coverage
-                    condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest') )
+                    condition: and( succeeded(), eq(variables['Build.Reason'], 'PullRequest') )
                     targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
                     artifactName: codeCoverageAnalysis
                     sbomEnabled: false
