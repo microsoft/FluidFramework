@@ -50,6 +50,7 @@ jobs:
         run: |
           echo "is_release_branch=true" >> $GITHUB_OUTPUT
           echo ":ship: Release branch detected" >> $GITHUB_STEP_SUMMARY
+
       - name: Target is not a release branch
         id: not-release-branch
         if: |
