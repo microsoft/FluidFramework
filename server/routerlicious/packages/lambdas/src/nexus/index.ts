@@ -194,7 +194,7 @@ export function configureWebSocketServices(
 
 		// Note connect is a reserved socket.io word so we use connect_document to represent the connect request
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		socket.on("connect_document", async (connectionMessage: IConnect) => {
+		socket.on("connect_document", async (connectionMessage: unknown) => {
 			if (!isValidConnectionMessage(connectionMessage)) {
 				// If the connection message is invalid, emit an error and return.
 				// This will prevent the connection from being established, but more importantly
