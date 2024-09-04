@@ -79,6 +79,7 @@ jobs:
     needs: [check_branch, not_release_branch]
     if: needs.check_branch.outputs.is_release_branch == 'true'
     runs-on: ubuntu-latest
+
     steps:
       # release notes: https://github.com/actions/checkout/releases/tag/v4.1.7
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # ratchet:actions/checkout@v4
@@ -121,7 +122,9 @@ jobs:
 
       - name: Check PR approval
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The standard token doesn't have org:read permissions, and that scope can't be added using permissions in
+          # the workflow.
+          GITHUB_TOKEN: ${{ secrets.ORGANIZATION_READ_PAT }}
         run: |
           # This command will fail with an error if the PR is not approved, which
           # will in turn cause the CI job to fail.
