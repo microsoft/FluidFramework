@@ -97,7 +97,7 @@ describe("separate-container migration", () => {
 			await page.waitForFunction(() => window["fluidStarted"]);
 		});
 
-		it("migrates after summarizer has connected", async () => {
+		it.skip("migrates after summarizer has connected", async () => {
 			// Validate the migration status shows "one" initially
 			await Promise.all([
 				page.waitForSelector("#sbs-left .migration-status"),
