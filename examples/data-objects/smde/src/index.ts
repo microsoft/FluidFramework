@@ -8,8 +8,8 @@ import {
 	MountableView,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
-import { IContainerContext } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/internal";
+import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
@@ -24,7 +24,7 @@ const defaultComponentId = "default";
 const smde = new SmdeFactory();
 
 class SmdeContainerFactory extends RuntimeFactoryHelper {
-	public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
+	public async instantiateFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const dataStore = await runtime.createDataStore(smde.type);
 		await dataStore.trySetAlias(defaultComponentId);
 	}
@@ -32,12 +32,12 @@ class SmdeContainerFactory extends RuntimeFactoryHelper {
 	public async preInitialize(
 		context: IContainerContext,
 		existing: boolean,
-	): Promise<ContainerRuntime> {
+	): Promise<IContainerRuntime & IRuntime> {
 		const registryEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 			[smde.type, Promise.resolve(smde)],
 		]);
 
-		const runtime: ContainerRuntime = await ContainerRuntime.loadRuntime({
+		const runtime = await loadContainerRuntime({
 			context,
 			registryEntries,
 			existing,

@@ -283,12 +283,17 @@ export async function getSession(
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	ephemeralDocumentTTLSec?: number,
 ): Promise<ISession> {
-	const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
+	const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
 	const document: IDocument = await documentRepository.readOne({ tenantId, documentId });
 	if (!document || document.scheduledDeletionTime !== undefined) {
 		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
 	}
+
+	const lumberjackProperties = {
+		...baseLumberjackProperties,
+		isEphemeralContainer: document.isEphemeralContainer,
+	};
 	if (document.isEphemeralContainer && ephemeralDocumentTTLSec !== undefined) {
 		// Check if the document is ephemeral and has expired.
 		const currentTime = Date.now();
@@ -296,11 +301,12 @@ export async function getSession(
 		if (currentTime > documentExpirationTime) {
 			// If the document is ephemeral and older than the max ephemeral document TTL, throw an error indicating that it can't be accessed.
 			const documentExpiredByMs = currentTime - documentExpirationTime;
-			const error = new NetworkError(404, "Ephemeral Container Expired");
+			// TODO: switch back to "Ephemeral Container Expired" once clients update to use errorType, not error message. AB#12867
+			const error = new NetworkError(404, "Document is deleted and cannot be accessed.");
 			Lumberjack.warning(
 				"Document is older than the max ephemeral document TTL.",
 				{
-					...getLumberBaseProperties(documentId, tenantId),
+					...lumberjackProperties,
 					documentCreateTime: document.createTime,
 					documentExpirationTime,
 					documentExpiredByMs,

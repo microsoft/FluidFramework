@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { AllowedUpdateType, Compatibility } from "../core/index.js";
+import { AllowedUpdateType, anchorSlot, Compatibility } from "../core/index.js";
 import {
 	type HasListeners,
 	type IEmitter,
@@ -14,13 +14,13 @@ import {
 	createEmitter,
 } from "../events/index.js";
 import {
-	type FlexFieldSchema,
 	type NodeKeyManager,
 	ViewSchema,
 	defaultSchemaPolicy,
 	ContextSlot,
 	cursorForMapTreeNode,
 	type FlexTreeSchema,
+	intoStoredSchema,
 } from "../feature-libraries/index.js";
 import {
 	type FieldSchema,
@@ -44,6 +44,11 @@ import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../
 import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
 import type { ITreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView } from "./treeView.js";
+/**
+ * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
+ * exists and error if creating a second.
+ */
+export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
 
 /**
  * Implementation of TreeView wrapping a FlexTreeView.
@@ -57,7 +62,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	 *
 	 * The view schema may be incompatible with the stored schema. Use `compatibility` to check.
 	 */
-	private view: CheckoutFlexTreeView<FlexFieldSchema> | undefined;
+	private view: CheckoutFlexTreeView | undefined;
 
 	/**
 	 * Undefined iff uninitialized or disposed.
@@ -89,6 +94,11 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		public readonly nodeKeyManager: NodeKeyManager,
 		public readonly breaker: Breakable = new Breakable("SchematizingSimpleTreeView"),
 	) {
+		if (checkout.forest.anchors.slots.has(ViewSlot)) {
+			throw new UsageError("Cannot create a second tree view from the same checkout");
+		}
+		checkout.forest.anchors.slots.set(ViewSlot, this);
+
 		const policy = {
 			...defaultSchemaPolicy,
 			validateSchema: config.enableSchemaValidation,
@@ -96,7 +106,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 		this.flexSchema = toFlexSchema(config.schema);
 
-		this.viewSchema = new ViewSchema(policy, {}, this.flexSchema);
+		this.viewSchema = new ViewSchema(policy, {}, intoStoredSchema(this.flexSchema));
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -137,7 +147,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 
 			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
-				schema: this.flexSchema,
+				schema: this.viewSchema.storedSchema,
 				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
 			});
 		});
@@ -164,7 +174,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 				AllowedUpdateType.SchemaCompatible,
 				this.checkout,
 				{
-					schema: this.flexSchema,
+					schema: this.viewSchema.storedSchema,
 					initialTree: undefined,
 				},
 			);
@@ -175,7 +185,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	/**
 	 * Gets the view. Throws when disposed.
 	 */
-	public getView(): CheckoutFlexTreeView<FlexFieldSchema> {
+	public getView(): CheckoutFlexTreeView {
 		this.ensureUndisposed();
 		assert(this.view !== undefined, 0x8c0 /* unexpected getViewOrError */);
 		return this.view;
@@ -252,12 +262,21 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 				}
 			};
 
-			this.view = requireSchema(
+			const view = requireSchema(
 				this.checkout,
 				this.viewSchema,
 				onViewDispose,
 				this.nodeKeyManager,
+				this.flexSchema,
 			);
+			this.view = view;
+
+			const unregister = this.checkout.storedSchema.on("afterSchemaChange", () => {
+				unregister();
+				this.unregisterCallbacks.delete(unregister);
+				view[disposeSymbol]();
+			});
+			this.unregisterCallbacks.add(unregister);
 		} else {
 			this.view = undefined;
 
@@ -304,6 +323,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	public dispose(): void {
 		this.disposed = true;
 		this.disposeView();
+		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
 	}
 
@@ -334,12 +354,13 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
  * Creates a view that self-disposes whenenever the stored schema changes.
  * This may only be called when the schema is already known to be compatible (typically via ensureSchema).
  */
-export function requireSchema<TRoot extends FlexFieldSchema>(
+export function requireSchema(
 	checkout: ITreeCheckout,
-	viewSchema: ViewSchema<TRoot>,
+	viewSchema: ViewSchema,
 	onDispose: () => void,
 	nodeKeyManager: NodeKeyManager,
-): CheckoutFlexTreeView<TRoot> {
+	flexTreeSchema: FlexTreeSchema,
+): CheckoutFlexTreeView {
 	const slots = checkout.forest.anchors.slots;
 	assert(!slots.has(ContextSlot), 0x8c2 /* Cannot create second view from checkout */);
 
@@ -352,18 +373,7 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 		);
 	}
 
-	const view = new CheckoutFlexTreeView(
-		checkout,
-		viewSchema.schema,
-		nodeKeyManager,
-		onDispose,
-	);
+	const view = new CheckoutFlexTreeView(checkout, flexTreeSchema, nodeKeyManager, onDispose);
 	assert(slots.has(ContextSlot), 0x90d /* Context should be tracked in slot */);
-
-	const unregister = checkout.storedSchema.on("afterSchemaChange", () => {
-		unregister();
-		view[disposeSymbol]();
-	});
-
 	return view;
 }

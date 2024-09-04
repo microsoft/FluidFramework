@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { ContainerSchema } from "@fluidframework/fluid-static";
-import { TinyliciousClient } from "@fluidframework/tinylicious-client/internal";
+import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 
 import { treeDataObject } from "../reactSharedTreeView.js";

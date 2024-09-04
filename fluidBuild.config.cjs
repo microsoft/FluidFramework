@@ -43,6 +43,7 @@ module.exports = {
 		},
 		"build": {
 			dependsOn: [
+				"check:format",
 				"compile",
 				"lint",
 				"build:api-reports",
@@ -61,14 +62,7 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: [
-				"check:format",
-				"eslint",
-				"good-fences",
-				"depcruise",
-				"check:exports",
-				"check:release-tags",
-			],
+			dependsOn: ["eslint", "good-fences", "depcruise", "check:exports", "check:release-tags"],
 			script: false,
 		},
 		"checks": {
@@ -81,10 +75,10 @@ module.exports = {
 		},
 		"build:copy": [],
 		"build:genver": [],
-		"typetests:gen": [
-			// type tests are generated from the built files, so we need to compile first
-			...compileDependsOn,
-		],
+		// These dependencies for typetests:gen can be removed once build-tools is upgraded to 0.45+.
+		// After that version, typetests are generated from the previous version of the package only, so they have no
+		// dependent tasks.
+		"typetests:gen": ["^tsc"],
 		"ts2esm": [],
 		"tsc": tscDependsOn,
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
@@ -571,11 +565,11 @@ module.exports = {
 
 	releaseNotes: {
 		sections: {
-			"feature": { heading: "✨ New Features" },
-			"tree": { heading: "🌳 SharedTree DDS changes" },
-			"fix": { heading: "🐛 Bug Fixes" },
-			"deprecation": { heading: "⚠️ Deprecations" },
-			"other": { heading: "Other Changes" },
+			feature: { heading: "✨ New Features" },
+			tree: { heading: "🌳 SharedTree DDS changes" },
+			fix: { heading: "🐛 Bug Fixes" },
+			deprecation: { heading: "⚠️ Deprecations" },
+			other: { heading: "Other Changes" },
 		},
 	},
 };

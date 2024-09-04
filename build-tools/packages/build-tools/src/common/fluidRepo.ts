@@ -5,24 +5,31 @@
 
 import * as path from "path";
 
-import {
-	DEFAULT_INTERDEPENDENCY_RANGE,
-	InterdependencyRange,
-	VersionBumpType,
-} from "@fluid-tools/version-tools";
-
-import registerDebug from "debug";
 import { TaskDefinitionsOnDisk } from "./fluidTaskDefinitions";
-import { loadFluidBuildConfig } from "./fluidUtils";
 import { MonoRepo } from "./monoRepo";
 import { Package, Packages } from "./npmPackage";
 import { ExecAsyncResult } from "./utils";
-const traceInit = registerDebug("fluid-build:init");
 
 /**
- * Fluid build configuration that is expected in the repo-root package.json.
+ * The version of the fluidBuild configuration currently used.
+ *
+ * @remarks
+ *
+ * This is not exported outside of the build-tools package; it is only used internally.
+ */
+export const FLUIDBUILD_CONFIG_VERSION = 1;
+
+/**
+ * Top-most configuration for repo build settings.
  */
 export interface IFluidBuildConfig {
+	/**
+	 * The version of the config.
+	 *
+	 * IMPORTANT: this will become required in a future release.
+	 */
+	version?: typeof FLUIDBUILD_CONFIG_VERSION;
+
 	/**
 	 * Build tasks and dependencies definitions
 	 */
@@ -337,7 +344,7 @@ export const defaultTypeValidationConfig: ITypeValidationConfig = {
 /**
  * Configures a package or release group
  */
-export interface IFluidRepoPackage {
+export interface IFluidBuildDir {
 	/**
 	 * The path to the package. For release groups this should be the path to the root of the release group.
 	 */
@@ -347,19 +354,13 @@ export interface IFluidRepoPackage {
 	 * An array of paths under `directory` that should be ignored.
 	 */
 	ignoredDirs?: string[];
-
-	/**
-	 * The interdependencyRange controls the type of semver range to use between packages in the same release group. This
-	 * setting controls the default range that will be used when updating the version of a release group. The default can
-	 * be overridden using the `--interdependencyRange` flag in the `flub bump` command.
-	 */
-	defaultInterdependencyRange: InterdependencyRange;
 }
 
-export type IFluidRepoPackageEntry =
-	| string
-	| IFluidRepoPackage
-	| (string | IFluidRepoPackage)[];
+export type IFluidBuildDirEntry = string | IFluidBuildDir | (string | IFluidBuildDir)[];
+
+export interface IFluidBuildDirs {
+	[name: string]: IFluidBuildDirEntry;
+}
 
 export class FluidRepo {
 	private readonly _releaseGroups = new Map<string, MonoRepo>();
@@ -370,46 +371,34 @@ export class FluidRepo {
 
 	public readonly packages: Packages;
 
-	public static create(resolvedRoot: string) {
-		const packageManifest = loadFluidBuildConfig(resolvedRoot);
-		return new FluidRepo(resolvedRoot, packageManifest);
-	}
-
-	protected constructor(
+	public constructor(
 		public readonly resolvedRoot: string,
-		packageManifest: IFluidBuildConfig,
+		fluidBuildDirs?: IFluidBuildDirs,
 	) {
 		// Expand to full IFluidRepoPackage and full path
-		const normalizeEntry = (
-			item: IFluidRepoPackageEntry,
-		): IFluidRepoPackage | IFluidRepoPackage[] => {
+		const normalizeEntry = (item: IFluidBuildDirEntry): IFluidBuildDir | IFluidBuildDir[] => {
 			if (Array.isArray(item)) {
-				return item.map((entry) => normalizeEntry(entry) as IFluidRepoPackage);
+				return item.map((entry) => normalizeEntry(entry) as IFluidBuildDir);
 			}
 			if (typeof item === "string") {
-				traceInit(
-					`No defaultInterdependencyRange setting found for '${item}'. Defaulting to "${DEFAULT_INTERDEPENDENCY_RANGE}".`,
-				);
 				return {
 					directory: path.join(resolvedRoot, item),
 					ignoredDirs: undefined,
-					defaultInterdependencyRange: DEFAULT_INTERDEPENDENCY_RANGE,
 				};
 			}
 			const directory = path.join(resolvedRoot, item.directory);
 			return {
 				directory,
 				ignoredDirs: item.ignoredDirs?.map((dir) => path.join(directory, dir)),
-				defaultInterdependencyRange: item.defaultInterdependencyRange,
 			};
 		};
-		const loadOneEntry = (item: IFluidRepoPackage, group: string) => {
+		const loadOneEntry = (item: IFluidBuildDir, group: string) => {
 			return Packages.loadDir(item.directory, group, item.ignoredDirs);
 		};
 
 		const loadedPackages: Package[] = [];
-		for (const group in packageManifest.repoPackages) {
-			const item = normalizeEntry(packageManifest.repoPackages[group]);
+		for (const group in fluidBuildDirs) {
+			const item = normalizeEntry(fluidBuildDirs[group]);
 			if (Array.isArray(item)) {
 				for (const i of item) {
 					loadedPackages.push(...loadOneEntry(i, group));
