@@ -97,7 +97,7 @@ jobs:
           result-encoding: string
           # Gets the head commit of the PR
           script: |
-            const { data: pr } = await github.pulls.get({
+            const { data: pr } = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: process.env.PR_NUMBER,
