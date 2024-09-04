@@ -49,7 +49,7 @@ jobs:
       - name: Download metadata
         if: github.event_name == 'workflow_run'
         # release notes: https://github.com/dawidd6/action-download-artifact/releases/tag/v6
-        uses: dawidd6/action-download-artifact@bd10f381a96414ce2b13a11bfa89902ba7cea07f # ratchet:dawidd6/action-download-artifact@v6
+        uses: dawidd6/action-download-artifact@bf251b5aa9c2f7eeb574a96ee720e24f801b7c11 # ratchet:dawidd6/action-download-artifact@v6
         with:
           workflow: release-branches.yml
           # workflow_conclusion: completed
