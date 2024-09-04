@@ -65,28 +65,26 @@ export class Workspace implements IWorkspace {
 				throw new Error(`Unknown package manager ${tool.type}`);
 		}
 
-		// filter out the root package
-		const filtered = foundPackages.filter((pkg) => pkg.relativeDir !== ".");
-
-		// Load IPackages for all packages in the workspace except the root
-		this.packages = filtered.map((pkg) =>
-			loadPackageFromWorkspaceDefinition(
+		this.packages = [];
+		for (const pkg of foundPackages) {
+			const loadedPackage = loadPackageFromWorkspaceDefinition(
 				path.join(pkg.dir, "package.json"),
 				packageManager,
 				/* isWorkspaceRoot */ false,
 				definition,
-			),
-		);
+			);
+			this.packages.push(loadedPackage);
+		}
 
 		// Load the workspace root IPackage
 		this.rootPackage = loadPackageFromWorkspaceDefinition(
-			path.join(foundRootPackage.dir, "package.json"),
+			path.join(this.directory, "package.json"),
 			packageManager,
 			/* isWorkspaceRoot */ true,
 			definition,
 		);
 
-		// Add the root package to the list of packages
+		// Prepend the root package to the list of packages
 		this.packages.unshift(this.rootPackage);
 
 		const rGroupDefinitions: Map<ReleaseGroupName, ReleaseGroupDefinition> =

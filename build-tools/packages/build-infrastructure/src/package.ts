@@ -198,13 +198,10 @@ export class Package<
 		this: T,
 		packageJsonFilePath: string,
 		packageManager: PackageManager,
-		// workspace?: IWorkspace,
 		isWorkspaceRoot: boolean,
-		// releaseGroupName: ReleaseGroupName,
-		// isReleaseGroupRoot: boolean,
 		workspaceDefinition: WorkspaceDefinition,
 		additionalProperties?: TAddProps,
-	) {
+	): IPackage {
 		const packageName: PackageName = readJsonSync(packageJsonFilePath).name;
 		const releaseGroupName = findReleaseGroupForPackage(
 			packageName,
@@ -228,7 +225,6 @@ export class Package<
 		return new this(
 			packageJsonFilePath,
 			packageManager,
-			// workspace,
 			isWorkspaceRoot,
 			releaseGroupName,
 			isReleaseGroupRoot,
