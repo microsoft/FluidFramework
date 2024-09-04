@@ -59,20 +59,64 @@ import { checkThrottleAndUsage, getSocketConnectThrottleId } from "./throttleAnd
  * Trace stages for the connect flow.
  */
 enum ConnectDocumentStage {
+	/**
+	 * The connect document flow has started.
+	 */
 	ConnectDocumentStarted = "ConnectDocumentStarted",
+	/**
+	 * Connection protocol versions have been parsed and validated.
+	 */
 	VersionsChecked = "VersionsChecked",
+	/**
+	 * Connection throttling has been checked and updated.
+	 */
 	ThrottleChecked = "ThrottleChecked",
+	/**
+	 * Authentication token has been validated.
+	 */
 	TokenVerified = "TokenVerified",
+	/**
+	 * Socket rooms have been joined/subscribed to.
+	 */
 	RoomJoined = "RoomJoined",
+	/**
+	 * Connected clients list has been retrieved from the client manager.
+	 */
 	ClientsRetrieved = "ClientsRetrieved",
+	/**
+	 * Server-trusted client information has been compiled into a "message client" variable.
+	 */
 	MessageClientCreated = "MessageClientCreated",
+	/**
+	 * Message client has been added to the client manager's connected clients list.
+	 */
 	MessageClientAdded = "MessageClientAdded",
+	/**
+	 * A timer has been started to terminate the connection when the token expires.
+	 */
 	TokenExpirySet = "TokenExpirySet",
+	/**
+	 * The orderer connection has been established (if client is a writer) and the
+	 * connected message response to send back to the client has been composed.
+	 */
 	MessageClientConnected = "MessageClientConnected",
+	/**
+	 * Socket tracking for this connection has been started for token revocation purposes.
+	 */
 	SocketTrackerAppended = "SocketTrackerAppended",
+	/**
+	 * Collaboration session tracking for this connection has been started for telemetry purposes.
+	 */
 	SessionTrackerAppended = "SessionTrackerAppended",
+	/**
+	 * A listener has been set up to broadcast signals from external APIs to the room.
+	 */
 	SignalListenerSetUp = "SignalListenerSetUp",
-	JoinOpEmitted = "JoinOpEmitted",
+	/**
+	 * The client has been successfully joined to the room and a client join notification has been
+	 * emitted to the room.
+	 */
+	JoinSignalEmitted = "JoinSignalEmitted",
 }
 
 function composeConnectedMessage(
@@ -461,7 +505,7 @@ async function retrieveClients(
 	return clients;
 }
 
-function createMessageClientAndJoinRoom(
+function createMessageClient(
 	mode: ConnectionMode,
 	client: IClient,
 	claims: ITokenClaims,
@@ -650,7 +694,7 @@ export async function connectDocument(
 		connectionTrace.stampStage(ConnectDocumentStage.ClientsRetrieved);
 
 		const connectedTimestamp = Date.now();
-		const messageClient = createMessageClientAndJoinRoom(
+		const messageClient = createMessageClient(
 			message.mode,
 			message.client,
 			claims,
@@ -744,7 +788,7 @@ export async function connectDocument(
 			"signal",
 			createRoomJoinMessage(result.connection.clientId, result.details),
 		);
-		connectionTrace.stampStage(ConnectDocumentStage.JoinOpEmitted);
+		connectionTrace.stampStage(ConnectDocumentStage.JoinSignalEmitted);
 
 		connectMetric.setProperties({
 			[CommonProperties.clientId]: result.connection.clientId,

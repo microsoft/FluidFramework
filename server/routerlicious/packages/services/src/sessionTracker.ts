@@ -24,6 +24,8 @@ import {
 export class CollaborationSessionTracker implements ICollaborationSessionTracker {
 	/**
 	 * Map of session timers keyed by session ID.
+	 *
+	 * @remarks
 	 * When a session is "ended" (last connected client session ends), a timer is started to
 	 * end the document's collaboration session after a period of inactivity.
 	 * This map tracks those timers so they can be cleared if a client reconnects.
@@ -35,11 +37,15 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 	constructor(
 		/**
 		 * Client manager used to manage the set of connected clients.
+		 *
+		 * @remarks
 		 * In a multi-service-instance environment, this should track state across all instances.
 		 */
 		private readonly clientManager: IClientManager,
 		/**
 		 * Session manager used to manage the set of active sessions.
+		 *
+		 * @remarks
 		 * In a multi-service-instance environment, this should track state across all instances.
 		 * This is also used to periodically prune sessions whose timers have expired but were not
 		 * cleaned up due to a service shutdown or other error.
@@ -107,10 +113,8 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		await this.sessionManager.addOrUpdateSession({
 			...updatedSession,
 		});
-		// TODO: check session in session manager
-		// If session exists, remove its lastClientLeaveTime property if necessary.
-		// Otherwise, create a new session in the session manager.
 	}
+
 	public endClientSession(
 		client: ICollaborationSessionClient,
 		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
