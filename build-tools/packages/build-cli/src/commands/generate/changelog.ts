@@ -6,12 +6,11 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { FluidRepo, Package } from "@fluidframework/build-tools";
-import { Flags } from "@oclif/core";
 import { command as execCommand } from "execa";
 import { inc } from "semver";
 import { CleanOptions } from "simple-git";
 
-import { checkFlags, releaseGroupFlag } from "../../flags.js";
+import { checkFlags, releaseGroupFlag, semverFlag } from "../../flags.js";
 import { BaseCommand, Repository } from "../../library/index.js";
 import { isReleaseGroup } from "../../releaseGroups.js";
 
@@ -30,7 +29,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		releaseGroup: releaseGroupFlag({
 			required: true,
 		}),
-		version: Flags.string({
+		version: semverFlag({
 			description:
 				"The version for which to generate the changelog. If this is not provided, the version of the package according to package.json will be used.",
 		}),
@@ -57,7 +56,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		const changesetsCalculatedVersion = isInternalVersionScheme(pkgVersion)
 			? fromInternalScheme(pkgVersion)[0].version
 			: inc(pkgVersion, "major");
-		const versionToUse = this.flags.version ?? pkgVersion;
+		const versionToUse = this.flags.version?.version ?? pkgVersion;
 
 		// Replace the changeset version with the correct version.
 		await replaceInFile(

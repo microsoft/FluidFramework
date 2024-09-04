@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type {
-	ContainerRuntime,
-	IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime/internal";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+	IContainerRuntime,
+	// eslint-disable-next-line import/no-deprecated
+	IContainerRuntimeWithResolveHandle_Deprecated,
+} from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-deprecated
 import type { RuntimeRequestHandler } from "@fluidframework/request-handler/internal";
@@ -52,11 +53,11 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	// eslint-disable-next-line import/no-deprecated
 	requestHandlers?: RuntimeRequestHandler[];
 	/**
-	 * The runtime options passed to the ContainerRuntime when instantiating it
+	 * The runtime options passed to the IContainerRuntime when instantiating it
 	 */
 	runtimeOptions?: IContainerRuntimeOptions;
 	/**
-	 * Function that will initialize the entryPoint of the ContainerRuntime instances
+	 * Function that will initialize the entryPoint of the IContainerRuntime instances
 	 * created with this factory
 	 */
 	provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
@@ -86,8 +87,9 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 		): Promise<IResponse | undefined> => {
 			const parser = RequestParser.create(request);
 			if (parser.pathParts.length === 0) {
-				// This cast is safe as ContainerRuntime.loadRuntime is called in the base class
-				return (runtime as ContainerRuntime).resolveHandle({
+				// This cast is safe as loadContainerRuntime is called in the base class
+				// eslint-disable-next-line import/no-deprecated
+				return (runtime as IContainerRuntimeWithResolveHandle_Deprecated).resolveHandle({
 					url: `/${defaultDataStoreId}${parser.query}`,
 					headers: request.headers,
 				});

@@ -122,4 +122,11 @@ export {
 } from "./jsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
-export { toStoredSchema, getStoredSchema } from "./toFlexSchema.js";
+export { toStoredSchema, getStoredSchema, getFlexSchema } from "./toFlexSchema.js";
+export {
+	numberSchema,
+	stringSchema,
+	booleanSchema,
+	handleSchema,
+	nullSchema,
+} from "./leafNodeSchema.js";

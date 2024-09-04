@@ -87,20 +87,11 @@ import {
 	type ITreeCursorSynchronous,
 	CursorLocationType,
 } from "../core/index.js";
-import {
-	cursorToJsonObject,
-	jsonRoot,
-	jsonSchema,
-	leaf,
-	singleJsonCursor,
-} from "../domains/index.js";
 import type { HasListeners, IEmitter, Listenable } from "../events/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
-	FieldKinds,
 	type FlexFieldSchema,
 	type NodeKeyManager,
-	SchemaBuilderBase,
 	ViewSchema,
 	buildForest,
 	cursorForMapTreeNode,
@@ -160,6 +151,7 @@ import {
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
 import { cursorFromInsertable } from "../simple-tree/index.js";
+import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js";
 
 // Testing utilities
 
@@ -768,21 +760,6 @@ export const IdentifierSchema = sf.object("identifier-object", {
 	identifier: sf.identifier,
 });
 
-export const jsonPrimitiveSchema = [sf.null, sf.boolean, sf.number, sf.string] as const;
-export const JsonUnion = [() => JsonObject, () => JsonArray, ...jsonPrimitiveSchema] as const;
-export const JsonObject = sf.mapRecursive("object", JsonUnion);
-export const JsonArray = sf.arrayRecursive("array", JsonUnion);
-
-export const jsonSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence, {
-	scope: "JsonSequenceRoot",
-	libraries: [jsonSchema],
-}).intoSchema(jsonRoot);
-
-export const numberSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence, {
-	libraries: [leaf.library],
-	scope: "NumberSequenceRoot",
-}).intoSchema(leaf.number);
-
 /**
  * Crates a tree using the Json domain with a required root field.
  */
@@ -825,6 +802,10 @@ export function expectJsonTree(
 	if (expectRemovedRootsAreSynchronized) {
 		checkRemovedRootsAreSynchronized(trees);
 	}
+}
+
+export function expectNoRemovedRoots(tree: ITreeCheckout): void {
+	assert(tree.getRemovedRoots().length === 0);
 }
 
 export function expectEqualPaths(
