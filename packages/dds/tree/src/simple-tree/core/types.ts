@@ -27,6 +27,11 @@ export type Unhydrated<T> = T;
 /**
  * A collection of events that can be emitted by a {@link TreeNode}.
  *
+ * @remarks
+ * Currently, events can be subscribed to for {@link Unhydrated} nodes, however no events will be triggered for the nodes until after they are hydrated.
+ * This is considered a known issue, and should be fixed in future versions.
+ * Do not rely on the fact that editing unhydrated nodes does not trigger their events.
+ *
  * @privateRemarks
  * TODO: add a way to subscribe to a specific field (for nodeChanged and treeChanged).
  * Probably have object node and map node specific APIs for this.
@@ -47,15 +52,13 @@ export type Unhydrated<T> = T;
  */
 export interface TreeChangeEvents {
 	/**
-	 * Emitted by a node after a batch of changes has been applied to the tree, if a change affected the node, where a
-	 * change is:
+	 * Emitted by a node after a batch of changes has been applied to the tree, if any of the changes affected the node.
 	 *
-	 * - For an object node, when the value of one of its properties changes (i.e., the property's value is set
-	 * to something else, including `undefined`).
+	 * - Object nodes define a change as being when the value of one of its properties changes (i.e., the property's value is set, including when set to `undefined`).
 	 *
-	 * - For an array node, when an element is added, removed, or moved.
+	 * - Array nodes define a change as when an element is added, removed, moved or replaced.
 	 *
-	 * - For a map node, when an entry is added, updated, or removed.
+	 * - Map nodes define a change as when an entry is added, updated, or removed.
 	 *
 	 * @remarks
 	 * This event is not emitted when:
@@ -70,13 +73,15 @@ export interface TreeChangeEvents {
 	 * For remote edits, this event is not guaranteed to occur in the same order or quantity that it did in
 	 * the client that made the original edit.
 	 *
-	 * When it is emitted, the tree is guaranteed to be in-schema.
+	 * When the event is emitted, the tree is guaranteed to be in-schema.
 	 *
 	 * @privateRemarks
 	 * This event occurs whenever the apparent contents of the node instance change, regardless of what caused the change.
 	 * For example, it will fire when the local client reassigns a child, when part of a remote edit is applied to the
 	 * node, or when the node has to be updated due to resolution of a merge conflict
 	 * (for example a previously applied local change might be undone, then reapplied differently or not at all).
+	 *
+	 * TODO: define and document event ordering (ex: bottom up, with nodeChanged before treeChange on each level).
 	 */
 	nodeChanged(): void;
 

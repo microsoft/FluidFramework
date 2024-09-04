@@ -120,7 +120,6 @@ export {
 	type FlexAllowedTypes,
 	FlexFieldSchema,
 	type FlexTreeSchema,
-	Any,
 	type SchemaLibraryData,
 	type LazyTreeNodeSchema,
 	ViewSchema,
@@ -141,27 +140,12 @@ export {
 	type FlexListToUnion,
 	type ExtractItemType,
 	isLazy,
-	type NormalizeObjectNodeFields,
-	type NormalizeField as NormalizeFieldSchema,
 	type FlexObjectNodeFields,
 	intoStoredSchema,
 	intoStoredSchemaCollection,
 	type NormalizeLazyItem,
 	type FlexList,
 } from "./typed-schema/index.js";
-
-export {
-	SchemaBuilderBase,
-	type SchemaLibrary,
-	type FlexImplicitFieldSchema,
-	type NormalizeField,
-	type FlexImplicitAllowedTypes,
-	type NormalizeAllowedTypes,
-	type SchemaBuilderOptions,
-	normalizeAllowedTypes,
-	normalizeField,
-} from "./schemaBuilderBase.js";
-export { SchemaBuilderInternal } from "./schemaBuilder.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
 
@@ -214,9 +198,6 @@ export {
 } from "./default-schema/index.js";
 
 export {
-	type AssignableFieldKinds,
-	type FlexibleFieldContent,
-	type FlexibleNodeContent,
 	type FlexTreeLeafNode,
 	type FlexTreeMapNode,
 	type FlexTreeOptionalField,
@@ -225,8 +206,6 @@ export {
 	Skip,
 	type FlexTreeContext,
 	type FlexTreeTypedField,
-	type FlexTreeTypedNode,
-	type FlexTreeTypedNodeUnion,
 	type FlexTreeEntity,
 	type FlexTreeField,
 	type FlexTreeNode,
