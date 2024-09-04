@@ -49,7 +49,7 @@ describe.only("Simple-Tree Indexes", () => {
 		return { parent, index };
 	}
 
-	it("can", () => {
+	it("can index nodes", () => {
 		const parent = hydrate(IndexableParent, {
 			[parentKey]: parentId,
 			child: { [childKey]: childId },
@@ -83,27 +83,35 @@ describe.only("Simple-Tree Indexes", () => {
 		assert.equal(index.size, 2);
 	});
 
-	it("fail on lookup if two nodes have the same key", () => {});
+	it("fail on lookup if two nodes have the same key", () => {
+		const { view, root: parent } = createView(new IndexableChild({ [childKey]: parentId }));
+		const { assertContents } = createIndex(view);
+		const child = parent.child;
+		assert(child !== undefined);
+		assertContents([parentId, parent, child]);
+	});
 
-	it("do not reify tree of nodes being scanned");
+	it("do not reify tree of nodes being scanned", () => {
 
-	// it("filters out removed nodes", () => {
-	// 	const parent = createParent();
-	// 	const index = new SimpleTreeIndex(getFlexNode(parent).context, (schemaId) => {
-	// 		if (schemaId === IndexableParent.identifier || schemaId === IndexableChild.identifier) {
-	// 			return (node) => {
-	// 				node.enterField(schemaId === IndexableParent.identifier ? parentKey : childKey);
-	// 				node.enterNode(0);
-	// 				const value = node.value;
-	// 				node.exitNode();
-	// 				node.exitField();
-	// 				assert(typeof value === "string");
-	// 				return value;
-	// 			};
-	// 		}
-	// 	});
-	// 	assert.equal(index.size, 2);
-	// 	assert.equal(index.get(parentKey)?.size, 1);
-	// 	assert.equal(index.get(childKey)?.size, 1);
-	// });
+	});
+
+	it("filters out removed nodes", () => {
+		const parent = createParent();
+		const index = new SimpleTreeIndex(getFlexNode(parent).context, (schemaId) => {
+			if (schemaId === IndexableParent.identifier || schemaId === IndexableChild.identifier) {
+				return (node) => {
+					node.enterField(schemaId === IndexableParent.identifier ? parentKey : childKey);
+					node.enterNode(0);
+					const value = node.value;
+					node.exitNode();
+					node.exitField();
+					assert(typeof value === "string");
+					return value;
+				};
+			}
+		});
+		assert.equal(index.size, 2);
+		assert.equal(index.get(parentKey)?.size, 1);
+		assert.equal(index.get(childKey)?.size, 1);
+	});
 });
