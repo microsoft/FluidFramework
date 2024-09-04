@@ -54,18 +54,18 @@ jobs:
           # workflow_conclusion: completed
           run_id: ${{ github.event.workflow_run.id }}
           name: release-branch-pr-metadata
-          path: ./results
+          path: ./artifacts
 
       - name: "workflow_run: Load PR number"
         id: workflow_run_load_pr
         if: github.event_name == "workflow_run"
-        working-directory: ./results
+        working-directory: ./artifacts
         run: echo "pr_num=$(cat pr)" >> $GITHUB_OUTPUT
 
       - name: "workflow_run: Load is_release_branch"
         id: workflow_run_is_release_branch
         if: github.event_name == "workflow_run"
-        working-directory: ./results
+        working-directory: ./artifacts
         run: echo "is_release_branch=$(cat is_release_branch)" >> $GITHUB_OUTPUT
 
       ### These steps run on workflow_dispatch event only ###

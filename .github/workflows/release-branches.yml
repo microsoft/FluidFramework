@@ -65,16 +65,19 @@ jobs:
     needs: check_branch
     runs-on: ubuntu-latest
     steps:
+      - name: Create artifacts folder
+        run: mkdir -p ./artifacts
+
       - name: Save PR number
-        run: echo ${{ github.event.pull_request.number }} > ./results/pr
+        run: echo ${{ github.event.pull_request.number }} > ./artifacts/pr
 
       - name: Save is_release_branch
-        run: echo ${{ needs.check_branch.outputs.is_release_branch }} > ./results/is_release_branch
+        run: echo ${{ needs.check_branch.outputs.is_release_branch }} > ./artifacts/is_release_branch
 
-      - name: Upload results artifact
+      - name: Upload artifact
         # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.0
         uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # ratchet:actions/upload-artifact@v4.4.0
         with:
           name: release-branch-pr-metadata
-          path: ./results
+          path: ./artifacts
           retention-days: 3
