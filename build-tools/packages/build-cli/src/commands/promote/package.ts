@@ -101,7 +101,7 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 			if (!response.ok) {
 				const errorData = (await response.json()) as PackagePromotionErrorResponse;
 				this.error(
-					`Failed to promote package. Status: ${response.status}, Message: ${errorData.message}`,
+					`Failed to promote package. Status: '${response.status}', Message: '${errorData.message}'`,
 					{ exit: 1 },
 				);
 			}
