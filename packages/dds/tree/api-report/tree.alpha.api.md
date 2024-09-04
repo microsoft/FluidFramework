@@ -425,6 +425,25 @@ type ScopedSchemaName<TScope extends string | undefined, TName extends number | 
 // @alpha
 export const SharedTree: ISharedObjectKind<ITree> & SharedObjectKind<ITree>;
 
+// @alpha
+export interface SharedTreeConfiguration {
+    // (undocumented)
+    readonly persistedFormatVersion?: SharedTreeFormatVersion[keyof SharedTreeFormatVersion] | undefined;
+}
+
+// @alpha
+export const SharedTreeFormatVersion: {
+    readonly v1: 1;
+    readonly v2: 2;
+    readonly v3: 3;
+};
+
+// @alpha
+export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
+
+// @alpha
+export const SharedTreeWithConfiguration: (options: SharedTreeConfiguration) => SharedObjectKind<ITree>;
+
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
 

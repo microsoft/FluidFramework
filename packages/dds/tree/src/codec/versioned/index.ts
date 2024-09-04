@@ -8,4 +8,5 @@ export {
 	makeVersionedCodec,
 	makeVersionedValidatedCodec,
 	makeVersionDispatchingCodec,
+	makeStrictVersionCodec,
 } from "./codec.js";

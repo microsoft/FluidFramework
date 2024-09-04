@@ -16,7 +16,11 @@ import {
 } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";
-import { SharedTree as SharedTreeImpl, type SharedTreeOptions } from "./shared-tree/index.js";
+import {
+	SharedTreeFormatVersion,
+	SharedTree as SharedTreeImpl,
+	type SharedTreeOptions,
+} from "./shared-tree/index.js";
 import type { ITree } from "./simple-tree/index.js";
 
 /**
@@ -96,3 +100,31 @@ export function configuredSharedTree(
 	}
 	return createSharedObjectKind<ITree>(ConfiguredFactory);
 }
+
+/**
+ * Configuration options for a SharedTree
+ * @alpha
+ */
+export interface SharedTreeConfiguration {
+	readonly persistedFormatVersion?:
+		| SharedTreeFormatVersion[keyof SharedTreeFormatVersion]
+		| undefined;
+}
+
+/**
+ * Produces a SharedTree that allows for a non-default configuration.
+ *
+ * @param options - The configuration options for SharedTree.
+ * @remarks You can use the object returned from this function as a value in the initial objects
+ * map of your Fluid container, so that all SharedTree instances created for the specified key have the custom configuration
+ * passed to this function.
+ *
+ * @alpha
+ */
+export const SharedTreeWithConfiguration: (
+	options: SharedTreeConfiguration,
+) => SharedObjectKind<ITree> = (options: SharedTreeConfiguration) => {
+	return configuredSharedTree({
+		formatVersion: options.persistedFormatVersion ?? SharedTreeFormatVersion.v3,
+	});
+};
