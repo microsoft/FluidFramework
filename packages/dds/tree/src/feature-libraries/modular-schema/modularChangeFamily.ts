@@ -673,7 +673,7 @@ export class ModularChangeFamily
 			0x89a /* Unexpected destroys in change to invert */,
 		);
 
-		if ((change.change.constraintViolationCount ?? 0) > 0) {
+		if (hasConflicts(change.change)) {
 			return makeModularChangeset(
 				undefined,
 				undefined,
@@ -827,7 +827,7 @@ export class ModularChangeFamily
 		over: TaggedChange<ModularChangeset>,
 		revisionMetadata: RevisionMetadataSource,
 	): ModularChangeset {
-		if ((over.change.constraintViolationCount ?? 0) > 0) {
+		if (hasConflicts(over.change)) {
 			return taggedChange.change;
 		}
 
@@ -1849,7 +1849,7 @@ export function intoDelta(
 	const idAllocator = MemoizedIdRangeAllocator.fromNextId();
 	const rootDelta: Mutable<DeltaRoot> = {};
 
-	if ((change.constraintViolationCount ?? 0) === 0) {
+	if (!hasConflicts(change)) {
 		// If there are no constraint violations, then tree changes apply.
 		const fieldDeltas = intoDeltaImpl(
 			change.fieldChanges,
