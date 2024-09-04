@@ -4,7 +4,7 @@
 
 name: Required release approval
 on:
-  pull_request:
+  pull_request_target:
     types:
       # This is triggered when the PR is opened. This is not strictly needed since the PR approval state is really
       # what's evaluated. However, running the job on PR open causes an immediate failure which will make it clearer to
@@ -30,7 +30,6 @@ on:
 
 permissions:
   pull-requests: read
-  contents: read
 
 jobs:
   check_branch:
