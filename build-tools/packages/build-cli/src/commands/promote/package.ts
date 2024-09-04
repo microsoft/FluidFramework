@@ -4,11 +4,12 @@
  */
 
 import { Flags } from "@oclif/core";
+import { semverFlag } from "../../flags.js";
 import { BaseCommand, readLines } from "../../library/index.js";
 
-interface PromotePackageResponse {
+interface PackagePromotionFalureResponse {
 	success: boolean;
-	message?: string;
+	message: string;
 }
 
 /**
@@ -22,8 +23,8 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 		"Used to promote a package to the Release view if it's a release build and in the build feed.  THIS COMMAND IS INTENDED FOR USE IN FLUID FRAMEWORK CI PIPELINES ONLY.";
 
 	static readonly flags = {
-		version: Flags.string({
-			description: "Version of the package",
+		version: semverFlag({
+			description: "Version of the package to promote.",
 			required: true,
 		}),
 		orderFile: Flags.file({
@@ -33,7 +34,8 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 			required: true,
 		}),
 		token: Flags.string({
-			description: "Azure DevOps access token. This parameter should be passed using the ADO_API_TOKEN environment variable for security purposes.",
+			description:
+				"Azure DevOps access token. This parameter should be passed using the ADO_API_TOKEN environment variable for security purposes.",
 			env: "ADO_API_TOKEN",
 			required: true,
 		}),
@@ -72,14 +74,14 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 	}
 
 	private async promotePackage(packageName: string): Promise<boolean> {
-		const url = this.getFeedPromotionUrl(packageName, this.flags.version);
+		const url = this.getFeedPromotionUrl(packageName, this.flags.version.version);
 		try {
 			const response = await fetch(url, {
 				method: "PATCH",
 				headers: {
 					"Content-Type": "application/json",
 					"Accept": "application/json",
-					"Authorization": `Basic ${Buffer.from(this.flags.token).toString("base64")}`,
+					"Authorization": `Basic ${Buffer.from(`:${this.flags.token}`).toString("base64")}`,
 				},
 				body: JSON.stringify({
 					views: {
@@ -91,9 +93,9 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 			});
 
 			if (!response.ok) {
-				const errorData = (await response.json()) as PromotePackageResponse;
+				const errorData = (await response.json()) as PackagePromotionFalureResponse;
 				this.error(
-					`Failed to promote package. Status: ${response.status}, Message: ${errorData.message ?? "Unknown error"}`,
+					`Failed to promote package. Status: ${response.status}, Message: ${errorData.message}`,
 					{ exit: 1 },
 				);
 			}
