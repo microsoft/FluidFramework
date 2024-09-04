@@ -17,6 +17,8 @@ import fs from "fs-extra";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
+const versions = ["1", "2"];
+
 // TODO: automate the generation of these URLs and output directories
 const artifactUrlBase = "https://fluidframework.blob.core.windows.net/api-extractor-json/latest";
 const artifacts = {
@@ -32,7 +34,7 @@ const outputDirectories = {
 }
 
 try {
-	await Promise.all(["1", "2"].map(async (version) => {
+	await Promise.all(versions.map(async (version) => {
 		const url = artifacts[version];
 		const destination = outputDirectories[version];
 

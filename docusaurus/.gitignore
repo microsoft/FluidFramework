@@ -13,6 +13,8 @@
 # Note: keep `mdx` files that are handwritten
 docs/api/*
 !docs/api/**/*.mdx
+versioned_docs/*/api/*
+!versioned_docs/*/api/**/*.mdx
 
 # Misc
 .DS_Store

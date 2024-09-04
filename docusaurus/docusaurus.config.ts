@@ -43,6 +43,28 @@ const config: Config = {
 			{
 				docs: {
 					sidebarPath: "./sidebars.ts",
+					lastVersion: "current",
+					includeCurrentVersion: true,
+					versions: {
+						current: {
+							label: "v2",
+							// path: "v2"
+						},
+						next: {
+							label: "next",
+							path: "next",
+							// Prevent indexing of unreleased docs
+							noIndex: true,
+							banner: "unreleased",
+						},
+						"1": {
+							label: "v1",
+							path: "v1",
+							// Prevent indexing of legacy docs
+							noIndex: true,
+							banner: "unmaintained",
+						}
+					}
 				},
 				blog: {
 					showReadingTime: true,
@@ -99,12 +121,22 @@ const config: Config = {
 			},
 			items: [
 				{
+					type: 'docsVersionDropdown',
+					position: 'left',
+					dropdownActiveClassDisabled: true,
+				},
+				{
 					type: "docSidebar",
 					sidebarId: "docsSidebar",
 					position: "left",
 					label: "Docs",
 				},
-				{ to: "/docs/api", label: "API", position: "left" },
+				{
+					type: 'docsVersion',
+					to: "/docs/api",
+					label: "API",
+					position: "left"
+				},
 				{ to: "/blog", label: "Blog", position: "left" },
 				{ to: "/community", label: "Community", position: "left" },
 				{ to: "/support", label: "Support", position: "left" },

@@ -16,29 +16,43 @@ import { renderApiDocumentation } from "./api-markdown-documenter/index.mjs";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// "next" maps to the local repo API docs.
+const versions = ["1", "2", "next"];
+
+const downloadedDocModelsDirectoryPath = path.resolve(dirname, "..", ".doc-models");
+const repoDocModelDirectoryPath = path.resolve(dirname, "..", "..", "_api-extractor-temp", "doc-models");
+
+const docModelDirectoryPaths = {
+	"1": path.resolve(downloadedDocModelsDirectoryPath, "v1"),
+	"2": path.resolve(downloadedDocModelsDirectoryPath, "v2"),
+	"next": path.resolve(repoDocModelDirectoryPath),
+};
+
+const outputDirectories = {
+	"1": path.resolve(dirname, "..", "versioned_docs", "version-1", "api"),
+	"2": path.resolve(dirname, "..", "docs", "api"),
+	"next": path.resolve(dirname, "..", "versioned_docs", "version-next", "api"),
+};
+
 try {
-	const apiReportsDirectoryPath = path.resolve(dirname, "..", ".doc-models", "v2");
-	const apiDocsDirectoryPath = path.resolve(
-		dirname,
-		"..",
-		"docs",
-		"api",
-		// version, // TODO: how to do versioning
-	);
+	await Promise.all(versions.map(async (version) => {
+		const docModelDirectoryPath = docModelDirectoryPaths[version];
+		const apiDocsDirectoryPath = outputDirectories[version];
 
-	// Note: the leading slash in the URI root is important.
-	// It tells Docusaurus to interpret the links as relative to the site root, rather than
-	// relative to the document containing the link.
-	// See documentation here: https://docusaurus.io/docs/markdown-features/links
-	const uriRootDirectoryPath = `/docs/api`;
+		// Note: the leading slash in the URI root is important.
+		// It tells Docusaurus to interpret the links as relative to the site root, rather than
+		// relative to the document containing the link.
+		// See documentation here: https://docusaurus.io/docs/markdown-features/links
+		const uriRootDirectoryPath = `/docs/api`;
 
-	await renderApiDocumentation(
-		apiReportsDirectoryPath,
-		apiDocsDirectoryPath,
-		uriRootDirectoryPath,
-	);
+		await renderApiDocumentation(
+			docModelDirectoryPath,
+			apiDocsDirectoryPath,
+			uriRootDirectoryPath,
+		);
 
-	console.log(chalk.green(`API docs written!`));
+		console.log(chalk.green(`Version "${version}" API docs written!`));
+	}));
 } catch (error) {
 	console.error(chalk.red("API docs generation failed due to one or more errors:"));
 	console.error(error);
