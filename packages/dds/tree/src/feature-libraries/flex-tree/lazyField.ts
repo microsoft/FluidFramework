@@ -51,7 +51,7 @@ import {
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
 import { type LazyTreeNode, makeTree } from "./lazyNode.js";
-import { unboxedUnion } from "./unboxed.js";
+import { unboxedFlexNode } from "./unboxed.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { cursorForMapTreeField, cursorForMapTreeNode } from "../mapTreeCursor.js";
@@ -208,7 +208,7 @@ export abstract class LazyField<out TKind extends FlexFieldKind>
 
 	public atIndex(index: number): FlexTreeUnknownUnboxed {
 		return inCursorNode(this[cursorSymbol], index, (cursor) =>
-			unboxedUnion(this.context, this.schema, cursor),
+			unboxedFlexNode(this.context, cursor),
 		);
 	}
 
@@ -234,7 +234,7 @@ export abstract class LazyField<out TKind extends FlexFieldKind>
 
 	public [Symbol.iterator](): IterableIterator<FlexTreeUnknownUnboxed> {
 		return iterateCursorField(this[cursorSymbol], (cursor) =>
-			unboxedUnion(this.context, this.schema, cursor),
+			unboxedFlexNode(this.context, cursor),
 		);
 	}
 
@@ -284,7 +284,7 @@ export class LazySequence
 		}
 
 		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
-			unboxedUnion(this.context, this.schema, cursor),
+			unboxedFlexNode(this.context, cursor),
 		);
 	}
 	public get asArray(): readonly FlexTreeUnknownUnboxed[] {

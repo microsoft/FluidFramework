@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable unicorn/no-null */
-
 import {
 	DataObject,
 	DataObjectFactory,
@@ -20,12 +18,9 @@ import type {
 	TreeFieldFromImplicitField,
 	TreeView,
 	ImplicitFieldSchema,
+	InsertableTreeFieldFromImplicitField,
 } from "@fluidframework/tree";
-import {
-	configuredSharedTree,
-	typeboxValidator,
-	type InsertableTreeFieldFromImplicitField,
-} from "@fluidframework/tree/internal";
+import { configuredSharedTree, typeboxValidator } from "@fluidframework/tree/internal";
 import * as React from "react";
 
 /**
@@ -107,7 +102,6 @@ export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
 	 * and collaborating between clients which have view schema that exactly correspond to that stored schema.
 	 * Future work on tree as well as these utilities should address this limitation.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	readonly config: TreeViewConfiguration<TSchema>;
 
 	/**
