@@ -2760,13 +2760,9 @@ export class ContainerRuntime
 				 * Otherwise, we would not realize this container has forked in the case where it did fork, and a batch
 				 * became empty but wasn't submitted as such.
 				 */
-				const { keyMessage, batchStartCsn } = inboundBatch;
 				messagesWithPendingState = [
 					{
-						message: {
-							...keyMessage,
-							clientSequenceNumber: batchStartCsn,
-						},
+						message: inboundBatch.keyMessage,
 						localOpMetadata: undefined,
 					},
 				];
