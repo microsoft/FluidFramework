@@ -31,7 +31,7 @@ permissions:
 jobs:
   on-failure:
     name: Check upstream workflow status
-    if: github.event_name == "workflow_run" && github.event.workflow_run.conclusion == "failure"
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure'
     runs-on: ubuntu-latest
     steps:
       - run: echo "The triggering workflow failed"
@@ -46,7 +46,7 @@ jobs:
 
       ### These steps run on workflow_run event only ###
       - name: Download metadata
-        if: github.event_name == "workflow_run"
+        if: github.event_name == 'workflow_run'
         # release notes: https://github.com/dawidd6/action-download-artifact/releases/tag/v6
         uses: dawidd6/action-download-artifact@bd10f381a96414ce2b13a11bfa89902ba7cea07f # ratchet:dawidd6/action-download-artifact@v6
         with:
@@ -58,25 +58,25 @@ jobs:
 
       - name: "workflow_run: Load PR number"
         id: workflow_run_load_pr
-        if: github.event_name == "workflow_run"
+        if: github.event_name == 'workflow_run'
         working-directory: ./artifacts
         run: echo "pr_num=$(cat pr)" >> $GITHUB_OUTPUT
 
       - name: "workflow_run: Load is_release_branch"
         id: workflow_run_is_release_branch
-        if: github.event_name == "workflow_run"
+        if: github.event_name == 'workflow_run'
         working-directory: ./artifacts
         run: echo "is_release_branch=$(cat is_release_branch)" >> $GITHUB_OUTPUT
 
       ### These steps run on workflow_dispatch event only ###
       - name: "workflow_dispatch: Load PR number"
         id: workflow_dispatch_load_pr
-        if: github.event_name == "workflow_dispatch"
+        if: github.event_name == 'workflow_dispatch'
         run: echo "pr_num=${{ github.event.inputs.pr }}" >> $GITHUB_OUTPUT
 
       - name: "workflow_dispatch: Load is_release_branch"
         id: workflow_dispatch_is_release_branch
-        if: github.event_name == "workflow_dispatch"
+        if: github.event_name == 'workflow_dispatch'
         run: echo "is_release_branch=true" >> $GITHUB_OUTPUT
 
   check_approval:
