@@ -167,6 +167,16 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"Interface_IProvideTestFluidObject": {
+				"forwardCompat": false
+			},
+			"Interface_ITestFluidObject": {
+				"forwardCompat": false
+			},
+			"Class_TestFluidObject": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
