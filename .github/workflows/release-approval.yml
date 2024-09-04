@@ -12,7 +12,7 @@ on:
     # Workflow is typically triggered by the completion of the release-branches workflow.
     workflows: [release-branches]
     types: [completed]
-    # Only workflow runs from these branches will trigger this workflow.
+    # Only workflow runs from PRs targeting these branches will trigger this workflow.
     branches:
       - release/client/**
       - release/server/**
