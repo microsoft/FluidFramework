@@ -83,7 +83,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
 			const { segment, offset } = vector.getContainingSegment(pos);
 			const asPerm = segment as PermutationSegment;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			handles.push(asPerm.start + offset);
+			handles.push(asPerm.start + offset!);
 		}
 
 		return handles;
