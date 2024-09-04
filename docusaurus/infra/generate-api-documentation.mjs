@@ -47,6 +47,7 @@ try {
 			docModelDirectoryPath,
 			apiDocsDirectoryPath,
 			uriRootDirectoryPath,
+			version,
 		);
 
 		console.log(chalk.green(`Version "${version}" API docs written!`));

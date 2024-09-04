@@ -36,13 +36,16 @@ const generatedContentNotice =
  * @param {string} inputDir - The directory path containing the API model to be processed.
  * @param {string} outputDir - The directory path under which the generated documentation suite will be saved.
  * @param {string} uriRootDir - The base for all links between API members.
+ * @param {string} apiVersion - The "version" of the API model being processed, represented as a string.
+ * E.g. "1", "2", "2.1", etc.
+ * Used for some policy decisions, and for logging purposes.
  */
-export async function renderApiDocumentation(inputDir, outputDir, uriRootDir) {
+export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersion) {
 	/**
 	 * Logs a progress message, prefaced with the API version number to help differentiate parallel logging output.
 	 */
 	function logProgress(message) {
-		console.log(`${message}`);
+		console.log(`(v${apiVersion}) ${message}`);
 	}
 
 	/**
@@ -50,7 +53,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir) {
 	 * logging output, and re-throws the error.
 	 */
 	function logErrorAndRethrow(message, error) {
-		console.error(chalk.red(`${message}:`));
+		console.error(chalk.red(`(v${apiVersion}) ${message}:`));
 		console.error(error);
 		throw error;
 	}
@@ -143,6 +146,22 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir) {
 
 	await Promise.all(
 		documents.map(async (document) => {
+			const documentApiItem = document.apiItem;
+
+			// #region Filter documents based on site-specific requirements
+
+			if (apiVersion === "1") {
+				// Skip `fluid-framework` package landing page for v1.
+				// Custom contents for this package's landing page are maintained via a checked-in file:
+				// `versioned_docs/version-1/fluid-framework.mdx`.
+				if (documentApiItem.kind === ApiItemKind.Package && documentApiItem.displayName === "fluid-framework") {
+					logProgress("Skipping document generation for `fluid-framework` package.");
+					return;
+				}
+			}
+
+			// #endregion
+
 			// TODO: custom landing pages for API suites?
 			let fileContents;
 			try {
@@ -151,12 +170,12 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir) {
 					customRenderers,
 				});
 
-				const frontMatter = createFrontMatter(document.apiItem, config);
+				const frontMatter = createFrontMatter(documentApiItem, config);
 
 				fileContents = [frontMatter, generatedContentNotice, documentBody].join("\n\n").trim();
 			} catch (error) {
 				logErrorAndRethrow(
-					`Encountered error while rendering Markdown contents for "${document.apiItem.displayName}"`,
+					`Encountered error while rendering Markdown contents for "${documentApiItem.displayName}"`,
 					error,
 				);
 			}
