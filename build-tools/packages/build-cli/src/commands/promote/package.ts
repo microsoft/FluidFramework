@@ -7,9 +7,15 @@ import { Flags } from "@oclif/core";
 import { semverFlag } from "../../flags.js";
 import { BaseCommand, readLines } from "../../library/index.js";
 
-interface PackagePromotionFalureResponse {
-	success: boolean;
+interface PackagePromotionErrorResponse {
+	success: string;
+	error: string;
+	reason: string;
 	message: string;
+	typeName: string;
+	typeKey: string;
+	errorCode: number;
+	eventId: number;
 }
 
 /**
@@ -93,7 +99,7 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 			});
 
 			if (!response.ok) {
-				const errorData = (await response.json()) as PackagePromotionFalureResponse;
+				const errorData = (await response.json()) as PackagePromotionErrorResponse;
 				this.error(
 					`Failed to promote package. Status: ${response.status}, Message: ${errorData.message}`,
 					{ exit: 1 },
