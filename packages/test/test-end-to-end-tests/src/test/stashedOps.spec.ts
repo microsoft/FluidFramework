@@ -2014,8 +2014,65 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(map1.get(testKey), testValue);
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
+});
 
-	describe("Serializing without closing and/or multiple rehydration (aka Offline Phase 3)", () => {
+describeCompat(
+	"Serializing without closing and/or multiple rehydration (aka Offline Phase 3)",
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		const { SharedCounter } = apis.dds;
+		const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
+
+		// We disable summarization (so no summarizer container is loaded) due to challenges specifying the exact
+		// expected behavior of the summarizer container in these tests, in the presence of race conditions.
+		// We aren't testing anything about summmarization anyway, so no need for it.
+		const testContainerConfig_noSummarizer: ITestContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry,
+			runtimeOptions: {
+				chunkSizeInBytes: Number.POSITIVE_INFINITY, // disable
+				compressionOptions: {
+					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
+				summaryOptions: {
+					summaryConfigOverrides: {
+						state: "disabled",
+					},
+				},
+				enableRuntimeIdCompressor: "on",
+			},
+			loaderProps: {
+				configProvider: configProvider({
+					"Fluid.Container.enableOfflineLoad": true,
+					"Fluid.Sequence.intervalStickinessEnabled": true,
+				}),
+			},
+		};
+
+		let provider: ITestObjectProvider;
+		let loader: IHostLoader;
+		let container1: IContainer;
+		let url: string;
+		let counter1: SharedCounter;
+
+		beforeEach("setup", async () => {
+			provider = getTestObjectProvider();
+			loader = provider.makeTestLoader(testContainerConfig_noSummarizer);
+
+			container1 = await createAndAttachContainer(
+				provider.defaultCodeDetails,
+				loader,
+				provider.driver.createCreateNewRequest(provider.documentId),
+			);
+			provider.updateDocumentId(container1.resolvedUrl);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- Container is attached so it'll have a URL
+			url = (await container1.getAbsoluteUrl(""))!;
+
+			const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
+			counter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
+		});
+
 		itExpects(
 			`Single-Threaded Fork: Closes (ForkedContainerError) when ops are submitted with different clientId from pendingLocalState (via Counter DDS)`,
 			[
@@ -2034,7 +2091,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			async function () {
 				const incrementValue = 3;
 				const pendingLocalState = await getPendingOps(
-					testContainerConfig,
+					testContainerConfig_noSummarizer,
 					provider,
 					true, // Do send ops from first container instance before closing
 					async (c, d) => {
@@ -2068,10 +2125,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		itExpects(
 			`Parallel Forks: Closes (ForkedContainerError and DuplicateBatchError) when hydrating twice and submitting in parallel (via Counter DDS)`,
 			[
-				// All containers close:
-				// contianer1, container1's summarizer, container2, container3
+				// All containers close: contianer1, container2, container3
 				// container2 or container3 (the loser of the race) will close with "Forked Container Error",
-				// All the rest will close with "Duplicate batch"
+				// The other two will close with "Duplicate batch"
 				// Due to the race condition, we can't specify the order of the different errors here.
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
@@ -2085,18 +2141,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					category: "error",
 				},
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
-					category: "error",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
-				},
 			],
 			async function () {
 				const incrementValue = 3;
 				const pendingLocalState = await getPendingOps(
-					testContainerConfig,
+					testContainerConfig_noSummarizer,
 					provider,
 					false, // Don't send ops from first container instance before closing
 					async (c, d) => {
@@ -2197,7 +2246,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			async function () {
 				const incrementValue = 3;
 				const pendingLocalState = await getPendingOps(
-					testContainerConfig,
+					testContainerConfig_noSummarizer,
 					provider,
 					false, // Don't send ops from first container instance before closing
 					async (c, d) => {
@@ -2246,8 +2295,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				assert.strictEqual(counter2.value, incrementValue);
 			},
 		);
-	});
-});
+	},
+);
 
 describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory, SharedCounter, SharedString, SharedCell } = apis.dds;
