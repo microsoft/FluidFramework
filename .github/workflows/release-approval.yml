@@ -156,9 +156,6 @@ jobs:
       - name: Check PR approval
         id: check-pr
         env:
-          # The standard token doesn't have org:read permissions, and that scope can't be added using permissions in
-          # the workflow.
-          # GITHUB_TOKEN: ${{ secrets.ORGANIZATION_READ_PAT }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
         run: |
