@@ -36,7 +36,7 @@ const { container } = await client.createContainer(containerSchema, "2");
 ```
 
 After creating a `SharedTree`, you need to create a `TreeView`.
-A `TreeView` provides the interface for reading and editing data on the `SharedTree`.
+A `TreeView` provides the interface for reading and editing data on the `SharedTree` using a particular schema.
 This is done by calling `viewWith` on the `SharedTree` with your tree configuration.
 
 ```
