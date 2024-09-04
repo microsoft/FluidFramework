@@ -93,7 +93,7 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 					? VersionOptions.Previous
 					: VersionOptions.ClearIfDisabled);
 		updatePackageJsonFile(pkg.directory, (jsonIn) => {
-			const json = jsonIn as PackageWithTypeTestSettings;
+			const json: PackageWithTypeTestSettings = jsonIn;
 			if (this.flags.disable) {
 				json.typeValidation ??= { broken: {} };
 				json.typeValidation.disabled = true;

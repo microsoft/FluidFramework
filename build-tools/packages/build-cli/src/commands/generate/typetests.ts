@@ -83,7 +83,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// Do not check that file exists before opening:
 		// Doing so is a time of use vs time of check issue so opening the file could fail anyway.
 		// Do not catch error from opening file since the default behavior is fine (exits process with error showing useful message)
-		const currentPackageJson = pkg.packageJson as PackageWithTypeTestSettings;
+		const currentPackageJson: PackageWithTypeTestSettings = pkg.packageJson;
 
 		const { name: previousPackageName, packageJsonPath: previousPackageJsonPath } =
 			getTypeTestPreviousPackageDetails(pkg);
