@@ -126,26 +126,6 @@ function printExecError(
 	}
 }
 
-/**
- * @deprecated No replacement.
- */
-export function resolveNodeModule(basePath: string, lookupPath: string) {
-	let currentBasePath = basePath;
-	// eslint-disable-next-line no-constant-condition
-	while (true) {
-		const tryPath = path.join(currentBasePath, "node_modules", lookupPath);
-		if (existsSync(tryPath)) {
-			return tryPath;
-		}
-		const nextBasePath = path.resolve(currentBasePath, "..");
-		if (nextBasePath === currentBasePath) {
-			break;
-		}
-		currentBasePath = nextBasePath;
-	}
-	return undefined;
-}
-
 export async function lookUpDirAsync(
 	dir: string,
 	callback: (currentDir: string) => Promise<boolean>,
