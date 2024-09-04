@@ -88,12 +88,12 @@ for (const testOpts of testMatrix) {
 			containerId: string;
 		}> => {
 			const client = createAzureClient(user.id, user.name, undefined, config, scopes);
-			const schema: ContainerSchema = {
+			const schema = {
 				initialObjects: {
 					signaler: SignalerTestDataObject,
 				},
-			};
-			let container: IFluidContainer;
+			} satisfies ContainerSchema;
+			let container: IFluidContainer<typeof schema>;
 			let services: AzureContainerServices;
 			let containerId: string;
 			if (id === undefined) {
@@ -130,7 +130,7 @@ for (const testOpts of testMatrix) {
 				"Container is not attached after attach is called",
 			);
 
-			const signaler = container.initialObjects.signaler as SignalerTestDataObject;
+			const signaler = container.initialObjects.signaler;
 			return {
 				client,
 				container,
