@@ -5,48 +5,40 @@
 
 import { strict as assert } from "assert";
 
-import {
-	FieldKinds,
-	FlexFieldSchema,
-	SchemaBuilderBase,
-	type FlexTreeOptionalField,
-} from "../../../feature-libraries/index.js";
+import { FieldKinds, type FlexTreeOptionalField } from "../../../feature-libraries/index.js";
 import {
 	deepCopyMapTree,
 	EmptyKey,
 	type ExclusiveMapTree,
 	type FieldKey,
 } from "../../../core/index.js";
-import { leaf as leafDomain } from "../../../domains/index.js";
 import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getOrCreateMapTreeNode } from "../../../feature-libraries/flex-map-tree/index.js";
+import { getFlexSchema, SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
 
 describe("MapTreeNodes", () => {
 	// #region The schema used in this test suite
-	const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, {
-		scope: "Test",
-		libraries: [leafDomain.library],
-	});
-	const mapSchema = schemaBuilder.map(
-		"Map",
-		FlexFieldSchema.create(FieldKinds.optional, [leafDomain.string]),
-	);
-	const arrayNodeSchema = schemaBuilder.object("ArrayNode", {
-		[EmptyKey]: FlexFieldSchema.create(FieldKinds.sequence, [leafDomain.string]),
-	});
 	const objectMapKey = "map" as FieldKey;
 	const objectFieldNodeKey = "fieldNode" as FieldKey;
-	const objectSchema = schemaBuilder.object("Object", {
-		[objectMapKey]: mapSchema,
-		[objectFieldNodeKey]: arrayNodeSchema,
+
+	const schemaFactory = new SchemaFactory("Test");
+	const mapSchemaSimple = schemaFactory.map("Map", schemaFactory.string);
+	const arrayNodeSchemaSimple = schemaFactory.array("ArrayNode", schemaFactory.string);
+	const objectSchemaSimple = schemaFactory.object("Object", {
+		[objectMapKey]: mapSchemaSimple,
+		[objectFieldNodeKey]: arrayNodeSchemaSimple,
 	});
+
+	const mapSchema = getFlexSchema(mapSchemaSimple);
+	const arrayNodeSchema = getFlexSchema(arrayNodeSchemaSimple);
+	const objectSchema = getFlexSchema(objectSchemaSimple);
 	// #endregion
 
 	// #region The `MapTree`s used to construct the `MapTreeNode`s
 	const childValue = "childValue";
 	const mapChildMapTree: ExclusiveMapTree = {
-		type: leafDomain.string.name,
+		type: brand(stringSchema.identifier),
 		value: childValue,
 		fields: new Map(),
 	};
@@ -56,7 +48,7 @@ describe("MapTreeNodes", () => {
 		fields: new Map([[mapKey, [mapChildMapTree]]]),
 	};
 	const fieldNodeChildMapTree: ExclusiveMapTree = {
-		type: leafDomain.string.name,
+		type: brand(stringSchema.identifier),
 		value: childValue,
 		fields: new Map(),
 	};
@@ -102,8 +94,14 @@ describe("MapTreeNodes", () => {
 		assert.equal(map.schema, mapSchema);
 		assert.equal(arrayNode.schema, arrayNodeSchema);
 		assert.equal(object.schema, objectSchema);
-		assert.equal(map.tryGetField(mapKey)?.boxedAt(0)?.schema, leafDomain.string);
-		assert.equal(arrayNode.tryGetField(EmptyKey)?.boxedAt(0)?.schema, leafDomain.string);
+		assert.equal(
+			map.tryGetField(mapKey)?.boxedAt(0)?.schema,
+			getFlexSchema(schemaFactory.string),
+		);
+		assert.equal(
+			arrayNode.tryGetField(EmptyKey)?.boxedAt(0)?.schema,
+			getFlexSchema(schemaFactory.string),
+		);
 	});
 
 	it("can get the children of maps", () => {
@@ -125,8 +123,6 @@ describe("MapTreeNodes", () => {
 
 		assert.equal(arrayNode.getBoxed(EmptyKey).length, 1);
 		const field = arrayNode.getBoxed(EmptyKey);
-		assert(field.isExactly(arrayNodeSchema.info[EmptyKey]));
-		assert(field.is(arrayNodeSchema.info[EmptyKey].kind));
 		assert.equal(arrayNode.tryGetField(brand("unknown key")), undefined);
 		assert.equal(arrayNode.getBoxed("unknown key").length, 0);
 		assert(field.is(FieldKinds.sequence));
@@ -157,7 +153,7 @@ describe("MapTreeNodes", () => {
 		);
 
 		const duplicateChild: ExclusiveMapTree = {
-			type: leafDomain.string.name,
+			type: brand(schemaFactory.string.identifier),
 			value: childValue,
 			fields: new Map(),
 		};

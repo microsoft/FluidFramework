@@ -978,6 +978,7 @@ describe("Runtime", () => {
 									address: "address",
 								},
 								clientSequenceNumber: 0,
+								minimumSequenceNumber: 0,
 							} as any as ISequencedDocumentMessage,
 							true /* local */,
 						);
@@ -1011,6 +1012,7 @@ describe("Runtime", () => {
 								contents: {
 									address: "address",
 								},
+								minimumSequenceNumber: 0,
 							} as any as ISequencedDocumentMessage,
 							false /* local */,
 						);
@@ -1027,6 +1029,7 @@ describe("Runtime", () => {
 									},
 									type: "chunkedOp",
 								},
+								minimumSequenceNumber: 0,
 							} as any as ISequencedDocumentMessage,
 							true /* local */,
 						);
@@ -1194,16 +1197,13 @@ describe("Runtime", () => {
 
 				const packedOp: Omit<
 					ISequencedDocumentMessage,
-					| "term"
-					| "minimumSequenceNumber"
-					| "clientSequenceNumber"
-					| "referenceSequenceNumber"
-					| "timestamp"
+					"term" | "clientSequenceNumber" | "referenceSequenceNumber" | "timestamp"
 				> = {
 					contents: JSON.stringify(futureRuntimeMessage),
 					type: MessageType.Operation,
 					sequenceNumber: 123,
 					clientId: "someClientId",
+					minimumSequenceNumber: 0,
 				};
 				containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */);
 			});
@@ -1218,16 +1218,13 @@ describe("Runtime", () => {
 
 				const packedOp: Omit<
 					ISequencedDocumentMessage,
-					| "term"
-					| "minimumSequenceNumber"
-					| "clientSequenceNumber"
-					| "referenceSequenceNumber"
-					| "timestamp"
+					"term" | "clientSequenceNumber" | "referenceSequenceNumber" | "timestamp"
 				> = {
 					type: MessageType.Operation,
 					contents: JSON.stringify(futureRuntimeMessage),
 					sequenceNumber: 123,
 					clientId: "someClientId",
+					minimumSequenceNumber: 0,
 				};
 				assert.throws(
 					() =>
@@ -1245,16 +1242,13 @@ describe("Runtime", () => {
 
 				const packedOp: Omit<
 					ISequencedDocumentMessage,
-					| "term"
-					| "minimumSequenceNumber"
-					| "clientSequenceNumber"
-					| "referenceSequenceNumber"
-					| "timestamp"
+					"term" | "clientSequenceNumber" | "referenceSequenceNumber" | "timestamp"
 				> = {
 					contents: JSON.stringify(futureRuntimeMessage),
 					type: MessageType.Operation,
 					sequenceNumber: 123,
 					clientId: "someClientId",
+					minimumSequenceNumber: 0,
 				};
 				assert.throws(
 					() =>
@@ -1747,6 +1741,7 @@ describe("Runtime", () => {
 							type: ContainerMessageType.Rejoin,
 							contents: undefined,
 						},
+						minimumSequenceNumber: 0,
 					} as any as ISequencedDocumentMessage,
 					true /* local */,
 				);

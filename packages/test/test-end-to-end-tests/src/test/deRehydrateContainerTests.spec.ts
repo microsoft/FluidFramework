@@ -217,8 +217,8 @@ describeCompat(
 				[sharedCounterId, SharedCounter.getFactory()],
 			]);
 
-			// This dance is to ensure that we get reasonable version of ContainerRuntime.
-			// If we do not set IRuntimeFactory property, LocalCodeLoader will use ContainerRuntime from current version
+			// This dance is to ensure that we get reasonable version of IContainerRuntime.
+			// If we do not set IRuntimeFactory property, LocalCodeLoader will use IContainerRuntime from current version
 			// We only support limited (N/N-1) compatibility for container runtime and data stores, so that will not work.
 			// Use version supplied by test framework
 			const defaultFactory = createDataStoreFactory("default", factory);

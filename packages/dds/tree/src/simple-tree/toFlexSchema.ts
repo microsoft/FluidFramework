@@ -199,7 +199,13 @@ export function convertNodeSchema(
 				);
 				// Lookup of cached schema is done here instead of before since walking the schema recursively to populate schemaMap is still required.
 				const cached = cachedFlexSchemaFromClassSchema(schema);
-				out = cached ?? FlexMapNodeSchema.create(builder, brand(schema.identifier), field);
+				out =
+					cached ??
+					FlexMapNodeSchema.create(
+						builder,
+						brand<TreeNodeSchemaIdentifier>(schema.identifier),
+						field,
+					);
 				break;
 			}
 			case NodeKind.Array: {
@@ -219,10 +225,10 @@ export function convertNodeSchema(
 			case NodeKind.Object: {
 				const info = schema.info as Record<string, ImplicitFieldSchema>;
 				const fields: Record<string, FlexFieldSchema> = Object.create(null);
-				for (const [viewKey, implicitFieldSchema] of Object.entries(info)) {
+				for (const [propertyKey, implicitFieldSchema] of Object.entries(info)) {
 					// If a `stored key` was provided, use it as the key in the flex schema.
-					// Otherwise, use the view key.
-					const flexKey = getStoredKey(viewKey, implicitFieldSchema);
+					// Otherwise, use the property key.
+					const flexKey = getStoredKey(propertyKey, implicitFieldSchema);
 
 					// This code has to be careful to avoid assigning to __proto__ or similar built-in fields.
 					Object.defineProperty(fields, flexKey, {
