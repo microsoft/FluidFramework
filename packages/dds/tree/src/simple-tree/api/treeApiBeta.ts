@@ -10,7 +10,7 @@ import { treeNodeApi } from "./treeNodeApi.js";
  * Data included for {@link TreeChangeEventsBeta.nodeChanged}.
  * @sealed @beta
  */
-export interface NodeChangedData {
+export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
 	/**
 	 * When the node changed is an object or Map node, this lists all the properties which changed.
 	 * @remarks
@@ -20,7 +20,12 @@ export interface NodeChangedData {
 	 *
 	 * When defined, the set should never be empty, since `nodeChanged` will only be triggered when there is a change, and for the supported node types, the only things that can change are properties.
 	 */
-	readonly changedProperties?: ReadonlySet<string>;
+	readonly changedProperties?: ReadonlySet<
+		// For Object nodes, make changedProperties required and strongly typed with the property names from the schema:
+		TNode extends WithType<string, NodeKind.Object, infer TInfo>
+			? string & keyof TInfo
+			: string
+	>;
 }
 
 /**
@@ -61,14 +66,16 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
 	 * (for example a previously applied local change might be undone, then reapplied differently or not at all).
 	 *
 	 * TODO: define and document event ordering (ex: bottom up, with nodeChanged before treeChange on each level).
+	 *
+	 * This defines a property which is a function instead of using the method syntax to avoid function bi-variance issues with the input data to the callback.
 	 */
-	nodeChanged(
-		data: NodeChangedData &
+	nodeChanged: (
+		data: NodeChangedData<TNode> &
 			// For object and Map nodes, make properties specific to them required instead of optional:
 			(TNode extends WithType<string, NodeKind.Map | NodeKind.Object>
-				? Required<Pick<NodeChangedData, "changedProperties">>
+				? Required<Pick<NodeChangedData<TNode>, "changedProperties">>
 				: unknown),
-	): void;
+	) => void;
 }
 
 /**
@@ -87,7 +94,7 @@ export const TreeBeta = {
 	on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(
 		node: TNode,
 		eventName: K,
-		listener: TreeChangeEventsBeta<TNode>[K],
+		listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>,
 	): () => void {
 		return treeNodeApi.on(node, eventName, listener);
 	},

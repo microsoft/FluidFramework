@@ -21,11 +21,12 @@ import {
 	treeNodeApi as Tree,
 	TreeBeta,
 	type TreeChangeEvents,
+	type TreeNode,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
 import { getView } from "../../utils.js";
 import { getViewForForkedBranch, hydrate } from "../utils.js";
-import { brand } from "../../../util/index.js";
+import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 
 import {
 	booleanSchema,
@@ -781,10 +782,11 @@ describe("treeNodeApi", () => {
 			view.initialize({ prop1: 1, prop2: 2 });
 			const root = view.root;
 
-			const eventLog: ReadonlySet<string>[] = [];
-			TreeBeta.on(root, "nodeChanged", ({ changedProperties }) =>
-				eventLog.push(changedProperties),
-			);
+			// Using property names here instead of string checks that strong typing works.
+			const eventLog: ReadonlySet<"prop1" | "prop2" | "prop3">[] = [];
+			TreeBeta.on(root, "nodeChanged", ({ changedProperties }) => {
+				eventLog.push(changedProperties);
+			});
 
 			const { forkView, forkCheckout } = getViewForForkedBranch(view);
 
@@ -797,6 +799,101 @@ describe("treeNodeApi", () => {
 			view.checkout.merge(forkCheckout);
 
 			assert.deepEqual(eventLog, [new Set(["prop1", "prop2", "prop3"])]);
+		});
+
+		it(`'nodeChanged' strong typing`, () => {
+			// Check compile time type checking of property names
+
+			const sb = new SchemaFactory("test");
+			class ObjectAB extends sb.object("AB", {
+				A: sb.optional(sb.number),
+				B: sb.optional(sb.number),
+			}) {}
+
+			class ObjectBC extends sb.object("BC", {
+				B: sb.optional(sb.number),
+				C: sb.optional(sb.number),
+			}) {}
+
+			class Map1 extends sb.map("Map1", sb.number) {}
+
+			class Array1 extends sb.array("Array1", sb.number) {}
+
+			const ab = new ObjectAB({});
+			const bc = new ObjectBC({});
+			const map1 = new Map1({});
+			const array = new Array1([]);
+
+			TreeBeta.on(ab, "nodeChanged", (data) => {
+				const x = data.changedProperties;
+				type _check = requireTrue<areSafelyAssignable<typeof x, ReadonlySet<"A" | "B">>>;
+			});
+
+			// @ts-expect-error Incorrect variance (using method syntax for "nodeChanged" makes this build when it shouldn't: this is a regression test for that issue)
+			TreeBeta.on(ab, "nodeChanged", (data: { changedProperties: ReadonlySet<"A"> }) => {
+				const x = data.changedProperties;
+			});
+
+			function oneOf<T extends readonly unknown[]>(...items: T): T[number] {
+				return items[0];
+			}
+
+			function out<T>(data: { changedProperties: ReadonlySet<T> }) {
+				return data.changedProperties;
+			}
+
+			function outOpt<T>(data: { changedProperties?: ReadonlySet<T> }) {
+				return data.changedProperties;
+			}
+
+			// Strong types work
+			TreeBeta.on(ab, "nodeChanged", out<"A" | "B">);
+			TreeBeta.on(ab, "nodeChanged", out<string>);
+			// Weakly typed (general) callback works
+			TreeBeta.on(ab, "nodeChanged", outOpt<string>);
+			TreeBeta.on(ab as TreeNode, "nodeChanged", outOpt<string>);
+
+			// @ts-expect-error Check these test utils work
+			TreeBeta.on(ab, "nodeChanged", out<"A">);
+			// @ts-expect-error Check these test utils work
+			TreeBeta.on(ab, "nodeChanged", out<"A", "B", "C">);
+			// @ts-expect-error Check these test utils work
+			TreeBeta.on(ab as TreeNode, "nodeChanged", out<"A">);
+
+			// Union cases
+
+			TreeBeta.on(oneOf(ab, bc), "nodeChanged", out<"A" | "B" | "C">);
+			TreeBeta.on(oneOf(ab, map1), "nodeChanged", out<string>);
+			// @ts-expect-error Check map is included
+			TreeBeta.on(oneOf(ab, map1), "nodeChanged", out<"A" | "B">);
+
+			// @ts-expect-error Array makes changedProperties optional
+			TreeBeta.on(array, "nodeChanged", out<string>);
+			TreeBeta.on(array, "nodeChanged", outOpt<string>);
+		});
+
+		it(`'nodeChanged' strong typing example`, () => {
+			const factory = new SchemaFactory("example");
+			class Point2d extends factory.object("Point2d", {
+				x: factory.number,
+				y: factory.number,
+			}) {}
+
+			const point = new Point2d({ x: 0, y: 0 });
+
+			TreeBeta.on(point, "nodeChanged", (data) => {
+				const changed: ReadonlySet<"x" | "y"> = data.changedProperties;
+				if (changed.has("x")) {
+					// ...
+				}
+			});
+
+			TreeBeta.on(point, "nodeChanged", (data) => {
+				// @ts-expect-error Strong typing for changed properties of object nodes detects incorrect keys:
+				if (data.changedProperties.has("z")) {
+					// ...
+				}
+			});
 		});
 
 		it(`'nodeChanged' includes the names of changed properties (mapNode)`, () => {
