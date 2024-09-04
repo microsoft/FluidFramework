@@ -20,7 +20,7 @@ const config: Config = {
 	// For GitHub pages deployment, it is often '/<projectName>/'
 	baseUrl: "/",
 
-	onBrokenAnchors: "warn",
+	onBrokenAnchors: "ignore", // TODO: plugin that supports our anchor syntax
 	onBrokenLinks: "warn",
 	onBrokenMarkdownLinks: "warn",
 	onDuplicateRoutes: "throw",
