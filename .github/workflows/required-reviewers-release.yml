@@ -14,6 +14,9 @@ on:
       # This is triggered when the base branch changes; handles the case where you open a PR against one branch
       # then change the base branch to a release branch.
       - edited
+
+      # This is triggered when the PR branch has new commits pushed to it.
+      - synchronize
     branches:
       - release/client/**
       - release/server/**
@@ -34,8 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       # This output will be set to true if the target branch is a release branch; false otherwise.
-      is_release_branch: |
-        ${{ steps.is-release-branch.outputs.is_release_branch || steps.not-release-branch.outputs.is_release_branch }}
+      is_release_branch: ${{ steps.is-release-branch.outputs.is_release_branch || steps.not-release-branch.outputs.is_release_branch }}
     steps:
       - name: Target is a release branch
         id: is-release-branch
@@ -72,7 +74,7 @@ jobs:
 
   check_approval:
     name: Approved by required reviewers
-    needs: check_branch
+    needs: [check_branch, not_release_branch]
     if: needs.check_branch.outputs.is_release_branch == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -117,7 +119,9 @@ jobs:
 
       - name: Check PR approval
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The standard token doesn't have org:read permissions, and that scope can't be added using permissions in
+          # the workflow.
+          GITHUB_TOKEN: ${{ secrets.ORGANIZATION_READ_PAT }}
         run: |
           # This command will fail with an error if the PR is not approved, which
           # will in turn cause the CI job to fail.
