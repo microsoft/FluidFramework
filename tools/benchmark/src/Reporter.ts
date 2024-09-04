@@ -123,7 +123,6 @@ export class BenchmarkReporter {
 
 		table.cell("name", chalk.italic(testName));
 
-		// Additional if-statement to display columns in more readble order & avoid reporter from crashing if customData is empty.
 		if (isResultError(result)) {
 			table.cell("error", result.error);
 		} else {
