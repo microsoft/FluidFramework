@@ -19,7 +19,7 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 		"Promotes a package to the Release view in Azure DevOps Artifacts.";
 
 	static readonly description =
-		"Used to promote a package to the Release view if it's a release build and in the build feed.";
+		"Used to promote a package to the Release view if it's a release build and in the build feed.  THIS COMMAND IS INTENDED FOR USE IN FLUID FRAMEWORK CI PIPELINES ONLY.";
 
 	static readonly flags = {
 		version: Flags.string({
