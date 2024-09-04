@@ -32,7 +32,6 @@ import {
 	FlexFieldSchema,
 	type FlexTreeNodeSchema,
 	isLazy,
-	schemaIsLeaf,
 } from "../typed-schema/index.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 import { FieldKinds, type SequenceFieldEditBuilder } from "../default-schema/index.js";
@@ -394,7 +393,7 @@ class EagerMapTreeOptionalField extends EagerMapTreeField implements FlexTreeOpt
 	public get content(): FlexTreeUnknownUnboxed | undefined {
 		const value = this.mapTrees[0];
 		if (value !== undefined) {
-			return unboxedUnion(this.schema, value, {
+			return unboxed(this.schema, value, {
 				parent: this,
 				index: 0,
 			});
@@ -450,7 +449,7 @@ class EagerMapTreeSequenceField extends EagerMapTreeField implements FlexTreeSeq
 		if (i === undefined) {
 			return undefined;
 		}
-		return unboxedUnion(this.schema, this.mapTrees[i] ?? oob(), { parent: this, index: i });
+		return unboxed(this.schema, this.mapTrees[i] ?? oob(), { parent: this, index: i });
 	}
 	public map<U>(callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U): U[] {
 		return Array.from(this, callbackfn);
@@ -458,7 +457,7 @@ class EagerMapTreeSequenceField extends EagerMapTreeField implements FlexTreeSeq
 
 	public *[Symbol.iterator](): IterableIterator<FlexTreeUnknownUnboxed> {
 		for (const [i, mapTree] of this.mapTrees.entries()) {
-			yield unboxedUnion(this.schema, mapTree, { parent: this, index: i });
+			yield unboxed(this.schema, mapTree, { parent: this, index: i });
 		}
 	}
 }
@@ -555,21 +554,18 @@ function getOrCreateField(
 	return new EagerMapTreeField(schema, key, parent);
 }
 
-/** Unboxes non-polymorphic leaf nodes to their values, if applicable */
-function unboxedUnion(
+/** Unboxes leaf nodes to their values */
+function unboxed(
 	schema: FlexFieldSchema,
 	mapTree: ExclusiveMapTree,
 	parent: LocationInField,
 ): FlexTreeUnknownUnboxed {
-	const type = schema.monomorphicChildType;
-	if (type !== undefined) {
-		if (schemaIsLeaf(type)) {
-			return mapTree.value as FlexTreeUnknownUnboxed;
-		}
-		return getOrCreateChild(mapTree, [type], parent) as FlexTreeUnknownUnboxed;
+	const value = mapTree.value;
+	if (value !== undefined) {
+		return value;
 	}
 
-	return getOrCreateChild(mapTree, schema.allowedTypes, parent) as FlexTreeUnknownUnboxed;
+	return getOrCreateChild(mapTree, schema.allowedTypes, parent);
 }
 
 // #endregion Caching and unboxing utilities
