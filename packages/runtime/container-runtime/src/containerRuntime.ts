@@ -107,6 +107,7 @@ import {
 	ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
+	extractSafePropertiesFromMessage,
 	GenericError,
 	IEventSampler,
 	LoggingError,
@@ -171,6 +172,7 @@ import { IBatchMetadata, ISavedOpMetadata } from "./metadata.js";
 import {
 	BatchId,
 	BatchMessage,
+	DuplicateBatchDetector,
 	ensureContentsDeserialized,
 	IBatch,
 	IBatchCheckpoint,
@@ -1358,6 +1360,7 @@ export class ContainerRuntime
 	private readonly scheduleManager: ScheduleManager;
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
+	private readonly duplicateBatchDetector: DuplicateBatchDetector;
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
 
@@ -1636,6 +1639,8 @@ export class ContainerRuntime
 			pendingRuntimeState?.pending,
 			this.logger,
 		);
+
+		this.duplicateBatchDetector = new DuplicateBatchDetector();
 
 		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 		const useDeltaManagerOpsProxy =
@@ -2731,6 +2736,30 @@ export class ContainerRuntime
 				return;
 			}
 
+			const result = this.duplicateBatchDetector.processInboundBatch(inboundBatch);
+			if (result.duplicate) {
+				const error = new DataCorruptionError(
+					"Duplicate batch - The same batch was sequenced twice",
+					{ batchId: inboundBatch.batchId },
+				);
+
+				this.mc.logger.sendTelemetryEvent(
+					{
+						eventName: "DuplicateBatch",
+						details: {
+							batchId: inboundBatch.batchId,
+							clientId: inboundBatch.clientId,
+							batchStartCsn: inboundBatch.batchStartCsn,
+							size: inboundBatch.messages.length,
+							duplicateBatchSequenceNumber: result.otherSequenceNumber,
+							...extractSafePropertiesFromMessage(inboundBatch.keyMessage),
+						},
+					},
+					error,
+				);
+				throw error;
+			}
+
 			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
 			// or to check to ensure the *remote* messages don't match the batchId of a pending local batch.
 			// This latter case would indicate that the container has forked - two copies are trying to persist the same local changes.
@@ -2738,6 +2767,7 @@ export class ContainerRuntime
 				inboundBatch,
 				local,
 			);
+
 			if (messagesWithPendingState.length > 0) {
 				messagesWithPendingState.forEach(({ message, localOpMetadata }) => {
 					const msg: MessageWithContext = {
@@ -2750,9 +2780,13 @@ export class ContainerRuntime
 					this.ensureNoDataModelChanges(() => this.processRuntimeMessage(msg));
 				});
 			} else {
-				this.ensureNoDataModelChanges(() => this.processEmptyBatch(inboundBatch, local));
+				this.ensureNoDataModelChanges(() => this.processEmptyBatch(inboundBatch));
 			}
 		} else {
+			// Note: We don't do anything with Batching or PendingStateManager in this branch
+			// All batched and/or local runtime ops would have the modern runtime message envelope
+			// and thus will land in the branch above.
+
 			// Check if message.type is one of values in ContainerMessageType
 
 			if (isRuntimeMessage(messageCopy)) {
@@ -2777,6 +2811,13 @@ export class ContainerRuntime
 				);
 			}
 		}
+
+		if (local) {
+			// If we have processed a local op, this means that the container is
+			// making progress and we can reset the counter for how many times
+			// we have consecutively replayed the pending states
+			this.resetReconnectCount();
+		}
 	}
 
 	private _processedClientSequenceNumber: number | undefined;
@@ -2789,7 +2830,7 @@ export class ContainerRuntime
 	private processRuntimeMessage(
 		messageWithContext: MessageWithContext & { isRuntimeMessage: true },
 	) {
-		const { message, local, localOpMetadata } = messageWithContext;
+		const { message, localOpMetadata } = messageWithContext;
 
 		// Set the minimum sequence number to the containerRuntime's understanding of minimum sequence number.
 		if (
@@ -2825,13 +2866,6 @@ export class ContainerRuntime
 			this.emit("op", message, messageWithContext.isRuntimeMessage);
 
 			this.scheduleManager.afterOpProcessing(undefined, message);
-
-			if (local) {
-				// If we have processed a local op, this means that the container is
-				// making progress and we can reset the counter for how many times
-				// we have consecutively replayed the pending states
-				this.resetReconnectCount();
-			}
 		} catch (e) {
 			this.scheduleManager.afterOpProcessing(e, message);
 			throw e;
@@ -2839,22 +2873,27 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Process an empty batch, which will execute expected actions while processing even if there are no messages.
-	 * This is a separate function because the processCore function expects at least one message to process.
-	 * It is expected to happen only when the outbox produces an empty batch due to a resubmit flow.
+	 * Process an empty batch, which will execute expected actions while processing even if there are no inner runtime messages.
+	 *
+	 * @remarks - Empty batches are produced by the outbox on resubmit when the resubmit flow resulted in no runtime messages.
+	 * This can happen if changes from a remote client "cancel out" the pending changes being resubmited by this client.
+	 * We submit an empty batch if "offline load" (aka rehydrating from stashed state) is enabled,
+	 * to ensure we account for this batch when comparing batchIds, checking for a forked container.
+	 * Otherwise, we would not realize this container has forked in the case where it did fork, and a batch became empty but wasn't submitted as such.
 	 */
-	private processEmptyBatch(emptyBatch: InboundBatch, local: boolean) {
-		const { emptyBatchSequenceNumber: sequenceNumber, batchStartCsn } = emptyBatch;
-		assert(sequenceNumber !== undefined, 0x9fa /* emptyBatchSequenceNumber must be defined */);
-		this.emit("batchBegin", { sequenceNumber });
+	private processEmptyBatch(emptyBatch: InboundBatch) {
+		const { keyMessage, batchStartCsn } = emptyBatch;
+		this.scheduleManager.beforeOpProcessing(keyMessage);
+
 		this._processedClientSequenceNumber = batchStartCsn;
 		if (!this.hasPendingMessages()) {
 			this.updateDocumentDirtyState(false);
 		}
-		this.emit("batchEnd", undefined, { sequenceNumber });
-		if (local) {
-			this.resetReconnectCount();
-		}
+
+		// We emit this event but say isRuntimeMessage is false, because there are no actual runtime messages here being processed.
+		// But someone listening to this event expecting to be notified whenever a message arrives would want to know about this.
+		this.emit("op", keyMessage, false /* isRuntimeMessage */);
+		this.scheduleManager.afterOpProcessing(undefined /* error */, keyMessage);
 	}
 
 	/**
@@ -2864,7 +2903,7 @@ export class ContainerRuntime
 	private observeNonRuntimeMessage(
 		messageWithContext: MessageWithContext & { isRuntimeMessage: false },
 	) {
-		const { message, local } = messageWithContext;
+		const { message } = messageWithContext;
 
 		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
 		// Sequence numbers are not guaranteed to follow any sort of order. Re-entrancy is one of those situations
@@ -2893,13 +2932,6 @@ export class ContainerRuntime
 			this.emit("op", message, messageWithContext.isRuntimeMessage);
 
 			this.scheduleManager.afterOpProcessing(undefined, message);
-
-			if (local) {
-				// If we have processed a local op, this means that the container is
-				// making progress and we can reset the counter for how many times
-				// we have consecutively replayed the pending states
-				this.resetReconnectCount();
-			}
 		} catch (e) {
 			this.scheduleManager.afterOpProcessing(e, message);
 			throw e;
@@ -4339,6 +4371,12 @@ export class ContainerRuntime
 		}
 	}
 
+	/**
+	 * Resubmits each message in the batch, and then flushes the outbox.
+	 *
+	 * @remarks - If the "Offline Load" feature is enabled, the batchId is included in the resubmitted messages,
+	 * for correlation to detect container forking.
+	 */
 	private reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId) {
 		this.orderSequentially(() => {
 			for (const message of batch) {

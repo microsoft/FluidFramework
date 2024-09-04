@@ -76,15 +76,15 @@ export enum FieldKind {
 }
 
 /**
- * Maps from a view key to its corresponding {@link FieldProps.key | stored key} for the provided
+ * Maps from a property key to its corresponding {@link FieldProps.key | stored key} for the provided
  * {@link ImplicitFieldSchema | field schema}.
  *
  * @remarks
  * If an explicit stored key was specified in the schema, it will be used.
- * Otherwise, the stored key is the same as the view key.
+ * Otherwise, the stored key is the same as the property key.
  */
-export function getStoredKey(viewKey: string, fieldSchema: ImplicitFieldSchema): FieldKey {
-	return brand(getExplicitStoredKey(fieldSchema) ?? viewKey);
+export function getStoredKey(propertyKey: string, fieldSchema: ImplicitFieldSchema): FieldKey {
+	return brand(getExplicitStoredKey(fieldSchema) ?? propertyKey);
 }
 
 /**
