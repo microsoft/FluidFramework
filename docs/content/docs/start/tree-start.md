@@ -35,10 +35,9 @@ const containerSchema: ContainerSchema = {
 const { container } = await client.createContainer(containerSchema, "2");
 ```
 
-After creating a `SharedTree`, you need to create a `TreeView` from it to read and edit the data on the tree.
+After creating a `SharedTree`, you need to create a `TreeView`.
+A `TreeView` provides the interface for reading and editing data on the `SharedTree`.
 This is done by calling `viewWith` on the `SharedTree` with your tree configuration.
-
-A `TreeView` is an editable view of a (version control style) branch of a `SharedTree` which conforms to a user defined schema that is provided to the tree configuration.
 
 ```
 const treeConfiguration = new TreeViewConfiguration(
@@ -49,6 +48,8 @@ const appData = container.initialObjects.appData.viewWith(
 	treeConfiguration
 );
 ```
+
+The tree configuration takes in a schema for the root of the tree which will need to be defined by your application.
 
 ## Defining a Schema
 
@@ -62,7 +63,7 @@ To define a schema, first create a `SchemaFactory` with a unique string to use a
 const schemaFactory = new SchemaFactory("some-schema-id-prob-a-uuid")
 ```
 
-There are three methods for specifying internal nodes; `object()`, `array()`, and `map()`, and five primitive data types for specifying leaf nodes; `boolean`, `string`, `number`, `null`, and `handle`.
+`SchemaFactory` provides some methods for specifying internal nodes including `object()`, `array()`, and `map()`; and five primitive data types for specifying leaf nodes: `boolean`, `string`, `number`, `null`, and `handle`.
 See [schema definition](../data-structures/tree#schema-definition) for more info on the provided types.
 
 You can define a schema in customizable mode by extending the notional type object which also creates a TypeScript data type.
@@ -88,6 +89,25 @@ This creates a `TodoList` class that is an object schema with two fields, `title
 Schemas can also be defined using plain old JavaScript object (POJO) mode.
 Generally, you should prefer customizable mode.
 See [the API docs](../api/v2/tree/schemafactory-class#schemafactory-remarks) for more info on the differences between the two modes.
+
+## Initializing the Tree
+
+Once your view is created, you need to initialize it with some data.
+This can only be done once after the tree is created and the data you initialize your tree with must conform to the schema that you provided.
+
+This is how we would initialize our todo list:
+
+```
+appData.initialize(new TodoList({
+	title: "todo list",
+	items: [
+		new TodoItem({
+			description: "first item",
+			isComplete: true,
+		}),
+	]
+}));
+```
 
 ## Reading Data From Your Tree
 
