@@ -37,6 +37,7 @@ module.exports = {
 		},
 		"build": {
 			dependsOn: [
+				"check:format",
 				"compile",
 				"lint",
 				"build:api-reports",
@@ -55,14 +56,7 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: [
-				"check:format",
-				"eslint",
-				"good-fences",
-				"depcruise",
-				"check:exports",
-				"check:release-tags",
-			],
+			dependsOn: ["eslint", "good-fences", "depcruise", "check:exports", "check:release-tags"],
 			script: false,
 		},
 		"checks": {
@@ -75,7 +69,10 @@ module.exports = {
 		},
 		"build:copy": [],
 		"build:genver": [],
-		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
+		// These dependencies for typetests:gen can be removed once build-tools is upgraded to 0.45+.
+		// After that version, typetests are generated from the previous version of the package only, so they have no
+		// dependent tasks.
+		"typetests:gen": ["^tsc"],
 		"ts2esm": [],
 		"tsc": tscDependsOn,
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
