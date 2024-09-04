@@ -2,8 +2,8 @@
 	"typescript.tsdk": "node_modules/typescript/lib",
 	"eslint.workingDirectories": [
 		{
-			"mode": "auto"
-		}
+			"mode": "auto",
+		},
 	],
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
 }
