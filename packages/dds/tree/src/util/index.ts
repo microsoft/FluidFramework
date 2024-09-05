@@ -56,7 +56,6 @@ export type {
 export { StackyIterator } from "./stackyIterator.js";
 export {
 	asMutable,
-	clone,
 	compareSets,
 	fail,
 	getOrAddEmptyToMap,
