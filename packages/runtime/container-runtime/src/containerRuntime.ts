@@ -1288,15 +1288,14 @@ export class ContainerRuntime
 	private readonly closeSummarizerDelayMs: number;
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private readonly _signalTracking: IPerfSignalReport = {
+		signalsSent: 0,
 		signalsLost: 0,
 		signalsOutOfOrder: 0,
-		broadcastSignalsSent: 0,
+		signalsSentCounter: 0,
 		signalSequenceNumber: 0,
 		signalTimestamp: 0,
 		roundTripSignalSequenceNumber: undefined,
-		roundTripSignalBroadcastNumber: 0,
 		trackingSignalSequenceNumber: undefined,
-		baseSignalTrackingGroupSequenceNumber: undefined,
 		minimumTrackingSignalSequenceNumber: undefined,
 	};
 
@@ -2606,12 +2605,11 @@ export class ContainerRuntime
 			this._signalTracking.signalsLost = 0;
 			this._signalTracking.signalsOutOfOrder = 0;
 			this._signalTracking.signalTimestamp = 0;
-			this._signalTracking.broadcastSignalsSent = 0;
-			this._signalTracking.roundTripSignalBroadcastNumber = 0;
+			this._signalTracking.signalsSentCounter = 0;
+			this._signalTracking.signalsSent = 0;
 			this._signalTracking.roundTripSignalSequenceNumber = undefined;
 			this._signalTracking.trackingSignalSequenceNumber = undefined;
 			this._signalTracking.minimumTrackingSignalSequenceNumber = undefined;
-			this._signalTracking.baseSignalTrackingGroupSequenceNumber = undefined;
 		} else {
 			assert(
 				this.attachState === AttachState.Attached,
@@ -2951,27 +2949,18 @@ export class ContainerRuntime
 	 */
 	private sendSignalTelemetryEvent(clientSignalSequenceNumber: number) {
 		const duration = Date.now() - this._signalTracking.signalTimestamp;
-		const signalsSent =
-			this._signalTracking.baseSignalTrackingGroupSequenceNumber !== undefined
-				? clientSignalSequenceNumber -
-					this._signalTracking.baseSignalTrackingGroupSequenceNumber +
-					1
-				: -1;
 		this.mc.logger.sendPerformanceEvent({
 			eventName: "SignalLatency",
 			duration, // Roundtrip duration of the tracked signal in milliseconds.
-			signalsSent, // Signals sent since the last logged SignalLatency event.
-			broadcastSignals: this._signalTracking.roundTripSignalBroadcastNumber, // Number of broadcast signals sent since last logged SignalLatency event.
+			signalsSent: this._signalTracking.signalsSent, // Signals sent since the last logged SignalLatency event.
 			signalsLost: this._signalTracking.signalsLost, // Signals lost since the last logged SignalLatency event.
 			outOfOrderSignals: this._signalTracking.signalsOutOfOrder, // Out of order signals since the last logged SignalLatency event.
 			reconnectCount: this.consecutiveReconnects, // Container reconnect count.
 		});
-		this._signalTracking.baseSignalTrackingGroupSequenceNumber =
-			clientSignalSequenceNumber + 1;
 		this._signalTracking.signalsLost = 0;
 		this._signalTracking.signalsOutOfOrder = 0;
 		this._signalTracking.signalTimestamp = 0;
-		this._signalTracking.roundTripSignalBroadcastNumber = 0;
+		this._signalTracking.signalsSent = 0;
 	}
 
 	public processSignal(message: ISignalMessage, local: boolean) {
@@ -3291,7 +3280,7 @@ export class ContainerRuntime
 		const newSequenceNumber = ++this._signalTracking.signalSequenceNumber;
 
 		if (!isTargetedSignal) {
-			this._signalTracking.broadcastSignalsSent++;
+			this._signalTracking.signalsSentCounter++;
 			if (
 				this._signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
 				this._signalTracking.trackingSignalSequenceNumber === undefined
@@ -3306,12 +3295,6 @@ export class ContainerRuntime
 			this._signalTracking.trackingSignalSequenceNumber = undefined;
 		}
 
-		// Initialize the base signal tracking group number.
-		// This is used to calculate signalSent metric between SignalLatency events.
-		if (this._signalTracking.baseSignalTrackingGroupSequenceNumber === undefined) {
-			this._signalTracking.baseSignalTrackingGroupSequenceNumber = newSequenceNumber;
-		}
-
 		const newEnvelope: ISignalEnvelope = {
 			address,
 			clientSignalSequenceNumber: newSequenceNumber,
@@ -3323,14 +3306,12 @@ export class ContainerRuntime
 		if (
 			!isTargetedSignal &&
 			newSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
-			this._signalTracking.roundTripSignalSequenceNumber === undefined &&
-			this._signalTracking.baseSignalTrackingGroupSequenceNumber !== undefined
+			this._signalTracking.roundTripSignalSequenceNumber === undefined
 		) {
 			this._signalTracking.signalTimestamp = Date.now();
 			this._signalTracking.roundTripSignalSequenceNumber = newSequenceNumber;
-			this._signalTracking.roundTripSignalBroadcastNumber +=
-				this._signalTracking.broadcastSignalsSent;
-			this._signalTracking.broadcastSignalsSent = 0;
+			this._signalTracking.signalsSent += this._signalTracking.signalsSentCounter;
+			this._signalTracking.signalsSentCounter = 0;
 		}
 
 		return newEnvelope;
