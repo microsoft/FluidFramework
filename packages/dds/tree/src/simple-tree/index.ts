@@ -44,6 +44,9 @@ export {
 	type TreeNodeApi,
 	cursorFromInsertable,
 	createFromInsertable,
+	type NodeChangedData,
+	TreeBeta,
+	type TreeChangeEventsBeta,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,

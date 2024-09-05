@@ -33,7 +33,7 @@ export class GenericsInfo extends Map<string, number> {
 	// kind of difficult given the different import methods, re-exports, etc.
 	static builtIns: string[] = ["Array", "Promise", "Map", "Set"];
 	set(key: string, value: number): this {
-		if (GenericsInfo.builtIns.findIndex((v) => v === key) !== -1) {
+		if (GenericsInfo.builtIns.includes(key)) {
 			return this;
 		}
 
@@ -41,8 +41,10 @@ export class GenericsInfo extends Map<string, number> {
 		return super.set(key, Math.max(value, oldValue));
 	}
 
-	merge(from: Map<string, number>) {
-		from.forEach((v, k) => this.set(k, v));
+	merge(from: Map<string, number>): void {
+		for (const [k, v] of from.entries()) {
+			this.set(k, v);
+		}
 	}
 }
 
@@ -54,15 +56,17 @@ function mergeResults(
 	into: Partial<DecompositionResult>,
 	from: DecompositionResult,
 	separator: string,
-) {
+): void {
 	if (into.typeAsString === undefined) {
 		into.typeAsString = from.typeAsString;
 		into.replacedTypes = from.replacedTypes;
 		into.requiredGenerics = from.requiredGenerics;
 	} else {
 		into.typeAsString = `${into.typeAsString}${separator}${from.typeAsString}`;
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		from.replacedTypes.forEach((v) => into.replacedTypes!.add(v));
+		for (const v of from.replacedTypes) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			into.replacedTypes!.add(v);
+		}
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		into.requiredGenerics!.merge(from.requiredGenerics);
 	}
@@ -80,9 +84,9 @@ export function typeToString(typeChecker: TypeChecker, type: Type): string {
 }
 
 /**
- * Break down a complex type to extract its constituents, then reconstruct it with type -> string
- * replacement, e.g. Promise<UncomparableClass | OtherClass> ->
- * Promise<"UncomparableClass" | "OtherClass">
+ * Break down a complex type to extract its constituents, then reconstruct it with type -\> string
+ * replacement, e.g. `Promise<UncomparableClass | OtherClass>` -\>
+ * `Promise<"UncomparableClass" | "OtherClass">`
  * This removes external dependencies from the type while preserving its structure, where those
  * external types can be checked separately.  Structure must be preserved to check back-compat.
  *
@@ -114,6 +118,7 @@ export function decomposeType(checker: TypeChecker, node: Type): DecompositionRe
 	// don't try to decompose aliases because they are handled at their declaration
 	// enums because they are unions that don't need to be decomposed
 	// these still need to be converted to strings because they are defined symbols
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 	if (node.getAliasSymbol() || node.isEnum()) {
 		result.typeAsString = `"${result.typeAsString}"`;
 	}
@@ -122,30 +127,31 @@ export function decomposeType(checker: TypeChecker, node: Type): DecompositionRe
 	if (node.isTypeParameter()) {
 		return result;
 	}
-	node = node as Type;
+
 	// intersections bind more strongly than unions so split those second
 	if (node.isUnion()) {
 		return decomposeTypes(checker, node.getUnionTypes(), " | ");
-	} else if (node.isIntersection()) {
-		return decomposeTypes(checker, node.getIntersectionTypes(), " & ");
-	} else {
-		// handle type args/generics
-		const typeArgs = node.getTypeArguments();
-		if (typeArgs.length > 0) {
-			// Array shorthand (type[]) is handled by type arguments
-			const typeArgsResult = decomposeTypes(checker, typeArgs, ", ");
-			const symbolName = checker.compilerObject.symbolToString(
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				node.compilerType.getSymbol()!,
-			);
-			typeArgsResult.requiredGenerics.set(symbolName, typeArgs.length);
-			typeArgsResult.typeAsString = `${symbolName}<${typeArgsResult.typeAsString}>`;
-			return typeArgsResult;
-		} else {
-			result.typeAsString = `"${result.typeAsString}"`;
-			return result;
-		}
 	}
+
+	if (node.isIntersection()) {
+		return decomposeTypes(checker, node.getIntersectionTypes(), " & ");
+	}
+
+	// handle type args/generics
+	const typeArgs = node.getTypeArguments();
+	if (typeArgs.length > 0) {
+		// Array shorthand (type[]) is handled by type arguments
+		const typeArgsResult = decomposeTypes(checker, typeArgs, ", ");
+		const symbolName = checker.compilerObject.symbolToString(
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			node.compilerType.getSymbol()!,
+		);
+		typeArgsResult.requiredGenerics.set(symbolName, typeArgs.length);
+		typeArgsResult.typeAsString = `${symbolName}<${typeArgsResult.typeAsString}>`;
+		return typeArgsResult;
+	}
+	result.typeAsString = `"${result.typeAsString}"`;
+	return result;
 }
 
 /**
@@ -161,7 +167,9 @@ export function decomposeTypes(
 	nodes: Type[],
 	separator: string,
 ): DecompositionResult {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const result = {} as DecompositionResult;
+	// eslint-disable-next-line array-callback-return
 	nodes.map((t) => {
 		const subResult = decomposeType(checker, t);
 		mergeResults(result, subResult, separator);
