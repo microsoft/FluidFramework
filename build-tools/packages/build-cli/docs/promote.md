@@ -11,17 +11,14 @@ Promotes a package to the Release view in Azure DevOps Artifacts.
 
 ```
 USAGE
-  $ flub promote package --version <value> --orderFile <value> --token <value> --releaseFlag <value> --feedKind
-    <value> [-v | --quiet]
+  $ flub promote package --version <value> --orderFile <value> --token <value> [-v | --quiet]
 
 FLAGS
-  --feedKind=<value>     (required) ADO feed kind e.g. (internal-build or public)
-  --orderFile=<value>    (required) A file with package names that should be promoted. Such files can be created using
-                         `flub list`.
-  --releaseFlag=<value>  (required) Release flag e.g. (prerelease or release)
-  --token=<value>        (required) Azure DevOps access token. This parameter should be passed using the ADO_API_TOKEN
-                         environment variable for security purposes.
-  --version=<value>      (required) Version of the package to promote.
+  --orderFile=<value>  (required) A file with package names that should be promoted. Such files can be created using
+                       `flub list`.
+  --token=<value>      (required) Azure DevOps access token. This parameter should be passed using the ADO_API_TOKEN
+                       environment variable for security purposes.
+  --version=<value>    (required) Version of the package to promote.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
