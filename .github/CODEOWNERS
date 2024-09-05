@@ -34,8 +34,10 @@
 
 /.github/CODEOWNERS                            @microsoft/fluid-cr-api
 
-# Changes to this workflow require approval from the Release Approvers team
-/.github/workflows/required-reviewers-release.yml @microsoft/FluidFramework-ReleaseApprovers
+# Changes to these workflows require approval from the Release Approvers team
+# Will be re-enabled once workflows are stable. AB#14288
+# /.github/workflows/release-approval.yml @microsoft/FluidFramework-ReleaseApprovers
+# /.github/workflows/release-branches.yml @microsoft/FluidFramework-ReleaseApprovers
 
 # ID compressor source
 /packages/runtime/id-compressor/src            @microsoft/fluid-cr-id-compressor
