@@ -16,6 +16,7 @@ import {
 	ISequencedProposal,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
+
 import { IQuorumSnapshot, Quorum } from "./quorum";
 
 /**
@@ -120,10 +121,10 @@ export class ProtocolOpHandler implements IProtocolHandler {
 				break;
 
 			case MessageType.Propose:
-                // This should become unconditional once (Loader LTS) DeltaManager.processInboundMessage() stops parsing content (ADO #12052)
-                // Note: Until that change is made in the loader, this case will never be hit.
-                // Then there will be a long time of needing both cases, until LTS catches up to the change.
-                if (typeof message.contents === "string") {
+				// This should become unconditional once (Loader LTS) DeltaManager.processInboundMessage() stops parsing content (ADO #12052)
+				// Note: Until that change is made in the loader, this case will never be hit.
+				// Then there will be a long time of needing both cases, until LTS catches up to the change.
+				if (typeof message.contents === "string") {
 					message.contents = JSON.parse(message.contents);
 				}
 				const proposal = message.contents as IProposal;

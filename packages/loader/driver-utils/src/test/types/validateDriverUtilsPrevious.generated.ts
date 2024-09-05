@@ -335,18 +335,16 @@ declare type current_as_old_for_ClassStatics_LocationRedirectionError = requireA
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Enum_MessageType2": {"forwardCompat": false}
+ * "RemovedEnum_MessageType2": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_MessageType2 = requireAssignableTo<TypeOnly<old.MessageType2>, TypeOnly<current.MessageType2>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Enum_MessageType2": {"backCompat": false}
+ * "RemovedEnum_MessageType2": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_MessageType2 = requireAssignableTo<TypeOnly<current.MessageType2>, TypeOnly<old.MessageType2>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
