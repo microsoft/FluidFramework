@@ -76,7 +76,7 @@ export type ObjectFromSchemaRecord<
 export type TreeObjectNode<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	TypeName extends string = string,
-> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object>;
+> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object, T>;
 
 /**
  * Type utility for determining whether or not an implicit field schema has a default value.
@@ -120,10 +120,10 @@ export type InsertableObjectFromSchemaRecord<
 >;
 
 /**
- * Maps from simple field keys ("view" keys) to information about the field.
+ * Maps from simple field keys ("property" keys) to information about the field.
  *
  * @remarks
- * A missing entry for a given view key indicates that no such field exists.
+ * A missing entry for a given property key indicates that no such field exists.
  * Keys with symbols are currently never used, but allowed to make lookups on non-field things
  * (returning undefined) easier.
  */
@@ -133,13 +133,13 @@ export type SimpleKeyMap = ReadonlyMap<
 >;
 
 /**
- * Caches the mappings from view keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
+ * Caches the mappings from property keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
  */
 function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): SimpleKeyMap {
 	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();
-	for (const [viewKey, fieldSchema] of Object.entries(fields)) {
-		const storedKey = getStoredKey(viewKey, fieldSchema);
-		keyMap.set(viewKey, { storedKey, schema: normalizeFieldSchema(fieldSchema) });
+	for (const [propertyKey, fieldSchema] of Object.entries(fields)) {
+		const storedKey = getStoredKey(propertyKey, fieldSchema);
+		keyMap.set(propertyKey, { storedKey, schema: normalizeFieldSchema(fieldSchema) });
 	}
 
 	return keyMap;
@@ -166,8 +166,8 @@ function createProxyHandler(
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
 	const handler: ProxyHandler<TreeNode> = {
-		get(target, viewKey, proxy): unknown {
-			const fieldInfo = flexKeyMap.get(viewKey);
+		get(target, propertyKey, proxy): unknown {
+			const fieldInfo = flexKeyMap.get(propertyKey);
 
 			if (fieldInfo !== undefined) {
 				const flexNode = getOrCreateInnerNode(proxy);
@@ -189,13 +189,15 @@ function createProxyHandler(
 			}
 
 			// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
-			return Reflect.get(target, viewKey, proxy);
+			return Reflect.get(target, propertyKey, proxy);
 		},
-		set(target, viewKey, value: InsertableContent | undefined, proxy) {
-			const fieldInfo = flexKeyMap.get(viewKey);
+		set(target, propertyKey, value: InsertableContent | undefined, proxy) {
+			const fieldInfo = flexKeyMap.get(propertyKey);
 			if (fieldInfo === undefined) {
 				// Pass the proxy as the receiver here, so that setters on the prototype receive `proxy` as `this`.
-				return allowAdditionalProperties ? Reflect.set(target, viewKey, value, proxy) : false;
+				return allowAdditionalProperties
+					? Reflect.set(target, propertyKey, value, proxy)
+					: false;
 			}
 
 			setField(
@@ -205,16 +207,16 @@ function createProxyHandler(
 			);
 			return true;
 		},
-		deleteProperty(target, viewKey): boolean {
+		deleteProperty(target, propertyKey): boolean {
 			// TODO: supporting delete when it makes sense (custom local fields, and optional field) could be added as a feature in the future.
 			throw new UsageError(
 				`Object nodes do not support the delete operator. Optional fields can be assigned to undefined instead.`,
 			);
 		},
-		has: (target, viewKey) => {
+		has: (target, propertyKey) => {
 			return (
-				flexKeyMap.has(viewKey) ||
-				(allowAdditionalProperties ? Reflect.has(target, viewKey) : false)
+				flexKeyMap.has(propertyKey) ||
+				(allowAdditionalProperties ? Reflect.has(target, propertyKey) : false)
 			);
 		},
 		ownKeys: (target) => {
@@ -223,12 +225,12 @@ function createProxyHandler(
 				...(allowAdditionalProperties ? Reflect.ownKeys(target) : []),
 			];
 		},
-		getOwnPropertyDescriptor: (target, viewKey) => {
-			const fieldInfo = flexKeyMap.get(viewKey);
+		getOwnPropertyDescriptor: (target, propertyKey) => {
+			const fieldInfo = flexKeyMap.get(propertyKey);
 
 			if (fieldInfo === undefined) {
 				return allowAdditionalProperties
-					? Reflect.getOwnPropertyDescriptor(target, viewKey)
+					? Reflect.getOwnPropertyDescriptor(target, propertyKey)
 					: undefined;
 			}
 
@@ -309,11 +311,11 @@ export function objectSchema<
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 ): ObjectNodeSchema<TName, T, ImplicitlyConstructable> & ObjectNodeSchemaInternalData {
-	// Ensure no collisions between final set of view keys, and final set of stored keys (including those
-	// implicitly derived from view keys)
+	// Ensure no collisions between final set of property keys, and final set of stored keys (including those
+	// implicitly derived from property keys)
 	assertUniqueKeys(identifier, info);
 
-	// Performance optimization: cache view key => stored key and schema.
+	// Performance optimization: cache property key => stored key and schema.
 	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(info);
 
 	let handler: ProxyHandler<object>;
@@ -433,8 +435,8 @@ export function objectSchema<
 const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
 
 /**
- * Ensures that the set of view keys in the schema is unique.
- * Also ensure that the final set of stored keys (including those implicitly derived from view keys) is unique.
+ * Ensures that the set of property keys in the schema is unique.
+ * Also ensure that the final set of stored keys (including those implicitly derived from property keys) is unique.
  * @throws Throws a `UsageError` if either of the key uniqueness invariants is violated.
  */
 function assertUniqueKeys<
@@ -457,10 +459,10 @@ function assertUniqueKeys<
 	}
 
 	// Verify that there are no duplicates among the derived
-	// (including those implicitly derived from view keys) stored keys.
+	// (including those implicitly derived from property keys) stored keys.
 	const derivedStoredKeys = new Set<string>();
-	for (const [viewKey, schema] of Object.entries(fields)) {
-		const storedKey = getStoredKey(viewKey, schema);
+	for (const [propertyKey, schema] of Object.entries(fields)) {
+		const storedKey = getStoredKey(propertyKey, schema);
 		if (derivedStoredKeys.has(storedKey)) {
 			throw new UsageError(
 				`Stored key "${storedKey}" in schema "${schemaName}" conflicts with a property key of the same name, which is not overridden by a stored key. The final set of stored keys in an object schema must be unique.`,
