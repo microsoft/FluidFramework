@@ -10,7 +10,7 @@ aliases:
 ---
 
 `SharedTree` is a [distributed data structure](../data-structures/overview.md) that looks and feels like simple JavaScript objects with a type safe wrapper.
-This guide will walk you through the basics of creating, configuring, and interacting with a `SharedTree` in your application. 
+This guide will walk you through the basics of creating, configuring, and interacting with a `SharedTree` in your application.
 
 ## Creating a Tree
 
@@ -19,7 +19,7 @@ This example creates a container using an Azure specific client.
 
 See more info on creating and loading containers [here](../build/containers.md#creating-a-container).
 
-```
+```typescript
 import { AzureClient } from "@fluidframework/azure-client";
 import { ContainerSchema, SharedTree } from "fluid-framework";
 
@@ -39,7 +39,7 @@ After creating a `SharedTree`, you need to create a `TreeView`.
 A `TreeView` provides the interface for reading and editing data on the `SharedTree` using a particular schema.
 This is done by calling `viewWith` on the `SharedTree` with your tree configuration.
 
-```
+```typescript
 const treeConfiguration = new TreeViewConfiguration(
 	{ schema: RootSchema }
 )
@@ -59,7 +59,7 @@ The data also behaves like JS objects which makes it easy to use in external lib
 
 To define a schema, first create a `SchemaFactory` with a unique string to use as the namespace.
 
-```
+```typescript
 const schemaFactory = new SchemaFactory("some-schema-id-prob-a-uuid")
 ```
 
@@ -69,7 +69,7 @@ See [schema definition](../data-structures/tree#schema-definition) for more info
 You can define a schema by extending one of the built-in object types.
 As an example, let's write a schema for a todo list:
 
-```
+```typescript
 class TodoList extends schemaFactory.object("TodoList", {
 	title: schemaFactory.string,
 	items: todoItems,
@@ -97,7 +97,7 @@ This can only be done once after the tree is created and the data you initialize
 
 This is how we would initialize our todo list:
 
-```
+```typescript
 appData.initialize(new TodoList({
 	title: "todo list",
 	items: [
@@ -116,14 +116,14 @@ Since the root of our tree is an object schema, its data can be accessed like a 
 
 If `TodoList` is the root schema of your tree, you can access the todo list data like this:
 
-```
+```typescript
 const todoListTitle = appData.root.title;
 const firstItem = appData.root.items[0];
 ```
 
 You can also iterate through the actual items, here's an example of how to use the data you're reading in a JSX component:
 
-```
+```typescript
 <li>
 	{appData.root.items.map((item) =>
 		<ul>{item.description}</ul>
@@ -134,7 +134,7 @@ You can also iterate through the actual items, here's an example of how to use t
 When using the data in your tree, it's important to listen to the change events provided by the tree so that you can make any necessary updates to your application.
 This is how you can use React hooks to listen to the `nodeChanged` event:
 
-```
+```typescript
 const [itemCount, setCount] = useState(appData.root.items.length);
 
 useEffect(() => {
@@ -153,20 +153,20 @@ See [the API](../api/v2/tree/treechangeevents-interface) docs for more details.
 There are built-in editing methods for each of the provided schema types.
 For example, if your data is in an array, you can add an item like this:
 
-```
+```typescript
 appData.root.items.insertAt(3);
 ```
 
 The schema types can also be edited using the assignment operator like this:
 
-```
+```typescript
 appData.root.title = "chores";
 ```
 
 Editing methods can also be defined on the schema classes defined.
 This allows you to write methods that are more suited to your app's specific needs.
 
-```
+```typescript
 class TodoList extends schemaFactory.object("TodoList", {
 	title: schemaFactory.string,
 	items: todoItems,
@@ -183,10 +183,10 @@ You can also read more about how these editing operations work in collaborative 
 
 ### Grouping Edits into Transactions
 
-Edits can be grouped into transaction using the `Tree.runTransaction()`	API.
+Edits can be grouped into transaction using the `Tree.runTransaction()` API.
 It can be useful to group edits because a transaction is equivalent to a single unit when undoing and redoing.
 
-```
+```typescript
 Tree.runTransaction(myNode, (node) => {
     // Make multiple changes to the tree.
     // This can be changes to the referenced node but is not limited to that scope.
@@ -208,7 +208,7 @@ The `kind` property on `CommitMetadata` tells you if a commit is the result of a
 This aids in managing separate undo and redo stacks.
 Here is a simple example of how to do so using the provided APIs:
 
-```
+```typescript
 const undoStack = [];
 const redoStack = []
 
