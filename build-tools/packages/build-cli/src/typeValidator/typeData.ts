@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+// AB#13931: Remove these lint disables
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable unicorn/no-lonely-if */
+/* eslint-disable prefer-destructuring */
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+
 import { Node } from "ts-morph";
 
 export interface TypeData {
