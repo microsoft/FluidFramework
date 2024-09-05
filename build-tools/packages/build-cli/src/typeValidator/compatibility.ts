@@ -6,7 +6,7 @@
 // We use namespaces as part of type test generation
 /* eslint-disable @typescript-eslint/no-namespace */
 
-// AB#13931: Remove these lint disables
+// Blocks are used in this file intentionally for scoping.
 /* eslint-disable no-lone-blocks */
 
 /**

@@ -3,18 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// AB#13931: Remove these lint disables
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable array-callback-return */
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
-/* eslint-disable no-else-return */
-/* eslint-disable no-param-reassign */
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-/* eslint-disable unicorn/no-array-for-each */
-/* eslint-disable unicorn/prefer-array-index-of */
-
 import { Type, TypeChecker } from "ts-morph";
 
 export interface DecompositionResult {
@@ -45,7 +33,7 @@ export class GenericsInfo extends Map<string, number> {
 	// kind of difficult given the different import methods, re-exports, etc.
 	static builtIns: string[] = ["Array", "Promise", "Map", "Set"];
 	set(key: string, value: number): this {
-		if (GenericsInfo.builtIns.findIndex((v) => v === key) !== -1) {
+		if (GenericsInfo.builtIns.includes(key)) {
 			return this;
 		}
 
@@ -53,8 +41,8 @@ export class GenericsInfo extends Map<string, number> {
 		return super.set(key, Math.max(value, oldValue));
 	}
 
-	merge(from: Map<string, number>) {
-		from.forEach((v, k) => this.set(k, v));
+	merge(from: Map<string, number>): void {
+		for (const [k, v] of from.entries()) this.set(k, v);
 	}
 }
 
@@ -66,15 +54,17 @@ function mergeResults(
 	into: Partial<DecompositionResult>,
 	from: DecompositionResult,
 	separator: string,
-) {
+): void {
 	if (into.typeAsString === undefined) {
 		into.typeAsString = from.typeAsString;
 		into.replacedTypes = from.replacedTypes;
 		into.requiredGenerics = from.requiredGenerics;
 	} else {
 		into.typeAsString = `${into.typeAsString}${separator}${from.typeAsString}`;
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		from.replacedTypes.forEach((v) => into.replacedTypes!.add(v));
+		for (const v of from.replacedTypes) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			into.replacedTypes!.add(v);
+		}
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		into.requiredGenerics!.merge(from.requiredGenerics);
 	}
@@ -135,29 +125,31 @@ export function decomposeType(checker: TypeChecker, node: Type): DecompositionRe
 		return result;
 	}
 	node = node as Type;
+
 	// intersections bind more strongly than unions so split those second
 	if (node.isUnion()) {
 		return decomposeTypes(checker, node.getUnionTypes(), " | ");
-	} else if (node.isIntersection()) {
-		return decomposeTypes(checker, node.getIntersectionTypes(), " & ");
-	} else {
-		// handle type args/generics
-		const typeArgs = node.getTypeArguments();
-		if (typeArgs.length > 0) {
-			// Array shorthand (type[]) is handled by type arguments
-			const typeArgsResult = decomposeTypes(checker, typeArgs, ", ");
-			const symbolName = checker.compilerObject.symbolToString(
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				node.compilerType.getSymbol()!,
-			);
-			typeArgsResult.requiredGenerics.set(symbolName, typeArgs.length);
-			typeArgsResult.typeAsString = `${symbolName}<${typeArgsResult.typeAsString}>`;
-			return typeArgsResult;
-		} else {
-			result.typeAsString = `"${result.typeAsString}"`;
-			return result;
-		}
 	}
+
+	if (node.isIntersection()) {
+		return decomposeTypes(checker, node.getIntersectionTypes(), " & ");
+	}
+
+	// handle type args/generics
+	const typeArgs = node.getTypeArguments();
+	if (typeArgs.length > 0) {
+		// Array shorthand (type[]) is handled by type arguments
+		const typeArgsResult = decomposeTypes(checker, typeArgs, ", ");
+		const symbolName = checker.compilerObject.symbolToString(
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			node.compilerType.getSymbol()!,
+		);
+		typeArgsResult.requiredGenerics.set(symbolName, typeArgs.length);
+		typeArgsResult.typeAsString = `${symbolName}<${typeArgsResult.typeAsString}>`;
+		return typeArgsResult;
+	}
+	result.typeAsString = `"${result.typeAsString}"`;
+	return result;
 }
 
 /**
@@ -173,7 +165,9 @@ export function decomposeTypes(
 	nodes: Type[],
 	separator: string,
 ): DecompositionResult {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const result = {} as DecompositionResult;
+	// eslint-disable-next-line array-callback-return
 	nodes.map((t) => {
 		const subResult = decomposeType(checker, t);
 		mergeResults(result, subResult, separator);

@@ -3,17 +3,13 @@
  * Licensed under the MIT License.
  */
 
-// AB#13931: Remove these lint disables
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable unicorn/no-array-for-each */
-
 import { IndentationText, Project } from "ts-morph";
 
-function case_insensitive_comp(strA: string, strB: string) {
+function case_insensitive_comp(strA: string, strB: string): number {
 	return strA.localeCompare(strB, "en", { sensitivity: "base" });
 }
 
-async function convert_package_dir(packageDir: string) {
+async function convert_package_dir(packageDir: string): Promise<void> {
 	console.log(`I'm here ${packageDir}`);
 	const project = new Project({
 		manipulationSettings: {
@@ -27,7 +23,7 @@ async function convert_package_dir(packageDir: string) {
 		`${packageDir}/**.ts`,
 	]);
 	console.log(sourceFiles.length);
-	sourceFiles.forEach((sourceFile) => {
+	for (const sourceFile of sourceFiles) {
 		console.log(sourceFile.getBaseName());
 		const exportDeclarations = sourceFile.getExportDeclarations();
 		// // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,7 +38,7 @@ async function convert_package_dir(packageDir: string) {
 		// sortedModuleSpecifiers.forEach((key, i) => {
 		//     moduleSpecifiers.get(key).setOrder(i);
 		// });
-		exportDeclarations.forEach((exportDeclaration) => {
+		for (const exportDeclaration of exportDeclarations) {
 			if (exportDeclaration.isNamespaceExport()) {
 				const moduleSpecifierSourceFile =
 					exportDeclaration.getModuleSpecifierSourceFileOrThrow();
@@ -50,12 +46,12 @@ async function convert_package_dir(packageDir: string) {
 				for (const [name] of moduleSpecifierSourceFile.getExportedDeclarations()) {
 					namedExports.push(name);
 				}
-				namedExports.sort(case_insensitive_comp).forEach((name) => {
+				for (const name of namedExports.sort(case_insensitive_comp)) {
 					exportDeclaration.addNamedExport(name);
 					console.log(
 						`Added ${name} to ${sourceFile.getBaseName()} from ${moduleSpecifierSourceFile.getBaseName()}`,
 					);
-				});
+				}
 			}
 			// if (exportDeclaration.hasNamedExports()) {
 			//     exportDeclaration
@@ -84,8 +80,8 @@ async function convert_package_dir(packageDir: string) {
 					);
 			}
 			sourceFile.saveSync();
-		});
-	});
+		}
+	}
 	await project.save();
 }
 
