@@ -14,7 +14,6 @@
  * @privateRemarks
  * Prefer using `JsonSerializable<unknown>` or `JsonDeserialized<unknown>` over this type that
  * is an implementation detail.
- * @legacy
  * @alpha
  */
 export type JsonTypeWith<T> =
@@ -30,7 +29,6 @@ export type JsonTypeWith<T> =
 /**
  * Portion of {@link JsonTypeWith} that is an object (including array) and not null.
  *
- * @legacy
  * @alpha
  */
 export type NonNullJsonObjectWith<T> =

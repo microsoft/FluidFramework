@@ -5,7 +5,7 @@
 	"compilerOptions": {
 		// Even though this is no-emit. The tsbuildinfo file needs a place to go.
 		// Note: placing it at the root confuses the build system incrementality for eslint.
-		"outDir": "../../lib/test/core-interfaces/no-exactOptionalPropertyTypes",
+		"outDir": "../../../lib/test/core-interfaces/no-exactOptionalPropertyTypes",
 		"exactOptionalPropertyTypes": false,
 		"noEmit": true,
 	},

@@ -33,6 +33,18 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./internal/container-definitions/internal": {
+			"import": "./lib/container-definitions/index.js",
+			"require": "./dist/container-definitions/index.js"
+		},
+		"./internal/core-interfaces": {
+			"import": "./lib/core-interfaces/index.js",
+			"require": "./dist/core-interfaces/index.js"
+		},
+		"./internal/events": {
+			"import": "./lib/events/events.js",
+			"require": "./dist/events/events.js"
 		}
 	},
 	"files": [
@@ -69,11 +81,11 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
+		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
 		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit",
 		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ./src/cjs/package.json ./dist"
 	},
 	"c8": {
 		"all": true,
@@ -96,7 +108,17 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/core-interfaces": "workspace:~"
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/container-runtime-definitions": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/datastore": "workspace:~",
+		"@fluidframework/datastore-definitions": "workspace:^",
+		"@fluidframework/fluid-static": "workspace:~",
+		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/shared-object-base": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
@@ -133,6 +155,10 @@
 			],
 			"check:exports:esm:index": [
 				"build:esnext"
+			],
+			"eslint": [
+				"build:esnext",
+				"^build:test:esm"
 			]
 		}
 	},
