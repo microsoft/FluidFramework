@@ -10,12 +10,6 @@
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 
 /**
- * The dependencies for the compile task. The build:test task is excluded and added only to the compile task definition
- * because other tasks need these same dependent tasks, but not the build:test task.
- */
-const compileDependsOn = ["commonjs", "build:esnext", "api", "build:copy"];
-
-/**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
  *
@@ -54,11 +48,11 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: [...compileDependsOn, "build:test"],
+			dependsOn: ["commonjs", "build:esnext", "api", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
-			dependsOn: ["tsc"],
+			dependsOn: ["tsc", "build:test"],
 			script: false,
 		},
 		"lint": {
@@ -89,7 +83,8 @@ module.exports = {
 		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
 		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
-			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
+			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext", "typetests:gen"],
+			// dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
