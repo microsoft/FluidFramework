@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { readFileAsync } from "../common/utils";
+import { readFile } from "fs/promises";
 import { sha256 } from "./hash";
 
 type hashFn = (buffer: Buffer) => string;
@@ -25,7 +24,7 @@ export class FileHashCache {
 			return cachedHashP;
 		}
 
-		const newHashP = readFileAsync(path).then(hash);
+		const newHashP = readFile(path).then(hash);
 		fileHashCache.set(path, newHashP);
 		return newHashP;
 	}
