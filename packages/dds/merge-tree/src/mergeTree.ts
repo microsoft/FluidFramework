@@ -1628,7 +1628,6 @@ export class MergeTree {
 							refSeq,
 						};
 					}
-					// const movedSeqs = concurrentMoves.map(({ seq: seqNum }) => seqNum);
 					const moveInfo = {
 						movedSeq: _movedSeq ?? UnassignedSequenceNumber,
 						concurrentMoves,
@@ -2027,9 +2026,7 @@ export class MergeTree {
 					// so put them at the head of the list
 					// The list isn't ordered, but we keep the first move at the head
 					// for partialLengths bookkeeping purposes
-					if (seq !== UnassignedSequenceNumber) {
-						existingMoveInfo.concurrentMoves.unshift({ clientId, seq, refSeq });
-					}
+					existingMoveInfo.concurrentMoves.unshift({ clientId, seq, refSeq });
 
 					existingMoveInfo.movedSeq = seq;
 					if (segment.localRefs?.empty === false) {

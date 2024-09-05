@@ -128,6 +128,9 @@ export interface IMoveInfo {
 	 */
 	movedSeq: number;
 
+	/**
+	 * Stores the seq, client id, and ref seq for each obliterate.
+	 */
 	concurrentMoves: IConcurrentMoveInfo[];
 
 	/**

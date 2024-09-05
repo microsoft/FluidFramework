@@ -421,7 +421,6 @@ export interface IMergeTreeTextHelper {
 
 // @alpha
 export interface IMoveInfo {
-    // (undocumented)
     concurrentMoves: IConcurrentMoveInfo[];
     localMovedSeq?: number;
     movedSeq: number;
