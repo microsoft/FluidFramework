@@ -231,8 +231,13 @@ const waitForSummary = async (
 		...testContainerConfig,
 		runtimeOptions: { ...testContainerConfig.runtimeOptions, summaryOptions: undefined },
 	};
-	const { summarizer } = await createSummarizer(provider, container, testConfig);
+	const { summarizer, container: summarizingContainer } = await createSummarizer(
+		provider,
+		container,
+		testConfig,
+	);
 	await summarizeNow(summarizer);
+	summarizingContainer.close();
 };
 // Introduced in 0.37
 // REVIEW: enable compat testing
@@ -1848,6 +1853,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		map1.set("test op 1", "test op 1");
 		const container: IContainerExperimental =
 			await provider.loadTestContainer(testContainerConfig);
+		const waitForSummaryPromise = waitForSummary(provider, container1, testContainerConfig);
 		const pendingOps = await new Promise<string | undefined>((resolve, reject) =>
 			container.on("op", (op) => {
 				if (op.type === "summarize") {
@@ -1855,6 +1861,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				}
 			}),
 		);
+		await waitForSummaryPromise;
 		assert.ok(pendingOps);
 
 		const container2 = await loader.resolve({ url }, pendingOps);
@@ -1956,14 +1963,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
-		// wait for summary
-		await new Promise<void>((resolve) =>
-			container1.on("op", (op) => {
-				if (op.type === "summaryAck") {
-					resolve();
-				}
-			}),
-		);
+		await waitForSummary(provider, container1, testContainerConfig);
 
 		// avoid our join op being saved
 		const headers: IRequestHeader = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
