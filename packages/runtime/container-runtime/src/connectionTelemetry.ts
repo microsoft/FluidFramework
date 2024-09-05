@@ -440,13 +440,13 @@ class OpPerfTelemetry {
 }
 export interface IPerfSignalReport {
 	/**
-	 * Identifier for the signal being submitted in order to
+	 * Identifier for tracked signal being submitted in order to
 	 * allow collection of data around the roundtrip of signal messages.
 	 */
 	signalSequenceNumber: number;
 
 	/**
-	 * Number of broadcast signals sent latency event.
+	 * Number of broadcast signals sent during latency event window.
 	 */
 	signalsSent: number;
 
