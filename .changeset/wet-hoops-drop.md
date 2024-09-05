@@ -44,3 +44,23 @@ TreeBeta.on(point, "nodeChanged", (data) => {
 	}
 });
 ```
+
+The existing stable "nodeChanged" event's callback now is given a parameter called `unstable` of type `unknown` which is used to indicate that additional data can be provided there.
+This could break existing code using "nodeChanged" in a particularly fragile way.
+
+```typescript
+function f(optional?: number) {
+	// ...
+}
+Tree.on(point, "nodeChanged", f); // Bad
+```
+
+Code like this which is implicitly discarding an optional argument from the function used as the listener will be broken.
+It can be fixed by using an inline lambda expression:
+
+```typescript
+function f(optional?: number) {
+	// ...
+}
+Tree.on(point, "nodeChanged", () => f()); // Safe
+```
