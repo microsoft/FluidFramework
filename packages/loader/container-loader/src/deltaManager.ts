@@ -30,11 +30,7 @@ import {
 	type IClientDetails,
 	type IClientConfiguration,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	MessageType2,
-	NonRetryableError,
-	isRuntimeMessage,
-} from "@fluidframework/driver-utils/internal";
+import { NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
@@ -116,7 +112,7 @@ function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage):
 		case MessageType.Propose:
 		case MessageType.Reject:
 		case MessageType.NoOp:
-		case MessageType2.Accept:
+		case MessageType.Accept:
 		case MessageType.Summarize: {
 			return true;
 		}

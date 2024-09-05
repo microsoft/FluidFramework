@@ -378,9 +378,8 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 			case MessageType.SummaryAck:
 			case MessageType.SummaryNack:
 				// Old files (prior to PR #10077) may not contain this info
-				// back-compat: ADO #1385: remove cast when ISequencedDocumentMessage changes are propagated
-				if ((op as any).data !== undefined) {
-					op.contents = JSON.parse((op as any).data);
+				if (op.data !== undefined) {
+					op.contents = JSON.parse(op.data);
 				} else {
 					this.parseContent(op);
 				}
