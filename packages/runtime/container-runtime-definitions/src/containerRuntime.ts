@@ -39,6 +39,7 @@ export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContaine
  * Events emitted by {@link IContainerRuntime}.
  * @legacy
  * @alpha
+ * @sealed
  */
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 	(event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void);
@@ -48,6 +49,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 /**
  * @legacy
  * @alpha
+ * @sealed
  */
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
 	IEventProvider<IContainerRuntimeEvents>;
@@ -56,6 +58,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * @legacy
  * @alpha
+ * @sealed
  */
 export interface IContainerRuntime
 	extends IProvideFluidDataStoreRegistry,

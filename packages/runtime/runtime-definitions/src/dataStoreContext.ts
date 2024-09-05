@@ -119,6 +119,7 @@ export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilitySt
 /**
  * @legacy
  * @alpha
+ * @sealed
  */
 export interface IContainerRuntimeBaseEvents extends IEvent {
 	(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void);
@@ -176,6 +177,7 @@ export interface IDataStore {
  * TODO: this should be merged into IFluidDataStoreContext
  * @legacy
  * @alpha
+ * @sealed
  */
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
 	readonly baseLogger: ITelemetryBaseLogger;
