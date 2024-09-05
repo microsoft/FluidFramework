@@ -19,7 +19,7 @@ import {
 import { Flags } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
 import * as changeCase from "change-case";
-import { pathExists, readJson } from "fs-extra/esm";
+import { readJson } from "fs-extra/esm";
 import * as resolve from "resolve.exports";
 import {
 	JSDoc,
@@ -117,13 +117,13 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// statements into the type test file, we need to use the previous version name.
 		previousPackageJson.name = previousPackageName;
 
-		const { typesPath: previousTypesPathRelative, levelUsed: previousPackageLevel } =
-			getTypesPathWithFallback(previousPackageJson, level, this.logger, fallbackLevel);
+		const { typesPath: previousTypesPathRelative, entrypointUsed: previousEntrypoint } =
+			getTypesPathWithFallback(previousPackageJson, entrypoint, this.logger, fallbackLevel);
 		const previousTypesPath = path.resolve(
 			path.join(previousBasePath, previousTypesPathRelative),
 		);
 		this.verbose(
-			`Found ${previousPackageLevel} type definitions for ${currentPackageJson.name}: ${previousTypesPath}`,
+			`Found ${previousEntrypoint} type definitions for ${currentPackageJson.name}: ${previousTypesPath}`,
 		);
 
 		const previousFile = loadTypesSourceFile(previousTypesPath);
@@ -143,7 +143,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// /internal entrypoint. This is consistent with our policy for code within the repo - all non-public APIs are
 		// imported from the /internal entrypoint for consistency
 		const previousImport = `import type * as old from "${previousPackageName}${
-			previousPackageLevel === ApiLevel.public ? "" : `/${ApiLevel.internal}`
+			previousEntrypoint === ApiLevel.public ? "" : `/${ApiLevel.internal}`
 		}";`;
 		const imports =
 			buildToolsPackageName < previousPackageName

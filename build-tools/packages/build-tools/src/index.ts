@@ -27,6 +27,7 @@ export * as TscUtils from "./common/tscUtils";
 export {
 	type BrokenCompatTypes,
 	type ITypeValidationConfig,
+	defaultTypeValidationConfig,
 } from "./common/typeValidatorConfig";
 export {
 	TypeOnly,

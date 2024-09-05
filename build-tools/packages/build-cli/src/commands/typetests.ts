@@ -4,7 +4,7 @@
  */
 
 import {
-	type ITypeValidationConfig,
+	ITypeValidationConfig,
 	Package,
 	PackageJson,
 	defaultTypeValidationConfig,
