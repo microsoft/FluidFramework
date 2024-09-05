@@ -22,21 +22,6 @@ export {
 	normalizeGlobalTaskDefinitions,
 	getTaskDefinitions,
 } from "./fluidBuild/fluidTaskDefinitions";
-export {
-	getApiExtractorConfigFilePath,
-	getEsLintConfigFilePath,
-} from "./fluidBuild/tasks/taskUtils";
+export { getApiExtractorConfigFilePath, getEsLintConfigFilePath } from "./fluidBuild/tasks/taskUtils";
 export * as TscUtils from "./fluidBuild/tscUtils";
-export {
-	type BrokenCompatTypes,
-	type ITypeValidationConfig,
-} from "./common/typeValidatorConfig";
-export {
-	TypeOnly,
-	MinimalType,
-	FullType,
-	requireAssignableTo,
-} from "./typeValidator/compatibility";
-export { type TestCaseTypeData, buildTestCase } from "./typeValidator/testGeneration";
-export { type TypeData } from "./typeValidator/typeData";
-export { getTypeTestPreviousPackageDetails } from "./typeValidator/validatorUtils";
+export { getTypeTestPreviousPackageDetails } from "./common/typeTests";
