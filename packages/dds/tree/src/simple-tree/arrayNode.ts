@@ -827,10 +827,10 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		validateIndexRange(sourceStart, sourceEnd, source ?? destinationField, "moveRangeToIndex");
 
 		// TODO: determine support for move across different sequence types
-		if (destinationField.schema.types !== undefined && sourceField !== destinationField) {
+		if (sourceField !== destinationField) {
 			for (let i = sourceStart; i < sourceEnd; i++) {
 				const sourceNode = sourceField.boxedAt(i) ?? oob();
-				if (!destinationField.schema.types.has(sourceNode.schema.name)) {
+				if (!destinationField.schema.types.has(sourceNode.schema)) {
 					throw new UsageError("Type in source sequence is not allowed in destination.");
 				}
 			}

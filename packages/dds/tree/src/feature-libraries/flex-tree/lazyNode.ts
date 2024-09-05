@@ -12,6 +12,7 @@ import {
 	type FieldKey,
 	type ITreeSubscriptionCursor,
 	type TreeNavigationResult,
+	type TreeNodeSchemaIdentifier,
 	type Value,
 	inCursorField,
 	mapCursorFields,
@@ -53,7 +54,7 @@ export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): Laz
 		assert(cached instanceof LazyTreeNode, 0x92c /* Expected LazyTreeNode */);
 		return cached as LazyTreeNode;
 	}
-	const schema = context.schema.nodeSchema.get(cursor.type) ?? fail("missing schema");
+	const schema = context.flexSchema.nodeSchema.get(cursor.type) ?? fail("missing schema");
 	return new LazyTreeNode(context, schema, cursor, anchorNode, anchor);
 }
 
@@ -74,6 +75,10 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 		return FlexTreeEntityKind.Node;
 	}
 
+	public get schema(): TreeNodeSchemaIdentifier {
+		return this.flexSchema.name;
+	}
+
 	// Using JS private here prevents it from showing up as a enumerable own property, or conflicting with struct fields.
 	readonly #removeDeleteCallback: () => void;
 
@@ -90,17 +95,17 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 		this.#removeDeleteCallback = anchorNode.on("afterDestroy", cleanupTree);
 
 		assert(
-			this.context.schema.nodeSchema.get(this.schema.name) !== undefined,
+			this.context.flexSchema.nodeSchema.get(this.flexSchema.name) !== undefined,
 			0x784 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the TreeStoredSchema */,
 		);
 	}
 
 	public is(schema: FlexTreeNodeSchema): boolean {
 		assert(
-			this.context.schema.nodeSchema.get(schema.name) === schema,
+			this.context.flexSchema.nodeSchema.get(schema.name) === schema,
 			0x785 /* Narrowing must be done to a schema that exists in this context */,
 		);
-		return this.schema === (schema as unknown);
+		return this.flexSchema === (schema as unknown);
 	}
 
 	protected override [tryMoveCursorToAnchorSymbol](
@@ -123,7 +128,7 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 	}
 
 	public tryGetField(fieldKey: FieldKey): FlexTreeField | undefined {
-		const schema = this.schema.getFieldSchema(fieldKey);
+		const schema = this.flexSchema.getFieldSchema(fieldKey);
 		return inCursorField(this[cursorSymbol], fieldKey, (cursor) => {
 			if (cursor.getFieldLength() === 0) {
 				return undefined;
@@ -133,7 +138,7 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 	}
 
 	public getBoxed(key: FieldKey): FlexTreeField {
-		const fieldSchema = this.schema.getFieldSchema(key);
+		const fieldSchema = this.flexSchema.getFieldSchema(key);
 		return inCursorField(this[cursorSymbol], key, (cursor) => {
 			return makeField(this.context, fieldSchema, cursor);
 		});
@@ -141,7 +146,7 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 
 	public boxedIterator(): IterableIterator<FlexTreeField> {
 		return mapCursorFields(this[cursorSymbol], (cursor) =>
-			makeField(this.context, this.schema.getFieldSchema(cursor.getFieldKey()), cursor),
+			makeField(this.context, this.flexSchema.getFieldSchema(cursor.getFieldKey()), cursor),
 		).values();
 	}
 
@@ -160,7 +165,7 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 			// Parent field is a detached sequence, and thus needs special handling for its schema.
 			// eslint-disable-next-line unicorn/prefer-ternary
 			if (key === rootFieldKey) {
-				fieldSchema = this.context.schema.rootFieldSchema;
+				fieldSchema = this.context.flexSchema.rootFieldSchema;
 			} else {
 				// All fields (in the flex tree API) have a schema.
 				// Since currently there is no known schema for detached field other than the special default root:
@@ -176,7 +181,7 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 				// This MIGHT work properly with existing merge resolution logic (it must keep client in sync and be unable to violate schema), but this either needs robust testing or to be explicitly banned (error before sending the op).
 				// Issues like replacing a node in the a removed sequenced then undoing the remove could easily violate schema if not everything works exactly right!
 				fieldSchema = FlexFieldSchema.create(FieldKinds.sequence, [
-					...this.context.schema.nodeSchema.values(),
+					...this.context.flexSchema.nodeSchema.values(),
 				]);
 			}
 		} else {
@@ -184,7 +189,7 @@ export class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchem
 			const parentType = cursor.type;
 			cursor.enterField(key);
 			const nodeSchema =
-				this.context.schema.nodeSchema.get(parentType) ??
+				this.context.flexSchema.nodeSchema.get(parentType) ??
 				fail("requested schema that does not exist");
 			fieldSchema = nodeSchema.getFieldSchema(key);
 		}
