@@ -2709,8 +2709,9 @@ export class ContainerRuntime
 				return;
 			}
 
-			const result = this.duplicateBatchDetector.processInboundBatch(inboundBatch);
-			if (result.duplicate) {
+			const { duplicate, otherSequenceNumber } =
+				this.duplicateBatchDetector.processInboundBatch(inboundBatch);
+			if (duplicate) {
 				const error = new DataCorruptionError(
 					"Duplicate batch - The same batch was sequenced twice",
 					{ batchId: inboundBatch.batchId },
@@ -2724,7 +2725,7 @@ export class ContainerRuntime
 							clientId: inboundBatch.clientId,
 							batchStartCsn: inboundBatch.batchStartCsn,
 							size: inboundBatch.messages.length,
-							duplicateBatchSequenceNumber: result.otherSequenceNumber,
+							duplicateBatchSequenceNumber: otherSequenceNumber,
 							...extractSafePropertiesFromMessage(inboundBatch.keyMessage),
 						},
 					},

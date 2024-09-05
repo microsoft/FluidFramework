@@ -876,7 +876,10 @@ describe("Runtime", () => {
 			};
 
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
-				pendingStateManager.onFlushBatch([{ referenceSequenceNumber: 0 }], 1);
+				pendingStateManager.onFlushBatch(
+					[{ referenceSequenceNumber: 0 }],
+					1 /* clientSequenceNumber */,
+				);
 
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, should ` +
@@ -912,7 +915,7 @@ describe("Runtime", () => {
 			);
 
 			it(
-				`No progress for ${maxReconnects} / 2 connection state changes, with pending state, should ` +
+				`No progress for (${maxReconnects} / 2 + 1) connection state changes, with pending state, should ` +
 					"generate telemetry event but not throw an error that closes the container",
 				async () => {
 					const pendingStateManager = getMockPendingStateManager();
@@ -978,6 +981,7 @@ describe("Runtime", () => {
 				},
 			);
 
+			//* Did I preserve the intent of this test?  It used to resend seqNum 0 many times
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, successfully ` +
 					"processing local op, should not generate telemetry event nor throw an error that closes the container",
@@ -1013,6 +1017,7 @@ describe("Runtime", () => {
 				},
 			);
 
+			//* Ditto for this one
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, successfully ` +
 					"processing remote op and local chunked op, should generate telemetry event and throw an error that closes the container",

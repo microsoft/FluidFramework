@@ -26,14 +26,16 @@ export class DuplicateBatchDetector {
 	 */
 	public processInboundBatch(
 		inboundBatch: InboundBatch,
-	): { duplicate: true; otherSequenceNumber: number } | { duplicate: false } {
+	):
+		| { duplicate: true; otherSequenceNumber: number }
+		| { duplicate: false; otherSequenceNumber?: never } {
 		const { sequenceNumber, minimumSequenceNumber } = inboundBatch.keyMessage;
 
 		// Glance at this batch's MSN. Any batchIds we're tracking with a lower sequence number are now safe to forget.
 		// Why? Because any other client holding the same batch locally would have seen the earlier batch and closed before submitting its duplicate.
 		this.clearOldBatchIds(minimumSequenceNumber);
 
-		// getEffectiveBatchId is only needed in the SUPER rare/surprising case where
+		// getEffectiveBatchId (as opposed to reading the stamped batchId) is only needed in the SUPER rare/surprising case where
 		// the original batch (not resubmitted, so no batchId) arrives in parallel with a resubmitted batch.
 		// In the presence of typical network conditions, this would not be possible
 		// (the original batch should roundtrip WAY before another container could rehydrate, connect, and resubmit)

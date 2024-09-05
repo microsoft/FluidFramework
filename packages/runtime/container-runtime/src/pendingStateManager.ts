@@ -240,6 +240,7 @@ export class PendingStateManager implements IDisposable {
 	 * or undefined if the batch was not yet sent (e.g. by the time we flushed we lost the connection)
 	 */
 	public onFlushBatch(batch: BatchMessage[], clientSequenceNumber: number | undefined) {
+		//* TODO: Write/update unit tests for this case
 		// clientId and batchStartCsn are used for generating the batchId so we can detect container forks
 		// where this batch was submitted by two different clients rehydrating from the same local state.
 		// In the typical case where the batch was actually sent, use the clientId and clientSequenceNumber.
