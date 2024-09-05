@@ -225,6 +225,7 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {},
+		"entrypoint": "public"
 	}
 }

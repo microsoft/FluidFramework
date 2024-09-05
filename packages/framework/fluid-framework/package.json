@@ -102,15 +102,9 @@
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},
-	"fluidBuild": {
-		"tasks": {
-			"tsc": [
-				"typetests:gen"
-			]
-		}
-	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "legacy"
 	}
 }
