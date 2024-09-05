@@ -272,8 +272,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/test/test-utils
       axios:
-        specifier: ^1.6.2
-        version: 1.6.2(debug@4.3.4)
+        specifier: ^1.7.7
+        version: 1.7.7(debug@4.3.4)
       commander:
         specifier: ^5.1.0
         version: 5.1.0
@@ -4133,8 +4133,8 @@ importers:
         specifier: ^2.0.0
         version: 2.1.0
       axios:
-        specifier: ^1.6.2
-        version: 1.6.2(debug@4.3.4)
+        specifier: ^1.7.7
+        version: 1.7.7(debug@4.3.4)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: /events@3.3.0
@@ -4741,8 +4741,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/utils/tool-utils
       axios:
-        specifier: ^1.6.2
-        version: 1.6.2(debug@4.3.4)
+        specifier: ^1.7.7
+        version: 1.7.7(debug@4.3.4)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -6106,8 +6106,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/dds/shared-object-base
       axios:
-        specifier: ^1.6.2
-        version: 1.6.2(debug@4.3.4)
+        specifier: ^1.7.7
+        version: 1.7.7(debug@4.3.4)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -10182,8 +10182,8 @@ importers:
         specifier: ^9.0.2
         version: 9.0.7
       axios:
-        specifier: ^1.6.2
-        version: 1.6.2(debug@4.3.4)
+        specifier: ^1.7.7
+        version: 1.7.7(debug@4.3.4)
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -11818,8 +11818,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       axios:
-        specifier: ^1.6.2
-        version: 1.6.2(debug@4.3.4)
+        specifier: ^1.7.7
+        version: 1.7.7(debug@4.3.4)
       lz4js:
         specifier: ^0.2.0
         version: 0.2.0
@@ -12924,8 +12924,8 @@ importers:
         specifier: workspace:~
         version: link:../../../dds/tree
       axios:
-        specifier: ^1.6.2
-        version: 1.6.2(debug@4.3.4)
+        specifier: ^1.7.7
+        version: 1.7.7(debug@4.3.4)
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -14003,8 +14003,8 @@ importers:
         specifier: ^4.5.0
         version: 4.5.0
       axios:
-        specifier: ^1.6.2
-        version: 1.6.2(debug@4.3.4)
+        specifier: ^1.7.7
+        version: 1.7.7(debug@4.3.4)
       semver:
         specifier: ^7.5.3
         version: 7.6.0
@@ -19916,7 +19916,7 @@ packages:
       '@fluidframework/core-utils': 2.2.0
       '@fluidframework/driver-definitions': 2.2.0
       '@fluidframework/telemetry-utils': 2.2.0
-      axios: 1.6.2(debug@4.3.4)
+      axios: 1.7.7(debug@4.3.4)
       lz4js: 0.2.0
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -19932,7 +19932,7 @@ packages:
       '@fluidframework/core-utils': 2.2.0
       '@fluidframework/driver-definitions': 2.2.0
       '@fluidframework/telemetry-utils': 2.2.0
-      axios: 1.6.2(debug@4.3.6)
+      axios: 1.7.7(debug@4.3.6)
       lz4js: 0.2.0
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -20663,7 +20663,7 @@ packages:
       '@types/semver': 7.5.6
       assert: 2.1.0
       async: 3.2.5
-      axios: 1.6.2(debug@4.3.4)
+      axios: 1.7.7(debug@4.3.4)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -20691,7 +20691,7 @@ packages:
       '@types/semver': 7.5.6
       assert: 2.1.0
       async: 3.2.5
-      axios: 1.6.2(debug@4.3.5)
+      axios: 1.7.7(debug@4.3.5)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -20719,7 +20719,7 @@ packages:
       '@types/semver': 7.5.6
       assert: 2.1.0
       async: 3.2.5
-      axios: 1.6.2(debug@4.3.6)
+      axios: 1.7.7(debug@4.3.6)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -20808,7 +20808,7 @@ packages:
       '@fluidframework/gitresources': 5.0.0
       '@fluidframework/protocol-base': 5.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      axios: 1.6.2(debug@4.3.5)
+      axios: 1.7.7(debug@4.3.5)
       crc-32: 1.2.0
       debug: 4.3.5
       json-stringify-safe: 5.0.1
@@ -22572,7 +22572,7 @@ packages:
     dependencies:
       '@previewjs/serializable-values': 7.0.3
       '@previewjs/type-analyzer': 8.0.2
-      axios: 1.6.2(debug@4.3.4)
+      axios: 1.7.7(debug@4.3.4)
     transitivePeerDependencies:
       - debug
     dev: true
@@ -22621,7 +22621,7 @@ packages:
       acorn: 8.11.2
       acorn-jsx: 5.3.2(acorn@8.11.2)
       assert-never: 1.2.1
-      axios: 1.6.2(debug@4.3.4)
+      axios: 1.7.7(debug@4.3.4)
       exclusive-promises: 1.0.3
       express: 4.19.2
       fs-extra: 11.1.1
@@ -25188,8 +25188,8 @@ packages:
       - debug
     dev: false
 
-  /axios@1.6.2(debug@4.3.4):
-    resolution: {integrity: sha512-7i24Ri4pmDRfJTR7LDBhsOTtcm+9kjX5WiY1X3wIisx6G9So3pfMkEiU7emUBe46oceVImccTEM3k6C5dbVW8A==}
+  /axios@1.7.7(debug@4.3.4):
+    resolution: {integrity: sha512-S4kL7XrjgBmvdGut0sN3yJxqYzrDOnivkBiN0OFs6hLiUam3UPvswUo0kqGyhqUZGEOytHyumEdXsAkgCOUf3Q==}
     dependencies:
       follow-redirects: 1.15.6(debug@4.3.4)
       form-data: 4.0.0
@@ -25197,8 +25197,8 @@ packages:
     transitivePeerDependencies:
       - debug
 
-  /axios@1.6.2(debug@4.3.5):
-    resolution: {integrity: sha512-7i24Ri4pmDRfJTR7LDBhsOTtcm+9kjX5WiY1X3wIisx6G9So3pfMkEiU7emUBe46oceVImccTEM3k6C5dbVW8A==}
+  /axios@1.7.7(debug@4.3.5):
+    resolution: {integrity: sha512-S4kL7XrjgBmvdGut0sN3yJxqYzrDOnivkBiN0OFs6hLiUam3UPvswUo0kqGyhqUZGEOytHyumEdXsAkgCOUf3Q==}
     dependencies:
       follow-redirects: 1.15.6(debug@4.3.5)
       form-data: 4.0.0
@@ -25206,8 +25206,8 @@ packages:
     transitivePeerDependencies:
       - debug
 
-  /axios@1.6.2(debug@4.3.6):
-    resolution: {integrity: sha512-7i24Ri4pmDRfJTR7LDBhsOTtcm+9kjX5WiY1X3wIisx6G9So3pfMkEiU7emUBe46oceVImccTEM3k6C5dbVW8A==}
+  /axios@1.7.7(debug@4.3.6):
+    resolution: {integrity: sha512-S4kL7XrjgBmvdGut0sN3yJxqYzrDOnivkBiN0OFs6hLiUam3UPvswUo0kqGyhqUZGEOytHyumEdXsAkgCOUf3Q==}
     dependencies:
       follow-redirects: 1.15.6(debug@4.3.6)
       form-data: 4.0.0
@@ -37751,7 +37751,7 @@ packages:
       '@fluidframework/server-services-utils': 5.0.0
       '@fluidframework/server-test-utils': 5.0.0
       agentkeepalive: 4.5.0
-      axios: 1.6.2(debug@4.3.4)
+      axios: 1.7.7(debug@4.3.4)
       body-parser: 1.20.2
       charwise: 3.0.1
       compression: 1.7.4
@@ -38861,7 +38861,7 @@ packages:
     engines: {node: '>=12.0.0'}
     hasBin: true
     dependencies:
-      axios: 1.6.2(debug@4.3.4)
+      axios: 1.7.7(debug@4.3.4)
       joi: 17.12.2
       lodash: 4.17.21
       minimist: 1.2.8
