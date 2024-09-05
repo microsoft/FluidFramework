@@ -3,12 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// AB#13931: Remove these lint disables
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable unicorn/no-lonely-if */
-/* eslint-disable prefer-destructuring */
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-
 import { Node } from "ts-morph";
 
 export interface TypeData {
@@ -34,8 +28,12 @@ export interface TypeData {
 /**
  * Generate an expression to include into the generated type tests which evaluates to the type to compare.
  */
-export function toTypeString(prefix: string, typeData: TypeData, typePreprocessor: string) {
-	const node = typeData.node;
+export function toTypeString(
+	prefix: string,
+	typeData: TypeData,
+	typePreprocessor: string,
+): string {
+	const { node } = typeData;
 	let typeParams: string | undefined;
 	if (
 		!typeData.useTypeof &&
@@ -44,6 +42,7 @@ export function toTypeString(prefix: string, typeData: TypeData, typePreprocesso
 			Node.isClassDeclaration(node))
 	) {
 		// does the type take generics that don't have defaults?
+		// eslint-disable-next-line unicorn/no-lonely-if -- logic is clearer when grouped this way.
 		if (
 			node.getTypeParameters().length > 0 &&
 			node.getTypeParameters().some((tp) => tp.getDefault() === undefined)
