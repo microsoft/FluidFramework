@@ -1133,7 +1133,7 @@ export class PartialSequenceLengths {
 	}
 
 	// Clear away partial sums for sequence numbers earlier than the current window
-
+	// eslint-disable-next-line import/no-deprecated
 	private zamboni(segmentWindow: CollaborationWindow): void {
 		this.minLength += this.partialLengths.copyDown(segmentWindow.minSeq);
 		this.minSeq = segmentWindow.minSeq;
