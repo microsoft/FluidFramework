@@ -53,9 +53,9 @@ The tree configuration takes in a schema for the root of the tree which will nee
 
 ## Defining a Schema
 
-A schema outlines the structure and types of data that your tree will manage.
-Having a schema provides useful guarantees about the shape your data will take.
-It is also used to generate TypeScript types which means the structure of your data is analogous to JS data types for easy use in external libraries or systems.
+A schema outlines the structure and types of data that your tree will manage, providing useful guarantees about the shape your data will take.
+It is used to generate TypeScript types to make working with your data more ergonomic.
+The data also behaves like JS objects which makes it easy to use in external libraries or systems.
 
 To define a schema, first create a `SchemaFactory` with a unique string to use as the namespace.
 
@@ -63,10 +63,10 @@ To define a schema, first create a `SchemaFactory` with a unique string to use a
 const schemaFactory = new SchemaFactory("some-schema-id-prob-a-uuid")
 ```
 
-`SchemaFactory` provides some methods for specifying internal nodes including `object()`, `array()`, and `map()`; and five primitive data types for specifying leaf nodes: `boolean`, `string`, `number`, `null`, and `handle`.
+`SchemaFactory` provides some methods for specifying collection types including `object()`, `array()`, and `map()`; and five primitive data types for specifying leaf nodes: `boolean`, `string`, `number`, `null`, and `handle`.
 See [schema definition](../data-structures/tree#schema-definition) for more info on the provided types.
 
-You can define a schema in customizable mode by extending the notional type object which also creates a TypeScript data type.
+You can define a schema by extending one of the built-in object types.
 As an example, let's write a schema for a todo list:
 
 ```
@@ -163,7 +163,7 @@ The schema types can also be edited using the assignment operator like this:
 appData.root.title = "chores";
 ```
 
-Editing methods can also be defined on schema classes defined in customizable mode.
+Editing methods can also be defined on the schema classes defined.
 This allows you to write methods that are more suited to your app's specific needs.
 
 ```
@@ -176,14 +176,15 @@ class TodoList extends schemaFactory.object("TodoList", {
 	};
 }
 ```
-\
+
+These methods are designed to merge well in collaborative settings without you having to think much about it.
 See [schema definition](../data-structures/tree#schema-definition) for more details on the built-in editing methods.
 You can also read more about how these editing operations work in collaborative settings [here](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/main/merge-semantics.md).
 
 ### Grouping Edits into Transactions
 
 Edits can be grouped into transaction using the `Tree.runTransaction()`	API.
-Using a transaction guarantees that (if applied) all of the changes will be applied together synchronously.
+It can be useful to group edits because a transaction is equivalent to a single unit when undoing and redoing.
 
 ```
 Tree.runTransaction(myNode, (node) => {
@@ -200,7 +201,7 @@ See more information on transactions [here](../data-structures/tree#transactions
 
 ### Undoing and Redoing Edits
 
-Calling `revert` on a `Revertible` will revert its associated commit on the associated view.
+Calling `revert` on a `Revertible` will revert the associated edit on the associated view.
 
 A revertible can be obtained by listening to the `commitApplied` event and calling the `getRevertible` callback provided.
 The `kind` property on `CommitMetadata` tells you if a commit is the result of a normal edit, an undo, or a redo.
