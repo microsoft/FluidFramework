@@ -174,7 +174,9 @@ describe("Runtime", () => {
 				return opFakeSequenceNumber++;
 			},
 			submitSignalFn: (content: unknown, targetClientId?: string) => {
-				submittedSignals.push(content as ISignalEnvelope); // Note: this object shape is for testing only. Not representative of real signals.
+				if (targetClientId === undefined || targetClientId === mockClientId) {
+					submittedSignals.push(content as ISignalEnvelope); // Note: this object shape is for testing only. Not representative of real signals.
+				}
 			},
 			clientId: mockClientId,
 			connected: true,
@@ -2957,6 +2959,101 @@ describe("Runtime", () => {
 						},
 					],
 					"SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals and SignalOutOfOrder event",
+				);
+			});
+			it("ignores non-self-targeted signal in signalLatency telemetry", () => {
+				// Send 1st signal and process it to prime the system
+				sendSignals(1);
+				processSubmittedSignals(1);
+
+				// Rapid send 100+ signals (one targeted)
+				sendSignals(50);
+				containerRuntime.submitSignal(
+					"TargetedSignalType",
+					"TargetedSignalContent",
+					"mockTargetClient",
+				);
+				sendSignals(50);
+
+				// Process all signals
+				processSubmittedSignals(100);
+
+				// Check for logged SignalLatency event
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 99,
+							signalsLost: 0,
+							outOfOrderSignals: 0,
+						},
+					],
+					"SignalLatency telemetry should log correct amount of sent and lost signals",
+				);
+			});
+			it("includes self targeted signal in signalLatency telemetry", () => {
+				// Send 1st signal and process it to prime the system
+				sendSignals(1);
+				processSubmittedSignals(1);
+
+				// Rapid send 100+ signals (one self-targeted)
+				sendSignals(50);
+				containerRuntime.submitSignal(
+					"TargetedSignalType",
+					"TargetedSignalContent",
+					containerRuntime.clientId,
+				);
+				sendSignals(50);
+
+				// Process all signals
+				processSubmittedSignals(100);
+
+				// Check for logged SignalLatency event
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 100,
+							signalsLost: 0,
+							outOfOrderSignals: 0,
+						},
+					],
+					"SignalLatency telemetry should log correct amount of sent and lost signals",
+				);
+			});
+			it("can detect dropped signal while ignoring non-self targeted signal in signalLatency telemetry", () => {
+				// Send 1st signal and process it to prime the system
+				sendSignals(1);
+				processSubmittedSignals(1);
+
+				// Rapid send 100 signals (one targeted) and drop 10
+				sendSignals(40);
+				processSubmittedSignals(40);
+				containerRuntime.submitSignal(
+					"TargetedSignalType",
+					"TargetedSignalContent",
+					"mockTargetClientId",
+				);
+				sendSignals(40);
+				dropSignals(10);
+				sendSignals(20);
+
+				// Process all signals (5 out of order)
+				processSubmittedSignals(45);
+				processDroppedSignals(5);
+				processSubmittedSignals(5);
+
+				// Check for logged SignalLatency event
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							signalsSent: 99,
+							signalsLost: 10,
+							outOfOrderSignals: 5,
+						},
+					],
+					"SignalLatency telemetry should log correct amount of sent and lost signals",
 				);
 			});
 		});

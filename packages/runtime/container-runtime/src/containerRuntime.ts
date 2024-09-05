@@ -3276,10 +3276,11 @@ export class ContainerRuntime
 		content: any,
 		targetClientId?: string,
 	): ISignalEnvelope {
-		const isTargetedSignal = targetClientId !== undefined;
+		const isExpectedToReturn =
+			targetClientId === undefined || targetClientId === this.clientId;
 		const newSequenceNumber = ++this._signalTracking.signalSequenceNumber;
 
-		if (!isTargetedSignal) {
+		if (isExpectedToReturn) {
 			this._signalTracking.signalsSentCounter++;
 			if (
 				this._signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
@@ -3304,7 +3305,7 @@ export class ContainerRuntime
 
 		// We should not track the round trip of a new signal in the case we are already tracking one.
 		if (
-			!isTargetedSignal &&
+			isExpectedToReturn &&
 			newSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
 			this._signalTracking.roundTripSignalSequenceNumber === undefined
 		) {
