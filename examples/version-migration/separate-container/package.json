@@ -111,7 +111,6 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {},
-		"entrypoint": "legacy"
+		"broken": {}
 	}
 }
