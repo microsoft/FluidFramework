@@ -96,10 +96,10 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_LocalKafka": {
+			"Class_LocalKafka": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_LocalOrderer": {
+			"Class_LocalOrderer": {
 				"forwardCompat": false
 			}
 		}

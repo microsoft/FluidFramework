@@ -99,7 +99,7 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_LocalOrdererManager": {
+			"Class_LocalOrdererManager": {
 				"forwardCompat": false
 			}
 		}

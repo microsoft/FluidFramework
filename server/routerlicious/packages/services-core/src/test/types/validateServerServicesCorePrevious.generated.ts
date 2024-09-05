@@ -112,6 +112,7 @@ declare type current_as_old_for_ClassStatics_CombinedLambda = requireAssignableT
  * typeValidation.broken:
  * "Class_CombinedProducer": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_CombinedProducer = requireAssignableTo<TypeOnly<old.CombinedProducer>, TypeOnly<current.CombinedProducer>>
 
 /*
@@ -1102,6 +1103,7 @@ declare type current_as_old_for_Interface_IOrderer = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Interface_IOrdererConnection": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IOrdererConnection = requireAssignableTo<TypeOnly<old.IOrdererConnection>, TypeOnly<current.IOrdererConnection>>
 
 /*
@@ -1120,6 +1122,7 @@ declare type current_as_old_for_Interface_IOrdererConnection = requireAssignable
  * typeValidation.broken:
  * "Interface_IOrdererManager": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IOrdererManager = requireAssignableTo<TypeOnly<old.IOrdererManager>, TypeOnly<current.IOrdererManager>>
 
 /*
@@ -1282,6 +1285,7 @@ declare type current_as_old_for_Interface_IPendingMessage = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IProducer": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IProducer = requireAssignableTo<TypeOnly<old.IProducer>, TypeOnly<current.IProducer>>
 
 /*
