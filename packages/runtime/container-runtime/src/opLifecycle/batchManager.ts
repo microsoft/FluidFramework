@@ -44,6 +44,7 @@ export function generateBatchId(originalClientId: string, batchStartCsn: number)
 export function getEffectiveBatchId(
 	pendingMessageOrInboundBatch: IPendingMessage | InboundBatch,
 ): string {
+	//* Check for something other than localOpMetadata, in case one day it is left off for undefined
 	if ("localOpMetadata" in pendingMessageOrInboundBatch) {
 		const pendingMessage: IPendingMessage = pendingMessageOrInboundBatch;
 		return (

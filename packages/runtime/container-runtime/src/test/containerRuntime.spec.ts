@@ -602,6 +602,7 @@ describe("Runtime", () => {
 
 						assert.strictEqual(submittedOpsMetadata.length, 6, "6 messages should be sent");
 
+						//* TODO: Add coverage for batchId in this codepath?  Maybe other tests do.
 						const expectedBatchMetadata = [
 							{ batch: true },
 							undefined,
