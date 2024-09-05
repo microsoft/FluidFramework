@@ -116,6 +116,7 @@ export function decomposeType(checker: TypeChecker, node: Type): DecompositionRe
 	// don't try to decompose aliases because they are handled at their declaration
 	// enums because they are unions that don't need to be decomposed
 	// these still need to be converted to strings because they are defined symbols
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 	if (node.getAliasSymbol() || node.isEnum()) {
 		result.typeAsString = `"${result.typeAsString}"`;
 	}
@@ -124,7 +125,6 @@ export function decomposeType(checker: TypeChecker, node: Type): DecompositionRe
 	if (node.isTypeParameter()) {
 		return result;
 	}
-	node = node as Type;
 
 	// intersections bind more strongly than unions so split those second
 	if (node.isUnion()) {
