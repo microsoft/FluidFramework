@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { sha256 } from "./hash";
 import { readFileAsync } from "../common/utils";
+import { sha256 } from "./hash";
 
 type hashFn = (buffer: Buffer) => string;
 export class FileHashCache {
