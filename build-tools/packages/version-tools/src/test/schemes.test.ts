@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "chai";
+import { assert, describe, it } from "vitest";
 
 import { detectVersionScheme, getLatestReleaseFromList } from "../schemes";
 

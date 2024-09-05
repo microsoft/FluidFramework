@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "chai";
+import type { Logger, PackageJson } from "@fluidframework/build-tools";
+import { assert, beforeEach, describe, it } from "vitest";
 
 import type { ExportData, Node10CompatExportData } from "../../src/library/packageExports.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../../src/library/packageExports.js";
-
-import type { Logger, PackageJson } from "@fluidframework/build-tools";
 
 const typeOnlyExportPackage: PackageJson = {
 	name: "@fluid-test/test-package-typeonly",
