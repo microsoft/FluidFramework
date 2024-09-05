@@ -11,9 +11,10 @@ import {
 	resetBrokenTests,
 	updateTypeTestDependency,
 } from "../../src/commands/typetests.js";
-import type {
-	ITypeValidationConfig,
-	PackageWithTypeTestSettings,
+import {
+	type ITypeValidationConfig,
+	type PackageWithTypeTestSettings,
+	defaultTypeValidationConfig,
 } from "../../src/typeValidator/typeValidatorConfig.js";
 
 /**
