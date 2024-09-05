@@ -92,9 +92,7 @@ export class BatchManager {
 	private get referenceSequenceNumber(): number | undefined {
 		return this.pendingBatch.length === 0
 			? undefined
-			: // Non null asserting here since we are checking the length above
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				this.pendingBatch[this.pendingBatch.length - 1]!.referenceSequenceNumber;
+			: this.pendingBatch[this.pendingBatch.length - 1].referenceSequenceNumber;
 	}
 
 	/**
@@ -166,9 +164,7 @@ export class BatchManager {
 			rollback: (process: (message: BatchMessage) => void) => {
 				for (let i = this.pendingBatch.length; i > startPoint; ) {
 					i--;
-					// Non null asserting here since we are iterating though pendingBatch
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const message = this.pendingBatch[i]!;
+					const message = this.pendingBatch[i];
 					this.batchContentSize -= message.contents?.length ?? 0;
 					process(message);
 				}
