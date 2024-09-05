@@ -35,6 +35,7 @@ import {
 	makeAnonChange,
 	makeDetachedFieldIndex,
 	rebaseChange,
+	rootFieldKey,
 	tagChange,
 	visitDelta,
 } from "../core/index.js";
@@ -656,6 +657,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
+		this.assertNoUntrackedRoots();
 		const trees: [string | number | undefined, number, JsonableTree][] = [];
 		const cursor = this.forest.allocateCursor("getRemovedRoots");
 		for (const { id, root } of this.removedRoots.entries()) {
@@ -738,6 +740,28 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		}
 
 		return { age: revertAge };
+	}
+
+	private assertNoUntrackedRoots(): void {
+		const cursor = this.forest.getCursorAboveDetachedFields();
+		const rootFields = new Set([rootFieldKey]);
+		for (const { root } of this.removedRoots.entries()) {
+			rootFields.add(this.removedRoots.toFieldKey(root));
+		}
+
+		if (!cursor.firstField()) {
+			return;
+		}
+
+		do {
+			const field = cursor.getFieldKey();
+			assert(
+				rootFields.has(field),
+				"Forest has a root field which is unknown to the detached field index",
+			);
+
+			rootFields.delete(field);
+		} while (cursor.nextField());
 	}
 }
 

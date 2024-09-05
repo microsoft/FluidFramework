@@ -29,6 +29,7 @@ import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
 	expectJsonTree,
+	expectNoRemovedRoots,
 	makeTreeFromJson,
 	moveWithin,
 	validateUsageError,
@@ -3123,6 +3124,40 @@ describe("Editing", () => {
 				expectJsonTree([tree, tree2], [{}]);
 			});
 		});
+
+		it("Rebase over conflicted change", () => {
+			const tree1 = makeTreeFromJsonSequence(["A", "B"]);
+			const tree2 = tree1.fork();
+
+			// Remove A
+			remove(tree1, 0, 1);
+
+			// This transaction will be conflicted after rebasing since the previous edit deletes the constrained node.
+			tree2.transaction.start();
+			tree2.editor.addNodeExistsConstraint({
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 0,
+			});
+
+			// Remove B
+			remove(tree2, 1, 1);
+			tree2.transaction.commit();
+
+			const tree3 = tree1.fork();
+
+			// This edit will be rebased over the conflicted transaction.
+			insert(tree3, 1, "C");
+
+			tree1.merge(tree2, false);
+			tree1.merge(tree3, false);
+
+			tree2.rebaseOnto(tree1);
+			tree3.rebaseOnto(tree1);
+
+			const expected = ["B", "C"];
+			expectJsonTree([tree1, tree2, tree3], expected);
+		});
 	});
 
 	it.skip("edit removed content", () => {
@@ -3256,6 +3291,7 @@ describe("Editing", () => {
 			branch.transaction.abort();
 
 			expectJsonTree(branch, [initialState]);
+			expectNoRemovedRoots(branch);
 		}
 
 		it("on the main branch", () => {
