@@ -22,6 +22,9 @@ export {
 	normalizeGlobalTaskDefinitions,
 	getTaskDefinitions,
 } from "./fluidBuild/fluidTaskDefinitions";
-export { getApiExtractorConfigFilePath, getEsLintConfigFilePath } from "./fluidBuild/tasks/taskUtils";
+export {
+	getApiExtractorConfigFilePath,
+	getEsLintConfigFilePath,
+} from "./fluidBuild/tasks/taskUtils";
 export * as TscUtils from "./fluidBuild/tscUtils";
 export { getTypeTestPreviousPackageDetails } from "./common/typeTests";
