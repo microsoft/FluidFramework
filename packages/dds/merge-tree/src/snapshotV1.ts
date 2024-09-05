@@ -333,8 +333,6 @@ export class SnapshotV1 {
 					(raw.seq !== undefined && raw.client !== undefined) ||
 						(raw.removedSeq !== undefined && raw.removedClientIds !== undefined) ||
 						(raw.movedSeq !== undefined &&
-							raw.movedClientIds !== undefined &&
-							raw.movedClientIds.length > 0 &&
 							raw.concurrentMoves !== undefined &&
 							raw.concurrentMoves.length > 0),
 					0x066 /* "Corrupted preservation of segment metadata!" */,
