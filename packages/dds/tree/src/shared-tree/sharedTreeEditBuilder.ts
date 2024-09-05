@@ -49,13 +49,15 @@ export class SharedTreeEditBuilder
 	public constructor(
 		modularChangeFamily: ModularChangeFamily,
 		private readonly changeReceiver: (change: SharedTreeChange) => void,
-		idCompressor?: IIdCompressor
+		idCompressor?: IIdCompressor,
 	) {
-		super(modularChangeFamily, (change) =>
-			changeReceiver({
-				changes: [{ type: "data", innerChange: change }],
-			}),
-			idCompressor
+		super(
+			modularChangeFamily,
+			(change) =>
+				changeReceiver({
+					changes: [{ type: "data", innerChange: change }],
+				}),
+			idCompressor,
 		);
 
 		this.schema = {

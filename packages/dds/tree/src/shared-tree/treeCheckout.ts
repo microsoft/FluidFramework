@@ -238,7 +238,7 @@ export function createTreeCheckout(
 				makeFieldBatchCodec(defaultCodecOptions, defaultFieldBatchVersion),
 			{ jsonValidator: noopValidator },
 			args?.chunkCompressionStrategy,
-			idCompressor
+			idCompressor,
 		);
 	const branch =
 		args?.branch ??

@@ -178,7 +178,11 @@ export class SharedTree
 		const schema = new TreeStoredSchemaRepository();
 		const forest =
 			options.forest === ForestType.Optimized
-				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy), undefined, runtime.idCompressor)
+				? buildChunkedForest(
+						makeTreeChunker(schema, defaultSchemaPolicy),
+						undefined,
+						runtime.idCompressor,
+					)
 				: options.forest === ForestType.Reference
 					? buildForest()
 					: buildForest(undefined, true);
@@ -217,7 +221,7 @@ export class SharedTree
 			fieldBatchCodec,
 			options,
 			options.treeEncodeType,
-			runtime.idCompressor
+			runtime.idCompressor,
 		);
 		const changeFamily = makeMitigatedChangeFamily(
 			innerChangeFamily,

@@ -160,7 +160,11 @@ export class Chunker implements IChunker {
  *
  * @param cursor - cursor in nodes mode
  */
-export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy, idCompressor?: IIdCompressor): TreeChunk {
+export function chunkTree(
+	cursor: ITreeCursorSynchronous,
+	policy: ChunkPolicy,
+	idCompressor?: IIdCompressor,
+): TreeChunk {
 	return chunkRange(cursor, policy, 1, true, idCompressor)[0] ?? oob();
 }
 
@@ -168,7 +172,11 @@ export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy, i
  * Get a TreeChunk[] for the current field (and its children) of cursor.
  * This will copy if needed, but add refs to existing chunks which hold the data.
  */
-export function chunkField(cursor: ITreeCursorSynchronous, policy: ChunkPolicy, idCompressor?: IIdCompressor): TreeChunk[] {
+export function chunkField(
+	cursor: ITreeCursorSynchronous,
+	policy: ChunkPolicy,
+	idCompressor?: IIdCompressor,
+): TreeChunk[] {
 	const length = cursor.getFieldLength();
 	const started = cursor.firstNode();
 	assert(started, 0x57c /* field to chunk should have at least one node */);
@@ -182,7 +190,7 @@ export function chunkField(cursor: ITreeCursorSynchronous, policy: ChunkPolicy, 
 export function chunkFieldSingle(
 	cursor: ITreeCursorSynchronous,
 	policy: ChunkPolicy,
-	idCompressor?: IIdCompressor
+	idCompressor?: IIdCompressor,
 ): TreeChunk {
 	const chunks = chunkField(cursor, policy, idCompressor);
 	if (chunks.length === 1) {
@@ -246,7 +254,9 @@ export function tryShapeFromSchema(
 	return getOrCreate(shapes, type, () => {
 		const treeSchema = schema.nodeSchema.get(type) ?? fail("missing schema");
 		if (treeSchema instanceof LeafNodeStoredSchema) {
-			return treeSchema.leafValue === ValueSchema.String ?  new TreeShape(type, true, [], true) :  new TreeShape(type, true, [], false);
+			return treeSchema.leafValue === ValueSchema.String
+				? new TreeShape(type, true, [], true)
+				: new TreeShape(type, true, [], false);
 		}
 		if (treeSchema instanceof ObjectNodeStoredSchema) {
 			const fieldsArray: FieldShape[] = [];
@@ -360,7 +370,7 @@ export function chunkRange(
 	policy: ChunkPolicy,
 	length: number,
 	skipLastNavigation: boolean,
-	idCompressor?: IIdCompressor
+	idCompressor?: IIdCompressor,
 ): TreeChunk[] {
 	assert(cursor.mode === CursorLocationType.Nodes, 0x57e /* should be in nodes */);
 	let output: TreeChunk[] = [];
@@ -416,7 +426,7 @@ export function chunkRange(
 					shape,
 					maxLength,
 					maxLength === remaining && skipLastNavigation,
-					idCompressor
+					idCompressor,
 				);
 				remaining -= newChunk.topLevelLength;
 				output.push(newChunk);

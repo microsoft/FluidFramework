@@ -62,7 +62,7 @@ export class SharedTreeChangeFamily
 		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: ICodecOptions,
 		chunkCompressionStrategy?: TreeCompressionStrategy,
-		private readonly idCompressor?: IIdCompressor
+		private readonly idCompressor?: IIdCompressor,
 	) {
 		const modularChangeCodec = makeModularChangeCodecFamily(
 			fieldKindConfigurations,
@@ -81,7 +81,11 @@ export class SharedTreeChangeFamily
 	public buildEditor(
 		changeReceiver: (change: SharedTreeChange) => void,
 	): SharedTreeEditBuilder {
-		return new SharedTreeEditBuilder(this.modularChangeFamily, changeReceiver, this.idCompressor);
+		return new SharedTreeEditBuilder(
+			this.modularChangeFamily,
+			changeReceiver,
+			this.idCompressor,
+		);
 	}
 
 	public compose(changes: TaggedChange<SharedTreeChange>[]): SharedTreeChange {
