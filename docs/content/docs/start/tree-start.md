@@ -64,7 +64,7 @@ const schemaFactory = new SchemaFactory("some-schema-id-prob-a-uuid")
 ```
 
 `SchemaFactory` provides some methods for specifying collection types including `object()`, `array()`, and `map()`; and five primitive data types for specifying leaf nodes: `boolean`, `string`, `number`, `null`, and `handle`.
-See [schema definition](../data-structures/tree#schema-definition) for more info on the provided types.
+See [schema definition](../data-structures/tree) for more info on the provided types.
 
 You can define a schema by extending one of the built-in object types.
 As an example, let's write a schema for a todo list:
@@ -88,7 +88,7 @@ This creates a `TodoList` class that is an object schema with two fields, `title
 
 Schemas can also be defined using plain old JavaScript object (POJO) mode.
 Generally, you should prefer customizable mode.
-See [the API docs](../api/v2/tree/schemafactory-class#schemafactory-remarks) for more info on the differences between the two modes.
+See [the API docs](../api/v2/tree/schemafactory-class) for more info on the differences between the two modes.
 
 ## Initializing the Tree
 
@@ -178,7 +178,7 @@ class TodoList extends schemaFactory.object("TodoList", {
 ```
 
 These methods are designed to merge well in collaborative settings without you having to think much about it.
-See [schema definition](../data-structures/tree#schema-definition) for more details on the built-in editing methods.
+See [schema definition](../data-structures/tree) for more details on the built-in editing methods.
 You can also read more about how these editing operations work in collaborative settings [here](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/main/merge-semantics.md).
 
 ### Grouping Edits into Transactions
@@ -197,7 +197,7 @@ Tree.runTransaction(myNode, (node) => {
 })
 ```
 
-See more information on transactions [here](../data-structures/tree#transactions).
+See more information on transactions [here](../data-structures/tree).
 
 ### Undoing and Redoing Edits
 
@@ -237,4 +237,4 @@ useEffect(() => {
 
 Note that any `Revertible`s obtained should be disposed of by the app author in order to free up the resources that are required to revert an edit.
 
-See [undo redo support](../data-structures/tree#undoredo-support) for more information.
+See [undo redo support](../data-structures/tree) for more information.
