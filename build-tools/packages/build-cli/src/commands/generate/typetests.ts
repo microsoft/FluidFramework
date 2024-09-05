@@ -40,9 +40,10 @@ import { type TestCaseTypeData, buildTestCase } from "../../typeValidator/testGe
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import/no-internal-modules
 import type { TypeData } from "../../typeValidator/typeData.js";
-import type {
-	BrokenCompatTypes,
-	PackageWithTypeTestSettings,
+import {
+	type BrokenCompatTypes,
+	type PackageWithTypeTestSettings,
+	defaultTypeValidationConfig,
 	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../typeValidator/typeValidatorConfig.js";
@@ -81,9 +82,10 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		const { entrypoint: entrypointFlag, outDir, outFile } = this.flags;
+		const pkgJson: PackageWithTypeTestSettings = pkg.packageJson;
 		const entrypoint: ApiLevel =
 			entrypointFlag ??
-			pkg.packageJson.typeValidation?.entrypoint ??
+			pkgJson.typeValidation?.entrypoint ??
 			defaultTypeValidationConfig.entrypoint;
 		const fallbackLevel = this.flags.publicFallback ? ApiLevel.public : undefined;
 
