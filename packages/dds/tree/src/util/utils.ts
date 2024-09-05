@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { Type } from "@sinclair/typebox";
-import structuredClone from "@ungap/structured-clone";
 
 /**
  * Subset of Map interface.
@@ -44,8 +43,6 @@ export type Populated<T> = {
 export function asMutable<T>(readonly: T): Mutable<T> {
 	return readonly as Mutable<T>;
 }
-
-export const clone = structuredClone;
 
 /**
  */

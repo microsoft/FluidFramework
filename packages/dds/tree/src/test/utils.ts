@@ -150,6 +150,7 @@ import {
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
+import structuredClone from "@ungap/structured-clone";
 import { cursorFromInsertable } from "../simple-tree/index.js";
 import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js";
 
@@ -1341,3 +1342,5 @@ export function moveWithin(
 ) {
 	editor.move(field, sourceIndex, count, field, destIndex);
 }
+
+export const clone = structuredClone;
