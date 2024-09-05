@@ -1042,7 +1042,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			});
 		}
 
-		// TODO Remove after SPO picks up the latest build.
+		// TODO: AB#12052: Stop parsing message.contents here, let the downstream handlers do it
 		if (
 			typeof message.contents === "string" &&
 			message.contents !== "" &&

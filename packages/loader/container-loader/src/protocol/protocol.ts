@@ -125,8 +125,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
 			}
 
 			case MessageType.Propose: {
-				// back-compat: ADO #1385: This should become unconditional eventually.
-				// Can be done only after Container.processRemoteMessage() stops parsing content!
+				// This should become unconditional once DeltaManager.processInboundMessage() stops parsing content (ADO #12052)
 				if (typeof message.contents === "string") {
 					message.contents = JSON.parse(message.contents);
 				}
