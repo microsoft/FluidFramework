@@ -42,7 +42,9 @@ export class GenericsInfo extends Map<string, number> {
 	}
 
 	merge(from: Map<string, number>): void {
-		for (const [k, v] of from.entries()) this.set(k, v);
+		for (const [k, v] of from.entries()) {
+			this.set(k, v);
+		}
 	}
 }
 
