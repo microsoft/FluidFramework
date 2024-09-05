@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
+// We use namespaces as part of type test generation
 /* eslint-disable @typescript-eslint/no-namespace */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
+// AB#13931: Remove these lint disables
+/* eslint-disable no-lone-blocks */
 
 /**
  * Compile time assert that A is assignable to (extends) B.
@@ -215,7 +218,9 @@ namespace Test_TypeOnly_Preserves_Primitives {
 	type _check_undefined1 = requireAssignableTo<TypeOnly<undefined>, undefined>;
 	type _check_undefined2 = requireAssignableTo<undefined, TypeOnly<undefined>>;
 
+	// eslint-disable-next-line @rushstack/no-new-null
 	type _check_null1 = requireAssignableTo<TypeOnly<null>, null>;
+	// eslint-disable-next-line @rushstack/no-new-null
 	type _check_null2 = requireAssignableTo<null, TypeOnly<null>>;
 
 	// Due to limitations of the current version of TypeOnly, brands on number are lost,
@@ -256,6 +261,7 @@ namespace Test_TypeOnly_Preserves_Primitives {
 	type _check_symbol2 = requireAssignableTo<brandedSymbol, TypeOnly<symbol>>;
 
 	// Unions of primitive types are preserved.
+	// eslint-disable-next-line @rushstack/no-new-null
 	type union = undefined | null | boolean | number | bigint | string | symbol;
 	type _check_union1 = requireAssignableTo<TypeOnly<union>, union>;
 	type _check_union2 = requireAssignableTo<union, TypeOnly<union>>;
@@ -263,6 +269,7 @@ namespace Test_TypeOnly_Preserves_Primitives {
 	// Branded unions of primitive types are preserved, except for string and number,
 	// which are stripped to just 'string | number'.
 	// Symbols are excluded from this as they are more aggressively omitted to handle unique symbols.
+	// eslint-disable-next-line @rushstack/no-new-null
 	type brandedUnion = (undefined | null | boolean | bigint) & {
 		brand: "Union";
 	};
@@ -281,6 +288,7 @@ namespace Test_TypeOnly_Symbols {
 
 	// Custom symbols are skipped, since they are likely from the package in question,
 	// and thus will not be considered equal to the version from the other copy of the package.
+	// eslint-disable-next-line symbol-description
 	const X: unique symbol = Symbol();
 	interface B {
 		[X]: number;
