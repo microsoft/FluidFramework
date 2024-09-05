@@ -86,8 +86,8 @@ export function getSchemaAndPolicy(nodeOrField: FlexTreeEntity): SchemaAndPolicy
 	}
 
 	return {
-		schema: nodeOrField.context.checkout.storedSchema,
-		policy: nodeOrField.context.schema.policy,
+		schema: nodeOrField.context.schema,
+		policy: nodeOrField.context.flexSchema.policy,
 	};
 }
 

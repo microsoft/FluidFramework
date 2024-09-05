@@ -8,6 +8,8 @@ import {
 	type ExclusiveMapTree,
 	type FieldKey,
 	type FieldUpPath,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
 	type TreeValue,
 	anchorSlot,
 } from "../../core/index.js";
@@ -39,7 +41,7 @@ export const flexTreeSlot = anchorSlot<FlexTreeNode>();
  */
 export const flexTreeMarker = Symbol("flexTreeMarker");
 
-export function isFlexTreeEntity(t: unknown): t is FlexTreeEntity {
+function isFlexTreeEntity(t: unknown): t is FlexTreeEntity {
 	return typeof t === "object" && t !== null && flexTreeMarker in t;
 }
 
@@ -79,21 +81,13 @@ export interface FlexTreeEntity<out TSchema = unknown> {
 	 * Schema for this entity.
 	 * If well-formed, it must follow this schema.
 	 */
-	readonly schema: TSchema;
+	readonly flexSchema: TSchema;
 
 	/**
 	 * A common context of a "forest" of FlexTrees.
 	 * @remarks This is `undefined` for unhydrated nodes or fields that have not yet been inserted into the tree.
 	 */
 	readonly context?: FlexTreeContext;
-
-	/**
-	 * Iterate through all nodes/fields in this field/node.
-	 *
-	 * @remarks
-	 * No mutations to the current view of the shared tree are permitted during iteration.
-	 */
-	boxedIterator(): IterableIterator<FlexTreeEntity>;
 }
 
 /**
@@ -193,6 +187,12 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	 * No guarantees are made regarding the order of the keys returned.
 	 */
 	keys(): IterableIterator<FieldKey>;
+
+	/**
+	 * Schema for this entity.
+	 * If well-formed, it must follow this schema.
+	 */
+	readonly schema: TreeNodeSchemaIdentifier;
 }
 
 /**
@@ -261,6 +261,12 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
 	 * Gets the FieldUpPath of a field.
 	 */
 	getFieldPath(): FieldUpPath;
+
+	/**
+	 * Schema for this entity.
+	 * If well-formed, it must follow this schema.
+	 */
+	readonly schema: TreeFieldStoredSchema;
 }
 
 // #region Node Kinds
@@ -277,7 +283,7 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
  * This differs from JavaScript Maps which have a subtle distinction between storing undefined as a value in the map and deleting an entry from the map.
  */
 export interface FlexTreeMapNode extends FlexTreeNode {
-	readonly schema: FlexMapNodeSchema;
+	readonly flexSchema: FlexMapNodeSchema;
 }
 
 /**
@@ -299,7 +305,7 @@ export interface FlexTreeMapNode extends FlexTreeNode {
  * putting its semantics half way between this library's "Object" schema and {@link FlexTreeMapNode}.
  */
 export interface FlexTreeObjectNode extends FlexTreeNode {
-	readonly schema: FlexObjectNodeSchema;
+	readonly flexSchema: FlexObjectNodeSchema;
 }
 
 /**
@@ -310,7 +316,7 @@ export interface FlexTreeObjectNode extends FlexTreeNode {
  * Leaf unboxes its content, so in schema aware APIs which do unboxing, the Leaf itself will be skipped over and its value will be returned directly.
  */
 export interface FlexTreeLeafNode<in out TSchema extends LeafNodeSchema> extends FlexTreeNode {
-	readonly schema: TSchema;
+	readonly flexSchema: TSchema;
 
 	/**
 	 * Value stored on this node.

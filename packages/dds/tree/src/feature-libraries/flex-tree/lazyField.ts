@@ -13,6 +13,7 @@ import {
 	type FieldUpPath,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
+	type TreeFieldStoredSchema,
 	type TreeNavigationResult,
 	inCursorNode,
 	iterateCursorField,
@@ -133,6 +134,10 @@ export abstract class LazyField<out TKind extends FlexFieldKind>
 	}
 	public readonly key: FieldKey;
 
+	public get schema(): TreeFieldStoredSchema {
+		return this.flexSchema.stored;
+	}
+
 	/**
 	 * If this field ends its lifetime before the Anchor does, this needs to be invoked to avoid a double free
 	 * if/when the Anchor is destroyed.
@@ -162,20 +167,20 @@ export abstract class LazyField<out TKind extends FlexFieldKind>
 
 	public is<TKind2 extends FlexFieldKind>(kind: TKind2): this is FlexTreeTypedField<TKind2> {
 		assert(
-			this.context.schema.policy.fieldKinds.get(kind.identifier) === kind,
+			this.context.flexSchema.policy.fieldKinds.get(kind.identifier) === kind,
 			"Narrowing must be done to a kind that exists in this context",
 		);
 
-		return this.schema.kind === (kind as unknown);
+		return this.flexSchema.kind === (kind as unknown);
 	}
 
 	public isExactly<TSchema extends FlexFieldSchema>(schema: TSchema): boolean {
 		assert(
-			this.context.schema.policy.fieldKinds.get(schema.kind.identifier) === schema.kind,
+			this.context.flexSchema.policy.fieldKinds.get(schema.kind.identifier) === schema.kind,
 			0x77c /* Narrowing must be done to a kind that exists in this context */,
 		);
 
-		return this.schema.equals(schema);
+		return this.flexSchema.equals(schema);
 	}
 
 	public get parent(): FlexTreeNode | undefined {

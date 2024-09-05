@@ -7,7 +7,6 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	type TreeNodeSchema,
-	type TreeNodeSchemaClass,
 	NodeKind,
 	tryGetSimpleNodeSchema,
 	isTreeNode,
@@ -15,6 +14,7 @@ import {
 	privateToken,
 	TreeNode,
 	type InternalTreeNode,
+	typeSchemaSymbol,
 } from "./core/index.js";
 import {
 	type FlexTreeNode,
@@ -26,7 +26,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { fail } from "../util/index.js";
 
 import { getFlexSchema } from "./toFlexSchema.js";
-import { getOrCreateInnerNode, setInnerNode } from "./proxyBinding.js";
+import { setInnerNode, type InnerNode } from "./proxyBinding.js";
 
 /**
  * Class which all {@link TreeNode}s must extend.
@@ -150,11 +150,9 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 			);
 		}
 
-		const node: FlexTreeNode = isFlexTreeNode(input)
-			? input
-			: schema.buildRawNode(this, input);
+		const node: InnerNode = isFlexTreeNode(input) ? input : schema.buildRawNode(this, input);
 		assert(
-			tryGetSimpleNodeSchema(node.schema) === schema,
+			tryGetSimpleNodeSchema(node.flexSchema) === schema,
 			0x83b /* building node with wrong schema */,
 		);
 
@@ -203,11 +201,7 @@ function inspectNodeFunction(
 	options?: unknown,
 	inspect?: unknown,
 ): unknown {
-	// TODO: replicated from tryGetSchema to avoid cycle.
-	// This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.
-	const schema = tryGetSimpleNodeSchema(
-		getOrCreateInnerNode(this).schema,
-	) as TreeNodeSchemaClass;
+	const schema = this[typeSchemaSymbol];
 	const title = `${schema.name}: ${NodeKind[schema.kind]} Node (${schema.identifier})`;
 
 	if (depth < 2) {

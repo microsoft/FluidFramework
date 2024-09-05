@@ -9,6 +9,7 @@ import {
 	type FieldKey,
 	type ForestEvents,
 	type TreeFieldStoredSchema,
+	type TreeStoredSchema,
 	anchorSlot,
 	moveToDetachedField,
 } from "../../core/index.js";
@@ -37,7 +38,13 @@ export interface FlexTreeContext extends Listenable<ForestEvents> {
 	 * Schema used within this context.
 	 * All data must conform to these schema.
 	 */
-	readonly schema: FlexTreeSchema;
+	readonly flexSchema: FlexTreeSchema;
+
+	/**
+	 * Schema used within this context.
+	 * All data must conform to these schema.
+	 */
+	readonly schema: TreeStoredSchema;
 
 	// TODO: Add more members:
 	// - transaction APIs
@@ -73,12 +80,12 @@ export class Context implements FlexTreeContext, IDisposable {
 	private disposed = false;
 
 	/**
-	 * @param schema - Schema to use when working with the  tree.
+	 * @param flexSchema - Schema to use when working with the  tree.
 	 * @param checkout - The checkout.
 	 * @param nodeKeyManager - An object which handles node key generation and conversion
 	 */
 	public constructor(
-		public readonly schema: FlexTreeSchema,
+		public readonly flexSchema: FlexTreeSchema,
 		public readonly checkout: ITreeCheckout,
 		public readonly nodeKeyManager: NodeKeyManager,
 	) {
@@ -93,6 +100,10 @@ export class Context implements FlexTreeContext, IDisposable {
 			0x92b /* Cannot create second flex-tree from checkout */,
 		);
 		this.checkout.forest.anchors.slots.set(ContextSlot, this);
+	}
+
+	public get schema(): TreeStoredSchema {
+		return this.checkout.storedSchema;
 	}
 
 	/**
@@ -138,7 +149,7 @@ export class Context implements FlexTreeContext, IDisposable {
 		assert(this.disposed === false, 0x804 /* use after dispose */);
 		const cursor = this.checkout.forest.allocateCursor("root");
 		moveToDetachedField(this.checkout.forest, cursor);
-		const field = makeField(this, this.schema.rootFieldSchema, cursor);
+		const field = makeField(this, this.flexSchema.rootFieldSchema, cursor);
 		cursor.free();
 		return field;
 	}
