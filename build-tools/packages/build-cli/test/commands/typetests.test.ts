@@ -11,9 +11,10 @@ import {
 	resetBrokenTests,
 	updateTypeTestDependency,
 } from "../../src/commands/typetests.js";
-import type {
-	ITypeValidationConfig,
-	PackageWithTypeTestSettings,
+import {
+	type ITypeValidationConfig,
+	type PackageWithTypeTestSettings,
+	defaultTypeValidationConfig,
 } from "../../src/typeValidator/typeValidatorConfig.js";
 
 /**
@@ -39,6 +40,7 @@ function packageWithTypeValidation(enabled = true): PackageWithTypeTestSettings 
 			"test-package-previous": "4.0.0",
 		},
 		typeValidation: {
+			entrypoint: "legacy",
 			broken: {
 				"broken-api": {
 					backCompat: false,
@@ -128,17 +130,16 @@ describe("typetests tests", () => {
 	describe("resetBrokenTests", () => {
 		it("empty", () => {
 			const pkgJson: { typeValidation?: ITypeValidationConfig } = {
-				typeValidation: {
-					broken: {},
-				},
+				typeValidation: defaultTypeValidationConfig,
 			};
 			resetBrokenTests(pkgJson);
-			assert.deepEqual(pkgJson, { typeValidation: { broken: {} } });
+			assert.deepEqual(pkgJson.typeValidation?.broken, {});
 		});
 
 		it("minimal", () => {
 			const pkgJson: { typeValidation?: ITypeValidationConfig } = {
 				typeValidation: {
+					entrypoint: "legacy",
 					broken: {
 						"broken-api": {
 							backCompat: false,
@@ -148,7 +149,7 @@ describe("typetests tests", () => {
 				},
 			};
 			resetBrokenTests(pkgJson);
-			assert.deepEqual(pkgJson, { typeValidation: { broken: {} } });
+			assert.deepEqual(pkgJson, { typeValidation: { broken: {}, entrypoint: "legacy" } });
 		});
 
 		it("ignores packages with no typeValidation node", () => {
