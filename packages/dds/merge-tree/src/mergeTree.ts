@@ -1544,10 +1544,7 @@ export class MergeTree {
 
 				const findLeftMovedSegment = (seg: ISegment): boolean => {
 					const movedSeqs =
-						seg.concurrentMoves?.filter(
-							({ seq: movedSeq }) =>
-								movedSeq >= refSeq || movedSeq === UnassignedSequenceNumber,
-						) ?? [];
+						seg.concurrentMoves?.filter(({ seq: movedSeq }) => movedSeq >= refSeq) ?? [];
 					const localMovedSeqs = seg.localMovedSeq ? [seg.localMovedSeq] : [];
 					for (const movedSeqObj of movedSeqs) {
 						leftAckedSegments[movedSeqObj.seq] = seg;
@@ -2032,7 +2029,6 @@ export class MergeTree {
 					movedSegments.push({ segment });
 				}
 			} else {
-				segment.concurrentMoves = [{ clientId, seq, refSeq }];
 				_overwrite = true;
 				if (existingMoveInfo.movedSeq === UnassignedSequenceNumber) {
 					// we moved this locally, but someone else moved it first
