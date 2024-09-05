@@ -3,20 +3,14 @@
  * Licensed under the MIT License.
  */
 
-// AB#13931: Remove these lint disables
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-/* eslint-disable no-bitwise */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { Project } from "ts-morph";
 
 let shouldLog = false;
-export function enableLogging(enable: boolean) {
+export function enableLogging(enable: boolean): void {
 	shouldLog = enable;
 }
 
-export function log(output: any) {
+export function log(output: unknown): void {
 	if (shouldLog) {
 		console.log(output);
 	}
@@ -30,6 +24,7 @@ export function log(output: any) {
 export enum BreakingIncrement {
 	none = 0,
 	minor = 1,
+	// eslint-disable-next-line no-bitwise
 	major = (minor << 1) | minor,
 }
 
