@@ -7,8 +7,8 @@ import * as path from "path";
 
 import { readdir, stat } from "fs/promises";
 import picomatch from "picomatch";
-import { readFileAsync, statAsync } from "../../../common/utils";
 import { getTypeTestPreviousPackageDetails } from "../../../common/typeTests";
+import { readFileAsync, statAsync } from "../../../common/utils";
 import { BuildPackage } from "../../buildGraph";
 import { globFn, toPosixPath } from "../taskUtils";
 import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask";
