@@ -76,7 +76,7 @@ export type ObjectFromSchemaRecord<
 export type TreeObjectNode<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	TypeName extends string = string,
-> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object>;
+> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object, T>;
 
 /**
  * Type utility for determining whether or not an implicit field schema has a default value.

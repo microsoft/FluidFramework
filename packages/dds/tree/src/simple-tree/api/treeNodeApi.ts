@@ -44,6 +44,7 @@ import {
 	type TreeChangeEvents,
 	tryGetTreeNodeSchema,
 } from "../core/index.js";
+import { isObjectNodeSchema } from "../objectNodeTypes.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -170,12 +171,31 @@ export const treeNodeApi: TreeNodeApi = {
 		const kernel = getKernel(node);
 		switch (eventName) {
 			case "nodeChanged": {
-				return kernel.on("childrenChangedAfterBatch", () => {
-					listener();
-				});
+				const nodeSchema = kernel.schema;
+				if (isObjectNodeSchema(nodeSchema)) {
+					return kernel.on("childrenChangedAfterBatch", ({ changedFields }) => {
+						const changedProperties = new Set(
+							Array.from(
+								changedFields,
+								(field) =>
+									nodeSchema.storedKeyToPropertyKey.get(field) ??
+									fail(`Could not find stored key '${field}' in schema.`),
+							),
+						);
+						listener({ changedProperties });
+					});
+				} else if (nodeSchema.kind === NodeKind.Array) {
+					return kernel.on("childrenChangedAfterBatch", () => {
+						listener({ changedProperties: undefined });
+					});
+				} else {
+					return kernel.on("childrenChangedAfterBatch", ({ changedFields }) => {
+						listener({ changedProperties: changedFields });
+					});
+				}
 			}
 			case "treeChanged": {
-				return kernel.on("subtreeChangedAfterBatch", () => listener());
+				return kernel.on("subtreeChangedAfterBatch", () => listener({}));
 			}
 			default:
 				throw new UsageError(`No event named ${JSON.stringify(eventName)}.`);
