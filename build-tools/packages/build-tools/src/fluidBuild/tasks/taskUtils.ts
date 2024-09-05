@@ -4,13 +4,13 @@
  */
 
 import { existsSync } from "node:fs";
-import { readFile as readFileAsync, readdir } from "node:fs/promises";
+import { readdir } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import * as path from "path";
 import * as glob from "glob";
 
 import type { PackageJson } from "../../common/npmPackage";
-import { lookUpDirAsync } from "../../common/utils";
+import { lookUpDirSync, readFileAsync } from "../../common/utils";
 
 export function getEsLintConfigFilePath(dir: string) {
 	// TODO: we currently don't support .yaml and .yml, or config in package.json
@@ -26,7 +26,7 @@ export function getEsLintConfigFilePath(dir: string) {
 
 export async function getInstalledPackageVersion(packageName: string, cwd: string) {
 	const resolvedPath = require.resolve(packageName, { paths: [cwd] });
-	const packageJsonPath = await lookUpDirAsync(resolvedPath, async (currentDir) => {
+	const packageJsonPath = lookUpDirSync(resolvedPath, (currentDir) => {
 		return existsSync(path.join(currentDir, "package.json"));
 	});
 	if (packageJsonPath === undefined) {
