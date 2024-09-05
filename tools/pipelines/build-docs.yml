@@ -95,7 +95,7 @@ variables:
 trigger:
   branches:
     include:
-    # - release/*
+    - release/*
     - main
 pr: none
 
@@ -302,10 +302,26 @@ stages:
             workingDir: $(Build.SourcesDirectory)/docs
             customCommand: 'run ci:linkcheck'
 
+- stage: check_branch_version
+  displayName: 'Check Version Deployment Condition'
+  pool: Small
+  jobs:
+    - job: check_branch_version
+      displayName: 'Check Version Deployment Condition'
+      steps:
+        - task: Bash@3
+          displayName: 'Check Version Deployment Condition'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ parameters.buildDirectory }}
+            script: |
+              flub check latestVersions $(RELEASE_VERSION)
+
 - stage: deploy
   displayName: 'Deploy website'
   pool: Small
   dependsOn: ['build', 'guardian']
+  condition: succeeded('check_branch_version')
   jobs:
     - job: deploy_site
       displayName: 'Deploy website'
