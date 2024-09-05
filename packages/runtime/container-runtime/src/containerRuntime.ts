@@ -3278,7 +3278,13 @@ export class ContainerRuntime
 	): ISignalEnvelope {
 		const isExpectedToReturn =
 			targetClientId === undefined || targetClientId === this.clientId;
-		const newSequenceNumber = ++this._signalTracking.signalSequenceNumber;
+
+		// clientsignalsSequenceNumber is solely used for local signal tracking/telemetry purposes,
+		// so therefore we will only increment CSSN when the signal is expected to return.
+		// Targeted signals to remote clients will be ignored as they are not expected to come back.
+		const newSequenceNumber = isExpectedToReturn
+			? ++this._signalTracking.signalSequenceNumber
+			: -1;
 
 		if (isExpectedToReturn) {
 			this._signalTracking.signalsSentCounter++;
@@ -3291,9 +3297,6 @@ export class ContainerRuntime
 				this._signalTracking.minimumTrackingSignalSequenceNumber = newSequenceNumber;
 				this._signalTracking.trackingSignalSequenceNumber = newSequenceNumber;
 			}
-		} else {
-			// Reset the tracking number for targeted signals, since we don't expect them to come back
-			this._signalTracking.trackingSignalSequenceNumber = undefined;
 		}
 
 		const newEnvelope: ISignalEnvelope = {

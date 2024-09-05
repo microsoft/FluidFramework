@@ -2983,7 +2983,7 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 99,
+							signalsSent: 100,
 							signalsLost: 0,
 							outOfOrderSignals: 0,
 						},
@@ -3048,7 +3048,7 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 99,
+							signalsSent: 100,
 							signalsLost: 10,
 							outOfOrderSignals: 5,
 						},
