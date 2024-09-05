@@ -3,11 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ITypeValidationConfig,
-	type PackageJson,
-	defaultTypeValidationConfig,
-} from "@fluidframework/build-tools";
 import { assert, expect } from "chai";
 
 import {
@@ -16,11 +11,15 @@ import {
 	resetBrokenTests,
 	updateTypeTestDependency,
 } from "../../src/commands/typetests.js";
+import type {
+	ITypeValidationConfig,
+	PackageWithTypeTestSettings,
+} from "../../src/typeValidator/typeValidatorConfig.js";
 
 /**
  * A minimal test package.json. It defines only the required fields according to the type definition.
  */
-function packageMinimal(): PackageJson {
+function packageMinimal(): PackageWithTypeTestSettings {
 	return {
 		name: "test-package",
 		version: "6.0.0",
@@ -33,7 +32,7 @@ function packageMinimal(): PackageJson {
  *
  * @param enabled - Set this to false to return a package with disabled type tests.
  */
-function packageWithTypeValidation(enabled = true): PackageJson {
+function packageWithTypeValidation(enabled = true): PackageWithTypeTestSettings {
 	return {
 		...packageMinimal(),
 		devDependencies: {
@@ -55,7 +54,7 @@ function packageWithTypeValidation(enabled = true): PackageJson {
 describe("typetests tests", () => {
 	describe("updateTypeTestDependency", () => {
 		it("does not remove unrelated dependencies", () => {
-			const pkg: PackageJson = {
+			const pkg: PackageWithTypeTestSettings = {
 				...packageMinimal(),
 				devDependencies: {
 					"test-package-previous": "4.0.0",

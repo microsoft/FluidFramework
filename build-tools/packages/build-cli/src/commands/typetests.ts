@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITypeValidationConfig,
-	Package,
-	PackageJson,
-	defaultTypeValidationConfig,
-	updatePackageJsonFile,
-} from "@fluidframework/build-tools";
+import { Package, updatePackageJsonFile } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 
 import { PackageCommand } from "../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../flags.js";
+import type {
+	ITypeValidationConfig,
+	PackageWithTypeTestSettings,
+	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+	// eslint-disable-next-line import/no-internal-modules
+} from "../typeValidator/typeValidatorConfig.js";
 
 export default class PrepareTypeTestsCommand extends PackageCommand<
 	typeof PrepareTypeTestsCommand
@@ -92,7 +92,8 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 				: this.flags.previous
 					? VersionOptions.Previous
 					: VersionOptions.ClearIfDisabled);
-		updatePackageJsonFile(pkg.directory, (json) => {
+		updatePackageJsonFile(pkg.directory, (jsonIn) => {
+			const json: PackageWithTypeTestSettings = jsonIn;
 			if (this.flags.disable) {
 				json.typeValidation ??= defaultTypeValidationConfig;
 				json.typeValidation.disabled = true;
@@ -163,7 +164,7 @@ export function previousVersion(version: string): string {
  *
  */
 export function updateTypeTestDependency(
-	pkgJson: PackageJson,
+	pkgJson: PackageWithTypeTestSettings,
 	versionOptions: string | VersionOptions,
 ): void {
 	const oldDepName = `${pkgJson.name}-previous`;

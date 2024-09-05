@@ -6,14 +6,9 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
-	type BrokenCompatTypes,
 	type Logger,
 	type Package,
 	type PackageJson,
-	type TestCaseTypeData,
-	type TypeData,
-	buildTestCase,
-	defaultTypeValidationConfig,
 	getTypeTestPreviousPackageDetails,
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
@@ -39,6 +34,18 @@ import {
 	knownApiLevels,
 	unscopedPackageNameString,
 } from "../../library/index.js";
+// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+// eslint-disable-next-line import/no-internal-modules
+import { type TestCaseTypeData, buildTestCase } from "../../typeValidator/testGeneration.js";
+// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+// eslint-disable-next-line import/no-internal-modules
+import type { TypeData } from "../../typeValidator/typeData.js";
+import type {
+	BrokenCompatTypes,
+	PackageWithTypeTestSettings,
+	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../typeValidator/typeValidatorConfig.js";
 
 export default class GenerateTypetestsCommand extends PackageCommand<
 	typeof GenerateTypetestsCommand
@@ -87,7 +94,8 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// Do not check that file exists before opening:
 		// Doing so is a time of use vs time of check issue so opening the file could fail anyway.
 		// Do not catch error from opening file since the default behavior is fine (exits process with error showing useful message)
-		const currentPackageJson = pkg.packageJson;
+		const currentPackageJson: PackageWithTypeTestSettings = pkg.packageJson;
+
 		const { name: previousPackageName, packageJsonPath: previousPackageJsonPath } =
 			getTypeTestPreviousPackageDetails(pkg);
 		const previousBasePath = path.dirname(previousPackageJsonPath);
@@ -522,7 +530,7 @@ export function loadTypesSourceFile(typesPath: string): SourceFile {
  */
 export function generateCompatibilityTestCases(
 	typeMap: Map<string, TypeData>,
-	packageObject: PackageJson,
+	packageObject: PackageWithTypeTestSettings,
 	testString: string[],
 ): string[] {
 	const broken: BrokenCompatTypes = packageObject.typeValidation?.broken ?? {};

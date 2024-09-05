@@ -3,6 +3,18 @@
  * Licensed under the MIT License.
  */
 
+// AB#13931: Remove these lint disables
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable array-callback-return */
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
+/* eslint-disable no-else-return */
+/* eslint-disable no-param-reassign */
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
+/* eslint-disable unicorn/no-array-for-each */
+/* eslint-disable unicorn/prefer-array-index-of */
+
 import { Type, TypeChecker } from "ts-morph";
 
 export interface DecompositionResult {
@@ -80,9 +92,9 @@ export function typeToString(typeChecker: TypeChecker, type: Type): string {
 }
 
 /**
- * Break down a complex type to extract its constituents, then reconstruct it with type -> string
- * replacement, e.g. Promise<UncomparableClass | OtherClass> ->
- * Promise<"UncomparableClass" | "OtherClass">
+ * Break down a complex type to extract its constituents, then reconstruct it with type -\> string
+ * replacement, e.g. `Promise<UncomparableClass | OtherClass>` -\>
+ * `Promise<"UncomparableClass" | "OtherClass">`
  * This removes external dependencies from the type while preserving its structure, where those
  * external types can be checked separately.  Structure must be preserved to check back-compat.
  *

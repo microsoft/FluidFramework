@@ -7,8 +7,8 @@ import * as path from "path";
 
 import { readdir, stat } from "fs/promises";
 import picomatch from "picomatch";
+import { getTypeTestPreviousPackageDetails } from "../../../common/typeTests";
 import { globFn, readFileAsync, statAsync, toPosixPath, unquote } from "../../../common/utils";
-import { getTypeTestPreviousPackageDetails } from "../../../typeValidator/validatorUtils";
 import { BuildPackage } from "../../buildGraph";
 import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask";
 
@@ -237,7 +237,9 @@ export class TypeValidationTask extends LeafWithFileStatDoneFileTask {
 	protected async getInputFiles(): Promise<string[]> {
 		if (this.inputFiles === undefined) {
 			this.inputFiles = [path.join(this.node.pkg.directory, "package.json")];
-			if (!(this.node.pkg.packageJson.typeValidation?.disabled === true)) {
+			// Casting as any is a workaround because the typeValidation-related types are in build-cli.
+			// Eventually the common stuff will be split into a shared package; tracked by AB#13197.
+			if (!((this.node.pkg.packageJson as any).typeValidation?.disabled === true)) {
 				// TODO: depend on all of input to product tsc, which impacts the API.
 				// This task is effectively a TscDependentTask with additional input,
 				// but some packages build tests including type tests as part of

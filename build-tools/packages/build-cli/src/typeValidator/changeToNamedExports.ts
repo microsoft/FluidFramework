@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
+// AB#13931: Remove these lint disables
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable unicorn/no-array-for-each */
+
 import { IndentationText, Project } from "ts-morph";
 
-function case_insensitive_comp(strA, strB) {
+function case_insensitive_comp(strA: string, strB: string) {
 	return strA.localeCompare(strB, "en", { sensitivity: "base" });
 }
 
@@ -92,5 +96,7 @@ async function run(): Promise<boolean> {
 }
 
 run()
+	// eslint-disable-next-line n/no-process-exit, unicorn/no-process-exit
 	.then((success) => process.exit(success ? 0 : 1))
+	// eslint-disable-next-line n/no-process-exit, unicorn/no-process-exit, unicorn/prefer-top-level-await
 	.catch(() => process.exit(2));

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { PackageJson } from "@fluidframework/build-tools";
+
 /**
  * Metadata about known-broken types.
  */
@@ -22,8 +24,8 @@ export type ApiLevel = "public" | "beta" | "alpha" | "internal" | "legacy";
 
 export interface ITypeValidationConfig {
 	/**
-	 * The entrypoint (API level) for which type tests should be generated. This value can be overridden when using `flub
-	 * generate typetests` by passing the `--entrypoint` flag. If this value is not provided, it will default to
+	 * The entrypoint (API level) for which type tests should be generated. This value can be overridden when using
+	 * `flub generate typetests` by passing the `--entrypoint` flag. If this value is not provided, it will default to
 	 * {@link ApiLevel.legacy}.
 	 *
 	 * @defaultValue {@link ApiLevel.legacy}
@@ -47,4 +49,17 @@ export const defaultTypeValidationConfig: ITypeValidationConfig = {
 	entrypoint: "legacy",
 	broken: {},
 	disabled: undefined,
+};
+
+/**
+ * A type representing package.json files with the Fluid-specific `typeValidation` settings.
+ *
+ * @remarks
+ *
+ * This type is needed because the config types (ITypeValidationConfig) live in build-cli, but the Package definitions
+ * are all in build-tools. Ultimately the Package class and supporting classes/types should move to a common package
+ * that is consumed by both fluid-build and build-cli.
+ */
+export type PackageWithTypeTestSettings = PackageJson & {
+	typeValidation?: ITypeValidationConfig;
 };
