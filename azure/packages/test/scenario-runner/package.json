@@ -81,7 +81,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"axios": "^1.6.2",
+		"axios": "^1.7.7",
 		"commander": "^5.1.0",
 		"cross-env": "^7.0.3",
 		"js-yaml": "^4.1.0",

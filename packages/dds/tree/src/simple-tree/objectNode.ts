@@ -76,7 +76,7 @@ export type ObjectFromSchemaRecord<
 export type TreeObjectNode<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	TypeName extends string = string,
-> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object>;
+> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object, T>;
 
 /**
  * Type utility for determining whether or not an implicit field schema has a default value.
@@ -273,13 +273,13 @@ export function setField(
 	}
 
 	switch (field.schema.kind) {
-		case FieldKinds.required: {
+		case FieldKinds.required.identifier: {
 			assert(mapTree !== undefined, 0xa04 /* Cannot set a required field to undefined */);
 			const typedField = field as FlexTreeRequiredField;
 			typedField.editor.set(mapTree);
 			break;
 		}
-		case FieldKinds.optional: {
+		case FieldKinds.optional.identifier: {
 			const typedField = field as FlexTreeOptionalField;
 			typedField.editor.set(mapTree, typedField.length === 0);
 			break;
