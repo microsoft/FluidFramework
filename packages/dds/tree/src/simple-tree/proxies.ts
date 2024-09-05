@@ -42,15 +42,15 @@ export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue 
 			: maybeContent;
 	}
 	switch (field.schema.kind) {
-		case FieldKinds.required: {
+		case FieldKinds.required.identifier: {
 			const typedField = field as FlexTreeRequiredField;
 			return tryToUnboxLeaves(typedField);
 		}
-		case FieldKinds.optional: {
+		case FieldKinds.optional.identifier: {
 			const typedField = field as FlexTreeOptionalField;
 			return tryToUnboxLeaves(typedField);
 		}
-		case FieldKinds.identifier: {
+		case FieldKinds.identifier.identifier: {
 			// Identifier fields are just value fields that hold strings
 			return (field as FlexTreeRequiredField).content as string;
 		}
@@ -66,7 +66,7 @@ export function getOrCreateNodeFromFlexTreeNode(flexNode: FlexTreeNode): TreeNod
 		return cachedProxy;
 	}
 
-	const schema = flexNode.schema;
+	const schema = flexNode.flexSchema;
 	const classSchema = tryGetSimpleNodeSchema(schema);
 	assert(classSchema !== undefined, 0x91b /* node without schema */);
 	if (typeof classSchema === "function") {
