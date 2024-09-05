@@ -50,15 +50,19 @@ import {
 	ForestType,
 	type TreeStoredContent,
 	type ISharedTreeEditor,
+	SharedTreeFactory,
 } from "../../../shared-tree/index.js";
 import {
 	MockTreeCheckout,
+	SummarizeType,
+	TestTreeProvider,
+	TestTreeProviderLite,
 	checkoutWithContent,
 	cursorFromInsertableTreeField,
 	forestWithContent,
 	testIdCompressor,
 } from "../../utils.js";
-import { numberSchema, SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
+import { numberSchema, SchemaFactory, stringSchema, TreeViewConfiguration } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
@@ -70,6 +74,9 @@ import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { JsonObject } from "../../json/jsonDomainSchema.js";
 import { brand } from "../../../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -373,6 +380,48 @@ describe("End to end chunked encoding", () => {
 
 			const jsonableTree = mapCursorField(chunk.cursor(), jsonableTreeFromCursor);
 			assert.deepEqual([initialTree], jsonableTree);
+		});
+
+		it("Initializing tree creates uniform chunks with encoded identifiers", async () => {
+			const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator, forest: ForestType.Optimized })
+			const provider = new TestTreeProviderLite(1, factory, true);
+
+			// Workaround for getting the same id values from the TestTreeProviderLite's deterministic id compressor
+			const random = makeRandom(0xdeadbeef)
+			const deterministicIdCompressor = createIdCompressor(random.uuid4() as SessionId)
+			const stableId = deterministicIdCompressor.decompress(deterministicIdCompressor.generateCompressedId())
+
+			class TreeWithIdentifier extends schemaFactory.object("treeWithIdentifier", {
+				identifier: schemaFactory.identifier
+			}){}
+			const view = provider.trees[0].viewWith(
+				new TreeViewConfiguration({
+					schema: TreeWithIdentifier,
+				}),
+			);
+			view.initialize({});
+			const forest = view.checkout.forest
+			assert(forest instanceof ChunkedForest)
+			const uniformChunk = forest.roots.fields.get(rootFieldKey)?.at(0)
+			assert(uniformChunk instanceof UniformChunk)
+			const chunkValues = uniformChunk.values
+			assert.deepEqual(chunkValues, [deterministicIdCompressor.recompress(stableId)])
+
+			// When getting the value from the cursor, check that the value is unencoded string
+			const jsonableTree = mapCursorField(uniformChunk.cursor(), jsonableTreeFromCursor);
+			assert.deepEqual(jsonableTree, [
+				   {
+				     fields: {
+				       identifier: [
+				         {
+				           type: 'com.fluidframework.leaf.string',
+				           value: stableId
+				         }
+				       ]
+				     },
+				     type: 'com.example.treeWithIdentifier'
+				   }
+				 ])
 		});
 	});
 });

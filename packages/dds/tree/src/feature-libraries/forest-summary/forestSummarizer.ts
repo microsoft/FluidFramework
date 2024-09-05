@@ -138,7 +138,7 @@ export class ForestSummarizer implements Summarizable {
 			const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
 			const build: DeltaDetachedNodeBuild[] = [];
 			for (const [fieldKey, field] of fields) {
-				const chunked = chunkField(field, defaultChunkPolicy);
+				const chunked = chunkField(field, defaultChunkPolicy, this.idCompressor);
 				const nodeCursors = chunked.flatMap((chunk) =>
 					mapCursorField(chunk.cursor(), (cursor) => cursor.fork()),
 				);
