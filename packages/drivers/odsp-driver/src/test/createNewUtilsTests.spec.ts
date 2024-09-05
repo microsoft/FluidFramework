@@ -17,9 +17,12 @@ import {
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { createNewFluidFile } from "../createFile.js";
-import { createNewContainerOnExistingFile } from "../createNewContainerOnExistingFile.js";
-import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils.js";
+// eslint-disable-next-line import/no-internal-modules
+import { createNewFluidFile } from "../createFile/createFile.js";
+// eslint-disable-next-line import/no-internal-modules
+import { createNewContainerOnExistingFile } from "../createFile/createNewContainerOnExistingFile.js";
+// eslint-disable-next-line import/no-internal-modules
+import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createFile/createNewUtils.js";
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";

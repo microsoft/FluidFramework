@@ -76,6 +76,7 @@ declare type old_as_current_for_TypeAlias_FetchType = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "TypeAlias_FetchType": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_FetchType = requireAssignableTo<TypeOnly<current.FetchType>, TypeOnly<old.FetchType>>
 
 /*
@@ -94,6 +95,7 @@ declare type old_as_current_for_TypeAlias_FetchTypeInternal = requireAssignableT
  * typeValidation.broken:
  * "TypeAlias_FetchTypeInternal": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_FetchTypeInternal = requireAssignableTo<TypeOnly<current.FetchTypeInternal>, TypeOnly<old.FetchTypeInternal>>
 
 /*

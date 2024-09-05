@@ -32,6 +32,7 @@ import {
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { useCreateNewModule } from "./createFile/index.js";
 import { ICacheAndTracker, createOdspCacheAndTracker } from "./epochTracker.js";
 import {
 	INonPersistentCache,
@@ -173,44 +174,32 @@ export class OdspDocumentServiceFactoryCore
 					resolvedUrlData,
 					this.getStorageToken,
 				);
-				// We can delay load this module as this path will not be executed in load flows and create flow
-				// while only happens once in lifetime of a document happens in the background after creation of
-				// detached container.
-				const module = await import(
-					/* webpackChunkName: "createNewModule" */ "./createNewModule.js"
-				)
-					.then((m) => {
-						odspLogger.sendTelemetryEvent({ eventName: "createNewModuleLoaded" });
-						return m;
-					})
-					.catch((error) => {
-						odspLogger.sendErrorEvent({ eventName: "createNewModuleLoadFailed" }, error);
-						throw error;
-					});
-				const _odspResolvedUrl = isNewFileInfo(fileInfo)
-					? await module.createNewFluidFile(
-							getAuthHeader,
-							fileInfo,
-							odspLogger,
-							createNewSummary,
-							cacheAndTracker.epochTracker,
-							fileEntry,
-							this.hostPolicy.cacheCreateNewSummary ?? true,
-							!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
-							odspResolvedUrl.isClpCompliantApp,
-							this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
-						)
-					: await module.createNewContainerOnExistingFile(
-							getAuthHeader,
-							fileInfo,
-							odspLogger,
-							createNewSummary,
-							cacheAndTracker.epochTracker,
-							fileEntry,
-							this.hostPolicy.cacheCreateNewSummary ?? true,
-							!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
-							odspResolvedUrl.isClpCompliantApp,
-						);
+				const _odspResolvedUrl = await useCreateNewModule(odspLogger, async (module) => {
+					return isNewFileInfo(fileInfo)
+						? module.createNewFluidFile(
+								getAuthHeader,
+								fileInfo,
+								odspLogger,
+								createNewSummary,
+								cacheAndTracker.epochTracker,
+								fileEntry,
+								this.hostPolicy.cacheCreateNewSummary ?? true,
+								!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+								odspResolvedUrl.isClpCompliantApp,
+								this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
+							)
+						: module.createNewContainerOnExistingFile(
+								getAuthHeader,
+								fileInfo,
+								odspLogger,
+								createNewSummary,
+								cacheAndTracker.epochTracker,
+								fileEntry,
+								this.hostPolicy.cacheCreateNewSummary ?? true,
+								!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+								odspResolvedUrl.isClpCompliantApp,
+							);
+				});
 				const docService = this.createDocumentServiceCore(
 					_odspResolvedUrl,
 					odspLogger,
