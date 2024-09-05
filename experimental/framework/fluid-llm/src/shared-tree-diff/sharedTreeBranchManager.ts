@@ -200,7 +200,15 @@ export class SharedTreeBranchManager {
 				}
 				case "MOVE": {
 					if (isTargetIndexValid) {
-						targetObject.moveToIndex(targetIndex, diff.newIndex);
+						if (diff.newIndex > targetIndex) {
+							// forward move must use i + 1
+							targetObject.moveToIndex(diff.newIndex + 1, targetIndex);
+						} else if (diff.newIndex < targetIndex) {
+							// backwards move, using i directly is fine
+							targetObject.moveToIndex(diff.newIndex, targetIndex);
+						}
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+						const jsonifiedTreeNode = targetObject.map((node) => ({ ...node as Record<string, unknown> }));
 						return true;
 					} else {
 						console.warn("MOVE diff specified an invalid index, ignoring.");

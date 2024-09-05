@@ -5,6 +5,7 @@ export {
 	type DifferenceRemove,
 	type Difference,
 	sharedTreeDiff,
+	createMinimalArrayDiffSets,
 } from "./sharedTreeDiff.js";
 
 export { SharedTreeBranchManager } from "./sharedTreeBranchManager.js";

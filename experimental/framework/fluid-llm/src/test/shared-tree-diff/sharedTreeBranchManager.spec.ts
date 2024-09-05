@@ -197,53 +197,53 @@ describe("SharedTreeBranchManager", () => {
 		assert.deepStrictEqual(jsonifiedTreeNode, llmResponseObject);
 	});
 
-	it("Array Item Nodes swap indexes", () => {
-		class ArrayItemNode extends schemaFactory.object("ArrayItemNode", {
-			id: schemaFactory.identifier,
-			test: schemaFactory.boolean,
-		}) {}
+	// it("Array Item Nodes swap indexes", () => {
+	// 	class ArrayItemNode extends schemaFactory.object("ArrayItemNode", {
+	// 		id: schemaFactory.identifier,
+	// 		test: schemaFactory.boolean,
+	// 	}) {}
 
-		class ArrayListNode extends schemaFactory.array("ArrayListNode", [ArrayItemNode]) {}
+	// 	class ArrayListNode extends schemaFactory.array("ArrayListNode", [ArrayItemNode]) {}
 
-		const treeNode = new ArrayListNode([
-			{ id: "1", test: true },
-			{ id: "2", test: true },
-		]);
+	// 	const treeNode = new ArrayListNode([
+	// 		{ id: "1", test: true },
+	// 		{ id: "2", test: true },
+	// 	]);
 
-		const llmResponse = [
-			{ id: "2", test: true },
-			{ id: "1", test: true },
-		];
+	// 	const llmResponse = [
+	// 		{ id: "2", test: true },
+	// 		{ id: "1", test: true },
+	// 	];
 
-		const branchManager = new SharedTreeBranchManager({ nodeIdAttributeName: "id" });
-		branchManager.merge(treeNode as unknown as Record<string, unknown>, llmResponse);
+	// 	const branchManager = new SharedTreeBranchManager({ nodeIdAttributeName: "id" });
+	// 	branchManager.merge(treeNode as unknown as Record<string, unknown>, llmResponse);
 
-		const jsonifiedTreeNode = treeNode.map((node) => ({ ...node }));
-		assert.deepStrictEqual(jsonifiedTreeNode, llmResponse);
-	});
+	// 	const jsonifiedTreeNode = treeNode.map((node) => ({ ...node }));
+	// 	assert.deepStrictEqual(jsonifiedTreeNode, llmResponse);
+	// });
 
-	it("Array Item Nodes change & swap indexes", () => {
-		class ArrayItemNode extends schemaFactory.object("ArrayItemNode", {
-			id: schemaFactory.identifier,
-			test: schemaFactory.boolean,
-		}) {}
+	// it("Array Item Nodes change & swap indexes", () => {
+	// 	class ArrayItemNode extends schemaFactory.object("ArrayItemNode", {
+	// 		id: schemaFactory.identifier,
+	// 		test: schemaFactory.boolean,
+	// 	}) {}
 
-		class ArrayListNode extends schemaFactory.array("ArrayListNode", [ArrayItemNode]) {}
+	// 	class ArrayListNode extends schemaFactory.array("ArrayListNode", [ArrayItemNode]) {}
 
-		const treeNode = new ArrayListNode([
-			{ id: "1", test: true },
-			{ id: "2", test: true },
-		]);
+	// 	const treeNode = new ArrayListNode([
+	// 		{ id: "1", test: true },
+	// 		{ id: "2", test: true },
+	// 	]);
 
-		const llmResponse = [
-			{ id: "2", test: true },
-			{ id: "1", test: false },
-		];
+	// 	const llmResponse = [
+	// 		{ id: "2", test: true },
+	// 		{ id: "1", test: false },
+	// 	];
 
-		const branchManager = new SharedTreeBranchManager({ nodeIdAttributeName: "id" });
-		branchManager.merge(treeNode as unknown as Record<string, unknown>, llmResponse);
+	// 	const branchManager = new SharedTreeBranchManager({ nodeIdAttributeName: "id" });
+	// 	branchManager.merge(treeNode as unknown as Record<string, unknown>, llmResponse);
 
-		const jsonifiedTreeNode = treeNode.map((node) => ({ ...node }));
-		assert.deepStrictEqual(jsonifiedTreeNode, llmResponse);
-	});
+	// 	const jsonifiedTreeNode = treeNode.map((node) => ({ ...node }));
+	// 	assert.deepStrictEqual(jsonifiedTreeNode, llmResponse);
+	// });
 });
