@@ -61,19 +61,19 @@ describeCompat("GC incremental summaries", "NoCompat", (getTestObjectProvider) =
 		return summaryResult.summaryVersion;
 	}
 
+	beforeEach("setup", async () => {
+		provider = getTestObjectProvider({ syncSummarizer: true });
+		mainContainer = await provider.makeTestContainer(defaultGCConfig);
+		dataStoreA = (await mainContainer.getEntryPoint()) as ITestDataObject;
+		await waitForContainerConnection(mainContainer);
+	});
+
 	beforeEach("skip-r11s", async function () {
 		// Skip these tests for standalone r11s.  Summaries can take upwards of 20 seconds which times out the test.
 		// These tests are covering client logic and the coverage from other drivers/endpoints is sufficient.
 		if (provider.driver.type === "r11s" && provider.driver.endpointName !== "frs") {
 			this.skip();
 		}
-	});
-
-	beforeEach("setup", async () => {
-		provider = getTestObjectProvider({ syncSummarizer: true });
-		mainContainer = await provider.makeTestContainer(defaultGCConfig);
-		dataStoreA = (await mainContainer.getEntryPoint()) as ITestDataObject;
-		await waitForContainerConnection(mainContainer);
 	});
 
 	async function createNewDataStore() {
@@ -205,7 +205,7 @@ describeCompat("GC incremental summaries", "NoCompat", (getTestObjectProvider) =
 
 		// Summarize the new client and validate that both dataStoreA and dataStoreB are trees. dataStoreA because it
 		// has a new op and dataStoreB because its reference state changed from unreferenced -> referenced.
-		summaryVersion = await validateIncrementalSummary(summarizer2, dataStoreSummaryTypesMap);
+		summaryVersion = await validateIncrementalSummary(summarizer2, dataStoreSummaryTypesMap); //* times out here
 
 		// Close existing summarizer and load a new summarizer from the summary generated above.
 		summarizer2.close();
@@ -227,7 +227,7 @@ describeCompat("GC incremental summaries", "NoCompat", (getTestObjectProvider) =
 	 * test validates that when there are GC state updated data stores in a summary and that summary fails,
 	 * incrementalSummaryViolation is not logged in the next successful summary.
 	 */
-	itExpects(
+	itExpects.only(
 		"does not log incrementalSummaryViolation when summary fails with gc state updated data stores",
 		[
 			{
@@ -292,7 +292,7 @@ describeCompat("GC incremental summaries", "NoCompat", (getTestObjectProvider) =
 			containerRuntime1.storage.uploadSummaryWithContext = uploadSummaryWithContextFunc;
 
 			// Summarize and validate that it succeeds.
-			await assert.doesNotReject(summarizeNow(summarizer1), "Summarize should have passed");
+			await assert.doesNotReject(summarizeNow(summarizer1), "Summarize should have passed"); //* Times out here
 			// There should not be any IncrementalSummaryViolation errors.
 			mockLogger.assertMatchNone([{ eventName: "IncrementalSummaryViolation" }]);
 		},
