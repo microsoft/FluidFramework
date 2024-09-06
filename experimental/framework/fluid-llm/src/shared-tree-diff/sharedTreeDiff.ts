@@ -461,28 +461,33 @@ export function createMinimalArrayDiffSets(
 		diffAdjustedObjectIndexes: Map<string | number, number>,
 		objectId: string | number,
 	): void => {
-		const targetIndex = diff.path[diff.path.length - 1] as number;
+		const sourceIndex = diff.path[diff.path.length - 1] as number;
 
-		if (diff.newIndex > targetIndex) {
-			// This move diff shifts objects to the left.
+		if (diff.newIndex > sourceIndex) {
+			// This move diff shifts objects it moved over to the left.
+			//                                            |----|             |----|
 			// e.g. - shift with no length change: [{1}, {2}, {3}, {4}] -> [{2}, {3}, {1}, {4}]
-
-			// adjust all indexes after the target index to be minus 1
+			const minIndex = sourceIndex;
+			const maxIndex = diff.newIndex;
 			for (const [id, index] of diffAdjustedObjectIndexes.entries()) {
 				const shouldIndexBeShifted =
-					id !== objectId && index <= diff.newIndex && index - 1 >= 0;
+					id !== objectId && index <= maxIndex && index >= minIndex && index - 1 >= 0;
 				if (shouldIndexBeShifted) {
 					diffAdjustedObjectIndexes.set(id, index - 1);
 				}
 			}
-		} else if (diff.newIndex < targetIndex) {
-			// this move diff shifts objects to the right.
+		} else if (diff.newIndex < sourceIndex) {
+			// This move diff shifts objects it moved over to the right.
+			//                                       |----|                       |----|
 			// e.g. - shift with no length change: [{1}, {2}, {3}, {4}] -> [{3}, {1}, {2}, {4}]
-
-			// adjust all indexes after the target index to be plus 1
+			const minIndex = diff.newIndex;
+			const maxIndex = sourceIndex;
 			for (const [id, index] of diffAdjustedObjectIndexes.entries()) {
 				const shouldIndexBeShifted =
-					id !== objectId && index >= diff.newIndex && index + 1 <= targetArray.length;
+					id !== objectId &&
+					index <= maxIndex &&
+					index >= minIndex &&
+					index + 1 <= targetArray.length;
 				if (shouldIndexBeShifted) {
 					diffAdjustedObjectIndexes.set(id, index + 1);
 				}
@@ -516,73 +521,41 @@ export function createMinimalArrayDiffSets(
 		) as unknown[];
 		const diffAdjustedObjectIndexes: Map<string | number, number> =
 			createObjectArrayItemIdsToIndexMap(targetArray, idAttributeName);
-		let hasInitialMoveBeenApplied = false;
 
 		for (const diff of arrayDiffs) {
 			if (diff.type === "MOVE") {
 				const objectId = (diff.value as Record<string, unknown>)[idAttributeName] as
 					| string
 					| number;
-				const targetIndex = diff.path[diff.path.length - 1] as number;
+				const sourceIndex = diff.path[diff.path.length - 1] as number;
 
-				if (hasInitialMoveBeenApplied === false) {
-					// 1. update the preMoveObjectIndexes using this move diff.
-					// No need to check for redundency on the first move diff.
-					diffAdjustedObjectIndexes.set(objectId, diff.newIndex);
-
-					if (diff.newIndex > targetArray.length - 1) {
-						// this MOVE should be applied after some series of creates that we haven't seen.
-						if (arrayDiffsMarkedForEndReorder.has(arrayUuid) === false) {
-							arrayDiffsMarkedForEndReorder.set(arrayUuid, []);
-						}
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						arrayDiffsMarkedForEndReorder.get(arrayUuid)!.push(diff);
-					} else {
-						shiftIndexesFromMove(
-							diff,
-							targetArray,
-							diffAdjustedObjectIndexes,
-							objectId,
-						);
-					}
-
-					hasInitialMoveBeenApplied = true;
-				} else {
-					// 2. Prior moves may render the next move redundant.
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const currentAdjustedIndex = diffAdjustedObjectIndexes.get(objectId)!;
-					if (currentAdjustedIndex === diff.newIndex) {
-						diffsMarkedForRemoval.add(diff);
-						continue;
-					}
-					if (currentAdjustedIndex !== targetIndex) {
-						// A Prior Remove or Move Diff moved the object to a new index, so update the diff source index to point to the new index.
-						diff.path[diff.path.length - 1] = currentAdjustedIndex;
-					}
-
-					// Handle index shifts
-					diffAdjustedObjectIndexes.set(objectId, diff.newIndex);
-
-					if (diff.newIndex > targetArray.length - 1) {
-						// this MOVE should be applied after some series of creates that we haven't seen.
-						// It also wont shift any indexes since its moved to the total end of the array,
-						// after creations that produce the necessary indexes.
-						if (arrayDiffsMarkedForEndReorder.has(arrayUuid) === false) {
-							arrayDiffsMarkedForEndReorder.set(arrayUuid, []);
-						}
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						arrayDiffsMarkedForEndReorder.get(arrayUuid)!.push(diff);
-					} else {
-						shiftIndexesFromMove(
-							diff,
-							targetArray,
-							diffAdjustedObjectIndexes,
-							objectId,
-						);
-					}
+				// 1. Prior moves may render the next move redundant.
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const currentAdjustedIndex = diffAdjustedObjectIndexes.get(objectId)!;
+				if (currentAdjustedIndex === diff.newIndex) {
+					diffsMarkedForRemoval.add(diff);
+					continue;
+				}
+				if (currentAdjustedIndex !== sourceIndex) {
+					// A Prior Remove or Move Diff moved the object to a new index, so update the diff source index to point to the new index.
+					diff.path[diff.path.length - 1] = currentAdjustedIndex;
 				}
 
-				// TODO: If move is referencing a destination index that is out of bounds, its dependant on CREATE diffs, punt its order until after the CREATE's
+				// Handle index shifts
+				diffAdjustedObjectIndexes.set(objectId, diff.newIndex);
+
+				// edge case: this MOVE should be applied after some series of creates that we haven't seen.
+				if (diff.newIndex > targetArray.length - 1) {
+					// It also wont shift any indexes since its moved to the total end of the array,
+					// after creations that produce the necessary indexes.
+					if (arrayDiffsMarkedForEndReorder.has(arrayUuid) === false) {
+						arrayDiffsMarkedForEndReorder.set(arrayUuid, []);
+					}
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					arrayDiffsMarkedForEndReorder.get(arrayUuid)!.push(diff);
+				} else {
+					shiftIndexesFromMove(diff, targetArray, diffAdjustedObjectIndexes, objectId);
+				}
 			}
 			if (diff.type === "REMOVE") {
 				const objectId = (diff.oldValue as Record<string, unknown>)[idAttributeName] as

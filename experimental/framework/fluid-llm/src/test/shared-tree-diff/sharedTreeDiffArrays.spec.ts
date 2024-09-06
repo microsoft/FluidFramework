@@ -2,11 +2,7 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactory } from "@fluidframework/tree";
 
-import {
-	createMinimalArrayDiffSets,
-	sharedTreeDiff,
-	type DifferenceMove,
-} from "../../shared-tree-diff/index.js";
+import { createMinimalArrayDiffSets, sharedTreeDiff } from "../../shared-tree-diff/index.js";
 
 const schemaFactory = new SchemaFactory("TreeNodeTest");
 
@@ -309,7 +305,7 @@ describe("clean Diffs", () => {
 		]),
 	}) {}
 
-	it("edge case 0: should remove unecessary move diff from a swap", () => {
+	it("Edge case 0: Remove unecessary move diff due to a swap", () => {
 		const treeNode = new ObjectTreeNode({
 			state: [
 				{ id: "1", test: true },
@@ -324,7 +320,14 @@ describe("clean Diffs", () => {
 			],
 		};
 
-		const expectedDiffs: DifferenceMove[] = [
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, llmResponse, {
+			cyclesFix: true,
+			useObjectIds: {
+				idAttributeName: "id",
+			},
+		});
+
+		assert.deepStrictEqual(diffs, [
 			{
 				// good [1, 2] -> [2, 1]
 				type: "MOVE",
@@ -339,18 +342,9 @@ describe("clean Diffs", () => {
 				value: treeNode.state[1],
 				newIndex: 0,
 			},
-		];
-		assert.deepStrictEqual(
-			expectedDiffs,
-			sharedTreeDiff(treeNode as unknown as Record<string, unknown>, llmResponse, {
-				cyclesFix: true,
-				useObjectIds: {
-					idAttributeName: "id",
-				},
-			}),
-		);
+		]);
 
-		const cleanedDiffs = createMinimalArrayDiffSets(treeNode, expectedDiffs, "id");
+		const cleanedDiffs = createMinimalArrayDiffSets(treeNode, diffs, "id");
 		assert.deepStrictEqual(cleanedDiffs, [
 			{
 				type: "MOVE",
@@ -361,7 +355,56 @@ describe("clean Diffs", () => {
 		]);
 	});
 
-	it("Edge case 1: should remove unecessary diff from a swap and reorder early move to index dependant on CREATE diffs", () => {
+	it("Edge case 1: Remove unecessary move diff move when a deletion places an object at the right index", () => {
+		const treeNode = new ObjectTreeNode({
+			state: [
+				{ id: "1", test: true },
+				{ id: "2", test: true },
+			],
+		});
+
+		const llmResponse = {
+			state: [{ id: "2", test: true }],
+		};
+
+		const expectedDiffs = [
+			{
+				// good [1, 2,] -> [2]
+				type: "REMOVE",
+				path: ["state", 0],
+				oldValue: treeNode.state[0],
+			},
+			{
+				// Should be removed, 2 will be in the right position after the removal of 1
+				type: "MOVE",
+				path: ["state", 1],
+				newIndex: 0,
+				value: treeNode.state[1],
+			},
+		];
+
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, llmResponse, {
+			cyclesFix: true,
+			useObjectIds: {
+				idAttributeName: "id",
+			},
+		});
+
+		assert.deepStrictEqual(diffs, expectedDiffs);
+
+		const minimalDiffs = createMinimalArrayDiffSets(treeNode, diffs, "id");
+
+		assert.deepStrictEqual(minimalDiffs, [
+			{
+				// [1, 2] -> [2]
+				type: "REMOVE",
+				path: ["state", 0],
+				oldValue: treeNode.state[0],
+			},
+		]);
+	});
+
+	it("Edge case 2: A 'REMOVE' diff causes shiting of other diffs backwards", () => {
 		const treeNode = new ObjectTreeNode({
 			state: [
 				{ id: "1", test: true },
@@ -373,8 +416,8 @@ describe("clean Diffs", () => {
 
 		const llmResponse = {
 			state: [
-				{ id: "2", test: true },
 				{ id: "1", test: true },
+				{ id: "2", test: true },
 				{ id: "6", test: true },
 				{ id: "5", test: true },
 				{ id: "4", test: true },
@@ -390,40 +433,23 @@ describe("clean Diffs", () => {
 
 		assert.deepStrictEqual(diffs, [
 			{
-				// good [1, 2, 3, 4] -> [2, 1, 3, 4]
-				type: "MOVE",
-				path: ["state", 0],
-				newIndex: 1,
-				value: treeNode.state[0],
-			},
-			{
-				// expected to be removed, unecessary due to swap
-				type: "MOVE",
-				path: ["state", 1],
-				newIndex: 0,
-				value: treeNode.state[1],
-			},
-			{
-				// good [2, 1, 3, 4] -> [2, 1, 4]
 				type: "REMOVE",
 				path: ["state", 2],
 				oldValue: treeNode.state[2],
 			},
 			{
-				// expected to be reordered to the end [2, 1, 4, 6, 5] -> [2, 1, 4, 6, 5, 4]
+				// expected to have the path index shifted back due to prior remove.
 				type: "MOVE",
 				path: ["state", 3],
 				newIndex: 4,
 				value: treeNode.state[3],
 			},
 			{
-				// good [2, 1, 4] -> [2, 1, 4, 6]
 				type: "CREATE",
 				path: ["state", 2],
 				value: { id: "6", test: true },
 			},
 			{
-				// good [2, 1, 4, 6] -> [2, 1, 4, 6, 5]
 				type: "CREATE",
 				path: ["state", 3],
 				value: { id: "5", test: true },
@@ -441,38 +467,34 @@ describe("clean Diffs", () => {
 
 		assert.deepStrictEqual(minimalDiffs, [
 			{
-				type: "MOVE",
-				path: ["state", 0],
-				newIndex: 1,
-				value: treeNode.state[0],
-			},
-			{
+				// [1, 2, 3, 4] -> [1, 2, 4]
 				type: "REMOVE",
 				path: ["state", 2],
 				oldValue: treeNode.state[2],
 			},
 			{
+				// [1, 2, 4] -> [1, 2, 4, 6]
 				type: "CREATE",
 				path: ["state", 2],
 				value: { id: "6", test: true },
 			},
 			{
+				// [1, 2, 4, 6] -> [1, 2, 4, 6, 5]
 				type: "CREATE",
 				path: ["state", 3],
 				value: { id: "5", test: true },
 			},
 			{
+				// [1, 2, 4, 6, 5] -> [1, 2, 4, 6, 5, 4]
 				type: "MOVE",
-				path: ["state", 2],
+				path: ["state", 2], // Note the index was shifted back because of the prior remove
 				newIndex: 4,
 				value: treeNode.state[3],
 			},
 		]);
-
-		debugger;
 	});
 
-	it("edge case 2: should remove unecessary diff move when a deletion places an object at the right index", () => {
+	it("Edge case Y: A 'MOVE' diff causes shifting of other diffs backwards", () => {
 		const treeNode = new ObjectTreeNode({
 			state: [
 				{ id: "1", test: true },
@@ -485,51 +507,11 @@ describe("clean Diffs", () => {
 		const llmResponse = {
 			state: [
 				{ id: "2", test: true },
-				{ id: "6", test: true },
-				{ id: "5", test: true },
 				{ id: "4", test: true },
+				{ id: "1", test: true },
+				{ id: "3", test: true },
 			],
 		};
-
-		const expectedDiffs = [
-			{
-				// good [1, 2, 3, 4] -> [2, 3, 4]
-				type: "REMOVE",
-				path: ["state", 0],
-				oldValue: treeNode.state[0],
-			},
-			{
-				// Should be ignored, 2 will be in the right position after the removal of 1
-				type: "MOVE",
-				path: ["state", 1],
-				newIndex: 0,
-				value: treeNode.state[1],
-			},
-			{
-				// good [2, 3, 4] -> [2, 4]
-				type: "REMOVE",
-				path: ["state", 2],
-				oldValue: treeNode.state[2],
-			},
-			{
-				// good [2, 4] -> [2, 6, 4]
-				type: "CREATE",
-				path: ["state", 1],
-				value: {
-					id: "6",
-					test: true,
-				},
-			},
-			{
-				// good [2, 6, 4] -> [2, 6, 5, 4]
-				type: "CREATE",
-				path: ["state", 2],
-				value: {
-					id: "5",
-					test: true,
-				},
-			},
-		];
 
 		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, llmResponse, {
 			cyclesFix: true,
@@ -538,45 +520,194 @@ describe("clean Diffs", () => {
 			},
 		});
 
-		assert.deepStrictEqual(diffs, expectedDiffs);
+		assert.deepStrictEqual(diffs, [
+			{
+				type: "MOVE",
+				path: ["state", 0],
+				newIndex: 2,
+				value: treeNode.state[0],
+			},
+			{
+				type: "MOVE",
+				path: ["state", 1],
+				newIndex: 0,
+				value: treeNode.state[1],
+			},
+			{
+				type: "MOVE",
+				path: ["state", 2],
+				newIndex: 3,
+				value: treeNode.state[2],
+			},
+			{
+				type: "MOVE",
+				path: ["state", 3],
+				newIndex: 1,
+				value: treeNode.state[3],
+			},
+		]);
 
 		const minimalDiffs = createMinimalArrayDiffSets(treeNode, diffs, "id");
 
 		assert.deepStrictEqual(minimalDiffs, [
 			{
-				// good [1, 2, 3, 4] -> [2, 3, 4]
-				type: "REMOVE",
+				//                  |--|
+				// [1, 2, 3, 4] -> [2, 3, 1, 4]
+				// obj at index 0 moves to index 2 so move everything it jumped over, back
+				type: "MOVE",
 				path: ["state", 0],
-				oldValue: treeNode.state[0],
+				newIndex: 2,
+				value: treeNode.state[0],
 			},
 			{
-				// good [2, 3, 4] -> [2, 4]
-				type: "REMOVE",
-				path: ["state", 2],
-				oldValue: treeNode.state[2],
+				//                     |--|
+				// [2, 3, 1, 4] -> [2, 1, 4, 3]
+				// obj at index 1 moves to index 3, so move everything < index 3 back. (only applies to index moved over)
+				type: "MOVE",
+				path: ["state", 1], // source index shifted backwards
+				newIndex: 3,
+				value: treeNode.state[2],
 			},
 			{
-				// good [2, 4] -> [2, 6, 4]
+				// [2, 1, 4, 3] -> [2, 4, 1, 3]
+				type: "MOVE",
+				path: ["state", 2], // source index shifted backwards
+				newIndex: 1,
+				value: treeNode.state[3], // keep in mind we are referencing node locations for eqaulity prior to the moves
+			},
+		]);
+
+		debugger;
+	});
+
+	it("Edge case Z: (TODO) A 'MOVE' diff causes shifting of other diffs forwards", () => {});
+
+	it("Edge case X: (TODO) All 'CHANGE' diffs are ordered first for each sequence of array diffs", () => {});
+
+	it("Edge case 3: Reorder early move to index that doesn't exist & dependent on CREATE diffs so the index is valid.", () => {
+		const treeNode = new ObjectTreeNode({
+			state: [
+				{ id: "1", test: true },
+				{ id: "4", test: true },
+			],
+		});
+
+		const llmResponse = {
+			state: [
+				{ id: "1", test: true },
+				{ id: "6", test: true },
+				{ id: "5", test: true },
+				{ id: "4", test: true },
+			],
+		};
+
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, llmResponse, {
+			cyclesFix: true,
+			useObjectIds: {
+				idAttributeName: "id",
+			},
+		});
+
+		assert.deepStrictEqual(diffs, [
+			{
+				// expected to be reordered to to the end of the array.
+				type: "MOVE",
+				path: ["state", 1],
+				newIndex: 3,
+				value: treeNode.state[1],
+			},
+			{
 				type: "CREATE",
 				path: ["state", 1],
-				value: {
-					id: "6",
-					test: true,
-				},
+				value: { id: "6", test: true },
 			},
 			{
-				// good [2, 6, 4] -> [2, 6, 5, 4]
 				type: "CREATE",
 				path: ["state", 2],
-				value: {
-					id: "5",
-					test: true,
-				},
+				value: { id: "5", test: true },
+			},
+			{
+				// Expected to be removed TODO: Potential BUG - Why does this diff even get created?
+				type: "MOVE",
+				path: ["state", 3],
+				newIndex: 3,
+				value: { id: "4", test: true }, // also records this value as pojo instead of the tree node?
+			},
+		]);
+		// 	{
+		// 		// good [1, 2, 3, 4] -> [2, 1, 3, 4]
+		// 		type: "MOVE",
+		// 		path: ["state", 0],
+		// 		newIndex: 1,
+		// 		value: treeNode.state[0],
+		// 	},
+		// 	{
+		// 		// expected to be removed, unecessary due to swap
+		// 		type: "MOVE",
+		// 		path: ["state", 1],
+		// 		newIndex: 0,
+		// 		value: treeNode.state[1],
+		// 	},
+		// 	{
+		// 		// good [2, 1, 3, 4] -> [2, 1, 4]
+		// 		type: "REMOVE",
+		// 		path: ["state", 2],
+		// 		oldValue: treeNode.state[2],
+		// 	},
+		// 	{
+		// 		// expected to be reordered to the end [2, 1, 4, 6, 5] -> [2, 1, 4, 6, 5, 4]
+		// 		type: "MOVE",
+		// 		path: ["state", 3],
+		// 		newIndex: 4,
+		// 		value: treeNode.state[3],
+		// 	},
+		// 	{
+		// 		// good [2, 1, 4] -> [2, 1, 4, 6]
+		// 		type: "CREATE",
+		// 		path: ["state", 2],
+		// 		value: { id: "6", test: true },
+		// 	},
+		// 	{
+		// 		// good [2, 1, 4, 6] -> [2, 1, 4, 6, 5]
+		// 		type: "CREATE",
+		// 		path: ["state", 3],
+		// 		value: { id: "5", test: true },
+		// 	},
+		// 	{
+		// 		// expected to be removed TODO: Potential bug - Why does this diff even get created?
+		// 		type: "MOVE",
+		// 		path: ["state", 4],
+		// 		newIndex: 4,
+		// 		value: { id: "4", test: true },
+		// 	},
+		// ]);
+
+		const minimalDiffs = createMinimalArrayDiffSets(treeNode, diffs, "id");
+
+		assert.deepStrictEqual(minimalDiffs, [
+			{
+				// [1, 4] -> [1, 4, 6]
+				type: "CREATE",
+				path: ["state", 1],
+				value: { id: "6", test: true },
+			},
+			{
+				// [1, 4, 6] -> [1, 4, 6, 5]
+				type: "CREATE",
+				path: ["state", 2],
+				value: { id: "5", test: true },
+			},
+			{
+				// [1, 4, 6, 5] -> [1, 6, 5, 4]
+				type: "MOVE",
+				path: ["state", 1],
+				newIndex: 3,
+				value: treeNode.state[1],
 			},
 		]);
 	});
 
-	it("edge case 4: handle edge cases across multiple arrays within an object", () => {
+	it("Edge case 4: handle edge cases across multiple arrays within an object", () => {
 		class SimpleObjectTreeNodeWithObjectArray extends schemaFactory.object(
 			"SimpleObjectTreeNodeWithObjectArray",
 			{
@@ -708,7 +839,7 @@ describe("clean Diffs", () => {
 		]);
 	});
 
-	it("edge case 5: handle edge cases across multiple arrays within an object with repeating ID's", () => {
+	it("Edge case 5: handle edge cases across multiple arrays within an object with repeating ID's", () => {
 		class SimpleObjectTreeNodeWithObjectArray extends schemaFactory.object(
 			"SimpleObjectTreeNodeWithObjectArray",
 			{
@@ -810,7 +941,5 @@ describe("clean Diffs", () => {
 				},
 			},
 		]);
-
-		debugger;
 	});
 });
