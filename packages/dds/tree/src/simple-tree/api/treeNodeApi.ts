@@ -310,7 +310,7 @@ function getStoredKey(node: TreeNode): string | number {
 	}
 
 	// The parent of `node` is an object, a map, or undefined. If undefined, then `node` is a root/detached node.
-	assert(parentField.index === 1, "When using field key as key, index should be 1");
+	assert(parentField.index === 0, "When using field key as key, index should be 0");
 	return parentField.parent.key;
 }
 
