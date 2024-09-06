@@ -131,13 +131,13 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"Class_NexusResources": {
+			"ClassDeclaration_NexusResources": {
 				"forwardCompat": false
 			},
-			"Class_OrdererManager": {
+			"ClassDeclaration_OrdererManager": {
 				"forwardCompat": false
 			},
-			"Class_AlfredResources": {
+			"ClassDeclaration_AlfredResources": {
 				"forwardCompat": false
 			}
 		}

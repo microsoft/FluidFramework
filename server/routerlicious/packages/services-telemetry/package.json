@@ -79,14 +79,8 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"Interface_ITelemetryContextProperties": {
+			"InterfaceDeclaration_ITelemetryContextProperties": {
 				"forwardCompat": false
-			},
-			"Enum_BaseTelemetryProperties": {
-				"backCompat": false
-			},
-			"Enum_HttpProperties": {
-				"backCompat": false
 			}
 		}
 	}

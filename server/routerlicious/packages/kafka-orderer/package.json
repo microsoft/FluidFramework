@@ -54,7 +54,7 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"Class_KafkaOrdererConnection": {
+			"ClassDeclaration_KafkaOrdererConnection": {
 				"forwardCompat": false
 			}
 		}

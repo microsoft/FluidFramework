@@ -112,7 +112,6 @@ declare type old_as_current_for_Enum_BaseTelemetryProperties = requireAssignable
  * typeValidation.broken:
  * "Enum_BaseTelemetryProperties": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Enum_BaseTelemetryProperties = requireAssignableTo<TypeOnly<current.BaseTelemetryProperties>, TypeOnly<old.BaseTelemetryProperties>>
 
 /*
@@ -149,7 +148,6 @@ declare type old_as_current_for_Enum_HttpProperties = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Enum_HttpProperties": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Enum_HttpProperties = requireAssignableTo<TypeOnly<current.HttpProperties>, TypeOnly<old.HttpProperties>>
 
 /*
@@ -267,7 +265,6 @@ declare type current_as_old_for_Interface_ITelemetryContext = requireAssignableT
  * typeValidation.broken:
  * "Interface_ITelemetryContextProperties": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ITelemetryContextProperties = requireAssignableTo<TypeOnly<old.ITelemetryContextProperties>, TypeOnly<current.ITelemetryContextProperties>>
 
 /*

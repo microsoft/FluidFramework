@@ -83,7 +83,6 @@
 		}
 	},
 	"typeValidation": {
-		"disabled": true,
 		"broken": {}
 	}
 }

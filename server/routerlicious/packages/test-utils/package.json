@@ -91,7 +91,7 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"Class_TestProducer": {
+			"ClassDeclaration_TestProducer": {
 				"forwardCompat": false
 			}
 		}
