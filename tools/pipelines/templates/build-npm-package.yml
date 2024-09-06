@@ -406,6 +406,7 @@ extends:
                         inputs:
                           sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
                           targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
 
                   # Process test result, include publishing and logging
                   - template: /tools/pipelines/templates/include-process-test-results.yml@self
