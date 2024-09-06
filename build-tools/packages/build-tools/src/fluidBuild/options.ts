@@ -24,8 +24,20 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
 	buildTaskNames: string[];
 	build?: boolean;
 	vscode: boolean;
+
+	/**
+	 * @deprecated symlink-related functionality will be removed in an upcoming release.
+	 */
 	symlink: boolean;
+
+	/**
+	 * @deprecated symlink-related functionality will be removed in an upcoming release.
+	 */
 	fullSymlink: boolean | undefined;
+
+	/**
+	 * @deprecated depcheck-related functionality will be removed in an upcoming release.
+	 */
 	depcheck: boolean;
 	force: boolean;
 	install: boolean;
@@ -212,16 +224,25 @@ export function parseOptions(argv: string[]) {
 		}
 
 		if (arg === "--symlink") {
+			console.warn(
+				"The --symlink flag is deprecated and will be removed in an upcoming release.",
+			);
 			setSymlink(false);
 			continue;
 		}
 
 		if (arg === "--symlink:full") {
+			console.warn(
+				"The --symlink:full flag is deprecated and will be removed in an upcoming release.",
+			);
 			setSymlink(true);
 			continue;
 		}
 
 		if (arg === "--depcheck") {
+			console.warn(
+				"The --depcheck flag is deprecated and will be removed in an upcoming release.",
+			);
 			options.depcheck = true;
 			setBuild(false);
 			continue;
