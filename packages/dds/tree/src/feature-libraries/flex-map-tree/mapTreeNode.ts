@@ -259,7 +259,7 @@ const unparentedLocation: LocationInField = {
 		key: EmptyKey,
 		parent: undefined,
 		is<TKind2 extends FlexFieldKind>(kind: TKind2) {
-			return this.flexSchema.kind === (kind as unknown);
+			return this.schema.kind === kind.identifier;
 		},
 		isExactly(schema: FlexFieldSchema) {
 			return schema === FlexFieldSchema.empty;
@@ -319,7 +319,7 @@ class EagerMapTreeField implements MapTreeField {
 	}
 
 	public is<TKind2 extends FlexFieldKind>(kind: TKind2): this is FlexTreeTypedField<TKind2> {
-		return this.flexSchema.kind === (kind as unknown);
+		return this.schema.kind === kind.identifier;
 	}
 
 	public isExactly(schema: FlexFieldSchema): boolean {
