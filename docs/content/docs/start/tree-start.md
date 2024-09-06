@@ -17,6 +17,8 @@ This guide will walk you through the basics of creating, configuring, and intera
 A `SharedTree` can be created by defining a `ContainerSchema` with an initial object of type `SharedTree` and using this schema to create and load your container.
 This example creates a container using an Azure specific client.
 
+**note**: `enableRuntimeIdCompressor` must be enabled in the [container runtime options](../api/v2/container-runtime/icontainerruntimeoptions-interface.md) in order to use `SharedTree`
+
 See more info on creating and loading containers [here](../build/containers.md#creating-a-container).
 
 ```typescript
