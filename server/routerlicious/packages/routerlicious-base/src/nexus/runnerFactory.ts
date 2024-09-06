@@ -74,6 +74,7 @@ export class NexusResources implements core.IResources {
 		public collaborationSessionEvents?: TypedEventEmitter<ICollaborationSessionEvents>,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
+		public collaborationSessionTracker?: core.ICollaborationSessionTracker,
 	) {}
 
 	public async dispose(): Promise<void> {
@@ -160,6 +161,43 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			redisClientConnectionManager,
 			redisParams2,
 		);
+
+		/**
+		 * Whether to enable collaboration session tracking.
+		 */
+		const enableCollaborationSessionTracking: boolean | undefined = config.get(
+			"nexus:enableCollaborationSessionTracking",
+		);
+		/**
+		 * Whether to enable pruning of collaboration session tracking information on an interval.
+		 */
+		const enableCollaborationSessionPruning: boolean | undefined = config.get(
+			"nexus:enableCollaborationSessionPruning",
+		);
+		const collaborationSessionManager =
+			enableCollaborationSessionTracking === true
+				? new services.RedisCollaborationSessionManager(
+						redisClientConnectionManager,
+						redisParams2,
+				  )
+				: undefined;
+		const collaborationSessionTracker =
+			enableCollaborationSessionTracking === true
+				? new services.CollaborationSessionTracker(
+						clientManager,
+						collaborationSessionManager,
+						// Same as Deli close on inactivity, which signals session end.
+						core.DefaultServiceConfiguration.documentLambda.partitionActivityTimeout,
+				  )
+				: undefined;
+		if (
+			enableCollaborationSessionPruning === true &&
+			collaborationSessionTracker !== undefined
+		) {
+			setInterval(() => {
+				collaborationSessionTracker.pruneInactiveSessions();
+			}, core.DefaultServiceConfiguration.documentLambda.partitionActivityCheckInterval);
+		}
 
 		const redisClientConnectionManagerForJwtCache =
 			customizations?.redisClientConnectionManagerForJwtCache
@@ -519,6 +557,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			collaborationSessionEvents,
 			serviceMessageResourceManager,
 			customizations?.clusterDrainingChecker,
+			collaborationSessionTracker,
 		);
 	}
 }
@@ -549,6 +588,7 @@ export class NexusRunnerFactory implements core.IRunnerFactory<NexusResources> {
 			resources.revokedTokenChecker,
 			resources.collaborationSessionEvents,
 			resources.clusterDrainingChecker,
+			resources.collaborationSessionTracker,
 		);
 	}
 }
