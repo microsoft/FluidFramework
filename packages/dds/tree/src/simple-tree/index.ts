@@ -19,6 +19,7 @@ export {
 	type Unhydrated,
 	type InternalTreeNode,
 	isTreeNode,
+	tryDisposeTreeNode,
 } from "./core/index.js";
 export {
 	type ITree,
@@ -68,7 +69,7 @@ export {
 	normalizeFieldSchema,
 	type ApplyKind,
 } from "./schemaTypes.js";
-export { getOrCreateInnerNode, tryDisposeTreeNode } from "./proxyBinding.js";
+export { getOrCreateInnerNode } from "./proxyBinding.js";
 export { toFlexSchema } from "./toFlexSchema.js";
 export type {
 	FieldHasDefaultUnsafe,

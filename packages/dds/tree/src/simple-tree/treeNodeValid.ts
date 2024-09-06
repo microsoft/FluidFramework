@@ -15,6 +15,7 @@ import {
 	TreeNode,
 	type InternalTreeNode,
 	typeSchemaSymbol,
+	type InnerNode,
 } from "./core/index.js";
 import {
 	type FlexTreeNode,
@@ -26,7 +27,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { fail } from "../util/index.js";
 
 import { getFlexSchema } from "./toFlexSchema.js";
-import { setInnerNode, type InnerNode } from "./proxyBinding.js";
 
 /**
  * Class which all {@link TreeNode}s must extend.
@@ -157,8 +157,11 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		);
 
 		const result = schema.prepareInstance(this, node);
-		new TreeNodeKernel(result, schema);
-		setInnerNode(result, node);
+		// The TreeNodeKernel associates itself the TreeNode (result here, not node) so it can be looked up later via getKernel.
+		// If desired this could be put in a non-enumerable symbol property for lookup instead, but that gets messy going through proxies,
+		// so just relying on the WeakMap seems like the cleanest approach.
+		new TreeNodeKernel(result, schema, node);
+
 		return result;
 	}
 }
