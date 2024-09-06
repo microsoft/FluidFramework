@@ -182,6 +182,8 @@ import {
 	Outbox,
 	RemoteMessageProcessor,
 } from "./opLifecycle/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { BatchStartInfo } from "./opLifecycle/remoteMessageProcessor.js"; //* LINT FIX
 import { pkgVersion } from "./packageVersion.js";
 import {
 	PendingMessageResubmitData,
@@ -2703,32 +2705,31 @@ export class ContainerRuntime
 			// If the message has the modern message envelope, then process it here.
 			// Here we unpack the message (decompress, unchunk, and/or ungroup) into a batch of messages with ContainerMessageType
 			const inboxResult = this.remoteMessageProcessor.process(messageCopy, logLegacyCase);
-			if (inboxResult.type === "batchInProgress") {
+			if (inboxResult === undefined) {
 				// This means the incoming message is an incomplete part of a message or batch
 				// and we need to process more messages before the rest of the system can understand it.
 				return;
 			}
 
-			//* Skip if not full batch
-			if (inboxResult.type === "fullBatch") {
-				const inboundBatch = inboxResult.batch;
-				const result = this.duplicateBatchDetector.processInboundBatch(inboundBatch);
+			if ("batchStart" in inboxResult) {
+				const batchStart: BatchStartInfo = inboxResult.batchStart;
+				const result = this.duplicateBatchDetector.processInboundBatch(batchStart);
 				if (result.duplicate) {
 					const error = new DataCorruptionError(
 						"Duplicate batch - The same batch was sequenced twice",
-						{ batchId: inboundBatch.batchId },
+						{ batchId: batchStart.batchId },
 					);
 
 					this.mc.logger.sendTelemetryEvent(
 						{
 							eventName: "DuplicateBatch",
 							details: {
-								batchId: inboundBatch.batchId,
-								clientId: inboundBatch.clientId,
-								batchStartCsn: inboundBatch.batchStartCsn,
-								size: inboundBatch.messages.length,
+								batchId: batchStart.batchId,
+								clientId: batchStart.clientId,
+								batchStartCsn: batchStart.batchStartCsn,
+								size: inboxResult.length,
 								duplicateBatchSequenceNumber: result.otherSequenceNumber,
-								...extractSafePropertiesFromMessage(inboundBatch.keyMessage),
+								...extractSafePropertiesFromMessage(batchStart.keyMessage),
 							},
 						},
 						error,
@@ -2737,7 +2738,6 @@ export class ContainerRuntime
 				}
 			}
 
-			//* Shoot, need to go all the way to PSM to add back per-message stuff...
 			let runtimeBatch: boolean = true;
 			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
 			// or to check to ensure the *remote* messages don't match the batchId of a pending local batch.
@@ -2745,8 +2745,8 @@ export class ContainerRuntime
 			let messagesWithPendingState: {
 				message: ISequencedDocumentMessage;
 				localOpMetadata?: unknown;
-			}[] = this.pendingStateManager.processInboundBatch(inboundBatch, local);
-			if (inboxResult.type === "fullBatch" && inboxResult.batch.messages.length === 0) {
+			}[] = this.pendingStateManager.processInflux(inboxResult, local);
+			if (inboxResult.type === "fullBatch" && inboxResult.length === 0) {
 				/**
 				 * We need to process an empty batch, which will execute expected actions while processing even if there
 				 * are no inner runtime messages.
@@ -2771,7 +2771,27 @@ export class ContainerRuntime
 			if (inboxResult.type === "fullBatch") {
 				this.processFullBatch(messagesWithPendingState, local, savedOp, runtimeBatch);
 			} else {
-				// this.processNextBatchMessage
+				const [{ message, localOpMetadata }, ...nothing] = messagesWithPendingState;
+				assert(nothing.length === 0, "Partial batch should have exactly one message");
+
+				//* TODO: Consider melting into processFullBatch (takes an indicator of whether to do start/end/neither/both)
+
+				if (inboxResult.type === "batchStartingMessage") {
+					//* TODO: batchSTart
+				}
+
+				this.ensureNoDataModelChanges(() => {
+					this.validateAndProcessRuntimeMessage({
+						message: message as InboundSequencedContainerRuntimeMessage,
+						local,
+						savedOp,
+						localOpMetadata,
+					});
+				});
+
+				if (inboxResult.type === "nextBatchMessage" && inboxResult.batchEnd) {
+					//* TODO: batchEnd
+				}
 			}
 		} else {
 			this.processFullBatch(

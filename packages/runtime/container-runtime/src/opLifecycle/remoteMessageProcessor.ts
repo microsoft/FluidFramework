@@ -21,6 +21,8 @@ import { OpDecompressor } from "./opDecompressor.js";
 import { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
 import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
 
+//* TODO: Rename to Inbox?
+
 /** Messages being received as a batch, with details needed to process the batch */
 export interface InboundBatch extends BatchStartInfo {
 	/** Messages in this batch */
@@ -48,22 +50,29 @@ export interface BatchStartInfo {
 	 * @remarks Do not use clientSequenceNumber here, use batchStartCsn instead.
 	 */
 	readonly keyMessage: ISequencedDocumentMessage;
+	//* Maybe move from InboxResult to here
+	// /** Number of messages in the batch, if known */
+	// readonly length?: number;
 }
 
 export type InboxResult =
-	| { type: "batchInProgress"; leadingChunk: boolean } //* leadingChunk probably not needed actually -- Replace this case with undefined again, so we can reuse this type elsewhere
-	| { type: "fullBatch"; batch: InboundBatch }
+	| {
+			type: "fullBatch";
+			batch: InboundBatch; //* TODO: Maybe just have messages here, and ditch InboundBatch type?
+			batchStart: BatchStartInfo;
+			length: number;
+	  }
 	| {
 			type: "batchStartingMessage";
 			batchStart: BatchStartInfo;
-			batchEnd?: never;
-			message: InboundSequencedContainerRuntimeMessage;
+			nextMessage: InboundSequencedContainerRuntimeMessage;
+			length?: never;
 	  }
 	| {
 			type: "nextBatchMessage";
-			batchStart?: never;
 			batchEnd?: true;
-			message: InboundSequencedContainerRuntimeMessage;
+			nextMessage: InboundSequencedContainerRuntimeMessage;
+			length?: never;
 	  };
 
 function assertHasClientId(
@@ -126,7 +135,7 @@ export class RemoteMessageProcessor {
 	public process(
 		remoteMessageCopy: ISequencedDocumentMessage,
 		logLegacyCase: (codePath: string) => void,
-	): InboxResult {
+	): InboxResult | undefined {
 		let message = remoteMessageCopy;
 
 		assertHasClientId(message);
@@ -136,7 +145,7 @@ export class RemoteMessageProcessor {
 			const chunkProcessingResult = this.opSplitter.processChunk(message);
 			// Only continue further if current chunk is the final chunk
 			if (!chunkProcessingResult.isFinalChunk) {
-				return { type: "batchInProgress", leadingChunk: true };
+				return undefined;
 			}
 			// This message will always be compressed
 			message = chunkProcessingResult.message;
@@ -162,15 +171,18 @@ export class RemoteMessageProcessor {
 			);
 			const batchId = asBatchMetadata(message.metadata)?.batchId;
 			const groupedMessages = this.opGroupingManager.ungroupOp(message).map(unpack);
+			const batch = {
+				messages: groupedMessages, // Will be [] for an empty batch
+				batchStartCsn: message.clientSequenceNumber,
+				clientId,
+				batchId,
+				keyMessage: groupedMessages[0] ?? message, // For an empty batch, this is the empty grouped batch message. Needed for sequence numbers for this batch
+			};
 			return {
 				type: "fullBatch",
-				batch: {
-					messages: groupedMessages, // Will be [] for an empty batch
-					batchStartCsn: message.clientSequenceNumber,
-					clientId,
-					batchId,
-					keyMessage: groupedMessages[0] ?? message, // For an empty batch, this is the empty grouped batch message. Needed for sequence numbers for this batch
-				},
+				batch,
+				batchStart: batch, //* Redundant
+				length: groupedMessages.length,
 			};
 		}
 
@@ -181,16 +193,23 @@ export class RemoteMessageProcessor {
 			message as InboundSequencedContainerRuntimeMessage & { clientId: string },
 		);
 
-		//* Check config and maybe return next message
+		//* TODO: Actually implement the right semantics based on this.returnPartialBatches.
+		//* But write tests first, because that's fun :)
+
 		if (!batchEnded) {
 			// batch not yet complete
-			return { type: "batchInProgress", leadingChunk: false };
+			return undefined;
 		}
 
 		const completedBatch = this.batchInProgress;
 		assert(completedBatch !== undefined, "Completed batch should be non-empty");
 		this.batchInProgress = undefined;
-		return { type: "fullBatch", batch: completedBatch };
+		return {
+			type: "fullBatch",
+			batch: completedBatch,
+			batchStart: completedBatch,
+			length: completedBatch.messages.length,
+		};
 	}
 
 	/**

@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { getEffectiveBatchId } from "./batchManager.js";
-import { type InboundBatch } from "./remoteMessageProcessor.js";
+import { type BatchStartInfo } from "./remoteMessageProcessor.js"; //* TODO: REname variables too
 
 /**
  * This class tracks recent batchIds we've seen, and checks incoming batches for duplicates.
@@ -25,7 +25,7 @@ export class DuplicateBatchDetector {
 	 * @remarks - We also use the minimumSequenceNumber to clear out old batchIds that are no longer at risk for duplicates.
 	 */
 	public processInboundBatch(
-		inboundBatch: InboundBatch,
+		inboundBatch: BatchStartInfo,
 	): { duplicate: true; otherSequenceNumber: number } | { duplicate: false } {
 		const { sequenceNumber, minimumSequenceNumber } = inboundBatch.keyMessage;
 
