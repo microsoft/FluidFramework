@@ -26,6 +26,8 @@ import {
 	getEffectiveBatchId,
 	InboundBatch,
 } from "./opLifecycle/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { InboxResult } from "./opLifecycle/remoteMessageProcessor.js"; //* Fix lint
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
@@ -353,23 +355,26 @@ export class PendingStateManager implements IDisposable {
 	 * - The batch IDs *do match* but it's not a local batch (indicates Container forking).
 	 */
 	public processInboundBatch(
-		batch: InboundBatch,
+		inboxResult: InboxResult,
 		local: boolean,
 	): {
 		message: InboundSequencedContainerRuntimeMessage;
 		localOpMetadata?: unknown;
 	}[] {
 		if (local) {
-			return this.processPendingLocalBatch(batch);
+			return this.processPendingLocalBatch(inboxResult);
 		}
 
 		// An inbound remote batch should not match the pending batch ID for this client.
 		// That would indicate the container forked (two instances trying to submit the same local state)
-		if (this.remoteBatchMatchesPendingBatch(batch)) {
+		if (
+			inboxResult.type === "fullBatch" &&
+			this.remoteBatchMatchesPendingBatch(inboxResult.batch)
+		) {
 			throw DataProcessingError.create(
 				"Forked Container Error! Matching batchIds but mismatched clientId",
 				"PendingStateManager.processInboundBatch",
-				batch.keyMessage,
+				inboxResult.batch.keyMessage,
 			);
 		}
 
@@ -384,7 +389,7 @@ export class PendingStateManager implements IDisposable {
 	 * @throws DataProcessingError if the pending message content doesn't match the incoming message content for any message in the batch.
 	 * @returns The inbound batch's messages with localOpMetadata "zipped" in.
 	 */
-	private processPendingLocalBatch(batch: InboundBatch): {
+	private processPendingLocalBatch(inboxResult: InboxResult): {
 		message: InboundSequencedContainerRuntimeMessage;
 		localOpMetadata: unknown;
 	}[] {

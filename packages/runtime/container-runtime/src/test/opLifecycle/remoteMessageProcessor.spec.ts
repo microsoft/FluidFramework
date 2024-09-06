@@ -41,6 +41,7 @@ describe("RemoteMessageProcessor", () => {
 				},
 				logger,
 			),
+			true /* returnPartialBatches */, //* Test both...
 		);
 	}
 
@@ -108,6 +109,7 @@ describe("RemoteMessageProcessor", () => {
 		grouping: [true, false],
 	});
 
+	//* These just need dual logic for the loop
 	messageGenerationOptions.forEach((option) => {
 		it(`Correctly processes single batch: compression [${option.compressionAndChunking.compression}] chunking [${option.compressionAndChunking.chunking}] grouping [${option.grouping}]`, () => {
 			let batch: IBatch = {
@@ -180,7 +182,7 @@ describe("RemoteMessageProcessor", () => {
 
 				ensureContentsDeserialized(inboundMessage, true, () => {});
 				// actualBatch will remain undefined every time except the last time through the loop
-				actualBatch = messageProcessor.process(inboundMessage, () => {});
+				const result = messageProcessor.process(inboundMessage, () => {});
 			}
 
 			const expected = option.grouping
@@ -208,6 +210,7 @@ describe("RemoteMessageProcessor", () => {
 		});
 	});
 
+	//* Not sure what should happen here, it points out what about the rest of the InboundBatch info?
 	it("Processes multiple batches", () => {
 		let csn = 1;
 		const batchManager = new BatchManager({
@@ -341,6 +344,7 @@ describe("RemoteMessageProcessor", () => {
 		assert.deepStrictEqual(processResults, expectedResults, "unexpected output from process");
 	});
 
+	//* These should behave the same for either config
 	describe("Throws on invalid batches", () => {
 		it("Unexpected batch start marker mid-batch", () => {
 			let csn = 1;
@@ -415,6 +419,7 @@ describe("RemoteMessageProcessor", () => {
 		});
 	});
 
+	//* Single message, don't need to test both configs
 	it("Processes legacy string-content message", () => {
 		const messageProcessor = getMessageProcessor();
 		const contents = {
@@ -438,6 +443,7 @@ describe("RemoteMessageProcessor", () => {
 		assert.deepStrictEqual(result.type, contents.type);
 	});
 
+	//* Single message, don't need to test both configs
 	it("Don't unpack non-datastore messages", () => {
 		const messageProcessor = getMessageProcessor();
 		const message = {
@@ -456,6 +462,8 @@ describe("RemoteMessageProcessor", () => {
 		assert.deepStrictEqual(result.type, message.type);
 	});
 
+	//* Maybe don't need to test both? Might as well though
+	//* Interesting, even if returnPartialBatches is false, for singletons and grouped batches it will still return type: "fullBatch"
 	it("Processing groupedBatch works as expected", () => {
 		const groupedBatch = {
 			type: MessageType.Operation,
@@ -532,6 +540,7 @@ describe("RemoteMessageProcessor", () => {
 		);
 	});
 
+	//* Maybe don't need to test both? Might as well though
 	it("Processing empty groupedBatch works as expected", () => {
 		const groupedBatch = {
 			type: MessageType.Operation,

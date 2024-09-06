@@ -22,9 +22,13 @@ import { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
 import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
 
 /** Messages being received as a batch, with details needed to process the batch */
-export interface InboundBatch {
+export interface InboundBatch extends BatchStartInfo {
 	/** Messages in this batch */
 	readonly messages: InboundSequencedContainerRuntimeMessage[];
+}
+
+/** Info about the batch we learn when we process the first message */
+export interface BatchStartInfo {
 	/** Batch ID, if present */
 	readonly batchId: string | undefined;
 	/** clientId that sent this batch. Used to compute Batch ID if needed */
@@ -45,6 +49,22 @@ export interface InboundBatch {
 	 */
 	readonly keyMessage: ISequencedDocumentMessage;
 }
+
+export type InboxResult =
+	| { type: "batchInProgress"; leadingChunk: boolean } //* leadingChunk probably not needed actually -- Replace this case with undefined again, so we can reuse this type elsewhere
+	| { type: "fullBatch"; batch: InboundBatch }
+	| {
+			type: "batchStartingMessage";
+			batchStart: BatchStartInfo;
+			batchEnd?: never;
+			message: InboundSequencedContainerRuntimeMessage;
+	  }
+	| {
+			type: "nextBatchMessage";
+			batchStart?: never;
+			batchEnd?: true;
+			message: InboundSequencedContainerRuntimeMessage;
+	  };
 
 function assertHasClientId(
 	message: ISequencedDocumentMessage,
@@ -73,6 +93,7 @@ export class RemoteMessageProcessor {
 		private readonly opSplitter: OpSplitter,
 		private readonly opDecompressor: OpDecompressor,
 		private readonly opGroupingManager: OpGroupingManager,
+		private readonly returnPartialBatches: boolean = false,
 	) {}
 
 	public get partialMessages(): ReadonlyMap<string, string[]> {
@@ -105,7 +126,7 @@ export class RemoteMessageProcessor {
 	public process(
 		remoteMessageCopy: ISequencedDocumentMessage,
 		logLegacyCase: (codePath: string) => void,
-	): InboundBatch | undefined {
+	): InboxResult {
 		let message = remoteMessageCopy;
 
 		assertHasClientId(message);
@@ -115,7 +136,7 @@ export class RemoteMessageProcessor {
 			const chunkProcessingResult = this.opSplitter.processChunk(message);
 			// Only continue further if current chunk is the final chunk
 			if (!chunkProcessingResult.isFinalChunk) {
-				return undefined;
+				return { type: "batchInProgress", leadingChunk: true };
 			}
 			// This message will always be compressed
 			message = chunkProcessingResult.message;
@@ -142,11 +163,14 @@ export class RemoteMessageProcessor {
 			const batchId = asBatchMetadata(message.metadata)?.batchId;
 			const groupedMessages = this.opGroupingManager.ungroupOp(message).map(unpack);
 			return {
-				messages: groupedMessages, // Will be [] for an empty batch
-				batchStartCsn: message.clientSequenceNumber,
-				clientId,
-				batchId,
-				keyMessage: groupedMessages[0] ?? message, // For an empty batch, this is the empty grouped batch message. Needed for sequence numbers for this batch
+				type: "fullBatch",
+				batch: {
+					messages: groupedMessages, // Will be [] for an empty batch
+					batchStartCsn: message.clientSequenceNumber,
+					clientId,
+					batchId,
+					keyMessage: groupedMessages[0] ?? message, // For an empty batch, this is the empty grouped batch message. Needed for sequence numbers for this batch
+				},
 			};
 		}
 
@@ -157,14 +181,16 @@ export class RemoteMessageProcessor {
 			message as InboundSequencedContainerRuntimeMessage & { clientId: string },
 		);
 
+		//* Check config and maybe return next message
 		if (!batchEnded) {
 			// batch not yet complete
-			return undefined;
+			return { type: "batchInProgress", leadingChunk: false };
 		}
 
 		const completedBatch = this.batchInProgress;
+		assert(completedBatch !== undefined, "Completed batch should be non-empty");
 		this.batchInProgress = undefined;
-		return completedBatch;
+		return { type: "fullBatch", batch: completedBatch };
 	}
 
 	/**
