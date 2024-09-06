@@ -375,9 +375,7 @@ export class PendingStateManager implements IDisposable {
 
 		// No localOpMetadata for remote messages
 		const messages =
-			inboxResult.type === "fullBatch"
-				? inboxResult.batch.messages
-				: [inboxResult.nextMessage];
+			inboxResult.type === "fullBatch" ? inboxResult.messages : [inboxResult.nextMessage];
 		return messages.map((message) => ({ message }));
 	}
 
@@ -399,7 +397,7 @@ export class PendingStateManager implements IDisposable {
 		// Empty batch
 		if (inboxResult.length === 0) {
 			const localOpMetadata = this.processNextPendingMessage(
-				inboxResult.batch.keyMessage.sequenceNumber,
+				inboxResult.batchStart.keyMessage.sequenceNumber,
 			);
 			assert(
 				asEmptyBatchLocalOpMetadata(localOpMetadata)?.emptyBatch === true,
@@ -409,9 +407,7 @@ export class PendingStateManager implements IDisposable {
 		}
 
 		const messages =
-			inboxResult.type === "fullBatch"
-				? inboxResult.batch.messages
-				: [inboxResult.nextMessage];
+			inboxResult.type === "fullBatch" ? inboxResult.messages : [inboxResult.nextMessage];
 
 		return messages.map((message) => ({
 			message,

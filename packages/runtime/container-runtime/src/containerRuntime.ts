@@ -2761,7 +2761,7 @@ export class ContainerRuntime
 				 */
 				messagesWithPendingState = [
 					{
-						message: inboxResult.batch.keyMessage,
+						message: inboxResult.batchStart.keyMessage,
 						localOpMetadata: undefined,
 					},
 				];

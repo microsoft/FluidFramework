@@ -58,7 +58,7 @@ export interface BatchStartInfo {
 export type InboxResult =
 	| {
 			type: "fullBatch";
-			batch: InboundBatch; //* TODO: Maybe just have messages here, and ditch InboundBatch type?
+			messages: InboundSequencedContainerRuntimeMessage[];
 			batchStart: BatchStartInfo;
 			length: number;
 	  }
@@ -103,7 +103,10 @@ export class RemoteMessageProcessor {
 		private readonly opDecompressor: OpDecompressor,
 		private readonly opGroupingManager: OpGroupingManager,
 		private readonly returnPartialBatches: boolean = false,
-	) {}
+	) {
+		//* build!
+		console.log(this.returnPartialBatches);
+	}
 
 	public get partialMessages(): ReadonlyMap<string, string[]> {
 		return this.opSplitter.chunks;
@@ -171,6 +174,7 @@ export class RemoteMessageProcessor {
 			);
 			const batchId = asBatchMetadata(message.metadata)?.batchId;
 			const groupedMessages = this.opGroupingManager.ungroupOp(message).map(unpack);
+			//* clean up
 			const batch = {
 				messages: groupedMessages, // Will be [] for an empty batch
 				batchStartCsn: message.clientSequenceNumber,
@@ -180,7 +184,7 @@ export class RemoteMessageProcessor {
 			};
 			return {
 				type: "fullBatch",
-				batch,
+				messages: batch.messages,
 				batchStart: batch, //* Redundant
 				length: groupedMessages.length,
 			};
@@ -206,7 +210,7 @@ export class RemoteMessageProcessor {
 		this.batchInProgress = undefined;
 		return {
 			type: "fullBatch",
-			batch: completedBatch,
+			messages: completedBatch.messages,
 			batchStart: completedBatch,
 			length: completedBatch.messages.length,
 		};
