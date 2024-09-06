@@ -149,10 +149,13 @@ See [the API](../api/v2/tree/treechangeevents-interface) docs for more details.
 ## Editing Tree Data
 
 There are built-in editing methods for each of the provided schema types.
-For example, if your data is in an array, you can add an item like this:
+For example, if your data is in an array, you can add a new todo item at index 3 like this:
 
 ```typescript
-appData.root.items.insertAt(3);
+appData.root.items.insertAt(3, new TodoItem({
+	description: "new item",
+	isComplete: false,
+}),);
 ```
 
 The schema types can also be edited using the assignment operator like this:
