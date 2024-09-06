@@ -32,9 +32,7 @@ const byte3 = (x32: number): number => (x32 << 24) >>> 24;
 // Given a uint16 returns the corresponding uint32 integer where 0s are
 // interleaved between the original bits. (e.g., 1111... -> 01010101...).
 const interlaceBitsX16 = (x16: number): number =>
-	// TODO Non null asserting, why is this not null?
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	(x8ToInterlacedX16[byte2(x16)]! << 16) | x8ToInterlacedX16[byte3(x16)]!;
+	(x8ToInterlacedX16[byte2(x16)] << 16) | x8ToInterlacedX16[byte3(x16)];
 
 const r0ToMorton16 = (row: number): number => (interlaceBitsX16(row) << 1) >>> 0;
 const c0ToMorton16 = (col: number): number => interlaceBitsX16(col) >>> 0;

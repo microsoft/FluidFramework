@@ -44,6 +44,7 @@ import {
 	type TreeChangeEvents,
 	tryGetTreeNodeSchema,
 } from "../core/index.js";
+import { isObjectNodeSchema } from "../objectNodeTypes.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -170,12 +171,31 @@ export const treeNodeApi: TreeNodeApi = {
 		const kernel = getKernel(node);
 		switch (eventName) {
 			case "nodeChanged": {
-				return kernel.on("childrenChangedAfterBatch", () => {
-					listener();
-				});
+				const nodeSchema = kernel.schema;
+				if (isObjectNodeSchema(nodeSchema)) {
+					return kernel.on("childrenChangedAfterBatch", ({ changedFields }) => {
+						const changedProperties = new Set(
+							Array.from(
+								changedFields,
+								(field) =>
+									nodeSchema.storedKeyToPropertyKey.get(field) ??
+									fail(`Could not find stored key '${field}' in schema.`),
+							),
+						);
+						listener({ changedProperties });
+					});
+				} else if (nodeSchema.kind === NodeKind.Array) {
+					return kernel.on("childrenChangedAfterBatch", () => {
+						listener({ changedProperties: undefined });
+					});
+				} else {
+					return kernel.on("childrenChangedAfterBatch", ({ changedFields }) => {
+						listener({ changedProperties: changedFields });
+					});
+				}
 			}
 			case "treeChanged": {
-				return kernel.on("subtreeChangedAfterBatch", () => listener());
+				return kernel.on("subtreeChangedAfterBatch", () => listener({}));
 			}
 			default:
 				throw new UsageError(`No event named ${JSON.stringify(eventName)}.`);
@@ -211,7 +231,7 @@ export const treeNodeApi: TreeNodeApi = {
 	},
 	shortId(node: TreeNode): number | string | undefined {
 		const flexNode = getOrCreateInnerNode(node);
-		const flexSchema = flexNode.schema;
+		const flexSchema = flexNode.flexSchema;
 		const identifierFieldKeys =
 			flexSchema instanceof FlexObjectNodeSchema ? flexSchema.identifierFieldKeys : [];
 
@@ -279,7 +299,7 @@ function getStoredKey(node: TreeNode): string | number {
 	// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
 	// "property keys".
 	const parentField = getOrCreateInnerNode(node).parentField;
-	if (parentField.parent.schema.kind.multiplicity === Multiplicity.Sequence) {
+	if (parentField.parent.flexSchema.kind.multiplicity === Multiplicity.Sequence) {
 		// The parent of `node` is an array node
 		return parentField.index;
 	}

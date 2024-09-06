@@ -91,16 +91,13 @@ describe("MapTreeNodes", () => {
 	});
 
 	it("can get their schema", () => {
-		assert.equal(map.schema, mapSchema);
-		assert.equal(arrayNode.schema, arrayNodeSchema);
-		assert.equal(object.schema, objectSchema);
-		assert.equal(
-			map.tryGetField(mapKey)?.boxedAt(0)?.schema,
-			getFlexSchema(schemaFactory.string),
-		);
+		assert.equal(map.schema, mapSchema.name);
+		assert.equal(arrayNode.schema, arrayNodeSchema.name);
+		assert.equal(object.schema, objectSchema.name);
+		assert.equal(map.tryGetField(mapKey)?.boxedAt(0)?.schema, schemaFactory.string.identifier);
 		assert.equal(
 			arrayNode.tryGetField(EmptyKey)?.boxedAt(0)?.schema,
-			getFlexSchema(schemaFactory.string),
+			schemaFactory.string.identifier,
 		);
 	});
 
