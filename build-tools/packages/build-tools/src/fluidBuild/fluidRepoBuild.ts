@@ -6,21 +6,19 @@
 import * as path from "path";
 import chalk from "chalk";
 import registerDebug from "debug";
-import { FluidRepo, IFluidBuildDirs } from "../common/fluidRepo";
-import { getFluidBuildConfig } from "../common/fluidUtils";
+
 import { defaultLogger } from "../common/logging";
 import { MonoRepo } from "../common/monoRepo";
 import { Package, Packages } from "../common/npmPackage";
-import {
-	ExecAsyncResult,
-	existsSync,
-	globFn,
-	isSameFileOrDir,
-	lookUpDirSync,
-} from "../common/utils";
+import { ExecAsyncResult, existsSync, isSameFileOrDir, lookUpDirSync } from "../common/utils";
 import { BuildGraph } from "./buildGraph";
+import type { IFluidBuildDirs } from "./fluidBuildConfig";
+import { FluidRepo } from "./fluidRepo";
+import { getFluidBuildConfig } from "./fluidUtils";
 import { NpmDepChecker } from "./npmDepChecker";
 import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
+import { globFn } from "./tasks/taskUtils";
+
 const traceInit = registerDebug("fluid-build:init");
 
 const { log } = defaultLogger;
