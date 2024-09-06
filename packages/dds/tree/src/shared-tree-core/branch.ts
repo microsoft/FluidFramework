@@ -19,9 +19,9 @@ import {
 	makeAnonChange,
 	mintCommit,
 	rebaseBranch,
-	tagChange,
 	tagRollbackInverse,
 	type RebaseStatsWithDuration,
+	tagChange,
 } from "../core/index.js";
 import { EventEmitter, type Listenable } from "../events/index.js";
 
@@ -229,7 +229,7 @@ export class SharedTreeBranch<
 		>,
 	) {
 		super();
-		this.editor = this.changeFamily.buildEditor((change) =>
+		this.editor = this.changeFamily.buildEditor(mintRevisionTag, (change) =>
 			this.apply(change, mintRevisionTag()),
 		);
 		this.unsubscribeBranchTrimmer = branchTrimmer?.on("ancestryTrimmed", (commit) => {
@@ -254,23 +254,28 @@ export class SharedTreeBranch<
 	 * @returns the change that was applied and the new head commit of the branch
 	 */
 	public apply(
-		change: TChange,
-		revision: RevisionTag,
+		taggedChange: TaggedChange<TChange>,
+		revision: RevisionTag, // This can be removed once we make revision required on taggedChange?
 		changeKind: CommitKind = CommitKind.Default,
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
+		const revisionTag = taggedChange.revision ?? revision;
+
 		// TODO: This should not be necessary when receiving changes from other clients.
-		const changeWithRevision = this.changeFamily.rebaser.changeRevision(change, revision);
+		const changeWithRevision = this.changeFamily.rebaser.changeRevision(
+			taggedChange.change,
+			revisionTag,
+		);
 
 		const newHead = mintCommit(this.head, {
-			revision,
+			revision: revisionTag,
 			change: changeWithRevision,
 		});
 
 		const changeEvent = {
 			type: "append",
-			change: tagChange(changeWithRevision, revision),
+			change: tagChange(changeWithRevision, revisionTag),
 			newCommits: [newHead],
 		} as const;
 
@@ -283,7 +288,7 @@ export class SharedTreeBranch<
 		}
 
 		this.emit("afterChange", changeEvent);
-		return [changeWithRevision, newHead];
+		return [taggedChange.change, newHead];
 	}
 
 	/**

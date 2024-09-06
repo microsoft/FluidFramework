@@ -276,7 +276,10 @@ describe("EditManager - Bench", () => {
 							const sequencedEdits: Commit<TestChange>[] = [];
 							for (let iChange = 0; iChange < count; iChange++) {
 								const revision = mintRevisionTag();
-								manager.localBranch.apply(TestChange.emptyChange, revision);
+								manager.localBranch.apply(
+									{ change: TestChange.emptyChange, revision },
+									revision,
+								);
 								sequencedEdits.push({
 									change: TestChange.emptyChange,
 									revision,

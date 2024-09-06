@@ -14,6 +14,7 @@ import {
 	mapCursorField,
 	RevisionTagCodec,
 	rootFieldKey,
+	type TaggedChange,
 	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
@@ -56,6 +57,7 @@ import {
 	checkoutWithContent,
 	cursorFromInsertableTreeField,
 	forestWithContent,
+	mintRevisionTag,
 	testIdCompressor,
 } from "../../utils.js";
 import { numberSchema, SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
@@ -137,8 +139,8 @@ describe("End to end chunked encoding", () => {
 		assert(!chunk.isShared());
 		const changeLog: ModularChangeset[] = [];
 
-		const changeReceiver = (change: ModularChangeset) => {
-			changeLog.push(change);
+		const changeReceiver = (change: TaggedChange<ModularChangeset>) => {
+			changeLog.push(change.change);
 		};
 		const codec = makeModularChangeCodecFamily(
 			fieldKindConfigurations,
@@ -146,7 +148,11 @@ describe("End to end chunked encoding", () => {
 			fieldBatchCodec,
 			{ jsonValidator: typeboxValidator },
 		);
-		const dummyEditor = new DefaultEditBuilder(new DefaultChangeFamily(codec), changeReceiver);
+		const dummyEditor = new DefaultEditBuilder(
+			new DefaultChangeFamily(codec),
+			mintRevisionTag,
+			changeReceiver,
+		);
 		const checkout = new MockTreeCheckout(forest, dummyEditor as unknown as ISharedTreeEditor);
 		checkout.editor
 			.sequenceField({ field: rootFieldKey, parent: undefined })

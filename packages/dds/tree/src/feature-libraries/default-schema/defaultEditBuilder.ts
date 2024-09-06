@@ -18,6 +18,7 @@ import {
 	type DeltaRoot,
 	type FieldUpPath,
 	type ITreeCursorSynchronous,
+	type RevisionTag,
 	type TaggedChange,
 	type UpPath,
 	compareFieldUpPaths,
@@ -67,8 +68,11 @@ export class DefaultChangeFamily
 		return this.modularFamily.codecs;
 	}
 
-	public buildEditor(changeReceiver: (change: DefaultChangeset) => void): DefaultEditBuilder {
-		return new DefaultEditBuilder(this, changeReceiver);
+	public buildEditor(
+		mintRevisionTag: () => RevisionTag,
+		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
+	): DefaultEditBuilder {
+		return new DefaultEditBuilder(this, mintRevisionTag, changeReceiver);
 	}
 }
 
@@ -167,9 +171,15 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
-		changeReceiver: (change: DefaultChangeset) => void,
+		mintRevisionTag: () => RevisionTag,
+		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
 	) {
-		this.modularBuilder = new ModularEditBuilder(family, fieldKinds, changeReceiver);
+		this.modularBuilder = new ModularEditBuilder(
+			family,
+			fieldKinds,
+			mintRevisionTag,
+			changeReceiver,
+		);
 	}
 
 	public enterTransaction(): void {

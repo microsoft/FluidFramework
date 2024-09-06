@@ -77,9 +77,14 @@ export class SharedTreeChangeFamily
 	}
 
 	public buildEditor(
-		changeReceiver: (change: SharedTreeChange) => void,
+		mintRevisionTag: () => RevisionTag,
+		changeReceiver: (change: TaggedChange<SharedTreeChange>) => void,
 	): SharedTreeEditBuilder {
-		return new SharedTreeEditBuilder(this.modularChangeFamily, changeReceiver);
+		return new SharedTreeEditBuilder(
+			this.modularChangeFamily,
+			mintRevisionTag,
+			changeReceiver,
+		);
 	}
 
 	public compose(changes: TaggedChange<SharedTreeChange>[]): SharedTreeChange {

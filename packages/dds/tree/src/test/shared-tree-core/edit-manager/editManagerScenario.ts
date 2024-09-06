@@ -269,7 +269,7 @@ export function runUnitTestScenario(
 					localCommits.push(commit);
 					knownToLocal.push(seq);
 					// Local changes should always lead to a delta that is equivalent to the local change.
-					manager.localBranch.apply(changeset, revision);
+					manager.localBranch.apply({ change: changeset, revision }, revision);
 					assert.deepEqual(
 						asDelta(manager.localBranch.getHead().change.intentions),
 						asDelta([seq]),

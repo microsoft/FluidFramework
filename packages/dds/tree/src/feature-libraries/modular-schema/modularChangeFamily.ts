@@ -1575,8 +1575,11 @@ export class ModularChangeFamily
 		}
 	}
 
-	public buildEditor(changeReceiver: (change: ModularChangeset) => void): ModularEditBuilder {
-		return new ModularEditBuilder(this, this.fieldKinds, changeReceiver);
+	public buildEditor(
+		mintRevisionTag: () => RevisionTag,
+		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
+	): ModularEditBuilder {
+		return new ModularEditBuilder(this, this.fieldKinds, mintRevisionTag, changeReceiver);
 	}
 
 	private createEmptyFieldChange(fieldKind: FieldKindIdentifier): FieldChange {
@@ -2441,9 +2444,10 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-		changeReceiver: (change: ModularChangeset) => void,
+		mintRevisionTag: () => RevisionTag,
+		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
 	) {
-		super(family, changeReceiver);
+		super(family, mintRevisionTag, changeReceiver);
 		this.idAllocator = idAllocatorFromMaxId();
 	}
 
