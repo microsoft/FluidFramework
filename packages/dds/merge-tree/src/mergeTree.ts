@@ -25,6 +25,7 @@ import {
 	LocalReferencePosition,
 	SlidingPreference,
 	anyLocalReferencePosition,
+	createDetachedLocalReferencePosition,
 	filterLocalReferencePositions,
 } from "./localReference.js";
 import {
@@ -90,7 +91,7 @@ import { PropertiesRollback } from "./segmentPropertiesManager.js";
 import { endpointPosAndSide, type SequencePlace } from "./sequencePlace.js";
 import { zamboniSegments } from "./zamboni.js";
 
-function wasRemovedAfter(seg: ISegment, seq: number): boolean {
+export function wasRemovedAfter(seg: ISegment, seq: number): boolean {
 	return (
 		seg.removedSeq !== UnassignedSequenceNumber &&
 		(seg.removedSeq === undefined || seg.removedSeq > seq)
@@ -413,6 +414,15 @@ const forwardPred = (ref: LocalReferencePosition): boolean =>
 	ref.slidingPreference !== SlidingPreference.BACKWARD;
 const backwardPred = (ref: LocalReferencePosition): boolean =>
 	ref.slidingPreference === SlidingPreference.BACKWARD;
+
+export interface ObliterateInfo {
+	start: LocalReferencePosition;
+	end: LocalReferencePosition;
+	refSeq: number;
+	clientId: number;
+	seq: number;
+	localSeq: number | undefined;
+}
 
 /**
  * @internal
@@ -1517,98 +1527,64 @@ export class MergeTree {
 					continue;
 				}
 
-				let moveUpperBound = Number.POSITIVE_INFINITY;
 				const smallestSeqMoveOp = this.getSmallestSeqMoveOp();
 
 				if (smallestSeqMoveOp === undefined) {
 					continue;
 				}
 
-				const leftAckedSegments: Record<number, ISegment> = {};
-				const leftLocalSegments: Record<number, ISegment> = {};
-
-				let _localMovedSeq: number | undefined;
-				let _movedSeq: number | undefined;
-				let movedClientIds: number[] | undefined;
-
+				const starts = new Set<ObliterateInfo>();
+				const overlapping = new Set<ObliterateInfo>();
 				const findLeftMovedSegment = (seg: ISegment): boolean => {
-					const movedSeqs = seg.movedSeqs?.filter((movedSeq) => movedSeq >= refSeq) ?? [];
-					const localMovedSeqs = seg.localMovedSeq ? [seg.localMovedSeq] : [];
-					for (const movedSeq of movedSeqs) {
-						leftAckedSegments[movedSeq] = seg;
-					}
-
-					for (const localMovedSeq of localMovedSeqs) {
-						leftLocalSegments[localMovedSeq] = seg;
-					}
-
-					if ((seg.movedSeqs?.length ?? 0) > 0 || localMovedSeqs.length > 0) {
-						return true;
-					}
-
-					if (!isRemoved(seg) || wasRemovedAfter(seg, moveUpperBound)) {
-						moveUpperBound = Math.min(moveUpperBound, seg.seq ?? Number.POSITIVE_INFINITY);
-					}
-					// If we've reached a segment that existed before any of our in-collab-window move ops
-					// happened, no need to continue.
-					return moveUpperBound >= smallestSeqMoveOp;
+					seg.localRefs?.walkReferences(
+						(ref) => {
+							const obliterate = ref.properties?.obliterate as ObliterateInfo | undefined;
+							if (obliterate?.start === ref) {
+								starts.add(obliterate);
+							}
+						},
+						undefined,
+						false,
+					);
+					return true;
 				};
 
 				const findRightMovedSegment = (seg: ISegment): boolean => {
-					const movedSeqs = seg.movedSeqs?.filter((movedSeq) => movedSeq >= refSeq) ?? [];
-					const localMovedSeqs = seg.localMovedSeq ? [seg.localMovedSeq] : [];
-
-					for (const movedSeq of movedSeqs) {
-						const left = leftAckedSegments[movedSeq];
-						if (left) {
-							_movedSeq = movedSeq;
-							const clientIdIdx = left.movedSeqs?.indexOf(movedSeq) ?? -1;
-							const movedClientId = left.movedClientIds?.[clientIdIdx];
-							assert(movedClientId !== undefined, 0x869 /* expected client id to exist */);
-							movedClientIds = [movedClientId];
-							return false;
+					seg.localRefs?.walkReferences((ref) => {
+						const obliterate = ref.properties?.obliterate as ObliterateInfo | undefined;
+						if (obliterate?.end === ref && starts.has(obliterate)) {
+							overlapping.add(obliterate);
 						}
-					}
-
-					for (const localMovedSeq of localMovedSeqs) {
-						const left = leftLocalSegments[localMovedSeq];
-						if (left) {
-							_localMovedSeq = localMovedSeq;
-							const clientIdIdx = left.movedSeqs?.indexOf(UnassignedSequenceNumber) ?? -1;
-							const movedClientId = left.movedClientIds?.[clientIdIdx];
-							assert(movedClientId !== undefined, 0x86a /* expected client id to exist */);
-							movedClientIds = [movedClientId];
-							return false;
-						}
-					}
-
-					if ((seg.movedSeqs?.length ?? 0) || localMovedSeqs.length > 0) {
-						return true;
-					}
-
-					if (!isRemoved(seg) || wasRemovedAfter(seg, moveUpperBound)) {
-						moveUpperBound = Math.min(moveUpperBound, seg.seq ?? Number.POSITIVE_INFINITY);
-					}
-					// If we've reached a segment that existed before any of our in-collab-window move ops
-					// happened, no need to continue.
-					return moveUpperBound >= smallestSeqMoveOp;
+					});
+					return true;
 				};
 
 				backwardExcursion(newSegment, findLeftMovedSegment);
-				moveUpperBound = Number.POSITIVE_INFINITY;
 				forwardExcursion(newSegment, findRightMovedSegment);
 
-				if (_localMovedSeq !== undefined || _movedSeq !== undefined) {
-					assert(
-						movedClientIds !== undefined,
-						0x86b /* movedClientIds should be set if local/moved seq is set */,
-					);
-					const moveInfo = {
+				let found: ObliterateInfo | undefined;
+				const movedClientIds: number[] = [];
+				const movedSeqs: number[] = [];
+				for (const ob of overlapping) {
+					if (ob.seq === UnassignedSequenceNumber || ob.seq > refSeq) {
+						if (found === undefined || found.seq < ob.seq) {
+							found = ob;
+							movedClientIds.unshift(ob.clientId);
+							movedSeqs.unshift(ob.seq);
+						} else {
+							movedClientIds.push(ob.clientId);
+							movedSeqs.push(ob.seq);
+						}
+					}
+				}
+
+				if (found) {
+					const moveInfo: IMoveInfo = {
 						movedClientIds,
-						movedSeq: _movedSeq ?? UnassignedSequenceNumber,
-						movedSeqs: _movedSeq === undefined ? [UnassignedSequenceNumber] : [_movedSeq],
-						localMovedSeq: _localMovedSeq,
-						wasMovedOnInsert: (_movedSeq ?? -1) !== UnassignedSequenceNumber,
+						movedSeq: found.seq,
+						movedSeqs,
+						localMovedSeq: found.localSeq,
+						wasMovedOnInsert: found.seq !== UnassignedSequenceNumber,
 					};
 
 					markSegmentMoved(newSegment, moveInfo);
@@ -1971,6 +1947,16 @@ export class MergeTree {
 		}
 		// eslint-disable-next-line import/no-deprecated
 		let segmentGroup: SegmentGroup;
+
+		const obliterate: ObliterateInfo = {
+			clientId,
+			end: createDetachedLocalReferencePosition(undefined),
+			refSeq,
+			seq,
+			start: createDetachedLocalReferencePosition(undefined),
+			localSeq,
+		};
+
 		const markMoved = (
 			segment: ISegment,
 			pos: number,
@@ -1978,8 +1964,23 @@ export class MergeTree {
 			_end: number,
 		): boolean => {
 			const existingMoveInfo = toMoveInfo(segment);
-			if (startSide) segment.startSide = startSide;
-			if (endSide) segment.endSide = endSide;
+			if (startPos === pos || (startPos === "start" && pos === 0)) {
+				obliterate.start = this.createLocalReferencePosition(
+					segment,
+					0,
+					ReferenceType.StayOnRemove,
+					{ obliterate },
+				);
+			}
+			if (obliterate.end) {
+				this.removeLocalReferencePosition(obliterate.end);
+			}
+			obliterate.end = this.createLocalReferencePosition(
+				segment,
+				segment.cachedLength - 1,
+				ReferenceType.StayOnRemove,
+				{ obliterate },
+			);
 
 			if (
 				clientId !== segment.clientId &&
@@ -1987,6 +1988,9 @@ export class MergeTree {
 				seq !== UnassignedSequenceNumber &&
 				(refSeq < segment.seq || segment.seq === UnassignedSequenceNumber)
 			) {
+				// why do we need this? we don't need it for the insert + remove case?
+				// there are subtle differences in the visibility of the client doing to remove
+				// however, i'm not aware of invariants in the code that would break due to that
 				segment.wasMovedOnInsert = true;
 			}
 
@@ -2357,7 +2361,10 @@ export class MergeTree {
 			_segment !== "start" &&
 			_segment !== "end" &&
 			isRemovedAndAckedOrMovedAndAcked(_segment) &&
-			!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient) &&
+			!refTypeIncludesFlag(
+				refType,
+				ReferenceType.SlideOnRemove | ReferenceType.Transient | ReferenceType.StayOnRemove,
+			) &&
 			_segment.endpointType === undefined
 		) {
 			throw new UsageError(

@@ -55,6 +55,7 @@ function _validateReferenceType(refType: ReferenceType): void {
 		);
 	}
 }
+
 /**
  * @sealed
  * @legacy
