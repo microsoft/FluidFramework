@@ -205,7 +205,7 @@ describeCompat("GC incremental summaries", "NoCompat", (getTestObjectProvider) =
 
 		// Summarize the new client and validate that both dataStoreA and dataStoreB are trees. dataStoreA because it
 		// has a new op and dataStoreB because its reference state changed from unreferenced -> referenced.
-		summaryVersion = await validateIncrementalSummary(summarizer2, dataStoreSummaryTypesMap); //* times out here
+		summaryVersion = await validateIncrementalSummary(summarizer2, dataStoreSummaryTypesMap);
 
 		// Close existing summarizer and load a new summarizer from the summary generated above.
 		summarizer2.close();
@@ -227,7 +227,7 @@ describeCompat("GC incremental summaries", "NoCompat", (getTestObjectProvider) =
 	 * test validates that when there are GC state updated data stores in a summary and that summary fails,
 	 * incrementalSummaryViolation is not logged in the next successful summary.
 	 */
-	itExpects.only(
+	itExpects(
 		"does not log incrementalSummaryViolation when summary fails with gc state updated data stores",
 		[
 			{
@@ -292,7 +292,7 @@ describeCompat("GC incremental summaries", "NoCompat", (getTestObjectProvider) =
 			containerRuntime1.storage.uploadSummaryWithContext = uploadSummaryWithContextFunc;
 
 			// Summarize and validate that it succeeds.
-			await assert.doesNotReject(summarizeNow(summarizer1), "Summarize should have passed"); //* Times out here
+			await assert.doesNotReject(summarizeNow(summarizer1), "Summarize should have passed");
 			// There should not be any IncrementalSummaryViolation errors.
 			mockLogger.assertMatchNone([{ eventName: "IncrementalSummaryViolation" }]);
 		},
