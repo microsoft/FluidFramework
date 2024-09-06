@@ -2,10 +2,6 @@
 title: SharedTree Quick Start
 menuPosition: 2
 codeCopyButton: true
-aliases:
-  - "/docs/get-started/tree-quick-start/"
-  - "/start/tree-quick-start/"
-  - "/docs/tree-start/"
 
 ---
 
