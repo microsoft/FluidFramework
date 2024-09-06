@@ -25,6 +25,8 @@ import {
 	groupBySection,
 	loadChangesets,
 } from "../../library/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { remarkHeadingLinks } from "../../library/markdown.js";
 
 /**
  * Generates release notes from individual changeset files.
@@ -197,6 +199,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 					},
 				})
 				.use(remarkToc, { maxDepth: 3, skip: ".*Start Building Today.*" })
+				.use(remarkHeadingLinks)
 				.process(`${header}\n\n${intro}\n\n${body.toString()}\n\n${footer}`),
 		);
 
