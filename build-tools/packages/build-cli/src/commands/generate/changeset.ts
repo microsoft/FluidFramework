@@ -7,7 +7,7 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { VersionBumpType } from "@fluid-tools/version-tools";
 import { Package } from "@fluidframework/build-tools";
-import { Flags } from "@oclif/core";
+import { Flags, ux } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
 import chalk from "chalk";
 import { humanId } from "human-id";
@@ -64,7 +64,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 	static readonly enableJsonFlag = true;
 
 	static readonly flags = {
-		releaseGroup: releaseGroupFlag(),
+		releaseGroup: releaseGroupFlag({ default: "client" }),
 		branch: Flags.string({
 			char: "b",
 			description: `The branch to compare the current changes against. The current changes will be compared with this branch to populate the list of changed packages. ${chalk.bold(
@@ -174,11 +174,13 @@ export default class GenerateChangesetCommand extends BaseCommand<
 			}
 		}
 
+		ux.action.start("Comparing local changes to remote...");
 		const {
 			packages,
 			files: changedFiles,
 			releaseGroups: changedReleaseGroups,
 		} = await repo.getChangedSinceRef(branch, remote, context);
+		ux.action.stop();
 
 		this.verbose(`release groups: ${changedReleaseGroups.join(", ")}`);
 		this.verbose(`packages: ${packages.map((p) => p.name).join(", ")}`);
@@ -217,7 +219,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		packageChoices.push(
 			{ title: `${chalk.bold(monorepo.name)}`, heading: true, disabled: true },
 			...monorepo.packages
-				.filter((pkg) => (all || noChanges || isIncludedByDefault(pkg)))
+				.filter((pkg) => all || noChanges || isIncludedByDefault(pkg))
 				.sort((a, b) => packageComparer(a, b, changedPackages))
 				.map((pkg) => {
 					const changed = changedPackages.some((cp) => cp.name === pkg.name);
@@ -404,7 +406,11 @@ function createChangesetContent(
 		for (const [name, value] of Object.entries(additionalMetadata)) {
 			lines.push(`"${name}": "${value}"`);
 		}
-		lines.push(frontMatterSeparator);
+		lines.push(
+			frontMatterSeparator,
+			// an extra empty line after the front matter
+			"",
+		);
 	}
 
 	const frontMatter = lines.join("\n");
