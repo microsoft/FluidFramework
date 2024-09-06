@@ -229,8 +229,14 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 			// start/end time calculation for this metric since we are logging immediately on create.
 			metricValue: sessionDurationInMs,
 			durationInMs: sessionDurationInMs,
-			lastClientLeaveTimestamp: new Date(session.lastClientLeaveTime).toISOString(),
-			timeSinceLastClientLeaveMs: now - session.lastClientLeaveTime,
+			lastClientLeaveTimestamp:
+				session.lastClientLeaveTime !== undefined
+					? new Date(session.lastClientLeaveTime).toISOString()
+					: undefined,
+			timeSinceLastClientLeaveMs:
+				session.lastClientLeaveTime !== undefined
+					? now - session.lastClientLeaveTime
+					: undefined,
 			...session.telemetryProperties,
 		});
 
