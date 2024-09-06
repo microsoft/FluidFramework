@@ -160,12 +160,8 @@ export class Chunker implements IChunker {
  *
  * @param cursor - cursor in nodes mode
  */
-export function chunkTree(
-	cursor: ITreeCursorSynchronous,
-	policy: ChunkPolicy,
-	idCompressor?: IIdCompressor,
-): TreeChunk {
-	return chunkRange(cursor, policy, 1, true, idCompressor)[0] ?? oob();
+export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkCompressor): TreeChunk {
+	return chunkRange(cursor, policy, 1, true)[0] ?? oob();
 }
 
 /**
@@ -174,13 +170,12 @@ export function chunkTree(
  */
 export function chunkField(
 	cursor: ITreeCursorSynchronous,
-	policy: ChunkPolicy,
-	idCompressor?: IIdCompressor,
+	policy: ChunkCompressor,
 ): TreeChunk[] {
 	const length = cursor.getFieldLength();
 	const started = cursor.firstNode();
 	assert(started, 0x57c /* field to chunk should have at least one node */);
-	return chunkRange(cursor, policy, length, false, idCompressor);
+	return chunkRange(cursor, policy, length, false);
 }
 
 /**
@@ -189,10 +184,9 @@ export function chunkField(
  */
 export function chunkFieldSingle(
 	cursor: ITreeCursorSynchronous,
-	policy: ChunkPolicy,
-	idCompressor?: IIdCompressor,
+	policy: ChunkCompressor,
 ): TreeChunk {
-	const chunks = chunkField(cursor, policy, idCompressor);
+	const chunks = chunkField(cursor, policy);
 	if (chunks.length === 1) {
 		return chunks[0] ?? oob();
 	}
@@ -205,7 +199,7 @@ export function chunkFieldSingle(
  */
 export function basicChunkTree(
 	cursor: ITreeCursorSynchronous,
-	policy: ChunkPolicy,
+	policy: ChunkCompressor,
 ): BasicChunk {
 	// symbol based fast path to check for BasicChunk:
 	// return existing chunk with a increased ref count if possible.
@@ -351,7 +345,15 @@ export interface ChunkPolicy {
 	shapeFromSchema(schema: TreeNodeSchemaIdentifier): ShapeInfo;
 }
 
-function newBasicChunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): BasicChunk {
+export interface ChunkCompressor {
+	policy: ChunkPolicy;
+	idCompressor?: IIdCompressor;
+}
+
+function newBasicChunkTree(
+	cursor: ITreeCursorSynchronous,
+	policy: ChunkCompressor,
+): BasicChunk {
 	return new BasicChunk(
 		cursor.type,
 		new Map(mapCursorFields(cursor, () => [cursor.getFieldKey(), chunkField(cursor, policy)])),
@@ -367,10 +369,9 @@ function newBasicChunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy):
  */
 export function chunkRange(
 	cursor: ITreeCursorSynchronous,
-	policy: ChunkPolicy,
+	chunkCompressor: ChunkCompressor,
 	length: number,
 	skipLastNavigation: boolean,
-	idCompressor?: IIdCompressor,
 ): TreeChunk[] {
 	assert(cursor.mode === CursorLocationType.Nodes, 0x57e /* should be in nodes */);
 	let output: TreeChunk[] = [];
@@ -388,7 +389,7 @@ export function chunkRange(
 				if (chunk !== undefined) {
 					if (
 						chunk instanceof SequenceChunk &&
-						chunk.subChunks.length <= policy.sequenceChunkInlineThreshold
+						chunk.subChunks.length <= chunkCompressor.policy.sequenceChunkInlineThreshold
 					) {
 						// If sequence chunk, and its very short, inline it.
 						// Note that this is not recursive: there may be short sequences nested below this which are not inlined.
@@ -414,11 +415,11 @@ export function chunkRange(
 			assert(cursor.mode === CursorLocationType.Nodes, 0x580 /* should be in nodes */);
 			// TODO: if provided, use schema to consider using UniformChunks
 			const type = cursor.type;
-			const shape = policy.shapeFromSchema(type);
+			const shape = chunkCompressor.policy.shapeFromSchema(type);
 			if (shape instanceof TreeShape) {
 				const nodesPerTopLevelNode = shape.positions.length;
 				const maxTopLevelLength = Math.ceil(
-					nodesPerTopLevelNode / policy.uniformChunkNodeCount,
+					nodesPerTopLevelNode / chunkCompressor.policy.uniformChunkNodeCount,
 				);
 				const maxLength = Math.min(maxTopLevelLength, remaining);
 				const newChunk = uniformChunkFromCursor(
@@ -426,13 +427,13 @@ export function chunkRange(
 					shape,
 					maxLength,
 					maxLength === remaining && skipLastNavigation,
-					idCompressor,
+					chunkCompressor.idCompressor,
 				);
 				remaining -= newChunk.topLevelLength;
 				output.push(newChunk);
 			} else {
 				// Slow path: copy tree into new basic chunk
-				output.push(newBasicChunkTree(cursor, policy));
+				output.push(newBasicChunkTree(cursor, chunkCompressor));
 				remaining -= 1;
 				if (!skipLastNavigation || remaining !== 0) {
 					cursor.nextNode();
@@ -444,8 +445,10 @@ export function chunkRange(
 	// TODO: maybe make a pass over output to coalesce UniformChunks and/or convert other formats to UniformChunks where possible.
 
 	// If output is large, group it into a tree of sequence chunks.
-	while (output.length > policy.sequenceChunkSplitThreshold) {
-		const chunkCount = Math.ceil(output.length / policy.sequenceChunkSplitThreshold);
+	while (output.length > chunkCompressor.policy.sequenceChunkSplitThreshold) {
+		const chunkCount = Math.ceil(
+			output.length / chunkCompressor.policy.sequenceChunkSplitThreshold,
+		);
 		const newOutput: TreeChunk[] = [];
 		// Rounding down, and add an extra item to some of the chunks.
 		const chunkSize = Math.floor(output.length / chunkCount);

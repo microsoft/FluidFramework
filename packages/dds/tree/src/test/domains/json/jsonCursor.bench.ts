@@ -111,7 +111,7 @@ function bench(
 					"BasicChunkCursor",
 					() => {
 						const input = cursorForJsonableTreeNode(encodedTree);
-						const chunk = basicChunkTree(input, defaultChunkPolicy);
+						const chunk = basicChunkTree(input, { policy: defaultChunkPolicy });
 						const cursor = chunk.cursor();
 						cursor.enterNode(0);
 						return cursor;

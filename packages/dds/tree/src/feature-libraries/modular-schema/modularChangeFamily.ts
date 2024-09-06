@@ -2479,8 +2479,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		const builds: ChangeAtomIdBTree<TreeChunk> = newTupleBTree();
 		const chunk =
 			content.mode === CursorLocationType.Fields
-				? chunkFieldSingle(content, defaultChunkPolicy)
-				: chunkTree(content, defaultChunkPolicy, idCompressor);
+				? chunkFieldSingle(content, { policy: defaultChunkPolicy })
+				: chunkTree(content, { policy: defaultChunkPolicy, idCompressor });
 		builds.set([undefined, firstId], chunk);
 
 		return {

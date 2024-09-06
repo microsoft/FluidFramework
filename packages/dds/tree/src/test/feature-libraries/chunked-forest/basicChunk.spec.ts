@@ -48,12 +48,12 @@ describe("basic chunk", () => {
 	it("calling chunkTree on existing chunk adds a reference", () => {
 		const data: JsonableTree = { type: brand("Foo"), value: "test" };
 		const inputCursor = cursorForJsonableTreeNode(data);
-		const chunk = chunkTree(inputCursor, basicOnlyChunkPolicy);
+		const chunk = chunkTree(inputCursor, { policy: basicOnlyChunkPolicy });
 		assert(!chunk.isShared(), "newly created chunk should not have more than one reference");
 
 		const chunkCursor = chunk.cursor();
 		chunkCursor.firstNode();
-		const newChunk = chunkTree(chunkCursor, basicOnlyChunkPolicy);
+		const newChunk = chunkTree(chunkCursor, { policy: basicOnlyChunkPolicy });
 		assert(
 			newChunk.isShared() && chunk.isShared(),
 			"chunk created off of existing chunk should be shared",
@@ -63,11 +63,11 @@ describe("basic chunk", () => {
 	it("calling chunkField on existing chunk adds a reference", () => {
 		const data: JsonableTree = { type: brand("Foo"), value: "test" };
 		const inputCursor = cursorForJsonableTreeNode(data);
-		const chunk = chunkTree(inputCursor, basicOnlyChunkPolicy);
+		const chunk = chunkTree(inputCursor, { policy: basicOnlyChunkPolicy });
 		assert(!chunk.isShared(), "newly created chunk should not have more than one reference");
 
 		const chunkCursor = chunk.cursor();
-		const newChunk = chunkField(chunkCursor, basicOnlyChunkPolicy);
+		const newChunk = chunkField(chunkCursor, { policy: basicOnlyChunkPolicy });
 		assert(
 			newChunk[0].isShared() && chunk.isShared(),
 			"chunk created off of existing chunk should be shared",
@@ -78,7 +78,7 @@ describe("basic chunk", () => {
 		"basic chunk",
 		(data): ITreeCursor => {
 			const inputCursor = cursorForJsonableTreeNode(data);
-			const chunk = basicChunkTree(inputCursor, basicOnlyChunkPolicy);
+			const chunk = basicChunkTree(inputCursor, { policy: basicOnlyChunkPolicy });
 			const cursor: ITreeCursor = chunk.cursor();
 			cursor.enterNode(0);
 			return cursor;

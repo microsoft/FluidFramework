@@ -29,6 +29,7 @@ import type {
 	ChangeEnricherMutableCheckout,
 	ChangeEnricherReadonlyCheckout,
 } from "../shared-tree-core/index.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export class SharedTreeReadonlyChangeEnricher
 	implements ChangeEnricherReadonlyCheckout<SharedTreeChange>
@@ -44,6 +45,7 @@ export class SharedTreeReadonlyChangeEnricher
 		protected readonly forest: IEditableForest,
 		private readonly schema: TreeStoredSchemaRepository,
 		protected readonly removedRoots: DetachedFieldIndex,
+		private readonly idCompressor?: IIdCompressor,
 	) {}
 
 	public fork(): ChangeEnricherMutableCheckout<SharedTreeChange> {
@@ -70,7 +72,10 @@ export class SharedTreeReadonlyChangeEnricher
 			const parentField = this.removedRoots.toFieldKey(root);
 			cursor.enterField(parentField);
 			cursor.enterNode(0);
-			return chunkTree(cursor, defaultChunkPolicy);
+			return chunkTree(cursor, {
+				policy: defaultChunkPolicy,
+				idCompressor: this.idCompressor,
+			});
 		}
 		return undefined;
 	};

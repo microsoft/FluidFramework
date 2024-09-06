@@ -141,7 +141,7 @@ describe("chunkTree", () => {
 	describe("chunkRange", () => {
 		it("single basic chunk", () => {
 			const cursor = cursorForJsonableTreeNode({ type: brand(nullSchema.identifier) });
-			const chunks = chunkRange(cursor, basicOnlyChunkPolicy, 1, true);
+			const chunks = chunkRange(cursor, { policy: basicOnlyChunkPolicy }, 1, true);
 			assert.equal(chunks.length, 1);
 			assert.equal(chunks[0].topLevelLength, 1);
 			assert.equal(cursor.fieldIndex, 0);
@@ -156,7 +156,7 @@ describe("chunkTree", () => {
 		it("full field basic chunk without skipLastNavigation", () => {
 			const cursor = cursorForJsonableTreeField([{ type: brand(nullSchema.identifier) }]);
 			cursor.firstNode();
-			const chunks = chunkRange(cursor, basicOnlyChunkPolicy, 1, false);
+			const chunks = chunkRange(cursor, { policy: basicOnlyChunkPolicy }, 1, false);
 			assert.equal(chunks.length, 1);
 			assert.equal(chunks[0].topLevelLength, 1);
 			// Should have existed the nodes and now be at fields level.
@@ -170,7 +170,7 @@ describe("chunkTree", () => {
 				{ type: brand(nullSchema.identifier) },
 			]);
 			cursor.firstNode();
-			const chunks = chunkRange(cursor, basicOnlyChunkPolicy, 2, false);
+			const chunks = chunkRange(cursor, { policy: basicOnlyChunkPolicy }, 2, false);
 			assert.equal(chunks.length, 2);
 			assert.equal(cursor.fieldIndex, 2);
 			assert.deepEqual(jsonableTreesFromFieldCursor(new SequenceChunk(chunks).cursor()), [
@@ -189,7 +189,7 @@ describe("chunkTree", () => {
 
 			const cursor = cursorForJsonableTreeField(numberSequenceField(4));
 			cursor.firstNode();
-			const chunks = chunkRange(cursor, policy, 3, false);
+			const chunks = chunkRange(cursor, { policy }, 3, false);
 			assert.equal(chunks.length, 2);
 			assert(chunks[0] instanceof SequenceChunk);
 			assert.equal(chunks[0].subChunks.length, 2);
@@ -238,7 +238,7 @@ describe("chunkTree", () => {
 					const field = numberSequenceField(fieldLength);
 					const cursor = cursorForJsonableTreeField(field);
 					cursor.firstNode();
-					const chunks = chunkRange(cursor, policy, fieldLength, true);
+					const chunks = chunkRange(cursor, { policy }, fieldLength, true);
 					assert.equal(cursor.fieldIndex, fieldLength - 1);
 
 					function checkChunks(
@@ -272,7 +272,7 @@ describe("chunkTree", () => {
 			cursor.firstNode();
 			assert.equal(tryGetChunk(cursor), chunk);
 			assert(!chunk.isShared());
-			const chunks = chunkRange(cursor, defaultChunkPolicy, 1, false);
+			const chunks = chunkRange(cursor, { policy: defaultChunkPolicy }, 1, false);
 			assert(chunk.isShared());
 			assert.equal(chunks[0], chunk);
 		});
