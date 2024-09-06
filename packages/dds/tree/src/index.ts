@@ -28,6 +28,7 @@ export {
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
 	LeafNodeStoredSchema,
+	type RevertibleFactory,
 } from "./core/index.js";
 export { type Brand } from "./util/index.js";
 
@@ -50,7 +51,6 @@ export {
 	type SharedTreeOptions,
 	ForestType,
 	type SharedTreeContentSnapshot,
-	type RevertibleFactory,
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,
