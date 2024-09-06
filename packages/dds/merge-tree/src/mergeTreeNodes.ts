@@ -15,6 +15,7 @@ import {
 	UniversalSequenceNumber,
 } from "./constants.js";
 import { LocalReferenceCollection } from "./localReference.js";
+import type { ObliterateInfo } from "./mergeTree.js";
 import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback.js";
 import { TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops.js";
@@ -657,6 +658,17 @@ export abstract class BaseSegment implements ISegment {
 			case MergeTreeDeltaType.OBLITERATE: {
 				const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
 				assert(moveInfo !== undefined, 0x86e /* On obliterate ack, missing move info! */);
+
+				this.localRefs?.walkReferences((ref) => {
+					const obliterate = ref.properties?.obliterate as ObliterateInfo | undefined;
+					if (obliterate !== undefined && obliterate.localSeq === moveInfo.localMovedSeq) {
+						obliterate.seq = opArgs.sequencedMessage!.sequenceNumber;
+						obliterate.localSeq = undefined;
+						return false;
+					}
+					return true;
+				});
+
 				this.localMovedSeq = undefined;
 				const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
 				assert(seqIdx !== -1, 0x86f /* expected movedSeqs to contain unacked seq */);
