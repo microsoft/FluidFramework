@@ -51,7 +51,7 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 
 	protected constructor(
 		public readonly context: Context,
-		public readonly schema: TSchema,
+		public readonly flexSchema: TSchema,
 		cursor: ITreeSubscriptionCursor,
 		anchor: TAnchor,
 	) {

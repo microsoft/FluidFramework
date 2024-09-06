@@ -152,7 +152,9 @@ function nodeDataToMapTree(
 	if (flexNode !== undefined) {
 		if (isMapTreeNode(flexNode)) {
 			if (
-				!allowedTypes.has(tryGetSimpleNodeSchema(flexNode.schema) ?? fail("missing schema"))
+				!allowedTypes.has(
+					tryGetSimpleNodeSchema(flexNode.flexSchema) ?? fail("missing schema"),
+				)
 			) {
 				throw new UsageError("Invalid schema for this context.");
 			}
