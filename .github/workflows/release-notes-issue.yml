@@ -68,7 +68,7 @@ jobs:
       # be included.
       - name: Generate release notes file
         run: |
-          flub generate releaseNotes -g client -t minor --includeUnknown --out RELEASE_NOTES.md -v
+          flub generate releaseNotes -g client -t minor --includeUnknown --headingLinks --out RELEASE_NOTES.md -v
 
       # Read the release notes file that we just generated into an output variable.
       - name: Read release notes file
