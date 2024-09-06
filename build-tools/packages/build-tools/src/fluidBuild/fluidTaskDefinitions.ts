@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PackageJson } from "./npmPackage";
+import { PackageJson } from "../common/npmPackage";
 
 /**
  * Task definitions (type `TaskDefinitions`) is an object describing build tasks for fluid-build.

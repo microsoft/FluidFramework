@@ -11,6 +11,7 @@ import {
 	type FieldKey,
 	type FieldUpPath,
 	type MapTree,
+	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type Value,
 } from "../../core/index.js";
@@ -97,6 +98,10 @@ interface LocationInField {
  * when retrieved via {@link getOrCreateNode}, the same {@link MapTree} object will always produce the same `MapTreeNode` object.
  */
 export class EagerMapTreeNode implements MapTreeNode {
+	public get schema(): TreeNodeSchemaIdentifier {
+		return this.flexSchema.name;
+	}
+
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Node as const;
 
 	/**
@@ -108,7 +113,7 @@ export class EagerMapTreeNode implements MapTreeNode {
 	 * Instead, it should always be acquired via {@link getOrCreateNode}.
 	 */
 	public constructor(
-		public readonly schema: FlexTreeNodeSchema,
+		public readonly flexSchema: FlexTreeNodeSchema,
 		/** The underlying {@link MapTree} that this `MapTreeNode` reads its data from */
 		public readonly mapTree: ExclusiveMapTree,
 		private location = unparentedLocation,
@@ -127,7 +132,7 @@ export class EagerMapTreeNode implements MapTreeNode {
 	}
 
 	public get type(): TreeNodeSchemaIdentifier {
-		return this.schema.name;
+		return this.flexSchema.name;
 	}
 
 	/**
@@ -165,25 +170,25 @@ export class EagerMapTreeNode implements MapTreeNode {
 	}
 
 	public is(schema: FlexTreeNodeSchema): boolean {
-		return (schema as unknown) === this.schema;
+		return (schema as unknown) === this.flexSchema;
 	}
 
 	public tryGetField(key: FieldKey): EagerMapTreeField | undefined {
 		const field = this.mapTree.fields.get(key);
 		// Only return the field if it is not empty, in order to fulfill the contract of `tryGetField`.
 		if (field !== undefined && field.length > 0) {
-			return getOrCreateField(this, key, this.schema.getFieldSchema(key));
+			return getOrCreateField(this, key, this.flexSchema.getFieldSchema(key));
 		}
 	}
 
 	public getBoxed(key: string): FlexTreeField {
 		const fieldKey: FieldKey = brand(key);
-		return getOrCreateField(this, fieldKey, this.schema.getFieldSchema(fieldKey));
+		return getOrCreateField(this, fieldKey, this.flexSchema.getFieldSchema(fieldKey));
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeField> {
 		return mapIterable(this.mapTree.fields.entries(), ([key]) =>
-			getOrCreateField(this, key, this.schema.getFieldSchema(key)),
+			getOrCreateField(this, key, this.flexSchema.getFieldSchema(key)),
 		);
 	}
 
@@ -206,11 +211,11 @@ export class EagerMapTreeNode implements MapTreeNode {
 
 	private walkTree(): void {
 		for (const [key, mapTrees] of this.mapTree.fields) {
-			const field = getOrCreateField(this, key, this.schema.getFieldSchema(key));
+			const field = getOrCreateField(this, key, this.flexSchema.getFieldSchema(key));
 			for (let index = 0; index < field.length; index++) {
 				const child = getOrCreateChild(
 					mapTrees[index] ?? oob(),
-					this.schema.getFieldSchema(key).allowedTypes,
+					this.flexSchema.getFieldSchema(key).allowedTypes,
 					{ parent: field, index },
 				);
 				// These next asserts detect the case where `getOrCreateChild` gets a cache hit of a different node than the one we're trying to create
@@ -254,7 +259,7 @@ const unparentedLocation: LocationInField = {
 		key: EmptyKey,
 		parent: undefined,
 		is<TKind2 extends FlexFieldKind>(kind: TKind2) {
-			return this.schema.kind === (kind as unknown);
+			return this.flexSchema.kind === (kind as unknown);
 		},
 		isExactly(schema: FlexFieldSchema) {
 			return schema === FlexFieldSchema.empty;
@@ -265,7 +270,8 @@ const unparentedLocation: LocationInField = {
 		boxedAt(index: number): FlexTreeNode | undefined {
 			return undefined;
 		},
-		schema: FlexFieldSchema.empty,
+		flexSchema: FlexFieldSchema.empty,
+		schema: FlexFieldSchema.empty.stored,
 		context: undefined,
 		mapTrees: [],
 		getFieldPath() {
@@ -278,8 +284,12 @@ const unparentedLocation: LocationInField = {
 class EagerMapTreeField implements MapTreeField {
 	public [flexTreeMarker] = FlexTreeEntityKind.Field as const;
 
+	public get schema(): TreeFieldStoredSchema {
+		return this.flexSchema.stored;
+	}
+
 	public constructor(
-		public readonly schema: FlexFieldSchema,
+		public readonly flexSchema: FlexFieldSchema,
 		public readonly key: FieldKey,
 		public readonly parent: EagerMapTreeNode,
 	) {
@@ -309,18 +319,18 @@ class EagerMapTreeField implements MapTreeField {
 	}
 
 	public is<TKind2 extends FlexFieldKind>(kind: TKind2): this is FlexTreeTypedField<TKind2> {
-		return this.schema.kind === (kind as unknown);
+		return this.flexSchema.kind === (kind as unknown);
 	}
 
 	public isExactly(schema: FlexFieldSchema): boolean {
-		return this.schema.equals(schema);
+		return this.flexSchema.equals(schema);
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeNode> {
 		return this.mapTrees
 			.map(
 				(m, index) =>
-					getOrCreateChild(m, this.schema.allowedTypes, {
+					getOrCreateChild(m, this.flexSchema.allowedTypes, {
 						parent: this,
 						index,
 					}) as FlexTreeNode,
@@ -335,7 +345,7 @@ class EagerMapTreeField implements MapTreeField {
 		}
 		const m = this.mapTrees[i];
 		if (m !== undefined) {
-			return getOrCreateChild(m, this.schema.allowedTypes, {
+			return getOrCreateChild(m, this.flexSchema.allowedTypes, {
 				parent: this,
 				index: i,
 			}) as FlexTreeNode;
@@ -393,7 +403,7 @@ class EagerMapTreeOptionalField extends EagerMapTreeField implements FlexTreeOpt
 	public get content(): FlexTreeUnknownUnboxed | undefined {
 		const value = this.mapTrees[0];
 		if (value !== undefined) {
-			return unboxed(this.schema, value, {
+			return unboxed(this.flexSchema, value, {
 				parent: this,
 				index: 0,
 			});
@@ -449,7 +459,7 @@ class EagerMapTreeSequenceField extends EagerMapTreeField implements FlexTreeSeq
 		if (i === undefined) {
 			return undefined;
 		}
-		return unboxed(this.schema, this.mapTrees[i] ?? oob(), { parent: this, index: i });
+		return unboxed(this.flexSchema, this.mapTrees[i] ?? oob(), { parent: this, index: i });
 	}
 	public map<U>(callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U): U[] {
 		return Array.from(this, callbackfn);
@@ -457,7 +467,7 @@ class EagerMapTreeSequenceField extends EagerMapTreeField implements FlexTreeSeq
 
 	public *[Symbol.iterator](): IterableIterator<FlexTreeUnknownUnboxed> {
 		for (const [i, mapTree] of this.mapTrees.entries()) {
-			yield unboxed(this.schema, mapTree, { parent: this, index: i });
+			yield unboxed(this.flexSchema, mapTree, { parent: this, index: i });
 		}
 	}
 }

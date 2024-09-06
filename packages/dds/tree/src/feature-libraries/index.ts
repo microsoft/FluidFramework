@@ -218,7 +218,6 @@ export {
 	ContextSlot,
 	// Internal
 	flexTreeMarker,
-	FlexTreeEntityKind,
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
 	getSchemaAndPolicy,

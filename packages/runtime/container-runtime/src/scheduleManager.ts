@@ -89,9 +89,7 @@ class ScheduleManagerCore {
 			}
 
 			// First message will have the batch flag set to true if doing a batched send
-			// Non null asserting because of the length check above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const firstMessageMetadata = messages[0]!.metadata as IRuntimeMessageMetadata;
+			const firstMessageMetadata = messages[0].metadata as IRuntimeMessageMetadata;
 			if (!firstMessageMetadata?.batch) {
 				return;
 			}
@@ -103,9 +101,7 @@ class ScheduleManagerCore {
 			}
 
 			// Set the batch flag to false on the last message to indicate the end of the send batch
-			// Non null asserting here because of the length check at the start of the function
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const lastMessage = messages[messages.length - 1]!;
+			const lastMessage = messages[messages.length - 1];
 			// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to false.
 			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 			lastMessage.metadata = { ...(lastMessage.metadata as any), batch: false };

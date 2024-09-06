@@ -174,7 +174,7 @@ export class ContainerStorageAdapter
 		let snapshot: ISnapshot;
 		if (
 			this.loadingGroupIdSnapshotsFromPendingState !== undefined &&
-			snapshotFetchOptions?.loadingGroupIds?.[0] !== undefined
+			snapshotFetchOptions?.loadingGroupIds !== undefined
 		) {
 			const localSnapshot =
 				this.loadingGroupIdSnapshotsFromPendingState[snapshotFetchOptions.loadingGroupIds[0]];

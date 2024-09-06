@@ -4,8 +4,9 @@
  */
 
 export { GitRepo } from "./common/gitRepo";
-export { FluidRepo, type IFluidBuildConfig } from "./common/fluidRepo";
-export { getResolvedFluidRoot, getFluidBuildConfig } from "./common/fluidUtils";
+export { FluidRepo } from "./fluidBuild/fluidRepo";
+export { type IFluidBuildConfig } from "./fluidBuild/fluidBuildConfig";
+export { getResolvedFluidRoot, getFluidBuildConfig } from "./fluidBuild/fluidUtils";
 export type { Logger } from "./common/logging";
 export { MonoRepo } from "./common/monoRepo";
 export {
@@ -20,7 +21,10 @@ export { Timer } from "./common/timer";
 export {
 	normalizeGlobalTaskDefinitions,
 	getTaskDefinitions,
-} from "./common/fluidTaskDefinitions";
-export { getApiExtractorConfigFilePath, getEsLintConfigFilePath } from "./common/taskUtils";
-export * as TscUtils from "./common/tscUtils";
+} from "./fluidBuild/fluidTaskDefinitions";
+export {
+	getApiExtractorConfigFilePath,
+	getEsLintConfigFilePath,
+} from "./fluidBuild/tasks/taskUtils";
+export * as TscUtils from "./fluidBuild/tscUtils";
 export { getTypeTestPreviousPackageDetails } from "./common/typeTests";
