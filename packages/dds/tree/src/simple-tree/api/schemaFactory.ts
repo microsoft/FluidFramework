@@ -134,17 +134,17 @@ export type ScopedSchemaName<
  * The usage below generalizes this to include array and map like objects as well.
  *
  * There are two ways to use these APIs:
- * |                     | Customizable | POJO Emulation |
- * | ------------------- | ------------ |--------------- |
- * | Declaration         | `class X extends schemaFactory.object("x", {}) {}` | `const X = schemaFactory.object("x", {}); type X = NodeFromSchema<typeof X>; `
- * | Allows adding "local" (non-persisted) members | Yes. Members (including methods) can be added to class.        | No. Attempting to set non-field members will error. |
- * | Prototype | The user defined class | `Object.prototype`, `Map.prototype` or `Array.prototype` depending on node kind |
- * | Structurally named Schema | Not Supported | Supported |
- * | Explicitly named Objects | Supported | Supported |
- * | Explicitly named Maps and Arrays | Supported: Both declaration approaches can be used | Not Supported |
- * | node.js assert.deepEqual | Compares like class instances: equal to other nodes of the same type with the same content, including custom local fields. | Compares like plain objects: equal to plain JavaScript objects with the same fields, and other nodes with the same fields, even if the types are different. |
- * | IntelliSense | Shows and links to user defined class by name: `X` | Shows internal type generation logic: `object & TreeNode & ObjectFromSchemaRecord<{}> & WithType<"test.x">` |
- * | Recursion | Supported with special declaration patterns. | Unsupported: Generated d.ts files replace recursive references with `any`, breaking use of recursive schema across compilation boundaries |
+ * |                                           | Customizable                                                                 | POJO Emulation                                                                                                     |
+ * |-------------------------------------------|------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
+ * | Declaration                               | `class X extends schemaFactory.object("x", {}) {}`                                                                 | `const X = schemaFactory.object("x", {}); type X = NodeFromSchema<typeof X>;`                                      |
+ * | Allows adding "local" (non-persisted) members | Yes. Members (including methods) can be added to class.                                                            | No. Attempting to set non-field members will error.                                                                |
+ * | Prototype                                 | The user-defined class                                                                                             | `Object.prototype`, `Map.prototype`, or `Array.prototype` depending on node kind                                    |
+ * | Structurally named Schema                 | Not Supported                                                                                                      | Supported                                                                                                          |
+ * | Explicitly named Objects                  | Supported                                                                                                          | Supported                                                                                                          |
+ * | Explicitly named Maps and Arrays          | Supported: Both declaration approaches can be used                                                                 | Not Supported                                                                                                      |
+ * | node.js `assert.deepEqual`                | Compares like class instances: equal to other nodes of the same type with the same content, including custom local fields. | Compares like plain objects: equal to plain JavaScript objects with the same fields, and other nodes with the same fields, even if the types are different. |
+ * | IntelliSense                              | Shows and links to user-defined class by name: `X`                                                                 | Shows internal type generation logic: `object & TreeNode & ObjectFromSchemaRecord<{}> & WithType<"test.x">`         |
+ * | Recursion                                 | Supported with special declaration patterns.                                                                       | Unsupported: Generated `.d.ts` files replace recursive references with `any`, breaking use of recursive schema across compilation boundaries.              |
  *
  * Note that while "POJO Emulation" nodes act a lot like POJO objects, they are not true POJO objects:
  *
