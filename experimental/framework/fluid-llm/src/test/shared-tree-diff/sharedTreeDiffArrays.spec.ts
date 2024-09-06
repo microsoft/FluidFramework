@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactory } from "@fluidframework/tree";
 
-import { createMinimalArrayDiffSets, sharedTreeDiff } from "../../shared-tree-diff/index.js";
+import { createMinimalDiffSeries, sharedTreeDiff } from "../../shared-tree-diff/index.js";
 
 const schemaFactory = new SchemaFactory("TreeNodeTest");
 
@@ -344,7 +344,7 @@ describe("clean Diffs", () => {
 			},
 		]);
 
-		const cleanedDiffs = createMinimalArrayDiffSets(treeNode, diffs, "id");
+		const cleanedDiffs = createMinimalDiffSeries(treeNode, diffs, "id");
 		assert.deepStrictEqual(cleanedDiffs, [
 			{
 				type: "MOVE",
@@ -392,7 +392,7 @@ describe("clean Diffs", () => {
 
 		assert.deepStrictEqual(diffs, expectedDiffs);
 
-		const minimalDiffs = createMinimalArrayDiffSets(treeNode, diffs, "id");
+		const minimalDiffs = createMinimalDiffSeries(treeNode, diffs, "id");
 
 		assert.deepStrictEqual(minimalDiffs, [
 			{
@@ -463,7 +463,7 @@ describe("clean Diffs", () => {
 			},
 		]);
 
-		const minimalDiffs = createMinimalArrayDiffSets(treeNode, diffs, "id");
+		const minimalDiffs = createMinimalDiffSeries(treeNode, diffs, "id");
 
 		assert.deepStrictEqual(minimalDiffs, [
 			{
@@ -494,7 +494,7 @@ describe("clean Diffs", () => {
 		]);
 	});
 
-	it("Edge case Y: A 'MOVE' diff causes shifting of other diffs backwards", () => {
+	it("Edge case 3: A 'MOVE' diff causes shifting of other diffs backwards", () => {
 		const treeNode = new ObjectTreeNode({
 			state: [
 				{ id: "1", test: true },
@@ -547,7 +547,7 @@ describe("clean Diffs", () => {
 			},
 		]);
 
-		const minimalDiffs = createMinimalArrayDiffSets(treeNode, diffs, "id");
+		const minimalDiffs = createMinimalDiffSeries(treeNode, diffs, "id");
 
 		assert.deepStrictEqual(minimalDiffs, [
 			{
@@ -576,15 +576,122 @@ describe("clean Diffs", () => {
 				value: treeNode.state[3], // keep in mind we are referencing node locations for eqaulity prior to the moves
 			},
 		]);
-
-		debugger;
 	});
 
-	it("Edge case Z: (TODO) A 'MOVE' diff causes shifting of other diffs forwards", () => {});
+	it("Edge case Z: (TODO) A 'MOVE' diff causes shifting of other diffs forwards", () => {
+		// having a hard time figuring out a good test case for this.
+	});
 
-	it("Edge case X: (TODO) All 'CHANGE' diffs are ordered first for each sequence of array diffs", () => {});
+	it("Edge case 4: All 'CHANGE' diffs are ordered first before any other diff", () => {
+		const treeNode = new ObjectTreeNode({
+			state: [
+				{ id: "1", test: true },
+				{ id: "2", test: true },
+				{ id: "3", test: true },
+				{ id: "4", test: true },
+			],
+		});
 
-	it("Edge case 3: Reorder early move to index that doesn't exist & dependent on CREATE diffs so the index is valid.", () => {
+		const llmResponse = {
+			state: [
+				{ id: "2", test: true },
+				{ id: "4", test: false },
+				{ id: "1", test: false },
+				{ id: "3", test: true },
+			],
+		};
+
+		const diffs = sharedTreeDiff(treeNode as unknown as Record<string, unknown>, llmResponse, {
+			cyclesFix: true,
+			useObjectIds: {
+				idAttributeName: "id",
+			},
+		});
+
+		assert.deepStrictEqual(diffs, [
+			{
+				type: "MOVE",
+				path: ["state", 0],
+				newIndex: 2,
+				value: treeNode.state[0],
+			},
+			{
+				// expected to be reordered to the beginning.
+				path: ["state", 0, "test"],
+				type: "CHANGE",
+				value: false,
+				oldValue: true,
+			},
+			{
+				// expected to be removed due to other moves placing this in the correct pos.
+				type: "MOVE",
+				path: ["state", 1],
+				newIndex: 0,
+				value: treeNode.state[1],
+			},
+			{
+				type: "MOVE",
+				path: ["state", 2],
+				newIndex: 3,
+				value: treeNode.state[2],
+			},
+			{
+				type: "MOVE",
+				path: ["state", 3],
+				newIndex: 1,
+				value: treeNode.state[3],
+			},
+			{
+				// expected to be reordered to the beginning.
+				path: ["state", 3, "test"],
+				type: "CHANGE",
+				value: false,
+				oldValue: true,
+			},
+		]);
+
+		const minimalDiffs = createMinimalDiffSeries(treeNode, diffs, "id");
+
+		assert.deepStrictEqual(minimalDiffs, [
+			{
+				// reordered to the beginning
+				path: ["state", 0, "test"],
+				type: "CHANGE",
+				value: false,
+				oldValue: true,
+			},
+			{
+				// reordered to the beginning
+				path: ["state", 3, "test"],
+				type: "CHANGE",
+				value: false,
+				oldValue: true,
+			},
+			{
+				// [1, 2, 3, 4] -> [2, 3, 1, 4]
+				type: "MOVE",
+				path: ["state", 0],
+				newIndex: 2,
+				value: treeNode.state[0],
+			},
+			{
+				// [2, 3, 1, 4] -> [2, 1, 4, 3]
+				type: "MOVE",
+				path: ["state", 1],
+				newIndex: 3,
+				value: treeNode.state[2],
+			},
+			{
+				// [2, 1, 4, 3] -> [2, 4, 1, 3]
+				type: "MOVE",
+				path: ["state", 2],
+				newIndex: 1,
+				value: treeNode.state[3],
+			},
+		]);
+	});
+
+	it("Edge case 5: Reorder early move to index that doesn't exist & dependent on CREATE diffs so the index is valid.", () => {
 		const treeNode = new ObjectTreeNode({
 			state: [
 				{ id: "1", test: true },
@@ -682,7 +789,7 @@ describe("clean Diffs", () => {
 		// 	},
 		// ]);
 
-		const minimalDiffs = createMinimalArrayDiffSets(treeNode, diffs, "id");
+		const minimalDiffs = createMinimalDiffSeries(treeNode, diffs, "id");
 
 		assert.deepStrictEqual(minimalDiffs, [
 			{
@@ -707,7 +814,7 @@ describe("clean Diffs", () => {
 		]);
 	});
 
-	it("Edge case 4: handle edge cases across multiple arrays within an object", () => {
+	it("Edge case 6: handle edge cases across multiple arrays within an object", () => {
 		class SimpleObjectTreeNodeWithObjectArray extends schemaFactory.object(
 			"SimpleObjectTreeNodeWithObjectArray",
 			{
@@ -800,7 +907,7 @@ describe("clean Diffs", () => {
 			},
 		});
 
-		const minimalDiffs = createMinimalArrayDiffSets(treeNode, diffs, "id");
+		const minimalDiffs = createMinimalDiffSeries(treeNode, diffs, "id");
 
 		assert.deepStrictEqual(minimalDiffs, [
 			{
@@ -839,7 +946,7 @@ describe("clean Diffs", () => {
 		]);
 	});
 
-	it("Edge case 5: handle edge cases across multiple arrays within an object with repeating ID's", () => {
+	it("Edge case 7: handle edge cases across multiple arrays within an object with repeating ID's", () => {
 		class SimpleObjectTreeNodeWithObjectArray extends schemaFactory.object(
 			"SimpleObjectTreeNodeWithObjectArray",
 			{
@@ -909,7 +1016,7 @@ describe("clean Diffs", () => {
 			},
 		});
 
-		const minimalDiffs = createMinimalArrayDiffSets(treeNode, diffs, "id");
+		const minimalDiffs = createMinimalDiffSeries(treeNode, diffs, "id");
 
 		assert.deepStrictEqual(minimalDiffs, [
 			{

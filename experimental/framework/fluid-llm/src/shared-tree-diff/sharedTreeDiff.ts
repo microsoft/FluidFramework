@@ -426,22 +426,33 @@ function createObjectArrayItemIdsToIndexMap(
 }
 
 /**
- * zzz
+ * Takes the full set of diffs produced by {@link sharedTreeDiff} and returns a minimal set
+ * of diffs that can be applied to the old object to produce the new object, without having
+ * to modify any of the diffs.
  */
-export function createMinimalArrayDiffSets(
+export function createMinimalDiffSeries(
 	oldObject: unknown,
 	diffs: Difference[],
 	idAttributeName: string | number,
 ): Difference[] {
-	// deep copy diff array.
-	const diffsCopy: Difference[] = diffs.map((diff) => {
-		return { ...diff };
-	});
+	// the final series of diffs that will be returned.
+	const finalDiffSeries: Difference[] = [];
+	// Diffs that aren't of type 'CHANGE'
+	const nonChangeDiffs: Difference[] = [];
+
+	for (const diff of diffs) {
+		if (diff.type === "CHANGE") {
+			// Changes must be applied before any other diff, ao so they are ordered first.
+			finalDiffSeries.push({ ...diff });
+		} else {
+			nonChangeDiffs.push({ ...diff });
+		}
+	}
 
 	// Create sets of array diffs grouped by the array they are applying changes to.
 	const diffsByArrayUuid = new Map<string, Difference[]>();
-	for (const diff of diffsCopy) {
-		if (!isDiffOnArray(diff) || diff.type === "CHANGE") {
+	for (const diff of nonChangeDiffs) {
+		if (!isDiffOnArray(diff)) {
 			continue;
 		}
 
@@ -576,24 +587,22 @@ export function createMinimalArrayDiffSets(
 		}
 	}
 
-	const finalDiffArray: Difference[] = [];
-
-	for (let i = 0; i < diffsCopy.length; i++) {
+	for (let i = 0; i < nonChangeDiffs.length; i++) {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const diff = diffsCopy[i]!;
+		const diff = nonChangeDiffs[i]!;
 
 		if (diffsMarkedForRemoval.has(diff)) {
 			continue;
 		}
 
 		const isLastDiffInArraySeries = (currentIndex: number): boolean => {
-			if (currentIndex === diffsCopy.length - 1) {
+			if (currentIndex === nonChangeDiffs.length - 1) {
 				return true;
 			}
 			const nextIndex = currentIndex + 1;
-			if (nextIndex <= diffsCopy.length - 1) {
+			if (nextIndex <= nonChangeDiffs.length - 1) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const diffAfter = diffsCopy[nextIndex]!;
+				const diffAfter = nonChangeDiffs[nextIndex]!;
 
 				if (diffsMarkedForRemoval.has(diffAfter)) {
 					return isLastDiffInArraySeries(nextIndex + 1);
@@ -614,20 +623,20 @@ export function createMinimalArrayDiffSets(
 			const isDiffMarkedForReorder = endReorderDiffs?.includes(diff) ?? false;
 
 			if (isDiffMarkedForReorder === false) {
-				finalDiffArray.push(diff);
+				finalDiffSeries.push(diff);
 			}
 
 			if (isLastDiffInArraySeries(i) && endReorderDiffs !== undefined) {
-				finalDiffArray.push(...endReorderDiffs);
+				finalDiffSeries.push(...endReorderDiffs);
 			}
 
 			continue;
 		}
 
-		finalDiffArray.push(diff);
+		finalDiffSeries.push(diff);
 	}
 
-	return finalDiffArray;
+	return finalDiffSeries;
 }
 
 function arrayUuidFromPath(path: ObjectPath): string {
