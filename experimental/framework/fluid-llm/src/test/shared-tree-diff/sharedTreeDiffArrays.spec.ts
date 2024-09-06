@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactory } from "@fluidframework/tree";
 
-import { createMinimalDiffSeries, sharedTreeDiff } from "../../shared-tree-diff/index.js";
+import { createMergableIdDiffSeries, sharedTreeDiff } from "../../shared-tree-diff/index.js";
 
 const schemaFactory = new SchemaFactory("TreeNodeTest");
 
@@ -344,7 +344,7 @@ describe("clean Diffs", () => {
 			},
 		]);
 
-		const cleanedDiffs = createMinimalDiffSeries(treeNode, diffs, "id");
+		const cleanedDiffs = createMergableIdDiffSeries(treeNode, diffs, "id");
 		assert.deepStrictEqual(cleanedDiffs, [
 			{
 				type: "MOVE",
@@ -392,7 +392,7 @@ describe("clean Diffs", () => {
 
 		assert.deepStrictEqual(diffs, expectedDiffs);
 
-		const minimalDiffs = createMinimalDiffSeries(treeNode, diffs, "id");
+		const minimalDiffs = createMergableIdDiffSeries(treeNode, diffs, "id");
 
 		assert.deepStrictEqual(minimalDiffs, [
 			{
@@ -463,7 +463,7 @@ describe("clean Diffs", () => {
 			},
 		]);
 
-		const minimalDiffs = createMinimalDiffSeries(treeNode, diffs, "id");
+		const minimalDiffs = createMergableIdDiffSeries(treeNode, diffs, "id");
 
 		assert.deepStrictEqual(minimalDiffs, [
 			{
@@ -547,7 +547,7 @@ describe("clean Diffs", () => {
 			},
 		]);
 
-		const minimalDiffs = createMinimalDiffSeries(treeNode, diffs, "id");
+		const minimalDiffs = createMergableIdDiffSeries(treeNode, diffs, "id");
 
 		assert.deepStrictEqual(minimalDiffs, [
 			{
@@ -650,7 +650,7 @@ describe("clean Diffs", () => {
 			},
 		]);
 
-		const minimalDiffs = createMinimalDiffSeries(treeNode, diffs, "id");
+		const minimalDiffs = createMergableIdDiffSeries(treeNode, diffs, "id");
 
 		assert.deepStrictEqual(minimalDiffs, [
 			{
@@ -789,7 +789,7 @@ describe("clean Diffs", () => {
 		// 	},
 		// ]);
 
-		const minimalDiffs = createMinimalDiffSeries(treeNode, diffs, "id");
+		const minimalDiffs = createMergableIdDiffSeries(treeNode, diffs, "id");
 
 		assert.deepStrictEqual(minimalDiffs, [
 			{
@@ -907,7 +907,7 @@ describe("clean Diffs", () => {
 			},
 		});
 
-		const minimalDiffs = createMinimalDiffSeries(treeNode, diffs, "id");
+		const minimalDiffs = createMergableIdDiffSeries(treeNode, diffs, "id");
 
 		assert.deepStrictEqual(minimalDiffs, [
 			{
@@ -1016,7 +1016,7 @@ describe("clean Diffs", () => {
 			},
 		});
 
-		const minimalDiffs = createMinimalDiffSeries(treeNode, diffs, "id");
+		const minimalDiffs = createMergableIdDiffSeries(treeNode, diffs, "id");
 
 		assert.deepStrictEqual(minimalDiffs, [
 			{

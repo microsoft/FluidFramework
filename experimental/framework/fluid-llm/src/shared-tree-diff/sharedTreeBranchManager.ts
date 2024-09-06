@@ -2,6 +2,8 @@ import { type TreeArrayNode } from "@fluidframework/tree";
 import type * as z from "zod";
 
 import {
+	createMergableDiffSeries,
+	createMergableIdDiffSeries,
 	sharedTreeDiff,
 	type Difference,
 	type DifferenceChange,
@@ -38,13 +40,19 @@ export class SharedTreeBranchManager {
 			}
 		}
 
-		return sharedTreeDiff(obj as Record<string, unknown> | unknown[], newObj, {
+		const diffTotality = sharedTreeDiff(obj as Record<string, unknown> | unknown[], newObj, {
 			useObjectIds:
 				this.nodeIdAttributeName === undefined
 					? undefined
 					: { idAttributeName: this.nodeIdAttributeName },
 			cyclesFix: true,
 		});
+
+		if (this.nodeIdAttributeName !== undefined) {
+			return createMergableIdDiffSeries(obj, diffTotality, this.nodeIdAttributeName);
+		}
+
+		return createMergableDiffSeries(diffTotality);
 	}
 
 	/**
@@ -68,89 +76,13 @@ export class SharedTreeBranchManager {
 		diffs: Difference[],
 		objectToUpdate: Record<string, unknown> | TreeArrayNode,
 	): Set<Difference> {
-		if (diffs === undefined) {
-			return new Set();
-		}
-
-		const changeDiffs: DifferenceChange[] = [];
-		const moveDiffs: DifferenceMove[] = [];
-		const removeDiffs: DifferenceRemove[] = [];
-		const createDiffs: DifferenceCreate[] = [];
-
-		for (const diff of diffs) {
-			switch (diff.type) {
-				case "CHANGE": {
-					changeDiffs.push({ ...diff });
-					break;
-				}
-				case "MOVE": {
-					moveDiffs.push({ ...diff });
-					break;
-				}
-				case "REMOVE": {
-					removeDiffs.push({ ...diff });
-					break;
-				}
-				case "CREATE": {
-					createDiffs.push({ ...diff });
-					break;
-				}
-				default: {
-					throw new TypeError("Unsupported diff type");
-				}
-			}
-		}
-
 		const unappliedDiffs = new Set<Difference>();
 
-		// 1. We apply all change diffs before handling more complex diff types.
-		for (const changeDiff of changeDiffs) {
-			const isDiffApplied = this.applyDiff(changeDiff, objectToUpdate);
+		for (const diff of diffs) {
+			const isDiffApplied = this.applyDiff(diff, objectToUpdate);
 
 			if (isDiffApplied === false) {
-				unappliedDiffs.add(changeDiff);
-				continue;
-			}
-		}
-
-		for (const moveDiff of moveDiffs) {
-			const isDiffApplied = this.applyDiff(moveDiff, objectToUpdate);
-
-			if (isDiffApplied === false) {
-				unappliedDiffs.add(moveDiff);
-				continue;
-			}
-
-			// If we moved a node within an array, we need to update all other applicable diffs that were pointing that this index to point to the new index.
-			if (this.isDiffOnArray(moveDiff)) {
-				const swappedIndex = moveDiff.newIndex;
-				// Update remove diffs reffering to the node at the old index to point to the new noved index.
-				for (const removeDiff of removeDiffs) {
-					const removalIndex = removeDiff.path[removeDiff.path.length - 1] as number;
-					if (this.isDiffOnArray(removeDiff) && removalIndex === swappedIndex) {
-						removeDiff.path[removeDiff.path.length - 1] = moveDiff.path[
-							moveDiff.path.length - 1
-						] as number;
-					}
-				}
-			}
-		}
-
-		for (const removeDiff of removeDiffs) {
-			const isDiffApplied = this.applyDiff(removeDiff, objectToUpdate);
-
-			if (isDiffApplied === false) {
-				unappliedDiffs.add(removeDiff);
-				continue;
-			}
-		}
-
-		for (const createDiff of createDiffs) {
-			const isDiffApplied = this.applyDiff(createDiff, objectToUpdate);
-
-			if (isDiffApplied === false) {
-				unappliedDiffs.add(createDiff);
-				continue;
+				unappliedDiffs.add(diff);
 			}
 		}
 
@@ -207,8 +139,6 @@ export class SharedTreeBranchManager {
 							// backwards move, using i directly is fine
 							targetObject.moveToIndex(diff.newIndex, targetIndex);
 						}
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-						const jsonifiedTreeNode = targetObject.map((node) => ({ ...node as Record<string, unknown> }));
 						return true;
 					} else {
 						console.warn("MOVE diff specified an invalid index, ignoring.");

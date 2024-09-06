@@ -5,7 +5,8 @@ export {
 	type DifferenceRemove,
 	type Difference,
 	sharedTreeDiff,
-	createMinimalDiffSeries,
+	createMergableIdDiffSeries,
+	createMergableDiffSeries,
 } from "./sharedTreeDiff.js";
 
 export { SharedTreeBranchManager } from "./sharedTreeBranchManager.js";

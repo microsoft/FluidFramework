@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/no-lonely-if */
 import { type TreeArrayNode, NodeKind } from "@fluidframework/tree";
 
 import { isTreeMapNode, sharedTreeTraverse } from "./utils.js";
@@ -426,11 +425,10 @@ function createObjectArrayItemIdsToIndexMap(
 }
 
 /**
- * Takes the full set of diffs produced by {@link sharedTreeDiff} and returns a minimal set
- * of diffs that can be applied to the old object to produce the new object, without having
- * to modify any of the diffs.
+ * Creates a set of mergeable diffs from a series of diffs produced by {@link sharedTreeDiff}
+ * that are using the object ID strategy. These diffs don't need any modifications to be applied to the old object.
  */
-export function createMinimalDiffSeries(
+export function createMergableIdDiffSeries(
 	oldObject: unknown,
 	diffs: Difference[],
 	idAttributeName: string | number,
@@ -635,6 +633,30 @@ export function createMinimalDiffSeries(
 
 		finalDiffSeries.push(diff);
 	}
+
+	return finalDiffSeries;
+}
+
+/**
+ * Creates a set of mergeable diffs from a series of diffs produced by {@link sharedTreeDiff}
+ * that AREN'T using the object ID strategy. These diffs don't need any modifications to be applied to the old object.
+ */
+export function createMergableDiffSeries(diffs: Difference[]): Difference[] {
+	// the final series of diffs that will be returned.
+	const finalDiffSeries: Difference[] = [];
+	// Diffs that aren't of type 'CHANGE'
+	const nonChangeDiffs: Difference[] = [];
+
+	for (const diff of diffs) {
+		if (diff.type === "CHANGE") {
+			// Changes must be applied before any other diff, ao so they are ordered first.
+			finalDiffSeries.push({ ...diff });
+		} else {
+			nonChangeDiffs.push({ ...diff });
+		}
+	}
+
+	finalDiffSeries.push(...nonChangeDiffs);
 
 	return finalDiffSeries;
 }
