@@ -230,6 +230,9 @@
 			},
 			"publish": {
 				"description": "Publish commands are used to publish packages to an npm registry."
+			},
+			"promote": {
+				"description": "Promote commands are used to promote packages published to an npm registry."
 			}
 		}
 	}
