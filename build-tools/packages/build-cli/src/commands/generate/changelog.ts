@@ -127,6 +127,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		// because the changeset tools only work on canonical changesets.
 		await this.stripAdditionalMetadata(releaseGroupRoot);
 
+		// The `changeset version` command applies the changesets to the changelogs
 		await execCommand("pnpm exec changeset version", { cwd: releaseGroupRoot });
 
 		const packagesToCheck = isReleaseGroup(releaseGroup)
@@ -144,10 +145,10 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 
 		this.repo = new Repository({ baseDir: gitRoot });
 
-		// git add the deleted changesets
+		// git add the deleted changesets (`changeset version` deletes them)
 		await this.repo.gitClient.add(".changeset/**");
 
-		// git restore the package.json files that were changed by changeset version
+		// git restore the package.json files that were changed by `changeset version`
 		await this.repo.gitClient.raw("restore", "**package.json");
 
 		// Calls processPackage on all packages.
