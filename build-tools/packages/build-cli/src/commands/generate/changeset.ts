@@ -217,7 +217,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		packageChoices.push(
 			{ title: `${chalk.bold(monorepo.name)}`, heading: true, disabled: true },
 			...monorepo.packages
-				.filter((pkg) => (all || noChanges ? true : isIncludedByDefault(pkg)))
+				.filter((pkg) => (all || noChanges || isIncludedByDefault(pkg)))
 				.sort((a, b) => packageComparer(a, b, changedPackages))
 				.map((pkg) => {
 					const changed = changedPackages.some((cp) => cp.name === pkg.name);
