@@ -70,7 +70,7 @@ export enum FlexTreeEntityKind {
  * Design and document iterator invalidation rules and ordering rules.
  * Providing a custom iterator type with place anchor semantics would be a good approach.
  */
-export interface FlexTreeEntity<out TSchema = unknown> {
+export interface FlexTreeEntity {
 	/**
 	 * Indicates that an object is a specific kind of flex tree FlexTreeEntity.
 	 * This makes it possible to both down cast FlexTreeEntities safely as well as validate if an object is or is not a FlexTreeEntity.
@@ -78,16 +78,9 @@ export interface FlexTreeEntity<out TSchema = unknown> {
 	readonly [flexTreeMarker]: FlexTreeEntityKind;
 
 	/**
-	 * Schema for this entity.
-	 * If well-formed, it must follow this schema.
+	 * A common context of FlexTrees.
 	 */
-	readonly flexSchema: TSchema;
-
-	/**
-	 * A common context of a "forest" of FlexTrees.
-	 * @remarks This is `undefined` for unhydrated nodes or fields that have not yet been inserted into the tree.
-	 */
-	readonly context?: FlexTreeContext;
+	readonly context: FlexTreeContext;
 }
 
 /**
@@ -132,7 +125,7 @@ export enum TreeStatus {
  * the schema aware API may be more ergonomic.
  * All editing is actually done via {@link FlexTreeField}s: the nodes are immutable other than that they contain mutable fields.
  */
-export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
+export interface FlexTreeNode extends FlexTreeEntity {
 	readonly [flexTreeMarker]: FlexTreeEntityKind.Node;
 
 	/**
@@ -193,6 +186,12 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	 * If well-formed, it must follow this schema.
 	 */
 	readonly schema: TreeNodeSchemaIdentifier;
+
+	/**
+	 * Schema for this entity.
+	 * If well-formed, it must follow this schema.
+	 */
+	readonly flexSchema: FlexTreeNodeSchema;
 }
 
 /**
@@ -213,7 +212,7 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
  * All content in the tree is accessible without down-casting, but if the schema is known,
  * the schema aware API may be more ergonomic.
  */
-export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
+export interface FlexTreeField extends FlexTreeEntity {
 	readonly [flexTreeMarker]: FlexTreeEntityKind.Field;
 
 	/**
@@ -267,6 +266,12 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
 	 * If well-formed, it must follow this schema.
 	 */
 	readonly schema: TreeFieldStoredSchema;
+
+	/**
+	 * Schema for this entity.
+	 * If well-formed, it must follow this schema.
+	 */
+	readonly flexSchema: FlexFieldSchema;
 }
 
 // #region Node Kinds

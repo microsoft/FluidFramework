@@ -29,7 +29,13 @@ export {
 	visitIterableTreeWithState,
 } from "./navigation.js";
 
-export { getTreeContext, type FlexTreeContext, Context, ContextSlot } from "./context.js";
+export {
+	getTreeContext,
+	type FlexTreeContext,
+	type FlexTreeHydratedContext,
+	Context,
+	ContextSlot,
+} from "./context.js";
 
 export { type FlexTreeNodeEvents } from "./treeEvents.js";
 
