@@ -157,6 +157,9 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		);
 
 		const result = schema.prepareInstance(this, node);
+		// The TreeNodeKernel associates itself the TreeNode (result here, not node) so it can be looked up later via getKernel.
+		// If desired this could be put in a non-enumerable symbol property for lookup instead, but that gets messy going through proxies,
+		// so just relying on the WeakMap seems like the cleanest approach.
 		new TreeNodeKernel(result, schema, node);
 
 		return result;
