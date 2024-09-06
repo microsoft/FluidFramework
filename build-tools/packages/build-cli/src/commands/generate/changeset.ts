@@ -194,12 +194,13 @@ export default class GenerateChangesetCommand extends BaseCommand<
 			return inReleaseGroup;
 		});
 
+		let noChanges: boolean = false;
 		if (changedFiles.length === 0) {
-			this.error(`No changes when compared to ${branch}.`, { exit: 1 });
-		}
-
-		if (packages.length === 0) {
-			this.error(`No changed packages when compared to ${branch}.`, { exit: 1 });
+			this.warning(`No changes when compared to ${branch}.`);
+			noChanges = true;
+		} else if (packages.length === 0) {
+			this.warning(`No changed packages when compared to ${branch}.`);
+			noChanges = true;
 		}
 
 		if (changedReleaseGroups.length > 1 && releaseGroup === undefined) {
@@ -216,7 +217,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		packageChoices.push(
 			{ title: `${chalk.bold(monorepo.name)}`, heading: true, disabled: true },
 			...monorepo.packages
-				.filter((pkg) => (all ? true : isIncludedByDefault(pkg)))
+				.filter((pkg) => (all || noChanges ? true : isIncludedByDefault(pkg)))
 				.sort((a, b) => packageComparer(a, b, changedPackages))
 				.map((pkg) => {
 					const changed = changedPackages.some((cp) => cp.name === pkg.name);
@@ -447,3 +448,16 @@ function packageComparer(a: Package, b: Package, changedPackages: Package[]): nu
 			? 0
 			: 1;
 }
+
+// async function createEmptyChangeset(directory: string) {
+// 	const emptyFile = await createChangesetFile(directory, new Map());
+// 	// eslint-disable-next-line @typescript-eslint/no-shadow
+// 	const changesetPath = path.relative(repoRoot, emptyFile);
+// 	this.logHr();
+// 	this.log(`Created empty changeset: ${chalk.green(changesetPath)}`);
+// 	return {
+// 		branch,
+// 		selectedPackages: [],
+// 		changesetPath,
+// 	};
+// }
