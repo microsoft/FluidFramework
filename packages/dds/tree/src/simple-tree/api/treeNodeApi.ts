@@ -5,7 +5,7 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
-import { Multiplicity, rootFieldKey } from "../../core/index.js";
+import { EmptyKey, rootFieldKey } from "../../core/index.js";
 import {
 	type LazyItem,
 	type TreeStatus,
@@ -13,6 +13,7 @@ import {
 	isTreeValue,
 	FlexObjectNodeSchema,
 	isMapTreeNode,
+	FieldKinds,
 } from "../../feature-libraries/index.js";
 import { fail, extractFromOpaque, isReadonlyArray } from "../../util/index.js";
 
@@ -299,8 +300,12 @@ function getStoredKey(node: TreeNode): string | number {
 	// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
 	// "property keys".
 	const parentField = getOrCreateInnerNode(node).parentField;
-	if (parentField.parent.flexSchema.kind.multiplicity === Multiplicity.Sequence) {
+	if (parentField.parent.schema.kind === FieldKinds.sequence.identifier) {
 		// The parent of `node` is an array node
+		assert(
+			parentField.parent.key === EmptyKey,
+			"When using index as key, field should use EmptyKey",
+		);
 		return parentField.index;
 	}
 

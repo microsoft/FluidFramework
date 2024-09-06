@@ -2,10 +2,6 @@
 title: SharedTree Quick Start
 menuPosition: 2
 codeCopyButton: true
-aliases:
-  - "/docs/get-started/tree-quick-start/"
-  - "/start/tree-quick-start/"
-  - "/docs/tree-start/"
 
 ---
 
@@ -16,6 +12,8 @@ This guide will walk you through the basics of creating, configuring, and intera
 
 A `SharedTree` can be created by defining a `ContainerSchema` with an initial object of type `SharedTree` and using this schema to create and load your container.
 This example creates a container using an Azure specific client.
+
+**note**: `enableRuntimeIdCompressor` must be enabled in the [container runtime options](../api/v2/container-runtime/icontainerruntimeoptions-interface.md) in order to use `SharedTree`
 
 See more info on creating and loading containers [here](../build/containers.md#creating-a-container).
 
@@ -151,10 +149,13 @@ See [the API](../api/v2/tree/treechangeevents-interface) docs for more details.
 ## Editing Tree Data
 
 There are built-in editing methods for each of the provided schema types.
-For example, if your data is in an array, you can add an item like this:
+For example, if your data is in an array, you can add a new todo item at index 3 like this:
 
 ```typescript
-appData.root.items.insertAt(3);
+appData.root.items.insertAt(3, new TodoItem({
+	description: "new item",
+	isComplete: false,
+}),);
 ```
 
 The schema types can also be edited using the assignment operator like this:
