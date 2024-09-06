@@ -75,7 +75,7 @@ steps:
       exit 0
 - task: Bash@3
   displayName: Promote Packages for ${{ parameters.artifactPath }}
-  condition: and(succeeded(), eq(variables['release'], "release"), eq("${{ parameters.feedKind }}", "internal-build"))
+  condition: and(succeeded(), eq(variables['release'], 'release'), eq('${{ parameters.feedKind }}', 'internal-build'))
   env:
     ADO_API_TOKEN: $(System.AccessToken)
   inputs:
