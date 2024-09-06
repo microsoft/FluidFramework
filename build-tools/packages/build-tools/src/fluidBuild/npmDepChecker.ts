@@ -9,10 +9,10 @@ import { readFileAsync } from "../common/utils";
 import registerDebug from "debug";
 const traceDepCheck = registerDebug("fluid-build:depCheck");
 
-	/**
-	 * @deprecated depcheck-related functionality will be removed in an upcoming release.
-	 */
-	interface DepCheckRecord {
+/**
+ * @deprecated depcheck-related functionality will be removed in an upcoming release.
+ */
+interface DepCheckRecord {
 	name: string;
 	import: RegExp;
 	declare: RegExp;
@@ -21,10 +21,10 @@ const traceDepCheck = registerDebug("fluid-build:depCheck");
 	found: boolean;
 }
 
-	/**
-	 * @deprecated depcheck-related functionality will be removed in an upcoming release.
-	 */
-	export class NpmDepChecker {
+/**
+ * @deprecated depcheck-related functionality will be removed in an upcoming release.
+ */
+export class NpmDepChecker {
 	private readonly foundTypes: string[] = [
 		"@types/node",
 		"@types/expect-puppeteer",
