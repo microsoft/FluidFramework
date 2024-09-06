@@ -14,7 +14,7 @@ import { visit } from "unist-util-visit";
 const slugger = new GithubSlugger();
 
 /**
- * A remarkjs/unist plugin that interts HTML anchor nodes before heading text. This is a workaround for GitHub's lack of
+ * A remarkjs/unist plugin that inserts HTML anchor nodes before heading text. This is a workaround for GitHub's lack of
  * automatic heading links in GitHub Releases. GitHub's markdown rendering is inconsistent, and in this case it does not
  * add automatic links.
  *
