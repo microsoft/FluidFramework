@@ -19,8 +19,7 @@ import {
 	getTreeNodeForField,
 	prepareContentForHydration,
 } from "./proxies.js";
-import { getOrCreateInnerNode, type InnerNode } from "./proxyBinding.js";
-import { getKernel } from "./core/index.js";
+import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
 	createFieldSchema,
 	FieldKind,
@@ -29,6 +28,8 @@ import {
 	type TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
+	getKernel,
+	type InnerNode,
 	NodeKind,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchema,

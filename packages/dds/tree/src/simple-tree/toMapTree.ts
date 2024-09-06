@@ -38,9 +38,15 @@ import {
 	FieldKind,
 	type TreeLeafValue,
 } from "./schemaTypes.js";
-import { NodeKind, tryGetSimpleNodeSchema, type TreeNodeSchema } from "./core/index.js";
+import {
+	getKernel,
+	isTreeNode,
+	NodeKind,
+	tryGetSimpleNodeSchema,
+	type InnerNode,
+	type TreeNodeSchema,
+} from "./core/index.js";
 import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
-import { tryGetInnerNode } from "./proxyBinding.js";
 import { isObjectNodeSchema } from "./objectNodeTypes.js";
 
 /**
@@ -719,5 +725,18 @@ function provideDefault(
 			// Leaving field empty despite it needing a default value since a context was required and non was provided.
 			// Caller better handle this case by providing the default at some other point in time when the context becomes known.
 		}
+	}
+}
+
+/**
+ * Retrieves the InnerNode associated with the given target via {@link setInnerNode}, if any.
+ * @remarks
+ * If `target` is a unhydrated node, returns its MapTreeNode.
+ * If `target` is a cooked node (or marinated but a FlexTreeNode exists) returns the FlexTreeNode.
+ * If the target is not a node, or a marinated node with no FlexTreeNode for its anchor, returns undefined.
+ */
+function tryGetInnerNode(target: unknown): InnerNode | undefined {
+	if (isTreeNode(target)) {
+		return getKernel(target).tryGetInnerNode();
 	}
 }
