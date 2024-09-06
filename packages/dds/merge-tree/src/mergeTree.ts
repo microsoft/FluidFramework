@@ -2051,6 +2051,7 @@ export class MergeTree {
 		};
 
 		this.nodeMap(
+			// this seems wrong, it won't see segments above the ref seq, but below the seq, which is the point of obliterate
 			refSeq,
 			clientId,
 			markMoved,
