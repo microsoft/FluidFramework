@@ -436,7 +436,7 @@ export function runTransaction<
 		const node = treeOrNode as TNode;
 		const t = transaction as (node: TNode) => TResult | typeof rollback;
 		const context = getOrCreateInnerNode(node).context;
-		// TODO: this can fail for unhydrated nodes
+		// TODO: AB#14628: this can fail for unhydrated nodes.
 		assert(context instanceof Context, 0x901 /* Unsupported context */);
 		const treeView =
 			contextToTreeView.get(context) ?? fail("Expected view to be registered for context");
