@@ -96,7 +96,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		for (const changeset of changesets) {
 			const metadata = Object.entries(changeset.metadata).map((entry) => {
 				const [packageName, bump] = entry;
-				return `"${packageName}": "${bump}"`;
+				return `"${packageName}": ${bump}`;
 			});
 			const output = `---\n${metadata.join("\n")}\n---\n\n${changeset.summary}\n\n${changeset.body}\n`;
 			toWrite.push(writeFile(changeset.sourceFile, output));
