@@ -495,16 +495,3 @@ function packageComparer(a: Package, b: Package, changedPackages: Package[]): nu
 			? 0
 			: 1;
 }
-
-// async function createEmptyChangeset(directory: string) {
-// 	const emptyFile = await createChangesetFile(directory, new Map());
-// 	// eslint-disable-next-line @typescript-eslint/no-shadow
-// 	const changesetPath = path.relative(repoRoot, emptyFile);
-// 	this.logHr();
-// 	this.log(`Created empty changeset: ${chalk.green(changesetPath)}`);
-// 	return {
-// 		branch,
-// 		selectedPackages: [],
-// 		changesetPath,
-// 	};
-// }
