@@ -99,7 +99,7 @@
 		"source-map-loader": "^5.0.0",
 		"ts-loader": "^9.3.0",
 		"typescript": "~5.1.6",
-		"webpack": "^5.82.0"
+		"webpack": "^5.94.0"
 	},
 	"typeValidation": {
 		"broken": {}
