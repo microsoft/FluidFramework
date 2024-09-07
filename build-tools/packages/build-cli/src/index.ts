@@ -4,4 +4,17 @@
  */
 
 export { run } from "@oclif/core";
+export type {
+	AssertTaggingConfig,
+	BumpConfig,
+	FlubConfig,
+	PackageNamePolicyConfig,
+	PackageRequirements,
+	PolicyConfig,
+	PreviousVersionStyle,
+	ReleaseNotesConfig,
+	ReleaseNotesSection,
+	ReleaseNotesSectionName,
+	ScriptRequirement,
+} from "./config.js";
 export type { knownReleaseGroups, ReleaseGroup, ReleasePackage } from "./releaseGroups.js";

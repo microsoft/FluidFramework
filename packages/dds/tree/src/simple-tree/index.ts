@@ -5,6 +5,7 @@
 
 export {
 	typeNameSymbol,
+	typeSchemaSymbol,
 	type WithType,
 	type TreeNodeSchema,
 	NodeKind,
@@ -18,6 +19,7 @@ export {
 	type Unhydrated,
 	type InternalTreeNode,
 	isTreeNode,
+	tryDisposeTreeNode,
 } from "./core/index.js";
 export {
 	type ITree,
@@ -41,6 +43,11 @@ export {
 	test_RecursiveObjectPojoMode,
 	treeNodeApi,
 	type TreeNodeApi,
+	cursorFromInsertable,
+	createFromInsertable,
+	type NodeChangedData,
+	TreeBeta,
+	type TreeChangeEventsBeta,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -62,7 +69,7 @@ export {
 	normalizeFieldSchema,
 	type ApplyKind,
 } from "./schemaTypes.js";
-export { getOrCreateInnerNode, tryDisposeTreeNode } from "./proxyBinding.js";
+export { getOrCreateInnerNode } from "./proxyBinding.js";
 export { toFlexSchema } from "./toFlexSchema.js";
 export type {
 	FieldHasDefaultUnsafe,
@@ -119,3 +126,11 @@ export {
 } from "./jsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
+export { toStoredSchema, getStoredSchema, getFlexSchema } from "./toFlexSchema.js";
+export {
+	numberSchema,
+	stringSchema,
+	booleanSchema,
+	handleSchema,
+	nullSchema,
+} from "./leafNodeSchema.js";
