@@ -282,8 +282,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(webpack@5.94.0)
       ts-loader:
-        specifier: ^9.3.0
-        version: 9.4.3(typescript@5.1.6)(webpack@5.94.0)
+        specifier: ^9.5.1
+        version: 9.5.1(typescript@5.1.6)(webpack@5.94.0)
       typescript:
         specifier: ~5.1.6
         version: 5.1.6
@@ -479,8 +479,8 @@ importers:
         specifier: ^9.2.3
         version: 9.2.4
       ts-loader:
-        specifier: ^9.3.0
-        version: 9.4.3(typescript@5.1.6)(webpack@5.94.0)
+        specifier: ^9.5.1
+        version: 9.5.1(typescript@5.1.6)(webpack@5.94.0)
       typescript:
         specifier: ~5.1.6
         version: 5.1.6
@@ -8722,14 +8722,6 @@ packages:
       - supports-color
       - utf-8-validate
 
-  /enhanced-resolve@5.15.0:
-    resolution: {integrity: sha512-LXYT42KJ7lpIKECr2mAXIaMldcNCh/7E0KBKOu4KSfkHmP+mZmSs+8V5gBAqisWBy0OO4W5Oyys0GO1Y8KtdKg==}
-    engines: {node: '>=10.13.0'}
-    dependencies:
-      graceful-fs: 4.2.11
-      tapable: 2.2.1
-    dev: true
-
   /enhanced-resolve@5.17.1:
     resolution: {integrity: sha512-LMHl3dXhTcfv8gM4kEzIUeTQ+7fpdA0l2tUf34BddXPkz2A5xJ5L/Pchd5BL6rdccM9QGvu0sWZzK1Z1t4wwyg==}
     engines: {node: '>=10.13.0'}
@@ -8944,7 +8936,7 @@ packages:
       eslint-plugin-import: '*'
     dependencies:
       debug: 4.3.4(supports-color@8.1.1)
-      enhanced-resolve: 5.15.0
+      enhanced-resolve: 5.17.1
       eslint: 8.55.0
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5)(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
       eslint-plugin-import: /eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
@@ -14263,6 +14255,11 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
+  /source-map@0.7.4:
+    resolution: {integrity: sha512-l3BikUxvPOcn5E74dZiq5BGsTb5yEwhaTSzccU6t4sDOH8NWJCstKO5QT2CvtFoK6F0saL7p9xHAqHOlCPJygA==}
+    engines: {node: '>= 8'}
+    dev: true
+
   /sparse-bitfield@3.0.3:
     resolution: {integrity: sha512-kvzhi7vqKTfkh0PZU+2D2PIllw2ymqJKujUcyPMd9Y75Nv4nPbGJZXNhxsgdQab2BmlDct1YnfQCguEvHr7VsQ==}
     requiresBuild: true
@@ -14784,17 +14781,18 @@ packages:
       typescript: 5.1.6
     dev: true
 
-  /ts-loader@9.4.3(typescript@5.1.6)(webpack@5.94.0):
-    resolution: {integrity: sha512-n3hBnm6ozJYzwiwt5YRiJZkzktftRpMiBApHaJPoWLA+qetQBAXkHqCLM6nwSdRDimqVtA5ocIkcTRLMTt7yzA==}
+  /ts-loader@9.5.1(typescript@5.1.6)(webpack@5.94.0):
+    resolution: {integrity: sha512-rNH3sK9kGZcH9dYzC7CewQm4NtxJTjSEVRJ2DyBZR7f8/wcta+iV44UPCXc5+nzDzivKtlzV6c9P4e+oFhDLYg==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
       typescript: '*'
       webpack: ^5.0.0
     dependencies:
       chalk: 4.1.2
-      enhanced-resolve: 5.15.0
+      enhanced-resolve: 5.17.1
       micromatch: 4.0.5
-      semver: 7.5.3
+      semver: 7.6.0
+      source-map: 0.7.4
       typescript: 5.1.6
       webpack: 5.94.0(webpack-cli@5.1.4)
     dev: true
