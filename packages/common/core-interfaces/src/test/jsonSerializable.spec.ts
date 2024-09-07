@@ -626,8 +626,8 @@ describe("JsonSerializable", () => {
 				 * support for both ESM and CommonJS, this helper allows calling
 				 * with undefined (for CommonJS) and simulates the error that
 				 * is expected on ESM.
-				 * Importantly `undefined` is not expected to be serialiable and
-				 * thus is always a problem.
+				 * Importantly `undefined` is not expected to be serializable
+				 * and thus is always a problem.
 				 */
 				function doNothingPassThru<T>(v: T): never {
 					if (v === undefined) {
