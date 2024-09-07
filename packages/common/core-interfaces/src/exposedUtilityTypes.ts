@@ -32,8 +32,7 @@ const RecursionMarkerSymbol: unique symbol = Symbol("recursion here");
  * exported anyway. All in namespace are left exported to avoid api-extractor
  * potentially failing to validate other modules correctly.
  *
- * @legacy
- * @alpha
+ * @internal
  * @system
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace

@@ -10,8 +10,7 @@
  * @privateRemarks type is used over interface; so inspection of type
  * result can be more informative than just the type name.
  *
- * @legacy
- * @alpha
+ * @internal
  * @system
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -26,8 +25,7 @@ export type SerializationErrorPerUndefinedArrayElement = {
  * @privateRemarks type is used over interface; so inspection of type
  * result can be more informative than just the type name.
  *
- * @legacy
- * @alpha
+ * @internal
  * @system
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
