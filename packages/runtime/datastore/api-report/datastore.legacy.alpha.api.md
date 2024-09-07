@@ -58,7 +58,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    get idCompressor(): IIdCompressor | undefined;
+    readonly idCompressor?: IIdCompressor;
     // (undocumented)
     get IFluidHandleContext(): this;
     // (undocumented)
