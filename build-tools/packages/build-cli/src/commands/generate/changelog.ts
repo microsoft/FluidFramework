@@ -98,6 +98,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 				changeset.additionalMetadata?.includeInChangelog === false ||
 				Object.keys(changeset.additionalMetadata ?? {}).length === 0
 			) {
+				this.info(`Removing changeset not included in changelog: ${changeset.sourceFile}`);
 				toWriteOrDelete.push(rm(changeset.sourceFile));
 			}
 
@@ -106,6 +107,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 				return `"${packageName}": "${bump}"`;
 			});
 			const output = `---\n${metadata.join("\n")}\n---\n\n${changeset.summary}\n\n${changeset.body}\n`;
+			this.info(`Writing stripped changeset content: ${changeset.sourceFile}`);
 			toWriteOrDelete.push(writeFile(changeset.sourceFile, output));
 		}
 		await Promise.all(toWriteOrDelete);
