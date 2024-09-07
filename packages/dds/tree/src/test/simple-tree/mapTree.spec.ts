@@ -1327,7 +1327,7 @@ describe("toMapTree", () => {
 					mapTreeFromNodeData(
 						content,
 						[schemaFactory.string],
-						undefined,
+						new MockNodeKeyManager(),
 						schemaValidationPolicy,
 					);
 				});
@@ -1340,7 +1340,7 @@ describe("toMapTree", () => {
 							mapTreeFromNodeData(
 								content,
 								[schemaFactory.string],
-								undefined,
+								new MockNodeKeyManager(),
 								schemaValidationPolicy,
 							),
 						outOfSchemaExpectedError,
@@ -1382,7 +1382,7 @@ describe("toMapTree", () => {
 					mapTreeFromNodeData(
 						content,
 						[myObjectSchema, schemaFactory.string],
-						undefined,
+						new MockNodeKeyManager(),
 						schemaValidationPolicy,
 					);
 				});
@@ -1394,7 +1394,7 @@ describe("toMapTree", () => {
 							mapTreeFromNodeData(
 								content,
 								[myObjectSchema, schemaFactory.string],
-								undefined,
+								new MockNodeKeyManager(),
 								schemaValidationPolicy,
 							),
 						outOfSchemaExpectedError,
@@ -1429,7 +1429,7 @@ describe("toMapTree", () => {
 					mapTreeFromNodeData(
 						content,
 						[myMapSchema, schemaFactory.string],
-						undefined,
+						new MockNodeKeyManager(),
 						schemaValidationPolicy,
 					);
 				});
@@ -1441,7 +1441,7 @@ describe("toMapTree", () => {
 							mapTreeFromNodeData(
 								content,
 								[myMapSchema, schemaFactory.string],
-								undefined,
+								new MockNodeKeyManager(),
 								schemaValidationPolicy,
 							),
 						outOfSchemaExpectedError,
@@ -1476,7 +1476,7 @@ describe("toMapTree", () => {
 					mapTreeFromNodeData(
 						content,
 						[myArrayNodeSchema, schemaFactory.string],
-						undefined,
+						new MockNodeKeyManager(),
 						schemaValidationPolicy,
 					);
 				});
@@ -1488,7 +1488,7 @@ describe("toMapTree", () => {
 							mapTreeFromNodeData(
 								content,
 								[myArrayNodeSchema, schemaFactory.string],
-								undefined,
+								new MockNodeKeyManager(),
 								schemaValidationPolicy,
 							),
 						outOfSchemaExpectedError,

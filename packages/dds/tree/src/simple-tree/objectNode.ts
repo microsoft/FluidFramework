@@ -18,6 +18,7 @@ import {
 	getSchemaAndPolicy,
 	isMapTreeNode,
 	type MapTreeNode,
+	UnhydratedContext,
 } from "../feature-libraries/index.js";
 import {
 	type InsertableContent,
@@ -48,7 +49,7 @@ import {
 } from "./core/index.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
-import { getFlexSchema } from "./toFlexSchema.js";
+import { getFlexSchema, toFlexSchema } from "./toFlexSchema.js";
 import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 
@@ -264,11 +265,11 @@ export function setField(
 	const mapTree = mapTreeFromNodeData(
 		value,
 		simpleFieldSchema,
-		field.context?.nodeKeyManager,
+		field.context.isHydrated() ? field.context.nodeKeyManager : undefined,
 		getSchemaAndPolicy(field),
 	);
 
-	if (field.context !== undefined) {
+	if (field.context.isHydrated()) {
 		prepareContentForHydration(mapTree, field.context.checkout.forest);
 	}
 
@@ -321,6 +322,7 @@ export function objectSchema<
 	let handler: ProxyHandler<object>;
 	let customizable: boolean;
 	let flexSchema: FlexObjectNodeSchema;
+	let unhydratedContext: UnhydratedContext;
 
 	class CustomObjectNode extends CustomObjectNodeBase<T> {
 		public static readonly fields: ReadonlyMap<string, FieldSchema> = new Map(
@@ -373,6 +375,7 @@ export function objectSchema<
 			input: T2,
 		): MapTreeNode {
 			return getOrCreateMapTreeNode(
+				unhydratedContext,
 				flexSchema,
 				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
 			);
@@ -384,7 +387,9 @@ export function objectSchema<
 			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
 			customizable = (this as unknown) !== CustomObjectNode;
 			handler = createProxyHandler(flexKeyMap, customizable);
-			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexObjectNodeSchema;
+			const schema = this as unknown as TreeNodeSchema;
+			flexSchema = getFlexSchema(schema) as FlexObjectNodeSchema;
+			unhydratedContext = new UnhydratedContext(toFlexSchema(schema));
 
 			// First run, do extra validation.
 			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
