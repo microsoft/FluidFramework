@@ -10,6 +10,7 @@ import { FluidRepo, Package } from "@fluidframework/build-tools";
 import { command as execCommand } from "execa";
 import { inc } from "semver";
 import { CleanOptions } from "simple-git";
+import { ux } from "@oclif/core";
 
 import { checkFlags, releaseGroupFlag, semverFlag } from "../../flags.js";
 import {
@@ -137,7 +138,9 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		await this.stripAdditionalMetadata(releaseGroupRoot);
 
 		// The `changeset version` command applies the changesets to the changelogs
+		ux.action.start("Running `changeset version`");
 		await execCommand("pnpm exec changeset version", { cwd: releaseGroupRoot });
+		ux.action.stop();
 
 		const packagesToCheck = isReleaseGroup(releaseGroup)
 			? context.packagesInReleaseGroup(releaseGroup)
@@ -161,6 +164,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		await this.repo.gitClient.raw("restore", "**package.json");
 
 		// Calls processPackage on all packages.
+		ux.action.start("Processing changelog updates");
 		const processPromises: Promise<void>[] = [];
 		for (const pkg of packagesToCheck) {
 			processPromises.push(this.processPackage(pkg));
@@ -184,6 +188,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 
 		// Cleanup: git clean any untracked files
 		await this.repo.gitClient.clean(CleanOptions.RECURSIVE + CleanOptions.FORCE);
+		ux.action.stop("Commit and open a PR!")
 
 		this.log("Commit and open a PR!");
 	}
