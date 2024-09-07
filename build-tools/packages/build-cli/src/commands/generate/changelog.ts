@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { FluidRepo, Package } from "@fluidframework/build-tools";
@@ -92,16 +92,23 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		const changesetDir = path.join(releaseGroupRootDir, DEFAULT_CHANGESET_PATH);
 		const changesets = await loadChangesets(changesetDir, this.logger);
 
-		const toWrite: Promise<void>[] = [];
+		const toWriteOrDelete: Promise<void>[] = [];
 		for (const changeset of changesets) {
+			if (
+				changeset.additionalMetadata?.includeInChangelog === false ||
+				Object.keys(changeset.additionalMetadata ?? {}).length === 0
+			) {
+				toWriteOrDelete.push(rm(changeset.sourceFile));
+			}
+
 			const metadata = Object.entries(changeset.metadata).map((entry) => {
 				const [packageName, bump] = entry;
 				return `"${packageName}": "${bump}"`;
 			});
 			const output = `---\n${metadata.join("\n")}\n---\n\n${changeset.summary}\n\n${changeset.body}\n`;
-			toWrite.push(writeFile(changeset.sourceFile, output));
+			toWriteOrDelete.push(writeFile(changeset.sourceFile, output));
 		}
-		await Promise.all(toWrite);
+		await Promise.all(toWriteOrDelete);
 	}
 
 	public async run(): Promise<void> {
